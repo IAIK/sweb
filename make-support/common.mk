@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.2 2005/04/12 18:42:51 nomenquis Exp $
+# $Id: common.mk,v 1.3 2005/04/12 19:04:04 davrieb Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.2  2005/04/12 18:42:51  nomenquis
+# changed a zillion of iles
+#
 # Revision 1.1  2005/04/12 17:41:22  nomenquis
 # added common.mk
 #
@@ -227,7 +230,7 @@ ifeq ($(V),1)
 else
 	@echo "DEP $< "
 endif
-	@$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; echo "`echo '$@' | sed s/\.d/\.o/` $@ : $< " > $@ ; \
+	@$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; echo "`echo '$@' | sed s/\\\.d/\\\.o/` $@ : $< " > $@ ; \
 		[ -s $@ ] || rm -f $@ '		
 
 
