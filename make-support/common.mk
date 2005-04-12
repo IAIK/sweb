@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.1 2005/04/12 17:41:22 nomenquis Exp $
+# $Id: common.mk,v 1.2 2005/04/12 18:42:51 nomenquis Exp $
 #
-# $Log:  $
+# $Log: common.mk,v $
+# Revision 1.1  2005/04/12 17:41:22  nomenquis
+# added common.mk
+#
 #
 #
 
@@ -47,9 +50,9 @@ LDCOMMAND := $(LD) $(LDFLAGS)
 ## find out the location where our objects should go
 
 
-OBJECTDIR := $(subst /sweb-testing/,/sweb-testing-bin/,${PWD})
+OBJECTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD})
 SOURECDIR := $(PWD)
-BINARYDESTDIR := $(subst /sweb-testing/,/sweb-testing-bin/,${PWD}/${PROJECT_ROOT}/bin)
+BINARYDESTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD}/${PROJECT_ROOT}/bin)
 
 CXXFILES := $(wildcard *.cpp)
 CCFILES := $(wildcard *.c)
@@ -67,13 +70,16 @@ OBJECTS := $(CXXOBJECTS) $(CCOBJECTS) $(ASOBJECTS)
 
 IS_LIB := $(findstring .a,$(TARGET))
 
+ifneq ($(TARGET),)
 TARGET := $(OBJECTDIR)/$(TARGET)
+endif
 
 SHARED_LIBS_NEW := $(foreach temp, $(SHARED_LIBS), $(OBJECTDIR)/$(temp))
 SHARED_LIBS := $(SHARED_LIBS_NEW) $(SHARED_LIBS_PROJECT)
 
+#ifneq ($(TARGET),)
 all: $(TARGET)
-
+#endif
 
 ## for the sake of simplicity, if we do not have a exe we set subdirs to be empty to 
 ## avoid an endless recursion
@@ -145,6 +151,7 @@ test:
 	@echo "TEST is $(OBJECTDIR)"
 	@echo "CXXOBJECTS is $(CXXOBJECTS)"
 	@echo "TARGET IS $(TARGET)"
+	@echo "OBJECT_DIR IS $(OBJECTDIR)"
 
 ifneq ($(TARGET),)
 $(TARGET): $(SUBPROJECTS) $(OBJECTS)

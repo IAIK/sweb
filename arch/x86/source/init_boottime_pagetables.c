@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.c,v 1.1 2005/04/12 17:46:44 nomenquis Exp $
+ * $Id: init_boottime_pagetables.c,v 1.2 2005/04/12 18:42:50 nomenquis Exp $
  *
- * $Log:  $
+ * $Log: init_boottime_pagetables.c,v $
+ * Revision 1.1  2005/04/12 17:46:44  nomenquis
+ * added lots of files
+ *
  *
  */
 
@@ -96,4 +99,8 @@ void initialiseBootTimePaging()
 void freeBootTimePaging()
 {
   // here we should tell our page manager that all of our boottime pages are free now
+}
+
+void handleInterrupt(void *regs)
+{
 }

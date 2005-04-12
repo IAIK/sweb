@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.1 2005/04/12 17:43:25 nomenquis Exp $
+# $Id: toolchain.mk,v 1.2 2005/04/12 18:42:51 nomenquis Exp $
 #
-# $Log:  $
+# $Log: toolchain.mk,v $
+# Revision 1.1  2005/04/12 17:43:25  nomenquis
+# added make support stuff
+#
 #
 #
 
@@ -24,7 +27,7 @@ CXX_DEP_TEMP := g++
 CC_DEP_TEMP := gcc
 AS_TEMP := nasm -f elf
 AS_DEP_TEMP := nasm -f elf
-LD_TEMP := g++
+LD_TEMP := ld
 AR_TEMP := ar
 endif
 
@@ -62,5 +65,5 @@ ifeq ($(SWEB_USE_CXX),gcc)
 CXXFLAGS := $(CXXFLAGS) -O3 -g -Wno-deprecated
 CCFLAGS := $(CCFLAGS) -O3 -g
 ASFLAGS := $(ASFLAGS) 
-LDFLAGS := $(LDFLAGS) -rdynamic -Wl,--no-keep-memory
+LDFLAGS := $(LDFLAGS) 
 endif
