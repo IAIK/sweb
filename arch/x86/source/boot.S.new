@@ -1,0 +1,225 @@
+/*  vim: et ts=2 sw=2 tw=79 ft=asmx86
+ */
+
+#define LINK_BASE               0x80000000
+#define LOAD_BASE               0x00100000
+#define BASE                    (LINK_BASE - LOAD_BASE)
+#define BASE_OFFSET             LOAD_BASE-LINK_BASE
+
+#define PHYS_OFFSET             0xC0000000
+
+#define DATA_SEGMENT_MAGIC      0x3544DA2A
+
+.set BOFF,BASE_OFFSET
+
+/* write a nice colored word on the screen */
+.macro writeTestOnScreen
+  movw $0x9F54, 0x0C00B8020
+  movw $0x9F65, 0x0C00B8022
+  movw $0x9F73, 0x0C00B8024
+  movw $0x9F74, 0x0C00B8026
+  movw $0x9F21, 0x0C00B802A
+.endm
+
+.macro writeError
+  movw $0x9F44, 0x0B8000
+  movw $0x9F61, 0x0B8002
+  movw $0x9F74, 0x0B8004
+  movw $0x9F61, 0x0B8006
+  movw $0x9F45, 0x0B800A
+  movw $0x9F72, 0x0B800C
+  movw $0x9F72, 0x0B800E
+  movw $0x9F6f, 0x0B8010
+  movw $0x9F72, 0x0B8012
+.endm
+
+
+/* jumps to this insturtion 'til the end of all times */
+.macro halt
+    jmp .
+.endm
+
+/* text section == code that can be executed */
+.section .text
+
+/* align the code */
+.align
+
+/* I would like to have 32 bits */
+.code32
+
+/* this is where well start
+ *first check if the loader did a good job
+ */
+.global entry
+entry:
+
+  movl ds_magic -BASE, %eax
+  cmpl $DATA_SEGMENT_MAGIC, %eax
+
+  /* check if the data segment is in the right, and if we can do jumps */
+  je data_segment_ok
+
+  /* if the data segment is not ok, we will write something to the screen
+   * and stop everything
+   */
+  writeError
+  halt
+
+data_segment_ok:
+
+   /* ok, next thing to do is to load our own descriptor table
+    * this one will spawn just one huge segment for the whole address space
+    */
+  lgdt gdt-BASE
+
+  /* ow prepare all the segment registers to use our segments */
+  movw $LINEAR_DATA_SEL, %ax
+  movw %ax, %ds
+  movw %ax, %es
+  movw %ax, %ss
+  movw %ax, %fs
+  movw %ax, %gs
+
+# ljmp $(LINEAR_CODE_SEL), $(now_using_segments-BASE)
+  /* it sucks that gas does not like the line above.
+   * Also Linux seems to do weird things to work around this one */
+  ljmp $0x18, $(now_using_segments-BASE)
+
+now_using_segments:
+
+halt
+
+.section .data
+
+/*
+ * this descritor is _REALLY_ braindead
+ * have a look at http://www.csee.umbc.edu/~plusquel/310/slides/micro_arch2.html
+ */
+gdt:
+
+/*
+ * this is the first global descriptor table
+ * this stuff is used for segmenting, we dont need anything special
+ * here to just boot and present some things
+ */
+
+/* NULL descriptor */
+  .word 0x0000 /* limit 15:0          */
+  .word 0x0000 /* base 15:0           */
+  .byte 0x00   /* base 23:16          */
+  .byte 0x00   /* type                */
+  .byte 0x00   /* limit 19:16, flags  */
+  .byte 0x00   /* base 31:24          */
+
+/* unused descriptor */
+  .word 0x0000
+  .word 0x0000
+  .byte 0x00
+  .byte 0x00
+  .byte 0x00
+  .byte 0x00
+
+/* the first interesting descriptor this one is for data */
+LINEAR_DATA_SEL = . - gdt
+
+  /* the limit, since the page-granular bit is turned on this is shifted 12
+   * bytes to the left
+   * in our case this means that the segment spawns the while 32bit address
+   * space
+   */
+  .word 0xFFFF
+  .word 0x0000
+  .byte 0x00
+  /* present, ring 0, data, expand-up, writable */
+  .byte 0x92
+  /* page-granular (4 gig limit), 32-bit */
+  .byte 0xCF
+  .byte 0x00
+
+/*
+ * basically the same thing as before, but we also need a descriptor for code
+ */
+LINEAR_CODE_SEL = . - gdt
+
+  .word 0xFFFF
+  .word 0x0000
+  .byte 0x00
+   /* present,ring 0,code,non-conforming,readable */
+  .byte 0x9A
+  /* page-granular (4 gig limit), 32-bit */
+  .byte 0xCF
+  .byte 0x00
+
+/* the first interesting descriptor this one is for data */
+LINEAR_USR_DATA_SEL = . - gdt
+  /*
+   * The limit, since the page-granular bit is turned on this is shifted 12
+   * bytes to the left. In our case this means that the segment spawns the
+   * while 32bit address space
+   */
+  .word 0xFFFF
+  .word 0x0000
+  .byte 0x00
+  /* present, ring 3, data, expand-up, writable */
+  .byte 0xF2
+  /* page-granular (4 gig limit), 32-bit */
+  .byte 0xCF
+  .byte 0x00
+
+/*
+ * Basically the same thing as before, but we also need a descriptor for user
+ * code.
+ */
+LINEAR_USR_CODE_SEL = . - gdt
+  .word 0xFFFF
+  .word 0x0000
+  .byte 0x00
+  /* present,ring 3,code,non-conforming,readable */
+  .byte 0xFA
+  /* page-granular (4 gig limit), 32-bit */
+  .byte 0xCF
+  .byte 0x00
+
+gdt_end:
+
+gdt_ptr:
+  .word gdt_end - gdt -1
+  .int  gdt - BASE
+
+gdt_ptr_new:
+  .word gdt_end - gdt -1
+  .int  gdt
+
+  .fill 1024, 4, 0
+
+#if 0
+.global idt
+#endif
+
+idt:
+
+.rept 256
+  .word 0x0000
+  .word LINEAR_CODE_SEL
+  .byte 0x00
+  .byte 0x8E
+  .word 0x0000
+.endr
+
+idt_end:
+
+.global idt_ptr
+
+idt_ptr:
+  .word idt_end - idt -1
+  .int  idt
+
+ds_magic:
+  .long DATA_SEGMENT_MAGIC
+
+.section .bss
+
+  .skip 65536 * 4
+
+  stack:
