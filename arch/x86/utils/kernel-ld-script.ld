@@ -1,8 +1,11 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.1 2005/04/12 18:42:51 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.2 2005/04/19 17:51:49 nomenquis Exp $
 *
-*  $Log: $
+*  $Log: kernel-ld-script.ld,v $
+*  Revision 1.1  2005/04/12 18:42:51  nomenquis
+*  changed a zillion of iles
+*
 *
 ********************************************************************/
 
@@ -16,13 +19,18 @@ LS_Phys = 0x100000; /* 1 meg */
 LS_Virt = 0x80000000; /* 2 gig */
 SECTIONS
 {
+
     .text LS_Virt : AT(LS_Phys)
     {
+	kernel_start_address = .;
+	text_start_address = .;
 	LS_Code = .;
+
 /* symbols to mark start of code segment */
 	code = .; _code = .;
 /* kernel code */
 	*(.text)
+	text_end_address = .;
 	*(.gnu.linkonce.r.*)
 /* .rodata is the ELF constant data section */
 	*(.rodata*)
@@ -59,6 +67,7 @@ sections are here... */
 	*(.stabstr)
     }
 /* symbols to mark end of kernel */
-    end = .; _end = .;
+    end = .; _end = .; 
+		kernel_end_address = .;
+		
 }
-
