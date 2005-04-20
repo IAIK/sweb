@@ -1,7 +1,7 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
-SUBPROJECTS := arch/arch/source common/source/kernel utils/mtools
-SHARED_LIBS := arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a
+SUBPROJECTS := arch/arch/source common/source/kernel common/source/mm utils/mtools 
+SHARED_LIBS := arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/kernel/libMM.a
 PROJECT_ROOT := .
 
 include ./make-support/common.mk
