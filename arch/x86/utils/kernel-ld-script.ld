@@ -1,8 +1,11 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.2 2005/04/19 17:51:49 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.3 2005/04/20 07:09:59 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.2  2005/04/19 17:51:49  nomenquis
+*  added some symbols
+*
 *  Revision 1.1  2005/04/12 18:42:51  nomenquis
 *  changed a zillion of iles
 *
@@ -16,7 +19,7 @@ ENTRY(entry)
 LS_Phys = 0x100000; /* 1 meg */
 /*LS_Virt = 0x100000; /* 1 meg */
 /* use this line instead when paging works properly! */
-LS_Virt = 0x80000000; /* 2 gig */
+LS_Virt = 0x80100000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
 SECTIONS
 {
 

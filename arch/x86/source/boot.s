@@ -1,11 +1,14 @@
 ;
-; $Id: boot.s,v 1.1 2005/04/12 17:46:43 nomenquis Exp $
+; $Id: boot.s,v 1.2 2005/04/20 07:09:59 nomenquis Exp $
 ;
-; $Log:  $
+; $Log: boot.s,v $
+; Revision 1.1  2005/04/12 17:46:43  nomenquis
+; added lots of files
+;
 ;
 ;
 
-LINK_BASE           EQU     80000000h              ; Base address (virtual)
+LINK_BASE            EQU     80100000h              ; Base address (virtual)
 LOAD_BASE           EQU     00100000h              ; Base address (physikal)
 BASE                EQU     (LINK_BASE - LOAD_BASE) ; difference to calculate (virtual)
 PHYS_OFFSET EQU 0C0000000h

@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.c,v 1.2 2005/04/12 18:42:50 nomenquis Exp $
+ * $Id: init_boottime_pagetables.c,v 1.3 2005/04/20 07:09:59 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.c,v $
+ * Revision 1.2  2005/04/12 18:42:50  nomenquis
+ * changed a zillion of iles
+ *
  * Revision 1.1  2005/04/12 17:46:44  nomenquis
  * added lots of files
  *
@@ -19,81 +22,40 @@
 void initialiseBootTimePaging()
 {
   uint32 i,k;
+ 
+  page_directory_entry *pde_start = (page_directory_entry*)BOOT_TIME_PAGE_DIRECTORY_START;
+  uint8 *pde_start_bytes = (uint8 *)BOOT_TIME_PAGE_DIRECTORY_START;
   
-  uint32 *pde_start = (uint32*)BOOT_TIME_PAGE_DIRECTORY_START;
+  for (i=0;i<PAGE_SIZE;++i)
+    pde_start_bytes[i] = 0;
   
-  // zero out the page dir, this will mark all entries as invalid
-  for (i=0;i<PAGE_SIZE/sizeof(uint32);++i)
+  for (i=0;i<5;++i)
   {
-    pde_start[i] = 0;
-  }
-  
-  // identity map 1-32mb
-  for (i = 0 ; i < 8; ++i)
-  {
-    unsigned pde_entry = 0;
-
-    unsigned *pte_entry = (unsigned *)(BOOT_TIME_PAGE_DIRECTORY_START + (PAGE_SIZE * (i + 1)));
-
-    pde_entry = ((unsigned)pte_entry);
-    pde_entry |= PAGE_PRESENT | PAGE_WRITEABLE |  PAGE_USER_ACCESS;
-
-    pde_start[i] = pde_entry;
-
-    for (k = 0; k < PAGE_SIZE / sizeof(unsigned); ++k)
-    {
-      unsigned page_num = i * (PAGE_SIZE / sizeof(unsigned)) + k;
-      unsigned pte = 0;
-      pte = page_num << PAGE_INDEX_OFFSET_BITS;
-      pte |= PAGE_PRESENT | PAGE_WRITEABLE |  PAGE_USER_ACCESS;
-      pte_entry[k] = pte;
-    }
-  }
-  
-  // map 0-16 meg to 2 gig
-  for (i = 0; i < 4; ++i)
-  {
-    unsigned pde_entry = 0;
-
-    unsigned *pte_entry = (unsigned *)(BOOT_TIME_PAGE_DIRECTORY_START + (PAGE_SIZE * (i+9)));
-
-    pde_entry = ((unsigned)pte_entry);
-    pde_entry |= PAGE_PRESENT | PAGE_WRITEABLE |  PAGE_USER_ACCESS;
-
-    pde_start[i+512] = pde_entry;
-
-    for (k=0;k<PAGE_SIZE/sizeof(unsigned);++k)
-    {
-      unsigned page_num = 0x100 + i*(PAGE_SIZE/sizeof(unsigned)) + k;
-      unsigned pte = 0;
-      pte = page_num << PAGE_INDEX_OFFSET_BITS;
-      pte |= PAGE_PRESENT | PAGE_WRITEABLE |  PAGE_USER_ACCESS | PAGE_PINNED;
-      pte_entry[k] = pte;
-    }
+    pde_start[i].pde4m.present = 1;
+    pde_start[i].pde4m.writeable = 1;
+    pde_start[i].pde4m.user_access = 1;
+    pde_start[i].pde4m.use_4_m_pages = 1;
+    pde_start[i].pde4m.page_base_address = i;
   }
 
-  // map first gig to 3 gig
-  for (i = 0; i < 256; ++i)
+  for (i=0;i<5;++i)
   {
-    unsigned pde_entry = 0;
-
-    unsigned *pte_entry = (unsigned *)(BOOT_TIME_PAGE_DIRECTORY_START + (PAGE_SIZE * (i+17+248)));
-
-    pde_entry = ((unsigned)pte_entry);
-    pde_entry |= PAGE_PRESENT | PAGE_WRITEABLE |  PAGE_USER_ACCESS;
-
-    pde_start[i+768] = pde_entry;
-
-    for (k=0 ; k < PAGE_SIZE / sizeof(unsigned); ++k)
-    {
-      unsigned page_num = i*(PAGE_SIZE/sizeof(unsigned)) + k;
-      unsigned pte = 0;
-      pte = page_num << PAGE_INDEX_OFFSET_BITS;
-      pte |= PAGE_PRESENT | PAGE_WRITEABLE |  PAGE_USER_ACCESS | PAGE_PINNED;
-      pte_entry[k] = pte;
-    }
+    pde_start[i+512].pde4m.present = 1;
+    pde_start[i+512].pde4m.writeable = 0;
+    pde_start[i+512].pde4m.user_access = 1;
+    pde_start[i+512].pde4m.use_4_m_pages = 1;
+    pde_start[i+512].pde4m.page_base_address = i;
   }
-
+ 
+  for (i=0;i<256;++i)
+  {
+    pde_start[i+768].pde4m.present = 1;
+    pde_start[i+768].pde4m.writeable = 1;
+    pde_start[i+768].pde4m.user_access = 0;
+    pde_start[i+768].pde4m.use_4_m_pages = 1;
+    pde_start[i+768].pde4m.page_base_address = i;
+  }
+ 
 }
 
 void freeBootTimePaging()
