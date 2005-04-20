@@ -1,7 +1,10 @@
 /**
- * $Id: offsets.h,v 1.1 2005/04/12 17:46:43 nomenquis Exp $
+ * $Id: offsets.h,v 1.2 2005/04/20 08:06:17 nomenquis Exp $
  *
- * $Log:  $
+ * $Log: offsets.h,v $
+ * Revision 1.1  2005/04/12 17:46:43  nomenquis
+ * added lots of files
+ *
  *
  */
 
@@ -13,7 +16,7 @@
   */
 
 /** Our image will be at 2gig virtual */
-#define LINK_BASE 0x80000000 
+#define LINK_BASE 0x80100000 
 
 /** Our image will be at 1meg physical */
 #define LOAD_BASE 0x00100000

@@ -1,7 +1,11 @@
 ;
-; $Id: boot.s,v 1.2 2005/04/20 07:09:59 nomenquis Exp $
+; $Id: boot.s,v 1.3 2005/04/20 08:06:17 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.2  2005/04/20 07:09:59  nomenquis
+; added inital paging for the kernel, plus mapping to two gigs
+; hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
+;
 ; Revision 1.1  2005/04/12 17:46:43  nomenquis
 ; added lots of files
 ;
@@ -39,6 +43,14 @@ MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
    mov word[0C00B8026h], 9F74h
    mov word[0C00B802Ah], 9F21h
 %endmacro
+%macro writeTestOnScreenUnMapped 0
+   mov word[0B8000h], 9F54h
+   mov word[0B8002h], 9F65h
+   mov word[0B8004h], 9F73h
+   mov word[0B8006h], 9F74h
+   mov word[0B800Ah], 9F21h
+
+%endmacro
 
 %macro halt 0
    jmp short $ ; now what does this do? it just jumps to this instructing untill the end of all times
@@ -75,7 +87,6 @@ entry:
    jmp short $ ; now what does this do? it just jumps to this instructing untill the end of all times
 
 data_segment_ok:
-
    ; ok, next thing to do is to load our own descriptor table
    ; this one will spawn just one huge segment for the whole address space
    lgdt [gdt_ptr - BASE]
@@ -96,16 +107,12 @@ now_using_segments:
    ; next thing to do to be c compliant is to
    ; clear the bss (uninitialised data)
    ; we also clear the stack
-
+   
    mov edi,bss - BASE; load bss address
-   mov ecx, end - BASE ; end of bss and stack (!), this symbol is at the very end of the kernel
+   mov ecx, end - BASE - 35000h; end of bss and stack (!), this symbol is at the very end of the kernel
    sub ecx, edi ; how much data do we have to clear
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
-
-
-
-
 
 
 
@@ -120,8 +127,16 @@ mov eax,initialiseBootTimePaging - BASE
 call eax
 
 
+
 mov     eax,(1024*1024*4); eax = &PD
 mov     cr3,eax         ; cr3 = &PD
+
+
+; set bit 0x4 to 1 in cr4 to enable PSE
+; need a pentium cpu for this but it will give us 4mbyte pages
+mov eax,cr4;
+or eax, 0x00000010;
+mov cr4,eax;
 
 ;  2) setting CR0's PG bit.
 
@@ -142,6 +157,8 @@ jmp     $ + 2          ; Flush the instruction queue.
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
    mov esp,stack
+
+
 
 
 mov eax, PagingMode
@@ -206,9 +223,6 @@ do_idt:
 ;call inivalidate_ident_mapping
 
 ;writeTestOnScreen
-
-writeTestOnScreen
-
 
 EXTERN panic
 
