@@ -12,12 +12,12 @@ all: kernel
 #use just "make" instead
 kernel: $(SUBPROJECTS)
 ifeq ($(V),1)
-	@echo "$(LDCOMMAND) $(SHARED_LIBS) -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel"
+	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel"
 else
 	@echo "LD $(OBJECTDIR)/kernel.x"
 endif
 	@mkdir -p $(OBJECTDIR)
-	@$(LDCOMMAND) $(SHARED_LIBS) -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
+	@$(KERNELLDCOMMAND) $(SHARED_LIBS) -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
 
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
