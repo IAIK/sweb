@@ -1,7 +1,12 @@
 ;
-; $Id: boot.s,v 1.3 2005/04/20 08:06:17 nomenquis Exp $
+; $Id: boot.s,v 1.4 2005/04/20 09:00:28 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.3  2005/04/20 08:06:17  nomenquis
+; the overloard (thats me) managed to get paging with 4m pages to work.
+; kernel is now at 2g +1 and writes something to the fb
+; w00t!
+;
 ; Revision 1.2  2005/04/20 07:09:59  nomenquis
 ; added inital paging for the kernel, plus mapping to two gigs
 ; hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
@@ -21,6 +26,8 @@ PHYS_OFFSET EQU 0C0000000h
 ; of the data segment
 ; used to verify that the bootloader really loaded everything
 DATA_SEGMENT_MAGIC equ 3544DA2Ah
+
+EXTERN text_start_address, text_end_address,bss_start_address, bss_end_address, kernel_end_address
 
 ; this is really really bad voodoo ...
 ; grub needs this, or it will refuse to boot
@@ -108,8 +115,8 @@ now_using_segments:
    ; clear the bss (uninitialised data)
    ; we also clear the stack
    
-   mov edi,bss - BASE; load bss address
-   mov ecx, end - BASE - 35000h; end of bss and stack (!), this symbol is at the very end of the kernel
+   mov edi,bss_start_address - BASE; load bss address
+   mov ecx, bss_end_address - BASE; end of bss and stack (!), this symbol is at the very end of the kernel
    sub ecx, edi ; how much data do we have to clear
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
@@ -150,13 +157,13 @@ jmp     $ + 2          ; Flush the instruction queue.
 
 
 
-   mov edi,bss - BASE; load bss address
-   mov ecx, end - BASE ; end of bss and stack (!), this symbol is at the very end of the kernel
-   sub ecx, edi ; how much data do we have to clear
-   xor eax, eax ; we want to fill with 0
-   rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
+ mov edi,bss_start_address - BASE; load bss address
+ mov ecx, bss_end_address - BASE ; end of bss and stack (!), this symbol is at the very end of the kernel
+ sub ecx, edi ; how much data do we have to clear
+ xor eax, eax ; we want to fill with 0
+ rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
-   mov esp,stack
+ mov esp,stack
 
 
 
@@ -190,9 +197,9 @@ now_using_segments_new:
 
 
 
-;EXTERN inivalidate_ident_mapping
+EXTERN removeBootTimeIdentMapping
 
-;call inivalidate_ident_mapping
+call removeBootTimeIdentMapping
 
 
 
@@ -248,7 +255,6 @@ EXTERN main ; tell the assembler we have a main somewhere
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 ;; this will help us to boot, this way we can tell grub
 ;; what to do
-EXTERN code, bss, end
 
 ALIGN 4
 mboot:
@@ -257,9 +263,9 @@ mboot:
    dd MULTIBOOT_CHECKSUM
 ; aout kludge. These must be PHYSICAL addresses
    dd mboot - BASE
-   dd code - BASE
-   dd bss - BASE
-   dd end - BASE
+   dd text_start_address - BASE
+   dd bss_start_address  - BASE
+   dd kernel_end_address - BASE
    dd entry - BASE
 
 
@@ -614,8 +620,10 @@ ds_magic:
 
 
 SECTION .bss
-
+   ; here we create lots of room for our stack (actually this is one by the resd 1024)
    resd 65536
-
 stack:
- ; here we create lots of room for our stack (actually this is one by the resd 1024)
+ 
+ SECTION .bss
+ kernel_page_directory_start:
+  resd 4096

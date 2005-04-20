@@ -1,8 +1,12 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.3 2005/04/20 07:09:59 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.4 2005/04/20 09:00:29 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.3  2005/04/20 07:09:59  nomenquis
+*  added inital paging for the kernel, plus mapping to two gigs
+*  hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
+*
 *  Revision 1.2  2005/04/19 17:51:49  nomenquis
 *  added some symbols
 *
@@ -22,43 +26,42 @@ LS_Phys = 0x100000; /* 1 meg */
 LS_Virt = 0x80100000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
 SECTIONS
 {
-
-    .text LS_Virt : AT(LS_Phys)
-    {
-	kernel_start_address = .;
+kernel_start_address = .;
+.text LS_Virt : AT(LS_Phys)
+{
+  LS_Code = .;
+	
 	text_start_address = .;
-	LS_Code = .;
-
-/* symbols to mark start of code segment */
-	code = .; _code = .;
-/* kernel code */
 	*(.text)
 	text_end_address = .;
 	*(.gnu.linkonce.r.*)
-/* .rodata is the ELF constant data section */
+  ro_data_start_address = .;
 	*(.rodata*)
+  ro_data_end_address = .;
 	. = ALIGN(4096);
-    }
-/* data section */
-    .data  ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
-    {
-	LS_Data = .;
-/* symbols to mark start of data segment */
-	data = .; _data = .;
-/* kernel data */
+}
+
+
+.data  ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
+{
+  LS_Data = .;
+	data_start_address = .;
 	*(.data)
+  data_end_address = .;
   . = ALIGN(4096);
-    }
-    .bss : AT(LS_Phys + (LS_Bss - LS_Code))
-    {
-	LS_Bss = .;
-/* symbols to mark start of BSS segment */
-	bss = .; _bss = .;
-/* kernel BSS */
-	*(.bss)
-	*(COMMON) /* "common" variables */
-	. = ALIGN(4096);
-    }
+}
+  
+.bss : AT(LS_Phys + (LS_Bss - LS_Code))
+{
+  LS_Bss = .;
+  bss_start_address = .;
+  *(.bss)
+  *(COMMON) /* "common" variables, I have no idea where this comes from*/  
+  bss_end_address = .;
+  . = ALIGN(4096);
+  
+}
+
 /* bug in MinGW? I get a bad executable file unless these
 sections are here... */
     .stab :
@@ -70,7 +73,6 @@ sections are here... */
 	*(.stabstr)
     }
 /* symbols to mark end of kernel */
-    end = .; _end = .; 
-		kernel_end_address = .;
 		
 }
+kernel_end_address = .;

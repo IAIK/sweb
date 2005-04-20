@@ -1,7 +1,11 @@
 /**
- * $Id: init_boottime_pagetables.c,v 1.3 2005/04/20 07:09:59 nomenquis Exp $
+ * $Id: init_boottime_pagetables.c,v 1.4 2005/04/20 09:00:29 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.c,v $
+ * Revision 1.3  2005/04/20 07:09:59  nomenquis
+ * added inital paging for the kernel, plus mapping to two gigs
+ * hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
+ *
  * Revision 1.2  2005/04/12 18:42:50  nomenquis
  * changed a zillion of iles
  *
@@ -58,9 +62,16 @@ void initialiseBootTimePaging()
  
 }
 
-void freeBootTimePaging()
+void removeBootTimeIdentMapping()
 {
-  // here we should tell our page manager that all of our boottime pages are free now
+  uint32 i;
+ 
+  page_directory_entry *pde_start = (page_directory_entry*)BOOT_TIME_PAGE_DIRECTORY_START;
+
+  for (i=0;i<5;++i)
+  {
+    pde_start[i].pde4m.present=0;
+  }
 }
 
 void handleInterrupt(void *regs)

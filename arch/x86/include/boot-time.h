@@ -1,7 +1,10 @@
 /**
- * $Id: boot-time.h,v 1.1 2005/04/12 17:46:43 nomenquis Exp $
+ * $Id: boot-time.h,v 1.2 2005/04/20 09:00:11 nomenquis Exp $
  *
- * $Log:  $
+ * $Log: boot-time.h,v $
+ * Revision 1.1  2005/04/12 17:46:43  nomenquis
+ * added lots of files
+ *
  *
  */
 
@@ -20,6 +23,8 @@ extern "C"
    * It's used to set up the initial paging for the 2gig kernel mapping
    */
   extern void initialiseBootTimePaging();
+  
+  extern void removeBootTimeIdentMapping();
   
   /**
    * This one shall be called when you've already set up the correct and final
