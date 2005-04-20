@@ -1,7 +1,10 @@
 /**
- * $Id: paging-definitions.h,v 1.1 2005/04/12 17:46:43 nomenquis Exp $
+ * $Id: paging-definitions.h,v 1.2 2005/04/20 06:39:11 nomenquis Exp $
  *
- * $Log:  $
+ * $Log: paging-definitions.h,v $
+ * Revision 1.1  2005/04/12 17:46:43  nomenquis
+ * added lots of files
+ *
  *
  */
 
@@ -37,6 +40,23 @@
 #define PAGE_FAULT_WRITEABLE  0x00000002
 #define PAGE_FAULT_PRESENT    0x00000001
 
+struct page_directory_entry_struct
+{
+  uint32 present                   :1;
+	uint32 writeable                 :1;
+	uint32 kernel_only               :1;
+	uint32 write_through             :1;
+	uint32 cache_disabled            :1;
+	uint32 accessed                  :1;
+	uint32 reserved                  :1;
+	uint32 use_4_m_pages             :1;
+	uint32 global_page               :1;
+	uint32 avail_1                   :1;
+	uint32 avail_2                   :1;
+	uint32 avail_3                   :1;
+	uint32 page_table_base_address   :20; 
+};
 
+typedef struct page_directory_entry_struct page_directory_entry;
 
 #endif

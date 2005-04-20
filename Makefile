@@ -6,7 +6,7 @@ PROJECT_ROOT := .
 
 include ./make-support/common.mk
 
-all: kernel install
+all: kernel 
 
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
@@ -17,7 +17,7 @@ else
 	@echo "LD $(OBJECTDIR)/kernel.x"
 endif
 	@mkdir -p $(OBJECTDIR)
-	@$(LDCOMMAND) $(SHARED_LIBS) -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel
+	@$(LDCOMMAND) $(SHARED_LIBS) -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
 
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
