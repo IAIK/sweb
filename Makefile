@@ -6,7 +6,7 @@ PROJECT_ROOT := .
 
 include ./make-support/common.mk
 
-all: kernel install bochs
+all: kernel install 
 
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
@@ -28,6 +28,6 @@ install: kernel
 	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
 
-bochs: install
+bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya: 1_44=boot.img, status=inserted\"" 
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya: 1_44=boot.img, status=inserted"

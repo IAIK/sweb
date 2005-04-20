@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.1 2005/04/20 19:27:38 nomenquis Exp $
+#*    $Id: bochsrc,v 1.2 2005/04/20 20:42:56 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.1  2005/04/20 19:27:38  nomenquis
+#*    lotsa changes
+#*
 #*    Revision 1.14  2005/01/25 12:23:38  zup
 #*    played around with (no) sound.
 #*
@@ -502,7 +505,8 @@ parport1: enabled=1, file="parport.out"
 # Examples:
 #   vga_update_interval: 250000
 #=======================================================================
-vga_update_interval: 300000
+#vga_update_interval: 300000
+vga_update_interval: 1 
 
 # using for Winstone '98 tests
 #vga_update_interval:  100000

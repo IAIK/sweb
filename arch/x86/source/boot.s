@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.5 2005/04/20 15:26:35 nomenquis Exp $
+; $Id: boot.s,v 1.6 2005/04/20 20:42:56 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.5  2005/04/20 15:26:35  nomenquis
+; more and more stuff actually works
+;
 ; Revision 1.3  2005/04/20 08:06:17  nomenquis
 ; the overloard (thats me) managed to get paging with 4m pages to work.
 ; kernel is now at 2g +1 and writes something to the fb
@@ -72,6 +75,17 @@ BITS 32 ; we want 32bit code
 GLOBAL entry
 entry:
 
+   mov edi,0B8000h; load bss address
+   mov ecx,0B8FA0h; end of bss and stack (!), this symbol is at the very end of the kernel
+   sub ecx, edi ; how much data do we have to clear
+   xor eax, eax ; we want to fill with 0
+   rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
+
+
+
+    mov word[0B8000h], 9F30h
+
+
    mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
    cmp eax, DATA_SEGMENT_MAGIC
 
@@ -94,6 +108,9 @@ entry:
    jmp short $ ; now what does this do? it just jumps to this instructing untill the end of all times
 
 data_segment_ok:
+
+    mov word[0B8002h], 9F31h
+
    ; ok, next thing to do is to load our own descriptor table
    ; this one will spawn just one huge segment for the whole address space
    lgdt [gdt_ptr - BASE]
@@ -130,11 +147,14 @@ now_using_segments:
 
     mov esp,stack - BASE
 
+    mov word[0B8004h], 9F32h
+
 EXTERN initialiseBootTimePaging
 
 mov eax,initialiseBootTimePaging - BASE
 call eax
 
+    mov word[0B8006h], 9F33h
 
 
 mov     eax,kernel_page_directory_start - BASE; eax = &PD
@@ -149,6 +169,8 @@ mov cr4,eax;
 
 ;  2) setting CR0's PG bit.
 
+   mov word[0B8008h], 9F34h
+
 
 mov     eax,cr0
 or      eax,0x80000001   ; Set PG bit
@@ -157,6 +179,7 @@ mov     cr0,eax         ; Paging is on!
 jmp     $ + 2          ; Flush the instruction queue.
 
 
+   mov word[0B800Ah], 9F35h
 
  mov edi,stack_start; load bss address
  mov ecx, stack; end of bss and stack (!), this symbol is at the very end of the kernel
@@ -168,6 +191,7 @@ jmp     $ + 2          ; Flush the instruction queue.
 
 
 
+   mov word[0B800Ch], 9F36h
 
 mov eax, PagingMode
 call eax
@@ -175,6 +199,7 @@ call eax
 
 PagingMode:
 
+   mov word[0C00B800Eh], 9F38h
 
 
 
@@ -195,6 +220,7 @@ PagingMode:
 
 now_using_segments_new:
 
+   mov word[0C00B8010h], 9F39h
 
 
 
@@ -203,13 +229,18 @@ EXTERN removeBootTimeIdentMapping
 call removeBootTimeIdentMapping
 
 
+   mov word[0C00B8012h], 4330h
 
 mov     eax,kernel_page_directory_start - BASE; eax = &PD
 mov     cr3,eax         ; cr3 = &PD
 
+   mov word[0C00B8014h], 4331h
+
 EXTERN initInterruptHandlers
 mov eax,initInterruptHandlers;
 call eax;
+
+   mov word[0C00B8016h], 4332h
 
    ; set up interrupt handlers, then load IDT register
    mov ecx,(idt_end - idt) >> 3 ; number of exception handlers
@@ -226,8 +257,11 @@ do_idt:
 
    mov eax, idt_ptr
 
+   mov word[0C00B8018h], 4334h
+
    lidt [eax]
 
+   mov word[0C00B801Ah], 4335h
 
 ;call inivalidate_ident_mapping
 ;call inivalidate_ident_mapping
@@ -250,6 +284,7 @@ EXTERN panic
    popf
 
 EXTERN main ; tell the assembler we have a main somewhere
+   mov word[0C00B801Ch], 4336h
 
    call main ; hellloooo, here we are in c !
    jmp $ ; suicide
@@ -632,3 +667,9 @@ stack:
 GLOBAL kernel_page_directory_start
 kernel_page_directory_start:
   resd 4096
+GLOBAL kernel_page_tables_start
+kernel_page_tables_start:
+  rest 4096
+  rest 4096
+  rest 4096
+  rest 4096

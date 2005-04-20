@@ -1,7 +1,10 @@
 /**
- * $Id: paging-definitions.h,v 1.4 2005/04/20 15:26:35 nomenquis Exp $
+ * $Id: paging-definitions.h,v 1.5 2005/04/20 20:42:56 nomenquis Exp $
  *
  * $Log: paging-definitions.h,v $
+ * Revision 1.4  2005/04/20 15:26:35  nomenquis
+ * more and more stuff actually works
+ *
  * Revision 1.3  2005/04/20 07:09:59  nomenquis
  * added inital paging for the kernel, plus mapping to two gigs
  * hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
@@ -91,5 +94,24 @@ union page_directory_entry_union
 
 
 typedef union page_directory_entry_union page_directory_entry;
+
+struct page_table_entry_struct
+{
+  uint32 present                   :1;
+	uint32 writeable                 :1;
+	uint32 user_access               :1;
+	uint32 write_through             :1;
+	uint32 cache_disabled            :1;
+	uint32 accessed                  :1;
+	uint32 dirty                     :1;
+	uint32 pat                       :1;
+	uint32 global_page               :1;
+	uint32 avail_1                   :1;
+	uint32 avail_2                   :1;
+	uint32 avail_3                   :1;
+	uint32 page_base_address         :20; 
+} __attribute__((__packed__));
+
+typedef struct page_table_entry_struct page_table_entry;
 
 #endif
