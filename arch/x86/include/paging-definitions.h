@@ -1,7 +1,11 @@
 /**
- * $Id: paging-definitions.h,v 1.3 2005/04/20 07:09:59 nomenquis Exp $
+ * $Id: paging-definitions.h,v 1.4 2005/04/20 15:26:35 nomenquis Exp $
  *
  * $Log: paging-definitions.h,v $
+ * Revision 1.3  2005/04/20 07:09:59  nomenquis
+ * added inital paging for the kernel, plus mapping to two gigs
+ * hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
+ *
  * Revision 1.2  2005/04/20 06:39:11  nomenquis
  * merged makefile, also removed install from default target since it does not work
  *
@@ -58,7 +62,7 @@ struct page_directory_entry_4k_struct
 	uint32 avail_2                   :1;
 	uint32 avail_3                   :1;
 	uint32 page_table_base_address   :20; 
-};
+} __attribute__((__packed__));
 
 struct page_directory_entry_4m_struct
 {
@@ -77,13 +81,13 @@ struct page_directory_entry_4m_struct
   uint32 pat                       :1;
   uint32 reserved                  :9;
   uint32 page_base_address         :10;
-};
+} __attribute__((__packed__));
 
 union page_directory_entry_union
 {
 	struct page_directory_entry_4k_struct pde4k;
 	struct page_directory_entry_4m_struct pde4m;
-};
+} __attribute__((__packed__));
 
 
 typedef union page_directory_entry_union page_directory_entry;

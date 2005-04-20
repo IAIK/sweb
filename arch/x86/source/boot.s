@@ -1,5 +1,5 @@
 ;
-; $Id: boot.s,v 1.4 2005/04/20 09:00:28 nomenquis Exp $
+; $Id: boot.s,v 1.5 2005/04/20 15:26:35 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
 ; Revision 1.3  2005/04/20 08:06:17  nomenquis
@@ -111,9 +111,11 @@ data_segment_ok:
 
 now_using_segments:
 
+
    ; next thing to do to be c compliant is to
    ; clear the bss (uninitialised data)
    ; we also clear the stack
+   
    
    mov edi,bss_start_address - BASE; load bss address
    mov ecx, bss_end_address - BASE; end of bss and stack (!), this symbol is at the very end of the kernel
@@ -135,7 +137,7 @@ call eax
 
 
 
-mov     eax,(1024*1024*4); eax = &PD
+mov     eax,kernel_page_directory_start - BASE; eax = &PD
 mov     cr3,eax         ; cr3 = &PD
 
 
@@ -147,6 +149,7 @@ mov cr4,eax;
 
 ;  2) setting CR0's PG bit.
 
+
 mov     eax,cr0
 or      eax,0x80000001   ; Set PG bit
 mov     cr0,eax         ; Paging is on!
@@ -155,10 +158,8 @@ jmp     $ + 2          ; Flush the instruction queue.
 
 
 
-
-
- mov edi,bss_start_address - BASE; load bss address
- mov ecx, bss_end_address - BASE ; end of bss and stack (!), this symbol is at the very end of the kernel
+ mov edi,stack_start; load bss address
+ mov ecx, stack; end of bss and stack (!), this symbol is at the very end of the kernel
  sub ecx, edi ; how much data do we have to clear
  xor eax, eax ; we want to fill with 0
  rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
@@ -173,6 +174,8 @@ call eax
 
 
 PagingMode:
+
+
 
 
    ; ok, next thing to do is to load our own descriptor table
@@ -195,18 +198,18 @@ now_using_segments_new:
 
 
 
-
-
 EXTERN removeBootTimeIdentMapping
 
 call removeBootTimeIdentMapping
 
 
 
-mov     eax,(1024*1024*4); eax = &PD
+mov     eax,kernel_page_directory_start - BASE; eax = &PD
 mov     cr3,eax         ; cr3 = &PD
 
-
+EXTERN initInterruptHandlers
+mov eax,initInterruptHandlers;
+call eax;
 
    ; set up interrupt handlers, then load IDT register
    mov ecx,(idt_end - idt) >> 3 ; number of exception handlers
@@ -229,7 +232,6 @@ do_idt:
 ;call inivalidate_ident_mapping
 ;call inivalidate_ident_mapping
 
-;writeTestOnScreen
 
 EXTERN panic
 
@@ -273,7 +275,7 @@ mboot:
 ; interrupt/exception handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-EXTERN handleInterrupt;
+EXTERN arch_handleInterrupt;
 
 ; I shouldn't have to do this!
 %macro PUSHB 1
@@ -302,7 +304,7 @@ isr%1:
 ; setvect() changes the operand of the CALL instruction at run-time,
 ; so we need its location = 27 bytes from start of stub. We also want
 ; the CALL to use absolute addressing instead of EIP-relative, so:
-      mov eax,handleInterrupt; (26)
+      mov eax,arch_handleInterrupt; (26)
       call eax       ; (31)
       jmp all_ints   ; (33)
 %endmacro            ; (38)
@@ -330,7 +332,7 @@ isr%1:
 ; setvect() changes the operand of the CALL instruction at run-time,
 ; so we need its location = 27 bytes from start of stub. We also want
 ; the CALL to use absolute addressing instead of EIP-relative, so:
-			mov eax,handleInterrupt; (26)
+			mov eax,arch_handleInterrupt; (26)
 			call eax	; (31)
 			jmp all_ints	; (33)
 %endmacro				; (38)
@@ -621,9 +623,12 @@ ds_magic:
 
 SECTION .bss
    ; here we create lots of room for our stack (actually this is one by the resd 1024)
+   GLOBAL stack_start
+stack_start:
    resd 65536
+   GLOBAL stack
 stack:
- 
- SECTION .bss
- kernel_page_directory_start:
+
+GLOBAL kernel_page_directory_start
+kernel_page_directory_start:
   resd 4096
