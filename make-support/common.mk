@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.3 2005/04/12 19:04:04 davrieb Exp $
+# $Id: common.mk,v 1.4 2005/04/20 18:19:44 nomenquis Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.3  2005/04/12 19:04:04  davrieb
+# fixed bug
+#
 # Revision 1.2  2005/04/12 18:42:51  nomenquis
 # changed a zillion of iles
 #
@@ -39,6 +42,7 @@ CXXFLAGS := $(CXXFLAGS) $(COMMON_FLAGS)
 CCFLAGS := $(CCFLAGS) $(COMMON_FLAGS) 
 ASFLAGS := $(ASFLAGS) $(COMMON_FLAGS)
 LDFLAGS := $(LDFLAGS)
+KERNELLDFLAGS := $(KERNELLDFLAGS)
 
 
 CXXCOMMAND := $(CXX) $(CXXFLAGS)
@@ -48,6 +52,7 @@ CXXDEPCOMMAND := $(CXX_DEP) $(CXXFLAGS)
 CCDEPCOMMAND := $(CC_DEP) $(CCFLAGS)
 ASDEPCOMMAND := $(AS_DEP) $(ASFLAGS)
 LDCOMMAND := $(LD) $(LDFLAGS)
+KERNELLDCOMMAND := $(KERNEL_LD) $(KERNELLDFLAGS)
 
 
 ## find out the location where our objects should go

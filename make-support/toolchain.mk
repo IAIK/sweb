@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.3 2005/04/20 16:53:53 nomenquis Exp $
+# $Id: toolchain.mk,v 1.4 2005/04/20 18:19:44 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.3  2005/04/20 16:53:53  nomenquis
+# make sure we're compiling 32 bit code only
+#
 # Revision 1.2  2005/04/12 18:42:51  nomenquis
 # changed a zillion of iles
 #
@@ -30,7 +33,8 @@ CXX_DEP_TEMP := g++ -m32
 CC_DEP_TEMP := gcc -m32
 AS_TEMP := nasm -f elf
 AS_DEP_TEMP := nasm -f elf
-LD_TEMP := ld -melf_i386
+LD_TEMP := g++ -m32
+KERNEL_LD_TEMP := ld -melf_i386
 AR_TEMP := ar
 endif
 
@@ -46,6 +50,7 @@ CXX_TEMP := $(NICE) $(CXX_TEMP)
 CC_TEMP := $(NICE) $(CC_TEMP)
 AS_TEMP := $(NICE) $(AS_TEMP)
 LD_TEMP := $(NICE) $(LD_TEMP)
+KERNEL_LD_TEMP := $(NICE) $(KERNEL_LD_TEMP)
 AR_TEMP := $(NICE) $(AR_TEMP)
 CXX_DEP_TEMP := $(NICE) $(CXX_DEP_TEMP)
 CC_DEP_TEMP := $(NICE) $(CC_DEP_TEMP)
@@ -57,6 +62,7 @@ CXX := $(CXX_TEMP)
 CC := $(CC_TEMP)
 AS := $(AS_TEMP)
 LD := $(LD_TEMP)
+KERNEL_LD := $(KERNEL_LD_TEMP)
 AR := $(AR_TEMP)
 CXX_DEP := $(CXX_DEP_TEMP)
 CC_DEP := $(CC_DEP_TEMP)
@@ -69,4 +75,5 @@ CXXFLAGS := $(CXXFLAGS) -O3 -g -Wno-deprecated
 CCFLAGS := $(CCFLAGS) -O3 -g
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
+KERNELLDFLAGS := $(KERNELLDFLAGS) 
 endif
