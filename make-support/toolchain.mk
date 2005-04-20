@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.2 2005/04/12 18:42:51 nomenquis Exp $
+# $Id: toolchain.mk,v 1.3 2005/04/20 16:53:53 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.2  2005/04/12 18:42:51  nomenquis
+# changed a zillion of iles
+#
 # Revision 1.1  2005/04/12 17:43:25  nomenquis
 # added make support stuff
 #
@@ -21,13 +24,13 @@ endif
 # 32 bit generation on 64 bit build systems
 
 ifeq ($(SWEB_USE_CXX),gcc)
-CXX_TEMP := g++ 
-CC_TEMP := gcc 
-CXX_DEP_TEMP := g++
-CC_DEP_TEMP := gcc
+CXX_TEMP := g++ -m32
+CC_TEMP := gcc -m32
+CXX_DEP_TEMP := g++ -m32
+CC_DEP_TEMP := gcc -m32
 AS_TEMP := nasm -f elf
 AS_DEP_TEMP := nasm -f elf
-LD_TEMP := ld
+LD_TEMP := ld -melf_i386
 AR_TEMP := ar
 endif
 
