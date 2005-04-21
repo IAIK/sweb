@@ -1,7 +1,11 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.2 2005/04/20 20:42:56 nomenquis Exp $
+#*    $Id: bochsrc,v 1.3 2005/04/21 21:31:24 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.2  2005/04/20 20:42:56  nomenquis
+#*    refined debuggability for bootstrapping
+#*    also using 4m mapping for 3g ident and 4k mapping with 4 ptes (but only one used) for 2g
+#*
 #*    Revision 1.1  2005/04/20 19:27:38  nomenquis
 #*    lotsa changes
 #*
@@ -157,10 +161,11 @@ megs: 32
 # VGAROMIMAGE
 # You now need to load a VGA ROM BIOS into C0000.
 #=======================================================================
-#vgaromimage: bios/VGABIOS-lgpl-latest
+vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: bios/VGABIOS-elpin-2.40
-vgaromimage: $BXSHARE/VGABIOS-elpin-2.40
-
+#vgaromimage: $BXSHARE/VGABIOS-elpin-2.40
+#vgaromimage: file=/home/philip/uni/sweb/sweb-testing/utils/bochs/vgabios-0.5a.bin
+#vga: extension=vbe
 #=======================================================================
 # FLOPPYA:
 # Point this to pathname of floppy image file or device
@@ -506,7 +511,7 @@ parport1: enabled=1, file="parport.out"
 #   vga_update_interval: 250000
 #=======================================================================
 #vga_update_interval: 300000
-vga_update_interval: 1 
+vga_update_interval: 300000
 
 # using for Winstone '98 tests
 #vga_update_interval:  100000

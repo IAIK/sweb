@@ -1,7 +1,11 @@
 ;
-; $Id: boot.s,v 1.6 2005/04/20 20:42:56 nomenquis Exp $
+; $Id: boot.s,v 1.7 2005/04/21 21:31:24 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.6  2005/04/20 20:42:56  nomenquis
+; refined debuggability for bootstrapping
+; also using 4m mapping for 3g ident and 4k mapping with 4 ptes (but only one used) for 2g
+;
 ; Revision 1.5  2005/04/20 15:26:35  nomenquis
 ; more and more stuff actually works
 ;
@@ -36,9 +40,11 @@ EXTERN text_start_address, text_end_address,bss_start_address, bss_end_address, 
 ; grub needs this, or it will refuse to boot
 MULTIBOOT_PAGE_ALIGN    equ 1<<0
 MULTIBOOT_MEMORY_INFO   equ 1<<1
+MULTIBOOT_WANT_VESA equ 1<<2
 MULTIBOOT_AOUT_KLUDGE   equ 1<<16
 MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
-MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE
+;MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE|MULTIBOOT_WANT_VESA
+MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
 %macro writeTestOnScreen 0
@@ -74,6 +80,11 @@ BITS 32 ; we want 32bit code
 ; first check if the loader did a good job
 GLOBAL entry
 entry:
+
+   ; we get these from grub
+   mov [multi_boot_magic_number-BASE], eax;
+   mov [multi_boot_structure_pointer-BASE], ebx;
+
 
    mov edi,0B8000h; load bss address
    mov ecx,0B8FA0h; end of bss and stack (!), this symbol is at the very end of the kernel
@@ -299,12 +310,19 @@ mboot:
    dd MULTIBOOT_HEADER_FLAGS
    dd MULTIBOOT_CHECKSUM
 ; aout kludge. These must be PHYSICAL addresses
+;   dd mboot - BASE
+;   dd text_start_address - BASE
+;   dd bss_start_address  - BASE
+;   dd kernel_end_address - BASE
    dd mboot - BASE
-   dd text_start_address - BASE
-   dd bss_start_address  - BASE
-   dd kernel_end_address - BASE
-   dd entry - BASE
-
+   dd 0
+   dd 0
+   dd 0
+   dd 0
+   dd 0 ; mode 
+   dd 800 ;width
+   dd 600 ; height
+   dd 32; depth
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; interrupt/exception handlers
@@ -655,7 +673,14 @@ idt_ptr:
 ds_magic:
    dd DATA_SEGMENT_MAGIC
 
-
+SECTION .data
+GLOBAL multi_boot_magic_number
+multi_boot_magic_number:
+	dd 0
+GLOBAL multi_boot_structure_pointer
+multi_boot_structure_pointer:
+	dd 0
+   
 SECTION .bss
    ; here we create lots of room for our stack (actually this is one by the resd 1024)
    GLOBAL stack_start
@@ -667,7 +692,7 @@ stack:
 GLOBAL kernel_page_directory_start
 kernel_page_directory_start:
   resd 4096
-GLOBAL kernel_page_tables_start
+GLOBAL kernel_page_tables_start:
 kernel_page_tables_start:
   rest 4096
   rest 4096

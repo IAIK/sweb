@@ -1,7 +1,11 @@
 /**
- * $Id: init_boottime_pagetables.c,v 1.6 2005/04/20 20:42:56 nomenquis Exp $
+ * $Id: init_boottime_pagetables.c,v 1.7 2005/04/21 21:31:24 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.c,v $
+ * Revision 1.6  2005/04/20 20:42:56  nomenquis
+ * refined debuggability for bootstrapping
+ * also using 4m mapping for 3g ident and 4k mapping with 4 ptes (but only one used) for 2g
+ *
  * Revision 1.5  2005/04/20 15:26:35  nomenquis
  * more and more stuff actually works
  *
@@ -26,9 +30,11 @@
 #include "boot-time.h"
 #include "paging-definitions.h"
 #include "offsets.h"
+#include "multiboot.h"
 
-extern  page_directory_entry kernel_page_directory_start[];
-extern  page_table_entry kernel_page_tables_start[];
+extern page_directory_entry kernel_page_directory_start[];
+extern page_table_entry kernel_page_tables_start[];
+extern multiboot_info_t multi_boot_structure_pointer[];
 
 void initialiseBootTimePaging()
 {
@@ -37,7 +43,8 @@ void initialiseBootTimePaging()
   page_directory_entry *pde_start = (page_directory_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
   uint8 *pde_start_bytes = (uint8 *)pde_start;
   page_table_entry *pte_start = (page_table_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
-
+  multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer);
+  
   // we do not have to clear the pde since its in the bss  
   for (i=0;i<5;++i)
   {
@@ -64,6 +71,22 @@ void initialiseBootTimePaging()
     pte_start[i].page_base_address = i;
   }
   
+  // if we have a working vesa fb then map it to 3gig - 16meg
+  if (mb_infos && mb_infos->flags & 1<<11)
+  {
+    struct vbe_mode* mode_info = mb_infos->vbe_mode_info;
+    if (mode_info->phys_base)
+    {
+      for (i=0;i<4;++i)
+      {
+        pde_start[764+i].pde4m.present = 1;
+        pde_start[764+i].pde4m.writeable = 1;
+        pde_start[764+i].pde4m.use_4_m_pages = 1;
+        pde_start[764+i].pde4m.page_base_address = (mode_info->phys_base / (1024*1024*4))+i;
+      }
+    }      
+  }
+
   for (i=0;i<256;++i)
   {
     pde_start[i+768].pde4m.present = 1;

@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.4 2005/04/20 18:19:44 nomenquis Exp $
+# $Id: toolchain.mk,v 1.5 2005/04/21 21:31:24 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.4  2005/04/20 18:19:44  nomenquis
+# updated these files
+#
 # Revision 1.3  2005/04/20 16:53:53  nomenquis
 # make sure we're compiling 32 bit code only
 #
@@ -69,11 +72,12 @@ CC_DEP := $(CC_DEP_TEMP)
 AS_DEP := $(AS_DEP_TEMP)
 MAKE := $(MAKE_TEMP)
 
-
+ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
-CXXFLAGS := $(CXXFLAGS) -O3 -g -Wno-deprecated
-CCFLAGS := $(CCFLAGS) -O3 -g
+CXXFLAGS := $(CXXFLAGS) -O3 -g -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+CCFLAGS := $(CCFLAGS) -O3 -g -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
 KERNELLDFLAGS := $(KERNELLDFLAGS) 
+endif
 endif
