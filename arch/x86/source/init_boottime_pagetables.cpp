@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.1 2005/04/22 17:40:58 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.2 2005/04/22 18:23:04 nomenquis Exp $
  *
- * $Log: init_boottime_pagetables.c,v $
+ * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.1  2005/04/22 17:40:58  nomenquis
+ * cleanup
+ *
  * Revision 1.7  2005/04/21 21:31:24  nomenquis
  * added lfb support, also we now use a different grub version
  * we also now read in the grub multiboot version
@@ -76,14 +79,14 @@ void initialiseBootTimePaging()
     pte_start[i].page_base_address = i;
   }
   
-  if (ArchCommon::haveVESAConsole())
+  if (ArchCommon::haveVESAConsole(0))
   {
     for (i=0;i<4;++i)
     {
       pde_start[764+i].pde4m.present = 1;
       pde_start[764+i].pde4m.writeable = 1;
       pde_start[764+i].pde4m.use_4_m_pages = 1;
-      pde_start[764+i].pde4m.page_base_address = (ArchCommon::getVESAConsoleLFBPtr() / (1024*1024*4))+i;
+      pde_start[764+i].pde4m.page_base_address = (ArchCommon::getVESAConsoleLFBPtr(0) / (1024*1024*4))+i;
     }     
   }
 

@@ -1,14 +1,18 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.cpp,v 1.1 2005/04/22 17:21:41 nomenquis Exp $
+//   $Id: ConsoleManager.cpp,v 1.2 2005/04/22 18:23:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: ConsoleManager.cpp,v $
+//  Revision 1.1  2005/04/22 17:21:41  nomenquis
+//  added TONS of stuff, changed ZILLIONS of things
+//
 //----------------------------------------------------------------------
 
 #include "console/ConsoleManager.h"
 #include "mm/new.h"
 #include "arch_panic.h"
 #include "console/TextConsole.h"
+#include "console/FrameBufferConsole.h"
 #include "ArchCommon.h"
 
 ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
@@ -23,7 +27,7 @@ ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
   for (i=0;i<number_of_consoles_to_generate;++i)
   {
     if (ArchCommon::haveVESAConsole())
-      consoles_[i] = new TextConsole();
+      consoles_[i] = new FrameBufferConsole();
     else
       consoles_[i] = new TextConsole();
     

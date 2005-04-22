@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.5 2005/04/22 17:21:41 nomenquis Exp $
+ * $Id: main.cpp,v 1.6 2005/04/22 18:23:16 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.5  2005/04/22 17:21:41  nomenquis
+ * added TONS of stuff, changed ZILLIONS of things
+ *
  * Revision 1.4  2005/04/21 21:31:24  nomenquis
  * added lfb support, also we now use a different grub version
  * we also now read in the grub multiboot version
@@ -32,37 +35,8 @@
 
 extern "C"
 {
-	extern char kernel_start_address;
-  extern multiboot_info_t * multi_boot_structure_pointer;
-  extern page_directory_entry kernel_page_directory_start[];
-
 	int main()
 	{
-    /*
-    multiboot_info_t * grub_multi = (multiboot_info_t*)(((uint32)multi_boot_structure_pointer)+1024*1024*1024*3);
-    if (!grub_multi)
-    {
-      arch_panic("No multiboot infos found, THIS IS FATAL");
-    }
-    
-    if (grub_multi->flags & 1)
-    {
-      // we have memory info;
-      //arch_panic("Have memory infos");
-    }
-    if (grub_multi->flags & 1<<11)
-    {
-	    volatile char *lfb_ptr = (char*)(764*1024*1024*4);
-      uint32 i;
-      for (i=0;i<4*1024*1024;++i)
-      {
-        lfb_ptr[i] = i%256;
-      }
-      arch_panic("Have lfb and am done, too bad no one will see this");
-    }
-    arch_panic("Do not have lfb");
-		return 0;
-    */
     ConsoleManager *manager = new ConsoleManager(1);
     for (;;);
 	}
