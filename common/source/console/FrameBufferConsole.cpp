@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.3 2005/04/22 19:18:14 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.4 2005/04/22 20:18:52 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
@@ -37,7 +37,7 @@ void FrameBufferConsole::clear()
 {
   
 }
-extern uint8 fontdata_8x16[];
+extern uint8 fontdata_sun8x16[];
 
 void FrameBufferConsole::setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b)
 {
@@ -63,7 +63,7 @@ uint32 FrameBufferConsole::setCharacter(uint32 const&column, uint32 const &row, 
     for (k=0;k<8;++k)
     {
       // find out the bit we want to draw
-      uint8 temp = fontdata_8x16[character_index+i];
+      uint8 temp = fontdata_sun8x16[character_index+i];
       temp &= 1<<(7-k);
       if (temp)
       {

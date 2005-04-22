@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kmm.cpp,v 1.1 2005/04/22 20:13:00 btittelbach Exp $
+//   $Id: kmm.cpp,v 1.2 2005/04/22 20:18:52 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: kmm.cpp,v $
+//  Revision 1.1  2005/04/22 20:13:00  btittelbach
+//  Memory Manager v.0001
+//
 //
 //----------------------------------------------------------------------
 ///
@@ -15,6 +18,7 @@
 /// 
 
 #include "../../include/mm/kmm.h"
+#define assert(x)
 
 KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address)
 {
@@ -40,7 +44,7 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   MallocSegment *new_pointer = findFreeSegment(requested_size);
   
   if (new_pointer == 0)
-    arch_panic("Not enough Memory left\n");
+    arch_panic((uint8*)"Not enough Memory left\n");
   
   fillSegment(new_pointer,requested_size);
 
