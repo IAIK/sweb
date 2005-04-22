@@ -1,12 +1,13 @@
 /***************************************************************************
- * $Id: bitmap.h,v 1.1 2005/04/22 02:38:50 btittelbach Exp $
+ * $Id: Bitmap.h,v 1.1 2005/04/22 17:32:25 btittelbach Exp $
  *
  *  Fri Apr 22 04:02:06 2005
  *  Copyright  2005  Bernhard Tittelbach
  *
  *  In case someone should need a bitmap
  *
- * $Log: bitmap.h,v $
+ * $Log: Bitmap.h,v $
+ *
  *
  ****************************************************************************/
 
