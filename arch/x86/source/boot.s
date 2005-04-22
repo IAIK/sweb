@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.9 2005/04/22 17:40:57 nomenquis Exp $
+; $Id: boot.s,v 1.10 2005/04/22 20:14:25 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.9  2005/04/22 17:40:57  nomenquis
+; cleanup
+;
 ; Revision 1.8  2005/04/22 17:21:39  nomenquis
 ; added TONS of stuff, changed ZILLIONS of things
 ;
@@ -306,10 +309,10 @@ EXTERN panic
    push dword 2
    popf
 
-EXTERN main ; tell the assembler we have a main somewhere
+EXTERN startup ; tell the assembler we have a main somewhere
    mov word[0C00B801Ch], 4336h
 
-   call main ; hellloooo, here we are in c !
+   call startup ; hellloooo, here we are in c !
    jmp $ ; suicide
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,

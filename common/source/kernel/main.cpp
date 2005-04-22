@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.7 2005/04/22 19:43:04 nomenquis Exp $
+ * $Id: main.cpp,v 1.8 2005/04/22 20:14:25 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.7  2005/04/22 19:43:04  nomenquis
+ *  more poison added
+ *
  * Revision 1.6  2005/04/22 18:23:16  nomenquis
  * massive cleanups
  *
@@ -38,7 +41,7 @@
 
 extern "C"
 {
-	int32 main()
+	void startup()
 	{
     ConsoleManager *manager = new ConsoleManager(1);
     for (;;);
