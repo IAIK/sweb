@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.6 2005/04/22 18:23:16 nomenquis Exp $
+ * $Id: main.cpp,v 1.7 2005/04/22 19:43:04 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.6  2005/04/22 18:23:16  nomenquis
+ * massive cleanups
+ *
  * Revision 1.5  2005/04/22 17:21:41  nomenquis
  * added TONS of stuff, changed ZILLIONS of things
  *
@@ -35,7 +38,7 @@
 
 extern "C"
 {
-	int main()
+	int32 main()
 	{
     ConsoleManager *manager = new ConsoleManager(1);
     for (;;);

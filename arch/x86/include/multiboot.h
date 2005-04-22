@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: multiboot.h,v 1.1 2005/04/21 21:31:24 nomenquis Exp $
+//   $Id: multiboot.h,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: multiboot.h,v $
+//  Revision 1.1  2005/04/21 21:31:24  nomenquis
+//  added lfb support, also we now use a different grub version
+//  we also now read in the grub multiboot version
+//
 //----------------------------------------------------------------------
 
 //
@@ -17,77 +21,77 @@
 /* VBE controller information.  */
 struct vbe_controller
 {
-  unsigned char signature[4];
-  unsigned short version;
-  unsigned long oem_string;
-  unsigned long capabilities;
-  unsigned long video_mode;
-  unsigned short total_memory;
-  unsigned short oem_software_rev;
-  unsigned long oem_vendor_name;
-  unsigned long oem_product_name;
-  unsigned long oem_product_rev;
-  unsigned char reserved[222];
-  unsigned char oem_data[256];
+  uint8 signature[4];
+  uint16 version;
+  uint32 oem_string;
+  uint32 capabilities;
+  uint32 video_mode;
+  uint16 total_memory;
+  uint16 oem_software_rev;
+  uint32 oem_vendor_name;
+  uint32 oem_product_name;
+  uint32 oem_product_rev;
+  uint8 reserved[222];
+  uint8 oem_data[256];
 } __attribute__ ((packed));
 
 /* VBE mode information.  */
 struct vbe_mode
 {
-  unsigned short mode_attributes;
-  unsigned char win_a_attributes;
-  unsigned char win_b_attributes;
-  unsigned short win_granularity;
-  unsigned short win_size;
-  unsigned short win_a_segment;
-  unsigned short win_b_segment;
-  unsigned long win_func;
-  unsigned short bytes_per_scanline;
+  uint16 mode_attributes;
+  uint8 win_a_attributes;
+  uint8 win_b_attributes;
+  uint16 win_granularity;
+  uint16 win_size;
+  uint16 win_a_segment;
+  uint16 win_b_segment;
+  uint32 win_func;
+  uint16 bytes_per_scanline;
 
   /* >=1.2 */
-  unsigned short x_resolution;
-  unsigned short y_resolution;
-  unsigned char x_char_size;
-  unsigned char y_char_size;
-  unsigned char number_of_planes;
-  unsigned char bits_per_pixel;
-  unsigned char number_of_banks;
-  unsigned char memory_model;
-  unsigned char bank_size;
-  unsigned char number_of_image_pages;
-  unsigned char reserved0;
+  uint16 x_resolution;
+  uint16 y_resolution;
+  uint8 x_char_size;
+  uint8 y_char_size;
+  uint8 number_of_planes;
+  uint8 bits_per_pixel;
+  uint8 number_of_banks;
+  uint8 memory_model;
+  uint8 bank_size;
+  uint8 number_of_image_pages;
+  uint8 reserved0;
 
   /* direct color */
-  unsigned char red_mask_size;
-  unsigned char red_field_position;
-  unsigned char green_mask_size;
-  unsigned char green_field_position;
-  unsigned char blue_mask_size;
-  unsigned char blue_field_position;
-  unsigned char reserved_mask_size;
-  unsigned char reserved_field_position;
-  unsigned char direct_color_mode_info;
+  uint8 red_mask_size;
+  uint8 red_field_position;
+  uint8 green_mask_size;
+  uint8 green_field_position;
+  uint8 blue_mask_size;
+  uint8 blue_field_position;
+  uint8 reserved_mask_size;
+  uint8 reserved_field_position;
+  uint8 direct_color_mode_info;
 
   /* >=2.0 */
-  unsigned long phys_base;
-  unsigned long reserved1;
-  unsigned short reversed2;
+  uint32 phys_base;
+  uint32 reserved1;
+  uint16 reversed2;
 
   /* >=3.0 */
-  unsigned short linear_bytes_per_scanline;
-  unsigned char banked_number_of_image_pages;
-  unsigned char linear_number_of_image_pages;
-  unsigned char linear_red_mask_size;
-  unsigned char linear_red_field_position;
-  unsigned char linear_green_mask_size;
-  unsigned char linear_green_field_position;
-  unsigned char linear_blue_mask_size;
-  unsigned char linear_blue_field_position;
-  unsigned char linear_reserved_mask_size;
-  unsigned char linear_reserved_field_position;
-  unsigned long max_pixel_clock;
+  uint16 linear_bytes_per_scanline;
+  uint8 banked_number_of_image_pages;
+  uint8 linear_number_of_image_pages;
+  uint8 linear_red_mask_size;
+  uint8 linear_red_field_position;
+  uint8 linear_green_mask_size;
+  uint8 linear_green_field_position;
+  uint8 linear_blue_mask_size;
+  uint8 linear_blue_field_position;
+  uint8 linear_reserved_mask_size;
+  uint8 linear_reserved_field_position;
+  uint32 max_pixel_clock;
 
-  unsigned char reserved3[189];
+  uint8 reserved3[189];
 } __attribute__ ((packed));
 
 

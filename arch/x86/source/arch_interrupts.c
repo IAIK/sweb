@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: arch_interrupts.c,v 1.1 2005/04/20 15:26:35 nomenquis Exp $
+//   $Id: arch_interrupts.c,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: arch_interrupts.c,v $
+//  Revision 1.1  2005/04/20 15:26:35  nomenquis
+//  more and more stuff actually works
+//
 //----------------------------------------------------------------------
 
 #include "arch_interrupts.h"
@@ -11,15 +14,15 @@
 typedef struct
 {
    /* pushed by pusha */
-   unsigned edi, esi, ebp, esp, ebx, edx, ecx, eax;
+   uint32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
    
    /* pushed separately */
-   unsigned ds, es, fs, gs;
-   unsigned which_int, err_code;
+   uint32 ds, es, fs, gs;
+   uint32 which_int, err_code;
    
    /* pushed by exception. Exception may also push err_code.
    user_esp and user_ss are pushed only if a privilege change occurs. */
-   unsigned eip, cs, eflags, user_esp, user_ss;
+   uint32 eip, cs, eflags, user_esp, user_ss;
 } regs_t;
 
 
@@ -28,7 +31,7 @@ static generic_interrupt_handler* interrupt_vector_table[256];
 void arch_handleInterrupt(void *r)
 {
   regs_t *regs = (regs_t*)r;
-  int number = regs->which_int;
+  uint32 number = regs->which_int;
   if (number < 256 && interrupt_vector_table[number])
   {
     interrupt_vector_table[number]();

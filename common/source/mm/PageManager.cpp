@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.1 2005/04/20 21:35:33 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: PageManager.cpp,v $
+//  Revision 1.1  2005/04/20 21:35:33  nomenquis
+//  started to implement page manager
+//
 //----------------------------------------------------------------------
 
 #include "mm/PageManager.h"
@@ -45,7 +48,7 @@ PageManager::PageManager(uint32 number_of_pages)
   if (number_of_free_pages < length_of_structure + 1)
   {
     // paaaaaaaaaaaaaaniiiiiiiiiiiiiiiiiiiiic
-    arch_panic("Unable to initialise PageManager, not enough kernel memory for data structures");
+    arch_panic((uint8*)"Unable to initialise PageManager, not enough kernel memory for data structures");
   }
   
   // here we should definitely use our über cool schubba algorithm to find out what to do

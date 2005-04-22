@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.cpp,v 1.2 2005/04/22 18:23:16 nomenquis Exp $
+//   $Id: ConsoleManager.cpp,v 1.3 2005/04/22 19:43:04 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.cpp,v $
+//  Revision 1.2  2005/04/22 18:23:16  nomenquis
+//  massive cleanups
+//
 //  Revision 1.1  2005/04/22 17:21:41  nomenquis
 //  added TONS of stuff, changed ZILLIONS of things
 //
@@ -21,7 +24,7 @@ ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
   consoles_ = new Console*[number_of_consoles_to_generate];
   if (!consoles_)
   {
-    arch_panic("Unable to allocate memory for consoles");
+    arch_panic((uint8*)"Unable to allocate memory for consoles");
   }
   
   for (i=0;i<number_of_consoles_to_generate;++i)
@@ -33,7 +36,7 @@ ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
     
     if (!consoles_[i])
     {
-      arch_panic("Unable to allocate memory for console");
+      arch_panic((uint8*)"Unable to allocate memory for console");
     }
   }
   number_of_consoles_ = number_of_consoles_to_generate;
@@ -47,7 +50,7 @@ ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
 
 uint32 ConsoleManager::setActiveConsole(uint32 const &console_number)
 {
-  int ret = 0;
+  uint32 ret = 0;
   if (console_number >= number_of_consoles_)
     return 1;
   

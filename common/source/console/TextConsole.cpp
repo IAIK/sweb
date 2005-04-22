@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.1 2005/04/22 17:21:41 nomenquis Exp $
+//   $Id: TextConsole.cpp,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: TextConsole.cpp,v $
+//  Revision 1.1  2005/04/22 17:21:41  nomenquis
+//  added TONS of stuff, changed ZILLIONS of things
+//
 //----------------------------------------------------------------------
 
 
@@ -46,7 +49,7 @@ void TextConsole::setBackgroundColor(uint32 const &color)
 static void kkkk(char *mesg)
 {
   uint8 * fb = (uint8*)0xC00B8000;
-  unsigned i=0;
+  uint32 i=0;
   while (mesg && *mesg)
   {
     fb[i++] = *mesg++;
