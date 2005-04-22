@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.8 2005/04/22 17:21:39 nomenquis Exp $
+; $Id: boot.s,v 1.9 2005/04/22 17:40:57 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.8  2005/04/22 17:21:39  nomenquis
+; added TONS of stuff, changed ZILLIONS of things
+;
 ; Revision 1.7  2005/04/21 21:31:24  nomenquis
 ; added lfb support, also we now use a different grub version
 ; we also now read in the grub multiboot version
@@ -163,6 +166,11 @@ now_using_segments:
     mov esp,stack - BASE
 
     mov word[0B8004h], 9F32h
+
+EXTERN parseMultibootHeader;
+
+mov eax,parseMultibootHeader - BASE
+call eax
 
 EXTERN initialiseBootTimePaging
 

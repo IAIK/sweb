@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.1 2005/04/22 17:21:38 nomenquis Exp $
+//   $Id: ArchCommon.h,v 1.2 2005/04/22 17:40:57 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: ArchCommon.h,v $
+//  Revision 1.1  2005/04/22 17:21:38  nomenquis
+//  added TONS of stuff, changed ZILLIONS of things
+//
 //----------------------------------------------------------------------
 
 #ifndef _ARCH_COMMON_H_
@@ -17,7 +20,8 @@ public:
   static uint32 haveVESAConsole();
   static uint32 getVESAConsoleHeight();
   static uint32 getVESAConsoleWidth();
-  static uint8 *getVESAConsoleLFBPtr();
+  static uint32 getVESAConsoleBitsPerPixel();
+  static uint32 getVESAConsoleLFBPtr();
   
 };
 
