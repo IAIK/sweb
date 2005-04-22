@@ -1,11 +1,13 @@
 /**
- * $Id: bitmap.cpp,v 1.1 2005/04/22 02:39:16 btittelbach Exp $
+ * $Id: Bitmap.cpp,v 1.1 2005/04/22 17:33:43 btittelbach Exp $
  *
- * $Log: bitmap.cpp,v $
+ * $Log: Bitmap.cpp,v $
+ * Revision 1.1  2005/04/22 02:39:16  btittelbach
+ *
  *
 */
 
-#include "../../include/mm/bitmap.h"
+#include "../../include/mm/Bitmap.h"
 
 Bitmap::Bitmap (size_t number_of_bits)
 {
