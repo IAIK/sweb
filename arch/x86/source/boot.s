@@ -1,7 +1,11 @@
 ;
-; $Id: boot.s,v 1.7 2005/04/21 21:31:24 nomenquis Exp $
+; $Id: boot.s,v 1.8 2005/04/22 17:21:39 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.7  2005/04/21 21:31:24  nomenquis
+; added lfb support, also we now use a different grub version
+; we also now read in the grub multiboot version
+;
 ; Revision 1.6  2005/04/20 20:42:56  nomenquis
 ; refined debuggability for bootstrapping
 ; also using 4m mapping for 3g ident and 4k mapping with 4 ptes (but only one used) for 2g
@@ -562,13 +566,13 @@ GLOBAL diediedie
 diediedie:
 jmp $
 
-SECTION .data
+SECTION .gdt_stuff
 
 
 
 ; this descritor is _REALLY_ braindead
 ; have a look at http://www.csee.umbc.edu/~plusquel/310/slides/micro_arch2.html
-
+align 4096
 gdt:
 
 ; this is the first global descriptor table
@@ -653,6 +657,7 @@ gdt_ptr_new:
 
 ; 256 ring 0 interrupt gates
 ; we certainly miss one ring 3 interrupt gate (for syscalls)
+SECTION .idt_stuff
 GLOBAL idt
 idt:
 %rep 256
@@ -688,11 +693,13 @@ stack_start:
    resd 65536
    GLOBAL stack
 stack:
-
+SECTION .paging_stuff
 GLOBAL kernel_page_directory_start
+align 4096
 kernel_page_directory_start:
   resd 4096
 GLOBAL kernel_page_tables_start:
+align 4096
 kernel_page_tables_start:
   rest 4096
   rest 4096

@@ -1,6 +1,10 @@
-# $Id: toolchain.mk,v 1.5 2005/04/21 21:31:24 nomenquis Exp $
+# $Id: toolchain.mk,v 1.6 2005/04/22 17:21:41 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.5  2005/04/21 21:31:24  nomenquis
+# added lfb support, also we now use a different grub version
+# we also now read in the grub multiboot version
+#
 # Revision 1.4  2005/04/20 18:19:44  nomenquis
 # updated these files
 #
@@ -78,6 +82,5 @@ CXXFLAGS := $(CXXFLAGS) -O3 -g -Wno-deprecated -Wall -W -nostdinc -fno-builtin -
 CCFLAGS := $(CCFLAGS) -O3 -g -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
-KERNELLDFLAGS := $(KERNELLDFLAGS) 
 endif
 endif

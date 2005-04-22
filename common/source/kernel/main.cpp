@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.4 2005/04/21 21:31:24 nomenquis Exp $
+ * $Id: main.cpp,v 1.5 2005/04/22 17:21:41 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.4  2005/04/21 21:31:24  nomenquis
+ * added lfb support, also we now use a different grub version
+ * we also now read in the grub multiboot version
+ *
  * Revision 1.3  2005/04/20 08:06:18  nomenquis
  * the overloard (thats me) managed to get paging with 4m pages to work.
  * kernel is now at 2g +1 and writes something to the fb
@@ -24,6 +28,7 @@
 #include "multiboot.h"
 #include "arch_panic.h"
 #include "paging-definitions.h"
+#include "console/ConsoleManager.h"
 
 extern "C"
 {
@@ -33,6 +38,7 @@ extern "C"
 
 	int main()
 	{
+    /*
     multiboot_info_t * grub_multi = (multiboot_info_t*)(((uint32)multi_boot_structure_pointer)+1024*1024*1024*3);
     if (!grub_multi)
     {
@@ -56,6 +62,9 @@ extern "C"
     }
     arch_panic("Do not have lfb");
 		return 0;
+    */
+    ConsoleManager *manager = new ConsoleManager(1);
+    for (;;);
 	}
 	  
 }

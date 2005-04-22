@@ -1,8 +1,12 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.4 2005/04/20 09:00:29 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.5 2005/04/22 17:21:39 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.4  2005/04/20 09:00:29  nomenquis
+*  removed lots of trash symbols, and added "nice" symbol names
+*  also added docs about these symbols into the wiki
+*
 *  Revision 1.3  2005/04/20 07:09:59  nomenquis
 *  added inital paging for the kernel, plus mapping to two gigs
 *  hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
@@ -47,6 +51,10 @@ kernel_start_address = .;
   LS_Data = .;
 	data_start_address = .;
 	*(.data)
+  . = ALIGN(4096);
+  *(.gdt_stuff)
+  . = ALIGN(4096);
+  *(.idt_stuff)
   data_end_address = .;
   . = ALIGN(4096);
 }
@@ -56,10 +64,12 @@ kernel_start_address = .;
   LS_Bss = .;
   bss_start_address = .;
   *(.bss)
-  *(COMMON) /* "common" variables, I have no idea where this comes from*/  
-  bss_end_address = .;
+  *(COMMON) /* "common" variables, I have no idea where this comes from*/ 
   . = ALIGN(4096);
-  
+  *(.paging_stuff)
+  . = ALIGN(4096);
+  bss_end_address = .;
+
 }
 
 /* bug in MinGW? I get a bad executable file unless these
