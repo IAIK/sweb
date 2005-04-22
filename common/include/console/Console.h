@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Console.h,v 1.1 2005/04/22 17:21:40 nomenquis Exp $
+//   $Id: Console.h,v 1.2 2005/04/22 19:18:14 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: Console.h,v $
+//  Revision 1.1  2005/04/22 17:21:40  nomenquis
+//  added TONS of stuff, changed ZILLIONS of things
+//
 //----------------------------------------------------------------------
 
 
@@ -26,6 +29,10 @@ public:
   virtual uint32 setAsCurrent()=0;
   virtual uint32 unsetAsCurrent()=0;
 
+  // make this an enum
+  virtual void setForegroundColor(uint32 const &color)=0;
+  virtual void setBackgroundColor(uint32 const &color)=0;
+  
 
 protected:
   
