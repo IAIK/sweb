@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.1 2005/04/23 15:59:26 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.2 2005/04/23 17:35:03 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: kmm.cpp,v $
+//  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.1  2005/04/23 15:59:26  btittelbach
+//
+//  Testing Version vom KMM
+//
 //  Revision 1.2  2005/04/22 20:18:52  nomenquis
 //  compile fixes
 //
@@ -23,6 +27,8 @@
 #include "../../include/mm/KernelMemoryManager.h"
 //#define assert(x)
 #define assert(condition) sweb_assert(condition,__LINE__,__FILE__);
+
+KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
 void sweb_assert(uint32 condition, uint32 line, char* file)
 {
@@ -77,15 +83,23 @@ void printout(char* text)
 
 }
 
+uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer end_address)
+{
+  instance_ = new ((void*)start_address) KernelMemoryManager(start_address + sizeof(KernelMemoryManager),end_address);
+  
+  return 0;
+}
+
 KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address)
 { 
   assert (start_address > ((pointer) this) + sizeof(this));
-  assert (start_address > 0x8018A89B && start_address < 0x80400000);
+//  assert (start_address > 0x8018A89B && start_address < 0x80400000);
   assert (start_address < end_address);
   assert (end_address <= 0x80400000);
-  assert (((pointer) this)> 0x8018A89B && ((pointer) this) < 0x80400000);
+//  assert (((pointer) this)> 0x8018A89B && ((pointer) this) < 0x80400000);
   //assert(1==2); //are we getting called ?
   
+  /*
   uint8 * fb = (uint8*) 0xC00B8000;
   uint32 i=0;
   for (uint8 *addr=(uint8*) start_address; addr < ((uint8*) start_address) + 0x6ff; ++addr)
@@ -94,6 +108,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
     fb[i++] = 0x9f; 
     //assert(*addr=='\0');
   }
+  */
   
   //just to make sure:  
   //memoryZero(start_address,end_address-start_address);
@@ -117,7 +132,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   
   fillSegment(new_pointer,requested_size);
   
-  printout ("allocated memory    ");
+  
+  //printout ("allocated memory    ");
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 
@@ -212,7 +228,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   while (current != 0)
   {
     assert(current->marker_ == 0xdeadbeef);
-    if (current->size_ >= requested_size)
+    if (current->size_ >= requested_size && current->flag_ == 0)
       return current;
     
     current = current->next_;

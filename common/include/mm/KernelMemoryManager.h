@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.1 2005/04/23 16:01:15 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.2 2005/04/23 17:35:03 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: kmm.h,v $
+//  $Log: KernelMemoryManager.h,v $
+//  Revision 1.1  2005/04/23 16:01:15  btittelbach
+//  Testing Version vom KMM
+//
 //  Revision 1.1  2005/04/22 20:12:09  btittelbach
 //  Kernel Memory Manager mit leichten bugs
 //
@@ -54,10 +57,11 @@ extern void* kernel_end_address;
 
 class KernelMemoryManager
 {
-	public:
-  //WARNING: we really have to own that memory from start to end, nothing must be there
-	KernelMemoryManager(pointer start_address=(pointer) &kernel_end_address , pointer end_address=0x80400000);
-		
+public:
+
+  static uint32 createMemoryManager(pointer start_address, pointer end_address);
+  static KernelMemoryManager *instance() {return instance_;}
+
   /// @return pointer to Memory Adress or -1 on NotEnoughMemory (?)
   pointer allocateMemory(size_t requested_size);
   
@@ -76,9 +80,13 @@ class KernelMemoryManager
   
   void memoryCopy(pointer source, pointer destination, size_t size);
   void memoryZero(pointer virtual_address, size_t size);
-    
+  
+  
 private:
   
+  //WARNING: we really have to own that memory from start to end, nothing must be there
+	KernelMemoryManager(pointer start_address=(pointer) &kernel_end_address , pointer end_address=0x80400000);
+
   MallocSegment *findFreeSegment(size_t requested_size);
   void fillSegment(MallocSegment *this_one, size_t size);
   void freeSegment(MallocSegment *this_one);
@@ -95,5 +103,7 @@ private:
   uint32 segments_used_;
   uint32 segments_free_;
   size_t memory_free_;
+
+  static KernelMemoryManager *instance_;
   
 };

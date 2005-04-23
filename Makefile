@@ -8,6 +8,8 @@ include ./make-support/common.mk
 
 all: kernel install 
 
+clean: 
+	rm -rf  $(OBJECTDIR)/sauhaufen/*
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
 kernel: $(SUBPROJECTS)

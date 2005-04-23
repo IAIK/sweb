@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: new.cpp,v 1.4 2005/04/23 15:59:54 btittelbach Exp $
+//   $Id: new.cpp,v 1.5 2005/04/23 17:35:03 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: new.cpp,v $
+//  Revision 1.4  2005/04/23 15:59:54  btittelbach
+//  compile fix
+//
 //  Revision 1.3  2005/04/23 15:58:17  btittelbach
 //  new mit kmm
 //
@@ -18,21 +21,12 @@
 #include "new.h"
 #include "KernelMemoryManager.h"
 
-//KernelMemoryManager kmm = KernelMemoryManager(((pointer) &kernel_end_address )+sizeof(KernelMemoryManager),0x80400000);
-KernelMemoryManager *kmm;
-
-void initializeKernelMemoryManager()
-{
-  //kmm = new ((void*) &kernel_end_address) KernelMemoryManager(((pointer) &kernel_end_address )+sizeof(KernelMemoryManager),0x80400000);
-  kmm = new ((void*) (0x80200000-sizeof(KernelMemoryManager)-0xff)) KernelMemoryManager(0x80200000,0x80400000);
-}
-
 // overloaded normal new operator
 void* operator new(size_t size)
 {
     // maybe we could take some precautions not to be interrupted while doing this
     //void* p = kmalloc(size);
-    void* p = (void*) kmm->allocateMemory(size);
+    void* p = (void*) KernelMemoryManager::instance()->allocateMemory(size);
     return p;
 }
 
@@ -40,7 +34,7 @@ void* operator new(size_t size)
 void operator delete(void* address)
 {
     //kfree(address);
-    kmm->freeMemory((pointer) address);
+    KernelMemoryManager::instance()->freeMemory((pointer) address);
     return;
 }
 
@@ -48,7 +42,7 @@ void operator delete(void* address)
 void* operator new[](size_t size)
 {
     //void* p = kmalloc(size);
-    void* p = (void*) kmm->allocateMemory(size);
+    void* p = (void*) KernelMemoryManager::instance()->allocateMemory(size);
     return p;
 }
 
@@ -56,7 +50,7 @@ void* operator new[](size_t size)
 void operator delete[](void* address)
 {
     //kfree(address);
-    kmm->freeMemory((pointer) address);
+    KernelMemoryManager::instance()->freeMemory((pointer) address);
     return;
 }
 

@@ -1,23 +1,22 @@
 //----------------------------------------------------------------------
-//   $Id: kmalloc.cpp,v 1.1 2005/04/22 17:21:41 nomenquis Exp $
+//   $Id: kmalloc.cpp,v 1.2 2005/04/23 17:35:03 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: kmalloc.cpp,v $
+//  Revision 1.1  2005/04/22 17:21:41  nomenquis
+//  added TONS of stuff, changed ZILLIONS of things
+//
 //----------------------------------------------------------------------
 
 #include "kmalloc.h"
-
-static uint32 heap_start = (1024*1024*1024*2+2*1024*1024);
-
+#include "KernelMemoryManager.h"
 
 void* kmalloc(size_t size)
 {
-  void *ret = (void*)heap_start;
-  heap_start += size;
-  return ret;
+  return (void*)KernelMemoryManager::instance()->allocateMemory(size);
 }
 
 void kfree(void * address)
 {
-  
+  KernelMemoryManager::instance()->freeMemory((pointer)address);
 }

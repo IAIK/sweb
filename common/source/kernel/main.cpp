@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.12 2005/04/23 16:03:40 btittelbach Exp $
+ * $Id: main.cpp,v 1.13 2005/04/23 17:35:03 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.12  2005/04/23 16:03:40  btittelbach
+ * kmm testen im main
+ *
  * Revision 1.11  2005/04/23 15:58:32  nomenquis
  * lots of new stuff
  *
@@ -51,6 +54,7 @@
 #include "console/ConsoleManager.h"
 #include "mm/new.h"
 #include "mm/PageManager.h"
+#include "mm/KernelMemoryManager.h"
 
 extern void* kernel_end_address;
 
@@ -59,9 +63,11 @@ extern "C"
   
 	void startup()
 	{
-   //KernelMemoryManager *kmm = new ((void*) &kernel_end_address) KernelMemoryManager(((pointer) &kernel_end_address )+sizeof(KernelMemoryManager),0x80400000);
-   initializeKernelMemoryManager();
-
+    pointer start_address = (pointer)&kernel_end_address;
+    pointer end_address = (pointer)(1024*1024*1024*2 + 1024*1024*4);
+    //start_address = PageManager::createPageManager(start_address);
+    KernelMemoryManager::createMemoryManager(start_address,end_address);
+    
     char *array = new char[1024];
     for (uint32 c=0; c<1024; ++c)
       array[c]='X';
@@ -103,7 +109,7 @@ extern "C"
 
   ConsoleManager *manager = new ConsoleManager(1);
     
-    Console *console = manager->getActiveConsole();
+  Console *console = manager->getActiveConsole();
     /*uint32 i,k;
     
 
@@ -117,6 +123,7 @@ extern "C"
       }
     }
     */
+    
     console->setBackgroundColor(Console::BG_BLACK);
     console->setForegroundColor(Console::FG_GREEN);
 
