@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.2 2005/04/23 12:43:09 nomenquis Exp $
+//   $Id: PageManager.h,v 1.3 2005/04/23 12:52:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.2  2005/04/23 12:43:09  nomenquis
+//  working page manager
+//
 //  Revision 1.1  2005/04/20 21:35:33  nomenquis
 //  started to implement page manager
 //
@@ -28,10 +31,10 @@ public:
    * Creates a new instance (and THE ONLY ONE) of our page manager
    * This one will also automagically initialise itself accordingly
    * i.e. mark pages used by the kernel already as used
-   * @param number_of_pages The number of physical Pages we have
+   * @param next_usable_address Pointer to memory the page manager can use
    * @return 0 on failure, otherwise a pointer to the next free memory location
    */
-  static pointer createPageManager();
+  static pointer createPageManager(pointer next_usable_address);
 
   uint32 getTotalNumPages() const;
 

@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.9 2005/04/23 12:43:09 nomenquis Exp $
+ * $Id: main.cpp,v 1.10 2005/04/23 12:52:26 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.9  2005/04/23 12:43:09  nomenquis
+ * working page manager
+ *
  * Revision 1.8  2005/04/22 20:14:25  nomenquis
  * fix for crappy old gcc versions
  *
@@ -43,14 +46,17 @@
 #include "console/ConsoleManager.h"
 #include "mm/PageManager.h"
 
+extern void* kernel_end_address;
+
 extern "C"
 {
 	void startup()
 	{
-
-    PageManager::createPageManager();
-    
-    //ConsoleManager *manager = new ConsoleManager(1);
+    /*
+    pointer next_usable_address = (pointer)&kernel_end_address;
+    next_usable_address = PageManager::createPageManager(next_usable_address);
+    */
+    ConsoleManager *manager = new ConsoleManager(1);
     for (;;);
 	}
 	  

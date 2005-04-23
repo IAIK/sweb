@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.3 2005/04/23 12:43:09 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.4 2005/04/23 12:52:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
@@ -42,9 +42,9 @@ static char* fb = (char*)0xC00B8100;
       }      \
     }
    
-    
 extern void* kernel_end_address;
-pointer PageManager::createPageManager()
+    
+pointer PageManager::createPageManager(pointer next_usable_address)
 {
   if (instance_)
     return 1;
@@ -54,10 +54,9 @@ pointer PageManager::createPageManager()
   // we know where the kernel ends, and this is good, we'll simply append ourselves after
   // the end of the kernel
   // me likes hacks ;)
-  void *our_page_manager_address = &kernel_end_address;
-  instance_ = new (our_page_manager_address) PageManager(((pointer)our_page_manager_address)+sizeof(PageManager));
+  instance_ = new ((void*)next_usable_address) PageManager(next_usable_address+sizeof(PageManager));
 
-  pointer next_usable_address = ((pointer)our_page_manager_address)+sizeof(PageManager) + instance_->getSizeOfMemoryUsed();
+  next_usable_address += sizeof(PageManager) + instance_->getSizeOfMemoryUsed();
   print(next_usable_address);
   print(next_usable_address / 1024);
   print(next_usable_address - 1024*1024*1024*2);
