@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.5 2005/04/23 15:58:32 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.6 2005/04/23 16:23:42 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
+//  Revision 1.5  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.4  2005/04/22 20:18:52  nomenquis
 //  compile fixes
 //
@@ -18,6 +21,7 @@
 #include "FrameBufferConsole.h"
 #include "ArchCommon.h"
 #include "Terminal.h"
+#include "image.h"
 
 FrameBufferConsole::FrameBufferConsole()
 {
@@ -31,17 +35,26 @@ FrameBufferConsole::FrameBufferConsole()
 void FrameBufferConsole::consoleClearScreen()
 {
   uint8 *lfb = (uint8*)ArchCommon::getVESAConsoleLFBPtr();
-  uint32 i;
+  uint32 i,k;
   for (i=0;i<x_res_*y_res_*bytes_per_pixel_;++i)
   {
     lfb[i]=0;
+  }
+  uint32 off = (x_res_ - logo.width) / 2;
+  
+  for (i=0;i<logo.height;++i)
+  {
+    for (k=0;k<logo.width;++k)
+    {
+      setPixel(off+k,(y_res_-65+i),logo.pixel_data[(i*logo.width+k)*3],logo.pixel_data[(i*logo.width+k)*3+1],logo.pixel_data[(i*logo.width+k)*3+2]);
+    }
   }
 }
 
 
 uint32 FrameBufferConsole::consoleGetNumRows() const
 {
-  return y_res_ / 16;
+  return (y_res_-65) / 16;
 }
 
 uint32 FrameBufferConsole::consoleGetNumColumns() const
