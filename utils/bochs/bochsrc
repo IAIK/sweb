@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.4 2005/04/23 11:56:35 nomenquis Exp $
+#*    $Id: bochsrc,v 1.5 2005/04/23 12:43:09 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.4  2005/04/23 11:56:35  nomenquis
+#*    added interface for memory maps, it works now
+#*
 #*    Revision 1.3  2005/04/21 21:31:24  nomenquis
 #*    added lfb support, also we now use a different grub version
 #*    we also now read in the grub multiboot version
@@ -139,12 +142,12 @@ romimage: file=$BXSHARE/BIOS-bochs-latest, address=0xf0000
 # The default is 32MB, most OS's won't need more than that. 
 #=======================================================================
 #megs: 256
-megs: 128
+#megs: 128
 #megs: 64
 #megs: 32
 #megs: 16
 #megs: 8
-
+megs: 1024
 #=======================================================================
 # OPTROMIMAGE[1-4]:
 # You may now load up to 4 optional ROM images. Be sure to use a 

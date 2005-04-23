@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.8 2005/04/22 20:14:25 nomenquis Exp $
+ * $Id: main.cpp,v 1.9 2005/04/23 12:43:09 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.8  2005/04/22 20:14:25  nomenquis
+ * fix for crappy old gcc versions
+ *
  * Revision 1.7  2005/04/22 19:43:04  nomenquis
  *  more poison added
  *
@@ -38,12 +41,16 @@
 #include "arch_panic.h"
 #include "paging-definitions.h"
 #include "console/ConsoleManager.h"
+#include "mm/PageManager.h"
 
 extern "C"
 {
 	void startup()
 	{
-    ConsoleManager *manager = new ConsoleManager(1);
+
+    PageManager::createPageManager();
+    
+    //ConsoleManager *manager = new ConsoleManager(1);
     for (;;);
 	}
 	  
