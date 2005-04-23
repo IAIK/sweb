@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.14 2005/04/23 20:08:26 nomenquis Exp $
+ * $Id: main.cpp,v 1.15 2005/04/23 20:32:30 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.14  2005/04/23 20:08:26  nomenquis
+ * updates
+ *
  * Revision 1.13  2005/04/23 17:35:03  nomenquis
  * fixed buggy memory manager
  * (giving out the same memory several times is no good idea)
@@ -59,12 +62,17 @@
 #include "mm/new.h"
 #include "mm/PageManager.h"
 #include "mm/KernelMemoryManager.h"
+#include "ArchInterrupts.h"
 
 extern void* kernel_end_address;
 
 extern "C"
 {
-  
+  static uint32 TickTack()
+  {
+    ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"Tick\n");
+    return 0;
+  }
 	void startup()
 	{
     pointer start_address = (pointer)&kernel_end_address;
@@ -84,6 +92,11 @@ extern "C"
     console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
     console->writeString((uint8 const*)"Gruen rackete autobus\n");
     console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
+
+    ArchInterrupts::initialise();
+    ArchInterrupts::setTimerHandler(&TickTack);
+    ArchInterrupts::enableTimer();
+    ArchInterrupts::enableInterrupts();
 
 
     for (;;);
