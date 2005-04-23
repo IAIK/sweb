@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: new.h,v 1.3 2005/04/22 19:43:04 nomenquis Exp $
+//   $Id: new.h,v 1.4 2005/04/23 15:57:49 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: new.h,v $
+//  Revision 1.3  2005/04/22 19:43:04  nomenquis
+//   more poison added
+//
 //  Revision 1.2  2005/04/22 17:21:40  nomenquis
 //  added TONS of stuff, changed ZILLIONS of things
 //
@@ -25,13 +28,12 @@ inline void* operator new(size_t, void* p)
   return p; 
 }
 
+void initializeKernelMemoryManager();
+
 void __builtin_delete(void* address);
 void* __builtin_new(uint32 size);
 void* __builtin_vec_new(uint32 size);
 void __builtin_vec_delete(void* address);
-
-
-
 
 
 #endif
