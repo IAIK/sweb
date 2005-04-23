@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.10 2005/04/22 20:14:25 nomenquis Exp $
+; $Id: boot.s,v 1.11 2005/04/23 11:56:34 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.10  2005/04/22 20:14:25  nomenquis
+; fix for crappy old gcc versions
+;
 ; Revision 1.9  2005/04/22 17:40:57  nomenquis
 ; cleanup
 ;
@@ -53,8 +56,8 @@ MULTIBOOT_MEMORY_INFO   equ 1<<1
 MULTIBOOT_WANT_VESA equ 1<<2
 MULTIBOOT_AOUT_KLUDGE   equ 1<<16
 MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
-;MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE|MULTIBOOT_WANT_VESA
-MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
+MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE|MULTIBOOT_WANT_VESA
+;MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
 %macro writeTestOnScreen 0
@@ -319,21 +322,23 @@ EXTERN startup ; tell the assembler we have a main somewhere
 ;; this will help us to boot, this way we can tell grub
 ;; what to do
 
+SECTION .mboot
 ALIGN 4
+GLOBAL mboot
 mboot:
    dd MULTIBOOT_HEADER_MAGIC
    dd MULTIBOOT_HEADER_FLAGS
    dd MULTIBOOT_CHECKSUM
 ; aout kludge. These must be PHYSICAL addresses
-;   dd mboot - BASE
-;   dd text_start_address - BASE
-;   dd bss_start_address  - BASE
-;   dd kernel_end_address - BASE
    dd mboot - BASE
-   dd 0
-   dd 0
-   dd 0
-   dd 0
+   dd text_start_address - BASE
+   dd bss_start_address  - BASE
+   dd kernel_end_address - BASE
+;   dd mboot - BASE
+;   dd 0
+;   dd 0
+;   dd 0
+;   dd 0
    dd 0 ; mode 
    dd 800 ;width
    dd 600 ; height
@@ -343,6 +348,7 @@ mboot:
 ; interrupt/exception handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+SECTION .text
 EXTERN arch_handleInterrupt;
 
 ; I shouldn't have to do this!

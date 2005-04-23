@@ -1,8 +1,11 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.5 2005/04/22 17:21:39 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.6 2005/04/23 11:56:34 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.5  2005/04/22 17:21:39  nomenquis
+*  added TONS of stuff, changed ZILLIONS of things
+*
 *  Revision 1.4  2005/04/20 09:00:29  nomenquis
 *  removed lots of trash symbols, and added "nice" symbol names
 *  also added docs about these symbols into the wiki
@@ -36,6 +39,7 @@ kernel_start_address = .;
   LS_Code = .;
 	
 	text_start_address = .;
+  *(.mboot)
 	*(.text)
 	text_end_address = .;
 	*(.gnu.linkonce.r.*)

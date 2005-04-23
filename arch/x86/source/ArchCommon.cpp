@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.3 2005/04/22 18:23:03 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.4 2005/04/23 11:56:34 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
@@ -17,6 +17,13 @@
 #include "boot-time.h"
 #include "offsets.h"
 
+#define MAX_MEMORY_MAPS 10
+#define FOUR_ZEROS 0,0,0,0
+#define EIGHT_ZEROS FOUR_ZEROS,FOUR_ZEROS
+#define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
+#define TWENTY_ZEROS SIXTEEN_ZEROS,FOUR_ZEROS
+#define FOURTY_ZEROS TWENTY_ZEROS,TWENTY_ZEROS
+
 struct multiboot_remainder
 {
 uint32 memory_size;
@@ -25,15 +32,47 @@ uint32 vesa_y_res;
 uint32 vesa_bits_per_pixel;
 uint32 have_vesa_console;
 pointer vesa_lfb_pointer;
+
+  struct memory_maps
+  {
+    uint32 used;
+    pointer start_address;
+    pointer end_address;
+    uint32 type;
+  } memory_maps[MAX_MEMORY_MAPS];
 };
 
+
 extern multiboot_info_t multi_boot_structure_pointer[];
-static struct multiboot_remainder mbr = {0,0,0,0,0,0};
+static struct multiboot_remainder mbr = {0,0,0,0,0,0,FOURTY_ZEROS};
   
 extern "C" void parseMultibootHeader();
 
+
+#define print(x)     fb_start += 2; \
+    { \
+      uint32 divisor; \
+      uint32 current; \
+      uint32 remainder; \
+      current = (uint32)x; \
+      divisor = 1000000000; \
+      while (divisor > 0) \
+      { \
+        remainder = current % divisor; \
+        current = current / divisor; \
+        \
+        fb[fb_start++] = (uint8)current + '0' ; \
+        fb[fb_start++] = 0x9f ; \
+    \
+        divisor = divisor / 10; \
+        current = remainder; \
+      }      \
+    }
+    
 void parseMultibootHeader()
 {
+  uint32 i;
+  uint8 * fb = (uint8*)0x000B8000;
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer);
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
   if (mb_infos && mb_infos->flags & 1<<11)
@@ -45,9 +84,31 @@ void parseMultibootHeader()
     orig_mbr.vesa_y_res = mode_info->y_resolution;
     orig_mbr.vesa_bits_per_pixel = mode_info->bits_per_pixel;
   } 
+  for (i=0;i<MAX_MEMORY_MAPS;++i)
+  {
+    orig_mbr.memory_maps[i].used = 0;
+  }
+  
+  if (mb_infos && mb_infos->flags & 1<<6)
+  {
+    uint32 mmap_size = sizeof(memory_map);
+    uint32 mmap_total_size = mb_infos->mmap_length;
+    
+    uint32 num_maps = mmap_total_size / mmap_size;
+    
+    for (i=0;i<num_maps;++i)
+    {
+      memory_map * map = (memory_map*)(mb_infos->mmap_addr+mmap_size*i);
+      orig_mbr.memory_maps[i].used = 1;
+      orig_mbr.memory_maps[i].start_address = map->base_addr_low;
+      orig_mbr.memory_maps[i].end_address = map->base_addr_low + map->length_low;
+      orig_mbr.memory_maps[i].type = map->type;
+    }
+  }
+  
+  
 
 }
-
 
 uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
 {
@@ -84,4 +145,27 @@ uint32 ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()
 {
   return mbr.vesa_bits_per_pixel;
+}
+
+uint32 ArchCommon::getNumUseableMemoryRegions()
+{
+  uint32 i;
+  for (i=0;i<MAX_MEMORY_MAPS;++i)
+  {
+    if (!mbr.memory_maps[i].used)
+      break;
+  }
+  return i;
+}
+
+uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
+{
+  if (region >= MAX_MEMORY_MAPS)
+    return 1;
+  
+  start_address = mbr.memory_maps[region].start_address;
+  end_address = mbr.memory_maps[region].end_address;
+  type = mbr.memory_maps[region].type;
+  
+  return 0;
 }
