@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.4 2005/04/23 18:13:27 nomenquis Exp $
+//   $Id: TextConsole.cpp,v 1.5 2005/04/23 20:08:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.4  2005/04/23 18:13:27  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.3  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -70,4 +74,14 @@ uint32 TextConsole::setAsCurrent()
 uint32 TextConsole::unsetAsCurrent()
 {
   return 0;
+}
+
+void TextConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
+{
+  
+}
+
+void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
+{
+  
 }

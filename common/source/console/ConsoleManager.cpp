@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.cpp,v 1.4 2005/04/23 15:58:32 nomenquis Exp $
+//   $Id: ConsoleManager.cpp,v 1.5 2005/04/23 20:08:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.cpp,v $
+//  Revision 1.4  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.3  2005/04/22 19:43:04  nomenquis
 //   more poison added
 //
@@ -20,6 +23,13 @@
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "ArchCommon.h"
+
+ConsoleManager *ConsoleManager::instance_ = 0;
+
+void ConsoleManager::createConsoleManager(uint32 const &number_of_consoles_to_generate)
+{
+  instance_ = new ConsoleManager(number_of_consoles_to_generate);
+}
 
 ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
 {

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.7 2005/04/23 18:13:27 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.8 2005/04/23 20:08:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
+//  Revision 1.7  2005/04/23 18:13:27  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.5  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -30,16 +34,17 @@ FrameBufferConsole::FrameBufferConsole()
   bits_per_pixel_ = ArchCommon::getVESAConsoleBitsPerPixel();
   bytes_per_pixel_ = bits_per_pixel_ / 8;
   terminal_ = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+  consoleSetForegroundColor(Console::FG_GREEN);
+  consoleSetBackgroundColor(Console::BG_BLACK);
 }
 
 void FrameBufferConsole::consoleClearScreen()
 {
   uint8 *lfb = (uint8*)ArchCommon::getVESAConsoleLFBPtr();
   uint32 i,k;
-  for (i=0;i<x_res_*y_res_*bytes_per_pixel_;++i)
-  {
-    lfb[i]=0;
-  }
+  
+  ArchCommon::bzero((pointer)lfb,x_res_*y_res_*bytes_per_pixel_);
+
   uint32 off = (x_res_ - logo.width) / 2;
   
   for (i=0;i<logo.height;++i)
@@ -79,9 +84,11 @@ void FrameBufferConsole::setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b)
 uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
 {
   uint32 i,k;
-  
-  
   uint32 character_index = character * 16;
+  
+  uint32 *lfb = (uint32*)ArchCommon::getVESAConsoleLFBPtr();
+
+  uint32 top_left_pixel = column*8 + row*16*x_res_;
   
   for (i=0;i<16;++i)
   {
@@ -93,7 +100,11 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
       temp &= 1<<(7-k);
       if (temp)
       {
-        setPixel(column * 8 + k, row * 16 + i,128,128,128);
+        lfb[top_left_pixel + k + i*x_res_] = current_foreground_color_;
+      }
+      else
+      {
+        lfb[top_left_pixel + k + i*x_res_] = current_background_color_;
       }
     }
     
@@ -121,4 +132,23 @@ void FrameBufferConsole::consoleScrollUp()
     (consoleGetNumRows()-1)*consoleGetNumColumns()*4*8*16);
   ArchCommon::bzero(fb+((consoleGetNumRows()-1)*consoleGetNumColumns()*4*8*16),consoleGetNumColumns()*4*8*16);
   
+}
+
+void FrameBufferConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
+{
+  uint8 r,g,b;
+  r = 0;
+  g = 255;
+  b = 0;
+  
+  current_foreground_color_ = (r<<16) + (g<<8) + (b); 
+  
+}
+void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
+{
+  uint8 r,g,b;
+  r = 0;
+  g = 0;
+  b = 0;
+  current_background_color_ = (r<<16) + (g<<8) + (b); 
 }

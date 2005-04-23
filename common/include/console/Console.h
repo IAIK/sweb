@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Console.h,v 1.4 2005/04/23 18:13:26 nomenquis Exp $
+//   $Id: Console.h,v 1.5 2005/04/23 20:08:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Console.h,v $
+//  Revision 1.4  2005/04/23 18:13:26  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.3  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -90,6 +94,10 @@ protected:
   virtual uint32 consoleGetNumColumns() const = 0;
   virtual void consoleScrollUp()=0;
 
+  virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color)=0;
+  virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)=0;
+ 
+ 
   Terminal *terminal_;
 };
 

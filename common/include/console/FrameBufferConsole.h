@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.h,v 1.5 2005/04/23 18:13:27 nomenquis Exp $
+//   $Id: FrameBufferConsole.h,v 1.6 2005/04/23 20:08:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.h,v $
+//  Revision 1.5  2005/04/23 18:13:27  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.4  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -40,6 +44,8 @@ protected:
   virtual uint32 consoleGetNumRows() const;
   virtual uint32 consoleGetNumColumns() const;
   virtual void consoleScrollUp();
+  virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color);
+  virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color);
 
 private:
   
@@ -48,6 +54,9 @@ private:
   uint32 y_res_;
   uint32 bits_per_pixel_;
   uint32 bytes_per_pixel_;
+  uint32 current_foreground_color_;
+  uint32 current_background_color_;
+
 };
 
 

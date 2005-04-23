@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.h,v 1.3 2005/04/23 18:13:27 nomenquis Exp $
+//   $Id: TextConsole.h,v 1.4 2005/04/23 20:08:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.h,v $
+//  Revision 1.3  2005/04/23 18:13:27  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.2  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -33,6 +37,8 @@ private:
   virtual uint32 consoleGetNumRows() const;
   virtual uint32 consoleGetNumColumns() const;
   virtual void consoleScrollUp();
+  virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color);
+  virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color);
 
 };
 
