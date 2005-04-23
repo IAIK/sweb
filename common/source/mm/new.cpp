@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: new.cpp,v 1.3 2005/04/23 15:58:17 btittelbach Exp $
+//   $Id: new.cpp,v 1.4 2005/04/23 15:59:54 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: new.cpp,v $
+//  Revision 1.3  2005/04/23 15:58:17  btittelbach
+//  new mit kmm
+//
 //  Revision 1.2  2005/04/22 19:43:04  nomenquis
 //   more poison added
 //
@@ -13,7 +16,7 @@
 
 //#include "kmalloc.h"
 #include "new.h"
-#include "kmm.h"
+#include "KernelMemoryManager.h"
 
 //KernelMemoryManager kmm = KernelMemoryManager(((pointer) &kernel_end_address )+sizeof(KernelMemoryManager),0x80400000);
 KernelMemoryManager *kmm;
