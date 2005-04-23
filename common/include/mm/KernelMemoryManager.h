@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.2 2005/04/23 17:35:03 nomenquis Exp $
+//   $Id: KernelMemoryManager.h,v 1.3 2005/04/23 22:20:30 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.2  2005/04/23 17:35:03  nomenquis
+//  fixed buggy memory manager
+//  (giving out the same memory several times is no good idea)
+//
 //  Revision 1.1  2005/04/23 16:01:15  btittelbach
 //  Testing Version vom KMM
 //
@@ -100,9 +104,9 @@ private:
   pointer malloc_end_;
 
   //statistics:
-  uint32 segments_used_;
-  uint32 segments_free_;
-  size_t memory_free_;
+ // uint32 segments_used_;
+  //uint32 segments_free_;
+  //size_t memory_free_;
 
   static KernelMemoryManager *instance_;
   

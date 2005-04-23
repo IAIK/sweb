@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.3 2005/04/23 18:13:27 nomenquis Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.4 2005/04/23 22:20:30 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.3  2005/04/23 18:13:27  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.2  2005/04/23 17:35:03  nomenquis
 //  fixed buggy memory manager
 //  (giving out the same memory several times is no good idea)
@@ -101,11 +105,11 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
  //memoryZero(start_address,end_address-start_address);
 
   malloc_end_=end_address;
-  memory_free_=end_address-start_address-sizeof(MallocSegment);
-  first_=new ((void*) start_address) MallocSegment(0,0,memory_free_,false);
+  //memory_free_=end_address-start_address-sizeof(MallocSegment);
+  first_=new ((void*) start_address) MallocSegment(0,0,end_address-start_address-sizeof(MallocSegment),false);
   last_=first_;
-  segments_free_=1;
-  segments_used_=0;
+  //segments_free_=1;
+  //segments_used_=0;
   
 }
 
