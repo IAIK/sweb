@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.4 2005/04/23 11:56:34 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.5 2005/04/23 15:58:31 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.4  2005/04/23 11:56:34  nomenquis
+//  added interface for memory maps, it works now
+//
 //  Revision 1.2  2005/04/22 17:40:57  nomenquis
 //  cleanup
 //
@@ -131,7 +134,7 @@ uint32 ArchCommon::getVESAConsoleWidth()
   return mbr.vesa_x_res;
 }
 
-uint32 ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
+pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
   if (is_paging_set_up)
     return 1024U*1024U*1024U*3U - 1024U*1024U*16U;
@@ -140,6 +143,14 @@ uint32 ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
     return orig_mbr.vesa_lfb_pointer;
   }
+}
+
+pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
+{
+  if (is_paging_set_up)
+    return 0xC00B8000;
+  else
+    return 0x000B8000;
 }
 
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
+//   $Id: TextConsole.cpp,v 1.3 2005/04/23 15:58:32 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.2  2005/04/22 19:43:04  nomenquis
+//   more poison added
+//
 //  Revision 1.1  2005/04/22 17:21:41  nomenquis
 //  added TONS of stuff, changed ZILLIONS of things
 //
@@ -10,42 +13,43 @@
 
 
 #include "TextConsole.h"
-
+#include "Terminal.h"
+#include "ArchCommon.h"
 
 TextConsole::TextConsole()
 {
+  terminal_ = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
 }
 
-uint32 TextConsole::getNumRows()const
+uint32 TextConsole::consoleGetNumRows()const
 {
-  return 20;
+  return 25;
 }
 
-uint32 TextConsole::getNumColumns()const
+uint32 TextConsole::consoleGetNumColumns()const
 {
   return 80;
 }
 
-void TextConsole::clear()
+void TextConsole::consoleClearScreen()
 {
-  
+  char *fb = (char*)ArchCommon::getFBPtr();
+  uint32 i;
+  for (i=0;i<consoleGetNumRows()*consoleGetNumColumns()*2;++i)
+  {
+    fb[i]=0;
+  }
 }
 
-uint32 TextConsole::setCharacter(uint32 const&column, uint32 const &row, uint8 const &character)
+uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
 {
+  char *fb = (char*)ArchCommon::getFBPtr();
+  fb[(column + row*consoleGetNumColumns())*2] = character;
+  fb[(column + row*consoleGetNumColumns())*2+1] = state;
+  
   return 0;
 }
 
-
-void TextConsole::setForegroundColor(uint32 const &color)
-{
-  
-}
-
-void TextConsole::setBackgroundColor(uint32 const &color)
-{
-  
-}
 static void kkkk(char *mesg)
 {
   uint8 * fb = (uint8*)0xC00B8000;

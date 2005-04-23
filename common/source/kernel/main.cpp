@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.10 2005/04/23 12:52:26 nomenquis Exp $
+ * $Id: main.cpp,v 1.11 2005/04/23 15:58:32 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.10  2005/04/23 12:52:26  nomenquis
+ * fixes
+ *
  * Revision 1.9  2005/04/23 12:43:09  nomenquis
  * working page manager
  *
@@ -57,6 +60,34 @@ extern "C"
     next_usable_address = PageManager::createPageManager(next_usable_address);
     */
     ConsoleManager *manager = new ConsoleManager(1);
+    
+    Console *console = manager->getActiveConsole();
+    /*uint32 i,k;
+    
+
+    for (i=0;i<16;++i)
+    {
+      for (k=0;k<16;++k)
+      {
+        console->setBackgroundColor((Console::BACKGROUNDCOLORS)i);
+        console->setForegroundColor((Console::FOREGROUNDCOLORS)k);
+        console->setCharacter(i,k,'A');
+      }
+    }
+    */
+    console->setBackgroundColor(Console::BG_BLACK);
+    console->setForegroundColor(Console::FG_GREEN);
+
+    uint32 i;
+  
+    console->writeString((uint8 const*)"Blabb\n");  
+
+    console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
+    console->writeString((uint8 const*)"Noch ne Zeile\n");
+    console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
+    console->writeString((uint8 const*)"Gruen rackete autobus\n");
+
+
     for (;;);
 	}
 	  

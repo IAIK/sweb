@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.cpp,v 1.3 2005/04/22 19:43:04 nomenquis Exp $
+//   $Id: ConsoleManager.cpp,v 1.4 2005/04/23 15:58:32 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.cpp,v $
+//  Revision 1.3  2005/04/22 19:43:04  nomenquis
+//   more poison added
+//
 //  Revision 1.2  2005/04/22 18:23:16  nomenquis
 //  massive cleanups
 //
@@ -43,7 +46,7 @@ ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
   
   if (number_of_consoles_)
   {
-    consoles_[0]->setAsCurrent();
+    //consoles_[0]->setAsCurrent();
     active_console_ = 0;
   }
 }
@@ -57,11 +60,16 @@ uint32 ConsoleManager::setActiveConsole(uint32 const &console_number)
   if (active_console_ == console_number)
     return 0;
   
-  if (ret = consoles_[active_console_]->unsetAsCurrent())
-    return ret;
+//  if (ret = consoles_[active_console_]->unsetAsCurrent())
+//    return ret;
   
-  ret = consoles_[console_number]->setAsCurrent();
+ // ret = consoles_[console_number]->setAsCurrent();
   active_console_ = console_number;
   
   return ret;
+}
+
+Console *ConsoleManager::getActiveConsole() const
+{
+  return consoles_[active_console_];
 }
