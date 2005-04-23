@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.h,v 1.4 2005/04/23 15:58:32 nomenquis Exp $
+//   $Id: FrameBufferConsole.h,v 1.5 2005/04/23 18:13:27 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.h,v $
+//  Revision 1.4  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.3  2005/04/22 19:18:14  nomenquis
 //  w00t
 //
@@ -36,6 +39,7 @@ protected:
   virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state);
   virtual uint32 consoleGetNumRows() const;
   virtual uint32 consoleGetNumColumns() const;
+  virtual void consoleScrollUp();
 
 private:
   

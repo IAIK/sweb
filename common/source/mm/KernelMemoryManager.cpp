@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.2 2005/04/23 17:35:03 nomenquis Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.3 2005/04/23 18:13:27 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.2  2005/04/23 17:35:03  nomenquis
+//  fixed buggy memory manager
+//  (giving out the same memory several times is no good idea)
+//
 //  Revision 1.1  2005/04/23 15:59:26  btittelbach
 //
 //  Testing Version vom KMM
@@ -25,6 +29,8 @@
 /// 
 
 #include "../../include/mm/KernelMemoryManager.h"
+#include "ArchCommon.h"
+
 //#define assert(x)
 #define assert(condition) sweb_assert(condition,__LINE__,__FILE__);
 
@@ -92,26 +98,7 @@ uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer e
 
 KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address)
 { 
-  assert (start_address > ((pointer) this) + sizeof(this));
-//  assert (start_address > 0x8018A89B && start_address < 0x80400000);
-  assert (start_address < end_address);
-  assert (end_address <= 0x80400000);
-//  assert (((pointer) this)> 0x8018A89B && ((pointer) this) < 0x80400000);
-  //assert(1==2); //are we getting called ?
-  
-  /*
-  uint8 * fb = (uint8*) 0xC00B8000;
-  uint32 i=0;
-  for (uint8 *addr=(uint8*) start_address; addr < ((uint8*) start_address) + 0x6ff; ++addr)
-  {
-    fb[i++] = *addr;
-    fb[i++] = 0x9f; 
-    //assert(*addr=='\0');
-  }
-  */
-  
-  //just to make sure:  
-  //memoryZero(start_address,end_address-start_address);
+ //memoryZero(start_address,end_address-start_address);
 
   malloc_end_=end_address;
   memory_free_=end_address-start_address-sizeof(MallocSegment);
@@ -131,9 +118,6 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
     arch_panic((uint8*)"Not enough Memory left\n");
   
   fillSegment(new_pointer,requested_size);
-  
-  
-  //printout ("allocated memory    ");
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 
@@ -145,6 +129,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address)
   //delete segment
   if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= malloc_end_)
     return false;
+  
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
   if (m_segment->marker_ != 0xdeadbeef)
     return false;
@@ -186,31 +171,13 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
       
     //or not.. lets search for larger space
     pointer new_address = allocateMemory(new_size);
-    memoryCopy(virtual_address, new_address, m_segment->size_);
+    ArchCommon::memcpy(new_address,virtual_address, m_segment->size_);
     freeSegment(m_segment);
     return new_address;
   }
 }
 
 
-
-
-//---Private Helper Functions--------------------------
-
-//this could be much faster
-void KernelMemoryManager::memoryCopy(pointer source, pointer destination, size_t size)
-{
-  for (uint8 *addr=0; addr < (uint8*)size; ++addr)
-    *(destination+addr)=*(source+addr);  
-}
-
-//this could propably be optimized as well
-void KernelMemoryManager::memoryZero(pointer virtual_address, size_t size)
-{
-  for (uint8 *addr=(uint8*)virtual_address; addr < (uint8*)(virtual_address + size); ++addr)
-    *addr='\0';
-
-}
 
 
 MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_address)
@@ -294,7 +261,8 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   mergeWithFollowingFreeSegment(this_one);
    
   //make it all nice and clean and debug friendly
-  memoryZero( ((pointer) this_one)+sizeof(MallocSegment), this_one->size_);
+  // naaaaaaaaaaaa
+  // memoryZero( ((pointer) this_one)+sizeof(MallocSegment), this_one->size_);
 }
 
 bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)

@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.6 2005/04/23 16:23:42 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.7 2005/04/23 18:13:27 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
@@ -112,4 +112,13 @@ uint32 FrameBufferConsole::setAsCurrent()
 uint32 FrameBufferConsole::unsetAsCurrent()
 {
   return 0;
+}
+
+void FrameBufferConsole::consoleScrollUp()
+{
+  pointer fb = ArchCommon::getVESAConsoleLFBPtr();
+  ArchCommon::memcpy(fb, fb+(consoleGetNumColumns()*4*8*16),
+    (consoleGetNumRows()-1)*consoleGetNumColumns()*4*8*16);
+  ArchCommon::bzero(fb+((consoleGetNumRows()-1)*consoleGetNumColumns()*4*8*16),consoleGetNumColumns()*4*8*16);
+  
 }

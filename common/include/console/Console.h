@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Console.h,v 1.3 2005/04/23 15:58:32 nomenquis Exp $
+//   $Id: Console.h,v 1.4 2005/04/23 18:13:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Console.h,v $
+//  Revision 1.3  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.2  2005/04/22 19:18:14  nomenquis
 //  w00t
 //
@@ -78,12 +81,14 @@ public:
   void setForegroundColor(FOREGROUNDCOLORS const &color);
   void setBackgroundColor(BACKGROUNDCOLORS const &color);
  
+  
 protected:
   
   virtual void consoleClearScreen()=0;
   virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)=0;
   virtual uint32 consoleGetNumRows() const = 0;
   virtual uint32 consoleGetNumColumns() const = 0;
+  virtual void consoleScrollUp()=0;
 
   Terminal *terminal_;
 };

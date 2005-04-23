@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.5 2005/04/23 12:43:09 nomenquis Exp $
+ * $Id: types.h,v 1.6 2005/04/23 18:13:26 nomenquis Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.5  2005/04/23 12:43:09  nomenquis
+ * working page manager
+ *
  * Revision 1.4  2005/04/22 19:43:04  nomenquis
  *  more poison added
  *
@@ -28,6 +31,9 @@ typedef unsigned short uint16;
 
 typedef int int32;
 typedef unsigned int uint32;
+
+typedef unsigned long long uint64;
+typedef long long int64;
 
 typedef unsigned int pointer;
 

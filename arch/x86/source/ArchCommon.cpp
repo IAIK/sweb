@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.5 2005/04/23 15:58:31 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.6 2005/04/23 18:13:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.5  2005/04/23 15:58:31  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.4  2005/04/23 11:56:34  nomenquis
 //  added interface for memory maps, it works now
 //
@@ -179,4 +182,52 @@ uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, 
   type = mbr.memory_maps[region].type;
   
   return 0;
+}
+
+#define MEMCOPY_LARGE_TYPE uint64
+
+void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
+{
+  MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)src;
+  MEMCOPY_LARGE_TYPE *d64 = (MEMCOPY_LARGE_TYPE*)dest;
+  
+  uint32 i;
+  uint32 num_64_bit_copies = size / sizeof(MEMCOPY_LARGE_TYPE);
+  uint32 num_8_bit_copies = size % sizeof(MEMCOPY_LARGE_TYPE);
+  
+  for (i=0;i<num_64_bit_copies;++i)
+  {
+    *d64 = *s64;
+    ++d64;
+    ++s64;
+  }
+  uint8 *s8 = (uint8*)s64;
+  uint8 *d8 = (uint8*)d64;
+  
+  for (i=0;i<num_8_bit_copies;++i)
+  {
+    *d8 = *s8;
+    ++d8;
+    ++s8;
+  }
+}
+void ArchCommon::bzero(pointer s, size_t n)
+{
+  MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)s;
+  uint32 num_64_bit_zeros = n / sizeof(MEMCOPY_LARGE_TYPE);
+  uint32 num_8_bit_zeros = n % sizeof(MEMCOPY_LARGE_TYPE);
+  uint32 i;
+  
+  for (i=0;i<num_64_bit_zeros;++i)
+  {
+    *s64 = 0;
+    ++s64;
+  }
+  uint8 *s8 = (uint8*)s64;
+  
+  for (i=0;i<num_8_bit_zeros;++i)
+  {
+    *s8 = 0;
+    ++s8;
+  }
 }

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.3 2005/04/23 15:58:32 nomenquis Exp $
+//   $Id: TextConsole.cpp,v 1.4 2005/04/23 18:13:27 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.3  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.2  2005/04/22 19:43:04  nomenquis
 //   more poison added
 //
@@ -50,21 +53,17 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
   return 0;
 }
 
-static void kkkk(char *mesg)
+void TextConsole::consoleScrollUp()
 {
-  uint8 * fb = (uint8*)0xC00B8000;
-  uint32 i=0;
-  while (mesg && *mesg)
-  {
-    fb[i++] = *mesg++;
-    fb[i++] = 0x9f;
-  }
-  for (;;);
+  pointer fb = ArchCommon::getFBPtr();
+  ArchCommon::memcpy(fb, fb+(consoleGetNumColumns()*2),
+    (consoleGetNumRows()-1)*consoleGetNumColumns()*2);
+  ArchCommon::bzero(fb+((consoleGetNumRows()-1)*consoleGetNumColumns()*2),consoleGetNumColumns()*2);
 }
+
 
 uint32 TextConsole::setAsCurrent()
 {
-  kkkk("I'm the current console");
   return 0;
 }
 

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.1 2005/04/23 15:58:32 nomenquis Exp $
+//  $Id: Terminal.cpp,v 1.2 2005/04/23 18:13:27 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: Terminal.cpp,v $
+//  Revision 1.1  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //----------------------------------------------------------------------
 
 #include "Terminal.h"
@@ -99,7 +102,9 @@ void Terminal::setBackgroundColor(Console::BACKGROUNDCOLORS const &color)
 void Terminal::scrollUp()
 {
   uint32 i,k,runner;
-  console_->consoleClearScreen();
+  
+  console_->consoleScrollUp();
+  //console_->consoleClearScreen();
   runner = 0;
   for (i=0;i<num_rows_-1;++i)
   {
@@ -107,7 +112,7 @@ void Terminal::scrollUp()
     {
       characters_[runner] = characters_[runner+num_columns_];
       character_states_[runner] = character_states_[runner+num_columns_];
-      console_->consoleSetCharacter(i,k,characters_[runner],character_states_[runner]);
+    //  console_->consoleSetCharacter(i,k,characters_[runner],character_states_[runner]);
       ++runner;
     }
   }

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.5 2005/04/23 15:58:31 nomenquis Exp $
+//   $Id: ArchCommon.h,v 1.6 2005/04/23 18:13:26 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.h,v $
+//  Revision 1.5  2005/04/23 15:58:31  nomenquis
+//  lots of new stuff
+//
 //  Revision 1.4  2005/04/23 11:56:34  nomenquis
 //  added interface for memory maps, it works now
 //
@@ -36,6 +39,9 @@ public:
 
   static uint32 getNumUseableMemoryRegions();
   static uint32 getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type);
+
+  static void memcpy(pointer dest, pointer src, size_t size);
+  static void bzero(pointer s, size_t n);
 
 };
 
