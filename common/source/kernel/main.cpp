@@ -1,10 +1,7 @@
 /**
- * $Id: main.cpp,v 1.20 2005/04/24 20:32:14 btittelbach Exp $
+ * $Id: main.cpp,v 1.21 2005/04/24 20:39:31 nomenquis Exp $
  *
  * $Log: main.cpp,v $
- * Revision 1.19  2005/04/24 18:58:45  btittelbach
- * kprintf bugfix
- *
  * Revision 1.18  2005/04/24 16:58:04  nomenquis
  * ultra hack threading
  *
@@ -71,12 +68,12 @@
 #include "arch_panic.h"
 #include "paging-definitions.h"
 #include "console/ConsoleManager.h"
-#include "console/kprintf.h"
 #include "mm/new.h"
 #include "mm/PageManager.h"
 #include "mm/KernelMemoryManager.h"
 #include "ArchInterrupts.h"
 #include "ArchThreads.h"
+#include "console/kprintf.h"
 
 extern void* kernel_end_address;
 
@@ -84,23 +81,23 @@ extern "C" void startup();
 
 void fun1()
 {
-  
-  while (1)
-    ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"Thread 1\n");
+  uint32 i=0;
+  while (++i)
+    kprintf("Kernel Thread 1 %d\n",i);
 }
 
 void fun2()
 {
-  while (1)
-    ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"Thread 2\n");
+  uint32 i=0;
+  while (++i)
+    kprintf("Kernel Thread 2 %d\n",i);
 }
 
 void startup()
 {
   
-  
   pointer start_address = (pointer)&kernel_end_address;
-  pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
+  pointer end_address = (pointer)(1024*1024*1024*2 + 1024*1024*4);
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
   
@@ -121,8 +118,6 @@ void startup()
   // initialise everything, meaning that we'll have a dummy 
   // thread info for the main thread
   //ArchThreads::initialise();
-  
-  kprintf("test %d %o %u %d noch ein String: %s und was hexadezimales %x\nein padding:\n%10d\n%10d\nzero padding:\n%+10d\n%010d\n", 1, 2, -3,-4, "'hallo'",16,200,300,400,500);
   
   ArchThreads::initDemo((pointer)&fun1, (pointer)&fun2);
 

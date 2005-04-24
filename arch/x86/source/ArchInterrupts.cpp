@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.4 2005/04/24 16:58:03 nomenquis Exp $
+//  $Id: ArchInterrupts.cpp,v 1.5 2005/04/24 20:39:31 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.4  2005/04/24 16:58:03  nomenquis
+//  ultra hack threading
+//
 //  Revision 1.3  2005/04/24 10:06:08  nomenquis
 //  commit to compile on different machine
 //
@@ -19,6 +22,7 @@
 #include "structures.h"
 #include "ports.h"
 #include "InterruptUtils.h"
+#include "SegmentUtils.h"
 
 static uint32 interrupts_on = 0;
 static uint32 timer_on = 0;
@@ -26,7 +30,9 @@ static uint32 timer_on = 0;
 // gives the arch a chance to set things up the way it wants to
 void ArchInterrupts::initialise()
 {
+ // disableInterrupts();
   initialise8259s();
+  SegmentUtils::initialise();
   InterruptUtils::initialise();
 }
 
