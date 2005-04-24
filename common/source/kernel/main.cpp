@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.18 2005/04/24 16:58:04 nomenquis Exp $
+ * $Id: main.cpp,v 1.19 2005/04/24 18:58:45 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.18  2005/04/24 16:58:04  nomenquis
+ * ultra hack threading
+ *
  * Revision 1.16  2005/04/24 10:06:09  nomenquis
  * commit to compile on different machine
  *
@@ -65,6 +68,7 @@
 #include "arch_panic.h"
 #include "paging-definitions.h"
 #include "console/ConsoleManager.h"
+#include "console/kprintf.h"
 #include "mm/new.h"
 #include "mm/PageManager.h"
 #include "mm/KernelMemoryManager.h"
@@ -91,8 +95,9 @@ void fun2()
 void startup()
 {
   
+  
   pointer start_address = (pointer)&kernel_end_address;
-  pointer end_address = (pointer)(1024*1024*1024*2 + 1024*1024*4);
+  pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
   
@@ -113,6 +118,8 @@ void startup()
   // initialise everything, meaning that we'll have a dummy 
   // thread info for the main thread
   //ArchThreads::initialise();
+  
+  kprintf("test %d %o %u %d noch ein String: %s und was hexadezimales %x\n", 1, 2, -3,-4, "'hallo'",16);
   
   ArchThreads::initDemo((pointer)&fun1, (pointer)&fun2);
 

@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.1 2005/04/24 13:33:40 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.2 2005/04/24 18:58:45 btittelbach Exp $
 //----------------------------------------------------------------------
-//   $Log: kprintf.cpp $
+//   $Log: kprintf.cpp,v $
+//   Revision 1.1  2005/04/24 13:33:40  btittelbach
+//   skeleton of a kprintf
+//
 //
 //----------------------------------------------------------------------
 
@@ -36,9 +39,9 @@ void output_number(Console *console, uint32 num, uint32 base, int32 precision, u
 	//~ c = (type & ZEROPAD) ? '0' : ' ';
 	sign = 0;
 	if (type & SIGN) {
-		if ((int64) num < 0) {
+		if (((int32) num) < 0) {
 			sign = '-';
-			num = - (int64) num;
+			num = - (int32) num;
 			//size--;
 		} else if (type & PLUS) {
 			sign = '+';
@@ -59,9 +62,8 @@ void output_number(Console *console, uint32 num, uint32 base, int32 precision, u
 		tmp[i++]='0';
 	else while (num != 0)
   {
-    //		tmp[i++] = digits[do_div(num,base)];
+		tmp[i++] = digits[num%base];
     num /= base;
-		tmp[i++] = digits[num];
   }
 	if (i > precision)
 		precision = i;
