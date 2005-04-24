@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.2 2005/04/23 20:32:30 nomenquis Exp $
+//  $Id: ArchInterrupts.cpp,v 1.3 2005/04/24 10:06:08 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.2  2005/04/23 20:32:30  nomenquis
+//  timer interrupt works
+//
 //  Revision 1.1  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -78,10 +81,47 @@ void setInterruptVector(uint32 key, pointer handler_function)
   setvect(&int_vect, key);
 }
 
+typedef struct ArchThreadInfo
+{
+  uint32  eip;       // 0
+  uint32  cs;        // 4
+  uint32  eflags;    // 8
+  uint32  eax;       // 12
+  uint32  ecx;       // 16
+  uint32  edx;       // 20
+  uint32  ebx;       // 24
+  uint32  esp;       // 28
+  uint32  ebp;       // 32
+  uint32  esi;       // 36
+  uint32  edi;       // 40
+  uint32  ds;        // 44
+  uint32  es;        // 48
+  uint32  fs;        // 52
+  uint32  gs;        // 56
+  uint32  ss;        // 60
+  uint32  dpl;       // 64
+  uint32  esp0;      // 68
+  uint32  ss0;       // 72
+  uint32  cr3;       // 76
+  uint32  fpu[27];   // 80
+};
+
+typedef struct ArchThread
+{
+  ArchThreadInfo *thread_info;
+  uint8 *stack;
+  
+};
+extern ArchThread *thread1;
+extern ArchThread *thread2;
+extern ArchThread *current;
+extern "C" void arch_switch_thread1();
+
 void handleTimerInterrupt(regs_t *regs)
 {
   if (timer_handler_callback)
     timer_handler_callback();
   
   outportb(0x20, 0x20);
+//  arch_switch_thread1();
 }
