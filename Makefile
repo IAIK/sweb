@@ -36,7 +36,7 @@ install: kernel
 	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 #	test -e $(OBJECTDIR)/bin/e2fsimage || (echo ERROR e2fsimage or libs not found; exit 1)
-	test -!e $(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
+	test -e !$(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
 	mkdir $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp/boot
 	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
