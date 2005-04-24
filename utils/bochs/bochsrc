@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.5 2005/04/23 12:43:09 nomenquis Exp $
+#*    $Id: bochsrc,v 1.6 2005/04/24 16:58:04 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.5  2005/04/23 12:43:09  nomenquis
+#*    working page manager
+#*
 #*    Revision 1.4  2005/04/23 11:56:35  nomenquis
 #*    added interface for memory maps, it works now
 #*
@@ -425,7 +428,9 @@ log: bochsout.txt
 panic: action=ask
 error: action=report
 info: action=report
-debug: action=ignore
+#debug: action=ignore
+debug: action=report
+#pass: action=report
 #pass: action=fatal
 
 #=======================================================================

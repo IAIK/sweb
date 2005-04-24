@@ -1,7 +1,11 @@
 /**
- * $Id: types.h,v 1.6 2005/04/23 18:13:26 nomenquis Exp $
+ * $Id: types.h,v 1.7 2005/04/24 16:58:03 nomenquis Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.6  2005/04/23 18:13:26  nomenquis
+ * added optimised memcpy and bzero
+ * These still could be made way faster by using asm and using cache bypassing mov instructions
+ *
  * Revision 1.5  2005/04/23 12:43:09  nomenquis
  * working page manager
  *
@@ -46,6 +50,10 @@ typedef unsigned int size_t;
 #pragma GCC poison short
 #pragma GCC poison long
 #pragma GCC poison unsigned
+
+#define KERNEL_CS (8*3)
+#define KERNEL_DS (8*2)
+#define KERNEL_SS (8*2)
 
 
 #endif

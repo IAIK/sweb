@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.2 2005/04/23 20:32:30 nomenquis Exp $
+//  $Id: ArchInterrupts.h,v 1.3 2005/04/24 16:58:03 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.2  2005/04/23 20:32:30  nomenquis
+//  timer interrupt works
+//
 //  Revision 1.1  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -25,8 +28,6 @@ public:
 
   // gives the arch a chance to set things up the way it wants to
   static void initialise();
-  
-  static void setTimerHandler(TimerHandlerCallback timer_handler);
 
   static void enableTimer();
   static void disableTimer();

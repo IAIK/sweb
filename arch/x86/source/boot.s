@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.11 2005/04/23 11:56:34 nomenquis Exp $
+; $Id: boot.s,v 1.12 2005/04/24 16:58:04 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.11  2005/04/23 11:56:34  nomenquis
+; added interface for memory maps, it works now
+;
 ; Revision 1.10  2005/04/22 20:14:25  nomenquis
 ; fix for crappy old gcc versions
 ;
@@ -265,30 +268,30 @@ mov     cr3,eax         ; cr3 = &PD
 
    mov word[0C00B8014h], 4331h
 
-EXTERN initInterruptHandlers
-mov eax,initInterruptHandlers;
-call eax;
+;EXTERN initInterruptHandlers
+;mov eax,initInterruptHandlers;
+;call eax;
 
-   mov word[0C00B8016h], 4332h
+ ;  mov word[0C00B8016h], 4332h
 
    ; set up interrupt handlers, then load IDT register
-   mov ecx,(idt_end - idt) >> 3 ; number of exception handlers
-   mov edi,idt
-   mov esi,isr0
-do_idt:
-   mov eax,esi			; EAX=offset of entry point
-   mov [edi],ax			; set low 16 bits of gate offset
-   shr eax,16
-   mov [edi + 6],ax		; set high 16 bits of gate offset
-   add edi,8			; 8 bytes/interrupt gate
-   add esi,(isr1 - isr0)		; bytes/stub
-   loop do_idt
+;   mov ecx,(idt_end - idt) >> 3 ; number of exception handlers
+;   mov edi,idt
+;   mov esi,isr0
+;do_idt:
+;   mov eax,esi			; EAX=offset of entry point
+;   mov [edi],ax			; set low 16 bits of gate offset
+;   shr eax,16
+;   mov [edi + 6],ax		; set high 16 bits of gate offset
+;   add edi,8			; 8 bytes/interrupt gate
+;   add esi,(isr1 - isr0)		; bytes/stub
+;   loop do_idt
 
-   mov eax, idt_ptr
+;   mov eax, idt_ptr
 
-   mov word[0C00B8018h], 4334h
+;   mov word[0C00B8018h], 4334h
 
-   lidt [eax]
+;   lidt [eax]
 
    mov word[0C00B801Ah], 4335h
 
@@ -318,6 +321,31 @@ EXTERN startup ; tell the assembler we have a main somewhere
    call startup ; hellloooo, here we are in c !
    jmp $ ; suicide
 
+global reload_segements
+reload_segements:
+   ; ok, next thing to do is to load our own descriptor table
+   ; this one will spawn just one huge segment for the whole address space
+   lgdt [gdt_ptr_very_new]
+
+   ; now prepare all the segment registers to use our segments
+   mov ax, LINEAR_DATA_SEL
+   mov ds,ax
+   mov es,ax
+   mov ss,ax
+   mov fs,ax
+   mov gs,ax
+
+   ; use these segments
+   jmp LINEAR_CODE_SEL:(reload_segments_new)
+
+reload_segments_new:
+
+    ret;
+    
+    
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 ;; this will help us to boot, this way we can tell grub
 ;; what to do
@@ -344,238 +372,7 @@ mboot:
    dd 600 ; height
    dd 32; depth
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; interrupt/exception handlers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-SECTION .text
-EXTERN arch_handleInterrupt;
-
-; I shouldn't have to do this!
-%macro PUSHB 1
-   db 6Ah
-   db %1
-%endmacro
-
-%macro INTR 1        ; (byte offset from start of stub)
-GLOBAL isr%1
-isr%1:
-   push byte 0       ; ( 0) fake error code
-   PUSHB %1          ; ( 2) exception number
-   push gs           ; ( 4) push segment registers
-   push fs           ; ( 6)
-   push es           ; ( 8)
-   push ds           ; ( 9)
-   pusha             ; (10) push GP registers
-      mov ax,LINEAR_DATA_SEL; (11) put known-good values...
-      mov ds,eax     ; (15) ...in segment registers
-      mov es,eax     ; (17)
-      mov fs,eax     ; (19)
-      mov gs,eax     ; (21)
-      mov eax,esp    ; (23)
-      push eax       ; (25) push pointer to regs_t
-.1:
-; setvect() changes the operand of the CALL instruction at run-time,
-; so we need its location = 27 bytes from start of stub. We also want
-; the CALL to use absolute addressing instead of EIP-relative, so:
-      mov eax,arch_handleInterrupt; (26)
-      call eax       ; (31)
-      jmp all_ints   ; (33)
-%endmacro            ; (38)
-
-
-%macro INTR_EC 1
-GLOBAL isr%1
-isr%1:
-	nop				; error code already pushed
-	nop				; nop+nop=same length as push byte
-	PUSHB %1			; ( 2) exception number
-	push gs				; ( 4) push segment registers
-	push fs				; ( 6)
-	push es				; ( 8)
-	push ds				; ( 9)
-	pusha				; (10) push GP registers
-		mov ax,LINEAR_DATA_SEL	; (11) put known-good values...
-		mov ds,eax		; (15) ...in segment registers
-		mov es,eax		; (17)
-		mov fs,eax		; (19)
-		mov gs,eax		; (21)
-		mov eax,esp		; (23)
-		push eax		; (25) push pointer to regs_t
-.1:
-; setvect() changes the operand of the CALL instruction at run-time,
-; so we need its location = 27 bytes from start of stub. We also want
-; the CALL to use absolute addressing instead of EIP-relative, so:
-			mov eax,arch_handleInterrupt; (26)
-			call eax	; (31)
-			jmp all_ints	; (33)
-%endmacro				; (38)
-
-; the vector within the stub (operand of the CALL instruction)
-; is at (isr0.1 - isr0 + 1)
-
-all_ints:
-	pop eax
-	popa				; pop GP registers
-	pop ds				; pop segment registers
-	pop es
-	pop fs
-	pop gs
-	add esp,8			; drop exception number and error code
-	iret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; name:			getvect
-; action:		reads interrupt vector
-; in:			[EBP + 12] = vector number
-; out:			vector stored at address given by [EBP + 8]
-; modifies:		EAX, EDX
-; minimum CPU:		'386+
-; notes:		C prototype:
-;			typedef struct
-;			{	unsigned access_byte, eip; } vector_t;
-;			getvect(vector_t *v, unsigned vect_num);
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-GLOBAL getvect
-getvect: 
-	push ebp
-		mov ebp,esp
-		push esi
-		push ebx
-			mov esi,[ebp + 8]
-
-; get access byte from IDT[i]
-			xor ebx,ebx
-			mov bl,[ebp + 12]
-			shl ebx,3
-			mov al,[idt + ebx + 5]
-			mov [esi + 0],eax
-
-; get handler address from stub
-			mov eax,isr1
-			sub eax,isr0	; assume stub size < 256 bytes
-			mul byte [ebp + 12]
-			mov ebx,eax
-			add ebx,isr0
-			mov eax,[ebx + (isr0.1 - isr0 + 1)]
-			mov [esi + 4],eax
-		pop ebx
-		pop esi
-	pop ebp
-	ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; name:			setvect
-; action:		writes interrupt vector
-; in:			[EBP + 12] = vector number,
-;			vector stored at address given by [EBP + 8]
-; out:			(nothing)
-; modifies:		EAX, EDX
-; minimum CPU:		'386+
-; notes:		C prototype:
-;			typedef struct
-;			{	unsigned access_byte, eip; } vector_t;
-;			getvect(vector_t *v, unsigned vect_num);
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-GLOBAL setvect
-setvect: 
-	push ebp
-		mov ebp,esp
-		push esi
-		push ebx
-			mov esi,[ebp + 8]
-
-; store access byte in IDT[i]
-			mov eax,[esi + 0]
-			xor ebx,ebx
-			mov bl,[ebp + 12]
-			shl ebx,3
-			mov [idt + ebx + 5],al
-
-; store handler address in stub
-			mov eax,isr1
-			sub eax,isr0	; assume stub size < 256 bytes
-			mul byte [ebp + 12]
-			mov ebx,eax
-			add ebx,isr0
-			mov eax,[esi + 4]
-			mov [ebx + (isr0.1 - isr0 + 1)],eax
-		pop ebx
-		pop esi
-	pop ebp
-	ret
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; interrupt/exception stubs
-; *** CAUTION: these must be consecutive, and must all be the same size.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-	INTR 0		; zero divide (fault)
-	INTR 1		; debug/single step
-	INTR 2		; non-maskable interrupt (trap)
-	INTR 3		; INT3 (trap)
-	INTR 4		; INTO (trap)
-	INTR 5		; BOUND (fault)
-	INTR 6		; invalid opcode (fault)
-	INTR 7		; coprocessor not available (fault)
-	INTR_EC 8	; double fault (abort w/ error code)
-	INTR 9		; coproc segment overrun (abort; 386/486SX only)
-	INTR_EC 0Ah	; bad TSS (fault w/ error code)
-	INTR_EC 0Bh	; segment not present (fault w/ error code)
-	INTR_EC 0Ch	; stack fault (fault w/ error code)
-	INTR_EC 0Dh	; GPF (fault w/ error code)
-	INTR_EC 0Eh	; page fault
-	INTR 0Fh	; reserved
-	INTR 10h	; FP exception/coprocessor error (trap)
-	INTR 11h	; alignment check (trap; 486+ only)
-	INTR 12h	; machine check (Pentium+ only)
-	INTR 13h
-	INTR 14h
-	INTR 15h
-	INTR 16h
-	INTR 17h
-	INTR 18h
-	INTR 19h
-	INTR 1Ah
-	INTR 1Bh
-	INTR 1Ch
-	INTR 1Dh
-	INTR 1Eh
-	INTR 1Fh
-
-; isr20 through isr2F are hardware interrupts. The 8259 programmable
-; interrupt controller (PIC) chips must be reprogrammed to make these work.
-	INTR 20h	; IRQ 0/timer interrupt
-	INTR 21h	; IRQ 1/keyboard interrupt
-	INTR 22h
-	INTR 23h
-	INTR 24h
-	INTR 25h
-	INTR 26h	; IRQ 6/floppy interrupt
-	INTR 27h
-	INTR 28h	; IRQ 8/real-time clock interrupt
-	INTR 29h
-	INTR 2Ah
-	INTR 2Bh
-	INTR 2Ch
-	INTR 2Dh	; IRQ 13/math coprocessor interrupt
-	INTR 2Eh	; IRQ 14/primary ATA ("IDE") drive interrupt
-	INTR 2Fh	; IRQ 15/secondary ATA drive interrupt
-
-; syscall software interrupt
-	INTR 30h
-
-; the other 207 vectors are undefined
-
-%assign i 31h
-%rep (0FFh - 30h)
-
-	INTR i
-
-%assign i (i + 1)
-%endrep
-
-
+section .text
 ; this is the data section
 ; you can see that the first thing we have here is our magic value
 
@@ -654,19 +451,36 @@ gdt:
 	db 0FAh			; present,ring 3,code,non-conforming,readable
 	db 0CFh                 ; page-granular (4 gig limit), 32-bit
 	db 0
+  gdt_end:
 
-gdt_end:
+; basically the same thing as before, but we also need a descriptor for user code
+global tss_selector
+tss_selector:
+ TSS_SEL	equ	$-gdt
+	dw 0
+	dw 0
+	db 0
+	db 0			; present,ring 3,code,non-conforming,readable
+	db 0                 ; page-granular (4 gig limit), 32-bit
+	db 0
+gdt_real_end:
 
 gdt_ptr:
 	dw gdt_end - gdt - 1
 	dd gdt - BASE
-
+  
+global gdt_ptr_new
 gdt_ptr_new:
 
 	dw gdt_end - gdt - 1
 	dd gdt
 	
+global gdt_ptr_very_new
+gdt_ptr_very_new:
 
+	dw gdt_real_end - gdt - 1
+	dd gdt
+	
 
 %rep 1024
  dd 0

@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.6 2005/04/22 17:21:41 nomenquis Exp $
+# $Id: toolchain.mk,v 1.7 2005/04/24 16:58:04 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.6  2005/04/22 17:21:41  nomenquis
+# added TONS of stuff, changed ZILLIONS of things
+#
 # Revision 1.5  2005/04/21 21:31:24  nomenquis
 # added lfb support, also we now use a different grub version
 # we also now read in the grub multiboot version
@@ -78,8 +81,8 @@ MAKE := $(MAKE_TEMP)
 
 ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
-CXXFLAGS := $(CXXFLAGS) -O3 -g -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-CCFLAGS := $(CCFLAGS) -O3 -g -Wall -W -nostdinc -fno-builtin
+CXXFLAGS := $(CXXFLAGS) -fpack-struct -O3 -g -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+CCFLAGS := $(CCFLAGS) -fpack-struct -O3 -g -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
 endif
