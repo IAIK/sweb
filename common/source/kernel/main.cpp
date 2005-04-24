@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.19 2005/04/24 18:58:45 btittelbach Exp $
+ * $Id: main.cpp,v 1.20 2005/04/24 20:32:14 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.19  2005/04/24 18:58:45  btittelbach
+ * kprintf bugfix
+ *
  * Revision 1.18  2005/04/24 16:58:04  nomenquis
  * ultra hack threading
  *
@@ -119,7 +122,7 @@ void startup()
   // thread info for the main thread
   //ArchThreads::initialise();
   
-  kprintf("test %d %o %u %d noch ein String: %s und was hexadezimales %x\n", 1, 2, -3,-4, "'hallo'",16);
+  kprintf("test %d %o %u %d noch ein String: %s und was hexadezimales %x\nein padding:\n%10d\n%10d\nzero padding:\n%+10d\n%010d\n", 1, 2, -3,-4, "'hallo'",16,200,300,400,500);
   
   ArchThreads::initDemo((pointer)&fun1, (pointer)&fun2);
 
