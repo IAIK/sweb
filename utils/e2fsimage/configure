@@ -1,0 +1,161 @@
+#!/bin/sh -e
+
+#####################################################
+# this configure-script searches for the needed includes
+# and libraries.
+#
+# if you have a very unusual setup or you are cross-compiling
+# you can edit "Local.mak" to fit your needs and to reflect your setup
+# 
+# The Makefiles should support parallel builds.
+#
+#######################################################
+
+version=0.2.0
+DIRS=""
+
+for dir in $@; do
+  DIRS="$DIRS `cd $dir; pwd`"
+done
+DIRS="$DIRS /usr /usr/local"
+echo $DIRS
+
+CF=""
+LIBS=
+LDIRS=
+
+err() {
+  echo
+  echo ERROR: $1
+  echo 
+  err_occ=Y
+}
+
+#adds an includedir to $CF
+add_include() {
+  for _dir in -I/usr/include ${CF}; do
+    if test "-I$1" = "${_dir}"; then
+      return 0
+    fi
+  done
+ 
+  CF="${CF} -I$1"
+}
+
+add_lib() {
+  LIBS="$LIBS -l$2"
+  for _libs in -L/usr/lib ${LDIRS}; do
+    if test "-L$1" = "${_libs}"; then
+      return 0
+    fi
+  done
+
+  LDIRS="${LDIRS} -L$1"
+}
+
+# check for includes
+search_includes() {
+  for dir in ${DIRS};  do
+    for incdir in /include ""; do
+      for dbn in "" ${subdirs}; do
+        if test -r ${dir}${incdir}${dbn}/$1; then
+          add_include ${dir}${incdir}${dbn}
+          echo Found: $1 at ${dir}${incdir}${dbn}
+          return 0
+        fi
+      done
+    done
+  done
+  return 1
+}
+
+# check for libs
+search_lib() {
+  for dbn in $@; do
+    for dir in ${DIRS};  do
+      for libdir in /lib "";  do
+        for suffix in so dylib obj a; do
+          if test -r ${dir}${libdir}/lib${dbn}.${suffix}; then
+            add_lib ${dir}${libdir} ${dbn};
+	    echo Found: lib${dbn}.${suffix} at ${dir}/lib
+            return 0
+	  fi
+        done
+      done
+    done
+  done
+  return 1
+}
+ 
+
+######################## e2fsprogs
+subdirs="/lib"
+search_includes ext2fs/ext2fs.h || err "Ext2progs header files were not found (ex2fs.h)"
+search_includes e2p/e2p.h || err "Ext2progs header files were not found (e2p.h)"
+search_lib ext2fs && \
+search_lib com_err || \
+	err "The ext2progs librarys were not found. Try installing e2fsprogs-dev" 
+
+##### Try to compile them all together and show the versions.
+cat >conftest.c <<EOF
+#include <e2p/e2p.h>
+main(){ const char *v, *d; ext2fs_get_library_version(&v,&d);
+printf("\nThe version of the e2fs library is: %s, %s\n", v, d);return 0;}
+EOF
+
+if gcc $LDIRS $CF $CFLAGS conftest.c $LIBS -o conftest &>conftest.log ; then
+  ./conftest || err "Unable to execute a freshly compiled application, maybe you have to adjust your LD_LIBRARY_PATH or /etc/ld.so.conf"
+  rm -f conftest.c conftest conftest.log
+else
+  err "Unable to compile a minimal application look at 'conftest.log' for errors"
+ echo gcc $LIBS $LDIRS $CF $CFLAGS conftest.c -o conftest >>conftest.log
+fi
+
+
+echo
+echo "LDFLAGS   :${LIBS}${LDIRS}"
+echo "PREFIX    :${prefix:=/usr/local}"
+echo "CPPFLAGS  :${CF}"
+echo "CFLAGS    :${CFLAGS:=-Wall}"
+echo "VERSION   :${version}"
+echo
+
+cat >Local.mak <<EOF
+CPPFLAGS=$CF
+CFLAGS=${CFLAGS}
+
+LDFLAGS=$LDIRS
+LIBS=$LIBS
+
+CC=${CC:=gcc}
+LD=${LD:=ld}
+STRIP=${STRIP:=strip}
+
+prefix=${prefix}
+basedir=${basedir}
+mandir=${mandir:=man}
+VERSION=${version}
+
+EOF
+
+for dirs in /bin /usr/bin /usr/local/bin /sw/bin; do
+  for make in gmake make; do
+    if ${dirs}/${make} -v 2>/dev/null | grep GNU; then
+      mak=${dirs}/${make}
+    fi
+  done  
+done
+
+echo
+if test ! -z "${mak}"; then
+  echo A usable "make" executable was found in ${mak}
+else
+  echo No usable "make" executable found.
+fi
+echo
+
+if test "x${err_occ}" = "xY"; then
+  echo
+  echo An error occured. Please edit 'Local.mak' manually if compiling fails.
+fi
+
