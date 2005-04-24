@@ -1,0 +1,32 @@
+
+default 3
+
+title = Sweb
+root (fd0)
+kernel = /boot/kernel.x
+
+title = Sweb - SVGA - 640x480x32
+root (fd0)
+kernel = /boot/kernel.x
+vbematch 640 480 32
+
+title = Sweb - SVGA - 800x600x32
+root (fd0)
+kernel = /boot/kernel.x
+vbematch 800 600 32
+
+title = Sweb - SVGA - 1024x768x32
+root (fd0)
+kernel = /boot/kernel.x
+vbematch 1024 768 32
+
+title = Sweb - SVGA - 1280x1024x32
+root (fd0)
+kernel = /boot/kernel.x
+vbematch 1280 1024 32
+
+title = Sweb - SVGA - 1600x1200x32
+root (fd0)
+kernel = /boot/kernel.x
+vbematch 1600 1200 32
+
