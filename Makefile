@@ -30,6 +30,21 @@ install: kernel
 	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
 	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
+	
+#	@echo "Starting with install - ext2"
+#	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
+#	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
+#	test -e $(OBJECTDIR)/bin/e2fsimage || (echo ERROR e2fsimage or libs not found; exit 1)
+#	test -!e $(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
+#	mkdir $(OBJECTDIR)/e2fstemp
+#	mkdir $(OBJECTDIR)/e2fstemp/boot
+#	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
+#	cp ./images/menu.lst $(OBJECTDIR)/e2fstemp/boot/grub
+#	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
+#	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
+#	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
+	
+	
 
 bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya: 1_44=boot.img, status=inserted\"" 
