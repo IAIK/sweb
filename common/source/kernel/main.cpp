@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.16 2005/04/24 10:06:09 nomenquis Exp $
+ * $Id: main.cpp,v 1.17 2005/04/24 13:33:40 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.16  2005/04/24 10:06:09  nomenquis
+ * commit to compile on different machine
+ *
  * Revision 1.15  2005/04/23 20:32:30  nomenquis
  * timer interrupt works
  *
@@ -62,6 +65,7 @@
 #include "arch_panic.h"
 #include "paging-definitions.h"
 #include "console/ConsoleManager.h"
+#include "console/kprintf.h"
 #include "mm/new.h"
 #include "mm/PageManager.h"
 #include "mm/KernelMemoryManager.h"
@@ -202,6 +206,8 @@ void printblubb()
     console->writeString((uint8 const*)"Gruen rackete autobus\n");
     console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
 
+    kprintf("KprintF Test #%d #%d #%d und %s und was hexadecimales: %x\n", 1,2,3, " noch ein string :)", 16);
+    
     ArchInterrupts::initialise();
     ArchInterrupts::setTimerHandler(&TickTack);
     ArchInterrupts::enableTimer();
