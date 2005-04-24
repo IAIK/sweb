@@ -1,6 +1,6 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
-SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm utils/mtools 
+SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm utils/mtools utils/e2fsimage 
 SHARED_LIBS :=  common/source/console/libConsole.a arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/mm/libMM.a
 PROJECT_ROOT := .
 
@@ -31,18 +31,19 @@ install: kernel
 	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
 	
-#	@echo "Starting with install - ext2"
-#	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
-#	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
+	@echo "Starting with install - ext2"
+	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
+	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
+	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 #	test -e $(OBJECTDIR)/bin/e2fsimage || (echo ERROR e2fsimage or libs not found; exit 1)
-#	test -!e $(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
-#	mkdir $(OBJECTDIR)/e2fstemp
-#	mkdir $(OBJECTDIR)/e2fstemp/boot
-#	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
-#	cp ./images/menu.lst $(OBJECTDIR)/e2fstemp/boot/grub
-#	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
-#	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
-#	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
+	test -!e $(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
+	mkdir $(OBJECTDIR)/e2fstemp
+	mkdir $(OBJECTDIR)/e2fstemp/boot
+	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
+	cp ./images/menu.lst $(OBJECTDIR)/e2fstemp/boot/grub
+	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
+	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
+	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
 	
 	
 
