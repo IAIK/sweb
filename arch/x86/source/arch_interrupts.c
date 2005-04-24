@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: arch_interrupts.c,v 1.3 2005/04/24 10:32:05 nomenquis Exp $
+//   $Id: arch_interrupts.c,v 1.4 2005/04/24 10:41:56 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: arch_interrupts.c,v $
@@ -32,25 +32,25 @@ typedef struct
 static generic_interrupt_handler* interrupt_vector_table[256];
 
 #define FOOBAR(asd)       case asd##0:\
-        arch_panic("PANIC: No handler for irq asd##0");\
+        arch_panic("PANIC: No handler for irq "#asd"0");\
       case asd##1:\
-        arch_panic("PANIC: No handler for irq asd##1");\
+        arch_panic("PANIC: No handler for irq "#asd"1");\
       case asd##2:\
-        arch_panic("PANIC: No handler for irq asd##2");\
+        arch_panic("PANIC: No handler for irq "#asd"2");\
       case asd##3:\
-        arch_panic("PANIC: No handler for irq asd##3");\
+        arch_panic("PANIC: No handler for irq "#asd"3");\
       case asd##4:\
-        arch_panic("PANIC: No handler for irq asd##4");\
+        arch_panic("PANIC: No handler for irq "#asd"4");\
       case asd##5:\
-        arch_panic("PANIC: No handler for irq asd##5");\
+        arch_panic("PANIC: No handler for irq "#asd"5");\
       case asd##6:\
-        arch_panic("PANIC: No handler for irq asd##6");\
+        arch_panic("PANIC: No handler for irq "#asd"6");\
       case asd##7:\
-        arch_panic("PANIC: No handler for irq asd##7");\
+        arch_panic("PANIC: No handler for irq "#asd"7");\
       case asd##8:\
-        arch_panic("PANIC: No handler for irq asd##8");\
+        arch_panic("PANIC: No handler for irq "#asd"8");\
       case asd##9:\
-        arch_panic("PANIC: No handler for irq asd##9");\
+        arch_panic("PANIC: No handler for irq "#asd"9");\
 
 void arch_handleInterrupt(void *r)
 {
