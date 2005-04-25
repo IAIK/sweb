@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.2 2005/04/24 20:43:17 nomenquis Exp $
+# $Id: Makefile,v 1.3 2005/04/25 19:34:48 nomenquis Exp $
 #
 ######################################################################
 
@@ -14,10 +14,10 @@ OBJS=main.o copy.o symlink.o util.o mkdir.o \
 unused_OBJ=initfs.o
 
 e2fsimage: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -melf_32 -o $@ $^ $(LIBS) 
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) 
 
 %.o: %.c Makefile Local.mak e2fsimage.h
-	$(CC) $(CPPFLAGS) -m32 -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
+	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJS) e2fsimage

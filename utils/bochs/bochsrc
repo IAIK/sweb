@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.6 2005/04/24 16:58:04 nomenquis Exp $
+#*    $Id: bochsrc,v 1.7 2005/04/25 19:34:48 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.6  2005/04/24 16:58:04  nomenquis
+#*    ultra hack threading
+#*
 #*    Revision 1.5  2005/04/23 12:43:09  nomenquis
 #*    working page manager
 #*
@@ -330,7 +333,7 @@ boot: floppy
 # 200Mhz Pentium with Linux 2.x                   approx 0.5 Mips
 #
 #=======================================================================
-ips: 1000000
+ips: 10000000
 
 #=======================================================================
 # CLOCK:
