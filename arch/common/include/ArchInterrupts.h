@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.4 2005/04/25 21:15:41 nomenquis Exp $
+//  $Id: ArchInterrupts.h,v 1.5 2005/04/25 22:40:18 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.4  2005/04/25 21:15:41  nomenquis
+//  lotsa changes
+//
 //  Revision 1.3  2005/04/24 16:58:03  nomenquis
 //  ultra hack threading
 //
@@ -37,7 +40,7 @@ public:
   
   // enable interrupts, no matter what, this is bad
   static void enableInterrupts();
-  static uint32 disableInterrupts();
+  static void disableInterrupts();
   static void setOldInterruptState(uint32 const &flags);
 
 };

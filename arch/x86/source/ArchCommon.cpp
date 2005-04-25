@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.7 2005/04/25 21:15:41 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.8 2005/04/25 22:40:18 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.7  2005/04/25 21:15:41  nomenquis
+//  lotsa changes
+//
 //  Revision 1.6  2005/04/23 18:13:26  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -82,7 +85,7 @@ extern "C" void parseMultibootHeader();
 void parseMultibootHeader()
 {
   uint32 i;
-  uint8 * fb = (uint8*)0x000B8000;
+  //uint8 * fb = (uint8*) 0x000B8000;
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer);
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
   if (mb_infos && mb_infos->flags & 1<<11)
