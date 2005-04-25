@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.7 2005/04/25 22:40:19 btittelbach Exp $
+//  $Id: ArchInterrupts.cpp,v 1.8 2005/04/25 22:41:58 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.7  2005/04/25 22:40:19  btittelbach
+//  Anti Warnings v0.1
+//
 //  Revision 1.6  2005/04/25 21:15:41  nomenquis
 //  lotsa changes
 //
@@ -40,8 +43,11 @@ void ArchInterrupts::initialise()
   initialise8259s();
   SegmentUtils::initialise();
   InterruptUtils::initialise();
-//  for (i=0;i<16;++i)
-//     disableIRQint(i);
+  //uint32 * bla = (uint32*)(1024*1024*1024*1 + 1000);
+  //*bla = 24;
+
+  for (i=0;i<16;++i)
+     disableIRQ(i);
 
 }
 

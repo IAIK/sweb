@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.2 2005/04/22 18:23:04 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.3 2005/04/25 22:41:58 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.2  2005/04/22 18:23:04  nomenquis
+ * massive cleanups
+ *
  * Revision 1.1  2005/04/22 17:40:58  nomenquis
  * cleanup
  *
@@ -75,9 +78,17 @@ void initialiseBootTimePaging()
   for (i=0;i<1024;++i)
   {
     pte_start[i].present = 1;
+    pte_start[i].writeable = 0;
+    pte_start[i].page_base_address = i;
+  }
+  
+  for (i=1024;i<1024;++i)
+  {
+    pte_start[i].present = 1;
     pte_start[i].writeable = 1;
     pte_start[i].page_base_address = i;
   }
+
   
   if (ArchCommon::haveVESAConsole(0))
   {
