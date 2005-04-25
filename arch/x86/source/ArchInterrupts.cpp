@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.8 2005/04/25 22:41:58 nomenquis Exp $
+//  $Id: ArchInterrupts.cpp,v 1.9 2005/04/25 23:09:18 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.8  2005/04/25 22:41:58  nomenquis
+//  foobar
+//
 //  Revision 1.7  2005/04/25 22:40:19  btittelbach
 //  Anti Warnings v0.1
 //
@@ -39,7 +42,7 @@ static uint32 timer_on = 0;
 // gives the arch a chance to set things up the way it wants to
 void ArchInterrupts::initialise()
 {
-  //uint16 i; // disableInterrupts();
+  uint16 i; // disableInterrupts();
   initialise8259s();
   SegmentUtils::initialise();
   InterruptUtils::initialise();

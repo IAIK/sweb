@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.5 2005/04/25 21:15:41 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.6 2005/04/25 23:09:18 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.5  2005/04/25 21:15:41  nomenquis
+//  lotsa changes
+//
 //  Revision 1.4  2005/04/23 12:52:26  nomenquis
 //  fixes
 //
@@ -45,7 +48,7 @@ static char* fb = (char*)0xC00B8100;
       }      \
       uint32 blubba;\
       uint32 asf;\
-      for (asf=0;asf<1;++asf)\
+      for (asf=0;asf<1000000;++asf)\
         ++blubba;\
     }
    

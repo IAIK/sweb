@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.23 2005/04/25 22:41:58 nomenquis Exp $
+ * $Id: main.cpp,v 1.24 2005/04/25 23:09:18 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.23  2005/04/25 22:41:58  nomenquis
+ * foobar
+ *
  * Revision 1.22  2005/04/25 21:15:41  nomenquis
  * lotsa changes
  *
@@ -149,17 +152,18 @@ void startup()
 
   ArchThreads::initialise();
   ArchInterrupts::initialise();
-//  ArchInterrupts::enableTimer();
+  ArchInterrupts::enableTimer();
   ArchInterrupts::disableTimer();
+  ArchInterrupts::enableTimer();
   ArchInterrupts::enableInterrupts();
 //  ArchInterrupts::disableInterrupts();
-
+/*
   uint8 * foo = (uint8*)0x80100030;
   uint32 bla =0;
   for (bla=0;bla<100;++bla)
   {
     foo[bla]=0x42;
-  }
+  }*/
   /*
      __asm__ __volatile__("int $65"
    :

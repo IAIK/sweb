@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: SegmentUtils.cpp,v 1.1 2005/04/24 20:39:31 nomenquis Exp $
+//  $Id: SegmentUtils.cpp,v 1.2 2005/04/25 23:09:18 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: SegmentUtils.cpp,v $
+//  Revision 1.1  2005/04/24 20:39:31  nomenquis
+//  cleanups
+//
 //----------------------------------------------------------------------
 
 #include "SegmentUtils.h"
@@ -104,7 +107,7 @@ static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type)
 void SegmentUtils::initialise()
 {
   
-  g_tss = (TSS*)(1024*1024*1024*2 + 1024*1024+3); // new uint8[sizeof(TSS)];
+  g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
   ArchCommon::bzero((pointer)g_tss,sizeof(TSS));
  
   setTSSSegDesc((uint32)g_tss, 0x00000067, SEGMENT_PRESENT | SEGMENT_DPL0 | 0x00 | 0x09);

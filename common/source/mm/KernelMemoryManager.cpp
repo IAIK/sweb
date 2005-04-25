@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.5 2005/04/25 21:15:41 nomenquis Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.6 2005/04/25 23:09:18 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.5  2005/04/25 21:15:41  nomenquis
+//  lotsa changes
+//
 //  Revision 1.4  2005/04/23 22:20:30  btittelbach
 //  just stuff
 //
@@ -116,8 +119,11 @@ static char* fb = (char*)0xC00B8500;
         divisor = divisor / 10; \
         current = remainder; \
       }      \
-    }
-   
+      uint32 blubba;\
+      uint32 asf;\
+      for (asf=0;asf<1000000;++asf)\
+        ++blubba;\
+    }   
     
 uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer end_address)
 {
@@ -156,6 +162,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   
   fillSegment(new_pointer,requested_size);
 
+  print(((pointer) new_pointer) + sizeof(MallocSegment))
+  print(9877)
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 
 }

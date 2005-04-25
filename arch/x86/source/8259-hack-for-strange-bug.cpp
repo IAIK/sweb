@@ -1,7 +1,7 @@
 #include "ports.h"
 #include "8259.h"
-
-void enableIRQ(uint16 number)
+/*
+static void enableIRQ(uint16 number)
 {
    uint32 mask = 1 << number;
    cached_mask &= ~mask;
@@ -16,7 +16,7 @@ void enableIRQ(uint16 number)
 }
 
 
-void disableIRQ(uint16 number)
+static void disableIRQ(uint16 number)
 {
    uint32 mask = 1 << number;
    cached_mask |= mask;
@@ -29,3 +29,4 @@ void disableIRQ(uint16 number)
       outportb(PIC_1_DATA_PORT,(cached_mask%8));
    }
 }
+*/

@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.12 2005/04/24 16:58:04 nomenquis Exp $
+; $Id: boot.s,v 1.13 2005/04/25 23:09:18 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.12  2005/04/24 16:58:04  nomenquis
+; ultra hack threading
+;
 ; Revision 1.11  2005/04/23 11:56:34  nomenquis
 ; added interface for memory maps, it works now
 ;
@@ -205,7 +208,7 @@ mov cr4,eax;
 
 
 mov     eax,cr0
-or      eax,0x80000001   ; Set PG bit
+or      eax,0x80010001   ; Set PG bit
 mov     cr0,eax         ; Paging is on!
 
 jmp     $ + 2          ; Flush the instruction queue.

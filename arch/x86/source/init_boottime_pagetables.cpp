@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.3 2005/04/25 22:41:58 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.4 2005/04/25 23:09:18 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.3  2005/04/25 22:41:58  nomenquis
+ * foobar
+ *
  * Revision 1.2  2005/04/22 18:23:04  nomenquis
  * massive cleanups
  *
@@ -75,14 +78,14 @@ void initialiseBootTimePaging()
   // ok, we currently only fill in mappings for the first 4 megs (aka one page table)
   // we do not have to zero out the other page tables since they're alreay empty
   // thanks to the bss clearance.
-  for (i=0;i<1024;++i)
+  for (i=0;i<257;++i)
   {
     pte_start[i].present = 1;
-    pte_start[i].writeable = 0;
+    pte_start[i].writeable = 1;
     pte_start[i].page_base_address = i;
   }
   
-  for (i=1024;i<1024;++i)
+  for (i=257;i<1024;++i)
   {
     pte_start[i].present = 1;
     pte_start[i].writeable = 1;
