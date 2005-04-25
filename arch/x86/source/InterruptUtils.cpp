@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.2 2005/04/24 20:39:31 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.3 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.2  2005/04/24 20:39:31  nomenquis
+//  cleanups
+//
 //  Revision 1.1  2005/04/24 16:58:04  nomenquis
 //  ultra hack threading
 //
@@ -16,7 +19,8 @@
 #include "ports.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
-
+#include "ConsoleManager.h"
+#include "kprintf.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -330,6 +334,34 @@ DUMMY_HANDLER(253)
 DUMMY_HANDLER(254)
 DUMMY_HANDLER(255)
 
+typedef struct ArchThreadInfo
+{
+  uint32  eip;       // 0
+  uint32  cs;        // 4
+  uint32  eflags;    // 8
+  uint32  eax;       // 12
+  uint32  ecx;       // 16
+  uint32  edx;       // 20
+  uint32  ebx;       // 24
+  uint32  esp;       // 28
+  uint32  ebp;       // 32
+  uint32  esi;       // 36
+  uint32  edi;       // 40
+  uint32  ds;        // 44
+  uint32  es;        // 48
+  uint32  fs;        // 52
+  uint32  gs;        // 56
+  uint32  ss;        // 60
+  uint32  dpl;       // 64
+  uint32  esp0;      // 68
+  uint32  ss0;       // 72
+  uint32  cr3;       // 76
+  uint32  fpu[27];   // 80
+};
+
+extern ArchThreadInfo *currentThreadInfo;
+extern Thread *currentThread;
+
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
   extern "C" void irqHandler_##x () {arch_panic((uint8*)"Irq "#x);}
@@ -338,11 +370,47 @@ extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
 extern "C" void irqHandler_0()
 {
+//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"IRQ0_s");
+  kprintf("Switch()\n");
+  
+    ArchThreadInfo* i = currentThreadInfo;
+
+    kprintf("eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
+    kprintf("esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
+    kprintf("cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
+    kprintf("eflags=%x eip=%x\n", i->eflags, i->eip);
+
   ArchThreads::switchThreads();
   outportb(0x20, 0x20);    
+//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"IRQ0_E");
   arch_switchThreadKernelToKernel();
 }
+extern "C" void arch_irqHandler_65();
+extern "C" void irqHandler_65()
+{
+//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"INT65_s");
+  ArchThreads::switchThreads();
+//  outportb(0x20, 0x20);    
+//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"INT65_e");
+  arch_switchThreadKernelToKernel();
+}
+
+extern "C" void arch_pageFaultHandler();
+extern "C" void pageFaultHandler(uint32 address, uint32 error)
+{
+  kprintf("PageFault(%d,%d)\n",address,error);
   
+    ArchThreadInfo* i = currentThreadInfo;
+    kprintf("\n");
+    kprintf("eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
+    kprintf("esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
+    kprintf("cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
+    kprintf("eflags=%x eip=%x\n", i->eflags, i->eip);
+
+
+  for(;;);
+}
+
 IRQ_HANDLER(1)
 IRQ_HANDLER(2)
 IRQ_HANDLER(3)
@@ -378,7 +446,7 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(11)
   DUMMYHANDLER(12)
   DUMMYHANDLER(13)
-  DUMMYHANDLER(14)
+  {14, &arch_pageFaultHandler},
   DUMMYHANDLER(15)
   DUMMYHANDLER(16)
   DUMMYHANDLER(17)
@@ -429,7 +497,7 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(62)
   DUMMYHANDLER(63)
   DUMMYHANDLER(64)
-  DUMMYHANDLER(65)
+  IRQHANDLER(65)
   DUMMYHANDLER(66)
   DUMMYHANDLER(67)
   DUMMYHANDLER(68)

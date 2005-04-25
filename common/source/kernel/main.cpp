@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.21 2005/04/24 20:39:31 nomenquis Exp $
+ * $Id: main.cpp,v 1.22 2005/04/25 21:15:41 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.21  2005/04/24 20:39:31  nomenquis
+ * cleanups
+ *
  * Revision 1.18  2005/04/24 16:58:04  nomenquis
  * ultra hack threading
  *
@@ -83,14 +86,33 @@ void fun1()
 {
   uint32 i=0;
   while (++i)
+  {
+    ArchInterrupts::disableInterrupts();
     kprintf("Kernel Thread 1 %d\n",i);
+    ArchInterrupts::enableInterrupts();
+    
+         __asm__ __volatile__("int $65"
+   :
+   :
+   );
+  
+  }
+  
 }
 
 void fun2()
 {
   uint32 i=0;
   while (++i)
+  {
+    ArchInterrupts::disableInterrupts();
     kprintf("Kernel Thread 2 %d\n",i);
+    ArchInterrupts::enableInterrupts();
+         __asm__ __volatile__("int $65"
+   :
+   :
+   );
+  }
 }
 
 void startup()
@@ -100,21 +122,22 @@ void startup()
   pointer end_address = (pointer)(1024*1024*1024*2 + 1024*1024*4);
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
-  
+ 
+
   ConsoleManager::createConsoleManager(1);
 
   Console *console = ConsoleManager::instance()->getActiveConsole();
 
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
-/*
+
   console->writeString((uint8 const*)"Blabb\n");  
   console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
   console->writeString((uint8 const*)"Noch ne Zeile\n");
   console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
   console->writeString((uint8 const*)"Gruen rackete autobus\n");
   console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
-*/
+
   // initialise everything, meaning that we'll have a dummy 
   // thread info for the main thread
   //ArchThreads::initialise();
@@ -124,8 +147,14 @@ void startup()
   ArchThreads::initialise();
   ArchInterrupts::initialise();
   ArchInterrupts::enableTimer();
+//  ArchInterrupts::disableTimer();
   ArchInterrupts::enableInterrupts();
+//  ArchInterrupts::disableInterrupts();
 
+     __asm__ __volatile__("int $65"
+   :
+   :
+   );
 
 //  thread1 = make_thread((pointer)&printbla);
 //  thread2 = make_thread((pointer)&printblubb);

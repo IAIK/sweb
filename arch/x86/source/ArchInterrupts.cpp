@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.5 2005/04/24 20:39:31 nomenquis Exp $
+//  $Id: ArchInterrupts.cpp,v 1.6 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.5  2005/04/24 20:39:31  nomenquis
+//  cleanups
+//
 //  Revision 1.4  2005/04/24 16:58:03  nomenquis
 //  ultra hack threading
 //
@@ -30,10 +33,13 @@ static uint32 timer_on = 0;
 // gives the arch a chance to set things up the way it wants to
 void ArchInterrupts::initialise()
 {
- // disableInterrupts();
+  uint16 i; // disableInterrupts();
   initialise8259s();
   SegmentUtils::initialise();
   InterruptUtils::initialise();
+//  for (i=0;i<16;++i)
+//     disableIRQint(i);
+
 }
 
 void ArchInterrupts::enableTimer()
@@ -52,11 +58,9 @@ void ArchInterrupts::enableInterrupts()
    :
    :
    );
-  for (;;);
-
 }
 
-void ArchInterrupts::disableInterrupts()
+uint32 ArchInterrupts::disableInterrupts()
 {
    uint32 ret_val;
 

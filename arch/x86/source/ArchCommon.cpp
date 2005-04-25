@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.6 2005/04/23 18:13:26 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.7 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.6  2005/04/23 18:13:26  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.5  2005/04/23 15:58:31  nomenquis
 //  lots of new stuff
 //
@@ -184,7 +188,7 @@ uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, 
   return 0;
 }
 
-#define MEMCOPY_LARGE_TYPE uint64
+#define MEMCOPY_LARGE_TYPE uint32
 
 void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
 {

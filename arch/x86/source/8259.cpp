@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: 8259.cpp,v 1.2 2005/04/24 10:32:05 nomenquis Exp $
+//  $Id: 8259.cpp,v 1.3 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: 8259.cpp,v $
+//  Revision 1.2  2005/04/24 10:32:05  nomenquis
+//  better debugging
+//
 //  Revision 1.1  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -11,12 +14,10 @@
 #include "8259.h"
 #include "ports.h"
 
-#define PIC_1_CONTROL_PORT 0x20
-#define PIC_2_CONTROL_PORT 0xA0
-#define PIC_1_DATA_PORT 0x21
-#define PIC_2_DATA_PORT 0xA1
 
-static uint32 cached_mask = 0xFFFF;
+uint32 cached_mask = 0xFFFF;
+
+void disableIRQint(uint16 number);
 
 void initialise8259s()
 {
@@ -33,11 +34,28 @@ void initialise8259s()
 	outportb(PIC_2_DATA_PORT, 0x01);
 
   uint32 i;
-  for (i=0;i<32;++i)
-    disableIRQ(i);
+  for (i=0;i<16;++i)
+    disableIRQint(i);
+  for (i=0;i<16;++i)
+    disableIRQint(i);
+  for (i=0;i<16;++i)
+    disableIRQint(i);
 }
 
-void disableIRQ(uint16 number)
+void enableIRQ(uint16 number)
+{
+   uint32 mask = 1 << number;
+   cached_mask &= ~mask;
+   if (number & 8)
+   {
+      outportb(PIC_2_DATA_PORT,((cached_mask/8)%8));
+   }
+   else
+   {
+      outportb(PIC_1_DATA_PORT,(cached_mask%8));
+   }
+}
+void disableIRQint(uint16 number)
 {
    uint32 mask = 1 << number;
    cached_mask |= mask;
@@ -51,11 +69,10 @@ void disableIRQ(uint16 number)
    }
 }
 
-
-void enableIRQ(uint16 number)
+void disableIRQ(uint16 number)
 {
    uint32 mask = 1 << number;
-   cached_mask &= ~mask;
+   cached_mask |= mask;
    if (number & 8)
    {
       outportb(PIC_2_DATA_PORT,((cached_mask/8)%8));

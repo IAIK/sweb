@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.3 2005/04/24 16:58:03 nomenquis Exp $
+//  $Id: ArchInterrupts.h,v 1.4 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.3  2005/04/24 16:58:03  nomenquis
+//  ultra hack threading
+//
 //  Revision 1.2  2005/04/23 20:32:30  nomenquis
 //  timer interrupt works
 //
@@ -32,8 +35,11 @@ public:
   static void enableTimer();
   static void disableTimer();
   
+  // enable interrupts, no matter what, this is bad
   static void enableInterrupts();
-  static void disableInterrupts();
+  static uint32 disableInterrupts();
+  static void setOldInterruptState(uint32 const &flags);
+
 };
 
 

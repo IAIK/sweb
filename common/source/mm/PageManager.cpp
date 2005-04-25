@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.4 2005/04/23 12:52:26 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.5 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.4  2005/04/23 12:52:26  nomenquis
+//  fixes
+//
 //  Revision 1.2  2005/04/22 19:43:04  nomenquis
 //   more poison added
 //
@@ -40,6 +43,10 @@ static char* fb = (char*)0xC00B8100;
         divisor = divisor / 10; \
         current = remainder; \
       }      \
+      uint32 blubba;\
+      uint32 asf;\
+      for (asf=0;asf<1;++asf)\
+        ++blubba;\
     }
    
 extern void* kernel_end_address;
@@ -79,7 +86,7 @@ PageManager::PageManager(pointer start_of_structure)
   for (i=0;i<num_mmaps;++i)
   {
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
-    number_of_pages_ = Max(number_of_pages_,end_address);
+    if (type==1) number_of_pages_ = Max(number_of_pages_,end_address);
   }
   
   number_of_pages_ = number_of_pages_ / PAGE_SIZE;
@@ -110,25 +117,33 @@ PageManager::PageManager(pointer start_of_structure)
   {
     page_usage_table_[i] = PAGE_RESERVED;
   }
+  print (11)
   
   for (i=0;i<num_mmaps;++i)
   {
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
     start_address /= PAGE_SIZE;
     end_address /= PAGE_SIZE;
-    
+    print(start_address)
+    print(end_address)
+    if (start_address > 1024*256 || end_address > 1024*256)
+    {
+      print(777777777);
+      continue;
+    }
     for (k=start_address;k<end_address;++k)
     {
       page_usage_table_[k] = PAGE_FREE;
     }
+    print (11+i)
   }    
-  
+  print (22)
   // next, the first 4 megs are allocated for the kernel
   for (i=0;i<1024;++i)
   {
     page_usage_table_[i] = PAGE_KERNEL;
   }
-   
+  print (12341234);
 }
 
 uint32 PageManager::getTotalNumPages() const

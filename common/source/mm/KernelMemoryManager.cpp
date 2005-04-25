@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.4 2005/04/23 22:20:30 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.5 2005/04/25 21:15:41 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.4  2005/04/23 22:20:30  btittelbach
+//  just stuff
+//
 //  Revision 1.3  2005/04/23 18:13:27  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -92,16 +95,45 @@ void printout(char* text)
     }
 
 }
+static uint32 fb_start = 0;
+static char* fb = (char*)0xC00B8500;
 
+#define print(x)     fb_start += 2; \
+    { \
+      uint32 divisor; \
+      uint32 current; \
+      uint32 remainder; \
+      current = (uint32)x; \
+      divisor = 1000000000; \
+      while (divisor > 0) \
+      { \
+        remainder = current % divisor; \
+        current = current / divisor; \
+        \
+        fb[fb_start++] = (uint8)current + '0' ; \
+        fb[fb_start++] = 0x9f ; \
+    \
+        divisor = divisor / 10; \
+        current = remainder; \
+      }      \
+    }
+   
+    
 uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer end_address)
 {
+  print (1111);
+  
   instance_ = new ((void*)start_address) KernelMemoryManager(start_address + sizeof(KernelMemoryManager),end_address);
+  
+  print (2222);
   
   return 0;
 }
 
 KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address)
 { 
+  
+  print (3333);
  //memoryZero(start_address,end_address-start_address);
 
   malloc_end_=end_address;
@@ -110,6 +142,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
   last_=first_;
   //segments_free_=1;
   //segments_used_=0;
+  print (4444);
   
 }
 
