@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.3 2005/04/23 12:52:26 nomenquis Exp $
+//   $Id: PageManager.h,v 1.4 2005/04/25 23:23:49 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.3  2005/04/23 12:52:26  nomenquis
+//  fixes
+//
 //  Revision 1.2  2005/04/23 12:43:09  nomenquis
 //  working page manager
 //
@@ -45,7 +48,7 @@ private:
 
   PageManager(pointer start_of_structure);
   PageManager(PageManager const&){};
-  PageManager &operator=(PageManager const&){};
+  //PageManager &operator=(PageManager const&){};
   static PageManager* instance_;
   
   uint32 *page_usage_table_;

@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.24 2005/04/25 23:09:18 nomenquis Exp $
+ * $Id: main.cpp,v 1.25 2005/04/25 23:23:49 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.24  2005/04/25 23:09:18  nomenquis
+ * fubar 2
+ *
  * Revision 1.23  2005/04/25 22:41:58  nomenquis
  * foobar
  *
@@ -125,7 +128,7 @@ void startup()
 {
   
   pointer start_address = (pointer)&kernel_end_address;
-  pointer end_address = (pointer)(1024*1024*1024*2 + 1024*1024*4);
+  pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
  
@@ -152,10 +155,16 @@ void startup()
 
   ArchThreads::initialise();
   ArchInterrupts::initialise();
+
   ArchInterrupts::enableTimer();
   ArchInterrupts::disableTimer();
   ArchInterrupts::enableTimer();
+
+  kprintf("now enabling Interrupts...");
+
   ArchInterrupts::enableInterrupts();
+  kprintf("done\n");
+
 //  ArchInterrupts::disableInterrupts();
 /*
   uint8 * foo = (uint8*)0x80100030;

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: SegmentUtils.cpp,v 1.2 2005/04/25 23:09:18 nomenquis Exp $
+//  $Id: SegmentUtils.cpp,v 1.3 2005/04/25 23:23:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: SegmentUtils.cpp,v $
+//  Revision 1.2  2005/04/25 23:09:18  nomenquis
+//  fubar 2
+//
 //  Revision 1.1  2005/04/24 20:39:31  nomenquis
 //  cleanups
 //
@@ -96,10 +99,10 @@ static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type)
     SegDesc *desc = (SegDesc*)&tss_selector;
   
     desc->baseL  = (uint16)(base & 0xFFFF);
-    desc->baseM  = (uint8)((base >> 16) & 0xFF);
-    desc->baseH  = (uint8)((base >> 24) & 0xFF);
+    desc->baseM  = (uint8)((base >> 16U) & 0xFF);
+    desc->baseH  = (uint8)((base >> 24U) & 0xFF);
     desc->limitL = (uint16)(limit & 0xFFFF);
-    desc->limitH = (uint8) (((limit >> 16) & 0x0F) | 0xC0); /* 4KB unit & 32bit segment */
+    desc->limitH = (uint8) (((limit >> 16U) & 0x0F) | 0xC0); /* 4KB unit & 32bit segment */
     desc->type   = type;
     return;
 }
@@ -113,7 +116,7 @@ void SegmentUtils::initialise()
   setTSSSegDesc((uint32)g_tss, 0x00000067, SEGMENT_PRESENT | SEGMENT_DPL0 | 0x00 | 0x09);
 
   // we have to reload our segment stuff
-  void * ptr = (void*)&gdt_ptr_new;
+  //void * ptr = (void*)&gdt_ptr_new;
   uint16 val = 48;
   
 
@@ -125,7 +128,7 @@ void SegmentUtils::initialise()
   
   uint32 *gss_stack = new uint32[1024];
   ArchCommon::bzero((pointer)gss_stack,4096);
-  pointer gp = (pointer)&gss_stack[1023];
+  //pointer gp = (pointer)&gss_stack[1023];
   
 //  g_tss->esp0 = gp;
 //  g_tss->ss0  = KERNEL_SS;

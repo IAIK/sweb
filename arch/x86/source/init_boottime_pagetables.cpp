@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.4 2005/04/25 23:09:18 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.5 2005/04/25 23:23:48 btittelbach Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.4  2005/04/25 23:09:18  nomenquis
+ * fubar 2
+ *
  * Revision 1.3  2005/04/25 22:41:58  nomenquis
  * foobar
  *
@@ -52,10 +55,10 @@ extern "C" void initialiseBootTimePaging();
 
 void initialiseBootTimePaging()
 {
-  uint32 i,k;
+  uint32 i;
  
   page_directory_entry *pde_start = (page_directory_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
-  uint8 *pde_start_bytes = (uint8 *)pde_start;
+  //uint8 *pde_start_bytes = (uint8 *)pde_start;
   page_table_entry *pte_start = (page_table_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
   
  
