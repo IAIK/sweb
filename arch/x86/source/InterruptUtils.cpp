@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.3 2005/04/25 21:15:41 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.4 2005/04/26 13:34:23 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.3  2005/04/25 21:15:41  nomenquis
+//  lotsa changes
+//
 //  Revision 1.2  2005/04/24 20:39:31  nomenquis
 //  cleanups
 //
@@ -75,7 +78,10 @@ void InterruptUtils::disableInterrupts()
   
 }
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void dummyHandler_##x () {arch_panic((uint8*)"Int "#x);}
+  extern "C" void dummyHandler_##x () \
+  {\
+    kprintf("Spurious INT " #x "\n");\
+  }
 
 DUMMY_HANDLER(0)
 DUMMY_HANDLER(1)
@@ -364,7 +370,13 @@ extern Thread *currentThread;
 
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
-  extern "C" void irqHandler_##x () {arch_panic((uint8*)"Irq "#x);}
+  extern "C" void irqHandler_##x ()  {\
+    if ( x > 7 )\
+      outportb(0xA0, 0x20);                              \
+\
+    kprintf("Spurious IRQ " #x "\n");\
+    outportb(0x20, 0x20);    \
+  }
 
 extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
