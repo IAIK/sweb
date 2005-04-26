@@ -1,7 +1,10 @@
 /**
- * $Id: offsets.h,v 1.3 2005/04/20 15:26:35 nomenquis Exp $
+ * $Id: offsets.h,v 1.4 2005/04/26 10:23:54 nomenquis Exp $
  *
  * $Log: offsets.h,v $
+ * Revision 1.3  2005/04/20 15:26:35  nomenquis
+ * more and more stuff actually works
+ *
  * Revision 1.2  2005/04/20 08:06:17  nomenquis
  * the overloard (thats me) managed to get paging with 4m pages to work.
  * kernel is now at 2g +1 and writes something to the fb
@@ -21,7 +24,7 @@
   */
 
 /** Our image will be at 2gig virtual */
-#define LINK_BASE 0x80100000 
+#define LINK_BASE 0x80000000 
 
 /** Our image will be at 1meg physical */
 #define LOAD_BASE 0x00100000

@@ -1,8 +1,11 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.6 2005/04/23 11:56:34 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.7 2005/04/26 10:23:54 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.6  2005/04/23 11:56:34  nomenquis
+*  added interface for memory maps, it works now
+*
 *  Revision 1.5  2005/04/22 17:21:39  nomenquis
 *  added TONS of stuff, changed ZILLIONS of things
 *
@@ -30,7 +33,7 @@ ENTRY(entry)
 LS_Phys = 0x100000; /* 1 meg */
 /*LS_Virt = 0x100000; /* 1 meg */
 /* use this line instead when paging works properly! */
-LS_Virt = 0x80100000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
+LS_Virt = 0x80000000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
 SECTIONS
 {
 kernel_start_address = .;

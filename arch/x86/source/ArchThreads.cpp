@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.1 2005/04/24 16:58:03 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.2 2005/04/26 10:23:54 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: ArchThreads.cpp,v $
+//  Revision 1.1  2005/04/24 16:58:03  nomenquis
+//  ultra hack threading
+//
 //----------------------------------------------------------------------
 
 #include "ArchThreads.h"
@@ -98,8 +101,8 @@ void ArchThreads::initDemo(pointer fun1, pointer fun2)
   ArchCommon::bzero((pointer)stack_two,1028*sizeof(uint32));
   
   
-  archCreateThread(thread_one,fun1,((pointer)&kernel_page_directory_start)-2*1024*1024*1024,(pointer)&stack_one[1027]);
-  archCreateThread(thread_two,fun2,((pointer)&kernel_page_directory_start)-2*1024*1024*1024,(pointer)&stack_two[1027]);
+  archCreateThread(thread_one,fun1,((pointer)&kernel_page_directory_start)-2*1024*1024*1024+1024*1024,(pointer)&stack_one[1027]);
+  archCreateThread(thread_two,fun2,((pointer)&kernel_page_directory_start)-2*1024*1024*1024+1024*1024,(pointer)&stack_two[1027]);
   
 }
 

@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.13 2005/04/25 23:09:18 nomenquis Exp $
+; $Id: boot.s,v 1.14 2005/04/26 10:23:54 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.13  2005/04/25 23:09:18  nomenquis
+; fubar 2
+;
 ; Revision 1.12  2005/04/24 16:58:04  nomenquis
 ; ultra hack threading
 ;
@@ -43,7 +46,7 @@
 ;
 ;
 
-LINK_BASE            EQU     80100000h              ; Base address (virtual)
+LINK_BASE            EQU     80000000h              ; Base address (virtual)
 LOAD_BASE           EQU     00100000h              ; Base address (physikal)
 BASE                EQU     (LINK_BASE - LOAD_BASE) ; difference to calculate (virtual)
 PHYS_OFFSET EQU 0C0000000h
@@ -509,6 +512,7 @@ idt_ptr:
    dw idt_end - idt - 1    ; IDT limit
    dd idt                  ; linear adr of IDT
 
+SECTION .data
 ds_magic:
    dd DATA_SEGMENT_MAGIC
 

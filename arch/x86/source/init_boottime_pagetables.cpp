@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.5 2005/04/25 23:23:48 btittelbach Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.6 2005/04/26 10:23:54 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.5  2005/04/25 23:23:48  btittelbach
+ * nothing really
+ *
  * Revision 1.4  2005/04/25 23:09:18  nomenquis
  * fubar 2
  *
@@ -85,14 +88,14 @@ void initialiseBootTimePaging()
   {
     pte_start[i].present = 1;
     pte_start[i].writeable = 1;
-    pte_start[i].page_base_address = i;
+    pte_start[i].page_base_address = i+256;
   }
   
   for (i=257;i<1024;++i)
   {
     pte_start[i].present = 1;
     pte_start[i].writeable = 1;
-    pte_start[i].page_base_address = i;
+    pte_start[i].page_base_address = i+256;
   }
 
   
