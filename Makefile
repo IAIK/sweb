@@ -1,6 +1,6 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
-SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm utils/mtools utils/e2fsimage 
+SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm utils/mtools
 SHARED_LIBS :=  common/source/console/libConsole.a arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/mm/libMM.a
 PROJECT_ROOT := .
 E2FSIMAGESOURCE := utils/e2fsimage/
