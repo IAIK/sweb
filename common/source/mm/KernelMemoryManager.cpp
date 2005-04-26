@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.6 2005/04/25 23:09:18 nomenquis Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.7 2005/04/26 15:58:46 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.6  2005/04/25 23:09:18  nomenquis
+//  fubar 2
+//
 //  Revision 1.5  2005/04/25 21:15:41  nomenquis
 //  lotsa changes
 //
@@ -121,7 +124,7 @@ static char* fb = (char*)0xC00B8500;
       }      \
       uint32 blubba;\
       uint32 asf;\
-      for (asf=0;asf<1000000;++asf)\
+      for (asf=0;asf<1;++asf)\
         ++blubba;\
     }   
     

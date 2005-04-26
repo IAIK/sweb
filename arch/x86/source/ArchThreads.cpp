@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.2 2005/04/26 10:23:54 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.3 2005/04/26 15:58:45 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.2  2005/04/26 10:23:54  nomenquis
+//  kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
+//
 //  Revision 1.1  2005/04/24 16:58:03  nomenquis
 //  ultra hack threading
 //
@@ -36,11 +39,7 @@ typedef struct ArchThreadInfo
   uint32  fpu[27];   // 80
 };
 
-ArchThreadInfo *currentThreadInfo;
-Thread *currentThread;
 
-ArchThreadInfo *thread_one;
-ArchThreadInfo *thread_two;
 
 void ArchThreads::initialise()
 {
@@ -48,7 +47,7 @@ void ArchThreads::initialise()
   // otherwise, on the very first irq we go kaboom.
   
 //  currentThreadInfo = new ArchThreadInfo();
-  currentThreadInfo = (ArchThreadInfo*) new uint8[1024];
+  currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
   
 
 }
@@ -56,60 +55,47 @@ void ArchThreads::initialise()
 #define DPL_KERNEL  0
 #define DPL_USER    3
 
-void archCreateThread(ArchThreadInfo* ainfo, pointer programCounter, pointer pageDirectory, pointer stack_pointer)
+extern "C" uint32 kernel_page_directory_start;
+
+void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
-  ArchCommon::bzero((pointer)ainfo,sizeof(ArchThreadInfo));
+  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   
-  ainfo->cs      = KERNEL_CS;
-  ainfo->ds      = KERNEL_DS;
-  ainfo->es      = KERNEL_DS;
-  ainfo->ss      = KERNEL_SS;
-  ainfo->eflags  = 0x200;
-  ainfo->eax     = 0;
-  ainfo->ecx     = 0;
-  ainfo->edx     = 0;
-  ainfo->ebx     = 0;
-  ainfo->esi     = 0;
-  ainfo->edi     = 0;
-  ainfo->dpl     = DPL_KERNEL;
-  ainfo->esp     = stack_pointer;
-  ainfo->ebp     = stack_pointer;
-  ainfo->eip     = programCounter;
-  ainfo->cr3     = pageDirectory;
+  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  pointer pageDirectory = (((pointer)&kernel_page_directory_start)-2*1024*1024*1024);
+
+  info->cs      = KERNEL_CS;
+  info->ds      = KERNEL_DS;
+  info->es      = KERNEL_DS;
+  info->ss      = KERNEL_SS;
+  info->eflags  = 0x200;
+  info->eax     = 0;
+  info->ecx     = 0;
+  info->edx     = 0;
+  info->ebx     = 0;
+  info->esi     = 0;
+  info->edi     = 0;
+  info->dpl     = DPL_KERNEL;
+  info->esp     = stack;
+  info->ebp     = stack;
+  info->eip     = start_function;
+  info->cr3     = pageDirectory;
 
  /* fpu (=fninit) */
-  ainfo->fpu[0] = 0xFFFF037F;
-  ainfo->fpu[1] = 0xFFFF0000;
-  ainfo->fpu[2] = 0xFFFFFFFF;
-  ainfo->fpu[3] = 0x00000000;
-  ainfo->fpu[4] = 0x00000000;
-  ainfo->fpu[5] = 0x00000000;
-  ainfo->fpu[6] = 0xFFFF0000;
+  info->fpu[0] = 0xFFFF037F;
+  info->fpu[1] = 0xFFFF0000;
+  info->fpu[2] = 0xFFFFFFFF;
+  info->fpu[3] = 0x00000000;
+  info->fpu[4] = 0x00000000;
+  info->fpu[5] = 0x00000000;
+  info->fpu[6] = 0xFFFF0000;
+
 }
 
-extern "C" uint32   kernel_page_directory_start;
-
-void ArchThreads::initDemo(pointer fun1, pointer fun2)
+void ArchThreads::yield()
 {
-  thread_one = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  thread_two = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-
-  uint32 *stack_one = new uint32[1028];
-  uint32 *stack_two = new uint32[1028];
-
-  ArchCommon::bzero((pointer)stack_one,1028*sizeof(uint32));
-  ArchCommon::bzero((pointer)stack_two,1028*sizeof(uint32));
-  
-  
-  archCreateThread(thread_one,fun1,((pointer)&kernel_page_directory_start)-2*1024*1024*1024+1024*1024,(pointer)&stack_one[1027]);
-  archCreateThread(thread_two,fun2,((pointer)&kernel_page_directory_start)-2*1024*1024*1024+1024*1024,(pointer)&stack_two[1027]);
-  
-}
-
-void ArchThreads::switchThreads()
-{
-  if (currentThreadInfo == thread_one)
-    currentThreadInfo = thread_two;
-  else
-    currentThreadInfo = thread_one;
+  __asm__ __volatile__("int $65"
+  :                          
+  :                          
+  );
 }

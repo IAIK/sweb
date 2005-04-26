@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.1 2005/04/24 16:58:03 nomenquis Exp $
+//  $Id: ArchThreads.h,v 1.2 2005/04/26 15:58:45 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: ArchThreads.h,v $
+//  Revision 1.1  2005/04/24 16:58:03  nomenquis
+//  ultra hack threading
+//
 //----------------------------------------------------------------------
 
 
@@ -27,8 +30,8 @@ public:
   
   static void initialise();
   static void switchToThreadOnIret(Thread *thread);
-  static void initDemo(pointer fun1, pointer fun2);
-  static void switchThreads();
+  static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
+  static void yield();
 
 };
 

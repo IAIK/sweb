@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.25 2005/04/25 23:23:49 btittelbach Exp $
+ * $Id: main.cpp,v 1.26 2005/04/26 15:58:45 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.25  2005/04/25 23:23:49  btittelbach
+ * nothing really
+ *
  * Revision 1.24  2005/04/25 23:09:18  nomenquis
  * fubar 2
  *
@@ -86,43 +89,36 @@
 #include "ArchInterrupts.h"
 #include "ArchThreads.h"
 #include "console/kprintf.h"
+#include "Thread.h"
+#include "Scheduler.h"
 
 extern void* kernel_end_address;
 
 extern "C" void startup();
 
-void fun1()
-{
-  uint32 i=0;
-  while (++i)
-  {
-    ArchInterrupts::disableInterrupts();
-    kprintf("Kernel Thread 1 %d\n",i);
-    ArchInterrupts::enableInterrupts();
-    
-         __asm__ __volatile__("int $65"
-   :
-   :
-   );
-  
-  }
-  
-}
 
-void fun2()
+class StupidThread : public Thread
 {
-  uint32 i=0;
-  while (++i)
+  public:
+    
+  StupidThread(uint32 id)
   {
-    ArchInterrupts::disableInterrupts();
-    kprintf("Kernel Thread 2 %d\n",i);
-    ArchInterrupts::enableInterrupts();
-         __asm__ __volatile__("int $65"
-   :
-   :
-   );
+    thread_number_ = id;
   }
-}
+  
+  virtual void Run()
+  {
+    uint32 i=0;
+    while (1)
+      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
+  }
+  
+private:
+  
+  uint32 thread_number_;
+
+};
+
 
 void startup()
 {
@@ -131,7 +127,7 @@ void startup()
   pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
- 
+  Scheduler::createScheduler();
 
   ConsoleManager::createConsoleManager(1);
 
@@ -140,48 +136,31 @@ void startup()
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
 
+  /*
   console->writeString((uint8 const*)"Blabb\n");  
   console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
   console->writeString((uint8 const*)"Noch ne Zeile\n");
   console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
   console->writeString((uint8 const*)"Gruen rackete autobus\n");
   console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
-
-  // initialise everything, meaning that we'll have a dummy 
-  // thread info for the main thread
-  //ArchThreads::initialise();
+ */
   
-  ArchThreads::initDemo((pointer)&fun1, (pointer)&fun2);
-
   ArchThreads::initialise();
   ArchInterrupts::initialise();
 
   ArchInterrupts::enableTimer();
-  ArchInterrupts::disableTimer();
-  ArchInterrupts::enableTimer();
 
+  StupidThread *thread0 = new StupidThread(0);
+  StupidThread *thread1 = new StupidThread(1);
+  
+  Scheduler::instance()->addNewThread(thread0);
+  Scheduler::instance()->addNewThread(thread1);
+  
   kprintf("now enabling Interrupts...");
 
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
 
-//  ArchInterrupts::disableInterrupts();
-/*
-  uint8 * foo = (uint8*)0x80100030;
-  uint32 bla =0;
-  for (bla=0;bla<100;++bla)
-  {
-    foo[bla]=0x42;
-  }*/
-  /*
-     __asm__ __volatile__("int $65"
-   :
-   :
-   );
-  */
-
-//  thread1 = make_thread((pointer)&printbla);
-//  thread2 = make_thread((pointer)&printblubb);
-  
+  Scheduler::instance()->yield();
   for (;;);
 }

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.4 2005/04/26 13:34:23 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.5 2005/04/26 15:58:45 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.4  2005/04/26 13:34:23  nomenquis
+//  whatever
+//
 //  Revision 1.3  2005/04/25 21:15:41  nomenquis
 //  lotsa changes
 //
@@ -24,6 +27,7 @@
 #include "ArchCommon.h"
 #include "ConsoleManager.h"
 #include "kprintf.h"
+#include "Scheduler.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -382,28 +386,14 @@ extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
 extern "C" void irqHandler_0()
 {
-//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"IRQ0_s");
-  kprintf("Switch()\n");
-  
-    ArchThreadInfo* i = currentThreadInfo;
-
-    kprintf("eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
-    kprintf("esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
-    kprintf("cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
-    kprintf("eflags=%x eip=%x\n", i->eflags, i->eip);
-
-  ArchThreads::switchThreads();
-  outportb(0x20, 0x20);    
-//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"IRQ0_E");
+  static uint32 i;
+  if (!(++i%100)) Scheduler::instance()->schedule(1);  outportb(0x20, 0x20);   
   arch_switchThreadKernelToKernel();
 }
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"INT65_s");
-  ArchThreads::switchThreads();
-//  outportb(0x20, 0x20);    
-//  ConsoleManager::instance()->getActiveConsole()->writeString((uint8*)"INT65_e");
+  Scheduler::instance()->schedule(1);
   arch_switchThreadKernelToKernel();
 }
 

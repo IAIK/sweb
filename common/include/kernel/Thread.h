@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.2 2005/04/24 10:06:09 nomenquis Exp $
+//  $Id: Thread.h,v 1.3 2005/04/26 15:58:45 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.2  2005/04/24 10:06:09  nomenquis
+//  commit to compile on different machine
+//
 //  Revision 1.1  2005/04/23 21:27:12  nomenquis
 //  commit for bernhard
 //
@@ -49,12 +52,23 @@ typedef struct ArchThread
 
 class Thread
 {
+friend class Scheduler;
 public:
   
   Thread();
   
-  uint32 stack_[2048];
 
+  // runs whatever the user wants it to run;
+
+
+protected:
+  
+  virtual void Run()=0;
+
+  ArchThreadInfo *arch_thread_info_;
+  uint32 stack_[2048];
+  
+  pointer getStackStartPointer();
 private:
   
   Thread(Thread const &);

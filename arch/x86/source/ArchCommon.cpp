@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.8 2005/04/25 22:40:18 btittelbach Exp $
+//   $Id: ArchCommon.cpp,v 1.9 2005/04/26 15:58:45 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.8  2005/04/25 22:40:18  btittelbach
+//  Anti Warnings v0.1
+//
 //  Revision 1.7  2005/04/25 21:15:41  nomenquis
 //  lotsa changes
 //
@@ -199,14 +202,21 @@ void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
   MEMCOPY_LARGE_TYPE *d64 = (MEMCOPY_LARGE_TYPE*)dest;
   
   uint32 i;
-  uint32 num_64_bit_copies = size / sizeof(MEMCOPY_LARGE_TYPE);
-  uint32 num_8_bit_copies = size % sizeof(MEMCOPY_LARGE_TYPE);
+  uint32 num_64_bit_copies = size / (sizeof(MEMCOPY_LARGE_TYPE)*8);
+  uint32 num_8_bit_copies = size % (sizeof(MEMCOPY_LARGE_TYPE)*8);
   
   for (i=0;i<num_64_bit_copies;++i)
   {
-    *d64 = *s64;
-    ++d64;
-    ++s64;
+    d64[0] = s64[0];
+    d64[1] = s64[1];
+    d64[2] = s64[2];
+    d64[3] = s64[3];
+    d64[4] = s64[4];
+    d64[5] = s64[5];
+    d64[6] = s64[6];
+    d64[7] = s64[7];
+    d64 += 8;
+    s64 += 8;
   }
   uint8 *s8 = (uint8*)s64;
   uint8 *d8 = (uint8*)d64;
