@@ -11,6 +11,7 @@
 #
 #######################################################
 
+
 version=0.2.0
 DIRS=""
 
@@ -120,7 +121,7 @@ echo "CFLAGS    :${CFLAGS:=-Wall}"
 echo "VERSION   :${version}"
 echo
 
-cat >Local.mak <<EOF
+cat >$1Local.mak <<EOF
 CPPFLAGS=$CF
 CFLAGS=${CFLAGS}
 
@@ -149,6 +150,8 @@ done
 echo
 if test ! -z "${mak}"; then
   echo A usable "make" executable was found in ${mak}
+  cd $1
+  make
 else
   echo No usable "make" executable found.
 fi
