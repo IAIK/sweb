@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.8 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.9 2005/04/26 17:03:27 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
+//  Revision 1.8  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.7  2005/04/23 18:13:27  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -72,13 +75,19 @@ extern uint8 fontdata_sun8x16[];
 
 void FrameBufferConsole::setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b)
 {
-  uint8 *lfb = (uint8*)ArchCommon::getVESAConsoleLFBPtr();
-  uint32 offset = (x + y*x_res_) * 4;
+  uint16 *lfb = (uint16*)ArchCommon::getVESAConsoleLFBPtr();
+  uint32 offset = (x + y*x_res_);
+  uint16 color=(b>>3);
+  color|=(g>>2)<<5;
+  color|=(r>>3)<<11;
+  
+  lfb[offset] = color;
+  /*
   lfb[offset + 0] = b;
   lfb[offset + 1] = g;
   lfb[offset + 2] = r;
   lfb[offset + 3] = 0;
-  
+  */
 }
 
 uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
@@ -86,7 +95,7 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
   uint32 i,k;
   uint32 character_index = character * 16;
   
-  uint32 *lfb = (uint32*)ArchCommon::getVESAConsoleLFBPtr();
+  uint16 *lfb = (uint16*)ArchCommon::getVESAConsoleLFBPtr();
 
   uint32 top_left_pixel = column*8 + row*16*x_res_;
   
@@ -128,9 +137,9 @@ uint32 FrameBufferConsole::unsetAsCurrent()
 void FrameBufferConsole::consoleScrollUp()
 {
   pointer fb = ArchCommon::getVESAConsoleLFBPtr();
-  ArchCommon::memcpy(fb, fb+(consoleGetNumColumns()*4*8*16),
-    (consoleGetNumRows()-1)*consoleGetNumColumns()*4*8*16);
-  ArchCommon::bzero(fb+((consoleGetNumRows()-1)*consoleGetNumColumns()*4*8*16),consoleGetNumColumns()*4*8*16);
+  ArchCommon::memcpy(fb, fb+(consoleGetNumColumns()*bytes_per_pixel_*8*16),
+    (consoleGetNumRows()-1)*consoleGetNumColumns()*bytes_per_pixel_*8*16);
+  ArchCommon::bzero(fb+((consoleGetNumRows()-1)*consoleGetNumColumns()*bytes_per_pixel_*8*16),consoleGetNumColumns()*bytes_per_pixel_*8*16);
   
 }
 

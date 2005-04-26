@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.7 2005/04/26 10:58:14 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.8 2005/04/26 17:03:27 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.7  2005/04/26 10:58:14  nomenquis
+ * and now it really works
+ *
  * Revision 1.6  2005/04/26 10:23:54  nomenquis
  * kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
  *
@@ -122,6 +125,8 @@ void initialiseBootTimePaging()
       pde_start[764+i].pde4m.present = 1;
       pde_start[764+i].pde4m.writeable = 1;
       pde_start[764+i].pde4m.use_4_m_pages = 1;
+      pde_start[764+i].pde4m.cache_disabled = 1;
+      pde_start[764+i].pde4m.write_through = 1;
       pde_start[764+i].pde4m.page_base_address = (ArchCommon::getVESAConsoleLFBPtr(0) / (1024*1024*4))+i;
     }     
   }
