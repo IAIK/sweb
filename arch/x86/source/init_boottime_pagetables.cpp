@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.6 2005/04/26 10:23:54 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.7 2005/04/26 10:58:14 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.6  2005/04/26 10:23:54  nomenquis
+ * kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
+ *
  * Revision 1.5  2005/04/25 23:23:48  btittelbach
  * nothing really
  *
@@ -84,14 +87,27 @@ void initialiseBootTimePaging()
   // ok, we currently only fill in mappings for the first 4 megs (aka one page table)
   // we do not have to zero out the other page tables since they're alreay empty
   // thanks to the bss clearance.
-  for (i=0;i<257;++i)
+  
+  // update, from now on, all pages up to the last page containing only rodata
+  // will be write protected.
+  
+  // DAMN IT, THIS TOTALLY SUCKS, I got it wrong like 3 times!
+  // AAAAAAAAAAAAAAAAAH, now the 4th time
+  
+  extern uint32 ro_data_end_address;
+  pointer rod = (pointer)&ro_data_end_address;
+  
+  uint32 last_ro_data_page = (rod-LINK_BASE)/PAGE_SIZE;
+
+//  last_ro_data_page = 19;
+  for (i=0;i<last_ro_data_page;++i)
   {
     pte_start[i].present = 1;
-    pte_start[i].writeable = 1;
+    pte_start[i].writeable = 0;
     pte_start[i].page_base_address = i+256;
   }
   
-  for (i=257;i<1024;++i)
+  for (i=last_ro_data_page;i<1024;++i)
   {
     pte_start[i].present = 1;
     pte_start[i].writeable = 1;
