@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.2 2005/04/23 18:13:27 nomenquis Exp $
+//  $Id: Terminal.cpp,v 1.3 2005/04/26 16:08:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.2  2005/04/23 18:13:27  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.1  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -112,7 +116,7 @@ void Terminal::scrollUp()
     {
       characters_[runner] = characters_[runner+num_columns_];
       character_states_[runner] = character_states_[runner+num_columns_];
-    //  console_->consoleSetCharacter(i,k,characters_[runner],character_states_[runner]);
+//      console_->consoleSetCharacter(i,k,characters_[runner],character_states_[runner]);
       ++runner;
     }
   }

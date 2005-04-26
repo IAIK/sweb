@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kmalloc.cpp,v 1.3 2005/04/26 15:49:07 btittelbach Exp $
+//   $Id: kmalloc.cpp,v 1.4 2005/04/26 16:08:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: kmalloc.cpp,v $
+//  Revision 1.3  2005/04/26 15:49:07  btittelbach
+//  krealloc
+//
 //  Revision 1.2  2005/04/23 17:35:03  nomenquis
 //  fixed buggy memory manager
 //  (giving out the same memory several times is no good idea)
@@ -17,7 +20,7 @@
 
 void* kmalloc(size_t size)
 {
-  return (void*)vKernelMemoryManager::instance()->allocateMemory(size);
+  return (void*)KernelMemoryManager::instance()->allocateMemory(size);
 }
 
 void kfree(void * address)

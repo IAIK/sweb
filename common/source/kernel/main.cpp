@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.26 2005/04/26 15:58:45 nomenquis Exp $
+ * $Id: main.cpp,v 1.27 2005/04/26 16:08:59 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.26  2005/04/26 15:58:45  nomenquis
+ * threads, scheduler, happy day
+ *
  * Revision 1.25  2005/04/25 23:23:49  btittelbach
  * nothing really
  *
@@ -91,6 +94,7 @@
 #include "console/kprintf.h"
 #include "Thread.h"
 #include "Scheduler.h"
+#include "ArchCommon.h"
 
 extern void* kernel_end_address;
 
@@ -148,7 +152,7 @@ void startup()
   ArchThreads::initialise();
   ArchInterrupts::initialise();
 
-  ArchInterrupts::enableTimer();
+ ArchInterrupts::enableTimer();
 
   StupidThread *thread0 = new StupidThread(0);
   StupidThread *thread1 = new StupidThread(1);
@@ -160,6 +164,7 @@ void startup()
 
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
+
 
   Scheduler::instance()->yield();
   for (;;);
