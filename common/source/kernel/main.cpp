@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.27 2005/04/26 16:08:59 nomenquis Exp $
+ * $Id: main.cpp,v 1.28 2005/04/26 21:38:43 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.27  2005/04/26 16:08:59  nomenquis
+ * updates
+ *
  * Revision 1.26  2005/04/26 15:58:45  nomenquis
  * threads, scheduler, happy day
  *
@@ -95,6 +98,7 @@
 #include "Thread.h"
 #include "Scheduler.h"
 #include "ArchCommon.h"
+#include "ipc/FiFo.h"
 
 extern void* kernel_end_address;
 
@@ -149,10 +153,40 @@ void startup()
   console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
  */
   
+  //~ kprintf("Testing FiFo:\n");
+  //~ FiFo<uint8> wuffwuff(6);
+  //~ kprintf("putting 5 elements:\n");
+  //~ wuffwuff.put((uint8) 'a');
+  //~ wuffwuff.put((uint8) 'b');
+  //~ wuffwuff.put((uint8) 'c');
+  //~ wuffwuff.put((uint8) 'd');
+  //~ wuffwuff.put((uint8) 'e');
+  
+  //~ kprintf("getting 4 elements: %c ",wuffwuff.get());
+  //~ kprintf("%c ",wuffwuff.get());
+  //~ kprintf("%c ",wuffwuff.get());
+  //~ kprintf("%c \n",wuffwuff.get());
+
+  //~ kprintf("putting 3 more elements:\n");
+  //~ wuffwuff.put((uint8) 'f');
+  //~ wuffwuff.put((uint8) 'g');
+  //~ wuffwuff.put((uint8) 'h');
+  //~ kprintf("getting 4 elements: %c ",wuffwuff.get());
+  //~ kprintf("%c ",wuffwuff.get());
+  //~ kprintf("%c ",wuffwuff.get());
+  //~ kprintf("%c \n",wuffwuff.get());
+  //~ kprintf("getting 4 more, expecting to block, bye bye:");
+  //~ kprintf("%c",wuffwuff.get());
+  //~ kprintf("%c",wuffwuff.get());
+  //~ kprintf("%c",wuffwuff.get());
+  //~ kprintf("%c\n",wuffwuff.get());
+  //~ kprintf("OMG, we survived, something is wrong");
+ 
+
   ArchThreads::initialise();
   ArchInterrupts::initialise();
 
- ArchInterrupts::enableTimer();
+  ArchInterrupts::enableTimer();
 
   StupidThread *thread0 = new StupidThread(0);
   StupidThread *thread1 = new StupidThread(1);
@@ -164,7 +198,6 @@ void startup()
 
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
-
 
   Scheduler::instance()->yield();
   for (;;);

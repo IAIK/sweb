@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.3 2005/04/24 20:31:33 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.4 2005/04/26 21:38:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.3  2005/04/24 20:31:33  btittelbach
+//   kprintf now knows how to padd
+//
 //   Revision 1.2  2005/04/24 18:58:45  btittelbach
 //   kprintf bugfix
 //
@@ -201,8 +204,9 @@ void vkprintf(Console *console, const char *fmt, va_list args)
         //  break;
 
         //we don't do unicode (yet)
-        //case 'c':
-        //  break;
+        case 'c':
+          console->write((uint8) va_arg(args,uint32));
+          break;
 
         default:
           //jump over unknown arg
