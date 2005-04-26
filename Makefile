@@ -3,10 +3,11 @@ INCLUDES := ../include ../../../common/include/mm/
 SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm utils/mtools utils/e2fsimage 
 SHARED_LIBS :=  common/source/console/libConsole.a arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/mm/libMM.a
 PROJECT_ROOT := .
+E2FSIMAGESOURCE := utils/e2fsimage/
 
 include ./make-support/common.mk
 
-all: kernel install 
+all: kernel e2fsimage install 
 
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
@@ -35,7 +36,6 @@ install: kernel
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
-#	test -e $(OBJECTDIR)/bin/e2fsimage || (echo ERROR e2fsimage or libs not found; exit 1)
 	test -e !$(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
 	mkdir $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp/boot
@@ -44,9 +44,10 @@ install: kernel
 	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
 	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
-	
-	
 
+e2fsimage:	
+	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
+	
 bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya: 1_44=boot.img, status=inserted\"" 
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya: 1_44=boot.img, status=inserted" 
