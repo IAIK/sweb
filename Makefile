@@ -50,3 +50,7 @@ install: kernel
 bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya: 1_44=boot.img, status=inserted\"" 
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya: 1_44=boot.img, status=inserted" 
+
+bochsc:
+	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya: 1_44=boot.img, status=inserted\"" 
+	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya: 1_44=boot.img, status=inserted" <<< c
