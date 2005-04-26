@@ -1,6 +1,6 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
-SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm
+SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm utils/mtools
 SHARED_LIBS :=  common/source/console/libConsole.a arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/mm/libMM.a
 PROJECT_ROOT := .
 E2FSIMAGESOURCE := utils/e2fsimage/
@@ -26,11 +26,11 @@ endif
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
 install: kernel
-#	@echo "Starting with install"
-#	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
-#	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
-#	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
-#	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
+	@echo "Starting with install"
+	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
+	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
+	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
+	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
 	
 	@echo "Starting with install - ext2"
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
