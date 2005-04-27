@@ -1,7 +1,10 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.8 2005/04/26 17:03:27 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.9 2005/04/27 08:58:16 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.8  2005/04/26 17:03:27  nomenquis
+ * 16 bit framebuffer hack
+ *
  * Revision 1.7  2005/04/26 10:58:14  nomenquis
  * and now it really works
  *
@@ -102,7 +105,7 @@ void initialiseBootTimePaging()
   
   uint32 last_ro_data_page = (rod-LINK_BASE)/PAGE_SIZE;
 
-//  last_ro_data_page = 19;
+//  last_ro_data_page = 0;
   for (i=0;i<last_ro_data_page;++i)
   {
     pte_start[i].present = 1;

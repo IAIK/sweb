@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.28 2005/04/26 21:38:43 btittelbach Exp $
+ * $Id: main.cpp,v 1.29 2005/04/27 08:58:16 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.28  2005/04/26 21:38:43  btittelbach
+ * Fifo/Pipe Template soweit das ohne Lock und CV zu implementiern ging
+ * kprintf kennt jetzt auch chars
+ *
  * Revision 1.27  2005/04/26 16:08:59  nomenquis
  * updates
  *
@@ -99,11 +103,13 @@
 #include "Scheduler.h"
 #include "ArchCommon.h"
 #include "ipc/FiFo.h"
+#include "kernel/Mutex.h"
 
 extern void* kernel_end_address;
 
 extern "C" void startup();
 
+Mutex * lock;
 
 class StupidThread : public Thread
 {
@@ -111,14 +117,23 @@ class StupidThread : public Thread
     
   StupidThread(uint32 id)
   {
+  //  lock->Acquire();
     thread_number_ = id;
+ //   lock->Release();
   }
   
   virtual void Run()
   {
     uint32 i=0;
     while (1)
+    {
+      kprintf("Thread %d trying to get the lock\n",thread_number_);
+    lock->Acquire();
+    Scheduler::instance()->yield();
+      kprintf("Thread %d has the lock\n",thread_number_);
       kprintf("Kernel Thread %d %d\n",thread_number_,i++);
+    lock->Release();
+    }
   }
   
 private:
@@ -135,24 +150,32 @@ void startup()
   pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
+  ConsoleManager::createConsoleManager(1);
   Scheduler::createScheduler();
 
-  ConsoleManager::createConsoleManager(1);
 
   Console *console = ConsoleManager::instance()->getActiveConsole();
 
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
 
-  /*
+  
   console->writeString((uint8 const*)"Blabb\n");  
   console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
   console->writeString((uint8 const*)"Noch ne Zeile\n");
   console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
   console->writeString((uint8 const*)"Gruen rackete autobus\n");
   console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
- */
+
+  uint32 dummy = 0;
+  kprintf("befor test set lock, val is now %d\n",dummy);
+  ArchThreads::testSetLock(dummy,10);
+  kprintf("After test set lock, val is now %d\n",dummy);
+  kprintf("Lock 2, %d\n",ArchThreads::testSetLock(dummy,22));
+  kprintf("After test set lock, val is now %d\n",dummy);
   
+  lock = new Mutex();
+
   //~ kprintf("Testing FiFo:\n");
   //~ FiFo<uint8> wuffwuff(6);
   //~ kprintf("putting 5 elements:\n");
@@ -182,23 +205,34 @@ void startup()
   //~ kprintf("%c\n",wuffwuff.get());
   //~ kprintf("OMG, we survived, something is wrong");
  
-
+  kprintf("Threads init\n");
   ArchThreads::initialise();
+  kprintf("Interupts init\n");
   ArchInterrupts::initialise();
 
+  kprintf("Timer enable\n");
   ArchInterrupts::enableTimer();
+  lock = new Mutex();
 
+  kprintf("Thread creation\n");
   StupidThread *thread0 = new StupidThread(0);
   StupidThread *thread1 = new StupidThread(1);
-  
+  kprintf("Adding threads\n");
   Scheduler::instance()->addNewThread(thread0);
   Scheduler::instance()->addNewThread(thread1);
   
   kprintf("now enabling Interrupts...");
 
+/*
+  kprintf("Trying to get the lock\n");
+  lock->Acquire();
+  kprintf("Done\n");
+  */
+
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
 
+  
   Scheduler::instance()->yield();
   for (;;);
 }

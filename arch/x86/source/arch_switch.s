@@ -106,3 +106,13 @@ arch_switchThreadKernelToKernel:
         push dword[ebx + 24]
         pop  ebx                     ; restore ebx
         iretd                        ; switch to next
+
+global arch_TestAndSet
+  arch_TestAndSet:
+    mov eax, dword[esp+4];,%eax  # get new_value into %eax
+    mov edx, dword[esp+8]; 8(%esp),%edx  # get lock_pointer into %edx
+    lock     ;         # next instruction is locked
+    xchg  dword[edx], eax;, # swap %eax with what is stored in (%edx)
+                     ;  # ... and don't let any other cpu touch that
+                      ; # ... memory location while you're swapping
+    ret               ; # return the old value that's in %eax

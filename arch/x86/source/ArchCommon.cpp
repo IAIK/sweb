@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.9 2005/04/26 15:58:45 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.10 2005/04/27 08:58:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.9  2005/04/26 15:58:45  nomenquis
+//  threads, scheduler, happy day
+//
 //  Revision 1.8  2005/04/25 22:40:18  btittelbach
 //  Anti Warnings v0.1
 //
@@ -32,6 +35,7 @@
 #include "multiboot.h"
 #include "boot-time.h"
 #include "offsets.h"
+#include "kprintf.h"
 
 #define MAX_MEMORY_MAPS 10
 #define FOUR_ZEROS 0,0,0,0
@@ -228,23 +232,25 @@ void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
     ++s8;
   }
 }
-void ArchCommon::bzero(pointer s, size_t n)
+void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
 {
+  if (debug) kprintf("Bzero start\n");
   MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)s;
   uint32 num_64_bit_zeros = n / sizeof(MEMCOPY_LARGE_TYPE);
   uint32 num_8_bit_zeros = n % sizeof(MEMCOPY_LARGE_TYPE);
   uint32 i;
-  
+  if (debug) kprintf("Bzero next\n");
   for (i=0;i<num_64_bit_zeros;++i)
   {
     *s64 = 0;
     ++s64;
   }
   uint8 *s8 = (uint8*)s64;
-  
+  if (debug) kprintf("Bzero middle\n");
   for (i=0;i<num_8_bit_zeros;++i)
   {
     *s8 = 0;
     ++s8;
   }
+  if (debug) kprintf("Bzero end\n");
 }

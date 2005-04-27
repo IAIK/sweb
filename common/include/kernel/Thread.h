@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.3 2005/04/26 15:58:45 nomenquis Exp $
+//  $Id: Thread.h,v 1.4 2005/04/27 08:58:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.3  2005/04/26 15:58:45  nomenquis
+//  threads, scheduler, happy day
+//
 //  Revision 1.2  2005/04/24 10:06:09  nomenquis
 //  commit to compile on different machine
 //
@@ -73,6 +76,10 @@ private:
   
   Thread(Thread const &);
   Thread &operator=(Thread const&);
+
+  uint64 num_jiffies_;
+  uint32 pid_;
+
 };
 
 

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.3 2005/04/26 15:58:45 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.4 2005/04/27 08:58:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.3  2005/04/26 15:58:45  nomenquis
+//  threads, scheduler, happy day
+//
 //  Revision 1.2  2005/04/26 10:23:54  nomenquis
 //  kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
 //
@@ -13,6 +16,7 @@
 
 #include "ArchThreads.h"
 #include "ArchCommon.h"
+#include "kprintf.h"
 
 typedef struct ArchThreadInfo
 {
@@ -59,11 +63,13 @@ extern "C" uint32 kernel_page_directory_start;
 
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
+  kprintf("ArchThreads::create enter %x\n",info);
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  
+  kprintf("alloc done %x\n",info);
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = (((pointer)&kernel_page_directory_start)-2*1024*1024*1024);
-
+  kprintf("bzero done\n");
+  
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
@@ -89,7 +95,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
-
+  kprintf("values done\n");
 }
 
 void ArchThreads::yield()
@@ -98,4 +104,10 @@ void ArchThreads::yield()
   :                          
   :                          
   );
+}
+
+extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
+uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
+{
+  return arch_TestAndSet(new_value, &lock);
 }

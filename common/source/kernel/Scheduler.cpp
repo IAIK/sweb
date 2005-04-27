@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.1 2005/04/26 15:58:45 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.2 2005/04/27 08:58:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: Scheduler.cpp,v $
+//  Revision 1.1  2005/04/26 15:58:45  nomenquis
+//  threads, scheduler, happy day
+//
 //----------------------------------------------------------------------
 
 
@@ -23,9 +26,27 @@ Scheduler *Scheduler::instance()
   return instance_;
 }
 
+class IdleThread : public Thread
+{
+public:
+  
+  virtual void Run()
+  {
+    while (1)
+    {
+      kprintf("IDLE\n");
+      Scheduler::instance()->yield();
+    }
+  }
+};
 void Scheduler::createScheduler()
 {
   instance_ = new Scheduler();
+  
+  // create idle thread, this one really does not do too much
+
+  Thread *idle = new IdleThread();
+  instance_->addNewThread(idle);
 }
 
 Scheduler::Scheduler()
@@ -76,7 +97,6 @@ void Scheduler::schedule(uint32 from_interrupt)
     if (threads_[i])
       break;
   }
-  kprintf("Thread is gonna be %d %x %x\n",i,threads_[i], threads_[i]->arch_thread_info_);
   
   currentThread = threads_[i];
   currentThreadInfo = threads_[i]->arch_thread_info_;

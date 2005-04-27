@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.6 2005/04/23 18:13:26 nomenquis Exp $
+//   $Id: ArchCommon.h,v 1.7 2005/04/27 08:58:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.h,v $
+//  Revision 1.6  2005/04/23 18:13:26  nomenquis
+//  added optimised memcpy and bzero
+//  These still could be made way faster by using asm and using cache bypassing mov instructions
+//
 //  Revision 1.5  2005/04/23 15:58:31  nomenquis
 //  lots of new stuff
 //
@@ -41,7 +45,7 @@ public:
   static uint32 getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type);
 
   static void memcpy(pointer dest, pointer src, size_t size);
-  static void bzero(pointer s, size_t n);
+  static void bzero(pointer s, size_t n, uint32 debug = 0);
 
 };
 

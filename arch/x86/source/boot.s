@@ -1,7 +1,10 @@
 ;
-; $Id: boot.s,v 1.14 2005/04/26 10:23:54 nomenquis Exp $
+; $Id: boot.s,v 1.15 2005/04/27 08:58:16 nomenquis Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.14  2005/04/26 10:23:54  nomenquis
+; kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
+;
 ; Revision 1.13  2005/04/25 23:09:18  nomenquis
 ; fubar 2
 ;
@@ -364,10 +367,10 @@ mboot:
    dd MULTIBOOT_HEADER_FLAGS
    dd MULTIBOOT_CHECKSUM
 ; aout kludge. These must be PHYSICAL addresses
-   dd mboot - BASE
-   dd text_start_address - BASE
-   dd bss_start_address  - BASE
-   dd kernel_end_address - BASE
+;   dd mboot - BASE
+;   dd text_start_address - BASE
+;   dd bss_start_address  - BASE
+;   dd kernel_end_address - BASE
 ;   dd mboot - BASE
 ;   dd 0
 ;   dd 0
@@ -528,7 +531,7 @@ SECTION .bss
    ; here we create lots of room for our stack (actually this is one by the resd 1024)
    GLOBAL stack_start
 stack_start:
-   resd 65536
+   resd 8192
    GLOBAL stack
 stack:
 SECTION .paging_stuff
