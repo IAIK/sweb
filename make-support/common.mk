@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.4 2005/04/20 18:19:44 nomenquis Exp $
+# $Id: common.mk,v 1.5 2005/04/27 08:56:00 woswasi Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.4  2005/04/20 18:19:44  nomenquis
+# updated these files
+#
 # Revision 1.3  2005/04/12 19:04:04  davrieb
 # fixed bug
 #
@@ -142,7 +145,11 @@ clean-l:
 	@rm -f $(TARGET)
 
 clean: $(SUBPROJECTS) clean-l
-	
+	@echo "CLEAN $(E2FSIMAGESOURCE)"
+	@rm -f $(E2FSIMAGESOURCE)*.o
+	@rm -f $(E2FSIMAGESOURCE)Local.mak
+	@rm -f $(E2FSIMAGESOURCE)e2fsimage
+
 clean-dep-l:
 	@echo "CLEAN $(OBJECTDIR)/*.d"
 	@rm -f $(OBJECTDIR)/*.d
