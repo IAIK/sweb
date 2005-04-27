@@ -1,12 +1,17 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.1 2005/04/26 21:38:43 btittelbach Exp $
+//   $Id: FiFo.h,v 1.2 2005/04/27 09:22:41 nomenquis Exp $
 //----------------------------------------------------------------------
-//   $Log: fifo.h,v $
+//   $Log: FiFo.h,v $
+//   Revision 1.1  2005/04/26 21:38:43  btittelbach
+//   Fifo/Pipe Template soweit das ohne Lock und CV zu implementiern ging
+//   kprintf kennt jetzt auch chars
+//
 //
 //----------------------------------------------------------------------
 
 #ifndef _FIFO_H
 #define _FIFO_H
+#include "console/kprintf.h"
 
 #ifdef __cplusplus
 extern "C"
