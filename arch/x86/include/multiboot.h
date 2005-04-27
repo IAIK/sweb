@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: multiboot.h,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
+//   $Id: multiboot.h,v 1.3 2005/04/27 09:19:20 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: multiboot.h,v $
+//  Revision 1.2  2005/04/22 19:43:04  nomenquis
+//   more poison added
+//
 //  Revision 1.1  2005/04/21 21:31:24  nomenquis
 //  added lfb support, also we now use a different grub version
 //  we also now read in the grub multiboot version
@@ -111,7 +114,7 @@ typedef struct multiboot_header
    uint32 width			: 32;
    uint32 height		: 32;
    uint32 depth			: 32;
-} multiboot_header_t;
+} __attribute__((__packed__)) multiboot_header_t;
 
 /* The symbol table for a.out. */
 typedef struct aout_symbol_table
@@ -120,7 +123,7 @@ typedef struct aout_symbol_table
   uint32 strsize;
   uint32 addr;
   uint32 reserved;
-} aout_symbol_table_t;
+} __attribute__((__packed__)) aout_symbol_table_t;
 
 /* The section header table for ELF. */
 typedef struct elf_section_header_table
@@ -129,7 +132,7 @@ typedef struct elf_section_header_table
   uint32 size;
   uint32 addr;
   uint32 shndx;
-} elf_section_header_table_t;
+} __attribute__((__packed__)) elf_section_header_table_t;
 
 /* The Multiboot information. */
 typedef struct multiboot_info
@@ -159,7 +162,7 @@ typedef struct multiboot_info
   uint32 vbe_interface_seg	: 32;
   uint32 vbe_interface_off	: 32;
   uint32 vbe_interface_len	: 32;
-} multiboot_info_t;
+} __attribute__((__packed__)) multiboot_info_t;
 
 /* The module structure. */
 typedef struct module
@@ -168,7 +171,7 @@ typedef struct module
   uint32 mod_end;
   uint32 string;
   uint32 reserved;
-} module_t;
+}__attribute__((__packed__)) module_t;
 
 /* The memory map. Be careful that the offset 0 is base_addr_low
  *    but no size. */
@@ -180,7 +183,7 @@ typedef struct memory_map
   uint32 length_low;
   uint32 length_high;
   uint32 type;
-} memory_map_t;
+} __attribute__((__packed__)) memory_map_t;
 
 
 #endif

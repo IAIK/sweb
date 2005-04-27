@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.10 2005/04/27 08:58:16 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.11 2005/04/27 09:19:20 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.10  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.9  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -59,8 +63,8 @@ pointer vesa_lfb_pointer;
     pointer start_address;
     pointer end_address;
     uint32 type;
-  } memory_maps[MAX_MEMORY_MAPS];
-};
+  } __attribute__((__packed__)) memory_maps[MAX_MEMORY_MAPS];
+}__attribute__((__packed__));
 
 
 extern multiboot_info_t multi_boot_structure_pointer[];

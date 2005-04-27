@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: structures.h,v 1.1 2005/04/23 20:33:06 nomenquis Exp $
+//  $Id: structures.h,v 1.2 2005/04/27 09:19:20 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: structures.h,v $
+//  Revision 1.1  2005/04/23 20:33:06  nomenquis
+//  timer interrupt works
+//
 //----------------------------------------------------------------------
 
 
@@ -24,11 +27,11 @@ typedef struct
    /* pushed by exception. Exception may also push err_code.
    user_esp and user_ss are pushed only if a privilege change occurs. */
    uint32 eip, cs, eflags, user_esp, user_ss;
-} regs_t;
+} regs_t __attribute__((__packed__));
 
 typedef struct
 {
   uint32 access_byte, eip;
-} vector_t;
+} vector_t __attribute__((__packed__));
 
 #endif

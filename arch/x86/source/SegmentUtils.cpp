@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: SegmentUtils.cpp,v 1.3 2005/04/25 23:23:48 btittelbach Exp $
+//  $Id: SegmentUtils.cpp,v 1.4 2005/04/27 09:19:20 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: SegmentUtils.cpp,v $
+//  Revision 1.3  2005/04/25 23:23:48  btittelbach
+//  nothing really
+//
 //  Revision 1.2  2005/04/25 23:09:18  nomenquis
 //  fubar 2
 //
@@ -28,7 +31,7 @@ typedef struct {
     uint8 type;
     uint8 limitH;
     uint8 baseH;
-} SegDesc;
+} __attribute__((__packed__))SegDesc;
 
 
 typedef struct {
@@ -70,7 +73,7 @@ typedef struct {
     uint16  padA;
     uint16  debugtrap;
     uint16  iobase;
-} TSS;
+} __attribute__((__packed__))TSS;
 
 TSS *g_tss;
 

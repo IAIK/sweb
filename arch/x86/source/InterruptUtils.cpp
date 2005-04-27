@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.5 2005/04/26 15:58:45 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.6 2005/04/27 09:19:20 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.5  2005/04/26 15:58:45  nomenquis
+//  threads, scheduler, happy day
+//
 //  Revision 1.4  2005/04/26 13:34:23  nomenquis
 //  whatever
 //
@@ -38,7 +41,7 @@ typedef struct {
     uint8 unused;   /*!< unused                    */
     uint8 type;     /*!< type                      */
     uint16 offsetH;  /*!< 16-32bit of offset address */
-} GateDesc;
+}__attribute__((__packed__)) GateDesc;
 
 
 void InterruptUtils::initialise()
