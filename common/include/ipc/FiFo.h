@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.2 2005/04/27 09:22:41 nomenquis Exp $
+//   $Id: FiFo.h,v 1.3 2005/04/28 09:06:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.2  2005/04/27 09:22:41  nomenquis
+//   fix broken file
+//
 //   Revision 1.1  2005/04/26 21:38:43  btittelbach
 //   Fifo/Pipe Template soweit das ohne Lock und CV zu implementiern ging
 //   kprintf kennt jetzt auch chars
@@ -28,6 +31,8 @@ extern "C"
 //Klasse sollte ein Monitor sein..
 
 #include "mm/new.h"
+#include "kernel/Mutex.h"
+#include "kernel/Scheduler.h"
 
 template<class T>
 class FiFo
@@ -46,7 +51,7 @@ private:
   T* pos_add(T* pos_pointer, uint32 value);
 
 
-  //mutex my_lock;
+  Mutex my_lock;
   T* buffer_start_;
   T* buffer_end_;
   T* write_pos_; //position of next to write element
@@ -72,29 +77,35 @@ FiFo<T>::~FiFo()
 template <class T>
 T FiFo<T>::get()
 {
-  //mylock.acquire();
+  my_lock.Acquire();
   while (write_pos_ == pos_add(read_pos_,1)) //nothing new to read
-  {kprintf("blocking get\n");} //block somehow, need sync mechanism for this, busy waiting for now
+    //block somehow, need sync mechanism for this, busy waiting for now
+    kprintf("blocking put\n");
+    Scheduler::instance()->yield();
 
   read_pos_ = pos_add(read_pos_,1);
   T element = *read_pos_;
-  //mylock.release();
+  my_lock.Release();
   return element;
 }
 
 template <class T>
 void FiFo<T>::put(T in)
 {
-  //mylock.acquire();
+  my_lock.Acquire();
   while (pos_add(write_pos_,1) == read_pos_) //no space to write, need to read first
-  {kprintf("blocking put\n");} //block somehow, need sync mechanism for this, busy waiting for now
+  {
+    //block somehow, need sync mechanism for this, busy waiting for now
+    kprintf("blocking put\n");
+    Scheduler::instance()->yield();
+  } 
   
   if (read_pos_ == 0)
     read_pos_ = buffer_start_;
   
   *write_pos_=in;
   write_pos_ = pos_add(write_pos_,1);
-  //mylock.release();
+  my_lock.Release();
 }
 
 template <class T>
