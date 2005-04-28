@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.3 2005/04/23 22:20:30 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.4 2005/04/28 14:07:12 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.3  2005/04/23 22:20:30  btittelbach
+//  just stuff
+//
 //  Revision 1.2  2005/04/23 17:35:03  nomenquis
 //  fixed buggy memory manager
 //  (giving out the same memory several times is no good idea)
@@ -37,17 +40,24 @@ public:
   MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used)
   {
     prev_=prev;
-    size_=size;
+    size_=size & 0x7FFFFFFF;  //size to max 2^31-1
     next_=next;
-    flag_=((used)?1:0);
+    size_ |= ( (used)? (1 << 31) : 0 ); //this is the used flag
+    //flag_=((used)?1:0);
     marker_= 0xdeadbeef;
   }
+
+  size_t getSize() {return size_ & 0x7FFFFFFF;}
+  void setSize(size_t size) {size_ = size & 0x7FFFFFFF;}
+  bool getUsed() {return size_ & 0x80000000;}
+  void setUsed(bool used) {size_ = (size_ & 0x7FFFFFFF) | ( (used)? (1 << 31) : 0 );}
+
   uint32 marker_;// = 0xdeadbeef;
   MallocSegment *next_;// = NULL;
   MallocSegment *prev_;// = NULL;
-  uint8 flag_;// = 0;
-  size_t size_;// = 0;
-
+  
+private:
+  size_t size_; // = 0; //max size is 2^31-1
 };
 
 // note by Bernhard: was auch eine nette Idee wäre:
@@ -80,11 +90,7 @@ public:
   //WARNING: after MemCpy can't assume that pointer remains the same
   //return -1 if unable to resize
   //if size == 0 -> free(what_and_where_is_it);
-  pointer reallocateMemory(pointer virtual_address, size_t new_size);
-  
-  void memoryCopy(pointer source, pointer destination, size_t size);
-  void memoryZero(pointer virtual_address, size_t size);
-  
+  pointer reallocateMemory(pointer virtual_address, size_t new_size);  
   
 private:
   
@@ -100,13 +106,12 @@ private:
 
   MallocSegment* first_;  //first_ must _never_ be NULL
   MallocSegment* last_;
-  //pointer *malloc_start_;
   pointer malloc_end_;
 
   //statistics:
- // uint32 segments_used_;
-  //uint32 segments_free_;
-  //size_t memory_free_;
+  uint32 segments_used_;
+  uint32 segments_free_;
+  size_t approx_memory_free_;
 
   static KernelMemoryManager *instance_;
   
