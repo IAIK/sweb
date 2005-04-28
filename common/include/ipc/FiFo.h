@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.3 2005/04/28 09:06:56 btittelbach Exp $
+//   $Id: FiFo.h,v 1.4 2005/04/28 09:07:42 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.3  2005/04/28 09:06:56  btittelbach
+//   locks und immer noch kein gutes blocking im fifo
+//
 //   Revision 1.2  2005/04/27 09:22:41  nomenquis
 //   fix broken file
 //
@@ -80,7 +83,7 @@ T FiFo<T>::get()
   my_lock.Acquire();
   while (write_pos_ == pos_add(read_pos_,1)) //nothing new to read
     //block somehow, need sync mechanism for this, busy waiting for now
-    kprintf("blocking put\n");
+    kprintf("blocking get\n");
     Scheduler::instance()->yield();
 
   read_pos_ = pos_add(read_pos_,1);
