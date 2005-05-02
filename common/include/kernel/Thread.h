@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.4 2005/04/27 08:58:16 nomenquis Exp $
+//  $Id: Thread.h,v 1.5 2005/05/02 19:58:40 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.4  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.3  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -71,7 +75,9 @@ protected:
   ArchThreadInfo *arch_thread_info_;
   uint32 stack_[2048];
   
+public:  
   pointer getStackStartPointer();
+  
 private:
   
   Thread(Thread const &);

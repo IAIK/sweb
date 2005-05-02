@@ -1,7 +1,7 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
-SUBPROJECTS := arch/arch/source common/source/kernel common/source/console common/source/mm common/source/ipc utils/mtools
-SHARED_LIBS :=  common/source/console/libConsole.a arch/arch/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/mm/libMM.a common/source/ipc/libIPC.a
+SUBPROJECTS := arch/x86/source common/source/kernel common/source/console common/source/mm common/source/ipc utils/mtools
+SHARED_LIBS :=  common/source/console/libConsole.a arch/x86/source/libArchSpecific.a common/source/kernel/libKernel.a common/source/mm/libMM.a common/source/ipc/libIPC.a
 PROJECT_ROOT := .
 E2FSIMAGESOURCE := utils/e2fsimage/
 
@@ -21,7 +21,7 @@ endif
 	@mkdir -p $(OBJECTDIR)/sauhaufen
 	@rm -f $(OBJECTDIR)/sauhaufen/*
 	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
-	@$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
+	@$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* -u entry -T arch/x86/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
 
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead

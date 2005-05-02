@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.29 2005/04/27 08:58:16 nomenquis Exp $
+ * $Id: main.cpp,v 1.30 2005/05/02 19:58:40 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.29  2005/04/27 08:58:16  nomenquis
+ * locks work!
+ * w00t !
+ *
  * Revision 1.28  2005/04/26 21:38:43  btittelbach
  * Fifo/Pipe Template soweit das ohne Lock und CV zu implementiern ging
  * kprintf kennt jetzt auch chars
@@ -88,10 +92,10 @@
  *
  */
  
-#include "types.h"
-#include "multiboot.h"
-#include "arch_panic.h"
-#include "paging-definitions.h"
+#include <types.h>
+#include <multiboot.h>
+#include <arch_panic.h>
+#include <paging-definitions.h>
 #include "console/ConsoleManager.h"
 #include "mm/new.h"
 #include "mm/PageManager.h"
