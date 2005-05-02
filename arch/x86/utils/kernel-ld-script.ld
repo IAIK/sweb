@@ -1,8 +1,11 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.7 2005/04/26 10:23:54 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.8 2005/05/02 18:33:05 nelles Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.7  2005/04/26 10:23:54  nomenquis
+*  kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
+*
 *  Revision 1.6  2005/04/23 11:56:34  nomenquis
 *  added interface for memory maps, it works now
 *
@@ -83,11 +86,15 @@ kernel_start_address = .;
 sections are here... */
     .stab :
     {
+	stab_start_address = .;
 	*(.stab)
+	stab_end_address = .;
     }
     .stabstr :
     {
+	stabstr_start_address = .;
 	*(.stabstr)
+	stabstr_end_address = .;
     }
 /* symbols to mark end of kernel */
 		
