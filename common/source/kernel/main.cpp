@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.30 2005/05/02 19:58:40 nelles Exp $
+ * $Id: main.cpp,v 1.31 2005/05/02 21:13:30 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.30  2005/05/02 19:58:40  nelles
+ * made GetStackPointer in Thread public
+ * added panic.cpp
+ *
  * Revision 1.29  2005/04/27 08:58:16  nomenquis
  * locks work!
  * w00t !
@@ -108,6 +112,7 @@
 #include "ArchCommon.h"
 #include "ipc/FiFo.h"
 #include "kernel/Mutex.h"
+#include <debug_bochs.h>
 
 extern void* kernel_end_address;
 
@@ -149,6 +154,8 @@ private:
 
 void startup()
 {
+  writeLine2Bochs( (uint8 *) "It's easy to write in Bochs");
+  writeLine2Bochs( (uint8 *) "Startup Started \n");
   
   pointer start_address = (pointer)&kernel_end_address;
   pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
