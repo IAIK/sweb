@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.31 2005/05/02 21:13:30 nelles Exp $
+ * $Id: main.cpp,v 1.32 2005/05/02 21:20:50 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.31  2005/05/02 21:13:30  nelles
+ * added the debug_bochs.h
+ *
  * Revision 1.30  2005/05/02 19:58:40  nelles
  * made GetStackPointer in Thread public
  * added panic.cpp
@@ -154,7 +157,7 @@ private:
 
 void startup()
 {
-  writeLine2Bochs( (uint8 *) "It's easy to write in Bochs");
+  writeLine2Bochs( (uint8 *) "It's easy to write in Bochs \n");
   writeLine2Bochs( (uint8 *) "Startup Started \n");
   
   pointer start_address = (pointer)&kernel_end_address;
