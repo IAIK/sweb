@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.32 2005/05/02 21:20:50 nelles Exp $
+ * $Id: main.cpp,v 1.33 2005/05/03 18:31:09 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.32  2005/05/02 21:20:50  nelles
+ * added tag to bochs debugwrite
+ *
  * Revision 1.31  2005/05/02 21:13:30  nelles
  * added the debug_bochs.h
  *
@@ -167,7 +170,7 @@ void startup()
   ConsoleManager::createConsoleManager(1);
   Scheduler::createScheduler();
 
-
+  
   Console *console = ConsoleManager::instance()->getActiveConsole();
 
   console->setBackgroundColor(Console::BG_BLACK);

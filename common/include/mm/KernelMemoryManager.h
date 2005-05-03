@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.5 2005/05/03 17:32:29 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.6 2005/05/03 18:31:09 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.5  2005/05/03 17:32:29  btittelbach
+//  size umbenannt
+//
 //  Revision 1.4  2005/04/28 14:07:12  btittelbach
 //  Merge von size und flag (hack)
 //
@@ -43,17 +46,27 @@ public:
   MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used)
   {
     prev_=prev;
-    size_flag_=size & 0x7FFFFFFF;  //size to max 2^31-1
-    next_=next;
-    size_flag_ |= ( (used)? (1 << 31) : 0 ); //this is the used flag
-    //flag_=((used)?1:0);
     marker_= 0xdeadbeef;
+    size_flag_=(size & 0x7FFFFFFF);  //size to max 2^31-1
+    next_=next;
+    if (used)
+      size_flag_ |= 0x80000000; //this is the used flag
+
   }
 
-  size_t getSize() {return size_flag_ & 0x7FFFFFFF;}
-  void setSize(size_t size) {size_flag_ = size & 0x7FFFFFFF;}
-  bool getUsed() {return size_flag_ & 0x80000000;}
-  void setUsed(bool used) {size_flag_ = (size_flag_ & 0x7FFFFFFF) | ( (used)? (1 << 31) : 0 );}
+  size_t getSize() {return (size_flag_ & 0x7FFFFFFF);}
+  void setSize(size_t size) 
+  { 
+    size_flag_ &= 0x80000000;
+    size_flag_ |= (size & 0x7FFFFFFF);
+  }
+  bool getUsed() {return (size_flag_ & 0x80000000);}
+  void setUsed(bool used) 
+  {
+    size_flag_ &= 0x7FFFFFFF;
+    if (used)
+      size_flag_ |= 0x80000000; //this is the used flag
+  }
 
   uint32 marker_;// = 0xdeadbeef;
   MallocSegment *next_;// = NULL;

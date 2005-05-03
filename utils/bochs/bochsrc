@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.8 2005/04/26 10:58:15 nomenquis Exp $
+#*    $Id: bochsrc,v 1.9 2005/05/03 18:31:10 btittelbach Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.8  2005/04/26 10:58:15  nomenquis
+#*    and now it really works
+#*
 #*    Revision 1.7  2005/04/25 19:34:48  nomenquis
 #*    fixed makefile
 #*
@@ -528,8 +531,8 @@ parport1: enabled=1, file="parport.out"
 # Examples:
 #   vga_update_interval: 250000
 #=======================================================================
-#vga_update_interval: 300000
 vga_update_interval: 300000
+#vga_update_interval: 1
 
 # using for Winstone '98 tests
 #vga_update_interval:  100000
