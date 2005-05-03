@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.8 2005/04/28 14:07:25 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.9 2005/05/03 17:09:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.8  2005/04/28 14:07:25  btittelbach
+//  Merge von size und flag (hack)
+//
 //  Revision 1.7  2005/04/26 15:58:46  nomenquis
 //  threads, scheduler, happy day
 //
@@ -143,7 +146,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
 
   malloc_end_=end_address;
   //memory_free_=end_address-start_address-sizeof(MallocSegment);
-  assert ((end_address-start_address-sizeof(MallocSegment)) & 0x80000000 == 0);
+  assert (((end_address-start_address-sizeof(MallocSegment)) & 0x80000000) == 0);
   first_=new ((void*) start_address) MallocSegment(0,0,end_address-start_address-sizeof(MallocSegment),false);
   last_=first_;
   //segments_free_=1;
@@ -155,7 +158,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
 {
   // find next free pointer of neccessary size + sizeof(MallocSegment);
-  assert (requested_size & 0x80000000 == 0);
+  assert ((requested_size & 0x80000000) == 0);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
   
   if (new_pointer == 0)
@@ -189,7 +192,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   //check if there is enought free space afterwards
   //if it is -> merge spaces and return same pointer
   //if not -> find large enough space and move memory, return new pointer
-  assert (new_size & 0x80000000 == 0);
+  assert ((new_size & 0x80000000) == 0);
   if (new_size == 0)
   {
     freeMemory(virtual_address);
