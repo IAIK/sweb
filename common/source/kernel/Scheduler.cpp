@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.2 2005/04/27 08:58:16 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.3 2005/05/08 21:43:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.2  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.1  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -34,7 +38,7 @@ public:
   {
     while (1)
     {
-      kprintf("IDLE\n");
+//      kprintf("IDLE\n");
       Scheduler::instance()->yield();
     }
   }

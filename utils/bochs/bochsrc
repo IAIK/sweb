@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.9 2005/05/03 18:31:10 btittelbach Exp $
+#*    $Id: bochsrc,v 1.10 2005/05/08 21:43:55 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.9  2005/05/03 18:31:10  btittelbach
+#*    fix of evil evil MemoryManager Bug
+#*
 #*    Revision 1.8  2005/04/26 10:58:15  nomenquis
 #*    and now it really works
 #*
@@ -436,9 +439,9 @@ log: bochsout.txt
 #=======================================================================
 panic: action=ask
 error: action=report
-info: action=report
+info: action=ignore
 #debug: action=ignore
-debug: action=report
+debug: action=ignore
 #pass: action=report
 #pass: action=fatal
 

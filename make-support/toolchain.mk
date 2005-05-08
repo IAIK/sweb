@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.9 2005/04/27 09:19:20 nomenquis Exp $
+# $Id: toolchain.mk,v 1.10 2005/05/08 21:43:55 nelles Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.9  2005/04/27 09:19:20  nomenquis
+# only pack whats needed
+#
 # Revision 1.8  2005/04/26 15:58:46  nomenquis
 # threads, scheduler, happy day
 #
@@ -87,10 +90,10 @@ MAKE := $(MAKE_TEMP)
 
 ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
-#CXXFLAGS := $(CXXFLAGS) -fpack-struct -O2 -g -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-#CCFLAGS := $(CCFLAGS) -fpack-struct -O2 -g -Wall -W -nostdinc -fno-builtin
-CXXFLAGS := $(CXXFLAGS) -O2 -g -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-CCFLAGS := $(CCFLAGS)  -O2 -g -Wall -W -nostdinc -fno-builtin
+#CXXFLAGS := $(CXXFLAGS) -fpack-struct -O2 -g3 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+#CCFLAGS := $(CCFLAGS) -fpack-struct -O2 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
+CXXFLAGS := $(CXXFLAGS) -O2 -g3 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+CCFLAGS := $(CCFLAGS)  -O2 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
 endif

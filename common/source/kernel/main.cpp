@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.33 2005/05/03 18:31:09 btittelbach Exp $
+ * $Id: main.cpp,v 1.34 2005/05/08 21:43:55 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.33  2005/05/03 18:31:09  btittelbach
+ * fix of evil evil MemoryManager Bug
+ *
  * Revision 1.32  2005/05/02 21:20:50  nelles
  * added tag to bochs debugwrite
  *
@@ -118,6 +121,7 @@
 #include "ArchCommon.h"
 #include "ipc/FiFo.h"
 #include "kernel/Mutex.h"
+#include <panic.h>
 #include <debug_bochs.h>
 
 extern void* kernel_end_address;
@@ -142,12 +146,15 @@ class StupidThread : public Thread
     uint32 i=0;
     while (1)
     {
-      kprintf("Thread %d trying to get the lock\n",thread_number_);
-    lock->Acquire();
-    Scheduler::instance()->yield();
-      kprintf("Thread %d has the lock\n",thread_number_);
-      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
-    lock->Release();
+//      kprintf("Thread %d trying to get the lock\n",thread_number_);
+//    lock->Acquire();
+//    Scheduler::instance()->yield();
+//      kprintf("Thread %d has the lock\n",thread_number_);
+//      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
+//    lock->Release();
+    
+    if( i++ >= 2 )
+      kpanict( (uint8 *) "panicking " );
     }
   }
   
@@ -177,12 +184,12 @@ void startup()
   console->setForegroundColor(Console::FG_GREEN);
 
   
-  console->writeString((uint8 const*)"Blabb\n");  
+ /* console->writeString((uint8 const*)"Blabb\n");  
   console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
   console->writeString((uint8 const*)"Noch ne Zeile\n");
   console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
   console->writeString((uint8 const*)"Gruen rackete autobus\n");
-  console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");
+  console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");*/
 
   uint32 dummy = 0;
   kprintf("befor test set lock, val is now %d\n",dummy);
@@ -248,7 +255,6 @@ void startup()
 
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
-
   
   Scheduler::instance()->yield();
   for (;;);
