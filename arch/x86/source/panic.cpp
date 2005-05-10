@@ -6,15 +6,15 @@
 #include "debug_bochs.h"
 
 // pointers to the start and end of the kernel code
-extern void* LS_Code;
-extern void* LS_Data;
+extern uint8* LS_Code;
+extern uint8* LS_Data;
 
 // pointers to the symbol table and symbol strings
-extern void* stab_start_address_nr;
-extern void* stab_end_address_nr;
+extern uint8* stab_start_address_nr;
+extern uint8* stab_end_address_nr;
 
-extern void* stabstr_start_address_nr;
-extern void* stabstr_end_address_nr;
+extern uint8* stabstr_start_address_nr;
+extern uint8* stabstr_end_address_nr;
 
 extern ArchThreadInfo *currentThreadInfo;
 
@@ -36,23 +36,27 @@ pointer STABSTR_END        = (pointer)&stabstr_end_address_nr;
     
     kprintf( "stack is > %x, KST is > %x, KEND is > %x \n",  stack, KERNEL_CODE_START, KERNEL_CODE_END );
 
-/*    for( pointer i = 0; i < 10; i++, stack-- )
-    {
-      kprintf( "\n*stack is > %x",  *stack );
-    }*/
+    uint32 * esp_reg = 0;
     
-    ArchThreadInfo* thrinfo = currentThreadInfo;
-    kprintf( "thrinfo->esp is > %x, thrinfo->ebp is > %x\n\n\n",  thrinfo->esp, thrinfo->ebp );
-    
-    for( uint32 * i = (uint32 *) (thrinfo->esp - 20); i < stack+20; i++ )
-    {
-      if( *i >= 0x80000000 )
+    __asm__ __volatile__(" \
+     pushl %%eax\n \
+     movl %%esp, %%eax\n \
+     movl %%eax, %0\n \
+     popl %%eax\n" 
+      : "=g" (esp_reg) 
+     );
+
+    kprintf( "esp_reg is > %x\n\n",  esp_reg );
+     
+    for( uint32 * i = (uint32 *) (esp_reg); i < stack; i++ )
+    {     
+      if( *i >= KERNEL_CODE_START && *i <= KERNEL_CODE_END )
       {
         for( symTablePtr = (stabs_out *) STAB_START ; symTablePtr < (stabs_out *) STAB_END; symTablePtr++ )
         {
           if( symTablePtr->n_value == *i )
           {
-            // kprintf(" %x = %x %x \n", symTablePtr->n_value, *i, symTablePtr->n_type );
+            kprintf(" %x = %x %x \n", symTablePtr->n_value, *i, symTablePtr->n_type );
             if( symTablePtr->n_type == 0x24 )
             {
               kprintf( "i: %x, *i: %x ",  i, *i );
@@ -85,21 +89,5 @@ pointer STABSTR_END        = (pointer)&stabstr_end_address_nr;
           
         }
     }
-    
-//    page fault to stop everything
-//    kprintf("str > %s \n", 0x80014020 + 0x80050000 );  
-           
-/*    for( i = stack; i & 0x0000FFFF; i++) 
-    {
-      kprintf("I is > %x \n ", i ); 
-      kprintf("*I is > %x,  \n", *( (uint32 *) i) );
-      // check whether the address is in code section of kernel
-      if( i >= KERNEL_CODE_START && i <= KERNEL_CODE_END )
-      {
-        kprintf("Called from : %x", *( (uint32 *) i) );// print it out
-      }
-      
-      // find a corresponding symbol in symbols
-    }*/
-    
+        
   }

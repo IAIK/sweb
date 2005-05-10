@@ -1,7 +1,16 @@
 /**
- * $Id: main.cpp,v 1.34 2005/05/08 21:43:55 nelles Exp $
+ * $Id: main.cpp,v 1.35 2005/05/10 19:05:16 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.34  2005/05/08 21:43:55  nelles
+ * changed gcc flags from -g to -g3 -gstabs in order to
+ * generate stabs output in object files
+ * changed linker script to load stabs in kernel
+ * in bss area so GRUB loads them automaticaly with
+ * the bss section
+ *
+ * changed StupidThreads in main for testing purposes
+ *
  * Revision 1.33  2005/05/03 18:31:09  btittelbach
  * fix of evil evil MemoryManager Bug
  *
@@ -153,8 +162,10 @@ class StupidThread : public Thread
 //      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
 //    lock->Release();
     
-    if( i++ >= 2 )
-      kpanict( (uint8 *) "panicking " );
+      if( i++ >= 5 )
+        kpanict( (uint8 *) " panicking " );
+      else
+        Scheduler::instance()->yield();
     }
   }
   
