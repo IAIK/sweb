@@ -1,6 +1,7 @@
 #include <types.h>
 #include <Thread.h>
 #include <Scheduler.h>
+#include <ArchInterrupts.h>
 #include "kprintf.h"
 #include "panic.h"
 #include "debug_bochs.h"
@@ -16,8 +17,6 @@ extern uint8* stab_end_address_nr;
 extern uint8* stabstr_start_address_nr;
 extern uint8* stabstr_end_address_nr;
 
-extern ArchThreadInfo *currentThreadInfo;
-
 pointer KERNEL_CODE_START  = (pointer)&LS_Code;
 pointer KERNEL_CODE_END    = (pointer)&LS_Data;
 
@@ -31,10 +30,12 @@ pointer STABSTR_END        = (pointer)&stabstr_end_address_nr;
 
   void kpanict ( uint8 * message ) 
   {
+    ArchInterrupts::disableInterrupts();
+    
     uint32* stack = (uint32*) currentThread->getStackStartPointer();
     stabs_out * symTablePtr = (stabs_out *) STAB_START;
     
-    kprintf( "stack is > %x, KST is > %x, KEND is > %x \n",  stack, KERNEL_CODE_START, KERNEL_CODE_END );
+    kprintf( "stack is > %x ",  stack );
 
     uint32 * esp_reg = 0;
     
@@ -46,29 +47,41 @@ pointer STABSTR_END        = (pointer)&stabstr_end_address_nr;
       : "=g" (esp_reg) 
      );
 
-    kprintf( "esp_reg is > %x\n\n",  esp_reg );
+    kprintf( "esp_reg is > %x\n",  esp_reg );
      
-    for( uint32 * i = (uint32 *) (esp_reg); i < stack; i++ )
-    {     
-      if( *i >= KERNEL_CODE_START && *i <= KERNEL_CODE_END )
+    for( uint32 * i = (esp_reg); i < stack; i++ )
+    {
+      if( (*i >= KERNEL_CODE_START ) )// && *i <= KERNEL_CODE_END) )
+    //  || ( *((uint32 *)*i) >= KERNEL_CODE_START && *((uint32 *)*i) >= KERNEL_CODE_START ) )
       {
+        kprintf( "i: %x, ",  i );
+        kprintf( "*i: %x ", *i );
+        kprintf( "**i: %x \n", *((uint32 *)*i) );
+        
         for( symTablePtr = (stabs_out *) STAB_START ; symTablePtr < (stabs_out *) STAB_END; symTablePtr++ )
         {
-          if( symTablePtr->n_value == *i )
+          if( symTablePtr->n_value == *i || symTablePtr->n_value == *((uint32 *)*i) )
           {
-            kprintf(" %x = %x %x \n", symTablePtr->n_value, *i, symTablePtr->n_type );
+            if( symTablePtr->n_value < KERNEL_CODE_START )
+              break;
+              
+            kprintf("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
             if( symTablePtr->n_type == 0x24 )
             {
-              kprintf( "i: %x, *i: %x ",  i, *i );
-              kprintf(" %s \n\n\n", ( STABSTR_START + symTablePtr->n_strx ) );
+              kprintf(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
             }
+            else
+              kprintf( "\n" );
           }
+          
+          
         }      
       }
     }
     
     kprintf("%s \n", message );   
-    kprintf("Panic Throwing PageFault %s \n", 0x80014020 + 0x80050000 );      
+    
+    for(;;); // taking a break from the cruel world
     
     pointer i = 0;
               

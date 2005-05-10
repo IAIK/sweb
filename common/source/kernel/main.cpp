@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.35 2005/05/10 19:05:16 nelles Exp $
+ * $Id: main.cpp,v 1.36 2005/05/10 21:25:56 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.35  2005/05/10 19:05:16  nelles
+ * changed the panic code to read value directly from ESP
+ *
  * Revision 1.34  2005/05/08 21:43:55  nelles
  * changed gcc flags from -g to -g3 -gstabs in order to
  * generate stabs output in object files
@@ -139,6 +142,24 @@ extern "C" void startup();
 
 Mutex * lock;
 
+static void stupid_static_func3( uint8 param )
+{
+  kpanict( (uint8 *) " panicking " );
+  return;
+};
+
+static void stupid_static_func2( uint16 param )
+{
+  stupid_static_func3( 8 );
+  return;
+};
+
+static void stupid_static_func1( uint32 param )
+{
+  stupid_static_func2( 12 );
+  return;
+};
+
 class StupidThread : public Thread
 {
   public:
@@ -162,10 +183,11 @@ class StupidThread : public Thread
 //      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
 //    lock->Release();
     
+      Scheduler::instance()->yield();
+      
       if( i++ >= 5 )
-        kpanict( (uint8 *) " panicking " );
-      else
-        Scheduler::instance()->yield();
+        stupid_static_func1( 32  );
+        
     }
   }
   
@@ -180,7 +202,7 @@ void startup()
 {
   writeLine2Bochs( (uint8 *) "It's easy to write in Bochs \n");
   writeLine2Bochs( (uint8 *) "Startup Started \n");
-  
+
   pointer start_address = (pointer)&kernel_end_address;
   pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
   start_address = PageManager::createPageManager(start_address);
@@ -194,7 +216,7 @@ void startup()
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
 
-  
+    
  /* console->writeString((uint8 const*)"Blabb\n");  
   console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
   console->writeString((uint8 const*)"Noch ne Zeile\n");
