@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.h,v 1.3 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: ConsoleManager.h,v 1.4 2005/05/10 17:03:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.h,v $
+//  Revision 1.3  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.2  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -27,6 +30,7 @@ public:
 
   uint32 setActiveConsole(uint32 const &console_number);
   Console *getActiveConsole() const;
+  Console *getDebugConsole() const;
 private:
   
   ConsoleManager(uint32 const &number_of_consoles_to_generate);

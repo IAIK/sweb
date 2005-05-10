@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.4 2005/04/26 21:38:43 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.5 2005/05/10 17:03:55 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.4  2005/04/26 21:38:43  btittelbach
+//   Fifo/Pipe Template soweit das ohne Lock und CV zu implementiern ging
+//   kprintf kennt jetzt auch chars
+//
 //   Revision 1.3  2005/04/24 20:31:33  btittelbach
 //   kprintf now knows how to padd
 //
@@ -228,6 +232,17 @@ void kprintf(const char *fmt, ...)
   va_list args;
 
   Console *console = ConsoleManager::instance()->getActiveConsole();
+  
+  va_start(args, fmt);
+  vkprintf(console, fmt, args);
+  va_end(args);
+}
+
+void kprintf_debug(const char *fmt, ...)
+{
+  va_list args;
+
+  Console *console = ConsoleManager::instance()->getDebugConsole();
   
   va_start(args, fmt);
   vkprintf(console, fmt, args);

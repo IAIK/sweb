@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.cpp,v 1.5 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: ConsoleManager.cpp,v 1.6 2005/05/10 17:03:44 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.cpp,v $
+//  Revision 1.5  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.4  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -82,4 +85,10 @@ uint32 ConsoleManager::setActiveConsole(uint32 const &console_number)
 Console *ConsoleManager::getActiveConsole() const
 {
   return consoles_[active_console_];
+}
+
+Console *ConsoleManager::getDebugConsole() const
+{
+  //DUMMY CODE FOR NOW
+  return 0;
 }
