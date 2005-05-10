@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.4 2005/04/27 08:58:16 nomenquis Exp $
+//  $Id: Thread.cpp,v 1.5 2005/05/10 08:53:50 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.4  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.3  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -31,3 +35,4 @@ pointer Thread::getStackStartPointer()
   stack += sizeof(stack_) - sizeof(uint32);
   return stack;
 }
+
