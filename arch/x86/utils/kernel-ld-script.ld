@@ -1,8 +1,17 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.9 2005/05/08 21:43:55 nelles Exp $
+*  $Id: kernel-ld-script.ld,v 1.10 2005/05/10 16:29:42 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.9  2005/05/08 21:43:55  nelles
+*  changed gcc flags from -g to -g3 -gstabs in order to
+*  generate stabs output in object files
+*  changed linker script to load stabs in kernel
+*  in bss area so GRUB loads them automaticaly with
+*  the bss section
+*
+*  changed StupidThreads in main for testing purposes
+*
 *  Revision 1.8  2005/05/02 18:33:05  nelles
 *  added stab_start, stab_end and stabstr start/end symbols to the ld script
 *
@@ -56,6 +65,15 @@ kernel_start_address = .;
     *(.rodata*)
     ro_data_end_address = .;
     . = ALIGN(4096);
+    
+    stab_start_address_nr = .;
+    [ .stab ]
+    stab_end_address_nr = .; 
+    
+    stabstr_start_address_nr = .;
+    [ .stabstr ]
+    stabstr_end_address_nr = .;    
+    . = ALIGN(4096);
   }
 
 
@@ -86,14 +104,6 @@ kernel_start_address = .;
        load stabs in BSS to avoid relocation 
        and to force GRUB to load it */
 
-    stab_start_address_nr = .;
-    [ .stab ]
-    stab_end_address_nr = .; 
-    
-    stabstr_start_address_nr = .;
-    [ .stabstr ]
-    stabstr_end_address_nr = .;    
-     
   }
 
 /* bug in MinGW? I get a bad executable file unless these
