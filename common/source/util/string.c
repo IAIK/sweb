@@ -462,6 +462,21 @@ char *strchr(const char* str, char c)
 //----------------------------------------------------------------------
 char *strrchr(const char* str, char c)
 {
+  uint32 len = strlen(str);
+  const char *pos = str + len; // goes to '\0'
+
+  do
+  {
+    if (*--pos == c)
+    {
+      return (char *)pos;
+    }
+  }
+  while (--len);
+
+  return (char *)0;
 }
+
+
 
 

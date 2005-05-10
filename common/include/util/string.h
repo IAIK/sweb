@@ -9,6 +9,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /// Calculate the length of a string.
 /// @param str is a NULL-terminated charachter string.
 /// @returns the length of str.
@@ -119,6 +124,9 @@ char *strchr(const char* str, char c);
 /// @return
 char *strrchr(const char* str, char c);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
