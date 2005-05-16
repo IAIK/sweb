@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.36 2005/05/10 21:25:56 nelles Exp $
+ * $Id: main.cpp,v 1.37 2005/05/16 20:37:51 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.36  2005/05/10 21:25:56  nelles
+ * 	StackTrace testing
+ *
  * Revision 1.35  2005/05/10 19:05:16  nelles
  * changed the panic code to read value directly from ESP
  *
@@ -176,17 +179,17 @@ class StupidThread : public Thread
     uint32 i=0;
     while (1)
     {
-//      kprintf("Thread %d trying to get the lock\n",thread_number_);
-//    lock->Acquire();
-//    Scheduler::instance()->yield();
-//      kprintf("Thread %d has the lock\n",thread_number_);
-//      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
-//    lock->Release();
+      kprintf("Thread %d trying to get the lock\n",thread_number_);
+    lock->Acquire();
+    Scheduler::instance()->yield();
+      kprintf("Thread %d has the lock\n",thread_number_);
+      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
+    lock->Release();
     
       Scheduler::instance()->yield();
       
-      if( i++ >= 5 )
-        stupid_static_func1( 32  );
+     // if( i++ >= 5 )
+       // stupid_static_func1( 32  );
         
     }
   }

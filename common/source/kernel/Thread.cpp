@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.5 2005/05/10 08:53:50 nelles Exp $
+//  $Id: Thread.cpp,v 1.6 2005/05/16 20:37:51 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.5  2005/05/10 08:53:50  nelles
+//  stack trace experimenting
+//
 //  Revision 1.4  2005/04/27 08:58:16  nomenquis
 //  locks work!
 //  w00t !
@@ -26,6 +29,7 @@ Thread::Thread()
 {
   kprintf("Thread ctor, this is %x, stack is %x, sizeof stack is %x", this,stack_, sizeof(stack_));
   ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
+  page_directory_ = 0;
   kprintf("After bzero\n");
 }
 
@@ -35,4 +39,3 @@ pointer Thread::getStackStartPointer()
   stack += sizeof(stack_) - sizeof(uint32);
   return stack;
 }
-

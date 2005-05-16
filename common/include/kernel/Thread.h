@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.5 2005/05/02 19:58:40 nelles Exp $
+//  $Id: Thread.h,v 1.6 2005/05/16 20:37:51 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.5  2005/05/02 19:58:40  nelles
+//  made GetStackPointer in Thread public
+//  added panic.cpp
+//
 //  Revision 1.4  2005/04/27 08:58:16  nomenquis
 //  locks work!
 //  w00t !
@@ -85,6 +89,8 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
+  pointer page_directory_;
+
 
 };
 
