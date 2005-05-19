@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.cpp,v 1.1 2005/05/19 15:45:38 btittelbach Exp $
+//  $Id: UserProcess.cpp,v 1.2 2005/05/19 20:04:17 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.cpp,v $
+//  Revision 1.1  2005/05/19 15:45:38  btittelbach
+//  Struktur zum Verwalten von UserProcessen, noch unfertig
+//
 //
 //----------------------------------------------------------------------
 
@@ -21,19 +24,21 @@ UserProcess::UserProcess()
   if (number_of_code_pages_ > 1023)
     kpanict((uint8*) "UserProcess: To many pages needed, not implemented yet\n");
   
-  ppn_of_pagetable_[0] = PageManager::instance()->getFreePhysicalPage(); //code & heap
-  ppn_of_pagetable_[1] = PageManager::instance()->getFreePhysicalPage(); //stack
+  ppn_of_pagetable_[0] = PageManager::instance()->getFreePhysicalPage(); //page directory
+  ppn_of_pagetable_[1] = PageManager::instance()->getFreePhysicalPage(); //code & heap
+  ppn_of_pagetable_[2] = PageManager::instance()->getFreePhysicalPage(); //stack
+  
+  page_directory_ = ArchMemory::initNewPageDirectory(ppn_of_pagetable_[0]);
   
   //evil, but ok
-  page_table_ = (page_table_entry*) PageManager::instance()->get3GBAdressOfPPN(ppn_of_pagetable_[0]);
-  stack_page_table_ = (page_table_entry*) PageManager::instance()->get3GBAdressOfPPN(ppn_of_pagetable_[1]);
-  
-    
+  page_table_ = ArchMemory::initNewPageTable(ppn_of_pagetable_[1]);
+  stack_page_table_ = ArchMemory::initNewPageTable(ppn_of_pagetable_[2]);
+   
   uint32 p=0;
   for (p=0; p< number_of_code_pages_+1; ++p) //+1 for some initial heap space
   {
     uint32 ppn = PageManager::instance()->getFreePhysicalPage();  
-    //FIXXME: -> arch
+    //FIXXME: -> arch :
     uint32 paddr = ppn*PAGE_SIZE;
     page_table_[p].present = 1;
     page_table_[p].writeable = 1;
@@ -46,7 +51,7 @@ UserProcess::UserProcess()
   {
     //initial stack page:
     uint32 ppn = PageManager::instance()->getFreePhysicalPage();
-    //FIXXME: -> arch
+    //FIXXME: -> arch :
     uint32 paddr = ppn*PAGE_SIZE;
     stack_page_table_[1023].present = 1;
     stack_page_table_[1023].writeable = 1;

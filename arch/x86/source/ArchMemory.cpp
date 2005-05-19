@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.2 2005/05/19 19:35:30 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.3 2005/05/19 20:04:16 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.2  2005/05/19 19:35:30  btittelbach
+//  ein bisschen Arch Memory
+//
 //  Revision 1.1  2005/05/16 20:37:51  nomenquis
 //  added ArchMemory for page table manip
 //
@@ -12,7 +15,7 @@
 
 extern "C" uint32 kernel_page_directory_start;
 
-pointer ArchMemory::initNewPageDirectory(uint32 physicalPageToUse)
+page_directory_entry *ArchMemory::initNewPageDirectory(uint32 physicalPageToUse)
 {
   page_directory_entry *new_page_directory = (page_directory_entry*) get3GBAdressOfPPN(physicalPageToUse);
   
@@ -22,9 +25,15 @@ pointer ArchMemory::initNewPageDirectory(uint32 physicalPageToUse)
     new_page_directory[p].pde4k.present=0;
     new_page_directory[p].pde4m.present=0;
   }
-  return (pointer) new_page_directory;
+  return new_page_directory;
 }
 
+page_table_entry *ArchMemory::initNewPageTable(uint32 physicalPageToUse)
+{
+  pointer addr = get3GBAdressOfPPN(physicalPageToUse);
+  ArchCommon::bzero(addr,PAGE_SIZE);
+  return (page_table_entry *) addr;
+}
 
 void ArchMemory::insertPTE(page_directory_entry *whichPageDirectory, uint32 pageDirectoryPage, pointer pageTable)
 {

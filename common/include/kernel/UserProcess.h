@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.h,v 1.2 2005/05/19 19:35:30 btittelbach Exp $
+//  $Id: UserProcess.h,v 1.3 2005/05/19 20:04:16 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.h,v $
+//  Revision 1.2  2005/05/19 19:35:30  btittelbach
+//  ein bisschen Arch Memory
+//
 //  Revision 1.1  2005/05/19 15:45:38  btittelbach
 //  Struktur zum Verwalten von UserProcessen, noch unfertig
 //
@@ -44,7 +47,9 @@ class UserProcess
   void loadELF(); //will need some arguments
   pointer allignAdress(pointer addr);
   
-  uint32 ppn_of_pagetable_[2]; //should propably be a list instead
+  
+  page_directory_entry *page_directory_;
+  uint32 ppn_of_pagetable_[3]; //should propably be a list instead
   page_table_entry *page_table_;    //code and heap, 4mb limit for now...
   page_table_entry *stack_page_table_; //stack
   uint32 number_of_code_pages_;

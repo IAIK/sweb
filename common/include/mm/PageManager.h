@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.5 2005/05/19 15:43:43 btittelbach Exp $
+//   $Id: PageManager.h,v 1.6 2005/05/19 20:04:17 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.5  2005/05/19 15:43:43  btittelbach
+//  Ansätze für eine UserSpace Verwaltung
+//
 //  Revision 1.4  2005/04/25 23:23:49  btittelbach
 //  nothing really
 //
@@ -47,11 +50,6 @@ public:
   uint32 getTotalNumPages() const;
 
   uint32 getFreePhysicalPage(uint32 type = PAGE_USERSPACE); //also marks page as used
-  
-  pointer get3GBAdressOfPPN(uint32 ppn)
-  {
-    return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE); //belongs into arch.... FIXXME ????
-  }
 
   void freePage(uint32 page_number);
 
