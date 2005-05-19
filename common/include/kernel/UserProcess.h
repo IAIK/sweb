@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.h,v 1.1 2005/05/19 15:45:38 btittelbach Exp $
+//  $Id: UserProcess.h,v 1.2 2005/05/19 19:35:30 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.h,v $
+//  Revision 1.1  2005/05/19 15:45:38  btittelbach
+//  Struktur zum Verwalten von UserProcessen, noch unfertig
+//
 //
 //----------------------------------------------------------------------
 
@@ -13,7 +16,7 @@
 #include "paging-definitions.h"
 #include "mm/PageManager.h"
 #include "../../arch/common/include/ArchMemory.h"
-#include "../../arch/arch/include/panic.h"
+//#include "../../arch/arch/include/panic.h"
 
 #ifdef __cplusplus
 extern "C"
