@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.6 2005/05/16 20:37:51 nomenquis Exp $
+//  $Id: Thread.h,v 1.7 2005/05/19 15:43:42 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.6  2005/05/16 20:37:51  nomenquis
+//  added ArchMemory for page table manip
+//
 //  Revision 1.5  2005/05/02 19:58:40  nelles
 //  made GetStackPointer in Thread public
 //  added panic.cpp
@@ -89,7 +92,7 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
-  pointer page_directory_;
+  //pointer page_directory_; //we need more than that, so moved it somewhere else for now
 
 
 };

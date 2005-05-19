@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.4 2005/04/25 23:23:49 btittelbach Exp $
+//   $Id: PageManager.h,v 1.5 2005/05/19 15:43:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.4  2005/04/25 23:23:49  btittelbach
+//  nothing really
+//
 //  Revision 1.3  2005/04/23 12:52:26  nomenquis
 //  fixes
 //
@@ -18,13 +21,14 @@
 #define _PAGEMANAGER_H_
 
 #include "types.h"
+#include "paging-definitions.h"
 
-#define PAGE_RESERVED (1<<31)
-#define PAGE_KERNEL (1<<30)
+#define PAGE_RESERVED static_cast<uint32>(1<<31)
+#define PAGE_KERNEL static_cast<uint32>(1<<30)
+#define PAGE_USERSPACE static_cast<uint32>(1<<30)
 
 
-
-#define PAGE_FREE (0)
+#define PAGE_FREE static_cast<uint32>(0)
 
 class PageManager
 {
@@ -38,8 +42,18 @@ public:
    * @return 0 on failure, otherwise a pointer to the next free memory location
    */
   static pointer createPageManager(pointer next_usable_address);
+  static PageManager *instance() {return instance_;}
 
   uint32 getTotalNumPages() const;
+
+  uint32 getFreePhysicalPage(uint32 type = PAGE_USERSPACE); //also marks page as used
+  
+  pointer get3GBAdressOfPPN(uint32 ppn)
+  {
+    return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE); //belongs into arch.... FIXXME ????
+  }
+
+  void freePage(uint32 page_number);
 
 
 private:

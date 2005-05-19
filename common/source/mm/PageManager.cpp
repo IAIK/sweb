@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.7 2005/04/26 10:58:15 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.8 2005/05/19 15:43:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.7  2005/04/26 10:58:15  nomenquis
+//  and now it really works
+//
 //  Revision 1.6  2005/04/25 23:09:18  nomenquis
 //  fubar 2
 //
@@ -160,4 +163,27 @@ uint32 PageManager::getTotalNumPages() const
 uint32 PageManager::getSizeOfMemoryUsed() const
 {
   return number_of_pages_ * sizeof(uint32); 
+}
+
+uint32 PageManager::getFreePhysicalPage(uint32 type)
+{
+  if (type == PAGE_FREE)  //what a stupid thing that would be to do
+    return 0;
+  
+  for (uint32 p=1024; p<number_of_pages_; ++p)  //start beyond kernel pages
+  {
+    if (page_usage_table_[p] == PAGE_FREE)
+    {
+      page_usage_table_[p] = type;
+      return p;
+    }
+  }
+  arch_panic((uint8*) "PageManager: Sorry, no more Pages Free !!!");
+  return 0;
+}
+
+void PageManager::freePage(uint32 page_number) 
+{
+  if (page_number >= 1024 && page_usage_table_[page_number] != PAGE_RESERVED)
+    page_usage_table_[page_number] = PAGE_FREE;
 }

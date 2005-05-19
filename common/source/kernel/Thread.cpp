@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.6 2005/05/16 20:37:51 nomenquis Exp $
+//  $Id: Thread.cpp,v 1.7 2005/05/19 15:43:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.6  2005/05/16 20:37:51  nomenquis
+//  added ArchMemory for page table manip
+//
 //  Revision 1.5  2005/05/10 08:53:50  nelles
 //  stack trace experimenting
 //
@@ -29,7 +32,7 @@ Thread::Thread()
 {
   kprintf("Thread ctor, this is %x, stack is %x, sizeof stack is %x", this,stack_, sizeof(stack_));
   ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
-  page_directory_ = 0;
+  //page_directory_ = 0;
   kprintf("After bzero\n");
 }
 

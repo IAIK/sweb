@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.37 2005/05/16 20:37:51 nomenquis Exp $
+ * $Id: main.cpp,v 1.38 2005/05/19 15:43:43 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.37  2005/05/16 20:37:51  nomenquis
+ * added ArchMemory for page table manip
+ *
  * Revision 1.36  2005/05/10 21:25:56  nelles
  * 	StackTrace testing
  *
@@ -207,7 +210,7 @@ void startup()
   writeLine2Bochs( (uint8 *) "Startup Started \n");
 
   pointer start_address = (pointer)&kernel_end_address;
-  pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U);
+  pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
   ConsoleManager::createConsoleManager(1);
