@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.cpp,v 1.7 2005/05/20 14:07:21 btittelbach Exp $
+//  $Id: UserProcess.cpp,v 1.8 2005/05/20 14:18:29 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.cpp,v $
+//  Revision 1.7  2005/05/20 14:07:21  btittelbach
+//  Redesign everything
+//
 //  Revision 1.6  2005/05/20 12:42:56  btittelbach
 //  Switching PDE's
 //
@@ -92,7 +95,7 @@
   
 void UserProcess::installUserSpaceTable()
 {
-  switchToPageTable((page_directory_entry*) (page_directory_ppn_ << PAGE_INDEX_OFFSET_BITS));
+  switchToPageDirectory(page_directory_ppn_);
 }
 
 uint32 UserProcess::calculateSizeNeeded()
