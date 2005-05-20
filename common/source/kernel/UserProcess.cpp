@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.cpp,v 1.5 2005/05/20 11:58:10 btittelbach Exp $
+//  $Id: UserProcess.cpp,v 1.6 2005/05/20 12:42:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.cpp,v $
+//  Revision 1.5  2005/05/20 11:58:10  btittelbach
+//  much much nicer UserProcess Page Management, but still things to do
+//
 //  Revision 1.3  2005/05/19 21:22:10  btittelbach
 //  Executables as CString for initial Testing without FileSystem
 //
@@ -25,7 +28,7 @@ UserProcess::UserProcess()
   number_of_stack_pages_ = UserStackSize_ / PAGE_SIZE;
   va_code_start_  = 0;
   va_heap_start_  = allignAdress(((pointer) va_code_start_ + code_size));
-  va_stack_start_ = 2U*1024U*1024U*1024U-1;  //starts at upper end of 2g and grows down
+  va_stack_start_ = 2U*1024U*1024U*1024U-4;  //starts at upper end of 2g and grows down
   
   if (number_of_code_pages_ + number_of_heap_pages_> 1024)
     kpanict((uint8*) "UserProcess: To many pages needed, not implemented yet, need dynamic List\n");
@@ -86,7 +89,7 @@ UserProcess::~UserProcess()
   
 void UserProcess::installUserSpaceTable()
 {
-  switchToPageTable((void*) (page_directory_ppn_ << PAGE_INDEX_OFFSET_BITS));
+  switchToPageTable((page_directory_entry*) (page_directory_ppn_ << PAGE_INDEX_OFFSET_BITS));
 }
 
 uint32 UserProcess::calculateSizeNeeded()

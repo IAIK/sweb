@@ -1,18 +1,25 @@
 /**
- * $Id: page-table-manip.c,v 1.1 2005/04/12 17:46:44 nomenquis Exp $
+ * $Id: page-table-manip.c,v 1.2 2005/05/20 12:42:55 btittelbach Exp $
  *
- * $Log:  $
+ * $Log: page-table-manip.c,v $
+ * Revision 1.1  2005/04/12 17:46:44  nomenquis
+ * added lots of files
+ *
  *
  */
 
 #include "types.h"
 #include "page-table-manip.h"
-#include "paging-definitions.h"
 
 
-
-void switchToPageTable(void *pde)
+void switchToPageTable(page_directory_entry *pde)
 {
- // __asm__ __volatile__("movw 
-  
+  //~ asm volatile("movl %0, %%cr3\n"
+              //~ : 
+              //~ : "m"(pde));
+  asm volatile("movl %0, %%eax\n"
+               "movl %%eax, %%cr3\n"
+              : 
+              : "m"(pde) 
+              : "eax");  
 }
