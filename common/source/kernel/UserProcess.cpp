@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.cpp,v 1.6 2005/05/20 12:42:56 btittelbach Exp $
+//  $Id: UserProcess.cpp,v 1.7 2005/05/20 14:07:21 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.cpp,v $
+//  Revision 1.6  2005/05/20 12:42:56  btittelbach
+//  Switching PDE's
+//
 //  Revision 1.5  2005/05/20 11:58:10  btittelbach
 //  much much nicer UserProcess Page Management, but still things to do
 //
@@ -20,72 +23,72 @@
 
 #include "UserProcess.h"
 
-UserProcess::UserProcess()
-{
-  uint32 code_size = calculateSizeNeeded(); //give arguments from Constructor
-  number_of_code_pages_  = code_size / PAGE_SIZE + ((code_size % PAGE_SIZE)?1:0); 
-  number_of_heap_pages_  = 1;
-  number_of_stack_pages_ = UserStackSize_ / PAGE_SIZE;
-  va_code_start_  = 0;
-  va_heap_start_  = allignAdress(((pointer) va_code_start_ + code_size));
-  va_stack_start_ = 2U*1024U*1024U*1024U-4;  //starts at upper end of 2g and grows down
+//~ UserProcess::UserProcess()
+//~ {
+  //~ uint32 code_size = calculateSizeNeeded(); //give arguments from Constructor
+  //~ number_of_code_pages_  = code_size / PAGE_SIZE + ((code_size % PAGE_SIZE)?1:0); 
+  //~ number_of_heap_pages_  = 1;
+  //~ number_of_stack_pages_ = UserStackSize_ / PAGE_SIZE;
+  //~ va_code_start_  = 0;
+  //~ va_heap_start_  = allignAdress(((pointer) va_code_start_ + code_size));
+  //~ va_stack_start_ = 2U*1024U*1024U*1024U-4;  //starts at upper end of 2g and grows down
   
-  if (number_of_code_pages_ + number_of_heap_pages_> 1024)
-    kpanict((uint8*) "UserProcess: To many pages needed, not implemented yet, need dynamic List\n");
+  //~ if (number_of_code_pages_ + number_of_heap_pages_> 1024)
+    //~ kpanict((uint8*) "UserProcess: To many pages needed, not implemented yet, need dynamic List\n");
   
-  page_directory_ppn_ = PageManager::instance()->getFreePhysicalPage(); //page directory
-  ppn_of_pagetable_[0] = PageManager::instance()->getFreePhysicalPage(); //code & heap, only 1 for now
-  ppn_of_pagetable_[1] = PageManager::instance()->getFreePhysicalPage(); //stack
+  //~ page_directory_ppn_ = PageManager::instance()->getFreePhysicalPage(); //page directory
+  //~ ppn_of_pagetable_[0] = PageManager::instance()->getFreePhysicalPage(); //code & heap, only 1 for now
+  //~ ppn_of_pagetable_[1] = PageManager::instance()->getFreePhysicalPage(); //stack
   
-  ArchMemory::initNewPageDirectory(page_directory_ppn_);
-  ArchMemory::initNewPageTable(ppn_of_pagetable_[0]);
-  ArchMemory::insertPTE(page_directory_ppn_, (va_code_start_/PAGE_SIZE/PAGE_TABLE_ENTRIES) ,ppn_of_pagetable_[0]);
-  ArchMemory::initNewPageTable(ppn_of_pagetable_[1]);
-  ArchMemory::insertPTE(page_directory_ppn_, (va_stack_start_/PAGE_SIZE/PAGE_TABLE_ENTRIES) ,ppn_of_pagetable_[1]);
+  //~ ArchMemory::initNewPageDirectory(page_directory_ppn_);
+  //~ ArchMemory::initNewPageTable(ppn_of_pagetable_[0]);
+  //~ ArchMemory::insertPTE(page_directory_ppn_, (va_code_start_/PAGE_SIZE/PAGE_TABLE_ENTRIES) ,ppn_of_pagetable_[0]);
+  //~ ArchMemory::initNewPageTable(ppn_of_pagetable_[1]);
+  //~ ArchMemory::insertPTE(page_directory_ppn_, (va_stack_start_/PAGE_SIZE/PAGE_TABLE_ENTRIES) ,ppn_of_pagetable_[1]);
    
-  uint32 vpn=0;
-  for (vpn=0; vpn< number_of_code_pages_+number_of_heap_pages_; ++vpn)
-  {
-    uint32 ppn = PageManager::instance()->getFreePhysicalPage();  
-    ArchMemory::mapPage(page_directory_ppn_,vpn,ppn,1);
-  }
+  //~ uint32 vpn=0;
+  //~ for (vpn=0; vpn< number_of_code_pages_+number_of_heap_pages_; ++vpn)
+  //~ {
+    //~ uint32 ppn = PageManager::instance()->getFreePhysicalPage();  
+    //~ ArchMemory::mapPage(page_directory_ppn_,vpn,ppn,1);
+  //~ }
   
-  uint32 last_vpn=(va_stack_start_/PAGE_SIZE);
-  for (vpn=last_vpn+1-number_of_stack_pages_; vpn< last_vpn+1; ++vpn)
-  {
-    uint32 ppn = PageManager::instance()->getFreePhysicalPage();
-    ArchMemory::mapPage(page_directory_ppn_,vpn,ppn,1);
-  }
+  //~ uint32 last_vpn=(va_stack_start_/PAGE_SIZE);
+  //~ for (vpn=last_vpn+1-number_of_stack_pages_; vpn< last_vpn+1; ++vpn)
+  //~ {
+    //~ uint32 ppn = PageManager::instance()->getFreePhysicalPage();
+    //~ ArchMemory::mapPage(page_directory_ppn_,vpn,ppn,1);
+  //~ }
   
-  installUserSpaceTable();
-  loadELF();
-}
+  //~ installUserSpaceTable();
+  //~ loadELF();
+//~ }
 
-UserProcess::~UserProcess()
-{
-  //free code pages
-  //free pages that were allocated for heap
+//~ UserProcess::~UserProcess()
+//~ {
+  //~ //free code pages
+  //~ //free pages that were allocated for heap
   
-  uint32 vpn=0;
-  for (vpn=0; vpn< number_of_code_pages_+number_of_heap_pages_; ++vpn)
-  {
-    uint32 ppn = ArchMemory::unmapPage(page_directory_ppn_,vpn);
-    PageManager::instance()->freePage(ppn);
-  }
+  //~ uint32 vpn=0;
+  //~ for (vpn=0; vpn< number_of_code_pages_+number_of_heap_pages_; ++vpn)
+  //~ {
+    //~ uint32 ppn = ArchMemory::unmapPage(page_directory_ppn_,vpn);
+    //~ PageManager::instance()->freePage(ppn);
+  //~ }
   
-  uint32 last_vpn=(va_stack_start_/PAGE_SIZE);
-  for (vpn=last_vpn-number_of_stack_pages_+1; vpn < last_vpn+1; ++vpn)
-  {
-    uint32 ppn = ArchMemory::unmapPage(page_directory_ppn_,vpn);
-    PageManager::instance()->freePage(ppn);
-  }
+  //~ uint32 last_vpn=(va_stack_start_/PAGE_SIZE);
+  //~ for (vpn=last_vpn-number_of_stack_pages_+1; vpn < last_vpn+1; ++vpn)
+  //~ {
+    //~ uint32 ppn = ArchMemory::unmapPage(page_directory_ppn_,vpn);
+    //~ PageManager::instance()->freePage(ppn);
+  //~ }
   
-  //free page where pageTables are
-  for (uint32 p=0; p<2; ++p)
-    PageManager::instance()->freePage(ppn_of_pagetable_[p]);
+  //~ //free page where pageTables are
+  //~ for (uint32 p=0; p<2; ++p)
+    //~ PageManager::instance()->freePage(ppn_of_pagetable_[p]);
 
-  PageManager::instance()->freePage(page_directory_ppn_);
-}
+  //~ PageManager::instance()->freePage(page_directory_ppn_);
+//~ }
   
 void UserProcess::installUserSpaceTable()
 {

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.h,v 1.4 2005/05/20 11:58:10 btittelbach Exp $
+//  $Id: UserProcess.h,v 1.5 2005/05/20 14:07:20 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.h,v $
+//  Revision 1.4  2005/05/20 11:58:10  btittelbach
+//  much much nicer UserProcess Page Management, but still things to do
+//
 //  Revision 1.3  2005/05/19 20:04:16  btittelbach
 //  Much of this still needs to be moved to arch
 //
@@ -41,8 +44,8 @@ uint32 const UserStackSize_ = 4U*1024U; //4k
 class UserProcess
 {
 public:
-  UserProcess(); //will need some way to get code from somewhere (uint32 inode ??)
-  ~UserProcess();
+  //~ UserProcess(); //will need some way to get code from somewhere (uint32 inode ??)
+  //~ ~UserProcess();
   
   void installUserSpaceTable();
   
