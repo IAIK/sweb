@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//  $Id: UserProcess.cpp,v 1.4 2005/05/20 10:56:33 davrieb Exp $
+//  $Id: UserProcess.cpp,v 1.5 2005/05/20 11:58:10 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: UserProcess.cpp,v $
@@ -22,49 +22,36 @@ UserProcess::UserProcess()
   uint32 code_size = calculateSizeNeeded(); //give arguments from Constructor
   number_of_code_pages_  = code_size / PAGE_SIZE + ((code_size % PAGE_SIZE)?1:0); 
   number_of_heap_pages_  = 1;
-  number_of_stack_pages_ = 1;
+  number_of_stack_pages_ = UserStackSize_ / PAGE_SIZE;
   va_code_start_  = 0;
   va_heap_start_  = allignAdress(((pointer) va_code_start_ + code_size));
   va_stack_start_ = 2U*1024U*1024U*1024U-1;  //starts at upper end of 2g and grows down
   
-  if (number_of_code_pages_ > 1023)
-    kpanict((uint8*) "UserProcess: To many pages needed, not implemented yet\n");
+  if (number_of_code_pages_ + number_of_heap_pages_> 1024)
+    kpanict((uint8*) "UserProcess: To many pages needed, not implemented yet, need dynamic List\n");
   
-  ppn_of_pagetable_[0] = PageManager::instance()->getFreePhysicalPage(); //page directory
-  ppn_of_pagetable_[1] = PageManager::instance()->getFreePhysicalPage(); //code & heap
-  ppn_of_pagetable_[2] = PageManager::instance()->getFreePhysicalPage(); //stack
+  page_directory_ppn_ = PageManager::instance()->getFreePhysicalPage(); //page directory
+  ppn_of_pagetable_[0] = PageManager::instance()->getFreePhysicalPage(); //code & heap, only 1 for now
+  ppn_of_pagetable_[1] = PageManager::instance()->getFreePhysicalPage(); //stack
   
-  page_directory_ = ArchMemory::initNewPageDirectory(ppn_of_pagetable_[0]);
-  
-  //evil, but ok
-  page_table_ = ArchMemory::initNewPageTable(ppn_of_pagetable_[1]);
-  stack_page_table_ = ArchMemory::initNewPageTable(ppn_of_pagetable_[2]);
+  ArchMemory::initNewPageDirectory(page_directory_ppn_);
+  ArchMemory::initNewPageTable(ppn_of_pagetable_[0]);
+  ArchMemory::insertPTE(page_directory_ppn_, (va_code_start_/PAGE_SIZE/PAGE_TABLE_ENTRIES) ,ppn_of_pagetable_[0]);
+  ArchMemory::initNewPageTable(ppn_of_pagetable_[1]);
+  ArchMemory::insertPTE(page_directory_ppn_, (va_stack_start_/PAGE_SIZE/PAGE_TABLE_ENTRIES) ,ppn_of_pagetable_[1]);
    
-  uint32 p=0;
-  for (p=0; p< number_of_code_pages_+1; ++p) //+1 for some initial heap space
+  uint32 vpn=0;
+  for (vpn=0; vpn< number_of_code_pages_+number_of_heap_pages_; ++vpn)
   {
     uint32 ppn = PageManager::instance()->getFreePhysicalPage();  
-    //FIXXME: -> arch :
-    uint32 paddr = ppn*PAGE_SIZE;
-    page_table_[p].present = 1;
-    page_table_[p].writeable = 1;
-    page_table_[p].user_access = 1;
-    page_table_[p].accessed = 0;
-    page_table_[p].dirty = 0;
-    page_table_[p].page_base_address = paddr >> 12; //only highest 20 bit of paddr matter (FIXXME -> Arch ?)
+    ArchMemory::mapPage(page_directory_ppn_,vpn,ppn,1);
   }
   
+  uint32 last_vpn=(va_stack_start_/PAGE_SIZE);
+  for (vpn=last_vpn+1-number_of_stack_pages_; vpn< last_vpn+1; ++vpn)
   {
-    //initial stack page:
     uint32 ppn = PageManager::instance()->getFreePhysicalPage();
-    //FIXXME: -> arch :
-    uint32 paddr = ppn*PAGE_SIZE;
-    stack_page_table_[1023].present = 1;
-    stack_page_table_[1023].writeable = 1;
-    stack_page_table_[1023].user_access = 1;
-    stack_page_table_[1023].accessed = 0;
-    stack_page_table_[1023].dirty = 0;
-    stack_page_table_[1023].page_base_address = paddr >> 12; //only highest 20 bit of paddr matter (FIXXME -> Arch ?)    
+    ArchMemory::mapPage(page_directory_ppn_,vpn,ppn,1);
   }
   
   installUserSpaceTable();
@@ -75,24 +62,31 @@ UserProcess::~UserProcess()
 {
   //free code pages
   //free pages that were allocated for heap
-  uint32 p=0;
-  for (p=0; p< number_of_code_pages_; ++p)
-    if (page_table_[p].present)
-      PageManager::instance()->freePage((page_table_[p].page_base_address << 12) / PAGE_SIZE); //belongs into arch.... FIXXME
   
-  //free pages for stack
-  for (p=1024; p!= 0; --p) //ok page 0 wont be freed here: FIXXME
-    if (stack_page_table_[p].present)    //should be just one
-      PageManager::instance()->freePage((stack_page_table_[p].page_base_address << 12) / PAGE_SIZE); //belongs into arch.... FIXXME
+  uint32 vpn=0;
+  for (vpn=0; vpn< number_of_code_pages_+number_of_heap_pages_; ++vpn)
+  {
+    uint32 ppn = ArchMemory::unmapPage(page_directory_ppn_,vpn);
+    PageManager::instance()->freePage(ppn);
+  }
+  
+  uint32 last_vpn=(va_stack_start_/PAGE_SIZE);
+  for (vpn=last_vpn-number_of_stack_pages_+1; vpn < last_vpn+1; ++vpn)
+  {
+    uint32 ppn = ArchMemory::unmapPage(page_directory_ppn_,vpn);
+    PageManager::instance()->freePage(ppn);
+  }
+  
+  //free page where pageTables are
+  for (uint32 p=0; p<2; ++p)
+    PageManager::instance()->freePage(ppn_of_pagetable_[p]);
 
-  //free page where pageTable is
-  PageManager::instance()->freePage(ppn_of_pagetable_[0]);
-  PageManager::instance()->freePage(ppn_of_pagetable_[1]);
+  PageManager::instance()->freePage(page_directory_ppn_);
 }
   
 void UserProcess::installUserSpaceTable()
 {
- // ArchMemory::instance()->mapPage(..,0,...);
+  switchToPageTable((void*) (page_directory_ppn_ << PAGE_INDEX_OFFSET_BITS));
 }
 
 uint32 UserProcess::calculateSizeNeeded()
