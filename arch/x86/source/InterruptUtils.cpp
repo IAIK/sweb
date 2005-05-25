@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.6 2005/04/27 09:19:20 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.7 2005/05/25 08:27:48 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.6  2005/04/27 09:19:20  nomenquis
+//  only pack whats needed
+//
 //  Revision 1.5  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -31,7 +34,7 @@
 #include "ConsoleManager.h"
 #include "kprintf.h"
 #include "Scheduler.h"
-
+#include "debug_bochs.h"
   extern "C" void arch_dummyHandler();
 
 // thanks mona
@@ -387,23 +390,48 @@ extern Thread *currentThread;
 
 extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
+extern "C" void arch_switchThreadKernelToKernelPageDirChange();
 extern "C" void irqHandler_0()
 {
-  static uint32 i;
-  if (!(++i%100)) Scheduler::instance()->schedule(1);  outportb(0x20, 0x20);   
-  arch_switchThreadKernelToKernel();
+  //kprintf("Tick\n");
+  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
+  uint32 ret = Scheduler::instance()->schedule(1);  
+  outportb(0x20, 0x20);   
+  switch (ret)
+  {
+    case 0:
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
+      arch_switchThreadKernelToKernel();
+    case 1:
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
+      arch_switchThreadKernelToKernelPageDirChange();
+    default:
+      kprintf("Panic in int 0 handler\n");
+      for(;;);
+  }  
 }
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  Scheduler::instance()->schedule(1);
-  arch_switchThreadKernelToKernel();
+  uint32 ret = Scheduler::instance()->schedule(1);  
+  switch (ret)
+  {
+    case 0:
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
+      arch_switchThreadKernelToKernel();
+    case 1:
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
+      arch_switchThreadKernelToKernelPageDirChange();
+    default:
+      kprintf("Panic in int 0 handler\n");
+      for(;;);
+  }  
 }
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-  kprintf("PageFault(%d,%d)\n",address,error);
+  kprintf("PageFault( address: %x, error: %x)\n",address,error);
   
     ArchThreadInfo* i = currentThreadInfo;
     kprintf("\n");

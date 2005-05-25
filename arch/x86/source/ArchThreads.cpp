@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.4 2005/04/27 08:58:16 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.5 2005/05/25 08:27:48 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.4  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.3  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -17,6 +21,9 @@
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "kprintf.h"
+#include "paging-definitions.h"
+#include "offsets.h"
+#include "Thread.h"
 
 typedef struct ArchThreadInfo
 {
@@ -61,15 +68,21 @@ void ArchThreads::initialise()
 
 extern "C" uint32 kernel_page_directory_start;
 
+void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page)
+{
+  thread->arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
+  kprintf("setting cr3 in info to %x\n",page_dir_physical_page * PAGE_SIZE);
+}
+
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   kprintf("ArchThreads::create enter %x\n",info);
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   kprintf("alloc done %x\n",info);
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = (((pointer)&kernel_page_directory_start)-2*1024*1024*1024);
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
   kprintf("bzero done\n");
-  
+  kprintf("CR3 is %x\n",pageDirectory);
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;

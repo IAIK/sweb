@@ -1,4 +1,8 @@
-#include <types.h>
+
+#ifndef __PANIC__H__
+#define __PANIC__H__
+
+#include "types.h"
 
 typedef struct _stabs_out
 {
@@ -11,3 +15,4 @@ typedef struct _stabs_out
 
 void kpanict( uint8 *message );
 
+#endif

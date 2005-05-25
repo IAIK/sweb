@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.1 2005/04/26 15:58:45 nomenquis Exp $
+//   $Id: Scheduler.h,v 1.2 2005/05/25 08:27:48 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: Scheduler.h,v $
+//  Revision 1.1  2005/04/26 15:58:45  nomenquis
+//  threads, scheduler, happy day
+//
 //----------------------------------------------------------------------
 
 
@@ -34,7 +37,7 @@ public:
   void yield();
 
   // NEVER EVER EVER CALL THIS ONE OUTSIDE OF AN INTERRUPT CONTEXT //
-  void schedule(uint32 from_interrupt=false);
+  uint32 schedule(uint32 from_interrupt=false);
 
 private:
 

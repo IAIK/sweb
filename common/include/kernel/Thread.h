@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.7 2005/05/19 15:43:42 btittelbach Exp $
+//  $Id: Thread.h,v 1.8 2005/05/25 08:27:49 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.7  2005/05/19 15:43:42  btittelbach
+//  Ansätze für eine UserSpace Verwaltung
+//
 //  Revision 1.6  2005/05/16 20:37:51  nomenquis
 //  added ArchMemory for page table manip
 //
@@ -32,6 +35,8 @@
 
 class Thread;
 // thanx mona!
+
+/*
 typedef struct ArchThreadInfo
 {
   uint32  eip;       // 0
@@ -63,7 +68,10 @@ typedef struct ArchThread
   Thread *thread;
   
 };
+*/
 
+class ArchThreadInfo;
+  
 class Thread
 {
 friend class Scheduler;
@@ -75,7 +83,7 @@ public:
   // runs whatever the user wants it to run;
 
 
-protected:
+public:
   
   virtual void Run()=0;
 
@@ -92,7 +100,6 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
-  //pointer page_directory_; //we need more than that, so moved it somewhere else for now
 
 
 };

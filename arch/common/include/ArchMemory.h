@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.6 2005/05/20 14:07:20 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.7 2005/05/25 08:27:48 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.6  2005/05/20 14:07:20  btittelbach
+//  Redesign everything
+//
 //  Revision 1.5  2005/05/20 11:58:10  btittelbach
 //  much much nicer UserProcess Page Management, but still things to do
 //
@@ -44,13 +47,15 @@ public:
   //remove a PDE and all its Pages and PageTables
   static void freePageDirectory(uint32 physical_page_directory_page);
 
+  static pointer physicalPageToKernelPointer(uint32 physical_page);
+
 
 private:
   static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
   static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
   static pointer get3GBAdressOfPPN(uint32 ppn)
   {
-    return (3U*1024U*1024U*1024U) + (ppn << PAGE_INDEX_OFFSET_BITS);
+    return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);
   }
 };
 

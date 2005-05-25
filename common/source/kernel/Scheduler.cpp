@@ -1,8 +1,17 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.3 2005/05/08 21:43:55 nelles Exp $
+//   $Id: Scheduler.cpp,v 1.4 2005/05/25 08:27:49 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.3  2005/05/08 21:43:55  nelles
+//  changed gcc flags from -g to -g3 -gstabs in order to
+//  generate stabs output in object files
+//  changed linker script to load stabs in kernel
+//  in bss area so GRUB loads them automaticaly with
+//  the bss section
+//
+//  changed StupidThreads in main for testing purposes
+//
 //  Revision 1.2  2005/04/27 08:58:16  nomenquis
 //  locks work!
 //  w00t !
@@ -76,7 +85,6 @@ void Scheduler::addNewThread(Thread *thread)
     arch_panic((uint8*)"Too many threads\n");
   }
   
-  ArchThreads::createThreadInfosKernelThread(thread->arch_thread_info_,(pointer)&Scheduler::startThreadHack,thread->getStackStartPointer());
 }
 
 void Scheduler::startThreadHack()
@@ -84,8 +92,13 @@ void Scheduler::startThreadHack()
   currentThread->Run();
 }
 
-void Scheduler::schedule(uint32 from_interrupt)
+uint32 Scheduler::schedule(uint32 from_interrupt)
 {
+  static uint32 bochs_sucks = 0;
+  if (++bochs_sucks % 1)
+  {
+    return 0;
+  }
   uint32 i;
   for (i=0;i<MAX_THREADS;++i)
   {
@@ -101,9 +114,19 @@ void Scheduler::schedule(uint32 from_interrupt)
     if (threads_[i])
       break;
   }
-  
+  uint32 ret = 1;
+ /*
+  if (currentThread != 0 && 
+    currentThread->page_directory_ != threads_[i]->page_directory_)
+  {
+      ret = 1;
+  }
+  if (currentThread)
+    kprintf("Pagedir %x %x\n",currentThread->page_directory_, threads_[i]->page_directory_);
+  */
   currentThread = threads_[i];
   currentThreadInfo = threads_[i]->arch_thread_info_;
+  return ret;
 }
 
 void Scheduler::yield()

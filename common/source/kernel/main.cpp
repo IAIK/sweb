@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.38 2005/05/19 15:43:43 btittelbach Exp $
+ * $Id: main.cpp,v 1.39 2005/05/25 08:27:49 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.38  2005/05/19 15:43:43  btittelbach
+ * Ansätze für eine UserSpace Verwaltung
+ *
  * Revision 1.37  2005/05/16 20:37:51  nomenquis
  * added ArchMemory for page table manip
  *
@@ -137,10 +140,12 @@
 #include "Thread.h"
 #include "Scheduler.h"
 #include "ArchCommon.h"
+#include "ArchThreads.h"
 #include "ipc/FiFo.h"
 #include "kernel/Mutex.h"
-#include <panic.h>
-#include <debug_bochs.h>
+#include "panic.h"
+#include "debug_bochs.h"
+#include "ArchMemory.h"
 
 extern void* kernel_end_address;
 
@@ -203,6 +208,102 @@ private:
 
 };
 
+class UserThread : public Thread
+{
+  public:
+    
+  UserThread()
+  {
+    uint32 page_for_page_dir = PageManager::instance()->getFreePhysicalPage();
+    kprintf("Got new Page no. %d\n",page_for_page_dir);
+   // page_directory_ = page_for_page_dir * PAGE_SIZE;
+    ArchMemory::initNewPageDirectory(page_for_page_dir);
+    kprintf("Initialised the page dir\n");
+    
+    uint32 i;
+    for (uint32 i=0;i<20;++i)
+    {
+      uint32 page = PageManager::instance()->getFreePhysicalPage();
+      ArchMemory::mapPage(page_for_page_dir,i,page,1);
+      if (!i) kprintf("Mapped a page to the userspace page dir %x\n",page);
+      pointer memory = ArchMemory::physicalPageToKernelPointer(page);
+      ArchCommon::bzero(memory,PAGE_SIZE,0);
+      uint32 k;
+      for (k=0;k<1024;++k)
+      {
+        uint32 *m= (uint32*)memory;
+        m[k] = i+100000000;
+      }
+      
+      if (!i)  kprintf("Done with bezero\n");
+      if (i==0)
+        bad_mapping_page_0 = page*PAGE_SIZE;
+    }
+    ArchThreads::setPageDirectory(this,page_for_page_dir);
+    kprintf("Pageforpagedir is %x\n",page_for_page_dir);
+  }
+  
+  virtual void Run()
+  {
+    for(;;)
+    {
+      kprintf("BLuna\n");
+      kprintf("%x == %x %x == %x\n",currentThread,this,currentThreadInfo,this->arch_thread_info_);
+      uint32* k=(uint32*)(0);
+      
+      uint32 i;
+      for (i=0;i<400000;++i)
+        kprintf("k[%d, %d]=%d\n",i,i/1024,k[i]);
+      for (;;);
+      *k='B';++k;
+      *k='L';++k;
+      *k='U';++k;
+      *k='N';++k;
+      *k='A';++k;
+      *k='B';++k;
+      *k='L';++k;
+      *k='U';++k;
+      *k='B';++k;
+      *k='B';++k;
+      *k='\0';++k;
+           
+      uint32* j=(uint32*)(bad_mapping_page_0+3U*1024U*1024U*1024U);
+      for(;;);
+      while (1)
+      {
+        if (*j == 'B' && j[1] == 'L' && j[2] == 'U')
+        {
+          kprintf("W00t %x\n",j);
+          for(;;);
+          break;
+        }
+        else
+        {
+          kprintf(":(\n");
+          ++j;
+        }
+      }
+      /*
+      kprintf("J is %x\n",j);
+      if (*j == 42)
+      {
+        kprintf("goodie\n");
+      }
+      else
+      {
+        kprintf("Baddie %x != %x\n",*j,*k);
+        kprintf("%x %x \n",((pointer)j)-(3*1024*1024*1024)-((pointer)k),(pointer)j);
+    }
+      */
+      Scheduler::instance()->yield();
+    }
+  }
+  
+private:
+  
+  uint32 bad_mapping_page_0;
+
+};
 
 void startup()
 {
@@ -292,6 +393,7 @@ void startup()
   kprintf("Done\n");
   */
 
+  Scheduler::instance()->addNewThread(new UserThread());
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
   
