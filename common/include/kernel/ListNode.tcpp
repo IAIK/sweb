@@ -1,0 +1,562 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Andreas Niederl
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+
+/**
+ * CVS Log Info for $RCSfile: ListNode.tcpp,v $
+ *
+ * $Id: ListNode.tcpp,v 1.1 2005/05/26 01:08:37 aniederl Exp $
+ * $Log$
+ */
+
+/**
+ * template definitions, included by ListNode.h
+ *
+ */
+
+
+#ifndef Swap_Function___
+#define Swap_Function___
+// FIXXXME: don't know where to put that function
+/**
+ * swaps two elements
+ * @param first the first element
+ * @param second the second element
+ *
+ */
+template<typename ValueType>
+void swap(ValueType &first, ValueType &second)
+{
+  ValueType tmp = first;
+  first = second;
+  second = tmp;
+}
+#endif // Swap_Function___
+
+template<typename ValueType>
+const typename ListNode<ValueType>::size_type
+ListNode<ValueType>::NPOS = -1;
+
+template<typename ValueType>
+const typename ListNode<ValueType>::size_type
+ListNode<ValueType>::DEFAULT_ARRAY_SIZE = 15;
+
+
+//----------------------------------------------------------------------
+/**
+ * default constructor for class ListNode
+ * @param size initial size of the array contained in the node
+ */
+template<typename ValueType>
+ListNode<ValueType>::ListNode(size_type size) : initial_size_(size),
+                                                threshold_(2 * size),
+                                                size_(size),
+                                                number_of_elements_(0),
+                                                next_node_(0),
+                                                previous_node_(0),
+                                                backward_access_(false),
+                                                first_element_offset_(0)
+{
+  data_ = new ValueType[size];
+
+  for(size_type index = 0; index < size; ++index)
+    data_[index] = 0;
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * copy constructor for class ListNode
+ * @param instance is a constant reference to an object of
+ * type ListNode
+ */
+template<typename ValueType>
+ListNode<ValueType>::ListNode(const ListNode<ValueType> &instance)
+{
+  initial_size_ = instance.initial_size_;
+  threshold_ = instance.threshold_;
+  size_ = instance.size_;
+  number_of_elements_ = instance.number_of_elements_;
+  next_node_ = instance.next_node_;
+  previous_node_ = instance.previous_node_;
+  backward_access_ = instance.backward_access_;
+  first_element_offset_ = instance.first_element_offset_;
+
+  data_ = new ValueType[size_];
+
+  for(size_type index = 0; index < size_; ++index)
+    data_[index] = instance.data_[index];
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * destructor for class ListNode
+ */
+template<typename ValueType>
+ListNode<ValueType>::~ListNode()
+{
+  delete[] data_;
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * = operator for class ListNode
+ * @param instance is a reference to a ListNode object
+ * @return is a reference to a ListNode object
+ */
+template<typename ValueType>
+ListNode<ValueType>& ListNode<ValueType>::operator = (
+  const ListNode<ValueType> &instance)
+{
+  ListNode<ValueType> new_node(instance);
+
+  swap(this->initial_size_, new_node.initial_size_);
+  swap(this->threshold_, new_node.threshold_);
+  swap(this->size_, new_node.size_);
+  swap(this->number_of_elements_, new_node.number_of_elements_);
+  swap(this->next_node_, new_node.next_node_);
+  swap(this->previous_node_, new_node.previous_node_);
+  swap(this->backward_access_, new_node.backward_access_);
+  swap(this->first_element_offset_, new_node.first_element_offset_);
+
+  data_ = new ValueType[size_];
+  for(size_type index = 0; index < size_; ++index)
+    data_[index] = new_node.data_[index];
+
+  return (*this);
+}
+
+//----------------------------------------------------------------------
+/**
+ * checks if the next node exists
+ * @return true if the next node exists
+ *
+ */
+template<typename ValueType>
+bool ListNode<ValueType>::hasNextNode() const
+{
+  return (next_node_ != 0);
+}
+
+//----------------------------------------------------------------------
+/**
+ * checks if the previous node exists
+ * @return true if the previous node exists
+ *
+ */
+template<typename ValueType>
+bool ListNode<ValueType>::hasPreviousNode() const
+{
+  return (previous_node_ != 0);
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the next node
+ * @return the next node
+ *
+ */
+template<typename ValueType>
+ListNode<ValueType> *ListNode<ValueType>::getNextNode() const
+{
+  return next_node_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the previous node
+ * @return the previous node
+ *
+ */
+template<typename ValueType>
+ListNode<ValueType> *ListNode<ValueType>::getPreviousNode() const
+{
+  return previous_node_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * sets the next node
+ * @param next_node the next node
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::setNextNode(ListNode<ValueType> *next_node)
+{
+  next_node_ = next_node;
+}
+
+//----------------------------------------------------------------------
+/**
+ * sets the previous node
+ * @param previous_node the previous node
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::setPreviousNode(ListNode<ValueType> *previous_node)
+{
+  previous_node_ = previous_node;
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the number of elements in the data array
+ * @return the number of elements in the data array
+ *
+ */
+template<typename ValueType>
+typename ListNode<ValueType>::size_type ListNode<ValueType>::size() const
+{
+  return number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * checks, if the node is empty
+ * @return true, if the node is empty
+ *
+ */
+template<typename ValueType>
+bool ListNode<ValueType>::empty() const
+{
+  return (number_of_elements_ == 0);
+}
+
+//----------------------------------------------------------------------
+/**
+ * checks if the node is full (number of elements equals array size)
+ * @return true if the node is full
+ *
+ */
+template<typename ValueType>
+bool ListNode<ValueType>::full() const
+{
+  return (number_of_elements_ == size_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the element at the given index
+ * @param index the index of the asked element
+ * @return the element at the given index
+ *
+ */
+template<typename ValueType>
+typename ListNode<ValueType>::reference ListNode<ValueType>::get(
+  size_type index)
+{
+  size_type element_index = index + first_element_offset_;
+
+  if(element_index < size_)
+    return data_[element_index];
+  else
+    return data_[size_ - 1];
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the element at the given index
+ * @param index the index of the asked element
+ * @return the element at the given index
+ *
+ */
+template<typename ValueType>
+typename ListNode<ValueType>::const_reference ListNode<ValueType>::get(
+  size_type index) const
+{
+  size_type element_index = index + first_element_offset_;
+
+  if(element_index < size_)
+    return data_[element_index];
+  else
+    return data_[size_ - 1];
+}
+
+//----------------------------------------------------------------------
+/**
+ * inserts an element at the given index
+ * @param index the index at which the element is to be inserted
+ * @param element the element to insert
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::insert(size_type index, const_reference element)
+{
+  size_type element_index = index + first_element_offset_;
+
+  // expand array if needed
+  if(element_index > (size_ - 1) ||
+     number_of_elements_ >= (size_ - 1))
+  {
+    size_type new_size = size_ + initial_size_;
+
+    while(element_index > new_size)
+      new_size += initial_size_;
+
+    ValueType *new_data = new ValueType[new_size];
+
+    if(backward_access_)
+    {
+      size_type new_index = new_size - number_of_elements_ - 1;
+      for(size_type data_index = first_element_offset_; data_index < size_;
+          ++data_index)
+        new_data[++new_index] = data_[data_index];
+
+      first_element_offset_ = new_size - number_of_elements_;
+
+      // get new element index
+      element_index = index + first_element_offset_;
+
+      for(size_type data_index = 0; data_index < first_element_offset_;
+          ++data_index)
+        new_data[data_index] = 0;
+    }
+    else
+    {
+      for(size_type data_index = 0; data_index < size_; ++data_index)
+        new_data[data_index] = data_[data_index];
+
+      for(size_type data_index = size_; data_index < new_size; ++data_index)
+        new_data[data_index] = 0;
+    }
+
+    delete[] data_;
+    data_ = new_data;
+
+    size_ = new_size;
+  }
+
+  if(backward_access_)
+  {
+    if(first_element_offset_
+       && element_index >= first_element_offset_)
+    {
+      --first_element_offset_;
+      --element_index;
+
+      // move elements one position downward
+      for(size_type data_index = 0; data_index < element_index;
+          ++data_index)
+        data_[data_index] = data_[data_index + 1];
+    }
+  }
+  else
+  {
+    // move elements one position upward
+    for(size_type data_index = number_of_elements_;
+        data_index > element_index;
+        --data_index)
+      data_[data_index] = data_[data_index - 1];
+  }
+
+  data_[element_index] = element;
+  ++number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * appends an element to the node
+ * @param element the element to add
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::append(const_reference element)
+{
+  // expand array if needed
+  if(number_of_elements_ == size_)
+  {
+    size_type new_size = size_ + initial_size_;
+    ValueType *new_data = new ValueType[new_size];
+
+    if(backward_access_)
+    {
+      size_type old_index = size_;
+      size_type new_index = new_size;
+
+      while(old_index > 0)
+        new_data[--new_index] = data_[--old_index];
+
+      first_element_offset_ = new_index;
+    }
+    else
+    {
+      for(size_type index = 0; index < size_; ++index)
+        new_data[index] = data_[index];
+    }
+
+    delete[] data_;
+    data_ = new_data;
+
+    size_ = new_size;
+
+  }
+
+  if(backward_access_)
+    data_[--first_element_offset_] = element;
+  else
+    data_[number_of_elements_] = element;
+
+  ++number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * removes the element at the given index
+ * @param index the index of the element to remove
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::remove(size_type index)
+{
+  size_type element_index = index + first_element_offset_;
+
+  if(element_index >= size_)
+    return;
+
+  if(index < number_of_elements_)
+  {
+    data_[element_index] = 0;
+
+    // move elements to fill the empty place
+    if(backward_access_)
+    {
+      // move elements one position upward
+      for(size_type data_index = element_index;
+          data_index > 0;
+          --data_index)
+        data_[data_index] = data_[data_index - 1];
+
+      data_[0] = 0;
+      first_element_offset_++;
+    }
+    else
+    {
+      size_type upper_bound = number_of_elements_ - 1;
+
+      // move elements one position downward
+      for(size_type data_index = element_index;
+          data_index < upper_bound;
+          ++data_index)
+        data_[data_index] = data_[data_index + 1];
+
+      data_[upper_bound] = 0;
+    }
+
+    --number_of_elements_;
+
+    // shrink array if there are few elements
+    if(size_ > (size_ - (threshold_)) &&
+       number_of_elements_ < (size_ - (threshold_)))
+    {
+      size_type new_size = size_ - initial_size_;
+      ValueType *new_data = new ValueType[new_size];
+
+      if(backward_access_)
+      {
+        // copy from end
+        size_type old_index = size_;
+        size_type data_index = new_size;
+        while(data_index > 0)
+          new_data[--data_index] = data_[--old_index];
+      }
+      else
+      {
+        // copy from start
+        for(size_type data_index = 0; data_index < new_size; ++data_index)
+          new_data[data_index] = data_[data_index];
+      }
+
+      delete[] data_;
+      data_ = new_data;
+
+      size_ = new_size;
+    }
+  }
+}
+
+//----------------------------------------------------------------------
+/**
+ * sets the backward access mode
+ * @param backward_access true for backward access
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::setBackwardAccess(bool backward_access)
+{
+  backward_access_ = backward_access;
+
+  if(backward_access)
+    shiftElementsToBack();
+  else
+    shiftElementsToFront();
+}
+
+//----------------------------------------------------------------------
+/**
+ * shifts the elements to the upper bound for backward access
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::shiftElementsToBack()
+{
+  if(number_of_elements_ && number_of_elements_ < size_)
+  {
+    size_type new_index = size_;
+    size_type old_index = number_of_elements_;
+
+    while(old_index > 0)
+      data_[--new_index] = data_[--old_index];
+
+    first_element_offset_ = new_index;
+
+    while(new_index > 0)
+      data_[--new_index] = 0;
+  }
+  else
+  {
+    if(!number_of_elements_)
+      first_element_offset_ = size_;
+  }
+}
+
+//----------------------------------------------------------------------
+/**
+ * shifts the elements to the lower bound for normal access
+ *
+ */
+template<typename ValueType>
+void ListNode<ValueType>::shiftElementsToFront()
+{
+  if(number_of_elements_ && number_of_elements_ < size_)
+  {
+    size_type old_index = first_element_offset_;
+    size_type new_index = 0;
+    for(; new_index < number_of_elements_;
+        ++new_index)
+      data_[new_index] = data_[old_index++];
+
+    while(new_index < size_)
+      data_[new_index++] = 0;
+  }
+
+  first_element_offset_ = 0;
+}

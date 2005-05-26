@@ -1,0 +1,291 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Andreas Niederl
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+
+/**
+ * CVS Log Info for $RCSfile: Queue.tcpp,v $
+ *
+ * $Id: Queue.tcpp,v 1.1 2005/05/26 01:08:37 aniederl Exp $
+ * $Log$
+ */
+
+
+/**
+ * template definitions, included by List.h
+ *
+ */
+
+
+#ifndef Swap_Function___
+#define Swap_Function___
+// FIXXXME: don't know where to put that function
+/**
+ * swaps two elements
+ * @param first the first element
+ * @param second the second element
+ *
+ */
+template<typename ValueType>
+void swap(ValueType &first, ValueType &second)
+{
+  ValueType tmp = first;
+  first = second;
+  second = tmp;
+}
+#endif // Swap_Function___
+
+template<typename ValueType>
+const typename Queue<ValueType>::size_type
+Queue<ValueType>::DEFAULT_NODE_SIZE = 15;
+
+//----------------------------------------------------------------------
+/**
+ * default constructor for class Queue
+ * @param node_size the size of the queue nodes
+ */
+template<typename ValueType>
+Queue<ValueType>::Queue(size_type node_size)
+ : node_size_(node_size),
+   number_of_nodes_(1),
+   number_of_elements_(0),
+   first_element_index_(0),
+   last_element_index_(-1)
+{
+  first_node_ = new ListNode<ValueType>(node_size_);
+  last_node_ = first_node_;
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * copy constructor for class Queue
+ * @param instance is a constant reference to an object of
+ * type Queue
+ */
+template<typename ValueType>
+Queue<ValueType>::Queue(const Queue<ValueType> &instance)
+{
+  node_size_ = instance.node_size_;
+  number_of_nodes_ = instance.number_of_nodes_;
+  number_of_elements_ = instance.number_of_elements_;
+  first_element_index_ = instance.first_element_index_;
+  last_element_index_ = instance.last_element_index_;
+
+  // copy nodes
+  ListNode<ValueType> *node = new ListNode<ValueType>(*instance.first_node_);
+
+  first_node_ = node;
+
+  while(node->hasNextNode())
+  {
+    ListNode<ValueType> *next_node = new ListNode<ValueType>(
+      *(node->getNextNode()));
+
+    next_node->setPreviousNode(node);
+    node->setNextNode(next_node);
+
+    node = next_node;
+  }
+
+  last_node_ = node;
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * destructor for class Queue
+ */
+template<typename ValueType>
+Queue<ValueType>::~Queue()
+{
+  while(first_node_)
+  {
+    ListNode<ValueType> *tmp = first_node_->getNextNode();
+    delete first_node_;
+    first_node_ = tmp;
+  }
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * = operator for class Queue
+ * @param instance is a reference to a Queue object
+ * @return is a reference to a Queue object
+ */
+template<typename ValueType>
+Queue<ValueType>& Queue<ValueType>::operator = (
+  const Queue<ValueType> &instance)
+{
+  Queue<ValueType> new_queue(instance);
+
+  swap(this->node_size_, new_queue.node_size_);
+  swap(this->number_of_nodes_, new_queue.number_of_nodes_);
+  swap(this->node_size_, new_queue.node_size_);
+  swap(this->number_of_elements_, new_queue.number_of_elements_);
+  swap(this->first_node_, new_queue.first_node_);
+  swap(this->first_element_index_, new_queue.first_element_index_);
+  swap(this->last_node_, new_queue.last_node_);
+  swap(this->last_element_index_, new_queue.last_element_index_);
+
+  return (*this);
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * returns the size (number of elements) of the queue
+ * @return the size (number of elements) of the queue
+ *
+ */
+template<typename ValueType>
+typename Queue<ValueType>::size_type Queue<ValueType>::size() const
+{
+  return number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * checks, if the queue is empty
+ * @return true, if the queue is empty
+ *
+ */
+template<typename ValueType>
+bool Queue<ValueType>::empty() const
+{
+  return (number_of_elements_ == 0);
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * returns the first element
+ * @return the first element
+ *
+ */
+template<typename ValueType>
+typename Queue<ValueType>::reference Queue<ValueType>::front()
+{
+  return first_node_->get(first_element_index_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the first element
+ * @return the first element
+ *
+ */
+template<typename ValueType>
+typename Queue<ValueType>::const_reference Queue<ValueType>::front() const
+{
+  return first_node_->get(first_element_index_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the last element
+ * @return the last element
+ *
+ */
+template<typename ValueType>
+typename Queue<ValueType>::reference Queue<ValueType>::back()
+{
+  return last_node_->get(last_element_index_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the last element
+ * @return the last element
+ *
+ */
+template<typename ValueType>
+typename Queue<ValueType>::const_reference Queue<ValueType>::back() const
+{
+  return last_node_->get(last_element_index_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * inserts an element at the end of the queue
+ * @param element the new element to insert
+ *
+ */
+template<typename ValueType>
+void Queue<ValueType>::push(const_reference element)
+{
+  if(last_node_->full())
+  {
+    ListNode<ValueType> *new_node = new ListNode<ValueType>(node_size_);
+    ++number_of_nodes_;
+    last_element_index_ = 0;
+
+    new_node->setPreviousNode(last_node_);
+    last_node_->setNextNode(new_node);
+
+    last_node_ = new_node;
+  }
+  else
+    ++last_element_index_;
+
+  last_node_->append(element);
+  ++number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * removes the first element
+ *
+ */
+template<typename ValueType>
+void Queue<ValueType>::pop()
+{
+  if(!number_of_elements_)
+    return;
+
+  --number_of_elements_;
+
+  if(first_element_index_ == (first_node_->size() - 1))
+  {
+    ListNode<ValueType> *next_node = first_node_->getNextNode();
+    delete first_node_;
+    --number_of_nodes_;
+
+    if(next_node)
+    {
+      first_node_ = next_node;
+      first_node_->setPreviousNode(0);
+    }
+    else
+    {
+      // reinitialize the queue
+      first_node_ = new ListNode<ValueType>(node_size_);
+      last_node_ = first_node_;
+
+      number_of_nodes_ = 1;
+      number_of_elements_ = 0;
+      last_element_index_ = -1;
+    }
+
+    first_element_index_ = 0;
+  }
+  else
+    ++first_element_index_;
+}

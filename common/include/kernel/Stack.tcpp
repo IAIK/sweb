@@ -1,0 +1,266 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Andreas Niederl
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+
+/**
+ * CVS Log Info for $RCSfile: Stack.tcpp,v $
+ *
+ * $Id: Stack.tcpp,v 1.1 2005/05/26 01:08:37 aniederl Exp $
+ * $Log$
+ */
+
+
+/**
+ * template definitions, included by List.h
+ *
+ */
+
+
+#ifndef Swap_Function___
+#define Swap_Function___
+// FIXXXME: don't know where to put that function
+/**
+ * swaps two elements
+ * @param first the first element
+ * @param second the second element
+ *
+ */
+template<typename ValueType>
+void swap(ValueType &first, ValueType &second)
+{
+  ValueType tmp = first;
+  first = second;
+  second = tmp;
+}
+#endif // Swap_Function___
+
+template<typename ValueType>
+const typename Stack<ValueType>::size_type
+Stack<ValueType>::DEFAULT_NODE_SIZE = 15;
+
+
+//----------------------------------------------------------------------
+/**
+ * default constructor for class Stack
+ * @param node_size the size of the stack nodes
+ */
+template<typename ValueType>
+Stack<ValueType>::Stack(size_type node_size)
+ : node_size_(node_size),
+   number_of_nodes_(1),
+   number_of_elements_(0),
+   last_element_index_(-1)
+{
+  first_node_ = new ListNode<ValueType>(node_size_);
+  last_node_ = first_node_;
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * copy constructor for class Stack
+ * @param instance is a constant reference to an object of
+ * type Stack
+ */
+template<typename ValueType>
+Stack<ValueType>::Stack(const Stack<ValueType> &instance)
+{
+  node_size_ = instance.node_size_;
+  number_of_nodes_ = instance.number_of_nodes_;
+  number_of_elements_ = instance.number_of_elements_;
+  last_element_index_ = instance.last_element_index_;
+
+  // copy nodes
+  ListNode<ValueType> *node = new ListNode<ValueType>(*instance.first_node_);
+
+  first_node_ = node;
+
+  while(node->hasNextNode())
+  {
+    ListNode<ValueType> *next_node = new ListNode<ValueType>(
+      *(node->getNextNode()));
+
+    next_node->setPreviousNode(node);
+    node->setNextNode(next_node);
+
+    node = next_node;
+  }
+
+  last_node_ = node;
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * destructor for class Stack
+ */
+template<typename ValueType>
+Stack<ValueType>::~Stack()
+{
+  while(first_node_)
+  {
+    ListNode<ValueType> *tmp = first_node_->getNextNode();
+    delete first_node_;
+    first_node_ = tmp;
+  }
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * = operator for class Stack
+ * @param instance is a reference to a Stack object
+ * @return is a reference to a Stack object
+ */
+template<typename ValueType>
+Stack<ValueType>& Stack<ValueType>::operator = (
+  const Stack<ValueType> &instance)
+{
+  Stack<ValueType> new_stack(instance);
+
+  swap(this->node_size_, new_stack.node_size_);
+  swap(this->number_of_nodes_, new_stack.number_of_nodes_);
+  swap(this->node_size_, new_stack.node_size_);
+  swap(this->number_of_elements_, new_stack.number_of_elements_);
+  swap(this->first_node_, new_stack.first_node_);
+  swap(this->last_node_, new_stack.last_node_);
+  swap(this->last_element_index_, new_stack.last_element_index_);
+
+  return (*this);
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * returns the size (number of elements) of the stack
+ * @return the size (number of elements) of the stack
+ *
+ */
+template<typename ValueType>
+typename Stack<ValueType>::size_type Stack<ValueType>::size() const
+{
+  return number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * checks, if the stack is empty
+ * @return true, if the stack is empty
+ *
+ */
+template<typename ValueType>
+bool Stack<ValueType>::empty() const
+{
+  return (number_of_elements_ == 0);
+}
+
+
+//----------------------------------------------------------------------
+/**
+ * returns the element on the top of the stack
+ * @return the element on the top of the stack
+ *
+ */
+template<typename ValueType>
+typename Stack<ValueType>::reference Stack<ValueType>::top()
+{
+  return last_node_->get(last_element_index_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * returns the element on the top of the stack
+ * @return the element on the top of the stack
+ *
+ */
+template<typename ValueType>
+typename Stack<ValueType>::const_reference Stack<ValueType>::top() const
+{
+  return last_node_->get(last_element_index_);
+}
+
+//----------------------------------------------------------------------
+/**
+ * pushes an element at the top of the stack
+ * @param element the new element to add
+ *
+ */
+template<typename ValueType>
+void Stack<ValueType>::push(const_reference element)
+{
+  if(last_node_->full())
+  {
+    ListNode<ValueType> *new_node = new ListNode<ValueType>(node_size_);
+    ++number_of_nodes_;
+    last_element_index_ = 0;
+
+    new_node->setPreviousNode(last_node_);
+    last_node_->setNextNode(new_node);
+
+    last_node_ = new_node;
+  }
+  else
+    ++last_element_index_;
+
+  last_node_->append(element);
+  ++number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * pops the top element from the stack
+ *
+ */
+template<typename ValueType>
+void Stack<ValueType>::pop()
+{
+  if(!number_of_elements_)
+    return;
+
+  last_node_->remove(last_element_index_);
+  --number_of_elements_;
+
+  if(last_node_->empty())
+  {
+    ListNode<ValueType> *previous = last_node_->getPreviousNode();
+    delete last_node_;
+    --number_of_nodes_;
+
+    if(previous)
+    {
+      last_node_ = previous;
+      last_node_->setNextNode(0);
+    }
+    else
+    {
+      // reinitialize the stack
+      first_node_ = new ListNode<ValueType>(node_size_);
+      last_node_ = first_node_;
+
+      number_of_nodes_ = 1;
+      number_of_elements_ = 0;
+      last_element_index_ = -1;
+    }
+
+    last_element_index_ = last_node_->size() - 1;
+  }
+  else
+    --last_element_index_;
+}
