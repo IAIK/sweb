@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: SegmentUtils.cpp,v 1.4 2005/04/27 09:19:20 nomenquis Exp $
+//  $Id: SegmentUtils.cpp,v 1.5 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: SegmentUtils.cpp,v $
+//  Revision 1.4  2005/04/27 09:19:20  nomenquis
+//  only pack whats needed
+//
 //  Revision 1.3  2005/04/25 23:23:48  btittelbach
 //  nothing really
 //
@@ -89,6 +92,7 @@ TSS *g_tss;
 #define SEGMENT_DPL2    0x40
 #define SEGMENT_DPL3    0x60
 
+/*
 #define GDT_ENTRY_SELECTOR(n) (n * sizeof(SegDesc))
 #define KERNEL_CS GDT_ENTRY_SELECTOR(1)
 #define KERNEL_DS GDT_ENTRY_SELECTOR(2)
@@ -96,7 +100,7 @@ TSS *g_tss;
 #define USER_CS   GDT_ENTRY_SELECTOR(5) | DPL_USER
 #define USER_DS   GDT_ENTRY_SELECTOR(6) | DPL_USER
 #define USER_SS   GDT_ENTRY_SELECTOR(7) | DPL_USER
-
+*/
 static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type) 
 {
     SegDesc *desc = (SegDesc*)&tss_selector;
@@ -116,6 +120,7 @@ void SegmentUtils::initialise()
   g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
   ArchCommon::bzero((pointer)g_tss,sizeof(TSS));
  
+  g_tss->ss0 = KERNEL_SS;
   setTSSSegDesc((uint32)g_tss, 0x00000067, SEGMENT_PRESENT | SEGMENT_DPL0 | 0x00 | 0x09);
 
   // we have to reload our segment stuff
@@ -131,10 +136,10 @@ void SegmentUtils::initialise()
   
   uint32 *gss_stack = new uint32[1024];
   ArchCommon::bzero((pointer)gss_stack,4096);
-  //pointer gp = (pointer)&gss_stack[1023];
+  pointer gp = (pointer)&gss_stack[1023];
   
-//  g_tss->esp0 = gp;
-//  g_tss->ss0  = KERNEL_SS;
+  g_tss->esp0 = gp;
+  g_tss->ss0  = KERNEL_SS;
   
    
  

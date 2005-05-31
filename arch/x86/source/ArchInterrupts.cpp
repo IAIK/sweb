@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.9 2005/04/25 23:09:18 nomenquis Exp $
+//  $Id: ArchInterrupts.cpp,v 1.10 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.9  2005/04/25 23:09:18  nomenquis
+//  fubar 2
+//
 //  Revision 1.8  2005/04/25 22:41:58  nomenquis
 //  foobar
 //
@@ -46,9 +49,6 @@ void ArchInterrupts::initialise()
   initialise8259s();
   SegmentUtils::initialise();
   InterruptUtils::initialise();
-  //uint32 * bla = (uint32*)(1024*1024*1024*1 + 1000);
-  //*bla = 24;
-
   for (i=0;i<16;++i)
      disableIRQ(i);
 

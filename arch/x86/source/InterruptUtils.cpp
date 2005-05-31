@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.7 2005/05/25 08:27:48 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.8 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.7  2005/05/25 08:27:48  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.6  2005/04/27 09:19:20  nomenquis
 //  only pack whats needed
 //
@@ -391,6 +394,7 @@ extern Thread *currentThread;
 extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
 extern "C" void arch_switchThreadKernelToKernelPageDirChange();
+extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
   //kprintf("Tick\n");
@@ -401,10 +405,10 @@ extern "C" void irqHandler_0()
   {
     case 0:
       writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
-      arch_switchThreadKernelToKernel();
+      arch_switchThreadKernelToKernelPageDirChange();
     case 1:
       writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
-      arch_switchThreadKernelToKernelPageDirChange();
+      arch_switchThreadToUserPageDirChange();
     default:
       kprintf("Panic in int 0 handler\n");
       for(;;);
@@ -418,10 +422,10 @@ extern "C" void irqHandler_65()
   {
     case 0:
       writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
-      arch_switchThreadKernelToKernel();
+      arch_switchThreadKernelToKernelPageDirChange();
     case 1:
       writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
-      arch_switchThreadKernelToKernelPageDirChange();
+      arch_switchThreadToUserPageDirChange();
     default:
       kprintf("Panic in int 0 handler\n");
       for(;;);

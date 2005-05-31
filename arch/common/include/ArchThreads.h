@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.4 2005/05/25 08:27:48 nomenquis Exp $
+//  $Id: ArchThreads.h,v 1.5 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.4  2005/05/25 08:27:48  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.3  2005/04/27 08:58:16  nomenquis
 //  locks work!
 //  w00t !
@@ -38,6 +41,8 @@ public:
   static void initialise();
   static void switchToThreadOnIret(Thread *thread);
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
+  static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack);
+
   static void yield();
   static void setPageDirectory(Thread *thread, uint32 page_dir_physical_page);
 

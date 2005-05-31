@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.5 2005/05/25 08:27:48 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.6 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.5  2005/05/25 08:27:48  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.4  2005/04/27 08:58:16  nomenquis
 //  locks work!
 //  w00t !
@@ -63,14 +66,12 @@ void ArchThreads::initialise()
 
 }
 
-#define DPL_KERNEL  0
-#define DPL_USER    3
-
 extern "C" uint32 kernel_page_directory_start;
 
 void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page)
 {
-  thread->arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
+  thread->kernel_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
+  if (thread->user_arch_thread_info_->cr3)thread->user_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
   kprintf("setting cr3 in info to %x\n",page_dir_physical_page * PAGE_SIZE);
 }
 
@@ -109,6 +110,50 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
   kprintf("values done\n");
+}
+
+void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
+{
+  kprintf("ArchThreads::create user enter %x\n",info);
+  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
+  kprintf("alloc done %x\n",info);
+  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  kprintf("bzero done\n");
+  kprintf("CR3 is %x\n",pageDirectory);
+
+  info->cs      = USER_CS;
+  info->ds      = USER_DS;
+  info->es      = USER_DS;
+  info->ss      = USER_SS;
+  info->ss0     = KERNEL_SS;
+  info->eflags  = 0x200;
+  info->eax     = 0;
+  info->ecx     = 0;
+  info->edx     = 0;
+  info->ebx     = 0;
+  info->esi     = 0;
+  info->edi     = 0;
+  info->dpl     = DPL_USER;
+  info->esp     = user_stack;
+  info->ebp     = user_stack;
+  #warning fixme, kernel stack ptr needed
+  info->esp0    = kernel_stack;
+  info->eip     = start_function;
+  info->cr3     = pageDirectory;
+
+ /* fpu (=fninit) */
+  info->fpu[0] = 0xFFFF037F;
+  info->fpu[1] = 0xFFFF0000;
+  info->fpu[2] = 0xFFFFFFFF;
+  info->fpu[3] = 0x00000000;
+  info->fpu[4] = 0x00000000;
+  info->fpu[5] = 0x00000000;
+  info->fpu[6] = 0xFFFF0000;
+  kprintf("values done\n"); 
+  
+
+
 }
 
 void ArchThreads::yield()

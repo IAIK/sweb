@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.8 2005/05/25 08:27:49 nomenquis Exp $
+//  $Id: Thread.h,v 1.9 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.8  2005/05/25 08:27:49  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.7  2005/05/19 15:43:42  btittelbach
 //  Ansätze für eine UserSpace Verwaltung
 //
@@ -87,9 +90,11 @@ public:
   
   virtual void Run()=0;
 
-  ArchThreadInfo *arch_thread_info_;
+  ArchThreadInfo *kernel_arch_thread_info_;
+  ArchThreadInfo *user_arch_thread_info_;
   uint32 stack_[2048];
   
+  uint32 switch_to_userspace_;
 public:  
   pointer getStackStartPointer();
   

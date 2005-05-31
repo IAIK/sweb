@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.7 2005/04/24 16:58:03 nomenquis Exp $
+ * $Id: types.h,v 1.8 2005/05/31 17:29:16 nomenquis Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.7  2005/04/24 16:58:03  nomenquis
+ * ultra hack threading
+ *
  * Revision 1.6  2005/04/23 18:13:26  nomenquis
  * added optimised memcpy and bzero
  * These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -54,6 +57,11 @@ typedef unsigned int size_t;
 #define KERNEL_CS (8*3)
 #define KERNEL_DS (8*2)
 #define KERNEL_SS (8*2)
+#define DPL_KERNEL  0
+#define DPL_USER    3
+#define USER_CS ((8*5)|DPL_USER)
+#define USER_DS ((8*4)|DPL_USER)
+#define USER_SS ((8*4)|DPL_USER)
 
 
 #endif

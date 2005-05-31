@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.8 2005/05/25 08:27:49 nomenquis Exp $
+//  $Id: Thread.cpp,v 1.9 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.8  2005/05/25 08:27:49  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.7  2005/05/19 15:43:43  btittelbach
 //  Ansätze für eine UserSpace Verwaltung
 //
@@ -45,8 +48,8 @@ Thread::Thread()
   ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
 
   kprintf("After bzero\n");
-  ArchThreads::createThreadInfosKernelThread(arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
-
+  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
+  switch_to_userspace_ = 0;
 }
 
 pointer Thread::getStackStartPointer()

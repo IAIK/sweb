@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.5 2005/05/31 17:25:56 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.6 2005/05/31 17:29:16 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.5  2005/05/31 17:25:56  btittelbach
+//  Scheduler mit Listen geschmückt
+//
 //  Revision 1.4  2005/05/25 08:27:49  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -105,44 +108,19 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
   {
     return 0;
   }
-  //~ uint32 i;
-  //~ for (i=0;i<MAX_THREADS;++i)
-  //~ {
-    //~ if (currentThread == threads_[i])
-    //~ {
-      //~ break;
-    //~ }
-  //~ }
-  //~ uint32 found = 0;
-  //~ while (!found)
-  //~ {
-    //~ i = (i+1)%MAX_THREADS;
-    //~ if (threads_[i])
-      //~ break;
-  //~ }
-  //~ uint32 ret = 1;
-  
- /*
-  if (currentThread != 0 && 
-    currentThread->page_directory_ != threads_[i]->page_directory_)
-  {
-      ret = 1;
-  }
-  if (currentThread)
-    kprintf("Pagedir %x %x\n",currentThread->page_directory_, threads_[i]->page_directory_);
-  */
-  
-  //kprintf("Thread Switch: previous Thread %x\n",currentThread);
+
+
   currentThread = threads_.front();
-  //kprintf("Thread Switch: next Thread %x\n",currentThread);
   threads_.popFront();
   threads_.pushBack(currentThread);
-  currentThreadInfo = currentThread->arch_thread_info_;
-  return 1;
-  
-  //~ currentThread = threads_[i];
-  //~ currentThreadInfo = threads_[i]->arch_thread_info_;
-  //~ return ret;
+  if ( currentThread->switch_to_userspace_)
+    currentThreadInfo =  currentThread->user_arch_thread_info_;
+  else
+    currentThreadInfo =  currentThread->kernel_arch_thread_info_,ret=0;
+  /*uint8*foo = 0;
+  *foo = 8;*/
+  return ret;
+
 }
 
 void Scheduler::yield()
