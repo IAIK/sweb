@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.2 2005/05/25 08:27:48 nomenquis Exp $
+//   $Id: Scheduler.h,v 1.3 2005/05/31 17:25:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.2  2005/05/25 08:27:48  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.1  2005/04/26 15:58:45  nomenquis
 //  threads, scheduler, happy day
 //
@@ -13,6 +16,7 @@
 #define _SCHEDULER_H_
 
 #include "types.h"
+#include "List.h"
 
 
 #define MAX_THREADS 20
@@ -45,7 +49,8 @@ private:
 
   static Scheduler *instance_;
 
-  Thread* threads_[MAX_THREADS];
+  List<Thread*> threads_;
+  //Thread* threads_[MAX_THREADS];
   
   static void startThreadHack();
 
