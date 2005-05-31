@@ -95,7 +95,18 @@ uint32 MAX_FN_DEPTH         = 256;
     
     kprintf("%s \n", message );   
     
-    for(;;); // taking a break from the cruel world
+    ArchInterrupts::disableInterrupts();
+    ArchInterrupts::disableTimer();
+    //disable other IRQ's ???
+    
+    for(;;) // taking a break from the cruel world
+    {
+      __asm__ __volatile__(" \
+       hlt\n"
+      );
+    }
+    
+    kprintf("MAJOR KERNEL PANIC!: Should never reach here\n");
     
     pointer i = 0;
               

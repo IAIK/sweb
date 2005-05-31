@@ -1,7 +1,15 @@
 /**
- * $Id: main.cpp,v 1.40 2005/05/31 13:23:25 nelles Exp $
+ * $Id: main.cpp,v 1.41 2005/05/31 16:43:05 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.40  2005/05/31 13:23:25  nelles
+ * panic function finally works as it should (I have lowered
+ * the optimisation
+ * level
+ * from O2 to O1 and the problem seems to be fixed)
+ *
+ * p.s. I really hate the vi ... Notepad RULES
+ *
  * Revision 1.39  2005/05/25 08:27:49  nomenquis
  * cr3 remapping finally really works now
  *
@@ -202,8 +210,8 @@ class StupidThread : public Thread
     
       Scheduler::instance()->yield();
       
-     // if( i++ >= 5 )
-       // stupid_static_func1( 32  );
+      if( i++ >= 5 )
+        stupid_static_func1( 32  );
         
     }
   }
