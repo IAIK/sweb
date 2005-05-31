@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.6 2005/05/31 17:29:16 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.7 2005/05/31 18:13:14 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.6  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.5  2005/05/31 17:25:56  btittelbach
 //  Scheduler mit Listen geschmückt
 //
@@ -109,7 +112,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     return 0;
   }
 
-
+  uint32 ret = 1;
   currentThread = threads_.front();
   threads_.popFront();
   threads_.pushBack(currentThread);
