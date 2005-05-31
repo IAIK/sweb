@@ -1,6 +1,15 @@
-# $Id: toolchain.mk,v 1.10 2005/05/08 21:43:55 nelles Exp $
+# $Id: toolchain.mk,v 1.11 2005/05/31 13:23:25 nelles Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.10  2005/05/08 21:43:55  nelles
+# changed gcc flags from -g to -g3 -gstabs in order to
+# generate stabs output in object files
+# changed linker script to load stabs in kernel
+# in bss area so GRUB loads them automaticaly with
+# the bss section
+#
+# changed StupidThreads in main for testing purposes
+#
 # Revision 1.9  2005/04/27 09:19:20  nomenquis
 # only pack whats needed
 #
@@ -90,10 +99,10 @@ MAKE := $(MAKE_TEMP)
 
 ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
-#CXXFLAGS := $(CXXFLAGS) -fpack-struct -O2 -g3 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-#CCFLAGS := $(CCFLAGS) -fpack-struct -O2 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
-CXXFLAGS := $(CXXFLAGS) -O2 -g3 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-CCFLAGS := $(CCFLAGS)  -O2 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
+#CXXFLAGS := $(CXXFLAGS) -fpack-struct -g3 -O1 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+#CCFLAGS := $(CCFLAGS) -fpack-struct -g3 -O1 -gstabs -Wall -W -nostdinc -fno-builtin
+CXXFLAGS := $(CXXFLAGS) -g3 -O1 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+CCFLAGS := $(CCFLAGS)  -O1 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
 endif

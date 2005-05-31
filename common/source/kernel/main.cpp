@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.39 2005/05/25 08:27:49 nomenquis Exp $
+ * $Id: main.cpp,v 1.40 2005/05/31 13:23:25 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.39  2005/05/25 08:27:49  nomenquis
+ * cr3 remapping finally really works now
+ *
  * Revision 1.38  2005/05/19 15:43:43  btittelbach
  * Ansätze für eine UserSpace Verwaltung
  *
@@ -156,18 +159,21 @@ Mutex * lock;
 static void stupid_static_func3( uint8 param )
 {
   kpanict( (uint8 *) " panicking " );
+  kprintf("f3");
   return;
 };
 
 static void stupid_static_func2( uint16 param )
 {
   stupid_static_func3( 8 );
+  kprintf("f2");
   return;
 };
 
 static void stupid_static_func1( uint32 param )
 {
   stupid_static_func2( 12 );
+  kprintf("f1");
   return;
 };
 

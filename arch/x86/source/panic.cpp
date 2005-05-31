@@ -26,6 +26,8 @@ pointer STAB_END           = (pointer)&stab_end_address_nr;
 pointer STABSTR_START      = (pointer)&stabstr_start_address_nr;
 pointer STABSTR_END        = (pointer)&stabstr_end_address_nr;
 
+uint32 MAX_FN_DEPTH         = 256;
+
   /// \brief kernel panict function writes the message and the stack trace to the screen and dies after that
 
   void kpanict ( uint8 * message ) 
@@ -51,31 +53,43 @@ pointer STABSTR_END        = (pointer)&stabstr_end_address_nr;
      
     for( uint32 * i = (esp_reg); i < stack; i++ )
     {
-      if( (*i >= KERNEL_CODE_START ) )// && *i <= KERNEL_CODE_END) )
-    //  || ( *((uint32 *)*i) >= KERNEL_CODE_START && *((uint32 *)*i) >= KERNEL_CODE_START ) )
+      if( (*i >= KERNEL_CODE_START && *i <= KERNEL_CODE_END) )
+      //|| ( *((uint32 *)*i) >= KERNEL_CODE_START && *((uint32 *)*i) <= KERNEL_CODE_END ) )
       {
         kprintf( "i: %x, ",  i );
         kprintf( "*i: %x ", *i );
         kprintf( "**i: %x \n", *((uint32 *)*i) );
         
-        for( symTablePtr = (stabs_out *) STAB_START ; symTablePtr < (stabs_out *) STAB_END; symTablePtr++ )
+        //|| symTablePtr->n_value == *((uint32 *)g)
+        
+        uint32 g = *i;
+        for( g = *i; g > (*i - MAX_FN_DEPTH); g-- )
         {
-          if( symTablePtr->n_value == *i || symTablePtr->n_value == *((uint32 *)*i) )
+          for( symTablePtr = (stabs_out *) STAB_START ; symTablePtr < (stabs_out *) STAB_END; symTablePtr++ )
           {
-            if( symTablePtr->n_value < KERNEL_CODE_START )
-              break;
-              
-            kprintf("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
-            if( symTablePtr->n_type == 0x24 )
+            if( symTablePtr->n_value == g  )
             {
-              kprintf(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
-            }
-            else
-              kprintf( "\n" );
-          }
-          
-          
-        }      
+              if( symTablePtr->n_value < KERNEL_CODE_START 
+              || symTablePtr->n_value > KERNEL_CODE_END )
+              {
+                kprintf( "!" );
+                break;
+              }
+                
+              if( symTablePtr->n_type == 0x24 )
+              {
+                kprintf("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
+              
+                kprintf(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
+                
+                g = (*i - MAX_FN_DEPTH) - 1; // sub 1 to be sure
+              }
+              else
+                kprintf( "!" );
+            } // if         
+          } // for stabs
+        } // for g
+        
       }
     }
     
