@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.11 2005/05/10 15:27:54 davrieb Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.12 2005/05/31 20:25:28 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.11  2005/05/10 15:27:54  davrieb
+//  move assert to util/assert.h
+//
 //  Revision 1.10  2005/05/03 18:31:10  btittelbach
 //  fix of evil evil MemoryManager Bug
 //
@@ -55,7 +58,7 @@
 
 #include "../../include/mm/KernelMemoryManager.h"
 #include "ArchCommon.h"
-#include "util/assert.h"
+#include "assert.h"
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
@@ -111,7 +114,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
 
   malloc_end_=end_address;
   //memory_free_=end_address-start_address-sizeof(MallocSegment);
-  assert (((end_address-start_address-sizeof(MallocSegment)) & 0x80000000) == 0);
+  prenew_assert (((end_address-start_address-sizeof(MallocSegment)) & 0x80000000) == 0);
   first_=new ((void*) start_address) MallocSegment(0,0,end_address-start_address-sizeof(MallocSegment),false);
   last_=first_;
   //segments_free_=1;
@@ -123,7 +126,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
 {
   // find next free pointer of neccessary size + sizeof(MallocSegment);
-  assert ((requested_size & 0x80000000) == 0);
+  prenew_assert ((requested_size & 0x80000000) == 0);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
   
   if (new_pointer == 0)
@@ -157,7 +160,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   //check if there is enought free space afterwards
   //if it is -> merge spaces and return same pointer
   //if not -> find large enough space and move memory, return new pointer
-  assert ((new_size & 0x80000000) == 0);
+  prenew_assert ((new_size & 0x80000000) == 0);
   if (new_size == 0)
   {
     freeMemory(virtual_address);
@@ -199,8 +202,8 @@ MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
 {
   MallocSegment *m_segment;
   m_segment = (MallocSegment*) (virtual_address - sizeof(MallocSegment));
-  assert(m_segment != 0);
-  assert(m_segment->marker_ == 0xdeadbeef);
+  prenew_assert(m_segment != 0);
+  prenew_assert(m_segment->marker_ == 0xdeadbeef);
   return m_segment;
 }
 
@@ -209,7 +212,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   MallocSegment *current=first_;
   while (current != 0)
   {
-    assert(current->marker_ == 0xdeadbeef);
+    prenew_assert(current->marker_ == 0xdeadbeef);
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
       return current;
     
@@ -221,22 +224,22 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 
 void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_size)
 {
-  assert(this_one != 0);
-  assert(this_one->marker_ == 0xdeadbeef);
-  assert(this_one->getSize() >= requested_size);
+  prenew_assert(this_one != 0);
+  prenew_assert(this_one->marker_ == 0xdeadbeef);
+  prenew_assert(this_one->getSize() >= requested_size);
 
   size_t space_left = this_one->getSize() - requested_size;
 
   //size stays as it is, if there would be no more space to add a new segment
   this_one->setUsed(true);
-  assert(this_one->getUsed() == true);
+  prenew_assert(this_one->getUsed() == true);
 
   //add a free segment after this one, it there's enough space
   if (space_left > sizeof(MallocSegment))
   {
     this_one->setSize(requested_size);
-    assert(this_one->getSize() == requested_size);
-    assert(this_one->getUsed() == true);
+    prenew_assert(this_one->getSize() == requested_size);
+    prenew_assert(this_one->getUsed() == true);
     
     MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+requested_size)) MallocSegment(this_one,this_one->next_,space_left-sizeof(MallocSegment),false);
     this_one->next_ = new_segment;
@@ -245,19 +248,19 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 {
-  assert(this_one != 0);
-  assert(this_one->marker_ == 0xdeadbeef);
+  prenew_assert(this_one != 0);
+  prenew_assert(this_one->marker_ == 0xdeadbeef);
 
   //mark segment as free
   //if previous segment is free: delete Segment and add space to previous Segmen
   //if next segment is free: delete next Segment and add space to this segment
    
   this_one->setUsed(false);
-  assert(this_one->getUsed() == false);
+  prenew_assert(this_one->getUsed() == false);
   
   if (this_one->prev_ != 0)
   {
-    assert(this_one->prev_->marker_ == 0xdeadbeef);
+    prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
     if (this_one->prev_->getUsed() == false)
     {
       size_t my_true_size = ((this_one->next_==0)? malloc_end_ - ((pointer) this_one) : ((pointer) this_one->next_) - ((pointer) this_one));
@@ -284,12 +287,12 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
 bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 {
-  assert(this_one != 0);
-  assert(this_one->marker_ == 0xdeadbeef);
+  prenew_assert(this_one != 0);
+  prenew_assert(this_one->marker_ == 0xdeadbeef);
   
   if (this_one->next_ != 0)
   {
-    assert(this_one->next_->marker_ == 0xdeadbeef);
+    prenew_assert(this_one->next_->marker_ == 0xdeadbeef);
     if (this_one->next_->getUsed() == false)
     {
       MallocSegment *next_one = this_one->next_;
@@ -312,9 +315,9 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 
 void KernelMemoryManager::downsizeSegment(MallocSegment *this_one, size_t new_size)
 {
-  assert(this_one != 0);
-  assert(this_one->marker_ == 0xdeadbeef);
-  assert(this_one->getUsed() >= new_size);
+  prenew_assert(this_one != 0);
+  prenew_assert(this_one->marker_ == 0xdeadbeef);
+  prenew_assert(this_one->getUsed() >= new_size);
 
   size_t space_free = this_one->getUsed() - new_size;
 
@@ -323,7 +326,7 @@ void KernelMemoryManager::downsizeSegment(MallocSegment *this_one, size_t new_si
   if (space_free > sizeof(MallocSegment))
   {
     this_one->setSize(new_size);
-    assert(this_one->getSize() == new_size);
+    prenew_assert(this_one->getSize() == new_size);
     
     MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+new_size)) MallocSegment(this_one,this_one->next_,space_free-sizeof(MallocSegment),false);
     this_one->next_ = new_segment;

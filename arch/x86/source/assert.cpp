@@ -1,16 +1,23 @@
 
 //
-// CVS Log Info for $RCSfile: assert.c,v $
+// CVS Log Info for $RCSfile: assert.cpp,v $
 //
-// $Id: assert.c,v 1.1 2005/05/10 15:27:55 davrieb Exp $
-// $Log$
+// $Id: assert.cpp,v 1.1 2005/05/31 20:25:28 btittelbach Exp $
+// $Log: assert.c,v $
+// Revision 1.1  2005/05/10 15:27:55  davrieb
+// move assert to util/assert.h
+//
 //
 
-#include "util/assert.h"
+#include "assert.h"
+#include "kprintf.h"
+#include "panic.h"
 
 
-void sweb_assert(uint32 condition, uint32 line, char* file)
+void pre_new_sweb_assert(uint32 condition, uint32 line, char* file)
 {
+
+    
   char *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line: ";
   if (!condition)
   {
@@ -44,7 +51,12 @@ void sweb_assert(uint32 condition, uint32 line, char* file)
       i--;
       line /= 10;
     }
+  }
+}  
 
-    for (;;);
-  }  
+
+void sweb_assert(uint32 condition, uint32 line, char* file)
+{
+  kprintf("KERNEL PANIC: Assertaion Failed in File %s on Line %d\n",file,line);
+  kpanict((uint8*) "Halting System\n");
 }

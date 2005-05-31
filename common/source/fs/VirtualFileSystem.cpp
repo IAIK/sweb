@@ -2,13 +2,16 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.1 2005/05/10 16:42:30 davrieb Exp $
-// $Log$
+// $Id: VirtualFileSystem.cpp,v 1.2 2005/05/31 20:25:28 btittelbach Exp $
+// $Log: VirtualFileSystem.cpp,v $
+// Revision 1.1  2005/05/10 16:42:30  davrieb
+// add first attempt to write a virtual file system
+//
 //
 
 #include "fs/VirtualFileSystem.h"
 #include "util/string.h"
-#include "util/assert.h"
+#include "assert.h"
 
 
 FileSystemType::FileSystemType(const char* fs_name) :
@@ -91,4 +94,3 @@ int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 
   return 0;
 }
-
