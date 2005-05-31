@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.7 2005/05/25 08:27:48 nomenquis Exp $
+//  $Id: ArchMemory.h,v 1.8 2005/05/31 18:59:19 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.7  2005/05/25 08:27:48  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.6  2005/05/20 14:07:20  btittelbach
 //  Redesign everything
 //
@@ -49,14 +52,16 @@ public:
 
   static pointer physicalPageToKernelPointer(uint32 physical_page);
 
+  static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
 
-private:
-  static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
-  static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
   static pointer get3GBAdressOfPPN(uint32 ppn)
   {
     return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);
   }
+
+private:
+  static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
+  static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
 };
 
 

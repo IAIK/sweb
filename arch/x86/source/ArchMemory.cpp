@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.6 2005/05/25 08:27:48 nomenquis Exp $
+//  $Id: ArchMemory.cpp,v 1.7 2005/05/31 18:59:20 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.6  2005/05/25 08:27:48  nomenquis
+//  cr3 remapping finally really works now
+//
 //  Revision 1.5  2005/05/20 14:07:20  btittelbach
 //  Redesign everything
 //
@@ -121,4 +124,22 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
     }
   }
   PageManager::instance()->freePage(physical_page_directory_page);
+}
+
+bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check)
+{
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
+  uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
+  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  if (page_directory[pde_vpn].pde4k.present)
+  {
+    page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+    if (pte_base[pte_vpn].present)
+      return true;
+    else
+      return false;
+  }
+  else
+    return false;
 }
