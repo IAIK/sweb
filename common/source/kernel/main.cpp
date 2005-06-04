@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.43 2005/05/31 18:13:14 nomenquis Exp $
+ * $Id: main.cpp,v 1.44 2005/06/04 19:41:26 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.43  2005/05/31 18:13:14  nomenquis
+ * fixed compile errors
+ *
  * Revision 1.42  2005/05/31 17:29:16  nomenquis
  * userspace
  *
@@ -9,7 +12,7 @@
  * cr3 remapping finally really works now
  *
  * Revision 1.38  2005/05/19 15:43:43  btittelbach
- * Ansätze für eine UserSpace Verwaltung
+ * Ansï¿½ze fr eine UserSpace Verwaltung
  *
  * Revision 1.37  2005/05/16 20:37:51  nomenquis
  * added ArchMemory for page table manip
@@ -154,29 +157,59 @@
 #include "ArchMemory.h"
 #include "Loader.h"
 
+#include "arch_serial.h"
+#include "drivers/serial.h"
+
 extern void* kernel_end_address;
 
 extern "C" void startup();
 
 Mutex * lock;
 
-static void stupid_static_func3( uint8 param )
+class SerialThread : public Thread
 {
-  kpanict( (uint8 *) " panicking " );
-  return;
+  public:
+    
+  SerialThread()
+  {
+  };
+  
+  virtual void Run()
+  {
+    SerialManager *sm = SerialManager::getInstance();
+    uint32 num_ports = sm->get_num_ports();
+    uint32 i = 0;
+    for( i=0; i < num_ports; i++ )
+    {
+      SerialPort *sp = sm->serial_ports[i];
+      kprintf( "Port number : %d, Port name : %s \n", i ,
+      sp->friendly_name );
+      uint32 bytes_written = 0;
+      uint8 buffer2write[] = "TEST";
+      sp->write( buffer2write, 4, bytes_written );
+      kprintf("bytes_written : %d\n", bytes_written);
+
+      
+      // read from serial port and write to console      
+      uint8 gotch = 0;
+      uint32 num_read = 0;
+      
+      do
+      {
+        sp->read( &gotch, 1, num_read );
+        if( num_read )
+          kprintf( "%c", gotch );
+      }
+      while( 1 );
+      // until forever
+    }
+    
+    kprintf("Done with serial ports\n");
+    for(;;) Scheduler::instance()->yield();
+  };
+  
 };
 
-static void stupid_static_func2( uint16 param )
-{
-  stupid_static_func3( 8 );
-  return;
-};
-
-static void stupid_static_func1( uint32 param )
-{
-  stupid_static_func2( 12 );
-  return;
-};
 
 class StupidThread : public Thread
 {
@@ -191,16 +224,15 @@ class StupidThread : public Thread
   
   virtual void Run()
   {
-    uint32 i=0;
+    //uint32 i=0;
     while (1)
     {
-      kprintf("Thread %d trying to get the lock\n",thread_number_);
-    lock->Acquire();
-    Scheduler::instance()->yield();
-      kprintf("Thread %d has the lock\n",thread_number_);
-      kprintf("Kernel Thread %d %d\n",thread_number_,i++);
-    lock->Release();
-    
+ //   kprintf("Thread %d trying to get the lock\n",thread_number_);
+      lock->Acquire();
+      Scheduler::instance()->yield();
+      //kprintf("Thread %d has the lock\n",thread_number_);
+  //     kprintf("Kernel Thread %d %d\n",thread_number_,i++);
+      lock->Release();
       Scheduler::instance()->yield();
       
      // if( i++ >= 5 )
@@ -249,7 +281,6 @@ private:
 
 void startup()
 {
-  writeLine2Bochs( (uint8 *) "It's easy to write in Bochs \n");
   writeLine2Bochs( (uint8 *) "Startup Started \n");
 
   pointer start_address = (pointer)&kernel_end_address;
@@ -258,20 +289,11 @@ void startup()
   KernelMemoryManager::createMemoryManager(start_address,end_address);
   ConsoleManager::createConsoleManager(1);
   Scheduler::createScheduler();
-
   
   Console *console = ConsoleManager::instance()->getActiveConsole();
 
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
-
-    
- /* console->writeString((uint8 const*)"Blabb\n");  
-  console->writeString((uint8 const*)"Blubb sagte die Katze und frasz den Hund\n");
-  console->writeString((uint8 const*)"Noch ne Zeile\n");
-  console->writeString((uint8 const*)"Und jetzt ne leere\n\n");
-  console->writeString((uint8 const*)"Gruen rackete autobus\n");
-  console->writeString((uint8 const*)"LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANNNNNNNNNNNNNNNNNNNNGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRR STRING\n");*/
 
   uint32 dummy = 0;
   kprintf("befor test set lock, val is now %d\n",dummy);
@@ -280,36 +302,6 @@ void startup()
   kprintf("Lock 2, %d\n",ArchThreads::testSetLock(dummy,22));
   kprintf("After test set lock, val is now %d\n",dummy);
   
-  lock = new Mutex();
-
-  //~ kprintf("Testing FiFo:\n");
-  //~ FiFo<uint8> wuffwuff(6);
-  //~ kprintf("putting 5 elements:\n");
-  //~ wuffwuff.put((uint8) 'a');
-  //~ wuffwuff.put((uint8) 'b');
-  //~ wuffwuff.put((uint8) 'c');
-  //~ wuffwuff.put((uint8) 'd');
-  //~ wuffwuff.put((uint8) 'e');
-  
-  //~ kprintf("getting 4 elements: %c ",wuffwuff.get());
-  //~ kprintf("%c ",wuffwuff.get());
-  //~ kprintf("%c ",wuffwuff.get());
-  //~ kprintf("%c \n",wuffwuff.get());
-
-  //~ kprintf("putting 3 more elements:\n");
-  //~ wuffwuff.put((uint8) 'f');
-  //~ wuffwuff.put((uint8) 'g');
-  //~ wuffwuff.put((uint8) 'h');
-  //~ kprintf("getting 4 elements: %c ",wuffwuff.get());
-  //~ kprintf("%c ",wuffwuff.get());
-  //~ kprintf("%c ",wuffwuff.get());
-  //~ kprintf("%c \n",wuffwuff.get());
-  //~ kprintf("getting 4 more, expecting to block, bye bye:");
-  //~ kprintf("%c",wuffwuff.get());
-  //~ kprintf("%c",wuffwuff.get());
-  //~ kprintf("%c",wuffwuff.get());
-  //~ kprintf("%c\n",wuffwuff.get());
-  //~ kprintf("OMG, we survived, something is wrong");
  
   kprintf("Threads init\n");
   ArchThreads::initialise();
@@ -319,23 +311,26 @@ void startup()
   kprintf("Timer enable\n");
   ArchInterrupts::enableTimer();
   lock = new Mutex();
+  
+  kprintf("Serial port initialisation\n");
+  SerialManager::getInstance()->do_detection( 1 );
+  
 
   kprintf("Thread creation\n");
   StupidThread *thread0 = new StupidThread(0);
   StupidThread *thread1 = new StupidThread(1);
+  
+  SerialThread *serial_thread = new SerialThread();
+  
   kprintf("Adding threads\n");
   Scheduler::instance()->addNewThread(thread0);
   Scheduler::instance()->addNewThread(thread1);
   
+  Scheduler::instance()->addNewThread(serial_thread);
+  
   kprintf("now enabling Interrupts...");
 
-/*
-  kprintf("Trying to get the lock\n");
-  lock->Acquire();
-  kprintf("Done\n");
-  */
-
-  Scheduler::instance()->addNewThread(new UserThread());
+  //Scheduler::instance()->addNewThread(new UserThread());
   ArchInterrupts::enableInterrupts();
   kprintf("done\n");
   

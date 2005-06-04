@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.8 2005/05/31 17:29:16 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.9 2005/06/04 19:41:26 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.8  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.7  2005/05/25 08:27:48  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -38,6 +41,10 @@
 #include "kprintf.h"
 #include "Scheduler.h"
 #include "debug_bochs.h"
+
+#include "arch_serial.h"
+#include "serial.h"
+
   extern "C" void arch_dummyHandler();
 
 // thanks mona
@@ -398,16 +405,16 @@ extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
   //kprintf("Tick\n");
-  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
+//  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
   uint32 ret = Scheduler::instance()->schedule(1);  
   outportb(0x20, 0x20);   
   switch (ret)
   {
     case 0:
-      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
+  //    writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
+    //  writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
       arch_switchThreadToUserPageDirChange();
     default:
       kprintf("Panic in int 0 handler\n");
@@ -421,10 +428,10 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
+    //  writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
+    //  writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
       arch_switchThreadToUserPageDirChange();
     default:
       kprintf("Panic in int 0 handler\n");
@@ -448,10 +455,24 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   for(;;);
 }
 
+extern "C" void arch_irqHandler_3();
+extern "C" void irqHandler_3()
+{
+  SerialManager::getInstance()->service_irq( 3 );
+  outportb(0x20, 0x20);
+}
+
+extern "C" void arch_irqHandler_4();
+extern "C" void irqHandler_4()
+{
+  SerialManager::getInstance()->service_irq( 4 );
+  outportb(0x20, 0x20);
+}
+
 IRQ_HANDLER(1)
 IRQ_HANDLER(2)
-IRQ_HANDLER(3)
-IRQ_HANDLER(4)
+//IRQ_HANDLER(3)
+//IRQ_HANDLER(4)
 IRQ_HANDLER(5)
 IRQ_HANDLER(6)
 IRQ_HANDLER(7)
@@ -579,7 +600,7 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(107)
   DUMMYHANDLER(108)
   DUMMYHANDLER(109)
-  DUMMYHANDLER(110)
+  DUMMYHANDLER(110)// NOT TODO: interrupt number
   DUMMYHANDLER(111)
   DUMMYHANDLER(112)
   DUMMYHANDLER(113)

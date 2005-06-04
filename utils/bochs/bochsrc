@@ -1,7 +1,16 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.10 2005/05/08 21:43:55 nelles Exp $
+#*    $Id: bochsrc,v 1.11 2005/06/04 19:41:26 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.10  2005/05/08 21:43:55  nelles
+#*    changed gcc flags from -g to -g3 -gstabs in order to
+#*    generate stabs output in object files
+#*    changed linker script to load stabs in kernel
+#*    in bss area so GRUB loads them automaticaly with
+#*    the bss section
+#*
+#*    changed StupidThreads in main for testing purposes
+#*
 #*    Revision 1.9  2005/05/03 18:31:10  btittelbach
 #*    fix of evil evil MemoryManager Bug
 #*
@@ -468,7 +477,7 @@ debugger_log: debugger.out
 # messing with things, and run bochs in the other window.  Serial I/O to
 # com1 (port 0x3f8) will all go to the other window.
 #=======================================================================
-#com1: enabled=1, dev=/dev/ttyp9
+com1: enabled=1, dev=/dev/pts/41
 
 
 #=======================================================================

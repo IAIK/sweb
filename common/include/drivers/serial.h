@@ -2,6 +2,7 @@
 #define _SERIAL_H_
 
 #include "types.h"
+#include "Mutex.h"
 
 #define MAX_PORTS  16
 
@@ -17,7 +18,7 @@ class ArchSerialInfo;
 class SerialPort
 {
 public:
-char friendly_name[6]; ///< The user friendly name of the port - "COM1" or "ttyS0"
+char friendly_name[10]; ///< The user friendly name of the port - "COM1" or "ttyS0", NULL terminated string
 
 
 /// \brief The baudrate for serial communication
@@ -92,7 +93,26 @@ SRESULT write( uint8 *buffer, uint32 num_bytes, uint32& bytes_written );
 /// \return Result \sa SERIAL_ERROR_E
 SRESULT read( uint8 *buffer, uint32 num_bytes, uint32& bytes_read );
 
-static void interrupt_handler();
+/// \brief Handles the irq of this serial port \sa get_info()
+void irq_handler();
+
+/// \brief Returns the Architecture specific data for this serial port.
+/// The basic task of any operating system is to hide this ugly data.
+/// This function is mainly called from SerialManager and I do not think
+/// that it is needed anywhere else. Perhaps it could be protected and 
+/// SerialManager declared as a friend class.
+/// \return \sa ArchSerialInfo
+ArchSerialInfo get_info() 
+{
+  return port_info_;
+};
+
+private:
+void write_UART( uint32 reg, uint8 what );
+uint8 read_UART( uint32 reg );
+
+uint32 WriteLock; 
+uint32 SerialLock;
 
 private:
 ArchSerialInfo port_info_;  ///< Architecture specific data for serial ports
@@ -117,7 +137,7 @@ uint16 buffer_read_; ///< Pointer to the read position
 ///  for( uint32 i=0; i < num_ports; i++ )
 ///     kprintf( "Port number : %d, Port name : %s", i , sm->serial_ports[i]->friendly_name );
 ///
-///  Or if you wanr to access the specific port 
+///  Or if you want to access the specific port 
 /// 
 ///  SerialManager *sm = SerialManager::getInstance();
 ///  uint32 port_num = sm->get_port_number( (uint8 *) "COM1" ); // or "ttyS0"
@@ -145,10 +165,12 @@ SerialManager();
 
 SerialPort * serial_ports[ MAX_PORTS ];
 
-uint32 do_detection();
+uint32 do_detection( uint32 );
 uint32 get_num_ports();
 
 uint32 get_port_number( const uint8* friendly_name );
+
+void service_irq( uint32 irq_num );
 
 private:
 uint32 num_ports;
