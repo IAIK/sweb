@@ -1,7 +1,11 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.11 2005/06/04 19:41:26 nelles Exp $
+#*    $Id: bochsrc,v 1.12 2005/06/05 07:59:35 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.11  2005/06/04 19:41:26  nelles
+#*
+#*    Serial ports now fully fuctional and tested ....
+#*
 #*    Revision 1.10  2005/05/08 21:43:55  nelles
 #*    changed gcc flags from -g to -g3 -gstabs in order to
 #*    generate stabs output in object files
@@ -224,7 +228,7 @@ floppya: 1_44="grub_disk.img", status=inserted
 #floppya: 1_2=../1_2, status=inserted
 #floppya: 1_44=a:, status=inserted
 #floppya: 1_44=a.img, status=inserted
-#floppya: 1_44=/dev/rfd0a, status=inserted
+#floppya: 1_44=/rfd0a, status=inserted
 
 #=======================================================================
 # FLOPPYB:
@@ -477,7 +481,10 @@ debugger_log: debugger.out
 # messing with things, and run bochs in the other window.  Serial I/O to
 # com1 (port 0x3f8) will all go to the other window.
 #=======================================================================
-com1: enabled=1, dev=/dev/pts/41
+#com1: enabled=1, dev=/s
+com1: enabled=1, mode=file, dev=serial1.txt
+com2: enabled=1, mode=file, dev=serial2.txt
+com3: enabled=1, mode=file, dev=serial3.txt
 
 
 #=======================================================================

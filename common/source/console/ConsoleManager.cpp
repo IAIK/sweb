@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.cpp,v 1.6 2005/05/10 17:03:44 btittelbach Exp $
+//   $Id: ConsoleManager.cpp,v 1.7 2005/06/05 07:59:35 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.cpp,v $
+//  Revision 1.6  2005/05/10 17:03:44  btittelbach
+//  Kprintf Vorbereitung für Print auf Bochs Console
+//  böse .o im source gelöscht
+//
 //  Revision 1.5  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -25,7 +29,11 @@
 #include "arch_panic.h"
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
+#include "console/SerialConsole.h"
 #include "ArchCommon.h"
+
+#include "arch_serial.h"
+#include "drivers/serial.h"
 
 ConsoleManager *ConsoleManager::instance_ = 0;
 
@@ -37,7 +45,7 @@ void ConsoleManager::createConsoleManager(uint32 const &number_of_consoles_to_ge
 ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
 {
   uint32 i;
-  consoles_ = new Console*[number_of_consoles_to_generate];
+  consoles_ = new Console*[number_of_consoles_to_generate+1];
   if (!consoles_)
   {
     arch_panic((uint8*)"Unable to allocate memory for consoles");
@@ -56,6 +64,19 @@ ConsoleManager::ConsoleManager(uint32 const &number_of_consoles_to_generate)
     }
   }
   number_of_consoles_ = number_of_consoles_to_generate;
+  
+  for (i = number_of_consoles_to_generate;i < number_of_consoles_to_generate+1; ++i)
+  {
+    SerialManager *sm = SerialManager::getInstance();
+    uint32 num_ports = sm->get_num_ports();
+    
+    if( num_ports )
+    {
+      consoles_[i] = new SerialConsole( 0 );
+      if( consoles_[i] )
+        debug_console_ = i;
+    } 
+  }
   
   if (number_of_consoles_)
   {
@@ -89,6 +110,5 @@ Console *ConsoleManager::getActiveConsole() const
 
 Console *ConsoleManager::getDebugConsole() const
 {
-  //DUMMY CODE FOR NOW
-  return 0;
+  return consoles_[debug_console_];
 }

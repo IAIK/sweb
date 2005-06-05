@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.5 2005/05/10 17:03:55 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.6 2005/06/05 07:59:35 nelles Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.5  2005/05/10 17:03:55  btittelbach
+//   Kprintf Vorbereitung für Print auf Bochs Console
+//   böse .o im source gelöscht
+//
 //   Revision 1.4  2005/04/26 21:38:43  btittelbach
 //   Fifo/Pipe Template soweit das ohne Lock und CV zu implementiern ging
 //   kprintf kennt jetzt auch chars
@@ -239,6 +243,17 @@ void kprintf(const char *fmt, ...)
 }
 
 void kprintf_debug(const char *fmt, ...)
+{
+  va_list args;
+
+  Console *console = ConsoleManager::instance()->getDebugConsole();
+  
+  va_start(args, fmt);
+  vkprintf(console, fmt, args);
+  va_end(args);
+}
+
+void kprintfd(const char *fmt, ...)
 {
   va_list args;
 

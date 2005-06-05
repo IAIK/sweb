@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.44 2005/06/04 19:41:26 nelles Exp $
+ * $Id: main.cpp,v 1.45 2005/06/05 07:59:35 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.44  2005/06/04 19:41:26  nelles
+ *
+ * Serial ports now fully fuctional and tested ....
+ *
  * Revision 1.43  2005/05/31 18:13:14  nomenquis
  * fixed compile errors
  *
@@ -178,18 +182,13 @@ class SerialThread : public Thread
   {
     SerialManager *sm = SerialManager::getInstance();
     uint32 num_ports = sm->get_num_ports();
-    uint32 i = 0;
+    uint32 i = 0, j = 0;
     for( i=0; i < num_ports; i++ )
     {
       SerialPort *sp = sm->serial_ports[i];
-      kprintf( "Port number : %d, Port name : %s \n", i ,
-      sp->friendly_name );
-      uint32 bytes_written = 0;
-      uint8 buffer2write[] = "TEST";
-      sp->write( buffer2write, 4, bytes_written );
-      kprintf("bytes_written : %d\n", bytes_written);
-
-      
+      kprintf_debug( "Port number : %d, Port name : %s \n", i ,
+      sp->friendly_name );     
+       
       // read from serial port and write to console      
       uint8 gotch = 0;
       uint32 num_read = 0;
@@ -201,7 +200,7 @@ class SerialThread : public Thread
           kprintf( "%c", gotch );
       }
       while( 1 );
-      // until forever
+      // until forever*/
     }
     
     kprintf("Done with serial ports\n");
@@ -287,6 +286,7 @@ void startup()
   pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
+  SerialManager::getInstance()->do_detection( 1 );  
   ConsoleManager::createConsoleManager(1);
   Scheduler::createScheduler();
   
@@ -295,14 +295,16 @@ void startup()
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
 
+  kprintf_debug("Debug print now functional\n");
+  kprintfd("Can be called with kprintf_debug or kprintfd\n");
+  
   uint32 dummy = 0;
   kprintf("befor test set lock, val is now %d\n",dummy);
   ArchThreads::testSetLock(dummy,10);
   kprintf("After test set lock, val is now %d\n",dummy);
   kprintf("Lock 2, %d\n",ArchThreads::testSetLock(dummy,22));
   kprintf("After test set lock, val is now %d\n",dummy);
-  
- 
+   
   kprintf("Threads init\n");
   ArchThreads::initialise();
   kprintf("Interupts init\n");
@@ -311,10 +313,7 @@ void startup()
   kprintf("Timer enable\n");
   ArchInterrupts::enableTimer();
   lock = new Mutex();
-  
-  kprintf("Serial port initialisation\n");
-  SerialManager::getInstance()->do_detection( 1 );
-  
+    
 
   kprintf("Thread creation\n");
   StupidThread *thread0 = new StupidThread(0);
@@ -328,11 +327,11 @@ void startup()
   
   Scheduler::instance()->addNewThread(serial_thread);
   
-  kprintf("now enabling Interrupts...");
+  kprintfd("Now enabling Interrupts...");
 
   //Scheduler::instance()->addNewThread(new UserThread());
   ArchInterrupts::enableInterrupts();
-  kprintf("done\n");
+  kprintfd("Init done\n");
   
   Scheduler::instance()->yield();
   for (;;);

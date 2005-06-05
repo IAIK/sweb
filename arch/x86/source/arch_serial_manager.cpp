@@ -23,7 +23,6 @@ uint32 SerialManager::get_num_ports()
 
 uint32 SerialManager::do_detection( uint32 is_paging_set_up )
 {
-  writeLine2Bochs((uint8 const *)"Entering detection of serial ports\n");
   uint16 * bios_sp_table;
   
   if (is_paging_set_up)
@@ -35,11 +34,9 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
   
   for( ; i < SC::MAX_ARCH_PORTS; i++, bios_sp_table++ )
   {
-    writeLine2Bochs((uint8 const *)"Detecting port\n");
     
     if( *bios_sp_table != 0x00 )
     {
-      writeLine2Bochs((uint8 const *)"Port detected \n");
 
       ArchSerialInfo * archInfo = new ArchSerialInfo();
       archInfo->base_port = *bios_sp_table;
@@ -53,11 +50,9 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
       
       num_ports++;
       
-      writeLine2Bochs((uint8 const *)"And added\n");
     }
   }
   
-  writeLine2Bochs((uint8 const *)"Exiting detection of serial ports\n"); 
   return num_ports;     
 }
 

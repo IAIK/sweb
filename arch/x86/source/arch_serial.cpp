@@ -100,7 +100,7 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
   
   write_UART( SC::LCR , data_bit_reg | par | stopb );  // deact DL and set params
   
-  write_UART( SC::FCR , 0x07);
+  write_UART( SC::FCR , 0xC7);
   write_UART( SC::MCR , 0x0B);  
   
   enableIRQ( this->port_info_.irq_num ); 
@@ -111,12 +111,32 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
 
 SerialPort::SRESULT SerialPort::write( uint8 *buffer, uint32 num_bytes, uint32& bytes_written )
 {
-  while( ArchThreads::testSetLock( SerialLock ,1 ) );
+  uint32 jiffies = 0;
+  
+  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 50000 );
+    
+  if( jiffies == 50000 )
+  {
+    SerialLock = 0;
+    WriteLock = 0;
+    return SR_ERROR;
+  }
+  
   WriteLock = bytes_written = 0;
   
   while( num_bytes -- )
-  {
-    while( ArchThreads::testSetLock( WriteLock ,1 ) );
+  {    
+    jiffies = 0;
+         
+    while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < 50000 );
+    
+    if( jiffies == 50000 ) // TIMEOUT
+    {
+      SerialLock = 0;
+      WriteLock = 0;
+      return SR_ERROR;
+    }    
+    
     write_UART( 0, *(buffer++) );
     bytes_written++;
   }

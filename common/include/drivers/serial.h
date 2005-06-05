@@ -2,7 +2,6 @@
 #define _SERIAL_H_
 
 #include "types.h"
-#include "Mutex.h"
 
 #define MAX_PORTS  16
 

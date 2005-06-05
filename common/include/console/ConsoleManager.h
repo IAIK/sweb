@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ConsoleManager.h,v 1.4 2005/05/10 17:03:43 btittelbach Exp $
+//   $Id: ConsoleManager.h,v 1.5 2005/06/05 07:59:35 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ConsoleManager.h,v $
+//  Revision 1.4  2005/05/10 17:03:43  btittelbach
+//  Kprintf Vorbereitung für Print auf Bochs Console
+//  böse .o im source gelöscht
+//
 //  Revision 1.3  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -37,7 +41,9 @@ private:
 
   uint32 number_of_consoles_;
   Console **consoles_;
+  
   uint32 active_console_;
+  uint32 debug_console_;
   
   static ConsoleManager *instance_;
 
