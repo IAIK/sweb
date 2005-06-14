@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.3 2005/05/31 17:25:56 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.4 2005/06/14 18:51:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.3  2005/05/31 17:25:56  btittelbach
+//  Scheduler mit Listen geschmückt
+//
 //  Revision 1.2  2005/05/25 08:27:48  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -36,6 +39,7 @@ public:
   static void createScheduler();
 
   void addNewThread(Thread *thread);
+  Thread *Scheduler::xchangeThread(Thread *pop_up_thread);
 
 
   void yield();

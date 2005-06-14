@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.7 2005/05/31 18:13:14 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.8 2005/06/14 18:51:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.7  2005/05/31 18:13:14  nomenquis
+//  fixed compile errors
+//
 //  Revision 1.6  2005/05/31 17:29:16  nomenquis
 //  userspace
 //
@@ -95,8 +98,20 @@ void Scheduler::addNewThread(Thread *thread)
   //~ if (i==MAX_THREADS)
   //~ {
     //~ arch_panic((uint8*)"Too many threads\n");
-  //~ }
-  
+  //~ } 
+}
+
+//exchanges the current Thread with a PopUpThread
+//note that the popupthread has to remember the original Thread*
+//and switch back if he's finished
+Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
+{
+  Thread *old_thread = threads_.back();
+  if (old_thread != currentThread)
+    kprintf("ERROR: Scheduler: currentThread wasn't where it was supposed to be\n");
+  threads_.popBack();
+  threads_.pushBack(pop_up_thread);
+  currentThread=pop_up_thread;
 }
 
 void Scheduler::startThreadHack()

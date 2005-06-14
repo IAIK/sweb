@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.12 2005/06/14 18:22:37 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.13 2005/06/14 18:51:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.12  2005/06/14 18:22:37  btittelbach
+//  RaceCondition anfälliges LoadOnDemand implementiert,
+//  sollte optimalerweise nicht im InterruptKontext laufen
+//
 //  Revision 1.11  2005/06/14 15:49:11  nomenquis
 //  ohhh hilfe
 //
@@ -406,12 +410,12 @@ extern Thread *currentThread;
 
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
-  extern "C" void irqHandler_##x ()  {
-    if ( x > 7 )
-      outportb(0xA0, 0x20);                              \
-    kprintf("Spurious IRQ " #x "\n");
-    outportb(0x20, 0x20); 
-  }
+  extern "C" void irqHandler_##x ()  {  \
+    if ( x > 7 )  \
+      outportb(0xA0, 0x20);   \
+    kprintf("Spurious IRQ " #x "\n"); \
+    outportb(0x20, 0x20); \
+  } \
 
 extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
@@ -461,6 +465,8 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
+  //maybe use a lock or disable exception, whatever...
+  
   uint32 const flag_p = 0x1 << 0;  //=0: pf caused because pt was not present; =1: protection violation
   uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
   uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
@@ -471,11 +477,13 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
                                                                             error&flag_us >> 2,
                                                                             error&flag_rsvd >> 3);
   
-  if (! (error & flag_p)) 
+  //lets hope this Exeption wasn't thrown during a TaskSwitch
+  
+  if (! (error & flag_p) && address < 3U*1024U*1024U*1024U)
   {
     currentThread->loader_->loadOnePage(address); //load stuff
     return;
-  } 
+  }
   else
   if (error & flag_rw) {
     kprintf("PageFault: Thread tried changing a write protected page\n");
