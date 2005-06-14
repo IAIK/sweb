@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.10 2005/06/14 13:54:55 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.11 2005/06/14 15:49:11 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.10  2005/06/14 13:54:55  nomenquis
+//  foobarpratz
+//
 //  Revision 1.9  2005/06/04 19:41:26  nelles
 //
 //  Serial ports now fully fuctional and tested ....
@@ -48,6 +51,8 @@
 
 #include "arch_serial.h"
 #include "serial.h"
+#include "Thread.h"
+#include "ArchInterrupts.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -235,7 +240,7 @@ DUMMY_HANDLER(124)
 DUMMY_HANDLER(125)
 DUMMY_HANDLER(126)
 DUMMY_HANDLER(127)
-DUMMY_HANDLER(128)
+//DUMMY_HANDLER(128)
 DUMMY_HANDLER(129)
 DUMMY_HANDLER(130)
 DUMMY_HANDLER(131)
@@ -459,6 +464,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   for(;;);
 }
 
+
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
@@ -473,6 +479,20 @@ extern "C" void irqHandler_4()
   outportb(0x20, 0x20);
 }
 
+extern "C" void arch_syscallHandler();
+extern "C" void syscallHandler()
+{
+  kprintf("SYSCALL");
+  // ok, find out the current thread
+  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThread->switch_to_userspace_ = false;
+  
+  for(;;)
+  {
+    kprintf("In syscall handler, still alive");
+    ArchInterrupts::enableInterrupts();
+  }
+}
 IRQ_HANDLER(1)
 IRQ_HANDLER(2)
 //IRQ_HANDLER(3)
@@ -622,7 +642,8 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(125)
   DUMMYHANDLER(126)
   DUMMYHANDLER(127)
-  DUMMYHANDLER(128)
+//  DUMMYHANDLER(128)
+  {128, &arch_syscallHandler},
   DUMMYHANDLER(129)
   DUMMYHANDLER(130)
   DUMMYHANDLER(131)

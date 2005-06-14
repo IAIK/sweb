@@ -223,7 +223,18 @@ dummyhandler 124
 dummyhandler 125
 dummyhandler 126
 dummyhandler 127
-dummyhandler 128
+
+
+global arch_syscallHandler
+extern syscallHandler
+arch_syscallHandler:
+        pushAll
+        changeData
+        call syscallHandler
+        popAll
+        iretd
+
+
 dummyhandler 129
 dummyhandler 130
 dummyhandler 131
