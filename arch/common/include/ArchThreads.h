@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.5 2005/05/31 17:29:16 nomenquis Exp $
+//  $Id: ArchThreads.h,v 1.6 2005/06/14 18:22:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.5  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.4  2005/05/25 08:27:48  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -45,6 +48,7 @@ public:
 
   static void yield();
   static void setPageDirectory(Thread *thread, uint32 page_dir_physical_page);
+  uint32 getPageDirectory(Thread *thread);
 
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
 

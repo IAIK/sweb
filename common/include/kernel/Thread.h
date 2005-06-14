@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.9 2005/05/31 17:29:16 nomenquis Exp $
+//  $Id: Thread.h,v 1.10 2005/06/14 18:22:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.9  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.8  2005/05/25 08:27:49  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -74,6 +77,7 @@ typedef struct ArchThread
 */
 
 class ArchThreadInfo;
+class Loader;
   
 class Thread
 {
@@ -98,6 +102,8 @@ public:
 public:  
   pointer getStackStartPointer();
   
+  Loader *loader_;
+
 private:
   
   Thread(Thread const &);

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.11 2005/06/14 15:49:11 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.12 2005/06/14 18:22:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.11  2005/06/14 15:49:11  nomenquis
+//  ohhh hilfe
+//
 //  Revision 1.10  2005/06/14 13:54:55  nomenquis
 //  foobarpratz
 //
@@ -53,6 +56,10 @@
 #include "serial.h"
 #include "Thread.h"
 #include "ArchInterrupts.h"
+
+//remove this later
+#include "Thread.h"
+#include "Loader.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -399,12 +406,11 @@ extern Thread *currentThread;
 
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
-  extern "C" void irqHandler_##x ()  {\
-    if ( x > 7 )\
+  extern "C" void irqHandler_##x ()  {
+    if ( x > 7 )
       outportb(0xA0, 0x20);                              \
-\
-    kprintf("Spurious IRQ " #x "\n");\
-    outportb(0x20, 0x20);    \
+    kprintf("Spurious IRQ " #x "\n");
+    outportb(0x20, 0x20); 
   }
 
 extern "C" void arch_irqHandler_0();
@@ -430,6 +436,7 @@ extern "C" void irqHandler_0()
       for(;;);
   }  
 }
+
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
@@ -448,19 +455,39 @@ extern "C" void irqHandler_65()
   }  
 }
 
+
+//extern Thread *currentThread;
+
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-  kprintf("PageFault( address: %x, error: %x)\n",address,error);
+  uint32 const flag_p = 0x1 << 0;  //=0: pf caused because pt was not present; =1: protection violation
+  uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
+  uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
+  uint32 const flag_rsvd = 0x1 << 3; //pf caused by reserved bits
+  kprintf("PageFault( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\n",address,
+                                                                            error&flag_p, 
+                                                                            error&flag_rw >> 1, 
+                                                                            error&flag_us >> 2,
+                                                                            error&flag_rsvd >> 3);
   
-    ArchThreadInfo* i = currentThreadInfo;
-    kprintf("\n");
-    kprintf("eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
-    kprintf("esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
-    kprintf("cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
-    kprintf("eflags=%x eip=%x\n", i->eflags, i->eip);
-
-
+  if (! (error & flag_p)) 
+  {
+    currentThread->loader_->loadOnePage(address); //load stuff
+    return;
+  } 
+  else
+  if (error & flag_rw) {
+    kprintf("PageFault: Thread tried changing a write protected page\n");
+  } 
+  
+  ArchThreadInfo* i = currentThreadInfo;
+  kprintf("\n");
+  kprintf("eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
+  kprintf("esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
+  kprintf("cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
+  kprintf("eflags=%x eip=%x\n", i->eflags, i->eip);
+    
   for(;;);
 }
 

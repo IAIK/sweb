@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.6 2005/05/31 17:29:16 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.7 2005/06/14 18:22:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.6  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.5  2005/05/25 08:27:48  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -71,9 +74,17 @@ extern "C" uint32 kernel_page_directory_start;
 void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page)
 {
   thread->kernel_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
-  if (thread->user_arch_thread_info_->cr3)thread->user_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
+  if (thread->user_arch_thread_info_->cr3)
+    thread->user_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
   kprintf("setting cr3 in info to %x\n",page_dir_physical_page * PAGE_SIZE);
 }
+
+uint32 ArchThreads::getPageDirectory(Thread *thread)
+{
+  return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
+  //FIXXME: should be the same for now, have to return only one 
+}
+
 
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
