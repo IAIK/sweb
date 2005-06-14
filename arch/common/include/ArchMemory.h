@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.8 2005/05/31 18:59:19 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.9 2005/06/14 12:55:21 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.8  2005/05/31 18:59:19  btittelbach
+//  Special Address Check Function for Philip ;>
+//
 //  Revision 1.7  2005/05/25 08:27:48  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -51,17 +54,18 @@ public:
   static void freePageDirectory(uint32 physical_page_directory_page);
 
   static pointer physicalPageToKernelPointer(uint32 physical_page);
-
-  static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
-
   static pointer get3GBAdressOfPPN(uint32 ppn)
   {
     return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);
   }
 
+  static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
+
+
 private:
   static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
   static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
+
 };
 
 

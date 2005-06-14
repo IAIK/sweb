@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.1 2005/05/31 18:25:49 nomenquis Exp $
+//   $Id: Loader.cpp,v 1.2 2005/06/14 12:55:21 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: Loader.cpp,v $
+//  Revision 1.1  2005/05/31 18:25:49  nomenquis
+//  forgot to add loader
+//
 //----------------------------------------------------------------------
 
 #include "Loader.h"
@@ -240,7 +243,39 @@ uint32 Loader::loadExecutableAndInitProcess()
   for (i=0;i<hdr->e_phnum;++i)
   {
     ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + i* hdr->e_phentsize);
-    kprintf("PHdr[%d].vaddr=%x .paddr=%x .type=%x \n",i,h->p_vaddr,h->p_paddr,h->p_type);
+    kprintf("PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+    
+    pointer ptr = h->p_paddr;
+    if (ptr % PAGE_SIZE)
+      kprintf("Hell broke loose\n");
+    
+    uint32 page_free = 0;
+    uint32 still_to_write = h->p_memsz;
+    uint32 still_to_read = h->p_filesz;
+    uint8 *curr_ptr = 0;
+    uint32 read = 0;
+    while (still_to_write)
+    {
+      if (!page_free)
+      {
+        uint32 page = PageManager::instance()->getFreePhysicalPage();
+        ArchMemory::mapPage(page_dir_page_,ptr/PAGE_SIZE,page,1);
+        curr_ptr = (uint8*)ArchMemory::get3GBAdressOfPPN(page);
+      }
+      if (still_to_read > 0)
+      {
+        *curr_ptr = file_image_[h->p_offset + read]; 
+        read++;
+        still_to_read--;
+      }
+      else
+      {
+        *curr_ptr = 0;
+      }
+      curr_ptr++;
+      still_to_write--;
+      ptr++;
+    }
   }
 
   ArchThreads::createThreadInfosUserspaceThread(thread_->user_arch_thread_info_, hdr->e_entry, 2*1024*1024*1024-sizeof(pointer), thread_->getStackStartPointer());
