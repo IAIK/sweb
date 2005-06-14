@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.2 2005/06/14 12:55:21 nomenquis Exp $
+//   $Id: Loader.cpp,v 1.3 2005/06/14 13:54:55 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.2  2005/06/14 12:55:21  nomenquis
+//  foobar
+//
 //  Revision 1.1  2005/05/31 18:25:49  nomenquis
 //  forgot to add loader
 //
@@ -261,6 +264,7 @@ uint32 Loader::loadExecutableAndInitProcess()
         uint32 page = PageManager::instance()->getFreePhysicalPage();
         ArchMemory::mapPage(page_dir_page_,ptr/PAGE_SIZE,page,1);
         curr_ptr = (uint8*)ArchMemory::get3GBAdressOfPPN(page);
+        page_free = PAGE_SIZE;
       }
       if (still_to_read > 0)
       {
@@ -275,6 +279,7 @@ uint32 Loader::loadExecutableAndInitProcess()
       curr_ptr++;
       still_to_write--;
       ptr++;
+      page_free--;
     }
   }
 

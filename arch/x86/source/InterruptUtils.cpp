@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.9 2005/06/04 19:41:26 nelles Exp $
+//  $Id: InterruptUtils.cpp,v 1.10 2005/06/14 13:54:55 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.9  2005/06/04 19:41:26  nelles
+//
+//  Serial ports now fully fuctional and tested ....
+//
 //  Revision 1.8  2005/05/31 17:29:16  nomenquis
 //  userspace
 //
@@ -404,17 +408,17 @@ extern "C" void arch_switchThreadKernelToKernelPageDirChange();
 extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
-  //kprintf("Tick\n");
+  kprintf("Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
   uint32 ret = Scheduler::instance()->schedule(1);  
   outportb(0x20, 0x20);   
   switch (ret)
   {
     case 0:
-  //    writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-    //  writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
       arch_switchThreadToUserPageDirChange();
     default:
       kprintf("Panic in int 0 handler\n");
@@ -428,10 +432,10 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-    //  writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 0\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-    //  writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
+      writeLine2Bochs((uint8 const *)"Going to leave irq Handler 0 1\n");
       arch_switchThreadToUserPageDirChange();
     default:
       kprintf("Panic in int 0 handler\n");

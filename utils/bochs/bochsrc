@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.12 2005/06/05 07:59:35 nelles Exp $
+#*    $Id: bochsrc,v 1.13 2005/06/14 13:54:55 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.12  2005/06/05 07:59:35  nelles
+#*    The kprintf_debug or kprintfd are finished
+#*
 #*    Revision 1.11  2005/06/04 19:41:26  nelles
 #*
 #*    Serial ports now fully fuctional and tested ....
@@ -482,9 +485,9 @@ debugger_log: debugger.out
 # com1 (port 0x3f8) will all go to the other window.
 #=======================================================================
 #com1: enabled=1, dev=/s
-com1: enabled=1, mode=file, dev=serial1.txt
-com2: enabled=1, mode=file, dev=serial2.txt
-com3: enabled=1, mode=file, dev=serial3.txt
+#com1: enabled=1, file=serial1.txt
+#com2: enabled=1, file=serial2.txt
+#com3: enabled=1, file=serial3.txt
 
 
 #=======================================================================
