@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.2 2005/04/27 08:58:16 nomenquis Exp $
+//  $Id: Mutex.cpp,v 1.3 2005/07/05 17:29:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.2  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.1  2005/04/24 20:39:31  nomenquis
 //  cleanups
 //
@@ -16,7 +20,7 @@
 
 Mutex::Mutex()
 {
-  kprintf("Mutex::Mutex");
+  kprintfd("Mutex::Mutex");
   mutex_ = 0;
 }
 
@@ -24,9 +28,9 @@ void Mutex::Acquire()
 {
   while (ArchThreads::testSetLock(mutex_,1))
   {
-    kprintf("Mutex get failure, going to yield()\n");
+    kprintfd("Mutex::Acquire: could not get lock, going to yield()\n");
     Scheduler::instance()->yield();
-    kprintf("Wakeup after yield()\n");
+    kprintfd("Mutex::Acquire: Wakeup after yield()\n");
    
   }
 }

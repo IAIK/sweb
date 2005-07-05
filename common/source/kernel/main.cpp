@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.47 2005/06/14 18:22:37 btittelbach Exp $
+ * $Id: main.cpp,v 1.48 2005/07/05 17:29:48 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.47  2005/06/14 18:22:37  btittelbach
+ * RaceCondition anfälliges LoadOnDemand implementiert,
+ * sollte optimalerweise nicht im InterruptKontext laufen
+ *
  * Revision 1.46  2005/06/14 13:54:55  nomenquis
  * foobarpratz
  *
@@ -192,7 +196,7 @@ class SerialThread : public Thread
     for( i=0; i < num_ports; i++ )
     {
       SerialPort *sp = sm->serial_ports[i];
-      kprintf_debug( "Port number : %d, Port name : %s \n", i ,
+      kprintf_debug( "SerialThread::Run: Port number : %d, Port name : %s \n", i ,
       sp->friendly_name );     
        
       // read from serial port and write to console      
@@ -209,7 +213,7 @@ class SerialThread : public Thread
       // until forever*/
     }
     
-    kprintf("Done with serial ports\n");
+    kprintf("SerialThread::Run: Done with serial ports\n");
     for(;;) Scheduler::instance()->yield();
   };
   
@@ -252,6 +256,7 @@ private:
 
 };
 
+
 class UserThread : public Thread
 {
   public:
@@ -264,7 +269,7 @@ class UserThread : public Thread
     loader_= new Loader(foo,this);
     loader_->loadExecutableAndInitProcess();
     
-    kprintf("Done loading exe \n");
+    kprintf("UserThread::ctor: Done loading exe \n");
   
   }
   
@@ -272,7 +277,7 @@ class UserThread : public Thread
   {
     for(;;)
     {
-      kprintf("Going to userr, expect page fault\n");
+      kprintf("UserThread:Run: Going to user, expect page fault\n");
       this->switch_to_userspace_ = 1;
 
       Scheduler::instance()->yield();
@@ -284,6 +289,41 @@ private:
   uint32 bad_mapping_page_0;
 
 };
+
+
+
+class FiniteLoopUserThread : public Thread
+{
+  public:
+    
+  FiniteLoopUserThread()
+  {
+    uint8 *foo=(uint8*) "\177\105\114\106\1\1\1\0\0\0\0\0\0\0\0\0\1\0\3\0\1\0\0\0\0\0\0\0\0\0\0\0\70\1\0\0\0\0\0\0\64\0\0\0\0\0\50\0\11\0\6\0\125\211\345\203\354\30\203\344\360\270\0\0\0\0\51\304\307\105\374\0\0\0\0\307\105\370\7\0\0\0\307\105\374\0\0\0\0\201\175\374\317\7\0\0\176\2\353\51\307\105\370\1\0\0\0\307\105\364\0\0\0\0\203\175\364\17\176\2\353\14\215\105\370\321\40\215\105\364\377\0\353\354\215\105\374\377\0\353\314\213\105\370\311\303\0\0\0\107\103\103\72\40\50\107\116\125\51\40\63\56\63\56\65\55\62\60\60\65\60\61\63\60\40\50\107\145\156\164\157\157\40\114\151\156\165\170\40\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\162\61\54\40\163\163\160\55\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\61\54\40\160\151\145\55\70\56\67\56\67\56\61\51\0\0\56\163\171\155\164\141\142\0\56\163\164\162\164\141\142\0\56\163\150\163\164\162\164\141\142\0\56\164\145\170\164\0\56\144\141\164\141\0\56\142\163\163\0\56\156\157\164\145\56\107\116\125\55\163\164\141\143\153\0\56\143\157\155\155\145\156\164\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\33\0\0\0\1\0\0\0\6\0\0\0\0\0\0\0\64\0\0\0\136\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\41\0\0\0\1\0\0\0\3\0\0\0\0\0\0\0\224\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\47\0\0\0\10\0\0\0\3\0\0\0\0\0\0\0\224\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\54\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\224\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\74\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\224\0\0\0\137\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\21\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\363\0\0\0\105\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\2\0\0\0\0\0\0\0\0\0\0\0\240\2\0\0\200\0\0\0\10\0\0\0\7\0\0\0\4\0\0\0\20\0\0\0\11\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\40\3\0\0\24\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\4\0\361\377\0\0\0\0\0\0\0\0\0\0\0\0\3\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\2\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\4\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\5\0\17\0\0\0\0\0\0\0\136\0\0\0\22\0\1\0\0\146\151\156\151\164\145\55\154\157\157\160\56\143\0\155\141\151\156\0";
+
+    loader_= new Loader(foo,this);
+    loader_->loadExecutableAndInitProcess();
+    
+    kprintf("FiniteLoopUserThread:ctor: Done loading exe \n");
+  
+  }
+  
+  virtual void Run()
+  {
+    for(;;)
+    {
+      kprintf("FiniteLoopUserThread:run: Going to userr, expect page fault\n");
+      this->switch_to_userspace_ = 1;
+
+      Scheduler::instance()->yield();
+    }
+  }
+  
+private:
+  
+  uint32 bad_mapping_page_0;
+
+};
+
 
 void startup()
 {
@@ -305,12 +345,12 @@ void startup()
   kprintf_debug("Debug print now functional\n");
   kprintfd("Can be called with kprintf_debug or kprintfd\n");
   
-  uint32 dummy = 0;
-  kprintf("befor test set lock, val is now %d\n",dummy);
-  ArchThreads::testSetLock(dummy,10);
-  kprintf("After test set lock, val is now %d\n",dummy);
-  kprintf("Lock 2, %d\n",ArchThreads::testSetLock(dummy,22));
-  kprintf("After test set lock, val is now %d\n",dummy);
+  //~ uint32 dummy = 0;
+  //~ kprintf("befor test set lock, val is now %d\n",dummy);
+  //~ ArchThreads::testSetLock(dummy,10);
+  //~ kprintf("After test set lock, val is now %d\n",dummy);
+  //~ kprintf("Lock 2, %d\n",ArchThreads::testSetLock(dummy,22));
+  //~ kprintf("After test set lock, val is now %d\n",dummy);
    
   kprintf("Threads init\n");
   ArchThreads::initialise();
@@ -350,11 +390,14 @@ void startup()
   //Scheduler::instance()->addNewThread(serial_thread);
  
 
-  Scheduler::instance()->addNewThread(new UserThread());
+//  Scheduler::instance()->addNewThread(new UserThread());
+  Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
  
   kprintfd("Now enabling Interrupts..."); 
+  kprintf("Now enabling Interrupts..."); 
   ArchInterrupts::enableInterrupts();
   kprintfd("Init done\n");
+  kprintf("Init done\n");
   
   Scheduler::instance()->yield();
   for (;;);

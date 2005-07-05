@@ -37,7 +37,7 @@ uint32 MAX_FN_DEPTH         = 256;
     uint32* stack = (uint32*) currentThread->getStackStartPointer();
     stabs_out * symTablePtr = (stabs_out *) STAB_START;
     
-    kprintf( "stack is > %x ",  stack );
+    kprintf( "KPANICT: stack is > %x ",  stack );
 
     uint32 * esp_reg = 0;
     

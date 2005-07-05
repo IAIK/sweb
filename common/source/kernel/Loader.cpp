@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.4 2005/06/14 18:22:37 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.5 2005/07/05 17:29:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.4  2005/06/14 18:22:37  btittelbach
+//  RaceCondition anfälliges LoadOnDemand implementiert,
+//  sollte optimalerweise nicht im InterruptKontext laufen
+//
 //  Revision 1.3  2005/06/14 13:54:55  nomenquis
 //  foobarpratz
 //
@@ -218,9 +222,9 @@ Loader::Loader(uint8 *file_image, Thread *thread) : file_image_(file_image),
 void Loader::initUserspaceAddressSpace()
 {
   page_dir_page_ = PageManager::instance()->getFreePhysicalPage();
-  kprintf("Loader: Got new Page no. %d\n",page_dir_page_);
+  kprintfd("Loader::initUserspaceAddressSpace: Got new Page no. %d\n",page_dir_page_);
   ArchMemory::initNewPageDirectory(page_dir_page_);
-  kprintf("Loader: Initialised the page dir\n");
+  kprintfd("Loader::initUserspaceAddressSpace: Initialised the page dir\n");
 
   uint32 page_for_stack = PageManager::instance()->getFreePhysicalPage();
 
@@ -233,7 +237,7 @@ void Loader::initUserspaceAddressSpace()
 uint32 Loader::loadExecutableAndInitProcess()
 {
   // first of all say hello
-  kprintf("Loader: going to load an executable\n");
+  //kprintfd("Loader::loadExecutableAndInitProcess: going to load an executable\n");
   
   initUserspaceAddressSpace();
   
@@ -294,17 +298,17 @@ uint32 Loader::loadExecutableAndInitProcess()
 void Loader::loadOnePage(uint32 virtual_address)
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
-  kprintf("Loader: going to load page %d\n",virtual_page);
+  kprintfd("Loader::loadOnePage: going to load virtual page %d\n",virtual_page);
   
 
   //uint32 page_dir_page = ArchThreads::getPageDirectory(thread);
 
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
   
-  kprintf("Loader: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
-  kprintf("Loader: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
-  kprintf("Loader: Num ents: %d\n",hdr->e_phnum);
-  kprintf("Loader: Entry: %x\n",hdr->e_entry);
+  kprintfd("Loader::loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
+  kprintfd("Loader::loadOnePage: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
+  kprintfd("Loader::loadOnePage: Num ents: %d\n",hdr->e_phnum);
+  kprintfd("Loader::loadOnePage: Entry: %x\n",hdr->e_entry);
   
   
   uint32 page = PageManager::instance()->getFreePhysicalPage();
@@ -321,11 +325,11 @@ void Loader::loadOnePage(uint32 virtual_address)
   for (i=0;i<hdr->e_phnum;++i)
   {
     ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + i* hdr->e_phentsize);
-    kprintf("Loader: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+    kprintfd("Loader::loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
     
     if (vaddr >= h->p_paddr && vaddr < h->p_paddr+h->p_memsz)
     {
-      kprintf("Loader: loading from PHdr[%d]\n",i);
+      kprintfd("Loader::loadOnePage: loading from PHdr[%d]\n",i);
       read = virtual_page*PAGE_SIZE - h->p_paddr;
       
       while (read < h->p_filesz && vaddr < (virtual_page+1)*PAGE_SIZE)

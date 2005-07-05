@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.8 2005/06/14 18:51:47 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.9 2005/07/05 17:29:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.8  2005/06/14 18:51:47  btittelbach
+//  afterthought page fault handling
+//
 //  Revision 1.7  2005/05/31 18:13:14  nomenquis
 //  fixed compile errors
 //
@@ -108,7 +111,7 @@ Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
 {
   Thread *old_thread = threads_.back();
   if (old_thread != currentThread)
-    kprintf("ERROR: Scheduler: currentThread wasn't where it was supposed to be\n");
+  kprintf("Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
   threads_.popBack();
   threads_.pushBack(pop_up_thread);
   currentThread=pop_up_thread;

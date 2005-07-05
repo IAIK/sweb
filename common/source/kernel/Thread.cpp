@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.9 2005/05/31 17:29:16 nomenquis Exp $
+//  $Id: Thread.cpp,v 1.10 2005/07/05 17:29:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.9  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.8  2005/05/25 08:27:49  nomenquis
 //  cr3 remapping finally really works now
 //
@@ -38,16 +41,16 @@
 static void ThreadStartHack()
 {
   currentThread->Run();
-  kprintf("Panic, thread returned\n");
+  kprintfd("ThreadStartHack: Panic, thread returned\n");
   for(;;);
 }
 
 Thread::Thread()
 {
-  kprintf("Thread ctor, this is %x, stack is %x, sizeof stack is %x", this,stack_, sizeof(stack_));
+  kprintfd("Thread::Thread: Thread ctor, this is %x, stack is %x, sizeof stack is %x", this,stack_, sizeof(stack_));
   ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
 
-  kprintf("After bzero\n");
+  //kprintfd("Thread::Thread: After bzero\n");
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
   switch_to_userspace_ = 0;
 }
