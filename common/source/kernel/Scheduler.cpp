@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.9 2005/07/05 17:29:48 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.10 2005/07/05 20:22:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.9  2005/07/05 17:29:48  btittelbach
+//  new kprintf(d) Policy:
+//  [Class::]Function: before start of debug message
+//  Function can be abbreviated "ctor" if Constructor
+//  use kprintfd where possible
+//
 //  Revision 1.8  2005/06/14 18:51:47  btittelbach
 //  afterthought page fault handling
 //
@@ -79,30 +85,29 @@ void Scheduler::createScheduler()
 
 Scheduler::Scheduler()
 {
-  //~ uint32 i;
-  //~ for (i=0;i<MAX_THREADS;++i)
-    //~ threads_[i] = 0;
 }
 
 void Scheduler::addNewThread(Thread *thread)
 {
-  threads_.pushBack(thread);
-  
-  //~ uint32 i;
-  
-  //~ for (i=0;i<MAX_THREADS;++i)
-  //~ {
-    //~ if (!threads_[i])
-    //~ {
-      //~ threads_[i] = thread;
-      //~ break;
-    //~ }
-  //~ }
-  //~ if (i==MAX_THREADS)
-  //~ {
-    //~ arch_panic((uint8*)"Too many threads\n");
-  //~ } 
+  //new Thread gets scheduled next
+  //also gets added to front as not to interfere with remove or xchange
+  threads_.pushFront(thread);
 }
+
+
+//you can't remove the last thread
+void Scheduler::removeCurrentThread()
+{
+  if (threads_.size() > 1)
+  {
+    //we can safely do this, because it won't affect the thread switch to the next thread
+    //just ensure that the currentThread in the list never again gets scheduled
+    //don't do this if you still need to clean up some things
+    
+    threads_.popBack();
+  }
+}
+
 
 //exchanges the current Thread with a PopUpThread
 //note that the popupthread has to remember the original Thread*
@@ -137,7 +142,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
   if ( currentThread->switch_to_userspace_)
     currentThreadInfo =  currentThread->user_arch_thread_info_;
   else
-    currentThreadInfo =  currentThread->kernel_arch_thread_info_,ret=0;
+    currentThreadInfo =  currentThread->kernel_arch_thread_info_, ret=0;
   /*uint8*foo = 0;
   *foo = 8;*/
   return ret;

@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.5 2005/07/05 17:29:48 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.6 2005/07/05 20:22:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.5  2005/07/05 17:29:48  btittelbach
+//  new kprintf(d) Policy:
+//  [Class::]Function: before start of debug message
+//  Function can be abbreviated "ctor" if Constructor
+//  use kprintfd where possible
+//
 //  Revision 1.4  2005/06/14 18:22:37  btittelbach
 //  RaceCondition anfälliges LoadOnDemand implementiert,
 //  sollte optimalerweise nicht im InterruptKontext laufen
@@ -247,7 +253,7 @@ uint32 Loader::loadExecutableAndInitProcess()
   //~ kprintf("Loader: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
   //~ kprintf("Loader: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
   //~ kprintf("Loader: Num ents: %d\n",hdr->e_phnum);
-  //~ kprintf("Loader: Entry: %x\n",hdr->e_entry);
+  kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x\n",hdr->e_entry);
   
   //~ uint32 i;
   //~ for (i=0;i<hdr->e_phnum;++i)
@@ -298,7 +304,7 @@ uint32 Loader::loadExecutableAndInitProcess()
 void Loader::loadOnePage(uint32 virtual_address)
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
-  kprintfd("Loader::loadOnePage: going to load virtual page %d\n",virtual_page);
+  kprintfd("Loader::loadOnePage: going to load virtual page %d (virtual_address=%d)\n",virtual_page,virtual_address);
   
 
   //uint32 page_dir_page = ArchThreads::getPageDirectory(thread);
@@ -316,35 +322,52 @@ void Loader::loadOnePage(uint32 virtual_address)
   ArchCommon::bzero(ArchMemory::get3GBAdressOfPPN(page),PAGE_SIZE,false);
   
   pointer vaddr = virtual_page*PAGE_SIZE;
-  uint8 *curr_ptr = curr_ptr = (uint8*)ArchMemory::get3GBAdressOfPPN(page);  
-  //can't be sure that we page_dir_page points to current pd
-  
+
+  bool wrote_someting=false;  
   
   uint32 i=0;
   uint32 read=0;
+ 
   for (i=0;i<hdr->e_phnum;++i)
   {
     ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + i* hdr->e_phentsize);
     kprintfd("Loader::loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
     
-    if (vaddr >= h->p_paddr && vaddr < h->p_paddr+h->p_memsz)
+    //if (vaddr >= h->p_paddr && vaddr < h->p_paddr+h->p_memsz)
+    if ((h->p_paddr >= vaddr && h->p_paddr < vaddr+PAGE_SIZE) || 
+        (h->p_paddr+h->p_memsz >= vaddr && h->p_paddr+h->p_memsz < vaddr + PAGE_SIZE))
     {
+      //now write from max(h->p_addr,vaddr) to min(h->p_addr+h->p_memsz,vaddr+PAGE_SIZE)
       kprintfd("Loader::loadOnePage: loading from PHdr[%d]\n",i);
-      read = virtual_page*PAGE_SIZE - h->p_paddr;
+      pointer write_start = vaddr;
+      if (h->p_paddr > write_start)
+        write_start=h->p_paddr;
       
-      while (read < h->p_filesz && vaddr < (virtual_page+1)*PAGE_SIZE)
+      pointer write_stop = vaddr+PAGE_SIZE;
+      if (h->p_paddr + h->p_memsz < write_stop)
+        write_stop = h->p_paddr + h->p_memsz;
+      
+      uint8 *curr_ptr = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page) +  (write_start % PAGE_SIZE));
+      
+      if (h->p_paddr > vaddr)
+        read=0;
+      else
+        read = vaddr - h->p_paddr;
+   
+      for (curr_ptr = reinterpret_cast<uint8*>(write_start); curr_ptr < reinterpret_cast<uint8*>(write_stop); ++curr_ptr)
       {
         *curr_ptr = file_image_[h->p_offset + read];
-        read++;
-        curr_ptr++;
-        vaddr++;
-      }      
+        ++read;
+      }
+      kprintfd("Loader::loadOnePage: wrote %d bytes\n",write_stop - write_start);
+      wrote_someting=true;
     }
   }
-  if (read == 0)
+  if (! wrote_someting)
   {
     //ERRRROOORRRR: we didn't load anything apparently, didn't even bzero a page, because no ELF section
     //corresponded with our vaddr    
     kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\n");
+    //kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");
   }
 }

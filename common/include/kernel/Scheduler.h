@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.4 2005/06/14 18:51:47 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.5 2005/07/05 20:22:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.4  2005/06/14 18:51:47  btittelbach
+//  afterthought page fault handling
+//
 //  Revision 1.3  2005/05/31 17:25:56  btittelbach
 //  Scheduler mit Listen geschmückt
 //
@@ -39,6 +42,7 @@ public:
   static void createScheduler();
 
   void addNewThread(Thread *thread);
+  void removeCurrentThread();
   Thread *Scheduler::xchangeThread(Thread *pop_up_thread);
 
 
@@ -55,7 +59,7 @@ private:
 
   List<Thread*> threads_;
   //Thread* threads_[MAX_THREADS];
-  
+
   static void startThreadHack();
 
 };

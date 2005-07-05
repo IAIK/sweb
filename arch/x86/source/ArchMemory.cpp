@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.8 2005/07/05 17:29:48 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.9 2005/07/05 20:22:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.8  2005/07/05 17:29:48  btittelbach
+//  new kprintf(d) Policy:
+//  [Class::]Function: before start of debug message
+//  Function can be abbreviated "ctor" if Constructor
+//  use kprintfd where possible
+//
 //  Revision 1.7  2005/05/31 18:59:20  btittelbach
 //  Special Address Check Function for Philip ;>
 //
@@ -87,7 +93,7 @@ pointer ArchMemory::physicalPageToKernelPointer(uint32 physical_page)
 
 void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access)
 {
-  kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x",physical_page_directory_page, physical_page);
+  kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
   page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;

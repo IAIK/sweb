@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.10 2005/07/05 17:29:48 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.11 2005/07/05 20:22:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.10  2005/07/05 17:29:48  btittelbach
+//  new kprintf(d) Policy:
+//  [Class::]Function: before start of debug message
+//  Function can be abbreviated "ctor" if Constructor
+//  use kprintfd where possible
+//
 //  Revision 1.9  2005/05/31 17:29:16  nomenquis
 //  userspace
 //
@@ -37,11 +43,14 @@
 #include "ArchCommon.h"
 #include "console/kprintf.h"
 #include "ArchThreads.h"
+#include "Scheduler.h"
 
 static void ThreadStartHack()
 {
   currentThread->Run();
   kprintfd("ThreadStartHack: Panic, thread returned\n");
+  //FIXXME: we propably should clean up the memory here, or change this Hack entireley
+  Scheduler::instance()->removeCurrentThread();
   for(;;);
 }
 

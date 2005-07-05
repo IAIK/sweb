@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.14 2005/07/05 17:29:48 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.15 2005/07/05 20:22:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.14  2005/07/05 17:29:48  btittelbach
+//  new kprintf(d) Policy:
+//  [Class::]Function: before start of debug message
+//  Function can be abbreviated "ctor" if Constructor
+//  use kprintfd where possible
+//
 //  Revision 1.13  2005/06/14 18:51:47  btittelbach
 //  afterthought page fault handling
 //
@@ -522,14 +528,18 @@ extern "C" void irqHandler_4()
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
-  kprintfd("syscallHANDLER");
+  kprintfd("syscallHANDLER\n");
   // ok, find out the current thread
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  currentThread->switch_to_userspace_ = false;
+  //currentThread->switch_to_userspace_ = false;
   
-  for(;;)
+  // just testing
+  currentThread->switch_to_userspace_ = true;
+  currentThread->kernel_arch_thread_info_->eip ++;
+  
+  //for(;;)
   {
-    kprintf("syscallHandler: still alive");
+    kprintf("syscallHandler: still alive\n");
     ArchInterrupts::enableInterrupts();
   }
 }
