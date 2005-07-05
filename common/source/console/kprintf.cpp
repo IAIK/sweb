@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.6 2005/06/05 07:59:35 nelles Exp $
+//   $Id: kprintf.cpp,v 1.7 2005/07/05 16:15:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.6  2005/06/05 07:59:35  nelles
+//   The kprintf_debug or kprintfd are finished
+//
 //   Revision 1.5  2005/05/10 17:03:55  btittelbach
 //   Kprintf Vorbereitung für Print auf Bochs Console
 //   böse .o im source gelöscht
@@ -231,6 +234,19 @@ void vkprintf(Console *console, const char *fmt, va_list args)
   
 }
 
+
+//------------------------------------------------
+/// Standard kprintf. Usable like any other printf. 
+/// Outputs Text on the Console. It is intendet for
+/// Kernel Debugging andt herefore avoids using "new".
+///
+/// @return void
+/// @param fmt Format String with standard Format Syntax
+/// @param args Possible multibple variable for printf as specified in Format String.
+///
+///
+///
+
 void kprintf(const char *fmt, ...)
 {
   va_list args;
@@ -242,6 +258,18 @@ void kprintf(const char *fmt, ...)
   va_end(args);
 }
 
+//------------------------------------------------
+/// kprintf_debug. Usable like any other printf. 
+/// Outputs Text on the Serial Debug Console. It is intendet for
+/// Kernel Debugging andt herefore avoids using "new".
+///
+/// @return void
+/// @param fmt Format String with standard Format Syntax
+/// @param args Possible multibple variable for printf as specified in Format String.
+///
+///
+///
+
 void kprintf_debug(const char *fmt, ...)
 {
   va_list args;
@@ -252,6 +280,18 @@ void kprintf_debug(const char *fmt, ...)
   vkprintf(console, fmt, args);
   va_end(args);
 }
+
+//------------------------------------------------
+/// kprintfd is a shorthand for kprintf_debug
+/// Outputs Text on the Serial Debug Console. It is intendet for
+/// Kernel Debugging andt herefore avoids using "new".
+///
+/// @return void
+/// @param fmt Format String with standard Format Syntax
+/// @param args Possible multibple variable for printf as specified in Format String.
+///
+///
+///
 
 void kprintfd(const char *fmt, ...)
 {
