@@ -1,4 +1,5 @@
-OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+OBJS = $(patsubst %.c,%,$(wildcard *.c))
+CFLAGS = -static -nostdinc -fno-builtin -nostdlib
 
 all: exe2str $(OBJS)
 	./exe2str $(OBJS) > out.cstr
@@ -9,4 +10,4 @@ exe2str: exe2str.hs
 
 .PHONY: clean
 clean:
-	rm -f exe2str *.o *.hi out.cstr
+	rm -f exe2str $(OBJS) *.hi out.cstr
