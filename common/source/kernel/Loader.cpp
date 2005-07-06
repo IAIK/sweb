@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.6 2005/07/05 20:22:56 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.7 2005/07/06 13:29:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.6  2005/07/05 20:22:56  btittelbach
+//  some changes
+//
 //  Revision 1.5  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -243,16 +246,15 @@ void Loader::initUserspaceAddressSpace()
 uint32 Loader::loadExecutableAndInitProcess()
 {
   // first of all say hello
-  //kprintfd("Loader::loadExecutableAndInitProcess: going to load an executable\n");
+  //~ kprintfd("Loader::loadExecutableAndInitProcess: going to load an executable\n");
   
   initUserspaceAddressSpace();
   
-  
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
   
-  //~ kprintf("Loader: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
-  //~ kprintf("Loader: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
-  //~ kprintf("Loader: Num ents: %d\n",hdr->e_phnum);
+  //~ kprintfd("Loader::loadExecutableAndInitProcess: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
+  //~ kprintfd("Loader::loadExecutableAndInitProcess: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
+  //~ kprintfd("Loader::loadExecutableAndInitProcess: Num ents: %d\n",hdr->e_phnum);
   kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x\n",hdr->e_entry);
   
   //~ uint32 i;
@@ -365,7 +367,7 @@ void Loader::loadOnePage(uint32 virtual_address)
   }
   if (! wrote_someting)
   {
-    //ERRRROOORRRR: we didn't load anything apparently, didn't even bzero a page, because no ELF section
+    //ERRRROOORRRR: we didn't load anything apparently, because no ELF section
     //corresponded with our vaddr    
     kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\n");
     //kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");

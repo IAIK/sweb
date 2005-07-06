@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.15 2005/07/05 20:22:56 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.16 2005/07/06 13:29:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.15  2005/07/05 20:22:56  btittelbach
+//  some changes
+//
 //  Revision 1.14  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -490,7 +493,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   
-  if (! (error & flag_p) && address < 3U*1024U*1024U*1024U)
+  if (! (error & flag_p) && address < 2U*1024U*1024U*1024U)
   {
     currentThread->loader_->loadOnePage(address); //load stuff
     return;
