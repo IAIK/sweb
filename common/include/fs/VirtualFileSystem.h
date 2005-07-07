@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.3 2005/07/07 12:31:19 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.4 2005/07/07 13:36:58 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.3  2005/07/07 12:31:19  davrieb
+// add ramfs and all changes it caused
+//
 // Revision 1.2  2005/06/01 09:20:36  davrieb
 // add all changes to fs
 //
@@ -16,7 +19,7 @@
 #define VirtualFileSystem_h__
 
 #include "types.h"
-#include "kmalloc.h"
+#include "mm/kmalloc.h"
 // #include "Superblock.h"
 
 /// File system flag indicating if the system in question requires an device.
