@@ -8,12 +8,6 @@
 class RamFileSystemType : public FileSystemType
 {
 
-  protected:
-
-    char* fs_name_;
-
-    int32 fs_flags_;
-
   public:
 
     RamFileSystemType();

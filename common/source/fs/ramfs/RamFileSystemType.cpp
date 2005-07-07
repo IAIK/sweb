@@ -2,10 +2,10 @@
 #include "fs/ramfs/RamFileSystemType.h"
 
 //----------------------------------------------------------------------
-RamFileSystemType::RamFileSystemType() :
-  fs_name_("ramfs"),
-  fs_flags_(0)
+RamFileSystemType::RamFileSystemType()
 {
+  fs_name_ = "ramfs";
+  fs_flags_ = 0;
 }
 
 RamFileSystemType::~RamFileSystemType()

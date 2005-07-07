@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.4 2005/07/07 12:31:48 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.5 2005/07/07 15:01:46 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.4  2005/07/07 12:31:48  davrieb
+// add ramfs
+//
 // Revision 1.3  2005/06/01 09:20:36  davrieb
 // add all changes to fs
 //
@@ -93,12 +96,12 @@ int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 //----------------------------------------------------------------------
 FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
 {
-  assert(fs_name != 0);
+  assert(fs_name);
 
   uint32 fstl_size = file_system_types_.size();
 
   for (uint32 counter = 0; counter < fstl_size; ++counter) {
-    if (strcmp(file_system_types_[counter]->getFSName(), fs_name))
+    if (strcmp(file_system_types_[counter]->getFSName(), fs_name) == 0)
     {
       return file_system_types_[counter];
     }
