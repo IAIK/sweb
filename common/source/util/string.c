@@ -2,7 +2,8 @@
 /// @author David Riebenbauer <davrieb@sbox.tugraz.at>
 
 #include "util/string.h"
-#include "kmalloc.h"
+#include "mm/kmalloc.h"
+#include "assert.h"
 
 
 //----------------------------------------------------------------------
@@ -68,7 +69,7 @@ void *memmove(void *dest, const void *src, size_t length)
   }
   else
   {
-    // if src is _not_ before dest we can do a forward copy
+    // if src is _not_ before dest we have to do a backward copy
     src8 += length;
     dest8 += length;
 
@@ -354,6 +355,14 @@ int32 memcmp(const void *region1, const void *region2, size_t size)
 //----------------------------------------------------------------------
 int32 strcmp(const char *str1, const char *str2)
 {
+  assert(str1);
+  assert(str2);
+
+  if (str1 == str2)
+  {
+    return 0;
+  }
+
   while ((*str1) && (*str2))
   {
     if (*str1 != *str2)
