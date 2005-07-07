@@ -17,7 +17,7 @@
 #define List_h___
 
 #include "types.h"
-#include "util/assert.h"
+#include "assert.h"
 //-----------------------------------------------------------------------------
 /**
  * ListElement
@@ -59,9 +59,10 @@ private:
 protected:
   ListElement<ContentType> *first_;
   ListElement<ContentType> *last_;
+  uint32 length_;
 
 public:
-  List() { first_ = last_ = 0; }
+  List() { first_ = last_ = 0; length_ = 0; }
 
   virtual ~List();
 
@@ -69,13 +70,17 @@ protected:
   virtual void list_element_insert(ListElement<ContentType> *new_list_element,
                ListElement<ContentType> *prev, ListElement<ContentType> *next);
 
-
-public:
-
   /**
    * return a ListElement if that the entry contained.
    */
   virtual ListElement<ContentType>* find(ContentType *entry);
+
+public:
+
+  /**
+   * check the existance of the input entry
+   */
+  virtual bool is_included(ContentType *entry);
 
   /**
    * Insert a new entry at the end of the list.
@@ -106,8 +111,15 @@ public:
    * remove the first element of the list and return the corresponde item
    */
   virtual ContentType* pop_first();
+  
+  /**
+   * return the point of ContetnType with the index in the list.
+   */
+  virtual ContentType* at(uint32 index);
 
   virtual bool is_empty();
+
+  virtual uint32 getLength() { return length_; }
 };
 
 //-----------------------------------------------------------------------------
@@ -154,8 +166,30 @@ ListElement<ContentType>* List<ContentType>::find(ContentType *entry)
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
+bool List<ContentType>::is_included(ContentType *entry)
+{
+  if(is_empty())
+    return false;
+  
+  ListElement<ContentType> *at = first_;
+  ListElement<ContentType> *prev;
+  
+  do
+  {
+    if(at->get_item() == entry)
+      return true;
+    prev = at;
+    at = prev->get_next();
+  } while(prev != last_);
+  
+  return false;
+}
+
+//-----------------------------------------------------------------------------
+template <class ContentType>
 void List<ContentType>::push_end(ContentType *new_entry)
 {
+  length_++;
   ListElement<ContentType> *new_element =
                             new ListElement<ContentType>(new_entry);
   if(is_empty()) // if the list is empty
@@ -178,6 +212,7 @@ void List<ContentType>::push_end(ContentType *new_entry)
 template <class ContentType>
 void List<ContentType>::append(ContentType *new_entry, ContentType *entry)
 {
+  length_++;
   ListElement<ContentType> *new_element =
                             new ListElement<ContentType>(new_entry);
   ListElement<ContentType> *at;
@@ -191,7 +226,8 @@ void List<ContentType>::append(ContentType *new_entry, ContentType *entry)
 template <class ContentType>
 void List<ContentType>::push_first(ContentType *new_entry)
 {
-    ListElement<ContentType> *new_element =
+  length_++;
+  ListElement<ContentType> *new_element =
                               new ListElement<ContentType>(new_entry);
   if(is_empty()) // if the list is empty
   {
@@ -213,6 +249,7 @@ void List<ContentType>::push_first(ContentType *new_entry)
 template <class ContentType>
 void List<ContentType>::prepend(ContentType *new_entry, ContentType *entry)
 {
+  length_++;
   ListElement<ContentType> *new_element =
                             new ListElement<ContentType>(new_entry);
   ListElement<ContentType> *at;
@@ -226,9 +263,9 @@ void List<ContentType>::prepend(ContentType *new_entry, ContentType *entry)
 template <class ContentType>
 ContentType* List<ContentType>::pop_first()
 {
-  if(is_empty())
-    return 0;
+  assert(is_empty() != true)
 
+  length_--;
   ListElement<ContentType> *element = first_;
   ContentType *item = first_->get_item();
   if(first_ == last_)
@@ -255,6 +292,7 @@ int32 List<ContentType>::remove(ContentType *entry)
     return -1;
   else
   {
+    length_--;
     ListElement<ContentType> *prev = element->get_prev();
     ListElement<ContentType> *next = element->get_next();
     if(element == first_)
@@ -285,6 +323,26 @@ bool List<ContentType>::is_empty()
     return true;
   else
     return false;
+}
+
+//-----------------------------------------------------------------------------
+template <class ContentType>
+ContentType* List<ContentType>::at(uint32 index)
+{
+  if(index >= length_)
+    return 0;
+  
+  ListElement<ContentType> *prev = first_;
+  ListElement<ContentType> *at = prev;
+  while(index != 0)
+  {
+    at = prev->get_next();
+    prev = at;
+    index--;
+  }
+  
+  ContentType *item = at->get_item();
+  return item;
 }
 
 //-----------------------------------------------------------------------------

@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: RamFsSuperblock.h,v $
 //
-// $Id: RamFsSuperblock.h,v 1.1 2005/06/01 09:20:36 davrieb Exp $
-// $Log: Superblock.h,v $
+// $Id: RamFsSuperblock.h,v 1.2 2005/07/07 12:31:19 davrieb Exp $
+// $Log: RamFsSuperblock.h,v $
+// Revision 1.1  2005/06/01 09:20:36  davrieb
+// add all changes to fs
+//
 // Revision 1.1  2005/05/10 16:42:32  davrieb
 // add first attempt to write a virtual file system
 //
@@ -14,16 +17,7 @@
 
 #include "fs/Superblock.h"
 
-#define MAGIC_NUMBER_EXT2 0xEF53
-
-// The falg of the super block.
-#define MS_RDONLY 1
-
-class FileSystemType;
-class Iattr;
-class Statfs;
-class WaitQueue;
-class File;
+class Superblock;
 
 //-----------------------------------------------------------------------------
 /**
@@ -34,19 +28,12 @@ class File;
  * filesystem. For disk-based filesystems, this object usually corresponds
  * to a filesystem control block stored on disk.
  */
-class RamFsSuperblock : Superblock
+class RamFsSuperblock : public Superblock
 {
 public:
 
-  typedef List<Inode> IList;
-
-protected:
-
-  IList inode_list_;
-
-public:
-
-  RamFsSuperblock();
+  RamFsSuperblock(FileSystemType *s_type, Dentry* s_root) :
+                 Superblock(s_type, s_root) {}
 
   virtual ~RamFsSuperblock();
 

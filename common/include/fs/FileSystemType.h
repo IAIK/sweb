@@ -16,8 +16,8 @@
 #ifndef FileSystemType_h___
 #define FileSystemType_h___
 
-#include "Superblock.h"
-
+//#include "Superblock.h"
+class Superblock;
 /// File system flag indicating if the system in question requires an device.
 #define FS_REQUIRES_DEV   0x0001 // located on a physical disk device
 #define FS_NOMOUNT        0x0010 // Filesystem has no mount point

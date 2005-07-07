@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.2 2005/06/01 09:20:36 davrieb Exp $
+// $Id: Superblock.h,v 1.3 2005/07/07 12:31:19 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.2  2005/06/01 09:20:36  davrieb
+// add all changes to fs
+//
 // Revision 1.1  2005/05/10 16:42:32  davrieb
 // add first attempt to write a virtual file system
 //
@@ -16,17 +19,12 @@
 #include "Dentry.h"
 #include "List.h"
 #include "Inode.h"
+#include "FileSystemType.h"
+#include "file.h"
 
-#define MAGIC_NUMBER_EXT2 0xEF53
-
-// The falg of the super block.
-#define MS_RDONLY 1
-
-class FileSystemType;
 class Iattr;
 class Statfs;
 class WaitQueue;
-class File;
 
 //-----------------------------------------------------------------------------
 /**
@@ -44,6 +42,9 @@ protected:
   /// The file system type.
   FileSystemType *s_type_;
 
+  /// The device that this file-system is mounted on.
+  // uint32 s_dev_;
+
   /// This is a list of flags which are logically with the flags in each
   /// inode to detemine certain behaviours. There is one flag which applies
   /// only to the whole file-system.
@@ -58,7 +59,17 @@ protected:
   /// passing it to d_alloc_root. This dentry will get spliced into the Dcache
   /// by the mount command.
   Dentry *s_root_;
-  //--------------------------------------------------------------------------
+
+  /// A list of dirty inodes.
+  List<Inode> s_inode_dirty_;
+
+  /// A list of used inodes.
+  List<Inode> s_inode_used_;
+
+  /// This is a list of files (linked on f_list) of open files on this
+  /// file-system. It is used, for example, to check if there are any files
+  /// open for write before remounting the file-system as read-only.
+  List<File> s_files_;
 
   //--------------------------------------------------------------------------
   // SYNCHRONIZATION
@@ -71,24 +82,15 @@ protected:
   /// the super-block.
   WaitQueue *s_wait_;
   //--------------------------------------------------------------------------
-
-  /// A list of dirty inodes.
-  List<Inode> s_inode_dirty_;
-
-  /// A list of used inodes.
-  List<Inode> s_inode_use_;
-
-  /// This is a list of files (linked on f_list) of open files on this
-  /// file-system. It is used, for example, to check if there are any files
-  /// open for write before remounting the file-system as read-only.
-  List<File> s_files_;
-  //--------------------------------------------------------------------------
+public:
+  void insertInodeUsed(Inode *inode) { s_inode_used_.push_end(inode); }
 
 public:
 
-  Superblock() {}
+  Superblock(FileSystemType *s_type, Dentry* s_root)
+    { s_type_ = s_type; s_root_ = s_root; }
 
-  virtual ~Superblock() {}
+  virtual ~Superblock();
 
   /// This method is called to read a specific inode from a mounted
   /// file-system. It is only called from get_new_inode.
@@ -112,7 +114,7 @@ public:
   /// presumed that the file-system will deal with this situation be
   /// invalidating the inode in the file-system and freeing up any resourses
   /// used.
-  virtual void delete_inode(Inode* inode) {}
+  virtual void delete_inode(Inode* inode);
 
   /// This is called when inode attributed are changed, the argument class
   /// Iattr* pointing to the new set of attributes. If the file-system does
@@ -128,12 +130,13 @@ public:
   /// this mount instance, such as inode bitmaps, block bitmaps, a buffer
   /// header containing super-block and decrement mount hold count if the
   /// file-system is implemented as a dynamically loadable module.
-  virtual void put_super(Superblock* super_block) {}
+  /// Implementation: destructure of the Superblock.
+  virtual void put_super() {}
 
   /// This method called when VFS decides that the super-block needs to be
   /// written to disk. It check the SuperBlock->s_dirty_, if it is true write
   /// the super block return to the Disc.
-  virtual void write_super(Superblock* super_block) {}
+  virtual void write_super() {}
 
   /// This method is needed to implement statfs(2) system call
   virtual int32 statfs(Superblock*, Statfs*, int32) { return 0; }

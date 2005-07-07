@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.2 2005/06/01 09:20:36 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.3 2005/07/07 12:31:19 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.2  2005/06/01 09:20:36  davrieb
+// add all changes to fs
+//
 // Revision 1.1  2005/05/10 16:42:32  davrieb
 // add first attempt to write a virtual file system
 //
@@ -23,73 +26,71 @@
 /// The maximal number of file system types.
 #define MAX_FILE_SYSTEM_TYPES 16
 
+#include "kernel/List.h"
 
 class Superblock;
 
 class FileSystemType
 {
-public:
 
-  typedef Superblock *(*ReadSuper) (struct Superblock *, void *, int32);
+  protected:
 
-protected:
+    char* fs_name_;
 
-  const char* fs_name_;
+    int32 fs_flags_;
 
-  int32 fs_flags_;
+  public:
 
-//  Superblock *(*readsuper) (struct Superblock *, void *, int32);
-  ReadSuper read_super_;
+    FileSystemType();
 
+    virtual ~FileSystemType();
 
-public:
+    FileSystemType const &operator =(FileSystemType const &instance)
+    {
+      fs_name_ = instance.fs_name_;
+      fs_flags_ = instance.fs_flags_;
+      return (*this);
+    }
 
-  FileSystemType();
+    const char* getFSName() const;
 
-  FileSystemType(const char* fs_name);
+    int32 getFSFlags() const;
 
-  ~FileSystemType();
-
-  const char* getFSName() const;
-
-  void setFSName(const char* fs_name);
-
-  int32 getFSFlags() const;
-
-  void setFSFlags(int32 fs_flags);
-
-  const ReadSuper getReadSuperFunction() const;
-
-  void setReadSuperFunction(ReadSuper read_super);
+    /// Reads the superblock from the device.
+    ///
+    /// @return is a pointer to the resulting superblock.
+    /// @param flags contains the mount flags.
+    /// @param dev_name is the name of the device where the superblock will be read from.
+    Superblock *readSuper(int32 flags, const char* dev_name);
 
 };
 
 class VirtualFileSystem
 {
-protected:
+  protected:
 
-  Superblock *superblock_;
+    Superblock *superblock_;
 
-  /// A null-terminated array of file system types.
-  FileSystemType *file_system_types_;
+    /// A null-terminated array of file system types.
+    List<FileSystemType*> file_system_types_;
 
-public:
+  public:
 
-  /// The constructor
-  VirtualFileSystem();
+    /// The constructor
+    VirtualFileSystem();
 
-  /// The destructor
-  ~VirtualFileSystem();
+    /// The destructor
+    ~VirtualFileSystem();
 
-  int32 registerFileSystem(FileSystemType *file_system_type);
+    int32 registerFileSystem(FileSystemType *file_system_type);
 
-  int32 unregisterFileSystem(FileSystemType *file_system_type);
+    int32 unregisterFileSystem(FileSystemType *file_system_type);
 
-  /// The getFsType function receives a filesystem name as its parameter, scans
-  /// the list of registered filesystems looking at the fs_name field of their
-  /// descriptors, and returns a pointer to the corresponding FileSystemType
-  /// object, if is present.
-  FileSystemType *getFsType(const char* fs_name);
+    /// The getFsType function receives a filesystem name as its parameter, scans
+    /// the list of registered filesystems looking at the fs_name field of their
+    /// descriptors, and returns a pointer to the corresponding FileSystemType
+    /// object, if is present.
+    FileSystemType *getFsType(const char* fs_name);
 
 };
 
