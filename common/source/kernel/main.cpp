@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.52 2005/07/07 13:20:10 lythien Exp $
+ * $Id: main.cpp,v 1.53 2005/07/07 14:06:55 davrieb Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.52  2005/07/07 13:20:10  lythien
+ * only for david
+ *
  * Revision 1.50  2005/07/06 13:29:37  btittelbach
  * testing
  *
@@ -187,7 +190,7 @@
 #include "drivers/serial.h"
 
 //#include "fs/VirtualFileSystem.h"
-//#include "fs/fsram/RamFileSystemType.h"
+//#include "fs/ramfs/RamFileSystemType.h"
 
 
 extern void* kernel_end_address;
@@ -372,18 +375,27 @@ private:
   uint32 bad_mapping_page_0;
 
 };
+
+
+////------------------------------------------------------------
+//// testing the registerfilesystem
+//oid testRegFS()
+//{
+//  kprintf("test test test\n");
+//  kprintf("this is the Register FileSystem \n");
+//  RamFileSystemType *ramfs = new RamFileSystemType();
+//  const char *fs_name = ramfs->getFSName();
+//  kprintf("name fo ramfs: %s\n", fs_name);
+//  VirtualFileSystem vfs;
+//  vfs.registerFileSystem(ramfs);
+//
+//  ramfs = 0;
+//  FileSystemType *fs = vfs.getFsType(fs_name);
+//  kprintf("name fo fs: %s\n", fs->getFSName());
+//}
+
+
 //------------------------------------------------------------
-// testing the registerfilesystem
-
-// void testRegFS()
-// {
-//   kprintf("this is the Register FileSystem \n");
-//   RamFileSystemType *ramfs = new RamFileSystemType();
-//   VirtualFileSystem::registerFileSystem(ramfs);
-// }
-//------------------------------------------------------------
-
-
 void startup()
 {
   writeLine2Bochs( (uint8 *) "Startup Started \n");
@@ -401,10 +413,6 @@ void startup()
 
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
-
-  // test the Register FileSystem
- //  kprintf("test test test");
-//   testRegFS();
 
   kprintf_debug("Debug print now functional\n");
   kprintfd("Can be called with kprintf_debug or kprintfd\n");
@@ -457,7 +465,7 @@ void startup()
 
   //Scheduler::instance()->addNewThread(new UserThread());
   //Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
-  Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
+  //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
 
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
