@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.53 2005/07/07 14:06:55 davrieb Exp $
+ * $Id: main.cpp,v 1.54 2005/07/07 15:00:48 davrieb Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.53  2005/07/07 14:06:55  davrieb
+ * more fs testing
+ *
  * Revision 1.52  2005/07/07 13:20:10  lythien
  * only for david
  *
@@ -379,7 +382,7 @@ private:
 
 ////------------------------------------------------------------
 //// testing the registerfilesystem
-//oid testRegFS()
+//void testRegFS()
 //{
 //  kprintf("test test test\n");
 //  kprintf("this is the Register FileSystem \n");
