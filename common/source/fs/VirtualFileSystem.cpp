@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.3 2005/06/01 09:20:36 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.4 2005/07/07 12:31:48 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.3  2005/06/01 09:20:36  davrieb
+// add all changes to fs
+//
 // Revision 1.2  2005/05/31 20:25:28  btittelbach
 // moved assert to where it belongs (arch) and created nicer version
 //
@@ -16,15 +19,10 @@
 #include "util/string.h"
 #include "assert.h"
 
-FileSystemType::FileSystemType()
+FileSystemType::FileSystemType() :
+  fs_name_(0),
+  fs_flags_(0)
 {
-  fs_name_ = 0;
-}
-
-FileSystemType::FileSystemType(const char* fs_name) :
-    fs_name_(fs_name)
-{
-  assert(fs_name != 0);
 }
 
 FileSystemType::~FileSystemType()
@@ -36,31 +34,15 @@ const char* FileSystemType::getFSName() const
   return fs_name_;
 }
 
-void FileSystemType::setFSName(const char* fs_name)
-{
-  assert(fs_name != 0);
-
-  fs_name_ = fs_name;
-}
-
 int32 FileSystemType::getFSFlags() const
 {
   return fs_flags_;
 }
 
-void FileSystemType::setFSFlags(int32 fs_flags)
+Superblock *FileSystemType::readSuper(int32 /*flags*/, const char* /*dev_name*/)
 {
-  fs_flags_ = fs_flags;
-}
-
-const FileSystemType::ReadSuper FileSystemType::getReadSuperFunction() const
-{
-  return read_super_;
-}
-
-void FileSystemType::setReadSuperFunction(FileSystemType::ReadSuper read_super)
-{
-  read_super_ = read_super;
+  assert(0);
+  return 0;
 }
 
 VirtualFileSystem::VirtualFileSystem():
@@ -84,27 +66,9 @@ int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)
     return -2;
   }
 
-  uint32 fst_counter = 0;
-
-  while ((fst_counter < MAX_FILE_SYSTEM_TYPES))
-  {
-    if (file_system_types_ + fst_counter)
-    {
-      if (strcmp(file_system_types_[fst_counter].getFSName(), file_system_type->getFSName()))
-      {
-        return -1;
-      }
-      ++fst_counter;
-    }
-
-    // TODO
-    // enter new entry in the rigth way
-    FileSystemType* entry = (file_system_types_ + fst_counter);
-    entry = file_system_type;
-    break;
-  }
-
+  file_system_types_.pushBack(file_system_type);
   return 0;
+
 }
 
 
@@ -112,11 +76,35 @@ int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 {
   assert(file_system_type != 0);
 
-  // const char *fs_name = file_system_type-> getFSName();
+  const char *fs_name = file_system_type-> getFSName();
+  uint32 fstl_size = file_system_types_.size();
 
-  for (int32 count = 0; count < MAX_FILE_SYSTEM_TYPES; ++count)
+  for (uint32 counter = 0; counter < fstl_size; ++counter)
   {
+    if (strcmp(file_system_types_[counter]->getFSName(), fs_name))
+    {
+      file_system_types_.remove(counter);
+    }
   }
 
   return 0;
 }
+
+//----------------------------------------------------------------------
+FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
+{
+  assert(fs_name != 0);
+
+  uint32 fstl_size = file_system_types_.size();
+
+  for (uint32 counter = 0; counter < fstl_size; ++counter) {
+    if (strcmp(file_system_types_[counter]->getFSName(), fs_name))
+    {
+      return file_system_types_[counter];
+    }
+  }
+
+  return 0;
+
+}
+
