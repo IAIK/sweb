@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: syscall.h,v $
  *
- * $Id: syscall.h,v 1.1 2005/07/07 23:46:23 aniederl Exp $
- * $Log$
+ * $Id: syscall.h,v 1.2 2005/07/08 00:20:20 aniederl Exp $
+ * $Log: syscall.h,v $
+ * Revision 1.1  2005/07/07 23:46:23  aniederl
+ * preprocessor macros for generating (most of the) syscall definitions
+ *
  */
 
 
@@ -61,21 +64,21 @@ extern unsigned int errno;
 // macros for restoring the argument registers
 #define RESTORE_ARGUMENT_REGISTERS_0
 #define RESTORE_ARGUMENT_REGISTERS_1 \
-  "pop %ebx\n"
+  "popl %ebx\n"
 #define RESTORE_ARGUMENT_REGISTERS_2 \
-  "pop %ecx\n" \
+  "popl %ecx\n" \
   RESTORE_ARGUMENT_REGISTERS_1
 #define RESTORE_ARGUMENT_REGISTERS_3 \
-  "pop %edx\n" \
+  "popl %edx\n" \
   RESTORE_ARGUMENT_REGISTERS_2
 #define RESTORE_ARGUMENT_REGISTERS_4 \
-  "pop %esi\n" \
+  "popl %esi\n" \
   RESTORE_ARGUMENT_REGISTERS_3
 #define RESTORE_ARGUMENT_REGISTERS_5 \
-  "pop %edi\n" \
+  "popl %edi\n" \
   RESTORE_ARGUMENT_REGISTERS_4
 #define RESTORE_ARGUMENT_REGISTERS_6 \
-  "pop %ebp\n" \
+  "popl %ebp\n" \
   RESTORE_ARGUMENT_REGISTERS_5
 
 
