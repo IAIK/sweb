@@ -48,7 +48,7 @@ uint32 SerialConsole::consoleSetCharacter(uint32 const &row, uint32 const&column
 #if defined(SERIAL_DEBUG)
         SerialManager::getInstance()->serial_ports[port_num_]->write( &sp, 1, bytes_written);
 #elif defined(BOCHS_DEBUG)
-        writeChar2Bochs( sp );
+      writeChar2Bochs( sp );
 #else
         ;
 #endif
@@ -73,12 +73,13 @@ void SerialConsole::consoleScrollUp()
   uint32 i = 80 - con_cpos_;
   uint8 sp = ' ';
   uint32 bytes_written = 0;
-  
+
+#if defined(SERIAL_DEBUG)  
   while(i--)
-#if defined(SERIAL_DEBUG)
-        SerialManager::getInstance()->serial_ports[port_num_]->write( &sp, 1, bytes_written);
+    SerialManager::getInstance()->serial_ports[port_num_]->write( &sp, 1, bytes_written);
 #elif defined(BOCHS_DEBUG)
-        writeChar2Bochs( sp );
+  writeChar2Bochs( '\r' );
+  writeChar2Bochs( '\n' );
 #else
         ;
 #endif

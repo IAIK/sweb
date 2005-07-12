@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.11 2005/07/05 20:22:56 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.12 2005/07/12 17:53:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.11  2005/07/05 20:22:56  btittelbach
+//  some changes
+//
 //  Revision 1.10  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -48,7 +51,7 @@
 static void ThreadStartHack()
 {
   currentThread->Run();
-  kprintfd("ThreadStartHack: Panic, thread returned\n");
+  kprintfd("ThreadStartHack: Panic, thread returned\r\n");
   //FIXXME: we propably should clean up the memory here, or change this Hack entireley
   Scheduler::instance()->removeCurrentThread();
   for(;;);
@@ -56,7 +59,7 @@ static void ThreadStartHack()
 
 Thread::Thread()
 {
-  kprintfd("Thread::Thread: Thread ctor, this is %x, stack is %x, sizeof stack is %x", this,stack_, sizeof(stack_));
+  kprintfd("Thread::Thread: Thread ctor, this is %x, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
   ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
 
   //kprintfd("Thread::Thread: After bzero\n");

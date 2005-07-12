@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.7 2005/07/06 13:29:37 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.8 2005/07/12 17:53:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.7  2005/07/06 13:29:37  btittelbach
+//  testing
+//
 //  Revision 1.6  2005/07/05 20:22:56  btittelbach
 //  some changes
 //
@@ -333,14 +336,14 @@ void Loader::loadOnePage(uint32 virtual_address)
   for (i=0;i<hdr->e_phnum;++i)
   {
     ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + i* hdr->e_phentsize);
-    kprintfd("Loader::loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+    kprintfd("Loader::loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
     
     //if (vaddr >= h->p_paddr && vaddr < h->p_paddr+h->p_memsz)
     if ((h->p_paddr >= vaddr && h->p_paddr < vaddr+PAGE_SIZE) || 
         (h->p_paddr+h->p_memsz >= vaddr && h->p_paddr+h->p_memsz < vaddr + PAGE_SIZE))
     {
       //now write from max(h->p_addr,vaddr) to min(h->p_addr+h->p_memsz,vaddr+PAGE_SIZE)
-      kprintfd("Loader::loadOnePage: loading from PHdr[%d]\n",i);
+      kprintfd("Loader::loadOnePage: loading from PHdr[%d]\r\n",i);
       pointer write_start = vaddr;
       if (h->p_paddr > write_start)
         write_start=h->p_paddr;
@@ -361,7 +364,7 @@ void Loader::loadOnePage(uint32 virtual_address)
         *curr_ptr = file_image_[h->p_offset + read];
         ++read;
       }
-      kprintfd("Loader::loadOnePage: wrote %d bytes\n",write_stop - write_start);
+      kprintfd("Loader::loadOnePage: wrote %d bytes\r\n",write_stop - write_start);
       wrote_someting=true;
     }
   }
@@ -369,7 +372,7 @@ void Loader::loadOnePage(uint32 virtual_address)
   {
     //ERRRROOORRRR: we didn't load anything apparently, because no ELF section
     //corresponded with our vaddr    
-    kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\n");
+    kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\r\n");
     //kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");
   }
 }
