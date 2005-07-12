@@ -8,9 +8,9 @@ SUBPROJECTS := \
                common/source/mm \
                common/source/util \
                common/source/drivers \
-               utils/mtools
-#               common/source/fs
-#               common/source/fs/ramfs
+               utils/mtools \
+	       common/source/fs \
+               common/source/fs/ramfs
 SHARED_LIBS :=  \
                 arch/x86/source/libArchSpecific.a \
                 common/source/console/libConsole.a \
@@ -18,9 +18,9 @@ SHARED_LIBS :=  \
                 common/source/kernel/libKernel.a \
                 common/source/mm/libMM.a \
                 common/source/util/libUtil.a \
-                common/source/drivers/libDrivers.a
-#               common/source/fs/libFS.a
-#               common/source/fs/ramfs/libRamFS.a
+                common/source/drivers/libDrivers.a \
+		common/source/fs/libFS.a \
+               common/source/fs/ramfs/libRamFS.a
 PROJECT_ROOT := .
 E2FSIMAGESOURCE := utils/e2fsimage/
 

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.14 2005/07/12 17:52:26 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.15 2005/07/12 19:52:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.14  2005/07/12 17:52:26  btittelbach
+//  Bochs SerialConsole ist jetzt lesbar
+//  KMM hat rudimentäre Bochs Debug
+//
 //  Revision 1.13  2005/07/12 17:28:47  btittelbach
 //  bochs kmm debug
 //
@@ -111,25 +115,25 @@ static char* fb = (char*)0xC00B8500;
 
 #define printbochs(x)  \
     { \
-      uint32 divisor; \
-      uint32 current; \
-      uint32 remainder; \
-      current = (uint32)x; \
-      divisor = 1000000000; \
-      while (divisor > 0) \
+      uint32 printbochs_divisor; \
+      uint32 printbochs_current; \
+      uint32 printbochs_remainder; \
+      printbochs_current = (uint32)x; \
+      printbochs_divisor = 1000000000; \
+      while (printbochs_divisor > 0) \
       { \
-        remainder = current % divisor; \
-        current = current / divisor; \
+        printbochs_remainder = printbochs_current % printbochs_divisor; \
+        printbochs_current = printbochs_current / printbochs_divisor; \
         \
-        writeChar2Bochs('0' + (uint8)current); \
+        writeChar2Bochs('0' + (uint8)printbochs_current); \
     \
-        divisor = divisor / 10; \
-        current = remainder; \
+        printbochs_divisor = printbochs_divisor / 10; \
+        printbochs_current = printbochs_remainder; \
       }      \
-      uint32 blubba;\
-      uint32 asf;\
-      for (asf=0;asf<1;++asf)\
-        ++blubba;\
+      uint32 printbochs_blubba;\
+      uint32 printbochs_asf;\
+      for (printbochs_asf=0;printbochs_asf<1;++printbochs_asf)\
+        ++printbochs_blubba;\
     } 
     
 uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer end_address)
@@ -162,7 +166,10 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   MallocSegment *new_pointer = findFreeSegment(requested_size);
   
   if (new_pointer == 0)
-    arch_panic((uint8*)"Not enough Memory left\n");
+  {
+    writeLine2Bochs((uint8*)"KernelMemoryManager::allocateMemory: Not enough Memory left\n");
+    arch_panic((uint8*)"KernelMemoryManager::allocateMemory: Not enough Memory left\n");
+  }
   
   fillSegment(new_pointer,requested_size);
 
@@ -241,9 +248,21 @@ MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
 
 MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 {
+  writeLine2Bochs((uint8*)"KernelMemoryManager::findFreeSegment: seeking memory block of bytes:");
+  printbochs(requested_size + sizeof(MallocSegment));
+  writeChar2Bochs((uint8)'\n');
+
+  
   MallocSegment *current=first_;
   while (current != 0)
   {
+    //~ writeLine2Bochs((uint8*)"KernelMemoryManager::findFreeSegment: current:");
+    //~ printbochs(current);
+    //~ writeLine2Bochs((uint8*)" size:");
+    //~ printbochs( current->getSize() + sizeof(MallocSegment));
+    //~ writeLine2Bochs((uint8*)" used:");
+    //~ printbochs( current->getUsed() );
+    //~ writeChar2Bochs((uint8)'\n');
     prenew_assert(current->marker_ == 0xdeadbeef);
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
       return current;
@@ -276,7 +295,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+requested_size)) MallocSegment(this_one,this_one->next_,space_left-sizeof(MallocSegment),false);
     this_one->next_ = new_segment;
   }
-  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: used memory block of bytes:");
+  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: filled memory block of bytes:");
   printbochs(this_one->getSize() + sizeof(MallocSegment));
   writeChar2Bochs((uint8)'\n');
 }
@@ -289,9 +308,17 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   //mark segment as free
   //if previous segment is free: delete Segment and add space to previous Segmen
   //if next segment is free: delete next Segment and add space to this segment
-
-
-  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: freeing block of bytes:");
+  
+  if (this_one->getUsed() == false) //that would be bad
+  {
+    writeLine2Bochs((uint8*)"KernelMemoryManager::freeSegment: FATAL ERROR\n");
+    writeLine2Bochs((uint8*)"KernelMemoryManager::freeSegment: tried freeing not used memory block\n"); 
+    prenew_assert(false);
+  } 
+  
+  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: freeing block ");
+  printbochs(this_one);   
+  writeLine2Bochs((uint8*)" of bytes:");
   printbochs(this_one->getSize() + sizeof(MallocSegment));   
   writeChar2Bochs((uint8)'\n');
   
@@ -305,15 +332,36 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     {
       size_t my_true_size = ((this_one->next_==0)? malloc_end_ - ((pointer) this_one) : ((pointer) this_one->next_) - ((pointer) this_one));
 
-      this_one->prev_->setSize(my_true_size + this_one->prev_->getSize());
-      this_one->prev_->next_ = this_one->next_;
-      
       MallocSegment *previous_one = this_one->prev_;
+      
+      previous_one->setSize(my_true_size + previous_one->getSize());
+      previous_one->next_ = this_one->next_;
+      if (this_one->next_ != 0)
+      {
+        prenew_assert(this_one->next_->marker_ == 0xdeadbeef);
+        this_one->next_->prev_=previous_one;
+      }
+      
+      writeLine2Bochs((uint8*)"KernelMemoryManager::freeSegment: post premerge, pre postmerge\n");
+      writeLine2Bochs((uint8*)"KernelMemoryManager::freeSegment: previous_one:");
+      printbochs(previous_one);
+      writeLine2Bochs((uint8*)" size:");
+      printbochs( previous_one->getSize() + sizeof(MallocSegment));
+      writeLine2Bochs((uint8*)" used:");
+      printbochs( previous_one->getUsed() );
+      writeChar2Bochs((uint8)'\n');
+      writeLine2Bochs((uint8*)"KernelMemoryManager::freeSegment: this_one:");
+      printbochs(this_one);
+      writeLine2Bochs((uint8*)" size:");
+      printbochs( this_one->getSize() + sizeof(MallocSegment));
+      writeLine2Bochs((uint8*)" used:");
+      printbochs( this_one->getUsed() );
+      writeChar2Bochs((uint8)'\n');
       
       this_one = previous_one;
     }
   }
-  
+
   mergeWithFollowingFreeSegment(this_one);
    
   //ease debugging, clear the segment we don't own anymore
@@ -323,6 +371,27 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   //is something is suddenly zero, we immediatly know there was a 
   //problem with someones pointer
   ArchCommon::bzero(((pointer) this_one) + sizeof(MallocSegment), this_one->getSize(), 0);
+  
+  
+  //debug code:
+  MallocSegment *current=first_;
+  while (current != 0)
+  {
+    writeLine2Bochs((uint8*)"KernelMemoryManager::freeSegment: current:");
+    printbochs(current);
+    writeLine2Bochs((uint8*)" prev:");
+    printbochs( current->prev_);
+    writeLine2Bochs((uint8*)" next:");
+    printbochs( current->next_);
+    writeLine2Bochs((uint8*)" size:");
+    printbochs( current->getSize() + sizeof(MallocSegment));
+    writeLine2Bochs((uint8*)" used:");
+    printbochs( current->getUsed() );
+    writeChar2Bochs((uint8)'\n');
+    prenew_assert(current->marker_ == 0xdeadbeef);    
+    current = current->next_;
+  }
+
 }
 
 bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
@@ -340,6 +409,11 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 
       this_one->setSize(this_one->getSize() + true_next_size);
       this_one->next_ = next_one->next_;
+      if (next_one->next_  != 0)
+      {
+        prenew_assert(next_one->next_->marker_ == 0xdeadbeef);
+        next_one->next_->prev_=this_one;
+      }
 
       ArchCommon::bzero((pointer) next_one, sizeof(MallocSegment), 0);
       
