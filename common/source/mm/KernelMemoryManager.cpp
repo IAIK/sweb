@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.12 2005/05/31 20:25:28 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.13 2005/07/12 17:28:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.12  2005/05/31 20:25:28  btittelbach
+//  moved assert to where it belongs (arch) and created nicer version
+//
 //  Revision 1.11  2005/05/10 15:27:54  davrieb
 //  move assert to util/assert.h
 //
@@ -59,6 +62,7 @@
 #include "../../include/mm/KernelMemoryManager.h"
 #include "ArchCommon.h"
 #include "assert.h"
+#include "../../../arch/arch/include/debug_bochs.h"
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
@@ -101,6 +105,29 @@ static char* fb = (char*)0xC00B8500;
       for (asf=0;asf<1;++asf)\
         ++blubba;\
     }   
+
+#define printbochs(x)  \
+    { \
+      uint32 divisor; \
+      uint32 current; \
+      uint32 remainder; \
+      current = (uint32)x; \
+      divisor = 1000000000; \
+      while (divisor > 0) \
+      { \
+        remainder = current % divisor; \
+        current = current / divisor; \
+        \
+        writeChar2Bochs('0' + (uint8)current); \
+    \
+        divisor = divisor / 10; \
+        current = remainder; \
+      }      \
+      uint32 blubba;\
+      uint32 asf;\
+      for (asf=0;asf<1;++asf)\
+        ++blubba;\
+    } 
     
 uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer end_address)
 {
@@ -244,6 +271,8 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+requested_size)) MallocSegment(this_one,this_one->next_,space_left-sizeof(MallocSegment),false);
     this_one->next_ = new_segment;
   }
+  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: allocated block in bytes:");
+  printbochs(this_one->getSize());
 }
 
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
@@ -254,7 +283,11 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   //mark segment as free
   //if previous segment is free: delete Segment and add space to previous Segmen
   //if next segment is free: delete next Segment and add space to this segment
-   
+
+
+  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: freeing block in bytes:");
+  printbochs(this_one->getSize());   
+  
   this_one->setUsed(false);
   prenew_assert(this_one->getUsed() == false);
   
