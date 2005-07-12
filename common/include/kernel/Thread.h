@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.10 2005/06/14 18:22:37 btittelbach Exp $
+//  $Id: Thread.h,v 1.11 2005/07/12 21:05:38 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.10  2005/06/14 18:22:37  btittelbach
+//  RaceCondition anfälliges LoadOnDemand implementiert,
+//  sollte optimalerweise nicht im InterruptKontext laufen
+//
 //  Revision 1.9  2005/05/31 17:29:16  nomenquis
 //  userspace
 //
@@ -104,6 +108,8 @@ public:
   
   Loader *loader_;
 
+  bool kill_me_;
+
 private:
   
   Thread(Thread const &);
@@ -111,7 +117,6 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
-
 
 };
 

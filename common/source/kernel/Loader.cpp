@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.8 2005/07/12 17:53:13 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.9 2005/07/12 21:05:38 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
@@ -241,8 +241,6 @@ void Loader::initUserspaceAddressSpace()
   uint32 page_for_stack = PageManager::instance()->getFreePhysicalPage();
 
   ArchMemory::mapPage(page_dir_page_,2*1024*256-1, page_for_stack,1);
-  
-  
 }
 
 
@@ -372,7 +370,12 @@ void Loader::loadOnePage(uint32 virtual_address)
   {
     //ERRRROOORRRR: we didn't load anything apparently, because no ELF section
     //corresponded with our vaddr    
-    kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\r\n");
-    //kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");
+    //kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\r\n");
+    kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");
+    kprintfd( "Loader: loadOnePage(): terminating UserProcess\n");
+    currentThread->switch_to_userspace_ = false;
+    currentThread->kill_me_=true;
+    Scheduler::instance()->yield();
+    kpanict((uint8*) "Loader: loadOnePage(): PANIC should not reach\r\n");
   }
 }

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.16 2005/07/06 13:29:37 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.17 2005/07/12 21:05:38 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.16  2005/07/06 13:29:37  btittelbach
+//  testing
+//
 //  Revision 1.15  2005/07/05 20:22:56  btittelbach
 //  some changes
 //
@@ -534,11 +537,20 @@ extern "C" void syscallHandler()
   kprintfd("syscallHANDLER\n");
   // ok, find out the current thread
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  //currentThread->switch_to_userspace_ = false;
-  
-  // just testing
+  kprintfd("syscallHANDLER: *esp: %x; *(esp++): %x; *(esp--): %x;\n",*(reinterpret_cast<uint32*>(currentThreadInfo->esp)),*(reinterpret_cast<uint32*>(currentThreadInfo->esp)-1),*(reinterpret_cast<uint32*>(currentThreadInfo->esp)+1));
+  if (*(reinterpret_cast<uint32*>(currentThreadInfo->esp)) == 0xdeadbeef)
+  {
+    currentThread->switch_to_userspace_ = false;
+    currentThread->kill_me_=true;
+    Scheduler::instance()->yield();
+  } 
+  else
+  {
+
+    // just testing
   currentThread->switch_to_userspace_ = true;
   currentThread->kernel_arch_thread_info_->eip ++;
+  }
   
   //for(;;)
   {

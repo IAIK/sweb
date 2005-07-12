@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.h,v 1.2 2005/06/14 18:22:37 btittelbach Exp $
+//   $Id: Loader.h,v 1.3 2005/07/12 21:05:38 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.h,v $
+//  Revision 1.2  2005/06/14 18:22:37  btittelbach
+//  RaceCondition anfälliges LoadOnDemand implementiert,
+//  sollte optimalerweise nicht im InterruptKontext laufen
+//
 //  Revision 1.1  2005/05/31 18:25:49  nomenquis
 //  forgot to add loader
 //
@@ -13,6 +17,7 @@
 
 #include "types.h"
 #include "Thread.h"
+#include "Scheduler.h"
 
 class Loader
 {

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.12 2005/07/12 17:53:13 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.13 2005/07/12 21:05:39 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.12  2005/07/12 17:53:13  btittelbach
+//  Bochs SerialConsole ist jetzt lesbar
+//
 //  Revision 1.11  2005/07/05 20:22:56  btittelbach
 //  some changes
 //
@@ -65,6 +68,7 @@ Thread::Thread()
   //kprintfd("Thread::Thread: After bzero\n");
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
   switch_to_userspace_ = 0;
+  kill_me_=false;
 }
 
 pointer Thread::getStackStartPointer()

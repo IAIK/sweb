@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.10 2005/07/05 20:22:56 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.11 2005/07/12 21:05:38 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.10  2005/07/05 20:22:56  btittelbach
+//  some changes
+//
 //  Revision 1.9  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -138,6 +141,14 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
   uint32 ret = 1;
   currentThread = threads_.front();
   threads_.popFront();
+  
+  if (currentThread->kill_me_)
+  {
+    delete currentThread;
+    currentThread = threads_.front();
+    threads_.popFront();
+  }
+  
   threads_.pushBack(currentThread);
   if ( currentThread->switch_to_userspace_)
     currentThreadInfo =  currentThread->user_arch_thread_info_;

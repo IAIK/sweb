@@ -11,11 +11,12 @@ int _start()
 			b = b << 1;
 	}
 	
-//call syscall handler
-//	__asm__ __volatile__ (
-//	   "int $0x80"
-//	   :
-//	   :);
+//call syscall handler, tell kernel that I'm dead
+	__asm__ __volatile__ (
+	   "movl $0xdeaddead, %%eax\n"
+	   "push %%eax\n"
+	   "int $0x80\n"
+	   :
+	   :);
 	
-	return b;
 }
