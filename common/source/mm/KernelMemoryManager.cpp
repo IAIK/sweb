@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.13 2005/07/12 17:28:47 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.14 2005/07/12 17:52:26 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.13  2005/07/12 17:28:47  btittelbach
+//  bochs kmm debug
+//
 //  Revision 1.12  2005/05/31 20:25:28  btittelbach
 //  moved assert to where it belongs (arch) and created nicer version
 //
@@ -146,7 +149,9 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
   last_=first_;
   //segments_free_=1;
   //segments_used_=0;
-  print (4444);
+  writeLine2Bochs((uint8*)"KernelMemoryManager::ctor: byte avaible:");
+  printbochs(end_address-start_address);
+  writeChar2Bochs((uint8)'\n');
   
 }
 
@@ -271,8 +276,9 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+requested_size)) MallocSegment(this_one,this_one->next_,space_left-sizeof(MallocSegment),false);
     this_one->next_ = new_segment;
   }
-  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: allocated block in bytes:");
-  printbochs(this_one->getSize());
+  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: used memory block of bytes:");
+  printbochs(this_one->getSize() + sizeof(MallocSegment));
+  writeChar2Bochs((uint8)'\n');
 }
 
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
@@ -285,8 +291,9 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   //if next segment is free: delete next Segment and add space to this segment
 
 
-  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: freeing block in bytes:");
-  printbochs(this_one->getSize());   
+  writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: freeing block of bytes:");
+  printbochs(this_one->getSize() + sizeof(MallocSegment));   
+  writeChar2Bochs((uint8)'\n');
   
   this_one->setUsed(false);
   prenew_assert(this_one->getUsed() == false);
