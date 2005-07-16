@@ -20,7 +20,7 @@
 #include "types.h"
 #include "fs/PointList.h"
 #include "Dentry.h"
-#include "file.h"
+#include "File.h"
 
 class Dentry;
 class VMArea;

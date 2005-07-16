@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.4 2005/07/16 13:22:00 davrieb Exp $
+// $Id: Superblock.h,v 1.5 2005/07/16 13:36:29 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.4  2005/07/16 13:22:00  davrieb
+// rrename List in fs to PointList to avoid name clashes
+//
 // Revision 1.3  2005/07/07 12:31:19  davrieb
 // add ramfs and all changes it caused
 //
@@ -22,7 +25,7 @@
 #include "Dentry.h"
 #include "fs/PointList.h"
 #include "Inode.h"
-#include "file.h"
+#include "File.h"
 
 class Iattr;
 class Statfs;
@@ -165,3 +168,4 @@ public:
 //-----------------------------------------------------------------------------
 
 #endif // Superblock_h___
+
