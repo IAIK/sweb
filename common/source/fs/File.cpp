@@ -26,8 +26,12 @@
 
 File::File()
 {
- //  inode_ = inode;
-//   return;
+
+  // uint8 SEEK_SET = 0;
+  // uint8 SEEK_CUR = 1;
+  // uint8 SEEK_END = 2;
+  // inode_ = inode;
+  // return;
 }
 
 
@@ -43,15 +47,16 @@ File::~File()
 // set the name of the file
 //----------------------------------------------------------------
 
-File::setName(const char *name)
+void File::setName(const char *name)
 {
+
 }
 
 //----------------------------------------------------------------
 // get name of the file
 //----------------------------------------------------------------
 
-File::const char *getName()
+const char * File::getName()
 {
 }
 
@@ -60,7 +65,7 @@ File::const char *getName()
 // get the dentry
 //----------------------------------------------------------------
 
-Dentry::Dentry *getDentry()
+void Dentry::Dentry *getDentry()
 {
 }
 
@@ -68,7 +73,7 @@ Dentry::Dentry *getDentry()
 // read from the file
 //----------------------------------------------------------------
 
-File::read(char *buffer, size_t count, l_off_t offset)
+void File::read(char *buffer, size_t count, l_off_t offset)
 {
 }
 
@@ -76,7 +81,7 @@ File::read(char *buffer, size_t count, l_off_t offset)
 // write to the file
 //----------------------------------------------------------------
 
-File::write(char *buffer, size_t count, l_off_t offset)
+void File::write(char *buffer, size_t count, l_off_t offset)
 {
 }
 
@@ -84,7 +89,7 @@ File::write(char *buffer, size_t count, l_off_t offset)
 // open the file
 //----------------------------------------------------------------
 
-File::open(Inode* inode)
+void File::open(Inode* inode)
 {
 }
 
@@ -92,7 +97,7 @@ File::open(Inode* inode)
 // close the file
 //----------------------------------------------------------------
 
-File::close()
+void File::close(Inode* inode)
 {
 }
 
@@ -100,6 +105,6 @@ File::close()
 // flush all off the file's wirte operations.
 //----------------------------------------------------------------
 
-File::flush()
+void File::flush()
 {
 }
