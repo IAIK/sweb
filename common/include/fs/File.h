@@ -20,7 +20,7 @@
 #define FILE_H__
 
 #include "types.h"
-#include "fs/PointList.h"
+#include "fs/List.h"
 
 // forward declarations
 class Inode;
@@ -41,7 +41,7 @@ class File
     /// Seek from the end of the file.
     static const uint8 SEEK_END = 2;
 
-    typedef PointList<File> FList;
+    typedef List<File> FList;
 
     typedef uint32 mode_t;
 
@@ -65,7 +65,7 @@ class File
     FList f_list_;
 
     /// The Filename
-    char *name_;
+    // char *name_;
 
     /// The indoe associated to the file.
     Inode* inode_;
@@ -143,13 +143,20 @@ class File
     /// @param buffer is the buffer where the data is read from
     /// @param count is the number of bytes to write.
     /// @param offset is the offset to write from counted from the start of the file.
-    int32 write(char *buffer, size_t count, l_off_t offset);
+  int32 write(char *buffer, size_t count, l_off_t offset);
 
     //----------------------------------------------------------------------
     /// Open the file
     ///
     /// @param inode is the inode the read the file from.
-    int32 open(Inode* inode);
+  int32 open(Inode* inode);
+
+  //-----------------------------------------------------------------------
+  /// Close the file
+  ///
+  /// @param inode is close, the superblock has the information, that this
+  /// inode is not use anymore.
+  int32 close(Inode* inode);
 
     //----------------------------------------------------------------------
     /// Flush all off the file's write operations. The File will be written to disk.
