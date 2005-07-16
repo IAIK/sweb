@@ -70,7 +70,7 @@ class Inode
 
   /// the reference count of the inode. if i_count_ is zero, it can be free
   /// the inode.
-  // uint32 i_count_;
+  uint32 i_count_;
 
   /// reference of superblock
   Superblock *i_superblock_;

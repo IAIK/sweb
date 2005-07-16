@@ -55,17 +55,14 @@ class RamFsInode : public Inode
 
     virtual ~RamFsInode();
 
-    //--------------------------------------------------------------------------
-    // This methode are only meaningful on directory inodes.
-    //--------------------------------------------------------------------------
-    /// create is called when the VFS wants to create a file with the given name
-    /// (in the dentry) in the given directory. The VFS will have already checked
-    /// that the name doesn't exist, and the dentry passed will be a negative
-    /// dentry meanging that the inode pointer will be NULL.If create successful,
-    /// get a new empty inode from the cache with get_empty_inode, fill in the
-    /// fields and insert it into the hash table with insert_inode_hash, mark it
-    /// dirty, and instantiate it into the Dcache with d_instantiate.
-    virtual int32 create(Inode *inode, Dentry *dentry) { return 0; }
+  //--------------------------------------------------------------------------
+  // This methode are only meaningful on directory inodes.
+  //--------------------------------------------------------------------------
+  /// create is called when the VFS wants to create a file with the given name
+  /// (in the dentry) in the given directory. The VFS will have already checked
+  /// that the name doesn't exist, and the dentry passed will be a negative
+  /// dentry meanging that the inode pointer will be NULL.
+  virtual int32 create(Dentry *dentry);
 
     /// lookup should check if that name (given by the Dentry) exists in the
     /// directory (given by the inode) and should update the Dentry using d_add
@@ -90,15 +87,15 @@ class RamFsInode : public Inode
     virtual int32 symlink(Inode *inode, Dentry *dentry, const char *link_name)
     {return 0;}
 
-    /// Create a directory with the given parent and name.
-    virtual int32 mkdir(Inode *inode, Dentry *dentry) {return 0;}
+  /// Create a directory with the given parent and name.
+  virtual int32 mkdir(Dentry *dentry);
 
     /// Remove the named directory (if empty) and d_delete the dentry.
     virtual int32 rmdir(Inode *inode, Dentry *dentry) {return 0;}
 
-    /// Create a device special file with the given parent, name and device
-    /// number. Then d_instantiate the new inode into the dentry.
-    virtual int32 mknod(Inode *inode, Dentry *dentry, int32 dev_num) {return 0;}
+  /// Create a device special file with name and device number (the inode is
+  /// the parent).
+  virtual int32 mknod(Dentry *dentry);
 
     /// The src_inode and src_entry refer to a directory and name that exist.
     /// rename should rename the object to have the parent and name given by the
