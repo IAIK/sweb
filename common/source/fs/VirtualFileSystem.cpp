@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.5 2005/07/07 15:01:46 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.6 2005/07/16 13:22:00 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.5  2005/07/07 15:01:46  davrieb
+// a few vfs fixes
+//
 // Revision 1.4  2005/07/07 12:31:48  davrieb
 // add ramfs
 //
@@ -48,33 +51,28 @@ Superblock *FileSystemType::readSuper(int32 /*flags*/, const char* /*dev_name*/)
   return 0;
 }
 
-VirtualFileSystem::VirtualFileSystem():
-  superblock_(0)
+//----------------------------------------------------------------------
+VirtualFileSystem::VirtualFileSystem()
 {
 }
 
+//----------------------------------------------------------------------
 VirtualFileSystem::~VirtualFileSystem()
 {
 }
 
+//----------------------------------------------------------------------
 int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)
 {
-  if (file_system_type == 0)
-  {
-    return -1;
-  }
-
-  if (file_system_type->getFSName() == 0)
-  {
-    return -2;
-  }
+  assert(file_system_type);
+  assert(file_system_type->getFSName());
 
   file_system_types_.pushBack(file_system_type);
   return 0;
 
 }
 
-
+//----------------------------------------------------------------------
 int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 {
   assert(file_system_type != 0);
@@ -86,6 +84,7 @@ int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
   {
     if (strcmp(file_system_types_[counter]->getFSName(), fs_name))
     {
+      delete file_system_types_[counter];
       file_system_types_.remove(counter);
     }
   }

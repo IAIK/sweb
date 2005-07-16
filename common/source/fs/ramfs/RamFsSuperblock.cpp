@@ -24,8 +24,10 @@ RamFsSuperblock::~RamFsSuperblock()
 //----------------------------------------------------------------------
 void RamFsSuperblock::read_inode(Inode* inode)
 {
-  RamFsInode *n_inode = new RamFsInode();
-  inode = (Inode*)n_inode;
+  assert(inode);
+
+  all_inodes_.push_end(inode);
+  s_inode_used_.push_end(inode);
 }
 
 //----------------------------------------------------------------------
@@ -36,5 +38,6 @@ void RamFsSuperblock::write_inode(Inode* inode)
 //----------------------------------------------------------------------
 void RamFsSuperblock::delete_inode(Inode* inode)
 {
+  all_inodes_.remove(inode);
 }
 

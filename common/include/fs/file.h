@@ -20,7 +20,7 @@
 #define FILE_H__
 
 #include "types.h"
-#include "fs/List.h"
+#include "fs/PointList.h"
 
 // forward declarations
 class Inode;
@@ -41,7 +41,7 @@ class File
     /// Seek from the end of the file.
     static const uint8 SEEK_END = 2;
 
-    typedef List<File> FList;
+    typedef PointList<File> FList;
 
     typedef uint32 mode_t;
 

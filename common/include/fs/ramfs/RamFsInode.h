@@ -18,7 +18,7 @@
 
 #include "types.h"
 #include "../Superblock.h"
-#include "../List.h"
+#include "fs/PointList.h"
 
 class FileLock;
 class VMArea;
@@ -66,17 +66,17 @@ class RamFsInode
     /// The i_hash_ linked list links together all inodes which hash to the same
     /// hash bucket. Hash values are based on the address of the superblock
     /// class, and the inode number of the inode.
-    /// List i_hash_;
+    /// PointList i_hash_;
 
     /// The i_list_ linked list links inodes in various states. There is the
     /// inode_in_use list which lists unchanged inodes that are in active use.
     /// inode_unused which lists unused inodes, and the s_dirty_ of Superblock
     /// class store all the dirty inodes on the given file system.
-    List<Inode> *i_list_;
+    PointList<Inode> *i_list_;
 
     /// The i_dentry list is a list of all class Dentrys that refer to this
     /// inode. They are linked together with the d_alias_ field of the Dentry.
-    List<Inode> *i_dentry_;
+    PointList<Inode> *i_dentry_;
     //--------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------

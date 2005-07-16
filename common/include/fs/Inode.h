@@ -18,7 +18,7 @@
 #define Inode_h___
 
 #include "types.h"
-#include "List.h"
+#include "fs/PointList.h"
 #include "Dentry.h"
 #include "file.h"
 
@@ -67,7 +67,7 @@ class Inode
   /// inode_in_use list which lists unchanged inodes that are in active use.
   /// inode_unused which lists unused inodes, and the s_dirty_ of Superblock
   /// class store all the dirty inodes on the given file system.
-  List<Inode> i_list_;
+  PointList<Inode> i_list_;
 
   /// The dentry of this inode.
   Dentry *i_dentry_;

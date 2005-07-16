@@ -1,5 +1,6 @@
 
 #include "fs/ramfs/RamFileSystemType.h"
+//#include "fs/ramfs/RamFsSuperblock.h"
 
 //----------------------------------------------------------------------
 RamFileSystemType::RamFileSystemType()
@@ -12,7 +13,8 @@ RamFileSystemType::~RamFileSystemType()
 {
 }
 
-Superblock *RamFileSystemType::readSuper(int32 flags, const char* dev_name)
+Superblock *RamFileSystemType::readSuper(int32 flags, const char* /*dev_name*/)
 {
+  //return (Superblock*)(new RamFsSuperblock);
 }
 

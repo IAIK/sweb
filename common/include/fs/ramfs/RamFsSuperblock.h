@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: RamFsSuperblock.h,v $
 //
-// $Id: RamFsSuperblock.h,v 1.2 2005/07/07 12:31:19 davrieb Exp $
+// $Id: RamFsSuperblock.h,v 1.3 2005/07/16 13:22:00 davrieb Exp $
 // $Log: RamFsSuperblock.h,v $
+// Revision 1.2  2005/07/07 12:31:19  davrieb
+// add ramfs and all changes it caused
+//
 // Revision 1.1  2005/06/01 09:20:36  davrieb
 // add all changes to fs
 //
@@ -15,6 +18,7 @@
 #ifndef RamFsSuperblock_h___
 #define RamFsSuperblock_h___
 
+#include "fs/PointList.h"
 #include "fs/Superblock.h"
 
 class Superblock;
@@ -30,6 +34,10 @@ class Superblock;
  */
 class RamFsSuperblock : public Superblock
 {
+
+protected:
+  PointList<Inode> all_inodes_;
+
 public:
 
   RamFsSuperblock(FileSystemType *s_type, Dentry* s_root) :

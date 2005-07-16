@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.3 2005/07/07 12:31:19 davrieb Exp $
+// $Id: Superblock.h,v 1.4 2005/07/16 13:22:00 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.3  2005/07/07 12:31:19  davrieb
+// add ramfs and all changes it caused
+//
 // Revision 1.2  2005/06/01 09:20:36  davrieb
 // add all changes to fs
 //
@@ -17,14 +20,14 @@
 
 #include "types.h"
 #include "Dentry.h"
-#include "List.h"
+#include "fs/PointList.h"
 #include "Inode.h"
-#include "FileSystemType.h"
 #include "file.h"
 
 class Iattr;
 class Statfs;
 class WaitQueue;
+class FileSystemType;
 
 //-----------------------------------------------------------------------------
 /**
@@ -61,15 +64,15 @@ protected:
   Dentry *s_root_;
 
   /// A list of dirty inodes.
-  List<Inode> s_inode_dirty_;
+  PointList<Inode> s_inode_dirty_;
 
   /// A list of used inodes.
-  List<Inode> s_inode_used_;
+  PointList<Inode> s_inode_used_;
 
   /// This is a list of files (linked on f_list) of open files on this
   /// file-system. It is used, for example, to check if there are any files
   /// open for write before remounting the file-system as read-only.
-  List<File> s_files_;
+  PointList<File> s_files_;
 
   //--------------------------------------------------------------------------
   // SYNCHRONIZATION

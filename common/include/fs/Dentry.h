@@ -15,7 +15,7 @@
 
 #include "types.h"
 #include "Inode.h"
-#include "List.h"
+#include "fs/PointList.h"
 #include "Superblock.h"
 
 #ifndef Dentry_h___
@@ -91,12 +91,12 @@ class Dentry
 
   /// This list_head is used to link together all the children of the d_parent_
   /// of this dentry.
-  List<Dentry> d_child_; /* child of parent list */
+  PointList<Dentry> d_child_; /* child of parent list */
 
   /// This is the head of the d_child list that links all the children of this
   /// dentry. Of course, elements may refer to file and not just
   /// sub-directories.
-  List<Dentry> d_subdirs_; /* our children */
+  PointList<Dentry> d_subdirs_; /* our children */
 
   /// For a directory that has had a file-system mounted on it, this points to
   /// the root dentry of that file-system. For other dentries, this points back

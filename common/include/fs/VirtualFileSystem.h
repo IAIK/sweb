@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.4 2005/07/07 13:36:58 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.5 2005/07/16 13:22:00 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.4  2005/07/07 13:36:58  davrieb
+// fix include of kmalloc
+//
 // Revision 1.3  2005/07/07 12:31:19  davrieb
 // add ramfs and all changes it caused
 //
@@ -72,7 +75,7 @@ class VirtualFileSystem
 {
   protected:
 
-    Superblock *superblock_;
+    List<Superblock*> superblocks_;
 
     /// A null-terminated array of file system types.
     List<FileSystemType*> file_system_types_;
