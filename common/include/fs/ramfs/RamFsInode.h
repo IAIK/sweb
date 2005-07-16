@@ -19,29 +19,13 @@
 #include "types.h"
 #include "../Superblock.h"
 #include "fs/PointList.h"
+#include "fs/Inode.h"
 
 class FileLock;
-class VMArea;
-class WaitQueue;
-class Swmaphore;
 class Dentry;
 class BufferHead;
-class Semaphore;
-class File;
-class Page;
-
-// three possible inode state bits:
-#define I_DIRTY 1 // Dirty inodes are on the per-super-block s_dirty_ list, and
-// will be written next time a sync is requested.
-#define I_LOCK 2 // Inodes are locked while they are being created, read oder
-// written.
-#define I_FREEING 4 // An inode is has this state when the reference count and
-// link count have both reached zero. This seems to be only
-// used by fat file-system.
-
-// The per-inode flags:
-#define MS_NODEV 2 // If this inode is a device special file, it cannot be
-// opend.
+// class File;
+// class Page;
 
 //-------------------------------------------------------------------------
 /**
@@ -57,91 +41,17 @@ class Page;
  * number. Inodes with the same hash value are then chained together in a
  * doubly linked list.
  */
-class RamFsInode
+class RamFsInode : public Inode
 {
+
   protected:
-    //--------------------------------------------------------------------------
-    // list of the inode
-    //--------------------------------------------------------------------------
-    /// The i_hash_ linked list links together all inodes which hash to the same
-    /// hash bucket. Hash values are based on the address of the superblock
-    /// class, and the inode number of the inode.
-    /// PointList i_hash_;
 
-    /// The i_list_ linked list links inodes in various states. There is the
-    /// inode_in_use list which lists unchanged inodes that are in active use.
-    /// inode_unused which lists unused inodes, and the s_dirty_ of Superblock
-    /// class store all the dirty inodes on the given file system.
-    PointList<Inode> *i_list_;
-
-    /// The i_dentry list is a list of all class Dentrys that refer to this
-    /// inode. They are linked together with the d_alias_ field of the Dentry.
-    PointList<Inode> *i_dentry_;
-    //--------------------------------------------------------------------------
-
-    //--------------------------------------------------------------------------
-    // Elementar
-    //--------------------------------------------------------------------------
-    /// the reference count of the inode. if i_count_ is zero, it can be free 
-    /// the inode.
-    uint64 i_count_;
-
-    Superblock *i_superblock_;
-
-    /// the data size of a inode.
-    // off_t i_size_;
-
-    /// The are three passible inode state bits: I_DIRTY, I_LOCK, I_FREEING.
-    uint32 i_state_;
-
-    /// This points to the list of class FileLock that impose locks in this
-    /// inode.
-    FileLock *i_flock_;
-    //--------------------------------------------------------------------------
-
-    //--------------------------------------------------------------------------
-    // memory variable
-    //--------------------------------------------------------------------------
-    /// All of the WMArea class that describe mapping of an inode are linked
-    /// together with the vm_next_share and vm_pprev_share pointers. This i_mmap_
-    /// pointer points into that list.
-    VMArea *i_mmap_;
-
-    /// If this is positive, it counts the number of clients (files or memory
-    /// maps) which have write access. If negative, then the absolute value of
-    /// this number counts the number of VM_DENYWRITE mappings that are current.
-    /// Otherwise it is 0, and onbody is trying to write or trying to stop others
-    /// from writing.
-    int32 i_write_count_;
-    //--------------------------------------------------------------------------
-
-    //--------------------------------------------------------------------------
-    // inode synchronization
-    //--------------------------------------------------------------------------
-    /// This is a queue of processes that are waiting for i_sem_ swmaphore on the
-    /// inode.
-    WaitQueue *i_wait_;
-
-    /// This swmaphore guards changes to the inode. Any code that wants to make
-    /// non-atomic access to the inode (i.e. two related accesses with the
-    /// possibility of sleeping inbetween) must first claim this semaphore. This
-    /// includes such things as allocating and deallocating blocks and searching
-    /// through directories.
-    Semaphore *i_sem_;
-    //--------------------------------------------------------------------------
-
-    //--------------------------------------------------------------------------
-    // Quota management
-    //--------------------------------------------------------------------------
-    /// to limit the number of inode
-    // Dquot *i_dquot_[MAXQUOTAS];
-    //--------------------------------------------------------------------------
-
+    /// the data of the inode
     int32* data_;
+  
+    public:
 
-  public:
-
-    RamFsInode();
+    RamFsInode(Superblock *super_block, uint32 inode_mode);
 
     virtual ~RamFsInode();
 
@@ -225,9 +135,9 @@ class RamFsInode
 
     /// It is needed for memory mapping of files, for using the send file system
     /// call.
-    virtual int32 read_page(File *, Page *) { return 0; }
-    virtual int32 wirte_page(File *, Page *) { return 0; }
-    virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
+    // virtual int32 read_page(File *, Page *) { return 0; }
+    // virtual int32 wirte_page(File *, Page *) { return 0; }
+    // virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
 
     int32 readData(int32 offset, int32 size, int32 *buffer);
 };

@@ -23,13 +23,9 @@
 #include "File.h"
 
 class Dentry;
-class VMArea;
-class WaitQueue;
-class Swmaphore;
 class BufferHead;
-class Semaphore;
 class File;
-class Page;
+// class Page;
 class Superblock;
 
 // three possible inode state bits:
@@ -94,36 +90,6 @@ class Inode
   /// There are three possible inode state bits: I_DIRTY, I_LOCK.
   uint32 i_state_;
 
-  //--------------------------------------------------------------------------
-  // memory variable
-  //--------------------------------------------------------------------------
-  /// All of the WMArea class that describe mapping of an inode are linked
-  /// together with the vm_next_share and vm_pprev_share pointers. This i_mmap_
-  /// pointer points into that list.
-  VMArea *i_mmap_;
-
-  /// If this is positive, it counts the number of clients (files or memory
-  /// maps) which have write access. If negative, then the absolute value of
-  /// this number counts the number of VM_DENYWRITE mappings that are current.
-  /// Otherwise it is 0, and onbody is trying to write or trying to stop others
-  /// from writing.
-  int32 i_write_count_;
-  //--------------------------------------------------------------------------
-
-  //--------------------------------------------------------------------------
-  // inode synchronization
-  //--------------------------------------------------------------------------
-  /// This is a queue of processes that are waiting for i_sem_ swmaphore on the
-  /// inode.
-  WaitQueue *i_wait_;
-
-  /// This swmaphore guards changes to the inode. Any code that wants to make
-  /// non-atomic access to the inode (i.e. two related accesses with the
-  /// possibility of sleeping inbetween) must first claim this semaphore. This
-  /// includes such things as allocating and deallocating blocks and searching
-  /// through directories.
-  Semaphore *i_sem_;
-  //--------------------------------------------------------------------------
 
  public:
 
@@ -206,9 +172,9 @@ class Inode
 
   /// It is needed for memory mapping of files, for using the send file system
   /// call.
-  virtual int32 read_page(File *, Page *) { return 0; }
-  virtual int32 wirte_page(File *, Page *) { return 0; }
-  virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
+  // virtual int32 read_page(File *, Page *) { return 0; }
+  // virtual int32 wirte_page(File *, Page *) { return 0; }
+  // virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
 };
 
 
