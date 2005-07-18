@@ -92,8 +92,6 @@ void Dentry::d_delete()
   if(d_count_ == 1 && d_inode_ != 0)
   {
     d_parent_->d_child_remove(this);
-    d_count_--;
-    set_inode(0);
     //TODO: update in the super_block
   }
 }

@@ -17,12 +17,10 @@
 #define RamFsInode_h___
 
 #include "types.h"
-#include "../Superblock.h"
+#include "fs/Superblock.h"
 #include "fs/PointList.h"
 #include "fs/Inode.h"
 
-class FileLock;
-class Dentry;
 class BufferHead;
 // class File;
 // class Page;
@@ -43,17 +41,16 @@ class BufferHead;
  */
 class RamFsInode : public Inode
 {
+protected:
 
-  protected:
-
-    /// the data of the inode
-    int32* data_;
+  /// the data of the inode
+  int32* data_;
   
-    public:
+public:
 
-    RamFsInode(Superblock *super_block, uint32 inode_mode);
+  RamFsInode(Superblock *super_block, uint32 inode_mode);
 
-    virtual ~RamFsInode();
+  virtual ~RamFsInode();
 
   //--------------------------------------------------------------------------
   // This methode are only meaningful on directory inodes.
@@ -71,15 +68,15 @@ class RamFsInode : public Inode
     /// Dentry, with an inode pointer of NULL.
     virtual Dentry* lookup(Inode *inode, Dentry *dentry) {return((Dentry*)0);}
 
-    /// The link method should make a hard link from the name refered to by the
-    /// src_dentry to the name referred to by the dst_denty, which is in the
-    /// directory refered to by the Inode.
-    virtual int32 link(Dentry *src_dentry, Inode *inode, Dentry *dst_dentry)
-    {return 0;}
+  /// The link method should make a hard link to the name referred to by the
+  /// denty, which is in the directory refered to by the Inode. 
+  /// @param dentry before link the dentry, the dentry muss be created.
+  virtual int32 link(Dentry *dentry);
 
-    /// This should remove the name refered to by the Dentry from the directory
-    /// referred to by the inode. It should d_delete the Dentry on success.
-    virtual int32 unlink(Inode *inode, Dentry *dentry) {return 0;}
+  /// This should remove the name refered to by the Dentry from the directory
+  /// referred to by the inode.
+  /// @param dentry after unlinked the dentry, the dentry muss be destructed.
+  virtual int32 unlink(Dentry *dentry);
 
     /// This should create a symbolic link in the given directory with the given
     /// name having the given value. It should d_instantiate the new inode into
@@ -90,8 +87,8 @@ class RamFsInode : public Inode
   /// Create a directory with the given parent and name.
   virtual int32 mkdir(Dentry *dentry);
 
-    /// Remove the named directory (if empty) and d_delete the dentry.
-    virtual int32 rmdir(Inode *inode, Dentry *dentry) {return 0;}
+  /// Remove the named directory (if empty) and d_delete the dentry.
+  virtual int32 rmdir(Dentry *dentry);
 
   /// Create a device special file with name and device number (the inode is
   /// the parent).
@@ -136,7 +133,7 @@ class RamFsInode : public Inode
     // virtual int32 wirte_page(File *, Page *) { return 0; }
     // virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
 
-    int32 readData(int32 offset, int32 size, int32 *buffer);
+  int32 readData(int32 offset, int32 size, int32 *buffer);
 };
 
 

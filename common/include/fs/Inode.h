@@ -65,13 +65,19 @@ class Inode
   /// class store all the dirty inodes on the given file system.
   PointList<Inode> i_list_;
 
-  /// The dentry of this inode.
+  /// The dentry of this inode. (dir)
   Dentry *i_dentry_;
+
+  /// The dentry-PointList of this inode. (file)
+  PointList<Dentry> i_dentry_link_;
 
   /// the reference count of the inode. if i_count_ is zero, it can be free
   /// the inode.
   uint32 i_count_;
-
+  
+  /// the number of the link of this inode.
+  uint32 i_nlink_;
+  
   /// reference of superblock
   Superblock *i_superblock_;
 
@@ -117,13 +123,13 @@ class Inode
   /// Dentry, with an inode pointer of NULL.
   virtual Dentry* lookup(Inode *inode, Dentry *dentry) {return((Dentry*)0);}
 
-  /// The link method should make a hard link to by the dst_denty, which is in
+  /// The link method should make a hard link to by the dentry, which is in
   /// the directory refered to by the Inode.
-  virtual int32 link(Dentry *dst_dentry) {return 0;}
+  virtual int32 link(Dentry *dentry) {return 0;}
 
   /// This should remove the name refered to by the Dentry from the directory
   /// referred to by the inode. It should d_delete the Dentry on success.
-  virtual void unlink(Dentry *dentry) {}
+  virtual int32 unlink(Dentry *dentry) {return 0;}
 
   /// This should create a symbolic link in the given directory with the given
   /// name having the given value. It should d_instantiate the new inode into
