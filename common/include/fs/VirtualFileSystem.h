@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.5 2005/07/16 13:22:00 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.6 2005/07/19 17:11:03 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.5  2005/07/16 13:22:00  davrieb
+// rrename List in fs to PointList to avoid name clashes
+//
 // Revision 1.4  2005/07/07 13:36:58  davrieb
 // fix include of kmalloc
 //
@@ -35,41 +38,7 @@
 #include "kernel/List.h"
 
 class Superblock;
-
-class FileSystemType
-{
-
-  protected:
-
-    char* fs_name_;
-
-    int32 fs_flags_;
-
-  public:
-
-    FileSystemType();
-
-    virtual ~FileSystemType();
-
-    FileSystemType const &operator =(FileSystemType const &instance)
-    {
-      fs_name_ = instance.fs_name_;
-      fs_flags_ = instance.fs_flags_;
-      return (*this);
-    }
-
-    const char* getFSName() const;
-
-    int32 getFSFlags() const;
-
-    /// Reads the superblock from the device.
-    ///
-    /// @return is a pointer to the resulting superblock.
-    /// @param flags contains the mount flags.
-    /// @param dev_name is the name of the device where the superblock will be read from.
-    Superblock *readSuper(int32 flags, const char* dev_name);
-
-};
+class FileSystemType;
 
 class VirtualFileSystem
 {

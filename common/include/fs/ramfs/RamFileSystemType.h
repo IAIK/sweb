@@ -2,7 +2,8 @@
 #ifndef RAMFILESYSTEMTYPE_H__
 #define RAMFILESYSTEMTYPE_H__
 
-#include "fs/VirtualFileSystem.h"
+
+#include "fs/FileSystemType.h"
 
 
 class RamFileSystemType : public FileSystemType
@@ -17,9 +18,9 @@ class RamFileSystemType : public FileSystemType
     /// Reads the superblock from the device.
     ///
     /// @return is a pointer to the resulting superblock.
-    /// @param flags contains the mount flags.
-    /// @param dev_name is the name of the device where the superblock will be read from.
-    Superblock *readSuper(int32 flags, const char* dev_name);
+    /// @param superblock is the superblock to fill with data.
+    /// @param data is the data given to the mount system call.
+    Superblock *readSuper(Superblock *superblock, void *dataa);
 
 };
 

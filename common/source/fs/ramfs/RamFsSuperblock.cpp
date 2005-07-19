@@ -25,9 +25,9 @@ RamFsSuperblock::~RamFsSuperblock()
 void RamFsSuperblock::read_inode(Inode* inode)
 {
   assert(inode);
+  assert(s_inode_used_.is_empty());
 
   all_inodes_.push_end(inode);
-  s_inode_used_.push_end(inode);
 }
 
 //----------------------------------------------------------------------
