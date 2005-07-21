@@ -31,7 +31,7 @@ void RamFsSuperblock::read_inode(Inode* inode)
 }
 
 //----------------------------------------------------------------------
-void RamFsSuperblock::write_inode(Inode* inode)
+void RamFsSuperblock::write_inode(Inode* /*inode*/)
 {
 }
 

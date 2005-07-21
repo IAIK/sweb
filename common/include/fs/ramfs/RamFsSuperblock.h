@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: RamFsSuperblock.h,v $
 //
-// $Id: RamFsSuperblock.h,v 1.3 2005/07/16 13:22:00 davrieb Exp $
+// $Id: RamFsSuperblock.h,v 1.4 2005/07/21 18:07:03 davrieb Exp $
 // $Log: RamFsSuperblock.h,v $
+// Revision 1.3  2005/07/16 13:22:00  davrieb
+// rrename List in fs to PointList to avoid name clashes
+//
 // Revision 1.2  2005/07/07 12:31:19  davrieb
 // add ramfs and all changes it caused
 //
@@ -20,6 +23,7 @@
 
 #include "fs/PointList.h"
 #include "fs/Superblock.h"
+#include "fs/ramfs/RamFsInode.h"
 
 class Superblock;
 
@@ -40,8 +44,30 @@ protected:
 
 public:
 
-  RamFsSuperblock(FileSystemType *s_type, Dentry* s_root) :
-                 Superblock(s_type, s_root) {}
+  RamFsSuperblock(Dentry* s_root) :
+    Superblock(s_root)
+  {
+
+    Dentry *root_dentry = 0;
+
+    if (s_root)
+    {
+      Dentry* parent = s_root->get_parent();
+      root_dentry = new Dentry(parent);
+
+      mounted_over_ = s_root;
+      s_root = root_dentry;
+    }
+    else
+    {
+      root_dentry = new Dentry(0);
+    }
+
+    Inode *root_inode = (Inode*)(new RamFsInode(this, I_DIR));
+    root_dentry->set_inode(root_inode);
+
+    all_inodes_.push_end(root_inode);
+  }
 
   virtual ~RamFsSuperblock();
 

@@ -20,6 +20,7 @@
 
 
 class Superblock;
+class Dentry;
 
 
 /// File system flag indicating if the system in question requires an device.
@@ -69,7 +70,12 @@ class FileSystemType
     /// @return is a pointer to the resulting superblock.
     /// @param superblock is the superblock to fill with data.
     /// @param data is the data given to the mount system call.
-    virtual Superblock *readSuper(Superblock *superblock, void *data);
+    virtual Superblock *readSuper(Superblock *superblock, void *data) const;
+
+    /// Creates an Superblock object for the actual file system type.
+    ///
+    /// @return a pointer to the Superblock object
+    virtual Superblock *createSuper(Dentry *root) const;
 
 };
 

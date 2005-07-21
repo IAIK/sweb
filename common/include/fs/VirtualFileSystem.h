@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.6 2005/07/19 17:11:03 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.7 2005/07/21 18:07:03 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.6  2005/07/19 17:11:03  davrieb
+// put filesystemtype into it's own file
+//
 // Revision 1.5  2005/07/16 13:22:00  davrieb
 // rrename List in fs to PointList to avoid name clashes
 //
@@ -26,7 +29,7 @@
 
 #include "types.h"
 #include "mm/kmalloc.h"
-// #include "Superblock.h"
+#include "fs/PointList.h"
 
 /// File system flag indicating if the system in question requires an device.
 #define FS_REQUIRES_DEV   0x0001 // located on a physical disk device
@@ -44,7 +47,7 @@ class VirtualFileSystem
 {
   protected:
 
-    List<Superblock*> superblocks_;
+    PointList<Superblock> superblocks_;
 
     /// A null-terminated array of file system types.
     List<FileSystemType*> file_system_types_;
@@ -67,6 +70,11 @@ class VirtualFileSystem
     /// object, if is present.
     FileSystemType *getFsType(const char* fs_name);
 
+    int32 mount(char* path, char* fs_name, int32 mode);
+
+    int32 root_mount(char* fs_name, int32 mode);
+
 };
 
 #endif
+

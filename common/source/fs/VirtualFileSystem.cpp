@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.7 2005/07/19 17:11:03 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.8 2005/07/21 18:07:04 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.7  2005/07/19 17:11:03  davrieb
+// put filesystemtype into it's own file
+//
 // Revision 1.6  2005/07/16 13:22:00  davrieb
 // rrename List in fs to PointList to avoid name clashes
 //
@@ -26,6 +29,7 @@
 
 #include "fs/FileSystemType.h"
 #include "fs/VirtualFileSystem.h"
+#include "fs/Dentry.h"
 #include "util/string.h"
 #include "assert.h"
 
@@ -86,5 +90,16 @@ FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
 
   return 0;
 
+}
+
+//----------------------------------------------------------------------
+int32 VirtualFileSystem::root_mount(char* fs_name, int32 mode)
+{
+  FileSystemType *fst = getFsType(fs_name);
+
+  Superblock *super = fst->createSuper(0);
+  super = fst->readSuper(super, 0);
+
+  superblocks_.push_end(super);
 }
 

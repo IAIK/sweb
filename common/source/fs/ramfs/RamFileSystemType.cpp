@@ -13,8 +13,14 @@ RamFileSystemType::~RamFileSystemType()
 {
 }
 
-Superblock *RamFileSystemType::readSuper(Superblock *superblock, void*)
+Superblock *RamFileSystemType::readSuper(Superblock *superblock, void*) const
 {
   return superblock;
+}
+
+Superblock *RamFileSystemType::createSuper(Dentry *root) const
+{
+  Superblock *super = new RamFsSuperblock(root);
+  return super;
 }
 

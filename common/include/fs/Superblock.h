@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.5 2005/07/16 13:36:29 davrieb Exp $
+// $Id: Superblock.h,v 1.6 2005/07/21 18:07:03 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.5  2005/07/16 13:36:29  davrieb
+// rename file.h and file.cpp to File.h and File.cpp
+//
 // Revision 1.4  2005/07/16 13:22:00  davrieb
 // rrename List in fs to PointList to avoid name clashes
 //
@@ -66,6 +69,9 @@ protected:
   /// by the mount command.
   Dentry *s_root_;
 
+  /// The old Dentry of the mount point of a mounted file system
+  Dentry *mounted_over_;
+
   /// A list of dirty inodes.
   PointList<Inode> s_inode_dirty_;
 
@@ -93,8 +99,9 @@ public:
 
 public:
 
-  Superblock(FileSystemType *s_type, Dentry* s_root)
-    { s_type_ = s_type; s_root_ = s_root; }
+  Superblock(Dentry* s_root) :
+    mounted_over_(0)
+    { s_root_ = s_root; }
 
   virtual ~Superblock();
 

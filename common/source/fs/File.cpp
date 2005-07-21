@@ -47,9 +47,10 @@ File::~File()
 // set the name of the file
 //----------------------------------------------------------------
 
-int32 File::setName(const char *name)
+int32 File::setName(const char *)
 {
-
+  assert(0);
+  return 0;
 }
 
 //----------------------------------------------------------------
@@ -58,6 +59,7 @@ int32 File::setName(const char *name)
 
 const char * File::getName() const
 {
+  return dentry_->get_name();
 }
 
 
@@ -67,38 +69,43 @@ const char * File::getName() const
 
 const Dentry *File::getDentry() const
 {
+  return dentry_;
 }
 
 //----------------------------------------------------------------
 // read from the file
 //----------------------------------------------------------------
 
-int32 File::read(char *buffer, size_t count, l_off_t offset)
+int32 File::read(char *, size_t, l_off_t)
 {
+  return 0;
 }
 
 //----------------------------------------------------------------
 // write to the file
 //----------------------------------------------------------------
 
-int32 File::write(char *buffer, size_t count, l_off_t offset)
+int32 File::write(char *, size_t, l_off_t)
 {
+  return 0;
 }
 
 //----------------------------------------------------------------
 // open the file
 //----------------------------------------------------------------
 
-int32 File::open(Inode* inode)
+int32 File::open(Inode*)
 {
+  return 0;
 }
 
 //----------------------------------------------------------------
 // close the file
 //----------------------------------------------------------------
 
-int32 File::close(Inode* inode)
+int32 File::close(Inode*)
 {
+  return 0;
 }
 
 //----------------------------------------------------------------
@@ -107,4 +114,5 @@ int32 File::close(Inode* inode)
 
 int32 File::flush()
 {
+  return 0;
 }

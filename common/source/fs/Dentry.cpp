@@ -19,7 +19,6 @@
 //---------------------------------------------------------------------------
 Dentry::Dentry(Dentry *parent)
 {
-  assert(parent != 0);
   d_parent_ = parent;
   d_name_ = new Qstr();
   d_inode_ = 0;
