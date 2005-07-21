@@ -230,6 +230,7 @@ extern syscallHandler
 arch_syscallHandler:
         pushAll
         changeData
+	call arch_saveThreadRegisters
         call syscallHandler
         popAll
         iretd

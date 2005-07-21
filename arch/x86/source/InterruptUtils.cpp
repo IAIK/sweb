@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.17 2005/07/12 21:05:38 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.18 2005/07/21 11:50:06 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.17  2005/07/12 21:05:38  btittelbach
+//  Lustiges Spielen mit UserProgramm Terminierung
+//
 //  Revision 1.16  2005/07/06 13:29:37  btittelbach
 //  testing
 //
@@ -537,9 +540,14 @@ extern "C" void syscallHandler()
   kprintfd("syscallHANDLER\n");
   // ok, find out the current thread
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  kprintfd("syscallHANDLER: *esp: %x; *(esp++): %x; *(esp--): %x;\n",*(reinterpret_cast<uint32*>(currentThreadInfo->esp)),*(reinterpret_cast<uint32*>(currentThreadInfo->esp)-1),*(reinterpret_cast<uint32*>(currentThreadInfo->esp)+1));
-  if (*(reinterpret_cast<uint32*>(currentThreadInfo->esp)) == 0xdeadbeef)
+  kprintfd("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
+                  currentThread->user_arch_thread_info_->ebx,
+                  currentThread->user_arch_thread_info_->ecx,
+                  currentThread->user_arch_thread_info_->edx);
+ 
+  if (currentThread->user_arch_thread_info_->eax == 0x0000dead)
   {
+    kprintfd("syscallHANDLER: Terminating Thread\n");
     currentThread->switch_to_userspace_ = false;
     currentThread->kill_me_=true;
     Scheduler::instance()->yield();
@@ -558,6 +566,7 @@ extern "C" void syscallHandler()
     ArchInterrupts::enableInterrupts();
   }
 }
+
 IRQ_HANDLER(1)
 IRQ_HANDLER(2)
 //IRQ_HANDLER(3)
