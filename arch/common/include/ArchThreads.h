@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.6 2005/06/14 18:22:37 btittelbach Exp $
+//  $Id: ArchThreads.h,v 1.7 2005/07/21 19:08:39 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.6  2005/06/14 18:22:37  btittelbach
+//  RaceCondition anfälliges LoadOnDemand implementiert,
+//  sollte optimalerweise nicht im InterruptKontext laufen
+//
 //  Revision 1.5  2005/05/31 17:29:16  nomenquis
 //  userspace
 //
@@ -43,6 +47,7 @@ public:
   
   static void initialise();
   static void switchToThreadOnIret(Thread *thread);
+  static void cleanupThreadInfos(ArchThreadInfo *&info);
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
   static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack);
 

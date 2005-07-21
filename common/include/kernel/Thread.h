@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.11 2005/07/12 21:05:38 btittelbach Exp $
+//  $Id: Thread.h,v 1.12 2005/07/21 19:08:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.11  2005/07/12 21:05:38  btittelbach
+//  Lustiges Spielen mit UserProgramm Terminierung
+//
 //  Revision 1.10  2005/06/14 18:22:37  btittelbach
 //  RaceCondition anfälliges LoadOnDemand implementiert,
 //  sollte optimalerweise nicht im InterruptKontext laufen
@@ -43,43 +46,9 @@
 
 #include "types.h"
 
+enum ThreadState {Running, Sleeping, ToBeDestroyed};
+
 class Thread;
-// thanx mona!
-
-/*
-typedef struct ArchThreadInfo
-{
-  uint32  eip;       // 0
-  uint32  cs;        // 4
-  uint32  eflags;    // 8
-  uint32  eax;       // 12
-  uint32  ecx;       // 16
-  uint32  edx;       // 20
-  uint32  ebx;       // 24
-  uint32  esp;       // 28
-  uint32  ebp;       // 32
-  uint32  esi;       // 36
-  uint32  edi;       // 40
-  uint32  ds;        // 44
-  uint32  es;        // 48
-  uint32  fs;        // 52
-  uint32  gs;        // 56
-  uint32  ss;        // 60
-  uint32  dpl;       // 64
-  uint32  esp0;      // 68
-  uint32  ss0;       // 72
-  uint32  cr3;       // 76
-  uint32  fpu[27];   // 80
-};
-
-typedef struct ArchThread
-{
-  ArchThreadInfo *thread_info;
-  Thread *thread;
-  
-};
-*/
-
 class ArchThreadInfo;
 class Loader;
   
@@ -89,8 +58,8 @@ friend class Scheduler;
 public:
   
   Thread();
-  
-
+  virtual ~Thread();
+  void kill();
   // runs whatever the user wants it to run;
 
 
@@ -108,7 +77,7 @@ public:
   
   Loader *loader_;
 
-  bool kill_me_;
+  ThreadState state_;
 
 private:
   
@@ -117,7 +86,6 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
-
 };
 
 

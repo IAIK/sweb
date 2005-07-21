@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.11 2005/07/12 21:05:38 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.12 2005/07/21 19:08:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.11  2005/07/12 21:05:38  btittelbach
+//  Lustiges Spielen mit UserProgramm Terminierung
+//
 //  Revision 1.10  2005/07/05 20:22:56  btittelbach
 //  some changes
 //
@@ -51,6 +54,7 @@
 #include "arch_panic.h"
 #include "ArchThreads.h"
 #include "console/kprintf.h"
+#include "ArchInterrupts.h"
 
 ArchThreadInfo *currentThreadInfo;
 Thread *currentThread;
@@ -71,11 +75,13 @@ public:
   {
     while (1)
     {
-//      kprintf("IDLE\n");
+      Scheduler::instance()->cleanupDeadThreads(); 
       Scheduler::instance()->yield();
     }
   }
+  
 };
+
 void Scheduler::createScheduler()
 {
   instance_ = new Scheduler();
@@ -88,6 +94,7 @@ void Scheduler::createScheduler()
 
 Scheduler::Scheduler()
 {
+  kill_me_=0;
 }
 
 void Scheduler::addNewThread(Thread *thread)
@@ -111,6 +118,20 @@ void Scheduler::removeCurrentThread()
   }
 }
 
+void Scheduler::sleep()
+{
+  if (threads_.size() > 1)
+  { 
+    currentThread->state_=Sleeping;
+    yield();
+  }
+}
+
+void Scheduler::wake(Thread* thread_to_wake)
+{
+  thread_to_wake->state_=Running;
+  //DEBUG: Check if thread_to_wake is in List
+}
 
 //exchanges the current Thread with a PopUpThread
 //note that the popupthread has to remember the original Thread*
@@ -119,10 +140,11 @@ Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
 {
   Thread *old_thread = threads_.back();
   if (old_thread != currentThread)
-  kprintf("Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
+    arch_panic((uint8*)"Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
   threads_.popBack();
   threads_.pushBack(pop_up_thread);
   currentThread=pop_up_thread;
+  return old_thread;
 }
 
 void Scheduler::startThreadHack()
@@ -137,30 +159,61 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
   {
     return 0;
   }
-
-  uint32 ret = 1;
-  currentThread = threads_.front();
-  threads_.popFront();
   
-  if (currentThread->kill_me_)
-  {
-    delete currentThread;
+  do {
     currentThread = threads_.front();
     threads_.popFront();
-  }
+    
+    if (kill_me_ == 0 && currentThread->state_ == ToBeDestroyed)
+    {
+      kill_me_=currentThread;
+      //to be killed Thread gets implicitly removed from list
+      continue;
+    }
+    
+    threads_.pushBack(currentThread);
+    
+  } while (currentThread->state_ != Running);
   
-  threads_.pushBack(currentThread);
+  uint32 ret = 1;
+  
   if ( currentThread->switch_to_userspace_)
     currentThreadInfo =  currentThread->user_arch_thread_info_;
   else
-    currentThreadInfo =  currentThread->kernel_arch_thread_info_, ret=0;
+  {
+    currentThreadInfo =  currentThread->kernel_arch_thread_info_;
+    ret=0;
+  }
   /*uint8*foo = 0;
   *foo = 8;*/
   return ret;
-
 }
 
 void Scheduler::yield()
 {
   ArchThreads::yield();
+}
+
+void Scheduler::cleanupDeadThreads()
+{
+  //check outside of atmoarity for performance gain,
+  // worst case, dead threads are around a while longer
+  //then make sure we're atomar (can't really lock list, can I ;->)
+  //note: currentThread is always last on list
+
+  if (kill_me_ == 0)
+    return;
+  
+  ArchInterrupts::disableInterrupts();
+  kprintfd("Scheduler::cleanupDeadThreads: now running\n");
+  if (kill_me_)
+  {
+    if (kill_me_->state_ == ToBeDestroyed)
+      delete kill_me_;  
+    else
+      kprintfd("Scheduler::cleanupDeadThreads: ERROR, how did that Thread get to be here\n");
+    kill_me_=0;
+  }
+  kprintfd("Scheduler::cleanupDeadThreads: done\n");
+  ArchInterrupts::enableInterrupts();
 }

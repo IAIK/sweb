@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.18 2005/07/21 11:50:06 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.19 2005/07/21 19:08:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.18  2005/07/21 11:50:06  btittelbach
+//  Basic Syscall
+//
 //  Revision 1.17  2005/07/12 21:05:38  btittelbach
 //  Lustiges Spielen mit UserProgramm Terminierung
 //
@@ -548,9 +551,7 @@ extern "C" void syscallHandler()
   if (currentThread->user_arch_thread_info_->eax == 0x0000dead)
   {
     kprintfd("syscallHANDLER: Terminating Thread\n");
-    currentThread->switch_to_userspace_ = false;
-    currentThread->kill_me_=true;
-    Scheduler::instance()->yield();
+    currentThread->kill();
   } 
   else
   {

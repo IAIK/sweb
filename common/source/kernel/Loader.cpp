@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.9 2005/07/12 21:05:38 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.10 2005/07/21 19:08:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.9  2005/07/12 21:05:38  btittelbach
+//  Lustiges Spielen mit UserProgramm Terminierung
+//
 //  Revision 1.7  2005/07/06 13:29:37  btittelbach
 //  testing
 //
@@ -243,6 +246,11 @@ void Loader::initUserspaceAddressSpace()
   ArchMemory::mapPage(page_dir_page_,2*1024*256-1, page_for_stack,1);
 }
 
+void Loader::cleanupUserspaceAddressSpace()
+{
+  ArchMemory::freePageDirectory(page_dir_page_);
+}
+
 
 uint32 Loader::loadExecutableAndInitProcess()
 {
@@ -253,55 +261,12 @@ uint32 Loader::loadExecutableAndInitProcess()
   
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
   
-  //~ kprintfd("Loader::loadExecutableAndInitProcess: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
-  //~ kprintfd("Loader::loadExecutableAndInitProcess: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
-  //~ kprintfd("Loader::loadExecutableAndInitProcess: Num ents: %d\n",hdr->e_phnum);
   kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x\n",hdr->e_entry);
   
-  //~ uint32 i;
-  //~ for (i=0;i<hdr->e_phnum;++i)
-  //~ {
-    //~ ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + i* hdr->e_phentsize);
-    //~ kprintf("Loader: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\n",i,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
-    
-    //~ pointer ptr = h->p_paddr;
-    //~ if (ptr % PAGE_SIZE)
-      //~ kprintf("Loader: Hell broke loose\n");
-    
-    //~ uint32 page_free = 0;
-    //~ uint32 still_to_write = h->p_memsz;
-    //~ uint32 still_to_read = h->p_filesz;
-    //~ uint8 *curr_ptr = 0;
-    //~ uint32 read = 0;
-    //~ while (still_to_write)
-    //~ {
-      //~ if (!page_free)
-      //~ {
-        //~ uint32 page = PageManager::instance()->getFreePhysicalPage();
-        //~ ArchMemory::mapPage(page_dir_page_,ptr/PAGE_SIZE,page,1);
-        //~ curr_ptr = (uint8*)ArchMemory::get3GBAdressOfPPN(page);
-        //~ page_free = PAGE_SIZE;
-      //~ }
-      //~ if (still_to_read > 0)
-      //~ {
-        //~ *curr_ptr = file_image_[h->p_offset + read]; 
-        //~ read++;
-        //~ still_to_read--;
-      //~ }
-      //~ else
-      //~ {
-        //~ *curr_ptr = 0;
-      //~ }
-      //~ curr_ptr++;
-      //~ still_to_write--;
-      //~ ptr++;
-      //~ page_free--;
-    //~ }
-  //~ }
-
   ArchThreads::createThreadInfosUserspaceThread(thread_->user_arch_thread_info_, hdr->e_entry, 2U*1024U*1024U*1024U-sizeof(pointer), thread_->getStackStartPointer());
-  ArchThreads::setPageDirectory(thread_,page_dir_page_);
+  ArchThreads::setPageDirectory(thread_, page_dir_page_);
 
+  return 0;
 }
 
 void Loader::loadOnePage(uint32 virtual_address)
@@ -373,9 +338,7 @@ void Loader::loadOnePage(uint32 virtual_address)
     //kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\r\n");
     kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");
     kprintfd( "Loader: loadOnePage(): terminating UserProcess\n");
-    currentThread->switch_to_userspace_ = false;
-    currentThread->kill_me_=true;
-    Scheduler::instance()->yield();
+    currentThread->kill();
     kpanict((uint8*) "Loader: loadOnePage(): PANIC should not reach\r\n");
   }
 }

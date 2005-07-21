@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.8 2005/07/05 17:29:48 btittelbach Exp $
+//  $Id: ArchThreads.cpp,v 1.9 2005/07/21 19:08:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.8  2005/07/05 17:29:48  btittelbach
+//  new kprintf(d) Policy:
+//  [Class::]Function: before start of debug message
+//  Function can be abbreviated "ctor" if Constructor
+//  use kprintfd where possible
+//
 //  Revision 1.7  2005/06/14 18:22:37  btittelbach
 //  RaceCondition anfälliges LoadOnDemand implementiert,
 //  sollte optimalerweise nicht im InterruptKontext laufen
@@ -167,6 +173,13 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->fpu[6] = 0xFFFF0000;
   kprintfd("ArchThreads::create: values done\n"); 
   
+}
+
+void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
+{
+  //avoid NULL-Pointer
+  if (info)
+    delete info;
 }
 
 void ArchThreads::yield()

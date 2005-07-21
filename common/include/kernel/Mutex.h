@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.h,v 1.2 2005/04/27 08:58:16 nomenquis Exp $
+//  $Id: Mutex.h,v 1.3 2005/07/21 19:08:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.h,v $
+//  Revision 1.2  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.1  2005/04/24 20:39:31  nomenquis
 //  cleanups
 //
@@ -14,7 +18,7 @@
 
 
 #include "types.h"
-#include "Array.h"
+#include "List.h"
 
 class Thread;
 class Mutex
@@ -23,14 +27,14 @@ public:
   
   Mutex();
 
-  void Acquire();
-  void Release();
+  void acquire();
+  void release();
 
 
 private:
   
   uint32 mutex_;
-  Array <Thread*> waiting_list_;
+  List<Thread*> sleepers_;
 
 };
 

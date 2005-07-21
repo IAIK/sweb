@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.13 2005/07/12 21:05:39 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.14 2005/07/21 19:08:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.13  2005/07/12 21:05:39  btittelbach
+//  Lustiges Spielen mit UserProgramm Terminierung
+//
 //  Revision 1.12  2005/07/12 17:53:13  btittelbach
 //  Bochs SerialConsole ist jetzt lesbar
 //
@@ -50,6 +53,7 @@
 #include "console/kprintf.h"
 #include "ArchThreads.h"
 #include "Scheduler.h"
+#include "Loader.h"
 
 static void ThreadStartHack()
 {
@@ -67,8 +71,32 @@ Thread::Thread()
 
   //kprintfd("Thread::Thread: After bzero\n");
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
+  user_arch_thread_info_=0;
   switch_to_userspace_ = 0;
-  kill_me_=false;
+  state_=Running;
+  loader_ = 0;
+}
+
+Thread::~Thread()
+{
+  if (loader_)
+  {
+    kprintfd("Thread::~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n");
+    loader_->cleanupUserspaceAddressSpace();
+    delete loader_;
+  }
+  kprintfd("Thread::~Thread: freeing ThreadInfos\n");
+  ArchThreads::cleanupThreadInfos(user_arch_thread_info_); //yes that's safe
+  ArchThreads::cleanupThreadInfos(kernel_arch_thread_info_);
+}
+
+//if the Thread we want to kill, is the currentThread, we better not return
+void Thread::kill()
+{
+  switch_to_userspace_ = false;
+  state_=ToBeDestroyed;
+  if (currentThread == this)
+    Scheduler::instance()->yield();
 }
 
 pointer Thread::getStackStartPointer()

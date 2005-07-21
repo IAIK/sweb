@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.5 2005/07/05 20:22:56 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.6 2005/07/21 19:08:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.5  2005/07/05 20:22:56  btittelbach
+//  some changes
+//
 //  Revision 1.4  2005/06/14 18:51:47  btittelbach
 //  afterthought page fault handling
 //
@@ -33,7 +36,6 @@ class ArchThreadInfo;
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
- 
 class Scheduler
 {
 public:
@@ -44,7 +46,9 @@ public:
   void addNewThread(Thread *thread);
   void removeCurrentThread();
   Thread *Scheduler::xchangeThread(Thread *pop_up_thread);
-
+  void sleep();
+  void wake(Thread* thread_to_wake);
+  void cleanupDeadThreads();
 
   void yield();
 
@@ -62,14 +66,7 @@ private:
 
   static void startThreadHack();
 
+  Thread* kill_me_;
+
 };
-
-
-
-
-
-
-
-
-
 #endif

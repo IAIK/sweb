@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.58 2005/07/21 11:50:06 btittelbach Exp $
+ * $Id: main.cpp,v 1.59 2005/07/21 19:08:41 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.58  2005/07/21 11:50:06  btittelbach
+ * Basic Syscall
+ *
  * Revision 1.57  2005/07/12 21:05:39  btittelbach
  * Lustiges Spielen mit UserProgramm Terminierung
  *
@@ -260,9 +263,9 @@ class StupidThread : public Thread
 
   StupidThread(uint32 id)
   {
-  //  lock->Acquire();
+  //  lock->acquire();
     thread_number_ = id;
- //   lock->Release();
+ //   lock->release();
   }
 
   virtual void Run()
@@ -271,11 +274,11 @@ class StupidThread : public Thread
     while (1)
     {
  //   kprintf("Thread %d trying to get the lock\n",thread_number_);
-      lock->Acquire();
+      lock->acquire();
       Scheduler::instance()->yield();
       //kprintf("Thread %d has the lock\n",thread_number_);
   //     kprintf("Kernel Thread %d %d\n",thread_number_,i++);
-      lock->Release();
+      lock->release();
       Scheduler::instance()->yield();
 
      // if( i++ >= 5 )
@@ -342,7 +345,7 @@ class FiniteLoopUserThread : public Thread
 
   virtual void Run()
   {
-    while (kill_me_ == false)
+    while (state_ != ToBeDestroyed)
     {
       kprintf("FiniteLoopUserThread:run: Going to userr, expect page fault\n");
       this->switch_to_userspace_ = 1;

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.9 2005/07/05 20:22:56 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.10 2005/07/21 19:08:39 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.9  2005/07/05 20:22:56  btittelbach
+//  some changes
+//
 //  Revision 1.8  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -112,10 +115,13 @@ void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_pag
   pte_base[pte_vpn].page_base_address = physical_page;
 }
 
+
+// only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT
+// want to free Kernel Pages
 void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
 {
   page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
-  for (uint32 pde_vpn=0; pde_vpn < PAGE_TABLE_ENTRIES; ++pde_vpn)
+  for (uint32 pde_vpn=0; pde_vpn < PAGE_TABLE_ENTRIES/2; ++pde_vpn)
   {
     if (page_directory[pde_vpn].pde4k.present)
     {
