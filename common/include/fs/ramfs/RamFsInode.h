@@ -61,12 +61,11 @@ public:
   /// dentry meanging that the inode pointer will be NULL.
   virtual int32 create(Dentry *dentry);
 
-    /// lookup should check if that name (given by the Dentry) exists in the
-    /// directory (given by the inode) and should update the Dentry using d_add
-    /// if it does. This involves finding and loading the inode. If the lookup
-    /// failed to find anything, this is indicated by returning a negative
-    /// Dentry, with an inode pointer of NULL.
-    virtual Dentry* lookup(Inode *inode, Dentry *dentry) {return((Dentry*)0);}
+  /// lookup should check if that name (given by the Dentry) exists in the
+  /// directory (given by the inode) and should update the Dentry if it does.
+  /// This involves finding and loading the inode. If the lookup failed to find
+  /// anything, this is indicated by returning a negative value.
+  virtual Dentry* lookup(Dentry *dentry);
 
   /// The link method should make a hard link to the name referred to by the
   /// denty, which is in the directory refered to by the Inode. 
@@ -87,8 +86,8 @@ public:
   /// Create a directory with the given parent and name.
   virtual int32 mkdir(Dentry *dentry);
 
-  /// Remove the named directory (if empty) and d_delete the dentry.
-  virtual int32 rmdir(Dentry *dentry);
+  /// Remove the named directory (if the sub_dentry is empty) and d_delete the dentry.
+  virtual int32 rmdir(Dentry *sub_dentry);
 
   /// Create a device special file with name and device number (the inode is
   /// the parent).

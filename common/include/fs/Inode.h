@@ -117,11 +117,10 @@ class Inode
   virtual int32 create(Dentry *dentry) { return 0; }
 
   /// lookup should check if that name (given by the Dentry) exists in the
-  /// directory (given by the inode) and should update the Dentry using d_add
-  /// if it does. This involves finding and loading the inode. If the lookup
-  /// failed to find anything, this is indicated by returning a negative
-  /// Dentry, with an inode pointer of NULL.
-  virtual Dentry* lookup(Inode *inode, Dentry *dentry) {return((Dentry*)0);}
+  /// directory (given by the inode) and should update the Dentry if it does.
+  /// This involves finding and loading the inode. If the lookup failed to find
+  /// anything, this is indicated by returning a negative value.
+  virtual Dentry* lookup(Dentry *dentry) {return 0;}
 
   /// The link method should make a hard link to by the dentry, which is in
   /// the directory refered to by the Inode.

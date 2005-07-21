@@ -20,8 +20,6 @@
 Dentry::Dentry(Dentry *parent)
 {
   assert(parent != 0);
-  parent->d_child_insert(this);
-  parent->increment_dcount();
   d_parent_ = parent;
   d_name_ = new Qstr();
   d_inode_ = 0;
@@ -34,15 +32,24 @@ Dentry::~Dentry()
   assert(d_count_ != 0);
   assert(d_inode_ != 0);
 
-  d_parent_->d_child_remove(this);
   delete d_name_;
 }
 
 //---------------------------------------------------------------------------
+int32 Dentry::dentry_destantiate()
+{
+  if(d_count_ != 1)
+    return -1;
+  
+  d_inode_ = 0;
+  d_count_--;
+  return 0;
+}
+//---------------------------------------------------------------------------
 void Dentry::d_child_insert(Dentry *child_dentry)
 {
   assert(child_dentry != 0);
-  increment_dcount();
+  d_count_++;
   d_child_.push_end(child_dentry);
 }
 
@@ -52,16 +59,18 @@ int32 Dentry::d_child_remove(Dentry *child_dentry)
   assert(child_dentry != 0);
   if(d_child_.remove(child_dentry) == 0)
   {
-    decrement_dcount();
+    d_count_--;
     return 0;
   }
   return -1;
 }
 
 //---------------------------------------------------------------------------
-bool Dentry::check_name(char* checked_name, uint32 checked_length)
+bool Dentry::check_name(Dentry *checked_dentry)
 {
   bool include = false;
+  char* checked_name = checked_dentry->get_name();
+  uint32 checked_length = checked_dentry->get_name_length();
   for(uint32 count = 0; count < (d_child_.getLength()); count++)
   {
     Dentry *dentry = (Dentry*)(d_child_.at(count));

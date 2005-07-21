@@ -75,7 +75,7 @@ class Dentry
 
   /// Dentry object usage count
   /// It increments if a inode linked with this dentry and derements if
-  /// unlinked.
+  /// unlinked. (linked with inode & linked with child)
   int32 d_count_;
 
   /// The pointer to the inode related to this name. This field may be NULL,
@@ -120,9 +120,13 @@ class Dentry
 public:
 
   void set_inode(Inode *inode) { d_inode_ = inode; }
+
+  void dentry_instantiate(Inode *inode) { d_inode_ = inode; d_count_++; }
+  int32 dentry_destantiate();
+  Dentry* get_parent() { return d_parent_; }
   Inode* get_inode() { return d_inode_; }
 
-  bool find_child(Dentry *entry) { return d_child_.is_included(entry); }
+  bool find_child(Dentry *dentry) { return d_child_.is_included(dentry); }
   bool empty_child() { return d_child_.is_empty(); }
 
   void increment_dcount() { d_count_++; }
@@ -135,7 +139,7 @@ public:
   /// This should compare the qstr with the all qstrs of the d_child_ list.
   /// It should return false if it exists the same qstr in the 
   /// list, return 0 if doesn't exist.
-  virtual bool check_name(char *name, uint32 length);
+  virtual bool check_name(Dentry *checked_dentry);
 
   /// remove a child dentry from the d_child_ list.
   /// @child the child dentry of the curent dentry.

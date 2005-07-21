@@ -96,8 +96,8 @@ int32 RamFsInode::link(Dentry *dentry)
     i_count_++;
     i_dentry_link_.push_end(dentry);
     
-    dentry->set_inode(this);
-    dentry->increment_dcount();
+    // dentry instantiate
+    dentry->dentry_instantiate(this);
   }
   else
   {
@@ -129,12 +129,52 @@ int32 RamFsInode::unlink(Dentry *dentry)
     i_count_--;
     i_dentry_link_.remove(dentry);
     
-    dentry->set_inode(0);
-    dentry->decrement_dcount();
+    if(i_dentry_link_.is_empty() == false)
+      return 0;
+  }
+
+  // dentry destantiate & remove correspondent dentry
+  int32 allow_remove = dentry->dentry_destantiate();
+  if(allow_remove == -1)
+  {
+    // Error: the dentry exists sub_directory
+    return -1;
   }
   else
   {
-    // Error: hard unlink invalid
+    Dentry *parent_dentry = dentry->get_parent();
+    parent_dentry->d_child_remove(dentry);
+    delete dentry;
+  }
+  
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+int32 RamFsInode::rmdir(Dentry *sub_dentry)
+{
+  if(sub_dentry == 0)
+  {
+    // Error: the dentry does not exist.
+    return -1;
+  }
+  
+  if(i_mode_ == I_DIR)
+  {
+    if(i_dentry_->check_name(sub_dentry) == true)
+    {
+      // ???
+      unlink(sub_dentry);
+    }
+    else
+    {
+      // Error: the name does not exist in the current directory.
+      return -1;
+    }
+  }
+  else
+  {
+    // Error: invalid command (only for Directory)
     return -1;
   }
   
@@ -142,9 +182,15 @@ int32 RamFsInode::unlink(Dentry *dentry)
 }
 
 //---------------------------------------------------------------------------
-int32 RamFsInode::rmdir(Dentry *dentry)
+Dentry* RamFsInode::lookup(Dentry *dentry)
 {
-  return 0;
+  if(dentry == 0)
+  {
+    // Error: the dentry does not exist.
+  }
+  
+  if(i_mode_ == I_DIR)
+  {
+  }
+  
 }
-
-//---------------------------------------------------------------------------
