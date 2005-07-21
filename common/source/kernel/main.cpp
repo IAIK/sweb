@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.59 2005/07/21 19:08:41 btittelbach Exp $
+ * $Id: main.cpp,v 1.60 2005/07/21 19:33:41 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.59  2005/07/21 19:08:41  btittelbach
+ * Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+ * Threads können schlafen, Mutex benutzt das jetzt auch
+ * Jetzt muß nur der Mutex auch überall verwendet werden
+ *
  * Revision 1.58  2005/07/21 11:50:06  btittelbach
  * Basic Syscall
  *
@@ -491,6 +496,7 @@ void startup()
   //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
 
   int32 *test = new int32[50];
+  //FiFo<uint32> test_fifo(20);
 
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
