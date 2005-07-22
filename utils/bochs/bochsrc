@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.13 2005/06/14 13:54:55 nomenquis Exp $
+#*    $Id: bochsrc,v 1.14 2005/07/22 13:35:56 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.13  2005/06/14 13:54:55  nomenquis
+#*    foobarpratz
+#*
 #*    Revision 1.12  2005/06/05 07:59:35  nelles
 #*    The kprintf_debug or kprintfd are finished
 #*
@@ -111,7 +114,7 @@
 config_interface: textconfig
 #config_interface: x
 #config_interface: wx
-
+gdbstub: enabled=0, port=12345
 #=======================================================================
 # DISPLAY_LIBRARY
 #

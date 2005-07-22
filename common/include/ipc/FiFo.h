@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.5 2005/07/21 19:33:41 btittelbach Exp $
+//   $Id: FiFo.h,v 1.6 2005/07/22 13:35:56 nomenquis Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.5  2005/07/21 19:33:41  btittelbach
+//   Fifo blocks now, and students still have the opportunity to implement a real cv
+//
 //   Revision 1.4  2005/04/28 09:07:42  btittelbach
 //   foobar
 //
@@ -97,14 +100,14 @@ T FiFo<T>::get()
     //block with a real cv, pseudo cv for now
     kprintfd("FiFo::get: blocking get\n");
     micro_cv_buffer_empty_=currentThread;
-    my_lock.release();
+    my_lock_.release();
     Scheduler::instance()->sleep();
-    my_lock.acquire();
+    my_lock_.acquire();
     micro_cv_buffer_empty_=0;    
   }
   read_pos_ = pos_add(read_pos_,1);
   T element = *read_pos_;
-  my_lock.release();
+  my_lock_.release();
   return element;
 }
 
@@ -123,9 +126,9 @@ void FiFo<T>::put(T in)
     //block somehow, need sync mechanism for this
     kprintfd("FiFo:put: blocking put\n");
     micro_cv_buffer_full_=currentThread;
-    my_lock.release();
+    my_lock_.release();
     Scheduler::instance()->sleep();
-    my_lock.acquire();
+    my_lock_.acquire();
     micro_cv_buffer_full_=0;
   }
   
@@ -134,7 +137,7 @@ void FiFo<T>::put(T in)
   
   *write_pos_=in;
   write_pos_ = pos_add(write_pos_,1);
-  my_lock.release();
+  my_lock_.release();
 }
 
 template <class T>
