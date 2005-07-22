@@ -1,8 +1,11 @@
 /********************************************************************
 *
-*  $Id: kernel-ld-script.ld,v 1.10 2005/05/10 16:29:42 nomenquis Exp $
+*  $Id: kernel-ld-script.ld,v 1.11 2005/07/22 15:29:42 nomenquis Exp $
 *
 *  $Log: kernel-ld-script.ld,v $
+*  Revision 1.10  2005/05/10 16:29:42  nomenquis
+*  stabs back into ro data
+*
 *  Revision 1.9  2005/05/08 21:43:55  nelles
 *  changed gcc flags from -g to -g3 -gstabs in order to
 *  generate stabs output in object files
@@ -108,12 +111,12 @@ kernel_start_address = .;
 
 /* bug in MinGW? I get a bad executable file unless these
 sections are here... */
-
+/*
   .stab : AT(LS_Phys + (LS_Stab - LS_Code))
   {
     LS_Stab = .;
     stab_start_address = .;
-    [ .stab ]
+    *(.stab)
     stab_end_address = .;
   }
     
@@ -121,10 +124,67 @@ sections are here... */
   {
     LS_Stabstr = .;
     stabstr_start_address = .;
-    [ .stabstr ]
+    *(.stabstr)
     stabstr_end_address = .;
   }
+  */
 /* symbols to mark end of kernel */
-		
+	
+/*
+  .stab          0 : { *(.stab) }
+  .stabstr       0 : { *(.stabstr) }
+  .stab.excl     0 : { *(.stab.excl) }
+  .stab.exclstr  0 : { *(.stab.exclstr) }
+  .stab.index    0 : { *(.stab.index) }
+  .stab.indexstr 0 : { *(.stab.indexstr) }
+  .comment       0 : { *(.comment) }
+*/ /*
+  .debug          0 : { *(.debug) }
+  .line           0 : { *(.line) }
+
+*/
+/*
+  .debug : AT(LS_Phys + (LS_Debug - LS_Code))
+  {
+    LS_Debug = .;
+    debug_start_address = .;
+    *(.debug)
+    debug_end_address = .;
+  }
+
+  .line : AT(LS_Phys + (LS_Line - LS_Code))
+  {
+    LS_Line = .;
+    line_start_address = .;
+    *(.line)
+    line_end_address = .;
+  }
+
+  .debug_srcinfo : AT(LS_Phys + (LS_DebugSrcInfo - LS_Code))
+  {
+    LS_DebugSrcInfo = .;
+    debug_srcinfo_start_address = .;
+    *(.debug_srcinfo)
+    debug_srcinfo_end_address = .;
+  }
+
+  .debug_sfnames : AT(LS_Phys + (LS_DebugSfNames - LS_Code))
+  {
+    LS_DebugSfNames = .;
+    line_start_address = .;
+    *(.debug_sfnames)
+    line_end_address = .;
+  }
+*/
+/*
+  .stab :  AT(LS_Phys + (LS_1 - LS_Code)) {LS_1 = .; *(.stab) }
+  .stabstr :  AT(LS_Phys + (LS_2 - LS_Code)) {LS_2 = .;  *(.stabstr) }
+  .stab.excl :  AT(LS_Phys + (LS_3 - LS_Code)) {LS_3 = .;  *(.stab.excl) }
+  .stab.exclstr :  AT(LS_Phys + (LS_4 - LS_Code)) {LS_4 = .;  *(.stab.exclstr) }
+  .stab.index :  AT(LS_Phys + (LS_5 - LS_Code)) {LS_5 = .;  *(.stab.index) }
+  .stab.indexstr :  AT(LS_Phys + (LS_6 - LS_Code)) {LS_6 = .;  *(.stab.indexstr) }
+  .comment :  AT(LS_Phys + (LS_7 - LS_Code)) {LS_7 = .;  *(.comment) }
+
+*/
 }
 kernel_end_address = .;

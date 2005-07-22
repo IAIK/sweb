@@ -32,7 +32,7 @@ all: kernel e2fsimage install
 #use just "make" instead
 kernel: $(SUBPROJECTS)
 ifeq ($(V),1)
-	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -u entry -u main -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
+	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -g -u entry -u main -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
 else
 	@echo "LD $(OBJECTDIR)/kernel.x"
 endif
@@ -79,3 +79,7 @@ bochs:
 bochsc:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot.img,status=inserted\"" 
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot.img,status=inserted" <<< c
+
+bochsgdb:
+	echo "Going to gdb bochs on port localhost:1234 " 
+	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot.img,status=inserted" "gdbstub: enabled=1, port=1234"

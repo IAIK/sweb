@@ -1,6 +1,14 @@
-# $Id: toolchain.mk,v 1.11 2005/05/31 13:23:25 nelles Exp $
+# $Id: toolchain.mk,v 1.12 2005/07/22 15:29:44 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.11  2005/05/31 13:23:25  nelles
+# panic function finally works as it should (I have lowered
+# the optimisation
+# level
+# from O2 to O1 and the problem seems to be fixed)
+#
+# p.s. I really hate the vi ... Notepad RULES
+#
 # Revision 1.10  2005/05/08 21:43:55  nelles
 # changed gcc flags from -g to -g3 -gstabs in order to
 # generate stabs output in object files
@@ -99,10 +107,10 @@ MAKE := $(MAKE_TEMP)
 
 ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
-#CXXFLAGS := $(CXXFLAGS) -fpack-struct -g3 -O1 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-#CCFLAGS := $(CCFLAGS) -fpack-struct -g3 -O1 -gstabs -Wall -W -nostdinc -fno-builtin
-CXXFLAGS := $(CXXFLAGS) -g3 -O1 -gstabs -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-CCFLAGS := $(CCFLAGS)  -O1 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
+#CXXFLAGS := $(CXXFLAGS) -fpack-struct -g -O1  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+#CCFLAGS := $(CCFLAGS) -fpack-struct -g -O1  -Wall -W -nostdinc -fno-builtin
+CXXFLAGS := $(CXXFLAGS) -g -O1  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+CCFLAGS := $(CCFLAGS)  -O1 -g  -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
 endif

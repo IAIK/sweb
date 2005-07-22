@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.14 2005/07/22 13:35:56 nomenquis Exp $
+#*    $Id: bochsrc,v 1.15 2005/07/22 15:29:45 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.14  2005/07/22 13:35:56  nomenquis
+#*    compilefix for typo
+#*
 #*    Revision 1.13  2005/06/14 13:54:55  nomenquis
 #*    foobarpratz
 #*
@@ -114,7 +117,8 @@
 config_interface: textconfig
 #config_interface: x
 #config_interface: wx
-gdbstub: enabled=0, port=12345
+
+
 #=======================================================================
 # DISPLAY_LIBRARY
 #
@@ -831,4 +835,3 @@ keyboard_mapping: enabled=0, map=
 # Default value is enabled=1
 #=======================================================================
 #newharddrivesupport: enabled=1
-
