@@ -32,7 +32,7 @@ all: kernel e2fsimage install
 #use just "make" instead
 kernel: $(SUBPROJECTS)
 ifeq ($(V),1)
-	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -g -u entry -u main -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
+	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -g -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
 else
 	@echo "LD $(OBJECTDIR)/kernel.x"
 endif
@@ -40,7 +40,7 @@ endif
 	@mkdir -p $(OBJECTDIR)/sauhaufen
 	@rm -f $(OBJECTDIR)/sauhaufen/*
 	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
-	@$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* -u entry -T arch/x86/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
+	@$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* -g -u entry -T arch/x86/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
 
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead

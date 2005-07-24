@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.4 2005/07/21 19:08:41 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.5 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.4  2005/07/21 19:08:41  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.3  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -26,7 +31,6 @@
 
 Mutex::Mutex()
 {
-  kprintfd("Mutex::Mutex");
   mutex_ = 0;
 }
 
@@ -34,10 +38,10 @@ void Mutex::acquire()
 {
   while (ArchThreads::testSetLock(mutex_,1))
   {
-    kprintfd("Mutex::Acquire: could not get lock, going to sleep()\n");
+//    kprintfd("Mutex::Acquire: could not get lock, going to sleep()\n");
     sleepers_.pushBack(currentThread);
     Scheduler::instance()->sleep();
-    kprintfd("Mutex::Acquire: Wakeup after yield()\n");
+//    kprintfd("Mutex::Acquire: Wakeup after yield()\n");
    
   }
 }

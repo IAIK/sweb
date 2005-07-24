@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.8 2005/05/31 17:29:16 nomenquis Exp $
+ * $Id: types.h,v 1.9 2005/07/24 17:02:59 nomenquis Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.8  2005/05/31 17:29:16  nomenquis
+ * userspace
+ *
  * Revision 1.7  2005/04/24 16:58:03  nomenquis
  * ultra hack threading
  *
@@ -62,6 +65,10 @@ typedef unsigned int size_t;
 #define USER_CS ((8*5)|DPL_USER)
 #define USER_DS ((8*4)|DPL_USER)
 #define USER_SS ((8*4)|DPL_USER)
+
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
+
 
 
 #endif

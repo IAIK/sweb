@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Console.h,v 1.5 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: Console.h,v 1.6 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Console.h,v $
+//  Revision 1.5  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.4  2005/04/23 18:13:26  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -23,11 +26,15 @@
 #define _CONSOLE_H_
 
 #include "types.h"
+#include "List.h"
+#include "Mutex.h"
 
 class Terminal;
 class Console
 {
 friend class Terminal;
+friend class ConsoleManager;
+  
 public:
  
   enum FOREGROUNDCOLORS
@@ -71,35 +78,40 @@ public:
     BG_BRIGHT_WHITE
   };
 
-  void write(uint8 character);
-  void writeString(uint8 const *string);
-  void writeBuffer(uint8 const *buffer, size_t len);
-
-  uint32 getNumRows() const;
-  uint32 getNumColumns() const;
-
-  void clearScreen();
-  
-  uint32 setCharacter(uint32 const &row, uint32 const&column, uint8 const &character);
-  
-  void setForegroundColor(FOREGROUNDCOLORS const &color);
-  void setBackgroundColor(BACKGROUNDCOLORS const &color);
- 
+  Console(uint32 num_terminals);
+  virtual ~Console(){}
+  uint32 getNumTerminals()const;
+  Terminal *getActiveTerminal();
+  Terminal *getTerminal(uint32 term);
+  void setActiveTerminal(uint32 term);
   
 protected:
   
+  void lockConsoleForDrawing();
+  void unLockConsoleForDrawing();
+
   virtual void consoleClearScreen()=0;
   virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)=0;
-  virtual uint32 consoleGetNumRows() const = 0;
-  virtual uint32 consoleGetNumColumns() const = 0;
+  virtual uint32 consoleGetNumRows() const=0;
+  virtual uint32 consoleGetNumColumns() const=0;
   virtual void consoleScrollUp()=0;
-
   virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color)=0;
   virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)=0;
+
  
- 
-  Terminal *terminal_;
+  List<Terminal *> terminals_;
+  Mutex console_lock_;
+  Mutex set_active_lock_;
+  uint8 locked_for_drawing_;
+
+  uint32 active_terminal_;
+
+private:
+  
+
 };
+
+extern Console* main_console;
 
 
 

@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.12 2005/07/21 19:08:41 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.13 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.12  2005/07/21 19:08:41  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.11  2005/07/12 21:05:38  btittelbach
 //  Lustiges Spielen mit UserProgramm Terminierung
 //
@@ -205,15 +210,15 @@ void Scheduler::cleanupDeadThreads()
     return;
   
   ArchInterrupts::disableInterrupts();
-  kprintfd("Scheduler::cleanupDeadThreads: now running\n");
+//  kprintfd("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_me_)
   {
     if (kill_me_->state_ == ToBeDestroyed)
       delete kill_me_;  
-    else
-      kprintfd("Scheduler::cleanupDeadThreads: ERROR, how did that Thread get to be here\n");
+//    else
+//      kprintfd("Scheduler::cleanupDeadThreads: ERROR, how did that Thread get to be here\n");
     kill_me_=0;
   }
-  kprintfd("Scheduler::cleanupDeadThreads: done\n");
+//  kprintfd("Scheduler::cleanupDeadThreads: done\n");
   ArchInterrupts::enableInterrupts();
 }

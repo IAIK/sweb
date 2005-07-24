@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.9 2005/04/26 17:03:27 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.10 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
+//  Revision 1.9  2005/04/26 17:03:27  nomenquis
+//  16 bit framebuffer hack
+//
 //  Revision 1.8  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -29,7 +32,7 @@
 #include "ArchCommon.h"
 #include "Terminal.h"
 #include "image.h"
-
+/*
 FrameBufferConsole::FrameBufferConsole()
 {
   x_res_ = ArchCommon::getVESAConsoleWidth();
@@ -88,6 +91,7 @@ void FrameBufferConsole::setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b)
   lfb[offset + 2] = r;
   lfb[offset + 3] = 0;
   */
+  /*
 }
 
 uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
@@ -161,3 +165,4 @@ void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color
   b = 0;
   current_background_color_ = (r<<16) + (g<<8) + (b); 
 }
+*/

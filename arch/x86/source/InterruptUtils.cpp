@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.19 2005/07/21 19:08:40 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.20 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.19  2005/07/21 19:08:40  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.18  2005/07/21 11:50:06  btittelbach
 //  Basic Syscall
 //
@@ -72,7 +77,8 @@
 #include "ports.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
-#include "ConsoleManager.h"
+#include "Console.h"
+#include "Terminal.h"
 #include "kprintf.h"
 #include "Scheduler.h"
 #include "debug_bochs.h"

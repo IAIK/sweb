@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.7 2005/07/05 16:15:48 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.8 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.7  2005/07/05 16:15:48  btittelbach
+//   kprintf.cpp
+//
 //   Revision 1.6  2005/06/05 07:59:35  nelles
 //   The kprintf_debug or kprintfd are finished
 //
@@ -29,7 +32,8 @@
 
 #include "stdarg.h"
 #include "kprintf.h"
-#include "ConsoleManager.h"
+#include "Console.h"
+#include "Terminal.h"
 
 uint8 const ZEROPAD	= 1;		/* pad with zero */
 uint8 const SIGN	= 2;		/* unsigned/signed long */
@@ -39,7 +43,7 @@ uint8 const LEFT	= 16;		/* left justified */
 uint8 const SPECIAL	= 32;		/* 0x */
 uint8 const LARGE	= 64;		/* use 'ABCDEF' instead of 'abcdef' */
 
-void output_number(Console *console, uint32 num, uint32 base, uint32 size, uint32 precision, uint8 type)
+void output_number(Terminal *console, uint32 num, uint32 base, uint32 size, uint32 precision, uint8 type)
 {
 	char c;
   char sign,tmp[70];
@@ -129,7 +133,7 @@ uint32 atoi(const char *&fmt)
 
 // simple vkprintf, doesn't know flags yet
 // by Bernhard
-void vkprintf(Console *console, const char *fmt, va_list args)
+void vkprintf(Terminal *console, const char *fmt, va_list args)
 {  
   while (fmt && *fmt)
   {
@@ -166,7 +170,7 @@ void vkprintf(Console *console, const char *fmt, va_list args)
           break;
         
         case 's':
-          console->writeString(va_arg(args,uint8*));
+          console->writeString(va_arg(args,char const*));
           break;
         
         //signed decimal
@@ -216,7 +220,7 @@ void vkprintf(Console *console, const char *fmt, va_list args)
 
         //we don't do unicode (yet)
         case 'c':
-          console->write((uint8) va_arg(args,uint32));
+          console->write((char) va_arg(args,uint32));
           break;
 
         default:
@@ -251,35 +255,14 @@ void kprintf(const char *fmt, ...)
 {
   va_list args;
 
-  Console *console = ConsoleManager::instance()->getActiveConsole();
+  
+  Terminal *term = main_console->getActiveTerminal();
   
   va_start(args, fmt);
-  vkprintf(console, fmt, args);
+  vkprintf(term, fmt, args);
   va_end(args);
 }
 
-//------------------------------------------------
-/// kprintf_debug. Usable like any other printf. 
-/// Outputs Text on the Serial Debug Console. It is intendet for
-/// Kernel Debugging andt herefore avoids using "new".
-///
-/// @return void
-/// @param fmt Format String with standard Format Syntax
-/// @param args Possible multibple variable for printf as specified in Format String.
-///
-///
-///
-
-void kprintf_debug(const char *fmt, ...)
-{
-  va_list args;
-
-  Console *console = ConsoleManager::instance()->getDebugConsole();
-  
-  va_start(args, fmt);
-  vkprintf(console, fmt, args);
-  va_end(args);
-}
 
 //------------------------------------------------
 /// kprintfd is a shorthand for kprintf_debug
@@ -297,9 +280,19 @@ void kprintfd(const char *fmt, ...)
 {
   va_list args;
 
-  Console *console = ConsoleManager::instance()->getDebugConsole();
+  Terminal *term = main_console->getActiveTerminal();
   
   va_start(args, fmt);
-  vkprintf(console, fmt, args);
+  vkprintf(term, fmt, args);
   va_end(args);
+}
+
+void kprintf_nosleep(const char *fmt, ...)
+{
+  
+}
+
+void kprintfd_nosleep(const char *fmt, ...)
+{
+  
 }

@@ -1,54 +1,70 @@
 //----------------------------------------------------------------------
-//  $Id: Console.cpp,v 1.1 2005/04/23 15:58:32 nomenquis Exp $
+//  $Id: Console.cpp,v 1.2 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: Console.cpp,v $
+//  Revision 1.1  2005/04/23 15:58:32  nomenquis
+//  lots of new stuff
+//
 //----------------------------------------------------------------------
 
 #include "Console.h"
 #include "Terminal.h"
 
-    
-uint32 Console::getNumRows() const
+Console* main_console=0;
+
+Console::Console(uint32)
 {
-  return terminal_->getNumRows();
+
 }
 
-uint32 Console::getNumColumns() const
+void Console::lockConsoleForDrawing()
 {
-  return terminal_->getNumColumns();
+  console_lock_.acquire();
+  locked_for_drawing_ = 1;
 }
 
-void Console::clearScreen()
+void Console::unLockConsoleForDrawing()
 {
-  terminal_->clearScreen();
+  locked_for_drawing_ = 0;
+  console_lock_.release();
 }
 
-uint32 Console::setCharacter(uint32 const &row, uint32 const&column, uint8 const &character)
+uint32 Console::getNumTerminals()const
 {
-  return terminal_->setCharacter(row,column,character);
+  return terminals_.size();
 }
 
-void Console::write(uint8 character)
+Terminal *Console::getActiveTerminal()
 {
-  terminal_->write(character);
+  // ok, this one is tricky, 
+  set_active_lock_.acquire();
+  Terminal * act = 0;
+  console_lock_.acquire();
+  act = terminals_[active_terminal_];
+  console_lock_.release();
+  set_active_lock_.release();
+  return act;  
 }
 
-void Console::writeString(uint8 const *string)
+Terminal *Console::getTerminal(uint32 term)
 {
-  terminal_->writeString(string);
+  return terminals_[term];  
 }
 
-void Console::writeBuffer(uint8 const *buffer, size_t len)
+void Console::setActiveTerminal(uint32 term)
 {
-  terminal_->writeBuffer(buffer, len);
-}
-
-void Console::setForegroundColor(FOREGROUNDCOLORS const &color)
-{
-  terminal_->setForegroundColor(color);
-}
-void Console::setBackgroundColor(BACKGROUNDCOLORS const &color)
-{
-  terminal_->setBackgroundColor(color);
+  // this one is a bitch
+  // no, really
+  // most likely this code will produce a dead lock
+  set_active_lock_.acquire();
+  
+  Terminal *t = terminals_[active_terminal_];
+  t->unSetAsActiveTerminal();
+  
+  t = terminals_[term];
+  t->setAsActiveTerminal();
+  active_terminal_ = term;
+  
+  set_active_lock_.release();
 }

@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.h,v 1.4 2005/06/05 07:59:35 nelles Exp $
+//   $Id: kprintf.h,v 1.5 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.h,v $
+//   Revision 1.4  2005/06/05 07:59:35  nelles
+//   The kprintf_debug or kprintfd are finished
+//
 //   Revision 1.3  2005/05/10 17:03:44  btittelbach
 //   Kprintf Vorbereitung für Print auf Bochs Console
 //   böse .o im source gelöscht
@@ -18,5 +21,7 @@
 #include "stdarg.h"
 
 void kprintf(const char *fmt, ...);
-void kprintf_debug(const char *fmt, ...);
 void kprintfd(const char *fmt, ...);
+
+void kprintf_nosleep(const char *fmt, ...);
+void kprintfd_nosleep(const char *fmt, ...);

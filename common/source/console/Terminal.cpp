@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.3 2005/04/26 16:08:59 nomenquis Exp $
+//  $Id: Terminal.cpp,v 1.4 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.3  2005/04/26 16:08:59  nomenquis
+//  updates
+//
 //  Revision 1.2  2005/04/23 18:13:27  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -17,15 +20,14 @@
 
 Terminal::Terminal(Console *console, uint32 num_columns, uint32 num_rows):
   console_(console), num_columns_(num_columns), num_rows_(num_rows), len_(num_rows * num_columns),
-  current_column_(0), current_state_(0x93)
+  current_column_(0), current_state_(0x93), active_(0)
 {
-  uint32 i;
   characters_ = new uint8[len_];
   character_states_ = new uint8[len_];
-  clearScreen();
+  //clearScreen();
 }
   
-void Terminal::write(uint8 character)
+void Terminal::writeInternal(char character)
 {
   if (character == '\n')
   {
@@ -45,17 +47,29 @@ void Terminal::write(uint8 character)
   }
 }
 
-void Terminal::writeString(uint8 const *string)
+void Terminal::write(char character)
 {
+  MutexLock lock(mutex_);
+  console_->lockConsoleForDrawing();
+  writeInternal(character);
+  console_->unLockConsoleForDrawing();  
+
+}
+void Terminal::writeString(char const *string)
+{
+  MutexLock lock(mutex_);
+  console_->lockConsoleForDrawing();
   while (string && *string)
   {
-    write(*string);
+    writeInternal(*string);
     ++string;
   }
+  console_->unLockConsoleForDrawing();  
 }
 
-void Terminal::writeBuffer(uint8 const *buffer, size_t len)
+void Terminal::writeBuffer(char const *buffer, size_t len)
 {
+  writeString("Sorry, buffer writing not implemented yet\n");
 }
 
 void Terminal::clearScreen()
@@ -83,11 +97,15 @@ uint32 Terminal::setCharacter(uint32 row,uint32 column, uint8 character)
 {
   characters_[column + row*num_columns_] = character;
   character_states_[column + row*num_columns_] = current_state_;
-  return console_->consoleSetCharacter(row,column,character,current_state_);
+  if (active_)
+    console_->consoleSetCharacter(row,column,character,current_state_);
+  
+  return 0;
 }
 
 void Terminal::setForegroundColor(Console::FOREGROUNDCOLORS const &color)
 {
+  MutexLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 0 bits
   uint8 mask = 15;
   current_state_ = current_state_ & ~mask;
@@ -96,6 +114,7 @@ void Terminal::setForegroundColor(Console::FOREGROUNDCOLORS const &color)
 
 void Terminal::setBackgroundColor(Console::BACKGROUNDCOLORS const &color)
 {
+  MutexLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 4 bits
   uint8 mask = 15<<4;
   uint8 col = color;
@@ -107,8 +126,6 @@ void Terminal::scrollUp()
 {
   uint32 i,k,runner;
   
-  console_->consoleScrollUp();
-  //console_->consoleClearScreen();
   runner = 0;
   for (i=0;i<num_rows_-1;++i)
   {
@@ -116,7 +133,6 @@ void Terminal::scrollUp()
     {
       characters_[runner] = characters_[runner+num_columns_];
       character_states_[runner] = character_states_[runner+num_columns_];
-//      console_->consoleSetCharacter(i,k,characters_[runner],character_states_[runner]);
       ++runner;
     }
   }
@@ -126,4 +142,34 @@ void Terminal::scrollUp()
     character_states_[runner] = 0;
     ++runner;
   }
+  if (active_)
+      console_->consoleScrollUp();
+
+}
+void Terminal::fullRedraw()
+{
+  console_->lockConsoleForDrawing();
+  uint32 i,k;
+  uint32 runner=0;
+  for (i=0;i<num_rows_;++i)
+  {
+    for (k=0;k<num_columns_;++k)
+    {
+      console_->consoleSetCharacter(i,k,characters_[runner],character_states_[runner]);
+      ++runner;
+    }
+  }
+  
+  console_->unLockConsoleForDrawing();
+}
+void Terminal::setAsActiveTerminal()
+{
+  MutexLock lock(mutex_);
+  active_ = 1;
+  fullRedraw();
+}
+void Terminal::unSetAsActiveTerminal()
+{
+  MutexLock lock(mutex_);
+  active_ = 0;
 }

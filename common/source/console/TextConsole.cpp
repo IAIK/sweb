@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.5 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: TextConsole.cpp,v 1.6 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.5  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.4  2005/04/23 18:13:27  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -22,10 +25,17 @@
 #include "TextConsole.h"
 #include "Terminal.h"
 #include "ArchCommon.h"
-
-TextConsole::TextConsole()
+#include "panic.h"
+TextConsole::TextConsole(uint32 num_terminals):Console(num_terminals)
 {
-  terminal_ = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+  uint32 i;
+  for (i=0;i<num_terminals;++i)
+  {
+    Terminal *term = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+    terminals_.pushBack(term);
+  }
+  active_terminal_ = 0;
+  
 }
 
 uint32 TextConsole::consoleGetNumRows()const
@@ -40,6 +50,9 @@ uint32 TextConsole::consoleGetNumColumns()const
 
 void TextConsole::consoleClearScreen()
 {
+//  if (unlikely(!locked_for_drawing_))
+//    panic("Console not locked for drawing, this is REALLY bad");
+  
   char *fb = (char*)ArchCommon::getFBPtr();
   uint32 i;
   for (i=0;i<consoleGetNumRows()*consoleGetNumColumns()*2;++i)
@@ -50,6 +63,9 @@ void TextConsole::consoleClearScreen()
 
 uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
 {
+//  if (unlikely(!locked_for_drawing_))
+//    panic("Console not locked for drawing, this is REALLY bad");
+  
   char *fb = (char*)ArchCommon::getFBPtr();
   fb[(column + row*consoleGetNumColumns())*2] = character;
   fb[(column + row*consoleGetNumColumns())*2+1] = state;
@@ -59,6 +75,9 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
 
 void TextConsole::consoleScrollUp()
 {
+//  if (unlikely(!locked_for_drawing_))
+//    panic("Console not locked for drawing, this is REALLY bad");
+  
   pointer fb = ArchCommon::getFBPtr();
   ArchCommon::memcpy(fb, fb+(consoleGetNumColumns()*2),
     (consoleGetNumRows()-1)*consoleGetNumColumns()*2);
@@ -66,15 +85,6 @@ void TextConsole::consoleScrollUp()
 }
 
 
-uint32 TextConsole::setAsCurrent()
-{
-  return 0;
-}
-
-uint32 TextConsole::unsetAsCurrent()
-{
-  return 0;
-}
 
 void TextConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
 {

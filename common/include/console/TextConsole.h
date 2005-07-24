@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.h,v 1.4 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: TextConsole.h,v 1.5 2005/07/24 17:02:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.h,v $
+//  Revision 1.4  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.3  2005/04/23 18:13:27  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -24,11 +27,8 @@ class TextConsole : public Console
 {
 public:
   
-  TextConsole();
+  TextConsole(uint32 num_terminals);
 
-  
-  virtual uint32 setAsCurrent();
-  virtual uint32 unsetAsCurrent();
 
 private:
   

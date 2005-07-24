@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------
 //   $Id: SerialConsole.cpp
 //----------------------------------------------------------------------
-
+/*
 #include "SerialConsole.h"
 #include "Terminal.h"
 #include "ArchCommon.h"
@@ -109,3 +109,4 @@ void SerialConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 {
   
 }
+*/

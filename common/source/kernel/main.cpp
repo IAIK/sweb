@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.60 2005/07/21 19:33:41 btittelbach Exp $
+ * $Id: main.cpp,v 1.61 2005/07/24 17:02:59 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.60  2005/07/21 19:33:41  btittelbach
+ * Fifo blocks now, and students still have the opportunity to implement a real cv
+ *
  * Revision 1.59  2005/07/21 19:08:41  btittelbach
  * Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
  * Threads können schlafen, Mutex benutzt das jetzt auch
@@ -191,7 +194,7 @@
 #include <multiboot.h>
 #include <arch_panic.h>
 #include <paging-definitions.h>
-#include "console/ConsoleManager.h"
+
 #include "mm/new.h"
 #include "mm/PageManager.h"
 #include "mm/KernelMemoryManager.h"
@@ -214,7 +217,8 @@
 
 #include "fs/VirtualFileSystem.h"
 #include "fs/ramfs/RamFileSystemType.h"
-
+#include "console/TextConsole.h"
+#include "console/Terminal.h"
 
 extern void* kernel_end_address;
 
@@ -238,7 +242,7 @@ class SerialThread : public Thread
     for( i=0; i < num_ports; i++ )
     {
       SerialPort *sp = sm->serial_ports[i];
-      kprintf_debug( "SerialThread::Run: Port number : %d, Port name : %s \n", i ,
+      kprintfd( "SerialThread::Run: Port number : %d, Port name : %s \n", i ,
       sp->friendly_name );
 
       // read from serial port and write to console
@@ -431,18 +435,36 @@ void startup()
 
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
-  SerialManager::getInstance()->do_detection( 1 );
-  ConsoleManager::createConsoleManager(1);
+//  SerialManager::getInstance()->do_detection( 1 );
+  
+
+  main_console = new TextConsole(8);;
+
+
+  Terminal *term_0 = main_console->getTerminal(0);
+  Terminal *term_1 = main_console->getTerminal(1);
+  Terminal *term_2 = main_console->getTerminal(2);
+  Terminal *term_3 = main_console->getTerminal(3);
+  
+  term_0->setBackgroundColor(Console::BG_BLACK);
+  term_0->setForegroundColor(Console::FG_GREEN);
+  term_0->writeString("This is on term 0, you should see me");
+  term_1->writeString("This is on term 1, you should not see me");
+  term_2->writeString("This is on term 2, you should not see me");
+  term_3->writeString("This is on term 3, you should not see me");
+  
+  main_console->setActiveTerminal(0);
+  
   Scheduler::createScheduler();
 
-  Console *console = ConsoleManager::instance()->getActiveConsole();
-
+  
+  /*
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
 
   kprintf_debug("Debug print now functional\n");
   kprintfd("Can be called with kprintf_debug or kprintfd\n");
-
+*/
   testRegFS();
   
   //~ uint32 dummy = 0;
@@ -492,7 +514,7 @@ void startup()
 
 
   //Scheduler::instance()->addNewThread(new UserThread());
-  Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
+ // Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
   //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
 
   int32 *test = new int32[50];
