@@ -37,7 +37,7 @@ uint32 MAX_FN_DEPTH         = 256;
     uint32* stack = (uint32*) currentThread->getStackStartPointer();
     stabs_out * symTablePtr = (stabs_out *) STAB_START;
     
-    kprintf( "KPANICT: stack is > %x ",  stack );
+    kprintf_nosleep( "KPANICT: stack is > %x ",  stack );
 
     uint32 * esp_reg = 0;
     
@@ -49,16 +49,16 @@ uint32 MAX_FN_DEPTH         = 256;
       : "=g" (esp_reg) 
      );
 
-    kprintf( "esp_reg is > %x\n",  esp_reg );
+    kprintf_nosleep( "esp_reg is > %x\n",  esp_reg );
      
     for( uint32 * i = (esp_reg); i < stack; i++ )
     {
       if( (*i >= KERNEL_CODE_START && *i <= KERNEL_CODE_END) )
       //|| ( *((uint32 *)*i) >= KERNEL_CODE_START && *((uint32 *)*i) <= KERNEL_CODE_END ) )
       {
-        kprintf( "i: %x, ",  i );
-        kprintf( "*i: %x ", *i );
-        kprintf( "**i: %x \n", *((uint32 *)*i) );
+        kprintf_nosleep( "i: %x, ",  i );
+        kprintf_nosleep( "*i: %x ", *i );
+        kprintf_nosleep( "**i: %x \n", *((uint32 *)*i) );
         
         //|| symTablePtr->n_value == *((uint32 *)g)
         
@@ -78,14 +78,14 @@ uint32 MAX_FN_DEPTH         = 256;
                 
               if( symTablePtr->n_type == 0x24 )
               {
-                kprintf("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
+                kprintf_nosleep("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
               
-                kprintf(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
+                kprintf_nosleep(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
                 
                 g = (*i - MAX_FN_DEPTH) - 1; // sub 1 to be sure
               }
               else
-                kprintf( "!" );
+                kprintf_nosleep( "!" );
             } // if         
           } // for stabs
         } // for g
@@ -93,7 +93,7 @@ uint32 MAX_FN_DEPTH         = 256;
       }
     }
     
-    kprintf("%s \n", message );   
+    kprintf_nosleep("%s \n", message );   
     
     ArchInterrupts::disableInterrupts();
     ArchInterrupts::disableTimer();
@@ -106,7 +106,7 @@ uint32 MAX_FN_DEPTH         = 256;
       );
     }
     
-    kprintf("MAJOR KERNEL PANIC!: Should never reach here\n");
+    kprintf_nosleep("MAJOR KERNEL PANIC!: Should never reach here\n");
     
     pointer i = 0;
               
@@ -115,9 +115,9 @@ uint32 MAX_FN_DEPTH         = 256;
         if( symTablePtr->n_type == 0x24 )
         {
           if( (i++ % 10) == 0 )      
-            kprintf("index  | type | oth. | desc | address   |  function\n");
+            kprintf_nosleep("index  | type | oth. | desc | address   |  function\n");
         
-          kprintf( "%x    %x  %x   %x     %x  %s    \n", 
+          kprintf_nosleep( "%x    %x  %x   %x     %x  %s    \n", 
           symTablePtr->n_strx,
           symTablePtr->n_type, 
           symTablePtr->n_other,

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.11 2005/04/27 09:19:20 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.12 2005/07/26 17:45:25 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.11  2005/04/27 09:19:20  nomenquis
+//  only pack whats needed
+//
 //  Revision 1.10  2005/04/27 08:58:16  nomenquis
 //  locks work!
 //  w00t !
@@ -238,23 +241,23 @@ void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
 }
 void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
 {
-  if (debug) kprintf("Bzero start\n");
+  if (debug) kprintf_nosleep("Bzero start\n");
   MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)s;
   uint32 num_64_bit_zeros = n / sizeof(MEMCOPY_LARGE_TYPE);
   uint32 num_8_bit_zeros = n % sizeof(MEMCOPY_LARGE_TYPE);
   uint32 i;
-  if (debug) kprintf("Bzero next\n");
+  if (debug) kprintf_nosleep("Bzero next\n");
   for (i=0;i<num_64_bit_zeros;++i)
   {
     *s64 = 0;
     ++s64;
   }
   uint8 *s8 = (uint8*)s64;
-  if (debug) kprintf("Bzero middle\n");
+  if (debug) kprintf_nosleep("Bzero middle\n");
   for (i=0;i<num_8_bit_zeros;++i)
   {
     *s8 = 0;
     ++s8;
   }
-  if (debug) kprintf("Bzero end\n");
+  if (debug) kprintf_nosleep("Bzero end\n");
 }

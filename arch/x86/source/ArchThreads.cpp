@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.9 2005/07/21 19:08:40 btittelbach Exp $
+//  $Id: ArchThreads.cpp,v 1.10 2005/07/26 17:45:25 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.9  2005/07/21 19:08:40  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.8  2005/07/05 17:29:48  btittelbach
 //  new kprintf(d) Policy:
 //  [Class::]Function: before start of debug message
@@ -86,7 +91,7 @@ void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page
   thread->kernel_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
   if (thread->user_arch_thread_info_->cr3)
     thread->user_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
-  kprintfd("ArchThreads::setPageDirectory: setting cr3 in info to %x\n",page_dir_physical_page * PAGE_SIZE);
+  kprintfd_nosleep("ArchThreads::setPageDirectory: setting cr3 in info to %x\n",page_dir_physical_page * PAGE_SIZE);
 }
 
 uint32 ArchThreads::getPageDirectory(Thread *thread)
@@ -98,13 +103,13 @@ uint32 ArchThreads::getPageDirectory(Thread *thread)
 
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
-  kprintfd("ArchThreads::createThreadInfosKernelThread: enter %x\n",info);
+  kprintfd_nosleep("ArchThreads::createThreadInfosKernelThread: enter %x\n",info);
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  kprintfd("ArchThreads::createThreadInfosKernelThread: alloc done %x\n",info);
+  kprintfd_nosleep("ArchThreads::createThreadInfosKernelThread: alloc done %x\n",info);
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
-  kprintfd("ArchThreads::createThreadInfosKernelThread: bzero done\n");
-  kprintfd("ArchThreads::createThreadInfosKernelThread: CR3 is %x\n",pageDirectory);
+  kprintfd_nosleep("ArchThreads::createThreadInfosKernelThread: bzero done\n");
+  kprintfd_nosleep("ArchThreads::createThreadInfosKernelThread: CR3 is %x\n",pageDirectory);
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
@@ -130,18 +135,18 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
-  kprintfd("ArchThreads::createThreadInfosKernelThread: values done\n");
+  kprintfd_nosleep("ArchThreads::createThreadInfosKernelThread: values done\n");
 }
 
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
 {
-  kprintfd("ArchThreads::create: user enter %x\n",info);
+  kprintfd_nosleep("ArchThreads::create: user enter %x\n",info);
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  kprintfd("ArchThreads::create:alloc done %x\n",info);
+  kprintfd_nosleep("ArchThreads::create:alloc done %x\n",info);
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
-  kprintfd("ArchThreads::create: bzero done\n");
-  kprintfd("ArchThreads::create: CR3 is %x\n",pageDirectory);
+  kprintfd_nosleep("ArchThreads::create: bzero done\n");
+  kprintfd_nosleep("ArchThreads::create: CR3 is %x\n",pageDirectory);
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;
@@ -171,7 +176,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
-  kprintfd("ArchThreads::create: values done\n"); 
+  kprintfd_nosleep("ArchThreads::create: values done\n"); 
   
 }
 

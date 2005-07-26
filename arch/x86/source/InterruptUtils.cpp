@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.20 2005/07/24 17:02:59 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.21 2005/07/26 17:45:25 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.20  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.19  2005/07/21 19:08:40  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -147,8 +150,8 @@ void InterruptUtils::disableInterrupts()
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
   extern "C" void dummyHandler_##x () \
   {\
-    kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    kprintfd("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    kprintfd_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
   }
 
 DUMMY_HANDLER(0)
@@ -441,8 +444,8 @@ extern Thread *currentThread;
   extern "C" void irqHandler_##x ()  {  \
     if ( x > 7 )  \
       outportb(0xA0, 0x20);   \
-    kprintf("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
-    kprintfd("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
+    kprintf_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
+    kprintfd_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
     outportb(0x20, 0x20); \
   } \
 
@@ -452,20 +455,20 @@ extern "C" void arch_switchThreadKernelToKernelPageDirChange();
 extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
-  kprintfd("irq0: Tick\n");
+  kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
   uint32 ret = Scheduler::instance()->schedule(1);  
   outportb(0x20, 0x20);   
   switch (ret)
   {
     case 0:
-      kprintfd("irq0: Going to leave irq Handler 0 0\n");
+      kprintfd_nosleep("irq0: Going to leave irq Handler 0 0\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      kprintfd("irq0: Going to leave irq Handler 0 1\n");
+      kprintfd_nosleep("irq0: Going to leave irq Handler 0 1\n");
       arch_switchThreadToUserPageDirChange();
     default:
-      kprintfd("irq0: Panic in int 0 handler\n");
+      kprintfd_nosleep("irq0: Panic in int 0 handler\n");
       for(;;);
   }  
 }
@@ -477,13 +480,13 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-      kprintfd("irq0: Going to leave irq Handler 0 0\n");
+      kprintfd_nosleep("irq0: Going to leave irq Handler 0 0\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      kprintfd("irq0: Going to leave irq Handler 0 1\n");
+      kprintfd_nosleep("irq0: Going to leave irq Handler 0 1\n");
       arch_switchThreadToUserPageDirChange();
     default:
-      kprintfd("irq0: Panic in int 0 handler\n");
+      kprintfd_nosleep("irq0: Panic in int 0 handler\n");
       for(;;);
   }  
 }
@@ -500,7 +503,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
   uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
   uint32 const flag_rsvd = 0x1 << 3; //pf caused by reserved bits
-  kprintfd("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\n",address,
+  kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\n",address,
                                                                             error&flag_p, 
                                                                             error&flag_rw >> 1, 
                                                                             error&flag_us >> 2,
@@ -515,15 +518,15 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   else
   if (error & flag_rw) {
-    kprintfd("PageFault: Thread tried changing a write protected page\n");
+    kprintfd_nosleep("PageFault: Thread tried changing a write protected page\n");
   } 
   
   ArchThreadInfo* i = currentThreadInfo;
-  kprintf("\n");
-  kprintf("PageFault: eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
-  kprintf("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
-  kprintf("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
-  kprintf("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
+  kprintf_nosleep("\n");
+  kprintf_nosleep("PageFault: eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
+  kprintf_nosleep("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
+  kprintf_nosleep("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
+  kprintf_nosleep("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
     
   for(;;);
 }
@@ -546,17 +549,17 @@ extern "C" void irqHandler_4()
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
-  kprintfd("syscallHANDLER\n");
+  kprintfd_nosleep("syscallHANDLER\n");
   // ok, find out the current thread
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  kprintfd("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
+  kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
                   currentThread->user_arch_thread_info_->ebx,
                   currentThread->user_arch_thread_info_->ecx,
                   currentThread->user_arch_thread_info_->edx);
  
   if (currentThread->user_arch_thread_info_->eax == 0x0000dead)
   {
-    kprintfd("syscallHANDLER: Terminating Thread\n");
+    kprintfd_nosleep("syscallHANDLER: Terminating Thread\n");
     currentThread->kill();
   } 
   else
@@ -569,7 +572,7 @@ extern "C" void syscallHandler()
   
   //for(;;)
   {
-    kprintf("syscallHandler: still alive\n");
+    kprintf_nosleep("syscallHandler: still alive\n");
     ArchInterrupts::enableInterrupts();
   }
 }
