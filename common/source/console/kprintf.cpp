@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.9 2005/07/27 10:04:26 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.10 2005/07/27 13:43:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.9  2005/07/27 10:04:26  btittelbach
+//   kprintf_nosleep and kprintfd_nosleep now works
+//   Output happens in dedicated Thread using VERY EVIL Mutex Hack
+//
 //   Revision 1.8  2005/07/24 17:02:59  nomenquis
 //   lots of changes for new console stuff
 //
@@ -367,11 +371,14 @@ void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const
 ///
 void kprintf(const char *fmt, ...)
 {
-  //check if atomar or not -> decide kprintf or kprintf_nosleep
   va_list args;
   
   va_start(args, fmt);
-  vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
+  //check if atomar or not in current context
+  if (likely(ArchInterrupts::testIFSet()))
+    vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
+  else
+    vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
   va_end(args);
 }
 
@@ -389,11 +396,14 @@ void kprintf(const char *fmt, ...)
 ///
 void kprintfd(const char *fmt, ...)
 {
-  //check if atomar or not -> decide kprintf or kprintf_nosleep
   va_list args;
 
   va_start(args, fmt);
-  vkprintf(oh_writeStringDebugWithSleep, oh_writeCharDebugWithSleep, fmt, args);
+  //check if atomar or not in current context
+  if (likely(ArchInterrupts::testIFSet()))
+    vkprintf(oh_writeStringDebugWithSleep, oh_writeCharDebugWithSleep, fmt, args);
+  else
+    vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
   va_end(args);
 }
 
@@ -403,7 +413,11 @@ void kprintf_nosleep(const char *fmt, ...)
   va_list args;
 
   va_start(args, fmt);
-  vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
+  //check if atomar or not in current context
+  if (unlikely(ArchInterrupts::testIFSet()))
+    vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
+  else
+    vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
   va_end(args);
 }
 //make this obsolete with atomarity check
@@ -412,7 +426,11 @@ void kprintfd_nosleep(const char *fmt, ...)
   va_list args;
 
   va_start(args, fmt);
-  vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
+  //check if atomar or not in current context
+  if (unlikely(ArchInterrupts::testIFSet()))
+    vkprintf(oh_writeStringDebugWithSleep, oh_writeCharDebugWithSleep, fmt, args);
+  else
+    vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
   va_end(args);  
 }
 

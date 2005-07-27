@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.10 2005/05/31 17:29:16 nomenquis Exp $
+//  $Id: ArchInterrupts.cpp,v 1.11 2005/07/27 13:43:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.10  2005/05/31 17:29:16  nomenquis
+//  userspace
+//
 //  Revision 1.9  2005/04/25 23:09:18  nomenquis
 //  fubar 2
 //
@@ -84,4 +87,19 @@ void ArchInterrupts::disableInterrupts()
  
 // return ret_val;
 
+}
+
+//tests if the InteruptFlag in EFLAGS is set
+bool ArchInterrupts::testIFSet()
+{
+  uint32 ret_val;
+  
+  __asm__ __volatile__(
+  "pushfl\n"
+  "popl %0\n"
+  : "=a"(ret_val)
+  :);
+  
+  return (ret_val & (1 << 9));  //testing IF Flag
+  
 }

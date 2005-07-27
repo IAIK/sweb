@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.5 2005/04/25 22:40:18 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.6 2005/07/27 13:43:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.5  2005/04/25 22:40:18  btittelbach
+//  Anti Warnings v0.1
+//
 //  Revision 1.4  2005/04/25 21:15:41  nomenquis
 //  lotsa changes
 //
@@ -41,6 +44,7 @@ public:
   // enable interrupts, no matter what, this is bad
   static void enableInterrupts();
   static void disableInterrupts();
+  static bool ArchInterrupts::testIFSet();
   static void setOldInterruptState(uint32 const &flags);
 
 };
