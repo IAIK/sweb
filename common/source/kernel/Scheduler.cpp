@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.13 2005/07/24 17:02:59 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.14 2005/07/27 10:04:26 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.13  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.12  2005/07/21 19:08:41  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -80,11 +83,11 @@ public:
   {
     while (1)
     {
-      Scheduler::instance()->cleanupDeadThreads(); 
+//      kprintfd("IdleThread::Run:\n");
+      Scheduler::instance()->cleanupDeadThreads();
       Scheduler::instance()->yield();
     }
   }
-  
 };
 
 void Scheduler::createScheduler()
@@ -210,7 +213,7 @@ void Scheduler::cleanupDeadThreads()
     return;
   
   ArchInterrupts::disableInterrupts();
-//  kprintfd("Scheduler::cleanupDeadThreads: now running\n");
+  kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_me_)
   {
     if (kill_me_->state_ == ToBeDestroyed)
@@ -219,6 +222,6 @@ void Scheduler::cleanupDeadThreads()
 //      kprintfd("Scheduler::cleanupDeadThreads: ERROR, how did that Thread get to be here\n");
     kill_me_=0;
   }
-//  kprintfd("Scheduler::cleanupDeadThreads: done\n");
+  kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
   ArchInterrupts::enableInterrupts();
 }

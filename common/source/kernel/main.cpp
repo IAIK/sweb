@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.61 2005/07/24 17:02:59 nomenquis Exp $
+ * $Id: main.cpp,v 1.62 2005/07/27 10:04:26 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.61  2005/07/24 17:02:59  nomenquis
+ * lots of changes for new console stuff
+ *
  * Revision 1.60  2005/07/21 19:33:41  btittelbach
  * Fifo blocks now, and students still have the opportunity to implement a real cv
  *
@@ -303,6 +306,7 @@ private:
 };
 
 
+
 class UserThread : public Thread
 {
   public:
@@ -407,6 +411,20 @@ private:
 };
 
 
+class KprintfNoSleepFlushingThread : public Thread
+{
+  public:
+
+  virtual void Run()
+  {
+    while (1)
+    {
+      kprintf_nosleep_flush();
+      Scheduler::instance()->yield();
+    }
+  }
+};
+
 //------------------------------------------------------------
 // testing the registerfilesystem
 void testRegFS()
@@ -507,14 +525,14 @@ void startup()
   //~ Scheduler::instance()->addNewThread(new StupidThread(13));
   //~ Scheduler::instance()->addNewThread(new StupidThread(14));
   //~ Scheduler::instance()->addNewThread(new StupidThread(15));
-
-
-
+  
   //Scheduler::instance()->addNewThread(serial_thread);
 
+  kprintf("Adding Important kprintf_nosleep Flush Thread\n");
+  Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
 
   //Scheduler::instance()->addNewThread(new UserThread());
- // Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
+  //Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
   //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
 
   int32 *test = new int32[50];
@@ -522,6 +540,7 @@ void startup()
 
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
+  //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
   ArchInterrupts::enableInterrupts();
   kprintfd("Init done\n");
   kprintf("Init done\n");

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Console.h,v 1.6 2005/07/24 17:02:59 nomenquis Exp $
+//   $Id: Console.h,v 1.7 2005/07/27 10:04:26 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Console.h,v $
+//  Revision 1.6  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.5  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -85,11 +88,13 @@ public:
   Terminal *getTerminal(uint32 term);
   void setActiveTerminal(uint32 term);
   
-protected:
+
   
   void lockConsoleForDrawing();
   void unLockConsoleForDrawing();
 
+protected:
+    
   virtual void consoleClearScreen()=0;
   virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)=0;
   virtual uint32 consoleGetNumRows() const=0;

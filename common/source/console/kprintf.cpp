@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.8 2005/07/24 17:02:59 nomenquis Exp $
+//   $Id: kprintf.cpp,v 1.9 2005/07/27 10:04:26 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.8  2005/07/24 17:02:59  nomenquis
+//   lots of changes for new console stuff
+//
 //   Revision 1.7  2005/07/05 16:15:48  btittelbach
 //   kprintf.cpp
 //
@@ -34,6 +37,119 @@
 #include "kprintf.h"
 #include "Console.h"
 #include "Terminal.h"
+#include "debug_bochs.h"
+#include "ArchInterrupts.h"
+
+
+void oh_writeCharWithSleep(char c)
+{
+  main_console->getActiveTerminal()->write(c);
+}
+void oh_writeStringWithSleep(char const* str)
+{
+  main_console->getActiveTerminal()->writeString(str);
+}
+
+
+void oh_writeCharDebugWithSleep(char c)
+{
+  //this blocks
+  writeChar2Bochs((uint8) c);
+}
+void oh_writeStringDebugWithSleep(char const* str)
+{
+  //this blocks
+  writeLine2Bochs((uint8*) str);
+}
+
+
+//called only from atomar functions, so no locking (otherwise BOOM)
+//but problem in itself !!!!!!
+uint32 const buffer_size_ = 4096;
+static char buffer_[buffer_size_];
+static uint32 buffer_in_pos_ = 0;
+static uint32 buffer_out_pos_ = 0;
+static bool buffer_overflow_ = false;
+
+void oh_writeCharNoSleep(char c)
+{
+  buffer_[buffer_in_pos_]=c;
+  buffer_in_pos_++;
+  buffer_in_pos_ %= buffer_size_;
+  if (buffer_in_pos_ == buffer_out_pos_)
+    buffer_overflow_ = true;
+}
+void oh_writeStringNoSleep(char const* str)
+{
+  while (*str)
+  {
+    oh_writeCharNoSleep(*str);
+    str++;
+  }
+}
+
+void flushActiveConsole(Terminal *term)
+{
+  if (buffer_overflow_)
+  {
+    buffer_overflow_ = false;
+    buffer_out_pos_ = buffer_in_pos_ + 1;
+    buffer_out_pos_ %= buffer_size_;
+    term->writeInternal('\n');
+  }
+  if (buffer_in_pos_ > buffer_size_-1)
+    buffer_in_pos_=buffer_size_-1;
+  while (buffer_in_pos_ != buffer_out_pos_)
+  {
+    term->writeInternal(buffer_[buffer_out_pos_]);
+    buffer_out_pos_++;
+    buffer_out_pos_ %= buffer_size_;
+  }
+}
+
+
+static char debug_buffer_[buffer_size_];
+static uint32 debug_buffer_in_pos_ = 0;
+static uint32 debug_buffer_out_pos_ = 0;
+static bool debug_buffer_overflow_ = false;
+
+void oh_writeCharDebugNoSleep(char c)
+{
+  debug_buffer_[debug_buffer_in_pos_]=c;
+  debug_buffer_in_pos_++;
+  debug_buffer_in_pos_ %= buffer_size_;
+  if (debug_buffer_in_pos_ == debug_buffer_out_pos_)
+    debug_buffer_overflow_ = true;
+}
+void oh_writeStringDebugNoSleep(char const* str)
+{
+  while (*str)
+  {
+    oh_writeCharDebugNoSleep(*str);
+    str++;
+  }
+}
+
+void flushDebugConsole(Terminal *term)
+{
+  if (debug_buffer_overflow_)
+  {
+    debug_buffer_overflow_ = false;
+    debug_buffer_out_pos_ = debug_buffer_in_pos_ + 1;
+    debug_buffer_out_pos_ %= buffer_size_;
+    writeChar2Bochs((uint8) '\n');
+  }
+  if (buffer_in_pos_ > buffer_size_-1)
+    buffer_in_pos_=buffer_size_-1;
+  while (debug_buffer_in_pos_ != debug_buffer_out_pos_)
+  {
+    writeChar2Bochs((uint8) debug_buffer_[debug_buffer_out_pos_]);
+    debug_buffer_out_pos_++;
+    debug_buffer_out_pos_ %= buffer_size_;
+  }
+}
+
+
 
 uint8 const ZEROPAD	= 1;		/* pad with zero */
 uint8 const SIGN	= 2;		/* unsigned/signed long */
@@ -43,7 +159,7 @@ uint8 const LEFT	= 16;		/* left justified */
 uint8 const SPECIAL	= 32;		/* 0x */
 uint8 const LARGE	= 64;		/* use 'ABCDEF' instead of 'abcdef' */
 
-void output_number(Terminal *console, uint32 num, uint32 base, uint32 size, uint32 precision, uint8 type)
+void output_number(void (*write_char)(char), uint32 num, uint32 base, uint32 size, uint32 precision, uint8 type)
 {
 	char c;
   char sign,tmp[70];
@@ -103,13 +219,13 @@ void output_number(Terminal *console, uint32 num, uint32 base, uint32 size, uint
     precision = size;
   
   while (size-- - precision > i)
-    console->write((uint8) c);
+    (write_char)((char) c);
   
   while (precision-- > i)         
-    console->write((uint8) '0');
+    (write_char)((char) '0');
     
 	while (i-- > 0)
-    console->write((uint8) tmp[i]);
+    (write_char)((char) tmp[i]);
 	//~ while (size-- > 0) {
 		//~ if (buf <= end)
 			//~ *buf = ' ';
@@ -133,7 +249,7 @@ uint32 atoi(const char *&fmt)
 
 // simple vkprintf, doesn't know flags yet
 // by Bernhard
-void vkprintf(Terminal *console, const char *fmt, va_list args)
+void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const char *fmt, va_list args)
 {  
   while (fmt && *fmt)
   {
@@ -166,16 +282,16 @@ void vkprintf(Terminal *console, const char *fmt, va_list args)
       switch (*fmt)
       {
         case '%':
-          console->write(*fmt);
+          write_char(*fmt);
           break;
         
         case 's':
-          console->writeString(va_arg(args,char const*));
+          write_string(va_arg(args,char const*));
           break;
         
         //signed decimal
         case 'd':
-          output_number(console,(uint32) va_arg(args,int32),10,width, 0, flag | SIGN);
+          output_number(write_char,(uint32) va_arg(args,int32),10,width, 0, flag | SIGN);
           break;
         
         //we don't do i until I see what it actually should do
@@ -184,20 +300,20 @@ void vkprintf(Terminal *console, const char *fmt, va_list args)
 
         //octal
         case 'o':
-          output_number(console,(uint32) va_arg(args,uint32),8,width, 0, flag | SPECIAL);
+          output_number(write_char,(uint32) va_arg(args,uint32),8,width, 0, flag | SPECIAL);
           break;
 
         //unsigned
         case 'u':
-          output_number(console,(uint32) va_arg(args,uint32),10,width, 0, flag );
+          output_number(write_char,(uint32) va_arg(args,uint32),10,width, 0, flag );
           break;
 
         case 'x':
-          output_number(console,(uint32) va_arg(args,uint32),16,width, 0, flag | SPECIAL);
+          output_number(write_char,(uint32) va_arg(args,uint32),16,width, 0, flag | SPECIAL);
           break;
 
         case 'X':
-          output_number(console,(uint32) va_arg(args,uint32), 16, width, 0, flag | SPECIAL | LARGE);
+          output_number(write_char,(uint32) va_arg(args,uint32), 16, width, 0, flag | SPECIAL | LARGE);
           break;
         
         //no floating point yet
@@ -220,7 +336,7 @@ void vkprintf(Terminal *console, const char *fmt, va_list args)
 
         //we don't do unicode (yet)
         case 'c':
-          console->write((char) va_arg(args,uint32));
+          write_char((char) va_arg(args,uint32));
           break;
 
         default:
@@ -231,13 +347,12 @@ void vkprintf(Terminal *console, const char *fmt, va_list args)
       
     }
     else
-      console->write(*fmt);
+      write_char(*fmt);
     
     ++fmt;
   }
   
 }
-
 
 //------------------------------------------------
 /// Standard kprintf. Usable like any other printf. 
@@ -250,16 +365,13 @@ void vkprintf(Terminal *console, const char *fmt, va_list args)
 ///
 ///
 ///
-
 void kprintf(const char *fmt, ...)
 {
+  //check if atomar or not -> decide kprintf or kprintf_nosleep
   va_list args;
-
-  
-  Terminal *term = main_console->getActiveTerminal();
   
   va_start(args, fmt);
-  vkprintf(term, fmt, args);
+  vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
   va_end(args);
 }
 
@@ -275,24 +387,43 @@ void kprintf(const char *fmt, ...)
 ///
 ///
 ///
-
 void kprintfd(const char *fmt, ...)
 {
+  //check if atomar or not -> decide kprintf or kprintf_nosleep
   va_list args;
 
-  Terminal *term = main_console->getActiveTerminal();
-  
   va_start(args, fmt);
-  vkprintf(term, fmt, args);
+  vkprintf(oh_writeStringDebugWithSleep, oh_writeCharDebugWithSleep, fmt, args);
   va_end(args);
 }
 
+//make this obsolete with atomarity check
 void kprintf_nosleep(const char *fmt, ...)
 {
-  
-}
+  va_list args;
 
+  va_start(args, fmt);
+  vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
+  va_end(args);
+}
+//make this obsolete with atomarity check
 void kprintfd_nosleep(const char *fmt, ...)
 {
-  
+  va_list args;
+
+  va_start(args, fmt);
+  vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
+  va_end(args);  
+}
+
+void kprintf_nosleep_flush()
+{
+  Terminal *term = main_console->getActiveTerminal();
+  main_console->lockConsoleForDrawing();
+  //getting the Lock is not enough, we need to make sure, noone can use kprintf_nosleep while we flush
+  ArchInterrupts::disableInterrupts();
+  flushActiveConsole(term);
+  flushDebugConsole(term);
+  ArchInterrupts::enableInterrupts();
+  main_console->unLockConsoleForDrawing();  
 }

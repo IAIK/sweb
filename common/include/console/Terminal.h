@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.2 2005/07/24 17:02:59 nomenquis Exp $
+//  $Id: Terminal.h,v 1.3 2005/07/27 10:04:26 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.2  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.1  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -32,15 +35,14 @@ public:
   void setForegroundColor(Console::FOREGROUNDCOLORS const &color);
   void setBackgroundColor(Console::BACKGROUNDCOLORS const &color);
 
+  void writeInternal(char character);
+
 protected:
   
   void setAsActiveTerminal();
   void unSetAsActiveTerminal();
 
 private:
-  
- 
-  void writeInternal(char character);
 
   void clearScreen();
   void fullRedraw();
