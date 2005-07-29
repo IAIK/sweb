@@ -16,7 +16,7 @@ size_t strlen(const char *str)
     ++pos;
   }
 
-  return (str - pos);
+  return (pos - str);
 }
 
 
@@ -27,7 +27,8 @@ void *memcpy(void *dest, const void *src, size_t length)
   const uint8 *src8 = (const uint8*)src;
 
 #ifdef STRING_SAVE
-  if ((src8 < (dest8 + length)) || (dest8 < (src8 + length)))
+  if (((src8 < (dest8 + length)) && (src8 > dest8))
+      || ((dest8 < (src8 + length)) && (dest8 > src8)))
   {
     return dest;
     // error because strings overlap with is not allowed for memcpy
