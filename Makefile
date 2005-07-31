@@ -1,32 +1,74 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
+
+
+ifeq ($(ARCH),xen)
+DEPS := kernelxen
+else
+DEPS:= kernel e2fsimage install 
+endif
+
+ifeq ($(ARCH),xen)
 SUBPROJECTS := \
-               arch/x86/source \
+               arch/arch/source \
+               common/source/util \
+               common/source/kernel \
                common/source/console \
                common/source/ipc \
-               common/source/kernel \
                common/source/mm \
-               common/source/util \
                common/source/drivers \
                utils/mtools \
                common/source/fs \
                common/source/fs/ramfs
+else
+SUBPROJECTS := \
+               arch/arch/source \
+               common/source/util \
+               common/source/kernel \
+               common/source/console \
+               common/source/ipc \
+               common/source/mm \
+               common/source/drivers \
+               utils/mtools \
+               common/source/fs \
+               common/source/fs/ramfs
+endif
+
+ifeq ($(ARCH),xen)
 SHARED_LIBS :=  \
-                arch/x86/source/libArchSpecific.a \
+                arch/arch/source/libArchSpecific.a \
+                common/source/util/libUtil.a \
+                common/source/kernel/libKernel.a \
                 common/source/console/libConsole.a \
                 common/source/ipc/libIPC.a \
-                common/source/kernel/libKernel.a \
                 common/source/mm/libMM.a \
-                common/source/util/libUtil.a \
                 common/source/drivers/libDrivers.a \
                 common/source/fs/libFS.a \
                 common/source/fs/ramfs/libRamFS.a
+else
+SHARED_LIBS :=  \
+                arch/arch/source/libArchSpecific.a \
+                common/source/util/libUtil.a \
+                common/source/kernel/libKernel.a \
+                common/source/console/libConsole.a \
+                common/source/ipc/libIPC.a \
+                common/source/mm/libMM.a \
+                common/source/drivers/libDrivers.a \
+                common/source/fs/libFS.a \
+                common/source/fs/ramfs/libRamFS.a
+endif
+
+
+
 PROJECT_ROOT := .
 E2FSIMAGESOURCE := utils/e2fsimage/
 
+
+
 include ./make-support/common.mk
 
-all: kernel e2fsimage install 
+
+all: $(DEPS)
 
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
@@ -42,6 +84,45 @@ endif
 	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
 	@$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* -g -u entry -T arch/x86/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
 
+
+
+kernelxen: $(SUBPROJECTS)
+ifeq ($(V),1)
+#	@echo "$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* $(SHARED_LIBS) -u _start -T arch/xen/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
+	@echo "ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/main.o $(OBJECTDIR)/arch/arch/source/libArchSpecific.a -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map"
+else
+	@echo "LD $(OBJECTDIR)/kernel.x"
+endif
+	@mkdir -p $(OBJECTDIR)
+	@mkdir -p $(OBJECTDIR)/sauhaufen
+	@rm -f $(OBJECTDIR)/sauhaufen/*
+	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
+	@rm $(OBJECTDIR)/sauhaufen/head.o -f
+	@rm $(OBJECTDIR)/sauhaufen/kprintf.o -f
+#	@rm $(OBJECTDIR)/sauhaufen/Loader.o -f
+#	@rm $(OBJECTDIR)/sauhaufen/Thread.o -f
+#	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/main.o  $(OBJECTDIR)/sauhaufen/arch_panic.o  $(SHARED_LIBS) -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map 
+	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/*  -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map 
+	@echo "objcopy -R .note -R .comment  $(OBJECTDIR)/sweb_xen.elf  $(OBJECTDIR)/sweb_xen.x"
+	objcopy -R .note -R .comment  $(OBJECTDIR)/sweb_xen.elf  $(OBJECTDIR)/sweb_xen.x
+ifeq ($(V),1)
+	@echo "gzip -f -9 -c $(OBJECTDIR)/sweb_xen.x >$(OBJECTDIR)/sweb_xen.gz"
+else
+	@echo "GZ image is sweb_xen.gz"
+endif
+	gzip -f -9 -c $(OBJECTDIR)/sweb_xen.x >$(OBJECTDIR)/sweb_xen.gz
+
+archlink:
+ifeq ($(ARCH),xen)
+	@rm $(PROJECT_ROOT)/arch/arch -f
+	@echo "ln -s xen arch"
+	@cd $(PROJECT_ROOT)/arch; ln -s xen arch
+else
+	@rm $(PROJECT_ROOT)/arch/arch -f
+	@echo "ln -s x86 arch"
+	@cd $(PROJECT_ROOT)/arch; ln -s x86 arch
+endif
+
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
 install: kernel
@@ -50,7 +131,6 @@ install: kernel
 	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
 	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
-	
 	@echo "Starting with install - ext2"
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
@@ -66,7 +146,6 @@ install: kernel
 
 e2fsimage:	
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
-	
 
 qemu:
 	echo "Going to run qemu -fda boot.img"
