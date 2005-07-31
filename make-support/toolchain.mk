@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.12 2005/07/22 15:29:44 nomenquis Exp $
+# $Id: toolchain.mk,v 1.13 2005/07/31 17:35:32 nightcreature Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.12  2005/07/22 15:29:44  nomenquis
+# added gdb support
+#
 # Revision 1.11  2005/05/31 13:23:25  nelles
 # panic function finally works as it should (I have lowered
 # the optimisation
@@ -72,6 +75,8 @@ AS_DEP_TEMP := nasm -f elf
 LD_TEMP := g++ -m32
 KERNEL_LD_TEMP := ld -melf_i386
 AR_TEMP := ar
+ASGCC_TEMP := gcc -D__ASSEMBLY__ -m32
+ASGCC_DEP_TEMP := gcc -D__ASSEMBLY__ -m32
 endif
 
 # only c++ and c code is distccd
@@ -92,6 +97,8 @@ CXX_DEP_TEMP := $(NICE) $(CXX_DEP_TEMP)
 CC_DEP_TEMP := $(NICE) $(CC_DEP_TEMP)
 AS_DEP_TEMP := $(NICE) $(AS_DEP_TEMP)
 MAKE_TEMP := $(NICE) $(MAKE_TEMP)
+ASGCC_TEMP := gcc -D__ASSEMBLY__ -m32
+ASGCC_DEP_TEMP := gcc -D__ASSEMBLY__ -m32
 endif
 
 CXX := $(CXX_TEMP)
@@ -104,6 +111,8 @@ CXX_DEP := $(CXX_DEP_TEMP)
 CC_DEP := $(CC_DEP_TEMP)
 AS_DEP := $(AS_DEP_TEMP)
 MAKE := $(MAKE_TEMP)
+ASGCC := $(ASGCC_TEMP)
+ASGCC_DEP := $(ASGCC_DEP_TEMP)
 
 ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
@@ -113,5 +122,6 @@ CXXFLAGS := $(CXXFLAGS) -g -O1  -Wno-deprecated -Wall -W -nostdinc -fno-builtin 
 CCFLAGS := $(CCFLAGS)  -O1 -g  -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
+ASGCCFLAGS := $(ASGCCFLAGS)  -c -O1 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
 endif
 endif

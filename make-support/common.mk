@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.5 2005/04/27 08:56:00 woswasi Exp $
+# $Id: common.mk,v 1.6 2005/07/31 17:35:32 nightcreature Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.5  2005/04/27 08:56:00  woswasi
+# added clean suport for e2fsimage
+#
 # Revision 1.4  2005/04/20 18:19:44  nomenquis
 # updated these files
 #
@@ -44,6 +47,7 @@ COMMON_FLAGS := $(COMMON_FLAGS) $(INCLUDE_DIRS) $(DEFINES)
 CXXFLAGS := $(CXXFLAGS) $(COMMON_FLAGS) 
 CCFLAGS := $(CCFLAGS) $(COMMON_FLAGS) 
 ASFLAGS := $(ASFLAGS) $(COMMON_FLAGS)
+ASGCCFLAGS := $(ASGCCFLAGS) $(COMMON_FLAGS)
 LDFLAGS := $(LDFLAGS)
 KERNELLDFLAGS := $(KERNELLDFLAGS)
 
@@ -51,6 +55,8 @@ KERNELLDFLAGS := $(KERNELLDFLAGS)
 CXXCOMMAND := $(CXX) $(CXXFLAGS)
 CCCOMMAND := $(CC) $(CCFLAGS)
 ASCOMMAND := $(AS) $(ASFLAGS)
+ASGCCCOMMAND := $(ASGCC) $(ASGCCFLAGS)
+ASGCCDEPCOMMAND := $(ASGCC_DEP) $(ASGCCFLAGS)
 CXXDEPCOMMAND := $(CXX_DEP) $(CXXFLAGS)
 CCDEPCOMMAND := $(CC_DEP) $(CCFLAGS)
 ASDEPCOMMAND := $(AS_DEP) $(ASFLAGS)
@@ -68,16 +74,19 @@ BINARYDESTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD}/${PROJECT_ROOT}/
 CXXFILES := $(wildcard *.cpp)
 CCFILES := $(wildcard *.c)
 ASFILES := $(wildcard *.s)
+ASGCCFILES := $(wildcard *.S)
 
 CXXOBJECTS_TEMP := $(patsubst %.cpp,%.o,$(CXXFILES))
 CCOBJECTS_TEMP := $(patsubst %.c,%.o,$(CCFILES))
 ASOBJECTS_TEMP := $(patsubst %.s,%.o,$(ASFILES))
+ASGCCOBJECTS_TEMP := $(patsubst %.S,%.o,$(ASGCCFILES))
 
 CXXOBJECTS := $(foreach temp, $(CXXOBJECTS_TEMP), $(OBJECTDIR)/$(temp))
 CCOBJECTS := $(foreach temp, $(CCOBJECTS_TEMP), $(OBJECTDIR)/$(temp))
 ASOBJECTS := $(foreach temp, $(ASOBJECTS_TEMP), $(OBJECTDIR)/$(temp))
+ASGCCOBJECTS := $(foreach temp, $(ASGCCOBJECTS_TEMP), $(OBJECTDIR)/$(temp))
 
-OBJECTS := $(CXXOBJECTS) $(CCOBJECTS) $(ASOBJECTS)
+OBJECTS := $(CXXOBJECTS) $(CCOBJECTS) $(ASOBJECTS)  $(ASGCCOBJECTS)
 
 IS_LIB := $(findstring .a,$(TARGET))
 
@@ -138,6 +147,16 @@ endif
 	@$(ASCOMMAND) $< -o $@        
 endif
 
+ifneq ($(ASGCCOBJECTS),)
+$(ASGCCOBJECTS): %.o:
+ifeq ($(V),1)
+	@echo "$(ASGCCCOMMAND) -c $< -o $@"
+else
+	@echo "ASGCC $<"
+endif
+	@$(ASGCCCOMMAND) $< -o $@        
+endif
+
 clean-l:
 	@echo "CLEAN $(OBJECTDIR)/*.o"
 	@rm -f $(OBJECTDIR)/*.o
@@ -155,7 +174,7 @@ clean-dep-l:
 	@rm -f $(OBJECTDIR)/*.d
 
 clean-dep: $(SUBPROJECTS) clean-dep-l
-	
+
 mrproper-l: clean-l clean-dep-l
 
 mrproper: $(SUBPROJECTS) mrproper-l
@@ -194,7 +213,7 @@ endif
 
 
 depend-l:
-	
+
 depend: $(SUBPROJECTS) depend-l
 
 
@@ -245,6 +264,18 @@ endif
 	@$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; echo "`echo '$@' | sed s/\\\.d/\\\.o/` $@ : $< " > $@ ; \
 		[ -s $@ ] || rm -f $@ '		
 
+$(OBJECTDIR)%.d: $(SOURECDIR)%.S
+ifeq ($(V),1)
+	@echo "$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; $(ASGCCDEPCOMMAND) -DCHANGED -MM $< \
+		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
+		[ -s $@ ] || rm -f $@ '"
+else
+	@echo "DEP $< "
+endif
+	@$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; $(ASGCCDEPCOMMAND) -DCHANGED -MM $< \
+		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
+		[ -s $@ ] || rm -f $@ '		
+
 
 do-make-dependencies = fubar
 ifeq ($(MAKECMDGOALS),clean)
@@ -275,5 +306,8 @@ ifneq ($(CCFILES),)
 endif
 ifneq ($(ASFILES),)
 -include $(foreach temp, $(patsubst %.s,%.d,$(ASFILES)), $(OBJECTDIR)/$(temp)) 
+endif
+ifneq ($(ASGCCFILES),)
+-include $(foreach temp, $(patsubst %.S,%.d,$(ASGCCFILES)), $(OBJECTDIR)/$(temp)) 
 endif
 endif
