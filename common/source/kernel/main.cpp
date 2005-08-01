@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.63 2005/07/27 13:43:48 btittelbach Exp $
+ * $Id: main.cpp,v 1.64 2005/08/01 08:41:15 nightcreature Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.63  2005/07/27 13:43:48  btittelbach
+ * Interrupt On/Off Autodetection in Kprintf
+ *
  * Revision 1.62  2005/07/27 10:04:26  btittelbach
  * kprintf_nosleep and kprintfd_nosleep now works
  * Output happens in dedicated Thread using VERY EVIL Mutex Hack
@@ -198,7 +201,7 @@
  */
 
 #include <types.h>
-#include <multiboot.h>
+//#include <multiboot.h>
 #include <arch_panic.h>
 #include <paging-definitions.h>
 
