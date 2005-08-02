@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.21 2005/07/26 17:45:25 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.22 2005/08/02 19:47:54 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.21  2005/07/26 17:45:25  nomenquis
+//  foobar
+//
 //  Revision 1.20  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -94,6 +97,7 @@
 //remove this later
 #include "Thread.h"
 #include "Loader.h"
+#include "Syscall.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -557,23 +561,23 @@ extern "C" void syscallHandler()
                   currentThread->user_arch_thread_info_->ecx,
                   currentThread->user_arch_thread_info_->edx);
  
-  if (currentThread->user_arch_thread_info_->eax == 0x0000dead)
-  {
-    kprintfd_nosleep("syscallHANDLER: Terminating Thread\n");
-    currentThread->kill();
-  } 
-  else
-  {
-
-    // just testing
-  currentThread->switch_to_userspace_ = true;
   currentThread->kernel_arch_thread_info_->eip ++;
-  }
+
+  currentThread->user_arch_thread_info_->eax =
+    Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
+                  currentThread->user_arch_thread_info_->ebx,
+                  currentThread->user_arch_thread_info_->ecx,
+                  currentThread->user_arch_thread_info_->edx);
+
+  currentThread->switch_to_userspace_ = true;
   
-  //for(;;)
+  for(;;)
   {
-    kprintf_nosleep("syscallHandler: still alive\n");
+    //round and round until we switch back to userspace kontext
+    //this could be solved much nicer
+    //kprintf_nosleep("syscallHandler: still alive\n");
     ArchInterrupts::enableInterrupts();
+    Scheduler::instance()->yield();
   }
 }
 
