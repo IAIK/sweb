@@ -22,9 +22,92 @@
 /**
  * CVS Log Info for $RCSfile: RamFsFile.cpp,v $
  *
- * $Id: RamFsFile.cpp,v 1.1 2005/08/02 17:42:55 lythien Exp $
+ * $Id: RamFsFile.cpp,v 1.2 2005/08/02 18:25:51 lythien Exp $
  * $Log$
  */
 
 
 #include "fs/ramfs/RamFsFile.h"
+#include "fs/ramfs/RamFsDentry.h"
+#include "fs/ramfs/RamFsInode.h"
+
+//-----------------------------------------------------------------
+// The Constructor
+//-----------------------------------------------------------------
+RamFsFile::RamFsFile()
+{
+}
+
+//-----------------------------------------------------------------
+// The Destructor
+//-----------------------------------------------------------------
+RamFsFile::~RamFsFile()
+{
+}
+
+//----------------------------------------------------------------
+// get name of the file
+//----------------------------------------------------------------
+
+virtual char *RamFsFile::getName() const
+{
+
+  return(f_dentry_->get_name());
+
+}
+
+
+//----------------------------------------------------------------
+// get the dentry
+//----------------------------------------------------------------
+virtual Dentry *RamFsFile::getDentry() const
+{
+  return(f_dentry_);
+}
+
+//----------------------------------------------------------------
+// read from the file
+//----------------------------------------------------------------
+
+
+virtual int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
+{
+  return(f_inode_ ->readData(offset, count, buffer));
+}
+
+//----------------------------------------------------------------
+// write to the file
+//----------------------------------------------------------------
+
+
+virtual int32 RamFsFile::write(int32 *buffer, size_t count, l_off_t offset)
+{
+  //return(f_inode_->writeData(offset, count, buffer));
+}
+
+//----------------------------------------------------------------
+// open the file
+//----------------------------------------------------------------
+
+virtual int32 RamFsFile::open(Inode*)
+{
+  return 0;
+}
+
+//----------------------------------------------------------------
+// close the file
+//----------------------------------------------------------------
+
+virtual int32 RamFsFile::close(Inode*)
+{
+  return 0;
+}
+
+//----------------------------------------------------------------
+// flush all off the file's wirte operations.
+//----------------------------------------------------------------
+
+virtual int32 RamFsFile::flush()
+{
+  return 0;
+}

@@ -21,7 +21,7 @@
 /**
  * CVS Log Info for $RCSfile: RamFsFile.h,v $
  *
- * $Id: RamFsFile.h,v 1.1 2005/08/02 17:45:07 lythien Exp $
+ * $Id: RamFsFile.h,v 1.2 2005/08/02 18:27:15 lythien Exp $
  * $Log$
  */
 
@@ -44,13 +44,13 @@ class RamFsFile: public File
   /**
    * default constructor for class RamFsFile
    */
-  RamFsFile(){}
+  RamFsFile();
 
 
   /**
    * destructor for class RamFsFile
    */
-  virtual ~RamFsFile(){}
+  virtual ~RamFsFile();
 
     //----------------------------------------------------------------------
     /// Setter method for the file's name.
@@ -63,13 +63,13 @@ class RamFsFile: public File
     /// Getter method for the filename.
     ///
     /// @return is the file's name
-  virtual char *getName() const{}
+  virtual char *getName() const;
 
     //----------------------------------------------------------------------
     /// Getter Method for the dentry.
     ///
     /// @return is the dentry associated to the File.
-  virtual Dentry *getDentry() const{}
+  virtual Dentry *getDentry() const;
 
     //----------------------------------------------------------------------
     /// Sets the file position relative to the start of the file, the  end of the file or the
@@ -86,7 +86,7 @@ class RamFsFile: public File
     /// @param buffer is the buffer where the data is written to
     /// @param count is the number of bytes to read.
     /// @param offset is the offset to read from counted from the start of the file.
-  virtual int32 read(int32 *buffer, size_t count, l_off_t offset){}
+  virtual int32 read(int32 *buffer, size_t count, l_off_t offset);
 
     //----------------------------------------------------------------------
     /// write to the file
@@ -94,26 +94,26 @@ class RamFsFile: public File
     /// @param buffer is the buffer where the data is read from
     /// @param count is the number of bytes to write.
     /// @param offset is the offset to write from counted from the start of the file.
-  virtual int32 write(int32 *buffer, size_t count, l_off_t offset){}
+  virtual int32 write(int32 *buffer, size_t count, l_off_t offset);
 
     //----------------------------------------------------------------------
     /// Open the file
     ///
     /// @param inode is the inode the read the file from.
-  virtual int32 open(Inode* inode){}
+  virtual int32 open(Inode* inode);
 
     //-----------------------------------------------------------------------
     /// Close the file
     ///
     /// @param inode is close, the superblock has the information, that this
     /// inode is not use anymore.
-  virtual int32 close(Inode* inode){}
+  virtual int32 close(Inode* inode);
 
     //----------------------------------------------------------------------
     /// Flush all off the file's write operations. The File will be written to disk.
     ///
     /// @return is the error code of the flush operation.
-  virtual int32 flush(){}
+  virtual int32 flush();
 
 
 
