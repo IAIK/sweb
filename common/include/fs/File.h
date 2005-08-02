@@ -95,11 +95,11 @@ class File
 
     //----------------------------------------------------------------------
     /// The Constructor
-    File();
+  File(){}
 
     //----------------------------------------------------------------------
     /// The Destructor
-    ~File();
+  virtual  ~File(){}
 
     //----------------------------------------------------------------------
     /// Setter method for the file's name.
@@ -112,13 +112,13 @@ class File
     /// Getter method for the filename.
     ///
     /// @return is the file's name
-    const char *getName() const;
+  virtual char *getName() const{}
 
     //----------------------------------------------------------------------
     /// Getter Method for the dentry.
     ///
     /// @return is the dentry associated to the File.
-    const Dentry *getDentry() const;
+  virtual Dentry *getDentry() const{}
 
     //----------------------------------------------------------------------
     /// Sets the file position relative to the start of the file, the  end of the file or the
@@ -135,7 +135,7 @@ class File
     /// @param buffer is the buffer where the data is written to
     /// @param count is the number of bytes to read.
     /// @param offset is the offset to read from counted from the start of the file.
-    int32 read(int32 *buffer, size_t count, l_off_t offset);
+  virtual  int32 read(int32 *buffer, size_t count, l_off_t offset){}
 
     //----------------------------------------------------------------------
     /// write to the file
@@ -143,26 +143,26 @@ class File
     /// @param buffer is the buffer where the data is read from
     /// @param count is the number of bytes to write.
     /// @param offset is the offset to write from counted from the start of the file.
-  int32 write(int32 *buffer, size_t count, l_off_t offset);
+  virtual  int32 write(int32 *buffer, size_t count, l_off_t offset){}
 
     //----------------------------------------------------------------------
     /// Open the file
     ///
     /// @param inode is the inode the read the file from.
-  int32 open(Inode* inode);
+  virtual  int32 open(Inode* inode){}
 
   //-----------------------------------------------------------------------
   /// Close the file
   ///
   /// @param inode is close, the superblock has the information, that this
   /// inode is not use anymore.
-  int32 close(Inode* inode);
+  virtual  int32 close(Inode* inode){}
 
     //----------------------------------------------------------------------
     /// Flush all off the file's write operations. The File will be written to disk.
     ///
     /// @return is the error code of the flush operation.
-    int32 flush();
+  virtual  int32 flush(){}
 
 
 
