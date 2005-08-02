@@ -27,11 +27,7 @@
 File::File()
 {
 
-  // uint8 SEEK_SET = 0;
-  // uint8 SEEK_CUR = 1;
-  // uint8 SEEK_END = 2;
-  // inode_ = inode;
-  // return;
+
 }
 
 
@@ -47,47 +43,58 @@ File::~File()
 // set the name of the file
 //----------------------------------------------------------------
 
-int32 File::setName(const char *)
-{
-  assert(0);
-  return 0;
-}
+// int32 File::setName(const char *)
+// {
+//   assert(0);
+//   return 0;
+// }
+
 
 //----------------------------------------------------------------
 // get name of the file
 //----------------------------------------------------------------
 
-const char * File::getName() const
+const char *File::getName() const
 {
-  return dentry_->get_name();
+
+  return(f_dentry_->get_name());
+
 }
 
 
 //----------------------------------------------------------------
 // get the dentry
 //----------------------------------------------------------------
-
 const Dentry *File::getDentry() const
 {
-  return dentry_;
+  return(f_dentry_);
+
 }
 
 //----------------------------------------------------------------
 // read from the file
 //----------------------------------------------------------------
 
-int32 File::read(char *, size_t, l_off_t)
+
+int32 File::read(int32 *buffer, size_t count, l_off_t offset)
 {
-  return 0;
+//  return(f_inode_ ->readData(offset, count, buffer));
+
 }
 
 //----------------------------------------------------------------
 // write to the file
 //----------------------------------------------------------------
 
-int32 File::write(char *, size_t, l_off_t)
+
+int32 File::write(int32 *buffer, size_t count, l_off_t offset)
 {
+
+  // isn't ready now..
+  // return(f_inode_->writeData(offset, count, buffer));
+
   return 0;
+
 }
 
 //----------------------------------------------------------------
@@ -97,6 +104,7 @@ int32 File::write(char *, size_t, l_off_t)
 int32 File::open(Inode*)
 {
   return 0;
+
 }
 
 //----------------------------------------------------------------
