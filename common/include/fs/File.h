@@ -68,10 +68,10 @@ class File
     // char *name_;
 
     /// The indoe associated to the file.
-    Inode* inode_;
+    Inode* f_inode_;
 
     /// The dcache entry pointing to this file/
-    Dentry* dentry_;
+    Dentry* f_dentry_;
 
     /// Mounted filesystem containing the file
     //VFSMount *vfs_mount_;
@@ -106,7 +106,7 @@ class File
     ///
     /// @param name is the new name of the file.
     /// @return is an error code or 0 if successfull.
-    int32 setName(const char *name);
+    ///  int32 setName(const char *name);
 
     //----------------------------------------------------------------------
     /// Getter method for the filename.
@@ -135,7 +135,7 @@ class File
     /// @param buffer is the buffer where the data is written to
     /// @param count is the number of bytes to read.
     /// @param offset is the offset to read from counted from the start of the file.
-    int32 read(char *buffer, size_t count, l_off_t offset);
+    int32 read(int32 *buffer, size_t count, l_off_t offset);
 
     //----------------------------------------------------------------------
     /// write to the file
@@ -143,7 +143,7 @@ class File
     /// @param buffer is the buffer where the data is read from
     /// @param count is the number of bytes to write.
     /// @param offset is the offset to write from counted from the start of the file.
-  int32 write(char *buffer, size_t count, l_off_t offset);
+  int32 write(int32 *buffer, size_t count, l_off_t offset);
 
     //----------------------------------------------------------------------
     /// Open the file
