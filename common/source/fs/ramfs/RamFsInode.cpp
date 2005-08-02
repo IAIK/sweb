@@ -6,6 +6,13 @@
 #include "assert.h"
 
 #define BASIC_ALLOC 4096
+#define ERROR_DNE "Error: the dentry does not exist."
+#define ERROR_DU  "Error: inode is used."
+#define ERROR_IC  "Error: invalid command (only for Directory)."
+#define ERROR_NNE "Error: the name does not exist in the current directory."
+#define ERROR_HLI "Error: hard link invalid."
+#define ERROR_DNEILL "Error: the dentry does not exist in the link list."
+#define ERROR_DES "Error: the dentry exists sub_directory"
 
 //---------------------------------------------------------------------------
 RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
@@ -51,13 +58,13 @@ int32 RamFsInode::mknod(Dentry *dentry)
 {
   if(dentry == 0)
   {
-    // Error: the dentry does not exist.
+    // ERROR_DNE
     return -1;
   }
   
 	if(i_count_ != 0)
  	{
- 	  // Error: inode is used.
+ 	  // ERROR_DU
  	  return -1;
  	}
  	i_count_++;
@@ -86,7 +93,7 @@ int32 RamFsInode::link(Dentry *dentry)
 {
   if(dentry == 0)
   {
-    // Error: the dentry does not exist.
+    // ERROR_DNE
     return -1;
   }
 
@@ -101,7 +108,7 @@ int32 RamFsInode::link(Dentry *dentry)
   }
   else
   {
-    // Error: hard link invalid
+    // ERROR_HLI
     return -1;
   }
   
@@ -113,7 +120,7 @@ int32 RamFsInode::unlink(Dentry *dentry)
 {
   if(dentry == 0)
   {
-    // Error: the dentry does not exist.
+    // ERROR_DNE
     return -1;
   }
 
@@ -121,7 +128,7 @@ int32 RamFsInode::unlink(Dentry *dentry)
   {
     if(i_dentry_link_.is_included(dentry) == false)
     {
-      // Error: the dentry does not exist in the link list.
+      // ERROR_DNEILL
       return -1;
     }
 
@@ -137,7 +144,7 @@ int32 RamFsInode::unlink(Dentry *dentry)
   int32 allow_remove = dentry->dentry_destantiate();
   if(allow_remove == -1)
   {
-    // Error: the dentry exists sub_directory
+    // ERROR_DES
     return -1;
   }
   else
@@ -155,7 +162,7 @@ int32 RamFsInode::rmdir(Dentry *sub_dentry)
 {
   if(sub_dentry == 0)
   {
-    // Error: the dentry does not exist.
+    // ERROR_DNE
     return -1;
   }
   
@@ -168,13 +175,13 @@ int32 RamFsInode::rmdir(Dentry *sub_dentry)
     }
     else
     {
-      // Error: the name does not exist in the current directory.
+      // ERROR_NNE
       return -1;
     }
   }
   else
   {
-    // Error: invalid command (only for Directory)
+    // ERROR_IC
     return -1;
   }
   
@@ -186,11 +193,29 @@ Dentry* RamFsInode::lookup(Dentry *dentry)
 {
   if(dentry == 0)
   {
-    // Error: the dentry does not exist.
+    // ERROR_DNE
+    return 0;
   }
   
   if(i_mode_ == I_DIR)
   {
+    if(i_dentry_->check_name(dentry) == true)
+    {
+      // ERROR_NNE
+      return 0;
+    }
+    else
+    {
+      return dentry;
+    }
+  }
+  else
+  {
+    // ERROR_IC
+    return 0;
   }
   
+  return dentry;
 }
+
+//---------------------------------------------------------------------------

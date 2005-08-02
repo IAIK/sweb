@@ -112,13 +112,13 @@ class File
     /// Getter method for the filename.
     ///
     /// @return is the file's name
-  virtual char *getName() const{}
+  virtual char *getName() const {return 0;}
 
     //----------------------------------------------------------------------
     /// Getter Method for the dentry.
     ///
     /// @return is the dentry associated to the File.
-  virtual Dentry *getDentry() const{}
+  virtual Dentry *getDentry() const {return 0;}
 
     //----------------------------------------------------------------------
     /// Sets the file position relative to the start of the file, the  end of the file or the
@@ -135,7 +135,7 @@ class File
     /// @param buffer is the buffer where the data is written to
     /// @param count is the number of bytes to read.
     /// @param offset is the offset to read from counted from the start of the file.
-  virtual  int32 read(int32 *buffer, size_t count, l_off_t offset){}
+  virtual  int32 read(int32 */*buffer*/, size_t /*count*/, l_off_t /*offset*/) {return 0;}
 
     //----------------------------------------------------------------------
     /// write to the file
@@ -143,26 +143,26 @@ class File
     /// @param buffer is the buffer where the data is read from
     /// @param count is the number of bytes to write.
     /// @param offset is the offset to write from counted from the start of the file.
-  virtual  int32 write(int32 *buffer, size_t count, l_off_t offset){}
+  virtual  int32 write(int32 */*buffer*/, size_t /*count*/, l_off_t /*offset*/) {return 0;}
 
     //----------------------------------------------------------------------
     /// Open the file
     ///
     /// @param inode is the inode the read the file from.
-  virtual  int32 open(Inode* inode){}
+  virtual  int32 open(Inode*) {return 0;}
 
   //-----------------------------------------------------------------------
   /// Close the file
   ///
   /// @param inode is close, the superblock has the information, that this
   /// inode is not use anymore.
-  virtual  int32 close(Inode* inode){}
+  virtual  int32 close(Inode*) {return 0;}
 
     //----------------------------------------------------------------------
     /// Flush all off the file's write operations. The File will be written to disk.
     ///
     /// @return is the error code of the flush operation.
-  virtual  int32 flush(){}
+  virtual  int32 flush() {return 0;}
 
 
 

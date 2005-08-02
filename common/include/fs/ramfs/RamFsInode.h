@@ -21,10 +21,6 @@
 #include "fs/PointList.h"
 #include "fs/Inode.h"
 
-class BufferHead;
-// class File;
-// class Page;
-
 //-------------------------------------------------------------------------
 /**
  * RamFsInode
@@ -80,8 +76,8 @@ public:
     /// This should create a symbolic link in the given directory with the given
     /// name having the given value. It should d_instantiate the new inode into
     /// the dentry on success.
-    virtual int32 symlink(Inode *inode, Dentry *dentry, const char *link_name)
-    {return 0;}
+    virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, 
+                          const char */*link_name*/) {return 0;}
 
   /// Create a directory with the given parent and name.
   virtual int32 mkdir(Dentry *dentry);
@@ -97,14 +93,14 @@ public:
     /// rename should rename the object to have the parent and name given by the
     /// the prt_inode and dst_dentry. All generic checks, including that the new
     /// parent isn't a child of the old name, have already been done.
-    virtual int32 rename(Inode *src_inode, Dentry *src_dentry,
-        Inode *prt_inode, Dentry *dst_dentry) {return 0;}
+    virtual int32 rename(Inode */*src_inode*/, Dentry */*src_dentry*/,
+                         Inode */*prt_inode*/, Dentry */*dst_dentry*/) {return 0;}
     //--------------------------------------------------------------------------
 
     /// The symbolic link referred to by the dentry is read and the value is
     /// copied into the user buffer (with copy_to_user) with a maximum length
     /// given by the intege.
-    virtual int32 readlink(Dentry *dentry, char*, int32 max_length) {return 0;}
+    virtual int32 readlink(Dentry */*dentry*/, char*, int32 max_length) {return 0;}
 
     /// If the directory (parent dentry) have a directory and a name within that
     /// directory (child dentry) then the obvious result of following the name
@@ -114,25 +110,9 @@ public:
     /// @prt_dentry the parent dentry
     /// @chd_dentry the child dentry
     /// @lookup_flags a number of LOOKUP flags
-    virtual Dentry* follow_link(Dentry *prt_dentry, Dentry *chd_dentry,
-        uint32 lookup_flags = 0) {return((Dentry*)0);}
+    virtual Dentry* follow_link(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) {return 0;}
 
-    /// This method is used to find the device block that holds a given block of
-    /// a file. get_block should initialise the b_dev and b_blocknr field of the
-    /// buffer_head, and should possibly modify the b_state flags.
-    /// @inode the file that the block hold
-    /// @block_number the file offset divided by file-system block size
-    /// @b_state the buffer state flags.
-    virtual int32 get_block(Inode *inode, int64 block_number,
-        BufferHead *buffer_head, int32 b_state) {return 0;}
-
-    /// It is needed for memory mapping of files, for using the send file system
-    /// call.
-    // virtual int32 read_page(File *, Page *) { return 0; }
-    // virtual int32 wirte_page(File *, Page *) { return 0; }
-    // virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
-
-  int32 readData(int32 offset, int32 size, int32 *buffer);
+    virtual int32 readData(int32 offset, int32 size, int32 *buffer);
 };
 
 

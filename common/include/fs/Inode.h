@@ -23,9 +23,7 @@
 #include "File.h"
 
 class Dentry;
-class BufferHead;
 class File;
-// class Page;
 class Superblock;
 
 // three possible inode state bits:
@@ -114,72 +112,60 @@ class Inode
   /// get a new empty inode from the cache with get_empty_inode, fill in the
   /// fields and insert it into the hash table with insert_inode_hash, mark it
   /// dirty, and instantiate it into the Dcache with d_instantiate.
-  virtual int32 create(Dentry *dentry) { return 0; }
+  virtual int32 create(Dentry *) { return 0; }
 
   /// lookup should check if that name (given by the Dentry) exists in the
   /// directory (given by the inode) and should update the Dentry if it does.
   /// This involves finding and loading the inode. If the lookup failed to find
   /// anything, this is indicated by returning a negative value.
-  virtual Dentry* lookup(Dentry *dentry) {return 0;}
+  virtual Dentry* lookup(Dentry *) {return 0;}
 
   /// The link method should make a hard link to by the dentry, which is in
   /// the directory refered to by the Inode.
-  virtual int32 link(Dentry *dentry) {return 0;}
+  virtual int32 link(Dentry *) {return 0;}
 
   /// This should remove the name refered to by the Dentry from the directory
   /// referred to by the inode. It should d_delete the Dentry on success.
-  virtual int32 unlink(Dentry *dentry) {return 0;}
+  virtual int32 unlink(Dentry *) {return 0;}
 
   /// This should create a symbolic link in the given directory with the given
   /// name having the given value. It should d_instantiate the new inode into
   /// the dentry on success.
-  virtual int32 symlink(Inode *inode, Dentry *dentry, const char *link_name)
-    {return 0;}
+  virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, 
+                        const char */*link_name*/) {return 0;}
 
   /// Create a directory with the given parent and name.
-  virtual int32 mkdir(Dentry *dentry) {return 0;}
+  virtual int32 mkdir(Dentry *) {return 0;}
 
   /// Remove the named directory (if empty) and d_delete the dentry.
-  virtual int32 rmdir(Dentry *dentry) {return 0;}
+  virtual int32 rmdir(Dentry *) {return 0;}
 
   /// Create a device special file with name and device number (the inode is
   /// the parent). Then d_instantiate the new inode into the dentry.
-  virtual int32 mknod(Dentry *dentry) {return 0;}
+  virtual int32 mknod(Dentry *) {return 0;}
 
   /// The src_inode and src_entry refer to a directory and name that exist.
   /// rename should rename the object to have the parent and name given by the
   /// the prt_inode and dst_dentry. All generic checks, including that the new
   /// parent isn't a child of the old name, have already been done.
-  virtual int32 rename(Inode *src_inode, Dentry *src_dentry,
-                       Inode *prt_inode, Dentry *dst_dentry) {return 0;}
+  virtual int32 rename(Inode */*src_inode*/, Dentry */*src_dentry*/,
+                       Inode */*prt_inode*/, Dentry */*dst_dentry*/) {return 0;}
   //--------------------------------------------------------------------------
 
   /// The symbolic link referred to by the dentry is read and the value is
   /// copied into the user buffer (with copy_to_user) with a maximum length
   /// given by the intege.
-  virtual int32 readlink(Dentry *dentry, char*, int32 max_length) {return 0;}
+  virtual int32 readlink(Dentry */*dentry*/, char*, int32 /*max_length*/) {return 0;}
 
   /// If the directory (parent dentry) have a directory and a name within that
   /// directory (child dentry) then the obvious result of following the name
   /// from the directory would arrive at the child dentry. 
   /// @param prt_dentry the parent dentry
   /// @param chd_dentry the child dentry
-  virtual Dentry* follow_link(Dentry *prt_dentry, Dentry *chd_dentry) {return 0; }
+  virtual Dentry* follow_link(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) {return 0;}
 
-  /// This method is used to find the device block that holds a given block of
-  /// a file. get_block should initialise the b_dev and b_blocknr field of the
-  /// buffer_head, and should possibly modify the b_state flags.
-  /// @inode the file that the block hold
-  /// @block_number the file offset divided by file-system block size
-  /// @b_state the buffer state flags.
-  virtual int32 get_block(Inode *inode, int64 block_number,
-                          BufferHead *buffer_head, int32 b_state) {return 0;}
-
-  /// It is needed for memory mapping of files, for using the send file system
-  /// call.
-  // virtual int32 read_page(File *, Page *) { return 0; }
-  // virtual int32 wirte_page(File *, Page *) { return 0; }
-  // virtual int32 flush_page(Inode *, Page *, uint64) { return 0; }
+  /// read the date of the inode
+  virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
 };
 
 
