@@ -72,6 +72,7 @@ arch_pageFaultHandler:
         call pageFaultHandler
         leave
         popAll
+        call arch_restoreUserThreadRegisters
         add esp, 0x04             ; remove error_cd
         iretd
 
@@ -224,16 +225,17 @@ dummyhandler 125
 dummyhandler 126
 dummyhandler 127
 
-
 global arch_syscallHandler
 extern syscallHandler
+extern arch_restoreUserThreadRegisters
 arch_syscallHandler:
-        pushAll
-        changeData
-		call arch_saveThreadRegisters
-        call syscallHandler
-        popAll
-        iretd
+    pushAll
+    changeData
+    call arch_saveThreadRegisters
+    call syscallHandler
+    popAll
+    call arch_restoreUserThreadRegisters
+    iretd
 
 
 dummyhandler 129

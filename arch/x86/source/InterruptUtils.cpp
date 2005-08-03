@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.22 2005/08/02 19:47:54 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.23 2005/08/03 11:56:56 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.22  2005/08/02 19:47:54  btittelbach
+//  Syscalls: there is some very evil bug still hidden here, what did I forget ?
+//
 //  Revision 1.21  2005/07/26 17:45:25  nomenquis
 //  foobar
 //
@@ -531,8 +534,10 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   kprintf_nosleep("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
   kprintf_nosleep("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
   kprintf_nosleep("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
-    
-  for(;;);
+ 
+  currentThread->switch_to_userspace_ = true;
+  ArchInterrupts::enableInterrupts();
+ // for(;;);
 }
 
 
@@ -570,15 +575,16 @@ extern "C" void syscallHandler()
                   currentThread->user_arch_thread_info_->edx);
 
   currentThread->switch_to_userspace_ = true;
+  ArchInterrupts::enableInterrupts();
   
-  for(;;)
-  {
-    //round and round until we switch back to userspace kontext
-    //this could be solved much nicer
-    //kprintf_nosleep("syscallHandler: still alive\n");
-    ArchInterrupts::enableInterrupts();
-    Scheduler::instance()->yield();
-  }
+  //~ for(;;)
+  //~ {
+    //~ //round and round until we switch back to userspace kontext
+    //~ //this could be solved much nicer
+    //~ //kprintf_nosleep("syscallHandler: still alive\n");
+    //~ ArchInterrupts::enableInterrupts();
+    //~ Scheduler::instance()->yield();
+  //~ }
 }
 
 IRQ_HANDLER(1)
