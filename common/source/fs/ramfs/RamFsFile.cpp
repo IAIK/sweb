@@ -1,7 +1,7 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
 //
-// Copyright (C) 2004 Maria Mauerhofer
+// Copyright (C) 2005 Maria Mauerhofer
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: RamFsFile.cpp,v $
  *
- * $Id: RamFsFile.cpp,v 1.3 2005/08/02 18:57:57 qiangchen Exp $
+ * $Id: RamFsFile.cpp,v 1.4 2005/08/04 17:04:00 lythien Exp $
  * $Log: RamFsFile.cpp,v $
+ * Revision 1.3  2005/08/02 18:57:57  qiangchen
+ * *** empty log message ***
+ *
  * Revision 1.2  2005/08/02 18:25:51  lythien
  * write RamFsFile
  *
@@ -53,9 +56,7 @@ RamFsFile::~RamFsFile()
 //----------------------------------------------------------------
 char *RamFsFile::getName() const
 {
-
   return(f_dentry_->get_name());
-
 }
 
 
@@ -80,8 +81,7 @@ int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
 //----------------------------------------------------------------
 int32 RamFsFile::write(int32 *buffer, size_t count, l_off_t offset)
 {
-  //return(f_inode_->writeData(offset, count, buffer));
-  return 0;
+  return(f_inode_->writeData(offset, count, buffer));
 }
 
 //----------------------------------------------------------------
