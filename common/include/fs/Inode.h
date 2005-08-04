@@ -166,6 +166,7 @@ class Inode
 
   /// read the date of the inode
   virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
+  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
 };
 
 

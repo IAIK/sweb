@@ -113,6 +113,7 @@ public:
     virtual Dentry* follow_link(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) {return 0;}
 
     virtual int32 readData(int32 offset, int32 size, int32 *buffer);
+    virtual int32 writeData(int32 offset, int32 size, int32 *buffer);
 };
 
 

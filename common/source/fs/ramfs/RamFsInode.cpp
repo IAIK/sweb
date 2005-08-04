@@ -18,7 +18,11 @@
 RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
     Inode(super_block, inode_mode)
 {
-  data_ = (int32*)kmalloc(BASIC_ALLOC);
+  if(inode_mode == I_FILE)
+    data_ = (int32*)kmalloc(BASIC_ALLOC);
+  else
+    data_ = 0;
+
   i_state_ = I_UNUSED;
   i_size_ = BASIC_ALLOC;
   i_count_ = 0;
@@ -43,13 +47,32 @@ RamFsInode::~RamFsInode()
 //---------------------------------------------------------------------------
 int32 RamFsInode::readData(int32 offset, int32 size, int32 *buffer)
 {
-  int32 *ptr_offset = data_ + (offset / 4);
-
-  if (memcpy(buffer, ptr_offset, size))
+  if(i_mode_ == I_FILE)
   {
-    return 1;
-  }
+    int32 *ptr_offset = data_ + (offset / 4);
 
+    if (memcpy(buffer, ptr_offset, size))
+    {
+      return 1;
+    }
+  }
+  
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+int32 RamFsInode::writeData(int32 offset, int32 size, int32 *buffer)
+{
+  if(i_mode_ == I_FILE)
+  {
+    int32 *ptr_offset = data_ + (offset / 4);
+    
+    if(memcpy(ptr_offset, buffer, size))
+    {
+      return 1;
+    }
+  }
+  
   return 0;
 }
 
