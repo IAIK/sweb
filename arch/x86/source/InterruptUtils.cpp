@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.23 2005/08/03 11:56:56 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.24 2005/08/04 17:49:21 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.23  2005/08/03 11:56:56  btittelbach
+//  Evil PageFaultBug now gets bigger... (but hopefully better to debug)
+//
 //  Revision 1.22  2005/08/02 19:47:54  btittelbach
 //  Syscalls: there is some very evil bug still hidden here, what did I forget ?
 //
@@ -503,19 +506,21 @@ extern "C" void irqHandler_65()
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
-{
-  //maybe use a lock or disable exception, whatever...
-  
+{  
   uint32 const flag_p = 0x1 << 0;  //=0: pf caused because pt was not present; =1: protection violation
   uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
   uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
   uint32 const flag_rsvd = 0x1 << 3; //pf caused by reserved bits
+  
+  //~ uint32 cr2=0xffff;
+  //~ __asm__("movl %%cr2, %0"
+  //~ :"=a"(cr2)
+  //~ :);
   kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\n",address,
                                                                             error&flag_p, 
                                                                             error&flag_rw >> 1, 
                                                                             error&flag_us >> 2,
                                                                             error&flag_rsvd >> 3);
-  
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U)

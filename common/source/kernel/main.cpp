@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.66 2005/08/03 11:56:57 btittelbach Exp $
+ * $Id: main.cpp,v 1.67 2005/08/04 17:49:22 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.66  2005/08/03 11:56:57  btittelbach
+ * Evil PageFaultBug now gets bigger... (but hopefully better to debug)
+ *
  * Revision 1.65  2005/08/02 19:47:54  btittelbach
  * Syscalls: there is some very evil bug still hidden here, what did I forget ?
  *
@@ -587,7 +590,7 @@ void startup()
   //Scheduler::instance()->addNewThread(new UserThread());
   //Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
   //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
-  Scheduler::instance()->addNewThread(new SyscallTest());
+  //Scheduler::instance()->addNewThread(new SyscallTest());
 
   int32 *test = new int32[50];
   //FiFo<uint32> test_fifo(20);

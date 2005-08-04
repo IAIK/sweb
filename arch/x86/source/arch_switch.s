@@ -191,8 +191,8 @@ global arch_restoreUserThreadRegisters
     mov ecx, dword[g_tss]        ; tss
     mov eax, dword[ebx + 68]     ; get esp0
     mov dword[ecx + 4], eax      ; restore esp0
-;    mov eax, dword[ebx + 76]     ; page directory
-;    mov cr3, eax                 ; change page directory
+    mov eax, dword[ebx + 76]     ; page directory
+    mov cr3, eax                 ; change page directory
     
     mov eax, dword[ebx + 12]     ; restore eax
     mov ecx, dword[ebx + 16]     ; restore ecx

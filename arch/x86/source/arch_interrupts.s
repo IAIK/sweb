@@ -59,23 +59,21 @@ section .text
 extern pageFaultHandler
 global arch_pageFaultHandler
 arch_pageFaultHandler:
-        pushAll
+        ;we are already on a new stack because a privliedge switch happened
+        pushAll 
         changeData
         call arch_saveThreadRegisters
-        push ebp
-        mov  ebp, esp
-        sub  esp, 8
-        mov  eax, dword[esp + 52] ; error cd
-        mov  dword[esp + 4], eax
-        mov  eax, cr2             ; page fault address
-        mov  dword[esp + 0], eax
+        ;error code was pushed on the new stack by cpu, now 52 additional bytes have been pushed after it
+        ;let's get it for the pageFaultHandler
+        push dword[esp+52]
+        ;lets get fault address from cr2 as well
+        mov eax, cr2
+        push eax
         call pageFaultHandler
-        leave
+        add esp, 0x08
         popAll
-        call arch_restoreUserThreadRegisters
-        add esp, 0x04             ; remove error_cd
-        iretd
-
+        call arch_restoreUserThreadRegisters  ; restore registers that may have been changed in ArchUserThreadInfo by c++ code
+        iretd ; restore user stack
 
   irqhandler 0
   irqhandler 1

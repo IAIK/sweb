@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.10 2005/07/27 13:43:47 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.11 2005/08/04 17:49:22 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.10  2005/07/27 13:43:47  btittelbach
+//   Interrupt On/Off Autodetection in Kprintf
+//
 //   Revision 1.9  2005/07/27 10:04:26  btittelbach
 //   kprintf_nosleep and kprintfd_nosleep now works
 //   Output happens in dedicated Thread using VERY EVIL Mutex Hack
@@ -44,6 +47,9 @@
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
 
+//it's more important to keep the messages that led to an error, instead of
+//the ones following it, when the nosleep buffer gets full
+#define KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
 
 void oh_writeCharWithSleep(char c)
 {
@@ -69,7 +75,7 @@ void oh_writeStringDebugWithSleep(char const* str)
 
 //called only from atomar functions, so no locking (otherwise BOOM)
 //but problem in itself !!!!!!
-uint32 const buffer_size_ = 4096;
+uint32 const buffer_size_ = 8192;
 static char buffer_[buffer_size_];
 static uint32 buffer_in_pos_ = 0;
 static uint32 buffer_out_pos_ = 0;
@@ -77,6 +83,10 @@ static bool buffer_overflow_ = false;
 
 void oh_writeCharNoSleep(char c)
 {
+#ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
+  if ((buffer_in_pos_ +1) % buffer_size_ == buffer_out_pos_)
+    return;
+#endif
   buffer_[buffer_in_pos_]=c;
   buffer_in_pos_++;
   buffer_in_pos_ %= buffer_size_;
@@ -119,6 +129,10 @@ static bool debug_buffer_overflow_ = false;
 
 void oh_writeCharDebugNoSleep(char c)
 {
+#ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
+  if ((debug_buffer_in_pos_ +1) % buffer_size_ == debug_buffer_out_pos_)
+    return;
+#endif
   debug_buffer_[debug_buffer_in_pos_]=c;
   debug_buffer_in_pos_++;
   debug_buffer_in_pos_ %= buffer_size_;
