@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.24 2005/08/04 17:49:21 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.25 2005/08/04 20:47:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.24  2005/08/04 17:49:21  btittelbach
+//  Improved (documented) arch_PageFaultHandler
+//  Solution to Userspace Bug still missing....
+//
 //  Revision 1.23  2005/08/03 11:56:56  btittelbach
 //  Evil PageFaultBug now gets bigger... (but hopefully better to debug)
 //
@@ -526,12 +530,14 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U)
   {
     currentThread->loader_->loadOnePage(address); //load stuff
-    return;
+//    ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
-  else
-  if (error & flag_rw) {
+  else if (error & flag_rw) 
+  { 
     kprintfd_nosleep("PageFault: Thread tried changing a write protected page\n");
-  } 
+    ArchInterrupts::enableInterrupts(); //enable Interrupts before exit !!!!
+    Syscall::exit(9999);
+  }
   
   ArchThreadInfo* i = currentThreadInfo;
   kprintf_nosleep("\n");
@@ -540,8 +546,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   kprintf_nosleep("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
   kprintf_nosleep("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
  
-  currentThread->switch_to_userspace_ = true;
-  ArchInterrupts::enableInterrupts();
  // for(;;);
 }
 

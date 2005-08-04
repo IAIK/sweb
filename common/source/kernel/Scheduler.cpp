@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.14 2005/07/27 10:04:26 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.15 2005/08/04 20:47:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.14  2005/07/27 10:04:26  btittelbach
+//  kprintf_nosleep and kprintfd_nosleep now works
+//  Output happens in dedicated Thread using VERY EVIL Mutex Hack
+//
 //  Revision 1.13  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -199,6 +203,12 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
 
 void Scheduler::yield()
 {
+  if (! ArchInterrupts::testIFSet())
+  {
+    kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?");
+    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?");
+    kprintf_nosleep_flush();
+  }
   ArchThreads::yield();
 }
 

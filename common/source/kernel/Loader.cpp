@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.10 2005/07/21 19:08:41 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.11 2005/08/04 20:47:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.10  2005/07/21 19:08:41  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.9  2005/07/12 21:05:38  btittelbach
 //  Lustiges Spielen mit UserProgramm Terminierung
 //
@@ -338,7 +343,7 @@ void Loader::loadOnePage(uint32 virtual_address)
     //kpanict((uint8*) "Loader: loadOnePage(): we didn't load anything apparently\r\n");
     kprintfd( "Loader: loadOnePage(): we didn't load anything apparently\n");
     kprintfd( "Loader: loadOnePage(): terminating UserProcess\n");
-    currentThread->kill();
+    currentThread->kill(); //syscall exit instead ?
     kpanict((uint8*) "Loader: loadOnePage(): PANIC should not reach\r\n");
   }
 }

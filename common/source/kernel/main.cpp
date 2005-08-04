@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.67 2005/08/04 17:49:22 btittelbach Exp $
+ * $Id: main.cpp,v 1.68 2005/08/04 20:47:43 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.67  2005/08/04 17:49:22  btittelbach
+ * Improved (documented) arch_PageFaultHandler
+ * Solution to Userspace Bug still missing....
+ *
  * Revision 1.66  2005/08/03 11:56:57  btittelbach
  * Evil PageFaultBug now gets bigger... (but hopefully better to debug)
  *
@@ -539,7 +543,8 @@ void startup()
   kprintf_debug("Debug print now functional\n");
   kprintfd("Can be called with kprintf_debug or kprintfd\n");
 */
-  testRegFS();
+  
+  //testRegFS();
   
   //~ uint32 dummy = 0;
   //~ kprintf("befor test set lock, val is now %d\n",dummy);
@@ -592,12 +597,13 @@ void startup()
   //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
   //Scheduler::instance()->addNewThread(new SyscallTest());
 
-  int32 *test = new int32[50];
+  //int32 *test = new int32[50];
   //FiFo<uint32> test_fifo(20);
 
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
+  kprintf_nosleep_flush();
   ArchInterrupts::enableInterrupts();
   kprintfd("Init done\n");
   kprintf("Init done\n");

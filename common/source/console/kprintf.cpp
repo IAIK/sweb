@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.11 2005/08/04 17:49:22 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.12 2005/08/04 20:47:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.11  2005/08/04 17:49:22  btittelbach
+//   Improved (documented) arch_PageFaultHandler
+//   Solution to Userspace Bug still missing....
+//
 //   Revision 1.10  2005/07/27 13:43:47  btittelbach
 //   Interrupt On/Off Autodetection in Kprintf
 //
@@ -450,12 +454,19 @@ void kprintfd_nosleep(const char *fmt, ...)
 
 void kprintf_nosleep_flush()
 {
+  bool previous_if = ArchInterrupts::testIFSet;
   Terminal *term = main_console->getActiveTerminal();
   main_console->lockConsoleForDrawing();
   //getting the Lock is not enough, we need to make sure, noone can use kprintf_nosleep while we flush
-  ArchInterrupts::disableInterrupts();
+  
+  if (previous_if)
+    ArchInterrupts::disableInterrupts();
+
   flushActiveConsole(term);
   flushDebugConsole(term);
-  ArchInterrupts::enableInterrupts();
+
+  if (previous_if)
+    ArchInterrupts::enableInterrupts();
+
   main_console->unLockConsoleForDrawing();  
 }
