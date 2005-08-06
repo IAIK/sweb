@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.1 2005/08/01 08:18:59 nightcreature Exp $
+//   $Id: ArchCommon.cpp,v 1.2 2005/08/06 17:38:35 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.1  2005/08/01 08:18:59  nightcreature
+//  initial release, partly dummy implementation, needs changes
+//
 //
 //----------------------------------------------------------------------
 
@@ -20,14 +23,6 @@
 #define TWENTY_ZEROS SIXTEEN_ZEROS,FOUR_ZEROS
 #define FOURTY_ZEROS TWENTY_ZEROS,TWENTY_ZEROS
 
-//should be usable...leave it anyway, just killed the multiboot struct around it
-// struct memory_maps
-// {
-//   uint32 used;
-//   pointer start_address;
-//   pointer end_address;
-//   uint32 type;
-// } __attribute__((__packed__)) memory_maps[MAX_MEMORY_MAPS];
 struct memory_maps
 {
   uint32 used;
@@ -39,31 +34,9 @@ struct memory_maps
 static struct memory_maps mem_map_[MAX_MEMORY_MAPS] = {FOURTY_ZEROS};
 
 // extern multiboot_info_t multi_boot_structure_pointer[];
-// static struct multiboot_remainder mbr = {0,0,0,0,0,0,FOURTY_ZEROS};
+
   
 extern "C" void parseMultibootHeader();
-
-//direkt writing in framebuffer...not so good
-// 
-// #define print(x)     fb_start += 2; \
-//     { \
-//       uint32 divisor; \
-//       uint32 current; \
-//       uint32 remainder; \
-//       current = (uint32)x; \
-//       divisor = 1000000000; \
-//       while (divisor > 0) \
-//       { \
-//         remainder = current % divisor; \
-//         current = current / divisor; \
-//         \
-//         fb[fb_start++] = (uint8)current + '0' ; \
-//         fb[fb_start++] = 0x9f ; \
-//     \
-//         divisor = divisor / 10; \
-//         current = remainder; \
-//       }      \
-//     }
 
 //we don't need this one..maybe remove it completly
 void parseMultibootHeader()
@@ -112,27 +85,27 @@ uint32 ArchCommon::getVESAConsoleBitsPerPixel()
   return 0;
 }
 
-//FIXXME:
+
 uint32 ArchCommon::getNumUseableMemoryRegions()
 {
   uint32 i;
-//   for (i=0;i<MAX_MEMORY_MAPS;++i)
-//   {
-//     if (!mbr.memory_maps[i].used)
-//       break;
-//   }
+  for (i=0;i<MAX_MEMORY_MAPS;++i)
+  {
+    if (!mem_map_[i].used)
+      break;
+  }
   return i;
 }
 
-//FIXXME:
+
 uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
-//   if (region >= MAX_MEMORY_MAPS)
-//     return 1;
+  if (region >= MAX_MEMORY_MAPS)
+    return 1;
   
-//   start_address = mbr.memory_maps[region].start_address;
-//   end_address = mbr.memory_maps[region].end_address;
-//   type = mbr.memory_maps[region].type;
+  start_address = mem_map_[region].start_address;
+  end_address = mem_map_[region].end_address;
+  type = mem_map_[region].type;
   
   return 0;
 }
