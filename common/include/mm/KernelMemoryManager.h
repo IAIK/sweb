@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.6 2005/05/03 18:31:09 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.7 2005/08/07 16:47:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.6  2005/05/03 18:31:09  btittelbach
+//  fix of evil evil MemoryManager Bug
+//
 //  Revision 1.5  2005/05/03 17:32:29  btittelbach
 //  size umbenannt
 //
@@ -36,6 +39,7 @@
 
 #include "arch_panic.h"
 #include "mm/new.h"
+#include "kernel/SpinLock.h"
 //#include "../../../arch/common/include/assert.h"
 
 // this will be written to the start of every mallog segment,
@@ -108,6 +112,8 @@ public:
   //if size == 0 -> free(what_and_where_is_it);
   pointer reallocateMemory(pointer virtual_address, size_t new_size);  
   
+  void startUsingSyncMechanism() {use_spinlock_=true;}
+  
 private:
   
   //WARNING: we really have to own that memory from start to end, nothing must be there
@@ -123,6 +129,19 @@ private:
   MallocSegment* first_;  //first_ must _never_ be NULL
   MallocSegment* last_;
   pointer malloc_end_;
+
+  void lockKMM() {
+    if (likely (use_spinlock_))
+      lock_.acquire();
+  }
+  void unlockKMM()
+  {
+    if (likely (use_spinlock_))
+      lock_.release();
+  }
+
+  bool use_spinlock_;
+  SpinLock lock_;
 
   //statistics:
   uint32 segments_used_;

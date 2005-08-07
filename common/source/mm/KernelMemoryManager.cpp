@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.16 2005/07/12 19:58:40 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.17 2005/08/07 16:47:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.16  2005/07/12 19:58:40  btittelbach
+//  minus debug garbage output
+//
 //  Revision 1.15  2005/07/12 19:52:25  btittelbach
 //  Debugged evil evil double-linked-list bug
 //
@@ -154,6 +157,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
   prenew_assert (((end_address-start_address-sizeof(MallocSegment)) & 0x80000000) == 0);
   first_=new ((void*) start_address) MallocSegment(0,0,end_address-start_address-sizeof(MallocSegment),false);
   last_=first_;
+  use_spinlock_=false;
   //segments_free_=1;
   //segments_used_=0;
   writeLine2Bochs((uint8*)"KernelMemoryManager::ctor: bytes avaible:");
@@ -164,6 +168,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
 {
+  lockKMM();
   // find next free pointer of neccessary size + sizeof(MallocSegment);
   prenew_assert ((requested_size & 0x80000000) == 0);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
@@ -176,6 +181,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   
   fillSegment(new_pointer,requested_size);
 
+  unlockKMM();
+  
   print(((pointer) new_pointer) + sizeof(MallocSegment))
   print(9877)
   return ((pointer) new_pointer) + sizeof(MallocSegment);
@@ -189,10 +196,17 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address)
   if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= malloc_end_)
     return false;
   
+  lockKMM();
+  
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
   if (m_segment->marker_ != 0xdeadbeef)
+  {
+    unlockKMM();
     return false;
+  }
   freeSegment(m_segment);
+  
+  unlockKMM();
   return true;
 }
   
@@ -205,18 +219,25 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   prenew_assert ((new_size & 0x80000000) == 0);
   if (new_size == 0)
   {
+    //in case you're wondering: we really don't want to lock here yet :) guess why
     freeMemory(virtual_address);
     return 0;
   }
   
+  lockKMM();
+  
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
   
   if (new_size == m_segment->getSize())
+  {
+    unlockKMM();
     return virtual_address;
+  }
   
   if (new_size < m_segment->getSize())
   { //downsize segment
     downsizeSegment(m_segment,new_size);
+    unlockKMM();
     return virtual_address;
   }
   else
@@ -226,6 +247,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
         m_segment->next_->getSize() + m_segment->getSize() >= new_size)
       {
         mergeWithFollowingFreeSegment(m_segment);
+        unlockKMM();
         return virtual_address;
       }
       
@@ -233,6 +255,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     pointer new_address = allocateMemory(new_size);
     ArchCommon::memcpy(new_address,virtual_address, m_segment->getSize());
     freeSegment(m_segment);
+    unlockKMM();
     return new_address;
   }
 }

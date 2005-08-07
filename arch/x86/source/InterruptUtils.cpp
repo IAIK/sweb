@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.25 2005/08/04 20:47:43 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.26 2005/08/07 16:47:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.25  2005/08/04 20:47:43  btittelbach
+//  Where is the Bug, maybe I will see something tomorrow that I didn't see today
+//
 //  Revision 1.24  2005/08/04 17:49:21  btittelbach
 //  Improved (documented) arch_PageFaultHandler
 //  Solution to Userspace Bug still missing....
@@ -520,14 +523,16 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //~ __asm__("movl %%cr2, %0"
   //~ :"=a"(cr2)
   //~ :);
-  kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\n",address,
+  kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\nPageFault:(currentThread: %x, switch_to_userspace_:%d)\n",address,
                                                                             error&flag_p, 
                                                                             error&flag_rw >> 1, 
                                                                             error&flag_us >> 2,
-                                                                            error&flag_rsvd >> 3);
+                                                                            error&flag_rsvd >> 3,
+                                                                            currentThread,
+                                                                            currentThread->switch_to_userspace_);
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   
-  if (! (error & flag_p) && address < 2U*1024U*1024U*1024U)
+  if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePage(address); //load stuff
 //    ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary

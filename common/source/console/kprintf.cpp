@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.12 2005/08/04 20:47:43 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.13 2005/08/07 16:47:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.12  2005/08/04 20:47:43  btittelbach
+//   Where is the Bug, maybe I will see something tomorrow that I didn't see today
+//
 //   Revision 1.11  2005/08/04 17:49:22  btittelbach
 //   Improved (documented) arch_PageFaultHandler
 //   Solution to Userspace Bug still missing....
@@ -111,12 +114,13 @@ void flushActiveConsole(Terminal *term)
   if (buffer_overflow_)
   {
     buffer_overflow_ = false;
-    buffer_out_pos_ = buffer_in_pos_ + 1;
-    buffer_out_pos_ %= buffer_size_;
+    buffer_out_pos_ = (buffer_in_pos_ + 1) % buffer_size_;
     term->writeInternal('\n');
   }
   if (buffer_in_pos_ > buffer_size_-1)
     buffer_in_pos_=buffer_size_-1;
+  if (buffer_out_pos_ > buffer_size_-1)
+    buffer_out_pos_=0;
   while (buffer_in_pos_ != buffer_out_pos_)
   {
     term->writeInternal(buffer_[buffer_out_pos_]);
@@ -126,50 +130,73 @@ void flushActiveConsole(Terminal *term)
 }
 
 
-static char debug_buffer_[buffer_size_];
-static uint32 debug_buffer_in_pos_ = 0;
-static uint32 debug_buffer_out_pos_ = 0;
-static bool debug_buffer_overflow_ = false;
 
 void oh_writeCharDebugNoSleep(char c)
 {
-#ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
-  if ((debug_buffer_in_pos_ +1) % buffer_size_ == debug_buffer_out_pos_)
-    return;
-#endif
-  debug_buffer_[debug_buffer_in_pos_]=c;
-  debug_buffer_in_pos_++;
-  debug_buffer_in_pos_ %= buffer_size_;
-  if (debug_buffer_in_pos_ == debug_buffer_out_pos_)
-    debug_buffer_overflow_ = true;
+  //this blocks
+  writeChar2Bochs((uint8) c);
 }
 void oh_writeStringDebugNoSleep(char const* str)
 {
-  while (*str)
-  {
-    oh_writeCharDebugNoSleep(*str);
-    str++;
-  }
+  //this blocks
+  writeLine2Bochs((uint8*) str);
 }
 
 void flushDebugConsole(Terminal *term)
 {
-  if (debug_buffer_overflow_)
-  {
-    debug_buffer_overflow_ = false;
-    debug_buffer_out_pos_ = debug_buffer_in_pos_ + 1;
-    debug_buffer_out_pos_ %= buffer_size_;
-    writeChar2Bochs((uint8) '\n');
-  }
-  if (buffer_in_pos_ > buffer_size_-1)
-    buffer_in_pos_=buffer_size_-1;
-  while (debug_buffer_in_pos_ != debug_buffer_out_pos_)
-  {
-    writeChar2Bochs((uint8) debug_buffer_[debug_buffer_out_pos_]);
-    debug_buffer_out_pos_++;
-    debug_buffer_out_pos_ %= buffer_size_;
-  }
 }
+
+//~ static char debug_buffer_[buffer_size_];
+//~ static uint32 debug_buffer_in_pos_ = 0;
+//~ static uint32 debug_buffer_out_pos_ = 0;
+//~ static bool debug_buffer_overflow_ = false;
+
+//~ void oh_writeCharDebugNoSleep(char c)
+//~ {
+//~ #ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
+  //~ if ((debug_buffer_in_pos_ +1) % buffer_size_ == debug_buffer_out_pos_)
+    //~ return;
+//~ #endif
+  //~ debug_buffer_[debug_buffer_in_pos_]=c;
+  //~ debug_buffer_in_pos_++;
+  //~ debug_buffer_in_pos_ %= buffer_size_;
+  //~ if (debug_buffer_in_pos_ == debug_buffer_out_pos_)
+    //~ debug_buffer_overflow_ = true;
+//~ }
+//~ void oh_writeStringDebugNoSleep(char const* str)
+//~ {
+  //~ while (*str)
+  //~ {
+    //~ oh_writeCharDebugNoSleep(*str);
+    //~ str++;
+  //~ }
+//~ }
+
+//~ void flushDebugConsole(Terminal *term)
+//~ {
+  //~ if (debug_buffer_overflow_)
+  //~ {
+    //~ debug_buffer_overflow_ = false;
+    //~ debug_buffer_out_pos_ = (debug_buffer_in_pos_ + 1) % buffer_size_;
+    //~ writeChar2Bochs((uint8) '\n');
+  //~ }
+  //~ if (debug_buffer_in_pos_ > buffer_size_-1)
+  //~ {
+    //~ writeLine2Bochs((uint8*) "flushDebugConsole: Recoverable Error in debug_buffer_in_pos_\n");
+    //~ debug_buffer_in_pos_=buffer_size_-1;
+  //~ }
+  //~ if (debug_buffer_out_pos_ > buffer_size_-1)
+  //~ {
+    //~ writeLine2Bochs((uint8*) "flushDebugConsole: Recoverable Error in debug_buffer_out_pos_\n");
+    //~ debug_buffer_out_pos_=0;
+  //~ }
+  //~ while (debug_buffer_in_pos_ != debug_buffer_out_pos_)
+  //~ {
+    //~ writeChar2Bochs((uint8) debug_buffer_[debug_buffer_out_pos_]);
+    //~ debug_buffer_out_pos_++;
+    //~ debug_buffer_out_pos_ %= buffer_size_;
+  //~ }
+//~ }
 
 
 
@@ -454,7 +481,7 @@ void kprintfd_nosleep(const char *fmt, ...)
 
 void kprintf_nosleep_flush()
 {
-  bool previous_if = ArchInterrupts::testIFSet;
+  bool previous_if = ArchInterrupts::testIFSet();
   Terminal *term = main_console->getActiveTerminal();
   main_console->lockConsoleForDrawing();
   //getting the Lock is not enough, we need to make sure, noone can use kprintf_nosleep while we flush

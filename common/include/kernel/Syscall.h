@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.h,v 1.1 2005/08/03 09:54:43 btittelbach Exp $
+//   $Id: Syscall.h,v 1.2 2005/08/07 16:47:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.h,v $
+//  Revision 1.1  2005/08/03 09:54:43  btittelbach
+//  Syscall Files, unfinished as of yet
+//
+
+
+#ifndef _SYSCALL_H_
+#define _SYSCALL_H_
+
 
 #include <types.h>
 #include "Thread.h"
@@ -27,3 +35,5 @@ class Syscall
   private:
   //helper functions
 };
+
+#endif

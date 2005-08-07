@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.15 2005/08/04 20:47:43 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.16 2005/08/07 16:47:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.15  2005/08/04 20:47:43  btittelbach
+//  Where is the Bug, maybe I will see something tomorrow that I didn't see today
+//
 //  Revision 1.14  2005/07/27 10:04:26  btittelbach
 //  kprintf_nosleep and kprintfd_nosleep now works
 //  Output happens in dedicated Thread using VERY EVIL Mutex Hack
@@ -107,19 +110,29 @@ void Scheduler::createScheduler()
 Scheduler::Scheduler()
 {
   kill_me_=0;
+  block_scheduling_=0;
 }
 
 void Scheduler::addNewThread(Thread *thread)
 {
   //new Thread gets scheduled next
   //also gets added to front as not to interfere with remove or xchange
+
+  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
+    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+  kprintf("Scheduler::addNewThread: %x\n",thread);
   threads_.pushFront(thread);
+  block_scheduling_=0;
 }
 
 
 //you can't remove the last thread
 void Scheduler::removeCurrentThread()
 {
+  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
+    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+
+  kprintfd("Scheduler::removeCurrentThread: %x, threads_.size() %d\n",currentThread,threads_.size());
   if (threads_.size() > 1)
   {
     //we can safely do this, because it won't affect the thread switch to the next thread
@@ -128,15 +141,13 @@ void Scheduler::removeCurrentThread()
     
     threads_.popBack();
   }
+  block_scheduling_=0;
 }
 
 void Scheduler::sleep()
 {
-  if (threads_.size() > 1)
-  { 
-    currentThread->state_=Sleeping;
-    yield();
-  }
+  currentThread->state_=Sleeping;
+  yield();
 }
 
 void Scheduler::wake(Thread* thread_to_wake)
@@ -150,12 +161,17 @@ void Scheduler::wake(Thread* thread_to_wake)
 //and switch back if he's finished
 Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
 {
+  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
+    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+
   Thread *old_thread = threads_.back();
   if (old_thread != currentThread)
     arch_panic((uint8*)"Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
   threads_.popBack();
   threads_.pushBack(pop_up_thread);
   currentThread=pop_up_thread;
+  
+  block_scheduling_=0;
   return old_thread;
 }
 
@@ -167,15 +183,29 @@ void Scheduler::startThreadHack()
 uint32 Scheduler::schedule(uint32 from_interrupt)
 {
   static uint32 bochs_sucks = 0;
-  if (++bochs_sucks % 1)
+  if (++bochs_sucks % 10)
   {
     return 0;
   }
+ 
+  //kprintfd_nosleep("Scheduler::schedule: running\n");  
+  //kprintfd_nosleep("Scheduler::schedule: running\n");
+  if (ArchThreads::testSetLock(block_scheduling_,1))
+  {
+    //no scheduling today...
+    //keep currentThread as it was
+    //and stay in Kernel Kontext
+    kprintfd_nosleep("Scheduler::schedule: currently blocked\n");
+    return 0;
+  }
   
-  do {
+  //kprintfd_nosleep("Scheduler::schedule: currentThread was %x\n",currentThread);
+  do 
+  {
     currentThread = threads_.front();
     threads_.popFront();
-    
+
+ //   kprintfd_nosleep("Scheduler::schedule: thinking about %x\n",currentThread);
     if (kill_me_ == 0 && currentThread->state_ == ToBeDestroyed)
     {
       kill_me_=currentThread;
@@ -186,6 +216,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     threads_.pushBack(currentThread);
     
   } while (currentThread->state_ != Running);
+  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x, switch_userspace:%d\n",currentThread,currentThread->switch_to_userspace_);
   
   uint32 ret = 1;
   
@@ -198,6 +229,8 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
   }
   /*uint8*foo = 0;
   *foo = 8;*/
+  
+  block_scheduling_=0;
   return ret;
 }
 
@@ -205,8 +238,8 @@ void Scheduler::yield()
 {
   if (! ArchInterrupts::testIFSet())
   {
-    kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?");
-    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?");
+    kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
+    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
     kprintf_nosleep_flush();
   }
   ArchThreads::yield();
@@ -222,7 +255,9 @@ void Scheduler::cleanupDeadThreads()
   if (kill_me_ == 0)
     return;
   
-  ArchInterrupts::disableInterrupts();
+  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
+    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_me_)
   {
@@ -233,5 +268,5 @@ void Scheduler::cleanupDeadThreads()
     kill_me_=0;
   }
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
-  ArchInterrupts::enableInterrupts();
+  block_scheduling_=0;
 }

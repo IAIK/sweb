@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.68 2005/08/04 20:47:43 btittelbach Exp $
+ * $Id: main.cpp,v 1.69 2005/08/07 16:47:25 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.68  2005/08/04 20:47:43  btittelbach
+ * Where is the Bug, maybe I will see something tomorrow that I didn't see today
+ *
  * Revision 1.67  2005/08/04 17:49:22  btittelbach
  * Improved (documented) arch_PageFaultHandler
  * Solution to Userspace Bug still missing....
@@ -405,18 +408,17 @@ class SyscallTest : public Thread
 
     loader_= new Loader(foo,this);
     loader_->loadExecutableAndInitProcess();
-
     kprintf("SyscallTest:ctor: Done loading exe \n");
-
   }
 
   virtual void Run()
   {
     while (state_ != ToBeDestroyed)
     {
-      kprintf("SyscallTest:run: Going to userr, expect page fault\n");
-      this->switch_to_userspace_ = 1;
-
+      kprintfd("SyscallTest:run: Going to userr, expect page fault\n");
+      //kprintf("SyscallTest:run: Going to userr, expect page fault\n");
+      //kprintfd("SyscallTest:run: post printf\n");
+      this->switch_to_userspace_ = 1; // this is necessary, because it's possible that we suddenly switch to kernelspace in a userthread (see Scheduler and bochs sucks)
       Scheduler::instance()->yield();
     }
     Scheduler::instance()->yield();
@@ -441,9 +443,6 @@ class InfiniteLoopUserThread : public Thread
   {
     uint8 *foo=(uint8*) "\177\105\114\106\1\1\1\0\0\0\0\0\0\0\0\0\2\0\3\0\1\0\0\0\264\200\4\10\64\0\0\0\134\1\0\0\0\0\0\0\64\0\40\0\4\0\50\0\10\0\5\0\1\0\0\0\0\0\0\0\0\200\4\10\0\200\4\10\310\0\0\0\310\0\0\0\5\0\0\0\0\20\0\0\1\0\0\0\310\0\0\0\310\220\4\10\310\220\4\10\0\0\0\0\0\0\0\0\6\0\0\0\0\20\0\0\121\345\164\144\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\4\0\0\0\200\25\4\145\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\50\0\0\4\0\0\0\125\211\345\203\354\4\307\105\374\7\0\0\0\215\105\374\377\0\353\371\0\107\103\103\72\40\50\107\116\125\51\40\63\56\63\56\65\55\62\60\60\65\60\61\63\60\40\50\107\145\156\164\157\157\40\114\151\156\165\170\40\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\162\61\54\40\163\163\160\55\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\61\54\40\160\151\145\55\70\56\67\56\67\56\61\51\0\0\56\163\171\155\164\141\142\0\56\163\164\162\164\141\142\0\56\163\150\163\164\162\164\141\142\0\56\164\145\170\164\0\56\144\141\164\141\0\56\142\163\163\0\56\143\157\155\155\145\156\164\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\33\0\0\0\1\0\0\0\6\0\0\0\264\200\4\10\264\0\0\0\24\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\41\0\0\0\1\0\0\0\3\0\0\0\310\220\4\10\310\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\47\0\0\0\10\0\0\0\3\0\0\0\310\220\4\10\310\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\54\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\310\0\0\0\137\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\21\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\47\1\0\0\65\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\2\0\0\0\0\0\0\0\0\0\0\0\234\2\0\0\320\0\0\0\7\0\0\0\11\0\0\0\4\0\0\0\20\0\0\0\11\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\154\3\0\0\53\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\264\200\4\10\0\0\0\0\3\0\1\0\0\0\0\0\310\220\4\10\0\0\0\0\3\0\2\0\0\0\0\0\310\220\4\10\0\0\0\0\3\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\4\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\6\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\7\0\1\0\0\0\0\0\0\0\0\0\0\0\4\0\361\377\14\0\0\0\264\200\4\10\24\0\0\0\22\0\1\0\23\0\0\0\310\220\4\10\0\0\0\0\20\0\361\377\37\0\0\0\310\220\4\10\0\0\0\0\20\0\361\377\46\0\0\0\310\220\4\10\0\0\0\0\20\0\361\377\0\163\157\155\145\154\157\157\160\56\143\0\137\163\164\141\162\164\0\137\137\142\163\163\137\163\164\141\162\164\0\137\145\144\141\164\141\0\137\145\156\144\0" ;
     
-    
-    
-
     loader_= new Loader(foo,this);
     loader_->loadExecutableAndInitProcess();
 
@@ -534,7 +533,7 @@ void startup()
   main_console->setActiveTerminal(0);
   
   Scheduler::createScheduler();
-
+  KernelMemoryManager::instance()->startUsingSyncMechanism();
   
   /*
   console->setBackgroundColor(Console::BG_BLACK);
@@ -595,7 +594,7 @@ void startup()
   //Scheduler::instance()->addNewThread(new UserThread());
   //Scheduler::instance()->addNewThread(new FiniteLoopUserThread());
   //Scheduler::instance()->addNewThread(new InfiniteLoopUserThread());
-  //Scheduler::instance()->addNewThread(new SyscallTest());
+  Scheduler::instance()->addNewThread(new SyscallTest());
 
   //int32 *test = new int32[50];
   //FiFo<uint32> test_fifo(20);

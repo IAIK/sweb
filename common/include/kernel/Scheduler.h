@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.6 2005/07/21 19:08:41 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.7 2005/08/07 16:47:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.6  2005/07/21 19:08:41  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.5  2005/07/05 20:22:56  btittelbach
 //  some changes
 //
@@ -67,6 +72,8 @@ private:
   static void startThreadHack();
 
   Thread* kill_me_;
+
+  uint32 block_scheduling_;
 
 };
 #endif

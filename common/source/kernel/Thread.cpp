@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.14 2005/07/21 19:08:41 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.15 2005/08/07 16:47:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.14  2005/07/21 19:08:41  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.13  2005/07/12 21:05:39  btittelbach
 //  Lustiges Spielen mit UserProgramm Terminierung
 //
@@ -95,6 +100,7 @@ void Thread::kill()
 {
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
+  kprintfd("Thread::kill: Preparing currentThread (%x) for destruction\n",currentThread);
   if (currentThread == this)
     Scheduler::instance()->yield();
 }
