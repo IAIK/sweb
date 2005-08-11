@@ -10,17 +10,6 @@
 #ifndef __XEN_PUBLIC_IO_DOMAIN_CONTROLLER_H__
 #define __XEN_PUBLIC_IO_DOMAIN_CONTROLLER_H__
 
-
-/*
- * Reason codes for SCHEDOP_shutdown. These are opaque to Xen but may be
- * interpreted by control software to determine the appropriate action. These 
- * are only really advisories: the controller can actually do as it likes.
- */
-#define SHUTDOWN_poweroff   0  /* Domain exited normally. Clean up and kill. */
-#define SHUTDOWN_reboot     1  /* Clean up, kill, and then restart.          */
-#define SHUTDOWN_suspend    2  /* Clean up, save suspend info, kill.         */
-
-
 /*
  * CONTROLLER MESSAGING INTERFACE.
  */
@@ -556,6 +545,10 @@ typedef struct {
                                     /* SHUTDOWN_suspend.                     */
 #define CMSG_SHUTDOWN_SYSRQ     3
 
+typedef struct {
+    char key;      /* 0: sysrq key */
+    char __pad[3]; /* 1: */
+} PACKED shutdown_sysrq_t; /* 4 bytes */
 
 /******************************************************************************
  * MEMORY CONTROLS
