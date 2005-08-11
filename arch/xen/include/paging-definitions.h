@@ -1,7 +1,10 @@
 /**
- * $Id: paging-definitions.h,v 1.1 2005/07/31 18:31:09 nightcreature Exp $
+ * $Id: paging-definitions.h,v 1.2 2005/08/11 16:57:20 nightcreature Exp $
  *
  * $Log: paging-definitions.h,v $
+ * Revision 1.1  2005/07/31 18:31:09  nightcreature
+ * copied from x86 to satisfy linker
+ *
  *
  */
 
@@ -12,7 +15,7 @@
 
 
 #define PAGE_TABLE_ENTRIES 1024
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096                   //be sure this matches the default size xen sets up
 #define PAGE_INDEX_OFFSET_BITS 12
 #define PAGE_ADDR_MASK      0xFFFFF000
 

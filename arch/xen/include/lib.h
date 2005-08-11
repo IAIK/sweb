@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: lib.h,v 1.1 2005/07/31 18:21:59 nightcreature Exp $
+//  $Id: lib.h,v 1.2 2005/08/11 16:57:20 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: lib.h,v $
+//  Revision 1.1  2005/07/31 18:21:59  nightcreature
+//  from mini os code, used for transition, maybe removed
+//
 //
 //----------------------------------------------------------------------
 
@@ -22,7 +25,7 @@
  * Description: Random useful library functions, contains some freebsd stuff
  *
  ****************************************************************************
- * $Id: lib.h,v 1.1 2005/07/31 18:21:59 nightcreature Exp $
+ * $Id: lib.h,v 1.2 2005/08/11 16:57:20 nightcreature Exp $
  ****************************************************************************
  *
  *-
@@ -92,51 +95,6 @@ int sprintf(char *buf, const char *cfmt, ...);
 int vsprintf(char *buf, const char *cfmt, char *ap); 
 
 #include "util/string.h"
-    /* string and memory manipulation */ 
-/*
- int    memcmp(const void *cs, const void *ct, size_t count); 
- void  *memcpy(void *dest, const void *src, size_t count); 
- int    strncmp(const char *cs, const char *ct, size_t count); 
- int    strcmp(const char *cs, const char *ct); 
- char  *strcpy(char *dest, const char *src); 
- char  *strncpy(char *dest, const char *src, size_t count); 
- void  *memset(void *s,int c, size_t count); 
- size_t strnlen(const char *s, size_t count); 
- size_t strlen(const char *s); 
- char  *strchr(const char *s, int c); 
- char  *strstr(const char *s1, const char *s2); 
-*/
-
-/* dlmalloc functions */
-struct mallinfo {
-  int arena;    /* non-mmapped space allocated from system */
-  int ordblks;  /* number of free chunks */
-  int smblks;   /* number of fastbin blocks */
-  int hblks;    /* number of mmapped regions */
-  int hblkhd;   /* space in mmapped regions */
-  int usmblks;  /* maximum total allocated space */
-  int fsmblks;  /* space available in freed fastbin blocks */
-  int uordblks; /* total allocated space */
-  int fordblks; /* total free space */
-  int keepcost; /* top-most, releasable (via malloc_trim) space */
-};
-
-void *malloc(size_t n);
-void *calloc(size_t n_elements, size_t element_size);
-void  free(void* p);
-void *realloc(void* p, size_t n);
-void *memalign(size_t alignment, size_t n);
-void *valloc(size_t n);
-struct mallinfo mallinfo(void);
-int  mallopt(int parameter_number, int parameter_value);
-
-void **independent_calloc(size_t n_elements, size_t size, void* chunks[]);
-void **independent_comalloc(size_t n_elements, size_t sizes[], void* chunks[]);
-void *pvalloc(size_t n);
-void cfree(void* p);
-int malloc_trim(size_t pad);
-size_t malloc_usable_size(void* p);
-void malloc_stats(void);
 
 
 #endif /* _LIB_H_ */
