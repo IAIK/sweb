@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.2 2005/07/31 17:45:06 nightcreature Exp $
+ * $Id: types.h,v 1.3 2005/08/11 16:53:42 nightcreature Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.2  2005/07/31 17:45:06  nightcreature
+ * needed updates
+ *
  * Revision 1.1  2005/07/10 19:40:00  nightcreature
  * added types used by mini-os code, needs to be changed to our types
  * 
@@ -11,6 +14,8 @@
 
 #ifndef _TYPES_H_
 #define _TYPES_H_
+
+#define isXenBuild
 
 //start mini-os types...TODO: change source to our types!
 
