@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.9 2005/06/14 12:55:21 nomenquis Exp $
+//  $Id: ArchMemory.h,v 1.10 2005/08/11 18:24:39 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.9  2005/06/14 12:55:21  nomenquis
+//  foobar
+//
 //  Revision 1.8  2005/05/31 18:59:19  btittelbach
 //  Special Address Check Function for Philip ;>
 //
@@ -53,7 +56,7 @@ public:
   //remove a PDE and all its Pages and PageTables
   static void freePageDirectory(uint32 physical_page_directory_page);
 
-  static pointer physicalPageToKernelPointer(uint32 physical_page);
+//  static pointer physicalPageToKernelPointer(uint32 physical_page);
   static pointer get3GBAdressOfPPN(uint32 ppn)
   {
     return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);

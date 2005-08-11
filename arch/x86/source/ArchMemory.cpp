@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.11 2005/07/26 17:45:25 nomenquis Exp $
+//  $Id: ArchMemory.cpp,v 1.12 2005/08/11 18:24:39 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.11  2005/07/26 17:45:25  nomenquis
+//  foobar
+//
 //  Revision 1.10  2005/07/21 19:08:39  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -94,10 +97,10 @@ void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, 
   page_directory[pde_vpn].pde4k.page_table_base_address = physical_page_table_page; 
 	page_directory[pde_vpn].pde4k.user_access = 1;
 }
-pointer ArchMemory::physicalPageToKernelPointer(uint32 physical_page)
-{
-  return physical_page * PAGE_SIZE + 1024*1024*1024*3;
-}
+//pointer ArchMemory::physicalPageToKernelPointer(uint32 physical_page)
+//{
+//  return physical_page * PAGE_SIZE + 1024*1024*1024*3;
+//}
 
 void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access)
 {
