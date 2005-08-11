@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.69 2005/08/07 16:47:25 btittelbach Exp $
+ * $Id: main.cpp,v 1.70 2005/08/11 16:18:02 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.69  2005/08/07 16:47:25  btittelbach
+ * More nice synchronisation Experiments..
+ * RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+ * kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+ *
  * Revision 1.68  2005/08/04 20:47:43  btittelbach
  * Where is the Bug, maybe I will see something tomorrow that I didn't see today
  *
@@ -305,14 +310,14 @@ class StupidThread : public Thread
 
   virtual void Run()
   {
-    //uint32 i=0;
+    uint32 i=0;
     while (1)
     {
  //   kprintf("Thread %d trying to get the lock\n",thread_number_);
       lock->acquire();
       Scheduler::instance()->yield();
       //kprintf("Thread %d has the lock\n",thread_number_);
-  //     kprintf("Kernel Thread %d %d\n",thread_number_,i++);
+       kprintf("Kernel Thread %d %d\n",thread_number_,i++);
       lock->release();
       Scheduler::instance()->yield();
 
@@ -602,7 +607,7 @@ void startup()
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
-  kprintf_nosleep_flush();
+  //kprintf_nosleep_flush();
   ArchInterrupts::enableInterrupts();
   kprintfd("Init done\n");
   kprintf("Init done\n");

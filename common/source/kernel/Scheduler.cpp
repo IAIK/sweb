@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.16 2005/08/07 16:47:25 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.17 2005/08/11 16:18:02 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.16  2005/08/07 16:47:25  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.15  2005/08/04 20:47:43  btittelbach
 //  Where is the Bug, maybe I will see something tomorrow that I didn't see today
 //
@@ -182,12 +187,13 @@ void Scheduler::startThreadHack()
 
 uint32 Scheduler::schedule(uint32 from_interrupt)
 {
+/*
   static uint32 bochs_sucks = 0;
   if (++bochs_sucks % 10)
   {
     return 0;
   }
- 
+ */
   //kprintfd_nosleep("Scheduler::schedule: running\n");  
   //kprintfd_nosleep("Scheduler::schedule: running\n");
   if (ArchThreads::testSetLock(block_scheduling_,1))
