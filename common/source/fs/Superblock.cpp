@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.cpp,v $
 //
-// $Id: Superblock.cpp,v 1.5 2005/08/11 16:34:28 qiangchen Exp $
+// $Id: Superblock.cpp,v 1.6 2005/08/11 16:46:57 davrieb Exp $
 // $Log: Superblock.cpp,v $
+// Revision 1.5  2005/08/11 16:34:28  qiangchen
+// *** empty log message ***
+//
 // Revision 1.4  2005/07/21 18:07:04  davrieb
 // mount of the root directory
 //
@@ -31,6 +34,7 @@ Superblock::~Superblock()
 
   delete s_root_;
 }
+//
 //------------------------------------------------------------------
 void Superblock::delete_inode(Inode *inode)
 {
@@ -40,6 +44,12 @@ void Superblock::delete_inode(Inode *inode)
     del_inode = s_inode_used_.remove(inode);
   assert(del_inode != -1);
   delete inode;
+}
+
+//------------------------------------------------------------------
+Dentry const *Superblock::getRoot() const
+{
+  return s_root_;
 }
 
 //----------------------------------------------------------------------

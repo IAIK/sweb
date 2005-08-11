@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.8 2005/07/21 18:07:04 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.9 2005/08/11 16:46:57 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.8  2005/07/21 18:07:04  davrieb
+// mount of the root directory
+//
 // Revision 1.7  2005/07/19 17:11:03  davrieb
 // put filesystemtype into it's own file
 //
@@ -30,6 +33,7 @@
 #include "fs/FileSystemType.h"
 #include "fs/VirtualFileSystem.h"
 #include "fs/Dentry.h"
+#include "fs/VfsMount.h"
 #include "util/string.h"
 #include "assert.h"
 
@@ -97,9 +101,14 @@ int32 VirtualFileSystem::root_mount(char* fs_name, int32 mode)
 {
   FileSystemType *fst = getFsType(fs_name);
 
+
   Superblock *super = fst->createSuper(0);
   super = fst->readSuper(super, 0);
+  Dentry *root = super->s_root_;
 
+  VfsMount *root_mount = new VfsMount(0, 0, root, super, 0);
+
+  mounts_.pushBack(root_mount);
   superblocks_.push_end(super);
 }
 

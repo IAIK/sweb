@@ -13,27 +13,36 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#ifndef Vfsmount_h___
-#define Vfsmount_h___
+#ifndef VfsMount_h___
+#define VfsMount_h___
 
-#include "Superblock.h"
 #include "List.h"
 #include "types.h"
-#include "Dentry.h"
+
+class Superblock;
+class Dentry;
+
+
+// Mount flags
+// Only MS_RDONLY is supported by now.
+
+/// Mount the Filesystem read-only
+#define MS_RDONLY 1
+
 
 //---------------------------------------------------------------------------
 /**
- * Vfsmount
+ * VfsMount
  *
  * Definitions for mount interface. This describes the in the kernel
  * build linkedlist with mounted filesystems.
  */
-class Vfsmount
+class VfsMount
 {
  protected:
 
   /// Points to the parent filesystem on which this filesystem is mounted on.
-  Vfsmount *mnt_parent_;
+  VfsMount *mnt_parent_;
 
   /// Points to the Dentry of the mount directory of this filesystem.
   Dentry *mnt_mountpoint_;
@@ -49,24 +58,38 @@ class Vfsmount
   /// handled.
   int32 mnt_flags_;
 
-  /// Head of the parent list of descriptors (relative to this filesystem).
-  List *mnt_mounts_;
+  ///// Head of the parent list of descriptors (relative to this filesystem).
+  //List *mnt_mounts_;
 
-  /// Pointers for the parent list of descriptors (relative to the parent
-  /// filesystem).
-  List *mnt_child_;
+  ///// Pointers for the parent list of descriptors (relative to the parent
+  ///// filesystem).
+  //List *mnt_child_;
 
  public:
 
-  Vfsmount();
+  VfsMount();
 
-  virtual ~Vfsmount();
+  VfsMount(VfsMount* parent, Dentry * mountpoint, Dentry* root,
+      Superblock* superblock, int32 flags);
 
-  void put_mnt(Vfsmount *mnt);
+  virtual ~VfsMount();
 
-  void remove_mnt(Vfsmount *mnt);
+  //void put_mnt(VfsMount *mnt);
 
-  Vfsmount* get_mnt();
+  //void remove_mnt(VfsMount *mnt);
+
+  //VfsMount* get_mnt();
+
+  VfsMount const *getParent() const;
+
+  Dentry const *getMountpoint() const;
+
+  Dentry const *getRoot() const;
+
+  Superblock const *getSuperblock() const;
+
+  int32 getFlags() const;
+
 };
 
 

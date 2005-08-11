@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.7 2005/08/11 16:34:28 qiangchen Exp $
+// $Id: Superblock.h,v 1.8 2005/08/11 16:46:57 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.7  2005/08/11 16:34:28  qiangchen
+// *** empty log message ***
+//
 // Revision 1.6  2005/07/21 18:07:03  davrieb
 // mount of the root directory
 //
@@ -37,6 +40,7 @@ class Iattr;
 class Statfs;
 class WaitQueue;
 class FileSystemType;
+class VirtualFileSystem;
 
 //-----------------------------------------------------------------------------
 /**
@@ -49,13 +53,17 @@ class FileSystemType;
  */
 class Superblock
 {
+public:
+
+  friend class VirtualFileSystem;
+
 protected:
 
   /// The file system type.
   FileSystemType *s_type_;
 
   /// The device that this file-system is mounted on.
-  // uint32 s_dev_;
+  uint32 s_dev_;
 
   /// This is a list of flags which are logically with the flags in each
   /// inode to detemine certain behaviours. There is one flag which applies
@@ -174,17 +182,22 @@ public:
   /// incomplete transaction on the file-system to fail quickly rather than
   /// block waiting on some external event such as a remote server responding.
   virtual void umount_begin(Superblock* super_block) {}
-  
+
+  /// Get the root Dentry of the Superblock
+  Dentry const *getRoot() const;
+
   /// insert the opened file point to the file_list
   int32 insert_opened_files(File*);
-  
+
   /// remove the opened file point from the file_list
   int32 remove_opened_files(File*);
-  
+
   /// check the existence of the opened file point in the file_list
   int32 check_opened_files(File* file) {return(s_files_.is_included(file));}
+
 };
 //-----------------------------------------------------------------------------
 
 #endif // Superblock_h___
+
 

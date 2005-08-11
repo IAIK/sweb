@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.7 2005/07/21 18:07:03 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.8 2005/08/11 16:46:57 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.7  2005/07/21 18:07:03  davrieb
+// mount of the root directory
+//
 // Revision 1.6  2005/07/19 17:11:03  davrieb
 // put filesystemtype into it's own file
 //
@@ -42,12 +45,16 @@
 
 class Superblock;
 class FileSystemType;
+class VfsMount;
 
 class VirtualFileSystem
 {
   protected:
 
     PointList<Superblock> superblocks_;
+
+    /// List of mounted Filesystems
+    List<VfsMount*> mounts_;
 
     /// A null-terminated array of file system types.
     List<FileSystemType*> file_system_types_;

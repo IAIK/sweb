@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.70 2005/08/11 16:18:02 nomenquis Exp $
+ * $Id: main.cpp,v 1.71 2005/08/11 16:46:57 davrieb Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.70  2005/08/11 16:18:02  nomenquis
+ * fixed a bug
+ *
  * Revision 1.69  2005/08/07 16:47:25  btittelbach
  * More nice synchronisation Experiments..
  * RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -493,17 +496,13 @@ class KprintfNoSleepFlushingThread : public Thread
 // testing the registerfilesystem
 void testRegFS()
 {
-  kprintf("test test test\n");
-  kprintf("this is the Register FileSystem \n");
   RamFileSystemType *ramfs = new RamFileSystemType();
   const char *fs_name = ramfs->getFSName();
-  kprintf("name fo ramfs: %s\n", fs_name);
   VirtualFileSystem vfs;
   vfs.registerFileSystem(ramfs);
 
-  ramfs = 0;
-  FileSystemType *fs = vfs.getFsType(fs_name);
-  kprintf("name fo fs: %s\n", fs->getFSName());
+  vfs.root_mount("ramfs", 0);
+  kprintfd("mounted ramfs on /");
 }
 
 

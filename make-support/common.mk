@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.6 2005/07/31 17:35:32 nightcreature Exp $
+# $Id: common.mk,v 1.7 2005/08/11 16:46:57 davrieb Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.6  2005/07/31 17:35:32  nightcreature
+# additions for xen target
+#
 # Revision 1.5  2005/04/27 08:56:00  woswasi
 # added clean suport for e2fsimage
 #
@@ -21,7 +24,7 @@
 
 
 #MAKEFLAGS += --no-print-directory
-MAKEFLAGS += --silent 
+MAKEFLAGS += --silent --print-directory
 
 ifeq ($(PROJECT_MAKE_SUPPORT_ROOT),)
 PROJECT_MAKE_SUPPORT_ROOT := $(PROJECT_ROOT)/make-support
