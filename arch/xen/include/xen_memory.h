@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.h,v 1.1 2005/08/11 16:59:10 nightcreature Exp $
+//  $Id: xen_memory.h,v 1.2 2005/08/11 18:09:46 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.h,v $
+//  Revision 1.1  2005/08/11 16:59:10  nightcreature
+//  replacing mm.h
+//
 //
 //----------------------------------------------------------------------
 
@@ -57,7 +60,7 @@ extern unsigned long *phys_to_machine_mapping;
 
 //ArchMemory wants
 
-static void initalisePhysToMachineMapping();
+void initalisePhysToMachineMapping();
 
 static __inline__ unsigned long phys_to_machine(unsigned long phys)
 {
