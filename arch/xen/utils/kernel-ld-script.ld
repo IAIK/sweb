@@ -1,7 +1,8 @@
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(_start)
-LS_Virt = 0xC0000000;
+/*LS_Virt = 0xC0000000; old value from mini-os*/
+LS_Virt = 0x80000000;
 SECTIONS
 {
 kernel_start_address = .;
@@ -40,9 +41,6 @@ kernel_start_address = .;
     data_start_address = .; /*from orig*/
     *(.data) 
     . = ALIGN(4096);       /*from orig*/
-    *(.gdt_stuff)          /*from orig WARNING: Most likely to change because of xen!*/
-    . = ALIGN(4096);       /*from orig*/
-    *(.idt_stuff)          /*from orig WARNING: Most likely to change because of xen!*/
     data_end_address = .;  /*from orig*/
     . = ALIGN(4096);
 
