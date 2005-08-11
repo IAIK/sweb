@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.8 2005/05/19 15:43:43 btittelbach Exp $
+//   $Id: PageManager.cpp,v 1.9 2005/08/11 18:28:10 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.8  2005/05/19 15:43:43  btittelbach
+//  Ansätze für eine UserSpace Verwaltung
+//
 //  Revision 1.7  2005/04/26 10:58:15  nomenquis
 //  and now it really works
 //
@@ -28,9 +31,9 @@
 #include "paging-definitions.h"
 #include "arch_panic.h"
 #include "ArchCommon.h"
+//#include "hypervisor.h"
 
-PageManager* PageManager::instance_=0;
-
+#ifndef isXenBuild
 static uint32 fb_start = 0;
 static char* fb = (char*)0xC00B8100;
 
@@ -57,11 +60,25 @@ static char* fb = (char*)0xC00B8100;
       for (asf=0;asf<1;++asf)\
         ++blubba;\
     }
-   
+#else
+  #define print(x) 
+#endif
+//the following is possible but not so good as it is printing on the console for ages
+// #else
+//   #include "console/kprintf.h"
+//   #define print(x) kprintf("%x ",x);
+// #endif
+
+
+PageManager* PageManager::instance_=0;
+  
 extern void* kernel_end_address;
     
 pointer PageManager::createPageManager(pointer next_usable_address)
 {
+  //next_usable_address is kernel_end_address defined in linker script
+
+  
   if (instance_)
     return 1;
 
@@ -107,14 +124,17 @@ PageManager::PageManager(pointer start_of_structure)
 
   size_t length_of_structure = number_of_pages_ * sizeof(uint32);
   size_t number_of_pages_for_structure = length_of_structure / PAGE_SIZE;
+  
+  //FIXME: hier sollte wohl die kernel_start_address sein statt der 2gig zahl?
   size_t number_of_used_pages = (((uint32)&kernel_end_address)-1024*1024*1024*2) / PAGE_SIZE; 
   size_t number_of_free_pages = 1024 - number_of_used_pages;
-  
+
+ 
   if (number_of_free_pages < number_of_pages_for_structure)
   {
     arch_panic((uint8*)"Error, not enough memory for pages");
   }
-  
+
   print (number_of_pages_for_structure);
   print (number_of_used_pages);
   print (number_of_free_pages);
@@ -123,11 +143,16 @@ PageManager::PageManager(pointer start_of_structure)
   // first mark everything as reserverd, and then mark everything we actually
   // can use as free
   for (i=0;i<number_of_pages_;++i)
+//  for (i=0;i<10;++i)
   {
     page_usage_table_[i] = PAGE_RESERVED;
   }
   print (11)
-  
+
+    /* do nothing */
+    //for ( ; ; ) HYPERVISOR_yield();
+
+   
   for (i=0;i<num_mmaps;++i)
   {
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
@@ -135,7 +160,7 @@ PageManager::PageManager(pointer start_of_structure)
     end_address /= PAGE_SIZE;
     print(start_address)
     print(end_address)
-    if (start_address > 1024*256 || end_address > 1024*256)
+    if (start_address > 1024*256 || end_address > 1024*256) //becaue max 1 gig of memory?, see above
     {
       print(777777777);
       continue;
@@ -165,6 +190,7 @@ uint32 PageManager::getSizeOfMemoryUsed() const
   return number_of_pages_ * sizeof(uint32); 
 }
 
+//used by loader.cpp ArchMemory.cpp UerProcess.cpp
 uint32 PageManager::getFreePhysicalPage(uint32 type)
 {
   if (type == PAGE_FREE)  //what a stupid thing that would be to do

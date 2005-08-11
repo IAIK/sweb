@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.17 2005/08/07 16:47:25 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.18 2005/08/11 18:28:10 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.17  2005/08/07 16:47:25  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.16  2005/07/12 19:58:40  btittelbach
 //  minus debug garbage output
 //
@@ -79,9 +84,9 @@
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
-
-void printout(char* text)
-{
+#ifndef isXenBuild
+  void printout(char* text)
+  {
     uint8 * fb = (uint8*)0xC00B8000;
     static uint32 i=160;
 
@@ -90,11 +95,20 @@ void printout(char* text)
       fb[i++] = *text++;
       fb[i++] = 0x9f;
     }
+  }
+#else
+  #include "console/kprintf.h"
+  void printout(char* text)
+  {
+    kprintf(text);
+  }
+#endif
 
-}
+
 static uint32 fb_start = 0;
 static char* fb = (char*)0xC00B8500;
 
+#ifndef isXenBuild
 #define print(x)     fb_start += 2; \
     { \
       uint32 divisor; \
@@ -117,7 +131,11 @@ static char* fb = (char*)0xC00B8500;
       uint32 asf;\
       for (asf=0;asf<1;++asf)\
         ++blubba;\
-    }   
+    }
+#else
+  #define print(x) 
+#endif
+
 
 #define printbochs(x)  \
     { \
