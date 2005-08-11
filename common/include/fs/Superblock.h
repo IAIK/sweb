@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.6 2005/07/21 18:07:03 davrieb Exp $
+// $Id: Superblock.h,v 1.7 2005/08/11 16:34:28 qiangchen Exp $
 // $Log: Superblock.h,v $
+// Revision 1.6  2005/07/21 18:07:03  davrieb
+// mount of the root directory
+//
 // Revision 1.5  2005/07/16 13:36:29  davrieb
 // rename file.h and file.cpp to File.h and File.cpp
 //
@@ -171,6 +174,15 @@ public:
   /// incomplete transaction on the file-system to fail quickly rather than
   /// block waiting on some external event such as a remote server responding.
   virtual void umount_begin(Superblock* super_block) {}
+  
+  /// insert the opened file point to the file_list
+  int32 insert_opened_files(File*);
+  
+  /// remove the opened file point from the file_list
+  int32 remove_opened_files(File*);
+  
+  /// check the existence of the opened file point in the file_list
+  int32 check_opened_files(File* file) {return(s_files_.is_included(file));}
 };
 //-----------------------------------------------------------------------------
 

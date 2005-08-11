@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: RamFsSuperblock.h,v $
 //
-// $Id: RamFsSuperblock.h,v 1.4 2005/07/21 18:07:03 davrieb Exp $
+// $Id: RamFsSuperblock.h,v 1.5 2005/08/11 16:34:28 qiangchen Exp $
 // $Log: RamFsSuperblock.h,v $
+// Revision 1.4  2005/07/21 18:07:03  davrieb
+// mount of the root directory
+//
 // Revision 1.3  2005/07/16 13:22:00  davrieb
 // rrename List in fs to PointList to avoid name clashes
 //
@@ -95,6 +98,7 @@ public:
   /// sturcture, as particularly might be the case for file-systems using the
   /// generic_ip field in class Inode.
   virtual void clear_inode(Inode* inode) {}
+  
 };
 //-----------------------------------------------------------------------------
 

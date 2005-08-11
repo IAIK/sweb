@@ -14,26 +14,31 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-
-
 #ifndef FILE_H__
 #define FILE_H__
 
 #include "types.h"
 #include "fs/PointList.h"
+//#include "Inode.h"
+//#include "Dentry.h"
 
 // forward declarations
+class Superblock;
 class Inode;
 class Dentry;
 
-
-/// The basic access modes for files
+/// The basic flags for files
 #define O_RDONLY    0x0000
 #define O_WRONLY    0x0001
 #define O_RDWR      0x0002
 
+/// The basic access modes for files
+#define A_READABLE  0x0001
+#define A_WRITABLE  0x0002
+#define A_EXECABLE  0x0004
 
 typedef uint32 l_off_t;
+
 
 class File
 {
@@ -74,10 +79,13 @@ class File
     /// The Filename
     // char *name_;
 
+    /// The superblock  pointing to this file
+    Superblock* f_superblock_;
+    
     /// The indoe associated to the file.
     Inode* f_inode_;
 
-    /// The dcache entry pointing to this file/
+    /// The dentry pointing to this file/
     Dentry* f_dentry_;
 
     /// Mounted filesystem containing the file
@@ -87,9 +95,10 @@ class File
     int32 count_;
 
     /// The flags specified when the file was opened
-    uint32 flags;
+    uint32 flag_;
 
     /// The process access mode of the file;
+    /// default value: READABLE ^ WRITABLE ^ EXECABLE
     mode_t mode_;
 
     /// Current offset in the file
@@ -102,7 +111,7 @@ class File
 
     //----------------------------------------------------------------------
     /// The Constructor
-  File(){}
+  File(Inode* inode, Dentry* dentry) {f_inode_ = inode; f_dentry_ = dentry;}
 
     //----------------------------------------------------------------------
     /// The Destructor
@@ -156,14 +165,14 @@ class File
     /// Open the file
     ///
     /// @param inode is the inode the read the file from.
-  virtual  int32 open(Inode*) {return 0;}
+  virtual  int32 open(uint32) {return 0;}
 
   //-----------------------------------------------------------------------
   /// Close the file
   ///
   /// @param inode is close, the superblock has the information, that this
   /// inode is not use anymore.
-  virtual  int32 close(Inode*) {return 0;}
+  virtual  int32 close() {return 0;}
 
     //----------------------------------------------------------------------
     /// Flush all off the file's write operations. The File will be written to disk.

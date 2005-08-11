@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: RamFsFile.cpp,v $
  *
- * $Id: RamFsFile.cpp,v 1.4 2005/08/04 17:04:00 lythien Exp $
+ * $Id: RamFsFile.cpp,v 1.5 2005/08/11 16:35:59 qiangchen Exp $
  * $Log: RamFsFile.cpp,v $
+ * Revision 1.4  2005/08/04 17:04:00  lythien
+ * include the methode write
+ *
  * Revision 1.3  2005/08/02 18:57:57  qiangchen
  * *** empty log message ***
  *
@@ -32,77 +35,109 @@
  *
  */
 
-
-#include "fs/ramfs/RamFsFile.h"
-#include "fs/Dentry.h"
 #include "fs/ramfs/RamFsInode.h"
+#include "fs/ramfs/RamFsFile.h"
+#include "fs/ramfs/RamFsSuperblock.h"
+#include "fs/Dentry.h"
 
-//-----------------------------------------------------------------
-// The Constructor
-//-----------------------------------------------------------------
-RamFsFile::RamFsFile()
+#define ERROR_FRO "ERROR: The flag muss be READONLY for several opened files"
+#define ERROR_FF  "ERROR: The flag does not allow this operation"
+#define ERROR_FNO "ERROR: The file is not open."
+
+//--------------------------------------------------------------------------
+RamFsFile::RamFsFile(Inode* inode, Dentry* dentry) : File(inode, dentry)
 {
+  f_superblock_ = inode->getSuperblock();
+  count_ = 0;
+  mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
+  offset_ = 0;
 }
 
-//-----------------------------------------------------------------
-// The Destructor
-//-----------------------------------------------------------------
+//--------------------------------------------------------------------------
 RamFsFile::~RamFsFile()
 {
+  assert(count_ != 0);
 }
 
-//----------------------------------------------------------------
-// get name of the file
-//----------------------------------------------------------------
+//--------------------------------------------------------------------------
 char *RamFsFile::getName() const
 {
   return(f_dentry_->get_name());
 }
 
-
-//----------------------------------------------------------------
-// get the dentry
-//----------------------------------------------------------------
+//--------------------------------------------------------------------------
 Dentry *RamFsFile::getDentry() const
 {
   return(f_dentry_);
 }
 
-//----------------------------------------------------------------
-// read from the file
-//----------------------------------------------------------------
+//--------------------------------------------------------------------------
 int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
 {
-  return(f_inode_->readData(offset, count, buffer));
+  if(f_superblock_->check_opened_files(this) == false)
+  {
+    // ERROR_FNO
+    return -1;
+  }
+  
+  if((flag_ == O_RDONLY) || (flag_ == O_RDWR))
+    return(f_inode_->readData(offset, count, buffer));
+  else
+  {
+    // ERROR_FF
+    return -1;
+  }   
 }
 
-//----------------------------------------------------------------
-// write to the file
-//----------------------------------------------------------------
+//--------------------------------------------------------------------------
 int32 RamFsFile::write(int32 *buffer, size_t count, l_off_t offset)
 {
-  return(f_inode_->writeData(offset, count, buffer));
+  if(f_superblock_->check_opened_files(this) == false)
+  {
+    // ERROR_FNO
+    return -1;
+  }
+
+  if((flag_ == O_WRONLY) || (flag_ == O_RDWR))
+    return(f_inode_->writeData(offset, count, buffer));
+  else
+  {
+    // ERROR_FF
+    return -1;
+  }
 }
 
-//----------------------------------------------------------------
-// open the file
-//----------------------------------------------------------------
-int32 RamFsFile::open(Inode*)
+//--------------------------------------------------------------------------
+int32 RamFsFile::open(uint32 flag)
 {
+
+  if(f_inode_->is_opened_files_empty() == true)
+  {
+  }
+  else if((f_inode_->insert_opened_files(this) == 0) && (flag == O_RDONLY))
+  {
+  }
+  else
+  {
+    // ERROR_FRO
+    return -1;
+  }
+  
+  f_inode_->insert_opened_files(this);
+  flag_ = flag;
+  f_superblock_->insert_opened_files(this);
+
   return 0;
 }
 
-//----------------------------------------------------------------
-// close the file
-//----------------------------------------------------------------
-int32 RamFsFile::close(Inode*)
+//--------------------------------------------------------------------------
+int32 RamFsFile::close()
 {
-  return 0;
+  assert((f_inode_->remove_opened_files(this) != 0) &&
+         (f_superblock_->remove_opened_files(this) != 0));
 }
 
-//----------------------------------------------------------------
-// flush all off the file's wirte operations.
-//----------------------------------------------------------------
+//--------------------------------------------------------------------------
 int32 RamFsFile::flush()
 {
   return 0;

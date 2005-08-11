@@ -15,3 +15,47 @@
 
 #include "fs/Inode.h"
 #include "assert.h"
+
+#define ERROR_FNE "Error: the file does not exist."
+#define ERROR_FE  "Error: the file is exists."
+
+//---------------------------------------------------------------------------
+int32 Inode::insert_opened_files(File* file)
+{
+  if(file == 0)
+  {
+    // ERROR_FNE
+    return -1;
+  }
+  
+  if(i_files_.is_included(file) == true)
+  {
+    // ERROR_FE
+    return -1;
+  }
+  i_files_.push_end(file);
+  
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+int32 Inode::remove_opened_files(File* file)
+{
+  if(file == 0)
+  {
+    // ERROR_FNE
+    return -1;
+  }
+  
+  if(i_files_.is_included(file) == true)
+    i_files_.remove(file);
+  else
+  {
+    // ERROR_FNE
+    return -1;
+  }
+  
+  return 0;
+}
+
+//---------------------------------------------------------------------------

@@ -12,7 +12,7 @@
 #define ERROR_NNE "Error: the name does not exist in the current directory."
 #define ERROR_HLI "Error: hard link invalid."
 #define ERROR_DNEILL "Error: the dentry does not exist in the link list."
-#define ERROR_DES "Error: the dentry exists sub_directory"
+#define ERROR_DES "Error: the dentry exists sub_directory."
 
 //---------------------------------------------------------------------------
 RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
@@ -241,4 +241,3 @@ Dentry* RamFsInode::lookup(Dentry *dentry)
   return dentry;
 }
 
-//---------------------------------------------------------------------------

@@ -68,6 +68,9 @@ class Inode
 
   /// The dentry-PointList of this inode. (file)
   PointList<Dentry> i_dentry_link_;
+  
+  /// The (open) file of this inode.
+  PointList<File> i_files_;
 
   /// the reference count of the inode. if i_count_ is zero, it can be free
   /// the inode.
@@ -167,6 +170,18 @@ class Inode
   /// read the date of the inode
   virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
   virtual int32 writeData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
+  
+ public:
+
+  /// insert the opened file point to the file_list of this inode.
+  int32 insert_opened_files(File*);
+
+  /// remove the opened file point from the file_list of this inode.
+  int32 remove_opened_files(File*);
+  
+  bool is_opened_files_empty() { return(i_files_.is_empty());}
+  
+  Superblock* getSuperblock() { return i_superblock_; }
 };
 
 
