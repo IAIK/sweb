@@ -1,14 +1,17 @@
 //----------------------------------------------------------------------
-//  $Id: ctrl_if.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
+//  $Id: ctrl_if.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ctrl_if.c,v $
+//  Revision 1.1  2005/08/01 08:22:38  nightcreature
+//  code from mini-os needed for transition, maybe removedOB
+//
 //
 //----------------------------------------------------------------------
 
 #include "os.h"
 #include "hypervisor.h"
-#include "mm.h"
+#include "xen_memory.h"
 #include "events.h"
 #include "time.h"
 #include "types.h"

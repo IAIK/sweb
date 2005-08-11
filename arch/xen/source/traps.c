@@ -1,15 +1,18 @@
 //----------------------------------------------------------------------
-//  $Id: traps.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
+//  $Id: traps.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: traps.c,v $
+//  Revision 1.1  2005/08/01 08:22:38  nightcreature
+//  code from mini-os needed for transition, maybe removedOB
+//
 //
 //----------------------------------------------------------------------
 
 
 #include "os.h"
 #include "hypervisor.h"
-#include "mm.h"
+#include "xen_memory.h"
 #include "lib.h"
 
 /*
@@ -129,9 +132,9 @@ void do_page_fault(struct pt_regs *regs, long error_code,
                    unsigned long address)
 {
     printf("Page fault\n");
-    printf("Address: 0x%lx", address);
-    printf("Error Code: 0x%lx", error_code);
-    printf("eip: \t 0x%lx", regs->eip);
+    printf("Address: 0x%lx  ", address);
+    printf("Error Code: 0x%lx  ", error_code);
+    printf("eip: \t 0x%lx\n", regs->eip);
     do_exit();
 }
 
@@ -139,7 +142,7 @@ void do_general_protection(struct pt_regs * regs, long error_code)
 {
   HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = 0;
   printf("GPF\n");
-  printf("Error Code: 0x%lx", error_code);
+  printf("Error Code: 0x%lx\n", error_code);
   dump_regs(regs);
   dump_code(regs->eip);
   do_exit();

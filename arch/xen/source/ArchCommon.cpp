@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.2 2005/08/06 17:38:35 rotho Exp $
+//   $Id: ArchCommon.cpp,v 1.3 2005/08/11 16:55:47 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.2  2005/08/06 17:38:35  rotho
+//  should work ... for now
+//
 //  Revision 1.1  2005/08/01 08:18:59  nightcreature
 //  initial release, partly dummy implementation, needs changes
 //
@@ -11,8 +14,7 @@
 
 
 #include "ArchCommon.h"
-//#include "multiboot.h"
-//#include "boot-time.h"
+#include "paging-definitions.h"
 #include "offsets.h"
 #include "kprintf.h"
 
@@ -32,16 +34,22 @@ struct memory_maps
 } __attribute__((__packed__)) memory_maps;
 
 static struct memory_maps mem_map_[MAX_MEMORY_MAPS] = {FOURTY_ZEROS};
+//FIXXXXXME: mem_maps need to be initalised (in x86 in parse multiboot gesetzt
+//wie sie in boot.s initalisiert wurden (quasi assigned)
+//used gibt anscheinend nur an dass das teil im array auch gesetzt ist!
+//type gibt an ob frei oder nicht:?? aus grub multiboot def: 1 means ram
+//available, other values mean not available
+//address is realmem addres??
 
-// extern multiboot_info_t multi_boot_structure_pointer[];
+extern "C" void initialiseArchCommonMemoryMaps(uint32 nr_pages);
 
-  
-extern "C" void parseMultibootHeader();
-
-//we don't need this one..maybe remove it completly
-void parseMultibootHeader()
+void initialiseArchCommonMemoryMaps(uint32 nr_pages)
 {
-  return;
+  mem_map_[0].type = 1;
+  mem_map_[0].start_address = 0;
+//  mem_map_[0].end_address = 100;
+  mem_map_[0].end_address = nr_pages * PAGE_SIZE;
+  mem_map_[0].used = 1;  
 }
 
 //no we don't have one at all (at the moment)
@@ -112,7 +120,6 @@ uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, 
 
 #define MEMCOPY_LARGE_TYPE uint32
 
-//maybe no changes needed so unchanged at the moment
 void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
 {
   MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)src;
@@ -146,7 +153,6 @@ void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
   }
 }
 
-//maybe no changes needed so unchanged at the moment
 void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
 {
   if (debug) kprintf("Bzero start\n");

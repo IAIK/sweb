@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: head.S,v 1.1 2005/08/01 08:27:05 nightcreature Exp $
+//  $Id: head.S,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: head.S,v $
+//  Revision 1.1  2005/08/01 08:27:05  nightcreature
+//  assembler files need for xen (boot up and "interupt" entry)
+//
 //
 //----------------------------------------------------------------------
 
@@ -13,7 +16,7 @@
 .equ HAHA_JETZT, 4567
  
 .section __xen_guest
-	.ascii	"GUEST_OS=linux,GUEST_VER=2.6,XEN_VER=2.0.6,VIRT_BASE=0xC0000000"
+	.ascii	"GUEST_OS=linux,GUEST_VER=2.6,XEN_VER=2.0.7,VIRT_BASE=0x80000000"
 	.ascii	",LOADER=generic"
 	.ascii	",PT_MODE_WRITABLE"
 	.byte	0

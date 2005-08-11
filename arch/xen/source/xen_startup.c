@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_startup.c,v 1.1 2005/08/01 08:30:25 nightcreature Exp $
+//  $Id: xen_startup.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_startup.c,v $
+//  Revision 1.1  2005/08/01 08:30:25  nightcreature
+//  second boot stage based on kernel.c from mini-os
+//
 //
 //----------------------------------------------------------------------
 
@@ -36,11 +39,13 @@
 
 #include "os.h"
 #include "hypervisor.h"
-#include "mm.h"
+#include "xen_memory.h"
 #include "events.h"
 #include "time.h"
 #include "types.h"
 #include "lib.h"
+
+//#include "ArchCommon.h"
 
 
  extern void startup();
@@ -74,9 +79,11 @@ static void exit_handler(int ev, struct pt_regs *regs);
 static void debug_handler(int ev, struct pt_regs *regs);
 
 
-extern char shared_info[PAGE_SIZE];
+extern char shared_info[PAGE_SIZE]; //defined in head.S
 
-static shared_info_t *map_shared_info(unsigned long pa)
+extern char text_start_address;
+
+static shared_info_t *mapSharedInfo(unsigned long pa)
 {
     if ( HYPERVISOR_update_va_mapping((unsigned long)shared_info >> PAGE_SHIFT,
                                       pa | 3, UVMF_INVLPG) )
@@ -109,38 +116,86 @@ void start_kernel(start_info_t *si)
 {
     console_ready = 0;
 
-
     /* Copy the start_info struct to a globally-accessible area. */
+    // start_info is defined in hypervisor.h
     memcpy(&start_info, si, sizeof(*si));
 
-    /* Grab the shared_info pointer and put it in a safe place. */
-    HYPERVISOR_shared_info = map_shared_info(start_info.shared_info);
+    // Grab the shared_info pointer and map it to our va space.
+    //HYPERVISOR_shared_info defined as pointer in xen.h
+    HYPERVISOR_shared_info = mapSharedInfo(start_info.shared_info);
 
     /* Set up event and failsafe callback addresses. */
     HYPERVISOR_set_callbacks(
         __KERNEL_CS, (unsigned long)hypervisor_callback,
         __KERNEL_CS, (unsigned long)failsafe_callback);
 
-    /* init console driver */
-     ctrl_if_init();
- 
+    //initalise memory maps in ArchCommon
 
+    printf("initalising arch common memory maps\n");
+
+    //----------------------------------------------------------------------
+    //taken from mini-os mm.c
+
+    uint64 start_pfn, max_pfn, max_free_pfn;
+    
+    uint64 *pgd = (unsigned long *)start_info.pt_base;
+    max_pfn = start_info.nr_pages;
+    start_pfn = PFN_UP(to_phys(& text_start_address));
+    /*
+     * we know where free tables start (start_pfn) and how many we 
+     * have (max_pfn). 
+     * 
+     * Currently the hypervisor stores page tables it providesin the
+     * high region of the this memory range.
+     * 
+     * next we work out how far down this goes (max_free_pfn)
+     * 
+     * XXX this assumes the hypervisor provided page tables to be in
+     * the upper region of our initial memory. I don't know if this 
+     * is always true.
+     */
+
+    max_free_pfn = PFN_DOWN(to_phys(pgd));
+    {
+        unsigned long *pgd = (unsigned long *)start_info.pt_base;
+        unsigned long  pte;
+        int i;
+
+        for ( i = 0; i < (HYPERVISOR_VIRT_START>>22); i++ )
+        {
+            unsigned long pgde = *pgd++;
+            if ( !(pgde & 1) ) continue;
+            pte = machine_to_phys(pgde & PAGE_MASK);
+            if (PFN_DOWN(pte) <= max_free_pfn) 
+                max_free_pfn = PFN_DOWN(pte);
+        }
+    }
+    max_free_pfn--;
+    //end takeout from mini-os mm.c
+    //----------------------------------------------------------------------
+    
+    initialiseArchCommonMemoryMaps(max_free_pfn - start_pfn);
+    printf("arch common memory maps intalised\n");    
+    
+    /* init console driver */
+    ctrl_if_init();
+ 
     trap_init();
 
     /* ENABLE EVENT DELIVERY. This is disabled at start of day. */
     __sti();
     
     /* print out some useful information  */
-     printk("Booting in Xen!\n"); 
-     printk("start_info:   %p\n",    si); 
-     printk("  nr_pages:   %lu",     si->nr_pages); 
-     printk("  shared_inf: %08lx\n", si->shared_info); 
-     printk("  pt_base:    %p",      (void *)si->pt_base);  
-     printk("  mod_start:  0x%lx\n", si->mod_start); 
-     printk("  mod_len:    %lu\n",   si->mod_len);  
-     printk("  flags:      0x%x\n",  (unsigned int)si->flags); 
-     printk("  cmd_line:   %s\n",   
-     si->cmd_line ? (const char *)si->cmd_line : "NULL"); 
+//      printk("Booting in Xen!\n"); 
+//      printk("start_info:   %p\n",    si); 
+//      printk("  nr_pages:   %lu",     si->nr_pages); 
+//      printk("  shared_inf: %08lx\n", si->shared_info); 
+//      printk("  pt_base:    %p",      (void *)si->pt_base);  
+//      printk("  mod_start:  0x%lx\n", si->mod_start); 
+//      printk("  mod_len:    %lu\n",   si->mod_len);  
+//      printk("  flags:      0x%x\n",  (unsigned int)si->flags); 
+//      printk("  cmd_line:   %s\n",   
+//      si->cmd_line ? (const char *)si->cmd_line : "NULL"); 
 
     /*
      * If used for porting another OS, start here to figure out your
@@ -148,16 +203,15 @@ void start_kernel(start_info_t *si)
      */
 
  
-
- //      print_message();
-//       printf("Ein Teststring\nneue Zeile\nein Integer:%i",113);    
-
-
-/* entering sweb */
-     startup();
+    //printmessage();
+    printf("xen initialisation done, now entering sweb startup\n");    
 
     /* do nothing */
-    for ( ; ; ) HYPERVISOR_yield();
+    //for ( ; ; ) HYPERVISOR_yield();
+
+   /* entering sweb */
+   startup();
+
 }
 
 
@@ -170,7 +224,7 @@ void start_kernel(start_info_t *si)
 
 void do_exit(void)
 {
-/*     printk("do_exit called!\n"); */
+    printk("do_exit called!\n"); 
     for ( ;; ) HYPERVISOR_shutdown();
 }
 
