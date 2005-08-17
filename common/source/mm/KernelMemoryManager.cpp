@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.18 2005/08/11 18:28:10 nightcreature Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.19 2005/08/17 20:00:59 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.18  2005/08/11 18:28:10  nightcreature
+//  changed define of evil print(x) depending on platform xen or x86
+//
 //  Revision 1.17  2005/08/07 16:47:25  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -201,8 +204,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
 
   unlockKMM();
   
-  print(((pointer) new_pointer) + sizeof(MallocSegment))
-  print(9877)
+  //print(((pointer) new_pointer) + sizeof(MallocSegment))
+  //print(9877)
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 
 }
