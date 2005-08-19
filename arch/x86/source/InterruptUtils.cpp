@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.26 2005/08/07 16:47:24 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.27 2005/08/19 21:14:15 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.26  2005/08/07 16:47:24  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.25  2005/08/04 20:47:43  btittelbach
 //  Where is the Bug, maybe I will see something tomorrow that I didn't see today
 //
@@ -525,11 +530,17 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //~ :);
   kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\nPageFault:(currentThread: %x, switch_to_userspace_:%d)\n",address,
                                                                             error&flag_p, 
-                                                                            error&flag_rw >> 1, 
-                                                                            error&flag_us >> 2,
-                                                                            error&flag_rsvd >> 3,
+                                                                            (error&flag_rw) >> 1, 
+                                                                            (error&flag_us) >> 2,
+                                                                            (error&flag_rsvd) >> 3,
                                                                             currentThread,
                                                                             currentThread->switch_to_userspace_);
+  //~ ArchThreadInfo* i = currentThreadInfo;
+  //~ kprintfd_nosleep("PageFault: eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
+  //~ kprintfd_nosleep("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
+  //~ kprintfd_nosleep("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
+  //~ kprintfd_nosleep("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
+  
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
@@ -537,20 +548,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     currentThread->loader_->loadOnePage(address); //load stuff
 //    ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
-  else if (error & flag_rw) 
+  else 
   { 
-    kprintfd_nosleep("PageFault: Thread tried changing a write protected page\n");
+    kprintfd_nosleep("PageFault: Userprogramm caused an unexpected Pagefault\n");
     ArchInterrupts::enableInterrupts(); //enable Interrupts before exit !!!!
     Syscall::exit(9999);
-  }
-  
-  ArchThreadInfo* i = currentThreadInfo;
-  kprintf_nosleep("\n");
-  kprintf_nosleep("PageFault: eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
-  kprintf_nosleep("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
-  kprintf_nosleep("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
-  kprintf_nosleep("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
- 
+  } 
  // for(;;);
 }
 

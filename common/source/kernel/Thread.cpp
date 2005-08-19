@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.15 2005/08/07 16:47:25 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.16 2005/08/19 21:14:15 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.15  2005/08/07 16:47:25  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.14  2005/07/21 19:08:41  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -93,6 +98,7 @@ Thread::~Thread()
   kprintfd("Thread::~Thread: freeing ThreadInfos\n");
   ArchThreads::cleanupThreadInfos(user_arch_thread_info_); //yes that's safe
   ArchThreads::cleanupThreadInfos(kernel_arch_thread_info_);
+  kprintfd("Thread::~Thread: done\n");
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return

@@ -12,11 +12,20 @@ long syscall(long syscall_number, long arg0, long arg1, long arg2)
   return return_value;
 }
 
+//~ void syscall(long syscall_number, long arg0, long arg1, long arg2)
+//~ {
+  	//~ __asm__ __volatile__ (
+	   //~ "int $0x80\n"
+	   //~ :
+	   //~ :"a" (syscall_number), "b" (arg0), "c" (arg1), "d" (arg2)
+  //~ );
+//~ }
+
 void print_to_stdout(char *string)
 {
   int strlen = 0;
-  while (*string++)
-    strlen++;
+  while (*string)
+    strlen++,string++;
   
   syscall(sc_write,fd_stdout,(long) string,strlen);
 }
@@ -31,4 +40,5 @@ void _start()
   
   // call Exit syscall with arguments
   syscall(sc_exit,0,0,0);
+  for(;;);
 }

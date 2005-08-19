@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.13 2005/08/07 16:47:25 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.14 2005/08/19 21:14:15 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
 //   Revision 1.12  2005/08/04 20:47:43  btittelbach
@@ -90,6 +90,8 @@ static bool buffer_overflow_ = false;
 
 void oh_writeCharNoSleep(char c)
 {
+  return;
+  
 #ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
   if ((buffer_in_pos_ +1) % buffer_size_ == buffer_out_pos_)
     return;
@@ -102,6 +104,8 @@ void oh_writeCharNoSleep(char c)
 }
 void oh_writeStringNoSleep(char const* str)
 {
+  return;
+  
   while (*str)
   {
     oh_writeCharNoSleep(*str);
@@ -481,6 +485,7 @@ void kprintfd_nosleep(const char *fmt, ...)
 
 void kprintf_nosleep_flush()
 {
+  return;
   bool previous_if = ArchInterrupts::testIFSet();
   Terminal *term = main_console->getActiveTerminal();
   main_console->lockConsoleForDrawing();
