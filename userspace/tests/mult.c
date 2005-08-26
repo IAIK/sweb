@@ -51,4 +51,5 @@ int _start()
       sum += cxc[x][y];
   
  // printf("Result is %d",sum);
+  __syscall(0,sum);
 }
