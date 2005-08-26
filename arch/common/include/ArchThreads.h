@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.7 2005/07/21 19:08:39 btittelbach Exp $
+//  $Id: ArchThreads.h,v 1.8 2005/08/26 13:58:24 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.7  2005/07/21 19:08:39  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.6  2005/06/14 18:22:37  btittelbach
 //  RaceCondition anfälliges LoadOnDemand implementiert,
 //  sollte optimalerweise nicht im InterruptKontext laufen
@@ -56,6 +61,9 @@ public:
   uint32 getPageDirectory(Thread *thread);
 
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
+
+  static void printThreadRegisters(Thread *thread, uint32 userspace_registers);
+
 
 };
 

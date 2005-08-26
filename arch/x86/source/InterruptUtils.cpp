@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.28 2005/08/26 12:01:25 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.29 2005/08/26 13:58:24 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.28  2005/08/26 12:01:25  nomenquis
+//  pagefaults in userspace now should really really really work
+//
 //  Revision 1.27  2005/08/19 21:14:15  btittelbach
 //  Debugging the Debugging Code
 //
@@ -522,6 +525,7 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {  
+
   uint32 const flag_p = 0x1 << 0;  //=0: pf caused because pt was not present; =1: protection violation
   uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
   uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
@@ -538,6 +542,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
                                                                             (error&flag_rsvd) >> 3,
                                                                             currentThread,
                                                                             currentThread->switch_to_userspace_);
+  ArchThreads::printThreadRegisters(currentThread,0);
+  ArchThreads::printThreadRegisters(currentThread,1);
   //~ ArchThreadInfo* i = currentThreadInfo;
   //~ kprintfd_nosleep("PageFault: eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
   //~ kprintfd_nosleep("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
@@ -558,7 +564,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     Syscall::exit(9999);
   } 
 
-    arch_switchThreadToUserPageDirChange();
+   // arch_switchThreadToUserPageDirChange();
  // for(;;);
 }
 
@@ -580,25 +586,39 @@ extern "C" void irqHandler_4()
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
-  kprintfd_nosleep("syscallHANDLER\n");
-  // ok, find out the current thread
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+ 
+  kprintfd_nosleep("syscallHANDLER, interrupts are %d\n",ArchInterrupts::testIFSet());
+  ArchThreads::printThreadRegisters(currentThread,0);
+  ArchThreads::printThreadRegisters(currentThread,1);
+   // ok, find out the current thread
+  //currentThreadInfo = currentThread->kernel_arch_thread_info_;
   kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
                   currentThread->user_arch_thread_info_->ebx,
                   currentThread->user_arch_thread_info_->ecx,
                   currentThread->user_arch_thread_info_->edx);
  
-  currentThread->kernel_arch_thread_info_->eip ++;
+  // a int 0x80 instruction takes two bytes in x86 asm
+  // to make sure we skip this one after syscall exit 
+  // we have to increment the eip
+  // add on, ever since the very first pmode machine 
+  // this is not needed anymore as the machine is smart 
+  // enough to do this on a trap
+  //currentThread->user_arch_thread_info_->eip +=2;
 
   currentThread->user_arch_thread_info_->eax =
     Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
                   currentThread->user_arch_thread_info_->ebx,
                   currentThread->user_arch_thread_info_->ecx,
-                  currentThread->user_arch_thread_info_->edx);
+                  currentThread->user_arch_thread_info_->edx,
+                  currentThread->user_arch_thread_info_->esi,
+                  currentThread->user_arch_thread_info_->edi);
 
   currentThread->switch_to_userspace_ = true;
-  ArchInterrupts::enableInterrupts();
-  
+  ArchThreads::printThreadRegisters(currentThread,1);
+
+  arch_switchThreadToUserPageDirChange();
+//  ArchInterrupts::enableInterrupts();
+
   //~ for(;;)
   //~ {
     //~ //round and round until we switch back to userspace kontext

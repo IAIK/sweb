@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.10 2005/07/26 17:45:25 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.11 2005/08/26 13:58:24 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.10  2005/07/26 17:45:25  nomenquis
+//  foobar
+//
 //  Revision 1.9  2005/07/21 19:08:40  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -200,3 +203,23 @@ uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
   return arch_TestAndSet(new_value, &lock);
 }
+
+
+void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers)
+{
+  ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
+  if (!info)
+  {
+    kprintfd_nosleep("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
+    return;
+  }
+  kprintfd("\n\n");
+  kprintfd("Thread: %x, info %x %s\n",thread,info,userspace_registers?"UserSpace":"Kernel");
+  kprintfd("eax: %x  ebx: %x  ecx: %x  edx: %x\n",info->eax,info->ebx,info->ecx,info->edx);
+  kprintfd("esi: %x  edi: %x  esp: %x  ebp: %x\n",info->esi,info->edi,info->esp,info->ebp);
+  kprintfd(" ds: %x   es: %x   fs: %x   gs: %x\n",info->ds,info->es,info->fs,info->gs);
+  kprintfd(" ss: %x   cs: %x esp0: %x  ss0: %x\n",info->ss,info->cs,info->esp0,info->ss0);
+  kprintfd("eip: %x eflg: %x  dpl: %x  cr3: %x\n",info->eip,info->eflags,info->dpl,info->cr3);
+  kprintfd("\n\n");  
+}
+

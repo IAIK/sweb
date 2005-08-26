@@ -160,10 +160,7 @@ from_user_1:
         mov dword[ebx + 44], eax
         mov eax, [esp + 4]      ; save es
         mov dword[ebx + 48], eax
-        
-        
-        
-        
+           
         ret
         
 global arch_switchThreadKernelToKernel

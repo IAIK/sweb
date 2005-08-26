@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.1 2005/08/03 09:54:43 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.2 2005/08/26 13:58:24 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.1  2005/08/03 09:54:43  btittelbach
+//  Syscall Files, unfinished as of yet
+//
 
 #include "Syscall.h"
 #include "syscall-definitions.h"
@@ -10,9 +13,10 @@
 #include "../console/kprintf.h"
 #include "ArchCommon.h"
 
-uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg0, uint32 arg1, uint32 arg2)
+uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
 {
   uint32 return_value=0;
+  /*
   switch (syscall_number)
   {
     case sc_exit:
@@ -29,7 +33,9 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg0, uint32 arg1
       break;
     default:
       kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %d\n",syscall_number);
-  }
+  }*/
+  kprintfd("Syscall %d called with arguments %d %d %d %d %d\n",syscall_number, arg1, arg2, arg3, arg4, arg5);
+  
   return return_value;
 }
 

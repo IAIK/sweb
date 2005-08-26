@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.h,v 1.2 2005/08/07 16:47:25 btittelbach Exp $
+//   $Id: Syscall.h,v 1.3 2005/08/26 13:58:24 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.h,v $
+//  Revision 1.2  2005/08/07 16:47:25  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.1  2005/08/03 09:54:43  btittelbach
 //  Syscall Files, unfinished as of yet
 //
@@ -20,7 +25,7 @@
 class Syscall
 {
   public:
-  static uint32 syscallException(uint32 syscall_number, uint32 arg0, uint32 arg1, uint32 arg2);
+  static uint32 syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5);
   
   static void execve();
   static uint32 clone();

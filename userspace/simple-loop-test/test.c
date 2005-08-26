@@ -1,5 +1,8 @@
 
 int foobar;
+typedef unsigned int uint32;
+
+extern  __syscall(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5);
 
 int bartar(int blubba, int blabba)
 {
@@ -12,6 +15,7 @@ int _start(int argc, char *argv[])
    for (;;)
    {
 	foobar=bartar(foobar,20);
+   	__syscall(0,1,2,3,4,5);
    }
    	return 0;
 }
