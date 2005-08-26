@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.11 2005/08/04 20:47:43 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.12 2005/08/26 12:01:25 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.11  2005/08/04 20:47:43  btittelbach
+//  Where is the Bug, maybe I will see something tomorrow that I didn't see today
+//
 //  Revision 1.10  2005/07/21 19:08:41  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -182,6 +185,24 @@ typedef struct
 
 } ELF32_Ehdr;
 
+static void printElfHeader(ELF32_Ehdr &hdr)
+{
+   kprintfd("hdr addr: %x\n",&hdr);
+   #define foobar(x) kprintfd("hdr " #x ": %x\n",hdr. x)
+   foobar(e_type);
+   foobar(e_machine);
+   foobar(e_version);
+   foobar(e_entry);
+   foobar(e_phoff);
+   foobar(e_shoff);
+   foobar(e_flags);
+   foobar(e_ehsize);
+   foobar(e_phentsize);
+   foobar(e_phnum);
+   foobar(e_shentsize);
+   foobar(e_shnum);
+   foobar(e_shstrndx);
+}
 
 typedef struct
 {
@@ -266,8 +287,8 @@ uint32 Loader::loadExecutableAndInitProcess()
   
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
   
-  kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x\n",hdr->e_entry);
-  
+  kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr->e_entry, hdr->e_phnum);
+  printElfHeader(*hdr);
   ArchThreads::createThreadInfosUserspaceThread(thread_->user_arch_thread_info_, hdr->e_entry, 2U*1024U*1024U*1024U-sizeof(pointer), thread_->getStackStartPointer());
   ArchThreads::setPageDirectory(thread_, page_dir_page_);
 
@@ -312,6 +333,39 @@ void Loader::loadOnePage(uint32 virtual_address)
     {
       //now write from max(h->p_addr,vaddr) to min(h->p_addr+h->p_memsz,vaddr+PAGE_SIZE)
       kprintfd("Loader::loadOnePage: loading from PHdr[%d]\r\n",i);
+      
+      if (h->p_paddr % PAGE_SIZE)
+      {
+        kprintfd("Error, this segment is NOT page aligned, this is not yet supported");
+        kprintfd("Giving up");
+        for(;;);
+      }
+      
+      uint32 difference_from_start_of_segment = virtual_page * PAGE_SIZE - h->p_paddr;
+      
+      if (difference_from_start_of_segment % PAGE_SIZE)
+      {
+        kprintfd("This really really should not have happened, offset into executable segment not a full page size\n");
+        for(;;);
+      }
+        
+      uint32 file_start_offset = h->p_offset + difference_from_start_of_segment;
+      uint8* memory_start_offset = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page));
+      
+      uint8* src = (uint8*)((uint32)file_image_ + file_start_offset);
+      uint8* dest = memory_start_offset;
+      uint32 num_copied = 0;
+      kprintfd("Start in file(memory) %x start in physical memory %x\n",src,dest);
+
+      while (num_copied < PAGE_SIZE && difference_from_start_of_segment+num_copied < h->p_filesz)
+      {
+        *dest++ = *src++;
+        ++num_copied;
+      }
+      kprintfd("Copied a total of %d\n",num_copied);
+             
+             /*
+      uint8* copy_helper = virtual_page
       pointer write_start = vaddr;
       if (h->p_paddr > write_start)
         write_start=h->p_paddr;
@@ -326,13 +380,13 @@ void Loader::loadOnePage(uint32 virtual_address)
         read=0;
       else
         read = vaddr - h->p_paddr;
-   
+      kprintfd("Testing this super buggy thing, write start is %x and write stop is %x\n",write_start,write_stop);
       for (curr_ptr = reinterpret_cast<uint8*>(write_start); curr_ptr < reinterpret_cast<uint8*>(write_stop); ++curr_ptr)
       {
         *curr_ptr = file_image_[h->p_offset + read];
         ++read;
       }
-      kprintfd("Loader::loadOnePage: wrote %d bytes\r\n",write_stop - write_start);
+      kprintfd("Loader::loadOnePage: wrote %d bytes\r\n",write_stop - write_start); */
       wrote_someting=true;
     }
   }
@@ -346,4 +400,81 @@ void Loader::loadOnePage(uint32 virtual_address)
     currentThread->kill(); //syscall exit instead ?
     kpanict((uint8*) "Loader: loadOnePage(): PANIC should not reach\r\n");
   }
+}
+
+void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
+{
+  uint32 virtual_page = virtual_address / PAGE_SIZE;
+  kprintfd("Loader::loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d)\n",virtual_page,virtual_address);
+  
+
+  //uint32 page_dir_page = ArchThreads::getPageDirectory(thread);
+
+  ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
+  
+  kprintfd("Loader::loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
+  kprintfd("Loader::loadOnePage: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
+  kprintfd("Loader::loadOnePage: Num ents: %d\n",hdr->e_phnum);
+  kprintfd("Loader::loadOnePage: Entry: %x\n",hdr->e_entry);
+  
+  
+  uint32 page = PageManager::instance()->getFreePhysicalPage();
+  ArchMemory::mapPage(page_dir_page_, virtual_page, page, true);
+  ArchCommon::bzero(ArchMemory::get3GBAdressOfPPN(page),PAGE_SIZE,false);
+  
+  pointer vaddr = virtual_page*PAGE_SIZE;
+
+  bool wrote_someting=false;  
+  
+  uint32 i=0;
+  uint32 k=0;
+  uint32 written=0;
+  uint8* dest = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page));
+  
+  kprintfd("I've got the following segments in the binary\n");
+  for (k=0;k<hdr->e_phnum;++k)
+  {
+     ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + k* hdr->e_phentsize);
+     kprintfd("PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+  }
+
+  for (i=0;i<PAGE_SIZE;++i)
+  {
+    uint32 load_byte_from_address = vaddr + i;
+    uint32 found = 0;
+    for (k=0;k<hdr->e_phnum;++k)
+    {
+      ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + k* hdr->e_phentsize);
+      //kprintfd("Loader::loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+      
+      //if (vaddr >= h->p_paddr && vaddr < h->p_paddr+h->p_memsz)
+      if (h->p_paddr <= load_byte_from_address && load_byte_from_address < (h->p_paddr + h->p_filesz) )
+      {
+        uint8* src = (uint8*)((uint32)file_image_ + h->p_offset + (load_byte_from_address - h->p_paddr));
+        dest[i] = *src;
+        ++written;
+        ++found;
+      }
+      // bss is not in the file but in memory
+      else if (h->p_paddr <= load_byte_from_address && load_byte_from_address < (h->p_paddr+h->p_memsz ) )
+      {
+        //kprintfd("In segment but not on file, this is .bss\n");
+        ++found;
+        ++written;
+      }
+
+    }
+
+    if (!found)
+    {
+      //kprintfd("Error, byte not found, byte virtual address is %x\n",load_byte_from_address);
+    }
+    else if (found >1)
+    {
+      kprintfd("EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address);
+    }
+  }
+  kprintfd("Loader wrote a total of %d bytes\n",written);
+  if (!written)
+    for(;;);
 }

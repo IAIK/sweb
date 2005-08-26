@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.17 2005/08/11 16:18:02 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.18 2005/08/26 12:01:25 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.17  2005/08/11 16:18:02  nomenquis
+//  fixed a bug
+//
 //  Revision 1.16  2005/08/07 16:47:25  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -79,7 +82,8 @@
 ArchThreadInfo *currentThreadInfo;
 Thread *currentThread;
 
- 
+
+
 Scheduler *Scheduler::instance_=0;
 
 Scheduler *Scheduler::instance()

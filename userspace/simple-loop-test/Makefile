@@ -1,4 +1,4 @@
 
 
 all: 
-	gcc test.c -o test -static -nostdinc -fno-builtin -nostdlib
+	gcc test.c -m32 -o test -static -nostdinc -fno-builtin -nostdlib

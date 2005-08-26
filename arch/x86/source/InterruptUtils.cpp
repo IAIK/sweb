@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.27 2005/08/19 21:14:15 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.28 2005/08/26 12:01:25 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.27  2005/08/19 21:14:15  btittelbach
+//  Debugging the Debugging Code
+//
 //  Revision 1.26  2005/08/07 16:47:24  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -484,10 +487,10 @@ extern "C" void irqHandler_0()
   switch (ret)
   {
     case 0:
-      kprintfd_nosleep("irq0: Going to leave irq Handler 0 0\n");
+      kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      kprintfd_nosleep("irq0: Going to leave irq Handler 0 1\n");
+      kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd_nosleep("irq0: Panic in int 0 handler\n");
@@ -502,13 +505,13 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-      kprintfd_nosleep("irq0: Going to leave irq Handler 0 0\n");
+      kprintfd_nosleep("irq65: Going to leave irq Handler 0 to kernel\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      kprintfd_nosleep("irq0: Going to leave irq Handler 0 1\n");
+      kprintfd_nosleep("irq65: Going to leave irq Handler 0 to user\n");
       arch_switchThreadToUserPageDirChange();
     default:
-      kprintfd_nosleep("irq0: Panic in int 0 handler\n");
+      kprintfd_nosleep("irq65: Panic in int 0 handler\n");
       for(;;);
   }  
 }
@@ -545,7 +548,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
-    currentThread->loader_->loadOnePage(address); //load stuff
+    currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
 //    ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
   else 
@@ -554,6 +557,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     ArchInterrupts::enableInterrupts(); //enable Interrupts before exit !!!!
     Syscall::exit(9999);
   } 
+
+    arch_switchThreadToUserPageDirChange();
  // for(;;);
 }
 
