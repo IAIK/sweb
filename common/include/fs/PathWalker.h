@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: PathWalker.h,v $
 //
-// $Id: PathWalker.h,v 1.1 2005/08/11 16:46:57 davrieb Exp $
-// $Log$
+// $Id: PathWalker.h,v 1.2 2005/09/01 17:07:49 davrieb Exp $
+// $Log: PathWalker.h,v $
+// Revision 1.1  2005/08/11 16:46:57  davrieb
+// add PathWalker
+//
 //
 //
 
@@ -18,6 +21,7 @@
 class Dentry;
 class Mount;
 
+#define MAX_NAME_LEN 100
 
 /// If the last component is a symbolic link follow it
 #define LOOKUP_FOLLOW     0x0001
@@ -55,18 +59,24 @@ public:
   /// The destructor
   ~PathWalker();
 
+  int32 init(const char* name, uint32 flags);
+
 protected:
 
-  int32 init(const char* name, uint32 flags);
 
   /// extract the first part of a path
   ///
   /// @param path is a char* cantaining the path
-  /// @retrun is tthe extracted part.
+  /// @return is tthe extracted part.
   ///         It is empty if there is no next part
   ///         In case of an error a null pointer is returned.
   ///
   char *getNextPart(const char* path);
+
+  /// Skip any leading slashes on path.
+  ///
+  /// @return is a pointer to the first charachter that is not a '/'.
+  char *skipSeparator(char const *path) const;
 
 };
 
