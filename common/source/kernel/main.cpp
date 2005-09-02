@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.74 2005/08/26 13:58:24 nomenquis Exp $
+ * $Id: main.cpp,v 1.75 2005/09/02 17:57:58 davrieb Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.74  2005/08/26 13:58:24  nomenquis
+ * finally even the syscall handler does that it is supposed to do
+ *
  * Revision 1.73  2005/08/26 12:01:25  nomenquis
  * pagefaults in userspace now should really really really work
  *
@@ -499,20 +502,6 @@ class KprintfNoSleepFlushingThread : public Thread
     }
   }
 };
-
-//------------------------------------------------------------
-// testing the registerfilesystem
-void testRegFS()
-{
-  RamFileSystemType *ramfs = new RamFileSystemType();
-  const char *fs_name = ramfs->getFSName();
-  VirtualFileSystem vfs;
-  vfs.registerFileSystem(ramfs);
-
-  vfs.root_mount("ramfs", 0);
-  kprintfd("mounted ramfs on /");
-}
-
 
 //------------------------------------------------------------
 void startup()

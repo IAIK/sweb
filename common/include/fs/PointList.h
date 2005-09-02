@@ -17,7 +17,13 @@
 #define PointList_h___
 
 #include "types.h"
+
+#ifdef STANDALONE
+#include <cassert>
+#else
 #include "assert.h"
+#endif
+
 //-----------------------------------------------------------------------------
 /**
  * PointListElement
@@ -266,7 +272,7 @@ void PointList<ContentType>::prepend(ContentType *new_entry, ContentType *entry)
 template <class ContentType>
 ContentType* PointList<ContentType>::pop_first()
 {
-  assert(is_empty() != true)
+  assert(is_empty() != true);
 
   length_--;
   PointListElement<ContentType> *element = first_;

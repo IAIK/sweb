@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.9 2005/08/11 16:46:57 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.10 2005/09/02 17:57:58 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.9  2005/08/11 16:46:57  davrieb
+// add PathWalker
+//
 // Revision 1.8  2005/07/21 18:07:04  davrieb
 // mount of the root directory
 //
@@ -36,6 +39,16 @@
 #include "fs/VfsMount.h"
 #include "util/string.h"
 #include "assert.h"
+
+#include "fs/fs_global.h"
+
+
+
+/// Global VirtualFileSystem object
+VirtualFileSystem vfs;
+
+
+
 
 //----------------------------------------------------------------------
 VirtualFileSystem::VirtualFileSystem()
@@ -111,4 +124,12 @@ int32 VirtualFileSystem::root_mount(char* fs_name, int32 mode)
   mounts_.pushBack(root_mount);
   superblocks_.push_end(super);
 }
+
+//----------------------------------------------------------------------
+FileSystemInfo *getFSInfo()
+{
+  // TODO this needs to be done properly as soon as possible
+  return &fs_info;
+}
+
 

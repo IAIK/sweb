@@ -1,0 +1,31 @@
+
+#
+# CVS Log Info for $RCSfile: Makefile.standalone,v $
+#
+# $Id: Makefile.standalone,v 1.1 2005/09/02 17:57:58 davrieb Exp $
+# $Log: Makefile,v $
+# Revision 1.3  2005/07/19 19:10:58  btittelbach
+# Makefile Fix
+#
+# Revision 1.2  2005/06/01 09:20:36  davrieb
+# add all changes to fs
+#
+# Revision 1.1  2005/05/10 16:33:06  davrieb
+# add Makefile for fs
+#
+#
+
+TARGET = libRamFS.a
+
+SWEB_COMPILE_USERSPACE = fs
+V = 1
+MAKEFLAGS :=
+INCLUDES = ../../../include ../../../../arch/arch/include
+SUBPROJECTS =
+PROJECT_ROOT = ../../../..
+COMMON_FLAGS = -DSTANDALONE -DNO_POISON
+
+
+include ../../../../make-support/common.mk
+
+

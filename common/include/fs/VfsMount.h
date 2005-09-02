@@ -16,7 +16,7 @@
 #ifndef VfsMount_h___
 #define VfsMount_h___
 
-#include "List.h"
+#include "kernel/List.h"
 #include "types.h"
 
 class Superblock;

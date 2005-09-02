@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.8 2005/08/11 16:46:57 davrieb Exp $
+// $Id: Superblock.h,v 1.9 2005/09/02 17:57:58 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.8  2005/08/11 16:46:57  davrieb
+// add PathWalker
+//
 // Revision 1.7  2005/08/11 16:34:28  qiangchen
 // *** empty log message ***
 //
@@ -118,12 +121,12 @@ public:
 
   /// This method is called to read a specific inode from a mounted
   /// file-system. It is only called from get_new_inode.
-  virtual void read_inode(Inode* inode) {}
+  virtual void read_inode(Inode* /*inode*/) {}
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty with
   /// mark_inode_dirty.
-  virtual void write_inode(Inode* inode) {}
+  virtual void write_inode(Inode* /*inode*/) {}
 
   /// This method is called whenever the reference count on an inode is
   /// decreased put_inode called before the i_count field is decreased, so if
@@ -131,14 +134,14 @@ public:
   /// if i_count is 1 or not. This method used it to do some special handling
   /// when the last reference to the inode is release. i.e. when i_count is 1
   /// and is about to be come zero.
-  virtual void put_inode(Inode* inode) {}
+  virtual void put_inode(Inode* /*inode*/) {}
 
   /// This method is called whenever the reference count on an inode reaches 0,
   /// and it is found that the link count (i_nlink= is also zero. It si
   /// presumed that the file-system will deal with this situation be
   /// invalidating the inode in the file-system and freeing up any resourses
   /// used.
-  virtual void delete_inode(Inode* inode);
+  virtual void delete_inode(Inode* /*inode*/);
 
   /// This is called when inode attributed are changed, the argument class
   /// Iattr* pointing to the new set of attributes. If the file-system does
@@ -147,7 +150,7 @@ public:
   /// verification. Then VFS marks the inode as dirty. If the file-system
   /// implements its own notify_change then it should call mark_inode_dirty
   /// (Inode).
-  virtual int32 notify_change(Dentry* dentry, Iattr* iattr) { return 0; }
+  virtual int32 notify_change(Dentry* /*dentry*/, Iattr* /*iattr*/) { return 0; }
 
   /// This method is called with super-block lock held. A typical
   /// implementation would free file-system-private resources specific for
@@ -175,13 +178,13 @@ public:
   /// least) by file-system which attaches kmalloced data to the inode
   /// sturcture, as particularly might be the case for file-systems using the
   /// generic_ip field in class Inode.
-  virtual void clear_inode(Inode* inode) {}
+  virtual void clear_inode(Inode* /*inode*/) {}
 
   /// This method is called early in the unmounting process if the MNT_FORCE
   /// flag was given to umount. The intentions is that it should cause any
   /// incomplete transaction on the file-system to fail quickly rather than
   /// block waiting on some external event such as a remote server responding.
-  virtual void umount_begin(Superblock* super_block) {}
+  virtual void umount_begin(Superblock* /*super_block*/) {}
 
   /// Get the root Dentry of the Superblock
   Dentry const *getRoot() const;

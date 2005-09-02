@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.8 2005/08/11 16:46:57 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.9 2005/09/02 17:57:58 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.8  2005/08/11 16:46:57  davrieb
+// add PathWalker
+//
 // Revision 1.7  2005/07/21 18:07:03  davrieb
 // mount of the root directory
 //
@@ -46,6 +49,8 @@
 class Superblock;
 class FileSystemType;
 class VfsMount;
+class FileSystemInfo;
+
 
 class VirtualFileSystem
 {
@@ -80,6 +85,9 @@ class VirtualFileSystem
     int32 mount(char* path, char* fs_name, int32 mode);
 
     int32 root_mount(char* fs_name, int32 mode);
+
+    /// Get the FileSystemInfo object of the current Process
+    FileSystemInfo *getFSInfo();
 
 };
 

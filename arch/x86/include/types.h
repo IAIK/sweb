@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.9 2005/07/24 17:02:59 nomenquis Exp $
+ * $Id: types.h,v 1.10 2005/09/02 17:57:58 davrieb Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.9  2005/07/24 17:02:59  nomenquis
+ * lots of changes for new console stuff
+ *
  * Revision 1.8  2005/05/31 17:29:16  nomenquis
  * userspace
  *
@@ -52,10 +55,12 @@ typedef unsigned int size_t;
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 
+#ifndef NO_POISON
 #pragma GCC poison int
 #pragma GCC poison short
 #pragma GCC poison long
 #pragma GCC poison unsigned
+#endif
 
 #define KERNEL_CS (8*3)
 #define KERNEL_DS (8*2)
