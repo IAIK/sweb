@@ -137,9 +137,9 @@ public:
   uint32 get_name_length() { return d_name_->get_length(); }
 
   /// This should compare the qstr with the all qstrs of the d_child_ list.
-  /// It should return false if it exists the same qstr in the 
-  /// list, return 0 if doesn't exist.
-  virtual bool check_name(Dentry *checked_dentry);
+  /// It should return the Dentry if it exists the same qstr in the list, 
+  /// return 0 if doesn't exist.
+  virtual Dentry* check_name(Dentry *checked_dentry);
 
   /// remove a child dentry from the d_child_ list.
   /// @child the child dentry of the curent dentry.

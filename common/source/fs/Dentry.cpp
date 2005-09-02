@@ -65,9 +65,9 @@ int32 Dentry::d_child_remove(Dentry *child_dentry)
 }
 
 //---------------------------------------------------------------------------
-bool Dentry::check_name(Dentry *checked_dentry)
+Dentry* Dentry::check_name(Dentry *checked_dentry)
 {
-  bool include = false;
+//  bool include = false;
   char* checked_name = checked_dentry->get_name();
   uint32 checked_length = checked_dentry->get_name_length();
   for(uint32 count = 0; count < (d_child_.getLength()); count++)
@@ -85,18 +85,20 @@ bool Dentry::check_name(Dentry *checked_dentry)
       }
       if(index == checked_length)
       {
-        include = true;
+//        include = true;
+        return dentry;
         break;
       }
     }
   }
 
-  return include;
+  return((Dentry*)0);
 }
 
 //---------------------------------------------------------------------------
 void Dentry::d_delete()
 {
+  
   if(d_count_ == 1 && d_inode_ != 0)
   {
     d_parent_->d_child_remove(this);

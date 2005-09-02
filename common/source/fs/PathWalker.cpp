@@ -2,6 +2,7 @@
 #include "fs/PathWalker.h"
 
 #include "fs/Inode.h"
+#include "fs/Dentry.h"
 
 #include "assert.h"
 #include "util/string.h"
@@ -41,6 +42,7 @@ int32 PathWalker::init(const char* name, uint32 flags)
   }
 
   // TODO adjust lookup flag according to process
+  
 
   char *tmp = 0;
   if (tmp = strchr(pos, '/'))

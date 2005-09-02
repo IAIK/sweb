@@ -191,7 +191,7 @@ int32 RamFsInode::rmdir(Dentry *sub_dentry)
   
   if(i_mode_ == I_DIR)
   {
-    if(i_dentry_->check_name(sub_dentry) == true)
+    if(i_dentry_->find_child(sub_dentry) == true)
     {
       // ???
       unlink(sub_dentry);
@@ -214,6 +214,7 @@ int32 RamFsInode::rmdir(Dentry *sub_dentry)
 //---------------------------------------------------------------------------
 Dentry* RamFsInode::lookup(Dentry *dentry)
 {
+  Dentry* dentry_update;
   if(dentry == 0)
   {
     // ERROR_DNE
@@ -222,22 +223,21 @@ Dentry* RamFsInode::lookup(Dentry *dentry)
   
   if(i_mode_ == I_DIR)
   {
-    if(i_dentry_->check_name(dentry) == true)
+    dentry_update = i_dentry_->check_name(dentry);
+    if(dentry_update == 0)
     {
       // ERROR_NNE
-      return 0;
+      return (Dentry*)0;
     }
     else
     {
-      return dentry;
+      return dentry_update;
     }
   }
   else
   {
     // ERROR_IC
-    return 0;
+    return (Dentry*)0;
   }
-  
-  return dentry;
 }
 
