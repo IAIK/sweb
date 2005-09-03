@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: exe2pseudofs.cpp,v 1.2 2005/09/03 13:01:54 btittelbach Exp $
+//  $Id: exe2pseudofs.cpp,v 1.3 2005/09/03 18:26:35 btittelbach Exp $
 //----------------------------------------------------------------------
 //  $Log: exe2pseudofs.cpp,v $
+//  Revision 1.2  2005/09/03 13:01:54  btittelbach
+//  -Cleaned exe2pseudofs.h of stuff so it can be included in kernel
+//  -use only basename of files
+//
 //  Revision 1.1  2005/08/30 15:59:50  btittelbach
 //  Exe2PseudoFS Proggy geschrieben, welches Datein in ein SuperSimple RO Filesystem schreibt,
 //  welches dann per Grub in den Speicher geladen werden kann.
@@ -86,9 +90,9 @@ int main (int argc, char *argv[])
   int file_fds[argc-2];
   unsigned int c=0;
   
-  if (argc < 3)
+  if (argc < 2)
   {
-    printf("Syntax:\n%s <pseudofs image file> <file1> [file2 [file3 [....]]]\n\n",argv[0]);
+    printf("Syntax:\n%s <pseudofs image file> [file1 [file2 [....]]]\n\n",argv[0]);
     return -1;
   }
   
@@ -112,6 +116,13 @@ int main (int argc, char *argv[])
   
   write(image_fd_, &pseudofs_magic_number_, sizeof(int));
   write(image_fd_, &number_of_files_, sizeof(int));
+  
+  if (argc < 3)
+  {
+    printf("Created empty PseudoFS\n");
+    return 0;
+  }
+
   
   index_offset_=lseek(image_fd_,0,SEEK_CUR);
 
