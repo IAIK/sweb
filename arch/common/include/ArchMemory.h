@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.10 2005/08/11 18:24:39 nightcreature Exp $
+//  $Id: ArchMemory.h,v 1.11 2005/09/03 19:02:54 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.10  2005/08/11 18:24:39  nightcreature
+//  removed unused method physicalPageToKernelPointer
+//
 //  Revision 1.9  2005/06/14 12:55:21  nomenquis
 //  foobar
 //
@@ -63,7 +66,7 @@ public:
   }
 
   static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
-
+  static bool getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
 
 private:
   static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);

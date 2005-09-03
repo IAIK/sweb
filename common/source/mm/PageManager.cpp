@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.9 2005/08/11 18:28:10 nightcreature Exp $
+//   $Id: PageManager.cpp,v 1.10 2005/09/03 19:02:54 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.9  2005/08/11 18:28:10  nightcreature
+//  changed define of evil print(x) depending on platform xen or x86
+//
 //  Revision 1.8  2005/05/19 15:43:43  btittelbach
 //  Ansätze für eine UserSpace Verwaltung
 //
@@ -31,6 +34,7 @@
 #include "paging-definitions.h"
 #include "arch_panic.h"
 #include "ArchCommon.h"
+#include "ArchMemory.h"
 //#include "hypervisor.h"
 
 #ifndef isXenBuild
@@ -90,9 +94,9 @@ pointer PageManager::createPageManager(pointer next_usable_address)
   instance_ = new ((void*)next_usable_address) PageManager(next_usable_address+sizeof(PageManager));
 
   next_usable_address += sizeof(PageManager) + instance_->getSizeOfMemoryUsed();
-  print(next_usable_address);
-  print(next_usable_address / 1024);
-  print(next_usable_address - 1024*1024*1024*2);
+  //print(next_usable_address);
+  //print(next_usable_address / 1024);
+  //print(next_usable_address - 1024*1024*1024*2);
   
   return next_usable_address;
 }
@@ -104,7 +108,7 @@ PageManager::PageManager(pointer start_of_structure)
   
   uint32 i,k;
   uint32 num_mmaps = ArchCommon::getNumUseableMemoryRegions();
-  print(num_mmaps);
+  //print(num_mmaps);
   
   pointer start_address, end_address;
   uint32 type;
@@ -117,7 +121,7 @@ PageManager::PageManager(pointer start_of_structure)
   
   number_of_pages_ = number_of_pages_ / PAGE_SIZE;
   
-  print(number_of_pages_);
+  //print(number_of_pages_);
   
   // max of 1 gig memory supportet
   number_of_pages_ = Min(number_of_pages_,1024*256);
@@ -125,7 +129,6 @@ PageManager::PageManager(pointer start_of_structure)
   size_t length_of_structure = number_of_pages_ * sizeof(uint32);
   size_t number_of_pages_for_structure = length_of_structure / PAGE_SIZE;
   
-  //FIXME: hier sollte wohl die kernel_start_address sein statt der 2gig zahl?
   size_t number_of_used_pages = (((uint32)&kernel_end_address)-1024*1024*1024*2) / PAGE_SIZE; 
   size_t number_of_free_pages = 1024 - number_of_used_pages;
 
@@ -135,9 +138,9 @@ PageManager::PageManager(pointer start_of_structure)
     arch_panic((uint8*)"Error, not enough memory for pages");
   }
 
-  print (number_of_pages_for_structure);
-  print (number_of_used_pages);
-  print (number_of_free_pages);
+  //print (number_of_pages_for_structure);
+  //print (number_of_used_pages);
+  //print (number_of_free_pages);
   
   // since we have gaps in the memory maps we can not give out everything
   // first mark everything as reserverd, and then mark everything we actually
@@ -147,7 +150,6 @@ PageManager::PageManager(pointer start_of_structure)
   {
     page_usage_table_[i] = PAGE_RESERVED;
   }
-  print (11)
 
     /* do nothing */
     //for ( ; ; ) HYPERVISOR_yield();
@@ -158,26 +160,36 @@ PageManager::PageManager(pointer start_of_structure)
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
     start_address /= PAGE_SIZE;
     end_address /= PAGE_SIZE;
-    print(start_address)
-    print(end_address)
+    //print(start_address)
+    //print(end_address)
     if (start_address > 1024*256 || end_address > 1024*256) //becaue max 1 gig of memory?, see above
     {
-      print(777777777);
+      //print(777777777);
       continue;
     }
     for (k=start_address;k<end_address;++k)
     {
       page_usage_table_[k] = PAGE_FREE;
     }
-    print (11+i)
   }    
-  print (22)
-  // next, the first 4 megs are allocated for the kernel
-  for (i=0;i<1024;++i)
+  
+  //mark as used everything >2gb und <3gb already used in PageDirectory
+  for (i=1024*512; i<1024*768; ++i)
   {
-    page_usage_table_[i] = PAGE_KERNEL;
+    uint32 physical_page=0;
+    if (ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page))
+      page_usage_table_[physical_page] = PAGE_RESERVED;
   }
-  print (12341234);
+  
+  //Mark Modules loaded by GRUB as used
+  for (i=0; i<ArchCommon::getNumModules(); ++i)
+  {
+    uint32 start_page=( ArchCommon::getModuleStartAddress(i) - 3U*1024U*1024U*1024U ) / PAGE_SIZE;
+    uint32 end_page=( ArchCommon::getModuleEndAddress(i) - 3U*1024U*1024U*1024U ) / PAGE_SIZE;
+    for (k = start_page; k <= end_page; ++k)
+      page_usage_table_[k] = PAGE_RESERVED;
+  }
+  
 }
 
 uint32 PageManager::getTotalNumPages() const
