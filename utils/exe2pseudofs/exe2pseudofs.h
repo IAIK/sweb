@@ -1,7 +1,13 @@
+#ifndef _PSEUDOFS_H_
+#define _PSEUDOFS_H_
 //----------------------------------------------------------------------
-//  $Id: exe2pseudofs.h,v 1.1 2005/08/30 15:59:50 btittelbach Exp $
+//  $Id: exe2pseudofs.h,v 1.2 2005/09/03 13:01:54 btittelbach Exp $
 //----------------------------------------------------------------------
 //  $Log: exe2pseudofs.h,v $
+//  Revision 1.1  2005/08/30 15:59:50  btittelbach
+//  Exe2PseudoFS Proggy geschrieben, welches Datein in ein SuperSimple RO Filesystem schreibt,
+//  welches dann per Grub in den Speicher geladen werden kann.
+//
 //
 
 //~ PseudoFS:
@@ -20,12 +26,6 @@
 //~ -char*		char* to Start of Object File Image
 //~ -int		length of Object File Image
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 
 struct FileIndexStruct
 {
@@ -35,10 +35,5 @@ struct FileIndexStruct
 };
 
 
-int const magic_number_ = 0x20DF97A1;
-
-int number_of_files_ = 0;
-int index_offset_ = 2*sizeof(int);
-int data_offset_ = 0;
-FileIndexStruct *file_index_list_=0;
-int image_fd_=-1;
+int const pseudofs_magic_number_ = 0x20DF97A1;
+#endif
