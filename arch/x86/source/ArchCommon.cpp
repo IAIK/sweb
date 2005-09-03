@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.12 2005/07/26 17:45:25 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.13 2005/09/03 17:08:34 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.12  2005/07/26 17:45:25  nomenquis
+//  foobar
+//
 //  Revision 1.11  2005/04/27 09:19:20  nomenquis
 //  only pack whats needed
 //
@@ -45,6 +48,7 @@
 #include "kprintf.h"
 
 #define MAX_MEMORY_MAPS 10
+#define MAX_MODULE_MAPS 10
 #define FOUR_ZEROS 0,0,0,0
 #define EIGHT_ZEROS FOUR_ZEROS,FOUR_ZEROS
 #define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
@@ -59,7 +63,8 @@ uint32 vesa_y_res;
 uint32 vesa_bits_per_pixel;
 uint32 have_vesa_console;
 pointer vesa_lfb_pointer;
-
+uint32 num_module_maps;
+   
   struct memory_maps
   {
     uint32 used;
@@ -67,6 +72,16 @@ pointer vesa_lfb_pointer;
     pointer end_address;
     uint32 type;
   } __attribute__((__packed__)) memory_maps[MAX_MEMORY_MAPS];
+  
+  struct module_maps
+  {
+    uint32 used;
+    pointer start_address;
+    pointer end_address;
+    uint8 name[256];
+  } __attribute__((__packed__)) module_maps[MAX_MODULE_MAPS];
+    
+  
 }__attribute__((__packed__));
 
 
@@ -99,9 +114,11 @@ extern "C" void parseMultibootHeader();
 void parseMultibootHeader()
 {
   uint32 i;
-  //uint8 * fb = (uint8*) 0x000B8000;
+  uint32 fb_start = 0;
+  uint8 * fb = (uint8*) 0x000B8000;
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer);
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+  
   if (mb_infos && mb_infos->flags & 1<<11)
   {
     struct vbe_mode* mode_info = (struct vbe_mode*)mb_infos->vbe_mode_info;
@@ -111,6 +128,21 @@ void parseMultibootHeader()
     orig_mbr.vesa_y_res = mode_info->y_resolution;
     orig_mbr.vesa_bits_per_pixel = mode_info->bits_per_pixel;
   } 
+  if (mb_infos && mb_infos->flags && 1<<3)
+  {
+
+     module_t * mods = (module_t*)mb_infos->mods_addr;
+     for (i=0;i<mb_infos->mods_count;++i)
+     {
+        orig_mbr.module_maps[i].used = 1;
+        orig_mbr.module_maps[i].start_address = mods[i].mod_start;
+        orig_mbr.module_maps[i].end_address = mods[i].mod_end;
+        //FIXXXME, copy module name
+        
+     }
+     orig_mbr.num_module_maps = mb_infos->mods_count;
+     
+  }
   for (i=0;i<MAX_MEMORY_MAPS;++i)
   {
     orig_mbr.memory_maps[i].used = 0;
@@ -133,7 +165,7 @@ void parseMultibootHeader()
     }
   }
   
-  
+
 
 }
 
@@ -146,6 +178,51 @@ uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
     return orig_mbr.have_vesa_console;
   }
+}
+
+uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
+{
+  
+  if (is_paging_set_up)
+    return mbr.num_module_maps;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.num_module_maps;
+  }
+
+}
+
+uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+{
+  if (is_paging_set_up)
+    return mbr.module_maps[num].start_address;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.module_maps[num].start_address;
+  }
+
+}
+
+uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
+{
+  if (is_paging_set_up)
+    return mbr.module_maps[num].end_address;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.module_maps[num].end_address;
+  }
+ 
+}
+
+void ArchCommon::dummdumm(uint32 i, uint32 &used, uint32 &start, uint32 &end)
+{
+   
+   used = mbr.module_maps[i].used;
+   start = mbr.module_maps[i].start_address;
+   end = mbr.module_maps[i].end_address;
 }
 
 uint32 ArchCommon::getVESAConsoleHeight()

@@ -1,7 +1,11 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.9 2005/04/27 08:58:16 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.10 2005/09/03 17:08:34 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
+ * Revision 1.9  2005/04/27 08:58:16  nomenquis
+ * locks work!
+ * w00t !
+ *
  * Revision 1.8  2005/04/26 17:03:27  nomenquis
  * 16 bit framebuffer hack
  *
@@ -63,16 +67,83 @@
 
 extern page_directory_entry kernel_page_directory_start[];
 extern page_table_entry kernel_page_tables_start[];
-extern "C" void initialiseBootTimePaging();
+extern void* kernel_end_address;
 
+extern "C" void initialiseBootTimePaging();
+#define print(x)     fb_start += 2; \
+    { \
+      uint32 divisor; \
+      uint32 current; \
+      uint32 remainder; \
+      current = (uint32)x; \
+      divisor = 1000000000; \
+      while (divisor > 0) \
+      { \
+        remainder = current % divisor; \
+        current = current / divisor; \
+        \
+        fb[fb_start++] = (uint8)current + '0' ; \
+        fb[fb_start++] = 0x9f ; \
+    \
+        divisor = divisor / 10; \
+        current = remainder; \
+      }      \
+    }
+  
+
+uint32 fb_start_hack = 0;
+
+uint32 isPageUsed(uint32 page_number)
+{
+
+   uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
+   uint8 * fb = (uint8*) 0x000B8000;
+   uint32 i;
+   uint32 num_modules = ArchCommon::getNumModules(0);
+   for (i=0;i<num_modules;++i)
+   {
+      uint32 start_page = ArchCommon::getModuleStartAddress(i,0) / PAGE_SIZE;
+      uint32 end_page = ArchCommon::getModuleEndAddress(i,0) / PAGE_SIZE;
+      
+      if ( start_page <= page_number && end_page >= page_number)
+      {
+         print(page_number);
+
+         return 1;
+      }
+      
+   }
+
+   return 0;
+}
+
+uint32 getNextFreePage(uint32 page_number)
+{
+   while(isPageUsed(page_number))
+     page_number++;
+   return page_number;
+}
+  // well, the concerned reader might ask himself "why the fuck does this work?"
+  // the answer is simple, it does work because the beloved compiler generates 
+  // relative calls in this case.
+  // if the compiler would generate an absolut call we'd be screwed since we 
+  // have not set up paging yet :)
 void initialiseBootTimePaging()
 {
   uint32 i;
- 
+
+  uint8 * fb = (uint8*) 0x000B8000;
+  uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
   page_directory_entry *pde_start = (page_directory_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
   //uint8 *pde_start_bytes = (uint8 *)pde_start;
   page_table_entry *pte_start = (page_table_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
   
+  uint32 kernel_last_page = ((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address)) / PAGE_SIZE;
+  uint32 first_free_page = kernel_last_page + 1;
+   
+  print((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address));
+  print(first_free_page);
+
  
   // we do not have to clear the pde since its in the bss  
   for (i=0;i<5;++i)
@@ -112,15 +183,26 @@ void initialiseBootTimePaging()
     pte_start[i].writeable = 0;
     pte_start[i].page_base_address = i+256;
   }
+  print(first_free_page);
   
-  for (i=last_ro_data_page;i<1024;++i)
+  for (i=last_ro_data_page;i<(first_free_page-256);++i)
   {
     pte_start[i].present = 1;
     pte_start[i].writeable = 1;
     pte_start[i].page_base_address = i+256;
   }
-
+  uint32 start_page = first_free_page;
   
+  for (i=first_free_page-256;i<1024;++i)
+  {
+    pte_start[i].present = 1;
+    pte_start[i].writeable = 1;
+    pte_start[i].page_base_address = getNextFreePage(start_page);
+    start_page = pte_start[i].page_base_address+1;
+    
+  }
+  
+
   if (ArchCommon::haveVESAConsole(0))
   {
     for (i=0;i<4;++i)
@@ -141,7 +223,7 @@ void initialiseBootTimePaging()
     pde_start[i+768].pde4m.use_4_m_pages = 1;
     pde_start[i+768].pde4m.page_base_address = i;
   }
- 
+  for (;;);
 }
 
 void removeBootTimeIdentMapping()

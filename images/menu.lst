@@ -1,9 +1,10 @@
 
-default 3
+default 0
 
 title = Sweb
 root (fd0)
 kernel = /boot/kernel.x
+module /boot/my_module
 
 title = Sweb - SVGA - 640x480x16
 root (fd0)

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.7 2005/04/27 08:58:16 nomenquis Exp $
+//   $Id: ArchCommon.h,v 1.8 2005/09/03 17:08:34 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.h,v $
+//  Revision 1.7  2005/04/27 08:58:16  nomenquis
+//  locks work!
+//  w00t !
+//
 //  Revision 1.6  2005/04/23 18:13:26  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -46,6 +50,12 @@ public:
 
   static void memcpy(pointer dest, pointer src, size_t size);
   static void bzero(pointer s, size_t n, uint32 debug = 0);
+
+  static uint32 getNumModules(uint32 is_paging_set_up=1);
+  static uint32 getModuleStartAddress(uint32 num,uint32 is_paging_set_up=1);
+  static uint32 getModuleEndAddress(uint32 num,uint32 is_paging_set_up=1);
+
+  static void dummdumm(uint32 i, uint32 &used, uint32 &start, uint32 &end);
 
 };
 

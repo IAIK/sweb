@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.75 2005/09/02 17:57:58 davrieb Exp $
+ * $Id: main.cpp,v 1.76 2005/09/03 17:08:34 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.75  2005/09/02 17:57:58  davrieb
+ * preparations to  build a standalone filesystem testsuite
+ *
  * Revision 1.74  2005/08/26 13:58:24  nomenquis
  * finally even the syscall handler does that it is supposed to do
  *
@@ -533,6 +536,11 @@ void startup()
   
   main_console->setActiveTerminal(0);
   
+  kprintfd("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
+  uint32 a,b,c;
+  ArchCommon::dummdumm(0,a,b,c);
+  kprintfd("A %x B %x C %x\n",a,b,c);
+
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
   
