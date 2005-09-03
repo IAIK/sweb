@@ -19,7 +19,8 @@ SUBPROJECTS := \
                common/source/drivers \
                utils/mtools \
                common/source/fs \
-               common/source/fs/ramfs
+               common/source/fdds/ramfs \
+	       userspace/tests
 else
 SUBPROJECTS := \
                arch/arch/source \
@@ -31,7 +32,8 @@ SUBPROJECTS := \
                common/source/drivers \
                utils/mtools \
                common/source/fs \
-               common/source/fs/ramfs
+               common/source/fs/ramfs \
+	       userspace/tests
 endif
 
 ifeq ($(ARCH),xen)

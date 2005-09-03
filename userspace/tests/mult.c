@@ -1,4 +1,4 @@
-
+#include "../../common/include/kernel/syscall-definitions.h"
 
 
 /* the result should be 1237619379 for size of 100 */
@@ -24,7 +24,7 @@ uint32 getRandom()
   return rand;
 }
 
-int _start()
+int main()
 {
   int pos, num = 0;
   int x, y, a, mult_pos = 0;
@@ -51,5 +51,5 @@ int _start()
       sum += cxc[x][y];
   
  // printf("Result is %d",sum);
-  __syscall(0,sum);
+  EXIT(sum);
 }

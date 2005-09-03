@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.14 2005/08/19 21:14:15 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.15 2005/09/03 21:54:45 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.14  2005/08/19 21:14:15  btittelbach
+//   Debugging the Debugging Code
+//
 //   Revision 1.12  2005/08/04 20:47:43  btittelbach
 //   Where is the Bug, maybe I will see something tomorrow that I didn't see today
 //
@@ -143,7 +146,11 @@ void oh_writeCharDebugNoSleep(char c)
 void oh_writeStringDebugNoSleep(char const* str)
 {
   //this blocks
-  writeLine2Bochs((uint8*) str);
+  while (*str)
+  {
+    oh_writeCharDebugNoSleep(*str);
+    str++;
+  }
 }
 
 void flushDebugConsole(Terminal *term)
