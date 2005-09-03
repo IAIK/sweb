@@ -140,7 +140,9 @@ install: kernel
 	mkdir $(OBJECTDIR)/e2fstemp/boot
 	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
 	cp ./images/menu.lst $(OBJECTDIR)/e2fstemp/boot/grub
+	test -e $(OBJECTDIR)/ramfs || cp ./images/ramfs $(OBJECTDIR)/ramfs
 	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
+	cp $(OBJECTDIR)/ramfs $(OBJECTDIR)/e2fstemp/boot
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
 	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
 
