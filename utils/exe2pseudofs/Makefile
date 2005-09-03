@@ -5,7 +5,7 @@ all: exe2pseudofs $(OBJS)
 	./exe2pseudofs pseudofs.img $(OBJS)
 
 exe2pseudofs: exe2pseudofs.cpp exe2pseudofs.h
-	$(CXX) -W -o exe2pseudofs exe2pseudofs.cpp
+	$(CXX) -m32 -W -o exe2pseudofs exe2pseudofs.cpp
 
 .PHONY: clean
 clean:

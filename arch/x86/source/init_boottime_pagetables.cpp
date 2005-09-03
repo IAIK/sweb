@@ -1,5 +1,5 @@
 /**
- * $Id: init_boottime_pagetables.cpp,v 1.10 2005/09/03 17:08:34 nomenquis Exp $
+ * $Id: init_boottime_pagetables.cpp,v 1.11 2005/09/03 18:20:14 nomenquis Exp $
  *
  * $Log: init_boottime_pagetables.cpp,v $
  * Revision 1.9  2005/04/27 08:58:16  nomenquis
@@ -223,7 +223,7 @@ void initialiseBootTimePaging()
     pde_start[i+768].pde4m.use_4_m_pages = 1;
     pde_start[i+768].pde4m.page_base_address = i;
   }
-  for (;;);
+
 }
 
 void removeBootTimeIdentMapping()

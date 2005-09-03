@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.15 2005/07/22 15:29:45 nomenquis Exp $
+#*    $Id: bochsrc,v 1.16 2005/09/03 18:20:15 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.15  2005/07/22 15:29:45  nomenquis
+#*    added gdb support
+#*
 #*    Revision 1.14  2005/07/22 13:35:56  nomenquis
 #*    compilefix for typo
 #*
@@ -182,7 +185,7 @@ romimage: file=$BXSHARE/BIOS-bochs-latest, address=0xf0000
 #megs: 256
 #megs: 128
 #megs: 64
-megs: 32
+megs: 1024
 #megs: 16
 #megs: 8
 #megs: 1024

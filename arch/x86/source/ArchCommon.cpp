@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.13 2005/09/03 17:08:34 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.14 2005/09/03 18:20:14 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
@@ -142,7 +142,7 @@ void parseMultibootHeader()
      }
      orig_mbr.num_module_maps = mb_infos->mods_count;
      
-  }
+  } 
   for (i=0;i<MAX_MEMORY_MAPS;++i)
   {
     orig_mbr.memory_maps[i].used = 0;
@@ -196,11 +196,11 @@ uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
 uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 {
   if (is_paging_set_up)
-    return mbr.module_maps[num].start_address;
+    return mbr.module_maps[num].start_address + 3*1024*1024*1024U;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].start_address;
+    return orig_mbr.module_maps[num].start_address ;
   }
 
 }
@@ -208,7 +208,7 @@ uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
   if (is_paging_set_up)
-    return mbr.module_maps[num].end_address;
+    return mbr.module_maps[num].end_address + 3*1024*1024*1024U;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));

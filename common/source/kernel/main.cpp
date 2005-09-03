@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.76 2005/09/03 17:08:34 nomenquis Exp $
+ * $Id: main.cpp,v 1.77 2005/09/03 18:20:14 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.76  2005/09/03 17:08:34  nomenquis
+ * added support for grub modules
+ *
  * Revision 1.75  2005/09/02 17:57:58  davrieb
  * preparations to  build a standalone filesystem testsuite
  *
@@ -268,6 +271,8 @@
 #include "fs/ramfs/RamFileSystemType.h"
 #include "console/TextConsole.h"
 #include "console/Terminal.h"
+
+#include "fs/PseudoFS.h"
 
 extern void* kernel_end_address;
 
@@ -544,6 +549,8 @@ void startup()
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
   
+  kprintfd("%x\n",PseudoFS::getInstance()->getFilePtr("someloop"));
+  for(;;);
   /*
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
