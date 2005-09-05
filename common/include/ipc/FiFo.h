@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.8 2005/09/05 23:18:17 btittelbach Exp $
+//   $Id: FiFo.h,v 1.9 2005/09/05 23:36:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.8  2005/09/05 23:18:17  btittelbach
+//   + Count Elements Ahead in Buffer
+//
 //   Revision 1.7  2005/09/05 23:01:24  btittelbach
 //   Keyboard Input Handler
 //   + several Bugfixes
@@ -151,7 +154,7 @@ void FiFo<T>::put(T in)
 template <class T>
 uint32 FiFo<T>::countElementsAhead()
 {
-  uint32 buffer_size = (((pointer) buffer_end) - ((pointer) buffer_start_)) / sizeof(T);
+  uint32 buffer_size = (((pointer) buffer_end_) - ((pointer) buffer_start_)) / sizeof(T);
   pointer count = (((pointer) write_pos_) - ((pointer) read_pos_)) / sizeof(T);
   if (count == 0)
     return buffer_size;
