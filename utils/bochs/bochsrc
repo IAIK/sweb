@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.16 2005/09/03 18:20:15 nomenquis Exp $
+#*    $Id: bochsrc,v 1.17 2005/09/05 23:01:24 btittelbach Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.16  2005/09/03 18:20:15  nomenquis
+#*    pseudo fs works now
+#*
 #*    Revision 1.15  2005/07/22 15:29:45  nomenquis
 #*    added gdb support
 #*
@@ -209,7 +212,8 @@ megs: 1024
 # VGAROMIMAGE
 # You now need to load a VGA ROM BIOS into C0000.
 #=======================================================================
-vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+#vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: bios/VGABIOS-elpin-2.40
 #vgaromimage: $BXSHARE/VGABIOS-elpin-2.40
 #vgaromimage: file=/home/philip/uni/sweb/sweb-testing/utils/bochs/vgabios-0.5a.bin

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: 8259.cpp,v 1.5 2005/04/25 23:09:18 nomenquis Exp $
+//  $Id: 8259.cpp,v 1.6 2005/09/05 23:01:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: 8259.cpp,v $
+//  Revision 1.5  2005/04/25 23:09:18  nomenquis
+//  fubar 2
+//
 //  Revision 1.4  2005/04/25 22:41:58  nomenquis
 //  foobar
 //
@@ -69,4 +72,12 @@ void disableIRQ(uint16 number)
    {
       outportb(PIC_1_DATA_PORT,(cached_mask%8));
    }
+}
+
+void sendEOI(uint16 number)
+{
+  if (number > 7)
+    outportb(PIC_2_CONTROL_PORT,0x20);
+  else
+    outportb(PIC_1_CONTROL_PORT,0x20);
 }

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.11 2005/07/27 13:43:47 btittelbach Exp $
+//  $Id: ArchInterrupts.cpp,v 1.12 2005/09/05 23:01:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.11  2005/07/27 13:43:47  btittelbach
+//  Interrupt On/Off Autodetection in Kprintf
+//
 //  Revision 1.10  2005/05/31 17:29:16  nomenquis
 //  userspace
 //
@@ -65,6 +68,22 @@ void ArchInterrupts::enableTimer()
 void ArchInterrupts::disableTimer()
 {
   disableIRQ(0);
+}
+
+void ArchInterrupts::enableKBD()
+{
+  enableIRQ(1);
+  enableIRQ(9);
+}
+
+void ArchInterrupts::disableKBD()
+{
+  disableIRQ(1);
+}
+
+void ArchInterrupts::EndOfInterrupt(uint16 number) 
+{
+  sendEOI(number);
 }
 
 void ArchInterrupts::enableInterrupts()

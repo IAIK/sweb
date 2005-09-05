@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.78 2005/09/03 21:54:45 btittelbach Exp $
+ * $Id: main.cpp,v 1.79 2005/09/05 23:01:24 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.78  2005/09/03 21:54:45  btittelbach
+ * Syscall Testprogramm, actually works now ;-) ;-)
+ * Test get autocompiled and autoincluded into kernel
+ * one kprintfd bug fixed
+ *
  * Revision 1.77  2005/09/03 18:20:14  nomenquis
  * pseudo fs works now
  *
@@ -277,6 +282,8 @@
 
 #include "fs/PseudoFS.h"
 
+#include "drivers/InputThread.h"
+
 extern void* kernel_end_address;
 
 extern "C" void startup();
@@ -322,7 +329,6 @@ class SerialThread : public Thread
 
 };
 
-
 class StupidThread : public Thread
 {
   public:
@@ -358,8 +364,6 @@ private:
   uint32 thread_number_;
 
 };
-
-
 
 class UserThread : public Thread
 {
@@ -546,6 +550,7 @@ void startup()
   ArchInterrupts::enableTimer();
   lock = new Mutex();
 
+  InputThread::startInputThread();
 
   kprintf("Thread creation\n");
   //StupidThread *thread0 = new StupidThread(0);
@@ -578,7 +583,7 @@ void startup()
 
   Scheduler::instance()->addNewThread(new MatriceMultTest());
   Scheduler::instance()->addNewThread(new SyscallTest());
-
+  
   //int32 *test = new int32[50];
   //FiFo<uint32> test_fifo(20);
 
@@ -586,10 +591,14 @@ void startup()
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
   //kprintf_nosleep_flush();
+  //Empty Keyboard Buffer so irq1 gets fired
   ArchInterrupts::enableInterrupts();
   kprintfd("Init done\n");
   kprintf("Init done\n");
 
   Scheduler::instance()->yield();
+  //~ while (inportb(0x64) & 1) {
+    //~ kprintfd("Emptying Keyboard Buffer content: %x\n",inportb(0x60));
+  //~ }
   for (;;);
 }

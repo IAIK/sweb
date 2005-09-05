@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.29 2005/08/26 13:58:24 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.30 2005/09/05 23:01:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.29  2005/08/26 13:58:24  nomenquis
+//  finally even the syscall handler does that it is supposed to do
+//
 //  Revision 1.28  2005/08/26 12:01:25  nomenquis
 //  pagefaults in userspace now should really really really work
 //
@@ -123,6 +126,8 @@
 #include "Loader.h"
 #include "Syscall.h"
 
+#include "InputThread.h"
+
   extern "C" void arch_dummyHandler();
 
 // thanks mona
@@ -166,20 +171,20 @@ void InterruptUtils::lidt(IDTR *idtr)
   asm volatile("lidt (%0) ": :"q" (idtr));
 }
 
-void InterruptUtils::enableInterrupts()
-{
+//~ void InterruptUtils::enableInterrupts()
+//~ {
   
-}
+//~ }
 
-void InterruptUtils::disableInterrupts()
-{
+//~ void InterruptUtils::disableInterrupts()
+//~ {
   
-}
+//~ }
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
   extern "C" void dummyHandler_##x () \
   {\
-    kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
     kprintfd_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
   }
 
 DUMMY_HANDLER(0)
@@ -470,11 +475,9 @@ extern Thread *currentThread;
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
   extern "C" void irqHandler_##x ()  {  \
-    if ( x > 7 )  \
-      outportb(0xA0, 0x20);   \
-    kprintf_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
     kprintfd_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
-    outportb(0x20, 0x20); \
+    kprintf_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
+    ArchInterrupts::EndOfInterrupt(x); \
   } \
 
 extern "C" void arch_irqHandler_0();
@@ -486,19 +489,27 @@ extern "C" void irqHandler_0()
   kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
   uint32 ret = Scheduler::instance()->schedule(1);  
-  outportb(0x20, 0x20);   
   switch (ret)
   {
     case 0:
       kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
+      ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
       kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
+      ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd_nosleep("irq0: Panic in int 0 handler\n");
       for(;;);
   }  
+}
+
+extern "C" void arch_irqHandler_1();
+extern "C" void irqHandler_1()
+{
+  Scheduler::instance()->wake(InputThread::getInstance());
+  ArchInterrupts::EndOfInterrupt(1);
 }
 
 extern "C" void arch_irqHandler_65();
@@ -544,11 +555,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
                                                                             currentThread->switch_to_userspace_);
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
-  //~ ArchThreadInfo* i = currentThreadInfo;
-  //~ kprintfd_nosleep("PageFault: eax=%x ebx=%x ecx=%x edx=%x\n", i->eax, i->ebx, i->ecx, i->edx);
-  //~ kprintfd_nosleep("PageFault: esp=%x ebp=%x esi=%x edi=%x\n", i->esp, i->ebp, i->esi, i->edi);
-  //~ kprintfd_nosleep("PageFault: cs =%x ds =%x ss =%x cr3=%x\n", i->cs , i->ds , i->ss , i->cr3);
-  //~ kprintfd_nosleep("PageFault: eflags=%x eip=%x\n", i->eflags, i->eip);
   
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   
@@ -573,14 +579,14 @@ extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
   SerialManager::getInstance()->service_irq( 3 );
-  outportb(0x20, 0x20);
+  ArchInterrupts::EndOfInterrupt(3);
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
   SerialManager::getInstance()->service_irq( 4 );
-  outportb(0x20, 0x20);
+  ArchInterrupts::EndOfInterrupt(4);
 }
 
 extern "C" void arch_syscallHandler();
@@ -629,7 +635,7 @@ extern "C" void syscallHandler()
   //~ }
 }
 
-IRQ_HANDLER(1)
+//IRQ_HANDLER(1)
 IRQ_HANDLER(2)
 //IRQ_HANDLER(3)
 //IRQ_HANDLER(4)

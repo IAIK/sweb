@@ -22,3 +22,6 @@ start.o:
 
 %.sweb: %.c $(LIBS)
 	$(CC) $(CFLAGS) -o $@ $<	$(LIBS)
+
+.PHONY: mrproper
+mrproper: clean

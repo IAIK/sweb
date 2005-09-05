@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.6 2005/07/27 13:43:47 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.7 2005/09/05 23:01:23 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.6  2005/07/27 13:43:47  btittelbach
+//  Interrupt On/Off Autodetection in Kprintf
+//
 //  Revision 1.5  2005/04/25 22:40:18  btittelbach
 //  Anti Warnings v0.1
 //
@@ -40,7 +43,11 @@ public:
 
   static void enableTimer();
   static void disableTimer();
+  static void enableKBD();
+  static void disableKBD();
   
+  static void EndOfInterrupt(uint16 number);
+
   // enable interrupts, no matter what, this is bad
   static void enableInterrupts();
   static void disableInterrupts();

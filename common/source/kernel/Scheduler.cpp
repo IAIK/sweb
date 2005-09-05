@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.18 2005/08/26 12:01:25 nomenquis Exp $
+//   $Id: Scheduler.cpp,v 1.19 2005/09/05 23:01:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.18  2005/08/26 12:01:25  nomenquis
+//  pagefaults in userspace now should really really really work
+//
 //  Revision 1.17  2005/08/11 16:18:02  nomenquis
 //  fixed a bug
 //
@@ -144,11 +147,16 @@ void Scheduler::removeCurrentThread()
   kprintfd("Scheduler::removeCurrentThread: %x, threads_.size() %d\n",currentThread,threads_.size());
   if (threads_.size() > 1)
   {
-    //we can safely do this, because it won't affect the thread switch to the next thread
-    //just ensure that the currentThread in the list never again gets scheduled
-    //don't do this if you still need to clean up some things
-    
-    threads_.popBack();
+    Thread *tmp_thread;
+    for (uint32 c=0; c< threads_.size(); ++c)
+    {
+      tmp_thread = threads_.back();
+      threads_.popBack();
+      if (tmp_thread == currentThread)      
+        break;
+      
+      threads_.pushFront(tmp_thread);
+    }
   }
   block_scheduling_=0;
 }
@@ -168,21 +176,22 @@ void Scheduler::wake(Thread* thread_to_wake)
 //exchanges the current Thread with a PopUpThread
 //note that the popupthread has to remember the original Thread*
 //and switch back if he's finished
-Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
-{
-  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
-    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+//~ Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
+//~ {
+  //~ if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
+    //~ arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
 
-  Thread *old_thread = threads_.back();
-  if (old_thread != currentThread)
-    arch_panic((uint8*)"Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
-  threads_.popBack();
-  threads_.pushBack(pop_up_thread);
-  currentThread=pop_up_thread;
+  //~ Thread *old_thread = threads_.back();
+  //~ if (old_thread != currentThread)
+    //~ arch_panic((uint8*)"Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
+  //~ threads_.popBack();
+  //~ threads_.pushBack(pop_up_thread);
+  //~ currentThread=pop_up_thread;
   
-  block_scheduling_=0;
-  return old_thread;
-}
+  //~ block_scheduling_=0;
+  //~ return old_thread;
+//~ }
+
 
 void Scheduler::startThreadHack()
 {

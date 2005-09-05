@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.7 2005/08/07 16:47:24 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.8 2005/09/05 23:01:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.7  2005/08/07 16:47:24  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.6  2005/07/21 19:08:41  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -50,7 +55,7 @@ public:
 
   void addNewThread(Thread *thread);
   void removeCurrentThread();
-  Thread *Scheduler::xchangeThread(Thread *pop_up_thread);
+  //~ Thread *Scheduler::xchangeThread(Thread *pop_up_thread);
   void sleep();
   void wake(Thread* thread_to_wake);
   void cleanupDeadThreads();
@@ -67,7 +72,6 @@ private:
   static Scheduler *instance_;
 
   List<Thread*> threads_;
-  //Thread* threads_[MAX_THREADS];
 
   static void startThreadHack();
 

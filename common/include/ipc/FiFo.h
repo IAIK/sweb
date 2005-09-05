@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.6 2005/07/22 13:35:56 nomenquis Exp $
+//   $Id: FiFo.h,v 1.7 2005/09/05 23:01:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.6  2005/07/22 13:35:56  nomenquis
+//   compilefix for typo
+//
 //   Revision 1.5  2005/07/21 19:33:41  btittelbach
 //   Fifo blocks now, and students still have the opportunity to implement a real cv
 //
@@ -72,6 +75,7 @@ private:
 template <class T>
 FiFo<T>::FiFo(uint32 buffer_size)
 {
+  kprintfd("Created Fifo with Buffer size %d\n",buffer_size);
   buffer_start_ = new T[buffer_size+1];
   buffer_end_ = &buffer_start_[buffer_size];
   write_pos_=buffer_start_+1;
@@ -114,7 +118,6 @@ T FiFo<T>::get()
 template <class T>
 void FiFo<T>::put(T in)
 {
-  
   my_lock_.acquire();
   if (micro_cv_buffer_empty_)
   {
@@ -145,9 +148,9 @@ T* FiFo<T>::pos_add(T* pos_pointer, uint32 value)
 {
   pos_pointer+= value; //nice pointer arithmetic, accepts + and - values
   if (pos_pointer > buffer_end_)
-    pos_pointer = buffer_start_ + (( ((pointer) pos_pointer ) - ((pointer) buffer_end_ ) )/sizeof(T));
+    pos_pointer = buffer_start_ + (( ((pointer) pos_pointer ) - ((pointer) buffer_end_ ) )/sizeof(T) - 1);
   else if (pos_pointer < buffer_start_)
-    pos_pointer = buffer_end_ - (( ((pointer) buffer_start_ ) - ((pointer) pos_pointer ) )/sizeof(T) - 1);
+    pos_pointer = buffer_end_ - (( ((pointer) buffer_start_ ) - ((pointer) pos_pointer ) )/sizeof(T) + 1);
   return pos_pointer;
 }
 
