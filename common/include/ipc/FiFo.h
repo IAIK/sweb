@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.7 2005/09/05 23:01:24 btittelbach Exp $
+//   $Id: FiFo.h,v 1.8 2005/09/05 23:18:17 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.7  2005/09/05 23:01:24  btittelbach
+//   Keyboard Input Handler
+//   + several Bugfixes
+//
 //   Revision 1.6  2005/07/22 13:35:56  nomenquis
 //   compilefix for typo
 //
@@ -58,6 +62,7 @@ public:
 
   T get();
   void put(T in);
+  uint32 countElementsAhead();
  
 private:
   T* pos_add(T* pos_pointer, uint32 value);
@@ -141,6 +146,19 @@ void FiFo<T>::put(T in)
   *write_pos_=in;
   write_pos_ = pos_add(write_pos_,1);
   my_lock_.release();
+}
+
+template <class T>
+uint32 FiFo<T>::countElementsAhead()
+{
+  uint32 buffer_size = (((pointer) buffer_end) - ((pointer) buffer_start_)) / sizeof(T);
+  pointer count = (((pointer) write_pos_) - ((pointer) read_pos_)) / sizeof(T);
+  if (count == 0)
+    return buffer_size;
+  else if (count > 0)
+    return (count - 1);
+  else  // count < 0
+    return (buffer_size + count);
 }
 
 template <class T>
