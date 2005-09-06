@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: InputThread.h,v 1.1 2005/09/05 23:01:24 btittelbach Exp $
+//   $Id: InputThread.h,v 1.2 2005/09/06 00:02:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InputThread.h,v $
+//  Revision 1.1  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //----------------------------------------------------------------------
 
 #ifndef _INPUTTHREAD_H_
@@ -32,6 +36,11 @@ class InputThread : public Thread
   uint8 getScancode()
   {
     return scancode_input_->get();
+  }
+  
+  uint32 countAhead()
+  {
+    return scancode_input_->countElementsAhead();
   }
   
   void setNumlock(bool on);
