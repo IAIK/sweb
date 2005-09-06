@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.12 2005/07/21 19:08:41 btittelbach Exp $
+//  $Id: Thread.h,v 1.13 2005/09/06 09:56:50 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.12  2005/07/21 19:08:41  btittelbach
+//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
+//  Threads können schlafen, Mutex benutzt das jetzt auch
+//  Jetzt muß nur der Mutex auch überall verwendet werden
+//
 //  Revision 1.11  2005/07/12 21:05:38  btittelbach
 //  Lustiges Spielen mit UserProgramm Terminierung
 //
@@ -79,6 +84,14 @@ public:
 
   ThreadState state_;
 
+  const char *getName()
+  {
+    if (name_)
+      return name_;
+    else
+      return "<>NULL<>";
+  }
+
 private:
   
   Thread(Thread const &);
@@ -86,6 +99,9 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
+
+protected:
+  char *name_;
 };
 
 

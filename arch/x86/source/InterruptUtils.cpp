@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.30 2005/09/05 23:01:24 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.31 2005/09/06 09:56:50 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.30  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //  Revision 1.29  2005/08/26 13:58:24  nomenquis
 //  finally even the syscall handler does that it is supposed to do
 //
@@ -535,8 +539,7 @@ extern "C" void irqHandler_65()
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
-{  
-
+{
   uint32 const flag_p = 0x1 << 0;  //=0: pf caused because pt was not present; =1: protection violation
   uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
   uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
@@ -546,12 +549,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //~ __asm__("movl %%cr2, %0"
   //~ :"=a"(cr2)
   //~ :);
-  kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\nPageFault:(currentThread: %x, switch_to_userspace_:%d)\n",address,
+  kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
                                                                             error&flag_p, 
                                                                             (error&flag_rw) >> 1, 
                                                                             (error&flag_us) >> 2,
                                                                             (error&flag_rsvd) >> 3,
-                                                                            currentThread,
+                                                                            currentThread,currentThread->getName(),
                                                                             currentThread->switch_to_userspace_);
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
@@ -564,12 +567,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 //    ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
   else 
-  { 
+  {
     kprintfd_nosleep("PageFault: Userprogramm caused an unexpected Pagefault\n");
     ArchInterrupts::enableInterrupts(); //enable Interrupts before exit !!!!
     Syscall::exit(9999);
-  } 
-
+  }
+  kprintfd_nosleep("PageFault: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
    // arch_switchThreadToUserPageDirChange();
  // for(;;);
 }
@@ -593,7 +596,7 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
  
-  kprintfd_nosleep("syscallHANDLER, interrupts are %d\n",ArchInterrupts::testIFSet());
+  kprintfd_nosleep("syscallHANDLER, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
    // ok, find out the current thread
@@ -609,8 +612,7 @@ extern "C" void syscallHandler()
   // add on, ever since the very first pmode machine 
   // this is not needed anymore as the machine is smart 
   // enough to do this on a trap
-  //currentThread->user_arch_thread_info_->eip +=2;
-
+  
   currentThread->user_arch_thread_info_->eax =
     Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
                   currentThread->user_arch_thread_info_->ebx,
@@ -621,9 +623,9 @@ extern "C" void syscallHandler()
 
   currentThread->switch_to_userspace_ = true;
   ArchThreads::printThreadRegisters(currentThread,1);
+  kprintfd_nosleep("syscallHANDLER: done (currentThread=%x)\n",currentThread);
 
   arch_switchThreadToUserPageDirChange();
-//  ArchInterrupts::enableInterrupts();
 
   //~ for(;;)
   //~ {

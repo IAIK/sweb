@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.79 2005/09/05 23:01:24 btittelbach Exp $
+ * $Id: main.cpp,v 1.80 2005/09/06 09:56:50 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.79  2005/09/05 23:01:24  btittelbach
+ * Keyboard Input Handler
+ * + several Bugfixes
+ *
  * Revision 1.78  2005/09/03 21:54:45  btittelbach
  * Syscall Testprogramm, actually works now ;-) ;-)
  * Test get autocompiled and autoincluded into kernel
@@ -294,8 +298,9 @@ class SerialThread : public Thread
 {
   public:
 
-  SerialThread()
+  SerialThread(char *name)
   {
+    name_=name;
   };
 
   virtual void Run()
@@ -333,10 +338,11 @@ class StupidThread : public Thread
 {
   public:
 
-  StupidThread(uint32 id)
+  StupidThread(uint32 id, char *name)
   {
   //  lock->acquire();
     thread_number_ = id;
+    name_=name;
  //   lock->release();
   }
 
@@ -369,8 +375,9 @@ class UserThread : public Thread
 {
   public:
 
-  UserThread()
+  UserThread(char *name)
   {
+    name_=name;
     uint8 *foo=(uint8*)"\177\105\114\106\1\1\1\0\0\0\0\0\0\0\0\0\2\0\3\0\1\0\0\0\264\200\4\10\64\0\0\0\174\1\0\0\0\0\0\0\64\0\40\0\4\0\50\0\11\0\6\0\1\0\0\0\0\0\0\0\0\200\4\10\0\200\4\10\332\0\0\0\332\0\0\0\5\0\0\0\0\20\0\0\1\0\0\0\334\0\0\0\334\220\4\10\334\220\4\10\4\0\0\0\24\47\0\0\6\0\0\0\0\20\0\0\121\345\164\144\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\4\0\0\0\200\25\4\145\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\50\0\0\4\0\0\0\125\211\345\315\200\353\376\0\163\157\155\145\40\162\157\40\144\141\164\141\0\0\0\0\274\200\4\10\163\157\155\145\40\144\141\164\141\0\0\0\320\200\4\10\0\107\103\103\72\40\50\107\116\125\51\40\63\56\63\56\65\55\62\60\60\65\60\61\63\60\40\50\107\145\156\164\157\157\40\114\151\156\165\170\40\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\162\61\54\40\163\163\160\55\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\61\54\40\160\151\145\55\70\56\67\56\67\56\61\51\0\0\56\163\171\155\164\141\142\0\56\163\164\162\164\141\142\0\56\163\150\163\164\162\164\141\142\0\56\164\145\170\164\0\56\162\157\144\141\164\141\0\56\144\141\164\141\0\56\142\163\163\0\56\143\157\155\155\145\156\164\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\33\0\0\0\1\0\0\0\6\0\0\0\264\200\4\10\264\0\0\0\7\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\41\0\0\0\1\0\0\0\2\0\0\0\274\200\4\10\274\0\0\0\36\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\51\0\0\0\1\0\0\0\3\0\0\0\334\220\4\10\334\0\0\0\4\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\57\0\0\0\10\0\0\0\3\0\0\0\340\220\4\10\340\0\0\0\20\47\0\0\0\0\0\0\0\0\0\0\40\0\0\0\0\0\0\0\64\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\340\0\0\0\137\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\21\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\77\1\0\0\75\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\2\0\0\0\0\0\0\0\0\0\0\0\344\2\0\0\20\1\0\0\10\0\0\0\12\0\0\0\4\0\0\0\20\0\0\0\11\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\364\3\0\0\100\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\264\200\4\10\0\0\0\0\3\0\1\0\0\0\0\0\274\200\4\10\0\0\0\0\3\0\2\0\0\0\0\0\334\220\4\10\0\0\0\0\3\0\3\0\0\0\0\0\340\220\4\10\0\0\0\0\3\0\4\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\6\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\7\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\10\0\1\0\0\0\0\0\0\0\0\0\0\0\4\0\361\377\10\0\0\0\340\220\4\10\20\47\0\0\21\0\4\0\17\0\0\0\264\200\4\10\7\0\0\0\22\0\1\0\26\0\0\0\314\200\4\10\4\0\0\0\21\0\2\0\43\0\0\0\340\220\4\10\0\0\0\0\20\0\361\377\57\0\0\0\334\220\4\10\4\0\0\0\21\0\3\0\64\0\0\0\340\220\4\10\0\0\0\0\20\0\361\377\73\0\0\0\360\267\4\10\0\0\0\0\20\0\361\377\0\164\145\163\164\56\143\0\142\154\165\142\142\141\0\137\163\164\141\162\164\0\163\157\155\145\137\162\157\137\144\141\164\141\0\137\137\142\163\163\137\163\164\141\162\164\0\144\141\164\141\0\137\145\144\141\164\141\0\137\145\156\144\0";
 
     loader_= new Loader(foo,this);
@@ -403,6 +410,7 @@ class MatriceMultTest : public Thread
 
   MatriceMultTest()
   {
+    name_="mult.sweb";
     uint8 *foo = PseudoFS::getInstance()->getFilePtr("mult.sweb");
     if (! foo)
       arch_panic((uint8*)"mult not found in pseudofs\n");
@@ -439,6 +447,7 @@ class SyscallTest : public Thread
 
   SyscallTest()
   {    
+    name_="stdout-test.sweb";
     uint8 *foo = PseudoFS::getInstance()->getFilePtr("stdout-test.sweb");
     if (! foo)
       arch_panic((uint8*)"stdout-test not found in pseudofs\n");
@@ -467,12 +476,52 @@ private:
 
 };
 
+class SyscallTest2 : public Thread
+{
+  public:
+
+  SyscallTest2()
+  {    
+    name_="stdin-test.sweb";
+    uint8 *foo = PseudoFS::getInstance()->getFilePtr("stdin-test.sweb");
+    if (! foo)
+      arch_panic((uint8*)"stdin-test not found in pseudofs\n");
+    loader_= new Loader(foo,this);
+    loader_->loadExecutableAndInitProcess();
+    kprintf("SyscallTest2:ctor: Done loading exe \n");
+  }
+
+  virtual void Run()
+  {
+    while (state_ != ToBeDestroyed)
+    {
+      kprintfd("SyscallTest2:run: Going to userr, expect page fault\n");
+      //kprintf("SyscallTest2:run: Going to userr, expect page fault\n");
+      //kprintfd("SyscallTest2:run: post printf\n");
+      this->switch_to_userspace_ = 1; // this is necessary, because it's possible that we suddenly switch to kernelspace in a userthread (see Scheduler and bochs sucks)
+      Scheduler::instance()->yield();
+    }
+    Scheduler::instance()->yield();
+    arch_panic((uint8*)("SyscallTest2::Run: should not reach here !!"));
+  }
+
+private:
+
+  uint32 bad_mapping_page_0;
+
+};
+
 
 
 class KprintfNoSleepFlushingThread : public Thread
 {
   public:
 
+  KprintfNoSleepFlushingThread()
+  {
+    name_="KprintfNoSleepFlushingThread";
+  }
+  
   virtual void Run()
   {
     while (1)
@@ -508,10 +557,10 @@ void startup()
   
   term_0->setBackgroundColor(Console::BG_BLACK);
   term_0->setForegroundColor(Console::FG_GREEN);
-  term_0->writeString("This is on term 0, you should see me");
-  term_1->writeString("This is on term 1, you should not see me");
-  term_2->writeString("This is on term 2, you should not see me");
-  term_3->writeString("This is on term 3, you should not see me");
+  term_0->writeString("This is on term 0, you should see me\n");
+  term_1->writeString("This is on term 1, you should not see me\n");
+  term_2->writeString("This is on term 2, you should not see me\n");
+  term_3->writeString("This is on term 3, you should not see me\n");
   
   main_console->setActiveTerminal(0);
   
@@ -583,6 +632,7 @@ void startup()
 
   Scheduler::instance()->addNewThread(new MatriceMultTest());
   Scheduler::instance()->addNewThread(new SyscallTest());
+  Scheduler::instance()->addNewThread(new SyscallTest2());
   
   //int32 *test = new int32[50];
   //FiFo<uint32> test_fifo(20);

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: InputThread.cpp,v 1.1 2005/09/05 23:01:24 btittelbach Exp $
+//   $Id: InputThread.cpp,v 1.2 2005/09/06 09:56:50 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InputThread.cpp,v $
+//  Revision 1.1  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //----------------------------------------------------------------------
 
 #include "InputThread.h"
@@ -29,6 +33,7 @@ void InputThread::startInputThread()
 
 InputThread::InputThread()
 {
+  name_="InputThread";
   scancode_input_ = new FiFo<uint8>(64);
   status_lights_=0;
 }

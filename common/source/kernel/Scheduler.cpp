@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.19 2005/09/05 23:01:24 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.20 2005/09/06 09:56:50 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.19  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //  Revision 1.18  2005/08/26 12:01:25  nomenquis
 //  pagefaults in userspace now should really really really work
 //
@@ -98,6 +102,11 @@ class IdleThread : public Thread
 {
 public:
   
+  IdleThread()
+  {
+    name_="IdleThread";
+  }
+
   virtual void Run()
   {
     while (1)
@@ -132,7 +141,7 @@ void Scheduler::addNewThread(Thread *thread)
 
   if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
     arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
-  kprintf("Scheduler::addNewThread: %x\n",thread);
+  kprintf("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
   threads_.pushFront(thread);
   block_scheduling_=0;
 }
@@ -144,7 +153,7 @@ void Scheduler::removeCurrentThread()
   if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
     arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
 
-  kprintfd("Scheduler::removeCurrentThread: %x, threads_.size() %d\n",currentThread,threads_.size());
+  kprintfd("Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size());
   if (threads_.size() > 1)
   {
     Thread *tmp_thread;
@@ -235,7 +244,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     threads_.pushBack(currentThread);
     
   } while (currentThread->state_ != Running);
-  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x, switch_userspace:%d\n",currentThread,currentThread->switch_to_userspace_);
+  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
   
   uint32 ret = 1;
   
