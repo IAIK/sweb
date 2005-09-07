@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: List.h,v $
  *
- * $Id: List.h,v 1.1 2005/05/26 01:08:37 aniederl Exp $
- * $Log$
+ * $Id: List.h,v 1.2 2005/09/07 23:44:42 aniederl Exp $
+ * $Log: List.h,v $
+ * Revision 1.1  2005/05/26 01:08:37  aniederl
+ * initial import of List, Queue and Stack data structures
+ *
  */
 
 
@@ -111,10 +114,15 @@ class List
  public:
   /**
    * default constructor for class List
+   * the node size will be set to a default value
+   */
+  List();
+
+  /**
+   * constructor for class List
    * @param node_size the size of the list nodes
    */
-  List(size_type node_size = NODE_SIZE);
-
+  List(size_type node_size);
 
   /**
    * destructor for class List

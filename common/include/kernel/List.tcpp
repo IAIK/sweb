@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.2 2005/09/07 23:13:01 aniederl Exp $
+ * $Id: List.tcpp,v 1.3 2005/09/07 23:44:42 aniederl Exp $
  * $Log: List.tcpp,v $
+ * Revision 1.2  2005/09/07 23:13:01  aniederl
+ * refined empty node handling in pop methods
+ *
  * Revision 1.1  2005/05/26 01:08:37  aniederl
  * initial import of List, Queue and Stack data structures
  *
@@ -60,6 +63,28 @@ const typename List<ValueType>::size_type List<ValueType>::NODE_SIZE = 15;
 //----------------------------------------------------------------------
 /**
  * default constructor for class List
+ * the node size will be set to a default value
+ */
+template<typename ValueType>
+List<ValueType>::List()
+ : node_size_(NODE_SIZE),
+   number_of_nodes_(2),
+   number_of_elements_(0)
+{
+  // generate the two default nodes
+  first_node_ = new ListNode<ValueType>(node_size_);
+  last_node_ = new ListNode<ValueType>(node_size_);
+
+  first_node_->setNextNode(last_node_);
+  last_node_->setPreviousNode(first_node_);
+
+  // set backward access for the first one
+  first_node_->setBackwardAccess(true);
+}
+
+//----------------------------------------------------------------------
+/**
+ * constructor for class List
  * @param node_size the size of the list nodes
  */
 template<typename ValueType>
