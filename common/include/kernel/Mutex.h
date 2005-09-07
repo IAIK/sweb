@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.h,v 1.4 2005/07/24 17:02:59 nomenquis Exp $
+//  $Id: Mutex.h,v 1.5 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.h,v $
+//  Revision 1.4  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.3  2005/07/21 19:08:40  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -34,12 +37,21 @@ public:
 
   void acquire();
   void release();
+  bool isFree();
+
+protected:
+friend class Condition;
+  bool isHeldBy(Thread *thread)
+  {
+    return (held_by_==thread);
+  }
 
 
 private:
   
   uint32 mutex_;
   List<Thread*> sleepers_;
+  Thread *held_by_;
 
   //this is a no no
   Mutex(Mutex const &){}
@@ -58,7 +70,7 @@ public:
   {
     mutex_.release();
   }
-  
+    
 private:
   
   // this is a no no

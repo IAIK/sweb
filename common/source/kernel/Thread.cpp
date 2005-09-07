@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.16 2005/08/19 21:14:15 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.17 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.16  2005/08/19 21:14:15  btittelbach
+//  Debugging the Debugging Code
+//
 //  Revision 1.15  2005/08/07 16:47:25  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -106,7 +109,7 @@ void Thread::kill()
 {
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
-  kprintfd("Thread::kill: Preparing currentThread (%x) for destruction\n",currentThread);
+  kprintfd("Thread::kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName());
   if (currentThread == this)
     Scheduler::instance()->yield();
 }

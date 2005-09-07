@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.80 2005/09/06 09:56:50 btittelbach Exp $
+ * $Id: main.cpp,v 1.81 2005/09/07 00:33:52 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.80  2005/09/06 09:56:50  btittelbach
+ * +Thread Names
+ * +stdin Test Example
+ *
  * Revision 1.79  2005/09/05 23:01:24  btittelbach
  * Keyboard Input Handler
  * + several Bugfixes
@@ -278,6 +282,7 @@
 
 #include "arch_serial.h"
 #include "drivers/serial.h"
+#include "atkbd.h"
 
 #include "fs/VirtualFileSystem.h"
 #include "fs/ramfs/RamFileSystemType.h"
@@ -286,7 +291,7 @@
 
 #include "fs/PseudoFS.h"
 
-#include "drivers/InputThread.h"
+#include "FiFoDRBOSS.h"
 
 extern void* kernel_end_address;
 
@@ -511,6 +516,8 @@ private:
 
 };
 
+extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
+FiFoDRBOSS<uint8> *kbd_ringbuffer_;
 
 
 class KprintfNoSleepFlushingThread : public Thread
@@ -524,8 +531,12 @@ class KprintfNoSleepFlushingThread : public Thread
   
   virtual void Run()
   {
-    while (1)
+    while (true)
     {
+      kprintfd("KprintfNoSleepFlushingThread::Run:1 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
+      uint8 sc = kbd_ringbuffer_->get();
+      kprintfd("KprintfNoSleepFlushingThread::Run:2 got SC from KBD: %x\n",sc);
+      kprintfd("KprintfNoSleepFlushingThread::Run:3 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
       //kprintfd("___Flushing Nosleep Buffer____\n");
       kprintf_nosleep_flush();
       Scheduler::instance()->yield();
@@ -599,7 +610,9 @@ void startup()
   ArchInterrupts::enableTimer();
   lock = new Mutex();
 
-  InputThread::startInputThread();
+  kbd_ringbuffer_ = new FiFoDRBOSS<uint8>(1024,128);
+  ArchInterrupts::enableKBD();
+  //InputThread::startInputThread();
 
   kprintf("Thread creation\n");
   //StupidThread *thread0 = new StupidThread(0);
@@ -641,14 +654,14 @@ void startup()
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
   //kprintf_nosleep_flush();
-  //Empty Keyboard Buffer so irq1 gets fired
   ArchInterrupts::enableInterrupts();
   kprintfd("Init done\n");
   kprintf("Init done\n");
 
   Scheduler::instance()->yield();
-  //~ while (inportb(0x64) & 1) {
-    //~ kprintfd("Emptying Keyboard Buffer content: %x\n",inportb(0x60));
-  //~ }
+  //Empty Keyboard Buffer so irq1 gets fired
+  while (kbdBufferFull()) {
+    kprintfd("Emptying Keyboard Port content: %x\n",kbdGetScancode());
+  }
   for (;;);
 }

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.20 2005/09/06 09:56:50 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.21 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.20  2005/09/06 09:56:50  btittelbach
+//  +Thread Names
+//  +stdin Test Example
+//
 //  Revision 1.19  2005/09/05 23:01:24  btittelbach
 //  Keyboard Input Handler
 //  + several Bugfixes
@@ -173,6 +177,8 @@ void Scheduler::removeCurrentThread()
 void Scheduler::sleep()
 {
   currentThread->state_=Sleeping;
+  //if we somehow stupidly go to sleep, block is automatically removed
+  block_scheduling_=0;
   yield();
 }
 

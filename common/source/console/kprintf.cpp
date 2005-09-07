@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.15 2005/09/03 21:54:45 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.16 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.15  2005/09/03 21:54:45  btittelbach
+//   Syscall Testprogramm, actually works now ;-) ;-)
+//   Test get autocompiled and autoincluded into kernel
+//   one kprintfd bug fixed
+//
 //   Revision 1.14  2005/08/19 21:14:15  btittelbach
 //   Debugging the Debugging Code
 //
@@ -79,7 +84,11 @@ void oh_writeCharDebugWithSleep(char c)
 void oh_writeStringDebugWithSleep(char const* str)
 {
   //this blocks
-  writeLine2Bochs((uint8*) str);
+  while (*str)
+  {
+    oh_writeCharDebugWithSleep(*str);
+    str++;
+  }
 }
 
 

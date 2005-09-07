@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: atkbd.h,v 1.1 2005/09/05 23:01:24 btittelbach Exp $
+//   $Id: atkbd.h,v 1.2 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: atkbd.h,v $
+//  Revision 1.1  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //----------------------------------------------------------------------
 #ifndef _ATKBD_H_
 #define _ATKBD_H_
@@ -25,6 +29,7 @@ uint8 kbdGetScancode();
 //reset
 void kbdReset();
 
-void updateKbdLights(uint8 status);
-
+void kbdSetNumlock(bool on);
+void kbdSetCapslock(bool on);
+void kbdSetScrolllock(bool on);
 #endif

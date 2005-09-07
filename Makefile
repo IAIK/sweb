@@ -164,4 +164,4 @@ bochsc:
 
 bochsgdb:
 	echo "Going to gdb bochs on port localhost:1234 " 
-	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot.img,status=inserted" "gdbstub: enabled=1, port=1234"
+	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"

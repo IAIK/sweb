@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.8 2005/09/05 23:01:24 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.9 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.8  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //  Revision 1.7  2005/08/07 16:47:24  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -61,6 +65,9 @@ public:
   void cleanupDeadThreads();
 
   void yield();
+
+  void holdScheduling();  //not as severe as stopping Interrupts
+  void resumeScheduling();
 
   // NEVER EVER EVER CALL THIS ONE OUTSIDE OF AN INTERRUPT CONTEXT //
   uint32 schedule(uint32 from_interrupt=false);

@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.6 2005/08/07 16:47:25 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.7 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.6  2005/08/07 16:47:25  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.5  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -33,6 +38,7 @@
 #include "debug_bochs.h"
 #include "Scheduler.h"
 #include "Thread.h"
+#include "arch_panic.h"
 
 Mutex::Mutex()
 {
@@ -53,11 +59,13 @@ void Mutex::acquire()
 //    kprintfd("Mutex::Acquire: Wakeup after yield()\n");
    
   }
+  held_by_=currentThread;
 }
 
 void Mutex::release()
 {
   mutex_ = 0;
+  held_by_=0;
   if (! sleepers_.empty())
   {
     if (unlikely (! ArchInterrupts::testIFSet()))
@@ -68,4 +76,15 @@ void Mutex::release()
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->wake(thread);
   }
+}
+
+bool Mutex::isFree()
+{
+  if (unlikely (ArchInterrupts::testIFSet()))
+    arch_panic((uint8*)("Mutex::isFree: ERROR: Should not be used with IF=1, use acquire instead\n"));
+
+  if (mutex_ > 0)
+    return false;
+  else
+    return true;
 }

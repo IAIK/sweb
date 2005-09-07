@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.31 2005/09/06 09:56:50 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.32 2005/09/07 00:33:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.31  2005/09/06 09:56:50  btittelbach
+//  +Thread Names
+//  +stdin Test Example
+//
 //  Revision 1.30  2005/09/05 23:01:24  btittelbach
 //  Keyboard Input Handler
 //  + several Bugfixes
@@ -130,7 +134,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 
-#include "InputThread.h"
+#include "FiFoDRBOSS.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -509,10 +513,16 @@ extern "C" void irqHandler_0()
   }  
 }
 
+extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  Scheduler::instance()->wake(InputThread::getInstance());
+  //Scheduler::instance()->wake(InputThread::getInstance());
+  uint8 sc = inportb(0x60);
+  kprintfd("irq1: got: %x\n",sc);
+
+  kbd_ringbuffer_->put(sc);
+  
   ArchInterrupts::EndOfInterrupt(1);
 }
 
@@ -570,7 +580,10 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   {
     kprintfd_nosleep("PageFault: Userprogramm caused an unexpected Pagefault\n");
     ArchInterrupts::enableInterrupts(); //enable Interrupts before exit !!!!
-    Syscall::exit(9999);
+    if (currentThread->loader_)
+      Syscall::exit(9999);
+    else
+      currentThread->kill();
   }
   kprintfd_nosleep("PageFault: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
    // arch_switchThreadToUserPageDirChange();
