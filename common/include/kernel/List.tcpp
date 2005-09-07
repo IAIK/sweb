@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.1 2005/05/26 01:08:37 aniederl Exp $
- * $Log$
+ * $Id: List.tcpp,v 1.2 2005/09/07 23:13:01 aniederl Exp $
+ * $Log: List.tcpp,v $
+ * Revision 1.1  2005/05/26 01:08:37  aniederl
+ * initial import of List, Queue and Stack data structures
+ *
  */
 
 /**
@@ -386,9 +389,8 @@ void List<ValueType>::popBack()
   }
 
 
-  // if last node is empty and NOT the second node remove it
-  if(last_node_->empty() &&
-     (number_of_nodes_ > 2))
+  // if last node is empty remove it
+  if(last_node_->empty())
   {
     ListNode<ValueType> *tmp = last_node_->getPreviousNode();
     delete last_node_;
@@ -396,6 +398,16 @@ void List<ValueType>::popBack()
 
     tmp->setNextNode(0);
     last_node_ = tmp;
+
+    if(number_of_nodes_ < 2)
+    {
+      first_node_ = new ListNode<ValueType>(node_size_);
+
+      first_node_->setNextNode(last_node_);
+      last_node_->setPreviousNode(first_node_);
+
+      ++number_of_nodes_;
+    }
   }
 }
 
@@ -449,6 +461,7 @@ void List<ValueType>::popFront()
     --number_of_nodes_;
 
     first_node_ = tmp;
+    first_node_->setPreviousNode(0);
     first_node_->setBackwardAccess(true);
 
     if(number_of_nodes_ < 2)
