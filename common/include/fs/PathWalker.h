@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: PathWalker.h,v $
 //
-// $Id: PathWalker.h,v 1.3 2005/09/02 17:57:58 davrieb Exp $
+// $Id: PathWalker.h,v 1.4 2005/09/10 19:25:27 qiangchen Exp $
 // $Log: PathWalker.h,v $
+// Revision 1.3  2005/09/02 17:57:58  davrieb
+// preparations to  build a standalone filesystem testsuite
+//
 // Revision 1.2  2005/09/01 17:07:49  davrieb
 // update path walking
 //
@@ -19,10 +22,9 @@
 
 #include "types.h"
 
-
 // forward declarations
 class Dentry;
-class Mount;
+class VfsMount;
 
 #define MAX_NAME_LEN 100
 
@@ -41,16 +43,33 @@ class Mount;
 
 /// Type of the last component on LOOKUP_PARENT
 enum {
-  LAST_NORM,
-  LAST_ROOT,
+  /// The last component is a regular filename
+  LAST_NORM, 
+
   /// The last component is the root directory
+  LAST_ROOT,
+  
+  /// The last component is "."
   LAST_DOT,
+  
+  /// The last component is ".."
   LAST_DOTDOT,
+  
+  /// The last component is a symbolic link into a special filesystem
   LAST_BIND
 };
 
-/// Error Codes for the path walker
-enum {
+/// Error Codes for the path init
+enum
+{
+  PI_SUCCESS = 0,
+  /// The path was not found
+  PI_ENOTFOUND
+};
+
+/// Error Codes for the path walk
+enum 
+{
   PW_SUCCESS = 0,
   /// The path was not found
   PW_ENOTFOUND,
@@ -62,8 +81,6 @@ enum {
 /// The maximal length of a filename
 #define MAX_NAME_LENGTH 4096
 
-
-
 class PathWalker
 {
 
@@ -73,7 +90,7 @@ protected:
   Dentry *dentry_;
 
   /// The Mount the path is located in
-  Mount* mount_;
+  VfsMount* vfs_mount_;
 
   /// The lookup flags
   int32 flags_;
@@ -92,7 +109,17 @@ public:
   /// The destructor
   ~PathWalker();
 
-  int32 init(const char* name, uint32 flags);
+  /// this method check the first character of the path (begins with '/' or 
+  /// with pwd). Initialize the flags_.
+  int32 pathInit(const char* pathname, uint32 flags);
+  
+  /// this method takes care of the lookup operation and stores the pointers
+  /// to the dentry_ object and mounted filesystem object relative to the last
+  /// component of the pathname.
+  int32 pathWalk(const char* pathname);
+  
+  /// this method terminate the pathname lookup of the mount point.
+  void pathRelease();
 
 protected:
 

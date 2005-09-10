@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.cpp,v $
 //
-// $Id: Superblock.cpp,v 1.6 2005/08/11 16:46:57 davrieb Exp $
+// $Id: Superblock.cpp,v 1.7 2005/09/10 19:25:27 qiangchen Exp $
 // $Log: Superblock.cpp,v $
+// Revision 1.6  2005/08/11 16:46:57  davrieb
+// add PathWalker
+//
 // Revision 1.5  2005/08/11 16:34:28  qiangchen
 // *** empty log message ***
 //
@@ -27,9 +30,9 @@
 //------------------------------------------------------------------
 Superblock::~Superblock()
 {
-  assert(s_inode_dirty_.is_empty() != false);
-  assert(s_inode_used_.is_empty() != false);
-  assert(s_files_.is_empty() != false);
+  assert(s_inode_dirty_.empty() != false);
+  assert(s_inode_used_.empty() != false);
+  assert(s_files_.empty() != false);
   s_type_ = 0;
 
   delete s_root_;
@@ -47,13 +50,13 @@ void Superblock::delete_inode(Inode *inode)
 }
 
 //------------------------------------------------------------------
-Dentry const *Superblock::getRoot() const
+Dentry *Superblock::getRoot()
 {
   return s_root_;
 }
 
 //----------------------------------------------------------------------
-int32 Superblock::insert_opened_files(File* file)
+int32 Superblock::insertOpenedFiles(File* file)
 {
   if(file == 0)
   {
@@ -61,18 +64,18 @@ int32 Superblock::insert_opened_files(File* file)
     return -1;
   }
   
-  if(s_files_.is_included(file) == true)
+  if(s_files_.included(file) == true)
   {
     // ERROR_FE
     return -1;
   }
-  s_files_.push_end(file);
+  s_files_.pushBack(file);
   
   return 0;
 }
 
 //----------------------------------------------------------------------
-int32 Superblock::remove_opened_files(File* file)
+int32 Superblock::removeOpenedFiles(File* file)
 {
   if(file == 0)
   {
@@ -80,7 +83,7 @@ int32 Superblock::remove_opened_files(File* file)
     return -1;
   }
   
-  if(s_files_.is_included(file) == true)
+  if(s_files_.included(file) == true)
     s_files_.remove(file);
   else
   {

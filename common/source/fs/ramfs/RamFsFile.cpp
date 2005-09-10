@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: RamFsFile.cpp,v $
  *
- * $Id: RamFsFile.cpp,v 1.5 2005/08/11 16:35:59 qiangchen Exp $
+ * $Id: RamFsFile.cpp,v 1.6 2005/09/10 19:25:27 qiangchen Exp $
  * $Log: RamFsFile.cpp,v $
+ * Revision 1.5  2005/08/11 16:35:59  qiangchen
+ * *** empty log message ***
+ *
  * Revision 1.4  2005/08/04 17:04:00  lythien
  * include the methode write
  *
@@ -48,7 +51,6 @@
 RamFsFile::RamFsFile(Inode* inode, Dentry* dentry) : File(inode, dentry)
 {
   f_superblock_ = inode->getSuperblock();
-  count_ = 0;
   mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
   offset_ = 0;
 }
@@ -56,25 +58,12 @@ RamFsFile::RamFsFile(Inode* inode, Dentry* dentry) : File(inode, dentry)
 //--------------------------------------------------------------------------
 RamFsFile::~RamFsFile()
 {
-  assert(count_ != 0);
-}
-
-//--------------------------------------------------------------------------
-char *RamFsFile::getName() const
-{
-  return(f_dentry_->get_name());
-}
-
-//--------------------------------------------------------------------------
-Dentry *RamFsFile::getDentry() const
-{
-  return(f_dentry_);
 }
 
 //--------------------------------------------------------------------------
 int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
 {
-  if(f_superblock_->check_opened_files(this) == false)
+  if(f_superblock_->checkOpenedFiles(this) == false)
   {
     // ERROR_FNO
     return -1;
@@ -92,7 +81,7 @@ int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
 //--------------------------------------------------------------------------
 int32 RamFsFile::write(int32 *buffer, size_t count, l_off_t offset)
 {
-  if(f_superblock_->check_opened_files(this) == false)
+  if(f_superblock_->checkOpenedFiles(this) == false)
   {
     // ERROR_FNO
     return -1;
@@ -111,10 +100,10 @@ int32 RamFsFile::write(int32 *buffer, size_t count, l_off_t offset)
 int32 RamFsFile::open(uint32 flag)
 {
 
-  if(f_inode_->is_opened_files_empty() == true)
+  if(f_inode_->openedFilesEmpty() == true)
   {
   }
-  else if((f_inode_->insert_opened_files(this) == 0) && (flag == O_RDONLY))
+  else if((f_inode_->insertOpenedFiles(this) == 0) && (flag == O_RDONLY))
   {
   }
   else
@@ -123,9 +112,9 @@ int32 RamFsFile::open(uint32 flag)
     return -1;
   }
   
-  f_inode_->insert_opened_files(this);
+  f_inode_->insertOpenedFiles(this);
   flag_ = flag;
-  f_superblock_->insert_opened_files(this);
+  f_superblock_->insertOpenedFiles(this);
 
   return 0;
 }
@@ -133,8 +122,8 @@ int32 RamFsFile::open(uint32 flag)
 //--------------------------------------------------------------------------
 int32 RamFsFile::close()
 {
-  assert((f_inode_->remove_opened_files(this) != 0) &&
-         (f_superblock_->remove_opened_files(this) != 0));
+  assert((f_inode_->removeOpenedFiles(this) != 0) &&
+         (f_superblock_->removeOpenedFiles(this) != 0));
 }
 
 //--------------------------------------------------------------------------

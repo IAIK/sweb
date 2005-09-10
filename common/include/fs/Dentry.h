@@ -22,42 +22,6 @@
 #define Dentry_h___
 
 class Inode;
-//-----------------------------------------------------------------------------
-/**
- * Qstr - Quick string
- *
- * eases parameter passing, but more importantly saves "metadata" about the
- * string (i.e. length and the hash)
- */
-class Qstr
-{
-protected:
-
-  uint32 length_;
-  char *name_;
-
-public:
-  Qstr()
-  { 
-    length_ = 0; 
-    name_ = 0;
-  }
-
-  ~Qstr() { delete[] name_; }
-
-  void set_name(char* name, uint32 length)
-  {
-  	length_ = length;
-    name_ = new char(length);
-    for(uint32 count = 0; count < length; count++)
-      name_[count] = name[count];	
-  }
-
-  uint32 get_length() { return length_; }
-  char* get_name() { return name_; }
-};
-
-//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 /**
@@ -74,82 +38,71 @@ class Dentry
  protected:
 
   /// Dentry object usage count
-  /// It increments if a inode linked with this dentry and derements if
-  /// unlinked. (linked with inode & linked with child)
-  int32 d_count_;
+  // int32 d_count_;
 
-  /// The pointer to the inode related to this name. This field may be NULL,
-  /// which indicates a negative entry, implying that the name is known not to
-  /// exist.
-  /// It can be a List of d_inode_ if it used to the link & unlink
-  Inode *d_inode_; /* Where the name belongs to - NULL is negative */
+  /// The pointer to the inode related to this name.
+  Inode *d_inode_;
 
   /// This will point to the parent dentry. For the root of a file-system, or
   /// for an anonymous entry like that for a file, this points back to the
   /// containing dentry itself.
-  Dentry *d_parent_; /* parent directory */
+  Dentry *d_parent_;
 
-  /// This list_head is used to link together all the children of the d_parent_
-  /// of this dentry.
-  PointList<Dentry> d_child_; /* child of parent list */
+  /// This list_head is used to link together all the children of the dentry.
+  PointList<Dentry> d_child_;
 
   /// This is the head of the d_child list that links all the children of this
   /// dentry. Of course, elements may refer to file and not just
   /// sub-directories.
-  PointList<Dentry> d_subdirs_; /* our children */
+  // PointList<Dentry> d_subdirs_;
 
   /// For a directory that has had a file-system mounted on it, this points to
   /// the root dentry of that file-system. For other dentries, this points back
   /// to the dentry itself.
-  Dentry *d_mounts_; /* mount information */
+  Dentry *d_mounts_;
 
-  /// This is the inverse of d_mounts. For the root of a mounted file-system,
+  /// This is the inverse of d_mounts_. For the root of a mounted file-system,
   /// this points to the dentry of the directory that it is mounted on. For
   /// other dentrys, this points to the dentry itself.
-  Dentry *d_covers_;
+  // Dentry *d_covers_;
 
   /// The d_name field contains the name of this entry, together with its hash
   /// value.
-  Qstr *d_name_;
+  char *d_name_;
   
-  /// This points to the super-block of the file-system on which the object
-  /// refered to by the dentry resides. It is not clear why this is needed
-  /// rather than using d_inode->i_sb.
-  // Superblock * d_sb_; /* The root of the dentry tree */
-
 public:
 
-  void set_inode(Inode *inode) { d_inode_ = inode; }
+  void setInode(Inode *inode) { d_inode_ = inode; }
+  void releaseInode() { d_inode_ = 0; }
+  Inode* getInode() { return d_inode_; }
+  
+  /// return the parent of the dentry
+  Dentry* getParent() { return d_parent_; }
 
-  void dentry_instantiate(Inode *inode) { d_inode_ = inode; d_count_++; }
-  int32 dentry_destantiate();
-  Dentry* get_parent() { return d_parent_; }
-  Inode* get_inode() { return d_inode_; }
+  bool findChild(Dentry *dentry) { return d_child_.included(dentry); }
+  bool emptyChild() { return d_child_.empty(); }
 
-  bool find_child(Dentry *dentry) { return d_child_.is_included(dentry); }
-  bool empty_child() { return d_child_.is_empty(); }
+  void setName(char* name);
+  char* getName();
 
-  void increment_dcount() { d_count_++; }
-  void decrement_dcount() { d_count_--; }
-
-  void set_name(char* name, uint32 length) { d_name_->set_name(name, length); }
-  char* get_name() { return d_name_->get_name(); }
-  uint32 get_name_length() { return d_name_->get_length(); }
-
-  /// This should compare the qstr with the all qstrs of the d_child_ list.
-  /// It should return the Dentry if it exists the same qstr in the list, 
+  /// This should compare the name with the all names of the d_child_ list.
+  /// It should return the Dentry if it exists the same name in the list, 
   /// return 0 if doesn't exist.
-  virtual Dentry* check_name(Dentry *checked_dentry);
+  virtual Dentry* checkName(const char* name);
 
-  /// remove a child dentry from the d_child_ list.
+  /// remove a chconst char* nameild dentry from the d_child_ list.
   /// @child the child dentry of the curent dentry.
-  virtual int32 d_child_remove(Dentry *child_dentry);
+  virtual int32 childRemove(Dentry *child_dentry);
   
   /// insert a child dentry to the d_child_ list.
   /// @child the 
-  virtual void d_child_insert(Dentry *child_dentry);
+  virtual void childInsert(Dentry *child_dentry);
 
 public:
+
+  /// Constructor of a new dentry.
+  /// create a Dentry, the root-directory call this contructor.
+  Dentry(char* name);
 
   /// Constructor of a new dentry.
   /// It muss to check the double name in the parent dentry before to call this
@@ -171,7 +124,7 @@ public:
 
   /// This is called when the reference count reaches zero, before the dentry
   /// is placed on the dentry_unused list.
-  virtual void d_delete();
+  // virtual void d_delete();
 };
 
 

@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.81 2005/09/07 00:33:52 btittelbach Exp $
+ * $Id: main.cpp,v 1.82 2005/09/10 19:25:27 qiangchen Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.81  2005/09/07 00:33:52  btittelbach
+ * +More Bugfixes
+ * +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+ *
  * Revision 1.80  2005/09/06 09:56:50  btittelbach
  * +Thread Names
  * +stdin Test Example
@@ -290,6 +294,7 @@
 #include "console/Terminal.h"
 
 #include "fs/PseudoFS.h"
+#include "fs/fs_tests.h"
 
 #include "FiFoDRBOSS.h"
 
@@ -558,8 +563,7 @@ void startup()
 //  SerialManager::getInstance()->do_detection( 1 );
   
 
-  main_console = new TextConsole(8);;
-
+  main_console = new TextConsole(8);
 
   Terminal *term_0 = main_console->getTerminal(0);
   Terminal *term_1 = main_console->getTerminal(1);
@@ -572,6 +576,10 @@ void startup()
   term_1->writeString("This is on term 1, you should not see me\n");
   term_2->writeString("This is on term 2, you should not see me\n");
   term_3->writeString("This is on term 3, you should not see me\n");
+
+//  for(uint32 i=0; i<100; i++)
+//    kprintfd("%d\n", i);
+  
   
   main_console->setActiveTerminal(0);
   
@@ -583,7 +591,7 @@ void startup()
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
   
-  kprintfd("%x\n",PseudoFS::getInstance()->getFilePtr("someloop"));
+  // kprintfd("%x\n",PseudoFS::getInstance()->getFilePtr("someloop"));
   /*
   console->setBackgroundColor(Console::BG_BLACK);
   console->setForegroundColor(Console::FG_GREEN);
@@ -592,7 +600,7 @@ void startup()
   kprintfd("Can be called with kprintf_debug or kprintfd\n");
 */
   
-  //testRegFS();
+  testRegFS();
   
   //~ uint32 dummy = 0;
   //~ kprintf("befor test set lock, val is now %d\n",dummy);

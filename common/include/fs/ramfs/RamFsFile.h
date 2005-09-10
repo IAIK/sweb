@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: RamFsFile.h,v $
  *
- * $Id: RamFsFile.h,v 1.3 2005/08/11 16:35:59 qiangchen Exp $
+ * $Id: RamFsFile.h,v 1.4 2005/09/10 19:25:27 qiangchen Exp $
  * $Log: RamFsFile.h,v $
+ * Revision 1.3  2005/08/11 16:35:59  qiangchen
+ * *** empty log message ***
+ *
  * Revision 1.2  2005/08/02 18:27:15  lythien
  * write RamFsFile
  *
@@ -54,18 +57,6 @@ class RamFsFile: public File
    * destructor for class RamFsFile
    */
   virtual ~RamFsFile();
-
-  //----------------------------------------------------------------------
-  /// Getter method for the filename.
-  ///
-  /// @return is the file's name
-  virtual char *getName() const;
-
-  //----------------------------------------------------------------------
-  /// Getter Method for the dentry.
-  ///
-  /// @return is the dentry associated to the File.
-  virtual Dentry *getDentry() const;
 
   //----------------------------------------------------------------------
   /// Sets the file position relative to the start of the file, the  end of 

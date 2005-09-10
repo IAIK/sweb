@@ -20,7 +20,7 @@
 #define ERROR_FE  "Error: the file is exists."
 
 //---------------------------------------------------------------------------
-int32 Inode::insert_opened_files(File* file)
+int32 Inode::insertOpenedFiles(File* file)
 {
   if(file == 0)
   {
@@ -28,18 +28,18 @@ int32 Inode::insert_opened_files(File* file)
     return -1;
   }
   
-  if(i_files_.is_included(file) == true)
+  if(i_files_.included(file) == true)
   {
     // ERROR_FE
     return -1;
   }
-  i_files_.push_end(file);
+  i_files_.pushBack(file);
   
   return 0;
 }
 
 //---------------------------------------------------------------------------
-int32 Inode::remove_opened_files(File* file)
+int32 Inode::removeOpenedFiles(File* file)
 {
   if(file == 0)
   {
@@ -47,7 +47,7 @@ int32 Inode::remove_opened_files(File* file)
     return -1;
   }
   
-  if(i_files_.is_included(file) == true)
+  if(i_files_.included(file) == true)
     i_files_.remove(file);
   else
   {

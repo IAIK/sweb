@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.9 2005/09/02 17:57:58 davrieb Exp $
+// $Id: VirtualFileSystem.h,v 1.10 2005/09/10 19:25:27 qiangchen Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.9  2005/09/02 17:57:58  davrieb
+// preparations to  build a standalone filesystem testsuite
+//
 // Revision 1.8  2005/08/11 16:46:57  davrieb
 // add PathWalker
 //
@@ -44,7 +47,7 @@
 /// The maximal number of file system types.
 #define MAX_FILE_SYSTEM_TYPES 16
 
-#include "kernel/List.h"
+// #include "kernel/List.h"
 
 class Superblock;
 class FileSystemType;
@@ -58,11 +61,11 @@ class VirtualFileSystem
 
     PointList<Superblock> superblocks_;
 
-    /// List of mounted Filesystems
-    List<VfsMount*> mounts_;
+    /// PointList of mounted Filesystems
+    PointList<VfsMount> mounts_;
 
     /// A null-terminated array of file system types.
-    List<FileSystemType*> file_system_types_;
+    PointList<FileSystemType> file_system_types_;
 
   public:
 

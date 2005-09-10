@@ -14,81 +14,84 @@
 // GNU General Public License for more details.
 
 #include "fs/Dentry.h"
+#include "util/string.h"
 #include "assert.h"
+#include "mm/kmalloc.h"
+
+#define STRLCOPY_ERR "strlcpy error"
+
+//---------------------------------------------------------------------------
+Dentry::Dentry(char* name)
+{
+  this->setName(name);
+  d_parent_ = this; // the parent of the root
+  d_inode_ = 0;
+}
 
 //---------------------------------------------------------------------------
 Dentry::Dentry(Dentry *parent)
 {
   d_parent_ = parent;
-  d_name_ = new Qstr();
   d_inode_ = 0;
-  d_count_ = 0;
 }
 
 //---------------------------------------------------------------------------
 Dentry::~Dentry()
 {
-  assert(d_count_ != 0);
   assert(d_inode_ != 0);
 
-  delete d_name_;
+  if(d_name_)
+    kfree(d_name_);
 }
 
 //---------------------------------------------------------------------------
-int32 Dentry::dentry_destantiate()
-{
-  if(d_count_ != 1)
-    return -1;
-  
-  d_inode_ = 0;
-  d_count_--;
-  return 0;
-}
-//---------------------------------------------------------------------------
-void Dentry::d_child_insert(Dentry *child_dentry)
+void Dentry::childInsert(Dentry *child_dentry)
 {
   assert(child_dentry != 0);
-  d_count_++;
-  d_child_.push_end(child_dentry);
+  d_child_.pushBack(child_dentry);
 }
 
 //---------------------------------------------------------------------------
-int32 Dentry::d_child_remove(Dentry *child_dentry)
+int32 Dentry::childRemove(Dentry *child_dentry)
 {
   assert(child_dentry != 0);
   if(d_child_.remove(child_dentry) == 0)
-  {
-    d_count_--;
     return 0;
-  }
+
   return -1;
 }
 
 //---------------------------------------------------------------------------
-Dentry* Dentry::check_name(Dentry *checked_dentry)
+void Dentry::setName(char* name)
 {
-//  bool include = false;
-  char* checked_name = checked_dentry->get_name();
-  uint32 checked_length = checked_dentry->get_name_length();
+  uint32 name_len = strlen(name);
+  d_name_ = (char*)kmalloc(name_len * sizeof(char));
+  
+  int32 copied = strlcpy(d_name_, name, name_len);
+  if(copied >= ((int32)name_len))
+  {
+    // STRLCOPY_ERR
+    kfree(d_name_);
+    d_name_ = 0;
+  } 
+}
+
+//---------------------------------------------------------------------------
+char* Dentry::getName() 
+{ 
+  return d_name_; 
+}
+
+//---------------------------------------------------------------------------
+Dentry* Dentry::checkName(const char* name)
+{
   for(uint32 count = 0; count < (d_child_.getLength()); count++)
   {
-    Dentry *dentry = (Dentry*)(d_child_.at(count));
-    char *tmp_name = dentry->get_name();
-    uint32 tmp_length = dentry->get_name_length();
-    if(checked_length == tmp_length)
+    Dentry *dentry = (Dentry*)(d_child_[count]);
+    const char *tmp_name = dentry->getName();
+    if(strcmp(tmp_name, name) == 0)
     {
-      uint32 index = 0;
-      for(; index < checked_length; index++)
-      {
-        if(checked_name[index] != tmp_name[index])
-          break;
-      }
-      if(index == checked_length)
-      {
-//        include = true;
-        return dentry;
-        break;
-      }
+      return dentry;
     }
   }
 
@@ -96,12 +99,11 @@ Dentry* Dentry::check_name(Dentry *checked_dentry)
 }
 
 //---------------------------------------------------------------------------
-void Dentry::d_delete()
-{
+// void Dentry::d_delete()
+// {
   
-  if(d_count_ == 1 && d_inode_ != 0)
-  {
-    d_parent_->d_child_remove(this);
-    //TODO: update in the super_block
-  }
-}
+//   if(d_count_ == 1 && d_inode_ != 0)
+//   {
+//     d_parent_->d_child_remove(this);
+//   }
+// }

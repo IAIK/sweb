@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: RamFsSuperblock.h,v $
 //
-// $Id: RamFsSuperblock.h,v 1.5 2005/08/11 16:34:28 qiangchen Exp $
+// $Id: RamFsSuperblock.h,v 1.6 2005/09/10 19:25:27 qiangchen Exp $
 // $Log: RamFsSuperblock.h,v $
+// Revision 1.5  2005/08/11 16:34:28  qiangchen
+// *** empty log message ***
+//
 // Revision 1.4  2005/07/21 18:07:03  davrieb
 // mount of the root directory
 //
@@ -26,8 +29,8 @@
 
 #include "fs/PointList.h"
 #include "fs/Superblock.h"
-#include "fs/ramfs/RamFsInode.h"
 
+class Inode;
 class Superblock;
 
 //-----------------------------------------------------------------------------
@@ -41,36 +44,9 @@ class Superblock;
  */
 class RamFsSuperblock : public Superblock
 {
+ public:
 
-protected:
-  PointList<Inode> all_inodes_;
-
-public:
-
-  RamFsSuperblock(Dentry* s_root) :
-    Superblock(s_root)
-  {
-
-    Dentry *root_dentry = 0;
-
-    if (s_root)
-    {
-      Dentry* parent = s_root->get_parent();
-      root_dentry = new Dentry(parent);
-
-      mounted_over_ = s_root;
-      s_root = root_dentry;
-    }
-    else
-    {
-      root_dentry = new Dentry(0);
-    }
-
-    Inode *root_inode = (Inode*)(new RamFsInode(this, I_DIR));
-    root_dentry->set_inode(root_inode);
-
-    all_inodes_.push_end(root_inode);
-  }
+  RamFsSuperblock(Dentry* s_root);
 
   virtual ~RamFsSuperblock();
 
@@ -97,7 +73,7 @@ public:
   /// least) by file-system which attaches kmalloced data to the inode
   /// sturcture, as particularly might be the case for file-systems using the
   /// generic_ip field in class Inode.
-  virtual void clear_inode(Inode* inode) {}
+  virtual void clear_inode(Inode* /*inode*/) {}
   
 };
 //-----------------------------------------------------------------------------

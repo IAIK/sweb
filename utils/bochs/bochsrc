@@ -1,7 +1,11 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.17 2005/09/05 23:01:24 btittelbach Exp $
+#*    $Id: bochsrc,v 1.18 2005/09/10 19:25:27 qiangchen Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.17  2005/09/05 23:01:24  btittelbach
+#*    Keyboard Input Handler
+#*    + several Bugfixes
+#*
 #*    Revision 1.16  2005/09/03 18:20:15  nomenquis
 #*    pseudo fs works now
 #*
@@ -188,7 +192,7 @@ romimage: file=$BXSHARE/BIOS-bochs-latest, address=0xf0000
 #megs: 256
 #megs: 128
 #megs: 64
-megs: 1024
+#megs: 1024
 #megs: 16
 #megs: 8
 #megs: 1024

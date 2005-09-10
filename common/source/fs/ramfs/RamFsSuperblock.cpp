@@ -15,7 +15,42 @@
 
 #include "fs/ramfs/RamFsSuperblock.h"
 #include "fs/ramfs/RamFsInode.h"
+#include "console/kprintf.h"
+#include "fs/ramfs/RamFsInode.h"
 
+#define ROOT_NAME "/"
+
+//----------------------------------------------------------------------
+RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
+{
+  kprintfd("***** enters Constructor of the RamFsSuperblock\n");
+  Dentry *root_dentry = 0;
+
+  // create or find a root_dentry
+  if (s_root)
+  {
+    Dentry* parent = s_root->getParent();
+    root_dentry = new Dentry(parent);
+      
+    mounted_over_ = s_root;
+    s_root_ = root_dentry;
+  }
+  else
+  {
+    kprintfd("init the ROOT_NAME\n");
+    root_dentry = new Dentry(ROOT_NAME);
+    mounted_over_ = 0;
+  }
+  s_root_ = root_dentry;
+
+  // create the inode for the root_dentry
+  Inode *root_inode = (Inode*)(new RamFsInode(this, I_DIR));
+  root_dentry->setInode(root_inode);
+
+  // add the root_inode in the list
+  all_inodes_.pushBack(root_inode);
+  kprintfd("***** leaves Constructor of the RamFsSuperblock\n");
+}
 //----------------------------------------------------------------------
 RamFsSuperblock::~RamFsSuperblock()
 {
@@ -25,9 +60,9 @@ RamFsSuperblock::~RamFsSuperblock()
 void RamFsSuperblock::read_inode(Inode* inode)
 {
   assert(inode);
-  assert(s_inode_used_.is_empty());
+  assert(s_inode_used_.empty());
 
-  all_inodes_.push_end(inode);
+  all_inodes_.pushBack(inode);
 }
 
 //----------------------------------------------------------------------

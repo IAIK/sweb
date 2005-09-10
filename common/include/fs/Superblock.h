@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.9 2005/09/02 17:57:58 davrieb Exp $
+// $Id: Superblock.h,v 1.10 2005/09/10 19:25:27 qiangchen Exp $
 // $Log: Superblock.h,v $
+// Revision 1.9  2005/09/02 17:57:58  davrieb
+// preparations to  build a standalone filesystem testsuite
+//
 // Revision 1.8  2005/08/11 16:46:57  davrieb
 // add PathWalker
 //
@@ -47,9 +50,7 @@ class VirtualFileSystem;
 
 //-----------------------------------------------------------------------------
 /**
- * Superblock
- *
- * The first block of the virtual-file-system. It contains for instance the
+ * Superblock * The first block of the virtual-file-system. It contains for instance the
  * configuration of the file system. Sotre information concerning a mounted
  * filesystem. For disk-based filesystems, this object usually corresponds
  * to a filesystem control block stored on disk.
@@ -77,10 +78,8 @@ protected:
   /// super-block or access times on files, will be made.
   uint64 s_flags_;
 
-  /// This is a class Dentry which refers to the root of the file-system. It is
-  /// normally created by loading the root iode from the file-system, and
-  /// passing it to d_alloc_root. This dentry will get spliced into the Dcache
-  /// by the mount command.
+  /// The Dentry refers the root of the file-system. It is normally created by
+  /// loading the root inode from the file-system. 
   Dentry *s_root_;
 
   /// The old Dentry of the mount point of a mounted file system
@@ -92,6 +91,9 @@ protected:
   /// A list of used inodes.
   PointList<Inode> s_inode_used_;
 
+  /// all inodes of the superblockt
+  PointList<Inode> all_inodes_;
+
   /// This is a list of files (linked on f_list) of open files on this
   /// file-system. It is used, for example, to check if there are any files
   /// open for write before remounting the file-system as read-only.
@@ -102,19 +104,18 @@ protected:
   //--------------------------------------------------------------------------
   /// This indicates whether the super-block is currently locked. It is
   /// managed by lock_super and unlock_super.
-  uint8 s_lock_;
+  // uint8 s_lock_;
 
   /// This is a queue of processes that are waiting for the s_lock_ lock on
   /// the super-block.
-  WaitQueue *s_wait_;
+  // PointList *s_wait_;
   //--------------------------------------------------------------------------
 public:
-  void insertInodeUsed(Inode *inode) { s_inode_used_.push_end(inode); }
+  void insertInodeUsed(Inode *inode) { s_inode_used_.pushBack(inode); }
 
 public:
 
-  Superblock(Dentry* s_root) :
-    mounted_over_(0)
+  Superblock(Dentry* s_root) : mounted_over_(0) 
     { s_root_ = s_root; }
 
   virtual ~Superblock();
@@ -187,16 +188,16 @@ public:
   virtual void umount_begin(Superblock* /*super_block*/) {}
 
   /// Get the root Dentry of the Superblock
-  Dentry const *getRoot() const;
+  Dentry *getRoot();
 
   /// insert the opened file point to the file_list
-  int32 insert_opened_files(File*);
+  int32 insertOpenedFiles(File*);
 
   /// remove the opened file point from the file_list
-  int32 remove_opened_files(File*);
+  int32 removeOpenedFiles(File*);
 
   /// check the existence of the opened file point in the file_list
-  int32 check_opened_files(File* file) {return(s_files_.is_included(file));}
+  int32 checkOpenedFiles(File* file) {return(s_files_.included(file));}
 
 };
 //-----------------------------------------------------------------------------

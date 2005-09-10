@@ -23,9 +23,7 @@ RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
   else
     data_ = 0;
 
-  i_state_ = I_UNUSED;
   i_size_ = BASIC_ALLOC;
-  i_count_ = 0;
   i_nlink_ = 0;
   i_dentry_ = 0;
 }
@@ -33,10 +31,9 @@ RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
 //---------------------------------------------------------------------------
 RamFsInode::~RamFsInode()
 {
-  assert(i_count_ != 0);
-  assert(i_nlink_ != 0);
+  assert(i_nlink_ == 0);
   assert(i_dentry_ == 0);
-  assert(i_dentry_link_.is_empty() != true);
+  assert(i_dentry_link_.empty() == true);
   
   if (data_)
   {
@@ -84,18 +81,15 @@ int32 RamFsInode::mknod(Dentry *dentry)
     // ERROR_DNE
     return -1;
   }
+
+  if(i_mode_ != I_DIR)
+  {
+    // ERROR_IC
+    return -1;
+  }
   
-	if(i_count_ != 0)
- 	{
- 	  // ERROR_DU
- 	  return -1;
- 	}
- 	i_count_++;
-
   i_dentry_ = dentry;
-
-  dentry->set_inode(this);
-  dentry->increment_dcount();
+  dentry->setInode(this);
   return 0;
 }
 
@@ -123,18 +117,15 @@ int32 RamFsInode::link(Dentry *dentry)
   if(i_mode_ == I_FILE)
   {
     i_nlink_++;
-    i_count_++;
-    i_dentry_link_.push_end(dentry);
-    
-    // dentry instantiate
-    dentry->dentry_instantiate(this);
+    i_dentry_link_.pushBack(dentry);
+    dentry->setInode(this);
   }
   else
   {
     // ERROR_HLI
     return -1;
   }
-  
+
   return 0;
 }
 
@@ -149,34 +140,32 @@ int32 RamFsInode::unlink(Dentry *dentry)
 
   if(i_mode_ == I_FILE)
   {
-    if(i_dentry_link_.is_included(dentry) == false)
+    if(i_dentry_link_.included(dentry) == false)
     {
       // ERROR_DNEILL
       return -1;
     }
 
     i_nlink_--;
-    i_count_--;
     i_dentry_link_.remove(dentry);
-    
-    if(i_dentry_link_.is_empty() == false)
+ 
+    if(i_dentry_link_.empty() == false)
       return 0;
-  }
-
-  // dentry destantiate & remove correspondent dentry
-  int32 allow_remove = dentry->dentry_destantiate();
-  if(allow_remove == -1)
-  {
-    // ERROR_DES
-    return -1;
+    else
+      return INODE_DEAD;
   }
   else
   {
-    Dentry *parent_dentry = dentry->get_parent();
-    parent_dentry->d_child_remove(dentry);
-    delete dentry;
+    // ERROR_HLI
+    return -1;
   }
-  
+
+  // remove dentry
+  dentry->releaseInode();
+  Dentry *parent_dentry = dentry->getParent();
+  parent_dentry->childRemove(dentry);
+  delete dentry;
+
   return 0;
 }
 
@@ -191,10 +180,28 @@ int32 RamFsInode::rmdir(Dentry *sub_dentry)
   
   if(i_mode_ == I_DIR)
   {
-    if(i_dentry_->find_child(sub_dentry) == true)
+    if(i_dentry_->findChild(sub_dentry) == true)
     {
-      // ???
-      unlink(sub_dentry);
+      uint32 sub_inode_mode = (sub_dentry->getInode())->getMode();
+      if(sub_inode_mode == I_FILE)
+        unlink(sub_dentry);
+      else if(sub_inode_mode == I_DIR)
+      {
+        if(sub_dentry->emptyChild() == true)
+        {
+          Inode *sub_inode = sub_dentry->getInode();
+          sub_dentry->releaseInode();
+          Dentry *parent_dentry = sub_dentry->getParent();
+          parent_dentry->childRemove(sub_dentry);
+          delete sub_dentry;
+          return INODE_DEAD;
+        }
+        else
+        {
+          // ERROR_DES
+          return -1;
+        }
+      }
     }
     else
     {
@@ -212,18 +219,18 @@ int32 RamFsInode::rmdir(Dentry *sub_dentry)
 }
 
 //---------------------------------------------------------------------------
-Dentry* RamFsInode::lookup(Dentry *dentry)
+Dentry* RamFsInode::lookup(const char* name)
 {
-  Dentry* dentry_update;
-  if(dentry == 0)
+  if(name == 0)
   {
     // ERROR_DNE
     return 0;
   }
   
+  Dentry* dentry_update = 0;
   if(i_mode_ == I_DIR)
   {
-    dentry_update = i_dentry_->check_name(dentry);
+    dentry_update = i_dentry_->checkName(name);
     if(dentry_update == 0)
     {
       // ERROR_NNE

@@ -22,6 +22,7 @@
 #include <cassert>
 #else
 #include "assert.h"
+#include "console/kprintf.h"
 #endif
 
 //-----------------------------------------------------------------------------
@@ -42,11 +43,11 @@ public:
   { item_ = item; prev_ = this; next_ = this; }
   virtual ~PointListElement() {}
 
-  virtual void set_next(PointListElement<ContentType> *next) { next_ = next; }
-  virtual void set_prev(PointListElement<ContentType> *prev) { prev_ = prev; }
-  virtual PointListElement* get_next() { return next_; }
-  virtual PointListElement* get_prev() { return prev_; }
-  virtual ContentType* get_item() { return item_; }
+  virtual void setNext(PointListElement<ContentType> *next) { next_ = next; }
+  virtual void setPrev(PointListElement<ContentType> *prev) { prev_ = prev; }
+  virtual PointListElement* getNext() { return next_; }
+  virtual PointListElement* getPrev() { return prev_; }
+  virtual ContentType* getItem() { return item_; }
 };
 
 //-----------------------------------------------------------------------------
@@ -68,12 +69,14 @@ protected:
   uint32 length_;
 
 public:
-  PointList() { first_ = last_ = 0; length_ = 0; }
+
+  PointList() { // kprintfd("*****contructor of the PointList\n"); 
+    first_ = last_ = 0; length_ = 0; }
 
   virtual ~PointList();
 
 protected:
-  virtual void list_element_insert(
+  virtual void listElementInsert(
                  PointListElement<ContentType> *new_list_element,
                  PointListElement<ContentType> *prev, 
                  PointListElement<ContentType> *next);
@@ -88,12 +91,12 @@ public:
   /**
    * check the existance of the input entry
    */
-  virtual bool is_included(ContentType *entry);
+  virtual bool included(ContentType *entry);
 
   /**
    * Insert a new entry at the end of the list.
    */
-  virtual void push_end(ContentType *new_entry);
+  virtual void pushBack(ContentType *new_entry);
 
   /**
    * Insert a new entry after the specified entry..
@@ -103,7 +106,7 @@ public:
   /**
    * Insert a new entry at the first of the list.
    */
-  virtual void push_first(ContentType *new_entry);
+  virtual void pushFront(ContentType *new_entry);
 
   /**
    * Insert a new entry before the specified entry..
@@ -114,18 +117,25 @@ public:
    * remove the element that the entry contained.
    */
   virtual int32 remove(ContentType *entry);
+  
+  /**
+   * remove the element that the entry contained.
+   */
+  // virtual int32 remove(uint32 index);
 
   /**
    * remove the first element of the list and return the corresponde item
    */
-  virtual ContentType* pop_first();
+  virtual ContentType* popFront();
   
   /**
    * return the point of ContetnType with the index in the list.
    */
   virtual ContentType* at(uint32 index);
+  
+  virtual ContentType* operator[](uint32 index);
 
-  virtual bool is_empty();
+  virtual bool empty();
 
   virtual uint32 getLength() { return length_; }
 };
@@ -135,27 +145,27 @@ template <class ContentType>
 PointList<ContentType>::~PointList()
 {
   while(first_ != 0)
-    pop_first();
+    popFront();
 }
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-void PointList<ContentType>::list_element_insert(
+void PointList<ContentType>::listElementInsert(
                PointListElement<ContentType> *new_list_element,
                PointListElement<ContentType> *prev, 
                PointListElement<ContentType> *next)
 {
-  prev->set_next(new_list_element);
-  new_list_element->set_prev(prev);
-  new_list_element->set_next(next);
-  next->set_prev(new_list_element);
+  prev->setNext(new_list_element);
+  new_list_element->setPrev(prev);
+  new_list_element->setNext(next);
+  next->setPrev(new_list_element);
 }
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
 PointListElement<ContentType>* PointList<ContentType>::find(ContentType *entry)
 {
-  if(is_empty())
+  if(first_ == 0)
     return 0;
 
   PointListElement<ContentType> *at = first_;
@@ -163,10 +173,10 @@ PointListElement<ContentType>* PointList<ContentType>::find(ContentType *entry)
 
   do
   {
-    if(at->get_item() == entry)
+    if(at->getItem() == entry)
       return at;
     prev = at;
-    at = prev->get_next();
+    at = prev->getNext();
   }
   while(prev != last_);
 
@@ -175,9 +185,9 @@ PointListElement<ContentType>* PointList<ContentType>::find(ContentType *entry)
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-bool PointList<ContentType>::is_included(ContentType *entry)
+bool PointList<ContentType>::included(ContentType *entry)
 {
-  if(is_empty())
+  if(first_ == 0)
     return false;
   
   PointListElement<ContentType> *at = first_;
@@ -185,10 +195,10 @@ bool PointList<ContentType>::is_included(ContentType *entry)
   
   do
   {
-    if(at->get_item() == entry)
+    if(at->getItem() == entry)
       return true;
     prev = at;
-    at = prev->get_next();
+    at = prev->getNext();
   } while(prev != last_);
   
   return false;
@@ -196,25 +206,34 @@ bool PointList<ContentType>::is_included(ContentType *entry)
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-void PointList<ContentType>::push_end(ContentType *new_entry)
+void PointList<ContentType>::pushBack(ContentType *new_entry)
 {
+//  kprintfd("List test1\n");
   length_++;
   PointListElement<ContentType> *new_element =
                             new PointListElement<ContentType>(new_entry);
-  if(is_empty()) // if the list is empty
+//  kprintfd("List test2\n");
+  if(first_ == 0) // if the list is empty
   {
+//  kprintfd("List test3\n");
     first_ = new_element;
     last_ = new_element;
+//  kprintfd("List test4\n");
   }
   else
   {
+//  kprintfd("List test5\n");
     PointListElement<ContentType> *at = last_;
 
-    at->set_next(new_element);
-    new_element->set_prev(at);
+//  kprintfd("List test6\n");
+    at->setNext(new_element);
+    new_element->setPrev(at);
+//  kprintfd("List test7\n");
 
     last_ = new_element;
+//  kprintfd("List test8\n");
   }
+//  kprintfd("List test9\n");
 }
 
 //-----------------------------------------------------------------------------
@@ -228,17 +247,17 @@ void PointList<ContentType>::append(ContentType *new_entry, ContentType *entry)
   at = find(entry);
   assert(at != 0);
   if(at != 0)
-    list_element_insert(new_element, at, at->get_next());
+    listElementInsert(new_element, at, at->getNext());
 }
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-void PointList<ContentType>::push_first(ContentType *new_entry)
+void PointList<ContentType>::pushFront(ContentType *new_entry)
 {
   length_++;
   PointListElement<ContentType> *new_element =
                               new PointListElement<ContentType>(new_entry);
-  if(is_empty()) // if the list is empty
+  if(first_ == 0) // if the list is empty
   {
     first_ = new_element;
     last_ = new_element;
@@ -247,8 +266,8 @@ void PointList<ContentType>::push_first(ContentType *new_entry)
   {
     PointListElement<ContentType> *at = first_;
 
-    new_element->set_next(at);
-    at->set_prev(new_element);
+    new_element->setNext(at);
+    at->setPrev(new_element);
 
     first_ = new_element;
   }
@@ -265,25 +284,25 @@ void PointList<ContentType>::prepend(ContentType *new_entry, ContentType *entry)
   at = find(entry);
   assert(at != 0);
   if(at != 0)
-    list_element_insert(new_element, at->get_prev(), at);
+    listElementInsert(new_element, at->getPrev(), at);
 }
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-ContentType* PointList<ContentType>::pop_first()
+ContentType* PointList<ContentType>::popFront()
 {
-  assert(is_empty() != true);
+  assert(empty() != true);
 
   length_--;
   PointListElement<ContentType> *element = first_;
-  ContentType *item = first_->get_item();
+  ContentType *item = first_->getItem();
   if(first_ == last_)
   { // List has only one entry, now has none
     first_ = 0;
     last_ = 0;
   }
   else
-    first_ = element->get_next();
+    first_ = element->getNext();
 
   delete element;
   return item;
@@ -293,7 +312,7 @@ ContentType* PointList<ContentType>::pop_first()
 template <class ContentType>
 int32 PointList<ContentType>::remove(ContentType *entry)
 {
-  if(is_empty())
+  if(first_ == 0)
     return -1;
 
   PointListElement<ContentType> *element = find(entry);
@@ -302,22 +321,22 @@ int32 PointList<ContentType>::remove(ContentType *entry)
   else
   {
     length_--;
-    PointListElement<ContentType> *prev = element->get_prev();
-    PointListElement<ContentType> *next = element->get_next();
+    PointListElement<ContentType> *prev = element->getPrev();
+    PointListElement<ContentType> *next = element->getNext();
     if(element == first_)
     {
-      next->set_prev(next);
+      next->setPrev(next);
       first_ = next;
     }
     else if(element == last_)
     {
-      prev->set_next(prev);
+      prev->setNext(prev);
       last_ = prev;
     }
     else
     {
-      prev->set_next(next);
-      next->set_prev(prev);
+      prev->setNext(next);
+      next->setPrev(prev);
     }
     delete element;
   }
@@ -325,13 +344,54 @@ int32 PointList<ContentType>::remove(ContentType *entry)
 }
 
 //-----------------------------------------------------------------------------
+/*
 template <class ContentType>
-bool PointList<ContentType>::is_empty()
+int32 PointList<ContentType>::remove(uint32 index)
 {
-  if(first_ == 0)
-    return true;
+  PointListElement<ContentType> *element = this->at(index); 
+
+  if(element == 0)
+    return -1;
   else
+  {
+    length_--;
+    PointListElement<ContentType> *prev = element->getPrev();
+    PointListElement<ContentType> *next = element->getNext();
+    if(element == first_)
+    {
+      next->setPrev(next);
+      first_ = next;
+    }
+    else if(element == last_)
+    {
+      prev->setNext(prev);
+      last_ = prev;
+    }
+    else
+    {
+      prev->setNext(next);
+      next->setPrev(prev);
+    }
+    delete element;
+  }
+  return 0;
+}
+*/
+//-----------------------------------------------------------------------------
+template <class ContentType>
+bool PointList<ContentType>::empty()
+{
+  kprintfd("empty test1\n");
+  if(first_ == 0)
+  {
+  kprintfd("empty test2\n");
+    return true;
+  }
+  else
+  {
+  kprintfd("empty test3\n");
     return false;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -345,16 +405,34 @@ ContentType* PointList<ContentType>::at(uint32 index)
   PointListElement<ContentType> *at = prev;
   while(index != 0)
   {
-    at = prev->get_next();
+    at = prev->getNext();
     prev = at;
     index--;
   }
   
-  ContentType *item = at->get_item();
+  ContentType *item = at->getItem();
   return item;
 }
 
 //-----------------------------------------------------------------------------
+template <class ContentType>
+ContentType* PointList<ContentType>::operator[](uint32 index)
+{
+  if(index >= length_)
+    return 0;
+  
+  PointListElement<ContentType> *prev = first_;
+  PointListElement<ContentType> *at = prev;
+  while(index != 0)
+  {
+    at = prev->getNext();
+    prev = at;
+    index--;
+  }
+  
+  ContentType *item = at->getItem();
+  return item;
+}
 
 #endif // PointList_h___
 

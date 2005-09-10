@@ -39,6 +39,7 @@ class Superblock;
 // The per-inode flags:
 #define MS_NODEV 2 // If this inode is a device special file, it cannot be
                    // opend.
+#define INODE_DEAD 666
 
 //-------------------------------------------------------------------------
 /**
@@ -72,10 +73,6 @@ class Inode
   /// The (open) file of this inode.
   PointList<File> i_files_;
 
-  /// the reference count of the inode. if i_count_ is zero, it can be free
-  /// the inode.
-  uint32 i_count_;
-
   /// the number of the link of this inode.
   uint32 i_nlink_;
 
@@ -86,17 +83,16 @@ class Inode
   uint32 i_size_;
 
   /// The basic block size of inode.
-  uint64 i_blksize_;
+  // uint64 i_blksize_;
 
   /// The power of 2 that i_blksize_ is.
-  uint32 i_blocks_;
+  // uint32 i_blocks_;
 
   /// There are three possible inode mode bits: I_FILE, I_DIR, I_LNK
   uint32 i_mode_;
 
   /// There are three possible inode state bits: I_DIRTY, I_LOCK.
   uint32 i_state_;
-
 
  public:
 
@@ -105,23 +101,14 @@ class Inode
 
   virtual ~Inode() {}
 
-  //--------------------------------------------------------------------------
-  // This methode are only meaningful on directory inodes.
-  //--------------------------------------------------------------------------
-  /// create is called when the VFS wants to create a file with the given name
-  /// (in the dentry) in the given directory. The VFS will have already checked
-  /// that the name doesn't exist, and the dentry passed will be a negative
-  /// dentry meanging that the inode pointer will be NULL.If create successful,
-  /// get a new empty inode from the cache with get_empty_inode, fill in the
-  /// fields and insert it into the hash table with insert_inode_hash, mark it
-  /// dirty, and instantiate it into the Dcache with d_instantiate.
+  /// Create a directory with the given dentry.
   virtual int32 create(Dentry *) { return 0; }
 
   /// lookup should check if that name (given by the Dentry) exists in the
   /// directory (given by the inode) and should update the Dentry if it does.
   /// This involves finding and loading the inode. If the lookup failed to find
   /// anything, this is indicated by returning a negative value.
-  virtual Dentry* lookup(Dentry *) {return 0;}
+  virtual Dentry* lookup(const char* /*name*/) {return 0;}
 
   /// The link method should make a hard link to by the dentry, which is in
   /// the directory refered to by the Inode.
@@ -137,14 +124,13 @@ class Inode
   virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, 
                         const char */*link_name*/) {return 0;}
 
-  /// Create a directory with the given parent and name.
+  /// Create a directory with the given dentry.
   virtual int32 mkdir(Dentry *) {return 0;}
 
   /// Remove the named directory (if empty) and d_delete the dentry.
   virtual int32 rmdir(Dentry *) {return 0;}
 
-  /// Create a device special file with name and device number (the inode is
-  /// the parent). Then d_instantiate the new inode into the dentry.
+  /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *) {return 0;}
 
   /// The src_inode and src_entry refer to a directory and name that exist.
@@ -153,7 +139,6 @@ class Inode
   /// parent isn't a child of the old name, have already been done.
   virtual int32 rename(Inode */*src_inode*/, Dentry */*src_dentry*/,
                        Inode */*prt_inode*/, Dentry */*dst_dentry*/) {return 0;}
-  //--------------------------------------------------------------------------
 
   /// The symbolic link referred to by the dentry is read and the value is
   /// copied into the user buffer (with copy_to_user) with a maximum length
@@ -165,7 +150,7 @@ class Inode
   /// from the directory would arrive at the child dentry. 
   /// @param prt_dentry the parent dentry
   /// @param chd_dentry the child dentry
-  virtual Dentry* follow_link(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) {return 0;}
+  virtual Dentry* followLink(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) {return 0;}
 
   /// read the date of the inode
   virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
@@ -174,14 +159,16 @@ class Inode
  public:
 
   /// insert the opened file point to the file_list of this inode.
-  int32 insert_opened_files(File*);
+  int32 insertOpenedFiles(File*);
 
   /// remove the opened file point from the file_list of this inode.
-  int32 remove_opened_files(File*);
+  int32 removeOpenedFiles(File*);
   
-  bool is_opened_files_empty() { return(i_files_.is_empty());}
+  bool openedFilesEmpty() { return(i_files_.empty());}
   
   Superblock* getSuperblock() { return i_superblock_; }
+  
+  uint32 getMode() { return i_mode_; }
 };
 
 
