@@ -22,13 +22,17 @@
 /**
  * CVS Log Info for $RCSfile: write.c,v $
  *
- * $Id: write.c,v 1.1 2005/09/07 03:49:45 aniederl Exp $
- * $Log$
+ * $Id: write.c,v 1.2 2005/09/11 10:20:11 aniederl Exp $
+ * $Log: write.c,v $
+ * Revision 1.1  2005/09/07 03:49:45  aniederl
+ * import of read/write functions
+ *
  *
  */
 
 
-#include <unistd.h>
+#include "unistd.h"
+#include "sys/syscall.h"
 
 
 //----------------------------------------------------------------------
