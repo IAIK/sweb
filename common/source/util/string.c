@@ -124,9 +124,11 @@ void *memset(void *block, uint8 c, size_t size)
 }
 
 
-//----------------------------------------------------------------------
+
 char *strcpy(char *dest, const char* src)
 {
+  assert("don't use strcpy" == 0);
+
   char *start = dest;
 
   for(; (*dest = *src); ++src, ++dest)
@@ -165,6 +167,7 @@ char *strncpy(char *dest, const char* src, size_t size)
 size_t strlcpy(char* dest, const char* src, size_t size)
 {
     const char* src_start = src;
+    char *dst_iterl
     size_t n = size;
 
     if(n > 1)
@@ -173,7 +176,7 @@ size_t strlcpy(char* dest, const char* src, size_t size)
 
       while (n--)
       {
-        if ((*dest++ = *src++) == 0)
+        if ((*dst_iter++ = *src++) == 0)
         {
           break;
         }
@@ -181,9 +184,9 @@ size_t strlcpy(char* dest, const char* src, size_t size)
     }
 
     // terminate dest, if it was not done already
-    if (n == 0 && *(dest - 1))
+    if (n == 0 && *(dst_iter - 1))
     {
-      *dest = '\0';
+      *dst_iter = '\0';
     }
 
     while (*src)
