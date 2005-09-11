@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.1 2005/09/11 09:46:15 aniederl Exp $
- * $Log$
+ * $Id: printf.c,v 1.2 2005/09/11 10:22:36 aniederl Exp $
+ * $Log: printf.c,v $
+ * Revision 1.1  2005/09/11 09:46:15  aniederl
+ * initial import of printf
+ *
  */
 
 
@@ -349,4 +352,6 @@ extern int printf(const char *format, ...)
   va_end(args);
 
   write(STDOUT_FILENO, (void*) output_string.start, output_string.length);
+
+  free(output_string.start);
 }
