@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: syscall.h,v $
  *
- * $Id: syscall.h,v 1.1 2005/09/11 10:17:53 aniederl Exp $
- * $Log$
+ * $Id: syscall.h,v 1.2 2005/09/11 12:35:49 aniederl Exp $
+ * $Log: syscall.h,v $
+ * Revision 1.1  2005/09/11 10:17:53  aniederl
+ * added amd64 port of syscall macros
+ *
  *
  */
 
@@ -80,6 +83,7 @@ extern unsigned int errno;
   RESTORE_ARGUMENT_REGISTERS_5
 
 
+// general-purpose syscall body macro
 #define SYSCALL_BODY(name, num_args, args...)                                 \
 (                                                                             \
 {                                                                             \
@@ -104,6 +108,26 @@ extern unsigned int errno;
 }                                                                             \
 )
 
+// for direct usage of the return value
+#define SYSCALL_BODY_SPECIAL(name, num_args, args...)                         \
+(                                                                             \
+{                                                                             \
+  unsigned int result;                                                        \
+                                                                              \
+  __asm__ __volatile__(SAVE_ARGUMENT_REGISTERS_##num_args);                   \
+                                                                              \
+  __asm__ __volatile__("int $0x80\n"                                          \
+                       : "=a"(result)                                         \
+                       : "0"(__NR_##name) ARGUMENT_REGISTERS_##num_args(args) \
+    );                                                                        \
+                                                                              \
+  __asm__ __volatile__(RESTORE_ARGUMENT_REGISTERS_##num_args);                \
+                                                                              \
+  (int) result;                                                               \
+}                                                                             \
+)
+
+// argument register types
 #define ARGUMENT_REGISTERS_0()
 #define ARGUMENT_REGISTERS_1(arg1) , "b"(arg1)
 #define ARGUMENT_REGISTERS_2(arg1, arg2) , "b"(arg1), "c"(arg2)
@@ -166,6 +190,58 @@ return_type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5,\
                                      arg6)); \
 }
 
+
+
+#define __syscall_special_0(return_type, name) \
+return_type name() \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 0)); \
+}
+
+#define __syscall_special_1(return_type, name, type1, arg1) \
+return_type name(type1 arg1) \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 1, arg1)); \
+}
+
+#define __syscall_special_2(return_type, name, type1, arg1, type2, arg2) \
+return_type name(type1 arg1, type2 arg2) \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 2, arg1, arg2)); \
+}
+
+#define __syscall_special_3(return_type, name, type1, arg1, type2, arg2, \
+                            type3, arg3) \
+return_type name(type1 arg1, type2 arg2, type3 arg3) \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 3, arg1, arg2, arg3)); \
+}
+
+#define __syscall_special_4(return_type, name, type1, arg1, type2, arg2, \
+                            type3, arg3, type4, arg4) \
+return_type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4) \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 4, arg1, arg2, arg3, \
+                                             arg4)); \
+}
+
+#define __syscall_special_5(return_type, name, type1, arg1, type2, arg2, \
+                           type3, arg3, type4, arg4, type5, arg5) \
+return_type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5) \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 5, arg1, arg2, arg3, arg4, \
+                                             arg5)); \
+}
+
+#define __syscall_special_6(return_type, name, type1, arg1, type2, arg2, \
+                            type3, arg3, type4, arg4, type5, arg5, type6, \
+                            arg6) \
+return_type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5,\
+                 type6 arg6) \
+{ \
+  return (return_type) (SYSCALL_BODY_SPECIAL(name, 6, arg1, arg2, arg3, arg4, \
+                                             arg5, arg6)); \
+}
 
 
 

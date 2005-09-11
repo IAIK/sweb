@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: unistd.h,v $
  *
- * $Id: unistd.h,v 1.1 2005/09/11 10:55:07 aniederl Exp $
- * $Log$
+ * $Id: unistd.h,v 1.2 2005/09/11 12:35:49 aniederl Exp $
+ * $Log: unistd.h,v $
+ * Revision 1.1  2005/09/11 10:55:07  aniederl
+ * initial import of unistd.h
+ *
  */
 
 
@@ -285,6 +288,8 @@ void _exit(int status);
  * Creates a new hard link to an existing file.
  * If new_path exists it will not be overwritten.
  *
+ * @param old_path Path to file for linking
+ * @param new_path Path to the link to create
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
@@ -458,12 +463,12 @@ extern ssize_t write(int file_descriptor, const void *buffer, size_t count);
  * the system has enough memory and the process doesn't exceed ist maximum
  * data size.
  *
- * @param end_data_segment the address where the end of the data segment\
+ * @param data_segment_end the address where the end of the data segment\
  should be set.
  * @return 0 on success, -1 otherwise and errno is set to ENOMEM
  *
  */
-extern int brk(void *end_data_segment);
+extern int brk(void *data_segment_end);
 
 /**
  * Increments the program's data space by the given value bytes.
