@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: syscall.h,v $
  *
- * $Id: syscall.h,v 1.1 2005/09/07 03:46:15 aniederl Exp $
- * $Log$
+ * $Id: syscall.h,v 1.2 2005/09/11 10:15:32 aniederl Exp $
+ * $Log: syscall.h,v $
+ * Revision 1.1  2005/09/07 03:46:15  aniederl
+ * import of syscall macros
+ *
  *
  */
 
@@ -88,7 +91,7 @@ extern unsigned int errno;
   __asm__ __volatile__(SAVE_ARGUMENT_REGISTERS_##num_args);                   \
                                                                               \
   __asm__ __volatile__("int $0x80\n"                                          \
-                       : "=a"(result),                                        \
+                       : "=a"(result)                                         \
                        : "0"(__NR_##name) ARGUMENT_REGISTERS_##num_args(args) \
     );                                                                        \
                                                                               \

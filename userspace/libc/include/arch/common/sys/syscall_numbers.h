@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: syscall_numbers.h,v $
  *
- * $Id: syscall_numbers.h,v 1.1 2005/09/07 03:46:15 aniederl Exp $
- * $Log$
+ * $Id: syscall_numbers.h,v 1.2 2005/09/11 10:15:32 aniederl Exp $
+ * $Log: syscall_numbers.h,v $
+ * Revision 1.1  2005/09/07 03:46:15  aniederl
+ * import of syscall macros
+ *
  *
  */
 
@@ -229,7 +232,7 @@
 #define __NR_putpmsg 189
 #define __NR_vfork 190
 #define __NR_ugetgrlimit 191
-#define __NR_getrlimit 191
+//#define __NR_getrlimit 191
 #define __NR_mmap2 192
 #define __NR_truncate64 193
 #define __NR_ftruncate64 194
