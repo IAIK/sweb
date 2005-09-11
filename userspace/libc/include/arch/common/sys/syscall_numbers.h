@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: syscall_numbers.h,v $
  *
- * $Id: syscall_numbers.h,v 1.2 2005/09/11 10:15:32 aniederl Exp $
+ * $Id: syscall_numbers.h,v 1.3 2005/09/11 13:13:34 aniederl Exp $
  * $Log: syscall_numbers.h,v $
+ * Revision 1.2  2005/09/11 10:15:32  aniederl
+ * fixed syscall macros
+ *
  * Revision 1.1  2005/09/07 03:46:15  aniederl
  * import of syscall macros
  *
@@ -45,7 +48,7 @@
 #define __NR_fork 2
 #define __NR_read 3
 #define __NR_write 4
-#define __NR_open 5
+#define __NR___syscall_open 5
 #define __NR_close 6
 #define __NR_waitpid 7
 #define __NR_creat 8
@@ -85,7 +88,7 @@
 #define __NR_pipe 42
 #define __NR_times 43
 #define __NR_prof 44
-#define __NR_brk 45
+#define __NR___syscall_brk 45
 #define __NR_setgid 46
 #define __NR_getgid 47
 #define __NR_signal 48
