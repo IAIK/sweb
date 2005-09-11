@@ -21,7 +21,7 @@
 /**
  * CVS Log Info for $RCSfile: List.h,v $
  *
- * $Id: List.h,v 1.3 2005/09/10 19:25:27 qiangchen Exp $
+ * $Id: List.h,v 1.4 2005/09/11 11:30:37 davrieb Exp $
  * $Log: List.h,v $
  * Revision 1.2  2005/09/07 23:44:42  aniederl
  * changed constructor with default parameter to a separate default constructor and one (for actual usage) with parameter
@@ -42,7 +42,7 @@ typedef unsigned int uint32;
 #endif // NON_SWEB_DEBUG___
 
 #include "ListNode.h"
-#include "console/kprintf.h"
+
 /**
  * class List provides a basic implementation of a list container
  *
