@@ -166,7 +166,7 @@ char *strncpy(char *dest, const char* src, size_t size)
 size_t strlcpy(char* dest, const char* src, size_t size)
 {
     const char* src_start = src;
-    char *dst_iter;
+    char *dst_iter = dest;
     size_t n = size;
 
     if(n > 1)
@@ -183,10 +183,7 @@ size_t strlcpy(char* dest, const char* src, size_t size)
     }
 
     // terminate dest, if it was not done already
-    if (n == 0 && *(dst_iter - 1))
-    {
-      *dst_iter = 0;
-    }
+    *dst_iter = '\0';
 
     while (*src)
     {
