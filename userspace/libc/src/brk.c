@@ -22,12 +22,16 @@
 /**
  * CVS Log Info for $RCSfile: brk.c,v $
  *
- * $Id: brk.c,v 1.1 2005/09/11 12:31:18 aniederl Exp $
- * $Log$
+ * $Id: brk.c,v 1.2 2005/09/11 13:12:50 aniederl Exp $
+ * $Log: brk.c,v $
+ * Revision 1.1  2005/09/11 12:31:18  aniederl
+ * initial import of brk
+ *
  */
 
 
 #include "unistd.h"
+#include "sys/syscall.h"
 
 /**
  * Marks the current break, set by brk() and used by sbrk()
@@ -35,18 +39,31 @@
  */
 void *__current_break = NULL;
 
+__syscall_special_1(void *, __syscall_brk, void *, data_segment_end)
+
 //----------------------------------------------------------------------
 /**
  * Sets the end of the data segment to the given value if it is reasonable,
  * the system has enough memory and the process doesn't exceed ist maximum
  * data size.
  *
- * @param end_data_segment the address where the end of the data segment\
+ * @param data_segment_end the address where the end of the data segment\
  should be set.
  * @return 0 on success, -1 otherwise and errno is set to ENOMEM
  *
  */
-int brk(void *end_data_segment);
+int brk(void *data_segment_end)
+{
+  // inspired from uClibc
+
+  __current_break = __syscall_brk(data_segment_end);
+
+  // out of memory
+  if(__current_break < data_segment_end)
+    return -1;
+
+  return 0;
+}
 
 //----------------------------------------------------------------------
 /**
@@ -59,4 +76,26 @@ int brk(void *end_data_segment);
  and errno is set to ENOMEM
  *
  */
-void *sbrk(intptr_t increment);
+void *sbrk(intptr_t increment)
+{
+  // inspired from uClibc
+
+  void *old_break;
+
+  if(!__current_break)
+  {
+    // Initialize
+    if(brk(NULL) < 0)
+      return (void *) -1;
+  }
+
+  if(!increment)
+    return __current_break;
+
+  old_break = __current_break;
+
+  if(brk(old_break + increment) < 0)
+    return (void *) -1;
+
+  return old_break;
+}

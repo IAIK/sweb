@@ -23,15 +23,19 @@
 /**
  * CVS Log Info for $RCSfile: file_alloc.c,v $
  *
- * $Id: file_alloc.c,v 1.1 2005/09/07 03:48:06 aniederl Exp $
- * $Log$
+ * $Id: file_alloc.c,v 1.2 2005/09/11 13:12:50 aniederl Exp $
+ * $Log: file_alloc.c,v $
+ * Revision 1.1  2005/09/07 03:48:06  aniederl
+ * import of file (de)allocation functions
+ *
  *
  */
 
 
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <stdarg.h>
+#include "unistd.h"
+#include "fcntl.h"
+#include "sys/syscall.h"
+#include "stdarg.h"
 
 
 //----------------------------------------------------------------------
@@ -86,7 +90,7 @@ __syscall_1(int, close, int, file_descriptor)
  * Defines the open syscall which will be used in the open function.
  *
  */
-__syscall_3(int, __syscall_open, const char *, path, mode_t, mode)
+__syscall_3(int, __syscall_open, const char *, path, int, flags, mode_t, mode)
 
 
 //----------------------------------------------------------------------
@@ -130,7 +134,21 @@ int open(const char *path, int flags, ...)
     va_end(args);
   }
 
-  return __syscall_open(file, flags, mode);
+  return __syscall_open(path, flags, mode);
+}
+
+//----------------------------------------------------------------------
+/**
+ * Equivalent to open() with flags equal to O_CREAT | O_WRONLY | O_TRUNC.
+ *
+ * @param path A pathname pointing to the file to open
+ * @param mode
+ * @return A valid file descriptor or -1 if an error occured
+ *
+ */
+int creat(const char *path, mode_t mode)
+{
+  return open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
 
