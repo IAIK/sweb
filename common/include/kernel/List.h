@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: List.h,v $
  *
- * $Id: List.h,v 1.4 2005/09/11 11:30:37 davrieb Exp $
+ * $Id: List.h,v 1.5 2005/09/11 17:47:02 davrieb Exp $
  * $Log: List.h,v $
+ * Revision 1.4  2005/09/11 11:30:37  davrieb
+ * revert to prev revision
+ *
  * Revision 1.2  2005/09/07 23:44:42  aniederl
  * changed constructor with default parameter to a separate default constructor and one (for actual usage) with parameter
  *
@@ -262,6 +265,12 @@ class List
    *
    */
   void clear();
+
+  /**
+   * Rotate the list.
+   * Removes the first element from the List and adds it to the end.
+   */
+  void rotate();
 
 };
 

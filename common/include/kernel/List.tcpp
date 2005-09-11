@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.5 2005/09/11 11:31:34 davrieb Exp $
+ * $Id: List.tcpp,v 1.6 2005/09/11 17:47:02 davrieb Exp $
  * $Log: List.tcpp,v $
+ * Revision 1.5  2005/09/11 11:31:34  davrieb
+ * revert to previous revision
+ *
  * Revision 1.3  2005/09/07 23:44:42  aniederl
  * changed constructor with default parameter to a separate default constructor and one (for actual usage) with parameter
  *
@@ -751,5 +754,45 @@ void List<ValueType>::clear()
 
   // set first node for backward access
   first_node_->setBackwardAccess(true);
+}
+
+template<typename ValueType>
+void List<ValueType>::rotate()
+{
+  if(number_of_elements_ <= 1)
+    return;
+
+  ListNode<ValueType> *to_move = 0;
+  ListNode<ValueType> *tmp = 0;
+
+  if(first_node_->empty())
+  {
+    to_move = first_node_->getNextNode();
+    tmp = to_move->getNextNode();
+    first_node_->setNextNode(tmp);
+    tmp->setPreviousNode(first_node_);
+  }
+  else
+  {
+    to_move = first_node_;
+    first_node_ = to_move->getNextNode();
+    first_node_->setPreviousNode(0);
+  }
+
+  if(last_node_->full())
+  {
+    last_node_->setNextNode(to_move);
+    to_move->setPreviousNode(last_node_);
+    to_move->setNextNode(0);
+    last_node_ = to_move;
+  }
+  else
+  {
+    tmp = last_node_->getPreviousNode();
+    to_move->setPreviousNode(tmp);
+    to_move->setNextNode(last_node_);
+    tmp->setNextNode(to_move);
+    last_node_->setPreviousNode(to_move);
+  }
 }
 
