@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.12 2005/08/26 12:01:25 nomenquis Exp $
+//   $Id: Loader.cpp,v 1.13 2005/09/12 14:22:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.12  2005/08/26 12:01:25  nomenquis
+//  pagefaults in userspace now should really really really work
+//
 //  Revision 1.11  2005/08/04 20:47:43  btittelbach
 //  Where is the Bug, maybe I will see something tomorrow that I didn't see today
 //
@@ -431,11 +434,11 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
   uint32 written=0;
   uint8* dest = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page));
   
-  kprintfd("I've got the following segments in the binary\n");
+  kprintfd("Loader::loadOnePageSafeButSlow:I've got the following segments in the binary\n");
   for (k=0;k<hdr->e_phnum;++k)
   {
      ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + k* hdr->e_phentsize);
-     kprintfd("PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+     kprintfd("Loader::loadOnePageSafeButSlow:PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
   }
 
   for (i=0;i<PAGE_SIZE;++i)
@@ -471,10 +474,13 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
     }
     else if (found >1)
     {
-      kprintfd("EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address);
+      kprintfd("Loader::loadOnePageSafeButSlow:EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address);
     }
   }
-  kprintfd("Loader wrote a total of %d bytes\n",written);
+  kprintfd("Loader::loadOnePageSafeButSlow: wrote a total of %d bytes\n",written);
   if (!written)
+  {
+    kprintfd("Loader::loadOnePageSafeButSlow: ERROR\n",written);
     for(;;);
+  }
 }

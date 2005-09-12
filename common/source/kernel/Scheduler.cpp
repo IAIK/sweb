@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.21 2005/09/07 00:33:52 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.22 2005/09/12 14:22:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.21  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.20  2005/09/06 09:56:50  btittelbach
 //  +Thread Names
 //  +stdin Test Example
@@ -143,20 +147,17 @@ void Scheduler::addNewThread(Thread *thread)
   //new Thread gets scheduled next
   //also gets added to front as not to interfere with remove or xchange
 
-  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
-    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+  lockScheduling();
   kprintf("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
   threads_.pushFront(thread);
-  block_scheduling_=0;
+  unlockScheduling();
 }
 
 
 //you can't remove the last thread
 void Scheduler::removeCurrentThread()
 {
-  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
-    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
-
+  lockScheduling();
   kprintfd("Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size());
   if (threads_.size() > 1)
   {
@@ -171,14 +172,14 @@ void Scheduler::removeCurrentThread()
       threads_.pushFront(tmp_thread);
     }
   }
-  block_scheduling_=0;
+  unlockScheduling();
 }
 
 void Scheduler::sleep()
 {
   currentThread->state_=Sleeping;
   //if we somehow stupidly go to sleep, block is automatically removed
-  block_scheduling_=0;
+  unlockScheduling();
   yield();
 }
 
@@ -188,26 +189,6 @@ void Scheduler::wake(Thread* thread_to_wake)
   //DEBUG: Check if thread_to_wake is in List
 }
 
-//exchanges the current Thread with a PopUpThread
-//note that the popupthread has to remember the original Thread*
-//and switch back if he's finished
-//~ Thread *Scheduler::xchangeThread(Thread *pop_up_thread)
-//~ {
-  //~ if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
-    //~ arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
-
-  //~ Thread *old_thread = threads_.back();
-  //~ if (old_thread != currentThread)
-    //~ arch_panic((uint8*)"Scheduler::xchangeThread: ERROR: currentThread wasn't where it was supposed to be\n");
-  //~ threads_.popBack();
-  //~ threads_.pushBack(pop_up_thread);
-  //~ currentThread=pop_up_thread;
-  
-  //~ block_scheduling_=0;
-  //~ return old_thread;
-//~ }
-
-
 void Scheduler::startThreadHack()
 {
   currentThread->Run();
@@ -215,16 +196,7 @@ void Scheduler::startThreadHack()
 
 uint32 Scheduler::schedule(uint32 from_interrupt)
 {
-/*
-  static uint32 bochs_sucks = 0;
-  if (++bochs_sucks % 10)
-  {
-    return 0;
-  }
- */
-  //kprintfd_nosleep("Scheduler::schedule: running\n");  
-  //kprintfd_nosleep("Scheduler::schedule: running\n");
-  if (ArchThreads::testSetLock(block_scheduling_,1))
+  if (testLock())
   {
     //no scheduling today...
     //keep currentThread as it was
@@ -261,10 +233,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     currentThreadInfo =  currentThread->kernel_arch_thread_info_;
     ret=0;
   }
-  /*uint8*foo = 0;
-  *foo = 8;*/
-  
-  block_scheduling_=0;
+
   return ret;
 }
 
@@ -289,9 +258,8 @@ void Scheduler::cleanupDeadThreads()
   if (kill_me_ == 0)
     return;
   
-  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
-    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
-
+  lockScheduling();
+  
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_me_)
   {
@@ -302,5 +270,18 @@ void Scheduler::cleanupDeadThreads()
     kill_me_=0;
   }
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
+  unlockScheduling();
+}
+
+void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
+{
+  if (unlikely(ArchThreads::testSetLock(block_scheduling_,1)))
+    arch_panic((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");  
+}
+void Scheduler::unlockScheduling()
+{
   block_scheduling_=0;
+}
+bool Scheduler::testLock() {
+  return (block_scheduling_>0);
 }

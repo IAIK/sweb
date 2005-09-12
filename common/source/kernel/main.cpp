@@ -1,7 +1,14 @@
 /**
- * $Id: main.cpp,v 1.82 2005/09/10 19:25:27 qiangchen Exp $
+ * $Id: main.cpp,v 1.83 2005/09/12 14:22:25 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.82  2005/09/10 19:25:27  qiangchen
+ *  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+ * USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+ * chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+ * chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+ * chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+ *
  * Revision 1.81  2005/09/07 00:33:52  btittelbach
  * +More Bugfixes
  * +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -620,7 +627,6 @@ void startup()
 
   kbd_ringbuffer_ = new FiFoDRBOSS<uint8>(1024,128);
   ArchInterrupts::enableKBD();
-  //InputThread::startInputThread();
 
   kprintf("Thread creation\n");
   //StupidThread *thread0 = new StupidThread(0);

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.9 2005/09/07 00:33:52 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.10 2005/09/12 14:22:25 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.9  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.8  2005/09/05 23:01:24  btittelbach
 //  Keyboard Input Handler
 //  + several Bugfixes
@@ -59,15 +63,13 @@ public:
 
   void addNewThread(Thread *thread);
   void removeCurrentThread();
-  //~ Thread *Scheduler::xchangeThread(Thread *pop_up_thread);
   void sleep();
   void wake(Thread* thread_to_wake);
   void cleanupDeadThreads();
 
   void yield();
 
-  void holdScheduling();  //not as severe as stopping Interrupts
-  void resumeScheduling();
+  bool checkThreadExists(Thread* thread);
 
   // NEVER EVER EVER CALL THIS ONE OUTSIDE OF AN INTERRUPT CONTEXT //
   uint32 schedule(uint32 from_interrupt=false);
@@ -76,13 +78,19 @@ private:
 
   Scheduler();
 
+  //don't use this externally
+  //this is only to protect the thread list
+  void lockScheduling();  //not as severe as stopping Interrupts
+  void unlockScheduling();
+  bool testLock();
+
   static Scheduler *instance_;
 
   List<Thread*> threads_;
 
   static void startThreadHack();
 
-  Thread* kill_me_;
+  Thread *kill_me_;
 
   uint32 block_scheduling_;
 
