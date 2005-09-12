@@ -20,33 +20,138 @@ void testRegFS()
   testMount();
   kprintfd("***** end testMount()\n");
   
+//  testVfsSyscall();
   testPathWalker();
+  
+  kprintfd("***** begin testUmount()\n");
+  testUmount();
+  kprintfd("***** begin testUmount()\n");
 }
-
 
 //----------------------------------------------------------------------
 void testMount()
 {
   RamFileSystemType *ramfs = new RamFileSystemType();
-  kprintfd("I'm hier\n");
+  kprintfd("testMount 1\n");
   vfs.registerFileSystem(ramfs);
-  kprintfd("I'm hier2\n");
+  kprintfd("testMount 2\n");
   
   vfs.root_mount("ramfs", 0);
-  kprintfd("I'm hier3\n");
+  kprintfd("testMount 3\n");
 }
 
+//----------------------------------------------------------------------
+void testUmount()
+{
+  vfs.rootUmount("ramfs");
+}
 
 //----------------------------------------------------------------------
 void testPathWalker()
 {
-  kprintfd("***** begin testPathWalker()\n");
-  int32 success = path_walker.pathInit("/", 0);
-  kprintfd("after pathInit() success = %d\n", success);
-  if(success == 0)
-    success = path_walker.pathWalk("/");
-  kprintfd("after pathWalk() success = %d\n", success);
-  path_walker.pathRelease();
-  kprintfd("***** end testPathWalker()\n");
+  kprintfd("***** start of mdkir(/chen)\n");
+  vfs_syscall.mkdir("/chen", 0);
+  kprintfd("***** end of mkdir(/chen)\n");
+
+  kprintfd("***** start of mkdir(test)\n");  
+  vfs_syscall.mkdir("test", 0);
+  kprintfd("***** end of mkdir(test)\n");  
+  
+  kprintfd("***** start of chdir(chen)\n");
+  vfs_syscall.chdir("chen");
+  kprintfd("***** end of chdir(chen)\n");
+  
+  kprintfd("***** start of mkdir(test)\n");  
+  vfs_syscall.mkdir("./../chen/.././SSS", 0);
+  kprintfd("***** end of mkdir(test)\n");  
+
+  kprintfd("***** start of mkdir(../hugo)\n");  
+  vfs_syscall.mkdir("../hugo", 0);
+  kprintfd("***** end of mkdir(../hugo)\n");  
+  
+  kprintfd("***** start of mkdir(./hugo)\n");  
+  vfs_syscall.mkdir("./hugo", 0);
+  kprintfd("***** end of mkdir(./hugo)\n");  
+
+  kprintfd("***** start of readdir(/)\n");
+  vfs_syscall.readdir("/");
+  kprintfd("***** end of readdir(/)\n");
+
+  kprintfd("***** start of readdir(/)\n");
+  vfs_syscall.readdir("/chen");
+  kprintfd("***** end of readdir(/)\n");
+/*  
+  kprintfd("***** start of mkdir(auto)\n");
+  vfs_syscall.mkdir("auto", 0);
+  kprintfd("***** end of mkdir(auto)\n");
+  
+  kprintfd("***** start of readdir(/)\n");
+  vfs_syscall.readdir("/");
+  kprintfd("***** end of readdir(/)\n");
+  
+  kprintfd("***** start of readdir(/chen)\n");
+  vfs_syscall.readdir("/chen");
+  kprintfd("***** end of readdir(/chen)\n");
+*/
+/*  
+  kprintfd("***** start of mkdir(/chen/qiang)\n");
+  vfs_syscall.mkdir("/chen/qiang", 0);
+  kprintfd("***** end of mkdir(/chen/qiang)\n");
+  
+  kprintfd("***** start of mkdir(/chen/qiang/always)\n");
+  vfs_syscall.mkdir("/chen/qiang/always", 0);
+  kprintfd("***** end of mkdir(/chen/qiang/always)\n");
+  
+  kprintfd("***** start of mkdir(/chen/2005)\n");
+  vfs_syscall.mkdir("/chen/2005", 0);
+  kprintfd("***** end of mkdir(/chen/2005)\n");
+  
+  kprintfd("***** start of readdir(/chen)\n");
+  vfs_syscall.readdir("/chen/");
+  kprintfd("***** end of readdir(/chen)\n");
+  
+  kprintfd("***** start of mkdir(/chen/qiang/always/dead)\n");
+  vfs_syscall.mkdir("/chen/qiang/always/dead", 0);
+  kprintfd("***** end of mkdir(/chen/qiang/always/dead)\n");
+  
+  kprintfd("***** start of chdir(/chen/qiang)");
+  vfs_syscall.chdir("/chen/qiang");
+  kprintfd("***** end of chdir(/chen/qiang)");
+  */
 }
 
+//----------------------------------------------------------------------
+void testVfsSyscall()
+{
+  kprintfd("***** start of mdkir(/chen)\n");
+  vfs_syscall.mkdir("/chen", 0);
+  kprintfd("***** end of mkdir(/chen)\n");
+  
+  kprintfd("***** start of mkdir(/chen/qiang)\n");
+  vfs_syscall.mkdir("/chen/qiang", 0);
+  kprintfd("***** end of mkdir(/chen/qiang)\n");
+  
+  kprintfd("***** start of mkdir(/chen/qiang/always)\n");
+  vfs_syscall.mkdir("/chen/qiang/always", 0);
+  kprintfd("***** end of mkdir(/chen/qiang/always)\n");
+  
+  kprintfd("***** start of mkdir(/chen/2005)\n");
+  vfs_syscall.mkdir("/chen/2005", 0);
+  kprintfd("***** end of mkdir(/chen/2005)\n");
+  
+  kprintfd("***** start of readdir(/chen)\n");
+  vfs_syscall.readdir("/chen/");
+  kprintfd("***** end of readdir(/chen)\n");
+  
+  kprintfd("***** start of chdir(/chen/qiang)\n");
+  vfs_syscall.chdir("/chen/qiang/");
+  kprintfd("***** end of chdir(/chen/qiang)\n");
+  
+  kprintfd("***** start of mkdir(/chen/qiang/always/dead)\n");
+  vfs_syscall.mkdir("/chen/qiang/always/dead", 0);
+  kprintfd("***** end of mkdir(/chen/qiang/always/dead)\n");
+  
+  kprintfd("***** start of rmdir(/chen/qiang/always/dead)\n");
+  vfs_syscall.rmdir("/chen/qiang/always/dead");
+  kprintfd("***** end of rmdir(/chen/qiang/always/dead)\n");
+}

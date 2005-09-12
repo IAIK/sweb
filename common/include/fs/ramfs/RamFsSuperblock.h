@@ -2,8 +2,15 @@
 //
 // CVS Log Info for $RCSfile: RamFsSuperblock.h,v $
 //
-// $Id: RamFsSuperblock.h,v 1.6 2005/09/10 19:25:27 qiangchen Exp $
+// $Id: RamFsSuperblock.h,v 1.7 2005/09/12 17:55:53 qiangchen Exp $
 // $Log: RamFsSuperblock.h,v $
+// Revision 1.6  2005/09/10 19:25:27  qiangchen
+//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+//
 // Revision 1.5  2005/08/11 16:34:28  qiangchen
 // *** empty log message ***
 //
@@ -49,6 +56,9 @@ class RamFsSuperblock : public Superblock
   RamFsSuperblock(Dentry* s_root);
 
   virtual ~RamFsSuperblock();
+
+  /// create a new Inode of the superblock, mknod with dentry, add in the list.
+  virtual Inode* createInode(Dentry* dentry, uint32 mode);
 
   /// This method is called to read a specific inode from a mounted
   /// file-system. It is only called from get_new_inode.

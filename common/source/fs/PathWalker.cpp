@@ -16,6 +16,9 @@
 /// follow the inode of the corresponding file pathname
 PathWalker path_walker;
 
+#define CHAR_DOT '.'
+#define NULL_CHAR '\0'
+
 //----------------------------------------------------------------------
 PathWalker::PathWalker()
 {
@@ -78,14 +81,18 @@ int32 PathWalker::pathWalk(const char* pathname)
   while(parts_left)
   {
     // get a part of pathname
+    kprintfd("pathname = %s, has length %d\n", pathname, strlen(pathname));
     char* npart = 0;
-    int32 npart_pos = getNextPart(pathname, npart);
+    uint32 npart_pos = 0; //getNextPart(pathname, npart);
+    npart = getNextPart(pathname, npart_pos);
+    kprintfd("npart_pos = %d\n", npart_pos);
+    kprintfd("npart = %s\n", npart);
     if(npart_pos < 0)
     {
       return PW_EINVALID;
     }
     
-    if((*npart == '/0') || (npart_pos == 0))
+    if((*npart == NULL_CHAR) || (npart_pos == 0))
     {
       delete npart;
       return PW_SUCCESS;
@@ -93,15 +100,20 @@ int32 PathWalker::pathWalk(const char* pathname)
     pathname += npart_pos;
     
     // checks the content
+    kprintfd("checks the content\n");
     this->last_ = npart;
-    if(*npart == '.')
+    kprintfd("last_ = %s, pathname = %s\n", last_, pathname);
+    kprintfd("*npart = %c\n", *npart);
+    if(*npart == CHAR_DOT)
     {
-      if(*(npart + 1) == '/0')
+      kprintfd(" :-) \n");
+      if(*(npart + 1) == NULL_CHAR)
       {
         this->last_type_ = LAST_DOT;
       }
-      else if((*(npart + 1) == '.') && (*(npart + 2) == '/0'))
+      else if((*(npart + 1) == CHAR_DOT) && (*(npart + 2) == NULL_CHAR))
       {
+        kprintfd(" :-) \n");
         this->last_type_ = LAST_DOTDOT;
       }
     }
@@ -109,8 +121,11 @@ int32 PathWalker::pathWalk(const char* pathname)
     {
       this->last_type_ = LAST_NORM;
     }
+    kprintfd("last_type_ = %d\n", last_type_);
 
     // follow the inode
+    // check the VfsMount
+    kprintfd("follow the inode\n");
     if(this->last_type_ == LAST_DOT) // follow LAST_DOT
     {
       kfree(npart);
@@ -139,14 +154,17 @@ int32 PathWalker::pathWalk(const char* pathname)
     }
     else if(this->last_type_ == LAST_NORM) // follow LAST_NORM
     {
+      kprintfd("LAST_NORM\n");
       Inode* current_inode = dentry_->getInode();
       Dentry *found = current_inode->lookup(last_);
       if(found != 0)
       {
+        kprintfd("dentry is found\n");
         this->dentry_ = found;
       }
       else
       {
+        kprintfd("dentry is not found\n");
         return PW_ENOTFOUND;
       }
     }
@@ -154,47 +172,48 @@ int32 PathWalker::pathWalk(const char* pathname)
     kfree(npart);
     last_ = 0;
     
+    kprintfd("*****+++***** pathname = %s\n", pathname);
+    while(*pathname == '/')
+      pathname++;
+
     if(strlen(pathname) == 0)
     {
       parts_left = false;
     }
   }
 
-  kprintfd("*** begin the pathWalker()\n");
+  kprintfd("*** end the pathWalker()\n");
   return 0;
 }
 
-
 //----------------------------------------------------------------------
-int32 PathWalker::getNextPart(const char* path, char *npart)
+char* PathWalker::getNextPart(const char* path, uint32 &npart_len)
 {
-  const char* tmp = 0;
+  char* tmp = 0;
   tmp = strchr(path, '/');
-
-  char *npart_tmp = 0;
-  int32 npart_len  = (size_t)(tmp - path);
-
+  
+  char* npart = 0;
+  npart_len = (size_t)(tmp - path + 1);
+  
+  uint32 length = npart_len;
+  kprintfd("npart_len = %d\n", npart_len);
+  
   if(tmp == 0)
   {
     npart_len = strlen(path);
+    length = npart_len + 1;
   }
-
-  if(npart_len != 0)
+  
+  kprintfd("npart_len = %d\n", length);
+  if(length != 0)
   {
-    npart_tmp = (char*)kmalloc(npart_len * sizeof(char)); /// + 1
-
-    int32 copied = strlcpy(npart_tmp, path, npart_len);
-    if (copied >= npart_len)
-    {
-      kfree(npart_tmp);
-      return -1;
-    }
+    npart = (char*)kmalloc(length * sizeof(char));
+    strlcpy(npart, path, length);
   }
-
-  npart = npart_tmp;
-  return npart_len;
+  
+  kprintfd("pathname = %s, has length: %d\n", npart, strlen(npart));
+  return npart;
 }
-
 //----------------------------------------------------------------------
 void PathWalker::pathRelease()
 {

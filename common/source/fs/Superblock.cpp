@@ -2,8 +2,15 @@
 //
 // CVS Log Info for $RCSfile: Superblock.cpp,v $
 //
-// $Id: Superblock.cpp,v 1.7 2005/09/10 19:25:27 qiangchen Exp $
+// $Id: Superblock.cpp,v 1.8 2005/09/12 17:55:53 qiangchen Exp $
 // $Log: Superblock.cpp,v $
+// Revision 1.7  2005/09/10 19:25:27  qiangchen
+//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+//
 // Revision 1.6  2005/08/11 16:46:57  davrieb
 // add PathWalker
 //
@@ -30,8 +37,8 @@
 //------------------------------------------------------------------
 Superblock::~Superblock()
 {
-  assert(s_inode_dirty_.empty() != false);
-  assert(s_inode_used_.empty() != false);
+  assert(dirty_inodes_.empty() != false);
+  assert(used_inodes_.empty() != false);
   assert(s_files_.empty() != false);
   s_type_ = 0;
 
@@ -42,9 +49,9 @@ Superblock::~Superblock()
 void Superblock::delete_inode(Inode *inode)
 {
   assert(inode != 0);
-  int32 del_inode = s_inode_dirty_.remove(inode);
+  int32 del_inode = dirty_inodes_.remove(inode);
   if(del_inode == -1)
-    del_inode = s_inode_used_.remove(inode);
+    del_inode = used_inodes_.remove(inode);
   assert(del_inode != -1);
   delete inode;
 }

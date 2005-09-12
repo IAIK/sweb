@@ -2,8 +2,15 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.10 2005/09/10 19:25:27 qiangchen Exp $
+// $Id: Superblock.h,v 1.11 2005/09/12 17:55:53 qiangchen Exp $
 // $Log: Superblock.h,v $
+// Revision 1.10  2005/09/10 19:25:27  qiangchen
+//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+//
 // Revision 1.9  2005/09/02 17:57:58  davrieb
 // preparations to  build a standalone filesystem testsuite
 //
@@ -86,12 +93,12 @@ protected:
   Dentry *mounted_over_;
 
   /// A list of dirty inodes.
-  PointList<Inode> s_inode_dirty_;
+  PointList<Inode> dirty_inodes_;
 
-  /// A list of used inodes.
-  PointList<Inode> s_inode_used_;
+  /// A list of used inodes. It is olny used to open-file.
+  PointList<Inode> used_inodes_;
 
-  /// all inodes of the superblockt
+  /// inodes of the superblock.
   PointList<Inode> all_inodes_;
 
   /// This is a list of files (linked on f_list) of open files on this
@@ -111,22 +118,22 @@ protected:
   // PointList *s_wait_;
   //--------------------------------------------------------------------------
 public:
-  void insertInodeUsed(Inode *inode) { s_inode_used_.pushBack(inode); }
-
-public:
 
   Superblock(Dentry* s_root) : mounted_over_(0) 
     { s_root_ = s_root; }
 
   virtual ~Superblock();
 
+  /// create a new Inode of the superblock, mknod with dentry, add in the list.
+  virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*mode*/) {}
+
   /// This method is called to read a specific inode from a mounted
-  /// file-system. It is only called from get_new_inode.
+  /// file-system and marks the inode in the s_inode_used_, if this inode exists
+  /// always in the s_inode_dirty_, do nothing.
   virtual void read_inode(Inode* /*inode*/) {}
 
   /// This method is called to write a specific inode to a mounted file-system,
-  /// and gets called on inodes which have been marked dirty with
-  /// mark_inode_dirty.
+  /// and marks the inode in the s_inode_dirty_.
   virtual void write_inode(Inode* /*inode*/) {}
 
   /// This method is called whenever the reference count on an inode is

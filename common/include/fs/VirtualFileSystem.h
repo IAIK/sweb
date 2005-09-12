@@ -2,8 +2,15 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.10 2005/09/10 19:25:27 qiangchen Exp $
+// $Id: VirtualFileSystem.h,v 1.11 2005/09/12 17:55:53 qiangchen Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.10  2005/09/10 19:25:27  qiangchen
+//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+//
 // Revision 1.9  2005/09/02 17:57:58  davrieb
 // preparations to  build a standalone filesystem testsuite
 //
@@ -88,6 +95,8 @@ class VirtualFileSystem
     int32 mount(char* path, char* fs_name, int32 mode);
 
     int32 root_mount(char* fs_name, int32 mode);
+    
+    int32 rootUmount(char* fs_name);
 
     /// Get the FileSystemInfo object of the current Process
     FileSystemInfo *getFSInfo();

@@ -128,7 +128,7 @@ class Inode
   virtual int32 mkdir(Dentry *) {return 0;}
 
   /// Remove the named directory (if empty) and d_delete the dentry.
-  virtual int32 rmdir(Dentry *) {return 0;}
+  virtual int32 rmdir() {return 0;}
 
   /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *) {return 0;}
@@ -169,6 +169,8 @@ class Inode
   Superblock* getSuperblock() { return i_superblock_; }
   
   uint32 getMode() { return i_mode_; }
+  
+  Dentry* getDentry() { return i_dentry_; }
 };
 
 

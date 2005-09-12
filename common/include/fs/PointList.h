@@ -111,18 +111,13 @@ public:
   /**
    * Insert a new entry before the specified entry..
    */
-  virtual void prepend(ContentType *new_entry, ContentType *entry);
+  virtual void prepBack(ContentType *new_entry, ContentType *entry);
 
   /**
    * remove the element that the entry contained.
    */
   virtual int32 remove(ContentType *entry);
   
-  /**
-   * remove the element that the entry contained.
-   */
-  // virtual int32 remove(uint32 index);
-
   /**
    * remove the first element of the list and return the corresponde item
    */
@@ -275,7 +270,7 @@ void PointList<ContentType>::pushFront(ContentType *new_entry)
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-void PointList<ContentType>::prepend(ContentType *new_entry, ContentType *entry)
+void PointList<ContentType>::prepBack(ContentType *new_entry, ContentType *entry)
 {
   length_++;
   PointListElement<ContentType> *new_element =
@@ -344,54 +339,13 @@ int32 PointList<ContentType>::remove(ContentType *entry)
 }
 
 //-----------------------------------------------------------------------------
-/*
-template <class ContentType>
-int32 PointList<ContentType>::remove(uint32 index)
-{
-  PointListElement<ContentType> *element = this->at(index); 
-
-  if(element == 0)
-    return -1;
-  else
-  {
-    length_--;
-    PointListElement<ContentType> *prev = element->getPrev();
-    PointListElement<ContentType> *next = element->getNext();
-    if(element == first_)
-    {
-      next->setPrev(next);
-      first_ = next;
-    }
-    else if(element == last_)
-    {
-      prev->setNext(prev);
-      last_ = prev;
-    }
-    else
-    {
-      prev->setNext(next);
-      next->setPrev(prev);
-    }
-    delete element;
-  }
-  return 0;
-}
-*/
-//-----------------------------------------------------------------------------
 template <class ContentType>
 bool PointList<ContentType>::empty()
 {
-  kprintfd("empty test1\n");
-  if(first_ == 0)
-  {
-  kprintfd("empty test2\n");
+  if(length_ == 0)
     return true;
-  }
   else
-  {
-  kprintfd("empty test3\n");
     return false;
-  }
 }
 
 //-----------------------------------------------------------------------------

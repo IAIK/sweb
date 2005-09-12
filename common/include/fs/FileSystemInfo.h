@@ -1,6 +1,8 @@
 #ifndef FILESYSTEMINFO_H___
 #define FILESYSTEMINFO_H___
 
+#include "types.h"
+
 class Dentry;
 class VfsMount;
 
@@ -32,6 +34,9 @@ class FileSystemInfo
   /// the alternative-root vfsmount-struct
   VfsMount* alt_root_mnt_;
   
+  /// the pathname of a fs_info
+  char* pathname_;
+  
  public:
   FileSystemInfo();
   
@@ -54,6 +59,14 @@ class FileSystemInfo
   
   // Dentry* getAltRoot() { return alt_root_; }
   // VfsMount* getAltRootMnt() { return alt_root_mnt_; }
+  
+  /// read the file pathname of the process
+  int32 setName(char* pathname, uint32 length = 0);
+  
+  char* getName() { return pathname_; }
+  
+  /// release the pathname_
+  void putName();
 };
 
 #endif // FILESYSTEMINFO_H___

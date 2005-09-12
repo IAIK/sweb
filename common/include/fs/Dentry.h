@@ -80,7 +80,10 @@ public:
   Dentry* getParent() { return d_parent_; }
 
   bool findChild(Dentry *dentry) { return d_child_.included(dentry); }
+  int32 setChild(Dentry *dentry);
   bool emptyChild() { return d_child_.empty(); }
+  uint32 getNumChild() { return d_child_.getLength(); }
+  Dentry* getChild(uint32 index);
 
   void setName(char* name);
   char* getName();

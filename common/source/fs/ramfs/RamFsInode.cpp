@@ -5,6 +5,8 @@
 #include "util/string.h"
 #include "assert.h"
 
+#include "console/kprintf.h"
+
 #define BASIC_ALLOC 4096
 #define ERROR_DNE "Error: the dentry does not exist."
 #define ERROR_DU  "Error: inode is used."
@@ -12,12 +14,13 @@
 #define ERROR_NNE "Error: the name does not exist in the current directory."
 #define ERROR_HLI "Error: hard link invalid."
 #define ERROR_DNEILL "Error: the dentry does not exist in the link list."
-#define ERROR_DES "Error: the dentry exists sub_directory."
+#define ERROR_DEC "Error: the dentry exists child."
 
 //---------------------------------------------------------------------------
 RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
     Inode(super_block, inode_mode)
 {
+  kprintfd("+++ constructor of RamFsInode\n");
   if(inode_mode == I_FILE)
     data_ = (int32*)kmalloc(BASIC_ALLOC);
   else
@@ -26,15 +29,13 @@ RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
   i_size_ = BASIC_ALLOC;
   i_nlink_ = 0;
   i_dentry_ = 0;
+  kprintfd("+++ constructor of RamFsInode\n");
 }
 
 //---------------------------------------------------------------------------
 RamFsInode::~RamFsInode()
 {
-  assert(i_nlink_ == 0);
-  assert(i_dentry_ == 0);
-  assert(i_dentry_link_.empty() == true);
-  
+  kprintfd("~RAMFSINODE\n");
   if (data_)
   {
     kfree(data_);
@@ -170,67 +171,43 @@ int32 RamFsInode::unlink(Dentry *dentry)
 }
 
 //---------------------------------------------------------------------------
-int32 RamFsInode::rmdir(Dentry *sub_dentry)
+int32 RamFsInode::rmdir()
 {
-  if(sub_dentry == 0)
+  Dentry* dentry = i_dentry_;
+
+  if(dentry->emptyChild() == true)
   {
-    // ERROR_DNE
-    return -1;
-  }
-  
-  if(i_mode_ == I_DIR)
-  {
-    if(i_dentry_->findChild(sub_dentry) == true)
-    {
-      uint32 sub_inode_mode = (sub_dentry->getInode())->getMode();
-      if(sub_inode_mode == I_FILE)
-        unlink(sub_dentry);
-      else if(sub_inode_mode == I_DIR)
-      {
-        if(sub_dentry->emptyChild() == true)
-        {
-          Inode *sub_inode = sub_dentry->getInode();
-          sub_dentry->releaseInode();
-          Dentry *parent_dentry = sub_dentry->getParent();
-          parent_dentry->childRemove(sub_dentry);
-          delete sub_dentry;
-          return INODE_DEAD;
-        }
-        else
-        {
-          // ERROR_DES
-          return -1;
-        }
-      }
-    }
-    else
-    {
-      // ERROR_NNE
-      return -1;
-    }
+    dentry->releaseInode();
+    Dentry* parent_dentry = dentry->getParent();
+    parent_dentry->childRemove(dentry);
+    kprintfd("Empty Child = %d\n", parent_dentry->emptyChild());
+    delete dentry;
+    i_dentry_ = 0;
+    return INODE_DEAD;
   }
   else
   {
-    // ERROR_IC
+    // ERROR_DEC
     return -1;
   }
-  
-  return 0;
 }
 
 //---------------------------------------------------------------------------
 Dentry* RamFsInode::lookup(const char* name)
 {
+  kprintfd("start of RamFsInode::lookup\n");
   if(name == 0)
   {
     // ERROR_DNE
     return 0;
   }
   
+  kprintfd("name = %s\n", name);
   Dentry* dentry_update = 0;
   if(i_mode_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
+    kprintfd("end of checkName...\n");
     if(dentry_update == 0)
     {
       // ERROR_NNE
@@ -238,6 +215,7 @@ Dentry* RamFsInode::lookup(const char* name)
     }
     else
     {
+      kprintfd("successful of the lookup\n");
       return dentry_update;
     }
   }

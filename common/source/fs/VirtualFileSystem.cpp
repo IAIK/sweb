@@ -2,8 +2,15 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.11 2005/09/10 19:25:27 qiangchen Exp $
+// $Id: VirtualFileSystem.cpp,v 1.12 2005/09/12 17:55:53 qiangchen Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.11  2005/09/10 19:25:27  qiangchen
+//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+//
 // Revision 1.10  2005/09/02 17:57:58  davrieb
 // preparations to  build a standalone filesystem testsuite
 //
@@ -107,7 +114,7 @@ FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
 
   for (uint32 counter = 0; counter < fstl_size; ++counter) 
   {
-//    if(strcmp(file_system_types_.at(counter)->getFSName(), fs_name) == 0)    
+//    if(strcmp(file_system_types_[counter]->getFSName(), fs_name) == 0)    
     if (strcmp(file_system_types_.at(counter)->getFSName(), fs_name) == 0)
     {
       kprintfd("find the fsType\n");
@@ -148,7 +155,30 @@ int32 VirtualFileSystem::root_mount(char* fs_name, int32 /*mode*/)
   fs_info.setFsRoot(root, root_mount);
   fs_info.setFsPwd(root, root_mount);
   kprintfd("end set the fs root info\n");
+  
+  kprintfd("************TEST***************\n");
+  Inode* root_inode = root->getInode();
+  if(root_inode)
+    kprintfd("root_inode success\n");
+  Dentry* test_root = root_inode->getDentry();
+  if(test_root == root)
+    kprintfd("test succesee\n");
+  kprintfd("******END******TEST***************\n");
   return 0;
+}
+
+//----------------------------------------------------------------------
+int32 VirtualFileSystem::rootUmount(char* fs_name)
+{
+  if(superblocks_.getLength() != 1)
+  {
+    kprintfd("it exists the sub-filesystem");
+    return -1;
+  }
+  
+  Superblock *root_sb = superblocks_.at(0);
+  delete root_sb;
+  kprintfd("SSSSS\n");
 }
 
 //----------------------------------------------------------------------

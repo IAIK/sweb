@@ -17,6 +17,7 @@
 #include "fs/ramfs/RamFsInode.h"
 #include "console/kprintf.h"
 #include "fs/ramfs/RamFsInode.h"
+#include "assert.h"
 
 #define ROOT_NAME "/"
 
@@ -45,29 +46,98 @@ RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
 
   // create the inode for the root_dentry
   Inode *root_inode = (Inode*)(new RamFsInode(this, I_DIR));
-  root_dentry->setInode(root_inode);
+  int32 root_init = root_inode->mknod(root_dentry);
+  assert(root_init == 0);
 
   // add the root_inode in the list
   all_inodes_.pushBack(root_inode);
   kprintfd("***** leaves Constructor of the RamFsSuperblock\n");
 }
+
 //----------------------------------------------------------------------
 RamFsSuperblock::~RamFsSuperblock()
 {
+  kprintfd("***** start Destructor of RamFsSuperblock\n");
+  assert(dirty_inodes_.empty() == true);
+
+  uint32 num = all_inodes_.getLength();
+      kprintfd("num = %d\n", num);
+ 
+  for(uint32 counter = 0; counter < num; counter++)
+  {
+    kprintfd("SSSSSS\n");
+    Inode* inode = all_inodes_.at(0);
+    Dentry* dentry = inode->getDentry();
+    all_inodes_.remove(inode);
+    delete dentry;
+    delete inode;
+    kprintfd("loop\n");
+  }
+/*
+  Dentry* current_dentry = s_root_;
+  for(;;)
+  {
+    kprintfd("loop\n");
+    if((current_dentry == s_root_) && (current_dentry->emptyChild() == true))
+      break;
+    
+    uint32 num = current_dentry->getNumChild();
+    kprintfd("dentry = %s, has child %d\n", current_dentry->getName(), num);
+    kprintfd("current_dentry->emptyChild() = %d\n", current_dentry->emptyChild());
+//    if(num > 0)
+    if(current_dentry->emptyChild() == true)
+    {
+      kprintfd("ssssss\n");
+      Inode* current_inode = current_dentry->getInode();
+      kprintfd("delete dentry = %s\n", current_dentry->getName());
+      current_dentry = current_dentry->getParent();
+      kprintfd("hier\n");
+      if(current_inode->rmdir() == INODE_DEAD)
+        all_inodes_.remove(current_inode);
+      else
+        kprintfd("rmdir failed\n");
+    }
+    else
+    {
+      kprintfd("ssss\n");
+      current_dentry = current_dentry->getChild(0);
+      kprintfd("current_dentry = %s\n", current_dentry->getName());
+    }
+    kprintfd("SSSSSSSSS\n");
+  }
+  */
+  
+  kprintfd("***** all_inodes_.getLength = %d\n", all_inodes_.getLength());
+  kprintfd("***** all_inodes_.empty = %d\n", all_inodes_.empty());
+  assert(all_inodes_.empty() == true);
+  kprintfd("***** end Destructor of RamFsSuperblock\n");
+}
+
+//----------------------------------------------------------------------
+Inode* RamFsSuperblock::createInode(Dentry* dentry, uint32 mode)
+{
+  Inode *inode = (Inode*)(new RamFsInode(this, mode));
+  int32 inode_init = inode->mknod(dentry);
+  assert(inode_init == 0);
+
+  all_inodes_.pushBack(inode);
+  return inode;
 }
 
 //----------------------------------------------------------------------
 void RamFsSuperblock::read_inode(Inode* inode)
 {
   assert(inode);
-  assert(s_inode_used_.empty());
 
   all_inodes_.pushBack(inode);
 }
 
 //----------------------------------------------------------------------
-void RamFsSuperblock::write_inode(Inode* /*inode*/)
+void RamFsSuperblock::write_inode(Inode* inode)
 {
+  assert(inode);
+  
+  all_inodes_.pushBack(inode);
 }
 
 //----------------------------------------------------------------------

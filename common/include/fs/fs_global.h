@@ -3,6 +3,7 @@
 #include "fs/VirtualFileSystem.h"
 #include "fs/FileSystemInfo.h"
 #include "fs/PathWalker.h"
+#include "fs/VfsSyscall.h"
 
 /// Global VirtualFileSystem object
 extern VirtualFileSystem vfs;
@@ -15,3 +16,6 @@ extern FileSystemInfo fs_info;
 /// the pathWalker object
 /// follow the inode of the corresponding file pathname
 extern PathWalker path_walker;
+
+/// the syscall of the virtual filesystem
+extern VfsSyscall vfs_syscall;

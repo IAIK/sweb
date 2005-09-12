@@ -76,8 +76,8 @@ public:
   /// Create a directory with the given dentry. It is only used to with directory.
   virtual int32 mkdir(Dentry *dentry);
 
-  /// Remove the named directory (if the sub_dentry is empty) and d_delete the dentry.
-  virtual int32 rmdir(Dentry *sub_dentry);
+  /// Remove the directory (if the sub_dentry is empty).
+  virtual int32 rmdir();
 
   /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *dentry);

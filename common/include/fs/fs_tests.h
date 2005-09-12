@@ -9,7 +9,8 @@ void fsTests(Terminal *term);
 
 void testRegFS();
 void testMount();
+void testUmount();
 void testPathWalker();
-
+void testVfsSyscall();
 
 #endif
