@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: List.h,v $
  *
- * $Id: List.h,v 1.5 2005/09/11 17:47:02 davrieb Exp $
+ * $Id: List.h,v 1.6 2005/09/12 23:29:06 aniederl Exp $
  * $Log: List.h,v $
+ * Revision 1.5  2005/09/11 17:47:02  davrieb
+ * add rotate()
+ *
  * Revision 1.4  2005/09/11 11:30:37  davrieb
  * revert to prev revision
  *
@@ -70,27 +73,8 @@ class List
   typedef const ValueType& const_reference;
 
 
-  /**
-   * default values for internal structure parameters
-   *
-   */
-  static const size_type NODE_SIZE;
-
-  /**
-   * the maximum possible index, used for returning a failure, when an index
-   * is to be returned
-   *
-   */
-  static const size_type NPOS = -1;
-
-
  protected:
 
-  /**
-   * (initial) size of the nodes
-   *
-   */
-  size_type node_size_;
 
   /**
    * pointer to the first node
@@ -103,12 +87,6 @@ class List
    *
    */
   ListNode<ValueType> *last_node_;
-
-  /**
-   * number of nodes contained in the list
-   *
-   */
-  size_type number_of_nodes_;
 
   /**
    * the number of elements contained in the list
@@ -125,16 +103,9 @@ class List
   List();
 
   /**
-   * constructor for class List
-   * @param node_size the size of the list nodes
-   */
-  List(size_type node_size);
-
-  /**
    * destructor for class List
    */
   virtual ~List();
-
 
 
   /**
@@ -267,10 +238,16 @@ class List
   void clear();
 
   /**
-   * Rotate the list.
-   * Removes the first element from the List and adds it to the end.
+   * Removes the first element and adds it to the end.
+   *
    */
-  void rotate();
+  void rotateBack();
+
+  /**
+   * Removes the last element and adds it to the front.
+   *
+   */
+  void rotateFront();
 
 };
 

@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: Stack.tcpp,v $
  *
- * $Id: Stack.tcpp,v 1.1 2005/05/26 01:08:37 aniederl Exp $
- * $Log$
+ * $Id: Stack.tcpp,v 1.2 2005/09/12 23:29:06 aniederl Exp $
+ * $Log: Stack.tcpp,v $
+ * Revision 1.1  2005/05/26 01:08:37  aniederl
+ * initial import of List, Queue and Stack data structures
+ *
  */
 
 
@@ -51,10 +54,6 @@ void swap(ValueType &first, ValueType &second)
 }
 #endif // Swap_Function___
 
-template<typename ValueType>
-const typename Stack<ValueType>::size_type
-Stack<ValueType>::DEFAULT_NODE_SIZE = 15;
-
 
 //----------------------------------------------------------------------
 /**
@@ -62,14 +61,9 @@ Stack<ValueType>::DEFAULT_NODE_SIZE = 15;
  * @param node_size the size of the stack nodes
  */
 template<typename ValueType>
-Stack<ValueType>::Stack(size_type node_size)
- : node_size_(node_size),
-   number_of_nodes_(1),
-   number_of_elements_(0),
-   last_element_index_(-1)
+Stack<ValueType>::Stack()
 {
-  first_node_ = new ListNode<ValueType>(node_size_);
-  last_node_ = first_node_;
+  list_ = new List<ValueType>();
 }
 
 
@@ -82,28 +76,7 @@ Stack<ValueType>::Stack(size_type node_size)
 template<typename ValueType>
 Stack<ValueType>::Stack(const Stack<ValueType> &instance)
 {
-  node_size_ = instance.node_size_;
-  number_of_nodes_ = instance.number_of_nodes_;
-  number_of_elements_ = instance.number_of_elements_;
-  last_element_index_ = instance.last_element_index_;
-
-  // copy nodes
-  ListNode<ValueType> *node = new ListNode<ValueType>(*instance.first_node_);
-
-  first_node_ = node;
-
-  while(node->hasNextNode())
-  {
-    ListNode<ValueType> *next_node = new ListNode<ValueType>(
-      *(node->getNextNode()));
-
-    next_node->setPreviousNode(node);
-    node->setNextNode(next_node);
-
-    node = next_node;
-  }
-
-  last_node_ = node;
+  list_ = instance.list_;
 }
 
 
@@ -114,12 +87,7 @@ Stack<ValueType>::Stack(const Stack<ValueType> &instance)
 template<typename ValueType>
 Stack<ValueType>::~Stack()
 {
-  while(first_node_)
-  {
-    ListNode<ValueType> *tmp = first_node_->getNextNode();
-    delete first_node_;
-    first_node_ = tmp;
-  }
+  delete list_;
 }
 
 
@@ -135,13 +103,7 @@ Stack<ValueType>& Stack<ValueType>::operator = (
 {
   Stack<ValueType> new_stack(instance);
 
-  swap(this->node_size_, new_stack.node_size_);
-  swap(this->number_of_nodes_, new_stack.number_of_nodes_);
-  swap(this->node_size_, new_stack.node_size_);
-  swap(this->number_of_elements_, new_stack.number_of_elements_);
-  swap(this->first_node_, new_stack.first_node_);
-  swap(this->last_node_, new_stack.last_node_);
-  swap(this->last_element_index_, new_stack.last_element_index_);
+  swap(this->list_, new_stack.list_);
 
   return (*this);
 }
@@ -156,7 +118,7 @@ Stack<ValueType>& Stack<ValueType>::operator = (
 template<typename ValueType>
 typename Stack<ValueType>::size_type Stack<ValueType>::size() const
 {
-  return number_of_elements_;
+  return list_->size();
 }
 
 //----------------------------------------------------------------------
@@ -168,7 +130,7 @@ typename Stack<ValueType>::size_type Stack<ValueType>::size() const
 template<typename ValueType>
 bool Stack<ValueType>::empty() const
 {
-  return (number_of_elements_ == 0);
+  return list_->empty();
 }
 
 
@@ -181,7 +143,7 @@ bool Stack<ValueType>::empty() const
 template<typename ValueType>
 typename Stack<ValueType>::reference Stack<ValueType>::top()
 {
-  return last_node_->get(last_element_index_);
+  return list_->back();
 }
 
 //----------------------------------------------------------------------
@@ -193,7 +155,7 @@ typename Stack<ValueType>::reference Stack<ValueType>::top()
 template<typename ValueType>
 typename Stack<ValueType>::const_reference Stack<ValueType>::top() const
 {
-  return last_node_->get(last_element_index_);
+  return list_->back();
 }
 
 //----------------------------------------------------------------------
@@ -205,22 +167,7 @@ typename Stack<ValueType>::const_reference Stack<ValueType>::top() const
 template<typename ValueType>
 void Stack<ValueType>::push(const_reference element)
 {
-  if(last_node_->full())
-  {
-    ListNode<ValueType> *new_node = new ListNode<ValueType>(node_size_);
-    ++number_of_nodes_;
-    last_element_index_ = 0;
-
-    new_node->setPreviousNode(last_node_);
-    last_node_->setNextNode(new_node);
-
-    last_node_ = new_node;
-  }
-  else
-    ++last_element_index_;
-
-  last_node_->append(element);
-  ++number_of_elements_;
+  list_->pushBack(element);
 }
 
 //----------------------------------------------------------------------
@@ -231,36 +178,5 @@ void Stack<ValueType>::push(const_reference element)
 template<typename ValueType>
 void Stack<ValueType>::pop()
 {
-  if(!number_of_elements_)
-    return;
-
-  last_node_->remove(last_element_index_);
-  --number_of_elements_;
-
-  if(last_node_->empty())
-  {
-    ListNode<ValueType> *previous = last_node_->getPreviousNode();
-    delete last_node_;
-    --number_of_nodes_;
-
-    if(previous)
-    {
-      last_node_ = previous;
-      last_node_->setNextNode(0);
-    }
-    else
-    {
-      // reinitialize the stack
-      first_node_ = new ListNode<ValueType>(node_size_);
-      last_node_ = first_node_;
-
-      number_of_nodes_ = 1;
-      number_of_elements_ = 0;
-      last_element_index_ = -1;
-    }
-
-    last_element_index_ = last_node_->size() - 1;
-  }
-  else
-    --last_element_index_;
+  list_->popBack();
 }

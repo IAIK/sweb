@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: Queue.h,v $
  *
- * $Id: Queue.h,v 1.1 2005/05/26 01:08:37 aniederl Exp $
- * $Log$
+ * $Id: Queue.h,v 1.2 2005/09/12 23:29:06 aniederl Exp $
+ * $Log: Queue.h,v $
+ * Revision 1.1  2005/05/26 01:08:37  aniederl
+ * initial import of List, Queue and Stack data structures
+ *
  */
 
 
@@ -35,10 +38,11 @@ typedef unsigned int uint32;
 #include <types.h>
 #endif // NON_SWEB_DEBUG___
 
-#include "ListNode.h"
+#include "List.h"
 
 /**
- * class Queue provides a basic queue implementation
+ * class Queue provides a wrapper for class List implementing a basic queue
+ * interface
  *
  */
 template<typename ValueType>
@@ -61,64 +65,22 @@ class Queue
   typedef const ValueType& const_reference;
 
 
-  /**
-   * default node size
-   *
-   */
-  static const size_type DEFAULT_NODE_SIZE;
-
 
  protected:
 
   /**
-   * (initial) size of the nodes
+   * List used as element storage for the queue
    *
    */
-  size_type node_size_;
-
-  /**
-   * pointer to the first node
-   *
-   */
-  ListNode<ValueType> *first_node_;
-
-  /**
-   * pointer to the last node
-   *
-   */
-  ListNode<ValueType> *last_node_;
-
-  /**
-   * number of nodes contained in the queue
-   *
-   */
-  size_type number_of_nodes_;
-
-  /**
-   * the number of elements contained in the queue
-   *
-   */
-  size_type number_of_elements_;
-
-  /**
-   * index of the first element
-   *
-   */
-  size_type first_element_index_;
-
-  /**
-   * index of the last element
-   *
-   */
-  size_type last_element_index_;
+  List<ValueType> *list_;
 
 
  public:
   /**
    * default constructor for class Queue
-   * @param node_size the size of the queue nodes
+   *
    */
-  Queue(size_type node_size = DEFAULT_NODE_SIZE);
+  Queue();
 
 
   /**

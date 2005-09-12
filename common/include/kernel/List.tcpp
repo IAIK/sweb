@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.6 2005/09/11 17:47:02 davrieb Exp $
+ * $Id: List.tcpp,v 1.7 2005/09/12 23:29:06 aniederl Exp $
  * $Log: List.tcpp,v $
+ * Revision 1.6  2005/09/11 17:47:02  davrieb
+ * add rotate()
+ *
  * Revision 1.5  2005/09/11 11:31:34  davrieb
  * revert to previous revision
  *
@@ -43,6 +46,7 @@
  *
  */
 
+#include "assert.h"
 
 #ifndef Swap_Function___
 #define Swap_Function___
@@ -62,9 +66,6 @@ void swap(ValueType &first, ValueType &second)
 }
 #endif // Swap_Function___
 
-template<typename ValueType>
-const typename List<ValueType>::size_type List<ValueType>::NODE_SIZE = 15;
-
 
 //----------------------------------------------------------------------
 /**
@@ -72,42 +73,11 @@ const typename List<ValueType>::size_type List<ValueType>::NODE_SIZE = 15;
  * the node size will be set to a default value
  */
 template<typename ValueType>
-List<ValueType>::List()
- : node_size_(NODE_SIZE),
-   number_of_nodes_(2),
-   number_of_elements_(0)
+List<ValueType>::List() : first_node_(0),
+                          last_node_(0),
+                          number_of_elements_(0)
 {
-  // generate the two default nodes
-  first_node_ = new ListNode<ValueType>(node_size_);
-  last_node_ = new ListNode<ValueType>(node_size_);
 
-  first_node_->setNextNode(last_node_);
-  last_node_->setPreviousNode(first_node_);
-
-  // set backward access for the first one
-  first_node_->setBackwardAccess(true);
-}
-
-//----------------------------------------------------------------------
-/**
- * constructor for class List
- * @param node_size the size of the list nodes
- */
-template<typename ValueType>
-List<ValueType>::List(size_type node_size)
- : node_size_(node_size),
-   number_of_nodes_(2),
-   number_of_elements_(0)
-{
-  // generate the two default nodes
-  first_node_ = new ListNode<ValueType>(node_size_);
-  last_node_ = new ListNode<ValueType>(node_size_);
-
-  first_node_->setNextNode(last_node_);
-  last_node_->setPreviousNode(first_node_);
-
-  // set backward access for the first one
-  first_node_->setBackwardAccess(true);
 }
 
 
@@ -120,10 +90,7 @@ List<ValueType>::List(size_type node_size)
 template<typename ValueType>
 List<ValueType>::List(const List<ValueType> &instance)
 {
-  node_size_ = instance.node_size_;
-  number_of_nodes_ = instance.number_of_nodes_;
   number_of_elements_ = instance.number_of_elements_;
-
 
   // copy nodes
   ListNode<ValueType> *node = new ListNode<ValueType>(*instance.first_node_);
@@ -172,9 +139,6 @@ List<ValueType>& List<ValueType>::operator = (const List<ValueType> &instance)
 {
   List<ValueType> new_list(instance);
 
-  swap(this->node_size_, new_list.node_size_);
-  swap(this->number_of_nodes_, new_list.number_of_nodes_);
-  swap(this->node_size_, new_list.node_size_);
   swap(this->number_of_elements_, new_list.number_of_elements_);
   swap(this->first_node_, new_list.first_node_);
   swap(this->last_node_, new_list.last_node_);
@@ -212,25 +176,27 @@ bool List<ValueType>::empty() const
  * returns a reference to the element at the given index
  * @param index The index of the searched element
  * @return the element at the given index
+ * @pre !empty() && index < size()
  *
  */
 template<typename ValueType>
 typename List<ValueType>::reference List<ValueType>::operator[](
   size_type index)
 {
-  ListNode<ValueType> *node = first_node_;
-  size_type node_size = node->size();
-  while(node->hasNextNode())
-  {
-    if(index < node_size)
-      break;
+  assert(!empty() && index < size());
 
-    index -= node_size;
-    node = node->getNextNode();
-    node_size = node->size();
+  ListNode<ValueType> *node = first_node_;
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
   }
 
-  return node->get(index);
+  assert(node);
+
+  return node->getElement();
 }
 
 
@@ -239,25 +205,27 @@ typename List<ValueType>::reference List<ValueType>::operator[](
  * returns a const reference to the element at the given index
  * @param index The index of the searched element
  * @return the element at the given index
+ * @pre !empty() && index < size()
  *
  */
 template<typename ValueType>
 typename List<ValueType>::const_reference List<ValueType>::operator[](
   size_type index) const
 {
-  ListNode<ValueType> *node = first_node_;
-  size_type node_size = node->size();
-  while(node->hasNextNode())
-  {
-    if(index < node_size)
-      break;
+  assert(!empty() && index < size());
 
-    index -= node_size;
-    node = node->getNextNode();
-    node_size_ = node->size();
+  ListNode<ValueType> *node = first_node_;
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
   }
 
-  return node->get(index);
+  assert(node);
+
+  return node->getElement();
 }
 
 
@@ -265,23 +233,15 @@ typename List<ValueType>::const_reference List<ValueType>::operator[](
 /**
  * returns the first element
  * @return the first element
+ * @pre !empty()
  *
  */
 template<typename ValueType>
 typename List<ValueType>::reference List<ValueType>::front()
 {
-  if(first_node_->size())
-    return first_node_->get(0);
-  else
-  {
-    ListNode<ValueType> *tmp = first_node_->getNextNode();
+  assert(!empty());
 
-    if(tmp)
-      return tmp->get(0);
-  }
-
-  // FIXXXME bad workaround
-  return first_node_->get(0);
+  return first_node_->getElement();
 }
 
 
@@ -289,23 +249,15 @@ typename List<ValueType>::reference List<ValueType>::front()
 /**
  * returns the first element
  * @return the first element
+ * @pre !empty()
  *
  */
 template<typename ValueType>
 typename List<ValueType>::const_reference List<ValueType>::front() const
 {
-  if(first_node_->size())
-    return first_node_->get(0);
-  else
-  {
-    ListNode<ValueType> *tmp = first_node_->getNextNode();
+  assert(!empty());
 
-    if(tmp)
-      return tmp->get(0);
-  }
-
-  // FIXXXME bad workaround
-  return first_node_->get(0);
+  return first_node_->getElement();
 }
 
 
@@ -313,26 +265,15 @@ typename List<ValueType>::const_reference List<ValueType>::front() const
 /**
  * returns the last element
  * @return the last element
+ * @pre !empty()
  *
  */
 template<typename ValueType>
 typename List<ValueType>::reference List<ValueType>::back()
 {
-  size_type node_size = last_node_->size();
+  assert(!empty());
 
-  if(node_size)
-    return last_node_->get(node_size - 1);
-  else
-  {
-    ListNode<ValueType> *tmp = last_node_->getPreviousNode();
-    node_size = tmp->size();
-
-    if(node_size)
-      return tmp->get(node_size - 1);
-  }
-
-  // FIXXXME bad workaround
-  return last_node_->get(0);
+  return last_node_->getElement();
 }
 
 
@@ -340,26 +281,15 @@ typename List<ValueType>::reference List<ValueType>::back()
 /**
  * returns the last element
  * @return the last element
+ * @pre !empty()
  *
  */
 template<typename ValueType>
 typename List<ValueType>::const_reference List<ValueType>::back() const
 {
-  size_type node_size = last_node_->size();
+  assert(!empty());
 
-  if(node_size)
-    return last_node_->get(node_size - 1);
-  else
-  {
-    ListNode<ValueType> *tmp = last_node_->getPreviousNode();
-    node_size = tmp->size();
-
-    if(node_size)
-      return tmp->get(node_size - 1);
-  }
-
-  // FIXXXME bad workaround
-  return last_node_->get(0);
+  return last_node_->getElement();
 }
 
 
@@ -373,17 +303,17 @@ typename List<ValueType>::const_reference List<ValueType>::back() const
 template<typename ValueType>
 void List<ValueType>::pushBack(const_reference element)
 {
-  if(last_node_->full())
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
+
+  if(last_node_)
   {
-    ListNode<ValueType> *tmp = new ListNode<ValueType>(node_size_);
-    last_node_->setNextNode(tmp);
-    tmp->setPreviousNode(last_node_);
-    ++number_of_nodes_;
-
-    last_node_ = tmp;
+    last_node_->setNextNode(new_node);
+    new_node->setPreviousNode(last_node_);
+    last_node_ = new_node;
   }
+  else
+    first_node_ = last_node_ = new_node;
 
-  last_node_->append(element);
   ++number_of_elements_;
 }
 
@@ -399,46 +329,20 @@ void List<ValueType>::popBack()
   if(!number_of_elements_)
     return;
 
-  size_type node_size = last_node_->size();
+  ListNode<ValueType> *last = last_node_->getPreviousNode();
 
-  // if last node is empty get hands on the previous node
-  if(!node_size)
-  {
-    ListNode<ValueType> *tmp = last_node_->getPreviousNode();
-    node_size = tmp->size();
-    if(node_size)
-    {
-      tmp->remove(node_size - 1);
-      --number_of_elements_;
-    }
-  }
+  delete last_node_;
+
+  --number_of_elements_;
+
+  if(last)
+    last_node_ = last;
   else
   {
-    // remove last element
-    last_node_->remove(node_size - 1);
-    --number_of_elements_;
-  }
-
-
-  // if last node is empty remove it
-  if(last_node_->empty())
-  {
-    ListNode<ValueType> *tmp = last_node_->getPreviousNode();
-    delete last_node_;
-    --number_of_nodes_;
-
-    tmp->setNextNode(0);
-    last_node_ = tmp;
-
-    if(number_of_nodes_ < 2)
-    {
-      first_node_ = new ListNode<ValueType>(node_size_);
-
-      first_node_->setNextNode(last_node_);
-      last_node_->setPreviousNode(first_node_);
-
-      ++number_of_nodes_;
-    }
+    if(number_of_elements_)
+      last_node_ = first_node_;
+    else
+      last_node_ = first_node_ = 0;
   }
 }
 
@@ -451,26 +355,17 @@ void List<ValueType>::popBack()
 template<typename ValueType>
 void List<ValueType>::pushFront(const_reference element)
 {
-  // check if first node is full, if so generate a new one
-  if(first_node_->full())
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
+
+  if(first_node_)
   {
-    // set node to default (forward access) state
-    first_node_->setBackwardAccess(false);
-
-    // get a new node
-    ListNode<ValueType> *tmp = new ListNode<ValueType>(node_size_);
-    ++number_of_nodes_;
-
-    first_node_->setPreviousNode(tmp);
-    tmp->setNextNode(first_node_);
-
-    first_node_ = tmp;
-
-    // set backward access
-    first_node_->setBackwardAccess(true);
+    first_node_->setPreviousNode(new_node);
+    new_node->setNextNode(first_node_);
+    first_node_ = new_node;
   }
+  else
+    first_node_ = last_node_ = new_node;
 
-  first_node_->append(element);
   ++number_of_elements_;
 }
 
@@ -485,29 +380,21 @@ void List<ValueType>::popFront()
   if(!number_of_elements_)
     return;
 
-  if(first_node_->empty())
-  {
-    ListNode<ValueType> *tmp = first_node_->getNextNode();
-    delete first_node_;
-    --number_of_nodes_;
+  ListNode<ValueType> *first = first_node_->getNextNode();
 
-    first_node_ = tmp;
-    first_node_->setPreviousNode(0);
-    first_node_->setBackwardAccess(true);
+  delete first_node_;
 
-    if(number_of_nodes_ < 2)
-    {
-      last_node_ = new ListNode<ValueType>(node_size_);
-
-      first_node_->setNextNode(last_node_);
-      last_node_->setPreviousNode(first_node_);
-
-      ++number_of_nodes_;
-    }
-  }
-
-  first_node_->remove(0);
   --number_of_elements_;
+
+  if(first)
+    first_node_ = first;
+  else
+  {
+    if(number_of_elements_)
+      first_node_ = last_node_;
+    else
+      first_node_ = last_node_ = 0;
+  }
 }
 
 //----------------------------------------------------------------------
@@ -525,83 +412,35 @@ void List<ValueType>::insert(size_type index, const_reference element)
     return;
 
   ListNode<ValueType> *node = first_node_;
-  size_type node_size = node->size();
-  while(node->hasNextNode())
-  {
-    if(!index || index < node_size)
-      break;
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
 
-    index -= node_size;
-    node = node->getNextNode();
-    node_size = node->size();
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
   }
 
-  if(node_size >= node_size_)
+  if(node)
   {
-    ListNode<ValueType> *tmp = new ListNode<ValueType>(node_size_);
-
-    // split the node into two nodes
-    if(index < (node_size_ / 2))
+    new_node->setNextNode(node);
+    new_node->setPreviousNode(node->getPreviousNode());
+    node->getPreviousNode()->setNextNode(new_node);
+    node->setPreviousNode(new_node);
+  }
+  else
+  {
+    if(last_node_)
     {
-      // top half gets a new node
-      for(size_type node_index = index; node_index < node_size; ++node_index)
-        tmp->append(node->get(node_index));
+      last_node_->setNextNode(new_node);
+      new_node->setPreviousNode(last_node_);
 
-      if(node == first_node_)
-        node->setBackwardAccess(false);
-
-      size_type remove_counter = node_size - index;
-      while(remove_counter-- > 0)
-        node->remove(node->size() - 1);
-
-      if(node == first_node_)
-        node->setBackwardAccess(true);
-
-      if(node == last_node_)
-        last_node_ = tmp;
-      else
-        tmp->setNextNode(node->getNextNode());
-
-
-      node->getNextNode()->setPreviousNode(tmp);
-      tmp->setPreviousNode(node);
-      node->setNextNode(tmp);
+      last_node_ = new_node;
     }
     else
-    {
-      // bottom half gets a new node
-      for(size_type node_index = 0; node_index < index; ++node_index)
-        tmp->append(node->get(node_index));
-
-      if(node != first_node_)
-        node->setBackwardAccess(true);
-
-      size_type remove_counter = index + 1;
-      while(remove_counter-- > 0)
-        node->remove(0);
-
-      if(node != first_node_)
-      {
-        node->setBackwardAccess(false);
-
-        tmp->setPreviousNode(node->getPreviousNode());
-        node->getPreviousNode()->setNextNode(tmp);
-      }
-      else
-      {
-        first_node_ = tmp;
-        tmp->setBackwardAccess(true);
-        node->setBackwardAccess(false);
-      }
-
-      tmp->setNextNode(node);
-      node->setPreviousNode(tmp);
-    }
-
-    ++number_of_nodes_;
+      first_node_ = last_node_ = new_node;
   }
 
-  node->insert(index, element);
   ++number_of_elements_;
 }
 
@@ -614,99 +453,38 @@ void List<ValueType>::insert(size_type index, const_reference element)
 template<typename ValueType>
 void List<ValueType>::remove(size_type index)
 {
+  if(index >= number_of_elements_)
+    return;
+
   ListNode<ValueType> *node = first_node_;
-  size_type node_size = node->size();
-  while(node->hasNextNode())
-  {
-    if(index < node_size)
-      break;
+  ListNode<ValueType> *next_node;
+  ListNode<ValueType> *previous_node;
 
-    index -= node_size;
-    node = node->getNextNode();
-    node_size = node->size();
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
   }
 
-  node->remove(index);
+  assert(node);
+
+  next_node = node->getNextNode();
+  previous_node = node->getPreviousNode();
+
+  if(previous_node)
+    previous_node->setNextNode(next_node);
+  else
+    first_node_ = next_node;
+
+  if(next_node)
+    next_node->setPreviousNode(previous_node);
+  else
+    last_node_ = previous_node;
+
+  delete node;
+
   --number_of_elements_;
-
-  // if the node size is less than the half of the initial size look for
-  // a neighbour which has room for the elements
-  // if one is found merge them
-  size_type half_node_size = node_size_ / 2;
-  if(number_of_nodes_ > 2 && (node->size() < half_node_size))
-  {
-    ListNode<ValueType> *tmp = node->getPreviousNode();
-
-    if(tmp && (tmp->size() < half_node_size))
-    {
-      if(tmp == first_node_)
-        tmp->setBackwardAccess(false);
-
-      // copy elements
-      for(size_type node_index = 0; node_index < node->size(); ++node_index)
-        tmp->append(node->get(node_index));
-
-      if(tmp == first_node_)
-        tmp->setBackwardAccess(true);
-
-      tmp->setNextNode(node->getNextNode());
-
-      ListNode<ValueType> *next = node->getNextNode();
-      if(next)
-        next->setPreviousNode(tmp);
-
-      delete node;
-
-      node = tmp;
-    }
-    else
-    {
-      tmp = node->getNextNode();
-
-      if(tmp && (tmp->size() < half_node_size))
-      {
-        tmp->setBackwardAccess(true);
-
-        // copy elements
-        size_type node_index = node->size();
-        while(node_index > 0)
-          tmp->append(node->get(--node_index));
-
-        tmp->setBackwardAccess(false);
-
-        tmp->setPreviousNode(node->getPreviousNode());
-
-        ListNode<ValueType> *previous = node->getPreviousNode();
-        if(previous)
-          previous->setNextNode(tmp);
-
-        delete node;
-
-        node = tmp;
-      }
-    }
-
-    // node is empty, remove it
-    if(node->empty())
-    {
-      ListNode<ValueType> *tmp = node->getPreviousNode();
-
-      if(tmp)
-        tmp->setNextNode(node->getNextNode());
-      else
-        first_node_ = node->getNextNode();
-
-      tmp = node->getNextNode();
-
-      if(tmp)
-        tmp->setPreviousNode(node->getPreviousNode());
-      else
-        last_node_ = node->getPreviousNode();
-
-      delete node;
-      --number_of_nodes_;
-    }
-  }
 }
 
 //----------------------------------------------------------------------
@@ -718,8 +496,6 @@ void List<ValueType>::remove(size_type index)
 template<typename ValueType>
 void List<ValueType>::swapList(List<ValueType> &list)
 {
-  swap(this->node_size_, list.node_size_);
-  swap(this->number_of_nodes_, list.number_of_nodes_);
   swap(this->number_of_elements_, list.number_of_elements_);
   swap(this->first_node_, list.first_node_);
   swap(this->last_node_, list.last_node_);
@@ -738,61 +514,54 @@ void List<ValueType>::clear()
   {
     ListNode<ValueType> *tmp = first_node_->getNextNode();
     delete first_node_;
-    first_node_ = first_node_->getNextNode();
+    first_node_ = tmp;
   }
 
-  // reset internal structure
-  number_of_nodes_ = 2;
   number_of_elements_ = 0;
-
-  // generate the two default nodes
-  first_node_ = new ListNode<ValueType>(node_size_);
-  last_node_ = new ListNode<ValueType>(node_size_);
-
-  first_node_->setNextNode(last_node_);
-  last_node_->setPreviousNode(first_node_);
-
-  // set first node for backward access
-  first_node_->setBackwardAccess(true);
 }
 
+//----------------------------------------------------------------------
+/**
+ * Removes the first element and adds it to the end.
+ *
+ */
 template<typename ValueType>
-void List<ValueType>::rotate()
+void List<ValueType>::rotateBack()
 {
+  // this command is senseless with <= 1 elements in the list
   if(number_of_elements_ <= 1)
     return;
 
-  ListNode<ValueType> *to_move = 0;
-  ListNode<ValueType> *tmp = 0;
+  ListNode<ValueType> *first = first_node_->getNextNode();
+  first_node_->setNextNode(0);
+  first->setPreviousNode(0);
 
-  if(first_node_->empty())
-  {
-    to_move = first_node_->getNextNode();
-    tmp = to_move->getNextNode();
-    first_node_->setNextNode(tmp);
-    tmp->setPreviousNode(first_node_);
-  }
-  else
-  {
-    to_move = first_node_;
-    first_node_ = to_move->getNextNode();
-    first_node_->setPreviousNode(0);
-  }
+  last_node_->setNextNode(first_node_);
+  first_node_->setPreviousNode(last_node_);
 
-  if(last_node_->full())
-  {
-    last_node_->setNextNode(to_move);
-    to_move->setPreviousNode(last_node_);
-    to_move->setNextNode(0);
-    last_node_ = to_move;
-  }
-  else
-  {
-    tmp = last_node_->getPreviousNode();
-    to_move->setPreviousNode(tmp);
-    to_move->setNextNode(last_node_);
-    tmp->setNextNode(to_move);
-    last_node_->setPreviousNode(to_move);
-  }
+  last_node_ = first_node_;
+  first_node_ = first;
 }
 
+//----------------------------------------------------------------------
+/**
+ * Removes the last element and adds it to the front.
+ *
+ */
+template<typename ValueType>
+void List<ValueType>::rotateFront()
+{
+  // this command is senseless with <= 1 elements in the list
+  if(number_of_elements_ <= 1)
+    return;
+
+  ListNode<ValueType> *last = last_node_->getPreviousNode();
+  last_node_->setPreviousNode(0);
+  last->setNextNode(0);
+
+  first_node_->setPreviousNode(last_node_);
+  last_node_->setNextNode(first_node_);
+
+  first_node_ = last_node_;
+  last_node_ = last;
+}
