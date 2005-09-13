@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: fcntl.h,v $
  *
- * $Id: fcntl.h,v 1.1 2005/09/11 13:15:46 aniederl Exp $
- * $Log$
+ * $Id: fcntl.h,v 1.2 2005/09/13 17:31:04 aniederl Exp $
+ * $Log: fcntl.h,v $
+ * Revision 1.1  2005/09/11 13:15:46  aniederl
+ * import of fcntl.h
+ *
  */
 
 
@@ -235,11 +238,6 @@ extern int creat(const char *path, mode_t mode);
  */
 extern int open(const char *path, int flags, ...);
 
-/**
- * Manipulates a file descriptor.
- *
- */
-extern int fcntl(int file_descriptor, int command);
 
 
 #endif // fcntl_h___

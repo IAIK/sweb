@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: unistd.h,v $
  *
- * $Id: unistd.h,v 1.2 2005/09/11 12:35:49 aniederl Exp $
+ * $Id: unistd.h,v 1.3 2005/09/13 17:31:04 aniederl Exp $
  * $Log: unistd.h,v $
+ * Revision 1.2  2005/09/11 12:35:49  aniederl
+ * added special syscall macro for return value pass-through
+ *
  * Revision 1.1  2005/09/11 10:55:07  aniederl
  * initial import of unistd.h
  *
@@ -158,119 +161,6 @@ typedef int intptr_t;
 extern pid_t fork();
 
 /**
- * Replaces the current process image with a new one.
- * The arguments starting with arg are the arguments for the new image starting
- * with the filename of the file to be executed (by convention).
- * The list of arguments must be terminated by a NULL pointer (which has to be
- * of type char *.
- * The environment variables for the new process image are taken from the
- * external environ variable in the current process.
- * If this function returns, an error has occured.
- *
- * Example: execl("/bin/sh", "/bin/sh", (char *) NULL);
- *
- * @param path the path to the file which has to be executed
- * @param arg argument list, terminated by a NULL pointer
- * @return -1 and errno is set to indicate the error
- *
- */
-extern int execl(const char *path, const char *arg, ...);
-
-/**
- * Replaces the current process image with a new one.
- * Searches for an executable file if the specified file name does not contain
- * a slash (/) character. The search path is the path specified by the PATH
- * variable in the environment. If it is not specified, the default path
- * ':/bin:/usr/bin" is used.
- * The arguments starting with arg are the arguments for the new image starting
- * with the filename of the file to be executed (by convention).
- * The list of arguments must be terminated by a NULL pointer (which has to be
- * of type char *.
- * The environment variables for the new process image are taken from the
- * external environ variable in the current process.
- * If this function returns, an error has occured.
- *
- * Example: execlp("sh", "sh", (char *) NULL);
- *
- * @param path the path to the file which has to be executed
- * @param arg argument list, terminated by a NULL pointer
- * @return -1 and errno is set to indicate the error
- *
- */
-extern int execlp(const char *file, const char *arg, ...);
-
-/**
- * Replaces the current process image with a new one.
- * The arguments starting with arg are the arguments for the new image starting
- * with the filename of the file to be executed (by convention).
- * The list of arguments must be terminated by a NULL pointer (which has to be
- * of type char *. It is followed by a pointer to an array containing the
- * environment variables for the new process image.
- * If this function returns, an error has occured.
- *
- * Example: execl("/bin/sh", "/bin/sh", (char *) NULL, environment);
- *
- * @param file the file which has to be executed
- * @param arg argument list, terminated by a NULL pointer
- * @param envp an array holding the environment variables
- * @return -1 and errno is set to indicate the error
- *
- */
-//extern int execle(const char *path, const char *arg, ..., char *const envp[]);
-extern int execle(const char *path, const char *arg, ...);
-
-/**
- * Replaces the current process image with a new one.
- * The values provided with the argv array are the arguments for the new
- * image starting with the filename of the file to be executed (by convention).
- * This pointer array must be terminated by a NULL pointer (which has to be
- * of type char *.
- * If this function returns, an error has occured.
- *
- * @param path path to the file to execute
- * @param argv an array containing the arguments
- * @return 0 on success, -1 otherwise and errno is set appropriately
- *
- */
-extern int execv(const char *path, char *const argv[]);
-
-/**
- * Replaces the current process image with a new one.
- * Searches for an executable file if the specified file name does not contain
- * a slash (/) character. The search path is the path specified by the PATH
- * variable in the environment. If it is not specified, the default path
- * ':/bin:/usr/bin" is used.
- * The values provided with the argv array are the arguments for the new
- * image starting with the filename of the file to be executed (by convention).
- * This pointer array must be terminated by a NULL pointer (which has to be
- * of type char *.
- * If this function returns, an error has occured.
- *
- * @param file the file to execute
- * @param argv an array containing the arguments
- * @return 0 on success, -1 otherwise and errno is set appropriately
- *
- */
-extern int execvp(const char *file, char *const argv[]);
-
-/**
- * Replaces the current process image with a new one.
- * The values provided with the argv array are the arguments for the new
- * image starting with the filename of the file to be executed (by convention).
- * This pointer array must be terminated by a NULL pointer (which has to be
- * of type char *. It is followed by a pointer to an array containing the
- * environment variables for the new process image.
- * If this function returns, an error has occured.
- *
- * @param path path to the file to execute
- * @param argv an array containing the arguments
- * @param envp an array holding the environment variables
- * @return 0 on success, -1 otherwise and errno is set appropriately
- *
- */
-extern int execve(const char *path, char *const argv[], char *const envp[]);
-
-/**
  * Terminates the calling process. Any open file descriptors belonging to the
  * process are closed, any children of the process are inherited by process
  * 1, init, and the process's parent is sent a SIGCHLD signal.
@@ -282,7 +172,7 @@ extern int execve(const char *path, char *const argv[], char *const envp[]);
  * @param status exit status of the process
  *
  */
-void _exit(int status);
+extern void _exit(int status);
 
 /**
  * Creates a new hard link to an existing file.
@@ -376,31 +266,6 @@ extern int dup2(int old_file_descriptor, int new_file_descriptor);
 extern int pipe(int file_descriptor_array[2]);
 
 /**
- * Applies, tests or removes a POSIX lock on an open file.
- * The operation given by the command argument will be carried out on the file
- * referenced by the given file descriptor, determining the section of the
- * file to operate on by the length argument.
- * If length is positive the section stretches over pos to pos + length - 1,
- * if it is negative it goes from pos - length to pos - 1 where pos is the
- * current file position.
- * If length is zero the section extends from the current position to infinity,
- * encompassing the present and future end-of-file positions.
- *
- * Valid operations are:
- *  - F_LOCK   Locks a section for exclusive use
- *  - F_ULOCK  Unlocks locked sections
- *  - F_TEST   Tests sections for locks by other processes
- *  - F_TLOCK  Tests and locks a section for exclusive use
- *
- * @param file_descriptor file descriptor referencing the file to operate on
- * @param command an integer value describing the lock operation
- * @param length length of the section to operate on, can be zero and negative
- * @return 0 on success, -1 otherwise and errno is set appropriately
- *
- */
-extern int lockf(int file_descriptor, int command, off_t length);
-
-/**
  * Repositions the read/write file offset to the given offset value according
  * to the directive whence.
  *
@@ -457,30 +322,6 @@ extern ssize_t read(int file_descriptor, void *buffer, size_t count);
  *
  */
 extern ssize_t write(int file_descriptor, const void *buffer, size_t count);
-
-/**
- * Sets the end of the data segment to the given value if it is reasonable,
- * the system has enough memory and the process doesn't exceed ist maximum
- * data size.
- *
- * @param data_segment_end the address where the end of the data segment\
- should be set.
- * @return 0 on success, -1 otherwise and errno is set to ENOMEM
- *
- */
-extern int brk(void *data_segment_end);
-
-/**
- * Increments the program's data space by the given value bytes.
- * Providing an increment of 0 can be used to find the current location of the
- * program break.
- *
- * @param increment the number of bytes for incrementing the data space
- * @return a pointer to the start of the new area on success, -1 otherwise\
- and errno is set to ENOMEM
- *
- */
-extern void *sbrk(intptr_t increment);
 
 
 #endif // unistd_h___
