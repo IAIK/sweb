@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.2 2005/09/11 10:22:36 aniederl Exp $
+ * $Id: printf.c,v 1.3 2005/09/13 18:37:58 aniederl Exp $
  * $Log: printf.c,v $
+ * Revision 1.2  2005/09/11 10:22:36  aniederl
+ * now freeing the memory of the output string
+ *
  * Revision 1.1  2005/09/11 09:46:15  aniederl
  * initial import of printf
  *
@@ -34,6 +37,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "stdarg.h"
+
 
 typedef struct c_string
 {
@@ -192,11 +196,20 @@ void writeNumber(c_string *output_string, unsigned int number,
  */
 extern int printf(const char *format, ...)
 {
+// no dynamic memory allocation available yet
+#define STATIC_MEMORY__
+
   c_string output_string;
-  unsigned int character_count = 50;
+  unsigned int character_count = 256;
 
+#ifdef STATIC_MEMORY__
+  char buffer[character_count];
 
+  output_string.start = (char *) &buffer;
+#else
   output_string.start = (char *) malloc(output_string.size * sizeof(char));
+#endif // STATIC_MEMORY__
+
   output_string.ptr = output_string.start;
   output_string.length = 0;
   output_string.size = character_count;
@@ -209,11 +222,15 @@ extern int printf(const char *format, ...)
   // format handling taken from vkprintf
   while (format && *format)
   {
-    // resize output string if necessary
     if(!character_count)
     {
+#ifdef STATIC_MEMORY__
+      break;
+#else
+      // resize output string if necessary
       character_count = output_string.size;
       resizeString(&output_string, output_string.size * 2);
+#endif // STATIC_MEMORY__
     }
 
     if (*format == '%')
@@ -242,12 +259,16 @@ extern int printf(const char *format, ...)
       {
         width = atoi(format);  //this advances *format as well
 
-
+#ifdef STATIC_MEMORY__
+        if(character_count < width)
+          width = character_count;
+#else
         while(character_count < width)
         {
           character_count = output_string.size;
           resizeString(&output_string, output_string.size * 2);
         }
+#endif // STATIC_MEMORY__
       }
 
       //handle diouxXfeEgGcs
@@ -266,12 +287,17 @@ extern int printf(const char *format, ...)
 
           while(string_arg && *string_arg)
           {
-            // resize output string if necessary
             if(!character_count)
             {
+#ifdef STATIC_MEMORY__
+              break;
+#else
+              // resize output string if necessary
               character_count = output_string.size;
               resizeString(&output_string, output_string.size * 2);
+#endif // STATIC_MEMORY__
             }
+
 
             *output_string.ptr++ = *string_arg++;
             --character_count;
@@ -353,5 +379,9 @@ extern int printf(const char *format, ...)
 
   write(STDOUT_FILENO, (void*) output_string.start, output_string.length);
 
+#ifdef STATIC_MEMORY__
   free(output_string.start);
+#endif // STATIC_MEMORY__
+
+  return output_string.length;
 }
