@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.10 2005/09/12 14:22:25 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.11 2005/09/13 21:24:42 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
@@ -90,7 +90,7 @@ private:
 
   static void startThreadHack();
 
-  Thread *kill_me_;
+  bool kill_old_;
 
   uint32 block_scheduling_;
 

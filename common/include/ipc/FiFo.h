@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.9 2005/09/05 23:36:24 btittelbach Exp $
+//   $Id: FiFo.h,v 1.10 2005/09/13 21:24:42 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.9  2005/09/05 23:36:24  btittelbach
+//   Typo Fix
+//
 //   Revision 1.8  2005/09/05 23:18:17  btittelbach
 //   + Count Elements Ahead in Buffer
 //
@@ -51,6 +54,7 @@ extern "C"
 
 #include "mm/new.h"
 #include "kernel/Mutex.h"
+#include "kernel/Condition.h"
 #include "kernel/Scheduler.h"
 
 template<class T>
@@ -70,9 +74,9 @@ public:
 private:
   T* pos_add(T* pos_pointer, uint32 value);
 
-  Mutex my_lock_;
-  Thread *micro_cv_buffer_empty_;
-  Thread *micro_cv_buffer_full_;
+  Mutex *my_lock_;
+  Condition *buffer_not_empty_;
+  Condition *buffer_not_full_;
   T* buffer_start_;
   T* buffer_end_;
   T* write_pos_; //position of next to write element
@@ -88,8 +92,9 @@ FiFo<T>::FiFo(uint32 buffer_size)
   buffer_end_ = &buffer_start_[buffer_size];
   write_pos_=buffer_start_+1;
   read_pos_=buffer_start_;
-  micro_cv_buffer_full_=0;
-  micro_cv_buffer_empty_=0;
+  my_lock_=new Mutex();
+  buffer_not_empty_=new Condition(my_lock_);
+  buffer_not_full_-=new Condition(my_lock_);
 }
 
 template <class T>
@@ -101,46 +106,30 @@ FiFo<T>::~FiFo()
 template <class T>
 T FiFo<T>::get()
 {
-  my_lock_.acquire();
-  if (micro_cv_buffer_full_)
-  {
-    Scheduler::instance()->wake(micro_cv_buffer_full_);
-    micro_cv_buffer_full_=0;
-  }
+  my_lock_->acquire();
+  buffer_not_full_->signal();
   while (write_pos_ == pos_add(read_pos_,1)) //nothing new to read
   {
     //block with a real cv, pseudo cv for now
     kprintfd("FiFo::get: blocking get\n");
-    micro_cv_buffer_empty_=currentThread;
-    my_lock_.release();
-    Scheduler::instance()->sleep();
-    my_lock_.acquire();
-    micro_cv_buffer_empty_=0;    
+    buffer_not_empty_->wait();
   }
   read_pos_ = pos_add(read_pos_,1);
   T element = *read_pos_;
-  my_lock_.release();
+  my_lock_->release();
   return element;
 }
 
 template <class T>
 void FiFo<T>::put(T in)
 {
-  my_lock_.acquire();
-  if (micro_cv_buffer_empty_)
-  {
-    Scheduler::instance()->wake(micro_cv_buffer_empty_);
-    micro_cv_buffer_empty_=0;
-  }
+  my_lock_->acquire();
+  buffer_not_empty_->signal();
   while (pos_add(write_pos_,1) == read_pos_) //no space to write, need to read first
   {
     //block somehow, need sync mechanism for this
     kprintfd("FiFo:put: blocking put\n");
-    micro_cv_buffer_full_=currentThread;
-    my_lock_.release();
-    Scheduler::instance()->sleep();
-    my_lock_.acquire();
-    micro_cv_buffer_full_=0;
+    buffer_not_full_->wait();
   }
   
   if (read_pos_ == 0)
@@ -148,14 +137,16 @@ void FiFo<T>::put(T in)
   
   *write_pos_=in;
   write_pos_ = pos_add(write_pos_,1);
-  my_lock_.release();
+  my_lock_->release();
 }
 
 template <class T>
 uint32 FiFo<T>::countElementsAhead()
 {
+  my_lock_->acquire();
   uint32 buffer_size = (((pointer) buffer_end_) - ((pointer) buffer_start_)) / sizeof(T);
   pointer count = (((pointer) write_pos_) - ((pointer) read_pos_)) / sizeof(T);
+  my_lock_->release();
   if (count == 0)
     return buffer_size;
   else if (count > 0)

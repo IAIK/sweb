@@ -1,13 +1,8 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.23 2005/09/13 15:00:51 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.24 2005/09/13 21:24:42 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
-//  Revision 1.22  2005/09/12 14:22:25  btittelbach
-//  tried cleaning up Scheduler by using List-Rotate instead of MemoryAllocation
-//  but then found out, that this could NEVER reliably work with the kind of
-//  List we use :-(
-//
 //  Revision 1.21  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -124,7 +119,6 @@ public:
   {
     while (1)
     {
-//      kprintfd("IdleThread::Run:\n");
       Scheduler::instance()->cleanupDeadThreads();
       Scheduler::instance()->yield();
     }
@@ -143,7 +137,7 @@ void Scheduler::createScheduler()
 
 Scheduler::Scheduler()
 {
-  kill_me_=0;
+  kill_old_=false;
   block_scheduling_=0;
 }
 
@@ -170,11 +164,12 @@ void Scheduler::removeCurrentThread()
     for (uint32 c=0; c< threads_.size(); ++c)
     {
       tmp_thread = threads_.back();
-      threads_.popBack();
-      if (tmp_thread == currentThread)      
-        break;
-      
-      threads_.pushFront(tmp_thread);
+      if (tmp_thread == currentThread)
+	  {
+			threads_.popBack();
+			break;
+	  }
+      threads_.rotateFront();
     }
   }
   unlockScheduling();
@@ -190,8 +185,9 @@ void Scheduler::sleep()
 
 void Scheduler::wake(Thread* thread_to_wake)
 {
-  thread_to_wake->state_=Running;
   //DEBUG: Check if thread_to_wake is in List
+  //if (checkThreadExists(thread_to_wake)
+  thread_to_wake->state_=Running;
 }
 
 void Scheduler::startThreadHack()
@@ -210,21 +206,16 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     return 0;
   }
   
-  //kprintfd_nosleep("Scheduler::schedule: currentThread was %x\n",currentThread);
+  kprintfd_nosleep("Scheduler::schedule: currentThread was %x %s\n",currentThread,currentThread->getName());
   do 
   {
     currentThread = threads_.front();
-    threads_.popFront();
-
- //   kprintfd_nosleep("Scheduler::schedule: thinking about %x\n",currentThread);
-    if (kill_me_ == 0 && currentThread->state_ == ToBeDestroyed)
-    {
-      kill_me_=currentThread;
-      //to be killed Thread gets implicitly removed from list
-      continue;
-    }
     
-    threads_.pushBack(currentThread);
+    if (kill_old_ == false && currentThread->state_ == ToBeDestroyed)
+      kill_old_=true;
+    
+    //this operation doesn't allocate or delete any kernel memory
+    threads_.rotateBack();
     
   } while (currentThread->state_ != Running);
   kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
@@ -238,7 +229,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     currentThreadInfo =  currentThread->kernel_arch_thread_info_;
     ret=0;
   }
-
+  
   return ret;
 }
 
@@ -248,6 +239,7 @@ void Scheduler::yield()
   {
     kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
+    kprintf_nosleep_flush();
   }
   ArchThreads::yield();
 }
@@ -259,23 +251,32 @@ void Scheduler::cleanupDeadThreads()
   //then make sure we're atomar (can't really lock list, can I ;->)
   //note: currentThread is always last on list
 
-  if (kill_me_ == 0)
+  if (!kill_old_)
     return;
   
   lockScheduling();
   
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
-  if (kill_me_)
+  if (kill_old_)
   {
-    if (kill_me_->state_ == ToBeDestroyed)
-      delete kill_me_;  
-//    else
-//      kprintfd("Scheduler::cleanupDeadThreads: ERROR, how did that Thread get to be here\n");
-    kill_me_=0;
+    Thread *tmp_thread;
+    for (uint32 c=0; c< threads_.size(); ++c)
+    {
+      tmp_thread = threads_.front();
+      if (tmp_thread->state_ == ToBeDestroyed)      
+      {
+        delete tmp_thread;
+        threads_.popFront();
+        continue;
+      }
+      threads_.rotateBack();
+    }
+    kill_old_=false;
   }
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
   unlockScheduling();
 }
+
 
 void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 {
