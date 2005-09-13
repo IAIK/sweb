@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.3 2005/07/27 10:04:26 btittelbach Exp $
+//  $Id: Terminal.h,v 1.4 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.3  2005/07/27 10:04:26  btittelbach
+//  kprintf_nosleep and kprintfd_nosleep now works
+//  Output happens in dedicated Thread using VERY EVIL Mutex Hack
+//
 //  Revision 1.2  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -36,6 +40,11 @@ public:
   void setBackgroundColor(Console::BACKGROUNDCOLORS const &color);
 
   void writeInternal(char character);
+
+  bool isLockFree()
+  {
+    return mutex_.isFree();
+  }
 
 protected:
   

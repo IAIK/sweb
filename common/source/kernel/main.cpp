@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.83 2005/09/12 14:22:25 btittelbach Exp $
+ * $Id: main.cpp,v 1.84 2005/09/13 15:00:51 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.83  2005/09/12 14:22:25  btittelbach
+ * tried cleaning up Scheduler by using List-Rotate instead of MemoryAllocation
+ * but then found out, that this could NEVER reliably work with the kind of
+ * List we use :-(
+ *
  * Revision 1.82  2005/09/10 19:25:27  qiangchen
  *  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
  * USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -536,9 +541,30 @@ class KprintfNoSleepFlushingThread : public Thread
 {
   public:
 
-  KprintfNoSleepFlushingThread()
+   KprintfNoSleepFlushingThread()
   {
     name_="KprintfNoSleepFlushingThread";
+  }
+  
+  virtual void Run()
+  {
+    while (true)
+    {
+      //kprintfd("___Flushing Nosleep Buffer____\n");
+      kprintf_nosleep_flush();
+      //kprintfd("___done_______________________\n");
+    }
+  }
+};
+
+
+class KbdTestThread : public Thread
+{
+  public:
+
+   KbdTestThread()
+  {
+    name_="KbdTestThread";
   }
   
   virtual void Run()
@@ -549,10 +575,6 @@ class KprintfNoSleepFlushingThread : public Thread
       uint8 sc = kbd_ringbuffer_->get();
       kprintfd("KprintfNoSleepFlushingThread::Run:2 got SC from KBD: %x\n",sc);
       kprintfd("KprintfNoSleepFlushingThread::Run:3 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
-      //kprintfd("___Flushing Nosleep Buffer____\n");
-      kprintf_nosleep_flush();
-      Scheduler::instance()->yield();
-      //kprintfd("___done_______________________\n");
     }
   }
 };
@@ -576,6 +598,8 @@ void startup()
   Terminal *term_1 = main_console->getTerminal(1);
   Terminal *term_2 = main_console->getTerminal(2);
   Terminal *term_3 = main_console->getTerminal(3);
+  
+  kprintf_nosleep_init();
   
   term_0->setBackgroundColor(Console::BG_BLACK);
   term_0->setForegroundColor(Console::FG_GREEN);
@@ -607,7 +631,7 @@ void startup()
   kprintfd("Can be called with kprintf_debug or kprintfd\n");
 */
   
-  testRegFS();
+  //testRegFS();
   
   //~ uint32 dummy = 0;
   //~ kprintf("befor test set lock, val is now %d\n",dummy);
@@ -656,6 +680,7 @@ void startup()
 
   kprintf("Adding Important kprintf_nosleep Flush Thread\n");
   Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
+  Scheduler::instance()->addNewThread(new KbdTestThread());
 
   Scheduler::instance()->addNewThread(new MatriceMultTest());
   Scheduler::instance()->addNewThread(new SyscallTest());

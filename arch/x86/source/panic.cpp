@@ -37,7 +37,8 @@ uint32 MAX_FN_DEPTH         = 256;
     uint32* stack = (uint32*) currentThread->getStackStartPointer();
     stabs_out * symTablePtr = (stabs_out *) STAB_START;
     
-    kprintf_nosleep( "KPANICT: stack is > %x ",  stack );
+    kprintfd_nosleep( "KPANICT: stack is > %x ",  stack );
+    //kprintf_nosleep( "KPANICT: stack is > %x ",  stack );
 
     uint32 * esp_reg = 0;
     
@@ -49,16 +50,20 @@ uint32 MAX_FN_DEPTH         = 256;
       : "=g" (esp_reg) 
      );
 
-    kprintf_nosleep( "esp_reg is > %x\n",  esp_reg );
+    kprintfd_nosleep( "esp_reg is > %x\n",  esp_reg );
+    //kprintf_nosleep( "esp_reg is > %x\n",  esp_reg );
      
     for( uint32 * i = (esp_reg); i < stack; i++ )
     {
       if( (*i >= KERNEL_CODE_START && *i <= KERNEL_CODE_END) )
       //|| ( *((uint32 *)*i) >= KERNEL_CODE_START && *((uint32 *)*i) <= KERNEL_CODE_END ) )
       {
-        kprintf_nosleep( "i: %x, ",  i );
-        kprintf_nosleep( "*i: %x ", *i );
-        kprintf_nosleep( "**i: %x \n", *((uint32 *)*i) );
+        kprintfd_nosleep( "i: %x, ",  i );
+        kprintfd_nosleep( "*i: %x ", *i );
+        kprintfd_nosleep( "**i: %x \n", *((uint32 *)*i) );
+        //kprintf_nosleep( "i: %x, ",  i );
+        //kprintf_nosleep( "*i: %x ", *i );
+        //kprintf_nosleep( "**i: %x \n", *((uint32 *)*i) );
         
         //|| symTablePtr->n_value == *((uint32 *)g)
         
@@ -78,14 +83,19 @@ uint32 MAX_FN_DEPTH         = 256;
                 
               if( symTablePtr->n_type == 0x24 )
               {
-                kprintf_nosleep("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
+                kprintfd_nosleep("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
+                //kprintf_nosleep("v: %x, t %x ", symTablePtr->n_value, symTablePtr->n_type );
               
-                kprintf_nosleep(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
+                kprintfd_nosleep(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
+                //kprintf_nosleep(" %s \n", ( STABSTR_START + symTablePtr->n_strx ) );
                 
                 g = (*i - MAX_FN_DEPTH) - 1; // sub 1 to be sure
               }
               else
-                kprintf_nosleep( "!" );
+              {
+                kprintfd_nosleep( "!" );
+                //kprintf_nosleep( "!" );
+}
             } // if         
           } // for stabs
         } // for g
@@ -93,6 +103,7 @@ uint32 MAX_FN_DEPTH         = 256;
       }
     }
     
+    kprintfd_nosleep("%s \n", message );   
     kprintf_nosleep("%s \n", message );   
     
     ArchInterrupts::disableInterrupts();
@@ -115,15 +126,23 @@ uint32 MAX_FN_DEPTH         = 256;
         if( symTablePtr->n_type == 0x24 )
         {
           if( (i++ % 10) == 0 )      
-            kprintf_nosleep("index  | type | oth. | desc | address   |  function\n");
-        
-          kprintf_nosleep( "%x    %x  %x   %x     %x  %s    \n", 
+            kprintfd_nosleep("index  | type | oth. | desc | address   |  function\n");
+          kprintfd_nosleep( "%x    %x  %x   %x     %x  %s    \n", 
           symTablePtr->n_strx,
           symTablePtr->n_type, 
           symTablePtr->n_other,
           symTablePtr->n_desc,
           symTablePtr->n_value,
-          ( STABSTR_START + symTablePtr->n_strx ) );
+          ( STABSTR_START + symTablePtr->n_strx ) );        
+          //~ if( (i++ % 10) == 0 )      
+            //~ kprintf_nosleep("index  | type | oth. | desc | address   |  function\n");
+          //~ kprintf_nosleep( "%x    %x  %x   %x     %x  %s    \n", 
+          //~ symTablePtr->n_strx,
+          //~ symTablePtr->n_type, 
+          //~ symTablePtr->n_other,
+          //~ symTablePtr->n_desc,
+          //~ symTablePtr->n_value,
+          //~ ( STABSTR_START + symTablePtr->n_strx ) );
           
         }
     }

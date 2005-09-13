@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.12 2005/09/05 23:01:24 btittelbach Exp $
+//  $Id: ArchInterrupts.cpp,v 1.13 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.12  2005/09/05 23:01:24  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //  Revision 1.11  2005/07/27 13:43:47  btittelbach
 //  Interrupt On/Off Autodetection in Kprintf
 //
@@ -94,7 +98,7 @@ void ArchInterrupts::enableInterrupts()
    );
 }
 
-void ArchInterrupts::disableInterrupts()
+bool ArchInterrupts::disableInterrupts()
 {
    uint32 ret_val;
 
@@ -104,7 +108,7 @@ void ArchInterrupts::disableInterrupts()
  : "=a"(ret_val)
  :);
  
-// return ret_val;
+return (ret_val & (1 << 9));  //testing IF Flag
 
 }
 
@@ -120,5 +124,4 @@ bool ArchInterrupts::testIFSet()
   :);
   
   return (ret_val & (1 << 9));  //testing IF Flag
-  
 }

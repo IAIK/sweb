@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.16 2005/09/07 00:33:52 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.17 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.16  2005/09/07 00:33:52  btittelbach
+//   +More Bugfixes
+//   +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //   Revision 1.15  2005/09/03 21:54:45  btittelbach
 //   Syscall Testprogramm, actually works now ;-) ;-)
 //   Test get autocompiled and autoincluded into kernel
@@ -61,10 +65,10 @@
 #include "Terminal.h"
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
+#include "ipc/FiFoDRBOSS.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full
-#define KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
 
 void oh_writeCharWithSleep(char c)
 {
@@ -92,32 +96,19 @@ void oh_writeStringDebugWithSleep(char const* str)
 }
 
 
-//called only from atomar functions, so no locking (otherwise BOOM)
-//but problem in itself !!!!!!
-uint32 const buffer_size_ = 8192;
-static char buffer_[buffer_size_];
-static uint32 buffer_in_pos_ = 0;
-static uint32 buffer_out_pos_ = 0;
-static bool buffer_overflow_ = false;
+FiFoDRBOSS<char> *nosleep_fifo_;
+
+void kprintf_nosleep_init()
+{
+  nosleep_fifo_ = new FiFoDRBOSS<char>(8192,2048,true);
+}
 
 void oh_writeCharNoSleep(char c)
 {
-  return;
-  
-#ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
-  if ((buffer_in_pos_ +1) % buffer_size_ == buffer_out_pos_)
-    return;
-#endif
-  buffer_[buffer_in_pos_]=c;
-  buffer_in_pos_++;
-  buffer_in_pos_ %= buffer_size_;
-  if (buffer_in_pos_ == buffer_out_pos_)
-    buffer_overflow_ = true;
+  nosleep_fifo_->put(c);
 }
 void oh_writeStringNoSleep(char const* str)
 {
-  return;
-  
   while (*str)
   {
     oh_writeCharNoSleep(*str);
@@ -125,26 +116,19 @@ void oh_writeStringNoSleep(char const* str)
   }
 }
 
-void flushActiveConsole(Terminal *term)
+void flushActiveConsole()
 {
-  if (buffer_overflow_)
+  if (ArchInterrupts::testIFSet())
   {
-    buffer_overflow_ = false;
-    buffer_out_pos_ = (buffer_in_pos_ + 1) % buffer_size_;
-    term->writeInternal('\n');
-  }
-  if (buffer_in_pos_ > buffer_size_-1)
-    buffer_in_pos_=buffer_size_-1;
-  if (buffer_out_pos_ > buffer_size_-1)
-    buffer_out_pos_=0;
-  while (buffer_in_pos_ != buffer_out_pos_)
+    for(;;)
+      main_console->getActiveTerminal()->write(nosleep_fifo_->get());
+  } 
+  else if (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree())
   {
-    term->writeInternal(buffer_[buffer_out_pos_]);
-    buffer_out_pos_++;
-    buffer_out_pos_ %= buffer_size_;
+    for(uint32 c=0;c<nosleep_fifo_->countElementsAhead();++c)
+      main_console->getActiveTerminal()->write(nosleep_fifo_->get());    
   }
 }
-
 
 
 void oh_writeCharDebugNoSleep(char c)
@@ -161,63 +145,6 @@ void oh_writeStringDebugNoSleep(char const* str)
     str++;
   }
 }
-
-void flushDebugConsole(Terminal *term)
-{
-}
-
-//~ static char debug_buffer_[buffer_size_];
-//~ static uint32 debug_buffer_in_pos_ = 0;
-//~ static uint32 debug_buffer_out_pos_ = 0;
-//~ static bool debug_buffer_overflow_ = false;
-
-//~ void oh_writeCharDebugNoSleep(char c)
-//~ {
-//~ #ifdef KPRINTF_NOSLEEP_KEEP_OLDEST_DROP_NEWEST
-  //~ if ((debug_buffer_in_pos_ +1) % buffer_size_ == debug_buffer_out_pos_)
-    //~ return;
-//~ #endif
-  //~ debug_buffer_[debug_buffer_in_pos_]=c;
-  //~ debug_buffer_in_pos_++;
-  //~ debug_buffer_in_pos_ %= buffer_size_;
-  //~ if (debug_buffer_in_pos_ == debug_buffer_out_pos_)
-    //~ debug_buffer_overflow_ = true;
-//~ }
-//~ void oh_writeStringDebugNoSleep(char const* str)
-//~ {
-  //~ while (*str)
-  //~ {
-    //~ oh_writeCharDebugNoSleep(*str);
-    //~ str++;
-  //~ }
-//~ }
-
-//~ void flushDebugConsole(Terminal *term)
-//~ {
-  //~ if (debug_buffer_overflow_)
-  //~ {
-    //~ debug_buffer_overflow_ = false;
-    //~ debug_buffer_out_pos_ = (debug_buffer_in_pos_ + 1) % buffer_size_;
-    //~ writeChar2Bochs((uint8) '\n');
-  //~ }
-  //~ if (debug_buffer_in_pos_ > buffer_size_-1)
-  //~ {
-    //~ writeLine2Bochs((uint8*) "flushDebugConsole: Recoverable Error in debug_buffer_in_pos_\n");
-    //~ debug_buffer_in_pos_=buffer_size_-1;
-  //~ }
-  //~ if (debug_buffer_out_pos_ > buffer_size_-1)
-  //~ {
-    //~ writeLine2Bochs((uint8*) "flushDebugConsole: Recoverable Error in debug_buffer_out_pos_\n");
-    //~ debug_buffer_out_pos_=0;
-  //~ }
-  //~ while (debug_buffer_in_pos_ != debug_buffer_out_pos_)
-  //~ {
-    //~ writeChar2Bochs((uint8) debug_buffer_[debug_buffer_out_pos_]);
-    //~ debug_buffer_out_pos_++;
-    //~ debug_buffer_out_pos_ %= buffer_size_;
-  //~ }
-//~ }
-
 
 
 uint8 const ZEROPAD	= 1;		/* pad with zero */
@@ -440,13 +367,12 @@ void kprintf(const char *fmt, ...)
   
   va_start(args, fmt);
   //check if atomar or not in current context
-  if (likely(ArchInterrupts::testIFSet()))
+  if (likely(ArchInterrupts::testIFSet()) || (unlikely(ArchInterrupts::testIFSet() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
   else
     vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
   va_end(args);
 }
-
 
 //------------------------------------------------
 /// kprintfd is a shorthand for kprintf_debug
@@ -479,7 +405,7 @@ void kprintf_nosleep(const char *fmt, ...)
 
   va_start(args, fmt);
   //check if atomar or not in current context
-  if (unlikely(ArchInterrupts::testIFSet()))
+  if (unlikely(ArchInterrupts::testIFSet()) || (likely(ArchInterrupts::testIFSet() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
   else
     vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
@@ -501,20 +427,6 @@ void kprintfd_nosleep(const char *fmt, ...)
 
 void kprintf_nosleep_flush()
 {
-  return;
-  bool previous_if = ArchInterrupts::testIFSet();
-  Terminal *term = main_console->getActiveTerminal();
-  main_console->lockConsoleForDrawing();
-  //getting the Lock is not enough, we need to make sure, noone can use kprintf_nosleep while we flush
-  
-  if (previous_if)
-    ArchInterrupts::disableInterrupts();
-
-  flushActiveConsole(term);
-  flushDebugConsole(term);
-
-  if (previous_if)
-    ArchInterrupts::enableInterrupts();
-
-  main_console->unLockConsoleForDrawing();  
+  //can have only one flush operation here, as each one would block
+  flushActiveConsole();
 }

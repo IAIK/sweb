@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.19 2005/08/17 20:00:59 nomenquis Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.20 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.19  2005/08/17 20:00:59  nomenquis
+//  fuck the fucking fuckers
+//
 //  Revision 1.18  2005/08/11 18:28:10  nightcreature
 //  changed define of evil print(x) depending on platform xen or x86
 //
@@ -84,6 +87,7 @@
 #include "ArchCommon.h"
 #include "assert.h"
 #include "../../../arch/arch/include/debug_bochs.h"
+#include "console/kprintf.h"
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
@@ -196,8 +200,10 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   
   if (new_pointer == 0)
   {
-    writeLine2Bochs((uint8*)"KernelMemoryManager::allocateMemory: Not enough Memory left\n");
-    arch_panic((uint8*)"KernelMemoryManager::allocateMemory: Not enough Memory left\n");
+    unlockKMM();
+    kprintfd_nosleep("KernelMemoryManager::allocateMemory: Not enough Memory left\n");
+    kprintf_nosleep("KernelMemoryManager::allocateMemory: Not enough Memory left\n");
+    return 0;
   }
   
   fillSegment(new_pointer,requested_size);

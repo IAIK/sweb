@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.17 2005/09/07 00:33:52 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.18 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.17  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.16  2005/08/19 21:14:15  btittelbach
 //  Debugging the Debugging Code
 //
@@ -65,6 +69,7 @@
 #include "ArchCommon.h"
 #include "console/kprintf.h"
 #include "ArchThreads.h"
+#include "ArchInterrupts.h"
 #include "Scheduler.h"
 #include "Loader.h"
 
@@ -111,7 +116,10 @@ void Thread::kill()
   state_=ToBeDestroyed;
   kprintfd("Thread::kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName());
   if (currentThread == this)
+  {
+    ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
+  }
 }
 
 pointer Thread::getStackStartPointer()

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.32 2005/09/07 00:33:52 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.33 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.32  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.31  2005/09/06 09:56:50  btittelbach
 //  +Thread Names
 //  +stdin Test Example
@@ -533,10 +537,10 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-      kprintfd_nosleep("irq65: Going to leave irq Handler 0 to kernel\n");
+      kprintfd_nosleep("irq65: Going to leave int Handler 65 to kernel\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      kprintfd_nosleep("irq65: Going to leave irq Handler 0 to user\n");
+      kprintfd_nosleep("irq65: Going to leave int Handler 65 to user\n");
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd_nosleep("irq65: Panic in int 0 handler\n");

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.7 2005/09/05 23:01:23 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.8 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.7  2005/09/05 23:01:23  btittelbach
+//  Keyboard Input Handler
+//  + several Bugfixes
+//
 //  Revision 1.6  2005/07/27 13:43:47  btittelbach
 //  Interrupt On/Off Autodetection in Kprintf
 //
@@ -50,10 +54,9 @@ public:
 
   // enable interrupts, no matter what, this is bad
   static void enableInterrupts();
-  static void disableInterrupts();
-  static bool ArchInterrupts::testIFSet();
-  static void setOldInterruptState(uint32 const &flags);
-
+  static bool disableInterrupts();
+  static bool testIFSet();
+  //static void setOldInterruptState(uint32 const &flags);
 };
 
 

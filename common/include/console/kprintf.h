@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.h,v 1.6 2005/07/27 10:04:26 btittelbach Exp $
+//   $Id: kprintf.h,v 1.7 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.h,v $
+//   Revision 1.6  2005/07/27 10:04:26  btittelbach
+//   kprintf_nosleep and kprintfd_nosleep now works
+//   Output happens in dedicated Thread using VERY EVIL Mutex Hack
+//
 //   Revision 1.5  2005/07/24 17:02:59  nomenquis
 //   lots of changes for new console stuff
 //
@@ -29,4 +33,5 @@ void kprintfd(const char *fmt, ...);
 void kprintf_nosleep(const char *fmt, ...);
 void kprintfd_nosleep(const char *fmt, ...);
 
+void kprintf_nosleep_init();
 void kprintf_nosleep_flush();

@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.22 2005/09/12 14:22:25 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.23 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.22  2005/09/12 14:22:25  btittelbach
+//  tried cleaning up Scheduler by using List-Rotate instead of MemoryAllocation
+//  but then found out, that this could NEVER reliably work with the kind of
+//  List we use :-(
+//
 //  Revision 1.21  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -243,7 +248,6 @@ void Scheduler::yield()
   {
     kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
-    kprintf_nosleep_flush();
   }
   ArchThreads::yield();
 }

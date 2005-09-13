@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.1 2005/09/07 00:33:52 btittelbach Exp $
+//   $Id: FiFoDRBOSS.h,v 1.2 2005/09/13 15:00:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.1  2005/09/07 00:33:52  btittelbach
+//   +More Bugfixes
+//   +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //----------------------------------------------------------------------
 
 //This is the Double Ring Buffered One Side Synchronised FiFo, intended for
@@ -29,7 +33,7 @@ template<class T>
 class FiFoDRBOSS
 {
 public:
-  FiFoDRBOSS(uint32 inputb_size=1024, uint32 fallbackb_size=0);
+  FiFoDRBOSS(uint32 inputb_size=1024, uint32 fallbackb_size=0, bool dont_overwrite_old=false);
   ~FiFoDRBOSS();
 
   //operator <<
@@ -55,10 +59,12 @@ private:
   T *input_buffer_;
   uint32 ib_write_pos_;
   uint32 ib_read_pos_;  
+
+  bool dont_overwrite_old_;
 };
 
 template <class T>
-FiFoDRBOSS<T>::FiFoDRBOSS(uint32 inputb_size, uint32 fallbackb_size)
+FiFoDRBOSS<T>::FiFoDRBOSS(uint32 inputb_size, uint32 fallbackb_size, bool dont_overwrite_old)
 {
   if (inputb_size == 0)
     input_buffer_size_=1024;
@@ -76,6 +82,7 @@ FiFoDRBOSS<T>::FiFoDRBOSS(uint32 inputb_size, uint32 fallbackb_size)
   ib_read_pos_=0;  
   input_buffer_lock_=new Mutex();
   something_to_read_=new Condition(input_buffer_lock_);
+  dont_overwrite_old_ = dont_overwrite_old;
 }
 
 template <class T>
@@ -98,9 +105,11 @@ void FiFoDRBOSS<T>::putIntoFallbackBuffer(T c)
 template <class T>
 void FiFoDRBOSS<T>::putIntoBuffer(T c)
 {
+ if (dont_overwrite_old_ && ((ib_write_pos_ + 1) % input_buffer_size_ == ib_read_pos_))
+   return;
  input_buffer_[ib_write_pos_++]=c;
  ib_write_pos_ %= input_buffer_size_;
-  if ((ib_write_pos_ + 1) % input_buffer_size_ == ib_read_pos_)
+  if (!dont_overwrite_old_ && ((ib_write_pos_ + 1) % input_buffer_size_ == ib_read_pos_))
   {
     //if we come to close to read pos, we move read pos ahead of us
     //Therefore we are more like a RingBuffer than a FIFO where put would block
