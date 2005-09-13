@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.24 2005/09/13 21:24:42 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.25 2005/09/13 22:15:52 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.24  2005/09/13 21:24:42  btittelbach
+//  Scheduler without Memory Allocation in critical context (at least in Theory)
+//
 //  Revision 1.21  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -205,8 +208,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     kprintfd_nosleep("Scheduler::schedule: currently blocked\n");
     return 0;
   }
-  
-  kprintfd_nosleep("Scheduler::schedule: currentThread was %x %s\n",currentThread,currentThread->getName());
+
   do 
   {
     currentThread = threads_.front();
@@ -277,6 +279,27 @@ void Scheduler::cleanupDeadThreads()
   unlockScheduling();
 }
 
+void Scheduler::printThreadList()
+{
+  uint32 c=0;
+  kprintfd("Scheduler::printThreadList: %d Threads in List\n",threads_.size());
+  for (c=0; c<threads_.size();++c)
+    kprintfd("Scheduler::printThreadList: threads_[%d]: %x %s\n",c,threads_[c],threads_[c]->getName());
+  //~ kprintfd("Scheduler::printThreadList: Rotating Through to Back\n");
+  //~ for (c=0; c<threads_.size();++c)
+  //~ {
+    //~ Thread *thread = threads_.front();
+    //~ kprintfd("Scheduler::printThreadList: %x %s\n",thread,thread->getName());
+    //~ threads_.rotateBack();
+  //~ }
+  //~ kprintfd("Scheduler::printThreadList: Rotating Through to Front\n");
+  //~ for (c=0; c<threads_.size();++c)
+  //~ {
+    //~ Thread *thread = threads_.back();
+    //~ kprintfd("Scheduler::printThreadList: %x %s\n",thread,thread->getName());
+    //~ threads_.rotateFront();
+  //~ }
+}
 
 void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 {
@@ -285,8 +308,8 @@ void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 }
 void Scheduler::unlockScheduling()
 {
-  block_scheduling_=0;
+  block_scheduling_ = 0;
 }
 bool Scheduler::testLock() {
-  return (block_scheduling_>0);
+  return (block_scheduling_ > 0);
 }

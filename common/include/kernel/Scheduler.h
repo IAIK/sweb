@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.11 2005/09/13 21:24:42 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.12 2005/09/13 22:15:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.11  2005/09/13 21:24:42  btittelbach
+//  Scheduler without Memory Allocation in critical context (at least in Theory)
+//
 //  Revision 1.9  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -69,6 +72,7 @@ public:
 
   void yield();
 
+  void printThreadList();
   bool checkThreadExists(Thread* thread);
 
   // NEVER EVER EVER CALL THIS ONE OUTSIDE OF AN INTERRUPT CONTEXT //

@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.84 2005/09/13 15:00:51 btittelbach Exp $
+ * $Id: main.cpp,v 1.85 2005/09/13 22:15:52 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.84  2005/09/13 15:00:51  btittelbach
+ * Prepare to be Synchronised...
+ * kprintf_nosleep works now
+ * scheduler/list still needs to be fixed
+ *
  * Revision 1.83  2005/09/12 14:22:25  btittelbach
  * tried cleaning up Scheduler by using List-Rotate instead of MemoryAllocation
  * but then found out, that this could NEVER reliably work with the kind of
@@ -289,7 +294,6 @@
 #include "Scheduler.h"
 #include "ArchCommon.h"
 #include "ArchThreads.h"
-#include "ipc/FiFo.h"
 #include "kernel/Mutex.h"
 #include "panic.h"
 #include "debug_bochs.h"
@@ -607,10 +611,6 @@ void startup()
   term_1->writeString("This is on term 1, you should not see me\n");
   term_2->writeString("This is on term 2, you should not see me\n");
   term_3->writeString("This is on term 3, you should not see me\n");
-
-//  for(uint32 i=0; i<100; i++)
-//    kprintfd("%d\n", i);
-  
   
   main_console->setActiveTerminal(0);
   
@@ -686,9 +686,8 @@ void startup()
   Scheduler::instance()->addNewThread(new SyscallTest());
   Scheduler::instance()->addNewThread(new SyscallTest2());
   
-  //int32 *test = new int32[50];
-  //FiFo<uint32> test_fifo(20);
-
+  Scheduler::instance()->printThreadList();
+  
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
