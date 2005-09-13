@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: assert.cpp,v $
 //
-// $Id: assert.cpp,v 1.3 2005/07/26 17:45:25 nomenquis Exp $
+// $Id: assert.cpp,v 1.4 2005/09/13 16:25:21 davrieb Exp $
 // $Log: assert.cpp,v $
+// Revision 1.3  2005/07/26 17:45:25  nomenquis
+// foobar
+//
 // Revision 1.2  2005/07/07 14:56:53  davrieb
 // fix assert to actually chaeck the condition
 //
@@ -63,6 +66,6 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, char* file)
 
 void sweb_assert(const char *condition, uint32 line, const char* file)
 {
-  kprintf_nosleep("KERNEL PANIC: Assertaion %s in File %s on Line %d\n",condition, file, line);
+  kprintf_nosleep("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kpanict((uint8*) "Halting System\n");
 }
