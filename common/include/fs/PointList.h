@@ -139,7 +139,7 @@ public:
 template <class ContentType>
 PointList<ContentType>::~PointList()
 {
-  while(first_ != 0)
+  while(length_ != 0)
     popFront();
 }
 

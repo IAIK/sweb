@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.12 2005/09/12 17:55:53 qiangchen Exp $
+// $Id: VirtualFileSystem.cpp,v 1.13 2005/09/14 14:22:16 davrieb Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.12  2005/09/12 17:55:53  qiangchen
+// test the VFS (vfsvfs__syscall)
+//
 // Revision 1.11  2005/09/10 19:25:27  qiangchen
 //  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
 // USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -168,17 +171,18 @@ int32 VirtualFileSystem::root_mount(char* fs_name, int32 /*mode*/)
 }
 
 //----------------------------------------------------------------------
-int32 VirtualFileSystem::rootUmount(char* fs_name)
+int32 VirtualFileSystem::rootUmount()
 {
   if(superblocks_.getLength() != 1)
   {
-    kprintfd("it exists the sub-filesystem");
+    kprintfd("There is a still another file system mounted\n");
     return -1;
   }
-  
+
   Superblock *root_sb = superblocks_.at(0);
   delete root_sb;
-  kprintfd("SSSSS\n");
+  kprintfd("unmounterd the root fs\n");
+  return 0;
 }
 
 //----------------------------------------------------------------------

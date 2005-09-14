@@ -32,7 +32,7 @@ RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
   {
     Dentry* parent = s_root->getParent();
     root_dentry = new Dentry(parent);
-      
+
     mounted_over_ = s_root;
     s_root_ = root_dentry;
   }
@@ -61,54 +61,19 @@ RamFsSuperblock::~RamFsSuperblock()
   assert(dirty_inodes_.empty() == true);
 
   uint32 num = all_inodes_.getLength();
-      kprintfd("num = %d\n", num);
- 
+
   for(uint32 counter = 0; counter < num; counter++)
   {
-    kprintfd("SSSSSS\n");
     Inode* inode = all_inodes_.at(0);
     Dentry* dentry = inode->getDentry();
     all_inodes_.remove(inode);
-    delete dentry;
+    if (dentry)
+    {
+      delete dentry;
+    }
     delete inode;
-    kprintfd("loop\n");
   }
-/*
-  Dentry* current_dentry = s_root_;
-  for(;;)
-  {
-    kprintfd("loop\n");
-    if((current_dentry == s_root_) && (current_dentry->emptyChild() == true))
-      break;
-    
-    uint32 num = current_dentry->getNumChild();
-    kprintfd("dentry = %s, has child %d\n", current_dentry->getName(), num);
-    kprintfd("current_dentry->emptyChild() = %d\n", current_dentry->emptyChild());
-//    if(num > 0)
-    if(current_dentry->emptyChild() == true)
-    {
-      kprintfd("ssssss\n");
-      Inode* current_inode = current_dentry->getInode();
-      kprintfd("delete dentry = %s\n", current_dentry->getName());
-      current_dentry = current_dentry->getParent();
-      kprintfd("hier\n");
-      if(current_inode->rmdir() == INODE_DEAD)
-        all_inodes_.remove(current_inode);
-      else
-        kprintfd("rmdir failed\n");
-    }
-    else
-    {
-      kprintfd("ssss\n");
-      current_dentry = current_dentry->getChild(0);
-      kprintfd("current_dentry = %s\n", current_dentry->getName());
-    }
-    kprintfd("SSSSSSSSS\n");
-  }
-  */
-  
-  kprintfd("***** all_inodes_.getLength = %d\n", all_inodes_.getLength());
-  kprintfd("***** all_inodes_.empty = %d\n", all_inodes_.empty());
+
   assert(all_inodes_.empty() == true);
   kprintfd("***** end Destructor of RamFsSuperblock\n");
 }

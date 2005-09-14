@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.h,v $
 //
-// $Id: VirtualFileSystem.h,v 1.11 2005/09/12 17:55:53 qiangchen Exp $
+// $Id: VirtualFileSystem.h,v 1.12 2005/09/14 14:22:16 davrieb Exp $
 // $Log: VirtualFileSystem.h,v $
+// Revision 1.11  2005/09/12 17:55:53  qiangchen
+// test the VFS (vfsvfs__syscall)
+//
 // Revision 1.10  2005/09/10 19:25:27  qiangchen
 //  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
 // USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -95,8 +98,8 @@ class VirtualFileSystem
     int32 mount(char* path, char* fs_name, int32 mode);
 
     int32 root_mount(char* fs_name, int32 mode);
-    
-    int32 rootUmount(char* fs_name);
+
+    int32 rootUmount();
 
     /// Get the FileSystemInfo object of the current Process
     FileSystemInfo *getFSInfo();

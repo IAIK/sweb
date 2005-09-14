@@ -23,6 +23,7 @@
 //---------------------------------------------------------------------------
 Dentry::Dentry(char* name)
 {
+  kprintfd("Dentry::Dentry(char* name)\n");
   this->setName(name);
   d_parent_ = this; // the parent of the root
   d_inode_ = 0;
@@ -31,6 +32,7 @@ Dentry::Dentry(char* name)
 //---------------------------------------------------------------------------
 Dentry::Dentry(Dentry *parent)
 {
+  kprintfd("Dentry::Dentry(Dentry *parent)\n");
   d_parent_ = parent;
   parent->setChild(this);
   d_inode_ = 0;
@@ -39,9 +41,9 @@ Dentry::Dentry(Dentry *parent)
 //---------------------------------------------------------------------------
 Dentry::~Dentry()
 {
-  kprintfd("~Dentry()\n");
   if(d_name_)
     kfree(d_name_);
+  kprintfd("~Dentry()\n");
 }
 
 //---------------------------------------------------------------------------
@@ -66,9 +68,9 @@ void Dentry::setName(char* name)
 {
   uint32 name_len = strlen(name) + 1;
   d_name_ = (char*)kmalloc(name_len * sizeof(char));
-  
+
   strlcpy(d_name_, name, name_len);
-  kprintfd("d_name_ = %s, has length %d\n", d_name_, strlen(d_name_));
+  kprintfd("\n\n\nd_name_ = %s, has length %d\n", d_name_, strlen(d_name_));
 }
 
 //---------------------------------------------------------------------------

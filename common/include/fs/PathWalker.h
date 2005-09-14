@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: PathWalker.h,v $
 //
-// $Id: PathWalker.h,v 1.5 2005/09/12 17:55:53 qiangchen Exp $
+// $Id: PathWalker.h,v 1.6 2005/09/14 14:22:16 davrieb Exp $
 // $Log: PathWalker.h,v $
+// Revision 1.5  2005/09/12 17:55:53  qiangchen
+// test the VFS (vfsvfs__syscall)
+//
 // Revision 1.4  2005/09/10 19:25:27  qiangchen
 //  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
 // USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -142,7 +145,7 @@ protected:
   ///         It is empty if there is no next part
   ///         In case of an error a null pointer is returned.
   ///
-  char* getNextPart(const char* path, uint32 &npart_len);
+  char* getNextPart(const char* path, int32 &npart_len);
   
   /// Skip any leading slashes on path.
   ///
