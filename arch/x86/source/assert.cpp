@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: assert.cpp,v $
 //
-// $Id: assert.cpp,v 1.4 2005/09/13 16:25:21 davrieb Exp $
+// $Id: assert.cpp,v 1.5 2005/09/14 13:21:20 davrieb Exp $
 // $Log: assert.cpp,v $
+// Revision 1.4  2005/09/13 16:25:21  davrieb
+// fix typo in assertion message
+//
 // Revision 1.3  2005/07/26 17:45:25  nomenquis
 // foobar
 //
@@ -60,6 +63,8 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, char* file)
       i--;
       line /= 10;
     }
+
+    for (;;);
   }
 }  
 
