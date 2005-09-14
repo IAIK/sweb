@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.3 2005/09/13 18:37:58 aniederl Exp $
+ * $Id: printf.c,v 1.4 2005/09/14 23:01:04 aniederl Exp $
  * $Log: printf.c,v $
+ * Revision 1.3  2005/09/13 18:37:58  aniederl
+ * modified printf for static memory
+ *
  * Revision 1.2  2005/09/11 10:22:36  aniederl
  * now freeing the memory of the output string
  *
@@ -200,7 +203,7 @@ extern int printf(const char *format, ...)
 #define STATIC_MEMORY__
 
   c_string output_string;
-  unsigned int character_count = 256;
+  ssize_t character_count = 256;
 
 #ifdef STATIC_MEMORY__
   char buffer[character_count];
@@ -377,11 +380,61 @@ extern int printf(const char *format, ...)
 
   va_end(args);
 
-  write(STDOUT_FILENO, (void*) output_string.start, output_string.length);
+  character_count = write(STDOUT_FILENO,
+                          (void*) output_string.start, output_string.length);
 
 #ifdef STATIC_MEMORY__
   free(output_string.start);
 #endif // STATIC_MEMORY__
 
-  return output_string.length;
+  return (int) character_count;
 }
+
+
+//----------------------------------------------------------------------
+/**
+ * Equivalent to putc(character, stdout).
+ *
+ * @param character The character for writing
+ * @return The character written as unsigned char cast to int or EOF on error
+ *
+ */
+int putchar(int character)
+{
+  unsigned char output_char = (unsigned char) character;
+
+  if(!write(STDOUT_FILENO, (void*) &output_char, 1))
+    return EOF;
+
+  return (int) output_char;
+}
+
+//----------------------------------------------------------------------
+/**
+ * Writes the given string followed by a newline to stdout.
+ *
+ * @param output_string The string for writing
+ * @return A non-negative number on success or EOF on error
+ *
+ */
+int puts(const char *output_string)
+{
+  unsigned char newline = '\n';
+  const char *string_ptr = output_string;
+  size_t string_length = 0;
+
+  while(string_ptr && *string_ptr++)
+    ++string_length;
+
+  if(string_length)
+  {
+    if(!write(STDOUT_FILENO, (void*) output_string, string_length))
+      return EOF;
+  }
+
+  if(!write(STDOUT_FILENO, (void*) &newline, 1))
+    return EOF;
+
+  return 0;
+}
+
