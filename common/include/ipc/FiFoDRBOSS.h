@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.2 2005/09/13 15:00:51 btittelbach Exp $
+//   $Id: FiFoDRBOSS.h,v 1.3 2005/09/14 09:16:36 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.2  2005/09/13 15:00:51  btittelbach
+//   Prepare to be Synchronised...
+//   kprintf_nosleep works now
+//   scheduler/list still needs to be fixed
+//
 //   Revision 1.1  2005/09/07 00:33:52  btittelbach
 //   +More Bugfixes
 //   +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -105,17 +110,18 @@ void FiFoDRBOSS<T>::putIntoFallbackBuffer(T c)
 template <class T>
 void FiFoDRBOSS<T>::putIntoBuffer(T c)
 {
- if (dont_overwrite_old_ && ((ib_write_pos_ + 1) % input_buffer_size_ == ib_read_pos_))
-   return;
+ if (ib_write_pos_ == ib_read_pos_)
+    if (dont_overwrite_old_)
+      return;
+    else
+    {
+      //if we come to close to read pos, we move read pos ahead of us
+      //Therefore we are more like a RingBuffer than a FIFO where put would block
+      ib_read_pos_++;
+      ib_read_pos_ %= input_buffer_size_;
+    }	  
  input_buffer_[ib_write_pos_++]=c;
  ib_write_pos_ %= input_buffer_size_;
-  if (!dont_overwrite_old_ && ((ib_write_pos_ + 1) % input_buffer_size_ == ib_read_pos_))
-  {
-    //if we come to close to read pos, we move read pos ahead of us
-    //Therefore we are more like a RingBuffer than a FIFO where put would block
-    ib_read_pos_++;
-    ib_read_pos_ %= input_buffer_size_;
-  }
 }
 
 template <class T>
@@ -157,7 +163,7 @@ T FiFoDRBOSS<T>::get()
   while (ib_write_pos_ == ((ib_read_pos_+1)%input_buffer_size_)) //nothing new to read
     something_to_read_->wait(); //this implicates release & acquire
   
-  ret = input_buffer_[ib_read_pos_++];
+  ret = input_buffer_[++ib_read_pos_];
   ib_read_pos_ %= input_buffer_size_;
   
   input_buffer_lock_->release();
