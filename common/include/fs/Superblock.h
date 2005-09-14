@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.h,v $
 //
-// $Id: Superblock.h,v 1.11 2005/09/12 17:55:53 qiangchen Exp $
+// $Id: Superblock.h,v 1.12 2005/09/14 11:51:50 davrieb Exp $
 // $Log: Superblock.h,v $
+// Revision 1.11  2005/09/12 17:55:53  qiangchen
+// test the VFS (vfsvfs__syscall)
+//
 // Revision 1.10  2005/09/10 19:25:27  qiangchen
 //  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
 // USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -125,7 +128,7 @@ public:
   virtual ~Superblock();
 
   /// create a new Inode of the superblock, mknod with dentry, add in the list.
-  virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*mode*/) {}
+  virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*mode*/) { return 0; }
 
   /// This method is called to read a specific inode from a mounted
   /// file-system and marks the inode in the s_inode_used_, if this inode exists
