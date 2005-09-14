@@ -23,15 +23,15 @@ int32 FileSystemInfo::setName(char* pathname, uint32 length)
   if(pathname == 0)
     return -1;
 
-  uint32 path_len = 0;
+  uint32 path_len = strlen(pathname);
+  assert(length < path_len);
   if(length == 0)
-    path_len = strlen(pathname) + 1;
+    path_len += 1;
   else
     path_len = length + 1;
 
   pathname_ = (char*)kmalloc(path_len * sizeof(char));
-  uint32 copied = strlcpy(pathname_, pathname, path_len);
-
+  strlcpy(pathname_, pathname, path_len);
   return 0;
 }
 
@@ -44,3 +44,4 @@ void FileSystemInfo::putName()
     pathname_ = 0;
   }
 }
+
