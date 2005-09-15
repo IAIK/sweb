@@ -1,7 +1,39 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.4 2005/09/15 17:51:13 nelles Exp $
+//   $Id: FiFoDRBOSS.h,v 1.5 2005/09/15 18:47:06 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.4  2005/09/15 17:51:13  nelles
+//
+//
+//    Massive update. Like PatchThursday.
+//    Keyboard is now available.
+//    Each Terminal has a buffer attached to it and threads should read the buffer
+//    of the attached terminal. See TestingThreads.h in common/include/kernel for
+//    example of how to do it.
+//    Switching of the terminals is done with the SHFT+F-keys. (CTRL+Fkeys gets
+//    eaten by X on my machine and does not reach Bochs).
+//    Lot of smaller modifications, to FiFo, Mutex etc.
+//
+//    Committing in .
+//
+//    Modified Files:
+//    	arch/x86/source/InterruptUtils.cpp
+//    	common/include/console/Console.h
+//    	common/include/console/Terminal.h
+//    	common/include/console/TextConsole.h common/include/ipc/FiFo.h
+//    	common/include/ipc/FiFoDRBOSS.h common/include/kernel/Mutex.h
+//    	common/source/console/Console.cpp
+//    	common/source/console/Makefile
+//    	common/source/console/Terminal.cpp
+//    	common/source/console/TextConsole.cpp
+//    	common/source/kernel/Condition.cpp
+//    	common/source/kernel/Mutex.cpp
+//    	common/source/kernel/Scheduler.cpp
+//    	common/source/kernel/Thread.cpp common/source/kernel/main.cpp
+//    Added Files:
+//    	arch/x86/include/arch_keyboard_manager.h
+//    	arch/x86/source/arch_keyboard_manager.cpp
+//
 //   Revision 1.3  2005/09/14 09:16:36  btittelbach
 //   BugFix
 //
@@ -35,8 +67,8 @@ extern "C"
 #include "mm/new.h"
 #include "kernel/Mutex.h"
 #include "kernel/Condition.h"
-#include "assert.h"
 #include "ArchInterrupts.h"
+#include "panic.h"
 
 template<class T>
 class FiFoDRBOSS
@@ -51,9 +83,7 @@ public:
   T get();
   void put(T c);
   uint32 countElementsAhead();
-  
   void clear( void );
-  void empty( void );
  
 private:
   void putIntoFallbackBuffer(T c);
@@ -144,14 +174,10 @@ void FiFoDRBOSS<T>::copyFB2Buffer()
 template <class T>
 void FiFoDRBOSS<T>::put(T c)
 {
- bool int_set = ArchInterrupts::testIFSet();
-
- if( int_set )
-   ArchInterrupts::disableInterrupts();  // to safely use them outside IRQ handlers
-  
- bool mutex_free = input_buffer_lock_->isFreeAtomic();
+ if (ArchInterrupts::testIFSet())
+   kpanict((uint8*)"FiFoDRBOSS::put: is not meant to be used outside of InterruptHandler Kontext, use FiFo instead\n");
  
- if( mutex_free )
+ if( input_buffer_lock_->isFree() )
  {
    copyFB2Buffer();
    putIntoBuffer(c);
@@ -163,22 +189,16 @@ void FiFoDRBOSS<T>::put(T c)
  {
    putIntoFallbackBuffer(c);
  }
- 
- if( int_set )
-     ArchInterrupts::enableInterrupts(); 
-}
-
-template <class T>
-void FiFoDRBOSS<T>::empty( void )
-{
-    clear();
 }
 
 template <class T>
 void FiFoDRBOSS<T>::clear( void )
 {
-    while( countElementsAhead() )
-	get();
+  input_buffer_lock_->acquire();
+  fb_write_pos_=0;
+  ib_write_pos_=1;
+  ib_read_pos_=0;
+  input_buffer_lock_->release();
 }
 
 //now this routine could get preemtepd

@@ -1,8 +1,40 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.26 2005/09/15 17:51:13 nelles Exp $
+//   $Id: Scheduler.cpp,v 1.27 2005/09/15 18:47:07 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.26  2005/09/15 17:51:13  nelles
+//
+//
+//   Massive update. Like PatchThursday.
+//   Keyboard is now available.
+//   Each Terminal has a buffer attached to it and threads should read the buffer
+//   of the attached terminal. See TestingThreads.h in common/include/kernel for
+//   example of how to do it.
+//   Switching of the terminals is done with the SHFT+F-keys. (CTRL+Fkeys gets
+//   eaten by X on my machine and does not reach Bochs).
+//   Lot of smaller modifications, to FiFo, Mutex etc.
+//
+//   Committing in .
+//
+//   Modified Files:
+//   	arch/x86/source/InterruptUtils.cpp
+//   	common/include/console/Console.h
+//   	common/include/console/Terminal.h
+//   	common/include/console/TextConsole.h common/include/ipc/FiFo.h
+//   	common/include/ipc/FiFoDRBOSS.h common/include/kernel/Mutex.h
+//   	common/source/console/Console.cpp
+//   	common/source/console/Makefile
+//   	common/source/console/Terminal.cpp
+//   	common/source/console/TextConsole.cpp
+//   	common/source/kernel/Condition.cpp
+//   	common/source/kernel/Mutex.cpp
+//   	common/source/kernel/Scheduler.cpp
+//   	common/source/kernel/Thread.cpp common/source/kernel/main.cpp
+//   Added Files:
+//   	arch/x86/include/arch_keyboard_manager.h
+//   	arch/x86/source/arch_keyboard_manager.cpp
+//
 //  Revision 1.25  2005/09/13 22:15:52  btittelbach
 //  small BugFix: Scheduler really works now
 //
@@ -126,7 +158,8 @@ public:
     while (1)
     {
       Scheduler::instance()->cleanupDeadThreads();
-      Scheduler::instance()->yield();
+      //Scheduler::instance()->yield();
+      __asm__ __volatile__("hlt");
     }
   }
 };

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.5 2005/09/07 00:33:52 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.6 2005/09/15 18:47:07 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.5  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.4  2005/09/06 09:56:50  btittelbach
 //  +Thread Names
 //  +stdin Test Example
@@ -24,6 +28,7 @@
 #include "assert.h"
 #include "../console/kprintf.h"
 #include "ArchCommon.h"
+#include "FiFoDRBOSS.h"
 
 uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
 {
@@ -74,16 +79,17 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   return size;
 }
 
+extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
 uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 {
   uint32 num_read = count;
-  if (fd == fd_stdin) //stdin
-  {
-    //Achtung, wir können hier nicht blocken und müssen einen Threadswitch vermeiden
-    //was aber wenn wir blocken wollen ???
+  //~ if (fd == fd_stdin) //stdin
+  //~ {
+    //~ //Achtung, wir können hier nicht blocken und müssen einen Threadswitch vermeiden
+    //~ //was aber wenn wir blocken wollen ???
 
-    //Input Beispiel: Direkt Scancodes für den Userspace und dort decoden
-    //~ uint32 count_ahead = InputThread::getInstance()->countAhead();
+    //~ //Input Beispiel: Direkt Scancodes für den Userspace und dort decoden
+    //~ uint32 count_ahead = kbd_ringbuffer_->countElementsAhead();
     //~ if (count_ahead < num_read)
       //~ num_read = count_ahead;
     
@@ -92,13 +98,13 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
     //~ kprintfd("Syscall::read: %d to read\n",num_read);
     //~ for (uint32 c=0; c<num_read; ++c)
     //~ {
-      //~ mybuffer[c] = InputThread::getInstance()->getScancode();
+      //~ mybuffer[c] = kbd_ringbuffer_->get();
       //~ kprintfd("Syscall::read: got %x\n",((char*)buffer)[c]);
     //~ }
     
     //~ ArchCommon::memcpy(buffer,(pointer) &mybuffer,num_read);
     
-  }
+  //~ }
   return num_read;
 }
 

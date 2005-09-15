@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.13 2005/09/06 09:56:50 btittelbach Exp $
+//  $Id: Thread.h,v 1.14 2005/09/15 18:47:06 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.13  2005/09/06 09:56:50  btittelbach
+//  +Thread Names
+//  +stdin Test Example
+//
 //  Revision 1.12  2005/07/21 19:08:41  btittelbach
 //  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
 //  Threads können schlafen, Mutex benutzt das jetzt auch
@@ -89,7 +93,7 @@ public:
     if (name_)
       return name_;
     else
-      return "<>NULL<>";
+      return "<UNNAMED THREAD>";
   }
 
 private:
