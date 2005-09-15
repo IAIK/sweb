@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: VirtualFileSystem.cpp,v $
 //
-// $Id: VirtualFileSystem.cpp,v 1.13 2005/09/14 14:22:16 davrieb Exp $
+// $Id: VirtualFileSystem.cpp,v 1.14 2005/09/15 00:31:36 qiangchen Exp $
 // $Log: VirtualFileSystem.cpp,v $
+// Revision 1.13  2005/09/14 14:22:16  davrieb
+// lot's of small vfs fixes
+//
 // Revision 1.12  2005/09/12 17:55:53  qiangchen
 // test the VFS (vfsvfs__syscall)
 //
@@ -77,13 +80,10 @@ VirtualFileSystem::~VirtualFileSystem()
 //----------------------------------------------------------------------
 int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)
 {
-//  kprintfd("register_test1\n");
   assert(file_system_type);
   assert(file_system_type->getFSName());
-//  kprintfd("register_test2\n");
   file_system_types_.pushBack(file_system_type);
-//  kprintfd("register_test3\n");
-    return 0;
+  return 0;
 
 }
 
@@ -134,39 +134,21 @@ FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
 //----------------------------------------------------------------------
 int32 VirtualFileSystem::root_mount(char* fs_name, int32 /*mode*/)
 {
-  kprintfd("root_mount_test1\n");
   FileSystemType *fst = getFsType(fs_name);
 
-  kprintfd("root_mount_test2\n");
   Superblock *super = fst->createSuper(0);
-  kprintfd("root_mount_test3\n");
   super = fst->readSuper(super, 0);
-  kprintfd("root_mount_test4\n");
   Dentry *root = super->getRoot();
 
-  kprintfd("root_mount_test5\n");
   VfsMount *root_mount = new VfsMount(0, 0, root, super, 0);
 
-  kprintfd("root_mount_test6\n");
   mounts_.pushBack(root_mount);
-  kprintfd("root_mount_test7\n");
   superblocks_.pushBack(super);
-  kprintfd("root_mount_test8\n"); 
 
   // fs_info initialize
-  kprintfd("begin set the fs root info\n");
   fs_info.setFsRoot(root, root_mount);
   fs_info.setFsPwd(root, root_mount);
-  kprintfd("end set the fs root info\n");
   
-  kprintfd("************TEST***************\n");
-  Inode* root_inode = root->getInode();
-  if(root_inode)
-    kprintfd("root_inode success\n");
-  Dentry* test_root = root_inode->getDentry();
-  if(test_root == root)
-    kprintfd("test succesee\n");
-  kprintfd("******END******TEST***************\n");
   return 0;
 }
 
@@ -178,6 +160,8 @@ int32 VirtualFileSystem::rootUmount()
     kprintfd("There is a still another file system mounted\n");
     return -1;
   }
+  VfsMount *root_vfs_mount = mounts_.at(0);
+  delete root_vfs_mount;
 
   Superblock *root_sb = superblocks_.at(0);
   delete root_sb;

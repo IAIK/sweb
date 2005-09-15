@@ -61,12 +61,12 @@ RamFsSuperblock::~RamFsSuperblock()
   assert(dirty_inodes_.empty() == true);
 
   uint32 num = all_inodes_.getLength();
-
   for(uint32 counter = 0; counter < num; counter++)
   {
     Inode* inode = all_inodes_.at(0);
     Dentry* dentry = inode->getDentry();
     all_inodes_.remove(inode);
+
     if (dentry)
     {
       delete dentry;
