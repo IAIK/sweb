@@ -1,3 +1,6 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+
 #ifndef FILESYSTEMINFO_H___
 #define FILESYSTEMINFO_H___
 
@@ -6,6 +9,7 @@
 class Dentry;
 class VfsMount;
 
+//---------------------------------------------------------------------------
 /**
  * The information of the file system
  * 

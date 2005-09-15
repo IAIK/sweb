@@ -1,26 +1,11 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Chen Qiang
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
 
 #ifndef Inode_h___
 #define Inode_h___
 
 #include "types.h"
 #include "fs/PointList.h"
-#include "Dentry.h"
-#include "File.h"
 
 class Dentry;
 class File;
@@ -46,14 +31,7 @@ class Superblock;
  * Inode
  *
  * All information needed by the filesystem to handle a file is included in a
- * data class called an inode. A filename is a casually assigned label that
- * can be changed, but the inode is unique to the file and remains the same
- * as long as the file exists.
- *
- * The path is through the inode hash table. Each inode is hashed (to an 8 bit
- * number) based on the address of the file-system's superblock and the inode
- * number. Inodes with the same hash value are then chained together in a
- * doubly linked list.
+ * data class called an inode.
  */
 class Inode
 {
@@ -62,7 +40,7 @@ class Inode
   /// inode_in_use list which lists unchanged inodes that are in active use.
   /// inode_unused which lists unused inodes, and the s_dirty_ of Superblock
   /// class store all the dirty inodes on the given file system.
-  PointList<Inode> i_list_;
+  // PointList<Inode> i_list_;
 
   /// The dentry of this inode. (dir)
   Dentry *i_dentry_;
@@ -104,18 +82,19 @@ class Inode
   /// Create a directory with the given dentry.
   virtual int32 create(Dentry *) { return 0; }
 
-  /// lookup should check if that name (given by the Dentry) exists in the
-  /// directory (given by the inode) and should update the Dentry if it does.
+  /// lookup should check if that name (given by the char-array) exists in the
+  /// directory (I_DIR inode) and should return the Dentry if it does.
   /// This involves finding and loading the inode. If the lookup failed to find
-  /// anything, this is indicated by returning a negative value.
+  /// anything, this is indicated by returning NULL-pointer.
   virtual Dentry* lookup(const char* /*name*/) {return 0;}
 
-  /// The link method should make a hard link to by the dentry, which is in
-  /// the directory refered to by the Inode.
+  /// The link method should make a hard link to the name referred to by the
+  /// denty, which is in the directory refered to by the Inode. 
+  /// (only used for File)
   virtual int32 link(Dentry *) {return 0;}
 
   /// This should remove the name refered to by the Dentry from the directory
-  /// referred to by the inode. It should d_delete the Dentry on success.
+  /// referred to by the inode. (only used for File)
   virtual int32 unlink(Dentry *) {return 0;}
 
   /// This should create a symbolic link in the given directory with the given
@@ -133,28 +112,38 @@ class Inode
   /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *) {return 0;}
 
-  /// The src_inode and src_entry refer to a directory and name that exist.
-  /// rename should rename the object to have the parent and name given by the
-  /// the prt_inode and dst_dentry. All generic checks, including that the new
-  /// parent isn't a child of the old name, have already been done.
-  virtual int32 rename(Inode */*src_inode*/, Dentry */*src_dentry*/,
-                       Inode */*prt_inode*/, Dentry */*dst_dentry*/) {return 0;}
+  /// change the name to new_name
+  virtual int32 rename(const char* /*new_name*/) {return 0;}
 
   /// The symbolic link referred to by the dentry is read and the value is
   /// copied into the user buffer (with copy_to_user) with a maximum length
   /// given by the intege.
-  virtual int32 readlink(Dentry */*dentry*/, char*, int32 /*max_length*/) {return 0;}
+  virtual int32 readlink(Dentry */*dentry*/, char*, int32 /*max_length*/) 
+    {return 0;}
 
   /// If the directory (parent dentry) have a directory and a name within that
   /// directory (child dentry) then the obvious result of following the name
-  /// from the directory would arrive at the child dentry. 
+  /// from the directory would arrive at the child dentry. (for symlink)
   /// @param prt_dentry the parent dentry
   /// @param chd_dentry the child dentry
-  virtual Dentry* followLink(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) {return 0;}
+  virtual Dentry* followLink(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/) 
+    {return 0;}
 
-  /// read the date of the inode
-  virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
-  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) {return 0;}
+  /// read the data from the inode
+  /// @param offset offset byte
+  /// @param size the size of data that read from this inode (data_)
+  /// @buffer the dest char-array to store the data
+  /// @return On successe, return 0. On error, return -1.
+  virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) 
+    {return 0;}
+
+  /// write the data to the inode
+  /// @param offset offset byte
+  /// @param size the size of data that write to this inode (data_)
+  /// @buffer the src char-array
+  /// @return On successe, return 0. On error, return -1.
+  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) 
+    {return 0;}
   
  public:
 

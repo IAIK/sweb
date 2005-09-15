@@ -1,24 +1,5 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  David Riebenbauer
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-//
-// CVS Log Info for $RCSfile: VfsMount.cpp,v $
-//
-// $Id: VfsMount.cpp,v 1.1 2005/08/11 16:46:57 davrieb Exp $
-// $Log$
-//
 
 #include "fs/VfsMount.h"
 

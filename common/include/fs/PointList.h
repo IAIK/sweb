@@ -1,29 +1,11 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Chen Qiang
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
 #ifndef PointList_h___
 #define PointList_h___
 
 #include "types.h"
-
-#ifdef STANDALONE
-#include <cassert>
-#else
 #include "assert.h"
-#include "console/kprintf.h"
-#endif
 
 //-----------------------------------------------------------------------------
 /**
@@ -127,9 +109,9 @@ public:
    * return the point of ContetnType with the index in the list.
    */
   virtual ContentType* at(uint32 index);
-  
-  virtual ContentType* operator[](uint32 index);
 
+  virtual ContentType* operator[](uint32 index);
+  
   virtual bool empty();
 
   virtual uint32 getLength() { return length_; }
@@ -201,32 +183,23 @@ bool PointList<ContentType>::included(ContentType *entry)
 template <class ContentType>
 void PointList<ContentType>::pushBack(ContentType *new_entry)
 {
-//  kprintfd("List test1\n");
   length_++;
   PointListElement<ContentType> *new_element =
                             new PointListElement<ContentType>(new_entry);
-//  kprintfd("List test2\n");
   if(first_ == 0) // if the list is empty
   {
-//  kprintfd("List test3\n");
     first_ = new_element;
     last_ = new_element;
-//  kprintfd("List test4\n");
   }
   else
   {
-//  kprintfd("List test5\n");
     PointListElement<ContentType> *at = last_;
 
-//  kprintfd("List test6\n");
     at->setNext(new_element);
     new_element->setPrev(at);
-//  kprintfd("List test7\n");
 
     last_ = new_element;
-//  kprintfd("List test8\n");
   }
-//  kprintfd("List test9\n");
 }
 
 //-----------------------------------------------------------------------------
@@ -367,6 +340,7 @@ ContentType* PointList<ContentType>::at(uint32 index)
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 template <class ContentType>
 ContentType* PointList<ContentType>::operator[](uint32 index)
 {
@@ -387,5 +361,3 @@ ContentType* PointList<ContentType>::operator[](uint32 index)
 }
 
 #endif // PointList_h___
-
-

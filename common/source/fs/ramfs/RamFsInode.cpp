@@ -4,23 +4,24 @@
 #include "mm/kmalloc.h"
 #include "util/string.h"
 #include "assert.h"
+#include "fs/ramfs/RamFsSuperblock.h"
+#include "fs/Dentry.h"
 
 #include "console/kprintf.h"
 
 #define BASIC_ALLOC 256
-#define ERROR_DNE "Error: the dentry does not exist."
-#define ERROR_DU  "Error: inode is used."
-#define ERROR_IC  "Error: invalid command (only for Directory)."
-#define ERROR_NNE "Error: the name does not exist in the current directory."
-#define ERROR_HLI "Error: hard link invalid."
-#define ERROR_DNEILL "Error: the dentry does not exist in the link list."
-#define ERROR_DEC "Error: the dentry exists child."
+#define ERROR_DNE "Error: the dentry does not exist.\n"
+#define ERROR_DU  "Error: inode is used.\n"
+#define ERROR_IC  "Error: invalid command (only for Directory).\n"
+#define ERROR_NNE "Error: the name does not exist in the current directory.\n"
+#define ERROR_HLI "Error: hard link invalid.\n"
+#define ERROR_DNEILL "Error: the dentry does not exist in the link list.\n"
+#define ERROR_DEC "Error: the dentry exists child.\n"
 
 //---------------------------------------------------------------------------
 RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
     Inode(super_block, inode_mode)
 {
-  kprintfd("+++ constructor of RamFsInode\n");
   if(inode_mode == I_FILE)
     data_ = (int32*)kmalloc(BASIC_ALLOC);
   else
@@ -29,7 +30,6 @@ RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
   i_size_ = BASIC_ALLOC;
   i_nlink_ = 0;
   i_dentry_ = 0;
-  kprintfd("+++ constructor of RamFsInode\n");
 }
 
 //---------------------------------------------------------------------------
@@ -180,7 +180,6 @@ int32 RamFsInode::rmdir()
     dentry->releaseInode();
     Dentry* parent_dentry = dentry->getParent();
     parent_dentry->childRemove(dentry);
-    kprintfd("Empty Child = %d\n", parent_dentry->emptyChild());
     delete dentry;
     i_dentry_ = 0;
     return INODE_DEAD;
@@ -195,19 +194,16 @@ int32 RamFsInode::rmdir()
 //---------------------------------------------------------------------------
 Dentry* RamFsInode::lookup(const char* name)
 {
-  kprintfd("start of RamFsInode::lookup\n");
   if(name == 0)
   {
     // ERROR_DNE
     return 0;
   }
   
-  kprintfd("name = %s\n", name);
   Dentry* dentry_update = 0;
   if(i_mode_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
-    kprintfd("end of checkName...\n");
     if(dentry_update == 0)
     {
       // ERROR_NNE
@@ -215,7 +211,6 @@ Dentry* RamFsInode::lookup(const char* name)
     }
     else
     {
-      kprintfd("successful of the lookup\n");
       return dentry_update;
     }
   }
@@ -225,4 +220,3 @@ Dentry* RamFsInode::lookup(const char* name)
     return (Dentry*)0;
   }
 }
-

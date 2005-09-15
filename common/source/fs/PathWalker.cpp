@@ -10,14 +10,14 @@
 
 #include "mm/kmalloc.h"
 
-#include "console/kprintf.h"
-
 /// the pathWalker object
 /// follow the inode of the corresponding file pathname
 PathWalker path_walker;
 
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'
+#define CHAR_ROOT '/'
+#define SEPARATOR '/'
 
 //----------------------------------------------------------------------
 PathWalker::PathWalker()
@@ -40,18 +40,18 @@ int32 PathWalker::pathInit(const char* pathname, uint32 flags)
   this->flags_ = flags;
 
   /// check the first character of the path
-  if(*pathname == '/')
+  if(*pathname == CHAR_ROOT)
   {
     this->last_type_ = LAST_ROOT;
     // altroot check
 
-    kprintfd("===== ROOT\n");
+    // start with ROOT
     this->dentry_ = fs_info.getRoot();
     this->vfs_mount_ = fs_info.getRootMnt();
   }
   else
   {
-    kprintfd("===== current\n");
+    // start with PWD
     this->dentry_ = fs_info.getPwd();
     this->vfs_mount_ = fs_info.getPwdMnt();
   }
@@ -67,7 +67,7 @@ int32 PathWalker::pathWalk(const char* pathname)
     return PW_ENOTFOUND;
   }
 
-  while(*pathname == '/')
+  while(*pathname == SEPARATOR)
     pathname++;
   if(!*pathname) // i.e. path = /
     return 0;
@@ -75,9 +75,7 @@ int32 PathWalker::pathWalk(const char* pathname)
   bool parts_left = true;
   while(parts_left)
   {
-    kprintfd("=====START=====\n");
     // get a part of pathname
-    kprintfd("pathname = %s, has length %d\n", pathname, strlen(pathname));
     char* npart = 0;
     int32 npart_pos = 0;
     npart = getNextPart(pathname, npart_pos);
@@ -86,7 +84,6 @@ int32 PathWalker::pathWalk(const char* pathname)
       return PW_EINVALID;
     }
 
-    kprintfd("getNextPart: npart = %s, pathname = %s\n", npart, pathname);
     if((*npart == NULL_CHAR) || (npart_pos == 0))
     {
       delete npart;
@@ -111,7 +108,6 @@ int32 PathWalker::pathWalk(const char* pathname)
     {
       this->last_type_ = LAST_NORM;
     }
-    kprintfd("lastType: last_ = %s, last_type_ = %d\n", last_, last_type_);
 
     // follow the inode
     // check the VfsMount
@@ -155,22 +151,17 @@ int32 PathWalker::pathWalk(const char* pathname)
       }
     }
 
-    kprintfd("after the follow of inode: pathname = %s\n", pathname);
-
     kfree(npart);
     last_ = 0;
 
-    while(*pathname == '/')
+    while(*pathname == SEPARATOR)
       pathname++;
 
     if(strlen(pathname) == 0)
     {
       break;
     }
-    kprintfd("=====END=====\n");
   }
-
-  kprintfd("position 5\n");
 
   return 0;
 }
@@ -179,7 +170,7 @@ int32 PathWalker::pathWalk(const char* pathname)
 char* PathWalker::getNextPart(const char* path, int32 &npart_len)
 {
   char* tmp = 0;
-  tmp = strchr(path, '/');
+  tmp = strchr(path, SEPARATOR);
 
   char* npart = 0;
   npart_len = (size_t)(tmp - path + 1);
@@ -210,9 +201,9 @@ void PathWalker::pathRelease()
   last_ = 0;
 }
 
-////----------------------------------------------------------------------
-//char *PathWalker::skipSeparator(char const *path) const
-//{
+//----------------------------------------------------------------------
+char *PathWalker::skipSeparator(char const */*path*/) const
+{
 //  assert(path);
 //
 //  while (*path == '/')
@@ -221,6 +212,6 @@ void PathWalker::pathRelease()
 //  }
 //
 //  return path;
-//}
+}
 
 

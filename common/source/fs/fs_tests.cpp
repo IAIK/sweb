@@ -1,6 +1,7 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
 
 #include "fs/fs_tests.h"
-
 
 #include "fs/ramfs/RamFileSystemType.h"
 #include "fs/VirtualFileSystem.h"
@@ -22,24 +23,24 @@ void testRegFS()
   
 //  testVfsSyscall();
 //  testPathWalker();
-//  kprintfd("***** begin testSyscallMkdir()\n");
-//  testSyscallMkdir();
-//  kprintfd("***** end testSyscallMkdir()\n");
+  kprintfd("***** begin testSyscallMkdir()\n");
+  testSyscallMkdir();
+  kprintfd("***** end testSyscallMkdir()\n");
 
 
-//  kprintfd("\n\n\n\n\n***** begin testSyscallReaddir()\n");
-//  testSyscallReaddir();
-//  kprintfd("***** end testSyscallReaddir()\n");
+  kprintfd("\n\n\n\n\n***** begin testSyscallReaddir()\n");
+  testSyscallReaddir();
+  kprintfd("***** end testSyscallReaddir()\n");
 
-//  kprintfd("\n\n\n\n\n***** begin testSyscallChdir()\n");
-//  testSyscallChdir();
-//  kprintfd("***** end testSyscallChdir()\n");
+  kprintfd("\n\n\n\n\n***** begin testSyscallChdir()\n");
+  testSyscallChdir();
+  kprintfd("***** end testSyscallChdir()\n");
   
-//  kprintfd("\n\n\n\n\n***** begin testSyscallRmdir()\n");
-//  testSyscallRmdir();
-//  kprintfd("***** end testSyscallRmdir()\n");
+  kprintfd("\n\n\n\n\n***** begin testSyscallRmdir()\n");
+  testSyscallRmdir();
+  kprintfd("***** end testSyscallRmdir()\n");
 
-  testSyscallRmdirExtern();
+//  testSyscallRmdirExtern();
 
   kprintfd("***** begin testUmount()\n");
   testUmount();
@@ -53,43 +54,41 @@ void testSyscallMkdir()
   vfs_syscall.mkdir("chen", 0);
   kprintfd("***** end syscall mkdir(chen)\n");
   
-  kprintfd("***** begin syscall mkdir(chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/qiang)\n");
   vfs_syscall.mkdir("/chen/qiang", 0);
-  kprintfd("***** end syscall mkdir(chen)\n");
+  kprintfd("***** end syscall mkdir(chen/qiang)\n");
 
-  kprintfd("***** begin syscall mkdir(chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/2006)\n");
   vfs_syscall.mkdir("/chen/2006", 0);
-  kprintfd("***** end syscall mkdir(chen)\n");
+  kprintfd("***** end syscall mkdir(chen/2006)\n");
 
-  kprintfd("***** begin syscall mkdir(chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/2005)\n");
   vfs_syscall.mkdir("/chen/2005", 0);
-  kprintfd("***** end syscall mkdir(chen)\n");
+  kprintfd("***** end syscall mkdir(chen/2005)\n");
 
-  kprintfd("***** begin syscall mkdir(chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/2007)\n");
   vfs_syscall.mkdir("/chen/2007", 0);
-  kprintfd("***** end syscall mkdir(chen)\n");
+  kprintfd("***** end syscall mkdir(chen/2007)\n");
 
   kprintfd("***** begin syscall mkdir(chen/chen)\n");
   vfs_syscall.mkdir("chen/chen", 0);
   kprintfd("***** end syscall mkdir(chen/chen)\n");
 
-  kprintfd("***** begin syscall mkdir(chen/chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/chen/chen)\n");
   vfs_syscall.mkdir("chen/chen/chen", 0);
-  kprintfd("***** end syscall mkdir(chen/chen)\n");
+  kprintfd("***** end syscall mkdir(chen/chen/chen)\n");
 
-  kprintfd("***** begin syscall mkdir(chen/chen)\n");
+  kprintfd("***** begin syscall mkdir(./.././chen/chen/chen/chen)\n");
   vfs_syscall.mkdir("./.././chen/chen/chen/chen", 0);
-  kprintfd("***** end syscall mkdir(chen/chen)\n");
+  kprintfd("***** end syscall mkdir(./.././chen/chen/chen/chen)\n");
 
-  kprintfd("***** begin syscall mkdir(chen/chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/chen/.././chen/chen/chen/.././chen/chen)\n");
   vfs_syscall.mkdir("chen/chen/.././chen/chen/chen/.././chen/chen", 0);
-  kprintfd("***** end syscall mkdir(chen/chen)\n");
+  kprintfd("***** end syscall mkdir(chen/chen/.././chen/chen/chen/.././chen/chen)\n");
 
-  kprintfd("***** begin syscall mkdir(chen/chen)\n");
+  kprintfd("***** begin syscall mkdir(chen/chen/chen/chen/chen)\n");
   vfs_syscall.mkdir("chen/chen/chen/chen/chen", 0);
-  kprintfd("***** end syscall mkdir(chen/chen)\n");
-
-  kprintfd("+++++ SSSSUCCCCCESSSSSESSSSSSSS +++++\n");
+  kprintfd("***** end syscall mkdir(chen/chen/chen/chen/chen)\n");
 }
 
 //----------------------------------------------------------------------
@@ -122,8 +121,6 @@ void testSyscallReaddir()
   kprintfd("!!!!! begin syscall readdir(/chen/chen/qiang)\n");
   vfs_syscall.readdir("/chen/chen/qiang");
   kprintfd("!!!!! end syscall readdir(/chen/chen/qiang)\n");
-
-  kprintfd("+++++ SSSSUCCCCCESSSSSESSSSSSSS +++++\n");
 }
 
 //----------------------------------------------------------------------
@@ -163,8 +160,6 @@ void testSyscallChdir()
   vfs_syscall.chdir("/chen/chen/qiang");
   vfs_syscall.readdir(".");
   kprintfd("!!!!! end syscall chdir(/chen/chen/qiang)\n");
-
-  kprintfd("+++++ SSSSUCCCCCESSSSSESSSSSSSS +++++\n");
 }
 
 //----------------------------------------------------------------------
@@ -209,8 +204,6 @@ void testSyscallRmdir()
   kprintfd("***** begin syscall rmdir(chen/chen)\n");
   vfs_syscall.rmdir("chen/chen/chen/chen/chen");
   kprintfd("***** end syscall rmdir(chen/chen)\n");
-
-  kprintfd("+++++ SSSSUCCCCCESSSSSESSSSSSSS +++++\n");
 }
 
 //----------------------------------------------------------------------
@@ -252,12 +245,9 @@ void testMini()
 void testMount()
 {
   RamFileSystemType *ramfs = new RamFileSystemType();
-  kprintfd("testMount 1\n");
   vfs.registerFileSystem(ramfs);
-  kprintfd("testMount 2\n");
   
   vfs.root_mount("ramfs", 0);
-  kprintfd("testMount 3\n");
 }
 
 //----------------------------------------------------------------------
@@ -301,8 +291,6 @@ void testPathWalker()
   kprintfd("***** start of readdir(/)\n");
   vfs_syscall.readdir("/chen");
   kprintfd("***** end of readdir(/)\n");
-
-  kprintfd("+++++ SSSSUCCCCCESSSSSESSSSSSSS +++++\n");
 }
 
 //----------------------------------------------------------------------
@@ -339,6 +327,4 @@ void testVfsSyscall()
   kprintfd("***** start of rmdir(/chen/qiang/always/dead)\n");
   vfs_syscall.rmdir("/chen/qiang/always/dead");
   kprintfd("***** end of rmdir(/chen/qiang/always/dead)\n");
-
-  kprintfd("+++++ SSSSUCCCCCESSSSSESSSSSSSS +++++\n");
 }

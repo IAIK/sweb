@@ -1,4 +1,5 @@
-// FileSystemInfo.cpp
+// Projectname: SWEB
+// Simple operating system for educational purposes
 
 #include "fs/FileSystemInfo.h"
 #include "fs/Dentry.h"
@@ -31,10 +32,8 @@ int32 FileSystemInfo::setName(const char* pathname, uint32 length)
   else
     path_len = length + 1;
 
-  kprintfd("pathname = %s, copy the length %d\n", pathname, (path_len - 1));
   pathname_ = (char*)kmalloc(path_len * sizeof(char));
   strlcpy(pathname_, pathname, path_len);
-  kprintfd("pathname_ = %s, pathname = %s\n", pathname_, pathname);
   return 0;
 }
 

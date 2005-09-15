@@ -1,3 +1,5 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
 
 #ifndef FS_TESTS_H__
 #define FS_TESTS_H__

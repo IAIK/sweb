@@ -1,14 +1,13 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
 
-#ifndef RAMFILESYSTEMTYPE_H__
-#define RAMFILESYSTEMTYPE_H__
-
+#ifndef RAMFILESYSTEMTYPE_H___
+#define RAMFILESYSTEMTYPE_H___
 
 #include "fs/FileSystemType.h"
 
-
 class RamFileSystemType : public FileSystemType
 {
-
   public:
 
     RamFileSystemType();
@@ -26,8 +25,6 @@ class RamFileSystemType : public FileSystemType
     ///
     /// @return a pointer to the Superblock object
     virtual Superblock *createSuper(Dentry *root) const;
-
 };
 
 #endif
-

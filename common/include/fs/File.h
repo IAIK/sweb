@@ -1,26 +1,11 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Chen Qiang
-// Copyright (C) 2005  David Riebenbauer
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
 #ifndef FILE_H__
 #define FILE_H__
 
 #include "types.h"
 #include "fs/PointList.h"
-//#include "Inode.h"
-//#include "Dentry.h"
 
 // forward declarations
 class Superblock;
@@ -39,7 +24,14 @@ class Dentry;
 
 typedef uint32 l_off_t;
 
-
+//---------------------------------------------------------------------------
+/**
+ * File
+ * 
+ * A file object is used where-ever there is a need to read from or write to 
+ * something. This includes accessing objects within file-system. Files are 
+ * accessible to processes through their file descriptors.
+ */
 class File
 {
   public:
@@ -125,14 +117,16 @@ class File
   /// @param buffer is the buffer where the data is written to
   /// @param count is the number of bytes to read.
   /// @param offset is the offset to read from counted from the start of the file.
-  virtual  int32 read(int32 */*buffer*/, size_t /*count*/, l_off_t /*offset*/) {return 0;}
+  virtual  int32 read(int32 */*buffer*/, size_t /*count*/, l_off_t /*offset*/) 
+    {return 0;}
 
   /// write to the file
   ///
   /// @param buffer is the buffer where the data is read from
   /// @param count is the number of bytes to write.
   /// @param offset is the offset to write from counted from the start of the file.
-  virtual  int32 write(int32 */*buffer*/, size_t /*count*/, l_off_t /*offset*/) {return 0;}
+  virtual  int32 write(int32 */*buffer*/, size_t /*count*/, l_off_t /*offset*/) 
+    {return 0;}
 
   /// Open the file
   ///

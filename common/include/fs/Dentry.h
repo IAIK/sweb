@@ -1,17 +1,5 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2004 Maria Mauerhofer
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
 #include "types.h"
 #include "Inode.h"
@@ -23,7 +11,7 @@
 
 class Inode;
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 /**
  * Dentry
  *
@@ -72,6 +60,7 @@ class Dentry
   
 public:
 
+  // method - Inode
   void setInode(Inode *inode) { d_inode_ = inode; }
   void releaseInode() { d_inode_ = 0; }
   Inode* getInode() { return d_inode_; }
@@ -79,13 +68,13 @@ public:
   /// return the parent of the dentry
   Dentry* getParent() { return d_parent_; }
 
-  bool findChild(Dentry *dentry) { return d_child_.included(dentry); }
+  // method - d_child_
   int32 setChild(Dentry *dentry);
   bool emptyChild() { return d_child_.empty(); }
   uint32 getNumChild() { return d_child_.getLength(); }
   Dentry* getChild(uint32 index);
 
-  void setName(char* name);
+  void setName(const char* name);
   char* getName();
 
   /// This should compare the name with the all names of the d_child_ list.
@@ -93,19 +82,20 @@ public:
   /// return 0 if doesn't exist.
   virtual Dentry* checkName(const char* name);
 
-  /// remove a chconst char* nameild dentry from the d_child_ list.
+  /// remove a child_dentry from the d_child_ list.
   /// @child the child dentry of the curent dentry.
   virtual int32 childRemove(Dentry *child_dentry);
   
   /// insert a child dentry to the d_child_ list.
-  /// @child the 
+  /// @child the child dentry of the current dentry.
   virtual void childInsert(Dentry *child_dentry);
 
 public:
 
-  /// Constructor of a new dentry.
-  /// create a Dentry, the root-directory call this contructor.
-  Dentry(char* name);
+  /// Constructor of a new dentry. 
+  /// construct a new dentry with the name,  the root-directory call this
+  /// contructor.
+  Dentry(const char* name);
 
   /// Constructor of a new dentry.
   /// It muss to check the double name in the parent dentry before to call this

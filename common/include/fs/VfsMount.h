@@ -1,17 +1,5 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Chen Qiang
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
 #ifndef VfsMount_h___
 #define VfsMount_h___
@@ -22,13 +10,11 @@
 class Superblock;
 class Dentry;
 
-
 // Mount flags
 // Only MS_RDONLY is supported by now.
 
 /// Mount the Filesystem read-only
 #define MS_RDONLY 1
-
 
 //---------------------------------------------------------------------------
 /**
@@ -59,11 +45,11 @@ class VfsMount
   int32 mnt_flags_;
 
   ///// Head of the parent list of descriptors (relative to this filesystem).
-  //List *mnt_mounts_;
+  // List *mnt_mounts_;
 
   ///// Pointers for the parent list of descriptors (relative to the parent
   ///// filesystem).
-  //List *mnt_child_;
+  // List *mnt_child_;
 
  public:
 
@@ -74,11 +60,11 @@ class VfsMount
 
   virtual ~VfsMount();
 
-  //void put_mnt(VfsMount *mnt);
+  // void put_mnt(VfsMount *mnt);
 
-  //void remove_mnt(VfsMount *mnt);
+  // void remove_mnt(VfsMount *mnt);
 
-  //VfsMount* get_mnt();
+  // VfsMount* get_mnt();
 
   VfsMount const *getParent() const;
 

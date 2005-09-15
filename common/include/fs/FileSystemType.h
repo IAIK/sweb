@@ -1,27 +1,13 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Chen Qiang
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
 #ifndef FileSystemType_h___
 #define FileSystemType_h___
 
 #include "types.h"
 
-
 class Superblock;
 class Dentry;
-
 
 /// File system flag indicating if the system in question requires an device.
 #define FS_REQUIRES_DEV   0x0001 // located on a physical disk device
@@ -31,6 +17,8 @@ class Dentry;
 #define MAX_FILE_SYSTEM_TYPES 16
 
 /**
+ * FileSystemType
+ * 
  * FileSystemType is used to register the file system to the vfs.
  * It also reads the superblock from the block device.
  *

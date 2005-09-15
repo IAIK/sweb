@@ -1,22 +1,10 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Chen Qiang
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
 
 #include "fs/ramfs/RamFsSuperblock.h"
 #include "fs/ramfs/RamFsInode.h"
-#include "console/kprintf.h"
-#include "fs/ramfs/RamFsInode.h"
+#include "fs/ramfs/RamFsFile.h"
+#include "fs/Dentry.h"
 #include "assert.h"
 
 #define ROOT_NAME "/"
@@ -24,7 +12,6 @@
 //----------------------------------------------------------------------
 RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
 {
-  kprintfd("***** enters Constructor of the RamFsSuperblock\n");
   Dentry *root_dentry = 0;
 
   // create or find a root_dentry
@@ -38,7 +25,6 @@ RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
   }
   else
   {
-    kprintfd("init the ROOT_NAME\n");
     root_dentry = new Dentry(ROOT_NAME);
     mounted_over_ = 0;
   }
@@ -51,13 +37,11 @@ RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
 
   // add the root_inode in the list
   all_inodes_.pushBack(root_inode);
-  kprintfd("***** leaves Constructor of the RamFsSuperblock\n");
 }
 
 //----------------------------------------------------------------------
 RamFsSuperblock::~RamFsSuperblock()
 {
-  kprintfd("***** start Destructor of RamFsSuperblock\n");
   assert(dirty_inodes_.empty() == true);
 
   uint32 num = all_inodes_.getLength();
@@ -75,7 +59,6 @@ RamFsSuperblock::~RamFsSuperblock()
   }
 
   assert(all_inodes_.empty() == true);
-  kprintfd("***** end Destructor of RamFsSuperblock\n");
 }
 
 //----------------------------------------------------------------------

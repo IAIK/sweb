@@ -1,34 +1,8 @@
-//
-//
-// CVS Log Info for $RCSfile: PathWalker.h,v $
-//
-// $Id: PathWalker.h,v 1.6 2005/09/14 14:22:16 davrieb Exp $
-// $Log: PathWalker.h,v $
-// Revision 1.5  2005/09/12 17:55:53  qiangchen
-// test the VFS (vfsvfs__syscall)
-//
-// Revision 1.4  2005/09/10 19:25:27  qiangchen
-//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
-// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
-// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
-// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
-// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
-//
-// Revision 1.3  2005/09/02 17:57:58  davrieb
-// preparations to  build a standalone filesystem testsuite
-//
-// Revision 1.2  2005/09/01 17:07:49  davrieb
-// update path walking
-//
-// Revision 1.1  2005/08/11 16:46:57  davrieb
-// add PathWalker
-//
-//
-//
+// Projectname: SWEB
+// Simple operating system for educational purposes
 
 #ifndef PathWalker_h__
 #define PathWalker_h__
-
 
 #include "types.h"
 
@@ -91,6 +65,14 @@ enum
 /// The maximal length of a filename
 #define MAX_NAME_LENGTH 4096
 
+//-------------------------------------------------------------------------
+/**
+ * PathWalker
+ * 
+ * this class illustrate how the VFS derives an inode from the corresponding
+ * file pathname. Pathname lookup is performed by three methods: pathInit(),
+ * pathWalk() and pathRelease().
+ */ 
 class PathWalker
 {
 
@@ -121,11 +103,17 @@ public:
 
   /// this method check the first character of the path (begins with '/' or 
   /// with pwd). Initialize the flags_.
+  /// @param pathname A pointer to the file pathname to be resolved
+  /// @param flags The vlaue of flags that represent how to look-up file is going
+  ///        to be accessed
+  /// @return On success, it is returned 0. On error, it return a non-Null value.
   int32 pathInit(const char* pathname, uint32 flags);
   
   /// this method takes care of the lookup operation and stores the pointers
   /// to the dentry_ object and mounted filesystem object relative to the last
   /// component of the pathname.
+  /// @param pathname A pointer to the file pathname to be resolved
+  /// @return On success, it is returned 0. On error, it return a non-Null value.
   int32 pathWalk(const char* pathname);
   
   /// this method terminate the pathname lookup of the mount point.
@@ -144,13 +132,12 @@ protected:
   /// @return is the start position of the extracted part in path.
   ///         It is empty if there is no next part
   ///         In case of an error a null pointer is returned.
-  ///
   char* getNextPart(const char* path, int32 &npart_len);
   
   /// Skip any leading slashes on path.
   ///
   /// @return is a pointer to the first charachter that is not a '/'.
-  char *skipSeparator(char const *path) const;
+  char *skipSeparator(char const */*path*/) const;
 
 };
 

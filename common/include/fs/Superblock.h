@@ -1,56 +1,11 @@
-
-//
-// CVS Log Info for $RCSfile: Superblock.h,v $
-//
-// $Id: Superblock.h,v 1.12 2005/09/14 11:51:50 davrieb Exp $
-// $Log: Superblock.h,v $
-// Revision 1.11  2005/09/12 17:55:53  qiangchen
-// test the VFS (vfsvfs__syscall)
-//
-// Revision 1.10  2005/09/10 19:25:27  qiangchen
-//  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
-// USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
-// chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
-// chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
-// chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
-//
-// Revision 1.9  2005/09/02 17:57:58  davrieb
-// preparations to  build a standalone filesystem testsuite
-//
-// Revision 1.8  2005/08/11 16:46:57  davrieb
-// add PathWalker
-//
-// Revision 1.7  2005/08/11 16:34:28  qiangchen
-// *** empty log message ***
-//
-// Revision 1.6  2005/07/21 18:07:03  davrieb
-// mount of the root directory
-//
-// Revision 1.5  2005/07/16 13:36:29  davrieb
-// rename file.h and file.cpp to File.h and File.cpp
-//
-// Revision 1.4  2005/07/16 13:22:00  davrieb
-// rrename List in fs to PointList to avoid name clashes
-//
-// Revision 1.3  2005/07/07 12:31:19  davrieb
-// add ramfs and all changes it caused
-//
-// Revision 1.2  2005/06/01 09:20:36  davrieb
-// add all changes to fs
-//
-// Revision 1.1  2005/05/10 16:42:32  davrieb
-// add first attempt to write a virtual file system
-//
-//
+// Projectname: SWEB
+// Simple operating system for educational purposes
 
 #ifndef Superblock_h___
 #define Superblock_h___
 
 #include "types.h"
-#include "Dentry.h"
 #include "fs/PointList.h"
-#include "Inode.h"
-#include "File.h"
 
 class Iattr;
 class Statfs;
@@ -58,12 +13,18 @@ class WaitQueue;
 class FileSystemType;
 class VirtualFileSystem;
 
+class Dentry;
+class Inode;
+class File;
+
 //-----------------------------------------------------------------------------
 /**
- * Superblock * The first block of the virtual-file-system. It contains for instance the
+ * Superblock 
+ * 
+ * The first block of the virtual-file-system. It contains for instance the
  * configuration of the file system. Sotre information concerning a mounted
- * filesystem. For disk-based filesystems, this object usually corresponds
- * to a filesystem control block stored on disk.
+ * filesystem. (For disk-based filesystems, this object usually corresponds
+ * to a filesystem control block stored on disk.)
  */
 class Superblock
 {
@@ -78,6 +39,10 @@ protected:
 
   /// The device that this file-system is mounted on.
   uint32 s_dev_;
+
+  /// This records an identification number that has been read from the device
+  /// to confirm that the data on the device corresponds to the file-system
+  uint64 s_magic_;
 
   /// This is a list of flags which are logically with the flags in each
   /// inode to detemine certain behaviours. There is one flag which applies
@@ -109,17 +74,6 @@ protected:
   /// open for write before remounting the file-system as read-only.
   PointList<File> s_files_;
 
-  //--------------------------------------------------------------------------
-  // SYNCHRONIZATION
-  //--------------------------------------------------------------------------
-  /// This indicates whether the super-block is currently locked. It is
-  /// managed by lock_super and unlock_super.
-  // uint8 s_lock_;
-
-  /// This is a queue of processes that are waiting for the s_lock_ lock on
-  /// the super-block.
-  // PointList *s_wait_;
-  //--------------------------------------------------------------------------
 public:
 
   Superblock(Dentry* s_root) : mounted_over_(0) 
@@ -131,12 +85,11 @@ public:
   virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*mode*/) { return 0; }
 
   /// This method is called to read a specific inode from a mounted
-  /// file-system and marks the inode in the s_inode_used_, if this inode exists
-  /// always in the s_inode_dirty_, do nothing.
+  /// file-system.
   virtual void read_inode(Inode* /*inode*/) {}
 
   /// This method is called to write a specific inode to a mounted file-system,
-  /// and marks the inode in the s_inode_dirty_.
+  /// and gets called on inodes which have been marked dirty.
   virtual void write_inode(Inode* /*inode*/) {}
 
   /// This method is called whenever the reference count on an inode is

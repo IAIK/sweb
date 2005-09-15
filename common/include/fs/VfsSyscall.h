@@ -1,3 +1,6 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+
 #ifndef VFS_SYSCALL_H___
 #define VFS_SYSCALL_H___
 
