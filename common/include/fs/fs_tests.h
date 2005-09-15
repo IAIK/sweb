@@ -20,8 +20,7 @@ void testSyscallChdir();
 void testSyscallRmdir();
 void testSyscallRmdirExtern();
 
-
 void testMini();
-
+void testReadWriteInode();
 
 #endif

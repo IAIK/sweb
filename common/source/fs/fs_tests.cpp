@@ -7,9 +7,7 @@
 #include "fs/VirtualFileSystem.h"
 #include "fs/PathWalker.h"
 
-#ifndef STANDALONE
 #include "console/kprintf.h"
-#endif
 
 #include "fs/fs_global.h"
 
@@ -27,7 +25,6 @@ void testRegFS()
   testSyscallMkdir();
   kprintfd("***** end testSyscallMkdir()\n");
 
-
   kprintfd("\n\n\n\n\n***** begin testSyscallReaddir()\n");
   testSyscallReaddir();
   kprintfd("***** end testSyscallReaddir()\n");
@@ -41,6 +38,7 @@ void testRegFS()
   kprintfd("***** end testSyscallRmdir()\n");
 
 //  testSyscallRmdirExtern();
+//  testReadWriteInode();
 
   kprintfd("***** begin testUmount()\n");
   testUmount();
@@ -327,4 +325,25 @@ void testVfsSyscall()
   kprintfd("***** start of rmdir(/chen/qiang/always/dead)\n");
   vfs_syscall.rmdir("/chen/qiang/always/dead");
   kprintfd("***** end of rmdir(/chen/qiang/always/dead)\n");
+}
+
+//----------------------------------------------------------------------
+#include "fs/ramfs/RamFsInode.h"
+#include "fs/ramfs/RamFsSuperblock.h"
+#include "fs/Dentry.h"
+
+void testReadWriteInode()
+{
+  Dentry *dentry = fs_info.getRoot();
+  Inode *inode = dentry->getInode();
+  Superblock *sb = inode->getSuperblock();
+  
+  Inode *test_inode = (Inode*)(new RamFsInode(sb, I_FILE));
+  test_inode->writeData(0, 13, "do write data");
+  
+  char test_array[20];
+  test_inode->readData(0, 13, test_array);
+  test_array[13] = '\0';
+  
+  kprintfd("test_array = %s\n", test_array);
 }

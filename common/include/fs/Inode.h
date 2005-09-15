@@ -130,19 +130,11 @@ class Inode
     {return 0;}
 
   /// read the data from the inode
-  /// @param offset offset byte
-  /// @param size the size of data that read from this inode (data_)
-  /// @buffer the dest char-array to store the data
-  /// @return On successe, return 0. On error, return -1.
-  virtual int32 readData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) 
+  virtual int32 readData(int32 /*offset*/, int32 /*size*/, char */*buffer*/) 
     {return 0;}
 
   /// write the data to the inode
-  /// @param offset offset byte
-  /// @param size the size of data that write to this inode (data_)
-  /// @buffer the src char-array
-  /// @return On successe, return 0. On error, return -1.
-  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, int32 */*buffer*/) 
+  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, char */*buffer*/) 
     {return 0;}
   
  public:

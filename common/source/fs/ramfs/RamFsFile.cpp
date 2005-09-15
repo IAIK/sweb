@@ -24,7 +24,7 @@ RamFsFile::~RamFsFile()
 }
 
 //--------------------------------------------------------------------------
-int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
+int32 RamFsFile::read(char *buffer, size_t count, l_off_t offset)
 {
   if(f_superblock_->checkOpenedFiles(this) == false)
   {
@@ -42,7 +42,7 @@ int32 RamFsFile::read(int32 *buffer, size_t count, l_off_t offset)
 }
 
 //--------------------------------------------------------------------------
-int32 RamFsFile::write(int32 *buffer, size_t count, l_off_t offset)
+int32 RamFsFile::write(char *buffer, size_t count, l_off_t offset)
 {
   if(f_superblock_->checkOpenedFiles(this) == false)
   {
