@@ -7,7 +7,7 @@
 
 #include "console/kprintf.h"
 
-#define BASIC_ALLOC 4096
+#define BASIC_ALLOC 256
 #define ERROR_DNE "Error: the dentry does not exist."
 #define ERROR_DU  "Error: inode is used."
 #define ERROR_IC  "Error: invalid command (only for Directory)."

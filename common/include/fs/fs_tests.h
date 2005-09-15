@@ -12,5 +12,14 @@ void testMount();
 void testUmount();
 void testPathWalker();
 void testVfsSyscall();
+void testSyscallMkdir();
+void testSyscallReaddir();
+void testSyscallChdir();
+void testSyscallRmdir();
+void testSyscallRmdirExtern();
+
+
+void testMini();
+
 
 #endif

@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: Superblock.cpp,v $
 //
-// $Id: Superblock.cpp,v 1.8 2005/09/12 17:55:53 qiangchen Exp $
+// $Id: Superblock.cpp,v 1.9 2005/09/15 00:38:15 qiangchen Exp $
 // $Log: Superblock.cpp,v $
+// Revision 1.8  2005/09/12 17:55:53  qiangchen
+// test the VFS (vfsvfs__syscall)
+//
 // Revision 1.7  2005/09/10 19:25:27  qiangchen
 //  21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
 // USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
@@ -37,12 +40,6 @@
 //------------------------------------------------------------------
 Superblock::~Superblock()
 {
-  assert(dirty_inodes_.empty() != false);
-  assert(used_inodes_.empty() != false);
-  assert(s_files_.empty() != false);
-  s_type_ = 0;
-
-  delete s_root_;
 }
 //
 //------------------------------------------------------------------

@@ -70,7 +70,7 @@ void Dentry::setName(char* name)
   d_name_ = (char*)kmalloc(name_len * sizeof(char));
 
   strlcpy(d_name_, name, name_len);
-  kprintfd("\n\n\nd_name_ = %s, has length %d\n", d_name_, strlen(d_name_));
+  kprintfd("SSSS\nd_name_ = %s\n", d_name_);
 }
 
 //---------------------------------------------------------------------------

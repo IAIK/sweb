@@ -61,7 +61,7 @@ class FileSystemInfo
   // VfsMount* getAltRootMnt() { return alt_root_mnt_; }
   
   /// read the file pathname of the process
-  int32 setName(char* pathname, uint32 length = 0);
+  int32 setName(const char* pathname, uint32 length = 0);
   
   char* getName() { return pathname_; }
   

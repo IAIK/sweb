@@ -45,11 +45,13 @@ int32 PathWalker::pathInit(const char* pathname, uint32 flags)
     this->last_type_ = LAST_ROOT;
     // altroot check
 
+    kprintfd("===== ROOT\n");
     this->dentry_ = fs_info.getRoot();
     this->vfs_mount_ = fs_info.getRootMnt();
   }
   else
   {
+    kprintfd("===== current\n");
     this->dentry_ = fs_info.getPwd();
     this->vfs_mount_ = fs_info.getPwdMnt();
   }
@@ -73,6 +75,7 @@ int32 PathWalker::pathWalk(const char* pathname)
   bool parts_left = true;
   while(parts_left)
   {
+    kprintfd("=====START=====\n");
     // get a part of pathname
     kprintfd("pathname = %s, has length %d\n", pathname, strlen(pathname));
     char* npart = 0;
@@ -83,6 +86,7 @@ int32 PathWalker::pathWalk(const char* pathname)
       return PW_EINVALID;
     }
 
+    kprintfd("getNextPart: npart = %s, pathname = %s\n", npart, pathname);
     if((*npart == NULL_CHAR) || (npart_pos == 0))
     {
       delete npart;
@@ -107,6 +111,7 @@ int32 PathWalker::pathWalk(const char* pathname)
     {
       this->last_type_ = LAST_NORM;
     }
+    kprintfd("lastType: last_ = %s, last_type_ = %d\n", last_, last_type_);
 
     // follow the inode
     // check the VfsMount
@@ -119,7 +124,7 @@ int32 PathWalker::pathWalk(const char* pathname)
     else if(this->last_type_ == LAST_DOTDOT) // follow LAST_DOTDOT
     {
       // case 1: the dentry_ is the root of file-system
-      if((dentry_ == fs_info.getRoot()) && (vfs_mount_ = fs_info.getRootMnt()))
+      if((dentry_ == fs_info.getRoot())&&(vfs_mount_ == fs_info.getRootMnt()))
       {
         kfree(npart);
         last_ = 0;
@@ -150,6 +155,8 @@ int32 PathWalker::pathWalk(const char* pathname)
       }
     }
 
+    kprintfd("after the follow of inode: pathname = %s\n", pathname);
+
     kfree(npart);
     last_ = 0;
 
@@ -158,9 +165,12 @@ int32 PathWalker::pathWalk(const char* pathname)
 
     if(strlen(pathname) == 0)
     {
-      parts_left = false;
+      break;
     }
+    kprintfd("=====END=====\n");
   }
+
+  kprintfd("position 5\n");
 
   return 0;
 }
