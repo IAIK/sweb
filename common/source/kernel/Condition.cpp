@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Condition.cpp,v 1.1 2005/09/07 00:33:52 btittelbach Exp $
+//   $Id: Condition.cpp,v 1.2 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Condition.cpp,v $
+//  Revision 1.1  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //
 //----------------------------------------------------------------------
 
@@ -37,6 +41,7 @@ void Condition::signal()
 {
   if (! lock_->isHeldBy(currentThread))
     return;
+  
   Thread *thread=0;
   if (!sleepers_->empty())
   {
@@ -46,10 +51,13 @@ void Condition::signal()
       //Solution to above Problem: Wake and Remove from List only Threads which are actually sleeping
       Scheduler::instance()->wake(thread);
       sleepers_->popFront();
-    }
+
+    }    
   }
+  
   if (thread)
-    kprintfd("Condition::signal: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
+      kprintfd("Condition::signal: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
+
 }
 
 void Condition::broadcast()

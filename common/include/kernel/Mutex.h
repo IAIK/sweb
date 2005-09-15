@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.h,v 1.5 2005/09/07 00:33:52 btittelbach Exp $
+//  $Id: Mutex.h,v 1.6 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.h,v $
+//  Revision 1.5  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.4  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -38,6 +42,7 @@ public:
   void acquire();
   void release();
   bool isFree();
+  bool isFreeAtomic();
 
 protected:
 friend class Condition;

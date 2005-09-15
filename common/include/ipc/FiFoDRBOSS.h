@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.3 2005/09/14 09:16:36 btittelbach Exp $
+//   $Id: FiFoDRBOSS.h,v 1.4 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.3  2005/09/14 09:16:36  btittelbach
+//   BugFix
+//
 //   Revision 1.2  2005/09/13 15:00:51  btittelbach
 //   Prepare to be Synchronised...
 //   kprintf_nosleep works now
@@ -33,6 +36,7 @@ extern "C"
 #include "kernel/Mutex.h"
 #include "kernel/Condition.h"
 #include "assert.h"
+#include "ArchInterrupts.h"
 
 template<class T>
 class FiFoDRBOSS
@@ -47,6 +51,9 @@ public:
   T get();
   void put(T c);
   uint32 countElementsAhead();
+  
+  void clear( void );
+  void empty( void );
  
 private:
   void putIntoFallbackBuffer(T c);
@@ -137,9 +144,14 @@ void FiFoDRBOSS<T>::copyFB2Buffer()
 template <class T>
 void FiFoDRBOSS<T>::put(T c)
 {
- assert(ArchInterrupts::testIFSet()==false);
+ bool int_set = ArchInterrupts::testIFSet();
+
+ if( int_set )
+   ArchInterrupts::disableInterrupts();  // to safely use them outside IRQ handlers
   
- if (input_buffer_lock_->isFree())
+ bool mutex_free = input_buffer_lock_->isFreeAtomic();
+ 
+ if( mutex_free )
  {
    copyFB2Buffer();
    putIntoBuffer(c);
@@ -151,6 +163,22 @@ void FiFoDRBOSS<T>::put(T c)
  {
    putIntoFallbackBuffer(c);
  }
+ 
+ if( int_set )
+     ArchInterrupts::enableInterrupts(); 
+}
+
+template <class T>
+void FiFoDRBOSS<T>::empty( void )
+{
+    clear();
+}
+
+template <class T>
+void FiFoDRBOSS<T>::clear( void )
+{
+    while( countElementsAhead() )
+	get();
 }
 
 //now this routine could get preemtepd

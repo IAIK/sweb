@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.25 2005/09/13 22:15:52 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.26 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.25  2005/09/13 22:15:52  btittelbach
+//  small BugFix: Scheduler really works now
+//
 //  Revision 1.24  2005/09/13 21:24:42  btittelbach
 //  Scheduler without Memory Allocation in critical context (at least in Theory)
 //
@@ -205,7 +208,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     //no scheduling today...
     //keep currentThread as it was
     //and stay in Kernel Kontext
-    kprintfd_nosleep("Scheduler::schedule: currently blocked\n");
+  //  kprintfd_nosleep("Scheduler::schedule: currently blocked\n");
     return 0;
   }
 
@@ -220,7 +223,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     threads_.rotateBack();
     
   } while (currentThread->state_ != Running);
-  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
+//  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
   
   uint32 ret = 1;
   
@@ -241,6 +244,7 @@ void Scheduler::yield()
   {
     kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
+    kprintfd("currentThread %s?\n", currentThread->name_);
     kprintf_nosleep_flush();
   }
   ArchThreads::yield();

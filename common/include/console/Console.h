@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Console.h,v 1.8 2005/09/13 15:00:51 btittelbach Exp $
+//   $Id: Console.h,v 1.9 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Console.h,v $
+//  Revision 1.8  2005/09/13 15:00:51  btittelbach
+//  Prepare to be Synchronised...
+//  kprintf_nosleep works now
+//  scheduler/list still needs to be fixed
+//
 //  Revision 1.7  2005/07/27 10:04:26  btittelbach
 //  kprintf_nosleep and kprintfd_nosleep now works
 //  Output happens in dedicated Thread using VERY EVIL Mutex Hack
@@ -36,8 +41,10 @@
 #include "List.h"
 #include "Mutex.h"
 
+#include "Thread.h"
+
 class Terminal;
-class Console
+class Console : public Thread
 {
 friend class Terminal;
 friend class ConsoleManager;
@@ -92,15 +99,18 @@ public:
   Terminal *getTerminal(uint32 term);
   void setActiveTerminal(uint32 term);
   
-
-  
   void lockConsoleForDrawing();
   void unLockConsoleForDrawing();
+  
+  virtual void Run();
+  
+
     
   bool areLocksFree()
   {
     return (console_lock_.isFree() && console_lock_.isFree() && locked_for_drawing_==0);
   }
+
 
 protected:
     

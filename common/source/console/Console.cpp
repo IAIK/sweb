@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Console.cpp,v 1.2 2005/07/24 17:02:59 nomenquis Exp $
+//  $Id: Console.cpp,v 1.3 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Console.cpp,v $
+//  Revision 1.2  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.1  2005/04/23 15:58:32  nomenquis
 //  lots of new stuff
 //
@@ -13,9 +16,9 @@
 
 Console* main_console=0;
 
-Console::Console(uint32)
+Console::Console(uint32): Thread()
 {
-
+  name_ = "ConsoleThread";
 }
 
 void Console::lockConsoleForDrawing()
@@ -67,4 +70,9 @@ void Console::setActiveTerminal(uint32 term)
   active_terminal_ = term;
   
   set_active_lock_.release();
+}
+
+void Console::Run( void )
+{
+  // we do not run
 }

@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.85 2005/09/13 22:15:52 btittelbach Exp $
+ * $Id: main.cpp,v 1.86 2005/09/15 17:51:13 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.85  2005/09/13 22:15:52  btittelbach
+ * small BugFix: Scheduler really works now
+ *
  * Revision 1.84  2005/09/13 15:00:51  btittelbach
  * Prepare to be Synchronised...
  * kprintf_nosleep works now
@@ -302,6 +305,8 @@
 
 #include "arch_serial.h"
 #include "drivers/serial.h"
+
+#include "arch_keyboard_manager.h"
 #include "atkbd.h"
 
 #include "fs/VirtualFileSystem.h"
@@ -314,51 +319,13 @@
 
 #include "FiFoDRBOSS.h"
 
+#include "TestingThreads.h"
+
 extern void* kernel_end_address;
 
 extern "C" void startup();
 
 Mutex * lock;
-
-class SerialThread : public Thread
-{
-  public:
-
-  SerialThread(char *name)
-  {
-    name_=name;
-  };
-
-  virtual void Run()
-  {
-    SerialManager *sm = SerialManager::getInstance();
-    uint32 num_ports = sm->get_num_ports();
-    uint32 i = 0, j = 0;
-    for( i=0; i < num_ports; i++ )
-    {
-      SerialPort *sp = sm->serial_ports[i];
-      kprintfd( "SerialThread::Run: Port number : %d, Port name : %s \n", i ,
-      sp->friendly_name );
-
-      // read from serial port and write to console
-      uint8 gotch = 0;
-      uint32 num_read = 0;
-
-      do
-      {
-        sp->read( &gotch, 1, num_read );
-        if( num_read )
-          kprintf( "%c", gotch );
-      }
-      while( 1 );
-      // until forever*/
-    }
-
-    kprintf("SerialThread::Run: Done with serial ports\n");
-    for(;;) Scheduler::instance()->yield();
-  };
-
-};
 
 class StupidThread : public Thread
 {
@@ -554,6 +521,9 @@ class KprintfNoSleepFlushingThread : public Thread
   {
     while (true)
     {
+       kprintf_nosleep_flush();
+      Scheduler::instance()->yield();
+      //kprintfd("___done_______________________\n");
       //kprintfd("___Flushing Nosleep Buffer____\n");
       kprintf_nosleep_flush();
       //kprintfd("___done_______________________\n");
@@ -579,6 +549,7 @@ class KbdTestThread : public Thread
       uint8 sc = kbd_ringbuffer_->get();
       kprintfd("KprintfNoSleepFlushingThread::Run:2 got SC from KBD: %x\n",sc);
       kprintfd("KprintfNoSleepFlushingThread::Run:3 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
+
     }
   }
 };
@@ -593,8 +564,8 @@ void startup()
 
   start_address = PageManager::createPageManager(start_address);
   KernelMemoryManager::createMemoryManager(start_address,end_address);
-//  SerialManager::getInstance()->do_detection( 1 );
   
+  //SerialManager::getInstance()->do_detection( 1 );
 
   main_console = new TextConsole(8);
 
@@ -611,9 +582,9 @@ void startup()
   term_1->writeString("This is on term 1, you should not see me\n");
   term_2->writeString("This is on term 2, you should not see me\n");
   term_3->writeString("This is on term 3, you should not see me\n");
-  
+
   main_console->setActiveTerminal(0);
-  
+
   kprintfd("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
   uint32 a,b,c;
   ArchCommon::dummdumm(0,a,b,c);
@@ -622,24 +593,6 @@ void startup()
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
   
-  // kprintfd("%x\n",PseudoFS::getInstance()->getFilePtr("someloop"));
-  /*
-  console->setBackgroundColor(Console::BG_BLACK);
-  console->setForegroundColor(Console::FG_GREEN);
-
-  kprintf_debug("Debug print now functional\n");
-  kprintfd("Can be called with kprintf_debug or kprintfd\n");
-*/
-  
-  //testRegFS();
-  
-  //~ uint32 dummy = 0;
-  //~ kprintf("befor test set lock, val is now %d\n",dummy);
-  //~ ArchThreads::testSetLock(dummy,10);
-  //~ kprintf("After test set lock, val is now %d\n",dummy);
-  //~ kprintf("Lock 2, %d\n",ArchThreads::testSetLock(dummy,22));
-  //~ kprintf("After test set lock, val is now %d\n",dummy);
-
   kprintf("Threads init\n");
   ArchThreads::initialise();
   kprintf("Interupts init\n");
@@ -653,38 +606,23 @@ void startup()
   ArchInterrupts::enableKBD();
 
   kprintf("Thread creation\n");
-  //StupidThread *thread0 = new StupidThread(0);
-  //StupidThread *thread1 = new StupidThread(1);
-
-  //SerialThread *serial_thread = new SerialThread();
-
-  kprintf("Adding threads\n");
-  //Scheduler::instance()->addNewThread(thread0);
-  //Scheduler::instance()->addNewThread(thread1);
-  //~ Scheduler::instance()->addNewThread(new StupidThread(2));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(3));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(4));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(5));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(6));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(7));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(8));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(9));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(10));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(11));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(12));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(13));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(14));
-  //~ Scheduler::instance()->addNewThread(new StupidThread(15));
   
-  //Scheduler::instance()->addNewThread(serial_thread);
-
+  kprintfd("Adding threads\n");
+ 
+  Scheduler::instance()->addNewThread( main_console );
+  
+  Scheduler::instance()->addNewThread( 
+    new TestTerminalThread( "TerminalTestThread", main_console, 1 )
+   );
+  
+  
   kprintf("Adding Important kprintf_nosleep Flush Thread\n");
   Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
   Scheduler::instance()->addNewThread(new KbdTestThread());
 
-  Scheduler::instance()->addNewThread(new MatriceMultTest());
-  Scheduler::instance()->addNewThread(new SyscallTest());
-  Scheduler::instance()->addNewThread(new SyscallTest2());
+ // Scheduler::instance()->addNewThread(new MatriceMultTest());
+ // Scheduler::instance()->addNewThread(new SyscallTest());
+ // Scheduler::instance()->addNewThread(new SyscallTest2());
   
   Scheduler::instance()->printThreadList();
   

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.4 2005/07/24 17:02:59 nomenquis Exp $
+//  $Id: Terminal.cpp,v 1.5 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.4  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.3  2005/04/26 16:08:59  nomenquis
 //  updates
 //
@@ -18,15 +21,74 @@
 #include "Terminal.h"
 #include "Console.h"
 
+#include "arch_keyboard_manager.h"
+
+#include "kprintf.h"
+
 Terminal::Terminal(Console *console, uint32 num_columns, uint32 num_rows):
   console_(console), num_columns_(num_columns), num_rows_(num_rows), len_(num_rows * num_columns),
   current_column_(0), current_state_(0x93), active_(0)
 {
   characters_ = new uint8[len_];
   character_states_ = new uint8[len_];
+  
+  uint32 i;
+  for (i=0;i<len_;++i)
+  {
+    characters_[i]=' ';
+    character_states_[i]=0;
+  }
+    
   //clearScreen();
+  
+  terminal_buffer_ = new FiFoDRBOSS< uint32 >( TERMINAL_BUFFER_SIZE, 128 );  
 }
   
+void Terminal::putInBuffer( uint32 what )
+{
+  terminal_buffer_->put( what );
+}
+
+char Terminal::read()
+{
+  return terminal_buffer_->get();
+}
+
+void Terminal::backspace( void )
+{
+  if( terminal_buffer_->countElementsAhead() )
+    terminal_buffer_->get();
+  
+  if( current_column_ )
+  {
+    --current_column_;
+    setCharacter(num_rows_-1, current_column_, ' ');
+  }
+}
+
+uint32 Terminal::readLine( char *line, uint32 size )
+{
+  uint32 cchar;
+  uint32 counter = 0;
+  
+   do {
+    cchar = terminal_buffer_->get();
+    
+    if( cchar == '\b' )
+    {
+      line--;
+      counter--;
+    }
+    else
+      *line++ = cchar;
+   }
+   while( cchar != '\n' && counter++ < size );
+  
+   *line = '\0';
+   
+   return counter;
+}
+
 void Terminal::writeInternal(char character)
 {
   if (character == '\n')
@@ -34,6 +96,8 @@ void Terminal::writeInternal(char character)
     scrollUp();
     current_column_ = 0;
   }
+  else if ( character == '\b' )
+    backspace();
   else
   {
     setCharacter(num_rows_-1,current_column_,character);
@@ -162,14 +226,17 @@ void Terminal::fullRedraw()
   
   console_->unLockConsoleForDrawing();
 }
+
 void Terminal::setAsActiveTerminal()
 {
   MutexLock lock(mutex_);
   active_ = 1;
   fullRedraw();
 }
+
 void Terminal::unSetAsActiveTerminal()
 {
   MutexLock lock(mutex_);
   active_ = 0;
 }
+

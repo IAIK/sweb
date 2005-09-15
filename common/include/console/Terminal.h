@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.4 2005/09/13 15:00:51 btittelbach Exp $
+//  $Id: Terminal.h,v 1.5 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.4  2005/09/13 15:00:51  btittelbach
+//  Prepare to be Synchronised...
+//  kprintf_nosleep works now
+//  scheduler/list still needs to be fixed
+//
 //  Revision 1.3  2005/07/27 10:04:26  btittelbach
 //  kprintf_nosleep and kprintfd_nosleep now works
 //  Output happens in dedicated Thread using VERY EVIL Mutex Hack
@@ -22,6 +27,9 @@
 
 #include "types.h"
 #include "Console.h"
+#include "Thread.h"
+
+#include "FiFoDRBOSS.h"
 
 class Console;
   
@@ -29,6 +37,8 @@ class Terminal
 {
 friend class Console;
 public:
+
+  static uint32 const TERMINAL_BUFFER_SIZE = 256;
 
   Terminal(Console *console, uint32 num_columns, uint32 num_rows);
   
@@ -40,6 +50,13 @@ public:
   void setBackgroundColor(Console::BACKGROUNDCOLORS const &color);
 
   void writeInternal(char character);
+  
+  char read();
+  uint32 readLine(char *, uint32);
+  
+  void putInBuffer( uint32 key );
+  
+  void backspace( void );
 
   bool isLockFree()
   {
@@ -53,13 +70,16 @@ protected:
 
 private:
 
+  FiFoDRBOSS< uint32 > *terminal_buffer_;
+  
+  void handleKey( uint32 key );
+  
   void clearScreen();
   void fullRedraw();
   uint32 getNumRows() const;
   uint32 getNumColumns() const;
 
   uint32 setCharacter(uint32 row,uint32 column, uint8 character);
-
 
   void scrollUp();
 
@@ -76,6 +96,7 @@ private:
   uint8 active_;
   
   Mutex mutex_;
+  
 };
 
 

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.h,v 1.5 2005/07/24 17:02:59 nomenquis Exp $
+//   $Id: TextConsole.h,v 1.6 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.h,v $
+//  Revision 1.5  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.4  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -29,6 +32,17 @@ public:
   
   TextConsole(uint32 num_terminals);
 
+  virtual void Run();
+  
+  void handleKey( uint32 );
+  
+  uint32 remap( uint32 ); // this should be moved to terminal
+  
+  bool isDisplayable( uint32 );
+  
+  bool isLetter( uint32 );
+  bool isNumber( uint32 );
+  
 
 private:
   

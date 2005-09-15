@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.10 2005/09/13 21:24:42 btittelbach Exp $
+//   $Id: FiFo.h,v 1.11 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.10  2005/09/13 21:24:42  btittelbach
+//   Scheduler without Memory Allocation in critical context (at least in Theory)
+//
 //   Revision 1.9  2005/09/05 23:36:24  btittelbach
 //   Typo Fix
 //
@@ -94,7 +97,7 @@ FiFo<T>::FiFo(uint32 buffer_size)
   read_pos_=buffer_start_;
   my_lock_=new Mutex();
   buffer_not_empty_=new Condition(my_lock_);
-  buffer_not_full_-=new Condition(my_lock_);
+  buffer_not_full_=new Condition(my_lock_);
 }
 
 template <class T>

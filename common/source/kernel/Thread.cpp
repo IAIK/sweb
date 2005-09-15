@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.18 2005/09/13 15:00:51 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.19 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.18  2005/09/13 15:00:51  btittelbach
+//  Prepare to be Synchronised...
+//  kprintf_nosleep works now
+//  scheduler/list still needs to be fixed
+//
 //  Revision 1.17  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -42,7 +47,7 @@
 //  cr3 remapping finally really works now
 //
 //  Revision 1.7  2005/05/19 15:43:43  btittelbach
-//  Ansätze für eine UserSpace Verwaltung
+//  Ansï¿½ze fr eine UserSpace Verwaltung
 //
 //  Revision 1.6  2005/05/16 20:37:51  nomenquis
 //  added ArchMemory for page table manip
@@ -85,14 +90,16 @@ static void ThreadStartHack()
 Thread::Thread()
 {
   kprintfd("Thread::Thread: Thread ctor, this is %x, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
-  ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
 
-  //kprintfd("Thread::Thread: After bzero\n");
+  //ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
+
+  kprintfd("Thread::Thread: After bzero\n");
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
   user_arch_thread_info_=0;
   switch_to_userspace_ = 0;
   state_=Running;
   loader_ = 0;
+  name_ = "Base";
 }
 
 Thread::~Thread()

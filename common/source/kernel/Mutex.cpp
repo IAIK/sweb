@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.7 2005/09/07 00:33:52 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.8 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.7  2005/09/07 00:33:52  btittelbach
+//  +More Bugfixes
+//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
+//
 //  Revision 1.6  2005/08/07 16:47:25  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -83,6 +87,14 @@ bool Mutex::isFree()
   if (unlikely (ArchInterrupts::testIFSet()))
     arch_panic((uint8*)("Mutex::isFree: ERROR: Should not be used with IF=1, use acquire instead\n"));
 
+  if (mutex_ > 0)
+    return false;
+  else
+    return true;
+}
+
+bool Mutex::isFreeAtomic()
+{
   if (mutex_ > 0)
     return false;
   else

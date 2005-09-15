@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.33 2005/09/13 15:00:51 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.34 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.33  2005/09/13 15:00:51  btittelbach
+//  Prepare to be Synchronised...
+//  kprintf_nosleep works now
+//  scheduler/list still needs to be fixed
+//
 //  Revision 1.32  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -130,6 +135,7 @@
 
 #include "arch_serial.h"
 #include "serial.h"
+#include "arch_keyboard_manager.h"
 #include "Thread.h"
 #include "ArchInterrupts.h"
 
@@ -498,17 +504,17 @@ extern "C" void arch_switchThreadKernelToKernelPageDirChange();
 extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
-  kprintfd_nosleep("irq0: Tick\n");
+  //kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
   uint32 ret = Scheduler::instance()->schedule(1);  
   switch (ret)
   {
     case 0:
-      kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
+ //     kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
+   //   kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadToUserPageDirChange();
     default:
@@ -521,13 +527,16 @@ extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  //Scheduler::instance()->wake(InputThread::getInstance());
+  KeyboardManager::getInstance()->serviceIRQ( );
+  ArchInterrupts::EndOfInterrupt(3);
+
+  /*//Scheduler::instance()->wake(InputThread::getInstance());
   uint8 sc = inportb(0x60);
   kprintfd("irq1: got: %x\n",sc);
 
   kbd_ringbuffer_->put(sc);
   
-  ArchInterrupts::EndOfInterrupt(1);
+  ArchInterrupts::EndOfInterrupt(1);*/
 }
 
 extern "C" void arch_irqHandler_65();
@@ -537,13 +546,16 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
+    //  kprintfd_nosleep("irq65: Going to leave irq Handler 0 to kernel\n");
       kprintfd_nosleep("irq65: Going to leave int Handler 65 to kernel\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
+     // kprintfd_nosleep("irq65: Going to leave irq Handler 0 to user\n");
       kprintfd_nosleep("irq65: Going to leave int Handler 65 to user\n");
+
       arch_switchThreadToUserPageDirChange();
     default:
-      kprintfd_nosleep("irq65: Panic in int 0 handler\n");
+      kprintfd_nosleep("irq65: Panic in int 65 handler\n");
       for(;;);
   }  
 }

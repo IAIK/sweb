@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.6 2005/07/24 17:02:59 nomenquis Exp $
+//   $Id: TextConsole.cpp,v 1.7 2005/09/15 17:51:13 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.6  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.5  2005/04/23 20:08:26  nomenquis
 //  updates
 //
@@ -26,6 +29,12 @@
 #include "Terminal.h"
 #include "ArchCommon.h"
 #include "panic.h"
+
+#include "Scheduler.h"
+
+#include "arch_keyboard_manager.h"
+#include "kprintf.h"
+
 TextConsole::TextConsole(uint32 num_terminals):Console(num_terminals)
 {
   uint32 i;
@@ -35,7 +44,7 @@ TextConsole::TextConsole(uint32 num_terminals):Console(num_terminals)
     terminals_.pushBack(term);
   }
   active_terminal_ = 0;
-  
+  name_ = "TxTConsoleThrd";
 }
 
 uint32 TextConsole::consoleGetNumRows()const
@@ -88,10 +97,91 @@ void TextConsole::consoleScrollUp()
 
 void TextConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
 {
-  
 }
 
 void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 {
+}
+
+void TextConsole::Run( void )
+{
+  KeyboardManager * km = KeyboardManager::getInstance();
+    
+  do 
+  {
+    uint32 key = km->getKeyFromBuffer();
+    if( isDisplayable( key ) )
+    {
+      key = remap( key );
+      terminals_[active_terminal_]->write( key );
+      terminals_[active_terminal_]->putInBuffer( key );
+    }
+    else
+      handleKey( key );
+  } 
+  while(1); // until the end of time
+
+}
+
+void TextConsole::handleKey( uint32 key )
+{
+  KeyboardManager * km = KeyboardManager::getInstance();
   
+  uint32 terminal_selected = (key - KeyboardManager::KEY_F1);
+  
+  if( terminal_selected < getNumTerminals() && km->isShift() )
+  {
+    setActiveTerminal(terminal_selected);
+    return;
+  }
+  
+  if( key == '\b' )
+    terminals_[active_terminal_]->backspace();
+  
+  return;
+}
+
+bool TextConsole::isDisplayable( uint32 key )
+{
+  return ( ( (key & 127) >= ' ' ) || (key == '\n') || (key == '\b') );
+}
+
+bool TextConsole::isLetter( uint32 key )
+{
+  return ( ( key >= 'a' ) && (key <= 'z') );
+}
+
+bool TextConsole::isNumber( uint32 key )
+{
+  return ( ( key >= '0' ) && (key <= '9') );
+}
+
+uint32 TextConsole::remap( uint32 key )
+{
+
+  /// TODO: Move this function in terminal and
+  ///       implement lookup tables for various
+  ///       keyboard layouts
+  
+  uint32 number_table[] = { ')', '!', '@', '#', '$', 
+                            '%', '^', '&', '*', '('  };
+  
+  KeyboardManager * km = KeyboardManager::getInstance();
+  
+  if ( isLetter( key ) )
+  {
+    bool shifted = km->isShift() ^ km->isCaps();
+    
+    if( shifted )
+      key &= ~0x20;  
+  }
+  
+  if ( isNumber( key ) )
+  {
+    if( km->isShift() )
+        key = number_table[ key - '0' ];
+    
+  }
+  
+  return key;
 }
