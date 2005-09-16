@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: exec.c,v $
  *
- * $Id: exec.c,v 1.1 2005/09/14 22:37:18 aniederl Exp $
- * $Log$
+ * $Id: exec.c,v 1.2 2005/09/16 05:00:07 aniederl Exp $
+ * $Log: exec.c,v $
+ * Revision 1.1  2005/09/14 22:37:18  aniederl
+ * stubs for exec functions
+ *
  */
 
 
@@ -38,7 +41,7 @@
  * Array of pointers to the environment strings, terminated by a null pointer
  *
  */
-extern char **environ;
+//extern char **environ;
 
 //----------------------------------------------------------------------
 /**
@@ -70,7 +73,7 @@ __syscall_special_0(pid_t, fork)
  */
 int execl(const char *path, const char *arg, ...)
 {
-
+  return 0;
 }
 
 //----------------------------------------------------------------------
@@ -98,6 +101,7 @@ int execl(const char *path, const char *arg, ...)
 int execlp(const char *file, const char *arg, ...)
 {
 
+  return 0;
 }
 
 //----------------------------------------------------------------------
@@ -122,6 +126,7 @@ int execlp(const char *file, const char *arg, ...)
 int execle(const char *path, const char *arg, ...)
 {
 
+  return 0;
 }
 
 //----------------------------------------------------------------------
@@ -141,6 +146,7 @@ int execle(const char *path, const char *arg, ...)
 int execv(const char *path, char *const argv[])
 {
 
+  return 0;
 }
 
 //----------------------------------------------------------------------
@@ -164,6 +170,7 @@ int execv(const char *path, char *const argv[])
 int execvp(const char *file, char *const argv[])
 {
 
+  return 0;
 }
 
 //----------------------------------------------------------------------
@@ -182,8 +189,8 @@ int execvp(const char *file, char *const argv[])
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-__syscall_3(int, execve, const char *, path, char *const , argv[],
-            char *const , envp[])
+__syscall_3(int, execve, const char *, path, char *const *, argv,
+            char *const *, envp)
 
 
 // exit syscall
