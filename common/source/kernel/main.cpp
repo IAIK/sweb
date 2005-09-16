@@ -1,8 +1,34 @@
 /**
- * $Id: main.cpp,v 1.87 2005/09/15 18:47:07 btittelbach Exp $
+ * $Id: main.cpp,v 1.88 2005/09/16 00:54:13 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.87  2005/09/15 18:47:07  btittelbach
+ * FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+ * IdleThread now uses hlt instead of yield.
+ *
  * Revision 1.86  2005/09/15 17:51:13  nelles
+ *
+ *
+ *  Massive update. Like PatchThursday.
+ *  Keyboard is now available.
+ *  Each Terminal has a buffer attached to it and threads should read the buffer
+ *  of the attached terminal. See TestingThreads.h in common/include/kernel for
+ *  example of how to do it.
+ *  Switching of the terminals is done with the SHFT+F-keys. (CTRL+Fkeys gets
+ *  eaten by X on my machine and does not reach Bochs).
+ *  Lot of smaller modifications, to FiFo, Mutex etc.
+ *
+ *  Committing in .
+ *
+ *  Modified Files:
+ *  	arch/x86/source/InterruptUtils.cpp
+ *  	common/include/console/Console.h
+ *  	common/include/console/Terminal.h
+ *  	common/include/console/TextConsole.h common/include/ipc/FiFo.h
+ *  	common/include/ipc/FiFoDRBOSS.h common/include/kernel/Mutex.h
+ *  	common/source/console/Console.cpp
+ *  	common/source/console/Makefile
+ *  	comm
  *
  *
  *  Massive update. Like PatchThursday.
@@ -559,29 +585,29 @@ class KprintfNoSleepFlushingThread : public Thread
   }
 };
 
-extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
-FiFoDRBOSS<uint8> *kbd_ringbuffer_;
-class KbdTestThread : public Thread
-{
-  public:
+//~ extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
+//~ FiFoDRBOSS<uint8> *kbd_ringbuffer_;
+//~ class KbdTestThread : public Thread
+//~ {
+  //~ public:
 
-   KbdTestThread()
-  {
-    name_="KbdTestThread";
-  }
+   //~ KbdTestThread()
+  //~ {
+    //~ name_="KbdTestThread";
+  //~ }
   
-  virtual void Run()
-  {
-    while (true)
-    {
-      kprintfd("KprintfNoSleepFlushingThread::Run:1 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
-      uint8 sc = kbd_ringbuffer_->get();
-      kprintfd("KprintfNoSleepFlushingThread::Run:2 got SC from KBD: %x\n",sc);
-      kprintfd("KprintfNoSleepFlushingThread::Run:3 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
+  //~ virtual void Run()
+  //~ {
+    //~ while (true)
+    //~ {
+      //~ kprintfd("KprintfNoSleepFlushingThread::Run:1 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
+      //~ uint8 sc = kbd_ringbuffer_->get();
+      //~ kprintfd("KprintfNoSleepFlushingThread::Run:2 got SC from KBD: %x\n",sc);
+      //~ kprintfd("KprintfNoSleepFlushingThread::Run:3 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
 
-    }
-  }
-};
+    //~ }
+  //~ }
+//~ };
 
 //------------------------------------------------------------
 void startup()
@@ -631,7 +657,6 @@ void startup()
   ArchInterrupts::enableTimer();
   lock = new Mutex();
 
-  kbd_ringbuffer_ = new FiFoDRBOSS<uint8>(1024,128);
   ArchInterrupts::enableKBD();
 
   kprintf("Thread creation\n");
@@ -649,9 +674,9 @@ void startup()
   Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
   //Scheduler::instance()->addNewThread(new KbdTestThread());
 
-  Scheduler::instance()->addNewThread(new MatriceMultTest());
-  Scheduler::instance()->addNewThread(new SyscallTest());
-  Scheduler::instance()->addNewThread(new SyscallTest2());
+  //~ Scheduler::instance()->addNewThread(new MatriceMultTest());
+  //~ Scheduler::instance()->addNewThread(new SyscallTest());
+  //~ Scheduler::instance()->addNewThread(new SyscallTest2());
     
   Scheduler::instance()->printThreadList();
   

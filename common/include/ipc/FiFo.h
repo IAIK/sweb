@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.12 2005/09/15 18:47:06 btittelbach Exp $
+//   $Id: FiFo.h,v 1.13 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.12  2005/09/15 18:47:06  btittelbach
+//   FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//   IdleThread now uses hlt instead of yield.
+//
 //   Revision 1.11  2005/09/15 17:51:13  nelles
 //
 //
@@ -96,7 +100,7 @@ template<class T>
 class FiFo
 {
 public:
-  FiFo(uint32 buffer_size);
+  FiFo(uint32 buffer_size, bool loose_data_on_buffer_full=false);
   ~FiFo();
 
   //operator <<
@@ -117,11 +121,13 @@ private:
   T* buffer_end_;
   T* write_pos_; //position of next to write element
   T* read_pos_; //position of next to read element
+
+  bool loose_data_on_buffer_full_;
 };
 
 
 template <class T>
-FiFo<T>::FiFo(uint32 buffer_size)
+FiFo<T>::FiFo(uint32 buffer_size, bool loose_data_on_buffer_full)
 {
   kprintfd("Created Fifo with Buffer size %d\n",buffer_size);
   buffer_start_ = new T[buffer_size+1];
@@ -131,6 +137,7 @@ FiFo<T>::FiFo(uint32 buffer_size)
   my_lock_=new Mutex();
   buffer_not_empty_=new Condition(my_lock_);
   buffer_not_full_=new Condition(my_lock_);
+  loose_data_on_buffer_full_=loose_data_on_buffer_full;
 }
 
 template <class T>
@@ -163,9 +170,16 @@ void FiFo<T>::put(T in)
   buffer_not_empty_->signal();
   while (pos_add(write_pos_,1) == read_pos_) //no space to write, need to read first
   {
-    //block somehow, need sync mechanism for this
-    kprintfd("FiFo:put: blocking put\n");
-    buffer_not_full_->wait();
+    if (loose_data_on_buffer_full_)
+    {
+      //move read position ahead of us
+      read_pos_=pos_add(read_pos_,1);
+    }
+    else
+    {
+      kprintfd("FiFo:put: blocking put\n");
+      buffer_not_full_->wait();
+    }
   }
   
   if (read_pos_ == 0)

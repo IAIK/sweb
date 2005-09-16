@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.5 2005/09/15 18:47:06 btittelbach Exp $
+//   $Id: FiFoDRBOSS.h,v 1.6 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.5  2005/09/15 18:47:06  btittelbach
+//   FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//   IdleThread now uses hlt instead of yield.
+//
 //   Revision 1.4  2005/09/15 17:51:13  nelles
 //
 //
@@ -84,6 +88,7 @@ public:
   void put(T c);
   uint32 countElementsAhead();
   void clear( void );
+  T peekAhead();
  
 private:
   void putIntoFallbackBuffer(T c);
@@ -181,9 +186,7 @@ void FiFoDRBOSS<T>::put(T c)
  {
    copyFB2Buffer();
    putIntoBuffer(c);
-   input_buffer_lock_->acquire();
-   something_to_read_->signal(); //to proudly protect the list and signal the threads
-   input_buffer_lock_->release();
+   something_to_read_->signalWithInterruptsOff();
  }
  else
  {
@@ -213,6 +216,22 @@ T FiFoDRBOSS<T>::get()
   
   ret = input_buffer_[++ib_read_pos_];
   ib_read_pos_ %= input_buffer_size_;
+  
+  input_buffer_lock_->release();
+  return ret;
+}
+
+//now this routine could get preemtepd
+template <class T>
+T FiFoDRBOSS<T>::peekAhead()
+{
+  T ret=0;
+  input_buffer_lock_->acquire();
+  
+  while (ib_write_pos_ == ((ib_read_pos_+1)%input_buffer_size_)) //nothing new to read
+    something_to_read_->wait(); //this implicates release & acquire
+  
+  ret = input_buffer_[ib_read_pos_+1];
   
   input_buffer_lock_->release();
   return ret;

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.9 2005/09/15 18:47:07 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.10 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.9  2005/09/15 18:47:07  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.8  2005/09/15 17:51:13  nelles
 //
 //
@@ -85,12 +89,9 @@ void Mutex::acquire()
 {
   while (ArchThreads::testSetLock(mutex_,1))
   {
-    if (unlikely (! ArchInterrupts::testIFSet()))
-      writeLine2Bochs(reinterpret_cast<const uint8*>("Mutex::acquire: WARNING Interrupts were off (now switiching on)\n"));
-    ArchInterrupts::disableInterrupts();
-//    kprintfd("Mutex::Acquire: could not get lock, going to sleep()\n");
+    spinlock_.acquire();
     sleepers_.pushBack(currentThread);
-    ArchInterrupts::enableInterrupts();
+    spinlock_.release();
     Scheduler::instance()->sleep();
 //    kprintfd("Mutex::Acquire: Wakeup after yield()\n");
    
@@ -102,16 +103,14 @@ void Mutex::release()
 {
   mutex_ = 0;
   held_by_=0;
+  spinlock_.acquire();
   if (! sleepers_.empty())
   {
-    if (unlikely (! ArchInterrupts::testIFSet()))
-      writeLine2Bochs(reinterpret_cast<const uint8*>("Mutex::acquire: WARNING Interrupts were off (now switiching on)\n"));
-    ArchInterrupts::disableInterrupts();
     Thread *thread = sleepers_.front();
     sleepers_.popFront();
-    ArchInterrupts::enableInterrupts();
     Scheduler::instance()->wake(thread);
   }
+  spinlock_.release();
 }
 
 bool Mutex::isFree()

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.6 2005/09/15 18:47:07 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.7 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.6  2005/09/15 18:47:07  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.5  2005/09/07 00:33:52  btittelbach
 //  +More Bugfixes
 //  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -79,7 +83,6 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   return size;
 }
 
-extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
 uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 {
   uint32 num_read = count;

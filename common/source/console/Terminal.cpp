@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.6 2005/09/15 18:47:07 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.7 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.6  2005/09/15 18:47:07  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.5  2005/09/15 17:51:13  nelles
 //
 //
@@ -73,7 +77,7 @@ Terminal::Terminal(Console *console, uint32 num_columns, uint32 num_rows):
     
   //clearScreen();
   
-  terminal_buffer_ = new FiFo< uint32 >( TERMINAL_BUFFER_SIZE );  
+  terminal_buffer_ = new FiFo< uint32 >( TERMINAL_BUFFER_SIZE , true );  
 }
   
 void Terminal::putInBuffer( uint32 what )

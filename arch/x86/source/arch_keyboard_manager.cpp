@@ -152,6 +152,8 @@ void KeyboardManager::kb_wait()
     if((stat & 0x02) == 0)
       break;
   }
+  if (i>=0x10000)
+    kprintfd_nosleep("KeyboardManager::kb_wait: waitiong on 0x02 didn't speed up things :-(\n");
 }
 
 void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
@@ -346,13 +348,17 @@ uint32 KeyboardManager::getKeyFromBuffer()
   return key;
 }
 
-uint32 KeyboardManager::peekKeyFromBuffer()
+bool KeyboardManager::peekKeyFromBuffer(uint32 &key)
 {
-  uint8 sc = keyboard_buffer_->get();
-  keyboard_buffer_->put(sc);
-  uint32 key = convertScancode( sc );
-  
-  return key;
+  //peeking should not block
+  if (keyboard_buffer_->countElementsAhead())
+  {
+    uint8 sc = keyboard_buffer_->peekAhead();
+    key = convertScancode( sc );
+    return true;
+  }
+  else 
+    return false;
 }
 
 void KeyboardManager::putKeyToBuffer( uint32 key )
@@ -367,4 +373,3 @@ void KeyboardManager::putKeyToBuffer( uint32 key )
   if( i != KEY_MAPPING_SIZE )
     keyboard_buffer_->put( i );
 }
-

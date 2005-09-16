@@ -103,7 +103,7 @@ public:
   };
   
   uint32 getKeyFromBuffer();
-  uint32 peekKeyFromBuffer();
+  bool peekKeyFromBuffer(uint32 &key);
   void putKeyToBuffer( uint32 key );
   
   void serviceIRQ( void );
@@ -140,4 +140,3 @@ protected:
 };
 
 #endif
-

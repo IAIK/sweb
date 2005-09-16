@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.6 2005/09/15 18:47:06 btittelbach Exp $
+//  $Id: Terminal.h,v 1.7 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.6  2005/09/15 18:47:06  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.5  2005/09/15 17:51:13  nelles
 //
 //
@@ -60,7 +64,6 @@
 #include "types.h"
 #include "Console.h"
 #include "Thread.h"
-
 #include "FiFo.h"
 
 class Console;

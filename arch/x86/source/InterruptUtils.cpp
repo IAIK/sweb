@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.35 2005/09/15 18:47:06 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.36 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.35  2005/09/15 18:47:06  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.34  2005/09/15 17:51:13  nelles
 //
 //
@@ -555,20 +559,11 @@ extern "C" void irqHandler_0()
   }  
 }
 
-extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
   KeyboardManager::getInstance()->serviceIRQ( );
   ArchInterrupts::EndOfInterrupt(3);
-
-  /*//Scheduler::instance()->wake(InputThread::getInstance());
-  uint8 sc = inportb(0x60);
-  kprintfd("irq1: got: %x\n",sc);
-
-  kbd_ringbuffer_->put(sc);
-  
-  ArchInterrupts::EndOfInterrupt(1);*/
 }
 
 extern "C" void arch_irqHandler_65();

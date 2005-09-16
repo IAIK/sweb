@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.h,v 1.7 2005/09/15 18:47:06 btittelbach Exp $
+//  $Id: Mutex.h,v 1.8 2005/09/16 00:54:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.h,v $
+//  Revision 1.7  2005/09/15 18:47:06  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.6  2005/09/15 17:51:13  nelles
 //
 //
@@ -63,6 +67,7 @@
 
 #include "types.h"
 #include "List.h"
+#include "SpinLock.h"
 
 class Thread;
 class Mutex
@@ -88,6 +93,7 @@ private:
   uint32 mutex_;
   List<Thread*> sleepers_;
   Thread *held_by_;
+  SpinLock spinlock_;
 
   //this is a no no
   Mutex(Mutex const &){}
