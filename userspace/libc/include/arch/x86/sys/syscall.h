@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: syscall.h,v $
  *
- * $Id: syscall.h,v 1.3 2005/09/11 12:35:49 aniederl Exp $
+ * $Id: syscall.h,v 1.4 2005/09/16 04:58:27 aniederl Exp $
  * $Log: syscall.h,v $
+ * Revision 1.3  2005/09/11 12:35:49  aniederl
+ * added special syscall macro for return value pass-through
+ *
  * Revision 1.2  2005/09/11 10:15:32  aniederl
  * fixed syscall macros
  *
@@ -46,7 +49,7 @@ extern unsigned int errno;
 
 // macros for pushing the argument registers on the stack, so they can safely
 // be used
-#define SAVE_ARGUMENT_REGISTERS_0
+#define SAVE_ARGUMENT_REGISTERS_0 ""
 #define SAVE_ARGUMENT_REGISTERS_1 \
   "pushl %ebx\n"
 #define SAVE_ARGUMENT_REGISTERS_2 \
@@ -66,7 +69,7 @@ extern unsigned int errno;
   "pushl %ebp\n"
 
 // macros for restoring the argument registers
-#define RESTORE_ARGUMENT_REGISTERS_0
+#define RESTORE_ARGUMENT_REGISTERS_0 ""
 #define RESTORE_ARGUMENT_REGISTERS_1 \
   "popl %ebx\n"
 #define RESTORE_ARGUMENT_REGISTERS_2 \
