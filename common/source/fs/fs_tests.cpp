@@ -4,6 +4,7 @@
 #include "fs/fs_tests.h"
 
 #include "fs/ramfs/RamFileSystemType.h"
+#include "fs/pseudofs/PseudoFileSystemType.h"
 #include "fs/VirtualFileSystem.h"
 #include "fs/PathWalker.h"
 
@@ -244,7 +245,10 @@ void testMount()
 {
   RamFileSystemType *ramfs = new RamFileSystemType();
   vfs.registerFileSystem(ramfs);
-  
+
+  PseudoFileSystemType *pfs = new PseudoFileSystemType();
+  vfs.registerFileSystem(pfs);
+
   vfs.root_mount("ramfs", 0);
 }
 
@@ -347,3 +351,4 @@ void testReadWriteInode()
   
   kprintfd("test_array = %s\n", test_array);
 }
+

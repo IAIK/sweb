@@ -19,8 +19,7 @@ SUBPROJECTS := \
                common/source/drivers \
                utils/mtools \
                common/source/fs \
-               common/source/fdds/ramfs \
-	       userspace/tests
+               userspace/tests
 else
 SUBPROJECTS := \
                arch/arch/source \
@@ -33,7 +32,8 @@ SUBPROJECTS := \
                utils/mtools \
                common/source/fs \
                common/source/fs/ramfs \
-	       userspace/tests
+               common/source/fs/pseudofs \
+               userspace/tests
 endif
 
 ifeq ($(ARCH),xen)
@@ -57,7 +57,8 @@ SHARED_LIBS :=  \
                 common/source/mm/libMM.a \
                 common/source/drivers/libDrivers.a \
                 common/source/fs/libFS.a \
-                common/source/fs/ramfs/libRamFS.a
+                common/source/fs/ramfs/libRamFS.a \
+                common/source/fs/pseudofs/libPseudoFS.a
 endif
 
 
