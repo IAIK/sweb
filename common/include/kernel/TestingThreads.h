@@ -23,6 +23,7 @@ class TestTerminalThread : public Thread
     do 
     {
       Terminal *t = main_console->getTerminal( on_terminal );
+      t->clearBuffer();
       t->writeString( "\n\n Greetings ! \n Could you tell me your name ? \n" );
       if( t->readLine( name, 50 ) > 48 )
         t->writeString( "Wow ! \n Your name is very long I was not prepared and I can not remember more than 49 characters !! \n" );

@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.88 2005/09/16 00:54:13 btittelbach Exp $
+ * $Id: main.cpp,v 1.89 2005/09/16 12:47:41 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.88  2005/09/16 00:54:13  btittelbach
+ * Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+ *
  * Revision 1.87  2005/09/15 18:47:07  btittelbach
  * FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
  * IdleThread now uses hlt instead of yield.
@@ -633,10 +636,10 @@ void startup()
   
   term_0->setBackgroundColor(Console::BG_BLACK);
   term_0->setForegroundColor(Console::FG_GREEN);
-  term_0->writeString("This is on term 0, you should see me\n");
-  term_1->writeString("This is on term 1, you should not see me\n");
-  term_2->writeString("This is on term 2, you should not see me\n");
-  term_3->writeString("This is on term 3, you should not see me\n");
+  term_0->writeString("This is on term 0, you should see me now\n");
+  term_1->writeString("This is on term 1, you should not see me, unles you switched to term 1\n");
+  term_2->writeString("This is on term 2, you should not see me, unles you switched to term 2\n");
+  term_3->writeString("This is on term 3, you should not see me, unles you switched to term 3\n");
 
   main_console->setActiveTerminal(0);
 

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.7 2005/09/16 00:54:13 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.8 2005/09/16 12:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.7  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.6  2005/09/15 18:47:07  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -77,9 +80,14 @@ Terminal::Terminal(Console *console, uint32 num_columns, uint32 num_rows):
     
   //clearScreen();
   
-  terminal_buffer_ = new FiFo< uint32 >( TERMINAL_BUFFER_SIZE , true );  
+  terminal_buffer_ = new FiFo< uint32 >( TERMINAL_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );  
 }
   
+void Terminal::clearBuffer()
+{
+  terminal_buffer_->clear();
+}
+
 void Terminal::putInBuffer( uint32 what )
 {
   terminal_buffer_->put( what );
@@ -106,21 +114,20 @@ uint32 Terminal::readLine( char *line, uint32 size )
 {
   uint32 cchar;
   uint32 counter = 0;
-  
    do {
     cchar = terminal_buffer_->get();
     
     if( cchar == '\b' )
     {
-      line--;
-      counter--;
+      if (counter>0)
+        counter--;
     }
     else
-      *line++ = cchar;
+      line[counter++] = cchar;
    }
-   while( cchar != '\n' && counter++ < size );
+   while( cchar != '\n' && counter < (size-1) );
   
-   *line = '\0';
+   line[counter] = '\0';
    
    return counter;
 }

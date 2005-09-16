@@ -134,7 +134,7 @@ KeyboardManager * KeyboardManager::instance_ = 0;
 
 KeyboardManager::KeyboardManager() : extended_scancode( 0 )
 {
-  keyboard_buffer_ = new FiFoDRBOSS<uint8>( 1024, 128 ); 
+  keyboard_buffer_ = new RingBuffer<uint8>( 256 ); 
 }
 
 KeyboardManager::~KeyboardManager()
@@ -340,36 +340,15 @@ uint32 KeyboardManager::convertScancode( uint8 scancode )
     return key;
 }
 
-uint32 KeyboardManager::getKeyFromBuffer()
-{
-  uint8 sc = keyboard_buffer_->get();
-  uint32 key = convertScancode( sc );
-  
-  return key;
-}
-
-bool KeyboardManager::peekKeyFromBuffer(uint32 &key)
+bool KeyboardManager::getKeyFromKbd(uint32 &key)
 {
   //peeking should not block
-  if (keyboard_buffer_->countElementsAhead())
+  uint8 sc;
+  if (keyboard_buffer_->get(sc))
   {
-    uint8 sc = keyboard_buffer_->peekAhead();
-    key = convertScancode( sc );
+    key = convertScancode(sc);
     return true;
   }
   else 
     return false;
-}
-
-void KeyboardManager::putKeyToBuffer( uint32 key )
-{
-  //TODO: implement faster inverse scancode lookup
-  uint8 i = 0;
-  
-  for( i = 0; i < KEY_MAPPING_SIZE; i ++ )
-    if( STANDARD_KEYMAP[ i ] == key )
-      break;
-  
-  if( i != KEY_MAPPING_SIZE )
-    keyboard_buffer_->put( i );
 }

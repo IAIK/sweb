@@ -1,9 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: FiFo.h,v 1.13 2005/09/16 00:54:13 btittelbach Exp $
+//   $Id: FiFo.h,v 1.14 2005/09/16 12:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFo.h,v $
+//   Revision 1.13  2005/09/16 00:54:13  btittelbach
+//   Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //   Revision 1.12  2005/09/15 18:47:06  btittelbach
-//   FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//   FiFo should only be used in interruptHandler Kontext, for everything else use FiFo
 //   IdleThread now uses hlt instead of yield.
 //
 //   Revision 1.11  2005/09/15 17:51:13  nelles
@@ -25,7 +28,7 @@
 //    	common/include/console/Console.h
 //    	common/include/console/Terminal.h
 //    	common/include/console/TextConsole.h common/include/ipc/FiFo.h
-//    	common/include/ipc/FiFoDRBOSS.h common/include/kernel/Mutex.h
+//    	common/include/ipc/FiFo.h common/include/kernel/Mutex.h
 //    	common/source/console/Console.cpp
 //    	common/source/console/Makefile
 //    	common/source/console/Terminal.cpp
@@ -96,133 +99,146 @@ extern "C"
 #include "kernel/Condition.h"
 #include "kernel/Scheduler.h"
 
+#define FIFO_NOBLOCK_PUT 1
+#define FIFO_NOBLOCK_PUT_OVERWRITE_OLD 2
+
 template<class T>
 class FiFo
 {
 public:
-  FiFo(uint32 buffer_size, bool loose_data_on_buffer_full=false);
+  FiFo(uint32 inputb_size=512, uint8 flags=0);
   ~FiFo();
 
   //operator <<
   //operator >>
 
+  void put(T c);
   T get();
-  void put(T in);
+  bool peekAhead(T &c);
   uint32 countElementsAhead();
-  void clear();
- 
+  void clear( void ); 
 private:
-  T* pos_add(T* pos_pointer, uint32 value);
+  Mutex *input_buffer_lock_;
+  Condition *something_to_read_;
+  Condition *space_to_write_;
+ 
+  uint32 input_buffer_size_;
+  T *input_buffer_;
+  uint32 ib_write_pos_;
+  uint32 ib_read_pos_;  
 
-  Mutex *my_lock_;
-  Condition *buffer_not_empty_;
-  Condition *buffer_not_full_;
-  T* buffer_start_;
-  T* buffer_end_;
-  T* write_pos_; //position of next to write element
-  T* read_pos_; //position of next to read element
-
-  bool loose_data_on_buffer_full_;
+  uint8 flags_;
 };
 
-
 template <class T>
-FiFo<T>::FiFo(uint32 buffer_size, bool loose_data_on_buffer_full)
+FiFo<T>::FiFo(uint32 inputb_size, uint8 flags)
 {
-  kprintfd("Created Fifo with Buffer size %d\n",buffer_size);
-  buffer_start_ = new T[buffer_size+1];
-  buffer_end_ = &buffer_start_[buffer_size];
-  write_pos_=buffer_start_+1;
-  read_pos_=buffer_start_;
-  my_lock_=new Mutex();
-  buffer_not_empty_=new Condition(my_lock_);
-  buffer_not_full_=new Condition(my_lock_);
-  loose_data_on_buffer_full_=loose_data_on_buffer_full;
+  if (inputb_size < 2)
+    input_buffer_size_=512;
+  else
+    input_buffer_size_=inputb_size;
+  
+  input_buffer_=new T[input_buffer_size_];
+  ib_write_pos_=1;
+  ib_read_pos_=0;  
+  input_buffer_lock_=new Mutex();
+  something_to_read_=new Condition(input_buffer_lock_);
+  space_to_write_=new Condition(input_buffer_lock_);
+  flags_=flags;
 }
 
 template <class T>
 FiFo<T>::~FiFo()
 {
-  delete[] buffer_start_;
+  delete[] input_buffer_;
+  delete input_buffer_lock_;
+  delete something_to_read_;
+  delete space_to_write_;
 }
 
+//only put uses the fallback buffer -> so it doesn't need a lock
+//input_buffer could be in use -> so if locked use fallback
 template <class T>
-T FiFo<T>::get()
+void FiFo<T>::put(T c)
 {
-  my_lock_->acquire();
-  buffer_not_full_->signal();
-  while (write_pos_ == pos_add(read_pos_,1)) //nothing new to read
-  {
-    //block with a real cv, pseudo cv for now
-    kprintfd("FiFo::get: blocking get\n");
-    buffer_not_empty_->wait();
-  }
-  read_pos_ = pos_add(read_pos_,1);
-  T element = *read_pos_;
-  my_lock_->release();
-  return element;
-}
-
-template <class T>
-void FiFo<T>::put(T in)
-{
-  my_lock_->acquire();
-  buffer_not_empty_->signal();
-  while (pos_add(write_pos_,1) == read_pos_) //no space to write, need to read first
-  {
-    if (loose_data_on_buffer_full_)
+  input_buffer_lock_->acquire();
+  if (ib_write_pos_ == ib_read_pos_)
+    if (flags_ & FIFO_NOBLOCK_PUT)
     {
-      //move read position ahead of us
-      read_pos_=pos_add(read_pos_,1);
+      if (flags_ & FIFO_NOBLOCK_PUT_OVERWRITE_OLD)
+        ib_read_pos_ = (ib_read_pos_ +1) % input_buffer_size_; //move read pos ahead of us
+      else
+      {
+        input_buffer_lock_->release();
+        return;
+      }
     }
     else
-    {
-      kprintfd("FiFo:put: blocking put\n");
-      buffer_not_full_->wait();
-    }
-  }
-  
-  if (read_pos_ == 0)
-    read_pos_ = buffer_start_;
-  
-  *write_pos_=in;
-  write_pos_ = pos_add(write_pos_,1);
-  my_lock_->release();
-}
-
-template <class T>
-uint32 FiFo<T>::countElementsAhead()
-{
-  my_lock_->acquire();
-  uint32 buffer_size = (((pointer) buffer_end_) - ((pointer) buffer_start_)) / sizeof(T);
-  pointer count = (((pointer) write_pos_) - ((pointer) read_pos_)) / sizeof(T);
-  my_lock_->release();
-  if (count == 0)
-    return buffer_size;
-  else if (count > 0)
-    return (count - 1);
-  else  // count < 0
-    return (buffer_size + count);
+      while (ib_write_pos_ == ib_read_pos_)
+        space_to_write_->wait();
+  something_to_read_->signal();
+  input_buffer_[ib_write_pos_++]=c;
+  ib_write_pos_ %= input_buffer_size_;
+  input_buffer_lock_->release();
 }
 
 template <class T>
 void FiFo<T>::clear( void )
 {
-  my_lock_->acquire();
-  write_pos_=buffer_start_+1;
-  read_pos_=buffer_start_;
-  my_lock_->release();
+  input_buffer_lock_->acquire();
+  ib_write_pos_=1;
+  ib_read_pos_=0;
+  input_buffer_lock_->release();
+}
+
+//now this routine could get preemtepd
+template <class T>
+T FiFo<T>::get()
+{
+  T ret=0;
+  input_buffer_lock_->acquire();
+  
+  while (ib_write_pos_ == ((ib_read_pos_+1)%input_buffer_size_)) //nothing new to read
+    something_to_read_->wait(); //this implicates release & acquire
+  
+  space_to_write_->signal();
+  ib_read_pos_ = (ib_read_pos_+1) % input_buffer_size_;
+  ret = input_buffer_[ib_read_pos_];
+  
+  input_buffer_lock_->release();
+  return ret;
+}
+
+//now this routine could get preemtepd
+template <class T>
+bool FiFo<T>::peekAhead(T &ret)
+{
+  input_buffer_lock_->acquire();
+  
+  if (ib_write_pos_ == ((ib_read_pos_+1)%input_buffer_size_)) //nothing new to read
+  {
+    input_buffer_lock_->release();
+    return false;
+  }
+  
+  ret = input_buffer_[(ib_read_pos_ + 1) % input_buffer_size_];
+  input_buffer_lock_->release();
+  return true;
 }
 
 template <class T>
-T* FiFo<T>::pos_add(T* pos_pointer, uint32 value)
+uint32 FiFo<T>::countElementsAhead()
 {
-  pos_pointer+= value; //nice pointer arithmetic, accepts + and - values
-  if (pos_pointer > buffer_end_)
-    pos_pointer = buffer_start_ + (( ((pointer) pos_pointer ) - ((pointer) buffer_end_ ) )/sizeof(T) - 1);
-  else if (pos_pointer < buffer_start_)
-    pos_pointer = buffer_end_ - (( ((pointer) buffer_start_ ) - ((pointer) pos_pointer ) )/sizeof(T) + 1);
-  return pos_pointer;
+  input_buffer_lock_->acquire();
+  uint32 count = ib_write_pos_ - ib_read_pos_;
+  input_buffer_lock_->release();
+  if (count == 0)
+    return input_buffer_size_;
+  else if (count > 0)
+    return (count - 1);
+  else  // count < 0
+    return (input_buffer_size_ + count);
 }
+
 
 #endif /* _FIFO_H */

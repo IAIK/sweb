@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.7 2005/09/16 00:54:13 btittelbach Exp $
+//  $Id: Terminal.h,v 1.8 2005/09/16 12:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.7  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.6  2005/09/15 18:47:06  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -89,6 +92,8 @@ public:
   char read();
   uint32 readLine(char *, uint32);
   
+  void clearBuffer();
+
   void putInBuffer( uint32 key );
   
   void backspace( void );

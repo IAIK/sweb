@@ -1,8 +1,40 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.7 2005/09/15 17:51:13 nelles Exp $
+//   $Id: TextConsole.cpp,v 1.8 2005/09/16 12:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.7  2005/09/15 17:51:13  nelles
+//
+//
+//   Massive update. Like PatchThursday.
+//   Keyboard is now available.
+//   Each Terminal has a buffer attached to it and threads should read the buffer
+//   of the attached terminal. See TestingThreads.h in common/include/kernel for
+//   example of how to do it.
+//   Switching of the terminals is done with the SHFT+F-keys. (CTRL+Fkeys gets
+//   eaten by X on my machine and does not reach Bochs).
+//   Lot of smaller modifications, to FiFo, Mutex etc.
+//
+//   Committing in .
+//
+//   Modified Files:
+//   	arch/x86/source/InterruptUtils.cpp
+//   	common/include/console/Console.h
+//   	common/include/console/Terminal.h
+//   	common/include/console/TextConsole.h common/include/ipc/FiFo.h
+//   	common/include/ipc/FiFoDRBOSS.h common/include/kernel/Mutex.h
+//   	common/source/console/Console.cpp
+//   	common/source/console/Makefile
+//   	common/source/console/Terminal.cpp
+//   	common/source/console/TextConsole.cpp
+//   	common/source/kernel/Condition.cpp
+//   	common/source/kernel/Mutex.cpp
+//   	common/source/kernel/Scheduler.cpp
+//   	common/source/kernel/Thread.cpp common/source/kernel/main.cpp
+//   Added Files:
+//   	arch/x86/include/arch_keyboard_manager.h
+//   	arch/x86/source/arch_keyboard_manager.cpp
+//
 //  Revision 1.6  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -106,19 +138,20 @@ void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 void TextConsole::Run( void )
 {
   KeyboardManager * km = KeyboardManager::getInstance();
-    
+  uint32 key; 
   do 
   {
-    uint32 key = km->getKeyFromBuffer();
-    if( isDisplayable( key ) )
-    {
-      key = remap( key );
-      terminals_[active_terminal_]->write( key );
-      terminals_[active_terminal_]->putInBuffer( key );
-    }
-    else
-      handleKey( key );
-  } 
+    while(km->getKeyFromKbd(key))
+      if( isDisplayable( key ) )
+      {
+        key = remap( key );
+        terminals_[active_terminal_]->write( key );
+        terminals_[active_terminal_]->putInBuffer( key );
+      }
+      else
+        handleKey( key );
+    Scheduler::instance()->yield();
+  }
   while(1); // until the end of time
 
 }

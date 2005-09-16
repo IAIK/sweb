@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.11 2005/08/26 13:58:24 nomenquis Exp $
+//  $Id: ArchThreads.cpp,v 1.12 2005/09/16 12:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.11  2005/08/26 13:58:24  nomenquis
+//  finally even the syscall handler does that it is supposed to do
+//
 //  Revision 1.10  2005/07/26 17:45:25  nomenquis
 //  foobar
 //
@@ -204,7 +207,6 @@ uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
   return arch_TestAndSet(new_value, &lock);
 }
 
-
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers)
 {
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
@@ -222,4 +224,3 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   kprintfd("eip: %x eflg: %x  dpl: %x  cr3: %x\n",info->eip,info->eflags,info->dpl,info->cr3);
   kprintfd("\n\n");  
 }
-

@@ -12,7 +12,7 @@ extern "C"
 #endif
 
 #include "ports.h"
-#include "FiFoDRBOSS.h"
+#include "RingBuffer.h"
 
 /// \class KeyboardManager
 /// \brief Class that contains architecture specific parameters for AT keyboard communication
@@ -102,9 +102,7 @@ public:
     return instance_;
   };
   
-  uint32 getKeyFromBuffer();
-  bool peekKeyFromBuffer(uint32 &key);
-  void putKeyToBuffer( uint32 key );
+  bool getKeyFromKbd(uint32 &key);
   
   void serviceIRQ( void );
 
@@ -121,7 +119,7 @@ private:
   void kb_wait();
   void send_cmd( uint8 cmd, uint8 port );
   
-  FiFoDRBOSS<uint8> *keyboard_buffer_;
+  RingBuffer<uint8> *keyboard_buffer_;
   
   static uint32 const KEY_MAPPING_SIZE;
   static uint32 const STANDARD_KEYMAP[];

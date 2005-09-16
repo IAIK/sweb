@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.6 2005/09/16 00:54:13 btittelbach Exp $
+//   $Id: FiFoDRBOSS.h,v 1.7 2005/09/16 12:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.6  2005/09/16 00:54:13  btittelbach
+//   Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //   Revision 1.5  2005/09/15 18:47:06  btittelbach
 //   FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //   IdleThread now uses hlt instead of yield.
@@ -214,8 +217,8 @@ T FiFoDRBOSS<T>::get()
   while (ib_write_pos_ == ((ib_read_pos_+1)%input_buffer_size_)) //nothing new to read
     something_to_read_->wait(); //this implicates release & acquire
   
-  ret = input_buffer_[++ib_read_pos_];
-  ib_read_pos_ %= input_buffer_size_;
+  ib_read_pos_ = (ib_read_pos_+1) % input_buffer_size_;
+  ret = input_buffer_[ib_read_pos_];
   
   input_buffer_lock_->release();
   return ret;
@@ -231,7 +234,7 @@ T FiFoDRBOSS<T>::peekAhead()
   while (ib_write_pos_ == ((ib_read_pos_+1)%input_buffer_size_)) //nothing new to read
     something_to_read_->wait(); //this implicates release & acquire
   
-  ret = input_buffer_[ib_read_pos_+1];
+  ret = input_buffer_[ib_read_pos_+1%input_buffer_size_];
   
   input_buffer_lock_->release();
   return ret;
