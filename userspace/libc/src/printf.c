@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.4 2005/09/14 23:01:04 aniederl Exp $
+ * $Id: printf.c,v 1.5 2005/09/16 03:13:58 aniederl Exp $
  * $Log: printf.c,v $
+ * Revision 1.4  2005/09/14 23:01:04  aniederl
+ * added putchar and puts
+ *
  * Revision 1.3  2005/09/13 18:37:58  aniederl
  * modified printf for static memory
  *
@@ -393,7 +396,8 @@ extern int printf(const char *format, ...)
 
 //----------------------------------------------------------------------
 /**
- * Equivalent to putc(character, stdout).
+ * Writes the given character to stdout.
+ * The character is casted to unsigned char.
  *
  * @param character The character for writing
  * @return The character written as unsigned char cast to int or EOF on error
@@ -402,8 +406,9 @@ extern int printf(const char *format, ...)
 int putchar(int character)
 {
   unsigned char output_char = (unsigned char) character;
+  ssize_t characters_written = write(STDOUT_FILENO, (void*) &output_char, 1);
 
-  if(!write(STDOUT_FILENO, (void*) &output_char, 1))
+  if(!characters_written || (characters_written == -1))
     return EOF;
 
   return (int) output_char;
@@ -422,17 +427,21 @@ int puts(const char *output_string)
   unsigned char newline = '\n';
   const char *string_ptr = output_string;
   size_t string_length = 0;
+  ssize_t characters_written =
+    write(STDOUT_FILENO, (void*) output_string, string_length);
 
   while(string_ptr && *string_ptr++)
     ++string_length;
 
   if(string_length)
   {
-    if(!write(STDOUT_FILENO, (void*) output_string, string_length))
+    if(!characters_written || (characters_written == -1))
       return EOF;
   }
 
-  if(!write(STDOUT_FILENO, (void*) &newline, 1))
+  characters_written = write(STDOUT_FILENO, (void*) &newline, 1);
+
+  if(!characters_written || (characters_written == -1))
     return EOF;
 
   return 0;
