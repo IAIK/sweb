@@ -22,13 +22,16 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.1 2005/09/16 05:01:40 aniederl Exp $
-# $Log$
+# $Id: Makefile,v 1.2 2005/09/16 06:12:48 aniederl Exp $
+# $Log: Makefile,v $
+# Revision 1.1  2005/09/16 05:01:40  aniederl
+# import of libc Makefiles
+#
 #
 
 INCLUDE_PATH = ../include
 
-CFLAGS = -Wall -g -fno-builtin -nostdinc -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/common -I $(INCLUDE_PATH)/arch/arch
+CFLAGS = -Wall -g -fno-builtin -nostdinc -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
 
 OBJECTS = \
 					atoi.o \
