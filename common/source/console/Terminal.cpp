@@ -1,8 +1,18 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.8 2005/09/16 12:47:41 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.9 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.8  2005/09/16 12:47:41  btittelbach
+//  Second PatchThursday:
+//  +KeyboardInput SyncStructure Rewrite
+//  +added RingBuffer
+//  +debugged FiFoDRBOSS (even though now obsolete)
+//  +improved FiFo
+//  +more debugging
+//  Added Files:
+//   	common/include/ipc/RingBuffer.h
+//
 //  Revision 1.7  2005/09/16 00:54:13  btittelbach
 //  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -95,7 +105,7 @@ void Terminal::putInBuffer( uint32 what )
 
 char Terminal::read()
 {
-  return terminal_buffer_->get();
+  return (char) terminal_buffer_->get();
 }
 
 void Terminal::backspace( void )
@@ -114,7 +124,9 @@ uint32 Terminal::readLine( char *line, uint32 size )
 {
   uint32 cchar;
   uint32 counter = 0;
-   do {
+  if (size < 1)
+    return 0;
+  do {
     cchar = terminal_buffer_->get();
     
     if( cchar == '\b' )
@@ -123,9 +135,35 @@ uint32 Terminal::readLine( char *line, uint32 size )
         counter--;
     }
     else
-      line[counter++] = cchar;
+      line[counter++] = (char) cchar;
+  }
+  while( cchar != '\n' && counter < (size-1) );
+  
+   line[counter] = '\0';
+   
+   return counter;
+}
+
+uint32 Terminal::readLineNoBlock( char *line, uint32 size )
+{
+  uint32 cchar;
+  uint32 counter = 0;
+  if (size < 1)
+    return 0;
+  while (terminal_buffer_->countElementsAhead())
+  {
+    cchar = terminal_buffer_->get();
+    
+    if( cchar == '\b' )
+    {
+      if (counter>0)
+        counter--;
+    }
+    else
+      line[counter++] = (char) cchar;
+    
+    if ( cchar != '\n' && counter < (size-1) );
    }
-   while( cchar != '\n' && counter < (size-1) );
   
    line[counter] = '\0';
    

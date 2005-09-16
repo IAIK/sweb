@@ -1,7 +1,17 @@
 /**
- * $Id: main.cpp,v 1.89 2005/09/16 12:47:41 btittelbach Exp $
+ * $Id: main.cpp,v 1.90 2005/09/16 15:47:41 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.89  2005/09/16 12:47:41  btittelbach
+ * Second PatchThursday:
+ * +KeyboardInput SyncStructure Rewrite
+ * +added RingBuffer
+ * +debugged FiFoDRBOSS (even though now obsolete)
+ * +improved FiFo
+ * +more debugging
+ * Added Files:
+ *  	common/include/ipc/RingBuffer.h
+ *
  * Revision 1.88  2005/09/16 00:54:13  btittelbach
  * Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
  *
@@ -565,53 +575,6 @@ private:
 
 };
 
-class KprintfNoSleepFlushingThread : public Thread
-{
-  public:
-
-   KprintfNoSleepFlushingThread()
-  {
-    name_="KprintfNoSleepFlushingThread";
-  }
-  
-  virtual void Run()
-  {
-    while (true)
-    {
-       kprintf_nosleep_flush();
-      Scheduler::instance()->yield();
-      //kprintfd("___done_______________________\n");
-      //kprintfd("___Flushing Nosleep Buffer____\n");
-      kprintf_nosleep_flush();
-      //kprintfd("___done_______________________\n");
-    }
-  }
-};
-
-//~ extern FiFoDRBOSS<uint8> *kbd_ringbuffer_;
-//~ FiFoDRBOSS<uint8> *kbd_ringbuffer_;
-//~ class KbdTestThread : public Thread
-//~ {
-  //~ public:
-
-   //~ KbdTestThread()
-  //~ {
-    //~ name_="KbdTestThread";
-  //~ }
-  
-  //~ virtual void Run()
-  //~ {
-    //~ while (true)
-    //~ {
-      //~ kprintfd("KprintfNoSleepFlushingThread::Run:1 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
-      //~ uint8 sc = kbd_ringbuffer_->get();
-      //~ kprintfd("KprintfNoSleepFlushingThread::Run:2 got SC from KBD: %x\n",sc);
-      //~ kprintfd("KprintfNoSleepFlushingThread::Run:3 %d SC in FiFoDRBOSS\n",kbd_ringbuffer_->countElementsAhead());
-
-    //~ }
-  //~ }
-//~ };
-
 //------------------------------------------------------------
 void startup()
 {
@@ -632,8 +595,6 @@ void startup()
   Terminal *term_2 = main_console->getTerminal(2);
   Terminal *term_3 = main_console->getTerminal(3);
   
-  kprintf_nosleep_init();
-  
   term_0->setBackgroundColor(Console::BG_BLACK);
   term_0->setForegroundColor(Console::FG_GREEN);
   term_0->writeString("This is on term 0, you should see me now\n");
@@ -650,6 +611,9 @@ void startup()
 
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
+  
+  //needs to be done after scheduler and terminal, but prior to enableInterrupts
+  kprintf_nosleep_init();
   
   kprintf("Threads init\n");
   ArchThreads::initialise();
@@ -671,15 +635,10 @@ void startup()
   Scheduler::instance()->addNewThread( 
     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
    );
-  
-  
-  kprintf("Adding Important kprintf_nosleep Flush Thread\n");
-  Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
-  //Scheduler::instance()->addNewThread(new KbdTestThread());
 
   //~ Scheduler::instance()->addNewThread(new MatriceMultTest());
-  //~ Scheduler::instance()->addNewThread(new SyscallTest());
-  //~ Scheduler::instance()->addNewThread(new SyscallTest2());
+  Scheduler::instance()->addNewThread(new SyscallTest());
+  Scheduler::instance()->addNewThread(new SyscallTest2());
     
   Scheduler::instance()->printThreadList();
   

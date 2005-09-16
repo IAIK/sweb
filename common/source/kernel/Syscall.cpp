@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.7 2005/09/16 00:54:13 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.8 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.7  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.6  2005/09/15 18:47:07  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -32,13 +35,14 @@
 #include "assert.h"
 #include "../console/kprintf.h"
 #include "ArchCommon.h"
-#include "FiFoDRBOSS.h"
+#include "ArchInterrupts.h"
+#include "console/Terminal.h"
 
 uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
 {
   uint32 return_value=0;
   
-  kprintfd("Syscall %d called with arguments %d %d %d %d %d\n",syscall_number, arg1, arg2, arg3, arg4, arg5);
+  kprintfd("Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n",syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
   
   switch (syscall_number)
   {
@@ -62,7 +66,7 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
 
 void Syscall::exit(uint32 exit_code) 
 {
-  kprintfd("Syscall EXIT called, exit_code: %d\n",exit_code);
+  kprintfd("Syscall::EXIT: called, exit_code: %d\n",exit_code);
   currentThread->kill();
 }
 
@@ -72,42 +76,23 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   assert(buffer < 2U*1024U*1024U*1024U);
   if (fd == fd_stdout) //stdout
   {
-    char *kernel_buffer = new char[size+1];
-    kernel_buffer[size]=0;
-    //don't really need to copy, but do it anyway for security reasons
-    ArchCommon::memcpy((pointer) kernel_buffer, buffer, size);
-    kprintfd("Syscall::write: %s\n",kernel_buffer);
-    kprintf("\n%s\n",kernel_buffer);
-    delete kernel_buffer;
+    kprintfd("Syscall::write: %B\n",(char*) buffer,size);
+    kprint_buffer((char*)buffer,size);
   }
   return size;
 }
 
 uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 {
-  uint32 num_read = count;
-  //~ if (fd == fd_stdin) //stdin
-  //~ {
-    //~ //Achtung, wir können hier nicht blocken und müssen einen Threadswitch vermeiden
-    //~ //was aber wenn wir blocken wollen ???
-
-    //~ //Input Beispiel: Direkt Scancodes für den Userspace und dort decoden
-    //~ uint32 count_ahead = kbd_ringbuffer_->countElementsAhead();
-    //~ if (count_ahead < num_read)
-      //~ num_read = count_ahead;
-    
-    //~ uint8 mybuffer[num_read];
-    
-    //~ kprintfd("Syscall::read: %d to read\n",num_read);
-    //~ for (uint32 c=0; c<num_read; ++c)
-    //~ {
-      //~ mybuffer[c] = kbd_ringbuffer_->get();
-      //~ kprintfd("Syscall::read: got %x\n",((char*)buffer)[c]);
-    //~ }
-    
-    //~ ArchCommon::memcpy(buffer,(pointer) &mybuffer,num_read);
-    
-  //~ }
+  assert(buffer < 2U*1024U*1024U*1024U);
+  uint32 num_read = 0;
+  if (fd == fd_stdin)
+  {
+    //Achtung, wir können hier nicht blocken und müssen einen Threadswitch vermeiden
+    //was aber wenn wir blocken wollen ???
+    num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
+    kprintfd("Syscall::read: %B\n",(char*) buffer,num_read);
+  }
   return num_read;
 }
 

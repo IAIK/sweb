@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.20 2005/09/15 18:47:07 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.21 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.20  2005/09/15 18:47:07  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.19  2005/09/15 17:51:13  nelles
 //
 //
@@ -109,9 +113,12 @@
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
 #include "Loader.h"
+#include "console/Console.h"
+#include "console/Terminal.h"
 
 static void ThreadStartHack()
 {
+  currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
   kprintfd("ThreadStartHack: Panic, thread returned\r\n");
   //FIXXME: we propably should clean up the memory here, or change this Hack entireley
@@ -121,17 +128,15 @@ static void ThreadStartHack()
 
 Thread::Thread()
 {
-  kprintfd("Thread::Thread: Thread ctor, this is %x, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
+  kprintfd("Thread::Thread: Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
 
-  //ArchCommon::bzero((pointer)stack_,sizeof(stack_),1);
-
-  kprintfd("Thread::Thread: After bzero\n");
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
   user_arch_thread_info_=0;
   switch_to_userspace_ = 0;
   state_=Running;
   loader_ = 0;
   name_ = 0;
+  my_terminal_ = 0;
 }
 
 Thread::~Thread()
@@ -166,4 +171,17 @@ pointer Thread::getStackStartPointer()
   pointer stack = (pointer)stack_;
   stack += sizeof(stack_) - sizeof(uint32);
   return stack;
+}
+
+Terminal *Thread::getTerminal()
+{
+  if (my_terminal_)
+    return my_terminal_;
+  else
+    return (main_console->getActiveTerminal());
+}
+
+void Thread::setTerminal(Terminal *my_term)
+{
+  my_terminal_=my_term;
 }

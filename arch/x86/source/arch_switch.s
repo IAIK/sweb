@@ -253,6 +253,37 @@ arch_switchThreadKernelToKernelPageDirChange:
         pop  ebx                     ; restore ebx
         iretd                        ; switch to next
 
+;;----------------------------------------------------------------------
+;; switch thread and change page
+;;----------------------------------------------------------------------
+global arch_switchThreadKernelToKernelPageDirChangeOnly
+arch_switchThreadKernelToKernelPageDirChangeOnly:
+;        mov eax, dword[g_currentThread]
+;        mov ebx, dword[eax + 0 ]     ; ArchThreadInfo
+        mov ebx, dword[currentThreadInfo]
+        frstor [ebx + 80]
+        mov ecx, dword[g_tss]        ; tss
+        mov eax, dword[ebx + 68]     ; get esp0
+        mov dword[ecx + 4], eax      ; restore esp0
+        mov eax, dword[ebx + 76]     ; page directory        
+        mov cr3, eax                 ; change page directory
+        mov eax, dword[ebx + 12]     ; restore eax
+        mov ecx, dword[ebx + 16]     ; restore ecx
+        mov edx, dword[ebx + 20]     ; restore edx
+        mov esp, dword[ebx + 28]     ; restore esp
+        mov ebp, dword[ebx + 32]     ; restore ebp
+        mov esi, dword[ebx + 36]     ; restore esi
+        mov edi, dword[ebx + 40]     ; restore edi
+        mov es , word[ebx + 48]      ; restore es
+        mov ds , word[ebx + 44]      ; restore ds
+        push dword[ebx + 8]          ; push eflags
+        push dword[ebx + 4]          ; push cs
+        push dword[ebx + 0]          ; push eip
+        push dword[ebx + 24]
+        pop  ebx                     ; restore ebx
+        ret                        ; return
+
+
 global arch_TestAndSet
   arch_TestAndSet:
     mov eax, dword[esp+4];,%eax  # get new_value into %eax

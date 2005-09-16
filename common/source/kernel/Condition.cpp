@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Condition.cpp,v 1.3 2005/09/16 00:54:13 btittelbach Exp $
+//   $Id: Condition.cpp,v 1.4 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Condition.cpp,v $
+//  Revision 1.3  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.2  2005/09/15 17:51:13  nelles
 //
 //
@@ -90,6 +93,8 @@ void Condition::signal()
       sleepers_->popFront();
     }    
   }
+  if (thread)
+    kprintfd("Condition::signal: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
 }
 
 //this is not guaranteed to reach the corrent next thread or be without problems
@@ -108,7 +113,6 @@ void Condition::signalWithInterruptsOff()
       removeFirstSleeper();
     }
   }
-  
   if (thread)
     kprintfd("Condition::signalWithInterruptsOff: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
 }

@@ -1,8 +1,18 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.8 2005/09/16 12:47:41 btittelbach Exp $
+//  $Id: Terminal.h,v 1.9 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.8  2005/09/16 12:47:41  btittelbach
+//  Second PatchThursday:
+//  +KeyboardInput SyncStructure Rewrite
+//  +added RingBuffer
+//  +debugged FiFoDRBOSS (even though now obsolete)
+//  +improved FiFo
+//  +more debugging
+//  Added Files:
+//   	common/include/ipc/RingBuffer.h
+//
 //  Revision 1.7  2005/09/16 00:54:13  btittelbach
 //  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -91,6 +101,7 @@ public:
   
   char read();
   uint32 readLine(char *, uint32);
+  uint32 readLineNoBlock(char *, uint32);
   
   void clearBuffer();
 

@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.14 2005/09/15 18:47:06 btittelbach Exp $
+//  $Id: Thread.h,v 1.15 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.h,v $
+//  Revision 1.14  2005/09/15 18:47:06  btittelbach
+//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
+//  IdleThread now uses hlt instead of yield.
+//
 //  Revision 1.13  2005/09/06 09:56:50  btittelbach
 //  +Thread Names
 //  +stdin Test Example
@@ -60,6 +64,7 @@ enum ThreadState {Running, Sleeping, ToBeDestroyed};
 class Thread;
 class ArchThreadInfo;
 class Loader;
+class Terminal;
   
 class Thread
 {
@@ -95,6 +100,9 @@ public:
     else
       return "<UNNAMED THREAD>";
   }
+  
+  Terminal *getTerminal();  
+  void setTerminal(Terminal *my_term);
 
 private:
   
@@ -103,6 +111,8 @@ private:
 
   uint64 num_jiffies_;
   uint32 pid_;
+
+  Terminal *my_terminal_;
 
 protected:
   char *name_;

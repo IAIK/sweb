@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.h,v 1.7 2005/09/13 15:00:51 btittelbach Exp $
+//   $Id: kprintf.h,v 1.8 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.h,v $
+//   Revision 1.7  2005/09/13 15:00:51  btittelbach
+//   Prepare to be Synchronised...
+//   kprintf_nosleep works now
+//   scheduler/list still needs to be fixed
+//
 //   Revision 1.6  2005/07/27 10:04:26  btittelbach
 //   kprintf_nosleep and kprintfd_nosleep now works
 //   Output happens in dedicated Thread using VERY EVIL Mutex Hack
@@ -26,12 +31,15 @@
 //----------------------------------------------------------------------
 
 #include "stdarg.h"
+#include "types.h"
 
 void kprintf(const char *fmt, ...);
 void kprintfd(const char *fmt, ...);
 
 void kprintf_nosleep(const char *fmt, ...);
 void kprintfd_nosleep(const char *fmt, ...);
+
+void kprint_buffer(char *buffer, uint32 size);
 
 void kprintf_nosleep_init();
 void kprintf_nosleep_flush();

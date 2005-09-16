@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.17 2005/09/13 15:00:51 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.18 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.17  2005/09/13 15:00:51  btittelbach
+//   Prepare to be Synchronised...
+//   kprintf_nosleep works now
+//   scheduler/list still needs to be fixed
+//
 //   Revision 1.16  2005/09/07 00:33:52  btittelbach
 //   +More Bugfixes
 //   +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
@@ -66,6 +71,7 @@
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
 #include "ipc/FiFoDRBOSS.h"
+#include "Scheduler.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full
@@ -98,9 +104,30 @@ void oh_writeStringDebugWithSleep(char const* str)
 
 FiFoDRBOSS<char> *nosleep_fifo_;
 
+class KprintfNoSleepFlushingThread : public Thread
+{
+  public:
+
+   KprintfNoSleepFlushingThread()
+  {
+    name_="KprintfNoSleepFlushingThread";
+  }
+  
+  virtual void Run()
+  {
+    while (true)
+    {
+      kprintf_nosleep_flush();
+      Scheduler::instance()->yield();
+    }
+  }
+};
+
 void kprintf_nosleep_init()
 {
   nosleep_fifo_ = new FiFoDRBOSS<char>(8192,2048,true);
+  kprintf("Adding Important kprintf_nosleep Flush Thread\n");
+  Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
 }
 
 void oh_writeCharNoSleep(char c)
@@ -243,6 +270,12 @@ uint32 atoi(const char *&fmt)
   return num;
 }
 
+void vkprint_buffer(void (*write_char)(char), char *buffer, uint32 size)
+{
+  for (uint32 c=0; c<size; ++c)
+    write_char((char) buffer[c]);
+}
+
 // simple vkprintf, doesn't know flags yet
 // by Bernhard
 void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const char *fmt, va_list args)
@@ -253,6 +286,7 @@ void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const
     {
       int32 width = 0;
       uint8 flag = 0;
+      char *tmp=0;
       ++fmt;
       switch (*fmt) 
       {
@@ -283,6 +317,14 @@ void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const
         
         case 's':
           write_string(va_arg(args,char const*));
+          break;
+        
+        //print a Buffer, this expects the buffer size as next argument
+        //and is quite non-standard :)
+        case 'B':
+          tmp = (char*) va_arg(args,char*);
+          width = (uint32) va_arg(args,uint32);
+          vkprint_buffer(write_char, tmp, width);
           break;
         
         //signed decimal
@@ -423,6 +465,14 @@ void kprintfd_nosleep(const char *fmt, ...)
   else
     vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
   va_end(args);  
+}
+
+void kprint_buffer(char *buffer, uint32 size)
+{
+  if (unlikely(ArchInterrupts::testIFSet()))
+    vkprint_buffer(oh_writeCharWithSleep, buffer, size);
+  else
+    vkprint_buffer(oh_writeCharNoSleep, buffer, size);
 }
 
 void kprintf_nosleep_flush()

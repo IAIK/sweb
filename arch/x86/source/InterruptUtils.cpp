@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.36 2005/09/16 00:54:13 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.37 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.36  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.35  2005/09/15 18:47:06  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -600,7 +603,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //~ __asm__("movl %%cr2, %0"
   //~ :"=a"(cr2)
   //~ :);
-  kprintfd_nosleep("PageFault:( address: %x, error: p:%d rw:%d us:%d rsvd:%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
+  kprintfd_nosleep("\nPageFault:( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
                                                                             error&flag_p, 
                                                                             (error&flag_rw) >> 1, 
                                                                             (error&flag_us) >> 2,
@@ -650,9 +653,9 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
  
-  kprintfd_nosleep("syscallHANDLER, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
+  kprintfd_nosleep("syscallHANDLER called, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
+  //ArchThreads::printThreadRegisters(currentThread,0);
+  //ArchThreads::printThreadRegisters(currentThread,1);
    // ok, find out the current thread
   //currentThreadInfo = currentThread->kernel_arch_thread_info_;
   kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
@@ -667,6 +670,15 @@ extern "C" void syscallHandler()
   // this is not needed anymore as the machine is smart 
   // enough to do this on a trap
   
+  kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  
+  currentThread->switch_to_userspace_ = false;
+  if ( currentThread->switch_to_userspace_)
+    currentThreadInfo = currentThread->user_arch_thread_info_;
+  else
+    currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  ArchInterrupts::enableInterrupts();
+  
   currentThread->user_arch_thread_info_->eax =
     Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
                   currentThread->user_arch_thread_info_->ebx,
@@ -675,20 +687,16 @@ extern "C" void syscallHandler()
                   currentThread->user_arch_thread_info_->esi,
                   currentThread->user_arch_thread_info_->edi);
 
+  kprintfd_nosleep("syscallHANDLER: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
-  ArchThreads::printThreadRegisters(currentThread,1);
-  kprintfd_nosleep("syscallHANDLER: done (currentThread=%x)\n",currentThread);
-
+  if ( currentThread->switch_to_userspace_)
+    currentThreadInfo =  currentThread->user_arch_thread_info_;
+  else
+    currentThreadInfo =  currentThread->kernel_arch_thread_info_;
+  //ArchThreads::printThreadRegisters(currentThread,1);
+  kprintfd_nosleep("syscallHANDLER: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
   arch_switchThreadToUserPageDirChange();
-
-  //~ for(;;)
-  //~ {
-    //~ //round and round until we switch back to userspace kontext
-    //~ //this could be solved much nicer
-    //~ //kprintf_nosleep("syscallHandler: still alive\n");
-    //~ ArchInterrupts::enableInterrupts();
-    //~ Scheduler::instance()->yield();
-  //~ }
 }
 
 //IRQ_HANDLER(1)

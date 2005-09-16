@@ -1,7 +1,17 @@
 //----------------------------------------------------------------------
-//   $Id: FiFoDRBOSS.h,v 1.7 2005/09/16 12:47:41 btittelbach Exp $
+//   $Id: FiFoDRBOSS.h,v 1.8 2005/09/16 15:47:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: FiFoDRBOSS.h,v $
+//   Revision 1.7  2005/09/16 12:47:41  btittelbach
+//   Second PatchThursday:
+//   +KeyboardInput SyncStructure Rewrite
+//   +added RingBuffer
+//   +debugged FiFoDRBOSS (even though now obsolete)
+//   +improved FiFo
+//   +more debugging
+//   Added Files:
+//    	common/include/ipc/RingBuffer.h
+//
 //   Revision 1.6  2005/09/16 00:54:13  btittelbach
 //   Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -57,6 +67,8 @@
 
 //This is the Double Ring Buffered One Side Synchronised FiFo, intended for
 //Input from _one_ irqHandler and Output to one or more Threads
+//WARNING: the wakeup of the reciever thread IS NOT guaranteed with this FiFo 
+//(it only gets more likely, the more you put in the FiFo)
 
 #ifndef _FIFO_DRBOSS_H
 #define _FIFO_DRBOSS_H
