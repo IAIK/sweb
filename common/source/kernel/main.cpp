@@ -1,7 +1,15 @@
 /**
- * $Id: main.cpp,v 1.90 2005/09/16 15:47:41 btittelbach Exp $
+ * $Id: main.cpp,v 1.91 2005/09/17 16:21:57 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.90  2005/09/16 15:47:41  btittelbach
+ * +even more KeyboardInput Bugfixes
+ * +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+ * +Thread now remembers its Terminal
+ * +Syscalls are USEABLE !! :-) IF=1 !!
+ * +Syscalls can block now ! ;-) Waiting for Input...
+ * +more other Bugfixes
+ *
  * Revision 1.89  2005/09/16 12:47:41  btittelbach
  * Second PatchThursday:
  * +KeyboardInput SyncStructure Rewrite
@@ -575,6 +583,31 @@ private:
 
 };
 
+
+class KprintfNoSleepFlushingThread : public Thread
+{
+  public:
+
+   KprintfNoSleepFlushingThread()
+  {
+    name_="KprintfNoSleepFlushingThread";
+  }
+  
+  virtual void Run()
+  {
+    while (true)
+    {
+       kprintf_nosleep_flush();
+      Scheduler::instance()->yield();
+      //kprintfd("___done_______________________\n");
+      //kprintfd("___Flushing Nosleep Buffer____\n");
+      kprintf_nosleep_flush();
+      //kprintfd("___done_______________________\n");
+    }
+  }
+};
+
+
 //------------------------------------------------------------
 void startup()
 {
@@ -637,8 +670,8 @@ void startup()
    );
 
   //~ Scheduler::instance()->addNewThread(new MatriceMultTest());
-  Scheduler::instance()->addNewThread(new SyscallTest());
-  Scheduler::instance()->addNewThread(new SyscallTest2());
+//   Scheduler::instance()->addNewThread(new SyscallTest());
+//   Scheduler::instance()->addNewThread(new SyscallTest2());
     
   Scheduler::instance()->printThreadList();
   

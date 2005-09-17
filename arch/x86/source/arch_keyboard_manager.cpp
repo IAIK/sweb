@@ -132,7 +132,7 @@
       
 KeyboardManager * KeyboardManager::instance_ = 0;
 
-KeyboardManager::KeyboardManager() : extended_scancode( 0 )
+KeyboardManager::KeyboardManager() : extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
   keyboard_buffer_ = new RingBuffer<uint8>( 256 ); 
 }
