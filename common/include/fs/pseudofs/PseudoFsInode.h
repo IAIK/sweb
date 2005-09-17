@@ -3,8 +3,11 @@
 //
 // CVS Log Info for $RCSfile: PseudoFsInode.h,v $
 //
-// $Id: PseudoFsInode.h,v 1.1 2005/09/16 16:27:40 davrieb Exp $
-// $Log$
+// $Id: PseudoFsInode.h,v 1.2 2005/09/17 09:33:55 davrieb Exp $
+// $Log: PseudoFsInode.h,v $
+// Revision 1.1  2005/09/16 16:27:40  davrieb
+// add pseudofs
+//
 //
 //
 
@@ -15,6 +18,27 @@
 
 class PseudoFsInode : public RamFsInode
 {
+
+  public:
+
+    PseudoFsInode(Superblock *super_block, uint32 inode_mode);
+
+    virtual ~PseudoFsInode();
+
+    /// read the data from the inode
+    /// @param offset offset byte
+    /// @param size the size of data that read from this inode
+    /// @buffer the dest char-array to store the data
+    /// @return On successe, return 0. On error, return -1.
+    virtual int32 readData(int32 offset, int32 size, char *buffer);
+
+    /// write the data to the inode
+    /// @param offset offset byte
+    /// @param size the size of data that write to this inode (data_)
+    /// @buffer the src char-array
+    /// @return On successe, return 0. On error, return -1.
+    virtual int32 writeData(int32 offset, int32 size, char *buffer);
+
 };
 
 #endif

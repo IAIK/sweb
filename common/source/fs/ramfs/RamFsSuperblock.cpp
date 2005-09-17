@@ -77,15 +77,21 @@ void RamFsSuperblock::read_inode(Inode* inode)
 {
   assert(inode);
 
-  all_inodes_.pushBack(inode);
+  if (!all_inodes_.included(inode))
+  {
+    all_inodes_.pushBack(inode);
+  }
 }
 
 //----------------------------------------------------------------------
 void RamFsSuperblock::write_inode(Inode* inode)
 {
   assert(inode);
-  
-  all_inodes_.pushBack(inode);
+
+  if (!all_inodes_.included(inode))
+  {
+    all_inodes_.pushBack(inode);
+  }
 }
 
 //----------------------------------------------------------------------
