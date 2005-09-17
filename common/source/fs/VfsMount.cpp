@@ -2,7 +2,8 @@
 // Simple operating system for educational purposes
 
 #include "fs/VfsMount.h"
-
+//#include "fs/Superblock.h"
+//#include "fs/Dentry.h"
 
 //----------------------------------------------------------------------
 VfsMount::VfsMount() :
@@ -31,25 +32,25 @@ VfsMount::~VfsMount()
 }
 
 //----------------------------------------------------------------------
-VfsMount const *VfsMount::getParent() const
+VfsMount *VfsMount::getParent() const
 {
   return mnt_parent_;
 }
 
 //----------------------------------------------------------------------
-Dentry const *VfsMount::getMountpoint() const
+Dentry *VfsMount::getMountPoint() const
 {
   return mnt_mountpoint_;
 }
 
 //----------------------------------------------------------------------
-Dentry const *VfsMount::getRoot() const
+Dentry *VfsMount::getRoot() const
 {
   return mnt_root_;
 }
 
 //----------------------------------------------------------------------
-Superblock const *VfsMount::getSuperblock() const
+Superblock *VfsMount::getSuperblock() const
 {
   return mnt_sb_;
 }
@@ -59,4 +60,3 @@ int32 VfsMount::getFlags() const
 {
   return mnt_flags_;
 }
-

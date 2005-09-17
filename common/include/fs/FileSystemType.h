@@ -16,6 +16,7 @@ class Dentry;
 /// The maximal number of file system types.
 #define MAX_FILE_SYSTEM_TYPES 16
 
+//----------------------------------------------------------------------
 /**
  * FileSystemType
  * 

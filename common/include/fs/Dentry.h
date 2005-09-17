@@ -2,9 +2,7 @@
 // Simple operating system for educational purposes
 
 #include "types.h"
-#include "Inode.h"
 #include "fs/PointList.h"
-#include "Superblock.h"
 
 #ifndef Dentry_h___
 #define Dentry_h___
@@ -45,8 +43,8 @@ class Dentry
   // PointList<Dentry> d_subdirs_;
 
   /// For a directory that has had a file-system mounted on it, this points to
-  /// the root dentry of that file-system. For other dentries, this points back
-  /// to the dentry itself.
+  /// the mount point of that current file-system. For other dentries, this 
+  /// points back to the dentry itself.
   Dentry *d_mounts_;
 
   /// This is the inverse of d_mounts_. For the root of a mounted file-system,
@@ -61,12 +59,15 @@ class Dentry
 public:
 
   // method - Inode
-  void setInode(Inode *inode) { d_inode_ = inode; }
+  void setInode(Inode *inode);
   void releaseInode() { d_inode_ = 0; }
   Inode* getInode() { return d_inode_; }
   
   /// return the parent of the dentry
   Dentry* getParent() { return d_parent_; }
+
+  /// return the mount_point of the current file-system
+  Dentry* getMountPoint() { return d_mounts_; }
 
   // method - d_child_
   int32 setChild(Dentry *dentry);

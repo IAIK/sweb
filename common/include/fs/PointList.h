@@ -52,8 +52,7 @@ protected:
 
 public:
 
-  PointList() { // kprintfd("*****contructor of the PointList\n"); 
-    first_ = last_ = 0; length_ = 0; }
+  PointList() { first_ = last_ = 0; length_ = 0; }
 
   virtual ~PointList();
 
@@ -68,6 +67,16 @@ protected:
    */
   virtual PointListElement<ContentType>* find(ContentType *entry);
 
+  /**
+   * Insert a new entry after the specified entry..
+   */
+  virtual void append(ContentType *new_entry, ContentType *entry);
+
+  /**
+   * Insert a new entry before the specified entry..
+   */
+  virtual void prepend(ContentType *new_entry, ContentType *entry);
+
 public:
 
   /**
@@ -81,19 +90,9 @@ public:
   virtual void pushBack(ContentType *new_entry);
 
   /**
-   * Insert a new entry after the specified entry..
-   */
-  virtual void append(ContentType *new_entry, ContentType *entry);
-
-  /**
    * Insert a new entry at the first of the list.
    */
   virtual void pushFront(ContentType *new_entry);
-
-  /**
-   * Insert a new entry before the specified entry..
-   */
-  virtual void prepBack(ContentType *new_entry, ContentType *entry);
 
   /**
    * remove the element that the entry contained.
@@ -241,7 +240,7 @@ void PointList<ContentType>::pushFront(ContentType *new_entry)
 
 //-----------------------------------------------------------------------------
 template <class ContentType>
-void PointList<ContentType>::prepBack(ContentType *new_entry, ContentType *entry)
+void PointList<ContentType>::prepend(ContentType *new_entry, ContentType *entry)
 {
   length_++;
   PointListElement<ContentType> *new_element =
@@ -278,7 +277,7 @@ ContentType* PointList<ContentType>::popFront()
 template <class ContentType>
 int32 PointList<ContentType>::remove(ContentType *entry)
 {
-  if(first_ == 0)
+  if(length_ == 0)
     return -1;
 
   PointListElement<ContentType> *element = find(entry);

@@ -4,7 +4,6 @@
 #ifndef VfsMount_h___
 #define VfsMount_h___
 
-#include "kernel/List.h"
 #include "types.h"
 
 class Superblock;
@@ -66,18 +65,16 @@ class VfsMount
 
   // VfsMount* get_mnt();
 
-  VfsMount const *getParent() const;
+  VfsMount *getParent() const;
 
-  Dentry const *getMountpoint() const;
+  Dentry *getMountPoint() const;
 
-  Dentry const *getRoot() const;
+  Dentry *getRoot() const;
 
-  Superblock const *getSuperblock() const;
+  Superblock *getSuperblock() const;
 
   int32 getFlags() const;
-
 };
-
 
 #endif // Vfsmount_h___
 

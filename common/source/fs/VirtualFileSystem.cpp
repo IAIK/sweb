@@ -4,11 +4,13 @@
 #include "fs/FileSystemType.h"
 #include "fs/VirtualFileSystem.h"
 #include "fs/Dentry.h"
+#include "fs/Superblock.h"
 #include "fs/VfsMount.h"
 #include "util/string.h"
 #include "assert.h"
 #include "mm/kmalloc.h"
 
+#include "console/kprintf.h"
 #include "fs/fs_global.h"
 
 /// Global VirtualFileSystem object
@@ -43,10 +45,10 @@ int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 
   for (uint32 counter = 0; counter < fstl_size; ++counter)
   {
-    if (strcmp(file_system_types_[counter]->getFSName(), fs_name) == 0)
+    if(strcmp(file_system_types_.at(counter)->getFSName(), fs_name) == 0)
     {
-      delete file_system_types_[counter];
-      file_system_types_.remove(file_system_types_[counter]);
+      FileSystemType *fst = file_system_types_.at(counter);
+      delete fst;
     }
   }
 
@@ -73,15 +75,48 @@ FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
 }
 
 //----------------------------------------------------------------------
-int32 VirtualFileSystem::root_mount(char* fs_name, int32 /*mode*/)
+VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
+{
+  assert(dentry);
+
+  uint32 vfs_mount_size = mounts_.getLength();
+
+  if(is_root == false)
+  {
+    for (uint32 counter = 0; counter < vfs_mount_size; ++counter)
+    {
+      if((mounts_.at(counter)->getMountPoint()) == dentry)
+      {
+        return mounts_.at(counter);
+      }
+    }
+  }
+  else
+  {
+    for (uint32 counter = 0; counter < vfs_mount_size; ++counter)
+    {
+      if((mounts_.at(counter)->getRoot()) == dentry)
+      {
+        return mounts_.at(counter);
+      }
+    }
+  }
+
+  return 0;
+
+}
+
+//----------------------------------------------------------------------
+int32 VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
 {
   FileSystemType *fst = getFsType(fs_name);
 
   Superblock *super = fst->createSuper(0);
   super = fst->readSuper(super, 0);
+  Dentry *mount_point = super->getMountPoint();
   Dentry *root = super->getRoot();
 
-  VfsMount *root_mount = new VfsMount(0, 0, root, super, 0);
+  VfsMount *root_mount = new VfsMount(0, mount_point, root, super, 0);
 
   mounts_.pushBack(root_mount);
   superblocks_.pushBack(super);
@@ -94,9 +129,48 @@ int32 VirtualFileSystem::root_mount(char* fs_name, int32 /*mode*/)
 }
 
 //----------------------------------------------------------------------
+int32 VirtualFileSystem::mount(const char* /*dev_name*/, const char* dir_name, 
+                               char* fs_name, uint32 /*flags*/)
+{
+//  if(!dev_name)
+//    return -1;
+  if((!dir_name) || (!fs_name))
+    return -1;
+
+  FileSystemType *fst = getFsType(fs_name);
+  
+  fs_info.setName(dir_name);
+  char* test_name = fs_info.getName();
+
+  int32 success = path_walker.pathInit(test_name, 0);
+  if(success == 0)
+    success = path_walker.pathWalk(test_name);
+  fs_info.putName();
+  
+  if(success != 0)
+    return -1;
+  
+  // found the mount point
+  Dentry *found_dentry = path_walker.getDentry();
+  VfsMount *found_vfs_mount = path_walker.getVfsMount();
+
+  // create a new superblock
+  Superblock *super = fst->createSuper(found_dentry);
+  super = fst->readSuper(super, 0);
+  Dentry *root = super->getRoot();
+  
+  // create a new vfs_mount
+  VfsMount *std_mount = new VfsMount(found_vfs_mount, found_dentry,
+                                     root, super, 0);
+  mounts_.pushBack(std_mount);
+  superblocks_.pushBack(super);
+  return 0;
+}
+
+//----------------------------------------------------------------------
 int32 VirtualFileSystem::rootUmount()
 {
-  if(superblocks_.getLength() != 1)
+  if(superblocks_.getLength() == 0)
   {
     return -1;
   }
@@ -105,6 +179,59 @@ int32 VirtualFileSystem::rootUmount()
 
   Superblock *root_sb = superblocks_.at(0);
   delete root_sb;
+  return 0;
+}
+
+//----------------------------------------------------------------------
+int32 VirtualFileSystem::umount(const char* dir_name, uint32 flags)
+{
+  if(dir_name == 0)
+    return -1;
+
+  fs_info.setName(dir_name);
+  char* test_name = fs_info.getName();
+
+  int32 success = path_walker.pathInit(test_name, 0);
+  if(success == 0)
+    success = path_walker.pathWalk(test_name);
+  fs_info.putName();
+  
+  if(success != 0)
+    return -1;
+  
+  // test the umount point\n
+  Dentry *found_dentry = path_walker.getDentry();
+  VfsMount * found_vfs_mount = path_walker.getVfsMount();
+
+  if(found_vfs_mount == 0)
+  {
+    kprintfd("umount point error\n");
+    return -1;
+  }
+  else
+    kprintfd("umount point found\n");
+  
+  // in the case, the current-directory is in the local-root of the umounted
+  // filesystem
+  if(fs_info.getPwdMnt() == found_vfs_mount)
+  {
+    if(fs_info.getPwd() == found_dentry)
+    {
+      kprintfd("the mount point exchange\n");
+      fs_info.setFsPwd(found_vfs_mount->getMountPoint(),
+                       found_vfs_mount->getParent());
+    }
+    else
+    {
+      kprintfd("set PWD NULL\n");
+      fs_info.setFsPwd(0,0);
+    }
+  }
+  
+  Superblock *sb = found_vfs_mount->getSuperblock();
+  delete found_vfs_mount;
+  delete sb;
+  
   return 0;
 }
 

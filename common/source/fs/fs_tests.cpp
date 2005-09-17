@@ -16,58 +16,114 @@
 // testing the registerfilesystem
 void testRegFS()
 {
-  kprintfd("***** begin testMount()\n");
-  testMount();
-  kprintfd("***** end testMount()\n");
+  kprintfd("***** begin ROOT_Mount()\n");
+  RamFileSystemType *ramfs = new RamFileSystemType();
+  vfs.registerFileSystem(ramfs);
+  vfs.root_mount("ramfs", 0);
+  kprintfd("***** end ROOT_ount()\n");
   
-//  testVfsSyscall();
-//  testPathWalker();
-  kprintfd("***** begin testSyscallMkdir()\n");
-  testSyscallMkdir();
-  kprintfd("***** end testSyscallMkdir()\n");
+  testMountUmount();
 
-  kprintfd("\n\n\n\n\n***** begin testSyscallReaddir()\n");
-  testSyscallReaddir();
-  kprintfd("***** end testSyscallReaddir()\n");
-
-  kprintfd("\n\n\n\n\n***** begin testSyscallChdir()\n");
-  testSyscallChdir();
-  kprintfd("***** end testSyscallChdir()\n");
-  
-  kprintfd("\n\n\n\n\n***** begin testSyscallRmdir()\n");
-  testSyscallRmdir();
-  kprintfd("***** end testSyscallRmdir()\n");
-
-//  testSyscallRmdirExtern();
-//  testReadWriteInode();
-
-  kprintfd("***** begin testUmount()\n");
-  testUmount();
-  kprintfd("***** end testUmount()\n");
+  kprintfd("***** begin ROOTUmount()\n\n\n");
+  vfs.rootUmount();
+  vfs.unregisterFileSystem(ramfs);
+  kprintfd("***** end ROOTUmount()\n");
 }
 
+//----------------------------------------------------------------------
+void testMountUmount()
+{
+  kprintfd("\n> mkdir var\n");
+  vfs_syscall.mkdir("var", 0);
+  
+  kprintfd("\n> mkdir ../../var\n");
+  vfs_syscall.mkdir("../../var", 0);
+  
+  kprintfd("\n> mkdir /dev\n");
+  vfs_syscall.mkdir("/dev", 0);
+  
+  kprintfd("\n> mkdir ../root\n");
+  vfs_syscall.mkdir("../root",0);
+  
+  kprintfd("\n> mkdir ../var/../dev/../root/../dev/hda\n");
+  vfs_syscall.mkdir("../var/../dev/../root/../dev/hda", 0);
+  
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+
+  kprintfd("\n> cd hda\n");
+  vfs_syscall.chdir("hda");
+
+  kprintfd("\n> cd dev/hda\n");
+  vfs_syscall.chdir("dev/hda");
+  
+  kprintfd("\n> mkdir hugo\n");
+  vfs_syscall.mkdir("hugo", 0);
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+
+  kprintfd("\nmount a new ramfs in the directory: /dev/hda\n");
+  vfs.mount(0, "/dev/hda", "ramfs", 0);
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+
+  kprintfd("\n> cd /dev/hda\n");
+  vfs_syscall.chdir("/dev/hda");
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+  
+  kprintfd("\n> mkdir /dev/hda/win_C\n");
+  vfs_syscall.mkdir("/dev/hda/win_C", 0);
+  
+  kprintfd("\n> mkdir win_D\n");
+  vfs_syscall.mkdir("win_D", 0);
+  
+  kprintfd("\n> mkdir ../auto\n");
+  vfs_syscall.mkdir("../auto", 0);
+  
+  kprintfd("\n> mkdir win_C/matlab\n");
+  vfs_syscall.mkdir("win_C/matlab", 0);
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+
+  kprintfd("\n> ls ..\n");
+  vfs_syscall.readdir("..");
+  
+  kprintfd("\n> rmdir win_C\n");
+  vfs_syscall.rmdir("win_C");
+
+  kprintfd("\n> rmdir win_D\n");
+  vfs_syscall.rmdir("win_D");
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+
+  kprintfd("\numount the ramfs\n");
+  vfs.umount("/dev/hda", 0);
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+
+  kprintfd("\n> mkdir dino\n");
+  vfs_syscall.mkdir("dino", 0);
+
+  kprintfd("\n> ls .\n");
+  vfs_syscall.readdir(".");
+}
 //----------------------------------------------------------------------
 void testSyscallMkdir()
 {
   kprintfd("***** begin syscall mkdir(chen)\n");
   vfs_syscall.mkdir("chen", 0);
   kprintfd("***** end syscall mkdir(chen)\n");
-  
-  kprintfd("***** begin syscall mkdir(chen/qiang)\n");
-  vfs_syscall.mkdir("/chen/qiang", 0);
-  kprintfd("***** end syscall mkdir(chen/qiang)\n");
-
-  kprintfd("***** begin syscall mkdir(chen/2006)\n");
-  vfs_syscall.mkdir("/chen/2006", 0);
-  kprintfd("***** end syscall mkdir(chen/2006)\n");
 
   kprintfd("***** begin syscall mkdir(chen/2005)\n");
   vfs_syscall.mkdir("/chen/2005", 0);
   kprintfd("***** end syscall mkdir(chen/2005)\n");
-
-  kprintfd("***** begin syscall mkdir(chen/2007)\n");
-  vfs_syscall.mkdir("/chen/2007", 0);
-  kprintfd("***** end syscall mkdir(chen/2007)\n");
 
   kprintfd("***** begin syscall mkdir(chen/chen)\n");
   vfs_syscall.mkdir("chen/chen", 0);
@@ -255,7 +311,6 @@ void testMount()
 //----------------------------------------------------------------------
 void testUmount()
 {
-  vfs.rootUmount();
 }
 
 //----------------------------------------------------------------------

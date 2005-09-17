@@ -35,7 +35,7 @@ public:
 protected:
 
   /// The file system type.
-  FileSystemType *s_type_;
+  const FileSystemType *s_type_;
 
   /// The device that this file-system is mounted on.
   uint32 s_dev_;
@@ -76,7 +76,7 @@ protected:
 
 public:
 
-  Superblock(Dentry* s_root) : mounted_over_(0) 
+  Superblock(Dentry* s_root)
     { s_root_ = s_root; }
 
   virtual ~Superblock();
@@ -152,6 +152,9 @@ public:
 
   /// Get the root Dentry of the Superblock
   Dentry *getRoot();
+  
+  /// Get the mount point Dentry of the Superblock
+  Dentry *getMountPoint();
 
   /// insert the opened file point to the file_list
   int32 insertOpenedFiles(File*);

@@ -5,9 +5,11 @@
 #include "util/string.h"
 #include "assert.h"
 #include "mm/kmalloc.h"
+#include "fs/Inode.h"
 
 #define STRLCOPY_ERR "strlcpy error"
 
+#include "console/kprintf.h"
 //---------------------------------------------------------------------------
 Dentry::Dentry(const char* name)
 {
@@ -27,8 +29,15 @@ Dentry::Dentry(Dentry *parent)
 //---------------------------------------------------------------------------
 Dentry::~Dentry()
 {
+  kprintfd("remove the dentry: %s\n", d_name_);
   if(d_name_)
     kfree(d_name_);
+}
+
+//---------------------------------------------------------------------------
+void Dentry::setInode(Inode *inode)
+{ 
+  d_inode_ = inode; 
 }
 
 //---------------------------------------------------------------------------

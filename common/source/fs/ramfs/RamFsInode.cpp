@@ -35,7 +35,6 @@ RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
 //---------------------------------------------------------------------------
 RamFsInode::~RamFsInode()
 {
-  kprintfd("~RAMFSINODE\n");
   if (data_)
   {
     kfree(data_);

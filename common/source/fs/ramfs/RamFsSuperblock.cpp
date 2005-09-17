@@ -4,7 +4,7 @@
 #include "fs/ramfs/RamFsSuperblock.h"
 #include "fs/ramfs/RamFsInode.h"
 #include "fs/ramfs/RamFsFile.h"
-#include "fs/Dentry.h"
+#include "fs/Dentry.h" 
 #include "assert.h"
 
 #define ROOT_NAME "/"
@@ -12,21 +12,17 @@
 //----------------------------------------------------------------------
 RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
 {
-  Dentry *root_dentry = 0;
+  Dentry *root_dentry = new Dentry(ROOT_NAME);
 
-  // create or find a root_dentry
   if (s_root)
   {
-    Dentry* parent = s_root->getParent();
-    root_dentry = new Dentry(parent);
-
+    // MOUNT
     mounted_over_ = s_root;
-    s_root_ = root_dentry;
   }
   else
   {
-    root_dentry = new Dentry(ROOT_NAME);
-    mounted_over_ = 0;
+    // ROOT
+    mounted_over_ = root_dentry;
   }
   s_root_ = root_dentry;
 

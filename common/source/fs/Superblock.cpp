@@ -29,6 +29,12 @@ Dentry *Superblock::getRoot()
   return s_root_;
 }
 
+//------------------------------------------------------------------
+Dentry *Superblock::getMountPoint()
+{
+  return mounted_over_;
+}
+
 //----------------------------------------------------------------------
 int32 Superblock::insertOpenedFiles(File* file)
 {

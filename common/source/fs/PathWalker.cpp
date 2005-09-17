@@ -3,12 +3,15 @@
 
 #include "fs/Inode.h"
 #include "fs/Dentry.h"
+#include "fs/VfsMount.h"
 #include "fs/fs_global.h"
+#include "fs/Superblock.h"
 
 #include "assert.h"
 #include "util/string.h"
 
 #include "mm/kmalloc.h"
+#include "console/kprintf.h"
 
 /// the pathWalker object
 /// follow the inode of the corresponding file pathname
@@ -55,6 +58,9 @@ int32 PathWalker::pathInit(const char* pathname, uint32 flags)
     this->dentry_ = fs_info.getPwd();
     this->vfs_mount_ = fs_info.getPwdMnt();
   }
+  
+  if((dentry_ == 0) || (vfs_mount_ == 0))
+    return PI_ENOTFOUND;
 
   return PI_SUCCESS;
 }
@@ -75,7 +81,6 @@ int32 PathWalker::pathWalk(const char* pathname)
   bool parts_left = true;
   while(parts_left)
   {
-    // get a part of pathname
     char* npart = 0;
     int32 npart_pos = 0;
     npart = getNextPart(pathname, npart_pos);
@@ -91,7 +96,6 @@ int32 PathWalker::pathWalk(const char* pathname)
     }
     pathname += npart_pos;
 
-    // checks the content
     this->last_ = npart;
     if(*npart == CHAR_DOT)
     {
@@ -119,28 +123,34 @@ int32 PathWalker::pathWalk(const char* pathname)
     }
     else if(this->last_type_ == LAST_DOTDOT) // follow LAST_DOTDOT
     {
-      // case 1: the dentry_ is the root of file-system
+      kfree(npart);
+      last_ = 0;
+
       if((dentry_ == fs_info.getRoot())&&(vfs_mount_ == fs_info.getRootMnt()))
       {
-        kfree(npart);
-        last_ = 0;
+        // the dentry_ is the root of file-system
+        // because the ROOT has not parent from VfsMount.
         continue;
       }
 
+      VfsMount* vfs_mount = vfs.getVfsMount(dentry_, true);
+      if(vfs_mount != 0)
+      {
+        // the dentry_ is a mount-point
+        vfs_mount_ = vfs_mount->getParent();
+        dentry_ = vfs_mount->getMountPoint();
+      }
       Dentry* parent_dentry = dentry_->getParent();
-      // case 2: the parent_dentry is in the same file-system-type
       dentry_ = parent_dentry;
-      kfree(npart);
-      last_ = 0;
       continue;
-
-      // case 3: the parent_dnetry isn't in the same file-system-type
-      // update the vfs_mount_
     }
     else if(this->last_type_ == LAST_NORM) // follow LAST_NORM
     {
       Inode* current_inode = dentry_->getInode();
       Dentry *found = current_inode->lookup(last_);
+      
+      kfree(npart);
+      last_ = 0;
       if(found != 0)
       {
         this->dentry_ = found;
@@ -149,10 +159,21 @@ int32 PathWalker::pathWalk(const char* pathname)
       {
         return PW_ENOTFOUND;
       }
-    }
 
-    kfree(npart);
-    last_ = 0;
+      VfsMount* vfs_mount = vfs.getVfsMount(dentry_);
+
+      if(vfs_mount != 0)
+      {
+        kprintfd("MOUNT_DOWN\n");
+        // the dentry_ is a mount-point
+        // update the vfs_mount_
+        vfs_mount_ = vfs_mount;
+        
+        // change the dentry of the mount-point
+        dentry_ = vfs_mount_->getRoot();
+
+      }
+    }
 
     while(*pathname == SEPARATOR)
       pathname++;

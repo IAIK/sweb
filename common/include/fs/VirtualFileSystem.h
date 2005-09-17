@@ -17,6 +17,7 @@
 class Superblock;
 class FileSystemType;
 class VfsMount;
+class Dentry;
 class FileSystemInfo;
 
 class VirtualFileSystem
@@ -51,9 +52,36 @@ class VirtualFileSystem
     /// object, if is present.
     FileSystemType *getFsType(const char* fs_name);
 
-    int32 mount(char* path, char* fs_name, int32 mode);
+    /// found the VfsMount from mounts_ list with given dentry.
+    ///
+    /// @param dentry the mount-point-dentry or root-dentry
+    /// @param is_mount_point if it is false, check with root-dentry, 
+    ///        else mount-point-dentry
+    VfsMount *getVfsMount(const Dentry* dentry, bool is_root = false);
 
-    int32 root_mount(char* fs_name, int32 mode);
+    /// mount the dev_name (device name) to the directory specified by dir_name.
+    /// @param dev_name the device file name of the block device storing the
+    ///                 filesystem.
+    /// @param dir_name the mount pointer directory
+    /// @param fs_name the name of the type of filesystem to be mounted
+    /// @param flags the mount flags
+    /// @param data contain arbitray fs-dependent information (or be NULL)
+    /// @return On success, zero is returned. On error, -1 is returned.
+    int32 mount(const char* dev_name, const char* dir_name, 
+                char* fs_name, uint32 flags/*, void *data*/);
+
+    /// unmount the filesystem
+    /// @param dir_name the mount pointer direcotry or (block devie block filename)
+    /// @param flags the umount flags
+    /// @return On success, zero is returned. On error, -1 is returned.
+    int32 umount(const char* dir_name, uint32 flags);
+
+    /// mount the ROOT to the VFS. (special of the mount)
+    ///
+    /// @param fs_name the name of the type of filesystem to be mounted
+    /// @param flags the mount flags
+    /// @return On success, zero is returned. On error, -1 is returned.
+    int32 root_mount(char* fs_name, uint32 flags);
 
     int32 rootUmount();
 

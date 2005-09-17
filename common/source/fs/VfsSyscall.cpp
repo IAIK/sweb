@@ -11,6 +11,9 @@
 #include "fs/Inode.h"
 #include "fs/Dentry.h"
 #include "fs/Superblock.h"
+
+#include "fs/VfsMount.h"
+
 #include "console/kprintf.h"
 
 VfsSyscall vfs_syscall;
@@ -48,6 +51,7 @@ int32 VfsSyscall::dupChecking(const char* pathname)
   if(success == 0)
     success = path_walker.pathWalk(fs_info.getName());
 
+  // checked
   return success;
 }
 
@@ -56,7 +60,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   if(dupChecking(pathname) == 0)
   {
-    kprintfd("the pathname is used\n");
+    kprintfd("the pathname exists\n");
     path_walker.pathRelease();
     fs_info.putName();
     return -1;
@@ -135,6 +139,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
     return (Dirent*)0;
   }
   
+  kprintfd("LIST: \n");
   for(uint32 counter = 0; counter < current_dentry->getNumChild(); counter++)
   {
     Dentry* sub_dentry = current_dentry->getChild(counter);
@@ -175,7 +180,6 @@ int32 VfsSyscall::chdir(const char* pathname)
   fs_info.putName();
   Dentry* current_dentry = path_walker.getDentry();
   Inode* current_inode = current_dentry->getInode();
-
   if(current_inode->getMode() != I_DIR)
   {
     kprintfd("This path is not a directory\n\n");
