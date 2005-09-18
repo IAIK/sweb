@@ -51,7 +51,7 @@ class SerialThread : public Thread
   {
     SerialManager *sm = SerialManager::getInstance();
     uint32 num_ports = sm->get_num_ports();
-    uint32 i = 0, j = 0;
+    uint32 i = 0;
     for( i=0; i < num_ports; i++ )
     {
       SerialPort *sp = sm->serial_ports[i];
@@ -73,6 +73,34 @@ class SerialThread : public Thread
     }
 
     kprintf("SerialThread::Run: Done with serial ports\n");
+    for(;;) Scheduler::instance()->yield();
+  };
+
+};
+
+class BDThread : public Thread
+{
+  public:
+
+  BDThread()
+  {
+    name_="BlockDevices";
+  };
+
+  virtual void Run()
+  {
+    kprintfd("BDThread::Run: Now setting up blockdevices ...\n");
+    ArchInterrupts::enableBDS();
+    BDManager::getInstance()->doDeviceDetection();
+    uint32 numdev = BDManager::getInstance()->getNumberOfDevices();
+    uint32 dev_cnt = 0;
+    
+    for( dev_cnt = numdev; dev_cnt--; )
+      kprintf("BDThread::Run: BD%d device %s size: %u \n", dev_cnt, 
+      BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getName(), 
+      BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getNumBlocks()*BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getBlockSize() );
+      
+    kprintf("BDThread::Run: Done with blockdevices\n");
     for(;;) Scheduler::instance()->yield();
   };
 

@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.37 2005/09/16 15:47:41 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.38 2005/09/18 20:25:05 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.37  2005/09/16 15:47:41  btittelbach
+//  +even more KeyboardInput Bugfixes
+//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//  +Thread now remembers its Terminal
+//  +Syscalls are USEABLE !! :-) IF=1 !!
+//  +Syscalls can block now ! ;-) Waiting for Input...
+//  +more other Bugfixes
+//
 //  Revision 1.36  2005/09/16 00:54:13  btittelbach
 //  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -175,6 +183,8 @@
 #include "arch_serial.h"
 #include "serial.h"
 #include "arch_keyboard_manager.h"
+#include "arch_bd_manager.h"
+
 #include "Thread.h"
 #include "ArchInterrupts.h"
 
@@ -562,13 +572,6 @@ extern "C" void irqHandler_0()
   }  
 }
 
-extern "C" void arch_irqHandler_1();
-extern "C" void irqHandler_1()
-{
-  KeyboardManager::getInstance()->serviceIRQ( );
-  ArchInterrupts::EndOfInterrupt(3);
-}
-
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
@@ -635,6 +638,14 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 }
 
 
+extern "C" void arch_irqHandler_1();
+extern "C" void irqHandler_1()
+{
+  KeyboardManager::getInstance()->serviceIRQ( );
+  ArchInterrupts::EndOfInterrupt(1);
+}
+
+
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
@@ -647,6 +658,22 @@ extern "C" void irqHandler_4()
 {
   SerialManager::getInstance()->service_irq( 4 );
   ArchInterrupts::EndOfInterrupt(4);
+}
+
+extern "C" void arch_irqHandler_13();
+extern "C" void irqHandler_13()
+{
+  kprintfd_nosleep( "IRQ 13 called\n" );
+  BDManager::getInstance()->serviceIRQ( 13 );
+  ArchInterrupts::EndOfInterrupt(13);
+}
+
+extern "C" void arch_irqHandler_14();
+extern "C" void irqHandler_14()
+{
+  kprintfd_nosleep( "IRQ 14 called\n" );
+  BDManager::getInstance()->serviceIRQ( 14 );
+  ArchInterrupts::EndOfInterrupt(14);
 }
 
 extern "C" void arch_syscallHandler();
@@ -711,8 +738,8 @@ IRQ_HANDLER(9)
 IRQ_HANDLER(10)
 IRQ_HANDLER(11)
 IRQ_HANDLER(12)
-IRQ_HANDLER(13)
-IRQ_HANDLER(14)
+//IRQ_HANDLER(13)
+//IRQ_HANDLER(14)
 IRQ_HANDLER(15)
   
 extern "C" void arch_dummyHandler();

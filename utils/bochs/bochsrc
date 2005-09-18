@@ -1,7 +1,14 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.18 2005/09/10 19:25:27 qiangchen Exp $
+#*    $Id: bochsrc,v 1.19 2005/09/18 20:25:05 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.18  2005/09/10 19:25:27  qiangchen
+#*     21:24:09 up 14:16,  3 users,  load average: 0.08, 0.09, 0.14
+#*    USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+#*    chen     :0       -                12:11   ?xdm?   1:01m  1.35s /usr/bin/gnome-
+#*    chen     pts/0    :0.0             12:15    1.00s  0.34s  0.03s cvs commit
+#*    chen     pts/1    :0.0             12:33    5:23m  3.13s  0.04s -bash
+#*
 #*    Revision 1.17  2005/09/05 23:01:24  btittelbach
 #*    Keyboard Input Handler
 #*    + several Bugfixes
@@ -328,13 +335,13 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #   ata3-slave:  type=cdrom, path=iso.sample, status=inserted
 #=======================================================================
 #ata0-master: type=disk, mode=flat, path="30M.sample", cylinders=615, heads=6, spt=17
-#ata0-slave: type=cdrom, path=D:, status=inserted
+ata0-slave: type=cdrom, path=D:, status=inserted
 #ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
 #ata0-slave: type=cdrom, path="drive", status=inserted
 #ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted 
 #
 #ata0-master: type=disk, path="image/hash.img", mode=flat, cylinders=60, heads=16, spt=63
-#ata0-master: type=disk, mode=flat, path="image/disk.img", cylinders=2, heads=16, spt=63
+ata0-master: type=disk, mode=flat, path="disk.img", cylinders=2, heads=16, spt=63
 #ata0-master: type=disk, mode=flat, path="image/mc.img", cylinders=4, heads=16, spt=63
 #ata0-slave: type=disk, mode=flat, path="image/minix_disk_1.img", cylinders=2, heads=2, spt=63
 #ata0-master: type=disk, path="image/c.img", mode=flat, cylinders=2, heads=16, spt=63
@@ -473,9 +480,9 @@ log: bochsout.txt
 #=======================================================================
 panic: action=ask
 error: action=report
-info: action=ignore
+info: action=report
 #debug: action=ignore
-debug: action=ignore
+debug: action=report
 #pass: action=report
 #pass: action=fatal
 

@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.13 2005/09/13 15:00:51 btittelbach Exp $
+//  $Id: ArchInterrupts.cpp,v 1.14 2005/09/18 20:25:05 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.13  2005/09/13 15:00:51  btittelbach
+//  Prepare to be Synchronised...
+//  kprintf_nosleep works now
+//  scheduler/list still needs to be fixed
+//
 //  Revision 1.12  2005/09/05 23:01:24  btittelbach
 //  Keyboard Input Handler
 //  + several Bugfixes
@@ -78,6 +83,13 @@ void ArchInterrupts::enableKBD()
 {
   enableIRQ(1);
   enableIRQ(9);
+}
+
+void ArchInterrupts::enableBDS()
+{
+  enableIRQ(13);
+  enableIRQ(14);
+  enableIRQ(15);
 }
 
 void ArchInterrupts::disableKBD()

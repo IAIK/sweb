@@ -1,7 +1,17 @@
 /**
- * $Id: main.cpp,v 1.91 2005/09/17 16:21:57 nelles Exp $
+ * $Id: main.cpp,v 1.92 2005/09/18 20:25:05 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.91  2005/09/17 16:21:57  nelles
+ *
+ *  Small bugfix in keyboard manager.
+ *  Shift, Caps, Num etc. status now initialized by ctor
+ *
+ *  Committing in .
+ *
+ *  Modified Files:
+ *  	arch/x86/source/arch_keyboard_manager.cpp
+ *
  * Revision 1.90  2005/09/16 15:47:41  btittelbach
  * +even more KeyboardInput Bugfixes
  * +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -388,6 +398,8 @@
 #include "arch_keyboard_manager.h"
 #include "atkbd.h"
 
+#include "arch_bd_manager.h"
+
 #include "fs/VirtualFileSystem.h"
 #include "fs/ramfs/RamFileSystemType.h"
 #include "console/TextConsole.h"
@@ -658,6 +670,7 @@ void startup()
   lock = new Mutex();
 
   ArchInterrupts::enableKBD();
+  
 
   kprintf("Thread creation\n");
   
@@ -668,7 +681,10 @@ void startup()
   Scheduler::instance()->addNewThread( 
     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
    );
-
+  
+  Scheduler::instance()->addNewThread( 
+    new BDThread()
+    );
   //~ Scheduler::instance()->addNewThread(new MatriceMultTest());
 //   Scheduler::instance()->addNewThread(new SyscallTest());
 //   Scheduler::instance()->addNewThread(new SyscallTest2());
@@ -679,11 +695,13 @@ void startup()
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
   //kprintf_nosleep_flush();
-  ArchInterrupts::enableInterrupts();
+  ArchInterrupts::enableInterrupts();    
+    
   kprintfd("Init done\n");
   kprintf("Init done\n");
 
   Scheduler::instance()->yield();
+  
   //Empty Keyboard Buffer so irq1 gets fired
   while (kbdBufferFull()) {
     kprintfd("Emptying Keyboard Port content: %x\n",kbdGetScancode());

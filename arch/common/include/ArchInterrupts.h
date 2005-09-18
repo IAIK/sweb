@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.8 2005/09/13 15:00:51 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.9 2005/09/18 20:25:05 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.8  2005/09/13 15:00:51  btittelbach
+//  Prepare to be Synchronised...
+//  kprintf_nosleep works now
+//  scheduler/list still needs to be fixed
+//
 //  Revision 1.7  2005/09/05 23:01:23  btittelbach
 //  Keyboard Input Handler
 //  + several Bugfixes
@@ -48,6 +53,7 @@ public:
   static void enableTimer();
   static void disableTimer();
   static void enableKBD();
+  static void enableBDS();
   static void disableKBD();
   
   static void EndOfInterrupt(uint16 number);

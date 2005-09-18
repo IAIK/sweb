@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.28 2005/09/16 15:47:41 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.29 2005/09/18 20:25:05 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.28  2005/09/16 15:47:41  btittelbach
+//  +even more KeyboardInput Bugfixes
+//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//  +Thread now remembers its Terminal
+//  +Syscalls are USEABLE !! :-) IF=1 !!
+//  +Syscalls can block now ! ;-) Waiting for Input...
+//  +more other Bugfixes
+//
 //  Revision 1.27  2005/09/15 18:47:07  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -260,7 +268,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     threads_.rotateBack();
     
   } while (currentThread->state_ != Running);
-  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
+  //kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
   
   uint32 ret = 1;
   
