@@ -1,3 +1,9 @@
+/********************************************************************
+*
+*    $Id: arch_bd_manager.cpp,v 1.3 2005/09/18 20:46:52 nelles Exp $
+*    $Log: arch_bd_manager.cpp,v $
+********************************************************************/
+
 #include "arch_bd_manager.h"
 #include "arch_bd_ide_driver.h"
 
@@ -19,8 +25,8 @@ void BDManager::doDeviceDetection( void )
 {
   kprintfd("BDManager::doDeviceDetection:Detecting IDE devices\n");
   IDEDriver id;
+    // insert other device detectors here
   kprintfd("BDManager::doDeviceDetection:Detection done\n");
-  // insert other device detectors here
 }
 
 void BDManager::addRequest( BDRequest* bdr )

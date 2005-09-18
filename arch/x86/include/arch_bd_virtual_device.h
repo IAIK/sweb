@@ -1,3 +1,9 @@
+/********************************************************************
+*
+*    $Id: arch_bd_virtual_device.h,v 1.2 2005/09/18 20:46:52 nelles Exp $
+*    $Log: arch_bd_virtual_device.h,v $
+********************************************************************/
+
 #ifndef _BD_VIRTUAL_DEVICE_
 #define _BD_VIRTUAL_DEVICE_
 

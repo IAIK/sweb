@@ -1,3 +1,8 @@
+/********************************************************************
+*
+*    $Id: arch_bd_ata_driver.cpp,v 1.2 2005/09/18 20:46:52 nelles Exp $
+*    $Log: arch_bd_ata_driver.cpp,v $
+********************************************************************/
 #include "arch_bd_ata_driver.h"
 #include "arch_bd_manager.h"
 

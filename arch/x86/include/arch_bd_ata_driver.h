@@ -1,3 +1,9 @@
+/********************************************************************
+*
+*    $Id: arch_bd_ata_driver.h,v 1.2 2005/09/18 20:46:52 nelles Exp $
+*    $Log: arch_bd_ata_driver.h,v $
+********************************************************************/
+
 #ifndef _ATA_DEVICE_DRIVER_
 #define _ATA_DEVICE_DRIVER_
 
