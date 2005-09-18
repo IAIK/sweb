@@ -23,6 +23,14 @@ void BDManager::doDeviceDetection( void )
   // insert other device detectors here
 }
 
+void BDManager::addRequest( BDRequest* bdr )
+{
+  if( bdr->getDevID() < getNumberOfDevices() )
+    getDeviceByNumber( bdr->getDevID() )->addRequest( bdr );
+  else
+    bdr->setStatus( BDRequest::BD_ERROR );
+}
+
 void BDManager::addVirtualDevice( BDVirtualDevice* dev )
 {
   kprintfd("BDManager::serviceIRQ:Adding device\n");
