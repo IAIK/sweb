@@ -22,20 +22,59 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.1 2005/09/16 05:01:40 aniederl Exp $
-# $Log$
+# $Id: Makefile,v 1.2 2005/09/20 10:53:16 btittelbach Exp $
+# $Log: Makefile,v $
+# Revision 1.1  2005/09/16 05:01:40  aniederl
+# import of libc Makefiles
+#
 #
 
-LIBC_PATH = src/
-LIBC_STATIC = $(LIBC_PATH)/libc.a
+OBJECTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD})
+SOURECDIR := $(PWD)/src
+
+LIBC_STATIC = $(OBJECTDIR)/libc.a
+
+INCLUDE_PATH = ./include
+
+CFLAGS = -Wall -g -fno-builtin -nostdinc -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
+
+OBJECTS = \
+					$(OBJECTDIR)/atoi.o \
+					$(OBJECTDIR)/exec.o \
+					$(OBJECTDIR)/file_alloc.o \
+					$(OBJECTDIR)/printf.o \
+					$(OBJECTDIR)/read.o \
+					$(OBJECTDIR)/scanf.o \
+					$(OBJECTDIR)/write.o
 
 
-all: libc
 
-libc: libc-static
+.PHONY: clean
 
-libc-static:
-	 make -C $(LIBC_PATH)
+all : objdir $(LIBC_STATIC)
+
+$(OBJECTDIR)/%.o : src/%.c
+	$(CC) $(CFLAGS) -o $@ -c $^
+
+$(LIBC_STATIC) : $(OBJECTS)
+	ar rcs $@ $^
 
 clean:
-	 make clean -C $(LIBC_PATH)
+	rm -f ./include/arch/arch
+	test -e $(OBJECTDIR) && rm -f $(OBJECTDIR)/*
+
+objdir: archlink
+	mkdir -p $(OBJECTDIR)
+
+archlink:
+ifeq ($(ARCH),amd64)
+	@rm ./include/arch/arch -f
+	@echo "ln -s amd64 arch"
+	@cd ./include/arch/; ln -s  arch
+else
+	@rm ./include/arch/arch -f
+	@echo "ln -s x86 arch"
+	@cd ./include/arch/; ln -s x86 arch
+endif
+
+	
