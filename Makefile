@@ -137,6 +137,7 @@ install: kernel
 	@echo "Starting with install - ext2"
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
+	test -e $(OBJECTDIR)/disk.img || cp ./images/disk.img $(OBJECTDIR)/
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 	test -e !$(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
 	mkdir $(OBJECTDIR)/e2fstemp

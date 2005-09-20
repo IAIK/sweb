@@ -1,8 +1,45 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.29 2005/09/18 20:25:05 nelles Exp $
+//   $Id: Scheduler.cpp,v 1.30 2005/09/20 08:05:08 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.29  2005/09/18 20:25:05  nelles
+//
+//
+//  Block devices update.
+//  See BDRequest and BDManager on how to use this.
+//  Currently ATADriver is functional. The driver tries to detect if IRQ
+//  mode is available and adjusts the mode of operation. Currently PIO
+//  modes with IRQ or without it are supported.
+//
+//  TODO:
+//  - add block PIO mode to read or write multiple sectors within one IRQ
+//  - add DMA and UDMA mode :)
+//
+//
+//   Committing in .
+//
+//   Modified Files:
+//   	arch/common/include/ArchInterrupts.h
+//   	arch/x86/source/ArchInterrupts.cpp
+//   	arch/x86/source/InterruptUtils.cpp
+//   	common/include/kernel/TestingThreads.h
+//   	common/source/kernel/Makefile
+//   	common/source/kernel/Scheduler.cpp
+//   	common/source/kernel/main.cpp utils/bochs/bochsrc
+//   Added Files:
+//   	arch/x86/include/arch_bd_ata_driver.h
+//   	arch/x86/include/arch_bd_driver.h
+//   	arch/x86/include/arch_bd_ide_driver.h
+//   	arch/x86/include/arch_bd_io.h
+//  	arch/x86/include/arch_bd_manager.h
+//   	arch/x86/include/arch_bd_request.h
+//   	arch/x86/include/arch_bd_virtual_device.h
+//   	arch/x86/source/arch_bd_ata_driver.cpp
+//   	arch/x86/source/arch_bd_ide_driver.cpp
+//   	arch/x86/source/arch_bd_manager.cpp
+//  	arch/x86/source/arch_bd_virtual_device.cpp
+//
 //  Revision 1.28  2005/09/16 15:47:41  btittelbach
 //  +even more KeyboardInput Bugfixes
 //  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -268,7 +305,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     threads_.rotateBack();
     
   } while (currentThread->state_ != Running);
-  //kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
+  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
   
   uint32 ret = 1;
   
@@ -288,9 +325,7 @@ void Scheduler::yield()
   if (! ArchInterrupts::testIFSet())
   {
     kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
-    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
-    kprintfd("currentThread %s?\n", currentThread->name_);
-    kprintf_nosleep_flush();
+    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n", currentThread, currentThread->name_);
   }
   ArchThreads::yield();
 }

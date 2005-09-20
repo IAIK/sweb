@@ -1,7 +1,15 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.h,v 1.8 2005/09/16 15:47:41 btittelbach Exp $
+//   $Id: kprintf.h,v 1.9 2005/09/20 08:05:07 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.h,v $
+//   Revision 1.8  2005/09/16 15:47:41  btittelbach
+//   +even more KeyboardInput Bugfixes
+//   +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//   +Thread now remembers its Terminal
+//   +Syscalls are USEABLE !! :-) IF=1 !!
+//   +Syscalls can block now ! ;-) Waiting for Input...
+//   +more other Bugfixes
+//
 //   Revision 1.7  2005/09/13 15:00:51  btittelbach
 //   Prepare to be Synchronised...
 //   kprintf_nosleep works now
@@ -42,4 +50,3 @@ void kprintfd_nosleep(const char *fmt, ...);
 void kprint_buffer(char *buffer, uint32 size);
 
 void kprintf_nosleep_init();
-void kprintf_nosleep_flush();

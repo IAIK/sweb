@@ -1,7 +1,44 @@
 /**
- * $Id: main.cpp,v 1.92 2005/09/18 20:25:05 nelles Exp $
+ * $Id: main.cpp,v 1.93 2005/09/20 08:05:08 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.92  2005/09/18 20:25:05  nelles
+ *
+ *
+ * Block devices update.
+ * See BDRequest and BDManager on how to use this.
+ * Currently ATADriver is functional. The driver tries to detect if IRQ
+ * mode is available and adjusts the mode of operation. Currently PIO
+ * modes with IRQ or without it are supported.
+ *
+ * TODO:
+ * - add block PIO mode to read or write multiple sectors within one IRQ
+ * - add DMA and UDMA mode :)
+ *
+ *
+ *  Committing in .
+ *
+ *  Modified Files:
+ *  	arch/common/include/ArchInterrupts.h
+ *  	arch/x86/source/ArchInterrupts.cpp
+ *  	arch/x86/source/InterruptUtils.cpp
+ *  	common/include/kernel/TestingThreads.h
+ *  	common/source/kernel/Makefile
+ *  	common/source/kernel/Scheduler.cpp
+ *  	common/source/kernel/main.cpp utils/bochs/bochsrc
+ *  Added Files:
+ *  	arch/x86/include/arch_bd_ata_driver.h
+ *  	arch/x86/include/arch_bd_driver.h
+ *  	arch/x86/include/arch_bd_ide_driver.h
+ *  	arch/x86/include/arch_bd_io.h
+ * 	arch/x86/include/arch_bd_manager.h
+ *  	arch/x86/include/arch_bd_request.h
+ *  	arch/x86/include/arch_bd_virtual_device.h
+ *  	arch/x86/source/arch_bd_ata_driver.cpp
+ *  	arch/x86/source/arch_bd_ide_driver.cpp
+ *  	arch/x86/source/arch_bd_manager.cpp
+ * 	arch/x86/source/arch_bd_virtual_device.cpp
+ *
  * Revision 1.91  2005/09/17 16:21:57  nelles
  *
  *  Small bugfix in keyboard manager.
@@ -408,8 +445,6 @@
 #include "fs/PseudoFS.h"
 #include "fs/fs_tests.h"
 
-#include "FiFoDRBOSS.h"
-
 #include "TestingThreads.h"
 
 extern void* kernel_end_address;
@@ -595,31 +630,6 @@ private:
 
 };
 
-
-class KprintfNoSleepFlushingThread : public Thread
-{
-  public:
-
-   KprintfNoSleepFlushingThread()
-  {
-    name_="KprintfNoSleepFlushingThread";
-  }
-  
-  virtual void Run()
-  {
-    while (true)
-    {
-       kprintf_nosleep_flush();
-      Scheduler::instance()->yield();
-      //kprintfd("___done_______________________\n");
-      //kprintfd("___Flushing Nosleep Buffer____\n");
-      kprintf_nosleep_flush();
-      //kprintfd("___done_______________________\n");
-    }
-  }
-};
-
-
 //------------------------------------------------------------
 void startup()
 {
@@ -686,15 +696,14 @@ void startup()
     new BDThread()
     );
   //~ Scheduler::instance()->addNewThread(new MatriceMultTest());
-//   Scheduler::instance()->addNewThread(new SyscallTest());
-//   Scheduler::instance()->addNewThread(new SyscallTest2());
+   Scheduler::instance()->addNewThread(new SyscallTest());
+   Scheduler::instance()->addNewThread(new SyscallTest2());
     
   Scheduler::instance()->printThreadList();
   
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
-  //kprintf_nosleep_flush();
   ArchInterrupts::enableInterrupts();    
     
   kprintfd("Init done\n");

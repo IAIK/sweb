@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//   $Id: Condition.cpp,v 1.4 2005/09/16 15:47:41 btittelbach Exp $
+//   $Id: Condition.cpp,v 1.5 2005/09/20 08:05:08 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Condition.cpp,v $
+//  Revision 1.4  2005/09/16 15:47:41  btittelbach
+//  +even more KeyboardInput Bugfixes
+//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//  +Thread now remembers its Terminal
+//  +Syscalls are USEABLE !! :-) IF=1 !!
+//  +Syscalls can block now ! ;-) Waiting for Input...
+//  +more other Bugfixes
+//
 //  Revision 1.3  2005/09/16 00:54:13  btittelbach
 //  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -55,7 +63,6 @@ Condition::Condition(Mutex *lock)
 {
   sleepers_=new List<Thread *>();
   lock_=lock;
-  first_element_=0;
 }
 Condition::~Condition()
 {
@@ -67,7 +74,6 @@ void Condition::wait()
   // list is protected, because we assume, the lock is being held
   assert(lock_->isHeldBy(currentThread));
   assert(ArchInterrupts::testIFSet());
-  cleanup();
   sleepers_->pushBack(currentThread);
   lock_->release();
   //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
@@ -81,7 +87,6 @@ void Condition::signal()
   if (! lock_->isHeldBy(currentThread))
     return;
   assert(ArchInterrupts::testIFSet());
-  cleanup();
   Thread *thread=0;
   if (!sleepers_->empty())
   {
@@ -97,32 +102,11 @@ void Condition::signal()
     kprintfd("Condition::signal: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
 }
 
-//this is not guaranteed to reach the corrent next thread or be without problems
-void Condition::signalWithInterruptsOff()
-{
-  cleanup();
-  assert(ArchInterrupts::testIFSet()==false);
-  Thread *thread=0;
-  if (!sleepersEmpty())
-  {
-    thread = getFirstSleeper();
-    if (thread->state_ == Sleeping)
-    {
-      //Solution to above Problem: Wake and Remove from List only Threads which are actually sleeping
-      Scheduler::instance()->wake(thread);
-      removeFirstSleeper();
-    }
-  }
-  if (thread)
-    kprintfd("Condition::signalWithInterruptsOff: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
-}
-
 void Condition::broadcast()
 {
   if (! lock_->isHeldBy(currentThread))
     return;
   assert(ArchInterrupts::testIFSet());
-  cleanup();
   Thread *thread;
   List<Thread*> tmp_threads;
   while (!sleepers_->empty())
@@ -140,29 +124,4 @@ void Condition::broadcast()
     sleepers_->pushBack(tmp_threads.front());
     tmp_threads.popFront();
   }
-}
-
-void Condition::cleanup()
-{
-  if (ArchInterrupts::testIFSet())
-    while (first_element_>0)
-    {
-     sleepers_->popFront();
-     --first_element_;
-    }
-}
-Thread *Condition::getFirstSleeper()
-{
-  return (*sleepers_)[first_element_];
-}
-bool Condition::sleepersEmpty()
-{
-  return ((sleepers_->size() - first_element_)==0);
-}
-void Condition::removeFirstSleeper()
-{
-  if (ArchInterrupts::testIFSet())
-    sleepers_->popFront();
-  else
-    ++first_element_;    
 }

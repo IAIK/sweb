@@ -1,7 +1,15 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.18 2005/09/16 15:47:41 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.19 2005/09/20 08:05:08 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.18  2005/09/16 15:47:41  btittelbach
+//   +even more KeyboardInput Bugfixes
+//   +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//   +Thread now remembers its Terminal
+//   +Syscalls are USEABLE !! :-) IF=1 !!
+//   +Syscalls can block now ! ;-) Waiting for Input...
+//   +more other Bugfixes
+//
 //   Revision 1.17  2005/09/13 15:00:51  btittelbach
 //   Prepare to be Synchronised...
 //   kprintf_nosleep works now
@@ -70,8 +78,9 @@
 #include "Terminal.h"
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
-#include "ipc/FiFoDRBOSS.h"
+#include "ipc/RingBuffer.h"
 #include "Scheduler.h"
+#include "assert.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full
@@ -101,8 +110,15 @@ void oh_writeStringDebugWithSleep(char const* str)
   }
 }
 
+RingBuffer<char> *nosleep_rb_;
 
-FiFoDRBOSS<char> *nosleep_fifo_;
+void flushActiveConsole()
+{
+  assert(ArchInterrupts::testIFSet());
+  char c=0;
+  while (nosleep_rb_->get(c))
+    main_console->getActiveTerminal()->write(c);
+}
 
 class KprintfNoSleepFlushingThread : public Thread
 {
@@ -117,7 +133,7 @@ class KprintfNoSleepFlushingThread : public Thread
   {
     while (true)
     {
-      kprintf_nosleep_flush();
+      flushActiveConsole();
       Scheduler::instance()->yield();
     }
   }
@@ -125,14 +141,14 @@ class KprintfNoSleepFlushingThread : public Thread
 
 void kprintf_nosleep_init()
 {
-  nosleep_fifo_ = new FiFoDRBOSS<char>(8192,2048,true);
+  nosleep_rb_ = new RingBuffer<char>(10240);
   kprintf("Adding Important kprintf_nosleep Flush Thread\n");
   Scheduler::instance()->addNewThread(new KprintfNoSleepFlushingThread());
 }
 
 void oh_writeCharNoSleep(char c)
 {
-  nosleep_fifo_->put(c);
+  nosleep_rb_->put(c);
 }
 void oh_writeStringNoSleep(char const* str)
 {
@@ -142,21 +158,6 @@ void oh_writeStringNoSleep(char const* str)
     str++;
   }
 }
-
-void flushActiveConsole()
-{
-  if (ArchInterrupts::testIFSet())
-  {
-    for(;;)
-      main_console->getActiveTerminal()->write(nosleep_fifo_->get());
-  } 
-  else if (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree())
-  {
-    for(uint32 c=0;c<nosleep_fifo_->countElementsAhead();++c)
-      main_console->getActiveTerminal()->write(nosleep_fifo_->get());    
-  }
-}
-
 
 void oh_writeCharDebugNoSleep(char c)
 {
@@ -473,10 +474,4 @@ void kprint_buffer(char *buffer, uint32 size)
     vkprint_buffer(oh_writeCharWithSleep, buffer, size);
   else
     vkprint_buffer(oh_writeCharNoSleep, buffer, size);
-}
-
-void kprintf_nosleep_flush()
-{
-  //can have only one flush operation here, as each one would block
-  flushActiveConsole();
 }
