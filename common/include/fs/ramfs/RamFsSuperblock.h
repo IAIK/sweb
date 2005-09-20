@@ -19,8 +19,10 @@ class RamFsSuperblock : public Superblock
 {
  public:
 
+  /// constructor
   RamFsSuperblock(Dentry* s_root);
 
+  /// destructor
   virtual ~RamFsSuperblock();
 
   /// create a new Inode of the superblock, mknod with dentry, add in the list.

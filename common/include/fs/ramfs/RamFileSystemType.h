@@ -10,8 +10,10 @@ class RamFileSystemType : public FileSystemType
 {
   public:
 
+    /// constructor
     RamFileSystemType();
 
+    /// destructor
     virtual ~RamFileSystemType();
 
     /// Reads the superblock from the device.

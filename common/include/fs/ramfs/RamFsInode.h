@@ -22,8 +22,10 @@ protected:
   
 public:
 
+  /// constructor
   RamFsInode(Superblock *super_block, uint32 inode_mode);
 
+  /// destructor
   virtual ~RamFsInode();
 
   /// Create a directory with the given dentry.
