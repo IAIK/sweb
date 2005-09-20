@@ -7,7 +7,8 @@ global __syscall
 __syscall:
 
   ; ok, first we have to do some little cleanup as every function should do
-  push ebp ; the base pointer goes onto the stack so we can restore it alter
+  push ebp 
+  ; the base pointer goes onto the stack so we can restore it alter
   mov ebp, esp; 
   
   ; ok, we have to save ALL registers we are now going to overwrite for 

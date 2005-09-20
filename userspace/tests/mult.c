@@ -1,5 +1,5 @@
 #include "../../common/include/kernel/syscall-definitions.h"
-#include "unistd.h"
+
 
 /* the result should be 1237619379 for size of 100 */
 #define ARRAY_SIZE 100
@@ -51,5 +51,5 @@ int main()
       sum += cxc[x][y];
   
  // printf("Result is %d",sum);
-  __syscall_exit(sum);
+  return sum;
 }
