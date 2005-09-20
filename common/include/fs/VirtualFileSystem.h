@@ -24,6 +24,7 @@ class VirtualFileSystem
 {
   protected:
 
+    /// PoinList of Superblock
     PointList<Superblock> superblocks_;
 
     /// PointList of mounted Filesystems
@@ -83,6 +84,9 @@ class VirtualFileSystem
     /// @return On success, zero is returned. On error, -1 is returned.
     int32 root_mount(char* fs_name, uint32 flags);
 
+    /// umount the ROOT from the VFS (special of the umount)
+    ///
+    /// @return On success, zero is returned. On error, -1 is returned.
     int32 rootUmount();
 
     /// Get the FileSystemInfo object of the current Process

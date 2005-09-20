@@ -119,7 +119,10 @@ public:
   /// this method terminate the pathname lookup of the mount point.
   void pathRelease();
 
+  /// get the dentry from the class
   Dentry* getDentry() { return dentry_; }
+  
+  /// get the VfsMount from the clawss
   VfsMount* getVfsMount() { return vfs_mount_; }
 
 protected:

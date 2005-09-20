@@ -58,9 +58,13 @@ class Dentry
   
 public:
 
-  // method - Inode
+  /// set the inode to the dentry
   void setInode(Inode *inode);
+  
+  /// release the inode to the dentry
   void releaseInode() { d_inode_ = 0; }
+  
+  /// get the inode to dentry
   Inode* getInode() { return d_inode_; }
   
   /// return the parent of the dentry
@@ -69,13 +73,22 @@ public:
   /// return the mount_point of the current file-system
   Dentry* getMountPoint() { return d_mounts_; }
 
-  // method - d_child_
+  /// set the child to the dentry
   int32 setChild(Dentry *dentry);
+  
+  /// check the existance of the child-list
   bool emptyChild() { return d_child_.empty(); }
+  
+  /// get the number of the child
   uint32 getNumChild() { return d_child_.getLength(); }
+  
+  /// get the child of the child-list
   Dentry* getChild(uint32 index);
 
+  /// set the name to the dentry
   void setName(const char* name);
+  
+  /// return the name of the dentry
   char* getName();
 
   /// This should compare the name with the all names of the d_child_ list.

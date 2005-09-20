@@ -52,11 +52,14 @@ class VfsMount
 
  public:
 
+  /// default-constructor
   VfsMount();
 
+  /// constructor
   VfsMount(VfsMount* parent, Dentry * mountpoint, Dentry* root,
       Superblock* superblock, int32 flags);
 
+  /// destructor
   virtual ~VfsMount();
 
   // void put_mnt(VfsMount *mnt);
@@ -65,14 +68,19 @@ class VfsMount
 
   // VfsMount* get_mnt();
 
+  /// get the parent-VfsMount of the VfsMount
   VfsMount *getParent() const;
 
+  /// get the mount-point of the VfsMount
   Dentry *getMountPoint() const;
 
+  /// get the ROOT-directory of the VfsMount
   Dentry *getRoot() const;
 
+  /// get the superblock fo the VfsMount
   Superblock *getSuperblock() const;
 
+  /// get the flags
   int32 getFlags() const;
 };
 

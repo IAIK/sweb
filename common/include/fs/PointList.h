@@ -16,19 +16,38 @@
 template <class ContentType> class PointListElement
 {
 protected:
+
+  /// the contain pointer
   ContentType *item_;
+  
+  /// the prev-element
   PointListElement *prev_;
+  
+  /// the next-element
   PointListElement *next_;
 
 public:
+
+  /// constructor
   PointListElement(ContentType *item)
   { item_ = item; prev_ = this; next_ = this; }
+  
+  /// destructor
   virtual ~PointListElement() {}
 
+  /// set the next-element
   virtual void setNext(PointListElement<ContentType> *next) { next_ = next; }
+  
+  /// set the prev-element
   virtual void setPrev(PointListElement<ContentType> *prev) { prev_ = prev; }
+  
+  /// get the next-element
   virtual PointListElement* getNext() { return next_; }
+  
+  /// set the prev-element
   virtual PointListElement* getPrev() { return prev_; }
+  
+  /// get the item (contain) of the element
   virtual ContentType* getItem() { return item_; }
 };
 
@@ -42,21 +61,32 @@ public:
 template <class ContentType> class PointList
 {
 private:
+  /// the assign-operator
   const PointList<ContentType>& operator = (const PointList<ContentType>&)
   { return(*this); }
 
 protected:
+
+  /// the first-element of the PointList
   PointListElement<ContentType> *first_;
+  
+  /// teh last_element of the PointList
   PointListElement<ContentType> *last_;
+  
+  /// the length of the list
   uint32 length_;
 
 public:
 
+  /// constructor
   PointList() { first_ = last_ = 0; length_ = 0; }
 
+  /// destructro
   virtual ~PointList();
 
 protected:
+
+  /// insert element to the list
   virtual void listElementInsert(
                  PointListElement<ContentType> *new_list_element,
                  PointListElement<ContentType> *prev, 
@@ -109,10 +139,19 @@ public:
    */
   virtual ContentType* at(uint32 index);
 
+  /**
+   * the []-operator
+   */
   virtual ContentType* operator[](uint32 index);
   
+  /**
+   * check the emptiness of the list
+   */
   virtual bool empty();
 
+  /**
+   * get the length of the list
+   */
   virtual uint32 getLength() { return length_; }
 };
 

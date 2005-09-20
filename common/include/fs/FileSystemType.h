@@ -29,16 +29,21 @@ class FileSystemType
 
   protected:
 
+    /// the name of the File-system-type
     char* fs_name_;
 
+    /// the flags of the File-system-type
     int32 fs_flags_;
 
   public:
 
+    /// contructor
     FileSystemType();
 
+    /// destructor
     virtual ~FileSystemType();
 
+    /// the assign operator
     FileSystemType const &operator =(FileSystemType const &instance)
     {
       fs_name_ = instance.fs_name_;
@@ -46,12 +51,16 @@ class FileSystemType
       return (*this);
     }
 
+    /// get the name from the file-system-type
     const char* getFSName() const;
 
+    /// set the name to the file-system-type
     void setFSName(const char* fs_name);
 
+    /// get the flags from the file-system-type
     int32 getFSFlags() const;
 
+    /// set the flags to the file-system-type
     void setFSFlags(int32 fs_flags);
 
     /// Reads the superblock from the device.

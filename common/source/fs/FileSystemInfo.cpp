@@ -9,7 +9,7 @@
 
 
 /// A global object for information about the current position in the FileSystem.
-/// TODO this has to be integrated in the ussr spave process code.
+/// TODO this has to be integrated in the ussr space process code.
 /// Every process needs one of these.
 FileSystemInfo fs_info;
 

@@ -74,9 +74,11 @@ class Inode
 
  public:
 
+  /// contructor
   Inode(Superblock *super_block, uint32 inode_mode)
     { i_superblock_ = super_block, i_mode_ = inode_mode; }
 
+  /// destructor
   virtual ~Inode() {}
 
   /// Create a directory with the given dentry.
@@ -145,12 +147,16 @@ class Inode
   /// remove the opened file point from the file_list of this inode.
   int32 removeOpenedFiles(File*);
   
+  /// check the existance of the open-file-list
   bool openedFilesEmpty() { return(i_files_.empty());}
   
+  /// return the Superblock that this inode is located
   Superblock* getSuperblock() { return i_superblock_; }
   
+  /// get the mode from inode
   uint32 getMode() { return i_mode_; }
   
+  /// get the pointer of the dentry
   Dentry* getDentry() { return i_dentry_; }
 };
 

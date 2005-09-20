@@ -18,8 +18,11 @@ class VfsSyscall
   int32 dupChecking(const char* pathname);
 
  public:
+ 
+  /// constructor
   VfsSyscall() {}
   
+  /// destructor
   virtual ~VfsSyscall() {}
  
   /// make a new directory.

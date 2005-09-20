@@ -76,9 +76,11 @@ protected:
 
 public:
 
+  /// constructor
   Superblock(Dentry* s_root)
     { s_root_ = s_root; }
 
+  /// destructor
   virtual ~Superblock();
 
   /// create a new Inode of the superblock, mknod with dentry, add in the list.
