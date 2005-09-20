@@ -89,7 +89,7 @@ endif
 	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
 	@$(KERNELLDCOMMAND) $(OBJECTDIR)/sauhaufen/* -g -u entry -T arch/x86/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map
 
-
+$(SUBPROJECTS): archlink
 
 kernelxen: $(SUBPROJECTS)
 ifeq ($(V),1)
