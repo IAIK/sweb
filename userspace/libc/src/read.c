@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: read.c,v $
  *
- * $Id: read.c,v 1.2 2005/09/11 10:56:55 aniederl Exp $
+ * $Id: read.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
  * $Log: read.c,v $
+ * Revision 1.2  2005/09/11 10:56:55  aniederl
+ * fixed include statements
+ *
  * Revision 1.1  2005/09/07 03:49:45  aniederl
  * import of read/write functions
  *
@@ -32,7 +35,7 @@
 
 
 #include "unistd.h"
-#include "sys/syscall.h"
+#include "../../../common/include/kernel/syscall-definitions.h"
 
 //----------------------------------------------------------------------
 /**
@@ -55,7 +58,10 @@
  this case)
  *
  */
-__syscall_3(off_t, lseek, int, file_descriptor, off_t, offset, int, whence)
+off_t lseek(int file_descriptor, off_t offset, int whence)
+{
+  return __syscall(sc_lseek, file_descriptor, offset, whence, 0x00, 0x00);
+}
 
 
 
@@ -76,6 +82,9 @@ __syscall_3(off_t, lseek, int, file_descriptor, off_t, offset, int, whence)
  offset for reading is after the end-of-file, and -1 if an error occured
  *
  */
-__syscall_3(ssize_t, read, int, file_descriptor, void *, buffer, size_t, count)
+ssize_t read(int file_descriptor, void *buffer, size_t count)
+{
+  return __syscall(sc_read, file_descriptor, (long) buffer, count, 0x00, 0x00);
+}
 
 

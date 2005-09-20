@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: exec.c,v $
  *
- * $Id: exec.c,v 1.2 2005/09/16 05:00:07 aniederl Exp $
+ * $Id: exec.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
  * $Log: exec.c,v $
+ * Revision 1.2  2005/09/16 05:00:07  aniederl
+ * syscall macros don't work with explicit array parameters (like argv[]), so changed them to pointers
+ *
  * Revision 1.1  2005/09/14 22:37:18  aniederl
  * stubs for exec functions
  *
@@ -32,7 +35,7 @@
 
 
 #include "unistd.h"
-#include "sys/syscall.h"
+#include "../../../common/include/kernel/syscall-definitions.h"
 #include "stdarg.h"
 #include "stdlib.h"
 
@@ -51,7 +54,10 @@
  * Resource utilizations are set to zero, file locks are not inherited.
  *
  */
-__syscall_special_0(pid_t, fork)
+pid_t fork()
+{
+  return __syscall(sc_fork, 0x00, 0x00, 0x00, 0x00, 0x00);
+}
 
 //----------------------------------------------------------------------
 /**
@@ -189,12 +195,12 @@ int execvp(const char *file, char *const argv[])
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-__syscall_3(int, execve, const char *, path, char *const *, argv,
-            char *const *, envp)
+int execve(const char *path, char *const *argv, char *const *envp)
+{
+  return __syscall(sc_execve, (long) path, (long) argv, (long) envp, 0x00,
+                   0x00);
+}
 
-
-// exit syscall
-__syscall_1(void, __syscall_exit, int, status)
 
 //----------------------------------------------------------------------
 /**
@@ -211,7 +217,7 @@ __syscall_1(void, __syscall_exit, int, status)
  */
 void _exit(int status)
 {
-  __syscall_exit(status);
+  __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
 }
 
 //----------------------------------------------------------------------
@@ -228,5 +234,5 @@ void _exit(int status)
  */
 void exit(int status)
 {
-  __syscall_exit(status);
+  __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
 }

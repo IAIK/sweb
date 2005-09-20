@@ -23,8 +23,11 @@
 /**
  * CVS Log Info for $RCSfile: file_alloc.c,v $
  *
- * $Id: file_alloc.c,v 1.2 2005/09/11 13:12:50 aniederl Exp $
+ * $Id: file_alloc.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
  * $Log: file_alloc.c,v $
+ * Revision 1.2  2005/09/11 13:12:50  aniederl
+ * fixed syscall access
+ *
  * Revision 1.1  2005/09/07 03:48:06  aniederl
  * import of file (de)allocation functions
  *
@@ -34,8 +37,8 @@
 
 #include "unistd.h"
 #include "fcntl.h"
-#include "sys/syscall.h"
 #include "stdarg.h"
+#include "../../../common/include/kernel/syscall-definitions.h"
 
 
 //----------------------------------------------------------------------
@@ -46,8 +49,11 @@
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-//int link(const char *old_path, const char *new_path)
-__syscall_2(int, link, const char *, old_path, const char *, new_path)
+int link(const char *old_path, const char *new_path)
+{
+  return __syscall(sc_link, (long) old_path, (long) new_path, 0x00, 0x00,
+                   0x00);
+}
 
 
 //----------------------------------------------------------------------
@@ -63,8 +69,10 @@ __syscall_2(int, link, const char *, old_path, const char *, new_path)
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-//int unlink(const char *path)
-__syscall_1(int, unlink, const char *, path)
+int unlink(const char *path)
+{
+  return __syscall(sc_unlink, (long) path, 0x00, 0x00, 0x00, 0x00);
+}
 
 
 //----------------------------------------------------------------------
@@ -82,15 +90,10 @@ __syscall_1(int, unlink, const char *, path)
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-__syscall_1(int, close, int, file_descriptor)
-
-
-//----------------------------------------------------------------------
-/**
- * Defines the open syscall which will be used in the open function.
- *
- */
-__syscall_3(int, __syscall_open, const char *, path, int, flags, mode_t, mode)
+int close(int file_descriptor)
+{
+  return __syscall(sc_close, file_descriptor, 0x00, 0x00, 0x00, 0x00);
+}
 
 
 //----------------------------------------------------------------------
@@ -134,7 +137,7 @@ int open(const char *path, int flags, ...)
     va_end(args);
   }
 
-  return __syscall_open(path, flags, mode);
+  return __syscall(sc_open, (long) path, flags, mode, 0x00, 0x00);
 }
 
 //----------------------------------------------------------------------
@@ -164,7 +167,10 @@ int creat(const char *path, mode_t mode)
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-__syscall_1(int, pipe, int, file_descriptor_array[2])
+int pipe(int file_descriptor_array[2])
+{
+  return __syscall(sc_pipe, file_descriptor_array, 0x00, 0x00, 0x00, 0x00);
+}
 
 
 //----------------------------------------------------------------------
@@ -179,7 +185,10 @@ __syscall_1(int, pipe, int, file_descriptor_array[2])
  set appropriately)
  *
  */
-__syscall_1(int, dup, int, file_descriptor)
+int dup(int file_descriptor)
+{
+  return __syscall(sc_dup, file_descriptor, 0x00, 0x00, 0x00, 0x00);
+}
 
 
 //----------------------------------------------------------------------
@@ -195,7 +204,11 @@ __syscall_1(int, dup, int, file_descriptor)
  set appropriately)
  *
  */
-__syscall_2(int, dup2, int, old_file_descriptor, int, new_file_descriptor)
+int dup2(int old_file_descriptor, int new_file_descriptor)
+{
+  return __syscall(sc_dup2, old_file_descriptor, new_file_descriptor, 0x00,
+                   0x00, 0x00);
+}
 
 
 //----------------------------------------------------------------------
@@ -207,4 +220,8 @@ __syscall_2(int, dup2, int, old_file_descriptor, int, new_file_descriptor)
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-__syscall_2(int, rename, const char *, old_path, const char *, new_path)
+int rename(const char *old_path, const char *new_path)
+{
+  return __syscall(sc_rename, (long) old_path, (long) new_path, 0x00, 0x00,
+                   0x00);
+}

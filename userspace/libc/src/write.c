@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: write.c,v $
  *
- * $Id: write.c,v 1.2 2005/09/11 10:20:11 aniederl Exp $
+ * $Id: write.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
  * $Log: write.c,v $
+ * Revision 1.2  2005/09/11 10:20:11  aniederl
+ * fixed include statements
+ *
  * Revision 1.1  2005/09/07 03:49:45  aniederl
  * import of read/write functions
  *
@@ -32,8 +35,7 @@
 
 
 #include "unistd.h"
-#include "sys/syscall.h"
-
+#include "../../../common/include/kernel/syscall-definitions.h"
 
 //----------------------------------------------------------------------
 /**
@@ -52,5 +54,8 @@
  nothing was written, and -1 if an error occured
  *
  */
-__syscall_3(ssize_t, write, int, file_descriptor, const void *, buffer,
-            size_t, count)
+ssize_t write(int file_descriptor, const void *buffer, size_t count)
+{
+  return __syscall(sc_write, file_descriptor, (long) buffer, count, 0x00,
+                   0x00);
+}
