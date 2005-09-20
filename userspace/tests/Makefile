@@ -1,27 +1,34 @@
+OBJECTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD})
+SOURECDIR := $(PWD)
 E2P_PATH = ../../utils/exe2pseudofs/
 CFLAGS = -O0 -m32 -static -nostdinc -fno-builtin -nostdlib
-LIBS=syscalls.o start.o
-OBJS = $(patsubst %.c,%.sweb,$(filter-out start.c ,$(wildcard *.c)))
+OBJS = $(patsubst %.c,$(OBJECTDIR)/%.sweb,$(wildcard *.c))
 PSEUDOFS_IMG = ../../../sweb-testing-bin/ramfs
 
-all: syscalls.o start.o $(OBJS) $(E2P_PATH)exe2pseudofs
-	$(E2P_PATH)exe2pseudofs $(PSEUDOFS_IMG) $(OBJS)
+INCLUDE=../libc/include/
+LIBC=$(OBJECTDIR)/../libc/libc.a
+
+all: $(LIBC) $(OBJS) $(E2P_PATH)exe2pseudofs
+	cd $(OJECTDIR)
+	$(E2P_PATH)exe2pseudofs $(PSEUDOFS_IMG) $(basename $(OBJS))
 
 $(E2P_PATH)exe2pseudofs: 
 	$(MAKE) -C $(E2P_PATH) exe2pseudofs
 
+$(LIBC):
+	cd ../libc
+	make
+
 .PHONY: clean
 clean:
-	rm -f $(E2P_PATH)exe2pseudofs $(LIBS) $(OBJS) $(PSEUDOFS_IMG)
+	rm -f $(E2P_PATH)exe2pseudofs $(OBJS) $(PSEUDOFS_IMG)
+	make -C ../libc clean
 
 syscalls.o:
 	nasm -f elf -o syscalls.o syscalls.s
 
-start.o:
-	$(CC) $(CFLAGS) -c start.c
-
-%.sweb: %.c $(LIBS)
-	$(CC) $(CFLAGS) -o $@ $<	$(LIBS)
+$(OBJECTDIR)/%.sweb: %.c $(LIBC)
+	$(CC) $(CFLAGS) -I $(INCLUDE) -o $@ $(LIBC) $<
 
 .PHONY: mrproper
 mrproper: clean
