@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.4 2005/09/20 13:28:14 btittelbach Exp $
+# $Id: Makefile,v 1.5 2005/09/20 14:32:09 btittelbach Exp $
 # $Log: Makefile,v $
+# Revision 1.4  2005/09/20 13:28:14  btittelbach
+# blubba
+#
 # Revision 1.3  2005/09/20 11:23:16  btittelbach
 # +_start
 #
@@ -37,6 +40,7 @@
 
 OBJECTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD})
 SOURECDIR := $(PWD)/src
+ARCHDIR := ../../arch/arch/userspace
 
 LIBC_STATIC = $(OBJECTDIR)/libc.a
 
@@ -52,7 +56,8 @@ OBJECTS = \
 					$(OBJECTDIR)/read.o \
 					$(OBJECTDIR)/scanf.o \
 					$(OBJECTDIR)/write.o \
-					$(OBJECTDIR)/start.o
+					$(OBJECTDIR)/start.o \
+					$(OBJECTDIR)/syscalls.o 
 
 
 all : $(OBJECTDIR) $(LIBC_STATIC)
@@ -60,7 +65,7 @@ all : $(OBJECTDIR) $(LIBC_STATIC)
 $(OBJECTDIR)/%.o : src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $^
 
-$(OBJECTDIR)/%.o : src/%.s
+$(OBJECTDIR)/%.o : $(ARCHDIR)/%.s
 	nasm -f elf -o $@ $^
 
 $(LIBC_STATIC) : $(OBJECTS)
@@ -75,16 +80,5 @@ clean:
 
 $(OBJECTDIR):
 	mkdir -p $(OBJECTDIR)
-
-archlink:
-ifeq ($(ARCH),amd64)
-	@rm ./include/arch/arch -f
-	@echo "ln -s amd64 arch"
-	@cd ./include/arch/; ln -s  arch
-else
-	@rm ./include/arch/arch -f
-	@echo "ln -s x86 arch"
-	@cd ./include/arch/; ln -s x86 arch
-endif
 
 	

@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.30 2005/09/20 08:05:08 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.31 2005/09/20 14:32:08 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.30  2005/09/20 08:05:08  btittelbach
+//  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
+//  +Condition cleanup
+//  +FiFoDRBOSS now obsolete and removed
+//  +added disk.img that nelle forgot to check in
+//
 //  Revision 1.29  2005/09/18 20:25:05  nelles
 //
 //
@@ -305,7 +311,7 @@ uint32 Scheduler::schedule(uint32 from_interrupt)
     threads_.rotateBack();
     
   } while (currentThread->state_ != Running);
-  kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
+  //kprintfd_nosleep("Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_);
   
   uint32 ret = 1;
   
