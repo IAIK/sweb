@@ -2,7 +2,8 @@ OBJECTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD})
 SOURECDIR := $(PWD)
 E2P_PATH = ../../utils/exe2pseudofs/
 CFLAGS = -O0 -m32 -static -nostdinc -fno-builtin -nostdlib
-LIBS=$(OBJECTDIR)/syscalls.o $(OBJECTDIR)/start.o
+LIBS=$(OBJECTDIR)/../libc/libc.a
+#$(OBJECTDIR)/syscalls.o $(OBJECTDIR)/start.o
 OBJS = $(patsubst %.c,$(OBJECTDIR)/%.sweb,$(wildcard *.c))
 PSEUDOFS_IMG = ../../../sweb-testing-bin/ramfs
 
@@ -23,7 +24,7 @@ $(OBJECTDIR)/%.o: %.s
 	nasm -f elf -o $@ $<
 
 $(OBJECTDIR)/%.sweb: %.c $(LIBS)
-	$(CC) $(CFLAGS) -o $@ $<	$(LIBS)
+	$(CC) $(CFLAGS) -o $@ $<	-Wl,-whole-archive $(LIBS)
 
 .PHONY: mrproper
 mrproper: clean
