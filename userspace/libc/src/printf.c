@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.5 2005/09/16 03:13:58 aniederl Exp $
+ * $Id: printf.c,v 1.6 2005/09/20 14:16:08 aniederl Exp $
  * $Log: printf.c,v $
+ * Revision 1.5  2005/09/16 03:13:58  aniederl
+ * fixed error recognition in putchar and puts
+ *
  * Revision 1.4  2005/09/14 23:01:04  aniederl
  * added putchar and puts
  *
@@ -77,6 +80,7 @@ unsigned char const LARGE	= 64;		/* use 'ABCDEF' instead of 'abcdef' */
  * @param new_size the value for resizing the string
  *
  */
+#ifdef STATIC_MEMORY__
 void resizeString(c_string *str, unsigned int new_size)
 {
   c_string old_string;
@@ -97,6 +101,7 @@ void resizeString(c_string *str, unsigned int new_size)
 
   free(old_string.start);
 }
+#endif // STATIC_MEMORY__
 
 //----------------------------------------------------------------------
 /**
@@ -386,7 +391,7 @@ extern int printf(const char *format, ...)
   character_count = write(STDOUT_FILENO,
                           (void*) output_string.start, output_string.length);
 
-#ifdef STATIC_MEMORY__
+#ifndef STATIC_MEMORY__
   free(output_string.start);
 #endif // STATIC_MEMORY__
 
