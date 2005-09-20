@@ -1,14 +1,15 @@
-#include "../../common/include/kernel/syscall-definitions.h"
+#include "unistd.h"
+#include "stdio.h"
 
-void print_to_stdout(char *string)
-{
-  int strlen = 0;
-  char *string2=string;
-  while (*string2++)
-    strlen++;
+//~ void print_to_stdout(char *string)
+//~ {
+  //~ int strlen = 0;
+  //~ char *string2=string;
+  //~ while (*string2++)
+    //~ strlen++;
   
-  __syscall(sc_write,fd_stdout,(long) string,strlen);
-}
+  //~ __syscall(sc_write,fd_stdout,(long) string,strlen);
+//~ }
 
 int main(int argc, char *argv[]) 
 {
@@ -17,7 +18,7 @@ int main(int argc, char *argv[])
 	char* str3="bye bye\n";
 
 	
-	print_to_stdout(str1);
-	print_to_stdout(str2);
-	print_to_stdout(str3);
+	printf("%s",str1);
+	printf("%s",str2);
+	printf("%s",str3);
 }
