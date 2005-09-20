@@ -122,6 +122,7 @@ ifeq ($(ARCH),xen)
 	@rm $(PROJECT_ROOT)/arch/arch -f
 	@echo "ln -s xen arch"
 	@cd $(PROJECT_ROOT)/arch; ln -s xen arch
+	@cd $(PROJECT_ROOT)/arch/xen/include; ln ../x86/include/*h ./ -sf
 else
 	@rm $(PROJECT_ROOT)/arch/arch -f
 	@echo "ln -s x86 arch"
