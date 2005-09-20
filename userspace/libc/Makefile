@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.2 2005/09/20 10:53:16 btittelbach Exp $
+# $Id: Makefile,v 1.3 2005/09/20 11:23:16 btittelbach Exp $
 # $Log: Makefile,v $
+# Revision 1.2  2005/09/20 10:53:16  btittelbach
+# Objects where they belong
+#
 # Revision 1.1  2005/09/16 05:01:40  aniederl
 # import of libc Makefiles
 #
@@ -45,8 +48,8 @@ OBJECTS = \
 					$(OBJECTDIR)/printf.o \
 					$(OBJECTDIR)/read.o \
 					$(OBJECTDIR)/scanf.o \
-					$(OBJECTDIR)/write.o
-
+					$(OBJECTDIR)/write.o \
+					$(OBJECTDIR)/start.o
 
 
 .PHONY: clean
@@ -55,6 +58,9 @@ all : objdir $(LIBC_STATIC)
 
 $(OBJECTDIR)/%.o : src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $^
+
+$(OBJECTDIR)/%.o : src/%.s
+	nasm -f elf -o $@ $^
 
 $(LIBC_STATIC) : $(OBJECTS)
 	ar rcs $@ $^
