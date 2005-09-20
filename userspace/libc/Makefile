@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.3 2005/09/20 11:23:16 btittelbach Exp $
+# $Id: Makefile,v 1.4 2005/09/20 13:28:14 btittelbach Exp $
 # $Log: Makefile,v $
+# Revision 1.3  2005/09/20 11:23:16  btittelbach
+# +_start
+#
 # Revision 1.2  2005/09/20 10:53:16  btittelbach
 # Objects where they belong
 #
@@ -52,9 +55,7 @@ OBJECTS = \
 					$(OBJECTDIR)/start.o
 
 
-.PHONY: clean
-
-all : objdir $(LIBC_STATIC)
+all : $(OBJECTDIR) $(LIBC_STATIC)
 
 $(OBJECTDIR)/%.o : src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $^
@@ -65,11 +66,14 @@ $(OBJECTDIR)/%.o : src/%.s
 $(LIBC_STATIC) : $(OBJECTS)
 	ar rcs $@ $^
 
+.PHONY: clean
+.PHONY: mrproper
+mrproper: clean
 clean:
 	rm -f ./include/arch/arch
 	test -e $(OBJECTDIR) && rm -f $(OBJECTDIR)/*
 
-objdir: archlink
+$(OBJECTDIR):
 	mkdir -p $(OBJECTDIR)
 
 archlink:
