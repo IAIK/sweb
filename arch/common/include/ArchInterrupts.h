@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.10 2005/09/20 17:43:55 lythien Exp $
+//  $Id: ArchInterrupts.h,v 1.11 2005/09/20 20:11:18 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.10  2005/09/20 17:43:55  lythien
+//  *** empty log message ***
+//
 //  Revision 1.9  2005/09/18 20:25:05  nelles
 //
 //
@@ -77,7 +80,7 @@
 
 /** @class ArchInterrupts
  *
- * the class ArchInterrupts
+ * Collection of architecture dependant functions conerning Interrupts
  *
  */
 class ArchInterrupts

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.9 2005/09/20 17:42:56 lythien Exp $
+//   $Id: ArchCommon.h,v 1.10 2005/09/20 20:11:18 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.h,v $
+//  Revision 1.9  2005/09/20 17:42:56  lythien
+//  *** empty log message ***
+//
 //  Revision 1.8  2005/09/03 17:08:34  nomenquis
 //  added support for grub modules
 //
@@ -38,9 +41,11 @@
 
 /** @class ArchCommon
  *
- * The class ArchCommon manages the size of the console
- * and the userbility of the console
- *
+ * Collection of architecture dependant stuff that didn't fit anywhere else
+ * + FrameBuffer Info
+ * + Grub Info (usable memory regions, modules)
+ * + memcpy
+ * + bzero
  */
 
 class ArchCommon
@@ -49,7 +54,7 @@ public:
 
   /** @haveVESAConsole
    *
-   * @param is_paging_set_up get a paramater
+   * @param is_paging_set_up inform function that paging is not yet up (=false) and that it should behave accordingly
    * if is_paging_set_up =1 default
    *
    */
@@ -78,84 +83,101 @@ public:
 
   /** @getVESAConsoleLFBPtr
    *
-   * FIXXMEE
-   * gets the FB-Pointer from the VESA Console
+   * returns a Pointer to the location of the VESA Memory Region
    *
-   * @param is_paging_set_up set up the paging
-   *
+   * @param is_paging_set_up 
+   *   on false: returns memory address in real memory
+   *   on true (default): returns mapped memory address
+   * @return a Pointer to the location of the VESA Memory Region
    */
   static pointer getVESAConsoleLFBPtr(uint32 is_paging_set_up=1);
 
   /** @getFBPtr
-   * FBPTR framebuffer pointer
+   * returns a Pointer to the location of the FrameBuffer
    *
-   * @param is_paging_set_up set up the paging
+   * @param is_paging_set_up 
+   *   on false: returns memory address in real memory
+   *   on true (default): returns mapped memory address
+   * @return a Pointer to the location of the FrameBuffer
    */
   static pointer getFBPtr(uint32 is_paging_set_up=1);
 
 
   /** @getNumUseableMemoryRegions
    *
-   * gets the number of usable memory regions
-   *
+   * tells you the number of Useable Memory Regions just as grub told us
    */
   static uint32 getNumUseableMemoryRegions();
 
   /** @getUsableMemoryRegion
    *
-   * @param region is the region of FIXXME
-   * @param start_address
-   * @param end_adress
-   * @param type
+   * Reads the Grub MultiBoot-Info and
+   * returns the start- and end-address of the Useable Memory Region x
+   *
+   * @param number of the region-information to parse
+   * @param &start_address of Useable Memory Region
+   * @param &end_adress of Useable Memory Region
+   * @param &type of Useable Memory Region
+   * @return 1 if region >= number_of_regions, 0 otherwise
    */
   static uint32 getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type);
 
 
   /** @memcpy
    *
+   * Copy Memory, fast
    *
-   * @param dest
-   * @param src
-   * @param size
+   * @param dest Destination to copy to
+   * @param src Source to read from
+   * @param size Number of Bytes to copy
    */
   static void memcpy(pointer dest, pointer src, size_t size);
 
   /** @bzero
-   * The  bzero()  function sets the first n bytes of the byte area starting at s to zero.
    *
-   * @param s
-   * @param n
-   * @param debug
+   * Sets the first n bytes of the memory area starting at s to zero.
+   *
+   * @param s (start zeroing here)
+   * @param n (zero n bytes)
+   * @param debug (set to 1 for debugging info)
    */
   static void bzero(pointer s, size_t n, uint32 debug = 0);
 
 
   /** @getNumModules
    *
+   * Parses the Grub MultiBoot Info with regard to modules
    *
-   * @param is_paging_set_up set up the paging
+   * @param is_paging_set_up set (default=1) set 0 if paging is not yet up
+   * @return uint32 returns the number of modules loaded by grub
    */
   static uint32 getNumModules(uint32 is_paging_set_up=1);
 
   /** @getModuleStartAddress
    *
+   * Parses the Grub MultiBoot Info with regard to modules
    *
-   * @param num
-   * @param is_paging_set_up
+   * @param num the number of grub-loaded module which this is about
+   * @param is_paging_set_up set (default=1) set 0 if paging is not yet up
+   * @return uint32 returns memory start address of module "num"
    */
   static uint32 getModuleStartAddress(uint32 num,uint32 is_paging_set_up=1);
 
   /** @getModuleEndAddress
    *
+   * Parses the Grub MultiBoot Info with regard to modules
    *
-   * @param num
-   * @param is_paging_set_up set up the paging
+   * @param num the number of grub-loaded module which this is about
+   * @param is_paging_set_up set (default=1) set 0 if paging is not yet up
+   * @return uint32 returns memory end address of module "num"
    */
   static uint32 getModuleEndAddress(uint32 num,uint32 is_paging_set_up=1);
 
 
   /** @dummdumm
    *
+   * Parses the Grub MultiBoot Info with regard to modules
+   * Used for debugging
    *
    * @param i
    * @param used

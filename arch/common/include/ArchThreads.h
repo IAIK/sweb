@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.9 2005/09/20 17:44:44 lythien Exp $
+//  $Id: ArchThreads.h,v 1.10 2005/09/20 20:11:18 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.9  2005/09/20 17:44:44  lythien
+//  *** empty log message ***
+//
 //  Revision 1.8  2005/08/26 13:58:24  nomenquis
 //  finally even the syscall handler does that it is supposed to do
 //
@@ -39,37 +42,20 @@
 
 #include "types.h"
 
-/** @class ArchThreadsInfo
- *
- * this is where the thread info for task switching is stored
- *
- */
 class ArchThreadInfo;
-
-/** @class Thread
- *
- * this is where the thread itself will reside
- *
- */
 class Thread;
 
 /** @ArchThreadInfo
  *
- *
+ * this is where the thread info for task switching is stored
  *
  */
 extern ArchThreadInfo *currentThreadInfo;
-
-/** @Thread
- *
- *
- *
- */
 extern Thread *currentThread;
 
 /** @class ArchThreads
  *
- *
+ * Collection of architecture dependant code concerning Task Switching
  *
  */
 class ArchThreads
@@ -116,29 +102,34 @@ public:
 
 /** @yield
  *
- *
+ * on x86: invokes int65, whose handler facilitates a task switch
  *
  */
   static void yield();
 
 /** @setPageDirectory
  *
- * @param thread
- * @param page_dir_physical_page
+ * set's a threads PageDirectory to the one in page_dir_physical_page
+ *
+ * @param *thread Pointer to Thread Object
+ * @param page_dir_physical_page The Page where a valid pde can be found
  */
   static void setPageDirectory(Thread *thread, uint32 page_dir_physical_page);
 
 /** @getPageDirectory
  *
- * @param thread
- *
+ * @param *thread Pointer to Thread Object
+ * @return returns pde page of *thread
  */
   uint32 getPageDirectory(Thread *thread);
 
-/** @testSetLock
+/** testSetLock
+ * uninterruptable locked operation
+ * exchanges value in variable lock with new_value and returns the old_value
  *
- * @param lock
- * @param new_value
+ * @param &lock Reference to variable being tested
+ * @param new_value to set variable lock to
+ * @returns old_value of variable lock
  */
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
 

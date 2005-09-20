@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.12 2005/09/20 17:44:26 lythien Exp $
+//  $Id: ArchMemory.h,v 1.13 2005/09/20 20:11:18 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.12  2005/09/20 17:44:26  lythien
+//  *** empty log message ***
+//
 //  Revision 1.11  2005/09/03 19:02:54  btittelbach
 //  PageManager++
 //
@@ -52,7 +55,7 @@
 //Arch-VirtualMemoryUserSpaceObjekt
 /** @enableKBD
  *
- *
+ * Collection of architecture dependant functions conerning Memory and Pages
  *
  */
 class ArchMemory
