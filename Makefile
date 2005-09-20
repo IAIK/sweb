@@ -19,7 +19,8 @@ SUBPROJECTS := \
                common/source/drivers \
                utils/mtools \
                common/source/fs \
-               userspace/tests
+               common/source/fs/ramfs \
+               common/source/fs/pseudofs 
 else
 SUBPROJECTS := \
                arch/arch/source \
@@ -46,7 +47,8 @@ SHARED_LIBS :=  \
                 common/source/mm/libMM.a \
                 common/source/drivers/libDrivers.a \
                 common/source/fs/libFS.a \
-                common/source/fs/ramfs/libRamFS.a
+                common/source/fs/ramfs/libRamFS.a \
+                common/source/fs/pseudofs/libPseudoFS.a
 else
 SHARED_LIBS :=  \
                 arch/arch/source/libArchSpecific.a \
