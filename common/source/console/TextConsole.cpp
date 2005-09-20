@@ -1,8 +1,18 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.8 2005/09/16 12:47:41 btittelbach Exp $
+//   $Id: TextConsole.cpp,v 1.9 2005/09/20 19:07:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.8  2005/09/16 12:47:41  btittelbach
+//  Second PatchThursday:
+//  +KeyboardInput SyncStructure Rewrite
+//  +added RingBuffer
+//  +debugged FiFoDRBOSS (even though now obsolete)
+//  +improved FiFo
+//  +more debugging
+//  Added Files:
+//   	common/include/ipc/RingBuffer.h
+//
 //  Revision 1.7  2005/09/15 17:51:13  nelles
 //
 //
@@ -167,6 +177,9 @@ void TextConsole::handleKey( uint32 key )
     setActiveTerminal(terminal_selected);
     return;
   }
+  
+  if (terminal_selected == 11)
+    Scheduler::instance()->printThreadList();
   
   if( key == '\b' )
     terminals_[active_terminal_]->backspace();

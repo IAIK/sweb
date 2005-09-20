@@ -1,7 +1,13 @@
 /**
- * $Id: main.cpp,v 1.93 2005/09/20 08:05:08 btittelbach Exp $
+ * $Id: main.cpp,v 1.94 2005/09/20 19:07:41 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.93  2005/09/20 08:05:08  btittelbach
+ * +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
+ * +Condition cleanup
+ * +FiFoDRBOSS now obsolete and removed
+ * +added disk.img that nelle forgot to check in
+ *
  * Revision 1.92  2005/09/18 20:25:05  nelles
  *
  *
@@ -451,184 +457,48 @@ extern void* kernel_end_address;
 
 extern "C" void startup();
 
-Mutex * lock;
-
-class StupidThread : public Thread
-{
-  public:
-
-  StupidThread(uint32 id, char *name)
-  {
-  //  lock->acquire();
-    thread_number_ = id;
-    name_=name;
- //   lock->release();
-  }
-
-  virtual void Run()
-  {
-    uint32 i=0;
-    while (1)
-    {
- //   kprintf("Thread %d trying to get the lock\n",thread_number_);
-      lock->acquire();
-      Scheduler::instance()->yield();
-      //kprintf("Thread %d has the lock\n",thread_number_);
-       kprintf("Kernel Thread %d %d\n",thread_number_,i++);
-      lock->release();
-      Scheduler::instance()->yield();
-
-     // if( i++ >= 5 )
-       // stupid_static_func1( 32  );
-
-    }
-  }
-
-private:
-
-  uint32 thread_number_;
-
-};
-
 class UserThread : public Thread
 {
   public:
-
-  UserThread(char *name)
+  UserThread(char *pseudofs_filename, uint32 terminal_number=0)
   {
-    name_=name;
-    uint8 *foo=(uint8*)"\177\105\114\106\1\1\1\0\0\0\0\0\0\0\0\0\2\0\3\0\1\0\0\0\264\200\4\10\64\0\0\0\174\1\0\0\0\0\0\0\64\0\40\0\4\0\50\0\11\0\6\0\1\0\0\0\0\0\0\0\0\200\4\10\0\200\4\10\332\0\0\0\332\0\0\0\5\0\0\0\0\20\0\0\1\0\0\0\334\0\0\0\334\220\4\10\334\220\4\10\4\0\0\0\24\47\0\0\6\0\0\0\0\20\0\0\121\345\164\144\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0\0\0\4\0\0\0\200\25\4\145\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\50\0\0\4\0\0\0\125\211\345\315\200\353\376\0\163\157\155\145\40\162\157\40\144\141\164\141\0\0\0\0\274\200\4\10\163\157\155\145\40\144\141\164\141\0\0\0\320\200\4\10\0\107\103\103\72\40\50\107\116\125\51\40\63\56\63\56\65\55\62\60\60\65\60\61\63\60\40\50\107\145\156\164\157\157\40\114\151\156\165\170\40\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\162\61\54\40\163\163\160\55\63\56\63\56\65\56\62\60\60\65\60\61\63\60\55\61\54\40\160\151\145\55\70\56\67\56\67\56\61\51\0\0\56\163\171\155\164\141\142\0\56\163\164\162\164\141\142\0\56\163\150\163\164\162\164\141\142\0\56\164\145\170\164\0\56\162\157\144\141\164\141\0\56\144\141\164\141\0\56\142\163\163\0\56\143\157\155\155\145\156\164\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\33\0\0\0\1\0\0\0\6\0\0\0\264\200\4\10\264\0\0\0\7\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\41\0\0\0\1\0\0\0\2\0\0\0\274\200\4\10\274\0\0\0\36\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\51\0\0\0\1\0\0\0\3\0\0\0\334\220\4\10\334\0\0\0\4\0\0\0\0\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0\57\0\0\0\10\0\0\0\3\0\0\0\340\220\4\10\340\0\0\0\20\47\0\0\0\0\0\0\0\0\0\0\40\0\0\0\0\0\0\0\64\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\340\0\0\0\137\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\21\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\77\1\0\0\75\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\2\0\0\0\0\0\0\0\0\0\0\0\344\2\0\0\20\1\0\0\10\0\0\0\12\0\0\0\4\0\0\0\20\0\0\0\11\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\364\3\0\0\100\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\264\200\4\10\0\0\0\0\3\0\1\0\0\0\0\0\274\200\4\10\0\0\0\0\3\0\2\0\0\0\0\0\334\220\4\10\0\0\0\0\3\0\3\0\0\0\0\0\340\220\4\10\0\0\0\0\3\0\4\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\6\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\7\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\10\0\1\0\0\0\0\0\0\0\0\0\0\0\4\0\361\377\10\0\0\0\340\220\4\10\20\47\0\0\21\0\4\0\17\0\0\0\264\200\4\10\7\0\0\0\22\0\1\0\26\0\0\0\314\200\4\10\4\0\0\0\21\0\2\0\43\0\0\0\340\220\4\10\0\0\0\0\20\0\361\377\57\0\0\0\334\220\4\10\4\0\0\0\21\0\3\0\64\0\0\0\340\220\4\10\0\0\0\0\20\0\361\377\73\0\0\0\360\267\4\10\0\0\0\0\20\0\361\377\0\164\145\163\164\56\143\0\142\154\165\142\142\141\0\137\163\164\141\162\164\0\163\157\155\145\137\162\157\137\144\141\164\141\0\137\137\142\163\163\137\163\164\141\162\164\0\144\141\164\141\0\137\145\144\141\164\141\0\137\145\156\144\0";
-
-    loader_= new Loader(foo,this);
-    loader_->loadExecutableAndInitProcess();
-
-    kprintf("UserThread::ctor: Done loading exe \n");
-
+    name_=pseudofs_filename;
+    uint8 *elf_data = PseudoFS::getInstance()->getFilePtr(pseudofs_filename);
+    if (elf_data)
+    {
+      loader_= new Loader(elf_data,this);
+      loader_->loadExecutableAndInitProcess();
+      run_me_=true;
+      terminal_number_=terminal_number;
+    }
+    else
+    {
+      run_me_=false;
+    }
+    kprintf("UserThread::ctor: Done loading %s\n",pseudofs_filename);
   }
 
   virtual void Run()
   {
-    for(;;)
-    {
-      kprintf("UserThread:Run: Going to user, expect page fault\n");
-      this->switch_to_userspace_ = 1;
-
-      Scheduler::instance()->yield();
-    }
+    if (run_me_)
+      for(;;)
+      {
+        if (main_console->getTerminal(terminal_number_))
+          this->setTerminal(main_console->getTerminal(terminal_number_));          
+        kprintf("UserThread:Run: %x %s Going to user, expect page fault\n",this,this->getName());
+        this->switch_to_userspace_ = 1;
+        Scheduler::instance()->yield();
+        //should not reach
+      }
+    else
+      currentThread->kill();
   }
 
 private:
-
-  uint32 bad_mapping_page_0;
-
+  bool run_me_;
+  uint32 terminal_number_;
 };
 
-class MatriceMultTest : public Thread
-{
-  public:
-
-  MatriceMultTest()
-  {
-    name_="mult.sweb";
-    uint8 *foo = PseudoFS::getInstance()->getFilePtr("mult.sweb");
-    if (! foo)
-      arch_panic((uint8*)"mult not found in pseudofs\n");
-    
-    loader_= new Loader(foo,this);
-    loader_->loadExecutableAndInitProcess();
-
-    kprintf("UserThread::ctor: Done loading exe \n");
-
-  }
-
-  virtual void Run()
-  {
-    while (state_ != ToBeDestroyed)
-    {
-      kprintf("UserThread:Run: Going to user, expect page fault\n");
-      this->switch_to_userspace_ = 1;
-
-      Scheduler::instance()->yield();
-    }
-    Scheduler::instance()->yield();
-    arch_panic((uint8*)("SyscallTest::Run: should not reach here !!"));
-  }
-
-private:
-
-  uint32 bad_mapping_page_0;
-
-};
-
-class SyscallTest : public Thread
-{
-  public:
-
-  SyscallTest()
-  {    
-    name_="stdout-test.sweb";
-    uint8 *foo = PseudoFS::getInstance()->getFilePtr("stdout-test.sweb");
-    if (! foo)
-      arch_panic((uint8*)"stdout-test not found in pseudofs\n");
-    loader_= new Loader(foo,this);
-    loader_->loadExecutableAndInitProcess();
-    kprintf("SyscallTest:ctor: Done loading exe \n");
-  }
-
-  virtual void Run()
-  {
-    while (state_ != ToBeDestroyed)
-    {
-      kprintfd("SyscallTest:run: Going to userr, expect page fault\n");
-      //kprintf("SyscallTest:run: Going to userr, expect page fault\n");
-      //kprintfd("SyscallTest:run: post printf\n");
-      this->switch_to_userspace_ = 1; // this is necessary, because it's possible that we suddenly switch to kernelspace in a userthread (see Scheduler and bochs sucks)
-      Scheduler::instance()->yield();
-    }
-    Scheduler::instance()->yield();
-    arch_panic((uint8*)("SyscallTest::Run: should not reach here !!"));
-  }
-
-private:
-
-  uint32 bad_mapping_page_0;
-
-};
-
-class SyscallTest2 : public Thread
-{
-  public:
-
-  SyscallTest2()
-  {    
-    name_="stdin-test.sweb";
-    uint8 *foo = PseudoFS::getInstance()->getFilePtr("stdin-test.sweb");
-    if (! foo)
-      arch_panic((uint8*)"stdin-test not found in pseudofs\n");
-    loader_= new Loader(foo,this);
-    loader_->loadExecutableAndInitProcess();
-    kprintf("SyscallTest2:ctor: Done loading exe \n");
-  }
-
-  virtual void Run()
-  {
-    while (state_ != ToBeDestroyed)
-    {
-      kprintfd("SyscallTest2:run: Going to userr, expect page fault\n");
-      //kprintf("SyscallTest2:run: Going to userr, expect page fault\n");
-      //kprintfd("SyscallTest2:run: post printf\n");
-      this->switch_to_userspace_ = 1; // this is necessary, because it's possible that we suddenly switch to kernelspace in a userthread (see Scheduler and bochs sucks)
-      Scheduler::instance()->yield();
-    }
-    Scheduler::instance()->yield();
-    arch_panic((uint8*)("SyscallTest2::Run: should not reach here !!"));
-  }
-
-private:
-
-  uint32 bad_mapping_page_0;
-
-};
 
 //------------------------------------------------------------
 void startup()
@@ -660,9 +530,6 @@ void startup()
   main_console->setActiveTerminal(0);
 
   kprintfd("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
-  uint32 a,b,c;
-  ArchCommon::dummdumm(0,a,b,c);
-  kprintfd("A %x B %x C %x\n",a,b,c);
 
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
@@ -677,14 +544,13 @@ void startup()
 
   kprintf("Timer enable\n");
   ArchInterrupts::enableTimer();
-  lock = new Mutex();
 
   ArchInterrupts::enableKBD();
   
 
   kprintf("Thread creation\n");
   
-  kprintfd("Adding threads\n");
+  kprintfd("Adding Kernel threads\n");
  
   Scheduler::instance()->addNewThread( main_console );
   
@@ -695,10 +561,16 @@ void startup()
   Scheduler::instance()->addNewThread( 
     new BDThread()
     );
-  //~ Scheduler::instance()->addNewThread(new MatriceMultTest());
-   Scheduler::instance()->addNewThread(new SyscallTest());
-   Scheduler::instance()->addNewThread(new SyscallTest2());
     
+  kprintfd("Adding UserThreads threads\n");
+  //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
+    
+  for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
+    Scheduler::instance()->addNewThread( 
+      new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
+    ); 
+  
+  
   Scheduler::instance()->printThreadList();
   
   kprintfd("Now enabling Interrupts...\n");

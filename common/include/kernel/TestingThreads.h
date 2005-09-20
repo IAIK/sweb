@@ -73,7 +73,7 @@ class SerialThread : public Thread
     }
 
     kprintf("SerialThread::Run: Done with serial ports\n");
-    for(;;) Scheduler::instance()->yield();
+    currentThread->kill();
   };
 
 };
@@ -101,7 +101,7 @@ class BDThread : public Thread
       BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getNumBlocks()*BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getBlockSize() );
       
     kprintf("BDThread::Run: Done with blockdevices\n");
-    for(;;) Scheduler::instance()->yield();
+    currentThread->kill();
   };
 
 };
