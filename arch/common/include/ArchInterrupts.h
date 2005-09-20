@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.11 2005/09/20 20:11:18 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.12 2005/09/20 20:19:48 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.11  2005/09/20 20:11:18  btittelbach
+//  doxification
+//
 //  Revision 1.10  2005/09/20 17:43:55  lythien
 //  *** empty log message ***
 //
@@ -138,7 +141,10 @@ public:
 
 /** @EndOfInterrupt
  *
- * @param number
+ * Signals EOI to the Interrupt-Controller, so the Controller
+ * can resume sending us Interrupts
+ *
+ * @param number of Interrupt that finished, so we know which Interrupt-Controller to signal
  *
  */
   static void EndOfInterrupt(uint16 number);
@@ -146,22 +152,23 @@ public:
 
 /** @enableInterrupts
  *
- * enable interrupts, no matter what, this is bad
- *
+ * enable interrupts, no more lazy linear code execution time ;-)
+ * (using sti on x86)
  */
   static void enableInterrupts();
 
 /** @disableInterrupts
  *
- * disable interrupts
- *
+ * disables Interrupts (by using cli (clear interrupts) on x86)
+ * @return bool true if Interrupts were enabled, false otherwise
  */
   static bool disableInterrupts();
 
 /** @testIFSet
  *
+ * on x86: tests if the IF Flag in EFLAGS is set, aka if the Interrupts are enabled
  * 
- *
+ * @return bool true if Interrupts are enabled, false otherwise
  */
   static bool testIFSet();
   //static void setOldInterruptState(uint32 const &flags);
