@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: unistd.h,v $
  *
- * $Id: unistd.h,v 1.3 2005/09/13 17:31:04 aniederl Exp $
+ * $Id: unistd.h,v 1.4 2005/09/20 14:17:24 aniederl Exp $
  * $Log: unistd.h,v $
+ * Revision 1.3  2005/09/13 17:31:04  aniederl
+ * removed "unnecessary" functions
+ *
  * Revision 1.2  2005/09/11 12:35:49  aniederl
  * added special syscall macro for return value pass-through
  *
@@ -35,6 +38,7 @@
 #ifndef unistd_h___
 #define unistd_h___
 
+#include "../../../common/include/kernel/syscall-definitions.h"
 #include "stdarg.h"
 
 
@@ -93,19 +97,19 @@
  * File number of stdin
  *
  */
-#define STDIN_FILENO 0
+#define STDIN_FILENO fd_stdin
 
 /**
  * File number of stdin
  *
  */
-#define STDOUT_FILENO 1
+#define STDOUT_FILENO fd_stdout
 
 /**
  * File number of stdin
  *
  */
-#define STDERR_FILENO 2
+#define STDERR_FILENO fd_stderr
 
 
 /**
