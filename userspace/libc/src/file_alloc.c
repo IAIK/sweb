@@ -23,8 +23,11 @@
 /**
  * CVS Log Info for $RCSfile: file_alloc.c,v $
  *
- * $Id: file_alloc.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
+ * $Id: file_alloc.c,v 1.4 2005/09/20 14:39:56 aniederl Exp $
  * $Log: file_alloc.c,v $
+ * Revision 1.3  2005/09/20 13:48:42  aniederl
+ * changed syscalls for using __syscall asm function
+ *
  * Revision 1.2  2005/09/11 13:12:50  aniederl
  * fixed syscall access
  *
@@ -38,6 +41,7 @@
 #include "unistd.h"
 #include "fcntl.h"
 #include "stdarg.h"
+#include "sys/syscall.h"
 #include "../../../common/include/kernel/syscall-definitions.h"
 
 
@@ -169,7 +173,8 @@ int creat(const char *path, mode_t mode)
  */
 int pipe(int file_descriptor_array[2])
 {
-  return __syscall(sc_pipe, file_descriptor_array, 0x00, 0x00, 0x00, 0x00);
+  return __syscall(sc_pipe, (long) file_descriptor_array, 0x00, 0x00, 0x00,
+                   0x00);
 }
 
 

@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: read.c,v $
  *
- * $Id: read.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
+ * $Id: read.c,v 1.4 2005/09/20 14:39:56 aniederl Exp $
  * $Log: read.c,v $
+ * Revision 1.3  2005/09/20 13:48:42  aniederl
+ * changed syscalls for using __syscall asm function
+ *
  * Revision 1.2  2005/09/11 10:56:55  aniederl
  * fixed include statements
  *
@@ -35,6 +38,7 @@
 
 
 #include "unistd.h"
+#include "sys/syscall.h"
 #include "../../../common/include/kernel/syscall-definitions.h"
 
 //----------------------------------------------------------------------

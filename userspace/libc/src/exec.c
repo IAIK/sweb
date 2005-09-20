@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: exec.c,v $
  *
- * $Id: exec.c,v 1.3 2005/09/20 13:48:42 aniederl Exp $
+ * $Id: exec.c,v 1.4 2005/09/20 14:39:56 aniederl Exp $
  * $Log: exec.c,v $
+ * Revision 1.3  2005/09/20 13:48:42  aniederl
+ * changed syscalls for using __syscall asm function
+ *
  * Revision 1.2  2005/09/16 05:00:07  aniederl
  * syscall macros don't work with explicit array parameters (like argv[]), so changed them to pointers
  *
@@ -36,6 +39,7 @@
 
 #include "unistd.h"
 #include "../../../common/include/kernel/syscall-definitions.h"
+#include "sys/syscall.h"
 #include "stdarg.h"
 #include "stdlib.h"
 
