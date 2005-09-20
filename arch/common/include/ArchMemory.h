@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.11 2005/09/03 19:02:54 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.12 2005/09/20 17:44:26 lythien Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.11  2005/09/03 19:02:54  btittelbach
+//  PageManager++
+//
 //  Revision 1.10  2005/08/11 18:24:39  nightcreature
 //  removed unused method physicalPageToKernelPointer
 //
@@ -47,38 +50,95 @@
 #include "../../../common/include/mm/PageManager.h"
 
 //Arch-VirtualMemoryUserSpaceObjekt
+/** @enableKBD
+ *
+ *
+ *
+ */
 class ArchMemory
 {
 public:
-  //creates a new Page Directory for a Process
+
+/** @initNewPageDirectory
+ *
+ * creates a new Page Directory for a Process
+ *
+ * @param physical_page_to_use
+ */
   static void initNewPageDirectory(uint32 physical_page_to_use);
-  //maps a physical page to a virtual page (pde and pte need to be set up first)
+
+/** @mapPage
+ *
+ * maps a physical page to a virtual page (pde and pte need to be set up first)
+ *
+ * @param physical_page_directory_page
+ * @param virtual_page
+ * @param physical_page
+ * @param user_access
+ */
   static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access);
-  //removes mapping to a virtual_page and returns ppn of that page
+
+/** @unmapPage
+ *
+ * removes mapping to a virtual_page and returns ppn of that page
+ *
+ * @param physical_page_directory_page
+ * @param virtual_page
+ */
   static void unmapPage(uint32 physical_page_directory_page, uint32 virtual_page);
-  //remove a PDE and all its Pages and PageTables
+
+/** @freePageDirectory
+ *
+ *remove a PDE and all its Pages and PageTables
+ *
+ * @param physical_page_directory_page
+ */
   static void freePageDirectory(uint32 physical_page_directory_page);
 
 //  static pointer physicalPageToKernelPointer(uint32 physical_page);
+
+/** @get3GBAdressOfPPN
+ *
+ * @param ppn
+ *
+ */
   static pointer get3GBAdressOfPPN(uint32 ppn)
   {
     return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);
   }
 
+/** @checkAdressValid
+ *
+ * @param physical_page_directory_page
+ * @param vaddress_to_check
+ */
   static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
+
+/** @getPhysicalPageInKernelMapping
+ *
+ * @param virtual_page
+ * @param physical_page
+ */
   static bool getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
 
 private:
+
+/** @insertPTE
+ *
+ * @param physical_page_directory_page
+ * @param pde_vpn
+ * @param physical_page_table_page
+ */
   static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
+
+/** @checkAndRemovePTE
+ *
+ * @param physical_page_directory_page
+ * @param pde_vpn
+ */
   static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
 
 };
-
-
-
-
-
-
 
 
 #endif
