@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: stdio.h,v $
  *
- * $Id: stdio.h,v 1.1 2005/09/14 23:11:29 aniederl Exp $
- * $Log$
+ * $Id: stdio.h,v 1.2 2005/09/20 15:58:38 aniederl Exp $
+ * $Log: stdio.h,v $
+ * Revision 1.1  2005/09/14 23:11:29  aniederl
+ * import of stdio.h
+ *
  */
 
 
@@ -32,6 +35,7 @@
 // stdarg.h is taken from gcc
 #include <stdarg.h>
 
+#include "unistd.h"
 
 /**
  * Size of <stdio.h> buffers

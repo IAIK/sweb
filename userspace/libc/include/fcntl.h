@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: fcntl.h,v $
  *
- * $Id: fcntl.h,v 1.2 2005/09/13 17:31:04 aniederl Exp $
+ * $Id: fcntl.h,v 1.3 2005/09/20 15:58:37 aniederl Exp $
  * $Log: fcntl.h,v $
+ * Revision 1.2  2005/09/13 17:31:04  aniederl
+ * removed "unnecessary" functions
+ *
  * Revision 1.1  2005/09/11 13:15:46  aniederl
  * import of fcntl.h
  *
@@ -31,6 +34,8 @@
 
 #ifndef fcntl_h___
 #define fcntl_h___
+
+#include "unistd.h"
 
 /**
  * Duplicate file descriptor
