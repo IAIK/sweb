@@ -1,3 +1,28 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Nebojsa Simic 
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+/********************************************************************
+*
+*    $Id: arch_bd_io.h,v 1.2 2005/09/20 21:14:31 nelles Exp $
+*    $Log: arch_bd_io.h,v $
+**********************************************************************/
+
 #ifndef _BD_IO_
 #define _BD_IO_
 
@@ -7,7 +32,11 @@ class bdio {
   public:
   // C Wrapers for reading and writing IO ports 
   // practicaly everything that exists in linux asm/io.h 
-  // but without hardware abstractons, purely for x86 archi 
+  // but without hardware abstractions, purely for x86 archi
+  
+  // The C wrappers are wrapped conviniently in a C++ class
+  // each class that needs access to these functions can simply
+  // inherit the bdio class or call them through bdio::method();
   
   // writes a byte to the IO port 
   static void outb( uint16 port, uint8 value) 
