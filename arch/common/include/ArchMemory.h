@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.14 2005/09/21 12:08:10 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.15 2005/09/21 18:38:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.14  2005/09/21 12:08:10  btittelbach
+//  sweet doxyfication
+//
 //  Revision 1.13  2005/09/20 20:11:18  btittelbach
 //  doxification
 //
@@ -123,11 +126,12 @@ public:
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the physical_page it refers to
+ * to get a physical address (which you can only use by adding 3gb to it) multiply the &physical_page with the return value
  * @param virtual_page virtual Page to look up
  * @param &physical_pag Reference to the result
- * @return true: if mapping exists\nfalse: if the virtual page doesn't map to any physical page
+ * @return 0: if the virtual page doesn't map to any physical page\notherwise returns the page size in byte (4096 for 4k pages or 4096*1024 for 4m pages)
  */
-  static bool getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
+  static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
 
 private:
 

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.13 2005/09/03 19:02:54 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.14 2005/09/21 18:38:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.13  2005/09/03 19:02:54  btittelbach
+//  PageManager++
+//
 //  Revision 1.12  2005/08/11 18:24:39  nightcreature
 //  removed unused method physicalPageToKernelPointer
 //
@@ -136,17 +139,25 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
   {
     if (page_directory[pde_vpn].pde4k.present)
     {
-      page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-      for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+      if (page_directory[pde_vpn].pde4m.use_4_m_pages)
       {
-        if (pte_base[pte_vpn].present)
-        {
-          pte_base[pte_vpn].present = 0;
-          PageManager::instance()->freePage(pte_base[pte_vpn].page_base_address);
-        }
+        page_directory[pde_vpn].pde4m.present=0;
+        //FIXXME free a 4m page (which are not yet supported by PageManager)
       }
-      page_directory[pde_vpn].pde4k.present=0;
-      PageManager::instance()->freePage(page_directory[pde_vpn].pde4k.page_table_base_address);
+      else
+      {
+        page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+        for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+        {
+          if (pte_base[pte_vpn].present)
+          {
+            pte_base[pte_vpn].present = 0;
+            PageManager::instance()->freePage(pte_base[pte_vpn].page_base_address);
+          }
+        }
+        page_directory[pde_vpn].pde4k.present=0;
+        PageManager::instance()->freePage(page_directory[pde_vpn].pde4k.page_table_base_address);
+      }
     }
   }
   PageManager::instance()->freePage(physical_page_directory_page);
@@ -160,6 +171,9 @@ bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 v
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde4k.present)
   {
+    if (page_directory[pde_vpn].pde4m.use_4_m_pages)
+      return true;
+    
     page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
     if (pte_base[pte_vpn].present)
       return true;
@@ -170,23 +184,31 @@ bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 v
     return false;
 }
 
-bool ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page)
+uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page)
 {
   page_directory_entry *page_directory = (page_directory_entry *) &kernel_page_directory_start;
   //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-  if (page_directory[pde_vpn].pde4k.present)
+  if (page_directory[pde_vpn].pde4k.present) //the present bit is the same for 4k and 4m
   {
-    page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-    if (pte_base[pte_vpn].present)
+    if (page_directory[pde_vpn].pde4m.use_4_m_pages)
     {
-      *physical_page = pte_base[pte_vpn].page_base_address;
-      return true;
+      *physical_page = page_directory[pde_vpn].pde4m.page_base_address;
+      return (PAGE_SIZE*1024U);
     }
     else
-      return false;
+    {
+      page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+      if (pte_base[pte_vpn].present)
+      {
+        *physical_page = pte_base[pte_vpn].page_base_address;
+        return PAGE_SIZE;
+      }
+      else
+        return 0;
+    }
   }
   else
-    return false;
+    return 0;
 }
