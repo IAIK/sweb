@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.10 2005/09/03 19:02:54 btittelbach Exp $
+//   $Id: PageManager.cpp,v 1.11 2005/09/21 14:00:51 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.10  2005/09/03 19:02:54  btittelbach
+//  PageManager++
+//
 //  Revision 1.9  2005/08/11 18:28:10  nightcreature
 //  changed define of evil print(x) depending on platform xen or x86
 //
@@ -162,12 +165,12 @@ PageManager::PageManager(pointer start_of_structure)
     end_address /= PAGE_SIZE;
     //print(start_address)
     //print(end_address)
-    if (start_address > 1024*256 || end_address > 1024*256) //becaue max 1 gig of memory?, see above
+    if (start_address > 1024*256) //becaue max 1 gig of memory?, see above
     {
       //print(777777777);
       continue;
     }
-    for (k=start_address;k<end_address;++k)
+    for (k=start_address;k<Min(end_address,1024*256);++k)
     {
       page_usage_table_[k] = PAGE_FREE;
     }
