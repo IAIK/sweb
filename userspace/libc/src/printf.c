@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.6 2005/09/20 14:16:08 aniederl Exp $
+ * $Id: printf.c,v 1.7 2005/09/21 03:31:52 aniederl Exp $
  * $Log: printf.c,v $
+ * Revision 1.6  2005/09/20 14:16:08  aniederl
+ * repaired wrong macro query
+ *
  * Revision 1.5  2005/09/16 03:13:58  aniederl
  * fixed error recognition in putchar and puts
  *
@@ -178,13 +181,24 @@ void writeNumber(c_string *output_string, unsigned int number,
     precision = size;
 
   while (size-- - precision > i)
+  {
     *output_string->ptr++ = c;
+    ++output_string->length;
+  }
 
   while (precision-- > i)
+  {
     *output_string->ptr++ = '0';
+    ++output_string->length;
+  }
 
 	while (i-- > 0)
+  {
     *output_string->ptr++ = tmp[i];
+    ++output_string->length;
+  }
+
+
 	//~ while (size-- > 0) {
 		//~ if (buf <= end)
 			//~ *buf = ' ';
