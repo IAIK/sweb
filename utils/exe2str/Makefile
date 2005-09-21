@@ -11,6 +11,3 @@ exe2str: exe2str.hs
 .PHONY: clean
 clean:
 	rm -f exe2str $(OBJS) *.hi out.cstr
-
-finite-loop2:
-	gcc $(CFLAGS) -o finite-loop2  ../../userspace/start.o finite-loop2.c
