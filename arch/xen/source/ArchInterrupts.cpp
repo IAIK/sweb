@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.1 2005/08/01 08:18:59 nightcreature Exp $
+//  $Id: ArchInterrupts.cpp,v 1.2 2005/09/21 02:18:58 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.1  2005/08/01 08:18:59  nightcreature
+//  initial release, partly dummy implementation, needs changes
+//
 //
 //----------------------------------------------------------------------
 
@@ -46,7 +49,7 @@ void ArchInterrupts::enableInterrupts()
 //    );
 }
 
-void ArchInterrupts::disableInterrupts()
+bool ArchInterrupts::disableInterrupts()
 {
 //    uint32 ret_val;
 
@@ -57,7 +60,7 @@ void ArchInterrupts::disableInterrupts()
 //  :);
  
 // // return ret_val;
-
+  return(false);
 }
 
 //tests if the InteruptFlag in EFLAGS is set
@@ -75,3 +78,10 @@ bool ArchInterrupts::testIFSet()
   
   return(false);
 }
+
+
+void ArchInterrupts::enableKBD(){}
+void ArchInterrupts::enableBDS(){}
+void ArchInterrupts::disableKBD(){}
+void ArchInterrupts::EndOfInterrupt(uint16 number){}
+
