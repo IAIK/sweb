@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.94 2005/09/20 19:07:41 btittelbach Exp $
+ * $Id: main.cpp,v 1.95 2005/09/21 13:39:58 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.94  2005/09/20 19:07:41  btittelbach
+ * +Comfy Userspace (.c files in userspace/tests get autocompiled and autorun in Sweb)
+ * +F12 prints ThreadList
+ *
  * Revision 1.93  2005/09/20 08:05:08  btittelbach
  * +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
  * +Condition cleanup
@@ -578,14 +582,10 @@ void startup()
   //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
   ArchInterrupts::enableInterrupts();    
     
-  kprintfd("Init done\n");
-  kprintf("Init done\n");
+  kprintfd("Init done\n"); 
+  //don't use anything that acquries a lock here, as we never return here after a taskswitch
 
   Scheduler::instance()->yield();
   
-  //Empty Keyboard Buffer so irq1 gets fired
-  while (kbdBufferFull()) {
-    kprintfd("Emptying Keyboard Port content: %x\n",kbdGetScancode());
-  }
   for (;;);
 }
