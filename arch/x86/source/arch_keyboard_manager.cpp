@@ -18,10 +18,17 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //----------------------------------------------------------------------
-//   $Id: arch_keyboard_manager.cpp,v 1.5 2005/09/20 21:14:31 nelles Exp $
+//   $Id: arch_keyboard_manager.cpp,v 1.6 2005/09/21 15:37:02 btittelbach Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: arch_keyboar_manager.cpp,v $
+//  $Log: arch_keyboard_manager.cpp,v $
+//  Revision 1.5  2005/09/20 21:14:31  nelles
+//
+//
+//  Some comments added
+//
+//   ----------------------------------------------------------------------
+//
 //
 //----------------------------------------------------------------------
 
@@ -335,6 +342,12 @@ bool KeyboardManager::isNum()
 bool KeyboardManager::isScroll()
 {
   return (keyboard_status_ & KBD_META_SCRL) ;
+}
+
+void KeyboardManager::emptyKbdBuffer()
+{
+  while (kbdBufferFull())
+    kbdGetScancode();
 }
 
 ////////////////////////////////////////////////////////////////////////

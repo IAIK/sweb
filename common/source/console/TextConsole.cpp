@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.9 2005/09/20 19:07:41 btittelbach Exp $
+//   $Id: TextConsole.cpp,v 1.10 2005/09/21 15:37:02 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.9  2005/09/20 19:07:41  btittelbach
+//  +Comfy Userspace (.c files in userspace/tests get autocompiled and autorun in Sweb)
+//  +F12 prints ThreadList
+//
 //  Revision 1.8  2005/09/16 12:47:41  btittelbach
 //  Second PatchThursday:
 //  +KeyboardInput SyncStructure Rewrite
@@ -148,7 +152,7 @@ void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 void TextConsole::Run( void )
 {
   KeyboardManager * km = KeyboardManager::getInstance();
-  uint32 key; 
+  uint32 key=(uint32)-1;
   do 
   {
     while(km->getKeyFromKbd(key))
@@ -161,9 +165,12 @@ void TextConsole::Run( void )
       else
         handleKey( key );
     Scheduler::instance()->yield();
+    if (key==(uint32)-1)  
+      km->emptyKbdBuffer();
+    //we assume above here, that irq1 has never been fired, presumeably because
+    //something was in the kbd buffer bevore irq1 got enabled
   }
   while(1); // until the end of time
-
 }
 
 void TextConsole::handleKey( uint32 key )

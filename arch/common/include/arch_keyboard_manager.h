@@ -13,6 +13,7 @@ extern "C"
 
 #include "ports.h"
 #include "RingBuffer.h"
+#include "atkbd.h"
 
 /// \class KeyboardManager
 /// \brief Class that contains architecture specific parameters for AT keyboard communication
@@ -114,6 +115,8 @@ public:
   bool isCaps();
   bool isNum();
   bool isScroll();
+  
+  void emptyKbdBuffer();
    
 private:
   void kb_wait();
