@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.14 2005/09/21 19:49:14 btittelbach Exp $
+//   $Id: PageManager.cpp,v 1.15 2005/09/21 19:54:04 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.14  2005/09/21 19:49:14  btittelbach
+//  PageManager now understands preallocated 4m pages
+//
 //  Revision 1.13  2005/09/21 17:01:12  nomenquis
 //  updates
 //
@@ -51,43 +54,6 @@
 #include "debug_bochs.h"
 #include "console/kprintf.h"
 
-#ifndef isXenBuild
-static uint32 fb_start = 0;
-static char* fb = (char*)0xC00B8100;
-
-#define print(x)     fb_start += 2; \
-    { \
-      uint32 divisor; \
-      uint32 current; \
-      uint32 remainder; \
-      current = (uint32)x; \
-      divisor = 1000000000; \
-      while (divisor > 0) \
-      { \
-        remainder = current % divisor; \
-        current = current / divisor; \
-        \
-        fb[fb_start++] = (uint8)current + '0' ; \
-        fb[fb_start++] = 0x9f ; \
-    \
-        divisor = divisor / 10; \
-        current = remainder; \
-      }      \
-      uint32 blubba;\
-      uint32 asf;\
-      for (asf=0;asf<1;++asf)\
-        ++blubba;\
-    }
-#else
-  #define print(x) 
-#endif
-//the following is possible but not so good as it is printing on the console for ages
-// #else
-//   #include "console/kprintf.h"
-//   #define print(x) kprintf("%x ",x);
-// #endif
-
-
 PageManager* PageManager::instance_=0;
   
 extern void* kernel_end_address;
@@ -108,9 +74,6 @@ pointer PageManager::createPageManager(pointer next_usable_address)
   instance_ = new ((void*)next_usable_address) PageManager(next_usable_address+sizeof(PageManager));
 
   next_usable_address += sizeof(PageManager) + instance_->getSizeOfMemoryUsed();
-  //print(next_usable_address);
-  //print(next_usable_address / 1024);
-  //print(next_usable_address - 1024*1024*1024*2);
   
   return next_usable_address;
 }
@@ -198,8 +161,8 @@ PageManager::PageManager(pointer start_of_structure)
   for (i=1024*512; i<1024*764; ++i) // only 764 because from 764 on we have the svga framebuffer in 4m pages
   {
     uint32 physical_page=0;
-    uint32 this_page_size=0;
-    if (this_page_size = ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page) > 0)
+    uint32 this_page_size = ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page);
+    if (this_page_size > 0)
     {
       //our bitmap only knows 4k pages for now
       uint32 num_4kpages = this_page_size / PAGE_SIZE; //should be 1 on 4k pages and 1024 on 4m pages
