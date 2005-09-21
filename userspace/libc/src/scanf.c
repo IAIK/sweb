@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: scanf.c,v $
  *
- * $Id: scanf.c,v 1.2 2005/09/21 16:44:46 aniederl Exp $
+ * $Id: scanf.c,v 1.3 2005/09/21 21:32:25 aniederl Exp $
  * $Log: scanf.c,v $
+ * Revision 1.2  2005/09/21 16:44:46  aniederl
+ * changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
+ *
  * Revision 1.1  2005/09/16 05:00:58  aniederl
  * import of getchar, gets and a stub for scanf
  *
@@ -450,14 +453,16 @@ int getchar()
  */
 char *gets(char *input_buffer, size_t buffer_size)
 {
-  while((*input_buffer != '\n') && (*input_buffer != EOF) && buffer_size)
+  do
   {
-    if(read(STDIN_FILENO, (void*) input_buffer, 1) == -1)
-      return NULL;
+    if(!buffer_size)
+      break;
 
-    ++input_buffer;
+    read(STDIN_FILENO, (void*) input_buffer, 1);
+
     --buffer_size;
-  }
+
+  } while((*input_buffer != '\n') && (*input_buffer++ != EOF));
 
   if(buffer_size)
     *input_buffer = '\0';
