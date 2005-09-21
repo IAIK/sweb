@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: stdio.h,v $
  *
- * $Id: stdio.h,v 1.2 2005/09/20 15:58:38 aniederl Exp $
+ * $Id: stdio.h,v 1.3 2005/09/21 16:44:46 aniederl Exp $
  * $Log: stdio.h,v $
+ * Revision 1.2  2005/09/20 15:58:38  aniederl
+ * included unistd.h
+ *
  * Revision 1.1  2005/09/14 23:11:29  aniederl
  * import of stdio.h
  *
@@ -178,17 +181,15 @@ extern int getchar();
 /**
  * Reads a line from stdin and stores it in the string pointed to by the
  * argument.
- * Reading is terminated by a newline or EOF which is replaced by '\0'.
+ * Reading is terminated by a newline, EOF which are both replaced by '\0' or
+ * when the buffer is full.
  *
- * No check for buffer overrun is performed. Therefore it is highly
- * inadvisible to use this function.
- * Use fgets() instead.
- *
- * @param input_string The string where the input is stored
+ * @param input_buffer The buffer where the input is stored
+ * @param buffer_size The size of the buffer
  * @return A pointer to the input_string on success, NULL otherwise
  *
  */
-extern char *gets(char *input_string);
+extern char *gets(char *input_buffer, size_t buffer_size);
 
 /**
  * Equivalent to putc(character, stdout).

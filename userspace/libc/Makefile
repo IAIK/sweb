@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.6 2005/09/21 02:25:03 aniederl Exp $
+# $Id: Makefile,v 1.7 2005/09/21 16:44:46 aniederl Exp $
 # $Log: Makefile,v $
+# Revision 1.6  2005/09/21 02:25:03  aniederl
+# added -m32 to CFLAGS for proper behaving on amd64
+#
 # Revision 1.5  2005/09/20 14:32:09  btittelbach
 # better yet
 #
@@ -59,8 +62,9 @@ OBJECTS = \
 					$(OBJECTDIR)/read.o \
 					$(OBJECTDIR)/scanf.o \
 					$(OBJECTDIR)/write.o \
+					$(OBJECTDIR)/ctype.o \
 					$(OBJECTDIR)/start.o \
-					$(OBJECTDIR)/syscalls.o 
+					$(OBJECTDIR)/syscalls.o
 
 
 all : $(OBJECTDIR) $(LIBC_STATIC)

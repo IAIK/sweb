@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: printf.c,v $
  *
- * $Id: printf.c,v 1.7 2005/09/21 03:31:52 aniederl Exp $
+ * $Id: printf.c,v 1.8 2005/09/21 16:44:46 aniederl Exp $
  * $Log: printf.c,v $
+ * Revision 1.7  2005/09/21 03:31:52  aniederl
+ * repaired writeNumber function (didn't increase string length)
+ *
  * Revision 1.6  2005/09/20 14:16:08  aniederl
  * repaired wrong macro query
  *
@@ -50,7 +53,11 @@
 #include "stdlib.h"
 #include "stdarg.h"
 
-
+/**
+ * structure containing useful variables describing a string stored in a
+ * character array
+ *
+ */
 typedef struct c_string
 {
   // start pointer
