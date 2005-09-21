@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.13 2005/09/20 20:11:18 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.14 2005/09/21 12:08:10 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.13  2005/09/20 20:11:18  btittelbach
+//  doxification
+//
 //  Revision 1.12  2005/09/20 17:44:26  lythien
 //  *** empty log message ***
 //
@@ -53,7 +56,7 @@
 #include "../../../common/include/mm/PageManager.h"
 
 //Arch-VirtualMemoryUserSpaceObjekt
-/** @enableKBD
+/*
  *
  * Collection of architecture dependant functions conerning Memory and Pages
  *
@@ -62,82 +65,84 @@ class ArchMemory
 {
 public:
 
-/** @initNewPageDirectory
+/** 
  *
- * creates a new Page Directory for a Process
+ * creates a new Page-Directory for a UserProccess by copying the Kernel-Page-Directory
  *
- * @param physical_page_to_use
+ * @param physical_page_to_use where the new PDE should be
  */
   static void initNewPageDirectory(uint32 physical_page_to_use);
 
-/** @mapPage
+/** 
  *
- * maps a physical page to a virtual page (pde and pte need to be set up first)
+ * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
- * @param physical_page_directory_page
- * @param virtual_page
+ * @param physical_page_directory_page Real Page where the PDE to work on resides
+ * @param virtual_page 
  * @param physical_page
- * @param user_access
+ * @param user_access PTE Flag allowing Userspace access or not
  */
   static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access);
 
-/** @unmapPage
+/**
  *
- * removes mapping to a virtual_page and returns ppn of that page
+ * removes the mapping to a virtual_page by marking its PTE Entry as non valid
  *
- * @param physical_page_directory_page
- * @param virtual_page
+ * @param physical_page_directory_page Real Page where the PDE to work on resides
+ * @param virtual_page which will be invalidated
  */
   static void unmapPage(uint32 physical_page_directory_page, uint32 virtual_page);
 
-/** @freePageDirectory
+/**
  *
- *remove a PDE and all its Pages and PageTables
+ *recursively remove a PageDirectoryEntry and all its Pages and PageTables
  *
- * @param physical_page_directory_page
+ * @param physical_page_directory_page of PDE to remove
  */
   static void freePageDirectory(uint32 physical_page_directory_page);
 
 //  static pointer physicalPageToKernelPointer(uint32 physical_page);
 
-/** @get3GBAdressOfPPN
- *
- * @param ppn
- *
+/**
+ * Takes a Physical Page Number in Real Memory and returns a virtual address than can be used to access given page
+ * @param ppn Physical Page Number
+ * @return Virtual Address above 3GB pointing to the start of a memory segment that is mapped to the physical page given
  */
   static pointer get3GBAdressOfPPN(uint32 ppn)
   {
     return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);
   }
 
-/** @checkAdressValid
- *
- * @param physical_page_directory_page
- * @param vaddress_to_check
+/**
+ * Checks if a given Virtual Address is valid and mapped to real memory
+ * @param physical_page_directory_page Real Page where the PDE can be found
+ * @param vaddress_to_check Virtual Address we want to check
+ * @return true: if mapping exists\nfalse: if the given virtual address is unmapped and accessing it would result in a pageFault
  */
   static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
 
-/** @getPhysicalPageInKernelMapping
- *
- * @param virtual_page
- * @param physical_page
+/**
+ * Takes a virtual_page and search through the pageTable and pageDirectory for the physical_page it refers to
+ * @param virtual_page virtual Page to look up
+ * @param &physical_pag Reference to the result
+ * @return true: if mapping exists\nfalse: if the virtual page doesn't map to any physical page
  */
   static bool getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
 
 private:
 
-/** @insertPTE
- *
- * @param physical_page_directory_page
- * @param pde_vpn
- * @param physical_page_table_page
+/** 
+ * adds a PageTableEntry to the given PageDirectory
+ * @param physical_page_directory_page Real Page where the PDE we want to ad a PTE to, resides
+ * @param pde_vpn The Virtual Page Number inside the PDE that shall point to our new PTE
+ * @param physical_page_table_page Real Page where the PTE we want to add, resides
  */
   static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
 
-/** @checkAndRemovePTE
- *
- * @param physical_page_directory_page
- * @param pde_vpn
+/**
+ * Removes a PageTableEntry from a PageDiretory if it was there in the first place
+ * @param physical_page_directory_page Real Page where the PDE is
+ * @param pde_vpn Virtual Page Number inside the PDE of the PTE we want to remove
  */
   static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
 

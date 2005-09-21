@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.12 2005/09/20 20:19:48 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.13 2005/09/21 12:08:10 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.12  2005/09/20 20:19:48  btittelbach
+//  doxyfication
+//
 //  Revision 1.11  2005/09/20 20:11:18  btittelbach
 //  doxification
 //
@@ -106,35 +109,35 @@ public:
 
 /** @enableTimer
  *
- * enables the Timer
+ * enables the Timer IRQ (0)
  *
  */
   static void enableTimer();
 
 /** @disableTimer
  *
- * disables the Timer
+ * disables the Timer IRQ (0)
  *
  */
   static void disableTimer();
 
 /** @enableKBD
  *
- * enables the KBD
+ * enables the Keyboard IRQ (1)
  *
  */
   static void enableKBD();
 
 /** @enableBDS
  *
- * enables the BDS
+ * enables the BlockDevice IRQs (13,14,15)
  *
  */
   static void enableBDS();
 
 /** @disableKBD
  *
- *  disables the KBD
+ *  disables the Keyboard IRQ (1)
  *
  */
   static void disableKBD();
