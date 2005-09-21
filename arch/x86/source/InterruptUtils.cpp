@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.39 2005/09/20 08:05:07 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.40 2005/09/21 15:50:01 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.39  2005/09/20 08:05:07  btittelbach
+//  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
+//  +Condition cleanup
+//  +FiFoDRBOSS now obsolete and removed
+//  +added disk.img that nelle forgot to check in
+//
 //  Revision 1.38  2005/09/18 20:25:05  nelles
 //
 //
@@ -588,6 +594,20 @@ extern "C" void arch_switchThreadKernelToKernelPageDirChange();
 extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
+  static uint32 heart_beat_value = 0;
+  char* fb = (char*)0xC00B8000;
+  if (heart_beat_value)
+  {
+    fb[0] = 'T';
+    fb[1] = 0x9f;
+  }
+  else
+  {
+    fb[0] = 'X';
+    fb[1] = 0x3d;
+  }
+  heart_beat_value = !heart_beat_value;
+  
   //kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
   uint32 ret = Scheduler::instance()->schedule(1);  
