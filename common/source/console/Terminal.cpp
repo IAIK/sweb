@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.10 2005/09/21 21:29:45 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.11 2005/09/21 22:31:37 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.10  2005/09/21 21:29:45  btittelbach
+//  make kernel readline do less, as its suppossed to
+//
 //  Revision 1.9  2005/09/16 15:47:41  btittelbach
 //  +even more KeyboardInput Bugfixes
 //  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -145,7 +148,7 @@ uint32 Terminal::readLine( char *line, uint32 size )
     else
       line[counter++] = (char) cchar;
   }
-  while( cchar != '\n' && counter < size );
+  while( cchar != '\n' && cchar != '\r' && counter < size );
    
   return counter;
 }
@@ -168,7 +171,7 @@ uint32 Terminal::readLineNoBlock( char *line, uint32 size )
     else
       line[counter++] = (char) cchar;
     
-    if ( cchar != '\n' && counter < (size-1) );
+    if ( cchar != '\n' && cchar != '\r' && counter < (size-1) );
    }
   
    line[counter] = '\0';
@@ -178,7 +181,7 @@ uint32 Terminal::readLineNoBlock( char *line, uint32 size )
 
 void Terminal::writeInternal(char character)
 {
-  if (character == '\n')
+  if (character == '\n' || character == '\r')
   {
     scrollUp();
     current_column_ = 0;
