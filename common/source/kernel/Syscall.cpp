@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.8 2005/09/16 15:47:41 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.9 2005/09/21 21:29:45 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.8  2005/09/16 15:47:41  btittelbach
+//  +even more KeyboardInput Bugfixes
+//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//  +Thread now remembers its Terminal
+//  +Syscalls are USEABLE !! :-) IF=1 !!
+//  +Syscalls can block now ! ;-) Waiting for Input...
+//  +more other Bugfixes
+//
 //  Revision 1.7  2005/09/16 00:54:13  btittelbach
 //  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -88,8 +96,7 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
   uint32 num_read = 0;
   if (fd == fd_stdin)
   {
-    //Achtung, wir können hier nicht blocken und müssen einen Threadswitch vermeiden
-    //was aber wenn wir blocken wollen ???
+    //this doesn't! terminate a string with \0, gotta do that yourself
     num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
     kprintfd("Syscall::read: %B\n",(char*) buffer,num_read);
   }

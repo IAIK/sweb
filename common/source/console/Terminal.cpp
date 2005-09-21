@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.9 2005/09/16 15:47:41 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.10 2005/09/21 21:29:45 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.9  2005/09/16 15:47:41  btittelbach
+//  +even more KeyboardInput Bugfixes
+//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//  +Thread now remembers its Terminal
+//  +Syscalls are USEABLE !! :-) IF=1 !!
+//  +Syscalls can block now ! ;-) Waiting for Input...
+//  +more other Bugfixes
+//
 //  Revision 1.8  2005/09/16 12:47:41  btittelbach
 //  Second PatchThursday:
 //  +KeyboardInput SyncStructure Rewrite
@@ -137,11 +145,9 @@ uint32 Terminal::readLine( char *line, uint32 size )
     else
       line[counter++] = (char) cchar;
   }
-  while( cchar != '\n' && counter < (size-1) );
-  
-   line[counter] = '\0';
+  while( cchar != '\n' && counter < size );
    
-   return counter;
+  return counter;
 }
 
 uint32 Terminal::readLineNoBlock( char *line, uint32 size )

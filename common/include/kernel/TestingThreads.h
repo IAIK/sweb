@@ -19,13 +19,17 @@ class TestTerminalThread : public Thread
   virtual void Run()
   {
     char *name = new char[ 50 ];
+    uint32 numread=0;
+    name[49]=0;
     
     do 
     {
       Terminal *t = main_console->getTerminal( on_terminal );
       t->clearBuffer();
       t->writeString( "\n\n Greetings ! \n Could you tell me your name ? \n" );
-      if( t->readLine( name, 50 ) > 48 )
+      numread = t->readLine( name, 49 );
+      name[numread]=0;
+      if( numread > 48 )
         t->writeString( "Wow ! \n Your name is very long I was not prepared and I can not remember more than 49 characters !! \n" );
       
       t->writeString("Hello, ");
