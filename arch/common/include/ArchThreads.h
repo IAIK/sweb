@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.10 2005/09/20 20:11:18 btittelbach Exp $
+//  $Id: ArchThreads.h,v 1.11 2005/09/21 14:46:35 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.10  2005/09/20 20:11:18  btittelbach
+//  doxification
+//
 //  Revision 1.9  2005/09/20 17:44:44  lythien
 //  *** empty log message ***
 //
@@ -45,7 +48,7 @@
 class ArchThreadInfo;
 class Thread;
 
-/** @ArchThreadInfo
+/** 
  *
  * this is where the thread info for task switching is stored
  *
@@ -53,7 +56,7 @@ class Thread;
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
-/** @class ArchThreads
+/**
  *
  * Collection of architecture dependant code concerning Task Switching
  *
@@ -62,28 +65,28 @@ class ArchThreads
 {
 public:
 
-/** @initialise
+/**
  *
  *
  *
  */
   static void initialise();
 
-/** @switchToThreadOnIret
+/**
  *
  * @param thread
  *
  */
   static void switchToThreadOnIret(Thread *thread);
 
-/** @cleanupThreadInfo
+/** 
  *
  * @param info
  *
  */
   static void cleanupThreadInfos(ArchThreadInfo *&info);
 
-/** @createThreadInfosKernelThread
+/** 
  *
  * @param info
  * @param start_function
@@ -91,7 +94,7 @@ public:
  */
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
 
-/** @createThreadInfoUserspaceThread
+/**
  *
  * @param info
  * @param start_function
@@ -100,14 +103,14 @@ public:
  */
   static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack);
 
-/** @yield
+/** 
  *
  * on x86: invokes int65, whose handler facilitates a task switch
  *
  */
   static void yield();
 
-/** @setPageDirectory
+/**
  *
  * set's a threads PageDirectory to the one in page_dir_physical_page
  *
@@ -116,14 +119,14 @@ public:
  */
   static void setPageDirectory(Thread *thread, uint32 page_dir_physical_page);
 
-/** @getPageDirectory
+/**
  *
  * @param *thread Pointer to Thread Object
  * @return returns pde page of *thread
  */
   uint32 getPageDirectory(Thread *thread);
 
-/** testSetLock
+/**
  * uninterruptable locked operation
  * exchanges value in variable lock with new_value and returns the old_value
  *
@@ -133,7 +136,7 @@ public:
  */
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
 
-/** @printThreadRegisters
+/** 
  *
  * @param thread
  * @param userspace_register

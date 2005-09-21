@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.95 2005/09/21 13:39:58 btittelbach Exp $
+ * $Id: main.cpp,v 1.96 2005/09/21 14:46:35 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.95  2005/09/21 13:39:58  btittelbach
+ * cleanup
+ *
  * Revision 1.94  2005/09/20 19:07:41  btittelbach
  * +Comfy Userspace (.c files in userspace/tests get autocompiled and autorun in Sweb)
  * +F12 prints ThreadList
@@ -566,7 +569,7 @@ void startup()
     new BDThread()
     );
     
-  kprintfd("Adding UserThreads threads\n");
+  kprintfd("Adding User Threads\n");
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
@@ -579,7 +582,6 @@ void startup()
   
   kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
-  //kprintfd_nosleep("Now enabling Interrupts NOSLEEP...\n");
   ArchInterrupts::enableInterrupts();    
     
   kprintfd("Init done\n"); 

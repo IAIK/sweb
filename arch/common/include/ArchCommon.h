@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.10 2005/09/20 20:11:18 btittelbach Exp $
+//   $Id: ArchCommon.h,v 1.11 2005/09/21 14:46:35 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.h,v $
+//  Revision 1.10  2005/09/20 20:11:18  btittelbach
+//  doxification
+//
 //  Revision 1.9  2005/09/20 17:42:56  lythien
 //  *** empty log message ***
 //
@@ -39,7 +42,7 @@
 
 #include "types.h"
 
-/** @class ArchCommon
+/** 
  *
  * Collection of architecture dependant stuff that didn't fit anywhere else
  * + FrameBuffer Info
@@ -52,7 +55,7 @@ class ArchCommon
 {
 public:
 
-  /** @haveVESAConsole
+  /** 
    *
    * @param is_paging_set_up inform function that paging is not yet up (=false) and that it should behave accordingly
    * if is_paging_set_up =1 default
@@ -60,30 +63,28 @@ public:
    */
   static uint32 haveVESAConsole(uint32 is_paging_set_up=1);
 
-  /** @getVESAConsoleHight
+  /**
    *
-   * gets the hight of the VESA Console
+   * @return the hight of the VESA Console
    *
    */
   static uint32 getVESAConsoleHeight();
 
-  /** @getVESAConsoleWidth
+  /** 
    *
-   * gets the width of the VESA Console
+   * @return the width of the VESA Console
    *
    */
   static uint32 getVESAConsoleWidth();
 
- /** @getVESAConsoleBitsPerPixel
+ /** 
   *
-  * gets the bits per pixel of the VESA Console
+  * @return the bits per pixel of the VESA Console
   *
   */
   static uint32 getVESAConsoleBitsPerPixel();
 
-  /** @getVESAConsoleLFBPtr
-   *
-   * returns a Pointer to the location of the VESA Memory Region
+  /** 
    *
    * @param is_paging_set_up 
    *   on false: returns memory address in real memory
@@ -92,7 +93,7 @@ public:
    */
   static pointer getVESAConsoleLFBPtr(uint32 is_paging_set_up=1);
 
-  /** @getFBPtr
+  /**
    * returns a Pointer to the location of the FrameBuffer
    *
    * @param is_paging_set_up 
@@ -103,13 +104,14 @@ public:
   static pointer getFBPtr(uint32 is_paging_set_up=1);
 
 
-  /** @getNumUseableMemoryRegions
+  /** 
    *
    * tells you the number of Useable Memory Regions just as grub told us
+   * @return number of Useable Memory Regions
    */
   static uint32 getNumUseableMemoryRegions();
 
-  /** @getUsableMemoryRegion
+  /**
    *
    * Reads the Grub MultiBoot-Info and
    * returns the start- and end-address of the Useable Memory Region x
@@ -123,7 +125,7 @@ public:
   static uint32 getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type);
 
 
-  /** @memcpy
+  /** 
    *
    * Copy Memory, fast
    *
@@ -133,7 +135,7 @@ public:
    */
   static void memcpy(pointer dest, pointer src, size_t size);
 
-  /** @bzero
+  /** 
    *
    * Sets the first n bytes of the memory area starting at s to zero.
    *
@@ -144,7 +146,7 @@ public:
   static void bzero(pointer s, size_t n, uint32 debug = 0);
 
 
-  /** @getNumModules
+  /** 
    *
    * Parses the Grub MultiBoot Info with regard to modules
    *
@@ -153,7 +155,7 @@ public:
    */
   static uint32 getNumModules(uint32 is_paging_set_up=1);
 
-  /** @getModuleStartAddress
+  /**
    *
    * Parses the Grub MultiBoot Info with regard to modules
    *
@@ -163,7 +165,7 @@ public:
    */
   static uint32 getModuleStartAddress(uint32 num,uint32 is_paging_set_up=1);
 
-  /** @getModuleEndAddress
+  /**
    *
    * Parses the Grub MultiBoot Info with regard to modules
    *
@@ -174,7 +176,7 @@ public:
   static uint32 getModuleEndAddress(uint32 num,uint32 is_paging_set_up=1);
 
 
-  /** @dummdumm
+  /**
    *
    * Parses the Grub MultiBoot Info with regard to modules
    * Used for debugging

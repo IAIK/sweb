@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.h,v 1.13 2005/09/21 12:08:10 btittelbach Exp $
+//  $Id: ArchInterrupts.h,v 1.14 2005/09/21 14:46:35 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.h,v $
+//  Revision 1.13  2005/09/21 12:08:10  btittelbach
+//  sweet doxyfication
+//
 //  Revision 1.12  2005/09/20 20:19:48  btittelbach
 //  doxyfication
 //
@@ -100,49 +103,49 @@ public:
  */
   typedef uint32 (*TimerHandlerCallback)();
 
-/** @initialise
+/** 
  *
  * gives the arch a chance to set things up the way it wants to
  *
  */
   static void initialise();
 
-/** @enableTimer
+/**
  *
  * enables the Timer IRQ (0)
  *
  */
   static void enableTimer();
 
-/** @disableTimer
+/**
  *
  * disables the Timer IRQ (0)
  *
  */
   static void disableTimer();
 
-/** @enableKBD
+/**
  *
  * enables the Keyboard IRQ (1)
  *
  */
   static void enableKBD();
 
-/** @enableBDS
+/**
  *
  * enables the BlockDevice IRQs (13,14,15)
  *
  */
   static void enableBDS();
 
-/** @disableKBD
+/** 
  *
  *  disables the Keyboard IRQ (1)
  *
  */
   static void disableKBD();
 
-/** @EndOfInterrupt
+/**
  *
  * Signals EOI to the Interrupt-Controller, so the Controller
  * can resume sending us Interrupts
@@ -153,21 +156,21 @@ public:
   static void EndOfInterrupt(uint16 number);
 
 
-/** @enableInterrupts
+/** 
  *
  * enable interrupts, no more lazy linear code execution time ;-)
  * (using sti on x86)
  */
   static void enableInterrupts();
 
-/** @disableInterrupts
+/** 
  *
  * disables Interrupts (by using cli (clear interrupts) on x86)
  * @return bool true if Interrupts were enabled, false otherwise
  */
   static bool disableInterrupts();
 
-/** @testIFSet
+/**
  *
  * on x86: tests if the IF Flag in EFLAGS is set, aka if the Interrupts are enabled
  * 
