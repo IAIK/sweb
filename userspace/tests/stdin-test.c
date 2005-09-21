@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	gets(name,199);
 	//scanf("%s\n",name);
 	printf("%s",str3);
-	scanf("%d\n",age);
+	scanf("%d\n",&age);
 	printf("Doumo, Anatano namae %s desu. Antawa %d sai desu\n%s",name,age,str4);
 	return age;
 }

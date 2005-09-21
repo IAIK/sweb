@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.9 2005/09/21 21:29:45 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.10 2005/09/21 23:03:35 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.9  2005/09/21 21:29:45  btittelbach
+//  make kernel readline do less, as its suppossed to
+//
 //  Revision 1.8  2005/09/16 15:47:41  btittelbach
 //  +even more KeyboardInput Bugfixes
 //  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -99,6 +102,10 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
     //this doesn't! terminate a string with \0, gotta do that yourself
     num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
     kprintfd("Syscall::read: %B\n",(char*) buffer,num_read);
+    for (uint32 c=0; c<num_read; ++c)
+      kprintfd("%c(%x) ",((char*)buffer)[c],((char*)buffer)[c]);
+    kprintfd("\n");
+
   }
   return num_read;
 }

@@ -34,6 +34,7 @@ SUBPROJECTS := \
                common/source/fs \
                common/source/fs/ramfs \
                common/source/fs/pseudofs \
+               userspace/libc \
                userspace/tests
 endif
 
