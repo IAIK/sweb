@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.13 2005/09/21 17:01:12 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.14 2005/09/21 19:49:14 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.13  2005/09/21 17:01:12  nomenquis
+//  updates
+//
 //  Revision 1.12  2005/09/21 15:50:55  nomenquis
 //  fixed some bugs when having a vesa console
 //
@@ -195,12 +198,14 @@ PageManager::PageManager(pointer start_of_structure)
   for (i=1024*512; i<1024*764; ++i) // only 764 because from 764 on we have the svga framebuffer in 4m pages
   {
     uint32 physical_page=0;
-    if (ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page))
+    uint32 this_page_size=0;
+    if (this_page_size = ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page) > 0)
     {
-      if (physical_page < number_of_pages_)
-      {
-        page_usage_table_[physical_page] = PAGE_RESERVED;
-      }
+      //our bitmap only knows 4k pages for now
+      uint32 num_4kpages = this_page_size / PAGE_SIZE; //should be 1 on 4k pages and 1024 on 4m pages
+      for (uint32 p=0;p<num_4kpages;++p)
+        if (physical_page*num_4kpages + p < number_of_pages_)
+          page_usage_table_[physical_page*num_4kpages + p] = PAGE_RESERVED;
     }
   }
   writeLine2Bochs((uint8*)"PM: done\n");

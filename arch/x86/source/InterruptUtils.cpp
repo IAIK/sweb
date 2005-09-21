@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.41 2005/09/21 17:01:12 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.42 2005/09/21 19:49:14 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.41  2005/09/21 17:01:12  nomenquis
+//  updates
+//
 //  Revision 1.40  2005/09/21 15:50:01  nomenquis
 //  added a heartbeat character for the text mode frambuffer
 //
@@ -598,26 +601,36 @@ extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
   static uint32 heart_beat_value = 0;
-  static uint32 leds = 0;
-  static uint32 ctr = 0;
+  //~ static uint32 leds = 0;
+  //~ static uint32 ctr = 0;
   char* fb = (char*)0xC00B8000;
-  if (heart_beat_value)
+  switch (heart_beat_value)
   {
-    fb[0] = 'T';
+    default:
+    case 0:
+    fb[0] = '/';
     fb[1] = 0x9f;
+    break;
+    case 1:
+    fb[0] = '-';
+    fb[1] = 0x9f;
+    break;
+    case 2:
+    fb[0] = '\\';
+    fb[1] = 0x9f;
+    break;
+    case 3:
+    fb[0] = '|';
+    fb[1] = 0x9f;
+    break;
   }
-  else
-  {
-    fb[0] = 'X';
-    fb[1] = 0x3d;
-  }
-  heart_beat_value = !heart_beat_value;
-  outportb( 0xED, 0x60 );  // "set LEDs" command
-  outportb( leds, 0x60 );
-  kprintfd("Settings leds to %d\n",leds);
-  if (ctr == 9)
-    leds = (leds + 1) % (1 << 3);
-  ctr = (ctr + 1) % 10;
+  heart_beat_value = (heart_beat_value + 1) % 4;
+  //~ outportb( 0xED, 0x60 );  // "set LEDs" command
+  //~ outportb( leds, 0x60 );
+  //~ kprintfd("Settings leds to %d\n",leds);
+  //~ if (ctr == 9)
+    //~ leds = (leds + 1) % (1 << 3);
+  //~ ctr = (ctr + 1) % 10;
   
   //kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
