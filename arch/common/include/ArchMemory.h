@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.15 2005/09/21 18:38:43 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.16 2005/09/21 19:26:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.15  2005/09/21 18:38:43  btittelbach
+//  ArchMemory differen page sizes part one
+//
 //  Revision 1.14  2005/09/21 12:08:10  btittelbach
 //  sweet doxyfication
 //
@@ -84,8 +87,9 @@ public:
  * @param virtual_page 
  * @param physical_page
  * @param user_access PTE Flag allowing Userspace access or not
+ * @param page_size Optional, defaults to 4k pages, but you ned to set it to 1024*4096 if you want to map a 4m page
  */
-  static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access);
+  static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
 
 /**
  *
@@ -109,11 +113,12 @@ public:
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than can be used to access given page
  * @param ppn Physical Page Number
+ * @param page_size Optional, defaults to 4k pages, but you ned to set it to 1024*4096 if you have a 4m page number
  * @return Virtual Address above 3GB pointing to the start of a memory segment that is mapped to the physical page given
  */
-  static pointer get3GBAdressOfPPN(uint32 ppn)
+  static pointer get3GBAdressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
   {
-    return (3U*1024U*1024U*1024U) + (ppn * PAGE_SIZE);
+    return (3U*1024U*1024U*1024U) + (ppn * page_size);
   }
 
 /**
