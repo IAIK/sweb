@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: scanf.c,v $
  *
- * $Id: scanf.c,v 1.3 2005/09/21 21:32:25 aniederl Exp $
+ * $Id: scanf.c,v 1.4 2005/09/21 22:33:02 aniederl Exp $
  * $Log: scanf.c,v $
+ * Revision 1.3  2005/09/21 21:32:25  aniederl
+ * repaired read loop in function gets()
+ *
  * Revision 1.2  2005/09/21 16:44:46  aniederl
  * changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
  *
@@ -462,7 +465,8 @@ char *gets(char *input_buffer, size_t buffer_size)
 
     --buffer_size;
 
-  } while((*input_buffer != '\n') && (*input_buffer++ != EOF));
+  } while((*input_buffer != '\n') && (*input_buffer++ != '\r'));
+  // test for '\n' (Line Feed) and '\r' (Carriage Return)
 
   if(buffer_size)
     *input_buffer = '\0';
