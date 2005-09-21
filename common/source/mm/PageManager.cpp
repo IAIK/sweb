@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.11 2005/09/21 14:00:51 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.12 2005/09/21 15:50:55 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.11  2005/09/21 14:00:51  nomenquis
+//  fixed bug for machines with >1gig of memory
+//
 //  Revision 1.10  2005/09/03 19:02:54  btittelbach
 //  PageManager++
 //
@@ -39,7 +42,7 @@
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 //#include "hypervisor.h"
-
+#include "debug_bochs.h"
 #ifndef isXenBuild
 static uint32 fb_start = 0;
 static char* fb = (char*)0xC00B8100;
@@ -118,8 +121,9 @@ PageManager::PageManager(pointer start_of_structure)
   
   for (i=0;i<num_mmaps;++i)
   {
+    writeLine2Bochs((uint8*)"PM: Managing region\n");
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
-    if (type==1) number_of_pages_ = Max(number_of_pages_,end_address);
+    if (type==1) number_of_pages_ = Max(number_of_pages_,Min(end_address,256*1024));
   }
   
   number_of_pages_ = number_of_pages_ / PAGE_SIZE;
@@ -138,7 +142,7 @@ PageManager::PageManager(pointer start_of_structure)
  
   if (number_of_free_pages < number_of_pages_for_structure)
   {
-    arch_panic((uint8*)"Error, not enough memory for pages");
+    arch_panic((uint8*)"PM: Error, not enough memory for pages");
   }
 
   //print (number_of_pages_for_structure);
@@ -148,6 +152,7 @@ PageManager::PageManager(pointer start_of_structure)
   // since we have gaps in the memory maps we can not give out everything
   // first mark everything as reserverd, and then mark everything we actually
   // can use as free
+  writeLine2Bochs((uint8*)"PM: Marking pages used by kernel as reserved\n");
   for (i=0;i<number_of_pages_;++i)
 //  for (i=0;i<10;++i)
   {
@@ -160,6 +165,7 @@ PageManager::PageManager(pointer start_of_structure)
    
   for (i=0;i<num_mmaps;++i)
   {
+    writeLine2Bochs((uint8*)"PM: Entering map for \n");
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
     start_address /= PAGE_SIZE;
     end_address /= PAGE_SIZE;
@@ -170,20 +176,28 @@ PageManager::PageManager(pointer start_of_structure)
       //print(777777777);
       continue;
     }
+    
     for (k=start_address;k<Min(end_address,1024*256);++k)
     {
       page_usage_table_[k] = PAGE_FREE;
     }
+    writeLine2Bochs((uint8*)"PM: Exiting map for \n");
   }    
   
   //mark as used everything >2gb und <3gb already used in PageDirectory
-  for (i=1024*512; i<1024*768; ++i)
+  writeLine2Bochs((uint8*)"PM: Marking stuff mapped in above 2 and < 3 gig as used\n");
+  for (i=1024*512; i<1024*764; ++i) // only 764 because from 764 on we have the svga framebuffer in 4m pages
   {
     uint32 physical_page=0;
     if (ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page))
-      page_usage_table_[physical_page] = PAGE_RESERVED;
+    {
+      if (physical_page < number_of_pages_)
+      {
+        page_usage_table_[physical_page] = PAGE_RESERVED;
+      }
+    }
   }
-  
+  writeLine2Bochs((uint8*)"PM: done\n");
   //Mark Modules loaded by GRUB as used
   for (i=0; i<ArchCommon::getNumModules(); ++i)
   {
