@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.3 2005/08/11 17:46:19 nightcreature Exp $
+//  $Id: ArchMemory.cpp,v 1.4 2005/09/21 03:33:52 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.3  2005/08/11 17:46:19  nightcreature
+//  preview for robert fixed
+//
 //  Revision 1.2  2005/08/11 16:55:47  nightcreature
 //  preview commit only for robert ;-)
 //
@@ -137,4 +140,25 @@ bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 v
 //   else
 //     return false;
   return true;
+}
+
+bool ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page)
+{
+//   page_directory_entry *page_directory = (page_directory_entry *) &kernel_page_directory_start;
+//   //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
+//   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+//   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+//   if (page_directory[pde_vpn].pde4k.present)
+//   {
+//     page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+//     if (pte_base[pte_vpn].present)
+//     {
+//       *physical_page = pte_base[pte_vpn].page_base_address;
+//       return true;
+//     }
+//     else
+//       return false;
+//   }
+//   else
+  return false;
 }

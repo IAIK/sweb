@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.3 2005/08/11 16:55:47 nightcreature Exp $
+//   $Id: ArchCommon.cpp,v 1.4 2005/09/21 03:33:52 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.3  2005/08/11 16:55:47  nightcreature
+//  preview commit only for robert ;-)
+//
 //  Revision 1.2  2005/08/06 17:38:35  rotho
 //  should work ... for now
 //
@@ -174,4 +177,19 @@ void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
     ++s8;
   }
   if (debug) kprintf("Bzero end\n");
+}
+
+uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
+{
+  return(0);
+}
+
+uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+{
+  return(0);
+}
+
+uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
+{
+  return(0);
 }
