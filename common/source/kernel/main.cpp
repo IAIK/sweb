@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.96 2005/09/21 14:46:35 btittelbach Exp $
+ * $Id: main.cpp,v 1.97 2005/09/21 17:01:12 nomenquis Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.96  2005/09/21 14:46:35  btittelbach
+ * *** empty log message ***
+ *
  * Revision 1.95  2005/09/21 13:39:58  btittelbach
  * cleanup
  *
@@ -453,6 +456,7 @@
 #include "fs/VirtualFileSystem.h"
 #include "fs/ramfs/RamFileSystemType.h"
 #include "console/TextConsole.h"
+#include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
 
 #include "fs/PseudoFS.h"
@@ -514,14 +518,19 @@ void startup()
 
   pointer start_address = (pointer)&kernel_end_address;
   pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
-
+  writeLine2Bochs( (uint8 *) "Creating Page Manager\n");
   start_address = PageManager::createPageManager(start_address);
+  writeLine2Bochs( (uint8 *) "PageManager created \n");
   KernelMemoryManager::createMemoryManager(start_address,end_address);
+  writeLine2Bochs( (uint8 *) "Kernel Memory Manager created \n");
+   //SerialManager::getInstance()->do_detection( 1 );
   
-  //SerialManager::getInstance()->do_detection( 1 );
-
-  main_console = new TextConsole(8);
-
+  if (ArchCommon::haveVESAConsole())
+    main_console = new FrameBufferConsole(4);
+  else
+    main_console = new TextConsole(4);
+  
+  writeLine2Bochs( (uint8 *) "Console created \n");
   Terminal *term_0 = main_console->getTerminal(0);
   Terminal *term_1 = main_console->getTerminal(1);
   Terminal *term_2 = main_console->getTerminal(2);
@@ -529,6 +538,7 @@ void startup()
   
   term_0->setBackgroundColor(Console::BG_BLACK);
   term_0->setForegroundColor(Console::FG_GREEN);
+  kprintfd("Init debug printf\n");
   term_0->writeString("This is on term 0, you should see me now\n");
   term_1->writeString("This is on term 1, you should not see me, unles you switched to term 1\n");
   term_2->writeString("This is on term 2, you should not see me, unles you switched to term 2\n");
@@ -536,7 +546,8 @@ void startup()
 
   main_console->setActiveTerminal(0);
 
-  kprintfd("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
+  kprintf("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
+
 
   Scheduler::createScheduler();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
@@ -557,7 +568,7 @@ void startup()
 
   kprintf("Thread creation\n");
   
-  kprintfd("Adding Kernel threads\n");
+  kprintf("Adding Kernel threads\n");
  
   Scheduler::instance()->addNewThread( main_console );
   
@@ -569,7 +580,7 @@ void startup()
     new BDThread()
     );
     
-  kprintfd("Adding User Threads\n");
+
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
@@ -580,14 +591,13 @@ void startup()
   
   Scheduler::instance()->printThreadList();
   
-  kprintfd("Now enabling Interrupts...\n");
   kprintf("Now enabling Interrupts...\n");
   ArchInterrupts::enableInterrupts();    
-    
-  kprintfd("Init done\n"); 
-  //don't use anything that acquries a lock here, as we never return here after a taskswitch
 
-  Scheduler::instance()->yield();
+  Scheduler::instance()->yield();  
+
+
+  
   
   for (;;);
 }

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.h,v 1.6 2005/04/23 20:08:26 nomenquis Exp $
+//   $Id: FrameBufferConsole.h,v 1.7 2005/09/21 17:01:12 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.h,v $
+//  Revision 1.6  2005/04/23 20:08:26  nomenquis
+//  updates
+//
 //  Revision 1.5  2005/04/23 18:13:27  nomenquis
 //  added optimised memcpy and bzero
 //  These still could be made way faster by using asm and using cache bypassing mov instructions
@@ -32,12 +35,22 @@ class FrameBufferConsole : public Console
 {
 public:
   
-  FrameBufferConsole();
- 
-  virtual uint32 setAsCurrent();
-  virtual uint32 unsetAsCurrent();
 
-protected:
+  FrameBufferConsole(uint32 num_terminals);
+
+  virtual void Run();
+  
+  void handleKey( uint32 );
+  
+  uint32 remap( uint32 ); // this should be moved to terminal
+  
+  bool isDisplayable( uint32 );
+  
+  bool isLetter( uint32 );
+  bool isNumber( uint32 );
+  
+
+private:
   
   virtual void consoleClearScreen();
   virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state);
@@ -45,10 +58,9 @@ protected:
   virtual uint32 consoleGetNumColumns() const;
   virtual void consoleScrollUp();
   virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color);
-  virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color);
+  virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color); 
 
-private:
-  
+
   void setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b);
   uint32 x_res_;
   uint32 y_res_;

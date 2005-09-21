@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.40 2005/09/21 15:50:01 nomenquis Exp $
+//  $Id: InterruptUtils.cpp,v 1.41 2005/09/21 17:01:12 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.40  2005/09/21 15:50:01  nomenquis
+//  added a heartbeat character for the text mode frambuffer
+//
 //  Revision 1.39  2005/09/20 08:05:07  btittelbach
 //  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
 //  +Condition cleanup
@@ -595,6 +598,8 @@ extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
   static uint32 heart_beat_value = 0;
+  static uint32 leds = 0;
+  static uint32 ctr = 0;
   char* fb = (char*)0xC00B8000;
   if (heart_beat_value)
   {
@@ -607,6 +612,12 @@ extern "C" void irqHandler_0()
     fb[1] = 0x3d;
   }
   heart_beat_value = !heart_beat_value;
+  outportb( 0xED, 0x60 );  // "set LEDs" command
+  outportb( leds, 0x60 );
+  kprintfd("Settings leds to %d\n",leds);
+  if (ctr == 9)
+    leds = (leds + 1) % (1 << 3);
+  ctr = (ctr + 1) % 10;
   
   //kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");

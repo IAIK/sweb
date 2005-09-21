@@ -1,6 +1,9 @@
-# $Id: toolchain.mk,v 1.13 2005/07/31 17:35:32 nightcreature Exp $
+# $Id: toolchain.mk,v 1.14 2005/09/21 17:01:12 nomenquis Exp $
 #
 # $Log: toolchain.mk,v $
+# Revision 1.13  2005/07/31 17:35:32  nightcreature
+# additions for xen target
+#
 # Revision 1.12  2005/07/22 15:29:44  nomenquis
 # added gdb support
 #
@@ -118,10 +121,10 @@ ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
 #CXXFLAGS := $(CXXFLAGS) -fpack-struct -g -O1  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
 #CCFLAGS := $(CCFLAGS) -fpack-struct -g -O1  -Wall -W -nostdinc -fno-builtin
-CXXFLAGS := $(CXXFLAGS) -g -O1  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
-CCFLAGS := $(CCFLAGS)  -O1 -g  -Wall -W -nostdinc -fno-builtin
+CXXFLAGS := $(CXXFLAGS) -g -O3  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
+CCFLAGS := $(CCFLAGS)  -O3 -g  -Wall -W -nostdinc -fno-builtin
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
-ASGCCFLAGS := $(ASGCCFLAGS)  -c -O1 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
+ASGCCFLAGS := $(ASGCCFLAGS)  -c -O3 -g3 -gstabs -Wall -W -nostdinc -fno-builtin
 endif
 endif

@@ -18,10 +18,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //----------------------------------------------------------------------
-//   $Id: arch_keyboard_manager.cpp,v 1.6 2005/09/21 15:37:02 btittelbach Exp $
+//   $Id: arch_keyboard_manager.cpp,v 1.7 2005/09/21 17:01:12 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: arch_keyboard_manager.cpp,v $
+//  Revision 1.6  2005/09/21 15:37:02  btittelbach
+//  full kbd buffer blocks irq1 bug fixed
+//
 //  Revision 1.5  2005/09/20 21:14:31  nelles
 //
 //
@@ -280,17 +283,17 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc )
     if(control_key & KBD_META_CAPS)
     {
       keyboard_status_ ^= KBD_META_CAPS;
-      setLEDs();
+      //setLEDs();
     }
     else if(control_key & KBD_META_NUM)
     {
       keyboard_status_ ^= KBD_META_NUM;
-      setLEDs();
+      //setLEDs();
     }
     else if(control_key & KBD_META_SCRL)
     {
       keyboard_status_ ^= KBD_META_SCRL;
-      setLEDs();
+      //setLEDs();
     }        
     else
       keyboard_status_ |= control_key;

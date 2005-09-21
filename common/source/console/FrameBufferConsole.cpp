@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.10 2005/07/24 17:02:59 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.11 2005/09/21 17:01:12 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
+//  Revision 1.10  2005/07/24 17:02:59  nomenquis
+//  lots of changes for new console stuff
+//
 //  Revision 1.9  2005/04/26 17:03:27  nomenquis
 //  16 bit framebuffer hack
 //
@@ -32,17 +35,29 @@
 #include "ArchCommon.h"
 #include "Terminal.h"
 #include "image.h"
-/*
-FrameBufferConsole::FrameBufferConsole()
+#include "arch_keyboard_manager.h"
+#include "kprintf.h"
+FrameBufferConsole::FrameBufferConsole(uint32 num_terminals):Console(num_terminals)
 {
   x_res_ = ArchCommon::getVESAConsoleWidth();
   y_res_ = ArchCommon::getVESAConsoleHeight();
   bits_per_pixel_ = ArchCommon::getVESAConsoleBitsPerPixel();
   bytes_per_pixel_ = bits_per_pixel_ / 8;
-  terminal_ = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
-  consoleSetForegroundColor(Console::FG_GREEN);
-  consoleSetBackgroundColor(Console::BG_BLACK);
+
+  uint32 i;
+  for (i=0;i<num_terminals;++i)
+  {
+    Terminal *term = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+    terminals_.pushBack(term);
+  }
+  active_terminal_ = 0;
+  name_ = "VESAConsoleThrd";
+  consoleSetForegroundColor(FG_BLACK);
+  consoleSetBackgroundColor(BG_WHITE);
+  consoleClearScreen();
 }
+
+
 
 void FrameBufferConsole::consoleClearScreen()
 {
@@ -91,11 +106,12 @@ void FrameBufferConsole::setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b)
   lfb[offset + 2] = r;
   lfb[offset + 3] = 0;
   */
-  /*
+  
 }
 
 uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
 {
+
   uint32 i,k;
   uint32 character_index = character * 16;
   
@@ -127,17 +143,6 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
 }
 
 
-
-uint32 FrameBufferConsole::setAsCurrent()
-{
-  return 0;
-}
-
-uint32 FrameBufferConsole::unsetAsCurrent()
-{
-  return 0;
-}
-
 void FrameBufferConsole::consoleScrollUp()
 {
   pointer fb = ArchCommon::getVESAConsoleLFBPtr();
@@ -165,4 +170,88 @@ void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color
   b = 0;
   current_background_color_ = (r<<16) + (g<<8) + (b); 
 }
-*/
+
+void FrameBufferConsole::Run( void )
+{
+  KeyboardManager * km = KeyboardManager::getInstance();
+  uint32 key; 
+  do 
+  {
+    while(km->getKeyFromKbd(key))
+      if( isDisplayable( key ) )
+      {
+        key = remap( key );
+        terminals_[active_terminal_]->write( key );
+        terminals_[active_terminal_]->putInBuffer( key );
+      }
+      else
+        handleKey( key );
+    Scheduler::instance()->yield();
+  }
+  while(1); // until the end of time
+
+}
+void FrameBufferConsole::handleKey( uint32 key )
+{
+  KeyboardManager * km = KeyboardManager::getInstance();
+  
+  uint32 terminal_selected = (key - KeyboardManager::KEY_F1);
+  
+  if( terminal_selected < getNumTerminals() && km->isShift() )
+  {
+    setActiveTerminal(terminal_selected);
+    return;
+  }
+  
+  if (terminal_selected == 11)
+    Scheduler::instance()->printThreadList();
+  
+  if( key == '\b' )
+    terminals_[active_terminal_]->backspace();
+  
+  return;
+}
+bool FrameBufferConsole::isDisplayable( uint32 key )
+{
+  return ( ( (key & 127) >= ' ' ) || (key == '\n') || (key == '\b') );
+}
+
+bool FrameBufferConsole::isLetter( uint32 key )
+{
+  return ( ( key >= 'a' ) && (key <= 'z') );
+}
+
+bool FrameBufferConsole::isNumber( uint32 key )
+{
+  return ( ( key >= '0' ) && (key <= '9') );
+}
+
+uint32 FrameBufferConsole::remap( uint32 key )
+{
+
+  /// TODO: Move this function in terminal and
+  ///       implement lookup tables for various
+  ///       keyboard layouts
+  
+  uint32 number_table[] = { ')', '!', '@', '#', '$', 
+                            '%', '^', '&', '*', '('  };
+  
+  KeyboardManager * km = KeyboardManager::getInstance();
+  
+  if ( isLetter( key ) )
+  {
+    bool shifted = km->isShift() ^ km->isCaps();
+    
+    if( shifted )
+      key &= ~0x20;  
+  }
+  
+  if ( isNumber( key ) )
+  {
+    if( km->isShift() )
+        key = number_table[ key - '0' ];
+    
+  }
+  
+  return key;
+}

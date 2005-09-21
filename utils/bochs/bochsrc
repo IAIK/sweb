@@ -1,7 +1,13 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.20 2005/09/20 08:05:08 btittelbach Exp $
+#*    $Id: bochsrc,v 1.21 2005/09/21 17:01:12 nomenquis Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.20  2005/09/20 08:05:08  btittelbach
+#*    +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
+#*    +Condition cleanup
+#*    +FiFoDRBOSS now obsolete and removed
+#*    +added disk.img that nelle forgot to check in
+#*
 #*    Revision 1.19  2005/09/18 20:25:05  nelles
 #*
 #*
@@ -239,7 +245,7 @@ romimage: file=$BXSHARE/BIOS-bochs-latest, address=0xf0000
 #megs: 1024
 #megs: 16
 #megs: 8
-#megs: 1024
+#megs: 1025
 #=======================================================================
 # OPTROMIMAGE[1-4]:
 # You may now load up to 4 optional ROM images. Be sure to use a 

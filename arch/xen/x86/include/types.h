@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.3 2005/08/11 16:53:42 nightcreature Exp $
+ * $Id: types.h,v 1.4 2005/09/21 17:01:12 nomenquis Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.3  2005/08/11 16:53:42  nightcreature
+ * some addition
+ *
  * Revision 1.2  2005/07/31 17:45:06  nightcreature
  * needed updates
  *
@@ -56,8 +59,8 @@ typedef unsigned int pointer;
 
 typedef unsigned int size_t;
 
-#define Min(x,y) (((x)<(y))?(x):(y))
-#define Max(x,y) (((x)>(y))?(x):(y))
+#define Min(x,y) ((((x))<((y)))?((x)):((y)))
+#define Max(x,y) ((((x))>((y)))?((x)):((y)))
 
 //#pragma GCC poison int
 //#pragma GCC poison short

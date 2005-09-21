@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.12 2005/09/21 15:50:55 nomenquis Exp $
+//   $Id: PageManager.cpp,v 1.13 2005/09/21 17:01:12 nomenquis Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.12  2005/09/21 15:50:55  nomenquis
+//  fixed some bugs when having a vesa console
+//
 //  Revision 1.11  2005/09/21 14:00:51  nomenquis
 //  fixed bug for machines with >1gig of memory
 //
@@ -43,6 +46,8 @@
 #include "ArchMemory.h"
 //#include "hypervisor.h"
 #include "debug_bochs.h"
+#include "console/kprintf.h"
+
 #ifndef isXenBuild
 static uint32 fb_start = 0;
 static char* fb = (char*)0xC00B8100;
@@ -123,11 +128,12 @@ PageManager::PageManager(pointer start_of_structure)
   {
     writeLine2Bochs((uint8*)"PM: Managing region\n");
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
-    if (type==1) number_of_pages_ = Max(number_of_pages_,Min(end_address,256*1024));
+    kprintfd("Have a memory region from page %d to page %d of type %d\n", start_address, end_address,type);
+    if (type==1) number_of_pages_ = Max(number_of_pages_,(Min(end_address,256*1024*PAGE_SIZE)));
   }
   
   number_of_pages_ = number_of_pages_ / PAGE_SIZE;
-  
+  kprintfd("Number of physical pages: %d\n",number_of_pages_);
   //print(number_of_pages_);
   
   // max of 1 gig memory supportet
@@ -225,7 +231,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
   if (type == PAGE_FREE)  //what a stupid thing that would be to do
     return 0;
   
-  for (uint32 p=1024; p<number_of_pages_; ++p)  //start beyond kernel pages
+  for (uint32 p=1024; p<number_of_pages_; ++p)  
   {
     if (page_usage_table_[p] == PAGE_FREE)
     {
@@ -233,6 +239,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
       return p;
     }
   }
+  kprintfd("I have %d pages \n",number_of_pages_); 
   arch_panic((uint8*) "PageManager: Sorry, no more Pages Free !!!");
   return 0;
 }
