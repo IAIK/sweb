@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.5 2005/09/20 14:32:09 btittelbach Exp $
+# $Id: Makefile,v 1.6 2005/09/21 02:25:03 aniederl Exp $
 # $Log: Makefile,v $
+# Revision 1.5  2005/09/20 14:32:09  btittelbach
+# better yet
+#
 # Revision 1.4  2005/09/20 13:28:14  btittelbach
 # blubba
 #
@@ -46,7 +49,7 @@ LIBC_STATIC = $(OBJECTDIR)/libc.a
 
 INCLUDE_PATH = ./include
 
-CFLAGS = -Wall -g -fno-builtin -nostdinc -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
+CFLAGS = -Wall -g -m32 -fno-builtin -nostdinc -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
 
 OBJECTS = \
 					$(OBJECTDIR)/atoi.o \
@@ -80,5 +83,3 @@ clean:
 
 $(OBJECTDIR):
 	mkdir -p $(OBJECTDIR)
-
-	
