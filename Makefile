@@ -170,8 +170,8 @@ e2fsimage:
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
 
 qemu:
-	echo "Going to run qemu -fda boot.img"
-	cd $(OBJECTDIR) && qemu -fda boot.img
+	echo "Going to run qemu -fda boot_ext2.img"
+	cd $(OBJECTDIR) && qemu -fda boot_ext2.img
 
 bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\"" 
