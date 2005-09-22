@@ -10,24 +10,29 @@ title = Sweb - SVGA - 640x480x16
 root (fd0)
 kernel = /boot/kernel.x
 vbematch 640 480 16
+module /boot/ramfs
 
 title = Sweb - SVGA - 800x600x16
 root (fd0)
 kernel = /boot/kernel.x
 vbematch 800 600 16
+module /boot/ramfs
 
 title = Sweb - SVGA - 1024x768x16
 root (fd0)
 kernel = /boot/kernel.x
 vbematch 1024 768 16
+module /boot/ramfs
 
 title = Sweb - SVGA - 1280x1024x16
 root (fd0)
 kernel = /boot/kernel.x
 vbematch 1280 1024 16
+module /boot/ramfs
 
 title = Sweb - SVGA - 1600x1200x16
 root (fd0)
 kernel = /boot/kernel.x
 vbematch 1600 1200 16
+module /boot/ramfs
 
