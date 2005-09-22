@@ -138,7 +138,7 @@ install: kernel
 	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
 	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
-	@echo "Starting with install - ext2"
+	@echo "Starting with install - ext2 floppy"
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
 	test -e $(OBJECTDIR)/disk.img || cp ./images/disk.img $(OBJECTDIR)/
@@ -153,6 +153,18 @@ install: kernel
 	cp $(OBJECTDIR)/ramfs $(OBJECTDIR)/e2fstemp/boot
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
 	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
+	@echo "Starting with install - ext2 hard drive"
+	test -e $(OBJECTDIR)/SWEB-flat.vmdk.gz || cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/
+	gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
+	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
+	cp ./images/SWEB.vmdk $(OBJECTDIR)/
+	cp ./images/sweb.vmx $(OBJECTDIR)/
+	cp ./images/nvram $(OBJECTDIR)/
+	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 skip=63
+	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/temp_fs_ext2 -d $(OBJECTDIR)/e2fstemp -n
+	dd of=$(OBJECTDIR)/SWEB-flat.vmdk if=$(OBJECTDIR)/temp_fs_ext2 seek=63
+	rm -f $(OBJECTDIR)/temp_fs_ext2
+	@echo "VMWare install ready"
 
 e2fsimage:	
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
