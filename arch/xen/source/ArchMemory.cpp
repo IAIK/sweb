@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.5 2005/09/21 18:38:43 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.6 2005/09/22 09:07:03 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.5  2005/09/21 18:38:43  btittelbach
+//  ArchMemory differen page sizes part one
+//
 //  Revision 1.4  2005/09/21 03:33:52  rotho
 //  compiles now, but still doesn't work
 //
@@ -82,7 +85,7 @@ void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, 
 	page_directory[pde_vpn].pde4k.user_access = 1;
 }
 
-void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access)
+void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
    kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
    page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
