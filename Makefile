@@ -17,10 +17,11 @@ SUBPROJECTS := \
                common/source/ipc \
                common/source/mm \
                common/source/drivers \
-               utils/mtools \
                common/source/fs \
                common/source/fs/ramfs \
                common/source/fs/pseudofs 
+#               utils/mtools
+
 else
 SUBPROJECTS := \
                arch/arch/source \
@@ -30,12 +31,12 @@ SUBPROJECTS := \
                common/source/ipc \
                common/source/mm \
                common/source/drivers \
-               utils/mtools \
                common/source/fs \
                common/source/fs/ramfs \
                common/source/fs/pseudofs \
                userspace/libc \
                userspace/tests
+#               utils/mtools
 endif
 
 ifeq ($(ARCH),xen)
@@ -133,14 +134,15 @@ endif
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
 install: kernel
-	@echo "Starting with install"
-	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
-	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
-	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
-	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
+#	@echo "Starting with install"
+#	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
+#	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
+#	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
+#	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
 	@echo "Starting with install - ext2 floppy"
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
-	cp utils/e2fsimage/e2fsimage $(BINARYDESTDIR)
+	test -d $(OBJECTDIR)/bin || mkdir $(OBJECTDIR)/bin
+	cp utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
 	test -e $(OBJECTDIR)/disk.img || cp ./images/disk.img $(OBJECTDIR)/
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 	test -e !$(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
@@ -154,8 +156,7 @@ install: kernel
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
 	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
 	@echo "Starting with install - ext2 hard drive"
-	test -e $(OBJECTDIR)/SWEB-flat.vmdk.gz || cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/
-	gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
+	test -e $(OBJECTDIR)/SWEB-flat.vmdk || cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ && gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
@@ -170,8 +171,8 @@ e2fsimage:
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
 
 qemu:
-	echo "Going to run qemu -fda boot_ext2.img"
-	cd $(OBJECTDIR) && qemu -fda boot_ext2.img
+	echo "Going to run qemu -hda SWEB-flat.vmdk"
+	cd $(OBJECTDIR) && qemu -hda SWEB-flat.vmdk
 
 bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\"" 
