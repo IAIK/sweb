@@ -142,11 +142,13 @@ install: kernel
 	@echo "Starting with install - ext2 floppy"
 	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	test -d $(OBJECTDIR)/bin || mkdir $(OBJECTDIR)/bin
+	@echo "copying ef2s binary"
 	cp utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
+	@echo "copying Floppy images"
 	test -e $(OBJECTDIR)/disk.img || cp ./images/disk.img $(OBJECTDIR)/
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
-	test -d $(OBJECTDIR)/e2fstemp && echo "removeing e2fstemp"
-	test -d $(OBJECTDIR)/e2fstemp && rm -rf $(OBJECTDIR)/e2fstemp
+	@echo "creating temp dir"
+	rm -rf $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp/boot
 	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
@@ -157,9 +159,11 @@ install: kernel
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
 	@echo "########## $(OBJECTDIR)/boot_ext2.img is ready ###########"
 	@echo "########## Starting with install - ext2 hard drive ###########"
-	test -e $(OBJECTDIR)/SWEB-flat.vmdk && echo "SWEB-flat.vmdk does not exist. creating it..."
-	test -e $(OBJECTDIR)/SWEB-flat.vmdk && cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ 
-	test -e $(OBJECTDIR)/SWEB-flat.vmdk.gz && gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
+	@echo $(OBJECTDIR)/SWEB-flat.vmdk
+#	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" && echo "SWEB-flat.vmdk does exist. using it..."
+	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" || echo "SWEB-flat.vmdk does not exist. creating it..."
+	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" || ( cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz )
+	@echo "copying helper files..."
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
