@@ -160,7 +160,7 @@ install: kernel
 	@echo "########## $(OBJECTDIR)/boot_ext2.img is ready ###########"
 	@echo "########## Starting with install - ext2 hard drive ###########"
 	@echo $(OBJECTDIR)/SWEB-flat.vmdk
-#	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" && echo "SWEB-flat.vmdk does exist. using it..."
+	! ( test -e "$(OBJECTDIR)/SWEB-flat.vmdk" ) || echo "SWEB-flat.vmdk does exist. using it..."
 	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" || echo "SWEB-flat.vmdk does not exist. creating it..."
 	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" || ( cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz )
 	@echo "copying helper files..."
@@ -181,6 +181,10 @@ e2fsimage:
 qemu:
 	echo "Going to run qemu -hda SWEB-flat.vmdk"
 	cd $(OBJECTDIR) && qemu -hda SWEB-flat.vmdk
+
+vmware:
+	echo "Going to run \"vmware start $(OBJECTDIR)/sweb.vmx\""
+	cd $(OBJECTDIR) && vmrun start "$(OBJECTDIR)/sweb.vmx"
 
 bochs:
 	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\"" 
