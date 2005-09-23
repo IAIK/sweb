@@ -155,7 +155,7 @@ install: kernel
 	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
 	cp $(OBJECTDIR)/ramfs $(OBJECTDIR)/e2fstemp/boot
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
-	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
+	@echo "########## $(OBJECTDIR)/boot_ext2.img is ready ###########"
 	@echo "########## Starting with install - ext2 hard drive ###########"
 	test -e $(OBJECTDIR)/SWEB-flat.vmdk && echo "SWEB-flat.vmdk does not exist. creating it..."
 	test -e $(OBJECTDIR)/SWEB-flat.vmdk && cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ 
