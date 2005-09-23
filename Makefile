@@ -160,9 +160,9 @@ install: kernel
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
 	cp ./images/nvram $(OBJECTDIR)/
-	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 skip=63
+	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/temp_fs_ext2 -d $(OBJECTDIR)/e2fstemp -n
-	dd of=$(OBJECTDIR)/SWEB-flat.vmdk if=$(OBJECTDIR)/temp_fs_ext2 seek=63
+	dd of=$(OBJECTDIR)/SWEB-flat.vmdk if=$(OBJECTDIR)/temp_fs_ext2 bs=512 seek=63
 	rm -f $(OBJECTDIR)/temp_fs_ext2
 	@echo "VMWare install ready"
 
