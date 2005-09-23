@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: hypervisor.h,v 1.1 2005/07/31 18:22:59 nightcreature Exp $
+//  $Id: hypervisor.h,v 1.2 2005/09/23 16:06:07 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: hypervisor.h,v $
+//  Revision 1.1  2005/07/31 18:22:59  nightcreature
+//  hypercall interface needed to talk to xen
+//
 //
 //----------------------------------------------------------------------
 
@@ -34,12 +37,18 @@ union start_info_union
 extern union start_info_union start_info_union;
 #define start_info (start_info_union.start_info)
 
-
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 /* hypervisor.c */
 void do_hypervisor_callback(struct pt_regs *regs);
 void enable_hypervisor_event(unsigned int ev);
 void disable_hypervisor_event(unsigned int ev);
 void ack_hypervisor_event(unsigned int ev);
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Assembler stubs for hyper-calls.

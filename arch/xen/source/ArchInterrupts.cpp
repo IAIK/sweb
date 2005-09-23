@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.2 2005/09/21 02:18:58 rotho Exp $
+//  $Id: ArchInterrupts.cpp,v 1.3 2005/09/23 16:06:07 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.2  2005/09/21 02:18:58  rotho
+//  temporary commit; still doesn't work
+//
 //  Revision 1.1  2005/08/01 08:18:59  nightcreature
 //  initial release, partly dummy implementation, needs changes
 //
@@ -10,11 +13,9 @@
 //----------------------------------------------------------------------
 
 #include "ArchInterrupts.h"
-#include "8259.h"
-#include "structures.h"
 #include "ports.h"
-#include "InterruptUtils.h"
-#include "SegmentUtils.h"
+#include "os.h"
+#include "hypervisor.h"
 
 static uint32 interrupts_on = 0;
 static uint32 timer_on = 0;
@@ -43,24 +44,14 @@ void ArchInterrupts::disableTimer()
 
 void ArchInterrupts::enableInterrupts()
 {
-//      __asm__ __volatile__("sti"
-//    :
-//    :
-//    );
+   __sti();
 }
 
 bool ArchInterrupts::disableInterrupts()
 {
-//    uint32 ret_val;
-
-//  __asm__ __volatile__("pushfl\n"
-//                       "popl %0\n"
-//                       "cli"
-//  : "=a"(ret_val)
-//  :);
- 
-// // return ret_val;
-  return(false);
+  bool x;
+  __save_and_cli(x);
+  return(!x);
 }
 
 //tests if the InteruptFlag in EFLAGS is set
