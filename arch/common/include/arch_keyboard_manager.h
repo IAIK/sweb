@@ -14,12 +14,13 @@ extern "C"
 #include "ports.h"
 #include "RingBuffer.h"
 #include "atkbd.h"
+#include "arch_bd_io.h"
 
 /// \class KeyboardManager
 /// \brief Class that contains architecture specific parameters for AT keyboard communication
 
 
-class KeyboardManager
+class KeyboardManager : public bdio
 {
 public:
 

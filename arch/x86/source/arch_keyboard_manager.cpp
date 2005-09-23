@@ -18,10 +18,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //----------------------------------------------------------------------
-//   $Id: arch_keyboard_manager.cpp,v 1.7 2005/09/21 17:01:12 nomenquis Exp $
+//   $Id: arch_keyboard_manager.cpp,v 1.8 2005/09/23 21:25:04 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: arch_keyboard_manager.cpp,v $
+//  Revision 1.7  2005/09/21 17:01:12  nomenquis
+//  updates
+//
 //  Revision 1.6  2005/09/21 15:37:02  btittelbach
 //  full kbd buffer blocks irq1 bug fixed
 //
@@ -197,7 +200,7 @@ void KeyboardManager::kb_wait()
 void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
 {
   kb_wait();
-  outportb( cmd, port );
+  outbp( port, cmd );
 }
 
 void KeyboardManager::serviceIRQ( void )
@@ -243,9 +246,10 @@ void KeyboardManager::serviceIRQ( void )
     send_cmd(0xAE);  // enable the keyboard    
     return;
   }
-  
-  modifyKeyboardStatus( scancode ); // handle num, caps, scroll, shift, ctrl and alt 
 
+  modifyKeyboardStatus( scancode ); // handle num, caps, scroll, shift, ctrl and alt   
+  setLEDs();         // setting the leds
+      
   if( (scancode & 0200 ) ) // if a key was released just ignore it
   {
     send_cmd(0xAE);  // enable the keyboard    
@@ -254,7 +258,8 @@ void KeyboardManager::serviceIRQ( void )
       
   keyboard_buffer_->put( scancode ); // put it inside the buffer
   
-  send_cmd(0xAE); // enable the keyboard    
+  send_cmd(0xAE);    // enable the keyboard 
+  
 }
 
 void KeyboardManager::modifyKeyboardStatus(uint8 sc )
@@ -283,17 +288,14 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc )
     if(control_key & KBD_META_CAPS)
     {
       keyboard_status_ ^= KBD_META_CAPS;
-      //setLEDs();
     }
     else if(control_key & KBD_META_NUM)
     {
       keyboard_status_ ^= KBD_META_NUM;
-      //setLEDs();
     }
     else if(control_key & KBD_META_SCRL)
     {
       keyboard_status_ ^= KBD_META_SCRL;
-      //setLEDs();
     }        
     else
       keyboard_status_ |= control_key;
@@ -364,11 +366,12 @@ void KeyboardManager::setLEDs( void )
   if(keyboard_status_ & KBD_META_SCRL)
     leds |= 1;
   if(keyboard_status_ & KBD_META_NUM)
-    leds |= 4;
-  if(keyboard_status_ & KBD_META_CAPS)
     leds |= 2;
+  if(keyboard_status_ & KBD_META_CAPS)
+    leds |= 4;
   if(last_leds != leds)
   {
+    send_cmd( 0xF4, 0x60 );  // enable keyboard command
     send_cmd( 0xED, 0x60 );  // "set LEDs" command
     send_cmd( leds, 0x60 );  // bottom 3 bits set LEDs
     last_leds = leds;

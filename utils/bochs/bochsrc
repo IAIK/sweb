@@ -1,7 +1,10 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.21 2005/09/21 17:01:12 nomenquis Exp $
+#*    $Id: bochsrc,v 1.22 2005/09/23 21:25:04 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.21  2005/09/21 17:01:12  nomenquis
+#*    updates
+#*
 #*    Revision 1.20  2005/09/20 08:05:08  btittelbach
 #*    +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
 #*    +Condition cleanup
@@ -294,7 +297,7 @@ vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 # supported on Windows 95 and 98.
 #=======================================================================
 #floppya: 1_44=/dev/fd0, status=inserted
-floppya: 1_44="grub_disk.img", status=inserted
+#floppya: 1_44="grub_disk.img", status=inserted
 #floppya: 1_44=/dev/fd0H1440, status=inserted
 #floppya: 1_2=../1_2, status=inserted
 #floppya: 1_44=a:, status=inserted
@@ -384,7 +387,7 @@ ata0-slave: type=cdrom, path=D:, status=inserted
 #ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted 
 #
 #ata0-master: type=disk, path="image/hash.img", mode=flat, cylinders=60, heads=16, spt=63
-ata0-master: type=disk, path="disk.img", mode=growing, cylinders=81, heads=16, spt=63
+ata0-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=208, heads=16, spt=63
 #ata0-master: type=disk, mode=flat, path="image/mc.img", cylinders=4, heads=16, spt=63
 #ata0-slave: type=disk, mode=flat, path="image/minix_disk_1.img", cylinders=2, heads=2, spt=63
 #ata0-master: type=disk, path="image/c.img", mode=flat, cylinders=2, heads=16, spt=63
@@ -403,8 +406,8 @@ ata0-master: type=disk, path="disk.img", mode=growing, cylinders=81, heads=16, s
 #   boot: c
 #   boot: a
 #=======================================================================
-boot: floppy
-#boot: disk
+#boot: floppy
+boot: disk
 
 #=======================================================================
 # IPS:
@@ -523,9 +526,9 @@ log: bochsout.txt
 #=======================================================================
 panic: action=ask
 error: action=report
-info: action=report
+info: action=ignore
 #debug: action=ignore
-debug: action=report
+debug: action=ignore
 #pass: action=report
 #pass: action=fatal
 
