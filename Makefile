@@ -145,7 +145,8 @@ install: kernel
 	cp utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
 	test -e $(OBJECTDIR)/disk.img || cp ./images/disk.img $(OBJECTDIR)/
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
-	test -e !$(OBJECTDIR)/e2fstemp || (rm -r $(OBJECTDIR)/e2fstemp; echo WARNING e2fstemp alredy exists - deleting.)
+	test -d $(OBJECTDIR)/e2fstemp && echo "removeing e2fstemp"
+	test -d $(OBJECTDIR)/e2fstemp && rm -rf $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp/boot
 	mkdir $(OBJECTDIR)/e2fstemp/boot/grub
@@ -155,17 +156,20 @@ install: kernel
 	cp $(OBJECTDIR)/ramfs $(OBJECTDIR)/e2fstemp/boot
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
 	@echo INSTALL: $(OBJECTDIR)/boot_ext2.img is ready
-	@echo "Starting with install - ext2 hard drive"
-	test -e $(OBJECTDIR)/SWEB-flat.vmdk || cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ && gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
+	@echo "########## Starting with install - ext2 hard drive ###########"
+	test -e $(OBJECTDIR)/SWEB-flat.vmdk && echo "SWEB-flat.vmdk does not exist. creating it..."
+	test -e $(OBJECTDIR)/SWEB-flat.vmdk && cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ 
+	test -e $(OBJECTDIR)/SWEB-flat.vmdk.gz && gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
 	cp ./images/nvram $(OBJECTDIR)/
-	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63
+	@echo "copy files to image..."
+	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63 2> /dev/null
 	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/temp_fs_ext2 -d $(OBJECTDIR)/e2fstemp -n
-	dd of=$(OBJECTDIR)/SWEB-flat.vmdk if=$(OBJECTDIR)/temp_fs_ext2 bs=512 seek=63
+	dd of=$(OBJECTDIR)/SWEB-flat.vmdk if=$(OBJECTDIR)/temp_fs_ext2 bs=512 seek=63 2> /dev/null
 	rm -f $(OBJECTDIR)/temp_fs_ext2
-	@echo "VMWare install ready"
+	@echo "########## Finished installing - ext2 hard drive ##########"
 
 e2fsimage:	
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
