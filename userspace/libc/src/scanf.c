@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: scanf.c,v $
  *
- * $Id: scanf.c,v 1.4 2005/09/21 22:33:02 aniederl Exp $
+ * $Id: scanf.c,v 1.5 2005/09/24 16:09:02 btittelbach Exp $
  * $Log: scanf.c,v $
+ * Revision 1.4  2005/09/21 22:33:02  aniederl
+ * gets now also tests for '\r' (Carriage Return)
+ *
  * Revision 1.3  2005/09/21 21:32:25  aniederl
  * repaired read loop in function gets()
  *
@@ -456,20 +459,26 @@ int getchar()
  */
 char *gets(char *input_buffer, size_t buffer_size)
 {
-  do
-  {
-    if(!buffer_size)
-      break;
+  unsigned int cchar;
+  unsigned int counter = 0;
+  if (!buffer_size)
+    return input_buffer;
+  
+  do {
+    read(STDIN_FILENO, (void*) &cchar, 1);
+    
+    if( cchar == '\b' )
+    {
+      if (counter>0)
+        counter--;
+    }
+    else
+      input_buffer[counter++] = (char) cchar;
+  }
+  while( cchar != '\n' && cchar != '\r' && counter < buffer_size );
 
-    read(STDIN_FILENO, (void*) input_buffer, 1);
-
-    --buffer_size;
-
-  } while((*input_buffer != '\n') && (*input_buffer++ != '\r'));
-  // test for '\n' (Line Feed) and '\r' (Carriage Return)
-
-  if(buffer_size)
-    *input_buffer = '\0';
+  if(buffer_size-counter)
+	input_buffer[counter]= '\0';
 
   return input_buffer;
 }

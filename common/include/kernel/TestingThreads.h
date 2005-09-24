@@ -100,11 +100,11 @@ class BDThread : public Thread
     uint32 dev_cnt = 0;
     
     for( dev_cnt = numdev; dev_cnt--; )
-      kprintf("BDThread::Run: BD%d device %s size: %u \n", dev_cnt, 
+      kprintfd("BDThread::Run: BD%d device %s size: %u \n", dev_cnt, 
       BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getName(), 
       BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getNumBlocks()*BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getBlockSize() );
       
-    kprintf("BDThread::Run: Done with blockdevices\n");
+    kprintfd("BDThread::Run: Done with blockdevices\n");
     currentThread->kill();
   };
 

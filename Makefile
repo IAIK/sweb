@@ -145,7 +145,6 @@ install: kernel
 	@echo "copying ef2s binary"
 	cp utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
 	@echo "copying Floppy images"
-	test -e $(OBJECTDIR)/disk.img || cp ./images/disk.img $(OBJECTDIR)/
 	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 	@echo "creating temp dir"
 	rm -rf $(OBJECTDIR)/e2fstemp
@@ -160,9 +159,7 @@ install: kernel
 	@echo "########## $(OBJECTDIR)/boot_ext2.img is ready ###########"
 	@echo "########## Starting with install - ext2 hard drive ###########"
 	@echo $(OBJECTDIR)/SWEB-flat.vmdk
-	! ( test -e "$(OBJECTDIR)/SWEB-flat.vmdk" ) || echo "SWEB-flat.vmdk does exist. using it..."
-	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" || echo "SWEB-flat.vmdk does not exist. creating it..."
-	test -e "$(OBJECTDIR)/SWEB-flat.vmdk" || ( cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz )
+	cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz
 	@echo "copying helper files..."
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
