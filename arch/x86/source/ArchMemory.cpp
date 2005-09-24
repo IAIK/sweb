@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.15 2005/09/21 19:26:24 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.16 2005/09/24 13:30:20 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.15  2005/09/21 19:26:24  btittelbach
+//  support for 4m pages, part two
+//
 //  Revision 1.14  2005/09/21 18:38:43  btittelbach
 //  ArchMemory differen page sizes part one
 //
@@ -92,7 +95,9 @@ void ArchMemory::unmapPage(uint32 physical_page_directory_page, uint32 virtual_p
   if (page_directory[pde_vpn].pde4m.use_4_m_pages)
   {
     page_directory[pde_vpn].pde4m.present = 0;
-    //FIXXME free a 4m page (which are not supported by PageManager)
+    //PageManager manages Pages of size PAGE_SIZE only, so we have to free this_page_size/PAGE_SIZE Pages
+    for (uint32 p=0;p<1024;++p)
+      PageManager::instance()->freePage(page_directory[pde_vpn].pde4m.page_base_address*1024 + p);
   }
   {
     page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
@@ -163,7 +168,8 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
       if (page_directory[pde_vpn].pde4m.use_4_m_pages)
       {
         page_directory[pde_vpn].pde4m.present=0;
-        //FIXXME free a 4m page (which are not supported by PageManager)
+          for (uint32 p=0;p<1024;++p)
+            PageManager::instance()->freePage(page_directory[pde_vpn].pde4m.page_base_address*1024 + p);
       }
       else
       {

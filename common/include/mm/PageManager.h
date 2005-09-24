@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.6 2005/05/19 20:04:17 btittelbach Exp $
+//   $Id: PageManager.h,v 1.7 2005/09/24 13:30:20 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.6  2005/05/19 20:04:17  btittelbach
+//  Much of this still needs to be moved to arch
+//
 //  Revision 1.5  2005/05/19 15:43:43  btittelbach
 //  Ansätze für eine UserSpace Verwaltung
 //
@@ -33,6 +36,9 @@
 
 #define PAGE_FREE static_cast<uint32>(0)
 
+/**
+* PageManager is in issence a BitMap managing free or used pages of size PAGE_SIZE only
+*/
 class PageManager
 {
 public:
