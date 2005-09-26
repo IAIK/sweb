@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.10 2005/09/21 23:03:35 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.11 2005/09/26 12:48:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.10  2005/09/21 23:03:35  btittelbach
+//  fix stuff
+//
 //  Revision 1.9  2005/09/21 21:29:45  btittelbach
 //  make kernel readline do less, as its suppossed to
 //
@@ -60,9 +63,6 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
     case sc_exit:
       exit(arg1);
       break;
-    case sc_clone:
-      return_value = clone();
-      break;
     case sc_write:
       return_value =  write(arg1,arg2,arg3);
       break;
@@ -108,13 +108,4 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 
   }
   return num_read;
-}
-
-uint32 Syscall::clone() 
-{
-  uint32 child_pid = 999; //no pids yet
-  
-  //clone process
- 
-  return child_pid; //we are parent
 }
