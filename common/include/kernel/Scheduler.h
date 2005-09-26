@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.12 2005/09/13 22:15:51 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.13 2005/09/26 13:56:55 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.12  2005/09/13 22:15:51  btittelbach
+//  small BugFix: Scheduler really works now
+//
 //  Revision 1.11  2005/09/13 21:24:42  btittelbach
 //  Scheduler without Memory Allocation in critical context (at least in Theory)
 //
@@ -53,39 +56,100 @@
 
 class Thread;
 class ArchThreadInfo;
-  
+
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
+
+//-----------------------------------------------------------
+/// Scheduler Class
+///
+/// This is a singelton class, it is instantiated in startup() and must be accessed via Scheduler::instance()->....
+/// The Scheduler knows about all running and sleeping threads and decides which thread to run next
+/// 
 class Scheduler
 {
 public:
-  
+
+//-----------------------------------------------------------
+/// Singelton Class Instance Access Method
+/// @return Pointer to Scheduler
   static Scheduler *instance();
+
+//-----------------------------------------------------------
+/// createScheduler is called by startup() and does exatly what it's name implies.
   static void createScheduler();
 
+//-----------------------------------------------------------
+/// adds a new Thread and prepares to run it
+/// this is the method that should be used to start a new Thread
+///
+/// @param *thread Pointer to the instance of a Class derived from Thread that contains the Thread to be started
   void addNewThread(Thread *thread);
+
+//-----------------------------------------------------------
+/// removes the currently active Thread from the scheduling list
+/// this method has actually no use right now and should propably not be used
+/// if you want to keep a thread from being scheduled use sleep() instead
+/// if you want to remove a thread permanently use Thread::kill() instead
   void removeCurrentThread();
+//-----------------------------------------------------------
+/// puts the currentThread to sleep and keeps it from being scheduled
   void sleep();
-  void wake(Thread* thread_to_wake);
-  void cleanupDeadThreads();
-
+//-----------------------------------------------------------
+/// wakes up a sleeping thread
+///
+/// @param *thread_to_wake, Pointer to the Thread that will be woken up
+  void wake(Thread *thread_to_wake);
+//-----------------------------------------------------------
+/// forces a task switch without waiting for the next timer interrupt
+///
   void yield();
-
+//-----------------------------------------------------------
+/// prints a List of all Threads using kprintfd
+///
   void printThreadList();
+//-----------------------------------------------------------
+/// compares all threads in the scheduler's list to the one given
+/// since the scheduler knows about all existing threads, this is
+/// a good way to see if a *thread is valid
+/// @param *thread Pointer to the Thread's instance we want to check its existance bevore accessing it
+/// @return true if *thread exists, fales otherwise
   bool checkThreadExists(Thread* thread);
 
-  // NEVER EVER EVER CALL THIS ONE OUTSIDE OF AN INTERRUPT CONTEXT //
-  uint32 schedule(uint32 from_interrupt=false);
+//-----------------------------------------------------------
+/// NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT 
+/// this is the methode that decides which threads will be scheduled next
+/// it is called by either the timer interrupt handler or the yield interrupt handler
+/// and changes the global variables currentThread and currentThreadInfo
+/// @return 1 if the InterruptHandler should switch to Usercontext or 0 if we can stay in Kernelcontext
+  uint32 schedule();
+
+protected:
+friend class IdleThread;
+//-----------------------------------------------------------
+/// this method is periodically called by the idle-Thread
+/// it removes and deletes Threads in state ToBeDestroyed
+///
+  void cleanupDeadThreads();
 
 private:
 
   Scheduler();
 
-  //don't use this externally
-  //this is only to protect the thread list
+//-----------------------------------------------------------
+/// Scheduler internal lock abstraction method
+/// locks the thread-list against concurrent access by prohibiting a thread switch
   void lockScheduling();  //not as severe as stopping Interrupts
+//-----------------------------------------------------------
+/// Scheduler internal lock abstraction method
+/// unlocks the thread-list
   void unlockScheduling();
+//-----------------------------------------------------------
+/// Scheduler internal lock abstraction method
+/// tests the thread-list-lock without setting it,
+/// use this _only_ in InterruptHandler-Context
+/// @return true if lock is set, false otherwise
   bool testLock();
 
   static Scheduler *instance_;

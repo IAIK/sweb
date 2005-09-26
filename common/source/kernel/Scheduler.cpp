@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.31 2005/09/20 14:32:08 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.32 2005/09/26 13:56:55 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.31  2005/09/20 14:32:08  btittelbach
+//  better yet
+//
 //  Revision 1.30  2005/09/20 08:05:08  btittelbach
 //  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
 //  +Condition cleanup
@@ -289,7 +292,7 @@ void Scheduler::startThreadHack()
   currentThread->Run();
 }
 
-uint32 Scheduler::schedule(uint32 from_interrupt)
+uint32 Scheduler::schedule()
 {
   if (testLock())
   {
@@ -336,6 +339,20 @@ void Scheduler::yield()
   ArchThreads::yield();
 }
 
+bool checkThreadExists(Thread* thread)
+{
+  bool retval=false;
+  lockScheduling();
+  for (c=0; c<threads_.size();++c)
+    if (threads_[c]==thread)
+    {
+      retval=true;
+      break;
+    }
+  unlockScheduling();
+  return retval;
+}
+
 void Scheduler::cleanupDeadThreads()
 {
   //check outside of atmoarity for performance gain,
@@ -371,24 +388,13 @@ void Scheduler::cleanupDeadThreads()
 
 void Scheduler::printThreadList()
 {
+  char *thread_states[6]= {"Running", "Sleeping", "ToBeDestroyed", "Unknown", "Unknown", "Unknown"};
   uint32 c=0;
+  lockScheduling();
   kprintfd("Scheduler::printThreadList: %d Threads in List\n",threads_.size());
   for (c=0; c<threads_.size();++c)
-    kprintfd("Scheduler::printThreadList: threads_[%d]: %x %s\n",c,threads_[c],threads_[c]->getName());
-  //~ kprintfd("Scheduler::printThreadList: Rotating Through to Back\n");
-  //~ for (c=0; c<threads_.size();++c)
-  //~ {
-    //~ Thread *thread = threads_.front();
-    //~ kprintfd("Scheduler::printThreadList: %x %s\n",thread,thread->getName());
-    //~ threads_.rotateBack();
-  //~ }
-  //~ kprintfd("Scheduler::printThreadList: Rotating Through to Front\n");
-  //~ for (c=0; c<threads_.size();++c)
-  //~ {
-    //~ Thread *thread = threads_.back();
-    //~ kprintfd("Scheduler::printThreadList: %x %s\n",thread,thread->getName());
-    //~ threads_.rotateFront();
-  //~ }
+    kprintfd("Scheduler::printThreadList: threads_[%d]: %x %s     [%s]\n",c,threads_[c],threads_[c]->getName(),thread_states[threads_[c]->state_]);
+  unlockScheduling();
 }
 
 void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
