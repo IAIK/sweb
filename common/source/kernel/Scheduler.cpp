@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.32 2005/09/26 13:56:55 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.33 2005/09/26 14:00:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.32  2005/09/26 13:56:55  btittelbach
+//  +doxyfication
+//  +SchedulerClass upgrade
+//
 //  Revision 1.31  2005/09/20 14:32:08  btittelbach
 //  better yet
 //
@@ -339,11 +343,11 @@ void Scheduler::yield()
   ArchThreads::yield();
 }
 
-bool checkThreadExists(Thread* thread)
+bool Scheduler::checkThreadExists(Thread* thread)
 {
   bool retval=false;
   lockScheduling();
-  for (c=0; c<threads_.size();++c)
+  for (uint32 c=0; c<threads_.size();++c)
     if (threads_[c]==thread)
     {
       retval=true;

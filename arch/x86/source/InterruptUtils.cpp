@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.42 2005/09/21 19:49:14 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.43 2005/09/26 14:00:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.42  2005/09/21 19:49:14  btittelbach
+//  PageManager now understands preallocated 4m pages
+//
 //  Revision 1.41  2005/09/21 17:01:12  nomenquis
 //  updates
 //
@@ -634,7 +637,7 @@ extern "C" void irqHandler_0()
   
   //kprintfd_nosleep("irq0: Tick\n");
 //  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
-  uint32 ret = Scheduler::instance()->schedule(1);  
+  uint32 ret = Scheduler::instance()->schedule();  
   switch (ret)
   {
     case 0:
@@ -654,7 +657,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  uint32 ret = Scheduler::instance()->schedule(1);  
+  uint32 ret = Scheduler::instance()->schedule();  
   switch (ret)
   {
     case 0:
