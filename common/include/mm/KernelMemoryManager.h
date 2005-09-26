@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.8 2005/09/26 14:58:05 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.9 2005/09/26 15:10:21 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.8  2005/09/26 14:58:05  btittelbach
+//  doxyfication
+//
 //  Revision 1.7  2005/08/07 16:47:25  btittelbach
 //  More nice synchronisation Experiments..
 //  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
@@ -168,7 +171,8 @@ public:
   pointer reallocateMemory(pointer virtual_address, size_t new_size);  
 
 //-----------------------------------------------------------
-/// called from startup() after the scheduler has been created
+/// called from startup() after the scheduler has been created and just
+/// before the Interrupts are turned on
   void startUsingSyncMechanism() {use_spinlock_=true;}
   
 private:

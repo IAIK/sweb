@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: new.cpp,v 1.5 2005/04/23 17:35:03 nomenquis Exp $
+//   $Id: new.cpp,v 1.6 2005/09/26 15:10:21 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: new.cpp,v $
+//  Revision 1.5  2005/04/23 17:35:03  nomenquis
+//  fixed buggy memory manager
+//  (giving out the same memory several times is no good idea)
+//
 //  Revision 1.4  2005/04/23 15:59:54  btittelbach
 //  compile fix
 //
@@ -99,7 +103,7 @@ void __pure_virtual() {
     \author HigePon
     \date   create:2002/08/08 update:2002/02/25
 */
-uint32 atexit( void (*)(void)) {return -1;}
+uint32 atexit( void (*)(void)) {return (uint32)-1;}
 
 /*!
     \brief dummy for gcc3.3
@@ -109,7 +113,7 @@ uint32 atexit( void (*)(void)) {return -1;}
     \author HigePon
     \date   create:2003/10/13 update:
 */
-uint32 __cxa_atexit() {return -1;}
+uint32 __cxa_atexit() {return (uint32)-1;}
 
 #ifndef GCC29
 void*   __dso_handle = (void*) &__dso_handle;
