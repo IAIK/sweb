@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.7 2005/08/07 16:47:25 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.8 2005/09/26 14:58:05 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.7  2005/08/07 16:47:25  btittelbach
+//  More nice synchronisation Experiments..
+//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
+//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
+//
 //  Revision 1.6  2005/05/03 18:31:09  btittelbach
 //  fix of evil evil MemoryManager Bug
 //
@@ -42,11 +47,28 @@
 #include "kernel/SpinLock.h"
 //#include "../../../arch/common/include/assert.h"
 
-// this will be written to the start of every mallog segment,
-// god help us, if someone ever writes beyond his allocated memory
+
+
+//-----------------------------------------------------------
+/// MallocSegment Class
+///
+/// This is a collection of 4 32bit values holding information about an allocated memory segment
+/// it is used as a ListNode by the KernelMemoryManager and is placed immediatly in front
+/// of an memory segment.
+/// If by error, some code should write beyond it's allocated memory segment, it would
+/// "surely"(read maybe) write into the next MallocSegment instance, therefore 
+/// overwriting the marker_ by which we hope to detect such an error
 class MallocSegment
 {
 public:
+//-----------------------------------------------------------
+/// MallocSegment ctor
+/// 
+/// @param *prev Pointer to the previous MallocSegment in the list
+/// @param *next Pointer to the next MallocSegment in the list
+/// @param size Number of Bytes the described segment is large 
+///     (this + sizeof(MallocSegment) + size is usually the start of the next segment)
+/// @param used describes if the segment is allocated or free
   MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used)
   {
     prev_=prev;
@@ -57,14 +79,21 @@ public:
       size_flag_ |= 0x80000000; //this is the used flag
 
   }
-
+//-----------------------------------------------------------
+/// @return the size of the segment in bytes (maximum 2^31-1 bytes)
   size_t getSize() {return (size_flag_ & 0x7FFFFFFF);}
+//-----------------------------------------------------------
+/// @param size sets the size of the segment in bytes (maximum 2^31-1 bytes)
   void setSize(size_t size) 
   { 
     size_flag_ &= 0x80000000;
     size_flag_ |= (size & 0x7FFFFFFF);
   }
+//-----------------------------------------------------------
+/// @return true if the segment is allocated, false it it is unused 
   bool getUsed() {return (size_flag_ & 0x80000000);}
+//-----------------------------------------------------------
+/// @param used set the segment as used (=true) or free (=false)
   void setUsed(bool used) 
   {
     size_flag_ &= 0x7FFFFFFF;
@@ -89,29 +118,57 @@ private:
 
 extern void* kernel_end_address;
 
+
+
+//-----------------------------------------------------------
+/// KernelMemoryManager Class
+///
+/// This class is a singelton. It should be accessed only by KernelMemoryManager::instance()->....
+/// 
+/// The KernelMemoryManager manages the useably Memory.
+///...
+///...
+
+
 class KernelMemoryManager
 {
 public:
-
+//-----------------------------------------------------------
+/// createMemoryManager is called by startup() and does exatly what it's name promises
+///
+/// @param start_address the first free memory address
+/// @param end_address the last address where memory is accessible (i.e. pages mapped)
   static uint32 createMemoryManager(pointer start_address, pointer end_address);
   static KernelMemoryManager *instance() {return instance_;}
 
-  /// @return pointer to Memory Adress or -1 on NotEnoughMemory (?)
+//-----------------------------------------------------------
+/// allocateMemory is called by new
+/// searches the MallocSegment-List for a free segment with size >= requested_size
+/// @param requested_size number of bytes to allocate 
+/// @return pointer to Memory Adress or 0 if Not Enough Memory
   pointer allocateMemory(size_t requested_size);
-  
-  /// @return bool false on NotEnoughMemory (?) or Overlap
-  /// this won't write a MallocSegmet, but irreversible mark a memory segment as used
-  //bool reserveMemory(pointer* virtual_address, size_t size);
 
-  // free memory segment
+//-----------------------------------------------------------
+/// freeMemory is called by delete
+/// checks if the given address points to an actual memory segment and marks it unused
+/// if possible it tries to merge with the free segments around it
+/// @param virtual_address memory address that was originally returned by allocateMemory
+/// @return true if segment was freed or false if address was wrong
   bool freeMemory(pointer virtual_address);
   
-  //in worst case: memcpy the entire stuff somewhere else
-  //WARNING: after MemCpy can't assume that pointer remains the same
-  //return -1 if unable to resize
-  //if size == 0 -> free(what_and_where_is_it);
+
+//-----------------------------------------------------------
+/// reallocateMemory is not used anywhere as of now
+/// its function is to resize an already allocated memory segment
+/// in the worst case moving the entire segment somewhere else as a result.
+/// WARNING: therefore, code mußt assume that the memory address will change after using reallocateMemory
+/// @param virtual_address address of the segment to resize
+/// @param new_size the new size (acts like free if size == 0)
+/// @return the (possibly altered) pointer to resized memory segment or 0 if unable to resize
   pointer reallocateMemory(pointer virtual_address, size_t new_size);  
-  
+
+//-----------------------------------------------------------
+/// called from startup() after the scheduler has been created
   void startUsingSyncMechanism() {use_spinlock_=true;}
   
 private:
