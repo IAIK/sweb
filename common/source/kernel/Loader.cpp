@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.13 2005/09/12 14:22:25 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.14 2005/09/26 15:29:05 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.13  2005/09/12 14:22:25  btittelbach
+//  tried cleaning up Scheduler by using List-Rotate instead of MemoryAllocation
+//  but then found out, that this could NEVER reliably work with the kind of
+//  List we use :-(
+//
 //  Revision 1.12  2005/08/26 12:01:25  nomenquis
 //  pagefaults in userspace now should really really really work
 //
@@ -298,6 +303,7 @@ uint32 Loader::loadExecutableAndInitProcess()
   return 0;
 }
 
+/*
 void Loader::loadOnePage(uint32 virtual_address)
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
@@ -367,29 +373,29 @@ void Loader::loadOnePage(uint32 virtual_address)
       }
       kprintfd("Copied a total of %d\n",num_copied);
              
-             /*
-      uint8* copy_helper = virtual_page
-      pointer write_start = vaddr;
-      if (h->p_paddr > write_start)
-        write_start=h->p_paddr;
+         
+      //~ uint8* copy_helper = virtual_page
+      //~ pointer write_start = vaddr;
+      //~ if (h->p_paddr > write_start)
+        //~ write_start=h->p_paddr;
       
-      pointer write_stop = vaddr+PAGE_SIZE;
-      if (h->p_paddr + h->p_memsz < write_stop)
-        write_stop = h->p_paddr + h->p_memsz;
+      //~ pointer write_stop = vaddr+PAGE_SIZE;
+      //~ if (h->p_paddr + h->p_memsz < write_stop)
+        //~ write_stop = h->p_paddr + h->p_memsz;
       
-      uint8 *curr_ptr = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page) +  (write_start % PAGE_SIZE));
+      //~ uint8 *curr_ptr = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page) +  (write_start % PAGE_SIZE));
       
-      if (h->p_paddr > vaddr)
-        read=0;
-      else
-        read = vaddr - h->p_paddr;
-      kprintfd("Testing this super buggy thing, write start is %x and write stop is %x\n",write_start,write_stop);
-      for (curr_ptr = reinterpret_cast<uint8*>(write_start); curr_ptr < reinterpret_cast<uint8*>(write_stop); ++curr_ptr)
-      {
-        *curr_ptr = file_image_[h->p_offset + read];
-        ++read;
-      }
-      kprintfd("Loader::loadOnePage: wrote %d bytes\r\n",write_stop - write_start); */
+      //~ if (h->p_paddr > vaddr)
+        //~ read=0;
+      //~ else
+        //~ read = vaddr - h->p_paddr;
+      //~ kprintfd("Testing this super buggy thing, write start is %x and write stop is %x\n",write_start,write_stop);
+      //~ for (curr_ptr = reinterpret_cast<uint8*>(write_start); curr_ptr < reinterpret_cast<uint8*>(write_stop); ++curr_ptr)
+      //~ {
+        //~ *curr_ptr = file_image_[h->p_offset + read];
+        //~ ++read;
+      //~ }
+      //~ kprintfd("Loader::loadOnePage: wrote %d bytes\r\n",write_stop - write_start); 
       wrote_someting=true;
     }
   }
@@ -404,7 +410,7 @@ void Loader::loadOnePage(uint32 virtual_address)
     kpanict((uint8*) "Loader: loadOnePage(): PANIC should not reach\r\n");
   }
 }
-
+*/
 void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;

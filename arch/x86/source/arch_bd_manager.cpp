@@ -1,7 +1,23 @@
 /********************************************************************
 *
-*    $Id: arch_bd_manager.cpp,v 1.3 2005/09/18 20:46:52 nelles Exp $
+*    $Id: arch_bd_manager.cpp,v 1.4 2005/09/26 15:29:05 btittelbach Exp $
 *    $Log: arch_bd_manager.cpp,v $
+*    Revision 1.3  2005/09/18 20:46:52  nelles
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/include/arch_bd_ide_driver.h
+*     	arch/x86/include/arch_bd_manager.h
+*     	arch/x86/include/arch_bd_request.h
+*     	arch/x86/include/arch_bd_virtual_device.h
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/x86/source/arch_bd_manager.cpp
+*     	arch/x86/source/arch_bd_virtual_device.cpp
+*     ----------------------------------------------------------------------
+*
 ********************************************************************/
 
 #include "arch_bd_manager.h"
@@ -64,6 +80,7 @@ BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )
 
 BDVirtualDevice* BDManager::getDeviceByName( char * dev_name )
 {
+#warning TODO: implement strcmp search for getDeviceByName
   return 0; // TODO: implement strcmp search
 };
 

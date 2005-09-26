@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.14 2005/09/03 18:20:14 nomenquis Exp $
+//   $Id: ArchCommon.cpp,v 1.15 2005/09/26 15:29:05 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.14  2005/09/03 18:20:14  nomenquis
+//  pseudo fs works now
+//
 //  Revision 1.12  2005/07/26 17:45:25  nomenquis
 //  foobar
 //
@@ -90,7 +93,7 @@ static struct multiboot_remainder mbr = {0,0,0,0,0,0,FOURTY_ZEROS};
   
 extern "C" void parseMultibootHeader();
 
-
+/*
 #define print(x)     fb_start += 2; \
     { \
       uint32 divisor; \
@@ -110,12 +113,12 @@ extern "C" void parseMultibootHeader();
         current = remainder; \
       }      \
     }
-    
+*/
 void parseMultibootHeader()
 {
   uint32 i;
-  uint32 fb_start = 0;
-  uint8 * fb = (uint8*) 0x000B8000;
+  //~ uint32 fb_start = 0;
+  //~ uint8 * fb = (uint8*) 0x000B8000;
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer);
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
   
