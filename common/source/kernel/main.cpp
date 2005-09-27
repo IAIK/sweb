@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.97 2005/09/21 17:01:12 nomenquis Exp $
+ * $Id: main.cpp,v 1.98 2005/09/27 21:24:43 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.97  2005/09/21 17:01:12  nomenquis
+ * updates
+ *
  * Revision 1.96  2005/09/21 14:46:35  btittelbach
  * *** empty log message ***
  *
@@ -550,11 +553,10 @@ void startup()
 
 
   Scheduler::createScheduler();
-  KernelMemoryManager::instance()->startUsingSyncMechanism();
   
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
   kprintf_nosleep_init();
-  
+
   kprintf("Threads init\n");
   ArchThreads::initialise();
   kprintf("Interupts init\n");
@@ -590,6 +592,9 @@ void startup()
   
   
   Scheduler::instance()->printThreadList();
+
+  PageManager::instance()->startUsingSyncMechanism();
+  KernelMemoryManager::instance()->startUsingSyncMechanism();
   
   kprintf("Now enabling Interrupts...\n");
   ArchInterrupts::enableInterrupts();    

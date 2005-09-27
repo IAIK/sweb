@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.7 2005/09/24 13:30:20 btittelbach Exp $
+//   $Id: PageManager.h,v 1.8 2005/09/27 21:24:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.7  2005/09/24 13:30:20  btittelbach
+//  4m page support
+//
 //  Revision 1.6  2005/05/19 20:04:17  btittelbach
 //  Much of this still needs to be moved to arch
 //
@@ -28,13 +31,16 @@
 
 #include "types.h"
 #include "paging-definitions.h"
+#include "new.h"
+#include "kernel/Mutex.h"
 
-#define PAGE_RESERVED static_cast<uint32>(1<<31)
-#define PAGE_KERNEL static_cast<uint32>(1<<30)
-#define PAGE_USERSPACE static_cast<uint32>(1<<30)
+typedef uint8 puttype;
+#define PAGE_RESERVED static_cast<puttype>(1<<0)
+#define PAGE_KERNEL static_cast<puttype>(1<<1)
+#define PAGE_USERSPACE static_cast<puttype>(1<<2)
 
 
-#define PAGE_FREE static_cast<uint32>(0)
+#define PAGE_FREE static_cast<puttype>(0)
 
 /**
 * PageManager is in issence a BitMap managing free or used pages of size PAGE_SIZE only
@@ -59,6 +65,7 @@ public:
 
   void freePage(uint32 page_number);
 
+  void startUsingSyncMechanism() {lock_=new Mutex();}
 
 private:
   
@@ -69,8 +76,10 @@ private:
   //PageManager &operator=(PageManager const&){};
   static PageManager* instance_;
   
-  uint32 *page_usage_table_;
+  puttype  *page_usage_table_;
   uint32 number_of_pages_;
+    
+  Mutex *lock_;
     
 };
 

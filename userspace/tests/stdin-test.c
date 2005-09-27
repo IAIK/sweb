@@ -8,9 +8,9 @@ void handle_command(char* buffer,int buffer_size)
 {
 	int c=0;
 	int num=0;
-	if (buffer[0]=='l' && buffer[1] =='s')
+	if (buffer[0]=='l' && buffer[1] =='s' && (buffer[2] == '\n' ||buffer[2] == '\r'|| buffer[2] == ' '))
 		printf("Sorry, Filesystem Syscalls not implemented yet\n");
-	else if (buffer[0] == 'p' && buffer[1] == 's' && (buffer[2] == 0 || buffer[2] == ' '))
+	else if (buffer[0] == 'p' && buffer[1] == 's' && (buffer[2] == '\n' ||buffer[2] == '\r'|| buffer[2] == ' '))
 		printf("Sorry, Threading System Syscalls not Implemented,\nuse F12 to print a list of Threads to Bochs\n");
 	else if (buffer[0]=='h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
 	{

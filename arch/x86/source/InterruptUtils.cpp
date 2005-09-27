@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.43 2005/09/26 14:00:43 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.44 2005/09/27 21:24:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.43  2005/09/26 14:00:43  btittelbach
+//  compilefix
+//
 //  Revision 1.42  2005/09/21 19:49:14  btittelbach
 //  PageManager now understands preallocated 4m pages
 //
@@ -688,7 +691,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //~ __asm__("movl %%cr2, %0"
   //~ :"=a"(cr2)
   //~ :);
-  kprintfd_nosleep("\nPageFault:( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
+  kprintfd_nosleep("PageFault::( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
                                                                             error&flag_p, 
                                                                             (error&flag_rw) >> 1, 
                                                                             (error&flag_us) >> 2,
@@ -697,9 +700,14 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
                                                                             currentThread->switch_to_userspace_);
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
+
+  kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  currentThread->switch_to_userspace_ = false;
+  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  ArchInterrupts::enableInterrupts();
+
   
-  //lets hope this Exeption wasn't thrown during a TaskSwitch
-  
+  //lets hope this Exeption wasn't thrown during a TaskSwitch  
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
@@ -708,15 +716,17 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   else 
   {
     kprintfd_nosleep("PageFault: Userprogramm caused an unexpected Pagefault\n");
-    ArchInterrupts::enableInterrupts(); //enable Interrupts before exit !!!!
     if (currentThread->loader_)
       Syscall::exit(9999);
     else
       currentThread->kill();
   }
+  kprintfd_nosleep("PageFault: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  ArchInterrupts::disableInterrupts();
+  currentThread->switch_to_userspace_ = true;
+  currentThreadInfo = currentThread->user_arch_thread_info_;
   kprintfd_nosleep("PageFault: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
-   // arch_switchThreadToUserPageDirChange();
- // for(;;);
+  arch_switchThreadToUserPageDirChange();
 }
 
 
@@ -782,10 +792,7 @@ extern "C" void syscallHandler()
   kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   
   currentThread->switch_to_userspace_ = false;
-  if ( currentThread->switch_to_userspace_)
-    currentThreadInfo = currentThread->user_arch_thread_info_;
-  else
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
   
   currentThread->user_arch_thread_info_->eax =
@@ -799,10 +806,7 @@ extern "C" void syscallHandler()
   kprintfd_nosleep("syscallHANDLER: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
-  if ( currentThread->switch_to_userspace_)
-    currentThreadInfo =  currentThread->user_arch_thread_info_;
-  else
-    currentThreadInfo =  currentThread->kernel_arch_thread_info_;
+  currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,1);
   kprintfd_nosleep("syscallHANDLER: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
   arch_switchThreadToUserPageDirChange();

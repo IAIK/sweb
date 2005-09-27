@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.15 2005/09/21 19:54:04 btittelbach Exp $
+//   $Id: PageManager.cpp,v 1.16 2005/09/27 21:24:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.15  2005/09/21 19:54:04  btittelbach
+//  +readability
+//  -warnings
+//
 //  Revision 1.14  2005/09/21 19:49:14  btittelbach
 //  PageManager now understands preallocated 4m pages
 //
@@ -53,6 +57,8 @@
 //#include "hypervisor.h"
 #include "debug_bochs.h"
 #include "console/kprintf.h"
+#include "ArchInterrupts.h"
+#include "assert.h"
 
 PageManager* PageManager::instance_=0;
   
@@ -81,7 +87,8 @@ pointer PageManager::createPageManager(pointer next_usable_address)
 PageManager::PageManager(pointer start_of_structure)
 {
   number_of_pages_ = 0;
-  page_usage_table_ = (uint32*)start_of_structure;
+  page_usage_table_ = (puttype*)start_of_structure;
+  lock_=0;
   
   uint32 i,k;
   uint32 num_mmaps = ArchCommon::getNumUseableMemoryRegions();
@@ -105,7 +112,7 @@ PageManager::PageManager(pointer start_of_structure)
   // max of 1 gig memory supportet
   number_of_pages_ = Min(number_of_pages_,1024*256);
 
-  size_t length_of_structure = number_of_pages_ * sizeof(uint32);
+  size_t length_of_structure = number_of_pages_ * sizeof(puttype);
   size_t number_of_pages_for_structure = length_of_structure / PAGE_SIZE;
   
   size_t number_of_used_pages = (((uint32)&kernel_end_address)-1024*1024*1024*2) / PAGE_SIZE; 
@@ -190,7 +197,7 @@ uint32 PageManager::getTotalNumPages() const
 
 uint32 PageManager::getSizeOfMemoryUsed() const
 {
-  return number_of_pages_ * sizeof(uint32); 
+  return number_of_pages_ * sizeof(puttype); 
 }
 
 //used by loader.cpp ArchMemory.cpp UerProcess.cpp
@@ -198,22 +205,33 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
 {
   if (type == PAGE_FREE)  //what a stupid thing that would be to do
     return 0;
+ 
+  if (lock_)
+    lock_->acquire();
   
   for (uint32 p=1024; p<number_of_pages_; ++p)  
   {
     if (page_usage_table_[p] == PAGE_FREE)
     {
       page_usage_table_[p] = type;
+      if (lock_)
+        lock_->release();
       return p;
     }
   }
   kprintfd("I have %d pages \n",number_of_pages_); 
   arch_panic((uint8*) "PageManager: Sorry, no more Pages Free !!!");
+  if (lock_)
+    lock_->release();  
   return 0;
 }
 
 void PageManager::freePage(uint32 page_number) 
 {
+  if (lock_)
+    lock_->acquire();
   if (page_number >= 1024 && page_usage_table_[page_number] != PAGE_RESERVED)
     page_usage_table_[page_number] = PAGE_FREE;
+  if (lock_)
+    lock_->release(); 
 }

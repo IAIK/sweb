@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.11 2005/09/21 22:31:37 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.12 2005/09/27 21:24:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.11  2005/09/21 22:31:37  btittelbach
+//  consider \r
+//
 //  Revision 1.10  2005/09/21 21:29:45  btittelbach
 //  make kernel readline do less, as its suppossed to
 //
@@ -149,7 +152,9 @@ uint32 Terminal::readLine( char *line, uint32 size )
       line[counter++] = (char) cchar;
   }
   while( cchar != '\n' && cchar != '\r' && counter < size );
-   
+
+  if(size-counter)
+    line[counter]= '\0';
   return counter;
 }
 

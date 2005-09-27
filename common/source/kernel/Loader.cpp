@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.14 2005/09/26 15:29:05 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.15 2005/09/27 21:24:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.14  2005/09/26 15:29:05  btittelbach
+//  check
+//
 //  Revision 1.13  2005/09/12 14:22:25  btittelbach
 //  tried cleaning up Scheduler by using List-Rotate instead of MemoryAllocation
 //  but then found out, that this could NEVER reliably work with the kind of
@@ -54,6 +57,7 @@
 #include "ArchThreads.h"
 #include "mm/PageManager.h"
 #include "ArchMemory.h"
+#include "Syscall.h"
 #define EI_NIDENT	16
 
 // Elf file types
@@ -432,8 +436,6 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
   ArchCommon::bzero(ArchMemory::get3GBAdressOfPPN(page),PAGE_SIZE,false);
   
   pointer vaddr = virtual_page*PAGE_SIZE;
-
-  bool wrote_someting=false;  
   
   uint32 i=0;
   uint32 k=0;
@@ -486,7 +488,7 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
   kprintfd("Loader::loadOnePageSafeButSlow: wrote a total of %d bytes\n",written);
   if (!written)
   {
-    kprintfd("Loader::loadOnePageSafeButSlow: ERROR\n",written);
-    for(;;);
+    kprintfd("Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location\n",written);
+    Syscall::exit(9999);
   }
 }
