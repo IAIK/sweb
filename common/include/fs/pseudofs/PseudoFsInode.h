@@ -3,8 +3,11 @@
 //
 // CVS Log Info for $RCSfile: PseudoFsInode.h,v $
 //
-// $Id: PseudoFsInode.h,v 1.2 2005/09/17 09:33:55 davrieb Exp $
+// $Id: PseudoFsInode.h,v 1.3 2005/09/28 20:11:36 qiangchen Exp $
 // $Log: PseudoFsInode.h,v $
+// Revision 1.2  2005/09/17 09:33:55  davrieb
+// finished pseudofs code
+//
 // Revision 1.1  2005/09/16 16:27:40  davrieb
 // add pseudofs
 //
@@ -21,7 +24,7 @@ class PseudoFsInode : public RamFsInode
 
   public:
 
-    PseudoFsInode(Superblock *super_block, uint32 inode_mode);
+    PseudoFsInode(Superblock *super_block, uint32 inode_type);
 
     virtual ~PseudoFsInode();
 

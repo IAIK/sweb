@@ -2,8 +2,11 @@
 //
 // CVS Log Info for $RCSfile: PseudoFsSuperblock.cpp,v $
 //
-// $Id: PseudoFsSuperblock.cpp,v 1.3 2005/09/20 15:32:30 davrieb Exp $
+// $Id: PseudoFsSuperblock.cpp,v 1.4 2005/09/28 20:11:36 qiangchen Exp $
 // $Log: PseudoFsSuperblock.cpp,v $
+// Revision 1.3  2005/09/20 15:32:30  davrieb
+// fix loop reading creating the inodes
+//
 // Revision 1.2  2005/09/17 09:33:55  davrieb
 // finished pseudofs code
 //
@@ -44,9 +47,9 @@ PseudoFsSuperblock::~PseudoFsSuperblock()
 }
 
 //----------------------------------------------------------------------
-Inode* PseudoFsSuperblock::createInode(Dentry* dentry, uint32 mode)
+Inode* PseudoFsSuperblock::createInode(Dentry* dentry, uint32 type)
 {
-  Inode *inode = (Inode*)(new PseudoFsInode(this, mode));
+  Inode *inode = (Inode*)(new PseudoFsInode(this, type));
   int32 inode_init = inode->mknod(dentry);
 
   all_inodes_.pushBack(inode);
