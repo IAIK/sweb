@@ -1,7 +1,13 @@
 /**
- * $Id: main.cpp,v 1.98 2005/09/27 21:24:43 btittelbach Exp $
+ * $Id: main.cpp,v 1.99 2005/09/28 16:35:43 nightcreature Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.98  2005/09/27 21:24:43  btittelbach
+ * +IF=1 in PageFaultHandler
+ * +Lock in PageManager
+ * +readline/gets Bugfix
+ * +pseudoshell bugfix
+ *
  * Revision 1.97  2005/09/21 17:01:12  nomenquis
  * updates
  *
@@ -461,6 +467,7 @@
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
+#include "XenConsole.h"
 
 #include "fs/PseudoFS.h"
 #include "fs/fs_tests.h"
@@ -527,13 +534,24 @@ void startup()
   KernelMemoryManager::createMemoryManager(start_address,end_address);
   writeLine2Bochs( (uint8 *) "Kernel Memory Manager created \n");
    //SerialManager::getInstance()->do_detection( 1 );
-  
+
+  #ifdef isXenBuild
+  main_console = new XenConsole(4);
+  writeLine2Bochs( (uint8 *) "Xen Console created \n");
+  #else
   if (ArchCommon::haveVESAConsole())
+  {
     main_console = new FrameBufferConsole(4);
+    writeLine2Bochs( (uint8 *) "Frame Buffer Console created \n");
+  }
   else
+  {
     main_console = new TextConsole(4);
+    writeLine2Bochs( (uint8 *) "Text Console created \n");
+  }
+  #endif
+  //writeLine2Bochs( (uint8 *) "Console created \n");
   
-  writeLine2Bochs( (uint8 *) "Console created \n");
   Terminal *term_0 = main_console->getTerminal(0);
   Terminal *term_1 = main_console->getTerminal(1);
   Terminal *term_2 = main_console->getTerminal(2);

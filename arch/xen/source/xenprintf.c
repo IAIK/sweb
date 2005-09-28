@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: printf.c,v 1.1 2005/08/01 08:28:34 nightcreature Exp $
+//  $Id: xenprintf.c,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: printf.c,v $
+//  Revision 1.1  2005/08/01 08:28:34  nightcreature
+//  what to say..
+//
 //
 //----------------------------------------------------------------------
 
@@ -23,7 +26,7 @@
  *              (freebsd port, mainly sys/subr_prf.c)
  *
  ****************************************************************************
- * $Id: printf.c,v 1.1 2005/08/01 08:28:34 nightcreature Exp $
+ * $Id: xenprintf.c,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
  ****************************************************************************
  *
  *-
@@ -84,7 +87,7 @@ static int kvprintf(char const *fmt, void *arg, int radix, va_list ap);
 void kcons_write(const char *s, unsigned int count);
 
 int
-printf(const char *fmt, ...)
+xenprintf(const char *fmt, ...)
 {
 	va_list ap;
 	int retval;
@@ -101,7 +104,7 @@ printf(const char *fmt, ...)
 }
 
 int
-vprintf(const char *fmt, va_list ap)
+xenvprintf(const char *fmt, va_list ap)
 {
 	int retval;
     static char printk_buf[1024];
@@ -113,7 +116,7 @@ vprintf(const char *fmt, va_list ap)
 }
 
 int
-sprintf(char *buf, const char *cfmt, ...)
+xensprintf(char *buf, const char *cfmt, ...)
 {
 	int retval;
 	va_list ap;
@@ -126,7 +129,7 @@ sprintf(char *buf, const char *cfmt, ...)
 }
 
 int
-vsprintf(char *buf, const char *cfmt, va_list ap)
+xenvsprintf(char *buf, const char *cfmt, va_list ap)
 {
 	int retval;
 

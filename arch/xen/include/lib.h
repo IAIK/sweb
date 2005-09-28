@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: lib.h,v 1.2 2005/08/11 16:57:20 nightcreature Exp $
+//  $Id: lib.h,v 1.3 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: lib.h,v $
+//  Revision 1.2  2005/08/11 16:57:20  nightcreature
+//  preview only for robert ;-)
+//
 //  Revision 1.1  2005/07/31 18:21:59  nightcreature
 //  from mini os code, used for transition, maybe removed
 //
@@ -25,7 +28,7 @@
  * Description: Random useful library functions, contains some freebsd stuff
  *
  ****************************************************************************
- * $Id: lib.h,v 1.2 2005/08/11 16:57:20 nightcreature Exp $
+ * $Id: lib.h,v 1.3 2005/09/28 16:35:43 nightcreature Exp $
  ****************************************************************************
  *
  *-
@@ -70,7 +73,7 @@
 //#include "stdarg.h"
 
 /* variadic function support */
-//typedef char *va_list;
+/*typedef char *va_list;
 //#define __va_size(type) \
 //        (((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
 //#ifdef __GNUC__
@@ -83,16 +86,16 @@
 //#define va_arg(ap, type) \
 //        (*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))
 //#define va_end(ap)
-
+*/
 //#include "printf.h"
     /* printing */ 
 
 #define printk  printf 
     //#define kprintf printf 
-int printf(const char *fmt, ...); 
-int vprintf(const char *fmt, char *ap); 
-int sprintf(char *buf, const char *cfmt, ...); 
-int vsprintf(char *buf, const char *cfmt, char *ap); 
+// int printf(const char *fmt, ...); 
+// int vprintf(const char *fmt, char *ap); 
+// int sprintf(char *buf, const char *cfmt, ...); 
+// int vsprintf(char *buf, const char *cfmt, char *ap); 
 
 #include "util/string.h"
 

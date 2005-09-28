@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.h,v 1.2 2005/08/11 18:09:46 nightcreature Exp $
+//  $Id: xen_memory.h,v 1.3 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.h,v $
+//  Revision 1.2  2005/08/11 18:09:46  nightcreature
+//  *** empty log message ***
+//
 //  Revision 1.1  2005/08/11 16:59:10  nightcreature
 //  replacing mm.h
 //
@@ -10,7 +13,7 @@
 //----------------------------------------------------------------------
 
 
-/* partly based on mm.h by  Rolf Neugebauer (neugebar@dcs.gla.ac.uk)from mini-os
+// partly based on mm.h by  Rolf Neugebauer (neugebar@dcs.gla.ac.uk)from mini-os
 
 /*
  ****************************************************************************
@@ -34,33 +37,37 @@
  */
 
 #ifndef _XEN_MEMORY_H_
-#define _XEN_MEMORY_H__
+#define _XEN_MEMORY_H_
+
+#include "paging-definitions.h"
 
 #define PAGE_SHIFT      12
-#define PAGE_SIZE       (1UL << PAGE_SHIFT)
+//#define PAGE_SIZE       (1UL << PAGE_SHIFT)
 #define PAGE_MASK       (~(PAGE_SIZE-1))
 
 #define PFN_UP(x)	(((x) + PAGE_SIZE-1) >> PAGE_SHIFT)
 #define PFN_DOWN(x)	((x) >> PAGE_SHIFT)
 #define PFN_PHYS(x)	((x) << PAGE_SHIFT)
 
+#define VIRT_START              0x80000000UL
+
+#define to_phys(x)                 ((unsigned long)(x)-VIRT_START)
+#define to_virt(x)                 ((void *)((unsigned long)(x)+VIRT_START))
+
 /* to align the pointer to the (next) page boundary */
 #define PAGE_ALIGN(addr)        (((addr)+PAGE_SIZE-1)&PAGE_MASK)
-
-
 
 //machine_to_phys_mapping is defined in xen.h
 #define mfn_to_pfn(_mfn) (machine_to_phys_mapping[(_mfn)])
 
-//but phys_to_machine_mapping isn't...it is defined in xen_memory.c but not
-//initalised yet?
-//CHECK: try to initalise it
+//initalised in initalisePhysToMachineMapping()
 extern unsigned long *phys_to_machine_mapping;
 #define pfn_to_mfn(_pfn) (phys_to_machine_mapping[(_pfn)])
 
-//ArchMemory wants
 
 void initalisePhysToMachineMapping();
+
+void initalisePhysMapping3GB(uint32 nr_pages);
 
 static __inline__ unsigned long phys_to_machine(unsigned long phys)
 {
@@ -74,11 +81,6 @@ static __inline__ unsigned long machine_to_phys(unsigned long machine)
     phys = (phys << PAGE_SHIFT) | (machine & ~PAGE_MASK);
     return phys;
 }
-
-#define VIRT_START              0x80000000UL
-
-#define to_phys(x)                 ((unsigned long)(x)-VIRT_START)
-#define to_virt(x)                 ((void *)((unsigned long)(x)+VIRT_START))
 
 // void init_mm(void);
 // unsigned long alloc_pages(int order);

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: printf.h,v 1.1 2005/07/31 18:31:29 nightcreature Exp $
+//  $Id: xenprintf.h,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: printf.h,v $
+//  Revision 1.1  2005/07/31 18:31:29  nightcreature
+//  *** empty log message ***
+//
 //
 //----------------------------------------------------------------------
 
@@ -12,9 +15,9 @@
 /* printing */
 //#define printk  printf
 //#define kprintf printf
-int printf(const char *fmt, ...);
-int vprintf(const char *fmt, char *ap);
-int sprintf(char *buf, const char *cfmt, ...);
-int vsprintf(char *buf, const char *cfmt, char *ap);
+int xenprintf(const char *fmt, ...);
+int xenvprintf(const char *fmt, char *ap);
+int xensprintf(char *buf, const char *cfmt, ...);
+int xenvsprintf(char *buf, const char *cfmt, char *ap);
 
 #endif

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: events.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
+//  $Id: events.c,v 1.2 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: events.c,v $
+//  Revision 1.1  2005/08/01 08:22:38  nightcreature
+//  code from mini-os needed for transition, maybe removedOB
+//
 //
 //----------------------------------------------------------------------
 
@@ -21,7 +24,7 @@
  * Description: Deal with events
  *
  ****************************************************************************
- * $Id: events.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
+ * $Id: events.c,v 1.2 2005/09/28 16:35:43 nightcreature Exp $
  ****************************************************************************
  */
 
@@ -44,7 +47,7 @@ unsigned int do_event(int ev, struct pt_regs *regs)
     char buffer[256];
 
     if (ev >= NR_EVS) {
-        printf("Large event number %d\n", ev);
+        xenprintf("Large event number %d\n", ev);
     return 0;
     }
 
@@ -74,7 +77,7 @@ unsigned int do_event(int ev, struct pt_regs *regs)
 unsigned int add_ev_action( int ev, void (*handler)(int, struct pt_regs *) )
 {
     if (ev_actions[ev].handler) {
-        printf ("event[%d] already handled by %p", ev, ev_actions[ev].handler);
+        xenprintf ("event[%d] already handled by %p", ev, ev_actions[ev].handler);
         return 0;
     }
 
@@ -85,7 +88,7 @@ unsigned int add_ev_action( int ev, void (*handler)(int, struct pt_regs *) )
 unsigned int enable_ev_action( int ev )
 {
     if (!ev_actions[ev].handler) {
-        printf ("enable event[%d], no handler installed", ev);
+        xenprintf ("enable event[%d], no handler installed", ev);
         return 0;
     }
     ev_actions[ev].status &= ~EVS_DISABLED;

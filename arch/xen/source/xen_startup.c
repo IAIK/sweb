@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_startup.c,v 1.3 2005/09/28 15:57:31 rotho Exp $
+//  $Id: xen_startup.c,v 1.4 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_startup.c,v $
+//  Revision 1.3  2005/09/28 15:57:31  rotho
+//  some work-progress (but qhacks too...)
+//
 //  Revision 1.2  2005/08/11 16:55:47  nightcreature
 //  preview commit only for robert ;-)
 //
@@ -42,23 +45,38 @@
 
 #include "os.h"
 #include "hypervisor.h"
-#include "xen_memory.h"
 //#include "events.h"
 //#include "time.h"
+#include "xen_memory.h"
 #include "types.h"
 #include "lib.h"
+#include "paging-definitions.h"
+//#include "xen_console_write.h"
+//#include "ctrl_if.h"
+#include "xenprintf.h"
 
 //#include "ArchCommon.h"
 
 
- extern void startup();
+extern void startup();
+
+extern void* kernel_start_address;
+extern void* kernel_end_address;
+extern void* bss_start_address;
+extern void* bss_end_address;
+extern char shared_info[PAGE_SIZE]; //defined in head.S
+extern char text_start_address;
+
+// extern void initialiseArchCommonMemoryMaps(uint32 nr_pages);
+// extern void initialiseArchCommonModulesInformation(uint32 nr_modules, pointer start, pointer end);
+
 /*
  * Shared page for communicating with the hypervisor.
  * Events flags go here, for example.
  */
 shared_info_t *HYPERVISOR_shared_info;
 
-console_ready;
+char console_ready;
 
 /*
  * This structure contains start-of-day info, such as pagetable base pointer,
@@ -81,10 +99,7 @@ void failsafe_callback(void);
 static void exit_handler(int ev, struct pt_regs *regs);
 static void debug_handler(int ev, struct pt_regs *regs);
 
-
-extern char shared_info[PAGE_SIZE]; //defined in head.S
-
-extern char text_start_address;
+void print_boottime_paging(page_directory_entry *boot_page_directory);
 
 static shared_info_t *mapSharedInfo(unsigned long pa)
 {
@@ -97,7 +112,6 @@ static shared_info_t *mapSharedInfo(unsigned long pa)
     return (shared_info_t *)shared_info;
 }
 
-
 extern void print_message ()
 {
     char buffer[256];
@@ -105,18 +119,17 @@ extern void print_message ()
 
     for (i = 0; i < 10; i++)
     {
-        sprintf (buffer, "[%d] Hello World\n", i);
+        xensprintf (buffer, "[%d] Hello World\n", i);
         kcons_write (buffer, strlen(buffer));
     }
 }
-
-
 
 /*
  * INITIAL C ENTRY POINT.
  */
 void start_kernel(start_info_t *si)
 {
+
     console_ready = 0;
 
     /* Copy the start_info struct to a globally-accessible area. */
@@ -132,16 +145,21 @@ void start_kernel(start_info_t *si)
         __KERNEL_CS, (unsigned long)hypervisor_callback,
         __KERNEL_CS, (unsigned long)failsafe_callback);
 
+    //initalise phys to machine mapping
+    initalisePhysToMachineMapping();
+    
+    //setup mapping of physical ram after 3GB (compatiblity for rest of sweb)
+    //initalisePhysMapping3GB(si->nr_pages);
+    
     //initalise memory maps in ArchCommon
-
-    printf("initalising arch common memory maps\n");
+    xenprintf("initalising arch common memory maps\n");
 
     //----------------------------------------------------------------------
     //taken from mini-os mm.c
 
     uint64 start_pfn, max_pfn, max_free_pfn;
     
-    uint64 *pgd = (unsigned long *)start_info.pt_base;
+    uint64 *pgd = (uint64 *)start_info.pt_base;
     max_pfn = start_info.nr_pages;
     start_pfn = PFN_UP(to_phys(& text_start_address));
     /*
@@ -158,27 +176,28 @@ void start_kernel(start_info_t *si)
      * is always true.
      */
 
-    max_free_pfn = PFN_DOWN(to_phys(pgd));
-    {
-        unsigned long *pgd = (unsigned long *)start_info.pt_base;
-        unsigned long  pte;
-        int i;
+//     max_free_pfn = PFN_DOWN(to_phys(pgd));
+//     {
+//         unsigned long *pgd = (unsigned long *)start_info.pt_base;
+//         unsigned long  pte;
+//         int i;
 
-        for ( i = 0; i < (HYPERVISOR_VIRT_START>>22); i++ )
-        {
-            unsigned long pgde = *pgd++;
-            if ( !(pgde & 1) ) continue;
-            pte = machine_to_phys(pgde & PAGE_MASK);
-            if (PFN_DOWN(pte) <= max_free_pfn) 
-                max_free_pfn = PFN_DOWN(pte);
-        }
-    }
-    max_free_pfn--;
+//         for ( i = 0; i < (HYPERVISOR_VIRT_START>>22); i++ )
+//         {
+//             unsigned long pgde = *pgd++;
+//             if ( !(pgde & 1) ) continue;
+//             pte = machine_to_phys(pgde & PAGE_MASK);
+//             if (PFN_DOWN(pte) <= max_free_pfn) 
+//                 max_free_pfn = PFN_DOWN(pte);
+//         }
+//     }
+//     max_free_pfn--;
     //end takeout from mini-os mm.c
     //----------------------------------------------------------------------
     
-    initialiseArchCommonMemoryMaps(max_free_pfn - start_pfn);
-    printf("arch common memory maps intalised\n");    
+    initialiseArchCommonMemoryMaps(si->nr_pages);
+    initialiseArchCommonModulesInformation(1,si->mod_start, si->mod_start+si->mod_len);
+    xenprintf("arch common memory maps and modules information initalised\n");    
     
     /* init console driver */
     ctrl_if_init();
@@ -191,25 +210,25 @@ void start_kernel(start_info_t *si)
     __sti(); 
     
     /* print out some useful information  */
-//      printk("Booting in Xen!\n"); 
-//      printk("start_info:   %p\n",    si); 
-//      printk("  nr_pages:   %lu",     si->nr_pages); 
-//      printk("  shared_inf: %08lx\n", si->shared_info); 
-//      printk("  pt_base:    %p",      (void *)si->pt_base);  
-//      printk("  mod_start:  0x%lx\n", si->mod_start); 
-//      printk("  mod_len:    %lu\n",   si->mod_len);  
-//      printk("  flags:      0x%x\n",  (unsigned int)si->flags); 
-//      printk("  cmd_line:   %s\n",   
-//      si->cmd_line ? (const char *)si->cmd_line : "NULL"); 
+      xenprintf("Booting in Xen!\n"); 
+      xenprintf("start_info:   %p\n",    si); 
+      xenprintf("  nr_pages:   %lu",     si->nr_pages); 
+      xenprintf("  shared_inf: %08lx\n", si->shared_info); 
+      xenprintf("  pt_base:    %p",      (void *)si->pt_base);  
+      xenprintf("  mod_start:  0x%lx\n", si->mod_start); 
+      xenprintf("  mod_len:    %lu\n",   si->mod_len);  
+      xenprintf("  flags:      0x%x\n",  (unsigned int)si->flags); 
+//      xenprintf("  cmd_line:   %s\n",   
+//      si->cmd_line ? (const char *)si->cmd_line : "NULL");
+      xenprintf("kernerl_start: %lx\n", &kernel_start_address);
+      xenprintf("kernerl_end: %lx\n", &kernel_end_address);
+      xenprintf("bss_start: %lx\n", &bss_start_address);
+      xenprintf("bss_end: %lx\n", &bss_end_address);
 
-    /*
-     * If used for porting another OS, start here to figure out your
-     * guest os entry point. Otherwise continue below...
-     */
-
+    // print_boottime_paging((page_directory_entry *)si->pt_base);
  
     //printmessage();
-    printf("xen initialisation done, now entering sweb startup\n");    
+    xenprintf("xen initialisation done, now entering sweb startup\n");    
 
     /* do nothing */
     //for ( ; ; ) HYPERVISOR_yield();
@@ -218,7 +237,6 @@ void start_kernel(start_info_t *si)
    startup();
 
 }
-
 
 /*
  * do_exit: This is called whenever an IRET fails in entry.S.
@@ -229,7 +247,7 @@ void start_kernel(start_info_t *si)
 
 void do_exit(void)
 {
-    printk("do_exit called!\n"); 
+    xenprintf("do_exit called!\n"); 
     for ( ;; ) HYPERVISOR_shutdown();
 }
 
@@ -243,3 +261,42 @@ static void exit_handler(int ev, struct pt_regs *regs) {
 static void debug_handler(int ev, struct pt_regs *regs) {
     dump_regs(regs);
 }   
+
+void print_boottime_paging(page_directory_entry *boot_page_directory)
+{
+  uint32 p = 512;
+  uint32 pte_vpn = 0;
+  
+   for ( p = 768; p < 1024; ++p) //we're concerned with first two gig, rest stays as is
+   {
+    if(boot_page_directory[p].pde4k.present)
+    {
+      //uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+      //uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+
+      xenprintf("page directory entry present: entry %lx  pt address: %lx\n", p,
+             boot_page_directory[p].pde4k.page_table_base_address);
+      
+//         page_table_entry *pte_base = (page_table_entry *)
+//           machine_to_phys(boot_page_directory[p].pde4k.page_table_base_address);
+
+//      page_table_entry *pte_base = (page_table_entry *)(
+//          (boot_page_directory[p].pde4k.page_table_base_address));
+
+      page_table_entry *pte_base = (page_table_entry *)(VIRT_START+
+          (boot_page_directory[p].pde4k.page_table_base_address));
+    
+      for (pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+        if (pte_base[pte_vpn].present > 0)
+        {
+           xenprintf("  page table entry present: entry %lx  page address %lx\n", pte_vpn,
+                  pte_base[pte_vpn].page_base_address);
+        }      
+    }
+    else if(boot_page_directory[p].pde4m.present)
+    {
+      xenprintf("4mb page present...print no further information\n");
+    }
+  }
+  
+}

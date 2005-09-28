@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: traps.c,v 1.3 2005/09/28 15:57:31 rotho Exp $
+//  $Id: traps.c,v 1.4 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: traps.c,v $
+//  Revision 1.3  2005/09/28 15:57:31  rotho
+//  some work-progress (but qhacks too...)
+//
 //  Revision 1.2  2005/08/11 16:55:47  nightcreature
 //  preview commit only for robert ;-)
 //
@@ -58,16 +61,16 @@ void dump_regs(struct pt_regs *regs)
 		esp = regs->esp;
 		ss = regs->xss & 0xffff;
 	}
-	printf("EIP:    %04x:[<%08lx>]\n",
+	xenprintf("EIP:    %04x:[<%08lx>]\n",
 	       0xffff & regs->xcs, regs->eip);
-	printf("EFLAGS: %08lx\n",regs->eflags);
-	printf("eax: %08lx   ebx: %08lx   ecx: %08lx   edx: %08lx\n",
+	xenprintf("EFLAGS: %08lx\n",regs->eflags);
+	xenprintf("eax: %08lx   ebx: %08lx   ecx: %08lx   edx: %08lx\n",
 		regs->eax, regs->ebx, regs->ecx, regs->edx);
-	printf("esi: %08lx   edi: %08lx   ebp: %08lx   esp: %08lx\n",
+	xenprintf("esi: %08lx   edi: %08lx   ebp: %08lx   esp: %08lx\n",
 		regs->esi, regs->edi, regs->ebp, esp);
-	printf("ds: %04x   es: %04x   ss: %04x\n",
+	xenprintf("ds: %04x   es: %04x   ss: %04x\n",
 		regs->xds & 0xffff, regs->xes & 0xffff, ss);
-	printf("\n");
+	xenprintf("\n");
 }	
 
 
@@ -76,9 +79,9 @@ static __inline__ void dump_code(unsigned eip)
   unsigned *ptr = (unsigned *)eip;
   int x;
 
-  printf("Bytes at eip:\n");
+  xenprintf("Bytes at eip:\n");
   for (x = -4; x < 5; x++)
-      printf("%x", ptr[x]);
+      xenprintf("%x", ptr[x]);
 }
 
 
@@ -97,8 +100,8 @@ static __inline__ void dump_code(unsigned eip)
 static void __inline__ do_trap(int trapnr, char *str,
 			   struct pt_regs * regs, long error_code)
 {
-  printf("FATAL:  Unhandled Trap (see: traps.c)");
-  printf("%d %s", trapnr, str);
+  xenprintf("FATAL:  Unhandled Trap (see: traps.c)");
+  xenprintf("%d %s", trapnr, str);
   dump_regs(regs);
   dump_code(regs->eip);
 
@@ -134,18 +137,18 @@ DO_ERROR(18, "machine check", machine_check)
 void do_page_fault(struct pt_regs *regs, long error_code,
                    unsigned long address)
 {
-    printf("Page fault\n");
-    printf("Address: 0x%lx  ", address);
-    printf("Error Code: 0x%lx  ", error_code);
-    printf("eip: \t 0x%lx\n", regs->eip);
+    xenprintf("Page fault\n");
+    xenprintf("Address: 0x%lx  ", address);
+    xenprintf("Error Code: 0x%lx  ", error_code);
+    xenprintf("eip: \t 0x%lx\n", regs->eip);
     do_exit();
 }
 
 void do_general_protection(struct pt_regs * regs, long error_code)
 {
   HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = 0;
-  printf("GPF\n");
-  printf("Error Code: 0x%lx\n", error_code);
+  xenprintf("GPF\n");
+  xenprintf("Error Code: 0x%lx\n", error_code);
   dump_regs(regs);
   dump_code(regs->eip);
   do_exit();
@@ -154,7 +157,7 @@ void do_general_protection(struct pt_regs * regs, long error_code)
 
 void do_debug(struct pt_regs * regs, long error_code)
 {
-    printf("Debug exception\n");
+    xenprintf("Debug exception\n");
 #define TF_MASK 0x100
     regs->eflags &= ~TF_MASK;
     dump_regs(regs);
@@ -165,7 +168,7 @@ void do_debug(struct pt_regs * regs, long error_code)
 
 void do_coprocessor_error(struct pt_regs * regs, long error_code)
 {
-    printf("Copro error\n");
+    xenprintf("Copro error\n");
     dump_regs(regs);
     dump_code(regs->eip);
     do_exit();
@@ -173,13 +176,13 @@ void do_coprocessor_error(struct pt_regs * regs, long error_code)
 
 void simd_math_error(void *eip)
 {
-    printf("SIMD error\n");
+    xenprintf("SIMD error\n");
 }
 
 void do_simd_coprocessor_error(struct pt_regs * regs,
                                long error_code)
 {
-    printf("SIMD copro error\n");
+    xenprintf("SIMD copro error\n");
 }
 
 void do_spurious_interrupt_bug(struct pt_regs * regs,

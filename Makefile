@@ -105,7 +105,7 @@ endif
 	@rm -f $(OBJECTDIR)/sauhaufen/*
 	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
 	@rm $(OBJECTDIR)/sauhaufen/head.o -f
-	@rm $(OBJECTDIR)/sauhaufen/kprintf.o -f
+#	@rm $(OBJECTDIR)/sauhaufen/kprintf.o -f
 #	@rm $(OBJECTDIR)/sauhaufen/Loader.o -f
 #	@rm $(OBJECTDIR)/sauhaufen/Thread.o -f
 #	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/main.o  $(OBJECTDIR)/sauhaufen/arch_panic.o  $(SHARED_LIBS) -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map 

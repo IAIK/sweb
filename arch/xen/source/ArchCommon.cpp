@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.4 2005/09/21 03:33:52 rotho Exp $
+//   $Id: ArchCommon.cpp,v 1.5 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.4  2005/09/21 03:33:52  rotho
+//  compiles now, but still doesn't work
+//
 //  Revision 1.3  2005/08/11 16:55:47  nightcreature
 //  preview commit only for robert ;-)
 //
@@ -27,6 +30,7 @@
 #define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
 #define TWENTY_ZEROS SIXTEEN_ZEROS,FOUR_ZEROS
 #define FOURTY_ZEROS TWENTY_ZEROS,TWENTY_ZEROS
+#define MAX_MODULES 1
 
 struct memory_maps
 {
@@ -37,22 +41,37 @@ struct memory_maps
 } __attribute__((__packed__)) memory_maps;
 
 static struct memory_maps mem_map_[MAX_MEMORY_MAPS] = {FOURTY_ZEROS};
-//FIXXXXXME: mem_maps need to be initalised (in x86 in parse multiboot gesetzt
-//wie sie in boot.s initalisiert wurden (quasi assigned)
-//used gibt anscheinend nur an dass das teil im array auch gesetzt ist!
-//type gibt an ob frei oder nicht:?? aus grub multiboot def: 1 means ram
-//available, other values mean not available
-//address is realmem addres??
+
+struct modules_list
+{
+  uint32 used;
+  pointer start_address;
+  pointer end_address;
+} __attribute__((__packed__)) modules_list;
+static struct modules_list modules_list_[MAX_MODULES] = {0,0,0};
 
 extern "C" void initialiseArchCommonMemoryMaps(uint32 nr_pages);
+extern "C" void initialiseArchCommonModulesInformation(uint32 nr_modules, pointer start, pointer end);
 
 void initialiseArchCommonMemoryMaps(uint32 nr_pages)
 {
-  mem_map_[0].type = 1;
-  mem_map_[0].start_address = 0;
-//  mem_map_[0].end_address = 100;
-  mem_map_[0].end_address = nr_pages * PAGE_SIZE;
-  mem_map_[0].used = 1;  
+   int i = 0;
+   mem_map_[0].type = 1;
+   mem_map_[0].start_address = 0;
+   mem_map_[0].end_address = nr_pages * PAGE_SIZE;
+   mem_map_[0].used = 1;
+   for(i=1;i < MAX_MEMORY_MAPS; i++)
+     mem_map_[i].used = 0;  
+}
+
+void initialiseArchCommonModulesInformation(uint32 nr_modules, pointer start, pointer end)
+{
+  if(nr_modules == 1)
+  {
+    modules_list_[0].start_address = start;
+    modules_list_[0].end_address = end;
+    modules_list_[0].used = 1;
+  }
 }
 
 //no we don't have one at all (at the moment)
@@ -100,24 +119,25 @@ uint32 ArchCommon::getVESAConsoleBitsPerPixel()
 uint32 ArchCommon::getNumUseableMemoryRegions()
 {
   uint32 i;
-  for (i=0;i<MAX_MEMORY_MAPS;++i)
-  {
-    if (!mem_map_[i].used)
-      break;
-  }
-  return i;
+   for (i=0;i<MAX_MEMORY_MAPS;++i)
+   {
+     if (!mem_map_[i].used)
+       break;
+   }
+   return i;
+//  return 1;
 }
 
 
 uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
   if (region >= MAX_MEMORY_MAPS)
-    return 1;
-  
+     return 1;
+//   if (region != 0)
+//     return 1; 
   start_address = mem_map_[region].start_address;
   end_address = mem_map_[region].end_address;
-  type = mem_map_[region].type;
-  
+  type = mem_map_[region].type;  
   return 0;
 }
 
@@ -181,15 +201,17 @@ void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
 
 uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
 {
-  return(0);
+  if(modules_list_[0].used)
+    return 1;
+  return 0;
 }
 
 uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 {
-  return(0);
+  return modules_list_[0].start_address;
 }
 
 uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
-  return(0);
+  return modules_list_[0].end_address;
 }

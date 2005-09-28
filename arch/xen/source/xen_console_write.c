@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_console_write.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
+//  $Id: xen_console_write.c,v 1.2 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_console_write.c,v $
+//  Revision 1.1  2005/08/01 08:22:38  nightcreature
+//  code from mini-os needed for transition, maybe removedOB
+//
 //
 //----------------------------------------------------------------------
 
@@ -24,7 +27,7 @@ static void __xencons_tx_flush(ctrl_msg_t *);
 
 void kcons_write(const char *s, unsigned int count)
 {
-    int i, j;
+    uint32 i,j;
     ctrl_msg_t msg;
     msg.type    = CMSG_CONSOLE;
     msg.subtype = CMSG_CONSOLE_DATA;

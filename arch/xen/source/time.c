@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: time.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
+//  $Id: time.c,v 1.2 2005/09/28 16:35:43 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: time.c,v $
+//  Revision 1.1  2005/08/01 08:22:38  nightcreature
+//  code from mini-os needed for transition, maybe removedOB
+//
 //
 //----------------------------------------------------------------------
 
@@ -163,7 +166,7 @@ static void timer_handler(int ev, struct pt_regs *regs)
     i++;
     if (i >= 1000) {
         gettimeofday(&tv);
-        printf("T(s=%ld us=%ld)\n", tv.tv_sec, tv.tv_usec);
+        xenprintf("T(s=%ld us=%ld)\n", tv.tv_sec, tv.tv_usec);
         i = 0;
     }
 }
@@ -187,7 +190,7 @@ void init_time(void)
     st_scale_f = scale & 0xffffffff;
     st_scale_i = scale >> 32;
 
-    printf("Xen reported: %lu.%03lu MHz processor.\n", 
+    xenprintf("Xen reported: %lu.%03lu MHz processor.\n", 
            cpu_khz / 1000, cpu_khz % 1000);
 
 /*	   
