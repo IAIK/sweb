@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: XenConsole.h,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
+//   $Id: XenConsole.h,v 1.1 2005/09/28 16:38:40 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: XenConsole.h,v $
+//  Revision 1.1  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //----------------------------------------------------------------------
 
 #ifndef _XENCONSOLE_H_
