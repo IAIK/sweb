@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_startup.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
+//  $Id: xen_startup.c,v 1.3 2005/09/28 15:57:31 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_startup.c,v $
+//  Revision 1.2  2005/08/11 16:55:47  nightcreature
+//  preview commit only for robert ;-)
+//
 //  Revision 1.1  2005/08/01 08:30:25  nightcreature
 //  second boot stage based on kernel.c from mini-os
 //
@@ -40,8 +43,8 @@
 #include "os.h"
 #include "hypervisor.h"
 #include "xen_memory.h"
-#include "events.h"
-#include "time.h"
+//#include "events.h"
+//#include "time.h"
 #include "types.h"
 #include "lib.h"
 
@@ -180,10 +183,12 @@ void start_kernel(start_info_t *si)
     /* init console driver */
     ctrl_if_init();
  
-    trap_init();
+    /* trap init*/
+//now done in ArchInterrupts.cpp
+//    trap_init();
 
     /* ENABLE EVENT DELIVERY. This is disabled at start of day. */
-    __sti();
+    __sti(); 
     
     /* print out some useful information  */
 //      printk("Booting in Xen!\n"); 

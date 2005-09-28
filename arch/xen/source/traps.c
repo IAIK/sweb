@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: traps.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
+//  $Id: traps.c,v 1.3 2005/09/28 15:57:31 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: traps.c,v $
+//  Revision 1.2  2005/08/11 16:55:47  nightcreature
+//  preview commit only for robert ;-)
+//
 //  Revision 1.1  2005/08/01 08:22:38  nightcreature
 //  code from mini-os needed for transition, maybe removedOB
 //
@@ -94,7 +97,7 @@ static __inline__ void dump_code(unsigned eip)
 static void __inline__ do_trap(int trapnr, char *str,
 			   struct pt_regs * regs, long error_code)
 {
-  printf("FATAL:  Unhandled Trap (see mini-os:traps.c)");
+  printf("FATAL:  Unhandled Trap (see: traps.c)");
   printf("%d %s", trapnr, str);
   dump_regs(regs);
   dump_code(regs->eip);
@@ -215,7 +218,7 @@ static trap_info_t trap_table[] = {
     
 
 
-void trap_init(void)
+extern void trap_init(void)
 {
     HYPERVISOR_set_trap_table(trap_table);    
 }

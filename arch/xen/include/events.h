@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: events.h,v 1.1 2005/07/31 18:21:59 nightcreature Exp $
+//  $Id: events.h,v 1.2 2005/09/28 15:57:31 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: events.h,v $
+//  Revision 1.1  2005/07/31 18:21:59  nightcreature
+//  from mini os code, used for transition, maybe removed
+//
 //
 //----------------------------------------------------------------------
 
@@ -22,7 +25,7 @@
  * Description: deal with events
  *
  ****************************************************************************
- * $Id: events.h,v 1.1 2005/07/31 18:21:59 nightcreature Exp $
+ * $Id: events.h,v 1.2 2005/09/28 15:57:31 rotho Exp $
  ****************************************************************************
  */
 
@@ -33,6 +36,7 @@
 #define EV_BLKDEV _EVENT_BLKDEV
 /*#define EV_TIMER  _EVENT_TIMER*/
 #define EV_TIMER VIRQ_TIMER
+#define EV_CONSOLE VIRQ_CONSOLE
 #define EV_DIE    _EVENT_DIE
 #define EV_DEBUG  _EVENT_DEBUG
 #define EV_NET    _EVENT_NET
@@ -54,11 +58,19 @@ typedef struct _ev_action_t {
     uint32 count;
 } ev_action_t;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 /* prototypes */
 unsigned int do_event(int ev, struct pt_regs *regs);
 unsigned int add_ev_action( int ev, void (*handler)(int, struct pt_regs *) );
 unsigned int enable_ev_action( int ev );
 unsigned int disable_ev_action( int ev );
 void init_events(void);
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* _EVENTS_H_ */
