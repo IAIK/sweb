@@ -35,6 +35,7 @@ Dentry *Superblock::getMountPoint()
   return mounted_over_;
 }
 
+/*
 //----------------------------------------------------------------------
 int32 Superblock::insertOpenedFiles(File* file)
 {
@@ -73,3 +74,4 @@ int32 Superblock::removeOpenedFiles(File* file)
   
   return 0;
 }
+*/

@@ -23,7 +23,7 @@ protected:
 public:
 
   /// constructor
-  RamFsInode(Superblock *super_block, uint32 inode_mode);
+  RamFsInode(Superblock *super_block, uint32 inode_type);
 
   /// destructor
   virtual ~RamFsInode();
@@ -40,11 +40,11 @@ public:
   /// The link method should make a hard link to the name referred to by the
   /// denty, which is in the directory refered to by the Inode. 
   /// (only used for File)
-  virtual int32 link(Dentry *dentry);
+  virtual File* link(uint32 flag);
 
   /// This should remove the name refered to by the Dentry from the directory
   /// referred to by the inode. (only used for File)
-  virtual int32 unlink(Dentry *dentry);
+  virtual int32 unlink(File* file);
 
   /// This should create a symbolic link in the given directory with the given
   /// name having the given value. It should d_instantiate the new inode into
@@ -60,6 +60,9 @@ public:
 
   /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *dentry);
+
+  /// Create a file with the given dentry.
+  virtual int32 mkfile(Dentry *dentry);
 
   /// change the name to new_name
   virtual int32 rename(const char* /*new_name*/) {return 0;}
@@ -91,7 +94,8 @@ public:
   /// @param size the size of data that write to this inode (data_)
   /// @buffer the src char-array
   /// @return On successe, return 0. On error, return -1.
-  virtual int32 writeData(int32 offset, int32 size, char *buffer);
+  virtual int32 writeData(int32 offset, int32 size, const char *buffer);
+
 };
 
 #endif // Inode_h___

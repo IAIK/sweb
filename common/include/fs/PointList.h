@@ -322,6 +322,14 @@ int32 PointList<ContentType>::remove(ContentType *entry)
   PointListElement<ContentType> *element = find(entry);
   if(element == 0)
     return -1;
+  
+  if(length_ == 1)
+  {
+    length_ = 0;
+    first_ = 0;
+    last_ = 0;
+    delete element;
+  }
   else
   {
     length_--;

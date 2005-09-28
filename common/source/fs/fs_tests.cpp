@@ -2,6 +2,7 @@
 // Simple operating system for educational purposes
 
 #include "fs/fs_tests.h"
+#include "types.h"
 
 #include "fs/ramfs/RamFileSystemType.h"
 #include "fs/pseudofs/PseudoFileSystemType.h"
@@ -20,14 +21,60 @@ void testRegFS()
   RamFileSystemType *ramfs = new RamFileSystemType();
   vfs.registerFileSystem(ramfs);
   vfs.root_mount("ramfs", 0);
-  kprintfd("***** end ROOT_ount()\n");
+  kprintfd("***** end ROOT_Mount()\n");
   
-  testMountUmount();
+  //testMountUmount();
+  testFile();
 
   kprintfd("***** begin ROOTUmount()\n\n\n");
   vfs.rootUmount();
   vfs.unregisterFileSystem(ramfs);
   kprintfd("***** end ROOTUmount()\n");
+}
+
+//----------------------------------------------------------------------
+void testFile()
+{
+  kprintfd("\n> open test01.txt\n");
+  int32 test01_fd = vfs_syscall.open("test01.txt", 0);
+  
+  kprintfd("\n> open test02.hugo\n");
+  int32 test02_fd = vfs_syscall.open("test02.hugo", 2);
+  
+  kprintfd("\n> close test01.txt\n");
+  vfs_syscall.close(test01_fd);
+  
+  kprintfd("\n> write hallo world! to test02.hugo\n");
+  vfs_syscall.write(test02_fd, "hallo world!", 12);
+  
+  kprintfd("\n> read 12 byte from the test02.hugo\n");
+  char test_array[20];
+  int32 size = vfs_syscall.read(test02_fd, test_array, 12);
+  test_array[size] = '\0';
+  kprintfd("size = %d\n", size);
+  kprintfd("after read-syscall test_array = %s\n", test_array);
+  
+  kprintfd("\n> close test02.hugo\n");
+  vfs_syscall.close(test02_fd);
+  
+  kprintfd("\n> open test02.hugo READ_ONLY\n");
+  test02_fd = vfs_syscall.open("test02.hugo", 0);
+  
+  kprintfd("\n> open test02.hugo\n");
+  vfs_syscall.open("test02.hugo", 0);
+
+  kprintfd("\n> open test02.hugo\n");
+  vfs_syscall.open("test02.hugo", 0);
+
+  kprintfd("\n> open test02.hugo\n");
+  vfs_syscall.open("test02.hugo", 0);
+
+  kprintfd("\n> read 12 byte from the test02.hugo\n");
+  char test2_array[20];
+  int32 size2 = vfs_syscall.read(test02_fd, test2_array, 12);
+  test2_array[size2] = '\0';
+  kprintfd("size = %d\n", size2);
+  kprintfd("after read-syscall test2_array = %s\n", test2_array);
 }
 
 //----------------------------------------------------------------------

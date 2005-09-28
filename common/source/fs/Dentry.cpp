@@ -60,6 +60,7 @@ int32 Dentry::childRemove(Dentry *child_dentry)
 //---------------------------------------------------------------------------
 void Dentry::setName(const char* name)
 {
+  kprintfd("set name: %s\n", name);
   uint32 name_len = strlen(name) + 1;
   d_name_ = (char*)kmalloc(name_len * sizeof(char));
 

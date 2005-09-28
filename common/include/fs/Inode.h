@@ -6,6 +6,7 @@
 
 #include "types.h"
 #include "fs/PointList.h"
+#include "console/kprintf.h"
 
 class Dentry;
 class File;
@@ -16,7 +17,7 @@ class Superblock;
 #define I_DIRTY 1 // Dirty inodes are on the per-super-block s_dirty_ list, and
                   // will be written next time a sync is requested.
 
-// three possible inode mode bits:
+// three possible inode type bits:
 #define I_FILE 0
 #define I_DIR  1
 #define I_LNK  2
@@ -66,8 +67,8 @@ class Inode
   /// The power of 2 that i_blksize_ is.
   // uint32 i_blocks_;
 
-  /// There are three possible inode mode bits: I_FILE, I_DIR, I_LNK
-  uint32 i_mode_;
+  /// There are three possible inode type bits: I_FILE, I_DIR, I_LNK
+  uint32 i_type_;
 
   /// There are three possible inode state bits: I_DIRTY, I_LOCK.
   uint32 i_state_;
@@ -75,8 +76,8 @@ class Inode
  public:
 
   /// contructor
-  Inode(Superblock *super_block, uint32 inode_mode)
-    { i_superblock_ = super_block, i_mode_ = inode_mode; }
+  Inode(Superblock *super_block, uint32 inode_type)
+    { i_superblock_ = super_block, i_type_ = inode_type; }
 
   /// destructor
   virtual ~Inode() {}
@@ -93,11 +94,11 @@ class Inode
   /// The link method should make a hard link to the name referred to by the
   /// denty, which is in the directory refered to by the Inode. 
   /// (only used for File)
-  virtual int32 link(Dentry *) {return 0;}
+  virtual File* link(uint32 flag) {return 0;}
 
   /// This should remove the name refered to by the Dentry from the directory
   /// referred to by the inode. (only used for File)
-  virtual int32 unlink(Dentry *) {return 0;}
+  virtual int32 unlink(File* file) {return 0;}
 
   /// This should create a symbolic link in the given directory with the given
   /// name having the given value. It should d_instantiate the new inode into
@@ -107,6 +108,9 @@ class Inode
 
   /// Create a directory with the given dentry.
   virtual int32 mkdir(Dentry *) {return 0;}
+
+  /// Create a file with the given dentry.
+  virtual int32 mkfile(Dentry */*dentry*/) { return 0; }
 
   /// Remove the named directory (if empty) and d_delete the dentry.
   virtual int32 rmdir() {return 0;}
@@ -136,9 +140,9 @@ class Inode
     {return 0;}
 
   /// write the data to the inode
-  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, char */*buffer*/) 
+  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, const char*/*buffer*/) 
     {return 0;}
-  
+
  public:
 
   /// insert the opened file point to the file_list of this inode.
@@ -153,11 +157,16 @@ class Inode
   /// return the Superblock that this inode is located
   Superblock* getSuperblock() { return i_superblock_; }
   
-  /// get the mode from inode
-  uint32 getMode() { return i_mode_; }
+  /// get the type from inode
+  uint32 getType() { return i_type_; }
   
   /// get the pointer of the dentry
   Dentry* getDentry() { return i_dentry_; }
+  
+  /// get the first file object.
+  File* getFirstFile() { return i_files_.at(0); }
+  
+  uint32 getNumOpenedFile() { return i_files_.getLength(); }
 };
 
 

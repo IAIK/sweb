@@ -4,6 +4,7 @@
 #include "fs/FileSystemInfo.h"
 #include "fs/PathWalker.h"
 #include "fs/VfsSyscall.h"
+#include "fs/FileDescriptor.h"
 
 /// Global VirtualFileSystem object
 extern VirtualFileSystem vfs;
@@ -20,3 +21,5 @@ extern PathWalker path_walker;
 /// the syscall of the virtual filesystem
 extern VfsSyscall vfs_syscall;
 
+/// the global file descriptor list
+extern PointList<FileDescriptor> global_fd;

@@ -23,5 +23,6 @@ void testSyscallRmdirExtern();
 void testMini();
 void testReadWriteInode();
 void testMountUmount();
+void testFile();
 
 #endif

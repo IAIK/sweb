@@ -5,6 +5,7 @@
 #include "util/string.h"
 #include "assert.h"
 #include "fs/ramfs/RamFsSuperblock.h"
+#include "fs/ramfs/RamFsFile.h"
 #include "fs/Dentry.h"
 
 #include "console/kprintf.h"
@@ -19,10 +20,10 @@
 #define ERROR_DEC "Error: the dentry exists child.\n"
 
 //---------------------------------------------------------------------------
-RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_mode) :
-    Inode(super_block, inode_mode)
+RamFsInode::RamFsInode(Superblock *super_block, uint32 inode_type) :
+    Inode(super_block, inode_type)
 {
-  if(inode_mode == I_FILE)
+  if(inode_type == I_FILE)
     data_ = (char*)kmalloc(BASIC_ALLOC);
   else
     data_ = 0;
@@ -44,27 +45,31 @@ RamFsInode::~RamFsInode()
 //---------------------------------------------------------------------------
 int32 RamFsInode::readData(int32 offset, int32 size, char *buffer)
 {
-  if(i_mode_ == I_FILE)
+  if((size + offset) > BASIC_ALLOC)
   {
-    char *ptr_offset = data_ + offset;
-    memcpy(buffer, ptr_offset, size);
-    return 0;
+    kprintfd("the size is bigger than size of the file\n");
+    assert(true);
   }
-  
-  return -1;
+
+  char *ptr_offset = data_ + offset;
+  memcpy(buffer, ptr_offset, size);
+  return size;
 }
 
 //---------------------------------------------------------------------------
-int32 RamFsInode::writeData(int32 offset, int32 size, char *buffer)
+int32 RamFsInode::writeData(int32 offset, int32 size, const char *buffer)
 {
-  if(i_mode_ == I_FILE)
+  if((size + offset) > BASIC_ALLOC)
   {
-    char *ptr_offset = data_ + offset;
-    memcpy(ptr_offset, buffer, size);
-    return 0;
+    kprintfd("the size is bigger than size of the file\n");
+    assert(true);
   }
-  
-  return -1;
+
+  assert(i_type_ == I_FILE);
+
+  char *ptr_offset = data_ + offset;
+  memcpy(ptr_offset, buffer, size);
+  return size;
 }
 
 //---------------------------------------------------------------------------
@@ -76,7 +81,7 @@ int32 RamFsInode::mknod(Dentry *dentry)
     return -1;
   }
 
-  if(i_mode_ != I_DIR)
+  if(i_type_ != I_DIR)
   {
     // ERROR_IC
     return -1;
@@ -94,13 +99,7 @@ int32 RamFsInode::mkdir(Dentry *dentry)
 }
 
 //---------------------------------------------------------------------------
-int32 RamFsInode::create(Dentry *dentry)
-{
-  return(mkdir(dentry));
-}
-
-//---------------------------------------------------------------------------
-int32 RamFsInode::link(Dentry *dentry)
+int32 RamFsInode::mkfile(Dentry *dentry)
 {
   if(dentry == 0)
   {
@@ -108,7 +107,39 @@ int32 RamFsInode::link(Dentry *dentry)
     return -1;
   }
 
-  if(i_mode_ == I_FILE)
+  if(i_type_ != I_FILE)
+  {
+    // ERROR_IC
+    return -1;
+  }
+  
+  i_dentry_ = dentry;
+  dentry->setInode(this);
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+int32 RamFsInode::create(Dentry *dentry)
+{
+  return(mkdir(dentry));
+}
+
+//---------------------------------------------------------------------------
+File* RamFsInode::link(uint32 flag)
+{
+  File* file = (File*)(new RamFsFile(this, i_dentry_, flag));
+  i_files_.pushBack(file);
+  return file;
+}
+
+/*
+  if(dentry == 0)
+  {
+    // ERROR_DNE
+    return -1;
+  }
+
+  if(i_type_ == I_FILE)
   {
     i_nlink_++;
     i_dentry_link_.pushBack(dentry);
@@ -121,18 +152,23 @@ int32 RamFsInode::link(Dentry *dentry)
   }
 
   return 0;
-}
+*/
 
 //---------------------------------------------------------------------------
-int32 RamFsInode::unlink(Dentry *dentry)
+int32 RamFsInode::unlink(File* file)
 {
+  int32 tmp = i_files_.remove(file);
+  delete file;
+  return tmp;
+}
+  /*
   if(dentry == 0)
   {
     // ERROR_DNE
     return -1;
   }
 
-  if(i_mode_ == I_FILE)
+  if(i_type_ == I_FILE)
   {
     if(i_dentry_link_.included(dentry) == false)
     {
@@ -161,7 +197,7 @@ int32 RamFsInode::unlink(Dentry *dentry)
   delete dentry;
 
   return 0;
-}
+  */
 
 //---------------------------------------------------------------------------
 int32 RamFsInode::rmdir()
@@ -194,7 +230,7 @@ Dentry* RamFsInode::lookup(const char* name)
   }
   
   Dentry* dentry_update = 0;
-  if(i_mode_ == I_DIR)
+  if(i_type_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
     if(dentry_update == 0)
@@ -213,3 +249,4 @@ Dentry* RamFsInode::lookup(const char* name)
     return (Dentry*)0;
   }
 }
+

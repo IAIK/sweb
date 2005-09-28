@@ -92,9 +92,12 @@ class File
     Owner owner;
 
   public:
+    uint32 getFlag() {return flag_;}
+  
+  public:
 
   /// The Constructor
-  File(Inode* inode, Dentry* dentry) {f_inode_ = inode; f_dentry_ = dentry;}
+  File(Inode* inode, Dentry* dentry, uint32 flag);
 
   /// The Destructor
   virtual  ~File(){}
@@ -103,6 +106,11 @@ class File
   ///
   /// @return is the dentry associated to the File.
   Dentry *getDentry() { return f_dentry_;}
+  
+  /// Get Method for the inode.
+  ///
+  /// @return is the dentry associated to the inode.
+  Inode* getInode() { return f_inode_; }
 
   /// Sets the file position relative to the start of the file, the end of the
   /// file or the current file position.
@@ -125,7 +133,7 @@ class File
   /// @param buffer is the buffer where the data is read from
   /// @param count is the number of bytes to write.
   /// @param offset is the offset to write from counted from the start of the file.
-  virtual  int32 write(char */*buffer*/, size_t /*count*/, l_off_t /*offset*/) 
+  virtual  int32 write(const char */*buffer*/, size_t /*count*/, l_off_t /*offset*/) 
     {return 0;}
 
   /// Open the file

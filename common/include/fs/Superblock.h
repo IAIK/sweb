@@ -12,6 +12,7 @@ class Statfs;
 class WaitQueue;
 class FileSystemType;
 class VirtualFileSystem;
+class FileDescriptor;
 
 class Dentry;
 class Inode;
@@ -72,7 +73,7 @@ protected:
   /// This is a list of files (linked on f_list) of open files on this
   /// file-system. It is used, for example, to check if there are any files
   /// open for write before remounting the file-system as read-only.
-  PointList<File> s_files_;
+  PointList<FileDescriptor> s_files_;
 
 public:
 
@@ -84,11 +85,11 @@ public:
   virtual ~Superblock();
 
   /// create a new Inode of the superblock, mknod with dentry, add in the list.
-  virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*mode*/) { return 0; }
+  virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*type*/) { return 0; }
 
   /// This method is called to read a specific inode from a mounted
   /// file-system.
-  virtual void read_inode(Inode* /*inode*/) {}
+  virtual int32 readInode(Inode* /*inode*/) {}
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty.
@@ -151,6 +152,13 @@ public:
   /// incomplete transaction on the file-system to fail quickly rather than
   /// block waiting on some external event such as a remote server responding.
   virtual void umount_begin(Superblock* /*super_block*/) {}
+  
+  /// create a file with the given flag and  a file descriptor with the given 
+  /// inode.
+  virtual int32 createFd(Inode* /*inode*/, uint32 /*flag*/) {return 0;}
+
+  /// remove the corresponding file descriptor.
+  virtual int32 removeFd(Inode* /*inode*/, FileDescriptor* /*file*/) { return 0;}
 
   /// Get the root Dentry of the Superblock
   Dentry *getRoot();
@@ -159,13 +167,13 @@ public:
   Dentry *getMountPoint();
 
   /// insert the opened file point to the file_list
-  int32 insertOpenedFiles(File*);
+  //int32 insertOpenedFiles(File*);
 
   /// remove the opened file point from the file_list
-  int32 removeOpenedFiles(File*);
+  //int32 removeOpenedFiles(File*);
 
   /// check the existence of the opened file point in the file_list
-  int32 checkOpenedFiles(File* file) {return(s_files_.included(file));}
+  //int32 checkOpenedFiles(File* file) {return(s_files_.included(file));}
 
 };
 //-----------------------------------------------------------------------------

@@ -26,11 +26,14 @@ class RamFsSuperblock : public Superblock
   virtual ~RamFsSuperblock();
 
   /// create a new Inode of the superblock, mknod with dentry, add in the list.
-  virtual Inode* createInode(Dentry* dentry, uint32 mode);
+  virtual Inode* createInode(Dentry* dentry, uint32 type);
+
+  /// remove the corresponding file descriptor.
+  virtual int32 removeFd(Inode* inode, FileDescriptor* fd);
 
   /// This method is called to read a specific inode from a mounted
   /// file-system.
-  virtual void read_inode(Inode* inode);
+  virtual int32 readInode(Inode* inode);
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty.
@@ -42,6 +45,10 @@ class RamFsSuperblock : public Superblock
   /// invalidating the inode in the file-system and freeing up any resourses
   /// used.
   virtual void delete_inode(Inode* inode);
+
+  /// create a file with the given flag and  a file descriptor with the given 
+  /// inode.
+  virtual int32 createFd(Inode* inode, uint32 flag);
 };
 //-----------------------------------------------------------------------------
 

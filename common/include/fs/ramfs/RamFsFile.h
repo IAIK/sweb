@@ -16,7 +16,7 @@ class RamFsFile: public File
  public:
 
    /// constructor of RamFsFile
-  RamFsFile(Inode* inode, Dentry* dentry);
+  RamFsFile(Inode* inode, Dentry* dentry, uint32 flag);
 
    /// destructor of RamFsFile
   virtual ~RamFsFile();
@@ -41,7 +41,7 @@ class RamFsFile: public File
   /// @param buffer is the buffer where the data is read from
   /// @param count is the number of bytes to write.
   /// @param offset is the offset to write from counted from the start of the file.
-  virtual int32 write(char *buffer, size_t count, l_off_t offset);
+  virtual int32 write(const char *buffer, size_t count, l_off_t offset);
 
   /// Open the file
   ///

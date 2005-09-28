@@ -11,7 +11,8 @@
 #define ERROR_FNO "ERROR: The file is not open."
 
 //--------------------------------------------------------------------------
-RamFsFile::RamFsFile(Inode* inode, Dentry* dentry) : File(inode, dentry)
+RamFsFile::RamFsFile(Inode* inode, Dentry* dentry, uint32 flag) : 
+  File(inode, dentry, flag)
 {
   f_superblock_ = inode->getSuperblock();
   mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
@@ -26,12 +27,6 @@ RamFsFile::~RamFsFile()
 //--------------------------------------------------------------------------
 int32 RamFsFile::read(char *buffer, size_t count, l_off_t offset)
 {
-  if(f_superblock_->checkOpenedFiles(this) == false)
-  {
-    // ERROR_FNO
-    return -1;
-  }
-  
   if((flag_ == O_RDONLY) || (flag_ == O_RDWR))
     return(f_inode_->readData(offset, count, buffer));
   else
@@ -42,14 +37,8 @@ int32 RamFsFile::read(char *buffer, size_t count, l_off_t offset)
 }
 
 //--------------------------------------------------------------------------
-int32 RamFsFile::write(char *buffer, size_t count, l_off_t offset)
+int32 RamFsFile::write(const char *buffer, size_t count, l_off_t offset)
 {
-  if(f_superblock_->checkOpenedFiles(this) == false)
-  {
-    // ERROR_FNO
-    return -1;
-  }
-
   if((flag_ == O_WRONLY) || (flag_ == O_RDWR))
     return(f_inode_->writeData(offset, count, buffer));
   else
@@ -77,7 +66,7 @@ int32 RamFsFile::open(uint32 flag)
   
   f_inode_->insertOpenedFiles(this);
   flag_ = flag;
-  f_superblock_->insertOpenedFiles(this);
+  //f_superblock_->insertOpenedFiles(this);
 
   return 0;
 }
@@ -85,8 +74,9 @@ int32 RamFsFile::open(uint32 flag)
 //--------------------------------------------------------------------------
 int32 RamFsFile::close()
 {
-  assert((f_inode_->removeOpenedFiles(this) != 0) &&
-         (f_superblock_->removeOpenedFiles(this) != 0));
+  assert((f_inode_->removeOpenedFiles(this) != 0));// &&
+//         (f_superblock_->removeOpenedFiles(this) != 0));
+
 }
 
 //--------------------------------------------------------------------------

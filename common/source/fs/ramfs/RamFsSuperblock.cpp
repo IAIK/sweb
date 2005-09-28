@@ -1,12 +1,15 @@
 // Projectname: SWEB
 // Simple operating system for educational purposes
 
+#include "fs/FileDescriptor.h"
 #include "fs/ramfs/RamFsSuperblock.h"
 #include "fs/ramfs/RamFsInode.h"
 #include "fs/ramfs/RamFsFile.h"
-#include "fs/Dentry.h" 
+#include "fs/Dentry.h"
+#include "fs_global.h" 
 #include "assert.h"
 
+#include "console/kprintf.h"
 #define ROOT_NAME "/"
 
 //----------------------------------------------------------------------
@@ -39,18 +42,31 @@ RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
 RamFsSuperblock::~RamFsSuperblock()
 {
   assert(dirty_inodes_.empty() == true);
+  
+  uint32 num = s_files_.getLength();
+  for(uint32 counter = 0; counter < num; counter++)
+  {
+    FileDescriptor *fd = s_files_.at(0);
+    File* file = fd->getFile();
+    s_files_.remove(fd);
+    
+    if(file)
+    {
+      delete file;
+    }
+    delete fd;
+  }
 
-  uint32 num = all_inodes_.getLength();
+  assert(s_files_.empty() == true);
+
+  num = all_inodes_.getLength();
   for(uint32 counter = 0; counter < num; counter++)
   {
     Inode* inode = all_inodes_.at(0);
-    Dentry* dentry = inode->getDentry();
     all_inodes_.remove(inode);
+    Dentry* dentry = inode->getDentry();
+    delete dentry;
 
-    if (dentry)
-    {
-      delete dentry;
-    }
     delete inode;
   }
 
@@ -58,18 +74,27 @@ RamFsSuperblock::~RamFsSuperblock()
 }
 
 //----------------------------------------------------------------------
-Inode* RamFsSuperblock::createInode(Dentry* dentry, uint32 mode)
+Inode* RamFsSuperblock::createInode(Dentry* dentry, uint32 type)
 {
-  Inode *inode = (Inode*)(new RamFsInode(this, mode));
-  int32 inode_init = inode->mknod(dentry);
-  assert(inode_init == 0);
+  Inode *inode = (Inode*)(new RamFsInode(this, type));
+  if(type == I_DIR)
+  {
+    int32 inode_init = inode->mknod(dentry);
+    assert(inode_init == 0);
+  }
+  else if(type == I_FILE)
+  {
+    kprintfd("createInode: I_FILE\n");
+    int32 inode_init = inode->mkfile(dentry);
+    assert(inode_init == 0);
+  }
 
   all_inodes_.pushBack(inode);
   return inode;
 }
 
 //----------------------------------------------------------------------
-void RamFsSuperblock::read_inode(Inode* inode)
+int32 RamFsSuperblock::readInode(Inode* inode)
 {
   assert(inode);
 
@@ -96,3 +121,42 @@ void RamFsSuperblock::delete_inode(Inode* inode)
   all_inodes_.remove(inode);
 }
 
+//----------------------------------------------------------------------
+int32 RamFsSuperblock::createFd(Inode* inode, uint32 flag)
+{
+  assert(inode);
+
+  File* file = inode->link(flag);
+  FileDescriptor* fd = new FileDescriptor(file);
+  s_files_.pushBack(fd);
+  global_fd.pushBack(fd); 
+
+  if (!used_inodes_.included(inode))
+  {
+    used_inodes_.pushBack(inode);
+  }
+  
+  return(fd->getFd());
+}
+
+//----------------------------------------------------------------------
+int32 RamFsSuperblock::removeFd(Inode* inode, FileDescriptor* fd)
+{
+  assert(inode);
+  assert(fd);
+
+  s_files_.remove(fd);
+  //global_fd.remove(fd);
+
+  File* file = fd->getFile();
+  int32 tmp = inode->unlink(file);
+
+  kprintfd("remove the fd num: %d\n", fd->getFd());
+  if(inode->getNumOpenedFile() == 0)
+  {
+    used_inodes_.remove(inode);
+  }
+  delete fd;
+  
+  return tmp;
+}

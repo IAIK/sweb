@@ -91,6 +91,7 @@ class VirtualFileSystem
 
     /// Get the FileSystemInfo object of the current Process
     FileSystemInfo *getFSInfo();
+    
 };
 
 #endif
