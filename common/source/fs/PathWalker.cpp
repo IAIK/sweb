@@ -233,6 +233,7 @@ char *PathWalker::skipSeparator(char const */*path*/) const
 //  }
 //
 //  return path;
+  return 0;
 }
 
 

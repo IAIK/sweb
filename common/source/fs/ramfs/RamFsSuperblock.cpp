@@ -102,6 +102,7 @@ int32 RamFsSuperblock::readInode(Inode* inode)
   {
     all_inodes_.pushBack(inode);
   }
+  return 0;
 }
 
 //----------------------------------------------------------------------

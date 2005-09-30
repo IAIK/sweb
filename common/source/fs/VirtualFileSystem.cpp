@@ -183,7 +183,7 @@ int32 VirtualFileSystem::rootUmount()
 }
 
 //----------------------------------------------------------------------
-int32 VirtualFileSystem::umount(const char* dir_name, uint32 flags)
+int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 {
   if(dir_name == 0)
     return -1;

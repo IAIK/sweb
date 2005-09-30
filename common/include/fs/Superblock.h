@@ -89,7 +89,7 @@ public:
 
   /// This method is called to read a specific inode from a mounted
   /// file-system.
-  virtual int32 readInode(Inode* /*inode*/) {}
+  virtual int32 readInode(Inode* /*inode*/) { return 0; }
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty.
@@ -165,15 +165,6 @@ public:
   
   /// Get the mount point Dentry of the Superblock
   Dentry *getMountPoint();
-
-  /// insert the opened file point to the file_list
-  //int32 insertOpenedFiles(File*);
-
-  /// remove the opened file point from the file_list
-  //int32 removeOpenedFiles(File*);
-
-  /// check the existence of the opened file point in the file_list
-  //int32 checkOpenedFiles(File* file) {return(s_files_.included(file));}
 
 };
 //-----------------------------------------------------------------------------

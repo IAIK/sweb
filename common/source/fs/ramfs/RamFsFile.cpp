@@ -51,32 +51,13 @@ int32 RamFsFile::write(const char *buffer, size_t count, l_off_t offset)
 //--------------------------------------------------------------------------
 int32 RamFsFile::open(uint32 flag)
 {
-
-  if(f_inode_->openedFilesEmpty() == true)
-  {
-  }
-  else if((f_inode_->insertOpenedFiles(this) == 0) && (flag == O_RDONLY))
-  {
-  }
-  else
-  {
-    // ERROR_FRO
-    return -1;
-  }
-  
-  f_inode_->insertOpenedFiles(this);
-  flag_ = flag;
-  //f_superblock_->insertOpenedFiles(this);
-
   return 0;
 }
 
 //--------------------------------------------------------------------------
 int32 RamFsFile::close()
 {
-  assert((f_inode_->removeOpenedFiles(this) != 0));// &&
-//         (f_superblock_->removeOpenedFiles(this) != 0));
-
+  return 0;
 }
 
 //--------------------------------------------------------------------------
