@@ -202,6 +202,36 @@ int32 RamFsInode::unlink(File* file)
 //---------------------------------------------------------------------------
 int32 RamFsInode::rmdir()
 {
+  if(i_type_ != I_DIR)
+    return -1;
+
+  Dentry* dentry = i_dentry_;
+
+  if(dentry->emptyChild() == true)
+  {
+    dentry->releaseInode();
+    Dentry* parent_dentry = dentry->getParent();
+    parent_dentry->childRemove(dentry);
+    delete dentry;
+    i_dentry_ = 0;
+    return INODE_DEAD;
+  }
+  else
+  {
+    // ERROR_DEC
+    return -1;
+  }
+}
+
+//---------------------------------------------------------------------------
+int32 RamFsInode::rm()
+{
+  if(i_files_.getLength() != 0)
+  {
+    kprintfd("the file is opened.\n");
+    return -1;
+  }
+
   Dentry* dentry = i_dentry_;
 
   if(dentry->emptyChild() == true)

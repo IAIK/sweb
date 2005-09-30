@@ -24,12 +24,60 @@ void testRegFS()
   kprintfd("***** end ROOT_Mount()\n");
   
   //testMountUmount();
-  testFile();
+  //testFile();
+  testFinal();
 
   kprintfd("***** begin ROOTUmount()\n\n\n");
   vfs.rootUmount();
   vfs.unregisterFileSystem(ramfs);
   kprintfd("***** end ROOTUmount()\n");
+}
+
+//----------------------------------------------------------------------
+void testFinal()
+{
+  kprintfd("\n> mkdir dev\n");
+  vfs_syscall.mkdir("dev",0);
+  
+  kprintfd("\n> open ../dev/hda0.txt\n");
+  int32 hda0_fd = vfs_syscall.open("../dev/hda0.txt", 2);
+  
+  kprintfd("\n> write hallo world! to hda0.txt");
+  vfs_syscall.write(hda0_fd, "hallo world!", 12);
+  
+  kprintfd("\n> rmdir dev\n");
+  vfs_syscall.rmdir("dev");
+  
+  kprintfd("\n> mkdir boot\n");
+  vfs_syscall.mkdir("/../../dev/../../boot", 0);
+  
+  kprintfd("\n> mkdir usr\n");
+  vfs_syscall.mkdir("usr", 0);
+  
+  kprintfd("\n> rmdir /dev/hda0.txt\n");
+  vfs_syscall.rmdir("/dev/hda0.txt");
+  
+  kprintfd("\n> rm /dev/hda0.txt\n");
+  vfs_syscall.rm("dev/hda0.txt");
+
+  kprintfd("\n> write hallo world! to hda0.txt");
+  char cbuffer[20];
+  int32 size = vfs_syscall.read(hda0_fd, cbuffer, 12);
+  cbuffer[size] = '\0';
+  kprintfd("cbuffer = %s\n", cbuffer);
+  
+  kprintfd("\n> close /dev/hda0.txt\n");
+  vfs_syscall.close(hda0_fd);
+  
+  kprintfd("\n> rmdir /dev/hda0.txt\n");
+  vfs_syscall.rmdir("/dev/hda0.txt");
+  
+  kprintfd("\n> rm /dev/hda0.txt\n");
+  vfs_syscall.rm("dev/hda0.txt");
+  
+  kprintfd("\n> rm /dev\n");
+  vfs_syscall.rm("/dev");
+  
 }
 
 //----------------------------------------------------------------------

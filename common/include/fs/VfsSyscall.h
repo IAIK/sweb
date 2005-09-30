@@ -58,6 +58,12 @@ class VfsSyscall
   ///@param dir the removed directory
   ///@return On success, zero is returned. On error, -1 is returned.
   virtual int32 rmdir(const char* pathname);
+
+  /// remove a directory (which must be empty) or a file 
+  ///
+  ///@param dir the removed directory
+  ///@return On success, zero is returned. On error, -1 is returned.
+  virtual int32 rm(const char* pathname);  
   
   /// The open() is used to convert a pathname into a file descriptor, if the
   /// pathname does not exist, create a new file.

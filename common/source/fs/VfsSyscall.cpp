@@ -46,7 +46,6 @@ int32 VfsSyscall::dupChecking(const char* pathname)
   if(pathname == 0)
     return -1;
 
-  char *path_tmp_ptr = 0;
   if((pathname[0] != SEPARATOR) && (pathname[1] != SEPARATOR) && 
      (pathname[2] != SEPARATOR))
   {
@@ -63,8 +62,6 @@ int32 VfsSyscall::dupChecking(const char* pathname)
   } 
   else
     fs_info.setName(pathname);
-
-  char* test_name = fs_info.getName();
 
   int32 success = path_walker.pathInit(fs_info.getName(), 0);
   if(success == 0)
@@ -209,6 +206,38 @@ int32 VfsSyscall::chdir(const char* pathname)
   fs_info.setFsPwd(path_walker.getDentry(), path_walker.getVfsMount());
   path_walker.pathRelease();
 
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+int32 VfsSyscall::rm(const char* pathname)
+{
+
+  if(dupChecking(pathname) != 0)
+  {
+    kprintfd("Error: (rmdir) the directory does not exist.\n");
+    path_walker.pathRelease();
+    fs_info.putName();
+    return -1;
+  }
+
+  fs_info.putName();
+  Dentry* current_dentry = path_walker.getDentry();
+  path_walker.pathRelease();
+  Inode* current_inode = current_dentry->getInode();
+
+  Superblock* sb = current_inode->getSuperblock();
+  if(current_inode->rm() == INODE_DEAD)
+  {
+    kprintfd("remove the inode from the list\n");
+    sb->delete_inode(current_inode);
+  }
+  else
+  {
+    kprintfd("remove the inode failed\n");
+    return -1;
+  }
+  
   return 0;
 }
 

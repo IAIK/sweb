@@ -24,5 +24,6 @@ void testMini();
 void testReadWriteInode();
 void testMountUmount();
 void testFile();
+void testFinal();
 
 #endif

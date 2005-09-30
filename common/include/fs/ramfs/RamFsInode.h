@@ -58,6 +58,9 @@ public:
   /// Remove the directory (if the sub_dentry is empty).
   virtual int32 rmdir();
 
+  /// REmove the named directory (if empty) or file
+  virtual int32 rm();
+
   /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *dentry);
 

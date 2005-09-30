@@ -94,11 +94,11 @@ class Inode
   /// The link method should make a hard link to the name referred to by the
   /// denty, which is in the directory refered to by the Inode. 
   /// (only used for File)
-  virtual File* link(uint32 flag) {return 0;}
+  virtual File* link(uint32 /*flag*/) {return 0;}
 
   /// This should remove the name refered to by the Dentry from the directory
   /// referred to by the inode. (only used for File)
-  virtual int32 unlink(File* file) {return 0;}
+  virtual int32 unlink(File* /*file*/) {return 0;}
 
   /// This should create a symbolic link in the given directory with the given
   /// name having the given value. It should d_instantiate the new inode into
@@ -112,8 +112,11 @@ class Inode
   /// Create a file with the given dentry.
   virtual int32 mkfile(Dentry */*dentry*/) { return 0; }
 
-  /// Remove the named directory (if empty) and d_delete the dentry.
+  /// Remove the named directory (if empty).
   virtual int32 rmdir() {return 0;}
+  
+  /// REmove the named directory (if empty) or file
+  virtual int32 rm() {return 0;}
 
   /// Create a directory with the given dentry.
   virtual int32 mknod(Dentry *) {return 0;}
@@ -145,15 +148,6 @@ class Inode
 
  public:
 
-  /// insert the opened file point to the file_list of this inode.
-  int32 insertOpenedFiles(File*);
-
-  /// remove the opened file point from the file_list of this inode.
-  int32 removeOpenedFiles(File*);
-  
-  /// check the existance of the open-file-list
-  bool openedFilesEmpty() { return(i_files_.empty());}
-  
   /// return the Superblock that this inode is located
   Superblock* getSuperblock() { return i_superblock_; }
   
