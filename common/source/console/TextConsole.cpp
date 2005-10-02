@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: TextConsole.cpp,v 1.10 2005/09/21 15:37:02 btittelbach Exp $
+//   $Id: TextConsole.cpp,v 1.11 2005/10/02 12:27:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: TextConsole.cpp,v $
+//  Revision 1.10  2005/09/21 15:37:02  btittelbach
+//  full kbd buffer blocks irq1 bug fixed
+//
 //  Revision 1.9  2005/09/20 19:07:41  btittelbach
 //  +Comfy Userspace (.c files in userspace/tests get autocompiled and autorun in Sweb)
 //  +F12 prints ThreadList
@@ -83,12 +86,36 @@
 
 TextConsole::TextConsole(uint32 num_terminals):Console(num_terminals)
 {
-  uint32 i;
+  uint32 i, j = 10, log = 1, k = 0, l = 0;
+  
+  while( num_terminals / j ) 
+  {
+    j *= 10;
+    log++;
+  }
+
+  char *term_name = new char[ log + 5 ];
+  term_name[ 0 ] = 't';
+  term_name[ 1 ] = 'e';
+  term_name[ 2 ] = 'r';
+  term_name[ 3 ] = 'm';
+  term_name[ log + 4 ] = 0;
+    
   for (i=0;i<num_terminals;++i)
   {
-    Terminal *term = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+    uint32 cterm = i;
+    for( l = 4, k = j/10; k > 0 ; k /= 10, l++ )
+    {
+      term_name[ l ] = cterm/k + '0';
+      cterm -= ((cterm/k) * k);
+    }
+      
+    Terminal *term = new Terminal( term_name, this,consoleGetNumColumns(),consoleGetNumRows());
     terminals_.pushBack(term);
   }
+  
+  delete term_name;
+  
   active_terminal_ = 0;
   name_ = "TxTConsoleThrd";
 }
@@ -143,10 +170,14 @@ void TextConsole::consoleScrollUp()
 
 void TextConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
 {
+  if( color )
+    return;
 }
 
 void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 {
+  if( color )
+    return;
 }
 
 void TextConsole::Run( void )

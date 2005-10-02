@@ -18,10 +18,17 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //----------------------------------------------------------------------
-//   $Id: arch_bd_driver.h,v 1.2 2005/09/20 21:14:31 nelles Exp $
+//   $Id: arch_bd_driver.h,v 1.3 2005/10/02 12:27:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: arch_bd_driver.h,v $
+//  Revision 1.2  2005/09/20 21:14:31  nelles
+//
+//
+//  Some comments added
+//
+//   ----------------------------------------------------------------------
+//
 //
 //--------------------------------------------------------------------
 
@@ -34,35 +41,33 @@
 class BDDriver
 {
   public:
-    uint32 addRequest( BDRequest * ) 
-    {
+    virtual ~BDDriver() {};
+    virtual uint32 addRequest( BDRequest * ) = 0;
+/*    {
       return 0xFFFFFFFF;
-    };
+    };*/
     
-    int32 readSector ( uint32, uint32 )
-    {
+    virtual int32 readSector ( uint32, uint32, void * ) = 0;
+/*    {
       return -1;
-    };
+    };*/
     
-    int32 writeSector ( uint32, uint32, void *  )
-    {
-      return -1;
-    };
+    virtual int32 writeSector ( uint32, uint32, void *  ) = 0;
+//     {
+//       return -1;
+//     };
 
-    uint32 getNumSectors( )
-    {
-      return 0;
-    };
+    virtual uint32 getNumSectors( ) = 0;
+//     {
+//       return 0;
+//     };
 
-    uint32 getSectorSize( )
-    {
+    virtual uint32 getSectorSize( ) = 0;
+/*    {
       return 0;
-    };
+    };*/
     
-    void serviceIRQ( void )
-    {
-      return;
-    };
+    virtual void serviceIRQ( void ) = 0;
 
     uint16 irq;
 };

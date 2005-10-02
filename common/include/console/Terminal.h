@@ -1,8 +1,16 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.h,v 1.9 2005/09/16 15:47:41 btittelbach Exp $
+//  $Id: Terminal.h,v 1.10 2005/10/02 12:27:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.h,v $
+//  Revision 1.9  2005/09/16 15:47:41  btittelbach
+//  +even more KeyboardInput Bugfixes
+//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
+//  +Thread now remembers its Terminal
+//  +Syscalls are USEABLE !! :-) IF=1 !!
+//  +Syscalls can block now ! ;-) Waiting for Input...
+//  +more other Bugfixes
+//
 //  Revision 1.8  2005/09/16 12:47:41  btittelbach
 //  Second PatchThursday:
 //  +KeyboardInput SyncStructure Rewrite
@@ -79,20 +87,24 @@
 #include "Thread.h"
 #include "FiFo.h"
 
+#include "chardev.h"
+
 class Console;
   
-class Terminal
+class Terminal : public CharacterDevice
 {
 friend class Console;
 public:
 
   static uint32 const TERMINAL_BUFFER_SIZE = 256;
 
-  Terminal(Console *console, uint32 num_columns, uint32 num_rows);
+  Terminal(char *name, Console *console, uint32 num_columns, uint32 num_rows);
   
   void write(char character);
   void writeString(char const *string);
   void writeBuffer(char const *buffer, size_t len);
+  
+  virtual int32 writeData (int32 offset, int32 size, const char*buffer);
 
   void setForegroundColor(Console::FOREGROUNDCOLORS const &color);
   void setBackgroundColor(Console::BACKGROUNDCOLORS const &color);
@@ -121,8 +133,6 @@ protected:
 
 private:
 
-  FiFo< uint32 > *terminal_buffer_;
-  
   void handleKey( uint32 key );
   
   void clearScreen();
@@ -131,6 +141,9 @@ private:
   uint32 getNumColumns() const;
 
   uint32 setCharacter(uint32 row,uint32 column, uint8 character);
+  
+  void processInBuffer( void ) {};
+  void processOutBuffer( void ) {};  
 
   void scrollUp();
 

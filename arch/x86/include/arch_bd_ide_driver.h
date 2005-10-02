@@ -19,8 +19,15 @@
 
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.h,v 1.3 2005/09/20 21:14:31 nelles Exp $
+*    $Id: arch_bd_ide_driver.h,v 1.4 2005/10/02 12:27:55 nelles Exp $
 *    $Log: arch_bd_ide_driver.h,v $
+*    Revision 1.3  2005/09/20 21:14:31  nelles
+*
+*
+*    Some comments added
+*
+*     ----------------------------------------------------------------------
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -79,7 +86,7 @@ public:
     uint16  signature;                // set to 0xAA55 for PC MBR
   } MBR;
     
-  int32    processMBR  ( ATADriver *, uint32, uint32 );
+  int32    processMBR  ( ATADriver *, uint32, uint32, char* );
   uint32   doDeviceDetection ( );
 };
 

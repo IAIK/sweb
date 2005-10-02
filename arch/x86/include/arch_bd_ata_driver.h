@@ -19,8 +19,15 @@
 
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.h,v 1.3 2005/09/20 21:14:31 nelles Exp $
+*    $Id: arch_bd_ata_driver.h,v 1.4 2005/10/02 12:27:55 nelles Exp $
 *    $Log: arch_bd_ata_driver.h,v $
+*    Revision 1.3  2005/09/20 21:14:31  nelles
+*
+*
+*    Some comments added
+*
+*     ----------------------------------------------------------------------
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -62,7 +69,7 @@ class ATADriver : public BDDriver, bdio
     uint32 addRequest( BDRequest * );
     
     ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum );
-    ~ATADriver();
+    virtual ~ATADriver() {};
     
     int32 readSector     ( uint32, uint32, void * );
     int32 writeSector    ( uint32, uint32, void * );

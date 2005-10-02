@@ -18,9 +18,11 @@ class Superblock;
                   // will be written next time a sync is requested.
 
 // three possible inode type bits:
-#define I_FILE 0
-#define I_DIR  1
-#define I_LNK  2
+#define I_FILE         0
+#define I_DIR          1
+#define I_LNK          2
+#define I_CHARDEVICE   3
+#define I_BLOCKDEVICE  4
 
 // The per-inode flags:
 #define MS_NODEV 2 // If this inode is a device special file, it cannot be
@@ -148,8 +150,26 @@ class Inode
 
  public:
 
+  /// insert the opened file point to the file_list of this inode.
+  int32 insertOpenedFiles(File*);
+
+  /// remove the opened file point from the file_list of this inode.
+  int32 removeOpenedFiles(File*);
+  
+  /// check the existance of the open-file-list
+  bool openedFilesEmpty() { return(i_files_.empty());}
+  
+  /// return the Superblock where this inode is located
+
   /// return the Superblock that this inode is located
+
   Superblock* getSuperblock() { return i_superblock_; }
+  
+  /// setting the superblock is neccessary because the devices
+  /// are created before the DeviceFS is created
+  void setSuperBlock( Superblock * sb) {
+    i_superblock_ = sb;
+  }
   
   /// get the type from inode
   uint32 getType() { return i_type_; }

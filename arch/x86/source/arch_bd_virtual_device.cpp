@@ -1,7 +1,23 @@
 /********************************************************************
 *
-*    $Id: arch_bd_virtual_device.cpp,v 1.2 2005/09/18 20:46:52 nelles Exp $
+*    $Id: arch_bd_virtual_device.cpp,v 1.3 2005/10/02 12:27:55 nelles Exp $
 *    $Log: arch_bd_virtual_device.cpp,v $
+*    Revision 1.2  2005/09/18 20:46:52  nelles
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/include/arch_bd_ide_driver.h
+*     	arch/x86/include/arch_bd_manager.h
+*     	arch/x86/include/arch_bd_request.h
+*     	arch/x86/include/arch_bd_virtual_device.h
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/x86/source/arch_bd_manager.cpp
+*     	arch/x86/source/arch_bd_virtual_device.cpp
+*     ----------------------------------------------------------------------
+*
 ********************************************************************/
 
 #include "arch_bd_virtual_device.h"
@@ -10,7 +26,8 @@
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable)
+BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable) :
+Inode( 0, I_BLOCKDEVICE )
 {
     kprintfd("BDVirtualDevice::ctor:entered");
     offset_       = offset;
@@ -20,10 +37,15 @@ BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_bl
     driver_       = driver;
     
     kprintfd("BDVirtualDevice::ctor:calling string functions\n");
-    name_         = new char[ strlen( name ) * sizeof( char ) + 1 ];
+    name_         = new char[ strlen( name ) + 1 ];
     strncpy( name_, name, strlen(name) );
     name_[ strlen(name) ] = '\0';
     kprintfd("BDVirtualDevice::ctor:string functions done\n");
+    
+    kprintfd("BDVirtualDevice::ctor:registering with DeviceFS\n");
+    i_superblock_ = DeviceFSSuperBlock::getInstance();
+    DeviceFSSuperBlock::getInstance()->addDevice( this, name_ );
+    kprintfd("BDVirtualDevice::ctor:registered with DeviceFS\n");
     
     dev_number_   = 0;
 };
@@ -59,4 +81,83 @@ void BDVirtualDevice::addRequest(BDRequest * command)
   command->setResult( res );
   return;
 };
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////   
+    
+int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer) 
+{
+   kprintfd("BDVirtualDevice::readData\n");
+   uint32 blocks2read = size/block_size_, jiffies = 0;
+   
+   if( size%block_size_ )
+     blocks2read++;
+
+   kprintfd("BDVirtualDevice::blocks2read %d\n", blocks2read );
+   char *my_buffer = (char *) kmalloc( blocks2read*block_size_*sizeof(char) );
+   BDRequest * bd = 
+   new BDRequest(0, BDRequest::BD_READ, offset, blocks2read, my_buffer);
+   addRequest ( bd );
+   
+   kprintfd("BDVirtualDevice::request added\n" );
+   
+   while( bd->getStatus() == BDRequest::BD_QUEUED && 
+          jiffies++ < 50000 );
+          
+   if( bd->getStatus() != BDRequest::BD_DONE )
+   {
+     kprintfd("BDVirtualDevice::!done\n" );
+     kfree( my_buffer );
+     delete bd;
+     return -1;
+   }
+
+   kprintfd("BDVirtualDevice::done\n" );
+   memcpy( buffer, my_buffer, size );
+   kprintfd("BDVirtualDevice::memcpied\n" );
+   kfree( my_buffer );
+   delete bd;
+   kprintfd("BDVirtualDevice::returning\n" );
+   return size;
+};
+
+int32 BDVirtualDevice::writeData(int32 offset, int32 size, char *buffer)
+{
+   kprintfd("BDVirtualDevice::writeData");
+   uint32 blocks2write = size/block_size_, jiffies = 0;
+   
+   char *my_buffer;
+   if( size%block_size_ )
+   {
+     blocks2write++;
+     my_buffer = (char *) kmalloc( blocks2write*block_size_*sizeof(char) );
+     if( readData(offset, blocks2write, my_buffer) == -1 )
+     {
+       kfree( my_buffer );
+       return -1;
+     }
+     memcpy( my_buffer, buffer, size );
+   }
+   else
+     my_buffer = (char *) kmalloc( blocks2write*block_size_*sizeof(char) );
+     
+   BDRequest * bd = 
+   new BDRequest(0,BDRequest::BD_WRITE, offset, blocks2write, my_buffer);
+   addRequest ( bd );
+   
+   while( bd->getStatus() == BDRequest::BD_QUEUED && 
+          jiffies++ < 50000 );
+
+   BDRequest::BD_RESULT stat = bd->getStatus();
+   
+   kfree( my_buffer );
+   delete bd;
+   
+   if( stat != BDRequest::BD_DONE )
+     return -1;
+   else
+     return size;
+};
+
 

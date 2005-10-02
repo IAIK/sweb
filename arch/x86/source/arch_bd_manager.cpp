@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_manager.cpp,v 1.4 2005/09/26 15:29:05 btittelbach Exp $
+*    $Id: arch_bd_manager.cpp,v 1.5 2005/10/02 12:27:55 nelles Exp $
 *    $Log: arch_bd_manager.cpp,v $
+*    Revision 1.4  2005/09/26 15:29:05  btittelbach
+*    check
+*
 *    Revision 1.3  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -55,9 +58,9 @@ void BDManager::addRequest( BDRequest* bdr )
 
 void BDManager::addVirtualDevice( BDVirtualDevice* dev )
 {
-  kprintfd("BDManager::serviceIRQ:Adding device\n");
+  kprintfd("BDManager::addVirtualDevice:Adding device\n");
   device_list_.pushBack( dev );
-  kprintfd("BDManager::serviceIRQ:Device added\n");
+  kprintfd("BDManager::addVirtualDevice:Device added\n");
 };
 
 void BDManager::serviceIRQ( uint32 irq_num )

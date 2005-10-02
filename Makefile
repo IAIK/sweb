@@ -19,7 +19,8 @@ SUBPROJECTS := \
                common/source/drivers \
                common/source/fs \
                common/source/fs/ramfs \
-               common/source/fs/pseudofs 
+               common/source/fs/pseudofs \
+               common/source/fs/devicefs
 #               utils/mtools
 
 else
@@ -34,6 +35,7 @@ SUBPROJECTS := \
                common/source/fs \
                common/source/fs/ramfs \
                common/source/fs/pseudofs \
+               common/source/fs/devicefs \
                userspace/libc \
                userspace/tests
 #               utils/mtools
@@ -50,7 +52,8 @@ SHARED_LIBS :=  \
                 common/source/drivers/libDrivers.a \
                 common/source/fs/libFS.a \
                 common/source/fs/ramfs/libRamFS.a \
-                common/source/fs/pseudofs/libPseudoFS.a
+                common/source/fs/pseudofs/libPseudoFS.a \
+                common/source/fs/devicefs/libDeviceFS.a
 else
 SHARED_LIBS :=  \
                 arch/arch/source/libArchSpecific.a \
@@ -62,7 +65,8 @@ SHARED_LIBS :=  \
                 common/source/drivers/libDrivers.a \
                 common/source/fs/libFS.a \
                 common/source/fs/ramfs/libRamFS.a \
-                common/source/fs/pseudofs/libPseudoFS.a
+                common/source/fs/pseudofs/libPseudoFS.a \
+                common/source/fs/devicefs/libDeviceFS.a
 endif
 
 
@@ -139,13 +143,13 @@ install: kernel
 #	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
 #	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 #	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
-	@echo "Starting with install - ext2 floppy"
-	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
+#	@echo "Starting with install - ext2 floppy"
+#	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	test -d $(OBJECTDIR)/bin || mkdir $(OBJECTDIR)/bin
 	@echo "copying ef2s binary"
 	cp utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
-	@echo "copying Floppy images"
-	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
+#	@echo "copying Floppy images"
+#	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 	@echo "creating temp dir"
 	rm -rf $(OBJECTDIR)/e2fstemp
 	mkdir $(OBJECTDIR)/e2fstemp
@@ -155,8 +159,8 @@ install: kernel
 	test -e $(OBJECTDIR)/ramfs || cp ./images/ramfs $(OBJECTDIR)/ramfs
 	cp $(OBJECTDIR)/kernel.x $(OBJECTDIR)/e2fstemp/boot
 	cp $(OBJECTDIR)/ramfs $(OBJECTDIR)/e2fstemp/boot
-	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
-	@echo "########## $(OBJECTDIR)/boot_ext2.img is ready ###########"
+#	$(OBJECTDIR)/bin/e2fsimage -f $(OBJECTDIR)/boot_ext2.img -d $(OBJECTDIR)/e2fstemp -n
+#	@echo "########## $(OBJECTDIR)/boot_ext2.img is ready ###########"
 	@echo "########## Starting with install - ext2 hard drive ###########"
 	@echo $(OBJECTDIR)/SWEB-flat.vmdk
 	cp ./images/SWEB-flat.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat.vmdk.gz

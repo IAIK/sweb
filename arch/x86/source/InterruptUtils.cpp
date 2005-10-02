@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.44 2005/09/27 21:24:43 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.45 2005/10/02 12:27:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.44  2005/09/27 21:24:43  btittelbach
+//  +IF=1 in PageFaultHandler
+//  +Lock in PageManager
+//  +readline/gets Bugfix
+//  +pseudoshell bugfix
+//
 //  Revision 1.43  2005/09/26 14:00:43  btittelbach
 //  compilefix
 //
@@ -741,15 +747,19 @@ extern "C" void irqHandler_1()
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
+  kprintfd_nosleep( "IRQ 3 called\n" );
   SerialManager::getInstance()->service_irq( 3 );
   ArchInterrupts::EndOfInterrupt(3);
+  kprintfd_nosleep( "IRQ 3 ended\n" );
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
+  kprintfd_nosleep( "IRQ 4 called\n" );
   SerialManager::getInstance()->service_irq( 4 );
   ArchInterrupts::EndOfInterrupt(4);
+  kprintfd_nosleep( "IRQ 4 ended\n" );
 }
 
 extern "C" void arch_irqHandler_13();

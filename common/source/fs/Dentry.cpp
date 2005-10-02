@@ -24,12 +24,14 @@ Dentry::Dentry(Dentry *parent)
   d_parent_ = parent;
   parent->setChild(this);
   d_inode_ = 0;
+  this->setName("NamELLEss");
 }
 
 //---------------------------------------------------------------------------
 Dentry::~Dentry()
 {
-  kprintfd("remove the dentry: %s\n", d_name_);
+  if( d_parent_ )
+    d_parent_->childRemove( this );
   if(d_name_)
     kfree(d_name_);
 }
@@ -98,7 +100,7 @@ Dentry* Dentry::checkName(const char* name)
 {
   for(uint32 count = 0; count < (d_child_.getLength()); count++)
   {
-    Dentry *dentry = (Dentry*)(d_child_[count]);
+    Dentry *dentry = (Dentry*)(d_child_.at(count));
     const char *tmp_name = dentry->getName();
     if(strcmp(tmp_name, name) == 0)
     {

@@ -148,7 +148,6 @@ int32 PathWalker::pathWalk(const char* pathname)
     {
       Inode* current_inode = dentry_->getInode();
       Dentry *found = current_inode->lookup(last_);
-      
       kfree(npart);
       last_ = 0;
       if(found != 0)
@@ -161,7 +160,6 @@ int32 PathWalker::pathWalk(const char* pathname)
       }
 
       VfsMount* vfs_mount = vfs.getVfsMount(dentry_);
-
       if(vfs_mount != 0)
       {
         kprintfd("MOUNT_DOWN\n");

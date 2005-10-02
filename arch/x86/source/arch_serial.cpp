@@ -5,13 +5,13 @@
 
 #include "ArchThreads.h"
 
-//#include "kprintf.h"
+#include "kprintf.h"
 //#include "debug_bochs.h"
 
 #include "8259.h"
 
 
-SerialPort::SerialPort ( ArchSerialInfo port_info ) : buffer_write_( 0 ), buffer_read_( 0 )
+SerialPort::SerialPort ( char *name, ArchSerialInfo port_info ) : CharacterDevice( name )
 {
   this->port_info_ = port_info;
 
@@ -23,7 +23,6 @@ SerialPort::SerialPort ( ArchSerialInfo port_info ) : buffer_write_( 0 ), buffer
 
 SerialPort::~SerialPort ()
 {
-  
 };
 
 SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity )
@@ -46,7 +45,7 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
       break;
     case BR_115200:
       divisor = 0x01;
-      break;
+      break;  
     default:
     case BR_9600:
       divisor = 0x0C;
@@ -103,23 +102,24 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
   write_UART( SC::FCR , 0xC7);
   write_UART( SC::MCR , 0x0B);  
   
-  enableIRQ( this->port_info_.irq_num ); 
   write_UART( SC::IER , 0x0F);  
   
   return SR_OK;
 };
 
-SerialPort::SRESULT SerialPort::write( uint8 *buffer, uint32 num_bytes, uint32& bytes_written )
+int32 SerialPort::writeData(int32 offset, int32 num_bytes, const char*buffer)
 {
-  uint32 jiffies = 0;
+  if( offset != 0 )
+    return -1;
+    
+  uint32 jiffies = 0, bytes_written = 0;
   
   while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 50000 );
     
   if( jiffies == 50000 )
   {
-    SerialLock = 0;
     WriteLock = 0;
-    return SR_ERROR;
+    return -1;
   }
   
   WriteLock = bytes_written = 0;
@@ -134,7 +134,7 @@ SerialPort::SRESULT SerialPort::write( uint8 *buffer, uint32 num_bytes, uint32& 
     {
       SerialLock = 0;
       WriteLock = 0;
-      return SR_ERROR;
+      return -1;
     }    
     
     write_UART( 0, *(buffer++) );
@@ -142,62 +142,36 @@ SerialPort::SRESULT SerialPort::write( uint8 *buffer, uint32 num_bytes, uint32& 
   }
     
   SerialLock = 0;
-  return SR_OK;
-};
-
-SerialPort::SRESULT SerialPort::read( uint8 *buffer, uint32 num_bytes, uint32& bytes_read )
-{
-  if( buffer_write_ <= buffer_read_ )
-  {
-    bytes_read = 0;
-    return SR_ERROR;
-  }
-  
-  if( ( buffer_write_ - buffer_read_ ) < num_bytes )
-    num_bytes = buffer_write_ - buffer_read_;
-  
-  uint8 * pb = (portbuffer_ + (buffer_read_ % 1024));
-  buffer_read_ += num_bytes;
-  bytes_read = num_bytes;
-    
-  while (num_bytes--)
-  {
-      *buffer++ = *pb++;
-  }
-  
-  return SR_OK;
+  return bytes_written;
 };
 
 void SerialPort::irq_handler()
 {
-  do
-  {
-    uint8 int_id_reg = read_UART( SC::IIR );
-    
-    if( int_id_reg & 0x01 )
-      return; // it is not my IRQ or IRQ is handled
+  kprintf("SerialPort::irq_handler: Entered SerialPort IRQ handler");
+
+  uint8 int_id_reg = read_UART( SC::IIR );
   
-    uint8 int_id = (int_id_reg & 0x06) >> 1;
-    
-    switch( int_id )
-    {
-    case 0: // Modem status changed
-      break;
-    case 1: // Output buffer is empty
-      WriteLock = 0;
-      break;
-    case 2: // Data is available
-      int_id = read_UART( 0 );
-      portbuffer_[ buffer_write_ % 2048 ] = int_id;
-      buffer_write_++;
-      break;
-    case 3: // Line status changed
-      break;
-    default: // This will never be executed
-      break;
-    }
+  if( int_id_reg & 0x01 )
+    return; // it is not my IRQ or IRQ is handled
+
+  uint8 int_id = (int_id_reg & 0x06) >> 1;
+  
+  switch( int_id )
+  {
+  case 0: // Modem status changed
+    break;
+  case 1: // Output buffer is empty
+    WriteLock = 0;
+    break;
+  case 2: // Data is available
+    int_id = read_UART( 0 );
+    _in_buffer->put( int_id );
+    break;
+  case 3: // Line status changed
+    break;
+  default: // This will never be executed
+    break;
   }
-  while(1);
   
   return;
 }

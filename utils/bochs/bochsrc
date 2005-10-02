@@ -1,7 +1,20 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.22 2005/09/23 21:25:04 nelles Exp $
+#*    $Id: bochsrc,v 1.23 2005/10/02 12:27:55 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.22  2005/09/23 21:25:04  nelles
+#*
+#*
+#*    	Keyboard LEDs now functional.
+#*
+#*     Committing in .
+#*
+#*     Modified Files:
+#*    	arch/common/include/arch_keyboard_manager.h
+#*    	arch/x86/source/arch_keyboard_manager.cpp
+#*    	utils/bochs/bochsrc
+#*     ----------------------------------------------------------------------
+#*
 #*    Revision 1.21  2005/09/21 17:01:12  nomenquis
 #*    updates
 #*
@@ -526,7 +539,7 @@ log: bochsout.txt
 #=======================================================================
 panic: action=ask
 error: action=report
-info: action=ignore
+info: action=report
 #debug: action=ignore
 debug: action=ignore
 #pass: action=report
@@ -555,7 +568,8 @@ debugger_log: debugger.out
 # messing with things, and run bochs in the other window.  Serial I/O to
 # com1 (port 0x3f8) will all go to the other window.
 #=======================================================================
-#com1: enabled=1, dev=/s
+com1: enabled=1, mode=term, dev=/dev/pts/42
+#com2: enabled=1, mode=term, dev=/dev/pts/44
 #com1: enabled=1, file=serial1.txt
 #com2: enabled=1, file=serial2.txt
 #com3: enabled=1, file=serial3.txt

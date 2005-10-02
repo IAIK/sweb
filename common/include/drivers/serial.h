@@ -2,6 +2,7 @@
 #define _SERIAL_H_
 
 #include "types.h"
+#include "chardev.h"
 
 #define MAX_PORTS  16
 
@@ -14,11 +15,9 @@
 
 class ArchSerialInfo;
 
-class SerialPort
+class SerialPort : public CharacterDevice
 {
 public:
-char friendly_name[10]; ///< The user friendly name of the port - "COM1" or "ttyS0", NULL terminated string
-
 
 /// \brief The baudrate for serial communication
 typedef enum _br
@@ -66,7 +65,7 @@ typedef enum _sres
 }
 SRESULT;
 
-SerialPort ( ArchSerialInfo port_info );
+SerialPort ( char*, ArchSerialInfo port_info );
 
 ~SerialPort ();
 
@@ -78,19 +77,20 @@ SerialPort ( ArchSerialInfo port_info );
 /// \return Result \sa SERIAL_ERROR_E
 SRESULT setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity );
 
-/// \brief Writes num_bytes bytes to serial port
+/// \brief Writes size bytes to serial port
 /// \param buffer The data to be written
-/// \param num_bytes Number of bytes to be written
-/// \param bytes_written Number of bytes actually written
-/// \return Result \sa SERIAL_ERROR_E
-SRESULT write( uint8 *buffer, uint32 num_bytes, uint32& bytes_written );
+/// \param size Number of bytes to be written
+/// \param offset Not used with serial ports
+/// \return Number of bytes actualy written or -1 in case of an error
+virtual int32 writeData(int32 offset, int32 size, const char*buffer);
 
-/// \brief Reads num_bytes bytes from serial port
-/// \param buffer Buffer for the data. Must be preallocated.
-/// \param num_bytes Number of bytes to be read
-/// \return Number of bytes actually read
-/// \return Result \sa SERIAL_ERROR_E
-SRESULT read( uint8 *buffer, uint32 num_bytes, uint32& bytes_read );
+/// \brief Reads size bytes from the serial port
+/// \param buffer The buffer to store the data (must be preallocated)
+/// \param size Number of bytes to be read
+/// \param offset Not used with serial ports
+/// \return Number of bytes actualy read or -1 in case of an error
+//  virtual int32 readData(int32 offset, int32 size, char *buffer);
+//  inherited from chardevice
 
 /// \brief Handles the irq of this serial port \sa get_info()
 void irq_handler();
@@ -115,10 +115,6 @@ uint32 SerialLock;
 
 private:
 ArchSerialInfo port_info_;  ///< Architecture specific data for serial ports
-
-uint8 portbuffer_[2048]; ///< Internal circular serial port buffer
-uint16 buffer_write_; ///< Pointer to the write position
-uint16 buffer_read_; ///< Pointer to the read position
 
 };
 

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: FrameBufferConsole.cpp,v 1.11 2005/09/21 17:01:12 nomenquis Exp $
+//   $Id: FrameBufferConsole.cpp,v 1.12 2005/10/02 12:27:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: FrameBufferConsole.cpp,v $
+//  Revision 1.11  2005/09/21 17:01:12  nomenquis
+//  updates
+//
 //  Revision 1.10  2005/07/24 17:02:59  nomenquis
 //  lots of changes for new console stuff
 //
@@ -44,12 +47,36 @@ FrameBufferConsole::FrameBufferConsole(uint32 num_terminals):Console(num_termina
   bits_per_pixel_ = ArchCommon::getVESAConsoleBitsPerPixel();
   bytes_per_pixel_ = bits_per_pixel_ / 8;
 
-  uint32 i;
+uint32 i, j = 10, log = 1, k = 0, l = 0;
+  
+  while( num_terminals / j ) 
+  {
+    j *= 10;
+    log++;
+  }
+
+  char *term_name = new char[ log + 5 ];
+  term_name[ 0 ] = 't';
+  term_name[ 1 ] = 'e';
+  term_name[ 2 ] = 'r';
+  term_name[ 3 ] = 'm';
+  term_name[ log + 4 ] = 0;
+    
   for (i=0;i<num_terminals;++i)
   {
-    Terminal *term = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+    uint32 cterm = i;
+    for( l = 4, k = j/10; k > 0 ; k /= 10, l++ )
+    {
+      term_name[ l ] = cterm/k + '0';
+      cterm -= ((cterm/k) * k);
+    }
+      
+    Terminal *term = new Terminal( term_name, this,consoleGetNumColumns(),consoleGetNumRows());
     terminals_.pushBack(term);
   }
+  
+  delete term_name;
+  
   active_terminal_ = 0;
   name_ = "VESAConsoleThrd";
   consoleSetForegroundColor(FG_BLACK);
@@ -109,11 +136,15 @@ void FrameBufferConsole::setPixel(uint32 x,uint32 y,uint8 r,uint8 g,uint8 b)
   
 }
 
-uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state)
+uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state )
 {
-
   uint32 i,k;
   uint32 character_index = character * 16;
+  
+  // Question for 1000000$: What does this piece of code do ?
+  if( state )  
+    i = 0;
+  // ----------------------------------------------------------
   
   uint16 *lfb = (uint16*)ArchCommon::getVESAConsoleLFBPtr();
 
@@ -161,6 +192,9 @@ void FrameBufferConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color
   
   current_foreground_color_ = (r<<16) + (g<<8) + (b); 
   
+  if( color )
+    return;
+  
 }
 void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 {
@@ -169,6 +203,9 @@ void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color
   g = 0;
   b = 0;
   current_background_color_ = (r<<16) + (g<<8) + (b); 
+  
+  if( color )
+    return;
 }
 
 void FrameBufferConsole::Run( void )

@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.99 2005/09/28 16:35:43 nightcreature Exp $
+ * $Id: main.cpp,v 1.100 2005/10/02 12:27:55 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.99  2005/09/28 16:35:43  nightcreature
+ * main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+ * in xenbuild, first batch of fixes in xen part
+ *
  * Revision 1.98  2005/09/27 21:24:43  btittelbach
  * +IF=1 in PageFaultHandler
  * +Lock in PageManager
@@ -464,6 +468,7 @@
 
 #include "fs/VirtualFileSystem.h"
 #include "fs/ramfs/RamFileSystemType.h"
+#include "fs/devicefs/DeviceFSType.h"
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
@@ -569,6 +574,12 @@ void startup()
 
   kprintf("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
 
+  
+  kprintfd("Mounting DeviceFS under /dev/\n");
+  DeviceFSType *devfs = new DeviceFSType();
+  vfs.registerFileSystem(devfs);
+  int32 mntres = vfs.root_mount("devicefs", 0);
+  kprintfd("Mount returned %d\n", mntres);  
 
   Scheduler::createScheduler();
   
@@ -584,8 +595,8 @@ void startup()
   ArchInterrupts::enableTimer();
 
   ArchInterrupts::enableKBD();
-  
-
+  ArchInterrupts::enableBDS();
+    
   kprintf("Thread creation\n");
   
   kprintf("Adding Kernel threads\n");
@@ -594,31 +605,37 @@ void startup()
   
   Scheduler::instance()->addNewThread( 
     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
-   );
+   );       
   
   Scheduler::instance()->addNewThread( 
     new BDThread()
-    );
-    
+   );
 
+  Scheduler::instance()->addNewThread( 
+    new SerialThread( "SerialTestThread" )
+    );
+            
+  Scheduler::instance()->addNewThread( 
+    new DeviceFSMountingThread()
+    );    
+    
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
-  for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
-    Scheduler::instance()->addNewThread( 
-      new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
-    ); 
+//   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
+//     Scheduler::instance()->addNewThread( 
+//       new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
+//     ); 
   
   
   Scheduler::instance()->printThreadList();
 
   PageManager::instance()->startUsingSyncMechanism();
   KernelMemoryManager::instance()->startUsingSyncMechanism();
-  
+
   kprintf("Now enabling Interrupts...\n");
   ArchInterrupts::enableInterrupts();    
-
+      
   Scheduler::instance()->yield();  
-
 
   
   

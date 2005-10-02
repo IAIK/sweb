@@ -34,3 +34,46 @@ Dentry *Superblock::getMountPoint()
 {
   return mounted_over_;
 }
+
+/*
+//----------------------------------------------------------------------
+int32 Superblock::insertOpenedFiles(File* file)
+{
+  if(file == 0)
+  {
+    // ERROR_FNE
+    return -1;
+  }
+  
+  if(s_files_.included(file) == true)
+  {
+    // ERROR_FE
+    return -1;
+  }
+  s_files_.pushBack(file);
+  
+  return 0;
+}
+
+//----------------------------------------------------------------------
+int32 Superblock::removeOpenedFiles(File* file)
+{
+  if(file == 0)
+  {
+    // ERROR_FNE
+    return -1;
+  }
+  
+  if(s_files_.included(file) == true)
+    s_files_.remove(file);
+  else
+  {
+    // ERROR_FNE
+    return -1;
+  }
+  
+  return 0;
+}
+*/
+
+

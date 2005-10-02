@@ -1,13 +1,30 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.cpp,v 1.2 2005/09/18 20:46:52 nelles Exp $
+*    $Id: arch_bd_ide_driver.cpp,v 1.3 2005/10/02 12:27:55 nelles Exp $
 *    $Log: arch_bd_ide_driver.cpp,v $
+*    Revision 1.2  2005/09/18 20:46:52  nelles
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/include/arch_bd_ide_driver.h
+*     	arch/x86/include/arch_bd_manager.h
+*     	arch/x86/include/arch_bd_request.h
+*     	arch/x86/include/arch_bd_virtual_device.h
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/x86/source/arch_bd_manager.cpp
+*     	arch/x86/source/arch_bd_virtual_device.cpp
+*     ----------------------------------------------------------------------
+*
 ********************************************************************/
 
 #include "arch_bd_ide_driver.h"
 #include "arch_bd_ata_driver.h"
 #include "arch_bd_virtual_device.h"
 #include "arch_bd_manager.h"
+#include "ports.h"
 
 uint32 IDEDriver::doDeviceDetection()
 {
@@ -29,7 +46,14 @@ uint32 IDEDriver::doDeviceDetection()
     
    for( cs = 0; cs < 4; cs ++)
    {
-      kprintfd("IDEDriver::doDetection:Detecting IDE DEV%d:\n", cs);   
+      char *name = new char[5];
+      name[0] = 'i';
+      name[1] = 'd';
+      name[2] = 'e';
+      name[3] = cs + 'a';
+      name[4] = '\0';  
+      
+      kprintfd("IDEDriver::doDetection:Detecting IDE DEV: %s\n", name); 
 
       if( cs > 1 )
       {
@@ -37,19 +61,34 @@ uint32 IDEDriver::doDeviceDetection()
         base_regport = 0x376;
       }
 
-      outbp( base_regport, devCtrl ); // init the device without interupts
+      outbp( base_regport, devCtrl ); // init the device with interupts
 
-      outbp( base_port + 6, (cs % 2 == 0 ? 0xA0 : 0xB0 ) );  
+      uint8 value = (cs % 2 == 0 ? 0xA0 : 0xB0 );
+      uint16 bpp6 = base_port + 6;
+      uint16 bpp2 = base_port + 2;
+      uint16 bpp3 = base_port + 3;
+      
+      outportb( bpp6, value );  
+      outportb( 0x80, 0x00 );
 
-      outbp( base_port + 2, 0x55 );
-      outbp( base_port + 3, 0xAA );
-      outbp( base_port + 2, 0xAA );
-      outbp( base_port + 3, 0x55 );
-      outbp( base_port + 2, 0x55 );
-      outbp( base_port + 3, 0xAA );
+      outportb( bpp2, 0x55 );
+      outportb( 0x80, 0x00 );
+      outportb( bpp3, 0xAA );
+      outportb( 0x80, 0x00 );
+      outportb( bpp2, 0xAA );
+      outportb( 0x80, 0x00 );
+      outportb( bpp3, 0x55 );
+      outportb( 0x80, 0x00 );
+      outportb( bpp2, 0x55 );
+      outportb( 0x80, 0x00 );
+      outportb( bpp3, 0xAA );
+      outportb( 0x80, 0x00 );
 
-      sc = inbp( base_port + 2 );
-      sn = inbp( base_port + 3 );
+      sc = inportb( bpp2 );
+      outportb( 0x80, 0x00 );
+      sn = inportb( bpp3 );
+      outportb( 0x80, 0x00 );
+      
       if ( ( sc == 0x55 ) && ( sn == 0xAA ) )
       {
         outbp( base_regport , devCtrl | 0x04 ); // RESET
@@ -108,24 +147,13 @@ uint32 IDEDriver::doDeviceDetection()
                     ATADriver *drv = new 
                     ATADriver( base_port, cs % 2, cs > 1 ? 14 : 13 );
                     
-                    char *name = new char[5];
-                    name[0] = 'A';
-                    name[1] = 'T';
-                    name[2] = 'A';
-                    name[3] = cs + '0';
-                    name[4] = '\0';
-                    
-                    // is seems that SWEB has problems with allocating
-                    // it like this :
-                    // char*name = "ATAX0";
-                    
                     BDVirtualDevice *bdv = new 
                     BDVirtualDevice( drv, 0, drv->getNumSectors(),
                     drv->getSectorSize(), name, true);
                     
                     BDManager::getInstance()->addVirtualDevice( bdv );
                     
-                    processMBR( drv, 0, drv->SPT );
+                    processMBR( drv, 0, drv->SPT, name );
                 }
                 else if( ( c4 == 0x3C ) && ( c5 == 0xC3 ) )
                 {
@@ -137,14 +165,6 @@ uint32 IDEDriver::doDeviceDetection()
                     
                     kprintfd("IDEDriver::doDetection: Running SATA device as PATA in compatibility mode! \n");
                     
-                    char *name = new char[6];
-                    name[0] = 'S';
-                    name[1] = 'A';
-                    name[2] = 'T';
-                    name[3] = 'A';
-                    name[4] = cs + '0';
-                    name[5] = '\0';
-                    
                     ATADriver *drv = new 
                     ATADriver( base_port, cs % 2, cs > 1 ? 14 : 13 );
                     
@@ -154,7 +174,7 @@ uint32 IDEDriver::doDeviceDetection()
                     
                     BDManager::getInstance()->addVirtualDevice( bdv );
                     
-                    processMBR( drv, 0, drv->SPT );
+                    processMBR( drv, 0, drv->SPT, name );
                 }
               }
               else
@@ -170,18 +190,24 @@ uint32 IDEDriver::doDeviceDetection()
     {
       kprintfd("IDEDriver::doDetection: Not found!\n ");
     }
+    
+    delete name;
   }
 
    // TODO : verify if the device is ATA and not ATAPI or SATA 
   return 0;
 }
 
-int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT )
+int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char *name )
 {
   uint32 offset = 0, numsec = 0;
   uint16 buff[256]; // read buffer
   kprintfd("IDEDriver::processMBR:reading MBR\n");
   
+  static uint32 part_num = 0;
+//   char part_num_str[2];
+//   char part_name[10];
+
   BDRequest *br = new 
   BDRequest( 0, BDRequest::BD_READ, sector, 1, (void *) buff );
   
@@ -191,9 +217,12 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT )
   if( br->getStatus() == BDRequest::BD_ERROR )
   {
     kprintfd("IDEDriver::processMBR: drv returned BD_ERROR\n" );
+    delete br;
     return -1;
   }
 
+  delete br;
+  
   MBR * mbr = (MBR *) buff;
 
   if( mbr->signature == 0xAA55 )
@@ -212,21 +241,36 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT )
         case 0x0F: // Windows extended partition
         case 0x85: // linux extended partition
           kprintfd("ext. part. at: %d \n", fp->relsect );
-          if ( processMBR( drv, sector + fp->relsect, SPT ) == -1 )
-              processMBR( drv, sector + fp->relsect - SPT, SPT );
+          if ( processMBR( drv, sector + fp->relsect, SPT, name) == -1 )
+              processMBR( drv, sector + fp->relsect - SPT, SPT, name );
           break;
         default:
           // offset = fp->relsect - SPT;
           offset = fp->relsect;
           numsec = fp->numsect;
-          kprintfd("part. offset : %d \n", offset);
-                      
+//           kprintfd("part. offset : %d \n", offset);
+// 
+//           part_num_str[0] = part_num + '0';
+//           part_num_str[1] = 0;
+//         
+//           kprintfd("strlen name : %d \n", strlen(name) );
+//           strncpy( part_name, strncat( name, part_num_str, 1 ), strlen(name) + 2);
+//           kprintfd("Copied\n" );
+//           kprintfd("now: %s\n", part_name );
+//           kprintfd("Now creating\n" );
+
+          char *part_name = (char*) kmalloc( 6 );
+          strncpy( part_name, name, 4 );
+          part_name[4] = part_num + '0';
+          part_name[5] = 0;
+          part_num++;          
           BDVirtualDevice *bdv = new 
           BDVirtualDevice( drv, offset, numsec,
-          drv->getSectorSize(), "PART", true);
-          // TODO: setup names
-          
+          drv->getSectorSize(), part_name, true);
+          kprintfd("Created\n" );
           BDManager::getInstance()->addVirtualDevice( bdv );
+          kprintfd("Added\n" );
+          kfree( part_name );
         break;
       }
       }

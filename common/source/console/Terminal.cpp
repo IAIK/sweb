@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: Terminal.cpp,v 1.12 2005/09/27 21:24:43 btittelbach Exp $
+//  $Id: Terminal.cpp,v 1.13 2005/10/02 12:27:55 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Terminal.cpp,v $
+//  Revision 1.12  2005/09/27 21:24:43  btittelbach
+//  +IF=1 in PageFaultHandler
+//  +Lock in PageManager
+//  +readline/gets Bugfix
+//  +pseudoshell bugfix
+//
 //  Revision 1.11  2005/09/21 22:31:37  btittelbach
 //  consider \r
 //
@@ -88,7 +94,7 @@
 
 #include "kprintf.h"
 
-Terminal::Terminal(Console *console, uint32 num_columns, uint32 num_rows):
+Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_rows): CharacterDevice( name ),
   console_(console), num_columns_(num_columns), num_rows_(num_rows), len_(num_rows * num_columns),
   current_column_(0), current_state_(0x93), active_(0)
 {
@@ -102,30 +108,27 @@ Terminal::Terminal(Console *console, uint32 num_columns, uint32 num_rows):
     character_states_[i]=0;
   }
     
-  //clearScreen();
-  
-  terminal_buffer_ = new FiFo< uint32 >( TERMINAL_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );  
 }
   
 void Terminal::clearBuffer()
 {
-  terminal_buffer_->clear();
+  _in_buffer->clear();
 }
 
 void Terminal::putInBuffer( uint32 what )
 {
-  terminal_buffer_->put( what );
+  _in_buffer->put( what );
 }
 
 char Terminal::read()
 {
-  return (char) terminal_buffer_->get();
+  return (char) _in_buffer->get();
 }
 
 void Terminal::backspace( void )
 {
-  if( terminal_buffer_->countElementsAhead() )
-    terminal_buffer_->get();
+  if( _in_buffer->countElementsAhead() )
+    _in_buffer->get();
   
   if( current_column_ )
   {
@@ -141,7 +144,7 @@ uint32 Terminal::readLine( char *line, uint32 size )
   if (size < 1)
     return 0;
   do {
-    cchar = terminal_buffer_->get();
+    cchar = _in_buffer->get();
     
     if( cchar == '\b' )
     {
@@ -162,11 +165,13 @@ uint32 Terminal::readLineNoBlock( char *line, uint32 size )
 {
   uint32 cchar;
   uint32 counter = 0;
+  
   if (size < 1)
     return 0;
-  while (terminal_buffer_->countElementsAhead())
+    
+  while ( _in_buffer->countElementsAhead() )
   {
-    cchar = terminal_buffer_->get();
+    cchar = _in_buffer->get();
     
     if( cchar == '\b' )
     {
@@ -177,11 +182,11 @@ uint32 Terminal::readLineNoBlock( char *line, uint32 size )
       line[counter++] = (char) cchar;
     
     if ( cchar != '\n' && cchar != '\r' && counter < (size-1) );
-   }
+  }
   
-   line[counter] = '\0';
+  line[counter] = '\0';
    
-   return counter;
+  return counter;
 }
 
 void Terminal::writeInternal(char character)
@@ -226,9 +231,26 @@ void Terminal::writeString(char const *string)
   console_->unLockConsoleForDrawing();  
 }
 
+int32 Terminal::writeData(int32 offset, int32 size, const char*buffer)
+{
+  if( offset != 0 )
+    return offset;
+    
+  writeBuffer( buffer, size );
+  return size;
+}
+
 void Terminal::writeBuffer(char const *buffer, size_t len)
 {
-  writeString("Sorry, buffer writing not implemented yet\n");
+  MutexLock lock(mutex_);
+  console_->lockConsoleForDrawing();
+  while ( len )
+  {
+    writeInternal(*buffer);
+    ++buffer;
+    --len;
+  }
+  console_->unLockConsoleForDrawing();  
 }
 
 void Terminal::clearScreen()

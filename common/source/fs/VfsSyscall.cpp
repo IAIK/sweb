@@ -314,7 +314,6 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   if(dupChecking(pathname) == 0)
   {
     fs_info.putName();
-
     Dentry* current_dentry = path_walker.getDentry();
     path_walker.pathRelease();
     Inode* current_inode = current_dentry->getInode();
@@ -397,11 +396,17 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     strlcpy(path_next_name, char_tmp, path_next_len);
 
     // create a new dentry
-    Dentry *sub_dentry = new Dentry(current_dentry);
+    Dentry *sub_dentry = new Dentry( current_dentry );
     sub_dentry->setName(path_next_name);
     kfree(path_next_name);
     Inode* sub_inode = current_sb->createInode(sub_dentry, I_FILE);
- 
+    
+    if( !sub_inode )
+    {
+      delete sub_dentry;
+      return -1;
+    }
+      
     int32 fd = current_sb->createFd(sub_inode, flag);
     kprintfd("the fd-num: %d\n", fd);
   
