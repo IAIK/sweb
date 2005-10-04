@@ -183,6 +183,10 @@ qemu:
 	echo "Going to run qemu -hda SWEB-flat.vmdk"
 	cd $(OBJECTDIR) && qemu -hda SWEB-flat.vmdk
 
+qemugdb:
+	echo "Going to gdb qemu on localhost:1234 using SWEB-flat.vmdk as hda"
+	cd $(OBJECTDIR) && qemu -s -S -hda SWEB-flat.vmdk
+
 vmware:
 	echo "Going to run \"vmware start $(OBJECTDIR)/sweb.vmx\""
 	cd $(OBJECTDIR) && vmrun start "$(OBJECTDIR)/sweb.vmx"
