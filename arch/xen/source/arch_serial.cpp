@@ -1,11 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: arch_serial.cpp,v 1.1 2005/08/01 08:17:51 nightcreature Exp $
+//   $Id: arch_serial.cpp,v 1.2 2005/10/08 10:42:33 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: arch_serial.cpp,v $
+//  Revision 1.1  2005/08/01 08:17:51  nightcreature
+//  copied from x86 to satisfy linker
+//
 //
 //----------------------------------------------------------------------
-
 
 #include "ports.h"
 
@@ -20,7 +22,7 @@
 #include "8259.h"
 
 
-SerialPort::SerialPort ( ArchSerialInfo port_info ) : buffer_write_( 0 ), buffer_read_( 0 )
+SerialPort::SerialPort ( char *name, ArchSerialInfo port_info ) : CharacterDevice( name )
 {
   this->port_info_ = port_info;
 
@@ -32,194 +34,167 @@ SerialPort::SerialPort ( ArchSerialInfo port_info ) : buffer_write_( 0 ), buffer
 
 SerialPort::~SerialPort ()
 {
-  
 };
 
 SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity )
 {
-//   write_UART( SC::IER , 0x00); // turn off interupts 
+  write_UART( SC::IER , 0x00); // turn off interupts 
   
-//   uint8 divisor = 0x0C;
+  uint8 divisor = 0x0C;
   
-//   switch( baud_rate )
-//   {
-//     case BR_14400:
-//     case BR_19200:
-//       divisor = 0x06;
-//       break;
-//     case BR_38400:
-//       divisor = 0x03;
-//       break;
-//     case BR_55600:
-//       divisor = 0x02;
-//       break;
-//     case BR_115200:
-//       divisor = 0x01;
-//       break;
-//     default:
-//     case BR_9600:
-//       divisor = 0x0C;
-//       break;      
-//   }
+  switch( baud_rate )
+  {
+    case BR_14400:
+    case BR_19200:
+      divisor = 0x06;
+      break;
+    case BR_38400:
+      divisor = 0x03;
+      break;
+    case BR_55600:
+      divisor = 0x02;
+      break;
+    case BR_115200:
+      divisor = 0x01;
+      break;  
+    default:
+    case BR_9600:
+      divisor = 0x0C;
+      break;      
+  }
       
-//   write_UART( SC::LCR , 0x80);  // activate DL
+  write_UART( SC::LCR , 0x80);  // activate DL
   
-//   write_UART( 0 , divisor );    // DL low byte
-//   write_UART( SC::IER , 0x00);  // DL high byte  
+  write_UART( 0 , divisor );    // DL low byte
+  write_UART( SC::IER , 0x00);  // DL high byte  
   
-//   uint8 data_bit_reg = 0x03;
+  uint8 data_bit_reg = 0x03;
   
-//   switch( data_bits )
-//   {
-//     case DATA_8:
-//       data_bit_reg = 0x03;
-//       break;
-//     case DATA_7:
-//       data_bit_reg = 0x02;
-//       break;
-//   }
+  switch( data_bits )
+  {
+    case DATA_8:
+      data_bit_reg = 0x03;
+      break;
+    case DATA_7:
+      data_bit_reg = 0x02;
+      break;
+  }
   
-//   uint8 par = 0x00;
+  uint8 par = 0x00;
   
-//   switch( parity )
-//   {
-//     case NO_PARITY:
-//       par = 0x00;
-//       break;
-//     case EVEN_PARITY:
-//       par = 0x18;
-//       break;
-//     case ODD_PARITY:
-//       par = 0x08;
-//       break;
-//   }
+  switch( parity )
+  {
+    case NO_PARITY:
+      par = 0x00;
+      break;
+    case EVEN_PARITY:
+      par = 0x18;
+      break;
+    case ODD_PARITY:
+      par = 0x08;
+      break;
+  }
       
-//   uint8 stopb = 0x00;
+  uint8 stopb = 0x00;
   
-//   switch( stop_bits )
-//   {
-//     case STOP_ONE:
-//       stopb = 0x00;
-//       break;
-//     case STOP_TWO:
-//     case STOP_ONEANDHALF:
-//       stopb = 0x04;
-//       break;
-//   }
+  switch( stop_bits )
+  {
+    case STOP_ONE:
+      stopb = 0x00;
+      break;
+    case STOP_TWO:
+    case STOP_ONEANDHALF:
+      stopb = 0x04;
+      break;
+  }
   
-//   write_UART( SC::LCR , data_bit_reg | par | stopb );  // deact DL and set params
+  write_UART( SC::LCR , data_bit_reg | par | stopb );  // deact DL and set params
   
-//   write_UART( SC::FCR , 0xC7);
-//   write_UART( SC::MCR , 0x0B);  
+  write_UART( SC::FCR , 0xC7);
+  write_UART( SC::MCR , 0x0B);  
   
-//   enableIRQ( this->port_info_.irq_num ); 
-//   write_UART( SC::IER , 0x0F);  
+  write_UART( SC::IER , 0x0F);  
   
   return SR_OK;
 };
 
-SerialPort::SRESULT SerialPort::write( uint8 *buffer, uint32 num_bytes, uint32& bytes_written )
+int32 SerialPort::writeData(int32 offset, int32 num_bytes, const char*buffer)
 {
-//   uint32 jiffies = 0;
-  
-//   while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 50000 );
+  if( offset != 0 )
+    return -1;
     
-//   if( jiffies == 50000 )
-//   {
-//     SerialLock = 0;
-//     WriteLock = 0;
-//     return SR_ERROR;
-//   }
+  uint32 jiffies = 0, bytes_written = 0;
   
-//   WriteLock = bytes_written = 0;
+  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 50000 );
+    
+  if( jiffies == 50000 )
+  {
+    WriteLock = 0;
+    return -1;
+  }
   
-//   while( num_bytes -- )
-//   {    
-//     jiffies = 0;
+  WriteLock = bytes_written = 0;
+  
+  while( num_bytes -- )
+  {    
+    jiffies = 0;
          
-//     while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < 50000 );
+    while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < 50000 );
     
-//     if( jiffies == 50000 ) // TIMEOUT
-//     {
-//       SerialLock = 0;
-//       WriteLock = 0;
-//       return SR_ERROR;
-//     }    
+    if( jiffies == 50000 ) // TIMEOUT
+    {
+      SerialLock = 0;
+      WriteLock = 0;
+      return -1;
+    }    
     
-//     write_UART( 0, *(buffer++) );
-//     bytes_written++;
-//   }
+    write_UART( 0, *(buffer++) );
+    bytes_written++;
+  }
     
-//   SerialLock = 0;
-  return SR_OK;
-};
-
-SerialPort::SRESULT SerialPort::read( uint8 *buffer, uint32 num_bytes, uint32& bytes_read )
-{
-//   if( buffer_write_ <= buffer_read_ )
-//   {
-//     bytes_read = 0;
-//     return SR_ERROR;
-//   }
-  
-//   if( ( buffer_write_ - buffer_read_ ) < num_bytes )
-//     num_bytes = buffer_write_ - buffer_read_;
-  
-//   uint8 * pb = (portbuffer_ + (buffer_read_ % 1024));
-//   buffer_read_ += num_bytes;
-//   bytes_read = num_bytes;
-    
-//   while (num_bytes--)
-//   {
-//       *buffer++ = *pb++;
-//   }
-  
-  return SR_OK;
+  SerialLock = 0;
+  return bytes_written;
 };
 
 void SerialPort::irq_handler()
 {
-//   do
-//   {
-//     uint8 int_id_reg = read_UART( SC::IIR );
-    
-//     if( int_id_reg & 0x01 )
-//       return; // it is not my IRQ or IRQ is handled
+  kprintf("SerialPort::irq_handler: Entered SerialPort IRQ handler");
+
+  uint8 int_id_reg = read_UART( SC::IIR );
   
-//     uint8 int_id = (int_id_reg & 0x06) >> 1;
-    
-//     switch( int_id )
-//     {
-//     case 0: // Modem status changed
-//       break;
-//     case 1: // Output buffer is empty
-//       WriteLock = 0;
-//       break;
-//     case 2: // Data is available
-//       int_id = read_UART( 0 );
-//       portbuffer_[ buffer_write_ % 2048 ] = int_id;
-//       buffer_write_++;
-//       break;
-//     case 3: // Line status changed
-//       break;
-//     default: // This will never be executed
-//       break;
-//     }
-//   }
-//   while(1);
+  if( int_id_reg & 0x01 )
+    return; // it is not my IRQ or IRQ is handled
+
+  uint8 int_id = (int_id_reg & 0x06) >> 1;
+  
+  switch( int_id )
+  {
+  case 0: // Modem status changed
+    break;
+  case 1: // Output buffer is empty
+    WriteLock = 0;
+    break;
+  case 2: // Data is available
+    int_id = read_UART( 0 );
+    _in_buffer->put( int_id );
+    break;
+  case 3: // Line status changed
+    break;
+  default: // This will never be executed
+    break;
+  }
   
   return;
 }
 
 void SerialPort::write_UART( uint32 reg, uint8 what )
 {
-//   outportb( this->port_info_.base_port + reg, what );
+   outportb( this->port_info_.base_port + reg, what );
 };
 
 uint8 SerialPort::read_UART( uint32 reg )
 {
-//  return inportb( this->port_info_.base_port + reg );
-  return(0);
+  return inportb( this->port_info_.base_port + reg );
 };
 
 

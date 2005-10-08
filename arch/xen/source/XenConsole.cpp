@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: XenConsole.cpp,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
+//   $Id: XenConsole.cpp,v 1.2 2005/10/08 10:42:33 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: XenConsole.cpp,v $
+//  Revision 1.1  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //----------------------------------------------------------------------
 
 
@@ -26,7 +30,7 @@ XenConsole::XenConsole(uint32 num_terminals):Console(num_terminals)
   uint32 i;
   for (i=0;i<num_terminals;++i)
   {
-    Terminal *term = new Terminal(this,consoleGetNumColumns(),consoleGetNumRows());
+    Terminal *term = new Terminal("",this,consoleGetNumColumns(),consoleGetNumRows());
     terminals_.pushBack(term);
   }
   active_terminal_ = 0;
