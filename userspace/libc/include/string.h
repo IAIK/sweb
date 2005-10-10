@@ -1,0 +1,93 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Andreas Niederl
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+/**
+ * CVS Log Info for $RCSfile: string.h,v $
+ *
+ * $Id: string.h,v 1.1 2005/10/10 06:15:55 aniederl Exp $
+ * $Log$
+ */
+
+
+#ifndef string_h___
+#define string_h___
+
+
+/**
+ * NULL pointer constant
+ *
+ */
+#define NULL 0
+
+/**
+ * Used for sizes of objects
+ *
+ */
+#ifndef SIZE_T_DEFINED
+#define SIZE_T_DEFINED
+typedef unsigned int size_t;
+#endif // SIZE_T_DEFINED
+
+
+/**
+ * Compares the given number of bytes of the memory areas started by the
+ * given pointers.
+ * The return value will be an integer less than zero, if the bytes at the
+ * first area are less than those of the second. It will be zero for equality,
+ * and a value greater zero if the bytes at the first area are greater than
+ * those of the second
+ *
+ * @param first_position Position of the first memory area
+ * @param second_position Position of the second memory area
+ * @param number_of_bytes Number of bytes to compare
+ * @return An integer indicating the found differences
+ *
+ */
+extern int memcmp(const void *first_position, const void *second_position,
+                  size_t number_of_bytes);
+
+/**
+ * Copies the given number of bytes from memory area source to memory area
+ * destination. The memory areas should not overlap.
+ *
+ * @param destination Destination memory position
+ * @param source Source memory position
+ * @param number_of_bytes Number of bytes to copy
+ * @return A pointer to the destination
+ *
+ */
+extern int memcpy(void *destination, const void *source,
+                  size_t number_of_bytes);
+
+/**
+ * Fills the given number of bytes of the memory area pointed to by the given
+ * position with the given value.
+ *
+ * @param position Position of the memory area
+ * @param value Value to write
+ * @param number_of_bytes Number of bytes to write
+ * @return A pointer to the memory area
+ *
+ */
+extern void *memset(void *position, int value, size_t number_of_bytes);
+
+#endif // string_h___
+
+

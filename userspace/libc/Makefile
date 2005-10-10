@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.7 2005/09/21 16:44:46 aniederl Exp $
+# $Id: Makefile,v 1.8 2005/10/10 06:15:55 aniederl Exp $
 # $Log: Makefile,v $
+# Revision 1.7  2005/09/21 16:44:46  aniederl
+# changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
+#
 # Revision 1.6  2005/09/21 02:25:03  aniederl
 # added -m32 to CFLAGS for proper behaving on amd64
 #
@@ -62,6 +65,7 @@ OBJECTS = \
 					$(OBJECTDIR)/read.o \
 					$(OBJECTDIR)/scanf.o \
 					$(OBJECTDIR)/write.o \
+					$(OBJECTDIR)/string.o \
 					$(OBJECTDIR)/ctype.o \
 					$(OBJECTDIR)/start.o \
 					$(OBJECTDIR)/syscalls.o
