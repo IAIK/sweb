@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.11 2005/10/22 13:59:34 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.12 2005/10/22 17:14:23 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.11  2005/10/22 13:59:34  btittelbach
+//  trying to avoid a RaceCondition
+//
 //  Revision 1.10  2005/09/16 00:54:13  btittelbach
 //  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
 //
@@ -123,9 +126,9 @@ void Mutex::acquire()
 
 void Mutex::release()
 {
+  spinlock_.acquire();
   mutex_ = 0;
   held_by_=0;
-  spinlock_.acquire();
   if (! sleepers_.empty())
   {
     Thread *thread = sleepers_.front();
@@ -140,7 +143,7 @@ bool Mutex::isFree()
   if (unlikely (ArchInterrupts::testIFSet()))
     arch_panic((uint8*)("Mutex::isFree: ERROR: Should not be used with IF=1, use acquire instead\n"));
 
-  if (mutex_ > 0)
+  if (!spinlock_.isFree() || mutex_ > 0)
     return false;
   else
     return true;
