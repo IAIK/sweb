@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.10 2005/09/16 00:54:13 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.11 2005/10/22 13:59:34 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.10  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.9  2005/09/15 18:47:07  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -85,17 +88,36 @@ Mutex::Mutex()
   mutex_ = 0;
 }
 
+// In Sweb we face the following Problems in designing a Lock
+// - we want to assure mutual exclusion
+// - threads put to sleep need to be remembered -> put on a list -> means allocating memory
+// - we can't switch of Interrupts while allocating memory
+// - we need to lock the list which is used by the lock
+//
+// To lock the sleepers_ list, we use an even simpler Mutex called SpinLock
+// SpinLock doesn't acquire memory but instead threads waiting on the spinlock
+// just loop until the lock is free. Unfortunately there is no way around this,
+// until threads can be put to sleep properly. 
+//
+// Another Problem we face are RaceConditions between acquire and release.
+// To avoid, that release() might take a thread from the list, before acquire() has
+// put one there, we need to acquire the spinlock before actually checking the 
+// Mutex-Lock itself.
+// Thus we can assure, that we are on the list, before release is run, but not that
+// we are actually asleep, before release tries to wake us. (in which case, we would never be woken)
+// Therefore we can release the SpinLock only after we have gone to sleep. (after a fashion,
+// since doing anything after having gone to sleep, is of course Impossible)
+// the Scheduler Method sleepAndRelease() tries to accomplish this trick for us.
 void Mutex::acquire()
 {
+  spinlock_.acquire();
   while (ArchThreads::testSetLock(mutex_,1))
   {
-    spinlock_.acquire();
     sleepers_.pushBack(currentThread);
-    spinlock_.release();
-    Scheduler::instance()->sleep();
-//    kprintfd("Mutex::Acquire: Wakeup after yield()\n");
-   
+    Scheduler::instance()->sleepAndRelease(spinlock_);
+    spinlock_.acquire();
   }
+  spinlock_.release();
   held_by_=currentThread;
 }
 
