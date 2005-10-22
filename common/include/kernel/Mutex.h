@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.h,v 1.8 2005/09/16 00:54:13 btittelbach Exp $
+//  $Id: Mutex.h,v 1.9 2005/10/22 13:59:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.h,v $
+//  Revision 1.8  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.7  2005/09/15 18:47:06  btittelbach
 //  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //  IdleThread now uses hlt instead of yield.
@@ -70,14 +73,43 @@
 #include "SpinLock.h"
 
 class Thread;
+  
+
+
+//-----------------------------------------------------------
+/// Mutex Class
+///
+/// This is intended to be your standard-from-the-shelf Lock
+/// However, since we cannot turn off interrupts and allocate Memory
+/// at the same time, we have to use some other means which are
+/// explained in Mutex.cpp
 class Mutex
 {
 public:
-  
+
+//-----------------------------------------------------------
+/// Mutex Constructor
   Mutex();
 
+//-----------------------------------------------------------
+/// acquire sets the Lock and must be called at the start of
+/// a critical region, assuring that code between acquire and release,
+/// can not be run by two threads at the same time. 
+/// Threads calling acquire on a already set lock, will be put to sleep
   void acquire();
+//-----------------------------------------------------------
+/// release frees the Lock. It must be called at the end of
+/// a critical region, allowing other threads to execute code
+/// in the critical region and to wake up the next sleeping thread.
   void release();
+//-----------------------------------------------------------
+/// allows us to check if the Lock is set or not.
+/// this should be used only if you really really know what you are doing and
+/// mutual exclusion is assured in some other way. Of course, if mutual exclusion
+/// is assured in another way, why do you need to check a Lock in the first place ?
+/// so there really is no good reason to use isFree() :-)
+/// (you can check an example use in kprintf_nosleep)
+/// @return true if lock is set, false otherwise
   bool isFree();
 
 protected:
