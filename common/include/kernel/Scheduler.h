@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.13 2005/09/26 13:56:55 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.14 2005/10/22 14:00:31 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.13  2005/09/26 13:56:55  btittelbach
+//  +doxyfication
+//  +SchedulerClass upgrade
+//
 //  Revision 1.12  2005/09/13 22:15:51  btittelbach
 //  small BugFix: Scheduler really works now
 //
@@ -50,6 +54,7 @@
 
 #include "types.h"
 #include "List.h"
+#include "SpinLock.h"
 
 
 #define MAX_THREADS 20
@@ -132,6 +137,18 @@ friend class IdleThread;
 /// it removes and deletes Threads in state ToBeDestroyed
 ///
   void cleanupDeadThreads();
+
+friend class Mutex;
+//-----------------------------------------------------------
+/// this a a protected Method and should be called from Mutex onlx
+/// it is somewhat of a hack, we need to release the Spinlock,
+/// after we set the ThreadState Sleeping, but before we yield away
+/// also we must not be interrupted and we want to avoid disabling Interrupts
+/// (even though it would be possible in this case, as we don't allocate memory)
+///
+/// @param &lock The SpinLock we want to release
+  void sleepAndRelease(SpinLock &lock);
+
 
 private:
 

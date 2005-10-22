@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.33 2005/09/26 14:00:43 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.34 2005/10/22 14:00:22 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.33  2005/09/26 14:00:43  btittelbach
+//  compilefix
+//
 //  Revision 1.32  2005/09/26 13:56:55  btittelbach
 //  +doxyfication
 //  +SchedulerClass upgrade
@@ -282,6 +285,16 @@ void Scheduler::sleep()
   //if we somehow stupidly go to sleep, block is automatically removed
   unlockScheduling();
   yield();
+}
+
+void Scheduler::sleepAndRelease(SpinLock &lock)
+{
+  lockScheduling();
+  currentThread->state_=Sleeping;
+  lock.release();
+  unlockScheduling();
+  yield();
+  
 }
 
 void Scheduler::wake(Thread* thread_to_wake)
