@@ -1,7 +1,48 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.23 2005/10/02 12:27:55 nelles Exp $
+#*    $Id: bochsrc,v 1.24 2005/10/24 21:28:04 nelles Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.23  2005/10/02 12:27:55  nelles
+#*
+#*     Committing in .
+#*
+#*    	DeviceFS patch. The devices can now be accessed through VFS.
+#*
+#*
+#*
+#*
+#*     Modified Files:
+#*     	Makefile arch/x86/include/arch_bd_ata_driver.h
+#*     	arch/x86/include/arch_bd_driver.h
+#*     	arch/x86/include/arch_bd_ide_driver.h
+#*     	arch/x86/include/arch_bd_virtual_device.h
+#*     	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
+#*     	arch/x86/source/arch_bd_ide_driver.cpp
+#*     	arch/x86/source/arch_bd_manager.cpp
+#*     	arch/x86/source/arch_bd_virtual_device.cpp
+#*     	arch/x86/source/arch_serial.cpp
+#*     	arch/x86/source/arch_serial_manager.cpp
+#*     	common/include/console/Terminal.h
+#*     	common/include/drivers/serial.h common/include/fs/Inode.h
+#*     	common/include/fs/Superblock.h common/include/fs/fs_global.h
+#*     	common/include/kernel/TestingThreads.h
+#*     	common/source/console/FrameBufferConsole.cpp
+#*     	common/source/console/Makefile
+#*     	common/source/console/Terminal.cpp
+#*     	common/source/console/TextConsole.cpp
+#*     	common/source/fs/Dentry.cpp common/source/fs/Makefile
+#*     	common/source/fs/PathWalker.cpp
+#*     	common/source/fs/Superblock.cpp
+#*     	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
+#*     	utils/bochs/bochsrc
+#*     Added Files:
+#*     	common/include/drivers/chardev.h
+#*     	common/include/fs/devicefs/DeviceFSSuperblock.h
+#*     	common/include/fs/devicefs/DeviceFSType.h
+#*     	common/source/fs/devicefs/DeviceFSSuperblock.cpp
+#*     	common/source/fs/devicefs/DeviceFSType.cpp
+#*     	common/source/fs/devicefs/Makefile
+#*
 #*    Revision 1.22  2005/09/23 21:25:04  nelles
 #*
 #*
@@ -282,7 +323,7 @@ romimage: file=$BXSHARE/BIOS-bochs-latest, address=0xf0000
 # VGAROMIMAGE
 # You now need to load a VGA ROM BIOS into C0000.
 #=======================================================================
-vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: bios/VGABIOS-elpin-2.40
 #vgaromimage: $BXSHARE/VGABIOS-elpin-2.40
@@ -566,9 +607,9 @@ debugger_log: debugger.out
 # window using the `tty' command, and use that as the `dev' parameter.
 # Then do `sleep 1000000' in the com1 window to keep the shell from
 # messing with things, and run bochs in the other window.  Serial I/O to
-# com1 (port 0x3f8) will all go to the other window.
+# com1 (port 0x3f8) willvgaall go to the other window.
 #=======================================================================
-com1: enabled=1, mode=term, dev=/dev/pts/42
+#com1: enabled=1, mode=term, dev=/dev/pts/42
 #com2: enabled=1, mode=term, dev=/dev/pts/44
 #com1: enabled=1, file=serial1.txt
 #com2: enabled=1, file=serial2.txt

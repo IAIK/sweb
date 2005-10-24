@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: SpinLock.cpp,v 1.4 2005/09/16 00:54:13 btittelbach Exp $
+//  $Id: SpinLock.cpp,v 1.5 2005/10/24 21:28:04 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: SpinLock.cpp,v $
+//  Revision 1.4  2005/09/16 00:54:13  btittelbach
+//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
+//
 //  Revision 1.3  2005/09/13 22:15:52  btittelbach
 //  small BugFix: Scheduler really works now
 //
@@ -38,6 +41,11 @@ void SpinLock::acquire()
     //SpinLock: Simplest of Locks, do the next best thing to busy wating
     Scheduler::instance()->yield();
   }
+}
+
+bool SpinLock::isFree()
+{
+	return (nosleep_mutex_ == 0);
 }
 
 void SpinLock::release()

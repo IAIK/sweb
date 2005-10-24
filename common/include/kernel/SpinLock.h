@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: SpinLock.h,v 1.2 2005/09/26 13:56:55 btittelbach Exp $
+//  $Id: SpinLock.h,v 1.3 2005/10/24 21:28:04 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: SpinLock.h,v $
+//  Revision 1.2  2005/09/26 13:56:55  btittelbach
+//  +doxyfication
+//  +SchedulerClass upgrade
+//
 //  Revision 1.1  2005/08/07 16:54:21  btittelbach
 //  SpinLock++ with Yield instead of BusyWaiting
 //
@@ -46,7 +50,8 @@ public:
 /// releases the SpinLock.
 ///
   void release();
-
+//---------
+  bool isFree();
 
 private:
   // dont't use any stuff that needs memory allocation here

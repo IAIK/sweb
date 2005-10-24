@@ -1,7 +1,48 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.cpp,v 1.3 2005/10/02 12:27:55 nelles Exp $
+*    $Id: arch_bd_ide_driver.cpp,v 1.4 2005/10/24 21:28:04 nelles Exp $
 *    $Log: arch_bd_ide_driver.cpp,v $
+*    Revision 1.3  2005/10/02 12:27:55  nelles
+*
+*     Committing in .
+*
+*    	DeviceFS patch. The devices can now be accessed through VFS.
+*
+*
+*
+*
+*     Modified Files:
+*     	Makefile arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/include/arch_bd_driver.h
+*     	arch/x86/include/arch_bd_ide_driver.h
+*     	arch/x86/include/arch_bd_virtual_device.h
+*     	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/x86/source/arch_bd_manager.cpp
+*     	arch/x86/source/arch_bd_virtual_device.cpp
+*     	arch/x86/source/arch_serial.cpp
+*     	arch/x86/source/arch_serial_manager.cpp
+*     	common/include/console/Terminal.h
+*     	common/include/drivers/serial.h common/include/fs/Inode.h
+*     	common/include/fs/Superblock.h common/include/fs/fs_global.h
+*     	common/include/kernel/TestingThreads.h
+*     	common/source/console/FrameBufferConsole.cpp
+*     	common/source/console/Makefile
+*     	common/source/console/Terminal.cpp
+*     	common/source/console/TextConsole.cpp
+*     	common/source/fs/Dentry.cpp common/source/fs/Makefile
+*     	common/source/fs/PathWalker.cpp
+*     	common/source/fs/Superblock.cpp
+*     	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
+*     	utils/bochs/bochsrc
+*     Added Files:
+*     	common/include/drivers/chardev.h
+*     	common/include/fs/devicefs/DeviceFSSuperblock.h
+*     	common/include/fs/devicefs/DeviceFSType.h
+*     	common/source/fs/devicefs/DeviceFSSuperblock.cpp
+*     	common/source/fs/devicefs/DeviceFSType.cpp
+*     	common/source/fs/devicefs/Makefile
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -35,6 +76,8 @@ uint32 IDEDriver::doDeviceDetection()
    uint8 sc;
    uint8 sn;
    uint8 devCtrl;
+	
+   uint8 ata_irqs[4] = { 14, 15, 11, 9 };
 
    // setup register values
 
@@ -145,7 +188,7 @@ uint32 IDEDriver::doDeviceDetection()
                     kprintfd("IDEDriver::doDetection: port: %4X, drive: %d \n", base_port, cs%2);
                     
                     ATADriver *drv = new 
-                    ATADriver( base_port, cs % 2, cs > 1 ? 14 : 13 );
+                    ATADriver( base_port, cs % 2, ata_irqs[cs] );
                     
                     BDVirtualDevice *bdv = new 
                     BDVirtualDevice( drv, 0, drv->getNumSectors(),
@@ -166,7 +209,7 @@ uint32 IDEDriver::doDeviceDetection()
                     kprintfd("IDEDriver::doDetection: Running SATA device as PATA in compatibility mode! \n");
                     
                     ATADriver *drv = new 
-                    ATADriver( base_port, cs % 2, cs > 1 ? 14 : 13 );
+                    ATADriver( base_port, cs % 2, ata_irqs[cs] );
                     
                     BDVirtualDevice *bdv = new 
                     BDVirtualDevice( drv, 0, drv->getNumSectors(),

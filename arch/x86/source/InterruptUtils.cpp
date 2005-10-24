@@ -1,8 +1,49 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.45 2005/10/02 12:27:55 nelles Exp $
+//  $Id: InterruptUtils.cpp,v 1.46 2005/10/24 21:28:04 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.45  2005/10/02 12:27:55  nelles
+//
+//   Committing in .
+//
+//  	DeviceFS patch. The devices can now be accessed through VFS.
+//
+//
+//
+//
+//   Modified Files:
+//   	Makefile arch/x86/include/arch_bd_ata_driver.h
+//   	arch/x86/include/arch_bd_driver.h
+//   	arch/x86/include/arch_bd_ide_driver.h
+//   	arch/x86/include/arch_bd_virtual_device.h
+//   	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
+//   	arch/x86/source/arch_bd_ide_driver.cpp
+//   	arch/x86/source/arch_bd_manager.cpp
+//   	arch/x86/source/arch_bd_virtual_device.cpp
+//   	arch/x86/source/arch_serial.cpp
+//   	arch/x86/source/arch_serial_manager.cpp
+//   	common/include/console/Terminal.h
+//   	common/include/drivers/serial.h common/include/fs/Inode.h
+//   	common/include/fs/Superblock.h common/include/fs/fs_global.h
+//   	common/include/kernel/TestingThreads.h
+//   	common/source/console/FrameBufferConsole.cpp
+//   	common/source/console/Makefile
+//   	common/source/console/Terminal.cpp
+//   	common/source/console/TextConsole.cpp
+//   	common/source/fs/Dentry.cpp common/source/fs/Makefile
+//   	common/source/fs/PathWalker.cpp
+//   	common/source/fs/Superblock.cpp
+//   	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
+//   	utils/bochs/bochsrc
+//   Added Files:
+//   	common/include/drivers/chardev.h
+//   	common/include/fs/devicefs/DeviceFSSuperblock.h
+//   	common/include/fs/devicefs/DeviceFSType.h
+//   	common/source/fs/devicefs/DeviceFSSuperblock.cpp
+//   	common/source/fs/devicefs/DeviceFSType.cpp
+//   	common/source/fs/devicefs/Makefile
+//
 //  Revision 1.44  2005/09/27 21:24:43  btittelbach
 //  +IF=1 in PageFaultHandler
 //  +Lock in PageManager
@@ -762,12 +803,20 @@ extern "C" void irqHandler_4()
   kprintfd_nosleep( "IRQ 4 ended\n" );
 }
 
-extern "C" void arch_irqHandler_13();
-extern "C" void irqHandler_13()
+extern "C" void arch_irqHandler_9();
+extern "C" void irqHandler_9()
 {
-  kprintfd_nosleep( "IRQ 13 called\n" );
-  BDManager::getInstance()->serviceIRQ( 13 );
-  ArchInterrupts::EndOfInterrupt(13);
+  kprintfd_nosleep( "IRQ 9 called\n" );
+  BDManager::getInstance()->serviceIRQ( 9 );
+  ArchInterrupts::EndOfInterrupt(9);
+}
+
+extern "C" void arch_irqHandler_11();
+extern "C" void irqHandler_11()
+{
+  kprintfd_nosleep( "IRQ 11 called\n" );
+  BDManager::getInstance()->serviceIRQ( 11 );
+  ArchInterrupts::EndOfInterrupt(11);
 }
 
 extern "C" void arch_irqHandler_14();
@@ -776,6 +825,14 @@ extern "C" void irqHandler_14()
   kprintfd_nosleep( "IRQ 14 called\n" );
   BDManager::getInstance()->serviceIRQ( 14 );
   ArchInterrupts::EndOfInterrupt(14);
+}
+
+extern "C" void arch_irqHandler_15();
+extern "C" void irqHandler_15()
+{
+  kprintfd_nosleep( "IRQ 15 called\n" );
+  BDManager::getInstance()->serviceIRQ( 15 );
+  ArchInterrupts::EndOfInterrupt(15);
 }
 
 extern "C" void arch_syscallHandler();
@@ -830,13 +887,13 @@ IRQ_HANDLER(5)
 IRQ_HANDLER(6)
 IRQ_HANDLER(7)
 IRQ_HANDLER(8)
-IRQ_HANDLER(9)
+//IRQ_HANDLER(9)
 IRQ_HANDLER(10)
-IRQ_HANDLER(11)
+//IRQ_HANDLER(11)
 IRQ_HANDLER(12)
-//IRQ_HANDLER(13)
+IRQ_HANDLER(13)
 //IRQ_HANDLER(14)
-IRQ_HANDLER(15)
+//IRQ_HANDLER(15)
   
 extern "C" void arch_dummyHandler();
 

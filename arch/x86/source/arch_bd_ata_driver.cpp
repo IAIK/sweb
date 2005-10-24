@@ -1,12 +1,31 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.2 2005/09/18 20:46:52 nelles Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.3 2005/10/24 21:28:04 nelles Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
+*    Revision 1.2  2005/09/18 20:46:52  nelles
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/include/arch_bd_ide_driver.h
+*     	arch/x86/include/arch_bd_manager.h
+*     	arch/x86/include/arch_bd_request.h
+*     	arch/x86/include/arch_bd_virtual_device.h
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/x86/source/arch_bd_manager.cpp
+*     	arch/x86/source/arch_bd_virtual_device.cpp
+*     ----------------------------------------------------------------------
+*
 ********************************************************************/
 #include "arch_bd_ata_driver.h"
 #include "arch_bd_manager.h"
 
+#include "ArchInterrupts.h"
+
 #include "Scheduler.h"
+#include "kprintf.h"
 
 ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
 {
@@ -44,7 +63,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
   kprintfd("ATADriver::ctor:irq tested !!\n");
   kprintfd("ATADriver::ctor:mode: %d !!\n", mode );
   
-  request_queue_ = new FiFo< BDRequest * >( 1 );
+  request_queue_ = new Queue< BDRequest * >();
   
   kprintfd("ATADriver::ctor:Driver created !!\n");
   return;
@@ -139,9 +158,11 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 	//SPT: number of sectors per track for the disk
 	//SECT: value of the sector CHS coordinate
 	//TEMP: buffer to hold a temporary value
+
   // This equation is used very often by operating systems such as DOS 
   // (or SWEB) to calculate the CHS values it needs to send to the disk 
   // controller or INT13h in order to read or write data.
+	
   uint32 LBA = start_sector;
   uint32 cyls = LBA / (HPC * SPT);
   uint32 TEMP = LBA % (HPC * SPT);
@@ -180,20 +201,21 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
 uint32 ATADriver::addRequest( BDRequest * br )
 {
-  kprintfd("ATADriver::addRequest:Adding request !!\n");
-  request_queue_->put( br );
-  kprintfd("ATADriver::addRequest:Request added !!\n");
+  if( mode != BD_PIO_NO_IRQ )
+  {
+	kprintfd("ATADriver::Entering the silence zone!\n");	  
+	ArchInterrupts::disableInterrupts();
+	request_queue_->push( br ); // Add request to the queue
+  }
   
   int32 res = -1;
   
   switch( br->getCmd() )
   {
     case BDRequest::BD_READ:
-      kprintfd("ATADriver::addRequest:Issuing read !!\n");    
       res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
       break;
     case BDRequest::BD_WRITE:
-      kprintfd("ATADriver::addRequest:Issuing write !!\n");        
       res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
       break;
     default:
@@ -203,8 +225,8 @@ uint32 ATADriver::addRequest( BDRequest * br )
   
   if( res != 0 )
   {
-    kprintfd("ATADriver::addRequest:Error !!\n");      
     br->setStatus( BDRequest::BD_ERROR );
+	ArchInterrupts::enableInterrupts();
     return 0;
   }
   
@@ -212,11 +234,12 @@ uint32 ATADriver::addRequest( BDRequest * br )
   {
     kprintfd("ATADriver::addRequest:No IRQ operation !!\n");      
     br->setStatus( BDRequest::BD_DONE );
-    request_queue_->get();
     return 0;
   }
 
-  kprintfd("ATADriver::addRequest:Request queued !!\n");
+  ArchInterrupts::enableInterrupts();
+  kprintfd("ATADriver::Finaly got out !!\n");
+  Scheduler::instance()->sleep();
   return 0;
 }
 
@@ -224,11 +247,16 @@ void ATADriver::serviceIRQ( void )
 {
   kprintfd("ATADriver::serviceIRQ:Entering IRQ handler!!\n");        
   
-  BDRequest * br;
+  if( request_queue_->empty() )
+  {
+	  kprintfd("ATADriver::serviceIRQ:IRQ without request!!\n");
+      outbp( port + 0x206, 0x04 ); 
+      outbp( port + 0x206, 0x00 ); // RESET COTROLLER
+	  kprintfd("ATADriver::serviceIRQ:Reseted controller!!\n");
+  	  return; // not my interrupt
+  }
   
-  if( !request_queue_->peekAhead( br ) )
-    return; // not my interrrupt
-  
+  BDRequest * br = request_queue_->front();
   kprintfd("ATADriver::serviceIRQ:Found active request!!\n");
   
   uint16 * word_buff = (uint16 *) br->getBuffer();
@@ -251,7 +279,6 @@ void ATADriver::serviceIRQ( void )
       outbp( port + 0x206, 0x04 ); 
       outbp( port + 0x206, 0x00 ); // RESET
       
-      request_queue_->get( );
       br->setStatus( BDRequest::BD_ERROR );
       Scheduler::instance()->wake( br->getThread() );
       
@@ -291,9 +318,9 @@ void ATADriver::serviceIRQ( void )
   if( blocks_done == br->getNumBlocks() )
   {
     kprintfd("ATADriver::serviceIRQ:All done!!\n");
-    request_queue_->get( );
     br->setStatus( BDRequest::BD_DONE );
     kprintfd("ATADriver::serviceIRQ:Waking up thread!!\n");
+	request_queue_->pop();
     Scheduler::instance()->wake( br->getThread() );
   }
 }

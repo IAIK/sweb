@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.22 2005/10/22 16:12:41 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.23 2005/10/24 21:28:04 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.22  2005/10/22 16:12:41  btittelbach
+//  bugfix
+//
 //  Revision 1.21  2005/09/16 15:47:41  btittelbach
 //  +even more KeyboardInput Bugfixes
 //  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -130,7 +133,7 @@ static void ThreadStartHack()
   currentThread->Run();
   kprintfd("ThreadStartHack: Panic, thread returned\r\n");
   //FIXXME: we propably should clean up the memory here, or change this Hack entireley
-  kill();
+  currentThread->kill();
   for(;;);
 }
 

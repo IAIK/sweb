@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.cpp,v 1.1 2005/09/21 03:33:52 rotho Exp $
+*    $Id: arch_bd_ide_driver.cpp,v 1.2 2005/10/24 21:28:04 nelles Exp $
 *    $Log: arch_bd_ide_driver.cpp,v $
+*    Revision 1.1  2005/09/21 03:33:52  rotho
+*    compiles now, but still doesn't work
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -34,6 +37,8 @@ uint32 IDEDriver::doDeviceDetection()
    uint8 sc;
    uint8 sn;
    uint8 devCtrl;
+	
+   uint8 ata_irqs[4] = { 14, 15, 11, 9 };
 
    // setup register values
 
@@ -122,7 +127,7 @@ uint32 IDEDriver::doDeviceDetection()
                     kprintfd("IDEDriver::doDetection: port: %4X, drive: %d \n", base_port, cs%2);
                     
                     ATADriver *drv = new 
-                    ATADriver( base_port, cs % 2, cs > 1 ? 14 : 13 );
+                    ATADriver( base_port, cs % 2, ata_irqs[cs] );
                     
                     char *name = new char[5];
                     name[0] = 'A';
@@ -162,7 +167,7 @@ uint32 IDEDriver::doDeviceDetection()
                     name[5] = '\0';
                     
                     ATADriver *drv = new 
-                    ATADriver( base_port, cs % 2, cs > 1 ? 14 : 13 );
+                    ATADriver( base_port, cs % 2, ata_irqs[cs] );
                     
                     BDVirtualDevice *bdv = new 
                     BDVirtualDevice( drv, 0, drv->getNumSectors(),
