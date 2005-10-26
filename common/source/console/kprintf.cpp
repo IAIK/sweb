@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.20 2005/10/26 10:09:17 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.21 2005/10/26 11:07:32 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.20  2005/10/26 10:09:17  btittelbach
+//   kprintf(d)_nosleep Functions now _always_ use the nosleep handlers,
+//   since with Scheduler Blocking we cannot be sure that thread switches can happen
+//   even if interrupts are on
+//
 //   Revision 1.19  2005/09/20 08:05:08  btittelbach
 //   +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
 //   +Condition cleanup
@@ -416,7 +421,8 @@ void kprintf(const char *fmt, ...)
   
   va_start(args, fmt);
   //check if atomar or not in current context
-  if (likely(ArchInterrupts::testIFSet()) || (unlikely(ArchInterrupts::testIFSet() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+  if (likely(ArchInterrupts::testIFSet() && likely(Scheduler::instance()->isSchedulingEnabled())) 
+    || (unlikely(ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
   else
     vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
@@ -454,7 +460,11 @@ void kprintf_nosleep(const char *fmt, ...)
 
   va_start(args, fmt);
   //check if atomar or not in current context
-  vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
+  if (unlikely(ArchInterrupts::testIFSet() && unlikely(Scheduler::instance()->isSchedulingEnabled())) 
+    || (likely(ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+    vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
+  else
+    vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
   va_end(args);
 }
 //make this obsolete with atomarity check
