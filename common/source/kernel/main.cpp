@@ -1,7 +1,48 @@
 /**
- * $Id: main.cpp,v 1.100 2005/10/02 12:27:55 nelles Exp $
+ * $Id: main.cpp,v 1.101 2005/10/26 11:17:40 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.100  2005/10/02 12:27:55  nelles
+ *
+ *  Committing in .
+ *
+ * 	DeviceFS patch. The devices can now be accessed through VFS.
+ *
+ *
+ *
+ *
+ *  Modified Files:
+ *  	Makefile arch/x86/include/arch_bd_ata_driver.h
+ *  	arch/x86/include/arch_bd_driver.h
+ *  	arch/x86/include/arch_bd_ide_driver.h
+ *  	arch/x86/include/arch_bd_virtual_device.h
+ *  	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
+ *  	arch/x86/source/arch_bd_ide_driver.cpp
+ *  	arch/x86/source/arch_bd_manager.cpp
+ *  	arch/x86/source/arch_bd_virtual_device.cpp
+ *  	arch/x86/source/arch_serial.cpp
+ *  	arch/x86/source/arch_serial_manager.cpp
+ *  	common/include/console/Terminal.h
+ *  	common/include/drivers/serial.h common/include/fs/Inode.h
+ *  	common/include/fs/Superblock.h common/include/fs/fs_global.h
+ *  	common/include/kernel/TestingThreads.h
+ *  	common/source/console/FrameBufferConsole.cpp
+ *  	common/source/console/Makefile
+ *  	common/source/console/Terminal.cpp
+ *  	common/source/console/TextConsole.cpp
+ *  	common/source/fs/Dentry.cpp common/source/fs/Makefile
+ *  	common/source/fs/PathWalker.cpp
+ *  	common/source/fs/Superblock.cpp
+ *  	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
+ *  	utils/bochs/bochsrc
+ *  Added Files:
+ *  	common/include/drivers/chardev.h
+ *  	common/include/fs/devicefs/DeviceFSSuperblock.h
+ *  	common/include/fs/devicefs/DeviceFSType.h
+ *  	common/source/fs/devicefs/DeviceFSSuperblock.cpp
+ *  	common/source/fs/devicefs/DeviceFSType.cpp
+ *  	common/source/fs/devicefs/Makefile
+ *
  * Revision 1.99  2005/09/28 16:35:43  nightcreature
  * main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
  * in xenbuild, first batch of fixes in xen part
@@ -575,11 +616,11 @@ void startup()
   kprintf("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
 
   
-  kprintfd("Mounting DeviceFS under /dev/\n");
-  DeviceFSType *devfs = new DeviceFSType();
-  vfs.registerFileSystem(devfs);
-  int32 mntres = vfs.root_mount("devicefs", 0);
-  kprintfd("Mount returned %d\n", mntres);  
+  //~ kprintfd("Mounting DeviceFS under /dev/\n");
+  //~ DeviceFSType *devfs = new DeviceFSType();
+  //~ vfs.registerFileSystem(devfs);
+  //~ int32 mntres = vfs.root_mount("devicefs", 0);
+  //~ kprintfd("Mount returned %d\n", mntres);  
 
   Scheduler::createScheduler();
   
@@ -607,24 +648,24 @@ void startup()
     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
    );       
   
-  Scheduler::instance()->addNewThread( 
-    new BDThread()
-   );
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new BDThread()
+   //~ );
 
-  Scheduler::instance()->addNewThread( 
-    new SerialThread( "SerialTestThread" )
-    );
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new SerialThread( "SerialTestThread" )
+    //~ );
             
-  Scheduler::instance()->addNewThread( 
-    new DeviceFSMountingThread()
-    );    
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new DeviceFSMountingThread()
+    //~ );    
     
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
-//   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
-//     Scheduler::instance()->addNewThread( 
-//       new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
-//     ); 
+   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
+     Scheduler::instance()->addNewThread( 
+       new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
+     ); 
   
   
   Scheduler::instance()->printThreadList();

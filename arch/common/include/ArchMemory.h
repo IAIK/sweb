@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.16 2005/09/21 19:26:24 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.17 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
+//  Revision 1.16  2005/09/21 19:26:24  btittelbach
+//  support for 4m pages, part two
+//
 //  Revision 1.15  2005/09/21 18:38:43  btittelbach
 //  ArchMemory differen page sizes part one
 //
@@ -86,7 +89,7 @@ public:
  * @param physical_page_directory_page Real Page where the PDE to work on resides
  * @param virtual_page 
  * @param physical_page
- * @param user_access PTE Flag allowing Userspace access or not
+ * @param user_access PTE User/Supervisor Flag, governing the binary Paging Privilege Mechanism
  * @param page_size Optional, defaults to 4k pages, but you ned to set it to 1024*4096 if you want to map a 4m page
  */
   static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);

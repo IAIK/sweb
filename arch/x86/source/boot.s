@@ -1,7 +1,11 @@
 ;
-; $Id: boot.s,v 1.15 2005/04/27 08:58:16 nomenquis Exp $
+; $Id: boot.s,v 1.16 2005/10/26 11:17:40 btittelbach Exp $
 ;
 ; $Log: boot.s,v $
+; Revision 1.15  2005/04/27 08:58:16  nomenquis
+; locks work!
+; w00t !
+;
 ; Revision 1.14  2005/04/26 10:23:54  nomenquis
 ; kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
 ;
@@ -423,8 +427,8 @@ gdt:
 
 ; the first interesting descriptor this one is for data
    LINEAR_DATA_SEL	equ	$-gdt
-	dw 0FFFFh ; the limit, since the page-granular bit is turned on this is shifted 12 bytes to the left
-             ; in our case this means that the segment spawns the while 32bit address space
+	dw 0FFFFh ; the limit, since the page-granular bit is turned on this is shifted 12 bits to the left
+             ; in our case this means that the segment spawns the whole 32bit address space
 	dw 0
 	db 0
 	db 92h			; present, ring 0, data, expand-up, writable
@@ -462,7 +466,7 @@ gdt:
 	db 0
   gdt_end:
 
-; basically the same thing as before, but we also need a descriptor for user code
+; dummy TSS Segment Descriptor
 global tss_selector
 tss_selector:
  TSS_SEL	equ	$-gdt

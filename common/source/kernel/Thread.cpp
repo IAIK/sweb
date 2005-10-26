@@ -1,8 +1,25 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.23 2005/10/24 21:28:04 nelles Exp $
+//  $Id: Thread.cpp,v 1.24 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.23  2005/10/24 21:28:04  nelles
+//
+//   Fixed block devices. I think.
+//
+//   Committing in .
+//
+//   Modified Files:
+//
+//   	arch/x86/include/arch_bd_ata_driver.h
+//   	arch/x86/source/InterruptUtils.cpp
+//   	arch/x86/source/arch_bd_ata_driver.cpp
+//   	arch/x86/source/arch_bd_ide_driver.cpp
+//   	arch/xen/source/arch_bd_ide_driver.cpp
+//
+//   	common/source/kernel/SpinLock.cpp
+//   	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+//
 //  Revision 1.22  2005/10/22 16:12:41  btittelbach
 //  bugfix
 //
@@ -132,7 +149,7 @@ static void ThreadStartHack()
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
   kprintfd("ThreadStartHack: Panic, thread returned\r\n");
-  //FIXXME: we propably should clean up the memory here, or change this Hack entireley
+  //kill will schedule the Thread Object for cleanup by the scheduler
   currentThread->kill();
   for(;;);
 }

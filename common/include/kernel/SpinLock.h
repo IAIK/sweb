@@ -1,8 +1,25 @@
 //----------------------------------------------------------------------
-//  $Id: SpinLock.h,v 1.3 2005/10/24 21:28:04 nelles Exp $
+//  $Id: SpinLock.h,v 1.4 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: SpinLock.h,v $
+//  Revision 1.3  2005/10/24 21:28:04  nelles
+//
+//   Fixed block devices. I think.
+//
+//   Committing in .
+//
+//   Modified Files:
+//
+//   	arch/x86/include/arch_bd_ata_driver.h
+//   	arch/x86/source/InterruptUtils.cpp
+//   	arch/x86/source/arch_bd_ata_driver.cpp
+//   	arch/x86/source/arch_bd_ide_driver.cpp
+//   	arch/xen/source/arch_bd_ide_driver.cpp
+//
+//   	common/source/kernel/SpinLock.cpp
+//   	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+//
 //  Revision 1.2  2005/09/26 13:56:55  btittelbach
 //  +doxyfication
 //  +SchedulerClass upgrade
@@ -50,7 +67,11 @@ public:
 /// releases the SpinLock.
 ///
   void release();
-//---------
+
+//-----------------------------------------------------------
+/// allows you to check if the SpinLock is set or not.
+/// trust the return value only if the SpinLock can't be acquired or releases
+/// when you're not loocking. (= only use in atomic state)
   bool isFree();
 
 private:

@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.9 2005/09/26 15:10:21 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.10 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.9  2005/09/26 15:10:21  btittelbach
+//  warnings fix
+//
 //  Revision 1.8  2005/09/26 14:58:05  btittelbach
 //  doxyfication
 //
@@ -174,7 +177,14 @@ public:
 /// called from startup() after the scheduler has been created and just
 /// before the Interrupts are turned on
   void startUsingSyncMechanism() {use_spinlock_=true;}
-  
+
+  bool isKMMLockFree()
+  {
+    if (likely (use_spinlock_))
+      return lock_.isFree();
+    else
+      return true;
+  }  
 private:
   
   //WARNING: we really have to own that memory from start to end, nothing must be there
@@ -200,7 +210,6 @@ private:
     if (likely (use_spinlock_))
       lock_.release();
   }
-
   bool use_spinlock_;
   SpinLock lock_;
 

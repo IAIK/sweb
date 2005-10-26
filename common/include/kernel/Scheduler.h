@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.14 2005/10/22 14:00:31 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.15 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.14  2005/10/22 14:00:31  btittelbach
+//  added sleepAndRelease()
+//
 //  Revision 1.13  2005/09/26 13:56:55  btittelbach
 //  +doxyfication
 //  +SchedulerClass upgrade
@@ -55,6 +58,7 @@
 #include "types.h"
 #include "List.h"
 #include "SpinLock.h"
+#include "Mutex.h"
 
 
 #define MAX_THREADS 20
@@ -113,6 +117,17 @@ public:
 //-----------------------------------------------------------
 /// prints a List of all Threads using kprintfd
 ///
+
+//-----------------------------------------------------------
+/// it is somewhat of a hack, we need to release the Spinlock,
+/// after we set the ThreadState Sleeping, but before we yield away
+/// also we must not be interrupted and we want to avoid disabling Interrupts
+/// (even though it would be possible in this case, as we don't allocate memory)
+///
+/// @param &lock The SpinLock we want to release
+  void sleepAndRelease(SpinLock &lock);
+  void sleepAndRelease(Mutex &lock);
+
   void printThreadList();
 //-----------------------------------------------------------
 /// compares all threads in the scheduler's list to the one given
@@ -121,6 +136,31 @@ public:
 /// @param *thread Pointer to the Thread's instance we want to check its existance bevore accessing it
 /// @return true if *thread exists, fales otherwise
   bool checkThreadExists(Thread* thread);
+
+//-----------------------------------------------------------
+/// provides a kind-of-atomicity for routines that need it, by
+/// preventing the scheduler from switching to another thread.
+/// Be aware, that interrupt-Handlers will still preempt you,
+/// but sharing data with these is a special case anyway.
+/// Be also aware, that disabling the Scheduler too long,
+/// will result in data-loss, since the interrupt-Handers depend
+/// on other threads to get() from their Ringbuffers.
+///
+/// @post After disabling Scheduling and before doing anything
+/// you HAVE to check if all locks you might possibly and accidentially
+/// acquire are _free_, otherwise you will deadlock.
+/// If the Locks are not free, you can'not continue, you might wait
+/// until all locks are free, but be warned that you might starve
+/// for some time (or forever).
+void disableScheduling();
+
+//-----------------------------------------------------------
+/// reenables Scheduling, ending the kind-of-atomicity.
+void reenableScheduling();
+
+//-----------------------------------------------------------
+/// @ret true if Scheduling is enabled, false otherwise
+bool isSchedulingEnabled();
 
 //-----------------------------------------------------------
 /// NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT 
@@ -138,18 +178,6 @@ friend class IdleThread;
 ///
   void cleanupDeadThreads();
 
-friend class Mutex;
-//-----------------------------------------------------------
-/// this a a protected Method and should be called from Mutex onlx
-/// it is somewhat of a hack, we need to release the Spinlock,
-/// after we set the ThreadState Sleeping, but before we yield away
-/// also we must not be interrupted and we want to avoid disabling Interrupts
-/// (even though it would be possible in this case, as we don't allocate memory)
-///
-/// @param &lock The SpinLock we want to release
-  void sleepAndRelease(SpinLock &lock);
-
-
 private:
 
   Scheduler();
@@ -157,7 +185,8 @@ private:
 //-----------------------------------------------------------
 /// Scheduler internal lock abstraction method
 /// locks the thread-list against concurrent access by prohibiting a thread switch
-  void lockScheduling();  //not as severe as stopping Interrupts
+/// don't call this from an Interrupt-Handler, since Atomicity won't be guaranteed
+  void lockScheduling(); 
 //-----------------------------------------------------------
 /// Scheduler internal lock abstraction method
 /// unlocks the thread-list
@@ -169,6 +198,11 @@ private:
 /// @return true if lock is set, false otherwise
   bool testLock();
 
+//-----------------------------------------------------------
+/// after blocking the Scheduler we need to test if all Locks we could possible
+/// acquire are really free, because otherwise we will deadlock.
+  void waitForFreeKMMLock();
+
   static Scheduler *instance_;
 
   List<Thread*> threads_;
@@ -178,6 +212,7 @@ private:
   bool kill_old_;
 
   uint32 block_scheduling_;
+  uint32 block_scheduling_extern_;
 
 };
 #endif

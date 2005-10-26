@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.21 2005/10/26 11:07:32 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.22 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.21  2005/10/26 11:07:32  btittelbach
+//   sorry, it's not that easy...
+//   kprintf_nosleep MUST Check for Interrupts and Scheduler, otherwise
+//   the kprintf_nosleep ringbuffer won't be locked and can get corrupted
+//
 //   Revision 1.20  2005/10/26 10:09:17  btittelbach
 //   kprintf(d)_nosleep Functions now _always_ use the nosleep handlers,
 //   since with Scheduler Blocking we cannot be sure that thread switches can happen
@@ -460,6 +465,7 @@ void kprintf_nosleep(const char *fmt, ...)
 
   va_start(args, fmt);
   //check if atomar or not in current context
+  //ALSO: this is a kind of lock on the kprintf_nosleep Datastructure, and therefore very important !
   if (unlikely(ArchInterrupts::testIFSet() && unlikely(Scheduler::instance()->isSchedulingEnabled())) 
     || (likely(ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);

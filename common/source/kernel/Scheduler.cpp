@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.34 2005/10/22 14:00:22 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.35 2005/10/26 11:17:40 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.34  2005/10/22 14:00:22  btittelbach
+//  added sleepAndRelease()
+//
 //  Revision 1.33  2005/09/26 14:00:43  btittelbach
 //  compilefix
 //
@@ -196,6 +199,7 @@
 #include "ArchThreads.h"
 #include "console/kprintf.h"
 #include "ArchInterrupts.h"
+#include "mm/KernelMemoryManager.h"
 
 ArchThreadInfo *currentThreadInfo;
 Thread *currentThread;
@@ -243,6 +247,7 @@ Scheduler::Scheduler()
 {
   kill_old_=false;
   block_scheduling_=0;
+  block_scheduling_extern_=0;
 }
 
 void Scheduler::addNewThread(Thread *thread)
@@ -251,7 +256,8 @@ void Scheduler::addNewThread(Thread *thread)
   //also gets added to front as not to interfere with remove or xchange
 
   lockScheduling();
-  kprintf("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
+  kprintf_nosleep("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
+  waitForFreeKMMLock();
   threads_.pushFront(thread);
   unlockScheduling();
 }
@@ -261,7 +267,8 @@ void Scheduler::addNewThread(Thread *thread)
 void Scheduler::removeCurrentThread()
 {
   lockScheduling();
-  kprintfd("Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size());
+  kprintfd_nosleep("Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size());
+  waitForFreeKMMLock();
   if (threads_.size() > 1)
   {
     Thread *tmp_thread;
@@ -283,6 +290,8 @@ void Scheduler::sleep()
 {
   currentThread->state_=Sleeping;
   //if we somehow stupidly go to sleep, block is automatically removed
+  //we might break a lock in doing so, but that's still better than having no chance
+  //of recovery whatsoever.
   unlockScheduling();
   yield();
 }
@@ -294,9 +303,15 @@ void Scheduler::sleepAndRelease(SpinLock &lock)
   lock.release();
   unlockScheduling();
   yield();
-  
 }
-
+void Scheduler::sleepAndRelease(Mutex &lock)
+{
+  lockScheduling();
+  currentThread->state_=Sleeping;
+  lock.release();
+  unlockScheduling();
+  yield();
+}
 void Scheduler::wake(Thread* thread_to_wake)
 {
   //DEBUG: Check if thread_to_wake is in List
@@ -311,7 +326,7 @@ void Scheduler::startThreadHack()
 
 uint32 Scheduler::schedule()
 {
-  if (testLock())
+  if (testLock() || block_scheduling_extern_>0)
   {
     //no scheduling today...
     //keep currentThread as it was
@@ -360,7 +375,7 @@ bool Scheduler::checkThreadExists(Thread* thread)
 {
   bool retval=false;
   lockScheduling();
-  for (uint32 c=0; c<threads_.size();++c)
+  for (uint32 c=0; c<threads_.size();++c) //fortunately this doesn't involve KMM
     if (threads_[c]==thread)
     {
       retval=true;
@@ -381,7 +396,7 @@ void Scheduler::cleanupDeadThreads()
     return;
   
   lockScheduling();
-  
+  waitForFreeKMMLock();
   kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_old_)
   {
@@ -408,9 +423,9 @@ void Scheduler::printThreadList()
   char *thread_states[6]= {"Running", "Sleeping", "ToBeDestroyed", "Unknown", "Unknown", "Unknown"};
   uint32 c=0;
   lockScheduling();
-  kprintfd("Scheduler::printThreadList: %d Threads in List\n",threads_.size());
+  kprintfd_nosleep("Scheduler::printThreadList: %d Threads in List\n",threads_.size());
   for (c=0; c<threads_.size();++c)
-    kprintfd("Scheduler::printThreadList: threads_[%d]: %x %s     [%s]\n",c,threads_[c],threads_[c]->getName(),thread_states[threads_[c]->state_]);
+    kprintfd_nosleep("Scheduler::printThreadList: threads_[%d]: %x %s     [%s]\n",c,threads_[c],threads_[c]->getName(),thread_states[threads_[c]->state_]);
   unlockScheduling();
 }
 
@@ -425,4 +440,34 @@ void Scheduler::unlockScheduling()
 }
 bool Scheduler::testLock() {
   return (block_scheduling_ > 0);
+}
+
+void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
+{
+  if (block_scheduling_==0)
+    arch_panic((uint8*) "FATAL ERROR: Scheduler::waitForFreeKMMLock: This is meant to be used while Scheduler is locked\n");  
+  while (! KernelMemoryManager::instance()->isKMMLockFree())
+  {
+    unlockScheduling();
+    yield();
+    lockScheduling();
+  }
+}
+
+void Scheduler::disableScheduling()
+{
+  lockScheduling();
+  block_scheduling_extern_++;
+  unlockScheduling();
+}
+void Scheduler::reenableScheduling()
+{
+  lockScheduling();
+  if (block_scheduling_extern_>0)
+    block_scheduling_extern_--;
+  unlockScheduling();  
+}
+bool Scheduler::isSchedulingEnabled()
+{
+   return (block_scheduling_==0 && block_scheduling_extern_==0);
 }
