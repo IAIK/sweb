@@ -1,7 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.19 2005/09/20 08:05:08 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.20 2005/10/26 10:09:17 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.19  2005/09/20 08:05:08  btittelbach
+//   +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
+//   +Condition cleanup
+//   +FiFoDRBOSS now obsolete and removed
+//   +added disk.img that nelle forgot to check in
+//
 //   Revision 1.18  2005/09/16 15:47:41  btittelbach
 //   +even more KeyboardInput Bugfixes
 //   +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -448,10 +454,7 @@ void kprintf_nosleep(const char *fmt, ...)
 
   va_start(args, fmt);
   //check if atomar or not in current context
-  if (unlikely(ArchInterrupts::testIFSet()) || (likely(ArchInterrupts::testIFSet() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
-    vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
-  else
-    vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
+  vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
   va_end(args);
 }
 //make this obsolete with atomarity check
@@ -460,11 +463,7 @@ void kprintfd_nosleep(const char *fmt, ...)
   va_list args;
 
   va_start(args, fmt);
-  //check if atomar or not in current context
-  if (unlikely(ArchInterrupts::testIFSet()))
-    vkprintf(oh_writeStringDebugWithSleep, oh_writeCharDebugWithSleep, fmt, args);
-  else
-    vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
+  vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
   va_end(args);  
 }
 
