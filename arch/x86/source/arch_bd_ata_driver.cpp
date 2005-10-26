@@ -1,7 +1,24 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.3 2005/10/24 21:28:04 nelles Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.4 2005/10/26 10:25:22 nelles Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
+*    Revision 1.3  2005/10/24 21:28:04  nelles
+*
+*     Fixed block devices. I think.
+*
+*     Committing in .
+*
+*     Modified Files:
+*
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/source/InterruptUtils.cpp
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/xen/source/arch_bd_ide_driver.cpp
+*
+*     	common/source/kernel/SpinLock.cpp
+*     	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -203,9 +220,9 @@ uint32 ATADriver::addRequest( BDRequest * br )
 {
   if( mode != BD_PIO_NO_IRQ )
   {
+	request_queue_->push( br ); // Add request to the queue	  
 	kprintfd("ATADriver::Entering the silence zone!\n");	  
 	ArchInterrupts::disableInterrupts();
-	request_queue_->push( br ); // Add request to the queue
   }
   
   int32 res = -1;

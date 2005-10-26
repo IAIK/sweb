@@ -1,8 +1,45 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.14 2005/09/18 20:25:05 nelles Exp $
+//  $Id: ArchInterrupts.cpp,v 1.15 2005/10/26 10:25:22 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.14  2005/09/18 20:25:05  nelles
+//
+//
+//  Block devices update.
+//  See BDRequest and BDManager on how to use this.
+//  Currently ATADriver is functional. The driver tries to detect if IRQ
+//  mode is available and adjusts the mode of operation. Currently PIO
+//  modes with IRQ or without it are supported.
+//
+//  TODO:
+//  - add block PIO mode to read or write multiple sectors within one IRQ
+//  - add DMA and UDMA mode :)
+//
+//
+//   Committing in .
+//
+//   Modified Files:
+//   	arch/common/include/ArchInterrupts.h
+//   	arch/x86/source/ArchInterrupts.cpp
+//   	arch/x86/source/InterruptUtils.cpp
+//   	common/include/kernel/TestingThreads.h
+//   	common/source/kernel/Makefile
+//   	common/source/kernel/Scheduler.cpp
+//   	common/source/kernel/main.cpp utils/bochs/bochsrc
+//   Added Files:
+//   	arch/x86/include/arch_bd_ata_driver.h
+//   	arch/x86/include/arch_bd_driver.h
+//   	arch/x86/include/arch_bd_ide_driver.h
+//   	arch/x86/include/arch_bd_io.h
+//  	arch/x86/include/arch_bd_manager.h
+//   	arch/x86/include/arch_bd_request.h
+//   	arch/x86/include/arch_bd_virtual_device.h
+//   	arch/x86/source/arch_bd_ata_driver.cpp
+//   	arch/x86/source/arch_bd_ide_driver.cpp
+//   	arch/x86/source/arch_bd_manager.cpp
+//  	arch/x86/source/arch_bd_virtual_device.cpp
+//
 //  Revision 1.13  2005/09/13 15:00:51  btittelbach
 //  Prepare to be Synchronised...
 //  kprintf_nosleep works now
@@ -87,7 +124,8 @@ void ArchInterrupts::enableKBD()
 
 void ArchInterrupts::enableBDS()
 {
-  enableIRQ(13);
+  enableIRQ(9);
+  enableIRQ(11);
   enableIRQ(14);
   enableIRQ(15);
 }
