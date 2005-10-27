@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.h,v 1.10 2005/10/26 11:17:40 btittelbach Exp $
+//   $Id: KernelMemoryManager.h,v 1.11 2005/10/27 09:04:59 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.h,v $
+//  Revision 1.10  2005/10/26 11:17:40  btittelbach
+//  -fixed KMM/SchedulerBlock Deadlock
+//  -introduced possible dangeours reenable-/disable-Scheduler Methods
+//  -discovered that removing the IF/Lock Checks in kprintfd_nosleep is a VERY BAD Idea
+//
 //  Revision 1.9  2005/09/26 15:10:21  btittelbach
 //  warnings fix
 //
@@ -195,7 +200,6 @@ private:
   void freeSegment(MallocSegment *this_one);
   MallocSegment *getSegmentFromAddress(pointer virtual_address);
   bool mergeWithFollowingFreeSegment(MallocSegment *this_one);
-  void downsizeSegment(MallocSegment *this_one, size_t new_size);
 
   MallocSegment* first_;  //first_ must _never_ be NULL
   MallocSegment* last_;

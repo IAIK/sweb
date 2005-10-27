@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: KernelMemoryManager.cpp,v 1.21 2005/09/26 14:58:05 btittelbach Exp $
+//   $Id: KernelMemoryManager.cpp,v 1.22 2005/10/27 09:04:59 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: KernelMemoryManager.cpp,v $
+//  Revision 1.21  2005/09/26 14:58:05  btittelbach
+//  doxyfication
+//
 //  Revision 1.20  2005/09/13 15:00:51  btittelbach
 //  Prepare to be Synchronised...
 //  kprintf_nosleep works now
@@ -268,7 +271,12 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   
   if (new_size < m_segment->getSize())
   { //downsize segment
-    downsizeSegment(m_segment,new_size);
+    fillSegment(m_segment,new_size);
+    if (m_segment->next_ != 0)
+    {
+      prenew_assert(m_segment->next_->marker_ == 0xdeadbeef);
+      mergeWithFollowingFreeSegment(m_segment->next_);
+    }
     unlockKMM();
     return virtual_address;
   }
@@ -291,8 +299,6 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     return new_address;
   }
 }
-
-
 
 
 MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_address)
@@ -351,7 +357,15 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     prenew_assert(this_one->getUsed() == true);
     
     MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+requested_size)) MallocSegment(this_one,this_one->next_,space_left-sizeof(MallocSegment),false);
+    if (this_one->next_ != 0)
+    {
+      prenew_assert(this_one->next_->marker_ == 0xdeadbeef);
+      this_one->next_->prev_ = new_segment;
+    }
     this_one->next_ = new_segment;
+    
+    if (new_segment->next_ == 0)
+      last_ = new_segment;
   }
   //~ writeLine2Bochs((uint8*)"KernelMemoryManager::fillSegment: filled memory block of bytes:");
   //~ printbochs(this_one->getSize() + sizeof(MallocSegment));
@@ -482,26 +496,4 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
     }
   }
   return false;
-}
-
-void KernelMemoryManager::downsizeSegment(MallocSegment *this_one, size_t new_size)
-{
-  prenew_assert(this_one != 0);
-  prenew_assert(this_one->marker_ == 0xdeadbeef);
-  prenew_assert(this_one->getUsed() >= new_size);
-
-  size_t space_free = this_one->getUsed() - new_size;
-
-  //add a free segment after this one, it there's enough space
-  //else, leave it as it is
-  if (space_free > sizeof(MallocSegment))
-  {
-    this_one->setSize(new_size);
-    prenew_assert(this_one->getSize() == new_size);
-    
-    MallocSegment *new_segment = new ((void*) ( ((pointer) this_one)+sizeof(MallocSegment)+new_size)) MallocSegment(this_one,this_one->next_,space_free-sizeof(MallocSegment),false);
-    this_one->next_ = new_segment;
-    //check if we can enlarge...
-    mergeWithFollowingFreeSegment(new_segment);
-  }
 }
