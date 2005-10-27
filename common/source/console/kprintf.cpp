@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.22 2005/10/26 11:17:40 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.23 2005/10/27 21:42:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.22  2005/10/26 11:17:40  btittelbach
+//   -fixed KMM/SchedulerBlock Deadlock
+//   -introduced possible dangeours reenable-/disable-Scheduler Methods
+//   -discovered that removing the IF/Lock Checks in kprintfd_nosleep is a VERY BAD Idea
+//
 //   Revision 1.21  2005/10/26 11:07:32  btittelbach
 //   sorry, it's not that easy...
 //   kprintf_nosleep MUST Check for Interrupts and Scheduler, otherwise
@@ -426,8 +431,8 @@ void kprintf(const char *fmt, ...)
   
   va_start(args, fmt);
   //check if atomar or not in current context
-  if (likely(ArchInterrupts::testIFSet() && likely(Scheduler::instance()->isSchedulingEnabled())) 
-    || (unlikely(ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+  if ((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
+  || (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
   else
     vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);
@@ -466,8 +471,8 @@ void kprintf_nosleep(const char *fmt, ...)
   va_start(args, fmt);
   //check if atomar or not in current context
   //ALSO: this is a kind of lock on the kprintf_nosleep Datastructure, and therefore very important !
-  if (unlikely(ArchInterrupts::testIFSet() && unlikely(Scheduler::instance()->isSchedulingEnabled())) 
-    || (likely(ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false) && main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+  if ((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
+  || (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     vkprintf(oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args);
   else
     vkprintf(oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args);

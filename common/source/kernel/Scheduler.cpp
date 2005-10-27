@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.35 2005/10/26 11:17:40 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.36 2005/10/27 21:42:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.35  2005/10/26 11:17:40  btittelbach
+//  -fixed KMM/SchedulerBlock Deadlock
+//  -introduced possible dangeours reenable-/disable-Scheduler Methods
+//  -discovered that removing the IF/Lock Checks in kprintfd_nosleep is a VERY BAD Idea
+//
 //  Revision 1.34  2005/10/22 14:00:22  btittelbach
 //  added sleepAndRelease()
 //
@@ -256,7 +261,7 @@ void Scheduler::addNewThread(Thread *thread)
   //also gets added to front as not to interfere with remove or xchange
 
   lockScheduling();
-  kprintf_nosleep("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
+  kprintfd_nosleep("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
   waitForFreeKMMLock();
   threads_.pushFront(thread);
   unlockScheduling();
@@ -365,8 +370,8 @@ void Scheduler::yield()
 {
   if (! ArchInterrupts::testIFSet())
   {
-    kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n", currentThread, currentThread->name_);
+    kprintf("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n");
   }
   ArchThreads::yield();
 }
@@ -469,5 +474,8 @@ void Scheduler::reenableScheduling()
 }
 bool Scheduler::isSchedulingEnabled()
 {
-   return (block_scheduling_==0 && block_scheduling_extern_==0);
+  if (this)
+    return (block_scheduling_==0 && block_scheduling_extern_==0);
+  else
+    return false;
 }

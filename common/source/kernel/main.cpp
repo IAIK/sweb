@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.101 2005/10/26 11:17:40 btittelbach Exp $
+ * $Id: main.cpp,v 1.102 2005/10/27 21:42:51 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.101  2005/10/26 11:17:40  btittelbach
+ * -fixed KMM/SchedulerBlock Deadlock
+ * -introduced possible dangeours reenable-/disable-Scheduler Methods
+ * -discovered that removing the IF/Lock Checks in kprintfd_nosleep is a VERY BAD Idea
+ *
  * Revision 1.100  2005/10/02 12:27:55  nelles
  *
  *  Committing in .
@@ -566,6 +571,41 @@ private:
   uint32 terminal_number_;
 };
 
+class TestThread : public Thread
+{
+  public:
+    TestThread()
+  {
+    name_="TestThread";
+  }
+  
+  virtual void Run()
+  {
+    kprintfd("TestThread: running\n");
+    Scheduler::instance()->yield();
+    kprintfd("TestThread: adding BDThread\n");    
+    Scheduler::instance()->addNewThread( 
+      new BDThread()
+     );
+    kprintfd("TestThread: done adding BDThread\n");    
+    Scheduler::instance()->yield();  
+    kprintfd("TestThread: adding SerialTestThread\n");    
+    Scheduler::instance()->addNewThread( 
+      new SerialThread( "SerialTestThread" )
+      );
+    kprintfd("TestThread: done adding SerialTestThread\n");    
+    Scheduler::instance()->yield();              
+    kprintfd("TestThread: adding DeviceFSMountingThread\n");
+    Scheduler::instance()->addNewThread( 
+      new DeviceFSMountingThread()
+      );  
+    kprintfd("TestThread: done adding DeviceFSMountingThread\n");
+    Scheduler::instance()->yield();    
+    kprintfd("\nDone Adding Threads\n");
+    kprintfd("\n\n"); 
+  }
+};
+
 
 //------------------------------------------------------------
 void startup()
@@ -667,6 +707,7 @@ void startup()
        new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
      ); 
   
+  Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();
 

@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.24 2005/10/26 11:17:40 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.25 2005/10/27 21:42:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.24  2005/10/26 11:17:40  btittelbach
+//  -fixed KMM/SchedulerBlock Deadlock
+//  -introduced possible dangeours reenable-/disable-Scheduler Methods
+//  -discovered that removing the IF/Lock Checks in kprintfd_nosleep is a VERY BAD Idea
+//
 //  Revision 1.23  2005/10/24 21:28:04  nelles
 //
 //   Fixed block devices. I think.
@@ -148,9 +153,10 @@ static void ThreadStartHack()
 {
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
-  kprintfd("ThreadStartHack: Panic, thread returned\r\n");
+  kprintfd("ThreadStartHack: Thread %x (%s) returned, scheduling for execution\n",currentThread,currentThread->getName());
   //kill will schedule the Thread Object for cleanup by the scheduler
   currentThread->kill();
+  kprintfd("ThreadStartHack: Panic, thread youldn't be killed\n");
   for(;;);
 }
 

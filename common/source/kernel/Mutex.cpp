@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: Mutex.cpp,v 1.12 2005/10/22 17:14:23 btittelbach Exp $
+//  $Id: Mutex.cpp,v 1.13 2005/10/27 21:42:51 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Mutex.cpp,v $
+//  Revision 1.12  2005/10/22 17:14:23  btittelbach
+//  bugfix
+//
 //  Revision 1.11  2005/10/22 13:59:34  btittelbach
 //  trying to avoid a RaceCondition
 //
@@ -84,7 +87,7 @@
 #include "debug_bochs.h"
 #include "Scheduler.h"
 #include "Thread.h"
-#include "arch_panic.h"
+#include "panic.h"
 
 Mutex::Mutex()
 {
@@ -140,8 +143,8 @@ void Mutex::release()
 
 bool Mutex::isFree()
 {
-  if (unlikely (ArchInterrupts::testIFSet()))
-    arch_panic((uint8*)("Mutex::isFree: ERROR: Should not be used with IF=1, use acquire instead\n"));
+  if (unlikely (ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()))
+    kpanict((uint8*)("Mutex::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n"));
 
   if (!spinlock_.isFree() || mutex_ > 0)
     return false;
