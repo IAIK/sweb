@@ -1,7 +1,13 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.4 2005/10/26 10:25:22 nelles Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.5 2005/11/16 20:42:31 nelles Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
+*    Revision 1.4  2005/10/26 10:25:22  nelles
+*
+*    Small patch
+*
+*     	source/ArchInterrupts.cpp source/arch_bd_ata_driver.cpp
+*
 *    Revision 1.3  2005/10/24 21:28:04  nelles
 *
 *     Fixed block devices. I think.
@@ -88,7 +94,9 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
 
 void ATADriver::testIRQ( )
 {
-  mode = BD_PIO;
+  mode = BD_PIO_NO_IRQ;
+
+/*  mode = BD_PIO;
   
   BDManager::getInstance()->probeIRQ = true;
   readSector( 0, 1, 0 );
@@ -97,7 +105,7 @@ void ATADriver::testIRQ( )
   while( BDManager::getInstance()->probeIRQ && jiffies++ < 50000 );
   
   if( jiffies > 50000 )
-    mode = BD_PIO_NO_IRQ;
+    mode = BD_PIO_NO_IRQ; */
 }
 
 int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
@@ -262,8 +270,11 @@ uint32 ATADriver::addRequest( BDRequest * br )
 
 void ATADriver::serviceIRQ( void )
 {
-  kprintfd("ATADriver::serviceIRQ:Entering IRQ handler!!\n");        
-  
+  kprintfd("ATADriver::serviceIRQ:Entering IRQ handler!!\n");
+	
+  if( mode == BD_PIO_NO_IRQ )
+	  return;
+
   if( request_queue_->empty() )
   {
 	  kprintfd("ATADriver::serviceIRQ:IRQ without request!!\n");
