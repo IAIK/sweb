@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.15 2005/10/26 10:25:22 nelles Exp $
+//  $Id: ArchInterrupts.cpp,v 1.16 2005/11/20 21:18:08 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.15  2005/10/26 10:25:22  nelles
+//
+//  Small patch
+//
+//   	source/ArchInterrupts.cpp source/arch_bd_ata_driver.cpp
+//
 //  Revision 1.14  2005/09/18 20:25:05  nelles
 //
 //
@@ -103,7 +109,6 @@ void ArchInterrupts::initialise()
   InterruptUtils::initialise();
   for (i=0;i<16;++i)
      disableIRQ(i);
-
 }
 
 void ArchInterrupts::enableTimer()
@@ -124,6 +129,7 @@ void ArchInterrupts::enableKBD()
 
 void ArchInterrupts::enableBDS()
 {
+  enableIRQ(2);
   enableIRQ(9);
   enableIRQ(11);
   enableIRQ(14);

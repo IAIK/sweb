@@ -19,8 +19,15 @@
 
 /********************************************************************
 *
-*    $Id: arch_bd_request.h,v 1.3 2005/09/20 21:14:31 nelles Exp $
+*    $Id: arch_bd_request.h,v 1.4 2005/11/20 21:18:08 nelles Exp $
 *    $Log: arch_bd_request.h,v $
+*    Revision 1.3  2005/09/20 21:14:31  nelles
+*
+*
+*    Some comments added
+*
+*     ----------------------------------------------------------------------
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -108,6 +115,7 @@ class BDRequest
       
       requesting_thread_ = currentThread;
       blocks_done_ = 0;
+	  next_request_ = 0;
     };
    
     /// returns the id of the device
@@ -131,6 +139,8 @@ class BDRequest
     
     /// returns the thread that created this request object
     Thread * getThread()         { return requesting_thread_; };
+	
+	BDRequest * getNextRequest(  )		{ return next_request_; };
     
     /// sets the start block of this request
     void setStartBlock( uint32 start_blk )  { start_block_=start_blk; };
@@ -140,6 +150,8 @@ class BDRequest
     void setStatus( BD_RESULT status )      { status_=status; };
     /// sets the the number of the blocks already read/written \sa getBlocksDone
     void setBlocksDone( uint32 bdone )      { blocks_done_=bdone; };
+    /// sets the the next request in the linked list
+	void setNextRequest( BDRequest *next )		{ next_request_=next; };
     
   private:
     BDRequest();  ///< default constructor, must never be called
@@ -157,6 +169,7 @@ class BDRequest
     void * buffer_;     ///< Name says it all.
     Thread * requesting_thread_; ///< Thread that created the object
 
+    BDRequest *next_request_;  ///< next_request in the linked list
 };
 
 #endif

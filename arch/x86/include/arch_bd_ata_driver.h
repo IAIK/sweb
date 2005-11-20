@@ -19,8 +19,25 @@
 
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.h,v 1.5 2005/10/24 21:28:04 nelles Exp $
+*    $Id: arch_bd_ata_driver.h,v 1.6 2005/11/20 21:18:08 nelles Exp $
 *    $Log: arch_bd_ata_driver.h,v $
+*    Revision 1.5  2005/10/24 21:28:04  nelles
+*
+*     Fixed block devices. I think.
+*
+*     Committing in .
+*
+*     Modified Files:
+*
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/source/InterruptUtils.cpp
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/xen/source/arch_bd_ide_driver.cpp
+*
+*     	common/source/kernel/SpinLock.cpp
+*     	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+*
 *    Revision 1.4  2005/10/02 12:27:55  nelles
 *
 *     Committing in .
@@ -137,7 +154,8 @@ class ATADriver : public BDDriver, bdio
     
     BD_ATA_MODES     mode; // mode see enum BD_ATA_MODES
     
-    Queue< BDRequest * > * request_queue_;
+    BDRequest *request_list_;
+    BDRequest *request_list_tail_;
 };
 
 #endif

@@ -1,8 +1,25 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.46 2005/10/24 21:28:04 nelles Exp $
+//  $Id: InterruptUtils.cpp,v 1.47 2005/11/20 21:18:08 nelles Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.46  2005/10/24 21:28:04  nelles
+//
+//   Fixed block devices. I think.
+//
+//   Committing in .
+//
+//   Modified Files:
+//
+//   	arch/x86/include/arch_bd_ata_driver.h
+//   	arch/x86/source/InterruptUtils.cpp
+//   	arch/x86/source/arch_bd_ata_driver.cpp
+//   	arch/x86/source/arch_bd_ide_driver.cpp
+//   	arch/xen/source/arch_bd_ide_driver.cpp
+//
+//   	common/source/kernel/SpinLock.cpp
+//   	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+//
 //  Revision 1.45  2005/10/02 12:27:55  nelles
 //
 //   Committing in .
@@ -274,6 +291,7 @@
 #include "new.h"
 #include "arch_panic.h"
 #include "ports.h"
+#include "ArchMemory.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "Console.h"
@@ -294,6 +312,7 @@
 #include "Thread.h"
 #include "Loader.h"
 #include "Syscall.h"
+#include "paging-definitions.h"
 
   extern "C" void arch_dummyHandler();
 
@@ -630,7 +649,7 @@ typedef struct ArchThreadInfo
   uint32  gs;        // 56
   uint32  ss;        // 60
   uint32  dpl;       // 64
-  uint32  esp0;      // 68
+  uint32  esp0;      // 68		call neo_%1
   uint32  ss0;       // 72
   uint32  cr3;       // 76
   uint32  fpu[27];   // 80
@@ -639,13 +658,12 @@ typedef struct ArchThreadInfo
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
-
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
   extern "C" void irqHandler_##x ()  {  \
     kprintfd_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
     kprintf_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
     ArchInterrupts::EndOfInterrupt(x); \
-  } \
+  }; \
 
 extern "C" void arch_irqHandler_0();
 extern "C" void arch_switchThreadKernelToKernel();  
@@ -747,6 +765,43 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
                                                                             currentThread->switch_to_userspace_);
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
+	
+  kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
+	  currentThread->user_arch_thread_info_->cr3,
+	  currentThread->loader_->page_dir_page_,
+	  ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_) );
+	  
+
+  page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
+  uint32 i = 0;
+  uint32 j = 0;
+  for( i = 0; i < 512; i++ )
+  {
+	  if( cpd[ i ].pde4k.present )
+	  {
+		  kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
+		  i,
+		  cpd[ i ].pde4k.present,
+		  cpd[ i ].pde4k.page_table_base_address, 
+		  ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address )
+		  );
+	  }
+	  
+	  if( cpd[ i ].pde4k.present )
+	  {
+		page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address );
+  		for( j = 0; j < 256; j++ )
+  		{
+			if( cpt[ j ].present )
+			{
+				kprintfd_nosleep( "\t j %d, present %d, where %X \n",
+				j,
+				cpt[ j ].present,
+				cpt[ j ].page_base_address );
+			}
+		}
+	  }
+  }
 
   kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   currentThread->switch_to_userspace_ = false;
@@ -801,6 +856,13 @@ extern "C" void irqHandler_4()
   SerialManager::getInstance()->service_irq( 4 );
   ArchInterrupts::EndOfInterrupt(4);
   kprintfd_nosleep( "IRQ 4 ended\n" );
+}
+
+extern "C" void arch_irqHandler_6();
+extern "C" void irqHandler_6()
+{
+  kprintfd_nosleep( "IRQ 6 called\n" );
+  kprintfd_nosleep( "IRQ 6 ended\n" );
 }
 
 extern "C" void arch_irqHandler_9();
@@ -884,7 +946,7 @@ IRQ_HANDLER(2)
 //IRQ_HANDLER(3)
 //IRQ_HANDLER(4)
 IRQ_HANDLER(5)
-IRQ_HANDLER(6)
+//IRQ_HANDLER(6)
 IRQ_HANDLER(7)
 IRQ_HANDLER(8)
 //IRQ_HANDLER(9)

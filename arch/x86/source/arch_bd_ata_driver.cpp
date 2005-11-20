@@ -1,7 +1,17 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.5 2005/11/16 20:42:31 nelles Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.6 2005/11/20 21:18:08 nelles Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
+*    Revision 1.5  2005/11/16 20:42:31  nelles
+*
+*
+*     Turned off interrupt mode in ATADriver.
+*
+*
+*     Committing in .
+*     Modified Files:
+*     	source/arch_bd_ata_driver.cpp
+*
 *    Revision 1.4  2005/10/26 10:25:22  nelles
 *
 *    Small patch
@@ -46,6 +56,7 @@
 #include "arch_bd_manager.h"
 
 #include "ArchInterrupts.h"
+#include "8259.h"
 
 #include "Scheduler.h"
 #include "kprintf.h"
@@ -81,12 +92,16 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
   numsec = CYLS * HPC * SPT;
   
   kprintfd("ATADriver::ctor:testing irqs !!\n");
+  enableIRQ( irqnum );
+  if( irqnum > 8 )
+	enableIRQ( 2 );   // cascade
   testIRQ( );
   irq = irqnum;
   kprintfd("ATADriver::ctor:irq tested !!\n");
   kprintfd("ATADriver::ctor:mode: %d !!\n", mode );
   
-  request_queue_ = new Queue< BDRequest * >();
+  request_list_ = 0;
+  request_list_tail_ = 0;
   
   kprintfd("ATADriver::ctor:Driver created !!\n");
   return;
@@ -94,9 +109,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
 
 void ATADriver::testIRQ( )
 {
-  mode = BD_PIO_NO_IRQ;
-
-/*  mode = BD_PIO;
+  mode = BD_PIO;
   
   BDManager::getInstance()->probeIRQ = true;
   readSector( 0, 1, 0 );
@@ -105,7 +118,7 @@ void ATADriver::testIRQ( )
   while( BDManager::getInstance()->probeIRQ && jiffies++ < 50000 );
   
   if( jiffies > 50000 )
-    mode = BD_PIO_NO_IRQ; */
+    mode = BD_PIO_NO_IRQ; 
 }
 
 int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
@@ -180,7 +193,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 	//CYL: value of the cylinder CHS coordinate
 	//HPC: number of heads per cylinder for the disk
 	//HEAD: value of the head CHS coordinate
-	//SPT: number of sectors per track for the disk
+	//SPT: number of sectors per trbochsout.txtack for the disk
 	//SECT: value of the sector CHS coordinate
 	//TEMP: buffer to hold a temporary value
 
@@ -226,11 +239,20 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
 uint32 ATADriver::addRequest( BDRequest * br )
 {
+  bool interrupt_context = false;
+  kprintfd("ATADriver::addRequest %d!\n", br->getCmd() );	  	
   if( mode != BD_PIO_NO_IRQ )
   {
-	request_queue_->push( br ); // Add request to the queue	  
-	kprintfd("ATADriver::Entering the silence zone!\n");	  
-	ArchInterrupts::disableInterrupts();
+	kprintfd("ATADriver::addRequest Entering the silence zone\n" );	  	
+	interrupt_context = ArchInterrupts::disableInterrupts();
+    // Add request to the list protected by the cli 	  
+	if( request_list_ == 0 )
+	  request_list_ = request_list_tail_ = br;
+	else
+	{
+	  request_list_tail_->setNextRequest(br) ; 
+	  request_list_tail_ = br;
+	}
   }
   
   int32 res = -1;
@@ -251,7 +273,9 @@ uint32 ATADriver::addRequest( BDRequest * br )
   if( res != 0 )
   {
     br->setStatus( BDRequest::BD_ERROR );
-	ArchInterrupts::enableInterrupts();
+    kprintfd("ATADriver::Got out on error !!\n");	  
+	if( interrupt_context )
+		ArchInterrupts::enableInterrupts();
     return 0;
   }
   
@@ -262,9 +286,13 @@ uint32 ATADriver::addRequest( BDRequest * br )
     return 0;
   }
 
-  ArchInterrupts::enableInterrupts();
   kprintfd("ATADriver::Finaly got out !!\n");
-  Scheduler::instance()->sleep();
+  currentThread->state_ = Sleeping;
+  if( interrupt_context )
+  {
+	ArchInterrupts::enableInterrupts();
+  	Scheduler::instance()->yield();
+  }
   return 0;
 }
 
@@ -275,16 +303,16 @@ void ATADriver::serviceIRQ( void )
   if( mode == BD_PIO_NO_IRQ )
 	  return;
 
-  if( request_queue_->empty() )
+  if( request_list_ == 0 )
   {
 	  kprintfd("ATADriver::serviceIRQ:IRQ without request!!\n");
       outbp( port + 0x206, 0x04 ); 
       outbp( port + 0x206, 0x00 ); // RESET COTROLLER
-	  kprintfd("ATADriver::serviceIRQ:Reseted controller!!\n");
+	  kprintfd("ATADriver::serviceIRQ:Reset controller!!\n");
   	  return; // not my interrupt
   }
   
-  BDRequest * br = request_queue_->front();
+  BDRequest * br = request_list_;
   kprintfd("ATADriver::serviceIRQ:Found active request!!\n");
   
   uint16 * word_buff = (uint16 *) br->getBuffer();
@@ -324,15 +352,16 @@ void ATADriver::serviceIRQ( void )
   else if( br->getCmd() == BDRequest::BD_WRITE )
   {
     kprintfd("ATADriver::serviceIRQ:Write request found!!\n");
-    
+	  
     uint32 counter;
 
     for ( counter = blocks_done * 256; 
           counter != (blocks_done + 1) * 256; 
           counter++ )  
        outwp ( port, word_buff [counter] );
+	
+	blocks_done++;
             
-    blocks_done++;
     br->setBlocksDone( blocks_done );
   }
   else
@@ -348,7 +377,7 @@ void ATADriver::serviceIRQ( void )
     kprintfd("ATADriver::serviceIRQ:All done!!\n");
     br->setStatus( BDRequest::BD_DONE );
     kprintfd("ATADriver::serviceIRQ:Waking up thread!!\n");
-	request_queue_->pop();
+  	request_list_ = br->getNextRequest();
     Scheduler::instance()->wake( br->getThread() );
   }
 }
