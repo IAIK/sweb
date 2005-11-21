@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.16 2005/09/27 21:24:43 btittelbach Exp $
+//   $Id: PageManager.cpp,v 1.17 2005/11/21 13:27:08 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.16  2005/09/27 21:24:43  btittelbach
+//  +IF=1 in PageFaultHandler
+//  +Lock in PageManager
+//  +readline/gets Bugfix
+//  +pseudoshell bugfix
+//
 //  Revision 1.15  2005/09/21 19:54:04  btittelbach
 //  +readability
 //  -warnings
@@ -102,8 +108,10 @@ PageManager::PageManager(pointer start_of_structure)
     writeLine2Bochs((uint8*)"PM: Managing region\n");
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
     kprintfd("Have a memory region from page %d to page %d of type %d\n", start_address, end_address,type);
-    if (type==1) number_of_pages_ = Max(number_of_pages_,(Min(end_address,256*1024*PAGE_SIZE)));
+    if (type==1) number_of_pages_ = Max(number_of_pages_,(Min(end_address,256*1024*PAGE_SIZE))); //number_of_pages_ := size of memory region, here
   }
+  //number_of_pages_ now contains the lowest linear memory address where a useable memory region ends
+  //we can have a max of 1 GB Memory (256*1024*4k)
   
   number_of_pages_ = number_of_pages_ / PAGE_SIZE;
   kprintfd("Number of physical pages: %d\n",number_of_pages_);
@@ -203,7 +211,7 @@ uint32 PageManager::getSizeOfMemoryUsed() const
 //used by loader.cpp ArchMemory.cpp UerProcess.cpp
 uint32 PageManager::getFreePhysicalPage(uint32 type)
 {
-  if (type == PAGE_FREE)  //what a stupid thing that would be to do
+  if (type == PAGE_FREE || type == PAGE_RESERVED)  //what a stupid thing that would be to do
     return 0;
  
   if (lock_)
