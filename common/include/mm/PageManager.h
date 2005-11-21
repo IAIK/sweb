@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.8 2005/09/27 21:24:43 btittelbach Exp $
+//   $Id: PageManager.h,v 1.9 2005/11/21 13:26:27 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.8  2005/09/27 21:24:43  btittelbach
+//  +IF=1 in PageFaultHandler
+//  +Lock in PageManager
+//  +readline/gets Bugfix
+//  +pseudoshell bugfix
+//
 //  Revision 1.7  2005/09/24 13:30:20  btittelbach
 //  4m page support
 //
@@ -42,29 +48,44 @@ typedef uint8 puttype;
 
 #define PAGE_FREE static_cast<puttype>(0)
 
-/**
-* PageManager is in issence a BitMap managing free or used pages of size PAGE_SIZE only
-*/
+//-----------------------------------------------------------
+/// PageManager is in issence a BitMap managing free or used pages of size PAGE_SIZE only
 class PageManager
 {
 public:
   
-  /**
-   * Creates a new instance (and THE ONLY ONE) of our page manager
-   * This one will also automagically initialise itself accordingly
-   * i.e. mark pages used by the kernel already as used
-   * @param next_usable_address Pointer to memory the page manager can use
-   * @return 0 on failure, otherwise a pointer to the next free memory location
-   */
+//-----------------------------------------------------------
+/// Creates a new instance (and THE ONLY ONE) of our page manager
+/// This one will also automagically initialise itself accordingly
+/// i.e. mark pages used by the kernel already as used
+/// @param next_usable_address Pointer to memory the page manager can use
+/// @return 0 on failure, otherwise a pointer to the next free memory location
   static pointer createPageManager(pointer next_usable_address);
   static PageManager *instance() {return instance_;}
 
+//-----------------------------------------------------------
+/// @return number of 4k Pages avaible to sweb. 
+/// ((size of the first usable memory region or max 4Gb) / PAGESIZE)
   uint32 getTotalNumPages() const;
 
+//-----------------------------------------------------------
+/// returns the number of the next free Physical Page
+/// and marks that Page as used. 
+/// @param type can be either PAGE_USERSPACE (default) or PAGE_KERNEL
+/// (passing PAGE_RESERVED or PAGE_FREE would obviously not make much sense,
+///  since the page then either can neve be free'd again or will be given out 
+///  again)
   uint32 getFreePhysicalPage(uint32 type = PAGE_USERSPACE); //also marks page as used
 
+//-----------------------------------------------------------
+/// marks physical page <page_number> as free, if it was used in
+/// user or kernel space.
+/// @param page_number Physcial Page to mark as unused
   void freePage(uint32 page_number);
 
+//-----------------------------------------------------------
+/// call this after initializing the KernelMemoryManager and before
+/// starting Interrupts to ensure Mutual Exclusion
   void startUsingSyncMechanism() {lock_=new Mutex();}
 
 private:
