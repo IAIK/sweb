@@ -147,6 +147,85 @@ class BDThread : public Thread
       
     kprintfd("BDThread::Run: Done with blockdevices\n");
     
+    
+   //Actually we know the virtual device number we want to use: "2" (swap)
+   //What is the block size on this device?
+   //Well, let's have a look. 
+   BDRequest * bd_bs = new BDRequest(0, BDRequest::BD_GET_BLK_SIZE);
+   BDManager::getInstance()->getDeviceByNumber(2)->addRequest ( bd_bs );
+   //this is a blocking request. It just references data already in memory.
+   if (bd_bs->getStatus() != BDRequest::BD_DONE)
+   {
+     // something went wrong... EXIT!
+   }
+   uint32 block_size = bd_bs->getResult();
+   
+   //We have to check how many blocks ae available on this device:
+   BDRequest * bd_bc = new BDRequest(0, BDRequest::BD_GET_NUM_BLOCKS);
+   BDManager::getInstance()->getDeviceByNumber(2)->addRequest ( bd_bc );
+   //this is a blocking request. It just references data already in memory.
+   if (bd_bs->getStatus() != BDRequest::BD_DONE)
+   {
+     // something went wrong... EXIT!
+   }
+   uint32 block_count = bd_bc->getResult();
+      
+   //We assume that we want to read two blocks (Number 234 and 235)     
+   uint32 blocks2read = 2;
+   uint32 offset = 233;
+   if (offset + blocks2read > block_count)
+   {
+     //do this little check.
+   } 
+   //allocate some buffer or point somewhere in memory.
+   char *my_buffer = (char *) kmalloc( blocks2read*block_size*sizeof(uint8) );
+   //build the command
+   BDRequest * bd = new BDRequest(2, BDRequest::BD_READ, offset, blocks2read, my_buffer);
+   //and send it.
+   BDManager::getInstance()->getDeviceByNumber(2)->addRequest ( bd );
+   uint32 jiffies = 0;
+   //actually we don't know if this request is blocking or not. Just to be
+   //on the safe side, check if the output is valid by now.   
+   while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+          
+   if( bd->getStatus() != BDRequest::BD_DONE )
+   {
+      //We should definitely should have a closer look at the status by now.
+      //It may happen, that the request is still in queue or had an error.
+   }
+   //By now the reqested data should be in my buffer.
+   kfree( my_buffer );
+   //Print the buffer...
+   for(uint32 i = 0; i < blocks2read*block_size; i++ )
+      kprintfd( "%2X%c", *(my_buffer+i), i%8 ? ' ' : '\n' );  
+   delete bd;
+   delete bd_bs;
+   delete bd_bc;
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     kprintfd("BDThread::Run:opening /dev/idea\n");
     int32 testide_fd = vfs_syscall.open("/dev/idea", 2);
     kprintfd("BDThread::Run: open returned %d\n", testide_fd);
@@ -158,9 +237,9 @@ class BDThread : public Thread
     
     kprintfd("BDThread::Run: open read ------------- \n");
     
-    uint32 i;
-    for( i = 0; i < 1100; i++ )
-      kprintfd( "%2X%c", buffer[i], i%8 ? ' ' : '\n' );
+    //uint32 i;
+    //for( i = 0; i < 1100; i++ )
+    //  kprintfd( "%2X%c", buffer[i], i%8 ? ' ' : '\n' );
     
     kprintfd("BDThread::Run: ----------------------- \n");
     

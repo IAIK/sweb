@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.h,v 1.6 2005/09/26 15:29:05 btittelbach Exp $
+//   $Id: Loader.h,v 1.7 2005/11/24 10:07:09 woswasi Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.h,v $
+//  Revision 1.6  2005/09/26 15:29:05  btittelbach
+//  check
+//
 //  Revision 1.5  2005/08/26 12:01:25  nomenquis
 //  pagefaults in userspace now should really really really work
 //
@@ -48,12 +51,12 @@ public:
 
 
   void loadOnePageSafeButSlow(uint32 virtual_address);
-
+  uint32 page_dir_page_;
 private:
 
   uint8 *file_image_;
   Thread *thread_;
-  uint32 page_dir_page_;
+
 };
 
 
