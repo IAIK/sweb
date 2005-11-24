@@ -1,7 +1,24 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.cpp,v 1.4 2005/10/24 21:28:04 nelles Exp $
+*    $Id: arch_bd_ide_driver.cpp,v 1.5 2005/11/24 23:38:35 nelles Exp $
 *    $Log: arch_bd_ide_driver.cpp,v $
+*    Revision 1.4  2005/10/24 21:28:04  nelles
+*
+*     Fixed block devices. I think.
+*
+*     Committing in .
+*
+*     Modified Files:
+*
+*     	arch/x86/include/arch_bd_ata_driver.h
+*     	arch/x86/source/InterruptUtils.cpp
+*     	arch/x86/source/arch_bd_ata_driver.cpp
+*     	arch/x86/source/arch_bd_ide_driver.cpp
+*     	arch/xen/source/arch_bd_ide_driver.cpp
+*
+*     	common/source/kernel/SpinLock.cpp
+*     	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+*
 *    Revision 1.3  2005/10/02 12:27:55  nelles
 *
 *     Committing in .
@@ -251,21 +268,14 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
 //   char part_num_str[2];
 //   char part_name[10];
 
-  BDRequest *br = new 
-  BDRequest( 0, BDRequest::BD_READ, sector, 1, (void *) buff );
+  uint32 read_res = drv->rawReadSector( sector, 1, (void *)buff );
   
-  drv->addRequest( br );                           // read the partition
-  while( br->getStatus() == BDRequest::BD_QUEUED );// wait
-  
-  if( br->getStatus() == BDRequest::BD_ERROR )
+  if( read_res != 0 )
   {
     kprintfd("IDEDriver::processMBR: drv returned BD_ERROR\n" );
-    delete br;
     return -1;
   }
 
-  delete br;
-  
   MBR * mbr = (MBR *) buff;
 
   if( mbr->signature == 0xAA55 )

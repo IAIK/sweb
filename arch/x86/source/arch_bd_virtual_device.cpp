@@ -1,7 +1,21 @@
 /********************************************************************
 *
-*    $Id: arch_bd_virtual_device.cpp,v 1.4 2005/11/20 21:18:08 nelles Exp $
+*    $Id: arch_bd_virtual_device.cpp,v 1.5 2005/11/24 23:38:35 nelles Exp $
 *    $Log: arch_bd_virtual_device.cpp,v $
+*    Revision 1.4  2005/11/20 21:18:08  nelles
+*
+*         Committing in .
+*
+*          Another block device update ... Interrupts are now functional fixed some
+*          8259 problems .. Reads and Writes tested  ....
+*
+*         Modified Files:
+*     	include/arch_bd_ata_driver.h include/arch_bd_request.h
+*     	include/arch_bd_virtual_device.h source/8259.cpp
+*     	source/ArchInterrupts.cpp source/InterruptUtils.cpp
+*     	source/arch_bd_ata_driver.cpp
+*     	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
+*
 *    Revision 1.3  2005/10/02 12:27:55  nelles
 *
 *     Committing in .
@@ -131,6 +145,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
 {
    kprintfd("BDVirtualDevice::readData\n");
    uint32 blocks2read = size/block_size_, jiffies = 0;
+   uint32 blockoffset = offset/block_size_;	
    
    if( size%block_size_ )
      blocks2read++;
@@ -138,7 +153,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
    kprintfd("BDVirtualDevice::blocks2read %d\n", blocks2read );
    char *my_buffer = (char *) kmalloc( blocks2read*block_size_*sizeof(char) );
    BDRequest * bd = 
-   new BDRequest(0, BDRequest::BD_READ, offset, blocks2read, my_buffer);
+   new BDRequest(0, BDRequest::BD_READ, blockoffset, blocks2read, my_buffer);
    addRequest ( bd );
    
    kprintfd("BDVirtualDevice::request added\n" );
@@ -155,7 +170,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
    }
 
    kprintfd("BDVirtualDevice::done\n" );
-   memcpy( buffer, my_buffer, size );
+   memcpy( buffer, my_buffer + (offset%block_size_), size );
    kprintfd("BDVirtualDevice::memcpied\n" );
    kfree( my_buffer );
    delete bd;
@@ -165,26 +180,29 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
 
 int32 BDVirtualDevice::writeData(int32 offset, int32 size, const char *buffer)
 {
-   kprintfd("BDVirtualDevice::writeData");
+   kprintfd("BDVirtualDevice::writeData\n");
    uint32 blocks2write = size/block_size_, jiffies = 0;
+   uint32 blockoffset = offset/block_size_;
    
    char *my_buffer;
    if( size%block_size_ )
    {
      blocks2write++;
      my_buffer = (char *) kmalloc( blocks2write*block_size_*sizeof(char) );
-     if( readData(offset, blocks2write, my_buffer) == -1 )
+
+     if( readData( blockoffset, blocks2write*block_size_*sizeof(char), my_buffer) == -1 )
      {
        kfree( my_buffer );
        return -1;
      }
-     memcpy( my_buffer, buffer, size );
    }
    else
      my_buffer = (char *) kmalloc( blocks2write*block_size_*sizeof(char) );
-     
+	   
+   memcpy( my_buffer + (offset%block_size_), buffer, size );
+   
    BDRequest * bd = 
-   new BDRequest(0,BDRequest::BD_WRITE, offset, blocks2write, my_buffer);
+   new BDRequest(0,BDRequest::BD_WRITE, blockoffset, blocks2write, my_buffer);
    addRequest ( bd );
    
    while( bd->getStatus() == BDRequest::BD_QUEUED && 
