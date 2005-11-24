@@ -59,6 +59,7 @@ class SerialThread : public Thread
     SerialManager::getInstance()->do_detection( 1 );
     kprintf("Serial Device done\n");
 
+	  
     SerialManager *sm = SerialManager::getInstance();
     uint32 num_ports = sm->get_num_ports();
     uint32 i = 0;
@@ -131,11 +132,46 @@ class BDThread : public Thread
 
   virtual void Run()
   {
-
-    kprintf("Block Device creation\n");
-    BDManager::getInstance()->doDeviceDetection( );
-    kprintf("Block Device done\n");  
+     
+    kprintfd("BDThread1::Run: Now getting info on blockdevices ...\n");
+    uint32 numdev = BDManager::getInstance()->getNumberOfDevices();
+    uint32 dev_cnt = 0;
+    
+    for( ;dev_cnt < numdev; dev_cnt++ )
+      kprintfd("BDThread1::Run: device %s size: %u \n",  
+      BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getName(), 
+      BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getNumBlocks()*BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getBlockSize() );
       
+    kprintfd("BDThread1::Run: Done with blockdevices\n");
+    
+	kprintfd("BDThread1::Run: Adding read request \n");
+	char message[4096];
+	
+	uint32 i;
+	for( i = 0; i < 4096; i++ )
+		message[i] = '0';
+	
+	BDRequest *bdr = new BDRequest( 0, BDRequest::BD_READ, 0, 8, message );
+	BDManager::getInstance()->addRequest( bdr );
+	Scheduler::instance()->yield();
+	kprintfd("BDThread1::Run: Read request %d \n", bdr->getStatus() );
+	
+    currentThread->kill();
+  };
+
+};
+
+class BDThread2 : public Thread
+{
+  public:
+
+  BDThread2()
+  {
+    name_="BlockDevices2";
+  };
+
+  virtual void Run()
+  {
     kprintfd("BDThread::Run: Now getting info on blockdevices ...\n");
     uint32 numdev = BDManager::getInstance()->getNumberOfDevices();
     uint32 dev_cnt = 0;
@@ -147,7 +183,18 @@ class BDThread : public Thread
       
     kprintfd("BDThread::Run: Done with blockdevices\n");
     
-    
+	kprintfd("BDThread::Run: Adding write request \n");
+	char message[4096];
+	
+	uint32 i;
+	for( i = 0; i < 4096; i++ )
+		message[i] = '0' + i%10;
+	
+	BDRequest *bdr = new BDRequest( 2, BDRequest::BD_WRITE, 233, 8, message );
+	BDManager::getInstance()->addRequest( bdr );
+	Scheduler::instance()->yield();
+	kprintfd("BDThread::Run: Write request %d \n", bdr->getStatus() );
+	   
    //Actually we know the virtual device number we want to use: "2" (swap)
    //What is the block size on this device?
    //Well, let's have a look. 
@@ -194,58 +241,19 @@ class BDThread : public Thread
       //It may happen, that the request is still in queue or had an error.
    }
    //By now the reqested data should be in my buffer.
-   kfree( my_buffer );
+
    //Print the buffer...
    for(uint32 i = 0; i < blocks2read*block_size; i++ )
       kprintfd( "%2X%c", *(my_buffer+i), i%8 ? ' ' : '\n' );  
+   
+   kfree( my_buffer );
+   
    delete bd;
    delete bd_bs;
    delete bd_bc;
 
 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    kprintfd("BDThread::Run:opening /dev/idea\n");
-    int32 testide_fd = vfs_syscall.open("/dev/idea", 2);
-    kprintfd("BDThread::Run: open returned %d\n", testide_fd);
-   
-    char buffer[1100] = { 0 };
-    kprintfd("BDThread::Run:reading /dev/idea\n");
-    int32 res = vfs_syscall.read(testide_fd, buffer , 1100);
-    kprintfd("BDThread::Run: read returned %d\n", res);
-    
-    kprintfd("BDThread::Run: open read ------------- \n");
-    
-    //uint32 i;
-    //for( i = 0; i < 1100; i++ )
-    //  kprintfd( "%2X%c", buffer[i], i%8 ? ' ' : '\n' );
-    
-    kprintfd("BDThread::Run: ----------------------- \n");
-    
-    kprintfd("BDThread::Run:Closing /dev/idea !\n");
-    vfs_syscall.close( testide_fd );
-    currentThread->kill();
   };
 
 };
@@ -284,4 +292,3 @@ class DeviceFSMountingThread : public Thread
     vfs_syscall.write(test02_fd, buffer, 15); // this is a BIG NO NO !
   }
 };
-
