@@ -19,8 +19,22 @@
 
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.h,v 1.6 2005/11/20 21:18:08 nelles Exp $
+*    $Id: arch_bd_ata_driver.h,v 1.7 2005/11/24 23:37:02 nelles Exp $
 *    $Log: arch_bd_ata_driver.h,v $
+*    Revision 1.6  2005/11/20 21:18:08  nelles
+*
+*         Committing in .
+*
+*          Another block device update ... Interrupts are now functional fixed some
+*          8259 problems .. Reads and Writes tested  ....
+*
+*         Modified Files:
+*     	include/arch_bd_ata_driver.h include/arch_bd_request.h
+*     	include/arch_bd_virtual_device.h source/8259.cpp
+*     	source/ArchInterrupts.cpp source/InterruptUtils.cpp
+*     	source/arch_bd_ata_driver.cpp
+*     	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
+*
 *    Revision 1.5  2005/10/24 21:28:04  nelles
 *
 *     Fixed block devices. I think.
@@ -129,6 +143,7 @@ class ATADriver : public BDDriver, bdio
     ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum );
     virtual ~ATADriver() {};
     
+	int32 rawReadSector  ( uint32, uint32, void * );
     int32 readSector     ( uint32, uint32, void * );
     int32 writeSector    ( uint32, uint32, void * );
         
@@ -137,6 +152,8 @@ class ATADriver : public BDDriver, bdio
     
     void serviceIRQ      ( void );
     void testIRQ         ( );
+	
+	bool waitForController( bool resetIfFailed );
 
     uint32 HPC, SPT;        // HEADS PER CYLINDER and SECTORS PER TRACK
     
