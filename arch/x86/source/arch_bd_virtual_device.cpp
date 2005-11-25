@@ -1,6 +1,6 @@
 /********************************************************************
 *
-*    $Id: arch_bd_virtual_device.cpp,v 1.6 2005/11/25 20:14:32 woswasi Exp $
+*    $Id: arch_bd_virtual_device.cpp,v 1.7 2005/11/25 20:16:24 woswasi Exp $
 *    $Log: arch_bd_virtual_device.cpp,v $
 *    Revision 1.5  2005/11/24 23:38:35  nelles
 *
@@ -126,11 +126,11 @@ void BDVirtualDevice::addRequest(BDRequest * command)
   switch( command->getCmd() )
   {
     case BDRequest::BD_GET_BLK_SIZE:
-      command->setResult( block_size_; )
+      command->setResult( block_size_ );
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_GET_NUM_BLOCKS: 
-      command->setResult( num_blocks_; )
+      command->setResult( num_blocks_ );
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_READ: 
