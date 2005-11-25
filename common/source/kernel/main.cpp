@@ -1,7 +1,12 @@
 /**
- * $Id: main.cpp,v 1.102 2005/10/27 21:42:51 btittelbach Exp $
+ * $Id: main.cpp,v 1.103 2005/11/25 00:00:18 nelles Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.102  2005/10/27 21:42:51  btittelbach
+ * -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
+ * -im Scheduler möglichen null-pointer zugriff vermieden
+ * -kprintf nosleep check logik optimiert
+ *
  * Revision 1.101  2005/10/26 11:17:40  btittelbach
  * -fixed KMM/SchedulerBlock Deadlock
  * -introduced possible dangeours reenable-/disable-Scheduler Methods
@@ -656,11 +661,11 @@ void startup()
   kprintf("Kernel end address is %x and in physical %x\n",&kernel_end_address, ((pointer)&kernel_end_address)-2U*1024*1024*1024+1*1024*1024);
 
   
-  //~ kprintfd("Mounting DeviceFS under /dev/\n");
-  //~ DeviceFSType *devfs = new DeviceFSType();
-  //~ vfs.registerFileSystem(devfs);
-  //~ int32 mntres = vfs.root_mount("devicefs", 0);
-  //~ kprintfd("Mount returned %d\n", mntres);  
+  kprintfd("Mounting DeviceFS under /dev/\n");
+  DeviceFSType *devfs = new DeviceFSType();
+  vfs.registerFileSystem(devfs);
+  int32 mntres = vfs.root_mount("devicefs", 0);
+  kprintfd("Mount returned %d\n", mntres);  
 
   Scheduler::createScheduler();
   
@@ -672,26 +677,41 @@ void startup()
   kprintf("Interupts init\n");
   ArchInterrupts::initialise();
 
+  kprintf("Block Device creation\n");
+  BDManager::getInstance()->doDeviceDetection( );
+  kprintf("Block Device done\n");  
+
   kprintf("Timer enable\n");
   ArchInterrupts::enableTimer();
 
   ArchInterrupts::enableKBD();
-  ArchInterrupts::enableBDS();
-    
+	
   kprintf("Thread creation\n");
   
   kprintf("Adding Kernel threads\n");
  
   Scheduler::instance()->addNewThread( main_console );
   
-  Scheduler::instance()->addNewThread( 
-    new TestTerminalThread( "TerminalTestThread", main_console, 1 )
-   );       
+  //Scheduler::instance()->addNewThread( 
+  //  new TestTerminalThread( "TerminalTestThread", main_console, 1 )
+  // );       
   
-  //~ Scheduler::instance()->addNewThread( 
-    //~ new BDThread()
-   //~ );
+  Scheduler::instance()->addNewThread( 
+    new BDThread()
+  );
+  
+  Scheduler::instance()->addNewThread( 
+    new BDThread2()
+  );  
 
+  Scheduler::instance()->addNewThread( 
+    new BDThread()
+  );  
+  
+  Scheduler::instance()->addNewThread( 
+    new BDThread2()
+  );    
+  
   //~ Scheduler::instance()->addNewThread( 
     //~ new SerialThread( "SerialTestThread" )
     //~ );
@@ -702,12 +722,12 @@ void startup()
     
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
-   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
+/*   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
      Scheduler::instance()->addNewThread( 
        new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
-     ); 
+     ); */
   
-  Scheduler::instance()->addNewThread(new TestThread());  
+  //Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();
 
@@ -716,9 +736,8 @@ void startup()
 
   kprintf("Now enabling Interrupts...\n");
   ArchInterrupts::enableInterrupts();    
-      
-  Scheduler::instance()->yield();  
 
+  Scheduler::instance()->yield();  
   
   
   for (;;);
