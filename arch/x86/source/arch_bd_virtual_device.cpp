@@ -1,7 +1,18 @@
 /********************************************************************
 *
-*    $Id: arch_bd_virtual_device.cpp,v 1.5 2005/11/24 23:38:35 nelles Exp $
+*    $Id: arch_bd_virtual_device.cpp,v 1.6 2005/11/25 20:14:32 woswasi Exp $
 *    $Log: arch_bd_virtual_device.cpp,v $
+*    Revision 1.5  2005/11/24 23:38:35  nelles
+*
+*
+*     Block devices fix.
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch_bd_ata_driver.cpp arch_bd_ide_driver.cpp
+*     	arch_bd_manager.cpp arch_bd_virtual_device.cpp
+*
 *    Revision 1.4  2005/11/20 21:18:08  nelles
 *
 *         Committing in .
@@ -111,29 +122,24 @@ Inode( 0, I_BLOCKDEVICE )
 /////////////////////////////////////////////////////////////////////    
 void BDVirtualDevice::addRequest(BDRequest * command) 
 {
-  uint32 res = 5;
-  uint32 start_block = 0;
-  
+  command->setResult( 5 );
   switch( command->getCmd() )
   {
     case BDRequest::BD_GET_BLK_SIZE:
-      res = block_size_;
+      command->setResult( block_size_; )
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_GET_NUM_BLOCKS: 
-      res = num_blocks_;
+      command->setResult( num_blocks_; )
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_READ: 
     case BDRequest::BD_WRITE:
-      start_block = command->getStartBlock();
-      command->setStartBlock( start_block + offset_ );
+      command->setStartBlock( command->getStartBlock() + offset_ );
    default:
-      res = driver_->addRequest( command );
+      command->setResult( driver_->addRequest( command ));
       break;
   }
-
-  command->setResult( res );
   return;
 };
 
