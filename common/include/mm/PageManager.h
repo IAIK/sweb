@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.h,v 1.9 2005/11/21 13:26:27 btittelbach Exp $
+//   $Id: PageManager.h,v 1.10 2005/11/27 01:04:58 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.h,v $
+//  Revision 1.9  2005/11/21 13:26:27  btittelbach
+//  doxyfication by bernhard
+//
 //  Revision 1.8  2005/09/27 21:24:43  btittelbach
 //  +IF=1 in PageFaultHandler
 //  +Lock in PageManager
@@ -65,7 +68,7 @@ public:
 
 //-----------------------------------------------------------
 /// @return number of 4k Pages avaible to sweb. 
-/// ((size of the first usable memory region or max 4Gb) / PAGESIZE)
+/// ((size of the first usable memory region or max 1Gb) / PAGESIZE)
   uint32 getTotalNumPages() const;
 
 //-----------------------------------------------------------
