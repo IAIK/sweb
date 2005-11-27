@@ -1,7 +1,18 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.cpp,v 1.5 2005/11/24 23:38:35 nelles Exp $
+*    $Id: arch_bd_ide_driver.cpp,v 1.6 2005/11/27 11:35:13 woswasi Exp $
 *    $Log: arch_bd_ide_driver.cpp,v $
+*    Revision 1.5  2005/11/24 23:38:35  nelles
+*
+*
+*     Block devices fix.
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch_bd_ata_driver.cpp arch_bd_ide_driver.cpp
+*     	arch_bd_manager.cpp arch_bd_virtual_device.cpp
+*
 *    Revision 1.4  2005/10/24 21:28:04  nelles
 *
 *     Fixed block devices. I think.
@@ -157,7 +168,7 @@ uint32 IDEDriver::doDeviceDetection()
         while( inbp( base_port + 7 ) != 58 && jiffies ++ < 50000 )
             ;
         
-        if( jiffies == 50000 )
+        if( jiffies > 49998 )
           kprintfd("IDEDriver::doDetection: Still busy after reset!\n ");
         else
         {
