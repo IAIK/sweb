@@ -1,10 +1,8 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.8 2005/11/27 11:35:13 woswasi Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.9 2005/11/27 11:57:06 woswasi Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
 *    Revision 1.7  2005/11/24 23:38:35  nelles
-*
-*
 *     Block devices fix.
 *
 *     Committing in .
@@ -100,7 +98,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
   outbp (port + 7, 0xEC);		// Get drive info data
   while (  inbp(port + 7) != 0x58 && jiffies++ < 50000 ); 
 
-  if( jiffies > 49998 )
+  if( jiffies == 50000 )
   {
       kprintfd("ATADriver::ctor:Timeout while reading the disk !!\n");
       return;
@@ -146,7 +144,7 @@ void ATADriver::testIRQ( )
   jiffies = 0;
   while( BDManager::getInstance()->probeIRQ && jiffies++ < 50000 );
   
-  if( jiffies > 49998 )
+  if( jiffies > 50000 )
     mode = BD_PIO_NO_IRQ; 
 }
 
@@ -205,7 +203,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   jiffies=0;
   while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000);
 
-  if(jiffies > 49998 )
+  if(jiffies > 50000 )
     return -1;
 
   uint32 counter;
@@ -258,7 +256,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   jiffies = 0;
   while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000);
 
-  if(jiffies > 49998 )
+  if(jiffies > 50000 )
   {
       kprintfd("ATADriver::writeSector: timeout");
       return -1;
@@ -344,7 +342,7 @@ bool ATADriver::waitForController( bool resetIfFailed = true )
     while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000)
       ;
   
-    if(jiffies > 49998 )
+    if(jiffies > 50000 )
     {
 		kprintfd("ATADriver::waitForController: controler still not ready\n");
 		if( resetIfFailed )
@@ -449,7 +447,7 @@ void ATADriver::serviceIRQ( void )
   else
   {
     blocks_done = br->getNumBlocks();
-    kprintfd("ATADriver::IRQHandler:Who changed the universe?\n");
+    kprintfd("ATADriver::IRQHandler:Who changed the universe\n");
     br->setStatus( BDRequest::BD_ERROR );
 	request_list_ = br->getNextRequest();
 	if( br->getThread() )	  

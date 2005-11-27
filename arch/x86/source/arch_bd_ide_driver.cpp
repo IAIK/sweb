@@ -1,10 +1,8 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ide_driver.cpp,v 1.6 2005/11/27 11:35:13 woswasi Exp $
+*    $Id: arch_bd_ide_driver.cpp,v 1.7 2005/11/27 11:57:06 woswasi Exp $
 *    $Log: arch_bd_ide_driver.cpp,v $
 *    Revision 1.5  2005/11/24 23:38:35  nelles
-*
-*
 *     Block devices fix.
 *
 *     Committing in .
@@ -168,7 +166,7 @@ uint32 IDEDriver::doDeviceDetection()
         while( inbp( base_port + 7 ) != 58 && jiffies ++ < 50000 )
             ;
         
-        if( jiffies > 49998 )
+        if( jiffies == 50000 )
           kprintfd("IDEDriver::doDetection: Still busy after reset!\n ");
         else
         {
