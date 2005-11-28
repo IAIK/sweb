@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.6 2005/09/22 09:07:03 nightcreature Exp $
+//  $Id: ArchMemory.cpp,v 1.7 2005/11/28 10:28:01 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.6  2005/09/22 09:07:03  nightcreature
+//  small fixes to compile again
+//
 //  Revision 1.5  2005/09/21 18:38:43  btittelbach
 //  ArchMemory differen page sizes part one
 //
@@ -57,12 +60,12 @@ void ArchMemory::checkAndRemovePTE(uint32 physical_page_directory_page, uint32 p
    PageManager::instance()->freePage(page_directory[pde_vpn].pde4k.page_table_base_address);
 }
 
-void ArchMemory::unmapPage(uint32 physical_page_directory_page, uint32 virtual_page)
+void ArchMemory::unmapPage(uint32 physical_page_directory_page, uint32 linear_page)
 {
    page_directory_entry *page_directory = (page_directory_entry *) (PAGE_SIZE *
                                           physical_page_directory_page);
-   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+   uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;
+   uint32 pte_vpn = linear_page % PAGE_TABLE_ENTRIES;
   
    page_table_entry *pte_base = (page_table_entry *) (PAGE_SIZE * mfn_to_pfn(
                         page_directory[pde_vpn].pde4k.page_table_base_address));
@@ -85,15 +88,15 @@ void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, 
 	page_directory[pde_vpn].pde4k.user_access = 1;
 }
 
-void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
+void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 linear_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
    kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
    page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
-  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;
+  uint32 pte_vpn = linear_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde4k.present == 0)
   {
-  kprintfd("ArchMemory::mapPage: Need to add a pte for 0 %d %d %d\n",pde_vpn, virtual_page, physical_page);
+  kprintfd("ArchMemory::mapPage: Need to add a pte for 0 %d %d %d\n",pde_vpn, linear_page, physical_page);
     insertPTE(physical_page_directory_page,pde_vpn,PageManager::instance()->getFreePhysicalPage());
   }
   page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
@@ -129,12 +132,12 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
 //   PageManager::instance()->freePage(physical_page_directory_page);
 }
 
-bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check)
+bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 laddress_to_check)
 {
 //   page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
-//   uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
-//   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-//   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+//   uint32 linear_page = vaddress_to_check / PAGE_SIZE;
+//   uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;
+//   uint32 pte_vpn = linear_page % PAGE_TABLE_ENTRIES;
 //   if (page_directory[pde_vpn].pde4k.present)
 //   {
 //     page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
@@ -148,7 +151,7 @@ bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 v
   return true;
 }
 
-uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page)
+uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 linear_page, uint32 *physical_page)
 {
   return 0;
 }
