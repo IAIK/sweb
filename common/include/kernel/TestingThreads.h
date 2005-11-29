@@ -116,7 +116,8 @@ class SerialThread : public Thread
     }
 
     kprintf("SerialThread::Run: Done with serial ports\n");
-    currentThread->kill();
+    //currentThread->kill();
+    while(1);
   };
 
 };
@@ -155,8 +156,10 @@ class BDThread : public Thread
 	BDManager::getInstance()->addRequest( bdr );
 	Scheduler::instance()->yield();
 	kprintfd("BDThread1::Run: Read request %d \n", bdr->getStatus() );
-	
-    currentThread->kill();
+	   kprintf(" FINISHED BDThread");
+
+    //currentThread->kill();
+    while(1);
   };
 
 };
@@ -192,13 +195,13 @@ class BDThread2 : public Thread
 	
 	BDRequest *bdr = new BDRequest( 2, BDRequest::BD_WRITE, 233, 8, message );
 	BDManager::getInstance()->addRequest( bdr );
-	Scheduler::instance()->yield();
+	//Scheduler::instance()->yield();
 	kprintfd("BDThread::Run: Write request %d \n", bdr->getStatus() );
 	   
    //Actually we know the virtual device number we want to use: "2" (swap)
    //What is the block size on this device?
    //Well, let's have a look. 
-   BDRequest * bd_bs = new BDRequest(0, BDRequest::BD_GET_BLK_SIZE);
+   BDRequest * bd_bs = new BDRequest(2, BDRequest::BD_GET_BLK_SIZE);
    BDManager::getInstance()->getDeviceByNumber(2)->addRequest ( bd_bs );
    //this is a blocking request. It just references data already in memory.
    if (bd_bs->getStatus() != BDRequest::BD_DONE)
@@ -208,7 +211,7 @@ class BDThread2 : public Thread
    uint32 block_size = bd_bs->getResult();
    
    //We have to check how many blocks ae available on this device:
-   BDRequest * bd_bc = new BDRequest(0, BDRequest::BD_GET_NUM_BLOCKS);
+   BDRequest * bd_bc = new BDRequest(2, BDRequest::BD_GET_NUM_BLOCKS);
    BDManager::getInstance()->getDeviceByNumber(2)->addRequest ( bd_bc );
    //this is a blocking request. It just references data already in memory.
    if (bd_bs->getStatus() != BDRequest::BD_DONE)
@@ -251,9 +254,10 @@ class BDThread2 : public Thread
    delete bd;
    delete bd_bs;
    delete bd_bc;
+   kprintf(" FINISHED BDThread2");
 
-
-
+//currentThread->kill();
+while(1);
   };
 
 };
@@ -290,5 +294,6 @@ class DeviceFSMountingThread : public Thread
     
     vfs_syscall.write(test02_fd, buffer, 10);
     vfs_syscall.write(test02_fd, buffer, 15); // this is a BIG NO NO !
+    while(1);
   }
 };
