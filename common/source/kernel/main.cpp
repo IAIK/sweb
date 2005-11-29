@@ -1,7 +1,17 @@
 /**
- * $Id: main.cpp,v 1.103 2005/11/25 00:00:18 nelles Exp $
+ * $Id: main.cpp,v 1.104 2005/11/29 17:13:55 woswasi Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.103  2005/11/25 00:00:18  nelles
+ *
+ *
+ *  Added initialisation of Block Devices before EnableTimer
+ *
+ *  Committing in .
+ *
+ *  Modified Files:
+ *  	main.cpp
+ *
  * Revision 1.102  2005/10/27 21:42:51  btittelbach
  * -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
  * -im Scheduler möglichen null-pointer zugriff vermieden
@@ -692,9 +702,9 @@ void startup()
  
   Scheduler::instance()->addNewThread( main_console );
   
-  //Scheduler::instance()->addNewThread( 
-  //  new TestTerminalThread( "TerminalTestThread", main_console, 1 )
-  // );       
+  Scheduler::instance()->addNewThread( 
+    new TestTerminalThread( "TerminalTestThread", main_console, 1 )
+  );       
   
   Scheduler::instance()->addNewThread( 
     new BDThread()
@@ -727,7 +737,7 @@ void startup()
        new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
      ); */
   
-  //Scheduler::instance()->addNewThread(new TestThread());  
+  Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();
 
