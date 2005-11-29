@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ctrl_if.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
+//  $Id: ctrl_if.c,v 1.3 2005/11/29 15:14:16 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ctrl_if.c,v $
+//  Revision 1.2  2005/08/11 16:55:47  nightcreature
+//  preview commit only for robert ;-)
+//
 //  Revision 1.1  2005/08/01 08:22:38  nightcreature
 //  code from mini-os needed for transition, maybe removedOB
 //
@@ -69,11 +72,13 @@ void ctrl_if_resume(void)
     ctrl_if_irq_action.handler = ctrl_if_interrupt;
     ctrl_if_irq_action.name    = "ctrl-if";
     (void)setup_irq(ctrl_if_irq, &ctrl_if_irq_action);
-    */
+    */    
     
     /* ** Just need to register a handler ** */
+/*
     add_ev_action (ctrl_if_evtchn, ctrl_if_interrupt);
     enable_ev_action(ctrl_if_evtchn);
+*/
 }
 
 

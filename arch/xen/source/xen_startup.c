@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xen_startup.c,v 1.4 2005/09/28 16:35:43 nightcreature Exp $
+//  $Id: xen_startup.c,v 1.5 2005/11/29 15:14:16 rotho Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_startup.c,v $
+//  Revision 1.4  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //  Revision 1.3  2005/09/28 15:57:31  rotho
 //  some work-progress (but qhacks too...)
 //
@@ -112,17 +116,6 @@ static shared_info_t *mapSharedInfo(unsigned long pa)
     return (shared_info_t *)shared_info;
 }
 
-extern void print_message ()
-{
-    char buffer[256];
-    int i;
-
-    for (i = 0; i < 10; i++)
-    {
-        xensprintf (buffer, "[%d] Hello World\n", i);
-        kcons_write (buffer, strlen(buffer));
-    }
-}
 
 /*
  * INITIAL C ENTRY POINT.
@@ -198,41 +191,42 @@ void start_kernel(start_info_t *si)
     initialiseArchCommonMemoryMaps(si->nr_pages);
     initialiseArchCommonModulesInformation(1,si->mod_start, si->mod_start+si->mod_len);
     xenprintf("arch common memory maps and modules information initalised\n");    
-    
+
     /* init console driver */
     ctrl_if_init();
- 
+
     /* trap init*/
-//now done in ArchInterrupts.cpp
-//    trap_init();
+    //now done in ArchInterrupts.cpp
+    //trap_init();
 
     /* ENABLE EVENT DELIVERY. This is disabled at start of day. */
-    __sti(); 
-    
+    //__sti(); 
+
+
     /* print out some useful information  */
-      xenprintf("Booting in Xen!\n"); 
-      xenprintf("start_info:   %p\n",    si); 
-      xenprintf("  nr_pages:   %lu",     si->nr_pages); 
-      xenprintf("  shared_inf: %08lx\n", si->shared_info); 
-      xenprintf("  pt_base:    %p",      (void *)si->pt_base);  
-      xenprintf("  mod_start:  0x%lx\n", si->mod_start); 
-      xenprintf("  mod_len:    %lu\n",   si->mod_len);  
-      xenprintf("  flags:      0x%x\n",  (unsigned int)si->flags); 
-//      xenprintf("  cmd_line:   %s\n",   
-//      si->cmd_line ? (const char *)si->cmd_line : "NULL");
-      xenprintf("kernerl_start: %lx\n", &kernel_start_address);
-      xenprintf("kernerl_end: %lx\n", &kernel_end_address);
-      xenprintf("bss_start: %lx\n", &bss_start_address);
-      xenprintf("bss_end: %lx\n", &bss_end_address);
+//     xenprintf("Booting in Xen!\n"); 
+//     xenprintf("start_info:   %p\n",    si); 
+//     xenprintf("  nr_pages:   %lu",     si->nr_pages); 
+//     xenprintf("  shared_inf: %08lx\n", si->shared_info); 
+//     xenprintf("  pt_base:    %p",      (void *)si->pt_base);  
+//     xenprintf("  mod_start:  0x%lx\n", si->mod_start); 
+//     xenprintf("  mod_len:    %lu\n",   si->mod_len);  
+//     xenprintf("  flags:      0x%x\n",  (unsigned int)si->flags); 
+//     //xenprintf("  cmd_line:   %s\n",   
+//     //si->cmd_line ? (const char *)si->cmd_line : "NULL");
+//     xenprintf("kernerl_start: %lx\n", &kernel_start_address);
+//     xenprintf("kernerl_end: %lx\n", &kernel_end_address);
+//     xenprintf("bss_start: %lx\n", &bss_start_address);
+//     xenprintf("bss_end: %lx\n", &bss_end_address);
 
     // print_boottime_paging((page_directory_entry *)si->pt_base);
  
     //printmessage();
-    xenprintf("xen initialisation done, now entering sweb startup\n");    
+    xenprintf("xen initialisation done\n");
 
     /* do nothing */
-    //for ( ; ; ) HYPERVISOR_yield();
-
+    for ( ; ; ) HYPERVISOR_yield();
+    xenprintf("now entering sweb startup\n");    
    /* entering sweb */
    startup();
 
