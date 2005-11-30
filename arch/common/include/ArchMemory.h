@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.h,v 1.18 2005/11/28 10:28:01 btittelbach Exp $
+//  $Id: ArchMemory.h,v 1.19 2005/11/30 00:55:39 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.h,v $
@@ -69,7 +69,7 @@
 #include "panic.h"
 #include "../../../common/include/mm/PageManager.h"
 
-//Arch-VirtualLinearMemoryUserSpaceObjekt
+//Arch-VirtualMemoryUserSpaceObjekt
 /*
  *
  * Collection of architecture dependant functions conerning Memory and Pages
@@ -81,7 +81,7 @@ public:
 
 /** 
  *
- * creates a new Page-Directory for an UserProccess by copying the original Kernel-Only Page-Directory
+ * creates a new Page-Directory for a UserProccess by copying the Kernel-Page-Directory
  *
  * @param physical_page_to_use where the new PDE should be
  */
@@ -89,24 +89,24 @@ public:
 
 /** 
  *
- * maps a linear page to a physical page (pde and pte need to be set up first)
+ * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
  * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param linear_page 
+ * @param virtual_page 
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging Privilege Mechanism
  * @param page_size Optional, defaults to 4k pages, but you ned to set it to 1024*4096 if you want to map a 4m page
  */
-  static void mapPage(uint32 physical_page_directory_page, uint32 linear_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
+  static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
 
 /**
  *
- * removes the mapping of a linear_page by marking its PTE Entry as non valid
+ * removes the mapping to a virtual_page by marking its PTE Entry as non valid
  *
  * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param linear_page which will be invalidated
+ * @param virtual_page which will be invalidated
  */
-  static void unmapPage(uint32 physical_page_directory_page, uint32 linear_page);
+  static void unmapPage(uint32 physical_page_directory_page, uint32 virtual_page);
 
 /**
  *
@@ -119,10 +119,10 @@ public:
 //  static pointer physicalPageToKernelPointer(uint32 physical_page);
 
 /**
- * Takes a Physical Page Number in Real Memory and returns a linear address than can be used to access given page
+ * Takes a Physical Page Number in Real Memory and returns a virtual address than can be used to access given page
  * @param ppn Physical Page Number
  * @param page_size Optional, defaults to 4k pages, but you ned to set it to 1024*4096 if you have a 4m page number
- * @return Linear Address above 3GB pointing to the start of a memory segment that is mapped to the physical page given
+ * @return Virtual Address above 3GB pointing to the start of a memory segment that is mapped to the physical page given
  */
   static pointer get3GBAdressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
   {
@@ -130,38 +130,38 @@ public:
   }
 
 /**
- * Checks if a given Linear Address is valid and mapped to real memory
+ * Checks if a given Virtual Address is valid and mapped to real memory
  * @param physical_page_directory_page Real Page where the PDE can be found
- * @param laddress_to_check Linear Address we want to check
- * @return true: if mapping exists\nfalse: if the given linear address is unmapped and accessing it would result in a pageFault
+ * @param vaddress_to_check Virtual Address we want to check
+ * @return true: if mapping exists\nfalse: if the given virtual address is unmapped and accessing it would result in a pageFault
  */
-  static bool checkAddressValid(uint32 physical_page_directory_page, uint32 laddress_to_check);
+  static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
 
 /**
- * Takes a linear_page and search through the pageTable and pageDirectory for the physical_page it refers to
+ * Takes a virtual_page and search through the pageTable and pageDirectory for the physical_page it refers to
  * to get a physical address (which you can only use by adding 3gb to it) multiply the &physical_page with the return value
- * @param linear_page linear Page to look up
+ * @param virtual_page virtual Page to look up
  * @param &physical_pag Reference to the result
- * @return 0: if the linear page doesn't map to any physical page\notherwise returns the page size in byte (4096 for 4k pages or 4096*1024 for 4m pages)
+ * @return 0: if the virtual page doesn't map to any physical page\notherwise returns the page size in byte (4096 for 4k pages or 4096*1024 for 4m pages)
  */
-  static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 linear_page, uint32 *physical_page);
+  static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
 
 private:
 
 /** 
  * adds a PageTableEntry to the given PageDirectory
  * @param physical_page_directory_page Real Page where the PDE we want to ad a PTE to, resides
- * @param pde_lpn The Linear Page Number inside the PDE that shall point to our new PTE
+ * @param pde_vpn The Virtual Page Number inside the PDE that shall point to our new PTE
  * @param physical_page_table_page Real Page where the PTE we want to add, resides
  */
-  static void insertPTE(uint32 physical_page_directory_page, uint32 pde_lpn, uint32 physical_page_table_page);
+  static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
 
 /**
  * Removes a PageTableEntry from a PageDiretory if it was there in the first place
  * @param physical_page_directory_page Real Page where the PDE is
- * @param pde_lpn Linear Page Number inside the PDE of the PTE we want to remove
+ * @param pde_vpn Virtual Page Number inside the PDE of the PTE we want to remove
  */
-  static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_lpn);
+  static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
 
 };
 
