@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.h,v 1.3 2005/09/28 16:35:43 nightcreature Exp $
+//  $Id: xen_memory.h,v 1.4 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.h,v $
+//  Revision 1.3  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //  Revision 1.2  2005/08/11 18:09:46  nightcreature
 //  *** empty log message ***
 //
@@ -45,25 +49,29 @@
 //#define PAGE_SIZE       (1UL << PAGE_SHIFT)
 #define PAGE_MASK       (~(PAGE_SIZE-1))
 
-#define PFN_UP(x)	(((x) + PAGE_SIZE-1) >> PAGE_SHIFT)
-#define PFN_DOWN(x)	((x) >> PAGE_SHIFT)
-#define PFN_PHYS(x)	((x) << PAGE_SHIFT)
+//#define PFN_UP(x)	(((x) + PAGE_SIZE-1) >> PAGE_SHIFT)
+//#define PFN_DOWN(x)	((x) >> PAGE_SHIFT)
+//#define PFN_PHYS(x)	((x) << PAGE_SHIFT)
 
-#define VIRT_START              0x80000000UL
-
-#define to_phys(x)                 ((unsigned long)(x)-VIRT_START)
-#define to_virt(x)                 ((void *)((unsigned long)(x)+VIRT_START))
+//#define to_phys(x)  ((unsigned long)(x)-VIRT_START)
+//#define to_virt(x)  ((void *)((unsigned long)(x)+VIRT_START))
 
 /* to align the pointer to the (next) page boundary */
-#define PAGE_ALIGN(addr)        (((addr)+PAGE_SIZE-1)&PAGE_MASK)
+#define PAGE_ALIGN(addr) (((addr)+PAGE_SIZE-1)&PAGE_MASK)
 
-//machine_to_phys_mapping is defined in xen.h
+
+//CHECK...see include/asm-xen/asm-i386/page.h for magic assembler code...
+//check if we need this
+//machine_to_phys_mapping is defined in xen-public/arch-x86_32.h
 #define mfn_to_pfn(_mfn) (machine_to_phys_mapping[(_mfn)])
 
 //initalised in initalisePhysToMachineMapping()
-extern unsigned long *phys_to_machine_mapping;
-#define pfn_to_mfn(_pfn) (phys_to_machine_mapping[(_pfn)])
+extern unsigned long *physical_to_machine_mapping_;
 
+#define FOREIGN_FRAME(m) (m | (1UL << 31))
+#define FRAME_NR_MASK (1UL << 31)
+#define pfn_to_mfn(_pfn) (physical_to_machine_mapping_[(unsigned int)_pfn] & FRAME_NR_MASK)
+#define __pte(x) ((pte_t) { (x) } )
 
 void initalisePhysToMachineMapping();
 
@@ -80,6 +88,11 @@ static __inline__ unsigned long machine_to_phys(unsigned long machine)
     unsigned long phys = mfn_to_pfn(machine >> PAGE_SHIFT);
     phys = (phys << PAGE_SHIFT) | (machine & ~PAGE_MASK);
     return phys;
+}
+
+static __inline__ unsigned long pfn_to_machine(unsigned long pfn)
+{
+    return (pfn_to_mfn(pfn) * PAGE_SIZE);
 }
 
 // void init_mm(void);

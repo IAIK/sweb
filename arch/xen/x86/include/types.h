@@ -1,7 +1,10 @@
 /**
- * $Id: types.h,v 1.4 2005/09/21 17:01:12 nomenquis Exp $
+ * $Id: types.h,v 1.5 2006/01/20 07:20:04 nightcreature Exp $
  *
  * $Log: types.h,v $
+ * Revision 1.4  2005/09/21 17:01:12  nomenquis
+ * updates
+ *
  * Revision 1.3  2005/08/11 16:53:42  nightcreature
  * some addition
  *
@@ -86,5 +89,20 @@ typedef unsigned int size_t;
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
+// types for xen public headers
+
+typedef  u8 uint8_t;
+typedef  s8 int8_t;
+typedef u16 uint16_t;
+typedef s16 int16_t;
+typedef u32 uint32_t;
+typedef s32 int32_t;
+typedef u64 uint64_t;
+typedef s64 int64_t;
+
+
+typedef struct { unsigned long pte_low; } pte_t;
+
+// end xen types
 
 #endif

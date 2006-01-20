@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.c,v 1.2 2005/09/28 16:35:43 nightcreature Exp $
+//  $Id: xen_memory.c,v 1.3 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.c,v $
+//  Revision 1.2  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //  Revision 1.1  2005/08/11 16:59:10  nightcreature
 //  replacing mm.h
 //
@@ -17,7 +21,7 @@
 #include "lib.h"
 #include "paging-definitions.h"
 
-unsigned long *phys_to_machine_mapping; //FIXXEME: korrect type?
+unsigned long *physical_to_machine_mapping_;
 extern char *stack;
 extern char _text, _etext, _edata, _end;
 
@@ -26,9 +30,7 @@ extern void initalisePhysToMachineMapping();
 
 void initalisePhysToMachineMapping()
 {
-  uint64 map_mfn = HYPERVISOR_shared_info->arch.pfn_to_mfn_frame_list;
-  //phys_to_machine_mapping = machine_to_phys(map_mfn);
-  phys_to_machine_mapping = (unsigned long *) mfn_to_pfn(map_mfn);
+  physical_to_machine_mapping_ = (unsigned long *) start_info_.mfn_list;
 }
 
 //----------------------------------------------------------------------
@@ -36,32 +38,29 @@ void initalisePhysToMachineMapping()
 void initalisePhysMapping3GB(uint32 nr_pages)
 {
   uint32 i =0;
-  uint32 mfn = 0;
-  uint32 madr = 0;
-  //uint32 virt_start = 3u*1024u*1024u*1024u;
-  //uint32 result = 0;
-  mmu_update_t entry;
-  page_table_entry pte;
+  unsigned long vadr = 1024*1024*1024*3U;
+
+  //TODO: This is a reather slow method of page talbe update
+  //would be better to use mmu_update in batch mode
+
+  //// FIXXME (andy, 2006-01-19 15:04:11) -> liegt nicht kernel am beginn von
+  //// 3gb, darf nicht neu mappen!
   
-  for(i = 0; i < nr_pages; i++)
+  ;
+  
+// END FIXXME (andy, 2006-01-19 15:04:11)
+
+  
+  //TODO: alles erstmal readonly mappen, dann die ausnahmen einbauen
+  //for(i = 0; i < nr_pages; i++)
+  for(i = 0; i < 10; i++)
   {
-    mfn = pfn_to_mfn(i);
-    madr = phys_to_machine(i * PAGE_SIZE);
-    madr <<= 2;
-    entry.ptr = MMU_NORMAL_PT_UPDATE | madr;
-
-    pte.present = 1;
-    pte.writeable = 1;
-    pte.user_access = 0;
-    pte.accessed = 0;
-    pte.dirty = 0;
-    pte.page_base_address = mfn * PAGE_SIZE;
-
-    //entry.val = (memory_t) pte;
-    
-    //entry.val = (mfn << 12) | 3;
-    entry.val = (pte.page_base_address) | 3;
-    
-    //HYPERVISOR_mmu_update(&entry,1,&result);
+    if ( HYPERVISOR_update_va_mapping(vadr, 
+       __pte(pfn_to_machine(i) | 1), UVMF_INVLPG) )
+    {
+      //printk("Failed to map shared_info!!\n");
+      *(int*)0=0;
+    }
+    //return (shared_info_t *)shared_info;
   }
 }

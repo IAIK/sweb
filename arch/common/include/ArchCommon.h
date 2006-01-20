@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.h,v 1.11 2005/09/21 14:46:35 btittelbach Exp $
+//   $Id: ArchCommon.h,v 1.12 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.h,v $
+//  Revision 1.11  2005/09/21 14:46:35  btittelbach
+//  *** empty log message ***
+//
 //  Revision 1.10  2005/09/20 20:11:18  btittelbach
 //  doxification
 //
@@ -55,6 +58,30 @@ class ArchCommon
 {
 public:
 
+  /** 
+   *
+   * @return returns the end address of the kernel
+   *
+   */
+  static pointer getKernelEndAddress();
+
+  /** 
+   *
+   * @return returns the start address of the free memory block used
+   *         for dynamic kernel memory
+   *
+   */
+  static pointer getFreeKernelMemoryStart();
+
+  /** 
+   *
+   * @return returns the end address of the free memory block used
+   *         for dynamic kernel memory
+   *
+   */
+  static pointer getFreeKernelMemoryEnd();
+  
+  
   /** 
    *
    * @param is_paging_set_up inform function that paging is not yet up (=false) and that it should behave accordingly

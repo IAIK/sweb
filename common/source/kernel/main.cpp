@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.104 2005/11/29 17:13:55 woswasi Exp $
+ * $Id: main.cpp,v 1.105 2006/01/20 07:20:04 nightcreature Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.104  2005/11/29 17:13:55  woswasi
+ * why does this fail afer some time?
+ *
  * Revision 1.103  2005/11/25 00:00:18  nelles
  *
  *
@@ -625,10 +628,10 @@ class TestThread : public Thread
 //------------------------------------------------------------
 void startup()
 {
-  writeLine2Bochs( (uint8 *) "Startup Started \n");
-
-  pointer start_address = (pointer)&kernel_end_address;
-  pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
+  pointer start_address = ArchCommon::getFreeKernelMemoryStart();
+  //pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
+  pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
+  
   writeLine2Bochs( (uint8 *) "Creating Page Manager\n");
   start_address = PageManager::createPageManager(start_address);
   writeLine2Bochs( (uint8 *) "PageManager created \n");

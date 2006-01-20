@@ -1,7 +1,10 @@
 /**
- * $Id: page-table-manip.c,v 1.2 2005/08/11 16:55:47 nightcreature Exp $
+ * $Id: page-table-manip.c,v 1.3 2006/01/20 07:20:04 nightcreature Exp $
  *
  * $Log: page-table-manip.c,v $
+ * Revision 1.2  2005/08/11 16:55:47  nightcreature
+ * preview commit only for robert ;-)
+ *
  * Revision 1.1  2005/08/01 08:27:59  nightcreature
  * to satisfy linker
  *
@@ -27,7 +30,7 @@ void switchToPageDirectory(uint32 physical_page_directory_page)
   
   
   //CHECK: not sure about the following: maybe should shift page 2 bits before?
-  update.ptr = MMU_EXTENDED_COMMAND | physical_page_directory_page;
+  //update.ptr = MMU_EXTENDED_COMMAND | physical_page_directory_page;
     
   //HYPERVISOR_mmu_update(&update, 1, &success_count);
 }

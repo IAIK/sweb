@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.15 2005/09/26 15:29:05 btittelbach Exp $
+//   $Id: ArchCommon.cpp,v 1.16 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.15  2005/09/26 15:29:05  btittelbach
+//  check
+//
 //  Revision 1.14  2005/09/03 18:20:14  nomenquis
 //  pseudo fs works now
 //
@@ -171,6 +174,22 @@ void parseMultibootHeader()
 
 
 }
+
+pointer ArchCommon::getKernelEndAddress()
+{
+   return (pointer)&kernel_end_address;
+}
+
+pointer ArchCommon::getFreeKernelMemoryStart()
+{
+   return (pointer)&kernel_end_address;
+}
+
+pointer ArchCommon::getFreeKernelMemoryEnd()
+{
+   return (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
+}
+
 
 uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
 {

@@ -1,30 +1,24 @@
-//----------------------------------------------------------------------
-//  $Id: hypervisor.h,v 1.2 2005/09/23 16:06:07 rotho Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: hypervisor.h,v $
-//  Revision 1.1  2005/07/31 18:22:59  nightcreature
-//  hypercall interface needed to talk to xen
-//
-//
-//----------------------------------------------------------------------
-
-
 /******************************************************************************
  * hypervisor.h
  * 
- * Linux-specific hypervisor handling.
- * 
+ * Hypervisor handling.
+ *
  * Copyright (c) 2002, K A Fraser
+ * Copyright (c) 2005, Grzegorz Milos
  */
 
 #ifndef _HYPERVISOR_H_
 #define _HYPERVISOR_H_
 
 #include <types.h>
-
 #include <xen-public/xen.h>
-#include <xen-public/io/domain_controller.h>
+#include <xen-public/dom0_ops.h>
+
+//new by nightcreature
+
+extern shared_info_t *HYPERVISOR_shared_info_;
+
+//end new
 
 /*
  * a placeholder for the start of day information passed up from the hypervisor
@@ -34,294 +28,293 @@ union start_info_union
     start_info_t start_info;
     char padding[512];
 };
-extern union start_info_union start_info_union;
-#define start_info (start_info_union.start_info)
+extern union start_info_union start_info_union_;
+#define start_info_ (start_info_union_.start_info)
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+
 /* hypervisor.c */
-void do_hypervisor_callback(struct pt_regs *regs);
-void enable_hypervisor_event(unsigned int ev);
-void disable_hypervisor_event(unsigned int ev);
-void ack_hypervisor_event(unsigned int ev);
-#ifdef __cplusplus
-}
-#endif
+//void do_hypervisor_callback(struct pt_regs *regs);
+void mask_evtchn(u32 port);
+void unmask_evtchn(u32 port);
+void clear_evtchn(u32 port);
 
 /*
  * Assembler stubs for hyper-calls.
  */
 
-static __inline__ int HYPERVISOR_set_trap_table(trap_info_t *table)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_set_trap_table),
-        "b" (table) : "memory" );
+#ifndef __HYPERCALL_H__
+#define __HYPERCALL_H__
 
-    return ret;
+#include <xen-public/sched.h>
+
+#define _hypercall0(type, name)			\
+({						\
+	long __res;				\
+	asm volatile (				\
+		TRAP_INSTR			\
+		: "=a" (__res)			\
+		: "0" (__HYPERVISOR_##name)	\
+		: "memory" );			\
+	(type)__res;				\
+})
+
+#define _hypercall1(type, name, a1)				\
+({								\
+	long __res, __ign1;					\
+	asm volatile (						\
+		TRAP_INSTR					\
+		: "=a" (__res), "=b" (__ign1)			\
+		: "0" (__HYPERVISOR_##name), "1" ((long)(a1))	\
+		: "memory" );					\
+	(type)__res;						\
+})
+
+#define _hypercall2(type, name, a1, a2)				\
+({								\
+	long __res, __ign1, __ign2;				\
+	asm volatile (						\
+		TRAP_INSTR					\
+		: "=a" (__res), "=b" (__ign1), "=c" (__ign2)	\
+		: "0" (__HYPERVISOR_##name), "1" ((long)(a1)),	\
+		"2" ((long)(a2))				\
+		: "memory" );					\
+	(type)__res;						\
+})
+
+#define _hypercall3(type, name, a1, a2, a3)			\
+({								\
+	long __res, __ign1, __ign2, __ign3;			\
+	asm volatile (						\
+		TRAP_INSTR					\
+		: "=a" (__res), "=b" (__ign1), "=c" (__ign2), 	\
+		"=d" (__ign3)					\
+		: "0" (__HYPERVISOR_##name), "1" ((long)(a1)),	\
+		"2" ((long)(a2)), "3" ((long)(a3))		\
+		: "memory" );					\
+	(type)__res;						\
+})
+
+#define _hypercall4(type, name, a1, a2, a3, a4)			\
+({								\
+	long __res, __ign1, __ign2, __ign3, __ign4;		\
+	asm volatile (						\
+		TRAP_INSTR					\
+		: "=a" (__res), "=b" (__ign1), "=c" (__ign2),	\
+		"=d" (__ign3), "=S" (__ign4)			\
+		: "0" (__HYPERVISOR_##name), "1" ((long)(a1)),	\
+		"2" ((long)(a2)), "3" ((long)(a3)),		\
+		"4" ((long)(a4))				\
+		: "memory" );					\
+	(type)__res;						\
+})
+
+#define _hypercall5(type, name, a1, a2, a3, a4, a5)		\
+({								\
+	long __res, __ign1, __ign2, __ign3, __ign4, __ign5;	\
+	asm volatile (						\
+		TRAP_INSTR					\
+		: "=a" (__res), "=b" (__ign1), "=c" (__ign2),	\
+		"=d" (__ign3), "=S" (__ign4), "=D" (__ign5)	\
+		: "0" (__HYPERVISOR_##name), "1" ((long)(a1)),	\
+		"2" ((long)(a2)), "3" ((long)(a3)),		\
+		"4" ((long)(a4)), "5" ((long)(a5))		\
+		: "memory" );					\
+	(type)__res;						\
+})
+
+static inline int
+HYPERVISOR_set_trap_table(
+	trap_info_t *table)
+{
+	return _hypercall1(int, set_trap_table, table);
 }
 
-static __inline__ int HYPERVISOR_mmu_update(mmu_update_t *req, 
-                                            int count, 
-                                            int *success_count)
+static inline int
+HYPERVISOR_mmu_update(
+	mmu_update_t *req, int count, int *success_count, domid_t domid)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_mmu_update), 
-        "b" (req), "c" (count), "d" (success_count)  : "memory" );
-
-    return ret;
+	return _hypercall4(int, mmu_update, req, count, success_count, domid);
 }
 
-static __inline__ int HYPERVISOR_set_gdt(unsigned long *frame_list, int entries)
+static inline int
+HYPERVISOR_mmuext_op(
+	struct mmuext_op *op, int count, int *success_count, domid_t domid)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_set_gdt), 
-        "b" (frame_list), "c" (entries) : "memory" );
-
-
-    return ret;
+	return _hypercall4(int, mmuext_op, op, count, success_count, domid);
 }
 
-static __inline__ int HYPERVISOR_stack_switch(unsigned long ss, unsigned long esp)
+static inline int
+HYPERVISOR_set_gdt(
+	unsigned long *frame_list, int entries)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_stack_switch),
-        "b" (ss), "c" (esp) : "memory" );
-
-    return ret;
+	return _hypercall2(int, set_gdt, frame_list, entries);
 }
 
-static __inline__ int HYPERVISOR_set_callbacks(
-    unsigned long event_selector, unsigned long event_address,
-    unsigned long failsafe_selector, unsigned long failsafe_address)
+static inline int
+HYPERVISOR_stack_switch(
+	unsigned long ss, unsigned long esp)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_set_callbacks),
-        "b" (event_selector), "c" (event_address), 
-        "d" (failsafe_selector), "S" (failsafe_address) : "memory" );
-
-    return ret;
+	return _hypercall2(int, stack_switch, ss, esp);
 }
 
-static __inline__ int HYPERVISOR_fpu_taskswitch(void)
+static inline int
+HYPERVISOR_set_callbacks(
+	unsigned long event_selector, unsigned long event_address,
+	unsigned long failsafe_selector, unsigned long failsafe_address)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_fpu_taskswitch) : "memory" );
-
-    return ret;
+	return _hypercall4(int, set_callbacks,
+			   event_selector, event_address,
+			   failsafe_selector, failsafe_address);
 }
 
-static __inline__ int HYPERVISOR_yield(void)
+static inline int
+HYPERVISOR_fpu_taskswitch(
+	int set)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_sched_op),
-        "b" (SCHEDOP_yield) : "memory" );
-
-    return ret;
+	return _hypercall1(int, fpu_taskswitch, set);
 }
 
-static __inline__ int HYPERVISOR_block(void)
+static inline int
+HYPERVISOR_sched_op(
+	int cmd, unsigned long arg)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_sched_op),
-        "b" (SCHEDOP_block) : "memory" );
-
-    return ret;
+	return _hypercall2(int, sched_op, cmd, arg);
 }
 
-static __inline__ int HYPERVISOR_shutdown(void)
+static inline long
+HYPERVISOR_set_timer_op(
+	u64 timeout)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_sched_op),
-        "b" (SCHEDOP_shutdown | (SHUTDOWN_poweroff << SCHEDOP_reasonshift))
-        : "memory" );
-
-    return ret;
+	unsigned long timeout_hi = (unsigned long)(timeout>>32);
+	unsigned long timeout_lo = (unsigned long)timeout;
+	return _hypercall2(long, set_timer_op, timeout_lo, timeout_hi);
 }
 
-static __inline__ int HYPERVISOR_reboot(void)
+static inline int
+HYPERVISOR_dom0_op(
+	dom0_op_t *dom0_op)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_sched_op),
-        "b" (SCHEDOP_shutdown | (SHUTDOWN_reboot << SCHEDOP_reasonshift))
-        : "memory" );
-
-    return ret;
+	dom0_op->interface_version = DOM0_INTERFACE_VERSION;
+	return _hypercall1(int, dom0_op, dom0_op);
 }
 
-static __inline__ int HYPERVISOR_suspend(unsigned long srec)
+static inline int
+HYPERVISOR_set_debugreg(
+	int reg, unsigned long value)
 {
-    int ret;
-    /* NB. On suspend, control software expects a suspend record in %esi. */
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_sched_op),
-        "b" (SCHEDOP_shutdown | (SHUTDOWN_suspend << SCHEDOP_reasonshift)), 
-        "S" (srec) : "memory" );
-
-    return ret;
+	return _hypercall2(int, set_debugreg, reg, value);
 }
 
-static __inline__ long HYPERVISOR_set_timer_op(void *timer_arg)
+static inline unsigned long
+HYPERVISOR_get_debugreg(
+	int reg)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_set_timer_op),
-        "b" (timer_arg) : "memory" );
-
-    return ret;
+	return _hypercall1(unsigned long, get_debugreg, reg);
 }
 
-static __inline__ int HYPERVISOR_dom0_op(void *dom0_op)
+static inline int
+HYPERVISOR_update_descriptor(
+	u64 ma, u64 desc)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_dom0_op),
-        "b" (dom0_op) : "memory" );
-
-    return ret;
+	return _hypercall4(int, update_descriptor, ma, ma>>32, desc, desc>>32);
 }
 
-static __inline__ int HYPERVISOR_set_debugreg(int reg, unsigned long value)
+static inline int
+HYPERVISOR_memory_op(
+	unsigned int cmd, void *arg)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_set_debugreg),
-        "b" (reg), "c" (value) : "memory" );
-
-    return ret;
+	return _hypercall2(int, memory_op, cmd, arg);
 }
 
-static __inline__ unsigned long HYPERVISOR_get_debugreg(int reg)
+static inline int
+HYPERVISOR_multicall(
+	void *call_list, int nr_calls)
 {
-    unsigned long ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_get_debugreg),
-        "b" (reg) : "memory" );
-
-    return ret;
+	return _hypercall2(int, multicall, call_list, nr_calls);
 }
 
-static __inline__ int HYPERVISOR_update_descriptor(
-    unsigned long pa, unsigned long word1, unsigned long word2)
+static inline int
+HYPERVISOR_update_va_mapping(
+	unsigned long va, pte_t new_val, unsigned long flags)
 {
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_update_descriptor), 
-        "b" (pa), "c" (word1), "d" (word2) : "memory" );
-
-    return ret;
+	unsigned long pte_hi = 0;
+#ifdef CONFIG_X86_PAE
+	pte_hi = new_val.pte_high;
+#endif
+	return _hypercall4(int, update_va_mapping, va,
+			   new_val.pte_low, pte_hi, flags);
 }
 
-static __inline__ int HYPERVISOR_set_fast_trap(int idx)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_set_fast_trap), 
-        "b" (idx) : "memory" );
-
-    return ret;
-}
-
-static __inline__ int HYPERVISOR_dom_mem_op(void *dom_mem_op)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_dom_mem_op),
-        "b" (dom_mem_op) : "memory" );
-
-    return ret;
-}
-
-static __inline__ int HYPERVISOR_multicall(void *call_list, int nr_calls)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_multicall),
-        "b" (call_list), "c" (nr_calls) : "memory" );
-
-    return ret;
-}
-
-static __inline__ int HYPERVISOR_update_va_mapping(
-    unsigned long page_nr, unsigned long new_val, unsigned long flags)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_update_va_mapping), 
-        "b" (page_nr), "c" (new_val), "d" (flags) : "memory" );
-
-    return ret;
-}
-
-static __inline__ int HYPERVISOR_xen_version(int cmd)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_xen_version), 
-        "b" (cmd) : "memory" );
-
-    return ret;
-}
-
-static __inline__ int HYPERVISOR_console_io(int cmd, int count, char *str)
-{
-    int ret;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret) : "0" (__HYPERVISOR_console_io),
-        "b" (cmd), "c" (count), "d" (str) : "memory" );
-
-    return ret;
-}
-
-/**********************************************************************/
-static __inline__ int
+static inline int
 HYPERVISOR_event_channel_op(
-    void *op)
+	void *op)
 {
-    int ret;
-    unsigned long ignore;
-    __asm__ __volatile__ (
-        TRAP_INSTR
-        : "=a" (ret), "=b" (ignore)
-	: "0" (__HYPERVISOR_event_channel_op), "1" (op)
-	: "memory" );
-
-    return ret;
+	return _hypercall1(int, event_channel_op, op);
 }
+
+static inline int
+HYPERVISOR_xen_version(
+	int cmd, void *arg)
+{
+	return _hypercall2(int, xen_version, cmd, arg);
+}
+
+static inline int
+HYPERVISOR_console_io(
+	int cmd, int count, char *str)
+{
+	return _hypercall3(int, console_io, cmd, count, str);
+}
+
+static inline int
+HYPERVISOR_physdev_op(
+	void *physdev_op)
+{
+	return _hypercall1(int, physdev_op, physdev_op);
+}
+
+static inline int
+HYPERVISOR_grant_table_op(
+	unsigned int cmd, void *uop, unsigned int count)
+{
+	return _hypercall3(int, grant_table_op, cmd, uop, count);
+}
+
+static inline int
+HYPERVISOR_update_va_mapping_otherdomain(
+	unsigned long va, pte_t new_val, unsigned long flags, domid_t domid)
+{
+	unsigned long pte_hi = 0;
+#ifdef CONFIG_X86_PAE
+	pte_hi = new_val.pte_high;
+#endif
+	return _hypercall5(int, update_va_mapping_otherdomain, va,
+			   new_val.pte_low, pte_hi, flags, domid);
+}
+
+static inline int
+HYPERVISOR_vm_assist(
+	unsigned int cmd, unsigned int type)
+{
+	return _hypercall2(int, vm_assist, cmd, type);
+}
+
+static inline int
+HYPERVISOR_vcpu_op(
+	int cmd, int vcpuid, void *extra_args)
+{
+	return _hypercall3(int, vcpu_op, cmd, vcpuid, extra_args);
+}
+
+static inline int
+HYPERVISOR_suspend(
+	unsigned long srec)
+{
+	return _hypercall3(int, sched_op, SCHEDOP_shutdown,
+			   SHUTDOWN_suspend, srec);
+}
+
+#endif /* __HYPERCALL_H__ */
 
 
 #endif /* __HYPERVISOR_H__ */

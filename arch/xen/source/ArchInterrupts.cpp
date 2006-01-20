@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.4 2005/09/28 15:57:31 rotho Exp $
+//  $Id: ArchInterrupts.cpp,v 1.5 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.4  2005/09/28 15:57:31  rotho
+//  some work-progress (but qhacks too...)
+//
 //  Revision 1.3  2005/09/23 16:06:07  rotho
 //  did some cleaning up
 //
@@ -23,7 +26,7 @@ extern "C"
 }
 #include "hypervisor.h"
 
-#include "events.h"
+//#include "events.h"
 
 static uint32 interrupts_on = 0;
 static uint32 timer_on = 0;
@@ -32,23 +35,14 @@ static uint32 timer_on = 0;
 void ArchInterrupts::initialise()
 {
 
-/// set all the callbacks
-//traps init
-trap_init();
-//event init
-
-//stop event delivery
-
 }
 
 void ArchInterrupts::enableTimer()
 {
-  enable_ev_action( EV_TIMER );
 }
 
 void ArchInterrupts::disableTimer()
 {
-  disable_ev_action( EV_TIMER );
 }
 
 void ArchInterrupts::enableInterrupts()
@@ -75,12 +69,10 @@ bool ArchInterrupts::testIFSet()
 
 void ArchInterrupts::enableKBD()
 {
-  enable_ev_action( EV_CONSOLE );
 }
 
 void ArchInterrupts::disableKBD()
 {
-  disable_ev_action( VIRQ_CONSOLE );
 }
 
 void ArchInterrupts::enableBDS()

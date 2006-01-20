@@ -1,18 +1,10 @@
-//----------------------------------------------------------------------
-//  $Id: hypervisor.c,v 1.1 2005/08/01 08:22:38 nightcreature Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: hypervisor.c,v $
-//
-//----------------------------------------------------------------------
-
-
 /******************************************************************************
  * hypervisor.c
  * 
  * Communication to/from hypervisor.
  * 
  * Copyright (c) 2002-2003, K A Fraser
+ * Copyright (c) 2005, Grzegorz Milos, gm281@cam.ac.uk,Intel Research Cambridge
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -33,70 +25,71 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "os.h"
+#include <os.h>
 #include "hypervisor.h"
-#include "events.h"
-#include "types.h"
-#include "stdarg.h"
-#include "lib.h"
-#include "synch_bitops.h"
+//#include <events.h>
 
-
-static unsigned long event_mask = 0;
-static unsigned long ev_err_count;
-extern int console_ready;
+#define active_evtchns(cpu,sh,idx)              \
+    ((sh)->evtchn_pending[idx] &                \
+     ~(sh)->evtchn_mask[idx])
 
 void do_hypervisor_callback(struct pt_regs *regs)
 {
-    unsigned long l1, l2;
-    unsigned int l1i, l2i, port;
-    unsigned long flags;
-    char buffer[256];
-    shared_info_t *s = HYPERVISOR_shared_info;
-    
-    local_irq_save(flags);
-    
-    while (s->vcpu_data[0].evtchn_upcall_pending) {
-        s->vcpu_data[0].evtchn_upcall_pending = 0;
-        /* NB. No need for a barrier here -- XCHG is a barrier on x86. */
-        l1 = xchg(&s->evtchn_pending_sel, 0);
-        while ((l1i = ffs(l1)) != 0) {
-            l1i--;
-            l1 &= ~(1 << l1i);
+    u32 	       l1, l2;
+    unsigned int   l1i, l2i, port;
+    int            cpu = 0;
+    shared_info_t *s = HYPERVISOR_shared_info_;
+    vcpu_info_t   *vcpu_info = &s->vcpu_info[cpu];
 
-            l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
-            while ((l2i = ffs(l2)) != 0) {
-                l2i--;
-                l2 &= ~(1 << l2i);
-
-                port = (l1i << 5) + l2i;
-                do_event ((int)port, regs);
-                synch_clear_bit(port, &s->evtchn_pending[0]);
-            }
-        }
-    }
+    vcpu_info->evtchn_upcall_pending = 0;
     
-    local_irq_restore(flags);
+    /* NB. No need for a barrier here -- XCHG is a barrier on x86. */
+//     l1 = xchg(&vcpu_info->evtchn_pending_sel, 0);
+//     while ( l1 != 0 )
+//     {
+//         l1i = __ffs(l1);
+//         l1 &= ~(1 << l1i);
+        
+//         while ( (l2 = active_evtchns(cpu, s, l1i)) != 0 )
+//         {
+//             l2i = __ffs(l2);
+//             l2 &= ~(1 << l2i);
+
+//             port = (l1i << 5) + l2i;
+// 			do_event(port, regs);
+//         }
+//     }
 }
 
-void enable_hypervisor_event(unsigned int ev)
+
+inline void mask_evtchn(u32 port)
 {
-   
-    set_bit(ev, &event_mask);
-    set_bit(ev, &HYPERVISOR_shared_info->evtchn_mask[0]);
-    if ( HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending)
-        do_hypervisor_callback(NULL);
+//     shared_info_t *s = HYPERVISOR_shared_info_;
+//     synch_set_bit(port, &s->evtchn_mask[0]);
 }
 
-void disable_hypervisor_event(unsigned int ev)
+inline void unmask_evtchn(u32 port)
 {
-    clear_bit(ev, &event_mask);
-    clear_bit(ev, &HYPERVISOR_shared_info->evtchn_mask[0]);
+//     shared_info_t *s = HYPERVISOR_shared_info_;
+//     vcpu_info_t *vcpu_info = &s->vcpu_info[smp_processor_id()];
+
+//     synch_clear_bit(port, &s->evtchn_mask[0]);
+
+//     /*
+//      * The following is basically the equivalent of 'hw_resend_irq'. Just like
+//      * a real IO-APIC we 'lose the interrupt edge' if the channel is masked.
+//      */
+//     if (  synch_test_bit        (port,    &s->evtchn_pending[0]) && 
+//          !synch_test_and_set_bit(port>>5, &vcpu_info->evtchn_pending_sel) )
+//     {
+//         vcpu_info->evtchn_upcall_pending = 1;
+//         if ( !vcpu_info->evtchn_upcall_mask )
+//             force_evtchn_callback();
+//     }
 }
 
-void ack_hypervisor_event(unsigned int ev)
+inline void clear_evtchn(u32 port)
 {
-    if ( !(event_mask & (1<<ev)) )
-        atomic_inc((atomic_t *)&ev_err_count);
-    set_bit(ev, &HYPERVISOR_shared_info->evtchn_mask[0]);
+//     shared_info_t *s = HYPERVISOR_shared_info_;
+//     synch_clear_bit(port, &s->evtchn_pending[0]);
 }

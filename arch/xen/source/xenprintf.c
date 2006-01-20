@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xenprintf.c,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
+//  $Id: xenprintf.c,v 1.2 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: printf.c,v $
+//  $Log: xenprintf.c,v $
+//  Revision 1.1  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //  Revision 1.1  2005/08/01 08:28:34  nightcreature
 //  what to say..
 //
@@ -26,7 +30,7 @@
  *              (freebsd port, mainly sys/subr_prf.c)
  *
  ****************************************************************************
- * $Id: xenprintf.c,v 1.1 2005/09/28 16:35:43 nightcreature Exp $
+ * $Id: xenprintf.c,v 1.2 2006/01/20 07:20:04 nightcreature Exp $
  ****************************************************************************
  *
  *-
@@ -84,7 +88,7 @@ char const hex2ascii_data[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 #define MAXNBUF    (sizeof(quad_t) * NBBY + 1)
 
 static int kvprintf(char const *fmt, void *arg, int radix, va_list ap);
-void kcons_write(const char *s, unsigned int count);
+//void kcons_write(const char *s, unsigned int count);
 
 int
 xenprintf(const char *fmt, ...)
@@ -97,9 +101,9 @@ xenprintf(const char *fmt, ...)
 	retval = kvprintf(fmt, printk_buf, 10, ap);
     printk_buf[retval] = '\0';
 	va_end(ap);
-    kcons_write(printk_buf,strlen(printk_buf));
-/*     (void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(printk_buf),  */
-/*                                 printk_buf); */
+  xen_early_console_write(printk_buf,strlen(printk_buf));
+  //   (void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(printk_buf),
+  //                               printk_buf); 
 	return retval;
 }
 

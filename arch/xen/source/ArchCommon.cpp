@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.5 2005/09/28 16:35:43 nightcreature Exp $
+//   $Id: ArchCommon.cpp,v 1.6 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.5  2005/09/28 16:35:43  nightcreature
+//  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
+//  in xenbuild, first batch of fixes in xen part
+//
 //  Revision 1.4  2005/09/21 03:33:52  rotho
 //  compiles now, but still doesn't work
 //
@@ -50,6 +54,8 @@ struct modules_list
 } __attribute__((__packed__)) modules_list;
 static struct modules_list modules_list_[MAX_MODULES] = {0,0,0};
 
+extern pointer kernel_end_address_;
+
 extern "C" void initialiseArchCommonMemoryMaps(uint32 nr_pages);
 extern "C" void initialiseArchCommonModulesInformation(uint32 nr_modules, pointer start, pointer end);
 
@@ -72,6 +78,22 @@ void initialiseArchCommonModulesInformation(uint32 nr_modules, pointer start, po
     modules_list_[0].end_address = end;
     modules_list_[0].used = 1;
   }
+}
+
+
+pointer ArchCommon::getKernelEndAddress()
+{
+   return kernel_end_address_;
+}
+
+pointer ArchCommon::getFreeKernelMemoryStart()
+{
+   return kernel_end_address_;
+}
+
+pointer ArchCommon::getFreeKernelMemoryEnd()
+{
+   return (pointer)(VIRT_START + 1024U*1024U*4U); //Kernel start +4MB like in x86
 }
 
 //no we don't have one at all (at the moment)

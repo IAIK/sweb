@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.7 2005/11/28 10:28:01 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.8 2006/01/20 07:20:04 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.7  2005/11/28 10:28:01  btittelbach
+//  replaced mentioning of virtual memory with linear memory to be in sync with intel manual
+//  and have better distinction with swap
+//
 //  Revision 1.6  2005/09/22 09:07:03  nightcreature
 //  small fixes to compile again
 //
@@ -38,7 +42,7 @@ void ArchMemory::initNewPageDirectory(uint32 physical_page_to_use)
 
   
   ArchCommon::memcpy((pointer) new_page_directory,
-                     (pointer) start_info.pt_base, PAGE_SIZE);
+                     (pointer) start_info_.pt_base, PAGE_SIZE);
   for (uint32 p = 0; p < 512; ++p) //we're concerned with first two gig, rest stays as is
   {
     new_page_directory[p].pde4k.present=0;
