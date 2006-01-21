@@ -11,8 +11,8 @@
 #define _HYPERVISOR_H_
 
 #include <types.h>
-#include <xen-public/xen.h>
-#include <xen-public/dom0_ops.h>
+#include <xen3-public/xen.h>
+#include <xen3-public/dom0_ops.h>
 
 //new by nightcreature
 
@@ -45,7 +45,7 @@ void clear_evtchn(u32 port);
 #ifndef __HYPERCALL_H__
 #define __HYPERCALL_H__
 
-#include <xen-public/sched.h>
+#include <xen3-public/sched.h>
 
 #define _hypercall0(type, name)			\
 ({						\

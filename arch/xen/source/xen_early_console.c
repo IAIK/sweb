@@ -1,15 +1,18 @@
 //----------------------------------------------------------------------
-//  $Id: xen_early_console.c,v 1.1 2006/01/20 07:28:37 nightcreature Exp $
+//  $Id: xen_early_console.c,v 1.2 2006/01/21 11:10:03 nightcreature Exp $
 //----------------------------------------------------------------------
 //  $Log: xen_early_console.c,v $
+//  Revision 1.1  2006/01/20 07:28:37  nightcreature
+//  *** empty log message ***
+//
 //
 //----------------------------------------------------------------------
 
 #include "types.h"
-#include "xen.h"
+#include "xen3-public/xen.h"
 #include "hypervisor.h"
-#include "xen-public/event_channel.h"
-#include "xen-public/io/console.h"
+#include "xen3-public/event_channel.h"
+#include "xen3-public/io/console.h"
 #include "paging-definitions.h"
 
 extern char console_page_dummy[PAGE_SIZE]; //defined in head.S

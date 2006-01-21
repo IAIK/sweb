@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xen_startup.c,v 1.6 2006/01/20 07:20:04 nightcreature Exp $
+//  $Id: xen_startup.c,v 1.7 2006/01/21 11:10:03 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_startup.c,v $
+//  Revision 1.6  2006/01/20 07:20:04  nightcreature
+//  updating to xen-3.0, modified sweb main to get the kernel end out of
+//  ArchCommon
+//
 //  Revision 1.5  2005/11/29 15:14:16  rotho
 //  did some cleaning up
 //
@@ -244,7 +248,7 @@ void print_boottime_paging(page_directory_entry *boot_page_directory)
 //          (boot_page_directory[p].pde4k.page_table_base_address));
 
       page_table_entry *pte_base = (page_table_entry *)
-                        machine_to_virt(boot_page_directory[p].pde4k.page_table_base_address);
+                        (boot_page_directory[p].pde4k.page_table_base_address);
     
       for (n=0; n < PAGE_TABLE_ENTRIES; n++)
         if (pte_base[n].present > 0)

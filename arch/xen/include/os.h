@@ -21,7 +21,7 @@
 #include <types.h>
 #include <hypervisor.h>
 #endif
-#include <xen-public/xen.h>
+#include <xen3-public/xen.h>
 
 
 #define force_evtchn_callback() ((void)HYPERVISOR_xen_version(0, 0))
