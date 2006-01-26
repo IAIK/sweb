@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.16 2006/01/20 07:20:04 nightcreature Exp $
+//   $Id: ArchCommon.cpp,v 1.17 2006/01/26 17:28:41 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.16  2006/01/20 07:20:04  nightcreature
+//  updating to xen-3.0, modified sweb main to get the kernel end out of
+//  ArchCommon
+//
 //  Revision 1.15  2005/09/26 15:29:05  btittelbach
 //  check
 //
@@ -90,6 +94,7 @@ uint32 num_module_maps;
   
 }__attribute__((__packed__));
 
+extern void* kernel_end_address;
 
 extern multiboot_info_t multi_boot_structure_pointer[];
 static struct multiboot_remainder mbr = {0,0,0,0,0,0,FOURTY_ZEROS};
