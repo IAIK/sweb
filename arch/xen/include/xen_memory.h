@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.h,v 1.4 2006/01/20 07:20:04 nightcreature Exp $
+//  $Id: xen_memory.h,v 1.5 2006/01/29 11:02:49 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.h,v $
+//  Revision 1.4  2006/01/20 07:20:04  nightcreature
+//  updating to xen-3.0, modified sweb main to get the kernel end out of
+//  ArchCommon
+//
 //  Revision 1.3  2005/09/28 16:35:43  nightcreature
 //  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
 //  in xenbuild, first batch of fixes in xen part
@@ -69,8 +73,9 @@
 extern unsigned long *physical_to_machine_mapping_;
 
 #define FOREIGN_FRAME(m) (m | (1UL << 31))
-#define FRAME_NR_MASK (1UL << 31)
-#define pfn_to_mfn(_pfn) (physical_to_machine_mapping_[(unsigned int)_pfn] & FRAME_NR_MASK)
+#define FRAME_NR_MASK ~(1UL << 31)
+//#define pfn_to_mfn(_pfn) (physical_to_machine_mapping_[(unsigned int)_pfn] & FRAME_NR_MASK)
+#define pfn_to_mfn(_pfn) (physical_to_machine_mapping_[_pfn])
 #define __pte(x) ((pte_t) { (x) } )
 
 void initalisePhysToMachineMapping();

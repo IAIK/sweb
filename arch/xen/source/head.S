@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: head.S,v 1.3 2006/01/20 07:20:04 nightcreature Exp $
+//  $Id: head.S,v 1.4 2006/01/29 11:02:49 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: head.S,v $
+//  Revision 1.3  2006/01/20 07:20:04  nightcreature
+//  updating to xen-3.0, modified sweb main to get the kernel end out of
+//  ArchCommon
+//
 //  Revision 1.2  2005/08/11 16:55:47  nightcreature
 //  preview commit only for robert ;-)
 //
@@ -12,15 +16,13 @@
 //
 //----------------------------------------------------------------------
 
-
- 
 #include <os.h>
 
 .equ HAHA_JETZT, 4567
  
 .section __xen_guest
-	.ascii	"GUEST_OS=linux,GUEST_VER=2.6"
-  .ascii  ",XEN_VER=xen-3.0"
+//	.ascii	"GUEST_OS=linux,GUEST_VER=2.6"
+  .ascii  "XEN_VER=xen-3.0"
   .ascii  ",VIRT_BASE=0x80000000"
   .ascii  ",PAE=no"
 	.ascii	",LOADER=generic"
@@ -34,7 +36,7 @@
                         
 _start:
         cld
-        //lss stack_start,%esp
+        lss stack_start,%esp
         push %esp
         push %esi
         call start_kernel
@@ -42,10 +44,12 @@ _start:
 stack_start:
 	.long stack+8192, __KERNEL_DS
 
-        /* Unpleasant -- the PTE that maps this page is actually overwritten */
-        /* to map the real shared-info page! :-)                             */
+//The following are two dummy pages...we need the PTE (virtuall addresses)
+//to map the real pages and access them (we need it before the VM setup is complete)
+ 
         .org 0x1000
 shared_info:
         .org 0x2000	
 console_page_dummy:
         .org 0x3000	
+

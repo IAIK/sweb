@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.c,v 1.3 2006/01/20 07:20:04 nightcreature Exp $
+//  $Id: xen_memory.c,v 1.4 2006/01/29 11:02:49 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.c,v $
+//  Revision 1.3  2006/01/20 07:20:04  nightcreature
+//  updating to xen-3.0, modified sweb main to get the kernel end out of
+//  ArchCommon
+//
 //  Revision 1.2  2005/09/28 16:35:43  nightcreature
 //  main.cpp: added XenConsole (partly implemented but works) to replace TextConsole
 //  in xenbuild, first batch of fixes in xen part
@@ -20,16 +24,18 @@
 #include "types.h"
 #include "lib.h"
 #include "paging-definitions.h"
+#include "xenprintf.h"
 
 unsigned long *physical_to_machine_mapping_;
 extern char *stack;
 extern char _text, _etext, _edata, _end;
 
 //extern void initalisePhysMapping3GB(uint32 nr_pages);
-extern void initalisePhysToMachineMapping();
+//extern void initalisePhysToMachineMapping();
 
 void initalisePhysToMachineMapping()
 {
+  xenprintf("mfn list: %08lx\n\n", start_info_.mfn_list);
   physical_to_machine_mapping_ = (unsigned long *) start_info_.mfn_list;
 }
 

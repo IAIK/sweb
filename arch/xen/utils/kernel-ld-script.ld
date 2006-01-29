@@ -1,13 +1,12 @@
 OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(_start)
-/*LS_Virt = 0xC0000000; old value from mini-os*/
 LS_Virt = 0x80000000;
 SECTIONS
 {
 kernel_start_address = .;
  _text = .;
- .text LS_Virt : /* orig places with AT at phys adr...not allowed or  necessary?*/
+ .text LS_Virt : 
  {
   LS_Code = .; /*from orig*/
   text_start_address = .;
@@ -44,7 +43,7 @@ kernel_start_address = .;
     data_end_address = .;  /*from orig*/
     . = ALIGN(4096);
 
-	  CONSTRUCTORS /*from mini-os needed?*/
+	  CONSTRUCTORS /*needed?*/
 	}
 
   _edata = .;			/* End of data section */
@@ -78,17 +77,6 @@ kernel_start_address = .;
 	*(.data.exit)
 	*(.exitcall.exit)
 	}
-
-  /*by mini-os -> cutted as a similar section from orig was inserted above*/
-  /* Stabs debugging sections.  */
-  /*.stab 0 : { *(.stab) }*/
-  /*.stabstr 0 : { *(.stabstr) }*/
-  /*.stab.excl 0 : { *(.stab.excl) }*/
-  /*.stab.exclstr 0 : { *(.stab.exclstr) }*/
-  /*.stab.index 0 : { *(.stab.index) }*/
-  /*.stab.indexstr 0 : { *(.stab.indexstr) }*/
-  /*.comment 0 : { *(.comment) }*/
-
 }
 
 /* symbols to mark end of kernel */		

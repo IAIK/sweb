@@ -16,13 +16,13 @@
 
 #define smp_processor_id() 0
 
-
+/* Everything below this point is not included by assembler (.S) files. */
 #ifndef __ASSEMBLY__
 #include <types.h>
 #include <hypervisor.h>
 #endif
-#include <xen3-public/xen.h>
 
+#include <xen3-public/xen.h>
 
 #define force_evtchn_callback() ((void)HYPERVISOR_xen_version(0, 0))
 
