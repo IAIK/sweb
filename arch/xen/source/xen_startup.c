@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_startup.c,v 1.8 2006/01/29 11:02:49 nightcreature Exp $
+//  $Id: xen_startup.c,v 1.9 2006/01/29 11:44:26 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_startup.c,v $
+//  Revision 1.8  2006/01/29 11:02:49  nightcreature
+//  fixes
+//
 //  Revision 1.7  2006/01/21 11:10:03  nightcreature
 //  grml cvs, jetzt sollte xen sweb wieder kompilieren (mit korrekten xen headern)
 //
@@ -148,7 +151,7 @@ void start_kernel(start_info_t *si, pointer stack_pointer)
   trap_init();
            
   //setup 1:1 mapping of "physical ram" after 3Gb
-  //initalisePhysMapping3GB(si->nr_pages);  //FIXXXXXME
+  initalisePhysMapping3GB(si->nr_pages);  //FIXXXXXME
     
   //initalise memory maps in ArchCommon
   xenprintf("initalising arch common memory maps\n");
@@ -170,24 +173,24 @@ void start_kernel(start_info_t *si, pointer stack_pointer)
   print_extended_info();
   //xenprintf("pfn -> mfn: %08ld -> %08lx | mfn -> pfn: %08lx -> %08ld \n",375,
   //           pfn_to_mfn(375), pfn_to_mfn(375), mfn_to_pfn(pfn_to_mfn(375)));
-  search_mfn_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames,
-                             pfn_to_mfn(100));
-  search_mfn_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames,
-                             pfn_to_mfn(200));
-  search_mfn_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames,
-                             pfn_to_mfn(375));
+//   search_mfn_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames,
+//                              pfn_to_mfn(100));
+//   search_mfn_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames,
+//                              pfn_to_mfn(200));
+//   search_mfn_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames,
+//                              pfn_to_mfn(375));
   
-  print_mfn_pfn_list(si->nr_pages);
+//  print_mfn_pfn_list(si->nr_pages);
   
-  page_directory_entry* bpd = (page_directory_entry *)si->pt_base;
-  xenprintf("pdg kernel entry, mfn of page table: %08x\n",
-            bpd[512].pde4k.page_table_base_address
-    );
-  uint32 n = bpd[512].pde4k.page_table_base_address;
-  xenprintf("pfn -> mfn: %08ld -> %08lx | mfn -> pfn: %08lx -> %08ld \n",0,
-             0, n, mfn_to_pfn(n));
+//   page_directory_entry* bpd = (page_directory_entry *)si->pt_base;
+//   xenprintf("pdg kernel entry, mfn of page table: %08x\n",
+//             bpd[512].pde4k.page_table_base_address
+//     );
+//   uint32 n = bpd[512].pde4k.page_table_base_address;
+//   xenprintf("pfn -> mfn: %08ld -> %08lx | mfn -> pfn: %08lx -> %08ld \n",0,
+//              0, n, mfn_to_pfn(n));
   
-  print_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames);
+//   print_boottime_paging((page_directory_entry *)si->pt_base, si->nr_pt_frames);
  
   //printmessage();
   xenprintf("\nxen initialisation done\n");
@@ -400,7 +403,7 @@ void print_mfn_pfn_list(uint32 nr_pages)
     //mfn = map[n];
     mfn = pfn_to_mfn(n);
     pfn = mfn_to_pfn(n);
-    if((n % 100)==0)
+    if((n % 1000)==0)
     //xenprintf("pfn -> mfn: %08ld -> %08lx | mfn -> pfn: %08lx -> %08ld \n",n,
     //          mfn, mfn, 0);
         xenprintf("pfn -> mfn: %08ld -> %08lx | mfn -> pfn: %08lx -> %08ld \n",n,

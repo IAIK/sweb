@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: xen_memory.c,v 1.4 2006/01/29 11:02:49 nightcreature Exp $
+//  $Id: xen_memory.c,v 1.5 2006/01/29 11:44:26 nightcreature Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: xen_memory.c,v $
+//  Revision 1.4  2006/01/29 11:02:49  nightcreature
+//  fixes
+//
 //  Revision 1.3  2006/01/20 07:20:04  nightcreature
 //  updating to xen-3.0, modified sweb main to get the kernel end out of
 //  ArchCommon
@@ -48,25 +51,20 @@ void initalisePhysMapping3GB(uint32 nr_pages)
 
   //TODO: This is a reather slow method of page talbe update
   //would be better to use mmu_update in batch mode
-
-  //// FIXXME (andy, 2006-01-19 15:04:11) -> liegt nicht kernel am beginn von
-  //// 3gb, darf nicht neu mappen!
-  
-  ;
-  
-// END FIXXME (andy, 2006-01-19 15:04:11)
-
-  
-  //TODO: alles erstmal readonly mappen, dann die ausnahmen einbauen
+ 
+  //TODO: momentan erstmal alles readonly gemappet,
+  //umstellen auf alles writeable bis auf die ausnahmen wie pagetables
   //for(i = 0; i < nr_pages; i++)
-  for(i = 0; i < 10; i++)
-  {
-    if ( HYPERVISOR_update_va_mapping(vadr, 
-       __pte(pfn_to_machine(i) | 1), UVMF_INVLPG) )
+  for(i = 400; i < 450; i++)
+  {    
+    if ( HYPERVISOR_update_va_mapping(vadr,
+//       __pte(pfn_to_machine(i) | 1), UVMF_INVLPG) )
+       __pte(pfn_to_mfn(i)*PAGE_SIZE | 1), UVMF_INVLPG) )
     {
-      //printk("Failed to map shared_info!!\n");
-      *(int*)0=0;
+      xenprintf("Failed mapping 3GB pfn: %d ,vadr %08x -> madr %08x\n", i, vadr, pfn_to_mfn(i));
+      //*(int*)0=0;
     }
+    vadr += PAGE_SIZE;
     //return (shared_info_t *)shared_info;
   }
 }
