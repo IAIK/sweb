@@ -35,7 +35,7 @@
  * http://www.hohnstaedt.de/e2fsimage
  * email: christian@hohnstaedt.de
  *
- * $Id: copy.c,v 1.1 2005/04/24 18:33:07 woswasi Exp $ 
+ * $Id: copy.c,v 1.2 2006/09/19 20:40:24 aniederl Exp $ 
  *
  */                           
 
@@ -53,7 +53,8 @@ int e2cp(e2i_ctx_t *e2c)
 	ext2_file_t e2file;
 	ext2_ino_t e2ino;
 	struct ext2_inode inode;
-	int ret, b_read, b_wrote;
+	int ret, b_read;
+  unsigned int b_wrote;
 	char *ptr, *ptr1;
 	off_t size = 0;
 	struct stat s;

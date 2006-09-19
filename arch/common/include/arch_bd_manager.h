@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_manager.h,v 1.1 2005/09/20 16:24:38 rotho Exp $
+*    $Id: arch_bd_manager.h,v 1.2 2006/09/19 20:40:23 aniederl Exp $
 *    $Log: arch_bd_manager.h,v $
+*    Revision 1.1  2005/09/20 16:24:38  rotho
+*    moved arch_bd_manager.h to arch/common/include/
+*
 *    Revision 1.2  2005/09/18 20:46:52  nelles
 *
 *     Committing in .
@@ -40,7 +43,10 @@ public:
   void              addVirtualDevice   ( BDVirtualDevice* dev );
   
   BDVirtualDevice*  getDeviceByNumber  ( uint32 dev_num  );
-  BDVirtualDevice*  getDeviceByName    ( char * dev_name );
+
+  // NOT IMPLEMENTED
+//   BDVirtualDevice*  getDeviceByName    ( char * dev_name );
+
   uint32            getNumberOfDevices ( void );
   
   void              addRequest         ( BDRequest * );

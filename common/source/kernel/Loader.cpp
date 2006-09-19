@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.16 2005/11/24 10:07:09 woswasi Exp $
+//   $Id: Loader.cpp,v 1.17 2006/09/19 20:40:24 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.16  2005/11/24 10:07:09  woswasi
+//  *** empty log message ***
+//
 //  Revision 1.15  2005/09/27 21:24:43  btittelbach
 //  +IF=1 in PageFaultHandler
 //  +Lock in PageManager
@@ -448,12 +451,12 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
   uint32 written=0;
   uint8* dest = reinterpret_cast<uint8*>(ArchMemory::get3GBAdressOfPPN(page));
   
-  kprintfd("Loader::loadOnePageSafeButSlow:I've got the following segments in the binary\n");
-  for (k=0;k<hdr->e_phnum;++k)
-  {
-     ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + k* hdr->e_phentsize);
-     //kprintfd("Loader::loadOnePageSafeButSlow:PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
-  }
+//   kprintfd("Loader::loadOnePageSafeButSlow:I've got the following segments in the binary\n");
+//   for (k=0;k<hdr->e_phnum;++k)
+//   {
+//      ELF32_Phdr *h = (ELF32_Phdr *)((uint32)file_image_ + hdr->e_phoff + k* hdr->e_phentsize);
+//      //kprintfd("Loader::loadOnePageSafeButSlow:PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset);
+//   }
 
   for (i=0;i<PAGE_SIZE;++i)
   {

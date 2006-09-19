@@ -1,7 +1,10 @@
 //----------------------------------------------------------------------
-//  $Id: exe2pseudofs.cpp,v 1.3 2005/09/03 18:26:35 btittelbach Exp $
+//  $Id: exe2pseudofs.cpp,v 1.4 2006/09/19 20:40:24 aniederl Exp $
 //----------------------------------------------------------------------
 //  $Log: exe2pseudofs.cpp,v $
+//  Revision 1.3  2005/09/03 18:26:35  btittelbach
+//  Can now creaty empty images
+//
 //  Revision 1.2  2005/09/03 13:01:54  btittelbach
 //  -Cleaned exe2pseudofs.h of stuff so it can be included in kernel
 //  -use only basename of files
@@ -40,7 +43,7 @@ char *base_name (char const *name)
   {
     if (*p == DIRECTORY_SEPERATOR)
     {
-      do 
+      do
         p++;
       while (*p == DIRECTORY_SEPERATOR);
 
@@ -88,22 +91,21 @@ void writeFileIndex()
 int main (int argc, char *argv[])
 {
   int file_fds[argc-2];
-  unsigned int c=0;
-  
+
   if (argc < 2)
   {
     printf("Syntax:\n%s <pseudofs image file> [file1 [file2 [....]]]\n\n",argv[0]);
     return -1;
   }
-  
+
   image_fd_ = open(argv[1],  O_WRONLY| O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if (image_fd_ < 0)
   {
     printf("Error opening %s\n\n",argv[1]);
-    return -1;    
+    return -1;
   }
-  
-  for (c=0; c< argc-2; ++c)
+
+  for (int c=0; c< argc-2; ++c)
   {
     file_fds[c] = open(argv[c+2], O_RDONLY);
     if (file_fds[c] < 0)
@@ -111,29 +113,29 @@ int main (int argc, char *argv[])
     else
       number_of_files_++;
   }
-  
+
   file_index_list_=new FileIndexStruct[number_of_files_];
-  
+
   write(image_fd_, &pseudofs_magic_number_, sizeof(int));
   write(image_fd_, &number_of_files_, sizeof(int));
-  
+
   if (argc < 3)
   {
     printf("Created empty PseudoFS\n");
     return 0;
   }
 
-  
+
   index_offset_=lseek(image_fd_,0,SEEK_CUR);
 
   char null_char = 0;
-  for (c=0; c < number_of_files_ * sizeof(FileIndexStruct); ++c)
+  for (unsigned int c=0; c < number_of_files_ * sizeof(FileIndexStruct); ++c)
     write(image_fd_, &null_char, 1);
-  
+
   data_offset_=lseek(image_fd_,0,SEEK_CUR);
-  
-  for (unsigned int file=0; file < number_of_files_; ++file)
-    if (file_fds[file] > -1)  
+
+  for (int file=0; file < number_of_files_; ++file)
+    if (file_fds[file] > -1)
     {
       writeFilename(file,base_name(argv[file+2]));
       writeFileContents(file,file_fds[file]);

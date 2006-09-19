@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: string.c,v $
  *
- * $Id: string.c,v 1.1 2005/10/10 06:15:55 aniederl Exp $
- * $Log$
+ * $Id: string.c,v 1.2 2006/09/19 20:40:24 aniederl Exp $
+ * $Log: string.c,v $
+ * Revision 1.1  2005/10/10 06:15:55  aniederl
+ * included memset, memcpy and memcmp because gcc uses them even with the -nostdlib flag
+ *
  */
 
 // implementations for memcmp, memcpy and memset taken from
@@ -86,10 +89,10 @@ int memcpy(void *destination, const void *source, size_t number_of_bytes)
       (byte_source > byte_destination)) ||
      ((byte_destination < (byte_source + number_of_bytes)) &&
       (byte_destination > byte_source)))
-    return destination;
+    return (int) destination;
 
   if(number_of_bytes == 0 || source == destination)
-    return destination;
+    return (int) destination;
 
   while(number_of_bytes--)
     *byte_destination++ = *byte_source++;

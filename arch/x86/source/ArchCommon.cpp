@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: ArchCommon.cpp,v 1.17 2006/01/26 17:28:41 nightcreature Exp $
+//   $Id: ArchCommon.cpp,v 1.18 2006/09/19 20:40:23 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchCommon.cpp,v $
+//  Revision 1.17  2006/01/26 17:28:41  nightcreature
+//  fixed missing extern
+//
 //  Revision 1.16  2006/01/20 07:20:04  nightcreature
 //  updating to xen-3.0, modified sweb main to get the kernel end out of
 //  ArchCommon
@@ -59,11 +62,29 @@
 
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
+
+// macros for initializing memory_maps
+#define MEMMAP_INIT {0,0,0,0}
+#define TWO_MEMMAP_INIT MEMMAP_INIT,MEMMAP_INIT
+#define FOUR_MEMMAP_INIT TWO_MEMMAP_INIT,TWO_MEMMAP_INIT
+#define FIVE_MEMMAP_INIT FOUR_MEMMAP_INIT,MEMMAP_INIT
+#define TEN_MEMMAP_INIT FIVE_MEMMAP_INIT,FIVE_MEMMAP_INIT
+
+// macros for initializing module_maps
 #define FOUR_ZEROS 0,0,0,0
 #define EIGHT_ZEROS FOUR_ZEROS,FOUR_ZEROS
 #define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
-#define TWENTY_ZEROS SIXTEEN_ZEROS,FOUR_ZEROS
-#define FOURTY_ZEROS TWENTY_ZEROS,TWENTY_ZEROS
+#define THIRTYTWO_ZEROS SIXTEEN_ZEROS,SIXTEEN_ZEROS
+#define SIXTYFOUR_ZEROS THIRTYTWO_ZEROS,THIRTYTWO_ZEROS
+#define HUNDREDTWENTYEIGHT_ZEROS SIXTYFOUR_ZEROS,SIXTYFOUR_ZEROS
+#define TWOHUNDREDFIFTYSIX_ZEROS HUNDREDTWENTYEIGHT_ZEROS,\
+                                 HUNDREDTWENTYEIGHT_ZEROS
+
+#define MODMAP_INIT {0,0,0,{TWOHUNDREDFIFTYSIX_ZEROS}}
+#define TWO_MODMAP_INIT MODMAP_INIT,MODMAP_INIT
+#define FOUR_MODMAP_INIT TWO_MODMAP_INIT,TWO_MODMAP_INIT
+#define FIVE_MODMAP_INIT FOUR_MODMAP_INIT,MODMAP_INIT
+#define TEN_MODMAP_INIT FIVE_MODMAP_INIT,FIVE_MODMAP_INIT
 
 struct multiboot_remainder
 {
@@ -97,7 +118,7 @@ uint32 num_module_maps;
 extern void* kernel_end_address;
 
 extern multiboot_info_t multi_boot_structure_pointer[];
-static struct multiboot_remainder mbr = {0,0,0,0,0,0,FOURTY_ZEROS};
+static struct multiboot_remainder mbr = {0,0,0,0,0,0,0,{TEN_MEMMAP_INIT},{TEN_MODMAP_INIT}};
   
 extern "C" void parseMultibootHeader();
 

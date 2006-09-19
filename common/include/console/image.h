@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: image.h,v 1.1 2005/04/23 16:23:42 nomenquis Exp $
+//   $Id: image.h,v 1.2 2006/09/19 20:40:24 aniederl Exp $
 //----------------------------------------------------------------------
 //
-//  $Log: $
+//  $Log: image.h,v $
+//  Revision 1.1  2005/04/23 16:23:42  nomenquis
+//  w00t
+//
 //----------------------------------------------------------------------
 
 #ifndef __IMAGE__H_
@@ -14,7 +17,7 @@ struct sweb_logo{
   uint32 	 width;
   uint32 	 height;
   uint32 	 bytes_per_pixel; /* 3:RGB, 4:RGBA */ 
-  uint8	 *pixel_data;
+  int8	 *pixel_data;
 } ;
 
 extern const struct sweb_logo logo;

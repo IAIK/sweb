@@ -1,7 +1,18 @@
 /********************************************************************
 *
-*    $Id: arch_bd_manager.cpp,v 1.6 2005/11/24 23:38:35 nelles Exp $
+*    $Id: arch_bd_manager.cpp,v 1.7 2006/09/19 20:40:23 aniederl Exp $
 *    $Log: arch_bd_manager.cpp,v $
+*    Revision 1.6  2005/11/24 23:38:35  nelles
+*
+*
+*     Block devices fix.
+*
+*     Committing in .
+*
+*     Modified Files:
+*     	arch_bd_ata_driver.cpp arch_bd_ide_driver.cpp
+*     	arch_bd_manager.cpp arch_bd_virtual_device.cpp
+*
 *    Revision 1.5  2005/10/02 12:27:55  nelles
 *
 *     Committing in .
@@ -125,11 +136,11 @@ BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )
   return device_list_[ dev_num ];
 };
 
-BDVirtualDevice* BDManager::getDeviceByName( char * dev_name )
-{
-#warning TODO: implement strcmp search for getDeviceByName
-  return 0; // TODO: implement strcmp search
-};
+// BDVirtualDevice* BDManager::getDeviceByName( char * dev_name )
+// {
+// #warning TODO: implement strcmp search for getDeviceByName
+//   return 0; // TODO: implement strcmp search
+// };
 
 uint32 BDManager::getNumberOfDevices ( void )
 {

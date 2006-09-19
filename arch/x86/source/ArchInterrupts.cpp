@@ -1,8 +1,22 @@
 //----------------------------------------------------------------------
-//  $Id: ArchInterrupts.cpp,v 1.16 2005/11/20 21:18:08 nelles Exp $
+//  $Id: ArchInterrupts.cpp,v 1.17 2006/09/19 20:40:23 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchInterrupts.cpp,v $
+//  Revision 1.16  2005/11/20 21:18:08  nelles
+//
+//       Committing in .
+//
+//        Another block device update ... Interrupts are now functional fixed some
+//        8259 problems .. Reads and Writes tested  ....
+//
+//       Modified Files:
+//   	include/arch_bd_ata_driver.h include/arch_bd_request.h
+//   	include/arch_bd_virtual_device.h source/8259.cpp
+//   	source/ArchInterrupts.cpp source/InterruptUtils.cpp
+//   	source/arch_bd_ata_driver.cpp
+//   	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
+//
 //  Revision 1.15  2005/10/26 10:25:22  nelles
 //
 //  Small patch
@@ -97,8 +111,6 @@
 #include "InterruptUtils.h"
 #include "SegmentUtils.h"
 
-static uint32 interrupts_on = 0;
-static uint32 timer_on = 0;
 
 // gives the arch a chance to set things up the way it wants to
 void ArchInterrupts::initialise()

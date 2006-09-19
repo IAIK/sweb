@@ -1,8 +1,18 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.12 2005/09/16 12:47:41 btittelbach Exp $
+//  $Id: ArchThreads.cpp,v 1.13 2006/09/19 20:40:23 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.cpp,v $
+//  Revision 1.12  2005/09/16 12:47:41  btittelbach
+//  Second PatchThursday:
+//  +KeyboardInput SyncStructure Rewrite
+//  +added RingBuffer
+//  +debugged FiFoDRBOSS (even though now obsolete)
+//  +improved FiFo
+//  +more debugging
+//  Added Files:
+//   	common/include/ipc/RingBuffer.h
+//
 //  Revision 1.11  2005/08/26 13:58:24  nomenquis
 //  finally even the syscall handler does that it is supposed to do
 //
@@ -169,7 +179,6 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->dpl     = DPL_USER;
   info->esp     = user_stack;
   info->ebp     = user_stack;
-  #warning fixme, kernel stack ptr needed
   info->esp0    = kernel_stack;
   info->eip     = start_function;
   info->cr3     = pageDirectory;
