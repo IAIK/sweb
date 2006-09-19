@@ -1,7 +1,11 @@
 /**
- * $Id: main.cpp,v 1.105 2006/01/20 07:20:04 nightcreature Exp $
+ * $Id: main.cpp,v 1.106 2006/09/19 14:42:54 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.105  2006/01/20 07:20:04  nightcreature
+ * updating to xen-3.0, modified sweb main to get the kernel end out of
+ * ArchCommon
+ *
  * Revision 1.104  2005/11/29 17:13:55  woswasi
  * why does this fail afer some time?
  *
@@ -735,10 +739,10 @@ void startup()
     
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
-/*   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
+   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
      Scheduler::instance()->addNewThread( 
        new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
-     ); */
+     );
   
   Scheduler::instance()->addNewThread(new TestThread());  
   
