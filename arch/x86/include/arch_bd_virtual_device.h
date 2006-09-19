@@ -1,7 +1,21 @@
 /********************************************************************
 *
-*    $Id: arch_bd_virtual_device.h,v 1.4 2005/11/20 21:18:08 nelles Exp $
+*    $Id: arch_bd_virtual_device.h,v 1.5 2006/09/19 14:13:21 aniederl Exp $
 *    $Log: arch_bd_virtual_device.h,v $
+*    Revision 1.4  2005/11/20 21:18:08  nelles
+*
+*         Committing in .
+*
+*          Another block device update ... Interrupts are now functional fixed some
+*          8259 problems .. Reads and Writes tested  ....
+*
+*         Modified Files:
+*     	include/arch_bd_ata_driver.h include/arch_bd_request.h
+*     	include/arch_bd_virtual_device.h source/8259.cpp
+*     	source/ArchInterrupts.cpp source/InterruptUtils.cpp
+*     	source/arch_bd_ata_driver.cpp
+*     	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
+*
 *    Revision 1.3  2005/10/02 12:27:55  nelles
 *
 *     Committing in .
@@ -83,7 +97,7 @@ class BDVirtualDevice : public Inode
 
     BDVirtualDevice( BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable);
   
-    void BDVirtualDevice::addRequest(BDRequest * command);
+    void addRequest(BDRequest * command);
     
     uint32    getBlockSize()                  { return block_size_; };
     uint32    getDeviceNumber()               { return dev_number_; };

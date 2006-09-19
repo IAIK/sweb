@@ -147,7 +147,7 @@ class SerialManager
 public:
 static SerialManager *instance_;
 
-static SerialManager * SerialManager::getInstance() 
+static SerialManager * getInstance() 
 { 
   if( !instance_ )
     instance_ = new SerialManager();
