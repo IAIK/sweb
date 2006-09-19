@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.11 2005/09/21 14:46:35 btittelbach Exp $
+//  $Id: ArchThreads.h,v 1.12 2006/09/19 18:37:21 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchThreads.h,v $
+//  Revision 1.11  2005/09/21 14:46:35  btittelbach
+//  *** empty log message ***
+//
 //  Revision 1.10  2005/09/20 20:11:18  btittelbach
 //  doxification
 //
@@ -124,7 +127,7 @@ public:
  * @param *thread Pointer to Thread Object
  * @return returns pde page of *thread
  */
-  uint32 getPageDirectory(Thread *thread);
+  static uint32 getPageDirectory(Thread *thread);
 
 /**
  * uninterruptable locked operation
