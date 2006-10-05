@@ -20,6 +20,7 @@ SUBPROJECTS := \
                common/source/fs \
                common/source/fs/ramfs \
                common/source/fs/pseudofs \
+	       utils/e2fsimage \
                common/source/fs/devicefs
 #               utils/mtools
 
@@ -37,6 +38,7 @@ SUBPROJECTS := \
                common/source/fs/pseudofs \
                common/source/fs/devicefs \
                userspace/libc \
+	       utils/e2fsimage \
                userspace/tests
 #               utils/mtools
 endif
