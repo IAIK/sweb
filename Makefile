@@ -206,6 +206,6 @@ bochsgdb:
 submit: mrproper
 	@test -n "$(group)" || (echo -e "\n\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	@test -n "$(assignment)" || (echo -e "\n\nSyntax: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
-	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" ./
+	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "./images" ./
 
 	
