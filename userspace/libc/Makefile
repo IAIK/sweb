@@ -22,8 +22,11 @@
 #
 # CVS Log Info for $RCSfile: Makefile,v $
 #
-# $Id: Makefile,v 1.8 2005/10/10 06:15:55 aniederl Exp $
+# $Id: Makefile,v 1.9 2006/10/05 13:58:07 btittelbach Exp $
 # $Log: Makefile,v $
+# Revision 1.8  2005/10/10 06:15:55  aniederl
+# included memset, memcpy and memcmp because gcc uses them even with the -nostdlib flag
+#
 # Revision 1.7  2005/09/21 16:44:46  aniederl
 # changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
 #
@@ -91,3 +94,5 @@ clean:
 
 $(OBJECTDIR):
 	mkdir -p $(OBJECTDIR)
+
+submit:

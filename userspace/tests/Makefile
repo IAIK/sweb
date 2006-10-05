@@ -33,3 +33,5 @@ $(OBJECTDIR)/%.sweb: %.c $(LIBS)
 
 .PHONY: mrproper
 mrproper: clean
+
+submit:

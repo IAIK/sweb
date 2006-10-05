@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.7 2005/08/11 16:46:57 davrieb Exp $
+# $Id: common.mk,v 1.8 2006/10/05 13:58:07 btittelbach Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.7  2005/08/11 16:46:57  davrieb
+# add PathWalker
+#
 # Revision 1.6  2005/07/31 17:35:32  nightcreature
 # additions for xen target
 #
@@ -314,3 +317,5 @@ ifneq ($(ASGCCFILES),)
 -include $(foreach temp, $(patsubst %.S,%.d,$(ASGCCFILES)), $(OBJECTDIR)/$(temp)) 
 endif
 endif
+
+submit:
