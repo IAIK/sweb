@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.17 2006/09/19 20:40:24 aniederl Exp $
+//   $Id: Loader.cpp,v 1.18 2006/10/13 11:38:12 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.17  2006/09/19 20:40:24  aniederl
+//  fixed a lot of warnings
+//
 //  Revision 1.16  2005/11/24 10:07:09  woswasi
 //  *** empty log message ***
 //
@@ -284,9 +287,9 @@ Loader::Loader(uint8 *file_image, Thread *thread) : file_image_(file_image),
 void Loader::initUserspaceAddressSpace()
 {
   page_dir_page_ = PageManager::instance()->getFreePhysicalPage();
-  kprintfd("Loader::initUserspaceAddressSpace: Got new Page no. %d\n",page_dir_page_);
+  //kprintfd("Loader::initUserspaceAddressSpace: Got new Page no. %d\n",page_dir_page_);
   ArchMemory::initNewPageDirectory(page_dir_page_);
-  kprintfd("Loader::initUserspaceAddressSpace: Initialised the page dir\n");
+  //kprintfd("Loader::initUserspaceAddressSpace: Initialised the page dir\n");
 
   uint32 page_for_stack = PageManager::instance()->getFreePhysicalPage();
 
@@ -308,7 +311,7 @@ uint32 Loader::loadExecutableAndInitProcess()
   
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
   
-  kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr->e_entry, hdr->e_phnum);
+  //kprintfd("Loader::loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr->e_entry, hdr->e_phnum);
   printElfHeader(*hdr);
   ArchThreads::createThreadInfosUserspaceThread(thread_->user_arch_thread_info_, hdr->e_entry, 2U*1024U*1024U*1024U-sizeof(pointer), thread_->getStackStartPointer());
   ArchThreads::setPageDirectory(thread_, page_dir_page_);
@@ -427,17 +430,17 @@ void Loader::loadOnePage(uint32 virtual_address)
 void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
-  kprintfd("Loader::loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d)\n",virtual_page,virtual_address);
+  //kprintfd("Loader::loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d)\n",virtual_page,virtual_address);
   
 
   //uint32 page_dir_page = ArchThreads::getPageDirectory(thread);
 
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *>(file_image_);
   
-  kprintfd("Loader::loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
-  kprintfd("Loader::loadOnePage: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
-  kprintfd("Loader::loadOnePage: Num ents: %d\n",hdr->e_phnum);
-  kprintfd("Loader::loadOnePage: Entry: %x\n",hdr->e_entry);
+  //kprintfd("Loader::loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4]);
+  //kprintfd("Loader::loadOnePage: Sizeof %d %d %d %d\n",sizeof(uint64),sizeof(uint32),sizeof(uint16),sizeof(uint8));
+  //kprintfd("Loader::loadOnePage: Num ents: %d\n",hdr->e_phnum);
+  //kprintfd("Loader::loadOnePage: Entry: %x\n",hdr->e_entry);
   
   
   uint32 page = PageManager::instance()->getFreePhysicalPage();
@@ -491,13 +494,13 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
     }
     else if (found >1)
     {
-      kprintfd("Loader::loadOnePageSafeButSlow:EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address);
+      //kprintfd("Loader::loadOnePageSafeButSlow:EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address);
     }
   }
-  kprintfd("Loader::loadOnePageSafeButSlow: wrote a total of %d bytes\n",written);
+  //kprintfd("Loader::loadOnePageSafeButSlow: wrote a total of %d bytes\n",written);
   if (!written)
   {
-    kprintfd("Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location\n",written);
+    //kprintfd("Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location\n",written);
     Syscall::exit(9999);
   }
 }

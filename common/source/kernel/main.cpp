@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.106 2006/09/19 14:42:54 btittelbach Exp $
+ * $Id: main.cpp,v 1.107 2006/10/13 11:38:13 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.106  2006/09/19 14:42:54  btittelbach
+ * mit pseudo shell schaut das schon eher was gleich :)
+ *
  * Revision 1.105  2006/01/20 07:20:04  nightcreature
  * updating to xen-3.0, modified sweb main to get the kernel end out of
  * ArchCommon
@@ -713,21 +716,21 @@ void startup()
     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
   );       
   
-  Scheduler::instance()->addNewThread( 
-    new BDThread()
-  );
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new BDThread()
+  //~ );
   
-  Scheduler::instance()->addNewThread( 
-    new BDThread2()
-  );  
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new BDThread2()
+  //~ );  
 
-  Scheduler::instance()->addNewThread( 
-    new BDThread()
-  );  
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new BDThread()
+  //~ );  
   
-  Scheduler::instance()->addNewThread( 
-    new BDThread2()
-  );    
+  //~ Scheduler::instance()->addNewThread( 
+    //~ new BDThread2()
+  //~ );    
   
   //~ Scheduler::instance()->addNewThread( 
     //~ new SerialThread( "SerialTestThread" )
@@ -744,7 +747,7 @@ void startup()
        new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
      );
   
-  Scheduler::instance()->addNewThread(new TestThread());  
+  //Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();
 

@@ -1,8 +1,14 @@
 //----------------------------------------------------------------------
-//   $Id: Condition.cpp,v 1.5 2005/09/20 08:05:08 btittelbach Exp $
+//   $Id: Condition.cpp,v 1.6 2006/10/13 11:38:12 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Condition.cpp,v $
+//  Revision 1.5  2005/09/20 08:05:08  btittelbach
+//  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
+//  +Condition cleanup
+//  +FiFoDRBOSS now obsolete and removed
+//  +added disk.img that nelle forgot to check in
+//
 //  Revision 1.4  2005/09/16 15:47:41  btittelbach
 //  +even more KeyboardInput Bugfixes
 //  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
@@ -77,7 +83,7 @@ void Condition::wait()
   sleepers_->pushBack(currentThread);
   lock_->release();
   //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
-  kprintfd("Condition::wait: Thread %x %s wating on Condition %x\n",currentThread,currentThread->getName(),this);
+  //kprintfd("Condition::wait: Thread %x %s wating on Condition %x\n",currentThread,currentThread->getName(),this);
   Scheduler::instance()->sleep();
   lock_->acquire();
 }
@@ -98,8 +104,8 @@ void Condition::signal()
       sleepers_->popFront();
     }    
   }
-  if (thread)
-    kprintfd("Condition::signal: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
+  //if (thread)
+    //kprintfd("Condition::signal: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
 }
 
 void Condition::broadcast()
@@ -117,7 +123,7 @@ void Condition::broadcast()
       Scheduler::instance()->wake(thread);
     else
       tmp_threads.pushBack(thread);
-    kprintfd("Condition::broadcast: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
+    //kprintfd("Condition::broadcast: Thread %x %s being signaled for Condition %x\n",thread,thread->getName(),this);
   }
   while (!tmp_threads.empty())
   {

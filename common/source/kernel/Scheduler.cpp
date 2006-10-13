@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.36 2005/10/27 21:42:51 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.37 2006/10/13 11:38:12 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.36  2005/10/27 21:42:51  btittelbach
+//  -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
+//  -im Scheduler möglichen null-pointer zugriff vermieden
+//  -kprintf nosleep check logik optimiert
+//
 //  Revision 1.35  2005/10/26 11:17:40  btittelbach
 //  -fixed KMM/SchedulerBlock Deadlock
 //  -introduced possible dangeours reenable-/disable-Scheduler Methods
@@ -261,7 +266,7 @@ void Scheduler::addNewThread(Thread *thread)
   //also gets added to front as not to interfere with remove or xchange
 
   lockScheduling();
-  kprintfd_nosleep("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
+  //kprintfd_nosleep("Scheduler::addNewThread: %x %s\n",thread,thread->getName());
   waitForFreeKMMLock();
   threads_.pushFront(thread);
   unlockScheduling();
@@ -272,7 +277,7 @@ void Scheduler::addNewThread(Thread *thread)
 void Scheduler::removeCurrentThread()
 {
   lockScheduling();
-  kprintfd_nosleep("Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size());
+  //kprintfd_nosleep("Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size());
   waitForFreeKMMLock();
   if (threads_.size() > 1)
   {
@@ -402,7 +407,7 @@ void Scheduler::cleanupDeadThreads()
   
   lockScheduling();
   waitForFreeKMMLock();
-  kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
+  //kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_old_)
   {
     Thread *tmp_thread;
@@ -419,7 +424,7 @@ void Scheduler::cleanupDeadThreads()
     }
     kill_old_=false;
   }
-  kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
+  //kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
   unlockScheduling();
 }
 

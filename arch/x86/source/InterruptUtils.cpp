@@ -1,8 +1,22 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.47 2005/11/20 21:18:08 nelles Exp $
+//  $Id: InterruptUtils.cpp,v 1.48 2006/10/13 11:38:12 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.47  2005/11/20 21:18:08  nelles
+//
+//       Committing in .
+//
+//        Another block device update ... Interrupts are now functional fixed some
+//        8259 problems .. Reads and Writes tested  ....
+//
+//       Modified Files:
+//   	include/arch_bd_ata_driver.h include/arch_bd_request.h
+//   	include/arch_bd_virtual_device.h source/8259.cpp
+//   	source/ArchInterrupts.cpp source/InterruptUtils.cpp
+//   	source/arch_bd_ata_driver.cpp
+//   	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
+//
 //  Revision 1.46  2005/10/24 21:28:04  nelles
 //
 //   Fixed block devices. I think.
@@ -756,54 +770,54 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //~ __asm__("movl %%cr2, %0"
   //~ :"=a"(cr2)
   //~ :);
-  kprintfd_nosleep("PageFault::( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
-                                                                            error&flag_p, 
-                                                                            (error&flag_rw) >> 1, 
-                                                                            (error&flag_us) >> 2,
-                                                                            (error&flag_rsvd) >> 3,
-                                                                            currentThread,currentThread->getName(),
-                                                                            currentThread->switch_to_userspace_);
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
+  //~ kprintfd_nosleep("PageFault::( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
+                                                                            //~ error&flag_p, 
+                                                                            //~ (error&flag_rw) >> 1, 
+                                                                            //~ (error&flag_us) >> 2,
+                                                                            //~ (error&flag_rsvd) >> 3,
+                                                                            //~ currentThread,currentThread->getName(),
+                                                                            //~ currentThread->switch_to_userspace_);
+  //ArchThreads::printThreadRegisters(currentThread,0);
+  //ArchThreads::printThreadRegisters(currentThread,1);
 	
-  kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
-	  currentThread->user_arch_thread_info_->cr3,
-	  currentThread->loader_->page_dir_page_,
-	  ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_) );
+  //~ kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
+	  //~ currentThread->user_arch_thread_info_->cr3,
+	  //~ currentThread->loader_->page_dir_page_,
+	  //~ ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_) );
 	  
 
-  page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
-  uint32 i = 0;
-  uint32 j = 0;
-  for( i = 0; i < 512; i++ )
-  {
-	  if( cpd[ i ].pde4k.present )
-	  {
-		  kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
-		  i,
-		  cpd[ i ].pde4k.present,
-		  cpd[ i ].pde4k.page_table_base_address, 
-		  ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address )
-		  );
-	  }
+  //~ page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
+  //~ uint32 i = 0;
+  //~ uint32 j = 0;
+  //~ for( i = 0; i < 512; i++ )
+  //~ {
+	  //~ if( cpd[ i ].pde4k.present )
+	  //~ {
+		  //~ kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
+		  //~ i,
+		  //~ cpd[ i ].pde4k.present,
+		  //~ cpd[ i ].pde4k.page_table_base_address, 
+		  //~ ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address )
+		  //~ );
+	  //~ }
 	  
-	  if( cpd[ i ].pde4k.present )
-	  {
-		page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address );
-  		for( j = 0; j < 256; j++ )
-  		{
-			if( cpt[ j ].present )
-			{
-				kprintfd_nosleep( "\t j %d, present %d, where %X \n",
-				j,
-				cpt[ j ].present,
-				cpt[ j ].page_base_address );
-			}
-		}
-	  }
-  }
+	  //~ if( cpd[ i ].pde4k.present )
+	  //~ {
+		//~ page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address );
+  		//~ for( j = 0; j < 256; j++ )
+  		//~ {
+			//~ if( cpt[ j ].present )
+			//~ {
+				//~ kprintfd_nosleep( "\t j %d, present %d, where %X \n",
+				//~ j,
+				//~ cpt[ j ].present,
+				//~ cpt[ j ].page_base_address );
+			//~ }
+		//~ }
+	  //~ }
+  //~ }
 
-  kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
@@ -823,11 +837,11 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     else
       currentThread->kill();
   }
-  kprintfd_nosleep("PageFault: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  //kprintfd_nosleep("PageFault: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo = currentThread->user_arch_thread_info_;
-  kprintfd_nosleep("PageFault: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  //kprintfd_nosleep("PageFault: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
   arch_switchThreadToUserPageDirChange();
 }
 
@@ -901,15 +915,15 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
  
-  kprintfd_nosleep("syscallHANDLER called, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
+  //kprintfd_nosleep("syscallHANDLER called, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
   //ArchThreads::printThreadRegisters(currentThread,0);
   //ArchThreads::printThreadRegisters(currentThread,1);
    // ok, find out the current thread
   //currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
-                  currentThread->user_arch_thread_info_->ebx,
-                  currentThread->user_arch_thread_info_->ecx,
-                  currentThread->user_arch_thread_info_->edx);
+  //~ kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
+                  //~ currentThread->user_arch_thread_info_->ebx,
+                  //~ currentThread->user_arch_thread_info_->ecx,
+                  //~ currentThread->user_arch_thread_info_->edx);
  
   // a int 0x80 instruction takes two bytes in x86 asm
   // to make sure we skip this one after syscall exit 
@@ -918,7 +932,7 @@ extern "C" void syscallHandler()
   // this is not needed anymore as the machine is smart 
   // enough to do this on a trap
   
-  kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  //kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
@@ -932,12 +946,12 @@ extern "C" void syscallHandler()
                   currentThread->user_arch_thread_info_->esi,
                   currentThread->user_arch_thread_info_->edi);
 
-  kprintfd_nosleep("syscallHANDLER: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  //kprintfd_nosleep("syscallHANDLER: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,1);
-  kprintfd_nosleep("syscallHANDLER: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  //kprintfd_nosleep("syscallHANDLER: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
   arch_switchThreadToUserPageDirChange();
 }
 

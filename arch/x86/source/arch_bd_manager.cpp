@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_manager.cpp,v 1.7 2006/09/19 20:40:23 aniederl Exp $
+*    $Id: arch_bd_manager.cpp,v 1.8 2006/10/13 11:38:12 btittelbach Exp $
 *    $Log: arch_bd_manager.cpp,v $
+*    Revision 1.7  2006/09/19 20:40:23  aniederl
+*    fixed a lot of warnings
+*
 *    Revision 1.6  2005/11/24 23:38:35  nelles
 *
 *
@@ -94,10 +97,10 @@ BDManager::BDManager()
 
 void BDManager::doDeviceDetection( void )
 {
-  kprintfd("BDManager::doDeviceDetection:Detecting IDE devices\n");
+  //kprintfd("BDManager::doDeviceDetection:Detecting IDE devices\n");
   IDEDriver id;
     // insert other device detectors here
-  kprintfd("BDManager::doDeviceDetection:Detection done\n");
+  //kprintfd("BDManager::doDeviceDetection:Detection done\n");
 }
 
 void BDManager::addRequest( BDRequest* bdr )
@@ -110,14 +113,14 @@ void BDManager::addRequest( BDRequest* bdr )
 
 void BDManager::addVirtualDevice( BDVirtualDevice* dev )
 {
-  kprintfd("BDManager::addVirtualDevice:Adding device\n");
+  //kprintfd("BDManager::addVirtualDevice:Adding device\n");
   device_list_.pushBack( dev );
-  kprintfd("BDManager::addVirtualDevice:Device added\n");
+  //kprintfd("BDManager::addVirtualDevice:Device added\n");
 };
 
 void BDManager::serviceIRQ( uint32 irq_num )
 {
-  kprintfd("BDManager::serviceIRQ:Servicing IRQ\n");
+  //kprintfd("BDManager::serviceIRQ:Servicing IRQ\n");
   probeIRQ = false;
   
   uint32 i = 0;
@@ -128,7 +131,7 @@ void BDManager::serviceIRQ( uint32 irq_num )
 	  return;
 	}
       
-  kprintfd("BDManager::serviceIRQ:End servicing IRQ\n");
+  //kprintfd("BDManager::serviceIRQ:End servicing IRQ\n");
 }
 
 BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )

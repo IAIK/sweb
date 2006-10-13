@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: PageManager.cpp,v 1.17 2005/11/21 13:27:08 btittelbach Exp $
+//   $Id: PageManager.cpp,v 1.18 2006/10/13 11:38:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: PageManager.cpp,v $
+//  Revision 1.17  2005/11/21 13:27:08  btittelbach
+//  comment
+//
 //  Revision 1.16  2005/09/27 21:24:43  btittelbach
 //  +IF=1 in PageFaultHandler
 //  +Lock in PageManager
@@ -107,15 +110,14 @@ PageManager::PageManager(pointer start_of_structure)
   {
     writeLine2Bochs((uint8*)"PM: Managing region\n");
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
-    kprintfd("Have a memory region from page %d to page %d of type %d\n", start_address, end_address,type);
+    //kprintfd("Have a memory region from page %d to page %d of type %d\n", start_address, end_address,type);
     if (type==1) number_of_pages_ = Max(number_of_pages_,(Min(end_address,256*1024*PAGE_SIZE))); //number_of_pages_ := size of memory region, here
   }
   //number_of_pages_ now contains the lowest linear memory address where a useable memory region ends
   //we can have a max of 1 GB Memory (256*1024*4k)
   
   number_of_pages_ = number_of_pages_ / PAGE_SIZE;
-  kprintfd("Number of physical pages: %d\n",number_of_pages_);
-  //print(number_of_pages_);
+  //kprintfd("Number of physical pages: %d\n",number_of_pages_);
   
   // max of 1 gig memory supportet
   number_of_pages_ = Min(number_of_pages_,1024*256);

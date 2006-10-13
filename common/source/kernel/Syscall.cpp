@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Syscall.cpp,v 1.11 2005/09/26 12:48:24 btittelbach Exp $
+//   $Id: Syscall.cpp,v 1.12 2006/10/13 11:38:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Syscall.cpp,v $
+//  Revision 1.11  2005/09/26 12:48:24  btittelbach
+//  cleanup 1ofx
+//
 //  Revision 1.10  2005/09/21 23:03:35  btittelbach
 //  fix stuff
 //
@@ -56,7 +59,7 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
 {
   uint32 return_value=0;
   
-  kprintfd("Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n",syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
+  //kprintfd("Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n",syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
   
   switch (syscall_number)
   {
@@ -77,7 +80,7 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
 
 void Syscall::exit(uint32 exit_code) 
 {
-  kprintfd("Syscall::EXIT: called, exit_code: %d\n",exit_code);
+  //kprintfd("Syscall::EXIT: called, exit_code: %d\n",exit_code);
   currentThread->kill();
 }
 
@@ -87,7 +90,7 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   assert(buffer < 2U*1024U*1024U*1024U);
   if (fd == fd_stdout) //stdout
   {
-    kprintfd("Syscall::write: %B\n",(char*) buffer,size);
+    //kprintfd("Syscall::write: %B\n",(char*) buffer,size);
     kprint_buffer((char*)buffer,size);
   }
   return size;
@@ -101,10 +104,10 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
     num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
-    kprintfd("Syscall::read: %B\n",(char*) buffer,num_read);
-    for (uint32 c=0; c<num_read; ++c)
-      kprintfd("%c(%x) ",((char*)buffer)[c],((char*)buffer)[c]);
-    kprintfd("\n");
+    //~ kprintfd("Syscall::read: %B\n",(char*) buffer,num_read);
+    //~ for (uint32 c=0; c<num_read; ++c)
+      //~ kprintfd("%c(%x) ",((char*)buffer)[c],((char*)buffer)[c]);
+    //~ kprintfd("\n");
 
   }
   return num_read;

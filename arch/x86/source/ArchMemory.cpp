@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.19 2006/09/19 20:40:23 aniederl Exp $
+//  $Id: ArchMemory.cpp,v 1.20 2006/10/13 11:38:11 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.19  2006/09/19 20:40:23  aniederl
+//  fixed a lot of warnings
+//
 //  Revision 1.18  2005/11/30 00:55:39  btittelbach
 //  changed back to "virtual memory" by request
 //
@@ -130,7 +133,7 @@ void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, 
 
 void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-  kprintfd_nosleep("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
+  //kprintfd_nosleep("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
   page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;

@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_virtual_device.cpp,v 1.7 2005/11/25 20:16:24 woswasi Exp $
+*    $Id: arch_bd_virtual_device.cpp,v 1.8 2006/10/13 11:38:12 btittelbach Exp $
 *    $Log: arch_bd_virtual_device.cpp,v $
+*    Revision 1.7  2005/11/25 20:16:24  woswasi
+*    even in small revisions can be bugs... *grumml*
+*
 *    Revision 1.5  2005/11/24 23:38:35  nelles
 *
 *
@@ -95,23 +98,23 @@
 BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable) :
 Inode( 0, I_BLOCKDEVICE )
 {
-    kprintfd("BDVirtualDevice::ctor:entered");
+    //kprintfd("BDVirtualDevice::ctor:entered");
     offset_       = offset;
     num_blocks_   = num_blocks;
     block_size_   = block_size;
     writable_     = writable;
     driver_       = driver;
     
-    kprintfd("BDVirtualDevice::ctor:calling string functions\n");
+    //kprintfd("BDVirtualDevice::ctor:calling string functions\n");
     name_         = new char[ strlen( name ) + 1 ];
     strncpy( name_, name, strlen(name) );
     name_[ strlen(name) ] = '\0';
-    kprintfd("BDVirtualDevice::ctor:string functions done\n");
+    //kprintfd("BDVirtualDevice::ctor:string functions done\n");
     
-    kprintfd("BDVirtualDevice::ctor:registering with DeviceFS\n");
+    //kprintfd("BDVirtualDevice::ctor:registering with DeviceFS\n");
     i_superblock_ = DeviceFSSuperBlock::getInstance();
     DeviceFSSuperBlock::getInstance()->addDevice( this, name_ );
-    kprintfd("BDVirtualDevice::ctor:registered with DeviceFS\n");
+    //kprintfd("BDVirtualDevice::ctor:registered with DeviceFS\n");
     
     dev_number_   = 0;
 };
@@ -149,44 +152,44 @@ void BDVirtualDevice::addRequest(BDRequest * command)
     
 int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer) 
 {
-   kprintfd("BDVirtualDevice::readData\n");
+   //kprintfd("BDVirtualDevice::readData\n");
    uint32 blocks2read = size/block_size_, jiffies = 0;
    uint32 blockoffset = offset/block_size_;	
    
    if( size%block_size_ )
      blocks2read++;
 
-   kprintfd("BDVirtualDevice::blocks2read %d\n", blocks2read );
+   //kprintfd("BDVirtualDevice::blocks2read %d\n", blocks2read );
    char *my_buffer = (char *) kmalloc( blocks2read*block_size_*sizeof(char) );
    BDRequest * bd = 
    new BDRequest(0, BDRequest::BD_READ, blockoffset, blocks2read, my_buffer);
    addRequest ( bd );
    
-   kprintfd("BDVirtualDevice::request added\n" );
+   //kprintfd("BDVirtualDevice::request added\n" );
    
    while( bd->getStatus() == BDRequest::BD_QUEUED && 
           jiffies++ < 50000 );
           
    if( bd->getStatus() != BDRequest::BD_DONE )
    {
-     kprintfd("BDVirtualDevice::!done\n" );
+     //kprintfd("BDVirtualDevice::!done\n" );
      kfree( my_buffer );
      delete bd;
      return -1;
    }
 
-   kprintfd("BDVirtualDevice::done\n" );
+   //kprintfd("BDVirtualDevice::done\n" );
    memcpy( buffer, my_buffer + (offset%block_size_), size );
-   kprintfd("BDVirtualDevice::memcpied\n" );
+   //kprintfd("BDVirtualDevice::memcpied\n" );
    kfree( my_buffer );
    delete bd;
-   kprintfd("BDVirtualDevice::returning\n" );
+   //kprintfd("BDVirtualDevice::returning\n" );
    return size;
 };
 
 int32 BDVirtualDevice::writeData(int32 offset, int32 size, const char *buffer)
 {
-   kprintfd("BDVirtualDevice::writeData\n");
+   //kprintfd("BDVirtualDevice::writeData\n");
    uint32 blocks2write = size/block_size_, jiffies = 0;
    uint32 blockoffset = offset/block_size_;
    

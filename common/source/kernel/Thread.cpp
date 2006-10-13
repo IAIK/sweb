@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//  $Id: Thread.cpp,v 1.25 2005/10/27 21:42:51 btittelbach Exp $
+//  $Id: Thread.cpp,v 1.26 2006/10/13 11:38:13 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Thread.cpp,v $
+//  Revision 1.25  2005/10/27 21:42:51  btittelbach
+//  -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
+//  -im Scheduler möglichen null-pointer zugriff vermieden
+//  -kprintf nosleep check logik optimiert
+//
 //  Revision 1.24  2005/10/26 11:17:40  btittelbach
 //  -fixed KMM/SchedulerBlock Deadlock
 //  -introduced possible dangeours reenable-/disable-Scheduler Methods
@@ -153,16 +158,16 @@ static void ThreadStartHack()
 {
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
-  kprintfd("ThreadStartHack: Thread %x (%s) returned, scheduling for execution\n",currentThread,currentThread->getName());
+  //kprintfd("ThreadStartHack: Thread %x (%s) returned, scheduling for execution\n",currentThread,currentThread->getName());
   //kill will schedule the Thread Object for cleanup by the scheduler
   currentThread->kill();
-  kprintfd("ThreadStartHack: Panic, thread youldn't be killed\n");
+  //kprintfd("ThreadStartHack: Panic, thread youldn't be killed\n");
   for(;;);
 }
 
 Thread::Thread()
 {
-  kprintfd("Thread::Thread: Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
+  //kprintfd("Thread::Thread: Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
 
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
   user_arch_thread_info_=0;
@@ -177,14 +182,14 @@ Thread::~Thread()
 {
   if (loader_)
   {
-    kprintfd("Thread::~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n");
+    //kprintfd("Thread::~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n");
     loader_->cleanupUserspaceAddressSpace();
     delete loader_;
   }
-  kprintfd("Thread::~Thread: freeing ThreadInfos\n");
+  //kprintfd("Thread::~Thread: freeing ThreadInfos\n");
   ArchThreads::cleanupThreadInfos(user_arch_thread_info_); //yes that's safe
   ArchThreads::cleanupThreadInfos(kernel_arch_thread_info_);
-  kprintfd("Thread::~Thread: done\n");
+  //kprintfd("Thread::~Thread: done\n");
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return
@@ -192,7 +197,7 @@ void Thread::kill()
 {
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
-  kprintfd("Thread::kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName());
+  //kprintfd("Thread::kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName());
   if (currentThread == this)
   {
     ArchInterrupts::enableInterrupts();

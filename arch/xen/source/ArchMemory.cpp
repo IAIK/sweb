@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.8 2006/01/20 07:20:04 nightcreature Exp $
+//  $Id: ArchMemory.cpp,v 1.9 2006/10/13 11:38:12 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.8  2006/01/20 07:20:04  nightcreature
+//  updating to xen-3.0, modified sweb main to get the kernel end out of
+//  ArchCommon
+//
 //  Revision 1.7  2005/11/28 10:28:01  btittelbach
 //  replaced mentioning of virtual memory with linear memory to be in sync with intel manual
 //  and have better distinction with swap
@@ -94,17 +98,17 @@ void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, 
 
 void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 linear_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-   kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
+   //kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
    page_directory_entry *page_directory = (page_directory_entry *) get3GBAdressOfPPN(physical_page_directory_page);
   uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = linear_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde4k.present == 0)
   {
-  kprintfd("ArchMemory::mapPage: Need to add a pte for 0 %d %d %d\n",pde_vpn, linear_page, physical_page);
+  //kprintfd("ArchMemory::mapPage: Need to add a pte for 0 %d %d %d\n",pde_vpn, linear_page, physical_page);
     insertPTE(physical_page_directory_page,pde_vpn,PageManager::instance()->getFreePhysicalPage());
   }
   page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-  kprintfd("ArchMemory::mapPage: pte_base = %x\n",pte_base);
+  //kprintfd("ArchMemory::mapPage: pte_base = %x\n",pte_base);
   pte_base[pte_vpn].present = 1;
   pte_base[pte_vpn].writeable = 1;
   pte_base[pte_vpn].user_access = user_access;
