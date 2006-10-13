@@ -1,7 +1,24 @@
 #*********************************************************************
 #*
-#*    $Id: bochsrc,v 1.24 2005/10/24 21:28:04 nelles Exp $
+#*    $Id: bochsrc,v 1.25 2006/10/13 02:23:25 btittelbach Exp $
 #*    $Log: bochsrc,v $
+#*    Revision 1.24  2005/10/24 21:28:04  nelles
+#*
+#*     Fixed block devices. I think.
+#*
+#*     Committing in .
+#*
+#*     Modified Files:
+#*
+#*     	arch/x86/include/arch_bd_ata_driver.h
+#*     	arch/x86/source/InterruptUtils.cpp
+#*     	arch/x86/source/arch_bd_ata_driver.cpp
+#*     	arch/x86/source/arch_bd_ide_driver.cpp
+#*     	arch/xen/source/arch_bd_ide_driver.cpp
+#*
+#*     	common/source/kernel/SpinLock.cpp
+#*     	common/source/kernel/Thread.cpp utils/bochs/bochsrc
+#*
 #*    Revision 1.23  2005/10/02 12:27:55  nelles
 #*
 #*     Committing in .
@@ -441,7 +458,7 @@ ata0-slave: type=cdrom, path=D:, status=inserted
 #ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted 
 #
 #ata0-master: type=disk, path="image/hash.img", mode=flat, cylinders=60, heads=16, spt=63
-ata0-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=208, heads=16, spt=63
+ata0-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=209, heads=16, spt=63
 #ata0-master: type=disk, mode=flat, path="image/mc.img", cylinders=4, heads=16, spt=63
 #ata0-slave: type=disk, mode=flat, path="image/minix_disk_1.img", cylinders=2, heads=2, spt=63
 #ata0-master: type=disk, path="image/c.img", mode=flat, cylinders=2, heads=16, spt=63
