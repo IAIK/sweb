@@ -204,10 +204,26 @@ bochsgdb:
 	echo "Going to gdb bochs on port localhost:1234 " 
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
 
-.PHONY: submit
+.PHONY: submit info
 submit: mrproper
 	@test -n "$(group)" || (echo -e "\n\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	@test -n "$(assignment)" || (echo -e "\n\nSyntax: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "./images" ./
 
-	
+info: 
+	echo -e "\nBOCHS:"	
+	bochs --help 2>&1 | head -n 5
+	echo -e "\ne2fsimage/Local.mak:"
+	ls -la utils/e2fsimage/Local.mak
+	echo -e "\nMD5SUMS:"
+	md5sum Makefile images/SWEB-flat images/SWEB-flat.vmdk.gz images/SWEB.vmdk images/ext2fs_grub_master.img images/menu.lst images/menu.lst.hda images/nvram images/ramfs images/sweb.vmx
+	echo -e "\nMAKE:"
+	make -v
+	echo -e "\nLIBEXT2:"
+	ldconfig -p | grep ext2
+	echo -e "\nCPU:"
+	cat /proc/cpuinfo
+	echo -e "\nKERNEL:"
+	cat /proc/version
+	echo -e "\nENVIRONMENT:"
+	env
