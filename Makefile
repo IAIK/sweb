@@ -213,12 +213,12 @@ submit: mrproper
 info: 
 	echo -e "\nBOCHS:"	
 	bochs --help 2>&1 | head -n 5
-	echo -e "\ne2fsimage/Local.mak:"
-	ls -la utils/e2fsimage/Local.mak
+	echo -e "\nGCC:"
+	gcc --version
 	echo -e "\nMD5SUMS:"
-	md5sum Makefile images/SWEB-flat images/SWEB-flat.vmdk.gz images/SWEB.vmdk images/ext2fs_grub_master.img images/menu.lst images/menu.lst.hda images/nvram images/ramfs images/sweb.vmx
+	md5sum Makefile images/SWEB-flat.vmdk.gz images/SWEB.vmdk images/ext2fs_grub_master.img images/menu.lst images/menu.lst.hda images/nvram images/ramfs images/sweb.vmx
 	echo -e "\nMAKE:"
-	make -v
+	$(MAKE) -v
 	echo -e "\nLIBEXT2:"
 	ldconfig -p | grep ext2
 	echo -e "\nCPU:"
@@ -227,3 +227,5 @@ info:
 	cat /proc/version
 	echo -e "\nENVIRONMENT:"
 	env
+	echo -e "\nE2FSIMAGE/Local.mak:"
+	ls -la utils/e2fsimage/Local.mak |cat 
