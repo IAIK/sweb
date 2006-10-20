@@ -1,7 +1,12 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.23 2005/10/27 21:42:51 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.24 2006/10/20 15:13:41 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.23  2005/10/27 21:42:51  btittelbach
+//   -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
+//   -im Scheduler möglichen null-pointer zugriff vermieden
+//   -kprintf nosleep check logik optimiert
+//
 //   Revision 1.22  2005/10/26 11:17:40  btittelbach
 //   -fixed KMM/SchedulerBlock Deadlock
 //   -introduced possible dangeours reenable-/disable-Scheduler Methods
@@ -116,20 +121,12 @@ void oh_writeStringWithSleep(char const* str)
 }
 
 
-void oh_writeCharDebugWithSleep(char c)
-{
-  //this blocks
-  writeChar2Bochs((uint8) c);
-}
-void oh_writeStringDebugWithSleep(char const* str)
-{
-  //this blocks
-  while (*str)
-  {
-    oh_writeCharDebugWithSleep(*str);
-    str++;
-  }
-}
+// void oh_writeCharDebugWithSleep(char c)
+// {
+// }
+// void oh_writeStringDebugWithSleep(char const* str)
+// {
+// }
 
 RingBuffer<char> *nosleep_rb_;
 
@@ -455,11 +452,9 @@ void kprintfd(const char *fmt, ...)
   va_list args;
 
   va_start(args, fmt);
-  //check if atomar or not in current context
-  if (likely(ArchInterrupts::testIFSet()))
-    vkprintf(oh_writeStringDebugWithSleep, oh_writeCharDebugWithSleep, fmt, args);
-  else
-    vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
+  // for a long time now, there was no difference between kprintd and kprintfd_nosleep
+  // now it's also immediately obvious
+  vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
   va_end(args);
 }
 
