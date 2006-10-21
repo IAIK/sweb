@@ -1,7 +1,10 @@
 /**
- * $Id: main.cpp,v 1.107 2006/10/13 11:38:13 btittelbach Exp $
+ * $Id: main.cpp,v 1.108 2006/10/21 23:26:45 btittelbach Exp $
  *
  * $Log: main.cpp,v $
+ * Revision 1.107  2006/10/13 11:38:13  btittelbach
+ * Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
+ *
  * Revision 1.106  2006/09/19 14:42:54  btittelbach
  * mit pseudo shell schaut das schon eher was gleich :)
  *
@@ -528,6 +531,7 @@
 #include "debug_bochs.h"
 #include "ArchMemory.h"
 #include "Loader.h"
+#include "assert.h"
 
 #include "arch_serial.h"
 #include "drivers/serial.h"
@@ -759,6 +763,6 @@ void startup()
 
   Scheduler::instance()->yield();  
   
-  
-  for (;;);
+  //not reached
+  assert(false);
 }
