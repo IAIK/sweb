@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.37 2006/10/13 11:38:12 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.38 2006/10/21 23:32:04 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.37  2006/10/13 11:38:12  btittelbach
+//  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
+//
 //  Revision 1.36  2005/10/27 21:42:51  btittelbach
 //  -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
 //  -im Scheduler möglichen null-pointer zugriff vermieden
@@ -336,6 +339,7 @@ void Scheduler::startThreadHack()
 
 uint32 Scheduler::schedule()
 {
+  assert(this);
   if (testLock() || block_scheduling_extern_>0)
   {
     //no scheduling today...
