@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.38 2006/10/21 23:32:04 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.39 2006/10/22 00:33:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.38  2006/10/21 23:32:04  btittelbach
+//  Catch Error: If Interrupts on before Scheduler created
+//
 //  Revision 1.37  2006/10/13 11:38:12  btittelbach
 //  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
 //
@@ -325,6 +328,19 @@ void Scheduler::sleepAndRelease(Mutex &lock)
   unlockScheduling();
   yield();
 }
+void Scheduler::sleepAndRestoreInterrupts(bool interrupts)
+{
+  //why do it get the feeling that misusing this function
+  //can mean a serious shot in the foot ?
+  currentThread->state_=Sleeping;
+  if (interrupts)
+  {
+  	ArchInterrupts::enableInterrupts();
+  	assert(block_scheduling_extern_==0);
+  	yield();
+  }
+}
+
 void Scheduler::wake(Thread* thread_to_wake)
 {
   //DEBUG: Check if thread_to_wake is in List

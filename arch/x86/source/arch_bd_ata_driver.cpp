@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.10 2006/10/13 11:38:12 btittelbach Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.11 2006/10/22 00:33:23 btittelbach Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
+*    Revision 1.10  2006/10/13 11:38:12  btittelbach
+*    Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
+*
 *    Revision 1.9  2005/11/27 11:57:06  woswasi
 *    *** empty log message ***
 *
@@ -328,14 +331,8 @@ uint32 ATADriver::addRequest( BDRequest * br )
   //kprintfd("ATADriver::Finaly got out !!\n");
   
   if( currentThread )
-  	currentThread->state_ = Sleeping;
-  
-  if( interrupt_context )
-  {
-	//kprintfd("ATADriver::Enabling interrupts !!\n");
-	ArchInterrupts::enableInterrupts();
-  	Scheduler::instance()->yield();
-  }
+  	Scheduler::instance()->sleepAndRestoreInterrupts(interrupt_context);
+
   return 0;
 }
 

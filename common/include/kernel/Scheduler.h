@@ -1,8 +1,13 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.15 2005/10/26 11:17:40 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.16 2006/10/22 00:33:24 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.15  2005/10/26 11:17:40  btittelbach
+//  -fixed KMM/SchedulerBlock Deadlock
+//  -introduced possible dangeours reenable-/disable-Scheduler Methods
+//  -discovered that removing the IF/Lock Checks in kprintfd_nosleep is a VERY BAD Idea
+//
 //  Revision 1.14  2005/10/22 14:00:31  btittelbach
 //  added sleepAndRelease()
 //
@@ -127,6 +132,17 @@ public:
 /// @param &lock The SpinLock we want to release
   void sleepAndRelease(SpinLock &lock);
   void sleepAndRelease(Mutex &lock);
+
+//-----------------------------------------------------------
+/// yet another hack. Nelle's BD Driver needs to switch off Interrupts
+/// and put Threads to sleep.
+/// In order to avoid getting a wakeup before we put the Thread to sleep
+/// we need to first sleep and _then_ enable Interrupts
+/// Ohhh the Pain !!!
+/// Everybody else using this function in any other sychronisation mechanism
+/// where disabling Interrupts is not _absolutely_ neccessary is going to be lashed !
+///
+  void sleepAndRestoreInterrupts(bool interrupts);
 
   void printThreadList();
 //-----------------------------------------------------------
