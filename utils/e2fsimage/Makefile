@@ -1,8 +1,9 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.5 2006/10/23 21:25:20 btittelbach Exp $
+# $Id: Makefile,v 1.6 2006/10/23 23:14:06 btittelbach Exp $
 #
 ######################################################################
+
 
 sinclude Local.mak
 
@@ -23,7 +24,7 @@ e2fsimage: $(OBJS)
 	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) e2fsimage
+	rm -f $(OBJS) e2fsimage Local.mak 
 
 mrproper: clean
 

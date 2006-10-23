@@ -1,6 +1,9 @@
-# $Id: common.mk,v 1.8 2006/10/05 13:58:07 btittelbach Exp $
+# $Id: common.mk,v 1.9 2006/10/23 23:14:06 btittelbach Exp $
 #
 # $Log: common.mk,v $
+# Revision 1.8  2006/10/05 13:58:07  btittelbach
+# *** empty log message ***
+#
 # Revision 1.7  2005/08/11 16:46:57  davrieb
 # add PathWalker
 #
@@ -170,10 +173,10 @@ clean-l:
 	@rm -f $(TARGET)
 
 clean: $(SUBPROJECTS) clean-l
-	@echo "CLEAN $(E2FSIMAGESOURCE)"
-	@rm -f $(E2FSIMAGESOURCE)*.o
-	@rm -f $(E2FSIMAGESOURCE)Local.mak
-	@rm -f $(E2FSIMAGESOURCE)e2fsimage
+#	@echo "CLEAN $(E2FSIMAGESOURCE)"
+#	@rm -f $(E2FSIMAGESOURCE)*.o
+#	@rm -f $(E2FSIMAGESOURCE)Local.mak
+#	@rm -f $(E2FSIMAGESOURCE)e2fsimage
 
 clean-dep-l:
 	@echo "CLEAN $(OBJECTDIR)/*.d"
