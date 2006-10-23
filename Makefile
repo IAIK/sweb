@@ -209,6 +209,9 @@ submit: clean
 	@test -n "$(group)" || (echo -e "\n\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	@test -n "$(assignment)" || (echo -e "\n\nSyntax: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "./images" ./
+	@echo -e "\n\n*******************************************"
+	@echo "Created: ../IMA$(assignment)GR$(group).tar.bz2"
+	@echo -e "*******************************************\n\n"
 
 info: 
 	echo -e "\nBOCHS:"	
@@ -220,7 +223,7 @@ info:
 	echo -e "\nMAKE:"
 	$(MAKE) -v
 	echo -e "\nLIBEXT2:"
-	ldconfig -p | grep ext2
+	/sbin/ldconfig -p | grep ext2
 	echo -e "\nCPU:"
 	cat /proc/cpuinfo
 	echo -e "\nKERNEL:"
