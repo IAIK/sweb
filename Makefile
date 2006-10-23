@@ -205,7 +205,7 @@ bochsgdb:
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
 
 .PHONY: submit info
-submit: mrproper
+submit: clean
 	@test -n "$(group)" || (echo -e "\n\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	@test -n "$(assignment)" || (echo -e "\n\nSyntax: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "./images" ./

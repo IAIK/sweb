@@ -1,6 +1,6 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.4 2006/10/13 02:51:41 btittelbach Exp $
+# $Id: Makefile,v 1.5 2006/10/23 21:25:20 btittelbach Exp $
 #
 ######################################################################
 
@@ -26,3 +26,11 @@ clean:
 	rm -f $(OBJS) e2fsimage
 
 mrproper: clean
+
+submit:
+
+install:
+
+kernel:
+
+kernelxen:
