@@ -210,10 +210,11 @@ submit:
 	find -name "*~" -or -iname "*.bak" -or -iname "*.backup" -iname "*.swp" -or -iname "*.sav" -exec rm {} \;
 	@test -n "$(group)" || (echo -e "\n\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	@test -n "$(assignment)" || (echo -e "\n\nSyntax: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
-	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "\.svn" --exclude "\./images" --exclude "\.[^/]" --exclude "*.prj" ./
-	@echo -e "\n\n*******************************************"
+	tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "\.svn" --exclude "\./images" --exclude "\.[^/]*" --exclude "*.prj" ./
+	@echo -e "\n\n**********************************************"
 	@echo "Created: ../IMA$(assignment)GR$(group).tar.bz2"
-	@echo -e "*******************************************\n\n"
+	@echo "Please Test with: tar tjf ../IMA$(assignment)GR$(group).tar.bz2 |less"
+	@echo -e "**********************************************\n\n"
 
 info: 
 	echo -e "\nBOCHS:"	
