@@ -1,11 +1,9 @@
 # vi: set sw=4 ts=4:
 #
-# $Id: Makefile,v 1.6 2006/10/23 23:14:06 btittelbach Exp $
+# $Id: Makefile,v 1.7 2006/10/24 19:09:48 btittelbach Exp $
 #
 ######################################################################
 
-
-sinclude Local.mak
 
 all: e2fsimage
 
@@ -17,10 +15,12 @@ unused_OBJ=initfs.o
 Local.mak:
 	$(SHELL) ./configure
 
-e2fsimage: $(OBJS)
+e2fsimage: $(OBJS) 
+	@echo $(eval sinclude Local.mak)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) 
 
 %.o: %.c Makefile Local.mak e2fsimage.h
+	@echo $(eval sinclude Local.mak)
 	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
