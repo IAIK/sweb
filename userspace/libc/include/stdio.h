@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: stdio.h,v $
  *
- * $Id: stdio.h,v 1.3 2005/09/21 16:44:46 aniederl Exp $
+ * $Id: stdio.h,v 1.4 2006/11/18 20:27:02 aniederl Exp $
  * $Log: stdio.h,v $
+ * Revision 1.3  2005/09/21 16:44:46  aniederl
+ * changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
+ *
  * Revision 1.2  2005/09/20 15:58:38  aniederl
  * included unistd.h
  *
@@ -51,19 +54,19 @@
  * Input/output fully buffered
  *
  */
-#define _IOFBF 1
+#define _IOFBF 0x0000
 
 /**
  * Input/output line buffered
  *
  */
-#define _IOLBF 2
+#define _IOLBF 0x0001
 
 /**
  * Input/output unbuffered
  *
  */
-#define _IONBF 3
+#define _IONBF 0x0002
 
 
 /**
@@ -83,19 +86,19 @@
  * Set file offset to offset, defined for lseek() and fcntl()
  *
  */
-#define SEEK_SET 1
+#define SEEK_SET 0x0000
 
 /**
  * Set file offset to current + offset, defined for lseek() and fcntl()
  *
  */
-#define SEEK_CUR 2
+#define SEEK_CUR 0x0001
 
 /**
  * Set file offset to EOF + offset, defined for lseek() and fcntl()
  *
  */
-#define SEEK_END 3
+#define SEEK_END 0x0002
 
 
 /**

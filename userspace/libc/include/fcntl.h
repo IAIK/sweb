@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: fcntl.h,v $
  *
- * $Id: fcntl.h,v 1.3 2005/09/20 15:58:37 aniederl Exp $
+ * $Id: fcntl.h,v 1.4 2006/11/18 20:27:02 aniederl Exp $
  * $Log: fcntl.h,v $
+ * Revision 1.3  2005/09/20 15:58:37  aniederl
+ * included unistd.h
+ *
  * Revision 1.2  2005/09/13 17:31:04  aniederl
  * removed "unnecessary" functions
  *
@@ -41,127 +44,149 @@
  * Duplicate file descriptor
  *
  */
-#define F_DUPFD 1
+#define F_DUPFD 0x0000
 
 /**
  * Get file descriptor flags
  *
  */
-#define F_GETFD 2
+#define F_GETFD 0x0001
 
 /**
  * Set file descriptor flags
  *
  */
-#define F_SETFD 3
+#define F_SETFD 0x0002
 
 /**
  * Get file status flags and file access mode
  *
  */
-#define F_GETFL 4
+#define F_GETFL 0x0004
 
 /**
  * Set file status flags
  *
  */
-#define F_SETFL 5
+#define F_SETFL 0x0008
 
 /**
  * Get record locking information
  *
  */
-#define F_GETLK 6
+#define F_GETLK 0x0010
 
 /**
  * Set record locking information
  *
  */
-#define F_SETLK 7
+#define F_SETLK 0x0020
 
 /**
  * Set record locking information; wait if blocked
  *
  */
-#define F_SETLKW 8
+#define F_SETLKW 0x0040
 
 /**
  * Close the file descriptor upon execution of an exec family function
  *
  */
-#define FD_CLOEXEC 11
+#define FD_CLOEXEC 0x0080
 
 /**
  * Shared or read lock
  *
  */
-#define F_RDLCK 12
+#define F_RDLCK 0x0100
 
 /**
  * Unlock
  *
  */
-#define F_UNLCK 13
+#define F_UNLCK 0x0200
 
 /**
  * Exclusive or write lock
  *
  */
-#define F_WRLCK 14
+#define F_WRLCK 0x0400
 
-/**
- * Create file if it does not exist
- *
- */
-#define O_CREAT 1
-
-/**
- * Truncate flag
- *
- */
-#define O_TRUNC 4
-
-/**
- * Set append mode
- *
- */
-#define O_APPEND 5
-
-/**
- * Non-blocking mode
- *
- */
-#define O_NONBLOCK 7
-
-/**
- * Synchronized read I/O operations
- *
- */
-#define O_RSYNC 8
-
-/**
- * Mask for file access modes
- *
- */
-#define O_ACCMODE 10
 
 /**
  * Open for reading only
  *
  */
-#define O_RDONLY 11
-
-/**
- * Open for reading and writing
- *
- */
-#define O_RDWR 12
+#define O_RDONLY 0x0000
 
 /**
  * Open for writing only
  *
  */
-#define O_WRONLY 13
+#define O_WRONLY 0x0001
+
+/**
+ * Open for reading and writing
+ *
+ */
+#define O_RDWR 0x0002
+
+
+/**
+ * Create file if it does not exist
+ *
+ */
+#define O_CREAT 0x0004
+
+/**
+ * Truncate flag
+ *
+ */
+#define O_TRUNC 0x0008
+
+/**
+ * Set append mode
+ *
+ */
+#define O_APPEND 0x0010
+
+/**
+ * Non-blocking mode
+ *
+ */
+#define O_NONBLOCK 0x0020
+
+/**
+ * Synchronized read I/O operations
+ *
+ */
+#define O_RSYNC 0x0040
+
+/**
+ * Mask for file access modes
+ *
+ */
+#define O_ACCMODE 0x0080
+
+
+/**
+ * Readable flag
+ *
+ */
+#define A_READABLE  0x0001
+
+/**
+ * Writeable flag
+ *
+ */
+#define A_WRITABLE  0x0002
+
+/**
+ * Executable flag
+ *
+ */
+#define A_EXECABLE  0x0004
+
 
 /**
  * Structure for describing a file lock

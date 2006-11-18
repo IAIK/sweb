@@ -21,8 +21,11 @@
 /**
  * CVS Log Info for $RCSfile: unistd.h,v $
  *
- * $Id: unistd.h,v 1.4 2005/09/20 14:17:24 aniederl Exp $
+ * $Id: unistd.h,v 1.5 2006/11/18 20:27:02 aniederl Exp $
  * $Log: unistd.h,v $
+ * Revision 1.4  2005/09/20 14:17:24  aniederl
+ * adapted file descriptor constants for using those from kernel syscall definitions
+ *
  * Revision 1.3  2005/09/13 17:31:04  aniederl
  * removed "unnecessary" functions
  *
@@ -53,44 +56,44 @@
  * Set file offset to offset, defined for lseek() and fcntl()
  *
  */
-#define SEEK_SET 1
+#define SEEK_SET 0x0000
 
 /**
  * Set file offset to current + offset, defined for lseek() and fcntl()
  *
  */
-#define SEEK_CUR 2
+#define SEEK_CUR 0x0001
 
 /**
  * Set file offset to EOF + offset, defined for lseek() and fcntl()
  *
  */
-#define SEEK_END 3
+#define SEEK_END 0x0002
 
 
 /**
  * Lock a section for exclusive use, defined for lockf()
  *
  */
-#define F_LOCK 1
+#define F_LOCK 0x0000
 
 /**
  * Unlock locked sections, defined for lockf()
  *
  */
-#define F_ULOCK 2
+#define F_ULOCK 0x0001
 
 /**
  * Test section for locks by other processes, defined for lockf()
  *
  */
-#define F_TEST 3
+#define F_TEST 0x0002
 
 /**
  * Test and lock a section for exclusive use, defined for lockf()
  *
  */
-#define F_TLOCK 4
+#define F_TLOCK 0x0004
 
 
 /**
