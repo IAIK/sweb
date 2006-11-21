@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.20 2006/10/13 11:38:11 btittelbach Exp $
+//  $Id: ArchMemory.cpp,v 1.21 2006/11/21 19:14:43 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: ArchMemory.cpp,v $
+//  Revision 1.20  2006/10/13 11:38:11  btittelbach
+//  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
+//
 //  Revision 1.19  2006/09/19 20:40:23  aniederl
 //  fixed a lot of warnings
 //
@@ -109,6 +112,7 @@ void ArchMemory::unmapPage(uint32 physical_page_directory_page, uint32 virtual_p
     for (uint32 p=0;p<1024;++p)
       PageManager::instance()->freePage(page_directory[pde_vpn].pde4m.page_base_address*1024 + p);
   }
+  else
   {
     page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
     if (pte_base[pte_vpn].present)
