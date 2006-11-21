@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.8 2006/09/19 18:37:21 aniederl Exp $
+ * $Id: List.tcpp,v 1.9 2006/11/21 21:29:13 btittelbach Exp $
  * $Log: List.tcpp,v $
+ * Revision 1.8  2006/09/19 18:37:21  aniederl
+ * bug fixes
+ *
  * Revision 1.7  2005/09/12 23:29:06  aniederl
  * complete rewrite of class List and ListNode for the sake of simplicity, stability and extendability
  *
@@ -432,10 +435,10 @@ void List<ValueType>::insert(size_type index, const_reference element)
       // only has to be done for node != first
       node->getPreviousNode()->setNextNode(new_node);
 
-    node->setPreviousNode(new_node);
-
     new_node->setNextNode(node);
     new_node->setPreviousNode(node->getPreviousNode());
+	node->setPreviousNode(new_node);
+	
   }
   else
   {
