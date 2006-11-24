@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Loader.cpp,v 1.19 2006/11/23 01:57:02 btittelbach Exp $
+//   $Id: Loader.cpp,v 1.20 2006/11/24 01:13:16 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Loader.cpp,v $
+//  Revision 1.19  2006/11/23 01:57:02  btittelbach
+//  verwirrung vermeiden
+//
 //  Revision 1.18  2006/10/13 11:38:12  btittelbach
 //  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
 //
@@ -433,7 +436,7 @@ void Loader::loadOnePage(uint32 virtual_address)
 void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
-  kprintfd("Loader::loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %s\n",virtual_page,virtual_address,currentThread->getName());
+  //kprintfd("Loader::loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %s\n",virtual_page,virtual_address,currentThread->getName());
   
 
   //uint32 page_dir_page = ArchThreads::getPageDirectory(thread);
@@ -502,7 +505,7 @@ void Loader::loadOnePageSafeButSlow(uint32 virtual_address)
       kprintfd("Loader::loadOnePageSafeButSlow:EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address);
     }
   }
-  kprintfd("Loader::loadOnePageSafeButSlow: wrote a total of %d bytes\n",written);
+  //kprintfd("Loader::loadOnePageSafeButSlow: wrote a total of %d bytes\n",written);
   if (!written)
   {
     kprintfd("Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location\n",written);

@@ -1,7 +1,17 @@
 //----------------------------------------------------------------------
-//   $Id: RingBuffer.h,v 1.1 2005/09/16 12:47:41 btittelbach Exp $
+//   $Id: RingBuffer.h,v 1.2 2006/11/24 01:13:16 btittelbach Exp $
 //----------------------------------------------------------------------
-//   $Log: FiFoDRBOSS.h,v $
+//   $Log: RingBuffer.h,v $
+//   Revision 1.1  2005/09/16 12:47:41  btittelbach
+//   Second PatchThursday:
+//   +KeyboardInput SyncStructure Rewrite
+//   +added RingBuffer
+//   +debugged FiFoDRBOSS (even though now obsolete)
+//   +improved FiFo
+//   +more debugging
+//   Added Files:
+//    	common/include/ipc/RingBuffer.h
+//
 //   Revision 1.5  2005/09/15 18:47:06  btittelbach
 //   FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
 //   IdleThread now uses hlt instead of yield.
@@ -92,7 +102,7 @@ private:
   uint32 buffer_size_;
   T *buffer_;
   uint32 write_pos_;
-  uint32 read_pos_;  
+  uint32 read_pos_;
 };
 
 template <class T>
