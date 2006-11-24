@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: atoi.c,v $
  *
- * $Id: atoi.c,v 1.1 2005/09/13 20:45:44 aniederl Exp $
- * $Log$
+ * $Id: atoi.c,v 1.2 2006/11/24 17:56:21 aniederl Exp $
+ * $Log: atoi.c,v $
+ * Revision 1.1  2005/09/13 20:45:44  aniederl
+ * initial import of atoi
+ *
  */
 
 
@@ -40,7 +43,7 @@ int atoi(const char *string)
 {
   // taken from kprintf.cpp
   int number = 0;
-  int log = 0;
+  int base = 10;
   int negative = 0;
 
   if(*string == '-')
@@ -54,9 +57,8 @@ int atoi(const char *string)
 
   while(*string >= '0' && *string <= '9')
   {
-    number *= (10 * log);
+    number *= base;
     number += *string - '0';
-    ++log;
     ++string;
   }
 
@@ -77,7 +79,7 @@ long atol(const char *string)
 {
   // taken from kprintf.cpp
   long number = 0;
-  long log = 0;
+  long base = 10;
   int negative = 0;
 
   if(*string == '-')
@@ -91,9 +93,8 @@ long atol(const char *string)
 
   while(*string >= '0' && *string <= '9')
   {
-    number *= (10 * log);
+    number *= base;
     number += *string - '0';
-    ++log;
     ++string;
   }
 
