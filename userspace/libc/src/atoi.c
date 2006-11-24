@@ -22,8 +22,11 @@
 /**
  * CVS Log Info for $RCSfile: atoi.c,v $
  *
- * $Id: atoi.c,v 1.2 2006/11/24 17:56:21 aniederl Exp $
+ * $Id: atoi.c,v 1.3 2006/11/24 18:10:39 aniederl Exp $
  * $Log: atoi.c,v $
+ * Revision 1.2  2006/11/24 17:56:21  aniederl
+ * fix defective behaviour of atoi and atol
+ *
  * Revision 1.1  2005/09/13 20:45:44  aniederl
  * initial import of atoi
  *
@@ -48,7 +51,7 @@ int atoi(const char *string)
 
   if(*string == '-')
   {
-    negative = 0;
+    negative = 1;
     ++string;
   }
   else
