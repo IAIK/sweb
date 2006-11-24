@@ -22,8 +22,13 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.9 2006/11/21 21:29:13 btittelbach Exp $
+ * $Id: List.tcpp,v 1.10 2006/11/24 17:12:42 aniederl Exp $
  * $Log: List.tcpp,v $
+ * Revision 1.9  2006/11/21 21:29:13  btittelbach
+ * Bug ausgebessert:
+ * node->previous node wurde gesetzt bevor es abgefragt wurde.
+ * Danke an Christian Pendl fürs Käfer jagen :)
+ *
  * Revision 1.8  2006/09/19 18:37:21  aniederl
  * bug fixes
  *
@@ -350,6 +355,9 @@ void List<ValueType>::popBack()
     else
       last_node_ = first_node_ = 0;
   }
+
+  if(last_node_)
+    last_node_->setNextNode(0);
 }
 
 //----------------------------------------------------------------------
@@ -401,6 +409,9 @@ void List<ValueType>::popFront()
     else
       first_node_ = last_node_ = 0;
   }
+
+  if(first_node_)
+    first_node_->setPreviousNode(0);
 }
 
 //----------------------------------------------------------------------
