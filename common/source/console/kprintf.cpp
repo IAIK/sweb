@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: kprintf.cpp,v 1.24 2006/10/20 15:13:41 btittelbach Exp $
+//   $Id: kprintf.cpp,v 1.25 2006/11/24 20:47:53 btittelbach Exp $
 //----------------------------------------------------------------------
 //   $Log: kprintf.cpp,v $
+//   Revision 1.24  2006/10/20 15:13:41  btittelbach
+//   kprintfd und kprintfd_nosleep machen jetzt seit einem Jahr dasselbe,
+//   jetzt sieht man das im Code wenigstens auch gleich
+//
 //   Revision 1.23  2005/10/27 21:42:51  btittelbach
 //   -Mutex::isFree() abuse check kennt jetzt auch Scheduler-Ausschalten und springt nicht mehr versehentlich an
 //   -im Scheduler möglichen null-pointer zugriff vermieden
@@ -278,12 +282,10 @@ void output_number(void (*write_char)(char), uint32 num, uint32 base, uint32 siz
 uint32 atoi(const char *&fmt)
 {
   uint32 num=0;
-  uint32 log=0;
   while (*fmt >= '0' && *fmt <= '9')
   {
-    num*= (10*log);
+    num*= 10;
     num+=*fmt - '0';
-    ++log;
     ++fmt;
   }
   return num;
@@ -335,7 +337,11 @@ void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const
           break;
         
         case 's':
-          write_string(va_arg(args,char const*));
+	  tmp = (char*) va_arg(args,char const*);
+	  if (tmp)
+	    write_string(tmp);
+	  else
+	    write_string("(null)");
           break;
         
         //print a Buffer, this expects the buffer size as next argument
@@ -343,7 +349,10 @@ void vkprintf(void (*write_string)(char const*), void (*write_char)(char), const
         case 'B':
           tmp = (char*) va_arg(args,char*);
           width = (uint32) va_arg(args,uint32);
-          vkprint_buffer(write_char, tmp, width);
+	  if (tmp)
+            vkprint_buffer(write_char, tmp, width);
+	  else
+	    write_string("(null)");
           break;
         
         //signed decimal
