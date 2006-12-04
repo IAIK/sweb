@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Condition.cpp,v 1.6 2006/10/13 11:38:12 btittelbach Exp $
+//   $Id: Condition.cpp,v 1.7 2006/12/04 10:25:18 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Condition.cpp,v $
+//  Revision 1.6  2006/10/13 11:38:12  btittelbach
+//  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
+//
 //  Revision 1.5  2005/09/20 08:05:08  btittelbach
 //  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
 //  +Condition cleanup
@@ -81,10 +84,9 @@ void Condition::wait()
   assert(lock_->isHeldBy(currentThread));
   assert(ArchInterrupts::testIFSet());
   sleepers_->pushBack(currentThread);
-  lock_->release();
   //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
   //kprintfd("Condition::wait: Thread %x %s wating on Condition %x\n",currentThread,currentThread->getName(),this);
-  Scheduler::instance()->sleep();
+  Scheduler::instance()->sleepAndRelease(*lock_);
   lock_->acquire();
 }
 
