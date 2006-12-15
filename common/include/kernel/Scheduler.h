@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.h,v 1.16 2006/10/22 00:33:24 btittelbach Exp $
+//   $Id: Scheduler.h,v 1.17 2006/12/15 12:45:44 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.h,v $
+//  Revision 1.16  2006/10/22 00:33:24  btittelbach
+//  Sleep ist jetzt im Scheduler wo's hingehört
+//
 //  Revision 1.15  2005/10/26 11:17:40  btittelbach
 //  -fixed KMM/SchedulerBlock Deadlock
 //  -introduced possible dangeours reenable-/disable-Scheduler Methods
@@ -64,9 +67,6 @@
 #include "List.h"
 #include "SpinLock.h"
 #include "Mutex.h"
-
-
-#define MAX_THREADS 20
 
 class Thread;
 class ArchThreadInfo;
