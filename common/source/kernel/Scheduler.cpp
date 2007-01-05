@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.39 2006/10/22 00:33:24 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.40 2007/01/05 21:06:47 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.39  2006/10/22 00:33:24  btittelbach
+//  Sleep ist jetzt im Scheduler wo's hingehört
+//
 //  Revision 1.38  2006/10/21 23:32:04  btittelbach
 //  Catch Error: If Interrupts on before Scheduler created
 //
@@ -367,6 +370,9 @@ uint32 Scheduler::schedule()
 
   do 
   {
+    // WARNING: do not read currentThread before is has been set here
+    //          the first time scheduler is called.
+    //          before this, currentThread may be 0 !!
     currentThread = threads_.front();
     
     if (kill_old_ == false && currentThread->state_ == ToBeDestroyed)
