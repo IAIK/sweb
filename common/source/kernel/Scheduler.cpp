@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//   $Id: Scheduler.cpp,v 1.40 2007/01/05 21:06:47 btittelbach Exp $
+//   $Id: Scheduler.cpp,v 1.41 2007/01/11 15:16:27 aniederl Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: Scheduler.cpp,v $
+//  Revision 1.40  2007/01/05 21:06:47  btittelbach
+//  useful comment
+//
 //  Revision 1.39  2006/10/22 00:33:24  btittelbach
 //  Sleep ist jetzt im Scheduler wo's hingehört
 //
@@ -433,6 +436,7 @@ void Scheduler::cleanupDeadThreads()
   
   lockScheduling();
   waitForFreeKMMLock();
+  List<Thread*> destroy_list;
   //kprintfd_nosleep("Scheduler::cleanupDeadThreads: now running\n");
   if (kill_old_)
   {
@@ -442,7 +446,7 @@ void Scheduler::cleanupDeadThreads()
       tmp_thread = threads_.front();
       if (tmp_thread->state_ == ToBeDestroyed)      
       {
-        delete tmp_thread;
+        destroy_list.pushBack(tmp_thread);
         threads_.popFront();
         continue;
       }
@@ -452,6 +456,12 @@ void Scheduler::cleanupDeadThreads()
   }
   //kprintfd_nosleep("Scheduler::cleanupDeadThreads: done\n");
   unlockScheduling();
+  while( ! destroy_list.empty() )
+  {
+    Thread *cur_thread = destroy_list.front();
+    destroy_list.popFront();
+    delete cur_thread;
+  }
 }
 
 void Scheduler::printThreadList()
