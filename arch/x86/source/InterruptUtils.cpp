@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.48 2006/10/13 11:38:12 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.49 2007/01/11 13:36:11 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.48  2006/10/13 11:38:12  btittelbach
+//  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
+//
 //  Revision 1.47  2005/11/20 21:18:08  nelles
 //
 //       Committing in .
@@ -780,6 +783,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //ArchThreads::printThreadRegisters(currentThread,0);
   //ArchThreads::printThreadRegisters(currentThread,1);
 	
+	
+	
   //~ kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
 	  //~ currentThread->user_arch_thread_info_->cr3,
 	  //~ currentThread->loader_->page_dir_page_,
@@ -816,6 +821,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 		//~ }
 	  //~ }
   //~ }
+
+  if (address >= 2U*1024U*1024U*1024U)
+  {
+    // remove this error check if your implementation swaps out kernel pages
+    kprintfd("WARNING: Pagefault above 2Gb, is this intentional ?");
+  }
 
   //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   currentThread->switch_to_userspace_ = false;
