@@ -1,7 +1,10 @@
 /********************************************************************
 *
-*    $Id: arch_bd_ata_driver.cpp,v 1.11 2006/10/22 00:33:23 btittelbach Exp $
+*    $Id: arch_bd_ata_driver.cpp,v 1.12 2007/01/12 15:39:36 btittelbach Exp $
 *    $Log: arch_bd_ata_driver.cpp,v $
+*    Revision 1.11  2006/10/22 00:33:23  btittelbach
+*    Sleep ist jetzt im Scheduler wo's hingehört
+*
 *    Revision 1.10  2006/10/13 11:38:12  btittelbach
 *    Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
 *
@@ -437,7 +440,7 @@ void ATADriver::serviceIRQ( void )
       }
 	
       for ( counter = blocks_done * 256; 
-          counter != (blocks_done + 1) * 256 + 1; 
+          counter != (blocks_done + 1) * 256; 
           counter++ )  
        outwp ( port, word_buff [counter] );
             
