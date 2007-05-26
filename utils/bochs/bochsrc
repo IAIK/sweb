@@ -344,7 +344,7 @@ vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: bios/VGABIOS-elpin-2.40
 #vgaromimage: $BXSHARE/VGABIOS-elpin-2.40
-#vgaromimage: file=/home/philip/uni/sweb/sweb-testing/utils/bochs/vgabios-0.5a.bin
+#vgaromimage: file=/home/philip/uni/sweb/sweb/utils/bochs/vgabios-0.5a.bin
 #vga: extension=vbe
 #=======================================================================
 # FLOPPYA:
