@@ -1,8 +1,11 @@
 //----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.49 2007/01/11 13:36:11 btittelbach Exp $
+//  $Id: InterruptUtils.cpp,v 1.50 2007/05/26 16:00:42 btittelbach Exp $
 //----------------------------------------------------------------------
 //
 //  $Log: InterruptUtils.cpp,v $
+//  Revision 1.49  2007/01/11 13:36:11  btittelbach
+//  one of many more sanity checks to come
+//
 //  Revision 1.48  2006/10/13 11:38:12  btittelbach
 //  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
 //
@@ -759,7 +762,12 @@ extern "C" void irqHandler_65()
 }
 
 
-//extern Thread *currentThread;
+
+extern "C" void arch_interruptHandler_0();
+extern "C" void arch_interruptHandler_0()
+{
+	kpanict((uint8 *) "DIVISION ERROR\n");
+}
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
@@ -987,7 +995,7 @@ extern "C" void arch_dummyHandler();
 #define DUMMYHANDLER(X) {X, &arch_dummyHandler_##X},
 #define IRQHANDLER(X) {X + 32, &arch_irqHandler_##X},
 InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
-  DUMMYHANDLER(0)
+  {0, &arch_interruptHandler_0},
   DUMMYHANDLER(1)
   DUMMYHANDLER(2)
   DUMMYHANDLER(3)
