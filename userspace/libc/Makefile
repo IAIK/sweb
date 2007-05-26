@@ -50,7 +50,7 @@
 #
 #
 
-OBJECTDIR := $(subst /sweb-testing,/sweb-testing-bin,${PWD})
+OBJECTDIR := $(subst /sweb,/sweb-bin,${PWD})
 SOURECDIR := $(PWD)/src
 ARCHDIR := ../../arch/arch/userspace
 
