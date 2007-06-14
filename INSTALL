@@ -1,0 +1,7 @@
+Requirements:
+* e2fslib 
+   Gentoo: emerge sys-fs/e2fsprogs
+   Ubuntu: apt-get install e2fslibs-dev
+* nasm
+* g++
+* bochs

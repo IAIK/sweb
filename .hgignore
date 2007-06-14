@@ -1,5 +1,8 @@
 syntax: glob
 *~
+utils/e2fsimage/Local.mak
+utils/e2fsimage/e2fsimage
+*.o
 
 syntax: regexp
 (.*/)?\#[^/]*\#$
