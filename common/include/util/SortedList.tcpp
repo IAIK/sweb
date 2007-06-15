@@ -1,0 +1,155 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Andreas Niederl
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+
+template<typename ValueType>
+SortedList<ValueType>::SortedList() : BaseList<ValueType>::BaseList()
+{
+}
+
+
+template<typename ValueType>
+SortedList<ValueType>::~SortedList()
+{
+  while(this->first_node_)
+  {
+    ListNode<ValueType> *tmp = this->first_node_->getNextNode();
+    delete this->first_node_;
+    this->first_node_ = tmp;
+  }
+}
+
+
+template<typename ValueType>
+bool SortedList<ValueType>::insert(typename BaseList<ValueType>::const_reference element)
+{
+  ListNode<ValueType> *qf_node;
+  uint32 index = this->quickfind(element, &qf_node);
+  if(qf_node != 0)
+  {
+    if(qf_node->getElement() == element)
+    {
+      return false;
+    }
+  }
+
+  ListNode<ValueType> *node = this->first_node_;
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
+  }
+
+  if(node)
+  {
+    if(node == this->first_node_)
+      this->first_node_ = new_node;
+    else
+      // only has to be done for node != first
+      node->getPreviousNode()->setNextNode(new_node);
+
+
+    new_node->setNextNode(node);
+    new_node->setPreviousNode(node->getPreviousNode());
+    node->setPreviousNode(new_node);
+  }
+  else
+  {
+    if(this->last_node_)
+    {
+      this->last_node_->setNextNode(new_node);
+      new_node->setPreviousNode(this->last_node_);
+
+      this->last_node_ = new_node;
+    }
+    else
+      this->first_node_ = this->last_node_ = new_node;
+  }
+
+  ++this->number_of_elements_;
+  return true;
+}
+
+
+template<typename ValueType>
+void SortedList<ValueType>::remove(typename BaseList<ValueType>::value_type value)
+{
+  uint32 index = this->quickfind(value);
+  if(index != 0)
+  {
+    BaseList<ValueType>::remove(index);
+  }
+}
+
+
+template<typename ValueType>
+uint32 SortedList<ValueType>::find(typename BaseList<ValueType>::value_type value)
+{
+  ListNode<ValueType> *node;
+  uint32 index = this->quickfind(value, &node);
+  if(node != 0)
+  {
+    if(node->getElement() == value)
+    {
+      return index;
+    }
+  }
+  return this->number_of_elements_;
+}
+
+
+template<typename ValueType>
+uint32 SortedList<ValueType>::quickfind(typename BaseList<ValueType>::value_type value,
+  ListNode<ValueType> **ret_node = 0)
+{
+  ListNode<ValueType> *node = this->first_node_;
+  if (node == 0)
+  {
+    if(ret_node != 0)
+    {
+      *ret_node = 0;
+    }
+    return 0;
+  }
+  typename BaseList<ValueType>::value_type element_value;
+  uint32 index = 0;
+  
+  for(; index < this->number_of_elements_; index++)
+  {
+    element_value = node->getElement();
+    if(element_value == value || value < element_value) {
+      if(ret_node != 0)
+      {
+        *ret_node = node;
+      }
+      return index;
+    }
+    node = node->getNextNode();
+  }
+  if(ret_node != 0)
+  {
+    *ret_node = 0;
+  }
+  return this->number_of_elements_;
+}
+

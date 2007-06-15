@@ -38,7 +38,7 @@
 #define _CONSOLE_H_
 
 #include "types.h"
-#include "List.h"
+#include "../util/List.h"
 #include "Mutex.h"
 
 #include "Thread.h"

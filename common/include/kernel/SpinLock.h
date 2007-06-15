@@ -34,7 +34,7 @@
 #define _SPINLOCK_H_
 
 #include "types.h"
-#include "List.h"
+#include "../util/List.h"
 
 class Thread;
   
