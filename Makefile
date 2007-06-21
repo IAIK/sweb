@@ -173,7 +173,8 @@ install: kernel
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
 	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
-	cp ./images/SWEB-flat-minix.vmdk $(OBJECTDIR)/
+#dd if=/dev/zero of=SWEB-flat-minix.vmdk bs=512 count=20805 
+	cp ./images/SWEB-flat-minix.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat-minix.vmdk.gz
 	cp ./images/nvram $(OBJECTDIR)/
 	@echo "copy files to image..."
 	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63 2> /dev/null
