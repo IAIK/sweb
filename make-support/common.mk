@@ -78,9 +78,9 @@ KERNELLDCOMMAND := $(KERNEL_LD) $(KERNELLDFLAGS)
 
 #GUESS_PROJECT_ROOT_NAME := $(shell SPATH=""; IFS="/"; for d in $PWD; do unset IFS; SPATH="$SPATH$d/"; if [ -d "${SPATH}arch" -a -d "${SPATH}images" -a -d "${SPATH}make-support" -a -d "${SPATH}userspace" ]; then echo $d; exit; fi; done; echo sweb )
 #GUESS_PROJECT_ROOT_NAME := $(shell basename `hg root`)
-OBJECTDIR := $(subst /sweb,/sweb-bin,${PWD})
+OBJECTDIR := $(subst /sweb-minix-branch,/sweb-bin-minix-branch,${PWD})
 SOURECDIR := $(PWD)
-BINARYDESTDIR := $(subst /sweb,/sweb-bin,${PWD}/${PROJECT_ROOT}/bin)
+BINARYDESTDIR := $(subst /sweb-minix-branch,/sweb-bin-minix-branch,${PWD}/${PROJECT_ROOT}/bin)
 
 CXXFILES := $(wildcard *.cpp)
 CCFILES := $(wildcard *.c)

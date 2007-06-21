@@ -6,6 +6,7 @@
 
 #include "types.h"
 #include "fs/PointList.h"
+#include "StorageManager.h"
 
 class Iattr;
 class Statfs;
@@ -75,11 +76,16 @@ protected:
   /// open for write before remounting the file-system as read-only.
   PointList<FileDescriptor> s_files_;
 
+  StorageManager *storage_manager_;
+
 public:
 
   /// constructor
   Superblock(Dentry* s_root)
-    { s_root_ = s_root; }
+  { 
+    s_root_ = s_root; 
+    storage_manager_ = 0;
+  }
 
   /// destructor
   virtual ~Superblock();
@@ -165,6 +171,8 @@ public:
   
   /// Get the mount point Dentry of the Superblock
   Dentry *getMountPoint();
+
+  StorageManager *getStorageManager() { return storage_manager_; }
 
 };
 //-----------------------------------------------------------------------------

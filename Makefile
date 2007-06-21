@@ -21,25 +21,26 @@ SUBPROJECTS := \
                common/source/fs/ramfs \
                common/source/fs/pseudofs \
 	       utils/e2fsimage \
-               common/source/fs/devicefs
+               common/source/fs/devicefs \
 #               utils/mtools
 
 else
 SUBPROJECTS := \
-               arch/arch/source \
-               common/source/util \
-               common/source/kernel \
-               common/source/console \
-               common/source/ipc \
-               common/source/mm \
-               common/source/drivers \
-               common/source/fs \
-               common/source/fs/ramfs \
-               common/source/fs/pseudofs \
-               common/source/fs/devicefs \
-               userspace/libc \
-	       utils/e2fsimage \
-               userspace/tests
+		arch/arch/source \
+		common/source/util \
+		common/source/kernel \
+		common/source/console \
+		common/source/ipc \
+		common/source/mm \
+		common/source/drivers \
+		common/source/fs \
+		common/source/fs/ramfs \
+		common/source/fs/pseudofs \
+		common/source/fs/devicefs \
+		common/source/fs/minixfs \
+		userspace/libc \
+		utils/e2fsimage \
+		userspace/tests
 #               utils/mtools
 endif
 
@@ -68,6 +69,7 @@ SHARED_LIBS :=  \
                 common/source/fs/libFS.a \
                 common/source/fs/ramfs/libRamFS.a \
                 common/source/fs/pseudofs/libPseudoFS.a \
+                common/source/fs/minixfs/libMinixFS.a \
                 common/source/fs/devicefs/libDeviceFS.a
 endif
 
@@ -170,6 +172,8 @@ install: kernel
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
+	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
+	cp ./images/SWEB-flat-minix.vmdk $(OBJECTDIR)/
 	cp ./images/nvram $(OBJECTDIR)/
 	@echo "copy files to image..."
 	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63 2> /dev/null

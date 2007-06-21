@@ -544,6 +544,7 @@
 #include "fs/VirtualFileSystem.h"
 #include "fs/ramfs/RamFileSystemType.h"
 #include "fs/devicefs/DeviceFSType.h"
+#include "fs/minixfs/MinixFSType.h"
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
@@ -691,6 +692,16 @@ void startup()
   int32 mntres = vfs.root_mount("devicefs", 0);
   kprintfd("Mount returned %d\n", mntres);  
 
+  
+  if(vfs_syscall.mkdir("/minix",0) == 0) 
+  {
+    kprintfd("Mounting Minix under /minix/\n");
+    MinixFSType *minixfs = new MinixFSType();
+    vfs.registerFileSystem(minixfs);
+    mntres = vfs.mount("TheMinixDeviceName", "/minix", "minixfs", 0);
+    kprintfd("Mount returned %d\n", mntres);  
+  }
+
   Scheduler::createScheduler();
   
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
@@ -720,13 +731,13 @@ void startup()
     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
   );       
   
-  //~ Scheduler::instance()->addNewThread( 
-    //~ new BDThread()
-  //~ );
+  Scheduler::instance()->addNewThread( 
+    new BDThread()
+  );
   
-  //~ Scheduler::instance()->addNewThread( 
-    //~ new BDThread2()
-  //~ );  
+  Scheduler::instance()->addNewThread( 
+     new BDThread2()
+   );
 
   //~ Scheduler::instance()->addNewThread( 
     //~ new BDThread()

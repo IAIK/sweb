@@ -50,7 +50,7 @@
 #
 #
 
-OBJECTDIR := $(subst /sweb,/sweb-bin,${PWD})
+OBJECTDIR := $(subst /sweb-minix-branch,/sweb-bin-minix-branch,${PWD})
 SOURECDIR := $(PWD)/src
 ARCHDIR := ../../arch/arch/userspace
 

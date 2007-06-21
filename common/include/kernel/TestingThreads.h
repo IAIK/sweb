@@ -143,7 +143,7 @@ class BDThread : public Thread
       BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getName(), 
       BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getNumBlocks()*BDManager::getInstance()->getDeviceByNumber(dev_cnt)->getBlockSize() );
       
-    kprintfd("BDThread1::Run: Done with blockdevices\n");
+    kprintfd("BDThread1::Run: Done with %d blockdevices\n",numdev);
     
 	kprintfd("BDThread1::Run: Adding read request \n");
 	char message[4096];
@@ -152,7 +152,7 @@ class BDThread : public Thread
 	for( i = 0; i < 4096; i++ )
 		message[i] = '0';
 	
-	BDRequest *bdr = new BDRequest( 0, BDRequest::BD_READ, 0, 8, message );
+	BDRequest *bdr = new BDRequest( 3, BDRequest::BD_READ, 0, 8, message );
 	BDManager::getInstance()->addRequest( bdr );
 	Scheduler::instance()->yield();
 	kprintfd("BDThread1::Run: Read request %d \n", bdr->getStatus() );
@@ -191,9 +191,9 @@ class BDThread2 : public Thread
 	
 	uint32 i;
 	for( i = 0; i < 4096; i++ )
-		message[i] = '0' + i%10;
+		message[i] = 'x';
 	
-	BDRequest *bdr = new BDRequest( 2, BDRequest::BD_WRITE, 233, 8, message );
+	BDRequest *bdr = new BDRequest( 3, BDRequest::BD_WRITE, 233, 8, message );
 	BDManager::getInstance()->addRequest( bdr );
 	//Scheduler::instance()->yield();
 	kprintfd("BDThread::Run: Write request %d \n", bdr->getStatus() );
@@ -210,7 +210,7 @@ class BDThread2 : public Thread
    }
    uint32 block_size = bd_bs->getResult();
    
-   //We have to check how many blocks ae available on this device:
+   //We have to check how many blocks are available on this device:
    BDRequest * bd_bc = new BDRequest(2, BDRequest::BD_GET_NUM_BLOCKS);
    BDManager::getInstance()->getDeviceByNumber(2)->addRequest ( bd_bc );
    //this is a blocking request. It just references data already in memory.

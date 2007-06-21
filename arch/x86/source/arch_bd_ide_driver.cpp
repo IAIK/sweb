@@ -213,16 +213,19 @@ uint32 IDEDriver::doDeviceDetection()
                     kprintfd("IDEDriver::doDetection: Found PATA ! \n");
                     kprintfd("IDEDriver::doDetection: port: %4X, drive: %d \n", base_port, cs%2);
                     
-                    ATADriver *drv = new 
-                    ATADriver( base_port, cs % 2, ata_irqs[cs] );
+                    ATADriver *drv = new ATADriver( base_port, cs % 2, ata_irqs[cs] );
+                    kprintfd("IDEDriver::doDetection: 1\n");
                     
-                    BDVirtualDevice *bdv = new 
-                    BDVirtualDevice( drv, 0, drv->getNumSectors(),
-                    drv->getSectorSize(), name, true);
+                    BDVirtualDevice *bdv = new BDVirtualDevice( drv, 0, drv->getNumSectors(),
+                      drv->getSectorSize(), name, true);
+                    kprintfd("IDEDriver::doDetection: 2\n");
                     
                     BDManager::getInstance()->addVirtualDevice( bdv );
+                    kprintfd("IDEDriver::doDetection: 3\n");
                     
                     processMBR( drv, 0, drv->SPT, name );
+
+                    kprintfd("IDEDriver::doDetection: 4\n");
                 }
                 else if( ( c4 == 0x3C ) && ( c5 == 0xC3 ) )
                 {
