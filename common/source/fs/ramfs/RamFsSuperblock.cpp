@@ -13,7 +13,7 @@
 #define ROOT_NAME "/"
 
 //----------------------------------------------------------------------
-RamFsSuperblock::RamFsSuperblock(Dentry* s_root) : Superblock(s_root)
+RamFsSuperblock::RamFsSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
 {
   Dentry *root_dentry = new Dentry(ROOT_NAME);
 

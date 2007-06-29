@@ -14,7 +14,7 @@ class PseudoFileSystemType : public  RamFileSystemType
 
     virtual Superblock *readSuper(Superblock *superblock, void* data) const;
 
-    virtual Superblock *createSuper(Dentry *root) const;
+    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 
 };
 

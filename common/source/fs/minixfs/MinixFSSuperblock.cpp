@@ -8,13 +8,55 @@
 #include "fs/Dentry.h"
 #include "fs_global.h"
 #include "assert.h"
+#include "arch_bd_manager.h"
+#include "kmalloc.h"
 
 #include "console/kprintf.h"
 #define ROOT_NAME "/"
+#define BLOCK_SIZE 1024
+
+uint16 MinixFSSuperblock::readBytes(char* buffer, uint32 offset)
+{
+  uint16 dst = 0;
+  dst |= buffer[offset + 1];
+  dst = dst << 8;
+  dst |= (buffer[offset] & 0xFF);
+  return dst;
+}
+
 
 //----------------------------------------------------------------------
-MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root) : Superblock(s_root)
+MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
 {
+  
+  kprintfd("------------dev id: %d", s_dev);
+  //TODO:read Superblock data from disc
+  char *buffer = new char[BLOCK_SIZE*sizeof(uint8)];
+  //char *buffer = (char *) kmalloc( BLOCK_SIZE*sizeof(uint8) );
+  BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, 2, 1, buffer);
+  BDManager::getInstance()->getDeviceByNumber(3)->addRequest ( bd );
+  uint32 jiffies = 0;
+  while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+  if( bd->getStatus() == BDRequest::BD_DONE )
+  {
+    s_num_inodes_ = readBytes(buffer, 0);
+    s_num_zones_ = readBytes(buffer, 2);
+    s_num_inode_bm_blocks_ = readBytes(buffer, 4);
+    s_num_zone_bm_blocks_ = readBytes(buffer, 6);
+    s_1st_datazone_ = readBytes(buffer, 8);
+    s_log_zone_size_ = readBytes(buffer, 10);
+    s_max_file_size_ = readBytes(buffer, 14);
+    s_max_file_size_ = s_max_file_size_ << 16;
+    s_max_file_size_ |= readBytes(buffer, 12);
+    s_magic_ = readBytes(buffer, 16);
+    kprintfd("------------DONE\n");
+  }
+  kprintfd("s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %d\n",s_num_inodes_,s_num_zones_,s_num_inode_bm_blocks_,s_num_zone_bm_blocks_,s_1st_datazone_,s_log_zone_size_,s_max_file_size_,s_magic_);
+  
+  for(uint32 i = 0; i < BLOCK_SIZE; i++ )
+    kprintfd( "%2X%c", *(buffer+i), i%8 ? ' ' : '\n' );
+  delete[] buffer;
+  
   Dentry *root_dentry = new Dentry(ROOT_NAME);
 
   if (s_root)
@@ -36,7 +78,9 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root) : Superblock(s_root)
 
   // add the root_inode in the list
   all_inodes_.pushBack(root_inode);
+
   //TODO:implement and call initInodes();
+  //TODO:init Storage Manager
 }
 
 //----------------------------------------------------------------------

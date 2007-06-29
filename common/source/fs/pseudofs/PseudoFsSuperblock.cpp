@@ -26,8 +26,8 @@
 #include "console/kprintf.h"
 
 //----------------------------------------------------------------------
-PseudoFsSuperblock::PseudoFsSuperblock(Dentry* s_root) :
-  RamFsSuperblock(s_root)
+PseudoFsSuperblock::PseudoFsSuperblock(Dentry* s_root, uint32 s_dev) :
+  RamFsSuperblock(s_root, s_dev)
 {
   PseudoFS *pfs = PseudoFS::getInstance();
 

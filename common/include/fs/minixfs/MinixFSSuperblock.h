@@ -21,7 +21,7 @@ class MinixFSSuperblock : public Superblock
   public:
 
   /// constructor
-    MinixFSSuperblock(Dentry* s_root);
+    MinixFSSuperblock(Dentry* s_root, uint32 s_dev);
 
   /// destructor
     virtual ~MinixFSSuperblock();
@@ -53,6 +53,23 @@ class MinixFSSuperblock : public Superblock
 
   private:
     int32 initInodes();
+
+    /// # usable inodes on the minor device
+    uint16 s_num_inodes_;
+    /// total device size including bit maps etc.
+    uint16 s_num_zones_;
+    /// # of blocks used by inode bit map
+    uint16 s_num_inode_bm_blocks_;
+    /// # of blocks used by zone bit map
+    uint16 s_num_zone_bm_blocks_;
+    /// number of first datazone
+    uint16 s_1st_datazone_;
+    /// log2 of blocks/zone
+    uint16 s_log_zone_size_;
+    /// maximum file size on this device
+    uint32 s_max_file_size_;
+
+    uint16 readBytes(char* buffer, uint32 offset);
 };
 //-----------------------------------------------------------------------------
 

@@ -23,9 +23,8 @@ Superblock *MinixFSType::readSuper(Superblock *superblock, void*) const
 }
 
 //----------------------------------------------------------------------
-Superblock *MinixFSType::createSuper(Dentry *root) const
+Superblock *MinixFSType::createSuper(Dentry *root, uint32 s_dev) const
 {
-  Superblock *super = new MinixFSSuperblock(root);
-  //super->setRoot( root );
+  Superblock *super = new MinixFSSuperblock(root, s_dev);
   return super;
 }

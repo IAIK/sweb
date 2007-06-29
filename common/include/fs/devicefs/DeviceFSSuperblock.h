@@ -14,7 +14,7 @@ class DeviceFSSuperBlock : public Superblock
   static const char ROOT_NAME[];
   static const char DEVICE_ROOT_NAME[];
 
-  DeviceFSSuperBlock(Dentry* s_root);
+  DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev);
   virtual ~DeviceFSSuperBlock();
 
   /// create a new Inode of the superblock
@@ -26,13 +26,13 @@ class DeviceFSSuperBlock : public Superblock
   static DeviceFSSuperBlock* getInstance() 
   {
     if( !instance_ )
-      instance_ = new DeviceFSSuperBlock( 0 );
+      instance_ = new DeviceFSSuperBlock( 0 , 0 );
     return instance_;
   }
 
   private:
   Inode*   cDevice;
-  Dentry*  s_dev_;
+  Dentry*  s_dev_dentry_;
   
   protected:
   static DeviceFSSuperBlock* instance_;

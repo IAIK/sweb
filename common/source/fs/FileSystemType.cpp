@@ -36,7 +36,7 @@ Superblock *FileSystemType::readSuper(Superblock* /*superblock*/, void* /*data*/
 }
 
 //----------------------------------------------------------------------
-Superblock *FileSystemType::createSuper(Dentry*) const
+Superblock *FileSystemType::createSuper(Dentry*, uint32 s_dev) const
 {
   assert(0);
   return (Superblock*)0;

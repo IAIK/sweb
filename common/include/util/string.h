@@ -41,14 +41,14 @@ char *strcpy(char *dest, const char* src);
 
 /// Copys size chars from the string src to the string dest up to and including the terminating
 /// '\0' char. If size is smaller than the length of src no terminating '\0' is written. If
-/// size is greater ten the length of src the rest is filled up with '\0' charachters.
+/// size is greater than the length of src the rest is filled up with '\0' charachters.
 ///
 /// @return is the value of dest.
 char *strncpy(char *dest, const char* src, size_t size);
 
 /// Copys at most size-1 characters from src to dest. If size is smaller than the length of src
 /// only the number of characters in src will be copied. The resulting string is
-/// NULL-terminated, unless size == 0, in which case nothing ius done.
+/// NULL-terminated, unless size == 0, in which case nothing is done.
 ///
 /// @return is the size of src.
 size_t strlcpy(char* dest, const char* src, size_t size);

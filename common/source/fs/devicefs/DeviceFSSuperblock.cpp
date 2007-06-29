@@ -17,7 +17,7 @@ const char DeviceFSSuperBlock::DEVICE_ROOT_NAME[] = { 'd','e','v',0 };
 DeviceFSSuperBlock* DeviceFSSuperBlock::instance_ = 0;
 
 //----------------------------------------------------------------------
-DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root) : Superblock(s_root)
+DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
 { 
   // mount the superblock over s_root or over default mount point
   Dentry *root_dentry = new Dentry( ROOT_NAME );
@@ -45,7 +45,7 @@ DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root) : Superblock(s_root)
   // set the root to / 
   s_root_ = root_dentry;
   // set the dev directory to /dev/ 
-  s_dev_  = device_root_dentry;
+  s_dev_dentry_  = device_root_dentry;
   
   // load up the devices and register them
   
@@ -117,14 +117,14 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
 //----------------------------------------------------------------------
 void DeviceFSSuperBlock::addDevice( Inode* device, char* device_name )
 {
-    Dentry* fdntr = new Dentry( s_dev_ );
-    fdntr->setName( device_name );
-    
-    cDevice = (Inode *) device;
-    cDevice->mknod( fdntr );
-    cDevice->setSuperBlock( this );
-  
-    all_inodes_.pushBack( cDevice );
+  Dentry* fdntr = new Dentry( s_dev_dentry_ );
+  fdntr->setName( device_name );
+
+  cDevice = (Inode *) device;
+  cDevice->mknod( fdntr );
+  cDevice->setSuperBlock( this );
+
+  all_inodes_.pushBack( cDevice );
 }
 
 //----------------------------------------------------------------------

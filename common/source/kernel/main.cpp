@@ -693,14 +693,6 @@ void startup()
   kprintfd("Mount returned %d\n", mntres);  
 
   
-  if(vfs_syscall.mkdir("/minix",0) == 0) 
-  {
-    kprintfd("Mounting Minix under /minix/\n");
-    MinixFSType *minixfs = new MinixFSType();
-    vfs.registerFileSystem(minixfs);
-    mntres = vfs.mount("TheMinixDeviceName", "/minix", "minixfs", 0);
-    kprintfd("Mount returned %d\n", mntres);  
-  }
 
   Scheduler::createScheduler();
   
@@ -716,6 +708,16 @@ void startup()
   BDManager::getInstance()->doDeviceDetection( );
   kprintf("Block Device done\n");  
 
+  //assume we detected the minix filesystem on device idec
+  if(vfs_syscall.mkdir("/minix",0) == 0)
+  {
+    kprintfd("Mounting Minix under /minix/\n");
+    MinixFSType *minixfs = new MinixFSType();
+    vfs.registerFileSystem(minixfs);
+    mntres = vfs.mount("idec", "/minix", "minixfs", 0);
+    kprintfd("Mount returned %d\n", mntres);
+  }
+
   kprintf("Timer enable\n");
   ArchInterrupts::enableTimer();
 
@@ -727,17 +729,17 @@ void startup()
  
   Scheduler::instance()->addNewThread( main_console );
   
-  Scheduler::instance()->addNewThread( 
-    new TestTerminalThread( "TerminalTestThread", main_console, 1 )
-  );       
+//   Scheduler::instance()->addNewThread( 
+//     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
+//   );       
   
-  Scheduler::instance()->addNewThread( 
-    new BDThread()
-  );
-  
-  Scheduler::instance()->addNewThread( 
-     new BDThread2()
-   );
+//   Scheduler::instance()->addNewThread( 
+//     new BDThread()
+//   );
+//   
+//   Scheduler::instance()->addNewThread( 
+//      new BDThread2()
+//    );
 
   //~ Scheduler::instance()->addNewThread( 
     //~ new BDThread()
@@ -770,7 +772,7 @@ void startup()
   KernelMemoryManager::instance()->startUsingSyncMechanism();
 
   kprintf("Now enabling Interrupts...\n");
-  ArchInterrupts::enableInterrupts();    
+  ArchInterrupts::enableInterrupts();   
 
   Scheduler::instance()->yield();  
   

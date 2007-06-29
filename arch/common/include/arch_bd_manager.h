@@ -28,7 +28,9 @@
 
 #include "arch_bd_request.h"
 #include "arch_bd_virtual_device.h"
-#include "List.h"
+#include "../../common/include/util/List.h"
+
+//extern template class List;
 
 class BDManager
 {
@@ -44,8 +46,7 @@ public:
   
   BDVirtualDevice*  getDeviceByNumber  ( uint32 dev_num  );
 
-  // NOT IMPLEMENTED
-//   BDVirtualDevice*  getDeviceByName    ( char * dev_name );
+  BDVirtualDevice*  getDeviceByName    ( const char * dev_name );
 
   uint32            getNumberOfDevices ( void );
   

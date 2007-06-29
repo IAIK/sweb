@@ -100,7 +100,7 @@ class BDRequest
     /// The constructor.
     /// \param dev_id the id of the device
     /// \param cmd command to send to the device \sa BD_CMD enum
-    /// \param start_block the starting block *optional* used onlz with read or write commands
+    /// \param start_block the starting block *optional* used only with read or write commands
     /// \param num_block the number of blocks to read or write
     /// \param buffer the buffer, must be large enough to store the data, no sanity checks performed, possible pagefault here
     BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 ) 

@@ -80,8 +80,9 @@
 
 #include "arch_bd_manager.h"
 #include "arch_bd_ide_driver.h"
-
+//#include "List.h"
 #include "kprintf.h"
+#include "string.h"
 
 BDManager * BDManager::getInstance()
 {
@@ -116,7 +117,7 @@ void BDManager::addVirtualDevice( BDVirtualDevice* dev )
   //kprintfd("BDManager::addVirtualDevice:Adding device\n");
   device_list_.pushBack( dev );
   //kprintfd("BDManager::addVirtualDevice:Device added\n");
-};
+}
 
 void BDManager::serviceIRQ( uint32 irq_num )
 {
@@ -137,17 +138,23 @@ void BDManager::serviceIRQ( uint32 irq_num )
 BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )
 {
   return device_list_[ dev_num ];
-};
+}
 
-// BDVirtualDevice* BDManager::getDeviceByName( char * dev_name )
-// {
-// #warning TODO: implement strcmp search for getDeviceByName
-//   return 0; // TODO: implement strcmp search
-// };
+BDVirtualDevice* BDManager::getDeviceByName( const char * dev_name )
+{
+  for ( uint32 index = 0; index < device_list_.size(); index++)
+  {
+    if(strcmp(device_list_[ index ]->getName(),dev_name) == 0)
+    {
+      return device_list_[ index ];
+    }
+  }
+  return 0;
+}
 
 uint32 BDManager::getNumberOfDevices ( void )
 {
   return device_list_.size();
-};
+}
 
 BDManager* BDManager::instance_ = 0;

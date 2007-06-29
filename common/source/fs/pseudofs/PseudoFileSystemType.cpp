@@ -21,9 +21,9 @@ Superblock *PseudoFileSystemType::readSuper(Superblock *superblock, void*) const
 }
 
 //----------------------------------------------------------------------
-Superblock *PseudoFileSystemType::createSuper(Dentry *root) const
+Superblock *PseudoFileSystemType::createSuper(Dentry *root, uint32 s_dev) const
 {
-  Superblock *super = new PseudoFsSuperblock(root);
+  Superblock *super = new PseudoFsSuperblock(root, s_dev);
   return super;
 }
 

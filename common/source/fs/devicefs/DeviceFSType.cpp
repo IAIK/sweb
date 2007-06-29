@@ -23,7 +23,7 @@ Superblock *DeviceFSType::readSuper(Superblock *superblock, void*) const
 }
 
 //----------------------------------------------------------------------
-Superblock *DeviceFSType::createSuper(Dentry *root) const
+Superblock *DeviceFSType::createSuper(Dentry *root, uint32 s_dev) const
 {
   Superblock *super = DeviceFSSuperBlock::getInstance();
   //super->setRoot( root );

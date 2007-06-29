@@ -81,10 +81,11 @@ protected:
 public:
 
   /// constructor
-  Superblock(Dentry* s_root)
+  Superblock(Dentry* s_root, uint32 s_dev)
   { 
     s_root_ = s_root; 
     storage_manager_ = 0;
+    s_dev_ = s_dev;
   }
 
   /// destructor

@@ -36,7 +36,7 @@
 #define _BD_DEVICE_DRIVER_
 
 #include "arch_bd_request.h"
-#include "FiFo.h"
+//#include "FiFo.h"
 
 class BDDriver
 {

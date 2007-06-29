@@ -28,7 +28,7 @@ class PseudoFsSuperblock : public RamFsSuperblock
 {
  public:
 
-  PseudoFsSuperblock(Dentry* s_root);
+  PseudoFsSuperblock(Dentry* s_root, uint32 s_dev);
 
   virtual ~PseudoFsSuperblock();
 

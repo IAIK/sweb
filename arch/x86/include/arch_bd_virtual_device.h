@@ -79,7 +79,7 @@
 #define _BD_VIRTUAL_DEVICE_
 
 #include "types.h"
-#include "string.h"
+//#include "string.h"
 
 #include "arch_bd_request.h"
 #include "arch_bd_driver.h"

@@ -9,6 +9,7 @@
 #include "util/string.h"
 #include "assert.h"
 #include "mm/kmalloc.h"
+#include "arch_bd_manager.h"
 
 #include "console/kprintf.h"
 #include "fs/fs_global.h"
@@ -111,7 +112,7 @@ int32 VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
 {
   FileSystemType *fst = getFsType(fs_name);
 
-  Superblock *super = fst->createSuper(0);
+  Superblock *super = fst->createSuper(0,0);
   super = fst->readSuper(super, 0);
   Dentry *mount_point = super->getMountPoint();
   Dentry *root = super->getRoot();
@@ -129,14 +130,16 @@ int32 VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
 }
 
 //----------------------------------------------------------------------
-int32 VirtualFileSystem::mount(const char* /*dev_name*/, const char* dir_name, 
+int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name,
                                char* fs_name, uint32 /*flags*/)
 {
-//  if(!dev_name)
-//    return -1;
+  if(!dev_name)
+    return -1;
   if((!dir_name) || (!fs_name))
     return -1;
 
+  uint32 dev = BDManager::getInstance()->getDeviceByName(dev_name)->getDeviceNumber();
+  
   FileSystemType *fst = getFsType(fs_name);
   
   fs_info.setName(dir_name);
@@ -155,7 +158,7 @@ int32 VirtualFileSystem::mount(const char* /*dev_name*/, const char* dir_name,
   VfsMount *found_vfs_mount = path_walker.getVfsMount();
 
   // create a new superblock
-  Superblock *super = fst->createSuper(found_dentry);
+  Superblock *super = fst->createSuper(found_dentry, dev);
   super = fst->readSuper(super, 0);
   Dentry *root = super->getRoot();
   

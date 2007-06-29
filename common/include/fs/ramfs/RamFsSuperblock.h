@@ -20,7 +20,7 @@ class RamFsSuperblock : public Superblock
  public:
 
   /// constructor
-  RamFsSuperblock(Dentry* s_root);
+  RamFsSuperblock(Dentry* s_root, uint32 s_dev);
 
   /// destructor
   virtual ~RamFsSuperblock();

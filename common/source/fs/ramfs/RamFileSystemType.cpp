@@ -23,8 +23,8 @@ Superblock *RamFileSystemType::readSuper(Superblock *superblock, void*) const
 }
 
 //----------------------------------------------------------------------
-Superblock *RamFileSystemType::createSuper(Dentry *root) const
+Superblock *RamFileSystemType::createSuper(Dentry *root, uint32 s_dev) const
 {
-  Superblock *super = new RamFsSuperblock(root);
+  Superblock *super = new RamFsSuperblock(root, s_dev);
   return super;
 }
