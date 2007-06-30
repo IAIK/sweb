@@ -32,8 +32,10 @@ public:
   ~Bitmap ();
   void setBit(size_t bit_number);
   bool getBit(size_t bit_number);
+  size_t getSize() { return size_; }
 
 private:
+  size_t size_;
   uint8 *bitmap_;
   size_t bit_count_;
 };

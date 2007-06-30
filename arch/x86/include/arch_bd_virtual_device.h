@@ -151,6 +151,7 @@ class BDVirtualDevice : public Inode
 
     
     void    setDeviceNumber( uint32 number ) { dev_number_ = number; };
+    void    setBlockSize( uint32 block_size ) { block_size_ = block_size; };
     
      
   private:

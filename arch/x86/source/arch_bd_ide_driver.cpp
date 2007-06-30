@@ -113,7 +113,7 @@ uint32 IDEDriver::doDeviceDetection()
 
    // assume there are no devices
 
-   kprintfd("IDEDriver::doDetection:\n", cs);   
+   kprintfd("IDEDriver::doDetection:%d\n", cs);   
     
    for( cs = 0; cs < 4; cs ++)
    {
@@ -244,7 +244,7 @@ uint32 IDEDriver::doDeviceDetection()
                     
                     BDVirtualDevice *bdv = new 
                     BDVirtualDevice( drv, 0, drv->getNumSectors(),
-                    drv->getSectorSize(), name, true);
+                                     drv->getSectorSize(), name, true);
                     
                     BDManager::getInstance()->addVirtualDevice( bdv );
                     

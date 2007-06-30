@@ -7,11 +7,14 @@
 class StorageManager
 {
   public:
+    StorageManager(uint16 num_inodes, uint16 num_zones);
+//     StorageManager(){};
     virtual ~StorageManager();
-    virtual void *allocateMemory(uint32 size);
-    virtual void freeMemory(void * /*data*/);
+    virtual void *allocateMemory(uint32 size) = 0;
+    virtual void freeMemory(void * /*data*/) = 0;
   
   private:
-    Bitmap bitmap_;
+    Bitmap* inode_bitmap_;
+    Bitmap* zone_bitmap_;
 };
 #endif //STORAGE_MANAGER__

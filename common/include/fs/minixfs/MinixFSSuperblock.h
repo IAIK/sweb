@@ -52,7 +52,7 @@ class MinixFSSuperblock : public Superblock
     virtual int32 createFd(Inode* inode, uint32 flag);
 
   private:
-    int32 initInodes();
+    void initInodes();
 
     /// # usable inodes on the minor device
     uint16 s_num_inodes_;
@@ -69,7 +69,11 @@ class MinixFSSuperblock : public Superblock
     /// maximum file size on this device
     uint32 s_max_file_size_;
 
-    uint16 readBytes(char* buffer, uint32 offset);
+    uint8 read1Byte(char* buffer, uint32 offset);
+    uint16 read2Bytes(char* buffer, uint32 offset);
+    uint32 read4Bytes(char* buffer, uint32 offset);
+
+    MinixStorageManager* storage_manager_;
 };
 //-----------------------------------------------------------------------------
 

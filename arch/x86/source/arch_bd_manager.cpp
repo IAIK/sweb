@@ -115,6 +115,7 @@ void BDManager::addRequest( BDRequest* bdr )
 void BDManager::addVirtualDevice( BDVirtualDevice* dev )
 {
   //kprintfd("BDManager::addVirtualDevice:Adding device\n");
+  dev->setDeviceNumber(device_list_.size());
   device_list_.pushBack( dev );
   //kprintfd("BDManager::addVirtualDevice:Device added\n");
 }
@@ -142,10 +143,12 @@ BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )
 
 BDVirtualDevice* BDManager::getDeviceByName( const char * dev_name )
 {
+  kprintfd("getDeviceByName: %s", dev_name);
   for ( uint32 index = 0; index < device_list_.size(); index++)
   {
     if(strcmp(device_list_[ index ]->getName(),dev_name) == 0)
     {
+      kprintfd("getDeviceByName%d: %s with id: %d",index, device_list_[ index ]->getName(), device_list_[ index ]->getDeviceNumber());
       return device_list_[ index ];
     }
   }

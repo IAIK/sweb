@@ -16,6 +16,7 @@ class Superblock;
 #define I_UNUSED 0 // the unused inode state
 #define I_DIRTY 1 // Dirty inodes are on the per-super-block s_dirty_ list, and
                   // will be written next time a sync is requested.
+#define I_LOCK 2  //state not implemented
 
 // three possible inode type bits:
 #define I_FILE         0
@@ -72,7 +73,7 @@ class Inode
   /// There are three possible inode type bits: I_FILE, I_DIR, I_LNK
   uint32 i_type_;
 
-  /// There are three possible inode state bits: I_DIRTY, I_LOCK.
+  /// There are three possible inode state bits: I_DIRTY, I_LOCK, I_UNUSED.
   uint32 i_state_;
 
  public:

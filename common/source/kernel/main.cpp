@@ -706,7 +706,14 @@ void startup()
 
   kprintf("Block Device creation\n");
   BDManager::getInstance()->doDeviceDetection( );
-  kprintf("Block Device done\n");  
+  kprintf("Block Device done\n");
+
+  for(uint32 i = 0; i < BDManager::getInstance()->getNumberOfDevices(); i++)
+  {
+    BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(i);
+    kprintfd("Detected Devices %d: %s :: %d\n",i, bdvd->getName(), bdvd->getDeviceNumber());
+
+  }
 
   //assume we detected the minix filesystem on device idec
   if(vfs_syscall.mkdir("/minix",0) == 0)

@@ -7,12 +7,13 @@
 class MinixStorageManager : public StorageManager
 {
   public:
+    MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones);
     virtual ~MinixStorageManager();
     virtual void *allocateMemory(uint32 size);
     virtual void freeMemory(void * /*data*/);
-  
-  private:
-    Bitmap bitmap_;
+    bool isInodeSet(uint32 which) { return false; }
+    uint32 getNumUsedInodes() { return 0; }
+    
 };
 
 

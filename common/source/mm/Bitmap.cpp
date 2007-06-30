@@ -8,9 +8,11 @@
 */
 
 #include "../../include/mm/Bitmap.h"
+#include "assert.h"
 
 Bitmap::Bitmap (size_t number_of_bits)
 {
+  size_ = number_of_bits;
   size_t byte_count = number_of_bits / bits_per_bitmap_atom_ 
                + ((number_of_bits % bits_per_bitmap_atom_ > 0)?1:0);
   bit_count_ = byte_count * bits_per_bitmap_atom_;
@@ -26,14 +28,14 @@ Bitmap::~Bitmap ()
 
 void Bitmap::setBit(size_t bit_number)
 {
-  //assert(bit_number < bit_count_);
+  assert(bit_number < size_);
   size_t byte_number = bit_number / bits_per_bitmap_atom_;
   size_t bit_offset = bit_number % bits_per_bitmap_atom_;
   *(bitmap_+byte_number) |= (1 << bit_offset);
 }
 bool Bitmap::getBit(size_t bit_number)
 {
-  //assert(bit_number < bit_count_);
+  assert(bit_number < size_);
   size_t byte_number = bit_number / bits_per_bitmap_atom_;
   size_t bit_offset = bit_number % bits_per_bitmap_atom_;
   return (*(bitmap_+byte_number) & (1 << bit_offset));

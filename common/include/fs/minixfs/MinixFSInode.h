@@ -20,11 +20,15 @@ class MinixFSInode : public Inode
   /// the data of the inode
     char* data_;
 
+    uint16* i_zones_;
+
   public:
 
   /// constructor
     MinixFSInode(Superblock *super_block, uint32 inode_type);
 
+    MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32 i_size, uint32 i_modtime, uint8 i_gid, uint8 i_nlinks, uint16* i_zones);
+    
   /// destructor
     virtual ~MinixFSInode();
 
