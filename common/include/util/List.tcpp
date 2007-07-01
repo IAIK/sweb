@@ -1,0 +1,198 @@
+// Projectname: SWEB
+// Simple operating system for educational purposes
+//
+// Copyright (C) 2005  Andreas Niederl
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+
+/**
+ * template definitions, included by List.h
+ *
+ */
+
+#include "assert.h"
+
+
+//----------------------------------------------------------------------
+/**
+ * default constructor for class List
+ * the node size will be set to a default value
+ */
+template<typename ValueType>
+List<ValueType>::List() : BaseList<ValueType>::BaseList()
+{
+
+}
+
+//----------------------------------------------------------------------
+/**
+ * destructor for class List
+ */
+template<typename ValueType>
+List<ValueType>::~List()
+{
+  while(this->first_node_)
+  {
+    ListNode<ValueType> *tmp = this->first_node_->getNextNode();
+    delete this->first_node_;
+    this->first_node_ = tmp;
+  }
+}
+
+//----------------------------------------------------------------------
+/**
+ * inserts an element at the end
+ * @param element the new element to insert
+ *
+ */
+template<typename ValueType>
+void List<ValueType>::pushBack(typename BaseList<ValueType>::const_reference element)
+{
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
+
+  if(this->last_node_)
+  {
+    this->last_node_->setNextNode(new_node);
+    new_node->setPreviousNode(this->last_node_);
+    this->last_node_ = new_node;
+  }
+  else
+    this->first_node_ = this->last_node_ = new_node;
+
+  ++this->number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * inserts an element at the front
+ * @param element the new element to insert
+ *
+ */
+template<typename ValueType>
+void List<ValueType>::pushFront(typename BaseList<ValueType>::const_reference element)
+{
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
+
+  if(this->first_node_)
+  {
+    this->first_node_->setPreviousNode(new_node);
+    new_node->setNextNode(this->first_node_);
+    this->first_node_ = new_node;
+  }
+  else
+    this->first_node_ = this->last_node_ = new_node;
+
+  ++this->number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * inserts an element at the given index
+ * NOTE that the index MUST be smaller than or equal to the size of the list
+ * @param index the index at which to insert the element
+ * @param element the element to insert
+ *
+ */
+template<typename ValueType>
+void List<ValueType>::insert(typename BaseList<ValueType>::size_type index, typename BaseList<ValueType>::const_reference element)
+{
+  if(index > this->number_of_elements_)
+    return;
+
+  ListNode<ValueType> *node = this->first_node_;
+  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
+  }
+
+  if(node)
+  {
+    if(node == this->first_node_)
+      this->first_node_ = new_node;
+    else
+      // only has to be done for node != first
+      node->getPreviousNode()->setNextNode(new_node);
+
+    node->setPreviousNode(new_node);
+
+    new_node->setNextNode(node);
+    new_node->setPreviousNode(node->getPreviousNode());
+  }
+  else
+  {
+    if(this->last_node_)
+    {
+      this->last_node_->setNextNode(new_node);
+      new_node->setPreviousNode(this->last_node_);
+
+      this->last_node_ = new_node;
+    }
+    else
+      this->first_node_ = this->last_node_ = new_node;
+  }
+
+  ++this->number_of_elements_;
+}
+
+//----------------------------------------------------------------------
+/**
+ * Removes the first element and adds it to the end.
+ *
+ */
+template<typename ValueType>
+void List<ValueType>::rotateBack()
+{
+  // this command is senseless with <= 1 elements in the list
+  if(this->number_of_elements_ <= 1)
+    return;
+
+  ListNode<ValueType> *first = this->first_node_->getNextNode();
+  this->first_node_->setNextNode(0);
+  first->setPreviousNode(0);
+
+  this->last_node_->setNextNode(this->first_node_);
+  this->first_node_->setPreviousNode(this->last_node_);
+
+  this->last_node_ = this->first_node_;
+  this->first_node_ = first;
+}
+
+//----------------------------------------------------------------------
+/**
+ * Removes the last element and adds it to the front.
+ *
+ */
+template<typename ValueType>
+void List<ValueType>::rotateFront()
+{
+  // this command is senseless with <= 1 elements in the list
+  if(this->number_of_elements_ <= 1)
+    return;
+
+  ListNode<ValueType> *last = this->last_node_->getPreviousNode();
+  this->last_node_->setPreviousNode(0);
+  last->setNextNode(0);
+
+  this->first_node_->setPreviousNode(this->last_node_);
+  this->last_node_->setNextNode(this->first_node_);
+
+  this->first_node_ = this->last_node_;
+  this->last_node_ = last;
+}

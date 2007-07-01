@@ -23,6 +23,9 @@
  *
  * $Id: List.h,v 1.6 2005/09/12 23:29:06 aniederl Exp $
  * $Log: List.h,v $
+ * Revision 1.6  2005/09/12 23:29:06  aniederl
+ * complete rewrite of class List and ListNode for the sake of simplicity, stability and extendability
+ *
  * Revision 1.5  2005/09/11 17:47:02  davrieb
  * add rotate()
  *
@@ -38,8 +41,8 @@
  */
 
 
-#ifndef List_h___
-#define List_h___
+#ifndef BASE_LIST_H___
+#define BASE_LIST_H___
 
 #ifdef NON_SWEB_DEBUG___
 typedef unsigned int uint32;
@@ -50,11 +53,11 @@ typedef unsigned int uint32;
 #include "ListNode.h"
 
 /**
- * class List provides a basic implementation of a list container
+ * class BaseList provides a basic implementation of a list or sorted list container
  *
  */
 template<typename ValueType>
-class List
+class BaseList
 {
  public:
 
@@ -97,31 +100,29 @@ class List
 
  public:
   /**
-   * default constructor for class List
+   * default constructor for class BaseList
    * the node size will be set to a default value
    */
-  List();
+  BaseList();
 
   /**
-   * destructor for class List
+   * destructor for class BaseList
    */
-  virtual ~List();
-
+  virtual ~BaseList();
 
   /**
-   * copy constructor for class List
+   * copy constructor for class BaseList
    * @param instance is a constant reference to an object of
-   * type List
+   * type BaseList
    */
-  List(const List<ValueType> &instance);
+  BaseList(const BaseList<ValueType> &instance);
 
   /**
-   * = operator for class List
-   * @param instance is a reference to a List object
-   * @return is a reference to a List object
+   * = operator for class BaseList
+   * @param instance is a reference to a BaseList object
+   * @return is a reference to a BaseList object
    */
-  virtual List<ValueType>& operator = (const List<ValueType> &instance);
-
+  virtual BaseList<ValueType>& operator = (const BaseList<ValueType> &instance);
 
   /**
    * returns the size (number of elements) of the list
@@ -156,6 +157,7 @@ class List
   /**
    * returns the first element
    * @return the first element
+   * @pre !empty()
    *
    */
   reference front();
@@ -163,6 +165,7 @@ class List
   /**
    * returns the first element
    * @return the first element
+   * @pre !empty()
    *
    */
   const_reference front() const;
@@ -170,6 +173,7 @@ class List
   /**
    * returns the last element
    * @return the last element
+   * @pre !empty()
    *
    */
   reference back();
@@ -177,17 +181,10 @@ class List
   /**
    * returns the last element
    * @return the last element
+   * @pre !empty()
    *
    */
   const_reference back() const;
-
-
-  /**
-   * inserts an element at the end
-   * @param element the new element to insert
-   *
-   */
-  void pushBack(const_reference element);
 
   /**
    * removes the last element
@@ -196,64 +193,35 @@ class List
   void popBack();
 
   /**
-   * inserts an element at the front
-   * @param element the new element to insert
-   *
-   */
-  void pushFront(const_reference element);
-
-  /**
    * removes the first element
    *
    */
   void popFront();
 
   /**
-   * inserts an element at the given index
-   * NOTE that the index MUST be smaller than or equal to the size of the list
-   * @param index the index at which to insert the element
-   * @param element the element to insert
-   *
-   */
-  void insert(size_type index, const_reference element);
-
-  /**
-   * removes an element at the given index
-   * @param index the index of the element to remove
+   * removes the element at the given index
+   * @param index the index of the element to delete
    *
    */
   void remove(size_type index);
+
 
   /**
    * swaps the contents of the list with the given list
    * @param list the list with which the contents are swapped
    *
    */
-  void swapList(List<ValueType> &list);
+  void swapList(BaseList<ValueType> &list);
 
   /**
    * cleares the list
    *
    */
   void clear();
-
-  /**
-   * Removes the first element and adds it to the end.
-   *
-   */
-  void rotateBack();
-
-  /**
-   * Removes the last element and adds it to the front.
-   *
-   */
-  void rotateFront();
-
 };
 
+#include "BaseList.tcpp"
 
-#include "List.tcpp"
-
-#endif // List_h___
+#endif // BASE_LIST_H___
 
 

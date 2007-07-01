@@ -1,0 +1,248 @@
+
+
+
+template<typename KeyType, typename ValueType>
+Map<KeyType, ValueType>::Map() : first_node_(0),
+                          last_node_(0),
+                          number_of_elements_(0)
+{
+
+}
+
+template<typename KeyType, typename ValueType>
+Map<KeyType, ValueType>::Map(const Map<KeyType, ValueType> &instance)
+{
+  number_of_elements_ = instance.number_of_elements_;
+
+  // copy nodes
+  ListNode<Pair<KeyType, ValueType> > *node = new ListNode<Pair<KeyType, ValueType> >(*instance.first_node_);
+
+  first_node_ = node;
+
+  while(node->hasNextNode())
+  {
+    ListNode<Pair<KeyType, ValueType> > *next_node = new ListNode<Pair<KeyType, ValueType> >(*(node->getNextNode()));
+
+    next_node->setPreviousNode(node);
+    node->setNextNode(next_node);
+
+    node = next_node;
+  }
+
+  last_node_ = node;
+}
+
+template<typename KeyType, typename ValueType>
+Map<KeyType, ValueType>::~Map()
+{
+  while(first_node_)
+  {
+    ListNode<Pair<KeyType, ValueType> > *tmp = first_node_->getNextNode();
+    delete first_node_;
+    first_node_ = tmp;
+  }
+}
+
+
+template<typename KeyType, typename ValueType>
+Map<KeyType, ValueType>& Map<KeyType, ValueType>::operator = (const Map<KeyType, ValueType> &instance)
+{
+  Map<KeyType, ValueType> new_list(instance);
+
+  swap(this->number_of_elements_, new_list.number_of_elements_);
+  swap(this->first_node_, new_list.first_node_);
+  swap(this->last_node_, new_list.last_node_);
+
+  return (*this);
+}
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::size() const
+{
+  return number_of_elements_;
+}
+
+template<typename KeyType, typename ValueType>
+bool Map<KeyType, ValueType>::empty() const
+{
+  return (number_of_elements_ == 0);
+}
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::pair_reference Map<KeyType, ValueType>::operator[](
+  size_type index)
+{
+  assert(!empty() && index < size());
+
+  ListNode<Pair<KeyType, ValueType> > *node = first_node_;
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
+  }
+
+  assert(node);
+
+  return node->getElement();
+}
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::pair_const_reference Map<KeyType, ValueType>::operator[](size_type index) const
+{
+  assert(!empty() && index < size());
+
+  ListNode<Pair<KeyType, ValueType> > *node = first_node_;
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
+  }
+
+  assert(node);
+
+  return node->getElement();
+}
+
+template<typename KeyType, typename ValueType>
+void Map<KeyType, ValueType>::remove(size_type index)
+{
+  if(index >= number_of_elements_)
+    return;
+
+  ListNode<Pair<KeyType, ValueType> > *node = first_node_;
+  ListNode<Pair<KeyType, ValueType> > *next_node;
+  ListNode<Pair<KeyType, ValueType> > *previous_node;
+
+  if(index && node)
+  {
+    do
+      node = node->getNextNode();
+    while(--index && node);
+  }
+
+  assert(node);
+
+  next_node = node->getNextNode();
+  previous_node = node->getPreviousNode();
+
+  if(previous_node)
+    previous_node->setNextNode(next_node);
+  else
+    first_node_ = next_node;
+
+  if(next_node)
+    next_node->setPreviousNode(previous_node);
+  else
+    last_node_ = previous_node;
+
+  delete node;
+
+  --number_of_elements_;
+}
+
+template<typename KeyType, typename ValueType>
+void Map<KeyType, ValueType>::clear()
+{
+  while(first_node_)
+  {
+    ListNode<Pair<KeyType, ValueType> > *tmp = first_node_->getNextNode();
+    delete first_node_;
+    first_node_ = tmp;
+  }
+
+  number_of_elements_ = 0;
+}
+
+template<typename KeyType, typename ValueType>
+void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::pair_const_reference element)
+{
+  ListNode<Pair<KeyType, ValueType> > *new_node = new ListNode<Pair<KeyType, ValueType> >(element);
+
+  if(this->last_node_)
+  {
+    this->last_node_->setNextNode(new_node);
+    new_node->setPreviousNode(this->last_node_);
+    this->last_node_ = new_node;
+  }
+  else
+    this->first_node_ = this->last_node_ = new_node;
+
+  ++this->number_of_elements_;
+}
+
+template<typename KeyType, typename ValueType>
+void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::key_type key, typename Map<KeyType, ValueType>::value_type value)
+{
+  this->pushBack(new Pair<KeyType, ValueType> >(key, value));
+}
+
+
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::find(typename Map<KeyType, ValueType>::KeyType key)
+{
+  ListNode<Pair<KeyType, ValueType> > *node = first_node_;
+  typename Map<KeyType, ValueType>::size_type index = 0;
+  while (node)
+  {
+    if(node->getElement().first() == key)
+    {
+      return index;
+    }
+    node = node->getNextNode();
+    ++index;
+  }
+  return number_of_elements_;
+}
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(typename Map<KeyType, ValueType>::KeyType key)
+{
+  ListNode<Pair<KeyType, ValueType> > *node = first_node_;
+  typename Map<KeyType, ValueType>::size_type index = 0;
+  while (node)
+  {
+    if(node->getElement()->first() == key)
+    {
+      return node->getElement();
+    }
+    node = node->getNextNode();
+    ++index;
+  }
+  return (typename Map<KeyType, ValueType>::pair_pointer) 0;
+}
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::getKey(typename Map<KeyType, ValueType>::size_type index)
+{
+  return this->[index].first();
+}
+
+template<typename KeyType, typename ValueType>
+typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::getValue(typename Map<KeyType, ValueType>::size_type index)
+{
+  return this->[index].second();
+}
+
+template<typename KeyType, typename ValueType>
+void Map<KeyType, ValueType>::removeByKey(KeyType key)
+{
+  ListNode<Pair<KeyType, ValueType> > *node = first_node_;
+  typename Map<KeyType, ValueType>::size_type index = 0;
+  while (node)
+  {
+    if(node->getElement().first() == key)
+    {
+      this->remove(index);
+      return;
+    }
+    node = node->getNextNode();
+    ++index;
+  }
+}
+
+

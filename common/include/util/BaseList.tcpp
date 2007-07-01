@@ -22,16 +22,8 @@
 /**
  * CVS Log Info for $RCSfile: List.tcpp,v $
  *
- * $Id: List.tcpp,v 1.11 2007/03/22 14:38:22 aniederl Exp $
+ * $Id: List.tcpp,v 1.8 2006/09/19 18:37:21 aniederl Exp $
  * $Log: List.tcpp,v $
- * Revision 1.10  2006/11/24 17:12:42  aniederl
- * fix missing previous/next update in popBack and popFront
- *
- * Revision 1.9  2006/11/21 21:29:13  btittelbach
- * Bug ausgebessert:
- * node->previous node wurde gesetzt bevor es abgefragt wurde.
- * Danke an Christian Pendl fürs Käfer jagen :)
- *
  * Revision 1.8  2006/09/19 18:37:21  aniederl
  * bug fixes
  *
@@ -56,7 +48,7 @@
  */
 
 /**
- * template definitions, included by List.h
+ * template definitions, included by BaseList.h
  *
  */
 
@@ -82,27 +74,19 @@ void swap(ValueType &first, ValueType &second)
 
 
 //----------------------------------------------------------------------
-/**
- * default constructor for class List
- * the node size will be set to a default value
- */
+
 template<typename ValueType>
-List<ValueType>::List() : first_node_(0),
+BaseList<ValueType>::BaseList() : first_node_(0),
                           last_node_(0),
                           number_of_elements_(0)
 {
 
 }
 
-
 //----------------------------------------------------------------------
-/**
- * copy constructor for class List
- * @param instance is a constant reference to an object of
- * type List
- */
+
 template<typename ValueType>
-List<ValueType>::List(const List<ValueType> &instance)
+BaseList<ValueType>::BaseList(const BaseList<ValueType> &instance)
 {
   number_of_elements_ = instance.number_of_elements_;
 
@@ -125,13 +109,10 @@ List<ValueType>::List(const List<ValueType> &instance)
   last_node_ = node;
 }
 
-
 //----------------------------------------------------------------------
-/**
- * destructor for class List
- */
+
 template<typename ValueType>
-List<ValueType>::~List()
+BaseList<ValueType>::~BaseList()
 {
   while(first_node_)
   {
@@ -141,17 +122,12 @@ List<ValueType>::~List()
   }
 }
 
-
 //----------------------------------------------------------------------
-/**
- * = operator for class List
- * @param instance is a reference to a List object
- * @return is a reference to a List object
- */
+
 template<typename ValueType>
-List<ValueType>& List<ValueType>::operator = (const List<ValueType> &instance)
+BaseList<ValueType>& BaseList<ValueType>::operator = (const BaseList<ValueType> &instance)
 {
-  List<ValueType> new_list(instance);
+  BaseList<ValueType> new_list(instance);
 
   swap(this->number_of_elements_, new_list.number_of_elements_);
   swap(this->first_node_, new_list.first_node_);
@@ -161,40 +137,25 @@ List<ValueType>& List<ValueType>::operator = (const List<ValueType> &instance)
 }
 
 //----------------------------------------------------------------------
-/**
- * returns the size (number of elements) of the list
- * @return the size (number of elements) of the list
- *
- */
+
 template<typename ValueType>
-typename List<ValueType>::size_type List<ValueType>::size() const
+typename BaseList<ValueType>::size_type BaseList<ValueType>::size() const
 {
   return number_of_elements_;
 }
 
 //----------------------------------------------------------------------
-/**
- * checks, if the list is empty
- * @return true, if the list is empty
- *
- */
+
 template<typename ValueType>
-bool List<ValueType>::empty() const
+bool BaseList<ValueType>::empty() const
 {
   return (number_of_elements_ == 0);
 }
 
-
 //----------------------------------------------------------------------
-/**
- * returns a reference to the element at the given index
- * @param index The index of the searched element
- * @return the element at the given index
- * @pre !empty() && index < size()
- *
- */
+
 template<typename ValueType>
-typename List<ValueType>::reference List<ValueType>::operator[](
+typename BaseList<ValueType>::reference BaseList<ValueType>::operator[](
   size_type index)
 {
   assert(!empty() && index < size());
@@ -213,17 +174,10 @@ typename List<ValueType>::reference List<ValueType>::operator[](
   return node->getElement();
 }
 
-
 //----------------------------------------------------------------------
-/**
- * returns a const reference to the element at the given index
- * @param index The index of the searched element
- * @return the element at the given index
- * @pre !empty() && index < size()
- *
- */
+
 template<typename ValueType>
-typename List<ValueType>::const_reference List<ValueType>::operator[](
+typename BaseList<ValueType>::const_reference BaseList<ValueType>::operator[](
   size_type index) const
 {
   assert(!empty() && index < size());
@@ -242,103 +196,48 @@ typename List<ValueType>::const_reference List<ValueType>::operator[](
   return node->getElement();
 }
 
-
-//----------------------------------------------------------------------
-/**
- * returns the first element
- * @return the first element
- * @pre !empty()
- *
- */
 template<typename ValueType>
-typename List<ValueType>::reference List<ValueType>::front()
+typename BaseList<ValueType>::reference BaseList<ValueType>::front()
 {
   assert(!empty());
 
   return first_node_->getElement();
 }
 
-
 //----------------------------------------------------------------------
-/**
- * returns the first element
- * @return the first element
- * @pre !empty()
- *
- */
+
 template<typename ValueType>
-typename List<ValueType>::const_reference List<ValueType>::front() const
+typename BaseList<ValueType>::const_reference BaseList<ValueType>::front() const
 {
   assert(!empty());
 
   return first_node_->getElement();
 }
 
-
 //----------------------------------------------------------------------
-/**
- * returns the last element
- * @return the last element
- * @pre !empty()
- *
- */
+
 template<typename ValueType>
-typename List<ValueType>::reference List<ValueType>::back()
+typename BaseList<ValueType>::reference BaseList<ValueType>::back()
 {
   assert(!empty());
 
   return last_node_->getElement();
 }
 
-
 //----------------------------------------------------------------------
-/**
- * returns the last element
- * @return the last element
- * @pre !empty()
- *
- */
+
 template<typename ValueType>
-typename List<ValueType>::const_reference List<ValueType>::back() const
+typename BaseList<ValueType>::const_reference BaseList<ValueType>::back() const
 {
   assert(!empty());
 
   return last_node_->getElement();
 }
 
-
-
 //----------------------------------------------------------------------
-/**
- * inserts an element at the end
- * @param element the new element to insert
- *
- */
+
 template<typename ValueType>
-void List<ValueType>::pushBack(const_reference element)
-{
-  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
-
-  if(last_node_)
-  {
-    last_node_->setNextNode(new_node);
-    new_node->setPreviousNode(last_node_);
-    last_node_ = new_node;
-  }
-  else
-    first_node_ = last_node_ = new_node;
-
-  ++number_of_elements_;
-}
-
-
-//----------------------------------------------------------------------
-/**
- * removes the last element
- *
- */
-template<typename ValueType>
-void List<ValueType>::popBack()
+void BaseList<ValueType>::popBack()
 {
   if(!number_of_elements_)
     return;
@@ -358,41 +257,12 @@ void List<ValueType>::popBack()
     else
       last_node_ = first_node_ = 0;
   }
-
-  if(last_node_)
-    last_node_->setNextNode(0);
 }
 
 //----------------------------------------------------------------------
-/**
- * inserts an element at the front
- * @param element the new element to insert
- *
- */
+
 template<typename ValueType>
-void List<ValueType>::pushFront(const_reference element)
-{
-  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
-
-  if(first_node_)
-  {
-    first_node_->setPreviousNode(new_node);
-    new_node->setNextNode(first_node_);
-    first_node_ = new_node;
-  }
-  else
-    first_node_ = last_node_ = new_node;
-
-  ++number_of_elements_;
-}
-
-//----------------------------------------------------------------------
-/**
- * removes the first element
- *
- */
-template<typename ValueType>
-void List<ValueType>::popFront()
+void BaseList<ValueType>::popFront()
 {
   if(!number_of_elements_)
     return;
@@ -412,72 +282,12 @@ void List<ValueType>::popFront()
     else
       first_node_ = last_node_ = 0;
   }
-
-  if(first_node_)
-    first_node_->setPreviousNode(0);
 }
 
 //----------------------------------------------------------------------
-/**
- * inserts an element at the given index
- * NOTE that the index MUST be smaller than or equal to the size of the list
- * @param index the index at which to insert the element
- * @param element the element to insert
- *
- */
+
 template<typename ValueType>
-void List<ValueType>::insert(size_type index, const_reference element)
-{
-  if(index > number_of_elements_)
-    return;
-
-  ListNode<ValueType> *node = first_node_;
-  ListNode<ValueType> *new_node = new ListNode<ValueType>(element);
-
-  if(index && node)
-  {
-    do
-      node = node->getNextNode();
-    while(--index && node);
-  }
-
-  if(node)
-  {
-    if(node == first_node_)
-      first_node_ = new_node;
-    else
-      // only has to be done for node != first
-      node->getPreviousNode()->setNextNode(new_node);
-
-    new_node->setNextNode(node);
-    new_node->setPreviousNode(node->getPreviousNode());
-	node->setPreviousNode(new_node);
-	
-  }
-  else
-  {
-    if(last_node_)
-    {
-      last_node_->setNextNode(new_node);
-      new_node->setPreviousNode(last_node_);
-
-      last_node_ = new_node;
-    }
-    else
-      first_node_ = last_node_ = new_node;
-  }
-
-  ++number_of_elements_;
-}
-
-//----------------------------------------------------------------------
-/**
- * removes an element at the given index
- * @param index the index of the element to remove
- *
- */
-template<typename ValueType>
-void List<ValueType>::remove(size_type index)
+void BaseList<ValueType>::remove(size_type index)
 {
   if(index >= number_of_elements_)
     return;
@@ -514,27 +324,19 @@ void List<ValueType>::remove(size_type index)
 }
 
 //----------------------------------------------------------------------
-/**
- * swaps the contents of the list with the given list
- * @param list the list with which the contents are swapped
- *
- */
+
 template<typename ValueType>
-void List<ValueType>::swapList(List<ValueType> &list)
+void BaseList<ValueType>::swapList(BaseList<ValueType> &list)
 {
   swap(this->number_of_elements_, list.number_of_elements_);
   swap(this->first_node_, list.first_node_);
   swap(this->last_node_, list.last_node_);
 }
 
-
 //----------------------------------------------------------------------
-/**
- * cleares the list
- *
- */
+
 template<typename ValueType>
-void List<ValueType>::clear()
+void BaseList<ValueType>::clear()
 {
   while(first_node_)
   {
@@ -543,52 +345,5 @@ void List<ValueType>::clear()
     first_node_ = tmp;
   }
 
-  last_node_ = 0;
   number_of_elements_ = 0;
-}
-
-//----------------------------------------------------------------------
-/**
- * Removes the first element and adds it to the end.
- *
- */
-template<typename ValueType>
-void List<ValueType>::rotateBack()
-{
-  // this command is senseless with <= 1 elements in the list
-  if(number_of_elements_ <= 1)
-    return;
-
-  ListNode<ValueType> *first = first_node_->getNextNode();
-  first_node_->setNextNode(0);
-  first->setPreviousNode(0);
-
-  last_node_->setNextNode(first_node_);
-  first_node_->setPreviousNode(last_node_);
-
-  last_node_ = first_node_;
-  first_node_ = first;
-}
-
-//----------------------------------------------------------------------
-/**
- * Removes the last element and adds it to the front.
- *
- */
-template<typename ValueType>
-void List<ValueType>::rotateFront()
-{
-  // this command is senseless with <= 1 elements in the list
-  if(number_of_elements_ <= 1)
-    return;
-
-  ListNode<ValueType> *last = last_node_->getPreviousNode();
-  last_node_->setPreviousNode(0);
-  last->setNextNode(0);
-
-  first_node_->setPreviousNode(last_node_);
-  last_node_->setNextNode(first_node_);
-
-  first_node_ = last_node_;
-  last_node_ = last;
 }

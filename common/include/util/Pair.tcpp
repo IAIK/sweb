@@ -1,0 +1,80 @@
+#include "ListNode.h"
+
+
+template<typename FirstValueType, typename SecondValueType>
+Pair<FirstValueType, SecondValueType>::Pair()
+{
+
+}
+
+template<typename FirstValueType, typename SecondValueType>
+Pair<FirstValueType, SecondValueType>::Pair(first_const_reference first, second_const_reference second) :                                                               first_element_(first),
+                                                         second_element_(second)
+{
+
+}
+
+template<typename FirstValueType, typename SecondValueType>
+Pair<FirstValueType, SecondValueType>::Pair(const Pair<FirstValueType, SecondValueType> &instance)
+{
+  first_element_ = instance.first_element_;
+  second_element_ = instance.second_element_;
+}
+
+
+template<typename FirstValueType, typename SecondValueType>
+Pair<FirstValueType, SecondValueType>::~Pair()
+{
+
+}
+
+
+template<typename FirstValueType, typename SecondValueType>
+Pair<FirstValueType, SecondValueType>& Pair<FirstValueType, SecondValueType>::operator = (
+  const Pair<FirstValueType, SecondValueType> &instance)
+{
+  Pair<FirstValueType, SecondValueType> new_pair(instance);
+
+  swap(this->first_element_, new_pair.first_element_);
+  swap(this->second_element_, new_pair.second_element_);
+
+  return (*this);
+}
+
+template<typename FirstValueType, typename SecondValueType>
+typename Pair<FirstValueType, SecondValueType>::first_reference Pair<FirstValueType, SecondValueType>::first()
+{
+  return first_element_;
+}
+
+
+template<typename FirstValueType, typename SecondValueType>
+typename Pair<FirstValueType, SecondValueType>::first_const_reference Pair<FirstValueType, SecondValueType>::first() const
+{
+  return first_element_;
+}
+
+template<typename FirstValueType, typename SecondValueType>
+typename Pair<FirstValueType, SecondValueType>::second_reference Pair<FirstValueType, SecondValueType>::second()
+{
+  return second_element_;
+}
+
+template<typename FirstValueType, typename SecondValueType>
+typename Pair<FirstValueType, SecondValueType>::second_const_reference Pair<FirstValueType, SecondValueType>::second() const
+{
+  return second_element_;
+}
+
+template<typename FirstValueType, typename SecondValueType>
+void Pair<FirstValueType, SecondValueType>::setFirst(first_const_reference element)
+{
+  first_element_ = element;
+}
+
+template<typename FirstValueType, typename SecondValueType>
+void Pair<FirstValueType, SecondValueType>::setSecond(second_const_reference element)
+{
+  second_element_ = element;
+}
+
