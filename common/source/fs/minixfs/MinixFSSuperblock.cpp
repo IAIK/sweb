@@ -13,29 +13,27 @@
 
 #include "console/kprintf.h"
 #define ROOT_NAME "/"
-#define BLOCK_SIZE 1024
-#define INODES_PER_BLOCK 32
 
 
 //----------------------------------------------------------------------
 MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
 {
   //read Superblock data from disc
-  char *buffer = new char[BLOCK_SIZE*sizeof(uint8)];
-  BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, 2, 1, buffer);
+  Buffer *buffer = new Buffer(BLOCK_SIZE);
+  BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, 2, 1, buffer->getBuffer());
   BDManager::getInstance()->getDeviceByNumber(s_dev)->addRequest ( bd );
   uint32 jiffies = 0;
   while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
   if( bd->getStatus() == BDRequest::BD_DONE )
   {
-    s_num_inodes_ = read2Bytes(buffer, 0);
-    s_num_zones_ = read2Bytes(buffer, 2);
-    s_num_inode_bm_blocks_ = read2Bytes(buffer, 4);
-    s_num_zone_bm_blocks_ = read2Bytes(buffer, 6);
-    s_1st_datazone_ = read2Bytes(buffer, 8);
-    s_log_zone_size_ = read2Bytes(buffer, 10);
-    s_max_file_size_ = read4Bytes(buffer, 12);
-    s_magic_ = read2Bytes(buffer, 16);
+    s_num_inodes_ = buffer->get2Bytes(0);
+    s_num_zones_ = buffer->get2Bytes(2);
+    s_num_inode_bm_blocks_ = buffer->get2Bytes(4);
+    s_num_zone_bm_blocks_ = buffer->get2Bytes(6);
+    s_1st_datazone_ = buffer->get2Bytes(8);
+    s_log_zone_size_ = buffer->get2Bytes(10);
+    s_max_file_size_ = buffer->get4Bytes(12);
+    s_magic_ = buffer->get2Bytes(16);
   }
   else
   {
@@ -46,7 +44,9 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
 //   for(uint32 i = 0; i < BLOCK_SIZE; i++ )
 //     kprintfd( "%2X%c", *(buffer+i), i%8 ? ' ' : '\n' );
 
-  delete[] buffer;
+  kprintfd("---buffer: %d", buffer);
+  delete buffer;
+  kprintfd("---buffer: end\n");
   
   
   
@@ -66,8 +66,8 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
 
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
-  char *bm_buffer = new char[BLOCK_SIZE*sizeof(uint8)*bm_size];
-  BDRequest * bm_bd = new BDRequest(s_dev_, BDRequest::BD_READ, 3, bm_size, bm_buffer);
+  Buffer *bm_buffer = new Buffer(BLOCK_SIZE*bm_size);
+  BDRequest * bm_bd = new BDRequest(s_dev_, BDRequest::BD_READ, 3, bm_size, bm_buffer->getBuffer());
   BDManager::getInstance()->getDeviceByNumber(s_dev)->addRequest ( bm_bd );
   jiffies = 0;
   while( bm_bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
@@ -82,13 +82,16 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
   {
     assert(0);
   }
-  delete[] bm_buffer;
+  kprintfd("---bm_buffer: %d", bm_buffer);
+  delete bm_buffer;
+  kprintfd("---bm_buffer: end\n");
 
   //call initInodes();
    initInodes();
-   //TODO:
-//   int32 root_init = all_inodes_.at(0)->mknod(s_root_);
-//   assert(root_init == 0);
+   if (all_inodes_.at(0))
+   {
+     int32 root_init = all_inodes_.at(0)->mknod(s_root_);
+   }
 }
 
 
@@ -103,10 +106,10 @@ void MinixFSSuperblock::initInodes()
   uint32 inodes_read = 0;
   uint32 curr_inode = 0;
   uint32 offset = 0;
-  char *buffer = new char[BLOCK_SIZE*sizeof(uint8)];
+  Buffer *buffer = new Buffer(sizeof(uint8));
   for (uint32 block = 0; block < num_inode_blocks && inodes_read < num_used_inodes; block++)
   {
-    BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, inodes_start + block, 1, buffer);
+    BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, inodes_start + block, 1, buffer->getBuffer());
     BDManager::getInstance()->getDeviceByNumber(s_dev_)->addRequest ( bd );
     uint32 jiffies = 0;
     while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
@@ -119,17 +122,17 @@ void MinixFSSuperblock::initInodes()
           uint16 *i_zones = new uint16[9];
           for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
           {
-            i_zones[num_zone] = read2Bytes(buffer, offset + 14 + (num_zone * 2));
+            i_zones[num_zone] = buffer->get2Bytes(offset + 14 + (num_zone * 2));
           }
           offset = curr_inode - ( block * INODES_PER_BLOCK );
           all_inodes_.pushBack(new MinixFSInode( this,
-                                               read2Bytes(buffer, offset),
-                                               read2Bytes(buffer, offset + 2),
-                                               read4Bytes(buffer, offset + 4),
-                                               read4Bytes(buffer, offset + 8),
-                                               read1Byte(buffer, offset + 12),
-                                               read1Byte(buffer, offset + 13),
-                                               i_zones
+                               buffer->get2Bytes(offset),
+                               buffer->get2Bytes(offset + 2),
+                               buffer->get4Bytes(offset + 4),
+                               buffer->get4Bytes(offset + 8),
+                               buffer->getByte(offset + 12),
+                               buffer->getByte(offset + 13),
+                               i_zones
                                              )
                               );
         }
@@ -140,7 +143,7 @@ void MinixFSSuperblock::initInodes()
       assert(0);
     }
   }
-  delete[] buffer;
+  delete buffer;
 }
 
 //----------------------------------------------------------------------
@@ -268,26 +271,13 @@ int32 MinixFSSuperblock::removeFd(Inode* inode, FileDescriptor* fd)
   return tmp;
 }
 
-uint8 read1Byte(char* buffer, uint32 offset)
+uint16 MinixFSSuperblock::allocateZone()
 {
-  return buffer[offset];
+  return (storage_manager_->acquireZone() + s_1st_datazone_);
 }
 
-uint16 MinixFSSuperblock::read2Bytes(char* buffer, uint32 offset)
+void MinixFSSuperblock::freeZone(uint16 pointer)
 {
-  uint16 dst = 0;
-  dst |= buffer[offset + 1];
-  dst = dst << 8;
-  dst |= (buffer[offset] & 0xFF);
-  return dst;
-}
-
-uint32 MinixFSSuperblock::read4Bytes(char* buffer, uint32 offset)
-{
-  uint32 dst = 0;
-  dst |= read2Bytes(buffer, offset + 2);
-  dst = dst << 16;
-  dst |= (read2Bytes(buffer, offset) & 0xFFFF);
-  return dst;
+  storage_manager_->freeZone(pointer - s_1st_datazone_);
 }
 

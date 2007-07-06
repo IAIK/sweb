@@ -10,7 +10,6 @@
 
 #include "console/kprintf.h"
 
-#define BASIC_ALLOC 256
 #define ERROR_DNE "Error: the dentry does not exist.\n"
 #define ERROR_DU  "Error: inode is used.\n"
 #define ERROR_IC  "Error: invalid command (only for Directory).\n"
@@ -24,11 +23,20 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type)
 {
   if(inode_type == I_FILE)
-    data_ = (char*)i_superblock_->getStorageManager()->allocateMemory(BASIC_ALLOC);
+  {
+    i_zones_ = new uint16[9*sizeof(uint16)];
+    i_zones_[0] = (uint16)((MinixFSSuperblock*)i_superblock_)->allocateZone();
+    for(uint32 i=1; i < 9;i++)
+    {
+      i_zones_[i] = 0;
+    }
+  }
   else
-    data_ = 0;
+  {
+    i_zones_ = 0;
+  }
 
-  i_size_ = BASIC_ALLOC;
+  i_size_ = BLOCK_SIZE;
   i_nlink_ = 0;
   i_dentry_ = 0;
 }
@@ -57,9 +65,16 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid,
 //---------------------------------------------------------------------------
 MinixFSInode::~MinixFSInode()
 {
-  if (data_)
+  if(i_zones_)
   {
-    i_superblock_->getStorageManager()->freeMemory(data_);
+    for(uint32 i = 0; i < 7; i++)
+    {
+      if (i_zones_[i])
+      {
+        ((MinixFSSuperblock*)i_superblock_)->freeZone(i_zones_[i]);
+      }
+    }
+    // TODO: delete indirect and double indirect zones
   }
 }
 
@@ -69,7 +84,7 @@ MinixFSInode::~MinixFSInode()
 //NOTE maybe pointer has to be translated?
 int32 MinixFSInode::readData(int32 offset, int32 size, char *buffer)
 {
-  if((size + offset) > BASIC_ALLOC)
+  if((size + offset) > i_size_)
   {
     kprintfd("the size is bigger than size of the file\n");
     assert(false);
@@ -85,7 +100,7 @@ int32 MinixFSInode::readData(int32 offset, int32 size, char *buffer)
 //---------------------------------------------------------------------------
 int32 MinixFSInode::writeData(int32 offset, int32 size, const char *buffer)
 {
-  if((size + offset) > BASIC_ALLOC)
+  if((size + offset) > i_size_)
   {
     kprintfd("the size is bigger than size of the file\n");
     assert(true);

@@ -76,7 +76,7 @@ protected:
   /// open for write before remounting the file-system as read-only.
   PointList<FileDescriptor> s_files_;
 
-  StorageManager *storage_manager_;
+//   StorageManager *storage_manager_;
 
 public:
 
@@ -84,7 +84,6 @@ public:
   Superblock(Dentry* s_root, uint32 s_dev)
   { 
     s_root_ = s_root; 
-    storage_manager_ = 0;
     s_dev_ = s_dev;
   }
 
@@ -173,7 +172,7 @@ public:
   /// Get the mount point Dentry of the Superblock
   Dentry *getMountPoint();
 
-  StorageManager *getStorageManager() { return storage_manager_; }
+//   StorageManager *getStorageManager() { return storage_manager_; }
 
 };
 //-----------------------------------------------------------------------------

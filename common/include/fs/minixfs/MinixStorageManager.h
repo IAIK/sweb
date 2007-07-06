@@ -3,16 +3,21 @@
 
 #include "StorageManager.h"
 #include "types.h"
+#include "../../util/Buffer.h"
+
+#define BLOCK_SIZE 1024
+#define INODES_PER_BLOCK 32
 
 class MinixStorageManager : public StorageManager
 {
   public:
-    MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones);
+    MinixStorageManager(Buffer *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones);
     virtual ~MinixStorageManager();
-    virtual void *allocateMemory(uint32 size);
-    virtual void freeMemory(void * /*data*/);
-    bool isInodeSet(uint32 which) { return false; }
-    uint32 getNumUsedInodes() { return 0; }
+    virtual size_t acquireZone();
+    virtual void freeZone(size_t index);
+    bool isInodeSet(size_t index);
+    uint32 getNumUsedInodes();
+    size_t curr_zone_pos_;
     
 };
 

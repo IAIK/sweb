@@ -10,10 +10,10 @@ class StorageManager
     StorageManager(uint16 num_inodes, uint16 num_zones);
 //     StorageManager(){};
     virtual ~StorageManager();
-    virtual void *allocateMemory(uint32 size) = 0;
-    virtual void freeMemory(void * /*data*/) = 0;
+    virtual void freeZone(size_t index) = 0;
+    virtual bool isInodeSet(size_t index) = 0;
   
-  private:
+  protected:
     Bitmap* inode_bitmap_;
     Bitmap* zone_bitmap_;
 };
