@@ -1,6 +1,6 @@
 #OBJS = $(patsubst %.c,%,$(wildcard *.c))
 OBJS = 
-CFLAGS = -static -nostdinc -fno-builtin -nostdlib
+CFLAGS = -static -nostdinc -fno-builtin -nostdlib -m32
 
 all: exe2pseudofs $(OBJS)
 #	./exe2pseudofs pseudofs.img $(OBJS)
