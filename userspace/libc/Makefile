@@ -58,7 +58,7 @@ LIBC_STATIC = $(OBJECTDIR)/libc.a
 
 INCLUDE_PATH = ./include
 
-CFLAGS = -Wall -g -m32 -fno-builtin -nostdinc -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
+CFLAGS = -Wall -g -m32 -fno-builtin -nostdinc -fno-stack-protector -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
 
 OBJECTS = \
 					$(OBJECTDIR)/atoi.o \
