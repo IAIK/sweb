@@ -8,6 +8,7 @@
 */
 
 #include "../../include/mm/Bitmap.h"
+#include "../console/kprintf.h"
 #include "assert.h"
 
 Bitmap::Bitmap (size_t number_of_bits)
@@ -59,5 +60,17 @@ void Bitmap::setByte(size_t byte_number, uint8 byte)
   {
     if((byte >> i) & 0x01)
       ++num_bits_set_;
+    kprintfd( "%x",byte);
   }
+  kprintfd( "\n");
+}
+
+void Bitmap::bmprint()
+{
+  kprintfd("\n-----Bitmap: size=%d, num_bits_set=%d-----\n",size_,num_bits_set_);
+  for(uint32 i = 0; i < size_; i++)
+  {
+    kprintfd( "%d", getBit( i));
+  }
+  kprintfd("\n-----Bitmap:end------\n");
 }

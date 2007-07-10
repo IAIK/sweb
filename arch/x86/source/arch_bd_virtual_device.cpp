@@ -97,13 +97,14 @@
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable) :
+BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable) :
 Inode( 0, I_BLOCKDEVICE )
 {
     //kprintfd("BDVirtualDevice::ctor:entered");
     offset_       = offset;
-    num_blocks_   = num_blocks;
-    block_size_   = block_size;
+    num_sectors_   = num_sectors;
+    sector_size_   = sector_size;
+    block_size_    = sector_size; // should changed with setBlockSize() if needed
     writable_     = writable;
     driver_       = driver;
     
@@ -135,12 +136,13 @@ void BDVirtualDevice::addRequest(BDRequest * command)
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_GET_NUM_BLOCKS: 
-      command->setResult( num_blocks_ );
+      command->setResult( num_sectors_ * block_size_ / sector_size_ );
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_READ: 
     case BDRequest::BD_WRITE:
-      command->setStartBlock( command->getStartBlock() + offset_ );
+      command->setStartBlock( command->getStartBlock() * block_size_ / sector_size_ + offset_ );
+      command->setNumBlocks( command->getNumBlocks() * block_size_ / sector_size_);
    default:
       command->setResult( driver_->addRequest( command ));
       break;

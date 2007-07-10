@@ -95,7 +95,7 @@ class BDVirtualDevice : public Inode
 {
   public:
 
-    BDVirtualDevice( BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable);
+    BDVirtualDevice( BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable);
   
     void addRequest(BDRequest * command);
     
@@ -103,7 +103,7 @@ class BDVirtualDevice : public Inode
     uint32    getDeviceNumber()               { return dev_number_; };
     BDDriver* getDriver()                     { return driver_; };
     char*     getName()                       { return name_; };
-    uint32    getNumBlocks()                  { return num_blocks_; };
+    uint32    getNumBlocks()                  { return num_sectors_ * block_size_ / sector_size_; };
 
     
 //// -----------------------------------------------------------------
@@ -159,7 +159,8 @@ class BDVirtualDevice : public Inode
     
     uint32 dev_number_;
     uint32 block_size_;
-    uint32 num_blocks_;
+    uint32 sector_size_;
+    uint32 num_sectors_;
     uint32 offset_;
     bool writable_;
     char *name_;

@@ -7,9 +7,9 @@
 class StorageManager
 {
   public:
-    StorageManager(uint16 num_inodes, uint16 num_zones);
+    StorageManager(uint16 num_inodes, uint16 num_zones) {inode_bitmap_ = new Bitmap(num_inodes); zone_bitmap_ = new Bitmap(num_zones);};
 //     StorageManager(){};
-    virtual ~StorageManager();
+    virtual ~StorageManager() {};
     virtual void freeZone(size_t index) = 0;
     virtual bool isInodeSet(size_t index) = 0;
   

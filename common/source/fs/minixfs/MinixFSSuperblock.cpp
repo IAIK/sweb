@@ -13,14 +13,16 @@
 
 #include "console/kprintf.h"
 #define ROOT_NAME "/"
+#define INODE_SIZE 32
 
 
 //----------------------------------------------------------------------
 MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
 {
+  BDManager::getInstance()->getDeviceByNumber(s_dev)->setBlockSize(MINIX_BLOCK_SIZE);
   //read Superblock data from disc
-  Buffer *buffer = new Buffer(BLOCK_SIZE);
-  BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, 2, 1, buffer->getBuffer());
+  Buffer *buffer = new Buffer(MINIX_BLOCK_SIZE);
+  BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, 1, 1, buffer->getBuffer());
   BDManager::getInstance()->getDeviceByNumber(s_dev)->addRequest ( bd );
   uint32 jiffies = 0;
   while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
@@ -66,17 +68,22 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
 
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
-  Buffer *bm_buffer = new Buffer(BLOCK_SIZE*bm_size);
+  Buffer *bm_buffer = new Buffer(MINIX_BLOCK_SIZE*bm_size);
+  kprintfd("---creating request\n");
   BDRequest * bm_bd = new BDRequest(s_dev_, BDRequest::BD_READ, 3, bm_size, bm_buffer->getBuffer());
+  kprintfd("---adding request\n");
   BDManager::getInstance()->getDeviceByNumber(s_dev)->addRequest ( bm_bd );
   jiffies = 0;
+  kprintfd("---waiting for request\n");
   while( bm_bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
   if( bm_bd->getStatus() == BDRequest::BD_DONE )
   {
+    kprintfd("---creating Storage Manager\n");
     storage_manager_ = new MinixStorageManager(bm_buffer,
                                                s_num_inode_bm_blocks_,
                                                s_num_zone_bm_blocks_,
                                                s_num_inodes_, s_num_zones_);
+    storage_manager_->printBitmap();
   }
   else
   {
@@ -103,10 +110,11 @@ void MinixFSSuperblock::initInodes()
   uint32 num_inode_blocks = s_1st_datazone_ - inodes_start;
   // read and create the inodes form disc which are marked used in the bitmap
   uint32 num_used_inodes = storage_manager_->getNumUsedInodes();
-  uint32 inodes_read = 0;
+  uint32 inodes_read = 1;
   uint32 curr_inode = 0;
   uint32 offset = 0;
-  Buffer *buffer = new Buffer(sizeof(uint8));
+  Buffer *buffer = new Buffer(MINIX_BLOCK_SIZE);
+  kprintfd( "initInodes: inode_start: %d\tnum_inode_blocks: %d\t num_used_inodes: %d\n",inodes_start, num_inode_blocks, num_used_inodes);
   for (uint32 block = 0; block < num_inode_blocks && inodes_read < num_used_inodes; block++)
   {
     BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, inodes_start + block, 1, buffer->getBuffer());
@@ -115,16 +123,17 @@ void MinixFSSuperblock::initInodes()
     while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
     if( bd->getStatus() == BDRequest::BD_DONE )
     {
-      for(;curr_inode < INODES_PER_BLOCK * (block + 1); curr_inode++)
+      for(;curr_inode < INODES_PER_BLOCK * (block + 1) && inodes_read < num_used_inodes; curr_inode++)
       {
+        //kprintfd( "initInodes: curr_inode: %d\t isset: %d\n", curr_inode, storage_manager_->isInodeSet(curr_inode));
         if(storage_manager_->isInodeSet(curr_inode))
         {
+          offset = curr_inode * INODE_SIZE - ( block * INODES_PER_BLOCK * INODE_SIZE);
           uint16 *i_zones = new uint16[9];
           for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
           {
             i_zones[num_zone] = buffer->get2Bytes(offset + 14 + (num_zone * 2));
           }
-          offset = curr_inode - ( block * INODES_PER_BLOCK );
           all_inodes_.pushBack(new MinixFSInode( this,
                                buffer->get2Bytes(offset),
                                buffer->get2Bytes(offset + 2),
@@ -135,6 +144,7 @@ void MinixFSSuperblock::initInodes()
                                i_zones
                                              )
                               );
+          ++inodes_read;
         }
       }
     }

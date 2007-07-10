@@ -1,11 +1,12 @@
 #ifndef MINIX_STORAGE_MANAGER__
 #define MINIX_STORAGE_MANAGER__
 
+//#include "../../../../arch/common/include/StorageManager.h"
 #include "StorageManager.h"
 #include "types.h"
 #include "../../util/Buffer.h"
 
-#define BLOCK_SIZE 1024
+#define MINIX_BLOCK_SIZE 1024
 #define INODES_PER_BLOCK 32
 
 class MinixStorageManager : public StorageManager
@@ -18,6 +19,8 @@ class MinixStorageManager : public StorageManager
     bool isInodeSet(size_t index);
     uint32 getNumUsedInodes();
     size_t curr_zone_pos_;
+    //debug
+    void printBitmap();
     
 };
 

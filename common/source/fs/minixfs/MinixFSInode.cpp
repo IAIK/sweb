@@ -36,7 +36,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
     i_zones_ = 0;
   }
 
-  i_size_ = BLOCK_SIZE;
+  i_size_ = MINIX_BLOCK_SIZE;
   i_nlink_ = 0;
   i_dentry_ = 0;
 }
@@ -44,9 +44,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
 //---------------------------------------------------------------------------
 MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32                   i_size, uint32 i_modtime, uint8 i_gid, uint8 i_nlinks, uint16* i_zones) : Inode(super_block, 0)
 {
-  i_size_ = 0;
   i_size_ = i_size;
-  i_nlink_ = 0;
   i_nlink_ = i_nlinks;
   i_dentry_ = 0;
   i_state_ = I_UNUSED;
@@ -60,6 +58,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid,
     i_type_ = I_DIR;
   }
   //TODO: else something else
+  kprintfd( "created inode with size: %x\tnlink: %x\tzones[0]: %x\tmode: %x\n", i_size_, i_nlink_, i_zones_[0], i_mode);
 }
 
 //---------------------------------------------------------------------------

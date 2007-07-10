@@ -151,7 +151,9 @@ class BDRequest
     /// sets the the number of the blocks already read/written \sa getBlocksDone
     void setBlocksDone( uint32 bdone )      { blocks_done_=bdone; };
     /// sets the the next request in the linked list
-	void setNextRequest( BDRequest *next )		{ next_request_=next; };
+    void setNextRequest( BDRequest *next )  { next_request_=next; };
+        
+    void setNumBlocks(uint32 num_block)      { num_block_ = num_block; };
     
   private:
     BDRequest();  ///< default constructor, must never be called

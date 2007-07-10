@@ -39,6 +39,7 @@ public:
   size_t getSize() { return size_; }
   size_t getNumBitsSet() { return num_bits_set_; }
   size_t getNumFreeBits() { return size_ - num_bits_set_; }
+  void bmprint();
 
 protected:
   void setByte(size_t byte_number, uint8 byte);
