@@ -35,6 +35,7 @@ PathWalker::~PathWalker()
 //----------------------------------------------------------------------
 int32 PathWalker::pathInit(const char* pathname, uint32 flags)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(pathname == 0)
   {
     return PI_ENOTFOUND;
@@ -49,14 +50,14 @@ int32 PathWalker::pathInit(const char* pathname, uint32 flags)
     // altroot check
 
     // start with ROOT
-    this->dentry_ = fs_info.getRoot();
-    this->vfs_mount_ = fs_info.getRootMnt();
+    this->dentry_ = fs_info->getRoot();
+    this->vfs_mount_ = fs_info->getRootMnt();
   }
   else
   {
     // start with PWD
-    this->dentry_ = fs_info.getPwd();
-    this->vfs_mount_ = fs_info.getPwdMnt();
+    this->dentry_ = fs_info->getPwd();
+    this->vfs_mount_ = fs_info->getPwdMnt();
   }
   
   if((dentry_ == 0) || (vfs_mount_ == 0))
@@ -68,6 +69,7 @@ int32 PathWalker::pathInit(const char* pathname, uint32 flags)
 //----------------------------------------------------------------------
 int32 PathWalker::pathWalk(const char* pathname)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(pathname == 0)
   {
     return PW_ENOTFOUND;
@@ -126,7 +128,7 @@ int32 PathWalker::pathWalk(const char* pathname)
       kfree(npart);
       last_ = 0;
 
-      if((dentry_ == fs_info.getRoot())&&(vfs_mount_ == fs_info.getRootMnt()))
+      if((dentry_ == fs_info->getRoot())&&(vfs_mount_ == fs_info->getRootMnt()))
       {
         // the dentry_ is the root of file-system
         // because the ROOT has not parent from VfsMount.

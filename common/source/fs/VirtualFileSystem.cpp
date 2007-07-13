@@ -108,7 +108,7 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
 }
 
 //----------------------------------------------------------------------
-int32 VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
+FileSystemInfo *VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
 {
   FileSystemType *fst = getFsType(fs_name);
 
@@ -123,16 +123,18 @@ int32 VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
   superblocks_.pushBack(super);
 
   // fs_info initialize
-  fs_info.setFsRoot(root, root_mount);
-  fs_info.setFsPwd(root, root_mount);
+  FileSystemInfo *fs_info = new FileSystemInfo();
+  fs_info->setFsRoot(root, root_mount);
+  fs_info->setFsPwd(root, root_mount);
   
-  return 0;
+  return fs_info;
 }
 
 //----------------------------------------------------------------------
 int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name,
                                char* fs_name, uint32 /*flags*/)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(!dev_name)
     return -1;
   if((!dir_name) || (!fs_name))
@@ -142,13 +144,13 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name,
   kprintfd("dev_nr:%d", dev);
   FileSystemType *fst = getFsType(fs_name);
   
-  fs_info.setName(dir_name);
-  char* test_name = fs_info.getName();
+  fs_info->setName(dir_name);
+  char* test_name = fs_info->getName();
 
   int32 success = path_walker.pathInit(test_name, 0);
   if(success == 0)
     success = path_walker.pathWalk(test_name);
-  fs_info.putName();
+  fs_info->putName();
   
   if(success != 0)
     return -1;
@@ -188,16 +190,17 @@ int32 VirtualFileSystem::rootUmount()
 //----------------------------------------------------------------------
 int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(dir_name == 0)
     return -1;
 
-  fs_info.setName(dir_name);
-  char* test_name = fs_info.getName();
+  fs_info->setName(dir_name);
+  char* test_name = fs_info->getName();
 
   int32 success = path_walker.pathInit(test_name, 0);
   if(success == 0)
     success = path_walker.pathWalk(test_name);
-  fs_info.putName();
+  fs_info->putName();
   
   if(success != 0)
     return -1;
@@ -216,18 +219,18 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
   
   // in the case, the current-directory is in the local-root of the umounted
   // filesystem
-  if(fs_info.getPwdMnt() == found_vfs_mount)
+  if(fs_info->getPwdMnt() == found_vfs_mount)
   {
-    if(fs_info.getPwd() == found_dentry)
+    if(fs_info->getPwd() == found_dentry)
     {
       kprintfd("the mount point exchange\n");
-      fs_info.setFsPwd(found_vfs_mount->getMountPoint(),
+      fs_info->setFsPwd(found_vfs_mount->getMountPoint(),
                        found_vfs_mount->getParent());
     }
     else
     {
       kprintfd("set PWD NULL\n");
-      fs_info.setFsPwd(0,0);
+      fs_info->setFsPwd(0,0);
     }
   }
   
@@ -243,7 +246,7 @@ FileSystemInfo *getFSInfo()
 {
   // TODO this needs to be done properly as soon as possible
   
-  return &fs_info;
+  return currentThread->getFSInfo();
 }
 
 

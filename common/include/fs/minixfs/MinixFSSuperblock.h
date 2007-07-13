@@ -57,6 +57,8 @@ class MinixFSSuperblock : public Superblock
 
   private:
     void initInodes();
+    
+    Inode* readInode(uint16 i_num);
 
     /// # usable inodes on the minor device
     uint16 s_num_inodes_;

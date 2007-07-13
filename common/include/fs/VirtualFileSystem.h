@@ -82,7 +82,7 @@ class VirtualFileSystem
     /// @param fs_name the name of the type of filesystem to be mounted
     /// @param flags the mount flags
     /// @return On success, zero is returned. On error, -1 is returned.
-    int32 root_mount(char* fs_name, uint32 flags);
+    FileSystemInfo *root_mount(char* fs_name, uint32 flags);
 
     /// umount the ROOT from the VFS (special of the umount)
     ///

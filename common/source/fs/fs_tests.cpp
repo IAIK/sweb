@@ -488,7 +488,8 @@ void testVfsSyscall()
 
 void testReadWriteInode()
 {
-  Dentry *dentry = fs_info.getRoot();
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
+  Dentry *dentry = fs_info->getRoot();
   Inode *inode = dentry->getInode();
   Superblock *sb = inode->getSuperblock();
   

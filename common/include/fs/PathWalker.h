@@ -122,7 +122,7 @@ public:
   /// get the dentry from the class
   Dentry* getDentry() { return dentry_; }
   
-  /// get the VfsMount from the clawss
+  /// get the VfsMount from the class
   VfsMount* getVfsMount() { return vfs_mount_; }
 
 protected:

@@ -69,9 +69,15 @@ public:
   
   /// return the parent of the dentry
   Dentry* getParent() { return d_parent_; }
+  
+  ///
+  void setParent(Dentry *parent) { d_parent_ = parent; }
 
   /// return the mount_point of the current file-system
   Dentry* getMountPoint() { return d_mounts_; }
+  
+  ///
+  void setMountPoint(Dentry *mount_point) { d_mounts_ = mount_point; }
 
   /// set the child to the dentry
   int32 setChild(Dentry *dentry);
@@ -124,8 +130,8 @@ public:
   /// in odrder to see if the entry is still valid. It is only needed if the
   /// file-system is likely to change without the VFS layer doing anything.
   /// @param dentry the input dentry.
-  /// @param lookup_falgs gibes the flags relevant to this lookup.
-  /// @return It returns 1 if the entry is can still be trusted, else 0. The
+  /// @param lookup_falgs gives the flags relevant to this lookup.
+  /// @return It returns 1 if the entry can still be trusted, else 0. The
   /// default is to assume a return value of 1.
   // virtual int32 d_revalidate(Dentry *dentry, int lookup_flags) {return 0;}
 

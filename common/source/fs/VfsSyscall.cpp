@@ -43,6 +43,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 //---------------------------------------------------------------------------
 int32 VfsSyscall::dupChecking(const char* pathname)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(pathname == 0)
     return -1;
 
@@ -57,15 +58,15 @@ int32 VfsSyscall::dupChecking(const char* pathname)
     *path_tmp_ptr++ = SEPARATOR;
     strlcpy(path_tmp_ptr, pathname, path_len);
     
-    fs_info.setName(path_tmp);
+    fs_info->setName(path_tmp);
     kfree(path_tmp);
   } 
   else
-    fs_info.setName(pathname);
+    fs_info->setName(pathname);
 
-  int32 success = path_walker.pathInit(fs_info.getName(), 0);
+  int32 success = path_walker.pathInit(fs_info->getName(), 0);
   if(success == 0)
-    success = path_walker.pathWalk(fs_info.getName());
+    success = path_walker.pathWalk(fs_info->getName());
 
   // checked
   return success;
@@ -74,32 +75,33 @@ int32 VfsSyscall::dupChecking(const char* pathname)
 //---------------------------------------------------------------------------
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(dupChecking(pathname) == 0)
   {
     kprintfd("(mkdir) the pathname exists\n");
     path_walker.pathRelease();
-    fs_info.putName();
+    fs_info->putName();
     return -1;
   }
   
   path_walker.pathRelease();
-  char* path_tmp=(char*)kmalloc((strlen(fs_info.getName())+ 1) * sizeof(char));
-  strlcpy(path_tmp, fs_info.getName(), (strlen(fs_info.getName()) + 1));
-  fs_info.putName();
+  char* path_tmp=(char*)kmalloc((strlen(fs_info->getName())+ 1) * sizeof(char));
+  strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+  fs_info->putName();
   
   char* char_tmp = strrchr(path_tmp, SEPARATOR); 
   assert(char_tmp != 0)
 
   // set directory
   uint32 path_prev_len = char_tmp - path_tmp + 1;
-  fs_info.setName(path_tmp, path_prev_len);
+  fs_info->setName(path_tmp, path_prev_len);
     
-  char* path_prev_name = fs_info.getName();
+  char* path_prev_name = fs_info->getName();
 
   int32 success = path_walker.pathInit(path_prev_name, 0);
   if(success == 0)
     success = path_walker.pathWalk(path_prev_name);
-  fs_info.putName();
+  fs_info->putName();
 
   if(success != 0)
   {
@@ -136,15 +138,16 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 //---------------------------------------------------------------------------
 Dirent* VfsSyscall::readdir(const char* pathname)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(dupChecking(pathname) != 0)
   {
     kprintfd("Error: (readdir) the directory does not exist.\n");
     path_walker.pathRelease();
-    fs_info.putName();
+    fs_info->putName();
     return (Dirent*)0;
   }
 
-  fs_info.putName();
+  fs_info->putName();
   Dentry* current_dentry = path_walker.getDentry();
   path_walker.pathRelease();
   Inode* current_inode = current_dentry->getInode();
@@ -185,15 +188,16 @@ Dirent* VfsSyscall::readdir(const char* pathname)
 //---------------------------------------------------------------------------
 int32 VfsSyscall::chdir(const char* pathname)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(dupChecking(pathname) != 0)
   {
     kprintfd("Error: (chdir) the directory does not exist.\n");
     path_walker.pathRelease();
-    fs_info.putName();
+    fs_info->putName();
     return -1;
   }
 
-  fs_info.putName();
+  fs_info->putName();
   Dentry* current_dentry = path_walker.getDentry();
   Inode* current_inode = current_dentry->getInode();
   if(current_inode->getType() != I_DIR)
@@ -203,7 +207,7 @@ int32 VfsSyscall::chdir(const char* pathname)
     return -1;
   }
 
-  fs_info.setFsPwd(path_walker.getDentry(), path_walker.getVfsMount());
+  fs_info->setFsPwd(path_walker.getDentry(), path_walker.getVfsMount());
   path_walker.pathRelease();
 
   return 0;
@@ -213,15 +217,16 @@ int32 VfsSyscall::chdir(const char* pathname)
 int32 VfsSyscall::rm(const char* pathname)
 {
 
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(dupChecking(pathname) != 0)
   {
     kprintfd("Error: (rmdir) the directory does not exist.\n");
     path_walker.pathRelease();
-    fs_info.putName();
+    fs_info->putName();
     return -1;
   }
 
-  fs_info.putName();
+  fs_info->putName();
   Dentry* current_dentry = path_walker.getDentry();
   path_walker.pathRelease();
   Inode* current_inode = current_dentry->getInode();
@@ -244,16 +249,16 @@ int32 VfsSyscall::rm(const char* pathname)
 //---------------------------------------------------------------------------
 int32 VfsSyscall::rmdir(const char* pathname)
 {
-
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(dupChecking(pathname) != 0)
   {
     kprintfd("Error: (rmdir) the directory does not exist.\n");
     path_walker.pathRelease();
-    fs_info.putName();
+    fs_info->putName();
     return -1;
   }
 
-  fs_info.putName();
+  fs_info->putName();
   Dentry* current_dentry = path_walker.getDentry();
   path_walker.pathRelease();
   Inode* current_inode = current_dentry->getInode();
@@ -297,7 +302,7 @@ int32 VfsSyscall::close(uint32 fd)
   Inode* current_inode = file->getInode();
   Superblock *current_sb = current_inode->getSuperblock();
   int32 tmp = current_sb->removeFd(current_inode, file_descriptor);
-  assert(tmp == 0)
+  assert(tmp == 0);
 
   return 0;
 }
@@ -305,6 +310,7 @@ int32 VfsSyscall::close(uint32 fd)
 //---------------------------------------------------------------------------
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
+  FileSystemInfo *fs_info = currentThread->getFSInfo();
   if(flag > O_RDWR)
   {
     kprintfd("(open) invalid parameter flag\n");
@@ -313,7 +319,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   
   if(dupChecking(pathname) == 0)
   {
-    fs_info.putName();
+    fs_info->putName();
     Dentry* current_dentry = path_walker.getDentry();
     path_walker.pathRelease();
     Inode* current_inode = current_dentry->getInode();
@@ -354,23 +360,23 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   {
     kprintfd("(open) create a new file\n");
     path_walker.pathRelease();
-    char* path_tmp=(char*)kmalloc((strlen(fs_info.getName())+ 1) * sizeof(char));
-    strlcpy(path_tmp, fs_info.getName(), (strlen(fs_info.getName()) + 1));
-    fs_info.putName();
+    char* path_tmp=(char*)kmalloc((strlen(fs_info->getName())+ 1) * sizeof(char));
+    strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+    fs_info->putName();
   
     char* char_tmp = strrchr(path_tmp, SEPARATOR); 
     assert(char_tmp != 0)
 
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
-    fs_info.setName(path_tmp, path_prev_len);
+    fs_info->setName(path_tmp, path_prev_len);
     
-    char* path_prev_name = fs_info.getName();
+    char* path_prev_name = fs_info->getName();
 
     int32 success = path_walker.pathInit(path_prev_name, 0);
     if(success == 0)
       success = path_walker.pathWalk(path_prev_name);
-    fs_info.putName();
+    fs_info->putName();
 
     if(success != 0)
     {

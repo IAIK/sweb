@@ -20,7 +20,7 @@ MinixStorageManager::MinixStorageManager(Buffer *bm_buffer, uint16 num_inode_bm_
       inode_bitmap_->setBit(i_byte * 8 + i_bit);
   }
   //read zone bitmap
-  z_byte = num_inode_bm_blocks * MINIX_BLOCK_SIZE;
+  uint32 z_byte = num_inode_bm_blocks * MINIX_BLOCK_SIZE;
   for (; z_byte < num_zones / 8; z_byte ++)
   {
     zone_bitmap_->setByte(z_byte, bm_buffer->getByte(z_byte));

@@ -108,4 +108,11 @@ void Buffer::print()
   kprintfd( "\n----Buffer:end------\n");
 }
     
-    
+void Buffer::clear()
+{
+  for(uint32 i = 0; i < size_; i++)
+  {
+    buffer_[i] = 0;
+  }
+}
+

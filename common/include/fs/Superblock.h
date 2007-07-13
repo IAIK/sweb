@@ -33,6 +33,7 @@ class Superblock
 public:
 
   friend class VirtualFileSystem;
+  friend class MinixFSInode;
 
 protected:
 

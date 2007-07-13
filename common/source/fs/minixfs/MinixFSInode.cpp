@@ -7,6 +7,7 @@
 #include "fs/minixfs/MinixFSSuperblock.h"
 #include "fs/minixfs/MinixFSFile.h"
 #include "fs/Dentry.h"
+#include "arch_bd_manager.h"
 
 #include "console/kprintf.h"
 
@@ -22,21 +23,8 @@
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type)
 {
-  if(inode_type == I_FILE)
-  {
-    i_zones_ = new uint16[9*sizeof(uint16)];
-    i_zones_[0] = (uint16)((MinixFSSuperblock*)i_superblock_)->allocateZone();
-    for(uint32 i=1; i < 9;i++)
-    {
-      i_zones_[i] = 0;
-    }
-  }
-  else
-  {
-    i_zones_ = 0;
-  }
-
-  i_size_ = MINIX_BLOCK_SIZE;
+  i_zones_ = 0;
+  i_size_ = 0;
   i_nlink_ = 0;
   i_dentry_ = 0;
 }
@@ -78,9 +66,6 @@ MinixFSInode::~MinixFSInode()
 }
 
 //---------------------------------------------------------------------------
-//TODO Files could be bigger than the basic allocated file
-//TODO if there is less to read than requested return less.
-//NOTE maybe pointer has to be translated?
 int32 MinixFSInode::readData(int32 offset, int32 size, char *buffer)
 {
   if((size + offset) > i_size_)
@@ -88,28 +73,102 @@ int32 MinixFSInode::readData(int32 offset, int32 size, char *buffer)
     kprintfd("the size is bigger than size of the file\n");
     assert(false);
   }
-
-  char *ptr_offset = data_ + offset;
-  memcpy(buffer, ptr_offset, size);
+  uint32 zone = offset / MINIX_ZONE_SIZE;
+  uint32 zone_offset = offset % MINIX_ZONE_SIZE;
+  uint32 num_zones = (zone_offset + size) / MINIX_ZONE_SIZE + 1;
+  Buffer* rbuffer = new Buffer(MINIX_ZONE_SIZE);
+  
+  uint32 index = 0;
+  
+  for(;zone < num_zones; zone++)
+  {
+    rbuffer->clear();
+    //TODO: handle indirect and double indirect zones!
+    BDRequest * bd = new BDRequest(i_superblock_->s_dev_, BDRequest::BD_READ, i_zones_[zone], MINIX_ZONE_SIZE/MINIX_BLOCK_SIZE, rbuffer->getBuffer());
+    BDManager::getInstance()->getDeviceByNumber(i_superblock_->s_dev_)->addRequest ( bd );
+    uint32 jiffies = 0;
+    while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+    if( bd->getStatus() == BDRequest::BD_DONE )
+    {
+      for(; index < size && zone_offset < MINIX_ZONE_SIZE; index++, zone_offset++)
+      {
+        buffer[index] = rbuffer->getByte( index + zone_offset);
+      }
+      zone_offset = 0;
+    }
+    else
+    {
+      assert(false);
+    }
+  }
+  delete buffer;
   return size;
 }
-//TODO reallocate memory if writing beyond file size
-// eventually change fd to new address
-//NOTE maybe pointer has to be translated?
+
+//TODO handle indirect and double indirect zones!
 //---------------------------------------------------------------------------
 int32 MinixFSInode::writeData(int32 offset, int32 size, const char *buffer)
 {
+  uint32 zone = offset / MINIX_ZONE_SIZE;
+  uint32 num_zones = (offset % MINIX_ZONE_SIZE + size) / MINIX_ZONE_SIZE + 1;
+  uint32 last_used_zone = i_size_/MINIX_ZONE_SIZE;
+  uint32 last_zone = last_used_zone;
+  
   if((size + offset) > i_size_)
   {
-    kprintfd("the size is bigger than size of the file\n");
-    assert(true);
+    uint32 num_new_zones = (size + offset - i_size_) / MINIX_ZONE_SIZE + 1;
+    for(uint32 new_zones = 0; new_zones < num_new_zones; new_zones++, last_zone++)
+    {
+      i_zones_[last_zone + 1] = (uint16)((MinixFSSuperblock*)i_superblock_)->allocateZone();
+    }
   }
-
-  assert(i_type_ == I_FILE);
-
-  char *ptr_offset = data_ + offset;
-  memcpy(ptr_offset, buffer, size);
+  
+  if(offset > i_size_)
+  {
+    uint32 zone_size_offset =  i_size_%MINIX_ZONE_SIZE;
+    uint32 rest_offset = MINIX_ZONE_SIZE-(offset%MINIX_ZONE_SIZE);
+    Buffer* fill_buffer = new Buffer(MINIX_ZONE_SIZE);
+    fill_buffer->clear();
+    readData( i_size_-zone_size_offset, zone_size_offset, fill_buffer->getBuffer());
+    writeZone( last_used_zone, fill_buffer->getBuffer() );
+    ++last_used_zone;
+    for (; last_used_zone <= offset/MINIX_ZONE_SIZE; last_used_zone++)
+    {
+      fill_buffer->clear();
+      writeZone( last_used_zone, fill_buffer->getBuffer() );
+    }
+    --last_used_zone;
+    i_size_ = offset;
+  }
+  
+  uint32 zone_offset = offset%MINIX_ZONE_SIZE;
+  Buffer* wbuffer = new Buffer(num_zones * MINIX_ZONE_SIZE);
+  readData( offset-zone_offset, zone_offset, wbuffer->getBuffer());
+  for(uint32 index = 0, pos = zone_offset; index<size; pos++, index++)
+  {
+    wbuffer->setByte( pos, buffer[index]);
+  }
+  for(uint32 zone_index = 0; zone_index < num_zones; zone_index++)
+  {
+    writeZone(zone_index + zone, wbuffer->getBuffer()+zone_index*MINIX_ZONE_SIZE);
+  }
+  if(i_size_ < offset + size)
+  {
+    i_size_ = offset + size;
+  }
   return size;
+}
+
+void MinixFSInode::writeZone(uint32 zone_number, char* buffer)
+{
+  BDRequest * bd = new BDRequest(i_superblock_->s_dev_, BDRequest::BD_WRITE, i_zones_[zone_number], MINIX_ZONE_SIZE/MINIX_BLOCK_SIZE, buffer);
+  BDManager::getInstance()->getDeviceByNumber(i_superblock_->s_dev_)->addRequest ( bd );
+  uint32 jiffies = 0;
+  while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+  if( bd->getStatus() != BDRequest::BD_DONE )
+  {
+    assert(false);
+  }
 }
 
 //---------------------------------------------------------------------------

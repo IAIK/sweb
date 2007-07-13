@@ -14,7 +14,9 @@
 #include "console/kprintf.h"
 #define ROOT_NAME "/"
 #define INODE_SIZE 32
-
+#define DENTRY_SIZE 32
+#define DENTRY_PER_BLOCK 32
+#define MAX_NAME_LENGTH 30
 
 //----------------------------------------------------------------------
 MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
@@ -49,22 +51,6 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
   kprintfd("---buffer: %d", buffer);
   delete buffer;
   kprintfd("---buffer: end\n");
-  
-  
-  
-  Dentry *root_dentry = new Dentry(ROOT_NAME);
-
-  if (s_root)
-  {
-    // MOUNT
-    mounted_over_ = s_root;
-  }
-  else
-  {
-    // ROOT
-    mounted_over_ = root_dentry;
-  }
-  s_root_ = root_dentry;
 
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
@@ -101,60 +87,143 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
    }
 }
 
-
-//----------------------------------------------------------------------
 void MinixFSSuperblock::initInodes()
 {
-  // starts after the MBR, Superblock, InodeBM and ZoneBM. ends when the Data starts.
+  MinixFSInode *root_inode = 0;
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
-  uint32 num_inode_blocks = s_1st_datazone_ - inodes_start;
-  // read and create the inodes form disc which are marked used in the bitmap
-  uint32 num_used_inodes = storage_manager_->getNumUsedInodes();
-  uint32 inodes_read = 1;
-  uint32 curr_inode = 0;
-  uint32 offset = 0;
-  Buffer *buffer = new Buffer(MINIX_BLOCK_SIZE);
-  kprintfd( "initInodes: inode_start: %d\tnum_inode_blocks: %d\t num_used_inodes: %d\n",inodes_start, num_inode_blocks, num_used_inodes);
-  for (uint32 block = 0; block < num_inode_blocks && inodes_read < num_used_inodes; block++)
+  Buffer *ibuffer = new Buffer(MINIX_BLOCK_SIZE);
+  BDRequest *bd = new BDRequest(s_dev_, BDRequest::BD_READ, inodes_start, 1, ibuffer->getBuffer());
+  BDManager::getInstance()->getDeviceByNumber(s_dev_)->addRequest ( bd );
+  uint32 jiffies = 0;
+  while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+  if( bd->getStatus() == BDRequest::BD_DONE )
   {
-    BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, inodes_start + block, 1, buffer->getBuffer());
+    uint16 *i_zones = new uint16[9];
+    for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
+    {
+      i_zones[num_zone] = ibuffer->get2Bytes(14 + (num_zone * 2));
+    }
+    root_inode = new MinixFSInode( this,
+                          ibuffer->get2Bytes(0),
+                          ibuffer->get2Bytes(2),
+                          ibuffer->get4Bytes(4),
+                          ibuffer->get4Bytes(8),
+                          ibuffer->getByte(12),
+                          ibuffer->getByte(13),
+                          i_zones
+                                        );
+  }
+  else
+  {
+    assert(false);
+  }
+  Dentry *root_dentry = new Dentry(ROOT_NAME);
+  if (s_root_)
+  {
+    root_dentry->setMountPoint(s_root_);
+    mounted_over_ = s_root_; // MOUNT
+  }
+  else
+  {
+    mounted_over_ = root_dentry; // ROOT
+    s_root_ = root_dentry;
+    
+  }
+  root_dentry->setParent(root_dentry); // NOTE: maybe set to s_root_ for not root mount ?
+  root_inode->mknod(root_dentry);
+  //TODO read childs from disc
+  Buffer *dbuffer = new Buffer(MINIX_ZONE_SIZE);
+  for (uint32 zone = 0; root_inode->i_zones_[zone] != 0; zone++)
+  {
+    BDRequest *bd = new BDRequest(s_dev_, BDRequest::BD_READ, root_inode->i_zones_[zone], MINIX_ZONE_SIZE/MINIX_BLOCK_SIZE, dbuffer->getBuffer());
     BDManager::getInstance()->getDeviceByNumber(s_dev_)->addRequest ( bd );
     uint32 jiffies = 0;
     while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
     if( bd->getStatus() == BDRequest::BD_DONE )
     {
-      for(;curr_inode < INODES_PER_BLOCK * (block + 1) && inodes_read < num_used_inodes; curr_inode++)
+      for(uint32 curr_dentry = 0; curr_dentry < MINIX_BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
       {
-        //kprintfd( "initInodes: curr_inode: %d\t isset: %d\n", curr_inode, storage_manager_->isInodeSet(curr_inode));
-        if(storage_manager_->isInodeSet(curr_inode))
+        if(dbuffer->get2Bytes(curr_dentry))
         {
-          offset = curr_inode * INODE_SIZE - ( block * INODES_PER_BLOCK * INODE_SIZE);
-          uint16 *i_zones = new uint16[9];
-          for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
+          Inode* inode = readInode(dbuffer->get2Bytes(curr_dentry));
+          uint32 offset = 2;
+          char *name = char[MAX_NAME_LENGTH];
+          char ch = 0;
+          do
           {
-            i_zones[num_zone] = buffer->get2Bytes(offset + 14 + (num_zone * 2));
-          }
-          all_inodes_.pushBack(new MinixFSInode( this,
-                               buffer->get2Bytes(offset),
-                               buffer->get2Bytes(offset + 2),
-                               buffer->get4Bytes(offset + 4),
-                               buffer->get4Bytes(offset + 8),
-                               buffer->getByte(offset + 12),
-                               buffer->getByte(offset + 13),
-                               i_zones
-                                             )
-                              );
-          ++inodes_read;
+            ch = dbuffer->getByte(curr_dentry + offset);
+            name[offset] = ch;
+            ++offset;
+          } while (ch);
+          inode->mknod(new Dentry(name));
         }
       }
     }
     else
     {
-      assert(0);
+      assert(false);
     }
   }
-  delete buffer;
 }
+
+Inode* MinixFSSuperblock::readInode(uint16 i_num)
+{
+  assert(storage_manager_->isSet(i_num));
+  
+}
+//----------------------------------------------------------------------
+// void MinixFSSuperblock::initInodes()
+// {
+//   // starts after the MBR, Superblock, InodeBM and ZoneBM. ends when the Data starts.
+//   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
+//   uint32 num_inode_blocks = s_1st_datazone_ - inodes_start;
+//   // read and create the inodes form disc which are marked used in the bitmap
+//   uint32 num_used_inodes = storage_manager_->getNumUsedInodes();
+//   uint32 inodes_read = 1;
+//   uint32 curr_inode = 0;
+//   uint32 offset = 0;
+//   Buffer *buffer = new Buffer(MINIX_BLOCK_SIZE);
+//   kprintfd( "initInodes: inode_start: %d\tnum_inode_blocks: %d\t num_used_inodes: %d\n",inodes_start, num_inode_blocks, num_used_inodes);
+//   for (uint32 block = 0; block < num_inode_blocks && inodes_read < num_used_inodes; block++)
+//   {
+//     BDRequest * bd = new BDRequest(s_dev_, BDRequest::BD_READ, inodes_start + block, 1, buffer->getBuffer());
+//     BDManager::getInstance()->getDeviceByNumber(s_dev_)->addRequest ( bd );
+//     uint32 jiffies = 0;
+//     while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+//     if( bd->getStatus() == BDRequest::BD_DONE )
+//     {
+//       for(;curr_inode < INODES_PER_BLOCK * (block + 1) && inodes_read < num_used_inodes; curr_inode++)
+//       {
+//         //kprintfd( "initInodes: curr_inode: %d\t isset: %d\n", curr_inode, storage_manager_->isInodeSet(curr_inode));
+//         if(storage_manager_->isInodeSet(curr_inode))
+//         {
+//           offset = curr_inode * INODE_SIZE - ( block * MINIX_BLOCK_SIZE);
+//           uint16 *i_zones = new uint16[9];
+//           for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
+//           {
+//             i_zones[num_zone] = buffer->get2Bytes(offset + 14 + (num_zone * 2));
+//           }
+//           all_inodes_.pushBack(new MinixFSInode( this,
+//                                buffer->get2Bytes(offset),
+//                                buffer->get2Bytes(offset + 2),
+//                                buffer->get4Bytes(offset + 4),
+//                                buffer->get4Bytes(offset + 8),
+//                                buffer->getByte(offset + 12),
+//                                buffer->getByte(offset + 13),
+//                                i_zones
+//                                              )
+//                               );
+//           ++inodes_read;
+//         }
+//       }
+//     }
+//     else
+//     {
+//       assert(0);
+//     }
+//   }
+//   delete buffer;
+// }
 
 //----------------------------------------------------------------------
 MinixFSSuperblock::~MinixFSSuperblock()
@@ -290,4 +359,6 @@ void MinixFSSuperblock::freeZone(uint16 pointer)
 {
   storage_manager_->freeZone(pointer - s_1st_datazone_);
 }
+
+
 

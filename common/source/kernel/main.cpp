@@ -689,10 +689,10 @@ void startup()
   kprintfd("Mounting DeviceFS under /dev/\n");
   DeviceFSType *devfs = new DeviceFSType();
   vfs.registerFileSystem(devfs);
-  int32 mntres = vfs.root_mount("devicefs", 0);
-  kprintfd("Mount returned %d\n", mntres);  
+  FileSystemInfo* root_fs_info = vfs.root_mount("devicefs", 0);
+//   kprintfd("Mount returned %d\n", mntres);  
 
-  
+  main_console->setFSInfo( root_fs_info );
 
   Scheduler::createScheduler();
   
@@ -721,7 +721,7 @@ void startup()
     kprintfd("Mounting Minix under /minix/\n");
     MinixFSType *minixfs = new MinixFSType();
     vfs.registerFileSystem(minixfs);
-    mntres = vfs.mount("idec", "/minix", "minixfs", 0);
+    uint32 mntres = vfs.mount("idec", "/minix", "minixfs", 0);
     kprintfd("Mount returned %d\n", mntres);
   }
 
@@ -767,10 +767,11 @@ void startup()
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
    for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
-     Scheduler::instance()->addNewThread( 
-       new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file))
-     );
-  
+   {
+     UserThread *user_thread = new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file));
+     user_thread->setFSInfo( new FileSystemInfo(*root_fs_info) );
+     Scheduler::instance()->addNewThread( user_thread );
+   }
   //Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();

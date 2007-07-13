@@ -22,7 +22,8 @@ class Buffer
   
     uint32 getSize();
     char *getBuffer();
-  
+    void clear();
+    
     void print();
   private:
 

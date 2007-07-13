@@ -15,10 +15,8 @@
  */
 class MinixFSInode : public Inode
 {
+  friend class MinixFSSuperblock;
   protected:
-
-  /// the data of the inode
-    char* data_;
 
     uint16* i_zones_;
 
@@ -103,6 +101,8 @@ class MinixFSInode : public Inode
   /// @return On successe, return 0. On error, return -1.
     virtual int32 writeData(int32 offset, int32 size, const char *buffer);
 
+  private:
+    void writeZone(uint32 zone_number, char* buffer);
 };
 
 #endif // Inode_h___

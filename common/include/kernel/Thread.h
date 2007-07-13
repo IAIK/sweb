@@ -58,6 +58,7 @@
 #define _THREAD_H_
 
 #include "types.h"
+#include "../fs/FileSystemInfo.h"
 
 enum ThreadState {Running, Sleeping, ToBeDestroyed};
 
@@ -103,6 +104,9 @@ public:
   
   Terminal *getTerminal();  
   void setTerminal(Terminal *my_term);
+  
+  FileSystemInfo *getFSInfo();
+  void setFSInfo(FileSystemInfo *fs_info);
 
 private:
   
@@ -113,6 +117,7 @@ private:
   uint32 pid_;
 
   Terminal *my_terminal_;
+  FileSystemInfo *fs_info_;
 
 protected:
   char *name_;
