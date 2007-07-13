@@ -34,7 +34,7 @@ class MinixFSFile: public File
   /// @param buffer is the buffer where the data is written to
   /// @param count is the number of bytes to read.
   /// @param offset is the offset to read from counted from the start of the file.
-    virtual int32 read(char *buffer, size_t count, l_off_t offset){return 0;};
+    virtual int32 read(char *buffer, size_t count, l_off_t offset){UNUSED_ARG(buffer);UNUSED_ARG(count);UNUSED_ARG(offset);return 0;};
 
   /// write to the file
     ///

@@ -74,6 +74,12 @@ typedef unsigned int size_t;
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 
+//----------------------------------------------------------------------
+// UNUSED_ARG
+// 	If compiler complains about unused argument this
+// 	macro may prevent him from complaining.
+//----------------------------------------------------------------------
+#define UNUSED_ARG(arg) do{/*nothing*/}while((&arg) == 0)
 
 
 #endif

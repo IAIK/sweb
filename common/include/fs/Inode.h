@@ -142,11 +142,11 @@ class Inode
     {return 0;}
 
   /// read the data from the inode
-  virtual int32 readData(int32 /*offset*/, int32 /*size*/, char */*buffer*/) 
+  virtual int32 readData(uint32 /*offset*/, uint32 /*size*/, char */*buffer*/) 
     {return 0;}
 
   /// write the data to the inode
-  virtual int32 writeData(int32 /*offset*/, int32 /*size*/, const char*/*buffer*/) 
+  virtual int32 writeData(uint32 /*offset*/, uint32 /*size*/, const char*/*buffer*/) 
     {return 0;}
 
  public:

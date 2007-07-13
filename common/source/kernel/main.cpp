@@ -699,14 +699,14 @@ void startup()
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
   kprintf_nosleep_init();
 
-  kprintf("Threads init\n");
+  kprintfd("Threads init\n");
   ArchThreads::initialise();
-  kprintf("Interupts init\n");
+  kprintfd("Interupts init\n");
   ArchInterrupts::initialise();
 
-  kprintf("Block Device creation\n");
+  kprintfd("Block Device creation\n");
   BDManager::getInstance()->doDeviceDetection( );
-  kprintf("Block Device done\n");
+  kprintfd("Block Device done\n");
 
   for(uint32 i = 0; i < BDManager::getInstance()->getNumberOfDevices(); i++)
   {
@@ -715,6 +715,11 @@ void startup()
 
   }
 
+  //NOTE: maybe replace by a mounting thread who mounts in his run() method
+  Thread* mounting_dummy_thread = new UserThread("mounting dummy thread");
+  mounting_dummy_thread->setFSInfo( root_fs_info );
+  currentThread = mounting_dummy_thread;
+  kprintfd("currentThread: %d",currentThread);
   //assume we detected the minix filesystem on device idec
   if(vfs_syscall.mkdir("/minix",0) == 0)
   {
@@ -724,8 +729,10 @@ void startup()
     uint32 mntres = vfs.mount("idec", "/minix", "minixfs", 0);
     kprintfd("Mount returned %d\n", mntres);
   }
+  currentThread = 0;
+  delete mounting_dummy_thread;
 
-  kprintf("Timer enable\n");
+  kprintfd("Timer enable\n");
   ArchInterrupts::enableTimer();
 
   ArchInterrupts::enableKBD();

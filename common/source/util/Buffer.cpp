@@ -98,6 +98,23 @@ char* Buffer::getBuffer()
   return buffer_;
 }
 
+void Buffer::append(Buffer* buffer_to_append)
+{
+  uint32 new_size = size_ + buffer_to_append->getSize();
+  char *new_buffer = new char[new_size];
+  size_t index = 0;
+  for(; index < this->getSize(); index++)
+  {
+    new_buffer[index] = buffer_[index];
+  }
+  for(; index < new_size; index++)
+  {
+    new_buffer[index] = buffer_to_append->getByte(index);
+  }
+  delete[] buffer_;
+  buffer_ = new_buffer;
+}
+
 void Buffer::print()
 {
   kprintfd( "\n----Buffer:size:%d------\n",size_);
@@ -115,4 +132,3 @@ void Buffer::clear()
     buffer_[i] = 0;
   }
 }
-

@@ -19,6 +19,10 @@
 #define ERROR_DNEILL "Error: the dentry does not exist in the link list.\n"
 #define ERROR_DEC "Error: the dentry exists child.\n"
 
+
+#define DENTRY_SIZE 32
+#define MAX_NAME_LENGTH 30
+
 //---------------------------------------------------------------------------
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type)
@@ -66,7 +70,7 @@ MinixFSInode::~MinixFSInode()
 }
 
 //---------------------------------------------------------------------------
-int32 MinixFSInode::readData(int32 offset, int32 size, char *buffer)
+int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
 {
   if((size + offset) > i_size_)
   {
@@ -107,7 +111,7 @@ int32 MinixFSInode::readData(int32 offset, int32 size, char *buffer)
 
 //TODO handle indirect and double indirect zones!
 //---------------------------------------------------------------------------
-int32 MinixFSInode::writeData(int32 offset, int32 size, const char *buffer)
+int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 {
   uint32 zone = offset / MINIX_ZONE_SIZE;
   uint32 num_zones = (offset % MINIX_ZONE_SIZE + size) / MINIX_ZONE_SIZE + 1;
@@ -180,6 +184,26 @@ int32 MinixFSInode::mknod(Dentry *dentry)
     return -1;
   }
 
+  if(i_type_ == I_DIR || i_type_ == I_FILE)
+  {
+    // ERROR_IC
+    return -1;
+  }
+  
+  i_dentry_ = dentry;
+  dentry->setInode(this);
+  return 0;
+}
+
+//---------------------------------------------------------------------------
+int32 MinixFSInode::mkdir(Dentry *dentry)
+{
+  if(dentry == 0)
+  {
+    // ERROR_DNE
+    return -1;
+  }
+
   if(i_type_ != I_DIR)
   {
     // ERROR_IC
@@ -189,14 +213,6 @@ int32 MinixFSInode::mknod(Dentry *dentry)
   i_dentry_ = dentry;
   dentry->setInode(this);
   return 0;
-}
-
-//---------------------------------------------------------------------------
-int32 MinixFSInode::mkdir(Dentry *dentry)
-{
-  //TODO implement
-  assert(false);
-  return(mkdir(dentry));
 }
 
 //---------------------------------------------------------------------------
@@ -377,6 +393,7 @@ Dentry* MinixFSInode::lookup(const char* name)
     }
     else
     {
+      ((MinixFSInode *)dentry_update->getInode())->loadChildren();
       return dentry_update;
     }
   }
@@ -386,4 +403,34 @@ Dentry* MinixFSInode::lookup(const char* name)
     return (Dentry*)0;
   }
 }
+
+void MinixFSInode::loadChildren()
+{
+  Buffer *dbuffer = new Buffer(MINIX_ZONE_SIZE);
+  for (uint32 zone = 0; i_zones_[zone] != 0; zone++)
+  {
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_[zone], dbuffer);
+    for(uint32 curr_dentry = 0; curr_dentry < MINIX_BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
+    {
+      if(dbuffer->get2Bytes(curr_dentry))
+      {
+        Inode* inode = ((MinixFSSuperblock *)i_superblock_)->getInode( dbuffer->get2Bytes(curr_dentry) );
+        uint32 offset = 2;
+        char *name = new char[MAX_NAME_LENGTH];
+        char ch = 0;
+        do
+        {
+          ch = dbuffer->getByte(curr_dentry + offset);
+          name[offset] = ch;
+          ++offset;
+        } while (ch);
+        Dentry *new_dentry = new Dentry(name);
+        i_dentry_->setChild(new_dentry);
+        new_dentry->setParent(i_dentry_);
+        (inode->getType() == I_DIR) ? inode->mkdir(new_dentry) : inode->mkfile(new_dentry);
+      }
+    }
+  }
+}
+
 

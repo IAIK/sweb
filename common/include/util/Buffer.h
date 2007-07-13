@@ -23,8 +23,9 @@ class Buffer
     uint32 getSize();
     char *getBuffer();
     void clear();
-    
     void print();
+    void append(Buffer* buffer_to_append);
+  
   private:
 
     size_t size_;

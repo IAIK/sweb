@@ -60,9 +60,7 @@ void Bitmap::setByte(size_t byte_number, uint8 byte)
   {
     if((byte >> i) & 0x01)
       ++num_bits_set_;
-    kprintfd( "%x",byte);
   }
-  kprintfd( "\n");
 }
 
 void Bitmap::bmprint()

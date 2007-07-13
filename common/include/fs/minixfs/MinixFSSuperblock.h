@@ -9,6 +9,7 @@
 #include "MinixStorageManager.h"
 
 class Inode;
+class MinixFSInode;
 class Superblock;
 
 //-----------------------------------------------------------------------------
@@ -19,6 +20,7 @@ class Superblock;
 class MinixFSSuperblock : public Superblock
 {
   public:
+    friend class MinixFSInode;
 
   /// constructor
     MinixFSSuperblock(Dentry* s_root, uint32 s_dev);
@@ -55,10 +57,18 @@ class MinixFSSuperblock : public Superblock
 
     virtual void freeZone(uint16 pointer);
 
-  private:
-    void initInodes();
     
-    Inode* readInode(uint16 i_num);
+    void readZone(uint32 block, Buffer* buffer);
+        
+    void readBlocks(uint32 block, uint32 num_blocks, Buffer* buffer);
+
+  protected:
+
+    MinixFSInode* getInode(uint16 i_num);
+    
+  private:
+    
+    void initInodes();
 
     /// # usable inodes on the minor device
     uint16 s_num_inodes_;

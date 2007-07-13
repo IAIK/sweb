@@ -30,7 +30,7 @@ PseudoFsInode::~PseudoFsInode()
 }
 
 //----------------------------------------------------------------------
-int32 PseudoFsInode::readData(int32 offset, int32 size, char *buffer)
+int32 PseudoFsInode::readData(uint32 offset, uint32 size, char *buffer)
 {
   if (i_type_ == I_FILE)
   {
@@ -40,7 +40,7 @@ int32 PseudoFsInode::readData(int32 offset, int32 size, char *buffer)
     uint8* filp =  pfs->getFilePtr(my_name);
     PseudoFS::FileIndexStruct* findx = pfs->getFileIndex(my_name);
 
-    int32 length = findx->file_length;
+    uint32 length = findx->file_length;
     if (length < (offset + size))
     {
       return -1;
@@ -55,7 +55,7 @@ int32 PseudoFsInode::readData(int32 offset, int32 size, char *buffer)
 }
 
 //----------------------------------------------------------------------
-int32 PseudoFsInode::writeData(int32 /*offset*/, int32 /*size*/, char * /*buffer*/)
+int32 PseudoFsInode::writeData(uint32 /*offset*/, uint32 /*size*/, char * /*buffer*/)
 {
   return -1;
 }
