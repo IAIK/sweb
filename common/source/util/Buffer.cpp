@@ -6,6 +6,7 @@ Buffer::Buffer(size_t size)
 {
   size_ = size;
   buffer_ = new char[size_*sizeof(char)];
+  offset_ = 0;
 }
 
 Buffer::Buffer(const Buffer &src)
@@ -16,6 +17,7 @@ Buffer::Buffer(const Buffer &src)
   {
     buffer_[index] = src.buffer_[index];
   }
+  offset_ = src.offset_;
 }
 
 Buffer::~Buffer()
@@ -25,15 +27,15 @@ Buffer::~Buffer()
   
 uint8 Buffer::getByte(size_t index)
 {
-  return (uint8)buffer_[index];
+  return (uint8)buffer_[index + offset_];
 }
 
 uint16 Buffer::get2Bytes(size_t index)
 {
   uint16 dst = 0;
-  dst |= buffer_[index + 1];
+  dst |= buffer_[index + 1 + offset_];
   dst = dst << 8;
-  dst |= (buffer_[index] & 0xFF);
+  dst |= (buffer_[index + offset_] & 0xFF);
   return dst;
 }
 
@@ -57,22 +59,22 @@ uint64 Buffer::get8Bytes(size_t index)
 
 void Buffer::setByte(size_t index, uint8 byte)
 {
-  assert(index < size_);
-  buffer_[index] = (char)byte;
+  assert(index + offset_ < size_);
+  buffer_[index + offset_] = (char)byte;
 }
 
 void Buffer::set2Bytes(size_t index, uint16 byte)
 {
-  assert(index+1 < size_);
+  assert(index+1 + offset_ < size_);
   char first_byte = byte >> 8;
   char second_byte = byte && 0xFF;
-  buffer_[index] = second_byte;
-  buffer_[index+1] = first_byte;
+  buffer_[index + offset_] = second_byte;
+  buffer_[index+1 + offset_] = first_byte;
 }
 
 void Buffer::set4Bytes(size_t index, uint32 byte)
 {
-  assert(index+3 < size_);
+  assert(index+3  + offset_< size_);
   uint16 first_2_bytes = byte >> 16;
   uint16 second_2_bytes = byte && 0xFFFF;
   set2Bytes(index, second_2_bytes);
@@ -81,7 +83,7 @@ void Buffer::set4Bytes(size_t index, uint32 byte)
 
 void Buffer::set8Bytes(size_t index, uint64 byte)
 {
-  assert(index+7 < size_);
+  assert(index+7  + offset_< size_);
   uint32 first_4_bytes = byte >> 32;
   uint32 second_4_bytes = byte && 0xFFFFFFFF;
   set2Bytes(index, second_4_bytes);
@@ -90,12 +92,12 @@ void Buffer::set8Bytes(size_t index, uint64 byte)
 
 uint32 Buffer::getSize()
 {
-  return size_;
+  return size_ - offset_;
 }
 
 char* Buffer::getBuffer()
 {
-  return buffer_;
+  return buffer_ + offset_;
 }
 
 void Buffer::append(Buffer* buffer_to_append)
@@ -127,8 +129,13 @@ void Buffer::print()
     
 void Buffer::clear()
 {
-  for(uint32 i = 0; i < size_; i++)
+  for(uint32 i = 0; i < size_ - offset_; i++)
   {
-    buffer_[i] = 0;
+    buffer_[i + offset_] = 0;
   }
+}
+
+void Buffer::setOffset(uint32 offset)
+{
+  offset_ = offset;
 }

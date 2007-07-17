@@ -7,6 +7,7 @@
 #include "types.h"
 #include "fs/PointList.h"
 #include "fs/Inode.h"
+#include "MinixFSZone.h"
 
 //-------------------------------------------------------------------------
 /**
@@ -18,14 +19,18 @@ class MinixFSInode : public Inode
   friend class MinixFSSuperblock;
   protected:
 
-    uint16* i_zones_;
+    MinixFSZone *i_zones_;
+    
+    uint32 i_num_;
+    
+    virtual void loadChildren();
 
   public:
 
   /// constructor
     MinixFSInode(Superblock *super_block, uint32 inode_type);
 
-    MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32 i_size, uint32 i_modtime, uint8 i_gid, uint8 i_nlinks, uint16* i_zones);
+    MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32 i_size, uint32 i_modtime, uint8 i_gid, uint8 i_nlinks, uint16* i_zones, uint32 i_num);
     
   /// destructor
     virtual ~MinixFSInode();
@@ -101,7 +106,6 @@ class MinixFSInode : public Inode
   /// @return On successe, return 0. On error, return -1.
     virtual int32 writeData(uint32 offset, uint32 size, const char *buffer);
 
-    virtual void loadChildren();
 
   private:
     void writeZone(uint32 zone_number, char* buffer);

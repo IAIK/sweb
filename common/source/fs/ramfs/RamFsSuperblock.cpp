@@ -106,7 +106,7 @@ int32 RamFsSuperblock::readInode(Inode* inode)
 }
 
 //----------------------------------------------------------------------
-void RamFsSuperblock::write_inode(Inode* inode)
+void RamFsSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
 

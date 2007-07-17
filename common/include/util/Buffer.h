@@ -25,11 +25,14 @@ class Buffer
     void clear();
     void print();
     void append(Buffer* buffer_to_append);
+    
+    void setOffset(uint32 offset);
   
   private:
 
     size_t size_;
     char *buffer_;
+    uint32 offset_;
 
 };
 

@@ -43,6 +43,7 @@ public:
 
 protected:
   void setByte(size_t byte_number, uint8 byte);
+  uint8 getByte(size_t byte_number);
 
 private:
   size_t size_;

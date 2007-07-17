@@ -89,22 +89,31 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   uint32 inode_block_num = inodes_start + (i_num - 1) / INODES_PER_BLOCK;
   MinixFSInode *inode = 0;
   Buffer *ibuffer = new Buffer(MINIX_BLOCK_SIZE);
+  kprintfd("getInode::reading block num: %d\n", inode_block_num);
   readBlocks(inode_block_num, 1, ibuffer);
-  uint32 offset = (i_num - 1)% INODES_PER_BLOCK;
+  kprintfd("getInode:: returned reading block num: %d\n", inode_block_num);
+  uint32 offset = ((i_num - 1)% INODES_PER_BLOCK) *INODE_SIZE;
+  kprintfd("getInode:: setting offset: %d\n", offset);
+  ibuffer->setOffset(offset);
   uint16 *i_zones = new uint16[9];
   for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
   {
-    i_zones[num_zone] = ibuffer->get2Bytes(offset + 14 + (num_zone * 2));
+    i_zones[num_zone] = ibuffer->get2Bytes(14 + (num_zone * 2));
   }
+  kprintfd("getInode:: calling creating Inode\n");
   inode = new MinixFSInode( this,
-                            ibuffer->get2Bytes(offset + 0),
-                            ibuffer->get2Bytes(offset + 2),
-                            ibuffer->get4Bytes(offset + 4),
-                            ibuffer->get4Bytes(offset + 8),
-                            ibuffer->getByte(offset + 12),
-                            ibuffer->getByte(offset + 13),
-                            i_zones
+                            ibuffer->get2Bytes(0),
+                            ibuffer->get2Bytes(2),
+                            ibuffer->get4Bytes(4),
+                            ibuffer->get4Bytes(8),
+                            ibuffer->getByte(12),
+                            ibuffer->getByte(13),
+                            i_zones,
+                            i_num
                           );
+  kprintfd("getInode:: returned creating Inode\n");
+  delete i_zones;
+  delete ibuffer;
   return inode;
 }
 
@@ -112,7 +121,7 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
 MinixFSSuperblock::~MinixFSSuperblock()
 {
   assert(dirty_inodes_.empty() == true);
-
+  storage_manager_->flush(this);
   uint32 num = s_files_.getLength();
   for(uint32 counter = 0; counter < num; counter++)
   {
@@ -146,7 +155,19 @@ MinixFSSuperblock::~MinixFSSuperblock()
 //----------------------------------------------------------------------
 Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
 {
-  Inode *inode = (Inode*)(new MinixFSInode(this, type));
+  uint16 mode = 0;
+  if (type == I_FILE)
+    mode &= 0x8000;
+  else if (type == I_DIR)
+    mode &= 0x4000;
+  //else link etc.
+  uint16 *zones = new uint16[9];
+  for(uint32 i = 0; i < 9; i++)
+    zones[i] = 0;
+  uint32 i_num = storage_manager_->acquireInode();
+  Inode *inode = (Inode*)(new MinixFSInode(this, mode, 0, 0, 0, 0, 0, zones, i_num));
+  delete zones;
+  writeInode(inode);
   if(type == I_DIR)
   {
     int32 inode_init = inode->mknod(dentry);
@@ -167,16 +188,27 @@ Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
 int32 MinixFSSuperblock::readInode(Inode* inode)
 {
   assert(inode);
-
-  if (!all_inodes_.included(inode))
+  MinixFSInode *minix_inode = (MinixFSInode *) inode;
+  assert(all_inodes_.included(inode));
+  uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + (minix_inode->i_num_ * INODE_SIZE / MINIX_BLOCK_SIZE);
+  uint32 offset = (minix_inode->i_num_ * INODE_SIZE) % MINIX_BLOCK_SIZE;
+  Buffer *buffer = new Buffer (INODE_SIZE);
+  readBytes(block, offset, INODE_SIZE, buffer);
+  uint16 *i_zones = new uint16[9];
+  for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
   {
-    all_inodes_.pushBack(inode);
+    i_zones[num_zone] = buffer->get2Bytes(14 + (num_zone * 2));
   }
+  delete minix_inode->i_zones_;
+  minix_inode->i_zones_ = new MinixFSZone(this, i_zones);
+  minix_inode->i_nlink_ = buffer->getByte(13);
+  minix_inode->i_size_ = buffer->getByte(4);
+  delete buffer;
   return 0;
 }
 
 //----------------------------------------------------------------------
-void MinixFSSuperblock::write_inode(Inode* inode)
+void MinixFSSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
 
@@ -243,13 +275,13 @@ void MinixFSSuperblock::freeZone(uint16 pointer)
   storage_manager_->freeZone(pointer - s_1st_datazone_);
 }
 
-void MinixFSSuperblock::readZone(uint32 zone, Buffer* buffer)
+void MinixFSSuperblock::readZone(uint16 zone, Buffer* buffer)
 {
   assert(buffer->getSize() >= MINIX_ZONE_SIZE);
   readBlocks(zone, MINIX_ZONE_SIZE/MINIX_BLOCK_SIZE, buffer);
 }
 
-void MinixFSSuperblock::readBlocks(uint32 block, uint32 num_blocks, Buffer* buffer)
+void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, Buffer* buffer)
 {
   assert(buffer->getSize() >= MINIX_BLOCK_SIZE * num_blocks);
   BDRequest *bd = new BDRequest(s_dev_, BDRequest::BD_READ, block, num_blocks, buffer->getBuffer());
@@ -258,5 +290,55 @@ void MinixFSSuperblock::readBlocks(uint32 block, uint32 num_blocks, Buffer* buff
   while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
   if( bd->getStatus() != BDRequest::BD_DONE )
     assert(false);
+  delete bd;
 }
 
+void MinixFSSuperblock::writeZone(uint16 zone, Buffer* buffer)
+{
+  assert(buffer->getSize() >= MINIX_ZONE_SIZE);
+  writeBlocks(zone, MINIX_ZONE_SIZE/MINIX_BLOCK_SIZE, buffer);
+}
+
+void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, Buffer* buffer)
+{
+  assert(buffer->getSize() >= MINIX_BLOCK_SIZE * num_blocks);
+  BDRequest *bd = new BDRequest(s_dev_, BDRequest::BD_WRITE, block, num_blocks, buffer->getBuffer());
+  BDManager::getInstance()->getDeviceByNumber(s_dev_)->addRequest ( bd );
+  uint32 jiffies = 0;
+  while( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+  if( bd->getStatus() != BDRequest::BD_DONE )
+    assert(false);
+  delete bd;
+}
+
+int32 MinixFSSuperblock::readBytes(uint32 block, uint32 offset, uint32 size, Buffer* buffer)
+{
+  assert(buffer->getSize() >= size);
+  assert(offset+size <= MINIX_BLOCK_SIZE);
+  Buffer* rbuffer = new Buffer(MINIX_BLOCK_SIZE);
+  readBlocks(block,1, rbuffer);
+  rbuffer->setOffset(offset);
+  for(uint32 index = 0; index < size; index++)
+  {
+    buffer[index] = rbuffer->getByte(index);
+  }
+  delete rbuffer;
+  return size;
+}
+
+int32 MinixFSSuperblock::writeBytes(uint32 block, uint32 offset, uint32 size, Buffer* buffer)
+{
+  assert(buffer->getSize() >= size);
+  assert(offset+size <= MINIX_BLOCK_SIZE);
+  Buffer* wbuffer = new Buffer(MINIX_BLOCK_SIZE);
+  readBlocks(block, 1, wbuffer);
+  wbuffer->setOffset(offset);
+  for(uint32 index = 0; index < size; index++)
+  {
+    wbuffer->setByte(index, buffer->getByte(index));
+  }
+  wbuffer->setOffset(0);
+  writeBlocks(block, 1, wbuffer);
+  delete wbuffer;
+  return size;
+}

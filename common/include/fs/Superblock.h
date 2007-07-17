@@ -66,7 +66,7 @@ protected:
   /// A list of dirty inodes.
   PointList<Inode> dirty_inodes_;
 
-  /// A list of used inodes. It is olny used to open-file.
+  /// A list of used inodes. It is only used to open-file.
   PointList<Inode> used_inodes_;
 
   /// inodes of the superblock.
@@ -100,7 +100,7 @@ public:
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty.
-  virtual void write_inode(Inode* /*inode*/) {}
+  virtual void writeInode(Inode* /*inode*/) {}
 
   /// This method is called whenever the reference count on an inode is
   /// decreased put_inode called before the i_count field is decreased, so if

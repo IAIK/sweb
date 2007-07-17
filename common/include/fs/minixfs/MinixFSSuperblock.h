@@ -21,6 +21,8 @@ class MinixFSSuperblock : public Superblock
 {
   public:
     friend class MinixFSInode;
+    friend class MinixFSZone;
+    friend class MinixStorageManager;
 
   /// constructor
     MinixFSSuperblock(Dentry* s_root, uint32 s_dev);
@@ -40,7 +42,7 @@ class MinixFSSuperblock : public Superblock
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty.
-    virtual void write_inode(Inode* inode);
+    virtual void writeInode(Inode* inode);
 
   /// This method is called whenever the reference count on an inode reaches 0,
   /// and it is found that the link count (i_nlink= is also zero. It si
@@ -57,14 +59,22 @@ class MinixFSSuperblock : public Superblock
 
     virtual void freeZone(uint16 pointer);
 
-    
-    void readZone(uint32 block, Buffer* buffer);
-        
-    void readBlocks(uint32 block, uint32 num_blocks, Buffer* buffer);
 
   protected:
 
-    MinixFSInode* getInode(uint16 i_num);
+    MinixFSInode *getInode(uint16 i_num);
+    
+    void readZone(uint16 zone, Buffer *buffer);
+        
+    void readBlocks(uint16 block, uint32 num_blocks, Buffer *buffer);
+    
+    void writeZone(uint16 zone, Buffer *buffer);
+        
+    void writeBlocks(uint16 block, uint32 num_blocks, Buffer *buffer);
+    
+    int32 writeBytes(uint32 block, uint32 offset, uint32 size, Buffer *buffer);
+    
+    int32 readBytes(uint32 block, uint32 offset, uint32 size, Buffer *buffer);
     
   private:
     

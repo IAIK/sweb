@@ -37,7 +37,7 @@ class RamFsSuperblock : public Superblock
 
   /// This method is called to write a specific inode to a mounted file-system,
   /// and gets called on inodes which have been marked dirty.
-  virtual void write_inode(Inode* inode);
+  virtual void writeInode(Inode* inode);
 
   /// This method is called whenever the reference count on an inode reaches 0,
   /// and it is found that the link count (i_nlink= is also zero. It si

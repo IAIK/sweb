@@ -63,6 +63,12 @@ void Bitmap::setByte(size_t byte_number, uint8 byte)
   }
 }
 
+uint8 Bitmap::getByte(size_t byte_number)
+{
+  assert(byte_number*8 < size_);
+  return bitmap_[byte_number];
+}
+
 void Bitmap::bmprint()
 {
   kprintfd("\n-----Bitmap: size=%d, num_bits_set=%d-----\n",size_,num_bits_set_);
