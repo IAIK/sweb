@@ -5,10 +5,7 @@
 #include "StorageManager.h"
 #include "types.h"
 #include "../../util/Buffer.h"
-
-#define MINIX_BLOCK_SIZE 1024
-#define MINIX_ZONE_SIZE 1024
-#define INODES_PER_BLOCK 32
+#include "minix_fs_consts.h"
 
 class MinixFSSuperblock;
 

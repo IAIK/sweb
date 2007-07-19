@@ -36,7 +36,7 @@ class MinixFSInode : public Inode
     virtual ~MinixFSInode();
 
   /// Create a directory with the given dentry.
-    virtual int32 create(Dentry *dentry);
+//     virtual int32 create(Dentry *dentry);
 
   /// lookup should check if that name (given by the char-array) exists in the
   /// directory (I_DIR inode) and should return the Dentry if it does.
@@ -65,11 +65,11 @@ class MinixFSInode : public Inode
   /// Remove the directory (if the sub_dentry is empty).
     virtual int32 rmdir();
 
-  /// REmove the named directory (if empty) or file
+  /// Remove the named directory (if empty) or file
     virtual int32 rm();
 
   /// Create a directory with the given dentry.
-    virtual int32 mknod(Dentry *dentry);
+    virtual int32 mknod(Dentry *dentry); // no dir no file
 
   /// Create a file with the given dentry.
     virtual int32 mkfile(Dentry *dentry);
@@ -108,7 +108,11 @@ class MinixFSInode : public Inode
 
 
   private:
-    void writeZone(uint32 zone_number, char* buffer);
+    void writeDentry(uint32 dest_i_num, uint32 src_i_num, char* name);
+
+    int32 findDentry(uint32 i_num);
+
+    
 };
 
 #endif // Inode_h___

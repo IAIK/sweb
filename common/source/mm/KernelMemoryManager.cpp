@@ -124,55 +124,55 @@ KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 //~ static char* fb = (char*)0xC00B8500;
 
 //~ #ifndef isXenBuild
-//~ #define print(x)     fb_start += 2; \
-    //~ { \
-      //~ uint32 divisor; \
-      //~ uint32 current; \
-      //~ uint32 remainder; \
-      //~ current = (uint32)x; \
-      //~ divisor = 1000000000; \
-      //~ while (divisor > 0) \
-      //~ { \
-        //~ remainder = current % divisor; \
-        //~ current = current / divisor; \
-        //~ \
-        //~ fb[fb_start++] = (uint8)current + '0' ; \
-        //~ fb[fb_start++] = 0x9f ; \
-    //~ \
-        //~ divisor = divisor / 10; \
-        //~ current = remainder; \
-      //~ }      \
-      //~ uint32 blubba;\
-      //~ uint32 asf;\
-      //~ for (asf=0;asf<1;++asf)\
-        //~ ++blubba;\
+//~ #define print(x)     fb_start += 2;
+    //~ { 
+      //~ uint32 divisor; 
+      //~ uint32 current; 
+      //~ uint32 remainder; 
+      //~ current = (uint32)x; 
+      //~ divisor = 1000000000; 
+      //~ while (divisor > 0) 
+      //~ { 
+        //~ remainder = current % divisor; 
+        //~ current = current / divisor; 
+        //~ 
+        //~ fb[fb_start++] = (uint8)current + '0' ; 
+        //~ fb[fb_start++] = 0x9f ; 
+    //~ 
+        //~ divisor = divisor / 10; 
+        //~ current = remainder; 
+      //~ }      
+      //~ uint32 blubba;
+      //~ uint32 asf;
+      //~ for (asf=0;asf<1;++asf)
+        //~ ++blubba;
     //~ }
 //~ #else
   //~ #define print(x) 
 //~ #endif
 
 
-//~ #define printbochs(x)  \
-    //~ { \
-      //~ uint32 printbochs_divisor; \
-      //~ uint32 printbochs_current; \
-      //~ uint32 printbochs_remainder; \
-      //~ printbochs_current = (uint32)x; \
-      //~ printbochs_divisor = 1000000000; \
-      //~ while (printbochs_divisor > 0) \
-      //~ { \
-        //~ printbochs_remainder = printbochs_current % printbochs_divisor; \
-        //~ printbochs_current = printbochs_current / printbochs_divisor; \
-        //~ \
-        //~ writeChar2Bochs('0' + (uint8)printbochs_current); \
-    //~ \
-        //~ printbochs_divisor = printbochs_divisor / 10; \
-        //~ printbochs_current = printbochs_remainder; \
-      //~ }      \
-      //~ uint32 printbochs_blubba;\
-      //~ uint32 printbochs_asf;\
-      //~ for (printbochs_asf=0;printbochs_asf<1;++printbochs_asf)\
-        //~ ++printbochs_blubba;\
+//~ #define printbochs(x)  
+    //~ { 
+      //~ uint32 printbochs_divisor; 
+      //~ uint32 printbochs_current; 
+      //~ uint32 printbochs_remainder; 
+      //~ printbochs_current = (uint32)x; 
+      //~ printbochs_divisor = 1000000000; 
+      //~ while (printbochs_divisor > 0) 
+      //~ { 
+        //~ printbochs_remainder = printbochs_current % printbochs_divisor; 
+        //~ printbochs_current = printbochs_current / printbochs_divisor; 
+        //~ 
+        //~ writeChar2Bochs('0' + (uint8)printbochs_current); 
+    //~ 
+        //~ printbochs_divisor = printbochs_divisor / 10; 
+        //~ printbochs_current = printbochs_remainder; 
+      //~ }      
+      //~ uint32 printbochs_blubba;
+      //~ uint32 printbochs_asf;
+      //~ for (printbochs_asf=0;printbochs_asf<1;++printbochs_asf)
+        //~ ++printbochs_blubba;
     //~ } 
     
 uint32 KernelMemoryManager::createMemoryManager(pointer start_address, pointer end_address)

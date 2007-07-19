@@ -63,7 +63,7 @@ enum
 
 
 /// The maximal length of a filename
-#define MAX_NAME_LENGTH 4096
+//#define MAX_NAME_LENGTH 4096 --- depending on file system
 
 //-------------------------------------------------------------------------
 /**

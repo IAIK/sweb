@@ -3,30 +3,30 @@
 
 #include "types.h"
 
-
-#define NUM_ZONE_ADDRESSES 512
-#define ZONE_SIZE 1024
+typedef uint16 zone_add_type;
 
 class MinixFSSuperblock;
 
 class MinixFSZone
 {
   public:
-    MinixFSZone(MinixFSSuperblock *superblock, uint16 *zones);
+    MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones);
     ~MinixFSZone();
     
-    uint16 getZone(uint32 index);
-    void setZone(uint32 index, uint16 zone);
-    void addZone(uint16 zone);
+    zone_add_type getZone(uint32 index);
+    void setZone(uint32 index, zone_add_type zone);
+    void addZone(zone_add_type zone);
     
     uint32 getNumZones() { return num_zones_; }
+
+    void flush(uint32 i_num);
     
   private:
     MinixFSSuperblock *superblock_;
-    uint16 *direct_zones_;
-    uint16 *indirect_zones_;
-    uint16 *double_indirect_linking_zone_;
-    uint16 **double_indirect_zones_;
+    zone_add_type *direct_zones_;
+    zone_add_type *indirect_zones_;
+    zone_add_type *double_indirect_linking_zone_;
+    zone_add_type **double_indirect_zones_;
     
     uint32 num_zones_;
   

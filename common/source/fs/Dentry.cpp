@@ -33,7 +33,7 @@ Dentry::~Dentry()
   if( d_parent_ )
     d_parent_->childRemove( this );
   if(d_name_)
-    kfree(d_name_);
+    delete d_name_;
 }
 
 //---------------------------------------------------------------------------
