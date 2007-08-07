@@ -81,11 +81,13 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
   assert(dentry);
 
   uint32 vfs_mount_size = mounts_.getLength();
+  kprintfd( "getVfsMount> vfs_mount_size : %d\n",vfs_mount_size);
 
   if(is_root == false)
   {
     for (uint32 counter = 0; counter < vfs_mount_size; ++counter)
     {
+      kprintfd( "getVfsMount> mounts_.at(counter)->getMountPoint()->getName() : %s\n",mounts_.at(counter)->getMountPoint()->getName());
       if((mounts_.at(counter)->getMountPoint()) == dentry)
       {
         return mounts_.at(counter);
@@ -115,6 +117,7 @@ FileSystemInfo *VirtualFileSystem::root_mount(char* fs_name, uint32 /*flags*/)
   Superblock *super = fst->createSuper(0,0);
   super = fst->readSuper(super, 0);
   Dentry *mount_point = super->getMountPoint();
+  mount_point->setMountPoint( mount_point );
   Dentry *root = super->getRoot();
 
   VfsMount *root_mount = new VfsMount(0, mount_point, root, super, 0);
@@ -161,7 +164,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name,
 
   // create a new superblock
   Superblock *super = fst->createSuper(found_dentry, dev);
-  super = fst->readSuper(super, 0);
+  super = fst->readSuper(super, 0); //?
   Dentry *root = super->getRoot();
   
   // create a new vfs_mount

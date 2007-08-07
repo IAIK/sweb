@@ -16,6 +16,7 @@ Dentry::Dentry(const char* name)
   this->setName(name);
   d_parent_ = this; // the parent of the root
   d_inode_ = 0;
+  kprintfd( "created Dentry with Name %s\n", name);
 }
 
 //---------------------------------------------------------------------------

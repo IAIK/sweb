@@ -8,8 +8,8 @@ MinixStorageManager::MinixStorageManager(Buffer *bm_buffer, uint16 num_inode_bm_
 {
   num_inode_bm_blocks_ = num_inode_bm_blocks;
   num_zone_bm_blocks_ = num_zone_bm_blocks;
-  kprintfd( "StorageManager: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n",num_inodes,num_inode_bm_blocks,num_zones,num_zone_bm_blocks);
-  bm_buffer->print();
+//   kprintfd( "StorageManager: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n",num_inodes,num_inode_bm_blocks,num_zones,num_zone_bm_blocks);
+//   bm_buffer->print();
   //read inode bitmap
   uint32 i_byte = 0;
   for (; i_byte < num_inodes / 8; i_byte ++)
@@ -24,17 +24,19 @@ MinixStorageManager::MinixStorageManager(Buffer *bm_buffer, uint16 num_inode_bm_
   }
   //read zone bitmap
   uint32 z_byte = num_inode_bm_blocks * BLOCK_SIZE;
-  for (; z_byte < num_zones / 8; z_byte ++)
+  uint32 z_bm_byte = 0;
+  for (; z_byte < num_zones / 8; z_byte ++, z_bm_byte++)
   {
-    zone_bitmap_->setByte(z_byte, bm_buffer->getByte(z_byte));
+    zone_bitmap_->setByte(z_bm_byte, bm_buffer->getByte(z_byte));
   }
   for (uint32 z_bit = 0; z_bit < num_zones % 8; z_bit ++)
   {    
     uint8 byte = bm_buffer->getByte(z_byte);
     if((byte >> z_bit) & 0x01)
-      zone_bitmap_->setBit(z_byte * 8 + z_bit);
+      zone_bitmap_->setBit(z_bm_byte * 8 + z_bit);
   }
-  
+  curr_inode_pos_ = 0;
+  curr_zone_pos_ = 0;
 }
 
 MinixStorageManager::~MinixStorageManager()
@@ -57,6 +59,7 @@ uint32 MinixStorageManager::getNumUsedInodes()
 
 size_t MinixStorageManager::acquireZone()
 {
+  kprintfd("MinixStorageManager acquireZone>\n");
   size_t pos = curr_zone_pos_ + 1;
   for (;pos != curr_zone_pos_; pos++ )
   {
@@ -66,6 +69,7 @@ size_t MinixStorageManager::acquireZone()
     {
       zone_bitmap_->setBit(pos);
       curr_zone_pos_ = pos;
+      kprintfd("MinixStorageManager acquireZone> returning pos %d\n",pos);
       return pos;
     }
   }
@@ -155,5 +159,6 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
 
 void MinixStorageManager::printBitmap()
 {
-  inode_bitmap_->bmprint();
+//   inode_bitmap_->bmprint();
+  zone_bitmap_->bmprint();
 }

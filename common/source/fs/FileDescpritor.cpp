@@ -3,7 +3,7 @@
 
 PointList<FileDescriptor> global_fd;
 
-static uint32 fd_num_ = 0;
+static uint32 fd_num_ = 3;
 
 //----------------------------------------------------------------------
 FileDescriptor::FileDescriptor(File* file)

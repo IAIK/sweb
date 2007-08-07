@@ -202,11 +202,11 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   uint32 head = TEMP / SPT;
   uint32 sect = TEMP % SPT + 1;
 
-  kprintfd("ATADriver::readSector:Sending commands !!\n");
+//   kprintfd("ATADriver::readSector:Sending commands !!\n");
   
   uint8 high = cyls >> 8;
   uint8 lo = cyls & 0x00FF;
-  kprintfd("ATADriver::readSector:(drive | head): %d, num_sectors: %d, sect: %d, lo: %d, high: %d!!\n",(drive | head),num_sectors,sect,lo,high);
+//   kprintfd("ATADriver::readSector:(drive | head): %d, num_sectors: %d, sect: %d, lo: %d, high: %d!!\n",(drive | head),num_sectors,sect,lo,high);
   outbp( port + 6, (drive | head) ); // drive and head selection
   outbp( port + 2, num_sectors );	// number of sectors to read
   outbp( port + 3, sect );			// starting sector
@@ -214,12 +214,12 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   outbp( port + 5, high );			// cylinder high
   outbp( port + 7, 0x20 );			// command
   
-  kprintfd("ATADriver::readSector:Commands sent !!\n");
+//   kprintfd("ATADriver::readSector:Commands sent !!\n");
   
   if( mode != BD_PIO_NO_IRQ )
     return 0;
   
-  kprintfd("ATADriver::readSector:No IRQ mode !!\n");
+//   kprintfd("ATADriver::readSector:No IRQ mode !!\n");
   
   jiffies=0;
   while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000);
@@ -232,7 +232,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
       word_buff [counter] = inwp ( port );
   
-  kprintfd("ATADriver::readSector:Read successfull !!\n");          
+//   kprintfd("ATADriver::readSector:Read successfull !!\n");          
   return 0;  
 }
 
@@ -297,10 +297,10 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 uint32 ATADriver::addRequest( BDRequest * br )
 {
   bool interrupt_context = false;
-  kprintfd("ATADriver::addRequest %d!\n", br->getCmd() );	  	
+//   kprintfd("ATADriver::addRequest %d!\n", br->getCmd() );	  	
   if( mode != BD_PIO_NO_IRQ )
   {
-	kprintfd("ATADriver::addRequest Entering the silence zone\n" );	  	
+// 	kprintfd("ATADriver::addRequest Entering the silence zone\n" );
 	interrupt_context = ArchInterrupts::disableInterrupts();
 //     Add request to the list protected by the cli 	  
 	if( request_list_ == 0 )
@@ -330,7 +330,7 @@ uint32 ATADriver::addRequest( BDRequest * br )
   if( res != 0 )
   {
     br->setStatus( BDRequest::BD_ERROR );
-    kprintfd("ATADriver::Got out on error !!\n");	  
+    kprintfd("ATADriver::Got out on error !!\n");
 	if( interrupt_context )
 		ArchInterrupts::enableInterrupts();
     return 0;
@@ -343,7 +343,7 @@ uint32 ATADriver::addRequest( BDRequest * br )
     return 0;
   }
 
-  kprintfd("ATADriver::Finaly got out !!\n");
+//   kprintfd("ATADriver::Finaly got out !!\n");
   
   if( currentThread )
   	Scheduler::instance()->sleepAndRestoreInterrupts(interrupt_context);

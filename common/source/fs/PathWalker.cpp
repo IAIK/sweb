@@ -61,24 +61,33 @@ int32 PathWalker::pathInit(const char* pathname, uint32 flags)
   }
   
   if((dentry_ == 0) || (vfs_mount_ == 0))
+  {
+    kprintfd( "PathInit> return not found - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_);
     return PI_ENOTFOUND;
-
+  }
+  kprintfd( "PathInit> return success - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_);
   return PI_SUCCESS;
 }
 
 //----------------------------------------------------------------------
 int32 PathWalker::pathWalk(const char* pathname)
 {
+  kprintfd( "pathWalk> pathname : %s\n",pathname);
   FileSystemInfo *fs_info = currentThread->getFSInfo();
+  kprintfd( "pathWalk> fs_info->getName() : %s\n", fs_info->getName());
   if(pathname == 0)
   {
+    kprintfd( "pathWalk> return pathname not found\n");
     return PW_ENOTFOUND;
   }
 
   while(*pathname == SEPARATOR)
     pathname++;
   if(!*pathname) // i.e. path = /
+  {
+    kprintfd( "pathWalk> return 0 pathname == \\n\n");
     return 0;
+  }
 
   bool parts_left = true;
   while(parts_left)
@@ -86,14 +95,21 @@ int32 PathWalker::pathWalk(const char* pathname)
     char* npart = 0;
     int32 npart_pos = 0;
     npart = getNextPart(pathname, npart_pos);
+    if(npart)
+      kprintfd( "pathWalk> npart : %s\n", npart);
+    else
+      kprintfd( "pathWalk> npart : 0!!!\n");
+    kprintfd( "pathWalk> npart_pos : %d\n", npart_pos);
     if(npart_pos < 0)
     {
+      kprintfd( "pathWalk> return path invalid npart_pos < 0 \n");
       return PW_EINVALID;
     }
 
     if((*npart == NULL_CHAR) || (npart_pos == 0))
     {
       delete npart;
+      kprintfd( "pathWalk> return success\n");
       return PW_SUCCESS;
     }
     pathname += npart_pos;
@@ -119,12 +135,14 @@ int32 PathWalker::pathWalk(const char* pathname)
     // check the VfsMount
     if(this->last_type_ == LAST_DOT) // follow LAST_DOT
     {
+      kprintfd( "pathWalk> follow last dot\n");
       kfree(npart);
       last_ = 0;
       continue;
     }
     else if(this->last_type_ == LAST_DOTDOT) // follow LAST_DOTDOT
     {
+      kprintfd( "pathWalk> follow last dotdot\n");
       kfree(npart);
       last_ = 0;
 
@@ -148,8 +166,13 @@ int32 PathWalker::pathWalk(const char* pathname)
     }
     else if(this->last_type_ == LAST_NORM) // follow LAST_NORM
     {
+      kprintfd( "pathWalk> follow last norm\n");
       Inode* current_inode = dentry_->getInode();
       Dentry *found = current_inode->lookup(last_);
+      if(found)
+        kprintfd( "pathWalk> found->getName() : %s\n",found->getName() );
+      else
+        kprintfd( "pathWalk> no dentry found !!!\n");
       kfree(npart);
       last_ = 0;
       if(found != 0)
@@ -158,6 +181,7 @@ int32 PathWalker::pathWalk(const char* pathname)
       }
       else
       {
+        kprintfd( "pathWalk> return dentry not found\n");
         return PW_ENOTFOUND;
       }
 
@@ -183,6 +207,7 @@ int32 PathWalker::pathWalk(const char* pathname)
       break;
     }
   }
+  kprintfd( "pathWalk> return 0 end of function\n");
 
   return 0;
 }

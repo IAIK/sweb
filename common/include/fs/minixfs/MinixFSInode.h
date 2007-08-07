@@ -106,11 +106,15 @@ class MinixFSInode : public Inode
   /// @return On successe, return 0. On error, return -1.
     virtual int32 writeData(uint32 offset, uint32 size, const char *buffer);
 
+    virtual int32 flush();
+
 
   private:
     void writeDentry(uint32 dest_i_num, uint32 src_i_num, char* name);
 
     int32 findDentry(uint32 i_num);
+
+    bool children_loaded_;
 
     
 };

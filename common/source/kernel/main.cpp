@@ -692,6 +692,8 @@ void startup()
   FileSystemInfo* root_fs_info = vfs.root_mount("devicefs", 0);
 //   kprintfd("Mount returned %d\n", mntres);  
 
+  kprintfd("root_fs_info : %d",root_fs_info);
+  kprintfd("root_fs_info root name: %s\t pwd name: %s\n", root_fs_info->getRoot()->getName(), root_fs_info->getPwd()->getName());
   main_console->setFSInfo( root_fs_info );
 
   Scheduler::createScheduler();
@@ -743,6 +745,11 @@ void startup()
  
   Scheduler::instance()->addNewThread( main_console );
   
+  Scheduler::instance()->addNewThread(
+      new MinixTestingThread(root_fs_info)
+  );
+
+  
 //   Scheduler::instance()->addNewThread( 
 //     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
 //   );       
@@ -773,12 +780,12 @@ void startup()
     
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
     
-   for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
+  /* for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
    {
      UserThread *user_thread = new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file));
      user_thread->setFSInfo( new FileSystemInfo(*root_fs_info) );
      Scheduler::instance()->addNewThread( user_thread );
-   }
+}*/
   //Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();

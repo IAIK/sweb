@@ -65,18 +65,18 @@ void Buffer::setByte(size_t index, uint8 byte)
 
 void Buffer::set2Bytes(size_t index, uint16 byte)
 {
-  assert(index+1 + offset_ < size_);
+  assert(index + 1 + offset_ < size_);
   char first_byte = byte >> 8;
-  char second_byte = byte && 0xFF;
+  char second_byte = byte & 0xFF;
   buffer_[index + offset_] = second_byte;
-  buffer_[index+1 + offset_] = first_byte;
+  buffer_[index + 1 + offset_] = first_byte;
 }
 
 void Buffer::set4Bytes(size_t index, uint32 byte)
 {
   assert(index+3  + offset_< size_);
   uint16 first_2_bytes = byte >> 16;
-  uint16 second_2_bytes = byte && 0xFFFF;
+  uint16 second_2_bytes = byte & 0xFFFF;
   set2Bytes(index, second_2_bytes);
   set2Bytes(index+2, first_2_bytes);
 }
@@ -85,7 +85,7 @@ void Buffer::set8Bytes(size_t index, uint64 byte)
 {
   assert(index+7  + offset_< size_);
   uint32 first_4_bytes = byte >> 32;
-  uint32 second_4_bytes = byte && 0xFFFFFFFF;
+  uint32 second_4_bytes = byte & 0xFFFFFFFF;
   set2Bytes(index, second_4_bytes);
   set2Bytes(index+4, first_4_bytes);
 }
@@ -119,7 +119,7 @@ void Buffer::append(Buffer* buffer_to_append)
 
 void Buffer::print()
 {
-  kprintfd( "\n----Buffer:size:%d------\n",size_);
+  kprintfd( "\n----Buffer:size:%d-offset:%d-----\n",size_,offset_);
   for(uint32 i = 0; i<size_;i++)
   {
     kprintfd( "%x",buffer_[i]);

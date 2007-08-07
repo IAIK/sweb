@@ -102,9 +102,12 @@ zone_add_type MinixFSZone::getZone(uint32 index)
 
 void MinixFSZone::setZone(uint32 index, zone_add_type zone)
 {
+  kprintfd("MinixFSZone::setZone> index: %d, zone: %d\n",index,zone);
   if (index < 7)
   {
     direct_zones_[index] = zone;
+    ++num_zones_;
+    return;
   }
   index -= 7;
   if (index < NUM_ZONE_ADDRESSES)
@@ -115,6 +118,8 @@ void MinixFSZone::setZone(uint32 index, zone_add_type zone)
       indirect_zones_ = new zone_add_type[NUM_ZONE_ADDRESSES];
     }
     indirect_zones_[index] = zone;
+    ++num_zones_;
+    return;
   }
   index -= NUM_ZONE_ADDRESSES;
   if(!double_indirect_zones_)

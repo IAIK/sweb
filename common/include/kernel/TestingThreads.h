@@ -297,3 +297,33 @@ class DeviceFSMountingThread : public Thread
     while(1);
   }
 };
+
+class MinixTestingThread : public Thread
+{
+  public:
+    MinixTestingThread( FileSystemInfo* root_fs_info)
+    {
+      name_="MinixTestingThread";
+      this->setFSInfo( root_fs_info);
+    }
+
+    virtual void Run()
+    {
+     /* kprintfd("\n> list /\n");
+      vfs_syscall.list("/");
+      kprintfd("\n> list /minix\n");
+      vfs_syscall.list("/minix");
+      kprintfd("\n> list /minix/dir\n");
+      vfs_syscall.list("/minix/dir");
+      kprintfd("\n> list /dev\n");
+      vfs_syscall.list("/dev");*/
+      kprintfd("\n> open /minix/minixtest.txt\n");
+      int32 fd = vfs_syscall.open("/minix/minixtest.txt", 2);
+      kprintfd("\n> open returned fd: <%d>\n",fd);
+//       kprintfd("\n> flush fd: <%d>\n",fd);
+//       int32 flush_ret = vfs_syscall.flush(fd);
+//       kprintfd("\n> flush returned: <%d>\n", flush_ret);
+      int32 write_ret = vfs_syscall.write(fd, "hello world!", 12);
+      kprintfd("\n> write returned: <%d>\n",write_ret);
+    }
+};

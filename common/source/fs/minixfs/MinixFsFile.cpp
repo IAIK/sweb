@@ -1,5 +1,6 @@
 
 #include "fs/minixfs/MinixFSFile.h"
+#include "fs/minixfs/MinixFSInode.h"
 #include "Inode.h"
 
 MinixFSFile::MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag) : File(inode, dentry, flag)
@@ -54,6 +55,7 @@ int32 MinixFSFile::close()
 
 int32 MinixFSFile::flush()
 {
+  ((MinixFSInode *)f_inode_)->flush();
   //there is no buffer, so no flushing
   //there is no asynchron writing, so no flushing
   return 0;

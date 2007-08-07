@@ -31,25 +31,25 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
   s_max_file_size_ = buffer->get4Bytes(12);
   s_magic_ = buffer->get2Bytes(16);
   
-  kprintfd("s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %d\n",s_num_inodes_,s_num_zones_,s_num_inode_bm_blocks_,s_num_zone_bm_blocks_,s_1st_datazone_,s_log_zone_size_,s_max_file_size_,s_magic_);
+//   kprintfd("s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %d\n",s_num_inodes_,s_num_zones_,s_num_inode_bm_blocks_,s_num_zone_bm_blocks_,s_1st_datazone_,s_log_zone_size_,s_max_file_size_,s_magic_);
   
 //   for(uint32 i = 0; i < BLOCK_SIZE; i++ )
 //     kprintfd( "%2X%c", *(buffer+i), i%8 ? ' ' : '\n' );
 
-  kprintfd("---buffer: %d", buffer);
+//   kprintfd("---buffer: %d", buffer);
   delete buffer;
-  kprintfd("---buffer: end\n");
+//   kprintfd("---buffer: end\n");
 
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
   Buffer *bm_buffer = new Buffer(BLOCK_SIZE*bm_size);
   readBlocks(2, bm_size, bm_buffer);
-  kprintfd("---creating Storage Manager\n");
+//   kprintfd("---creating Storage Manager\n");
   storage_manager_ = new MinixStorageManager(bm_buffer,
                                              s_num_inode_bm_blocks_,
                                              s_num_zone_bm_blocks_,
                                              s_num_inodes_, s_num_zones_);
-  storage_manager_->printBitmap();
+//   storage_manager_->printBitmap();
   delete bm_buffer;
 
   initInodes();
@@ -65,8 +65,10 @@ void MinixFSSuperblock::initInodes()
   Dentry *root_dentry = new Dentry(ROOT_NAME);
   if (s_root_)
   {
-    root_dentry->setMountPoint(s_root_);
+//     root_dentry->setMountPoint(s_root_);
+    s_root_->setMountPoint(root_dentry);
     mounted_over_ = s_root_; // MOUNT
+    s_root_ = root_dentry;
   }
   else
   {
@@ -88,18 +90,18 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   uint32 inode_block_num = inodes_start + (i_num - 1) / INODES_PER_BLOCK;
   MinixFSInode *inode = 0;
   Buffer *ibuffer = new Buffer(BLOCK_SIZE);
-  kprintfd("getInode::reading block num: %d\n", inode_block_num);
+//   kprintfd("getInode::reading block num: %d\n", inode_block_num);
   readBlocks(inode_block_num, 1, ibuffer);
-  kprintfd("getInode:: returned reading block num: %d\n", inode_block_num);
+//   kprintfd("getInode:: returned reading block num: %d\n", inode_block_num);
   uint32 offset = ((i_num - 1)% INODES_PER_BLOCK) *INODE_SIZE;
-  kprintfd("getInode:: setting offset: %d\n", offset);
+//   kprintfd("getInode:: setting offset: %d\n", offset);
   ibuffer->setOffset(offset);
   uint16 *i_zones = new uint16[9];
   for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
   {
     i_zones[num_zone] = ibuffer->get2Bytes(14 + (num_zone * 2));
   }
-  kprintfd("getInode:: calling creating Inode\n");
+//   kprintfd("getInode:: calling creating Inode\n");
   inode = new MinixFSInode( this,
                             ibuffer->get2Bytes(0),
                             ibuffer->get2Bytes(2),
@@ -110,7 +112,7 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
                             i_zones,
                             i_num
                           );
-  kprintfd("getInode:: returned creating Inode\n");
+//   kprintfd("getInode:: returned creating Inode\n");
   delete i_zones;
   delete ibuffer;
   return inode;
@@ -164,22 +166,27 @@ Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
   for(uint32 i = 0; i < 9; i++)
     zones[i] = 0;
   uint32 i_num = storage_manager_->acquireInode();
+  kprintfd("createInode> acquired inode %d\n", i_num);
   Inode *inode = (Inode*)(new MinixFSInode(this, mode, 0, 0, 0, 0, 0, zones, i_num));
+  kprintfd("createInode> created Inode\n");
   delete zones;
+  all_inodes_.pushBack(inode);
+  kprintfd("createInode> calling write Inode to Disc\n");
   writeInode(inode);
+  kprintfd("createInode> returned from write Inode to Disc\n");
   if(type == I_DIR)
   {
+    kprintfd("createInode> mkdir\n");
     int32 inode_init = inode->mkdir(dentry);
     assert(inode_init == 0);
   }
   else if(type == I_FILE)
   {
-    kprintfd("createInode: I_FILE\n");
+    kprintfd("createInode> mkfile\n");
     int32 inode_init = inode->mkfile(dentry);
     assert(inode_init == 0);
   }
-
-  all_inodes_.pushBack(inode);
+  kprintfd("createInode> finished\n");
   return inode;
 }
 
@@ -190,7 +197,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   assert(all_inodes_.included(inode));
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + (minix_inode->i_num_ * INODE_SIZE / BLOCK_SIZE);
-  uint32 offset = (minix_inode->i_num_ * INODE_SIZE) % BLOCK_SIZE;
+  uint32 offset = ((minix_inode->i_num_ - 1 )* INODE_SIZE) % BLOCK_SIZE;
   Buffer *buffer = new Buffer (INODE_SIZE);
   readBytes(block, offset, INODE_SIZE, buffer);
   uint16 *i_zones = new uint16[9];
@@ -215,16 +222,33 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   //flush zones
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + (minix_inode->i_num_ * INODE_SIZE / BLOCK_SIZE);
-  uint32 offset = (minix_inode->i_num_ * INODE_SIZE) % BLOCK_SIZE;
+  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   Buffer *buffer = new Buffer (INODE_SIZE);
+  buffer->clear();
+  kprintfd("writeInode> reading block %d with offset %d from disc\n", block, offset);
   readBytes(block, offset, INODE_SIZE, buffer);
-  for(uint32 num_zone = 0; num_zone < 9; num_zone ++)
+  kprintfd("writeInode> read data from disc\n");
+  kprintfd("writeInode> the inode: i_type_: %d, i_nlink_: %d, i_size_: %d\n",minix_inode->i_type_,minix_inode->i_nlink_,minix_inode->i_size_);
+  if(minix_inode->i_type_ == I_FILE)
   {
-    buffer->set2Bytes(14 + (num_zone * 2), minix_inode->i_zones_->getZone(num_zone));
+    kprintfd("writeInode> setting mode to file : %x\n",buffer->get2Bytes(0) | 0x8000);
+    buffer->set2Bytes(0, buffer->get2Bytes(0) | 0x8000);
+  }
+  else if(minix_inode->i_type_ == I_DIR)
+  {
+    kprintfd("writeInode> setting mode to dir : %x\n",buffer->get2Bytes(0) | 0x4000);
+    buffer->set2Bytes(0, buffer->get2Bytes(0) | 0x4000);
+  }
+  else
+  {
+    //TODO; link etc.
   }
   buffer->setByte(13, minix_inode->i_nlink_);
   buffer->setByte(4, minix_inode->i_size_);
+  kprintfd("writeInode> writing bytes to disc on block %d with offset %d\n",block,offset);
+  buffer->print();
   writeBytes(block, offset, INODE_SIZE, buffer);
+  kprintfd("writeInode> flushing zones\n");
   minix_inode->i_zones_->flush(minix_inode->i_num_);
   delete buffer;
 }
@@ -298,7 +322,12 @@ int32 MinixFSSuperblock::removeFd(Inode* inode, FileDescriptor* fd)
 
 uint16 MinixFSSuperblock::allocateZone()
 {
-  return (storage_manager_->acquireZone() + s_1st_datazone_);
+  kprintfd("MinixFSSuperblock allocateZone>\n");
+  storage_manager_->printBitmap();
+  uint16 ret = (storage_manager_->acquireZone() + s_1st_datazone_ - 1); // -1 because the zone nr 0 is set in the bitmap and should never be used!
+  storage_manager_->printBitmap();
+  kprintfd("MinixFSSuperblock allocateZone> returning %d\n",ret);
+  return ret;
 }
 
 void MinixFSSuperblock::freeZone(uint16 pointer)
@@ -351,7 +380,7 @@ int32 MinixFSSuperblock::readBytes(uint32 block, uint32 offset, uint32 size, Buf
   rbuffer->setOffset(offset);
   for(uint32 index = 0; index < size; index++)
   {
-    buffer[index] = rbuffer->getByte(index);
+    buffer->setByte(index,rbuffer->getByte(index));
   }
   delete rbuffer;
   return size;
