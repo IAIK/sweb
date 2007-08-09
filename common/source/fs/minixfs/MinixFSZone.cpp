@@ -62,6 +62,27 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)
   }
   else
     double_indirect_zones_ = 0;
+  
+  kprintfd( "=========Zones:======%d=======\n",num_zones_);
+  kprintfd( "====direct Zones:====\n");
+  uint32 print_num_zones = 0;
+  for(uint32 i = 0; i < 9; i++,print_num_zones++)
+  {
+    kprintfd("====zone: %x\t", direct_zones_[i]);
+  }
+  kprintfd( "===indirect Zones:===\n");
+  for(uint32 i = 0; i < NUM_ZONE_ADDRESSES && print_num_zones < num_zones_; i++,print_num_zones++)
+  {
+    kprintfd("===zone: %x\t", indirect_zones_[i]);
+  }
+  kprintfd( "=dblindirect Zones:==\n");
+  for(uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES && print_num_zones < num_zones_; ind_zone++,print_num_zones++)
+  {
+    for(uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES && print_num_zones < num_zones_; d_ind_zone++,print_num_zones++)
+    {
+      kprintfd("=zone: %x\t", double_indirect_zones_[ind_zone][d_ind_zone]);
+    }
+  }
 }
 
 

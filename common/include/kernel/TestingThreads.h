@@ -336,26 +336,45 @@ class MinixTestingThread : public Thread
 //       vfs_syscall.readdir("/minix/dir");
 //       kprintfd("\n> list /dev\n");
 //       vfs_syscall.readdir("/dev");
-//       kprintfd("\n> open /minix/minixtest.txt\n");
-//       int32 fd = vfs_syscall.open("/minix/minixtest.txt", 2);
-//       kprintfd("\n> open returned fd: <%d>\n",fd);
+      kprintfd("\n> open /minix/vbf\n");
+      int32 fd = vfs_syscall.open("/minix/vbf", 2);
+      kprintfd("\n> open returned fd: <%d>\n",fd);
 //       kprintfd("\n> flush fd: <%d>\n",fd);
 //       int32 flush_ret = vfs_syscall.flush(fd);
 //       kprintfd("\n> flush returned: <%d>\n", flush_ret);
-//       int32 write_ret = vfs_syscall.write(fd, "hello world!", 12);
-//       kprintfd("\n> write returned: <%d>\n",write_ret);
+//    
+      char *buffer = new char[500001];
+      buffer[500000] = '\0';
       
-//       char *buffer = new char[13];
-//       buffer[12] = '\0';
+      for(uint32 i = 0; i<500000; i++)
+        buffer[i] = 1;
       
-//       int32 read_ret = vfs_syscall.read(fd, buffer, 12);
-//       kprintfd("\n> read returned: <%d>\n",read_ret);
-//       kprintfd("\n> read: <%s>\n",buffer);
+      int32 read_ret = vfs_syscall.read(fd, buffer, 500000);
+      kprintfd("\n> read returned: <%d>\n",read_ret);
+//       for(uint32 i = 0; i<500000; i++)
+//         kprintfd("%x",buffer[i]);
       
-//       kprintfd("\n> open /minix/test1.txt\n");
-//       int32 t_fd = vfs_syscall.open("/minix/test1.txt", 2);
-//       kprintfd("\n> open returned fd: <%d>\n",t_fd);
+      kprintfd("\n> open /minix/test1.txt\n");
+      int32 t_fd = vfs_syscall.open("/minix/test1.txt", 2);
+      kprintfd("\n> open returned fd: <%d>\n",t_fd);
       
+      
+      int32 write_ret = vfs_syscall.write(t_fd, buffer, 500000);
+      kprintfd("\n> write returned: <%d>\n",write_ret);
+      
+      
+      char *r_buffer = new char[500001];
+      r_buffer[500000] = '\0';
+      
+      
+      for(uint32 i = 0; i<500000; i++)
+        r_buffer[i] = 1;
+      
+      read_ret = vfs_syscall.read(t_fd, r_buffer, 500000);
+      kprintfd("\n> read returned: <%d>\n",read_ret);
+      
+       for(uint32 i = 0; i<500000; i++)
+         kprintfd("%x",r_buffer[i]);
       
 //       char *t_buffer = new char[6];
 //       t_buffer[5] = '\0';

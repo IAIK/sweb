@@ -66,7 +66,7 @@ MinixFSInode::~MinixFSInode()
 //---------------------------------------------------------------------------
 int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
 {
-  kprintfd("MinixFSInode readData> offset: %d, size; %d, buffer: %s\n",offset,size,buffer);
+  kprintfd("MinixFSInode readData> offset: %d, size; %d, buffer: %s,i_size_: %d\n",offset,size,buffer,i_size_);
   if((size + offset) > i_size_)
   {
     kprintfd("the size is bigger than size of the file\n");
@@ -82,11 +82,11 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   for(;zone < num_zones; zone++)
   {
     rbuffer->clear();
-    kprintfd("MinixFSInode readData> calling readZone with the zone: %d\n", i_zones_->getZone(zone));
+    kprintfd("MinixFSInode readData> calling readZone with the zone: %d", i_zones_->getZone(zone));
     ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
-    for(; index < size && (index + zone_offset) < ZONE_SIZE; index++)
+    for(uint32 read_index = 0; index < size && (read_index + zone_offset) < ZONE_SIZE; index++, read_index++)
     {
-      buffer[index] = rbuffer->getByte( index + zone_offset);
+      buffer[index] = rbuffer->getByte( read_index + zone_offset);
     }
     zone_offset = 0;
   }
@@ -147,7 +147,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   readData( offset-zone_offset, zone_offset, wbuffer->getBuffer());
   for(uint32 index = 0, pos = zone_offset; index<size; pos++, index++)
   {
-    kprintfd("MinixFSInode writeData>filling writebuffer\n");
+//     kprintfd("MinixFSInode writeData>filling writebuffer\n");
     wbuffer->setByte( pos, buffer[index]);
   }
   kprintfd("MinixFSInode writeData> zone: %d, num_zones: %d\n",zone, num_zones);
@@ -163,7 +163,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   }
   kprintfd("MinixFSInode writeData>deleting writebuffer\n");
   delete wbuffer;
-  kprintfd("MinixFSInode writeData>returning size: %d\n",size);
+  kprintfd("MinixFSInode writeData>returning size: %d i_size_: %d\n",size,i_size_);
   return size;
 }
 

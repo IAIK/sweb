@@ -321,9 +321,9 @@ int32 MinixFSSuperblock::removeFd(Inode* inode, FileDescriptor* fd)
 uint16 MinixFSSuperblock::allocateZone()
 {
   kprintfd("MinixFSSuperblock allocateZone>\n");
-  storage_manager_->printBitmap();
+//   storage_manager_->printBitmap();
   uint16 ret = (storage_manager_->acquireZone() + s_1st_datazone_ - 1); // -1 because the zone nr 0 is set in the bitmap and should never be used!
-  storage_manager_->printBitmap();
+//   storage_manager_->printBitmap();
   kprintfd("MinixFSSuperblock allocateZone> returning %d\n",ret);
   return ret;
 }
