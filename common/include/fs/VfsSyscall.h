@@ -100,8 +100,6 @@ class VfsSyscall
   ///        indicates nothing was written). On error, -1 is returned
   virtual int32 write(uint32 fd, const char *buffer, uint32 count);
 
-  virtual int32 list(const char* pathname);
-
   virtual int32 flush(uint32 fd);
 };
 

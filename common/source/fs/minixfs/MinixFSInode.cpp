@@ -51,6 +51,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid,
   {
     i_type_ = I_DIR;
   }
+  kprintfd("MinixFSInode ctr: i_type_: %d, i_mode: %d\n",i_type_, i_mode);
   //TODO: else something else (hard/sym link)
 
 //   kprintfd( "created inode with size: %x\tnlink: %x\tzones[0]: %x\tmode: %x\n", i_size_, i_nlink_, i_zones_->getZone(0), i_mode);
@@ -190,6 +191,7 @@ int32 MinixFSInode::mknod(Dentry *dentry)
 //---------------------------------------------------------------------------
 int32 MinixFSInode::mkdir(Dentry *dentry)
 {
+  kprintfd("MinixFSInode mkdir> dentry: %d, i_type_: %d\n",dentry,i_type_);
   if(dentry == 0)
   {
     // ERROR_DNE
@@ -312,11 +314,11 @@ int32 MinixFSInode::rmdir()
 
   if(dentry->emptyChild())
   {
-    dentry->releaseInode();
     Dentry* parent_dentry = dentry->getParent();
     parent_dentry->childRemove(dentry);
     char ch = '\0';
     ((MinixFSInode *)parent_dentry->getInode())->writeDentry(((MinixFSInode *)dentry->getInode())->i_num_,0,&ch);
+    dentry->releaseInode();
     delete dentry;
     i_dentry_ = 0;
     return INODE_DEAD;
@@ -338,14 +340,19 @@ int32 MinixFSInode::rm()
   }
 
   Dentry* dentry = i_dentry_;
-
+  kprintfd("MinixFSInode rm> dentry->getName(): %s\n",dentry->getName());
   if(dentry->emptyChild())
   {
-    dentry->releaseInode();
+    kprintfd("MinixFSInode rm> emtyChild == true\n");
     Dentry* parent_dentry = dentry->getParent();
+    kprintfd("MinixFSInode rm> parent_dentry->getName(): %s\n",parent_dentry->getName());
     parent_dentry->childRemove(dentry);
     char ch = '\0';
+    kprintfd("MinixFSInode rm> dentry->getInode(): %d\n",dentry->getInode());
+    kprintfd("MinixFSInode rm> call write Dentry with inum: %d, ch: %c \n",((MinixFSInode *)dentry->getInode())->i_num_,ch);
     ((MinixFSInode *)parent_dentry->getInode())->writeDentry(((MinixFSInode *)dentry->getInode())->i_num_,0,&ch);
+    kprintfd("MinixFSInode rm> deleting Dentry\n");
+    dentry->releaseInode();
     delete dentry;
     i_dentry_ = 0;
     return INODE_DEAD;
@@ -360,6 +367,8 @@ int32 MinixFSInode::rm()
 //---------------------------------------------------------------------------
 Dentry* MinixFSInode::lookup(const char* name)
 {
+  
+  kprintfd("MinixFSInode lookup> name: %s this->i_dentry_->getName(): %s \n",name,this->i_dentry_->getName());
   if(name == 0)
   {
     // ERROR_DNE
@@ -367,6 +376,8 @@ Dentry* MinixFSInode::lookup(const char* name)
   }
 
   Dentry* dentry_update = 0;
+  
+  kprintfd("MinixFSInode lookup i_type_: %d\n",i_type_);
   if(i_type_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
@@ -377,7 +388,11 @@ Dentry* MinixFSInode::lookup(const char* name)
     }
     else
     {
-      ((MinixFSInode *)dentry_update->getInode())->loadChildren();
+      kprintfd("MinixFSInode lookup dentry_update->getName(): %s\n"),dentry_update->getName();
+      if(((MinixFSInode *)dentry_update->getInode())->i_type_==I_DIR)
+      {
+        ((MinixFSInode *)dentry_update->getInode())->loadChildren();
+      }
       return dentry_update;
     }
   }
@@ -405,17 +420,18 @@ void MinixFSInode::loadChildren()
       {
         kprintfd("calling get Inode with the number: %d\n", inode_index);
         Inode* inode = ((MinixFSSuperblock *)i_superblock_)->getInode( inode_index );
+        ((MinixFSSuperblock *)i_superblock_)->all_inodes_.pushBack(inode);
         kprintfd("returned get Inode with the number: %d\n", inode_index);
         uint32 offset = 0;
         char *name = new char[MAX_NAME_LENGTH];
         char ch = '\0';
-        dbuffer->print();
+//         dbuffer->print();
         do
         {
           ch = dbuffer->getByte(curr_dentry + offset + 2);
           name[offset] = ch;
           ++offset;
-          kprintfd("MinixFSInode loadChildren dentry ch: %c\n",ch);
+//           kprintfd("MinixFSInode loadChildren dentry ch: %c\n",ch);
         } while (ch);
         // ? name[offset] = '\0';
         kprintfd("MinixFSInode loadChildren dentry name: %s\n",name);

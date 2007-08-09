@@ -6,6 +6,8 @@
 #include "fs/FileDescriptor.h"
 #include "fs_global.h" 
 
+#include "console/kprintf.h"
+
 #include "Console.h"
 
 extern Console* main_console;
@@ -132,10 +134,23 @@ void DeviceFSSuperBlock::addDevice( Inode* device, char* device_name )
 //----------------------------------------------------------------------
 Inode* DeviceFSSuperBlock::createInode(Dentry* dentry, uint32 type)
 {
-  if( dentry == 0 || type == 0 ) // mainly to avoid unused vars warning during compilation, because I really, I mean RREEALLY, hate warnings 
-    return 0;
-  
-  return 0;
+  Inode *inode = (Inode*)(new RamFsInode(this, type));
+  assert(inode);
+  if(type == I_DIR)
+  {
+    kprintfd("createInode: I_DIR\n");
+    int32 inode_init = inode->mknod(dentry);
+    assert(inode_init == 0);
+  }
+  else if(type == I_FILE)
+  {
+    kprintfd("createInode: I_FILE\n");
+    int32 inode_init = inode->mkfile(dentry);
+    assert(inode_init == 0);
+  }
+
+  all_inodes_.pushBack(inode);
+  return inode;
 }
 
 

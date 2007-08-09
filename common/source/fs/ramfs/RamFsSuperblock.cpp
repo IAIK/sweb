@@ -15,6 +15,7 @@
 //----------------------------------------------------------------------
 RamFsSuperblock::RamFsSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(s_root, s_dev)
 {
+  kprintfd("===========================RamFsSuperblock::RamFsSuperblock\n");
   Dentry *root_dentry = new Dentry(ROOT_NAME);
 
   if (s_root)
@@ -77,8 +78,10 @@ RamFsSuperblock::~RamFsSuperblock()
 Inode* RamFsSuperblock::createInode(Dentry* dentry, uint32 type)
 {
   Inode *inode = (Inode*)(new RamFsInode(this, type));
+  assert(inode);
   if(type == I_DIR)
   {
+    kprintfd("createInode: I_DIR\n");
     int32 inode_init = inode->mknod(dentry);
     assert(inode_init == 0);
   }

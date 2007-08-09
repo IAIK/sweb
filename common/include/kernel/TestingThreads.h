@@ -309,21 +309,89 @@ class MinixTestingThread : public Thread
 
     virtual void Run()
     {
-     /* kprintfd("\n> list /\n");
-      vfs_syscall.list("/");
-      kprintfd("\n> list /minix\n");
-      vfs_syscall.list("/minix");
-      kprintfd("\n> list /minix/dir\n");
-      vfs_syscall.list("/minix/dir");
-      kprintfd("\n> list /dev\n");
-      vfs_syscall.list("/dev");*/
-      kprintfd("\n> open /minix/minixtest.txt\n");
-      int32 fd = vfs_syscall.open("/minix/minixtest.txt", 2);
-      kprintfd("\n> open returned fd: <%d>\n",fd);
+//       kprintfd("\n> list /\n");
+//       vfs_syscall.readdir("/");
+      kprintfd("\n> list ./\n");
+      vfs_syscall.readdir("./");
+      
+      kprintfd("\n> chdir /minix\n");
+      int32 chdir_ret = vfs_syscall.chdir("/minix");
+      kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
+      
+      
+      kprintfd("\n> list ./\n");
+      vfs_syscall.readdir("./");
+      
+      
+      kprintfd("\n> chdir ./dir\n");
+      chdir_ret = vfs_syscall.chdir("./dir");
+      kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
+      
+      
+      kprintfd("\n> list ./\n");
+      vfs_syscall.readdir("./");
+      
+      
+//       kprintfd("\n> list /minix/dir\n");
+//       vfs_syscall.readdir("/minix/dir");
+//       kprintfd("\n> list /dev\n");
+//       vfs_syscall.readdir("/dev");
+//       kprintfd("\n> open /minix/minixtest.txt\n");
+//       int32 fd = vfs_syscall.open("/minix/minixtest.txt", 2);
+//       kprintfd("\n> open returned fd: <%d>\n",fd);
 //       kprintfd("\n> flush fd: <%d>\n",fd);
 //       int32 flush_ret = vfs_syscall.flush(fd);
 //       kprintfd("\n> flush returned: <%d>\n", flush_ret);
-      int32 write_ret = vfs_syscall.write(fd, "hello world!", 12);
-      kprintfd("\n> write returned: <%d>\n",write_ret);
+//       int32 write_ret = vfs_syscall.write(fd, "hello world!", 12);
+//       kprintfd("\n> write returned: <%d>\n",write_ret);
+      
+//       char *buffer = new char[13];
+//       buffer[12] = '\0';
+      
+//       int32 read_ret = vfs_syscall.read(fd, buffer, 12);
+//       kprintfd("\n> read returned: <%d>\n",read_ret);
+//       kprintfd("\n> read: <%s>\n",buffer);
+      
+//       kprintfd("\n> open /minix/test1.txt\n");
+//       int32 t_fd = vfs_syscall.open("/minix/test1.txt", 2);
+//       kprintfd("\n> open returned fd: <%d>\n",t_fd);
+      
+      
+//       char *t_buffer = new char[6];
+//       t_buffer[5] = '\0';
+      
+//       int32 t_read_ret = vfs_syscall.read(t_fd, t_buffer, 5);
+//       kprintfd("\n> read returned: <%d>\n",t_read_ret);
+//       kprintfd("\n> read: <%s>\n",t_buffer);
+      
+//       kprintfd("\n> closing file <%d>\n",t_fd);
+//       int32 close_ret = vfs_syscall.close(t_fd);
+//       kprintfd("\n> close returned: <%d>\n",close_ret);
+      
+      
+//       kprintfd("\n> rm /minix/test1.txt\n");
+//       int32 rm_ret = vfs_syscall.rm("/minix/test1.txt");
+//       kprintfd("\n> rm returned : <%d>\n",rm_ret);
+      
+//       kprintfd("\n> calling mkdir: /minix/folder\n");
+//       int32 mkdir_ret = vfs_syscall.mkdir("/minix/folder", 2);
+//       kprintfd("\n> mkdir returned <%d>\n",mkdir_ret);
+      
+      
+//       kprintfd("\n> list /minix\n");
+//       vfs_syscall.readdir("/minix");
+//       int32 t_write_ret = vfs_syscall.write(t_fd, "hello test1!", 12);
+//       kprintfd("\n> write returned: <%d>\n",t_write_ret);
+      
+//       kprintfd("\n> calling rmdir: /minix/folder\n");
+//       int32 rmdir_ret = vfs_syscall.rmdir("/minix/folder");
+//       kprintfd("\n> rmdir returned <%d>\n",rmdir_ret);
+      
+      
+      
+//       kprintfd("\n> list /minix\n");
+//       vfs_syscall.readdir("/minix");
+      
+      //    
     }
 };

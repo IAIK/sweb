@@ -103,6 +103,7 @@ Dentry* Dentry::checkName(const char* name)
   {
     Dentry *dentry = (Dentry*)(d_child_.at(count));
     const char *tmp_name = dentry->getName();
+    kprintfd("(checkname) name : %s\n",tmp_name);
     if(strcmp(tmp_name, name) == 0)
     {
       return dentry;

@@ -83,12 +83,14 @@ int32 RamFsInode::mknod(Dentry *dentry)
 
   if(i_type_ != I_DIR)
   {
-    // ERROR_IC
     return -1;
   }
   
   i_dentry_ = dentry;
   dentry->setInode(this);
+  kprintfd("RamFsInode::mknod> i_dentry_->getName() :%s\n",i_dentry_->getName());
+  kprintfd("RamFsInode::mknod> i_dentry_->getInode() : %d\n",i_dentry_->getInode());
+  kprintfd("RamFsInode::mknod> i_dentry_->getInode()->getType() : %d\n",i_dentry_->getInode()->getType());
   return 0;
 }
 
@@ -108,8 +110,7 @@ int32 RamFsInode::mkfile(Dentry *dentry)
   }
 
   if(i_type_ != I_FILE)
-  {
-    // ERROR_IC
+  {;
     return -1;
   }
   

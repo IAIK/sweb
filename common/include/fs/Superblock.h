@@ -172,6 +172,8 @@ public:
   
   /// Get the mount point Dentry of the Superblock
   Dentry *getMountPoint();
+  
+  FileSystemType *getFSType() {return (FileSystemType *)s_type_;}
 
 //   StorageManager *getStorageManager() { return storage_manager_; }
 

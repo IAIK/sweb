@@ -53,10 +53,6 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev) : Superblock(
   delete bm_buffer;
 
   initInodes();
-  if (all_inodes_.at(0))
-  {
-    all_inodes_.at(0)->mkdir(s_root_);
-  }
 }
 
 void MinixFSSuperblock::initInodes()
@@ -79,8 +75,11 @@ void MinixFSSuperblock::initInodes()
   root_dentry->setParent(root_dentry);
   root_inode->i_dentry_ = root_dentry;
   root_dentry->setInode(root_inode);
+  
+  all_inodes_.pushBack( root_inode );
   //read children from disc
   root_inode->loadChildren();
+  
 }
 
 MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
@@ -158,15 +157,15 @@ Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
 {
   uint16 mode = 0x01ff;
   if (type == I_FILE)
-    mode &= 0x8000;
+    mode |= 0x8000;
   else if (type == I_DIR)
-    mode &= 0x4000;
+    mode |= 0x4000;
   //else link etc.
   uint16 *zones = new uint16[9];
   for(uint32 i = 0; i < 9; i++)
     zones[i] = 0;
   uint32 i_num = storage_manager_->acquireInode();
-  kprintfd("createInode> acquired inode %d\n", i_num);
+  kprintfd("createInode> acquired inode %d mode: %d\n", i_num,mode);
   Inode *inode = (Inode*)(new MinixFSInode(this, mode, 0, 0, 0, 0, 0, zones, i_num));
   kprintfd("createInode> created Inode\n");
   delete zones;
@@ -257,7 +256,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
 void MinixFSSuperblock::delete_inode(Inode* inode)
 {
   Dentry* dentry = inode->getDentry();
-  assert(dentry->emptyChild());
+  assert(dentry == 0);
   assert(!used_inodes_.included(inode));
   if(dirty_inodes_.included(inode))
   {
@@ -271,11 +270,10 @@ void MinixFSSuperblock::delete_inode(Inode* inode)
     freeZone(minix_inode->i_zones_->getZone(index));
   }
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + (minix_inode->i_num_ * INODE_SIZE / BLOCK_SIZE);
-  uint32 offset = (minix_inode->i_num_ * INODE_SIZE) % BLOCK_SIZE;
+  uint32 offset = ((minix_inode->i_num_ -1) * INODE_SIZE) % BLOCK_SIZE;
   Buffer *buffer = new Buffer (INODE_SIZE);
   buffer->clear();
   writeBytes(block, offset, INODE_SIZE, buffer);
-  delete dentry;
   delete buffer;
   delete inode;
 }
@@ -402,3 +400,4 @@ int32 MinixFSSuperblock::writeBytes(uint32 block, uint32 offset, uint32 size, Bu
   delete wbuffer;
   return size;
 }
+

@@ -39,7 +39,7 @@ class Superblock;
  */
 class Inode
 {
- protected:
+ public:
   /// The i_list_ linked list links inodes in various states. There is the
   /// inode_in_use list which lists unchanged inodes that are in active use.
   /// inode_unused which lists unused inodes, and the s_dirty_ of Superblock

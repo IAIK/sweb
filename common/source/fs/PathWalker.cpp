@@ -85,6 +85,7 @@ int32 PathWalker::pathWalk(const char* pathname)
     pathname++;
   if(!*pathname) // i.e. path = /
   {
+//     dentry_ = vfs_mount_->getSuperblock()->getRoot();
     kprintfd( "pathWalk> return 0 pathname == \\n\n");
     return 0;
   }
@@ -166,7 +167,7 @@ int32 PathWalker::pathWalk(const char* pathname)
     }
     else if(this->last_type_ == LAST_NORM) // follow LAST_NORM
     {
-      kprintfd( "pathWalk> follow last norm\n");
+      kprintfd( "pathWalk> follow last norm last_: %s\n",last_);
       Inode* current_inode = dentry_->getInode();
       Dentry *found = current_inode->lookup(last_);
       if(found)
