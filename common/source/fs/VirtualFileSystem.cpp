@@ -87,7 +87,7 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
   {
     for (uint32 counter = 0; counter < vfs_mount_size; ++counter)
     {
-      kprintfd( "getVfsMount> mounts_.at(counter)->getMountPoint()->getName() : %s\n",mounts_.at(counter)->getMountPoint()->getName());
+//       kprintfd( "getVfsMount> mounts_.at(counter)->getMountPoint()->getName() : %s\n",mounts_.at(counter)->getMountPoint()->getName());
       if((mounts_.at(counter)->getMountPoint()) == dentry)
       {
         return mounts_.at(counter);
@@ -238,7 +238,14 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
   }
   
   Superblock *sb = found_vfs_mount->getSuperblock();
-  delete found_vfs_mount;
+
+
+//   NOTE: workaround because removing from mounts_ doesn't work!
+//   TODO: FIX this workaround
+//   mounts_.remove(found_vfs_mount);;
+//   delete found_vfs_mount;
+  found_vfs_mount->clear();
+  
   delete sb;
   
   return 0;

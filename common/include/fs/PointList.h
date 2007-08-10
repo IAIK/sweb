@@ -7,6 +7,8 @@
 #include "types.h"
 #include "assert.h"
 
+#include "console/kprintf.h"
+
 //-----------------------------------------------------------------------------
 /**
  * PointListElement
@@ -178,21 +180,26 @@ void PointList<ContentType>::listElementInsert(
 template <class ContentType>
 PointListElement<ContentType>* PointList<ContentType>::find(ContentType *entry)
 {
+  kprintfd( "PointList: find 1\n");
   if(first_ == 0)
     return 0;
-
+  kprintfd( "PointList: find 2\n");
   PointListElement<ContentType> *at = first_;
   PointListElement<ContentType> *prev;
-
+  kprintfd( "PointList: find 3\n");
   do
   {
+    kprintfd( "PointList: find do\n");
     if(at->getItem() == entry)
+    {
+      kprintfd( "PointList: find returning at: %d\n",at);
       return at;
+    }
     prev = at;
     at = prev->getNext();
   }
   while(prev != last_);
-
+  kprintfd( "PointList: find failed returning 0\n");
   return 0;
 }
 
@@ -316,42 +323,67 @@ ContentType* PointList<ContentType>::popFront()
 template <class ContentType>
 int32 PointList<ContentType>::remove(ContentType *entry)
 {
+  kprintfd( "PointList: start remove this: %d, entry: %d\n",this,entry);
   if(length_ == 0)
     return -1;
-
-  PointListElement<ContentType> *element = find(entry);
+  if(first_)
+  {
+    kprintfd( "PointList: first: %d\n",first_->getItem());
+  }
+  if(first_->getNext())
+  {
+    kprintfd( "PointList: second: %d\n",first_->getNext()->getItem());
+  }
+  kprintfd( "PointList: remove 1\n");
+  PointListElement<ContentType> *element;
+  kprintfd( "PointList: element declared\n");
+  element = 0;
+  kprintfd( "PointList: element initialized\n");
+//   kprintfd( "PointList: find returns: %d\n",&find(entry));
+  element = find(entry);
+  kprintfd( "PointList: remove element found\n");
   if(element == 0)
     return -1;
-  
+  kprintfd( "PointList: remove 2\n");
   if(length_ == 1)
   {
+    kprintfd( "PointList: remove length == 1\n");
     length_ = 0;
     first_ = 0;
     last_ = 0;
+    kprintfd( "PointList: remove delete element\n");
     delete element;
+    kprintfd( "PointList: remove element deleted\n");
   }
   else
   {
+    kprintfd( "PointList: remove 3\n");
     length_--;
     PointListElement<ContentType> *prev = element->getPrev();
     PointListElement<ContentType> *next = element->getNext();
     if(element == first_)
     {
+      kprintfd( "PointList: remove ==first \n");
       next->setPrev(next);
       first_ = next;
     }
     else if(element == last_)
     {
+      kprintfd( "PointList: remove == last_\n");
       prev->setNext(prev);
       last_ = prev;
     }
     else
     {
+      kprintfd( "PointList: remove  != first last\n");
       prev->setNext(next);
       next->setPrev(prev);
     }
+    kprintfd( "PointList: remove delete element\n");
     delete element;
+    kprintfd( "PointList: remove element deleted\n");
   }
+  kprintfd( "PointList: remove finished\n");
   return 0;
 }
 

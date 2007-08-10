@@ -31,10 +31,23 @@ Dentry::Dentry(Dentry *parent)
 //---------------------------------------------------------------------------
 Dentry::~Dentry()
 {
-  if( d_parent_ )
+  kprintfd( "deleting Dentry with Name %s, d_parent_: %d, this: %d\n", d_name_,d_parent_,this);
+  if( d_parent_ && (d_parent_ != this))
+  {
+    kprintfd( "deleting Dentry child remove d_parent_: %d\n",d_parent_);
     d_parent_->childRemove( this );
+  }
+  for(uint32 count = 0; count < (d_child_.getLength()); count++)
+  {
+    Dentry *dentry = (Dentry*)(d_child_.at(count));
+    dentry->d_parent_ = 0;
+  }
   if(d_name_)
-    delete d_name_;
+  {
+    kprintfd( "deleting Dentry name\n");
+    kfree(d_name_);
+  }
+  kprintfd( "deleting Dentry finished\n");
 }
 
 //---------------------------------------------------------------------------
@@ -53,10 +66,19 @@ void Dentry::childInsert(Dentry *child_dentry)
 //---------------------------------------------------------------------------
 int32 Dentry::childRemove(Dentry *child_dentry)
 {
+  kprintfd( "Dentry childRemove entering\n");
+  kprintfd( "Dentry childRemove d_child_ length: %d \n",d_child_.getLength());
+  
+  kprintfd( "Dentry childRemove d_child_ included: %d\n",d_child_.included(child_dentry));
   assert(child_dentry != 0);
   if(d_child_.remove(child_dentry) == 0)
+  {
+    child_dentry->d_parent_ = 0;
+    kprintfd( "Dentry childRemove remove == 0\n");
     return 0;
+  }
 
+  kprintfd( "Dentry childRemove failed\n");
   return -1;
 }
 

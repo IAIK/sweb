@@ -14,6 +14,8 @@
 #include "fs/File.h"
 #include "fs/FileDescriptor.h"
 #include "fs/FileSystemType.h"
+#include "fs/VirtualFileSystem.h"
+#include "fs/minixfs/MinixFSType.h"
 
 #include "fs/VfsMount.h"
 
@@ -527,5 +529,18 @@ int32 VfsSyscall::flush(uint32 fd)
   return file->flush();
 }
 
+int32 VfsSyscall::mount(const char *device_name, const char *dir_name, char *file_system_name, int32 flag)
+{
+  if(strcmp(file_system_name, "minixfs") == 0)
+  {
+    MinixFSType *minixfs = new MinixFSType();
+    vfs.registerFileSystem(minixfs);
+    return vfs.mount(device_name, dir_name, file_system_name, flag);
+  }
+  return -1; // file system type not known
+}
 
-
+int32 VfsSyscall::umount(const char *dir_name, int32 flag)
+{
+  return vfs.umount(dir_name, flag);
+}

@@ -718,21 +718,21 @@ void startup()
   }
 
   //NOTE: maybe replace by a mounting thread who mounts in his run() method
-  Thread* mounting_dummy_thread = new UserThread("mounting dummy thread");
-  mounting_dummy_thread->setFSInfo( root_fs_info );
-  currentThread = mounting_dummy_thread;
-  kprintfd("currentThread: %d",currentThread);
-  //assume we detected the minix filesystem on device idec
-  if(vfs_syscall.mkdir("/minix",0) == 0)
-  {
-    kprintfd("Mounting Minix under /minix/\n");
-    MinixFSType *minixfs = new MinixFSType();
-    vfs.registerFileSystem(minixfs);
-    uint32 mntres = vfs.mount("idec", "/minix", "minixfs", 0);
-    kprintfd("Mount returned %d\n", mntres);
-  }
-  currentThread = 0;
-  delete mounting_dummy_thread;
+//   Thread* mounting_dummy_thread = new UserThread("mounting dummy thread");
+//   mounting_dummy_thread->setFSInfo( root_fs_info );
+//   currentThread = mounting_dummy_thread;
+//   kprintfd("currentThread: %d",currentThread);
+//   //assume we detected the minix filesystem on device idec
+//   if(vfs_syscall.mkdir("/minix",0) == 0)
+//   {
+//     kprintfd("Mounting Minix under /minix/\n");
+//     MinixFSType *minixfs = new MinixFSType();
+//     vfs.registerFileSystem(minixfs);
+//     uint32 mntres = vfs.mount("idec", "/minix", "minixfs", 0);
+//     kprintfd("Mount returned %d\n", mntres);
+//   }
+//   currentThread = 0;
+//   delete mounting_dummy_thread;
 
   kprintfd("Timer enable\n");
   ArchInterrupts::enableTimer();

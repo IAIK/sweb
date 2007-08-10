@@ -101,6 +101,10 @@ class VfsSyscall
   virtual int32 write(uint32 fd, const char *buffer, uint32 count);
 
   virtual int32 flush(uint32 fd);
+
+  virtual int32 mount(const char *device_name, const char *dir_name, char *file_system_name, int32 flag);
+
+  virtual int32 umount(const char *dir_name, int32 flag);
 };
 
 #endif // VFS_SYSCALL_H___

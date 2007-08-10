@@ -130,10 +130,10 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
   }
   
   uint32 num_zones = zone_bitmap_->getSize();
-  uint32 z_byte = i_byte;
-  for(; z_byte < num_zones / 8; z_byte++)
+  uint32 z_byte = 0;
+  for(; z_byte < num_zones / 8; z_byte++, i_byte++)
   {
-    bm_buffer->setByte(z_byte, zone_bitmap_->getByte(z_byte));
+    bm_buffer->setByte(i_byte, zone_bitmap_->getByte(z_byte));
   }
   byte = 0;
   for(uint32 z_bit = 0; z_bit < 8; z_bit++)
@@ -148,12 +148,16 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
     else
       byte &= 0x01 << z_bit;
   }
-  bm_buffer->setByte(z_byte, byte);
+  bm_buffer->setByte(i_byte, byte);
   ++z_byte;
-  for(; z_byte < num_inode_bm_blocks_ * BLOCK_SIZE; z_byte++)
+  ++i_byte;
+  for(; z_byte < num_zone_bm_blocks_ * BLOCK_SIZE; z_byte++,i_byte++)
   {
-    bm_buffer->setByte(z_byte, 0xff);
+    bm_buffer->setByte(i_byte, 0xff);
   }
+  inode_bitmap_->bmprint();
+  zone_bitmap_->bmprint();
+  bm_buffer->print();
   superblock->writeBlocks(2,num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer);
 }
 

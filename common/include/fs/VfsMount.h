@@ -82,6 +82,10 @@ class VfsMount
 
   /// get the flags
   int32 getFlags() const;
+
+  //NOTE: only used as workaround
+  void clear();
+  
 };
 
 #endif // Vfsmount_h___

@@ -120,6 +120,7 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
 //----------------------------------------------------------------------
 MinixFSSuperblock::~MinixFSSuperblock()
 {
+  kprintfd("~MinixSuperblock\n");
   assert(dirty_inodes_.empty() == true);
   storage_manager_->flush(this);
   uint32 num = s_files_.getLength();
@@ -139,17 +140,29 @@ MinixFSSuperblock::~MinixFSSuperblock()
   assert(s_files_.empty() == true);
 
   num = all_inodes_.getLength();
+  
+  kprintfd("~MinixSuperblock num: %d inodes to delete\n",num);
   for(uint32 counter = 0; counter < num; counter++)
   {
     Inode* inode = all_inodes_.at(0);
+    
+    kprintfd("~MinixSuperblock writing inode to disc\n");
     writeInode(inode);
+    
+    kprintfd("~MinixSuperblock inode written to disc\n");
     all_inodes_.remove(inode);
     Dentry* dentry = inode->getDentry();
+    
+    kprintfd("~MinixSuperblock deleteing denty->getName() : %s\n",dentry->getName());
     delete dentry;
+    
+    kprintfd("~MinixSuperblock deleting inode\n");
     delete inode;
   }
 
   assert(all_inodes_.empty() == true);
+  
+  kprintfd("~MinixSuperblock finished\n");
 }
 
 //----------------------------------------------------------------------
@@ -269,8 +282,8 @@ void MinixFSSuperblock::delete_inode(Inode* inode)
   {
     freeZone(minix_inode->i_zones_->getZone(index));
   }
-  uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + (minix_inode->i_num_ * INODE_SIZE / BLOCK_SIZE);
-  uint32 offset = ((minix_inode->i_num_ -1) * INODE_SIZE) % BLOCK_SIZE;
+  uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
+  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   Buffer *buffer = new Buffer (INODE_SIZE);
   buffer->clear();
   writeBytes(block, offset, INODE_SIZE, buffer);
