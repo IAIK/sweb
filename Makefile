@@ -88,6 +88,7 @@ all: $(DEPS)
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
 kernel: $(SUBPROJECTS)
+	@echo "Starting with kernel"
 ifeq ($(V),1)
 	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -g -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
 else
@@ -142,7 +143,7 @@ endif
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
 install: kernel
-#	@echo "Starting with install"
+	@echo "Starting with install"
 #	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
 #	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
 #	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
@@ -173,8 +174,6 @@ install: kernel
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
 	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
-	#dd if=/dev/zero of=SWEB-flat-minix.vmdk bs=512 count=20805 
-	#cp ./images/SWEB-flat-minix.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat-minix.vmdk.gz
 	cp ./images/SWEB-flat-minix.vmdk $(OBJECTDIR)/
 	cp ./images/nvram $(OBJECTDIR)/
 	@echo "copy files to image..."
@@ -184,7 +183,13 @@ install: kernel
 	rm -f $(OBJECTDIR)/temp_fs_ext2
 	@echo "########## Finished installing - ext2 hard drive ##########"
 
-e2fsimage:	
+
+#minixfs:
+#	dd if=/dev/zero of=./images/SWEB-flat-minix.vmdk bs=512 count=20808
+#	sudo mkfs.minix ./images/SWEB-flat-minix.vmdk
+
+e2fsimage:
+	@echo "Starting with e2fsimage"	
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
 
 qemu:

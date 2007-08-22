@@ -1,6 +1,6 @@
 #include "Buffer.h"
 #include "assert.h"
-#include "../../include/console/kprintf.h"
+#include "console/kprintf.h"
 
 Buffer::Buffer(size_t size)
 {

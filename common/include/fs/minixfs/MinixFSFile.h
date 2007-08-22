@@ -8,55 +8,58 @@
 
 //-------------------------------------------------------------------------
 /**
- * MinixFSFile
- *
+ * @class MinixFSFile handles files on a minix file system
+ * basically read and write
  */
 class MinixFSFile: public File
 {
   public:
 
-   /// constructor of MinixFSFile
+    /**
+     * constructor
+     * @param inode the inode of the file
+     * @param dentry the dentry
+     * @param flag the flag i.e. readonly
+     */
     MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag);
 
-   /// destructor of MinixFSFile
+    /**
+     * destructor
+     */
     virtual ~MinixFSFile();
 
-  /// Sets the file position relative to the start of the file, the  end of
-  /// the file or the current file position.
-    ///
-  /// @param offset is the offset to set.
-  /// @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
-  /// @returns the offset from the start off the file or -1 on failure.
-  // l_off_t llSeek(l_off_t offset, uint8 origin)
-
-  /// reads from the file
-    ///
-  /// @param buffer is the buffer where the data is written to
-  /// @param count is the number of bytes to read.
-  /// @param offset is the offset to read from counted from the start of the file.
+    /**
+     * reads from the file
+     * @param buffer the buffer where the data is written to
+     * @param count the number of bytes to read
+     * @param offset the offset to read from counted from the start of the file.
+     * @return the number of bytes read
+     */
     virtual int32 read(char *buffer, size_t count, l_off_t offset);
 
-  /// write to the file
-    ///
-  /// @param buffer is the buffer where the data is read from
-  /// @param count is the number of bytes to write.
-  /// @param offset is the offset to write from counted from the start of the file.
+    /**
+     * writes to the file
+     * @param buffer the buffer where the data is read from
+     * @param count the number of bytes to write
+     * @param offset the offset to write from counted from the start of the file
+     * @return the number of bytes written
+     */
     virtual int32 write(const char *buffer, size_t count, l_off_t offset);
 
-  /// Open the file
-    ///
-  /// @param inode is the inode the read the file from.
+    /**
+     * not implemented
+     */
     virtual int32 open(uint32 flag);
 
-  /// Close the file
-    ///
-  /// @param inode is close, the superblock has the information, that this
-  /// inode is not use anymore.
+    /**
+     * not implemented
+     */
     virtual int32 close();
 
-  /// Flush all off the file's write operations. The File will be written to disk.
-    ///
-  /// @return is the error code of the flush operation.
+    /**
+     * writes all data to disc
+     * @return 0 on success
+     */
     virtual int32 flush();
 };
 

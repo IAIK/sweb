@@ -1,8 +1,10 @@
 #include "Thread.h"
 #include "fs/VirtualFileSystem.h"
 #include "fs/fs_global.h"
+#include "Scheduler.h"
 
 /// Various testing threads 
+
 
 class TestTerminalThread : public Thread
 {
@@ -310,94 +312,109 @@ class MinixTestingThread : public Thread
     virtual void Run()
     {
 
-      kprintfd("\n> list /\n");
-      vfs_syscall.readdir("/");
-      
-      kprintfd("\n> calling mkdir: /minix\n");
-      int32 mkdir_ret = vfs_syscall.mkdir("/minix", 2);
-      kprintfd("\n> mkdir returned <%d>\n",mkdir_ret);
-
+//       kprintfd("\n> list /\n");
+//       vfs_syscall.readdir("/");
+//       
+//       kprintfd("\n> calling mkdir: /minix\n");
+//       int32 mkdir_ret = vfs_syscall.mkdir("/minix", 2);
+//       kprintfd("\n> mkdir returned <%d>\n",mkdir_ret);
+// 
       kprintfd("\n> calling mount: idec, /minix, minixfs\n");
       int32 mount_ret = vfs_syscall.mount("idec","/minix", "minixfs",0);
       kprintfd("\n> mount returned <%d>\n",mount_ret);
-
       
-      kprintfd("\n> list ./\n");
-      vfs_syscall.readdir("./");
-      
-      kprintfd("\n> chdir /minix\n");
-      int32 chdir_ret = vfs_syscall.chdir("/minix");
+      kprintfd("\n> chdir tests\n");
+      int32 chdir_ret = vfs_syscall.chdir("tests");
       kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
       
-      
-      kprintfd("\n> list ./\n");
-      vfs_syscall.readdir("./");
-      
-      
-      kprintfd("\n> chdir ./dir\n");
-      chdir_ret = vfs_syscall.chdir("./dir");
-      kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
+      UserThread *user_thread = new UserThread("stdin-test.sweb");
+      user_thread->setFSInfo(getFSInfo());
+      Scheduler::instance()->addNewThread( user_thread );
       
       
-      kprintfd("\n> list ./\n");
-      vfs_syscall.readdir("./");
+      kprintfd("\n> calling umount: /minix\n");
+      int32 umount_ret = vfs_syscall.umount("/minix",0);
+      kprintfd("\n> umount returned <%d>\n",umount_ret);
+      
+      
+// 
+//       
+//       kprintfd("\n> list ./\n");
+//       vfs_syscall.readdir("./");
+//       
+//       kprintfd("\n> chdir /minix\n");
+//       int32 chdir_ret = vfs_syscall.chdir("/minix");
+//       kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
+//       
+//       
+//       kprintfd("\n> list ./\n");
+//       vfs_syscall.readdir("./");
+//       
+//       
+//       kprintfd("\n> chdir ./dir\n");
+//       chdir_ret = vfs_syscall.chdir("./dir");
+//       kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
+//       
+//       
+//       kprintfd("\n> list ./\n");
+//       vfs_syscall.readdir("./");
       
       
 //       kprintfd("\n> list /minix/dir\n");
 //       vfs_syscall.readdir("/minix/dir");
 //       kprintfd("\n> list /dev\n");
 //       vfs_syscall.readdir("/dev");
-      kprintfd("\n> open /minix/vbf\n");
-      int32 fd = vfs_syscall.open("/minix/vbf", 2);
-      kprintfd("\n> open returned fd: <%d>\n",fd);
+//       kprintfd("\n> open /minix/vbf\n");
+//       int32 fd = vfs_syscall.open("/minix/vbf", 2);
+//       kprintfd("\n> open returned fd: <%d>\n",fd);
 //       kprintfd("\n> flush fd: <%d>\n",fd);
 //       int32 flush_ret = vfs_syscall.flush(fd);
 //       kprintfd("\n> flush returned: <%d>\n", flush_ret);
 //    
-      char *buffer = new char[5001];
-      buffer[5000] = '\0';
-      
-      for(uint32 i = 0; i<5000; i++)
-        buffer[i] = 1;
-      
-      int32 read_ret = vfs_syscall.read(fd, buffer, 5000);
-      kprintfd("\n> read returned: <%d>\n",read_ret);
+//       char *buffer = new char[5001];
+//       buffer[5000] = '\0';
+//       
+//       for(uint32 i = 0; i<5000; i++)
+//         buffer[i] = 1;
+//       
+//       int32 read_ret = vfs_syscall.read(fd, buffer, 5000);
+//       kprintfd("\n> read returned: <%d>\n",read_ret);
 //       for(uint32 i = 0; i<500000; i++)
 //         kprintfd("%x",buffer[i]);
       
-      kprintfd("\n> open /minix/test1.txt\n");
-      int32 t_fd = vfs_syscall.open("/minix/test1.txt", 2);
-      kprintfd("\n> open returned fd: <%d>\n",t_fd);
-      
-      
-      int32 write_ret = vfs_syscall.write(t_fd, buffer, 5000);
-      kprintfd("\n> write returned: <%d>\n",write_ret);
-      
-      
-      char *r_buffer = new char[5001];
-      r_buffer[5000] = '\0';
-      
-      
-      for(uint32 i = 0; i<5000; i++)
-        r_buffer[i] = 1;
-      
-      read_ret = vfs_syscall.read(t_fd, r_buffer, 5000);
-      kprintfd("\n> read returned: <%d>\n",read_ret);
-      
-       for(uint32 i = 0; i<5000; i++)
-         kprintfd("%x",r_buffer[i]);
+//       kprintfd("\n> open /minix/test1.txt\n");
+//       int32 t_fd = vfs_syscall.open("/minix/test1.txt", 2);
+//       kprintfd("\n> open returned fd: <%d>\n",t_fd);
+//       
+//       
+//       int32 write_ret = vfs_syscall.write(t_fd, buffer, 5000);
+//       kprintfd("\n> write returned: <%d>\n",write_ret);
+//       
+//       
+//       char *r_buffer = new char[5001];
+//       r_buffer[5000] = '\0';
+//       
+//       
+//       for(uint32 i = 0; i<5000; i++)
+//         r_buffer[i] = 1;
+//       
+//       read_ret = vfs_syscall.read(t_fd, r_buffer, 5000);
+//       kprintfd("\n> read returned: <%d>\n",read_ret);
+//       
+//        for(uint32 i = 0; i<5000; i++)
+//          kprintfd("%x",r_buffer[i]);
 
 
-       kprintfd("\n> calling umount: /minix\n");
-       int32 umount_ret = vfs_syscall.umount("/minix",0);
-       kprintfd("\n> umount returned <%d>\n",umount_ret);
+//        kprintfd("\n> calling umount: /minix\n");
+//        int32 umount_ret = vfs_syscall.umount("/minix",0);
+//        kprintfd("\n> umount returned <%d>\n",umount_ret);
 
 
-       kprintfd("\n> list /\n");
-       vfs_syscall.readdir("/");
-
-       kprintfd("\n> list /minix\n");
-       vfs_syscall.readdir("/minix");
+//        kprintfd("\n> list /\n");
+//        vfs_syscall.readdir("/");
+// 
+//        kprintfd("\n> list /minix\n");
+//        vfs_syscall.readdir("/minix");
        
 //       char *t_buffer = new char[6];
 //       t_buffer[5] = '\0';

@@ -24,7 +24,7 @@ class File;
  * Superblock 
  * 
  * The first block of the virtual-file-system. It contains for instance the
- * configuration of the file system. Sotre information concerning a mounted
+ * configuration of the file system. Source information concerning a mounted
  * filesystem. (For disk-based filesystems, this object usually corresponds
  * to a filesystem control block stored on disk.)
  */
@@ -33,7 +33,6 @@ class Superblock
 public:
 
   friend class VirtualFileSystem;
-  friend class MinixFSInode;
 
 protected:
 
@@ -173,9 +172,8 @@ public:
   /// Get the mount point Dentry of the Superblock
   Dentry *getMountPoint();
   
+  /// Get the File System Type of the Superblock
   FileSystemType *getFSType() {return (FileSystemType *)s_type_;}
-
-//   StorageManager *getStorageManager() { return storage_manager_; }
 
 };
 //-----------------------------------------------------------------------------

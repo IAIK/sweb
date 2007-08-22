@@ -16,7 +16,7 @@
 #ifndef _CONDITION_
 #define _CONDITION_
 
-#include "../util/List.h"
+#include "util/List.h"
 #include "Thread.h"
 #include "Mutex.h"
 

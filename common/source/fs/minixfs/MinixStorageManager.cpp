@@ -1,7 +1,7 @@
 #include "fs/minixfs/MinixStorageManager.h"
 #include "fs/minixfs/MinixFSSuperblock.h"
 #include "assert.h"
-#include "../../../include/console/kprintf.h"
+#include "console/kprintf.h"
 
 
 MinixStorageManager::MinixStorageManager(Buffer *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones) : StorageManager(num_inodes, num_zones)
@@ -100,6 +100,11 @@ void MinixStorageManager::freeZone(size_t index)
   zone_bitmap_->unsetBit(index);
 }
 
+void MinixStorageManager::freeInode(size_t index)
+{
+  inode_bitmap_->unsetBit(index);
+}
+
 void MinixStorageManager::flush(MinixFSSuperblock *superblock)
 {
   Buffer* bm_buffer = new Buffer((num_inode_bm_blocks_ + num_zone_bm_blocks_) * BLOCK_SIZE);
@@ -163,6 +168,6 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
 
 void MinixStorageManager::printBitmap()
 {
-//   inode_bitmap_->bmprint();
+  inode_bitmap_->bmprint();
   zone_bitmap_->bmprint();
 }

@@ -70,13 +70,13 @@ public:
   /// return the parent of the dentry
   Dentry* getParent() { return d_parent_; }
   
-  ///
+  /// set the parent dentry
   void setParent(Dentry *parent) { d_parent_ = parent; }
 
   /// return the mount_point of the current file-system
   Dentry* getMountPoint() { return d_mounts_; }
   
-  ///
+  /// set the mount point
   void setMountPoint(Dentry *mount_point) { d_mounts_ = mount_point; }
 
   /// set the child to the dentry

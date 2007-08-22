@@ -553,7 +553,6 @@
 #include "fs/PseudoFS.h"
 #include "fs/fs_tests.h"
 
-#include "TestingThreads.h"
 
 extern void* kernel_end_address;
 
@@ -601,6 +600,8 @@ private:
   uint32 terminal_number_;
 };
 
+#include "TestingThreads.h"
+             
 class TestThread : public Thread
 {
   public:
@@ -786,6 +787,7 @@ void startup()
      user_thread->setFSInfo( new FileSystemInfo(*root_fs_info) );
      Scheduler::instance()->addNewThread( user_thread );
 }*/
+  
   //Scheduler::instance()->addNewThread(new TestThread());  
   
   Scheduler::instance()->printThreadList();

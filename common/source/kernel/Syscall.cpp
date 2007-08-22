@@ -50,7 +50,7 @@
 #include "Syscall.h"
 #include "syscall-definitions.h"
 #include "assert.h"
-#include "../console/kprintf.h"
+#include "console/kprintf.h"
 #include "ArchCommon.h"
 #include "ArchInterrupts.h"
 #include "console/Terminal.h"

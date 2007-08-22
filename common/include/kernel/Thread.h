@@ -58,7 +58,7 @@
 #define _THREAD_H_
 
 #include "types.h"
-#include "../fs/FileSystemInfo.h"
+#include "fs/FileSystemInfo.h"
 
 enum ThreadState {Running, Sleeping, ToBeDestroyed};
 

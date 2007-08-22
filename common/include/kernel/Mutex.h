@@ -69,7 +69,7 @@
 
 
 #include "types.h"
-#include "../util/List.h"
+#include "util/List.h"
 #include "SpinLock.h"
 
 class Thread;

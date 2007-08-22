@@ -5,27 +5,37 @@
 #define _MINIXFS_TYPE_H_
 
 #include "fs/FileSystemType.h"
-
+/**
+ * @class MinixFSType is used to register the file system to the vfs.
+ * It also reads the minix superblock from the block device.
+ */
 class MinixFSType : public FileSystemType
 {
   public:
 
-    /// constructor
+    /**
+     * constructor
+     */
     MinixFSType();
 
-    /// destructor
+    /**
+     * destructor
+     */
     virtual ~MinixFSType();
 
-    /// Reads the superblock from the device.
-    ///
-    /// @return is a pointer to the resulting superblock.
-    /// @param superblock is the superblock to fill with data.
-    /// @param data is the data given to the mount system call.
+    /**
+     *  reads the superblock from the device
+     * @param superblock a pointer to the resulting superblock
+     * @param data the data given to the mount system call
+     * @return the superblock
+     */
     virtual Superblock *readSuper(Superblock *superblock, void *data) const;
 
-    /// Creates an Superblock object for the actual file system type.
-    ///
-    /// @return a pointer to the Superblock object
+    /**
+     * creates an Superblock object for the actual file system type
+     * @param root the root dentry
+     * @param s_dev the device number
+     */
     virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 };
 

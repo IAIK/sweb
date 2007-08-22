@@ -28,7 +28,7 @@
 
 #include "arch_bd_request.h"
 #include "arch_bd_virtual_device.h"
-#include "../../common/include/util/List.h"
+#include "util/List.h"
 
 //extern template class List;
 

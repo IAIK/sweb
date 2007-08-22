@@ -7,8 +7,8 @@
  *
 */
 
-#include "../../include/mm/Bitmap.h"
-#include "../console/kprintf.h"
+#include "mm/Bitmap.h"
+#include "console/kprintf.h"
 #include "assert.h"
 
 Bitmap::Bitmap (size_t number_of_bits)

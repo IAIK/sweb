@@ -64,7 +64,7 @@
 #define _SCHEDULER_H_
 
 #include "types.h"
-#include "../util/List.h"
+#include "util/List.h"
 #include "SpinLock.h"
 #include "Mutex.h"
 

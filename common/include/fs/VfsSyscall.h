@@ -100,10 +100,25 @@ class VfsSyscall
   ///        indicates nothing was written). On error, -1 is returned
   virtual int32 write(uint32 fd, const char *buffer, uint32 count);
 
+  /// flushes the file with the given file descriptor to the disc
+  /// so that changes in the system are written to disc
+  ///
+  ///@param fd the file descriptor
+  ///@return 0 on success, -1 on error
   virtual int32 flush(uint32 fd);
 
+  /// mounts a file system
+  ///@param device_name the device name i.e. ida
+  ///@param dir_name the directory name where to mount the filesystem
+  ///@param file_system_name the file system name i.e. minixfs
+  ///@param flag the flag indicates if mounted readonly etc.
+  ///@return 0 on success
   virtual int32 mount(const char *device_name, const char *dir_name, char *file_system_name, int32 flag);
 
+  /// unmounts a filesystem
+  ///@param dir_name the directory where the filesystem to unmount is mounted
+  ///@param flag not used
+  ///@return 0 on success
   virtual int32 umount(const char *dir_name, int32 flag);
 };
 

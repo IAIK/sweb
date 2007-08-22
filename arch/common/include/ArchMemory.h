@@ -67,7 +67,7 @@
 #include "paging-definitions.h"
 #include "ArchCommon.h"
 #include "panic.h"
-#include "../../../common/include/mm/PageManager.h"
+#include "mm/PageManager.h"
 
 //Arch-VirtualMemoryUserSpaceObjekt
 /*

@@ -91,10 +91,10 @@
 /// @version 1.0.0
 /// 
 
-#include "../../include/mm/KernelMemoryManager.h"
+#include "mm/KernelMemoryManager.h"
 #include "ArchCommon.h"
 #include "assert.h"
-#include "../../../arch/arch/include/debug_bochs.h"
+#include "debug_bochs.h"
 #include "console/kprintf.h"
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
