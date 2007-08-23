@@ -499,3 +499,57 @@ void kprint_buffer(char *buffer, uint32 size)
   else
     vkprint_buffer(oh_writeCharNoSleep, buffer, size);
 }
+
+void debug(uint32 flag, const char *fmt, ...)
+{  
+  va_list args;
+  va_start(args, fmt);
+  
+  bool group_enabled = false;
+  
+  if(!(flag & OUTPUT_ENABLED))
+  {
+    uint32 group_flag = flag & 0x01110000;
+    group_flag |= OUTPUT_ENABLED;
+    switch(group_flag)
+    {
+      case MINIX:
+        group_enabled = true;
+        break;
+        
+    }
+  }
+  
+  if((flag & OUTPUT_ENABLED) || group_enabled)
+  {
+      switch(flag)
+      {
+        case M_INODE:
+          kprintfd("M_INODE:>> ");
+          vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
+          break;
+        case M_STORAGE_MANAGER:
+          kprintfd("M_STORAGE_MANAGER:>> ");
+          vkprintf(oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args);
+          break;
+      }
+  }
+  
+  va_end(args);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

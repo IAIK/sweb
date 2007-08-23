@@ -120,6 +120,8 @@ class VfsSyscall
   ///@param flag not used
   ///@return 0 on success
   virtual int32 umount(const char *dir_name, int32 flag);
+  
+  virtual uint32 getFileSize(uint32 fd);
 };
 
 #endif // VFS_SYSCALL_H___

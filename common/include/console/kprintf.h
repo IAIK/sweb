@@ -40,6 +40,7 @@
 
 #include "stdarg.h"
 #include "types.h"
+#include "debug.h"
 
 void kprintf(const char *fmt, ...);
 void kprintfd(const char *fmt, ...);
@@ -50,3 +51,5 @@ void kprintfd_nosleep(const char *fmt, ...);
 void kprint_buffer(char *buffer, uint32 size);
 
 void kprintf_nosleep_init();
+
+void debug(uint32 flag, const char *fmt, ...);

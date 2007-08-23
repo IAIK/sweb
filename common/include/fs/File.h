@@ -151,6 +151,8 @@ class File
   ///
   /// @return is the error code of the flush operation.
   virtual  int32 flush() {return 0;}
+  
+  virtual  uint32 getSize();
 };
 
 

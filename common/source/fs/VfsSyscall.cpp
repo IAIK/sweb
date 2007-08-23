@@ -544,3 +544,19 @@ int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 {
   return vfs.umount(dir_name, flag);
 }
+
+uint32 VfsSyscall::getFileSize(uint32 fd)
+{
+  FileDescriptor* file_descriptor = 0;
+  
+  file_descriptor = getFileDescriptor(fd);
+  
+  if(file_descriptor == 0)
+  {
+    kprintfd("(read) Error: the fd does not exist.\n");
+    return -1;
+  }
+  
+  File* file = file_descriptor->getFile();
+  return file->getSize();
+}

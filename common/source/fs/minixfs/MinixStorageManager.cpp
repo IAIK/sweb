@@ -2,15 +2,17 @@
 #include "fs/minixfs/MinixFSSuperblock.h"
 #include "assert.h"
 #include "console/kprintf.h"
+#include "console/debug.h"
 
 
 MinixStorageManager::MinixStorageManager(Buffer *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones) : StorageManager(num_inodes, num_zones)
 {
+  debug( M_STORAGE_MANAGER, "Constructor: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n",num_inodes,num_inode_bm_blocks,num_zones,num_zone_bm_blocks);
+//   bm_buffer->print();
+  
   num_inode_bm_blocks_ = num_inode_bm_blocks;
   num_zone_bm_blocks_ = num_zone_bm_blocks;
-//   kprintfd( "StorageManager: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n",num_inodes,num_inode_bm_blocks,num_zones,num_zone_bm_blocks);
-//   bm_buffer->print();
-  //read inode bitmap
+  
   uint32 i_byte = 0;
   for (; i_byte < num_inodes / 8; i_byte ++)
   {
@@ -43,6 +45,7 @@ MinixStorageManager::~MinixStorageManager()
 {
   delete inode_bitmap_;
   delete zone_bitmap_;
+  debug(M_STORAGE_MANAGER, "Destructor: destroyed\n");
 }
 
 
@@ -59,7 +62,6 @@ uint32 MinixStorageManager::getNumUsedInodes()
 
 size_t MinixStorageManager::acquireZone()
 {
-  kprintfd("MinixStorageManager acquireZone>\n");
   size_t pos = curr_zone_pos_ + 1;
   for (;pos != curr_zone_pos_; pos++ )
   {
@@ -69,10 +71,11 @@ size_t MinixStorageManager::acquireZone()
     {
       zone_bitmap_->setBit(pos);
       curr_zone_pos_ = pos;
-      kprintfd("MinixStorageManager acquireZone> returning pos %d\n",pos);
+      debug(M_STORAGE_MANAGER, "acquireZone: Zone %d acquired\n", pos);
       return pos;
     }
   }
+  kprintfd("acquireZone: NO FREE ZONE FOUND!\n");
   assert(false); // full memory should have been checked.
   return 0;
 }
@@ -88,9 +91,11 @@ size_t MinixStorageManager::acquireInode()
     {
       inode_bitmap_->setBit(pos);
       curr_inode_pos_ = pos;
+      debug(M_STORAGE_MANAGER, "acquireInode: Inode %d acquired\n", pos);
       return pos;
     }
   }
+  kprintfd("acquireInode: NO FREE INODE FOUND!\n");
   assert(false); // full memory should have been checked.
   return 0;
 }
@@ -98,15 +103,18 @@ size_t MinixStorageManager::acquireInode()
 void MinixStorageManager::freeZone(size_t index)
 {
   zone_bitmap_->unsetBit(index);
+  debug(M_STORAGE_MANAGER, "freeZone: Zone %d freed\n", index);
 }
 
 void MinixStorageManager::freeInode(size_t index)
 {
   inode_bitmap_->unsetBit(index);
+  debug(M_STORAGE_MANAGER, "freeInode: Inode %d freed\n", index);
 }
 
 void MinixStorageManager::flush(MinixFSSuperblock *superblock)
 {
+  debug(M_STORAGE_MANAGER, "flush: starting flushing\n");
   Buffer* bm_buffer = new Buffer((num_inode_bm_blocks_ + num_zone_bm_blocks_) * BLOCK_SIZE);
   uint32 num_inodes = inode_bitmap_->getSize();
   uint32 i_byte = 0;
@@ -164,6 +172,7 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
   zone_bitmap_->bmprint();
   bm_buffer->print();
   superblock->writeBlocks(2,num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer);
+  debug(M_STORAGE_MANAGER, "flush: flushing finished\n");
 }
 
 void MinixStorageManager::printBitmap()

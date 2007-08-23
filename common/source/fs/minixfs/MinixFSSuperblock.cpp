@@ -282,7 +282,7 @@ void MinixFSSuperblock::delete_inode(Inode* inode)
   {
     storage_manager_->freeZone(minix_inode->i_zones_->getZone(index));
   }
-  storage_manager_->freeInode(i_num_ - 1);
+  storage_manager_->freeInode(minix_inode->i_num_ - 1);
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   Buffer *buffer = new Buffer (INODE_SIZE);

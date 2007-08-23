@@ -315,26 +315,29 @@ class MinixTestingThread : public Thread
 //       kprintfd("\n> list /\n");
 //       vfs_syscall.readdir("/");
 //       
-//       kprintfd("\n> calling mkdir: /minix\n");
-//       int32 mkdir_ret = vfs_syscall.mkdir("/minix", 2);
-//       kprintfd("\n> mkdir returned <%d>\n",mkdir_ret);
+      kprintfd("\n> calling mkdir: /minix\n");
+      int32 mkdir_ret = vfs_syscall.mkdir("/minix", 2);
+      kprintfd("\n> mkdir returned <%d>\n",mkdir_ret);
 // 
       kprintfd("\n> calling mount: idec, /minix, minixfs\n");
       int32 mount_ret = vfs_syscall.mount("idec","/minix", "minixfs",0);
       kprintfd("\n> mount returned <%d>\n",mount_ret);
       
       kprintfd("\n> chdir tests\n");
-      int32 chdir_ret = vfs_syscall.chdir("tests");
+      int32 chdir_ret = vfs_syscall.chdir("/minix/tests");
       kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
       
-      UserThread *user_thread = new UserThread("stdin-test.sweb");
+      MinixUserThread *user_thread = new MinixUserThread("/minix/tests/stdin-test.sweb");
       user_thread->setFSInfo(getFSInfo());
       Scheduler::instance()->addNewThread( user_thread );
       
       
-      kprintfd("\n> calling umount: /minix\n");
-      int32 umount_ret = vfs_syscall.umount("/minix",0);
-      kprintfd("\n> umount returned <%d>\n",umount_ret);
+      Scheduler::instance()->yield();  
+      
+      
+//       kprintfd("\n> calling umount: /minix\n");
+//       int32 umount_ret = vfs_syscall.umount("/minix",0);
+//       kprintfd("\n> umount returned <%d>\n",umount_ret);
       
       
 // 

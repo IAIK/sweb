@@ -182,6 +182,9 @@ class Inode
   File* getFirstFile() { return i_files_.at(0); }
   
   uint32 getNumOpenedFile() { return i_files_.getLength(); }
+  
+  uint32 getSize() { return i_size_; }
+  
 };
 
 

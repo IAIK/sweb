@@ -553,6 +553,8 @@
 #include "fs/PseudoFS.h"
 #include "fs/fs_tests.h"
 
+#include "fs/fs_global.h"
+
 
 extern void* kernel_end_address;
 
@@ -598,6 +600,51 @@ class UserThread : public Thread
 private:
   bool run_me_;
   uint32 terminal_number_;
+};
+
+class MinixUserThread : public Thread
+{
+  public:
+    MinixUserThread(char *minixfs_filename, uint32 terminal_number=0)
+    {
+      name_= minixfs_filename;
+      uint32 fd = vfs_syscall.open(minixfs_filename,0);
+      uint32 file_size = vfs_syscall.getFileSize(fd);
+      char *elf_data = new char[file_size];
+      
+      if (vfs_syscall.read(fd,elf_data,file_size))
+      {
+        loader_= new Loader((uint8 *)elf_data,this);
+        loader_->loadExecutableAndInitProcess();
+        run_me_=true;
+        terminal_number_=terminal_number;
+      }
+      else
+      {
+        run_me_=false;
+      }
+      kprintf("UserThread::ctor: Done loading %s\n",minixfs_filename);
+    }
+
+    virtual void Run()
+    {
+      if (run_me_)
+        for(;;)
+      {
+        if (main_console->getTerminal(terminal_number_))
+          this->setTerminal(main_console->getTerminal(terminal_number_));          
+        kprintf("UserThread:Run: %x %s Going to user, expect page fault\n",this,this->getName());
+        this->switch_to_userspace_ = 1;
+        Scheduler::instance()->yield();
+        //should not reach
+      }
+      else
+        currentThread->kill();
+    }
+
+  private:
+    bool run_me_;
+    uint32 terminal_number_;
 };
 
 #include "TestingThreads.h"
