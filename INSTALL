@@ -9,3 +9,4 @@ Requirements:
   Ubuntu: apt-get install bochs-x
   (change bochsrc as appropriate)
 * Mercurial (aka: "hg") 
+* Basic Shell Commands like: test, wc, grep, awk, make, ...
