@@ -254,7 +254,7 @@ info:
 	echo -e "\nGCC:"
 	gcc --version
 	echo -e "\nMD5SUMS:"
-	md5sum Makefile images/SWEB-flat.vmdk.gz images/SWEB.vmdk images/ext2fs_grub_master.img images/menu.lst images/menu.lst.hda images/nvram images/ramfs images/sweb.vmx
+	md5sum Makefile images/*
 	echo -e "\nMAKE:"
 	$(MAKE) -v
 	echo -e "\nLIBEXT2:"
