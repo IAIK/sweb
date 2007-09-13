@@ -204,19 +204,49 @@ bochsgdb:
 	echo "Going to gdb bochs on port localhost:1234 " 
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
 
+.PHONY: prepare-system-ubuntu
+prepare-system-ubuntu:
+	$(info PREPARE-SYSTEM: you may have to manualy choose a libstdc++-dev)
+	$(info PREPARE-SYSTEM: running: sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev)
+	@echo 
+	sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev 
+
 .PHONY: submit info
 submit:
+ifneq ($(shell hg status -m -a -r -X images/ -X utils/ | wc -l),0)
+	$(warning )
+	$(warning WARNING: you have modified files in your working directory)
+	$(warning WARNING: are you sure you don't want to submit your latest changes ?)
+	$(warning WARNING: maybe you forgot "hg commit" ?)
+	$(warning )
+	
+endif
+ifneq ($(shell hg status -u | grep -i -E "(Makefile|\.c|\.cc|\.h|\.cpp|\.s|\.tcpp)$$" | wc -l),0)
+	$(warning )
+	$(warning WARNING: you have untracked source files in your working direcory !)
+	$(warning WARNING: are you sure you don't want to submit those ?)
+	$(warning WARNING: maybe you forgot "hg status" and then "hg add" ?)
+	$(warning )
+endif
+ifndef assignment
+	$(warning )
+	$(warning SYNATX: make submit assignment=<1od.2> group=<group number, upper case>)
+	$(warning )
+	$(error assignment not specified)
+endif
+ifndef group
+	$(warning )
+	$(warning SYNATX: make submit assignment=<1od.2> group=<group number, upper case>)
+	$(warning )
+	$(error group not specified)
+endif
 	#@$(MAKE) mrproper
-	#find -name "*~" -or -iname "*.bak" -or -iname "*.backup" -iname "*.swp" -or -iname "*.sav" -exec rm {} \;
-	@test -n "$(group)" || (echo -e "\n\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
-	@test -n "$(assignment)" || (echo -e "\n\nSyntax: make submit assignment=<1od.2> group=<group number, upper case>\n\n"; exit 1)
 	hg archive -r tip -t tbz2 -X "utils/" -X "images/" "IMA$(assignment)GR$(group).tar.bz2"
-	#tar cjf ../IMA$(assignment)GR$(group).tar.bz2 --exclude "CVS" --exclude "\.svn" --exclude "\./images" --exclude "\.[^/]*" --exclude "*.prj" ./
-	@echo -e "\n\n**********************************************"
+	@echo -e "\n**********************************************"
 	@echo "Created: ../IMA$(assignment)GR$(group).tar.bz2"
 	@echo "Please Test with: tar tjfv IMA$(assignment)GR$(group).tar.bz2 |less"
 	@echo "Make sure you didn't forget to 'hg add' new files !"
-	@echo -e "**********************************************\n\n"
+	@echo -e "**********************************************\n"
 
 info: 
 	echo -e "\nBOCHS:"	
