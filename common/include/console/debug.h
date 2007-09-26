@@ -8,6 +8,7 @@
 const uint32 MINIX             = 0x00010000 | OUTPUT_ENABLED;
 const uint32 M_STORAGE_MANAGER = 0x00010001;
 const uint32 M_INODE           = 0x00010002;
+const uint32 BD_MANAGER        = 0x00010003;
 
 #endif //DEBUG_H___
 
