@@ -1,3 +1,6 @@
+/**
+ * @file Thread.cpp
+ */
 
 #include "kernel/Thread.h"
 #include "ArchCommon.h"
@@ -11,18 +14,18 @@
 
 static void ThreadStartHack()
 {
-  currentThread->setTerminal(main_console->getActiveTerminal());
+  currentThread->setTerminal ( main_console->getActiveTerminal() );
   currentThread->Run();
   currentThread->kill();
-  //kprintfd("ThreadStartHack: Panic, thread youldn't be killed\n");
-  for(;;);
+  debug ( THREAD,"ThreadStartHack: Panic, thread youldn't be killed\n" );
+  for ( ;; );
 }
 
 Thread::Thread()
 {
-  //kprintfd("Thread::Thread: Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof(stack_));
+  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
 
-  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_,(pointer)&ThreadStartHack,getStackStartPointer());
+  ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
   user_arch_thread_info_=0;
   switch_to_userspace_ = 0;
   state_=Running;
@@ -34,16 +37,16 @@ Thread::Thread()
 
 Thread::~Thread()
 {
-  if (loader_)
+  if ( loader_ )
   {
-    //kprintfd("Thread::~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n");
+    debug ( THREAD,"~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
     loader_->cleanupUserspaceAddressSpace();
     delete loader_;
   }
-  //kprintfd("Thread::~Thread: freeing ThreadInfos\n");
-  ArchThreads::cleanupThreadInfos(user_arch_thread_info_); //yes that's safe
-  ArchThreads::cleanupThreadInfos(kernel_arch_thread_info_);
-  //kprintfd("Thread::~Thread: done\n");
+  debug ( THREAD,"~Thread: freeing ThreadInfos\n" );
+  ArchThreads::cleanupThreadInfos ( user_arch_thread_info_ ); //yes that's safe
+  ArchThreads::cleanupThreadInfos ( kernel_arch_thread_info_ );
+  debug ( THREAD,"~Thread: done\n" );
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return
@@ -51,8 +54,8 @@ void Thread::kill()
 {
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
-  //kprintfd("Thread::kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName());
-  if (currentThread == this)
+  debug ( THREAD,"kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName() );
+  if ( currentThread == this )
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
@@ -61,20 +64,20 @@ void Thread::kill()
 
 pointer Thread::getStackStartPointer()
 {
-  pointer stack = (pointer)stack_;
-  stack += sizeof(stack_) - sizeof(uint32);
+  pointer stack = ( pointer ) stack_;
+  stack += sizeof ( stack_ ) - sizeof ( uint32 );
   return stack;
 }
 
 Terminal *Thread::getTerminal()
 {
-  if (my_terminal_)
+  if ( my_terminal_ )
     return my_terminal_;
   else
-    return (main_console->getActiveTerminal());
+    return ( main_console->getActiveTerminal() );
 }
 
-void Thread::setTerminal(Terminal *my_term)
+void Thread::setTerminal ( Terminal *my_term )
 {
   my_terminal_=my_term;
 }
@@ -84,7 +87,7 @@ FileSystemInfo *Thread::getFSInfo()
   return fs_info_;
 }
 
-void Thread::setFSInfo(FileSystemInfo *fs_info)
+void Thread::setFSInfo ( FileSystemInfo *fs_info )
 {
   fs_info_ = fs_info;
 }

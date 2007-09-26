@@ -1,22 +1,12 @@
-//----------------------------------------------------------------------
-//  $Id: Console.cpp,v 1.3 2005/09/15 17:51:13 nelles Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: Console.cpp,v $
-//  Revision 1.2  2005/07/24 17:02:59  nomenquis
-//  lots of changes for new console stuff
-//
-//  Revision 1.1  2005/04/23 15:58:32  nomenquis
-//  lots of new stuff
-//
-//----------------------------------------------------------------------
-
+/**
+ * @file Console.cpp
+ */
 #include "Console.h"
 #include "Terminal.h"
 
 Console* main_console=0;
 
-Console::Console(uint32): Thread()
+Console::Console ( uint32 ) : Thread()
 {
   name_ = "ConsoleThread";
 }
@@ -33,46 +23,43 @@ void Console::unLockConsoleForDrawing()
   console_lock_.release();
 }
 
-uint32 Console::getNumTerminals()const
+uint32 Console::getNumTerminals() const
 {
   return terminals_.size();
 }
 
 Terminal *Console::getActiveTerminal()
 {
-  // ok, this one is tricky, 
   set_active_lock_.acquire();
   Terminal * act = 0;
   console_lock_.acquire();
   act = terminals_[active_terminal_];
   console_lock_.release();
   set_active_lock_.release();
-  return act;  
+  return act;
 }
 
-Terminal *Console::getTerminal(uint32 term)
+Terminal *Console::getTerminal ( uint32 term )
 {
-  return terminals_[term];  
+  return terminals_[term];
 }
 
-void Console::setActiveTerminal(uint32 term)
+void Console::setActiveTerminal ( uint32 term )
 {
-  // this one is a bitch
-  // no, really
   // most likely this code will produce a dead lock
   set_active_lock_.acquire();
-  
+
   Terminal *t = terminals_[active_terminal_];
   t->unSetAsActiveTerminal();
-  
+
   t = terminals_[term];
   t->setAsActiveTerminal();
   active_terminal_ = term;
-  
+
   set_active_lock_.release();
 }
 
-void Console::Run( void )
+void Console::Run ( void )
 {
   // we do not run
 }

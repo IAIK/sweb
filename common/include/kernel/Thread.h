@@ -1,58 +1,6 @@
-//----------------------------------------------------------------------
-//  $Id: Thread.h,v 1.15 2005/09/16 15:47:41 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: Thread.h,v $
-//  Revision 1.14  2005/09/15 18:47:06  btittelbach
-//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
-//  IdleThread now uses hlt instead of yield.
-//
-//  Revision 1.13  2005/09/06 09:56:50  btittelbach
-//  +Thread Names
-//  +stdin Test Example
-//
-//  Revision 1.12  2005/07/21 19:08:41  btittelbach
-//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
-//  Threads können schlafen, Mutex benutzt das jetzt auch
-//  Jetzt muß nur der Mutex auch überall verwendet werden
-//
-//  Revision 1.11  2005/07/12 21:05:38  btittelbach
-//  Lustiges Spielen mit UserProgramm Terminierung
-//
-//  Revision 1.10  2005/06/14 18:22:37  btittelbach
-//  RaceCondition anfälliges LoadOnDemand implementiert,
-//  sollte optimalerweise nicht im InterruptKontext laufen
-//
-//  Revision 1.9  2005/05/31 17:29:16  nomenquis
-//  userspace
-//
-//  Revision 1.8  2005/05/25 08:27:49  nomenquis
-//  cr3 remapping finally really works now
-//
-//  Revision 1.7  2005/05/19 15:43:42  btittelbach
-//  Ans�tze f�r eine UserSpace Verwaltung
-//
-//  Revision 1.6  2005/05/16 20:37:51  nomenquis
-//  added ArchMemory for page table manip
-//
-//  Revision 1.5  2005/05/02 19:58:40  nelles
-//  made GetStackPointer in Thread public
-//  added panic.cpp
-//
-//  Revision 1.4  2005/04/27 08:58:16  nomenquis
-//  locks work!
-//  w00t !
-//
-//  Revision 1.3  2005/04/26 15:58:45  nomenquis
-//  threads, scheduler, happy day
-//
-//  Revision 1.2  2005/04/24 10:06:09  nomenquis
-//  commit to compile on different machine
-//
-//  Revision 1.1  2005/04/23 21:27:12  nomenquis
-//  commit for bernhard
-//
-//----------------------------------------------------------------------
+/**
+ * @file Thread.h
+ */
 
 #ifndef _THREAD_H_
 #define _THREAD_H_
@@ -66,61 +14,113 @@ class Thread;
 class ArchThreadInfo;
 class Loader;
 class Terminal;
-  
+
+/**
+ * @class Thread
+ * thread base class
+ */
 class Thread
 {
-friend class Scheduler;
-public:
-  
-  Thread();
-  virtual ~Thread();
-  void kill();
-  // runs whatever the user wants it to run;
+    friend class Scheduler;
+  public:
 
+    /**
+     * Constructor
+     * @return Thread instance
+     */
+    Thread();
 
-public:
-  
-  virtual void Run()=0;
+    /**
+     * Destructor
+     */
+    virtual ~Thread();
 
-  ArchThreadInfo *kernel_arch_thread_info_;
-  ArchThreadInfo *user_arch_thread_info_;
-  uint32 stack_[2048];
-  
-  uint32 switch_to_userspace_;
-public:  
-  pointer getStackStartPointer();
-  
-  Loader *loader_;
+    /**
+     * Marks the thread to be deleted by the scheduler.
+     */
+    void kill();
 
-  ThreadState state_;
+    /**
+     * runs whatever the user wants it to run;
+     */
+    virtual void Run() =0;
 
-  const char *getName()
-  {
-    if (name_)
-      return name_;
-    else
-      return "<UNNAMED THREAD>";
-  }
-  
-  Terminal *getTerminal();  
-  void setTerminal(Terminal *my_term);
-  
-  FileSystemInfo *getFSInfo();
-  void setFSInfo(FileSystemInfo *fs_info);
+    ArchThreadInfo *kernel_arch_thread_info_;
+    ArchThreadInfo *user_arch_thread_info_;
+    uint32 stack_[2048];
 
-private:
-  
-  Thread(Thread const &);
-  Thread &operator=(Thread const&);
+    uint32 switch_to_userspace_;
 
-  uint64 num_jiffies_;
-  uint32 pid_;
+    /**
+     * Returns the stack's start pointer.
+     * @return the pointer
+     */
+    pointer getStackStartPointer();
 
-  Terminal *my_terminal_;
-  FileSystemInfo *fs_info_;
+    Loader *loader_;
 
-protected:
-  char *name_;
+    ThreadState state_;
+
+    /**
+     * Returns the thread's name.
+     * @return the name
+     */
+    const char *getName()
+    {
+      if ( name_ )
+        return name_;
+      else
+        return "<UNNAMED THREAD>";
+    }
+
+    /**
+     * Returns thread's current terminal
+     * @return
+     */
+    Terminal *getTerminal();
+
+    /**
+     * Sets the thread's terminal
+     * @param my_term the new terminal
+     */
+    void setTerminal ( Terminal *my_term );
+
+    /**
+     * returns the threads file system info
+     * @return the threads file system info
+     */
+    FileSystemInfo *getFSInfo();
+
+    /**
+     * sets the threads file system info
+     * @param fs_info the filesystem info to set
+     */
+    void setFSInfo ( FileSystemInfo *fs_info );
+
+  private:
+
+    /**
+     * Copy Constructor (not implemented)
+     * @param src the object to copy
+     * @return the new object
+     */
+    Thread ( Thread const &src );
+
+    /**
+     * Operator = using Copy Constructor (not implemented)
+     * @param src the object to copy
+     * @return the new object
+     */
+    Thread &operator= ( Thread const &src );
+
+    uint64 num_jiffies_;
+    uint32 pid_;
+
+    Terminal *my_terminal_;
+    FileSystemInfo *fs_info_;
+
+  protected:
+    char *name_;
 };
 
 

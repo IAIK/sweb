@@ -1,55 +1,74 @@
-//----------------------------------------------------------------------
-//   $Id: kprintf.h,v 1.9 2005/09/20 08:05:07 btittelbach Exp $
-//----------------------------------------------------------------------
-//   $Log: kprintf.h,v $
-//   Revision 1.8  2005/09/16 15:47:41  btittelbach
-//   +even more KeyboardInput Bugfixes
-//   +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
-//   +Thread now remembers its Terminal
-//   +Syscalls are USEABLE !! :-) IF=1 !!
-//   +Syscalls can block now ! ;-) Waiting for Input...
-//   +more other Bugfixes
-//
-//   Revision 1.7  2005/09/13 15:00:51  btittelbach
-//   Prepare to be Synchronised...
-//   kprintf_nosleep works now
-//   scheduler/list still needs to be fixed
-//
-//   Revision 1.6  2005/07/27 10:04:26  btittelbach
-//   kprintf_nosleep and kprintfd_nosleep now works
-//   Output happens in dedicated Thread using VERY EVIL Mutex Hack
-//
-//   Revision 1.5  2005/07/24 17:02:59  nomenquis
-//   lots of changes for new console stuff
-//
-//   Revision 1.4  2005/06/05 07:59:35  nelles
-//   The kprintf_debug or kprintfd are finished
-//
-//   Revision 1.3  2005/05/10 17:03:44  btittelbach
-//   Kprintf Vorbereitung für Print auf Bochs Console
-//   böse .o im source gelöscht
-//
-//   Revision 1.2  2005/04/24 20:39:31  nomenquis
-//   cleanups
-//
-//   Revision 1.1  2005/04/24 13:33:39  btittelbach
-//   skeleton of a kprintf
-//
-//
-//----------------------------------------------------------------------
+/**
+ * @file kprintf.h
+ */
 
 #include "stdarg.h"
 #include "types.h"
 #include "debug.h"
 
-void kprintf(const char *fmt, ...);
-void kprintfd(const char *fmt, ...);
+/**
+ * Standard kprintf. Usable like any other printf.
+ * Outputs Text on the Console. It is intendet for
+ * Kernel Debugging and therefore avoids using "new".
+ * @param fmt Format String with standard Format Syntax
+ * @param args Possible multibple variable for printf as specified in Format String.
+ */
+void kprintf ( const char *fmt, ... );
 
-void kprintf_nosleep(const char *fmt, ...);
-void kprintfd_nosleep(const char *fmt, ...);
+/**
+ * Usable like any other printf.
+ * kprintfd is a shorthand for kprintf_debug
+ * Outputs Text on the Serial Debug Console. It is intendet for
+ * Kernel Debugging and therefore avoids using "new".
+ * @param fmt Format String with standard Format Syntax
+ * @param args Possible multibple variable for printf as specified in Format String.
+ */
+void kprintfd ( const char *fmt, ... );
 
-void kprint_buffer(char *buffer, uint32 size);
+/**
+ * Usable like any other printf.
+ * Outputs Text on the Console. It can safely be used even if
+ * interrupts are turned off, but doesn't guarantee that it prints at all.
+ * @param fmt Format String with standard Format Syntax
+ * @param args Possible multibple variable for printf as specified in Format String.
+ */
+void kprintf_nosleep ( const char *fmt, ... );
 
+/**
+ * Usable like any other printf.
+ * Outputs Text on the Serial Debug Console. It can safely be used even if
+ * interrupts are turned off, but doesn't guarantee that it prints at all.
+ * @param fmt Format String with standard Format Syntax
+ * @param args Possible multibple variable for printf as specified in Format String.
+ */
+void kprintfd_nosleep ( const char *fmt, ... );
+/**
+ * prints out a whole buffer with the given size to the Console.
+ * @param buffer the buffer to print
+ * @param size the buffer's size
+ */
+void kprint_buffer ( char *buffer, uint32 size );
+
+/**
+ * Initializes the nosleep functionality and starts the flushing thread.
+ */
 void kprintf_nosleep_init();
 
-void debug(uint32 flag, const char *fmt, ...);
+/**
+ * Displays the output only is the debug flag is set in debug.h
+ * needs a debug flag as first parameter otherwise usable like any other printf
+ * adds an additional prompt depending on the debug flag
+ * please add your custom debug flag here if needed
+ * @param flag the debug flag
+ * @param fmt Format String with standard Format Syntax
+ * @param args Possible multibple variable for printf as specified in Format String.
+ */
+void debug ( uint32 flag, const char *fmt, ... );
+
+/**
+ * returns true if the Debug output for the given flag is enabled
+ * @param flag the flag to check
+ * @return true if debug is enabled
+ */
+bool isDebugEnabled ( uint32 flage );
+
