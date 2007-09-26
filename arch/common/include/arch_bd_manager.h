@@ -1,27 +1,3 @@
-/********************************************************************
-*
-*    $Id: arch_bd_manager.h,v 1.2 2006/09/19 20:40:23 aniederl Exp $
-*    $Log: arch_bd_manager.h,v $
-*    Revision 1.1  2005/09/20 16:24:38  rotho
-*    moved arch_bd_manager.h to arch/common/include/
-*
-*    Revision 1.2  2005/09/18 20:46:52  nelles
-*
-*     Committing in .
-*
-*     Modified Files:
-*     	arch/x86/include/arch_bd_ata_driver.h
-*     	arch/x86/include/arch_bd_ide_driver.h
-*     	arch/x86/include/arch_bd_manager.h
-*     	arch/x86/include/arch_bd_request.h
-*     	arch/x86/include/arch_bd_virtual_device.h
-*     	arch/x86/source/arch_bd_ata_driver.cpp
-*     	arch/x86/source/arch_bd_ide_driver.cpp
-*     	arch/x86/source/arch_bd_manager.cpp
-*     	arch/x86/source/arch_bd_virtual_device.cpp
-*     ----------------------------------------------------------------------
-*
-********************************************************************/
 
 #ifndef _BD_DEVICE_MANAGER_
 #define _BD_DEVICE_MANAGER_
@@ -30,30 +6,76 @@
 #include "arch_bd_virtual_device.h"
 #include "util/List.h"
 
-//extern template class List;
 
 class BDManager
 {
 public:
+  
+  
+  /**
+   * Constructor
+   */
   BDManager();
+  
+  
+  /**
+   * Destructor
+   */
   ~BDManager();
   
-  static BDManager* getInstance        ( void );
+  /**
+   * returns singleton instance
+   * @return the block device manager instance
+   */
+  static BDManager* getInstance        ( );
   
-  void              doDeviceDetection  ( void );
+  /**
+   * detects all devices present
+   */
+  void              doDeviceDetection  ( );
   
+  /**
+   * adds the given device to the manager
+   * @param dev the device to add
+   */
   void              addVirtualDevice   ( BDVirtualDevice* dev );
   
+  /**
+   * returns the device with the given number
+   * @param dev_num the device number
+   * @return the device
+   */
   BDVirtualDevice*  getDeviceByNumber  ( uint32 dev_num  );
 
+  /**
+   * returns the device with the given name
+   * @param dev_name the device name
+   * @return the device
+   */
   BDVirtualDevice*  getDeviceByName    ( const char * dev_name );
 
-  uint32            getNumberOfDevices ( void );
+  /**
+   * returns the number of devices in the bd manager
+   * @return the number of devices
+   */
+  uint32            getNumberOfDevices ( );
   
-  void              addRequest         ( BDRequest * );
+  /**
+   * adds the given request to the device given in the request
+   * @param bdr the request
+   */
+  void              addRequest         ( BDRequest * bdr );
   
-  void              serviceIRQ         ( uint32  );
+  /**
+   * calls seviceIRQ on the device the irg with the given number is on
+   * after that probeIRQ is false
+   * @param irq_num the irq number
+   */
+  void              serviceIRQ         ( uint32 irq_num );
   
+  /**
+   * gets false when the irq is serviced
+   */
   bool              probeIRQ;
   
 private:

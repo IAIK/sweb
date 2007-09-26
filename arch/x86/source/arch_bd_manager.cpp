@@ -1,87 +1,9 @@
-/********************************************************************
-*
-*    $Id: arch_bd_manager.cpp,v 1.8 2006/10/13 11:38:12 btittelbach Exp $
-*    $Log: arch_bd_manager.cpp,v $
-*    Revision 1.7  2006/09/19 20:40:23  aniederl
-*    fixed a lot of warnings
-*
-*    Revision 1.6  2005/11/24 23:38:35  nelles
-*
-*
-*     Block devices fix.
-*
-*     Committing in .
-*
-*     Modified Files:
-*     	arch_bd_ata_driver.cpp arch_bd_ide_driver.cpp
-*     	arch_bd_manager.cpp arch_bd_virtual_device.cpp
-*
-*    Revision 1.5  2005/10/02 12:27:55  nelles
-*
-*     Committing in .
-*
-*    	DeviceFS patch. The devices can now be accessed through VFS.
-*
-*
-*
-*
-*     Modified Files:
-*     	Makefile arch/x86/include/arch_bd_ata_driver.h
-*     	arch/x86/include/arch_bd_driver.h
-*     	arch/x86/include/arch_bd_ide_driver.h
-*     	arch/x86/include/arch_bd_virtual_device.h
-*     	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
-*     	arch/x86/source/arch_bd_ide_driver.cpp
-*     	arch/x86/source/arch_bd_manager.cpp
-*     	arch/x86/source/arch_bd_virtual_device.cpp
-*     	arch/x86/source/arch_serial.cpp
-*     	arch/x86/source/arch_serial_manager.cpp
-*     	common/include/console/Terminal.h
-*     	common/include/drivers/serial.h common/include/fs/Inode.h
-*     	common/include/fs/Superblock.h common/include/fs/fs_global.h
-*     	common/include/kernel/TestingThreads.h
-*     	common/source/console/FrameBufferConsole.cpp
-*     	common/source/console/Makefile
-*     	common/source/console/Terminal.cpp
-*     	common/source/console/TextConsole.cpp
-*     	common/source/fs/Dentry.cpp common/source/fs/Makefile
-*     	common/source/fs/PathWalker.cpp
-*     	common/source/fs/Superblock.cpp
-*     	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
-*     	utils/bochs/bochsrc
-*     Added Files:
-*     	common/include/drivers/chardev.h
-*     	common/include/fs/devicefs/DeviceFSSuperblock.h
-*     	common/include/fs/devicefs/DeviceFSType.h
-*     	common/source/fs/devicefs/DeviceFSSuperblock.cpp
-*     	common/source/fs/devicefs/DeviceFSType.cpp
-*     	common/source/fs/devicefs/Makefile
-*
-*    Revision 1.4  2005/09/26 15:29:05  btittelbach
-*    check
-*
-*    Revision 1.3  2005/09/18 20:46:52  nelles
-*
-*     Committing in .
-*
-*     Modified Files:
-*     	arch/x86/include/arch_bd_ata_driver.h
-*     	arch/x86/include/arch_bd_ide_driver.h
-*     	arch/x86/include/arch_bd_manager.h
-*     	arch/x86/include/arch_bd_request.h
-*     	arch/x86/include/arch_bd_virtual_device.h
-*     	arch/x86/source/arch_bd_ata_driver.cpp
-*     	arch/x86/source/arch_bd_ide_driver.cpp
-*     	arch/x86/source/arch_bd_manager.cpp
-*     	arch/x86/source/arch_bd_virtual_device.cpp
-*     ----------------------------------------------------------------------
-*
-********************************************************************/
 
 #include "arch_bd_manager.h"
 #include "arch_bd_ide_driver.h"
-//#include "List.h"
+
 #include "kprintf.h"
+#include "debug.h"
 #include "string.h"
 
 BDManager * BDManager::getInstance()
@@ -98,10 +20,10 @@ BDManager::BDManager()
 
 void BDManager::doDeviceDetection( void )
 {
-  //kprintfd("BDManager::doDeviceDetection:Detecting IDE devices\n");
+  debug(BD_MANAGER, "doDeviceDetection: Detecting IDE devices\n");
   IDEDriver id;
     // insert other device detectors here
-  //kprintfd("BDManager::doDeviceDetection:Detection done\n");
+  debug(BD_MANAGER, "doDeviceDetection:Detection done\n");
 }
 
 void BDManager::addRequest( BDRequest* bdr )
@@ -114,15 +36,15 @@ void BDManager::addRequest( BDRequest* bdr )
 
 void BDManager::addVirtualDevice( BDVirtualDevice* dev )
 {
-  //kprintfd("BDManager::addVirtualDevice:Adding device\n");
+  debug(BD_MANAGER, "addVirtualDevice:Adding device\n");
   dev->setDeviceNumber(device_list_.size());
   device_list_.pushBack( dev );
-  //kprintfd("BDManager::addVirtualDevice:Device added\n");
+  debug(BD_MANAGER, "addVirtualDevice:Device added\n");
 }
 
 void BDManager::serviceIRQ( uint32 irq_num )
 {
-  //kprintfd("BDManager::serviceIRQ:Servicing IRQ\n");
+  debug(BD_MANAGER, "serviceIRQ:Servicing IRQ\n");
   probeIRQ = false;
   
   uint32 i = 0;
@@ -133,7 +55,7 @@ void BDManager::serviceIRQ( uint32 irq_num )
 	  return;
 	}
       
-  //kprintfd("BDManager::serviceIRQ:End servicing IRQ\n");
+  debug(BD_MANAGER, "serviceIRQ:End servicing IRQ\n");
 }
 
 BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )
@@ -143,12 +65,12 @@ BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  )
 
 BDVirtualDevice* BDManager::getDeviceByName( const char * dev_name )
 {
-  kprintfd("getDeviceByName: %s", dev_name);
+  debug(BD_MANAGER, "getDeviceByName: %s", dev_name);
   for ( uint32 index = 0; index < device_list_.size(); index++)
   {
     if(strcmp(device_list_[ index ]->getName(),dev_name) == 0)
     {
-      kprintfd("getDeviceByName%d: %s with id: %d",index, device_list_[ index ]->getName(), device_list_[ index ]->getDeviceNumber());
+      debug(BD_MANAGER, "getDeviceByName%d: %s with id: %d",index, device_list_[ index ]->getName(), device_list_[ index ]->getDeviceNumber());
       return device_list_[ index ];
     }
   }
