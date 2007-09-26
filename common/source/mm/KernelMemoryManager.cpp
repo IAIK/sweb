@@ -26,7 +26,7 @@ KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_ad
   first_=new ( ( void* ) start_address ) MallocSegment ( 0,0,end_address-start_address-sizeof ( MallocSegment ),false );
   last_=first_;
   use_spinlock_=false;
-  debug ( KMM,"KernelMemoryManager::ctor: bytes avaible: %d \n"end_address-start_address );
+  debug ( KMM,"KernelMemoryManager::ctor: bytes avaible: %d \n",end_address-start_address );
 }
 
 pointer KernelMemoryManager::allocateMemory ( size_t requested_size )

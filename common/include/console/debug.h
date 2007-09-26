@@ -29,10 +29,12 @@ const uint32 LOADER             = 0x00040002;
 const uint32 SCHEDULER          = 0x00040003;
 const uint32 SYSCALL            = 0x00040004;
 const uint32 MAIN               = 0x00040005;
+const uint32 THREAD             = 0x00040006;
 
 //group mm
 const uint32 MM                 = 0x00050000;
 const uint32 PM                 = 0x00050001;
+const uint32 KMM                 = 0x00050002;
 
 
 

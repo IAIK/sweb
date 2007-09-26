@@ -87,9 +87,8 @@ class PageManager
     /**
      * Copy Constructor
      * must not be implemented
-     * @param src not implemented
      */
-    PageManager ( PageManager const& src ) {};
+    PageManager ( PageManager const& ) {};
     //PageManager &operator=(PageManager const&){};
     static PageManager* instance_;
 
