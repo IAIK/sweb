@@ -1,44 +1,10 @@
-// Projectname: SWEB
-// Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Andreas Niederl
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-
-
 /**
- * CVS Log Info for $RCSfile: Queue.tcpp,v $
- *
- * $Id: Queue.tcpp,v 1.2 2005/09/12 23:29:06 aniederl Exp $
- * $Log: Queue.tcpp,v $
- * Revision 1.1  2005/05/26 01:08:37  aniederl
- * initial import of List, Queue and Stack data structures
+ * @file Queue.tcpp template definitions, included by List.h
  *
  */
-
-
-/**
- * template definitions, included by List.h
- *
- */
-
 
 #ifndef Swap_Function___
 #define Swap_Function___
-// FIXXXME: don't know where to put that function
 /**
  * swaps two elements
  * @param first the first element
@@ -55,11 +21,6 @@ void swap(ValueType &first, ValueType &second)
 #endif // Swap_Function___
 
 
-//----------------------------------------------------------------------
-/**
- * default constructor for class Queue
- * @param node_size the size of the queue nodes
- */
 template<typename ValueType>
 Queue<ValueType>::Queue()
 {
@@ -67,12 +28,6 @@ Queue<ValueType>::Queue()
 }
 
 
-//----------------------------------------------------------------------
-/**
- * copy constructor for class Queue
- * @param instance is a constant reference to an object of
- * type Queue
- */
 template<typename ValueType>
 Queue<ValueType>::Queue(const Queue<ValueType> &instance)
 {
@@ -80,10 +35,6 @@ Queue<ValueType>::Queue(const Queue<ValueType> &instance)
 }
 
 
-//----------------------------------------------------------------------
-/**
- * destructor for class Queue
- */
 template<typename ValueType>
 Queue<ValueType>::~Queue()
 {
@@ -91,12 +42,6 @@ Queue<ValueType>::~Queue()
 }
 
 
-//----------------------------------------------------------------------
-/**
- * = operator for class Queue
- * @param instance is a reference to a Queue object
- * @return is a reference to a Queue object
- */
 template<typename ValueType>
 Queue<ValueType>& Queue<ValueType>::operator = (
   const Queue<ValueType> &instance)
@@ -109,24 +54,13 @@ Queue<ValueType>& Queue<ValueType>::operator = (
 }
 
 
-//----------------------------------------------------------------------
-/**
- * returns the size (number of elements) of the queue
- * @return the size (number of elements) of the queue
- *
- */
 template<typename ValueType>
 typename Queue<ValueType>::size_type Queue<ValueType>::size() const
 {
   return list_->size();
 }
 
-//----------------------------------------------------------------------
-/**
- * checks, if the queue is empty
- * @return true, if the queue is empty
- *
- */
+
 template<typename ValueType>
 bool Queue<ValueType>::empty() const
 {
@@ -134,71 +68,41 @@ bool Queue<ValueType>::empty() const
 }
 
 
-//----------------------------------------------------------------------
-/**
- * returns the first element
- * @return the first element
- *
- */
 template<typename ValueType>
 typename Queue<ValueType>::reference Queue<ValueType>::front()
 {
   return list_->front();
 }
 
-//----------------------------------------------------------------------
-/**
- * returns the first element
- * @return the first element
- *
- */
+
 template<typename ValueType>
 typename Queue<ValueType>::const_reference Queue<ValueType>::front() const
 {
   return list_->front();
 }
 
-//----------------------------------------------------------------------
-/**
- * returns the last element
- * @return the last element
- *
- */
+
 template<typename ValueType>
 typename Queue<ValueType>::reference Queue<ValueType>::back()
 {
   return list_->back();
 }
 
-//----------------------------------------------------------------------
-/**
- * returns the last element
- * @return the last element
- *
- */
+
 template<typename ValueType>
 typename Queue<ValueType>::const_reference Queue<ValueType>::back() const
 {
   return list_->back();
 }
 
-//----------------------------------------------------------------------
-/**
- * inserts an element at the end of the queue
- * @param element the new element to insert
- *
- */
+
 template<typename ValueType>
 void Queue<ValueType>::push(const_reference element)
 {
   list_->pushBack(element);
 }
 
-//----------------------------------------------------------------------
-/**
- * removes the first element
- *
- */
+
 template<typename ValueType>
 void Queue<ValueType>::pop()
 {

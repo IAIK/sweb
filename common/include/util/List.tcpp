@@ -1,46 +1,17 @@
-// Projectname: SWEB
-// Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Andreas Niederl
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-
 /**
- * template definitions, included by List.h
- *
+ * @file List.tcpp template definitions, included by List.h
  */
 
 #include "assert.h"
 
 
-//----------------------------------------------------------------------
-/**
- * default constructor for class List
- * the node size will be set to a default value
- */
 template<typename ValueType>
 List<ValueType>::List() : BaseList<ValueType>::BaseList()
 {
 
 }
 
-//----------------------------------------------------------------------
-/**
- * destructor for class List
- */
+
 template<typename ValueType>
 List<ValueType>::~List()
 {
@@ -52,12 +23,7 @@ List<ValueType>::~List()
   }
 }
 
-//----------------------------------------------------------------------
-/**
- * inserts an element at the end
- * @param element the new element to insert
- *
- */
+
 template<typename ValueType>
 void List<ValueType>::pushBack(typename BaseList<ValueType>::const_reference element)
 {
@@ -75,12 +41,7 @@ void List<ValueType>::pushBack(typename BaseList<ValueType>::const_reference ele
   ++this->number_of_elements_;
 }
 
-//----------------------------------------------------------------------
-/**
- * inserts an element at the front
- * @param element the new element to insert
- *
- */
+
 template<typename ValueType>
 void List<ValueType>::pushFront(typename BaseList<ValueType>::const_reference element)
 {
@@ -98,14 +59,7 @@ void List<ValueType>::pushFront(typename BaseList<ValueType>::const_reference el
   ++this->number_of_elements_;
 }
 
-//----------------------------------------------------------------------
-/**
- * inserts an element at the given index
- * NOTE that the index MUST be smaller than or equal to the size of the list
- * @param index the index at which to insert the element
- * @param element the element to insert
- *
- */
+
 template<typename ValueType>
 void List<ValueType>::insert(typename BaseList<ValueType>::size_type index, typename BaseList<ValueType>::const_reference element)
 {
@@ -151,11 +105,7 @@ void List<ValueType>::insert(typename BaseList<ValueType>::size_type index, type
   ++this->number_of_elements_;
 }
 
-//----------------------------------------------------------------------
-/**
- * Removes the first element and adds it to the end.
- *
- */
+
 template<typename ValueType>
 void List<ValueType>::rotateBack()
 {
@@ -174,11 +124,7 @@ void List<ValueType>::rotateBack()
   this->first_node_ = first;
 }
 
-//----------------------------------------------------------------------
-/**
- * Removes the last element and adds it to the front.
- *
- */
+
 template<typename ValueType>
 void List<ValueType>::rotateFront()
 {

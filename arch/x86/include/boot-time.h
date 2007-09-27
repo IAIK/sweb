@@ -1,10 +1,5 @@
 /**
- * $Id: boot-time.h,v 1.2 2005/04/20 09:00:11 nomenquis Exp $
- *
- * $Log: boot-time.h,v $
- * Revision 1.1  2005/04/12 17:46:43  nomenquis
- * added lots of files
- *
+ * @file boot-time.h
  *
  */
 
@@ -17,18 +12,21 @@
 extern "C"
 {
 #endif
-  
+
   /**
    * This one is called from the bootup asm stuff
    * It's used to set up the initial paging for the 2gig kernel mapping
    */
   extern void initialiseBootTimePaging();
-  
+
+  /**
+   * zeros the kernel_page_directory_start entries
+   */
   extern void removeBootTimeIdentMapping();
-  
+
   /**
    * This one shall be called when you've already set up the correct and final
-   * kernel mapping. Only call this one once after you've set up a new and final
+   * kernel mapping. Only call this once, after you've set up a new and final
    * mapping
    */
   extern void freeBootTimePaging();

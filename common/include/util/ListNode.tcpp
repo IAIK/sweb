@@ -1,48 +1,14 @@
-// Projectname: SWEB
-// Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Andreas Niederl
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-
-
 /**
- * CVS Log Info for $RCSfile: ListNode.tcpp,v $
- *
- * $Id: ListNode.tcpp,v 1.2 2005/09/12 23:29:06 aniederl Exp $
- * $Log: ListNode.tcpp,v $
- * Revision 1.1  2005/05/26 01:08:37  aniederl
- * initial import of List, Queue and Stack data structures
+ * @file ListNode.tcpp template definitions, included by ListNode.h
  *
  */
 
-/**
- * template definitions, included by ListNode.h
- *
- */
-
-
-#ifndef Swap_Function___
-#define Swap_Function___
-// FIXXXME: don't know where to put that function
+#ifndef SWAP_FUNCTION__
+#define SWAP_FUNCTION__
 /**
  * swaps two elements
  * @param first the first element
  * @param second the second element
- *
  */
 template<typename ValueType>
 void swap(ValueType &first, ValueType &second)
@@ -51,14 +17,9 @@ void swap(ValueType &first, ValueType &second)
   first = second;
   second = tmp;
 }
-#endif // Swap_Function___
+#endif // SWAP_FUNCTION__
 
 
-//----------------------------------------------------------------------
-/**
- * default constructor for class ListNode
- *
- */
 template<typename ValueType>
 ListNode<ValueType>::ListNode() : next_node_(0),
                                   previous_node_(0)
@@ -66,12 +27,7 @@ ListNode<ValueType>::ListNode() : next_node_(0),
 
 }
 
-//----------------------------------------------------------------------
-/**
- * constructor for class ListNode
- * @param element The element for the new node
- *
- */
+
 template<typename ValueType>
 ListNode<ValueType>::ListNode(const_reference element) : element_(element),
                                                          next_node_(0),
@@ -80,12 +36,7 @@ ListNode<ValueType>::ListNode(const_reference element) : element_(element),
 
 }
 
-//----------------------------------------------------------------------
-/**
- * copy constructor for class ListNode
- * @param instance is a constant reference to an object of
- * type ListNode
- */
+
 template<typename ValueType>
 ListNode<ValueType>::ListNode(const ListNode<ValueType> &instance)
 {
@@ -95,10 +46,6 @@ ListNode<ValueType>::ListNode(const ListNode<ValueType> &instance)
 }
 
 
-//----------------------------------------------------------------------
-/**
- * destructor for class ListNode
- */
 template<typename ValueType>
 ListNode<ValueType>::~ListNode()
 {
@@ -106,12 +53,6 @@ ListNode<ValueType>::~ListNode()
 }
 
 
-//----------------------------------------------------------------------
-/**
- * = operator for class ListNode
- * @param instance is a reference to a ListNode object
- * @return is a reference to a ListNode object
- */
 template<typename ValueType>
 ListNode<ValueType>& ListNode<ValueType>::operator = (
   const ListNode<ValueType> &instance)
@@ -125,72 +66,42 @@ ListNode<ValueType>& ListNode<ValueType>::operator = (
   return (*this);
 }
 
-//----------------------------------------------------------------------
-/**
- * checks if the next node exists
- * @return true if the next node exists
- *
- */
+
 template<typename ValueType>
 bool ListNode<ValueType>::hasNextNode() const
 {
   return (next_node_ != 0);
 }
 
-//----------------------------------------------------------------------
-/**
- * checks if the previous node exists
- * @return true if the previous node exists
- *
- */
+
 template<typename ValueType>
 bool ListNode<ValueType>::hasPreviousNode() const
 {
   return (previous_node_ != 0);
 }
 
-//----------------------------------------------------------------------
-/**
- * returns the next node
- * @return the next node
- *
- */
+
 template<typename ValueType>
 ListNode<ValueType> *ListNode<ValueType>::getNextNode() const
 {
   return next_node_;
 }
 
-//----------------------------------------------------------------------
-/**
- * returns the previous node
- * @return the previous node
- *
- */
+
 template<typename ValueType>
 ListNode<ValueType> *ListNode<ValueType>::getPreviousNode() const
 {
   return previous_node_;
 }
 
-//----------------------------------------------------------------------
-/**
- * sets the next node
- * @param next_node the next node
- *
- */
+
 template<typename ValueType>
 void ListNode<ValueType>::setNextNode(ListNode<ValueType> *next_node)
 {
   next_node_ = next_node;
 }
 
-//----------------------------------------------------------------------
-/**
- * sets the previous node
- * @param previous_node the previous node
- *
- */
+
 template<typename ValueType>
 void ListNode<ValueType>::setPreviousNode(ListNode<ValueType> *previous_node)
 {
@@ -198,24 +109,13 @@ void ListNode<ValueType>::setPreviousNode(ListNode<ValueType> *previous_node)
 }
 
 
-//----------------------------------------------------------------------
-/**
- * returns a reference to the node element
- * @return a reference to the node element
- *
- */
 template<typename ValueType>
 typename ListNode<ValueType>::reference ListNode<ValueType>::getElement()
 {
   return element_;
 }
 
-//----------------------------------------------------------------------
-/**
- * returns a const reference to the node element
- * @return a const reference to the node element
- *
- */
+
 template<typename ValueType>
 typename ListNode<ValueType>::const_reference ListNode<ValueType>::getElement() const
 {
@@ -223,12 +123,6 @@ typename ListNode<ValueType>::const_reference ListNode<ValueType>::getElement() 
 }
 
 
-//----------------------------------------------------------------------
-/**
- * sets the element of the node
- * @param element The element to set
- *
- */
 template<typename ValueType>
 void ListNode<ValueType>::setElement(const_reference element)
 {

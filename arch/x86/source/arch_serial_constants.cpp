@@ -1,8 +1,10 @@
+/**
+ * @file arch_serial_constants.cpp
+ *
+ */
+ 
 #include "arch_serial.h"
 
-///////////////////////////////////////////////////////////////////////////
-/// Constants
-///////////////////////////////////////////////////////////////////////////
 
 uint32 SC::IER = 1;
 uint32 SC::IIR = 2;
@@ -17,6 +19,3 @@ uint32 SC::MAX_ARCH_PORTS = 4;
 uint32 SC::UART_16650A = 2;
 uint32 SC::UART_16650 = 1;
 uint32 SC::UART_OLD = 0;
-
-
-

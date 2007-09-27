@@ -1,3 +1,7 @@
+/**
+ * @file Map.h
+ */
+
 #ifndef MAP_H___
 #define MAP_H___
 
@@ -11,195 +15,174 @@ typedef unsigned int uint32;
 #include "Pair.h"
 
 /**
- * class Map provides a implementation of a map container
- *
+ * @class Map provides a implementation of a map container
  */
-
 template<typename KeyType, typename ValueType>
 class Map
 {
- public:
+  public:
 
-  typedef uint32 size_type;
-
-
-  typedef KeyType key_type;
-
-  typedef KeyType* key_pointer;
-
-  typedef KeyType& key_reference;
-
-  typedef const KeyType& key_const_reference;
+    typedef uint32 size_type;
 
 
-  typedef ValueType value_type;
+    typedef KeyType key_type;
 
-  typedef ValueType* value_pointer;
+    typedef KeyType* key_pointer;
 
-  typedef ValueType& value_reference;
+    typedef KeyType& key_reference;
 
-  typedef const ValueType& value_const_reference;
-
-
-  typedef Pair<KeyType, ValueType> pair_value_type;
-
-  typedef Pair<KeyType, ValueType>* pair_pointer;
-
-  typedef Pair<KeyType, ValueType>& pair_reference;
-
-  typedef const Pair<KeyType, ValueType>& pair_const_reference;
+    typedef const KeyType& key_const_reference;
 
 
- protected:
+    typedef ValueType value_type;
+
+    typedef ValueType* value_pointer;
+
+    typedef ValueType& value_reference;
+
+    typedef const ValueType& value_const_reference;
 
 
-  /**
-   * pointer to the first node
-   *
-   */
-  ListNode< pair_value_type > *first_node_;
+    typedef Pair<KeyType, ValueType> pair_value_type;
 
-  /**
-   * pointer to the last node
-   *
-   */
-  ListNode< pair_value_type > *last_node_;
+    typedef Pair<KeyType, ValueType>* pair_pointer;
 
-  /**
-   * the number of elements contained in the list
-   *
-   */
-  size_type number_of_elements_;
+    typedef Pair<KeyType, ValueType>& pair_reference;
+
+    typedef const Pair<KeyType, ValueType>& pair_const_reference;
 
 
- public:
-  /**
-   * default constructor for class Map
-   * the node size will be set to a default value
-   */
-  Map();
-
-  /**
-   * destructor for class Map
-   */
-  virtual ~Map();
+  protected:
 
 
-  /**
-   * copy constructor for class Map
-   * @param instance is a constant reference to an object of
-   * type Map
-   */
-  Map(const Map<KeyType, ValueType> &instance);
+    /**
+     * pointer to the first node
+     */
+    ListNode< pair_value_type > *first_node_;
 
-  /**
-   * = operator for class Map
-   * @param instance is a reference to a Map object
-   * @return is a reference to a Map object
-   */
-  virtual Map<KeyType, ValueType>& operator = (const Map<KeyType, ValueType> &instance);
+    /**
+     * pointer to the last node
+     */
+    ListNode< pair_value_type > *last_node_;
+
+    /**
+     * the number of elements contained in the list
+     */
+    size_type number_of_elements_;
 
 
-  /**
-   * returns the size (number of elements) of the map
-   * @return the size (number of elements) of the map
-   *
-   */
-  size_type size() const;
+  public:
+    /**
+     * default constructor for class Map
+     * the node size will be set to a default value
+     */
+    Map();
 
-  /**
-   * checks, if the map is empty
-   * @return true, if the map is empty
-   *
-   */
-  bool empty() const;
+    /**
+     * destructor for class Map
+     */
+    virtual ~Map();
 
-  /**
-   * returns a reference to the element pair at the given index
-   * @param index The index of the searched element pair
-   * @return the element pair at the given index
-   *
-   */
-  pair_reference operator[](size_type index);
+    /**
+     * copy constructor for class Map
+     * @param instance is a constant reference to an object of
+     * type Map
+     */
+    Map ( const Map<KeyType, ValueType> &instance );
 
-  /**
-   * returns a const reference to the element pair at the given index
-   * @param index The index of the searched element pair
-   * @return the element pair at the given index
-   *
-   */
-  pair_const_reference operator[](size_type index) const;
+    /**
+     * = operator for class Map
+     * @param instance is a reference to a Map object
+     * @return is a reference to a Map object
+     */
+    virtual Map<KeyType, ValueType>& operator = ( const Map<KeyType, ValueType> &instance );
 
-  /**
-   * adds the given element to the end of the Map
-   * @param element a Pair with the Map's types
-   *
-   */
-  void pushBack(pair_const_reference element);
+    /**
+     * returns the size (number of elements) of the map
+     * @return the size (number of elements) of the map
+     */
+    size_type size() const;
 
-  /**
-   * adds the given element to the end of the Map
-   * @param key_value the key to add
-   * @param value_value the value to add
-   *
-   */
-  void pushBack(KeyType key, ValueType value);
+    /**
+     * checks, if the map is empty
+     * @return true, if the map is empty
+     */
+    bool empty() const;
 
-  /**
-   * returns the index of the element with the given key
-   * or size if not found
-   * @param key the key to look for
-   * @return the index of the element
-   *
-   */
-  size_type find(KeyType key);
+    /**
+     * returns a reference to the element pair at the given index
+     * @param index The index of the searched element pair
+     * @return the element pair at the given index
+     */
+    pair_reference operator[] ( size_type index );
 
-  /**
-   * returns the Pair with the given key or a null-pointer if not found
-   * @param key the key
-   * @return the Pair looked for
-   *
-   */
-  pair_pointer get(KeyType key);
+    /**
+     * returns a const reference to the element pair at the given index
+     * @param index The index of the searched element pair
+     * @return the element pair at the given index
+     */
+    pair_const_reference operator[] ( size_type index ) const;
 
-  /**
-   * returns the key at the given index
-   * @param index the index
-   * @return the key
-   *
-   */
-  KeyType getKey(size_type index);
+    /**
+     * adds the given element to the end of the Map
+     * @param element a Pair with the Map's types
+     */
+    void pushBack ( pair_const_reference element );
 
-  /**
-   * returns the value at the given index
-   * @param index the index
-   * @return the value
-   *
-   */
-  ValueType getValue(size_type index);
+    /**
+     * adds the given element to the end of the Map
+     * @param key_value the key to add
+     * @param value_value the value to add
+     */
+    void pushBack ( KeyType key, ValueType value );
 
-  /**
-   * removes an element by index
-   * @param index the index
-   *
-   */
-  void remove(size_type index);
+    /**
+     * returns the index of the element with the given key
+     * or size if not found
+     * @param key the key to look for
+     * @return the index of the element
+     */
+    size_type find ( KeyType key );
 
-  /**
-   * removes an element by key
-   * @param key the key
-   *
-   */
-  void removeByKey(KeyType key);
+    /**
+     * returns the Pair with the given key or a null-pointer if not found
+     * @param key the key
+     * @return the Pair looked for
+     */
+    pair_pointer get ( KeyType key );
 
-  /**
-   * cleares the map
-   *
-   */
-  void clear();
+    /**
+     * returns the key at the given index
+     * @param index the index
+     * @return the key
+     */
+    KeyType getKey ( size_type index );
+
+    /**
+     * returns the value at the given index
+     * @param index the index
+     * @return the value
+     */
+    ValueType getValue ( size_type index );
+
+    /**
+     * removes an element by index
+     * @param index the index
+     */
+    void remove ( size_type index );
+
+    /**
+     * removes an element by key
+     * @param key the key
+     */
+    void removeByKey ( KeyType key );
+
+    /**
+     * cleares the map
+     */
+    void clear();
 
 };
-
 
 #include "Map.tcpp"
 

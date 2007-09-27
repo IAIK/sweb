@@ -1,4 +1,8 @@
-
+/**
+ * @file arch_bd_manager.cpp
+ *
+ */
+ 
 #include "arch_bd_manager.h"
 #include "arch_bd_ide_driver.h"
 
@@ -6,11 +10,10 @@
 #include "debug.h"
 #include "string.h"
 
-BDManager * BDManager::getInstance()
+BDManager *BDManager::getInstance()
 {
   if( !instance_ )
     instance_ = new BDManager();
-    
   return instance_;
 };
 
@@ -22,7 +25,7 @@ void BDManager::doDeviceDetection( void )
 {
   debug(BD_MANAGER, "doDeviceDetection: Detecting IDE devices\n");
   IDEDriver id;
-    // insert other device detectors here
+  // insert other device detectors here
   debug(BD_MANAGER, "doDeviceDetection:Detection done\n");
 }
 
@@ -46,15 +49,15 @@ void BDManager::serviceIRQ( uint32 irq_num )
 {
   debug(BD_MANAGER, "serviceIRQ:Servicing IRQ\n");
   probeIRQ = false;
-  
+
   uint32 i = 0;
   for( i = 0; i < device_list_.size(); i++ )
     if( device_list_[i]->getDriver()->irq == irq_num )
-	{	
+    {
       device_list_[i]->getDriver()->serviceIRQ( );
-	  return;
-	}
-      
+      return;
+    }
+
   debug(BD_MANAGER, "serviceIRQ:End servicing IRQ\n");
 }
 
@@ -71,6 +74,7 @@ BDVirtualDevice* BDManager::getDeviceByName( const char * dev_name )
     if(strcmp(device_list_[ index ]->getName(),dev_name) == 0)
     {
       debug(BD_MANAGER, "getDeviceByName%d: %s with id: %d",index, device_list_[ index ]->getName(), device_list_[ index ]->getDeviceNumber());
+
       return device_list_[ index ];
     }
   }

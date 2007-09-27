@@ -34,7 +34,7 @@
 #include "arch_bd_manager.h"
 
 #include "fs/VirtualFileSystem.h"
-#include "fs/ramfs/RamFileSystemType.h"
+#include "fs/ramfs/RamFSType.h"
 #include "fs/devicefs/DeviceFSType.h"
 #include "fs/minixfs/MinixFSType.h"
 #include "console/TextConsole.h"

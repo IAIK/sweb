@@ -7,7 +7,7 @@
 
 #include "fs/PointList.h"
 #include "fs/Inode.h"
-#include "fs/ramfs/RamFsFile.h"
+#include "fs/ramfs/RamFSFile.h"
 #include "fs/devicefs/DeviceFSSuperblock.h"
 #include "fs/Dentry.h"
 #include "fs/Superblock.h"
@@ -150,7 +150,7 @@ class CharacterDevice : public Inode, public Thread
      */
     File* link ( uint32 flag )
     {
-      File* file = ( File* ) ( new RamFsFile ( this, i_dentry_, flag ) );
+      File* file = ( File* ) ( new RamFSFile ( this, i_dentry_, flag ) );
       i_files_.pushBack ( file );
       return file;
     }

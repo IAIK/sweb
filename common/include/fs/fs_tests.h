@@ -1,13 +1,13 @@
-// Projectname: SWEB
-// Simple operating system for educational purposes
+/**
+ * @file fs_test.h
+ */
 
 #ifndef FS_TESTS_H__
 #define FS_TESTS_H__
 
 class Terminal;
 
-void fsTests(Terminal *term);
-
+void fsTests ( Terminal *term );
 
 void testRegFS();
 void testMount();

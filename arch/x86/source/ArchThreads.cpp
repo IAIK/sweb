@@ -1,63 +1,8 @@
-//----------------------------------------------------------------------
-//  $Id: ArchThreads.cpp,v 1.14 2006/10/13 11:38:12 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: ArchThreads.cpp,v $
-//  Revision 1.13  2006/09/19 20:40:23  aniederl
-//  fixed a lot of warnings
-//
-//  Revision 1.12  2005/09/16 12:47:41  btittelbach
-//  Second PatchThursday:
-//  +KeyboardInput SyncStructure Rewrite
-//  +added RingBuffer
-//  +debugged FiFoDRBOSS (even though now obsolete)
-//  +improved FiFo
-//  +more debugging
-//  Added Files:
-//   	common/include/ipc/RingBuffer.h
-//
-//  Revision 1.11  2005/08/26 13:58:24  nomenquis
-//  finally even the syscall handler does that it is supposed to do
-//
-//  Revision 1.10  2005/07/26 17:45:25  nomenquis
-//  foobar
-//
-//  Revision 1.9  2005/07/21 19:08:40  btittelbach
-//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
-//  Threads können schlafen, Mutex benutzt das jetzt auch
-//  Jetzt muß nur der Mutex auch überall verwendet werden
-//
-//  Revision 1.8  2005/07/05 17:29:48  btittelbach
-//  new kprintf(d) Policy:
-//  [Class::]Function: before start of debug message
-//  Function can be abbreviated "ctor" if Constructor
-//  use kprintfd where possible
-//
-//  Revision 1.7  2005/06/14 18:22:37  btittelbach
-//  RaceCondition anfälliges LoadOnDemand implementiert,
-//  sollte optimalerweise nicht im InterruptKontext laufen
-//
-//  Revision 1.6  2005/05/31 17:29:16  nomenquis
-//  userspace
-//
-//  Revision 1.5  2005/05/25 08:27:48  nomenquis
-//  cr3 remapping finally really works now
-//
-//  Revision 1.4  2005/04/27 08:58:16  nomenquis
-//  locks work!
-//  w00t !
-//
-//  Revision 1.3  2005/04/26 15:58:45  nomenquis
-//  threads, scheduler, happy day
-//
-//  Revision 1.2  2005/04/26 10:23:54  nomenquis
-//  kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
-//
-//  Revision 1.1  2005/04/24 16:58:03  nomenquis
-//  ultra hack threading
-//
-//----------------------------------------------------------------------
-
+/**
+ * @file ArchThreads.cpp
+ *
+ */
+ 
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "kprintf.h"
@@ -94,13 +39,7 @@ typedef struct ArchThreadInfo
 
 void ArchThreads::initialise()
 {
-  // this _REALLY_ sucks, we have to create a thread info for the main kernel thread
-  // otherwise, on the very first irq we go kaboom.
-  
-//  currentThreadInfo = new ArchThreadInfo();
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
-  
-
 }
 
 extern "C" uint32 kernel_page_directory_start;
@@ -116,7 +55,7 @@ void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page
 uint32 ArchThreads::getPageDirectory(Thread *thread)
 {
   return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
-  //FIXXME: should be the same for now, have to return only one 
+  //TODO: should be the same for now, have to return only one
 }
 
 

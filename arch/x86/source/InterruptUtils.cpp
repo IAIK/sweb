@@ -1,311 +1,7 @@
-//----------------------------------------------------------------------
-//  $Id: InterruptUtils.cpp,v 1.50 2007/05/26 16:00:42 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: InterruptUtils.cpp,v $
-//  Revision 1.49  2007/01/11 13:36:11  btittelbach
-//  one of many more sanity checks to come
-//
-//  Revision 1.48  2006/10/13 11:38:12  btittelbach
-//  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
-//
-//  Revision 1.47  2005/11/20 21:18:08  nelles
-//
-//       Committing in .
-//
-//        Another block device update ... Interrupts are now functional fixed some
-//        8259 problems .. Reads and Writes tested  ....
-//
-//       Modified Files:
-//   	include/arch_bd_ata_driver.h include/arch_bd_request.h
-//   	include/arch_bd_virtual_device.h source/8259.cpp
-//   	source/ArchInterrupts.cpp source/InterruptUtils.cpp
-//   	source/arch_bd_ata_driver.cpp
-//   	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
-//
-//  Revision 1.46  2005/10/24 21:28:04  nelles
-//
-//   Fixed block devices. I think.
-//
-//   Committing in .
-//
-//   Modified Files:
-//
-//   	arch/x86/include/arch_bd_ata_driver.h
-//   	arch/x86/source/InterruptUtils.cpp
-//   	arch/x86/source/arch_bd_ata_driver.cpp
-//   	arch/x86/source/arch_bd_ide_driver.cpp
-//   	arch/xen/source/arch_bd_ide_driver.cpp
-//
-//   	common/source/kernel/SpinLock.cpp
-//   	common/source/kernel/Thread.cpp utils/bochs/bochsrc
-//
-//  Revision 1.45  2005/10/02 12:27:55  nelles
-//
-//   Committing in .
-//
-//  	DeviceFS patch. The devices can now be accessed through VFS.
-//
-//
-//
-//
-//   Modified Files:
-//   	Makefile arch/x86/include/arch_bd_ata_driver.h
-//   	arch/x86/include/arch_bd_driver.h
-//   	arch/x86/include/arch_bd_ide_driver.h
-//   	arch/x86/include/arch_bd_virtual_device.h
-//   	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
-//   	arch/x86/source/arch_bd_ide_driver.cpp
-//   	arch/x86/source/arch_bd_manager.cpp
-//   	arch/x86/source/arch_bd_virtual_device.cpp
-//   	arch/x86/source/arch_serial.cpp
-//   	arch/x86/source/arch_serial_manager.cpp
-//   	common/include/console/Terminal.h
-//   	common/include/drivers/serial.h common/include/fs/Inode.h
-//   	common/include/fs/Superblock.h common/include/fs/fs_global.h
-//   	common/include/kernel/TestingThreads.h
-//   	common/source/console/FrameBufferConsole.cpp
-//   	common/source/console/Makefile
-//   	common/source/console/Terminal.cpp
-//   	common/source/console/TextConsole.cpp
-//   	common/source/fs/Dentry.cpp common/source/fs/Makefile
-//   	common/source/fs/PathWalker.cpp
-//   	common/source/fs/Superblock.cpp
-//   	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
-//   	utils/bochs/bochsrc
-//   Added Files:
-//   	common/include/drivers/chardev.h
-//   	common/include/fs/devicefs/DeviceFSSuperblock.h
-//   	common/include/fs/devicefs/DeviceFSType.h
-//   	common/source/fs/devicefs/DeviceFSSuperblock.cpp
-//   	common/source/fs/devicefs/DeviceFSType.cpp
-//   	common/source/fs/devicefs/Makefile
-//
-//  Revision 1.44  2005/09/27 21:24:43  btittelbach
-//  +IF=1 in PageFaultHandler
-//  +Lock in PageManager
-//  +readline/gets Bugfix
-//  +pseudoshell bugfix
-//
-//  Revision 1.43  2005/09/26 14:00:43  btittelbach
-//  compilefix
-//
-//  Revision 1.42  2005/09/21 19:49:14  btittelbach
-//  PageManager now understands preallocated 4m pages
-//
-//  Revision 1.41  2005/09/21 17:01:12  nomenquis
-//  updates
-//
-//  Revision 1.40  2005/09/21 15:50:01  nomenquis
-//  added a heartbeat character for the text mode frambuffer
-//
-//  Revision 1.39  2005/09/20 08:05:07  btittelbach
-//  +kprintf flush fix: even though it worked fine before, now it works fine in theory as well ;->
-//  +Condition cleanup
-//  +FiFoDRBOSS now obsolete and removed
-//  +added disk.img that nelle forgot to check in
-//
-//  Revision 1.38  2005/09/18 20:25:05  nelles
-//
-//
-//  Block devices update.
-//  See BDRequest and BDManager on how to use this.
-//  Currently ATADriver is functional. The driver tries to detect if IRQ
-//  mode is available and adjusts the mode of operation. Currently PIO
-//  modes with IRQ or without it are supported.
-//
-//  TODO:
-//  - add block PIO mode to read or write multiple sectors within one IRQ
-//  - add DMA and UDMA mode :)
-//
-//
-//   Committing in .
-//
-//   Modified Files:
-//   	arch/common/include/ArchInterrupts.h
-//   	arch/x86/source/ArchInterrupts.cpp
-//   	arch/x86/source/InterruptUtils.cpp
-//   	common/include/kernel/TestingThreads.h
-//   	common/source/kernel/Makefile
-//   	common/source/kernel/Scheduler.cpp
-//   	common/source/kernel/main.cpp utils/bochs/bochsrc
-//   Added Files:
-//   	arch/x86/include/arch_bd_ata_driver.h
-//   	arch/x86/include/arch_bd_driver.h
-//   	arch/x86/include/arch_bd_ide_driver.h
-//   	arch/x86/include/arch_bd_io.h
-//  	arch/x86/include/arch_bd_manager.h
-//   	arch/x86/include/arch_bd_request.h
-//   	arch/x86/include/arch_bd_virtual_device.h
-//   	arch/x86/source/arch_bd_ata_driver.cpp
-//   	arch/x86/source/arch_bd_ide_driver.cpp
-//   	arch/x86/source/arch_bd_manager.cpp
-//  	arch/x86/source/arch_bd_virtual_device.cpp
-//
-//  Revision 1.37  2005/09/16 15:47:41  btittelbach
-//  +even more KeyboardInput Bugfixes
-//  +intruducing: kprint_buffer(..) (console write should never be used directly from anything with IF=0)
-//  +Thread now remembers its Terminal
-//  +Syscalls are USEABLE !! :-) IF=1 !!
-//  +Syscalls can block now ! ;-) Waiting for Input...
-//  +more other Bugfixes
-//
-//  Revision 1.36  2005/09/16 00:54:13  btittelbach
-//  Small not-so-good Sync-Fix that works before Total-Syncstructure-Rewrite
-//
-//  Revision 1.35  2005/09/15 18:47:06  btittelbach
-//  FiFoDRBOSS should only be used in interruptHandler Kontext, for everything else use FiFo
-//  IdleThread now uses hlt instead of yield.
-//
-//  Revision 1.34  2005/09/15 17:51:13  nelles
-//
-//
-//   Massive update. Like PatchThursday.
-//   Keyboard is now available.
-//   Each Terminal has a buffer attached to it and threads should read the buffer
-//   of the attached terminal. See TestingThreads.h in common/include/kernel for
-//   example of how to do it.
-//   Switching of the terminals is done with the SHFT+F-keys. (CTRL+Fkeys gets
-//   eaten by X on my machine and does not reach Bochs).
-//   Lot of smaller modifications, to FiFo, Mutex etc.
-//
-//   Committing in .
-//
-//   Modified Files:
-//   	arch/x86/source/InterruptUtils.cpp
-//   	common/include/console/Console.h
-//   	common/include/console/Terminal.h
-//   	common/include/console/TextConsole.h common/include/ipc/FiFo.h
-//   	common/include/ipc/FiFoDRBOSS.h common/include/kernel/Mutex.h
-//   	common/source/console/Console.cpp
-//   	common/source/console/Makefile
-//   	common/source/console/Terminal.cpp
-//   	common/source/console/TextConsole.cpp
-//   	common/source/kernel/Condition.cpp
-//   	common/source/kernel/Mutex.cpp
-//   	common/source/kernel/Scheduler.cpp
-//   	common/source/kernel/Thread.cpp common/source/kernel/main.cpp
-//   Added Files:
-//   	arch/x86/include/arch_keyboard_manager.h
-//   	arch/x86/source/arch_keyboard_manager.cpp
-//
-//  Revision 1.33  2005/09/13 15:00:51  btittelbach
-//  Prepare to be Synchronised...
-//  kprintf_nosleep works now
-//  scheduler/list still needs to be fixed
-//
-//  Revision 1.32  2005/09/07 00:33:52  btittelbach
-//  +More Bugfixes
-//  +Character Queue (FiFoDRBOSS) from irq with Synchronisation that actually works
-//
-//  Revision 1.31  2005/09/06 09:56:50  btittelbach
-//  +Thread Names
-//  +stdin Test Example
-//
-//  Revision 1.30  2005/09/05 23:01:24  btittelbach
-//  Keyboard Input Handler
-//  + several Bugfixes
-//
-//  Revision 1.29  2005/08/26 13:58:24  nomenquis
-//  finally even the syscall handler does that it is supposed to do
-//
-//  Revision 1.28  2005/08/26 12:01:25  nomenquis
-//  pagefaults in userspace now should really really really work
-//
-//  Revision 1.27  2005/08/19 21:14:15  btittelbach
-//  Debugging the Debugging Code
-//
-//  Revision 1.26  2005/08/07 16:47:24  btittelbach
-//  More nice synchronisation Experiments..
-//  RaceCondition/kprintf_nosleep related ?/infinite memory write loop Error still not found
-//  kprintfd doesn't use a buffer anymore, as output_bochs blocks anyhow, should propably use some arch-specific interface instead
-//
-//  Revision 1.25  2005/08/04 20:47:43  btittelbach
-//  Where is the Bug, maybe I will see something tomorrow that I didn't see today
-//
-//  Revision 1.24  2005/08/04 17:49:21  btittelbach
-//  Improved (documented) arch_PageFaultHandler
-//  Solution to Userspace Bug still missing....
-//
-//  Revision 1.23  2005/08/03 11:56:56  btittelbach
-//  Evil PageFaultBug now gets bigger... (but hopefully better to debug)
-//
-//  Revision 1.22  2005/08/02 19:47:54  btittelbach
-//  Syscalls: there is some very evil bug still hidden here, what did I forget ?
-//
-//  Revision 1.21  2005/07/26 17:45:25  nomenquis
-//  foobar
-//
-//  Revision 1.20  2005/07/24 17:02:59  nomenquis
-//  lots of changes for new console stuff
-//
-//  Revision 1.19  2005/07/21 19:08:40  btittelbach
-//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
-//  Threads können schlafen, Mutex benutzt das jetzt auch
-//  Jetzt muß nur der Mutex auch überall verwendet werden
-//
-//  Revision 1.18  2005/07/21 11:50:06  btittelbach
-//  Basic Syscall
-//
-//  Revision 1.17  2005/07/12 21:05:38  btittelbach
-//  Lustiges Spielen mit UserProgramm Terminierung
-//
-//  Revision 1.16  2005/07/06 13:29:37  btittelbach
-//  testing
-//
-//  Revision 1.15  2005/07/05 20:22:56  btittelbach
-//  some changes
-//
-//  Revision 1.14  2005/07/05 17:29:48  btittelbach
-//  new kprintf(d) Policy:
-//  [Class::]Function: before start of debug message
-//  Function can be abbreviated "ctor" if Constructor
-//  use kprintfd where possible
-//
-//  Revision 1.13  2005/06/14 18:51:47  btittelbach
-//  afterthought page fault handling
-//
-//  Revision 1.12  2005/06/14 18:22:37  btittelbach
-//  RaceCondition anfälliges LoadOnDemand implementiert,
-//  sollte optimalerweise nicht im InterruptKontext laufen
-//
-//  Revision 1.11  2005/06/14 15:49:11  nomenquis
-//  ohhh hilfe
-//
-//  Revision 1.10  2005/06/14 13:54:55  nomenquis
-//  foobarpratz
-//
-//  Revision 1.9  2005/06/04 19:41:26  nelles
-//
-//  Serial ports now fully fuctional and tested ....
-//
-//  Revision 1.8  2005/05/31 17:29:16  nomenquis
-//  userspace
-//
-//  Revision 1.7  2005/05/25 08:27:48  nomenquis
-//  cr3 remapping finally really works now
-//
-//  Revision 1.6  2005/04/27 09:19:20  nomenquis
-//  only pack whats needed
-//
-//  Revision 1.5  2005/04/26 15:58:45  nomenquis
-//  threads, scheduler, happy day
-//
-//  Revision 1.4  2005/04/26 13:34:23  nomenquis
-//  whatever
-//
-//  Revision 1.3  2005/04/25 21:15:41  nomenquis
-//  lotsa changes
-//
-//  Revision 1.2  2005/04/24 20:39:31  nomenquis
-//  cleanups
-//
-//  Revision 1.1  2005/04/24 16:58:04  nomenquis
-//  ultra hack threading
-//
-//----------------------------------------------------------------------
-
-
+/**
+ * @file InterruptUtils.cpp
+ *
+ */
 
 #include "InterruptUtils.h"
 #include "new.h"
@@ -338,38 +34,37 @@
 
 // thanks mona
 typedef struct {
-    uint16 offsetL;  /*!< 0-15bit of offset address */
-    uint16 selector; /*!< selector address          */
-    uint8 unused;   /*!< unused                    */
-    uint8 type;     /*!< type                      */
-    uint16 offsetH;  /*!< 16-32bit of offset address */
+  uint16 offsetL;  // 0-15bit of offset address
+  uint16 selector; // selector address
+  uint8 unused;    // unused
+  uint8 type;      // type
+  uint16 offsetH;  // 16-32bit of offset address
 }__attribute__((__packed__)) GateDesc;
 
 
 void InterruptUtils::initialise()
 {
   uint32 i;
-  
-  // ok, allocate some memory for our neat lil' handlers
+
+  // allocate some memory for our handlers
   GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
-  
+
   for (i=0;i<NUM_INTERRUPT_HANDLERS;++i)
   {
     interrupt_gates[i].offsetL  = ((uint32)(handlers[i].handler)) & 0x0000FFFF;
     interrupt_gates[i].offsetH  = (((uint32)(handlers[i].handler)) & 0xFFFF0000) >> 16;
-#warning FIXME, THIS IS REALLY BAD VOODOO !
+    //warning FIXME, THIS IS REALLY BAD VOODOO !
     interrupt_gates[i].selector = 8*3;
-    interrupt_gates[i].type     = handlers[i].number == 0x80 ? 0xEE : 0x8E; /* System call use 0x80 */
+    // System call use 0x80
+    interrupt_gates[i].type     = handlers[i].number == 0x80 ? 0xEE : 0x8E;
     interrupt_gates[i].unused   = 0x00;
   }
-
 
   IDTR *idtr = new IDTR();
   idtr->base = (uint32)interrupt_gates;
   idtr->limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS -1;
 
   lidt(idtr);
-  
 }
 
 void InterruptUtils::lidt(IDTR *idtr)
@@ -377,15 +72,9 @@ void InterruptUtils::lidt(IDTR *idtr)
   asm volatile("lidt (%0) ": :"q" (idtr));
 }
 
-//~ void InterruptUtils::enableInterrupts()
-//~ {
-  
-//~ }
+// void InterruptUtils::enableInterrupts(){}
+// void InterruptUtils::disableInterrupts(){}
 
-//~ void InterruptUtils::disableInterrupts()
-//~ {
-  
-//~ }
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
   extern "C" void dummyHandler_##x () \
   {\
@@ -669,7 +358,7 @@ typedef struct ArchThreadInfo
   uint32  gs;        // 56
   uint32  ss;        // 60
   uint32  dpl;       // 64
-  uint32  esp0;      // 68		call neo_%1
+  uint32  esp0;      // 68  call neo_%1
   uint32  ss0;       // 72
   uint32  cr3;       // 76
   uint32  fpu[27];   // 80
@@ -686,14 +375,14 @@ extern Thread *currentThread;
   }; \
 
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_switchThreadKernelToKernel();  
+extern "C" void arch_switchThreadKernelToKernel();
 extern "C" void arch_switchThreadKernelToKernelPageDirChange();
 extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
   static uint32 heart_beat_value = 0;
-  //~ static uint32 leds = 0;
-  //~ static uint32 ctr = 0;
+  // static uint32 leds = 0;
+  // static uint32 ctr = 0;
   char* fb = (char*)0xC00B8000;
   switch (heart_beat_value)
   {
@@ -716,119 +405,119 @@ extern "C" void irqHandler_0()
     break;
   }
   heart_beat_value = (heart_beat_value + 1) % 4;
-  //~ outportb( 0xED, 0x60 );  // "set LEDs" command
-  //~ outportb( leds, 0x60 );
-  //~ kprintfd("Settings leds to %d\n",leds);
-  //~ if (ctr == 9)
-    //~ leds = (leds + 1) % (1 << 3);
-  //~ ctr = (ctr + 1) % 10;
-  
-  //kprintfd_nosleep("irq0: Tick\n");
-//  writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
-  uint32 ret = Scheduler::instance()->schedule();  
+
+  // outportb( 0xED, 0x60 );  // "set LEDs" command
+  // outportb( leds, 0x60 );
+  // if (ctr == 9)
+  // leds = (leds + 1) % (1 << 3);
+  // ctr = (ctr + 1) % 10;
+
+  // kprintfd_nosleep("irq0: Tick\n");
+  // writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
+
+  uint32 ret = Scheduler::instance()->schedule();
   switch (ret)
   {
     case 0:
- //     kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
+      // kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-   //   kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
+      // kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd_nosleep("irq0: Panic in int 0 handler\n");
       for(;;);
-  }  
+  }
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  uint32 ret = Scheduler::instance()->schedule();  
+  uint32 ret = Scheduler::instance()->schedule();
   switch (ret)
   {
     case 0:
-      //kprintfd_nosleep("irq65: Going to leave int Handler 65 to kernel\n");
+      // kprintfd_nosleep("irq65: Going to leave int Handler 65 to kernel\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      //kprintfd_nosleep("irq65: Going to leave int Handler 65 to user\n");
-
+      // kprintfd_nosleep("irq65: Going to leave int Handler 65 to user\n");
       arch_switchThreadToUserPageDirChange();
+
     default:
       kprintfd_nosleep("irq65: Panic in int 65 handler\n");
       for(;;);
-  }  
+  }
 }
-
 
 
 extern "C" void arch_interruptHandler_0();
 extern "C" void arch_interruptHandler_0()
 {
-	kpanict((uint8 *) "DIVISION ERROR\n");
+  kpanict((uint8 *) "DIVISION ERROR\n");
 }
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-  uint32 const flag_p = 0x1 << 0;  //=0: pf caused because pt was not present; =1: protection violation
-  uint32 const flag_rw = 0x1 << 1;  //pf caused by a 1=write/0=read
-  uint32 const flag_us = 0x1 << 2;  //pf caused in 1=usermode/0=supervisormode
-  uint32 const flag_rsvd = 0x1 << 3; //pf caused by reserved bits
-  
-  //~ uint32 cr2=0xffff;
-  //~ __asm__("movl %%cr2, %0"
-  //~ :"=a"(cr2)
-  //~ :);
-  //~ kprintfd_nosleep("PageFault::( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
-                                                                            //~ error&flag_p, 
-                                                                            //~ (error&flag_rw) >> 1, 
-                                                                            //~ (error&flag_us) >> 2,
-                                                                            //~ (error&flag_rsvd) >> 3,
-                                                                            //~ currentThread,currentThread->getName(),
-                                                                            //~ currentThread->switch_to_userspace_);
+  uint32 const flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
+  uint32 const flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
+  uint32 const flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
+  uint32 const flag_rsvd = 0x1 << 3; // pf caused by reserved bits
+
+  UNUSED_ARG(flag_rw);
+  UNUSED_ARG(flag_us);
+  UNUSED_ARG(flag_rsvd);
+  // uint32 cr2=0xffff;
+  // __asm__("movl %%cr2, %0"
+  // :"=a"(cr2)
+  // :);
+  // kprintfd_nosleep("PageFault::( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
+      // error&flag_p,
+      // (error&flag_rw) >> 1,
+      // (error&flag_us) >> 2,
+      // (error&flag_rsvd) >> 3,
+      // currentThread,currentThread->getName(),
+      // currentThread->switch_to_userspace_);
+
   //ArchThreads::printThreadRegisters(currentThread,0);
   //ArchThreads::printThreadRegisters(currentThread,1);
-	
-	
-	
-  //~ kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
-	  //~ currentThread->user_arch_thread_info_->cr3,
-	  //~ currentThread->loader_->page_dir_page_,
-	  //~ ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_) );
-	  
 
-  //~ page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
-  //~ uint32 i = 0;
-  //~ uint32 j = 0;
-  //~ for( i = 0; i < 512; i++ )
-  //~ {
-	  //~ if( cpd[ i ].pde4k.present )
-	  //~ {
-		  //~ kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
-		  //~ i,
-		  //~ cpd[ i ].pde4k.present,
-		  //~ cpd[ i ].pde4k.page_table_base_address, 
-		  //~ ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address )
-		  //~ );
-	  //~ }
-	  
-	  //~ if( cpd[ i ].pde4k.present )
-	  //~ {
-		//~ page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address );
-  		//~ for( j = 0; j < 256; j++ )
-  		//~ {
-			//~ if( cpt[ j ].present )
-			//~ {
-				//~ kprintfd_nosleep( "\t j %d, present %d, where %X \n",
-				//~ j,
-				//~ cpt[ j ].present,
-				//~ cpt[ j ].page_base_address );
-			//~ }
-		//~ }
-	  //~ }
-  //~ }
+  // kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
+	  // currentThread->user_arch_thread_info_->cr3,
+	  // currentThread->loader_->page_dir_page_,
+	  // ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_) );
+
+  // page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
+  // uint32 i = 0;
+  // uint32 j = 0;
+  // for( i = 0; i < 512; i++ )
+  // {
+    // if( cpd[ i ].pde4k.present )
+    // {
+      // kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
+		  // i,
+		  // cpd[ i ].pde4k.present,
+		  // cpd[ i ].pde4k.page_table_base_address,
+		  // ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address )
+		  // );
+    // }
+    // if( cpd[ i ].pde4k.present )
+    // {
+      // page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address );
+      // for( j = 0; j < 256; j++ )
+      // {
+        // if( cpt[ j ].present )
+        // {
+          // kprintfd_nosleep( "\t j %d, present %d, where %X \n",
+		// j,
+		// cpt[ j ].present,
+		// cpt[ j ].page_base_address );
+	// }
+      // }
+    // }
+  // }
 
   if (address >= 2U*1024U*1024U*1024U)
   {
@@ -841,14 +530,13 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
 
-  
-  //lets hope this Exeption wasn't thrown during a TaskSwitch  
+  //lets hope this Exeption wasn't thrown during a TaskSwitch
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
-//    ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
+    // ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
-  else 
+  else
   {
     kprintfd_nosleep("PageFault: Userprogramm caused an unexpected Pagefault\n");
     if (currentThread->loader_)
@@ -864,14 +552,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   arch_switchThreadToUserPageDirChange();
 }
 
-
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
   KeyboardManager::getInstance()->serviceIRQ( );
   ArchInterrupts::EndOfInterrupt(1);
 }
-
 
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
@@ -933,7 +619,7 @@ extern "C" void irqHandler_15()
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
- 
+
   //kprintfd_nosleep("syscallHANDLER called, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
   //ArchThreads::printThreadRegisters(currentThread,0);
   //ArchThreads::printThreadRegisters(currentThread,1);
@@ -943,20 +629,20 @@ extern "C" void syscallHandler()
                   //~ currentThread->user_arch_thread_info_->ebx,
                   //~ currentThread->user_arch_thread_info_->ecx,
                   //~ currentThread->user_arch_thread_info_->edx);
- 
+
   // a int 0x80 instruction takes two bytes in x86 asm
-  // to make sure we skip this one after syscall exit 
+  // to make sure we skip this one after syscall exit
   // we have to increment the eip
-  // add on, ever since the very first pmode machine 
-  // this is not needed anymore as the machine is smart 
+  // add on, ever since the very first pmode machine
+  // this is not needed anymore as the machine is smart
   // enough to do this on a trap
-  
+
   //kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
-  
+
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
-  
+
   currentThread->user_arch_thread_info_->eax =
     Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
                   currentThread->user_arch_thread_info_->ebx,
@@ -989,7 +675,7 @@ IRQ_HANDLER(12)
 IRQ_HANDLER(13)
 //IRQ_HANDLER(14)
 //IRQ_HANDLER(15)
-  
+
 extern "C" void arch_dummyHandler();
 
 #define DUMMYHANDLER(X) {X, &arch_dummyHandler_##X},

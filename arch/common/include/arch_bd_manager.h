@@ -1,3 +1,7 @@
+/**
+ * @file arch_bd_manager.h
+ *
+ */
 
 #ifndef _BD_DEVICE_MANAGER_
 #define _BD_DEVICE_MANAGER_
@@ -27,62 +31,62 @@ public:
    * returns singleton instance
    * @return the block device manager instance
    */
-  static BDManager* getInstance        ( );
+  static BDManager *getInstance();
   
   /**
    * detects all devices present
    */
-  void              doDeviceDetection  ( );
+  void doDeviceDetection();
   
   /**
    * adds the given device to the manager
    * @param dev the device to add
    */
-  void              addVirtualDevice   ( BDVirtualDevice* dev );
+  void addVirtualDevice(BDVirtualDevice *dev);
   
   /**
    * returns the device with the given number
    * @param dev_num the device number
    * @return the device
    */
-  BDVirtualDevice*  getDeviceByNumber  ( uint32 dev_num  );
+  BDVirtualDevice *getDeviceByNumber(uint32 dev_num);
 
   /**
    * returns the device with the given name
    * @param dev_name the device name
    * @return the device
    */
-  BDVirtualDevice*  getDeviceByName    ( const char * dev_name );
+  BDVirtualDevice *getDeviceByName(const char *dev_name);
 
   /**
    * returns the number of devices in the bd manager
    * @return the number of devices
    */
-  uint32            getNumberOfDevices ( );
+  uint32 getNumberOfDevices();
   
   /**
    * adds the given request to the device given in the request
    * @param bdr the request
    */
-  void              addRequest         ( BDRequest * bdr );
-  
+  void addRequest(BDRequest *bdr);
+
   /**
-   * calls seviceIRQ on the device the irg with the given number is on
+   * calls seviceIRQ on the device the irq with the given number is on
    * after that probeIRQ is false
    * @param irq_num the irq number
    */
-  void              serviceIRQ         ( uint32 irq_num );
-  
+  void serviceIRQ(uint32 irq_num);
+
   /**
    * gets false when the irq is serviced
    */
-  bool              probeIRQ;
-  
+  bool probeIRQ;
+
 private:
   List< BDVirtualDevice *> device_list_;
-    
+
 protected:
-  static BDManager * instance_;  
+  static BDManager *instance_;
 };
 
 #endif

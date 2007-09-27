@@ -1,62 +1,12 @@
-// Projectname: SWEB
-// Simple operating system for educational purposes
-//
-// Copyright (C) 2005  Andreas Niederl
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-
-
 /**
- * CVS Log Info for $RCSfile: List.tcpp,v $
- *
- * $Id: List.tcpp,v 1.8 2006/09/19 18:37:21 aniederl Exp $
- * $Log: List.tcpp,v $
- * Revision 1.8  2006/09/19 18:37:21  aniederl
- * bug fixes
- *
- * Revision 1.7  2005/09/12 23:29:06  aniederl
- * complete rewrite of class List and ListNode for the sake of simplicity, stability and extendability
- *
- * Revision 1.6  2005/09/11 17:47:02  davrieb
- * add rotate()
- *
- * Revision 1.5  2005/09/11 11:31:34  davrieb
- * revert to previous revision
- *
- * Revision 1.3  2005/09/07 23:44:42  aniederl
- * changed constructor with default parameter to a separate default constructor and one (for actual usage) with parameter
- *
- * Revision 1.2  2005/09/07 23:13:01  aniederl
- * refined empty node handling in pop methods
- *
- * Revision 1.1  2005/05/26 01:08:37  aniederl
- * initial import of List, Queue and Stack data structures
- *
- */
-
-/**
- * template definitions, included by BaseList.h
- *
+ * @file BaseList.tcpp template definitions, included by BaseList.h
  */
 
 #include "assert.h"
 
-#ifndef Swap_Function___
-#define Swap_Function___
-// FIXXXME: don't know where to put that function
+#ifndef SWAP_FUNCTION__
+#define SWAP_FUNCTION__
+
 /**
  * swaps two elements
  * @param first the first element
@@ -70,10 +20,8 @@ void swap(ValueType &first, ValueType &second)
   first = second;
   second = tmp;
 }
-#endif // Swap_Function___
 
-
-//----------------------------------------------------------------------
+#endif // SWAP_FUNCTION__
 
 template<typename ValueType>
 BaseList<ValueType>::BaseList() : first_node_(0),
@@ -83,7 +31,6 @@ BaseList<ValueType>::BaseList() : first_node_(0),
 
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 BaseList<ValueType>::BaseList(const BaseList<ValueType> &instance)
@@ -109,7 +56,6 @@ BaseList<ValueType>::BaseList(const BaseList<ValueType> &instance)
   last_node_ = node;
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 BaseList<ValueType>::~BaseList()
@@ -122,7 +68,6 @@ BaseList<ValueType>::~BaseList()
   }
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 BaseList<ValueType>& BaseList<ValueType>::operator = (const BaseList<ValueType> &instance)
@@ -136,7 +81,6 @@ BaseList<ValueType>& BaseList<ValueType>::operator = (const BaseList<ValueType> 
   return (*this);
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 typename BaseList<ValueType>::size_type BaseList<ValueType>::size() const
@@ -144,7 +88,6 @@ typename BaseList<ValueType>::size_type BaseList<ValueType>::size() const
   return number_of_elements_;
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 bool BaseList<ValueType>::empty() const
@@ -152,7 +95,6 @@ bool BaseList<ValueType>::empty() const
   return (number_of_elements_ == 0);
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 typename BaseList<ValueType>::reference BaseList<ValueType>::operator[](
@@ -174,7 +116,6 @@ typename BaseList<ValueType>::reference BaseList<ValueType>::operator[](
   return node->getElement();
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 typename BaseList<ValueType>::const_reference BaseList<ValueType>::operator[](
@@ -204,7 +145,6 @@ typename BaseList<ValueType>::reference BaseList<ValueType>::front()
   return first_node_->getElement();
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 typename BaseList<ValueType>::const_reference BaseList<ValueType>::front() const
@@ -214,7 +154,6 @@ typename BaseList<ValueType>::const_reference BaseList<ValueType>::front() const
   return first_node_->getElement();
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 typename BaseList<ValueType>::reference BaseList<ValueType>::back()
@@ -224,7 +163,6 @@ typename BaseList<ValueType>::reference BaseList<ValueType>::back()
   return last_node_->getElement();
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 typename BaseList<ValueType>::const_reference BaseList<ValueType>::back() const
@@ -234,7 +172,6 @@ typename BaseList<ValueType>::const_reference BaseList<ValueType>::back() const
   return last_node_->getElement();
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 void BaseList<ValueType>::popBack()
@@ -259,7 +196,6 @@ void BaseList<ValueType>::popBack()
   }
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 void BaseList<ValueType>::popFront()
@@ -284,7 +220,6 @@ void BaseList<ValueType>::popFront()
   }
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 void BaseList<ValueType>::remove(size_type index)
@@ -323,7 +258,6 @@ void BaseList<ValueType>::remove(size_type index)
   --number_of_elements_;
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 void BaseList<ValueType>::swapList(BaseList<ValueType> &list)
@@ -333,7 +267,6 @@ void BaseList<ValueType>::swapList(BaseList<ValueType> &list)
   swap(this->last_node_, list.last_node_);
 }
 
-//----------------------------------------------------------------------
 
 template<typename ValueType>
 void BaseList<ValueType>::clear()

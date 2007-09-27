@@ -1,3 +1,8 @@
+/**
+ * @file StorageManager.cpp
+ *
+ */
+
 #include "StorageManager.h"
 
 

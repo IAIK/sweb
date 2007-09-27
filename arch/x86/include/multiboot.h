@@ -1,27 +1,16 @@
-//----------------------------------------------------------------------
-//   $Id: multiboot.h,v 1.3 2005/04/27 09:19:20 nomenquis Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: multiboot.h,v $
-//  Revision 1.2  2005/04/22 19:43:04  nomenquis
-//   more poison added
-//
-//  Revision 1.1  2005/04/21 21:31:24  nomenquis
-//  added lfb support, also we now use a different grub version
-//  we also now read in the grub multiboot version
-//
-//----------------------------------------------------------------------
-
-//
-// Credit where credit is due, this is shamelessly stolen (borrowed, we'll give it 
-// back soon) from the spoon os.
-//
-
+/**
+ * @file multiboot.h
+ *
+ */
 
 #ifndef _MULTIBOOT_H_
 #define _MULTIBOOT_H_
 
-/* VBE controller information.  */
+
+/**
+ * VBE controller information.
+ *
+ */
 struct vbe_controller
 {
   uint8 signature[4];
@@ -38,7 +27,10 @@ struct vbe_controller
   uint8 oem_data[256];
 } __attribute__ ((packed));
 
-/* VBE mode information.  */
+/**
+ * VBE mode information
+ *
+ */
 struct vbe_mode
 {
   uint16 mode_attributes;
@@ -51,7 +43,7 @@ struct vbe_mode
   uint32 win_func;
   uint16 bytes_per_scanline;
 
-  /* >=1.2 */
+  // >=1.2
   uint16 x_resolution;
   uint16 y_resolution;
   uint8 x_char_size;
@@ -64,7 +56,7 @@ struct vbe_mode
   uint8 number_of_image_pages;
   uint8 reserved0;
 
-  /* direct color */
+  // direct color
   uint8 red_mask_size;
   uint8 red_field_position;
   uint8 green_mask_size;
@@ -75,12 +67,12 @@ struct vbe_mode
   uint8 reserved_field_position;
   uint8 direct_color_mode_info;
 
-  /* >=2.0 */
+  // >=2.0
   uint32 phys_base;
   uint32 reserved1;
   uint16 reversed2;
 
-  /* >=3.0 */
+  // >=3.0
   uint16 linear_bytes_per_scanline;
   uint8 banked_number_of_image_pages;
   uint8 linear_number_of_image_pages;
@@ -97,9 +89,10 @@ struct vbe_mode
   uint8 reserved3[189];
 } __attribute__ ((packed));
 
-
-
-/* The Multiboot header. */
+/**
+ * The Multiboot header
+ *
+ */
 typedef struct multiboot_header
 {
    uint32 magic			: 32;
@@ -116,7 +109,10 @@ typedef struct multiboot_header
    uint32 depth			: 32;
 } __attribute__((__packed__)) multiboot_header_t;
 
-/* The symbol table for a.out. */
+/**
+ * The symbol table for a.out
+ *
+ */
 typedef struct aout_symbol_table
 {
   uint32 tabsize;
@@ -125,7 +121,10 @@ typedef struct aout_symbol_table
   uint32 reserved;
 } __attribute__((__packed__)) aout_symbol_table_t;
 
-/* The section header table for ELF. */
+/**
+ * The section header table for ELF
+ *
+ */
 typedef struct elf_section_header_table
 {
   uint32 num;
@@ -134,7 +133,10 @@ typedef struct elf_section_header_table
   uint32 shndx;
 } __attribute__((__packed__)) elf_section_header_table_t;
 
-/* The Multiboot information. */
+/**
+ * The Multiboot information
+ *
+ */
 typedef struct multiboot_info
 {
   uint32 flags			: 32;
@@ -164,7 +166,10 @@ typedef struct multiboot_info
   uint32 vbe_interface_len	: 32;
 } __attribute__((__packed__)) multiboot_info_t;
 
-/* The module structure. */
+/**
+ * The module structure
+ *
+ */
 typedef struct module
 {
   uint32 mod_start;
@@ -173,8 +178,11 @@ typedef struct module
   uint32 reserved;
 }__attribute__((__packed__)) module_t;
 
-/* The memory map. Be careful that the offset 0 is base_addr_low
- *    but no size. */
+ /**
+  * The memory map. Be careful that the offset 0 is base_addr_low
+  * but no size.
+  *
+  */
 typedef struct memory_map
 {
   uint32 size;

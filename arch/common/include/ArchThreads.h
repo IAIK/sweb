@@ -1,48 +1,8 @@
-//----------------------------------------------------------------------
-//  $Id: ArchThreads.h,v 1.12 2006/09/19 18:37:21 aniederl Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: ArchThreads.h,v $
-//  Revision 1.11  2005/09/21 14:46:35  btittelbach
-//  *** empty log message ***
-//
-//  Revision 1.10  2005/09/20 20:11:18  btittelbach
-//  doxification
-//
-//  Revision 1.9  2005/09/20 17:44:44  lythien
-//  *** empty log message ***
-//
-//  Revision 1.8  2005/08/26 13:58:24  nomenquis
-//  finally even the syscall handler does that it is supposed to do
-//
-//  Revision 1.7  2005/07/21 19:08:39  btittelbach
-//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
-//  Threads können schlafen, Mutex benutzt das jetzt auch
-//  Jetzt muß nur der Mutex auch überall verwendet werden
-//
-//  Revision 1.6  2005/06/14 18:22:37  btittelbach
-//  RaceCondition anfälliges LoadOnDemand implementiert,
-//  sollte optimalerweise nicht im InterruptKontext laufen
-//
-//  Revision 1.5  2005/05/31 17:29:16  nomenquis
-//  userspace
-//
-//  Revision 1.4  2005/05/25 08:27:48  nomenquis
-//  cr3 remapping finally really works now
-//
-//  Revision 1.3  2005/04/27 08:58:16  nomenquis
-//  locks work!
-//  w00t !
-//
-//  Revision 1.2  2005/04/26 15:58:45  nomenquis
-//  threads, scheduler, happy day
-//
-//  Revision 1.1  2005/04/24 16:58:03  nomenquis
-//  ultra hack threading
-//
-//----------------------------------------------------------------------
-
-
+/**
+ * @file ArchThreads.h
+ *
+ */
+ 
 #ifndef _ARCH_THREADS_H_
 #define _ARCH_THREADS_H_
 
@@ -51,8 +11,7 @@
 class ArchThreadInfo;
 class Thread;
 
-/** 
- *
+/**
  * this is where the thread info for task switching is stored
  *
  */
@@ -60,7 +19,6 @@ extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
 /**
- *
  * Collection of architecture dependant code concerning Task Switching
  *
  */
@@ -69,40 +27,39 @@ class ArchThreads
 public:
 
 /**
- *
- *
+ * allocates space for the currentThreadInfo
  *
  */
   static void initialise();
 
 /**
- *
- * @param thread
+ * not implemented
  *
  */
   static void switchToThreadOnIret(Thread *thread);
 
-/** 
+/**
+ * deletes the info if not null
  *
- * @param info
+ * @param info to be cleaned up
  *
  */
   static void cleanupThreadInfos(ArchThreadInfo *&info);
 
 /** 
- *
- * @param info
- * @param start_function
- * @param stack
+ * creates the ArchThreadInfo for a kernel thread
+ * @param info where the ArchThreadInfo is saved
+ * @param start_function instruction pointer is set so start function
+ * @param stack stackpointer
  */
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
 
 /**
- *
- * @param info
- * @param start_function
- * @param user_stack
- * @param kernel_stack
+ * creates the ArchThreadInfo for a user thread
+ * @param info where the ArchThreadInfo is saved
+ * @param start_function instruction pointer is set so start function
+ * @param user_stack pointer to the userstack
+ * @param kernel_stack pointer to the kernel stack
  */
   static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack);
 
@@ -114,8 +71,7 @@ public:
   static void yield();
 
 /**
- *
- * set's a threads PageDirectory to the one in page_dir_physical_page
+ * sets a threads PageDirectory to the one in page_dir_physical_page
  *
  * @param *thread Pointer to Thread Object
  * @param page_dir_physical_page The Page where a valid pde can be found
@@ -123,6 +79,7 @@ public:
   static void setPageDirectory(Thread *thread, uint32 page_dir_physical_page);
 
 /**
+ * function to get the PageDirectory of a given thread
  *
  * @param *thread Pointer to Thread Object
  * @return returns pde page of *thread

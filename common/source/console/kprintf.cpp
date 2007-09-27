@@ -396,6 +396,9 @@ bool isDebugEnabled ( uint32 flag )
       case CONSOLE:
       case KERNEL:
       case MM:
+      case FS:
+      case DRIVER:
+      case ARCH:
         group_enabled = true;
         break;
     }
@@ -449,6 +452,58 @@ void debug ( uint32 flag, const char *fmt, ... )
         break;
       case PM:
         kprintfd ( "PM:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case RAMFS:
+        kprintfd ( "RAMFS:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case DENTRY:
+        kprintfd ( "DENTRY:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case PATHWALKER:
+        kprintfd ( "PATHWALKER:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case PSEUDOFS:
+        kprintfd ( "PSEUDOFS:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case VFSSYSCALL:
+        kprintfd ( "VFSSYSCALL:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case VFS:
+        kprintfd ( "VFS:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case ATA_DRIVER:
+        kprintfd ( "ATA_DRIVER:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case IDE_DRIVER:
+        kprintfd ( "IDE_DRIVER:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case A_COMMON:
+        kprintfd ( "A_COMMON:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case A_MEMORY:
+        kprintfd ( "A_MEMORY:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case A_SERIALPORT:
+        kprintfd ( "A_SERIALPORT:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case A_KB_MANAGER:
+        kprintfd ( "A_KB_MANAGER:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case BD_VIRT_DEVICE:
+        kprintfd ( "BD_VIRT_DEVICE:>> " );
         vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
     }

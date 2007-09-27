@@ -1,13 +1,8 @@
-//----------------------------------------------------------------------
-//   $Id: atkbd.h,v 1.2 2005/09/07 00:33:52 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: atkbd.h,v $
-//  Revision 1.1  2005/09/05 23:01:24  btittelbach
-//  Keyboard Input Handler
-//  + several Bugfixes
-//
-//----------------------------------------------------------------------
+/**
+ * @file atkbd.h
+ *
+ */
+
 #ifndef _ATKBD_H_
 #define _ATKBD_H_
 
@@ -22,14 +17,40 @@
 #define LIGHT_CAPS 0x4
 
 
-//something to get ?
+/**
+ * something to get?
+ *
+ */
 bool kbdBufferFull();
-//get scancode
+
+/**
+ * get scancode
+ *
+ */
 uint8 kbdGetScancode();
-//reset
+
+/**
+ * reset
+ *
+ */
 void kbdReset();
 
+/**
+ * sets Numlock
+ *
+ */
 void kbdSetNumlock(bool on);
+
+/**
+ * sets Capslock
+ *
+ */
 void kbdSetCapslock(bool on);
+
+/**
+ * sets scrolllock
+ *
+ */
 void kbdSetScrolllock(bool on);
+
 #endif

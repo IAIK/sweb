@@ -1,3 +1,8 @@
+/**
+ * @file StorageManager.h
+ *
+ */
+ 
 #ifndef STORAGE_MANAGER__
 #define STORAGE_MANAGER__
 
@@ -7,6 +12,7 @@
 class StorageManager
 {
   public:
+
     /**
      * constructor
      * @param num_inodes the max number of inodes
@@ -18,30 +24,31 @@ class StorageManager
      * destructor
      */
     virtual ~StorageManager();
-    
+
     /**
      * frees the zone at the given index
      * @param index the zone index
      */
     virtual void freeZone(size_t index) = 0;
-    
-    
+
     /**
      * frees the inode at the given index
      * @param index the inode index
      */
     virtual void freeInode(size_t index) = 0;
-    
+
     /**
      * checks if inode is set
      * @param index the inode index
      * @return true if the inode is set
      */
     virtual bool isInodeSet(size_t index) = 0;
-  
+
   protected:
+
     Bitmap* inode_bitmap_;
     Bitmap* zone_bitmap_;
-    
+
 };
+
 #endif //STORAGE_MANAGER__
