@@ -1,3 +1,6 @@
+/**
+ * @file minix_fs_consts.h
+ */
 
 #define NUM_ZONE_ADDRESSES 512
 #define ZONE_SIZE 1024

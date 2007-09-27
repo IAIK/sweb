@@ -1,12 +1,12 @@
-// Projectname: SWEB
-// Simple operating system for educational purposes
+/**
+ * @file MinixFSFile.h
+ */
 
 #ifndef MinixFSFile_h___
 #define MinixFSFile_h___
 
 #include "fs/File.h"
 
-//-------------------------------------------------------------------------
 /**
  * @class MinixFSFile handles files on a minix file system
  * basically read and write
@@ -21,7 +21,7 @@ class MinixFSFile: public File
      * @param dentry the dentry
      * @param flag the flag i.e. readonly
      */
-    MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag);
+    MinixFSFile ( Inode* inode, Dentry* dentry, uint32 flag );
 
     /**
      * destructor
@@ -35,7 +35,7 @@ class MinixFSFile: public File
      * @param offset the offset to read from counted from the start of the file.
      * @return the number of bytes read
      */
-    virtual int32 read(char *buffer, size_t count, l_off_t offset);
+    virtual int32 read ( char *buffer, size_t count, l_off_t offset );
 
     /**
      * writes to the file
@@ -44,12 +44,12 @@ class MinixFSFile: public File
      * @param offset the offset to write from counted from the start of the file
      * @return the number of bytes written
      */
-    virtual int32 write(const char *buffer, size_t count, l_off_t offset);
+    virtual int32 write ( const char *buffer, size_t count, l_off_t offset );
 
     /**
      * not implemented
      */
-    virtual int32 open(uint32 flag);
+    virtual int32 open ( uint32 flag );
 
     /**
      * not implemented

@@ -1,3 +1,6 @@
+/**
+ * @file MinixFSInode.cpp
+ */
 
 #include "fs/minixfs/MinixFSInode.h"
 
@@ -20,7 +23,6 @@
 #define ERROR_DEC "Error: the dentry exists child.\n"
 
 
-//---------------------------------------------------------------------------
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type)
 {
@@ -31,7 +33,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
   i_dentry_ = 0;
 }
 
-//---------------------------------------------------------------------------
+
 MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32 i_size, uint32 i_modtime, uint8 i_gid, uint8 i_nlinks, uint16* i_zones, uint32 i_num) : Inode(super_block, 0)
 {
   UNUSED_ARG(i_uid);
@@ -57,14 +59,14 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid,
   debug(M_INODE, "Constructor: size: %d\tnlink: %d\tnum zones: %d\tmode: %x\n", i_size_, i_nlink_, i_zones_->getNumZones(), i_mode);
 }
 
-//---------------------------------------------------------------------------
+
 MinixFSInode::~MinixFSInode()
 {
   debug(M_INODE, "Destructor\n");
   delete i_zones_;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
 {
   debug(M_INODE, "readData: offset: %d, size; %d,i_size_: %d\n",offset,size,i_size_);
@@ -77,7 +79,7 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   uint32 zone_offset = offset % ZONE_SIZE;
   uint32 num_zones = (zone_offset + size) / ZONE_SIZE + 1;
   Buffer* rbuffer = new Buffer(ZONE_SIZE);
-  
+
   uint32 index = 0;
   debug(M_INODE, "readData: zone: %d, zone_offset %d, num_zones: %d\n",zone,zone_offset,num_zones);
   for(;zone < num_zones; zone++)
@@ -94,7 +96,7 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   return size;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 {
   debug(M_INODE, "MinixFSInode writeData> offset: %d, size: %d, i_size_: %d\n",offset,size,i_size_);
@@ -140,7 +142,6 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   readData( offset-zone_offset, zone_offset, wbuffer->getBuffer());
   for(uint32 index = 0, pos = zone_offset; index<size; pos++, index++)
   {
-//     kprintfd("MinixFSInode writeData>filling writebuffer\n");
     wbuffer->setByte( pos, buffer[index]);
   }
   for(uint32 zone_index = 0; zone_index < num_zones; zone_index++)
@@ -157,7 +158,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   return size;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::mknod(Dentry *dentry)
 {
   debug(M_INODE, "mknod: dentry: %d, i_type_: %d\n",dentry,i_type_);
@@ -179,7 +180,7 @@ int32 MinixFSInode::mknod(Dentry *dentry)
   return 0;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::mkdir(Dentry *dentry)
 {
   debug(M_INODE, "mkdir: dentry: %d, i_type_: %d\n",dentry,i_type_);
@@ -196,13 +197,13 @@ int32 MinixFSInode::mkdir(Dentry *dentry)
   }
   i_dentry_ = dentry;
   dentry->setInode(this);
-  
+
   ((MinixFSInode *)dentry->getParent()->getInode())->writeDentry(0, i_num_, i_dentry_->getName());
 
   return 0;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::mkfile(Dentry *dentry)
 {
   debug(M_INODE, "mkfile: dentry: %d, i_type_: %d\n",dentry,i_type_);
@@ -222,6 +223,7 @@ int32 MinixFSInode::mkfile(Dentry *dentry)
   i_dentry_->setInode(this);
   return 0;
 }
+
 
 int32 MinixFSInode::findDentry(uint32 i_num)
 {
@@ -272,7 +274,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, char* name)
   return;
 }
 
-//---------------------------------------------------------------------------
+
 File* MinixFSInode::link(uint32 flag)
 {
   debug(M_INODE, "link: flag: %d\n",flag);
@@ -282,7 +284,7 @@ File* MinixFSInode::link(uint32 flag)
   return file;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::unlink(File* file)
 {
   debug(M_INODE, "unlink\n");
@@ -292,7 +294,7 @@ int32 MinixFSInode::unlink(File* file)
   return tmp;
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::rmdir()
 {
   debug(M_INODE, "rmdir\n");
@@ -319,7 +321,7 @@ int32 MinixFSInode::rmdir()
   }
 }
 
-//---------------------------------------------------------------------------
+
 int32 MinixFSInode::rm()
 {
   if(i_files_.getLength() != 0)
@@ -348,10 +350,10 @@ int32 MinixFSInode::rm()
   }
 }
 
-//---------------------------------------------------------------------------
+
 Dentry* MinixFSInode::lookup(const char* name)
 {
-  
+
   debug(M_INODE, "lookup: name: %s this->i_dentry_->getName(): %s \n",name,this->i_dentry_->getName());
   if(name == 0)
   {
@@ -360,7 +362,7 @@ Dentry* MinixFSInode::lookup(const char* name)
   }
 
   Dentry* dentry_update = 0;
-  
+
   if(i_type_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
@@ -385,6 +387,7 @@ Dentry* MinixFSInode::lookup(const char* name)
     return (Dentry*)0;
   }
 }
+
 
 void MinixFSInode::loadChildren()
 {
@@ -429,8 +432,9 @@ void MinixFSInode::loadChildren()
   delete dbuffer;
 }
 
+
 int32 MinixFSInode::flush()
-{ 
+{
   i_superblock_->writeInode(this);
   debug(M_INODE, "flush: flushed\n");
   return 0;

@@ -426,6 +426,14 @@ void debug ( uint32 flag, const char *fmt, ... )
         kprintfd ( "M_STORAGE_MANAGER:>> " );
         vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
+      case M_SB:
+        kprintfd ( "M_SB:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
+      case M_ZONE:
+        kprintfd ( "M_ZONE:>> " );
+        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
+        break;
       case BD_MANAGER:
         kprintfd ( "BD_MANAGER:>> " );
         vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );

@@ -10,9 +10,11 @@
 #define OUTPUT_ENABLED 0x1000000
 
 //group minix
-const uint32 MINIX              = 0x00010000 | OUTPUT_ENABLED;
+const uint32 MINIX              = 0x00010000;
 const uint32 M_STORAGE_MANAGER  = 0x00010001;
 const uint32 M_INODE            = 0x00010002;
+const uint32 M_SB               = 0x00010004;
+const uint32 M_ZONE             = 0x00010008;
 
 //group Block Device
 const uint32 BD                 = 0x00020000;
