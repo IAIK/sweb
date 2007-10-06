@@ -172,8 +172,10 @@ install: kernel
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
-	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
-	cp ./images/SWEB-flat-minix.vmdk $(OBJECTDIR)/
+#-- this should be done if you want to use the same minix image
+ 	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
+ 	cp ./images/SWEB-flat-minix.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat-minix.vmdk.gz
+#-- so uncomment this and use make minixfs
 	cp ./images/nvram $(OBJECTDIR)/
 	@echo "copy files to image..."
 	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63 2> /dev/null
@@ -183,10 +185,10 @@ install: kernel
 	@echo "########## Finished installing - ext2 hard drive ##########"
 
 
-#minixfs:
-#	dd if=/dev/zero of=./images/SWEB-flat-minix.vmdk bs=512 count=20808
-#	sudo mkfs.minix ./images/SWEB-flat-minix.vmdk
-
+minixfs:
+	dd if=/dev/zero of=./images/SWEB-flat-minix.vmdk bs=512 count=20808
+	sudo mkfs.minix ./images/SWEB-flat-minix.vmdk
+  
 e2fsimage:
 	@echo "Starting with e2fsimage"	
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
