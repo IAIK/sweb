@@ -13,7 +13,7 @@ OBJS=main.o copy.o symlink.o util.o mkdir.o \
 unused_OBJ=initfs.o
 
 Local.mak:
-	$(SHELL) ./configure
+	./configure
 
 e2fsimage: $(OBJS) 
 	@echo $(eval sinclude Local.mak)
