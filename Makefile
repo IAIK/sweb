@@ -225,7 +225,7 @@ prepare-system-ubuntu:
 
 .PHONY: submit info
 submit:
-ifneq ($(shell hg status -m -a -r -X images/ -X utils/ | wc -l),0)
+ifneq ($(shell hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l),0)
 	$(warning )
 	$(warning WARNING: you have modified files in your working directory)
 	$(warning WARNING: are you sure you don't want to submit your latest changes ?)
@@ -253,7 +253,7 @@ ifndef group
 	$(error group not specified)
 endif
 	#@$(MAKE) mrproper
-	hg archive -r tip -t tbz2 -X "utils/" -X "images/" "IMA$(assignment)GR$(group).tar.bz2"
+	hg archive -r tip -t tbz2 -X "utils/" -X "images/" -X "bin/" "IMA$(assignment)GR$(group).tar.bz2"
 	@echo -e "\n**********************************************"
 	@echo "Created: ../IMA$(assignment)GR$(group).tar.bz2"
 	@echo "Please Test with: tar tjfv IMA$(assignment)GR$(group).tar.bz2 |less"
