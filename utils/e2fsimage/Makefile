@@ -1,30 +1,47 @@
-# vi: set sw=4 ts=4:
-#
-# $Id: Makefile,v 1.7 2006/10/24 19:09:48 btittelbach Exp $
-#
-######################################################################
+PROJECT_ROOT := ../..
+SOURCEDIR := $(PWD)
 
+PROJECT_ROOT := $(shell readlink -f $(PROJECT_ROOT))
+TOP_DIR := $(notdir $(PROJECT_ROOT))
+PARENT_DIR := $(dir $(PROJECT_ROOT))
+OBJECTDIR := $(subst $(PARENT_DIR)$(TOP_DIR),$(PARENT_DIR)$(TOP_DIR)-bin,${PWD})
 
-all: e2fsimage
+OBJECTS = \
+			 $(OBJECTDIR)/main.o \
+			 $(OBJECTDIR)/copy.o \
+			 $(OBJECTDIR)/symlink.o \
+			 $(OBJECTDIR)/util.o \
+			 $(OBJECTDIR)/mkdir.o \
+			 $(OBJECTDIR)/dirent.o \
+			 $(OBJECTDIR)/mke2fs.o \
+			 $(OBJECTDIR)/inodb.o \
+			 $(OBJECTDIR)/sfile.o \
+			 $(OBJECTDIR)/uiddb.o \
+			 $(OBJECTDIR)/uids.o \
+			 $(OBJECTDIR)/passwd.o
 
-OBJS=main.o copy.o symlink.o util.o mkdir.o \
-	dirent.o mke2fs.o inodb.o sfile.o uiddb.o uids.o passwd.o
+TARGET := $(OBJECTDIR)/e2fsimage
 
-unused_OBJ=initfs.o
+unused_OBJ=$(OBJECTDIR)/initfs.o
+
+all: $(OBJECTDIR) $(TARGET)
 
 Local.mak:
 	./configure
 
-e2fsimage: $(OBJS) 
+$(OBJECTDIR):
+	+@[ -d $@ ] || mkdir -p $@
+
+$(TARGET): $(OBJECTS)
 	@echo $(eval sinclude Local.mak)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) 
 
-%.o: %.c Makefile Local.mak e2fsimage.h
+$(OBJECTDIR)/%.o: $(SOURCEDIR)/%.c Makefile Local.mak e2fsimage.h
 	@echo $(eval sinclude Local.mak)
 	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) e2fsimage Local.mak 
+	rm -f $(OBJECTS) $(TARGET) Local.mak 
 
 mrproper: clean
 

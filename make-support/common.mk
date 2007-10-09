@@ -1,34 +1,3 @@
-# $Id: common.mk,v 1.9 2006/10/23 23:14:06 btittelbach Exp $
-#
-# $Log: common.mk,v $
-# Revision 1.8  2006/10/05 13:58:07  btittelbach
-# *** empty log message ***
-#
-# Revision 1.7  2005/08/11 16:46:57  davrieb
-# add PathWalker
-#
-# Revision 1.6  2005/07/31 17:35:32  nightcreature
-# additions for xen target
-#
-# Revision 1.5  2005/04/27 08:56:00  woswasi
-# added clean suport for e2fsimage
-#
-# Revision 1.4  2005/04/20 18:19:44  nomenquis
-# updated these files
-#
-# Revision 1.3  2005/04/12 19:04:04  davrieb
-# fixed bug
-#
-# Revision 1.2  2005/04/12 18:42:51  nomenquis
-# changed a zillion of iles
-#
-# Revision 1.1  2005/04/12 17:41:22  nomenquis
-# added common.mk
-#
-#
-#
-
-
 #MAKEFLAGS += --no-print-directory
 MAKEFLAGS += --silent --print-directory
 
@@ -78,7 +47,12 @@ KERNELLDCOMMAND := $(KERNEL_LD) $(KERNELLDFLAGS)
 
 #GUESS_PROJECT_ROOT_NAME := $(shell SPATH=""; IFS="/"; for d in $PWD; do unset IFS; SPATH="$SPATH$d/"; if [ -d "${SPATH}arch" -a -d "${SPATH}images" -a -d "${SPATH}make-support" -a -d "${SPATH}userspace" ]; then echo $d; exit; fi; done; echo sweb )
 #GUESS_PROJECT_ROOT_NAME := $(shell basename `hg root`)
-OBJECTDIR := $(subst /sweb-minix-branch,/sweb-bin-minix-branch,${PWD})
+PROJECT_ROOT := $(shell readlink -f $(PROJECT_ROOT))
+TOP_DIR := $(notdir $(PROJECT_ROOT))
+PARENT_DIR := $(dir $(PROJECT_ROOT))
+OBJECTDIR := $(subst $(PARENT_DIR)$(TOP_DIR),$(PARENT_DIR)$(TOP_DIR)-bin,${PWD})
+BINARYDESTDIR := $(PROJECT_ROOT)-bin/bin
+
 SOURECDIR := $(PWD)
 BINARYDESTDIR := $(subst /sweb-minix-branch,/sweb-bin-minix-branch,${PWD}/${PROJECT_ROOT}/bin)
 

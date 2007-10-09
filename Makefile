@@ -1,7 +1,6 @@
 TARGET :=
 INCLUDES := ../include ../../../common/include/mm/
 
-
 ifeq ($(ARCH),xen)
 DEPS := kernelxen
 else
@@ -151,7 +150,7 @@ install: kernel
 #	cp ./images/ext2fs_grub_master.img $(OBJECTDIR)/boot_ext2.img
 	test -d $(OBJECTDIR)/bin || mkdir $(OBJECTDIR)/bin
 	@echo "copying ef2s binary"
-	cp utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
+	cp $(OBJECTDIR)/utils/e2fsimage/e2fsimage $(OBJECTDIR)/bin/
 #	@echo "copying Floppy images"
 #	test -e $(OBJECTDIR)/boot_ext2.img || (echo ERROR boot_ext2.img nowhere found; exit 1)
 	@echo "creating temp dir"
@@ -279,3 +278,6 @@ info:
 	env
 	echo -e "\nE2FSIMAGE/Local.mak:"
 	ls -la utils/e2fsimage/Local.mak |cat 
+    
+mrproper:
+	rm -rf $(OBJECTDIR)

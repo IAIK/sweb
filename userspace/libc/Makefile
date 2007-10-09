@@ -17,42 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-#
-# CVS Log Info for $RCSfile: Makefile,v $
-#
-# $Id: Makefile,v 1.9 2006/10/05 13:58:07 btittelbach Exp $
-# $Log: Makefile,v $
-# Revision 1.8  2005/10/10 06:15:55  aniederl
-# included memset, memcpy and memcmp because gcc uses them even with the -nostdlib flag
-#
-# Revision 1.7  2005/09/21 16:44:46  aniederl
-# changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
-#
-# Revision 1.6  2005/09/21 02:25:03  aniederl
-# added -m32 to CFLAGS for proper behaving on amd64
-#
-# Revision 1.5  2005/09/20 14:32:09  btittelbach
-# better yet
-#
-# Revision 1.4  2005/09/20 13:28:14  btittelbach
-# blubba
-#
-# Revision 1.3  2005/09/20 11:23:16  btittelbach
-# +_start
-#
-# Revision 1.2  2005/09/20 10:53:16  btittelbach
-# Objects where they belong
-#
-# Revision 1.1  2005/09/16 05:01:40  aniederl
-# import of libc Makefiles
-#
-#
-
-OBJECTDIR := $(subst /sweb,/sweb-bin,${PWD})
+PROJECT_ROOT := ../..
 SOURECDIR := $(PWD)/src
 ARCHDIR := ../../arch/arch/userspace
+
+PROJECT_ROOT := $(shell readlink -f $(PROJECT_ROOT))
+TOP_DIR := $(notdir $(PROJECT_ROOT))
+PARENT_DIR := $(dir $(PROJECT_ROOT))
+OBJECTDIR := $(subst $(PARENT_DIR)$(TOP_DIR),$(PARENT_DIR)$(TOP_DIR)-bin,${PWD})
 
 LIBC_STATIC = $(OBJECTDIR)/libc.a
 

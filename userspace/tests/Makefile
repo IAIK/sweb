@@ -1,11 +1,17 @@
-OBJECTDIR := $(subst /sweb,/sweb-bin,${PWD})
+PROJECT_ROOT := ../..
+SOURECDIR := $(PWD)
+
+PROJECT_ROOT := $(shell readlink -f $(PROJECT_ROOT))
+TOP_DIR := $(notdir $(PROJECT_ROOT))
+PARENT_DIR := $(dir $(PROJECT_ROOT))
+OBJECTDIR := $(subst $(PARENT_DIR)$(TOP_DIR),$(PARENT_DIR)$(TOP_DIR)-bin,${PWD})
 SOURECDIR := $(PWD)
 E2P_PATH = ../../utils/exe2pseudofs/
 CFLAGS = -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector
 LIBS=$(OBJECTDIR)/../libc/libc.a
 #$(OBJECTDIR)/syscalls.o $(OBJECTDIR)/start.o
 OBJS = $(patsubst %.c,$(OBJECTDIR)/%.sweb,$(wildcard *.c))
-PSEUDOFS_IMG = ../../../sweb-bin/ramfs
+PSEUDOFS_IMG = $(PROJECT_ROOT)-bin/ramfs
 INCLUDES=-I "../libc/include"
 
 all: $(OBJECTDIR) $(LIBS) $(OBJS) $(E2P_PATH)exe2pseudofs
