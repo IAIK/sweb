@@ -54,7 +54,6 @@ OBJECTDIR := $(subst $(PARENT_DIR)$(TOP_DIR),$(PARENT_DIR)$(TOP_DIR)-bin,${PWD})
 BINARYDESTDIR := $(PROJECT_ROOT)-bin/bin
 
 SOURECDIR := $(PWD)
-BINARYDESTDIR := $(subst /sweb-minix-branch,/sweb-bin-minix-branch,${PWD}/${PROJECT_ROOT}/bin)
 
 CXXFILES := $(wildcard *.cpp)
 CCFILES := $(wildcard *.c)

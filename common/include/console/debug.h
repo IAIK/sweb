@@ -29,10 +29,10 @@ const uint32 KPRINTF            = 0x00040001;
 const uint32 KERNEL             = 0x00080000;
 const uint32 CONDITION          = 0x00080001;
 const uint32 LOADER             = 0x00080002;
-const uint32 SCHEDULER          = 0x00080004;
-const uint32 SYSCALL            = 0x00080008;
-const uint32 MAIN               = 0x00080010;
-const uint32 THREAD             = 0x00080020;
+const uint32 SCHEDULER          = 0x00080004 | OUTPUT_ENABLED;
+const uint32 SYSCALL            = 0x00080008 | OUTPUT_ENABLED;
+const uint32 MAIN               = 0x00080010 | OUTPUT_ENABLED;
+const uint32 THREAD             = 0x00080020 | OUTPUT_ENABLED;
 
 //group memory management
 const uint32 MM                 = 0x00100000;

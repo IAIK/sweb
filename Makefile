@@ -4,7 +4,7 @@ INCLUDES := ../include ../../../common/include/mm/
 ifeq ($(ARCH),xen)
 DEPS := kernelxen
 else
-DEPS:= kernel e2fsimage install 
+DEPS:= kernel e2fsimage install
 endif
 
 ifeq ($(ARCH),xen)
@@ -115,8 +115,8 @@ endif
 #	@rm $(OBJECTDIR)/sauhaufen/kprintf.o -f
 #	@rm $(OBJECTDIR)/sauhaufen/Loader.o -f
 #	@rm $(OBJECTDIR)/sauhaufen/Thread.o -f
-#	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/main.o  $(OBJECTDIR)/sauhaufen/arch_panic.o  $(SHARED_LIBS) -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map 
-	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/*  -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map 
+#	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/main.o  $(OBJECTDIR)/sauhaufen/arch_panic.o  $(SHARED_LIBS) -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map
+	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/*  -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map
 	@echo "objcopy -R .note -R .comment  $(OBJECTDIR)/sweb_xen.elf  $(OBJECTDIR)/sweb_xen.x"
 	objcopy -R .note -R .comment  $(OBJECTDIR)/sweb_xen.elf  $(OBJECTDIR)/sweb_xen.x
 ifeq ($(V),1)
@@ -143,7 +143,7 @@ endif
 install: kernel
 	@echo "Starting with install"
 #	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
-#	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
+#	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1)
 #	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
 #	@echo INSTALL: $(OBJECTDIR)/boot.img is ready
 #	@echo "Starting with install - ext2 floppy"
@@ -172,8 +172,8 @@ install: kernel
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
 #-- this should be done if you want to use the same minix image
- 	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
- 	cp ./images/SWEB-flat-minix.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat-minix.vmdk.gz
+	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
+	cp ./images/SWEB-flat-minix.vmdk.gz $(OBJECTDIR)/ ; gzip -df $(OBJECTDIR)/SWEB-flat-minix.vmdk.gz
 #-- so uncomment this and use make minixfs
 	cp ./images/nvram $(OBJECTDIR)/
 	@echo "copy files to image..."
@@ -187,9 +187,9 @@ install: kernel
 minixfs:
 	dd if=/dev/zero of=./images/SWEB-flat-minix.vmdk bs=512 count=20808
 	sudo mkfs.minix ./images/SWEB-flat-minix.vmdk
-  
+
 e2fsimage:
-	@echo "Starting with e2fsimage"	
+	@echo "Starting with e2fsimage"
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
 
 qemu:
@@ -205,22 +205,22 @@ vmware:
 	cd $(OBJECTDIR) && vmrun start "$(OBJECTDIR)/sweb.vmx"
 
 bochs:
-	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\"" 
-	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" 
+	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
+	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"
 bochsc:
-	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\"" 
+	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"<<< c
 
 bochsgdb:
-	echo "Going to gdb bochs on port localhost:1234 " 
+	echo "Going to gdb bochs on port localhost:1234 "
 	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
 
 .PHONY: prepare-system-ubuntu
 prepare-system-ubuntu:
 	$(info PREPARE-SYSTEM: you may have to manualy choose a libstdc++-dev)
 	$(info PREPARE-SYSTEM: running: sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev)
-	@echo 
-	sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev 
+	@echo
+	sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev
 
 .PHONY: submit info
 submit:
@@ -230,7 +230,7 @@ ifneq ($(shell hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l),0)
 	$(warning WARNING: are you sure you don't want to submit your latest changes ?)
 	$(warning WARNING: maybe you forgot "hg commit" ?)
 	$(warning )
-	
+
 endif
 ifneq ($(shell hg status -u | grep -i -E "(Makefile|\.c|\.cc|\.h|\.cpp|\.s|\.tcpp)$$" | wc -l),0)
 	$(warning )
@@ -259,8 +259,8 @@ endif
 	@echo "Make sure you didn't forget to 'hg add' new files !"
 	@echo -e "**********************************************\n"
 
-info: 
-	echo -e "\nBOCHS:"	
+info:
+	echo -e "\nBOCHS:"
 	bochs --help 2>&1 | head -n 5
 	echo -e "\nGCC:"
 	gcc --version
@@ -277,7 +277,7 @@ info:
 	echo -e "\nENVIRONMENT:"
 	env
 	echo -e "\nE2FSIMAGE/Local.mak:"
-	ls -la utils/e2fsimage/Local.mak |cat 
-    
+	ls -la utils/e2fsimage/Local.mak |cat
+
 mrproper:
 	rm -rf $(OBJECTDIR)

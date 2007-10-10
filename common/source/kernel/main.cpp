@@ -121,7 +121,13 @@ class MinixUserThread : public Thread
     MinixUserThread ( char *minixfs_filename, uint32 terminal_number=0 )
     {
       name_= minixfs_filename;
-      uint32 fd = vfs_syscall.open ( minixfs_filename,0 );
+      int32 fd = vfs_syscall.open ( minixfs_filename,0 );
+      if ( fd < 0 )
+      {
+        run_me_ = false;
+        kprintf ( "Error: file %s does not exist!\n",minixfs_filename );
+        return;
+      }
       uint32 file_size = vfs_syscall.getFileSize ( fd );
       char *elf_data = new char[file_size];
 
@@ -264,7 +270,7 @@ void startup()
   kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, ( ( pointer ) &kernel_end_address )-2U*1024*1024*1024+1*1024*1024 );
 
 
-  kprintfd ( "Mounting DeviceFS under /dev/\n" );
+  debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
   DeviceFSType *devfs = new DeviceFSType();
   vfs.registerFileSystem ( devfs );
   FileSystemInfo* root_fs_info = vfs.root_mount ( "devicefs", 0 );
@@ -295,23 +301,6 @@ void startup()
 
   }
 
-  //NOTE: maybe replace by a mounting thread who mounts in his run() method
-//   Thread* mounting_dummy_thread = new UserThread("mounting dummy thread");
-//   mounting_dummy_thread->setFSInfo( root_fs_info );
-//   currentThread = mounting_dummy_thread;
-//   kprintfd("currentThread: %d",currentThread);
-//   //assume we detected the minix filesystem on device idec
-//   if(vfs_syscall.mkdir("/minix",0) == 0)
-//   {
-//     kprintfd("Mounting Minix under /minix/\n");
-//     MinixFSType *minixfs = new MinixFSType();
-//     vfs.registerFileSystem(minixfs);
-//     uint32 mntres = vfs.mount("idec", "/minix", "minixfs", 0);
-//     kprintfd("Mount returned %d\n", mntres);
-//   }
-//   currentThread = 0;
-//   delete mounting_dummy_thread;
-
   debug ( MAIN, "Timer enable\n" );
   ArchInterrupts::enableTimer();
 
@@ -323,9 +312,9 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-  Scheduler::instance()->addNewThread (
-      new MinixTestingThread ( root_fs_info )
-  );
+//   Scheduler::instance()->addNewThread (
+//       new MinixTestingThread ( root_fs_info )
+//   );
 
 
 //   Scheduler::instance()->addNewThread(
@@ -358,12 +347,12 @@ void startup()
 
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
 
-  /* for (uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file)
-   {
-     UserThread *user_thread = new UserThread( PseudoFS::getInstance()->getFileNameByNumber(file));
-     user_thread->setFSInfo( new FileSystemInfo(*root_fs_info) );
-     Scheduler::instance()->addNewThread( user_thread );
-  }*/
+  for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
+  {
+    UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ) );
+    user_thread->setFSInfo ( new FileSystemInfo ( *root_fs_info ) );
+    Scheduler::instance()->addNewThread ( user_thread );
+  }
 
   //Scheduler::instance()->addNewThread(new TestThread());
 

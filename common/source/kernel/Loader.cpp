@@ -254,7 +254,10 @@ uint32 Loader::loadExecutableAndInitProcess()
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *> ( file_image_ );
 
   debug ( LOADER,"loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr->e_entry, hdr->e_phnum );
-  printElfHeader ( *hdr );
+  if ( isDebugEnabled ( LOADER ) )
+  {
+    printElfHeader ( *hdr );
+  }
   ArchThreads::createThreadInfosUserspaceThread ( thread_->user_arch_thread_info_, hdr->e_entry, 2U*1024U*1024U*1024U-sizeof ( pointer ), thread_->getStackStartPointer() );
   ArchThreads::setPageDirectory ( thread_, page_dir_page_ );
 

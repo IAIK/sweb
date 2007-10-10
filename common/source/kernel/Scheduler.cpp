@@ -73,7 +73,7 @@ void Scheduler::addNewThread ( Thread *thread )
   //also gets added to front as not to interfere with remove or xchange
 
   lockScheduling();
-  kprintfd_nosleep ( "Scheduler::addNewThread: %x %s\n",thread,thread->getName() );
+  debug ( SCHEDULER,"addNewThread: %x %s\n",thread,thread->getName() );
   waitForFreeKMMLock();
   threads_.pushFront ( thread );
   unlockScheduling();
@@ -82,7 +82,7 @@ void Scheduler::addNewThread ( Thread *thread )
 void Scheduler::removeCurrentThread()
 {
   lockScheduling();
-  kprintfd_nosleep ( "Scheduler::removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size() );
+  debug ( SCHEDULER,"removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size() );
   waitForFreeKMMLock();
   if ( threads_.size() > 1 )
   {
@@ -179,7 +179,7 @@ uint32 Scheduler::schedule()
 
   }
   while ( currentThread->state_ != Running );
-  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_ );
+//   debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_ );
 
   uint32 ret = 1;
 

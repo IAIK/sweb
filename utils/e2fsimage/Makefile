@@ -34,14 +34,14 @@ $(OBJECTDIR):
 
 $(TARGET): $(OBJECTS)
 	@echo $(eval sinclude Local.mak)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS) 
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 $(OBJECTDIR)/%.o: $(SOURCEDIR)/%.c Makefile Local.mak e2fsimage.h
 	@echo $(eval sinclude Local.mak)
 	$(CC) $(CPPFLAGS) -DVER=\"$(VERSION)\" $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(TARGET) Local.mak 
+	rm -f $(OBJECTS) $(TARGET) Local.mak
 
 mrproper: clean
 
