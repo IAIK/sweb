@@ -1,18 +1,13 @@
-//----------------------------------------------------------------------
-//   $Id: arch_panic.c,v 1.2 2005/04/22 19:43:04 nomenquis Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: arch_panic.c,v $
-//  Revision 1.1  2005/04/20 15:26:35  nomenquis
-//  more and more stuff actually works
-//
-//----------------------------------------------------------------------
-
+/**
+ * @file arch_panic.c
+ *
+ */
+ 
 #include "arch_panic.h"
 
 void arch_panic(uint8 *mesg)
 {
-  uint8 * fb = (uint8*)0xC00B8000;
+  uint8 *fb = (uint8*)0xC00B8000;
   uint32 i=0;
   while (mesg && *mesg)
   {

@@ -1,0 +1,18 @@
+# Disk DescriptorFile
+version=1
+CID=a33f9c18
+parentCID=ffffffff
+createType="monolithicFlat"
+
+# Extent description
+RW 209715 FLAT "SWEB-flat-minix.vmdk" 0
+
+# The Disk Data Base 
+#DDB
+
+ddb.toolsVersion = "0"
+ddb.adapterType = "ide"
+ddb.geometry.sectors = "63"
+ddb.geometry.heads = "16"
+ddb.geometry.cylinders = "208"
+ddb.virtualHWVersion = "3"

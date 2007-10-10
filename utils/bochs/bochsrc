@@ -452,13 +452,16 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #   ata3-slave:  type=cdrom, path=iso.sample, status=inserted
 #=======================================================================
 #ata0-master: type=disk, mode=flat, path="30M.sample", cylinders=615, heads=6, spt=17
-ata0-slave: type=cdrom, path=D:, status=inserted
+ata1-master: type=disk, mode=flat, path="SWEB-flat-minix.vmdk", cylinders=306, heads=4, spt=17
+#ata0-slave: type=disk, mode=flat, path="SWEB-flat-minix.vmdk", cylinders=306, heads=4, spt=17
+#ata1-slave: type=disk, mode=flat, path="SWEB-flat-minix.vmdk", cylinders=306, heads=4, spt=17
 #ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
 #ata0-slave: type=cdrom, path="drive", status=inserted
 #ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted 
 #
 #ata0-master: type=disk, path="image/hash.img", mode=flat, cylinders=60, heads=16, spt=63
 ata0-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=209, heads=16, spt=63
+#ata1-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=209, heads=16, spt=63
 #ata0-master: type=disk, mode=flat, path="image/mc.img", cylinders=4, heads=16, spt=63
 #ata0-slave: type=disk, mode=flat, path="image/minix_disk_1.img", cylinders=2, heads=2, spt=63
 #ata0-master: type=disk, path="image/c.img", mode=flat, cylinders=2, heads=16, spt=63

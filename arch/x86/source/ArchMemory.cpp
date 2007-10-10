@@ -1,71 +1,7 @@
-//----------------------------------------------------------------------
-//  $Id: ArchMemory.cpp,v 1.21 2006/11/21 19:14:43 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: ArchMemory.cpp,v $
-//  Revision 1.20  2006/10/13 11:38:11  btittelbach
-//  Ein Bissal Uebersichtlichkeit im Bochs Terminal (aka loopende kprintfs auskomentiert)
-//
-//  Revision 1.19  2006/09/19 20:40:23  aniederl
-//  fixed a lot of warnings
-//
-//  Revision 1.18  2005/11/30 00:55:39  btittelbach
-//  changed back to "virtual memory" by request
-//
-//  Revision 1.16  2005/09/24 13:30:20  btittelbach
-//  4m page support
-//
-//  Revision 1.15  2005/09/21 19:26:24  btittelbach
-//  support for 4m pages, part two
-//
-//  Revision 1.14  2005/09/21 18:38:43  btittelbach
-//  ArchMemory differen page sizes part one
-//
-//  Revision 1.13  2005/09/03 19:02:54  btittelbach
-//  PageManager++
-//
-//  Revision 1.12  2005/08/11 18:24:39  nightcreature
-//  removed unused method physicalPageToKernelPointer
-//
-//  Revision 1.11  2005/07/26 17:45:25  nomenquis
-//  foobar
-//
-//  Revision 1.10  2005/07/21 19:08:39  btittelbach
-//  Jö schön, Threads u. Userprozesse werden ordnungsgemäß beendet
-//  Threads können schlafen, Mutex benutzt das jetzt auch
-//  Jetzt muß nur der Mutex auch überall verwendet werden
-//
-//  Revision 1.9  2005/07/05 20:22:56  btittelbach
-//  some changes
-//
-//  Revision 1.8  2005/07/05 17:29:48  btittelbach
-//  new kprintf(d) Policy:
-//  [Class::]Function: before start of debug message
-//  Function can be abbreviated "ctor" if Constructor
-//  use kprintfd where possible
-//
-//  Revision 1.7  2005/05/31 18:59:20  btittelbach
-//  Special Address Check Function for Philip ;>
-//
-//  Revision 1.6  2005/05/25 08:27:48  nomenquis
-//  cr3 remapping finally really works now
-//
-//  Revision 1.5  2005/05/20 14:07:20  btittelbach
-//  Redesign everything
-//
-//  Revision 1.4  2005/05/20 11:58:10  btittelbach
-//  much much nicer UserProcess Page Management, but still things to do
-//
-//  Revision 1.3  2005/05/19 20:04:16  btittelbach
-//  Much of this still needs to be moved to arch
-//
-//  Revision 1.2  2005/05/19 19:35:30  btittelbach
-//  ein bisschen Arch Memory
-//
-//  Revision 1.1  2005/05/16 20:37:51  nomenquis
-//  added ArchMemory for page table manip
-//
-//----------------------------------------------------------------------
+/**
+ * @file ArchMemory.cpp
+ *
+ */
 
 #include "ArchMemory.h"
 #include "kprintf.h"

@@ -1,10 +1,7 @@
-//----------------------------------------------------------------------
-//  $Id: SegmentUtils.h,v 1.1 2005/04/24 20:39:31 nomenquis Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: $
-//----------------------------------------------------------------------
-
+/**
+ * @file SegmentUtils.h
+ *
+ */
 
 #ifndef _SEGMENT_UTILS_H_
 #define _SEGMENT_UTILS_H_
@@ -14,14 +11,12 @@
 class SegmentUtils
 {
 public:
-  
+
+  /**
+   * initialisation
+   */
   static void initialise();
-  
+
 };
-
-
-
-
-
 
 #endif

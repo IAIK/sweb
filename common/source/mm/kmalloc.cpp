@@ -1,19 +1,6 @@
-//----------------------------------------------------------------------
-//   $Id: kmalloc.cpp,v 1.4 2005/04/26 16:08:59 nomenquis Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: kmalloc.cpp,v $
-//  Revision 1.3  2005/04/26 15:49:07  btittelbach
-//  krealloc
-//
-//  Revision 1.2  2005/04/23 17:35:03  nomenquis
-//  fixed buggy memory manager
-//  (giving out the same memory several times is no good idea)
-//
-//  Revision 1.1  2005/04/22 17:21:41  nomenquis
-//  added TONS of stuff, changed ZILLIONS of things
-//
-//----------------------------------------------------------------------
+/**
+ * @file kmalloc.cpp
+ */
 
 #include "kmalloc.h"
 #include "KernelMemoryManager.h"

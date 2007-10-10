@@ -1,3 +1,7 @@
+/**
+ * @file Pair.tcpp template definitions, included by Pair.h
+ */
+
 #include "ListNode.h"
 
 
@@ -7,12 +11,14 @@ Pair<FirstValueType, SecondValueType>::Pair()
 
 }
 
+
 template<typename FirstValueType, typename SecondValueType>
 Pair<FirstValueType, SecondValueType>::Pair(first_const_reference first, second_const_reference second) :                                                               first_element_(first),
                                                          second_element_(second)
 {
 
 }
+
 
 template<typename FirstValueType, typename SecondValueType>
 Pair<FirstValueType, SecondValueType>::Pair(const Pair<FirstValueType, SecondValueType> &instance)
@@ -41,6 +47,7 @@ Pair<FirstValueType, SecondValueType>& Pair<FirstValueType, SecondValueType>::op
   return (*this);
 }
 
+
 template<typename FirstValueType, typename SecondValueType>
 typename Pair<FirstValueType, SecondValueType>::first_reference Pair<FirstValueType, SecondValueType>::first()
 {
@@ -54,11 +61,13 @@ typename Pair<FirstValueType, SecondValueType>::first_const_reference Pair<First
   return first_element_;
 }
 
+
 template<typename FirstValueType, typename SecondValueType>
 typename Pair<FirstValueType, SecondValueType>::second_reference Pair<FirstValueType, SecondValueType>::second()
 {
   return second_element_;
 }
+
 
 template<typename FirstValueType, typename SecondValueType>
 typename Pair<FirstValueType, SecondValueType>::second_const_reference Pair<FirstValueType, SecondValueType>::second() const
@@ -66,11 +75,13 @@ typename Pair<FirstValueType, SecondValueType>::second_const_reference Pair<Firs
   return second_element_;
 }
 
+
 template<typename FirstValueType, typename SecondValueType>
 void Pair<FirstValueType, SecondValueType>::setFirst(first_const_reference element)
 {
   first_element_ = element;
 }
+
 
 template<typename FirstValueType, typename SecondValueType>
 void Pair<FirstValueType, SecondValueType>::setSecond(second_const_reference element)

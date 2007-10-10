@@ -1,68 +1,66 @@
-/// @file string.c basic string and array manipulation
-/// @author David Riebenbauer <davrieb@sbox.tugraz.at>
+/**
+ * @file string.c basic string and array manipulation
+ */
 
 #include "util/string.h"
 #include "mm/kmalloc.h"
 #include "assert.h"
 
-//----------------------------------------------------------------------
-size_t strlen(const char *str)
+size_t strlen ( const char *str )
 {
   const char *pos = str;
 
-  while (*pos)
+  while ( *pos )
   {
     ++pos;
   }
 
-  return (pos - str);
+  return ( pos - str );
 }
 
 
-//----------------------------------------------------------------------
-void *memcpy(void *dest, const void *src, size_t length)
+void *memcpy ( void *dest, const void *src, size_t length )
 {
-  uint8 *dest8 = (uint8*)dest;
-  const uint8 *src8 = (const uint8*)src;
+  uint8 *dest8 = ( uint8* ) dest;
+  const uint8 *src8 = ( const uint8* ) src;
 
 #ifdef STRING_SAVE
-  if (((src8 < (dest8 + length)) && (src8 > dest8))
-      || ((dest8 < (src8 + length)) && (dest8 > src8)))
+  if ( ( ( src8 < ( dest8 + length ) ) && ( src8 > dest8 ) )
+          || ( ( dest8 < ( src8 + length ) ) && ( dest8 > src8 ) ) )
   {
     return dest;
     // error because strings overlap with is not allowed for memcpy
   }
 #endif
 
-  if (length == 0 || src == dest)
+  if ( length == 0 || src == dest )
   {
     return dest;
   }
 
-  while (length--)
+  while ( length-- )
   {
-      *dest8++ = *src8++;
+    *dest8++ = *src8++;
   }
 
   return dest;
 }
 
 
-//----------------------------------------------------------------------
-void *memmove(void *dest, const void *src, size_t length)
+void *memmove ( void *dest, const void *src, size_t length )
 {
-  uint8* dest8 = (uint8*)dest;
-  const uint8* src8 = (const uint8*) src;
+  uint8* dest8 = ( uint8* ) dest;
+  const uint8* src8 = ( const uint8* ) src;
 
-  if (length == 0 || src == dest)
+  if ( length == 0 || src == dest )
   {
     return dest;
   }
 
-  if (src < dest)
+  if ( src < dest )
   {
     // if src is before dest we can do a forward copy
-    while (length--)
+    while ( length-- )
     {
       *dest8++ = *src8++;
     }
@@ -73,7 +71,7 @@ void *memmove(void *dest, const void *src, size_t length)
     src8 += length;
     dest8 += length;
 
-    while (length--)
+    while ( length-- )
     {
       *dest8-- = *src8--;
     }
@@ -83,37 +81,35 @@ void *memmove(void *dest, const void *src, size_t length)
 }
 
 
-//----------------------------------------------------------------------
-void *memccpy(void *dest, const void *src, uint8 c, size_t length)
+void *memccpy ( void *dest, const void *src, uint8 c, size_t length )
 {
-  uint8 *dest8 = (uint8*)dest;
-  const uint8 *src8 = (const uint8*)src;
+  uint8 *dest8 = ( uint8* ) dest;
+  const uint8 *src8 = ( const uint8* ) src;
 
-  if (length == 0)
+  if ( length == 0 )
   {
-    return (void*)0;
+    return ( void* ) 0;
   }
 
-  while (length--)
+  while ( length-- )
   {
-    if ((*dest8++ = *src8++) == c)
+    if ( ( *dest8++ = *src8++ ) == c )
     {
-      return (void*)dest8;
+      return ( void* ) dest8;
     }
   }
 
-  return (void *)0;
+  return ( void * ) 0;
 }
 
 
-//----------------------------------------------------------------------
-void *memset(void *block, uint8 c, size_t size)
+void *memset ( void *block, uint8 c, size_t size )
 {
-  uint8 *block8 = (uint8*)block;
+  uint8 *block8 = ( uint8* ) block;
 
-  if (size)
+  if ( size )
   {
-    while (size--)
+    while ( size-- )
     {
       *block8++ = c;
     }
@@ -123,33 +119,31 @@ void *memset(void *block, uint8 c, size_t size)
 }
 
 
-
-char *strcpy(char *dest, const char* src)
+char *strcpy ( char *dest, const char* src )
 {
-  assert("don't use strcpy" == 0);
+  assert ( "don't use strcpy" == 0 );
 
   char *start = dest;
 
-  for(; (*dest = *src); ++src, ++dest)
+  for ( ; ( *dest = *src ); ++src, ++dest )
     ;
 
   return start;
 }
 
 
-//----------------------------------------------------------------------
-char *strncpy(char *dest, const char* src, size_t size)
+char *strncpy ( char *dest, const char* src, size_t size )
 {
   char *start = dest;
   int8 fill = 0;
 
-  while (size--)
+  while ( size-- )
   {
-    if (fill)
+    if ( fill )
     {
       *dest = 0;
     }
-    else if ((*dest = *src) == 0)
+    else if ( ( *dest = *src ) == 0 )
     {
       fill = 1;
     }
@@ -162,80 +156,76 @@ char *strncpy(char *dest, const char* src, size_t size)
 }
 
 
-//----------------------------------------------------------------------
-size_t strlcpy(char* dest, const char* src, size_t size)
+size_t strlcpy ( char* dest, const char* src, size_t size )
 {
-    const char* src_start = src;
-    char *dst_iter = dest;
-    size_t n = size;
+  const char* src_start = src;
+  char *dst_iter = dest;
+  size_t n = size;
 
-    if(n > 1)
+  if ( n > 1 )
+  {
+    --n;
+
+    while ( n-- )
     {
-      --n;
-
-      while (n--)
+      if ( ( *dst_iter++ = *src++ ) == 0 )
       {
-        if ((*dst_iter++ = *src++) == 0)
-        {
-          break;
-        }
+        break;
       }
     }
-
-    // terminate dest, if it was not done already
-    *dst_iter = '\0';
-
-    while (*src)
-    {
-      ++src;
-    }
-
-    return (src - src_start);
-}
-
-
-//----------------------------------------------------------------------
-char *strdup(const char *src)
-{
-  size_t size = strlen(src) + 1;
-  char *dest = 0;
-
-  if ((dest = (char*)kmalloc((size) * sizeof(char))) == (char*)0)
-  {
-    return (char*)0;
   }
 
-  return (char*)memcpy(dest, src, size);
+  // terminate dest, if it was not done already
+  *dst_iter = '\0';
+
+  while ( *src )
+  {
+    ++src;
+  }
+
+  return ( src - src_start );
 }
 
 
-//----------------------------------------------------------------------
-char *strcat(char *dest, const char*append)
+char *strdup ( const char *src )
 {
-  char *start = dest + strlen(dest);
-  strcpy(start, append);
+  size_t size = strlen ( src ) + 1;
+  char *dest = 0;
+
+  if ( ( dest = ( char* ) kmalloc ( ( size ) * sizeof ( char ) ) ) == ( char* ) 0 )
+  {
+    return ( char* ) 0;
+  }
+
+  return ( char* ) memcpy ( dest, src, size );
+}
+
+
+char *strcat ( char *dest, const char*append )
+{
+  char *start = dest + strlen ( dest );
+  strcpy ( start, append );
   return dest;
 }
 
 
-//----------------------------------------------------------------------
-char *strncat(char *dest, const char*append, size_t size)
+char *strncat ( char *dest, const char*append, size_t size )
 {
   char* save = dest;
 
-  if (size == 0)
+  if ( size == 0 )
   {
     return save;
   }
 
-  while (*dest)
+  while ( *dest )
   {
     ++dest;
   }
 
-  while (size--)
+  while ( size-- )
   {
-    if ((*dest = *append++) == '\0')
+    if ( ( *dest = *append++ ) == '\0' )
     {
       break;
     }
@@ -247,53 +237,51 @@ char *strncat(char *dest, const char*append, size_t size)
 }
 
 
-//----------------------------------------------------------------------
-size_t strlcat(char *dest, const char*append, size_t size)
+size_t strlcat ( char *dest, const char*append, size_t size )
 {
   size_t count = size;
   const char*append_start = append;
   size_t done = 0;
 
-  while (count != 0 && *dest != '\0')
+  while ( count != 0 && *dest != '\0' )
   {
     --count;
     ++dest;
   }
   done = size - count;
 
-  if (count == 0)
+  if ( count == 0 )
   {
-    return done + strlen(append);
+    return done + strlen ( append );
   }
 
-  while (count--)
+  while ( count-- )
   {
-    if ((*dest++ = *append) == '\0')
+    if ( ( *dest++ = *append ) == '\0' )
     {
       break;
     }
     ++append;
   }
 
-  return done + (append - append_start) - 1;
+  return done + ( append - append_start ) - 1;
 }
 
 
-//----------------------------------------------------------------------
-void bcopy(void *src, void* dest, size_t length)
+void bcopy ( void *src, void* dest, size_t length )
 {
-  uint8* dest8 = (uint8*)dest;
-  const uint8* src8 = (const uint8*) src;
+  uint8* dest8 = ( uint8* ) dest;
+  const uint8* src8 = ( const uint8* ) src;
 
-  if (length == 0 || src == dest)
+  if ( length == 0 || src == dest )
   {
     return;
   }
 
-  if (src < dest)
+  if ( src < dest )
   {
     // if src is before dest we can do a forward copy
-    while (length--)
+    while ( length-- )
     {
       *dest8++ = *src8++;
     }
@@ -304,7 +292,7 @@ void bcopy(void *src, void* dest, size_t length)
     src8 += length;
     dest8 += length;
 
-    while (length--)
+    while ( length-- )
     {
       *dest8-- = *src8--;
     }
@@ -313,14 +301,13 @@ void bcopy(void *src, void* dest, size_t length)
 }
 
 
-//----------------------------------------------------------------------
-void bzero(void *block, size_t size)
+void bzero ( void *block, size_t size )
 {
-  uint8 *block8 = (uint8*)block;
+  uint8 *block8 = ( uint8* ) block;
 
-  if (size)
+  if ( size )
   {
-    while (size--)
+    while ( size-- )
     {
       *block8++ = 0;
     }
@@ -329,22 +316,21 @@ void bzero(void *block, size_t size)
 }
 
 
-//----------------------------------------------------------------------
-int32 memcmp(const void *region1, const void *region2, size_t size)
+int32 memcmp ( const void *region1, const void *region2, size_t size )
 {
   const uint8* b1 = region1;
   const uint8* b2 = region2;
 
-  if (size == 0)
+  if ( size == 0 )
   {
     return 0;
   }
 
-  while (size--)
+  while ( size-- )
   {
-    if (*b1++ != *b2++)
+    if ( *b1++ != *b2++ )
     {
-      return (*--b1 - *--b2);
+      return ( *--b1 - *--b2 );
     }
   }
 
@@ -352,20 +338,19 @@ int32 memcmp(const void *region1, const void *region2, size_t size)
 }
 
 
-//----------------------------------------------------------------------
-int32 strcmp(const char *str1, const char *str2)
+int32 strcmp ( const char *str1, const char *str2 )
 {
-  assert(str1);
-  assert(str2);
+  assert ( str1 );
+  assert ( str2 );
 
-  if (str1 == str2)
+  if ( str1 == str2 )
   {
     return 0;
   }
 
-  while ((*str1) && (*str2))
+  while ( ( *str1 ) && ( *str2 ) )
   {
-    if (*str1 != *str2)
+    if ( *str1 != *str2 )
     {
       break;
     }
@@ -373,16 +358,15 @@ int32 strcmp(const char *str1, const char *str2)
     ++str2;
   }
 
-  return (*(uint8 *)str1 - *(uint8 *)str2);
+  return ( * ( uint8 * ) str1 - * ( uint8 * ) str2 );
 }
 
 
-//----------------------------------------------------------------------
-int32 strncmp(const char *str1, const char *str2, size_t n)
+int32 strncmp ( const char *str1, const char *str2, size_t n )
 {
-  while (n-- && (*str1) && (*str2))
+  while ( n-- && ( *str1 ) && ( *str2 ) )
   {
-    if (*str1 != *str2)
+    if ( *str1 != *str2 )
     {
       break;
     }
@@ -390,26 +374,25 @@ int32 strncmp(const char *str1, const char *str2, size_t n)
     ++str2;
   }
 
-  return (*(uint8 *)str1 - *(uint8 *)str2);
+  return ( * ( uint8 * ) str1 - * ( uint8 * ) str2 );
 }
 
 
-//----------------------------------------------------------------------
-int32 bcmp(const void *region1, const void *region2, size_t size)
+int32 bcmp ( const void *region1, const void *region2, size_t size )
 {
   const uint8* b1 = region1;
   const uint8* b2 = region2;
 
-  if (size == 0)
+  if ( size == 0 )
   {
     return 0;
   }
 
-  while (size--)
+  while ( size-- )
   {
-    if (*b1++ != *b2++)
+    if ( *b1++ != *b2++ )
     {
-      return (*--b1 - *--b2);
+      return ( *--b1 - *--b2 );
     }
   }
 
@@ -417,75 +400,68 @@ int32 bcmp(const void *region1, const void *region2, size_t size)
 }
 
 
-//----------------------------------------------------------------------
-void *memchr(const void *block, uint8 c, size_t size)
+void *memchr ( const void *block, uint8 c, size_t size )
 {
-  const uint8 *b = (const uint8*)block;
+  const uint8 *b = ( const uint8* ) block;
 
-  while (size--)
+  while ( size-- )
   {
-    if (*b == c)
+    if ( *b == c )
     {
-      return (void *)b;
+      return ( void * ) b;
     }
     ++b;
   }
 
-  return (void *)0;
+  return ( void * ) 0;
 }
 
 
-//----------------------------------------------------------------------
-void *memrchr(const void *block, uint8 c, size_t size)
+void *memrchr ( const void *block, uint8 c, size_t size )
 {
-  const uint8 *b = (const uint8*)(block + size - 1);
+  const uint8 *b = ( const uint8* ) ( block + size - 1 );
 
-  while (size--)
+  while ( size-- )
   {
-    if (*b == c)
+    if ( *b == c )
     {
-      return (void *)b;
+      return ( void * ) b;
     }
     --b;
   }
 
-  return (void *)0;
+  return ( void * ) 0;
 }
 
 
-//----------------------------------------------------------------------
-char *strchr(const char* str, char c)
+char *strchr ( const char* str, char c )
 {
   do
   {
-    if (*str == c)
+    if ( *str == c )
     {
-      return (char *)str;
+      return ( char * ) str;
     }
-  } while (*++str);
+  }
+  while ( *++str );
 
-  return (char *)0;
+  return ( char * ) 0;
 }
 
 
-//----------------------------------------------------------------------
-char *strrchr(const char* str, char c)
+char *strrchr ( const char* str, char c )
 {
-  uint32 len = strlen(str);
+  uint32 len = strlen ( str );
   const char *pos = str + len; // goes to '\0'
 
   do
   {
-    if (*--pos == c)
+    if ( *--pos == c )
     {
-      return (char *)pos;
+      return ( char * ) pos;
     }
   }
-  while (--len);
+  while ( --len );
 
-  return (char *)0;
+  return ( char * ) 0;
 }
-
-
-
-

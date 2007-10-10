@@ -1,5 +1,6 @@
-
-
+/**
+ * @file Map.tcpp template definitions, included by Map.h
+ */
 
 template<typename KeyType, typename ValueType>
 Map<KeyType, ValueType>::Map() : first_node_(0),
@@ -8,6 +9,7 @@ Map<KeyType, ValueType>::Map() : first_node_(0),
 {
 
 }
+
 
 template<typename KeyType, typename ValueType>
 Map<KeyType, ValueType>::Map(const Map<KeyType, ValueType> &instance)
@@ -31,6 +33,7 @@ Map<KeyType, ValueType>::Map(const Map<KeyType, ValueType> &instance)
 
   last_node_ = node;
 }
+
 
 template<typename KeyType, typename ValueType>
 Map<KeyType, ValueType>::~Map()
@@ -56,17 +59,20 @@ Map<KeyType, ValueType>& Map<KeyType, ValueType>::operator = (const Map<KeyType,
   return (*this);
 }
 
+
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::size() const
 {
   return number_of_elements_;
 }
 
+
 template<typename KeyType, typename ValueType>
 bool Map<KeyType, ValueType>::empty() const
 {
   return (number_of_elements_ == 0);
 }
+
 
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::pair_reference Map<KeyType, ValueType>::operator[](
@@ -88,6 +94,7 @@ typename Map<KeyType, ValueType>::pair_reference Map<KeyType, ValueType>::operat
   return node->getElement();
 }
 
+
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::pair_const_reference Map<KeyType, ValueType>::operator[](size_type index) const
 {
@@ -106,6 +113,7 @@ typename Map<KeyType, ValueType>::pair_const_reference Map<KeyType, ValueType>::
 
   return node->getElement();
 }
+
 
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::remove(size_type index)
@@ -144,6 +152,7 @@ void Map<KeyType, ValueType>::remove(size_type index)
   --number_of_elements_;
 }
 
+
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::clear()
 {
@@ -156,6 +165,7 @@ void Map<KeyType, ValueType>::clear()
 
   number_of_elements_ = 0;
 }
+
 
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::pair_const_reference element)
@@ -174,12 +184,12 @@ void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::pair_co
   ++this->number_of_elements_;
 }
 
+
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::key_type key, typename Map<KeyType, ValueType>::value_type value)
 {
   this->pushBack(new Pair<KeyType, ValueType> >(key, value));
 }
-
 
 
 template<typename KeyType, typename ValueType>
@@ -199,6 +209,7 @@ typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::find(typena
   return number_of_elements_;
 }
 
+
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(typename Map<KeyType, ValueType>::KeyType key)
 {
@@ -216,17 +227,20 @@ typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(type
   return (typename Map<KeyType, ValueType>::pair_pointer) 0;
 }
 
+
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::getKey(typename Map<KeyType, ValueType>::size_type index)
 {
   return this->[index].first();
 }
 
+
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::getValue(typename Map<KeyType, ValueType>::size_type index)
 {
   return this->[index].second();
 }
+
 
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::removeByKey(KeyType key)
@@ -244,5 +258,3 @@ void Map<KeyType, ValueType>::removeByKey(KeyType key)
     ++index;
   }
 }
-
-

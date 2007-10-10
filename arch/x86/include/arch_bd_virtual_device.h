@@ -1,92 +1,18 @@
-/********************************************************************
-*
-*    $Id: arch_bd_virtual_device.h,v 1.5 2006/09/19 14:13:21 aniederl Exp $
-*    $Log: arch_bd_virtual_device.h,v $
-*    Revision 1.4  2005/11/20 21:18:08  nelles
-*
-*         Committing in .
-*
-*          Another block device update ... Interrupts are now functional fixed some
-*          8259 problems .. Reads and Writes tested  ....
-*
-*         Modified Files:
-*     	include/arch_bd_ata_driver.h include/arch_bd_request.h
-*     	include/arch_bd_virtual_device.h source/8259.cpp
-*     	source/ArchInterrupts.cpp source/InterruptUtils.cpp
-*     	source/arch_bd_ata_driver.cpp
-*     	source/arch_bd_virtual_device.cpp source/arch_interrupts.s
-*
-*    Revision 1.3  2005/10/02 12:27:55  nelles
-*
-*     Committing in .
-*
-*    	DeviceFS patch. The devices can now be accessed through VFS.
-*
-*
-*
-*
-*     Modified Files:
-*     	Makefile arch/x86/include/arch_bd_ata_driver.h
-*     	arch/x86/include/arch_bd_driver.h
-*     	arch/x86/include/arch_bd_ide_driver.h
-*     	arch/x86/include/arch_bd_virtual_device.h
-*     	arch/x86/source/InterruptUtils.cpp arch/x86/source/Makefile
-*     	arch/x86/source/arch_bd_ide_driver.cpp
-*     	arch/x86/source/arch_bd_manager.cpp
-*     	arch/x86/source/arch_bd_virtual_device.cpp
-*     	arch/x86/source/arch_serial.cpp
-*     	arch/x86/source/arch_serial_manager.cpp
-*     	common/include/console/Terminal.h
-*     	common/include/drivers/serial.h common/include/fs/Inode.h
-*     	common/include/fs/Superblock.h common/include/fs/fs_global.h
-*     	common/include/kernel/TestingThreads.h
-*     	common/source/console/FrameBufferConsole.cpp
-*     	common/source/console/Makefile
-*     	common/source/console/Terminal.cpp
-*     	common/source/console/TextConsole.cpp
-*     	common/source/fs/Dentry.cpp common/source/fs/Makefile
-*     	common/source/fs/PathWalker.cpp
-*     	common/source/fs/Superblock.cpp
-*     	common/source/fs/VfsSyscall.cpp common/source/kernel/main.cpp
-*     	utils/bochs/bochsrc
-*     Added Files:
-*     	common/include/drivers/chardev.h
-*     	common/include/fs/devicefs/DeviceFSSuperblock.h
-*     	common/include/fs/devicefs/DeviceFSType.h
-*     	common/source/fs/devicefs/DeviceFSSuperblock.cpp
-*     	common/source/fs/devicefs/DeviceFSType.cpp
-*     	common/source/fs/devicefs/Makefile
-*
-*    Revision 1.2  2005/09/18 20:46:52  nelles
-*
-*     Committing in .
-*
-*     Modified Files:
-*     	arch/x86/include/arch_bd_ata_driver.h
-*     	arch/x86/include/arch_bd_ide_driver.h
-*     	arch/x86/include/arch_bd_manager.h
-*     	arch/x86/include/arch_bd_request.h
-*     	arch/x86/include/arch_bd_virtual_device.h
-*     	arch/x86/source/arch_bd_ata_driver.cpp
-*     	arch/x86/source/arch_bd_ide_driver.cpp
-*     	arch/x86/source/arch_bd_manager.cpp
-*     	arch/x86/source/arch_bd_virtual_device.cpp
-*     ----------------------------------------------------------------------
-*
-********************************************************************/
+/**
+ * @file arch_bd_virtual_device.h
+ *
+ */
 
 #ifndef _BD_VIRTUAL_DEVICE_
 #define _BD_VIRTUAL_DEVICE_
 
 #include "types.h"
-#include "string.h"
-
 #include "arch_bd_request.h"
 #include "arch_bd_driver.h"
 
 #include "fs/PointList.h"
 #include "fs/Inode.h"
-#include "fs/ramfs/RamFsFile.h"
+#include "fs/ramfs/RamFSFile.h"
 #include "fs/devicefs/DeviceFSSuperblock.h"
 #include "fs/Dentry.h"
 #include "fs/Superblock.h"
@@ -95,70 +21,150 @@ class BDVirtualDevice : public Inode
 {
   public:
 
-    BDVirtualDevice( BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable);
-  
-    void addRequest(BDRequest * command);
-    
-    uint32    getBlockSize()                  { return block_size_; };
-    uint32    getDeviceNumber()               { return dev_number_; };
-    BDDriver* getDriver()                     { return driver_; };
-    char*     getName()                       { return name_; };
-    uint32    getNumBlocks()                  { return num_blocks_; };
+    /**
+     * Constructor
+     *
+     */
+    BDVirtualDevice( BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable);
 
-    
-//// -----------------------------------------------------------------
+    /**
+     * adds the given request to the device given in the request
+     * @param command the request
+     *
+     */
+    void addRequest(BDRequest *command);
+
+    /**
+     * @return returns the size of one block
+     * now 1024
+     *
+     */
+    uint32 getBlockSize() { return block_size_; };
+
+    /**
+     * @return returns the current device number
+     *
+     */
+    uint32 getDeviceNumber() { return dev_number_; };
+
+    /**
+     * @return returns the current driver
+     *
+     */
+    BDDriver *getDriver() { return driver_; };
+
+    /**
+     * @return returns the current name
+     *
+     */
+    char *getName() { return name_; };
+
+    /**
+     * calculates the number of blocks
+     *
+     */
+    uint32 getNumBlocks() { return num_sectors_ * block_size_ / sector_size_; };
+
+
 //// Inode functions
-
+    /**
+     * reads the data from the inode on the current device
+     * @param offset where to start to read
+     * @param size number of bytes that should be read
+     * @param buffer to save the data that has been read
+     *
+     */
     virtual int32 readData(int32 offset, int32 size, char *buffer);
+
+    /**
+     * reads the data from the inode on the current device
+     * @param offset where to start to write
+     * @param size number of bytes that should be written
+     * @param buffer data, that should be written
+     *
+     */
     virtual int32 writeData(int32 offset, int32 size, const char *buffer);
-        
+
+    /**
+     * creates an inode at the given dentry
+     *
+     */
     int32 mknod(Dentry *dentry)
     {
       if(dentry == 0)
         return -1;
-    
+
       i_dentry_ = dentry;
       dentry->setInode(this);
       return 0;
-    } 
-    
+    }
+
+    /**
+     * creates an inode at the given dentry
+     *
+     */
     int32 create(Dentry *dentry)
     {
       return(mknod(dentry));
     }
-    
+
+    /**
+     * creates a file at the given dentry
+     *
+     */
     int32 mkfile(Dentry *dentry)
     {
       return(mknod(dentry));
     }
-    
-    File* link(uint32 flag)
+
+    /**
+     * creates a link to the current file
+     *
+     */
+    File *link(uint32 flag)
     {
-      File* file = (File*)(new RamFsFile(this, i_dentry_, flag));
+      File* file = (File*)(new RamFSFile(this, i_dentry_, flag));
       i_files_.pushBack(file);
       return file;
     }
-  
+
+    /**
+     * deletes the link to the given file
+     *
+     */
     int32 unlink(File* file)
     {
       int32 tmp = i_files_.remove(file);
       delete file;
       return tmp;
-    }    
-    
+    }
 //// End Inode functions
-//// -----------------------------------------------------------------
 
-    
-    void    setDeviceNumber( uint32 number ) { dev_number_ = number; };
-    
-     
+    /**
+     * sets the device number
+     *
+     */
+    void setDeviceNumber( uint32 number ) { dev_number_ = number; };
+
+    /**
+     * sets the blocksize
+     *
+     */
+    void setBlockSize( uint32 block_size ) { block_size_ = block_size; };
+
+
   private:
+
+    /**
+     * private Constuctor, should not be used!
+     *
+     */
     BDVirtualDevice();
-    
+
     uint32 dev_number_;
     uint32 block_size_;
-    uint32 num_blocks_;
+    uint32 sector_size_;
+    uint32 num_sectors_;
     uint32 offset_;
     bool writable_;
     char *name_;

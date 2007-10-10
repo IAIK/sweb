@@ -1,13 +1,15 @@
-#include "ports.h"
+/**
+ * @file arch_serial.cpp
+ *
+ */
 
+#include "ports.h"
 #include "arch_serial.h"
 #include "serial.h"
 
 #include "ArchThreads.h"
-
 #include "kprintf.h"
 //#include "debug_bochs.h"
-
 #include "8259.h"
 
 
@@ -49,11 +51,11 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
     default:
     case BR_9600:
       divisor = 0x0C;
-      break;      
+      break;
   }
-      
+
   write_UART( SC::LCR , 0x80);  // activate DL
-  
+
   write_UART( 0 , divisor );    // DL low byte
   write_UART( SC::IER , 0x00);  // DL high byte  
   
@@ -147,7 +149,7 @@ int32 SerialPort::writeData(int32 offset, int32 num_bytes, const char*buffer)
 
 void SerialPort::irq_handler()
 {
-  kprintf("SerialPort::irq_handler: Entered SerialPort IRQ handler");
+  debug(A_SERIALPORT, "irq_handler: Entered SerialPort IRQ handler");
 
   uint8 int_id_reg = read_UART( SC::IIR );
   
@@ -185,5 +187,3 @@ uint8 SerialPort::read_UART( uint32 reg )
 {
   return inportb( this->port_info_.base_port + reg );
 };
-
-

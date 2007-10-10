@@ -1,20 +1,8 @@
-//----------------------------------------------------------------------
-//  $Id: 8259.h,v 1.4 2005/09/05 23:01:24 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: 8259.h,v $
-//  Revision 1.3  2005/04/25 22:41:58  nomenquis
-//  foobar
-//
-//  Revision 1.2  2005/04/25 21:15:41  nomenquis
-//  lotsa changes
-//
-//  Revision 1.1  2005/04/23 20:08:26  nomenquis
-//  updates
-//
-//----------------------------------------------------------------------
-
-
+/**
+ * @file 8259.h
+ *
+ */
+ 
 #ifndef _8259_H_
 #define _8259_H_
 
@@ -25,13 +13,32 @@
 #define PIC_1_DATA_PORT 0x21
 #define PIC_2_DATA_PORT 0xA1
 
-
+/**
+ * sends the initialisation and operational command words to CPU
+ *
+ */
 void initialise8259s();
 
 extern uint32 cached_mask;
 
+/**
+ * enables the interrupt Request with the given number 0 to 15
+ *
+ */
 void enableIRQ(uint16 number);
+
+/**
+ * disables the interrupt Request with the given number 0 to 15
+ *
+ */
 void disableIRQ(uint16 number);
+
+/**
+ * sends the EOI signal to a Programmable Interrupt Controller (PIC)
+ * to indicate the completion of interrupt processing for the given
+ * interrupt.
+ *
+ */
 void sendEOI(uint16 number);
 
 #endif

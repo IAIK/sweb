@@ -1,3 +1,7 @@
+/**
+ * @file stdarg.h
+ */
+
 /* Copyright (C) 1989, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
 
 This file is part of GCC.
@@ -47,18 +51,18 @@ typedef __builtin_va_list __gnuc_va_list;
    if this invocation was from the user program.  */
 #ifdef _STDARG_H
 
-#define va_start(v,l)	__builtin_va_start(v,l)
-#define va_end(v)	__builtin_va_end(v)
-#define va_arg(v,l)	__builtin_va_arg(v,l)
+#define va_start(v,l) __builtin_va_start(v,l)
+#define va_end(v) __builtin_va_end(v)
+#define va_arg(v,l) __builtin_va_arg(v,l)
 #if !defined(__STRICT_ANSI__) || __STDC_VERSION__ + 0 >= 199900L
-#define va_copy(d,s)	__builtin_va_copy(d,s)
+#define va_copy(d,s)  __builtin_va_copy(d,s)
 #endif
-#define __va_copy(d,s)	__builtin_va_copy(d,s)
+#define __va_copy(d,s)  __builtin_va_copy(d,s)
 
 /* Define va_list, if desired, from __gnuc_va_list. */
 /* We deliberately do not define va_list when called from
    stdio.h, because ANSI C says that stdio.h is not supposed to define
-   va_list.  stdio.h needs to have access to that data type, 
+   va_list.  stdio.h needs to have access to that data type,
    but must not use that name.  It should use the name __gnuc_va_list,
    which is safe because it is reserved for the implementation.  */
 
@@ -90,9 +94,9 @@ typedef __gnuc_va_list va_list;
 #else /* not __svr4__ || _SCO_DS */
 
 /* The macro _VA_LIST_ is the same thing used by this file in Ultrix.
-   But on BSD NET2 we must not test or define or undef it.
-   (Note that the comments in NET 2's ansi.h
-   are incorrect for _VA_LIST_--see stdio.h!)  */
+But on BSD NET2 we must not test or define or undef it.
+(Note that the comments in NET 2's ansi.h
+are incorrect for _VA_LIST_--see stdio.h!)  */
 #if !defined (_VA_LIST_) || defined (__BSD_NET2__) || defined (____386BSD____) || defined (__bsdi__) || defined (__sequent__) || defined (__FreeBSD__) || defined(WINNT)
 /* The macro _VA_LIST_DEFINED is used in Windows NT 3.5  */
 #ifndef _VA_LIST_DEFINED

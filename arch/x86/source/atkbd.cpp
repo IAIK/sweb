@@ -1,30 +1,20 @@
-//----------------------------------------------------------------------
-//   $Id: atkbd.cpp,v 1.2 2005/09/07 00:33:52 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: atkbd.cpp,v $
-//  Revision 1.1  2005/09/05 23:01:24  btittelbach
-//  Keyboard Input Handler
-//  + several Bugfixes
-//
-//----------------------------------------------------------------------
-
-
+/**
+ * @file atkbd.cpp
+ *
+ */
+ 
 #include "atkbd.h"
 
-//something to get ?
 bool kbdBufferFull()
 {
   return (inportb(ATKBD_CTRL) & 1);
 }
 
-//get scancode
 uint8 kbdGetScancode()
 {
   return inportb(ATKBD_DATA);
 }
 
-//reset
 void kbdReset()
 {
   outportb(ATKBD_DATA,0xF6);

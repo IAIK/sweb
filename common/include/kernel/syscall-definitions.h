@@ -1,8 +1,7 @@
-//----------------------------------------------------------------------
-//   $Id: syscall-definitions.h,v 1.1 2005/08/03 09:54:43 btittelbach Exp $
-//----------------------------------------------------------------------
-//
-//  $Log: syscall-definitions.h,v $
+/**
+ * @file syscall-definitions.h
+ * defines the various syscall names used by class @ref Syscall
+ */
 
 #define fd_stdout 0
 #define fd_stdin 1
@@ -26,7 +25,7 @@
 #define sc_mount 21
 #define sc_umount 22
 //....
-#define sc_nice	34
+#define sc_nice 34
 //....
 #define sc_kill 37
 //....

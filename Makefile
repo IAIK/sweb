@@ -20,27 +20,27 @@ SUBPROJECTS := \
                common/source/fs \
                common/source/fs/ramfs \
                common/source/fs/pseudofs \
-	       utils/e2fsimage \
-               common/source/fs/devicefs
-#               utils/mtools
+	           utils/e2fsimage \
+               common/source/fs/devicefs 
 
 else
 SUBPROJECTS := \
-               arch/arch/source \
-               common/source/util \
-               common/source/kernel \
-               common/source/console \
-               common/source/ipc \
-               common/source/mm \
-               common/source/drivers \
-               common/source/fs \
-               common/source/fs/ramfs \
-               common/source/fs/pseudofs \
-               common/source/fs/devicefs \
-               userspace/libc \
-	       utils/e2fsimage \
-               userspace/tests
-#               utils/mtools
+		arch/arch/source \
+		common/source/util \
+		common/source/kernel \
+		common/source/console \
+		common/source/ipc \
+		common/source/mm \
+		common/source/drivers \
+		common/source/fs \
+		common/source/fs/ramfs \
+		common/source/fs/pseudofs \
+		common/source/fs/devicefs \
+		common/source/fs/minixfs \
+		userspace/libc \
+		utils/e2fsimage \
+		userspace/tests
+
 endif
 
 ifeq ($(ARCH),xen)
@@ -68,6 +68,7 @@ SHARED_LIBS :=  \
                 common/source/fs/libFS.a \
                 common/source/fs/ramfs/libRamFS.a \
                 common/source/fs/pseudofs/libPseudoFS.a \
+                common/source/fs/minixfs/libMinixFS.a \
                 common/source/fs/devicefs/libDeviceFS.a
 endif
 
@@ -86,6 +87,7 @@ all: $(DEPS)
 #make kernel doesn't work yet, because there is no rule kernel in common.mk
 #use just "make" instead
 kernel: $(SUBPROJECTS)
+	@echo "Starting with kernel"
 ifeq ($(V),1)
 	@echo "$(KERNELLDCOMMAND) $(SHARED_LIBS) -g -u entry -T arch/arch/utils/kernel-ld-script.ld -o $(OBJECTDIR)/kernel.x -Map $(OBJECTDIR)/kernel.map"
 else
@@ -140,7 +142,7 @@ endif
 #make install doesn't work yet, because there is no rule install in common.mk
 #use just "make" instead
 install: kernel
-#	@echo "Starting with install"
+	@echo "Starting with install"
 #	cp ./images/boot_new.img $(OBJECTDIR)/boot.img
 #	test -e $(OBJECTDIR)/boot.img || (echo ERROR boot.img nowhere found; exit 1) 
 #	MTOOLS_SKIP_CHECK=1 $(OBJECTDIR)/utils/mtools/mtools -c mcopy -i $(OBJECTDIR)/boot.img $(OBJECTDIR)/kernel.x ::/boot/
@@ -170,6 +172,8 @@ install: kernel
 	cp ./images/menu.lst.hda $(OBJECTDIR)/e2fstemp/boot/grub/menu.lst
 	cp ./images/SWEB.vmdk $(OBJECTDIR)/
 	cp ./images/sweb.vmx $(OBJECTDIR)/
+	cp ./images/SWEB-minix.vmdk $(OBJECTDIR)/
+	cp ./images/SWEB-flat-minix.vmdk $(OBJECTDIR)/
 	cp ./images/nvram $(OBJECTDIR)/
 	@echo "copy files to image..."
 	dd if=$(OBJECTDIR)/SWEB-flat.vmdk of=$(OBJECTDIR)/temp_fs_ext2 bs=512 skip=63 2> /dev/null
@@ -178,7 +182,13 @@ install: kernel
 	rm -f $(OBJECTDIR)/temp_fs_ext2
 	@echo "########## Finished installing - ext2 hard drive ##########"
 
-e2fsimage:	
+
+#minixfs:
+#	dd if=/dev/zero of=./images/SWEB-flat-minix.vmdk bs=512 count=20808
+#	sudo mkfs.minix ./images/SWEB-flat-minix.vmdk
+
+e2fsimage:
+	@echo "Starting with e2fsimage"	
 	test -e $(E2FSIMAGESOURCE)e2fsimage || $(E2FSIMAGESOURCE)configure $(E2FSIMAGESOURCE)
 
 qemu:

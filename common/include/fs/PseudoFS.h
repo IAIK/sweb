@@ -1,43 +1,68 @@
+/**
+ * @file PseudoFS.h
+ */
 
-//
-// CVS Log Info for $RCSfile: PseudoFS.h,v $
-//
-// $Id: PseudoFS.h,v 1.3 2005/09/17 09:33:55 davrieb Exp $
-// $Log$
-//
-//
-
-#ifndef PseudoF_h__
-#define PseudoF_h__
+#ifndef PSEUDO_FS_H__
+#define PSEUDO_FS_H__
 
 #include "types.h"
 
+/**
+ * @class PseudoFS
+ */
 class PseudoFS
 {
-public:
+  public:
 
-  typedef struct
-  {
-    char  *file_name;
-    char  *file_start;
-    uint32 file_length;
-  }FileIndexStruct;
+    typedef struct
+    {
+      char  *file_name;
+      char  *file_start;
+      uint32 file_length;
+    }
+    FileIndexStruct;
 
-  static PseudoFS *getInstance();
+    /**
+     * Sigleton access method
+     * @return the sigleton istance
+     */
+    static PseudoFS *getInstance();
 
-  uint8 *getFilePtr(char *file_name);
+    /**
+     * returns the file pointer by the file name
+     * @param file_name the file name
+     * @return the file pointer
+     */
+    uint8 *getFilePtr ( char *file_name );
 
-  FileIndexStruct* getFileIndex(char *file_name);
+    /**
+     * returns the files index
+     * @param file_name the wanted file name
+     * @return the file index
+     */
+    FileIndexStruct* getFileIndex ( char *file_name );
 
-  uint32 getNumFiles() const;
+    /**
+     * returns the number of files
+     * @return the number of files
+     */
+    uint32 getNumFiles() const;
 
-  char* getFileNameByNumber(uint32 number) const;
+    /**
+     * returns the file by the given number
+     * @param number the number looking for
+     * @return the file
+     */
+    char* getFileNameByNumber ( uint32 number ) const;
 
-private:
+  private:
 
-  PseudoFS();
+    /**
+     * constructor
+     */
+    PseudoFS();
 
-  static PseudoFS *instance_;
+    static PseudoFS *instance_;
 
 };
 
