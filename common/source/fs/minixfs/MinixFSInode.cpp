@@ -34,11 +34,8 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
 }
 
 
-MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32 i_size, uint32 i_modtime, uint8 i_gid, uint8 i_nlinks, uint16* i_zones, uint32 i_num) : Inode(super_block, 0)
+MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 __attribute__((unused)) i_uid, uint32 i_size, uint32 __attribute__((unused)) i_modtime, uint8 __attribute__((unused)) i_gid, uint8 i_nlinks, uint16* i_zones, uint32 i_num) : Inode(super_block, 0)
 {
-  UNUSED_ARG(i_uid);
-  UNUSED_ARG(i_modtime);
-  UNUSED_ARG(i_gid);
   i_size_ = i_size;
   i_nlink_ = i_nlinks;
   i_dentry_ = 0;

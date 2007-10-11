@@ -100,12 +100,10 @@ void FrameBufferConsole::setPixel ( uint32 x,uint32 y,uint8 r,uint8 g,uint8 b )
   */
 }
 
-uint32 FrameBufferConsole::consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state )
+uint32 FrameBufferConsole::consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const __attribute__((unused)) &state )
 {
   uint32 i,k;
   uint32 character_index = character * 16;
-
-  UNUSED_ARG ( state );
 
   uint16 *lfb = ( uint16* ) ArchCommon::getVESAConsoleLFBPtr();
 

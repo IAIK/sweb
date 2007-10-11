@@ -461,14 +461,11 @@ extern "C" void arch_interruptHandler_0()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-  uint32 const flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
-  uint32 const flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
-  uint32 const flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
-  uint32 const flag_rsvd = 0x1 << 3; // pf caused by reserved bits
+  uint32 const __attribute__((unused)) flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
+  uint32 const __attribute__((unused)) flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
+  uint32 const __attribute__((unused)) flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
+  uint32 const __attribute__((unused)) flag_rsvd = 0x1 << 3; // pf caused by reserved bits
 
-  UNUSED_ARG(flag_rw);
-  UNUSED_ARG(flag_us);
-  UNUSED_ARG(flag_rsvd);
   // uint32 cr2=0xffff;
   // __asm__("movl %%cr2, %0"
   // :"=a"(cr2)

@@ -48,9 +48,8 @@ int32 RamFSFile::write ( const char *buffer, size_t count, l_off_t offset )
 }
 
 
-int32 RamFSFile::open ( uint32 flag )
+int32 RamFSFile::open ( uint32 __attribute__((unused)) flag )
 {
-  UNUSED_ARG(flag);
   return 0;
 }
 
