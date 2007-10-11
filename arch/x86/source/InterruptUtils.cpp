@@ -461,22 +461,89 @@ extern "C" void arch_interruptHandler_0()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
+  //--------Start "just for Debugging"-----------  
   uint32 const __attribute__((unused)) flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
   uint32 const __attribute__((unused)) flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
   uint32 const __attribute__((unused)) flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
   uint32 const __attribute__((unused)) flag_rsvd = 0x1 << 3; // pf caused by reserved bits
-
+    
   // uint32 cr2=0xffff;
   // __asm__("movl %%cr2, %0"
   // :"=a"(cr2)
   // :);
-  // kprintfd_nosleep("PageFault::( address: %x, error: present=%d writing=%d user=%d rsvd=%d)\nPageFault:(currentThread: %x %s, switch_to_userspace_:%d)\n",address,
-      // error&flag_p,
-      // (error&flag_rw) >> 1,
-      // (error&flag_us) >> 2,
-      // (error&flag_rsvd) >> 3,
-      // currentThread,currentThread->getName(),
-      // currentThread->switch_to_userspace_);
+  
+  debug(A_INTERRUPTS | PM, "pageFaultHandler( address: %x, error: page_present=%d writing=%d user=%d rsvd=%d)\n\t(currentThread: %x %s, switch_to_userspace_:%d)\n",
+      address,
+      error&flag_p,
+      (error&flag_rw) >> 1,
+      (error&flag_us) >> 2,
+      (error&flag_rsvd) >> 3,
+      currentThread,currentThread->getName(),
+      currentThread->switch_to_userspace_);
+  if (error)
+  {
+    if (error&flag_p)
+    {
+      debug(A_INTERRUPTS | PM, "Ouch, We got a pagefault even though the page mapping is present\n");
+      debug(A_INTERRUPTS | PM, "Apparently ");
+      if (error&flag_us)
+        debug(A_INTERRUPTS | PM, "a userprogram ");
+      else
+        debug(A_INTERRUPTS | PM, "some kernel code ");
+      debug(A_INTERRUPTS | PM, " tried to ");
+      if (error&flag_rw)
+        debug(A_INTERRUPTS | PM, "write to ");
+      else
+        debug(A_INTERRUPTS | PM, "read from ");
+      debug(A_INTERRUPTS | PM, "address 0x%x\n",address);
+      if (address >= 2U*1024U*1024U*1024U)
+      debug(A_INTERRUPTS | PM, "Likely the PageTable Flags forbid this operation\n");
+        
+      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
+      uint32 virtual_page = address / PAGE_SIZE;
+      uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+      uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+      if (page_directory[pde_vpn].pde4k.present)
+      {
+        if (page_directory[pde_vpn].pde4m.use_4_m_pages)
+        {
+          debug(A_INTERRUPTS | PM, "Page %d is a 4MiB Page\n",virtual_page);
+          debug(A_INTERRUPTS | PM, "Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page, page_directory[pde_vpn].pde4m.writeable, page_directory[pde_vpn].pde4m.user_access);
+        }
+        else
+        {
+          page_table_entry *pte_base = (page_table_entry *) ArchMemory::get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+          debug(A_INTERRUPTS | PM, "Page %d is a 4KiB Page\n",virtual_page);
+          debug(A_INTERRUPTS | PM, "Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", virtual_page, pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
+        }
+      }
+      else
+        debug(A_INTERRUPTS | PM, "WTF ? PDE non-present but Exception present flag was set ?\n");
+    }
+    else
+    {
+      if (address >= 2U*1024U*1024U*1024U)
+      {
+        debug(A_INTERRUPTS | PM, "The virtual page we accessed was not mapped to a physical page\n");
+        if (error&flag_us)
+        {
+          debug(A_INTERRUPTS | PM, "WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
+          debug(A_INTERRUPTS | PM, "WARNING: most likey there is an pointer error somewhere\n");
+        }
+        else
+        {
+          // remove this error check if your implementation swaps out kernel pages
+          debug(A_INTERRUPTS | PM, "WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
+          debug(A_INTERRUPTS | PM, "WARNING: most likey there is an pointer error somewhere\n");
+        }            
+      }
+      else
+      {
+        //debug(A_INTERRUPTS | PM, "The virtual page we accessed was not mapped to a physical page\n");
+        //debug(A_INTERRUPTS | PM, "this is normal and the Loader will propably take care of it now\n");
+      }
+    }      
+  }
 
   //ArchThreads::printThreadRegisters(currentThread,0);
   //ArchThreads::printThreadRegisters(currentThread,1);
@@ -516,12 +583,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     // }
   // }
 
-  if (address >= 2U*1024U*1024U*1024U)
-  {
-    // remove this error check if your implementation swaps out kernel pages
-    kprintfd("WARNING: Pagefault above 2Gb, is this intentional ?");
-  }
-
+  //--------End "just for Debugging"-----------
+    
   //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
@@ -535,7 +598,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   else
   {
-    kprintfd_nosleep("PageFault: Userprogramm caused an unexpected Pagefault\n");
     if (currentThread->loader_)
       Syscall::exit(9999);
     else

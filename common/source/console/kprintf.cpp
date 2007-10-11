@@ -420,101 +420,81 @@ void debug ( uint32 flag, const char *fmt, ... )
     {
       case M_INODE:
         kprintfd ( "M_INODE:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case M_STORAGE_MANAGER:
         kprintfd ( "M_STORAGE_MANAGER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case M_SB:
         kprintfd ( "M_SB:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case M_ZONE:
         kprintfd ( "M_ZONE:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case BD_MANAGER:
         kprintfd ( "BD_MANAGER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case KPRINTF:
         kprintfd ( "KPRINTF:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case LOADER:
         kprintfd ( "LOADER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case SCHEDULER:
         kprintfd ( "SCHEDULER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case SYSCALL:
         kprintfd ( "SYSCALL:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case MAIN:
         kprintfd ( "MAIN:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case PM:
         kprintfd ( "PM:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case RAMFS:
         kprintfd ( "RAMFS:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case DENTRY:
         kprintfd ( "DENTRY:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case PATHWALKER:
         kprintfd ( "PATHWALKER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case PSEUDOFS:
         kprintfd ( "PSEUDOFS:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case VFSSYSCALL:
         kprintfd ( "VFSSYSCALL:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case VFS:
         kprintfd ( "VFS:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case ATA_DRIVER:
         kprintfd ( "ATA_DRIVER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case IDE_DRIVER:
         kprintfd ( "IDE_DRIVER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case A_COMMON:
         kprintfd ( "A_COMMON:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case A_MEMORY:
         kprintfd ( "A_MEMORY:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case A_SERIALPORT:
         kprintfd ( "A_SERIALPORT:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case A_KB_MANAGER:
         kprintfd ( "A_KB_MANAGER:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
       case BD_VIRT_DEVICE:
         kprintfd ( "BD_VIRT_DEVICE:>> " );
-        vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
         break;
+      case A_INTERRUPTS:
+        kprintfd ( "A_INTERRUPTS:>> " );
+        break;        
     }
+    vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
   }
 
   va_end ( args );

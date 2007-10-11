@@ -51,6 +51,7 @@ const uint32 A_COMMON           = 0x00400001;
 const uint32 A_MEMORY           = 0x00400002;
 const uint32 A_SERIALPORT       = 0x00400004;
 const uint32 A_KB_MANAGER       = 0x00400008;
+const uint32 A_INTERRUPTS       = 0x00400010;
 
 //group file system
 const uint32 FS                 = 0x00800000;
