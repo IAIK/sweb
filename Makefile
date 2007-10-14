@@ -111,10 +111,10 @@ endif
 	@mkdir -p $(OBJECTDIR)/sauhaufen
 	@rm -f $(OBJECTDIR)/sauhaufen/*
 	@bash -c 'for lib in $(SHARED_LIBS); do cd $(OBJECTDIR)/sauhaufen && ar x $${lib};done'
-	@rm $(OBJECTDIR)/sauhaufen/head.o -f
-#	@rm $(OBJECTDIR)/sauhaufen/kprintf.o -f
-#	@rm $(OBJECTDIR)/sauhaufen/Loader.o -f
-#	@rm $(OBJECTDIR)/sauhaufen/Thread.o -f
+	@rm -f $(OBJECTDIR)/sauhaufen/head.o
+#	@rm -f $(OBJECTDIR)/sauhaufen/kprintf.o 
+#	@rm -f $(OBJECTDIR)/sauhaufen/Loader.o 
+#	@rm -f $(OBJECTDIR)/sauhaufen/Thread.o 
 #	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/main.o  $(OBJECTDIR)/sauhaufen/arch_panic.o  $(SHARED_LIBS) -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map
 	@ld -N -T arch/xen/utils/kernel-ld-script.ld $(OBJECTDIR)/arch/arch/source/head.o  $(OBJECTDIR)/sauhaufen/*  -g -u _start -o $(OBJECTDIR)/sweb_xen.elf -Map $(OBJECTDIR)/kernel.map
 	@echo "objcopy -R .note -R .comment  $(OBJECTDIR)/sweb_xen.elf  $(OBJECTDIR)/sweb_xen.x"
@@ -128,12 +128,12 @@ endif
 
 archlink:
 ifeq ($(ARCH),xen)
-	@rm $(PROJECT_ROOT)/arch/arch -f
+	@rm -f $(PROJECT_ROOT)/arch/arch
 	@echo "ln -s xen arch"
 	@cd $(PROJECT_ROOT)/arch; ln -s xen arch
 	@cd $(PROJECT_ROOT)/arch/xen/include; ln ../x86/include/*h ./ -sf
 else
-	@rm $(PROJECT_ROOT)/arch/arch -f
+	@rm -f $(PROJECT_ROOT)/arch/arch 
 	@echo "ln -s x86 arch"
 	@cd $(PROJECT_ROOT)/arch; ln -s x86 arch
 endif
