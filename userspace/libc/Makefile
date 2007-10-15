@@ -30,7 +30,7 @@ LIBC_STATIC = $(OBJECTDIR)/libc.a
 
 INCLUDE_PATH = ./include
 
-CFLAGS = -Wall -g -m32 -fno-builtin -nostdinc -fno-stack-protector -fno-common -I $(INCLUDE_PATH) -I $(INCLUDE_PATH)/arch/arch -I $(INCLUDE_PATH)/arch/common
+CFLAGS = -Wall -g -m32 -fno-builtin -nostdinc -fno-stack-protector -fno-common -I $(INCLUDE_PATH)
 
 OBJECTS = \
 					$(OBJECTDIR)/atoi.o \
@@ -61,8 +61,7 @@ $(LIBC_STATIC) : $(OBJECTS)
 .PHONY: mrproper
 mrproper: clean
 clean:
-	rm -f ./include/arch/arch
-	test -e $(OBJECTDIR) && rm -f $(OBJECTDIR)/*
+	rm -f $(OBJECTS)
 
 $(OBJECTDIR):
 	mkdir -p $(OBJECTDIR)
