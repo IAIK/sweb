@@ -259,25 +259,27 @@ endif
 	@echo "Make sure you didn't forget to 'hg add' new files !"
 	@echo -e "**********************************************\n"
 
+INFO_FILE=info.file
 info:
-	echo -e "\nBOCHS:"
-	bochs --help 2>&1 | head -n 5
-	echo -e "\nGCC:"
-	gcc --version
-	echo -e "\nMD5SUMS:"
-	md5sum Makefile images/*
-	echo -e "\nMAKE:"
-	$(MAKE) -v
-	echo -e "\nLIBEXT2:"
-	/sbin/ldconfig -p | grep ext2
-	echo -e "\nCPU:"
-	cat /proc/cpuinfo
-	echo -e "\nKERNEL:"
-	cat /proc/version
-	echo -e "\nENVIRONMENT:"
-	env
-	echo -e "\nE2FSIMAGE/Local.mak:"
-	ls -la utils/e2fsimage/Local.mak |cat
+	echo -e "\nBOCHS:" > $(INFO_FILE)
+	bochs --help 2>&1 | head -n 5 >> $(INFO_FILE)
+	echo -e "\nGCC:" >> $(INFO_FILE)
+	gcc --version >> $(INFO_FILE)
+	echo -e "\nMD5SUMS:" >> $(INFO_FILE)
+	md5sum Makefile images/* >> $(INFO_FILE)
+	echo -e "\nMAKE:" >> $(INFO_FILE)
+	$(MAKE) -v >> $(INFO_FILE)
+	echo -e "\nLIBEXT2:" >> $(INFO_FILE)
+	/sbin/ldconfig -p | grep ext2 >> $(INFO_FILE)
+	echo -e "\nCPU:" >> $(INFO_FILE)
+	cat /proc/cpuinfo >> $(INFO_FILE)
+	echo -e "\nKERNEL:" >> $(INFO_FILE)
+	cat /proc/version >> $(INFO_FILE)
+	echo -e "\nENVIRONMENT:" >> $(INFO_FILE)
+	env >> $(INFO_FILE)
+	echo -e "\nE2FSIMAGE/Local.mak:" >> $(INFO_FILE)
+	ls -la utils/e2fsimage/Local.mak >> $(INFO_FILE)
+	cat $(INFO_FILE)
 
 mrproper:
 	rm -rf $(OBJECTDIR)

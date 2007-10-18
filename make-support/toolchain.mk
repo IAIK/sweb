@@ -121,8 +121,8 @@ ifeq ($(SWEB_COMPILE_USERSPACE),)
 ifeq ($(SWEB_USE_CXX),gcc)
 #CXXFLAGS := $(CXXFLAGS) -fpack-struct -g -O1  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions
 #CCFLAGS := $(CCFLAGS) -fpack-struct -g -O1  -Wall -W -nostdinc -fno-builtin
-CXXFLAGS := $(CXXFLAGS) -g -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector
-CCFLAGS := $(CCFLAGS)  -O0 -g  -Wall -W -nostdinc -fno-builtin -fno-stack-protector
+CXXFLAGS := $(CXXFLAGS) -ggdb -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector
+CCFLAGS := $(CCFLAGS)  -O0 -ggdb  -Wall -W -nostdinc -fno-builtin -fno-stack-protector
 ASFLAGS := $(ASFLAGS) 
 LDFLAGS := $(LDFLAGS) 
 ASGCCFLAGS := $(ASGCCFLAGS)  -c -O0 -g3 -gstabs -Wall -W -nostdinc -fno-builtin -fno-stack-protector
