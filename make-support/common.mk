@@ -53,7 +53,7 @@ PARENT_DIR := $(dir $(PROJECT_ROOT))
 OBJECTDIR := $(subst $(PARENT_DIR)$(TOP_DIR),$(PARENT_DIR)$(TOP_DIR)-bin,${PWD})
 BINARYDESTDIR := $(PROJECT_ROOT)-bin/bin
 
-SOURECDIR := $(PWD)
+SOURCEDIR := $(PWD)
 
 CXXFILES := $(wildcard *.cpp)
 CCFILES := $(wildcard *.c)
@@ -202,7 +202,7 @@ depend: $(SUBPROJECTS) depend-l
 
 
 
-$(OBJECTDIR)%.d: $(SOURECDIR)%.c
+$(OBJECTDIR)%.d: $(SOURCEDIR)%.c
 ifeq ($(V),1)
 	@echo "$(SHELL) -ec 'mkdir -p $(OBJECTDIR) ; $(CCDEPCOMMAND) -DCHANGED -MM $< \
 		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
@@ -214,7 +214,7 @@ endif
 		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
 		[ -s $@ ] || rm -f $@ '		
 
-$(OBJECTDIR)%.d: $(SOURECDIR)%.cpp
+$(OBJECTDIR)%.d: $(SOURCEDIR)%.cpp
 ifeq ($(V),1)
 	@echo "$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; $(CXXDEPCOMMAND) -DCHANGED -MM $< \
 		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
@@ -226,7 +226,7 @@ endif
 		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
 		[ -s $@ ] || rm -f $@ '		
 
-#$(OBJECTDIR)%.d: $(SOURECDIR)%.S
+#$(OBJECTDIR)%.d: $(SOURCEDIR)%.S
 #ifeq ($(V),1)
 #	@echo "$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; $(ASDEPCOMMAND) -DCHANGED -MM $< \
 #		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
@@ -238,7 +238,7 @@ endif
 #		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \
 #		[ -s $@ ] || rm -f $@ '		
 
-$(OBJECTDIR)%.d: $(SOURECDIR)%.s
+$(OBJECTDIR)%.d: $(SOURCEDIR)%.s
 ifeq ($(V),1)
 	@echo "$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; echo \"`echo '$@' | sed s/\.d/\.o/` $@ : $< \" > $@ ;  \
 		[ -s $@ ] || rm -f $@ '"
@@ -248,7 +248,7 @@ endif
 	@$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; echo "`echo '$@' | sed s/\\\.d/\\\.o/` $@ : $< " > $@ ; \
 		[ -s $@ ] || rm -f $@ '		
 
-$(OBJECTDIR)%.d: $(SOURECDIR)%.S
+$(OBJECTDIR)%.d: $(SOURCEDIR)%.S
 ifeq ($(V),1)
 	@echo "$(SHELL) -c 'mkdir -p $(OBJECTDIR) ; $(ASGCCDEPCOMMAND) -DCHANGED -MM $< \
 		| awk -f $(PROJECT_MAKE_SUPPORT_ROOT)/gen-dep-helper.awk objectdir=$(OBJECTDIR) depfilename=$@ > $@ ; \

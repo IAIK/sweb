@@ -205,19 +205,19 @@ vmware:
 	cd $(OBJECTDIR) && vmrun start "$(OBJECTDIR)/sweb.vmx"
 
 bochs:
-	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
-	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"
+	echo "Going to bochs -f $(SOURCEDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
+	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"
 bochsc:
-	echo "Going to bochs -f $(SOURECDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
-	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"<<< c
+	echo "Going to bochs -f $(SOURCEDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
+	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"<<< c
 
 bochsgdb:
 	echo "Going to gdb bochs on port localhost:1234 "
-	cd $(OBJECTDIR) && bochs -q -f $(SOURECDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
+	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
 
 .PHONY: rungdb
 rungdb:
-	gdb -cd $(SOURECDIR) -command $(SOURECDIR)/utils/gdb/gdbinit $(OBJECTDIR)/kernel.x
+	gdb -cd $(SOURCEDIR) -command $(SOURCEDIR)/utils/gdb/gdbinit $(OBJECTDIR)/kernel.x
 
 .PHONY: prepare-system-ubuntu
 prepare-system-ubuntu:
