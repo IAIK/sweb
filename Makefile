@@ -215,9 +215,11 @@ bochsgdb:
 	echo "Going to gdb bochs on port localhost:1234 "
 	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
 
-.PHONY: rungdb
+.PHONY: rungdb runddd
 rungdb:
 	gdb -cd $(SOURCEDIR) -command $(SOURCEDIR)/utils/gdb/gdbinit $(OBJECTDIR)/kernel.x
+runddd:
+	ddd -cd $(SOURCEDIR) -command $(SOURCEDIR)/utils/gdb/gdbinit $(OBJECTDIR)/kernel.x
 
 .PHONY: prepare-system-ubuntu
 prepare-system-ubuntu:
