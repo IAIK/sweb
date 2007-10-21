@@ -1,0 +1,10 @@
+# Don't stop on page faults
+handle SIGUSR1 nostop noprint nopass
+
+# Connect to Bochs' gdbstub
+target remote localhost:1234
+
+# Welcome message
+echo \n\n
+echo You can now set trace and breakpoints.\n
+echo Enter 'continue' (or 'c') when you're done.\n
