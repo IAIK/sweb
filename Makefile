@@ -258,6 +258,7 @@ endif
 	@echo "Please Test with: tar tjfv IMA$(assignment)GR$(group).tar.bz2 |less"
 	@echo "Make sure you didn't forget to 'hg add' new files !"
 	@echo -e "**********************************************\n"
+	@test $(shell ls -s -k "IMA$(assignment)GR$(group).tar.bz2" | cut -f1 -d' ') -lt 600 || echo -e "\nWARNING: The tar file created is unusually large !\nWARNING: make sure that you don\'t have unnecessary junk in your Repository!\n\n"
 
 INFO_FILE=info.file
 info:
