@@ -92,7 +92,7 @@ class UserThread : public Thread
         {
           if ( main_console->getTerminal ( terminal_number_ ) )
             this->setTerminal ( main_console->getTerminal ( terminal_number_ ) );
-          kprintf ( "UserThread:Run: %x %s Going to user, expect page fault\n",this,this->getName() );
+          kprintf ( "UserThread:Run: %x  %d:%s Going to user, expect page fault\n",this,this->getPID(),this->getName() );
           this->switch_to_userspace_ = 1;
           Scheduler::instance()->yield();
           //should not reach
@@ -155,7 +155,7 @@ class MinixUserThread : public Thread
         {
           if ( main_console->getTerminal ( terminal_number_ ) )
             this->setTerminal ( main_console->getTerminal ( terminal_number_ ) );
-          kprintf ( "UserThread:Run: %x %s Going to user, expect page fault\n",this,this->getName() );
+          kprintf ( "UserThread:Run: %x  %d:%s Going to user, expect page fault\n",this,this->getPID(), this->getName() );
           this->switch_to_userspace_ = 1;
           Scheduler::instance()->yield();
           //should not reach

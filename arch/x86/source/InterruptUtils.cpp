@@ -472,13 +472,15 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   // :"=a"(cr2)
   // :);
   
-  debug(A_INTERRUPTS | PM, "pageFaultHandler( address: %x, error: page_present=%d writing=%d user=%d rsvd=%d)\n\t(currentThread: %x %s, switch_to_userspace_:%d)\n",
+  debug(A_INTERRUPTS | PM, "pageFaultHandler( address: %x, error: page_present=%d writing=%d user=%d rsvd=%d)\n\t(currentThread: %x  %d:%s, switch_to_userspace_:%d)\n",
       address,
       error&flag_p,
       (error&flag_rw) >> 1,
       (error&flag_us) >> 2,
       (error&flag_rsvd) >> 3,
-      currentThread,currentThread->getName(),
+      currentThread,
+      currentThread->getPID(),
+      currentThread->getName(),
       currentThread->switch_to_userspace_);
   if (error)
   {

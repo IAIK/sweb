@@ -72,6 +72,11 @@ class Thread
       else
         return "<UNNAMED THREAD>";
     }
+    
+    uint32 getPID()
+    {
+      return pid_;
+    }
 
     /**
      * Returns thread's current terminal

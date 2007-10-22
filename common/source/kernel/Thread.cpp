@@ -17,7 +17,7 @@ static void ThreadStartHack()
   currentThread->setTerminal ( main_console->getActiveTerminal() );
   currentThread->Run();
   currentThread->kill();
-  debug ( THREAD,"ThreadStartHack: Panic, thread youldn't be killed\n" );
+  debug ( THREAD,"ThreadStartHack: Panic, thread couldn't be killed\n" );
   for ( ;; );
 }
 
@@ -32,6 +32,7 @@ Thread::Thread()
   loader_ = 0;
   name_ = 0;
   my_terminal_ = 0;
+  pid_ = 0;
   fs_info_ = new FileSystemInfo();
 }
 

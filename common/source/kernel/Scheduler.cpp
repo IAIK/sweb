@@ -73,7 +73,7 @@ void Scheduler::addNewThread ( Thread *thread )
   //also gets added to front as not to interfere with remove or xchange
 
   lockScheduling();
-  debug ( SCHEDULER,"addNewThread: %x %s\n",thread,thread->getName() );
+  debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   waitForFreeKMMLock();
   threads_.pushFront ( thread );
   unlockScheduling();
@@ -82,7 +82,7 @@ void Scheduler::addNewThread ( Thread *thread )
 void Scheduler::removeCurrentThread()
 {
   lockScheduling();
-  debug ( SCHEDULER,"removeCurrentThread: %x %s, threads_.size() %d\n",currentThread,currentThread->getName(),threads_.size() );
+  debug ( SCHEDULER,"removeCurrentThread: %x %d:%s, threads_.size() %d\n",currentThread,currentThread->getPID(),currentThread->getName(),threads_.size() );
   waitForFreeKMMLock();
   if ( threads_.size() > 1 )
   {
@@ -265,7 +265,7 @@ void Scheduler::printThreadList()
   lockScheduling();
   debug ( SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n",threads_.size() );
   for ( c=0; c<threads_.size();++c )
-    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x %s     [%s]\n",c,threads_[c],threads_[c]->getName(),thread_states[threads_[c]->state_] );
+    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),thread_states[threads_[c]->state_] );
   unlockScheduling();
 }
 

@@ -267,7 +267,7 @@ uint32 Loader::loadExecutableAndInitProcess()
 void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
-  debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %s\n",virtual_page,virtual_address,currentThread->getName() );
+  debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %d:%s\n",virtual_page,virtual_address,currentThread->getPID(),currentThread->getName() );
 
   ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *> ( file_image_ );
 
@@ -338,7 +338,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   debug ( LOADER,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
   if ( !written )
   {
-    kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location\n",written );
+    kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location: v_adddr=%x, v_page=%d\n",virtual_address,virtual_page);
     Syscall::exit ( 9999 );
   }
 }
