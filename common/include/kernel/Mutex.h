@@ -78,7 +78,7 @@ class Mutex
 
     /**
      *Returns if the lock is held by the Thread, that means,
-     *if the Thread has created this lock
+     *if the Thread has currently acquired and not yet released this lock
      *
      * @return true if lock is held by the given Thread
      */
