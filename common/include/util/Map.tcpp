@@ -184,16 +184,16 @@ void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::pair_co
   ++this->number_of_elements_;
 }
 
-
+// thanks to Markus Steinberger
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::key_type key, typename Map<KeyType, ValueType>::value_type value)
 {
-  this->pushBack(new Pair<KeyType, ValueType> >(key, value));
+  this->pushBack(*(new Pair<KeyType, ValueType>(key, value)));
 }
 
 
 template<typename KeyType, typename ValueType>
-typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::find(typename Map<KeyType, ValueType>::KeyType key)
+typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::find(typename Map<KeyType, ValueType>::key_type key)
 {
   ListNode<Pair<KeyType, ValueType> > *node = first_node_;
   typename Map<KeyType, ValueType>::size_type index = 0;
@@ -211,7 +211,7 @@ typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::find(typena
 
 
 template<typename KeyType, typename ValueType>
-typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(typename Map<KeyType, ValueType>::KeyType key)
+typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(typename Map<KeyType, ValueType>::key_type key)
 {
   ListNode<Pair<KeyType, ValueType> > *node = first_node_;
   typename Map<KeyType, ValueType>::size_type index = 0;
@@ -229,16 +229,16 @@ typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(type
 
 
 template<typename KeyType, typename ValueType>
-typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::getKey(typename Map<KeyType, ValueType>::size_type index)
+typename Map<KeyType, ValueType>::key_type Map<KeyType, ValueType>::getKey(typename Map<KeyType, ValueType>::size_type index)
 {
-  return this->[index].first();
+  return (*this)[index].first();
 }
 
 
 template<typename KeyType, typename ValueType>
-typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::getValue(typename Map<KeyType, ValueType>::size_type index)
+typename Map<KeyType, ValueType>::value_type Map<KeyType, ValueType>::getValue(typename Map<KeyType, ValueType>::size_type index)
 {
-  return this->[index].second();
+  return (*this)[index].second();
 }
 
 
