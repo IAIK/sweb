@@ -209,7 +209,7 @@ typename Map<KeyType, ValueType>::size_type Map<KeyType, ValueType>::find(typena
   return number_of_elements_;
 }
 
-
+//thanks to Georg Neubauer
 template<typename KeyType, typename ValueType>
 typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(typename Map<KeyType, ValueType>::key_type key)
 {
@@ -217,9 +217,9 @@ typename Map<KeyType, ValueType>::pair_pointer Map<KeyType, ValueType>::get(type
   typename Map<KeyType, ValueType>::size_type index = 0;
   while (node)
   {
-    if(node->getElement()->first() == key)
+    if(node->getElement().first() == key)
     {
-      return node->getElement();
+      return &(node->getElement());
     }
     node = node->getNextNode();
     ++index;
