@@ -4,8 +4,8 @@
  */
 
 
-#ifndef Swap_Function___
-#define Swap_Function___
+#ifndef SWAP_FUNCTION__
+#define SWAP_FUNCTION__
 /**
  * swaps two elements
  * @param first the first element
@@ -19,7 +19,7 @@ void swap(ValueType &first, ValueType &second)
   first = second;
   second = tmp;
 }
-#endif // Swap_Function___
+#endif // SWAP_FUNCTION__
 
 
 template<typename ValueType>
