@@ -75,6 +75,14 @@ void InterruptUtils::lidt(IDTR *idtr)
 // void InterruptUtils::enableInterrupts(){}
 // void InterruptUtils::disableInterrupts(){}
 
+#define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
+  extern "C" void errorHandler_##x () \
+  {\
+    kprintfd_nosleep("\nCPU Fault " #msg "\n\n");\
+    kprintf_nosleep("\nCPU Fault " #msg "\n\n");\
+    currentThread->kill();\
+  }
+
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
   extern "C" void dummyHandler_##x () \
   {\
@@ -82,26 +90,26 @@ void InterruptUtils::lidt(IDTR *idtr)
     kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
   }
 
-DUMMY_HANDLER(0)
+ERROR_HANDLER(0,#DE: Divide by Zero)
 DUMMY_HANDLER(1)
 DUMMY_HANDLER(2)
 DUMMY_HANDLER(3)
-DUMMY_HANDLER(4)
-DUMMY_HANDLER(5)
-DUMMY_HANDLER(6)
-DUMMY_HANDLER(7)
-DUMMY_HANDLER(8)
-DUMMY_HANDLER(9)
-DUMMY_HANDLER(10)
-DUMMY_HANDLER(11)
-DUMMY_HANDLER(12)
-DUMMY_HANDLER(13)
+ERROR_HANDLER(4,#OF: Overflow (INTO Instruction))
+ERROR_HANDLER(5,#BR: Bound Range Exceeded)
+ERROR_HANDLER(6,#OP: Invalid OP Code)
+ERROR_HANDLER(7,#NM: FPU Not Avaiable or Ready)
+ERROR_HANDLER(8,#DF: Double Fault)
+ERROR_HANDLER(9,#MF: FPU Segment Overrun)
+ERROR_HANDLER(10,#TS: Invalid Task State Segment (TSS))
+ERROR_HANDLER(11,#NP: Segment Not Present (WTF ?))
+ERROR_HANDLER(12,#SS: Stack Segment Fault)
+ERROR_HANDLER(13,#GF: General Protection Fault (unallowed memory reference) )
 DUMMY_HANDLER(14)
 DUMMY_HANDLER(15)
-DUMMY_HANDLER(16)
-DUMMY_HANDLER(17)
-DUMMY_HANDLER(18)
-DUMMY_HANDLER(19)
+ERROR_HANDLER(16,#MF: Floting Point Error)
+ERROR_HANDLER(17,#AC: Alignment Error (Unaligned Memory Reference))
+ERROR_HANDLER(18,#MC: Machine Check Error)
+ERROR_HANDLER(19,#XF: SIMD Floting Point Error)
 DUMMY_HANDLER(20)
 DUMMY_HANDLER(21)
 DUMMY_HANDLER(22)
@@ -452,12 +460,6 @@ extern "C" void irqHandler_65()
 }
 
 
-extern "C" void arch_interruptHandler_0();
-extern "C" void arch_interruptHandler_0()
-{
-  kpanict((uint8 *) "DIVISION ERROR\n");
-}
-
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
@@ -740,28 +742,29 @@ IRQ_HANDLER(13)
 extern "C" void arch_dummyHandler();
 
 #define DUMMYHANDLER(X) {X, &arch_dummyHandler_##X},
+#define ERRORHANDLER(X) {X, &arch_errorHandler_##X},
 #define IRQHANDLER(X) {X + 32, &arch_irqHandler_##X},
 InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
-  {0, &arch_interruptHandler_0},
+  ERRORHANDLER(0)
   DUMMYHANDLER(1)
   DUMMYHANDLER(2)
   DUMMYHANDLER(3)
-  DUMMYHANDLER(4)
-  DUMMYHANDLER(5)
-  DUMMYHANDLER(6)
-  DUMMYHANDLER(7)
-  DUMMYHANDLER(8)
-  DUMMYHANDLER(9)
-  DUMMYHANDLER(10)
-  DUMMYHANDLER(11)
-  DUMMYHANDLER(12)
-  DUMMYHANDLER(13)
+  ERRORHANDLER(4)
+  ERRORHANDLER(5)
+  ERRORHANDLER(6)
+  ERRORHANDLER(7)
+  ERRORHANDLER(8)
+  ERRORHANDLER(9)
+  ERRORHANDLER(10)
+  ERRORHANDLER(11)
+  ERRORHANDLER(12)
+  ERRORHANDLER(13)
   {14, &arch_pageFaultHandler},
   DUMMYHANDLER(15)
-  DUMMYHANDLER(16)
-  DUMMYHANDLER(17)
-  DUMMYHANDLER(18)
-  DUMMYHANDLER(19)
+  ERRORHANDLER(16)
+  ERRORHANDLER(17)
+  ERRORHANDLER(18)
+  ERRORHANDLER(19)
   DUMMYHANDLER(20)
   DUMMYHANDLER(21)
   DUMMYHANDLER(22)

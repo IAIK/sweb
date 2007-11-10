@@ -55,6 +55,17 @@ arch_dummyHandler_%1:
         iretd
 %endmacro
 
+%macro errorhandler  1
+global arch_errorHandler_%1
+extern errorHandler_%1
+arch_errorHandler_%1:
+        pushAll
+        changeData
+        call errorHandler_%1
+        popAll
+        iretd
+%endmacro
+
 section .text
 
 extern pageFaultHandler
@@ -111,26 +122,26 @@ arch_pageFaultHandler:
   
   irqhandler 65
   
-dummyhandler 0
+errorhandler 0
 dummyhandler 1
 dummyhandler 2
 dummyhandler 3
-dummyhandler 4
-dummyhandler 5
-dummyhandler 6
-dummyhandler 7
-dummyhandler 8
-dummyhandler 9
-dummyhandler 10
-dummyhandler 11
-dummyhandler 12
-dummyhandler 13
+errorhandler 4
+errorhandler 5
+errorhandler 6
+errorhandler 7
+errorhandler 8
+errorhandler 9
+errorhandler 10
+errorhandler 11
+errorhandler 12
+errorhandler 13
 dummyhandler 14
 dummyhandler 15
-dummyhandler 16
-dummyhandler 17
-dummyhandler 18
-dummyhandler 19
+errorhandler 16
+errorhandler 17
+errorhandler 18
+errorhandler 19
 dummyhandler 20
 dummyhandler 21
 dummyhandler 22
