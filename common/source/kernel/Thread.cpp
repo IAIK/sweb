@@ -51,6 +51,7 @@ Thread::~Thread()
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return
+// DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
   switch_to_userspace_ = false;
