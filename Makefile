@@ -228,7 +228,8 @@ prepare-system-ubuntu:
 	@echo
 	sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev
 
-.PHONY: submit info
+.PHONY: submit
+SUBMIT_FILE:=./IMA$(assignment)GR$(group).tar.bz2
 submit:
 ifneq ($(shell hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l),0)
 	$(warning )
@@ -258,15 +259,16 @@ ifndef group
 	$(error group not specified)
 endif
 	#@$(MAKE) mrproper
-	hg archive -r tip -t tbz2 -X "utils/" -X "images/" -X "bin/" "IMA$(assignment)GR$(group).tar.bz2"
+	hg archive -r tip -t tbz2 -X "utils/" -X "images/" -X "bin/" "$(SUBMIT_FILE)" 
 	@echo -e "\n**********************************************"
-	@echo "Created: ../IMA$(assignment)GR$(group).tar.bz2"
-	@echo "Please Test with: tar tjfv IMA$(assignment)GR$(group).tar.bz2 |less"
+	@echo "Created: $(SUBMIT_FILE)" 
+	@echo "Please Test with: tar tjfv \"$(SUBMIT_FILE)\"  |less"
 	@echo "Make sure you didn't forget to 'hg add' new files !"
 	@echo -e "**********************************************\n"
-	@test $(shell ls -s -k "IMA$(assignment)GR$(group).tar.bz2" | cut -f1 -d' ') -lt 600 || echo -e "\nWARNING: The tar file created is unusually large !\nWARNING: make sure that you don\'t have unnecessary junk in your Repository!\n\n"
+	@test $$( ls -s -k "$(SUBMIT_FILE)" | cut -f1 -d' ' ) -lt 600 || echo -e "\nWARNING: The tar file created is unusually large !\nWARNING: make sure that you don't have unnecessary junk in your Repository!\n\n"
 
 INFO_FILE=info.file
+.PHONY: info
 info:
 	echo -e "\nBOCHS:" > $(INFO_FILE)
 	bochs --help 2>&1 | head -n 5 >> $(INFO_FILE)
