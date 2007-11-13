@@ -47,7 +47,7 @@ extern "C" uint32 kernel_page_directory_start;
 void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page)
 {
   thread->kernel_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
-  if (thread->user_arch_thread_info_->cr3)
+  if (thread->user_arch_thread_info_)
     thread->user_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
   //kprintfd_nosleep("ArchThreads::setPageDirectory: setting cr3 in info to %x\n",page_dir_physical_page * PAGE_SIZE);
 }
