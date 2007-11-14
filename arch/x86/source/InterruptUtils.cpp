@@ -590,6 +590,9 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //--------End "just for Debugging"-----------
     
   //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
+  
+  //save previous state on stack of currentThread
+  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
@@ -609,10 +612,18 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   //kprintfd_nosleep("PageFault: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
-  currentThread->switch_to_userspace_ = true;
-  currentThreadInfo = currentThread->user_arch_thread_info_;
-  //kprintfd_nosleep("PageFault: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
-  arch_switchThreadToUserPageDirChange();
+  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
+  switch (currentThread->switch_to_userspace_)
+  {
+    case 0:
+      break; //we already are in kernel mode
+    case 1:
+      currentThreadInfo = currentThread->user_arch_thread_info_;
+      arch_switchThreadToUserPageDirChange();
+      break; //not reached
+    default:
+      kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
+  }  
 }
 
 extern "C" void arch_irqHandler_1();
