@@ -36,6 +36,21 @@ Thread::Thread()
   fs_info_ = new FileSystemInfo();
 }
 
+Thread::Thread ( FileSystemInfo *fs_info )
+{
+  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
+  debug ( THREAD,"Thread ctor, fs_info ptr: %d\n", fs_info );
+  ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
+  user_arch_thread_info_=0;
+  switch_to_userspace_ = 0;
+  state_=Running;
+  loader_ = 0;
+  name_ = 0;
+  my_terminal_ = 0;
+  pid_ = 0;
+  fs_info_ = fs_info;
+}
+
 Thread::~Thread()
 {
   if ( loader_ )
@@ -43,10 +58,17 @@ Thread::~Thread()
     debug ( THREAD,"~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
     loader_->cleanupUserspaceAddressSpace();
     delete loader_;
+    loader_ = 0;
   }
   debug ( THREAD,"~Thread: freeing ThreadInfos\n" );
   ArchThreads::cleanupThreadInfos ( user_arch_thread_info_ ); //yes that's safe
   ArchThreads::cleanupThreadInfos ( kernel_arch_thread_info_ );
+  if ( fs_info_ )
+  {
+    debug ( THREAD,"~Thread deleting fs info\n" );
+    delete fs_info_;
+    fs_info_ = 0;
+  }
   debug ( THREAD,"~Thread: done\n" );
 }
 

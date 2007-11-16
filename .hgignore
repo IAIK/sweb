@@ -5,7 +5,7 @@ utils/e2fsimage/Local.mak
 utils/e2fsimage/e2fsimage
 utils/exe2pseudofs/exe2pseudofs
 Doxyfile
-swebminixbranch.*
+sweb.kdev*
 
 syntax: regexp
 (.*/)?\#[^/]*\#$

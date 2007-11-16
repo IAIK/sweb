@@ -41,8 +41,8 @@
 
   /// Static constants
   uint8 const  KeyboardManager::E0_BASE = 96;
-  
-  uint8 const  KeyboardManager::E0_KPENTER     = 
+
+  uint8 const  KeyboardManager::E0_KPENTER     =
   KeyboardManager::E0_BASE + 1;
   uint8 const  KeyboardManager::E0_RCTRL       =
   KeyboardManager::E0_BASE + 2;
@@ -74,7 +74,7 @@
   KeyboardManager::E0_BASE + 15;
   uint8 const  KeyboardManager::E0_MACRO       =
   KeyboardManager::E0_BASE + 16;
-  uint8 const  KeyboardManager::E0_F13 = 
+  uint8 const  KeyboardManager::E0_F13 =
   KeyboardManager::E0_BASE + 17;
   uint8 const  KeyboardManager::E0_F14 =
   KeyboardManager::E0_BASE + 18;
@@ -88,9 +88,9 @@
   KeyboardManager::E0_BASE + 22;
   uint8 const  KeyboardManager::E1_PAUSE =
   KeyboardManager::E0_BASE + 23;
-  
+
   uint32 const KeyboardManager::KEY_MAPPING_SIZE = 0x80;
-  
+
   uint32 const KeyboardManager::KBD_META_LALT  = 0x0200;
   uint32 const KeyboardManager::KBD_META_RALT  = 0x0400;
   uint32 const KeyboardManager::KBD_META_CTRL  = 0x0800;
@@ -98,7 +98,7 @@
   uint32 const KeyboardManager::KBD_META_CAPS  = 0x2000;
   uint32 const KeyboardManager::KBD_META_NUM   = 0x4000;
   uint32 const KeyboardManager::KBD_META_SCRL  = 0x8000;
-  
+
   uint8 const KeyboardManager::KEY_F1    = 0x80;
   uint8 const KeyboardManager::KEY_F2    = (KeyboardManager::KEY_F1 + 1);
   uint8 const KeyboardManager::KEY_F3    = (KeyboardManager::KEY_F2 + 1);
@@ -111,7 +111,7 @@
   uint8 const KeyboardManager::KEY_F10   = (KeyboardManager::KEY_F9 + 1);
   uint8 const KeyboardManager::KEY_F11   = (KeyboardManager::KEY_F10 + 1);
   uint8 const KeyboardManager::KEY_F12   = (KeyboardManager::KEY_F11 + 1);
-  
+
   uint8 const KeyboardManager::KEY_INS   = 0x90;
   uint8 const KeyboardManager::KEY_DEL   = (KeyboardManager::KEY_INS + 1);
   uint8 const KeyboardManager::KEY_HOME  = (KeyboardManager::KEY_DEL + 1);
@@ -127,7 +127,7 @@
   uint8 const KeyboardManager::KEY_LWIN  = (KeyboardManager::KEY_PAUSE + 1);
   uint8 const KeyboardManager::KEY_RWIN   = (KeyboardManager::KEY_LWIN + 1);
   uint8 const KeyboardManager::KEY_MENU  = (KeyboardManager::KEY_RWIN + 1);
-  
+
   uint32 const KeyboardManager::STANDARD_KEYMAP[KeyboardManager::KEY_MAPPING_SIZE] =
   {
         0, 0x1B, '1', '2', '3', '4', '5' , '6',   // 08
@@ -167,23 +167,24 @@
         0, 0, 0, 0, 0, 0, 0, 0, // 70
         0, 0, 0, 0, 0, 0, 0, 0, // 78
   };
-      
+
 KeyboardManager * KeyboardManager::instance_ = 0;
 
 KeyboardManager::KeyboardManager() : extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
-  keyboard_buffer_ = new RingBuffer<uint8>( 256 ); 
+  keyboard_buffer_ = new RingBuffer<uint8>( 256 );
 }
 
 KeyboardManager::~KeyboardManager()
 {
   delete keyboard_buffer_;
+  keyboard_buffer_ = 0;
 }
 
 void KeyboardManager::kb_wait()
 {
   uint32 i;
-  
+
   for(i=0; i<0x10000; i++)
   {
     uint8 stat = inportb(0x64);
@@ -206,7 +207,7 @@ void KeyboardManager::serviceIRQ( void )
   kb_wait();
 
   uint8 scancode = inportb( 0x60 );
-  
+
   if( extended_scancode == 0xE0 )
   {
     if( scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE )
@@ -215,21 +216,21 @@ void KeyboardManager::serviceIRQ( void )
       send_cmd(0xAE);  // enable the keyboard
       return;
     }
-      
+
     scancode = E0_KEYS[ scancode ];
   }
   else if ( extended_scancode == 0xE1 && scancode == 0x1D )
   {
-    extended_scancode = 0x100;  
+    extended_scancode = 0x100;
     send_cmd(0xAE);  // enable the keyboard
-    return;  
+    return;
   }
   else if ( extended_scancode == 0x100 && scancode == 0x45 )
     scancode = E1_PAUSE;
-  
+
   extended_scancode = 0;
-    
-  if( scancode == 0xFF || scancode == 0xFA 
+
+  if( scancode == 0xFF || scancode == 0xFA
   || scancode == 0xFE || scancode ==0x00 ) // non parsable codes, ACK and keyb. buffer errors
   {
     kprintfd( "Non-parsable scancode %X \n", scancode );
@@ -240,39 +241,39 @@ void KeyboardManager::serviceIRQ( void )
   if( scancode == 0xE0 || scancode == 0xE1 )
   {
     extended_scancode = scancode;
-    send_cmd(0xAE);  // enable the keyboard    
+    send_cmd(0xAE);  // enable the keyboard
     return;
   }
-  
-  modifyKeyboardStatus( scancode ); // handle num, caps, scroll, shift, ctrl and alt 
+
+  modifyKeyboardStatus( scancode ); // handle num, caps, scroll, shift, ctrl and alt
 
   if( (scancode & 0200 ) ) // if a key was released just ignore it
   {
-    send_cmd(0xAE);  // enable the keyboard    
+    send_cmd(0xAE);  // enable the keyboard
     return;
   }
-      
+
   keyboard_buffer_->put( scancode ); // put it inside the buffer
-  
-  send_cmd(0xAE); // enable the keyboard    
+
+  send_cmd(0xAE); // enable the keyboard
 }
 
 void KeyboardManager::modifyKeyboardStatus(uint8 sc )
 {
   bool key_released = sc & 0200;
-  
+
   if( key_released )
     sc &= 0x7f;
-    
+
   uint32 key = convertScancode( sc );
-  
+
   uint32 simple_key = key & 0xFF;
   uint32 control_key = key & 0xFF00;
-  
+
   if( simple_key )
     return;
-  
-  
+
+
   if( key_released )
   {
     if(!((control_key & KBD_META_CAPS) || (control_key & KBD_META_NUM) || (control_key & KBD_META_SCRL)))
@@ -294,13 +295,13 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc )
     {
       keyboard_status_ ^= KBD_META_SCRL;
       setLEDs();
-    }        
+    }
     else
       keyboard_status_ |= control_key;
-      
+
   }
-  
-  
+
+
   return;
 }
 
@@ -379,7 +380,7 @@ uint32 KeyboardManager::convertScancode( uint8 scancode )
 {
     uint32 simple_key = STANDARD_KEYMAP[ scancode ] & 0xFF;
     uint32 control_key = STANDARD_KEYMAP[ scancode ] & 0xFF00;
-    
+
     uint32 key = control_key | simple_key;
     return key;
 }
@@ -393,6 +394,6 @@ bool KeyboardManager::getKeyFromKbd(uint32 &key)
     key = convertScancode(sc);
     return true;
   }
-  else 
+  else
     return false;
 }

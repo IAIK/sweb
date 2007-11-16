@@ -372,10 +372,9 @@ class MinixTestingThread : public Thread
      * Constructor
      * @param root_fs_info the FileSystemInfo
      */
-    MinixTestingThread ( FileSystemInfo* root_fs_info )
+    MinixTestingThread ( FileSystemInfo* root_fs_info ) : Thread ( root_fs_info )
     {
       name_="MinixTestingThread";
-      this->setFSInfo ( root_fs_info );
     }
 
     /**
@@ -399,8 +398,7 @@ class MinixTestingThread : public Thread
       int32 chdir_ret = vfs_syscall.chdir ( "/minix/tests" );
       kprintfd ( "\n> chdir returned: <%d>\n",chdir_ret );
 
-      MinixUserThread *user_thread = new MinixUserThread ( "/minix/tests/stdin-test.sweb" );
-      user_thread->setFSInfo ( getFSInfo() );
+      MinixUserThread *user_thread = new MinixUserThread ( "/minix/tests/stdin-test.sweb", new FileSystemInfo ( *this->getFSInfo() ) );
       Scheduler::instance()->addNewThread ( user_thread );
 
 

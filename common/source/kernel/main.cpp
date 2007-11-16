@@ -64,8 +64,9 @@ class UserThread : public Thread
      * @param pseudofs_filename filename of the file in pseudofs to execute
      * @param terminal_number the terminal to run in (default 0)
      */
-    UserThread ( char *pseudofs_filename, uint32 terminal_number=0 )
+    UserThread ( char *pseudofs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info )
     {
+      kprintfd ( "UserThread::ctor: starting %s\n",pseudofs_filename );
       name_=pseudofs_filename;
       uint8 *elf_data = PseudoFS::getInstance()->getFilePtr ( pseudofs_filename );
       if ( elf_data )
@@ -80,6 +81,7 @@ class UserThread : public Thread
         run_me_=false;
       }
       kprintf ( "UserThread::ctor: Done loading %s\n",pseudofs_filename );
+      kprintfd ( "UserThread::ctor: Done loading %s\n",pseudofs_filename );
     }
 
     /**
@@ -118,7 +120,7 @@ class MinixUserThread : public Thread
      * @param minixfs_filename filename of the file in minixfs to execute
      * @param terminal_number the terminal to run in (default 0)
      */
-    MinixUserThread ( char *minixfs_filename, uint32 terminal_number=0 )
+    MinixUserThread ( char *minixfs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info )
     {
       name_= minixfs_filename;
       int32 fd = vfs_syscall.open ( minixfs_filename,0 );
@@ -142,7 +144,8 @@ class MinixUserThread : public Thread
       {
         run_me_=false;
       }
-      kprintf ( "UserThread::ctor: Done loading %s\n",minixfs_filename );
+      kprintf ( "MinixUserThread::ctor: Done loading %s\n",minixfs_filename );
+      delete elf_data;
     }
 
     /**
@@ -155,7 +158,7 @@ class MinixUserThread : public Thread
         {
           if ( main_console->getTerminal ( terminal_number_ ) )
             this->setTerminal ( main_console->getTerminal ( terminal_number_ ) );
-          kprintf ( "UserThread:Run: %x  %d:%s Going to user, expect page fault\n",this,this->getPID(), this->getName() );
+          kprintf ( "MinixUserThread:Run: %x  %d:%s Going to user, expect page fault\n",this,this->getPID(), this->getName() );
           this->switch_to_userspace_ = 1;
           Scheduler::instance()->yield();
           //should not reach
@@ -278,6 +281,10 @@ void startup()
 
   debug ( MAIN, "root_fs_info : %d",root_fs_info );
   debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n", root_fs_info->getRoot()->getName(), root_fs_info->getPwd()->getName() );
+  if ( main_console->getFSInfo() )
+  {
+    delete main_console->getFSInfo();
+  }
   main_console->setFSInfo ( root_fs_info );
 
   Scheduler::createScheduler();
@@ -312,9 +319,9 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-//   Scheduler::instance()->addNewThread (
-//       new MinixTestingThread ( root_fs_info )
-//   );
+  Scheduler::instance()->addNewThread (
+      new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
+  );
 
 
 //   Scheduler::instance()->addNewThread(
@@ -349,8 +356,7 @@ void startup()
 
   for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
   {
-    UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ) );
-    user_thread->setFSInfo ( new FileSystemInfo ( *root_fs_info ) );
+    UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
     Scheduler::instance()->addNewThread ( user_thread );
   }
 

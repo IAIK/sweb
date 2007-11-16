@@ -145,6 +145,7 @@ KeyboardManager::KeyboardManager() : extended_scancode( 0 ), keyboard_status_ ( 
 KeyboardManager::~KeyboardManager()
 {
   delete keyboard_buffer_;
+  keyboard_buffer_ = 0;
 }
 
 void KeyboardManager::kb_wait()

@@ -16,5 +16,7 @@ StorageManager::~StorageManager()
 {
   delete inode_bitmap_;
   delete zone_bitmap_;
+  inode_bitmap_ = 0;
+  zone_bitmap_ = 0;
 }
 

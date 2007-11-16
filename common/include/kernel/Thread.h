@@ -31,6 +31,12 @@ class Thread
     Thread();
 
     /**
+     * Constructor with FileSystemInfo given
+     * @return Thread instance
+     */
+    Thread ( FileSystemInfo *fs_info );
+
+    /**
      * Destructor
      */
     virtual ~Thread();
@@ -73,7 +79,7 @@ class Thread
       else
         return "<UNNAMED THREAD>";
     }
-    
+
     uint32 getPID()
     {
       return pid_;

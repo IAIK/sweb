@@ -436,6 +436,9 @@ void debug ( uint32 flag, const char *fmt, ... )
       case KPRINTF:
         kprintfd ( "KPRINTF:>> " );
         break;
+      case CONDITION:
+        kprintfd ( "CONDITION:>> " );
+        break;
       case LOADER:
         kprintfd ( "LOADER:>> " );
         break;
@@ -448,8 +451,14 @@ void debug ( uint32 flag, const char *fmt, ... )
       case MAIN:
         kprintfd ( "MAIN:>> " );
         break;
+      case THREAD:
+        kprintfd ( "THREAD:>> " );
+        break;
       case PM:
         kprintfd ( "PM:>> " );
+        break;
+      case KMM:
+        kprintfd ( "KMM:>> " );
         break;
       case RAMFS:
         kprintfd ( "RAMFS:>> " );
@@ -492,7 +501,7 @@ void debug ( uint32 flag, const char *fmt, ... )
         break;
       case A_INTERRUPTS:
         kprintfd ( "A_INTERRUPTS:>> " );
-        break;        
+        break;
     }
     vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
   }
