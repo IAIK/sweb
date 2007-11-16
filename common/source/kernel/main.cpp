@@ -335,9 +335,9 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-  Scheduler::instance()->addNewThread (
-      new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
-  );
+//   Scheduler::instance()->addNewThread (
+//       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
+//   );
 
 
 //   Scheduler::instance()->addNewThread(
@@ -372,8 +372,8 @@ void startup()
 
   for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
   {
-    //UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
-    //Scheduler::instance()->addNewThread ( user_thread );
+    UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
+    Scheduler::instance()->addNewThread ( user_thread );
   }
 
   //Scheduler::instance()->addNewThread(new TestThread());
