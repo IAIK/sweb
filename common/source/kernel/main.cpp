@@ -128,6 +128,9 @@ class MinixUserThread : public Thread
       {
         run_me_ = false;
         kprintf ( "Error: file %s does not exist!\n",minixfs_filename );
+        loader_ = 0;
+        delete fs_info_;
+        fs_info_ = 0;
         return;
       }
       uint32 file_size = vfs_syscall.getFileSize ( fd );
@@ -145,7 +148,20 @@ class MinixUserThread : public Thread
         run_me_=false;
       }
       kprintf ( "MinixUserThread::ctor: Done loading %s\n",minixfs_filename );
-      delete elf_data;
+    }
+
+    ~MinixUserThread ()
+    {
+      if ( loader_ )
+      {
+        debug ( THREAD,"~MinixUserThread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
+        loader_->cleanupUserspaceAddressSpace();
+        if(loader_->getFileImagePtr()) {
+           delete loader_->getFileImagePtr();
+         }
+        delete loader_;
+        loader_ = 0;
+      }
     }
 
     /**
@@ -319,9 +335,9 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-//   Scheduler::instance()->addNewThread (
-//       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
-//   );
+  Scheduler::instance()->addNewThread (
+      new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
+  );
 
 
 //   Scheduler::instance()->addNewThread(
@@ -356,8 +372,8 @@ void startup()
 
   for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
   {
-    UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
-    Scheduler::instance()->addNewThread ( user_thread );
+    //UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
+    //Scheduler::instance()->addNewThread ( user_thread );
   }
 
   //Scheduler::instance()->addNewThread(new TestThread());

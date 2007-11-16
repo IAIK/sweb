@@ -49,6 +49,8 @@ class Loader
      */
     void loadOnePageSafeButSlow ( uint32 virtual_address );
 
+    uint8 *getFileImagePtr() {return file_image_;}
+
     uint32 page_dir_page_;
   private:
 

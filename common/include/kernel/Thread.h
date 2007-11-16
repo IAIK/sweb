@@ -129,9 +129,9 @@ class Thread
     uint32 pid_;
 
     Terminal *my_terminal_;
-    FileSystemInfo *fs_info_;
 
   protected:
+    FileSystemInfo *fs_info_;
     char *name_;
 };
 

@@ -62,7 +62,9 @@ Thread::~Thread()
   }
   debug ( THREAD,"~Thread: freeing ThreadInfos\n" );
   ArchThreads::cleanupThreadInfos ( user_arch_thread_info_ ); //yes that's safe
+  user_arch_thread_info_ = 0;
   ArchThreads::cleanupThreadInfos ( kernel_arch_thread_info_ );
+  kernel_arch_thread_info_ = 0;
   if ( fs_info_ )
   {
     debug ( THREAD,"~Thread deleting fs info\n" );

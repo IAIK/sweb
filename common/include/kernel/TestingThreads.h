@@ -394,11 +394,14 @@ class MinixTestingThread : public Thread
       int32 mount_ret = vfs_syscall.mount ( "idec","/minix", "minixfs",0 );
       kprintfd ( "\n> mount returned <%d>\n",mount_ret );
 
-      kprintfd ( "\n> chdir tests\n" );
-      int32 chdir_ret = vfs_syscall.chdir ( "/minix/tests" );
+      kprintfd ( "\n> chdir test\n" );
+      int32 chdir_ret = vfs_syscall.chdir ( "/minix/test" );
       kprintfd ( "\n> chdir returned: <%d>\n",chdir_ret );
 
-      MinixUserThread *user_thread = new MinixUserThread ( "/minix/tests/stdin-test.sweb", new FileSystemInfo ( *this->getFSInfo() ) );
+      kprintfd("\n> list ./\n");
+      vfs_syscall.readdir("./");
+
+      MinixUserThread *user_thread = new MinixUserThread ( "/minix/test/stdin-test.sweb", new FileSystemInfo ( *this->getFSInfo() ) );
       Scheduler::instance()->addNewThread ( user_thread );
 
 
