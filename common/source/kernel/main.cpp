@@ -319,9 +319,9 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-  Scheduler::instance()->addNewThread (
-      new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
-  );
+//   Scheduler::instance()->addNewThread (
+//       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
+//   );
 
 
 //   Scheduler::instance()->addNewThread(
