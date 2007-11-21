@@ -75,6 +75,7 @@ class Mutex
 
   protected:
     friend class Condition;
+    friend class Scheduler;
 
     /**
      *Returns if the lock is held by the Thread, that means,
