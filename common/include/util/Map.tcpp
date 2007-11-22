@@ -152,7 +152,7 @@ void Map<KeyType, ValueType>::remove(size_type index)
   --number_of_elements_;
 }
 
-
+// thanks to Markus Steinberger
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::clear()
 {
@@ -162,7 +162,8 @@ void Map<KeyType, ValueType>::clear()
     delete first_node_;
     first_node_ = tmp;
   }
-
+  first_node_ = 0;
+  last_node_ = 0;
   number_of_elements_ = 0;
 }
 

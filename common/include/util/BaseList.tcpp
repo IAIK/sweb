@@ -32,28 +32,36 @@ BaseList<ValueType>::BaseList() : first_node_(0),
 }
 
 
+// thanks to Markus Steinberger
 template<typename ValueType>
 BaseList<ValueType>::BaseList(const BaseList<ValueType> &instance)
 {
   number_of_elements_ = instance.number_of_elements_;
 
   // copy nodes
-  ListNode<ValueType> *node = new ListNode<ValueType>(*instance.first_node_);
-
-  first_node_ = node;
-
-  while(node->hasNextNode())
+  if(instance.first_node_ != 0)
   {
-    ListNode<ValueType> *next_node = new ListNode<ValueType>(
-      *(node->getNextNode()));
+    ListNode<ValueType> *node = new ListNode<ValueType>(*instance.first_node_);
 
-    next_node->setPreviousNode(node);
-    node->setNextNode(next_node);
+    first_node_ = node;
 
-    node = next_node;
+    while(node->hasNextNode())
+    {
+      ListNode<ValueType> *next_node = new ListNode<ValueType>(
+        *(node->getNextNode()));
+
+      next_node->setPreviousNode(node);
+      node->setNextNode(next_node);
+
+      node = next_node;
+    }
+
+    last_node_ = node;
   }
-
-  last_node_ = node;
+  else
+  {
+    last_node_ = first_node_ = 0;
+  }
 }
 
 
