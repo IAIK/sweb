@@ -229,7 +229,7 @@ prepare-system-ubuntu:
 	sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev
 
 .PHONY: submit
-SUBMIT_FILE:=./IMA$(assignment)GR$(group).tar.gz
+SUBMIT_FILE:=./IMA$(assignment)GR$(group).tar.bz2
 submit:
 ifneq ($(shell hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l),0)
 	$(warning )
@@ -259,7 +259,7 @@ ifndef group
 	$(error group not specified)
 endif
 	#@$(MAKE) mrproper
-	hg archive -r tip -t tgz -X "utils/" -X "images/" -X "bin/" "$(SUBMIT_FILE)" 
+	hg archive -r tip -t tbz2 -X "utils/" -X "images/" -X "bin/" "$(SUBMIT_FILE)" 
 	@echo -e "\n**********************************************"
 	@echo "Created: $(SUBMIT_FILE)" 
 	@echo "Please Test with: tar tjfv \"$(SUBMIT_FILE)\"  |less"
