@@ -228,9 +228,9 @@ prepare-system-ubuntu:
 	@echo
 	sudo apt-get install e2fslibs-dev nasm mercurial bochs-x libstdc++-dev
 
-.PHONY: submit
+.PHONY: submit submit-nohg submit-check-hg submit-check-param
 SUBMIT_FILE:=./IMA$(assignment)GR$(group).tar.bz2
-submit:
+submit-check-hg:
 ifneq ($(shell hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l),0)
 	$(warning )
 	$(warning WARNING: you have modified files in your working directory)
@@ -246,6 +246,8 @@ ifneq ($(shell hg status -u | grep -i -E "(Makefile|\.c|\.cc|\.h|\.cpp|\.s|\.tcp
 	$(warning WARNING: maybe you forgot "hg status" and then "hg add" ?)
 	$(warning )
 endif
+
+submit-check-param:
 ifndef assignment
 	$(warning )
 	$(warning SYNATX: make submit assignment=<1od.2> group=<group number, upper case>)
@@ -258,7 +260,8 @@ ifndef group
 	$(warning )
 	$(error group not specified)
 endif
-	#@$(MAKE) mrproper
+
+submit: submit-check-hg submit-check-param
 	hg archive -r tip -t tbz2 -X "utils/" -X "images/" -X "bin/" "$(SUBMIT_FILE)" 
 	@echo -e "\n**********************************************"
 	@echo "Created: $(SUBMIT_FILE)" 
@@ -266,6 +269,17 @@ endif
 	@echo "Make sure you didn't forget to 'hg add' new files !"
 	@echo -e "**********************************************\n"
 	@test $$( ls -s -k "$(SUBMIT_FILE)" | cut -f1 -d' ' ) -lt 600 || echo -e "\nWARNING: The tar file created is unusually large !\nWARNING: make sure that you don't have unnecessary junk in your Repository!\n\n"
+
+submit-nohg: submit-check-param 
+	@$(MAKE) mrproper
+	find -name "*~" -or -iname "*.bak" -or -iname "*.backup" -or -iname "*.swp" -or -iname "*.swap" -or -iname "*.sav" -exec rm {} \;
+	tar cjf "$(SUBMIT_FILE)" --exclude "CVS" --exclude "\.svn" --exclude "\.hg" --exclude "\./images" --exclude "\./bin" --exclude "\./utils" --exclude "\.[^/]*" --exclude "*.orig" --exclude "*.rej" --exclude "*.prj" --exclude "\./IMA[^/]*\.tar\.bz2"  ./
+	@echo -e "\n**********************************************"
+	@echo "Created: $(SUBMIT_FILE)" 
+	@echo "Please Test with: tar tjfv \"$(SUBMIT_FILE)\"  |less"
+	@echo -e "**********************************************\n"
+	@test $$( ls -s -k "$(SUBMIT_FILE)" | cut -f1 -d' ' ) -lt 600 || echo -e "\nWARNING: The tar file created is unusually large !\nWARNING: make sure to clean out unnecessary junk in your Repository!\n\n"
+
 
 INFO_FILE=info.file
 .PHONY: info
