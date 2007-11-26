@@ -52,6 +52,9 @@ class IdleThread : public Thread
 
 void Scheduler::createScheduler()
 {
+  if (instance_)
+    return;
+
   instance_ = new Scheduler();
 
   // create idle thread, this one really does not do too much
