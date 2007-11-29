@@ -194,7 +194,10 @@ void BaseList<ValueType>::popBack()
   --number_of_elements_;
 
   if(last)
+  {
     last_node_ = last;
+    last_node_->setNextNode(0);
+  }
   else
   {
     if(number_of_elements_)
@@ -218,7 +221,10 @@ void BaseList<ValueType>::popFront()
   --number_of_elements_;
 
   if(first)
+  {
     first_node_ = first;
+    first_node_->setPreviousNode(0);
+  }
   else
   {
     if(number_of_elements_)
