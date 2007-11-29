@@ -142,3 +142,5 @@ void List<ValueType>::rotateFront()
   this->first_node_ = this->last_node_;
   this->last_node_ = last;
 }
+
+// vim: syntax=cpp

@@ -294,3 +294,5 @@ void BaseList<ValueType>::clear()
 
   number_of_elements_ = 0;
 }
+
+// vim: syntax=cpp
