@@ -95,6 +95,15 @@ class Terminal : public CharacterDevice
     uint32 readLine ( char *line, uint32 size );
 
     /**
+     * Reads the given number of characters from the input or until the end of line.
+     * and don't remove control characters from the string
+     * @param line the buffer to write
+     * @param size the number of characters to read
+     * @return the number of chracters read
+     */
+    uint32 readLineRaw ( char *line, uint32 size );
+
+    /**
      * Reads the given number of characters from the input or until the end of line
      * or until there is no more input
      * @param line the buffer to write

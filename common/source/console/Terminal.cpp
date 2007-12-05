@@ -77,6 +77,25 @@ uint32 Terminal::readLine ( char *line, uint32 size )
   return counter;
 }
 
+uint32 Terminal::readLineRaw ( char *line, uint32 size )
+{
+  uint32 cchar;
+  uint32 counter = 0;
+  if ( size < 1 )
+    return 0;
+  do
+  {
+    cchar = _in_buffer->get();
+
+    line[counter++] = ( char ) cchar;
+  }
+  while ( cchar != '\n' && cchar != '\r' && counter < size );
+
+  if ( size-counter )
+    line[counter]= '\0';
+  return counter;
+}
+
 uint32 Terminal::readLineNoBlock ( char *line, uint32 size )
 {
   uint32 cchar;

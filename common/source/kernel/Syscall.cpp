@@ -59,7 +59,7 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
   if (fd == fd_stdin)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
-    num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
+    num_read = currentThread->getTerminal()->readLineRaw((char*) buffer, count);
     debug(SYSCALL,"Syscall::read: %B\n",(char*) buffer,num_read);
     if(isDebugEnabled(SYSCALL))
     {
