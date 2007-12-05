@@ -77,18 +77,10 @@ uint8 *PseudoFS::getFilePtr ( char *file_name )
   {
     char *a = file_name;
     char *b = files[i].file_name;
-    uint32 c = 1;
-    while ( *a && *b )
-    {
-      if ( *a != *b )
-      {
-        c = 0;
-        break;
-      }
+    while ( *a && *b && (*a == *b))
       ++a,b++;
 
-    }
-    if ( c )
+    if ( (a - file_name) && (b - files[i].file_name) && !*a && !*b )
       return ( uint8* ) files[i].file_start;
   }
 
