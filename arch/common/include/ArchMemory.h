@@ -91,11 +91,12 @@ public:
  * to get a physical address (which you can only use by adding 3gb to it) multiply
  * the &physical_page with the return value
  * @param virtual_page virtual Page to look up
- * @param &physical_pag Reference to the result
+ * @param *physical_page Pointer to the result
+ * @param *physical_pte_page optional: Pointer to physical page number of used PTE, or unchanged if 4MiB Page
  * @return 0: if the virtual page doesn't map to any physical page\notherwise
- * returns the page size in byte (4096 for 4k pages or 4096*1024 for 4m pages)
+ * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
  */
-  static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page);
+  static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page=0);
 
 private:
 

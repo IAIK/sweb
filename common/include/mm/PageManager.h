@@ -32,7 +32,7 @@ class PageManager
      * @param next_usable_address Pointer to memory the page manager can use
      * @return 0 on failure, otherwise a pointer to the next free memory location
      */
-    static pointer createPageManager ( pointer next_usable_address );
+    static void createPageManager ();
 
     /**
     * the access method to the singleton instance
@@ -73,16 +73,10 @@ class PageManager
   private:
 
     /**
-     * returns the size of used memory
-     * @return the size
-     */
-    uint32 getSizeOfMemoryUsed() const;
-
-    /**
      * the singleton constructor
      * @param start_of_structure the start address of the memory after the page manager
      */
-    PageManager ( pointer start_of_structure );
+    PageManager ();
 
     /**
      * Copy Constructor
@@ -94,6 +88,7 @@ class PageManager
 
     puttype  *page_usage_table_;
     uint32 number_of_pages_;
+    uint32 lowest_unreserved_page_;
 
     Mutex *lock_;
 

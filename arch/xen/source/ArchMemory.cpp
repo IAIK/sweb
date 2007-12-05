@@ -159,7 +159,7 @@ bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 l
   return true;
 }
 
-uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 linear_page, uint32 *physical_page)
+uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
   return 0;
 }

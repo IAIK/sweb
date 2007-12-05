@@ -13,6 +13,8 @@ KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
 uint32 KernelMemoryManager::createMemoryManager ( pointer start_address, pointer end_address )
 {
+  //start_address will propably be &kernel_end_address defined in linker script
+  //since we don't have memory management before creating the MemoryManager, we use "placement new"
   instance_ = new ( ( void* ) start_address ) KernelMemoryManager ( start_address + sizeof ( KernelMemoryManager ),end_address );
   return 0;
 }
@@ -48,7 +50,7 @@ pointer KernelMemoryManager::allocateMemory ( size_t requested_size )
 
   unlockKMM();
 
-  debug ( KMM,"allocateMemory returns address: %d \n", ( ( pointer ) new_pointer ) + sizeof ( MallocSegment ) );
+  debug ( KMM,"allocateMemory returns address: %x \n", ( ( pointer ) new_pointer ) + sizeof ( MallocSegment ) );
   return ( ( pointer ) new_pointer ) + sizeof ( MallocSegment );
 
 }
@@ -141,7 +143,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment ( size_t requested_size )
   MallocSegment *current=first_;
   while ( current != 0 )
   {
-    debug ( KMM,"findFreeSegment: current: %d size: %d used: %d \n", current, current->getSize() + sizeof ( MallocSegment ), current->getUsed() );
+    debug ( KMM,"findFreeSegment: current: %x size: %d used: %d \n", current, current->getSize() + sizeof ( MallocSegment ), current->getUsed() );
     prenew_assert ( current->marker_ == 0xdeadbeef );
     if ( ( current->getSize() >= requested_size ) && ( current->getUsed() == false ) )
       return current;
@@ -197,7 +199,7 @@ void KernelMemoryManager::freeSegment ( MallocSegment *this_one )
     prenew_assert ( false );
   }
 
-  debug ( KMM,"fillSegment: freeing block: %d of bytes: %d \n",this_one,this_one->getSize() + sizeof ( MallocSegment ) );
+  debug ( KMM,"fillSegment: freeing block: %x of bytes: %d \n",this_one,this_one->getSize() + sizeof ( MallocSegment ) );
 
   this_one->setUsed ( false );
   prenew_assert ( this_one->getUsed() == false );
@@ -220,8 +222,8 @@ void KernelMemoryManager::freeSegment ( MallocSegment *this_one )
       }
 
       debug ( KMM,"freeSegment: post premerge, pre postmerge\n" );
-      debug ( KMM,"freeSegment: previous_one: %d size: %d used: %d\n",previous_one, previous_one->getSize() + sizeof ( MallocSegment ), previous_one->getUsed() );
-      debug ( KMM,"freeSegment: this_one: %d size: %d used: %d\n",this_one, this_one->getSize() + sizeof ( MallocSegment ), this_one->getUsed() );
+      debug ( KMM,"freeSegment: previous_one: %x size: %d used: %d\n",previous_one, previous_one->getSize() + sizeof ( MallocSegment ), previous_one->getUsed() );
+      debug ( KMM,"freeSegment: this_one: %x size: %d used: %d\n",this_one, this_one->getSize() + sizeof ( MallocSegment ), this_one->getUsed() );
 
       this_one = previous_one;
     }
@@ -243,7 +245,7 @@ void KernelMemoryManager::freeSegment ( MallocSegment *this_one )
     MallocSegment *current=first_;
     while ( current != 0 )
     {
-      debug ( KMM,"freeSegment: current: %d prev: %d next: %d size: %d used: %d\n",current, current->prev_, current->next_, current->getSize() + sizeof ( MallocSegment ), current->getUsed() );
+      debug ( KMM,"freeSegment: current: %x prev: %x next: %x size: %d used: %d\n",current, current->prev_, current->next_, current->getSize() + sizeof ( MallocSegment ), current->getUsed() );
       prenew_assert ( current->marker_ == 0xdeadbeef );
       current = current->next_;
     }

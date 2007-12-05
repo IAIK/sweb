@@ -236,6 +236,30 @@ class TestThread : public Thread
 };
 
 
+//HACK Example: Extend Kernel Memory (by Bernhard T.):
+//uncomment this outside of startup
+//~extern "C" page_directory_entry kernel_page_directory_start;
+//
+//add this at beginn of startup() before creating KMM and after setting end_address:
+  //~ //insert PTE manually, to avoid mapPage calling PageManager (yep, its normally a private function)
+  //~ uint32 kernel_pde;
+  //~ uint32 more_pages = 512; //extend Kernel Memory by 512 Pages = 2MiB
+  //~ assert(more_pages <= 1024); //or need to insert more PTE's
+  //~ ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(((pointer) &kernel_page_directory_start)/PAGE_SIZE,&kernel_pde);
+  //~ uint32 next_free_pp=1600; //guess
+  //~ kprintfd("pde 513 present ?: %d\n",ArchMemory::checkAddressValid(kernel_pde,513U*1024U*PAGE_SIZE));
+  //~ writeLine2Bochs ( ( uint8 * ) "insert PTE\n" );
+  //~ ArchMemory::insertPTE(kernel_pde,513,next_free_pp++);
+  //~ //map some Pages
+  //~ writeLine2Bochs ( ( uint8 * ) "map some Pages\n" );
+  //~ for (uint32 kp=0;kp<more_pages;++kp) 
+  //~ {  //PRAY we don't hit a reserved memory area !!
+    //~ ArchMemory::mapPage(kernel_pde,513*1024+kp,next_free_pp++,0);
+  //~ }
+  //~ end_address+=more_pages*PAGE_SIZE;
+  //~ writeLine2Bochs ( ( uint8 * ) "ok\n" );
+//HACK Example End
+
 /**
  * startup called in @ref boot.s
  * starts up SWEB
@@ -243,15 +267,18 @@ class TestThread : public Thread
  */
 void startup()
 {
+  writeLine2Bochs ( ( uint8 * ) "SWEB starting...\n" );
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   //pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
   pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
-
-  writeLine2Bochs ( ( uint8 * ) "Creating Page Manager\n" );
-  start_address = PageManager::createPageManager ( start_address );
-  writeLine2Bochs ( ( uint8 * ) "PageManager created \n" );
+  //extend Kernel Memory here
   KernelMemoryManager::createMemoryManager ( start_address,end_address );
   writeLine2Bochs ( ( uint8 * ) "Kernel Memory Manager created \n" );
+  writeLine2Bochs ( ( uint8 * ) "Creating Page Manager...\n" );
+  PageManager::createPageManager();
+  writeLine2Bochs ( ( uint8 * ) "PageManager created \n" );
+
+  
   //SerialManager::getInstance()->do_detection( 1 );
 
 #ifdef isXenBuild

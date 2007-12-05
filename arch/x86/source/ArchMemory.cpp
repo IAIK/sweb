@@ -161,7 +161,7 @@ bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 v
     return false;
 }
 
-uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page)
+uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
   page_directory_entry *page_directory = &kernel_page_directory_start;
   //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
@@ -176,6 +176,8 @@ uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_pa
     }
     else
     {
+      if (physical_pte_page)
+        *physical_pte_page = page_directory[pde_vpn].pde4k.page_table_base_address;
       page_table_entry *pte_base = (page_table_entry *) get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
       if (pte_base[pte_vpn].present)
       {
