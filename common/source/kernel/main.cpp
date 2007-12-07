@@ -237,6 +237,7 @@ class TestThread : public Thread
 
 //HowTo Extend Kernel Memory ?:
 // see init_boottime_pagetables.cpp
+// then increase end_address appropriately
 
 /**
  * startup called in @ref boot.s
