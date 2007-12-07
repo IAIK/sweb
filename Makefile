@@ -207,6 +207,9 @@ vmware:
 bochs:
 	echo "Going to bochs -f $(SOURCEDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
 	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"
+bochs6meg:
+	echo "Going to bochs -f $(SOURCEDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
+	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "megs:6"
 bochsc:
 	echo "Going to bochs -f $(SOURCEDIR)/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
 	cd $(OBJECTDIR) && bochs -q -f $(SOURCEDIR)/utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"<<< c

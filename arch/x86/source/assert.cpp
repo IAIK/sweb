@@ -63,6 +63,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, char* file)
 
 void sweb_assert(const char *condition, uint32 line, const char* file)
 {
+  kprintfd_nosleep("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kprintf_nosleep("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kpanict((uint8*) "Halting System\n");
 }

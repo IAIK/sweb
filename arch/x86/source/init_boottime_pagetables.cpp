@@ -133,6 +133,8 @@ void initialiseBootTimePaging()
   }
   uint32 start_page = first_free_page;
 
+  //HACK Example: Extend Kernel Memory (by Bernhard T.):
+  // just change 1024 here to anything <= 3*1024  (because we have 3 pte's in bss which were mapped in the pde above)
   for (i=first_free_page-256;i<1024;++i)
   {
     pte_start[i].present = 1;

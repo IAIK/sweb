@@ -35,20 +35,49 @@ PageManager::PageManager()
   uint32 i=0,k=0;
   uint32 num_mmaps = ArchCommon::getNumUseableMemoryRegions();
 
-  pointer start_address=0, end_address=0;
-  uint32 highest_address_below_1gig=0,type=0;
+  bool disable_used_pages_check=false;
+  pointer start_address=0, end_address=0,last_end_page=0;
+  uint32 highest_address_below_1gig=0,type=0,used_pages=0;
 
+  //Determine Amount of RAM
   for (i=0;i<num_mmaps;++i)
   {
     ArchCommon::getUsableMemoryRegion(i,start_address,end_address,type);
-    debug(PM,"Ctor: usable memory region from physical %x to %x of type %d\n", start_address, end_address,type);
-    if (type==1) 
+    debug(PM,"Ctor: usable memory region from physical %x to %x of type %d\n", start_address, end_address, type);
+    if (type==1)
       highest_address_below_1gig = Max(highest_address_below_1gig, Min(end_address, 256*1024*PAGE_SIZE));
   }
   //we can have a max of 1 GiB Memory (256*1024*4k)
 
   number_of_pages_ = highest_address_below_1gig / PAGE_SIZE;
   debug(PM,"Ctor: Number of physical pages: %d\n",number_of_pages_);
+
+  //Determine RAM Used by Grub Modules
+  for (i=0; i<ArchCommon::getNumModules(); ++i)
+  {
+    uint32 start_page=( ArchCommon::getModuleStartAddress(i) - 3U*1024U*1024U*1024U ) / PAGE_SIZE;
+    uint32 end_page=( ArchCommon::getModuleEndAddress(i) - 3U*1024U*1024U*1024U ) / PAGE_SIZE;
+
+    if (start_page < last_end_page)
+    {
+      disable_used_pages_check=true;
+      break;
+    }
+    used_pages = end_page - start_page + ((i>0 && end_page == last_end_page) ? 0 : 1);
+    last_end_page = end_page;
+  }
+
+  if (disable_used_pages_check)
+    debug(PM,"Ctor: Unable to determine number of pages used by Grub Modules\n");
+  else
+    debug(PM,"Ctor: Pages used by Grub Modules %d\n",used_pages);
+
+  //need at least 4 MiB for Kernel Memory + first physical MiB
+  if (number_of_pages_ < 1024+256+ ((disable_used_pages_check)? 0 : used_pages))
+  {
+    kprintfd("FATAL ERROR: Not enough Memory, Sweb needs at least %d KiB of RAM\n",(1024U+256U+((disable_used_pages_check)? 0 : used_pages))*4U);
+    prenew_assert(false);
+  }
 
   // maximum of 1 GiB physical memory supportet, just to be really sure ;->
   number_of_pages_ = Min(number_of_pages_,1024*256);
@@ -59,7 +88,7 @@ PageManager::PageManager()
   //currently we have 4MiB of kernel memory (1024 mapped pages starting at linear addr.: 2GiB)
   //if our kernel image becomes too large, the following command might fail
   page_usage_table_ = new puttype[number_of_pages_];
-  
+
   // since we have gaps in the memory maps we can not give out everything
   // first mark everything as reserved, just to be sure
   debug(PM,"Ctor: Initializing page_usage_table_ with all pages reserved\n");
@@ -80,15 +109,16 @@ PageManager::PageManager()
       continue;
     }
 
-    for (k=Max(start_page, lowest_unreserved_page_); k<Min(end_page, 1024*256);++k)
+    for (k=Max(start_page, lowest_unreserved_page_); k<Min(end_page, number_of_pages_);++k)
     {
       page_usage_table_[k] = PAGE_FREE;
     }
   }
 
   //some of the useable memory regions are already in use by the kernel (propably the first 1024 pages)
-  //therefore, mark as reserved everything >2gb und <3gb already used in PageDirectory 
+  //therefore, mark as reserved everything >2gb und <3gb already used in PageDirectory
   debug(PM,"Ctor: Marking stuff mapped in above 2 and < 3 gig as used\n");
+//  uint32 last_page=0;
   for (i=1024*512; i<1024*768;++i)
   {
     uint32 physical_page=0;
@@ -96,28 +126,31 @@ PageManager::PageManager()
     uint32 this_page_size = ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page,&pte_page);
     if (this_page_size > 0)
     {
-      //debug(PM,"Ctor: mark reserved: vp: %d, pp: %d, pptep: %d, page_size: %d\n",i,physical_page,pte_page,this_page_size);
+//      if (physical_page != last_page+1)
+//        debug(PM,"Ctor: Memory GAP\n");
+//      last_page=physical_page;
+//      debug(PM,"Ctor: mark reserved: vp: %d, pp: %d, pptep: %d, page_size: %d\n",i,physical_page,pte_page,this_page_size);
       //our bitmap only knows 4k pages for now
       uint32 num_4kpages = this_page_size / PAGE_SIZE; //should be 1 on 4k pages and 1024 on 4m pages
       for (uint32 p=0;p<num_4kpages;++p)
         if (physical_page*num_4kpages + p < number_of_pages_)
           page_usage_table_[physical_page*num_4kpages + p] = PAGE_RESERVED;
       i+=(num_4kpages-1); //+0 in most cases
-      if (num_4kpages == 1 && i % 1024 == 0)
+      if (num_4kpages == 1 && i % 1024 == 0 && pte_page < number_of_pages_)
         page_usage_table_[pte_page] = PAGE_RESERVED;
     }
   }
-  
+
   debug(PM,"Ctor: Marking GRUB loaded modules as reserved\n");
   //LastbutNotLeast: Mark Modules loaded by GRUB as reserved (i.e. pseudofs, etc)
   for (i=0; i<ArchCommon::getNumModules(); ++i)
   {
     uint32 start_page=( ArchCommon::getModuleStartAddress(i) - 3U*1024U*1024U*1024U ) / PAGE_SIZE;
     uint32 end_page=( ArchCommon::getModuleEndAddress(i) - 3U*1024U*1024U*1024U ) / PAGE_SIZE;
-    for (k = start_page; k <= end_page; ++k)
+    for (k = Min(start_page,number_of_pages_); k <= Min(end_page,number_of_pages_-1); ++k)
       page_usage_table_[k] = PAGE_RESERVED;
   }
-  
+
   debug(PM,"Ctor: find lowest unreserved page\n");
   for (uint32 p=lowest_unreserved_page_; p<number_of_pages_; ++p)
   {
@@ -127,11 +160,11 @@ PageManager::PageManager()
       break;
     }
   }
-    
+
   //will propably be 1024
   debug(PM,"Ctor: lowest_unreserved_page_=%d\n",lowest_unreserved_page_);
-  assert(lowest_unreserved_page_ >= 1024);
-  assert(lowest_unreserved_page_ < number_of_pages_);
+  prenew_assert(lowest_unreserved_page_ >= 1024);
+  prenew_assert(lowest_unreserved_page_ < number_of_pages_);
   debug(PM,"Ctor done\n");
 }
 
@@ -161,7 +194,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
     }
   }
   if (lock_)
-    lock_->release();  
+    lock_->release();
   arch_panic((uint8*) "PageManager: Sorry, no more Pages Free !!!");
   return 0;
 }
