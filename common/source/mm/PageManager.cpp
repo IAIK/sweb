@@ -203,7 +203,7 @@ void PageManager::freePage(uint32 page_number)
 {
   if (lock_)
     lock_->acquire();
-  if (page_number >= lowest_unreserved_page_ && page_usage_table_[page_number] != PAGE_RESERVED)
+  if ( page_number >= lowest_unreserved_page_ && page_number < number_of_pages_ && page_usage_table_[page_number] != PAGE_RESERVED )
     page_usage_table_[page_number] = PAGE_FREE;
   if (lock_)
     lock_->release();
