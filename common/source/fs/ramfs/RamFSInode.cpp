@@ -46,7 +46,7 @@ RamFSInode::~RamFSInode()
 }
 
 
-int32 RamFSInode::readData ( int32 offset, int32 size, char *buffer )
+int32 RamFSInode::readData ( uint32 offset, uint32 size, char *buffer )
 {
   if ( ( size + offset ) > BASIC_ALLOC )
   {
@@ -60,7 +60,7 @@ int32 RamFSInode::readData ( int32 offset, int32 size, char *buffer )
 }
 
 
-int32 RamFSInode::writeData ( int32 offset, int32 size, const char *buffer )
+int32 RamFSInode::writeData ( uint32 offset, uint32 size, const char *buffer )
 {
   if ( ( size + offset ) > BASIC_ALLOC )
   {

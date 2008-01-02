@@ -145,14 +145,14 @@ class RamFSInode : public Inode
     /// @param size the size of data that read from this inode
     /// @buffer the dest char-array to store the data
     /// @return On successe, return 0. On error, return -1.
-    virtual int32 readData ( int32 offset, int32 size, char *buffer );
+    virtual int32 readData ( uint32 offset, uint32 size, char *buffer );
 
     /// write the data to the inode
     /// @param offset offset byte
     /// @param size the size of data that write to this inode (data_)
     /// @buffer the src char-array
     /// @return On successe, return 0. On error, return -1.
-    virtual int32 writeData ( int32 offset, int32 size, const char *buffer );
+    virtual int32 writeData ( uint32 offset, uint32 size, const char *buffer );
 
 };
 
