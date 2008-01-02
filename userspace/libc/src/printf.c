@@ -453,14 +453,14 @@ int puts(const char *output_string)
   unsigned char newline = '\n';
   const char *string_ptr = output_string;
   size_t string_length = 0;
-  ssize_t characters_written =
-    write(STDOUT_FILENO, (void*) output_string, string_length);
+  ssize_t characters_written = 0;
 
   while(string_ptr && *string_ptr++)
     ++string_length;
 
   if(string_length)
   {
+    characters_written = write(STDOUT_FILENO, (void*) output_string, string_length);
     if(!characters_written || (characters_written == -1))
       return EOF;
   }
