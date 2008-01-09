@@ -16,22 +16,27 @@ Map<KeyType, ValueType>::Map(const Map<KeyType, ValueType> &instance)
 {
   number_of_elements_ = instance.number_of_elements_;
 
-  // copy nodes
-  ListNode<Pair<KeyType, ValueType> > *node = new ListNode<Pair<KeyType, ValueType> >(*instance.first_node_);
-
-  first_node_ = node;
-
-  while(node->hasNextNode())
+  if(number_of_elements_)
   {
-    ListNode<Pair<KeyType, ValueType> > *next_node = new ListNode<Pair<KeyType, ValueType> >(*(node->getNextNode()));
-
-    next_node->setPreviousNode(node);
-    node->setNextNode(next_node);
-
-    node = next_node;
+    // copy nodes
+    ListNode<Pair<KeyType, ValueType> > *node = new ListNode<Pair<KeyType, ValueType> >(*instance.first_node_);
+  
+    first_node_ = node;
+  
+    while(node->hasNextNode())
+    {
+      ListNode<Pair<KeyType, ValueType> > *next_node = new ListNode<Pair<KeyType, ValueType> >(*(node->getNextNode()));
+  
+      next_node->setPreviousNode(node);
+      node->setNextNode(next_node);
+  
+      node = next_node;
+    }
+  
+    last_node_ = node;
   }
-
-  last_node_ = node;
+  else
+    first_node_ = last_node_ = 0;
 }
 
 
