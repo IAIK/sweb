@@ -292,6 +292,7 @@ void BaseList<ValueType>::clear()
     first_node_ = tmp;
   }
 
+  last_node_ = 0;
   number_of_elements_ = 0;
 }
 
