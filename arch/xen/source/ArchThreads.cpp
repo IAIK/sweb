@@ -167,3 +167,19 @@ uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
 //   return arch_TestAndSet(new_value, &lock);
 }
+
+uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
+{
+  return (uint32) ArchThreads::atomic_add((int32 &) value, increment);
+}
+
+int32 ArchThreads::atomic_add(int32 &value, int32 increment)
+{
+  int32 ret=increment;
+  __asm__ __volatile__(
+  "lock; xadd %0, %1;"
+  :"=a" (ret), "=m" (value)
+  :"a" (ret)
+  :);
+  return ret;
+}

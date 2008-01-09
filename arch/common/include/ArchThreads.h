@@ -2,7 +2,7 @@
  * @file ArchThreads.h
  *
  */
- 
+
 #ifndef _ARCH_THREADS_H_
 #define _ARCH_THREADS_H_
 
@@ -46,7 +46,7 @@ public:
  */
   static void cleanupThreadInfos(ArchThreadInfo *&info);
 
-/** 
+/**
  * creates the ArchThreadInfo for a kernel thread
  * @param info where the ArchThreadInfo is saved
  * @param start_function instruction pointer is set so start function
@@ -63,7 +63,7 @@ public:
  */
   static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack);
 
-/** 
+/**
  *
  * on x86: invokes int65, whose handler facilitates a task switch
  *
@@ -96,7 +96,17 @@ public:
  */
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
 
-/** 
+/**
+ * atomically increments value by increment
+ *
+ * @param &value Reference to value
+ * @param &increment can be positive or negative
+ * @returns old value of value
+ */
+  static uint32 atomic_add(uint32 &value, int32 increment);
+  static int32 atomic_add(int32 &value, int32 increment);
+
+/**
  *
  * @param thread
  * @param userspace_register

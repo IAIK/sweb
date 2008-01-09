@@ -2,7 +2,7 @@
  * @file ArchThreads.cpp
  *
  */
- 
+
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "kprintf.h"
@@ -133,8 +133,8 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
-  //kprintfd_nosleep("ArchThreads::create: values done\n"); 
-  
+  //kprintfd_nosleep("ArchThreads::create: values done\n");
+
 }
 
 void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
@@ -147,8 +147,8 @@ void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
 void ArchThreads::yield()
 {
   __asm__ __volatile__("int $65"
-  :                          
-  :                          
+  :
+  :
   );
 }
 
@@ -156,6 +156,24 @@ extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
   return arch_TestAndSet(new_value, &lock);
+}
+
+uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
+{
+  int32 ret=increment;
+  __asm__ __volatile__(
+  "lock; xadd %0, %1;"
+  :"=a" (ret), "=m" (value)
+  :"a" (ret)
+  :);
+  return ret;
+}
+
+//Note: the compile should optimize the unnecessary call away
+// but even if it doesn't, it is still correct behaviour
+int32 ArchThreads::atomic_add(int32 &value, int32 increment)
+{
+  return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers)
@@ -173,5 +191,5 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   //kprintfd(" ds: %x   es: %x   fs: %x   gs: %x\n",info->ds,info->es,info->fs,info->gs);
   //kprintfd(" ss: %x   cs: %x esp0: %x  ss0: %x\n",info->ss,info->cs,info->esp0,info->ss0);
   //kprintfd("eip: %x eflg: %x  dpl: %x  cr3: %x\n",info->eip,info->eflags,info->dpl,info->cr3);
-  //kprintfd("\n\n");  
+  //kprintfd("\n\n");
 }
