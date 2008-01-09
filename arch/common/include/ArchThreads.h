@@ -97,10 +97,10 @@ public:
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
 
 /**
- * atomically increments value by increment
+ * atomically increments or decrements value by increment
  *
  * @param &value Reference to value
- * @param &increment can be positive or negative
+ * @param increment can be positive or negative
  * @returns old value of value
  */
   static uint32 atomic_add(uint32 &value, int32 increment);
