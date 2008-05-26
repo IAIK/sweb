@@ -48,7 +48,7 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev, uint64 offs
   s_max_file_size_ = buffer->get4Bytes ( 12 );
   s_magic_ = buffer->get2Bytes ( 16 );
 
-  printf ( "s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %d\n",s_num_inodes_,s_num_zones_,s_num_inode_bm_blocks_,s_num_zone_bm_blocks_,s_1st_datazone_,s_log_zone_size_,s_max_file_size_,s_magic_ );
+  //printf ( "s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %d\n",s_num_inodes_,s_num_zones_,s_num_inode_bm_blocks_,s_num_zone_bm_blocks_,s_1st_datazone_,s_log_zone_size_,s_max_file_size_,s_magic_ );
 
 
   delete buffer;
@@ -68,8 +68,8 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev, uint64 offs
   }*/
   delete bm_buffer;
 
-  std::cout << storage_manager_->isInodeSet ( 0 ) << " " << storage_manager_->isInodeSet ( 1 ) << " " << 
-    storage_manager_->isInodeSet ( 2 ) << " " << storage_manager_->isInodeSet ( 3 ) << " " << storage_manager_->isInodeSet ( 4 ) << " " << storage_manager_->isInodeSet ( 5 ) << std::endl;
+  //std::cout << storage_manager_->isInodeSet ( 0 ) << " " << storage_manager_->isInodeSet ( 1 ) << " " << 
+    //storage_manager_->isInodeSet ( 2 ) << " " << storage_manager_->isInodeSet ( 3 ) << " " << storage_manager_->isInodeSet ( 4 ) << " " << storage_manager_->isInodeSet ( 5 ) << std::endl;
 
   initInodes();
 }
@@ -116,7 +116,7 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loade
 
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
-  std::cout << "getInode(" << i_num << ") called!" << std::endl;
+  //std::cout << "getInode(" << i_num << ") called!" << std::endl;
 //  assert ( storage_manager_->isInodeSet ( i_num ) );
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
   uint32 inode_block_num = inodes_start + ( i_num - 1 ) / INODES_PER_BLOCK;

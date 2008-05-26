@@ -5,12 +5,12 @@
 #ifndef PSEUDO_FS_TYPE_H__
 #define PSEUDO_FS_TYPE_H__
 
-#include "fs/ramfs/RamFSType.h"
+#include "fs/FileSystemType.h"
 
 /**
  * @class PseudoFSType
  */
-class PseudoFSType : public  RamFSType
+class PseudoFSType : public  FileSystemType
 {
   public:
 

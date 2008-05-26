@@ -5,8 +5,8 @@
 #include "fs/FileSystemType.h"
 #include "assert.h"
 
-FileSystemType::FileSystemType() :
-    fs_name_ ( 0 ),
+FileSystemType::FileSystemType(const char *fs_name) :
+    fs_name_ ( fs_name ),
     fs_flags_ ( 0 )
 {}
 

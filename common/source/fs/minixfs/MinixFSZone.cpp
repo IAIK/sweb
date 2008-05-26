@@ -223,3 +223,4 @@ void MinixFSZone::flush ( uint32 i_num )
     delete dbl_ind_buffer;
   }
 }
+

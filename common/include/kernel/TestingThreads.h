@@ -26,9 +26,8 @@ class TestTerminalThread : public Thread
        * @param terminal the terminal to test
        * @return TestTerminalThread instance
        */
-    TestTerminalThread ( char *name, Console *console, uint32 terminal )
+    TestTerminalThread ( const char *name, Console *console, uint32 terminal ) : Thread(name)
     {
-      name_=name;
       main_console = console;
       on_terminal = terminal;
     };
@@ -75,9 +74,8 @@ class SerialThread : public Thread
      * @param name the name
      * @return SerialThread instance
      */
-    SerialThread ( char *name )
+    SerialThread ( const char *name ) : Thread(name)
     {
-      name_=name;
     };
 
     /**
@@ -132,7 +130,7 @@ class SerialThread : public Thread
         char gotch = 0;
         uint32 num_read = 0;
 
-        char *msg = "MESSAGE";
+        char const *msg = "MESSAGE";
         sp->writeData ( 0, 7, msg );
 
         do
@@ -164,9 +162,8 @@ class BDThread : public Thread
      * Consturctor
      * @return BDThread instance
      */
-    BDThread()
+    BDThread() : Thread("BlockDevices")
     {
-      name_="BlockDevices";
     };
 
     /**
@@ -217,9 +214,8 @@ class BDThread2 : public Thread
      * Consturctor
      * @return BDThread2 instance
      */
-    BDThread2()
+    BDThread2() : Thread("BlockDevices2")
     {
-      name_="BlockDevices2";
     };
 
     /**
@@ -326,9 +322,8 @@ class DeviceFSMountingThread : public Thread
      * Constructor
      * @return DeviceFSMountingThread instance
      */
-    DeviceFSMountingThread()
+    DeviceFSMountingThread() : Thread("DeviceFSMountingThread")
     {
-      name_="DeviceFSMountingThread";
     };
 
     /**
@@ -372,9 +367,8 @@ class MinixTestingThread : public Thread
      * Constructor
      * @param root_fs_info the FileSystemInfo
      */
-    MinixTestingThread ( FileSystemInfo* root_fs_info ) : Thread ( root_fs_info )
+    MinixTestingThread ( FileSystemInfo* root_fs_info ) : Thread ( root_fs_info, "MinixTestingThread" )
     {
-      name_="MinixTestingThread";
     }
 
     /**

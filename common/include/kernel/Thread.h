@@ -28,13 +28,13 @@ class Thread
      * Constructor
      * @return Thread instance
      */
-    Thread();
+    Thread(const char* name);
 
     /**
      * Constructor with FileSystemInfo given
      * @return Thread instance
      */
-    Thread ( FileSystemInfo *fs_info );
+    Thread ( FileSystemInfo *fs_info, const char* name );
 
     /**
      * Destructor
@@ -132,7 +132,7 @@ class Thread
 
   protected:
     FileSystemInfo *fs_info_;
-    char *name_;
+    const char *name_;
 };
 
 

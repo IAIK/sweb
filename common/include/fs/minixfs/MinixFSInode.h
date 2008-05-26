@@ -176,7 +176,7 @@ class MinixFSInode : public Inode
      * @param src_i_num the inode number to write
      * @param name the name to write there
      */
-    void writeDentry ( uint32 dest_i_num, uint32 src_i_num, char* name );
+    void writeDentry ( uint32 dest_i_num, uint32 src_i_num, const char* name );
 
     /**
      * finding the position of the dentry of the given inode in this inode

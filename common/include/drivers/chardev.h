@@ -30,8 +30,8 @@ class CharacterDevice : public Inode, public Thread
      * @param super_block the superblock (0)
      * @param inode_type the inode type (cahracter device)
      */
-    CharacterDevice ( char* name, Superblock* super_block = 0, uint32 inode_type = I_CHARDEVICE ) :
-        Inode ( super_block, inode_type )
+    CharacterDevice ( const char* name, Superblock* super_block = 0, uint32 inode_type = I_CHARDEVICE ) :
+        Inode ( super_block, inode_type ), Thread("CharDevThread")
     {
 
       i_type_   = I_CHARDEVICE;
@@ -59,8 +59,6 @@ class CharacterDevice : public Inode, public Thread
         delete _in_buffer;
       if ( _out_buffer )
         delete _out_buffer;
-
-      name_ = "CharDevThread";
     };
 
     /**
@@ -184,7 +182,7 @@ class CharacterDevice : public Inode, public Thread
     FiFo< uint32 > *_in_buffer;
     FiFo< uint32 > *_out_buffer;
 
-    char * device_name;
+    char *device_name;
 
   private:
 

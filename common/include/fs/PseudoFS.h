@@ -33,14 +33,14 @@ class PseudoFS
      * @param file_name the file name
      * @return the file pointer
      */
-    uint8 *getFilePtr ( char *file_name );
+    uint8 *getFilePtr ( const char *file_name );
 
     /**
      * returns the files index
      * @param file_name the wanted file name
      * @return the file index
      */
-    FileIndexStruct* getFileIndex ( char *file_name );
+    FileIndexStruct* getFileIndex ( const char *file_name );
 
     /**
      * returns the number of files

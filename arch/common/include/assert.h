@@ -32,7 +32,7 @@ void sweb_assert(const char *condition, uint32 line, const char* file);
  * @param line the function which to jump to
  * @param file where the assertion is called
  */
-void pre_new_sweb_assert(uint32 condition, uint32 line, char* file);
+void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file);
 
 #ifdef __cplusplus
 }

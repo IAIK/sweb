@@ -12,7 +12,7 @@
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
 
-TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals )
+TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxTConsoleThrd")
 {
   uint32 i, j = 10, log = 1, k = 0, l = 0;
 
@@ -45,7 +45,6 @@ TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals )
   delete term_name;
 
   active_terminal_ = 0;
-  name_ = "TxTConsoleThrd";
 }
 
 uint32 TextConsole::consoleGetNumRows() const

@@ -441,7 +441,7 @@ int scanf(const char *fmt, ...)
 int getchar()
 {
   char character = 0;
-  ssize_t characters_read = read(STDIN_FILENO, (void*) &character, 1);
+  int characters_read = read(STDIN_FILENO, (void*) &character, 1);
 
   if(!characters_read || (characters_read == -1))
     return EOF;

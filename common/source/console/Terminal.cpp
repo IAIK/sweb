@@ -116,7 +116,7 @@ uint32 Terminal::readLineNoBlock ( char *line, uint32 size )
     else
       line[counter++] = ( char ) cchar;
 
-    if ( cchar != '\n' && cchar != '\r' && counter < ( size-1 ) );
+    //if ( cchar != '\n' && cchar != '\r' && counter < ( size-1 ) );
   }
 
   line[counter] = '\0';

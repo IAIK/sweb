@@ -64,10 +64,9 @@ class UserThread : public Thread
      * @param pseudofs_filename filename of the file in pseudofs to execute
      * @param terminal_number the terminal to run in (default 0)
      */
-    UserThread ( char *pseudofs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info )
+    UserThread ( const char *pseudofs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, pseudofs_filename )
     {
       kprintfd ( "UserThread::ctor: starting %s\n",pseudofs_filename );
-      name_=pseudofs_filename;
       uint8 *elf_data = PseudoFS::getInstance()->getFilePtr ( pseudofs_filename );
       if ( elf_data )
       {
@@ -120,9 +119,8 @@ class MinixUserThread : public Thread
      * @param minixfs_filename filename of the file in minixfs to execute
      * @param terminal_number the terminal to run in (default 0)
      */
-    MinixUserThread ( char *minixfs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info )
+    MinixUserThread ( const char *minixfs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, minixfs_filename )
     {
-      name_= minixfs_filename;
       int32 fd = vfs_syscall.open ( minixfs_filename,0 );
       if ( fd < 0 )
       {
@@ -200,9 +198,8 @@ class TestThread : public Thread
     /**
      * Constructor
      */
-    TestThread()
+    TestThread() : Thread("TestThread")
     {
-      name_="TestThread";
     }
 
     /**
@@ -301,7 +298,7 @@ void startup()
   FileSystemInfo* root_fs_info = vfs.root_mount ( "devicefs", 0 );
 //   kprintfd("Mount returned %d\n", mntres);
 
-  debug ( MAIN, "root_fs_info : %d",root_fs_info );
+  //debug ( MAIN, "root_fs_info : %d",root_fs_info );
   debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n", root_fs_info->getRoot()->getName(), root_fs_info->getPwd()->getName() );
   if ( main_console->getFSInfo() )
   {

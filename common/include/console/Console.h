@@ -76,6 +76,8 @@ class Console : public Thread
      */
     Console ( uint32 num_terminals );
 
+    Console ( uint32 num_terminals, const char *name );
+
     /**
      * Destructor
      */

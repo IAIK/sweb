@@ -5,10 +5,8 @@
 #include "fs/pseudofs/PseudoFSType.h"
 #include "fs/pseudofs/PseudoFSSuperblock.h"
 
-PseudoFSType::PseudoFSType()
+PseudoFSType::PseudoFSType() : FileSystemType("pseudofs")
 {
-  fs_name_ = "pseudofs";
-  fs_flags_ = 0;
 }
 
 

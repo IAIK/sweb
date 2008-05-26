@@ -310,7 +310,7 @@ extern off_t lseek(int file_descriptor, off_t offset, int whence);
  offset for reading is after the end-of-file, and -1 if an error occured
  *
  */
-extern ssize_t read(int file_descriptor, void *buffer, size_t count);
+extern int read(int file_descriptor, void *buffer, size_t count);
 
 /**
  * Writes to a file descriptor.
@@ -328,7 +328,7 @@ extern ssize_t read(int file_descriptor, void *buffer, size_t count);
  nothing was written, and -1 if an error occured
  *
  */
-extern ssize_t write(int file_descriptor, const void *buffer, size_t count);
+extern int write(int file_descriptor, const void *buffer, size_t count);
 
 
 #endif // unistd_h___

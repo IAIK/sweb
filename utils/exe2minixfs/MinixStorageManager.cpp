@@ -44,15 +44,15 @@ MinixStorageManager::MinixStorageManager ( Buffer *bm_buffer, uint16 num_inode_b
   }
   curr_inode_pos_ = 0;
   curr_zone_pos_ = 0;
-  std::cout << this << " ctor: inodes_set: " << inodes_set() << " zones_set: " << zones_set() << std::endl;
+  //std::cout << this << " ctor: inodes_set: " << inodes_set() << " zones_set: " << zones_set() << std::endl;
 
-  for(uint32 i=0; i < 200; i++)
+  /*for(uint32 i=0; i < 200; i++)
   {
     if(i % 25 == 0)
       std::cout << std::endl;
     std::cout << "|" << zone_bitmap_->getBit(i);
   }
-  std::cout << std::endl;
+  std::cout << std::endl;*/
 }
 
 
@@ -134,7 +134,7 @@ void MinixStorageManager::freeInode ( size_t index )
 
 void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
 {
-  std::cout << this << " flush: inodes_set: " << inodes_set() << " zones_set: " << zones_set() << std::endl;
+  //std::cout << this << " flush: inodes_set: " << inodes_set() << " zones_set: " << zones_set() << std::endl;
   //debug ( M_STORAGE_MANAGER, "flush: starting flushing\n" );
   Buffer* bm_buffer = new Buffer ( ( num_inode_bm_blocks_ + num_zone_bm_blocks_ ) * BLOCK_SIZE );
   uint32 num_inodes = inode_bitmap_->getSize();

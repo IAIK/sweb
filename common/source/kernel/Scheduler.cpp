@@ -32,9 +32,8 @@ class IdleThread : public Thread
      * Constructor
      * @return IdleThread instance
      */
-    IdleThread()
+    IdleThread() : Thread("IdleThread")
     {
-      name_="IdleThread";
     }
 
     /**
@@ -269,7 +268,7 @@ void Scheduler::cleanupDeadThreads()
 
 void Scheduler::printThreadList()
 {
-  char *thread_states[6]= {"Running", "Sleeping", "ToBeDestroyed", "Unknown", "Unknown", "Unknown"};
+  const char *thread_states[6]= {"Running", "Sleeping", "ToBeDestroyed", "Unknown", "Unknown", "Unknown"};
   uint32 c=0;
   lockScheduling();
   debug ( SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n",threads_.size() );

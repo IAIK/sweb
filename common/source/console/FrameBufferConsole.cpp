@@ -9,7 +9,7 @@
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
 
-FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) :Console ( num_terminals )
+FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_terminals, "VESAConsoleThrd")
 {
   x_res_ = ArchCommon::getVESAConsoleWidth();
   y_res_ = ArchCommon::getVESAConsoleHeight();
@@ -47,7 +47,6 @@ FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) :Console ( num_t
   delete term_name;
 
   active_terminal_ = 0;
-  name_ = "VESAConsoleThrd";
   consoleSetForegroundColor ( FG_BLACK );
   consoleSetBackgroundColor ( BG_WHITE );
   consoleClearScreen();

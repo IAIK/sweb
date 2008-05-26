@@ -47,7 +47,7 @@ class DeviceFSSuperBlock : public Superblock
      * @param inode the inode of the device to add
      * @param device_name the device name
      */
-    void addDevice ( Inode* inode, char* device_name );
+    void addDevice ( Inode* inode, const char* device_name );
 
     /**
      * Access method to the singleton instance

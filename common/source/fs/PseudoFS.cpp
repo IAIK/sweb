@@ -50,7 +50,7 @@ PseudoFS::PseudoFS()
 }
 
 
-uint8 *PseudoFS::getFilePtr ( char *file_name )
+uint8 *PseudoFS::getFilePtr ( const char *file_name )
 {
   // first check if we have modules
   uint32 num_modules = ArchCommon::getNumModules();
@@ -75,7 +75,7 @@ uint8 *PseudoFS::getFilePtr ( char *file_name )
 
   for ( i=0;i<num_files;++i )
   {
-    char *a = file_name;
+    char const *a = file_name;
     char *b = files[i].file_name;
     while ( *a && *b && (*a == *b))
       ++a,b++;
@@ -143,7 +143,7 @@ char* PseudoFS::getFileNameByNumber ( uint32 number ) const
 }
 
 
-PseudoFS::FileIndexStruct* PseudoFS::getFileIndex ( char *file_name )
+PseudoFS::FileIndexStruct* PseudoFS::getFileIndex ( const char *file_name )
 {
   // first check if we have modules
   uint32 num_modules = ArchCommon::getNumModules();
@@ -168,7 +168,7 @@ PseudoFS::FileIndexStruct* PseudoFS::getFileIndex ( char *file_name )
 
   for ( i=0;i<num_files;++i )
   {
-    char *a = file_name;
+    char const *a = file_name;
     char *b = files[i].file_name;
     uint32 c = 1;
     while ( *a && *b )

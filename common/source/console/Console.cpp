@@ -6,9 +6,12 @@
 
 Console* main_console=0;
 
-Console::Console ( uint32 ) : Thread()
+Console::Console ( uint32 ) : Thread("ConsoleThread")
 {
-  name_ = "ConsoleThread";
+}
+
+Console::Console ( uint32, const char* name ) : Thread(name)
+{
 }
 
 void Console::lockConsoleForDrawing()

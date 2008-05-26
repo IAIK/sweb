@@ -21,7 +21,7 @@ static void ThreadStartHack()
   for ( ;; );
 }
 
-Thread::Thread()
+Thread::Thread(const char *name) : name_(name)
 {
   debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
 
@@ -30,13 +30,12 @@ Thread::Thread()
   switch_to_userspace_ = 0;
   state_=Running;
   loader_ = 0;
-  name_ = 0;
   my_terminal_ = 0;
   pid_ = 0;
   fs_info_ = new FileSystemInfo();
 }
 
-Thread::Thread ( FileSystemInfo *fs_info )
+Thread::Thread ( FileSystemInfo *fs_info, const char *name ) : name_(name)
 {
   debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
   debug ( THREAD,"Thread ctor, fs_info ptr: %d\n", fs_info );
@@ -45,7 +44,6 @@ Thread::Thread ( FileSystemInfo *fs_info )
   switch_to_userspace_ = 0;
   state_=Running;
   loader_ = 0;
-  name_ = 0;
   my_terminal_ = 0;
   pid_ = 0;
   fs_info_ = fs_info;

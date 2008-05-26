@@ -5,10 +5,8 @@
 #include "fs/minixfs/MinixFSType.h"
 #include "fs/minixfs/MinixFSSuperblock.h"
 
-MinixFSType::MinixFSType()
+MinixFSType::MinixFSType() : FileSystemType("minixfs")
 {
-  fs_name_ = "minixfs";
-  fs_flags_ = 0;
 }
 
 

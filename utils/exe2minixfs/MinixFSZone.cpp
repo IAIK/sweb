@@ -72,7 +72,7 @@ MinixFSZone::MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones )
     double_indirect_linking_zone_ = 0;
   }
 
-  std::cout << this << "ctor: num-zones = " << num_zones_ << std::endl;
+  //std::cout << this << "ctor: num-zones = " << num_zones_ << std::endl;
 
   /*if ( isDebugEnabled ( M_ZONE ) )
   {
@@ -121,7 +121,7 @@ MinixFSZone::~MinixFSZone()
 
 zone_add_type MinixFSZone::getZone ( uint32 index )
 {
-  std::cout << "getZone: index: " << index << " zone of " << this << std::endl;
+  //std::cout << "getZone: index: " << index << " zone of " << this << std::endl;
   assert ( index < num_zones_ );
   if ( index < 7 )
   {
@@ -196,7 +196,7 @@ void MinixFSZone::addZone ( zone_add_type zone )
 
 void MinixFSZone::flush ( uint32 i_num )
 {
-  std::cout << this << "flush: num-zones = " << num_zones_ << std::endl;
+  //std::cout << this << "flush: num-zones = " << num_zones_ << std::endl;
   //debug ( M_ZONE, "MinixFSZone::flush i_num : %d\n",i_num );
   Buffer *buffer = new Buffer ( 18 );
   for ( uint32 index = 0; index < 9; index++ )
@@ -278,4 +278,5 @@ void MinixFSZone::freeZones()
      for(uint32 j=0; j < NUM_ZONE_ADDRESSES; j++)
        if(double_indirect_zones_[i][j])
          superblock_->freeZone(double_indirect_zones_[i][j]);
-} 
+}
+

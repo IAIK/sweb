@@ -6,10 +6,8 @@
 #include "fs/ramfs/RamFSSuperblock.h"
 
 
-RamFSType::RamFSType()
+RamFSType::RamFSType() : FileSystemType("ramfs")
 {
-  fs_name_ = "ramfs";
-  fs_flags_ = 0;
 }
 
 

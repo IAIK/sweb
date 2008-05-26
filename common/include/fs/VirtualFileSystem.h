@@ -102,7 +102,7 @@ class VirtualFileSystem
      * @return On success, zero is returned. On error, -1 is returned.
      */
     int32 mount ( const char* dev_name, const char* dir_name,
-                  char* fs_name, uint32 flags/*, void *data*/ );
+                  const char* fs_name, uint32 flags/*, void *data*/ );
 
     /**
      * unmount the filesystem
@@ -118,7 +118,7 @@ class VirtualFileSystem
      * @param flags the mount flags
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    FileSystemInfo *root_mount ( char* fs_name, uint32 flags );
+    FileSystemInfo *root_mount ( const char* fs_name, uint32 flags );
 
     /**
      * umount the ROOT from the VFS (special of the umount)

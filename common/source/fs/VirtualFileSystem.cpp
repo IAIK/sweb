@@ -111,7 +111,7 @@ VfsMount *VirtualFileSystem::getVfsMount ( const Dentry* dentry, bool is_root )
 }
 
 
-FileSystemInfo *VirtualFileSystem::root_mount ( char* fs_name, uint32 /*flags*/ )
+FileSystemInfo *VirtualFileSystem::root_mount ( const char *fs_name, uint32 /*flags*/ )
 {
   FileSystemType *fst = getFsType ( fs_name );
 
@@ -136,7 +136,7 @@ FileSystemInfo *VirtualFileSystem::root_mount ( char* fs_name, uint32 /*flags*/ 
 
 
 int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
-                                 char* fs_name, uint32 /*flags*/ )
+                                 const char* fs_name, uint32 /*flags*/ )
 {
   FileSystemInfo *fs_info = currentThread->getFSInfo();
   if ( !dev_name )

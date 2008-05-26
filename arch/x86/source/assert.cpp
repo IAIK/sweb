@@ -9,9 +9,9 @@
 #include "debug_bochs.h"
 
 
-void pre_new_sweb_assert(uint32 condition, uint32 line, char* file)
+void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
 {
-  char *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
+  char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
   if (!condition)
   {

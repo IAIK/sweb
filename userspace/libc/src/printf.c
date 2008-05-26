@@ -232,7 +232,7 @@ extern int printf(const char *format, ...)
 #define STATIC_MEMORY__
 
   c_string output_string;
-  ssize_t character_count = 256;
+  int character_count = 256;
 
 #ifdef STATIC_MEMORY__
   char buffer[character_count];
@@ -432,7 +432,7 @@ extern int printf(const char *format, ...)
 int putchar(int character)
 {
   unsigned char output_char = (unsigned char) character;
-  ssize_t characters_written = write(STDOUT_FILENO, (void*) &output_char, 1);
+  int characters_written = write(STDOUT_FILENO, (void*) &output_char, 1);
 
   if(!characters_written || (characters_written == -1))
     return EOF;
@@ -453,7 +453,7 @@ int puts(const char *output_string)
   unsigned char newline = '\n';
   const char *string_ptr = output_string;
   size_t string_length = 0;
-  ssize_t characters_written = 0;
+  int characters_written = 0;
 
   while(string_ptr && *string_ptr++)
     ++string_length;

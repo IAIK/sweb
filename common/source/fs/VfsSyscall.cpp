@@ -530,7 +530,7 @@ int32 VfsSyscall::flush ( uint32 fd )
 }
 
 
-int32 VfsSyscall::mount ( const char *device_name, const char *dir_name, char *file_system_name, int32 flag )
+int32 VfsSyscall::mount ( const char *device_name, const char *dir_name, const char *file_system_name, int32 flag )
 {
   if ( strcmp ( file_system_name, "minixfs" ) == 0 )
   {

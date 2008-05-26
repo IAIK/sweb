@@ -137,7 +137,7 @@ class VfsSyscall
      * @param flag the flag indicates if mounted readonly etc.
      * @return 0 on success
      */
-    virtual int32 mount ( const char *device_name, const char *dir_name, char *file_system_name, int32 flag );
+    virtual int32 mount ( const char *device_name, const char *dir_name, const char *file_system_name, int32 flag );
 
     /** unmounts a filesystem
      * @param dir_name the directory where the filesystem to unmount is mounted

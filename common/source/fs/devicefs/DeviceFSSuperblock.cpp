@@ -92,7 +92,7 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
 }
 
 
-void DeviceFSSuperBlock::addDevice ( Inode* device, char* device_name )
+void DeviceFSSuperBlock::addDevice ( Inode* device, const char* device_name )
 {
   Dentry* fdntr = new Dentry ( s_dev_dentry_ );
   fdntr->setName ( device_name );

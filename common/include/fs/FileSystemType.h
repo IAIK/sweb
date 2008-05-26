@@ -35,7 +35,7 @@ class FileSystemType
     /**
      * the name of the File-system-type
      */
-    char* fs_name_;
+    const char *fs_name_;
 
     /**
      * the flags of the File-system-type
@@ -47,7 +47,7 @@ class FileSystemType
     /**
      * contructor
      */
-    FileSystemType();
+    FileSystemType(const char *fs_name);
 
     /**
      * destructor

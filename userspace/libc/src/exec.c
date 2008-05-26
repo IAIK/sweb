@@ -81,7 +81,7 @@ pid_t fork()
  * @return -1 and errno is set to indicate the error
  *
  */
-int execl(const char *path, const char *arg, ...)
+int execl(const char * path __attribute__((unused)), const char * arg __attribute__((unused)), ...)
 {
   return 0;
 }
@@ -108,7 +108,7 @@ int execl(const char *path, const char *arg, ...)
  * @return -1 and errno is set to indicate the error
  *
  */
-int execlp(const char *file, const char *arg, ...)
+int execlp(const char *file __attribute__((unused)), const char *arg __attribute__((unused)), ...)
 {
 
   return 0;
@@ -133,7 +133,7 @@ int execlp(const char *file, const char *arg, ...)
  *
  */
 //int execle(const char *path, const char *arg, ..., char *const envp[]);
-int execle(const char *path, const char *arg, ...)
+int execle(const char *path __attribute__((unused)), const char *arg __attribute__((unused)), ...)
 {
 
   return 0;
@@ -153,7 +153,7 @@ int execle(const char *path, const char *arg, ...)
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-int execv(const char *path, char *const argv[])
+int execv(const char *path __attribute__((unused)), char *const argv[] __attribute__((unused)))
 {
 
   return 0;
@@ -177,7 +177,7 @@ int execv(const char *path, char *const argv[])
  * @return 0 on success, -1 otherwise and errno is set appropriately
  *
  */
-int execvp(const char *file, char *const argv[])
+int execvp(const char *file __attribute__((unused)), char *const argv[] __attribute__((unused)))
 {
 
   return 0;

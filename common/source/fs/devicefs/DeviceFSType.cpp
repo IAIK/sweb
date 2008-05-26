@@ -5,10 +5,8 @@
 #include "fs/devicefs/DeviceFSType.h"
 #include "fs/devicefs/DeviceFSSuperblock.h"
 
-DeviceFSType::DeviceFSType()
+DeviceFSType::DeviceFSType() : FileSystemType("devicefs")
 {
-  fs_name_ = "devicefs";
-  fs_flags_ = 0;
 }
 
 

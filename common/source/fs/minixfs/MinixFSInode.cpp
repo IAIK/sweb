@@ -243,7 +243,7 @@ int32 MinixFSInode::findDentry(uint32 i_num)
 }
 
 
-void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, char* name)
+void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* name)
 {
   debug(M_INODE, "writeDentry: dest_i_num : %d, src_i_num : %d, name : %s\n", dest_i_num, src_i_num, name);
   assert(name);

@@ -39,9 +39,8 @@ class KprintfNoSleepFlushingThread : public Thread
 {
   public:
 
-    KprintfNoSleepFlushingThread()
+    KprintfNoSleepFlushingThread() : Thread("KprintfNoSleepFlushingThread")
     {
-      name_="KprintfNoSleepFlushingThread";
     }
 
     virtual void Run()
