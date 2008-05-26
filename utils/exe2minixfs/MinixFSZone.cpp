@@ -111,10 +111,8 @@ MinixFSZone::~MinixFSZone()
     delete[] double_indirect_zones_;
     delete[] double_indirect_linking_zone_;
   }
-  if ( indirect_zones_ )
-  {
-    delete[] indirect_zones_;
-  }
+
+  delete[] indirect_zones_;
   delete[] direct_zones_;
 }
 

@@ -289,62 +289,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
 
   if(dest_i_num == 0 && i_size_ < (uint32)dentry_pos + DENTRY_SIZE)
     i_size_ += DENTRY_SIZE;
-
-  return;
 }
-
-/*void MinixFSInode::removeDentry(uint32 dest_i_num)
-{
-  assert(i_size_);
-  int32 dentry_pos = findDentry(dest_i_num);
-  assert(dentry_pos >= 0);
-
-  int32 last_dentry = i_size_ - DENTRY_SIZE;
-
-  //std::cout << "removing dir-entry " << dentry_pos << " last entry is " << last_dentry << std::endl;  
-
-  uint16 inode = 0;
-  char new_dir_name[MAX_NAME_LENGTH];
-
-  if(last_dentry != dentry_pos)
-  {
-    Buffer *ldbuffer = new Buffer(ZONE_SIZE);
-    uint32 last_dentry_zone = i_zones_->getZone(last_dentry / ZONE_SIZE);
-    ((MinixFSSuperblock *)i_superblock_)->readZone(last_dentry_zone, ldbuffer);
-  
-    inode = ldbuffer->get2Bytes(last_dentry % ZONE_SIZE);
-    ldbuffer->set2Bytes(last_dentry % ZONE_SIZE, 0);
-  
-    for(uint32 offset = 0; offset < MAX_NAME_LENGTH;offset++)
-      new_dir_name[offset] = ldbuffer->getByte(last_dentry % ZONE_SIZE + offset + 2);
-
-    ldbuffer->setByte(last_dentry % ZONE_SIZE + 2, 0);
-
-    ((MinixFSSuperblock *)i_superblock_)->writeZone(last_dentry_zone, ldbuffer);
-    delete ldbuffer;
-    //std::cout << "last dentry: " << new_dir_name << std::endl;
-  }
-  else
-    new_dir_name[0] = 0;
-
-  Buffer *dbuffer = new Buffer(ZONE_SIZE);
-  uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
-  ((MinixFSSuperblock *)i_superblock_)->readZone(zone, dbuffer);
-  dbuffer->set2Bytes(dentry_pos % ZONE_SIZE, inode);
-
-  for(uint32 offset = 0; offset < MAX_NAME_LENGTH; offset++)
-  {
-    if(offset > 0 && !new_dir_name[offset-1])
-      break;
-    std::cout << new_dir_name[offset] << std::endl;
-    dbuffer->setByte(dentry_pos % ZONE_SIZE + offset + 2, new_dir_name[offset]);
-  }
-
-  ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, dbuffer);
-  delete dbuffer;
-
-  i_size_ -= DENTRY_SIZE;
-}*/
 
 File* MinixFSInode::link(uint32 flag)
 {
@@ -378,7 +323,7 @@ int32 MinixFSInode::rmdir()
 
   //the "." and ".." dentries will be deleted in some inode-dtor
   //("." in this inodes-dtor, ".." in the parent-dentry-inodes-dtor)
-  for(uint32 i = 0; i < dentry->getNumChilds(); i++)
+  for(uint32 i = 0; i < dentry->getNumChild(); i++)
   {
     if(strcmp(dentry->getChild(i)->getName(), ".") != 0 &&
        strcmp(dentry->getChild(i)->getName(), "..") != 0)

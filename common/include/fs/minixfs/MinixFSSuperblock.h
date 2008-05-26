@@ -88,6 +88,12 @@ class MinixFSSuperblock : public Superblock
      */
     virtual uint16 allocateZone();
 
+    /**
+     * frees zone on the file system
+     * @param index the zone index
+     */
+    virtual void freeZone(uint16 index);
+
 
   protected:
 
@@ -97,6 +103,17 @@ class MinixFSSuperblock : public Superblock
      * @return the Inode object
      */
     MinixFSInode *getInode ( uint16 i_num );
+
+    /**
+     * creates an Inode object with the given number from the file system
+     * this overloaded version should be used; directories usually have
+     * "." and ".." entries, which are pointing to already loaded inodes!!!
+     * by now this method is only called from MinixFSInode::loadChildren
+     * @param i_num the inode number
+     * @param is_already_loaded should be set to true if already loaded
+     * @return the Inode object
+     */
+    MinixFSInode *getInode ( uint16 i_num, bool &is_already_loaded );
 
     /**
      * reads one Zone from the file system to the given buffer

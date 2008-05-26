@@ -31,7 +31,7 @@ MinixStorageManager::MinixStorageManager ( Buffer *bm_buffer, uint16 num_inode_b
   //read zone bitmap
   uint32 z_byte = num_inode_bm_blocks * BLOCK_SIZE;
   uint32 z_bm_byte = 0;
-  for ( ; z_byte < num_zones / 8; z_byte ++, z_bm_byte++ )
+  for ( ; z_bm_byte < num_zones / 8; z_byte ++, z_bm_byte++ )
   {
     zone_bitmap_->setByte ( z_bm_byte, bm_buffer->getByte ( z_byte ) );
   }
@@ -48,8 +48,9 @@ MinixStorageManager::MinixStorageManager ( Buffer *bm_buffer, uint16 num_inode_b
 
 MinixStorageManager::~MinixStorageManager()
 {
-  delete inode_bitmap_;
-  delete zone_bitmap_;
+  //this deletes are done in ~StorageManager()
+  //delete inode_bitmap_;
+  //delete zone_bitmap_;
   debug ( M_STORAGE_MANAGER, "Destructor: destroyed\n" );
 }
 
@@ -182,6 +183,7 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
   zone_bitmap_->bmprint();
   bm_buffer->print();
   superblock->writeBlocks ( 2,num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer );
+  delete bm_buffer;
   debug ( M_STORAGE_MANAGER, "flush: flushing finished\n" );
 }
 

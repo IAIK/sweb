@@ -210,6 +210,7 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
       }
       debug ( VFSSYSCALL,"%s\n",sub_dentry->getName() );
     }
+    kfree( path_tmp );
   }
   else
   {
@@ -306,11 +307,15 @@ int32 VfsSyscall::rmdir ( const char* pathname )
   path_walker.pathRelease();
   Inode* current_inode = current_dentry->getInode();
 
-  if ( current_dentry->getNumChild() != 0 )
+  //if directory is read from a real file system,
+  //it can't ever be empty, "." and ".." are still
+  //contained; this has to be checked in Inode::rmdir()
+
+  /*if ( current_dentry->getNumChild() != 0 )
   {
     debug ( VFSSYSCALL,"This directory is not empty\n" );
     return -1;
-  }
+  }*/
 
   if ( current_inode->getType() != I_DIR )
   {
@@ -454,6 +459,7 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
     uint32 path_next_len = strlen ( path_tmp ) - path_prev_len + 1;
     char* path_next_name = ( char* ) kmalloc ( path_next_len * sizeof ( char ) );
     strlcpy ( path_next_name, char_tmp, path_next_len );
+    kfree( path_tmp );
 
     // create a new dentry
     Dentry *sub_dentry = new Dentry ( current_dentry );

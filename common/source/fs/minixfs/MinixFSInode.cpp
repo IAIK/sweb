@@ -61,6 +61,9 @@ MinixFSInode::~MinixFSInode()
 {
   debug(M_INODE, "Destructor\n");
   delete i_zones_;
+
+  while ( !other_dentries_.empty() )
+    delete other_dentries_.popFront();
 }
 
 
@@ -69,8 +72,11 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   debug(M_INODE, "readData: offset: %d, size; %d,i_size_: %d\n",offset,size,i_size_);
   if((size + offset) > i_size_)
   {
-    kprintfd("MinixFSInode: readData: the size is bigger than size of the file - aborting\n");
-    assert(false);
+    //kprintfd("MinixFSInode: readData: the size is bigger than size of the file - aborting\n");
+    //assert(false);
+    //why the hell we should abort? i think its standard behaviour to read what we can read and return
+    //the number of bytes we could read...
+    size = i_size_ - offset;
   }
   uint32 zone = offset / ZONE_SIZE;
   uint32 zone_offset = offset % ZONE_SIZE;
@@ -145,7 +151,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   {
     debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n",zone_index,i_zones_->getZone(zone));
     wbuffer->setOffset(zone_index*ZONE_SIZE);
-    ((MinixFSSuperblock *)i_superblock_)->writeZone(zone_index + i_zones_->getZone(zone), wbuffer);
+    ((MinixFSSuperblock *)i_superblock_)->writeZone( i_zones_->getZone(zone_index + zone), wbuffer );
   }
   if(i_size_ < offset + size)
   {
@@ -196,7 +202,11 @@ int32 MinixFSInode::mkdir(Dentry *dentry)
   dentry->setInode(this);
 
   ((MinixFSInode *)dentry->getParent()->getInode())->writeDentry(0, i_num_, i_dentry_->getName());
-
+  i_nlink_++;
+  writeDentry(0, i_num_, ".");
+  i_nlink_++;
+  writeDentry(0, ((MinixFSInode *)dentry->getParent()->getInode())->i_num_, "..");
+  ((MinixFSInode *)dentry->getParent()->getInode())->i_nlink_++;
   return 0;
 }
 
@@ -218,6 +228,7 @@ int32 MinixFSInode::mkfile(Dentry *dentry)
   i_dentry_ = dentry;
   ((MinixFSInode *)dentry->getParent()->getInode())->writeDentry(0, i_num_, i_dentry_->getName());
   i_dentry_->setInode(this);
+  i_nlink_++;
   return 0;
 }
 
@@ -235,10 +246,12 @@ int32 MinixFSInode::findDentry(uint32 i_num)
       if(inode_index == i_num)
       {
         debug(M_INODE, "findDentry: found pos: %d\n",(zone * ZONE_SIZE + curr_dentry));
+        delete dbuffer;
         return (zone * ZONE_SIZE + curr_dentry);
       }
     }
   }
+  delete dbuffer;
   return -1;
 }
 
@@ -268,7 +281,10 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   }
   ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, dbuffer);
   delete dbuffer;
-  return;
+
+  if(dest_i_num == 0 && i_size_ < (uint32)dentry_pos + DENTRY_SIZE)
+    i_size_ += DENTRY_SIZE;
+
 }
 
 
@@ -277,7 +293,7 @@ File* MinixFSInode::link(uint32 flag)
   debug(M_INODE, "link: flag: %d\n",flag);
   File* file = (File*)(new MinixFSFile(this, i_dentry_, flag));
   i_files_.pushBack(file);
-  ++i_nlink_;
+  //++i_nlink_;
   return file;
 }
 
@@ -287,7 +303,7 @@ int32 MinixFSInode::unlink(File* file)
   debug(M_INODE, "unlink\n");
   int32 tmp = i_files_.remove(file);
   delete file;
-  --i_nlink_;
+  //--i_nlink_;
   return tmp;
 }
 
@@ -403,7 +419,8 @@ void MinixFSInode::loadChildren()
       if(inode_index)
       {
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
-        Inode* inode = ((MinixFSSuperblock *)i_superblock_)->getInode( inode_index );
+        bool is_already_loaded = false;
+        Inode* inode = ((MinixFSSuperblock *)i_superblock_)->getInode( inode_index, is_already_loaded );
         ((MinixFSSuperblock *)i_superblock_)->all_inodes_.pushBack(inode);
         uint32 offset = 0;
         char *name = new char[MAX_NAME_LENGTH];
@@ -417,10 +434,16 @@ void MinixFSInode::loadChildren()
         } while (ch);
         debug(M_INODE, "loadChildren: dentry name: %s\n",name);
         Dentry *new_dentry = new Dentry(name);
-        // ? delete name
+        delete[] name;
         i_dentry_->setChild(new_dentry);
         new_dentry->setParent(i_dentry_);
-        ((MinixFSInode *)inode)->i_dentry_ = new_dentry;
+        if(!is_already_loaded)
+        {
+          ((MinixFSInode *)inode)->i_dentry_ = new_dentry;
+          ((MinixFSSuperblock *)i_superblock_)->all_inodes_.pushBack(inode);
+        }
+        else
+          ((MinixFSInode *)inode)->other_dentries_.pushBack(new_dentry);
         new_dentry->setInode(inode);
       }
     }

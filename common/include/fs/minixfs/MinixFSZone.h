@@ -68,6 +68,11 @@ class MinixFSZone
      */
     void flush ( uint32 i_num );
 
+    /**
+     * frees all zones, also the ones which are storing zone addresses
+     */
+    void freeZones();
+
   private:
 
     MinixFSSuperblock *superblock_;

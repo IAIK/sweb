@@ -9,14 +9,14 @@
 Buffer::Buffer ( size_t size )
 {
   size_ = size;
-  buffer_ = new char[size_*sizeof ( char ) ];
+  buffer_ = new char[size_];
   offset_ = 0;
 }
 
 Buffer::Buffer ( const Buffer &src )
 {
   size_ = src.size_;
-  buffer_ = new char[size_*sizeof ( char ) ];
+  buffer_ = new char[size_];
   for ( size_t index = 0; index < size_; index++ )
   {
     buffer_[index] = src.buffer_[index];

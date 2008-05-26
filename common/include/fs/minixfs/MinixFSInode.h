@@ -190,6 +190,8 @@ class MinixFSInode : public Inode
      */
     bool children_loaded_;
 
+    PointList<Dentry> other_dentries_;
+
 
 };
 

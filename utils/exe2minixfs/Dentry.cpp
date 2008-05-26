@@ -128,11 +128,6 @@ Dentry* Dentry::getChild ( uint32 index )
   return ( d_child_.at ( index ) );
 }
 
-uint32 Dentry::getNumChilds ( )
-{
-  return d_child_.getLength();
-}
-
 Dentry* Dentry::checkName ( const char* name )
 {
   for ( uint32 count = 0; count < ( d_child_.getLength() ); count++ )
@@ -146,5 +141,5 @@ Dentry* Dentry::checkName ( const char* name )
     }
   }
 
-  return ( ( Dentry* ) 0 );
+  return 0;
 }

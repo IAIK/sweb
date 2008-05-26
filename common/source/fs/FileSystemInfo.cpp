@@ -9,7 +9,7 @@
 #include "mm/kmalloc.h"
 
 
-FileSystemInfo::FileSystemInfo()
+FileSystemInfo::FileSystemInfo() : pathname_(0)
 {}
 
 int32 FileSystemInfo::setName ( const char* pathname, uint32 length )

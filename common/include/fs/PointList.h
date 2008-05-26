@@ -216,7 +216,19 @@ template <class ContentType> class PointList
 
 template <class ContentType>
 PointList<ContentType>::~PointList()
-{}
+{
+  if(!first_)
+    return;
+
+  while(true)
+  {
+    PointListElement<ContentType> *tmp = first_->getNext();
+    delete first_;
+    if(first_ == tmp)
+      break;
+    first_ = tmp;
+  }
+}
 
 
 template <class ContentType>
@@ -378,7 +390,25 @@ int32 PointList<ContentType>::remove ( ContentType *entry )
     return -1;
   PointListElement<ContentType> *element;
   element = 0;
-  element = find ( entry );
+
+
+  if ( !first_ )
+    return -1;
+  element = first_;
+  bool found=false;
+  do
+  {
+    if ( element->getItem() == entry )
+    {
+      found=true;
+      break;
+    }
+  }
+  while ( element != last_ && (element = element->getNext()) );
+  if(!found)
+    return -1;
+
+
   if ( element == 0 )
     return -1;
   if ( length_ == 1 )

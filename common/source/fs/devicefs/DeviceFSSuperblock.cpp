@@ -68,10 +68,7 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
     File* file = fd->getFile();
     s_files_.remove ( fd );
 
-    if ( file )
-    {
-      delete file;
-    }
+    delete file;
     delete fd;
   }
 

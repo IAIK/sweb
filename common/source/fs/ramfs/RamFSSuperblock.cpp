@@ -52,10 +52,7 @@ RamFSSuperblock::~RamFSSuperblock()
     File* file = fd->getFile();
     s_files_.remove ( fd );
 
-    if ( file )
-    {
-      delete file;
-    }
+    delete file;
     delete fd;
   }
 
@@ -151,7 +148,7 @@ int32 RamFSSuperblock::removeFd ( Inode* inode, FileDescriptor* fd )
   assert ( fd );
 
   s_files_.remove ( fd );
-  //global_fd.remove(fd);
+  global_fd.remove(fd);
 
   File* file = fd->getFile();
   int32 tmp = inode->unlink ( file );

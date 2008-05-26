@@ -117,7 +117,7 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loade
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
   //std::cout << "getInode(" << i_num << ") called!" << std::endl;
-//  assert ( storage_manager_->isInodeSet ( i_num ) );
+  assert ( storage_manager_->isInodeSet ( i_num ) );
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
   uint32 inode_block_num = inodes_start + ( i_num - 1 ) / INODES_PER_BLOCK;
   MinixFSInode *inode = 0;
@@ -390,10 +390,10 @@ uint16 MinixFSSuperblock::allocateZone()
   uint16 ret = ( storage_manager_->acquireZone() + s_1st_datazone_ - 1 ); //-1 because the zone nr 0 is set in the bitmap and should never be used!
 //   storage_manager_->printBitmap();
   //debug ( M_SB,"MinixFSSuperblock allocateZone> returning %d\n",ret );
-  Buffer *buffer = new Buffer(ZONE_SIZE);
-  buffer->clear();
-  writeZone(ret, buffer);
-  delete buffer;
+  //Buffer *buffer = new Buffer(ZONE_SIZE);
+  //buffer->clear();
+  //writeZone(ret, buffer);
+  //delete buffer;
   return ret;
 }
 

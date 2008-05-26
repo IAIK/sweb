@@ -137,7 +137,6 @@ class Dentry
      * @return the found child dentry
      */
     Dentry* getChild ( uint32 index );
-    uint32 getNumChilds ();
 
     /**
      * set the name to the dentry

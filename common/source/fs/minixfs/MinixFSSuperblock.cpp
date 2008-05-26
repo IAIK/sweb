@@ -83,9 +83,22 @@ void MinixFSSuperblock::initInodes()
 
 }
 
+MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loaded )
+{
+  for(uint32 i=0; i < all_inodes_.getLength(); i++)
+  {
+    if(((MinixFSInode*)all_inodes_.at(i))->i_num_ == i_num)
+    {
+      is_already_loaded = true;
+      return (MinixFSInode*) all_inodes_[i];
+    }
+  }
+  return getInode(i_num);
+}
+
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
-  assert ( storage_manager_->isInodeSet ( i_num - 1 ) );
+  assert ( storage_manager_->isInodeSet ( i_num ) );
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
   uint32 inode_block_num = inodes_start + ( i_num - 1 ) / INODES_PER_BLOCK;
   MinixFSInode *inode = 0;
@@ -113,7 +126,7 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
                              i_num
                            );
   debug ( M_SB,"getInode:: returned creating Inode\n" );
-  delete i_zones;
+  delete[] i_zones;
   delete ibuffer;
   return inode;
 }
@@ -161,6 +174,8 @@ MinixFSSuperblock::~MinixFSSuperblock()
     delete inode;
   }
 
+  delete storage_manager_;
+
   assert ( all_inodes_.empty() == true );
 
   debug ( M_SB,"~MinixSuperblock finished\n" );
@@ -178,11 +193,11 @@ Inode* MinixFSSuperblock::createInode ( Dentry* dentry, uint32 type )
   uint16 *zones = new uint16[9];
   for ( uint32 i = 0; i < 9; i++ )
     zones[i] = 0;
-  uint32 i_num = storage_manager_->acquireInode() + 1;
+  uint32 i_num = storage_manager_->acquireInode();
   debug ( M_SB,"createInode> acquired inode %d mode: %d\n", i_num,mode );
   Inode *inode = ( Inode* ) ( new MinixFSInode ( this, mode, 0, 0, 0, 0, 0, zones, i_num ) );
   debug ( M_SB,"createInode> created Inode\n" );
-  delete zones;
+  delete[] zones;
   all_inodes_.pushBack ( inode );
   debug ( M_SB,"createInode> calling write Inode to Disc\n" );
   writeInode ( inode );
@@ -221,7 +236,7 @@ int32 MinixFSSuperblock::readInode ( Inode* inode )
   MinixFSZone *to_delete_i_zones = minix_inode->i_zones_;
   minix_inode->i_zones_ = new MinixFSZone ( this, i_zones );
   minix_inode->i_nlink_ = buffer->getByte ( 13 );
-  minix_inode->i_size_ = buffer->getByte ( 4 );
+  minix_inode->i_size_ = buffer->get4Bytes ( 4 );
   delete to_delete_i_zones;
   delete buffer;
   return 0;
@@ -257,7 +272,7 @@ void MinixFSSuperblock::writeInode ( Inode* inode )
     //TODO; link etc.
   }
   buffer->setByte ( 13, minix_inode->i_nlink_ );
-  buffer->setByte ( 4, minix_inode->i_size_ );
+  buffer->set4Bytes ( 4, minix_inode->i_size_ );
   debug ( M_SB,"writeInode> writing bytes to disc on block %d with offset %d\n",block,offset );
   buffer->print();
   writeBytes ( block, offset, INODE_SIZE, buffer );
@@ -279,11 +294,12 @@ void MinixFSSuperblock::delete_inode ( Inode* inode )
   assert ( all_inodes_.remove ( inode ) == 0 );
   MinixFSInode *minix_inode = ( MinixFSInode * ) inode;
   assert ( minix_inode->i_files_.empty() );
-  for ( uint32 index = 0; index < minix_inode->i_zones_->getNumZones(); index++ )
+  /*for ( uint32 index = 0; index < minix_inode->i_zones_->getNumZones(); index++ )
   {
     storage_manager_->freeZone ( minix_inode->i_zones_->getZone ( index ) );
-  }
-  storage_manager_->freeInode ( minix_inode->i_num_ - 1 );
+  }*/
+  minix_inode->i_zones_->freeZones();
+  storage_manager_->freeInode ( minix_inode->i_num_ );
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + ( ( minix_inode->i_num_ - 1 ) * INODE_SIZE / BLOCK_SIZE );
   uint32 offset = ( ( minix_inode->i_num_ - 1 ) * INODE_SIZE ) % BLOCK_SIZE;
   Buffer *buffer = new Buffer ( INODE_SIZE );
@@ -318,7 +334,7 @@ int32 MinixFSSuperblock::removeFd ( Inode* inode, FileDescriptor* fd )
   assert ( fd );
 
   s_files_.remove ( fd );
-  //global_fd.remove(fd);
+  global_fd.remove(fd);
 
   File* file = fd->getFile();
   int32 tmp = inode->unlink ( file );
@@ -416,5 +432,10 @@ int32 MinixFSSuperblock::writeBytes ( uint32 block, uint32 offset, uint32 size, 
   writeBlocks ( block, 1, wbuffer );
   delete wbuffer;
   return size;
+}
+
+void MinixFSSuperblock::freeZone(uint16 index)
+{
+  storage_manager_->freeZone ( index - s_1st_datazone_ + 1 );
 }
 

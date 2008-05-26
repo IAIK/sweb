@@ -13,7 +13,7 @@
 #include "console/kprintf.h"
 #include "console/debug.h"
 
-Dentry::Dentry ( const char* name )
+Dentry::Dentry ( const char* name ) : d_name_(0)
 {
   this->setName ( name );
   d_parent_ = this; // the parent of the root
@@ -22,7 +22,7 @@ Dentry::Dentry ( const char* name )
 }
 
 
-Dentry::Dentry ( Dentry *parent )
+Dentry::Dentry ( Dentry *parent ) : d_name_(0)
 {
   d_parent_ = parent;
   parent->setChild ( this );
@@ -87,6 +87,7 @@ int32 Dentry::childRemove ( Dentry *child_dentry )
 
 void Dentry::setName ( const char* name )
 {
+  kfree(d_name_);
   uint32 name_len = strlen ( name ) + 1;
   d_name_ = ( char* ) kmalloc ( name_len * sizeof ( char ) );
 
@@ -120,12 +121,11 @@ Dentry* Dentry::getChild ( uint32 index )
   return ( d_child_.at ( index ) );
 }
 
-
 Dentry* Dentry::checkName ( const char* name )
 {
   for ( uint32 count = 0; count < ( d_child_.getLength() ); count++ )
   {
-    Dentry *dentry = ( Dentry* ) ( d_child_.at ( count ) );
+    Dentry *dentry = d_child_.at ( count );
     const char *tmp_name = dentry->getName();
     debug ( DENTRY, "(checkname) name : %s\n",tmp_name );
     if ( strcmp ( tmp_name, name ) == 0 )
@@ -134,5 +134,5 @@ Dentry* Dentry::checkName ( const char* name )
     }
   }
 
-  return ( ( Dentry* ) 0 );
+  return 0;
 }

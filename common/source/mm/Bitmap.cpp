@@ -13,14 +13,14 @@ Bitmap::Bitmap (size_t number_of_bits)
   size_t byte_count = number_of_bits / bits_per_bitmap_atom_
                + ((number_of_bits % bits_per_bitmap_atom_ > 0)?1:0);
   bit_count_ = byte_count * bits_per_bitmap_atom_;
-  bitmap_=new uint8[byte_count];
+  bitmap_ = new uint8[byte_count];
   for (size_t byte = 0; byte < byte_count; ++byte)
     *(bitmap_+byte) = static_cast<uint8>(0);
 }
 
 Bitmap::~Bitmap ()
 {
-  delete bitmap_;
+  delete[] bitmap_;
 }
 
 void Bitmap::setBit(size_t bit_number)
