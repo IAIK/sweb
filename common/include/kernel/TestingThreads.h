@@ -384,21 +384,41 @@ class MinixTestingThread : public Thread
       int32 mkdir_ret = vfs_syscall.mkdir ( "/minix", 2 );
       kprintfd ( "\n> mkdir returned <%d>\n",mkdir_ret );
 
-      kprintfd ( "\n> calling mount: idec, /minix, minixfs\n" );
-      int32 mount_ret = vfs_syscall.mount ( "idec","/minix", "minixfs",0 );
+      kprintfd ( "\n> calling mount: idea0, /minix, minixfs\n" );
+      int32 mount_ret = vfs_syscall.mount ( "idea0","/minix", "minixfs",0 );
       kprintfd ( "\n> mount returned <%d>\n",mount_ret );
 
-      kprintfd ( "\n> chdir test\n" );
-      int32 chdir_ret = vfs_syscall.chdir ( "/minix/test" );
-      kprintfd ( "\n> chdir returned: <%d>\n",chdir_ret );
+      //kprintfd ( "\n> chdir test\n" );
+      //int32 chdir_ret = vfs_syscall.chdir ( "/minix/test" );
+      //kprintfd ( "\n> chdir returned: <%d>\n",chdir_ret );
 
       kprintfd("\n> list ./\n");
       vfs_syscall.readdir("./");
 
-      MinixUserThread *user_thread = new MinixUserThread ( "/minix/test/stdin-test.sweb", new FileSystemInfo ( *this->getFSInfo() ) );
-      Scheduler::instance()->addNewThread ( user_thread );
+      kprintfd("\n> list /minix\n");
+      vfs_syscall.readdir("/minix");
 
+      kprintfd("\n> list /minix/boot\n");
+      vfs_syscall.readdir("/minix/boot");
 
+      //int32 fd = vfs_syscall.open("/minix/bochsout.txt", O_RDWR);
+      //char buf[300];
+      //vfs_syscall.read(fd, buf, 299);
+      //buf[299] = 0;
+      //kprintf("file bochsout.txt: \n%s\n", buf);
+      //vfs_syscall.close(fd);
+
+      //MinixUserThread *user_thread = new MinixUserThread ( "/minix/test/stdin-test.sweb", new FileSystemInfo ( *this->getFSInfo() ) );
+      //Scheduler::instance()->addNewThread ( user_thread );
+
+      vfs_syscall.mkdir("/minix/test", 0);
+      int32 fd = vfs_syscall.open("/minix/test/asdf.txt", O_RDWR);
+      char const *asdf = "Ich bin ein String.\nHallihallo!";
+      vfs_syscall.write(fd, asdf, strlen(asdf));
+      vfs_syscall.close(fd);
+
+      vfs_syscall.umount("/minix", 0);
+      state_ = ToBeDestroyed;
       Scheduler::instance()->yield();
 
 

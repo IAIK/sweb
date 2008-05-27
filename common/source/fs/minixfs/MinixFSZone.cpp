@@ -187,7 +187,7 @@ void MinixFSZone::addZone ( zone_add_type zone )
 
 void MinixFSZone::flush ( uint32 i_num )
 {
-  debug ( M_ZONE, "MinixFSZone::flush i_num : %d\n",i_num );
+  debug ( M_ZONE, "MinixFSZone::flush i_num : %d; %x\n",i_num, this );
   Buffer *buffer = new Buffer ( 18 );
   for ( uint32 index = 0; index < 9; index++ )
   {

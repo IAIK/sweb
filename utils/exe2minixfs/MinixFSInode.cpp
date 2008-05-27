@@ -337,15 +337,12 @@ int32 MinixFSInode::rmdir()
     char ch = '\0';
 
     writeDentry(i_num_, 0, &ch); //this was the "."-entry
-    //removeDentry(i_num_);
     i_nlink_--;
 
     writeDentry(((MinixFSInode *)parent_dentry->getInode())->i_num_, 0, &ch); //this was ".."
-    //removeDentry(((MinixFSInode *)parent_dentry->getInode())->i_num_);
     ((MinixFSInode *)parent_dentry->getInode())->i_nlink_--;
 
     ((MinixFSInode *)parent_dentry->getInode())->writeDentry(i_num_, 0, &ch);
-    //((MinixFSInode *)parent_dentry->getInode())->removeDentry(i_num_);
     i_nlink_--;
 
     dentry->releaseInode();

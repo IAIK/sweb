@@ -338,7 +338,7 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-//   Scheduler::instance()->addNewThread (
+//  Scheduler::instance()->addNewThread (
 //       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
 //   );
 

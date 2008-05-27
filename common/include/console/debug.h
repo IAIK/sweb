@@ -10,11 +10,11 @@
 #define OUTPUT_ENABLED 0x1000000
 
 //group minix
-const uint32 MINIX              = 0x00010000;
-const uint32 M_STORAGE_MANAGER  = 0x00010001;
-const uint32 M_INODE            = 0x00010002;
-const uint32 M_SB               = 0x00010004;
-const uint32 M_ZONE             = 0x00010008;
+const uint32 MINIX              = 0x00010000;// | OUTPUT_ENABLED;
+const uint32 M_STORAGE_MANAGER  = 0x00010001;// | OUTPUT_ENABLED;
+const uint32 M_INODE            = 0x00010002 | OUTPUT_ENABLED;
+const uint32 M_SB               = 0x00010004;// | OUTPUT_ENABLED;
+const uint32 M_ZONE             = 0x00010008;// | OUTPUT_ENABLED;
 
 //group Block Device
 const uint32 BD                 = 0x00020000;
@@ -59,7 +59,7 @@ const uint32 RAMFS              = 0x00800001;
 const uint32 DENTRY             = 0x00800002;
 const uint32 PATHWALKER         = 0x00800004;
 const uint32 PSEUDOFS           = 0x00800008;
-const uint32 VFSSYSCALL         = 0x00800010;
+const uint32 VFSSYSCALL         = 0x00800010 | OUTPUT_ENABLED;
 const uint32 VFS                = 0x00800020;
 
 

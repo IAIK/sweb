@@ -74,7 +74,7 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   {
     //kprintfd("MinixFSInode: readData: the size is bigger than size of the file - aborting\n");
     //assert(false);
-    //why the hell we should abort? i think its standard behaviour to read what we can read and return
+    //why the hell we should abort? its standard behaviour to read what we can read and return
     //the number of bytes we could read...
     size = i_size_ - offset;
   }
@@ -142,7 +142,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   uint32 zone_offset = offset%ZONE_SIZE;
   Buffer* wbuffer = new Buffer(num_zones * ZONE_SIZE);
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",offset-zone_offset,zone_offset);
-  readData( offset-zone_offset, zone_offset, wbuffer->getBuffer());
+  readData( offset, num_zones * ZONE_SIZE, wbuffer->getBuffer());
   for(uint32 index = 0, pos = zone_offset; index<size; pos++, index++)
   {
     wbuffer->setByte( pos, buffer[index]);
@@ -315,25 +315,39 @@ int32 MinixFSInode::rmdir()
     return -1;
 
   Dentry* dentry = i_dentry_;
+  Dentry* parent_dentry = dentry->getParent();
 
-  if(dentry->emptyChild())
+  //the "." and ".." dentries will be deleted in some inode-dtor
+  //("." in this inodes-dtor, ".." in the parent-dentry-inodes-dtor)
+  for(uint32 i = 0; i < dentry->getNumChild(); i++)
   {
-    Dentry* parent_dentry = dentry->getParent();
-    parent_dentry->childRemove(dentry);
-    char ch = '\0';
-    ((MinixFSInode *)parent_dentry->getInode())->writeDentry(((MinixFSInode *)dentry->getInode())->i_num_,0,&ch);
-    dentry->releaseInode();
-    delete dentry;
-    i_dentry_ = 0;
-    return INODE_DEAD;
+    if(strcmp(dentry->getChild(i)->getName(), ".") != 0 &&
+       strcmp(dentry->getChild(i)->getName(), "..") != 0)
+    {
+      //if directory contains other entries than "." or ".."
+      //-> directory not empty
+      return -1;
+    }
   }
-  else
-  {
-    // ERROR_DEC
-    return -1;
-  }
+
+  parent_dentry->childRemove(dentry);
+  char ch = '\0';
+
+  writeDentry(i_num_, 0, &ch); //this was the "."-entry
+  i_nlink_--;
+
+  writeDentry(((MinixFSInode *)parent_dentry->getInode())->i_num_, 0, &ch); //this was ".."
+  ((MinixFSInode *)parent_dentry->getInode())->i_nlink_--;
+
+  ((MinixFSInode *)parent_dentry->getInode())->writeDentry(i_num_, 0, &ch);
+  i_nlink_--;
+
+  dentry->releaseInode();
+  delete dentry;
+  i_dentry_ = 0;
+  i_nlink_ = 0;
+  return INODE_DEAD;
 }
-
 
 int32 MinixFSInode::rm()
 {
@@ -349,7 +363,9 @@ int32 MinixFSInode::rm()
     Dentry* parent_dentry = dentry->getParent();
     parent_dentry->childRemove(dentry);
     char ch = '\0';
-    ((MinixFSInode *)parent_dentry->getInode())->writeDentry(((MinixFSInode *)dentry->getInode())->i_num_,0,&ch);;
+    ((MinixFSInode *)parent_dentry->getInode())->writeDentry(((MinixFSInode *)dentry->getInode())->i_num_,0,&ch);
+    i_nlink_--;
+
     dentry->releaseInode();
     delete dentry;
     i_dentry_ = 0;
@@ -421,7 +437,6 @@ void MinixFSInode::loadChildren()
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
         bool is_already_loaded = false;
         Inode* inode = ((MinixFSSuperblock *)i_superblock_)->getInode( inode_index, is_already_loaded );
-        ((MinixFSSuperblock *)i_superblock_)->all_inodes_.pushBack(inode);
         uint32 offset = 0;
         char *name = new char[MAX_NAME_LENGTH];
         char ch = '\0';

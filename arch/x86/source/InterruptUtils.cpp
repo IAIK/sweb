@@ -677,7 +677,7 @@ extern "C" void irqHandler_11()
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
-  kprintfd_nosleep( "IRQ 14 called\n" );
+  //kprintfd_nosleep( "IRQ 14 called\n" );
   BDManager::getInstance()->serviceIRQ( 14 );
   ArchInterrupts::EndOfInterrupt(14);
 }
@@ -685,7 +685,7 @@ extern "C" void irqHandler_14()
 extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
-  kprintfd_nosleep( "IRQ 15 called\n" );
+  //kprintfd_nosleep( "IRQ 15 called\n" );
   BDManager::getInstance()->serviceIRQ( 15 );
   ArchInterrupts::EndOfInterrupt(15);
 }

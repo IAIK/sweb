@@ -208,7 +208,7 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
         default:
           break;
       }
-      debug ( VFSSYSCALL,"%s\n",sub_dentry->getName() );
+      kprintf("%s\n", sub_dentry->getName() );
     }
     kfree( path_tmp );
   }
@@ -217,7 +217,7 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
     debug ( VFSSYSCALL,"(list) Path doesn't exist\n" );
     path_walker.pathRelease();
   }
-  return ( Dirent* ) 0;
+  return 0;
 }
 
 

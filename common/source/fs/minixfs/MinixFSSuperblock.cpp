@@ -98,6 +98,7 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loade
 
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
+  debug ( M_SB,"getInode::called with i_num: %d\n", i_num );
   assert ( storage_manager_->isInodeSet ( i_num ) );
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
   uint32 inode_block_num = inodes_start + ( i_num - 1 ) / INODES_PER_BLOCK;
@@ -144,10 +145,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
     File* file = fd->getFile();
     s_files_.remove ( fd );
 
-    if ( file )
-    {
-      delete file;
-    }
+    delete file;
     delete fd;
   }
 
@@ -156,6 +154,10 @@ MinixFSSuperblock::~MinixFSSuperblock()
   num = all_inodes_.getLength();
 
   debug ( M_SB,"~MinixSuperblock num: %d inodes to delete\n",num );
+
+  for(uint32 i=0; i < num; i++)
+    debug(M_SB, "Inode: %x\n", all_inodes_.at(i));
+
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     Inode* inode = all_inodes_.at ( 0 );
@@ -259,13 +261,13 @@ void MinixFSSuperblock::writeInode ( Inode* inode )
   debug ( M_SB,"writeInode> the inode: i_type_: %d, i_nlink_: %d, i_size_: %d\n",minix_inode->i_type_,minix_inode->i_nlink_,minix_inode->i_size_ );
   if ( minix_inode->i_type_ == I_FILE )
   {
-    debug ( M_SB,"writeInode> setting mode to file : %x\n",buffer->get2Bytes ( 0 ) | 0x8000 );
-    buffer->set2Bytes ( 0, buffer->get2Bytes ( 0 ) | 0x8000 );
+    debug ( M_SB,"writeInode> setting mode to file : %x\n",buffer->get2Bytes ( 0 ) | 0x81FF );
+    buffer->set2Bytes ( 0, buffer->get2Bytes ( 0 ) | 0x81FF );
   }
   else if ( minix_inode->i_type_ == I_DIR )
   {
-    debug ( M_SB,"writeInode> setting mode to dir : %x\n",buffer->get2Bytes ( 0 ) | 0x4000 );
-    buffer->set2Bytes ( 0, buffer->get2Bytes ( 0 ) | 0x4000 );
+    debug ( M_SB,"writeInode> setting mode to dir : %x\n",buffer->get2Bytes ( 0 ) | 0x41FF );
+    buffer->set2Bytes ( 0, buffer->get2Bytes ( 0 ) | 0x41FF );
   }
   else
   {
@@ -274,9 +276,10 @@ void MinixFSSuperblock::writeInode ( Inode* inode )
   buffer->setByte ( 13, minix_inode->i_nlink_ );
   buffer->set4Bytes ( 4, minix_inode->i_size_ );
   debug ( M_SB,"writeInode> writing bytes to disc on block %d with offset %d\n",block,offset );
-  buffer->print();
+  if ( isDebugEnabled ( M_SB ) )
+    buffer->print();
   writeBytes ( block, offset, INODE_SIZE, buffer );
-  debug ( M_SB,"writeInode> flushing zones\n" );
+  debug ( M_SB,"writeInode> flushing zones of inode %x\n", inode );
   minix_inode->i_zones_->flush ( minix_inode->i_num_ );
   delete buffer;
 }
