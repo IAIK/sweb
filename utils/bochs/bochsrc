@@ -461,7 +461,7 @@ ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
 #ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted 
 #
 #ata0-master: type=disk, path="image/hash.img", mode=flat, cylinders=60, heads=16, spt=63
-ata0-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=203,heads=16, spt=63
+ata0-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=209,heads=16, spt=63
 #ata1-master: type=disk, path="SWEB-flat.vmdk", mode=flat, cylinders=209, heads=16, spt=63
 #ata0-master: type=disk, mode=flat, path="image/mc.img", cylinders=4, heads=16, spt=63
 #ata0-slave: type=disk, mode=flat, path="image/minix_disk_1.img", cylinders=2, heads=2, spt=63
@@ -741,7 +741,7 @@ keyboard_paste_delay: 100000
 # Examples:
 #   floppy_command_delay: 50000
 #=======================================================================
-floppy_command_delay: 500
+#floppy_command_delay: 500
 
 #=======================================================================
 # MOUSE: 

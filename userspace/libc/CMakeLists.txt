@@ -1,6 +1,7 @@
 project(sweb_libc)
 
 
+set(CMAKE_C_FLAGS "-Wall -g -m32 -fno-builtin -nostdinc -fno-stack-protector -fno-common")
 
 include_directories(
     include
