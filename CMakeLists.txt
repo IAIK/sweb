@@ -172,7 +172,7 @@ add_custom_target(bochs
 #Custom target: make bochsgdb
 #Run bochs in debugging mode
 add_custom_target(bochsgdb
-                  COMMAND 	/opt/bochs/bin/bochs -q -f ../utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
+                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
                   COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
                   )
