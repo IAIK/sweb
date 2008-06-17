@@ -76,16 +76,20 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
     //assert(false);
     //why the hell we should abort? its standard behaviour to read what we can read and return
     //the number of bytes we could read...
-    size = i_size_ - offset;
+    
+    if(i_size_ <= offset)
+      return 0;
+    else
+      size = i_size_ - offset;
   }
-  uint32 zone = offset / ZONE_SIZE;
+  uint32 start_zone = offset / ZONE_SIZE;
   uint32 zone_offset = offset % ZONE_SIZE;
   uint32 num_zones = (zone_offset + size) / ZONE_SIZE + 1;
   Buffer* rbuffer = new Buffer(ZONE_SIZE);
 
   uint32 index = 0;
-  debug(M_INODE, "readData: zone: %d, zone_offset %d, num_zones: %d\n",zone,zone_offset,num_zones);
-  for(;zone < num_zones; zone++)
+  debug(M_INODE, "readData: zone: %d, zone_offset %d, num_zones: %d\n",start_zone,zone_offset,num_zones);
+  for(uint32 zone = start_zone; zone < start_zone + num_zones; zone++)
   {
     rbuffer->clear();
     ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
@@ -142,7 +146,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   uint32 zone_offset = offset%ZONE_SIZE;
   Buffer* wbuffer = new Buffer(num_zones * ZONE_SIZE);
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",offset-zone_offset,zone_offset);
-  readData( offset, num_zones * ZONE_SIZE, wbuffer->getBuffer());
+  readData( offset - zone_offset, num_zones * ZONE_SIZE, wbuffer->getBuffer());
   for(uint32 index = 0, pos = zone_offset; index<size; pos++, index++)
   {
     wbuffer->setByte( pos, buffer[index]);

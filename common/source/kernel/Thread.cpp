@@ -38,7 +38,7 @@ Thread::Thread(const char *name) : name_(name)
 Thread::Thread ( FileSystemInfo *fs_info, const char *name ) : name_(name)
 {
   debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
-  debug ( THREAD,"Thread ctor, fs_info ptr: %d\n", fs_info );
+  debug ( THREAD,"Thread ctor, fs_info ptr: %u\n", fs_info );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
   user_arch_thread_info_=0;
   switch_to_userspace_ = 0;
@@ -69,7 +69,7 @@ Thread::~Thread()
     delete fs_info_;
     fs_info_ = 0;
   }
-  debug ( THREAD,"~Thread: done\n" );
+  debug ( THREAD,"~Thread: done (%s)\n", name_ );
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return

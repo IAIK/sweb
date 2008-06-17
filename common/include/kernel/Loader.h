@@ -9,6 +9,12 @@
 #include "Thread.h"
 #include "Scheduler.h"
 
+struct sELF32_Phdr;
+typedef struct sELF32_Phdr ELF32_Phdr;
+
+struct sELF32_Ehdr;
+typedef struct sELF32_Ehdr ELF32_Ehdr;
+
 /**
 * @class Loader manages the Addressspace creation of a thread
 */
@@ -22,7 +28,9 @@ class Loader
      * @param thread Thread to which the loader should belong
      * @return Loader instance
      */
-    Loader ( uint8* file_image, Thread *thread );
+    Loader(int32 fd, Thread *thread);
+
+    ~Loader();
 
     /**
      *Creates a new PageDirectory and a new Page for the stack and initialises them
@@ -49,14 +57,17 @@ class Loader
      */
     void loadOnePageSafeButSlow ( uint32 virtual_address );
 
-    uint8 *getFileImagePtr() {return file_image_;}
+    //uint8 *getFileImagePtr() {return file_image_;}
 
     uint32 page_dir_page_;
   private:
 
-    uint8 *file_image_;
+    //uint8 *file_image_;
+    uint32 fd_;
+    //File *file_;
     Thread *thread_;
-
+    ELF32_Ehdr *hdr;
+    ELF32_Phdr **phdrs;
 };
 
 #endif

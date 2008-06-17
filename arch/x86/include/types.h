@@ -22,6 +22,8 @@ typedef unsigned int pointer;
 
 typedef unsigned int size_t;
 
+typedef uint32 l_off_t;
+
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 

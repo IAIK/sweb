@@ -194,7 +194,7 @@ void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::pair_co
 template<typename KeyType, typename ValueType>
 void Map<KeyType, ValueType>::pushBack(typename Map<KeyType, ValueType>::key_type key, typename Map<KeyType, ValueType>::value_type value)
 {
-  this->pushBack(*(new Pair<KeyType, ValueType>(key, value)));
+  this->pushBack(Pair<KeyType, ValueType>(key, value));
 }
 
 

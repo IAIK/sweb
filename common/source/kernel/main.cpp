@@ -56,15 +56,15 @@ extern "C" void startup();
  * @class UserThread
  * Thread used to execute a file in pseudofs.
  */
-class UserThread : public Thread
+/*class UserThread : public Thread
 {
-  public:
+  public:*/
     /**
      * Constructor
      * @param pseudofs_filename filename of the file in pseudofs to execute
      * @param terminal_number the terminal to run in (default 0)
      */
-    UserThread ( const char *pseudofs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, pseudofs_filename )
+    /*UserThread ( const char *pseudofs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, pseudofs_filename )
     {
       kprintfd ( "UserThread::ctor: starting %s\n",pseudofs_filename );
       uint8 *elf_data = PseudoFS::getInstance()->getFilePtr ( pseudofs_filename );
@@ -81,12 +81,12 @@ class UserThread : public Thread
       }
       kprintf ( "UserThread::ctor: Done loading %s\n",pseudofs_filename );
       kprintfd ( "UserThread::ctor: Done loading %s\n",pseudofs_filename );
-    }
+    }*/
 
     /**
      * Starts the thread
      */
-    virtual void Run()
+    /*virtual void Run()
     {
       if ( run_me_ )
         for ( ;; )
@@ -105,7 +105,7 @@ class UserThread : public Thread
   private:
     bool run_me_;
     uint32 terminal_number_;
-};
+};*/
 
 /**
  * @class MinixUserThread
@@ -121,8 +121,9 @@ class MinixUserThread : public Thread
      */
     MinixUserThread ( const char *minixfs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, minixfs_filename )
     {
-      int32 fd = vfs_syscall.open ( minixfs_filename,0 );
-      if ( fd < 0 )
+      currentThread = this;
+      fd_ = vfs_syscall.open ( minixfs_filename, 0 );
+      if ( fd_ < 0 )
       {
         run_me_ = false;
         kprintf ( "Error: file %s does not exist!\n",minixfs_filename );
@@ -131,8 +132,19 @@ class MinixUserThread : public Thread
         fs_info_ = 0;
         return;
       }
-      uint32 file_size = vfs_syscall.getFileSize ( fd );
-      char *elf_data = new char[file_size];
+      uint32 file_size = vfs_syscall.getFileSize ( fd_ );
+
+      if(file_size)
+      {
+        loader_= new Loader ( fd_, this );
+        loader_->loadExecutableAndInitProcess();
+        run_me_ = true;
+        terminal_number_ = terminal_number;
+      }
+      else
+        run_me_ = false;
+
+      /*char *elf_data = new char[file_size];
 
       if ( vfs_syscall.read ( fd,elf_data,file_size ) )
       {
@@ -144,7 +156,7 @@ class MinixUserThread : public Thread
       else
       {
         run_me_=false;
-      }
+      }*/
       kprintf ( "MinixUserThread::ctor: Done loading %s\n",minixfs_filename );
     }
 
@@ -154,11 +166,12 @@ class MinixUserThread : public Thread
       {
         debug ( THREAD,"~MinixUserThread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
         loader_->cleanupUserspaceAddressSpace();
-        if(loader_->getFileImagePtr()) {
+        /*if(loader_->getFileImagePtr()) {
            delete loader_->getFileImagePtr();
-         }
+         }*/
         delete loader_;
         loader_ = 0;
+        vfs_syscall.close(fd_);
       }
     }
 
@@ -184,6 +197,33 @@ class MinixUserThread : public Thread
   private:
     bool run_me_;
     uint32 terminal_number_;
+    int32 fd_;
+};
+
+class MountMinixAndStartUserProgramsThread : public Thread
+{
+  public:
+    /**
+     * Constructor
+     * @param root_fs_info the FileSystemInfo
+     */
+    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info ) : Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" )
+    {
+    }
+
+    /**
+     * Mounts the Minix-Partition with user-programs
+     */
+    virtual void Run()
+    {
+      vfs_syscall.mkdir ( "/user_progs", 0 );
+      vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
+
+      Scheduler::instance()->addNewThread ( new MinixUserThread ( "/user_progs/stdin-test.sweb", new FileSystemInfo ( *fs_info_ )) );
+
+      state_ = ToBeDestroyed;
+      Scheduler::instance()->yield();
+    }
 };
 
 #include "TestingThreads.h"
@@ -342,6 +382,10 @@ void startup()
 //       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
 //   );
 
+  Scheduler::instance()->addNewThread (
+       new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ) )
+   );
+
 
 //   Scheduler::instance()->addNewThread(
 //     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
@@ -373,11 +417,11 @@ void startup()
 
   //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
 
-  for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
+  /*for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
   {
     UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
     Scheduler::instance()->addNewThread ( user_thread );
-  }
+  }*/
 
   //Scheduler::instance()->addNewThread(new TestThread());
 

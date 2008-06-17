@@ -13,8 +13,9 @@ Pair<FirstValueType, SecondValueType>::Pair()
 
 
 template<typename FirstValueType, typename SecondValueType>
-Pair<FirstValueType, SecondValueType>::Pair(first_const_reference first, second_const_reference second) :                                                               first_element_(first),
-                                                         second_element_(second)
+Pair<FirstValueType, SecondValueType>::Pair(first_const_reference first, second_const_reference second) :
+  first_element_(first),
+  second_element_(second)
 {
 
 }

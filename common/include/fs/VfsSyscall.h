@@ -111,6 +111,16 @@ class VfsSyscall
     virtual int32 read ( uint32 fd, char* buffer, uint32 count );
 
     /**
+     * Sets the file position relative to the start of the file, the end of the
+     * file or the current file position.
+     * @param fd the file descriptor
+     * @param offset is the offset to set.
+     * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
+     * @returns the offset from the start off the file or -1 on failure.
+     */
+    l_off_t lseek ( uint32 fd, l_off_t offset, uint8 origin );
+
+    /**
      * write  writes  up  to  count  bytes  to the file referenced by the file
      * descriptor fd from the buffer starting at buf.
      * @param fd the file descriptor

@@ -32,7 +32,7 @@ class MinixFSFile: public File
      * reads from the file
      * @param buffer the buffer where the data is written to
      * @param count the number of bytes to read
-     * @param offset the offset to read from counted from the start of the file.
+     * @param offset the offset to read from counted from the current file position
      * @return the number of bytes read
      */
     virtual int32 read ( char *buffer, size_t count, l_off_t offset );
@@ -41,7 +41,7 @@ class MinixFSFile: public File
      * writes to the file
      * @param buffer the buffer where the data is read from
      * @param count the number of bytes to write
-     * @param offset the offset to write from counted from the start of the file
+     * @param offset the offset to write from counted from the current file position
      * @return the number of bytes written
      */
     virtual int32 write ( const char *buffer, size_t count, l_off_t offset );

@@ -8,6 +8,13 @@
 #include "mm/PageManager.h"
 #include "ArchMemory.h"
 #include "Syscall.h"
+#include "VfsSyscall.h"
+#include "File.h"
+#include "Pair.h"
+#include "Array.h"
+
+extern VfsSyscall vfs_syscall;
+
 #define EI_NIDENT 16
 
 // Elf file types
@@ -128,7 +135,7 @@ typedef int32 Elf32_Sword;
 typedef uint32 Elf32_Word;
 
 
-typedef struct
+typedef struct sELF32_Ehdr
 {
   uint8 e_ident[EI_NIDENT];
   Elf32_Half    e_type;
@@ -145,8 +152,9 @@ typedef struct
   Elf32_Half    e_shnum;
   Elf32_Half    e_shstrndx;
 
-}
-ELF32_Ehdr;
+};
+
+typedef struct sELF32_Ehdr ELF32_Ehdr;
 
 static void printElfHeader ( ELF32_Ehdr &hdr )
 {
@@ -210,7 +218,7 @@ typedef struct
 }
 ELF32_Rela;
 
-typedef struct
+struct sELF32_Phdr
 {
   Elf32_Word    p_type;
   Elf32_Off   p_offset;
@@ -220,12 +228,43 @@ typedef struct
   Elf32_Word    p_memsz;
   Elf32_Word    p_flags;
   Elf32_Word    p_align;
-}
-ELF32_Phdr;
+};
 
-Loader::Loader ( uint8 *file_image, Thread *thread ) : file_image_ ( file_image ),
+typedef struct sELF32_Phdr ELF32_Phdr;
+
+
+/*Loader::Loader ( uint8 *file_image, Thread *thread ) : file_image_ ( file_image ),
     thread_ ( thread )
-{}
+{}*/
+
+Loader::Loader ( int32 fd, Thread *thread ) : fd_ ( fd ),
+    thread_ ( thread )
+{
+  //its MUCH more efficient to save the ehdr and the phdrs as members, since they
+  //are often needed
+  hdr = new ELF32_Ehdr;
+  vfs_syscall.lseek(fd_, 0, File::SEEK_SET);
+  vfs_syscall.read(fd_, reinterpret_cast<char *>(hdr), sizeof(ELF32_Ehdr));
+
+  phdrs = new ELF32_Phdr*[hdr -> e_phnum];
+
+  for ( int32 k=0; k < hdr -> e_phnum;++k )
+  {
+    phdrs[k] = new ELF32_Phdr;
+    vfs_syscall.lseek(fd_, hdr->e_phoff + k* hdr->e_phentsize, File::SEEK_SET);
+    vfs_syscall.read(fd_, reinterpret_cast<char *>(phdrs[k]), sizeof(ELF32_Phdr));
+  }
+}
+
+Loader::~Loader()
+{
+  for ( int32 k=0; k < hdr -> e_phnum;++k )
+    delete phdrs[k];
+
+  delete phdrs;
+  delete hdr;
+}
+
 
 void Loader::initUserspaceAddressSpace()
 {
@@ -251,7 +290,7 @@ uint32 Loader::loadExecutableAndInitProcess()
 
   initUserspaceAddressSpace();
 
-  ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *> ( file_image_ );
+  //ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *> ( file_image_ );
 
   debug ( LOADER,"loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr->e_entry, hdr->e_phnum );
   if ( isDebugEnabled ( LOADER ) )
@@ -264,6 +303,124 @@ uint32 Loader::loadExecutableAndInitProcess()
   return 0;
 }
 
+void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
+{
+  kprintfd("here in loader1\n");
+  uint32 virtual_page = virtual_address / PAGE_SIZE;
+  debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %d:%s\n",virtual_page,virtual_address,currentThread->getPID(),currentThread->getName() );
+
+  //ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *> ( file_image_ );
+
+  //debug ( LOADER,"loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4] );
+  debug ( LOADER,"loadOnePage: Sizeof %d %d %d %d\n",sizeof ( uint64 ),sizeof ( uint32 ),sizeof ( uint16 ),sizeof ( uint8 ) );
+  debug ( LOADER,"loadOnePage: Num ents: %d\n",hdr->e_phnum );
+  debug ( LOADER,"loadOnePage: Entry: %x\n",hdr->e_entry );
+
+
+  uint32 page = PageManager::instance()->getFreePhysicalPage();
+  ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
+  ArchCommon::bzero ( ArchMemory::get3GBAdressOfPPN ( page ),PAGE_SIZE,false );
+
+  pointer vaddr = virtual_page*PAGE_SIZE;
+
+  uint32 i=0;
+  uint32 k=0;
+  uint32 written=0;
+  uint8* dest = reinterpret_cast<uint8*> ( ArchMemory::get3GBAdressOfPPN ( page ) );
+
+  debug ( LOADER,"loadOnePageSafeButSlow:I've got the following segments in the binary\n" );
+  if ( isDebugEnabled ( LOADER ) )
+  {
+    for ( k=0;k<hdr->e_phnum;++k )
+    {
+      ELF32_Phdr *h = phdrs[k];
+      //ELF32_Phdr *h = new ELF32_Phdr;
+      //vfs_syscall.lseek(fd_, hdr->e_phoff + k* hdr->e_phentsize, File::SEEK_SET);
+      //vfs_syscall.read(fd_, reinterpret_cast<char *>(h), sizeof(ELF32_Phdr), hdr->e_phoff + k* hdr->e_phentsize);
+      //ELF32_Phdr *h = ( ELF32_Phdr * ) ( ( uint32 ) file_image_ + hdr->e_phoff + k* hdr->e_phentsize );
+      debug ( LOADER,"loadOnePageSafeButSlow:PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset );
+    }
+  }
+
+  Array<Pair<uint32, uint32> > byte_map;
+  byte_map.resetSize(PAGE_SIZE);
+  uint32 min_value = 0xFFFFFFFF;
+  uint32 max_value = 0;
+
+  for ( i=0; i < PAGE_SIZE; ++i )
+  {
+    uint32 load_byte_from_address = vaddr + i;
+    uint32 found = 0;
+    for ( k=0;k < hdr->e_phnum; ++k )
+    {
+      ELF32_Phdr *h = phdrs[k];
+      //ELF32_Phdr *h = new ELF32_Phdr;
+      //file_->lseek(hdr->e_phoff + k* hdr->e_phentsize, File::SEEK_SET);
+      //file_->read(reinterpret_cast<char *>(h), sizeof(ELF32_Phdr), hdr->e_phoff + k* hdr->e_phentsize);
+      //ELF32_Phdr *h = ( ELF32_Phdr * ) ( ( uint32 ) file_image_ + hdr->e_phoff + k* hdr->e_phentsize );
+      debug ( LOADER,"loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset );
+
+      if ( h->p_paddr <= load_byte_from_address && load_byte_from_address < ( h->p_paddr + h->p_filesz ) )
+      {
+        //char src;
+        //file_->lseek(h->p_offset + load_byte_from_address - h->p_paddr, File::SEEK_SET);
+        if(min_value > h->p_offset + load_byte_from_address - h->p_paddr)
+          min_value = h->p_offset + load_byte_from_address - h->p_paddr;
+
+        if(max_value < h->p_offset + load_byte_from_address - h->p_paddr)
+          max_value = h->p_offset + load_byte_from_address - h->p_paddr;
+
+        //file_->read(reinterpret_cast<char*>(&dest[i]), 1, h->p_offset + load_byte_from_address - h->p_paddr);
+        //uint8* src = ( uint8* ) ( ( uint32 ) file_image_ + h->p_offset + ( load_byte_from_address - h->p_paddr ) );
+
+        //its VERY MUCH more efficient to only search the bytes, save them in the array byte_map,
+        //and read ONCE from the executable; its very expensive to read every byte single from harddisk
+        //(we have to read a full zone) -> for this we need the max- and min-byte from file we have to load
+        Pair<uint32, uint32> temp(i, h->p_offset + load_byte_from_address - h->p_paddr);
+        byte_map.appendElement(temp);
+        ++written;
+        ++found;
+      }
+      // bss is not in the file but in memory
+      else if ( h->p_paddr <= load_byte_from_address && load_byte_from_address < ( h->p_paddr+h->p_memsz ) )
+      {
+        debug ( LOADER,"In segment but not on file, this is .bss\n" );
+        ++found;
+        ++written;
+      }
+    }
+
+    if ( !found )
+    {
+      debug ( LOADER,"Byte not found, byte virtual address is %x\n",load_byte_from_address );
+      // this is expected behaviour. Our Loader tries to find every bytes on a needed page in the ELF Header.
+      // Of course, often only parts of a page are listed in the ELF Hedaer
+    }
+    else if ( found >1 )
+    {
+      kprintfd ( "Loader::loadOnePageSafeButSlow:EEEEEEEEEEEERRRRRRRROR, found the byte (%x) in two different segments\n", load_byte_from_address );
+    }
+  }
+
+  //read once the bytes we need (and a few more)
+  char *buffer = new char[max_value - min_value + 1];
+  vfs_syscall.lseek(fd_, min_value, File::SEEK_SET);
+  vfs_syscall.read(fd_, buffer, max_value - min_value + 1);
+
+  for(i=0; i < byte_map.getNumElems(); i++)
+    dest[byte_map.getElement(i).first()] = buffer[byte_map.getElement(i).second() - min_value];
+
+  delete[] buffer;
+
+  debug ( LOADER,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
+  if ( !written )
+  {
+    kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location: v_adddr=%x, v_page=%d\n",virtual_address,virtual_page);
+    Syscall::exit ( 9999 );
+  }
+}
+
+/*
 void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
@@ -342,6 +499,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     Syscall::exit ( 9999 );
   }
 }
+*/
 
 /*
 void Loader::loadOnePage(uint32 virtual_address)

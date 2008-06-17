@@ -149,7 +149,7 @@ class MinixFSInode : public Inode
      * @param offset offset byte
      * @param size the size of data that read from this inode
      * @param buffer the dest char-array to store the data
-     * @return On successe, return 0. On error, return -1.
+     * @return the number of bytes read
      */
     virtual int32 readData ( uint32 offset, uint32 size, char *buffer );
 
@@ -158,7 +158,7 @@ class MinixFSInode : public Inode
      * @param offset offset byte
      * @param size the size of data that write to this inode (data_)
      * @param buffer the src char-array
-     * @return On successe, return 0. On error, return -1.
+     * @return the number of bytes written
      */
     virtual int32 writeData ( uint32 offset, uint32 size, const char *buffer );
 

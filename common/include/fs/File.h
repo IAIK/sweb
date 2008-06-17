@@ -27,7 +27,7 @@ class Dentry;
 #define A_WRITABLE  0x0002
 #define A_EXECABLE  0x0004
 
-typedef uint32 l_off_t;
+//typedef uint32 l_off_t;
 
 
 /**
@@ -168,14 +168,14 @@ class File
      * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
      * @returns the offset from the start off the file or -1 on failure.
      */
-    l_off_t llSeek ( l_off_t offset, uint8 origin );
+    l_off_t lseek ( l_off_t offset, uint8 origin );
 
     /**
      * not implemented here
      * reads from the file
      * @param buffer is the buffer where the data is written to
      * @param count is the number of bytes to read.
-     * @param offset is the offset to read from counted from the start of the file.
+     * @param offset is the offset to read from counted from the current file position.
      */
     virtual int32 read ( char */*buffer*/, size_t /*count*/, l_off_t /*offset*/ )
     {return 0;}
@@ -185,7 +185,7 @@ class File
      * write to the file
      * @param buffer is the buffer where the data is read from
      * @param count is the number of bytes to write.
-     * @param offset is the offset to write from counted from the start of the file.
+     * @param offset is the offset to write from counted from the current file position
      */
     virtual  int32 write ( const char */*buffer*/, size_t /*count*/, l_off_t /*offset*/ )
     {return 0;}

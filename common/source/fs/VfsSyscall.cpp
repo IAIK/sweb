@@ -509,12 +509,26 @@ int32 VfsSyscall::write ( uint32 fd, const char *buffer, uint32 count )
 
   if ( file_descriptor == 0 )
   {
-    kprintfd ( "(read) Error: the fd does not exist.\n" );
+    kprintfd ( "(write) Error: the fd does not exist.\n" );
     return -1;
   }
 
   File* file = file_descriptor->getFile();
   return ( file->write ( buffer, count, 0 ) );
+}
+
+l_off_t VfsSyscall::lseek ( uint32 fd, l_off_t offset, uint8 origin )
+{
+  FileDescriptor* file_descriptor = getFileDescriptor ( fd );
+
+  if ( file_descriptor == 0 )
+  {
+    kprintfd ( "(lseek) Error: the fd does not exist.\n" );
+    return -1;
+  }
+
+  File* file = file_descriptor->getFile();
+  return file->lseek(offset, origin);
 }
 
 

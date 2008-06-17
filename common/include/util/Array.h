@@ -21,7 +21,7 @@ class Array
     /**
      * Constructor
      */
-    Array() : num_elems_ ( 0 ), size_ ( 0 )
+    Array() : num_elems_ ( 0 ), size_ ( 0 ), elements_(0)
     {
     }
 
