@@ -47,6 +47,7 @@
 
 #include "fs/fs_global.h"
 
+#include "UserProcess.h"
 
 extern void* kernel_end_address;
 
@@ -107,99 +108,6 @@ extern "C" void startup();
     uint32 terminal_number_;
 };*/
 
-/**
- * @class MinixUserThread
- * Thread used to execute a file in minixfs.
- */
-class MinixUserThread : public Thread
-{
-  public:
-    /**
-     * Constructor
-     * @param minixfs_filename filename of the file in minixfs to execute
-     * @param terminal_number the terminal to run in (default 0)
-     */
-    MinixUserThread ( const char *minixfs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, minixfs_filename )
-    {
-      currentThread = this;
-      fd_ = vfs_syscall.open ( minixfs_filename, 0 );
-      if ( fd_ < 0 )
-      {
-        run_me_ = false;
-        kprintf ( "Error: file %s does not exist!\n",minixfs_filename );
-        loader_ = 0;
-        delete fs_info_;
-        fs_info_ = 0;
-        return;
-      }
-      uint32 file_size = vfs_syscall.getFileSize ( fd_ );
-
-      if(file_size)
-      {
-        loader_= new Loader ( fd_, this );
-        loader_->loadExecutableAndInitProcess();
-        run_me_ = true;
-        terminal_number_ = terminal_number;
-      }
-      else
-        run_me_ = false;
-
-      /*char *elf_data = new char[file_size];
-
-      if ( vfs_syscall.read ( fd,elf_data,file_size ) )
-      {
-        loader_= new Loader ( ( uint8 * ) elf_data,this );
-        loader_->loadExecutableAndInitProcess();
-        run_me_=true;
-        terminal_number_=terminal_number;
-      }
-      else
-      {
-        run_me_=false;
-      }*/
-      kprintf ( "MinixUserThread::ctor: Done loading %s\n",minixfs_filename );
-    }
-
-    ~MinixUserThread ()
-    {
-      if ( loader_ )
-      {
-        debug ( THREAD,"~MinixUserThread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
-        loader_->cleanupUserspaceAddressSpace();
-        /*if(loader_->getFileImagePtr()) {
-           delete loader_->getFileImagePtr();
-         }*/
-        delete loader_;
-        loader_ = 0;
-        vfs_syscall.close(fd_);
-      }
-    }
-
-    /**
-     * Starts the thread
-     */
-    virtual void Run()
-    {
-      if ( run_me_ )
-        for ( ;; )
-        {
-          if ( main_console->getTerminal ( terminal_number_ ) )
-            this->setTerminal ( main_console->getTerminal ( terminal_number_ ) );
-          kprintf ( "MinixUserThread:Run: %x  %d:%s Going to user, expect page fault\n",this,this->getPID(), this->getName() );
-          this->switch_to_userspace_ = 1;
-          Scheduler::instance()->yield();
-          //should not reach
-        }
-      else
-        currentThread->kill();
-    }
-
-  private:
-    bool run_me_;
-    uint32 terminal_number_;
-    int32 fd_;
-};
-
 class MountMinixAndStartUserProgramsThread : public Thread
 {
   public:
@@ -207,7 +115,8 @@ class MountMinixAndStartUserProgramsThread : public Thread
      * Constructor
      * @param root_fs_info the FileSystemInfo
      */
-    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info ) : Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" )
+    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info ) :
+      Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" )
     {
     }
 
@@ -219,7 +128,7 @@ class MountMinixAndStartUserProgramsThread : public Thread
       vfs_syscall.mkdir ( "/user_progs", 0 );
       vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
 
-      Scheduler::instance()->addNewThread ( new MinixUserThread ( "/user_progs/stdin-test.sweb", new FileSystemInfo ( *fs_info_ )) );
+      Scheduler::instance()->addNewThread (new UserProcess ( "/user_progs/stdin-test.sweb", new FileSystemInfo ( *fs_info_ )) );
 
       state_ = ToBeDestroyed;
       Scheduler::instance()->yield();
@@ -378,9 +287,9 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-//  Scheduler::instance()->addNewThread (
-//       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
-//   );
+  /*Scheduler::instance()->addNewThread (
+       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
+   );*/
 
   Scheduler::instance()->addNewThread (
        new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ) )

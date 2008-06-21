@@ -394,27 +394,35 @@ class MinixTestingThread : public Thread
 
       kprintfd("\n> list ./\n");
       vfs_syscall.readdir("./");
-
+      kprintfd("\n");
+      
       kprintfd("\n> list /minix\n");
       vfs_syscall.readdir("/minix");
+      kprintfd("\n");
 
       kprintfd("\n> list /minix/boot\n");
       vfs_syscall.readdir("/minix/boot");
-
-      //int32 fd = vfs_syscall.open("/minix/bochsout.txt", O_RDWR);
-      //char buf[300];
-      //vfs_syscall.read(fd, buf, 299);
-      //buf[299] = 0;
-      //kprintf("file bochsout.txt: \n%s\n", buf);
-      //vfs_syscall.close(fd);
-
-      //MinixUserThread *user_thread = new MinixUserThread ( "/minix/test/stdin-test.sweb", new FileSystemInfo ( *this->getFSInfo() ) );
-      //Scheduler::instance()->addNewThread ( user_thread );
-
+      kprintfd("\n");
+      
       vfs_syscall.mkdir("/minix/test", 0);
       int32 fd = vfs_syscall.open("/minix/test/asdf.txt", O_RDWR);
       char const *asdf = "Ich bin ein String.\nHallihallo!";
       vfs_syscall.write(fd, asdf, strlen(asdf));
+      vfs_syscall.lseek(fd, 7, File::SEEK_SET);
+      vfs_syscall.write(fd, &asdf[9], 1);
+      vfs_syscall.write(fd, &asdf[12], 1);
+      vfs_syscall.lseek(fd, 0, File::SEEK_SET);
+      
+      char buf[1000];
+      int32 read = vfs_syscall.read(fd, buf, 1000);
+      buf[read] = 0;
+      kprintf("file asdf.txt: %s\n\n", buf);
+      vfs_syscall.lseek(fd, 10, File::SEEK_SET);
+      
+      read = vfs_syscall.read(fd, buf, 1000);
+      buf[read] = 0;
+      kprintf("file asdf.txt from char 10: %s\n\n", buf);
+      
       vfs_syscall.close(fd);
 
       vfs_syscall.umount("/minix", 0);

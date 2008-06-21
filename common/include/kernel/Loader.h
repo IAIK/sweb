@@ -24,12 +24,15 @@ class Loader
 
     /**
      *Constructor
-     * @param file_image_ all needed data from the executable
+     * @param fd the file descriptor of the executable
      * @param thread Thread to which the loader should belong
      * @return Loader instance
      */
     Loader(int32 fd, Thread *thread);
 
+    /**
+     *Constructor
+     */
     ~Loader();
 
     /**
@@ -46,9 +49,9 @@ class Loader
      *Initialises the Addressspace of the User, creates the Thread's
      *InfosUserspaceThread and sets the PageDirectory
      *
-     * @return 0
+     * @return true if this was successful, false otherwise
      */
-    uint32 loadExecutableAndInitProcess();
+    bool loadExecutableAndInitProcess();
 
     /**
      *loads one page slow by its virtual address: gets a free page, maps it,
@@ -64,10 +67,9 @@ class Loader
 
     //uint8 *file_image_;
     uint32 fd_;
-    //File *file_;
     Thread *thread_;
-    ELF32_Ehdr *hdr;
-    ELF32_Phdr **phdrs;
+    ELF32_Ehdr *hdr_;
+    ELF32_Phdr **phdrs_;
 };
 
 #endif

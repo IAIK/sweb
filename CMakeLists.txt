@@ -75,7 +75,8 @@ endforeach(file)
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 add_custom_command ( OUTPUT kernel_image
-                    DEPENDS ${FINAL_LIB_NAMES} exe2minixfs exe2pseudofs
+                    DEPENDS ${FINAL_LIB_NAMES} exe2minixfs
+                    #DEPENDS ${FINAL_LIB_NAMES} exe2minixfs exe2pseudofs
                     COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT}
                     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                     )
@@ -97,9 +98,9 @@ add_custom_command (OUTPUT temp_dir
                     COMMAND mkdir "./temp/boot/grub"
                     
                     #COMMAND cp "../images/menu.lst.hda" "./temp/boot/grub"
-                    COMMAND test -e "./ramfs" || cp "../images/ramfs" "./ramfs"
+                    #COMMAND test -e "./ramfs" || cp "../images/ramfs" "./ramfs"
                     COMMAND cp "./kernel.x" "./temp/boot"
-                    COMMAND cp "./ramfs" "./temp/boot"
+                    #COMMAND cp "./ramfs" "./temp/boot"
                     
                     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
                     COMMENT "Creating temp dir..."
@@ -134,7 +135,8 @@ add_custom_command (OUTPUT helper_files
 #Custom Command: invoke exe2minixfs and copy the temp dir to our hd image 
 add_custom_command (OUTPUT copy_to_image
 	                DEPENDS helper_files exe2minixfs
-	                COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./kernel.x /boot/kernel.x ./temp/boot/ramfs /boot/ramfs ./temp/boot/grub/menu.lst /boot/grub/menu.lst
+	                COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./kernel.x /boot/kernel.x ./temp/boot/grub/menu.lst /boot/grub/menu.lst
+	                #./temp/boot/ramfs /boot/ramfs
 	                COMMAND rm -R temp
 
                     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -164,16 +166,16 @@ add_custom_target (userspace
 #Custom target: make bochs
 #Run bochs in non debugging mode
 add_custom_target(bochs
-                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted"
-                  COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
+                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc
+                  COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc"
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
                   )
 
 #Custom target: make bochsgdb
 #Run bochs in debugging mode
 add_custom_target(bochsgdb
-                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc "floppya:1_44=boot_ext2.img,status=inserted" "gdbstub: enabled=1, port=1234"
-                  COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"floppya:1_44=boot_ext2.img,status=inserted\""
+                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc "gdbstub: enabled=1, port=1234"
+                  COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"gdbstub: enabled=1, port=1234\""
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
                   )
 

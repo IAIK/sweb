@@ -108,7 +108,7 @@ Inode* DeviceFSSuperBlock::createInode ( Dentry* dentry, uint32 type )
   assert ( inode );
   if ( type == I_DIR )
   {
-    kprintfd ( "createInode: I_DIR\n" );
+    //kprintfd ( "createInode: I_DIR\n" );
     int32 inode_init = inode->mknod ( dentry );
     assert ( inode_init == 0 );
   }

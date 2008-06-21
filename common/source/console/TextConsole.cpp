@@ -42,7 +42,7 @@ TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxT
     terminals_.pushBack ( term );
   }
 
-  delete term_name;
+  delete[] term_name;
 
   active_terminal_ = 0;
 }

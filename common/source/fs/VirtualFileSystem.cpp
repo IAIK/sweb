@@ -145,7 +145,7 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
     return -1;
 
   uint32 dev = BDManager::getInstance()->getDeviceByName ( dev_name )->getDeviceNumber();
-  kprintfd ( "dev_nr:%d", dev );
+  debug ( VFS, "dev_nr:%d\n", dev );
   FileSystemType *fst = getFsType ( fs_name );
 
   fs_info->setName ( dir_name );

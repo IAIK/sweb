@@ -21,32 +21,37 @@ static void ThreadStartHack()
   for ( ;; );
 }
 
-Thread::Thread(const char *name) : name_(name)
+Thread::Thread(const char *name) :
+  kernel_arch_thread_info_(0),
+  user_arch_thread_info_(0),
+  switch_to_userspace_(0),
+  loader_(0),
+  state_(Running),
+  pid_(0),
+  my_terminal_(0),
+  fs_info_(new FileSystemInfo()),
+  name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
-
+  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x\r\n", this, stack_ );
+  debug ( THREAD,"sizeof stack is %x; my name: %s\r\n", sizeof ( stack_ ), name_ ); 
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
-  user_arch_thread_info_=0;
-  switch_to_userspace_ = 0;
-  state_=Running;
-  loader_ = 0;
-  my_terminal_ = 0;
-  pid_ = 0;
-  fs_info_ = new FileSystemInfo();
 }
 
-Thread::Thread ( FileSystemInfo *fs_info, const char *name ) : name_(name)
+Thread::Thread ( FileSystemInfo *fs_info, const char *name ) :
+  kernel_arch_thread_info_(0),
+  user_arch_thread_info_(0),
+  switch_to_userspace_(0),
+  loader_(0),
+  state_(Running),
+  pid_(0),
+  my_terminal_(0),
+  fs_info_(fs_info),
+  name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x, sizeof stack is %x\r\n", this,stack_, sizeof ( stack_ ) );
+  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x\r\n", this, stack_);
+  debug ( THREAD,"sizeof stack is %x; my name: %s\r\n", sizeof ( stack_ ), name_ ); 
   debug ( THREAD,"Thread ctor, fs_info ptr: %u\n", fs_info );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
-  user_arch_thread_info_=0;
-  switch_to_userspace_ = 0;
-  state_=Running;
-  loader_ = 0;
-  my_terminal_ = 0;
-  pid_ = 0;
-  fs_info_ = fs_info;
 }
 
 Thread::~Thread()
