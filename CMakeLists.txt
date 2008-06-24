@@ -4,6 +4,8 @@ project(sweb)
 SET (ARCH x86)
 
 
+cmake_minimum_required(VERSION 2.4)
+
 set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
 set (ASM_WILDCARDS *.s)
 set (INFO_FILE info.file)
@@ -17,8 +19,8 @@ find_program(AR_EXECUTABLE ar)
 #set(CMAKE_VERBOSE_MAKEFILE true) 
 
 #Set Compiler and compiterflags
-set(CMAKE_CXX_COMPILER g++)
-set(CMAKE_C_COMPILER gcc)
+#set(CMAKE_CXX_COMPILER g++)
+#set(CMAKE_C_COMPILER gcc)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -g3 -gstabs -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector -Wall -Wextra -nostdlib -nostartfiles -nodefaultlibs")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -O0  -g3 -gstabs -Wall -W -nostdinc -fno-builtin -nostdlib -fno-exceptions -fno-stack-protector -Wall -Wextra  -nostdlib -nostartfiles -nodefaultlibs")
 
