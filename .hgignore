@@ -6,6 +6,11 @@ utils/e2fsimage/e2fsimage
 utils/exe2pseudofs/exe2pseudofs
 Doxyfile
 sweb.kdev*
+CMakeFiles
+CMakeCache.txt
+*.cmake
+Makefile
+./bin
 
 syntax: regexp
 (.*/)?\#[^/]*\#$
