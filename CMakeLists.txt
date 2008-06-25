@@ -14,6 +14,7 @@ set (INFO_FILE info.file)
 find_program(NASM_EXECUTABLE nasm)
 find_program(LD_EXECUTABLE ld)
 find_program(AR_EXECUTABLE ar)
+find_program(DOXYGEN_EXECUTABLE doxygen)
 
 #Comment in to enable verbose compile output
 #set(CMAKE_VERBOSE_MAKEFILE true) 
@@ -327,4 +328,10 @@ add_custom_target(info
 		COMMAND env >> ${INFO_FILE}
 		COMMAND cat ${INFO_FILE}
 		COMMENT "Building info file"
+		)
+
+#Builds the doxygen documentation
+add_custom_target(doxygen
+		COMMAND ${DOXYGEN_EXECUTABLE} \"./doc/sweb.dox\"
+		COMMENT "Building SWEB documentation"
 		)
