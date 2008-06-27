@@ -108,33 +108,6 @@ extern "C" void startup();
     uint32 terminal_number_;
 };*/
 
-class MountMinixAndStartUserProgramsThread : public Thread
-{
-  public:
-    /**
-     * Constructor
-     * @param root_fs_info the FileSystemInfo
-     */
-    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info ) :
-      Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" )
-    {
-    }
-
-    /**
-     * Mounts the Minix-Partition with user-programs
-     */
-    virtual void Run()
-    {
-      vfs_syscall.mkdir ( "/user_progs", 0 );
-      vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
-
-      Scheduler::instance()->addNewThread (new UserProcess ( "/user_progs/stdin-test.sweb", new FileSystemInfo ( *fs_info_ )) );
-
-      state_ = ToBeDestroyed;
-      Scheduler::instance()->yield();
-    }
-};
-
 #include "TestingThreads.h"
 
 /**
@@ -291,8 +264,14 @@ void startup()
        new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
    );*/
 
+  char const *user_progs[] = {
+                              "/user_progs/stdout-test.sweb",
+                              "/user_progs/stdin-test.sweb",
+                              0
+                             };
+
   Scheduler::instance()->addNewThread (
-       new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ) )
+       new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ), user_progs )
    );
 
 

@@ -8,6 +8,7 @@
 #include "fs/VfsSyscall.h"
 #include "fs/FileDescriptor.h"
 #include "kernel/Thread.h"
+#include "fs/File.h"
 
 /**
  * Global VirtualFileSystem object

@@ -365,7 +365,7 @@ int32 VfsSyscall::close ( uint32 fd )
 int32 VfsSyscall::open ( const char* pathname, uint32 flag )
 {
   FileSystemInfo *fs_info = currentThread->getFSInfo();
-  if ( flag > O_RDWR )
+  if ( flag > (O_CREAT | O_RDWR) )
   {
     debug ( VFSSYSCALL,"(open) invalid parameter flag\n" );
     return -1;
@@ -389,11 +389,11 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
     {
       debug ( VFSSYSCALL,"(open) repeated open\n" );
       // check the existing file
-      if ( flag != O_RDONLY )
+      /*if ( !(flag & O_RDONLY) )
       {
         kprintfd ( "(open) Error: The flag is not READ_ONLY\n" );
         return -1;
-      }
+      }*/
 
       if ( current_inode->getType() != I_FILE )
       {
@@ -401,21 +401,21 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
         return -1;
       }
 
-      File* file = current_inode->getFirstFile();
+      /*File* file = current_inode->getFirstFile();
       uint32 file_flag = file->getFlag();
-      if ( file_flag != O_RDONLY )
+      if ( !(file_flag & O_RDONLY) )
       {
         kprintfd ( "(open) Error: The file flag is not READ_ONLY\n" );
         return -1;
-      }
+      }*/
     }
 
-    int32 fd = current_sb->createFd ( current_inode, flag );
-    debug ( VFSSYSCALL,"the fd-num: %d\n", fd );
+    int32 fd = current_sb->createFd ( current_inode, flag & 0xFFFFFFFB );
+    debug ( VFSSYSCALL,"the fd-num: %d, flag: %d\n", fd, flag );
 
     return fd;
   }
-  else
+  else if(flag & O_CREAT)
   {
     debug ( VFSSYSCALL,"(open) create a new file\n" );
     path_walker.pathRelease();
@@ -476,11 +476,13 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
       return -1;
     }
 
-    int32 fd = current_sb->createFd ( sub_inode, flag );
+    int32 fd = current_sb->createFd ( sub_inode, flag & 0xFFFFFFFB );
     debug ( VFSSYSCALL,"the fd-num: %d\n", fd );
 
     return fd;
   }
+  else
+    return -1;
 }
 
 

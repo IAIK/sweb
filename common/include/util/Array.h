@@ -48,7 +48,7 @@ class Array
      * appends the given element to the end of the array
      * @param element the element to add
      */
-    void appendElement ( T &element )
+    void appendElement ( T const &element )
     {
       if ( num_elems_ +1 >= size_ )
       {

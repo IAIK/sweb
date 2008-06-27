@@ -8,6 +8,8 @@
 #include "types.h"
 #include "Thread.h"
 #include "Scheduler.h"
+#include "Mutex.h"
+
 
 struct sELF32_Phdr;
 typedef struct sELF32_Phdr ELF32_Phdr;
@@ -31,7 +33,7 @@ class Loader
     Loader(int32 fd, Thread *thread);
 
     /**
-     *Constructor
+     *Destructor
      */
     ~Loader();
 
@@ -47,7 +49,8 @@ class Loader
 
     /**
      *Initialises the Addressspace of the User, creates the Thread's
-     *InfosUserspaceThread and sets the PageDirectory
+     *InfosUserspaceThread and sets the PageDirectory,
+     *loads the ehdr and phdrs from executable
      *
      * @return true if this was successful, false otherwise
      */
@@ -70,6 +73,7 @@ class Loader
     Thread *thread_;
     ELF32_Ehdr *hdr_;
     ELF32_Phdr **phdrs_;
+    Mutex lock_;
 };
 
 #endif

@@ -37,7 +37,7 @@ TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxT
       term_name[ l ] = cterm/k + '0';
       cterm -= ( ( cterm/k ) * k );
     }
-
+    
     Terminal *term = new Terminal ( term_name, this,consoleGetNumColumns(),consoleGetNumRows() );
     terminals_.pushBack ( term );
   }

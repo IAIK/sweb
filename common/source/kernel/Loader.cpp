@@ -238,7 +238,7 @@ typedef struct sELF32_Phdr ELF32_Phdr;
 {}*/
 
 Loader::Loader ( int32 fd, Thread *thread ) : fd_ ( fd ),
-    thread_ ( thread ), hdr_(0), phdrs_(0)
+    thread_ ( thread ), hdr_(0), phdrs_(0), lock_()
 {
 }
 
@@ -275,18 +275,20 @@ bool Loader::loadExecutableAndInitProcess()
 {
   debug ( LOADER,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
 
-  initUserspaceAddressSpace();
-
   //ELF32_Ehdr *hdr = reinterpret_cast<ELF32_Ehdr *> ( file_image_ );
 
   //its MUCH more efficient to save the ehdr and the phdrs as members, since they
   //are often needed
+  lock_.acquire();
+
   hdr_ = new ELF32_Ehdr;
   vfs_syscall.lseek(fd_, 0, File::SEEK_SET);
   if(!hdr_ || vfs_syscall.read(fd_, reinterpret_cast<char *>(hdr_),
                                sizeof(ELF32_Ehdr)) != sizeof(ELF32_Ehdr))
   {
+    lock_.release();
     delete hdr_;
+    hdr_ = 0;
     return false;
   }
 
@@ -294,7 +296,9 @@ bool Loader::loadExecutableAndInitProcess()
   
   if(!phdrs_)
   {
+    lock_.release();
     delete hdr_;
+    hdr_ = 0;
     return false;
   }
 
@@ -306,6 +310,7 @@ bool Loader::loadExecutableAndInitProcess()
     if(!phdrs_[k] ||  vfs_syscall.read(fd_, reinterpret_cast<char *>(phdrs_[k]),
                                        sizeof(ELF32_Phdr)) != sizeof(ELF32_Phdr))
     {
+      lock_.release();
       do
       {
         delete phdrs_[k];
@@ -313,10 +318,16 @@ bool Loader::loadExecutableAndInitProcess()
       while(k--);
       
       delete[] phdrs_;
+      phdrs_ = 0;
       delete hdr_;
+      hdr_ = 0;
       return false;
     }
   }
+
+  lock_.release();
+
+  initUserspaceAddressSpace();
 
   debug ( LOADER,"loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr_->e_entry, hdr_->e_phnum );
   if ( isDebugEnabled ( LOADER ) )
@@ -399,8 +410,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
         //its VERY MUCH more efficient to only search the bytes, save them in the array byte_map,
         //and read ONCE from the executable; its very expensive to read every byte single from harddisk
         //(we have to read a full zone) -> for this we also need the max- and min-byte from file we have to load
-        Pair<uint32, uint32> temp(i, h->p_offset + load_byte_from_address - h->p_paddr);
-        byte_map.appendElement(temp);
+        byte_map.appendElement(Pair<uint32, uint32>(i, h->p_offset + load_byte_from_address - h->p_paddr));
         ++written;
         ++found;
       }
@@ -433,9 +443,15 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   
   //read once the bytes we need (and a few more, probably, depends on elf-format)
   char *buffer = new char[max_value - min_value + 1];
+
+  lock_.acquire();
+
   vfs_syscall.lseek(fd_, min_value, File::SEEK_SET);
+  int32 bytes_read = vfs_syscall.read(fd_, buffer, max_value - min_value + 1);
+
+  lock_.release();
   
-  if(vfs_syscall.read(fd_, buffer, max_value - min_value + 1) != static_cast<int32>(max_value - min_value + 1))
+  if(bytes_read != static_cast<int32>(max_value - min_value + 1))
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
     Syscall::exit ( 9999 );

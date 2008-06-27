@@ -87,7 +87,7 @@ int32 Dentry::childRemove ( Dentry *child_dentry )
 
 void Dentry::setName ( const char* name )
 {
-  kfree(d_name_);
+  //kfree(d_name_);
   uint32 name_len = strlen ( name ) + 1;
   d_name_ = ( char* ) kmalloc ( name_len * sizeof ( char ) );
 
