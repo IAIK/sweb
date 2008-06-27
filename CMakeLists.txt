@@ -4,6 +4,8 @@ project(sweb)
 SET (ARCH x86)
 
 
+cmake_minimum_required(VERSION 2.4)
+
 set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
 set (ASM_WILDCARDS *.s)
 set (INFO_FILE info.file)
@@ -12,13 +14,14 @@ set (INFO_FILE info.file)
 find_program(NASM_EXECUTABLE nasm)
 find_program(LD_EXECUTABLE ld)
 find_program(AR_EXECUTABLE ar)
+find_program(DOXYGEN_EXECUTABLE doxygen)
 
 #Comment in to enable verbose compile output
 #set(CMAKE_VERBOSE_MAKEFILE true) 
 
 #Set Compiler and compiterflags
-set(CMAKE_CXX_COMPILER g++)
-set(CMAKE_C_COMPILER gcc)
+#set(CMAKE_CXX_COMPILER g++)
+#set(CMAKE_C_COMPILER gcc)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -g3 -gstabs -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector -Wall -Wextra -nostdlib -nostartfiles -nodefaultlibs")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb -O0  -g3 -gstabs -Wall -W -nostdinc -fno-builtin -nostdlib -fno-exceptions -fno-stack-protector -Wall -Wextra  -nostdlib -nostartfiles -nodefaultlibs")
 
@@ -231,14 +234,78 @@ add_custom_target(remove_cmake
  		  COMMAND rm -r bin/*
 		)
 
-#TODO
+#Checks for assignment and group parameter
+add_custom_command(OUTPUT submit_check_param
+		#Check for assignment parameter
+		COMMAND if [ '$(assignment)' = '' ]\; then
+				echo \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\"\;
+				echo \"assignment not specified\\n\\n\"\;
+				exit 1\;
+			fi\;
+
+		COMMAND if [ '$(group)' = '' ]\; then
+				echo \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\"\;
+				echo \"group not specified\\n\\n\"\;
+				exit 1\;
+			fi\;
+		COMMENT "Checking for assignment and group parameter"
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+		)
+
+
+#Checks for clean hg
+add_custom_command(OUTPUT submit_check_hg
+		DEPENDS submit_check_param
+		#Check for modified uncommited files
+		COMMAND if [ `hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l` -ne 0 ]\; then
+			echo \"\\n\\nWARNING: you have modified files in your working directory\"\;
+			echo \"WARNING: are you sure you don't want to submit your latest changes ?\"\;
+			echo \"WARNING: maybe you forgot \"hg commit\" ?\\n\\n\"\;
+			fi\;
+
+		COMMAND if [ `hg status -u | grep -i -E \"\(CMakeLists.txt|\\.c|\\.cc|\\.h|\\.cpp|\\.s|\\.tcpp\)$$\" | wc -l` -ne 0 ]\; then
+			echo \"\\n\\nWARNING: you have untracked source files in your working direcory !\"\;
+			echo \"WARNING: are you sure you don't want to submit those ?\"\;
+			echo \"WARNING: maybe you forgot \"hg status\" and then \"hg add\" ?\\n\\n\"\;
+			fi\;
+		COMMENT "Checking for clean hg"
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+		)
+
+#Build submit archive from hg tip
 add_custom_target(submit
-		COMMAND echo $(assignment) $(group)
+		DEPENDS submit_check_param submit_check_hg
+		COMMAND SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
+			hg archive -r tip -t tbz2  -X \"utils/\" -X \"images/\" -X \"bin/\" \"`echo $$SUBMIT_FILE`\" \;
+			echo \"\\n**********************************************************\"\;
+			echo \"Created: $$SUBMIT_FILE\" \;
+			echo \"Please Test with: tar tjfv \"$$SUBMIT_FILE\"  |less\"\;
+			echo \"Make sure you didn't forget to 'hg add' new files !\"\;
+			echo \"**********************************************************\\n\"\;
+			if [ `ls -s -k \"$$SUBMIT_FILE\" | cut -f1 -d' '` -gt 600 ]\; then
+				echo \"\\nWARNING: The tar file created is unusually large !\"\;
+				echo \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\"\;
+			fi\;
+		COMMENT "Building submit archive (hg)"
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-#TODO
+#Build submit archive from dir
 add_custom_target(submit-nohg
-		COMMAND echo $(assignment) $(group)
+		DEPENDS submit_check_param
+		COMMAND SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
+			find -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
+			tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.hg\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
+			echo \"\\n**********************************************************\"\;
+			echo \"Created: $$SUBMIT_FILE\" \;
+			echo \"Please Test with: tar tjfv \"$$SUBMIT_FILE\"  |less\"\;
+			echo \"**********************************************************\\n\"\;
+			if [ `ls -s -k \"$$SUBMIT_FILE\" | cut -f1 -d' '` -gt 600 ]\; then
+				echo \"\\nWARNING: The tar file created is unusually large !\"\;
+				echo \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\"\;
+			fi\;
+		COMMENT "Building submit archive (nohg)"
+		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
 #Outputs some information
@@ -261,4 +328,10 @@ add_custom_target(info
 		COMMAND env >> ${INFO_FILE}
 		COMMAND cat ${INFO_FILE}
 		COMMENT "Building info file"
+		)
+
+#Builds the doxygen documentation
+add_custom_target(doxygen
+		COMMAND ${DOXYGEN_EXECUTABLE} \"./doc/sweb.dox\"
+		COMMENT "Building SWEB documentation"
 		)
