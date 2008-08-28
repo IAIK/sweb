@@ -124,4 +124,28 @@ void *memset(void *position, int value, size_t number_of_bytes)
   return (void *) byte_block;
 }
 
+/**
+ * Gets the length of the null terminated string
+ *
+ * @param str String
+ * @return length of String
+ */
+size_t strlen(const char* str) 
+{
+	size_t count=0;
+	while(str[count] != '\0')
+		count++;
+	return count;
+}
 
+/**
+ * Compares the 2 Strings, default implementation
+ */
+int strcmp (const char * l, const char * r)
+{
+ 
+    for(; *l == *r; ++l, ++r)
+        if(*l == 0)
+            return 0;
+    return *(unsigned char *)l < *(unsigned char *)r ? -1 : 1;
+}

@@ -1,8 +1,6 @@
 project(sweb)
 
-#Architecture to use: x86, xen
-SET (ARCH x86)
-
+include(MakeOptions)
 
 cmake_minimum_required(VERSION 2.4)
 
@@ -16,8 +14,15 @@ find_program(LD_EXECUTABLE ld)
 find_program(AR_EXECUTABLE ar)
 find_program(DOXYGEN_EXECUTABLE doxygen)
 
-#Comment in to enable verbose compile output
-#set(CMAKE_VERBOSE_MAKEFILE true) 
+
+if(NOT BIN_DIR_PREFIX)
+	message(FATAL_ERROR "BIN_DIR_PREFIX not set, check MakeOptions file")
+endif(NOT BIN_DIR_PREFIX)
+
+if(NOT BIN_DIR_NAME)
+	message(FATAL_ERROR "BIN_DIR_NAME not set, check MakeOptions file")
+endif(NOT BIN_DIR_NAME)
+
 
 #Set Compiler and compiterflags
 #set(CMAKE_CXX_COMPILER g++)
@@ -35,8 +40,8 @@ set(LIBRARY_FILENAMES)
 set(ENV{LIBRARY_NAMES})
 
 #Initialize CMake output directories
-set(CMAKE_BINARY_DIR "bin") 
-set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/bin")
+set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}") 
+set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
@@ -58,7 +63,7 @@ set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 
 #Build the Linker command
 set(LD_ARGUMENT -melf_i386)
-set(LD_ARGUMENT ${LD_ARGUMENT} -g -u entry -T ../../arch/x86/utils/kernel-ld-script.ld)
+set(LD_ARGUMENT ${LD_ARGUMENT} -g -u entry -T ${CMAKE_SOURCE_DIR}/arch/x86/utils/kernel-ld-script.ld)
 set(LD_ARGUMENT ${LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
 set(LD_ARGUMENT ${LD_ARGUMENT} -Map ${PROJECT_BINARY_DIR}/kernel.map)
 
@@ -112,7 +117,7 @@ add_custom_command (OUTPUT temp_dir
  #Custom Command: Outputs empty ext2 disk image                   
  add_custom_command (OUTPUT hdd_image
                      DEPENDS temp_dir
-                     COMMAND if [ ! -f ./SWEB-flat.vmdk ]; then cp "../images/SWEB-flat.vmdk.gz" "." \; gzip -df "./SWEB-flat.vmdk.gz" \; fi
+                     COMMAND if [ ! -f ./SWEB-flat.vmdk ]; then cp "${CMAKE_SOURCE_DIR}/images/SWEB-flat.vmdk.gz" "." \; gzip -df "./SWEB-flat.vmdk.gz" \; fi
                      WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
                      COMMENT "Unpacking disk image..."
                      )
@@ -122,13 +127,13 @@ add_custom_command (OUTPUT temp_dir
 add_custom_command (OUTPUT helper_files
                     DEPENDS hdd_image
 		    COMMAND echo ${PROJECT_BINARY_DIR}
-                    COMMAND cp "../images/menu.lst.hda" "./temp/boot/grub/menu.lst"
-                    COMMAND	cp "../images/SWEB.vmdk" "./"
-	            COMMAND cp "../images/sweb.vmx" "./"
+                    COMMAND cp "${CMAKE_SOURCE_DIR}/images/menu.lst.hda" "./temp/boot/grub/menu.lst"
+                    COMMAND	cp "${CMAKE_SOURCE_DIR}/images/SWEB.vmdk" "./"
+	            COMMAND cp "${CMAKE_SOURCE_DIR}/images/sweb.vmx" "./"
                     #COMMAND	cp "../images/SWEB-minix.vmdk" "./"
                     #COMMAND cp "../images/SWEB-flat-minix.vmdk.gz" "./" 
 	            #COMMAND gzip -df "./SWEB-flat-minix.vmdk.gz"
-                    COMMAND cp "../images/nvram" "./"                   
+                    COMMAND cp "${CMAKE_SOURCE_DIR}/images/nvram" "./"
                     
                     
                     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -169,7 +174,7 @@ add_custom_target (userspace
 #Custom target: make bochs
 #Run bochs in non debugging mode
 add_custom_target(bochs
-                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc
+                  COMMAND 	bochs -q -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'
                   COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc"
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
                   )
@@ -177,7 +182,7 @@ add_custom_target(bochs
 #Custom target: make bochsgdb
 #Run bochs in debugging mode
 add_custom_target(bochsgdb
-                  COMMAND 	bochs -q -f ../utils/bochs/bochsrc "gdbstub: enabled=1, port=1234"
+                  COMMAND 	bochs -q -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc' "gdbstub: enabled=1, port=1234"
                   COMMENT "Going to bochs -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"gdbstub: enabled=1, port=1234\""
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
                   )
@@ -201,7 +206,7 @@ add_custom_target(qemugdb
 #Custom target: make runddd
 #Run ddd with some presets
 add_custom_target(runddd
-                  COMMAND ddd -cd ${PROJECT_BINARY_DIR}/../ -command ${PROJECT_BINARY_DIR}/../utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
+                  COMMAND ddd -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
                   COMMENT "Going to ddd"
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
 		)
@@ -209,7 +214,7 @@ add_custom_target(runddd
 #Custom target: make rungdb
 #Run gdb with some presets
 add_custom_target(rungdb
-                  COMMAND gdb -cd ${PROJECT_BINARY_DIR}/../ -command ${PROJECT_BINARY_DIR}/../utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
+                  COMMAND gdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
                   COMMENT "Going to ddd"
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR} 
                   )
@@ -221,7 +226,7 @@ add_custom_target(mrproper
 		  COMMAND find -name 'CMakeCache.txt' -exec rm {} +;
 		  COMMAND find -name 'CMakeFiles' -exec rm -f -r {} +;
 		  COMMAND find -name 'cmake_install.cmake' -exec rm -f -r {} +;
- 		  COMMAND rm -r bin/*
+ 		  COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
 		  COMMAND cmake .
 		 )
 
@@ -231,7 +236,7 @@ add_custom_target(remove_cmake
 		  COMMAND find -name 'CMakeCache.txt' -exec rm {} +;
 		  COMMAND find -name 'CMakeFiles' -exec rm -f -r {} +;
 		  COMMAND find -name 'cmake_install.cmake' -exec rm -f -r {} +;
- 		  COMMAND rm -r bin/*
+ 		  COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
 		)
 
 #Checks for assignment and group parameter

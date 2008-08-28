@@ -88,6 +88,19 @@ extern int memcpy(void *destination, const void *source,
  */
 extern void *memset(void *position, int value, size_t number_of_bytes);
 
+/**
+ * Gets the length of the null terminated string
+ *
+ * @param str String
+ * @return length of String
+ */
+extern size_t strlen(const char* str);
+
+/**
+ * Compares the 2 Strings, default implementation
+ */
+extern int strcmp (const char * l, const char * r);
+
 #endif // string_h___
 
 
