@@ -1,22 +1,68 @@
 #include "unistd.h"
 #include "stdio.h"
+#include "string.h"
 
 int running;
 int exit_code;
+
+char command[256];
+char args[10][256];
 
 void handle_command(char* buffer,int buffer_size)
 {
 	int c=0;
 	int num=0;
-	if (buffer[0]=='l' && buffer[1] =='s' && (buffer[2] == '\n' ||buffer[2] == '\r'|| buffer[2] == ' '))
+	int argsCount = -1;
+	int lastIndex = 0;
+	int pid;
+
+	for(c=0; c<buffer_size; c++)
+	{
+		if(argsCount > 10)
+		{
+			argsCount = 10;
+			printf("Argument Count is limited to 10 (no dynamic memory allocation) all other arguments will be ignores\n");
+			break;
+		}
+		if(buffer[c] == '\r' || buffer[c] == '\n' || buffer[c] == ' ')
+		{
+			if(argsCount == -1)
+			{
+				memcpy(command, buffer + lastIndex, c - lastIndex);
+				command[c - lastIndex] = 0;
+			}
+			else
+			{
+				memcpy(args[argsCount], buffer + lastIndex, c - lastIndex);
+				args[argsCount][c - lastIndex] = 0;
+			}
+			argsCount++;
+			lastIndex = c + 1;
+			
+			
+		}
+	}
+
+
+	/*
+	printf("Command: '%s' len: %d\n", command, strlen(command));
+
+	for(c=0; c<argsCount; c++)
+	{
+		printf("Argument #%d: '%s' len: %d\n", c, args[c], strlen(args[c]));
+	}
+	*/
+
+
+	if (strcmp(command, "ls") == 0)
 		printf("Sorry, Filesystem Syscalls not implemented yet\n");
-	else if (buffer[0] == 'p' && buffer[1] == 's' && (buffer[2] == '\n' ||buffer[2] == '\r'|| buffer[2] == ' '))
+	else if (strcmp(command, "ps") == 0)
 		printf("Sorry, Threading System Syscalls not Implemented,\nuse F12 to print a list of Threads to Bochs\n");
 	else if (buffer[0]=='h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
 	{
 		printf("Command Help:\nhelp                  yes, here we are\nexit [exit_code]      is really the only command that does something right now\nls                    does nothing\nps                    does nothing as well\ntest <num> [&& cmd]   evaluates integer x==0:false, x<>0:true, default: false\n\n");
 	}
-	else if (buffer[0]=='t' && buffer[1] == 'e' && buffer[2] == 's' && buffer[3] == 't')
+	else if (strcmp(command, "test") == 0)
 	{
 		c=4;
 		while (buffer[c] ==' ')
@@ -40,7 +86,7 @@ void handle_command(char* buffer,int buffer_size)
 					c++;
 		}
 	}
-	else if (buffer[0]=='e' && buffer[1] == 'x' && buffer[2] == 'i' && buffer[3] == 't')
+	else if (strcmp(command, "exit") == 0)
 	{
 		c=4;
 		while (buffer[c] ==' ')
@@ -50,7 +96,24 @@ void handle_command(char* buffer,int buffer_size)
 		running=0;
 	}
 	else
-		printf("Command not understood\n");
+	{
+		pid = fork();
+		printf("NewPid: %d\n", pid);
+
+		if(pid == 0)
+		{
+			//child process, replace with new image
+			execv(command);	
+			printf("Command not understood\n");
+		}
+		else
+		{
+			//wait for child process
+			printf("Join on child process\n");
+		}
+
+		
+	}
 }
 
 int main(int argc, char *argv[]) 
