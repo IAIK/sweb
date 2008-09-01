@@ -337,6 +337,9 @@ add_custom_target(info
 
 #Builds the doxygen documentation
 add_custom_target(doxygen
-		COMMAND ${DOXYGEN_EXECUTABLE} \"./doc/sweb.dox\"
+		COMMAND cp \"${PROJECT_SOURCE_DIR}/doc/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
+		COMMAND sed -i 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
+		COMMAND ${DOXYGEN_EXECUTABLE} \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
+		#COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
 		COMMENT "Building SWEB documentation"
 		)

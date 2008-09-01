@@ -2,10 +2,13 @@
 SET (ARCH x86)
 
 # Added before the BIN_DIR_NAME (e.g. "../")
-SET (BIN_DIR_PREFIX "/")
+SET (BIN_DIR_PREFIX "../")
 
 # Name of the Binary dir (e.g. sweb-bin)
-SET (BIN_DIR_NAME "bin")
+SET (BIN_DIR_NAME "sweb-bin")
+
+# Doxygen output directory
+SET (DOC_DIR "..\\/sweb-docs")
 
 #Comment in to enable verbose compile output
-set(CMAKE_VERBOSE_MAKEFILE false)
+set(CMAKE_VERBOSE_MAKEFILE true)

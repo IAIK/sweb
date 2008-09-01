@@ -5,7 +5,7 @@
 #---------------------------------------------------------------------------
 PROJECT_NAME           = SWEB
 PROJECT_NUMBER         = 
-OUTPUT_DIRECTORY       = ./doc/
+OUTPUT_DIRECTORY       = $[DOC_OUTPUT_DIR]
 CREATE_SUBDIRS         = YES
 OUTPUT_LANGUAGE        = English
 USE_WINDOWS_ENCODING   = NO
