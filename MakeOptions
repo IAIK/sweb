@@ -8,7 +8,14 @@ SET (BIN_DIR_PREFIX "../")
 SET (BIN_DIR_NAME "sweb-bin")
 
 # Doxygen output directory
+# Result must include escaping characters e.g. "..\\/sweb-docs"
 SET (DOC_DIR "..\\/sweb-docs")
 
-#Comment in to enable verbose compile output
-set(CMAKE_VERBOSE_MAKEFILE true)
+# Path to the bochs executable to use (patched bochs at different location)
+SET (BOCHS_PATH "bochs")
+#SET (BOCHS_PATH "/opt/sweb-bochs/bin/bochs")
+
+#'true' to enable verbose compile output
+set(CMAKE_VERBOSE_MAKEFILE false)
+
+
