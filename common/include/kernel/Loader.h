@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "Scheduler.h"
 #include "Mutex.h"
+#include "Array.h"
 
 
 struct sELF32_Phdr;
@@ -63,17 +64,22 @@ class Loader
      */
     void loadOnePageSafeButSlow ( uint32 virtual_address );
 
-    //uint8 *getFileImagePtr() {return file_image_;}
-
     uint32 page_dir_page_;
+
   private:
 
-    //uint8 *file_image_;
+    /**
+     *reads ELF-headers from the executable
+     * @return true if this was successful, false otherwise
+     */
+    bool readHeaders();
+
+
     uint32 fd_;
     Thread *thread_;
     ELF32_Ehdr *hdr_;
-    ELF32_Phdr **phdrs_;
-    Mutex lock_;
+    Array<ELF32_Phdr*> phdrs_;
+    Mutex file_lock_;
 };
 
 #endif

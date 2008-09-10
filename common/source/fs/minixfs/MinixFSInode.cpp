@@ -440,7 +440,18 @@ void MinixFSInode::loadChildren()
       {
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
         bool is_already_loaded = false;
+
         Inode* inode = ((MinixFSSuperblock *)i_superblock_)->getInode( inode_index, is_already_loaded );
+
+        if(!inode)
+        {
+          kprintfd("MinixFSInode::loadChildren: inode nr. %d not set in bitmap, but occurs in directory-entry; "
+                   "maybe filesystem was not properly unmounted last time\n", inode_index);
+          char ch = 0;
+          writeDentry(inode_index, 0, &ch);
+          continue;
+        }
+
         uint32 offset = 0;
         char *name = new char[MAX_NAME_LENGTH];
         char ch = '\0';

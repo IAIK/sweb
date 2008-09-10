@@ -9,38 +9,6 @@
 #include "Mutex.h"
 
 /**
- * @class MountMinixAndStartUserProgramsThread
- * Helper thread which mounts the second partition and starts the
- * selected userprograms on it
- */
-class MountMinixAndStartUserProgramsThread : public Thread
-{
-  public:
-    /**
-     * Constructor
-     * @param root_fs_info the FileSystemInfo
-     */
-    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info, char const *progs[] ) :
-      Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ), progs_(progs)
-    {
-    }
-
-    /**
-     * Mounts the Minix-Partition with user-programs and creates processes
-     */
-    virtual void Run();
-
-    static void process_exit();
-
-  private:
-
-    char const **progs_;
-    static uint32 prog_counter_;
-    static Mutex lock_;
-    static Thread *unmount_thread_;
-};
-
-/**
  * @class UserProcess
  * Thread used to execute a file in minixfs.
  * NOTE: this process is only ONE thread; if you want to implement mulithreading,

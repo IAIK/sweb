@@ -117,7 +117,13 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loade
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
   //std::cout << "getInode(" << i_num << ") called!" << std::endl;
-  assert ( storage_manager_->isInodeSet ( i_num ) );
+  if(!storage_manager_->isInodeSet ( i_num ))
+  {
+    if(i_num == 1)
+      assert ( storage_manager_->isInodeSet ( 1 ) );
+
+    return 0;
+  }
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
   uint32 inode_block_num = inodes_start + ( i_num - 1 ) / INODES_PER_BLOCK;
   MinixFSInode *inode = 0;

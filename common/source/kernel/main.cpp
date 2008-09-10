@@ -54,59 +54,44 @@ extern void* kernel_end_address;
 extern "C" void startup();
 
 /**
- * @class UserThread
- * Thread used to execute a file in pseudofs.
+ * @class MountMinixAndStartUserProgramsThread
+ * Helper thread which mounts the second partition and starts the
+ * selected userprograms on it
  */
-/*class UserThread : public Thread
+class MountMinixAndStartUserProgramsThread : public Thread
 {
-  public:*/
+  public:
     /**
      * Constructor
-     * @param pseudofs_filename filename of the file in pseudofs to execute
-     * @param terminal_number the terminal to run in (default 0)
+     * @param root_fs_info the FileSystemInfo
      */
-    /*UserThread ( const char *pseudofs_filename, FileSystemInfo *fs_info, uint32 terminal_number=0 ) : Thread ( fs_info, pseudofs_filename )
+    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info, char const *progs[] ) :
+      Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ), progs_(progs)
     {
-      kprintfd ( "UserThread::ctor: starting %s\n",pseudofs_filename );
-      uint8 *elf_data = PseudoFS::getInstance()->getFilePtr ( pseudofs_filename );
-      if ( elf_data )
-      {
-        loader_= new Loader ( elf_data,this );
-        loader_->loadExecutableAndInitProcess();
-        run_me_=true;
-        terminal_number_=terminal_number;
-      }
-      else
-      {
-        run_me_=false;
-      }
-      kprintf ( "UserThread::ctor: Done loading %s\n",pseudofs_filename );
-      kprintfd ( "UserThread::ctor: Done loading %s\n",pseudofs_filename );
-    }*/
+    }
 
     /**
-     * Starts the thread
+     * Mounts the Minix-Partition with user-programs and creates processes
      */
-    /*virtual void Run()
+    virtual void Run()
     {
-      if ( run_me_ )
-        for ( ;; )
-        {
-          if ( main_console->getTerminal ( terminal_number_ ) )
-            this->setTerminal ( main_console->getTerminal ( terminal_number_ ) );
-          kprintf ( "UserThread:Run: %x  %d:%s Going to user, expect page fault\n",this,this->getPID(),this->getName() );
-          this->switch_to_userspace_ = 1;
-          Scheduler::instance()->yield();
-          //should not reach
-        }
-      else
-        currentThread->kill();
+      if(!progs_)
+        return;
+
+      vfs_syscall.mkdir ( "/user_progs", 0 );
+      vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
+
+      for(uint32 i=0; progs_[i]; i++)
+        Scheduler::instance()->addNewThread (new UserProcess ( progs_[i], new FileSystemInfo ( *fs_info_ )) );
+
+      state_ = ToBeDestroyed;
+      Scheduler::instance()->yield();
     }
 
   private:
-    bool run_me_;
-    uint32 terminal_number_;
-};*/
+
+    char const **progs_;
+};
 
 #include "TestingThreads.h"
 
