@@ -1,4 +1,4 @@
-include_directories(../../include/fs/devicefs)
+include_directories(../../../include/fs/devicefs)
 
 FILE(GLOB common_fs_devicefs_SOURCES ${SOURCE_WILDCARDS})
 

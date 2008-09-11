@@ -1,4 +1,4 @@
-include_directories(../../include/console)
+include_directories(../../../include/fs/minixfs)
 
 FILE(GLOB common_fs_minixfs_SOURCES ${SOURCE_WILDCARDS})
 

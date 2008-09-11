@@ -1,4 +1,4 @@
-include_directories(../../include/fs/pseudofs)
+include_directories(../../../include/fs/pseudofs)
 
 FILE(GLOB common_fs_pseudofs_SOURCES ${SOURCE_WILDCARDS})
 

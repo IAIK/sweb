@@ -2,17 +2,17 @@
  * @file MinixFSInode.cpp
  */
 
-#include "fs/minixfs/MinixFSInode.h"
+#include "MinixFSInode.h"
 
-#include "mm/kmalloc.h"
-#include "util/string.h"
+#include "kmalloc.h"
+#include "string.h"
 #include "assert.h"
-#include "fs/minixfs/MinixFSSuperblock.h"
-#include "fs/minixfs/MinixFSFile.h"
-#include "fs/Dentry.h"
+#include "MinixFSSuperblock.h"
+#include "MinixFSFile.h"
+#include "Dentry.h"
 #include "arch_bd_manager.h"
 
-#include "console/kprintf.h"
+#include "kprintf.h"
 
 #define ERROR_DNE "Error: the dentry does not exist.\n"
 #define ERROR_DU  "Error: inode is used.\n"

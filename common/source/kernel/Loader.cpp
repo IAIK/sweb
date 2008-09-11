@@ -296,6 +296,7 @@ bool Loader::readHeaders()
     if(!phdrs_[k] || vfs_syscall.read(fd_, reinterpret_cast<char*>(phdrs_[k]),
                                       sizeof(ELF32_Phdr)) != sizeof(ELF32_Phdr))
     {
+      phdrs_.pushBack(0); //if read failed -> we need a zero for deleting in dtor
       return false;
     }
   }
