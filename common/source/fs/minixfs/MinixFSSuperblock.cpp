@@ -385,7 +385,7 @@ void MinixFSSuperblock::readBlocks ( uint16 block, uint32 num_blocks, Buffer* bu
   BDRequest *bd = new BDRequest ( s_dev_, BDRequest::BD_READ, block, num_blocks, buffer->getBuffer() );
   BDManager::getInstance()->getDeviceByNumber ( s_dev_ )->addRequest ( bd );
   uint32 jiffies = 0;
-  while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+  while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 ) ;
   if ( bd->getStatus() != BDRequest::BD_DONE )
     assert ( false );
   delete bd;
@@ -405,7 +405,7 @@ void MinixFSSuperblock::writeBlocks ( uint16 block, uint32 num_blocks, Buffer* b
   BDRequest *bd = new BDRequest ( s_dev_, BDRequest::BD_WRITE, block, num_blocks, buffer->getBuffer() );
   BDManager::getInstance()->getDeviceByNumber ( s_dev_ )->addRequest ( bd );
   uint32 jiffies = 0;
-  while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+  while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 ) ;
   if ( bd->getStatus() != BDRequest::BD_DONE )
     assert ( false );
   delete bd;

@@ -340,9 +340,12 @@ add_custom_target(doxygen
 		COMMAND cp \"${PROJECT_SOURCE_DIR}/doc/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
 		COMMAND sed -i 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
 		COMMAND ${DOXYGEN_EXECUTABLE} \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
-		#COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
+		COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
 		COMMENT "Building SWEB documentation"
 		)
+
+#add_custom_target(config
+#		COMMAND 
 
 #Outputs help on build targets
 add_custom_target(help

@@ -56,7 +56,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
     }
     writeLine2Bochs((uint8*) line_string);
     writeChar2Bochs((uint8) '\n');
-    for (;;);
+    for ( ; ;) ;
   }
 }
 

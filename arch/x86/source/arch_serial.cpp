@@ -116,7 +116,7 @@ int32 SerialPort::writeData(int32 offset, int32 num_bytes, const char*buffer)
     
   uint32 jiffies = 0, bytes_written = 0;
   
-  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 50000 );
+  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 50000 ) ;
     
   if( jiffies == 50000 )
   {
@@ -130,7 +130,7 @@ int32 SerialPort::writeData(int32 offset, int32 num_bytes, const char*buffer)
   {    
     jiffies = 0;
          
-    while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < 50000 );
+    while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < 50000 ) ;
     
     if( jiffies == 50000 ) // TIMEOUT
     {

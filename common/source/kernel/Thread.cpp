@@ -18,7 +18,7 @@ static void ThreadStartHack()
   currentThread->Run();
   currentThread->kill();
   debug ( THREAD,"ThreadStartHack: Panic, thread couldn't be killed\n" );
-  for ( ;; );
+  for ( ;; ) ;
 }
 
 Thread::Thread(const char *name) :

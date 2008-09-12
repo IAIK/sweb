@@ -301,6 +301,7 @@ display_library: x
 # You can also use the environment variable $BXSHARE to specify the
 # location of the BIOS.
 #=======================================================================
+
 romimage: file=$BXSHARE/BIOS-bochs-latest
 #romimage: file=bios/BIOS-bochs-2-processors, address=0xf0000
 #romimage: file=bios/BIOS-bochs-4-processors, address=0xf0000
@@ -341,6 +342,7 @@ megs: 8
 # VGAROMIMAGE
 # You now need to load a VGA ROM BIOS into C0000.
 #=======================================================================
+
 vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: $BXSHARE/VGABIOS-lgpl-latest
 #vgaromimage: bios/VGABIOS-elpin-2.40

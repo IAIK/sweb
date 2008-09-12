@@ -72,7 +72,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
    addRequest ( bd );
 
    while( bd->getStatus() == BDRequest::BD_QUEUED &&
-          jiffies++ < 50000 );
+          jiffies++ < 50000 ) ;
 
    if( bd->getStatus() != BDRequest::BD_DONE )
    {
@@ -116,7 +116,7 @@ int32 BDVirtualDevice::writeData(int32 offset, int32 size, const char *buffer)
    addRequest ( bd );
 
    while( bd->getStatus() == BDRequest::BD_QUEUED && 
-          jiffies++ < 50000 );
+          jiffies++ < 50000 ) ;
 
    BDRequest::BD_RESULT stat = bd->getStatus();
 

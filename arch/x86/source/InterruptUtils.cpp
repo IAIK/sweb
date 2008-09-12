@@ -436,7 +436,7 @@ extern "C" void irqHandler_0()
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd_nosleep("irq0: Panic in int 0 handler\n");
-      for(;;);
+      for( ; ; ) ;
   }
 }
 
@@ -455,7 +455,7 @@ extern "C" void irqHandler_65()
 
     default:
       kprintfd_nosleep("irq65: Panic in int 65 handler\n");
-      for(;;);
+      for( ; ; ) ;
   }
 }
 

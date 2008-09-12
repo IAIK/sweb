@@ -5,7 +5,7 @@
 #include "MinixFSInode.h"
 
 //#include "mm/kmalloc.h"
-//#include "string.h"
+#include "string.h"
 #include <iostream>
 #include <assert.h>
 #include "MinixFSSuperblock.h"

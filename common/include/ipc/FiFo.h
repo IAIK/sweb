@@ -121,6 +121,7 @@ void FiFo<T>::put ( T c )
 {
   input_buffer_lock_->acquire();
   if ( ib_write_pos_ == ib_read_pos_ )
+  {
     if ( flags_ & FIFO_NOBLOCK_PUT )
     {
       if ( flags_ & FIFO_NOBLOCK_PUT_OVERWRITE_OLD )
@@ -134,6 +135,7 @@ void FiFo<T>::put ( T c )
     else
       while ( ib_write_pos_ == ib_read_pos_ )
         space_to_write_->wait();
+  }
   something_to_read_->signal();
   input_buffer_[ib_write_pos_++]=c;
   ib_write_pos_ %= input_buffer_size_;

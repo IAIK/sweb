@@ -145,7 +145,7 @@ class SerialThread : public Thread
 
       kprintf ( "SerialThread::Run: Done with serial ports\n" );
       //currentThread->kill();
-      while ( 1 );
+      while ( 1 ) ;
     };
 
 };
@@ -197,7 +197,7 @@ class BDThread : public Thread
       kprintf ( " FINISHED BDThread" );
 
       //currentThread->kill();
-      while ( 1 );
+      while ( 1 ) ;
     };
 
 };
@@ -284,7 +284,7 @@ class BDThread2 : public Thread
       uint32 jiffies = 0;
       //actually we don't know if this request is blocking or not. Just to be
       //on the safe side, check if the output is valid by now.
-      while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 );
+      while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 ) ;
 
       if ( bd->getStatus() != BDRequest::BD_DONE )
       {
@@ -305,7 +305,7 @@ class BDThread2 : public Thread
       kprintf ( " FINISHED BDThread2" );
 
 //currentThread->kill();
-      while ( 1 );
+      while ( 1 ) ;
     };
 
 };
@@ -352,7 +352,7 @@ class DeviceFSMountingThread : public Thread
 
       vfs_syscall.write ( test02_fd, buffer, 10 );
       vfs_syscall.write ( test02_fd, buffer, 15 ); // this is a BIG NO NO !
-      while ( 1 );
+      while ( 1 ) ;
     }
 };
 
