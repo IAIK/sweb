@@ -295,7 +295,8 @@ add_custom_command(OUTPUT submit_check_hg
 #Build submit archive from hg tip
 add_custom_target(submit
 		DEPENDS submit_check_param submit_check_hg
-		COMMAND SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
+		COMMAND printf \"\"\;
+			SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
 			hg archive -r tip -t tbz2  -X \"utils/\" -X \"images/\" -X \"bin/\" \"`echo $$SUBMIT_FILE`\" \;
 			printf \"\\n**********************************************************\\n\"\;
 			printf \"Created: $$SUBMIT_FILE\\n\" \;
@@ -313,7 +314,8 @@ add_custom_target(submit
 #Build submit archive from dir
 add_custom_target(submit-nohg
 		DEPENDS submit_check_param
-		COMMAND SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
+		COMMAND printf \"\"\;
+			SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
 			find -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
 			tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.hg\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
 			printf \"\\n**********************************************************\\n\"\;
