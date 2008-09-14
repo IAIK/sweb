@@ -126,7 +126,6 @@ add_custom_command (OUTPUT temp_dir
 #Custom Command: Writes helper files to temp file structure
 add_custom_command (OUTPUT helper_files
                     DEPENDS hdd_image
-		    COMMAND echo ${PROJECT_BINARY_DIR}
                     COMMAND cp "${CMAKE_SOURCE_DIR}/images/menu.lst.hda" "./temp/boot/grub/menu.lst"
                     COMMAND	cp "${CMAKE_SOURCE_DIR}/images/SWEB.vmdk" "./"
 	            COMMAND cp "${CMAKE_SOURCE_DIR}/images/sweb.vmx" "./"
@@ -174,9 +173,9 @@ add_custom_target (userspace
 #Checks for bochs configuration and runs 'make bochsconfig' if configuration does not exist
 add_custom_command(OUTPUT check_for_bochs_config
 		COMMAND if [ -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc' ]\; then
-				echo \"\\nBochs configuration already exists, skipping 'make bochsconfig'\\n\"\;
+				printf \"\\nBochs configuration already exists, skipping 'make bochsconfig'\\n\\n\"\;
 			else
-				echo \"\\nBochs configuration does not exist, running 'make bochsconfig'\\n\"\;
+				printf \"\\nBochs configuration does not exist, running 'make bochsconfig'\\n\\n\"\;
 				make bochsconfig\;
 			fi\;
 	
@@ -259,14 +258,14 @@ add_custom_target(remove_cmake
 add_custom_command(OUTPUT submit_check_param
 		#Check for assignment parameter
 		COMMAND if [ '$(assignment)' = '' ]\; then
-				echo \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\"\;
-				echo \"assignment not specified\\n\\n\"\;
+				printf \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\\n\"\;
+				printf \"assignment not specified\\n\\n\\n\"\;
 				exit 1\;
 			fi\;
 
 		COMMAND if [ '$(group)' = '' ]\; then
-				echo \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\"\;
-				echo \"group not specified\\n\\n\"\;
+				printf \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\\n\"\;
+				printf \"group not specified\\n\\n\\n\"\;
 				exit 1\;
 			fi\;
 		COMMENT "Checking for assignment and group parameter"
@@ -279,15 +278,15 @@ add_custom_command(OUTPUT submit_check_hg
 		DEPENDS submit_check_param
 		#Check for modified uncommited files
 		COMMAND if [ `hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l` -ne 0 ]\; then
-			echo \"\\n\\nWARNING: you have modified files in your working directory\"\;
-			echo \"WARNING: are you sure you don't want to submit your latest changes ?\"\;
-			echo \"WARNING: maybe you forgot \"hg commit\" ?\\n\\n\"\;
+			printf \"\\n\\nWARNING: you have modified files in your working directory\\n\"\;
+			printf \"WARNING: are you sure you don't want to submit your latest changes ?\\n\"\;
+			printf \"WARNING: maybe you forgot \\\"hg commit\\\" ?\\n\\n\\n\"\;
 			fi\;
 
 		COMMAND if [ `hg status -u | grep -i -E \"\(CMakeLists.txt|\\.c|\\.cc|\\.h|\\.cpp|\\.s|\\.tcpp\)$$\" | wc -l` -ne 0 ]\; then
-			echo \"\\n\\nWARNING: you have untracked source files in your working direcory !\"\;
-			echo \"WARNING: are you sure you don't want to submit those ?\"\;
-			echo \"WARNING: maybe you forgot \"hg status\" and then \"hg add\" ?\\n\\n\"\;
+			printf \"\\n\\nWARNING: you have untracked source files in your working direcory !\\n\"\;
+			printf \"WARNING: are you sure you don't want to submit those ?\\n\"\;
+			printf \"WARNING: maybe you forgot \\\"hg status\\\" and then \\\"hg add\\\" ?\\n\\n\\n\"\;
 			fi\;
 		COMMENT "Checking for clean hg"
 		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -298,14 +297,14 @@ add_custom_target(submit
 		DEPENDS submit_check_param submit_check_hg
 		COMMAND SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
 			hg archive -r tip -t tbz2  -X \"utils/\" -X \"images/\" -X \"bin/\" \"`echo $$SUBMIT_FILE`\" \;
-			echo \"\\n**********************************************************\"\;
-			echo \"Created: $$SUBMIT_FILE\" \;
-			echo \"Please Test with: tar tjfv \"$$SUBMIT_FILE\"  |less\"\;
-			echo \"Make sure you didn't forget to 'hg add' new files !\"\;
-			echo \"**********************************************************\\n\"\;
+			printf \"\\n**********************************************************\\n\"\;
+			printf \"Created: $$SUBMIT_FILE\\n\" \;
+			printf \"Please Test with: tar tjfv \\\"$$SUBMIT_FILE\\\"  |less\\n\"\;
+			printf \"Make sure you didn't forget to 'hg add' new files !\\n\"\;
+			printf \"**********************************************************\\n\\n\"\;
 			if [ `ls -s -k \"$$SUBMIT_FILE\" | cut -f1 -d' '` -gt 600 ]\; then
-				echo \"\\nWARNING: The tar file created is unusually large !\"\;
-				echo \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\"\;
+				printf \"\\nWARNING: The tar file created is unusually large !\\n\"\;
+				printf \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\\n\"\;
 			fi\;
 		COMMENT "Building submit archive (hg)"
 		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -317,13 +316,13 @@ add_custom_target(submit-nohg
 		COMMAND SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
 			find -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
 			tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.hg\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
-			echo \"\\n**********************************************************\"\;
-			echo \"Created: $$SUBMIT_FILE\" \;
-			echo \"Please Test with: tar tjfv \"$$SUBMIT_FILE\"  |less\"\;
-			echo \"**********************************************************\\n\"\;
+			printf \"\\n**********************************************************\\n\"\;
+			printf \"Created: $$SUBMIT_FILE\\n\" \;
+			printf \"Please Test with: tar tjfv \\\"$$SUBMIT_FILE\\\"  |less\\n\"\;
+			printf \"**********************************************************\\n\\n\"\;
 			if [ `ls -s -k \"$$SUBMIT_FILE\" | cut -f1 -d' '` -gt 600 ]\; then
-				echo \"\\nWARNING: The tar file created is unusually large !\"\;
-				echo \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\"\;
+				printf \"\\nWARNING: The tar file created is unusually large !\\n\"\;
+				printf \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\\n\"\;
 			fi\;
 		COMMENT "Building submit archive (nohg)"
 		WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -336,13 +335,11 @@ add_custom_target(bochsconfig
 		#Extracts Bochsversion from bochs --help
 		COMMAND bochs --help 2>&1 |
 			grep -A 1 -m 1 \"=======\" |
-        		grep -o -E \"\([[:alnum:]]|\\.\)+[[:space:]]*$$\" > bochs_version
+        		grep -o -E \"\([[:alnum:]]|\\.\)+[[:space:]]*$$\" > bochs_version\;
 
-		#COMMAND echo \"2.2.pre5\" > bochs_version
-
-		COMMAND	IFS=.\; set -- $$\(echo \"`cat bochs_version`\"\)\;
+			IFS=.\; set -- $$\(echo \"`cat bochs_version`\"\)\;
 			
-			echo \"\\nYour bochs version is \\\"$$1.$$2.$$3\\\"\"\;
+			printf \"\\nYour bochs version is \\\"$$1.$$2.$$3\\\"\\n\\n\"\;
 
 			major=\"$$1\"\;
 			minor=\"$$2\"\;
@@ -372,14 +369,14 @@ add_custom_target(bochsconfig
 			#major version == 2 AND minor version < 2
 			\([ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -lt \"2\" ]\) ||
 			#major version == 2 AND minor version == 2 AND rev <= 0 
-			\([ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -eq \"2\" ] && [ \"$$rev\" -le \"0\"  ]\)\; then
+			\([ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -eq \"2\" ] && [ \"$$rev\" -le \"1\"  ]\)\; then
 				#Generate bochs config for bochs version <= 2.2
-				echo  \"\\nGenerating bochs config for bochs version <= 2.2\\n\"\;
+				printf  \"\\nGenerating bochs config for bochs version <= 2.2.1\\n\\n\"\;
 				#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
 				sed -i 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 			else
 				#Generate bochs config for bochs version > 2.2
-				echo \"\\nGenerating bochs config for bochs version > 2.2\\n\"\;
+				printf \"\\nGenerating bochs config for bochs version > 2.2.1\\n\\n\"\;
 				#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
 				sed -i 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 			fi\;
@@ -401,21 +398,21 @@ add_dependencies(config bochsconfig)
 
 #Outputs some information
 add_custom_target(info
-		COMMAND echo -e \"\\nBOCHS:\" > ${INFO_FILE}
+		COMMAND printf  \"\\nBOCHS:\\n\" > ${INFO_FILE}
 		COMMAND bochs --help 2>&1 | head -n 5 >> ${INFO_FILE}
-		COMMAND echo -e \"\\nGCC:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nGCC:\\n\" >> ${INFO_FILE}
 		COMMAND gcc --version >> ${INFO_FILE}
-		COMMAND echo -e \"\\nLD:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nLD:\\n\" >> ${INFO_FILE}
 		COMMAND ld --version >> ${INFO_FILE}
-		COMMAND echo -e \"\\nMD5SUMS:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nMD5SUMS:\\n\" >> ${INFO_FILE}
 		COMMAND md5sum Makefile images/* >> ${INFO_FILE}
-		COMMAND echo -e \"\\nMAKE:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nMAKE:\\n\" >> ${INFO_FILE}
 		COMMAND make -v >> ${INFO_FILE}
-		COMMAND echo -e \"\\nCPU:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nCPU:\\n\" >> ${INFO_FILE}
 		COMMAND cat /proc/cpuinfo >> ${INFO_FILE}
-		COMMAND echo -e \"\\nKERNEL:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nKERNEL:\\n\" >> ${INFO_FILE}
 		COMMAND cat /proc/version >> ${INFO_FILE}
-		COMMAND echo -e \"\\nENVIRONMENT:\" >> ${INFO_FILE}
+		COMMAND printf \"\\nENVIRONMENT:\\n\" >> ${INFO_FILE}
 		COMMAND env >> ${INFO_FILE}
 		COMMAND cat ${INFO_FILE}
 		COMMENT "Building info file"
