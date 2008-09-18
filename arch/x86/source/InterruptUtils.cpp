@@ -75,11 +75,16 @@ void InterruptUtils::lidt(IDTR *idtr)
 // void InterruptUtils::enableInterrupts(){}
 // void InterruptUtils::disableInterrupts(){}
 
+char const *intel_manual =
+                  "See Intel 64 and IA-32 Architectures Software Developer's Manual\n"
+                  "Volume 3A: System Programming Guide\n"
+                  "for further information on what happened\n\n";
+
 #define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
   extern "C" void errorHandler_##x () \
   {\
-    kprintfd_nosleep("\nCPU Fault " #msg "\n\n");\
-    kprintf_nosleep("\nCPU Fault " #msg "\n\n");\
+    kprintfd_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
+    kprintf_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     currentThread->kill();\
   }
 
@@ -104,7 +109,7 @@ ERROR_HANDLER(10,#TS: Invalid Task State Segment (TSS))
 ERROR_HANDLER(11,#NP: Segment Not Present (WTF ?))
 ERROR_HANDLER(12,#SS: Stack Segment Fault)
 ERROR_HANDLER(13,#GF: General Protection Fault (unallowed memory reference) )
-DUMMY_HANDLER(14)
+//DUMMY_HANDLER(14)->PF-handler
 DUMMY_HANDLER(15)
 ERROR_HANDLER(16,#MF: Floting Point Error)
 ERROR_HANDLER(17,#AC: Alignment Error (Unaligned Memory Reference))
@@ -484,6 +489,10 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       currentThread->getPID(),
       currentThread->getName(),
       currentThread->switch_to_userspace_);
+
+  if(address == 0)
+    debug(A_INTERRUPTS | PM, "\tmaybe you're dereferencing a null-pointer!!!\n\n");
+
   if (error)
   {
     if (error&flag_p)
@@ -501,8 +510,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         debug(A_INTERRUPTS | PM, "read from ");
       debug(A_INTERRUPTS | PM, "address 0x%x\n",address);
       if (address >= 2U*1024U*1024U*1024U)
-      debug(A_INTERRUPTS | PM, "Likely the PageTable Flags forbid this operation\n");
-        
+        debug(A_INTERRUPTS | PM, "Likely the PageTable Flags forbid this operation\n");
+
       page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
       uint32 virtual_page = address / PAGE_SIZE;
       uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
