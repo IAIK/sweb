@@ -252,6 +252,7 @@ void startup()
   char const *user_progs[] = {
                               "/user_progs/stdout-test.sweb",
                               "/user_progs/stdin-test.sweb",
+                              "/user_progs/mult.sweb",
                               0
                              };
 

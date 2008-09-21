@@ -425,8 +425,18 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     Syscall::exit ( 9999 );
   }
 
+  //in this case all bytes are in bss-section, but not in file
+  if(max_value == 0 && min_value == 0xffffffff)
+    return;
+
   //read once the bytes we need (and a few more, probably, depends on elf-format)
   char *buffer = new char[max_value - min_value + 1];
+
+  if(!buffer)
+  {
+    kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
+    Syscall::exit ( 9999 );
+  }
 
   file_lock_.acquire();
 
