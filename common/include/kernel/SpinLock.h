@@ -65,12 +65,12 @@ class SpinLock
     /**
       * Copy Constructor - you _really_ don't want to copy a SpinLock!
       */
-    SpinLock ( SpinLock const & ) {}
+    SpinLock ( SpinLock const & );
 
     /**
       * operator = - you _really_ don't want to copy a SpinLock!
       */
-    SpinLock &operator= ( SpinLock const& ) {return *this;}
+    SpinLock &operator= ( SpinLock const& );
 };
 
 #endif

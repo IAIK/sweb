@@ -102,13 +102,13 @@ class Mutex
      *
      *Don't use it!!!
      */
-    Mutex ( Mutex const & ) {}
+    Mutex ( Mutex const & );
 
     /**
      * = Operator for the class Mutex
-     * @return this
+     * private, mustn't be used
      */
-    Mutex &operator= ( Mutex const& ) {return *this;}
+    Mutex &operator= ( Mutex const& );
 };
 
 
@@ -145,8 +145,13 @@ class MutexLock
      *
      *Don't use it!!!
      */
-    MutexLock ( MutexLock const& ) : mutex_ ( *static_cast<Mutex*> ( 0 ) )
-    {}
+    MutexLock ( MutexLock const& );
+
+    /**
+     * = Operator for the class MutexLock
+     * private, mustn't be used
+     */
+    MutexLock &operator= ( MutexLock const& );
 
     Mutex &mutex_;
 };

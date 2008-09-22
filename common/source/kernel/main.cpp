@@ -48,50 +48,11 @@
 #include "fs/fs_global.h"
 
 #include "UserProcess.h"
+#include "MountMinix.h"
 
 extern void* kernel_end_address;
 
 extern "C" void startup();
-
-/**
- * @class MountMinixAndStartUserProgramsThread
- * Helper thread which mounts the second partition and starts the
- * selected userprograms on it
- */
-class MountMinixAndStartUserProgramsThread : public Thread
-{
-  public:
-    /**
-     * Constructor
-     * @param root_fs_info the FileSystemInfo
-     */
-    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info, char const *progs[] ) :
-      Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ), progs_(progs)
-    {
-    }
-
-    /**
-     * Mounts the Minix-Partition with user-programs and creates processes
-     */
-    virtual void Run()
-    {
-      if(!progs_)
-        return;
-
-      vfs_syscall.mkdir ( "/user_progs", 0 );
-      vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
-
-      for(uint32 i=0; progs_[i]; i++)
-        Scheduler::instance()->addNewThread (new UserProcess ( progs_[i], new FileSystemInfo ( *fs_info_ )) );
-
-      state_ = ToBeDestroyed;
-      Scheduler::instance()->yield();
-    }
-
-  private:
-
-    char const **progs_;
-};
 
 #include "TestingThreads.h"
 

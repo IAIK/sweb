@@ -11,9 +11,12 @@
 #include "Thread.h"
 #include "panic.h"
 
-Mutex::Mutex()
+Mutex::Mutex() : 
+  mutex_(0),
+  sleepers_(),
+  held_by_(0),
+  spinlock_()
 {
-  mutex_ = 0;
 }
 
 void Mutex::acquire()

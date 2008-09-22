@@ -10,9 +10,9 @@
 #include "Scheduler.h"
 #include "Thread.h"
 
-SpinLock::SpinLock()
+SpinLock::SpinLock() :
+  nosleep_mutex_(0)
 {
-  nosleep_mutex_ = 0;
 }
 
 void SpinLock::acquire()
