@@ -6,7 +6,7 @@
 #ifndef STORAGE_MANAGER__
 #define STORAGE_MANAGER__
 
-#include "mm/Bitmap.h"
+#include "util/Bitmap.h"
 #include "types.h"
 
 class StorageManager

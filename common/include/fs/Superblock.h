@@ -7,7 +7,6 @@
 
 #include "types.h"
 #include "fs/PointList.h"
-#include "StorageManager.h"
 
 class Iattr;
 class Statfs;

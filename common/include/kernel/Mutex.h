@@ -109,6 +109,8 @@ class Mutex
      * private, mustn't be used
      */
     Mutex &operator= ( Mutex const& );
+
+    bool threadOnList(Thread *thread);
 };
 
 

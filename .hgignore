@@ -13,6 +13,8 @@ CMakeCache.txt
 *.cmake
 Makefile
 ./bin
+info.file
+utils/bochs/bochsrc
 
 syntax: regexp
 (.*/)?\#[^/]*\#$
