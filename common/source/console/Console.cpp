@@ -34,10 +34,7 @@ uint32 Console::getNumTerminals() const
 Terminal *Console::getActiveTerminal()
 {
   set_active_lock_.acquire();
-  Terminal * act = 0;
-  console_lock_.acquire();
-  act = terminals_[active_terminal_];
-  console_lock_.release();
+  Terminal *act = terminals_[active_terminal_];
   set_active_lock_.release();
   return act;
 }
@@ -49,7 +46,6 @@ Terminal *Console::getTerminal ( uint32 term )
 
 void Console::setActiveTerminal ( uint32 term )
 {
-  // most likely this code will produce a dead lock
   set_active_lock_.acquire();
 
   Terminal *t = terminals_[active_terminal_];
@@ -60,9 +56,4 @@ void Console::setActiveTerminal ( uint32 term )
   active_terminal_ = term;
 
   set_active_lock_.release();
-}
-
-void Console::Run ( void )
-{
-  // we do not run
 }

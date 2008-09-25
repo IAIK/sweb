@@ -20,7 +20,7 @@ MountMinixAndStartUserProgramsThread::MountMinixAndStartUserProgramsThread
 
 void MountMinixAndStartUserProgramsThread::Run()
 {
-  if(!progs_)
+  if(!progs_ || !progs_[0])
     return;
 
   kprintfd("MountMinix: Mounting userprog-partition \n");

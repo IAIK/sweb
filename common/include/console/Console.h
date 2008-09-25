@@ -122,7 +122,7 @@ class Console : public Thread
     /**
      * not implemented here
      */
-    virtual void Run();
+    virtual void Run() = 0;
 
     /**
      * Checks if all Console locks are free.

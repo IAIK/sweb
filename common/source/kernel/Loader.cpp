@@ -244,9 +244,6 @@ Loader::Loader ( int32 fd, Thread *thread ) : page_dir_page_(0), fd_ ( fd ),
 
 Loader::~Loader()
 {
-  for ( uint32 k=0; k < phdrs_.getNumElems() && phdrs_[k]; ++k )
-    delete phdrs_[k];
-
   delete hdr_;
 }
 
@@ -270,7 +267,7 @@ void Loader::cleanupUserspaceAddressSpace()
 
 bool Loader::readHeaders()
 {
-  //its MUCH more efficient to save the ehdr and the phdrs as members, since they
+  //the ehdr and the phdrs are saved as members, since they
   //are often needed
   MutexLock lock(file_lock_);
 
@@ -283,22 +280,27 @@ bool Loader::readHeaders()
     return false;
   }
 
-  if(!phdrs_.resetSize(hdr_->e_phnum))
+  //checking elf-magic-numbers, 32-bit format and a few more things
+  if(hdr_->e_ident[EI_MAG0] != 0x7f || hdr_->e_ident[EI_MAG1] != 'E' ||
+     hdr_->e_ident[EI_MAG2] != 'L' || hdr_->e_ident[EI_MAG3] != 'F' ||
+     hdr_->e_ident[EI_CLASS] != ELFCLASS32 || hdr_->e_ident[EI_DATA] != ELFDATA2LSB ||
+     hdr_->e_type != ET_EXEC || hdr_->e_machine != EM_386 || hdr_->e_version != EV_CURRENT)
   {
     return false;
   }
 
-  for ( int32 k=0; k < hdr_->e_phnum; ++k )
+  if(sizeof(ELF32_Phdr) != hdr_->e_phentsize ||
+     !phdrs_.resetSize(hdr_->e_phnum))
   {
-    phdrs_.pushBack(new ELF32_Phdr);
-    vfs_syscall.lseek(fd_, hdr_->e_phoff + k* hdr_->e_phentsize, File::SEEK_SET);
+    return false;
+  }
 
-    if(!phdrs_[k] || vfs_syscall.read(fd_, reinterpret_cast<char*>(phdrs_[k]),
-                                      sizeof(ELF32_Phdr)) != sizeof(ELF32_Phdr))
-    {
-      phdrs_.pushBack(0); //if read failed -> we need a zero for deleting in dtor
-      return false;
-    }
+  vfs_syscall.lseek(fd_, hdr_->e_phoff, File::SEEK_SET);
+
+  if(vfs_syscall.read(fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(ELF32_Phdr))
+      != static_cast<int32>(sizeof(ELF32_Phdr)*hdr_->e_phnum))
+  {
+    return false;
   }
 
   return true;
@@ -355,7 +357,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   {
     for ( k=0;k < hdr_->e_phnum; ++k )
     {
-      ELF32_Phdr *h = phdrs_[k];
+      ELF32_Phdr *h = &phdrs_[k];
       debug ( LOADER,"loadOnePageSafeButSlow:PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset );
     }
   }
@@ -376,7 +378,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     uint32 found = 0;
     for ( k=0;k < hdr_->e_phnum; ++k )
     {
-      ELF32_Phdr *h = phdrs_[k];
+      ELF32_Phdr *h = &phdrs_[k];
 
       debug ( LOADER,"loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset );
 
