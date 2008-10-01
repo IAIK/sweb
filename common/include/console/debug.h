@@ -33,6 +33,8 @@ const uint32 SCHEDULER          = 0x00080004 | OUTPUT_ENABLED;
 const uint32 SYSCALL            = 0x00080008 | OUTPUT_ENABLED;
 const uint32 MAIN               = 0x00080010 | OUTPUT_ENABLED;
 const uint32 THREAD             = 0x00080020 | OUTPUT_ENABLED;
+const uint32 USERPROCESS        = 0x00080040 | OUTPUT_ENABLED;
+const uint32 MOUNTMINIX         = 0x00080080 | OUTPUT_ENABLED;
 
 //group memory management
 const uint32 MM                 = 0x00100000;

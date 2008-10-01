@@ -23,7 +23,7 @@ void MountMinixAndStartUserProgramsThread::Run()
   if(!progs_ || !progs_[0])
     return;
 
-  kprintfd("MountMinix: Mounting userprog-partition \n");
+  debug(MOUNTMINIX, "mounting userprog-partition \n");
 
   vfs_syscall.mkdir ( "/user_progs", 0 );
   vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
@@ -38,7 +38,7 @@ void MountMinixAndStartUserProgramsThread::Run()
 
   counter_lock_.release();
 
-  kprintfd("MountMinix: Unmounting userprog-partition because all processes terminated \n");
+  debug(MOUNTMINIX, "unmounting userprog-partition because all processes terminated \n");
 
   vfs_syscall.umount ("/user_progs", 0 );
   kill();

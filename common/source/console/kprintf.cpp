@@ -453,6 +453,12 @@ void debug ( uint32 flag, const char *fmt, ... )
       case THREAD:
         kprintfd ( "THREAD:>> " );
         break;
+      case USERPROCESS:
+        kprintfd ( "USERPROCESS:>> " );
+        break;
+      case MOUNTMINIX:
+        kprintfd ( "MOUNTMINIX:>> " );
+        break;
       case PM:
         kprintfd ( "PM:>> " );
         break;
