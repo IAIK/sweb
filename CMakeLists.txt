@@ -4,9 +4,69 @@ include(MakeOptions)
 
 cmake_minimum_required(VERSION 2.4)
 
+
+# Macro which processes NASM files
+# OBJS are the names (without extension) in the current directory
+MACRO(ASM2OBJ OUTPUTOBJNAMES)
+	
+	foreach(src ${ARGN})
+		set(ASM_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/${src}.s)
+		set(ASM_OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${src}.o)
+		set(ASM_OBJECTS ${ASM_OBJECTS} ${ASM_OBJECT})
+		
+		add_custom_command(
+		OUTPUT ${ASM_OBJECT}
+		COMMAND ${NASM_EXECUTABLE}
+		ARGS    -f elf -o ${ASM_OBJECT} ${ASM_SOURCE}
+		DEPENDS ${ASM_SOURCE}
+		)
+	ENDFOREACH(src)
+	
+	set(${OUTPUTOBJNAMES} ${ASM_OBJECTS})
+ENDMACRO(ASM2OBJ)
+
+# Finds and returns NASM source files in the current directory
+MACRO(FIND_ASM_FILES OUTPUTFILES)
+	file(GLOB filenames ${ASM_WILDCARDS})
+	
+	set(TEMPOUTPUTLIST)
+	foreach(src ${filenames})
+		get_filename_component(TEMPOUTPUT ${src} NAME_WE)
+		set(TEMPOUTPUTLIST ${TEMPOUTPUTLIST} ${TEMPOUTPUT})
+	endforeach(src)
+	set(${OUTPUTFILES} ${TEMPOUTPUTLIST})
+ENDMACRO(FIND_ASM_FILES)
+
+# Searches for ASM files, Searches for c and cpp files
+# compiles ASM files and adds the library
+MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
+	find_asm_files(asm_source)
+
+	asm2obj(asm_objs ${asm_source})
+
+	file(GLOB source_files ${SOURCE_WILDCARDS})
+
+	set(library_files)
+
+	if(source_files)
+		set(library_files ${source_files})
+	endif(source_files)
+
+	if(asm_objs)
+		set(library_files ${library_files} ${asm_objs})
+	endif(asm_objs)
+
+	if(library_files)
+		add_library(${LIBRARY_NAME} ${library_files})
+		set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
+	endif(library_files)	
+ENDMACRO(ADD_PROJECT_LIBRARY)
+
+
 set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
 set (ASM_WILDCARDS *.s)
 set (INFO_FILE info.file)
+
 
 #Find program executables needed during compilation
 find_program(NASM_EXECUTABLE nasm)
