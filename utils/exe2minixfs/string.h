@@ -6,7 +6,7 @@
 #define STRING_H__
 
 #include <cstring>
-#include "types.h"
+#include "MinixFSTypes.h"
 
 size_t strlcpy ( char* dest, const char* src, size_t size );
 

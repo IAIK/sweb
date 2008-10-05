@@ -5,7 +5,7 @@
 #ifndef POINT_LIST_H__
 #define POINT_LIST_H__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 #include <assert.h>
 
 /**

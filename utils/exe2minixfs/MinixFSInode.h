@@ -5,7 +5,7 @@
 #ifndef MinixFSInode_h___
 #define MinixFSInode_h___
 
-#include "types.h"
+#include "MinixFSTypes.h"
 #include "PointList.h"
 #include "Inode.h"
 #include "MinixFSZone.h"

@@ -1,7 +1,7 @@
 /**
  * @file Dentry.h
  */
-#include "types.h"
+#include "MinixFSTypes.h"
 #include "PointList.h"
 
 #ifndef DENTRY_h__

@@ -6,7 +6,7 @@
 #define MINIX_STORAGE_MANAGER__
 
 #include "StorageManager.h"
-#include "types.h"
+#include "MinixFSTypes.h"
 #include "Buffer.h"
 #include "minix_fs_consts.h"
 

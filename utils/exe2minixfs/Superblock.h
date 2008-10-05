@@ -5,7 +5,7 @@
 #ifndef SUPERBLOCK_H__
 #define SUPERBLOCK_H__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 #include "PointList.h"
 #include "StorageManager.h"
 

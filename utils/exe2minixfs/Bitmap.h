@@ -5,7 +5,7 @@
 #ifndef BITMAP_H__
 #define BITMAP_H__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 
 uint8 const bits_per_bitmap_atom_ = 8;
 

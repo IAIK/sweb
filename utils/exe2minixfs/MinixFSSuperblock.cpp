@@ -8,7 +8,7 @@
 #include "MinixFSFile.h"
 #include "Dentry.h"
 
-#include <sys/types.h>
+#include "MinixFSTypes.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdio>

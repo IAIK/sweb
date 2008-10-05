@@ -5,7 +5,7 @@
 #ifndef MINIX_FS_ZONE__
 #define MINIX_FS_ZONE__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 
 typedef uint16 zone_add_type;
 

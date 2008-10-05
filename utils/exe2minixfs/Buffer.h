@@ -4,7 +4,7 @@
 
 #ifndef BUFFER_H__
 #define BUFFER_H__
-#include "types.h"
+#include "MinixFSTypes.h"
 
 /**
  * @class Buffer

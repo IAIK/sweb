@@ -7,7 +7,7 @@
 #define STORAGE_MANAGER__
 
 #include "Bitmap.h"
-#include "types.h"
+#include "MinixFSTypes.h"
 
 class StorageManager
 {

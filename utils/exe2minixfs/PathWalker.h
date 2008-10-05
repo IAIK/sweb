@@ -5,7 +5,7 @@
 #ifndef PATH_WALKER_H__
 #define PATH_WALKER_H__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 
 // forward declarations
 class Dentry;

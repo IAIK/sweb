@@ -5,7 +5,7 @@
 #ifndef FILE_H__
 #define FILE_H__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 #include "PointList.h"
 #include "Inode.h"
 

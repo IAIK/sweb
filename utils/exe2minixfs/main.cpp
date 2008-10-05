@@ -1,5 +1,5 @@
 
-#include <sys/types.h>
+#include "MinixFSTypes.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdio>
@@ -10,7 +10,6 @@
 #include <sstream>
 #include <stdlib.h>
 
-#include "types.h"
 #include "VfsSyscall.h"
 
 int main (int argc, char *argv[])

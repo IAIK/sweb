@@ -5,7 +5,7 @@
 #ifndef FILESYSTEMINFO_H__
 #define FILESYSTEMINFO_H__
 
-#include "types.h"
+#include "MinixFSTypes.h"
 #include <string>
 
 class Dentry;
