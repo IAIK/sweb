@@ -20,7 +20,7 @@ typedef u_int32_t uint32;
 typedef u_int64_t uint64;
 typedef int64_t int64;
 
-typedef u_int32_t size_t;
+//typedef u_int32_t size_t;
 
 //#define Min(x,y) (((x)<(y))?(x):(y))
 //#define Max(x,y) (((x)>(y))?(x):(y))
