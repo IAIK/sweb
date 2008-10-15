@@ -51,14 +51,15 @@ ENTRY(entry)
 LS_Phys = 0x100000; /* 1 meg */
 /*LS_Virt = 0x100000; /* 1 meg */
 /* use this line instead when paging works properly! */
-LS_Virt = 0x80000000; /* 2 gig */
+LS_Virt = 0x80000000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
 SECTIONS
 {
-kernel_start_address = .;
   .text LS_Virt : AT(LS_Phys)
   {
+    PROVIDE(kernel_start_address = ABSOLUTE(.));
+
     LS_Code = .;
-    
+
     text_start_address = .;
     *(.mboot)
     *(.text)
@@ -68,14 +69,14 @@ kernel_start_address = .;
     *(.rodata*)
     ro_data_end_address = .;
     . = ALIGN(4096);
-    
+
     stab_start_address_nr = .;
-    [ .stab ]
-    stab_end_address_nr = .; 
-    
+    *(.stab)
+    stab_end_address_nr = .;
+    . = .;
     stabstr_start_address_nr = .;
-    [ .stabstr ]
-    stabstr_end_address_nr = .;    
+    *(.stabstr)
+    stabstr_end_address_nr = .;
     . = ALIGN(4096);
   }
 
@@ -92,23 +93,78 @@ kernel_start_address = .;
     data_end_address = .;
     . = ALIGN(4096);
   }
-  
+
   .bss : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;
     bss_start_address = .;
     *(.bss)
-    *(COMMON) /* "common" variables, I have no idea where this comes from*/ 
+    *(COMMON) /* common symbols, usually placed in .bss */
     . = ALIGN(4096);
     *(.paging_stuff)
     . = ALIGN(4096);
     bss_end_address = .;
-    /* lets try this bad voodo shit 
-       load stabs in BSS to avoid relocation 
-       and to force GRUB to load it */
 
+    PROVIDE(kernel_end_address = .);
   }
 
+/*
+ * Debug information sections
+ *
+ * Copied from the default elf_i386.x linker script
+ * from binutils-2.18
+ */
+
+/* Stabs debugging sections. */
+
+  .stab.excl       0 : { *(.stab.excl) }
+  .stab.exclstr    0 : { *(.stab.exclstr) }
+  .stab.index      0 : { *(.stab.index) }
+  .stab.indexstr   0 : { *(.stab.indexstr) }
+  .comment         0 : { *(.comment) }
+
+  /*
+   * DWARF debug sections.
+   * Symbols in the DWARF debugging sections are relative to the beginning
+   * of the section so we begin them at 0.
+   */
+  /* DWARF 1 */
+  .debug           0 : { *(.debug) }
+  .line            0 : { *(.line) }
+
+  /* GNU DWARF 1 extensions */
+  .debug_srcinfo   0 : { *(.debug_srcinfo) }
+  .debug_sfnames   0 : { *(.debug_sfnames) }
+
+  /* DWARF 1.1 and DWARF 2 */
+  .debug_aranges   0 : { *(.debug_aranges) }
+  .debug_pubnames  0 : { *(.debug_pubnames) }
+
+  /* DWARF 2 */
+  .debug_info      0 : { *(.debug_info .gnu.linkonce.wi.*) }
+  .debug_abbrev    0 : { *(.debug_abbrev) }
+  .debug_line      0 : { *(.debug_line) }
+  .debug_frame     0 : { *(.debug_frame) }
+  .debug_str       0 : { *(.debug_str) }
+  .debug_loc       0 : { *(.debug_loc) }
+  .debug_macinfo   0 : { *(.debug_macinfo) }
+
+  /* SGI/MIPS DWARF 2 extensions */
+  .debug_weaknames 0 : { *(.debug_weaknames) }
+  .debug_funcnames 0 : { *(.debug_funcnames) }
+  .debug_typenames 0 : { *(.debug_typenames) }
+  .debug_varnames  0 : { *(.debug_varnames) }
+
+  /* DWARF 3 */
+  .debug_pubtypes  0 : { *(.debug_pubtypes) }
+  .debug_ranges    0 : { *(.debug_ranges) }
+  .gnu.attributes  0 : { KEEP (*(.gnu.attributes)) }
+
+  /DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) }
+
+  /* Voodoo? */
+/*  .gptab.sdata : { *(.gptab.data) *(.gptab.sdata) }
+  .gptab.sbss : { *(.gptab.bss) *(.gptab.sbss) } */
 /* bug in MinGW? I get a bad executable file unless these
 sections are here... */
 /*
@@ -119,7 +175,7 @@ sections are here... */
     *(.stab)
     stab_end_address = .;
   }
-    
+
   .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
@@ -129,7 +185,7 @@ sections are here... */
   }
   */
 /* symbols to mark end of kernel */
-	
+
 /*
   .stab          0 : { *(.stab) }
   .stabstr       0 : { *(.stabstr) }
@@ -187,4 +243,4 @@ sections are here... */
 
 */
 }
-kernel_end_address = .;
+
