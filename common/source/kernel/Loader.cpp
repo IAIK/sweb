@@ -334,6 +334,17 @@ bool Loader::loadExecutableAndInitProcess()
 void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
+
+  MutexLock loadlock(load_lock_);
+  //check if page has not been loaded meanwhile
+  if(ArchMemory::checkAddressValid(page_dir_page_, virtual_address))
+  {
+    debug ( LOADER,"loadOnePageSafeButSlow: Page %d (virtual_address=%d) has already been mapped, probably by another thread between pagefault and reaching loader.\n",virtual_page,virtual_address );
+    return;
+  }
+  //else...
+
+
   debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %d:%s\n",virtual_page,virtual_address,currentThread->getPID(),currentThread->getName() );
 
   //debug ( LOADER,"loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4] );
@@ -342,7 +353,6 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   debug ( LOADER,"loadOnePage: Entry: %x\n",hdr_->e_entry );
 
   uint32 page = PageManager::instance()->getFreePhysicalPage();
-  ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
   ArchCommon::bzero ( ArchMemory::get3GBAdressOfPPN ( page ),PAGE_SIZE,false );
 
   pointer vaddr = virtual_page*PAGE_SIZE;
@@ -366,6 +376,8 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if(!byte_map.resetSize(PAGE_SIZE))
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
+    //free unmapped page
+    PageManager::instance()->freePage(page);
     Syscall::exit ( 9999 );
   }
 
@@ -424,12 +436,17 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if ( !written )
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location: v_adddr=%x, v_page=%d\n",virtual_address,virtual_page);
+    //free unmapped page
+    PageManager::instance()->freePage(page);
     Syscall::exit ( 9999 );
   }
 
   //in this case all bytes are in bss-section, but not in file
   if(max_value == 0 && min_value == 0xffffffff)
+  {
+    ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
     return;
+  }
 
   //read once the bytes we need (and a few more, probably, depends on elf-format)
   char *buffer = new char[max_value - min_value + 1];
@@ -437,6 +454,8 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if(!buffer)
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
+    //free unmapped page
+    PageManager::instance()->freePage(page);
     Syscall::exit ( 9999 );
   }
 
@@ -450,6 +469,10 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if(bytes_read != static_cast<int32>(max_value - min_value + 1))
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
+    //free unmapped page
+    PageManager::instance()->freePage(page);
+    //free buffer
+    delete[] buffer;
     Syscall::exit ( 9999 );
   }
 
@@ -457,8 +480,9 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     dest[byte_map[i].first()] = buffer[byte_map[i].second() - min_value];
 
   delete[] buffer;
-
+  
+  ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
   debug ( LOADER,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
-
+  
 }
 
