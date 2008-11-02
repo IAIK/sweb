@@ -79,7 +79,6 @@ class Loader
     Thread *thread_;
     ELF32_Ehdr *hdr_;
     Array<ELF32_Phdr> phdrs_;
-    Mutex file_lock_;
     Mutex load_lock_;
 };
 
