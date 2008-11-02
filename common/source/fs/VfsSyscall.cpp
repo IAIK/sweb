@@ -101,7 +101,7 @@ int32 VfsSyscall::mkdir ( const char* pathname, int32 )
   uint32 path_prev_len = char_tmp - path_tmp + 1;
   fs_info->setName ( path_tmp, path_prev_len );
 
-  char* path_prev_name = fs_info->getName();
+  const char* path_prev_name = fs_info->getName();
   debug ( VFSSYSCALL,"(mkdir) path_prev_name: %s\n",path_prev_name );
   int32 success = path_walker.pathInit ( path_prev_name, 0 );
   if ( success == 0 )
@@ -163,7 +163,7 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
     uint32 path_prev_len = char_tmp - path_tmp + 1;
     fs_info->setName ( path_tmp, path_prev_len-1 );
 
-    char* path_prev_name = fs_info->getName();
+    const char* path_prev_name = fs_info->getName();
 
     int32 success = path_walker.pathInit ( path_prev_name, 0 );
     if ( success == 0 )
@@ -430,7 +430,7 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
     uint32 path_prev_len = char_tmp - path_tmp + 1;
     fs_info->setName ( path_tmp, path_prev_len );
 
-    char* path_prev_name = fs_info->getName();
+    const char* path_prev_name = fs_info->getName();
 
     int32 success = path_walker.pathInit ( path_prev_name, 0 );
     if ( success == 0 )

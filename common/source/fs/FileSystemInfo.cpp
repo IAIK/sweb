@@ -12,6 +12,14 @@
 FileSystemInfo::FileSystemInfo() : pathname_(0)
 {}
 
+FileSystemInfo::FileSystemInfo(const FileSystemInfo& fsi) :  root_(fsi.root_),
+                                                            root_mnt_(fsi.root_mnt_),
+                                                            pwd_(fsi.pwd_),
+                                                            pwd_mnt_(fsi.pwd_mnt_),
+                                                            alt_root_(fsi.alt_root_),
+                                                            pathname_(0)
+{ }
+
 int32 FileSystemInfo::setName ( const char* pathname, uint32 length )
 {
   if ( pathname == 0 )

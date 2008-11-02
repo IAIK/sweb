@@ -149,7 +149,7 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
   FileSystemType *fst = getFsType ( fs_name );
 
   fs_info->setName ( dir_name );
-  char* test_name = fs_info->getName();
+  const char* test_name = fs_info->getName();
 
   int32 success = path_walker.pathInit ( test_name, 0 );
   if ( success == 0 )
@@ -199,7 +199,7 @@ int32 VirtualFileSystem::umount ( const char* dir_name, uint32 /*flags*/ )
     return -1;
 
   fs_info->setName ( dir_name );
-  char* test_name = fs_info->getName();
+  const char* test_name = fs_info->getName();
 
   int32 success = path_walker.pathInit ( test_name, 0 );
   if ( success == 0 )

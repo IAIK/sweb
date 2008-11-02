@@ -238,7 +238,7 @@ typedef struct sELF32_Phdr ELF32_Phdr;
 {}*/
 
 Loader::Loader ( int32 fd, Thread *thread ) : page_dir_page_(0), fd_ ( fd ),
-    thread_ ( thread ), hdr_(0), phdrs_(), file_lock_()
+    thread_ ( thread ), hdr_(0), phdrs_()
 {
 }
 
@@ -269,7 +269,6 @@ bool Loader::readHeaders()
 {
   //the ehdr and the phdrs are saved as members, since they
   //are often needed
-  MutexLock lock(file_lock_);
 
   hdr_ = new ELF32_Ehdr;
 
@@ -459,12 +458,10 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     Syscall::exit ( 9999 );
   }
 
-  file_lock_.acquire();
 
   vfs_syscall.lseek(fd_, min_value, File::SEEK_SET);
   int32 bytes_read = vfs_syscall.read(fd_, buffer, max_value - min_value + 1);
 
-  file_lock_.release();
 
   if(bytes_read != static_cast<int32>(max_value - min_value + 1))
   {

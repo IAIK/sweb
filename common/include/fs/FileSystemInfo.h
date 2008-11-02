@@ -69,6 +69,11 @@ class FileSystemInfo
   ~FileSystemInfo() {}
 
   /**
+   * copy contructor
+   */
+  FileSystemInfo(const FileSystemInfo& fsi);
+
+  /**
    * set the ROOT-info to the class
    * @param root the root dentry to set
    * @param root_mnt the root_mnt to set
@@ -140,7 +145,7 @@ class FileSystemInfo
    * return the file pathname from the class
    * @return the pathname
    */
-  char* getName() { return pathname_; }
+   const char* getName() const { return pathname_; }
 
   /**
    * release the file pathname
