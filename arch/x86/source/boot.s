@@ -478,21 +478,21 @@ multi_boot_structure_pointer:
 	dd 0
    
 SECTION .bss
-   ; here we create lots of room for our stack (actually this is one by the resd 1024)
+   ; here we create lots of room for our stack: 16 kiB (actually this is done by the resd 4096 )
    GLOBAL stack_start
 stack_start:
-   resd 8192
+   resd 4096
    GLOBAL stack
 stack:
 SECTION .paging_stuff
 GLOBAL kernel_page_directory_start
 align 4096
 kernel_page_directory_start:
-  resd 4096
+  resd 1024
 GLOBAL kernel_page_tables_start:
 align 4096
 kernel_page_tables_start:
-  rest 4096
-  rest 4096
-  rest 4096
-  rest 4096
+  resd 1024
+  resd 1024
+  resd 1024
+  resd 1024
