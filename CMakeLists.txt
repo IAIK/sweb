@@ -435,12 +435,12 @@ add_custom_target(bochsconfig
 				#Generate bochs config for bochs version <= 2.2
 				printf  \"\\nGenerating bochs config for bochs version <= 2.2.1\\n\\n\"\;
 				#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
-				sed -i 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+				sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 			else
 				#Generate bochs config for bochs version > 2.2
 				printf \"\\nGenerating bochs config for bochs version > 2.2.1\\n\\n\"\;
 				#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
-				sed -i 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+				sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 			fi\;
 		COMMAND rm bochs_version
 
@@ -483,7 +483,7 @@ add_custom_target(info
 #Builds the doxygen documentation
 add_custom_target(doxygen
 		COMMAND cp \"${PROJECT_SOURCE_DIR}/doc/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
-		COMMAND sed -i 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
+		COMMAND sed -i -e 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
 		COMMAND ${DOXYGEN_EXECUTABLE} \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 		COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\" 
 		COMMENT "Building SWEB documentation"
