@@ -98,12 +98,11 @@ SECTIONS
   {
     LS_Bss = .;
     bss_start_address = .;
-    . = ALIGN(4096);
     *(.bss)
     *(COMMON) /* common symbols, usually placed in .bss */
     . = ALIGN(4096);
- /*   *(.paging_stuff)
-    . = ALIGN(4096);    */
+    *(.paging_stuff)
+    . = ALIGN(4096);
     bss_end_address = .;
 
     PROVIDE(kernel_end_address = .);

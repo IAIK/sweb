@@ -484,8 +484,7 @@ stack_start:
    resd 4096
    GLOBAL stack
 stack:
-;SECTION .paging_stuff
-SECTION .bss
+SECTION .paging_stuff
 GLOBAL kernel_page_directory_start
 align 4096
 kernel_page_directory_start:
