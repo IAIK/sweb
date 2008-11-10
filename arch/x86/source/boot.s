@@ -483,10 +483,20 @@ stack:
 SECTION .paging_stuff
 GLOBAL kernel_page_directory_start
 kernel_page_directory_start:
-  resd 1024
+%rep 1024
+  dd 0
+%endrep
 GLOBAL kernel_page_tables_start:
 kernel_page_tables_start:
-  resd 1024
-  resd 1024
-  resd 1024
-  resd 1024
+%rep 1024
+  dd 0
+%endrep
+%rep 1024
+  dd 0
+%endrep
+%rep 1024
+  dd 0
+%endrep
+%rep 1024
+  dd 0
+%endrep
