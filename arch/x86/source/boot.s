@@ -167,8 +167,6 @@ mov     eax,cr0
 or      eax,0x80010001   ; Set PG bit
 mov     cr0,eax         ; Paging is on!
 
-jmp     $ + 2          ; Flush the instruction queue.
-
 
    mov word[0B800Ah], 9F35h
 
