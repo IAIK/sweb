@@ -308,7 +308,6 @@ reload_segments_new:
 ;; what to do
 
 SECTION .mboot
-ALIGN 4
 GLOBAL mboot
 mboot:
    dd MULTIBOOT_HEADER_MAGIC
@@ -343,7 +342,6 @@ SECTION .gdt_stuff
 
 ; this descritor is _REALLY_ braindead
 ; have a look at http://www.csee.umbc.edu/~plusquel/310/slides/micro_arch2.html
-align 4096
 gdt:
 
 ; this is the first global descriptor table
@@ -484,11 +482,9 @@ stack_start:
 stack:
 SECTION .paging_stuff
 GLOBAL kernel_page_directory_start
-align 4096
 kernel_page_directory_start:
   resd 1024
 GLOBAL kernel_page_tables_start:
-align 4096
 kernel_page_tables_start:
   resd 1024
   resd 1024
