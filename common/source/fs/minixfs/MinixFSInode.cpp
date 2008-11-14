@@ -452,16 +452,17 @@ void MinixFSInode::loadChildren()
           continue;
         }
 
-        uint32 offset = 0;
-        char *name = new char[MAX_NAME_LENGTH];
-        char ch = '\0';
+        char *name = new char[MAX_NAME_LENGTH+1];
 //         dbuffer->print();
-        do
+        for(uint32 offset = 0; offset < MAX_NAME_LENGTH; ++offset)
         {
-          ch = dbuffer->getByte(curr_dentry + offset + 2);
-          name[offset] = ch;
-          ++offset;
-        } while (ch);
+          name[offset] = dbuffer->getByte(curr_dentry + offset + 2);
+          if(!name[offset])
+            break;
+        }
+
+        name[MAX_NAME_LENGTH] = 0;
+
         debug(M_INODE, "loadChildren: dentry name: %s\n",name);
         Dentry *new_dentry = new Dentry(name);
         delete[] name;
