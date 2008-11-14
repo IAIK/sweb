@@ -100,6 +100,12 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
   debug ( M_SB,"getInode::called with i_num: %d\n", i_num );
 
+  if(i_num >= storage_manager_->getNumUsedInodes())
+  {
+    debug (M_SB, "getInode::bad inode number %d\n", i_num );
+    return 0;
+  }
+
   if(!storage_manager_->isInodeSet ( i_num ))
   {
     if(i_num == 1)

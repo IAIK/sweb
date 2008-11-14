@@ -455,8 +455,9 @@ void MinixFSInode::loadChildren()
 
         if(!inode)
         {
-          std::cout << "MinixFSInode::loadChildren: inode nr. " << inode_index << " not set in bitmap, but occurs in directory-entry; "
-                   "maybe filesystem was not properly unmounted last time" << std::endl;
+          std::cout << "MinixFSInode::loadChildren: inode nr. " << inode_index <<
+            " not set in bitmap, but occurs in directory-entry; "
+            "maybe filesystem was not properly unmounted last time" << std::endl;
           char ch = 0;
           writeDentry(inode_index, 0, &ch);
           continue;

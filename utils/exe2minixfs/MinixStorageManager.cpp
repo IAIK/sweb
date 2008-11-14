@@ -66,6 +66,8 @@ MinixStorageManager::~MinixStorageManager()
 
 bool MinixStorageManager::isInodeSet ( size_t index )
 {
+  assert(index < inode_bitmap_->getSize() &&
+         "MinixStorageManager::isInodeSet called with bad index number");
   return inode_bitmap_->getBit ( index );
 }
 
@@ -148,7 +150,7 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
   {
     if ( i_bit < num_inodes % 8 )
     {
-      if ( inode_bitmap_->getBit ( i_bit ) )
+      if ( inode_bitmap_->getBit ( i_byte*8 + i_bit ) )
       {
         byte &= 0x01 << i_bit;
       }
@@ -174,7 +176,7 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
   {
     if ( z_bit < num_inodes % 8 )
     {
-      if ( zone_bitmap_->getBit ( z_bit ) )
+      if ( zone_bitmap_->getBit ( z_byte*8 + z_bit ) )
       {
         byte &= 0x01 << z_bit;
       }

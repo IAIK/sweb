@@ -116,6 +116,10 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loade
 
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 {
+  if(i_num >= storage_manager_->getNumUsedInodes())
+  {
+    return 0;
+  }
   //std::cout << "getInode(" << i_num << ") called!" << std::endl;
   if(!storage_manager_->isInodeSet ( i_num ))
   {
