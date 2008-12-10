@@ -63,7 +63,7 @@ class BDVirtualDevice : public Inode
      * calculates the number of blocks
      *
      */
-    uint32 getNumBlocks() { return num_sectors_ * block_size_ / sector_size_; };
+    uint32 getNumBlocks() { return num_sectors_ * sector_size_ / block_size_; };
 
 
 //// Inode functions

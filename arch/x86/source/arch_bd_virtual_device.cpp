@@ -41,11 +41,12 @@ void BDVirtualDevice::addRequest(BDRequest * command)
       command->setStatus( BDRequest::BD_DONE );
       break;
     case BDRequest::BD_GET_NUM_BLOCKS: 
-      command->setResult( num_sectors_ * block_size_ / sector_size_ );
+      command->setResult( getNumBlocks() );
       command->setStatus( BDRequest::BD_DONE );
       break;
-    case BDRequest::BD_READ: 
+    case BDRequest::BD_READ:
     case BDRequest::BD_WRITE:
+      //start block and num blocks will be interpreted as start sector and num sectors
       command->setStartBlock( command->getStartBlock() * block_size_ / sector_size_ + offset_ );
       command->setNumBlocks( command->getNumBlocks() * block_size_ / sector_size_);
     default:
@@ -68,7 +69,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
    debug(BD_VIRT_DEVICE, "blocks2read %d\n", blocks2read );
    char *my_buffer = (char *) kmalloc( blocks2read *block_size_*sizeof(char) );
    BDRequest * bd = 
-   new BDRequest(0, BDRequest::BD_READ, blockoffset, blocks2read, my_buffer);
+   new BDRequest(dev_number_, BDRequest::BD_READ, blockoffset, blocks2read, my_buffer);
    addRequest ( bd );
 
    while( bd->getStatus() == BDRequest::BD_QUEUED &&
@@ -90,7 +91,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
 
 int32 BDVirtualDevice::writeData(int32 offset, int32 size, const char *buffer)
 {
-   //debug(BD_VIRT_DEVICE, "writeData\n");
+   debug(BD_VIRT_DEVICE, "writeData\n");
    uint32 blocks2write = size/block_size_, jiffies = 0;
    uint32 blockoffset = offset/block_size_;
 
@@ -112,7 +113,7 @@ int32 BDVirtualDevice::writeData(int32 offset, int32 size, const char *buffer)
    memcpy( my_buffer + (offset%block_size_), buffer, size );
 
    BDRequest * bd = 
-   new BDRequest(0,BDRequest::BD_WRITE, blockoffset, blocks2write, my_buffer);
+   new BDRequest(dev_number_ ,BDRequest::BD_WRITE, blockoffset, blocks2write, my_buffer);
    addRequest ( bd );
 
    while( bd->getStatus() == BDRequest::BD_QUEUED && 
