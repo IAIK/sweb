@@ -17,7 +17,9 @@ Inode( 0, I_BLOCKDEVICE )
   writable_      = writable;
   driver_        = driver;
 
-  //debug(BD_VIRT_DEVICE, "ctor:calling string functions\n");
+  debug(BD_VIRT_DEVICE, "ctor: offset = %d, num_sectors = %d,\n  sector_size = %d, "
+                        "name = %s \n", offset, num_sectors, sector_size, name);
+
   name_         = new char[ strlen( name ) + 1 ];
   strncpy( name_, name, strlen(name) );
   name_[ strlen(name) ] = '\0';
@@ -47,8 +49,8 @@ void BDVirtualDevice::addRequest(BDRequest * command)
     case BDRequest::BD_READ:
     case BDRequest::BD_WRITE:
       //start block and num blocks will be interpreted as start sector and num sectors
-      command->setStartBlock( command->getStartBlock() * block_size_ / sector_size_ + offset_ );
-      command->setNumBlocks( command->getNumBlocks() * block_size_ / sector_size_);
+      command->setStartBlock( command->getStartBlock() * (block_size_ / sector_size_) + offset_ );
+      command->setNumBlocks( command->getNumBlocks() * (block_size_ / sector_size_));
     default:
       command->setResult( driver_->addRequest( command ));
       break;
