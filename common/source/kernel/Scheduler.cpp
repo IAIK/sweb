@@ -250,6 +250,7 @@ void Scheduler::cleanupDeadThreads()
       {
         destroy_list.pushBack ( tmp_thread );
         threads_.popFront();
+        --c;
         continue;
       }
       threads_.rotateBack();
