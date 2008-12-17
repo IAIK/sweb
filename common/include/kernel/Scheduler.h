@@ -186,6 +186,12 @@ class Scheduler
      */
     void waitForFreeKMMLock();
 
+    /**
+     * after blocking the Scheduler we need to test if all Locks we could possible
+     * acquire are really free, because otherwise we will deadlock.
+     */
+    void waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock);
+
     static Scheduler *instance_;
 
     List<Thread*> threads_;

@@ -125,12 +125,7 @@ void Scheduler::sleepAndRelease ( SpinLock &lock )
 void Scheduler::sleepAndRelease ( Mutex &lock )
 {
   lockScheduling();
-  while (! lock.spinlock_.isFree())
-  {
-    unlockScheduling();
-    yield();
-    lockScheduling();
-  }
+  waitForFreeKMMLockAndFreeSpinLock(lock.spinlock_);
   currentThread->state_=Sleeping;
   lock.release();
   unlockScheduling();
@@ -295,8 +290,25 @@ bool Scheduler::testLock()
 void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
 {
   if ( block_scheduling_==0 )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLock: This is meant to be used while Scheduler is locked\n" );
+    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLock: This "
+                            "is meant to be used while Scheduler is locked\n" );
+
   while ( ! KernelMemoryManager::instance()->isKMMLockFree() )
+  {
+    unlockScheduling();
+    yield();
+    lockScheduling();
+  }
+}
+
+void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
+{
+  if ( block_scheduling_==0 )
+    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLockAndFreeSpinLock"
+                            ": This is meant to be used while Scheduler is locked\n" );
+
+  while ( ! KernelMemoryManager::instance()->isKMMLockFree() ||
+          ! spinlock.isFree())
   {
     unlockScheduling();
     yield();
