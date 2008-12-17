@@ -151,7 +151,7 @@ class BDVirtualDevice : public Inode
      */
     void setBlockSize( uint32 block_size )
     {
-      assert(block_size_ % sector_size_ == 0);
+      assert(block_size % sector_size_ == 0);
       block_size_ = block_size;
     };
 
