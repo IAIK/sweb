@@ -101,7 +101,6 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
     {
       prenew_assert ( m_segment->next_->marker_ == 0xdeadbeef );
       mergeWithFollowingFreeSegment ( m_segment->next_ );
-      fillSegment(m_segment, new_size);
     }
     unlockKMM();
     return virtual_address;
@@ -114,6 +113,7 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
               m_segment->next_->getSize() + m_segment->getSize() >= new_size )
       {
         mergeWithFollowingFreeSegment ( m_segment );
+        fillSegment(m_segment, new_size);
         unlockKMM();
         return virtual_address;
       }
