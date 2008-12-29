@@ -33,9 +33,18 @@ KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_ad
 
 pointer KernelMemoryManager::allocateMemory ( size_t requested_size )
 {
-  lockKMM();
-  // find next free pointer of neccessary size + sizeof(MallocSegment);
   prenew_assert ( ( requested_size & 0x80000000 ) == 0 );
+  lockKMM();
+  pointer ptr = private_AllocateMemory ( requested_size );
+  if(ptr)
+    unlockKMM();
+
+  debug ( KMM,"allocateMemory returns address: %x \n", ptr );
+  return ptr;
+}
+pointer KernelMemoryManager::private_AllocateMemory ( size_t requested_size )
+{
+   // find next free pointer of neccessary size + sizeof(MallocSegment);
   MallocSegment *new_pointer = findFreeSegment ( requested_size );
 
   if ( new_pointer == 0 )
@@ -47,12 +56,7 @@ pointer KernelMemoryManager::allocateMemory ( size_t requested_size )
   }
 
   fillSegment ( new_pointer,requested_size );
-
-  unlockKMM();
-
-  debug ( KMM,"allocateMemory returns address: %x \n", ( ( pointer ) new_pointer ) + sizeof ( MallocSegment ) );
   return ( ( pointer ) new_pointer ) + sizeof ( MallocSegment );
-
 }
 
 bool KernelMemoryManager::freeMemory ( pointer virtual_address )
@@ -83,6 +87,10 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
     freeMemory ( virtual_address );
     return 0;
   }
+  //iff the old segment is no segment ;) -> we create a new one
+  if(virtual_address == 0)
+    return allocateMemory(new_size);
+
 
   lockKMM();
 
@@ -119,7 +127,17 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
       }
 
     //or not.. lets search for larger space
-    pointer new_address = allocateMemory ( new_size );
+
+    //thx to Philipp Toeglhofer we are not going to deadlock here anymore ;)
+    pointer new_address = private_AllocateMemory ( new_size );
+    if(new_address == 0)
+    {
+      //we are not freeing the old semgent in here, so that the data is not
+      //getting lost, although we could not allocate more memory 
+
+      //just if you wonder: the KMM is already unlocked
+      return 0;
+    }
     ArchCommon::memcpy ( new_address,virtual_address, m_segment->getSize() );
     freeSegment ( m_segment );
     unlockKMM();

@@ -203,6 +203,13 @@ class KernelMemoryManager
      */
     bool mergeWithFollowingFreeSegment ( MallocSegment *this_one );
 
+    /**
+     * This really implements the allocateMemory behaviour, but 
+     * does not lock the KMM, so we can also use it within the
+     * reallocate method
+     */
+    inline pointer private_AllocateMemory ( size_t requested_size );
+
     MallocSegment* first_;  //first_ must _never_ be NULL
     MallocSegment* last_;
     pointer malloc_end_;
