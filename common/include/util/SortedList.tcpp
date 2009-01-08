@@ -3,7 +3,7 @@
  */
 
 template<typename ValueType>
-SortedList<ValueType>::SortedList() : BaseList<ValueType>::BaseList()
+SortedList<ValueType>::SortedList() : BaseList<ValueType>()
 {
 }
 
@@ -11,12 +11,7 @@ SortedList<ValueType>::SortedList() : BaseList<ValueType>::BaseList()
 template<typename ValueType>
 SortedList<ValueType>::~SortedList()
 {
-  while(this->first_node_)
-  {
-    ListNode<ValueType> *tmp = this->first_node_->getNextNode();
-    delete this->first_node_;
-    this->first_node_ = tmp;
-  }
+  //nodes are deleted in ~BaseList
 }
 
 
@@ -24,7 +19,7 @@ template<typename ValueType>
 bool SortedList<ValueType>::insert(typename BaseList<ValueType>::const_reference element)
 {
   ListNode<ValueType> *qf_node;
-  uint32 index = this->quickfind(element, &qf_node);
+  uint32 index = quickfind(element, &qf_node);
   if(qf_node != 0)
   {
     if(qf_node->getElement() == element)
@@ -75,10 +70,10 @@ bool SortedList<ValueType>::insert(typename BaseList<ValueType>::const_reference
 
 
 template<typename ValueType>
-void SortedList<ValueType>::remove(typename BaseList<ValueType>::value_type value)
+void SortedList<ValueType>::removeElement(typename BaseList<ValueType>::const_reference value)
 {
-  uint32 index = this->quickfind(value);
-  if(index != 0)
+  uint32 index = quickfind(value);
+  if(index != this->number_of_elements_)
   {
     BaseList<ValueType>::remove(index);
   }
@@ -86,10 +81,10 @@ void SortedList<ValueType>::remove(typename BaseList<ValueType>::value_type valu
 
 
 template<typename ValueType>
-uint32 SortedList<ValueType>::find(typename BaseList<ValueType>::value_type value)
+uint32 SortedList<ValueType>::find(typename BaseList<ValueType>::const_reference value)
 {
   ListNode<ValueType> *node;
-  uint32 index = this->quickfind(value, &node);
+  uint32 index = quickfind(value, &node);
   if(node != 0)
   {
     if(node->getElement() == value)
@@ -102,25 +97,25 @@ uint32 SortedList<ValueType>::find(typename BaseList<ValueType>::value_type valu
 
 
 template<typename ValueType>
-uint32 SortedList<ValueType>::quickfind(typename BaseList<ValueType>::value_type value,
+uint32 SortedList<ValueType>::quickfind(typename BaseList<ValueType>::const_reference value,
   ListNode<ValueType> **ret_node = 0)
 {
   ListNode<ValueType> *node = this->first_node_;
+
+  if(ret_node != 0)
+  {
+    *ret_node = 0;
+  }
+
   if (node == 0)
   {
-    if(ret_node != 0)
-    {
-      *ret_node = 0;
-    }
     return 0;
   }
-  typename BaseList<ValueType>::value_type element_value;
-  uint32 index = 0;
 
-  for(; index < this->number_of_elements_; index++)
+  for(uint32 index = 0; index < this->number_of_elements_; index++)
   {
-    element_value = node->getElement();
-    if(element_value == value || value < element_value) {
+    if(node->getElement() == value || value < node->getElement())
+    {
       if(ret_node != 0)
       {
         *ret_node = node;
@@ -129,10 +124,7 @@ uint32 SortedList<ValueType>::quickfind(typename BaseList<ValueType>::value_type
     }
     node = node->getNextNode();
   }
-  if(ret_node != 0)
-  {
-    *ret_node = 0;
-  }
+
   return this->number_of_elements_;
 }
 

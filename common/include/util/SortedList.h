@@ -1,5 +1,5 @@
 /**
- * @file SoretedList.h
+ * @file SortedList.h
  */
 
 #ifndef SORTED_LIST_H___
@@ -15,10 +15,10 @@ typedef unsigned int uint32;
 #include "ListNode.h"
 
 /**
- * @class List provides a basic implementation of a not sorted list container
+ * @class SortedList provides a basic implementation of a sorted list container
  */
 template<typename ValueType>
-class SortedList:public BaseList<ValueType>
+class SortedList : public BaseList<ValueType>
 {
 
   public:
@@ -45,7 +45,7 @@ class SortedList:public BaseList<ValueType>
      * Removes an element by value
      * @param element the value of the element to remove
      */
-    void remove ( typename BaseList<ValueType>::value_type value );
+    void removeElement ( typename BaseList<ValueType>::const_reference value );
 
     /**
      * Finds an element by value
@@ -53,7 +53,7 @@ class SortedList:public BaseList<ValueType>
      * @return the index of the element or the position after the last element if not found
      * @pre the '<' and '==' operator has to be implemented for ValueType
      */
-    uint32 find ( typename BaseList<ValueType>::value_type value );
+    uint32 find ( typename BaseList<ValueType>::const_reference value );
 
   private:
     /**
@@ -63,7 +63,7 @@ class SortedList:public BaseList<ValueType>
      * @return the index of the node or before where it should be inserted.
      * @pre the '<' and '==' operator has to be implemented for ValueType
      */
-    uint32 quickfind ( typename BaseList<ValueType>::value_type value,
+    uint32 quickfind ( typename BaseList<ValueType>::const_reference value,
                        ListNode<ValueType> **ret_node );
 
 };

@@ -6,21 +6,15 @@
 
 
 template<typename ValueType>
-List<ValueType>::List() : BaseList<ValueType>::BaseList()
+List<ValueType>::List() : BaseList<ValueType>()
 {
-
 }
 
 
 template<typename ValueType>
 List<ValueType>::~List()
 {
-  while(this->first_node_)
-  {
-    ListNode<ValueType> *tmp = this->first_node_->getNextNode();
-    delete this->first_node_;
-    this->first_node_ = tmp;
-  }
+  //nodes are deleted in ~BaseList
 }
 
 
@@ -84,10 +78,10 @@ void List<ValueType>::insert(typename BaseList<ValueType>::size_type index, type
       // only has to be done for node != first
       node->getPreviousNode()->setNextNode(new_node);
 
-    node->setPreviousNode(new_node);
-
     new_node->setNextNode(node);
     new_node->setPreviousNode(node->getPreviousNode());
+
+    node->setPreviousNode(new_node);
   }
   else
   {
