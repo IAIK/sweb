@@ -332,51 +332,13 @@ add_custom_command(OUTPUT submit_check_param
 	)
 
 
-#Checks for clean hg
-add_custom_command(OUTPUT submit_check_hg
-	DEPENDS submit_check_param
-	#Check for modified uncommited files
-	COMMAND if [ `hg status -m -a -r -X images/ -X utils/ -X bin/ | wc -l` -ne 0 ]\; then
-		printf \"\\n\\nWARNING: you have modified files in your working directory\\n\"\;
-		printf \"WARNING: are you sure you don't want to submit your latest changes ?\\n\"\;
-		printf \"WARNING: maybe you forgot \\\"hg commit\\\" ?\\n\\n\\n\"\;
-	fi\;
-
-	COMMAND if [ `hg status -u | grep -i -E \"\(CMakeLists.txt|\\.c|\\.cc|\\.h|\\.cpp|\\.s|\\.tcpp\)$$\" | wc -l` -ne 0 ]\; then
-		printf \"\\n\\nWARNING: you have untracked source files in your working direcory !\\n\"\;
-		printf \"WARNING: are you sure you don't want to submit those ?\\n\"\;
-		printf \"WARNING: maybe you forgot \\\"hg status\\\" and then \\\"hg add\\\" ?\\n\\n\\n\"\;
-	fi\;
-	COMMENT "Checking for clean hg"
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	)
-
-#Build submit archive from hg tip
-add_custom_target(submit
-	DEPENDS submit_check_param submit_check_hg
-	COMMAND printf \"\"\;
-	SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
-	hg archive -r tip -t tbz2  -X \"utils/\" -X \"images/\" -X \"bin/\" \"`echo $$SUBMIT_FILE`\" \;
-	printf \"\\n**********************************************************\\n\"\;
-	printf \"Created: $$SUBMIT_FILE\\n\" \;
-	printf \"Please Test with: tar tjfv \\\"$$SUBMIT_FILE\\\"  |less\\n\"\;
-	printf \"Make sure you didn't forget to 'hg add' new files !\\n\"\;
-	printf \"**********************************************************\\n\\n\"\;
-	if [ `ls -s -k \"$$SUBMIT_FILE\" | cut -f1 -d' '` -gt 600 ]\; then
-	printf \"\\nWARNING: The tar file created is unusually large !\\n\"\;
-	printf \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\\n\"\;
-	fi\;
-	COMMENT "Building submit archive (hg)"
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	)
-
 #Build submit archive from dir
-add_custom_target(submit-nohg
+add_custom_target(submit-nogit
 	DEPENDS submit_check_param
 	COMMAND printf \"\"\;
 	SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
 	find . -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
-	tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.hg\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
+	tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.git\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
 	printf \"\\n**********************************************************\\n\"\;
 	printf \"Created: $$SUBMIT_FILE\\n\" \;
 	printf \"Please Test with: tar tjfv \\\"$$SUBMIT_FILE\\\"  |less\\n\"\;
@@ -385,7 +347,7 @@ add_custom_target(submit-nohg
 	printf \"\\nWARNING: The tar file created is unusually large !\\n\"\;
 	printf \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\\n\"\;
 	fi\;
-	COMMENT "Building submit archive (nohg)"
+	COMMENT "Building submit archive (nogit)"
 	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 	)
 
@@ -514,8 +476,7 @@ add_custom_target(help
 	COMMAND printf \"\\nqemugdb\\t\\truns qemu, waiting for gdb connection at localhost:1234\\n\"
 	COMMAND printf \"\\nrunddd\\t\\truns ddd, connecting to localhost:1234\\n\"
 	COMMAND printf \"\\nrungdb\\t\\truns gdb, connecting to localhost:1234\\n\"
-	COMMAND printf \"\\nsubmit assignment=<1 or 2> group=<group number, upper case>\\n\\t\\tBuilds a submit package using the last commited \(hg\)\\n\\t\\tversion. Uncommited changes are ignored.\\n\"
-	COMMAND printf \"\\nsubmit-nohg assignment=<1 or 2> group=<group number, upper case>\\n\\t\\tBuilds a submit package without \\n\\t\\tworrying about hg\\n\"
+	COMMAND printf \"\\nsubmit-nogit assignment=<1 or 2> group=<group number, upper case>\\n\\t\\tBuilds a submit package without \\n\\t\\tworrying about git (EMERGENCY ONLY!)\\n\"
 	COMMAND printf \"\\ninfo\\t\\toutputs some important system informations\\n\"
 	COMMAND printf \"\\ndoxygen\\t\\tbuilds the html and latex source documentation of SWEB\\n\"
 	COMMAND printf \"\\nhelp\\t\\tshows this target summary\\n\"
