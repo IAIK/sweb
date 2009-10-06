@@ -298,9 +298,9 @@ add_custom_target(rungdb
 #Makes really clean
 add_custom_target(mrproper
 		  COMMAND make clean;
-		  COMMAND find -name 'CMakeCache.txt' -exec rm {} +;
-		  COMMAND find -name 'CMakeFiles' -exec rm -f -r {} +;
-		  COMMAND find -name 'cmake_install.cmake' -exec rm -f -r {} +;
+		  COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
+		  COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
+		  COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
  		  COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
 		  COMMAND cmake .
 		 )
@@ -308,9 +308,9 @@ add_custom_target(mrproper
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 add_custom_target(remove_cmake
 		  COMMAND make clean;
-		  COMMAND find -name 'CMakeCache.txt' -exec rm {} +;
-		  COMMAND find -name 'CMakeFiles' -exec rm -f -r {} +;
-		  COMMAND find -name 'cmake_install.cmake' -exec rm -f -r {} +;
+		  COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
+		  COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
+		  COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
  		  COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
 		)
 
@@ -376,7 +376,7 @@ add_custom_target(submit-nohg
 		DEPENDS submit_check_param
 		COMMAND printf \"\"\;
 			SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
-			find -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
+			find . -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
 			tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.hg\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
 			printf \"\\n**********************************************************\\n\"\;
 			printf \"Created: $$SUBMIT_FILE\\n\" \;
