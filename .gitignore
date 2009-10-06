@@ -16,5 +16,5 @@ Makefile
 info.file
 utils/bochs/bochsrc
 
-syntax: regexp
-(.*/)?\#[^/]*\#$
+#syntax: regexp
+#(.*/)?\#[^/]*\#$
