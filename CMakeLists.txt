@@ -441,6 +441,18 @@ add_custom_target(bochsconfig
 		#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
 		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 	fi\;
+
+	if [ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -lt \"4\" ] \; then
+		#replace $[CPU] with ips: 10000000
+		sed -i -e 's/\\$$\\[CPU\\]$$/ips: 10000000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+	else
+		#Generate bochs config for bochs version > 2.4
+		printf \"\\nAdapting bochs config for bochs version > 2.4\\n\\n\"\;
+		#replace $[CPU] with cpu: count=1, ips=10000000
+		sed -i -e 's/\\$$\\[CPU\\]$$/cpu: count=1, ips=10000000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+		#activate port_e9_hack option
+		sed -i -e 's/\#\\\(port_e9_hack: enabled=1\\\)/\\1/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+	fi\;
 	COMMAND rm bochs_version
 
 	COMMENT Generating Bochs configuration
