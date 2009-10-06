@@ -135,7 +135,7 @@ typedef int32 Elf32_Sword;
 typedef uint32 Elf32_Word;
 
 
-typedef struct sELF32_Ehdr
+struct sELF32_Ehdr
 {
   uint8 e_ident[EI_NIDENT];
   Elf32_Half    e_type;

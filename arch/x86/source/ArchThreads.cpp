@@ -10,7 +10,7 @@
 #include "offsets.h"
 #include "Thread.h"
 
-typedef struct ArchThreadInfo
+struct ArchThreadInfo
 {
   uint32  eip;       // 0
   uint32  cs;        // 4

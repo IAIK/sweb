@@ -352,7 +352,7 @@ DUMMY_HANDLER(253)
 DUMMY_HANDLER(254)
 DUMMY_HANDLER(255)
 
-typedef struct ArchThreadInfo
+struct ArchThreadInfo
 {
   uint32  eip;       // 0
   uint32  cs;        // 4
