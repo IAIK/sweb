@@ -8,7 +8,7 @@ Requirements:
   Gentoo: USE="X -debugger" emerge app-emulation/bochs
   Ubuntu: apt-get install bochs-x
   (change bochsrc as appropriate)
-* Mercurial (aka: "hg") 
+* git 
 * Basic Shell Commands like: test, wc, grep, awk, make, md5sum, ...
 * CMake
 * Run 'cmake .' in base sweb directory
