@@ -224,7 +224,7 @@ int32 PathWalker::pathWalk ( const char* pathname )
 char* PathWalker::getNextPart ( const char* path, int32 &npart_len )
 {
   char* tmp = 0;
-  tmp = strchr ( path, SEPARATOR );
+  tmp = strchr ( (char*) path, SEPARATOR );
 
   char* npart = 0;
   npart_len = ( size_t ) ( tmp - path + 1 );
