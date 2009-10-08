@@ -476,7 +476,7 @@ add_custom_target(help
 	COMMAND printf \"\\nqemugdb\\t\\truns qemu, waiting for gdb connection at localhost:1234\\n\"
 	COMMAND printf \"\\nrunddd\\t\\truns ddd, connecting to localhost:1234\\n\"
 	COMMAND printf \"\\nrungdb\\t\\truns gdb, connecting to localhost:1234\\n\"
-	COMMAND printf \"\\nsubmit-nogit assignment=<1 or 2> group=<group number, upper case>\\n\\t\\tBuilds a submit package without \\n\\t\\tworrying about git (EMERGENCY ONLY!)\\n\"
+	COMMAND printf \"\\nsubmit-nogit assignment=<1 or 2> group=<group number, upper case>\\n\\t\\tBuilds a submit package without \\n\\t\\tworrying about git \(EMERGENCY ONLY!\)\\n\"
 	COMMAND printf \"\\ninfo\\t\\toutputs some important system informations\\n\"
 	COMMAND printf \"\\ndoxygen\\t\\tbuilds the html and latex source documentation of SWEB\\n\"
 	COMMAND printf \"\\nhelp\\t\\tshows this target summary\\n\"
