@@ -125,12 +125,6 @@ class BDRequest
     BD_RESULT getStatus(){ return status_; };
 
     /**
-     * returns the number of the blocks
-     *
-     */
-    uint32 getNumBlock(){ return num_block_; };
-
-    /**
      * returns the number of the blocks already read/written *do not use unless you
      * know EXACTLY what you are doing* - heavy sync issues can come up.
      *

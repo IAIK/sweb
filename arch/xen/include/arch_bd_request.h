@@ -85,7 +85,6 @@ class BDRequest
     uint32 getNumBlocks()        { return num_block_; };
     uint32 getResult()           { return result_; };
     BD_RESULT getStatus()        { return status_; };
-    uint32 getNumBlock()         { return num_block_; };
     uint32 getBlocksDone()       { return blocks_done_; };
     void * getBuffer()           { return buffer_; };
     
