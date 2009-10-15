@@ -356,7 +356,7 @@ add_custom_target(submit-nogit
 add_custom_target(bochsconfig
 
 	#Extracts Bochsversion from bochs --help
-	COMMAND bochs --help 2>&1 |
+	COMMAND ${BOCHS_PATH} --help 2>&1 |
 	grep -A 1 -m 1 \"=======\" |
 	grep -o -E \"\([[:alnum:]]|\\.\)+[[:space:]]*$$\" > bochs_version\;
 
