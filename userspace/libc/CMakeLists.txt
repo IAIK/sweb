@@ -30,4 +30,4 @@ set(LIBRARY_OUTPUT_PATH  "${LIBRARY_OUTPUT_PATH}/userspace")
 FILE(GLOB userspace_libc_SOURCES src/*.c)
 
 ADD_LIBRARY(userspace_libc ${userspace_libc_SOURCES} ${ASM_OBJECTS})
-    
+
