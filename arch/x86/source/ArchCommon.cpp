@@ -184,7 +184,7 @@ uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
     return orig_mbr.module_maps[num].end_address;
   }
- 
+
 }
 
 void ArchCommon::dummdumm(uint32 i, uint32 &used, uint32 &start, uint32 &end)
@@ -257,11 +257,11 @@ void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
 {
   MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)src;
   MEMCOPY_LARGE_TYPE *d64 = (MEMCOPY_LARGE_TYPE*)dest;
-  
+
   uint32 i;
   uint32 num_64_bit_copies = size / (sizeof(MEMCOPY_LARGE_TYPE)*8);
   uint32 num_8_bit_copies = size % (sizeof(MEMCOPY_LARGE_TYPE)*8);
-  
+
   for (i=0;i<num_64_bit_copies;++i)
   {
     d64[0] = s64[0];
@@ -278,7 +278,7 @@ void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
 
   uint8 *s8 = (uint8*)s64;
   uint8 *d8 = (uint8*)d64;
-  
+
   for (i=0;i<num_8_bit_copies;++i)
   {
     *d8 = *s8;
