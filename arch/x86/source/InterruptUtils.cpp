@@ -468,17 +468,17 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-  //--------Start "just for Debugging"-----------  
+  //--------Start "just for Debugging"-----------
   uint32 const __attribute__((unused)) flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
   uint32 const __attribute__((unused)) flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
   uint32 const __attribute__((unused)) flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
   uint32 const __attribute__((unused)) flag_rsvd = 0x1 << 3; // pf caused by reserved bits
-    
+
   // uint32 cr2=0xffff;
   // __asm__("movl %%cr2, %0"
   // :"=a"(cr2)
   // :);
-  
+
   debug(A_INTERRUPTS | PM, "pageFaultHandler( address: %x, error: page_present=%d writing=%d user=%d rsvd=%d)\n\t(currentThread: %x  %d:%s, switch_to_userspace_:%d)\n",
       address,
       error&flag_p,
@@ -548,14 +548,14 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
           // remove this error check if your implementation swaps out kernel pages
           debug(A_INTERRUPTS | PM, "WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
           debug(A_INTERRUPTS | PM, "WARNING: most likey there is an pointer error somewhere\n");
-        }            
+        }
       }
       else
       {
         //debug(A_INTERRUPTS | PM, "The virtual page we accessed was not mapped to a physical page\n");
         //debug(A_INTERRUPTS | PM, "this is normal and the Loader will propably take care of it now\n");
       }
-    }      
+    }
   }
 
   //ArchThreads::printThreadRegisters(currentThread,0);
@@ -597,9 +597,9 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   // }
 
   //--------End "just for Debugging"-----------
-    
+
   //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
-  
+
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = false;
@@ -632,7 +632,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       break; //not reached
     default:
       kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
-  }  
+  }
 }
 
 extern "C" void arch_irqHandler_1();
