@@ -2,6 +2,8 @@
  * @file Map.tcpp template definitions, included by Map.h
  */
 
+#include "assert.h"
+
 template<typename KeyType, typename ValueType>
 Map<KeyType, ValueType>::Map() : first_node_(0),
                           last_node_(0),
@@ -20,19 +22,19 @@ Map<KeyType, ValueType>::Map(const Map<KeyType, ValueType> &instance)
   {
     // copy nodes
     ListNode<Pair<KeyType, ValueType> > *node = new ListNode<Pair<KeyType, ValueType> >(*instance.first_node_);
-  
+
     first_node_ = node;
-  
+
     while(node->hasNextNode())
     {
       ListNode<Pair<KeyType, ValueType> > *next_node = new ListNode<Pair<KeyType, ValueType> >(*(node->getNextNode()));
-  
+
       next_node->setPreviousNode(node);
       node->setNextNode(next_node);
-  
+
       node = next_node;
     }
-  
+
     last_node_ = node;
   }
   else
@@ -264,3 +266,5 @@ void Map<KeyType, ValueType>::removeByKey(KeyType key)
     ++index;
   }
 }
+
+/* vim: ft=cpp */
