@@ -16,5 +16,10 @@ Makefile
 info.file
 utils/bochs/bochsrc
 
+/GPATH
+/GRTAGS
+/GSYMS
+/GTAGS
+
 #syntax: regexp
 #(.*/)?\#[^/]*\#$
