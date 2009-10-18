@@ -21,5 +21,9 @@ utils/bochs/bochsrc
 /GSYMS
 /GTAGS
 
+# eclipse project files
+.project
+.cproject
+
 #syntax: regexp
 #(.*/)?\#[^/]*\#$
