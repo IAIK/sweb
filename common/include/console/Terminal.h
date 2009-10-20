@@ -66,7 +66,7 @@ class Terminal : public CharacterDevice
      * @param buffer the buffer to write
      * @return the size
      */
-    virtual int32 writeData ( int32 offset, int32 size, const char*buffer );
+    virtual int32 writeData ( uint32 offset, uint32 size, const char*buffer );
 
     /**
      * Sets the foregroundcolor of the terminal.

@@ -68,7 +68,7 @@ class CharacterDevice : public Inode, public Thread
      * @param offset is never to be used, because there is no offset
      *        in character devices, but it is defined in the Inode interface
      */
-    virtual int32 readData ( int32 offset, int32 size, char *buffer )
+    virtual int32 readData ( uint32 offset, uint32 size, char *buffer )
     {
       if ( offset )
         return -1; // offset reading not supprted with char devices
@@ -78,7 +78,7 @@ class CharacterDevice : public Inode, public Thread
       {
         *bptr++ = _in_buffer->get();
       }
-      while ( ( bptr - buffer ) < size );
+      while ( ( bptr - buffer ) < (int32) size );
 
       return ( bptr - buffer );
     };
@@ -90,7 +90,7 @@ class CharacterDevice : public Inode, public Thread
      * @param offset is never to be used, because there is no offset
      *        in character devices, but it is defined in the Inode interface
      */
-    virtual int32 writeData ( int32 offset, int32 size, const char*buffer )
+    virtual int32 writeData ( uint32 offset, uint32 size, const char*buffer )
     {
       if ( offset )
         return -1; // offset writing also not supp0rted
@@ -100,7 +100,7 @@ class CharacterDevice : public Inode, public Thread
       {
         _out_buffer->put ( *bptr++ );
       }
-      while ( ( bptr - buffer ) < size );
+      while ( ( bptr - buffer ) < (int32) size );
 
       return ( bptr - buffer );
     };

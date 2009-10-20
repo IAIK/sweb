@@ -59,7 +59,7 @@ void BDVirtualDevice::addRequest(BDRequest * command)
 };
 
 
-int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer) 
+int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
    debug(BD_VIRT_DEVICE, "readData\n");
    uint32 blocks2read = size/block_size_, jiffies = 0;
@@ -91,7 +91,7 @@ int32 BDVirtualDevice::readData(int32 offset, int32 size, char *buffer)
    return size;
 };
 
-int32 BDVirtualDevice::writeData(int32 offset, int32 size, const char *buffer)
+int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, const char *buffer)
 {
    debug(BD_VIRT_DEVICE, "writeData\n");
    uint32 blocks2write = size/block_size_, jiffies = 0;

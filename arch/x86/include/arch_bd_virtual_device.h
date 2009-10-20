@@ -73,7 +73,7 @@ class BDVirtualDevice : public Inode
      * @param buffer to save the data that has been read
      *
      */
-    virtual int32 readData(int32 offset, int32 size, char *buffer);
+    virtual int32 readData(uint32 offset, uint32 size, char *buffer);
 
     /**
      * reads the data from the inode on the current device
@@ -82,7 +82,7 @@ class BDVirtualDevice : public Inode
      * @param buffer data, that should be written
      *
      */
-    virtual int32 writeData(int32 offset, int32 size, const char *buffer);
+    virtual int32 writeData(uint32 offset, uint32 size, const char *buffer);
 
     /**
      * creates an inode at the given dentry

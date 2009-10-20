@@ -166,7 +166,7 @@ void Terminal::writeString ( char const *string )
   console_->unLockConsoleForDrawing();
 }
 
-int32 Terminal::writeData ( int32 offset, int32 size, const char*buffer )
+int32 Terminal::writeData ( uint32 offset, uint32 size, const char*buffer )
 {
   if ( offset != 0 )
     return offset;

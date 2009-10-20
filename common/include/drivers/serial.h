@@ -99,7 +99,7 @@ class SerialPort : public CharacterDevice
      * @param buffer The data to be written
      * @return Number of bytes actualy written or -1 in case of an error
      */
-    virtual int32 writeData ( int32 offset, int32 size, const char*buffer );
+    virtual int32 writeData ( uint32 offset, uint32 size, const char*buffer );
 
 //  /**
 //  * Reads size bytes from the serial port
