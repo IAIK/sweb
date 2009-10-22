@@ -247,7 +247,7 @@ add_custom_command(OUTPUT check_for_bochs_config
 #Run bochs in non debugging mode
 add_custom_target(bochs
 	DEPENDS check_for_bochs_config
-	COMMAND ${BOCHS_PATH} -q -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'
+	COMMAND ${BOCHS_PATH} -q -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc
 	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
@@ -384,7 +384,7 @@ add_custom_target(bochsconfig
 
 
 	#copy pattern file to real file
-	cp \"${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc.pattern\" \"${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\"\;
+	cp ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc.pattern ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
 
 
 	#major version < 2?
@@ -396,24 +396,24 @@ add_custom_target(bochsconfig
 		#Generate bochs config for bochs version <= 2.2
 		printf  \"\\nGenerating bochs config for bochs version <= 2.2.1\\n\\n\"\;
 		#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
-		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
 	else
 		#Generate bochs config for bochs version > 2.2
 		printf \"\\nGenerating bochs config for bochs version > 2.2.1\\n\\n\"\;
 		#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
-		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
 	fi\;
 
 	if [ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -lt \"4\" ] \; then
 		#replace $[CPU] with ips: 10000000
-		sed -i -e 's/\\$$\\[CPU\\]$$/ips: 10000000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+		sed -i -e 's/\\$$\\[CPU\\]$$/ips: 10000000/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
 	else
 		#Generate bochs config for bochs version > 2.4
 		printf \"\\nAdapting bochs config for bochs version > 2.4\\n\\n\"\;
 		#replace $[CPU] with cpu: count=1, ips=10000000
 		sed -i -e 's/\\$$\\[CPU\\]$$/cpu: count=1, ips=10000000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 		#activate port_e9_hack option
-		sed -i -e 's/\#\\\(port_e9_hack: enabled=1\\\)/\\1/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+		sed -i -e 's/\#\\\(port_e9_hack: enabled=1\\\)/\\1/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
 	fi\;
 	COMMAND rm bochs_version
 
