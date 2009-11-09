@@ -97,7 +97,7 @@ void Scheduler::addNewThread ( Thread *thread )
   lockScheduling();
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   waitForFreeKMMLock();
-  threads_.push_front ( thread );
+  threads_.push_back ( thread );
   unlockScheduling();
 }
 
