@@ -468,13 +468,12 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
     sub_dentry->setParent ( current_dentry );
     debug ( VFSSYSCALL,"(open) calling create Inode\n" );
     Inode* sub_inode = current_sb->createInode ( sub_dentry, I_FILE );
-    debug ( VFSSYSCALL,"(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName() );
-
     if ( !sub_inode )
     {
       delete sub_dentry;
       return -1;
     }
+    debug ( VFSSYSCALL,"(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName() );
 
     int32 fd = current_sb->createFd ( sub_inode, flag & 0xFFFFFFFB );
     debug ( VFSSYSCALL,"the fd-num: %d\n", fd );
