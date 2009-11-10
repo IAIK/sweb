@@ -25,9 +25,46 @@ class Array
     {
     }
 
+    /*
+     * Copy constructors. Copies all elements from ths to this.
+     */
+    Array(const Array& rhs)
+      : num_elems_(rhs.num_elems_), size_(rhs.num_elems_),
+        elements_(0)
+    {
+      if (!size_)
+        return;
+
+      elements_ = new T[size_];
+      for (uint32 u = 0; u != rhs.num_elems_; ++u)
+        elements_[u] = rhs.elements_[u];
+    }
+
     ~Array()
     {
       delete[] elements_;
+    }
+
+    /**
+     * Assignment operator. Copies all elements from rhs to this.
+     */
+    Array& operator =(const Array& rhs)
+    {
+      if (!rhs.num_elems_)
+      {
+        delete[] elements_;
+        num_elems_ = 0;
+        size_ = 0;
+      }
+      else
+      {
+        resetSize(rhs.num_elems_);
+        for (uint32 u = 0; u != rhs.num_elems_; ++u)
+          elements_[u] = rhs.elements_[u];
+        num_elems_ = rhs.num_elems_;
+      }
+
+      return *this;
     }
 
     /**
