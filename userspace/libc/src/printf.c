@@ -52,6 +52,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "stdarg.h"
+#include "string.h"
 
 /**
  * structure containing useful variables describing a string stored in a
@@ -114,6 +115,19 @@ void resizeString(c_string *str, unsigned int new_size)
 #endif // STATIC_MEMORY__
 
 //----------------------------------------------------------------------
+
+/**
+ * Writes a number of fill chars into a string
+ */
+void writeFillChars(c_string *output_string, int size, char fill )
+{
+  while( size-- > 0 )
+  {
+    *output_string->ptr++ = fill;
+    ++output_string->length;
+  }
+}
+
 /**
  * Writes a number into a string using the given parameters.
  *
@@ -287,9 +301,15 @@ extern int printf(const char *format, ...)
         default:
           break;
       }
-      if (*format > '0' && *format <= '9')
+      size_t c = 0;
+      char num[4];
+      for(; *format > '0' && *format <= '9'; ++format, ++c)
+        if( c < 4 )
+          num[c] = *format;
+      num[c < 4 ? c : 3] = 0;
+      if( c )
       {
-        width = atoi(format);  //this advances *format as well
+        width = atoi(num); //this advances *format as well
 
 #ifdef STATIC_MEMORY__
         if(character_count < width)
@@ -316,7 +336,27 @@ extern int printf(const char *format, ...)
         case 's':
         {
           char const *string_arg = va_arg(args, char const*);
+          int len = strlen(string_arg);
 
+          // we should align right -> fill with spaces
+          if( !((flag & LEFT) && (len < width)) )
+          {
+            character_count -= width - len;
+            if( character_count < 0 )
+            {
+#ifdef STATIC_MEMORY__
+              break;
+#else
+              // resize output string if necessary
+              character_count = output_string.size;
+              resizeString(&output_string, output_string.size * 2);
+#endif // STATIC_MEMORY__
+            }
+
+            writeFillChars(&output_string, width - len, ' ');
+          }
+
+          // now print the string
           while(string_arg && *string_arg)
           {
             if(!character_count)
@@ -335,6 +375,25 @@ extern int printf(const char *format, ...)
             --character_count;
             ++output_string.length;
           }
+
+          // and some fillchars if aligned on the left
+          if( flag & LEFT && len < width )
+          {
+            character_count -= width - len;
+            if( character_count < 0 )
+            {
+#ifdef STATIC_MEMORY__
+              break;
+#else
+              // resize output string if necessary
+              character_count = output_string.size;
+              resizeString(&output_string, output_string.size * 2);
+#endif // STATIC_MEMORY__
+            }
+
+            writeFillChars(&output_string, width - len, ' ');
+          }
+
           break;
         }
 
