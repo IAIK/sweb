@@ -22,8 +22,10 @@ utils/bochs/bochsrc
 /GTAGS
 
 # eclipse project files
+.settings
 .project
 .cproject
+.cdtproject
 
 #syntax: regexp
 #(.*/)?\#[^/]*\#$
