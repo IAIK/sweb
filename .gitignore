@@ -26,6 +26,7 @@ utils/bochs/bochsrc
 .project
 .cproject
 .cdtproject
+.cdtbuild
 
 #syntax: regexp
 #(.*/)?\#[^/]*\#$
