@@ -53,6 +53,7 @@ class Array
       if (!rhs.num_elems_)
       {
         delete[] elements_;
+        elements_ = 0;
         num_elems_ = 0;
         size_ = 0;
       }
