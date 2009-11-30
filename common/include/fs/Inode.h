@@ -111,7 +111,11 @@ class Inode
      * @param super_block the superblock to create the inode on
      * @param inode_type the inode type
      */
-    Inode ( Superblock *super_block, uint32 inode_type )
+    Inode ( Superblock *super_block, uint32 inode_type ):
+      i_dentry_(0),
+      i_nlink_(0),
+      i_size_ (0),
+      i_state_( I_UNUSED )
     { i_superblock_ = super_block, i_type_ = inode_type; }
 
     /**
