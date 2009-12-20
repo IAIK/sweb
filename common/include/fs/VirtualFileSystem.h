@@ -60,9 +60,10 @@ class VirtualFileSystem
     ~VirtualFileSystem();
 
     /**
-     * register the file-system-typt to the vfs
+     * register the file-system-type to the vfs
      * @param file_system_type the file system type to register
-     * @return 0 on success
+     * @return 0 on success, -1 if a file-system-type with that name has
+     * already been registered
      */
     int32 registerFileSystem ( FileSystemType *file_system_type );
 

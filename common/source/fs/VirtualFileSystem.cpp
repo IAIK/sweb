@@ -33,6 +33,12 @@ int32 VirtualFileSystem::registerFileSystem ( FileSystemType *file_system_type )
 {
   assert ( file_system_type );
   assert ( file_system_type->getFSName() );
+
+  // check whether a file system type with that name has already been
+  // registered
+  if (getFsType(file_system_type->getFSName()))
+      return -1;
+
   file_system_types_.pushBack ( file_system_type );
   return 0;
 }
