@@ -98,7 +98,10 @@ class FileSystemType
 
     /**
      * Creates an Superblock object for the actual file system type.
-     * @return a pointer to the Superblock object
+     * @param s_dev a valid device number or -1 if no block device is available
+     *              (e.g. for pseudo file systems)
+     * @return a pointer to the Superblock object, 0 if wasn't possible to
+     * create a Superblock with the given device number
      */
     virtual Superblock *createSuper ( Dentry *root, uint32 s_dev ) const;
 

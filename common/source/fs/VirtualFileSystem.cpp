@@ -121,7 +121,7 @@ FileSystemInfo *VirtualFileSystem::root_mount ( const char *fs_name, uint32 /*fl
 {
   FileSystemType *fst = getFsType ( fs_name );
 
-  Superblock *super = fst->createSuper ( 0,0 );
+  Superblock *super = fst->createSuper ( 0,-1 );
   super = fst->readSuper ( super, 0 );
   Dentry *mount_point = super->getMountPoint();
   mount_point->setMountPoint ( mount_point );
@@ -150,9 +150,19 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
   if ( ( !dir_name ) || ( !fs_name ) )
     return -1;
 
-  uint32 dev = BDManager::getInstance()->getDeviceByName ( dev_name )->getDeviceNumber();
+
+  BDVirtualDevice* bddev = BDManager::getInstance()->getDeviceByName(dev_name);
+  uint32 dev = bddev ? bddev->getDeviceNumber() : (uint32) -1;
+  if (!bddev && strcmp(dev_name, "") != 0)
+  {
+    debug(VFS, "mount: device with name %s doesn't exist\n", dev_name);
+    return -1;
+  }
+
   debug ( VFS, "dev_nr:%d\n", dev );
   FileSystemType *fst = getFsType ( fs_name );
+  if (!fst)
+    return -1;
 
   fs_info->setName ( dir_name );
   const char* test_name = fs_info->getName();
@@ -171,6 +181,8 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
 
   // create a new superblock
   Superblock *super = fst->createSuper ( found_dentry, dev );
+  if (!super)
+    return -1;
   super = fst->readSuper ( super, 0 ); //?
   Dentry *root = super->getRoot();
 

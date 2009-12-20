@@ -95,7 +95,8 @@ class VirtualFileSystem
     /**
      * mount the dev_name (device name) to the directory specified by dir_name.
      * @param dev_name the device file name of the block device storing the
-     *                  filesystem.
+     *                  filesystem. Shall be a empty string to mount pseudo
+     *                  file sytems.
      * @param dir_name the mount pointer directory
      * @param fs_name the name of the type of filesystem to be mounted
      * @param flags the mount flags
