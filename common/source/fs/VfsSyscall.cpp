@@ -553,13 +553,16 @@ int32 VfsSyscall::flush ( uint32 fd )
 
 int32 VfsSyscall::mount ( const char *device_name, const char *dir_name, const char *file_system_name, int32 flag )
 {
-  if ( strcmp ( file_system_name, "minixfs" ) == 0 )
+  FileSystemType* type = vfs.getFsType(file_system_name);
+  if (!type && strcmp(file_system_name, "minixfs") == 0)
   {
     MinixFSType *minixfs = new MinixFSType();
-    vfs.registerFileSystem ( minixfs );
-    return vfs.mount ( device_name, dir_name, file_system_name, flag );
+    assert(vfs.registerFileSystem(minixfs) == 0);
   }
-  return -1; // file system type not known
+  else if (!type)
+    return -1; // file system type not known
+
+  return vfs.mount ( device_name, dir_name, file_system_name, flag );
 }
 
 
