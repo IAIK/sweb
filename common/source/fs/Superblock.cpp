@@ -15,10 +15,9 @@ Superblock::~Superblock()
 void Superblock::delete_inode ( Inode *inode )
 {
   assert ( inode != 0 );
-  int32 del_inode = dirty_inodes_.remove ( inode );
-  if ( del_inode == -1 )
-    del_inode = used_inodes_.remove ( inode );
-  assert ( del_inode != -1 );
+  dirty_inodes_.remove ( inode );
+  used_inodes_.remove ( inode );
+  assert ( all_inodes_.remove(inode) != -1 );
   delete inode;
 }
 
