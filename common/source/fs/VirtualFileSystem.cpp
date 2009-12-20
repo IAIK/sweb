@@ -246,13 +246,8 @@ int32 VirtualFileSystem::umount ( const char* dir_name, uint32 /*flags*/ )
 
   Superblock *sb = found_vfs_mount->getSuperblock();
 
-
-//   NOTE: workaround because removing from mounts_ doesn't work!
-//   TODO: FIX this workaround
-//   mounts_.remove(found_vfs_mount);;
-//   delete found_vfs_mount;
-  found_vfs_mount->clear();
-
+  mounts_.remove(found_vfs_mount);
+  delete found_vfs_mount;
   delete sb;
 
   return 0;
