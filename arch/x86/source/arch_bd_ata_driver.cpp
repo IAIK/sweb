@@ -92,6 +92,12 @@ int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *
 
 int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
+  /* Wait for drive to clear BUSY */
+  jiffies = 0;
+  while((inbp(port+7) & 0x80) && jiffies++ < 50000);
+  if(jiffies > 50000)
+    return -1;
+
   //The equations to convert from LBA to CHS follow:
   //CYL = LBA / (HPC * SPT)
   //TEMP = LBA % (HPC * SPT)
@@ -126,6 +132,14 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   outbp( port + 3, sect );            // starting sector
   outbp( port + 4, lo );              // cylinder low
   outbp( port + 5, high );            // cylinder high
+
+  /* Wait for drive to set DRDY */
+  jiffies = 0;
+  while(!(inbp(port+7) & 0x40) && jiffies < 50000);
+  if(jiffies > 50000)
+    return -1;
+
+  /* Write the command code to the command register */
   outbp( port + 7, 0x20 );            // command
 
   if( mode != BD_PIO_NO_IRQ )
@@ -134,8 +148,8 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   jiffies = 0;
 
   while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000) ;
-    if(jiffies > 50000 )
-      return -1;
+  if(jiffies > 50000 )
+    return -1;
 
   uint32 counter;
   uint16 *word_buff = (uint16 *) buffer;
@@ -148,6 +162,12 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
 int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer )
 {
+  /* Wait for drive to clear BUSY */
+  jiffies = 0;
+  while((inbp(port+7) & 0x80) && jiffies < 50000);
+  if(jiffies > 50000)
+    return -1;
+
   uint16 *word_buff = (uint16 *) buffer;
 
   // This equation is used very often by operating systems such as DOS 
@@ -168,6 +188,14 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   outbp( port + 3, sect );           // starting sector
   outbp( port + 4, lo );             // cylinder low
   outbp( port + 5, high );           // cylinder high
+
+  /* Wait for drive to set DRDY */
+  jiffies = 0;
+  while(!(inbp(port+7) & 0x40));
+  if(jiffies > 50000)
+    return -1;
+
+  /* Write the command code to the command register */
   outbp( port + 7, 0x30 );           // command
 
   jiffies = 0;
