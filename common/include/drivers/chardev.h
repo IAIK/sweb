@@ -46,8 +46,8 @@ class CharacterDevice : public Inode, public Thread
       i_superblock_ = DeviceFSSuperBlock::getInstance();
       DeviceFSSuperBlock::getInstance()->addDevice ( this, name );
 
-      _in_buffer  = new FiFo< uint32 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
-      _out_buffer = new FiFo< uint32 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
+      _in_buffer  = new FiFo< uint8 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
+      _out_buffer = new FiFo< uint8 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
     };
 
     /**
@@ -179,12 +179,18 @@ class CharacterDevice : public Inode, public Thread
       while ( 1 );
     }
 
-    FiFo< uint32 > *_in_buffer;
-    FiFo< uint32 > *_out_buffer;
+    char *getDeviceName() const
+    {
+      return device_name;
+    }
+
+
+  protected:
+
+    FiFo< uint8 > *_in_buffer;
+    FiFo< uint8 > *_out_buffer;
 
     char *device_name;
-
-  private:
 
     /**
      * processes the in buffer of the character device

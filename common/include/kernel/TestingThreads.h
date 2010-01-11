@@ -96,7 +96,7 @@ class SerialThread : public Thread
       {
         SerialPort *sp = sm->serial_ports[i];
         kprintfd ( "SerialThread::Run: Port number : %d, Port name : %s \n", i ,
-                   sp->device_name );
+                   sp->getDeviceName() );
         kprintfd ( "SerialThread::Run: I/O Port : %X, Port irq : %d \n",
                    sp->get_info().base_port, sp->get_info().irq_num );
       }
