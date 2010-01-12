@@ -135,7 +135,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies < 50000) ;
+  while(!(inbp(port+7) & 0x40) && jiffies++ < 50000) ;
   if(jiffies > 50000)
     return -1;
 
@@ -164,7 +164,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 {
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies < 50000) ;
+  while((inbp(port+7) & 0x80) && jiffies++ < 50000) ;
   if(jiffies > 50000)
     return -1;
 
@@ -191,7 +191,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40)) ;
+  while(!(inbp(port+7) & 0x40) && jiffies++ < 50000) ;
   if(jiffies > 50000)
     return -1;
 
