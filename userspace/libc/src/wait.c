@@ -17,16 +17,15 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-#ifndef sched_h___
-#define sched_h___
+#include "wait.h"
 
 /**
- * posix function signature
- * do not change the signature!
+ * function stub
+ * posix compatible signature - do not change the signature!
  */
-extern int sched_yield(void);
-
-#endif // sched_h___
+pid_t waitpid(pid_t pid, int *status, int options)
+{
+  return -1;
+}
 
 

@@ -17,16 +17,31 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-#ifndef sched_h___
-#define sched_h___
+#include "stdlib.h"
 
 /**
- * posix function signature
- * do not change the signature!
+ * function stub
+ * posix compatible signature - do not change the signature!
  */
-extern int sched_yield(void);
+void *malloc(unsigned int size)
+{
+  return NULL;
+}
 
-#endif // sched_h___
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+void free(void *ptr)
+{
+}
 
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int atexit(void (*function)(void))
+{
+  return -1;
+}
 

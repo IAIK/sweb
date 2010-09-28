@@ -17,16 +17,52 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+#include "semaphore.h"
 
-#ifndef sched_h___
-#define sched_h___
 
 /**
- * posix function signature
- * do not change the signature!
+ * function stub
+ * posix compatible signature - do not change the signature!
  */
-extern int sched_yield(void);
+int sem_wait(sem_t *sem)
+{
+  return -1;
+}
 
-#endif // sched_h___
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int sem_trywait(sem_t *sem)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int sem_init(sem_t *sem, int pshared, unsigned value)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int sem_destroy(sem_t *sem)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int sem_post(sem_t *sem)
+{
+  return -1;
+}
 
 

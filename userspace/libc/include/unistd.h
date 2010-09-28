@@ -336,13 +336,13 @@ extern int read(int file_descriptor, void *buffer, size_t count);
 extern int write(int file_descriptor, const void *buffer, size_t count);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern void* brk(void *end_data_segment);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern void* sbrk(intptr_t increment);

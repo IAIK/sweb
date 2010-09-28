@@ -30,7 +30,7 @@ typedef int pid_t;
 #endif // PID_T_DEFINED
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern pid_t waitpid(pid_t pid, int *status, int options);

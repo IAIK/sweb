@@ -17,16 +17,41 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-#ifndef sched_h___
-#define sched_h___
+#include "sys/mman.h"
 
 /**
- * posix function signature
- * do not change the signature!
+ * function stub
+ * posix compatible signature - do not change the signature!
  */
-extern int sched_yield(void);
+void* mmap(void* start, size_t length, int prot, int flags, int fd,
+           off_t offset)
+{
+  return 0;
+}
 
-#endif // sched_h___
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int munmap(void* start, size_t length)
+{
+  return -1;
+}
 
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int shm_open(const char* name, int oflag, mode_t mode)
+{
+  return -1;
+}
 
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int shm_unlink(const char* name)
+{
+  return -1;
+}

@@ -59,25 +59,25 @@ typedef unsigned int off_t;
 #endif // OFF_T_DEFINED
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int munmap(void* start, size_t length);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int shm_open(const char* name, int oflag, mode_t mode);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int shm_unlink(const char* name);

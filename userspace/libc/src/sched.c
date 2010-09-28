@@ -18,15 +18,13 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
-#ifndef sched_h___
-#define sched_h___
+#include "sched.h"
 
 /**
- * posix function signature
- * do not change the signature!
+ * function stub
+ * posix compatible signature - do not change the signature!
  */
-extern int sched_yield(void);
-
-#endif // sched_h___
-
-
+int sched_yield(void)
+{
+  return -1;
+}

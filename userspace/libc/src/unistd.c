@@ -17,16 +17,25 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+#include "unistd.h"
 
-#ifndef sched_h___
-#define sched_h___
 
 /**
- * posix function signature
- * do not change the signature!
+ * function stub
+ * posix compatible signature - do not change the signature!
  */
-extern int sched_yield(void);
+void* brk(void *end_data_segment)
+{
+  return (void*) -1;
+}
 
-#endif // sched_h___
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+void* sbrk(intptr_t increment)
+{
+  return (void*) -1;
+}
 
 

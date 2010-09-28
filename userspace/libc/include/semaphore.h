@@ -28,31 +28,31 @@ typedef unsigned int sem_t;
 #endif // SEM_T_DEFINED_
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int sem_init(sem_t *sem, int pshared, unsigned value);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int sem_wait(sem_t *sem);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int sem_trywait(sem_t *sem);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int sem_destroy(sem_t *sem);
 
 /**
- * posix method signature
+ * posix function signature
  * do not change the signature!
  */
 extern int sem_post(sem_t *sem);
