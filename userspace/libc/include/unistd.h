@@ -134,16 +134,21 @@ typedef unsigned int ssize_t;
 #endif // SSIZE_T_DEFINED
 
 /**
- * Used for file sizes
+ * Used for setting offsets
  *
  */
-typedef long int off_t;
-
+#ifndef OFF_T_DEFINED
+#define OFF_T_DEFINED
+typedef unsigned int off_t;
+#endif // OFF_T_DEFINED
 /**
  * Used for process IDs and process group IDs
  *
  */
+#ifndef PID_T_DEFINED
+#define PID_T_DEFINED
 typedef int pid_t;
+#endif // PID_T_DEFINED
 
 /**
  * Time in microseconds
@@ -330,6 +335,17 @@ extern int read(int file_descriptor, void *buffer, size_t count);
  */
 extern int write(int file_descriptor, const void *buffer, size_t count);
 
+/**
+ * posix method signature
+ * do not change the signature!
+ */
+extern void* brk(void *end_data_segment);
+
+/**
+ * posix method signature
+ * do not change the signature!
+ */
+extern void* sbrk(intptr_t increment);
 
 #endif // unistd_h___
 
