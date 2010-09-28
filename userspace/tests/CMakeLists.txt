@@ -26,3 +26,19 @@ foreach(curFile ${userspace_tests_SOURCES})
 	set(ENV{USERSPACE_NAMES} "$ENV{USERSPACE_NAMES};${curName}.sweb")
 	set(ENV{USERSPACE_NAMES_EXE2MINIX} "$ENV{USERSPACE_NAMES_EXE2MINIX};${EXECUTABLE_OUTPUT_PATH}/${curName}.sweb;${curName}.sweb")
 endforeach(curFile)
+
+file(GLOB userspace_tests_PROJECTS */)
+
+
+foreach(curProject ${userspace_tests_PROJECTS})
+    file(GLOB curProject_SOURCES ${curProject}/*.c)
+
+    if(curProject_SOURCES)
+       get_filename_component(exename ${curProject} NAME)       
+       add_executable(${exename}.sweb ${curProject_SOURCES})
+       target_link_libraries(${exename}.sweb "-Wl,-whole-archive" userspace_libc)
+       
+       set(ENV{USERSPACE_NAMES} "$ENV{USERSPACE_NAMES};${exename}.sweb")
+	   set(ENV{USERSPACE_NAMES_EXE2MINIX} "$ENV{USERSPACE_NAMES_EXE2MINIX};${EXECUTABLE_OUTPUT_PATH}/${exename}.sweb;${exename}.sweb")
+    endif(curProject_SOURCES)
+endforeach(curProject)
