@@ -86,7 +86,7 @@ off_t lseek(int file_descriptor, off_t offset, int whence)
  offset for reading is after the end-of-file, and -1 if an error occured
  *
  */
-int read(int file_descriptor, void *buffer, size_t count)
+ssize_t read(int file_descriptor, void *buffer, size_t count)
 {
   return __syscall(sc_read, file_descriptor, (long) buffer, count, 0x00, 0x00);
 }

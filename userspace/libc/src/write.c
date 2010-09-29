@@ -58,7 +58,7 @@
  nothing was written, and -1 if an error occured
  *
  */
-int write(int file_descriptor, const void *buffer, size_t count)
+ssize_t write(int file_descriptor, const void *buffer, size_t count)
 {
   return __syscall(sc_write, file_descriptor, (long) buffer, count, 0x00,
                    0x00);

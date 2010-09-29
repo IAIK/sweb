@@ -136,4 +136,11 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
   return -1;
 }
 
-
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_yield(void)
+{
+  return -1;
+}
