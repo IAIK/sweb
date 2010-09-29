@@ -418,94 +418,94 @@ void debug ( uint32 flag, const char *fmt, ... )
     switch ( flag )
     {
       case M_INODE:
-        kprintfd ( "M_INODE:>> " );
+        kprintfd ( "\033[0;33m[M_INODE          ] \033[1;m" );
         break;
       case M_STORAGE_MANAGER:
-        kprintfd ( "M_STORAGE_MANAGER:>> " );
+        kprintfd ( "\033[0;33m[M_STORAGE_MANAGER] \033[1;m" );
         break;
       case M_SB:
-        kprintfd ( "M_SB:>> " );
+        kprintfd ( "\033[0;33m[M_SB             ] \033[1;m" );
         break;
       case M_ZONE:
-        kprintfd ( "M_ZONE:>> " );
+        kprintfd ( "\033[0;33m[M_ZONE           ] \033[1;m" );
         break;
       case BD_MANAGER:
-        kprintfd ( "BD_MANAGER:>> " );
+        kprintfd ( "\033[0;33m[BD_MANAGER       ] \033[1;m" );
         break;
       case KPRINTF:
-        kprintfd ( "KPRINTF:>> " );
+        kprintfd ( "\033[0;33m[KPRINTF          ] \033[1;m" );
         break;
       case CONDITION:
-        kprintfd ( "CONDITION:>> " );
+        kprintfd ( "\033[0;33m[CONDITION        ] \033[1;m" );
         break;
       case LOADER:
-        kprintfd ( "LOADER:>> " );
+        kprintfd ( "\033[0;37m[LOADER           ] \033[1;m" );
         break;
       case SCHEDULER:
-        kprintfd ( "SCHEDULER:>> " );
+        kprintfd ( "\033[0;33m[SCHEDULER        ] \033[1;m" );
         break;
       case SYSCALL:
-        kprintfd ( "SYSCALL:>> " );
+        kprintfd ( "\033[0;34m[SYSCALL          ] \033[1;m" );
         break;
       case MAIN:
-        kprintfd ( "MAIN:>> " );
+        kprintfd ( "\033[0;31m[MAIN             ] \033[1;m" );
         break;
       case THREAD:
-        kprintfd ( "THREAD:>> " );
+        kprintfd ( "\033[0;35m[THREAD           ] \033[1;m" );
         break;
       case USERPROCESS:
-        kprintfd ( "USERPROCESS:>> " );
+        kprintfd ( "\033[0;36m[USERPROCESS      ] \033[1;m" );
         break;
       case MOUNTMINIX:
-        kprintfd ( "MOUNTMINIX:>> " );
+        kprintfd ( "\033[0;36m[MOUNTMINIX       ] \033[1;m" );
         break;
       case PM:
-        kprintfd ( "PM:>> " );
+        kprintfd ( "\033[0;32m[PM               ] \033[1;m" );
         break;
       case KMM:
-        kprintfd ( "KMM:>> " );
+        kprintfd ( "\033[0;33m[KMM              ] \033[1;m" );
         break;
       case RAMFS:
-        kprintfd ( "RAMFS:>> " );
+        kprintfd ( "\033[0;37m[RAMFS            ] \033[1;m" );
         break;
       case DENTRY:
-        kprintfd ( "DENTRY:>> " );
+        kprintfd ( "\033[0;38m[DENTRY           ] \033[1;m" );
         break;
       case PATHWALKER:
-        kprintfd ( "PATHWALKER:>> " );
+        kprintfd ( "\033[0;33m[PATHWALKER       ] \033[1;m" );
         break;
       case PSEUDOFS:
-        kprintfd ( "PSEUDOFS:>> " );
+        kprintfd ( "\033[0;33m[PSEUDOFS         ] \033[1;m" );
         break;
       case VFSSYSCALL:
-        kprintfd ( "VFSSYSCALL:>> " );
+        kprintfd ( "\033[0;33m[VFSSYSCALL       ] \033[1;m" );
         break;
       case VFS:
-        kprintfd ( "VFS:>> " );
+        kprintfd ( "\033[0;33m[VFS              ] \033[1;m" );
         break;
       case ATA_DRIVER:
-        kprintfd ( "ATA_DRIVER:>> " );
+        kprintfd ( "\033[0;33m[ATA_DRIVER       ] \033[1;m" );
         break;
       case IDE_DRIVER:
-        kprintfd ( "IDE_DRIVER:>> " );
+        kprintfd ( "\033[0;33m[IDE_DRIVER       ] \033[1;m" );
         break;
       case A_COMMON:
-        kprintfd ( "A_COMMON:>> " );
+        kprintfd ( "\033[0;33m[A_COMMON         ] \033[1;m" );
         break;
       case A_MEMORY:
-        kprintfd ( "A_MEMORY:>> " );
+        kprintfd ( "\033[0;33m[A_MEMORY         ] \033[1;m" );
         break;
       case A_SERIALPORT:
-        kprintfd ( "A_SERIALPORT:>> " );
+        kprintfd ( "\033[0;33m[A_SERIALPORT     ] \033[1;m" );
         break;
       case A_KB_MANAGER:
-        kprintfd ( "A_KB_MANAGER:>> " );
+        kprintfd ( "\033[0;33m[A_KB_MANAGER     ] \033[1;m" );
         break;
       case BD_VIRT_DEVICE:
-        kprintfd ( "BD_VIRT_DEVICE:>> " );
+        kprintfd ( "\033[0;33m[BD_VIRT_DEVICE   ] \033[1;m" );
         break;
       case A_INTERRUPTS:
-        kprintfd ( "A_INTERRUPTS:>> " );
+        kprintfd ( "\033[0;33m[A_INTERRUPTS     ] \033[1;m" );
         break;
     }
     vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );

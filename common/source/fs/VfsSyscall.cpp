@@ -51,8 +51,23 @@ int32 VfsSyscall::dupChecking ( const char* pathname )
   if ( pathname == 0 )
     return -1;
 
-  if ( ( pathname[0] != SEPARATOR ) && ( pathname[1] != SEPARATOR ) &&
-          ( pathname[2] != SEPARATOR ) )
+  bool prepend_slash_dot = true;
+  uint32 len = strlen(pathname);
+
+  if (len > 0 && pathname[0] == SEPARATOR)
+    prepend_slash_dot = false;
+  else if (pathname[0] == CHAR_DOT)
+  {
+    if (len > 1 && pathname[1] == SEPARATOR)
+      prepend_slash_dot = false;
+    else if (pathname[1] == CHAR_DOT)
+    {
+      if (len > 2 && pathname[2] == SEPARATOR)
+        prepend_slash_dot = false;
+    }
+  }
+
+  if ( prepend_slash_dot )
   {
     uint32 path_len = strlen ( pathname ) + 1;
     char *path_tmp = ( char* ) kmalloc ( ( path_len + 2 ) * sizeof ( char ) );

@@ -1,0 +1,43 @@
+From ba9238d8d845cad9b4449236e1cadf689654b7e8 Mon Sep 17 00:00:00 2001
+From: Moritz Lipp <m.lipp@student.tugraz.at>
+Date: Fri, 11 Dec 2009 21:19:20 +0100
+Subject: [PATCH] Print debug information from the 0xe9 port
+
+This patch registers a function, that just prints the given characters
+to the standard output with the 0xe9 port, that is used in Sweb and
+bochs to print additional debugging information.
+---
+ vl.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/vl.c b/vl.c
+index 710d52e..7b414fe 100644
+--- a/vl.c
++++ b/vl.c
+@@ -4821,6 +4821,11 @@ char *qemu_find_file(int type, const char *name)
+     return buf;
+ }
+ 
++static void e9write(void *opaque, uint32_t address, uint32_t value)
++{
++  printf("%c", (char) value);
++}
++
+ int main(int argc, char **argv, char **envp)
+ {
+     const char *gdbstub_dev = NULL;
+@@ -6139,6 +6144,9 @@ int main(int argc, char **argv, char **envp)
+     }
+ #endif
+ 
++    /* register the 0xe9 port to the e9write function */
++    register_ioport_write(0xe9, 1, 1, e9write, NULL);
++
+     main_loop();
+     quit_timers();
+     net_cleanup();
+-- 
+1.6.5.5
+
+
+ 	  	 

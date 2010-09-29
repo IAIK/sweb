@@ -479,38 +479,20 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   // :"=a"(cr2)
   // :);
 
-  debug(A_INTERRUPTS | PM, "pageFaultHandler( address: %x, error: page_present=%d writing=%d user=%d rsvd=%d)\n\t(currentThread: %x  %d:%s, switch_to_userspace_:%d)\n",
-      address,
-      error&flag_p,
-      (error&flag_rw) >> 1,
-      (error&flag_us) >> 2,
-      (error&flag_rsvd) >> 3,
-      currentThread,
-      currentThread->getPID(),
-      currentThread->getName(),
-      currentThread->switch_to_userspace_);
+  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
+      address, error & flag_p, (error & flag_rw) >> 1, (error & flag_us) >> 2, (error & flag_rsvd) >> 3, currentThread, currentThread->getPID(),
+      currentThread->getName(), currentThread->switch_to_userspace_);
 
-  if(address == 0)
-    debug(A_INTERRUPTS | PM, "\tmaybe you're dereferencing a null-pointer!!!\n\n");
+  if(!address)
+    debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");
 
   if (error)
   {
     if (error&flag_p)
     {
-      debug(A_INTERRUPTS | PM, "Ouch, We got a pagefault even though the page mapping is present\n");
-      debug(A_INTERRUPTS | PM, "Apparently ");
-      if (error&flag_us)
-        debug(A_INTERRUPTS | PM, "a userprogram ");
-      else
-        debug(A_INTERRUPTS | PM, "some kernel code ");
-      debug(A_INTERRUPTS | PM, " tried to ");
-      if (error&flag_rw)
-        debug(A_INTERRUPTS | PM, "write to ");
-      else
-        debug(A_INTERRUPTS | PM, "read from ");
-      debug(A_INTERRUPTS | PM, "address 0x%x\n",address);
-      if (address >= 2U*1024U*1024U*1024U)
-        debug(A_INTERRUPTS | PM, "Likely the PageTable Flags forbid this operation\n");
+      debug(PM, "[PageFaultHandler] We got a pagefault even though the page mapping is present\n");
+      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & flag_us) ? "A userprogram" : "Some kernel code",
+        (error & flag_rw) ? "write to" : "read from", address);
 
       page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
       uint32 virtual_page = address / PAGE_SIZE;
@@ -520,34 +502,36 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       {
         if (page_directory[pde_vpn].pde4m.use_4_m_pages)
         {
-          debug(A_INTERRUPTS | PM, "Page %d is a 4MiB Page\n",virtual_page);
-          debug(A_INTERRUPTS | PM, "Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page, page_directory[pde_vpn].pde4m.writeable, page_directory[pde_vpn].pde4m.user_access);
+          debug(PM, "[PageFaultHandler] Page %d is a 4MiB Page\n", virtual_page);
+          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page,
+              page_directory[pde_vpn].pde4m.writeable, page_directory[pde_vpn].pde4m.user_access);
         }
         else
         {
           page_table_entry *pte_base = (page_table_entry *) ArchMemory::get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-          debug(A_INTERRUPTS | PM, "Page %d is a 4KiB Page\n",virtual_page);
-          debug(A_INTERRUPTS | PM, "Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", virtual_page, pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
+          debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", virtual_page);
+          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page,
+            pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
         }
       }
       else
-        debug(A_INTERRUPTS | PM, "WTF ? PDE non-present but Exception present flag was set ?\n");
+        debug(PM, "[PageFaultHandler] WTF? PDE non-present but Exception present flag was set\n");
     }
     else
     {
       if (address >= 2U*1024U*1024U*1024U)
       {
-        debug(A_INTERRUPTS | PM, "The virtual page we accessed was not mapped to a physical page\n");
+        debug(PM, "[PageFaultHandler] The virtual page we accessed was not mapped to a physical page\n");
         if (error&flag_us)
         {
-          debug(A_INTERRUPTS | PM, "WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
-          debug(A_INTERRUPTS | PM, "WARNING: most likey there is an pointer error somewhere\n");
+          debug(PM, "[PageFaultHandler] WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
+          debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
         }
         else
         {
           // remove this error check if your implementation swaps out kernel pages
-          debug(A_INTERRUPTS | PM, "WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
-          debug(A_INTERRUPTS | PM, "WARNING: most likey there is an pointer error somewhere\n");
+          debug(PM, "[PageFaultHandler] WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
+          debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
         }
       }
       else

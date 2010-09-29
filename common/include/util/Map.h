@@ -13,6 +13,7 @@ typedef unsigned int uint32;
 
 #include "ListNode.h"
 #include "Pair.h"
+#include "assert.h"
 
 /**
  * @class Map provides a implementation of a map container

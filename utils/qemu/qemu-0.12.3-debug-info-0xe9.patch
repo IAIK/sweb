@@ -1,0 +1,29 @@
+diff -p3 qemu-0.12.3/vl.c qemu-0.12.3-patched/vl.c
+*** qemu-0.12.3/vl.c	2010-02-23 21:54:38.000000000 +0100
+--- qemu-0.12.3-patched/vl.c	2010-04-12 13:57:59.000000000 +0200
+*************** char *qemu_find_file(int type, const cha
+*** 4651,4656 ****
+--- 4651,4661 ----
+      return buf;
+  }
+  
++ static void e9write(void *opaque, uint32_t address, uint32_t value)
++ {
++   printf("%c", (char) value);
++ }
++ 
+  static int device_init_func(QemuOpts *opts, void *opaque)
+  {
+      DeviceState *dev;
+*************** int main(int argc, char **argv, char **e
+*** 6122,6127 ****
+--- 6127,6135 ----
+      }
+  #endif
+  
++     /* register the 0xe9 port to the e9write function */
++     register_ioport_write(0xe9, 1, 1, e9write, NULL);
++     
+      main_loop();
+      quit_timers();
+      net_cleanup();
