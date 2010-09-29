@@ -34,7 +34,7 @@
  * number as defined in the kernel syscall definitions.
  * Unused arguments can be filled up with 0x00s.
  * e.g. __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
- *
+ * DO NOT CHANGE SIGNATURE.
  */
 extern int __syscall(int arg1, int arg2, int arg3, int arg4, int arg5,
                      int arg6);

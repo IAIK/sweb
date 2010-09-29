@@ -80,7 +80,8 @@ void oh_writeCharDebugNoSleep ( char c )
 
 void oh_writeStringDebugNoSleep ( char const* str )
 {
-  while ( *str )
+  uint32 i = 251;
+  while (*str && --i)
   {
     oh_writeCharDebugNoSleep ( *str );
     str++;

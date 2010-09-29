@@ -48,6 +48,18 @@ class Syscall
   static void exit(uint32 exit_code);
 
 /**
+ * write a text to a hardware i/o port (for reasons of testing and debugging)
+ * important: only hardware port 0xe9 is allowed. generally you should not
+ * allow user programs to access hardware this way.
+ *
+ * @pre IF==1
+ * @pre pointer < 2gb
+ * @param port the port to write on
+ * @param text the text which will be written
+ */
+  static void outline(uint32 port, pointer text);
+
+/**
  * write is a basic example of a method handling the write syscall
  *
  * @pre IF==1

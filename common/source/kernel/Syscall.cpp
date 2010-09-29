@@ -28,6 +28,9 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
     case sc_read:
       return_value =  read(arg1,arg2,arg3);
       break;
+    case sc_outline:
+      outline(arg1,arg2);
+      break;
     default:
       kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %d\n",syscall_number);
   }
@@ -70,4 +73,14 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 
   }
   return num_read;
+}
+
+void Syscall::outline(uint32 port, pointer text)
+{
+  //WARNING: this might fail if Kernel PageFaults are not handled
+  assert(text < 2U*1024U*1024U*1024U);
+  if (port == 0xe9) // debug port
+  {
+    oh_writeStringDebugNoSleep((const char*)text);
+  }
 }

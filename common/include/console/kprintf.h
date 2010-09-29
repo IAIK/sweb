@@ -72,3 +72,8 @@ void debug ( uint32 flag, const char *fmt, ... );
  */
 bool isDebugEnabled ( uint32 flage );
 
+/**
+ * writes a string to the port 0xe9
+ * @param str the string to write
+ */
+void oh_writeStringDebugNoSleep ( char const* str );
