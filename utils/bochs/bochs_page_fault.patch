@@ -15,32 +15,7 @@ diff -r a9d46eea0609 bochs.h
 diff -r a9d46eea0609 cpu/exception.cc
 --- cpu/exception.cc	Fri Jun 13 16:53:20 2008 +0200
 +++ cpu/exception.cc	Fri Jun 13 17:02:35 2008 +0200
-@@ -345,7 +345,6 @@ void BX_CPU_C::protected_mode_int(Bit8u 
-     BX_ERROR(("interrupt(): gate not present"));
-     exception(BX_NP_EXCEPTION, vector*8 + 2, 0);
-   }
--
-   switch (gate_descriptor.type) {
-   case BX_TASK_GATE:
-     // examine selector to TSS, given in task gate descriptor
-@@ -791,7 +790,6 @@ void BX_CPU_C::interrupt(Bit8u vector, b
- #endif
-   bx_dbg_interrupt(BX_CPU_ID, vector, error_code);
- #endif
--
-   BX_DEBUG(("interrupt(): vector = %u, INT = %u, EXT = %u",
-       (unsigned) vector, (unsigned) is_INT, (unsigned) BX_CPU_THIS_PTR EXT));
- 
-@@ -814,7 +812,6 @@ void BX_CPU_C::interrupt(Bit8u vector, b
-     return;
-   }
- #endif
--
-   if(real_mode()) {
-     real_mode_int(vector, is_INT, is_error_code, error_code);
-   }
-@@ -1039,6 +1036,12 @@ void BX_CPU_C::exception(unsigned vector
- 
+@@ -1039,3 +1036,9 @@ void BX_CPU_C::exception(unsigned vector
    BX_CPU_THIS_PTR errorno++;
  
 +//BEGIN EDIT os page fault
@@ -50,8 +25,6 @@ diff -r a9d46eea0609 cpu/exception.cc
 +//END EDIT os page fault
 +
    if (real_mode()) {
-     // not INT, no error code pushed
-     BX_CPU_THIS_PTR interrupt(vector, 0, 0, 0);
 diff -r a9d46eea0609 gdbstub.cc
 --- gdbstub.cc	Fri Jun 13 16:53:20 2008 +0200
 +++ gdbstub.cc	Fri Jun 13 17:02:35 2008 +0200
