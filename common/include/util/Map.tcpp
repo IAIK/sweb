@@ -267,4 +267,4 @@ void Map<KeyType, ValueType>::removeByKey(KeyType key)
   }
 }
 
-/* vim: ft=cpp */
+// vim: ft=cpp

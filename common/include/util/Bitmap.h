@@ -15,8 +15,6 @@ uint8 const bits_per_bitmap_atom_ = 8;
 class Bitmap
 {
 
-  friend class MinixStorageManager;
-
 public:
 
   /**
@@ -72,7 +70,7 @@ public:
    */
   void bmprint();
 
-protected:
+  //protected:
   /**
    * sets a whole byte in the bitmap
    * only use if you know what you are doing
@@ -93,7 +91,6 @@ private:
   size_t size_;
   size_t num_bits_set_;
   uint8 *bitmap_;
-  size_t bit_count_;
 };
 
 #endif /* BITMAP_H__ */
