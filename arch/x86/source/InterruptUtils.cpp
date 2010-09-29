@@ -494,7 +494,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & flag_us) ? "A userprogram" : "Some kernel code",
         (error & flag_rw) ? "write to" : "read from", address);
 
-      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
+      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_);
       uint32 virtual_page = address / PAGE_SIZE;
       uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
       uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -508,7 +508,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         }
         else
         {
-          page_table_entry *pte_base = (page_table_entry *) ArchMemory::get3GBAdressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+          page_table_entry *pte_base = (page_table_entry *) ArchMemory::get3GBAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
           debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", virtual_page);
           debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page,
             pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
@@ -548,9 +548,9 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   // kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
 	  // currentThread->user_arch_thread_info_->cr3,
 	  // currentThread->loader_->page_dir_page_,
-	  // ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_) );
+	  // ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_) );
 
-  // page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAdressOfPPN(currentThread->loader_->page_dir_page_);
+  // page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_);
   // uint32 i = 0;
   // uint32 j = 0;
   // for( i = 0; i < 512; i++ )
@@ -561,12 +561,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 		  // i,
 		  // cpd[ i ].pde4k.present,
 		  // cpd[ i ].pde4k.page_table_base_address,
-		  // ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address )
+		  // ArchMemory::get3GBAddressOfPPN( cpd[ i ].pde4k.page_table_base_address )
 		  // );
     // }
     // if( cpd[ i ].pde4k.present )
     // {
-      // page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAdressOfPPN( cpd[ i ].pde4k.page_table_base_address );
+      // page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAddressOfPPN( cpd[ i ].pde4k.page_table_base_address );
       // for( j = 0; j < 256; j++ )
       // {
         // if( cpt[ j ].present )

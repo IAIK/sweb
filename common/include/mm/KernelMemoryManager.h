@@ -117,7 +117,7 @@ class KernelMemoryManager
      * allocateMemory is called by new
      * searches the MallocSegment-List for a free segment with size >= requested_size
      * @param requested_size number of bytes to allocate
-     * @return pointer to Memory Adress or 0 if Not Enough Memory
+     * @return pointer to Memory Address or 0 if Not Enough Memory
      */
     pointer allocateMemory ( size_t requested_size );
 

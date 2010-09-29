@@ -71,7 +71,7 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-  static pointer get3GBAdressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
+  static pointer get3GBAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
   {
     return (3U*1024U*1024U*1024U) + (ppn * page_size);
   }

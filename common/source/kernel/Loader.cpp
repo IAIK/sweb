@@ -352,14 +352,14 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   debug ( LOADER,"loadOnePage: Entry: %x\n",hdr_->e_entry );
 
   uint32 page = PageManager::instance()->getFreePhysicalPage();
-  ArchCommon::bzero ( ArchMemory::get3GBAdressOfPPN ( page ),PAGE_SIZE,false );
+  ArchCommon::bzero ( ArchMemory::get3GBAddressOfPPN ( page ),PAGE_SIZE,false );
 
   pointer vaddr = virtual_page*PAGE_SIZE;
 
   uint32 i=0;
   uint32 k=0;
   uint32 written=0;
-  uint8* dest = reinterpret_cast<uint8*> ( ArchMemory::get3GBAdressOfPPN ( page ) );
+  uint8* dest = reinterpret_cast<uint8*> ( ArchMemory::get3GBAddressOfPPN ( page ) );
 
   debug ( LOADER,"loadOnePageSafeButSlow:I've got the following segments in the binary\n" );
   if ( isDebugEnabled ( LOADER ) )

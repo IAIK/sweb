@@ -15,10 +15,10 @@ class MinixFSSuperblock;
  * @class MinixFSZone handles the zones of a minix inode
  * the minix file system's memory  is devided in zones,
  * a zone is a combination of 1 to many blocks depending on the size of the file system
- * minix inodes have stored 9 zone adresses in its header
- * the first 7 are directly adressed to its first 7 zones
- * the 8th is the adress of a zone containing the zone adresses 8 to 520
- * the 9th is the adress of a zone containing the zone adresses for further zones containg the adresses 520 to 262,664
+ * minix inodes have stored 9 zone addresses in its header
+ * the first 7 are directly addressed to its first 7 zones
+ * the 8th is the address of a zone containing the zone addresses 8 to 520
+ * the 9th is the address of a zone containing the zone addresses for further zones containg the addresses 520 to 262,664
  */
 class MinixFSZone
 {
@@ -37,22 +37,22 @@ class MinixFSZone
     ~MinixFSZone();
 
     /**
-     * returns the zone adress at the given index
+     * returns the zone address at the given index
      * @param index the zone index
-     * @return the adress
+     * @return the address
      */
     zone_add_type getZone ( uint32 index );
 
     /**
-     * sets the zone adress at the given index
+     * sets the zone address at the given index
      * @param index the index
-     * @param zone the zone adress
+     * @param zone the zone address
      */
     void setZone ( uint32 index, zone_add_type zone );
 
     /**
-     * adds one zone with the given adress
-     * @param zone the adress
+     * adds one zone with the given address
+     * @param zone the address
      */
     void addZone ( zone_add_type zone );
 

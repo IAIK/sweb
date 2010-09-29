@@ -95,7 +95,7 @@ public:
    *
    * @param number of the region-information to parse
    * @param &start_address of Useable Memory Region
-   * @param &end_adress of Useable Memory Region
+   * @param &end_address of Useable Memory Region
    * @param &type of Useable Memory Region
    * @return 1 if region >= number_of_regions, 0 otherwise
    */
