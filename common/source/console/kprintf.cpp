@@ -410,6 +410,12 @@ bool isDebugEnabled ( uint32 flag )
   return false;
 }
 
+#ifndef NO_COLOR
+#define COLORDEBUG(str, color) "\033[0;%sm%s\033[1;m", color, str
+#else
+#define COLORDEBUG(str, color) str
+#endif
+
 void debug ( uint32 flag, const char *fmt, ... )
 {
   va_list args;
@@ -419,94 +425,94 @@ void debug ( uint32 flag, const char *fmt, ... )
     switch ( flag )
     {
       case M_INODE:
-        kprintfd ( "\033[0;33m[M_INODE    ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[M_INODE    ]", "33")); 
         break;
       case M_STORAGE_MANAGER:
-        kprintfd ( "\033[0;33m[M_STORAGE_M] \033[1;m" );
+        kprintfd ( COLORDEBUG("[M_STORAGE_M]", "33"));
         break;
       case M_SB:
-        kprintfd ( "\033[0;33m[M_SB       ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[M_SB       ]", "33"));
         break;
       case M_ZONE:
-        kprintfd ( "\033[0;33m[M_ZONE     ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[M_ZONE     ]", "33"));
         break;
       case BD_MANAGER:
-        kprintfd ( "\033[0;33m[BD_MANAGER ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[BD_MANAGER ]", "33"));
         break;
       case KPRINTF:
-        kprintfd ( "\033[0;33m[KPRINTF    ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[KPRINTF    ]", "33"));
         break;
       case CONDITION:
-        kprintfd ( "\033[0;33m[CONDITION  ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[CONDITION  ]", "33"));
         break;
       case LOADER:
-        kprintfd ( "\033[0;37m[LOADER     ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[LOADER     ]", "37"));
         break;
       case SCHEDULER:
-        kprintfd ( "\033[0;33m[SCHEDULER  ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[SCHEDULER  ]", "33"));
         break;
       case SYSCALL:
-        kprintfd ( "\033[0;34m[SYSCALL    ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[SYSCALL    ]", "34"));
         break;
       case MAIN:
-        kprintfd ( "\033[0;31m[MAIN       ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[MAIN       ]", "31")); 
         break;
       case THREAD:
-        kprintfd ( "\033[0;35m[THREAD     ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[THREAD     ]", "35"));
         break;
       case USERPROCESS:
-        kprintfd ( "\033[0;36m[USERPROCESS] \033[1;m" );
+        kprintfd ( COLORDEBUG("[USERPROCESS]", "36"));
         break;
       case MOUNTMINIX:
-        kprintfd ( "\033[0;36m[MOUNTMINIX ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[MOUNTMINIX ]", "36"));
         break;
       case PM:
-        kprintfd ( "\033[0;32m[PM         ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[PM         ]", "32"));
         break;
       case KMM:
-        kprintfd ( "\033[0;33m[KMM        ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[KMM        ]", "33"));
         break;
       case RAMFS:
-        kprintfd ( "\033[0;37m[RAMFS      ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[RAMFS      ]", "37"));
         break;
       case DENTRY:
-        kprintfd ( "\033[0;38m[DENTRY     ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[DENTRY     ]", "38"));
         break;
       case PATHWALKER:
-        kprintfd ( "\033[0;33m[PATHWALKER ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[PATHWALKER ]", "33"));
         break;
       case PSEUDOFS:
-        kprintfd ( "\033[0;33m[PSEUDOFS   ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[PSEUDOFS   ]", "33"));
         break;
       case VFSSYSCALL:
-        kprintfd ( "\033[0;33m[VFSSYSCALL ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[VFSSYSCALL ]", "33"));
         break;
       case VFS:
-        kprintfd ( "\033[0;33m[VFS        ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[VFS        ]", "33"));
         break;
       case ATA_DRIVER:
-        kprintfd ( "\033[0;33m[ATA_DRIVER ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[ATA_DRIVER ]", "33"));
         break;
       case IDE_DRIVER:
-        kprintfd ( "\033[0;33m[IDE_DRIVER ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[IDE_DRIVER ]", "33"));
         break;
       case A_COMMON:
-        kprintfd ( "\033[0;33m[A_COMMON   ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[A_COMMON   ]", "33"));
         break;
       case A_MEMORY:
-        kprintfd ( "\033[0;33m[A_MEMORY   ] \033[1;m" );
+        kprintfd ( COLORDEBUG("[A_MEMORY   ]", "33"));
         break;
       case A_SERIALPORT:
-        kprintfd ( "\033[0;33m[A_SERIALPRT] \033[1;m" );
+        kprintfd ( COLORDEBUG("[A_SERIALPRT]", "33"));
         break;
       case A_KB_MANAGER:
-        kprintfd ( "\033[0;33m[A_KB_MANAGR] \033[1;m" );
+        kprintfd ( COLORDEBUG("[A_KB_MANAGR]", "33"));
         break;
       case BD_VIRT_DEVICE:
-        kprintfd ( "\033[0;33m[BD_VIRT_DEV] \033[1;m" );
+        kprintfd ( COLORDEBUG("[BD_VIRT_DEV]", "33"));
         break;
       case A_INTERRUPTS:
-        kprintfd ( "\033[0;33m[A_INTERRUPT] \033[1;m" );
+        kprintfd ( COLORDEBUG("[A_INTERRUPT]", "33"));
         break;
     }
     vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
