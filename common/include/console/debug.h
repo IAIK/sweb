@@ -7,7 +7,7 @@
 
 #include "types.h"
 
-#define OUTPUT_ENABLED 0x1000000
+#define OUTPUT_ENABLED 0x80000000
 
 //group minix
 const uint32 MINIX              = 0x00010000;// | OUTPUT_ENABLED;

@@ -387,7 +387,7 @@ bool isDebugEnabled ( uint32 flag )
 
   if ( ! ( flag & OUTPUT_ENABLED ) )
   {
-    uint32 group_flag = flag & 0x01110000;
+    uint32 group_flag = flag & 0x7fff0000;
     group_flag |= OUTPUT_ENABLED;
     switch ( group_flag )
     {
