@@ -44,7 +44,14 @@ class IdleThread : public Thread
       while ( 1 )
       {
         Scheduler::instance()->cleanupDeadThreads();
-        __asm__ __volatile__ ( "hlt" );
+        if (Scheduler::instance()->threadCount() > 1)
+        {
+          Scheduler::instance()->yield();
+        }
+        else
+        {
+          __asm__ __volatile__ ( "hlt" );
+        }
       }
     }
 };
@@ -335,4 +342,9 @@ bool Scheduler::isSchedulingEnabled()
     return ( block_scheduling_==0 && block_scheduling_extern_==0 );
   else
     return false;
+}
+
+uint32 Scheduler::threadCount()
+{
+  return threads_.size();
 }

@@ -155,6 +155,11 @@ class Scheduler
      */
     void cleanupDeadThreads();
 
+    /**
+     * returns the number of threads
+     */
+    uint32 threadCount();
+    
   private:
 
     Scheduler();
