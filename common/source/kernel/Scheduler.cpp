@@ -46,15 +46,15 @@ class IdleThread : public Thread
       while ( 1 )
       {
         Scheduler::instance()->cleanupDeadThreads();
-        last_ticks = new_ticks;
         new_ticks = Scheduler::instance()->getTicks();
         if (new_ticks == last_ticks)
         {
+          last_ticks = new_ticks + 1;
           __asm__ __volatile__ ( "hlt" );
         }
         else
         {
-
+          last_ticks = new_ticks;
           Scheduler::instance()->yield();
         }
       }
