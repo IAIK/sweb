@@ -419,6 +419,8 @@ extern "C" void irqHandler_0()
   }
   heart_beat_value = (heart_beat_value + 1) % 4;
 
+  Scheduler::instance()->incTicks();
+
   // outportb( 0xED, 0x60 );  // "set LEDs" command
   // outportb( leds, 0x60 );
   // if (ctr == 9)

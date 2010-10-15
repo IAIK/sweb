@@ -41,16 +41,21 @@ class IdleThread : public Thread
      */
     virtual void Run()
     {
+      uint32 last_ticks = 0;
+      uint32 new_ticks = 0;
       while ( 1 )
       {
         Scheduler::instance()->cleanupDeadThreads();
-        if (Scheduler::instance()->threadCount() > 1)
+        last_ticks = new_ticks;
+        new_ticks = Scheduler::instance()->getTicks();
+        if (new_ticks == last_ticks)
         {
-          Scheduler::instance()->yield();
+          __asm__ __volatile__ ( "hlt" );
         }
         else
         {
-          __asm__ __volatile__ ( "hlt" );
+
+          Scheduler::instance()->yield();
         }
       }
     }
@@ -74,6 +79,7 @@ Scheduler::Scheduler()
   kill_old_=false;
   block_scheduling_=0;
   block_scheduling_extern_=0;
+  ticks_=0;
 }
 
 void Scheduler::addNewThread ( Thread *thread )
@@ -347,4 +353,14 @@ bool Scheduler::isSchedulingEnabled()
 uint32 Scheduler::threadCount()
 {
   return threads_.size();
+}
+
+uint32 Scheduler::getTicks()
+{
+  return ticks_;
+}
+
+void Scheduler::incTicks()
+{
+  ++ticks_;
 }

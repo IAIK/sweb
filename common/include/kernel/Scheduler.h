@@ -147,6 +147,11 @@ class Scheduler
      */
     uint32 schedule();
 
+    /**
+     * increments the stored ticks value by 1
+     */
+    void incTicks();
+
   protected:
     friend class IdleThread;
     /**
@@ -159,6 +164,11 @@ class Scheduler
      * returns the number of threads
      */
     uint32 threadCount();
+
+    /**
+     * returns the ticks value stored
+     */
+    uint32 getTicks();
     
   private:
 
@@ -211,5 +221,6 @@ class Scheduler
     uint32 block_scheduling_;
     uint32 block_scheduling_extern_;
 
+    uint32 ticks_;
 };
 #endif
