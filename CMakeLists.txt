@@ -425,7 +425,7 @@ add_custom_target(bochsconfig
 		#Generate bochs config for bochs version > 2.4
 		printf \"\\nAdapting bochs config for bochs version > 2.4\\n\\n\"\;
 		#replace $[CPU] with cpu: count=1, ips=10000000
-		sed -i -e 's/\\$$\\[CPU\\]$$/cpu: count=1, ips=10000000/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
+		sed -i -e 's/\\$$\\[CPU\\]$$/cpu: count=1, ips=10000000, reset_on_triple_fault=0/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
 		#activate port_e9_hack option
 		sed -i -e 's/\#\\\(port_e9_hack: enabled=1\\\)/\\1/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
 	fi\;
