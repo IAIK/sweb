@@ -347,6 +347,12 @@ extern void* brk(void *end_data_segment);
  */
 extern void* sbrk(intptr_t increment);
 
+/**
+ * posix function signature
+ * do not change the signature!
+ */
+extern unsigned int sleep(unsigned int seconds);
+
 #endif // unistd_h___
 
 

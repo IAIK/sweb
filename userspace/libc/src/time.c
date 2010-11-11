@@ -17,36 +17,14 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include "unistd.h"
+#include "time.h"
 
 
 /**
  * function stub
  * posix compatible signature - do not change the signature!
  */
-void* brk(void *end_data_segment)
+clock_t clock(void)
 {
-  return (void*) -1;
+  return (clock_t) -1U;
 }
-
-/**
- * function stub
- * posix compatible signature - do not change the signature!
- */
-void* sbrk(intptr_t increment)
-{
-  return (void*) -1;
-}
-
-
-/**
- * function stub
- * posix compatible signature - do not change the signature!
- */
-unsigned int sleep(unsigned int seconds)
-{
-  return -1U;
-}
-
-
-
