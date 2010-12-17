@@ -26,7 +26,7 @@
  */
 int brk(void *end_data_segment)
 {
-  return (void*) -1;
+  return -1;
 }
 
 /**
