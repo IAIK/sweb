@@ -24,7 +24,7 @@
  * function stub
  * posix compatible signature - do not change the signature!
  */
-void* brk(void *end_data_segment)
+int brk(void *end_data_segment)
 {
   return (void*) -1;
 }

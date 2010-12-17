@@ -345,7 +345,7 @@ extern void* brk(void *end_data_segment);
  * posix function signature
  * do not change the signature!
  */
-extern void* sbrk(intptr_t increment);
+extern int sbrk(intptr_t increment);
 
 /**
  * posix function signature
