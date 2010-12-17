@@ -339,13 +339,13 @@ extern ssize_t write(int file_descriptor, const void *buffer, size_t count);
  * posix function signature
  * do not change the signature!
  */
-extern void* brk(void *end_data_segment);
+extern int brk(void *end_data_segment);
 
 /**
  * posix function signature
  * do not change the signature!
  */
-extern int sbrk(intptr_t increment);
+extern void* sbrk(intptr_t increment);
 
 /**
  * posix function signature
