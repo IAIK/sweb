@@ -82,7 +82,7 @@ class BDVirtualDevice : public Inode
      * @param buffer data, that should be written
      *
      */
-    virtual int32 writeData(uint32 offset, uint32 size, const char *buffer);
+    virtual int32 writeData(uint32 offset, uint32 size, char *buffer);
 
     /**
      * creates an inode at the given dentry

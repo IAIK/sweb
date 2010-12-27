@@ -61,72 +61,41 @@ void BDVirtualDevice::addRequest(BDRequest * command)
 
 int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
+   assert(offset % block_size_ == 0);
+   assert(size % block_size_ == 0);
    debug(BD_VIRT_DEVICE, "readData\n");
    uint32 blocks2read = size/block_size_, jiffies = 0;
    uint32 blockoffset = offset/block_size_;	
 
-   if( size%block_size_ )
-     blocks2read++;
-
    debug(BD_VIRT_DEVICE, "blocks2read %d\n", blocks2read );
-   char *my_buffer = (char *) kmalloc( blocks2read *block_size_*sizeof(char) );
-   BDRequest * bd = 
-   new BDRequest(dev_number_, BDRequest::BD_READ, blockoffset, blocks2read, my_buffer);
-   addRequest ( bd );
+   BDRequest bd(dev_number_, BDRequest::BD_READ, blockoffset, blocks2read, buffer);
+   addRequest ( &bd );
 
-   while( bd->getStatus() == BDRequest::BD_QUEUED &&
+   while( bd.getStatus() == BDRequest::BD_QUEUED &&
           jiffies++ < 50000 ) ;
 
-   if( bd->getStatus() != BDRequest::BD_DONE )
+   if( bd.getStatus() != BDRequest::BD_DONE )
    {
-     kfree( my_buffer );
-     delete bd;
      return -1;
    }
-
-   memcpy( buffer, my_buffer + (offset%block_size_), size );
-   //debug(BD_VIRT_DEVICE, "memcpied\n" );
-   kfree( my_buffer );
-   delete bd;
    return size;
 };
 
-int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, const char *buffer)
+int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
 {
+   assert(offset % block_size_ == 0);
+   assert(size % block_size_ == 0);
    debug(BD_VIRT_DEVICE, "writeData\n");
    uint32 blocks2write = size/block_size_, jiffies = 0;
    uint32 blockoffset = offset/block_size_;
 
-   char *my_buffer;
-   if( size%block_size_ )
-   {
-     blocks2write++;
-     my_buffer = (char *) kmalloc( blocks2write*block_size_*sizeof(char) );
+   BDRequest bd(dev_number_ ,BDRequest::BD_WRITE, blockoffset, blocks2write, buffer);
+   addRequest ( &bd );
 
-     if( readData( blockoffset, blocks2write*block_size_*sizeof(char), my_buffer) == -1 )
-     {
-       kfree( my_buffer );
-       return -1;
-     }
-   }
-   else
-     my_buffer = (char *) kmalloc( blocks2write*block_size_*sizeof(char) );
-
-   memcpy( my_buffer + (offset%block_size_), buffer, size );
-
-   BDRequest * bd = 
-   new BDRequest(dev_number_ ,BDRequest::BD_WRITE, blockoffset, blocks2write, my_buffer);
-   addRequest ( bd );
-
-   while( bd->getStatus() == BDRequest::BD_QUEUED && 
+   while( bd.getStatus() == BDRequest::BD_QUEUED && 
           jiffies++ < 50000 ) ;
 
-   BDRequest::BD_RESULT stat = bd->getStatus();
-
-   kfree( my_buffer );
-   delete bd;
-
-   if( stat != BDRequest::BD_DONE )
+   if( bd.getStatus() != BDRequest::BD_DONE )
      return -1;
    else
      return size;
