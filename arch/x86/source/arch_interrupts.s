@@ -72,7 +72,18 @@ extern pageFaultHandler
 global arch_pageFaultHandler
 arch_pageFaultHandler:
         ;we are already on a new stack because a privliedge switch happened
-        mov edi, 0xFFAAFFEE
+        
+        ; It's a bad idea to tamper with the EDI before the context was saved!
+        ; This can cause severe malfunction - e.g. a userspace program
+        ; executing something like rep movs DWORD PTR es:[edi],DWORD PTR ds:[esi]
+        ; may trigger a PF, when the src- operand (DWORD PTR ds:[esi]) is read.
+        ; When returning from the PF- handler, the programm expects EDI to still
+        ; contain a valid pointer, which isn't the case, because it was set to
+        ; 0xFFAAFFEE here (in the PF- handler).
+        ; Thus the next line is commented.
+        ;
+        ; mov edi, 0xFFAAFFEE
+                             
         pushAll 
         changeData
         ;call arch_saveThreadRegistersForPageFault
