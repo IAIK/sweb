@@ -180,6 +180,7 @@ uint32 Scheduler::schedule()
     return 0;
   }
 
+  Thread* previousThread = currentThread;
   do
   {
     // WARNING: do not read currentThread before is has been set here
@@ -192,9 +193,13 @@ uint32 Scheduler::schedule()
 
     //this operation doesn't allocate or delete any kernel memory
     threads_.rotateBack();
-
+    if ((currentThread == previousThread) && (currentThread->state_ != Running))
+    {
+      debug(SCHEDULER, "Scheduler::schedule: ERROR: no thread is in state Running!!");
+      assert(false);
+    }
   }
-  while ( currentThread->state_ != Running );
+  while (currentThread->state_ != Running);
 //   debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread->getName(),currentThread->switch_to_userspace_ );
 
   uint32 ret = 1;

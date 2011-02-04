@@ -58,7 +58,10 @@ void Syscall::exit(uint32 exit_code)
 uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
 {
   //WARNING: this might fail if Kernel PageFaults are not handled
-  assert(buffer < 2U*1024U*1024U*1024U);
+  if ((buffer >= 2U*1024U*1024U*1024U) || (buffer+size > 2U*1024U*1024U*1024U))
+  {
+    return -1U;
+  }
   if (fd == fd_stdout) //stdout
   {
     debug(SYSCALL,"Syscall::write: %B\n",(char*) buffer,size);
@@ -69,7 +72,10 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
 
 uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 {
-  assert(buffer < 2U*1024U*1024U*1024U);
+  if ((buffer >= 2U*1024U*1024U*1024U) || (buffer+count > 2U*1024U*1024U*1024U))
+  {
+    return -1U;
+  }
   uint32 num_read = 0;
   if (fd == fd_stdin)
   {
@@ -90,7 +96,10 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
 void Syscall::outline(uint32 port, pointer text)
 {
   //WARNING: this might fail if Kernel PageFaults are not handled
-  assert(text < 2U*1024U*1024U*1024U);
+  if (text >= 2U*1024U*1024U*1024U)
+  {
+    return;
+  }
   if (port == 0xe9) // debug port
   {
     oh_writeStringDebugNoSleep((const char*)text);
@@ -99,12 +108,16 @@ void Syscall::outline(uint32 port, pointer text)
 
 uint32 Syscall::createprocess(uint32 path, uint32 sleep)
 {
-  debug(SYSCALL,"Syscall::createprocess: %s; %d\n",(char*) path,sleep);
+  debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
   if (path >= 2U*1024U*1024U*1024U)
+  {
     return -1U;
+  }
   uint32 fd = vfs_syscall.open((const char*) path, O_RDONLY);
   if (fd == -1U)
+  {
     return -1U;
+  }
   vfs_syscall.close(fd);
   uint32 len = strlen((const char*) path) + 1;
   char* copy = new char[len];
