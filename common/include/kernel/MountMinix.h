@@ -39,12 +39,23 @@ class MountMinixAndStartUserProgramsThread : public Thread
      */
     void processStart();
 
+    /**
+     * returns instance
+     */
+    static MountMinixAndStartUserProgramsThread* instance();
+
+    /**
+     * creates a new process
+     */
+    Thread* createProcess(const char* path);
+
   private:
 
     char const **progs_;
     uint32 progs_running_;
     Mutex counter_lock_;
     Condition all_processes_killed_;
+    static MountMinixAndStartUserProgramsThread* instance_;
 };
 
 #endif

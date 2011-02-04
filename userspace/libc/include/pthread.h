@@ -114,12 +114,6 @@ extern int pthread_cond_broadcast(pthread_cond_t *cond);
  */
 extern int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 
-/**
- * posix function signature
- * do not change the signature!
- */
-extern int pthread_yield(void);
-
 #endif // pthread_h___
 
 

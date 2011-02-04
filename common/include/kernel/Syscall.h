@@ -83,6 +83,17 @@ class Syscall
  */
   static uint32 read(uint32 fd, pointer buffer, uint32 count);
 
+/**
+ * creates a new process
+ *
+ * @pre IF==1
+ * @pre pointer < 2gb
+ * @param path the path to the binary to open
+ * @param sleep until the new process terminated
+ * @return -1 upon error, 0 otherwise
+ */
+  static uint32 createprocess(uint32 path, uint32 sleep);
+
   //static uint32 clone();
   //static uint32 brk(..);
   //static void waitpid();

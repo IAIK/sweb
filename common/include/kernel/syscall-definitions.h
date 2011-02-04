@@ -52,4 +52,8 @@
 #define sc_flock 143
 #define sc_msync 144
 //....
+#define sc_sched_yield 158
+//....
 #define sc_vfork 190
+#define sc_createprocess 191
+

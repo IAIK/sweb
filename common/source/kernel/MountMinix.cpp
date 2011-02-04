@@ -8,6 +8,8 @@
 #include "fs_global.h"
 #include "kprintf.h"
 
+MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::instance_ = 0;
+
 MountMinixAndStartUserProgramsThread::MountMinixAndStartUserProgramsThread
                           ( FileSystemInfo *root_fs_info, char const *progs[] ) :
   Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ),
@@ -16,6 +18,12 @@ MountMinixAndStartUserProgramsThread::MountMinixAndStartUserProgramsThread
   counter_lock_(),
   all_processes_killed_(&counter_lock_)
 {
+  instance_ = this; // instance_ is static! attention if you make changes in number of MountMinixThreads or similar
+}
+
+MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::instance()
+{
+  return instance_;
 }
 
 void MountMinixAndStartUserProgramsThread::Run()
@@ -29,7 +37,7 @@ void MountMinixAndStartUserProgramsThread::Run()
   vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
 
   for(uint32 i=0; progs_[i]; i++)
-    Scheduler::instance()->addNewThread ( new UserProcess ( progs_[i], new FileSystemInfo ( *fs_info_ ), this));
+    createProcess(progs_[i]);
 
   counter_lock_.acquire();
 
@@ -59,4 +67,11 @@ void MountMinixAndStartUserProgramsThread::processStart()
   counter_lock_.acquire();
   ++progs_running_;
   counter_lock_.release();
+}
+
+Thread* MountMinixAndStartUserProgramsThread::createProcess(const char* path)
+{
+  Thread* process = new UserProcess(path, new FileSystemInfo(*fs_info_), this);
+  Scheduler::instance()->addNewThread(process);
+  return process;
 }

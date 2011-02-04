@@ -10,23 +10,35 @@
 #include "ArchInterrupts.h"
 #include "console/Terminal.h"
 #include "console/debug.h"
+#include "fs/VfsSyscall.h"
+#include "UserProcess.h"
+#include "MountMinix.h"
+
+extern VfsSyscall vfs_syscall;
 
 uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
 {
   uint32 return_value=0;
 
-  debug(SYSCALL,"Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n",syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
+  if (syscall_number != sc_sched_yield || syscall_number == sc_outline) // no debug print because these might occur very often
+    debug(SYSCALL,"Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n",syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
 
   switch (syscall_number)
   {
+    case sc_sched_yield:
+      Scheduler::instance()->yield();
+      break;
+    case sc_createprocess:
+      return_value = createprocess(arg1,arg2);
+      break;
     case sc_exit:
       exit(arg1);
       break;
     case sc_write:
-      return_value =  write(arg1,arg2,arg3);
+      return_value = write(arg1,arg2,arg3);
       break;
     case sc_read:
-      return_value =  read(arg1,arg2,arg3);
+      return_value = read(arg1,arg2,arg3);
       break;
     case sc_outline:
       outline(arg1,arg2);
@@ -84,3 +96,27 @@ void Syscall::outline(uint32 port, pointer text)
     oh_writeStringDebugNoSleep((const char*)text);
   }
 }
+
+uint32 Syscall::createprocess(uint32 path, uint32 sleep)
+{
+  debug(SYSCALL,"Syscall::createprocess: %s; %d\n",(char*) path,sleep);
+  if (path >= 2U*1024U*1024U*1024U)
+    return -1U;
+  uint32 fd = vfs_syscall.open((const char*) path, O_RDONLY);
+  if (fd == -1U)
+    return -1U;
+  vfs_syscall.close(fd);
+  uint32 len = strlen((const char*) path) + 1;
+  char* copy = new char[len];
+  memcpy(copy, (const char*) path, len);
+  Thread* thread = MountMinixAndStartUserProgramsThread::instance()->createProcess(copy);
+  if (sleep)
+  {
+    while(Scheduler::instance()->checkThreadExists(thread))
+    {
+      Scheduler::instance()->yield();
+    }
+  }
+  return 0;
+}
+
