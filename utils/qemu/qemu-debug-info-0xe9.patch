@@ -1,5 +1,25 @@
 *** qemu-0.12.5/vl.c	2010-07-22 14:39:04.000000000 +0200
 --- qemu-0.12.5-patched/vl.c	2010-11-12 13:14:42.000000000 +0100
+***************
+*** 228,233 ****
+--- 228,234 ----
+  unsigned int nb_prom_envs = 0;
+  const char *prom_envs[MAX_PROM_ENVS];
+  int boot_menu;
++ void e9write(void *opaque, uint32_t address, uint32_t value);
+
+  typedef struct FWBootEntry FWBootEntry;
+
+***************
+*** 1453,1458 ****
+--- 1454,1460 ----
+      }
+      bdrv_close_all();
+      pause_all_vcpus();
++     e9write(0, 0, '\n');
+  }
+
+  static void version(void)
 *************** static int virtcon_parse(const char *dev
 *** 4848,4853 ****
 --- 4848,4891 ----
