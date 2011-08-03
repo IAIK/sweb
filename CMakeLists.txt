@@ -299,6 +299,15 @@ add_custom_target(runddd
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
 
+#Custom target: make runcgdb
+#Run cgdb with some presets
+add_custom_target(runcgdb
+        COMMAND cgdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
+        COMMENT "Going to cgdb"
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        )
+
+
 #Custom target: make rungdb
 #Run gdb with some presets
 add_custom_target(rungdb
