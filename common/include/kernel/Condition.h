@@ -5,7 +5,7 @@
 #ifndef CONDITION__
 #define CONDITION__
 
-#include "util/List.h"
+#include <ustl/ulist.h>
 #include "Thread.h"
 #include "Mutex.h"
 
@@ -61,7 +61,7 @@ class Condition
     void broadcast();
 
   private:
-    List<Thread *> *sleepers_;
+    ustl::list<Thread *> *sleepers_;
     Mutex *lock_;
 
 };

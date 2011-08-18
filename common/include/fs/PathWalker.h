@@ -6,6 +6,7 @@
 #define PATH_WALKER_H__
 
 #include "types.h"
+#include "Mutex.h"
 
 // forward declarations
 class Dentry;
@@ -133,6 +134,8 @@ class PathWalker
      * The last path component
      */
     char* last_;
+
+    Mutex lock_;
 
   public:
 

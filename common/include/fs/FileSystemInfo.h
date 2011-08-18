@@ -6,6 +6,7 @@
 #define FILESYSTEMINFO_H__
 
 #include "types.h"
+#include "PathWalker.h"
 
 class Dentry;
 class VfsMount;
@@ -55,6 +56,8 @@ class FileSystemInfo
    * the pathname of a fs_info
    */
   char* pathname_;
+
+  PathWalker path_walker_;
 
  public:
 
@@ -151,6 +154,8 @@ class FileSystemInfo
    * release the file pathname
    */
   void putName();
+
+  PathWalker& getPathWalker();
 };
 
 #endif // FILESYSTEMINFO_H___

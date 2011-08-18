@@ -35,7 +35,7 @@ Inode* PseudoFSSuperblock::createInode ( Dentry* dentry, uint32 type )
   Inode *inode = ( Inode* ) ( new PseudoFSInode ( this, type ) );
   inode->mknod ( dentry );
 
-  all_inodes_.pushBack ( inode );
+  all_inodes_.push_back ( inode );
   return inode;
 }
 

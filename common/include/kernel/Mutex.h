@@ -5,7 +5,7 @@
 #define _MUTEX_H_
 
 #include "types.h"
-#include "util/List.h"
+#include <ustl/ulist.h>
 #include "SpinLock.h"
 
 class Thread;
@@ -45,6 +45,13 @@ class Mutex
      *Constructor
      */
     Mutex();
+
+    /**
+     *like acquire, but instead of blocking the currentThread until the Lock is free
+     *acquireNonBlocking() immediately returns True or False, depending on whether the Lock
+     *was acquired successfully or already held by another Thread.
+     */
+    bool acquireNonBlocking();
 
     /**
      *acquire sets the Lock and must be called at the start of
@@ -92,7 +99,7 @@ class Mutex
   private:
 
     uint32 mutex_;
-    List<Thread*> sleepers_;
+    ustl::list<Thread*> sleepers_;
     Thread *held_by_;
     SpinLock spinlock_;
 

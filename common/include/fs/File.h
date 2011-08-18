@@ -6,7 +6,6 @@
 #define FILE_H__
 
 #include "types.h"
-#include "fs/PointList.h"
 
 // forward declarations
 class Superblock;

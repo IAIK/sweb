@@ -9,6 +9,7 @@
 #include "console/kprintf.h"
 #include "ArchInterrupts.h"
 #include "mm/KernelMemoryManager.h"
+#include <ustl/ulist.h>
 
 ArchThreadInfo *currentThreadInfo;
 Thread *currentThread;
@@ -90,7 +91,7 @@ void Scheduler::addNewThread ( Thread *thread )
   lockScheduling();
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   waitForFreeKMMLock();
-  threads_.pushFront ( thread );
+  threads_.push_front ( thread );
   unlockScheduling();
 }
 
@@ -101,8 +102,8 @@ void Scheduler::removeCurrentThread()
   waitForFreeKMMLock();
   if ( threads_.size() > 1 )
   {
-    Thread *tmp_thread;
-    for ( uint32 c=0; c< threads_.size(); ++c )
+    threads_.remove(currentThread);
+    /*for ( uint32 c=0; c< threads_.size(); ++c )
     {
       tmp_thread = threads_.back();
       if ( tmp_thread == currentThread )
@@ -111,7 +112,7 @@ void Scheduler::removeCurrentThread()
         break;
       }
       threads_.rotateFront();
-    }
+    }*/
   }
   unlockScheduling();
 }
@@ -192,7 +193,11 @@ uint32 Scheduler::schedule()
       kill_old_=true;
 
     //this operation doesn't allocate or delete any kernel memory
-    threads_.rotateBack();
+    //threads_.rotateBack();
+    //ustl::rotate(threads_.begin(),threads_.end(), threads_.end());
+    threads_.push_back(threads_.front());
+    threads_.pop_front();
+    //swap(*threads_.begin(), *threads_.end());
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
     {
       debug(SCHEDULER, "Scheduler::schedule: ERROR: no thread is in state Running!!");
@@ -251,12 +256,26 @@ void Scheduler::cleanupDeadThreads()
 
   lockScheduling();
   waitForFreeKMMLock();
-  List<Thread*> destroy_list;
+  //List<Thread*> destroy_list;
+  ThreadList destroy_list;
   debug ( SCHEDULER,"cleanupDeadThreads: now running\n" );
   if ( kill_old_ )
   {
-    Thread *tmp_thread;
-    for ( uint32 c=0; c< threads_.size(); ++c )
+    //Thread *tmp_thread;
+    for(ThreadList::iterator it=threads_.begin(); it!=threads_.end(); /* see in braces */)
+    {
+    	if((*it)->state_ == ToBeDestroyed)
+    	{
+    		destroy_list.push_back(*it);
+    		it = threads_.erase(it);
+    	}
+    	else
+    	{
+    		++it;
+    	}
+    }
+
+    /*for ( uint32 c=0; c< threads_.size(); ++c )
     {
       tmp_thread = threads_.front();
       if ( tmp_thread->state_ == ToBeDestroyed )
@@ -267,16 +286,20 @@ void Scheduler::cleanupDeadThreads()
         continue;
       }
       threads_.rotateBack();
-    }
+    }*/
     kill_old_=false;
   }
   debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   unlockScheduling();
-  while ( ! destroy_list.empty() )
+  /*while ( ! destroy_list.empty() )
   {
     Thread *cur_thread = destroy_list.front();
     destroy_list.popFront();
     delete cur_thread;
+  }*/
+  for(ThreadList::iterator it=destroy_list.begin(); it!=destroy_list.end(); ++it)
+  {
+	  delete *it;
   }
 }
 

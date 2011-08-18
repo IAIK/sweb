@@ -6,7 +6,7 @@
 #define VIRTUAL_FILE_SYSTEM__
 
 #include "types.h"
-#include "fs/PointList.h"
+#include <ustl/ulist.h>
 
 /**
  * File system flag indicating if the system in question requires an device.
@@ -35,19 +35,20 @@ class VirtualFileSystem
     /**
      * PoinList of Superblock
      */
-    PointList<Superblock> superblocks_;
+    ustl::list<Superblock*> superblocks_;
 
     /**
      * PointList of mounted Filesystems
      */
-    PointList<VfsMount> mounts_;
+    ustl::list<VfsMount*> mounts_;
 
     /**
      * A null-terminated array of file system types.
      */
-    PointList<FileSystemType> file_system_types_;
+    ustl::list<FileSystemType*> file_system_types_;
 
   public:
+    void initialize();
 
     /**
      * The constructor

@@ -3,10 +3,10 @@
  */
 
 #include "fs/FileDescriptor.h"
-#include "fs/PointList.h"
+#include <ustl/ulist.h>
 #include "ArchThreads.h"
 
-PointList<FileDescriptor> global_fd;
+ustl::list<FileDescriptor*> global_fd;
 
 static uint32 fd_num_ = 3;
 

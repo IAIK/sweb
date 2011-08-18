@@ -37,7 +37,7 @@ RamFSSuperblock::RamFSSuperblock ( Dentry* s_root, uint32 s_dev ) : Superblock (
   assert ( root_init == 0 );
 
   // add the root_inode in the list
-  all_inodes_.pushBack ( root_inode );
+  all_inodes_.push_back ( root_inode );
 }
 
 
@@ -45,7 +45,7 @@ RamFSSuperblock::~RamFSSuperblock()
 {
   assert ( dirty_inodes_.empty() == true );
 
-  uint32 num = s_files_.getLength();
+  uint32 num = s_files_.size();
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     FileDescriptor *fd = s_files_.at ( 0 );
@@ -58,7 +58,7 @@ RamFSSuperblock::~RamFSSuperblock()
 
   assert ( s_files_.empty() == true );
 
-  num = all_inodes_.getLength();
+  num = all_inodes_.size();
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     Inode* inode = all_inodes_.at ( 0 );
@@ -90,7 +90,7 @@ Inode* RamFSSuperblock::createInode ( Dentry* dentry, uint32 type )
     assert ( inode_init == 0 );
   }
 
-  all_inodes_.pushBack ( inode );
+  all_inodes_.push_back ( inode );
   return inode;
 }
 
@@ -99,9 +99,9 @@ int32 RamFSSuperblock::readInode ( Inode* inode )
 {
   assert ( inode );
 
-  if ( !all_inodes_.included ( inode ) )
+  if ( ustl::find(all_inodes_, inode ) == all_inodes_.end())
   {
-    all_inodes_.pushBack ( inode );
+    all_inodes_.push_back ( inode );
   }
   return 0;
 }
@@ -111,9 +111,9 @@ void RamFSSuperblock::writeInode ( Inode* inode )
 {
   assert ( inode );
 
-  if ( !all_inodes_.included ( inode ) )
+  if ( ustl::find(all_inodes_, inode ) == all_inodes_.end())
   {
-    all_inodes_.pushBack ( inode );
+    all_inodes_.push_back ( inode );
   }
 }
 
@@ -130,12 +130,12 @@ int32 RamFSSuperblock::createFd ( Inode* inode, uint32 flag )
 
   File* file = inode->link ( flag );
   FileDescriptor* fd = new FileDescriptor ( file );
-  s_files_.pushBack ( fd );
-  global_fd.pushBack ( fd );
+  s_files_.push_back ( fd );
+  global_fd.push_back ( fd );
 
-  if ( !used_inodes_.included ( inode ) )
+  if ( ustl::find(used_inodes_, inode ) == used_inodes_.end() )
   {
-    used_inodes_.pushBack ( inode );
+    used_inodes_.push_back ( inode );
   }
 
   return ( fd->getFd() );

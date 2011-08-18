@@ -131,16 +131,16 @@ int32 RamFSInode::create ( Dentry *dentry )
 File* RamFSInode::link ( uint32 flag )
 {
   File* file = ( File* ) ( new RamFSFile ( this, i_dentry_, flag ) );
-  i_files_.pushBack ( file );
+  i_files_.push_back ( file );
   return file;
 }
 
 
 int32 RamFSInode::unlink ( File* file )
 {
-  int32 tmp = i_files_.remove ( file );
+  i_files_.remove ( file );
   delete file;
-  return tmp;
+  return 0;
 }
 
 
@@ -170,7 +170,7 @@ int32 RamFSInode::rmdir()
 
 int32 RamFSInode::rm()
 {
-  if ( i_files_.getLength() != 0 )
+  if ( i_files_.size() != 0 )
   {
     kprintfd ( "RamFSInode::ERROR: the file is opened.\n" );
     return -1;

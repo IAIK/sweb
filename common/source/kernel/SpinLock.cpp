@@ -15,6 +15,17 @@ SpinLock::SpinLock() :
 {
 }
 
+bool SpinLock::acquireNonBlocking()
+{
+  if ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )
+  {
+    if ( unlikely ( ArchInterrupts::testIFSet() ==false ) )
+      kpanict ( ( uint8* ) "SpinLock::acquireNonBlocking: with IF=0 ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context ?\n" );
+    return false;
+  }
+  return true;
+}
+
 void SpinLock::acquire()
 {
   while ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )

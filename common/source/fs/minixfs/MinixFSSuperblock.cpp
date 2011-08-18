@@ -77,7 +77,7 @@ void MinixFSSuperblock::initInodes()
   root_inode->i_dentry_ = root_dentry;
   root_dentry->setInode ( root_inode );
 
-  all_inodes_.pushBack ( root_inode );
+  all_inodes_.push_back ( root_inode );
   //read children from disc
   root_inode->loadChildren();
 
@@ -85,7 +85,7 @@ void MinixFSSuperblock::initInodes()
 
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loaded )
 {
-  for(uint32 i=0; i < all_inodes_.getLength(); i++)
+  for(uint32 i=0; i < all_inodes_.size(); i++)
   {
     if(((MinixFSInode*)all_inodes_.at(i))->i_num_ == i_num)
     {
@@ -152,7 +152,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
   debug ( M_SB,"~MinixSuperblock\n" );
   assert ( dirty_inodes_.empty() == true );
   storage_manager_->flush ( this );
-  uint32 num = s_files_.getLength();
+  uint32 num = s_files_.size();
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     FileDescriptor *fd = s_files_.at ( 0 );
@@ -165,7 +165,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
 
   assert ( s_files_.empty() == true );
 
-  num = all_inodes_.getLength();
+  num = all_inodes_.size();
 
   debug ( M_SB,"~MinixSuperblock num: %d inodes to delete\n",num );
 
@@ -214,7 +214,7 @@ Inode* MinixFSSuperblock::createInode ( Dentry* dentry, uint32 type )
   Inode *inode = ( Inode* ) ( new MinixFSInode ( this, mode, 0, 0, 0, 0, 0, zones, i_num ) );
   debug ( M_SB,"createInode> created Inode\n" );
   delete[] zones;
-  all_inodes_.pushBack ( inode );
+  all_inodes_.push_back ( inode );
   debug ( M_SB,"createInode> calling write Inode to Disc\n" );
   writeInode ( inode );
   debug ( M_SB,"createInode> returned from write Inode to Disc\n" );
@@ -239,7 +239,7 @@ int32 MinixFSSuperblock::readInode ( Inode* inode )
 {
   assert ( inode );
   MinixFSInode *minix_inode = ( MinixFSInode * ) inode;
-  assert ( all_inodes_.included ( inode ) );
+  assert ( ustl::find(all_inodes_, inode ) != all_inodes_.end());
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + ( ( minix_inode->i_num_ - 1 ) * INODE_SIZE / BLOCK_SIZE );
   uint32 offset = ( ( minix_inode->i_num_ - 1 ) * INODE_SIZE ) % BLOCK_SIZE;
   Buffer *buffer = new Buffer ( INODE_SIZE );
@@ -262,7 +262,7 @@ int32 MinixFSSuperblock::readInode ( Inode* inode )
 void MinixFSSuperblock::writeInode ( Inode* inode )
 {
   assert ( inode );
-  assert ( all_inodes_.included ( inode ) );
+  assert ( ustl::find(all_inodes_, inode ) != all_inodes_.end() );
   //flush zones
   MinixFSInode *minix_inode = ( MinixFSInode * ) inode;
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + ( ( minix_inode->i_num_ - 1 ) * INODE_SIZE / BLOCK_SIZE );
@@ -303,12 +303,12 @@ void MinixFSSuperblock::delete_inode ( Inode* inode )
 {
   Dentry* dentry = inode->getDentry();
   assert ( dentry == 0 );
-  assert ( !used_inodes_.included ( inode ) );
-  if ( dirty_inodes_.included ( inode ) )
+  assert ( ustl::find(used_inodes_, inode ) == used_inodes_.end());
+  if ( ustl::find(dirty_inodes_, inode ) != dirty_inodes_.end() )
   {
     dirty_inodes_.remove ( inode );
   }
-  assert ( all_inodes_.remove ( inode ) == 0 );
+  all_inodes_.remove ( inode );
   MinixFSInode *minix_inode = ( MinixFSInode * ) inode;
   assert ( minix_inode->i_files_.empty() );
   /*for ( uint32 index = 0; index < minix_inode->i_zones_->getNumZones(); index++ )
@@ -333,12 +333,12 @@ int32 MinixFSSuperblock::createFd ( Inode* inode, uint32 flag )
 
   File* file = inode->link ( flag );
   FileDescriptor* fd = new FileDescriptor ( file );
-  s_files_.pushBack ( fd );
-  global_fd.pushBack ( fd );
+  s_files_.push_back ( fd );
+  global_fd.push_back ( fd );
 
-  if ( !used_inodes_.included ( inode ) )
+  if ( ustl::find(used_inodes_, inode ) == used_inodes_.end() )
   {
-    used_inodes_.pushBack ( inode );
+    used_inodes_.push_back ( inode );
   }
 
   return ( fd->getFd() );

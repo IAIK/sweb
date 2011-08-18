@@ -20,6 +20,11 @@
  */
 VirtualFileSystem vfs;
 
+void VirtualFileSystem::initialize()
+{
+    new(this) VirtualFileSystem();
+}
+
 
 VirtualFileSystem::VirtualFileSystem()
 {}
@@ -38,8 +43,7 @@ int32 VirtualFileSystem::registerFileSystem ( FileSystemType *file_system_type )
   // registered
   if (getFsType(file_system_type->getFSName()))
       return -1;
-
-  file_system_types_.pushBack ( file_system_type );
+  file_system_types_.push_back ( file_system_type );
   return 0;
 }
 
@@ -49,7 +53,7 @@ int32 VirtualFileSystem::unregisterFileSystem ( FileSystemType *file_system_type
   assert ( file_system_type != 0 );
 
   const char *fs_name = file_system_type-> getFSName();
-  uint32 fstl_size = file_system_types_.getLength();
+  uint32 fstl_size = file_system_types_.size();
 
   for ( uint32 counter = 0; counter < fstl_size; ++counter )
   {
@@ -68,7 +72,7 @@ FileSystemType *VirtualFileSystem::getFsType ( const char* fs_name )
 {
   assert ( fs_name );
 
-  uint32 fstl_size = file_system_types_.getLength();
+  uint32 fstl_size = file_system_types_.size();
 
   for ( uint32 counter = 0; counter < fstl_size; ++counter )
   {
@@ -87,7 +91,7 @@ VfsMount *VirtualFileSystem::getVfsMount ( const Dentry* dentry, bool is_root )
 {
   assert ( dentry );
 
-  uint32 vfs_mount_size = mounts_.getLength();
+  uint32 vfs_mount_size = mounts_.size();
   debug ( VFS, "getVfsMount> vfs_mount_size : %d\n",vfs_mount_size );
 
   if ( is_root == false )
@@ -129,8 +133,8 @@ FileSystemInfo *VirtualFileSystem::root_mount ( const char *fs_name, uint32 /*fl
 
   VfsMount *root_mount = new VfsMount ( 0, mount_point, root, super, 0 );
 
-  mounts_.pushBack ( root_mount );
-  superblocks_.pushBack ( super );
+  mounts_.push_back ( root_mount );
+  superblocks_.push_back ( super );
 
   // fs_info initialize
   FileSystemInfo *fs_info = new FileSystemInfo();
@@ -167,17 +171,17 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
   fs_info->setName ( dir_name );
   const char* test_name = fs_info->getName();
 
-  int32 success = path_walker.pathInit ( test_name, 0 );
+  int32 success = fs_info->getPathWalker().pathInit ( test_name, 0 );
   if ( success == 0 )
-    success = path_walker.pathWalk ( test_name );
+    success = fs_info->getPathWalker().pathWalk ( test_name );
   fs_info->putName();
 
   if ( success != 0 )
     return -1;
 
   // found the mount point
-  Dentry *found_dentry = path_walker.getDentry();
-  VfsMount *found_vfs_mount = path_walker.getVfsMount();
+  Dentry *found_dentry = fs_info->getPathWalker().getDentry();
+  VfsMount *found_vfs_mount = fs_info->getPathWalker().getVfsMount();
 
   // create a new superblock
   Superblock *super = fst->createSuper ( found_dentry, dev );
@@ -189,15 +193,15 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
   // create a new vfs_mount
   VfsMount *std_mount = new VfsMount ( found_vfs_mount, found_dentry,
                                        root, super, 0 );
-  mounts_.pushBack ( std_mount );
-  superblocks_.pushBack ( super );
+  mounts_.push_back ( std_mount );
+  superblocks_.push_back ( super );
   return 0;
 }
 
 
 int32 VirtualFileSystem::rootUmount()
 {
-  if ( superblocks_.getLength() == 0 )
+  if ( superblocks_.size() == 0 )
   {
     return -1;
   }
@@ -219,17 +223,17 @@ int32 VirtualFileSystem::umount ( const char* dir_name, uint32 /*flags*/ )
   fs_info->setName ( dir_name );
   const char* test_name = fs_info->getName();
 
-  int32 success = path_walker.pathInit ( test_name, 0 );
+  int32 success = fs_info->getPathWalker().pathInit ( test_name, 0 );
   if ( success == 0 )
-    success = path_walker.pathWalk ( test_name );
+    success = fs_info->getPathWalker().pathWalk ( test_name );
   fs_info->putName();
 
   if ( success != 0 )
     return -1;
 
   // test the umount point\n
-  Dentry *found_dentry = path_walker.getDentry();
-  VfsMount * found_vfs_mount = path_walker.getVfsMount();
+  Dentry *found_dentry = fs_info->getPathWalker().getDentry();
+  VfsMount * found_vfs_mount = fs_info->getPathWalker().getVfsMount();
 
   if ( found_vfs_mount == 0 )
   {

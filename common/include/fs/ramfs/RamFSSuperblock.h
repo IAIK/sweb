@@ -5,7 +5,6 @@
 #ifndef RAM_FS_SUPERBLOCK_H__
 #define RAM_FS_SUPERBLOCK_H__
 
-#include "fs/PointList.h"
 #include "fs/Superblock.h"
 
 class Inode;

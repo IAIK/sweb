@@ -6,9 +6,9 @@
 #define MinixFSInode_h___
 
 #include "types.h"
-#include "fs/PointList.h"
 #include "fs/Inode.h"
 #include "MinixFSZone.h"
+#include <ustl/ulist.h>
 
 /**
  * @class MinixFSInode represents an inode on a minix file system and handles the corresponding functions
@@ -190,7 +190,7 @@ class MinixFSInode : public Inode
      */
     bool children_loaded_;
 
-    PointList<Dentry> other_dentries_;
+    ustl::list<Dentry*> other_dentries_;
 
 
 };

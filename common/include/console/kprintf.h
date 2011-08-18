@@ -48,7 +48,12 @@ void kprintfd_nosleep ( const char *fmt, ... );
  * @param size the buffer's size
  */
 void kprint_buffer ( char *buffer, uint32 size );
-
+/**
+ * prints out a whole buffer with the given size to the debug console.
+ * @param buffer the buffer to print
+ * @param size the buffer's size
+ */
+void kprintd_buffer ( char *buffer, uint32 size );
 /**
  * Initializes the nosleep functionality and starts the flushing thread.
  */

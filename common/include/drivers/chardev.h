@@ -5,7 +5,6 @@
 #ifndef CHAR_DEV_H__
 #define CHAR_DEV_H__
 
-#include "fs/PointList.h"
 #include "fs/Inode.h"
 #include "fs/ramfs/RamFSFile.h"
 #include "fs/devicefs/DeviceFSSuperblock.h"
@@ -149,7 +148,7 @@ class CharacterDevice : public Inode, public Thread
     File* link ( uint32 flag )
     {
       File* file = ( File* ) ( new RamFSFile ( this, i_dentry_, flag ) );
-      i_files_.pushBack ( file );
+      i_files_.push_back ( file );
       return file;
     }
 
@@ -161,9 +160,9 @@ class CharacterDevice : public Inode, public Thread
      */
     int32 unlink ( File* file )
     {
-      int32 tmp = i_files_.remove ( file );
+      i_files_.remove ( file );
       delete file;
-      return tmp;
+      return 0;
     }
 
     /**

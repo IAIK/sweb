@@ -9,6 +9,7 @@
 #include "fs/FileDescriptor.h"
 #include "kernel/Thread.h"
 #include "fs/File.h"
+#include <ustl/ulist.h>
 
 /**
  * Global VirtualFileSystem object
@@ -37,6 +38,6 @@ extern VfsSyscall vfs_syscall;
 /**
  * the global file descriptor list
  */
-extern PointList<FileDescriptor> global_fd;
+extern ustl::list<FileDescriptor*> global_fd;
 
 

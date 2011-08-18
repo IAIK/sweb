@@ -10,8 +10,7 @@
 #include "Syscall.h"
 #include "VfsSyscall.h"
 #include "File.h"
-#include "Pair.h"
-#include "Array.h"
+#include <ustl/uvector.h>
 
 extern VfsSyscall vfs_syscall;
 
@@ -298,11 +297,12 @@ bool Loader::readHeaders()
     return false;
   }
 
-  if(sizeof(ELF32_Phdr) != hdr_->e_phentsize ||
-     !phdrs_.resetSize(hdr_->e_phnum))
+  if(sizeof(ELF32_Phdr) != hdr_->e_phentsize)
   {
     return false;
   }
+
+  phdrs_.resize(hdr_->e_phnum, true);
 
   vfs_syscall.lseek(fd_, hdr_->e_phoff, File::SEEK_SET);
 
@@ -384,7 +384,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   //   }
   // }
 
-  Array<PagePart> byte_map;
+  ustl::vector<PagePart> byte_map;
   /*if(!byte_map.resetSize(PAGE_SIZE))
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
@@ -429,7 +429,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
         //and read ONCE from the executable; its very expensive to read every byte single from harddisk
         //(we have to read a full zone) -> for this we also need the max- and min-byte from file we have to load
 
-        byte_map.pushBack(part);
+        byte_map.push_back(part);
 
         ++written;
         ++found;
@@ -503,9 +503,9 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   ArchCommon::bzero ( ArchMemory::get3GBAddressOfPPN ( page ),PAGE_SIZE,false );
   debug(PM, "bzero!\n");
   uint8* dest = reinterpret_cast<uint8*> (ArchMemory::get3GBAddressOfPPN ( page ));
-  debug(PM, "copying %d elements\n", byte_map.getNumElems());
+  debug(PM, "copying %d elements\n", byte_map.size());
   written = 0;
-  for(i=0; i < byte_map.getNumElems(); i++)
+  for(i=0; i < byte_map.size(); i++)
   {
     part = byte_map[i];
 

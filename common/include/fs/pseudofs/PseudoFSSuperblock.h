@@ -7,7 +7,6 @@
 
 #include "fs/ramfs/RamFSSuperblock.h"
 
-#include "fs/PointList.h"
 #include "fs/Superblock.h"
 
 class Inode;

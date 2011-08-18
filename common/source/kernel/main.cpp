@@ -49,6 +49,7 @@
 
 #include "UserProcess.h"
 #include "MountMinix.h"
+#include "ustl/outerrstream.h"
 
 extern void* kernel_end_address;
 
@@ -140,7 +141,6 @@ void startup()
     writeLine2Bochs ( ( uint8 * ) "Text Console created \n" );
   }
 #endif
-  //writeLine2Bochs( (uint8 *) "Console created \n");
 
   Terminal *term_0 = main_console->getTerminal ( 0 );
   Terminal *term_1 = main_console->getTerminal ( 1 );
@@ -159,14 +159,17 @@ void startup()
 
   kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, ( ( pointer ) &kernel_end_address )-2U*1024*1024*1024+1*1024*1024 );
 
+  // initialize global and static objects
+  ustl::coutclass::init();
+  vfs.initialize();
+  extern ustl::list<FileDescriptor*> global_fd;
+  new (&global_fd) ustl::list<FileDescriptor*>();
 
   debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
   DeviceFSType *devfs = new DeviceFSType();
   vfs.registerFileSystem ( devfs );
   FileSystemInfo* root_fs_info = vfs.root_mount ( "devicefs", 0 );
-//   kprintfd("Mount returned %d\n", mntres);
 
-  //debug ( MAIN, "root_fs_info : %d",root_fs_info );
   debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n", root_fs_info->getRoot()->getName(), root_fs_info->getPwd()->getName() );
   if ( main_console->getFSInfo() )
   {
@@ -206,10 +209,6 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-  /*Scheduler::instance()->addNewThread (
-       new MinixTestingThread ( new FileSystemInfo ( *root_fs_info ) )
-   );*/
-
   // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!
   char const *user_progs[] = {
   // for reasons of automated testing
@@ -223,45 +222,6 @@ void startup()
        new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ), user_progs )
    );
 
-
-//   Scheduler::instance()->addNewThread(
-//     new TestTerminalThread( "TerminalTestThread", main_console, 1 )
-//   );
-
-//   Scheduler::instance()->addNewThread(
-//     new BDThread()
-//   );
-//
-//   Scheduler::instance()->addNewThread(
-//      new BDThread2()
-//    );
-
-  //~ Scheduler::instance()->addNewThread(
-  //~ new BDThread()
-  //~ );
-
-  //~ Scheduler::instance()->addNewThread(
-  //~ new BDThread2()
-  //~ );
-
-  //~ Scheduler::instance()->addNewThread(
-  //~ new SerialThread( "SerialTestThread" )
-  //~ );
-
-  //~ Scheduler::instance()->addNewThread(
-  //~ new DeviceFSMountingThread()
-  //~ );
-
-  //~ Scheduler::instance()->addNewThread(new UserThread("mult.sweb"));
-
-  /*for ( uint32 file=0; file < PseudoFS::getInstance()->getNumFiles(); ++ file )
-  {
-    UserThread *user_thread = new UserThread ( PseudoFS::getInstance()->getFileNameByNumber ( file ), new FileSystemInfo ( *root_fs_info ) );
-    Scheduler::instance()->addNewThread ( user_thread );
-  }*/
-
-  //Scheduler::instance()->addNewThread(new TestThread());
-
   Scheduler::instance()->printThreadList();
 
   PageManager::instance()->startUsingSyncMechanism();
@@ -269,7 +229,7 @@ void startup()
 
   kprintf ( "Now enabling Interrupts...\n" );
   ArchInterrupts::enableInterrupts();
-
+  
   Scheduler::instance()->yield();
 
   //not reached

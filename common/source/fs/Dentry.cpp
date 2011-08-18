@@ -7,6 +7,7 @@
 #include "assert.h"
 #include "mm/kmalloc.h"
 #include "fs/Inode.h"
+#include <ustl/ualgo.h>
 
 #define STRLCOPY_ERR "strlcpy error"
 
@@ -39,7 +40,7 @@ Dentry::~Dentry()
     debug ( DENTRY, "deleting Dentry child remove d_parent_: %d\n",d_parent_ );
     d_parent_->childRemove ( this );
   }
-  for ( uint32 count = 0; count < ( d_child_.getLength() ); count++ )
+  for ( uint32 count = 0; count < ( d_child_.size() ); count++ )
   {
     Dentry *dentry = ( Dentry* ) ( d_child_.at ( count ) );
     dentry->d_parent_ = 0;
@@ -62,26 +63,21 @@ void Dentry::setInode ( Inode *inode )
 void Dentry::childInsert ( Dentry *child_dentry )
 {
   assert ( child_dentry != 0 );
-  d_child_.pushBack ( child_dentry );
+  d_child_.push_back ( child_dentry );
 }
 
 
 int32 Dentry::childRemove ( Dentry *child_dentry )
 {
   debug ( DENTRY,  "Dentry childRemove entering\n" );
-  debug ( DENTRY, "Dentry childRemove d_child_ length: %d \n",d_child_.getLength() );
+  debug ( DENTRY, "Dentry childRemove d_child_ length: %d \n",d_child_.size() );
 
-  debug ( DENTRY, "Dentry childRemove d_child_ included: %d\n",d_child_.included ( child_dentry ) );
+  debug ( DENTRY, "Dentry childRemove d_child_ included: %d\n", ustl::find(d_child_, child_dentry ) != d_child_.end());
   assert ( child_dentry != 0 );
-  if ( d_child_.remove ( child_dentry ) == 0 )
-  {
-    child_dentry->d_parent_ = 0;
-    debug ( DENTRY, "Dentry childRemove remove == 0\n" );
-    return 0;
-  }
-
-  debug ( DENTRY, "Dentry childRemove failed\n" );
-  return -1;
+  d_child_.remove ( child_dentry );
+  child_dentry->d_parent_ = 0;
+  debug ( DENTRY, "Dentry childRemove remove == 0\n" );
+  return 0;
 }
 
 
@@ -106,10 +102,10 @@ int32 Dentry::setChild ( Dentry *dentry )
   if ( dentry == 0 )
     return -1;
 
-  if ( d_child_.included ( dentry ) == true )
+  if ( ustl::find(d_child_, dentry ) != d_child_.end() )
     return -1;
 
-  d_child_.pushBack ( dentry );
+  d_child_.push_back ( dentry );
 
   return 0;
 }
@@ -117,13 +113,13 @@ int32 Dentry::setChild ( Dentry *dentry )
 
 Dentry* Dentry::getChild ( uint32 index )
 {
-  assert ( index < d_child_.getLength() );
+  assert ( index < d_child_.size() );
   return ( d_child_.at ( index ) );
 }
 
 Dentry* Dentry::checkName ( const char* name )
 {
-  for ( uint32 count = 0; count < ( d_child_.getLength() ); count++ )
+  for ( uint32 count = 0; count < ( d_child_.size() ); count++ )
   {
     Dentry *dentry = d_child_.at ( count );
     const char *tmp_name = dentry->getName();

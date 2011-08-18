@@ -381,6 +381,11 @@ void kprint_buffer ( char *buffer, uint32 size )
     vkprint_buffer ( oh_writeCharNoSleep, buffer, size );
 }
 
+void kprintd_buffer ( char *buffer, uint32 size )
+{
+    vkprint_buffer ( oh_writeCharDebugNoSleep, buffer, size );
+}
+
 bool isDebugEnabled ( uint32 flag )
 {
   bool group_enabled = false;

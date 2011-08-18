@@ -6,7 +6,7 @@
 #define CONSOLE_H__
 
 #include "types.h"
-#include "util/List.h"
+#include <ustl/ulist.h>
 #include "Mutex.h"
 
 #include "Thread.h"
@@ -171,7 +171,7 @@ class Console : public Thread
     virtual void consoleSetBackgroundColor ( BACKGROUNDCOLORS const &color ) =0;
 
 
-    List<Terminal *> terminals_;
+    ustl::list<Terminal *> terminals_;
     Mutex console_lock_;
     Mutex set_active_lock_;
     uint8 locked_for_drawing_;

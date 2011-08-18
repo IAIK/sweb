@@ -19,6 +19,28 @@ Mutex::Mutex() :
 {
 }
 
+bool Mutex::acquireNonBlocking()
+{
+  if(!spinlock_.acquireNonBlocking())
+      return false;
+
+  while ( ArchThreads::testSetLock ( mutex_,1 ) )
+  {
+    if(threadOnList(currentThread))
+    {
+      kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list\n"
+                 "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName() );
+      assert(false);
+    }
+
+    spinlock_.release();
+    return false;
+  }
+  spinlock_.release();
+  held_by_=currentThread;
+  return true;
+}
+
 void Mutex::acquire()
 {
   spinlock_.acquire();
@@ -31,7 +53,7 @@ void Mutex::acquire()
       assert(false);
     }
 
-    sleepers_.pushBack ( currentThread );
+    sleepers_.push_back ( currentThread );
     Scheduler::instance()->sleepAndRelease ( spinlock_ );
     spinlock_.acquire();
   }
@@ -47,7 +69,7 @@ void Mutex::release()
   if ( ! sleepers_.empty() )
   {
     Thread *thread = sleepers_.front();
-    sleepers_.popFront();
+    sleepers_.pop_front();
     Scheduler::instance()->wake ( thread );
   }
   spinlock_.release();
@@ -71,7 +93,8 @@ bool Mutex::threadOnList(Thread *thread)
   {
     if(thread == sleepers_.front())
       return_value = true;
-    sleepers_.rotateBack();
+    sleepers_.push_back(sleepers_.front());
+    sleepers_.pop_front();
   }
   return return_value;
 }

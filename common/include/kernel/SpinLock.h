@@ -6,7 +6,7 @@
 #define _SPINLOCK_H_
 
 #include "types.h"
-#include "util/List.h"
+#include <ustl/ulist.h>
 
 class Thread;
 
@@ -41,6 +41,11 @@ class SpinLock
      * acquires the SpinLock.
      */
     void acquire();
+
+    /**
+     * acquires the SpinLock non blocking.
+     */
+    bool acquireNonBlocking();
 
     /**
      * releases the SpinLock.

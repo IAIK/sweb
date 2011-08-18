@@ -9,7 +9,7 @@
 #include "Thread.h"
 #include "Scheduler.h"
 #include "Mutex.h"
-#include "Array.h"
+#include <ustl/uvector.h>
 
 
 struct sELF32_Phdr;
@@ -78,7 +78,7 @@ class Loader
     uint32 fd_;
     Thread *thread_;
     ELF32_Ehdr *hdr_;
-    Array<ELF32_Phdr> phdrs_;
+    ustl::vector<ELF32_Phdr> phdrs_;
     Mutex load_lock_;
 };
 

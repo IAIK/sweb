@@ -22,7 +22,7 @@ TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxT
     log++;
   }
 
-  char *term_name = new char[ log + 5 ];
+  char term_name[ log + 5 ];
   term_name[ 0 ] = 't';
   term_name[ 1 ] = 'e';
   term_name[ 2 ] = 'r';
@@ -39,10 +39,9 @@ TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxT
     }
     
     Terminal *term = new Terminal ( term_name, this,consoleGetNumColumns(),consoleGetNumRows() );
-    terminals_.pushBack ( term );
+    terminals_.push_back ( term );
   }
 
-  delete[] term_name;
 
   active_terminal_ = 0;
 }

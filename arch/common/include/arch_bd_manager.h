@@ -8,7 +8,7 @@
 
 #include "arch_bd_request.h"
 #include "arch_bd_virtual_device.h"
-#include "util/List.h"
+#include <ustl/ulist.h>
 
 
 class BDManager
@@ -83,7 +83,7 @@ public:
   bool probeIRQ;
 
 private:
-  List< BDVirtualDevice *> device_list_;
+  ustl::list< BDVirtualDevice *> device_list_;
 
 protected:
   static BDManager *instance_;

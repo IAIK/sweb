@@ -10,12 +10,12 @@
 #include "arch_bd_request.h"
 #include "arch_bd_driver.h"
 
-#include "fs/PointList.h"
 #include "fs/Inode.h"
 #include "fs/ramfs/RamFSFile.h"
 #include "fs/devicefs/DeviceFSSuperblock.h"
 #include "fs/Dentry.h"
 #include "fs/Superblock.h"
+#include "ustl/ulist.h"
 
 class BDVirtualDevice : public Inode
 {
@@ -123,7 +123,7 @@ class BDVirtualDevice : public Inode
     File *link(uint32 flag)
     {
       File* file = (File*)(new RamFSFile(this, i_dentry_, flag));
-      i_files_.pushBack(file);
+      i_files_.push_back(file);
       return file;
     }
 
@@ -133,9 +133,9 @@ class BDVirtualDevice : public Inode
      */
     int32 unlink(File* file)
     {
-      int32 tmp = i_files_.remove(file);
+      i_files_.remove(file);
       delete file;
-      return tmp;
+      return 0;
     }
 //// End Inode functions
 

@@ -6,8 +6,8 @@
 #define INODE_H__
 
 #include "types.h"
-#include "fs/PointList.h"
 #include "console/kprintf.h"
+#include <ustl/ulist.h>
 
 class Dentry;
 class File;
@@ -61,12 +61,12 @@ class Inode
     /**
      * The dentry-PointList of this inode. (file)
      */
-    PointList<Dentry> i_dentry_link_;
+    ustl::list<Dentry*> i_dentry_link_;
 
     /**
      * The (open) file of this inode.
      */
-    PointList<File> i_files_;
+    ustl::list<File*> i_files_;
 
     /**
      * the number of the link of this inode.
@@ -311,7 +311,7 @@ class Inode
      * returns the number of opened files on this inode
      * @return the number of files
      */
-    uint32 getNumOpenedFile() { return i_files_.getLength(); }
+    uint32 getNumOpenedFile() { return i_files_.size(); }
 
     /**
      * returns the size

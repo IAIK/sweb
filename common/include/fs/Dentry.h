@@ -2,7 +2,7 @@
  * @file Dentry.h
  */
 #include "types.h"
-#include "fs/PointList.h"
+#include <ustl/ulist.h>
 
 #ifndef DENTRY_h__
 #define DENTRY_h__
@@ -40,7 +40,7 @@ class Dentry
     /**
      * This list_head is used to link together all the children of the dentry.
      */
-    PointList<Dentry> d_child_;
+    ustl::list<Dentry*> d_child_;
 
     /**
      * This is the head of the d_child list that links all the children of this
@@ -129,7 +129,7 @@ class Dentry
      * get the number of the child
      * @return the number of childs
      */
-    uint32 getNumChild() { return d_child_.getLength(); }
+    uint32 getNumChild() { return d_child_.size(); }
 
     /**
      * get the child of the child-list

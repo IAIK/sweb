@@ -5,7 +5,6 @@
 #ifndef DEVICEFS_SUPERBLOCK_H__
 #define DEVICEFS_SUPERBLOCK_H__
 
-#include "fs/PointList.h"
 #include "fs/Superblock.h"
 
 class Inode;

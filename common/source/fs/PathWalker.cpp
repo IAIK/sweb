@@ -15,12 +15,12 @@
 
 #include "mm/kmalloc.h"
 #include "console/kprintf.h"
+#include "kernel/Mutex.h"
 
 /**
  * the pathWalker object
  * follow the inode of the corresponding file pathname
  */
-PathWalker path_walker;
 
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'
@@ -28,15 +28,16 @@ PathWalker path_walker;
 #define SEPARATOR '/'
 
 PathWalker::PathWalker()
-{}
-
+{
+}
 
 PathWalker::~PathWalker()
-{}
-
+{
+}
 
 int32 PathWalker::pathInit ( const char* pathname, uint32 flags )
 {
+  MutexLock lock(lock_);
   FileSystemInfo *fs_info = currentThread->getFSInfo();
   if ( pathname == 0 )
   {
@@ -74,6 +75,7 @@ int32 PathWalker::pathInit ( const char* pathname, uint32 flags )
 
 int32 PathWalker::pathWalk ( const char* pathname )
 {
+  MutexLock lock(lock_);
   debug ( PATHWALKER,  "pathWalk> pathname : %s\n",pathname );
   FileSystemInfo *fs_info = currentThread->getFSInfo();
   debug ( PATHWALKER,  "pathWalk> fs_info->getName() : %s\n", fs_info->getName() );

@@ -37,7 +37,7 @@ DeviceFSSuperBlock::DeviceFSSuperBlock ( Dentry* s_root, uint32 s_dev ) : Superb
   Inode *root_inode = ( Inode* ) ( new RamFSInode ( this, I_DIR ) );
   int32 root_init = root_inode->mknod ( root_dentry );
   assert ( root_init == 0 );
-  all_inodes_.pushBack ( root_inode );
+  all_inodes_.push_back ( root_inode );
 
   Dentry *device_root_dentry = new Dentry ( root_dentry );
   device_root_dentry->setName ( DEVICE_ROOT_NAME );
@@ -46,7 +46,7 @@ DeviceFSSuperBlock::DeviceFSSuperBlock ( Dentry* s_root, uint32 s_dev ) : Superb
   Inode *device_root_inode = ( Inode* ) ( new RamFSInode ( this, I_DIR ) );
   root_init = device_root_inode->mknod ( device_root_dentry );
   assert ( root_init == 0 );
-  all_inodes_.pushBack ( device_root_inode );
+  all_inodes_.push_back ( device_root_inode );
 
   // set the root to /
   s_root_ = root_dentry;
@@ -61,7 +61,7 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
 {
   assert ( dirty_inodes_.empty() == true );
 
-  uint32 num = s_files_.getLength();
+  uint32 num = s_files_.size();
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     FileDescriptor *fd = s_files_.at ( 0 );
@@ -74,7 +74,7 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
 
   assert ( s_files_.empty() == true );
 
-  num = all_inodes_.getLength();
+  num = all_inodes_.size();
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     Inode* inode = all_inodes_.at ( 0 );
@@ -98,7 +98,7 @@ void DeviceFSSuperBlock::addDevice ( Inode* device, const char* device_name )
   cDevice->mknod ( fdntr );
   cDevice->setSuperBlock ( this );
 
-  all_inodes_.pushBack ( cDevice );
+  all_inodes_.push_back ( cDevice );
 }
 
 
@@ -119,7 +119,7 @@ Inode* DeviceFSSuperBlock::createInode ( Dentry* dentry, uint32 type )
     assert ( inode_init == 0 );
   }
 
-  all_inodes_.pushBack ( inode );
+  all_inodes_.push_back ( inode );
   return inode;
 }
 
@@ -130,12 +130,12 @@ int32 DeviceFSSuperBlock::createFd ( Inode* inode, uint32 flag )
 
   File* file = inode->link ( flag );
   FileDescriptor* fd = new FileDescriptor ( file );
-  s_files_.pushBack ( fd );
-  global_fd.pushBack ( fd );
+  s_files_.push_back ( fd );
+  global_fd.push_back ( fd );
 
-  if ( !used_inodes_.included ( inode ) )
+  if ( ustl::find(used_inodes_, inode ) == used_inodes_.end())
   {
-    used_inodes_.pushBack ( inode );
+    used_inodes_.push_back ( inode );
   }
 
   return ( fd->getFd() );

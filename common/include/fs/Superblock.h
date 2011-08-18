@@ -6,7 +6,7 @@
 #define SUPERBLOCK_H__
 
 #include "types.h"
-#include "fs/PointList.h"
+#include <ustl/ulist.h>
 
 class Iattr;
 class Statfs;
@@ -76,24 +76,24 @@ class Superblock
     /**
      * A list of dirty inodes.
      */
-    PointList<Inode> dirty_inodes_;
+    ustl::list<Inode*> dirty_inodes_;
 
     /**
      * A list of used inodes. It is only used to open-file.
      */
-    PointList<Inode> used_inodes_;
+    ustl::list<Inode*> used_inodes_;
 
     /**
      * inodes of the superblock.
      */
-    PointList<Inode> all_inodes_;
+    ustl::list<Inode*> all_inodes_;
 
     /**
      * This is a list of files (linked on f_list) of open files on this
      * file-system. It is used, for example, to check if there are any files
      * open for write before remounting the file-system as read-only.
      */
-    PointList<FileDescriptor> s_files_;
+    ustl::list<FileDescriptor*> s_files_;
 
   public:
 

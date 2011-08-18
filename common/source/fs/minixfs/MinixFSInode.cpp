@@ -63,7 +63,10 @@ MinixFSInode::~MinixFSInode()
   delete i_zones_;
 
   while ( !other_dentries_.empty() )
-    delete other_dentries_.popFront();
+  {
+    delete other_dentries_.front();
+    other_dentries_.pop_front();
+  }
 }
 
 
@@ -296,7 +299,7 @@ File* MinixFSInode::link(uint32 flag)
 {
   debug(M_INODE, "link: flag: %d\n",flag);
   File* file = (File*)(new MinixFSFile(this, i_dentry_, flag));
-  i_files_.pushBack(file);
+  i_files_.push_back(file);
   //++i_nlink_;
   return file;
 }
@@ -305,10 +308,10 @@ File* MinixFSInode::link(uint32 flag)
 int32 MinixFSInode::unlink(File* file)
 {
   debug(M_INODE, "unlink\n");
-  int32 tmp = i_files_.remove(file);
+  i_files_.remove(file);
   delete file;
   //--i_nlink_;
-  return tmp;
+  return 0;
 }
 
 
@@ -355,7 +358,7 @@ int32 MinixFSInode::rmdir()
 
 int32 MinixFSInode::rm()
 {
-  if(i_files_.getLength() != 0)
+  if(i_files_.size() != 0)
   {
     debug(M_INODE, "the file is opened.\n");
     return -1;
@@ -471,10 +474,10 @@ void MinixFSInode::loadChildren()
         if(!is_already_loaded)
         {
           ((MinixFSInode *)inode)->i_dentry_ = new_dentry;
-          ((MinixFSSuperblock *)i_superblock_)->all_inodes_.pushBack(inode);
+          ((MinixFSSuperblock *)i_superblock_)->all_inodes_.push_back(inode);
         }
         else
-          ((MinixFSInode *)inode)->other_dentries_.pushBack(new_dentry);
+          ((MinixFSInode *)inode)->other_dentries_.push_back(new_dentry);
         new_dentry->setInode(inode);
       }
     }

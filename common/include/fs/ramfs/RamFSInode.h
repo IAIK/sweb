@@ -6,7 +6,6 @@
 #define RAM_FS_INODE_H__
 
 #include "types.h"
-#include "fs/PointList.h"
 #include "fs/Inode.h"
 
 /**

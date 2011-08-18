@@ -47,3 +47,7 @@ void FileSystemInfo::putName()
   }
 }
 
+PathWalker& FileSystemInfo::getPathWalker()
+{
+  return path_walker_;
+}

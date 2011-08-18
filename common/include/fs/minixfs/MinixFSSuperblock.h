@@ -5,7 +5,6 @@
 #ifndef MinixFSSuperblock_h___
 #define MinixFSSuperblock_h___
 
-#include "fs/PointList.h"
 #include "fs/Superblock.h"
 #include "MinixStorageManager.h"
 

@@ -28,10 +28,10 @@ typedef uint32 l_off_t;
 #define Max(x,y) (((x)>(y))?(x):(y))
 
 #ifndef NO_POISON
-#pragma GCC poison int
-#pragma GCC poison short
-#pragma GCC poison long
-#pragma GCC poison unsigned
+//#pragma GCC poison int
+//#pragma GCC poison short
+//#pragma GCC poison long
+//#pragma GCC poison unsigned
 #endif
 
 #define KERNEL_CS (8*3)

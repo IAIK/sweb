@@ -13,6 +13,7 @@ include_directories(
     include/ipc
     include/mm
     include/util
+    include/ustl
 )
 
 if(${ARCH} STREQUAL "xen")

@@ -34,10 +34,14 @@ void MountMinixAndStartUserProgramsThread::Run()
   debug(MOUNTMINIX, "mounting userprog-partition \n");
 
   vfs_syscall.mkdir ( "/user_progs", 0 );
+  debug(MOUNTMINIX, "mkdir /user_progs\n");
   vfs_syscall.mount ( "idea1", "/user_progs", "minixfs", 0 );
+  debug(MOUNTMINIX, "mount idea1\n");
 
   for(uint32 i=0; progs_[i]; i++)
+  {
     createProcess(progs_[i]);
+  }
 
   counter_lock_.acquire();
 
@@ -71,7 +75,10 @@ void MountMinixAndStartUserProgramsThread::processStart()
 
 Thread* MountMinixAndStartUserProgramsThread::createProcess(const char* path)
 {
+  debug(MOUNTMINIX, "create process %s\n", path);
   Thread* process = new UserProcess(path, new FileSystemInfo(*fs_info_), this);
+  debug(MOUNTMINIX, "created userprocess %s\n", path);
   Scheduler::instance()->addNewThread(process);
+  debug(MOUNTMINIX, "added thread %s\n", path);
   return process;
 }

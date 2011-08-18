@@ -31,7 +31,7 @@ VfsSyscall vfs_syscall;
 FileDescriptor* VfsSyscall::getFileDescriptor ( uint32 fd )
 {
   FileDescriptor* file_descriptor = 0;
-  uint32 num = global_fd.getLength();
+  uint32 num = global_fd.size();
   for ( uint32 counter = 0; counter < num; counter++ )
   {
     if ( global_fd.at ( counter )->getFd() == fd )
@@ -83,9 +83,9 @@ int32 VfsSyscall::dupChecking ( const char* pathname )
   else
     fs_info->setName ( pathname );
 
-  int32 success = path_walker.pathInit ( fs_info->getName(), 0 );
+  int32 success = fs_info->getPathWalker().pathInit ( fs_info->getName(), 0 );
   if ( success == 0 )
-    success = path_walker.pathWalk ( fs_info->getName() );
+    success = fs_info->getPathWalker().pathWalk ( fs_info->getName() );
 
   // checked
   return success;
@@ -99,12 +99,12 @@ int32 VfsSyscall::mkdir ( const char* pathname, int32 )
   if ( dupChecking ( pathname ) == 0 )
   {
     debug ( VFSSYSCALL,"(mkdir) the pathname exists\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     fs_info->putName();
     return -1;
   }
   debug ( VFSSYSCALL,"(mkdir) pathRelease();\n" );
-  path_walker.pathRelease();
+  fs_info->getPathWalker().pathRelease();
   char* path_tmp= ( char* ) kmalloc ( ( strlen ( fs_info->getName() ) + 1 ) * sizeof ( char ) );
   strlcpy ( path_tmp, fs_info->getName(), ( strlen ( fs_info->getName() ) + 1 ) );
   fs_info->putName();
@@ -118,20 +118,20 @@ int32 VfsSyscall::mkdir ( const char* pathname, int32 )
 
   const char* path_prev_name = fs_info->getName();
   debug ( VFSSYSCALL,"(mkdir) path_prev_name: %s\n",path_prev_name );
-  int32 success = path_walker.pathInit ( path_prev_name, 0 );
+  int32 success = fs_info->getPathWalker().pathInit ( path_prev_name, 0 );
   if ( success == 0 )
-    success = path_walker.pathWalk ( path_prev_name );
+    success = fs_info->getPathWalker().pathWalk ( path_prev_name );
   fs_info->putName();
 
   if ( success != 0 )
   {
     debug ( VFSSYSCALL,"path_walker failed\n\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     return -1;
   }
 
-  Dentry* current_dentry = path_walker.getDentry();
-  path_walker.pathRelease();
+  Dentry* current_dentry = fs_info->getPathWalker().getDentry();
+  fs_info->getPathWalker().pathRelease();
   Inode* current_inode = current_dentry->getInode();
   Superblock* current_sb = current_inode->getSuperblock();
 
@@ -166,7 +166,7 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
   FileSystemInfo *fs_info = currentThread->getFSInfo();
   if ( dupChecking ( pathname ) == 0 )
   {
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     char* path_tmp= ( char* ) kmalloc ( ( strlen ( fs_info->getName() ) + 1 ) * sizeof ( char ) );
     strlcpy ( path_tmp, fs_info->getName(), ( strlen ( fs_info->getName() ) + 1 ) );
     fs_info->putName();
@@ -180,21 +180,21 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
 
     const char* path_prev_name = fs_info->getName();
 
-    int32 success = path_walker.pathInit ( path_prev_name, 0 );
+    int32 success = fs_info->getPathWalker().pathInit ( path_prev_name, 0 );
     if ( success == 0 )
     {
-      success = path_walker.pathWalk ( path_tmp );
+      success = fs_info->getPathWalker().pathWalk ( path_tmp );
     }
     fs_info->putName();
 
     if ( success != 0 )
     {
       debug ( VFSSYSCALL,"(list) path_walker failed\n\n" );
-      path_walker.pathRelease();
+      fs_info->getPathWalker().pathRelease();
       return ( ( Dirent* ) 0 );
     }
 
-    Dentry* dentry = path_walker.getDentry();
+    Dentry* dentry = fs_info->getPathWalker().getDentry();
 
     if ( dentry->getInode()->getType() != I_DIR )
     {
@@ -230,7 +230,7 @@ Dirent* VfsSyscall::readdir ( const char* pathname )
   else
   {
     debug ( VFSSYSCALL,"(list) Path doesn't exist\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
   }
   return 0;
 }
@@ -242,23 +242,23 @@ int32 VfsSyscall::chdir ( const char* pathname )
   if ( dupChecking ( pathname ) != 0 )
   {
     kprintfd ( "Error: (chdir) the directory does not exist.\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     fs_info->putName();
     return -1;
   }
 
   fs_info->putName();
-  Dentry* current_dentry = path_walker.getDentry();
+  Dentry* current_dentry = fs_info->getPathWalker().getDentry();
   Inode* current_inode = current_dentry->getInode();
   if ( current_inode->getType() != I_DIR )
   {
     debug ( VFSSYSCALL,"This path is not a directory\n\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     return -1;
   }
 
-  fs_info->setFsPwd ( path_walker.getDentry(), path_walker.getVfsMount() );
-  path_walker.pathRelease();
+  fs_info->setFsPwd ( fs_info->getPathWalker().getDentry(), fs_info->getPathWalker().getVfsMount() );
+  fs_info->getPathWalker().pathRelease();
 
   return 0;
 }
@@ -271,15 +271,15 @@ int32 VfsSyscall::rm ( const char* pathname )
   if ( dupChecking ( pathname ) != 0 )
   {
     kprintfd ( "Error: (rm) the directory does not exist.\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     fs_info->putName();
     return -1;
   }
   debug ( VFSSYSCALL,"(rm) \n" );
   fs_info->putName();
-  Dentry* current_dentry = path_walker.getDentry();
+  Dentry* current_dentry = fs_info->getPathWalker().getDentry();
   debug ( VFSSYSCALL,"(rm) current_dentry->getName(): %s \n",current_dentry->getName() );
-  path_walker.pathRelease();
+  fs_info->getPathWalker().pathRelease();
   Inode* current_inode = current_dentry->getInode();
   debug ( VFSSYSCALL,"(rm) current_inode: %d\n",current_inode );
 
@@ -312,14 +312,14 @@ int32 VfsSyscall::rmdir ( const char* pathname )
   if ( dupChecking ( pathname ) != 0 )
   {
     kprintfd ( "Error: (rmdir) the directory does not exist.\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     fs_info->putName();
     return -1;
   }
 
   fs_info->putName();
-  Dentry* current_dentry = path_walker.getDentry();
-  path_walker.pathRelease();
+  Dentry* current_dentry = fs_info->getPathWalker().getDentry();
+  fs_info->getPathWalker().pathRelease();
   Inode* current_inode = current_dentry->getInode();
 
   //if directory is read from a real file system,
@@ -391,9 +391,9 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
     debug ( VFSSYSCALL,"(open) putName\n" );
     fs_info->putName();
     debug ( VFSSYSCALL,"(open) path_walker.getDentry()\n" );
-    Dentry* current_dentry = path_walker.getDentry();
+    Dentry* current_dentry = fs_info->getPathWalker().getDentry();
     debug ( VFSSYSCALL,"(open) pathRelease\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     debug ( VFSSYSCALL,"(open)current_dentry->getInode() \n" );
     Inode* current_inode = current_dentry->getInode();
     debug ( VFSSYSCALL,"(open) current_inode->getSuperblock()\n" );
@@ -433,7 +433,7 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
   else if(flag & O_CREAT)
   {
     debug ( VFSSYSCALL,"(open) create a new file\n" );
-    path_walker.pathRelease();
+    fs_info->getPathWalker().pathRelease();
     char* path_tmp= ( char* ) kmalloc ( ( strlen ( fs_info->getName() ) + 1 ) * sizeof ( char ) );
     strlcpy ( path_tmp, fs_info->getName(), ( strlen ( fs_info->getName() ) + 1 ) );
     fs_info->putName();
@@ -447,20 +447,20 @@ int32 VfsSyscall::open ( const char* pathname, uint32 flag )
 
     const char* path_prev_name = fs_info->getName();
 
-    int32 success = path_walker.pathInit ( path_prev_name, 0 );
+    int32 success = fs_info->getPathWalker().pathInit ( path_prev_name, 0 );
     if ( success == 0 )
-      success = path_walker.pathWalk ( path_prev_name );
+      success = fs_info->getPathWalker().pathWalk ( path_prev_name );
     fs_info->putName();
 
     if ( success != 0 )
     {
       debug ( VFSSYSCALL,"(open) path_walker failed\n\n" );
-      path_walker.pathRelease();
+      fs_info->getPathWalker().pathRelease();
       return -1;
     }
 
-    Dentry* current_dentry = path_walker.getDentry();
-    path_walker.pathRelease();
+    Dentry* current_dentry = fs_info->getPathWalker().getDentry();
+    fs_info->getPathWalker().pathRelease();
     Inode* current_inode = current_dentry->getInode();
     Superblock* current_sb = current_inode->getSuperblock();
 

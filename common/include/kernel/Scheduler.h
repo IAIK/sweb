@@ -6,9 +6,9 @@
 #define SCHEDULER_H__
 
 #include "types.h"
-#include "util/List.h"
 #include "SpinLock.h"
 #include "Mutex.h"
+#include <ustl/ulist.h>
 
 class Thread;
 class ArchThreadInfo;
@@ -209,7 +209,10 @@ class Scheduler
 
     static Scheduler *instance_;
 
-    List<Thread*> threads_;
+    //List<Thread*> threads_;
+    typedef ustl::list<Thread*> ThreadList;
+    ThreadList threads_;
+
 
     /**
      * runs the current thread

@@ -41,7 +41,7 @@ void BDManager::addVirtualDevice( BDVirtualDevice* dev )
 {
   debug(BD_MANAGER, "addVirtualDevice:Adding device\n");
   dev->setDeviceNumber(device_list_.size());
-  device_list_.pushBack( dev );
+  device_list_.push_back( dev );
   debug(BD_MANAGER, "addVirtualDevice:Device added\n");
 }
 

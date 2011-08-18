@@ -17,7 +17,7 @@ void Superblock::delete_inode ( Inode *inode )
   assert ( inode != 0 );
   dirty_inodes_.remove ( inode );
   used_inodes_.remove ( inode );
-  assert ( all_inodes_.remove(inode) != -1 );
+  all_inodes_.remove(inode);
   delete inode;
 }
 

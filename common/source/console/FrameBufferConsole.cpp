@@ -41,7 +41,7 @@ FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_
     }
 
     Terminal *term = new Terminal ( term_name, this,consoleGetNumColumns(),consoleGetNumRows() );
-    terminals_.pushBack ( term );
+    terminals_.push_back ( term );
   }
 
   delete term_name;
