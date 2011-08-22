@@ -21,6 +21,7 @@
  * the pathWalker object
  * follow the inode of the corresponding file pathname
  */
+PathWalker path_walker;
 
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'
@@ -178,10 +179,14 @@ int32 PathWalker::pathWalk ( const char* pathname )
         debug ( PATHWALKER,  "pathWalk> found->getName() : %s\n",found->getName() );
       else
         debug ( PATHWALKER,  "pathWalk> no dentry found !!!\n" );
+debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       kfree ( npart );
+debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       last_ = 0;
+debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       if ( found != 0 )
       {
+debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
         this->dentry_ = found;
       }
       else
@@ -189,8 +194,9 @@ int32 PathWalker::pathWalk ( const char* pathname )
         debug ( PATHWALKER, "pathWalk> return dentry not found\n" );
         return PW_ENOTFOUND;
       }
-
+debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       VfsMount* vfs_mount = vfs.getVfsMount ( dentry_ );
+debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       if ( vfs_mount != 0 )
       {
         debug ( PATHWALKER, "MOUNT_DOWN\n" );

@@ -171,17 +171,17 @@ int32 VirtualFileSystem::mount ( const char* dev_name, const char* dir_name,
   fs_info->setName ( dir_name );
   const char* test_name = fs_info->getName();
 
-  int32 success = fs_info->getPathWalker().pathInit ( test_name, 0 );
+  int32 success = path_walker.pathInit ( test_name, 0 );
   if ( success == 0 )
-    success = fs_info->getPathWalker().pathWalk ( test_name );
+    success = path_walker.pathWalk ( test_name );
   fs_info->putName();
 
   if ( success != 0 )
     return -1;
 
   // found the mount point
-  Dentry *found_dentry = fs_info->getPathWalker().getDentry();
-  VfsMount *found_vfs_mount = fs_info->getPathWalker().getVfsMount();
+  Dentry *found_dentry = path_walker.getDentry();
+  VfsMount *found_vfs_mount = path_walker.getVfsMount();
 
   // create a new superblock
   Superblock *super = fst->createSuper ( found_dentry, dev );
@@ -223,17 +223,17 @@ int32 VirtualFileSystem::umount ( const char* dir_name, uint32 /*flags*/ )
   fs_info->setName ( dir_name );
   const char* test_name = fs_info->getName();
 
-  int32 success = fs_info->getPathWalker().pathInit ( test_name, 0 );
+  int32 success = path_walker.pathInit ( test_name, 0 );
   if ( success == 0 )
-    success = fs_info->getPathWalker().pathWalk ( test_name );
+    success = path_walker.pathWalk ( test_name );
   fs_info->putName();
 
   if ( success != 0 )
     return -1;
 
   // test the umount point\n
-  Dentry *found_dentry = fs_info->getPathWalker().getDentry();
-  VfsMount * found_vfs_mount = fs_info->getPathWalker().getVfsMount();
+  Dentry *found_dentry = path_walker.getDentry();
+  VfsMount * found_vfs_mount = path_walker.getVfsMount();
 
   if ( found_vfs_mount == 0 )
   {
