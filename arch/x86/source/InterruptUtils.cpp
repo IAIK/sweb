@@ -352,31 +352,6 @@ DUMMY_HANDLER(253)
 DUMMY_HANDLER(254)
 DUMMY_HANDLER(255)
 
-struct ArchThreadInfo
-{
-  uint32  eip;       // 0
-  uint32  cs;        // 4
-  uint32  eflags;    // 8
-  uint32  eax;       // 12
-  uint32  ecx;       // 16
-  uint32  edx;       // 20
-  uint32  ebx;       // 24
-  uint32  esp;       // 28
-  uint32  ebp;       // 32
-  uint32  esi;       // 36
-  uint32  edi;       // 40
-  uint32  ds;        // 44
-  uint32  es;        // 48
-  uint32  fs;        // 52
-  uint32  gs;        // 56
-  uint32  ss;        // 60
-  uint32  dpl;       // 64
-  uint32  esp0;      // 68  call neo_%1
-  uint32  ss0;       // 72
-  uint32  cr3;       // 76
-  uint32  fpu[27];   // 80
-};
-
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
@@ -486,7 +461,9 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       currentThread->getName(), currentThread->switch_to_userspace_);
 
   if(!address)
+  {
     debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");
+  }
 
   if (error)
   {
@@ -547,6 +524,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //ArchThreads::printThreadRegisters(currentThread,0);
   //ArchThreads::printThreadRegisters(currentThread,1);
 
+
   // kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
 	  // currentThread->user_arch_thread_info_->cr3,
 	  // currentThread->loader_->page_dir_page_,
@@ -600,6 +578,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   else
   {
+    currentThread->printBacktrace();
     if (currentThread->loader_)
       Syscall::exit(9999);
     else

@@ -109,6 +109,13 @@ class Thread
      */
     void setFSInfo ( FileSystemInfo *fs_info );
 
+    /**
+     * prints a backtrace (i.e. the call stack) to the
+     * debug output.
+     * @param use_stored_thread_info determines whether to use the stored or the current thread registers
+     */
+    void printBacktrace(bool use_stored_registers = true);
+
   private:
 
     /**

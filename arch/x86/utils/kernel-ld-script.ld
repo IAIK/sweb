@@ -117,11 +117,11 @@ SECTIONS
 
 /* Stabs debugging sections. */
 
-  .stab.excl       0 : { *(.stab.excl) }
+ /* .stab.excl       0 : { *(.stab.excl) }
   .stab.exclstr    0 : { *(.stab.exclstr) }
   .stab.index      0 : { *(.stab.index) }
   .stab.indexstr   0 : { *(.stab.indexstr) }
-  .comment         0 : { *(.comment) }
+  .comment         0 : { *(.comment) }*/
 
   /*
    * DWARF debug sections.
@@ -129,12 +129,12 @@ SECTIONS
    * of the section so we begin them at 0.
    */
   /* DWARF 1 */
-  .debug           0 : { *(.debug) }
-  .line            0 : { *(.line) }
+/*  .debug           0 : { *(.debug) }
+  .line            0 : { *(.line) }*/
 
   /* GNU DWARF 1 extensions */
-  .debug_srcinfo   0 : { *(.debug_srcinfo) }
-  .debug_sfnames   0 : { *(.debug_sfnames) }
+/*  .debug_srcinfo   0 : { *(.debug_srcinfo) }
+  .debug_sfnames   0 : { *(.debug_sfnames) }*/
 
   /* DWARF 1.1 and DWARF 2 */
   .debug_aranges   0 : { *(.debug_aranges) }
@@ -231,16 +231,20 @@ sections are here... */
     *(.debug_sfnames)
     line_end_address = .;
   }
+
 */
-/*
-  .stab :  AT(LS_Phys + (LS_1 - LS_Code)) {LS_1 = .; *(.stab) }
+/*  .stab :  AT(LS_Phys + (LS_1 - LS_Code)) 
+   { LS_1 = .; 
+     debug_start_address = .; 
+     *(.stab)
+     debug_end_address = .; }
   .stabstr :  AT(LS_Phys + (LS_2 - LS_Code)) {LS_2 = .;  *(.stabstr) }
   .stab.excl :  AT(LS_Phys + (LS_3 - LS_Code)) {LS_3 = .;  *(.stab.excl) }
   .stab.exclstr :  AT(LS_Phys + (LS_4 - LS_Code)) {LS_4 = .;  *(.stab.exclstr) }
   .stab.index :  AT(LS_Phys + (LS_5 - LS_Code)) {LS_5 = .;  *(.stab.index) }
   .stab.indexstr :  AT(LS_Phys + (LS_6 - LS_Code)) {LS_6 = .;  *(.stab.indexstr) }
   .comment :  AT(LS_Phys + (LS_7 - LS_Code)) {LS_7 = .;  *(.comment) }
-
 */
+
 }
 

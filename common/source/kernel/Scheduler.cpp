@@ -10,6 +10,12 @@
 #include "ArchInterrupts.h"
 #include "mm/KernelMemoryManager.h"
 #include <ustl/ulist.h>
+#include "backtrace.h"
+
+#include "ustl/umap.h"
+#include "ustl/ustring.h"
+
+extern ustl::map<uint32, ustl::string> symbol_table;
 
 ArchThreadInfo *currentThreadInfo;
 Thread *currentThread;
@@ -391,4 +397,12 @@ uint32 Scheduler::getTicks()
 void Scheduler::incTicks()
 {
   ++ticks_;
+}
+
+void Scheduler::printStackTraces()
+{
+  debug(BACKTRACE, "printing the backtraces of %d threads:\n", threads_.size());
+
+  for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
+    (*it)->printBacktrace(*it != currentThread);
 }

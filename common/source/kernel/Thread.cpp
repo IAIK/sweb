@@ -11,6 +11,9 @@
 #include "Loader.h"
 #include "console/Console.h"
 #include "console/Terminal.h"
+#include "backtrace.h"
+
+#define MAX_STACK_FRAMES 20
 
 static void ThreadStartHack()
 {
@@ -121,5 +124,25 @@ void Thread::setFSInfo ( FileSystemInfo *fs_info )
   fs_info_ = fs_info;
 }
 
+void Thread::printBacktrace(bool use_stored_registers)
+{
+  pointer CallStack[MAX_STACK_FRAMES];
+  int Count = backtrace(CallStack, MAX_STACK_FRAMES,
+      this, use_stored_registers);
 
+  debug(BACKTRACE, "=== Begin of backtrace for thread <%s> ===\n", getName());
+  debug(BACKTRACE, "   found <%d> stack %s:\n\n", Count, Count != 1 ? "frames" : "frame");
 
+  for (int i = 0; i < Count; ++i)
+  {
+    char FunctionName[255];
+    pointer StartAddr = get_function_name(CallStack[i], FunctionName);
+
+    if (StartAddr)
+      debug(BACKTRACE, "   (%d): %x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
+    else
+      debug(BACKTRACE, "   (%d): %x (<UNKNOWN FUNCTION>)\n", i, CallStack[i]);
+  }
+
+  debug(BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
+}

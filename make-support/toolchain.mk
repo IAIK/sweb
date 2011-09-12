@@ -69,17 +69,17 @@ endif
 # 32 bit generation on 64 bit build systems
 
 ifeq ($(SWEB_USE_CXX),gcc)
-CXX_TEMP := g++ -m32
-CC_TEMP := gcc -m32
-CXX_DEP_TEMP := g++ -m32
-CC_DEP_TEMP := gcc -m32
+CXX_TEMP := g++ -m32 -gstabs1
+CC_TEMP := gcc -m32 -gstabs1
+CXX_DEP_TEMP := g++ -m32 -gstabs1
+CC_DEP_TEMP := gcc -m32 -gstabs1
 AS_TEMP := nasm -f elf
 AS_DEP_TEMP := nasm -f elf
 LD_TEMP := g++ -m32
 KERNEL_LD_TEMP := ld -melf_i386
 AR_TEMP := ar
-ASGCC_TEMP := gcc -D__ASSEMBLY__ -m32
-ASGCC_DEP_TEMP := gcc -D__ASSEMBLY__ -m32
+ASGCC_TEMP := gcc -D__ASSEMBLY__ -m32 -gstabs1
+ASGCC_DEP_TEMP := gcc -D__ASSEMBLY__ -m32 -gstabs1
 endif
 
 # only c++ and c code is distccd

@@ -57,6 +57,8 @@ void kpanict ( uint8 * message )
   kprintfd_nosleep( "esp_reg is > %x\n",  esp_reg );
   //kprintf_nosleep( "esp_reg is > %x\n",  esp_reg );
 
+  currentThread->printBacktrace(false);
+
   for( uint32 * i = (esp_reg); i < stack; i++ )
   {
     if( (*i >= KERNEL_CODE_START && *i <= KERNEL_CODE_END) )
@@ -105,6 +107,8 @@ void kpanict ( uint8 * message )
       } // for g
     }
   }
+
+  Scheduler::instance()->printThreadList();
 
   kprintfd_nosleep("%s \n", message );
   kprintf_nosleep("%s \n", message );

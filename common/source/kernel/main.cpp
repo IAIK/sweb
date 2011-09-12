@@ -51,9 +51,17 @@
 #include "MountMinix.h"
 #include "ustl/outerrstream.h"
 
+#include "backtrace.h"
+
 extern void* kernel_end_address;
 
 extern "C" void startup();
+
+extern unsigned char stab_start_address_nr;
+extern unsigned char stab_end_address_nr;
+
+extern unsigned char stabstr_start_address_nr;
+extern unsigned char stabstr_end_address_nr;
 
 #include "TestingThreads.h"
 
@@ -186,6 +194,8 @@ void startup()
   ArchThreads::initialise();
   debug ( MAIN, "Interupts init\n" );
   ArchInterrupts::initialise();
+
+  parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 
   debug ( MAIN, "Block Device creation\n" );
   BDManager::getInstance()->doDeviceDetection( );

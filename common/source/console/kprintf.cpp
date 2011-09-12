@@ -471,6 +471,9 @@ void debug ( uint32 flag, const char *fmt, ... )
       case MOUNTMINIX:
         kprintfd ( COLORDEBUG("[MOUNTMINIX ]", "36"));
         break;
+      case BACKTRACE:
+        kprintfd ( COLORDEBUG("[BACKTRACE  ]", "31"));
+        break;
       case PM:
         kprintfd ( COLORDEBUG("[PM         ]", "32"));
         break;

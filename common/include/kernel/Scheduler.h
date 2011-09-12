@@ -76,6 +76,11 @@ class Scheduler
     void printThreadList();
 
     /**
+     * prints a stack trace for each thread
+     */
+    void printStackTraces();
+
+    /**
      * it is somewhat of a hack, we need to release the Spinlock,
      * after we set the ThreadState Sleeping, but before we yield away
      * also we must not be interrupted and we want to avoid disabling Interrupts
