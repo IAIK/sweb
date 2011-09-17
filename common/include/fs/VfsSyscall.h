@@ -8,6 +8,8 @@
 #include "types.h"
 
 class Dirent;
+class Dentry;
+class VfsMount;
 class FileDescriptor;
 
 /**
@@ -22,7 +24,7 @@ class VfsSyscall
      * @param pathname the input pathname
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    int32 dupChecking ( const char* pathname );
+    int32 dupChecking ( const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount );
 
     /**
      * get the File descriptor object from the global variable

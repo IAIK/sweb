@@ -17,68 +17,51 @@
 #include "console/kprintf.h"
 #include "kernel/Mutex.h"
 
-/**
- * the pathWalker object
- * follow the inode of the corresponding file pathname
- */
-PathWalker path_walker;
-
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'
 #define CHAR_ROOT '/'
 #define SEPARATOR '/'
 
-PathWalker::PathWalker()
+int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_, VfsMount*& vfs_mount_ )
 {
-}
+  // Flag indicating the type of the last path component.
+  int32 last_type_ = 0;
 
-PathWalker::~PathWalker()
-{
-}
+  // The last path component
+  char* last_ = 0;
 
-int32 PathWalker::pathInit ( const char* pathname, uint32 flags )
-{
-  MutexLock lock(lock_);
   FileSystemInfo *fs_info = currentThread->getFSInfo();
   if ( pathname == 0 )
   {
-    return PI_ENOTFOUND;
+    return PW_ENOTFOUND;
   }
-
-  this->flags_ = flags;
 
   // check the first character of the path
   if ( *pathname == CHAR_ROOT )
   {
-    this->last_type_ = LAST_ROOT;
+    last_type_ = LAST_ROOT;
     // altroot check
 
     // start with ROOT
-    this->dentry_ = fs_info->getRoot();
-    this->vfs_mount_ = fs_info->getRootMnt();
+    dentry_ = fs_info->getRoot();
+    vfs_mount_ = fs_info->getRootMnt();
   }
   else
   {
     // start with PWD
-    this->dentry_ = fs_info->getPwd();
-    this->vfs_mount_ = fs_info->getPwdMnt();
+    dentry_ = fs_info->getPwd();
+    vfs_mount_ = fs_info->getPwdMnt();
   }
 
   if ( ( dentry_ == 0 ) || ( vfs_mount_ == 0 ) )
   {
-    kprintfd ( "PathWalker: PathInit> ERROR return not found - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_ );
-    return PI_ENOTFOUND;
+    kprintfd ( "PathWalker: PathWalk> ERROR return not found - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_ );
+    return PW_ENOTFOUND;
   }
-  debug ( PATHWALKER, "PathInit> return success - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_ );
-  return PI_SUCCESS;
-}
+  debug ( PATHWALKER, "PathWalk> return success - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_ );
 
-
-int32 PathWalker::pathWalk ( const char* pathname )
-{
-  MutexLock lock(lock_);
   debug ( PATHWALKER,  "pathWalk> pathname : %s\n",pathname );
-  FileSystemInfo *fs_info = currentThread->getFSInfo();
+  fs_info = currentThread->getFSInfo();
   debug ( PATHWALKER,  "pathWalk> fs_info->getName() : %s\n", fs_info->getName() );
   if ( pathname == 0 )
   {
@@ -90,9 +73,8 @@ int32 PathWalker::pathWalk ( const char* pathname )
     pathname++;
   if ( !*pathname ) // i.e. path = /
   {
-//     dentry_ = vfs_mount_->getSuperblock()->getRoot();
     debug ( PATHWALKER,  "pathWalk> return 0 pathname == \\n\n" );
-    return 0;
+    return PW_SUCCESS;
   }
 
   bool parts_left = true;
@@ -120,33 +102,33 @@ int32 PathWalker::pathWalk ( const char* pathname )
     }
     pathname += npart_pos;
 
-    this->last_ = npart;
+    last_ = npart;
     if ( *npart == CHAR_DOT )
     {
       if ( * ( npart + 1 ) == NULL_CHAR )
       {
-        this->last_type_ = LAST_DOT;
+        last_type_ = LAST_DOT;
       }
       else if ( ( * ( npart + 1 ) == CHAR_DOT ) && ( * ( npart + 2 ) == NULL_CHAR ) )
       {
-        this->last_type_ = LAST_DOTDOT;
+        last_type_ = LAST_DOTDOT;
       }
     }
     else
     {
-      this->last_type_ = LAST_NORM;
+      last_type_ = LAST_NORM;
     }
 
     // follow the inode
     // check the VfsMount
-    if ( this->last_type_ == LAST_DOT ) // follow LAST_DOT
+    if ( last_type_ == LAST_DOT ) // follow LAST_DOT
     {
       debug ( PATHWALKER,  "pathWalk> follow last dot\n" );
       kfree ( npart );
       last_ = 0;
       continue;
     }
-    else if ( this->last_type_ == LAST_DOTDOT ) // follow LAST_DOTDOT
+    else if ( last_type_ == LAST_DOTDOT ) // follow LAST_DOTDOT
     {
       debug ( PATHWALKER,  "pathWalk> follow last dotdot\n" );
       kfree ( npart );
@@ -170,7 +152,7 @@ int32 PathWalker::pathWalk ( const char* pathname )
       dentry_ = parent_dentry;
       continue;
     }
-    else if ( this->last_type_ == LAST_NORM ) // follow LAST_NORM
+    else if ( last_type_ == LAST_NORM ) // follow LAST_NORM
     {
       debug ( PATHWALKER,  "pathWalk> follow last norm last_: %s\n",last_ );
       Inode* current_inode = dentry_->getInode();
@@ -179,24 +161,18 @@ int32 PathWalker::pathWalk ( const char* pathname )
         debug ( PATHWALKER,  "pathWalk> found->getName() : %s\n",found->getName() );
       else
         debug ( PATHWALKER,  "pathWalk> no dentry found !!!\n" );
-debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       kfree ( npart );
-debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       last_ = 0;
-debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       if ( found != 0 )
       {
-debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
-        this->dentry_ = found;
+        dentry_ = found;
       }
       else
       {
         debug ( PATHWALKER, "pathWalk> return dentry not found\n" );
         return PW_ENOTFOUND;
       }
-debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       VfsMount* vfs_mount = vfs.getVfsMount ( dentry_ );
-debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
       if ( vfs_mount != 0 )
       {
         debug ( PATHWALKER, "MOUNT_DOWN\n" );
@@ -220,7 +196,7 @@ debug ( PATHWALKER,  "pathWalk> %d\n",__LINE__);
   }
   debug ( PATHWALKER,  "pathWalk> return 0 end of function\n" );
 
-  return 0;
+  return PW_SUCCESS;
 }
 
 
@@ -248,29 +224,3 @@ char* PathWalker::getNextPart ( const char* path, int32 &npart_len )
 
   return npart;
 }
-
-
-void PathWalker::pathRelease()
-{
-  dentry_ = 0;
-  vfs_mount_ = 0;
-  flags_ = 0;
-  last_type_ = 0;
-  last_ = 0;
-}
-
-
-char *PathWalker::skipSeparator ( char const */*path*/ ) const
-{
-//  assert(path);
-//
-//  while (*path == '/')
-//  {
-//    ++path;
-//  }
-//
-//  return path;
-  return 0;
-}
-
-

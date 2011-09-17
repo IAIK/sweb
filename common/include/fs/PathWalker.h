@@ -66,18 +66,6 @@ enum {
 };
 
 /**
- * @enum Error Codes for the path init
- */
-enum
-{
-    PI_SUCCESS = 0,
-    /**
-     * The path was not found
-     */
-    PI_ENOTFOUND
-};
-
-/**
  * @enum Error Codes for the path walk
  */
 enum
@@ -93,12 +81,6 @@ enum
     PW_EINVALID
 };
 
-
-/**
- * The maximal length of a filename
- */
-//#define MAX_NAME_LENGTH 4096 --- depending on file system
-
 /**
  * @class PathWalker
  * this class illustrate how the VFS derives an inode from the corresponding
@@ -107,83 +89,20 @@ enum
  */
 class PathWalker
 {
-
-  protected:
-
-    /**
-     * The resluting Dentry after the lookup has succeded
-     */
-    Dentry *dentry_;
-
-    /**
-     * The Mount the path is located in
-     */
-    VfsMount* vfs_mount_;
-
-    /**
-     * The lookup flags
-     */
-    int32 flags_;
-
-    /**
-     * Flag indicating the type of the last path component.
-     */
-    int32 last_type_;
-
-    /**
-     * The last path component
-     */
-    char* last_;
-
-    Mutex lock_;
-
   public:
 
     /**
-     * The Constructor
-     */
-    PathWalker();
-
-    /**
-     * The destructor
-     */
-    ~PathWalker();
-
-    /**
-     * this method check the first character of the path (begins with '/' or
+     * check the first character of the path (begins with '/' or
      * with pwd). Initialize the flags_.
+     * takes care of the lookup operation and stores the pointers
+     * to the dentry_ object and mounted filesystem object relative to the last
+     * component of the pathname.
      * @param pathname A pointer to the file pathname to be resolved
      * @param flags The vlaue of flags that represent how to look-up file is going
      *         to be accessed
      * @return On success, it is returned 0. On error, it return a non-Null value.
      */
-    int32 pathInit ( const char* pathname, uint32 flags );
-
-    /**
-     * this method takes care of the lookup operation and stores the pointers
-     * to the dentry_ object and mounted filesystem object relative to the last
-     * component of the pathname.
-     * @param pathname A pointer to the file pathname to be resolved
-     * @return On success, it is returned 0. On error, it return a non-Null value.
-     */
-    int32 pathWalk ( const char* pathname );
-
-    /**
-     * this method terminate the pathname lookup of the mount point.
-     */
-    void pathRelease();
-
-    /**
-     * get the dentry from the class
-     * @return the dentry
-     */
-    Dentry* getDentry() { return dentry_; }
-
-    /**
-     * get the VfsMount from the class
-     * @return the VfsMount
-     */
-    VfsMount* getVfsMount() { return vfs_mount_; }
+    static int32 pathWalk ( const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_, VfsMount*& vfs_mount_ );
 
   protected:
 
@@ -196,14 +115,18 @@ class PathWalker
      *          It is empty if there is no next part
      *          In case of an error a null pointer is returned.
      */
-    char* getNextPart ( const char* path, int32 &npart_len );
+    static char* getNextPart ( const char* path, int32 &npart_len );
+  private:
 
     /**
-     * Skip any leading slashes on path.
-     * @return is a pointer to the first charachter that is not a '/'.
+     * The Constructor
      */
-    char *skipSeparator ( char const */*path*/ ) const;
+    PathWalker();
 
+    /**
+     * The destructor
+     */
+    ~PathWalker();
 };
 
 #endif
