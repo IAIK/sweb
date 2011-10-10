@@ -211,6 +211,8 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 
 pointer get_function_name(pointer address, char function_name[])
 {
+  if (symbol_table.size() == 0)
+    return NULL;
   ustl::map<uint32, ustl::string>::iterator it = symbol_table.end();
 
   if (ADDRESS_BETWEEN(address, symbol_table.at(0).first, &kernel_end_address))

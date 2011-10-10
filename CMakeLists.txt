@@ -90,8 +90,14 @@ endif(NOT BIN_DIR_NAME)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -gstabs2 -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector -Wall -Wextra -nostdlib -nostartfiles -nodefaultlibs")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0  -gstabs2 -Wall -W -nostdinc -fno-builtin -nostdlib -fno-exceptions -fno-stack-protector -Wall -Wextra  -nostdlib -nostartfiles -nodefaultlibs")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
+if(GGDB)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -ggdb -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -ggdb -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
+endif(GGDB)
+if(NOT GGDB)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
+endif(NOT GGDB)
 
 
 set(LIBRARY_FILENAMES)
@@ -316,14 +322,18 @@ add_custom_target(rungdb
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
 
+#Custom target: make debug
+#debug target for gdb
+add_custom_target(debug
+	COMMAND cmake -D GGDB=1 .
+	COMMAND make
+  )
+
 #Custom target: make mrproper
 #Makes really clean
 add_custom_target(mrproper
-	COMMAND make clean;
-	COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
-	COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
-	COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
 	COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
+	COMMAND ./relocate_project.sh
 	COMMAND cmake .
 	)
 
@@ -498,6 +508,7 @@ add_custom_target(help
 	COMMAND printf \"\\nqemu\\t\\truns qemu, without gdb\\n\"
 	COMMAND printf \"\\nqemugdb\\t\\truns qemu, waiting for gdb connection at localhost:1234\\n\"
 	COMMAND printf \"\\nrunddd\\t\\truns ddd, connecting to localhost:1234\\n\"
+	COMMAND printf \"\\nruncgdb\\t\\truns cgdb, connecting to localhost:1234\\n\"
 	COMMAND printf \"\\nrungdb\\t\\truns gdb, connecting to localhost:1234\\n\"
 	COMMAND printf \"\\nsubmit-nogit assignment=<1 or 2> group=<group number, upper case>\\n\\t\\tBuilds a submit package without \\n\\t\\tworrying about git \(EMERGENCY ONLY!\)\\n\"
 	COMMAND printf \"\\ninfo\\t\\toutputs some important system informations\\n\"
