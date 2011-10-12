@@ -276,7 +276,7 @@ add_custom_target(bochsgdb
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu -m 8M -hda SWEB-flat.vmdk
+	COMMAND	qemu -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
 	COMMENT "Going to qemu -m 8M -hda SWEB-flat.vmdk"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
@@ -284,7 +284,7 @@ add_custom_target(qemu
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu -s -S -m 8M -hda SWEB-flat.vmdk
+	COMMAND	qemu -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
 	COMMENT "Going to gdb qemu -s -S -m 8M -hda SWEB-flat.vmdk on localhost:1234"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
@@ -292,7 +292,7 @@ add_custom_target(qemugdb
 #Custom target: make qemutacos
 #Run qemu in tcp monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor tcp::4444,server,nodelay,wait
+  COMMAND qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor tcp::4444,server,nodelay,wait -debugcon /dev/stdout
   COMMENT "Going to qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor tcp::4444,server,nodelay,wait"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
@@ -326,6 +326,7 @@ add_custom_target(rungdb
 #debug target for gdb
 add_custom_target(debug
 	COMMAND cmake -D GGDB=1 .
+        COMMAND touch CMakeFiles/is_debug_build
 	COMMAND make
   )
 
