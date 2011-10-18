@@ -159,6 +159,8 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd_nosleep("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
+  kprintfd("%sThread: %10x, info: %10x -- eax: %10x  ebx: %10x  ecx: %10x  edx: %10x -- esp: %10x  ebp: %10x  esp0 %10x -- eip: %10x  eflg: %10x  cr3: %x\n",
+           userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
   //kprintfd("\n\n");
   //kprintfd("Thread: %x, info %x %s\n",thread,info,userspace_registers?"UserSpace":"Kernel");
   //kprintfd("eax: %x  ebx: %x  ecx: %x  edx: %x\n",info->eax,info->ebx,info->ecx,info->edx);
