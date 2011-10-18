@@ -521,8 +521,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     }
   }
 
-  //ArchThreads::printThreadRegisters(currentThread,0);
-  //ArchThreads::printThreadRegisters(currentThread,1);
+  ArchThreads::printThreadRegisters(currentThread,0);
+  ArchThreads::printThreadRegisters(currentThread,1);
 
 
   // kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",

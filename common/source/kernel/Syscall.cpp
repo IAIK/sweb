@@ -108,11 +108,12 @@ void Syscall::outline(uint32 port, pointer text)
 
 uint32 Syscall::createprocess(uint32 path, uint32 sleep)
 {
-  debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
+  debug(SYSCALL,"Syscall::createprocess: path:%d sleep:%d\n",path,sleep);
   if (path >= 2U*1024U*1024U*1024U)
   {
     return -1U;
   }
+  debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
   uint32 fd = vfs_syscall.open((const char*) path, O_RDONLY);
   if (fd == -1U)
   {
@@ -125,7 +126,7 @@ uint32 Syscall::createprocess(uint32 path, uint32 sleep)
   Thread* thread = MountMinixAndStartUserProgramsThread::instance()->createProcess(copy);
   if (sleep)
   {
-    while(Scheduler::instance()->checkThreadExists(thread))
+    while(Scheduler::instance()->checkThreadExists(thread)) // please note that this might fail ;)
     {
       Scheduler::instance()->yield();
     }
