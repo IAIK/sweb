@@ -122,7 +122,7 @@ void handle_command(char* buffer,int buffer_size)
   else
   {
     memcpy(executable, EXECUTABLE_PREFIX, EXECUTABLE_PREFIX_LEN);
-    memcpy(executable + EXECUTABLE_PREFIX_LEN, command, strlen(command));
+    memcpy(executable + EXECUTABLE_PREFIX_LEN, command, strlen(command) + 1);
     pid = createprocess(executable, 1);
     if (pid == -1)
     {
