@@ -136,7 +136,7 @@ pointer ArchCommon::getFreeKernelMemoryStart()
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
 {
-   return (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
+   return (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs fuer den es derzeit Paging gibt
 }
 
 
@@ -185,13 +185,6 @@ uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
     return orig_mbr.module_maps[num].end_address;
   }
 
-}
-
-void ArchCommon::dummdumm(uint32 i, uint32 &used, uint32 &start, uint32 &end)
-{
-   used = mbr.module_maps[i].used;
-   start = mbr.module_maps[i].start_address;
-   end = mbr.module_maps[i].end_address;
 }
 
 uint32 ArchCommon::getVESAConsoleHeight()

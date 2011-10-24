@@ -147,17 +147,6 @@ public:
    */
   static uint32 getModuleEndAddress(uint32 num,uint32 is_paging_set_up = 1);
 
-  /**
-   * Parses the Grub MultiBoot Info with regard to modules
-   * Used for debugging
-   *
-   * @param i
-   * @param used
-   * @param start
-   * @param end
-   */
-  static void dummdumm(uint32 i, uint32 &used, uint32 &start, uint32 &end);
-
 };
 
 #endif

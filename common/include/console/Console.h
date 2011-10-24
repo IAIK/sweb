@@ -130,7 +130,7 @@ class Console : public Thread
      */
     bool areLocksFree()
     {
-      return ( console_lock_.isFree() && console_lock_.isFree() && locked_for_drawing_==0 );
+      return ( console_lock_.isFree() && locked_for_drawing_==0 );
     }
 
   protected:
