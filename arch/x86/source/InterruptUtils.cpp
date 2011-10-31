@@ -578,6 +578,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   else
   {
+    debug(PM, "[PageFaultHandler] !(error & flag_p): %x, address: %x, loader_: %x\n", !(error & flag_p), address < 2U*1024U*1024U*1024U, currentThread->loader_);
     currentThread->printBacktrace();
     if (currentThread->loader_)
       Syscall::exit(9999);
