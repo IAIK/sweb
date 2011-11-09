@@ -201,7 +201,8 @@ uint32 Scheduler::schedule()
     //this operation doesn't allocate or delete any kernel memory
     //threads_.rotateBack();
     //ustl::rotate(threads_.begin(),threads_.end(), threads_.end());
-    threads_.push_back(threads_.front());
+    Thread* temp = threads_.front();
+    threads_.push_back(temp);
     threads_.pop_front();
     //swap(*threads_.begin(), *threads_.end());
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
