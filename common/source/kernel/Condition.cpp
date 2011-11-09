@@ -71,7 +71,8 @@ void Condition::broadcast()
   }
   while (!tmp_threads.empty())
   {
-    sleepers_->push_back(tmp_threads.front());
+    Thread* temp = tmp_threads.front();
+    sleepers_->push_back(temp);
     tmp_threads.pop_front();
   }
 }

@@ -93,7 +93,8 @@ bool Mutex::threadOnList(Thread *thread)
   {
     if(thread == sleepers_.front())
       return_value = true;
-    sleepers_.push_back(sleepers_.front());
+    Thread* temp = sleepers_.front();
+    sleepers_.push_back(temp);
     sleepers_.pop_front();
   }
   return return_value;
