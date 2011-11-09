@@ -170,7 +170,8 @@ uint32 IDEDriver::doDeviceDetection()
     delete name;
   }
 
-   // TODO : verify if the device is ATA and not ATAPI or SATA 
+   // This will only work for ATA Drives
+   // ATAPI or SATA drives will fail
   return 0;
 }
 

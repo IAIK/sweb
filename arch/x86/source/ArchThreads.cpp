@@ -30,7 +30,6 @@ void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page
 uint32 ArchThreads::getPageDirectory(Thread *thread)
 {
   return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
-  //TODO: should be the same for now, have to return only one
 }
 
 

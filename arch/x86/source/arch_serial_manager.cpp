@@ -43,7 +43,8 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
       uint8 sp_name[] = { 's', 'p', num_ports + '1', '\0' };
       ArchSerialInfo * archInfo = new ArchSerialInfo();
       archInfo->base_port = *bios_sp_table;
-      archInfo->uart_type = SC::UART_OLD;  // TODO: UART type detection
+      archInfo->uart_type = SC::UART_OLD;
+      // UART type detection still missing
       archInfo->irq_num = 4 - i%2;
       serial_ports[ num_ports ] = new SerialPort( (char*) sp_name, *archInfo );
       enableIRQ( archInfo->irq_num );
