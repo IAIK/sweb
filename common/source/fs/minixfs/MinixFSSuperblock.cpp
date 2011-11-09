@@ -285,7 +285,7 @@ void MinixFSSuperblock::writeInode ( Inode* inode )
   }
   else
   {
-    //TODO; link etc.
+    // link etc. unhandled
   }
   buffer->setByte ( 13, minix_inode->i_nlink_ );
   buffer->set4Bytes ( 4, minix_inode->i_size_ );

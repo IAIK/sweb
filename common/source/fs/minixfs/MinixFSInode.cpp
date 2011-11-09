@@ -51,7 +51,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 __attr
   {
     i_type_ = I_DIR;
   }
-  //TODO: else something else (hard/sym link)
+  // (hard/sym link/...) not handled!
 
   debug(M_INODE, "Constructor: size: %d\tnlink: %d\tnum zones: %d\tmode: %x\n", i_size_, i_nlink_, i_zones_->getNumZones(), i_mode);
 }

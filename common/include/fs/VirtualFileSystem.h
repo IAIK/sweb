@@ -129,11 +129,6 @@ class VirtualFileSystem
      */
     int32 rootUmount();
 
-    /**
-     * Get the FileSystemInfo object of the current Process
-     * @return the file system info
-     */
-    FileSystemInfo *getFSInfo();
 
 };
 

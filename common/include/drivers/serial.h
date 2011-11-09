@@ -74,7 +74,7 @@ class SerialPort : public CharacterDevice
     typedef enum _sres
     {
         SR_OK,
-        SR_ERROR // TODO: add elements for common errors that can appear
+        SR_ERROR // you might want to add elements for common errors that can appear
     }
     SRESULT;
 

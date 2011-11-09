@@ -269,11 +269,3 @@ int32 VirtualFileSystem::umount ( const char* dir_name, uint32 /*flags*/ )
 }
 
 
-FileSystemInfo *getFSInfo()
-{
-  // TODO this needs to be done properly as soon as possible
-
-  return currentThread->getFSInfo();
-}
-
-

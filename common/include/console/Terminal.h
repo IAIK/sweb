@@ -130,7 +130,6 @@ class Terminal : public CharacterDevice
 
     /**
      * Remaps the key if shift or capslock is active
-     * TODO: implement lookup tables for various keyboard layouts
      * @param key the key to remap
      * @return the remaped key
      */

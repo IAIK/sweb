@@ -347,7 +347,6 @@ void kprintfd ( const char *fmt, ... )
   va_end ( args );
 }
 
-//TODO: make this obsolete with atomarity check
 void kprintf_nosleep ( const char *fmt, ... )
 {
   va_list args;
@@ -363,7 +362,6 @@ void kprintf_nosleep ( const char *fmt, ... )
   va_end ( args );
 }
 
-//TODO: make this obsolete with atomarity check
 void kprintfd_nosleep ( const char *fmt, ... )
 {
   va_list args;

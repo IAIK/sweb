@@ -396,15 +396,6 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  // outportb( 0xED, 0x60 );  // "set LEDs" command
-  // outportb( leds, 0x60 );
-  // if (ctr == 9)
-  // leds = (leds + 1) % (1 << 3);
-  // ctr = (ctr + 1) % 10;
-
-  // kprintfd_nosleep("irq0: Tick\n");
-  // writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
-
   uint32 ret = Scheduler::instance()->schedule();
   switch (ret)
   {
@@ -451,10 +442,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   uint32 const __attribute__((unused)) flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
   uint32 const __attribute__((unused)) flag_rsvd = 0x1 << 3; // pf caused by reserved bits
 
-  // uint32 cr2=0xffff;
-  // __asm__("movl %%cr2, %0"
-  // :"=a"(cr2)
-  // :);
 
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
       address, error & flag_p, (error & flag_rw) >> 1, (error & flag_us) >> 2, (error & flag_rsvd) >> 3, currentThread, currentThread->getPID(),
@@ -524,45 +511,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
 
-
-  // kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
-	  // currentThread->user_arch_thread_info_->cr3,
-	  // currentThread->loader_->page_dir_page_,
-	  // ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_) );
-
-  // page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_);
-  // uint32 i = 0;
-  // uint32 j = 0;
-  // for( i = 0; i < 512; i++ )
-  // {
-    // if( cpd[ i ].pde4k.present )
-    // {
-      // kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
-		  // i,
-		  // cpd[ i ].pde4k.present,
-		  // cpd[ i ].pde4k.page_table_base_address,
-		  // ArchMemory::get3GBAddressOfPPN( cpd[ i ].pde4k.page_table_base_address )
-		  // );
-    // }
-    // if( cpd[ i ].pde4k.present )
-    // {
-      // page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAddressOfPPN( cpd[ i ].pde4k.page_table_base_address );
-      // for( j = 0; j < 256; j++ )
-      // {
-        // if( cpt[ j ].present )
-        // {
-          // kprintfd_nosleep( "\t j %d, present %d, where %X \n",
-		// j,
-		// cpt[ j ].present,
-		// cpt[ j ].page_base_address );
-	// }
-      // }
-    // }
-  // }
-
   //--------End "just for Debugging"-----------
 
-  //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
 
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
@@ -574,7 +524,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
-    // ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
   else
   {
@@ -585,7 +534,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     else
       currentThread->kill();
   }
-  //kprintfd_nosleep("PageFault: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   switch (currentThread->switch_to_userspace_)
@@ -668,26 +616,6 @@ extern "C" void irqHandler_15()
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
-
-  //kprintfd_nosleep("syscallHANDLER called, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
-  //ArchThreads::printThreadRegisters(currentThread,0);
-  //ArchThreads::printThreadRegisters(currentThread,1);
-   // ok, find out the current thread
-  //currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  //~ kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
-                  //~ currentThread->user_arch_thread_info_->ebx,
-                  //~ currentThread->user_arch_thread_info_->ecx,
-                  //~ currentThread->user_arch_thread_info_->edx);
-
-  // a int 0x80 instruction takes two bytes in x86 asm
-  // to make sure we skip this one after syscall exit
-  // we have to increment the eip
-  // add on, ever since the very first pmode machine
-  // this is not needed anymore as the machine is smart
-  // enough to do this on a trap
-
-  //kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
-
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
@@ -700,12 +628,10 @@ extern "C" void syscallHandler()
                   currentThread->user_arch_thread_info_->esi,
                   currentThread->user_arch_thread_info_->edi);
 
-  //kprintfd_nosleep("syscallHANDLER: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,1);
-  //kprintfd_nosleep("syscallHANDLER: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
   arch_switchThreadToUserPageDirChange();
 }
 
