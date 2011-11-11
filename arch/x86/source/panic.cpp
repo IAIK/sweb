@@ -39,7 +39,9 @@ void kpanict ( uint8 * message )
   ArchInterrupts::disableInterrupts();
 
   uint32* stack = (uint32*) currentThread->getStackStartPointer();
-  stabs_out * symTablePtr = (stabs_out *) STAB_START;
+
+  kprintfd_nosleep("%s \n", message );
+  kprintf_nosleep("%s \n", message );
 
   kprintfd_nosleep( "KPANICT: stack is > %x ",  stack );
   //kprintf_nosleep( "KPANICT: stack is > %x ",  stack );
@@ -58,6 +60,8 @@ void kpanict ( uint8 * message )
   //kprintf_nosleep( "esp_reg is > %x\n",  esp_reg );
 
   currentThread->printBacktrace(false);
+
+  stabs_out * symTablePtr = (stabs_out *) STAB_START;
 
   for( uint32 * i = (esp_reg); i < stack; i++ )
   {
@@ -109,9 +113,6 @@ void kpanict ( uint8 * message )
   }
 
   Scheduler::instance()->printThreadList();
-
-  kprintfd_nosleep("%s \n", message );
-  kprintf_nosleep("%s \n", message );
 
   ArchInterrupts::disableInterrupts();
   ArchInterrupts::disableTimer();

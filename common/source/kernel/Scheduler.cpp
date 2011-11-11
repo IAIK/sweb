@@ -188,13 +188,9 @@ uint32 Scheduler::schedule()
     if ( kill_old_ == false && currentThread->state_ == ToBeDestroyed )
       kill_old_=true;
 
-    //this operation doesn't allocate or delete any kernel memory
-    //threads_.rotateBack();
-    //ustl::rotate(threads_.begin(),threads_.end(), threads_.end());
-    Thread* temp = threads_.front();
-    threads_.push_back(temp);
-    threads_.pop_front();
-    //swap(*threads_.begin(), *threads_.end());
+    //this operation doesn't allocate or delete any kernel memory (important because Interrupts are disabled in this method)
+    ustl::rotate(threads_.begin(),threads_.begin()+1, threads_.end());
+
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
     {
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");

@@ -93,9 +93,7 @@ bool Mutex::threadOnList(Thread *thread)
   {
     if(thread == sleepers_.front())
       return_value = true;
-    Thread* temp = sleepers_.front();
-    sleepers_.push_back(temp);
-    sleepers_.pop_front();
+    ustl::rotate(sleepers_.begin(),sleepers_.begin()+1, sleepers_.end());
   }
   return return_value;
 }
