@@ -109,16 +109,6 @@ void Scheduler::removeCurrentThread()
   if ( threads_.size() > 1 )
   {
     threads_.remove(currentThread);
-    /*for ( uint32 c=0; c< threads_.size(); ++c )
-    {
-      tmp_thread = threads_.back();
-      if ( tmp_thread == currentThread )
-      {
-        threads_.popBack();
-        break;
-      }
-      threads_.rotateFront();
-    }*/
   }
   unlockScheduling();
 }
@@ -207,7 +197,7 @@ uint32 Scheduler::schedule()
     //swap(*threads_.begin(), *threads_.end());
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
     {
-      debug(SCHEDULER, "Scheduler::schedule: ERROR: no thread is in state Running!!");
+      debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
       assert(false);
     }
   }
@@ -282,28 +272,10 @@ void Scheduler::cleanupDeadThreads()
     	}
     }
 
-    /*for ( uint32 c=0; c< threads_.size(); ++c )
-    {
-      tmp_thread = threads_.front();
-      if ( tmp_thread->state_ == ToBeDestroyed )
-      {
-        destroy_list.pushBack ( tmp_thread );
-        threads_.popFront();
-        --c;
-        continue;
-      }
-      threads_.rotateBack();
-    }*/
     kill_old_=false;
   }
   debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   unlockScheduling();
-  /*while ( ! destroy_list.empty() )
-  {
-    Thread *cur_thread = destroy_list.front();
-    destroy_list.popFront();
-    delete cur_thread;
-  }*/
   for(ThreadList::iterator it=destroy_list.begin(); it!=destroy_list.end(); ++it)
   {
 	  delete *it;
