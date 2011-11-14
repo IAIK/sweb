@@ -334,10 +334,12 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
 
 void Scheduler::disableScheduling()
 {
+  arch_panic((uint8*) "You should never disable the scheduler!\n");
   lockScheduling();
   block_scheduling_extern_++;
   unlockScheduling();
 }
+
 void Scheduler::reenableScheduling()
 {
   lockScheduling();

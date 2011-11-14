@@ -35,8 +35,8 @@ Thread::Thread(const char *name) :
   fs_info_(new FileSystemInfo()),
   name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x\r\n", this, stack_ );
-  debug ( THREAD,"sizeof stack is %x; my name: %s\r\n", sizeof ( stack_ ), name_ ); 
+  debug ( THREAD,"Thread ctor, this is %x; stack is %x\n", this, stack_ );
+  debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
 }
 
@@ -51,9 +51,9 @@ Thread::Thread ( FileSystemInfo *fs_info, const char *name ) :
   fs_info_(fs_info),
   name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x\r\n", this, stack_);
-  debug ( THREAD,"sizeof stack is %x; my name: %s\r\n", sizeof ( stack_ ), name_ ); 
-  debug ( THREAD,"Thread ctor, fs_info ptr: %u\n", fs_info );
+  debug ( THREAD,"Thread ctor, this is %x, stack is %x\n", this, stack_);
+  debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
+  debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", fs_info );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
 }
 
@@ -86,7 +86,7 @@ void Thread::kill()
 {
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
-  debug ( THREAD,"kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName() );
+  debug ( THREAD,"kill: Preparing thread (%x %s) for destruction\n",this,getName() );
   if ( currentThread == this )
   {
     ArchInterrupts::enableInterrupts();
