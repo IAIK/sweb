@@ -161,11 +161,6 @@ void Scheduler::wake ( Thread* thread_to_wake )
   thread_to_wake->state_=Running;
 }
 
-void Scheduler::startThreadHack()
-{
-  currentThread->Run();
-}
-
 uint32 Scheduler::schedule()
 {
   if ( testLock() || block_scheduling_extern_>0 )
@@ -257,15 +252,15 @@ void Scheduler::cleanupDeadThreads()
     //Thread *tmp_thread;
     for(ThreadList::iterator it=threads_.begin(); it!=threads_.end(); /* see in braces */)
     {
-    	if((*it)->state_ == ToBeDestroyed)
-    	{
-    		destroy_list.push_back(*it);
-    		it = threads_.erase(it);
-    	}
-    	else
-    	{
-    		++it;
-    	}
+      if((*it)->state_ == ToBeDestroyed)
+      {
+        destroy_list.push_back(*it);
+        it = threads_.erase(it);
+      }
+      else
+      {
+        ++it;
+      }
     }
 
     kill_old_=false;
@@ -274,7 +269,7 @@ void Scheduler::cleanupDeadThreads()
   unlockScheduling();
   for(ThreadList::iterator it=destroy_list.begin(); it!=destroy_list.end(); ++it)
   {
-	  delete *it;
+    delete *it;
   }
 }
 

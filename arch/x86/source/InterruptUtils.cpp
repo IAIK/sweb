@@ -23,48 +23,70 @@
 
 #include "Thread.h"
 #include "ArchInterrupts.h"
+#include "backtrace.h"
 
 //remove this later
 #include "Thread.h"
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+//---------------------------------------------------------------------------*/
+#define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
+#define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
 
-  extern "C" void arch_dummyHandler();
+#define GATE_SIZE_16_BIT     0 // use 16- bit push
+#define GATE_SIZE_32_BIT     1 // use 32- bit push
 
-// thanks mona
-typedef struct {
-  uint16 offsetL;  // 0-15bit of offset address
-  uint16 selector; // selector address
-  uint8 unused;    // unused
-  uint8 type;      // type
-  uint16 offsetH;  // 16-32bit of offset address
-}__attribute__((__packed__)) GateDesc;
+#define TYPE_TRAP_GATE       7 // trap gate, i.e. IF flag is *not* cleared
+#define TYPE_INTERRUPT_GATE  6 // interrupt gate, i.e. IF flag *is* cleared
 
+#define DPL_KERNEL_SPACE     0 // kernelspace's protection level
+#define DPL_USER_SPACE       3 // userspaces's protection level
+
+#define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
+//---------------------------------------------------------------------------*/
+struct GateDesc
+{
+  uint16 offset_low;       // low word of handler entry point's address
+  uint16 segment_selector; // (code) segment selector the handler resides in
+  uint8 reserved  : 5;     // reserved. set to zero
+  uint8 zeros     : 3;     // set to zero
+  uint8 type      : 3;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
+  uint8 gate_size : 1;     // set to GATE_SIZE_16_BIT or GATE_SIZE_32_BIT
+  uint8 unused    : 1;     // unsued - set to zero
+  uint8 dpl       : 2;     // descriptor protection level
+  uint8 present   : 1;     // present- flag - set to 1
+  uint16 offset_high;      // high word of handler entry point's address
+}__attribute__((__packed__));
+//---------------------------------------------------------------------------*/
+
+extern "C" void arch_dummyHandler();
 
 void InterruptUtils::initialise()
 {
-  uint32 i;
-
   // allocate some memory for our handlers
   GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
 
-  for (i=0;i<NUM_INTERRUPT_HANDLERS;++i)
+  for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
   {
-    interrupt_gates[i].offsetL  = ((uint32)(handlers[i].handler)) & 0x0000FFFF;
-    interrupt_gates[i].offsetH  = (((uint32)(handlers[i].handler)) & 0xFFFF0000) >> 16;
-    //warning FIXME, THIS IS REALLY BAD VOODOO !
-    interrupt_gates[i].selector = 8*3;
-    // System call use 0x80
-    interrupt_gates[i].type     = handlers[i].number == 0x80 ? 0xEE : 0x8E;
-    interrupt_gates[i].unused   = 0x00;
+    interrupt_gates[i].offset_low = LO_WORD(handlers[i].offset);
+    interrupt_gates[i].offset_high = HI_WORD(handlers[i].offset);
+    interrupt_gates[i].gate_size = GATE_SIZE_32_BIT;
+    interrupt_gates[i].present = 1;
+    interrupt_gates[i].reserved = 0;
+    interrupt_gates[i].segment_selector = KERNEL_CS;
+    interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
+    interrupt_gates[i].unused = 0;
+    interrupt_gates[i].zeros = 0;
+    interrupt_gates[i].dpl = (handlers[i].number == SYSCALL_INTERRUPT ?
+        DPL_USER_SPACE : DPL_KERNEL_SPACE);
   }
 
-  IDTR *idtr = new IDTR();
-  idtr->base = (uint32)interrupt_gates;
-  idtr->limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS -1;
+  IDTR idtr;
 
-  lidt(idtr);
+  idtr.base =  (uint32)interrupt_gates;
+  idtr.limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS - 1;
+  lidt(&idtr);
 }
 
 void InterruptUtils::lidt(IDTR *idtr)
@@ -446,6 +468,20 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
       address, error & flag_p, (error & flag_rw) >> 1, (error & flag_us) >> 2, (error & flag_rsvd) >> 3, currentThread, currentThread->getPID(),
       currentThread->getName(), currentThread->switch_to_userspace_);
+
+  if (!(error & flag_us))
+  {
+    // The PF happened in kernel mode? Cool, let's look up the function that caused it.
+    // A word of warning: Due to the way the lookup is performed, we may be
+    // returned a wrong function name here! Especially routines residing inside
+    // ASM- modules are very likely to be detected incorrectly.
+    char FunctionName[255];
+    pointer StartAddr = get_function_name(currentThread->kernel_arch_thread_info_->eip, FunctionName);
+
+    if (StartAddr)
+      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
+          currentThread->kernel_arch_thread_info_->eip - StartAddr);
+  }
 
   if(!address)
   {

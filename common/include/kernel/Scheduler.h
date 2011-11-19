@@ -218,12 +218,6 @@ class Scheduler
     typedef ustl::list<Thread*> ThreadList;
     ThreadList threads_;
 
-
-    /**
-     * runs the current thread
-     */
-    static void startThreadHack();
-
     bool kill_old_;
 
     uint32 block_scheduling_;

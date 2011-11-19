@@ -22,8 +22,8 @@
 static uint32 const NUM_INTERRUPT_HANDLERS = 256;
 
 typedef struct {
-  uint32  number;       // handler number
-  void (*handler)();    // pointer to handler function
+  uint32  number;      // handler number
+  void (*offset)();    // pointer to handler function
 }  __attribute__((__packed__)) InterruptHandlers;
 
 
