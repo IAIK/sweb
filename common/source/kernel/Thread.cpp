@@ -84,9 +84,12 @@ Thread::~Thread()
 // DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
+  debug ( THREAD,"kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
+      currentThread, getName(), this);
+
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
-  debug ( THREAD,"kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName() );
+
   if ( currentThread == this )
   {
     ArchInterrupts::enableInterrupts();
