@@ -88,21 +88,20 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   uint32 start_zone = offset / ZONE_SIZE;
   uint32 zone_offset = offset % ZONE_SIZE;
   uint32 num_zones = (zone_offset + size) / ZONE_SIZE + 1;
-  Buffer* rbuffer = new Buffer(ZONE_SIZE);
+  Buffer rbuffer(ZONE_SIZE);
 
   uint32 index = 0;
   debug(M_INODE, "readData: zone: %d, zone_offset %d, num_zones: %d\n",start_zone,zone_offset,num_zones);
   for(uint32 zone = start_zone; zone < start_zone + num_zones; zone++)
   {
-    rbuffer->clear();
-    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
+    rbuffer.clear();
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &rbuffer);
     for(uint32 read_index = 0; index < size && (read_index + zone_offset) < ZONE_SIZE; index++, read_index++)
     {
-      buffer[index] = rbuffer->getByte( read_index + zone_offset);
+      buffer[index] = rbuffer.getByte( read_index + zone_offset);
     }
     zone_offset = 0;
   }
-  delete rbuffer;
   return size;
 }
 
@@ -129,22 +128,21 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   {
     debug(M_INODE, "writeData: have to clean memory\n");
     uint32 zone_size_offset =  i_size_%ZONE_SIZE;
-    Buffer* fill_buffer = new Buffer(ZONE_SIZE);
-    fill_buffer->clear();
+    Buffer fill_buffer(ZONE_SIZE);
+    fill_buffer.clear();
     if (zone_size_offset)
     {
-      readData( i_size_-zone_size_offset, zone_size_offset, fill_buffer->getBuffer());
-      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, fill_buffer);
+      readData( i_size_-zone_size_offset, zone_size_offset, fill_buffer.getBuffer());
+      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, &fill_buffer);
     }
     ++last_used_zone;
     for (; last_used_zone <= offset/ZONE_SIZE; last_used_zone++)
     {
-      fill_buffer->clear();
-      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, fill_buffer );
+      fill_buffer.clear();
+      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, &fill_buffer );
     }
     --last_used_zone;
     i_size_ = offset;
-    delete fill_buffer;
   }
   uint32 zone_offset = offset%ZONE_SIZE;
   Buffer* wbuffer = new Buffer(num_zones * ZONE_SIZE);
@@ -243,22 +241,20 @@ int32 MinixFSInode::mkfile(Dentry *dentry)
 int32 MinixFSInode::findDentry(uint32 i_num)
 {
   debug(M_INODE, "findDentry: i_num: %d\n",i_num);
-  Buffer *dbuffer = new Buffer(ZONE_SIZE);
+  Buffer dbuffer(ZONE_SIZE);
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
-    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &dbuffer);
     for(uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint16 inode_index = dbuffer->get2Bytes(curr_dentry);
+      uint16 inode_index = dbuffer.get2Bytes(curr_dentry);
       if(inode_index == i_num)
       {
         debug(M_INODE, "findDentry: found pos: %d\n",(zone * ZONE_SIZE + curr_dentry));
-        delete dbuffer;
         return (zone * ZONE_SIZE + curr_dentry);
       }
     }
   }
-  delete dbuffer;
   return -1;
 }
 
@@ -273,10 +269,10 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
     i_zones_->addZone(((MinixFSSuperblock *)i_superblock_)->allocateZone());
     dentry_pos = (i_zones_->getNumZones() - 1) * ZONE_SIZE;
   }
-  Buffer *dbuffer = new Buffer(ZONE_SIZE);
+  Buffer dbuffer(ZONE_SIZE);
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
-  ((MinixFSSuperblock *)i_superblock_)->readZone(zone, dbuffer);
-  dbuffer->set2Bytes(dentry_pos % ZONE_SIZE, src_i_num);
+  ((MinixFSSuperblock *)i_superblock_)->readZone(zone, &dbuffer);
+  dbuffer.set2Bytes(dentry_pos % ZONE_SIZE, src_i_num);
   char ch = 'a'; // != '\0'
   for(uint32 offset = 0; offset < MAX_NAME_LENGTH;offset++)
   {
@@ -284,10 +280,9 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
     {
       ch = name[offset];
     }
-    dbuffer->setByte(dentry_pos % ZONE_SIZE + offset + 2, ch);
+    dbuffer.setByte(dentry_pos % ZONE_SIZE + offset + 2, ch);
   }
-  ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, dbuffer);
-  delete dbuffer;
+  ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, &dbuffer);
 
   if(dest_i_num == 0 && i_size_ < (uint32)dentry_pos + DENTRY_SIZE)
     i_size_ += DENTRY_SIZE;
@@ -432,13 +427,13 @@ void MinixFSInode::loadChildren()
     debug(M_INODE, "loadChildren: Children allready loaded\n");
     return;
   }
-  Buffer *dbuffer = new Buffer(ZONE_SIZE);
+  Buffer dbuffer(ZONE_SIZE);
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
-    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &dbuffer);
     for(uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint16 inode_index = dbuffer->get2Bytes(curr_dentry);
+      uint16 inode_index = dbuffer.get2Bytes(curr_dentry);
       if(inode_index)
       {
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
@@ -455,11 +450,11 @@ void MinixFSInode::loadChildren()
           continue;
         }
 
-        char *name = new char[MAX_NAME_LENGTH+1];
-//         dbuffer->print();
+        char name[MAX_NAME_LENGTH+1];
+//         dbuffer.print();
         for(uint32 offset = 0; offset < MAX_NAME_LENGTH; ++offset)
         {
-          name[offset] = dbuffer->getByte(curr_dentry + offset + 2);
+          name[offset] = dbuffer.getByte(curr_dentry + offset + 2);
           if(!name[offset])
             break;
         }
@@ -468,7 +463,6 @@ void MinixFSInode::loadChildren()
 
         debug(M_INODE, "loadChildren: dentry name: %s\n",name);
         Dentry *new_dentry = new Dentry(name);
-        delete[] name;
         i_dentry_->setChild(new_dentry);
         new_dentry->setParent(i_dentry_);
         if(!is_already_loaded)
@@ -483,7 +477,6 @@ void MinixFSInode::loadChildren()
     }
   }
   children_loaded_ = true;
-  delete dbuffer;
 }
 
 
