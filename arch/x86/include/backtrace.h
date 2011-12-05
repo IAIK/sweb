@@ -4,11 +4,6 @@
 //-------------------------------------------------------------------------------------*/
 class Thread;
 
-namespace ustl
-{
-  class string;
-};
-
 struct StabEntry;
 //-------------------------------------------------------------------------------------*/
 #define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \

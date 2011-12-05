@@ -6,7 +6,7 @@
 #include "ArchThreads.h"
 #include "mm/KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "ustl/umap.h"
-#include "ustl/ustring.h"
+
 //-------------------------------------------------------------------------------------*/
 #define N_GSYM  0x20    /* global symbol: name,,0,type,0 */
 #define N_FNAME 0x22    /* procedure name (f77 kludge): name,,0 */
@@ -419,7 +419,8 @@ void demangle_name(const char* name, char *buffer)
 
   if (pData[0] != '_' || pData[1] != 'Z')  // is the name mangled?
   {
-    for (ustl::string::size_type i = 0; i < strlen(name); ++i) // copy unmangled name
+    size_t length = strlen(name);
+    for (size_t i = 0; i < length; ++i) // copy unmangled name
     {
       if (*pData == ':') break;
 
@@ -485,7 +486,7 @@ void demangle_name(const char* name, char *buffer)
 
 void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_str)
 {
-  new (&symbol_table) ustl::map<uint32, ustl::string>();
+  new (&symbol_table) ustl::map<uint32, const char*>();
 
   for (StabEntry* current_stab = stab_start; current_stab < stab_end; ++current_stab)
   {
