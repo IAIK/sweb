@@ -270,6 +270,13 @@ void paste_typename(const char *& input, char *& buffer)
     IsPointer = true;
   }
 
+  if (*input == 'K')
+  {
+    memcpy(buffer, "const ", 6);
+    ++input;
+    buffer += 6;
+  }
+
   if (*input >= '0' && *input <= '9')
   {
     Count = read_number(input);

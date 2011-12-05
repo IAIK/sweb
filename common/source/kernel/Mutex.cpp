@@ -63,6 +63,20 @@ void Mutex::acquire()
 
 void Mutex::release()
 {
+  if (held_by_ != currentThread) // this is a mutex - not a binary semaphore!
+  { // ... and yes - I'm pretty sure, we are can safely do this without the spinlock.
+
+    kprintfd("\n\nMutex::release(): Mutex <%x> currently not held by currentThread!\n"
+      "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", this,
+     (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread);
+
+    kprintf("\n\nMutex::release(): Mutex <%x> currently not held by currentThread!\n"
+      "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", this,
+     (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread);
+
+    return;
+  }
+
   spinlock_.acquire();
   mutex_ = 0;
   held_by_=0;

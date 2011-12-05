@@ -329,7 +329,10 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
 
 void Scheduler::disableScheduling()
 {
-  arch_panic((uint8*) "You should never disable the scheduler!\n");
+  kprintfd("Do not use Scheduler::disableScheduling()!\n");
+  kprintf("Do not use Scheduler::disableScheduling()!\n");
+  assert(false);
+
   lockScheduling();
   block_scheduling_extern_++;
   unlockScheduling();
@@ -337,6 +340,10 @@ void Scheduler::disableScheduling()
 
 void Scheduler::reenableScheduling()
 {
+  kprintfd("Do not use Scheduler::reenableScheduling()!\nn");
+  kprintf("Do not use Scheduler::reenableScheduling()!\n");
+  assert(false);
+
   lockScheduling();
   if ( block_scheduling_extern_>0 )
     block_scheduling_extern_--;
