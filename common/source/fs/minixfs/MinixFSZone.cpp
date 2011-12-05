@@ -13,7 +13,6 @@
 MinixFSZone::MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones )
 {
   superblock_ = superblock;
-  direct_zones_ = new zone_add_type[9];
   num_zones_ = 0;
   for ( uint32 i = 0; i < 9; i++ )
   {
@@ -22,43 +21,49 @@ MinixFSZone::MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones )
       ++num_zones_;
     debug ( M_ZONE,"zone: %x\t", zones[i] );
   }
+  Buffer buffer( ZONE_SIZE );
+  uint16* temp = (uint16*) buffer.getBuffer();
   if ( zones[7] )
   {
     indirect_zones_ = new zone_add_type[NUM_ZONE_ADDRESSES];
-    Buffer buffer( ZONE_SIZE );
     superblock_->readZone ( zones[7], &buffer );
-    for ( uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++ )
+    for (uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++)
     {
-      indirect_zones_[i] = buffer.get2Bytes ( i*2 );
-      if ( buffer.get2Bytes ( i*2 ) )
+      indirect_zones_[i] = temp[i];
+      if (indirect_zones_[i])
         ++num_zones_;
     }
   }
   else
+  {
     indirect_zones_ = 0;
+  }
   if ( zones[8] )
   {
     double_indirect_zones_ = new zone_add_type*[NUM_ZONE_ADDRESSES];
     double_indirect_linking_zone_ = new zone_add_type[NUM_ZONE_ADDRESSES];
-    Buffer buffer( ZONE_SIZE );
     superblock_->readZone ( zones[8], &buffer );
     Buffer ind_buffer( ZONE_SIZE );
+    uint16* ind_temp = (uint16*) ind_buffer.getBuffer();
     for ( uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++ )
     {
-      double_indirect_linking_zone_[ind_zone] = buffer.get2Bytes ( ind_zone*2 );
-      if ( buffer.get2Bytes ( ind_zone*2 ) )
+      double_indirect_linking_zone_[ind_zone] = temp[ind_zone];
+      if ( double_indirect_linking_zone_[ind_zone] )
       {
-        superblock_->readZone ( buffer.get2Bytes ( ind_zone*2 ), &ind_buffer );
+        superblock_->readZone ( double_indirect_linking_zone_[ind_zone], &ind_buffer );
         double_indirect_zones_[ind_zone] = new zone_add_type[NUM_ZONE_ADDRESSES];
+
         for ( uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES; d_ind_zone++ )
         {
-          double_indirect_zones_[ind_zone][d_ind_zone] = ind_buffer.get2Bytes ( d_ind_zone*2 );
-          if ( ind_buffer.get2Bytes ( d_ind_zone*2 ) )
+          double_indirect_zones_[ind_zone][d_ind_zone] = ind_temp[d_ind_zone];
+          if (double_indirect_zones_[ind_zone][d_ind_zone])
             ++num_zones_;
         }
       }
       else
+      {
         double_indirect_zones_[ind_zone] = 0;
+      }
     }
   }
   else
@@ -106,7 +111,6 @@ MinixFSZone::~MinixFSZone()
   }
 
   delete[] indirect_zones_;
-  delete[] direct_zones_;
 }
 
 

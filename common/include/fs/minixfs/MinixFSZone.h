@@ -76,7 +76,7 @@ class MinixFSZone
   private:
 
     MinixFSSuperblock *superblock_;
-    zone_add_type *direct_zones_;
+    zone_add_type direct_zones_[9];
     zone_add_type *indirect_zones_;
     zone_add_type *double_indirect_linking_zone_;
     zone_add_type **double_indirect_zones_;

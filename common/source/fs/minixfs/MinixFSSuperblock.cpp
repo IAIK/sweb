@@ -75,6 +75,7 @@ void MinixFSSuperblock::initInodes()
   root_dentry->setInode ( root_inode );
 
   all_inodes_.push_back ( root_inode );
+  all_inodes_set_[((MinixFSInode*)root_inode)->i_num_] = root_inode;
   //read children from disc
   root_inode->loadChildren();
 
@@ -82,15 +83,14 @@ void MinixFSSuperblock::initInodes()
 
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num, bool &is_already_loaded )
 {
-  for(uint32 i=0; i < all_inodes_.size(); i++)
+  MinixFSInode* tmp = (MinixFSInode*)all_inodes_set_[i_num];
+  if (tmp)
   {
-    if(((MinixFSInode*)all_inodes_.at(i))->i_num_ == i_num)
-    {
-      is_already_loaded = true;
-      return (MinixFSInode*) all_inodes_[i];
-    }
+    is_already_loaded = true;
+    return tmp;
   }
-  return getInode(i_num);
+  tmp = getInode(i_num);
+  return tmp;
 }
 
 MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
@@ -110,7 +110,6 @@ MinixFSInode* MinixFSSuperblock::getInode ( uint16 i_num )
 
     return 0;
   }
-
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
   uint32 inode_block_num = inodes_start + ( i_num - 1 ) / INODES_PER_BLOCK;
   MinixFSInode *inode = 0;
@@ -164,8 +163,11 @@ MinixFSSuperblock::~MinixFSSuperblock()
 
   debug ( M_SB,"~MinixSuperblock num: %d inodes to delete\n",num );
 
-  for(uint32 i=0; i < num; i++)
-    debug(M_SB, "Inode: %x\n", all_inodes_.at(i));
+  if (isDebugEnabled(M_SB))
+  {
+    for(uint32 i=0; i < num; i++)
+      debug(M_SB, "Inode: %x\n", all_inodes_.at(i));
+  }
 
   for ( uint32 counter = 0; counter < num; counter++ )
   {
@@ -209,6 +211,7 @@ Inode* MinixFSSuperblock::createInode ( Dentry* dentry, uint32 type )
   Inode *inode = ( Inode* ) ( new MinixFSInode ( this, mode, 0, 0, 0, 0, 0, zones, i_num ) );
   debug ( M_SB,"createInode> created Inode\n" );
   all_inodes_.push_back ( inode );
+  all_inodes_set_[((MinixFSInode*)inode)->i_num_] = inode;
   debug ( M_SB,"createInode> calling write Inode to Disc\n" );
   writeInode ( inode );
   debug ( M_SB,"createInode> returned from write Inode to Disc\n" );
@@ -301,6 +304,7 @@ void MinixFSSuperblock::delete_inode ( Inode* inode )
     dirty_inodes_.remove ( inode );
   }
   all_inodes_.remove ( inode );
+  all_inodes_set_.erase(((MinixFSInode*)inode)->i_num_);
   MinixFSInode *minix_inode = ( MinixFSInode * ) inode;
   assert ( minix_inode->i_files_.empty() );
   /*for ( uint32 index = 0; index < minix_inode->i_zones_->getNumZones(); index++ )

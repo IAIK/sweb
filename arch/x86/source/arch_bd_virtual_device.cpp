@@ -71,8 +71,8 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
    BDRequest bd(dev_number_, BDRequest::BD_READ, blockoffset, blocks2read, buffer);
    addRequest ( &bd );
 
-   while( bd.getStatus() == BDRequest::BD_QUEUED &&
-          jiffies++ < 50000 ) ;
+   while( bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 )
+     __asm__ __volatile__ ( "hlt" );
 
    if( bd.getStatus() != BDRequest::BD_DONE )
    {
@@ -92,8 +92,8 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
    BDRequest bd(dev_number_ ,BDRequest::BD_WRITE, blockoffset, blocks2write, buffer);
    addRequest ( &bd );
 
-   while( bd.getStatus() == BDRequest::BD_QUEUED && 
-          jiffies++ < 50000 ) ;
+   while( bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 )
+     __asm__ __volatile__ ( "hlt" );
 
    if( bd.getStatus() != BDRequest::BD_DONE )
      return -1;

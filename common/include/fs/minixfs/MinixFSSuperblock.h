@@ -7,6 +7,7 @@
 
 #include "fs/Superblock.h"
 #include "MinixStorageManager.h"
+#include "ustl/umap.h"
 
 class Inode;
 class MinixFSInode;
@@ -205,6 +206,8 @@ class MinixFSSuperblock : public Superblock
      * the storage manager
      */
     MinixStorageManager* storage_manager_;
+
+    ustl::map<uint32,Inode*> all_inodes_set_;
 };
 
 #endif // MinixFSSuperblock_h___

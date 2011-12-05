@@ -32,7 +32,7 @@ Buffer::~Buffer()
 
 void Buffer::memcpy(size_t offset, const char* src, size_t n)
 {
-  ArchCommon::memcpy((pointer) buffer_ + offset_ + offset, (pointer) src, n);
+  ArchCommon::memcpy((pointer) (buffer_ + offset_ + offset), (pointer) src, n);
 }
 
 
@@ -43,62 +43,41 @@ uint8 Buffer::getByte ( size_t index )
 
 uint16 Buffer::get2Bytes ( size_t index )
 {
-  uint16 dst = 0;
-  dst |= buffer_[index + 1 + offset_];
-  dst = dst << 8;
-  dst |= ( buffer_[index + offset_] & 0xFF );
-  return dst;
+  return *(( uint16* ) (buffer_ + index + offset_));
 }
 
 uint32 Buffer::get4Bytes ( size_t index )
 {
-  uint32 dst = 0;
-  dst |= get2Bytes ( index + 2 );
-  dst = dst << 16;
-  dst |= ( get2Bytes ( index ) & 0xFFFF );
-  return dst;
+  return *(( uint32* ) (buffer_ + index + offset_));
 }
 
 uint64 Buffer::get8Bytes ( size_t index )
 {
-  uint64 dst = 0;
-  dst |= get4Bytes ( index + 4 );
-  dst = dst << 16;
-  dst |= ( get4Bytes ( index ) & 0xFFFFFFFF );
-  return dst;
+  return *(( uint64* ) (buffer_ + index + offset_));
 }
 
 void Buffer::setByte ( size_t index, uint8 byte )
 {
-  assert ( index + offset_ < size_ );
+  //assert ( index + offset_ < size_ );
   buffer_[index + offset_] = ( char ) byte;
 }
 
 void Buffer::set2Bytes ( size_t index, uint16 byte )
 {
-  assert ( index + 1 + offset_ < size_ );
-  char first_byte = byte >> 8;
-  char second_byte = byte & 0xFF;
-  buffer_[index + offset_] = second_byte;
-  buffer_[index + 1 + offset_] = first_byte;
+  //assert ( index + 1 + offset_ < size_ );
+  *((uint16*) (buffer_ + index + offset_)) = byte;
 }
 
 void Buffer::set4Bytes ( size_t index, uint32 byte )
 {
-  assert ( index+3  + offset_< size_ );
-  uint16 first_2_bytes = byte >> 16;
-  uint16 second_2_bytes = byte & 0xFFFF;
-  set2Bytes ( index, second_2_bytes );
-  set2Bytes ( index+2, first_2_bytes );
+  //assert ( index+3  + offset_< size_ );
+  *((uint32*) (buffer_ + index + offset_)) = byte;
 }
 
 void Buffer::set8Bytes ( size_t index, uint64 byte )
 {
-  assert ( index+7  + offset_< size_ );
-  uint32 first_4_bytes = byte >> 32;
-  uint32 second_4_bytes = byte & 0xFFFFFFFF;
-  set2Bytes ( index, second_4_bytes );
-  set2Bytes ( index+4, first_4_bytes );
+  //assert ( index+7  + offset_< size_ );
+  *((uint64*) (buffer_ + index + offset_)) = byte;
 }
 
 uint32 Buffer::getSize()
