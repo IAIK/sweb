@@ -19,7 +19,7 @@ int backtrace(pointer *call_stack, int size, Thread *thread,
 
 pointer get_function_name(pointer address, char function_name[]);
 
-void demangle_name(const ustl::string& name, char *buffer);
+void demangle_name(const char* name, char *buffer);
 void parse_symtab(StabEntry* stab_start, StabEntry* stab_end, const char *stab_str);
 //-------------------------------------------------------------------------------------*/
 #endif // BACKTRACE_H_
