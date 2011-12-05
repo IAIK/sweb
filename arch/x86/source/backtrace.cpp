@@ -6,7 +6,7 @@
 #include "ArchThreads.h"
 #include "mm/KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "ustl/umap.h"
-#include "ustl/ustring.h"
+
 //-------------------------------------------------------------------------------------*/
 #define N_GSYM  0x20    /* global symbol: name,,0,type,0 */
 #define N_FNAME 0x22    /* procedure name (f77 kludge): name,,0 */
@@ -44,7 +44,7 @@ struct StabEntry
 } __attribute__((packed));
 //-------------------------------------------------------------------------------------*/
 extern Thread* currentThread;
-ustl::map<uint32, ustl::string> symbol_table;
+ustl::map<uint32, const char*> symbol_table;
 //-------------------------------------------------------------------------------------*/
 bool try_paste_operator(const char *&input, char *& buffer);
 int read_number(const char *& input);
@@ -213,7 +213,7 @@ pointer get_function_name(pointer address, char function_name[])
 {
   if (symbol_table.size() == 0)
     return NULL;
-  ustl::map<uint32, ustl::string>::iterator it = symbol_table.end();
+  ustl::map<uint32, const char*>::iterator it = symbol_table.end();
 
   if (ADDRESS_BETWEEN(address, symbol_table.at(0).first, &kernel_end_address))
   {
@@ -411,15 +411,16 @@ void paste_arguments(const char *& input, char *& buffer, char delimiter)
 }
 //-------------------------------------------------------------------------------------*/
 
-void demangle_name(const ustl::string &name, char *buffer)
+void demangle_name(const char* name, char *buffer)
 {
-  const char *pData = name.c_str();
+  const char *pData = name;
 
   if (!buffer || !pData) return;
 
   if (pData[0] != '_' || pData[1] != 'Z')  // is the name mangled?
   {
-    for (ustl::string::size_type i = 0; i < name.length(); ++i) // copy unmangled name
+    size_t length = strlen(name);
+    for (size_t i = 0; i < length; ++i) // copy unmangled name
     {
       if (*pData == ':') break;
 
@@ -485,13 +486,13 @@ void demangle_name(const ustl::string &name, char *buffer)
 
 void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_str)
 {
-  new (&symbol_table) ustl::map<uint32, ustl::string>();
+  new (&symbol_table) ustl::map<uint32, const char*>();
 
   for (StabEntry* current_stab = stab_start; current_stab < stab_end; ++current_stab)
   {
     if ((current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME) &&
         ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, &kernel_end_address))
-    symbol_table[current_stab->n_value] = stab_str+current_stab->n_strx;
+      symbol_table[current_stab->n_value] = stab_str+current_stab->n_strx;
   }
 
   debug(MAIN, "found %d functions\n", symbol_table.size());
