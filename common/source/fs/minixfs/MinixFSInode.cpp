@@ -11,6 +11,7 @@
 #include "MinixFSFile.h"
 #include "Dentry.h"
 #include "arch_bd_manager.h"
+#include "ArchMemory.h"
 
 #include "kprintf.h"
 
@@ -96,10 +97,11 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   {
     rbuffer.clear();
     ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &rbuffer);
-    for(uint32 read_index = 0; index < size && (read_index + zone_offset) < ZONE_SIZE; index++, read_index++)
-    {
-      buffer[index] = rbuffer.getByte( read_index + zone_offset);
-    }
+    uint32 count = size - index;
+    uint32 zone_diff = ZONE_SIZE - zone_offset;
+    count = count < zone_diff ? count : zone_diff;
+    ArchCommon::memcpy((pointer) buffer + index, (pointer) rbuffer.getBuffer() + zone_offset, count);
+    index += count;
     zone_offset = 0;
   }
   return size;
@@ -148,10 +150,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   Buffer* wbuffer = new Buffer(num_zones * ZONE_SIZE);
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",offset-zone_offset,zone_offset);
   readData( offset - zone_offset, num_zones * ZONE_SIZE, wbuffer->getBuffer());
-  for(uint32 index = 0, pos = zone_offset; index<size; pos++, index++)
-  {
-    wbuffer->setByte( pos, buffer[index]);
-  }
+  wbuffer->memcpy(zone_offset, buffer, size);
   for(uint32 zone_index = 0; zone_index < num_zones; zone_index++)
   {
     debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n",zone_index,i_zones_->getZone(zone));
@@ -273,15 +272,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
   ((MinixFSSuperblock *)i_superblock_)->readZone(zone, &dbuffer);
   dbuffer.set2Bytes(dentry_pos % ZONE_SIZE, src_i_num);
-  char ch = 'a'; // != '\0'
-  for(uint32 offset = 0; offset < MAX_NAME_LENGTH;offset++)
-  {
-    if(ch != '\0')
-    {
-      ch = name[offset];
-    }
-    dbuffer.setByte(dentry_pos % ZONE_SIZE + offset + 2, ch);
-  }
+  strncpy(dbuffer.getBuffer() + dentry_pos % ZONE_SIZE + 2, name, MAX_NAME_LENGTH);
   ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, &dbuffer);
 
   if(dest_i_num == 0 && i_size_ < (uint32)dentry_pos + DENTRY_SIZE)
@@ -451,13 +442,7 @@ void MinixFSInode::loadChildren()
         }
 
         char name[MAX_NAME_LENGTH+1];
-//         dbuffer.print();
-        for(uint32 offset = 0; offset < MAX_NAME_LENGTH; ++offset)
-        {
-          name[offset] = dbuffer.getByte(curr_dentry + offset + 2);
-          if(!name[offset])
-            break;
-        }
+        strncpy(name, dbuffer.getBuffer() + curr_dentry + 2, MAX_NAME_LENGTH);
 
         name[MAX_NAME_LENGTH] = 0;
 

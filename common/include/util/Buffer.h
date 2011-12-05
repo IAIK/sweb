@@ -33,6 +33,14 @@ class Buffer
     ~Buffer();
 
     /**
+     * copy n bytes from src to this
+     * @param offset offset for this
+     * @param src the source buffer
+     * @param n number of bytes
+     */
+    void memcpy(size_t offset, const char* src, size_t n);
+
+    /**
      * get one Byte at the given index
      * @param index the index of the byte to read
      * @return one byte

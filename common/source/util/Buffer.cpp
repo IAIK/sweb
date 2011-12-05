@@ -5,6 +5,7 @@
 #include "Buffer.h"
 #include "assert.h"
 #include "console/kprintf.h"
+#include "ArchCommon.h"
 
 Buffer::Buffer ( size_t size )
 {
@@ -28,6 +29,12 @@ Buffer::~Buffer()
 {
   delete[] buffer_;
 }
+
+void Buffer::memcpy(size_t offset, const char* src, size_t n)
+{
+  ArchCommon::memcpy((pointer) buffer_ + offset_ + offset, (pointer) src, n);
+}
+
 
 uint8 Buffer::getByte ( size_t index )
 {

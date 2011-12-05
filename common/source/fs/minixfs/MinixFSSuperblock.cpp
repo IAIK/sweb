@@ -36,10 +36,10 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev ) : Superblo
 
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
-  Buffer bm_buffer( BLOCK_SIZE*bm_size );
-  readBlocks ( 2, bm_size, &bm_buffer );
+  Buffer* bm_buffer = new Buffer( BLOCK_SIZE*bm_size );
+  readBlocks ( 2, bm_size, bm_buffer );
   debug ( M_SB,"---creating Storage Manager\n" );
-  storage_manager_ = new MinixStorageManager ( &bm_buffer,
+  storage_manager_ = new MinixStorageManager ( bm_buffer,
                      s_num_inode_bm_blocks_,
                      s_num_zone_bm_blocks_,
                      s_num_inodes_, s_num_zones_ );
@@ -47,6 +47,7 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev ) : Superblo
   {
     storage_manager_->printBitmap();
   }
+  delete bm_buffer;
 
   initInodes();
 }
@@ -378,13 +379,8 @@ void MinixFSSuperblock::readZone ( uint16 zone, Buffer* buffer )
 void MinixFSSuperblock::readBlocks ( uint16 block, uint32 num_blocks, Buffer* buffer )
 {
   assert ( buffer->getSize() >= BLOCK_SIZE * num_blocks );
-  BDRequest *bd = new BDRequest ( s_dev_, BDRequest::BD_READ, block, num_blocks, buffer->getBuffer() );
-  BDManager::getInstance()->getDeviceByNumber ( s_dev_ )->addRequest ( bd );
-  uint32 jiffies = 0;
-  while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 ) ;
-  if ( bd->getStatus() != BDRequest::BD_DONE )
-    assert ( false );
-  delete bd;
+  BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber ( s_dev_ );
+  bdvd->readData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer->getBuffer());
 }
 
 
@@ -398,13 +394,8 @@ void MinixFSSuperblock::writeZone ( uint16 zone, Buffer* buffer )
 void MinixFSSuperblock::writeBlocks ( uint16 block, uint32 num_blocks, Buffer* buffer )
 {
   assert ( buffer->getSize() >= BLOCK_SIZE * num_blocks );
-  BDRequest *bd = new BDRequest ( s_dev_, BDRequest::BD_WRITE, block, num_blocks, buffer->getBuffer() );
-  BDManager::getInstance()->getDeviceByNumber ( s_dev_ )->addRequest ( bd );
-  uint32 jiffies = 0;
-  while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 ) ;
-  if ( bd->getStatus() != BDRequest::BD_DONE )
-    assert ( false );
-  delete bd;
+  BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber ( s_dev_ );
+  bdvd->writeData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer->getBuffer());
 }
 
 
@@ -415,10 +406,7 @@ int32 MinixFSSuperblock::readBytes ( uint32 block, uint32 offset, uint32 size, B
   Buffer rbuffer( BLOCK_SIZE );
   readBlocks ( block,1, &rbuffer );
   rbuffer.setOffset ( offset );
-  for ( uint32 index = 0; index < size; index++ )
-  {
-    buffer->setByte ( index,rbuffer.getByte ( index ) );
-  }
+  rbuffer.memcpy(offset, buffer->getBuffer(), size);
   return size;
 }
 
@@ -429,12 +417,7 @@ int32 MinixFSSuperblock::writeBytes ( uint32 block, uint32 offset, uint32 size, 
   assert ( offset+size <= BLOCK_SIZE );
   Buffer wbuffer( BLOCK_SIZE );
   readBlocks ( block, 1, &wbuffer );
-  wbuffer.setOffset ( offset );
-  for ( uint32 index = 0; index < size; index++ )
-  {
-    wbuffer.setByte ( index, buffer->getByte ( index ) );
-  }
-  wbuffer.setOffset ( 0 );
+  wbuffer.memcpy(offset, buffer->getBuffer(), size);
   writeBlocks ( block, 1, &wbuffer );
   return size;
 }
