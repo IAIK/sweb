@@ -24,7 +24,8 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
 
   outbp (port + 6, drive);  // Get first drive
   outbp (port + 7, 0xEC);   // Get drive info data
-  while (  inbp(port + 7) != 0x58 && jiffies++ < 50000 ) ; 
+  while (  inbp(port + 7) != 0x58 && jiffies++ < 5 )
+    __asm__ __volatile__ ( "hlt" );
 
   if( jiffies == 50000 )
   {
@@ -72,7 +73,8 @@ void ATADriver::testIRQ( )
   readSector( 0, 1, 0 );
 
   jiffies = 0;
-  while( BDManager::getInstance()->probeIRQ && jiffies++ < 50000 ) ;
+  while( BDManager::getInstance()->probeIRQ && jiffies++ < 5 )
+    __asm__ __volatile__ ( "hlt" );
 
   if( jiffies > 50000 )
   {
@@ -94,7 +96,8 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 {
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < 50000) ;
+  while((inbp(port+7) & 0x80) && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
   if(jiffies > 50000)
     return -1;
 
@@ -135,7 +138,8 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies++ < 50000) ;
+  while(!(inbp(port+7) & 0x40) && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
   if(jiffies > 50000)
     return -1;
 
@@ -147,7 +151,8 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   jiffies = 0;
 
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000) ;
+  while( inbp( port + 7 ) != 0x58  && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
   if(jiffies > 50000 )
     return -1;
 
@@ -164,7 +169,8 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 {
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < 50000) ;
+  while((inbp(port+7) & 0x80) && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
   if(jiffies > 50000)
     return -1;
 
@@ -191,7 +197,8 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies++ < 50000) ;
+  while(!(inbp(port+7) & 0x40) && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
   if(jiffies > 50000)
     return -1;
 
@@ -199,7 +206,8 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   outbp( port + 7, 0x30 );           // command
 
   jiffies = 0;
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000) ;
+  while( inbp( port + 7 ) != 0x58  && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
 
   if(jiffies > 50000 )
   {
@@ -276,8 +284,8 @@ uint32 ATADriver::addRequest( BDRequest *br )
 bool ATADriver::waitForController( bool resetIfFailed = true )
 {
   uint32 jiffies = 0;
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < 50000)
-    ;
+  while( inbp( port + 7 ) != 0x58  && jiffies++ < 5)
+    __asm__ __volatile__ ( "hlt" );
 
   if(jiffies > 50000 )
   {

@@ -284,7 +284,8 @@ class BDThread2 : public Thread
       uint32 jiffies = 0;
       //actually we don't know if this request is blocking or not. Just to be
       //on the safe side, check if the output is valid by now.
-      while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 50000 ) ;
+      while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < 5 )
+        __asm__ __volatile__ ( "hlt" );
 
       if ( bd->getStatus() != BDRequest::BD_DONE )
       {
