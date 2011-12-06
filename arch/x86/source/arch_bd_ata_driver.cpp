@@ -24,10 +24,10 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
 
   outbp (port + 6, drive);  // Get first drive
   outbp (port + 7, 0xEC);   // Get drive info data
-  while (  inbp(port + 7) != 0x58 && jiffies++ < 5 )
-    __asm__ __volatile__ ( "hlt" );
+  while (  inbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT )
+    ArchInterrupts::yieldIfIFSet();
 
-  if( jiffies == 50000 )
+  if( jiffies >= IO_TIMEOUT )
   {
     debug(ATA_DRIVER, "ctor: Timeout while reading the disk !!\n");
       return;
@@ -35,6 +35,8 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
 
   for (dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
     dd [dd_off] = inwp ( port );
+
+  debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
 
   debug(ATA_DRIVER, "ctor: Disk geometry read !!\n");
 
@@ -70,13 +72,13 @@ void ATADriver::testIRQ( )
   mode = BD_PIO;
 
   BDManager::getInstance()->probeIRQ = true;
-  readSector( 0, 1, 0 );
+  //readSector( 0, 1, 0 );
 
   jiffies = 0;
-  while( BDManager::getInstance()->probeIRQ && jiffies++ < 5 )
-    __asm__ __volatile__ ( "hlt" );
+  while( BDManager::getInstance()->probeIRQ && jiffies++ < IO_TIMEOUT )
+    ArchInterrupts::yieldIfIFSet();
 
-  if( jiffies > 50000 )
+  if( jiffies >= IO_TIMEOUT )
   {
     mode = BD_PIO_NO_IRQ; 
   }
@@ -96,9 +98,9 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 {
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
-  if(jiffies > 50000)
+  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT)
     return -1;
 
   //The equations to convert from LBA to CHS follow:
@@ -138,9 +140,9 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
-  if(jiffies > 50000)
+  while(!(inbp(port+7) & 0x40) && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT)
     return -1;
 
   /* Write the command code to the command register */
@@ -151,9 +153,9 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   jiffies = 0;
 
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
-  if(jiffies > 50000 )
+  while( inbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT )
     return -1;
 
   uint32 counter;
@@ -169,9 +171,9 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 {
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
-  if(jiffies > 50000)
+  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT)
     return -1;
 
   uint16 *word_buff = (uint16 *) buffer;
@@ -197,19 +199,19 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
-  if(jiffies > 50000)
+  while(!(inbp(port+7) & 0x40) && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT)
     return -1;
 
   /* Write the command code to the command register */
   outbp( port + 7, 0x30 );           // command
 
   jiffies = 0;
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
+  while( inbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
 
-  if(jiffies > 50000 )
+  if(jiffies >= IO_TIMEOUT )
   {
     debug(ATA_DRIVER, "writeSector: timeout");
       return -1;
@@ -284,10 +286,10 @@ uint32 ATADriver::addRequest( BDRequest *br )
 bool ATADriver::waitForController( bool resetIfFailed = true )
 {
   uint32 jiffies = 0;
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < 5)
-    __asm__ __volatile__ ( "hlt" );
+  while( inbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
 
-  if(jiffies > 50000 )
+  if(jiffies >= IO_TIMEOUT )
   {
     debug(ATA_DRIVER, "waitForController: controler still not ready\n");
     if( resetIfFailed )

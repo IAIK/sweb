@@ -16,6 +16,8 @@
 #ifndef _ARCH_INTERRUPTS_H_
 #define _ARCH_INTERRUPTS_H_
 
+#define IO_TIMEOUT 50000
+
 #include "types.h"
 
 /** @class ArchInterrupts
@@ -100,6 +102,11 @@ public:
    */
   static bool testIFSet();
   //static void setOldInterruptState(uint32 const &flags);
+
+  /**
+   * yields if the IF Flag is set, else does hlt
+   */
+  static void yieldIfIFSet();
 };
 
 #endif

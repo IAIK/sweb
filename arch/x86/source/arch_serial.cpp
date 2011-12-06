@@ -7,9 +7,9 @@
 #include "arch_serial.h"
 #include "serial.h"
 
+#include "ArchInterrupts.h"
 #include "ArchThreads.h"
 #include "kprintf.h"
-//#include "debug_bochs.h"
 #include "8259.h"
 
 
@@ -116,10 +116,10 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
     
   uint32 jiffies = 0, bytes_written = 0;
   
-  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < 5 )
-    __asm__ __volatile__ ( "hlt" );
+  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < IO_TIMEOUT )
+    ArchInterrupts::yieldIfIFSet();
     
-  if( jiffies == 50000 )
+  if( jiffies == IO_TIMEOUT )
   {
     WriteLock = 0;
     return -1;
@@ -131,10 +131,10 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
   {    
     jiffies = 0;
          
-    while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < 5 )
-      __asm__ __volatile__ ( "hlt" );
+    while( !(read_UART( SC::LSR ) & 0x40) && jiffies++ < IO_TIMEOUT )
+      ArchInterrupts::yieldIfIFSet();
     
-    if( jiffies == 50000 ) // TIMEOUT
+    if( jiffies == IO_TIMEOUT)
     {
       SerialLock = 0;
       WriteLock = 0;

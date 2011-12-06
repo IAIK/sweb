@@ -9,7 +9,7 @@
 #include "ports.h"
 #include "InterruptUtils.h"
 #include "SegmentUtils.h"
-
+#include "ArchThreads.h"
 
 void ArchInterrupts::initialise()
 {
@@ -89,4 +89,18 @@ bool ArchInterrupts::testIFSet()
   :);
 
   return (ret_val & (1 << 9));  //testing IF Flag
+}
+
+void ArchInterrupts::yieldIfIFSet()
+{
+// instable...
+//
+//  if (testIFSet())
+//  {
+//    ArchThreads::yield(); // noticed some problems in early boot situations
+//  }
+//  else
+//  {
+//    __asm__ __volatile__("hlt"); // might slow down i/o
+//  }
 }
