@@ -410,7 +410,7 @@ int32 MinixFSSuperblock::readBytes ( uint32 block, uint32 offset, uint32 size, B
   Buffer rbuffer( BLOCK_SIZE );
   readBlocks ( block,1, &rbuffer );
   rbuffer.setOffset ( offset );
-  rbuffer.memcpy(offset, buffer->getBuffer(), size);
+  rbuffer.memcpy(0, buffer->getBuffer(), size);
   return size;
 }
 
