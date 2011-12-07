@@ -109,13 +109,11 @@ class PathWalker
 
     /**
      * extract the first part of a path
-     * @param path is a char* cantaining the path to get the next part from.
-     * @param npart will be filled with a newly allocated copy of the next part.
-     * @return is the start position of the extracted part in path.
-     *          It is empty if there is no next part
-     *          In case of an error a null pointer is returned.
+     * @param path is a char* containing the path to get the next part from.
+     * @param npart_len will be set to the length of the next part
+     * @return length of the next part
      */
-    static char* getNextPart ( const char* path, int32 &npart_len );
+    static int32 getNextPartLen ( const char* path, int32& npart_len );
   private:
 
     /**

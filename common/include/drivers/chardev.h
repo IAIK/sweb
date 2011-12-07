@@ -30,7 +30,8 @@ class CharacterDevice : public Inode, public Thread
      * @param inode_type the inode type (cahracter device)
      */
     CharacterDevice ( const char* name, Superblock* super_block = 0, uint32 inode_type = I_CHARDEVICE ) :
-        Inode ( super_block, inode_type ), Thread("CharDevThread")
+        Inode ( super_block, inode_type ), Thread("CharDevThread"), _in_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD ),
+        _out_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD )
     {
 
       i_type_   = I_CHARDEVICE;
@@ -44,9 +45,6 @@ class CharacterDevice : public Inode, public Thread
 
       i_superblock_ = DeviceFSSuperBlock::getInstance();
       DeviceFSSuperBlock::getInstance()->addDevice ( this, name );
-
-      _in_buffer  = new FiFo< uint8 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
-      _out_buffer = new FiFo< uint8 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
     };
 
     /**
@@ -54,10 +52,6 @@ class CharacterDevice : public Inode, public Thread
      */
     ~CharacterDevice()
     {
-      if ( _in_buffer )
-        delete _in_buffer;
-      if ( _out_buffer )
-        delete _out_buffer;
     };
 
     /**
@@ -75,7 +69,7 @@ class CharacterDevice : public Inode, public Thread
       char *bptr = buffer;
       do
       {
-        *bptr++ = _in_buffer->get();
+        *bptr++ = _in_buffer.get();
       }
       while ( ( bptr - buffer ) < (int32) size );
 
@@ -97,7 +91,7 @@ class CharacterDevice : public Inode, public Thread
       const char *bptr = buffer;
       do
       {
-        _out_buffer->put ( *bptr++ );
+        _out_buffer.put ( *bptr++ );
       }
       while ( ( bptr - buffer ) < (int32) size );
 
@@ -185,9 +179,10 @@ class CharacterDevice : public Inode, public Thread
 
 
   protected:
+    static const uint32 CD_BUFFER_SIZE = 1024;
 
-    FiFo< uint8 > *_in_buffer;
-    FiFo< uint8 > *_out_buffer;
+    FiFo< uint8 > _in_buffer;
+    FiFo< uint8 > _out_buffer;
 
     char *device_name;
 
@@ -196,8 +191,7 @@ class CharacterDevice : public Inode, public Thread
      */
     void processInBuffer()
     {
-      if ( _in_buffer )
-        _in_buffer->get();
+      _in_buffer.get();
     };
 
 
@@ -206,11 +200,9 @@ class CharacterDevice : public Inode, public Thread
      */
     void processOutBuffer()
     {
-      if ( _out_buffer )
-        _out_buffer->get();
+      _out_buffer.get();
     };
 
-    static const uint32 CD_BUFFER_SIZE = 1024;
 
 };
 

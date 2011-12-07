@@ -169,7 +169,7 @@ void SerialPort::irq_handler()
     break;
   case 2: // Data is available
     int_id = read_UART( 0 );
-    _in_buffer->put( int_id );
+    _in_buffer.put( int_id );
     break;
   case 3: // Line status changed
     break;

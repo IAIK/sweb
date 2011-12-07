@@ -37,7 +37,7 @@ class TestTerminalThread : public Thread
      */
     virtual void Run()
     {
-      char *name = new char[ 50 ];
+      char name[ 50 ];
       uint32 numread=0;
       name[49]=0;
 
@@ -190,10 +190,10 @@ class BDThread : public Thread
       for ( i = 0; i < 4096; i++ )
         message[i] = '0';
 
-      BDRequest *bdr = new BDRequest ( 3, BDRequest::BD_READ, 0, 8, message );
-      BDManager::getInstance()->addRequest ( bdr );
+      BDRequest bdr( 3, BDRequest::BD_READ, 0, 8, message );
+      BDManager::getInstance()->addRequest ( &bdr );
       Scheduler::instance()->yield();
-      kprintfd ( "BDThread1::Run: Read request %d \n", bdr->getStatus() );
+      kprintfd ( "BDThread1::Run: Read request %d \n", bdr.getStatus() );
       kprintf ( " FINISHED BDThread" );
 
       //currentThread->kill();
@@ -241,32 +241,32 @@ class BDThread2 : public Thread
       for ( i = 0; i < 4096; i++ )
         message[i] = 'x';
 
-      BDRequest *bdr = new BDRequest ( 3, BDRequest::BD_WRITE, 233, 8, message );
-      BDManager::getInstance()->addRequest ( bdr );
+      BDRequest bdr( 3, BDRequest::BD_WRITE, 233, 8, message );
+      BDManager::getInstance()->addRequest ( &bdr );
       //Scheduler::instance()->yield();
-      kprintfd ( "BDThread::Run: Write request %d \n", bdr->getStatus() );
+      kprintfd ( "BDThread::Run: Write request %d \n", bdr.getStatus() );
 
       //Actually we know the virtual device number we want to use: "2" (swap)
       //What is the block size on this device?
       //Well, let's have a look.
-      BDRequest * bd_bs = new BDRequest ( 2, BDRequest::BD_GET_BLK_SIZE );
-      BDManager::getInstance()->getDeviceByNumber ( 2 )->addRequest ( bd_bs );
+      BDRequest bd_bs( 2, BDRequest::BD_GET_BLK_SIZE );
+      BDManager::getInstance()->getDeviceByNumber ( 2 )->addRequest ( &bd_bs );
       //this is a blocking request. It just references data already in memory.
-      if ( bd_bs->getStatus() != BDRequest::BD_DONE )
+      if ( bd_bs.getStatus() != BDRequest::BD_DONE )
       {
         // something went wrong... EXIT!
       }
-      uint32 block_size = bd_bs->getResult();
+      uint32 block_size = bd_bs.getResult();
 
       //We have to check how many blocks are available on this device:
-      BDRequest * bd_bc = new BDRequest ( 2, BDRequest::BD_GET_NUM_BLOCKS );
-      BDManager::getInstance()->getDeviceByNumber ( 2 )->addRequest ( bd_bc );
+      BDRequest bd_bc( 2, BDRequest::BD_GET_NUM_BLOCKS );
+      BDManager::getInstance()->getDeviceByNumber ( 2 )->addRequest ( &bd_bc );
       //this is a blocking request. It just references data already in memory.
-      if ( bd_bs->getStatus() != BDRequest::BD_DONE )
+      if ( bd_bs.getStatus() != BDRequest::BD_DONE )
       {
         // something went wrong... EXIT!
       }
-      uint32 block_count = bd_bc->getResult();
+      uint32 block_count = bd_bc.getResult();
 
       //We assume that we want to read two blocks (Number 234 and 235)
       uint32 blocks2read = 2;
@@ -276,18 +276,18 @@ class BDThread2 : public Thread
         //do this little check.
       }
       //allocate some buffer or point somewhere in memory.
-      char *my_buffer = ( char * ) kmalloc ( blocks2read*block_size*sizeof ( uint8 ) );
+      char* my_buffer = new char[blocks2read*block_size];
       //build the command
-      BDRequest * bd = new BDRequest ( 2, BDRequest::BD_READ, offset, blocks2read, my_buffer );
+      BDRequest bd( 2, BDRequest::BD_READ, offset, blocks2read, my_buffer );
       //and send it.
-      BDManager::getInstance()->getDeviceByNumber ( 2 )->addRequest ( bd );
+      BDManager::getInstance()->getDeviceByNumber ( 2 )->addRequest ( &bd );
       uint32 jiffies = 0;
       //actually we don't know if this request is blocking or not. Just to be
       //on the safe side, check if the output is valid by now.
-      while ( bd->getStatus() == BDRequest::BD_QUEUED && jiffies++ < TIMEOUT )
+      while ( bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < TIMEOUT )
         ArchInterrupts::yieldIfIFSet();
 
-      if ( bd->getStatus() != BDRequest::BD_DONE )
+      if ( bd.getStatus() != BDRequest::BD_DONE )
       {
         //We should definitely should have a closer look at the status by now.
         //It may happen, that the request is still in queue or had an error.
@@ -298,11 +298,8 @@ class BDThread2 : public Thread
       for ( uint32 i = 0; i < blocks2read*block_size; i++ )
         kprintfd ( "%2X%c", * ( my_buffer+i ), i%8 ? ' ' : '\n' );
 
-      kfree ( my_buffer );
+      delete[] my_buffer;
 
-      delete bd;
-      delete bd_bs;
-      delete bd_bc;
       kprintf ( " FINISHED BDThread2" );
 
 //currentThread->kill();
@@ -378,9 +375,6 @@ class MinixTestingThread : public Thread
     virtual void Run()
     {
 
-//       kprintfd("\n> list /\n");
-//       vfs_syscall.readdir("/");
-//
       kprintfd ( "\n> calling mkdir: /minix\n" );
       int32 mkdir_ret = vfs_syscall.mkdir ( "/minix", 2 );
       kprintfd ( "\n> mkdir returned <%d>\n",mkdir_ret );
@@ -388,10 +382,6 @@ class MinixTestingThread : public Thread
       kprintfd ( "\n> calling mount: idea0, /minix, minixfs\n" );
       int32 mount_ret = vfs_syscall.mount ( "idea0","/minix", "minixfs",0 );
       kprintfd ( "\n> mount returned <%d>\n",mount_ret );
-
-      //kprintfd ( "\n> chdir test\n" );
-      //int32 chdir_ret = vfs_syscall.chdir ( "/minix/test" );
-      //kprintfd ( "\n> chdir returned: <%d>\n",chdir_ret );
 
       kprintfd("\n> list ./\n");
       vfs_syscall.readdir("./");
@@ -430,126 +420,5 @@ class MinixTestingThread : public Thread
       state_ = ToBeDestroyed;
       Scheduler::instance()->yield();
 
-
-//       kprintfd("\n> calling umount: /minix\n");
-//       int32 umount_ret = vfs_syscall.umount("/minix",0);
-//       kprintfd("\n> umount returned <%d>\n",umount_ret);
-
-
-//
-//
-//       kprintfd("\n> list ./\n");
-//       vfs_syscall.readdir("./");
-//
-//       kprintfd("\n> chdir /minix\n");
-//       int32 chdir_ret = vfs_syscall.chdir("/minix");
-//       kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
-//
-//
-//       kprintfd("\n> list ./\n");
-//       vfs_syscall.readdir("./");
-//
-//
-//       kprintfd("\n> chdir ./dir\n");
-//       chdir_ret = vfs_syscall.chdir("./dir");
-//       kprintfd("\n> chdir returned: <%d>\n",chdir_ret);
-//
-//
-//       kprintfd("\n> list ./\n");
-//       vfs_syscall.readdir("./");
-
-
-//       kprintfd("\n> list /minix/dir\n");
-//       vfs_syscall.readdir("/minix/dir");
-//       kprintfd("\n> list /dev\n");
-//       vfs_syscall.readdir("/dev");
-//       kprintfd("\n> open /minix/vbf\n");
-//       int32 fd = vfs_syscall.open("/minix/vbf", 2);
-//       kprintfd("\n> open returned fd: <%d>\n",fd);
-//       kprintfd("\n> flush fd: <%d>\n",fd);
-//       int32 flush_ret = vfs_syscall.flush(fd);
-//       kprintfd("\n> flush returned: <%d>\n", flush_ret);
-//
-//       char *buffer = new char[5001];
-//       buffer[5000] = '\0';
-//
-//       for(uint32 i = 0; i<5000; i++)
-//         buffer[i] = 1;
-//
-//       int32 read_ret = vfs_syscall.read(fd, buffer, 5000);
-//       kprintfd("\n> read returned: <%d>\n",read_ret);
-//       for(uint32 i = 0; i<500000; i++)
-//         kprintfd("%x",buffer[i]);
-
-//       kprintfd("\n> open /minix/test1.txt\n");
-//       int32 t_fd = vfs_syscall.open("/minix/test1.txt", 2);
-//       kprintfd("\n> open returned fd: <%d>\n",t_fd);
-//
-//
-//       int32 write_ret = vfs_syscall.write(t_fd, buffer, 5000);
-//       kprintfd("\n> write returned: <%d>\n",write_ret);
-//
-//
-//       char *r_buffer = new char[5001];
-//       r_buffer[5000] = '\0';
-//
-//
-//       for(uint32 i = 0; i<5000; i++)
-//         r_buffer[i] = 1;
-//
-//       read_ret = vfs_syscall.read(t_fd, r_buffer, 5000);
-//       kprintfd("\n> read returned: <%d>\n",read_ret);
-//
-//        for(uint32 i = 0; i<5000; i++)
-//          kprintfd("%x",r_buffer[i]);
-
-
-//        kprintfd("\n> calling umount: /minix\n");
-//        int32 umount_ret = vfs_syscall.umount("/minix",0);
-//        kprintfd("\n> umount returned <%d>\n",umount_ret);
-
-
-//        kprintfd("\n> list /\n");
-//        vfs_syscall.readdir("/");
-//
-//        kprintfd("\n> list /minix\n");
-//        vfs_syscall.readdir("/minix");
-
-//       char *t_buffer = new char[6];
-//       t_buffer[5] = '\0';
-
-//       int32 t_read_ret = vfs_syscall.read(t_fd, t_buffer, 5);
-//       kprintfd("\n> read returned: <%d>\n",t_read_ret);
-//       kprintfd("\n> read: <%s>\n",t_buffer);
-
-//       kprintfd("\n> closing file <%d>\n",t_fd);
-//       int32 close_ret = vfs_syscall.close(t_fd);
-//       kprintfd("\n> close returned: <%d>\n",close_ret);
-
-
-//       kprintfd("\n> rm /minix/test1.txt\n");
-//       int32 rm_ret = vfs_syscall.rm("/minix/test1.txt");
-//       kprintfd("\n> rm returned : <%d>\n",rm_ret);
-
-//       kprintfd("\n> calling mkdir: /minix/folder\n");
-//       int32 mkdir_ret = vfs_syscall.mkdir("/minix/folder", 2);
-//       kprintfd("\n> mkdir returned <%d>\n",mkdir_ret);
-
-
-//       kprintfd("\n> list /minix\n");
-//       vfs_syscall.readdir("/minix");
-//       int32 t_write_ret = vfs_syscall.write(t_fd, "hello test1!", 12);
-//       kprintfd("\n> write returned: <%d>\n",t_write_ret);
-
-//       kprintfd("\n> calling rmdir: /minix/folder\n");
-//       int32 rmdir_ret = vfs_syscall.rmdir("/minix/folder");
-//       kprintfd("\n> rmdir returned <%d>\n",rmdir_ret);
-
-
-
-//       kprintfd("\n> list /minix\n");
-//       vfs_syscall.readdir("/minix");
-
-      //
     }
 };

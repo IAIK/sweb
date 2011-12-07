@@ -80,13 +80,11 @@ int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ (
   bool parts_left = true;
   while ( parts_left )
   {
-    char* npart = 0;
     int32 npart_pos = 0;
-    npart = getNextPart ( pathname, npart_pos );
-    if ( npart )
-      debug ( PATHWALKER,  "pathWalk> npart : %s\n", npart );
-    else
-      debug ( PATHWALKER,  "pathWalk> npart : 0!!!\n" );
+    int32 npart_len = getNextPartLen ( pathname, npart_pos );
+    char npart[npart_len];
+    strlcpy ( npart, pathname, npart_len );
+    debug ( PATHWALKER,  "pathWalk> npart : %s\n", npart );
     debug ( PATHWALKER,  "pathWalk> npart_pos : %d\n", npart_pos );
     if ( npart_pos < 0 )
     {
@@ -96,7 +94,6 @@ int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ (
 
     if ( ( *npart == NULL_CHAR ) || ( npart_pos == 0 ) )
     {
-      delete npart;
       debug ( PATHWALKER,  "pathWalk> return success\n" );
       return PW_SUCCESS;
     }
@@ -124,14 +121,12 @@ int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ (
     if ( last_type_ == LAST_DOT ) // follow LAST_DOT
     {
       debug ( PATHWALKER,  "pathWalk> follow last dot\n" );
-      kfree ( npart );
       last_ = 0;
       continue;
     }
     else if ( last_type_ == LAST_DOTDOT ) // follow LAST_DOTDOT
     {
       debug ( PATHWALKER,  "pathWalk> follow last dotdot\n" );
-      kfree ( npart );
       last_ = 0;
 
       if ( ( dentry_ == fs_info->getRoot() ) && ( vfs_mount_ == fs_info->getRootMnt() ) )
@@ -161,7 +156,6 @@ int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ (
         debug ( PATHWALKER,  "pathWalk> found->getName() : %s\n",found->getName() );
       else
         debug ( PATHWALKER,  "pathWalk> no dentry found !!!\n" );
-      kfree ( npart );
       last_ = 0;
       if ( found != 0 )
       {
@@ -199,13 +193,11 @@ int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ (
   return PW_SUCCESS;
 }
 
-
-char* PathWalker::getNextPart ( const char* path, int32 &npart_len )
+int32 PathWalker::getNextPartLen ( const char* path, int32 &npart_len )
 {
   char* tmp = 0;
   tmp = strchr ( path, SEPARATOR );
 
-  char* npart = 0;
   npart_len = ( size_t ) ( tmp - path + 1 );
 
   uint32 length = npart_len;
@@ -216,11 +208,5 @@ char* PathWalker::getNextPart ( const char* path, int32 &npart_len )
     length = npart_len + 1;
   }
 
-  if ( length != 0 )
-  {
-    npart = ( char* ) kmalloc ( length * sizeof ( char ) );
-    strlcpy ( npart, path, length );
-  }
-
-  return npart;
+  return length;
 }

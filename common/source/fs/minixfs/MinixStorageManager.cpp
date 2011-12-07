@@ -20,26 +20,26 @@ MinixStorageManager::MinixStorageManager ( char *bm_buffer, uint16 num_inode_bm_
   uint32 i_byte = 0;
   for ( ; i_byte < num_inodes / 8; i_byte ++ )
   {
-    inode_bitmap_->setByte ( i_byte, bm_buffer[i_byte] );
+    inode_bitmap_.setByte ( i_byte, bm_buffer[i_byte] );
   }
   for ( uint32 i_bit = 0; i_bit < num_inodes % 8; i_bit ++ )
   {
     uint8 byte = bm_buffer[i_byte];
     if ( ( byte >> i_bit ) & 0x01 )
-      inode_bitmap_->setBit ( i_byte * 8 + i_bit );
+      inode_bitmap_.setBit ( i_byte * 8 + i_bit );
   }
   //read zone bitmap
   uint32 z_byte = num_inode_bm_blocks * BLOCK_SIZE;
   uint32 z_bm_byte = 0;
   for ( ; z_bm_byte < num_zones / 8; z_byte ++, z_bm_byte++ )
   {
-    zone_bitmap_->setByte ( z_bm_byte, bm_buffer[z_byte] );
+    zone_bitmap_.setByte ( z_bm_byte, bm_buffer[z_byte] );
   }
   for ( uint32 z_bit = 0; z_bit < num_zones % 8; z_bit ++ )
   {
     uint8 byte = bm_buffer[z_byte];
     if ( ( byte >> z_bit ) & 0x01 )
-      zone_bitmap_->setBit ( z_bm_byte * 8 + z_bit );
+      zone_bitmap_.setBit ( z_bm_byte * 8 + z_bit );
   }
   curr_inode_pos_ = 0;
   curr_zone_pos_ = 0;
@@ -57,15 +57,15 @@ MinixStorageManager::~MinixStorageManager()
 
 bool MinixStorageManager::isInodeSet ( size_t index )
 {
-  assert(index < inode_bitmap_->getSize() &&
+  assert(index < inode_bitmap_.getSize() &&
     "MinixStorageManager::isInodeSet called with bad index number");
-  return inode_bitmap_->getBit ( index );
+  return inode_bitmap_.getBit ( index );
 }
 
 
 uint32 MinixStorageManager::getNumUsedInodes()
 {
-  return inode_bitmap_->getNumBitsSet();
+  return inode_bitmap_.getNumBitsSet();
 }
 
 
@@ -74,11 +74,11 @@ size_t MinixStorageManager::acquireZone()
   size_t pos = curr_zone_pos_ + 1;
   for ( ;pos != curr_zone_pos_; pos++ )
   {
-    if ( pos >= zone_bitmap_->getSize() )
+    if ( pos >= zone_bitmap_.getSize() )
       pos =0;
-    if ( !zone_bitmap_->getBit ( pos ) )
+    if ( !zone_bitmap_.getBit ( pos ) )
     {
-      zone_bitmap_->setBit ( pos );
+      zone_bitmap_.setBit ( pos );
       curr_zone_pos_ = pos;
       debug ( M_STORAGE_MANAGER, "acquireZone: Zone %d acquired\n", pos );
       return pos;
@@ -95,11 +95,11 @@ size_t MinixStorageManager::acquireInode()
   size_t pos = curr_inode_pos_ + 1;
   for ( ;pos != curr_inode_pos_; pos++ )
   {
-    if ( pos >= inode_bitmap_->getSize() )
+    if ( pos >= inode_bitmap_.getSize() )
       pos =0;
-    if ( !inode_bitmap_->getBit ( pos ) )
+    if ( !inode_bitmap_.getBit ( pos ) )
     {
-      inode_bitmap_->setBit ( pos );
+      inode_bitmap_.setBit ( pos );
       curr_inode_pos_ = pos;
       debug ( M_STORAGE_MANAGER, "acquireInode: Inode %d acquired\n", pos );
       return pos;
@@ -113,14 +113,14 @@ size_t MinixStorageManager::acquireInode()
 
 void MinixStorageManager::freeZone ( size_t index )
 {
-  zone_bitmap_->unsetBit ( index );
+  zone_bitmap_.unsetBit ( index );
   debug ( M_STORAGE_MANAGER, "freeZone: Zone %d freed\n", index );
 }
 
 
 void MinixStorageManager::freeInode ( size_t index )
 {
-  inode_bitmap_->unsetBit ( index );
+  inode_bitmap_.unsetBit ( index );
   debug ( M_STORAGE_MANAGER, "freeInode: Inode %d freed\n", index );
 }
 
@@ -129,18 +129,18 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
 {
   debug ( M_STORAGE_MANAGER, "flush: starting flushing\n" );
   char* bm_buffer = new char[ ( num_inode_bm_blocks_ + num_zone_bm_blocks_ ) * BLOCK_SIZE];
-  uint32 num_inodes = inode_bitmap_->getSize();
+  uint32 num_inodes = inode_bitmap_.getSize();
   uint32 i_byte = 0;
   for ( ; i_byte < num_inodes / 8; i_byte++ )
   {
-    bm_buffer[i_byte] = inode_bitmap_->getByte ( i_byte );
+    bm_buffer[i_byte] = inode_bitmap_.getByte ( i_byte );
   }
   uint8 byte = 0;
   for ( uint32 i_bit = 0; i_bit < 8; i_bit++ )
   {
     if ( i_bit < num_inodes % 8 )
     {
-      if ( inode_bitmap_->getBit ( i_byte*8 + i_bit ) )
+      if ( inode_bitmap_.getBit ( i_byte*8 + i_bit ) )
       {
         byte &= 0x01 << i_bit;
       }
@@ -155,18 +155,18 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
     bm_buffer[i_byte] = 0xff;
   }
 
-  uint32 num_zones = zone_bitmap_->getSize();
+  uint32 num_zones = zone_bitmap_.getSize();
   uint32 z_byte = 0;
   for ( ; z_byte < num_zones / 8; z_byte++, i_byte++ )
   {
-    bm_buffer[i_byte] = zone_bitmap_->getByte ( z_byte );
+    bm_buffer[i_byte] = zone_bitmap_.getByte ( z_byte );
   }
   byte = 0;
   for ( uint32 z_bit = 0; z_bit < 8; z_bit++ )
   {
     if ( z_bit < num_inodes % 8 )
     {
-      if ( zone_bitmap_->getBit ( z_byte*8 + z_bit ) )
+      if ( zone_bitmap_.getBit ( z_byte*8 + z_bit ) )
       {
         byte &= 0x01 << z_bit;
       }
@@ -181,8 +181,8 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
   {
     bm_buffer[i_byte] = 0xff;
   }
-  //inode_bitmap_->bmprint();
-  //zone_bitmap_->bmprint();
+  //inode_bitmap_.bmprint();
+  //zone_bitmap_.bmprint();
   superblock->writeBlocks ( 2,num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer );
   delete[] bm_buffer;
   debug ( M_STORAGE_MANAGER, "flush: flushing finished\n" );
@@ -190,6 +190,6 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
 
 void MinixStorageManager::printBitmap()
 {
-  inode_bitmap_->bmprint();
-  zone_bitmap_->bmprint();
+  inode_bitmap_.bmprint();
+  zone_bitmap_.bmprint();
 }

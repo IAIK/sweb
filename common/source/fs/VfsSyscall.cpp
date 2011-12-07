@@ -68,7 +68,7 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
   if (prepend_slash_dot)
   {
     uint32 path_len = strlen(pathname) + 1;
-    char *path_tmp = (char*) kmalloc((path_len + 2) * sizeof(char));
+    char path_tmp[path_len + 2];
     // path_tmp = "./" + pathname + '\0'
     char *path_tmp_ptr = path_tmp;
     *path_tmp_ptr++ = CHAR_DOT;
@@ -76,7 +76,6 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
     strlcpy(path_tmp_ptr, pathname, path_len);
 
     fs_info->setName(path_tmp);
-    kfree(path_tmp);
   }
   else
     fs_info->setName(pathname);
@@ -100,9 +99,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
     return -1;
   }
   debug(VFSSYSCALL, "(mkdir) pathRelease();\n");
-  char* path_tmp = (char*) kmalloc(
-                                   (strlen(fs_info->getName()) + 1)
-                                       * sizeof(char));
+  char path_tmp[strlen(fs_info->getName()) + 1];
   strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
   fs_info->putName();
 
@@ -138,13 +135,12 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
   char_tmp++;
   uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
-  char* path_next_name = (char*) kmalloc(path_next_len * sizeof(char));
+  char path_next_name[path_next_len];
   strlcpy(path_next_name, char_tmp, path_next_len);
 
   // create a new dentry
   Dentry *sub_dentry = new Dentry(current_dentry);
   sub_dentry->setName(path_next_name);
-  kfree(path_next_name);
   debug(VFSSYSCALL, "(mkdir) creating Inode: current_dentry->getName(): %s\n",
         current_dentry->getName());
   debug(VFSSYSCALL, "(mkdir) creating Inode: sub_dentry->getName(): %s\n",
@@ -166,9 +162,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
-    char* path_tmp = (char*) kmalloc(
-                                     (strlen(fs_info->getName()) + 1)
-                                         * sizeof(char));
+    char path_tmp[strlen(fs_info->getName()) + 1];
     strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
     fs_info->putName();
 
@@ -222,7 +216,6 @@ Dirent* VfsSyscall::readdir(const char* pathname)
       }
       kprintf("%s\n", sub_dentry->getName());
     }
-    kfree(path_tmp);
   }
   else
   {
@@ -424,9 +417,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   else if (flag & O_CREAT)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
-    char* path_tmp = (char*) kmalloc(
-                                     (strlen(fs_info->getName()) + 1)
-                                         * sizeof(char));
+    char path_tmp[strlen(fs_info->getName()) + 1];
     strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
     fs_info->putName();
 
@@ -462,14 +453,12 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     char_tmp++;
     uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
-    char* path_next_name = (char*) kmalloc(path_next_len * sizeof(char));
+    char path_next_name[path_next_len];
     strlcpy(path_next_name, char_tmp, path_next_len);
-    kfree(path_tmp);
 
     // create a new dentry
     Dentry *sub_dentry = new Dentry(current_dentry);
     sub_dentry->setName(path_next_name);
-    kfree(path_next_name);
     sub_dentry->setParent(current_dentry);
     debug(VFSSYSCALL, "(open) calling create Inode\n");
     Inode* sub_inode = current_sb->createInode(sub_dentry, I_FILE);

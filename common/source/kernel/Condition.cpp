@@ -9,15 +9,12 @@
 #include "ArchInterrupts.h"
 #include "console/debug.h"
 
-Condition::Condition(Mutex *lock)
+Condition::Condition(Mutex *lock) : sleepers_(), lock_(lock)
 {
-  sleepers_=new ustl::list<Thread *>();
-  lock_=lock;
 }
 
 Condition::~Condition()
 {
-  delete sleepers_;
 }
 
 void Condition::wait()
@@ -25,7 +22,7 @@ void Condition::wait()
   // list is protected, because we assume, the lock is being held
   assert(lock_->isHeldBy(currentThread));
   assert(ArchInterrupts::testIFSet());
-  sleepers_->push_back(currentThread);
+  sleepers_.push_back(currentThread);
   //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
   debug(CONDITION, "Condition::wait: Thread %x  %d:%s wating on Condition %x\n",currentThread,currentThread->getPID(),currentThread->getName(),this);
   Scheduler::instance()->sleepAndRelease(*lock_);
@@ -38,14 +35,14 @@ void Condition::signal()
     return;
   assert(ArchInterrupts::testIFSet());
   Thread *thread=0;
-  if (!sleepers_->empty())
+  if (!sleepers_.empty())
   {
-    thread = sleepers_->front();
+    thread = sleepers_.front();
     if (thread->state_ == Sleeping)
     {
       //Solution to above Problem: Wake and Remove from List only Threads which are actually sleeping
       Scheduler::instance()->wake(thread);
-      sleepers_->pop_front();
+      sleepers_.pop_front();
     }
   }
   if (thread)
@@ -59,10 +56,10 @@ void Condition::broadcast()
   assert(ArchInterrupts::testIFSet());
   Thread *thread;
   ustl::list<Thread*> tmp_threads;
-  while (!sleepers_->empty())
+  while (!sleepers_.empty())
   {
-    thread = sleepers_->front();
-    sleepers_->pop_front();
+    thread = sleepers_.front();
+    sleepers_.pop_front();
     if (thread->state_ == Sleeping)
       Scheduler::instance()->wake(thread);
     else
@@ -72,7 +69,7 @@ void Condition::broadcast()
   while (!tmp_threads.empty())
   {
     Thread* temp = tmp_threads.front();
-    sleepers_->push_back(temp);
+    sleepers_.push_back(temp);
     tmp_threads.pop_front();
   }
 }

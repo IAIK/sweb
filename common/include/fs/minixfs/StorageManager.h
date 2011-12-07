@@ -46,8 +46,8 @@ class StorageManager
 
   protected:
 
-    Bitmap* inode_bitmap_;
-    Bitmap* zone_bitmap_;
+    Bitmap inode_bitmap_;
+    Bitmap zone_bitmap_;
 
 };
 

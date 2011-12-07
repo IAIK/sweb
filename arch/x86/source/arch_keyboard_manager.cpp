@@ -137,15 +137,12 @@
 
 KeyboardManager *KeyboardManager::instance_ = 0;
 
-KeyboardManager::KeyboardManager() : extended_scancode( 0 ), keyboard_status_ ( 0 )
+KeyboardManager::KeyboardManager() : keyboard_buffer_( 256 ), extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
-  keyboard_buffer_ = new RingBuffer<uint8>( 256 );
 }
 
 KeyboardManager::~KeyboardManager()
 {
-  delete keyboard_buffer_;
-  keyboard_buffer_ = 0;
 }
 
 void KeyboardManager::kb_wait()
@@ -221,7 +218,7 @@ void KeyboardManager::serviceIRQ( void )
     return;
   }
 
-  keyboard_buffer_->put( scancode ); // put it inside the buffer
+  keyboard_buffer_.put( scancode ); // put it inside the buffer
 
   send_cmd(0xAE);    // enable the keyboard
 }
@@ -342,7 +339,7 @@ bool KeyboardManager::getKeyFromKbd(uint32 &key)
 {
   //peeking should not block
   uint8 sc;
-  if (keyboard_buffer_->get(sc))
+  if (keyboard_buffer_.get(sc))
   {
     key = convertScancode(sc);
     return true;

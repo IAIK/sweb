@@ -31,7 +31,7 @@ uint32 IDEDriver::doDeviceDetection()
 
    for( cs = 0; cs < 4; cs ++)
    {
-      char *name = new char[5];
+      char name[5];
       name[0] = 'i';
       name[1] = 'd';
       name[2] = 'e';
@@ -167,7 +167,6 @@ uint32 IDEDriver::doDeviceDetection()
       debug(IDE_DRIVER, "doDetection: Not found!\n ");
     }
 
-    delete name;
   }
 
    // This will only work for ATA Drives
@@ -219,7 +218,7 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
           offset = fp->relsect;
           numsec = fp->numsect;
 
-          char *part_name = (char*) kmalloc( 6 );
+          char part_name[6];
           strncpy( part_name, name, 4 );
           part_name[4] = part_num + '0';
           part_name[5] = 0;
@@ -229,7 +228,6 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
           drv->getSectorSize(), part_name, true);
 
           BDManager::getInstance()->addVirtualDevice( bdv );
-          kfree( part_name );
           break;
       }
     }

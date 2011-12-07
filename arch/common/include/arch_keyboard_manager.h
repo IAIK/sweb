@@ -176,7 +176,7 @@ private:
    */
   void send_cmd( uint8 cmd, uint8 port );
 
-  RingBuffer<uint8> *keyboard_buffer_;
+  RingBuffer<uint8> keyboard_buffer_;
 
   static uint32 const KEY_MAPPING_SIZE;
   static uint32 const STANDARD_KEYMAP[];
