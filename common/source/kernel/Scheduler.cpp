@@ -91,9 +91,6 @@ Scheduler::Scheduler()
 
 void Scheduler::addNewThread ( Thread *thread )
 {
-  //new Thread gets scheduled next
-  //also gets added to front as not to interfere with remove or xchange
-
   lockScheduling();
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   waitForFreeKMMLock();
