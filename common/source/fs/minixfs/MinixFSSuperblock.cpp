@@ -22,17 +22,7 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev ) : Superblo
 {
   BDManager::getInstance()->getDeviceByNumber ( s_dev )->setBlockSize ( BLOCK_SIZE );
   //read Superblock data from disc
-  char buffer[BLOCK_SIZE];
-  readBlocks ( 1, 1, buffer );
-  s_num_inodes_ = *(uint16*)(buffer + 0 );
-  s_num_zones_ = *(uint16*)(buffer + 2 );
-  s_num_inode_bm_blocks_ = *(uint16*)(buffer + 4 );
-  s_num_zone_bm_blocks_ = *(uint16*)(buffer + 6 );
-  s_1st_datazone_ = *(uint16*)(buffer + 8 );
-  s_log_zone_size_ = *(uint16*)(buffer + 10 );
-  s_max_file_size_ = *(uint32*)(buffer + 12 );
-  s_magic_ = *(uint16*)(buffer + 16 );
-
+  readHeader();
   debug ( M_SB,"s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %d\n",s_num_inodes_,s_num_zones_,s_num_inode_bm_blocks_,s_num_zone_bm_blocks_,s_1st_datazone_,s_log_zone_size_,s_max_file_size_,s_magic_ );
 
   //create Storage Manager
@@ -53,6 +43,19 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev ) : Superblo
   initInodes();
 }
 
+void MinixFSSuperblock::readHeader()
+{
+  char buffer[BLOCK_SIZE];
+  readBlocks ( 1, 1, buffer );
+  s_num_inodes_ = *(uint16*)(buffer + 0 );
+  s_num_zones_ = *(uint16*)(buffer + 2 );
+  s_num_inode_bm_blocks_ = *(uint16*)(buffer + 4 );
+  s_num_zone_bm_blocks_ = *(uint16*)(buffer + 6 );
+  s_1st_datazone_ = *(uint16*)(buffer + 8 );
+  s_log_zone_size_ = *(uint16*)(buffer + 10 );
+  s_max_file_size_ = *(uint32*)(buffer + 12 );
+  s_magic_ = *(uint16*)(buffer + 16 );
+}
 
 void MinixFSSuperblock::initInodes()
 {
@@ -75,8 +78,7 @@ void MinixFSSuperblock::initInodes()
   root_inode->i_dentry_ = root_dentry;
   root_dentry->setInode ( root_inode );
 
-  all_inodes_.push_back ( root_inode );
-  all_inodes_set_[((MinixFSInode*)root_inode)->i_num_] = root_inode;
+  all_inodes_add_inode( root_inode );
   //read children from disc
   root_inode->loadChildren();
 
@@ -179,7 +181,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
     writeInode ( inode );
 
     debug ( M_SB,"~MinixSuperblock inode written to disc\n" );
-    all_inodes_.remove ( inode );
+    all_inodes_remove_inode( inode );
     Dentry* dentry = inode->getDentry();
 
     debug ( M_SB,"~MinixSuperblock deleteing denty->getName() : %s\n",dentry->getName() );
@@ -212,8 +214,7 @@ Inode* MinixFSSuperblock::createInode ( Dentry* dentry, uint32 type )
   debug ( M_SB,"createInode> acquired inode %d mode: %d\n", i_num,mode );
   Inode *inode = ( Inode* ) ( new MinixFSInode ( this, mode, 0, 0, 0, 0, 0, zones, i_num ) );
   debug ( M_SB,"createInode> created Inode\n" );
-  all_inodes_.push_back ( inode );
-  all_inodes_set_[((MinixFSInode*)inode)->i_num_] = inode;
+  all_inodes_add_inode( inode );
   debug ( M_SB,"createInode> calling write Inode to Disc\n" );
   writeInode ( inode );
   debug ( M_SB,"createInode> returned from write Inode to Disc\n" );
@@ -294,6 +295,18 @@ void MinixFSSuperblock::writeInode ( Inode* inode )
 }
 
 
+void MinixFSSuperblock::all_inodes_add_inode ( Inode* inode )
+{
+  all_inodes_.push_back ( inode );
+  all_inodes_set_[((MinixFSInode*)inode)->i_num_] = inode;
+}
+
+void MinixFSSuperblock::all_inodes_remove_inode( Inode* inode )
+{
+  all_inodes_.remove ( inode );
+  all_inodes_set_.erase(((MinixFSInode*)inode)->i_num_);
+}
+
 void MinixFSSuperblock::delete_inode ( Inode* inode )
 {
   Dentry* dentry = inode->getDentry();
@@ -303,9 +316,8 @@ void MinixFSSuperblock::delete_inode ( Inode* inode )
   {
     dirty_inodes_.remove ( inode );
   }
-  all_inodes_.remove ( inode );
-  all_inodes_set_.erase(((MinixFSInode*)inode)->i_num_);
   MinixFSInode *minix_inode = ( MinixFSInode * ) inode;
+  all_inodes_remove_inode(minix_inode);
   assert ( minix_inode->i_files_.empty() );
   /*for ( uint32 index = 0; index < minix_inode->i_zones_->getNumZones(); index++ )
   {

@@ -453,7 +453,7 @@ void MinixFSInode::loadChildren()
         if(!is_already_loaded)
         {
           ((MinixFSInode *)inode)->i_dentry_ = new_dentry;
-          ((MinixFSSuperblock *)i_superblock_)->all_inodes_.push_back(inode);
+          ((MinixFSSuperblock *)i_superblock_)->all_inodes_add_inode(inode);
         }
         else
           ((MinixFSInode *)inode)->other_dentries_.push_back(new_dentry);

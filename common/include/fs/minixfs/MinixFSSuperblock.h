@@ -75,6 +75,18 @@ class MinixFSSuperblock : public Superblock
     virtual void delete_inode ( Inode* inode );
 
     /**
+     * add an inode to the all_inodes_ data structures
+     * @param inode to add
+     */
+    void all_inodes_add_inode ( Inode* inode );
+
+    /**
+     * remove an inode to the all_inodes_ data structures
+     * @param inode to remove
+     */
+    void all_inodes_remove_inode( Inode* inode );
+
+    /**
      * create a file with the given flag and a file descriptor with the given inode.
      * @param inode the inode to link the file with
      * @param flag the flag to create the file with
@@ -167,6 +179,10 @@ class MinixFSSuperblock : public Superblock
      */
     int32 readBytes ( uint32 block, uint32 offset, uint32 size, char *buffer );
 
+    /**
+     * reads the fs header
+     */
+    void readHeader();
   private:
 
     /**
