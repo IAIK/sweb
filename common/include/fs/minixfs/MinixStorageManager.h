@@ -7,7 +7,6 @@
 
 #include "StorageManager.h"
 #include "types.h"
-#include "util/Buffer.h"
 #include "minix_fs_consts.h"
 
 class MinixFSSuperblock;
@@ -33,7 +32,7 @@ class MinixStorageManager : public StorageManager
      * @param num_inodes the max number of inodes
      * @param num_zones the max number of zones
      */
-    MinixStorageManager ( Buffer *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones );
+    MinixStorageManager ( char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones );
 
     /**
      * destructor

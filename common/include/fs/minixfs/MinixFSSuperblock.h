@@ -120,7 +120,7 @@ class MinixFSSuperblock : public Superblock
      * @param zone the zone index to read
      * @param buffer the buffer to write in
      */
-    void readZone ( uint16 zone, Buffer *buffer );
+    void readZone ( uint16 zone, char *buffer );
 
     /**
      * reads the given number of blocks from the file system to the given buffer
@@ -128,14 +128,14 @@ class MinixFSSuperblock : public Superblock
      * @param num_blocks the number of blcoks to read
      * @param buffer the buffer to write in
      */
-    void readBlocks ( uint16 block, uint32 num_blocks, Buffer *buffer );
+    void readBlocks ( uint16 block, uint32 num_blocks, char *buffer );
 
     /**
      * writes one zone from the given buffer to the file system
      * @param zone the zone index to write
      * @param buffer the buffer to write
      */
-    void writeZone ( uint16 zone, Buffer *buffer );
+    void writeZone ( uint16 zone, char *buffer );
 
     /**
      * writes the given number of blcoks to the file system from the given buffer
@@ -143,7 +143,7 @@ class MinixFSSuperblock : public Superblock
      * @param num_blocks the number of blocks to write
      * @param buffer the buffer to write
      */
-    void writeBlocks ( uint16 block, uint32 num_blocks, Buffer *buffer );
+    void writeBlocks ( uint16 block, uint32 num_blocks, char *buffer );
 
     /**
      * writes the given number of bytes to the filesystem
@@ -154,7 +154,7 @@ class MinixFSSuperblock : public Superblock
      * @param buffer the buffer with the bytes to write
      * @return the number of bytes written
      */
-    int32 writeBytes ( uint32 block, uint32 offset, uint32 size, Buffer *buffer );
+    int32 writeBytes ( uint32 block, uint32 offset, uint32 size, char *buffer );
 
     /**
      * reads the given number of bytes from the disc
@@ -165,7 +165,7 @@ class MinixFSSuperblock : public Superblock
      * @param buffer the buffer to write to
      * @return the number of bytes read
      */
-    int32 readBytes ( uint32 block, uint32 offset, uint32 size, Buffer *buffer );
+    int32 readBytes ( uint32 block, uint32 offset, uint32 size, char *buffer );
 
   private:
 

@@ -89,18 +89,18 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   uint32 start_zone = offset / ZONE_SIZE;
   uint32 zone_offset = offset % ZONE_SIZE;
   uint32 num_zones = (zone_offset + size) / ZONE_SIZE + 1;
-  Buffer rbuffer(ZONE_SIZE);
+  char rbuffer[ZONE_SIZE];
 
   uint32 index = 0;
   debug(M_INODE, "readData: zone: %d, zone_offset %d, num_zones: %d\n",start_zone,zone_offset,num_zones);
   for(uint32 zone = start_zone; zone < start_zone + num_zones; zone++)
   {
-    rbuffer.clear();
-    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &rbuffer);
+    ArchCommon::bzero((pointer)rbuffer,sizeof(rbuffer));
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
     uint32 count = size - index;
     uint32 zone_diff = ZONE_SIZE - zone_offset;
     count = count < zone_diff ? count : zone_diff;
-    ArchCommon::memcpy((pointer) buffer + index, (pointer) rbuffer.getBuffer() + zone_offset, count);
+    ArchCommon::memcpy((pointer) buffer + index, (pointer) rbuffer + zone_offset, count);
     index += count;
     zone_offset = 0;
   }
@@ -130,31 +130,31 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   {
     debug(M_INODE, "writeData: have to clean memory\n");
     uint32 zone_size_offset =  i_size_%ZONE_SIZE;
-    Buffer fill_buffer(ZONE_SIZE);
-    fill_buffer.clear();
+    char fill_buffer[ZONE_SIZE];
+    ArchCommon::bzero((pointer)fill_buffer,sizeof(fill_buffer));
     if (zone_size_offset)
     {
-      readData( i_size_-zone_size_offset, zone_size_offset, fill_buffer.getBuffer());
-      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, &fill_buffer);
+      readData( i_size_-zone_size_offset, zone_size_offset, fill_buffer);
+      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, fill_buffer);
     }
     ++last_used_zone;
     for (; last_used_zone <= offset/ZONE_SIZE; last_used_zone++)
     {
-      fill_buffer.clear();
-      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, &fill_buffer );
+      ArchCommon::bzero((pointer)fill_buffer,sizeof(fill_buffer));
+      ((MinixFSSuperblock *)i_superblock_)->writeZone( last_used_zone, fill_buffer );
     }
     --last_used_zone;
     i_size_ = offset;
   }
   uint32 zone_offset = offset%ZONE_SIZE;
-  Buffer* wbuffer = new Buffer(num_zones * ZONE_SIZE);
+  char* wbuffer = new char[num_zones * ZONE_SIZE];
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",offset-zone_offset,zone_offset);
-  readData( offset - zone_offset, num_zones * ZONE_SIZE, wbuffer->getBuffer());
-  wbuffer->memcpy(zone_offset, buffer, size);
+  readData( offset - zone_offset, num_zones * ZONE_SIZE, wbuffer);
+  memcpy(wbuffer + zone_offset, buffer, size);
   for(uint32 zone_index = 0; zone_index < num_zones; zone_index++)
   {
     debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n",zone_index,i_zones_->getZone(zone));
-    wbuffer->setOffset(zone_index*ZONE_SIZE);
+    wbuffer += zone_index*ZONE_SIZE;
     ((MinixFSSuperblock *)i_superblock_)->writeZone( i_zones_->getZone(zone_index + zone), wbuffer );
   }
   if(i_size_ < offset + size)
@@ -240,13 +240,13 @@ int32 MinixFSInode::mkfile(Dentry *dentry)
 int32 MinixFSInode::findDentry(uint32 i_num)
 {
   debug(M_INODE, "findDentry: i_num: %d\n",i_num);
-  Buffer dbuffer(ZONE_SIZE);
+  char dbuffer[ZONE_SIZE];
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
-    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &dbuffer);
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
     for(uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint16 inode_index = dbuffer.get2Bytes(curr_dentry);
+      uint16 inode_index = *(uint16*)(dbuffer + curr_dentry);
       if(inode_index == i_num)
       {
         debug(M_INODE, "findDentry: found pos: %d\n",(zone * ZONE_SIZE + curr_dentry));
@@ -268,12 +268,12 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
     i_zones_->addZone(((MinixFSSuperblock *)i_superblock_)->allocateZone());
     dentry_pos = (i_zones_->getNumZones() - 1) * ZONE_SIZE;
   }
-  Buffer dbuffer(ZONE_SIZE);
+  char dbuffer[ZONE_SIZE];
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
-  ((MinixFSSuperblock *)i_superblock_)->readZone(zone, &dbuffer);
-  dbuffer.set2Bytes(dentry_pos % ZONE_SIZE, src_i_num);
-  strncpy(dbuffer.getBuffer() + dentry_pos % ZONE_SIZE + 2, name, MAX_NAME_LENGTH);
-  ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, &dbuffer);
+  ((MinixFSSuperblock *)i_superblock_)->readZone(zone, dbuffer);
+  *(uint16*)(dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
+  strncpy(dbuffer + dentry_pos % ZONE_SIZE + 2, name, MAX_NAME_LENGTH);
+  ((MinixFSSuperblock *)i_superblock_)->writeZone(zone, dbuffer);
 
   if(dest_i_num == 0 && i_size_ < (uint32)dentry_pos + DENTRY_SIZE)
     i_size_ += DENTRY_SIZE;
@@ -418,13 +418,13 @@ void MinixFSInode::loadChildren()
     debug(M_INODE, "loadChildren: Children allready loaded\n");
     return;
   }
-  Buffer dbuffer(ZONE_SIZE);
+  char dbuffer[ZONE_SIZE];
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
-    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), &dbuffer);
+    ((MinixFSSuperblock *)i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
     for(uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint16 inode_index = dbuffer.get2Bytes(curr_dentry);
+      uint16 inode_index = *(uint16*)(dbuffer + curr_dentry);
       if(inode_index)
       {
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
@@ -442,7 +442,7 @@ void MinixFSInode::loadChildren()
         }
 
         char name[MAX_NAME_LENGTH+1];
-        strncpy(name, dbuffer.getBuffer() + curr_dentry + 2, MAX_NAME_LENGTH);
+        strncpy(name, dbuffer + curr_dentry + 2, MAX_NAME_LENGTH);
 
         name[MAX_NAME_LENGTH] = 0;
 

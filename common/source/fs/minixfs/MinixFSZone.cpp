@@ -8,7 +8,7 @@
 #include "console/kprintf.h"
 
 #include "fs/minixfs/minix_fs_consts.h"
-
+#include "ArchCommon.h"
 
 MinixFSZone::MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones )
 {
@@ -21,12 +21,12 @@ MinixFSZone::MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones )
       ++num_zones_;
     debug ( M_ZONE,"zone: %x\t", zones[i] );
   }
-  Buffer buffer( ZONE_SIZE );
-  uint16* temp = (uint16*) buffer.getBuffer();
+  char buffer[ZONE_SIZE];
+  uint16* temp = (uint16*) buffer;
   if ( zones[7] )
   {
     indirect_zones_ = new zone_add_type[NUM_ZONE_ADDRESSES];
-    superblock_->readZone ( zones[7], &buffer );
+    superblock_->readZone ( zones[7], buffer );
     for (uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++)
     {
       indirect_zones_[i] = temp[i];
@@ -42,15 +42,15 @@ MinixFSZone::MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones )
   {
     double_indirect_zones_ = new zone_add_type*[NUM_ZONE_ADDRESSES];
     double_indirect_linking_zone_ = new zone_add_type[NUM_ZONE_ADDRESSES];
-    superblock_->readZone ( zones[8], &buffer );
-    Buffer ind_buffer( ZONE_SIZE );
-    uint16* ind_temp = (uint16*) ind_buffer.getBuffer();
+    superblock_->readZone ( zones[8], buffer );
+    char ind_buffer[ZONE_SIZE];
+    uint16* ind_temp = (uint16*) ind_buffer;
     for ( uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++ )
     {
       double_indirect_linking_zone_[ind_zone] = temp[ind_zone];
       if ( double_indirect_linking_zone_[ind_zone] )
       {
-        superblock_->readZone ( double_indirect_linking_zone_[ind_zone], &ind_buffer );
+        superblock_->readZone ( double_indirect_linking_zone_[ind_zone], ind_buffer );
         double_indirect_zones_[ind_zone] = new zone_add_type[NUM_ZONE_ADDRESSES];
 
         for ( uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES; d_ind_zone++ )
@@ -188,47 +188,47 @@ void MinixFSZone::addZone ( zone_add_type zone )
 void MinixFSZone::flush ( uint32 i_num )
 {
   debug ( M_ZONE, "MinixFSZone::flush i_num : %d; %x\n",i_num, this );
-  Buffer buffer( 18 );
+  char buffer[18];
   for ( uint32 index = 0; index < 9; index++ )
   {
-    buffer.set2Bytes ( index * 2, direct_zones_[index] );
+    *(uint16*)(buffer + index * 2) = direct_zones_[index];
   }
   uint32 block = 2 + superblock_->s_num_inode_bm_blocks_ + superblock_->s_num_zone_bm_blocks_ + ( ( i_num - 1 ) * INODE_SIZE ) / BLOCK_SIZE;
-  superblock_->writeBytes ( block, ( ( i_num - 1 ) * INODE_SIZE ) % BLOCK_SIZE + 14, 18, &buffer );
+  superblock_->writeBytes ( block, ( ( i_num - 1 ) * INODE_SIZE ) % BLOCK_SIZE + 14, 18, buffer );
   debug ( M_ZONE,"MinixFSZone::flush direct written\n" );
   if ( direct_zones_[7] )
   {
-    Buffer ind_buffer( ZONE_SIZE );
+    char ind_buffer[ZONE_SIZE];
     debug ( M_ZONE,"MinixFSZone::flush writing indirect\n" );
     assert ( indirect_zones_ );
-    ind_buffer.clear();
+    ArchCommon::bzero((pointer)ind_buffer,sizeof(ind_buffer));
     for ( uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++ )
     {
-      ind_buffer.set2Bytes ( i*2, indirect_zones_[i] );
+      *(uint16*)(ind_buffer + i*2) = indirect_zones_[i];
     }
-    superblock_->writeZone ( direct_zones_[7], &ind_buffer );
+    superblock_->writeZone ( direct_zones_[7], ind_buffer );
   }
 
   if ( direct_zones_[8] )
   {
-    Buffer dbl_ind_buffer( ZONE_SIZE );
+    char dbl_ind_buffer[ZONE_SIZE];
     assert ( double_indirect_linking_zone_ );
     assert ( double_indirect_zones_ );
     for ( uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++ )
     {
-      dbl_ind_buffer.set2Bytes ( ind_zone*2, double_indirect_linking_zone_[ind_zone] );
+      *(uint16*)(dbl_ind_buffer + ind_zone*2) = double_indirect_linking_zone_[ind_zone];
     }
-    superblock_->writeZone ( direct_zones_[8], &dbl_ind_buffer );
+    superblock_->writeZone ( direct_zones_[8], dbl_ind_buffer );
     for ( uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++ )
     {
       if ( double_indirect_linking_zone_[ind_zone] )
       {
-        dbl_ind_buffer.clear();
+        ArchCommon::bzero((pointer)dbl_ind_buffer,sizeof(dbl_ind_buffer));
         for ( uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES; d_ind_zone++ )
         {
-          dbl_ind_buffer.set2Bytes ( d_ind_zone*2, double_indirect_zones_[ind_zone][d_ind_zone] );
+          *(uint16*)(dbl_ind_buffer + d_ind_zone*2) = double_indirect_zones_[ind_zone][d_ind_zone];
         }
-        superblock_->writeZone ( double_indirect_linking_zone_[ind_zone], &dbl_ind_buffer );
+        superblock_->writeZone ( double_indirect_linking_zone_[ind_zone], dbl_ind_buffer );
       }
     }
   }
