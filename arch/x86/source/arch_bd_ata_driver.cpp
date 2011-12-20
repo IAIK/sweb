@@ -223,7 +223,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   uint32 counter;
   for (counter = 0; counter != count2; counter++) 
-      outwp ( port, word_buff [counter] );
+      outw ( port, word_buff [counter] );
 
   return 0;
 }
@@ -375,7 +375,7 @@ void ATADriver::serviceIRQ()
       }
 	
       for(counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
-        outwp ( port, word_buff [counter] );
+        outw ( port, word_buff [counter] );
 
       br->setBlocksDone( blocks_done );
     }
