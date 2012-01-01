@@ -48,6 +48,18 @@ class FileDescriptor
      * @return the file
      */
     File* getFile() { return file_; }
+
+    /**
+     * add fd to global fd list
+     * @param fd
+     */
+    static void add(FileDescriptor* fd);
+
+    /**
+     * remove fd from global fd list
+     * @param fd
+     */
+    static void remove(FileDescriptor* fd);
 };
 
 #endif // FILEDESCRIPTOR_H_

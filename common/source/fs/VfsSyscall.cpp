@@ -29,13 +29,14 @@ VfsSyscall vfs_syscall;
 
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
+  extern Mutex global_fd_lock;
   FileDescriptor* file_descriptor = 0;
-  uint32 num = global_fd.size();
-  for (uint32 counter = 0; counter < num; counter++)
+  MutexLock mlock(global_fd_lock);
+  for (ustl::list<FileDescriptor*>::iterator it = global_fd.begin(); it != global_fd.end(); it++)
   {
-    if (global_fd.at(counter)->getFd() == fd)
+    if ((*it)->getFd() == fd)
     {
-      file_descriptor = global_fd.at(counter);
+      file_descriptor = *it;
       debug(VFSSYSCALL, "found the fd\n");
       break;
     }

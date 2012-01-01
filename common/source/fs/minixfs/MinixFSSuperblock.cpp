@@ -341,7 +341,7 @@ int32 MinixFSSuperblock::createFd ( Inode* inode, uint32 flag )
   File* file = inode->link ( flag );
   FileDescriptor* fd = new FileDescriptor ( file );
   s_files_.push_back ( fd );
-  global_fd.push_back ( fd );
+  FileDescriptor::add(fd);
 
   if ( ustl::find(used_inodes_, inode ) == used_inodes_.end() )
   {
@@ -358,7 +358,7 @@ int32 MinixFSSuperblock::removeFd ( Inode* inode, FileDescriptor* fd )
   assert ( fd );
 
   s_files_.remove ( fd );
-  global_fd.remove(fd);
+  FileDescriptor::remove(fd);
 
   File* file = fd->getFile();
   int32 tmp = inode->unlink ( file );

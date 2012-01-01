@@ -131,7 +131,7 @@ int32 DeviceFSSuperBlock::createFd ( Inode* inode, uint32 flag )
   File* file = inode->link ( flag );
   FileDescriptor* fd = new FileDescriptor ( file );
   s_files_.push_back ( fd );
-  global_fd.push_back ( fd );
+  FileDescriptor::add(fd);
 
   if ( ustl::find(used_inodes_, inode ) == used_inodes_.end())
   {
