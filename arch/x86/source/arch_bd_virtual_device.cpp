@@ -36,6 +36,7 @@ Inode( 0, I_BLOCKDEVICE )
 
 void BDVirtualDevice::addRequest(BDRequest * command) 
 {
+  assert(command->getBuffer());
   command->setResult( 5 );
   switch( command->getCmd() )
   {
@@ -62,6 +63,7 @@ void BDVirtualDevice::addRequest(BDRequest * command)
 
 int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
+   assert(buffer);
    assert(offset % block_size_ == 0);
    assert(size % block_size_ == 0);
    debug(BD_VIRT_DEVICE, "readData\n");

@@ -211,6 +211,7 @@ void Scheduler::yield()
   {
     kprintfd ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n", currentThread, currentThread->name_ );
     kprintf ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n" );
+    currentThread->printBacktrace();
   }
   ArchThreads::yield();
 }

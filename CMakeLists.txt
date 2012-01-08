@@ -276,7 +276,7 @@ add_custom_target(bochsgdb
 #Custom target: make kvm
 #Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND kvm -hda SWEB-flat.vmdk -debugcon /dev/stdout
+        COMMAND qemu -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
         COMMENT "Going to kvm -hda SWEB-flat.vmdk -debugcon /dev/stdout"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMAND reset -I

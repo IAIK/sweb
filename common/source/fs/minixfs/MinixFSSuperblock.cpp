@@ -387,6 +387,7 @@ uint16 MinixFSSuperblock::allocateZone()
 
 void MinixFSSuperblock::readZone ( uint16 zone, char* buffer )
 {
+  assert(buffer);
   //assert ( buffer->getSize() >= ZONE_SIZE );
   readBlocks ( zone, ZONE_SIZE/BLOCK_SIZE, buffer );
 }
@@ -394,6 +395,7 @@ void MinixFSSuperblock::readZone ( uint16 zone, char* buffer )
 
 void MinixFSSuperblock::readBlocks ( uint16 block, uint32 num_blocks, char* buffer )
 {
+  assert(buffer);
   //assert ( buffer->getSize() >= BLOCK_SIZE * num_blocks );
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber ( s_dev_ );
   bdvd->readData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);

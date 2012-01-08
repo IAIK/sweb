@@ -74,6 +74,7 @@ MinixFSInode::~MinixFSInode()
 
 int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
 {
+  assert(buffer);
   debug(M_INODE, "readData: offset: %d, size; %d,i_size_: %d\n",offset,size,i_size_);
   if((size + offset) > i_size_)
   {

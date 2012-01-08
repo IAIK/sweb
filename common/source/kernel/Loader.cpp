@@ -476,7 +476,16 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 
   //read once the bytes we need (and a few more, probably, depends on elf-format)
   uint32 buffersize = max_value - min_value + 1;
-  char *buffer = new char[buffersize];
+  char* buffer = 0;
+  char page_buffer[PAGE_SIZE];
+  if (buffersize <= PAGE_SIZE)
+  {
+    buffer = page_buffer;
+  }
+  else
+  {
+    buffer = new char[buffersize];
+  }
   debug(PM, "buffer is %d bytes long\n", buffersize);
 
   if(!buffer)
@@ -495,7 +504,8 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
     //free buffer
-    delete[] buffer;
+    if (buffersize > PAGE_SIZE)
+      delete[] buffer;
     Syscall::exit ( 9998 );
   }
   page = PageManager::instance()->getFreePhysicalPage();
@@ -529,7 +539,8 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     written += part.length;
   }
 
-  delete[] buffer;
+  if (buffersize > PAGE_SIZE)
+    delete[] buffer;
 
   ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
   debug ( PM,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
