@@ -19,8 +19,15 @@ Mutex::Mutex() :
 {
 }
 
-bool Mutex::acquireNonBlocking()
+bool Mutex::acquireNonBlocking(char* debug_info)
 {
+  if (held_by_ == currentThread && currentThread != 0)
+  {
+    kprintfd("Mutex::acquire: Deadlock: Mutex (%x) already held by currentThread (%x)\n", this, currentThread);
+    if (debug_info)
+      kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
+    assert(false);
+  }
   if(!spinlock_.acquireNonBlocking())
       return false;
 
@@ -30,6 +37,8 @@ bool Mutex::acquireNonBlocking()
     {
       kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list\n"
                  "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName() );
+      if (debug_info)
+        kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
       assert(false);
     }
 
@@ -41,8 +50,15 @@ bool Mutex::acquireNonBlocking()
   return true;
 }
 
-void Mutex::acquire()
+void Mutex::acquire(char* debug_info)
 {
+  if (held_by_ == currentThread && currentThread != 0)
+  {
+    kprintfd("Mutex::acquire: Deadlock: Mutex (%x) already held by currentThread (%x)\n", this, currentThread);
+    if (debug_info)
+      kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
+    assert(false);
+  }
   spinlock_.acquire();
   while ( ArchThreads::testSetLock ( mutex_,1 ) )
   {
@@ -50,6 +66,8 @@ void Mutex::acquire()
     {
       kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list\n"
                  "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName() );
+      if (debug_info)
+        kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
       assert(false);
     }
 

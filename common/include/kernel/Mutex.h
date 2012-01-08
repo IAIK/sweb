@@ -39,6 +39,9 @@ class Thread;
  */
 class Mutex
 {
+  friend class Condition;
+  friend class Scheduler;
+
   public:
 
     /**
@@ -51,7 +54,7 @@ class Mutex
      *acquireNonBlocking() immediately returns True or False, depending on whether the Lock
      *was acquired successfully or already held by another Thread.
      */
-    bool acquireNonBlocking();
+    bool acquireNonBlocking(char* debug_info = 0);
 
     /**
      *acquire sets the Lock and must be called at the start of
@@ -59,7 +62,7 @@ class Mutex
      *can not be run by two threads at the same time.
      *Threads calling acquire on a already set lock, will be put to sleep
      */
-    void acquire();
+    void acquire(char* debug_info = 0);
 
     /**
      *release frees the Lock. It must be called at the end of
@@ -80,10 +83,6 @@ class Mutex
      */
     bool isFree();
 
-  protected:
-    friend class Condition;
-    friend class Scheduler;
-
     /**
      *Returns if the lock is held by the Thread, that means,
      *if the Thread has currently acquired and not yet released this lock
@@ -94,7 +93,6 @@ class Mutex
     {
       return ( held_by_==thread );
     }
-
 
   private:
 
