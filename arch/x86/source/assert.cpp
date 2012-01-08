@@ -7,7 +7,9 @@
 #include "kprintf.h"
 #include "panic.h"
 #include "debug_bochs.h"
+#include "Thread.h"
 
+extern Thread* currentThread;
 
 void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
 {
@@ -56,6 +58,8 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
     }
     writeLine2Bochs((uint8*) line_string);
     writeChar2Bochs((uint8) '\n');
+    if (currentThread != 0)
+      currentThread->printBacktrace();
     for ( ; ;) ;
   }
 }
