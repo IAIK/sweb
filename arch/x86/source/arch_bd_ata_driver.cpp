@@ -34,7 +34,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
   }
 
   for (dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
-    dd [dd_off] = inwp ( port );
+    dd [dd_off] = inw ( port );
 
   debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
 
@@ -161,7 +161,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   uint32 counter;
   uint16 *word_buff = (uint16 *) buffer;
   for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
-      word_buff [counter] = inwp ( port );
+      word_buff [counter] = inw ( port );
 
   //debug(ATA_DRIVER, "readSector:Read successfull !!\n");
   return 0;  
@@ -223,7 +223,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   uint32 counter;
   for (counter = 0; counter != count2; counter++) 
-      outwp ( port, word_buff [counter] );
+      outw ( port, word_buff [counter] );
 
   return 0;
 }
@@ -336,7 +336,7 @@ void ATADriver::serviceIRQ()
     }
 
     for(counter = blocks_done * 256; counter!=(blocks_done + 1) * 256; counter++ )
-      word_buff [counter] = inwp ( port );
+      word_buff [counter] = inw ( port );
 
     blocks_done++;
     br->setBlocksDone( blocks_done );
@@ -375,7 +375,7 @@ void ATADriver::serviceIRQ()
       }
 	
       for(counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
-        outwp ( port, word_buff [counter] );
+        outw ( port, word_buff [counter] );
 
       br->setBlocksDone( blocks_done );
     }
