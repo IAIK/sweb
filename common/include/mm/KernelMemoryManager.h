@@ -159,6 +159,11 @@ class KernelMemoryManager
       else
         return true;
     }
+
+    /**
+     * @return the thread holding the KMM Lock
+     */
+    Thread* KMMLockHeldBy();
   private:
 
     //WARNING: we really have to own that memory from start to end, nothing must be there
@@ -231,6 +236,7 @@ class KernelMemoryManager
       if ( likely ( use_spinlock_ ) )
         lock_.release();
     }
+
     bool use_spinlock_;
     SpinLock lock_;
 

@@ -94,6 +94,16 @@ class Mutex
       return ( held_by_==thread );
     }
 
+    /**
+     * Returns the thread holding the lock
+     *
+     * @return the thread holding the lock
+     */
+    Thread* heldBy()
+    {
+      return held_by_;
+    }
+
   private:
 
     uint32 mutex_;

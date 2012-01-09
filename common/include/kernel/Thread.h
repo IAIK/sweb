@@ -24,6 +24,8 @@ class Thread
     friend class Scheduler;
   public:
 
+    static const char* threadStatePrintable[3];
+
     /**
      * Constructor
      * @return Thread instance

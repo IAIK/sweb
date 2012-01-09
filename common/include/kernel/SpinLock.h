@@ -59,6 +59,16 @@ class SpinLock
      */
     bool isFree();
 
+    /**
+     * Returns the thread holding the lock
+     *
+     * @return the thread holding the lock
+     */
+    Thread* heldBy()
+    {
+      return held_by_;
+    }
+
   private:
 
     /**
@@ -66,6 +76,7 @@ class SpinLock
       * since the spinlock is used by the KernelMemoryManager
       */
     uint32 nosleep_mutex_;
+    Thread *held_by_;
 
     /**
       * Copy Constructor - you _really_ don't want to copy a SpinLock!

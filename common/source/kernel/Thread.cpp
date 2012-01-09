@@ -15,6 +15,8 @@
 
 #define MAX_STACK_FRAMES 20
 
+const char* Thread::threadStatePrintable[3] = {"Running", "Sleeping", "ToBeDestroyed"};
+
 static void ThreadStartHack()
 {
   currentThread->setTerminal ( main_console->getActiveTerminal() );

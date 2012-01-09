@@ -273,12 +273,11 @@ void Scheduler::cleanupDeadThreads()
 
 void Scheduler::printThreadList()
 {
-  const char *thread_states[6]= {"Running", "Sleeping", "ToBeDestroyed", "Unknown", "Unknown", "Unknown"};
   uint32 c=0;
   lockScheduling();
   debug ( SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n",threads_.size() );
   for ( c=0; c<threads_.size();++c )
-    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),thread_states[threads_[c]->state_] );
+    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),Thread::threadStatePrintable[threads_[c]->state_] );
   unlockScheduling();
 }
 
@@ -302,8 +301,17 @@ void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
     arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLock: This "
                             "is meant to be used while Scheduler is locked\n" );
 
-  while ( ! KernelMemoryManager::instance()->isKMMLockFree() )
+  uint32 ticks = 0;
+  while ( ! KernelMemoryManager::instance()->isKMMLockFree())
   {
+    if (unlikely(++ticks > 5))
+    {
+      kprintfd("FATAL ERROR: Scheduler::waitForFreeKMMLock: KMM is locked since more than 50 ticks? There is definitely something wrong! Let's see who's the bad guy:\n");
+      Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
+      kprintfd("Thread: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      t->printBacktrace(true);
+      assert(false);
+    }
     unlockScheduling();
     yield();
     lockScheduling();

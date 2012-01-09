@@ -11,7 +11,7 @@
 #include "Thread.h"
 
 SpinLock::SpinLock() :
-  nosleep_mutex_(0)
+  nosleep_mutex_(0), held_by_(0)
 {
 }
 
@@ -23,6 +23,7 @@ bool SpinLock::acquireNonBlocking()
       kpanict ( ( uint8* ) "SpinLock::acquireNonBlocking: with IF=0 ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context ?\n" );
     return false;
   }
+  held_by_ = currentThread;
   return true;
 }
 
@@ -35,6 +36,7 @@ void SpinLock::acquire()
     //SpinLock: Simplest of Locks, do the next best thing to busy wating
     Scheduler::instance()->yield();
   }
+  held_by_ = currentThread;
 }
 
 bool SpinLock::isFree()
@@ -44,5 +46,6 @@ bool SpinLock::isFree()
 
 void SpinLock::release()
 {
+  held_by_ = 0;
   nosleep_mutex_ = 0;
 }

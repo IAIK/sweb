@@ -312,3 +312,8 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment ( MallocSegment *this_on
   }
   return false;
 }
+
+Thread* KernelMemoryManager::KMMLockHeldBy()
+{
+  return lock_.heldBy();
+}
