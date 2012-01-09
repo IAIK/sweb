@@ -63,6 +63,7 @@ void BDVirtualDevice::addRequest(BDRequest * command)
 
 int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
+   MutexLock mlock(lock_);
    assert(buffer);
    assert(offset % block_size_ == 0);
    assert(size % block_size_ == 0);
@@ -86,6 +87,7 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 
 int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
 {
+   MutexLock mlock(lock_);
    assert(offset % block_size_ == 0);
    assert(size % block_size_ == 0);
    debug(BD_VIRT_DEVICE, "writeData\n");

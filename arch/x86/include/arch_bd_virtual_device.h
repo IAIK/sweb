@@ -16,6 +16,7 @@
 #include "fs/Dentry.h"
 #include "fs/Superblock.h"
 #include "ustl/ulist.h"
+#include "Mutex.h"
 
 class BDVirtualDevice : public Inode
 {
@@ -163,7 +164,7 @@ class BDVirtualDevice : public Inode
      *
      */
     BDVirtualDevice();
-
+    Mutex lock_;
     uint32 dev_number_;
     uint32 block_size_;
     uint32 sector_size_;
