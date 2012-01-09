@@ -197,8 +197,11 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
   if (use_stored_registers)
     call_stack[i++] = thread->kernel_arch_thread_info_->eip;
 
+  void* kernel_start_address = (void*)0x80000000;
   while (i < size &&
-      ADDRESS_BETWEEN(CurrentFrame->return_address, 0x80000000, &kernel_end_address) &&
+      ADDRESS_BETWEEN(CurrentFrame->return_address, kernel_start_address, &kernel_end_address) &&
+      ADDRESS_BETWEEN(StackEnd, kernel_start_address, &kernel_end_address) &&
+      ADDRESS_BETWEEN(StackStart, kernel_start_address, &kernel_end_address) &&
       ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart))
   {
     call_stack[i++] = (pointer)CurrentFrame->return_address;

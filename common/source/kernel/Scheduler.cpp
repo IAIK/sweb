@@ -306,7 +306,7 @@ void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
   {
     if (unlikely(++ticks > 5))
     {
-      kprintfd("FATAL ERROR: Scheduler::waitForFreeKMMLock: KMM is locked since more than 50 ticks? There is definitely something wrong! Let's see who's the bad guy:\n");
+      kprintfd("FATAL ERROR: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? There is definitely something wrong! Let's see who's the bad guy:\n", ticks);
       Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
       kprintfd("Thread: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
       t->printBacktrace(true);
@@ -324,9 +324,18 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
     arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLockAndFreeSpinLock"
                             ": This is meant to be used while Scheduler is locked\n" );
 
+  uint32 ticks = 0;
   while ( ! KernelMemoryManager::instance()->isKMMLockFree() ||
           ! spinlock.isFree())
   {
+    if (unlikely(++ticks > 5))
+    {
+      kprintfd("FATAL ERROR: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? There is definitely something wrong! Let's see who's the bad guy:\n", ticks);
+      Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
+      kprintfd("Thread: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      t->printBacktrace(true);
+      assert(false);
+    }
     unlockScheduling();
     yield();
     lockScheduling();
