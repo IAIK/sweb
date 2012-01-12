@@ -304,13 +304,13 @@ void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
   uint32 ticks = 0;
   while ( ! KernelMemoryManager::instance()->isKMMLockFree())
   {
-    if (unlikely(++ticks > 5))
+    if (unlikely(++ticks > 50))
     {
-      kprintfd("FATAL ERROR: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? There is definitely something wrong! Let's see who's the bad guy:\n", ticks);
+      kprintfd("WARNING: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? Maybe there is something wrong!\n", ticks);
       Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
-      kprintfd("Thread: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
       t->printBacktrace(true);
-      assert(false);
+      //assert(false);
     }
     unlockScheduling();
     yield();
@@ -328,11 +328,11 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
   while ( ! KernelMemoryManager::instance()->isKMMLockFree() ||
           ! spinlock.isFree())
   {
-    if (unlikely(++ticks > 5))
+    if (unlikely(++ticks > 50))
     {
-      kprintfd("FATAL ERROR: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? There is definitely something wrong! Let's see who's the bad guy:\n", ticks);
+      kprintfd("WARNING: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? Maybe there is something wrong!\n", ticks);
       Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
-      kprintfd("Thread: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
       t->printBacktrace(true);
       assert(false);
     }
