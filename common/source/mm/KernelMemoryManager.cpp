@@ -183,7 +183,8 @@ void KernelMemoryManager::fillSegment ( MallocSegment *this_one, size_t requeste
   {
     if (mem[i] != 0)
     {
-      prenew_assert(false);
+      kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %x\n", mem + i);
+      break;
     }
   }
 
