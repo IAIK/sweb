@@ -334,7 +334,7 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
       Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
       kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
       t->printBacktrace(true);
-      assert(false);
+      //assert(false);
     }
     unlockScheduling();
     yield();
