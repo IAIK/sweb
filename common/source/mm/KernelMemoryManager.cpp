@@ -179,7 +179,7 @@ void KernelMemoryManager::fillSegment ( MallocSegment *this_one, size_t requeste
   prenew_assert ( this_one->marker_ == 0xdeadbeef );
   prenew_assert ( this_one->getSize() >= requested_size );
   uint8* mem = ((uint8*) this_one) + sizeof(MallocSegment);
-  for (uint32 i; i < requested_size; ++i)
+  for (uint32 i = 0; i < requested_size; ++i)
   {
     if (mem[i] != 0)
     {
