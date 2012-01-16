@@ -29,6 +29,8 @@ KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_ad
   last_=first_;
   use_spinlock_=false;
   debug ( KMM,"KernelMemoryManager::ctor: bytes avaible: %d \n",end_address-start_address );
+  ArchCommon::bzero((pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment));
+  debug(MAIN, "%x %x\n", start_address, end_address);
 }
 
 pointer KernelMemoryManager::allocateMemory ( size_t requested_size )
@@ -50,8 +52,10 @@ pointer KernelMemoryManager::private_AllocateMemory ( size_t requested_size )
   if ( new_pointer == 0 )
   {
     unlockKMM();
-    debug ( KMM,"KernelMemoryManager::allocateMemory: Not enough Memory left\n" );
-    debug ( KMM,"KernelMemoryManager::allocateMemory: Not enough Memory left\n" );
+    kprintfd("KernelMemoryManager::allocateMemory: Not enough Memory left\n" );
+    kprintfd("Are we having a memory leak in the kernel??\n" );
+    kprintfd("This might as well be caused by running too many threads/processes, which partially reside in the kernel.\n" );
+    assert(false);
     return 0;
   }
 
@@ -104,7 +108,7 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
 
   if ( new_size < m_segment->getSize() )
   {
-    fillSegment ( m_segment,new_size );
+    fillSegment ( m_segment,new_size,0 );
     if ( m_segment->next_ != 0 )
     {
       prenew_assert ( m_segment->next_->marker_ == 0xdeadbeef );
@@ -121,7 +125,7 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
               m_segment->next_->getSize() + m_segment->getSize() >= new_size )
       {
         mergeWithFollowingFreeSegment ( m_segment );
-        fillSegment(m_segment, new_size);
+        fillSegment(m_segment, new_size, 0);
         unlockKMM();
         return virtual_address;
       }
@@ -173,18 +177,26 @@ MallocSegment *KernelMemoryManager::findFreeSegment ( size_t requested_size )
   return 0;
 }
 
-void KernelMemoryManager::fillSegment ( MallocSegment *this_one, size_t requested_size )
+void KernelMemoryManager::fillSegment ( MallocSegment *this_one, size_t requested_size, uint32 zero_check )
 {
   prenew_assert ( this_one != 0 );
   prenew_assert ( this_one->marker_ == 0xdeadbeef );
   prenew_assert ( this_one->getSize() >= requested_size );
-  uint8* mem = ((uint8*) this_one) + sizeof(MallocSegment);
-  for (uint32 i = 0; i < requested_size; ++i)
+  uint32* mem = (uint32*) (this_one + 1);
+  if (zero_check)
   {
-    if (mem[i] != 0)
+    uint32 checked = 0;
+    for (uint32 i = 0; i < requested_size / 4; ++i)
     {
-      kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %x\n", mem + i);
-      break;
+      if (checked)
+      {
+        //kprintfd("%x\n", mem[i]);
+      }
+      else if (mem[i] != 0)
+      {
+        checked = 1;
+        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %x:\n", mem + i);
+      }
     }
   }
 

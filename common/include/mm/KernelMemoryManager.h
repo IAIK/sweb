@@ -185,8 +185,9 @@ class KernelMemoryManager
      * creates a new segment after the given one if the space is big enough
      * @param this_one the segment
      * @param size the size to used
+     * @param zero_check whether memory is zero'd
      */
-    void fillSegment ( MallocSegment *this_one, size_t size );
+    void fillSegment ( MallocSegment *this_one, size_t size, uint32 zero_check = 1 );
 
     /**
      * frees the given segment
