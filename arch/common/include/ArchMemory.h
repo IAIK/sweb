@@ -101,21 +101,25 @@ public:
 private:
 
 /** 
- * adds a PageTableEntry to the given PageDirectory
- * @param physical_page_directory_page Real Page where the PDE we want to ad a PTE
- * to, resides
- * @param pde_vpn The Virtual Page Number inside the PDE that shall point to our new
- * PTE
- * @param physical_page_table_page Real Page where the PTE we want to add, resides
+ * Adds a page directory entry to the given page directory.
+ * (In other words, adds the reference to a new page table to a given
+ * page directory.)
+ *
+ * @param physical_page_directory_page physical page containing the target PD.
+ * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
+ * @param physical_page_table_page physical page of the new page table.
  */
-  static void insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
+  static void insertPT(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
 
 /**
- * Removes a PageTableEntry from a PageDiretory if it was there in the first place
- * @param physical_page_directory_page Real Page where the PDE is
- * @param pde_vpn Virtual Page Number inside the PDE of the PTE we want to remove
+ * Removes a page directory entry from a given page directory if it is present
+ * in the first place. Futhermore, the target page table is assured to be
+ * empty.
+ *
+ * @param physical_page_directory_page physical page containing the target PD.
+ * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
  */
-  static void checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn);
+  static void checkAndRemovePT(uint32 physical_page_directory_page, uint32 pde_vpn);
 
 };
 

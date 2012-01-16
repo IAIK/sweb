@@ -302,3 +302,22 @@ void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
   }
   if (debug) kprintf_nosleep("Bzero end\n");
 }
+
+uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
+{
+  uint32 *src = (uint32*)ArchMemory::get3GBAddressOfPPN(physical_page_number);
+
+  uint32 poly = 0xEDB88320;
+  int bit = 0, nbits = 8;
+  uint32 res = 0xFFFFFFFF;
+
+  for (uint32 byte_nr = 0; byte_nr < page_size; ++byte_nr)
+    for (bit = nbits - 1; bit >= 0; --bit)
+      if ((res & 1) != ((src[byte_nr] >> bit) & 1))
+        res = (res >> 1) ^ poly;
+      else
+        res = (res >> 1) + 7;
+
+  res ^= 0xFFFFFFFF;
+  return res;
+}
