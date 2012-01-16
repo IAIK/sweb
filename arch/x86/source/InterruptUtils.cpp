@@ -44,11 +44,30 @@
 #define DPL_USER_SPACE       3 // userspaces's protection level
 
 #define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
+
+
+// --- Pagefault error flags.
+//     PF because/in/caused by/...
+
+#define FLAG_PF_PRESENT     0x01 // =0: pt/page not present
+                                 // =1: of protection violation
+
+#define FLAG_PF_RDWR        0x02 // =0: read access
+                                 // =1: write access
+
+#define FLAG_PF_USER        0x04 // =0: supervisormode (CPL < 3)
+                                 // =1: usermode (CPL == 3)
+
+#define FLAG_PF_RSVD        0x08 // =0: not a reserved bit
+                                 // =1: a reserved bit
+
+#define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
+                                 // =1: an instruction fetch (need PAE for that)
 //---------------------------------------------------------------------------*/
 struct GateDesc
 {
   uint16 offset_low;       // low word of handler entry point's address
-  uint16 segment_selector; // (code) segment selector the handler resides in
+  uint16 segment_selector; // (code) segment the handler resides in
   uint8 reserved  : 5;     // reserved. set to zero
   uint8 zeros     : 3;     // set to zero
   uint8 type      : 3;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
@@ -459,17 +478,14 @@ extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
   //--------Start "just for Debugging"-----------
-  uint32 const __attribute__((unused)) flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
-  uint32 const __attribute__((unused)) flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
-  uint32 const __attribute__((unused)) flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
-  uint32 const __attribute__((unused)) flag_rsvd = 0x1 << 3; // pf caused by reserved bits
-
 
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
-      address, error & flag_p, (error & flag_rw) >> 1, (error & flag_us) >> 2, (error & flag_rsvd) >> 3, currentThread, currentThread->getPID(),
+      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getPID(),
       currentThread->getName(), currentThread->switch_to_userspace_);
 
-  if (!(error & flag_us))
+  debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
+
+  if (!(error & FLAG_PF_USER))
   {
     // The PF happened in kernel mode? Cool, let's look up the function that caused it.
     // A word of warning: Due to the way the lookup is performed, we may be
@@ -490,11 +506,11 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 
   if (error)
   {
-    if (error&flag_p)
+    if (error & FLAG_PF_PRESENT)
     {
       debug(PM, "[PageFaultHandler] We got a pagefault even though the page mapping is present\n");
-      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & flag_us) ? "A userprogram" : "Some kernel code",
-        (error & flag_rw) ? "write to" : "read from", address);
+      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
+        (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
 
       page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_);
       uint32 virtual_page = address / PAGE_SIZE;
@@ -524,7 +540,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       if (address >= 2U*1024U*1024U*1024U)
       {
         debug(PM, "[PageFaultHandler] The virtual page we accessed was not mapped to a physical page\n");
-        if (error&flag_us)
+        if (error & FLAG_PF_USER)
         {
           debug(PM, "[PageFaultHandler] WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
           debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
@@ -557,15 +573,18 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchInterrupts::enableInterrupts();
 
   //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
+  if (! (error & FLAG_PF_PRESENT) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
   }
   else
   {
-    debug(PM, "[PageFaultHandler] !(error & flag_p): %x, address: %x, loader_: %x\n", !(error & flag_p), address < 2U*1024U*1024U*1024U, currentThread->loader_);
-    if (!((error & flag_us) >> 2))
+    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %x\n",
+        !(error & FLAG_PF_PRESENT), address < 2U*1024U*1024U*1024U, currentThread->loader_);
+
+    if (!(error & FLAG_PF_USER))
       currentThread->printBacktrace();
+
     if (currentThread->loader_)
       Syscall::exit(9999);
     else

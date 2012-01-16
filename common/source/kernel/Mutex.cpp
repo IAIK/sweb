@@ -83,7 +83,7 @@ void Mutex::acquire(const char* debug_info)
 void Mutex::release()
 {
   if (held_by_ != currentThread) // this is a mutex - not a binary semaphore!
-  { // ... and yes - I'm pretty sure, we are can safely do this without the spinlock.
+  { // ... and yes - I'm pretty sure, we can safely do this without the spinlock.
 
     kprintfd("\n\nMutex::release(): Mutex %s (%x) currently not held by currentThread!\n"
       "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", name_, this,
