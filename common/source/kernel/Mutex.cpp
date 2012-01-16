@@ -11,19 +11,20 @@
 #include "Thread.h"
 #include "panic.h"
 
-Mutex::Mutex() : 
+Mutex::Mutex(const char* name) :
   mutex_(0),
   sleepers_(),
   held_by_(0),
-  spinlock_()
+  spinlock_(),
+  name_(name ? name : "")
 {
 }
 
-bool Mutex::acquireNonBlocking(char* debug_info)
+bool Mutex::acquireNonBlocking(const char* debug_info)
 {
   if (held_by_ == currentThread && currentThread != 0)
   {
-    kprintfd("Mutex::acquire: Deadlock: Mutex (%x) already held by currentThread (%x)\n", this, currentThread);
+    kprintfd("Mutex::acquire: Deadlock: Mutex %s (%x) already held by currentThread (%x)\n", name_, this, currentThread);
     if (debug_info)
       kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
     assert(false);
@@ -35,8 +36,8 @@ bool Mutex::acquireNonBlocking(char* debug_info)
   {
     if(threadOnList(currentThread))
     {
-      kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list\n"
-                 "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName() );
+      kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
+                 "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
       if (debug_info)
         kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
       assert(false);
@@ -50,11 +51,11 @@ bool Mutex::acquireNonBlocking(char* debug_info)
   return true;
 }
 
-void Mutex::acquire(char* debug_info)
+void Mutex::acquire(const char* debug_info)
 {
   if (held_by_ == currentThread && currentThread != 0)
   {
-    kprintfd("Mutex::acquire: Deadlock: Mutex (%x) already held by currentThread (%x)\n", this, currentThread);
+    kprintfd("Mutex::acquire: Deadlock: Mutex %s (%x) already held by currentThread (%x)\n", name_, this, currentThread);
     if (debug_info)
       kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
     assert(false);
@@ -64,8 +65,8 @@ void Mutex::acquire(char* debug_info)
   {
     if(threadOnList(currentThread))
     {
-      kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list\n"
-                 "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName() );
+      kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
+                 "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
       if (debug_info)
         kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
       assert(false);
@@ -84,12 +85,12 @@ void Mutex::release()
   if (held_by_ != currentThread) // this is a mutex - not a binary semaphore!
   { // ... and yes - I'm pretty sure, we are can safely do this without the spinlock.
 
-    kprintfd("\n\nMutex::release(): Mutex <%x> currently not held by currentThread!\n"
-      "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", this,
+    kprintfd("\n\nMutex::release(): Mutex %s (%x) currently not held by currentThread!\n"
+      "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", name_, this,
      (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread);
 
-    kprintf("\n\nMutex::release(): Mutex <%x> currently not held by currentThread!\n"
-      "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", this,
+    kprintf("\n\nMutex::release(): Mutex %s (%x) currently not held by currentThread!\n"
+      "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", name_, this,
      (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread);
 
     return;

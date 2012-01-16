@@ -47,14 +47,14 @@ class Mutex
     /**
      *Constructor
      */
-    Mutex();
+    Mutex(const char* debug_name = 0);
 
     /**
      *like acquire, but instead of blocking the currentThread until the Lock is free
      *acquireNonBlocking() immediately returns True or False, depending on whether the Lock
      *was acquired successfully or already held by another Thread.
      */
-    bool acquireNonBlocking(char* debug_info = 0);
+    bool acquireNonBlocking(const char* debug_info = 0);
 
     /**
      *acquire sets the Lock and must be called at the start of
@@ -62,7 +62,7 @@ class Mutex
      *can not be run by two threads at the same time.
      *Threads calling acquire on a already set lock, will be put to sleep
      */
-    void acquire(char* debug_info = 0);
+    void acquire(const char* debug_info = 0);
 
     /**
      *release frees the Lock. It must be called at the end of
@@ -126,6 +126,8 @@ class Mutex
     Mutex &operator= ( Mutex const& );
 
     bool threadOnList(Thread *thread);
+
+    const char* name_;
 };
 
 
