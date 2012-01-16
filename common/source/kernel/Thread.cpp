@@ -12,6 +12,7 @@
 #include "console/Console.h"
 #include "console/Terminal.h"
 #include "backtrace.h"
+#include "mm/KernelMemoryManager.h"
 
 #define MAX_STACK_FRAMES 20
 
@@ -80,6 +81,7 @@ Thread::~Thread()
     fs_info_ = 0;
   }
   debug ( THREAD,"~Thread: done (%s)\n", name_ );
+  assert(KernelMemoryManager::instance()->KMMLockHeldBy() != this);
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return

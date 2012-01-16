@@ -21,8 +21,6 @@ uint32 KernelMemoryManager::createMemoryManager ( pointer start_address, pointer
 
 KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_address )
 {
-
-
   malloc_end_=end_address;
   prenew_assert ( ( ( end_address-start_address-sizeof ( MallocSegment ) ) & 0x80000000 ) == 0 );
   first_=new ( ( void* ) start_address ) MallocSegment ( 0,0,end_address-start_address-sizeof ( MallocSegment ),false );
@@ -140,6 +138,10 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
       //getting lost, although we could not allocate more memory 
 
       //just if you wonder: the KMM is already unlocked
+      kprintfd("KernelMemoryManager::reallocateMemory: Not enough Memory left\n" );
+      kprintfd("Are we having a memory leak in the kernel??\n" );
+      kprintfd("This might as well be caused by running too many threads/processes, which partially reside in the kernel.\n" );
+      assert(false);
       return 0;
     }
     ArchCommon::memcpy ( new_address,virtual_address, m_segment->getSize() );
