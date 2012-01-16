@@ -9,6 +9,7 @@
 #include "arch_bd_request.h"
 #include "arch_bd_driver.h"
 #include "arch_bd_io.h"
+#include "Mutex.h"
 
 class ATADriver : public BDDriver, bdio
 {
@@ -113,6 +114,8 @@ class ATADriver : public BDDriver, bdio
 
     BDRequest *request_list_;
     BDRequest *request_list_tail_;
+
+    Mutex lock_;
 };
 
 #endif

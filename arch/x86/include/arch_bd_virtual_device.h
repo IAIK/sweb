@@ -164,7 +164,6 @@ class BDVirtualDevice : public Inode
      *
      */
     BDVirtualDevice();
-    Mutex lock_;
     uint32 dev_number_;
     uint32 block_size_;
     uint32 sector_size_;
