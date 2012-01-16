@@ -138,7 +138,8 @@ void Thread::printBacktrace(bool use_stored_registers)
       this, use_stored_registers);
 
   debug(BACKTRACE, "=== Begin of backtrace for thread <%s> ===\n", getName());
-  debug(BACKTRACE, "   found <%d> stack %s:\n\n", Count, Count != 1 ? "frames" : "frame");
+  debug(BACKTRACE, "   found <%d> stack %s:\n", Count, Count != 1 ? "frames" : "frame");
+  debug(BACKTRACE, "\n");
 
   for (int i = 0; i < Count; ++i)
   {

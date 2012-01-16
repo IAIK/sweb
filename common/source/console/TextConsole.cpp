@@ -133,7 +133,9 @@ void TextConsole::handleKey ( uint32 key )
     return;
   }
 
-  if ( terminal_selected == 11 )
+  if (terminal_selected == 10)
+    Scheduler::instance()->printStackTraces();
+  else if ( terminal_selected == 11 )
     Scheduler::instance()->printThreadList();
 
   if ( key == '\b' )

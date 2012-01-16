@@ -6,6 +6,7 @@
 #include "ArchThreads.h"
 #include "mm/KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "ustl/umap.h"
+#include "ArchCommon.h"
 
 //-------------------------------------------------------------------------------------*/
 #define N_GSYM  0x20    /* global symbol: name,,0,type,0 */
@@ -197,12 +198,14 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
   if (use_stored_registers)
     call_stack[i++] = thread->kernel_arch_thread_info_->eip;
 
-  void* kernel_start_address = (void*)0x80000000;
+  void *StartAddress = (void*)0x80000000;
+  void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();
+
   while (i < size &&
-      ADDRESS_BETWEEN(CurrentFrame->return_address, kernel_start_address, &kernel_end_address) &&
-      ADDRESS_BETWEEN(StackEnd, kernel_start_address, &kernel_end_address) &&
-      ADDRESS_BETWEEN(StackStart, kernel_start_address, &kernel_end_address) &&
-      ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart))
+      ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
+      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
+      ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
+      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
   {
     call_stack[i++] = (pointer)CurrentFrame->return_address;
     CurrentFrame = CurrentFrame->previous_frame;

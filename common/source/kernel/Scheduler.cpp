@@ -389,8 +389,15 @@ void Scheduler::incTicks()
 
 void Scheduler::printStackTraces()
 {
-  debug(BACKTRACE, "printing the backtraces of %d threads:\n", threads_.size());
+  lockScheduling();
+  debug(BACKTRACE, "printing the backtraces of <%d> threads:\n", threads_.size());
 
   for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
+  {
     (*it)->printBacktrace(*it != currentThread);
+    debug(BACKTRACE, "\n");
+    debug(BACKTRACE, "\n");
+  }
+
+  unlockScheduling();
 }
