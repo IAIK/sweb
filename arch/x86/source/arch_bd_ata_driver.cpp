@@ -96,6 +96,7 @@ int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *
 
 int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
+  assert(buffer);
   MutexLock mlock(lock_);
   /* Wait for drive to clear BUSY */
   jiffies = 0;
@@ -170,6 +171,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
 int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer )
 {
+  assert(buffer);
   MutexLock mlock(lock_);
   /* Wait for drive to clear BUSY */
   jiffies = 0;
