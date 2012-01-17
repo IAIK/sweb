@@ -36,7 +36,6 @@ Inode( 0, I_BLOCKDEVICE )
 
 void BDVirtualDevice::addRequest(BDRequest * command) 
 {
-  assert(command->getBuffer());
   command->setResult( 5 );
   switch( command->getCmd() )
   {
