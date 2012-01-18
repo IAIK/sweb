@@ -242,7 +242,7 @@ typedef struct sELF32_Phdr ELF32_Phdr;
 {}*/
 
 Loader::Loader ( int32 fd, Thread *thread ) : page_dir_page_(0), fd_ ( fd ),
-    thread_ ( thread ), hdr_(0), phdrs_()
+    thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_")
 {
 }
 

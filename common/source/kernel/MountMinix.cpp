@@ -15,7 +15,7 @@ MountMinixAndStartUserProgramsThread::MountMinixAndStartUserProgramsThread
   Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ),
   progs_(progs),
   progs_running_(0),
-  counter_lock_(),
+  counter_lock_("MountMinixAndStartUserProgramsThread::counter_lock_"),
   all_processes_killed_(&counter_lock_)
 {
   instance_ = this; // instance_ is static! attention if you make changes in number of MountMinixThreads or similar

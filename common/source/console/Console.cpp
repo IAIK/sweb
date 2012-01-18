@@ -6,11 +6,11 @@
 
 Console* main_console=0;
 
-Console::Console ( uint32 ) : Thread("ConsoleThread")
+Console::Console ( uint32 ) : Thread("ConsoleThread"), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_")
 {
 }
 
-Console::Console ( uint32, const char* name ) : Thread(name)
+Console::Console ( uint32, const char* name ) : Thread(name), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_")
 {
 }
 

@@ -131,6 +131,11 @@ void Thread::setFSInfo ( FileSystemInfo *fs_info )
   fs_info_ = fs_info;
 }
 
+void Thread::printBacktrace()
+{
+  printBacktrace(currentThread != this);
+}
+
 void Thread::printBacktrace(bool use_stored_registers)
 {
   pointer CallStack[MAX_STACK_FRAMES];

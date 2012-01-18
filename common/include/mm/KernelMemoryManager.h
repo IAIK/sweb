@@ -223,20 +223,12 @@ class KernelMemoryManager
     /**
      * locks the kernel memory manager
      */
-    void lockKMM()
-    {
-      if ( likely ( use_spinlock_ ) )
-        lock_.acquire();
-    }
+    void lockKMM();
 
     /**
      * unlocks the kernel memory manager
      */
-    void unlockKMM()
-    {
-      if ( likely ( use_spinlock_ ) )
-        lock_.release();
-    }
+    void unlockKMM();
 
     bool use_spinlock_;
     SpinLock lock_;

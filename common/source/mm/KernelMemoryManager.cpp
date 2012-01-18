@@ -8,6 +8,8 @@
 #include "debug_bochs.h"
 #include "console/kprintf.h"
 #include "console/debug.h"
+#include "kernel/Scheduler.h"
+#include "ArchInterrupts.h"
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
@@ -331,4 +333,19 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment ( MallocSegment *this_on
 Thread* KernelMemoryManager::KMMLockHeldBy()
 {
   return lock_.heldBy();
+}
+
+void KernelMemoryManager::lockKMM()
+{
+  if ( likely ( use_spinlock_ ) )
+  {
+    assert(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled());
+    lock_.acquire();
+  }
+}
+
+void KernelMemoryManager::unlockKMM()
+{
+  if ( likely ( use_spinlock_ ) )
+    lock_.release();
 }

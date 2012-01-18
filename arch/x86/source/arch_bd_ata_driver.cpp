@@ -12,7 +12,7 @@
 #include "Scheduler.h"
 #include "kprintf.h"
 
-ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum )
+ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_("ATADriver::lock_")
 {
   debug(ATA_DRIVER, "ctor: Entered with irgnum %d and baseport %d!!\n", irqnum, baseport);
 
