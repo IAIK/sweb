@@ -3,6 +3,7 @@
  */
 #include "Console.h"
 #include "Terminal.h"
+#include "arch_keyboard_manager.h"
 
 Console* main_console=0;
 
@@ -24,6 +25,37 @@ void Console::unLockConsoleForDrawing()
 {
   locked_for_drawing_ = 0;
   console_lock_.release();
+}
+
+void Console::handleKey ( uint32 key )
+{
+  KeyboardManager * km = KeyboardManager::getInstance();
+
+  uint32 terminal_selected = key - KEY_F1;
+
+  if (km->isShift())
+  {
+    if (terminal_selected < getNumTerminals())
+      setActiveTerminal (terminal_selected);
+
+    return;
+  }
+
+// else...
+  switch (key)
+  {
+    case KEY_F11:
+      Scheduler::instance()->printStackTraces();
+       break;
+
+    case KEY_F12:
+      Scheduler::instance()->printThreadList();
+      break;
+
+    case '\b':
+      terminals_[active_terminal_]->backspace();
+      break;
+  }
 }
 
 uint32 Console::getNumTerminals() const

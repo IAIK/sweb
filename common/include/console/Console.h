@@ -136,6 +136,15 @@ class Console : public Thread
   protected:
 
     /**
+     * Handles special non displayable keys:
+     * F-keys for switching active terminals
+     * displaying threads list
+     * backspace
+     * @param key the key to handle
+     */
+    void handleKey ( uint32 key );
+
+    /**
      * not implemented here
      */
     virtual void consoleClearScreen() =0;

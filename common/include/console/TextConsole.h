@@ -28,15 +28,6 @@ class TextConsole : public Console
     virtual void Run();
 
     /**
-     * Handles special non displayable keys:
-     * F-keys for switching active terminals
-     * displaying threads list
-     * backspace
-     * @param key the key to handle
-     */
-    void handleKey ( uint32 );
-
-    /**
      * Checks if the given key is displayable.
      * @param key the key to check
      * @return true if displayable

@@ -184,28 +184,6 @@ void FrameBufferConsole::Run ( void )
   while ( 1 ); // until the end of time
 
 }
-void FrameBufferConsole::handleKey ( uint32 key )
-{
-  KeyboardManager * km = KeyboardManager::getInstance();
-
-  uint32 terminal_selected = ( key - KeyboardManager::KEY_F1 );
-
-  if ( terminal_selected < getNumTerminals() && km->isShift() )
-  {
-    setActiveTerminal ( terminal_selected );
-    return;
-  }
-
-  if (terminal_selected == 10)
-    Scheduler::instance()->printStackTraces();
-  else if ( terminal_selected == 11 )
-    Scheduler::instance()->printThreadList();
-
-  if ( key == '\b' )
-    terminals_[active_terminal_]->backspace();
-
-  return;
-}
 bool FrameBufferConsole::isDisplayable ( uint32 key )
 {
   return ( ( ( key & 127 ) >= ' ' ) || ( key == '\n' ) || ( key == '\b' ) );
