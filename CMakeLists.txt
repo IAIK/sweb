@@ -108,6 +108,7 @@ set(ENV{LIBRARY_NAMES})
 #Initialize CMake output directories
 set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
 set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
+set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
@@ -289,6 +290,13 @@ add_custom_target(qemu
 	COMMENT "Going to qemu -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
+	)
+
+#Custom target: make emu
+#Run qemu in emu mode
+add_custom_target(emu
+	COMMAND	cat emu.txt
+	WORKING_DIRECTORY ${UTILS_DIR}
 	)
 
 #Custom target: make qemu
