@@ -241,11 +241,11 @@ void Scheduler::cleanupDeadThreads()
     return;
 
   lockScheduling();
-  uint32 thread_count = threads_.size();
-  if (thread_count > 1024)
-    thread_count = 1024;
+  uint32 thread_count_max = threads_.size();
+  if (thread_count_max > 1024)
+    thread_count_max = 1024;
   Thread* destroy_list[thread_count];
-  thread_count = 0;
+  uint32 thread_count = 0;
   debug ( SCHEDULER,"cleanupDeadThreads: now running\n" );
   if ( kill_old_ )
   {
@@ -258,6 +258,8 @@ void Scheduler::cleanupDeadThreads()
         threads_.erase(threads_.begin() + i);
         --i;
       }
+      if (thread_count >= thread_count_max)
+        break;
     }
 
     kill_old_=false;
