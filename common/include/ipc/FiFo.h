@@ -90,7 +90,7 @@ class FiFo
 
 template <class T>
 FiFo<T>::FiFo ( uint32 inputb_size, uint8 flags )
-  : input_buffer_lock_(), something_to_read_( &input_buffer_lock_ ),
+  : input_buffer_lock_("FiFo input_buffer_lock_"), something_to_read_( &input_buffer_lock_ ),
     space_to_write_( &input_buffer_lock_ )
 {
   if ( inputb_size < 2 )

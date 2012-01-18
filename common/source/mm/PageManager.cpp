@@ -10,6 +10,7 @@
 #include "ArchMemory.h"
 #include "debug_bochs.h"
 #include "console/kprintf.h"
+#include "kernel/Scheduler.h"
 #include "ArchInterrupts.h"
 #include "assert.h"
 
@@ -180,7 +181,10 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
     return 0;
 
   if (lock_)
+  {
+    assert(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled());
     lock_->acquire();
+  }
 
   //first 1024 pages are the 4MiB for Kernel Space
   for (uint32 p=lowest_unreserved_page_; p<number_of_pages_; ++p)
@@ -202,7 +206,10 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
 void PageManager::freePage(uint32 page_number)
 {
   if (lock_)
+  {
+    assert(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled());
     lock_->acquire();
+  }
   if ( page_number >= lowest_unreserved_page_ && page_number < number_of_pages_ && page_usage_table_[page_number] != PAGE_RESERVED )
     page_usage_table_[page_number] = PAGE_FREE;
   if (lock_)

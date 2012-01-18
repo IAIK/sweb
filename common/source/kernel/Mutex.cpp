@@ -53,6 +53,7 @@ bool Mutex::acquireNonBlocking(const char* debug_info)
 
 void Mutex::acquire(const char* debug_info)
 {
+  //kprintfd_nosleep("Mutex::acquire %x %s, %s\n", this, name_, debug_info);
   if (held_by_ == currentThread && currentThread != 0)
   {
     kprintfd("Mutex::acquire: Deadlock: Mutex %s (%x) already held by currentThread (%x)\n", name_, this, currentThread);
@@ -61,6 +62,7 @@ void Mutex::acquire(const char* debug_info)
     assert(false);
   }
   spinlock_.acquire();
+
   while ( ArchThreads::testSetLock ( mutex_,1 ) )
   {
     if(threadOnList(currentThread))
@@ -76,12 +78,14 @@ void Mutex::acquire(const char* debug_info)
     Scheduler::instance()->sleepAndRelease ( spinlock_ );
     spinlock_.acquire();
   }
-  spinlock_.release();
+  assert(held_by_ == 0);
   held_by_=currentThread;
+  spinlock_.release();
 }
 
-void Mutex::release()
+void Mutex::release(const char* debug_info)
 {
+  //kprintfd_nosleep("Mutex::release %x %s, %s\n", this, name_, debug_info);
   if (held_by_ != currentThread) // this is a mutex - not a binary semaphore!
   { // ... and yes - I'm pretty sure, we can safely do this without the spinlock.
 
@@ -93,7 +97,7 @@ void Mutex::release()
       "held_by <%s (%x)> currentThread <%s (%x)>\n\n\n", name_, this,
      (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread);
 
-    return;
+    assert(false);
   }
 
   spinlock_.acquire();

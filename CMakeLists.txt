@@ -295,7 +295,7 @@ add_custom_target(qemu
 #Custom target: make emu
 #Run qemu in emu mode
 add_custom_target(emu
-	COMMAND	cat emu.txt
+	COMMAND	cat '${PROJECT_SOURCE_DIR}/utils/emu.txt'
 	WORKING_DIRECTORY ${UTILS_DIR}
 	)
 

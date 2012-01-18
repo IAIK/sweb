@@ -127,7 +127,7 @@ void startup()
   extern ustl::list<FileDescriptor*> global_fd;
   new (&global_fd) ustl::list<FileDescriptor*>();
   extern Mutex global_fd_lock;
-  new (&global_fd_lock) Mutex();
+  new (&global_fd_lock) Mutex("global_fd_lock");
 
   debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
   DeviceFSType *devfs = new DeviceFSType();

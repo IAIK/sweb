@@ -47,7 +47,7 @@ class Mutex
     /**
      *Constructor
      */
-    Mutex(const char* debug_name = 0);
+    Mutex(const char* name);
 
     /**
      *like acquire, but instead of blocking the currentThread until the Lock is free
@@ -69,7 +69,7 @@ class Mutex
      *a critical region, allowing other threads to execute code
      *in the critical region and to wake up the next sleeping thread.
      */
-    void release();
+    void release(const char* debug_info = 0);
 
     /**
      *allows us to check if the Lock is set or not.

@@ -116,7 +116,8 @@ class Thread
      * debug output.
      * @param use_stored_thread_info determines whether to use the stored or the current thread registers
      */
-    void printBacktrace(bool use_stored_registers = true);
+    void printBacktrace();
+    void printBacktrace(bool use_stored_registers);
 
   private:
 

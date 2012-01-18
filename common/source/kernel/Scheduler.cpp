@@ -241,23 +241,22 @@ void Scheduler::cleanupDeadThreads()
     return;
 
   lockScheduling();
-  waitForFreeKMMLock();
-  //List<Thread*> destroy_list;
-  ThreadList destroy_list;
+  uint32 thread_count = threads_.size();
+  if (thread_count > 1024)
+    thread_count = 1024;
+  Thread* destroy_list[thread_count];
+  thread_count = 0;
   debug ( SCHEDULER,"cleanupDeadThreads: now running\n" );
   if ( kill_old_ )
   {
-    //Thread *tmp_thread;
-    for(ThreadList::iterator it=threads_.begin(); it!=threads_.end(); /* see in braces */)
+    for(uint32 i = 0; i < threads_.size(); ++i)
     {
-      if((*it)->state_ == ToBeDestroyed)
+      Thread* tmp = threads_[i];
+      if(tmp->state_ == ToBeDestroyed)
       {
-        destroy_list.push_back(*it);
-        it = threads_.erase(it);
-      }
-      else
-      {
-        ++it;
+        destroy_list[thread_count++] = tmp;
+        threads_.erase(threads_.begin() + i);
+        --i;
       }
     }
 
@@ -265,9 +264,9 @@ void Scheduler::cleanupDeadThreads()
   }
   debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   unlockScheduling();
-  for(ThreadList::iterator it=destroy_list.begin(); it!=destroy_list.end(); ++it)
+  for(uint32 i = 0; i < thread_count; ++i)
   {
-    delete *it;
+    delete destroy_list[i];
   }
 }
 
@@ -309,7 +308,7 @@ void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
       kprintfd("WARNING: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? Maybe there is something wrong!\n", ticks);
       Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
       kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
-      t->printBacktrace(true);
+      t->printBacktrace();
       //assert(false);
     }
     unlockScheduling();
@@ -333,7 +332,7 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
       kprintfd("WARNING: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? Maybe there is something wrong!\n", ticks);
       Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
       kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
-      t->printBacktrace(true);
+      t->printBacktrace();
       //assert(false);
     }
     unlockScheduling();
@@ -394,7 +393,7 @@ void Scheduler::printStackTraces()
 
   for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
   {
-    (*it)->printBacktrace(*it != currentThread);
+    (*it)->printBacktrace();
     debug(BACKTRACE, "\n");
     debug(BACKTRACE, "\n");
   }

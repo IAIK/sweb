@@ -583,7 +583,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         !(error & FLAG_PF_PRESENT), address < 2U*1024U*1024U*1024U, currentThread->loader_);
 
     if (!(error & FLAG_PF_USER))
-      currentThread->printBacktrace();
+      currentThread->printBacktrace(true);
 
     if (currentThread->loader_)
       Syscall::exit(9999);

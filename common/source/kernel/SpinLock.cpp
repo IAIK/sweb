@@ -32,10 +32,11 @@ void SpinLock::acquire()
   while ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )
   {
     if ( unlikely ( ArchInterrupts::testIFSet() ==false ) )
-      kpanict ( ( uint8* ) "SpinLock::acquire: with IF=0 ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context ?\n" );
+      kpanict ( ( uint8* ) "SpinLock::acquireNonBlocking: with IF=0 ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context ?\n" );
     //SpinLock: Simplest of Locks, do the next best thing to busy wating
     Scheduler::instance()->yield();
   }
+  assert(held_by_ == 0);
   held_by_ = currentThread;
 }
 

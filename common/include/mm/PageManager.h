@@ -68,7 +68,7 @@ class PageManager
      * call this after initializing the KernelMemoryManager and before
      * starting Interrupts to ensure Mutual Exclusion
      */
-    void startUsingSyncMechanism() {lock_=new Mutex();}
+    void startUsingSyncMechanism() {lock_=new Mutex("PageManager::lock_");}
 
   private:
 

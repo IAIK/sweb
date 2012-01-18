@@ -11,7 +11,7 @@
 
 Terminal::Terminal ( char *name, Console *console, uint32 num_columns, uint32 num_rows ) : CharacterDevice ( name ),
     console_ ( console ), num_columns_ ( num_columns ), num_rows_ ( num_rows ), len_ ( num_rows * num_columns ),
-    current_column_ ( 0 ), current_state_ ( 0x93 ), active_ ( 0 )
+    current_column_ ( 0 ), current_state_ ( 0x93 ), active_ ( 0 ), mutex_("Terminal::mutex_")
 {
   characters_ = new uint8[len_];
   character_states_ = new uint8[len_];
