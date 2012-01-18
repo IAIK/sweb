@@ -339,7 +339,7 @@ void KernelMemoryManager::lockKMM()
 {
   if ( likely ( use_spinlock_ ) )
   {
-    assert(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled());
+    assert(ArchInterrupts::testIFSet());
     lock_.acquire();
   }
 }

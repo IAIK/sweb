@@ -62,6 +62,7 @@ void Mutex::acquire(const char* debug_info)
     assert(false);
   }
   spinlock_.acquire();
+
   while ( ArchThreads::testSetLock ( mutex_,1 ) )
   {
     if(threadOnList(currentThread))
@@ -77,8 +78,9 @@ void Mutex::acquire(const char* debug_info)
     Scheduler::instance()->sleepAndRelease ( spinlock_ );
     spinlock_.acquire();
   }
-  spinlock_.release();
+  assert(held_by_ == 0);
   held_by_=currentThread;
+  spinlock_.release();
 }
 
 void Mutex::release(const char* debug_info)

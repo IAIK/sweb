@@ -36,6 +36,7 @@ void SpinLock::acquire()
     //SpinLock: Simplest of Locks, do the next best thing to busy wating
     Scheduler::instance()->yield();
   }
+  assert(held_by_ == 0);
   held_by_ = currentThread;
 }
 
