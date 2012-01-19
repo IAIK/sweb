@@ -244,7 +244,7 @@ void Scheduler::cleanupDeadThreads()
   uint32 thread_count_max = threads_.size();
   if (thread_count_max > 1024)
     thread_count_max = 1024;
-  Thread* destroy_list[thread_count];
+  Thread* destroy_list[thread_count_max];
   uint32 thread_count = 0;
   debug ( SCHEDULER,"cleanupDeadThreads: now running\n" );
   if ( kill_old_ )
