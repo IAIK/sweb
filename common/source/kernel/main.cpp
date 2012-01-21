@@ -193,9 +193,9 @@ void startup()
 
   Scheduler::instance()->printThreadList();
 
-  boot_completed = 1;
 
   kprintf ( "Now enabling Interrupts...\n" );
+  boot_completed = 1;
   ArchInterrupts::enableInterrupts();
   
   Scheduler::instance()->yield();

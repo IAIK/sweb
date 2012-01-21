@@ -11,6 +11,8 @@
 #include "kernel/Scheduler.h"
 #include "ArchInterrupts.h"
 
+extern uint32 boot_completed;
+
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
 uint32 KernelMemoryManager::createMemoryManager ( pointer start_address, pointer end_address )
@@ -27,7 +29,6 @@ KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_ad
   prenew_assert ( ( ( end_address-start_address-sizeof ( MallocSegment ) ) & 0x80000000 ) == 0 );
   first_=new ( ( void* ) start_address ) MallocSegment ( 0,0,end_address-start_address-sizeof ( MallocSegment ),false );
   last_=first_;
-  use_spinlock_=false;
   debug ( KMM,"KernelMemoryManager::ctor: bytes avaible: %d \n",end_address-start_address );
   ArchCommon::bzero((pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment));
   debug(MAIN, "%x %x\n", start_address, end_address);
@@ -337,25 +338,15 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
-  if ( likely ( use_spinlock_ ) )
-    lock_.acquire();
+  lock_.acquire();
 }
 
 void KernelMemoryManager::unlockKMM()
 {
-  if ( likely ( use_spinlock_ ) )
-    lock_.release();
-}
-
-void KernelMemoryManager::startUsingSyncMechanism()
-{
-  use_spinlock_=true;
+  lock_.release();
 }
 
 bool KernelMemoryManager::isKMMLockFree()
 {
-  if ( likely ( use_spinlock_ ) )
-    return lock_.isFree();
-  else
-    return true;
+  return lock_.isFree();
 }

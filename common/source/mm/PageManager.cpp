@@ -27,11 +27,10 @@ void PageManager::createPageManager()
   instance_ = new PageManager();
 }
 
-PageManager::PageManager()
+PageManager::PageManager() : lock_("PageManager::lock_")
 {
   number_of_pages_ = 0;
   lowest_unreserved_page_ = 256; //physical memory <1MiB is reserved
-  lock_=0;
 
   uint32 i=0,k=0;
   uint32 num_mmaps = ArchCommon::getNumUseableMemoryRegions();
@@ -180,11 +179,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
   if (type == PAGE_FREE || type == PAGE_RESERVED)  //what a stupid thing that would be to do
     return 0;
 
-  if (lock_)
-  {
-    assert(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled());
-    lock_->acquire();
-  }
+  lock_.acquire();
 
   //first 1024 pages are the 4MiB for Kernel Space
   for (uint32 p=lowest_unreserved_page_; p<number_of_pages_; ++p)
@@ -192,26 +187,19 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
     if (page_usage_table_[p] == PAGE_FREE)
     {
       page_usage_table_[p] = type;
-      if (lock_)
-        lock_->release();
+      lock_.release();
       return p;
     }
   }
-  if (lock_)
-    lock_->release();
+  lock_.release();
   arch_panic((uint8*) "PageManager: Sorry, no more Pages Free !!!");
   return 0;
 }
 
 void PageManager::freePage(uint32 page_number)
 {
-  if (lock_)
-  {
-    assert(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled());
-    lock_->acquire();
-  }
+  lock_.acquire();
   if ( page_number >= lowest_unreserved_page_ && page_number < number_of_pages_ && page_usage_table_[page_number] != PAGE_RESERVED )
     page_usage_table_[page_number] = PAGE_FREE;
-  if (lock_)
-    lock_->release();
+  lock_.release();
 }
