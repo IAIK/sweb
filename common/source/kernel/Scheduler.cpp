@@ -85,14 +85,13 @@ Scheduler::Scheduler()
 {
   kill_old_=false;
   block_scheduling_=0;
-  block_scheduling_extern_=0;
   ticks_=0;
 }
 
 void Scheduler::addNewThread ( Thread *thread )
 {
-  lockScheduling();
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
+  lockScheduling();
   waitForFreeKMMLock();
   threads_.push_back ( thread );
   unlockScheduling();
@@ -100,8 +99,8 @@ void Scheduler::addNewThread ( Thread *thread )
 
 void Scheduler::removeCurrentThread()
 {
-  lockScheduling();
   debug ( SCHEDULER,"removeCurrentThread: %x %d:%s, threads_.size() %d\n",currentThread,currentThread->getPID(),currentThread->getName(),threads_.size() );
+  lockScheduling();
   waitForFreeKMMLock();
   if ( threads_.size() > 1 )
   {
@@ -113,10 +112,7 @@ void Scheduler::removeCurrentThread()
 void Scheduler::sleep()
 {
   currentThread->state_=Sleeping;
-  //if we somehow stupidly go to sleep, block is automatically removed
-  //we might break a lock in doing so, but that's still better than having no chance
-  //of recovery whatsoever.
-  unlockScheduling();
+  assert(block_scheduling_ == 0);
   yield();
 }
 
@@ -147,8 +143,8 @@ void Scheduler::sleepAndRestoreInterrupts ( bool interrupts )
   currentThread->state_=Sleeping;
   if ( interrupts )
   {
+    assert(block_scheduling_ == 0);
     ArchInterrupts::enableInterrupts();
-    assert ( block_scheduling_extern_==0 );
     yield();
   }
 }
@@ -160,7 +156,7 @@ void Scheduler::wake ( Thread* thread_to_wake )
 
 uint32 Scheduler::schedule()
 {
-  if ( testLock() || block_scheduling_extern_>0 )
+  if (block_scheduling_ != 0)
   {
     //no scheduling today...
     //keep currentThread as it was
@@ -255,7 +251,7 @@ void Scheduler::cleanupDeadThreads()
       if(tmp->state_ == ToBeDestroyed)
       {
         destroy_list[thread_count++] = tmp;
-        threads_.erase(threads_.begin() + i);
+        threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
         --i;
       }
       if (thread_count >= thread_count_max)
@@ -287,13 +283,10 @@ void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
   if ( unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) ) )
     arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
 }
+
 void Scheduler::unlockScheduling()
 {
   block_scheduling_ = 0;
-}
-bool Scheduler::testLock()
-{
-  return ( block_scheduling_ > 0 );
 }
 
 void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
@@ -343,32 +336,10 @@ void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
   }
 }
 
-void Scheduler::disableScheduling()
-{
-  kprintfd("Do not use Scheduler::disableScheduling()!\n");
-  kprintf("Do not use Scheduler::disableScheduling()!\n");
-  assert(false);
-
-  lockScheduling();
-  block_scheduling_extern_++;
-  unlockScheduling();
-}
-
-void Scheduler::reenableScheduling()
-{
-  kprintfd("Do not use Scheduler::reenableScheduling()!\nn");
-  kprintf("Do not use Scheduler::reenableScheduling()!\n");
-  assert(false);
-
-  lockScheduling();
-  if ( block_scheduling_extern_>0 )
-    block_scheduling_extern_--;
-  unlockScheduling();
-}
 bool Scheduler::isSchedulingEnabled()
 {
-  if ( this )
-    return ( block_scheduling_==0 && block_scheduling_extern_==0 );
+  if (this)
+    return (block_scheduling_ == 0);
   else
     return false;
 }

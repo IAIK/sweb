@@ -57,7 +57,10 @@ void SpinLock::release(const char* debug_info)
 
 void SpinLock::checkInterrupts(const char* method, const char* debug_info)
 {
-  if ( unlikely ( ArchInterrupts::testIFSet() == false /*|| !Scheduler::instance()->isSchedulingEnabled()*/))
+  // it would be nice to assert Scheduler::instance()->isSchedulingEnabled() as well.
+  // unfortunately this is difficult because we might want to acquire/release locks
+  // while scheduling is disabled
+  if ( unlikely ( ArchInterrupts::testIFSet() == false))
   {
     kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d and SchedulingEnabled=%d ! Now we're dead !!!\n"
              "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",

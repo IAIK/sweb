@@ -221,7 +221,6 @@ class Scheduler
     bool kill_old_;
 
     uint32 block_scheduling_;
-    uint32 block_scheduling_extern_;
 
     uint32 ticks_;
 };
