@@ -67,6 +67,8 @@ extern unsigned char stabstr_end_address_nr;
 // see init_boottime_pagetables.cpp
 // then increase end_address appropriately
 
+uint32 boot_completed;
+
 /**
  * startup called in @ref boot.s
  * starts up SWEB
@@ -74,6 +76,7 @@ extern unsigned char stabstr_end_address_nr;
  */
 void startup()
 {
+  boot_completed = 0;
   writeLine2Bochs ( ( uint8 * ) "SWEB starting...\n" );
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   //pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
@@ -190,8 +193,7 @@ void startup()
 
   Scheduler::instance()->printThreadList();
 
-  PageManager::instance()->startUsingSyncMechanism();
-  KernelMemoryManager::instance()->startUsingSyncMechanism();
+  boot_completed = 1;
 
   kprintf ( "Now enabling Interrupts...\n" );
   ArchInterrupts::enableInterrupts();

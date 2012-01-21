@@ -146,19 +146,13 @@ class KernelMemoryManager
      * called from startup() after the scheduler has been created and just
      * before the Interrupts are turned on
      */
-    void startUsingSyncMechanism() {use_spinlock_=true;}
+    void startUsingSyncMechanism();
 
     /**
      * checks if the kernel memory manager lock is free
      * @return true if it is free
      */
-    bool isKMMLockFree()
-    {
-      if ( likely ( use_spinlock_ ) )
-        return lock_.isFree();
-      else
-        return true;
-    }
+    bool isKMMLockFree();
 
     /**
      * @return the thread holding the KMM Lock
@@ -230,7 +224,6 @@ class KernelMemoryManager
      */
     void unlockKMM();
 
-    bool use_spinlock_;
     SpinLock lock_;
 
     //statistics:

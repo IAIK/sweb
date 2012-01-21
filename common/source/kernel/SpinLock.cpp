@@ -17,10 +17,13 @@ SpinLock::SpinLock() :
 
 bool SpinLock::acquireNonBlocking()
 {
+  if ( unlikely ( ArchInterrupts::testIFSet() ==false || !Scheduler::instance()->isSchedulingEnabled()))
+  {
+    kprintfd("(WARNING) SpinLock::acquireNonBlocking: with IF=%d and SchedulingEnabled=%d !\n", ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled());
+  }
+
   if ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )
   {
-    if ( unlikely ( ArchInterrupts::testIFSet() ==false ) )
-      kpanict ( ( uint8* ) "SpinLock::acquireNonBlocking: with IF=0 ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context ?\n" );
     return false;
   }
   held_by_ = currentThread;
@@ -29,10 +32,13 @@ bool SpinLock::acquireNonBlocking()
 
 void SpinLock::acquire()
 {
+  if ( unlikely ( ArchInterrupts::testIFSet() ==false || !Scheduler::instance()->isSchedulingEnabled()))
+  {
+    kprintfd("(ERROR) SpinLock::acquire: with IF=%d and SchedulingEnabled=%d ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\n", ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled());
+    assert(false);
+  }
   while ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )
   {
-    if ( unlikely ( ArchInterrupts::testIFSet() ==false ) )
-      kpanict ( ( uint8* ) "SpinLock::acquireNonBlocking: with IF=0 ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context ?\n" );
     //SpinLock: Simplest of Locks, do the next best thing to busy wating
     Scheduler::instance()->yield();
   }

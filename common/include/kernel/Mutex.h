@@ -7,6 +7,7 @@
 #include "types.h"
 #include <ustl/ulist.h>
 #include "SpinLock.h"
+#include "MutexLock.h"
 
 class Thread;
 
@@ -128,51 +129,6 @@ class Mutex
     bool threadOnList(Thread *thread);
 
     const char* name_;
-};
-
-
-/**
- * @class MutexLock holds the Mutex of the class Mutex
- */
-class MutexLock
-{
-  public:
-
-    /**
-     *Constructor
-     *acquires the mutex
-     * @param m the Mutex of the class Mutex
-     */
-    MutexLock ( Mutex &m ) :mutex_ ( m )
-    {
-      mutex_.acquire();
-    }
-
-    /**
-     *Destructor
-     *releases the mutex
-     */
-    ~MutexLock()
-    {
-      mutex_.release();
-    }
-
-  private:
-
-    /**
-     *Copy Constructor, but private.
-     *
-     *Don't use it!!!
-     */
-    MutexLock ( MutexLock const& );
-
-    /**
-     * = Operator for the class MutexLock
-     * private, mustn't be used
-     */
-    MutexLock &operator= ( MutexLock const& );
-
-    Mutex &mutex_;
 };
 
 #endif

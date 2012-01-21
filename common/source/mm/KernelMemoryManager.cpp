@@ -338,14 +338,24 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 void KernelMemoryManager::lockKMM()
 {
   if ( likely ( use_spinlock_ ) )
-  {
-    assert(ArchInterrupts::testIFSet());
     lock_.acquire();
-  }
 }
 
 void KernelMemoryManager::unlockKMM()
 {
   if ( likely ( use_spinlock_ ) )
     lock_.release();
+}
+
+void KernelMemoryManager::startUsingSyncMechanism()
+{
+  use_spinlock_=true;
+}
+
+bool KernelMemoryManager::isKMMLockFree()
+{
+  if ( likely ( use_spinlock_ ) )
+    return lock_.isFree();
+  else
+    return true;
 }
