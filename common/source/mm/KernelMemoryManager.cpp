@@ -23,7 +23,7 @@ uint32 KernelMemoryManager::createMemoryManager ( pointer start_address, pointer
   return 0;
 }
 
-KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_address )
+KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_address ) : lock_("KMM::lock_")
 {
   malloc_end_=end_address;
   prenew_assert ( ( ( end_address-start_address-sizeof ( MallocSegment ) ) & 0x80000000 ) == 0 );

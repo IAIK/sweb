@@ -128,6 +128,20 @@ class Mutex
 
     bool threadOnList(Thread *thread);
 
+    /**
+     * verifies that there is no direct deadlock
+     * @param method in which the check is done
+     * @param debug_info additional debug info
+     */
+
+    void checkDeadlock(const char* method, const char* debug_info);
+    /**
+     * verifies that the mutex is held by this thread
+     * @param method in which the check is done
+     * @param debug_info additional debug info
+     */
+    void checkInvalidRelease(const char* method, const char* debug_info);
+
     const char* name_;
 };
 

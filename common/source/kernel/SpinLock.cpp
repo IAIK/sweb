@@ -12,40 +12,28 @@
 
 extern uint32 boot_completed;
 
-SpinLock::SpinLock() :
-  nosleep_mutex_(0), held_by_(0)
+SpinLock::SpinLock(const char* name) :
+  nosleep_mutex_(0), held_by_(0), name_(name)
 {
 }
 
-bool SpinLock::acquireNonBlocking()
+bool SpinLock::acquireNonBlocking(const char* debug_info)
 {
-  if (likely (boot_completed))
+  if (boot_completed && ArchThreads::testSetLock(nosleep_mutex_, 1))
   {
-    if ( unlikely ( ArchInterrupts::testIFSet() == false /*|| !Scheduler::instance()->isSchedulingEnabled()*/))
-    {
-      kprintfd("(WARNING) SpinLock::acquireNonBlocking: with IF=%d and SchedulingEnabled=%d !\n", ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled());
-    }
-
-    if ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )
-    {
-      return false;
-    }
+    return false;
   }
+  assert(held_by_ == 0);
   held_by_ = currentThread;
   return true;
 }
 
-void SpinLock::acquire()
+void SpinLock::acquire(const char* debug_info)
 {
   if (likely (boot_completed))
   {
-    if ( unlikely ( ArchInterrupts::testIFSet() == false /*|| !Scheduler::instance()->isSchedulingEnabled()*/))
-    {
-      kprintfd("(ERROR) SpinLock::acquire: with IF=%d and SchedulingEnabled=%d ! Now we're dead !!!\nMaybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\n", ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled());
-      currentThread->printBacktrace(false);
-      assert(false);
-    }
-    while ( ArchThreads::testSetLock ( nosleep_mutex_,1 ) )
+    checkInterrupts("SpinLock::acquire", debug_info);
+    while (ArchThreads::testSetLock(nosleep_mutex_, 1))
     {
       //SpinLock: Simplest of Locks, do the next best thing to busy wating
       Scheduler::instance()->yield();
@@ -57,11 +45,24 @@ void SpinLock::acquire()
 
 bool SpinLock::isFree()
 {
-  return ( nosleep_mutex_ == 0 );
+  return (nosleep_mutex_ == 0);
 }
 
-void SpinLock::release()
+void SpinLock::release(const char* debug_info)
 {
+  assert(held_by_ == currentThread);
   held_by_ = 0;
   nosleep_mutex_ = 0;
+}
+
+void SpinLock::checkInterrupts(const char* method, const char* debug_info)
+{
+  if ( unlikely ( ArchInterrupts::testIFSet() == false /*|| !Scheduler::instance()->isSchedulingEnabled()*/))
+  {
+    kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d and SchedulingEnabled=%d ! Now we're dead !!!\n"
+             "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",
+             method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info);
+    currentThread->printBacktrace(false);
+    assert(false);
+  }
 }

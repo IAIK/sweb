@@ -35,22 +35,22 @@ class SpinLock
      * Constructor
      * @return SpinLock instance
      */
-    SpinLock();
+    SpinLock(const char* name);
 
     /**
      * acquires the SpinLock.
      */
-    void acquire();
+    void acquire(const char* debug_info = 0);
 
     /**
      * acquires the SpinLock non blocking.
      */
-    bool acquireNonBlocking();
+    bool acquireNonBlocking(const char* debug_info = 0);
 
     /**
      * releases the SpinLock.
      */
-    void release();
+    void release(const char* debug_info = 0);
 
     /**
      * allows you to check if the SpinLock is set or not.
@@ -77,6 +77,7 @@ class SpinLock
       */
     uint32 nosleep_mutex_;
     Thread *held_by_;
+    const char* name_;
 
     /**
       * Copy Constructor - you _really_ don't want to copy a SpinLock!
@@ -87,6 +88,14 @@ class SpinLock
       * operator = - you _really_ don't want to copy a SpinLock!
       */
     SpinLock &operator= ( SpinLock const& );
+
+    /**
+     * verifies that interrupts are enabled
+     * @param method in which the check is done
+     * @param debug_info additional debug info
+     */
+    void checkInterrupts(const char* method, const char* debug_info);
+
 };
 
 #endif
