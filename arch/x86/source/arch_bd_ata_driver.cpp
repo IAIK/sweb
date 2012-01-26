@@ -176,6 +176,16 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   uint16 *word_buff = (uint16 *) buffer;
   for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
       word_buff [counter] = inw ( port );
+ 
+  /* Wait for drive to clear BUSY */
+  jiffies = 0;
+  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT)
+  {
+    TIMEOUT_WARNING();
+    return -1;
+  }
 
   //debug(ATA_DRIVER, "readSector:Read successfull !!\n");
   return 0;  
@@ -248,10 +258,20 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   uint32 counter;
   for (counter = 0; counter != count2; counter++) 
       outw ( port, word_buff [counter] );
+ 
+  /* Wait for drive to clear BUSY */
+  jiffies = 0;
+  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+    ArchInterrupts::yieldIfIFSet();
+  if(jiffies >= IO_TIMEOUT)
+  {
+    TIMEOUT_WARNING();
+    return -1;
+  }
 
   /* Write flush code to the command register */
-  //outbp (port + 7, 0xE7);
-  
+  outbp (port + 7, 0xE7);
+    
   /* Wait for drive to clear BUSY */
   jiffies = 0;
   while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
