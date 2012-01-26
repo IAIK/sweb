@@ -116,29 +116,6 @@ class Scheduler
     bool checkThreadExists ( Thread* thread );
 
     /**
-     * provides a kind-of-atomicity for routines that need it, by
-     * preventing the scheduler from switching to another thread.
-     * Be aware, that interrupt-Handlers will still preempt you,
-     * but sharing data with these is a special case anyway.
-     * Be also aware, that disabling the Scheduler too long,
-     * will result in data-loss, since the interrupt-Handers depend
-     * on other threads to get() from their Ringbuffers.
-     *
-     * @post After disabling Scheduling and before doing anything
-     * you HAVE to check if all locks you might possibly and accidentially
-     * acquire are _free_, otherwise you will deadlock.
-     * If the Locks are not free, you can'not continue, you might wait
-     * until all locks are free, but be warned that you might starve
-     * for some time (or forever).
-     */
-    void disableScheduling();
-
-    /**
-     * reenables Scheduling, ending the kind-of-atomicity.
-     */
-    void reenableScheduling();
-
-    /**
      * @ret true if Scheduling is enabled, false otherwis
      */
     bool isSchedulingEnabled();
