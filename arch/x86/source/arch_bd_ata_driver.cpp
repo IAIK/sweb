@@ -139,37 +139,45 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   //debug(ATA_DRIVER, "readSector:(drive | head): %d, num_sectors: %d, sect: %d, lo: %d, high: %d!!\n",(drive | head),num_sectors,sect,lo,high);
 
-  outbp( port + 6, (drive | head) );  // drive and head selection
-  outbp( port + 2, num_sectors );     // number of sectors to read
-  outbp( port + 3, sect );            // starting sector
-  outbp( port + 4, lo );              // cylinder low
-  outbp( port + 5, high );            // cylinder high
+  outbp(port + 6, (drive | head)); // drive and head selection
+  outbp(port + 2, num_sectors); // number of sectors to read
+  outbp(port + 3, sect); // starting sector
+  outbp(port + 4, lo); // cylinder low
+  outbp(port + 5, high); // cylinder high
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies++ < IO_TIMEOUT)
+  while (!(inbp(port + 7) & 0x40) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
+  if (jiffies >= IO_TIMEOUT)
   {
     TIMEOUT_WARNING();
     return -1;
   }
 
 
-  /* Write the command code to the command register */
-  outbp( port + 7, 0x20 );            // command
-
-  if( mode != BD_PIO_NO_IRQ )
-    return 0;
-
-  jiffies = 0;
-
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT )
+  for (int i = 0;; ++i)
   {
-    TIMEOUT_WARNING();
-    return -1;
+
+    /* Write the command code to the command register */
+    outbp(port + 7, 0x20); // command
+
+    if (mode != BD_PIO_NO_IRQ)
+      return 0;
+
+    jiffies = 0;
+    while (inbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT)
+      ArchInterrupts::yieldIfIFSet();
+    if (jiffies >= IO_TIMEOUT)
+    {
+      if (i == 3)
+      {
+        TIMEOUT_WARNING();
+        return -1;
+      }
+    }
+    else
+      break;
   }
 
   uint32 counter;
