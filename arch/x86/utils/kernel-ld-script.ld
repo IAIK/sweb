@@ -70,16 +70,14 @@ SECTIONS
     ro_data_end_address = .;
     . = ALIGN(4096);
 
-    stab_start_address_nr = .;
+/*  stab_start_address_nr = .;
     *(.stab)
     stab_end_address_nr = .;
     . = .;
     stabstr_start_address_nr = .;
     *(.stabstr)
-    stabstr_end_address_nr = .;
-    . = ALIGN(4096);
+    stabstr_end_address_nr = .;*/
   }
-
 
   .data  ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
   {
@@ -105,6 +103,26 @@ SECTIONS
     . = ALIGN(4096);
     bss_end_address = .;
 
+  }
+
+  .stab : AT(LS_Phys + (LS_Stab - LS_Code))
+  {
+    LS_Stab = .;
+    stab_start_address_nr = .;
+    *(.stab)
+    stab_end_address_nr = .;
+    . = ALIGN(4096);
+  }
+  
+
+  .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
+  {
+    LS_Stabstr = .;
+    stabstr_start_address_nr = .;
+    *(.stabstr)
+    stabstr_end_address_nr = .;
+    . = ALIGN(4096);
+
     PROVIDE(kernel_end_address = .);
   }
 
@@ -117,134 +135,43 @@ SECTIONS
 
 /* Stabs debugging sections. */
 
- /* .stab.excl       0 : { *(.stab.excl) }
-  .stab.exclstr    0 : { *(.stab.exclstr) }
-  .stab.index      0 : { *(.stab.index) }
-  .stab.indexstr   0 : { *(.stab.indexstr) }
-  .comment         0 : { *(.comment) }*/
-
   /*
    * DWARF debug sections.
    * Symbols in the DWARF debugging sections are relative to the beginning
    * of the section so we begin them at 0.
    */
   /* DWARF 1 */
-/*  .debug           0 : { *(.debug) }
+  /*.debug           0 : { *(.debug) }
   .line            0 : { *(.line) }*/
 
   /* GNU DWARF 1 extensions */
-/*  .debug_srcinfo   0 : { *(.debug_srcinfo) }
+  /*.debug_srcinfo   0 : { *(.debug_srcinfo) }
   .debug_sfnames   0 : { *(.debug_sfnames) }*/
 
   /* DWARF 1.1 and DWARF 2 */
-  .debug_aranges   0 : { *(.debug_aranges) }
-  .debug_pubnames  0 : { *(.debug_pubnames) }
+  /*.debug_aranges   0 : { *(.debug_aranges) }
+  .debug_pubnames  0 : { *(.debug_pubnames) }*/
 
   /* DWARF 2 */
-  .debug_info      0 : { *(.debug_info .gnu.linkonce.wi.*) }
+  /*.debug_info      0 : { *(.debug_info .gnu.linkonce.wi.*) }
   .debug_abbrev    0 : { *(.debug_abbrev) }
   .debug_line      0 : { *(.debug_line) }
   .debug_frame     0 : { *(.debug_frame) }
   .debug_str       0 : { *(.debug_str) }
   .debug_loc       0 : { *(.debug_loc) }
-  .debug_macinfo   0 : { *(.debug_macinfo) }
+  .debug_macinfo   0 : { *(.debug_macinfo) }*/
 
   /* SGI/MIPS DWARF 2 extensions */
-  .debug_weaknames 0 : { *(.debug_weaknames) }
+  /*.debug_weaknames 0 : { *(.debug_weaknames) }
   .debug_funcnames 0 : { *(.debug_funcnames) }
   .debug_typenames 0 : { *(.debug_typenames) }
-  .debug_varnames  0 : { *(.debug_varnames) }
+  .debug_varnames  0 : { *(.debug_varnames) }*/
 
   /* DWARF 3 */
-  .debug_pubtypes  0 : { *(.debug_pubtypes) }
+  /*.debug_pubtypes  0 : { *(.debug_pubtypes) }
   .debug_ranges    0 : { *(.debug_ranges) }
-  .gnu.attributes  0 : { KEEP (*(.gnu.attributes)) }
+  .gnu.attributes  0 : { KEEP (*(.gnu.attributes)) }*/
 
-  /DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) }
-
-  /* Voodoo? */
-/*  .gptab.sdata : { *(.gptab.data) *(.gptab.sdata) }
-  .gptab.sbss : { *(.gptab.bss) *(.gptab.sbss) } */
-/* bug in MinGW? I get a bad executable file unless these
-sections are here... */
-/*
-  .stab : AT(LS_Phys + (LS_Stab - LS_Code))
-  {
-    LS_Stab = .;
-    stab_start_address = .;
-    *(.stab)
-    stab_end_address = .;
-  }
-
-  .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
-  {
-    LS_Stabstr = .;
-    stabstr_start_address = .;
-    *(.stabstr)
-    stabstr_end_address = .;
-  }
-  */
-/* symbols to mark end of kernel */
-
-/*
-  .stab          0 : { *(.stab) }
-  .stabstr       0 : { *(.stabstr) }
-  .stab.excl     0 : { *(.stab.excl) }
-  .stab.exclstr  0 : { *(.stab.exclstr) }
-  .stab.index    0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
-  .comment       0 : { *(.comment) }
-*/ /*
-  .debug          0 : { *(.debug) }
-  .line           0 : { *(.line) }
-
-*/
-/*
-  .debug : AT(LS_Phys + (LS_Debug - LS_Code))
-  {
-    LS_Debug = .;
-    debug_start_address = .;
-    *(.debug)
-    debug_end_address = .;
-  }
-
-  .line : AT(LS_Phys + (LS_Line - LS_Code))
-  {
-    LS_Line = .;
-    line_start_address = .;
-    *(.line)
-    line_end_address = .;
-  }
-
-  .debug_srcinfo : AT(LS_Phys + (LS_DebugSrcInfo - LS_Code))
-  {
-    LS_DebugSrcInfo = .;
-    debug_srcinfo_start_address = .;
-    *(.debug_srcinfo)
-    debug_srcinfo_end_address = .;
-  }
-
-  .debug_sfnames : AT(LS_Phys + (LS_DebugSfNames - LS_Code))
-  {
-    LS_DebugSfNames = .;
-    line_start_address = .;
-    *(.debug_sfnames)
-    line_end_address = .;
-  }
-
-*/
-/*  .stab :  AT(LS_Phys + (LS_1 - LS_Code)) 
-   { LS_1 = .; 
-     debug_start_address = .; 
-     *(.stab)
-     debug_end_address = .; }
-  .stabstr :  AT(LS_Phys + (LS_2 - LS_Code)) {LS_2 = .;  *(.stabstr) }
-  .stab.excl :  AT(LS_Phys + (LS_3 - LS_Code)) {LS_3 = .;  *(.stab.excl) }
-  .stab.exclstr :  AT(LS_Phys + (LS_4 - LS_Code)) {LS_4 = .;  *(.stab.exclstr) }
-  .stab.index :  AT(LS_Phys + (LS_5 - LS_Code)) {LS_5 = .;  *(.stab.index) }
-  .stab.indexstr :  AT(LS_Phys + (LS_6 - LS_Code)) {LS_6 = .;  *(.stab.indexstr) }
-  .comment :  AT(LS_Phys + (LS_7 - LS_Code)) {LS_7 = .;  *(.comment) }
-*/
+/*  /DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) } */
 
 }
-
