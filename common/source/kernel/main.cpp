@@ -153,9 +153,6 @@ void startup()
   debug ( MAIN, "Interupts init\n" );
   ArchInterrupts::initialise();
 
-  kprintfd("&stab_start_address_nr = %x\n", &stab_start_address_nr);
-  kprintfd("&stab_end_address_nr = %x\n", &stab_end_address_nr);
-  kprintfd("&stabstr_start_address_nr = %x\n", &stabstr_start_address_nr);
   parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 
   debug ( MAIN, "Block Device creation\n" );
