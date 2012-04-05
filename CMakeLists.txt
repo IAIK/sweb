@@ -85,19 +85,9 @@ endif(NOT BIN_DIR_NAME)
 
 
 #Set Compiler and compiterflags
-#set(CMAKE_CXX_COMPILER g++)
-#set(CMAKE_C_COMPILER gcc)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -gstabs2 -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector -Wall -Wextra -nostdlib -nostartfiles -nodefaultlibs")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0  -gstabs2 -Wall -W -nostdinc -fno-builtin -nostdlib -fno-exceptions -fno-stack-protector -Wall -Wextra  -nostdlib -nostartfiles -nodefaultlibs")
 
-if(GGDB)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -ggdb -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -ggdb -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
-endif(GGDB)
-if(NOT GGDB)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
-endif(NOT GGDB)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
 
 
 set(LIBRARY_FILENAMES)
@@ -341,14 +331,6 @@ add_custom_target(rungdb
 	COMMENT "Going to gdb"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
-
-#Custom target: make debug
-#debug target for gdb
-add_custom_target(debug
-	COMMAND cmake -D GGDB=1 .
-        COMMAND touch CMakeFiles/is_debug_build
-	COMMAND make
-  )
 
 #Custom target: make mrproper
 #Makes really clean

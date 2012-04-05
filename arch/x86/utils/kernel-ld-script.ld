@@ -1,49 +1,8 @@
-/********************************************************************
-*
-*  $Id: kernel-ld-script.ld,v 1.11 2005/07/22 15:29:42 nomenquis Exp $
-*
-*  $Log: kernel-ld-script.ld,v $
-*  Revision 1.10  2005/05/10 16:29:42  nomenquis
-*  stabs back into ro data
-*
-*  Revision 1.9  2005/05/08 21:43:55  nelles
-*  changed gcc flags from -g to -g3 -gstabs in order to
-*  generate stabs output in object files
-*  changed linker script to load stabs in kernel
-*  in bss area so GRUB loads them automaticaly with
-*  the bss section
-*
-*  changed StupidThreads in main for testing purposes
-*
-*  Revision 1.8  2005/05/02 18:33:05  nelles
-*  added stab_start, stab_end and stabstr start/end symbols to the ld script
-*
-*  Revision 1.7  2005/04/26 10:23:54  nomenquis
-*  kernel at 2gig again, not 2gig + 1m since were not using 4m pages anymore
-*
-*  Revision 1.6  2005/04/23 11:56:34  nomenquis
-*  added interface for memory maps, it works now
-*
-*  Revision 1.5  2005/04/22 17:21:39  nomenquis
-*  added TONS of stuff, changed ZILLIONS of things
-*
-*  Revision 1.4  2005/04/20 09:00:29  nomenquis
-*  removed lots of trash symbols, and added "nice" symbol names
-*  also added docs about these symbols into the wiki
-*
-*  Revision 1.3  2005/04/20 07:09:59  nomenquis
-*  added inital paging for the kernel, plus mapping to two gigs
-*  hoever, the kernel now is at 1meg phys and 2gig + 1 meg virtual due to these 4m pages
-*
-*  Revision 1.2  2005/04/19 17:51:49  nomenquis
-*  added some symbols
-*
-*  Revision 1.1  2005/04/12 18:42:51  nomenquis
-*  changed a zillion of iles
-*
-*
-********************************************************************/
-
+/**
+ * this linker script tells ld how to link and which symbols to add to the
+ * kernel.x binary
+ */
+ 
 /* let the linker use its 'native' format  (ELF/COFF/PE) */
 OUTPUT_FORMAT("elf32-i386")
 /* no leading underscore for symbols handled in asm: */
@@ -125,53 +84,5 @@ SECTIONS
 
     PROVIDE(kernel_end_address = .);
   }
-
-/*
- * Debug information sections
- *
- * Copied from the default elf_i386.x linker script
- * from binutils-2.18
- */
-
-/* Stabs debugging sections. */
-
-  /*
-   * DWARF debug sections.
-   * Symbols in the DWARF debugging sections are relative to the beginning
-   * of the section so we begin them at 0.
-   */
-  /* DWARF 1 */
-  /*.debug           0 : { *(.debug) }
-  .line            0 : { *(.line) }*/
-
-  /* GNU DWARF 1 extensions */
-  /*.debug_srcinfo   0 : { *(.debug_srcinfo) }
-  .debug_sfnames   0 : { *(.debug_sfnames) }*/
-
-  /* DWARF 1.1 and DWARF 2 */
-  /*.debug_aranges   0 : { *(.debug_aranges) }
-  .debug_pubnames  0 : { *(.debug_pubnames) }*/
-
-  /* DWARF 2 */
-  /*.debug_info      0 : { *(.debug_info .gnu.linkonce.wi.*) }
-  .debug_abbrev    0 : { *(.debug_abbrev) }
-  .debug_line      0 : { *(.debug_line) }
-  .debug_frame     0 : { *(.debug_frame) }
-  .debug_str       0 : { *(.debug_str) }
-  .debug_loc       0 : { *(.debug_loc) }
-  .debug_macinfo   0 : { *(.debug_macinfo) }*/
-
-  /* SGI/MIPS DWARF 2 extensions */
-  /*.debug_weaknames 0 : { *(.debug_weaknames) }
-  .debug_funcnames 0 : { *(.debug_funcnames) }
-  .debug_typenames 0 : { *(.debug_typenames) }
-  .debug_varnames  0 : { *(.debug_varnames) }*/
-
-  /* DWARF 3 */
-  /*.debug_pubtypes  0 : { *(.debug_pubtypes) }
-  .debug_ranges    0 : { *(.debug_ranges) }
-  .gnu.attributes  0 : { KEEP (*(.gnu.attributes)) }*/
-
-/*  /DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) } */
 
 }
