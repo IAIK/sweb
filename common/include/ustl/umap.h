@@ -132,8 +132,9 @@ inline typename map<K,V,Comp>::const_iterator map<K,V,Comp>::find_data (const_da
 template <typename K, typename V, typename Comp>
 inline const typename map<K,V,Comp>::data_type& map<K,V,Comp>::operator[] (const_key_ref k) const
 {
-    assert (find(k) != end() && "operator[] const can not insert non-existent keys");
-    return (find(k)->second);
+    iterator ip = find(k);
+    assert (ip != end() && "operator[] const can not insert non-existent keys");
+    return (ip->second);
 }
 
 /// Returns data associated with key \p k.
@@ -142,7 +143,7 @@ typename map<K,V,Comp>::data_type& map<K,V,Comp>::operator[] (const_key_ref k)
 {
     iterator ip = lower_bound (k);
     if (ip == end() || Comp()(k,ip->first))
-	ip = base_class::insert (ip, make_pair (k, V()));
+    ip = base_class::insert (ip, make_pair (k, V()));
     return (ip->second);
 }
 

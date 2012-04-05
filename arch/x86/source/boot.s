@@ -19,15 +19,9 @@ MULTIBOOT_WANT_VESA equ 1<<2
 MULTIBOOT_AOUT_KLUDGE   equ 1<<16
 MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
 MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE|MULTIBOOT_WANT_VESA
-;MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
 %macro writeTestOnScreen 0
-   ;mov word[0B8000h], 9F54h
-   ;mov word[0B8002h], 9F65h
-   ;mov word[0B8004h], 9F73h
-   ;mov word[0B8006h], 9F74h
-   ;mov word[0B800Ah], 9F21h
    mov word[0C00B8020h], 9F54h
    mov word[0C00B8022h], 9F65h
    mov word[0C00B8024h], 9F73h
@@ -44,7 +38,7 @@ MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 %endmacro
 
 %macro halt 0
-   jmp short $ ; now what does this do? it just jumps to this instructing untill the end of all times
+   jmp short $ ; now what does this do? it just jumps to this instruction until the end of all times
 %endmacro
 
 ; Text section == Code that can be exectuted
@@ -225,49 +219,13 @@ mov     cr3,eax         ; cr3 = &PD
 
    mov word[0C00B8014h], 4331h
 
-;EXTERN initInterruptHandlers
-;mov eax,initInterruptHandlers;
-;call eax;
-
- ;  mov word[0C00B8016h], 4332h
-
-   ; set up interrupt handlers, then load IDT register
-;   mov ecx,(idt_end - idt) >> 3 ; number of exception handlers
-;   mov edi,idt
-;   mov esi,isr0
-;do_idt:
-;   mov eax,esi			; EAX=offset of entry point
-;   mov [edi],ax			; set low 16 bits of gate offset
-;   shr eax,16
-;   mov [edi + 6],ax		; set high 16 bits of gate offset
-;   add edi,8			; 8 bytes/interrupt gate
-;   add esi,(isr1 - isr0)		; bytes/stub
-;   loop do_idt
-
-;   mov eax, idt_ptr
-
-;   mov word[0C00B8018h], 4334h
-
-;   lidt [eax]
 
    mov word[0C00B801Ah], 4335h
-
-;call inivalidate_ident_mapping
-;call inivalidate_ident_mapping
-
-
-EXTERN panic
-
-;push  0
-;call panic
-
 
 
 ; GRUB 0.90 leaves the NT bit set in EFLAGS. The first IRET we attempt
 ; will cause a TSS-based task-switch, which will cause Exception 10.
 ; Let's prevent that:
-
-
 
    push dword 2
    popf

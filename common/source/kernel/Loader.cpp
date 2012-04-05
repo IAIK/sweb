@@ -237,10 +237,6 @@ struct sELF32_Phdr
 typedef struct sELF32_Phdr ELF32_Phdr;
 
 
-/*Loader::Loader ( uint8 *file_image, Thread *thread ) : file_image_ ( file_image ),
-    thread_ ( thread )
-{}*/
-
 Loader::Loader ( int32 fd, Thread *thread ) : page_dir_page_(0), fd_ ( fd ),
     thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_")
 {
@@ -347,6 +343,9 @@ struct PagePart
   uint32 length;
 };
 
+#define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
+  ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
+
 void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 {
   uint32 virtual_page = virtual_address / PAGE_SIZE;
@@ -358,46 +357,26 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     debug ( LOADER,"loadOnePageSafeButSlow: Page %d (virtual_address=%d) has already been mapped, probably by another thread between pagefault and reaching loader.\n",virtual_page,virtual_address );
     return;
   }
-  //else...
-
 
   debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %d:%s\n",virtual_page,virtual_address,currentThread->getPID(),currentThread->getName() );
 
-  //debug ( LOADER,"loadOnePage: %c%c%c%c%c\n",file_image_[0],file_image_[1],file_image_[2],file_image_[3],file_image_[4] );
   debug ( LOADER,"loadOnePage: Sizeof %d %d %d %d\n",sizeof ( uint64 ),sizeof ( uint32 ),sizeof ( uint16 ),sizeof ( uint8 ) );
   debug ( LOADER,"loadOnePage: Num ents: %d\n",hdr_->e_phnum );
   debug ( LOADER,"loadOnePage: Entry: %x\n",hdr_->e_entry );
 
-  pointer vaddr = virtual_page*PAGE_SIZE;
   uint32 page = 0;
   uint32 i=0;
   uint32 k=0;
   uint32 written=0;
 
-  //debug ( LOADER,"loadOnePageSafeButSlow:I've got the following segments in the binary\n" );
-  // if ( isDebugEnabled ( LOADER ) )
-  // {
-  //   for ( k=0;k < hdr_->e_phnum; ++k )
-  //   {
-  //     ELF32_Phdr *h = &phdrs_[k];
-  //     debug ( LOADER,"loadOnePageSafeButSlow:PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h->p_vaddr,h->p_paddr,h->p_type,h->p_memsz,h->p_filesz,h->p_offset );
-  //   }
-  // }
-
   ustl::vector<PagePart> byte_map;
-  /*if(!byte_map.resetSize(PAGE_SIZE))
-  {
-    kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
-    //free unmapped page
-    Syscall::exit ( 9995 );
-  }*/
   PagePart part;
   uint32 min_value = 0xFFFFFFFF;
   uint32 max_value = 0;
 
   for ( i=0; i < PAGE_SIZE; ++i )
   {
-    uint32 load_byte_from_address = vaddr + i;
+    uint32 load_byte_from_address = virtual_page*PAGE_SIZE + i;
     uint32 found = 0;
     for ( k=0;k < hdr_->e_phnum; ++k )
     {
@@ -405,7 +384,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 
       debug ( LOADER,"loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h.p_vaddr,h.p_paddr,h.p_type,h.p_memsz,h.p_filesz,h.p_offset );
 
-      if ( h.p_paddr <= load_byte_from_address && load_byte_from_address < ( h.p_paddr + h.p_filesz ) )
+      if (ADDRESS_BETWEEN(load_byte_from_address, h.p_paddr, h.p_paddr + h.p_filesz))
       {
         uint32 byte_to_load = h.p_offset + load_byte_from_address - h.p_paddr;
 
@@ -423,8 +402,6 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
         if(byte_to_load + load_count > max_value)
           max_value = byte_to_load + load_count;
 
-
-
         //its VERY MUCH more efficient to only search the bytes, save them in the array byte_map,
         //and read ONCE from the executable; its very expensive to read every byte single from harddisk
         //(we have to read a full zone) -> for this we also need the max- and min-byte from file we have to load
@@ -435,7 +412,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
         ++found;
       }
       // bss is not in the file but in memory
-      else if ( h.p_paddr <= load_byte_from_address && load_byte_from_address < ( h.p_paddr+h.p_memsz ) )
+      else if (ADDRESS_BETWEEN(load_byte_from_address, h.p_filesz, h.p_paddr + h.p_memsz))
       {
         // skip ahead to end of section
         i += (h.p_paddr + h.p_memsz) - load_byte_from_address - 1;
@@ -475,9 +452,10 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   }
 
   //read once the bytes we need (and a few more, probably, depends on elf-format)
-  uint32 buffersize = max_value - min_value + 1;
+  uint32 buffersize = max_value - min_value;
   char* buffer = 0;
   char page_buffer[PAGE_SIZE];
+  assert(buffersize <= PAGE_SIZE && "how could the other case occur and how would we handle it?");
   if (buffersize <= PAGE_SIZE)
   {
     buffer = page_buffer;
@@ -497,10 +475,10 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 
 
   vfs_syscall.lseek(fd_, min_value, File::SEEK_SET);
-  int32 bytes_read = vfs_syscall.read(fd_, buffer, max_value - min_value + 1);
+  int32 bytes_read = vfs_syscall.read(fd_, buffer, max_value - min_value);
 
 
-  if(bytes_read != static_cast<int32>(max_value - min_value + 1))
+  if(bytes_read != static_cast<int32>(max_value - min_value))
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
     //free buffer
@@ -519,23 +497,11 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   {
     part = byte_map[i];
 
-    if (part.length > 1)
-    {
-       if (i < 2)
-          debug(PM, "copying %dth element from %x to %x ;   page byte: %d, length: %d\n", i, buffer+part.vaddr - min_value, dest + part.page_byte, part.page_byte, part.length);
+    debug(PM, "copying %dth element from %x to %x ;   page byte: %d, length: %d\n", i, buffer+part.vaddr - min_value, dest + part.page_byte, part.page_byte, part.length);
 
-       assert(part.vaddr - min_value + part.length < buffersize);
-       assert(part.page_byte + part.length < PAGE_SIZE + 1);
-       ArchCommon::memcpy((pointer)(dest + part.page_byte), (pointer)(buffer + part.vaddr - min_value), part.length);
-       //if (i < 2)
-       //  debug(LOADER, "copy successful!\n");
-    }
-    else
-    {
-       assert(part.vaddr-min_value < buffersize);
-       assert(part.page_byte < PAGE_SIZE);
-       dest[part.page_byte] = buffer[part.vaddr - min_value];
-    }
+    assert(part.vaddr - min_value + part.length <= buffersize);
+    assert(part.page_byte + part.length <= PAGE_SIZE);
+    ArchCommon::memcpy((pointer)(dest + part.page_byte), (pointer)(buffer + part.vaddr - min_value), part.length);
     written += part.length;
   }
 

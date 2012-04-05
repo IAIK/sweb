@@ -79,7 +79,6 @@ void startup()
   boot_completed = 0;
   writeLine2Bochs ( ( uint8 * ) "SWEB starting...\n" );
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
-  //pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
   pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
   //extend Kernel Memory here
   KernelMemoryManager::createMemoryManager ( start_address,end_address );

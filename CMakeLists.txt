@@ -95,8 +95,8 @@ if(GGDB)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -ggdb -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
 endif(GGDB)
 if(NOT GGDB)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs+ -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs+ -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
 endif(NOT GGDB)
 
 
@@ -277,8 +277,8 @@ add_custom_target(bochsgdb
 #Custom target: make kvm
 #Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND qemu -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
-        COMMENT "Going to qemu -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
+        COMMAND qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
+        COMMENT "Going to qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMAND reset -I
         )
@@ -286,8 +286,8 @@ add_custom_target(kvm
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to qemu -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout"
+	COMMAND	qemu-system-i386 -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
+	COMMENT "Going to qemu-system-i386 -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -354,7 +354,6 @@ add_custom_target(debug
 #Makes really clean
 add_custom_target(mrproper
 	COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
-	COMMAND ./relocate_project.sh
 	COMMAND cmake .
 	)
 

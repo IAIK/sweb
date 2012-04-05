@@ -493,12 +493,15 @@ void demangle_name(const char* name, char *buffer)
 void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_str)
 {
   new (&symbol_table) ustl::map<uint32, const char*>();
+  symbol_table.reserve(2048);
 
   for (StabEntry* current_stab = stab_start; current_stab < stab_end; ++current_stab)
   {
-    if ((current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME) &&
-        ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, &kernel_end_address))
+    if (unlikely((current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME) &&
+        ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, &kernel_end_address)))
+    {
       symbol_table[current_stab->n_value] = stab_str+current_stab->n_strx;
+    }
   }
 
   debug(MAIN, "found %d functions\n", symbol_table.size());
