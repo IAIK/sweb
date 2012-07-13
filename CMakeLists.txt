@@ -333,11 +333,19 @@ add_custom_target(rungdb
 	)
 
 #Custom target: make mrproper
-#Makes really clean
+#Makes really clean (except for the object files)
 add_custom_target(mrproper
-	COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
+	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\"
 	COMMAND cmake .
 	)
+
+#Custom target: make mrsproper
+#Makes really clean (including the object files)
+add_custom_target(mrsproper
+        COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\"
+        COMMAND ./relocate_project.sh
+        COMMAND cmake .
+        )
 
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 add_custom_target(remove_cmake
