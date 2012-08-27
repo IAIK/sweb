@@ -60,25 +60,25 @@ class exception {
 class exception : public std::exception {
 #endif
 public:
-    //typedef const CBacktrace& rcbktrace_t;
+    typedef const CBacktrace& rcbktrace_t;
 public:
     inline		exception (void) throw() : m_Format (xfmt_Exception) {}
     inline virtual     ~exception (void) throw() {}
     inline virtual const char* what (void) const throw() { return ("error"); }
     virtual void	info (string& msgbuf, const char* fmt = NULL) const throw();
-    //virtual void	read (istream& is);
-    //virtual void	write (ostream& os) const;
-    //void		text_write (ostringstream& os) const;
-    //inline virtual size_t stream_size (void) const { return (sizeof(m_Format) + sizeof(uint32_t) + m_Backtrace.stream_size()); }
+    virtual void	read (istream& is);
+    virtual void	write (ostream& os) const;
+    void		text_write (ostringstream& os) const;
+    inline virtual size_t stream_size (void) const { return (sizeof(m_Format) + sizeof(uint32_t) + m_Backtrace.stream_size()); }
     /// Format of the exception is used to lookup exception::info format string.
     /// Another common use is the instantiation of serialized exceptions, used
     /// by the error handler node chain to troubleshoot specific errors.
     inline xfmt_t	format (void) const	{ return (m_Format); }
-    //inline rcbktrace_t	backtrace (void) const	{ return (m_Backtrace); }
+    inline rcbktrace_t	backtrace (void) const	{ return (m_Backtrace); }
 protected:
     inline void		set_format (xfmt_t fmt) { m_Format = fmt; }
 private:
-    //CBacktrace		m_Backtrace;	///< Backtrace of the throw point.
+    CBacktrace		m_Backtrace;	///< Backtrace of the throw point.
     xfmt_t		m_Format;	///< Format of the exception's data.
 };
 
@@ -115,8 +115,8 @@ public:
     explicit		bad_alloc (size_t nBytes = 0) throw();
     inline virtual const char*	what (void) const throw() { return ("memory allocation failed"); }
     virtual void	info (string& msgbuf, const char* fmt = NULL) const throw();
-    //virtual void	read (istream& is);
-    //virtual void	write (ostream& os) const;
+    virtual void	read (istream& is);
+    virtual void	write (ostream& os) const;
     virtual size_t	stream_size (void) const;
 protected:
     size_t		m_nBytesRequested;	///< Number of bytes requested by the failed allocation.
@@ -136,8 +136,8 @@ public:
     const libc_exception& operator= (const libc_exception& v);
     inline virtual const char*	what (void) const throw() { return ("libc function failed"); }
     virtual void	info (string& msgbuf, const char* fmt = NULL) const throw();
-    //virtual void	read (istream& is);
-    //virtual void	write (ostream& os) const;
+    virtual void	read (istream& is);
+    virtual void	write (ostream& os) const;
     virtual size_t	stream_size (void) const;
 protected:
     intptr_t		m_Errno;		///< Error code returned by the failed operation.

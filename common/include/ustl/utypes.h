@@ -7,8 +7,7 @@
 #define UTYPES_H_118BBB3B50B7DBF22F5460C52E515C83
 
 #include "config.h"
-/*
-#ifndef STDC_HEADERS
+/*#ifndef STDC_HEADERS
     #error "This library requires standard C and C++ headers to compile."
 #endif
 #ifndef STDUNIX_HEADERS
@@ -110,6 +109,7 @@ typedef size_t		uoff_t;		///< A type for storing offsets into blocks measured by
 typedef uint32_t	hashvalue_t;	///< Value type returned by the hash functions.
 typedef size_t		streamsize;	///< Size of stream data
 typedef uoff_t		streamoff;	///< Offset into a stream
+
 typedef size_t uintptr_t;
 typedef int intptr_t;
 

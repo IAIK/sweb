@@ -143,7 +143,7 @@ typename map<K,V,Comp>::data_type& map<K,V,Comp>::operator[] (const_key_ref k)
 {
     iterator ip = lower_bound (k);
     if (ip == end() || Comp()(k,ip->first))
-    ip = base_class::insert (ip, make_pair (k, V()));
+	ip = base_class::insert (ip, make_pair (k, V()));
     return (ip->second);
 }
 

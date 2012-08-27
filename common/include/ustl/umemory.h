@@ -7,11 +7,11 @@
 #define UMEMORY_H_4AB5B0DB5BF09140541409CC47BCD17A
 
 #include "unew.h"
-//#if HAVE_ALLOCA_H
-//    #include <alloca.h>
-//#else
-//    #include <stdlib.h>
-//#endif
+/*#if HAVE_ALLOCA_H
+    #include <alloca.h>
+#else
+    #include <stdlib.h>
+#endif*/
 #include "upair.h"
 #include "uiterator.h"
 #include "ulimits.h"

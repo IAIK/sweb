@@ -96,7 +96,7 @@ inline T* NullPointer (void)
     { return ((T*) NULL); }
 
 /// \brief Returns a non-dereferentiable value reference.
-/// This is useful for passing to alignof or the like which need a value but
+/// This is useful for passing to stream_align_of or the like which need a value but
 /// don't need to actually use it.
 template <typename T>
 inline T& NullValue (void)

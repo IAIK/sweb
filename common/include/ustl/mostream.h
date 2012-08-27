@@ -252,7 +252,7 @@ inline void ostream::write (const cmemlink& buf)
 template <typename T>
 inline void ostream::iwrite (const T& v)
 {
-    assert (aligned (alignof (v)));
+    assert (aligned (stream_align_of (v)));
 #if WANT_STREAM_BOUNDS_CHECKING
     if (!verify_remaining ("write", typeid(v).name(), sizeof(T)))
 	return;

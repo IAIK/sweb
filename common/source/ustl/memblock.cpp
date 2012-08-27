@@ -88,17 +88,17 @@ void memblock::assign (const void* p, size_type n)
 void memblock::reserve (size_type newSize, bool bExact)
 {
     if ((newSize += minimumFreeCapacity()) <= m_Capacity)
-      return;
+	return;
     pointer oldBlock (is_linked() ? NULL : data());
     const size_t alignedSize (Align (newSize, 64));
     if (!bExact)
-      newSize = alignedSize;
+	newSize = alignedSize;
     pointer newBlock = (pointer) krealloc (oldBlock, newSize);
     if (!newBlock)
-    	kpanict((uint8_t*)"bad_alloc");
+      kpanict((uint8_t*)"bad_alloc");
       //throw bad_alloc (newSize);
     if (!oldBlock & (cdata() != NULL))
-      copy_n (cdata(), min (size() + 1, newSize), newBlock);
+	copy_n (cdata(), min (size() + 1, newSize), newBlock);
     link (newBlock, size());
     m_Capacity = newSize;
 }
@@ -123,9 +123,8 @@ memblock::iterator memblock::erase (iterator start, size_type n)
     return (iat (ep));
 }
 
-#ifdef WANTS_STREAMS
 /// Reads the object from stream \p s
-void memblock::read (istream& is)
+/*void memblock::read (istream& is)
 {
     written_size_type n = 0;
     is >> n;
@@ -133,7 +132,7 @@ void memblock::read (istream& is)
 	return;
     resize (n);
     is.read (data(), writable_size());
-    is.align (alignof (n));
+    is.align (stream_align_of (n));
 }
 
 /// Reads the entire file \p "filename".
@@ -147,8 +146,7 @@ void memblock::read_file (const char* filename)
     f.read (data(), fsize);
     f.close();
     resize (fsize);
-}
-#endif
+}*/
 
 memblock::size_type memblock::minimumFreeCapacity (void) const throw() { return (0); }
 

@@ -118,7 +118,6 @@ inline void vector<T>::reserve (size_type n, bool bExact)
 template <typename T>
 inline void vector<T>::resize (size_type n, bool bExact)
 {
-
     const size_type nb = n * sizeof(T);
     if (m_Data.capacity() < nb)
       reserve (n, bExact);
@@ -127,6 +126,7 @@ inline void vector<T>::resize (size_type n, bool bExact)
       extern void checkKMMDeadlock();
       checkKMMDeadlock();
     }
+	reserve (n, bExact);
     m_Data.memlink::resize (nb);
 }
 

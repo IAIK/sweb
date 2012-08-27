@@ -350,9 +350,8 @@ size_t string::stream_size (void) const
     return (Utf8Bytes(size()) + size());
 }
 
-#ifdef WANTS_STREAMS
 /// Reads the object from stream \p os
-void string::read (istream& is)
+/*void string::read (istream& is)
 {
     char szbuf [8];
     is >> szbuf[0];
@@ -379,8 +378,7 @@ void string::write (ostream& os) const
     if (!os.verify_remaining ("write", "ustl::string", szsz + sz)) return;
     os.write (szbuf, szsz);
     os.write (cdata(), sz);
-}
-#endif // WANTS_STREAMS
+}*/
 
 /// Returns a hash value for [first, last)
 /*static*/ hashvalue_t string::hash (const char* first, const char* last)

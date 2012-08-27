@@ -7,16 +7,17 @@
 #include "sostream.h"
 #include "ustring.h"
 #include "ualgo.h"
+#include "console/kprintf.h"
 
 namespace ustl {
 
 //--------------------------------------------------------------------
 
 /// Checks that \p n bytes are available in the stream, or else throws.
-void ios_base::overrun (const char* op __attribute__((unused)), const char* type __attribute__((unused)), uint32_t n __attribute__((unused)), uint32_t pos __attribute__((unused)), uint32_t rem)
+void ios_base::overrun (const char* op, const char* type, uint32_t n, uint32_t pos, uint32_t rem)
 {
     if (set_and_throw (rem ? failbit : (failbit | eofbit)))
-/*	throw stream_bounds_exception (op, type, pos, n, rem)*/{ ; }
+	/*	throw stream_bounds_exception (op, type, pos, n, rem)*/{ kprintfd("ERROR stream_bounds_exception: %s:%d", __FILE__, __LINE__); }
 }
 
 //--------------------------------------------------------------------
@@ -28,7 +29,7 @@ istream::istream (const ostream& source)
 {
 }
 
-void istream::unlink (void) 		{ cmemlink::unlink(); m_Pos = 0; }
+void istream::unlink (void) 			{ cmemlink::unlink(); m_Pos = 0; }
 void ostream::unlink (void) 		{ memlink::unlink(); m_Pos = 0; }
 
 /// Writes all unread bytes into \p os.

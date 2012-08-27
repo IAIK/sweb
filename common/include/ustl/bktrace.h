@@ -4,7 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #if 0
-//#ifndef BKTRACE_H_63ABB1E4388CEDD975DBE58B57DE474F
+#ifndef BKTRACE_H_63ABB1E4388CEDD975DBE58B57DE474F
 #define BKTRACE_H_63ABB1E4388CEDD975DBE58B57DE474F
 
 #include "ulimits.h"
@@ -47,7 +47,5 @@ private:
 };
 
 } // namespace ustl
-
-ALIGNOF(ustl::CBacktrace, sizeof(void*))
 
 #endif

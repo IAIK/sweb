@@ -36,7 +36,7 @@ public:
     inline iterator		end (void)			{ return (vector<T>::end()); }
     inline const_iterator	end (void) const		{ return (vector<T>::end()); }
     inline void			push_front (const T& v)		{ insert (begin(), v); }
-    inline void			pop_front (void)		{ erase (begin()); }
+    inline void			pop_front (void)		{ this->erase (begin()); }
     inline const_reference	front (void) const		{ return (*begin()); }
     inline reference		front (void)			{ return (*begin()); }
     inline void			remove (const T& v)		{ ::ustl::remove (*this, v); }

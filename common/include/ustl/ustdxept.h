@@ -4,7 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #if 0
-//#ifndef USTDXEPT_H_46F7AE967738B588038F95E41158D7FF
+#ifndef USTDXEPT_H_46F7AE967738B588038F95E41158D7FF
 #define USTDXEPT_H_46F7AE967738B588038F95E41158D7FF
 
 #include "uexception.h"

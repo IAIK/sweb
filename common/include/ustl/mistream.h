@@ -3,7 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-//#ifndef MISTREAM_H_103AEF1F266C04AA1A817D38705983DA
+#ifndef MISTREAM_H_103AEF1F266C04AA1A817D38705983DA
 #define MISTREAM_H_103AEF1F266C04AA1A817D38705983DA
 
 #include "memlink.h"
@@ -93,7 +93,7 @@ public:
     streamsize		readsome (void* s, streamsize n);
     inline void		read (istream&)			{ }
     void		write (ostream& os) const;
-//    void		text_write (ostringstream& os) const;
+    //void		text_write (ostringstream& os) const;
     inline streamsize	stream_size (void) const	{ return (remaining()); }
     template <typename T>
     inline void		iread (T& v);
@@ -256,7 +256,7 @@ inline void istream::align (streamsize grain)
 template <typename T>
 inline void istream::iread (T& v)
 {
-    assert (aligned (alignof (v)));
+    assert (aligned (stream_align_of (v)));
 #if WANT_STREAM_BOUNDS_CHECKING
     if (!verify_remaining ("read", typeid(v).name(), sizeof(T)))
 	return;
@@ -320,3 +320,5 @@ inline utf8istream_iterator utf8in (istream& is)
 //----------------------------------------------------------------------
 
 } // namespace ustl
+
+#endif

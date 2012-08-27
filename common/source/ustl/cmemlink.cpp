@@ -19,7 +19,7 @@ namespace ustl {
 void cmemlink::link (const void* p, size_type n)
 {
     if (!p && n)
-    	kpanict((uint8_t*)"bad_alloc");
+      kpanict((uint8_t*)"bad_alloc");
       //throw bad_alloc (n);
     unlink();
     relink (p, n);
@@ -30,29 +30,27 @@ void cmemlink::unlink (void)
     m_Data = NULL; m_Size = 0;
 }
 
-#ifdef WANTS_STREAMS
 /// Writes the object to stream \p os
-void cmemlink::write (ostream& os) const
+/*void cmemlink::write (ostream& os) const
 {
     const written_size_type sz (size());
     assert (sz == size() && "No support for writing memblocks larger than 4G");
     os << sz;
     os.write (cdata(), sz);
-    os.align (alignof (sz));
+    os.align (stream_align_of (sz));
 }
 
 /// Writes the object to stream \p os
 void cmemlink::text_write (ostringstream& os) const
 {
     os.write (begin(), readable_size());
-}
-#endif
+}*/
 
 /// Returns the number of bytes required to write this object to a stream.
 cmemlink::size_type cmemlink::stream_size (void) const
 {
     const written_size_type sz (size());
-    return (Align (stream_size_of (sz) + sz, alignof(sz)));
+    return (Align (stream_size_of (sz) + sz, stream_align_of(sz)));
 }
 
 /// Writes the data to file \p "filename".
