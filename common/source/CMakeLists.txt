@@ -1,3 +1,4 @@
+add_subdirectory(cache)
 add_subdirectory(console)
 add_subdirectory(drivers)
 add_subdirectory(fs)

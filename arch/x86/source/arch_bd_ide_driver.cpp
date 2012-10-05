@@ -10,6 +10,8 @@
 #include "ports.h"
 #include "kmalloc.h"
 #include "string.h"
+#include "debug.h"
+#include "kprintf.h"
 
 uint32 IDEDriver::doDeviceDetection()
 {
@@ -226,6 +228,9 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
           BDVirtualDevice *bdv = new 
           BDVirtualDevice( drv, offset, numsec,
           drv->getSectorSize(), part_name, true);
+
+          // set Partition Type (FileSystem identifier)
+          bdv->setPartitionType(fp->systid);
 
           BDManager::getInstance()->addVirtualDevice( bdv );
           break;

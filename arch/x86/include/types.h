@@ -20,7 +20,12 @@ typedef long long int64;
 
 typedef unsigned int pointer;
 
+#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 typedef unsigned int size_t;
+typedef unsigned int mode_t;
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+#endif
 
 typedef uint32 l_off_t;
 

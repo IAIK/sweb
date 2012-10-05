@@ -14,8 +14,6 @@
 #include "UserProcess.h"
 #include "MountMinix.h"
 
-extern VfsSyscall vfs_syscall;
-
 uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
 {
   uint32 return_value=0;
@@ -114,12 +112,12 @@ uint32 Syscall::createprocess(uint32 path, uint32 sleep)
     return -1U;
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
-  uint32 fd = vfs_syscall.open((const char*) path, O_RDONLY);
+  uint32 fd = VfsSyscall::instance()->open(currentThread, (const char*) path, O_RDONLY);
   if (fd == -1U)
   {
     return -1U;
   }
-  vfs_syscall.close(fd);
+  VfsSyscall::instance()->close(currentThread, fd);
   uint32 len = strlen((const char*) path) + 1;
   char* copy = new char[len];
   memcpy(copy, (const char*) path, len);

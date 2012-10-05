@@ -33,17 +33,13 @@
 
 #include "arch_bd_manager.h"
 
-#include "fs/VirtualFileSystem.h"
-#include "fs/ramfs/RamFSType.h"
-#include "fs/devicefs/DeviceFSType.h"
-#include "fs/minixfs/MinixFSType.h"
+#include "fs/VfsSyscall.h"
+#include "fs/FsWorkingDirectory.h"
+
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
 #include "XenConsole.h"
-
-#include "fs/PseudoFS.h"
-#include "fs/fs_tests.h"
 
 #include "fs/fs_global.h"
 
@@ -123,26 +119,6 @@ void startup()
 
   kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, ( ( pointer ) &kernel_end_address )-2U*1024*1024*1024+1*1024*1024 );
 
-  // initialize global and static objects
-  ustl::coutclass::init();
-  vfs.initialize();
-  extern ustl::list<FileDescriptor*> global_fd;
-  new (&global_fd) ustl::list<FileDescriptor*>();
-  extern Mutex global_fd_lock;
-  new (&global_fd_lock) Mutex("global_fd_lock");
-
-  debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
-  DeviceFSType *devfs = new DeviceFSType();
-  vfs.registerFileSystem ( devfs );
-  FileSystemInfo* root_fs_info = vfs.root_mount ( "devicefs", 0 );
-
-  debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n", root_fs_info->getRoot()->getName(), root_fs_info->getPwd()->getName() );
-  if ( main_console->getFSInfo() )
-  {
-    delete main_console->getFSInfo();
-  }
-  main_console->setFSInfo ( root_fs_info );
-
   Scheduler::createScheduler();
 
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
@@ -166,6 +142,27 @@ void startup()
 
   }
 
+  // initialize global and static objects
+  ustl::coutclass::init();
+  VfsSyscall::createVfsSyscall();
+
+  extern ustl::list<FileDescriptor*> global_fd;
+  new (&global_fd) ustl::list<FileDescriptor*>();
+  extern Mutex global_fd_lock;
+  new (&global_fd_lock) Mutex("global_fd_lock");
+
+  // the default working directory info
+  debug ( MAIN, "creating a default working Directory\n" );
+  FsWorkingDirectory default_working_dir;
+  debug ( MAIN, "finished with creating working Directory\n" );
+
+  debug ( MAIN, "make a deep copy of FsWorkingDir\n" );
+  main_console->setWorkingDirInfo(new FsWorkingDirectory(default_working_dir));
+  debug ( MAIN, "main_console->setWorkingDirInfo done\n" );
+
+  debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n",
+      main_console->getWorkingDirInfo()->getRootDirPath(), main_console->getWorkingDirInfo()->getWorkingDirPath() );
+
   debug ( MAIN, "Timer enable\n" );
   ArchInterrupts::enableTimer();
 
@@ -180,18 +177,15 @@ void startup()
   // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!
   char const *user_progs[] = {
   // for reasons of automated testing
-                              "/user_progs/stdout-test.sweb",
-                              "/user_progs/stdin-test.sweb",
-                              "/user_progs/mult.sweb",
+                              "/stdin-test.sweb",
                               0
                              };
 
   Scheduler::instance()->addNewThread (
-       new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ), user_progs )
+       new MountMinixAndStartUserProgramsThread ( new FsWorkingDirectory(default_working_dir), user_progs )
    );
 
   Scheduler::instance()->printThreadList();
-
 
   kprintf ( "Now enabling Interrupts...\n" );
   boot_completed = 1;

@@ -10,15 +10,10 @@
 #include "arch_bd_request.h"
 #include "arch_bd_driver.h"
 
-#include "fs/Inode.h"
-#include "fs/ramfs/RamFSFile.h"
-#include "fs/devicefs/DeviceFSSuperblock.h"
-#include "fs/Dentry.h"
-#include "fs/Superblock.h"
 #include "ustl/ulist.h"
 #include "Mutex.h"
 
-class BDVirtualDevice : public Inode
+class BDVirtualDevice
 {
   public:
 
@@ -40,13 +35,13 @@ class BDVirtualDevice : public Inode
      * now 1024
      *
      */
-    uint32 getBlockSize() { return block_size_; };
+    uint32 getBlockSize() const { return block_size_; };
 
     /**
      * @return returns the current device number
      *
      */
-    uint32 getDeviceNumber() { return dev_number_; };
+    uint32 getDeviceNumber() const { return dev_number_; };
 
     /**
      * @return returns the current driver
@@ -66,7 +61,6 @@ class BDVirtualDevice : public Inode
      */
     uint32 getNumBlocks() { return num_sectors_ / (block_size_/sector_size_); };
 
-//// Inode functions
     /**
      * reads the data from the inode on the current device
      * @param offset where to start to read
@@ -86,59 +80,18 @@ class BDVirtualDevice : public Inode
     virtual int32 writeData(uint32 offset, uint32 size, char *buffer);
 
     /**
-     * creates an inode at the given dentry
-     *
+     * the PartitionType is a 8bit field in the PartitionTable of a MBR
+     * it specifies the FileSystem which is installed on the partition
+     * @param part_type partition type value to be applied to the Device
      */
-    int32 mknod(Dentry *dentry)
-    {
-      if(dentry == 0)
-        return -1;
-
-      i_dentry_ = dentry;
-      dentry->setInode(this);
-      return 0;
-    }
+    void setPartitionType(uint8 part_type);
 
     /**
-     * creates an inode at the given dentry
-     *
+     * getting the PartitionType of this Device (value of the 8bit field
+     * in Partition Table of the MBR)
+     * @return the partition type
      */
-    int32 create(Dentry *dentry)
-    {
-      return(mknod(dentry));
-    }
-
-    /**
-     * creates a file at the given dentry
-     *
-     */
-    int32 mkfile(Dentry *dentry)
-    {
-      return(mknod(dentry));
-    }
-
-    /**
-     * creates a link to the current file
-     *
-     */
-    File *link(uint32 flag)
-    {
-      File* file = (File*)(new RamFSFile(this, i_dentry_, flag));
-      i_files_.push_back(file);
-      return file;
-    }
-
-    /**
-     * deletes the link to the given file
-     *
-     */
-    int32 unlink(File* file)
-    {
-      i_files_.remove(file);
-      delete file;
-      return 0;
-    }
-//// End Inode functions
+    uint8 getPartitionType(void) const;
 
     /**
      * sets the device number
@@ -172,6 +125,7 @@ class BDVirtualDevice : public Inode
     bool writable_;
     char *name_;
     BDDriver * driver_;
+    uint8 partition_type_;
 };
 
 #endif

@@ -7,9 +7,10 @@
 #include "arch_bd_virtual_device.h"
 #include "kmalloc.h"
 #include "string.h"
+#include "debug.h"
+#include "console/kprintf.h"
 
-BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable) :
-Inode( 0, I_BLOCKDEVICE )
+BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable)
 {
   offset_        = offset;
   num_sectors_   = num_sectors;
@@ -18,18 +19,20 @@ Inode( 0, I_BLOCKDEVICE )
   writable_      = writable;
   driver_        = driver;
 
+  partition_type_ = 0x00; // by default not set
+
   debug(BD_VIRT_DEVICE, "ctor: offset = %d, num_sectors = %d,\n  sector_size = %d, "
                         "name = %s \n", offset, num_sectors, sector_size, name);
 
   name_         = new char[ strlen( name ) + 1 ];
   strncpy( name_, name, strlen(name) );
   name_[ strlen(name) ] = '\0';
-
+/*
   debug(BD_VIRT_DEVICE, "ctor:registering with DeviceFS\n");
   i_superblock_ = DeviceFSSuperBlock::getInstance();
   DeviceFSSuperBlock::getInstance()->addDevice( this, name_ );
   debug(BD_VIRT_DEVICE, "ctor:registered with DeviceFS\n");
-
+*/
   dev_number_   = 0;
 };
 
@@ -102,3 +105,13 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
    else
      return size;
 };
+
+void BDVirtualDevice::setPartitionType(uint8 part_type)
+{
+  partition_type_ = part_type;
+}
+
+uint8 BDVirtualDevice::getPartitionType(void) const
+{
+  return partition_type_;
+}

@@ -2,5 +2,6 @@
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_C_COMPILER gcc)
 
-add_subdirectory(exe2minixfs)
+# add_subdirectory(exe2minixfs)
+add_subdirectory(sweb-img-util)
 #add_subdirectory(exe2pseudofs)
