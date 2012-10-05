@@ -155,6 +155,27 @@ extern "C"
    */
   char *strrchr ( const char* str, char c );
 
+  /**
+   * strtok() - Split string into tokens
+   * description from: http://www.cplusplus.com/reference/clibrary/cstring/strtok/
+   * @param str
+   * @param delimiters
+   * @return
+   */
+  char* strtok ( char* str, const char* delimiters );
+
+  /**
+   * itoa() - Converts an integer to null-terminated string
+   * @param value Value to be converted to a string.
+   * @param str Array in memory where to store the resulting null-terminated
+   *            string.
+   * @param Numerical base used to represent the value as a string.
+   *        (10 : decimal, 16: hex, 2: binary)
+   * @return A pointer to the resulting null-terminated string, same
+   * as parameter str.
+   */
+  char* itoa(int value, char * str, int base);
+
 #ifdef __cplusplus
 }
 #endif

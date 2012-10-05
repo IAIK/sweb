@@ -6,6 +6,10 @@
 #include "mm/kmalloc.h"
 #include "assert.h"
 
+#ifndef NULL
+#define NULL    0
+#endif
+
 size_t strlen ( const char *str )
 {
   const char *pos = str;
@@ -464,4 +468,130 @@ char *strrchr ( const char* str, char c )
   while ( --len );
 
   return ( char * ) 0;
+}
+
+char* strtok ( char* str, const char* delimiters )
+{
+  static char* str_to_tok = NULL;
+  if(str != NULL)
+    str_to_tok = str;
+
+  // no delimiters, so just return the rest-string
+  if(delimiters == NULL)
+    return str_to_tok;
+
+  if(str_to_tok == NULL)
+    return NULL;
+
+  // determine token start and end
+  uint32 tok_start = 0;
+  uint32 tok_end = -1;
+
+  // find first char which is not one of the delimiters
+  uint32 str_pos = 0;
+  for(str_pos = 0; str_to_tok[str_pos] != '\0'; str_pos++)
+  {
+    uint8 char_is_delimiter = 0;
+
+    uint32 del_pos = 0;
+    for(del_pos = 0; delimiters[del_pos] != '\0'; del_pos++)
+    {
+      if(str_to_tok[str_pos] == delimiters[del_pos])
+      {
+        char_is_delimiter = 1;
+        break;
+      }
+    }
+
+    if(char_is_delimiter == 0)
+    {
+      // this is the start char of the token
+      tok_start = str_pos;
+      break;
+    }
+  }
+
+  // find next delimiter in the string
+  for(str_pos = tok_start; str_to_tok[str_pos] != '\0'; str_pos++)
+  {
+    uint32 del_pos = 0;
+    for(; delimiters[del_pos] != '\0'; del_pos++)
+    {
+      if(str_to_tok[str_pos] == delimiters[del_pos])
+      {
+        // delimiter found!
+        tok_end = str_pos;
+        break;
+      }
+    }
+
+    if(tok_end != -1U)
+      break;
+  }
+
+  // create and return token:
+  char* token = str_to_tok + tok_start;
+
+  // update string
+  if(tok_end == -1U)
+  {
+    // finished, no next token
+    str_to_tok = NULL;
+  }
+  else
+  {
+    str_to_tok[tok_end] = '\0';
+    str_to_tok += tok_end+1;
+  }
+
+  return token;
+}
+
+// converts a single digit into an
+char numToASCIIChar(uint8 number)
+{
+  if(number >= 0 && number <= 9)
+    return 0x30+number;
+
+  if(number >= 0xa && number <= 0xf)
+    return 0x61+number;
+
+  // default value
+  return '?';
+}
+
+char* itoa(int value, char* str, int base)
+{
+  if(!str)
+    return 0;
+
+  int div = value;
+  int mod;
+  unsigned int str_pos = 0;
+
+  while(div >= base)
+  {
+    mod = div % base;
+    div /= base;
+    str[str_pos++] = numToASCIIChar(mod);
+  }
+  str[str_pos++] = numToASCIIChar(div);
+  if(value < 0)
+    str[str_pos++] = '-';
+  str[str_pos] = '\0';
+
+  if(str_pos > 1)
+  {
+    uint32 str_len = strlen(str);
+    uint32 i = 0;
+    // switching the string
+    for(i = 0; i < str_len / 2; i++)
+    {
+      char temp = str[str_len-1-i];
+      str[str_len-1-i] = str[i];
+      str[i] = temp;
+    }
+  }
+
+  return str;
 }

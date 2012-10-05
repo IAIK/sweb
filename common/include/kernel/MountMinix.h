@@ -22,7 +22,7 @@ class MountMinixAndStartUserProgramsThread : public Thread
      * @param root_fs_info the FileSystemInfo
      * @param progs a string-array of the userprograms which should be executed
      */
-    MountMinixAndStartUserProgramsThread ( FileSystemInfo *root_fs_info, char const *progs[] );
+    MountMinixAndStartUserProgramsThread ( FsWorkingDirectory *root_fs_info, char const *progs[] );
 
     /**
      * Mounts the Minix-Partition with user-programs and creates processes

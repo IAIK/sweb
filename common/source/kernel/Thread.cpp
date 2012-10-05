@@ -35,7 +35,7 @@ Thread::Thread(const char *name) :
   state_(Running),
   pid_(0),
   my_terminal_(0),
-  fs_info_(new FileSystemInfo()),
+  working_dir_(0),
   name_(name)
 {
   debug ( THREAD,"Thread ctor, this is %x; stack is %x\n", this, stack_ );
@@ -43,7 +43,7 @@ Thread::Thread(const char *name) :
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
 }
 
-Thread::Thread ( FileSystemInfo *fs_info, const char *name ) :
+Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
   kernel_arch_thread_info_(0),
   user_arch_thread_info_(0),
   switch_to_userspace_(0),
@@ -51,12 +51,12 @@ Thread::Thread ( FileSystemInfo *fs_info, const char *name ) :
   state_(Running),
   pid_(0),
   my_terminal_(0),
-  fs_info_(fs_info),
+  working_dir_(working_dir),
   name_(name)
 {
   debug ( THREAD,"Thread ctor, this is %x, stack is %x\n", this, stack_);
   debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
-  debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", fs_info );
+  debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", working_dir_ );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
 }
 
@@ -74,11 +74,11 @@ Thread::~Thread()
   user_arch_thread_info_ = 0;
   ArchThreads::cleanupThreadInfos ( kernel_arch_thread_info_ );
   kernel_arch_thread_info_ = 0;
-  if ( fs_info_ )
+  if ( working_dir_ )
   {
     debug ( THREAD,"~Thread deleting fs info\n" );
-    delete fs_info_;
-    fs_info_ = 0;
+    delete working_dir_;
+    working_dir_ = 0;
   }
   debug ( THREAD,"~Thread: done (%s)\n", name_ );
   assert(KernelMemoryManager::instance()->KMMLockHeldBy() != this);
@@ -121,19 +121,19 @@ void Thread::setTerminal ( Terminal *my_term )
   my_terminal_=my_term;
 }
 
-FileSystemInfo *Thread::getFSInfo()
-{
-  return fs_info_;
-}
-
-void Thread::setFSInfo ( FileSystemInfo *fs_info )
-{
-  fs_info_ = fs_info;
-}
-
 void Thread::printBacktrace()
 {
   printBacktrace(currentThread != this);
+}
+
+FsWorkingDirectory* Thread::getWorkingDirInfo(void)
+{
+  return working_dir_;
+}
+
+void Thread::setWorkingDirInfo(FsWorkingDirectory* working_dir)
+{
+  working_dir_ = working_dir;
 }
 
 void Thread::printBacktrace(bool use_stored_registers)

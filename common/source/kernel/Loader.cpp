@@ -8,11 +8,11 @@
 #include "mm/PageManager.h"
 #include "ArchMemory.h"
 #include "Syscall.h"
-#include "VfsSyscall.h"
-#include "File.h"
+#include "fs/VfsSyscall.h"
+//#include "File.h"
 #include <ustl/uvector.h>
 
-extern VfsSyscall vfs_syscall;
+//extern VfsSyscall vfs_syscall;
 
 #define EI_NIDENT 16
 
@@ -272,8 +272,8 @@ bool Loader::readHeaders()
 
   hdr_ = new ELF32_Ehdr;
 
-  vfs_syscall.lseek(fd_, 0, File::SEEK_SET);
-  if(!hdr_ || vfs_syscall.read(fd_, reinterpret_cast<char*>(hdr_),
+  VfsSyscall::instance()->lseek(currentThread, fd_, 0, SEEK_SET);
+  if(!hdr_ || VfsSyscall::instance()->read(currentThread, fd_, reinterpret_cast<char*>(hdr_),
               sizeof(ELF32_Ehdr)) != sizeof(ELF32_Ehdr))
   {
     return false;
@@ -300,9 +300,9 @@ bool Loader::readHeaders()
 
   phdrs_.resize(hdr_->e_phnum, true);
 
-  vfs_syscall.lseek(fd_, hdr_->e_phoff, File::SEEK_SET);
+  VfsSyscall::instance()->lseek(currentThread, fd_, hdr_->e_phoff, SEEK_SET);
 
-  if(vfs_syscall.read(fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(ELF32_Phdr))
+  if(VfsSyscall::instance()->read(currentThread, fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(ELF32_Phdr))
       != static_cast<int32>(sizeof(ELF32_Phdr)*hdr_->e_phnum))
   {
     return false;
@@ -474,8 +474,8 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   }
 
 
-  vfs_syscall.lseek(fd_, min_value, File::SEEK_SET);
-  int32 bytes_read = vfs_syscall.read(fd_, buffer, max_value - min_value);
+  VfsSyscall::instance()->lseek(currentThread, fd_, min_value, SEEK_SET);
+  int32 bytes_read = VfsSyscall::instance()->read(currentThread, fd_, buffer, max_value - min_value);
 
 
   if(bytes_read != static_cast<int32>(max_value - min_value))
