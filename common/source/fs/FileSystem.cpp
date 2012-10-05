@@ -18,8 +18,6 @@
 #include "cache/CacheFactory.h"
 #include "cache/FiFoReadNoWriteCacheFactory.h"
 #include "cache/FifoReadWriteBackCacheFactory.h"
-#include "cache/AgingReadNoWriteCacheFactory.h"
-#include "cache/AgingReadWriteBackCacheFactory.h"
 #include "fs/DeviceCache.h"
 
 #include "fs/FsSmartLock.h"
