@@ -73,7 +73,7 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   }
   else
   {
-    vfs_syscall.write(fd, (char*) buffer, size);
+    VfsSyscall::instance()->write(currentThread, fd, (char*) buffer, size);
   }
   return size;
 }
@@ -99,14 +99,14 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
   }
   else
   {
-    num_read = vfs_syscall.read(fd, (char*) buffer, count);
+    num_read = VfsSyscall::instance()->read(currentThread, fd, (char*) buffer, count);
   }
   return num_read;
 }
 
 uint32 Syscall::close(uint32 fd)
 {
-  return vfs_syscall.close(fd);
+  return VfsSyscall::instance()->close(currentThread, fd);
 }
 
 uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
@@ -115,7 +115,7 @@ uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
   {
     return -1U;
   }
-  return vfs_syscall.open((char*) path, flags | mode);
+  return VfsSyscall::instance()->open(currentThread, (char*) path, flags | mode);
 }
 
 void Syscall::outline(uint32 port, pointer text)
