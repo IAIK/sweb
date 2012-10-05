@@ -519,9 +519,6 @@ void debug ( uint32 flag, const char *fmt, ... )
       case FS_UTIL:
         kprintfd ( COLORDEBUG("[FS_UTIL    ]", "39"));
         break;
-      case FS_TESTCASE:
-        kprintfd ( COLORDEBUG("[FS_TESTCASE]", "34"));
-        break;
       case FS_UNIX:
         kprintfd ( COLORDEBUG("[FS_UNIX    ]", "32"));
         break;
