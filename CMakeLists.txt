@@ -276,8 +276,8 @@ add_custom_target(kvm
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-i386 -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to qemu-system-i386 -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout"
+	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
+	COMMENT "Going to qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -292,8 +292,8 @@ add_custom_target(emu
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to gdb qemu -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout on localhost:1234"
+	COMMAND	qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
+	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout on localhost:1234"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -301,8 +301,8 @@ add_custom_target(qemugdb
 #Custom target: make qemutacos
 #Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
-  COMMENT "Going to qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
+  COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
+  COMMENT "Going to qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   #COMMAND reset -I
   )
