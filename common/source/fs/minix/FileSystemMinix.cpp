@@ -44,7 +44,7 @@ FileSystemMinix::FileSystemMinix(FsDevice* device, uint32 mount_flags,
   createInodeTable(minix_version);
 
   // create the zone-bitmap
-  zone_bitmap_ = new FsBitmap(this, this->getVolumeManager(),
+  zone_bitmap_ = new FsBitmap(this, getVolumeManager(),
                               zone_bitmap_sector_, zone_bitmap_sector_+zone_bitmap_size_-1,
                               superblock_.s_nzones);
   debug(FS_MINIX, "FileSystemMinix() - FsBitmap Zone successfully created\n");
@@ -174,7 +174,7 @@ void FileSystemMinix::createInodeTable(uint16 minix_version)
   // Minix Version 2
   if(minix_version == 2)
   {
-    inode_table_ = new InodeTableMinixV2(this, this->getVolumeManager(),
+    inode_table_ = new InodeTableMinixV2(this, getVolumeManager(),
                                        inode_tbl_sector_, inode_tbl_size_,
                                        inode_bitmap_sector_, inode_bitmap_sector_+inode_bitmap_size_-1,
                                        superblock_.s_ninodes);
@@ -182,7 +182,7 @@ void FileSystemMinix::createInodeTable(uint16 minix_version)
   // default: Minix Version 1
   else
   {
-    inode_table_ = new InodeTableMinix(this, this->getVolumeManager(),
+    inode_table_ = new InodeTableMinix(this, getVolumeManager(),
                                        inode_tbl_sector_, inode_tbl_size_,
                                        inode_bitmap_sector_, inode_bitmap_sector_+inode_bitmap_size_-1,
                                        superblock_.s_ninodes);
@@ -199,7 +199,7 @@ void FileSystemMinix::initRootInode(void)
   debug(FS_MINIX, "initRootInode - CALL\n");
 
   // getting the root-inode out of the InodeTable
-  Inode* root_node = this->acquireInode(MINIX_ROOT_INO, NULL, "/");
+  Inode* root_node = acquireInode(MINIX_ROOT_INO, NULL, "/");
 
   assert(root_node != NULL);
   assert(root_node->getID() == MINIX_ROOT_INO);
@@ -216,7 +216,7 @@ void FileSystemMinix::initRootInode(void)
   debug(FS_MINIX, "initRootInode - root I-node was successfully loaded.\n");
 
   // load the root-s children
-  this->loadDirChildrenUnsafe(root_);
+  loadDirChildrenUnsafe(root_);
 
   debug(FS_MINIX, "initRootInode - DONE\n");
 }
@@ -265,7 +265,7 @@ File* FileSystemMinix::creat(Directory* parent, const char* name,
   // * file-size is 0 (empty new file)
   RegularFile* new_file = new RegularFile(id, inode_table_->getInodeSectorAddr(id),
                                           inode_table_->getInodeSectorOffset(id),
-                                          this, this->getVolumeManager(),
+                                          this, getVolumeManager(),
                                           current_time, current_time, current_time,
                                           1, 0);
 
@@ -907,7 +907,7 @@ bool FileSystemMinix::removeDirectoryEntry(Directory* parent, const char* name, 
         if(isDataBlockFreeOfReferences(block, getDataBlockSize(), DIR_ENTRY_SIZE_))
         {
           // ... if so, it is not used any longer and can therefore be freed
-          //this->removeLastSectorOfInode(parent);
+          //removeLastSectorOfInode(parent);
           removeSectorFromInode(parent, j);
 
           assert(parent->getFileSize() >= getDataBlockSize());
@@ -979,9 +979,9 @@ statfs_s* FileSystemMinix::statfs(void) const
 {
   statfs_s* stat_info = new statfs_s;
 
-  stat_info->fs_ident = this->getPartitionIdentifier();
+  stat_info->fs_ident = getPartitionIdentifier();
 
-  stat_info->block_size = this->getBlockSize();
+  stat_info->block_size = getBlockSize();
   stat_info->num_blocks = superblock_.s_nzones; //device_->getNumBlocks();
   stat_info->num_free_blocks = zone_bitmap_->getNumFreeBits();
 
