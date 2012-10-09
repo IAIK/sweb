@@ -180,9 +180,7 @@ void startup()
   // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!
   char const *user_progs[] = {
   // for reasons of automated testing
-                              "/user_progs/stdout-test.sweb",
                               "/user_progs/stdin-test.sweb",
-                              "/user_progs/mult.sweb",
                               0
                              };
 

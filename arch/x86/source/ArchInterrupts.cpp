@@ -93,14 +93,13 @@ bool ArchInterrupts::testIFSet()
 
 void ArchInterrupts::yieldIfIFSet()
 {
-  __asm__ __volatile__("nop");
-  /*extern uint32 boot_completed;
+  extern uint32 boot_completed;
   if (boot_completed && currentThread && testIFSet())
   {
     ArchThreads::yield();
   }
   else
   {
-    __asm__ __volatile__("hlt"); // might slow down i/o
-  }*/
+    __asm__ __volatile__("nop");
+  }
 }
