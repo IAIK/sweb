@@ -10,7 +10,7 @@
 #include "ports.h"
 #include "kmalloc.h"
 #include "string.h"
-#include "debug.h"
+#include "ArchInterrupts.h"
 #include "kprintf.h"
 
 uint32 IDEDriver::doDeviceDetection()
@@ -81,10 +81,11 @@ uint32 IDEDriver::doDeviceDetection()
         outbp( base_regport , devCtrl | 0x04 ); // RESET
         outbp( base_regport , devCtrl );
 
-        while( inbp( base_port + 7 ) != 58 && jiffies ++ < 50000 )
-          ;
+        jiffies = 0;
+        while (!(inbp( base_port + 7 ) & 0x58) && jiffies++ < IO_TIMEOUT)
+          ArchInterrupts::yieldIfIFSet();
 
-        if( jiffies == 50000 )
+        if( jiffies >= IO_TIMEOUT )
           debug(IDE_DRIVER, "doDetection: Still busy after reset!\n ");
         else
         {
@@ -198,7 +199,7 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
 
   if( mbr->signature == 0xAA55 )
   {
-    debug(IDE_DRIVER, "processMBR: | Valid PC MBR | ");
+    debug(IDE_DRIVER, "processMBR: | Valid PC MBR | \n");
     FP * fp = (FP *) mbr->parts;
     uint32 i;
     for(i = 0; i < 4; i++, fp++)
