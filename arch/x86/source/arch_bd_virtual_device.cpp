@@ -27,12 +27,6 @@ BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_se
   name_         = new char[ strlen( name ) + 1 ];
   strncpy( name_, name, strlen(name) );
   name_[ strlen(name) ] = '\0';
-/*
-  debug(BD_VIRT_DEVICE, "ctor:registering with DeviceFS\n");
-  i_superblock_ = DeviceFSSuperBlock::getInstance();
-  DeviceFSSuperBlock::getInstance()->addDevice( this, name_ );
-  debug(BD_VIRT_DEVICE, "ctor:registered with DeviceFS\n");
-*/
   dev_number_   = 0;
 };
 

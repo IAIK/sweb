@@ -29,7 +29,7 @@ bool FsDeviceVirtual::readSector(sector_addr_t sector, char* buffer, sector_len_
   if(buffer_size % getBlockSize() != 0)
     return false;
 
-  debug(FS_DEVICE, "writeSector - reading sector=%x buffer=%x (len=%d)\n", sector, buffer, buffer_size);
+  debug(FS_DEVICE, "readSector - reading sector=%x buffer=%x (len=%d)\n", sector, buffer, buffer_size);
 
   // reading data
   if(dev_->readData(sector * getBlockSize(), buffer_size, buffer) == -1)

@@ -70,7 +70,7 @@ VfsSyscall::VfsSyscall(char path_separator) : PATH_SEPARATOR(path_separator),
 {
   LAST_DEFINED_PATH_SEPARATOR = path_separator;
   debug(VFSSYSCALL, "starting to create VfsSyscall Singleton-instance\n");
-  initRootFs();
+  assert(initRootFs() == 0);
   debug(VFSSYSCALL, "VfsSyscall was successfully init\n");
 }
 
@@ -78,7 +78,7 @@ VfsSyscall::~VfsSyscall()
 {
 }
 
-void VfsSyscall::initRootFs(void)
+int32 VfsSyscall::initRootFs(void)
 {
   // Initializing the root-file system
   debug(VFSSYSCALL, "init root filesystem\n");
@@ -96,6 +96,14 @@ void VfsSyscall::initRootFs(void)
 
   // create the root-file system
   root_ = fs_pool_.getNewFsInstance(root_fs_dev, bddev->getPartitionType(), /*MS_SYNCHRONOUS |*/ MS_NOATIME);
+
+  // failed to create the root-file system
+  if(root_ == NULL)
+  {
+    debug(VFSSYSCALL, "mount - ERROR failed to instantiate new file-system\n");
+    return -1; //
+  }
+
   mounted_fs_.push_back(root_);
 
   debug(VFSSYSCALL, "Root FileSystem is \"%s\"\n", root_->getName());

@@ -83,22 +83,16 @@ bool FileSystemMinix::readSuperblock(FsDevice* device, minix_super_block& superb
   debug(FS_MINIX, "readSuperblock - reading Superblock from %x, offset=%x\n", sector, offset);
 
   // the buffer containing the data of the MINIX_SUPERBLOCK_OFFSET
-  char* buffer = new char[MINIX_BLOCK_SIZE];
+  char buffer[MINIX_BLOCK_SIZE];
 
   if(!device->readSector(sector, buffer, MINIX_BLOCK_SIZE))
   {
     debug(FS_MINIX, "readSuperblock - I/O read error, failed to read SB!\n");
-
-    delete[] buffer;
     return false;
   }
 
   // copy of Super-block data
   superblock = *reinterpret_cast<minix_super_block*>(buffer + offset);
-
-  // buffer is no longer used!
-  delete[] buffer;
-  buffer = NULL;
 
   // some debug prints
   debug(FS_MINIX, "readSuperblock - magic-number=%x\n", superblock.s_magic);

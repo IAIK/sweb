@@ -463,7 +463,7 @@ class VfsSyscall
     /**
      * loads and creates the root-filesystem
      */
-    void initRootFs(void);
+    int32 initRootFs(void);
 
     /**
      * returns the position of the last Separator-char in a given path
