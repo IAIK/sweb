@@ -70,8 +70,14 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
    BDRequest bd(dev_number_, BDRequest::BD_READ, blockoffset, blocks2read, buffer);
    addRequest ( &bd );
 
+   bool interrupt_context = ArchInterrupts::disableInterrupts();
+   ArchInterrupts::enableInterrupts();
+
    while( bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT )
      ArchInterrupts::yieldIfIFSet();
+
+   if( !interrupt_context )
+     ArchInterrupts::disableInterrupts();
 
    if( bd.getStatus() != BDRequest::BD_DONE )
    {
@@ -91,8 +97,14 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
    BDRequest bd(dev_number_ ,BDRequest::BD_WRITE, blockoffset, blocks2write, buffer);
    addRequest ( &bd );
 
+   bool interrupt_context = ArchInterrupts::disableInterrupts();
+   ArchInterrupts::enableInterrupts();
+
    while( bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT )
      ArchInterrupts::yieldIfIFSet();
+
+   if( !interrupt_context )
+     ArchInterrupts::disableInterrupts();
 
    if( bd.getStatus() != BDRequest::BD_DONE )
      return -1;
