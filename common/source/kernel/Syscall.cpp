@@ -42,7 +42,7 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
       return_value = open(arg1,arg2,arg3);
       break;
     case sc_close:
-      return_value = read(arg1,arg2,arg3);
+      return_value = close(arg1);
       break;
     case sc_outline:
       outline(arg1,arg2);
