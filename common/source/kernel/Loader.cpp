@@ -412,7 +412,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
         ++found;
       }
       // bss is not in the file but in memory
-      else if (ADDRESS_BETWEEN(load_byte_from_address, h.p_filesz, h.p_paddr + h.p_memsz))
+      else if (ADDRESS_BETWEEN(load_byte_from_address, h.p_paddr, h.p_paddr + h.p_memsz))
       {
         // skip ahead to end of section
         i += (h.p_paddr + h.p_memsz) - load_byte_from_address - 1;
