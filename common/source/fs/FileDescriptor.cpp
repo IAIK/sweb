@@ -118,6 +118,18 @@ FileDescriptor::FileDescriptor ( File* file, Thread* owner, bool append_mode,
   //file_ = file;
 }
 
+FileDescriptor::FileDescriptor(const FileDescriptor& cpy) : fd_(cpy.fd_),
+    file_(cpy.file_), cursor_pos_(cpy.cursor_pos_), owner_(cpy.owner_),
+    append_mode_(cpy.append_mode_), nonblocking_mode_(cpy.nonblocking_mode_),
+    read_mode_(cpy.read_mode_), write_mode_(cpy.write_mode_),
+    synchronous_(cpy.synchronous_)
+{
+  // IMPORTANT: the fs uses a reference counter to prevent from deleting an object
+  // instance while it is still in use; now that file_ is used once more we need
+  // to manually increment the reference counter of it
+  assert ( file_->getFileSystem()->acquireInode(file_->getID(), 0, file_->getName()) == file_ );
+}
+
 FileDescriptor::~FileDescriptor()
 {
   debug(VFSSYSCALL, "~FileDescriptor() - fd destructor\n");

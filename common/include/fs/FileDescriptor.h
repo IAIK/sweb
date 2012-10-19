@@ -65,6 +65,13 @@ class FileDescriptor
                      bool append_mode = false, bool nonblocking_mode = false );
 
     /**
+     * copy constructor
+     *
+     * @param cpy copies a fd the safe way
+     */
+    FileDescriptor(const FileDescriptor& cpy);
+
+    /**
      * destructor
      */
     virtual ~FileDescriptor();
