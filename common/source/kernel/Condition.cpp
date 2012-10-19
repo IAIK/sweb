@@ -63,7 +63,10 @@ void Condition::broadcast()
     if (thread->state_ == Sleeping)
       Scheduler::instance()->wake(thread);
     else
+    {
+      assert(thread->state_ != Running && "Why is a *Running* thread on the sleepers list of this condition? bug?");
       tmp_threads.push_back(thread);
+    }
     debug(CONDITION,"Condition::broadcast: Thread %x  %d:%s being signaled for Condition %x\n",thread,thread->getPID(),thread->getName(),this);
   }
   while (!tmp_threads.empty())

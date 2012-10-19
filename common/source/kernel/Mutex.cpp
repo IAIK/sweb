@@ -92,7 +92,7 @@ bool Mutex::isFree()
   if ( unlikely ( ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() ) )
     kpanict ( ( uint8* ) ( "Mutex::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n" ) );
 
-  if ( !spinlock_.isFree() || mutex_ > 0 )
+  if ( mutex_ > 0 )
     return false;
   else
     return true;
