@@ -128,7 +128,7 @@ void Scheduler::sleepAndRelease ( SpinLock &lock )
 void Scheduler::sleepAndRelease ( Mutex &lock )
 {
   lockScheduling();
-  waitForFreeKMMLockAndFreeSpinLock(lock.spinlock_);
+  waitForFreeKMMLock();
   currentThread->state_=Sleeping;
   lock.release();
   unlockScheduling();
@@ -297,30 +297,6 @@ void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
 
   uint32 ticks = 0;
   while ( ! KernelMemoryManager::instance()->isKMMLockFree())
-  {
-    if (unlikely(++ticks > 50))
-    {
-      kprintfd("WARNING: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? Maybe there is something wrong!\n", ticks);
-      Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
-      kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
-      t->printBacktrace();
-      //assert(false);
-    }
-    unlockScheduling();
-    yield();
-    lockScheduling();
-  }
-}
-
-void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
-{
-  if ( block_scheduling_==0 )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLockAndFreeSpinLock"
-                            ": This is meant to be used while Scheduler is locked\n" );
-
-  uint32 ticks = 0;
-  while ( ! KernelMemoryManager::instance()->isKMMLockFree() ||
-          ! spinlock.isFree())
   {
     if (unlikely(++ticks > 50))
     {
