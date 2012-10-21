@@ -344,7 +344,7 @@ struct PagePart
 };
 
 #define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
-  ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
+  ((((uint32)Value) >= ((uint32)LowerBound)) && (((uint32)Value) < ((uint32)UpperBound)))
 
 void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 {

@@ -17,9 +17,9 @@ SpinLock::SpinLock(const char* name) :
 {
 }
 
-bool SpinLock::acquireNonBlocking(const char* debug_info)
+bool SpinLock::acquireNonBlocking(__attribute__((unused)) const char* debug_info)
 {
-  if (boot_completed && ArchThreads::testSetLock(nosleep_mutex_, 1))
+  if (likely(boot_completed) && ArchThreads::testSetLock(nosleep_mutex_, 1))
   {
     return false;
   }
@@ -48,7 +48,7 @@ bool SpinLock::isFree()
   return (nosleep_mutex_ == 0);
 }
 
-void SpinLock::release(const char* debug_info)
+void SpinLock::release(__attribute__((unused)) const char* debug_info)
 {
   assert(held_by_ == currentThread);
   held_by_ = 0;
