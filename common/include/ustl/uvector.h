@@ -126,7 +126,6 @@ inline void vector<T>::resize (size_type n, bool bExact)
       extern void checkKMMDeadlock();
       checkKMMDeadlock();
     }
-	reserve (n, bExact);
     m_Data.memlink::resize (nb);
 }
 
