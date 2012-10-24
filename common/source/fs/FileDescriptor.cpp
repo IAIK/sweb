@@ -127,7 +127,9 @@ FileDescriptor::FileDescriptor(const FileDescriptor& cpy) : fd_(cpy.fd_),
   // IMPORTANT: the fs uses a reference counter to prevent from deleting an object
   // instance while it is still in use; now that file_ is used once more we need
   // to manually increment the reference counter of it
+#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
   assert ( file_->getFileSystem()->acquireInode(file_->getID(), 0, file_->getName()) == file_ );
+#endif
 }
 
 FileDescriptor::~FileDescriptor()
