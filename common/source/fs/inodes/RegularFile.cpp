@@ -104,7 +104,7 @@ int32 RegularFile::read(FileDescriptor* fd, char* buffer, uint32 len)
     // avoid a size-overflow
     if(cursor_pos + read_bytes + num_bytes_to_cpy > getFileSize())
     {
-      assert(getFileSize() > (cursor_pos + read_bytes));
+      assert(getFileSize() >= (cursor_pos + read_bytes));
       // fragment size is the rest of the file that should be read
       num_bytes_to_cpy = getFileSize() - (cursor_pos + read_bytes);
       end_of_file = true;
