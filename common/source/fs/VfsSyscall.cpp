@@ -1161,7 +1161,8 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
 
   // split path into tokens
   char* path_cpy = strdup(path);
-  char* path_token = strtok(path_cpy, "/" /*&PATH_SEPARATOR*/ );
+  char* path_token = strtok(path_cpy, "/");
+  debug(VFSSYSCALL, "resolvePath() - duplicated path is \"%s\"\n", path_cpy);
 
   while(true)
   {
@@ -1195,7 +1196,7 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
     }
 
     // get next token
-    path_token = strtok(NULL, &PATH_SEPARATOR );
+    path_token = strtok(NULL, "/");
 
     // no next path token available
     if(path_token == NULL || strcmp(path_token, "") == 0)
