@@ -7,8 +7,6 @@
 #define _BD_VIRTUAL_DEVICE_
 
 #include "types.h"
-#include "arch_bd_request.h"
-#include "arch_bd_driver.h"
 
 #include "fs/Inode.h"
 #include "fs/ramfs/RamFSFile.h"
@@ -17,6 +15,9 @@
 #include "fs/Superblock.h"
 #include "ustl/ulist.h"
 #include "Mutex.h"
+
+class BDDriver;
+class BDRequest;
 
 class BDVirtualDevice : public Inode
 {

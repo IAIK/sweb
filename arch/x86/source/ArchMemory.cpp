@@ -6,6 +6,8 @@
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
+#include "ArchCommon.h"
+#include "PageManager.h"
 
 //extern "C" uint32 kernel_page_directory_start;
 extern "C" page_directory_entry kernel_page_directory_start;

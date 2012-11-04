@@ -6,7 +6,8 @@
 #ifndef _BD_DEVICE_DRIVER_
 #define _BD_DEVICE_DRIVER_
 
-#include "arch_bd_request.h"
+#include "types.h"
+class BDRequest;
 
 /**
  * @class BDDriver

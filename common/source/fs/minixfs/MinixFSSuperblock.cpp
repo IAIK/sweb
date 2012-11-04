@@ -12,6 +12,7 @@
 #include "arch_bd_manager.h"
 #include "kmalloc.h"
 #include "ArchCommon.h"
+#include "arch_bd_virtual_device.h"
 
 #include "console/kprintf.h"
 

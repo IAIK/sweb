@@ -12,6 +12,7 @@
 #include "Dentry.h"
 #include "arch_bd_manager.h"
 #include "ArchMemory.h"
+#include "ArchCommon.h"
 
 #include "kprintf.h"
 
@@ -25,7 +26,7 @@
 
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
-    Inode(super_block, inode_type)
+    Inode(super_block, inode_type), i_num_(0), children_loaded_(false)
 {
   debug(M_INODE, "Simple Constructor\n");
   i_zones_ = 0;

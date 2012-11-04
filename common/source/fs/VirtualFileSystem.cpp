@@ -11,7 +11,7 @@
 #include "assert.h"
 #include "mm/kmalloc.h"
 #include "arch_bd_manager.h"
-
+#include "arch_bd_virtual_device.h"
 #include "console/kprintf.h"
 #include "fs/fs_global.h"
 

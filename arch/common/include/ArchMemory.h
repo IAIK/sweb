@@ -8,9 +8,6 @@
 
 #include "types.h"
 #include "paging-definitions.h"
-#include "ArchCommon.h"
-#include "panic.h"
-#include "mm/PageManager.h"
 
 //Arch-VirtualMemoryUserSpaceObjekt
 /**

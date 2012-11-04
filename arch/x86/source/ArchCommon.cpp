@@ -8,6 +8,7 @@
 #include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
+#include "ArchMemory.h"
 
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
