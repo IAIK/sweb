@@ -8,12 +8,12 @@
 #ifndef IMAGEINFO_H_
 #define IMAGEINFO_H_
 
-#include <algorithm>
+#include <stdint.h>
 #include <vector>
 #include <fstream>
-#include <iostream>
 
-#include "PartitionInfo.h"
+
+class PartitionInfo;
 
 /**
  * @class collects and returns informations about a given raw image file

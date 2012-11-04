@@ -11,6 +11,8 @@
 
 #include "UtilTask.h"
 
+class FsWorkingDirectory;
+
 class TaskCopyFiles : public UtilTask
 {
 public:

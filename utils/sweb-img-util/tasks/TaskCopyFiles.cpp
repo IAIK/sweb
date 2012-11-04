@@ -9,14 +9,14 @@
 #include "TaskCopyFiles.h"
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "fs/VfsSyscall.h"
 #include "fs/FsWorkingDirectory.h"
 #include "fs/Statfs.h"
+#include "Program.h"
 
 TaskCopyFiles::TaskCopyFiles(Program& image_util) : UtilTask(image_util)
 {

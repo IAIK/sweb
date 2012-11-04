@@ -6,15 +6,18 @@
  * Author: chris
  */
 
+#include <iostream>
+
 #include "TaskFormatPartition.h"
 #include "Util.h"
-
+#include "Program.h"
 #include "fs/device/FsDevice.h"
 #include "fs/device/FsDeviceFile.h"
 
 #include "fs/FileSystem.h"
 #include "fs/minix/FileSystemMinix.h"
 #include "fs/minix/FormatMinixPartition.h"
+#include "ImageInfo.h"
 
 TaskFormatPartition::TaskFormatPartition(Program& image_util) : UtilTask(image_util)
 {

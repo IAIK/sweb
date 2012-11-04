@@ -12,10 +12,9 @@
 #define USE_FILE_SYSTEM_ON_GUEST_OS             1
 
 #include <string>
-
+#include <vector>
 class UtilTask;
-
-#include "ImageInfo.h"
+class ImageInfo;
 
 /**
  * @class Program management class

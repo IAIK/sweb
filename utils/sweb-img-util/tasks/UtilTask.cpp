@@ -7,12 +7,12 @@
  */
 
 #include "UtilTask.h"
-
 #include "fs/VfsSyscall.h"
-
-#include "fs/device/FsDevice.h"
 #include "fs/device/FsDeviceFile.h"
-
+#include "Program.h"
+#include "PartitionInfo.h"
+#include "ImageInfo.h"
+#include <iostream>
 #include <assert.h>
 
 UtilTask::UtilTask(Program& image_util) : image_util_(image_util)
@@ -28,7 +28,7 @@ const char* UtilTask::getDescription(void) const
   return "< empty >";
 }
 
-FsDevice* UtilTask::getNewDeviceInstance(uint32 partition)
+FsDevice* UtilTask::getNewDeviceInstance(uint32_t partition)
 {
   ImageInfo* img_info = image_util_.getImageInfo();
   if(img_info == NULL) return NULL;
@@ -41,7 +41,7 @@ FsDevice* UtilTask::getNewDeviceInstance(uint32 partition)
       part_info->getNumSectors() * part_info->getSectorSize());
 }
 
-VfsSyscall* UtilTask::getVfsSyscallInstance(uint32 partition)
+VfsSyscall* UtilTask::getVfsSyscallInstance(uint32_t partition)
 {
   // obtaining hte ImageInfo object
   ImageInfo* img_info = image_util_.getImageInfo();

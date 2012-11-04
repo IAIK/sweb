@@ -6,10 +6,12 @@
  */
 
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <cstring>
 
 #include "ImageInfo.h"
+#include "PartitionInfo.h"
 
 ImageInfo::ImageInfo(const char* image_file) : image_file_( strdup(image_file) ), file_size_(0)
 {

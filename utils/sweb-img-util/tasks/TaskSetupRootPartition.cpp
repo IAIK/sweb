@@ -6,6 +6,7 @@
  * Author: chris
  */
 
+#include <iostream>
 #include "TaskSetupRootPartition.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
@@ -17,7 +18,7 @@
 #endif
 
 #include "fs/VfsSyscall.h"
-
+#include "Program.h"
 #include "fs/FsWorkingDirectory.h"
 
 TaskSetupRootPartition::TaskSetupRootPartition(Program& image_util) : UtilTask(image_util)

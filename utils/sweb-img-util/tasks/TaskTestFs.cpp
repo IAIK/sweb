@@ -8,12 +8,7 @@
 
 #include "TaskTestFs.h"
 
-#include <assert.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include "fs/VfsSyscall.h"
-#include "fs/FsWorkingDirectory.h"
+#include <iostream>
 
 //#include "fs/tests/FsTestsuite.h"
 

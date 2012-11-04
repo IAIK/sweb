@@ -10,6 +10,7 @@
 #define TASK_INSTALL_ON_FLASH_DEVICE_H_
 
 #include "UtilTask.h"
+#include <string>
 
 class TaskInstallOnFlashDrive : public UtilTask
 {

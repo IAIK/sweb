@@ -6,7 +6,10 @@
  * Author: chris
  */
 
+#include <iostream>
 #include "TaskListPartitions.h"
+#include "Program.h"
+#include "ImageInfo.h"
 
 TaskListPartitions::TaskListPartitions(Program& image_util) : UtilTask(image_util)
 {

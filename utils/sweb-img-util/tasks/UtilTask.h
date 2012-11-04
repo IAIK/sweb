@@ -9,9 +9,11 @@
 #ifndef UTILTASK_H_
 #define UTILTASK_H_
 
-#include "Program.h"
+#include <stdint.h>
+class Program;
+class VfsSyscall;
+class FsDevice;
 
-#include "fs/VfsSyscall.h"
 
 /**
  * @class
@@ -54,13 +56,13 @@ public:
    * @param partition the number of the partition to mount
    * @return the VfsSyscall instance or NULL
    */
-  VfsSyscall* getVfsSyscallInstance(uint32 partition);
+  VfsSyscall* getVfsSyscallInstance(uint32_t partition);
 
   /**
    * get a new FsDevice instance for the current loaded image
    * and the given partition
    */
-  FsDevice* getNewDeviceInstance(uint32 partition);
+  FsDevice* getNewDeviceInstance(uint32_t partition);
 
 protected:
 

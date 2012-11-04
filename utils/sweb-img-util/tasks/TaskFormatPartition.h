@@ -13,6 +13,8 @@
 
 #include "fs/FsDefinitions.h"
 
+class FsDevice;
+
 /**
  * @class
  */

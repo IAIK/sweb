@@ -6,7 +6,9 @@
  * Author: chris
  */
 
+#include <iostream>
 #include "TaskPrintHelp.h"
+#include "Program.h"
 
 TaskPrintHelp::TaskPrintHelp(Program& image_util) : UtilTask(image_util)
 {

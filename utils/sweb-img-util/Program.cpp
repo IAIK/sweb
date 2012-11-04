@@ -6,7 +6,7 @@
  * Author: chris
  */
 
-#include <stdint.h>
+#include <iostream>
 
 #include "Program.h"
 
@@ -19,6 +19,7 @@
 #include "TaskSetupRootPartition.h"
 #include "TaskCopyFiles.h"
 #include "TaskInstallOnFlashDrive.h"
+#include "ImageInfo.h"
 
 //#include "TaskTestFs.h"
 
