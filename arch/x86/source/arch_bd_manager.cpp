@@ -5,10 +5,13 @@
  
 #include "arch_bd_manager.h"
 #include "arch_bd_ide_driver.h"
+#include "arch_bd_driver.h"
+#include "arch_bd_request.h"
 
 #include "kprintf.h"
 #include "debug.h"
 #include "string.h"
+#include "arch_bd_virtual_device.h"
 
 BDManager *BDManager::getInstance()
 {
@@ -17,7 +20,7 @@ BDManager *BDManager::getInstance()
   return instance_;
 };
 
-BDManager::BDManager()
+BDManager::BDManager() : probeIRQ(false)
 {
 }
 

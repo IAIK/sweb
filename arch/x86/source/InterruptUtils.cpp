@@ -20,6 +20,7 @@
 #include "serial.h"
 #include "arch_keyboard_manager.h"
 #include "arch_bd_manager.h"
+#include "panic.h"
 
 #include "Thread.h"
 #include "ArchInterrupts.h"

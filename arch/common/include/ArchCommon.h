@@ -12,8 +12,7 @@
 #define _ARCH_COMMON_H_
 
 #include "types.h"
-#include "ArchMemory.h"
-
+#include "paging-definitions.h"
 
 class ArchCommon
 {

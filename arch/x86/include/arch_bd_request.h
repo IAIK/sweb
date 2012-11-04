@@ -23,8 +23,8 @@
 #define _BD_REQUEST_H_
 
 #include "types.h"
-#include "Thread.h"
 
+class Thread;
 
 extern Thread * currentThread;
 

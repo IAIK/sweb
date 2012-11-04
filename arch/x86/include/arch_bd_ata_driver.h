@@ -6,10 +6,11 @@
 #ifndef _ATA_DEVICE_DRIVER_
 #define _ATA_DEVICE_DRIVER_
 
-#include "arch_bd_request.h"
 #include "arch_bd_driver.h"
 #include "arch_bd_io.h"
 #include "Mutex.h"
+
+class BDRequest;
 
 class ATADriver : public BDDriver, bdio
 {

@@ -32,6 +32,7 @@
 #include "atkbd.h"
 
 #include "arch_bd_manager.h"
+#include "arch_bd_virtual_device.h"
 
 #include "fs/VfsSyscall.h"
 #include "fs/FsWorkingDirectory.h"
@@ -39,7 +40,6 @@
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
-#include "XenConsole.h"
 
 #include "fs/fs_global.h"
 

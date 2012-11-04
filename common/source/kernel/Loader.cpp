@@ -7,6 +7,7 @@
 #include "ArchThreads.h"
 #include "mm/PageManager.h"
 #include "ArchMemory.h"
+#include "ArchCommon.h"
 #include "Syscall.h"
 #include "fs/VfsSyscall.h"
 //#include "File.h"
