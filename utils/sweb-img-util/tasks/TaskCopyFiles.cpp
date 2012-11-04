@@ -119,6 +119,8 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const
     bytes_copied += buf_len;
   }
 
+  close(src_file);
+
   delete[] chunk_buf;
 
   // close it
