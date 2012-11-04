@@ -18,8 +18,6 @@
 #include "fs/FsWorkingDirectory.h"
 #include "fs/Statfs.h"
 
-#include "Thread.h"
-
 TaskCopyFiles::TaskCopyFiles(Program& image_util) : UtilTask(image_util)
 {
 }
@@ -39,7 +37,7 @@ void TaskCopyFiles::execute(void)
   VfsSyscall* vfs = getVfsSyscallInstance( partition_to_copy_to );
 
   // just a dummy thread
-  Thread thread(new FsWorkingDirectory());
+  FsWorkingDirectory wd_info;
 
   // call format of this task is as follows
   // sweb-img-util -x <img-file> <partition-number> [<file.0-src> <file.0-dest>]*
@@ -53,7 +51,7 @@ void TaskCopyFiles::execute(void)
     std::cout << "copying " << src_filename << " (as \"" << dst_filename << "\") to the image-file" << std::endl;
 
     // copy the file to the image
-    copyFile(vfs, &thread, src_filename.c_str(), dst_filename.c_str());
+    copyFile(vfs, &wd_info, src_filename.c_str(), dst_filename.c_str());
   }
 
   // delete VFS instance
@@ -72,10 +70,10 @@ const char* TaskCopyFiles::getDescription(void) const
   return "copies all files specified to the given partition. call with : -x <img-file> <partition-no> [<file.0-src> <file.0-dest>]*";
 }
 
-bool TaskCopyFiles::copyFile(VfsSyscall* vfs, Thread* thread, const char* src, const char* dest)
+bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const char* src, const char* dest)
 {
   // create the destination file
-  int32 fd = vfs->creat(thread, dest);
+  int32 fd = vfs->creat(wd_info, dest);
 
   if(fd <= 0)
   {
@@ -90,7 +88,7 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, Thread* thread, const char* src, c
   {
     std::cout << "ERROR - failed to open the source-file!" << std::endl;
 
-    vfs->close(thread, fd);
+    vfs->close(wd_info, fd);
     return false;
   }
 
@@ -112,14 +110,14 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, Thread* thread, const char* src, c
     }
 
     assert( read(src_file, chunk_buf, buf_len) == buf_len );
-    assert( vfs->write(thread, fd, chunk_buf, buf_len) == buf_len );
+    assert( vfs->write(wd_info, fd, chunk_buf, buf_len) == buf_len );
     bytes_copied += buf_len;
   }
 
   delete[] chunk_buf;
 
   // close it
-  vfs->close(thread, fd);
+  vfs->close(wd_info, fd);
 
   return true;
 }

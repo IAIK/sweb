@@ -273,8 +273,8 @@ bool Loader::readHeaders()
 
   hdr_ = new ELF32_Ehdr;
 
-  VfsSyscall::instance()->lseek(currentThread, fd_, 0, SEEK_SET);
-  if(!hdr_ || VfsSyscall::instance()->read(currentThread, fd_, reinterpret_cast<char*>(hdr_),
+  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, 0, SEEK_SET);
+  if(!hdr_ || VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, reinterpret_cast<char*>(hdr_),
               sizeof(ELF32_Ehdr)) != sizeof(ELF32_Ehdr))
   {
     return false;
@@ -301,9 +301,9 @@ bool Loader::readHeaders()
 
   phdrs_.resize(hdr_->e_phnum, true);
 
-  VfsSyscall::instance()->lseek(currentThread, fd_, hdr_->e_phoff, SEEK_SET);
+  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, hdr_->e_phoff, SEEK_SET);
 
-  if(VfsSyscall::instance()->read(currentThread, fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(ELF32_Phdr))
+  if(VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(ELF32_Phdr))
       != static_cast<int32>(sizeof(ELF32_Phdr)*hdr_->e_phnum))
   {
     return false;
@@ -475,8 +475,8 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   }
 
 
-  VfsSyscall::instance()->lseek(currentThread, fd_, min_value, SEEK_SET);
-  int32 bytes_read = VfsSyscall::instance()->read(currentThread, fd_, buffer, max_value - min_value);
+  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, min_value, SEEK_SET);
+  int32 bytes_read = VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, buffer, max_value - min_value);
 
 
   if(bytes_read != static_cast<int32>(max_value - min_value))

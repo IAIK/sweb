@@ -57,12 +57,10 @@ class FileDescriptor
     /**
      * constructor
      * @param file the file to create the fd for
-     * @param owner
      * @param append_mode
      * @param nonblocking_mode
      */
-    FileDescriptor ( File* file, Thread* owner,
-                     bool append_mode = false, bool nonblocking_mode = false );
+    FileDescriptor ( File* file, bool append_mode = false, bool nonblocking_mode = false );
 
     /**
      * copy constructor
@@ -87,12 +85,6 @@ class FileDescriptor
      * @return the file
      */
     File* getFile() { return file_; }
-
-    /**
-     * getting the owing Thread of the FD
-     * @return the owener of the FD
-     */
-    Thread* getOwner(void);
 
     /**
      * getting the current cursor position

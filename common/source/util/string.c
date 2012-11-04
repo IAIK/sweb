@@ -550,7 +550,7 @@ char* strtok ( char* str, const char* delimiters )
 // converts a single digit into an
 char numToASCIIChar(uint8 number)
 {
-  if(number >= 0 && number <= 9)
+  if(number <= 9)
     return 0x30+number;
 
   if(number >= 0xa && number <= 0xf)

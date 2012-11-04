@@ -7,7 +7,7 @@
  */
 
 #include "cache/FifoReadWriteBackCacheFactory.h"
-
+#include "cache/GeneralCache.h"
 #include "cache/FifoReadCache.h"
 #include "cache/WriteBackCache.h"
 

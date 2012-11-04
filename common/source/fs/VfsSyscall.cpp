@@ -29,8 +29,6 @@
 #include "fs/device/FsDevice.h"
 #include "fs/device/FsDeviceVirtual.h"
 
-#include "Thread.h"
-
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 #include "arch_bd_virtual_device.h"
 #include "arch_bd_manager.h"
@@ -107,6 +105,7 @@ int32 VfsSyscall::initRootFs(void)
   mounted_fs_.push_back(root_);
 
   debug(VFSSYSCALL, "Root FileSystem is \"%s\"\n", root_->getName());
+  return 0;
 }
 
 void VfsSyscall::unmountRoot(void)
@@ -150,7 +149,7 @@ VfsSyscall::~VfsSyscall()
 
 #endif
 
-bool VfsSyscall::resolveAndWriteLockParentDirectory(Thread* cur_thread,
+bool VfsSyscall::resolveAndWriteLockParentDirectory(FsWorkingDirectory* wd_info,
     const char* pathname, FailCondition fail_if,
     Directory*& parent, char*& last_part, bool& file_extists)
 {
@@ -170,7 +169,7 @@ bool VfsSyscall::resolveAndWriteLockParentDirectory(Thread* cur_thread,
   }
 
   // 3. resolve parent-directory of the File
-  Directory* parent_dir = resolveDirectory(cur_thread, path);
+  Directory* parent_dir = resolveDirectory(wd_info, path);
 
   // from now on the path is no longer needed
   delete[] path;
@@ -212,9 +211,9 @@ bool VfsSyscall::resolveAndWriteLockParentDirectory(Thread* cur_thread,
   }
 
   // 6. check permission; is the user allowed to create a file here?
-  if( !isOperationPermitted(cur_thread, parent_dir, WRITE) )
+  if( !isOperationPermitted(parent_dir, WRITE) )
   {
-    // WRITE-access to parent is not permitted for cur_thread!
+    // WRITE-access to parent is not permitted for wd_info!
     parent_dir->getLock()->releaseWrite();
     fs->releaseInode( parent_dir );
 
@@ -229,7 +228,7 @@ bool VfsSyscall::resolveAndWriteLockParentDirectory(Thread* cur_thread,
   return true;
 }
 
-int32 VfsSyscall::mkdir(Thread* cur_thread, const char* pathname, mode_t mode)
+int32 VfsSyscall::mkdir(FsWorkingDirectory* wd_info, const char* pathname, mode_t mode)
 {
   if(pathname == NULL)
   {
@@ -244,7 +243,7 @@ int32 VfsSyscall::mkdir(Thread* cur_thread, const char* pathname, mode_t mode)
 
   // resolve parent Directory of folder to create new; method call includes
   // check if the there is already an inode in the parent-directory
-  if(!resolveAndWriteLockParentDirectory(cur_thread, pathname,
+  if(!resolveAndWriteLockParentDirectory(wd_info, pathname,
       FAIL_IF_CHILD_EXISTS, parent, folder_name, inode_already_exists))
   {
     debug(VFSSYSCALL, "mkdir - ERROR failed to resolve/lock/write-access the parent Directory!\n");
@@ -283,7 +282,7 @@ int32 VfsSyscall::mkdir(Thread* cur_thread, const char* pathname, mode_t mode)
   return ret_val;
 }
 
-int32 VfsSyscall::rmdir ( Thread* cur_thread, const char* pathname )
+int32 VfsSyscall::rmdir ( FsWorkingDirectory* wd_info, const char* pathname )
 {
   if(pathname == NULL)
   {
@@ -293,7 +292,7 @@ int32 VfsSyscall::rmdir ( Thread* cur_thread, const char* pathname )
   debug(VFSSYSCALL, "rmdir - going to remove \"%s\"\n", pathname);
 
   // resolve the path of the Directory that should be removed
-  Directory* dir_to_rm = resolveDirectory(cur_thread, pathname);
+  Directory* dir_to_rm = resolveDirectory(wd_info, pathname);
 
   if(dir_to_rm == NULL)
   {
@@ -310,7 +309,7 @@ int32 VfsSyscall::rmdir ( Thread* cur_thread, const char* pathname )
 
   // resolve parent Directory of folder to create new; method call includes
   // check if the there is already an inode in the parent-directory
-  if(!resolveAndWriteLockParentDirectory(cur_thread, pathname,
+  if(!resolveAndWriteLockParentDirectory(wd_info, pathname,
       FAIL_IF_CHILD_DOES_NOT_EXIST, parent, folder_name, inode_already_exists))
   {
     fs->releaseInode( dir_to_rm );
@@ -371,7 +370,7 @@ int32 VfsSyscall::rmdir ( Thread* cur_thread, const char* pathname )
   return ret_val;
 }
 
-int32 VfsSyscall::link(Thread* cur_thread, const char* oldpath, const char* newpath)
+int32 VfsSyscall::link(FsWorkingDirectory* wd_info, const char* oldpath, const char* newpath)
 {
   if(oldpath == NULL || newpath == NULL)
     return -1; // ENOENT
@@ -379,7 +378,7 @@ int32 VfsSyscall::link(Thread* cur_thread, const char* oldpath, const char* newp
   debug(VFSSYSCALL, "link - CALL link to \"%s\" from \"%s\"\n", oldpath, newpath);
 
   // resolve file to be linked
-  File* file_to_link = resolveFile(cur_thread, oldpath);
+  File* file_to_link = resolveFile(wd_info, oldpath);
 
   // just links to Files allowed!
   if(file_to_link == NULL)
@@ -394,7 +393,7 @@ int32 VfsSyscall::link(Thread* cur_thread, const char* oldpath, const char* newp
 
   // resolve linked File's new parent Directory; resolving FAILS if there
   // is already an inode named like filename
-  if(!resolveAndWriteLockParentDirectory(cur_thread, newpath, FAIL_IF_CHILD_EXISTS, parent, filename, inode_already_exists))
+  if(!resolveAndWriteLockParentDirectory(wd_info, newpath, FAIL_IF_CHILD_EXISTS, parent, filename, inode_already_exists))
   {
     file_to_link->getFileSystem()->releaseInode( file_to_link );
 
@@ -454,7 +453,7 @@ int32 VfsSyscall::link(Thread* cur_thread, const char* oldpath, const char* newp
   return ret_val;
 }
 
-int32 VfsSyscall::unlink(Thread* cur_thread, const char *pathname)
+int32 VfsSyscall::unlink(FsWorkingDirectory* wd_info, const char *pathname)
 {
   if(pathname == NULL)
     return -1; // ENOENT
@@ -467,7 +466,7 @@ int32 VfsSyscall::unlink(Thread* cur_thread, const char *pathname)
 
   // resolve parent Directory of folder to create new; method call includes
   // check if the there is already an inode in the parent-directory
-  if(!resolveAndWriteLockParentDirectory(cur_thread, pathname,
+  if(!resolveAndWriteLockParentDirectory(wd_info, pathname,
       FAIL_IF_CHILD_DOES_NOT_EXIST, parent, filename, inode_already_exists))
   {
     debug(VFSSYSCALL, "unlink - ERROR failed to resolve/lock/write-access the parent Directory!\n");
@@ -532,12 +531,12 @@ int32 VfsSyscall::unlink(Thread* cur_thread, const char *pathname)
   return ret_val;
 }
 
-DIR* VfsSyscall::opendir(Thread* cur_thread, const char* name)
+DIR* VfsSyscall::opendir(FsWorkingDirectory* wd_info, const char* name)
 {
   debug(VFSSYSCALL, "opendir - call; path=\"%s\"\n", name);
 
   // resolve given path
-  Directory* dir = resolveDirectory(cur_thread, name);
+  Directory* dir = resolveDirectory(wd_info, name);
 
   if(dir == NULL)
   {
@@ -555,7 +554,7 @@ DIR* VfsSyscall::opendir(Thread* cur_thread, const char* name)
   return new DIR(dir);
 }
 
-Dirent* VfsSyscall::readdir ( Thread* cur_thread __attribute__((unused)), DIR* dirp )
+Dirent* VfsSyscall::readdir ( FsWorkingDirectory* wd_info __attribute__((unused)), DIR* dirp )
 {
   debug(VFSSYSCALL, "readdir - call\n");
 
@@ -588,7 +587,7 @@ Dirent* VfsSyscall::readdir ( Thread* cur_thread __attribute__((unused)), DIR* d
   return dirent;
 }
 
-void VfsSyscall::rewinddir(Thread* cur_thread __attribute__((unused)), DIR* dirp)
+void VfsSyscall::rewinddir(FsWorkingDirectory* wd_info __attribute__((unused)), DIR* dirp)
 {
   debug(VFSSYSCALL, "rewinddir - call\n");
 
@@ -602,7 +601,7 @@ void VfsSyscall::rewinddir(Thread* cur_thread __attribute__((unused)), DIR* dirp
   debug(VFSSYSCALL, "rewinddir - OK\n");
 }
 
-bool VfsSyscall::closedir(Thread* cur_thread __attribute__((unused)), DIR* dirp)
+bool VfsSyscall::closedir(FsWorkingDirectory* wd_info __attribute__((unused)), DIR* dirp)
 {
   debug(VFSSYSCALL, "closedir - call\n");
 
@@ -615,32 +614,32 @@ bool VfsSyscall::closedir(Thread* cur_thread __attribute__((unused)), DIR* dirp)
   return true;
 }
 
-int32 VfsSyscall::chdir ( Thread* cur_thread, const char* pathname )
+int32 VfsSyscall::chdir ( FsWorkingDirectory* wd_info, const char* pathname )
 {
   debug(VFSSYSCALL, "chdir - CALL\n");
 
-  if(cur_thread == NULL)
+  if(wd_info == NULL)
     return -1; // no thread, no wd-change!
 
   debug(VFSSYSCALL, "chdir - changing current directory to \"%s\"\n", pathname);
-  return cur_thread->getWorkingDirInfo()->setWorkingDir(pathname);
+  return wd_info->setWorkingDir(pathname);
 }
 
-const char* VfsSyscall::getwd(Thread* cur_thread) const
+const char* VfsSyscall::getwd(FsWorkingDirectory* wd_info) const
 {
-  if(cur_thread == NULL)
+  if(wd_info == NULL)
     return NULL;
 
-  return cur_thread->getWorkingDirInfo()->getWorkingDirPath();
+  return wd_info->getWorkingDirPath();
 }
 
-int32 VfsSyscall::creat(Thread* cur_thread, const char *path, mode_t mode)
+int32 VfsSyscall::creat(FsWorkingDirectory* wd_info, const char *path, mode_t mode)
 {
   // see http://pubs.opengroup.org/onlinepubs/009604599/functions/creat.html
-  return this->open(cur_thread, path, O_WRONLY|O_CREAT|O_TRUNC, mode);
+  return this->open(wd_info, path, O_WRONLY|O_CREAT|O_TRUNC, mode);
 }
 
-int32 VfsSyscall::open(Thread* cur_thread, const char* pathname, int32 flag, mode_t mode)
+int32 VfsSyscall::open(FsWorkingDirectory* wd_info, const char* pathname, int32 flag, mode_t mode)
 {
   if(pathname == NULL)
     return -1;
@@ -648,7 +647,7 @@ int32 VfsSyscall::open(Thread* cur_thread, const char* pathname, int32 flag, mod
   debug(VFSSYSCALL, "open() - opening \"%s\" with flags=%d\n", pathname, flag);
 
   // resolve path into an File-I-node
-  File* file = resolveFile(cur_thread, pathname);
+  File* file = resolveFile(wd_info, pathname);
 
   // the file does not exist ...
   if(file == NULL)
@@ -659,7 +658,7 @@ int32 VfsSyscall::open(Thread* cur_thread, const char* pathname, int32 flag, mod
       debug(VFSSYSCALL, "open() - file does not exist - O_CREAT is set - so create it:\n");
 
       // file does not exist, create it!
-      file = createFile(cur_thread, pathname, mode);
+      file = createFile(wd_info, pathname, mode);
     }
 
     // ... error file does not exist, failed to open
@@ -680,7 +679,7 @@ int32 VfsSyscall::open(Thread* cur_thread, const char* pathname, int32 flag, mod
   debug(VFSSYSCALL, "open() - OK - file resolved!\n");
 
   // create a FileDescriptor for the File
-  FileDescriptor* fd = createFDForFile(cur_thread, file, flag);
+  FileDescriptor* fd = createFDForFile(file, flag);
 
   if(fd == NULL)
   {
@@ -696,14 +695,14 @@ int32 VfsSyscall::open(Thread* cur_thread, const char* pathname, int32 flag, mod
   return fd->getFd();
 }
 
-FileDescriptor* VfsSyscall::createFDForFile(Thread* cur_thread, File* file, uint32 flag)
+FileDescriptor* VfsSyscall::createFDForFile(File* file, uint32 flag)
 {
   // create a FileDescriptor object for the given file with the given flags
   bool append = (flag & O_APPEND) ? true : false;
   bool nonblock = (flag & O_NONBLOCK) ? true : false;
 
   // create a FD with the File and return it's id
-  FileDescriptor* fd = new FileDescriptor(file, cur_thread, append, nonblock);
+  FileDescriptor* fd = new FileDescriptor(file, append, nonblock);
 
   if(fd == NULL)
   {
@@ -730,8 +729,8 @@ FileDescriptor* VfsSyscall::createFDForFile(Thread* cur_thread, File* file, uint
   }
 
   // finally before adding the fd - check the permissions of the user
-  if( (fd->writeMode() && !isOperationPermitted(cur_thread, file, WRITE)) ||
-      (fd->readMode() && !isOperationPermitted(cur_thread, file, READ)))
+  if( (fd->writeMode() && !isOperationPermitted(file, WRITE)) ||
+      (fd->readMode() && !isOperationPermitted(file, READ)))
   {
     delete fd; // includes the release of the File
 
@@ -749,7 +748,7 @@ FileDescriptor* VfsSyscall::createFDForFile(Thread* cur_thread, File* file, uint
   return fd;
 }
 
-File* VfsSyscall::createFile(Thread* cur_thread, const char* pathname, mode_t mode)
+File* VfsSyscall::createFile(FsWorkingDirectory* wd_info, const char* pathname, mode_t mode)
 {
   debug(VFSSYSCALL, "createFile() - INFO - create new file %s\n", pathname);
 
@@ -758,7 +757,7 @@ File* VfsSyscall::createFile(Thread* cur_thread, const char* pathname, mode_t mo
   bool inode_already_exists;
 
   // resolve parent Directory of folder to create new
-  if(!resolveAndWriteLockParentDirectory(cur_thread, pathname, DO_NOT_FAIL, parent, filename, inode_already_exists))
+  if(!resolveAndWriteLockParentDirectory(wd_info, pathname, DO_NOT_FAIL, parent, filename, inode_already_exists))
   {
     debug(VFSSYSCALL, "createFile() - ERROR failed to resolve/lock/write-access the parent Directory!\n");
     return NULL;
@@ -826,7 +825,7 @@ File* VfsSyscall::createFile(Thread* cur_thread, const char* pathname, mode_t mo
   return new_file;
 }
 
-int32 VfsSyscall::close(Thread* cur_thread __attribute__((unused)), uint32 fd)
+int32 VfsSyscall::close(FsWorkingDirectory* wd_info __attribute__((unused)), uint32 fd)
 {
   debug(VFSSYSCALL, "close() - INFO - closing FD\n");
 
@@ -839,7 +838,7 @@ int32 VfsSyscall::close(Thread* cur_thread __attribute__((unused)), uint32 fd)
   return 0;
 }
 
-int32 VfsSyscall::read ( Thread* cur_thread __attribute__((unused)), fd_size_t fd, char* buffer, size_t count )
+int32 VfsSyscall::read ( FsWorkingDirectory* wd_info __attribute__((unused)), fd_size_t fd, char* buffer, size_t count )
 {
   debug(VFSSYSCALL, "read() - call\n");
 
@@ -865,7 +864,7 @@ int32 VfsSyscall::read ( Thread* cur_thread __attribute__((unused)), fd_size_t f
   return file->read(fd_object, buffer, count);
 }
 
-int32 VfsSyscall::write ( Thread* cur_thread __attribute__((unused)), fd_size_t fd, const char *buffer, size_t count )
+int32 VfsSyscall::write ( FsWorkingDirectory* wd_info __attribute__((unused)), fd_size_t fd, const char *buffer, size_t count )
 {
   debug(VFSSYSCALL, "write - CALL writing %d bytes to fd=%d\n", count, fd);
 
@@ -901,7 +900,7 @@ int32 VfsSyscall::write ( Thread* cur_thread __attribute__((unused)), fd_size_t 
   return bytes_written;
 }
 
-l_off_t VfsSyscall::lseek ( Thread* cur_thread __attribute__((unused)), fd_size_t fd, l_off_t offset, uint8 whence )
+l_off_t VfsSyscall::lseek ( FsWorkingDirectory* wd_info __attribute__((unused)), fd_size_t fd, l_off_t offset, uint8 whence )
 {
   debug(VFSSYSCALL, "lseek() - seeking fd(%d) by=%d whence=%d\n", fd, offset, whence);
 
@@ -943,7 +942,7 @@ l_off_t VfsSyscall::lseek ( Thread* cur_thread __attribute__((unused)), fd_size_
   return new_offset;
 }
 
-void VfsSyscall::sync(Thread* cur_thread __attribute__((unused)))
+void VfsSyscall::sync(FsWorkingDirectory* wd_info __attribute__((unused)))
 {
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
   // Synchronize all mounted file systems
@@ -961,7 +960,7 @@ void VfsSyscall::sync(Thread* cur_thread __attribute__((unused)))
 #endif
 }
 
-int32 VfsSyscall::fsync(Thread* cur_thread __attribute__((unused)), int32 fd)
+int32 VfsSyscall::fsync(FsWorkingDirectory* wd_info __attribute__((unused)), int32 fd)
 {
   debug(VFSSYSCALL, "fsync() - CALL\n");
 
@@ -981,12 +980,12 @@ int32 VfsSyscall::fsync(Thread* cur_thread __attribute__((unused)), int32 fd)
   return fs->fsync(file);
 }
 
-statfs_s* VfsSyscall::statfs(Thread* cur_thread, const char *path)
+statfs_s* VfsSyscall::statfs(FsWorkingDirectory* wd_info, const char *path)
 {
   debug(VFSSYSCALL, "statfs() - CALL\n");
 
   // resolve path to an I-Node
-  Inode* inode = resolvePath(cur_thread, path);
+  Inode* inode = resolvePath(wd_info, path);
 
   if(inode == NULL)
   {
@@ -1085,7 +1084,7 @@ bool VfsSyscall::splitPath(const char* full_path, char** path, char** part) cons
   return true;
 }
 
-bool VfsSyscall::isOperationPermitted(Thread* cur_thread __attribute__((unused)), Inode* inode, int32 operation)
+bool VfsSyscall::isOperationPermitted(Inode* inode, int32 operation)
 {
   FileSystem* fs = inode->getFileSystem();
 
@@ -1100,13 +1099,13 @@ bool VfsSyscall::isOperationPermitted(Thread* cur_thread __attribute__((unused))
   return true;
 }
 
-bool VfsSyscall::diskQuotaNotExceeded(Thread* cur_thread __attribute__((unused)))
+bool VfsSyscall::diskQuotaNotExceeded()
 {
   // TODO implement disk-quota checking here
   return true;
 }
 
-Inode* VfsSyscall::resolvePath(Thread* cur_thread, const char* path)
+Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
 {
   if(path == NULL)
     return NULL;
@@ -1125,7 +1124,7 @@ Inode* VfsSyscall::resolvePath(Thread* cur_thread, const char* path)
     cur_dir = getVfsRoot();
 
     // TODO consider user-specific root-directory
-    //FsWorkingDirectory* wd_info = cur_thread->getWorkingDirInfo();
+    //FsWorkingDirectory* wd_info = wd_info->getWorkingDirInfo();
     //if(wd_info != NULL)
     //{
     //  cur_dir = root_->getVfsRoot();
@@ -1139,12 +1138,9 @@ Inode* VfsSyscall::resolvePath(Thread* cur_thread, const char* path)
 
   }
   // path is relative, so start off with the relative path
-  else if(cur_thread)
+  else if(wd_info)
   {
     debug(VFSSYSCALL, "resolvePath() - resolving a relate path\n", path);
-
-    // get current-dir
-    FsWorkingDirectory* wd_info = cur_thread->getWorkingDirInfo();
 
     // in case of failure pick the VFS-root
     if(wd_info != NULL)
@@ -1172,7 +1168,7 @@ Inode* VfsSyscall::resolvePath(Thread* cur_thread, const char* path)
     debug(VFSSYSCALL, "resolvePath() - current path token is \"%s\"\n", path_token);
 
     // check if the calling thread is allowed to scan the directory
-    if(cur_thread != NULL && !this->isOperationPermitted(cur_thread, cur_dir, EXECUTE))
+    if(wd_info != NULL && !this->isOperationPermitted(cur_dir, EXECUTE))
     {
       debug(VFSSYSCALL, "resolvePath() - ERROR calling thread is not allowed to read Directory!\n", path_token);
 
@@ -1235,10 +1231,10 @@ Inode* VfsSyscall::resolvePath(Thread* cur_thread, const char* path)
   return NULL;
 }
 
-Directory* VfsSyscall::resolveDirectory(Thread* cur_thread, const char* path)
+Directory* VfsSyscall::resolveDirectory(FsWorkingDirectory* wd_info, const char* path)
 {
   // resolving Path and casting result into a Directory
-  Inode* node = resolvePath(cur_thread, path);
+  Inode* node = resolvePath(wd_info, path);
   if(node == NULL)
     return NULL;
 
@@ -1260,10 +1256,10 @@ Directory* VfsSyscall::resolveDirectory(Thread* cur_thread, const char* path)
   return dir;
 }
 
-File* VfsSyscall::resolveFile(Thread* cur_thread, const char* path)
+File* VfsSyscall::resolveFile(FsWorkingDirectory* wd_info, const char* path)
 {
   // resolving Path and casting result into a Directory
-  Inode* node = resolvePath(cur_thread, path);
+  Inode* node = resolvePath(wd_info, path);
   if(node == NULL)
     return NULL;
 
@@ -1281,7 +1277,7 @@ File* VfsSyscall::resolveFile(Thread* cur_thread, const char* path)
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 
-Directory* VfsSyscall::resolveRealDirectory(Thread* cur_thread, const char* path)
+Directory* VfsSyscall::resolveRealDirectory(FsWorkingDirectory* wd_info, const char* path)
 {
   debug(VFSSYSCALL, "resolveRealDirectory - CALL\n");
 
@@ -1293,7 +1289,7 @@ Directory* VfsSyscall::resolveRealDirectory(Thread* cur_thread, const char* path
   splitPath(path, &mnt_parent, &mnt_folder);
 
   // 2. resolve the first part of the path as usual
-  Directory* parent = resolveDirectory(cur_thread, mnt_parent);
+  Directory* parent = resolveDirectory(wd_info, mnt_parent);
 
   if(parent == NULL)
   {
@@ -1329,7 +1325,7 @@ Directory* VfsSyscall::resolveRealDirectory(Thread* cur_thread, const char* path
   return reinterpret_cast<Directory*>(inode);
 }
 
-int32 VfsSyscall::mount( Thread* cur_thread, const char *device_name,
+int32 VfsSyscall::mount( FsWorkingDirectory* wd_info, const char *device_name,
                          const char *dir_name, const char* file_system_name __attribute__((unused)),
                          int32 mnt_flags )
 {
@@ -1359,7 +1355,7 @@ int32 VfsSyscall::mount( Thread* cur_thread, const char *device_name,
   }
 
   // 1. resolve given mount-path
-  Directory* mount_path = resolveRealDirectory(cur_thread, dir_name);
+  Directory* mount_path = resolveRealDirectory(wd_info, dir_name);
 
   if(mount_path == NULL)
   {
@@ -1405,7 +1401,7 @@ int32 VfsSyscall::mount( Thread* cur_thread, const char *device_name,
 #endif
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-int32 VfsSyscall::umount ( Thread* cur_thread, const char *dir_name, int32 flag __attribute__((unused)) )
+int32 VfsSyscall::umount ( FsWorkingDirectory* wd_info, const char *dir_name, int32 flag __attribute__((unused)) )
 {
   if(dir_name == NULL)
     return -1; // ERROR
@@ -1413,7 +1409,7 @@ int32 VfsSyscall::umount ( Thread* cur_thread, const char *dir_name, int32 flag 
   debug(VFSSYSCALL, "umount - going to unmount fs under \"%s\"\n", dir_name);
 
   // getting the mount-path
-  Directory* mount_path = resolveRealDirectory(cur_thread, dir_name);
+  Directory* mount_path = resolveRealDirectory(wd_info, dir_name);
 
   // there are now some write - operations following, so lock exclusively
   mount_path->getLock()->acquireWriteBlocking();

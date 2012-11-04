@@ -14,7 +14,6 @@
 
 #include "fs/VfsSyscall.h"
 #include "fs/FsWorkingDirectory.h"
-#include "Thread.h"
 
 //#include "fs/tests/FsTestsuite.h"
 

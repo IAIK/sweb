@@ -9,11 +9,13 @@
 #ifndef CACHEFACTORY_H_
 #define CACHEFACTORY_H_
 
-#include "GeneralCache.h"
+#include "CacheStrategy.h"
+
 
 namespace Cache
 {
-
+class GeneralCache;
+class DeviceAdapter;
 /**
  * @class an abstract Factory, defining a Factory interface to produce
  * different types of caches

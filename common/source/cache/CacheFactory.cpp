@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include "CacheFactory.h"
+#include "GeneralCache.h"
 
 namespace Cache
 {

@@ -16,8 +16,6 @@
 #define NO_USE_OF_MULTITHREADING                1
 #endif
 
-#include "Thread.h"
-
 #include "fs/VfsSyscall.h"
 
 #include "fs/FsWorkingDirectory.h"
@@ -45,19 +43,18 @@ void TaskSetupRootPartition::execute(void)
     return;
   }
 
-  // just a dummy thread
-  Thread thread(new FsWorkingDirectory());
+  FsWorkingDirectory dir;
 
   // just create some folders on it
-  vfs->mkdir(&thread, "/bin", 0755);
-  vfs->mkdir(&thread, "/boot", 0755);
-  vfs->mkdir(&thread, "/dev", 0755);
-  vfs->mkdir(&thread, "/mnt", 0755);
-  vfs->mkdir(&thread, "/usr", 0755);
+  vfs->mkdir(&dir, "/bin", 0755);
+  vfs->mkdir(&dir, "/boot", 0755);
+  vfs->mkdir(&dir, "/dev", 0755);
+  vfs->mkdir(&dir, "/mnt", 0755);
+  vfs->mkdir(&dir, "/usr", 0755);
 
-  vfs->mkdir(&thread, "/usr/bin", 0755);
-  vfs->mkdir(&thread, "/usr/lib", 0755);
-  vfs->mkdir(&thread, "/usr/include", 0755);
+  vfs->mkdir(&dir, "/usr/bin", 0755);
+  vfs->mkdir(&dir, "/usr/lib", 0755);
+  vfs->mkdir(&dir, "/usr/include", 0755);
 
   delete vfs;
 

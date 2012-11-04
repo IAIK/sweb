@@ -73,7 +73,7 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   }
   else
   {
-    VfsSyscall::instance()->write(currentThread, fd, (char*) buffer, size);
+    VfsSyscall::instance()->write(currentThread->getWorkingDirInfo(), fd, (char*) buffer, size);
   }
   return size;
 }
@@ -99,14 +99,14 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
   }
   else
   {
-    num_read = VfsSyscall::instance()->read(currentThread, fd, (char*) buffer, count);
+    num_read = VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd, (char*) buffer, count);
   }
   return num_read;
 }
 
 uint32 Syscall::close(uint32 fd)
 {
-  return VfsSyscall::instance()->close(currentThread, fd);
+  return VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
 }
 
 uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
@@ -115,7 +115,7 @@ uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
   {
     return -1U;
   }
-  return VfsSyscall::instance()->open(currentThread, (char*) path, flags | mode);
+  return VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (char*) path, flags | mode);
 }
 
 void Syscall::outline(uint32 port, pointer text)
@@ -141,12 +141,12 @@ uint32 Syscall::createprocess(uint32 path, uint32 sleep)
     return -1U;
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
-  uint32 fd = VfsSyscall::instance()->open(currentThread, (const char*) path, O_RDONLY);
+  uint32 fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
   if (fd == -1U)
   {
     return -1U;
   }
-  VfsSyscall::instance()->close(currentThread, fd);
+  VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
   uint32 len = strlen((const char*) path) + 1;
   char* copy = new char[len];
   memcpy(copy, (const char*) path, len);

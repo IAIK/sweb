@@ -27,9 +27,7 @@ struct statfs_s;
 struct DIR;
 class Dirent;
 class FileDescriptor;
-
-class Thread;
-
+class FsWorkingDirectory;
 #ifndef NULL
 #define NULL    0
 #endif
@@ -82,20 +80,20 @@ class VfsSyscall
     /**
      * create a new Directory
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param pathname the new directory.
      * @param mode the permissions.
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    virtual int32 mkdir ( Thread* cur_thread, const char* pathname, mode_t mode );
+    virtual int32 mkdir ( FsWorkingDirectory* wd_info, const char* pathname, mode_t mode );
 
     /**
      * delete a directory, which must be empty.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param pathname the removed directory
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    virtual int32 rmdir ( Thread* cur_thread, const char* pathname );
+    virtual int32 rmdir ( FsWorkingDirectory* wd_info, const char* pathname );
 
     /**
      * creates a (hard) link to a file
@@ -103,103 +101,103 @@ class VfsSyscall
      * NOTE: TODO link() currently does not update the effected I-Node's
      * time fields!
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param oldpath already existing path to a file
      * @param newpath the new path to the existing file
      * @return
      */
-    virtual int32 link(Thread* cur_thread, const char* oldpath,
+    virtual int32 link(FsWorkingDirectory* wd_info, const char* oldpath,
                        const char* newpath);
 
     /**
      * removes a hard link from a file and also the file-itself it the
      * file's reference count decreases to 0!
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param pathname
      * @return
      */
-    virtual int32 unlink(Thread* cur_thread, const char *pathname);
+    virtual int32 unlink(FsWorkingDirectory* wd_info, const char *pathname);
 
     /**
      * opens a directory for enumeration of all containing i-nodes
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param name the path to the directory to open
      * @return a pointer to a DIR object or NULL in case of failure
      */
-    virtual DIR* opendir(Thread* cur_thread, const char* name);
+    virtual DIR* opendir(FsWorkingDirectory* wd_info, const char* name);
 
     /**
      * The readdir() display the names from all childs and returns a pointer
      * to a Dirent.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param pathname the destination-directory.
      * @return the dirent
      */
-    virtual Dirent* readdir ( Thread* cur_thread, DIR* dirp );
+    virtual Dirent* readdir ( FsWorkingDirectory* wd_info, DIR* dirp );
 
     /**
      * resets the position of the directory stream dirp to the beginning of
      * the directory
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param dirp a pointer to a valid DIR-pointer
      * @return none
      */
-    virtual void rewinddir(Thread* cur_thread, DIR* dirp);
+    virtual void rewinddir(FsWorkingDirectory* wd_info, DIR* dirp);
 
     /**
      * closing the directory - freeing resources acquired by the dirp-pointer
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param dirp a pointer to a valid DIR-pointer
      * @return true in case of success / false in case of failure
      */
-    virtual bool closedir(Thread* cur_thread, DIR* dirp);
+    virtual bool closedir(FsWorkingDirectory* wd_info, DIR* dirp);
 
     /**
      * chdir() changes the current directory to the specified directory.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param dir the destination-directory.
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    virtual int32 chdir ( Thread* cur_thread, const char* pathname );
+    virtual int32 chdir ( FsWorkingDirectory* wd_info, const char* pathname );
 
     /**
      * getting the current working directory of the given Thread
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @return cur_thread's working directory
      */
-    virtual const char* getwd(Thread* cur_thread) const;
+    virtual const char* getwd(FsWorkingDirectory* wd_info) const;
 
     /**
      * create a new file or rewrite an existing one
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param pathname the file's pathname
      * @param flag specified when the file was opened
      */
-    virtual int32 creat(Thread* cur_thread, const char *path, mode_t mode = 0755);
+    virtual int32 creat(FsWorkingDirectory* wd_info, const char *path, mode_t mode = 0755);
 
     /**
      * The open() is used to convert a pathname into a file descriptor, if the
      * pathname does not exist, create a new file.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param pathname the file pathname
      * @param flag specified when the file was opened
      * @return On success, file descriptor is returned. On error, -1 is returned.
      */
-    virtual int32 open(Thread* cur_thread, const char* pathname, int32 flag, mode_t mode = 0755);
+    virtual int32 open(FsWorkingDirectory* wd_info, const char* pathname, int32 flag, mode_t mode = 0755);
 
     /**
      * The close() closes a file descriptor.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param fd the file descriptor
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    virtual int32 close(Thread* cur_thread, uint32 fd);
+    virtual int32 close(FsWorkingDirectory* wd_info, uint32 fd);
 
     /**
      * The read() attempts to read up to count bytes from file descriptor fd
      * into the buffer starting at buffter.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param fd the file descriptor
      * @param buffer the buffer that to read the date
      * @param count the size of the byte
@@ -207,44 +205,44 @@ class VfsSyscall
      *         end of file), and the file position is advanced by this number.
      *         On error, -1 is returned.
      */
-    virtual int32 read ( Thread* cur_thread, fd_size_t fd, char* buffer, size_t count );
+    virtual int32 read ( FsWorkingDirectory* wd_info, fd_size_t fd, char* buffer, size_t count );
 
     /**
      * Sets the file position relative to the start of the file, the end of the
      * file or the current file position.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param fd the file descriptor
      * @param offset is the offset to set.
      * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
      * @returns the offset from the start off the file or -1 on failure.
      */
-    l_off_t lseek ( Thread* cur_thread, fd_size_t fd, l_off_t offset, uint8 origin );
+    l_off_t lseek ( FsWorkingDirectory* wd_info, fd_size_t fd, l_off_t offset, uint8 origin );
 
     /**
      * write  writes  up  to  count  bytes  to the file referenced by the file
      * descriptor fd from the buffer starting at buf.
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param fd the file descriptor
      * @param buffer the buffer that to store the date
      * @param count the size of the byte
      * @return On success, the number of bytes written are returned (zero
      *         indicates nothing was written). On error, -1 is returned
      */
-    virtual int32 write ( Thread* cur_thread, fd_size_t fd, const char *buffer, size_t count );
+    virtual int32 write ( FsWorkingDirectory* wd_info, fd_size_t fd, const char *buffer, size_t count );
 
     /**
      * commit buffer cache to disk (http://linux.die.net/man/2/sync)
      * sync() causes all buffered modifications to file metadata and data
      * to be written to the underlying file systems.
      */
-    virtual void sync(Thread* cur_thread);
+    virtual void sync(FsWorkingDirectory* wd_info);
 
     /**
      * fsync() - synchronize a file's in-core state with storage device
      * @param fd the file-descriptor the File to be flushed
      * @return in case of success 0, otherwise -1
      */
-    int32 fsync(Thread* cur_thread, int32 fd);
+    int32 fsync(FsWorkingDirectory* wd_info, int32 fd);
 
     /**
      * get file system statistics
@@ -257,28 +255,28 @@ class VfsSyscall
      * path is stored on
      * NULL in case of failure
      */
-    statfs_s* statfs(Thread* cur_thread, const char *path);
+    statfs_s* statfs(FsWorkingDirectory* wd_info, const char *path);
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 
     /**
      * mounts a file system
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param device_name the device name i.e. ida
      * @param dir_name the directory name where to mount the filesystem
      * @param file_system_name the file system name i.e. minixfs
      * @param flag the flag indicates if mounted readonly etc.
      * @return 0 on success
      */
-    virtual int32 mount ( Thread* cur_thread, const char *device_name, const char *dir_name, const char *file_system_name, int32 flag );
+    virtual int32 mount ( FsWorkingDirectory* wd_info, const char *device_name, const char *dir_name, const char *file_system_name, int32 flag );
 
     /** unmounts a filesystem
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param dir_name the directory where the filesystem to unmount is mounted
      * @param flag not used
      * @return 0 on success
      */
-    virtual int32 umount ( Thread* cur_thread, const char *dir_name, int32 flag );
+    virtual int32 umount ( FsWorkingDirectory* wd_info, const char *dir_name, int32 flag );
 
 
     /**
@@ -328,33 +326,33 @@ class VfsSyscall
     /**
      * resolves a string-given path and returns the Inode
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param path the path to resolve (coded as a string)
      * @return the Inode of the reolved path or NULL in case of failure
      */
-    virtual Inode* resolvePath(Thread* cur_thread, const char* path);
+    virtual Inode* resolvePath(FsWorkingDirectory* wd_info, const char* path);
 
     /**
      * resolves a string-given path into a Directory
      * in contrast to the more general method resolvePath, resolveDirectory
      * will fail if any part of the path-string does not refer to a Directory
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param path the path to resolve (coded as a string)
      * @return the resolved Directory or NULL in case of error
      */
-    virtual Directory* resolveDirectory(Thread* cur_thread, const char* path);
+    virtual Directory* resolveDirectory(FsWorkingDirectory* wd_info, const char* path);
 
     /**
      * resolves a string-given path into a File
      * in contrast to the more general method resolvePath, resolveFile will
      * fail if the last part of the path-string does not refer to a File
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param path the path to resolve (coded as a string)
      * @return the resolved Directory or NULL in case of error
      */
-    virtual File* resolveFile(Thread* cur_thread, const char* path);
+    virtual File* resolveFile(FsWorkingDirectory* wd_info, const char* path);
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
     /**
@@ -363,12 +361,12 @@ class VfsSyscall
      * mount-point of the mounted FileSystem but the real Directory will be
      * returned
      *
-     * @param cur_thread the current Thread calling this function
+     * @param wd_info current working dir
      * @param path the path to resolve (coded as a string)
      * @return the resolved Directory or NULL in case of error (e.g. path does
      * not refer to a Directory)
      */
-    virtual Directory* resolveRealDirectory(Thread* cur_thread, const char* path);
+    virtual Directory* resolveRealDirectory(FsWorkingDirectory* wd_info, const char* path);
 #endif
 
     // possible file-system operations
@@ -380,21 +378,19 @@ class VfsSyscall
      * checks if the current-Thread is allowed to perform the given operation
      * (READ, WRITE, EXECUTE) on the given I-Node
      *
-     * @param cur_thread the current Thread calling this function
      * @param inode the Inode to operate on
      * @param operation the Operations to carry out
      * @return true if the Thread is allowed to carry out the given operation / false
      * if not
      */
-    virtual bool isOperationPermitted(Thread* cur_thread, Inode* inode, int32 operation);
+    virtual bool isOperationPermitted(Inode* inode, int32 operation);
 
     /**
      * HOOK; not implemented
      * checking User's disk-quota
-     * @param cur_thread the current Thread calling this function
      * @return true / false if the Disk quota reached its limit (not write's possible)
      */
-    virtual bool diskQuotaNotExceeded(Thread* cur_thread);
+    virtual bool diskQuotaNotExceeded();
 
     /**
      * splitting a given path into the directory and the last-part (file)
@@ -479,7 +475,7 @@ class VfsSyscall
      * operations, it will be checked whether the child Inode exists in the
      * parent and if the caller has WRITE-access to the parent
      *
-     * @param cur_thread the calling current Thread
+     * @param wd_info current working dir
      * @param pathname
      * @param[out] parent
      * @param[out] last_part
@@ -489,17 +485,17 @@ class VfsSyscall
      * or false in case of error; in case of failure the output parameters will
      * NOT be filled with data!
      */
-    bool resolveAndWriteLockParentDirectory(Thread* cur_thread, const char* pathname, FailCondition fail_if,
+    bool resolveAndWriteLockParentDirectory(FsWorkingDirectory* wd_info, const char* pathname, FailCondition fail_if,
                                             Directory*& parent, char*& last_part, bool& file_extists);
 
     /**
      * creates a new File
      *
-     * @param cur_thread
+     * @param wd_info current working dir
      * @param pathname the path of the new file
      * @param mode the file permissions
      */
-    File* createFile ( Thread* cur_thread, const char* pathname, mode_t mode );
+    File* createFile ( FsWorkingDirectory* wd_info, const char* pathname, mode_t mode );
 
     /**
      * creates a new FileDescriptor object for a given File considering the given
@@ -507,12 +503,11 @@ class VfsSyscall
      * if the creation of the FD fails the given File will be released by the
      * function
      *
-     * @param cur_thread
      * @param file the File to create a FileDescriptor
      * @param flags the open flags
      * @return the created FD ready to be used or NULL in case of failure
      */
-    FileDescriptor* createFDForFile(Thread* cur_thread, File* file, uint32 flags);
+    FileDescriptor* createFDForFile(File* file, uint32 flags);
 
     /**
      * rewrites the Inode of a parent-directory that was affected by

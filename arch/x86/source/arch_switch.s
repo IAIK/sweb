@@ -257,7 +257,8 @@ global arch_TestAndSet
   arch_TestAndSet:
     mov eax, dword[esp+4];,%eax  # get new_value into %eax
     mov edx, dword[esp+8]; 8(%esp),%edx  # get lock_pointer into %edx
-    lock     ;         # next instruction is locked
+    ;lock     ;         # next instruction is locked
+    ;according to the intel manuals xchg is already locked (fixed a warning)
     xchg  dword[edx], eax;, # swap %eax with what is stored in (%edx)
                      ;  # ... and don't let any other cpu touch that
                       ; # ... memory location while you're swapping

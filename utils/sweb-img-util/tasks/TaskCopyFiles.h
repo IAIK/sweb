@@ -39,7 +39,7 @@ private:
    * @param dest
    * @return true / false
    */
-  bool copyFile(VfsSyscall* vfs, Thread* thread, const char* src, const char* dest);
+  bool copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const char* src, const char* dest);
 
 };
 

@@ -26,6 +26,9 @@
 namespace Cache
 {
 
+class CacheReadStrategy;
+class CacheWriteStrategy;
+
 typedef uint32 num_items_t;
 
 /**

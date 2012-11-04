@@ -19,7 +19,6 @@
 #include "fs/FsWorkingDirectory.h"
 #include "fs/Statfs.h"
 
-#include "Thread.h"
 
 TaskInstallOnFlashDrive::TaskInstallOnFlashDrive(Program& image_util) : UtilTask(image_util)
 {

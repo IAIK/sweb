@@ -15,7 +15,7 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
   Thread ( fs_info, minixfs_filename ),
   run_me_(false),
   terminal_number_(terminal_number),
-  fd_(VfsSyscall::instance()->open ( currentThread, minixfs_filename, O_RDONLY ) ),
+  fd_(VfsSyscall::instance()->open ( fs_info, minixfs_filename, O_RDONLY ) ),
   process_registry_(process_registry)
 {
   process_registry_->processStart();//should also be called if you fork a process
@@ -39,7 +39,7 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
 UserProcess::~UserProcess()
 {
   if(fd_ > 0)
-    VfsSyscall::instance()->close(this, fd_);
+    VfsSyscall::instance()->close(this->getWorkingDirInfo(), fd_);
 
   process_registry_->processExit();
 }

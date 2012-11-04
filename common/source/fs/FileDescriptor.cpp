@@ -104,9 +104,9 @@ FileDescriptor* FileDescriptor::getFileDescriptor(fd_size_t fd)
   return file_descriptor;
 }
 
-FileDescriptor::FileDescriptor ( File* file, Thread* owner, bool append_mode,
+FileDescriptor::FileDescriptor ( File* file, bool append_mode,
                                  bool nonblocking_mode ) : file_(file), cursor_pos_(0),
-                                 owner_(owner), append_mode_(append_mode),
+                                 append_mode_(append_mode),
                                  nonblocking_mode_(nonblocking_mode), read_mode_(false),
                                  write_mode_(true), synchronous_(false)
 {
@@ -173,11 +173,6 @@ void FileDescriptor::setSynchroniousWrite(bool mode)
 bool FileDescriptor::synchronizeMode(void) const
 {
   return synchronous_;
-}
-
-Thread* FileDescriptor::getOwner(void)
-{
-  return owner_;
 }
 
 file_size_t FileDescriptor::getCursorPos(void) const
