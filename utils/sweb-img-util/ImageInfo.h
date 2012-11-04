@@ -104,7 +104,7 @@ private:
 	unsigned long file_size_;
 
 	// the detected partitions:
-	std::vector<PartitionInfo> partitions_;
+	std::vector<PartitionInfo*> partitions_;
 };
 
 #endif /* IMAGEINFO_H_ */

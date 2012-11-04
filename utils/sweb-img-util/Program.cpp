@@ -98,8 +98,6 @@ void Program::createTasks(void)
   tasks_.push_back( new TaskFormatPartition(*this) );
   tasks_.push_back( new TaskSetupRootPartition(*this) );
   tasks_.push_back( new TaskCopyFiles(*this) );
-
-  //tasks_.push_back( new TaskTestFs(*this) );
   tasks_.push_back( new TaskInstallOnFlashDrive(*this) );
 
   // TODO add here more tasks
@@ -158,16 +156,6 @@ unsigned int Program::getNumArgs(void) const
 {
   return args_.size();
 }
-
-/*
-const char* Program::getArg(unsigned int arg_nr) const
-{
-  if(args_.size() >= arg_nr)
-    return NULL;
-
-  return args_[arg_nr].c_str();
-}
-*/
 
 std::string Program::getArg(unsigned int arg_nr) const
 {

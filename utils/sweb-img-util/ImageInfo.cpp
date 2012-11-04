@@ -20,9 +20,13 @@ ImageInfo::~ImageInfo()
 {
   if(image_file_ != NULL)
   {
-    //free(image_file_);
-    delete[] image_file_; // causes a mismatched free warning...
+    delete[] image_file_;
     image_file_ = NULL;
+  }
+  while (partitions_.size() > 0)
+  {
+    delete partitions_.back();
+    partitions_.pop_back();
   }
 }
 
@@ -83,13 +87,12 @@ unsigned long ImageInfo::getImageSize(void) const
 
 bool ImageInfo::readBootSector(std::fstream& image)
 {
-	char* boot_sector = new char[BOOT_SECTOR_SIZE];
+	char boot_sector[BOOT_SECTOR_SIZE];
 	image.read(boot_sector, BOOT_SECTOR_SIZE);
 
 	if(image.fail())
 	{
 		std::cout << "readBootSector: read fail" << std::endl;
-		delete[] boot_sector;
 		return false;
 	}
 
@@ -99,7 +102,6 @@ bool ImageInfo::readBootSector(std::fstream& image)
 	{
 		std::cout << "readBootSector: signature corrupt" << std::endl;
 
-		delete[] boot_sector;
 		return false;
 	}
 
@@ -118,14 +120,13 @@ bool ImageInfo::readBootSector(std::fstream& image)
 			continue;
 		}
 
-		partitions_.push_back(PartitionInfo(entry->boot_able,
+		partitions_.push_back(new PartitionInfo(entry->boot_able,
 											entry->part_type,
 											512,
 											entry->start_sector_,
 											entry->num_sectors_));
 	}
 
-	delete[] boot_sector;
 	return true;
 }
 
@@ -139,7 +140,7 @@ const PartitionInfo* ImageInfo::getPartition(unsigned int number) const
   if(number > getNumPartitions())
     return NULL;
 
-  return &partitions_[number];
+  return partitions_[number];
 }
 
 std::ostream& operator<<(std::ostream& stream, const ImageInfo& image)
@@ -153,10 +154,10 @@ std::ostream& operator<<(std::ostream& stream, const ImageInfo& image)
 	for(unsigned int i = 0; i < image.partitions_.size(); i++)
 	{
 		stream << std::setw(5) << i
-		     << std::setw(5) << (image.partitions_[i].isBootAble() ? "yes" : "no")
+		     << std::setw(5) << (image.partitions_[i]->isBootAble() ? "yes" : "no")
 		     << std::setw(15)
-		        << PartitionInfo::getPartitionTypeString(image.partitions_[i].getPartitionIdentfier())
-			   << std::setw(13) << image.partitions_[i].getPartitionSectorOffset()*image.partitions_[i].getSectorSize()
+		        << PartitionInfo::getPartitionTypeString(image.partitions_[i]->getPartitionIdentfier())
+			   << std::setw(13) << image.partitions_[i]->getPartitionSectorOffset()*image.partitions_[i]->getSectorSize()
 			      << " bytes" << std::endl;
 	}
 

@@ -51,7 +51,12 @@ void TaskCopyFiles::execute(void)
     std::cout << "copying " << src_filename << " (as \"" << dst_filename << "\") to the image-file" << std::endl;
 
     // copy the file to the image
-    copyFile(vfs, &wd_info, src_filename.c_str(), dst_filename.c_str());
+    int32 retry = 3;
+    while (retry > 0 && !copyFile(vfs, &wd_info, src_filename.c_str(), dst_filename.c_str()))
+    {
+      --retry;
+    }
+
   }
 
   // delete VFS instance
