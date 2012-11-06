@@ -54,49 +54,50 @@ void FsVolumeManager::acquireSectorForReading(sector_addr_t sector)
 {
   debug(VOLUME_MANAGER, "acquireSectorForReading - sector (%d)\n", sector);
   sector_lock_manager_.acquireReadBlocking(sector);
-  sector_lock_manager_.setSlotAdditionalInfo(sector, 0);
 }
 
 void FsVolumeManager::acquireSectorForWriting(sector_addr_t sector)
 {
   debug(VOLUME_MANAGER, "acquireSectorForWriting - sector (%d)\n", sector);
   sector_lock_manager_.acquireWriteBlocking(sector);
-  sector_lock_manager_.setSlotAdditionalInfo(sector, 0);
 }
 
-void FsVolumeManager::releaseReadSector(sector_addr_t sector)
+void FsVolumeManager::releaseReadSector(sector_addr_t sector, uint32 num_ref_releases)
 {
   debug(VOLUME_MANAGER, "releaseReadSector - sector (%d)\n", sector);
 
   // free all acquired cache references and release the slot
-  decrRefCounterOfCacheElements(sector);
+  decrRefCounterOfCacheElements(sector, num_ref_releases);
   sector_lock_manager_.releaseRead(sector);
 
   debug(VOLUME_MANAGER, "releaseReadSector - slot (%d) released\n", sector);
 }
 
-void FsVolumeManager::releaseWriteSector(sector_addr_t sector)
+void FsVolumeManager::releaseWriteSector(sector_addr_t sector, uint32 num_ref_releases)
 {
   debug(VOLUME_MANAGER, "releaseWriteSector - sector (%x)\n", sector);
 
   // free all acquired cache references and release the slot
-  decrRefCounterOfCacheElements(sector);
+  decrRefCounterOfCacheElements(sector, num_ref_releases);
   sector_lock_manager_.releaseWrite(sector);
 
   debug(VOLUME_MANAGER, "releaseWriteSector - slot (%d) released\n", sector);
 }
 
-void FsVolumeManager::decrRefCounterOfCacheElements(sector_addr_t sector)
+void FsVolumeManager::decrRefCounterOfCacheElements(sector_addr_t sector,
+                                                    uint32 num_release_calls)
 {
-  if(sector_lock_manager_.getSlotAdditionalInfo(sector) > 0)
-  {
-    SectorCacheIdent ident(sector, getBlockSize());
+  //assert(num_release_calls > 0);
+  if(num_release_calls == 0)
+    return;
 
-    for(uint32 i = 0; i < sector_lock_manager_.getSlotAdditionalInfo(sector); i++)
-    {
-      dev_sector_cache_->releaseItem(ident);
-      debug(VOLUME_MANAGER, "release - cache item (%x) released\n", sector);
-    }
+  SectorCacheIdent ident(sector, getBlockSize());
+
+  for(uint32 i = 0; i < num_release_calls; i++)
+  {
+    debug(VOLUME_MANAGER, "release - going to release cache item (%x)\n", sector);
+    dev_sector_cache_->releaseItem(ident);
+    debug(VOLUME_MANAGER, "release - cache item (%x) released\n", sector);
   }
 }
 
@@ -116,54 +117,9 @@ char* FsVolumeManager::readSectorUnprotected(sector_addr_t sector)
 
   debug(VOLUME_MANAGER, "readSectorUnprotected - return cache item\n");
 
-  sector_lock_manager_.setSlotAdditionalInfo(sector, sector_lock_manager_.getSlotAdditionalInfo(sector) + 1);
-
   // item is valid, but no data in the item?!?
   assert(item->getData() != NULL);
   return reinterpret_cast<char*>(item->getData());
-
-/*
-  // read-out the Sector from the underlying device
-  if(dev_sector_cache_ != NULL)
-  {
-    // Cache is available, try to get the Sector data from the Cache
-    SectorCacheIdent ident(sector, getBlockSize());
-    Cache::Item* item = dev_sector_cache_->getItem(ident);
-
-    if(item != NULL)
-    {
-      debug(VOLUME_MANAGER, "readSectorUnprotected - return cache item\n");
-      // item is valid, but no data in the item?!?
-      assert(item->getData() != NULL);
-      return reinterpret_cast<char*>(item->getData());
-    }
-  }
-
-  // no Cache available, or sector item was not cached, so read from
-  // the FileSystem's device
-  sector_len_t sector_size = getBlockSize();
-
-  char* sector_data = new char[sector_size];
-  if(!device_->readSector(sector, sector_data, sector_size))
-  {
-    // FAIL, Sector could not be loaded!
-    debug(VOLUME_MANAGER, "readSectorUnprotected - failed to read out sector!\n");
-    return NULL;
-  }
-  debug(VOLUME_MANAGER, "readSectorUnprotected - sector read manually!\n");
-
-  // if a Cache is available, the new Item will be inserted to it
-  if(dev_sector_cache_ != NULL)
-  {
-    SectorCacheIdent ident(sector, getBlockSize());
-    SectorCacheItem* item = new SectorCacheItem(sector_data);
-
-    // insert new cache item
-    dev_sector_cache_->addItem(ident, item);
-    debug(VOLUME_MANAGER, "readSectorUnprotected - added new cache item manually!\n");
-  }
-
-  return sector_data;*/
 }
 
 bool FsVolumeManager::writeSectorUnprotected(sector_addr_t sector, const char* buffer)
@@ -228,7 +184,7 @@ void FsVolumeManager::acquireDataBlockForWriting(sector_addr_t data_block)
   }
 }
 
-void FsVolumeManager::releaseReadDataBlock(sector_addr_t data_block)
+void FsVolumeManager::releaseReadDataBlock(sector_addr_t data_block, uint32 num_ref_releases)
 {
   if(getDataBlockSize() % getBlockSize() != 0)
     return;
@@ -238,11 +194,11 @@ void FsVolumeManager::releaseReadDataBlock(sector_addr_t data_block)
 
   for(uint32 i = 0; i < num_sectors_per_data_block; i++)
   {
-    releaseReadSector(file_system_->convertDataBlockToSectorAddress(data_block) + i);
+    releaseReadSector(file_system_->convertDataBlockToSectorAddress(data_block) + i, num_ref_releases);
   }
 }
 
-void FsVolumeManager::releaseWriteDataBlock(sector_addr_t data_block)
+void FsVolumeManager::releaseWriteDataBlock(sector_addr_t data_block, uint32 num_ref_releases)
 {
   if(getDataBlockSize() % getBlockSize() != 0)
     return;
@@ -252,7 +208,7 @@ void FsVolumeManager::releaseWriteDataBlock(sector_addr_t data_block)
 
   for(uint32 i = 0; i < num_sectors_per_data_block; i++)
   {
-    releaseWriteSector(file_system_->convertDataBlockToSectorAddress(data_block) + i);
+    releaseWriteSector(file_system_->convertDataBlockToSectorAddress(data_block) + i, num_ref_releases);
   }
 }
 
@@ -311,16 +267,9 @@ bool FsVolumeManager::writeDataBlockUnprotected(sector_addr_t data_block, const 
     // calculate the address of the current sector
     sector_addr_t cur_sector = file_system_->convertDataBlockToSectorAddress(data_block) + i;
 
-    updateSectorData(cur_sector, block, i);
-/*
     // 1. update item in cache (synchronize cache)
-    char* temp = readSectorUnprotected(cur_sector);
-    if(temp == NULL)
-    {
-      return false;
-    }
-    memcpy(temp, block + (i*block_size), block_size);
-*/
+    updateSectorData(cur_sector, block, i);
+
     // 2. save (write) to disk
     if(!writeSectorUnprotected(cur_sector, block + (i*block_size)))
     {

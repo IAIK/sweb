@@ -660,7 +660,7 @@ sector_addr_t FileSystemMinix::occupyAndReturnFreeBlock(bool clear_block)
     // since this is the first time (and for sure the ONLY thread to write) to
     // this data-block, no locking aids are required!
     volume_manager_->writeDataBlockUnprotected(new_block_addr, block);
-    volume_manager_->releaseWriteDataBlock(new_block_addr);
+    volume_manager_->releaseWriteDataBlock(new_block_addr, 0);
     delete[] block;
   }
 
@@ -679,13 +679,7 @@ bool FileSystemMinix::freeOccupiedBlock(sector_addr_t block_address)
 
   // convert the given block-address to the bit-number in the Zone Bitmap
   bitmap_t bit = block_address - getFirstDataBlockAddress();
-/*
-  if(zone_bitmap_->getBit(bit))
-  {
-    debug(FS_MINIX, "freeOccupiedBlock - ERROR bit is already freed!\n", block_address);
-    return false;
-  }
-*/
+
   // set the bit to 0!
   bool result = zone_bitmap_->setBit(bit, false);
 

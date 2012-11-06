@@ -130,9 +130,7 @@ void FifoReadCache::clear(void)
     else
     {
       it++; // pick next element
-#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
       debug(READ_CACHE, "evictItem - FAIL could not clear item because it is still referenced!\n");
-#endif
     }
   }
 }

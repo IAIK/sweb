@@ -17,10 +17,12 @@
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 #include "ustl/umap.h"
 #define STL_NAMESPACE_PREFIX    ustl::
+using ustl::map;
 #else
 #include <map>
 #include "assert.h"
 #define STL_NAMESPACE_PREFIX    std::
+using std::map;
 #endif
 
 #include "fs/FileSystemLock.h"
@@ -166,6 +168,14 @@ public:
    */
   U getSlotAdditionalInfo(const T& slot) const;
 
+  /**
+   * sets the default value that should be applied as additional
+   * information when a new slot entry is created
+   *
+   * @param def_add_info the default additional value to apply
+   */
+  void setDefaultAdditionalInfoValue(U info);
+
 private:
 
   /**
@@ -205,7 +215,7 @@ private:
     SlotLock slot_lock;
     slot_lock.fs_lock = FileSystemLock::getNewFSLock();
     slot_lock.ref_count = 1;
-    slot_lock.additional_info = 0;
+    slot_lock.additional_info = def_add_info_;
 
     active_locks_.insert(STL_NAMESPACE_PREFIX make_pair(slot, slot_lock));
 
@@ -242,18 +252,16 @@ private:
   };
 
   // the lock map:
-#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-  typedef typename ustl::map<T, SlotLock>::iterator map_it;
-  ustl::map<T, SlotLock> active_locks_;
-#else
-  typedef typename std::map<T, SlotLock>::iterator map_it;
-  std::map<T, SlotLock> active_locks_;
-#endif
+  typedef typename map<T, SlotLock>::iterator map_it;
+  map<T, SlotLock> active_locks_;
 
   // the mutex that protects the above map
 #ifndef NO_USE_OF_MULTITHREADING
   mutable Mutex lock_map_lock_;
 #endif
+
+  // the default additional-info value to apply on slot-item creation:
+  U def_add_info_;
 };
 
 template<class T, typename U>
@@ -300,6 +308,12 @@ U SlotLockManager<T,U>::getSlotAdditionalInfo(const T& slot) const
     }
   }
   return 0;
+}
+
+template<class T, typename U>
+void SlotLockManager<T,U>::setDefaultAdditionalInfoValue(U info)
+{
+  def_add_info_ = info;
 }
 
 #endif /* SLOTLOCKMANAGER_H_ */

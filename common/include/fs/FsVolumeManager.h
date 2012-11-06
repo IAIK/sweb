@@ -100,9 +100,13 @@ public:
    * released afterwards by calling one of the release methods!
    *
    * @param sector the Sector number to release
+   * @param num_ref_releases the number of times the GeneralCache's releaseItem()
+   * method shall be called (has to equal your number of performed read-operations)
+   * by default 1 (assumes exactly one readSectorUnprotected() call in
+   * the critical section)
    */
-  virtual void releaseReadSector(sector_addr_t sector);
-  virtual void releaseWriteSector(sector_addr_t sector);
+  virtual void releaseReadSector(sector_addr_t sector, uint32 num_ref_releases = 1);
+  virtual void releaseWriteSector(sector_addr_t sector, uint32 num_ref_releases = 1);
 
   /**
    * getting the size of a *data* block on the FileSystem
@@ -130,9 +134,13 @@ public:
    * released afterwards by calling one of the release methods!
    *
    * @param data_block the data-block to release
+   * @param num_ref_releases the number of times the GeneralCache's releaseItem()
+   * method shall be called (has to equal your number of performed read-operations)
+   * by default 1 (assumes exactly one readDataBlock() call in the critical
+   * section)
    */
-  virtual void releaseReadDataBlock(sector_addr_t data_block);
-  virtual void releaseWriteDataBlock(sector_addr_t data_block);
+  virtual void releaseReadDataBlock(sector_addr_t data_block, uint32 num_ref_releases = 1);
+  virtual void releaseWriteDataBlock(sector_addr_t data_block, uint32 num_ref_releases = 1);
 
   /**
    * reads out a data-block and returns it
@@ -181,7 +189,14 @@ private:
 
   void updateSectorData(sector_addr_t sector, const char* new_data, sector_len_t offset);
 
-  void decrRefCounterOfCacheElements(sector_addr_t sector);
+  /**
+   * calls for the given sector num_release_calls-times the GeneralCache's
+   * releaseItem() method
+   *
+   * @param sector
+   * @param num_release_calls default
+   */
+  void decrRefCounterOfCacheElements(sector_addr_t sector, uint32 num_release_calls);
 };
 
 #endif /* FSVOLUMEMANAGER_H_ */
