@@ -27,7 +27,7 @@ Cache::Item* FsDevice::read(const Cache::ItemIdentity& ident)
 {
   debug(FS_DEVICE, "read - CALL (ident addr=%x)\n", &ident);
 
-  const SectorCacheIdent* sector_ident = reinterpret_cast<const SectorCacheIdent*>(&ident);
+  const SectorCacheIdent* sector_ident = static_cast<const SectorCacheIdent*>(&ident);
 
   // invalid / not usable ident-object
   if(sector_ident == NULL)
@@ -56,7 +56,7 @@ bool FsDevice::write(const Cache::ItemIdentity& ident, Cache::Item* data)
 {
   debug(FS_DEVICE, "write - CALL (ident addr=%x) (data addr=%x)\n", &ident, data);
 
-  const SectorCacheIdent* sector_ident = reinterpret_cast<const SectorCacheIdent*>(&ident);
+  const SectorCacheIdent* sector_ident = static_cast<const SectorCacheIdent*>(&ident);
 
   // error wrong ItemIdent object
   if(sector_ident == NULL || data == NULL)
@@ -69,7 +69,7 @@ bool FsDevice::write(const Cache::ItemIdentity& ident, Cache::Item* data)
   debug(FS_DEVICE, "write - data to write=%x.\n", data->getData());
 
   return writeSector(sector_ident->getSectorNumber(),
-                     reinterpret_cast<const char*>(data->getData()),
+                     static_cast<const char*>(data->getData()),
                      sector_ident->getSectorSize());
 }
 

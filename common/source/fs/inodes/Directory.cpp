@@ -62,7 +62,7 @@ Inode* Directory::obtainInode(inode_id_t id, const char* name)
   if(inode != NULL && inode->getType() == Inode::InodeTypeDirectory)
   {
     // check if this directory is a mount point
-    Directory* dir = reinterpret_cast<Directory*>(inode);
+    Directory* dir = static_cast<Directory*>(inode);
 
     if(dir->isMountPoint())
     {

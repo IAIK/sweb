@@ -493,7 +493,7 @@ int32 VfsSyscall::unlink(FsWorkingDirectory* wd_info, const char *pathname)
     return -1; // EPERM
   }
 
-  File* file_to_unlink = reinterpret_cast<File*>(inode);
+  File* file_to_unlink = static_cast<File*>(inode);
 
   // lock file to unlink
   file_to_unlink->getLock()->acquireWriteBlocking();
@@ -782,7 +782,7 @@ File* VfsSyscall::createFile(FsWorkingDirectory* wd_info, const char* pathname, 
     if(inode->getType() & Inode::InodeTypeFile)
     {
       debug(VFSSYSCALL, "createFile() - OK - file was created in the meantime, so return it!\n");
-      return reinterpret_cast<File*>(inode);
+      return static_cast<File*>(inode);
     }
     // parent-dir has already a child named like the one to be created, but
     // the child is actually not a file -> error
@@ -1223,7 +1223,7 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
       }
 
       // update cur_dir
-      cur_dir = reinterpret_cast<Directory*>(child);
+      cur_dir = static_cast<Directory*>(child);
     }
   }
 
@@ -1247,8 +1247,7 @@ Directory* VfsSyscall::resolveDirectory(FsWorkingDirectory* wd_info, const char*
     return NULL;
   }
 
-  //return reinterpret_cast<Directory*>(node);
-  Directory* dir = reinterpret_cast<Directory*>(node);
+  Directory* dir = static_cast<Directory*>(node);
 
   // just do a dummy lookup in order to load the Directorie's children
   // if they are not actually loaded
@@ -1272,8 +1271,7 @@ File* VfsSyscall::resolveFile(FsWorkingDirectory* wd_info, const char* path)
     return NULL;
   }
 
-  // Directory* dir = dynamic_cast<Directory*>(node);
-  return reinterpret_cast<File*>(node);
+  return static_cast<File*>(node);
 }
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
@@ -1323,7 +1321,7 @@ Directory* VfsSyscall::resolveRealDirectory(FsWorkingDirectory* wd_info, const c
   }
 
   // getting the mount-path
-  return reinterpret_cast<Directory*>(inode);
+  return static_cast<Directory*>(inode);
 }
 
 int32 VfsSyscall::mount( FsWorkingDirectory* wd_info, const char *device_name,

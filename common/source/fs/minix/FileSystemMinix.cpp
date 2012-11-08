@@ -205,7 +205,7 @@ void FileSystemMinix::initRootInode(void)
     assert(false);
     return;
   }
-  root_ = reinterpret_cast<Directory*>(root_node);
+  root_ = static_cast<Directory*>(root_node);
 
   debug(FS_MINIX, "initRootInode - root I-node was successfully loaded.\n");
 
@@ -531,7 +531,7 @@ Inode* FileSystemMinix::acquireInode(inode_id_t id,
       debug(FS_MINIX, "acquireInode - I-Node fetched successfully from/by Cache\n");
 
       // item was in cache:
-      return reinterpret_cast<Inode*>(item->getData());
+      return static_cast<Inode*>(item->getData());
     }
   }
 

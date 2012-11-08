@@ -119,7 +119,7 @@ char* FsVolumeManager::readSectorUnprotected(sector_addr_t sector)
 
   // item is valid, but no data in the item?!?
   assert(item->getData() != NULL);
-  return reinterpret_cast<char*>(item->getData());
+  return static_cast<char*>(item->getData());
 }
 
 bool FsVolumeManager::writeSectorUnprotected(sector_addr_t sector, const char* buffer)
@@ -246,7 +246,7 @@ void FsVolumeManager::updateSectorData(sector_addr_t sector, const char* block, 
     return;
   }
 
-  char* temp = reinterpret_cast<char*>(item->getData());
+  char* temp = static_cast<char*>(item->getData());
   memcpy(temp, block + (offset*getBlockSize()), getBlockSize());
 
   dev_sector_cache_->releaseItem(ident);

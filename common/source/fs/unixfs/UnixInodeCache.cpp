@@ -25,7 +25,7 @@ bool UnixInodeIdent::operator==(const Cache::ItemIdentity& cmp)
 {
   // try to cast the Interface into a SectorIdent type, if it fails
   // we know that they are not equal!
-  const UnixInodeIdent* p_cmp = reinterpret_cast<const UnixInodeIdent*>(&cmp);
+  const UnixInodeIdent* p_cmp = static_cast<const UnixInodeIdent*>(&cmp);
 
   //const SectorCacheIdent* p_cmp = dynamic_cast<const SectorCacheIdent*>(&cmp);
 

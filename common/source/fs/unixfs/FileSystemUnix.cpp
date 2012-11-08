@@ -144,7 +144,7 @@ sector_addr_t FileSystemUnix::storeIndirectDataBlocks(Inode* inode, sector_addr_
   }
 
   debug(FS_UNIX, "storeIndirectDataBlocks - indirect_block %x deg_of_indirection=%d\n", indirect_block, degree_of_indirection);
-  FileSystemUnix* fs = reinterpret_cast<FileSystemUnix*>(inode->getFileSystem());
+  FileSystemUnix* fs = static_cast<FileSystemUnix*>(inode->getFileSystem());
   assert(fs != NULL);
   FsVolumeManager* volume_manager = fs->getVolumeManager();
   assert(volume_manager != NULL);

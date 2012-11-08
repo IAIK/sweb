@@ -33,8 +33,8 @@ Cache::Item* InodeTable::read(const Cache::ItemIdentity& ident)
 {
   debug(INODE_TABLE, "read - CALL (ident addr=%x)\n", &ident);
 
-  const UnixInodeIdent* unix_ident = reinterpret_cast<const UnixInodeIdent*>(&ident);
-  //const UnixInodeIdent* unix_ident = dynamic_cast<const UnixInodeIdent*>(&ident);
+  const UnixInodeIdent* unix_ident = static_cast<const UnixInodeIdent*>(&ident);
+
   debug(INODE_TABLE, "Cache::read - going to read inode %d from Table\n", unix_ident->getInodeID());
 
   // invalid / not usable ident-object
@@ -52,8 +52,8 @@ bool InodeTable::write(const Cache::ItemIdentity& ident, Cache::Item* data)
 {
   debug(INODE_TABLE, "write - CALL (ident addr=%x) (item addr=%x)\n", &ident, data);
 
-  const UnixInodeIdent* unix_ident = reinterpret_cast<const UnixInodeIdent*>(&ident);
-  Inode* inode = reinterpret_cast<Inode*>(data->getData());
+  const UnixInodeIdent* unix_ident = static_cast<const UnixInodeIdent*>(&ident);
+  Inode* inode = static_cast<Inode*>(data->getData());
 
   if(unix_ident == NULL || inode == NULL)
   {
@@ -75,8 +75,8 @@ bool InodeTable::remove(const Cache::ItemIdentity& ident, Cache::Item* item)
 {
   debug(INODE_TABLE, "remove - CALL (ident addr=%x) (item addr=%x)\n", &ident, item);
 
-  const UnixInodeIdent* unix_ident = reinterpret_cast<const UnixInodeIdent*>(&ident);
-  UnixInodeCacheItem* unix_item = reinterpret_cast<UnixInodeCacheItem*>(item);
+  const UnixInodeIdent* unix_ident = static_cast<const UnixInodeIdent*>(&ident);
+  UnixInodeCacheItem* unix_item = static_cast<UnixInodeCacheItem*>(item);
 
   if(unix_ident == NULL || unix_item == NULL)
   {
