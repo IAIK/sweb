@@ -618,8 +618,12 @@ int32 VfsSyscall::chdir ( FsWorkingDirectory* wd_info, const char* pathname )
 {
   debug(VFSSYSCALL, "chdir - CALL\n");
 
+  // no wd-object, no wd-change!
   if(wd_info == NULL)
-    return -1; // no thread, no wd-change!
+  {
+    debug(VFSSYSCALL, "chdir - FAIL no valid wd_info given (%x) \n", wd_info);
+    return -1;
+  }
 
   debug(VFSSYSCALL, "chdir - changing current directory to \"%s\"\n", pathname);
   return wd_info->setWorkingDir(pathname);
@@ -1138,9 +1142,9 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
 
   }
   // path is relative, so start off with the relative path
-  else if(wd_info)
+  else
   {
-    debug(VFSSYSCALL, "resolvePath() - resolving a relate path\n", path);
+    debug(VFSSYSCALL, "resolvePath() - resolving a relative path\n", path);
 
     // in case of failure pick the VFS-root
     if(wd_info != NULL)
@@ -1150,6 +1154,10 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
 
     if(strlen(path) == 0)
     {
+      // path is "" and no working directory; so pick the root
+      if(cur_dir == NULL)
+        return getVfsRoot();
+
       // empty path means the working-directory
       return cur_dir;
     }
