@@ -626,7 +626,7 @@ int32 VfsSyscall::chdir ( FsWorkingDirectory* wd_info, const char* pathname )
   }
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-  if(VfsSyscall::instance()->resolveDirectory(cur_thread, pathname) == NULL)
+  if(VfsSyscall::instance()->resolveDirectory(wd_info, pathname) == NULL)
   {
     debug(VFSSYSCALL, "Invalid path \"%s\"\n", pathname);
     return -1;
