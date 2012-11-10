@@ -14,6 +14,9 @@
 class BDDriver;
 class BDRequest;
 
+class BDDriver;
+class BDRequest;
+
 class BDVirtualDevice
 {
   public:

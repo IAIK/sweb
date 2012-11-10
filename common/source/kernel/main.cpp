@@ -166,6 +166,7 @@ void startup()
   debug ( MAIN, "Timer enable\n" );
   ArchInterrupts::enableTimer();
 
+  KeyboardManager::getInstance();
   ArchInterrupts::enableKBD();
 
   debug ( MAIN, "Thread creation\n" );

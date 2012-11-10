@@ -61,8 +61,7 @@ void Mutex::acquire(const char* debug_info)
 
       spinlock_.acquire();
       sleepers_.push_back ( currentThread );
-      spinlock_.release();
-      Scheduler::instance()->sleep();
+      Scheduler::instance()->sleepAndRelease(spinlock_);
     }
     assert(held_by_ == 0);
     held_by_=currentThread;
