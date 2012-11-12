@@ -14,6 +14,7 @@ class Thread;
 class ArchThreadInfo;
 class Loader;
 class Terminal;
+class Mutex;
 
 /**
  * @class Thread
@@ -119,6 +120,10 @@ class Thread
     void printBacktrace();
     void printBacktrace(bool use_stored_registers);
 
+    /**
+     * debugging information for mutex deadlocks
+     */
+    Mutex* sleeping_on_mutex_;
   private:
 
     /**
