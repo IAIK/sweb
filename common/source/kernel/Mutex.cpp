@@ -22,6 +22,11 @@ Mutex::Mutex(const char* name) :
 {
 }
 
+Mutex::~Mutex()
+{
+  assert(sleepers_.size() == 0);
+}
+
 bool Mutex::acquireNonBlocking(const char* debug_info)
 {
   checkDeadlock("Mutex::acquireNonBlocking", debug_info);
@@ -59,9 +64,12 @@ void Mutex::acquire(const char* debug_info)
         assert(false);
       }
 
+      checkCircularDeadlock("Mutex::acquire", debug_info, currentThread);
       spinlock_.acquire();
       sleepers_.push_back ( currentThread );
+      currentThread->sleeping_on_mutex_ = this;
       Scheduler::instance()->sleepAndRelease(spinlock_);
+      currentThread->sleeping_on_mutex_ = 0;
     }
     assert(held_by_ == 0);
     held_by_=currentThread;
@@ -113,6 +121,20 @@ void Mutex::checkDeadlock(const char* method, const char* debug_info)
     if (debug_info)
       kprintfd("%s: Debug Info: %s\n", method, debug_info);
     assert(false);
+  }
+}
+
+void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Thread* start)
+{
+  if (start == 0)
+    return;
+
+  assert(held_by_ != 0 && held_by_ != start);
+
+  if (held_by_->state_ == Sleeping)
+  {
+    assert(held_by_->sleeping_on_mutex_ != 0);
+    held_by_->sleeping_on_mutex_->checkCircularDeadlock(method, debug_info, (start == 0) ? currentThread : start);
   }
 }
 

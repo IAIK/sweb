@@ -49,7 +49,7 @@ class Mutex
      *Constructor
      */
     Mutex(const char* name);
-
+    virtual ~Mutex();
     /**
      *like acquire, but instead of blocking the currentThread until the Lock is free
      *acquireNonBlocking() immediately returns True or False, depending on whether the Lock
@@ -135,6 +135,7 @@ class Mutex
      */
 
     void checkDeadlock(const char* method, const char* debug_info);
+    void checkCircularDeadlock(const char* method, const char* debug_info, Thread* start);
     /**
      * verifies that the mutex is held by this thread
      * @param method in which the check is done
