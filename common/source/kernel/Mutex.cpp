@@ -25,6 +25,7 @@ Mutex::Mutex(const char* name) :
 Mutex::~Mutex()
 {
   assert(sleepers_.size() == 0);
+  assert(held_by_ == 0 || held_by_ == currentThread);
 }
 
 bool Mutex::acquireNonBlocking(const char* debug_info)
