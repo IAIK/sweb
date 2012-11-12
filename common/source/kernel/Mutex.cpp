@@ -67,7 +67,7 @@ void Mutex::acquire(const char* debug_info)
         assert(false);
       }
 
-      checkCircularDeadlock("Mutex::acquire", debug_info, currentThread);
+      checkCircularDeadlock("Mutex::acquire", debug_info, currentThread, false);
       spinlock_.acquire();
       sleepers_.push_back ( currentThread );
       currentThread->sleeping_on_mutex_ = this;
@@ -127,21 +127,25 @@ void Mutex::checkDeadlock(const char* method, const char* debug_info)
   }
 }
 
-void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Thread* start)
+void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Thread* start, bool output)
 {
   if (start == 0)
     return;
 
-  if (held_by_ != 0 && held_by_ != start)
+  if (held_by_ != 0 && held_by_ == start)
   {
     kprintfd("%s: WARNING - Potential Deadlock: when sleeping on Mutex %s (%x) with currentThread (%x)\n", name_, method, this, currentThread);
+    if (!output)
+      checkCircularDeadlock(method, debug_info, start, true);
     return;
   }
 
   if (held_by_ != 0 && held_by_->state_ == Sleeping)
   {
     assert(held_by_->sleeping_on_mutex_ != 0);
-    held_by_->sleeping_on_mutex_->checkCircularDeadlock(method, debug_info, (start == 0) ? currentThread : start);
+    if (output)
+      kprintfd("              Potential Deadlock: Mutex %s (%x) held_by_ (%x)\n", name_, this, currentThread);
+    held_by_->sleeping_on_mutex_->checkCircularDeadlock(method, debug_info, start, output);
   }
 }
 

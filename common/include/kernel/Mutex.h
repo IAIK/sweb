@@ -135,7 +135,7 @@ class Mutex
      */
 
     void checkDeadlock(const char* method, const char* debug_info);
-    void checkCircularDeadlock(const char* method, const char* debug_info, Thread* start);
+    void checkCircularDeadlock(const char* method, const char* debug_info, Thread* start, bool output);
     /**
      * verifies that the mutex is held by this thread
      * @param method in which the check is done
