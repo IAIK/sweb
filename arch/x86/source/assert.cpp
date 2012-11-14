@@ -18,7 +18,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
   char line_string[5];
   if (!condition)
   {
-    disableInterrupts();
+    ArchInterrupts::disableInterrupts();
     extern uint32 boot_completed;
     boot_completed = 0;
     uint8 * fb = (uint8*)0xC00B8000;
