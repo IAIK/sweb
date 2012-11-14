@@ -46,6 +46,9 @@ bool Mutex::acquireNonBlocking(const char* debug_info)
     }
     return false;
   }
+  if (held_by_ != 0)
+    Scheduler::instance()->yield();
+  assert(held_by_ == 0);
   held_by_=currentThread;
   return true;
 }
@@ -76,6 +79,8 @@ void Mutex::acquire(const char* debug_info)
       Scheduler::instance()->sleepAndRelease(spinlock_);
       currentThread->sleeping_on_mutex_ = 0;
     }
+    if (held_by_ != 0)
+      Scheduler::instance()->yield();
     assert(held_by_ == 0);
     held_by_=currentThread;
   }
@@ -85,8 +90,8 @@ void Mutex::release(const char* debug_info)
 {
   checkInvalidRelease("Mutex::release", debug_info);
   //kprintfd_nosleep("Mutex::release %x %s, %s\n", this, name_, debug_info);
-  held_by_=0;
   mutex_ = 0;
+  held_by_=0;
   spinlock_.acquire();
   if ( ! sleepers_.empty() )
   {
@@ -153,7 +158,7 @@ void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Th
 
 void Mutex::checkInvalidRelease(const char* method, const char* debug_info)
 {
-  if (held_by_ != currentThread) // this is a mutex - not a binary semaphore!
+  if (boot_completed && held_by_ != currentThread) // this is a mutex - not a binary semaphore!
   { // ... and yes - I'm pretty sure, we can safely do this without the spinlock.
     boot_completed = 0;
 
