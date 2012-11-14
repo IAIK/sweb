@@ -69,6 +69,8 @@ class SpinLock
       return held_by_;
     }
 
+    const char* name_;
+
   private:
 
     /**
@@ -77,7 +79,6 @@ class SpinLock
       */
     uint32 nosleep_mutex_;
     Thread *held_by_;
-    const char* name_;
 
     /**
       * Copy Constructor - you _really_ don't want to copy a SpinLock!

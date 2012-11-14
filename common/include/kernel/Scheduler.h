@@ -181,7 +181,7 @@ class Scheduler
      * after blocking the Scheduler we need to test if all Locks we could possible
      * acquire are really free, because otherwise we will deadlock.
      */
-    void waitForFreeKMMLock();
+    void waitForFreeSpinLock(SpinLock& lock);
 
     static Scheduler *instance_;
 

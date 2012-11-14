@@ -149,10 +149,10 @@ class KernelMemoryManager
     void startUsingSyncMechanism();
 
     /**
-     * checks if the kernel memory manager lock is free
+     * returns the kernel memory manager lock
      * @return true if it is free
      */
-    bool isKMMLockFree();
+    SpinLock& getKMMLock();
 
     /**
      * @return the thread holding the KMM Lock
