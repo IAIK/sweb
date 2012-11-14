@@ -125,16 +125,37 @@ char const *intel_manual =
 #define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
   extern "C" void errorHandler_##x () \
   {\
+    currentThread->switch_to_userspace_ = false;\
+    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
+    ArchInterrupts::enableInterrupts();\
     kprintfd_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     kprintf_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     currentThread->kill();\
   }
 
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
+  extern "C" void arch_switchThreadToUserPageDirChange();\
   extern "C" void dummyHandler_##x () \
   {\
+    uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
+    currentThread->switch_to_userspace_ = false;\
+    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
+    ArchInterrupts::enableInterrupts();\
     kprintfd_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
     kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    ArchInterrupts::disableInterrupts();\
+    currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
+    switch (currentThread->switch_to_userspace_)\
+    {\
+      case 0:\
+        break;\
+      case 1:\
+        currentThreadInfo = currentThread->user_arch_thread_info_;\
+        arch_switchThreadToUserPageDirChange();\
+        break;\
+      default:\
+        kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
+    }\
   }
 
 ERROR_HANDLER(0,#DE: Divide by Zero)

@@ -64,6 +64,7 @@ extern unsigned char stabstr_end_address_nr;
 // then increase end_address appropriately
 
 uint32 boot_completed;
+uint32 we_are_dying;
 
 /**
  * startup called in @ref boot.s
@@ -72,6 +73,7 @@ uint32 boot_completed;
  */
 void startup()
 {
+  we_are_dying = 0;
   boot_completed = 0;
   writeLine2Bochs ( ( uint8 * ) "SWEB starting...\n" );
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();

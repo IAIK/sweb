@@ -37,6 +37,7 @@ bool Mutex::acquireNonBlocking(const char* debug_info)
   {
     if(threadOnList(currentThread))
     {
+      boot_completed = 0;
       kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
                  "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
       if (debug_info)
@@ -60,6 +61,7 @@ void Mutex::acquire(const char* debug_info)
     {
       if(threadOnList(currentThread))
       {
+        boot_completed = 0;
         kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
                    "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
         if (debug_info)
@@ -152,16 +154,17 @@ void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Th
 void Mutex::checkInvalidRelease(const char* method, const char* debug_info)
 {
   if (held_by_ != currentThread) // this is a mutex - not a binary semaphore!
-   { // ... and yes - I'm pretty sure, we can safely do this without the spinlock.
+  { // ... and yes - I'm pretty sure, we can safely do this without the spinlock.
+    boot_completed = 0;
 
-     kprintfd("\n\n%s: Mutex %s (%x) currently not held by currentThread!\n"
-       "held_by <%s (%x)> currentThread <%s (%x)>\ndebug info: %s\n\n", method, name_, this,
-      (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread, debug_info ? debug_info : "(NULL)");
+    kprintfd("\n\n%s: Mutex %s (%x) currently not held by currentThread!\n"
+        "held_by <%s (%x)> currentThread <%s (%x)>\ndebug info: %s\n\n", method, name_, this,
+        (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread, debug_info ? debug_info : "(NULL)");
 
-     kprintf("\n\n%s: Mutex %s (%x) currently not held by currentThread!\n"
-       "held_by <%s (%x)> currentThread <%s (%x)>\ndebug info: %s\n\n", method, name_, this,
-      (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread, debug_info ? debug_info : "(NULL)");
+    kprintf("\n\n%s: Mutex %s (%x) currently not held by currentThread!\n"
+        "held_by <%s (%x)> currentThread <%s (%x)>\ndebug info: %s\n\n", method, name_, this,
+        (held_by_ ? held_by_->getName() : "(NULL)"), held_by_, currentThread->getName(), currentThread, debug_info ? debug_info : "(NULL)");
 
-     assert(false);
-   }
+    assert(false);
+  }
 }

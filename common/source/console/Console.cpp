@@ -65,10 +65,7 @@ uint32 Console::getNumTerminals() const
 
 Terminal *Console::getActiveTerminal()
 {
-  set_active_lock_.acquire();
-  Terminal *act = terminals_[active_terminal_];
-  set_active_lock_.release();
-  return act;
+  return terminals_[active_terminal_]; // why not locked? integer read is consistent anyway
 }
 
 Terminal *Console::getTerminal ( uint32 term )

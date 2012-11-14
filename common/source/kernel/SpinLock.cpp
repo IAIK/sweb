@@ -13,7 +13,7 @@
 extern uint32 boot_completed;
 
 SpinLock::SpinLock(const char* name) :
-  nosleep_mutex_(0), held_by_(0), name_(name)
+    name_(name), nosleep_mutex_(0), held_by_(0)
 {
 }
 
@@ -65,10 +65,11 @@ void SpinLock::checkInterrupts(const char* method, const char* debug_info)
   // while scheduling is disabled
   if ( unlikely ( ArchInterrupts::testIFSet() == false))
   {
+    boot_completed = 0;
     kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d and SchedulingEnabled=%d ! Now we're dead !!!\n"
              "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",
              method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info);
-    currentThread->printBacktrace(false);
+    currentThread->printBacktrace();
     assert(false);
   }
 }
