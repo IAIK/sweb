@@ -14,12 +14,13 @@ extern Thread* currentThread;
 
 void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
 {
-  extern uint32 boot_completed;
-  boot_completed = 0;
   char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
   if (!condition)
   {
+    disableInterrupts();
+    extern uint32 boot_completed;
+    boot_completed = 0;
     uint8 * fb = (uint8*)0xC00B8000;
     uint32 s=0;
     uint32 i=0;

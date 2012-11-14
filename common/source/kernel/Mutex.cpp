@@ -32,24 +32,27 @@ Mutex::~Mutex()
 
 bool Mutex::acquireNonBlocking(const char* debug_info)
 {
-  checkDeadlock("Mutex::acquireNonBlocking", debug_info);
-  if (likely(boot_completed) && ArchThreads::testSetLock ( mutex_,1 ) )
+  if (likely(boot_completed))
   {
-    if(threadOnList(currentThread))
+    checkDeadlock("Mutex::acquireNonBlocking", debug_info);
+    if (likely(boot_completed) && ArchThreads::testSetLock ( mutex_,1 ) )
     {
-      boot_completed = 0;
-      kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
-                 "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
-      if (debug_info)
-        kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
-      assert(false);
+      if(threadOnList(currentThread))
+      {
+        boot_completed = 0;
+        kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
+                   "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
+        if (debug_info)
+          kprintfd("Mutex::acquire: Debug Info: %s\n", debug_info);
+        assert(false);
+      }
+      return false;
     }
-    return false;
+    if (held_by_ != 0)
+      Scheduler::instance()->yield();
+    assert(held_by_ == 0);
+    held_by_=currentThread;
   }
-  if (held_by_ != 0)
-    Scheduler::instance()->yield();
-  assert(held_by_ == 0);
-  held_by_=currentThread;
   return true;
 }
 
