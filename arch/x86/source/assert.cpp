@@ -8,6 +8,7 @@
 #include "panic.h"
 #include "debug_bochs.h"
 #include "Thread.h"
+#include "ArchInterrupts.h"
 
 extern Thread* currentThread;
 
@@ -69,6 +70,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
 
 void sweb_assert(const char *condition, uint32 line, const char* file)
 {
+  ArchInterrupts::disableInterrupts();
   extern uint32 boot_completed;
   boot_completed = 0;
   kprintfd_nosleep("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
