@@ -3,8 +3,8 @@
  * defines the various syscall names used by class @ref Syscall
  */
 
-#define fd_stdout 0
-#define fd_stdin 1
+#define fd_stdin 0
+#define fd_stdout 1
 #define fd_stderr 2
 
 #define sc_restart 0
