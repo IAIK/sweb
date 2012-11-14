@@ -45,6 +45,9 @@ void SpinLock::acquire(const char* debug_info)
 
 bool SpinLock::isFree()
 {
+  if ( unlikely ( ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() ) )
+    kpanict ( ( uint8* ) ( "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n" ) );
+
   return (nosleep_mutex_ == 0);
 }
 

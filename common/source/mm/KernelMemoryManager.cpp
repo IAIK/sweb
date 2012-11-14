@@ -346,7 +346,7 @@ void KernelMemoryManager::unlockKMM()
   lock_.release();
 }
 
-bool KernelMemoryManager::isKMMLockFree()
+SpinLock& KernelMemoryManager::getKMMLock()
 {
-  return lock_.isFree();
+  return lock_;
 }

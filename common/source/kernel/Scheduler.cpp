@@ -92,7 +92,7 @@ void Scheduler::addNewThread ( Thread *thread )
 {
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   lockScheduling();
-  waitForFreeKMMLock();
+  waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
   threads_.push_back ( thread );
   unlockScheduling();
 }
@@ -101,7 +101,7 @@ void Scheduler::removeCurrentThread()
 {
   debug ( SCHEDULER,"removeCurrentThread: %x %d:%s, threads_.size() %d\n",currentThread,currentThread->getPID(),currentThread->getName(),threads_.size() );
   lockScheduling();
-  waitForFreeKMMLock();
+  waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
   if ( threads_.size() > 1 )
   {
     threads_.remove(currentThread);
@@ -128,6 +128,7 @@ void Scheduler::sleepAndRelease ( SpinLock &lock )
 void Scheduler::sleepAndRelease ( Mutex &lock )
 {
   lockScheduling();
+  waitForFreeSpinLock(lock.spinlock_);
   currentThread->state_=Sleeping;
   lock.release();
   unlockScheduling();
@@ -288,20 +289,20 @@ void Scheduler::unlockScheduling()
   block_scheduling_ = 0;
 }
 
-void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
+void Scheduler::waitForFreeSpinLock(SpinLock& lock)  //not as severe as stopping Interrupts
 {
   if ( block_scheduling_==0 )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLock: This "
+    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeSpinLock: This "
                             "is meant to be used while Scheduler is locked\n" );
 
   uint32 ticks = 0;
-  while ( ! KernelMemoryManager::instance()->isKMMLockFree())
+  while (!lock.isFree())
   {
     if (unlikely(++ticks > 50))
     {
-      kprintfd("WARNING: Scheduler::waitForFreeKMMLock: KMM is locked since more than %d ticks? Maybe there is something wrong!\n", ticks);
-      Thread* t = KernelMemoryManager::instance()->KMMLockHeldBy();
-      kprintfd("Thread holding KMM: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      kprintfd("WARNING: Scheduler::waitForFreeSpinLock: SpinLock <%s> is locked since more than %d ticks? Maybe there is something wrong!\n", lock.name_,ticks);
+      Thread* t = lock.heldBy();
+      kprintfd("Thread holding SpinLock: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
       t->printBacktrace();
       //assert(false);
     }
