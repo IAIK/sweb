@@ -12,7 +12,7 @@
 #include "Thread.h"
 
 class Terminal;
-
+extern uint32 boot_completed;
 /**
  * @class Console Base Class Console
  */
@@ -130,7 +130,7 @@ class Console : public Thread
      */
     bool areLocksFree()
     {
-      return ( console_lock_.isFree() && locked_for_drawing_==0 );
+      return ( !boot_completed || (console_lock_.isFree() && locked_for_drawing_==0 ));
     }
 
   protected:

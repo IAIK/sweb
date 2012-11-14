@@ -36,9 +36,9 @@ uint32 MAX_FN_DEPTH         = 256;
 
 void kpanict ( uint8 * message )
 {
+  ArchInterrupts::disableInterrupts();
   extern uint32 boot_completed;
   boot_completed = 0;
-  ArchInterrupts::disableInterrupts();
 
   uint32* stack = (uint32*) currentThread->getStackStartPointer();
 
