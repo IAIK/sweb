@@ -26,6 +26,7 @@ void Condition::wait()
   //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
   debug(CONDITION, "Condition::wait: Thread %x  %d:%s wating on Condition %x\n",currentThread,currentThread->getPID(),currentThread->getName(),this);
   Scheduler::instance()->sleepAndRelease(*lock_);
+  assert(lock_);
   lock_->acquire();
 }
 
