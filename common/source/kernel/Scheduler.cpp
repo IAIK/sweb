@@ -128,7 +128,6 @@ void Scheduler::sleepAndRelease ( SpinLock &lock )
 void Scheduler::sleepAndRelease ( Mutex &lock )
 {
   lockScheduling();
-  waitForFreeKMMLock();
   currentThread->state_=Sleeping;
   lock.release();
   unlockScheduling();
