@@ -438,6 +438,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if ( !written )
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR Request for Unknown Memory Location: v_adddr=%x, v_page=%d\n",virtual_address,virtual_page);
+    load_lock_.release();
     //free unmapped page
     Syscall::exit ( 9997 );
   }
@@ -470,6 +471,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if(!buffer)
   {
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
+    load_lock_.release();
     //free unmapped page
     Syscall::exit ( 9996 );
   }
@@ -485,6 +487,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     //free buffer
     if (buffersize > PAGE_SIZE)
       delete[] buffer;
+    load_lock_.release();
     Syscall::exit ( 9998 );
   }
   page = PageManager::instance()->getFreePhysicalPage();
