@@ -152,10 +152,12 @@ void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Th
 
   if (held_by_ != 0 && held_by_->state_ == Sleeping)
   {
-    assert(held_by_->sleeping_on_mutex_ != 0);
-    if (output)
-      kprintfd("              Potential Deadlock: Mutex %s (%x) held_by_ (%x)\n", name_, this, held_by_);
-    held_by_->sleeping_on_mutex_->checkCircularDeadlock(method, debug_info, start, output);
+    if (held_by_->sleeping_on_mutex_ != 0)
+    {
+      if (output)
+        kprintfd("              Potential Deadlock: Mutex %s (%x) held_by_ (%x)\n", name_, this, held_by_);
+      held_by_->sleeping_on_mutex_->checkCircularDeadlock(method, debug_info, start, output);
+    }
   }
 }
 
