@@ -9,12 +9,10 @@
 #include "string.h"
 #include "FiFo.h"
 
-#include "Thread.h"
-
 /**
  * @class CharacterDevice Links the character devices to the Device File System.
  */
-class CharacterDevice : public Thread
+class CharacterDevice
 {
   public:
 
@@ -24,7 +22,7 @@ class CharacterDevice : public Thread
      * @param super_block the superblock (0)
      * @param inode_type the inode type (cahracter device)
      */
-    CharacterDevice ( const char* name) : Thread("CharDevThread"), _in_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD ),
+    CharacterDevice ( const char* name) : _in_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD ),
         _out_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD )
     {
       uint32 name_len = strlen ( name ) + 1;
@@ -82,19 +80,6 @@ class CharacterDevice : public Thread
 
       return ( bptr - buffer );
     };
-
-    /**
-     * processes the in and out buffers of the character device
-     */
-    virtual void Run()
-    {
-      do
-      {
-        processInBuffer();
-        processOutBuffer();
-      }
-      while ( 1 );
-    }
 
     char *getDeviceName() const
     {
