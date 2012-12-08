@@ -1177,7 +1177,9 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
 
   // split path into tokens
   char* path_cpy = strdup(path);
-  char* path_token = strtok(path_cpy, "/");
+  char* path_ptr = path_cpy;
+
+  char* path_token = strtok_threadsafe(&path_ptr, "/");
   debug(VFSSYSCALL, "resolvePath() - duplicated path is \"%s\"\n", path_cpy);
 
   while(true)
@@ -1212,7 +1214,7 @@ Inode* VfsSyscall::resolvePath(FsWorkingDirectory* wd_info, const char* path)
     }
 
     // get next token
-    path_token = strtok(NULL, "/");
+    path_token = strtok_threadsafe(&path_ptr, "/");
 
     // no next path token available
     if(path_token == NULL || strcmp(path_token, "") == 0)
@@ -1502,4 +1504,87 @@ void VfsSyscall::rewriteParentDirectory(FileSystem* fs, Directory* parent) const
   {
     fs->fsync(parent);
   }
+}
+
+char* VfsSyscall::strtok_threadsafe ( char** rest_str, const char* delimiters )
+{
+  if(rest_str == NULL)
+    return NULL;
+
+  // temporary pointer to work with the rest of the string
+  char* str_to_tok = *rest_str;
+
+  if(str_to_tok == NULL)
+  {
+    return NULL;
+  }
+
+  // no delimiters, so just return the rest-string
+  if(delimiters == NULL)
+    return str_to_tok;
+
+  // determine token start and end
+  uint32 tok_start = 0;
+  uint32 tok_end = -1;
+
+  // find first char which is not one of the delimiters
+  uint32 str_pos = 0;
+  for(str_pos = 0; str_to_tok[str_pos] != '\0'; str_pos++)
+  {
+    uint8 char_is_delimiter = 0;
+
+    // search all delimiters
+    uint32 del_pos = 0;
+    for(del_pos = 0; delimiters[del_pos] != '\0'; del_pos++)
+    {
+      if(str_to_tok[str_pos] == delimiters[del_pos])
+      {
+        char_is_delimiter = 1;
+        break;
+      }
+    }
+
+    if(char_is_delimiter == 0)
+    {
+      // this is the start char of the token
+      tok_start = str_pos;
+      break;
+    }
+  }
+
+  // find next delimiter in the string
+  for(str_pos = tok_start; str_to_tok[str_pos] != '\0'; str_pos++)
+  {
+    uint32 del_pos = 0;
+    for(; delimiters[del_pos] != '\0'; del_pos++)
+    {
+      if(str_to_tok[str_pos] == delimiters[del_pos])
+      {
+        // delimiter found!
+        tok_end = str_pos;
+        break;
+      }
+    }
+
+    if(tok_end != -1U)
+      break;
+  }
+
+  // create and return token:
+  char* token = str_to_tok + tok_start;
+
+  // update string
+  if(tok_end == -1U)
+  {
+    // finished, no next token
+    *rest_str = NULL;
+  }
+  else
+  {
+    str_to_tok[tok_end] = '\0';
+    //str_to_tok += tok_end+1;
+    *rest_str += tok_end+1;
+  }
+
+  return token;
 }

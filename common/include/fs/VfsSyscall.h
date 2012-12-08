@@ -321,6 +321,19 @@ class VfsSyscall
      */
     char getPathSeparator(void) const;
 
+    /**
+     * a non-standard but threadsafe version of strtok
+     * works basically like strtok, but works with a pointer to a char* instead of
+     * using static variables
+     *
+     * @param[out] rest_str pointer to the input string to split into token. This
+     * pointer is updated by the function at each call, so it points to the
+     * rest of string after the current returned token
+     * @param delimiters like in strtok()
+     * @return the a pointer to the current token
+     */
+    static char* strtok_threadsafe ( char** rest_str, const char* delimiters );
+
   protected:
 
     /**
@@ -469,6 +482,7 @@ class VfsSyscall
     uint32 getLastSeparatorPos(const char* full_path) const;
 
     enum FailCondition { DO_NOT_FAIL, FAIL_IF_CHILD_EXISTS, FAIL_IF_CHILD_DOES_NOT_EXIST };
+
     /**
      * resolve the parent Directory of the full given path, if the resolution of
      * the path was successful the parent-directory will be locked for WRITE
