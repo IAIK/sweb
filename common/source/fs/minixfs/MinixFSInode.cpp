@@ -151,6 +151,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   }
   uint32 zone_offset = offset%ZONE_SIZE;
   char* wbuffer = new char[num_zones * ZONE_SIZE];
+  char* wbuffer_original = wbuffer;
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",offset-zone_offset,zone_offset);
   readData( offset - zone_offset, num_zones * ZONE_SIZE, wbuffer);
   memcpy(wbuffer + zone_offset, buffer, size);
@@ -164,7 +165,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   {
     i_size_ = offset + size;
   }
-  delete wbuffer;
+  delete wbuffer_original;
   return size;
 }
 
