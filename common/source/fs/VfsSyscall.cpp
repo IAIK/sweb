@@ -791,7 +791,7 @@ File* VfsSyscall::createFile(FsWorkingDirectory* wd_info, const char* pathname, 
     fs->releaseInode( parent );
     delete[] filename;
 
-    if(inode->getType() & Inode::InodeTypeFile)
+    if(inode != NULL && inode->getType() & Inode::InodeTypeFile)
     {
       debug(VFSSYSCALL, "createFile() - OK - file was created in the meantime, so return it!\n");
       return static_cast<File*>(inode);
@@ -801,7 +801,8 @@ File* VfsSyscall::createFile(FsWorkingDirectory* wd_info, const char* pathname, 
     else
     {
       // release inode
-      inode->getFileSystem()->releaseInode( inode );
+      if (inode)
+        inode->getFileSystem()->releaseInode( inode );
       debug(VFSSYSCALL, "createFile() - ERROR - there exists already an object with the given name!\n");
       return NULL;
     }
@@ -1334,7 +1335,8 @@ Directory* VfsSyscall::resolveRealDirectory(FsWorkingDirectory* wd_info, const c
   {
     debug(VFSSYSCALL, "resolveRealDirectory - ERROR failed to resolve child Directory.\n");
 
-    inode->getFileSystem()->releaseInode(inode);
+    if (inode)
+      inode->getFileSystem()->releaseInode(inode);
     return NULL;
   }
 
