@@ -63,7 +63,7 @@ bool FileDescriptor::remove(fd_size_t fd)
 
   for(STL_NAMESPACE_PREFIX list<FileDescriptor*>::iterator it = global_fd.begin(); it != global_fd.end(); it++)
   {
-    if((*it)->getFd() == fd)
+    if(*it && (*it)->getFd() == fd)
     {
       delete (*it);
       global_fd.erase(it);
