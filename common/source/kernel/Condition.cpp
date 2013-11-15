@@ -17,6 +17,8 @@ Condition::Condition(Mutex *lock) : sleepers_(), lock_(lock)
 
 Condition::~Condition()
 {
+  if (sleepers_.size() != 0)
+    kprintfd("WARNING: Condition::~Condition (%x) with sleepers_.size() != 0 and currentThread (%x)\n", this, currentThread);
 }
 
 void Condition::wait()

@@ -24,10 +24,12 @@ Mutex::Mutex(const char* name) :
 
 Mutex::~Mutex()
 {
+  spinlock_.acquire();
   if (sleepers_.size() != 0)
     kprintfd("WARNING: Mutex::~Mutex %s (%x) with sleepers_.size() != 0 and currentThread (%x)\n", name_, this, currentThread);
   if (held_by_ != 0 && held_by_ != currentThread)
     kprintfd("WARNING: Mutex::~Mutex %s (%x) with held_by_ != 0 && held_by_ != currentThread and currentThread (%x) and held_by_ (%x)\n", name_, this, currentThread, held_by_);
+  spinlock_.release();
 }
 
 bool Mutex::acquireNonBlocking(const char* debug_info)
