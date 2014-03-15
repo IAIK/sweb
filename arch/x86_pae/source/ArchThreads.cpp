@@ -9,6 +9,7 @@
 #include "kprintf.h"
 #include "paging-definitions.h"
 #include "offsets.h"
+#include "assert.h"
 #include "Thread.h"
 
 
@@ -18,26 +19,25 @@ void ArchThreads::initialise()
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
 }
 
-extern "C" uint32 kernel_page_directory_start;
+extern "C" uint32 kernel_page_directory_pointer_table;
 
-void ArchThreads::setArchMemory(Thread *thread, ArchMemory& arch_memory)
+void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
-  thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
+  void* pdpt = arch_memory.page_dir_pointer_table_;
+  // last 5 bits must be zero!
+  assert(((uint32)pdpt & 0x1F) == 0);
+  uint32 paddr = ArchMemory::get_PAddr_Of_VAddr_In_KernelMapping((uint32)pdpt);
+  kprintfd("vaddr %x vtpb %x paddr %x\n", pdpt, VIRTUAL_TO_PHYSICAL_BOOT(((pointer)pdpt)), paddr);
+  thread->kernel_arch_thread_info_->cr3 = paddr;
   if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
+    thread->user_arch_thread_info_->cr3 = paddr;
 }
-
-uint32 ArchThreads::getPageDirectory(Thread *thread)
-{
-  return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
-}
-
 
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pdpt = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_pointer_table));
 
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
@@ -54,7 +54,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->esp     = stack;
   info->ebp     = stack;
   info->eip     = start_function;
-  info->cr3     = pageDirectory;
+  info->cr3     = pdpt;
 
  /* fpu (=fninit) */
   info->fpu[0] = 0xFFFF037F;
@@ -70,7 +70,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pdpt = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_pointer_table));
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;
@@ -89,7 +89,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->ebp     = user_stack;
   info->esp0    = kernel_stack;
   info->eip     = start_function;
-  info->cr3     = pageDirectory;
+  info->cr3     = pdpt;
 
  /* fpu (=fninit) */
   info->fpu[0] = 0xFFFF037F;

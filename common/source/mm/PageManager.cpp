@@ -121,9 +121,9 @@ PageManager::PageManager() : lock_("PageManager::lock_")
 //  uint32 last_page=0;
   for (i=1024*512; i<1024*768;++i)
   {
-    uint32 physical_page=0;
+    size_t physical_page=0;
     uint32 pte_page=0;
-    uint32 this_page_size = ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(i,&physical_page,&pte_page);
+    uint32 this_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(i,&physical_page,&pte_page);
     if (this_page_size > 0)
     {
 //      if (physical_page != last_page+1)

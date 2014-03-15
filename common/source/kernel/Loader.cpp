@@ -322,7 +322,7 @@ bool Loader::loadExecutableAndInitProcess()
         thread_->getStackStartPointer()
   );
 
-  ArchThreads::setPageDirectory ( thread_, arch_memory_ );
+  ArchThreads::setAddressSpace(thread_, arch_memory_);
 
   return true;
 }
