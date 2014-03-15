@@ -167,7 +167,7 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
     return false;
 }
 
-uint32 ArchMemory::getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
+uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
   page_directory_entry *page_directory = &kernel_page_directory_start;
   //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;

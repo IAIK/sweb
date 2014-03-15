@@ -85,7 +85,7 @@ public:
  * @return 0: if the virtual page doesn't map to any physical page\notherwise
  * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
  */
-  static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page=0);
+  static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page=0);
 
 /**
  * ppn of the page dir page

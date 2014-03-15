@@ -20,7 +20,7 @@ void ArchThreads::initialise()
 
 extern "C" uint32 kernel_page_directory_start;
 
-void ArchThreads::setArchMemory(Thread *thread, ArchMemory& arch_memory)
+void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
   thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
   if (thread->user_arch_thread_info_)
