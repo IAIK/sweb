@@ -5,6 +5,7 @@
 
 #include "ArchThreads.h"
 #include "ArchCommon.h"
+#include "ArchMemory.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
 #include "offsets.h"
@@ -19,11 +20,11 @@ void ArchThreads::initialise()
 
 extern "C" uint32 kernel_page_directory_start;
 
-void ArchThreads::setPageDirectory(Thread *thread, uint32 page_dir_physical_page)
+void ArchThreads::setPageDirectory(Thread *thread, ArchMemory& arch_memory)
 {
-  thread->kernel_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
+  thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
   if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->cr3 = page_dir_physical_page * PAGE_SIZE;
+    thread->user_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
 uint32 ArchThreads::getPageDirectory(Thread *thread)

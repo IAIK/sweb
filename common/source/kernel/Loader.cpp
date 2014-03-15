@@ -238,7 +238,7 @@ struct sELF32_Phdr
 typedef struct sELF32_Phdr ELF32_Phdr;
 
 
-Loader::Loader ( int32 fd, Thread *thread ) : page_dir_page_(0), fd_ ( fd ),
+Loader::Loader ( int32 fd, Thread *thread ) : fd_ ( fd ),
     thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_")
 {
 }
@@ -251,19 +251,9 @@ Loader::~Loader()
 
 void Loader::initUserspaceAddressSpace()
 {
-  page_dir_page_ = PageManager::instance()->getFreePhysicalPage();
-  debug ( LOADER,"Loader::initUserspaceAddressSpace: Got new Page no. %d\n",page_dir_page_ );
-  ArchMemory::initNewPageDirectory ( page_dir_page_ );
-  debug ( LOADER,"Loader::initUserspaceAddressSpace: Initialised the page dir\n" );
-
   uint32 page_for_stack = PageManager::instance()->getFreePhysicalPage();
 
-  ArchMemory::mapPage ( page_dir_page_,2*1024*256-1, page_for_stack,1 );
-}
-
-void Loader::cleanupUserspaceAddressSpace()
-{
-  ArchMemory::freePageDirectory ( page_dir_page_ );
+  arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
 }
 
 bool Loader::readHeaders()
@@ -332,7 +322,7 @@ bool Loader::loadExecutableAndInitProcess()
         thread_->getStackStartPointer()
   );
 
-  ArchThreads::setPageDirectory ( thread_, page_dir_page_ );
+  ArchThreads::setPageDirectory ( thread_, arch_memory_ );
 
   return true;
 }
@@ -353,7 +343,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
 
   MutexLock loadlock(load_lock_);
   //check if page has not been loaded meanwhile
-  if(ArchMemory::checkAddressValid(page_dir_page_, virtual_address))
+  if(arch_memory_.checkAddressValid(virtual_address))
   {
     debug ( LOADER,"loadOnePageSafeButSlow: Page %d (virtual_address=%d) has already been mapped, probably by another thread between pagefault and reaching loader.\n",virtual_page,virtual_address );
     return;
@@ -449,7 +439,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
     debug(LOADER, "%x is in .bss\n", virtual_address);
     page = PageManager::instance()->getFreePhysicalPage();
     ArchCommon::bzero ( ArchMemory::get3GBAddressOfPPN ( page ),PAGE_SIZE,false );
-    ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
+    arch_memory_.mapPage(virtual_page, page, true);
     return;
   }
 
@@ -512,7 +502,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   if (buffersize > PAGE_SIZE)
     delete[] buffer;
 
-  ArchMemory::mapPage ( page_dir_page_, virtual_page, page, true );
+  arch_memory_.mapPage(virtual_page, page, true);
   debug ( PM,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
 
 }

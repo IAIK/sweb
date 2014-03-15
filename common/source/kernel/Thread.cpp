@@ -67,7 +67,6 @@ Thread::~Thread()
   if ( loader_ )
   {
     debug ( THREAD,"~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
-    loader_->cleanupUserspaceAddressSpace();
     delete loader_;
     loader_ = 0;
   }

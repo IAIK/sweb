@@ -34,7 +34,7 @@ struct ArchThreadInfo
 };
 
 class Thread;
-
+class ArchMemory;
 /**
  * this is where the thread info for task switching is stored
  *
@@ -100,7 +100,7 @@ public:
  * @param *thread Pointer to Thread Object
  * @param page_dir_physical_page The Page where a valid pde can be found
  */
-  static void setPageDirectory(Thread *thread, uint32 page_dir_physical_page);
+  static void setPageDirectory(Thread *thread, ArchMemory& arch_memory);
 
 /**
  * function to get the PageDirectory of a given thread

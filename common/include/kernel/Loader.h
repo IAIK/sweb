@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "Scheduler.h"
 #include "Mutex.h"
+#include "ArchMemory.h"
 #include <ustl/uvector.h>
 
 
@@ -64,7 +65,7 @@ class Loader
      */
     void loadOnePageSafeButSlow ( uint32 virtual_address );
 
-    uint32 page_dir_page_;
+    ArchMemory arch_memory_;
 
   private:
 

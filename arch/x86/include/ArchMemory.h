@@ -9,7 +9,6 @@
 #include "types.h"
 #include "paging-definitions.h"
 
-//Arch-VirtualMemoryUserSpaceObjekt
 /**
  *
  * Collection of architecture dependant functions concerning Memory and Pages
@@ -20,19 +19,17 @@ class ArchMemory
 public:
 
 /** 
- *
+ * Constructor
  * creates a new Page-Directory for a UserProccess by copying the
  * Kernel-Page-Directory
  *
- * @param physical_page_to_use where the new PDE should be
  */
-  static void initNewPageDirectory(uint32 physical_page_to_use);
+  ArchMemory();
 
 /** 
  *
  * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
  * @param virtual_page 
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
@@ -40,24 +37,20 @@ public:
  * @param page_size Optional, defaults to 4k pages, but you ned to set it to
  * 1024*4096 if you want to map a 4m page
  */
-  static void mapPage(uint32 physical_page_directory_page, uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
+  void mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
  *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
  * @param virtual_page which will be invalidated
  */
-  static void unmapPage(uint32 physical_page_directory_page, uint32 virtual_page);
+  void unmapPage(uint32 virtual_page);
 
 /**
- * recursively remove a PageDirectoryEntry and all its Pages and PageTables
+ * Destructor. Recursively deletes the page directory and all page tables
  *
- * @param physical_page_directory_page of PDE to remove
  */
-  static void freePageDirectory(uint32 physical_page_directory_page);
-
-//  static pointer physicalPageToKernelPointer(uint32 physical_page);
+  ~ArchMemory();
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
@@ -75,12 +68,11 @@ public:
 
 /**
  * Checks if a given Virtual Address is valid and is mapped to real memory
- * @param physical_page_directory_page Real Page where the PDE can be found
  * @param vaddress_to_check Virtual Address we want to check
  * @return true: if mapping exists\nfalse: if the given virtual address is unmapped
  * and accessing it would result in a pageFault
  */
-  static bool checkAddressValid(uint32 physical_page_directory_page, uint32 vaddress_to_check);
+  bool checkAddressValid(uint32 vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
@@ -95,6 +87,11 @@ public:
  */
   static uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page=0);
 
+/**
+ * ppn of the page dir page
+ */
+  uint32 page_dir_page_;
+
 private:
 
 /** 
@@ -102,21 +99,19 @@ private:
  * (In other words, adds the reference to a new page table to a given
  * page directory.)
  *
- * @param physical_page_directory_page physical page containing the target PD.
  * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
  * @param physical_page_table_page physical page of the new page table.
  */
-  static void insertPT(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page);
+  void insertPT(uint32 pde_vpn, uint32 physical_page_table_page);
 
 /**
  * Removes a page directory entry from a given page directory if it is present
  * in the first place. Futhermore, the target page table is assured to be
  * empty.
  *
- * @param physical_page_directory_page physical page containing the target PD.
  * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
  */
-  static void checkAndRemovePT(uint32 physical_page_directory_page, uint32 pde_vpn);
+  void checkAndRemovePT(uint32 pde_vpn);
 
 };
 

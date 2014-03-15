@@ -48,7 +48,7 @@ const uint32 IDE_DRIVER         = 0x00200002;
 //group arch
 const uint32 ARCH               = 0x00400000;
 const uint32 A_COMMON           = 0x00400001;
-const uint32 A_MEMORY           = 0x00400002;
+const uint32 A_MEMORY           = 0x00400002 | OUTPUT_ENABLED;
 const uint32 A_SERIALPORT       = 0x00400004;
 const uint32 A_KB_MANAGER       = 0x00400008;
 const uint32 A_INTERRUPTS       = 0x00400010;
