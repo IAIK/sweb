@@ -1,5 +1,5 @@
 # Architecture to use: x86, xen
-SET (ARCH x86)
+SET (ARCH xen)
 
 # Added before the BIN_DIR_NAME (e.g. "../")
 SET (BIN_DIR_PREFIX "../")
