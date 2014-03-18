@@ -40,95 +40,8 @@
 #include "kprintf.h"
 
   /// Static constants
-  uint8 const  KeyboardManager::E0_BASE = 96;
 
-  uint8 const  KeyboardManager::E0_KPENTER     =
-  KeyboardManager::E0_BASE + 1;
-  uint8 const  KeyboardManager::E0_RCTRL       =
-  KeyboardManager::E0_BASE + 2;
-  uint8 const  KeyboardManager::E0_KPSLASH     =
-  KeyboardManager::E0_BASE + 3;
-  uint8 const  KeyboardManager::E0_PRSCR       =
-  KeyboardManager::E0_BASE + 4;
-  uint8 const  KeyboardManager::E0_RALT        =
-  KeyboardManager::E0_BASE + 5;
-  uint8 const  KeyboardManager::E0_BREAK       =
-  KeyboardManager::E0_BASE + 6;
-  uint8 const  KeyboardManager::E0_HOME        =
-  KeyboardManager::E0_BASE + 7;
-  uint8 const  KeyboardManager::E0_UP          =
-  KeyboardManager::E0_BASE + 8;
-  uint8 const  KeyboardManager::E0_PGUP        =
-  KeyboardManager::E0_BASE + 9;
-  uint8 const  KeyboardManager::E0_LEFT        =
-  KeyboardManager::E0_BASE + 10;
-  uint8 const  KeyboardManager::E0_RIGHT       =
-  KeyboardManager::E0_BASE + 11;
-  uint8 const  KeyboardManager::E0_END         =
-  KeyboardManager::E0_BASE + 12;
-  uint8 const  KeyboardManager::E0_DOWN        =
-  KeyboardManager::E0_BASE + 13;
-  uint8 const  KeyboardManager::E0_PGDN        =
-  KeyboardManager::E0_BASE + 14;
-  uint8 const  KeyboardManager::E0_INS         =
-  KeyboardManager::E0_BASE + 15;
-  uint8 const  KeyboardManager::E0_MACRO       =
-  KeyboardManager::E0_BASE + 16;
-  uint8 const  KeyboardManager::E0_F13 =
-  KeyboardManager::E0_BASE + 17;
-  uint8 const  KeyboardManager::E0_F14 =
-  KeyboardManager::E0_BASE + 18;
-  uint8 const  KeyboardManager::E0_HELP =
-  KeyboardManager::E0_BASE + 19;
-  uint8 const  KeyboardManager::E0_DO =
-  KeyboardManager::E0_BASE + 20;
-  uint8 const  KeyboardManager::E0_F17 =
-  KeyboardManager::E0_BASE + 21;
-  uint8 const  KeyboardManager::E0_KPMINPLUS =
-  KeyboardManager::E0_BASE + 22;
-  uint8 const  KeyboardManager::E1_PAUSE =
-  KeyboardManager::E0_BASE + 23;
-
-  uint32 const KeyboardManager::KEY_MAPPING_SIZE = 0x80;
-
-  uint32 const KeyboardManager::KBD_META_LALT  = 0x0200;
-  uint32 const KeyboardManager::KBD_META_RALT  = 0x0400;
-  uint32 const KeyboardManager::KBD_META_CTRL  = 0x0800;
-  uint32 const KeyboardManager::KBD_META_SHIFT = 0x1000;
-  uint32 const KeyboardManager::KBD_META_CAPS  = 0x2000;
-  uint32 const KeyboardManager::KBD_META_NUM   = 0x4000;
-  uint32 const KeyboardManager::KBD_META_SCRL  = 0x8000;
-
-  uint8 const KeyboardManager::KEY_F1    = 0x80;
-  uint8 const KeyboardManager::KEY_F2    = (KeyboardManager::KEY_F1 + 1);
-  uint8 const KeyboardManager::KEY_F3    = (KeyboardManager::KEY_F2 + 1);
-  uint8 const KeyboardManager::KEY_F4    = (KeyboardManager::KEY_F3 + 1);
-  uint8 const KeyboardManager::KEY_F5    = (KeyboardManager::KEY_F4 + 1);
-  uint8 const KeyboardManager::KEY_F6    = (KeyboardManager::KEY_F5 + 1);
-  uint8 const KeyboardManager::KEY_F7    = (KeyboardManager::KEY_F6 + 1);
-  uint8 const KeyboardManager::KEY_F8    = (KeyboardManager::KEY_F7 + 1);
-  uint8 const KeyboardManager::KEY_F9    = (KeyboardManager::KEY_F8 + 1);
-  uint8 const KeyboardManager::KEY_F10   = (KeyboardManager::KEY_F9 + 1);
-  uint8 const KeyboardManager::KEY_F11   = (KeyboardManager::KEY_F10 + 1);
-  uint8 const KeyboardManager::KEY_F12   = (KeyboardManager::KEY_F11 + 1);
-
-  uint8 const KeyboardManager::KEY_INS   = 0x90;
-  uint8 const KeyboardManager::KEY_DEL   = (KeyboardManager::KEY_INS + 1);
-  uint8 const KeyboardManager::KEY_HOME  = (KeyboardManager::KEY_DEL + 1);
-  uint8 const KeyboardManager::KEY_END   = (KeyboardManager::KEY_HOME + 1);
-  uint8 const KeyboardManager::KEY_PGUP  = (KeyboardManager::KEY_END + 1);
-  uint8 const KeyboardManager::KEY_PGDN  = (KeyboardManager::KEY_PGUP + 1);
-  uint8 const KeyboardManager::KEY_LFT   = (KeyboardManager::KEY_PGDN + 1);
-  uint8 const KeyboardManager::KEY_UP    = (KeyboardManager::KEY_LFT + 1);
-  uint8 const KeyboardManager::KEY_DN    = (KeyboardManager::KEY_UP + 1);
-  uint8 const KeyboardManager::KEY_RT    = (KeyboardManager::KEY_DN + 1);
-  uint8 const KeyboardManager::KEY_PRNT  = (KeyboardManager::KEY_RT + 1);
-  uint8 const KeyboardManager::KEY_PAUSE = (KeyboardManager::KEY_PRNT + 1);
-  uint8 const KeyboardManager::KEY_LWIN  = (KeyboardManager::KEY_PAUSE + 1);
-  uint8 const KeyboardManager::KEY_RWIN   = (KeyboardManager::KEY_LWIN + 1);
-  uint8 const KeyboardManager::KEY_MENU  = (KeyboardManager::KEY_RWIN + 1);
-
-  uint32 const KeyboardManager::STANDARD_KEYMAP[KeyboardManager::KEY_MAPPING_SIZE] =
+  uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
         0, 0x1B, '1', '2', '3', '4', '5' , '6',   // 08
         '7', '8', '9', '0', '-', '^', '\b', '\t', // 10
@@ -148,7 +61,7 @@
         0, 0, 0, 0, 0, 0, 0, 0, // 80
   };
 
-  uint32 const KeyboardManager::E0_KEYS[KeyboardManager::KEY_MAPPING_SIZE] =
+  uint32 const KeyboardManager::E0_KEYS[KEY_MAPPING_SIZE] =
   {
         0, 0, 0, 0, 0, 0, 0, 0, // 00
         0, 0, 0, 0, 0, 0, 0, 0, // 08
@@ -170,15 +83,12 @@
 
 KeyboardManager * KeyboardManager::instance_ = 0;
 
-KeyboardManager::KeyboardManager() : extended_scancode( 0 ), keyboard_status_ ( 0 )
+KeyboardManager::KeyboardManager() : extended_scancode( 0 ), keyboard_status_ ( 0 ), keyboard_buffer_(256)
 {
-  keyboard_buffer_ = new RingBuffer<uint8>( 256 );
 }
 
 KeyboardManager::~KeyboardManager()
 {
-  delete keyboard_buffer_;
-  keyboard_buffer_ = 0;
 }
 
 void KeyboardManager::kb_wait()
@@ -253,7 +163,7 @@ void KeyboardManager::serviceIRQ( void )
     return;
   }
 
-  keyboard_buffer_->put( scancode ); // put it inside the buffer
+  keyboard_buffer_.put( scancode ); // put it inside the buffer
 
   send_cmd(0xAE); // enable the keyboard
 }
@@ -389,7 +299,7 @@ bool KeyboardManager::getKeyFromKbd(uint32 &key)
 {
   //peeking should not block
   uint8 sc;
-  if (keyboard_buffer_->get(sc))
+  if (keyboard_buffer_.get(sc))
   {
     key = convertScancode(sc);
     return true;

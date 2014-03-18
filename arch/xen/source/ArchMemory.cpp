@@ -36,13 +36,13 @@
 #include "kprintf.h"
 #include "hypervisor.h"
 #include "xen_memory.h"
+#include "ArchCommon.h"
+#include "PageManager.h"
 
-//extern "C" uint32 kernel_page_directory_start;
-
-void ArchMemory::initNewPageDirectory(uint32 physical_page_to_use)
+ArchMemory::ArchMemory()
 {
-  page_directory_entry *new_page_directory = (page_directory_entry*)
-                                             (physical_page_to_use * PAGE_SIZE);
+  page_dir_page_ = PageManager::instance()->getFreePhysicalPage();
+  page_directory_entry *new_page_directory = (page_directory_entry*) (page_dir_page_ * PAGE_SIZE);
 
   
   ArchCommon::memcpy((pointer) new_page_directory,
@@ -54,10 +54,9 @@ void ArchMemory::initNewPageDirectory(uint32 physical_page_to_use)
   }
 }
 
-void ArchMemory::checkAndRemovePTE(uint32 physical_page_directory_page, uint32 pde_vpn)
+void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 {
-  page_directory_entry *page_directory = (page_directory_entry *)
-                                 (physical_page_directory_page * PAGE_SIZE);
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(page_dir_page_);
    page_table_entry *pte_base = (page_table_entry *) 
         machine_to_phys(page_directory[pde_vpn].pde4k.page_table_base_address);
    for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
@@ -68,10 +67,9 @@ void ArchMemory::checkAndRemovePTE(uint32 physical_page_directory_page, uint32 p
    PageManager::instance()->freePage(page_directory[pde_vpn].pde4k.page_table_base_address);
 }
 
-void ArchMemory::unmapPage(uint32 physical_page_directory_page, uint32 linear_page)
+void ArchMemory::unmapPage(uint32 linear_page)
 {
-   page_directory_entry *page_directory = (page_directory_entry *) (PAGE_SIZE *
-                                          physical_page_directory_page);
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(page_dir_page_);
    uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;
    uint32 pte_vpn = linear_page % PAGE_TABLE_ENTRIES;
   
@@ -82,13 +80,12 @@ void ArchMemory::unmapPage(uint32 physical_page_directory_page, uint32 linear_pa
     pte_base[pte_vpn].present = 0;
     PageManager::instance()->freePage(mfn_to_pfn(pte_base[pte_vpn].page_base_address));
   }
-  checkAndRemovePTE(physical_page_directory_page, pde_vpn);
+  checkAndRemovePT(pde_vpn);
 }
 
-void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, uint32 physical_page_table_page)
+void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 {
-  page_directory_entry *page_directory = (page_directory_entry *) (PAGE_SIZE *
-                                         physical_page_directory_page);
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(page_dir_page_);
   ArchCommon::bzero(physical_page_table_page * PAGE_SIZE, PAGE_SIZE);
   page_directory[pde_vpn].pde4k.present = 1;
 	page_directory[pde_vpn].pde4k.writeable = 1;
@@ -96,16 +93,15 @@ void ArchMemory::insertPTE(uint32 physical_page_directory_page, uint32 pde_vpn, 
 	page_directory[pde_vpn].pde4k.user_access = 1;
 }
 
-void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 linear_page, uint32 physical_page, uint32 user_access, uint32 page_size)
+void ArchMemory::mapPage(uint32 linear_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-   //kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
-   page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(physical_page_directory_page);
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = linear_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde4k.present == 0)
   {
   //kprintfd("ArchMemory::mapPage: Need to add a pte for 0 %d %d %d\n",pde_vpn, linear_page, physical_page);
-    insertPTE(physical_page_directory_page,pde_vpn,PageManager::instance()->getFreePhysicalPage());
+    insertPT(pde_vpn,PageManager::instance()->getFreePhysicalPage());
   }
   page_table_entry *pte_base = (page_table_entry *) get3GBAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
   //kprintfd("ArchMemory::mapPage: pte_base = %x\n",pte_base);
@@ -117,8 +113,9 @@ void ArchMemory::mapPage(uint32 physical_page_directory_page, uint32 linear_page
   pte_base[pte_vpn].page_base_address = physical_page;
 }
 
-void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
+ArchMemory::~ArchMemory()
 {
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(page_dir_page_);
 //   page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(physical_page_directory_page);
 //   for (uint32 pde_vpn=0; pde_vpn < PAGE_TABLE_ENTRIES; ++pde_vpn)
 //   {
@@ -140,8 +137,9 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
 //   PageManager::instance()->freePage(physical_page_directory_page);
 }
 
-bool ArchMemory::checkAddressValid(uint32 physical_page_directory_page, uint32 laddress_to_check)
+bool ArchMemory::checkAddressValid(uint32 laddress_to_check)
 {
+  page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(page_dir_page_);
 //   page_directory_entry *page_directory = (page_directory_entry *) get3GBAddressOfPPN(physical_page_directory_page);
 //   uint32 linear_page = vaddress_to_check / PAGE_SIZE;
 //   uint32 pde_vpn = linear_page / PAGE_TABLE_ENTRIES;

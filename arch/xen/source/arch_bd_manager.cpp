@@ -29,7 +29,7 @@ void BDManager::serviceIRQ( uint32 irq_num ){}
 
 BDVirtualDevice* BDManager::getDeviceByNumber( uint32 dev_num  ){}
 
-BDVirtualDevice* BDManager::getDeviceByName( char * dev_name ){return 0;}
+BDVirtualDevice* BDManager::getDeviceByName( const char * dev_name ){return 0;}
 
 uint32 BDManager::getNumberOfDevices ( void ){}
 

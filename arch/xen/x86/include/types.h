@@ -62,6 +62,14 @@ typedef unsigned int pointer;
 
 typedef unsigned int size_t;
 
+#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
+typedef unsigned int mode_t;
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+#endif
+
+typedef uint32 l_off_t;
+
 #define Min(x,y) ((((x))<((y)))?((x)):((y)))
 #define Max(x,y) ((((x))>((y)))?((x)):((y)))
 
@@ -91,8 +99,8 @@ typedef unsigned int size_t;
 
 // types for xen public headers
 
-typedef  u8 uint8_t;
-typedef  s8 int8_t;
+typedef uint8 uint8_t;
+typedef int8 int8_t;
 typedef u16 uint16_t;
 typedef s16 int16_t;
 typedef u32 uint32_t;

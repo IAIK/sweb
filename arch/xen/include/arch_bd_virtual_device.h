@@ -23,11 +23,14 @@ class BDVirtualDevice
 public:
     BDVirtualDevice( BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable);
     void addRequest(BDRequest * command);
-    
+    uint8 getPartitionType(void) const        { return 0; };
+    void setBlockSize( uint32 block_size )    { };
     uint32    getBlockSize()                  { return 0; };
     uint32    getDeviceNumber()               { return 0; };
     char*     getName()                       { return name_; };
     uint32    getNumBlocks()                  { return 0; };
+    int32 readData(uint32 offset, uint32 size, char *buffer) { return 0; }
+    int32 writeData(uint32 offset, uint32 size, char *buffer) { return 0; }
     char *name_;
 };
 

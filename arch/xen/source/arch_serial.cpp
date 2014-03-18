@@ -118,7 +118,7 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
   return SR_OK;
 };
 
-int32 SerialPort::writeData(int32 offset, int32 num_bytes, const char*buffer)
+int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
 {
   if( offset != 0 )
     return -1;
@@ -176,7 +176,7 @@ void SerialPort::irq_handler()
     break;
   case 2: // Data is available
     int_id = read_UART( 0 );
-    _in_buffer->put( int_id );
+    _in_buffer.put( int_id );
     break;
   case 3: // Line status changed
     break;

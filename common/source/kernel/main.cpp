@@ -37,6 +37,7 @@
 #include "fs/VfsSyscall.h"
 #include "fs/FsWorkingDirectory.h"
 
+#include "XenConsole.h"
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
@@ -58,52 +59,6 @@ extern unsigned char stab_end_address_nr;
 
 extern unsigned char stabstr_start_address_nr;
 extern unsigned char stabstr_end_address_nr;
-
-#include "TestingThreads.h"
-
-/**
- * @class TestThread
- * Thread starting all testing threads.
- */
-class TestThread : public Thread
-{
-  public:
-    /**
-     * Constructor
-     */
-    TestThread() : Thread("TestThread")
-    {
-    }
-
-    /**
-     * Runs all testing threads
-     */
-    virtual void Run()
-    {
-      kprintfd ( "TestThread: running\n" );
-      Scheduler::instance()->yield();
-      kprintfd ( "TestThread: adding BDThread\n" );
-      Scheduler::instance()->addNewThread (
-          new BDThread()
-      );
-      kprintfd ( "TestThread: done adding BDThread\n" );
-      Scheduler::instance()->yield();
-      kprintfd ( "TestThread: adding SerialTestThread\n" );
-      Scheduler::instance()->addNewThread (
-          new SerialThread ( "SerialTestThread" )
-      );
-      kprintfd ( "TestThread: done adding SerialTestThread\n" );
-      Scheduler::instance()->yield();
-      kprintfd ( "TestThread: adding DeviceFSMountingThread\n" );
-      Scheduler::instance()->addNewThread (
-          new DeviceFSMountingThread()
-      );
-      kprintfd ( "TestThread: done adding DeviceFSMountingThread\n" );
-      Scheduler::instance()->yield();
-      kprintfd ( "\nDone Adding Threads\n" );
-      kprintfd ( "\n\n" );
-    }
-};
 
 //HowTo Extend Kernel Memory ?:
 // see init_boottime_pagetables.cpp
@@ -130,7 +85,6 @@ void startup()
   writeLine2Bochs ( ( uint8 * ) "Creating Page Manager...\n" );
   PageManager::createPageManager();
   writeLine2Bochs ( ( uint8 * ) "PageManager created \n" );
-
 
   //SerialManager::getInstance()->do_detection( 1 );
 

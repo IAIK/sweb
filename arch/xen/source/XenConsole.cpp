@@ -31,7 +31,7 @@ XenConsole::XenConsole(uint32 num_terminals):Console(num_terminals)
   for (i=0;i<num_terminals;++i)
   {
     Terminal *term = new Terminal("",this,consoleGetNumColumns(),consoleGetNumRows());
-    terminals_.pushBack(term);
+    terminals_.push_back(term);
   }
   active_terminal_ = 0;
   name_ = "TxTConsoleThrd";
@@ -128,7 +128,7 @@ void XenConsole::handleKey( uint32 key )
 {
   KeyboardManager * km = KeyboardManager::getInstance();
   
-  uint32 terminal_selected = (key - KeyboardManager::KEY_F1);
+  uint32 terminal_selected = (key - KEY_F1);
   
   if( terminal_selected < getNumTerminals() && km->isShift() )
   {
