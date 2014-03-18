@@ -62,8 +62,45 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	endif(library_files)
 ENDMACRO(ADD_PROJECT_LIBRARY)
 
+# Searches for ASM files, Searches for c and cpp files
+# the additional arguments adds sub-directory files to the library
+# compiles ASM files and adds the library
+MACRO(ADD_PROJECT_LIBRARY_SUB_DIRECTORIES LIBRARY_NAME ...)
+	find_asm_files(asm_source)
+
+	asm2obj(asm_objs ${asm_source})
+
+	file(GLOB source_files ${SOURCE_WILDCARDS})
+
+	set(library_files)
+
+	if(source_files)
+		set(library_files ${source_files})
+	endif(source_files)
+	
+	if(asm_objs)
+		set(library_files ${library_files} ${asm_objs})
+	endif(asm_objs)
+	
+	#message(STATUS ${ARGV0})
+	foreach(add_src_file ${ARGV})
+		if(${add_src_file} STREQUAL ${ARGV0})
+			# do nothing - library name is not a source-file and therefore not added
+		else()
+			set(library_files ${library_files} ${add_src_file})
+    		#message(STATUS ${add_src_file})
+		endif()
+	endforeach(add_src_file)
+	
+	if(library_files)
+		#message(STATUS ${library_files})
+		add_library(${LIBRARY_NAME} ${library_files})
+		set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
+	endif(library_files)
+ENDMACRO(ADD_PROJECT_LIBRARY_SUB_DIRECTORIES)
 
 set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
+set (SUB_DIR_SOURCE_WILDCARDS */*.cpp */*.c */*.tcpp */*.S)
 set (ASM_WILDCARDS *.s)
 set (INFO_FILE info.file)
 
@@ -85,19 +122,9 @@ endif(NOT BIN_DIR_NAME)
 
 
 #Set Compiler and compiterflags
-#set(CMAKE_CXX_COMPILER g++)
-#set(CMAKE_C_COMPILER gcc)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -gstabs2 -O0  -Wno-deprecated -Wall -W -nostdinc -fno-builtin -nostdlib -fno-rtti -nostdinc++ -fno-exceptions -fno-stack-protector -Wall -Wextra -nostdlib -nostartfiles -nodefaultlibs")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0  -gstabs2 -Wall -W -nostdinc -fno-builtin -nostdlib -fno-exceptions -fno-stack-protector -Wall -Wextra  -nostdlib -nostartfiles -nodefaultlibs")
 
-if(GGDB)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -ggdb -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -ggdb -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
-endif(GGDB)
-if(NOT GGDB)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
-endif(NOT GGDB)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
 
 
 set(LIBRARY_FILENAMES)
@@ -108,6 +135,7 @@ set(ENV{LIBRARY_NAMES})
 #Initialize CMake output directories
 set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
 set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
+set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
@@ -155,8 +183,7 @@ endforeach(file)
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 add_custom_command (OUTPUT kernel_image
-	DEPENDS ${FINAL_LIB_NAMES} exe2minixfs
-	#DEPENDS ${FINAL_LIB_NAMES} exe2minixfs exe2pseudofs
+	DEPENDS ${FINAL_LIB_NAMES} sweb-img-util
 	COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 	)
@@ -211,9 +238,8 @@ add_custom_command (OUTPUT helper_files
 
 #Custom Command: invoke exe2minixfs and copy the temp dir to our hd image
 add_custom_command (OUTPUT copy_to_image
-	DEPENDS helper_files exe2minixfs
-	COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./kernel.x /boot/kernel.x ./temp/boot/grub/menu.lst /boot/grub/menu.lst
-	#./temp/boot/ramfs /boot/ramfs
+	DEPENDS helper_files sweb-img-util
+	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 0 ./kernel.x /boot/kernel.x ./temp/boot/grub/menu.lst /boot/grub/menu.lst
 	COMMAND rm -R temp
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -223,7 +249,7 @@ add_custom_command (OUTPUT copy_to_image
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
 	DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
-	COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
+	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 1 ${MINIXFS_ARGUMENT}
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying userspace programs to image..."
 	)
@@ -276,8 +302,8 @@ add_custom_target(bochsgdb
 #Custom target: make kvm
 #Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND kvm -hda SWEB-flat.vmdk -debugcon /dev/stdout
-        COMMENT "Going to kvm -hda SWEB-flat.vmdk -debugcon /dev/stdout"
+        COMMAND qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
+        COMMENT "Going to qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMAND reset -I
         )
@@ -285,17 +311,32 @@ add_custom_target(kvm
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to qemu -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout"
+	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
+	COMMENT "Going to qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
+	)
+
+#Custom target: make emu
+#Run qemu in emu mode
+add_custom_target(emu
+	COMMAND	cat '${PROJECT_SOURCE_DIR}/utils/emu.txt'
+	WORKING_DIRECTORY ${UTILS_DIR}
+	)
+
+#Custom target: make format
+#invoke sweb-img-util and re-formats the user-progs partition
+add_custom_target(format
+	COMMAND ./sweb-img-util -f SWEB-flat.vmdk 1 minix 0 1 30
+	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+	COMMENT "(re)format image's user-progs partition..."
 	)
 
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to gdb qemu -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout on localhost:1234"
+	COMMAND	qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
+	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout on localhost:1234"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -303,8 +344,8 @@ add_custom_target(qemugdb
 #Custom target: make qemutacos
 #Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
-  COMMENT "Going to qemu -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
+  COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
+  COMMENT "Going to qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   #COMMAND reset -I
   )
@@ -334,21 +375,20 @@ add_custom_target(rungdb
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
 
-#Custom target: make debug
-#debug target for gdb
-add_custom_target(debug
-	COMMAND cmake -D GGDB=1 .
-        COMMAND touch CMakeFiles/is_debug_build
-	COMMAND make
-  )
-
 #Custom target: make mrproper
-#Makes really clean
+#Makes really clean (except for the object files)
 add_custom_target(mrproper
-	COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
-	COMMAND ./relocate_project.sh
+	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\"
 	COMMAND cmake .
 	)
+
+#Custom target: make mrsproper
+#Makes really clean (including the object files)
+add_custom_target(mrsproper
+        COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\"
+        COMMAND ./relocate_project.sh
+        COMMAND cmake .
+        )
 
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 add_custom_target(remove_cmake

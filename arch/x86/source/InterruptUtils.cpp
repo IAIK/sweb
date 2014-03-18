@@ -20,51 +20,93 @@
 #include "serial.h"
 #include "arch_keyboard_manager.h"
 #include "arch_bd_manager.h"
+#include "panic.h"
 
 #include "Thread.h"
 #include "ArchInterrupts.h"
+#include "backtrace.h"
 
 //remove this later
 #include "Thread.h"
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+//---------------------------------------------------------------------------*/
+#define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
+#define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
 
-  extern "C" void arch_dummyHandler();
+#define GATE_SIZE_16_BIT     0 // use 16- bit push
+#define GATE_SIZE_32_BIT     1 // use 32- bit push
 
-// thanks mona
-typedef struct {
-  uint16 offsetL;  // 0-15bit of offset address
-  uint16 selector; // selector address
-  uint8 unused;    // unused
-  uint8 type;      // type
-  uint16 offsetH;  // 16-32bit of offset address
-}__attribute__((__packed__)) GateDesc;
+#define TYPE_TRAP_GATE       7 // trap gate, i.e. IF flag is *not* cleared
+#define TYPE_INTERRUPT_GATE  6 // interrupt gate, i.e. IF flag *is* cleared
 
+#define DPL_KERNEL_SPACE     0 // kernelspace's protection level
+#define DPL_USER_SPACE       3 // userspaces's protection level
+
+#define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
+
+
+// --- Pagefault error flags.
+//     PF because/in/caused by/...
+
+#define FLAG_PF_PRESENT     0x01 // =0: pt/page not present
+                                 // =1: of protection violation
+
+#define FLAG_PF_RDWR        0x02 // =0: read access
+                                 // =1: write access
+
+#define FLAG_PF_USER        0x04 // =0: supervisormode (CPL < 3)
+                                 // =1: usermode (CPL == 3)
+
+#define FLAG_PF_RSVD        0x08 // =0: not a reserved bit
+                                 // =1: a reserved bit
+
+#define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
+                                 // =1: an instruction fetch (need PAE for that)
+//---------------------------------------------------------------------------*/
+struct GateDesc
+{
+  uint16 offset_low;       // low word of handler entry point's address
+  uint16 segment_selector; // (code) segment the handler resides in
+  uint8 reserved  : 5;     // reserved. set to zero
+  uint8 zeros     : 3;     // set to zero
+  uint8 type      : 3;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
+  uint8 gate_size : 1;     // set to GATE_SIZE_16_BIT or GATE_SIZE_32_BIT
+  uint8 unused    : 1;     // unsued - set to zero
+  uint8 dpl       : 2;     // descriptor protection level
+  uint8 present   : 1;     // present- flag - set to 1
+  uint16 offset_high;      // high word of handler entry point's address
+}__attribute__((__packed__));
+//---------------------------------------------------------------------------*/
+
+extern "C" void arch_dummyHandler();
 
 void InterruptUtils::initialise()
 {
-  uint32 i;
-
   // allocate some memory for our handlers
   GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
 
-  for (i=0;i<NUM_INTERRUPT_HANDLERS;++i)
+  for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
   {
-    interrupt_gates[i].offsetL  = ((uint32)(handlers[i].handler)) & 0x0000FFFF;
-    interrupt_gates[i].offsetH  = (((uint32)(handlers[i].handler)) & 0xFFFF0000) >> 16;
-    //warning FIXME, THIS IS REALLY BAD VOODOO !
-    interrupt_gates[i].selector = 8*3;
-    // System call use 0x80
-    interrupt_gates[i].type     = handlers[i].number == 0x80 ? 0xEE : 0x8E;
-    interrupt_gates[i].unused   = 0x00;
+    interrupt_gates[i].offset_low = LO_WORD(handlers[i].offset);
+    interrupt_gates[i].offset_high = HI_WORD(handlers[i].offset);
+    interrupt_gates[i].gate_size = GATE_SIZE_32_BIT;
+    interrupt_gates[i].present = 1;
+    interrupt_gates[i].reserved = 0;
+    interrupt_gates[i].segment_selector = KERNEL_CS;
+    interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
+    interrupt_gates[i].unused = 0;
+    interrupt_gates[i].zeros = 0;
+    interrupt_gates[i].dpl = (handlers[i].number == SYSCALL_INTERRUPT ?
+        DPL_USER_SPACE : DPL_KERNEL_SPACE);
   }
 
-  IDTR *idtr = new IDTR();
-  idtr->base = (uint32)interrupt_gates;
-  idtr->limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS -1;
+  IDTR idtr;
 
-  lidt(idtr);
+  idtr.base =  (uint32)interrupt_gates;
+  idtr.limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS - 1;
+  lidt(&idtr);
 }
 
 void InterruptUtils::lidt(IDTR *idtr)
@@ -83,16 +125,37 @@ char const *intel_manual =
 #define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
   extern "C" void errorHandler_##x () \
   {\
+    currentThread->switch_to_userspace_ = false;\
+    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
+    ArchInterrupts::enableInterrupts();\
     kprintfd_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     kprintf_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     currentThread->kill();\
   }
 
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
+  extern "C" void arch_switchThreadToUserPageDirChange();\
   extern "C" void dummyHandler_##x () \
   {\
+    uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
+    currentThread->switch_to_userspace_ = false;\
+    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
+    ArchInterrupts::enableInterrupts();\
     kprintfd_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
     kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    ArchInterrupts::disableInterrupts();\
+    currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
+    switch (currentThread->switch_to_userspace_)\
+    {\
+      case 0:\
+        break;\
+      case 1:\
+        currentThreadInfo = currentThread->user_arch_thread_info_;\
+        arch_switchThreadToUserPageDirChange();\
+        break;\
+      default:\
+        kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
+    }\
   }
 
 ERROR_HANDLER(0,#DE: Divide by Zero)
@@ -396,15 +459,6 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  // outportb( 0xED, 0x60 );  // "set LEDs" command
-  // outportb( leds, 0x60 );
-  // if (ctr == 9)
-  // leds = (leds + 1) % (1 << 3);
-  // ctr = (ctr + 1) % 10;
-
-  // kprintfd_nosleep("irq0: Tick\n");
-  // writeLine2Bochs((uint8 const *)"Enter irq Handler 0\n");
-
   uint32 ret = Scheduler::instance()->schedule();
   switch (ret)
   {
@@ -446,19 +500,26 @@ extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
   //--------Start "just for Debugging"-----------
-  uint32 const __attribute__((unused)) flag_p = 0x1 << 0; // =0: pf caused because pt was not present; =1: protection violation
-  uint32 const __attribute__((unused)) flag_rw = 0x1 << 1; // pf caused by a 1=write/0=read
-  uint32 const __attribute__((unused)) flag_us = 0x1 << 2; // pf caused in 1=usermode/0=supervisormode
-  uint32 const __attribute__((unused)) flag_rsvd = 0x1 << 3; // pf caused by reserved bits
-
-  // uint32 cr2=0xffff;
-  // __asm__("movl %%cr2, %0"
-  // :"=a"(cr2)
-  // :);
 
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
-      address, error & flag_p, (error & flag_rw) >> 1, (error & flag_us) >> 2, (error & flag_rsvd) >> 3, currentThread, currentThread->getPID(),
+      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getPID(),
       currentThread->getName(), currentThread->switch_to_userspace_);
+
+  debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
+
+  if (!(error & FLAG_PF_USER))
+  {
+    // The PF happened in kernel mode? Cool, let's look up the function that caused it.
+    // A word of warning: Due to the way the lookup is performed, we may be
+    // returned a wrong function name here! Especially routines residing inside
+    // ASM- modules are very likely to be detected incorrectly.
+    char FunctionName[255];
+    pointer StartAddr = get_function_name(currentThread->kernel_arch_thread_info_->eip, FunctionName);
+
+    if (StartAddr)
+      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
+          currentThread->kernel_arch_thread_info_->eip - StartAddr);
+  }
 
   if(!address)
   {
@@ -467,13 +528,13 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 
   if (error)
   {
-    if (error&flag_p)
+    if (error & FLAG_PF_PRESENT)
     {
       debug(PM, "[PageFaultHandler] We got a pagefault even though the page mapping is present\n");
-      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & flag_us) ? "A userprogram" : "Some kernel code",
-        (error & flag_rw) ? "write to" : "read from", address);
+      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
+        (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
 
-      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_);
+      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->arch_memory_.page_dir_page_);
       uint32 virtual_page = address / PAGE_SIZE;
       uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
       uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -501,7 +562,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       if (address >= 2U*1024U*1024U*1024U)
       {
         debug(PM, "[PageFaultHandler] The virtual page we accessed was not mapped to a physical page\n");
-        if (error&flag_us)
+        if (error & FLAG_PF_USER)
         {
           debug(PM, "[PageFaultHandler] WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
           debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
@@ -524,45 +585,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
 
-
-  // kprintfd_nosleep( "CR3 =  %X, pg_num = %X, pg3GB = %x \n\n",
-	  // currentThread->user_arch_thread_info_->cr3,
-	  // currentThread->loader_->page_dir_page_,
-	  // ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_) );
-
-  // page_directory_entry *cpd = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->page_dir_page_);
-  // uint32 i = 0;
-  // uint32 j = 0;
-  // for( i = 0; i < 512; i++ )
-  // {
-    // if( cpd[ i ].pde4k.present )
-    // {
-      // kprintfd_nosleep( " i %d, present %d, where %Xm where 3G : %X \n",
-		  // i,
-		  // cpd[ i ].pde4k.present,
-		  // cpd[ i ].pde4k.page_table_base_address,
-		  // ArchMemory::get3GBAddressOfPPN( cpd[ i ].pde4k.page_table_base_address )
-		  // );
-    // }
-    // if( cpd[ i ].pde4k.present )
-    // {
-      // page_table_entry *cpt = (page_table_entry *) ArchMemory::get3GBAddressOfPPN( cpd[ i ].pde4k.page_table_base_address );
-      // for( j = 0; j < 256; j++ )
-      // {
-        // if( cpt[ j ].present )
-        // {
-          // kprintfd_nosleep( "\t j %d, present %d, where %X \n",
-		// j,
-		// cpt[ j ].present,
-		// cpt[ j ].page_base_address );
-	// }
-      // }
-    // }
-  // }
-
   //--------End "just for Debugging"-----------
 
-  //kprintfd_nosleep("PageFault:: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
 
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
@@ -571,21 +595,23 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchInterrupts::enableInterrupts();
 
   //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (! (error & flag_p) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
+  if (! (error & FLAG_PF_PRESENT) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
-    // ArchInterrupts::enableInterrupts(); //previous EFLAGS get restored anyway, so this is not necessary
   }
   else
   {
-    debug(PM, "[PageFaultHandler] !(error & flag_p): %x, address: %x, loader_: %x\n", !(error & flag_p), address < 2U*1024U*1024U*1024U, currentThread->loader_);
-    currentThread->printBacktrace();
+    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %x\n",
+        !(error & FLAG_PF_PRESENT), address < 2U*1024U*1024U*1024U, currentThread->loader_);
+
+    if (!(error & FLAG_PF_USER))
+      currentThread->printBacktrace(true);
+
     if (currentThread->loader_)
       Syscall::exit(9999);
     else
       currentThread->kill();
   }
-  //kprintfd_nosleep("PageFault: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   switch (currentThread->switch_to_userspace_)
@@ -668,26 +694,6 @@ extern "C" void irqHandler_15()
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
-
-  //kprintfd_nosleep("syscallHANDLER called, interrupts are %d (currentThread=%x %s)\n",ArchInterrupts::testIFSet(),currentThread,currentThread->getName());
-  //ArchThreads::printThreadRegisters(currentThread,0);
-  //ArchThreads::printThreadRegisters(currentThread,1);
-   // ok, find out the current thread
-  //currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  //~ kprintfd_nosleep("syscallHANDLER: thread: eax: %x; ebx: %x; ecx: %x; edx: %x;\n",currentThread->user_arch_thread_info_->eax,
-                  //~ currentThread->user_arch_thread_info_->ebx,
-                  //~ currentThread->user_arch_thread_info_->ecx,
-                  //~ currentThread->user_arch_thread_info_->edx);
-
-  // a int 0x80 instruction takes two bytes in x86 asm
-  // to make sure we skip this one after syscall exit
-  // we have to increment the eip
-  // add on, ever since the very first pmode machine
-  // this is not needed anymore as the machine is smart
-  // enough to do this on a trap
-
-  //kprintfd_nosleep("syscallHANDLER: switching to Kernelspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
-
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
@@ -700,12 +706,10 @@ extern "C" void syscallHandler()
                   currentThread->user_arch_thread_info_->esi,
                   currentThread->user_arch_thread_info_->edi);
 
-  //kprintfd_nosleep("syscallHANDLER: returning to Userspace (currentThread=%x %s)\n",currentThread,currentThread->getName());
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,1);
-  //kprintfd_nosleep("syscallHANDLER: done (currentThread=%x %s)\n",currentThread,currentThread->getName());
   arch_switchThreadToUserPageDirChange();
 }
 

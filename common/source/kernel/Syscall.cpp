@@ -14,8 +14,6 @@
 #include "UserProcess.h"
 #include "MountMinix.h"
 
-extern VfsSyscall vfs_syscall;
-
 uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
 {
   uint32 return_value=0;
@@ -39,6 +37,12 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
       break;
     case sc_read:
       return_value = read(arg1,arg2,arg3);
+      break;
+    case sc_open:
+      return_value = open(arg1,arg2,arg3);
+      break;
+    case sc_close:
+      return_value = close(arg1);
       break;
     case sc_outline:
       outline(arg1,arg2);
@@ -67,6 +71,10 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
     debug(SYSCALL,"Syscall::write: %B\n",(char*) buffer,size);
     kprint_buffer((char*)buffer,size);
   }
+  else
+  {
+    VfsSyscall::instance()->write(currentThread->getWorkingDirInfo(), fd, (char*) buffer, size);
+  }
   return size;
 }
 
@@ -88,9 +96,26 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
         kprintfd("%c(%x) ",((char*)buffer)[c],((char*)buffer)[c]);
       kprintfd("\n");
     }
-
+  }
+  else
+  {
+    num_read = VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd, (char*) buffer, count);
   }
   return num_read;
+}
+
+uint32 Syscall::close(uint32 fd)
+{
+  return VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
+}
+
+uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
+{
+  if (path >= 2U*1024U*1024U*1024U)
+  {
+    return -1U;
+  }
+  return VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (char*) path, flags | mode);
 }
 
 void Syscall::outline(uint32 port, pointer text)
@@ -108,18 +133,20 @@ void Syscall::outline(uint32 port, pointer text)
 
 uint32 Syscall::createprocess(uint32 path, uint32 sleep)
 {
+  // THIS METHOD IS FOR TESTING PURPOSES ONLY!
+  // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
   debug(SYSCALL,"Syscall::createprocess: path:%d sleep:%d\n",path,sleep);
   if (path >= 2U*1024U*1024U*1024U)
   {
     return -1U;
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
-  uint32 fd = vfs_syscall.open((const char*) path, O_RDONLY);
+  uint32 fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
   if (fd == -1U)
   {
     return -1U;
   }
-  vfs_syscall.close(fd);
+  VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
   uint32 len = strlen((const char*) path) + 1;
   char* copy = new char[len];
   memcpy(copy, (const char*) path, len);

@@ -28,6 +28,20 @@ inline streamsize stream_size_of (const T& v) {
     return (stream_sizer_t()(v));
 }
 
+/// \brief Returns the recommended stream alignment for type \p T. Override with ALIGNOF.
+/// Because this is occasionally called with a null value, do not access the argument!
+template <typename T>
+inline size_t stream_align_of (const T&)
+{
+    if (numeric_limits<T>::is_integral)
+	return (__alignof__(T));
+    return (4);
+}
+
+#define ALIGNOF(type,grain)	\
+namespace ustl {		\
+    template <> inline size_t stream_align_of (const type&) { return (grain); } }
+
 } // namespace ustl
 
 //

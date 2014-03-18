@@ -46,9 +46,9 @@ template <typename T1, typename T2>
 istream& operator>> (istream& is, pair<T1,T2>& p)
 {
     is >> p.first;
-    is.align (alignof(p.second));
+    is.align (stream_align_of(p.second));
     is >> p.second;
-    is.align (alignof(p.first));
+    is.align (stream_align_of(p.first));
     return (is);
 }
 
@@ -57,9 +57,9 @@ template <typename T1, typename T2>
 ostream& operator<< (ostream& os, const pair<T1,T2>& p)
 {
     os << p.first;
-    os.align (alignof(p.second));
+    os.align (stream_align_of(p.second));
     os << p.second;
-    os.align (alignof(p.first));
+    os.align (stream_align_of(p.first));
     return (os);
 }
 
@@ -76,8 +76,8 @@ template <typename T1, typename T2>
 struct object_stream_size<pair<T1,T2> > {
     inline size_t operator()(const pair<T1,T2>& v) const
     {
-	return (Align (stream_size_of(v.first), alignof(v.second)) +
-		Align (stream_size_of(v.second), alignof(v.first)));
+	return (Align (stream_size_of(v.first), stream_align_of(v.second)) +
+		Align (stream_size_of(v.second), stream_align_of(v.first)));
     }
 };
 
@@ -111,10 +111,10 @@ unconst (const pair<typename Container::const_iterator, typename Container::cons
 //----{ vector }--------------------------------------------------------
 
 template <typename T>
-inline size_t alignof (const vector<T>&)
+inline size_t stream_align_of (const vector<T>&)
 {
     typedef typename vector<T>::written_size_type written_size_type;
-    return (alignof (written_size_type()));
+    return (stream_align_of (written_size_type()));
 }
 
 //----{ bitset }--------------------------------------------------------
@@ -152,7 +152,7 @@ struct numeric_limits<tuple<N,T> > {
 };
 
 template <size_t N, typename T>
-inline size_t alignof (const tuple<N,T>&) { return (alignof (NullValue<T>())); }
+inline size_t stream_align_of (const tuple<N,T>&) { return (stream_align_of (NullValue<T>())); }
 
 template <typename T, typename IntT>
 inline ostringstream& chartype_text_write (ostringstream& os, const T& v)
@@ -256,5 +256,8 @@ CAST_STREAMABLE(bool, uint8_t)
 #if SIZE_OF_LONG == 8 && HAVE_INT64_T
 ALIGNOF (_long4grain, 4)
 #endif
+
+ALIGNOF(ustl::CBacktrace, sizeof(void*))
+ALIGNOF (ustl::string, stream_align_of (string::value_type()))
 
 #endif

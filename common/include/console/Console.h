@@ -12,7 +12,7 @@
 #include "Thread.h"
 
 class Terminal;
-
+extern uint32 boot_completed;
 /**
  * @class Console Base Class Console
  */
@@ -130,10 +130,19 @@ class Console : public Thread
      */
     bool areLocksFree()
     {
-      return ( console_lock_.isFree() && locked_for_drawing_==0 );
+      return ( !boot_completed || (console_lock_.isFree() && locked_for_drawing_==0 ));
     }
 
   protected:
+
+    /**
+     * Handles special non displayable keys:
+     * F-keys for switching active terminals
+     * displaying threads list
+     * backspace
+     * @param key the key to handle
+     */
+    void handleKey ( uint32 key );
 
     /**
      * not implemented here

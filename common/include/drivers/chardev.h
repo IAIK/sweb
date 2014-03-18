@@ -5,21 +5,14 @@
 #ifndef CHAR_DEV_H__
 #define CHAR_DEV_H__
 
-#include "fs/Inode.h"
-#include "fs/ramfs/RamFSFile.h"
-#include "fs/devicefs/DeviceFSSuperblock.h"
-#include "fs/Dentry.h"
-#include "fs/Superblock.h"
 
 #include "string.h"
 #include "FiFo.h"
 
-#include "Thread.h"
-
 /**
  * @class CharacterDevice Links the character devices to the Device File System.
  */
-class CharacterDevice : public Inode, public Thread
+class CharacterDevice
 {
   public:
 
@@ -29,24 +22,12 @@ class CharacterDevice : public Inode, public Thread
      * @param super_block the superblock (0)
      * @param inode_type the inode type (cahracter device)
      */
-    CharacterDevice ( const char* name, Superblock* super_block = 0, uint32 inode_type = I_CHARDEVICE ) :
-        Inode ( super_block, inode_type ), Thread("CharDevThread")
+    CharacterDevice ( const char* name) : _in_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD ),
+        _out_buffer( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD )
     {
-
-      i_type_   = I_CHARDEVICE;
-      i_size_   = 0;
-      i_nlink_  = 0;
-      i_dentry_ = 0;
-
       uint32 name_len = strlen ( name ) + 1;
       device_name = new char[name_len];
       strlcpy ( device_name, name, name_len );
-
-      i_superblock_ = DeviceFSSuperBlock::getInstance();
-      DeviceFSSuperBlock::getInstance()->addDevice ( this, name );
-
-      _in_buffer  = new FiFo< uint8 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
-      _out_buffer = new FiFo< uint8 > ( CD_BUFFER_SIZE , FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD );
     };
 
     /**
@@ -54,10 +35,6 @@ class CharacterDevice : public Inode, public Thread
      */
     ~CharacterDevice()
     {
-      if ( _in_buffer )
-        delete _in_buffer;
-      if ( _out_buffer )
-        delete _out_buffer;
     };
 
     /**
@@ -75,7 +52,7 @@ class CharacterDevice : public Inode, public Thread
       char *bptr = buffer;
       do
       {
-        *bptr++ = _in_buffer->get();
+        *bptr++ = _in_buffer.get();
       }
       while ( ( bptr - buffer ) < (int32) size );
 
@@ -97,86 +74,12 @@ class CharacterDevice : public Inode, public Thread
       const char *bptr = buffer;
       do
       {
-        _out_buffer->put ( *bptr++ );
+        _out_buffer.put ( *bptr++ );
       }
       while ( ( bptr - buffer ) < (int32) size );
 
       return ( bptr - buffer );
     };
-
-    /**
-     * links the inode to the given dentry
-     * @param dentry the denty
-     * @return 0 on success
-     */
-    int32 mknod ( Dentry *dentry )
-    {
-      if ( dentry == 0 )
-        return -1;
-
-      i_dentry_ = dentry;
-      dentry->setInode ( this );
-      return 0;
-    }
-
-    /**
-     * links the inode to the given dentry
-     * @param dentry the denty
-     * @return 0 on success
-     */
-    int32 create ( Dentry *dentry )
-    {
-      return ( mknod ( dentry ) );
-    }
-
-    /**
-     * links the inode to the given dentry
-     * @param dentry the denty
-     * @return 0 on success
-     */
-    int32 mkfile ( Dentry *dentry )
-    {
-      return ( mknod ( dentry ) );
-    }
-
-    /**
-     * Makes a hard link to the name referred to by the
-     * denty, which is in the directory refered to by the Inode.
-     * @param flag the flag
-     * @return the linking File
-     */
-    File* link ( uint32 flag )
-    {
-      File* file = ( File* ) ( new RamFSFile ( this, i_dentry_, flag ) );
-      i_files_.push_back ( file );
-      return file;
-    }
-
-    /**
-     * removes the name refered to by the Dentry from the directory
-     * referred to by the inode.
-     * @param file the file to remove
-     * @return 0 on success
-     */
-    int32 unlink ( File* file )
-    {
-      i_files_.remove ( file );
-      delete file;
-      return 0;
-    }
-
-    /**
-     * processes the in and out buffers of the character device
-     */
-    virtual void Run()
-    {
-      do
-      {
-        processInBuffer();
-        processOutBuffer();
-      }
-      while ( 1 );
-    }
 
     char *getDeviceName() const
     {
@@ -185,9 +88,10 @@ class CharacterDevice : public Inode, public Thread
 
 
   protected:
+    static const uint32 CD_BUFFER_SIZE = 1024;
 
-    FiFo< uint8 > *_in_buffer;
-    FiFo< uint8 > *_out_buffer;
+    FiFo< uint8 > _in_buffer;
+    FiFo< uint8 > _out_buffer;
 
     char *device_name;
 
@@ -196,8 +100,7 @@ class CharacterDevice : public Inode, public Thread
      */
     void processInBuffer()
     {
-      if ( _in_buffer )
-        _in_buffer->get();
+      _in_buffer.get();
     };
 
 
@@ -206,11 +109,9 @@ class CharacterDevice : public Inode, public Thread
      */
     void processOutBuffer()
     {
-      if ( _out_buffer )
-        _out_buffer->get();
+      _out_buffer.get();
     };
 
-    static const uint32 CD_BUFFER_SIZE = 1024;
 
 };
 

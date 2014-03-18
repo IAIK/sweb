@@ -11,7 +11,7 @@
 
 Terminal::Terminal ( char *name, Console *console, uint32 num_columns, uint32 num_rows ) : CharacterDevice ( name ),
     console_ ( console ), num_columns_ ( num_columns ), num_rows_ ( num_rows ), len_ ( num_rows * num_columns ),
-    current_column_ ( 0 ), current_state_ ( 0x93 ), active_ ( 0 )
+    current_column_ ( 0 ), current_state_ ( 0x93 ), active_ ( 0 ), mutex_("Terminal::mutex_")
 {
   characters_ = new uint8[len_];
   character_states_ = new uint8[len_];
@@ -27,23 +27,23 @@ Terminal::Terminal ( char *name, Console *console, uint32 num_columns, uint32 nu
 
 void Terminal::clearBuffer()
 {
-  _in_buffer->clear();
+  _in_buffer.clear();
 }
 
 void Terminal::putInBuffer ( uint32 what )
 {
-  _in_buffer->put ( what );
+  _in_buffer.put ( what );
 }
 
 char Terminal::read()
 {
-  return ( char ) _in_buffer->get();
+  return ( char ) _in_buffer.get();
 }
 
 void Terminal::backspace ( void )
 {
-  if ( _in_buffer->countElementsAhead() )
-    _in_buffer->get();
+  if ( _in_buffer.countElementsAhead() )
+    _in_buffer.get();
 
   if ( current_column_ )
   {
@@ -60,7 +60,7 @@ uint32 Terminal::readLine ( char *line, uint32 size )
     return 0;
   do
   {
-    cchar = _in_buffer->get();
+    cchar = _in_buffer.get();
 
     if ( cchar == '\b' )
     {
@@ -85,7 +85,7 @@ uint32 Terminal::readLineRaw ( char *line, uint32 size )
     return 0;
   do
   {
-    cchar = _in_buffer->get();
+    cchar = _in_buffer.get();
 
     line[counter++] = ( char ) cchar;
   }
@@ -104,9 +104,9 @@ uint32 Terminal::readLineNoBlock ( char *line, uint32 size )
   if ( size < 1 )
     return 0;
 
-  while ( _in_buffer->countElementsAhead() )
+  while ( _in_buffer.countElementsAhead() )
   {
-    cchar = _in_buffer->get();
+    cchar = _in_buffer.get();
 
     if ( cchar == '\b' )
     {

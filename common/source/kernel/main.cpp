@@ -32,18 +32,14 @@
 #include "atkbd.h"
 
 #include "arch_bd_manager.h"
+#include "arch_bd_virtual_device.h"
 
-#include "fs/VirtualFileSystem.h"
-#include "fs/ramfs/RamFSType.h"
-#include "fs/devicefs/DeviceFSType.h"
-#include "fs/minixfs/MinixFSType.h"
+#include "fs/VfsSyscall.h"
+#include "fs/FsWorkingDirectory.h"
+
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
-#include "XenConsole.h"
-
-#include "fs/PseudoFS.h"
-#include "fs/fs_tests.h"
 
 #include "fs/fs_global.h"
 
@@ -113,6 +109,9 @@ class TestThread : public Thread
 // see init_boottime_pagetables.cpp
 // then increase end_address appropriately
 
+uint32 boot_completed;
+uint32 we_are_dying;
+
 /**
  * startup called in @ref boot.s
  * starts up SWEB
@@ -120,9 +119,10 @@ class TestThread : public Thread
  */
 void startup()
 {
+  we_are_dying = 0;
+  boot_completed = 0;
   writeLine2Bochs ( ( uint8 * ) "SWEB starting...\n" );
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
-  //pointer end_address = (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs für den es derzeit Paging gibt
   pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
   //extend Kernel Memory here
   KernelMemoryManager::createMemoryManager ( start_address,end_address );
@@ -167,24 +167,6 @@ void startup()
 
   kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, ( ( pointer ) &kernel_end_address )-2U*1024*1024*1024+1*1024*1024 );
 
-  // initialize global and static objects
-  ustl::coutclass::init();
-  vfs.initialize();
-  extern ustl::list<FileDescriptor*> global_fd;
-  new (&global_fd) ustl::list<FileDescriptor*>();
-
-  debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
-  DeviceFSType *devfs = new DeviceFSType();
-  vfs.registerFileSystem ( devfs );
-  FileSystemInfo* root_fs_info = vfs.root_mount ( "devicefs", 0 );
-
-  debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n", root_fs_info->getRoot()->getName(), root_fs_info->getPwd()->getName() );
-  if ( main_console->getFSInfo() )
-  {
-    delete main_console->getFSInfo();
-  }
-  main_console->setFSInfo ( root_fs_info );
-
   Scheduler::createScheduler();
 
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
@@ -208,9 +190,31 @@ void startup()
 
   }
 
+  // initialize global and static objects
+  ustl::coutclass::init();
+  VfsSyscall::createVfsSyscall();
+
+  extern ustl::list<FileDescriptor*> global_fd;
+  new (&global_fd) ustl::list<FileDescriptor*>();
+  extern Mutex global_fd_lock;
+  new (&global_fd_lock) Mutex("global_fd_lock");
+
+  // the default working directory info
+  debug ( MAIN, "creating a default working Directory\n" );
+  FsWorkingDirectory default_working_dir;
+  debug ( MAIN, "finished with creating working Directory\n" );
+
+  debug ( MAIN, "make a deep copy of FsWorkingDir\n" );
+  main_console->setWorkingDirInfo(new FsWorkingDirectory(default_working_dir));
+  debug ( MAIN, "main_console->setWorkingDirInfo done\n" );
+
+  debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n",
+      main_console->getWorkingDirInfo()->getRootDirPath(), main_console->getWorkingDirInfo()->getWorkingDirPath() );
+
   debug ( MAIN, "Timer enable\n" );
   ArchInterrupts::enableTimer();
 
+  KeyboardManager::getInstance();
   ArchInterrupts::enableKBD();
 
   debug ( MAIN, "Thread creation\n" );
@@ -222,22 +226,18 @@ void startup()
   // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!
   char const *user_progs[] = {
   // for reasons of automated testing
-                              "/user_progs/stdout-test.sweb",
-                              "/user_progs/stdin-test.sweb",
-                              "/user_progs/mult.sweb",
+                              "/stdin-test.sweb",
                               0
                              };
 
   Scheduler::instance()->addNewThread (
-       new MountMinixAndStartUserProgramsThread ( new FileSystemInfo ( *root_fs_info ), user_progs )
+       new MountMinixAndStartUserProgramsThread ( new FsWorkingDirectory(default_working_dir), user_progs )
    );
 
   Scheduler::instance()->printThreadList();
 
-  PageManager::instance()->startUsingSyncMechanism();
-  KernelMemoryManager::instance()->startUsingSyncMechanism();
-
   kprintf ( "Now enabling Interrupts...\n" );
+  boot_completed = 1;
   ArchInterrupts::enableInterrupts();
   
   Scheduler::instance()->yield();

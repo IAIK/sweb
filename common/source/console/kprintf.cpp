@@ -347,7 +347,6 @@ void kprintfd ( const char *fmt, ... )
   va_end ( args );
 }
 
-//TODO: make this obsolete with atomarity check
 void kprintf_nosleep ( const char *fmt, ... )
 {
   va_list args;
@@ -363,7 +362,6 @@ void kprintf_nosleep ( const char *fmt, ... )
   va_end ( args );
 }
 
-//TODO: make this obsolete with atomarity check
 void kprintfd_nosleep ( const char *fmt, ... )
 {
   va_list args;
@@ -396,12 +394,11 @@ bool isDebugEnabled ( uint32 flag )
     group_flag |= OUTPUT_ENABLED;
     switch ( group_flag )
     {
-      case MINIX:
       case BD:
       case CONSOLE:
       case KERNEL:
       case MM:
-      case FS:
+      case VFSSYSCALL:
       case DRIVER:
       case ARCH:
         group_enabled = true;
@@ -429,17 +426,14 @@ void debug ( uint32 flag, const char *fmt, ... )
   {
     switch ( flag )
     {
-      case M_INODE:
-        kprintfd ( COLORDEBUG("[M_INODE    ]", "33")); 
+      case CACHE:
+        kprintfd ( COLORDEBUG("[CACHE      ]", "31"));
         break;
-      case M_STORAGE_MANAGER:
-        kprintfd ( COLORDEBUG("[M_STORAGE_M]", "33"));
+      case READ_CACHE:
+        kprintfd ( COLORDEBUG("[READ_CACHE ]", "32"));
         break;
-      case M_SB:
-        kprintfd ( COLORDEBUG("[M_SB       ]", "33"));
-        break;
-      case M_ZONE:
-        kprintfd ( COLORDEBUG("[M_ZONE     ]", "33"));
+      case WRITE_CACHE:
+        kprintfd ( COLORDEBUG("[WRITE_CACHE]", "33"));
         break;
       case BD_MANAGER:
         kprintfd ( COLORDEBUG("[BD_MANAGER ]", "33"));
@@ -480,24 +474,6 @@ void debug ( uint32 flag, const char *fmt, ... )
       case KMM:
         kprintfd ( COLORDEBUG("[KMM        ]", "33"));
         break;
-      case RAMFS:
-        kprintfd ( COLORDEBUG("[RAMFS      ]", "37"));
-        break;
-      case DENTRY:
-        kprintfd ( COLORDEBUG("[DENTRY     ]", "38"));
-        break;
-      case PATHWALKER:
-        kprintfd ( COLORDEBUG("[PATHWALKER ]", "33"));
-        break;
-      case PSEUDOFS:
-        kprintfd ( COLORDEBUG("[PSEUDOFS   ]", "33"));
-        break;
-      case VFSSYSCALL:
-        kprintfd ( COLORDEBUG("[VFSSYSCALL ]", "33"));
-        break;
-      case VFS:
-        kprintfd ( COLORDEBUG("[VFS        ]", "33"));
-        break;
       case ATA_DRIVER:
         kprintfd ( COLORDEBUG("[ATA_DRIVER ]", "33"));
         break;
@@ -521,6 +497,36 @@ void debug ( uint32 flag, const char *fmt, ... )
         break;
       case A_INTERRUPTS:
         kprintfd ( COLORDEBUG("[A_INTERRUPT]", "33"));
+        break;
+      case VFSSYSCALL:
+        kprintfd ( COLORDEBUG("[VFSSYSCALL ]", "33"));
+        break;
+      case FILE_SYSTEM:
+        kprintfd ( COLORDEBUG("[FILE_SYSTEM]", "32"));
+        break;
+      case VOLUME_MANAGER:
+        kprintfd ( COLORDEBUG("[VOLUME-MAN ]", "31"));
+        break;
+      case FS_DEVICE:
+        kprintfd ( COLORDEBUG("[FS_DEVICE  ]", "35"));
+        break;
+      case FS_BITMAP:
+        kprintfd ( COLORDEBUG("[FS_BITMAP  ]", "36"));
+        break;
+      case FS_INODE:
+        kprintfd ( COLORDEBUG("[INODE      ]", "38"));
+        break;
+      case FS_UTIL:
+        kprintfd ( COLORDEBUG("[FS_UTIL    ]", "39"));
+        break;
+      case FS_UNIX:
+        kprintfd ( COLORDEBUG("[FS_UNIX    ]", "32"));
+        break;
+      case INODE_TABLE:
+        kprintfd ( COLORDEBUG("[INODETABLE ]", "37"));
+        break;
+      case FS_MINIX:
+        kprintfd ( COLORDEBUG("[FS_MINIX   ]", "32"));
         break;
     }
     vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );

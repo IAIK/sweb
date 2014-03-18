@@ -109,7 +109,7 @@ void CBacktrace::text_write (ostringstream& os) const
 /// Reads the object from stream \p is.
 void CBacktrace::read (istream& is)
 {
-    assert (is.aligned (alignof (m_Addresses[0])) && "Backtrace object contains pointers and must be void* aligned");
+    assert (is.aligned (stream_align_of (m_Addresses[0])) && "Backtrace object contains pointers and must be void* aligned");
     is >> m_nFrames >> m_SymbolsSize;
     nfree (m_Symbols);
     m_Symbols = (char*) malloc (m_SymbolsSize + 1);
@@ -122,7 +122,7 @@ void CBacktrace::read (istream& is)
 /// Writes the object to stream \p os.
 void CBacktrace::write (ostream& os) const
 {
-    assert (os.aligned (alignof (m_Addresses[0])) && "Backtrace object contains pointers and must be void* aligned");
+    assert (os.aligned (stream_align_of (m_Addresses[0])) && "Backtrace object contains pointers and must be void* aligned");
     os << m_nFrames << m_SymbolsSize;
     os.write (m_Symbols, m_SymbolsSize);
     os.align();

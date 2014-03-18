@@ -85,40 +85,26 @@ Scheduler::Scheduler()
 {
   kill_old_=false;
   block_scheduling_=0;
-  block_scheduling_extern_=0;
   ticks_=0;
 }
 
 void Scheduler::addNewThread ( Thread *thread )
 {
-  //new Thread gets scheduled next
-  //also gets added to front as not to interfere with remove or xchange
-
-  lockScheduling();
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
-  waitForFreeKMMLock();
-  threads_.push_front ( thread );
+  lockScheduling();
+  waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
+  threads_.push_back ( thread );
   unlockScheduling();
 }
 
 void Scheduler::removeCurrentThread()
 {
-  lockScheduling();
   debug ( SCHEDULER,"removeCurrentThread: %x %d:%s, threads_.size() %d\n",currentThread,currentThread->getPID(),currentThread->getName(),threads_.size() );
-  waitForFreeKMMLock();
+  lockScheduling();
+  waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
   if ( threads_.size() > 1 )
   {
     threads_.remove(currentThread);
-    /*for ( uint32 c=0; c< threads_.size(); ++c )
-    {
-      tmp_thread = threads_.back();
-      if ( tmp_thread == currentThread )
-      {
-        threads_.popBack();
-        break;
-      }
-      threads_.rotateFront();
-    }*/
   }
   unlockScheduling();
 }
@@ -126,10 +112,7 @@ void Scheduler::removeCurrentThread()
 void Scheduler::sleep()
 {
   currentThread->state_=Sleeping;
-  //if we somehow stupidly go to sleep, block is automatically removed
-  //we might break a lock in doing so, but that's still better than having no chance
-  //of recovery whatsoever.
-  unlockScheduling();
+  assert(block_scheduling_ == 0);
   yield();
 }
 
@@ -145,7 +128,7 @@ void Scheduler::sleepAndRelease ( SpinLock &lock )
 void Scheduler::sleepAndRelease ( Mutex &lock )
 {
   lockScheduling();
-  waitForFreeKMMLockAndFreeSpinLock(lock.spinlock_);
+  waitForFreeSpinLock(lock.spinlock_);
   currentThread->state_=Sleeping;
   lock.release();
   unlockScheduling();
@@ -160,8 +143,8 @@ void Scheduler::sleepAndRestoreInterrupts ( bool interrupts )
   currentThread->state_=Sleeping;
   if ( interrupts )
   {
+    assert(block_scheduling_ == 0);
     ArchInterrupts::enableInterrupts();
-    assert ( block_scheduling_extern_==0 );
     yield();
   }
 }
@@ -171,14 +154,9 @@ void Scheduler::wake ( Thread* thread_to_wake )
   thread_to_wake->state_=Running;
 }
 
-void Scheduler::startThreadHack()
-{
-  currentThread->Run();
-}
-
 uint32 Scheduler::schedule()
 {
-  if ( testLock() || block_scheduling_extern_>0 )
+  if (block_scheduling_ != 0)
   {
     //no scheduling today...
     //keep currentThread as it was
@@ -198,16 +176,12 @@ uint32 Scheduler::schedule()
     if ( kill_old_ == false && currentThread->state_ == ToBeDestroyed )
       kill_old_=true;
 
-    //this operation doesn't allocate or delete any kernel memory
-    //threads_.rotateBack();
-    //ustl::rotate(threads_.begin(),threads_.end(), threads_.end());
-    Thread* temp = threads_.front();
-    threads_.push_back(temp);
-    threads_.pop_front();
-    //swap(*threads_.begin(), *threads_.end());
+    //this operation doesn't allocate or delete any kernel memory (important because Interrupts are disabled in this method)
+    ustl::rotate(threads_.begin(),threads_.begin()+1, threads_.end());
+
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
     {
-      debug(SCHEDULER, "Scheduler::schedule: ERROR: no thread is in state Running!!");
+      debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
       assert(false);
     }
   }
@@ -233,6 +207,7 @@ void Scheduler::yield()
   {
     kprintfd ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n", currentThread, currentThread->name_ );
     kprintf ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n" );
+    currentThread->printBacktrace();
   }
   ArchThreads::yield();
 }
@@ -262,62 +237,44 @@ void Scheduler::cleanupDeadThreads()
     return;
 
   lockScheduling();
-  waitForFreeKMMLock();
-  //List<Thread*> destroy_list;
-  ThreadList destroy_list;
+  uint32 thread_count_max = threads_.size();
+  if (thread_count_max > 1024)
+    thread_count_max = 1024;
+  Thread* destroy_list[thread_count_max];
+  uint32 thread_count = 0;
   debug ( SCHEDULER,"cleanupDeadThreads: now running\n" );
   if ( kill_old_ )
   {
-    //Thread *tmp_thread;
-    for(ThreadList::iterator it=threads_.begin(); it!=threads_.end(); /* see in braces */)
+    for(uint32 i = 0; i < threads_.size(); ++i)
     {
-    	if((*it)->state_ == ToBeDestroyed)
-    	{
-    		destroy_list.push_back(*it);
-    		it = threads_.erase(it);
-    	}
-    	else
-    	{
-    		++it;
-    	}
+      Thread* tmp = threads_[i];
+      if(tmp->state_ == ToBeDestroyed)
+      {
+        destroy_list[thread_count++] = tmp;
+        threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
+        --i;
+      }
+      if (thread_count >= thread_count_max)
+        break;
     }
 
-    /*for ( uint32 c=0; c< threads_.size(); ++c )
-    {
-      tmp_thread = threads_.front();
-      if ( tmp_thread->state_ == ToBeDestroyed )
-      {
-        destroy_list.pushBack ( tmp_thread );
-        threads_.popFront();
-        --c;
-        continue;
-      }
-      threads_.rotateBack();
-    }*/
     kill_old_=false;
   }
   debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   unlockScheduling();
-  /*while ( ! destroy_list.empty() )
+  for(uint32 i = 0; i < thread_count; ++i)
   {
-    Thread *cur_thread = destroy_list.front();
-    destroy_list.popFront();
-    delete cur_thread;
-  }*/
-  for(ThreadList::iterator it=destroy_list.begin(); it!=destroy_list.end(); ++it)
-  {
-	  delete *it;
+    delete destroy_list[i];
   }
 }
 
 void Scheduler::printThreadList()
 {
-  const char *thread_states[6]= {"Running", "Sleeping", "ToBeDestroyed", "Unknown", "Unknown", "Unknown"};
   uint32 c=0;
   lockScheduling();
   debug ( SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n",threads_.size() );
   for ( c=0; c<threads_.size();++c )
-    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),thread_states[threads_[c]->state_] );
+    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),Thread::threadStatePrintable[threads_[c]->state_] );
   unlockScheduling();
 }
 
@@ -326,61 +283,39 @@ void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
   if ( unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) ) )
     arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
 }
+
 void Scheduler::unlockScheduling()
 {
   block_scheduling_ = 0;
 }
-bool Scheduler::testLock()
-{
-  return ( block_scheduling_ > 0 );
-}
 
-void Scheduler::waitForFreeKMMLock()  //not as severe as stopping Interrupts
+void Scheduler::waitForFreeSpinLock(SpinLock& lock)  //not as severe as stopping Interrupts
 {
   if ( block_scheduling_==0 )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLock: This "
+    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeSpinLock: This "
                             "is meant to be used while Scheduler is locked\n" );
 
-  while ( ! KernelMemoryManager::instance()->isKMMLockFree() )
+  uint32 ticks = 0;
+  while (!lock.isFree())
   {
+    if (unlikely(++ticks > 50))
+    {
+      kprintfd("WARNING: Scheduler::waitForFreeSpinLock: SpinLock <%s> is locked since more than %d ticks? Maybe there is something wrong!\n", lock.name_,ticks);
+      Thread* t = lock.heldBy();
+      kprintfd("Thread holding SpinLock: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      t->printBacktrace();
+      //assert(false);
+    }
     unlockScheduling();
     yield();
     lockScheduling();
   }
 }
 
-void Scheduler::waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock)
-{
-  if ( block_scheduling_==0 )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeKMMLockAndFreeSpinLock"
-                            ": This is meant to be used while Scheduler is locked\n" );
-
-  while ( ! KernelMemoryManager::instance()->isKMMLockFree() ||
-          ! spinlock.isFree())
-  {
-    unlockScheduling();
-    yield();
-    lockScheduling();
-  }
-}
-
-void Scheduler::disableScheduling()
-{
-  lockScheduling();
-  block_scheduling_extern_++;
-  unlockScheduling();
-}
-void Scheduler::reenableScheduling()
-{
-  lockScheduling();
-  if ( block_scheduling_extern_>0 )
-    block_scheduling_extern_--;
-  unlockScheduling();
-}
 bool Scheduler::isSchedulingEnabled()
 {
-  if ( this )
-    return ( block_scheduling_==0 && block_scheduling_extern_==0 );
+  if (this)
+    return (block_scheduling_ == 0);
   else
     return false;
 }
@@ -402,8 +337,15 @@ void Scheduler::incTicks()
 
 void Scheduler::printStackTraces()
 {
-  debug(BACKTRACE, "printing the backtraces of %d threads:\n", threads_.size());
+  lockScheduling();
+  debug(BACKTRACE, "printing the backtraces of <%d> threads:\n", threads_.size());
 
   for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
-    (*it)->printBacktrace(*it != currentThread);
+  {
+    (*it)->printBacktrace();
+    debug(BACKTRACE, "\n");
+    debug(BACKTRACE, "\n");
+  }
+
+  unlockScheduling();
 }

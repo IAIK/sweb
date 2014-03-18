@@ -3,8 +3,8 @@
 #include "string.h"
 
 #define FORK_ENABLED 0
-#define EXECUTABLE_PREFIX "/user_progs/"
-#define EXECUTABLE_PREFIX_LEN 12
+#define EXECUTABLE_PREFIX       "/"          // "/user_progs/"
+#define EXECUTABLE_PREFIX_LEN   1            //12
 
 int running;
 int exit_code;

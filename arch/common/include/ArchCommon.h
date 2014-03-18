@@ -12,7 +12,7 @@
 #define _ARCH_COMMON_H_
 
 #include "types.h"
-
+#include "paging-definitions.h"
 
 class ArchCommon
 {
@@ -119,6 +119,14 @@ public:
    * @param debug (set to 1 for debugging info)
    */
   static void bzero(pointer s, size_t n, uint32 debug = 0);
+
+  /**
+   * Computes a CRC- like checksum over a given physical page.
+   *
+   * @param physical_page_number the number of the physical page.
+   * @return the CRC- like checksum over all PAGE_SIZE bytes of the page.
+   */
+  static uint32 checksumPage(uint32 phsical_page_number, uint32 page_size = PAGE_SIZE);
 
 
   /** 

@@ -3,14 +3,15 @@
  */
 #include "Console.h"
 #include "Terminal.h"
+#include "arch_keyboard_manager.h"
 
 Console* main_console=0;
 
-Console::Console ( uint32 ) : Thread("ConsoleThread")
+Console::Console ( uint32 ) : Thread("ConsoleThread"), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_")
 {
 }
 
-Console::Console ( uint32, const char* name ) : Thread(name)
+Console::Console ( uint32, const char* name ) : Thread(name), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_")
 {
 }
 
@@ -26,6 +27,37 @@ void Console::unLockConsoleForDrawing()
   console_lock_.release();
 }
 
+void Console::handleKey ( uint32 key )
+{
+  KeyboardManager * km = KeyboardManager::getInstance();
+
+  uint32 terminal_selected = key - KEY_F1;
+
+  if (km->isShift())
+  {
+    if (terminal_selected < getNumTerminals())
+      setActiveTerminal (terminal_selected);
+
+    return;
+  }
+
+// else...
+  switch (key)
+  {
+    case KEY_F11:
+      Scheduler::instance()->printStackTraces();
+       break;
+
+    case KEY_F12:
+      Scheduler::instance()->printThreadList();
+      break;
+
+    case '\b':
+      terminals_[active_terminal_]->backspace();
+      break;
+  }
+}
+
 uint32 Console::getNumTerminals() const
 {
   return terminals_.size();
@@ -33,10 +65,7 @@ uint32 Console::getNumTerminals() const
 
 Terminal *Console::getActiveTerminal()
 {
-  set_active_lock_.acquire();
-  Terminal *act = terminals_[active_terminal_];
-  set_active_lock_.release();
-  return act;
+  return terminals_[active_terminal_]; // why not locked? integer read is consistent anyway
 }
 
 Terminal *Console::getTerminal ( uint32 term )

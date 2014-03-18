@@ -84,6 +84,25 @@ class Syscall
   static uint32 read(uint32 fd, pointer buffer, uint32 count);
 
 /**
+ * close is a basic example of a method handling the close syscall
+ *
+ * @pre IF==1
+ * @param fd File-Descriptor as described in syscall-definitions:
+ *        fd_stdin,fd_stdout,fd_stderr or fd>2 is anything else a process has opened
+ */
+  static uint32 close(uint32 fd);
+
+/**
+ * open is a basic example of a method handling the open syscall
+ *
+ * @pre IF==1
+ * @pre path < 2gb
+ * @param flags file system flags
+ * @param mode file system mode
+ */
+  static uint32 open(uint32 path, uint32 flags, uint32 mode);
+
+/**
  * creates a new process
  *
  * @pre IF==1

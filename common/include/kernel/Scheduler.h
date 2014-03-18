@@ -116,29 +116,6 @@ class Scheduler
     bool checkThreadExists ( Thread* thread );
 
     /**
-     * provides a kind-of-atomicity for routines that need it, by
-     * preventing the scheduler from switching to another thread.
-     * Be aware, that interrupt-Handlers will still preempt you,
-     * but sharing data with these is a special case anyway.
-     * Be also aware, that disabling the Scheduler too long,
-     * will result in data-loss, since the interrupt-Handers depend
-     * on other threads to get() from their Ringbuffers.
-     *
-     * @post After disabling Scheduling and before doing anything
-     * you HAVE to check if all locks you might possibly and accidentially
-     * acquire are _free_, otherwise you will deadlock.
-     * If the Locks are not free, you can'not continue, you might wait
-     * until all locks are free, but be warned that you might starve
-     * for some time (or forever).
-     */
-    void disableScheduling();
-
-    /**
-     * reenables Scheduling, ending the kind-of-atomicity.
-     */
-    void reenableScheduling();
-
-    /**
      * @ret true if Scheduling is enabled, false otherwis
      */
     bool isSchedulingEnabled();
@@ -204,30 +181,16 @@ class Scheduler
      * after blocking the Scheduler we need to test if all Locks we could possible
      * acquire are really free, because otherwise we will deadlock.
      */
-    void waitForFreeKMMLock();
-
-    /**
-     * after blocking the Scheduler we need to test if all Locks we could possible
-     * acquire are really free, because otherwise we will deadlock.
-     */
-    void waitForFreeKMMLockAndFreeSpinLock(SpinLock &spinlock);
+    void waitForFreeSpinLock(SpinLock& lock);
 
     static Scheduler *instance_;
 
-    //List<Thread*> threads_;
     typedef ustl::list<Thread*> ThreadList;
     ThreadList threads_;
-
-
-    /**
-     * runs the current thread
-     */
-    static void startThreadHack();
 
     bool kill_old_;
 
     uint32 block_scheduling_;
-    uint32 block_scheduling_extern_;
 
     uint32 ticks_;
 };

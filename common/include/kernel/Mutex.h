@@ -7,6 +7,7 @@
 #include "types.h"
 #include <ustl/ulist.h>
 #include "SpinLock.h"
+#include "MutexLock.h"
 
 class Thread;
 
@@ -39,19 +40,22 @@ class Thread;
  */
 class Mutex
 {
+  friend class Condition;
+  friend class Scheduler;
+
   public:
 
     /**
      *Constructor
      */
-    Mutex();
-
+    Mutex(const char* name);
+    virtual ~Mutex();
     /**
      *like acquire, but instead of blocking the currentThread until the Lock is free
      *acquireNonBlocking() immediately returns True or False, depending on whether the Lock
      *was acquired successfully or already held by another Thread.
      */
-    bool acquireNonBlocking();
+    bool acquireNonBlocking(const char* debug_info = 0);
 
     /**
      *acquire sets the Lock and must be called at the start of
@@ -59,14 +63,14 @@ class Mutex
      *can not be run by two threads at the same time.
      *Threads calling acquire on a already set lock, will be put to sleep
      */
-    void acquire();
+    void acquire(const char* debug_info = 0);
 
     /**
      *release frees the Lock. It must be called at the end of
      *a critical region, allowing other threads to execute code
      *in the critical region and to wake up the next sleeping thread.
      */
-    void release();
+    void release(const char* debug_info = 0);
 
     /**
      *allows us to check if the Lock is set or not.
@@ -80,10 +84,6 @@ class Mutex
      */
     bool isFree();
 
-  protected:
-    friend class Condition;
-    friend class Scheduler;
-
     /**
      *Returns if the lock is held by the Thread, that means,
      *if the Thread has currently acquired and not yet released this lock
@@ -95,6 +95,15 @@ class Mutex
       return ( held_by_==thread );
     }
 
+    /**
+     * Returns the thread holding the lock
+     *
+     * @return the thread holding the lock
+     */
+    Thread* heldBy()
+    {
+      return held_by_;
+    }
 
   private:
 
@@ -118,51 +127,23 @@ class Mutex
     Mutex &operator= ( Mutex const& );
 
     bool threadOnList(Thread *thread);
-};
-
-
-/**
- * @class MutexLock holds the Mutex of the class Mutex
- */
-class MutexLock
-{
-  public:
 
     /**
-     *Constructor
-     *acquires the mutex
-     * @param m the Mutex of the class Mutex
+     * verifies that there is no direct deadlock
+     * @param method in which the check is done
+     * @param debug_info additional debug info
      */
-    MutexLock ( Mutex &m ) :mutex_ ( m )
-    {
-      mutex_.acquire();
-    }
 
+    void checkDeadlock(const char* method, const char* debug_info);
+    void checkCircularDeadlock(const char* method, const char* debug_info, Thread* start, bool output);
     /**
-     *Destructor
-     *releases the mutex
+     * verifies that the mutex is held by this thread
+     * @param method in which the check is done
+     * @param debug_info additional debug info
      */
-    ~MutexLock()
-    {
-      mutex_.release();
-    }
+    void checkInvalidRelease(const char* method, const char* debug_info);
 
-  private:
-
-    /**
-     *Copy Constructor, but private.
-     *
-     *Don't use it!!!
-     */
-    MutexLock ( MutexLock const& );
-
-    /**
-     * = Operator for the class MutexLock
-     * private, mustn't be used
-     */
-    MutexLock &operator= ( MutexLock const& );
-
-    Mutex &mutex_;
+    const char* name_;
 };
 
 #endif

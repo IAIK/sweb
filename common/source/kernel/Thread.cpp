@@ -12,8 +12,11 @@
 #include "console/Console.h"
 #include "console/Terminal.h"
 #include "backtrace.h"
+#include "mm/KernelMemoryManager.h"
 
 #define MAX_STACK_FRAMES 20
+
+const char* Thread::threadStatePrintable[3] = {"Running", "Sleeping", "ToBeDestroyed"};
 
 static void ThreadStartHack()
 {
@@ -30,30 +33,32 @@ Thread::Thread(const char *name) :
   switch_to_userspace_(0),
   loader_(0),
   state_(Running),
+  sleeping_on_mutex_(0),
   pid_(0),
   my_terminal_(0),
-  fs_info_(new FileSystemInfo()),
+  working_dir_(0),
   name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x\r\n", this, stack_ );
-  debug ( THREAD,"sizeof stack is %x; my name: %s\r\n", sizeof ( stack_ ), name_ ); 
+  debug ( THREAD,"Thread ctor, this is %x; stack is %x\n", this, stack_ );
+  debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
 }
 
-Thread::Thread ( FileSystemInfo *fs_info, const char *name ) :
+Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
   kernel_arch_thread_info_(0),
   user_arch_thread_info_(0),
   switch_to_userspace_(0),
   loader_(0),
   state_(Running),
+  sleeping_on_mutex_(0),
   pid_(0),
   my_terminal_(0),
-  fs_info_(fs_info),
+  working_dir_(working_dir),
   name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x &s, stack is %x\r\n", this, stack_);
-  debug ( THREAD,"sizeof stack is %x; my name: %s\r\n", sizeof ( stack_ ), name_ ); 
-  debug ( THREAD,"Thread ctor, fs_info ptr: %u\n", fs_info );
+  debug ( THREAD,"Thread ctor, this is %x, stack is %x\n", this, stack_);
+  debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
+  debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", working_dir_ );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
 }
 
@@ -62,7 +67,6 @@ Thread::~Thread()
   if ( loader_ )
   {
     debug ( THREAD,"~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
-    loader_->cleanupUserspaceAddressSpace();
     delete loader_;
     loader_ = 0;
   }
@@ -71,22 +75,26 @@ Thread::~Thread()
   user_arch_thread_info_ = 0;
   ArchThreads::cleanupThreadInfos ( kernel_arch_thread_info_ );
   kernel_arch_thread_info_ = 0;
-  if ( fs_info_ )
+  if ( working_dir_ )
   {
     debug ( THREAD,"~Thread deleting fs info\n" );
-    delete fs_info_;
-    fs_info_ = 0;
+    delete working_dir_;
+    working_dir_ = 0;
   }
   debug ( THREAD,"~Thread: done (%s)\n", name_ );
+  assert(KernelMemoryManager::instance()->KMMLockHeldBy() != this);
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return
 // DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
+  debug ( THREAD,"kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
+      currentThread, getName(), this);
+
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
-  debug ( THREAD,"kill: Preparing currentThread (%x %s) for destruction\n",currentThread,currentThread->getName() );
+
   if ( currentThread == this )
   {
     ArchInterrupts::enableInterrupts();
@@ -114,14 +122,19 @@ void Thread::setTerminal ( Terminal *my_term )
   my_terminal_=my_term;
 }
 
-FileSystemInfo *Thread::getFSInfo()
+void Thread::printBacktrace()
 {
-  return fs_info_;
+  printBacktrace(currentThread != this);
 }
 
-void Thread::setFSInfo ( FileSystemInfo *fs_info )
+FsWorkingDirectory* Thread::getWorkingDirInfo(void)
 {
-  fs_info_ = fs_info;
+  return working_dir_;
+}
+
+void Thread::setWorkingDirInfo(FsWorkingDirectory* working_dir)
+{
+  working_dir_ = working_dir;
 }
 
 void Thread::printBacktrace(bool use_stored_registers)
@@ -131,7 +144,8 @@ void Thread::printBacktrace(bool use_stored_registers)
       this, use_stored_registers);
 
   debug(BACKTRACE, "=== Begin of backtrace for thread <%s> ===\n", getName());
-  debug(BACKTRACE, "   found <%d> stack %s:\n\n", Count, Count != 1 ? "frames" : "frame");
+  debug(BACKTRACE, "   found <%d> stack %s:\n", Count, Count != 1 ? "frames" : "frame");
+  debug(BACKTRACE, "\n");
 
   for (int i = 0; i < Count; ++i)
   {

@@ -55,7 +55,7 @@ public:
     typedef ::ustl::reverse_iterator<iterator>		reverse_iterator;
     typedef ::ustl::reverse_iterator<const_iterator>	const_reverse_iterator;
     typedef utf8in_iterator<const_iterator>		utf8_iterator;
-    static const uoff_t npos = static_cast<uoff_t>(-1);	///< Value that means the end of string.
+    static const size_type npos = INT_MAX;		///< Value that means the end of string.
 public:
     inline			string (void)		: memblock () { relink ("",0); }
 				string (const string& s);
@@ -84,8 +84,8 @@ public:
     inline utf8_iterator	utf8_end (void) const	{ return (utf8_iterator (end())); }
     inline const_reference	at (uoff_t pos) const	{ assert (pos <= size() && begin()); return (begin()[pos]); }
     inline reference		at (uoff_t pos)		{ assert (pos <= size() && begin()); return (begin()[pos]); }
-    inline const_iterator	iat (uoff_t pos) const	{ return (begin() + min (pos, size())); }
-    inline iterator		iat (uoff_t pos)	{ return (begin() + min (pos, size())); }
+    inline const_iterator	iat (uoff_t pos) const	{ return (begin() + (__builtin_constant_p(pos) && pos >= npos ? size() : min(pos,size()))); }
+    inline iterator		iat (uoff_t pos)	{ return (const_cast<iterator>(const_cast<const string*>(this)->iat(pos))); }
     const_iterator		wiat (uoff_t i) const;
     inline iterator		wiat (uoff_t i)		{ return (const_cast<iterator>(const_cast<const string*>(this)->wiat(i))); }
     inline const_reference	back (void) const	{ return (at(size()-1)); }
@@ -263,8 +263,5 @@ inline hashvalue_t hash_value (const char* v)
 //----------------------------------------------------------------------
 
 } // namespace ustl
-
-// Specialization for stream alignment
-ALIGNOF (ustl::string, alignof (string::value_type()))
 
 #endif

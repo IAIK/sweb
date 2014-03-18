@@ -64,12 +64,6 @@ class PageManager
      */
     void freePage ( uint32 page_number );
 
-    /**
-     * call this after initializing the KernelMemoryManager and before
-     * starting Interrupts to ensure Mutual Exclusion
-     */
-    void startUsingSyncMechanism() {lock_=new Mutex();}
-
   private:
 
     /**
@@ -82,7 +76,7 @@ class PageManager
      * Copy Constructor
      * must not be implemented
      */
-    PageManager ( PageManager const& ) {};
+    PageManager ( PageManager const& );
     //PageManager &operator=(PageManager const&){};
     static PageManager* instance_;
 
@@ -90,7 +84,7 @@ class PageManager
     uint32 number_of_pages_;
     uint32 lowest_unreserved_page_;
 
-    Mutex *lock_;
+    Mutex lock_;
 
 };
 

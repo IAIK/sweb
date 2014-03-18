@@ -8,6 +8,7 @@
 #include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
+#include "ArchMemory.h"
 
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
@@ -89,7 +90,7 @@ void parseMultibootHeader()
     orig_mbr.vesa_bits_per_pixel = mode_info->bits_per_pixel;
   }
 
-  if (mb_infos && mb_infos->flags && 1<<3)
+  if (mb_infos && mb_infos->flags & 1<<3)
   {
     module_t * mods = (module_t*)mb_infos->mods_addr;
     for (i=0;i<mb_infos->mods_count;++i)
@@ -301,4 +302,23 @@ void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
     ++s8;
   }
   if (debug) kprintf_nosleep("Bzero end\n");
+}
+
+uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
+{
+  uint32 *src = (uint32*)ArchMemory::get3GBAddressOfPPN(physical_page_number);
+
+  uint32 poly = 0xEDB88320;
+  int bit = 0, nbits = 32;
+  uint32 res = 0xFFFFFFFF;
+
+  for (uint32 i = 0; i < page_size/sizeof(*src); ++i)
+    for (bit = nbits - 1; bit >= 0; --bit)
+      if ((res & 1) != ((src[i] >> bit) & 1))
+        res = (res >> 1) ^ poly;
+      else
+        res = (res >> 1) + 7;
+
+  res ^= 0xFFFFFFFF;
+  return res;
 }

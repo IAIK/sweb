@@ -61,7 +61,7 @@ class Condition
     void broadcast();
 
   private:
-    ustl::list<Thread *> *sleepers_;
+    ustl::list<Thread *> sleepers_;
     Mutex *lock_;
 
 };

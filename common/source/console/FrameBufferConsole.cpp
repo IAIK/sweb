@@ -24,7 +24,7 @@ FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_
     log++;
   }
 
-  char *term_name = new char[ log + 5 ];
+  char term_name[ log + 5 ];
   term_name[ 0 ] = 't';
   term_name[ 1 ] = 'e';
   term_name[ 2 ] = 'r';
@@ -43,8 +43,6 @@ FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_
     Terminal *term = new Terminal ( term_name, this,consoleGetNumColumns(),consoleGetNumRows() );
     terminals_.push_back ( term );
   }
-
-  delete term_name;
 
   active_terminal_ = 0;
   consoleSetForegroundColor ( FG_BLACK );
@@ -185,26 +183,6 @@ void FrameBufferConsole::Run ( void )
   }
   while ( 1 ); // until the end of time
 
-}
-void FrameBufferConsole::handleKey ( uint32 key )
-{
-  KeyboardManager * km = KeyboardManager::getInstance();
-
-  uint32 terminal_selected = ( key - KeyboardManager::KEY_F1 );
-
-  if ( terminal_selected < getNumTerminals() && km->isShift() )
-  {
-    setActiveTerminal ( terminal_selected );
-    return;
-  }
-
-  if ( terminal_selected == 11 )
-    Scheduler::instance()->printThreadList();
-
-  if ( key == '\b' )
-    terminals_[active_terminal_]->backspace();
-
-  return;
 }
 bool FrameBufferConsole::isDisplayable ( uint32 key )
 {

@@ -132,7 +132,6 @@ void copy_n_fast (const void* src, size_t nBytes, void* dest) throw()
 }
 #endif // CPU_HAS_MMX
 
-
 /// The fastest optimized backwards raw memory copy.
 void copy_backward_fast (const void* first, const void* last, void* result) throw()
 {

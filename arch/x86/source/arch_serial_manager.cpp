@@ -40,7 +40,7 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
   {
     if( *bios_sp_table != 0x00 )
     {
-      uint8 sp_name[] = { 's', 'p', num_ports + '1', '\0' };
+      uint8 sp_name[] = { 's', 'p', (uint8) (num_ports + '1'), '\0' };
       ArchSerialInfo * archInfo = new ArchSerialInfo();
       archInfo->base_port = *bios_sp_table;
       archInfo->uart_type = SC::UART_OLD;  // TODO: UART type detection

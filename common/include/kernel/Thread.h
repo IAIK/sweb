@@ -6,7 +6,7 @@
 #define _THREAD_H_
 
 #include "types.h"
-#include "fs/FileSystemInfo.h"
+#include "fs/FsWorkingDirectory.h"
 
 enum ThreadState {Running, Sleeping, ToBeDestroyed};
 
@@ -14,6 +14,7 @@ class Thread;
 class ArchThreadInfo;
 class Loader;
 class Terminal;
+class Mutex;
 
 /**
  * @class Thread
@@ -24,6 +25,8 @@ class Thread
     friend class Scheduler;
   public:
 
+    static const char* threadStatePrintable[3];
+
     /**
      * Constructor
      * @return Thread instance
@@ -31,10 +34,12 @@ class Thread
     Thread(const char* name);
 
     /**
-     * Constructor with FileSystemInfo given
+     * Constructor with FsWorkingDirectory given
+     * @param working_dir working directory informations for the new Thread
+     * @param name Thread's name
      * @return Thread instance
      */
-    Thread ( FileSystemInfo *fs_info, const char* name );
+    Thread ( FsWorkingDirectory* working_dir, const char* name );
 
     /**
      * Destructor
@@ -98,24 +103,30 @@ class Thread
     void setTerminal ( Terminal *my_term );
 
     /**
-     * returns the threads file system info
-     * @return the threads file system info
+     * getting the informations about the working Directory of this
+     * Thread
+     * @return the thread's FsWorkingDirectory
      */
-    FileSystemInfo *getFSInfo();
+    FsWorkingDirectory* getWorkingDirInfo(void);
 
     /**
-     * sets the threads file system info
-     * @param fs_info the filesystem info to set
+     * sets the working directory informations of the this Thread
+     * @param working_dir the new working directory informations
      */
-    void setFSInfo ( FileSystemInfo *fs_info );
+    void setWorkingDirInfo(FsWorkingDirectory* working_dir);
 
     /**
      * prints a backtrace (i.e. the call stack) to the
      * debug output.
      * @param use_stored_thread_info determines whether to use the stored or the current thread registers
      */
-    void printBacktrace(bool use_stored_registers = true);
+    void printBacktrace();
+    void printBacktrace(bool use_stored_registers);
 
+    /**
+     * debugging information for mutex deadlocks
+     */
+    Mutex* sleeping_on_mutex_;
   private:
 
     /**
@@ -138,7 +149,8 @@ class Thread
     Terminal *my_terminal_;
 
   protected:
-    FileSystemInfo *fs_info_;
+    FsWorkingDirectory* working_dir_;
+
     const char *name_;
 };
 

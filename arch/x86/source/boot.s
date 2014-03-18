@@ -1,7 +1,7 @@
 
-LINK_BASE            EQU     80000000h              ; Base address (virtual)
-LOAD_BASE           EQU     00100000h              ; Base address (physikal)
-BASE                EQU     (LINK_BASE - LOAD_BASE) ; difference to calculate (virtual)
+LINK_BASE           EQU     80000000h              ; Base address (virtual) (kernel is linked to start at this address)
+LOAD_BASE           EQU     00100000h              ; Base address (physikal) (kernel is actually loaded at this address)
+BASE                EQU     (LINK_BASE - LOAD_BASE) ; difference to calculate physical adress from virtual address until paging is set up
 PHYS_OFFSET EQU 0C0000000h
 
 ; this is a magic number which will be at the start
@@ -19,15 +19,9 @@ MULTIBOOT_WANT_VESA equ 1<<2
 MULTIBOOT_AOUT_KLUDGE   equ 1<<16
 MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
 MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE|MULTIBOOT_WANT_VESA
-;MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
 %macro writeTestOnScreen 0
-   ;mov word[0B8000h], 9F54h
-   ;mov word[0B8002h], 9F65h
-   ;mov word[0B8004h], 9F73h
-   ;mov word[0B8006h], 9F74h
-   ;mov word[0B800Ah], 9F21h
    mov word[0C00B8020h], 9F54h
    mov word[0C00B8022h], 9F65h
    mov word[0C00B8024h], 9F73h
@@ -44,42 +38,47 @@ MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 %endmacro
 
 %macro halt 0
-   jmp short $ ; now what does this do? it just jumps to this instructing untill the end of all times
+   jmp short $ ; now what does this do? it just jumps to this instruction until the end of all times
 %endmacro
 
 ; Text section == Code that can be exectuted
+
 SECTION .text
 BITS 32 ; we want 32bit code
 
-; this is where well start
+; this is where we will start
 ; first check if the loader did a good job
 GLOBAL entry
 entry:
 
    ; we get these from grub
+   ;
+   ; until paging is properly set up, all addresses are "corrected" using the "xx - BASE" - construct
+   ; xx is a virtual address above 2GB, BASE is the offset to subtract to get the actual physical address.
+   ;
    mov [multi_boot_magic_number-BASE], eax;
    mov [multi_boot_structure_pointer-BASE], ebx;
 
 
-   mov edi,0B8000h; load bss address
-   mov ecx,0B8FA0h; end of bss and stack (!), this symbol is at the very end of the kernel
+   mov edi,0B8000h; load frame buffer start
+   mov ecx,0B8FA0h; end of frame buffer
    sub ecx, edi ; how much data do we have to clear
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
 
 
-    mov word[0B8000h], 9F30h
+   mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
 
 
    mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
    cmp eax, DATA_SEGMENT_MAGIC
 
-   ; comment this je to just see a few characters on the screen, really impressive :)
+   ; comment this next statement to just see a few characters on the screen, really impressive :)
    je data_segment_ok ; if its the same then everything is good
 
 ; if we end up here the data segment is _not_ ok
-; write something to the vga memory and halt
+; write something to the frame buffer and halt
 
    mov word[0B8000h], 9F44h
    mov word[0B8002h], 9F61h
@@ -91,11 +90,11 @@ entry:
    mov word[0B8010h], 9F6fh
    mov word[0B8012h], 9F72h
 
-   jmp short $ ; now what does this do? it just jumps to this instructing untill the end of all times
+   jmp short $ ; now what does this do? it just jumps to itself looping until the end of all times
 
 data_segment_ok:
 
-    mov word[0B8002h], 9F31h
+    mov word[0B8002h], 9F31h ; show something on screen just in case we get stuck, so that we know where
 
    ; ok, next thing to do is to load our own descriptor table
    ; this one will spawn just one huge segment for the whole address space
@@ -117,95 +116,95 @@ now_using_segments:
 
    ; next thing to do to be c compliant is to
    ; clear the bss (uninitialised data)
-   ; we also clear the stack
-   
-   
+
    mov edi,bss_start_address - BASE; load bss address
    mov ecx, bss_end_address - BASE; end of bss and stack (!), this symbol is at the very end of the kernel
    sub ecx, edi ; how much data do we have to clear
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
-
-
-
    ; setup the stack pointer to point to our stack in the just cleared bss section
-
     mov esp,stack - BASE
 
     mov word[0B8004h], 9F32h
 
-EXTERN parseMultibootHeader;
 
-mov eax,parseMultibootHeader - BASE
-call eax
+	EXTERN parseMultibootHeader;
 
-EXTERN initialiseBootTimePaging
+	mov eax,parseMultibootHeader - BASE
+	call eax
 
-mov eax,initialiseBootTimePaging - BASE
-call eax
+	EXTERN initialiseBootTimePaging
+
+	mov eax,initialiseBootTimePaging - BASE
+	call eax
 
     mov word[0B8006h], 9F33h
 
+	; prepare paging, set CR3 register to start of page directory
 
-mov     eax,kernel_page_directory_start - BASE; eax = &PD
-mov     cr3,eax         ; cr3 = &PD
-
-
-; set bit 0x4 to 1 in cr4 to enable PSE
-; need a pentium cpu for this but it will give us 4mbyte pages
-mov eax,cr4;
-or eax, 0x00000010;
-mov cr4,eax;
-
-;  2) setting CR0's PG bit.
-
-   mov word[0B8008h], 9F34h
+	mov     eax,kernel_page_directory_start - BASE; eax = &PD
+	mov     cr3,eax         ; cr3 = &PD
 
 
-mov     eax,cr0
-or      eax,0x80010001   ; Set PG bit
-mov     cr0,eax         ; Paging is on!
+	; set bit 0x4 to 1 in cr4 to enable PSE
+	; need a pentium cpu for this but it will give us 4mbyte pages
+	mov eax,cr4;
+	or eax, 0x00000010;
+	mov cr4,eax;
+
+	;  2) setting CR0's PG bit to enable paging
+
+    mov word[0B8008h], 9F34h
 
 
-   mov word[0B800Ah], 9F35h
+	mov     eax,cr0
+	or      eax,0x80010001   ; Set PG bit
+	mov     cr0,eax         ; Paging is on!
 
- mov edi,stack_start; load bss address
- mov ecx, stack; end of bss and stack (!), this symbol is at the very end of the kernel
- sub ecx, edi ; how much data do we have to clear
- xor eax, eax ; we want to fill with 0
- rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
+; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
 
- mov esp,stack
+    mov word[0B800Ah], 9F35h
+; the following memory-clearing should already have been covered by the generic .bss-cleaning above,
+; since the stack is part of the .bss
+ 	;mov edi,stack_start; load bss address
+ 	;mov ecx, stack; end of bss and stack (!), this symbol is at the very end of the kernel
+ 	;sub ecx, edi ; how much data do we have to clear
+ 	;xor eax, eax ; we want to fill with 0
+ 	;rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
+
+ 	mov esp,stack
 
 
 
-   mov word[0B800Ch], 9F36h
+    mov word[0B800Ch], 9F36h
 
-mov eax, PagingMode
-call eax
+	;; UNKLAR wozu das nötig ist? Aber ohne gehts net .. .:) Dokumentieren wär gut
+	mov eax, PagingMode
+	call eax
 
 
 PagingMode:
 
    mov word[0C00B800Eh], 9F38h
 
-
+   ; this has already been done above and not undone so removed PL
 
    ; ok, next thing to do is to load our own descriptor table
    ; this one will spawn just one huge segment for the whole address space
-   lgdt [gdt_ptr_new]
+
+   ;lgdt [gdt_ptr_new]
 
    ; now prepare all the segment registers to use our segments
-   mov ax, LINEAR_DATA_SEL
-   mov ds,ax
-   mov es,ax
-   mov ss,ax
-   mov fs,ax
-   mov gs,ax
+   ;mov ax, LINEAR_DATA_SEL
+   ;mov ds,ax
+   ;mov es,ax
+   ;mov ss,ax
+   ;mov fs,ax
+   ;mov gs,ax
 
    ; use these segments
-   jmp LINEAR_CODE_SEL:(now_using_segments_new)
+   ;jmp LINEAR_CODE_SEL:(now_using_segments_new)
 
 now_using_segments_new:
 
@@ -220,54 +219,19 @@ call removeBootTimeIdentMapping
 
    mov word[0C00B8012h], 4330h
 
-mov     eax,kernel_page_directory_start - BASE; eax = &PD
-mov     cr3,eax         ; cr3 = &PD
+; me thinks this has already been done, so why again
+; mov     eax,kernel_page_directory_start - BASE; eax = &PD
+; mov     cr3,eax         ; cr3 = &PD
 
    mov word[0C00B8014h], 4331h
 
-;EXTERN initInterruptHandlers
-;mov eax,initInterruptHandlers;
-;call eax;
-
- ;  mov word[0C00B8016h], 4332h
-
-   ; set up interrupt handlers, then load IDT register
-;   mov ecx,(idt_end - idt) >> 3 ; number of exception handlers
-;   mov edi,idt
-;   mov esi,isr0
-;do_idt:
-;   mov eax,esi			; EAX=offset of entry point
-;   mov [edi],ax			; set low 16 bits of gate offset
-;   shr eax,16
-;   mov [edi + 6],ax		; set high 16 bits of gate offset
-;   add edi,8			; 8 bytes/interrupt gate
-;   add esi,(isr1 - isr0)		; bytes/stub
-;   loop do_idt
-
-;   mov eax, idt_ptr
-
-;   mov word[0C00B8018h], 4334h
-
-;   lidt [eax]
 
    mov word[0C00B801Ah], 4335h
-
-;call inivalidate_ident_mapping
-;call inivalidate_ident_mapping
-
-
-EXTERN panic
-
-;push  0
-;call panic
-
 
 
 ; GRUB 0.90 leaves the NT bit set in EFLAGS. The first IRET we attempt
 ; will cause a TSS-based task-switch, which will cause Exception 10.
 ; Let's prevent that:
-
-
 
    push dword 2
    popf
@@ -333,15 +297,10 @@ section .text
 ; you can see that the first thing we have here is our magic value
 
 GLOBAL diediedie
-diediedie:
-jmp $
+diediedie:		jmp $
 
 SECTION .gdt_stuff
-
-
-
-; this descritor is _REALLY_ braindead
-; have a look at http://www.csee.umbc.edu/~plusquel/310/slides/micro_arch2.html
+; have a look at http://www.intel.com/Assets/ja_JP/PDF/manual/253668.pdf
 gdt:
 
 ; this is the first global descriptor table
@@ -354,7 +313,7 @@ gdt:
 	dw 0			; limit 15:0
 	dw 0			; base 15:0
 	db 0			; base 23:16
-	db 0			; type
+	db 0			; type (3 bits for the type + system/code or data, privilege level and present bit)
 	db 0			; limit 19:16, flags
 	db 0			; base 31:24
 
@@ -367,14 +326,15 @@ gdt:
 	db 0
 
 
-; the first interesting descriptor this one is for data
+; the first interesting descriptor; this one is for data
+
    LINEAR_DATA_SEL	equ	$-gdt
 	dw 0FFFFh ; the limit, since the page-granular bit is turned on this is shifted 12 bits to the left
              ; in our case this means that the segment spawns the whole 32bit address space
-	dw 0
+	dw 0	 ; since it also starts at 0
 	db 0
-	db 92h			; present, ring 0, data, expand-up, writable
-	db 0CFh                 ; page-granular (4 gig limit), 32-bit
+	db 92h	 ; 1 00 1 0010 == present, ring 0, data, expand-up, writable
+	db 0CFh  ; 1 1 0 0 granularity:page (4 gig limit), 32-bit, not a 64 bit code segment
 	db 0
 
 
@@ -383,8 +343,8 @@ gdt:
 	dw 0FFFFh
 	dw 0
 	db 0
-	db 9Ah			; present,ring 0,code,non-conforming,readable
-	db 0CFh                 ; page-granular (4 gig limit), 32-bit
+	db 9Ah			; 1 00 1 1010 present,ring 0,code,execute,readable
+	db 0CFh         ; page-granular (4 gig limit), 32-bit
 	db 0
    
 ; the first interesting descriptor this one is for data
@@ -403,7 +363,7 @@ gdt:
 	dw 0FFFFh
 	dw 0
 	db 0
-	db 0FAh			; present,ring 3,code,non-conforming,readable
+	db 0FAh			; present,ring 3,code,execute, readable
 	db 0CFh                 ; page-granular (4 gig limit), 32-bit
 	db 0
   gdt_end:

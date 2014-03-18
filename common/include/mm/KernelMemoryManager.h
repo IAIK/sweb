@@ -146,19 +146,18 @@ class KernelMemoryManager
      * called from startup() after the scheduler has been created and just
      * before the Interrupts are turned on
      */
-    void startUsingSyncMechanism() {use_spinlock_=true;}
+    void startUsingSyncMechanism();
 
     /**
-     * checks if the kernel memory manager lock is free
+     * returns the kernel memory manager lock
      * @return true if it is free
      */
-    bool isKMMLockFree()
-    {
-      if ( likely ( use_spinlock_ ) )
-        return lock_.isFree();
-      else
-        return true;
-    }
+    SpinLock& getKMMLock();
+
+    /**
+     * @return the thread holding the KMM Lock
+     */
+    Thread* KMMLockHeldBy();
   private:
 
     //WARNING: we really have to own that memory from start to end, nothing must be there
@@ -180,8 +179,9 @@ class KernelMemoryManager
      * creates a new segment after the given one if the space is big enough
      * @param this_one the segment
      * @param size the size to used
+     * @param zero_check whether memory is zero'd
      */
-    void fillSegment ( MallocSegment *this_one, size_t size );
+    void fillSegment ( MallocSegment *this_one, size_t size, uint32 zero_check = 1 );
 
     /**
      * frees the given segment
@@ -217,21 +217,13 @@ class KernelMemoryManager
     /**
      * locks the kernel memory manager
      */
-    void lockKMM()
-    {
-      if ( likely ( use_spinlock_ ) )
-        lock_.acquire();
-    }
+    void lockKMM();
 
     /**
      * unlocks the kernel memory manager
      */
-    void unlockKMM()
-    {
-      if ( likely ( use_spinlock_ ) )
-        lock_.release();
-    }
-    bool use_spinlock_;
+    void unlockKMM();
+
     SpinLock lock_;
 
     //statistics:

@@ -25,7 +25,7 @@ class UserProcess : public Thread
      * @param terminal_number the terminal to run in (default 0)
      * @param unregister_thread the thread which should be notified if the process exits
      */
-    UserProcess ( const char *minixfs_filename, FileSystemInfo *fs_info,
+    UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
                   MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number = 0 );
 
     /**

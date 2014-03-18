@@ -121,6 +121,11 @@ inline void vector<T>::resize (size_type n, bool bExact)
     const size_type nb = n * sizeof(T);
     if (m_Data.capacity() < nb)
       reserve (n, bExact);
+    else
+    {
+      extern void checkKMMDeadlock();
+      checkKMMDeadlock();
+    }
     m_Data.memlink::resize (nb);
 }
 

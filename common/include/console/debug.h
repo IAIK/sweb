@@ -9,12 +9,10 @@
 
 #define OUTPUT_ENABLED 0x80000000
 
-//group minix
-const uint32 MINIX              = 0x00010000;// | OUTPUT_ENABLED;
-const uint32 M_STORAGE_MANAGER  = 0x00010001;// | OUTPUT_ENABLED;
-const uint32 M_INODE            = 0x00010002;// | OUTPUT_ENABLED;
-const uint32 M_SB               = 0x00010004;// | OUTPUT_ENABLED;
-const uint32 M_ZONE             = 0x00010008;// | OUTPUT_ENABLED;
+//group Cache
+const uint32 CACHE              = 0x00010000;// | OUTPUT_ENABLED;
+const uint32 READ_CACHE         = 0x00010001;// | OUTPUT_ENABLED;
+const uint32 WRITE_CACHE        = 0x00010002;// | OUTPUT_ENABLED;
 
 //group Block Device
 const uint32 BD                 = 0x00020000;
@@ -47,24 +45,29 @@ const uint32 DRIVER             = 0x00200000;
 const uint32 ATA_DRIVER         = 0x00200001;
 const uint32 IDE_DRIVER         = 0x00200002;
 
-
 //group arch
 const uint32 ARCH               = 0x00400000;
 const uint32 A_COMMON           = 0x00400001;
-const uint32 A_MEMORY           = 0x00400002;
+const uint32 A_MEMORY           = 0x00400002 | OUTPUT_ENABLED;
 const uint32 A_SERIALPORT       = 0x00400004;
 const uint32 A_KB_MANAGER       = 0x00400008;
 const uint32 A_INTERRUPTS       = 0x00400010;
 
-//group file system
-const uint32 FS                 = 0x00800000;
-const uint32 RAMFS              = 0x00800001;
-const uint32 DENTRY             = 0x00800002;
-const uint32 PATHWALKER         = 0x00800004;
-const uint32 PSEUDOFS           = 0x00800008;
-const uint32 VFSSYSCALL         = 0x00800010;// | OUTPUT_ENABLED;
-const uint32 VFS                = 0x00800020;
+//group file system (very general)
+const uint32 VFSSYSCALL         = 0x00800000;
+const uint32 FILE_SYSTEM        = 0x00800001;
+const uint32 VOLUME_MANAGER     = 0x00800002;
+const uint32 FS_DEVICE          = 0x00800004;
+const uint32 FS_BITMAP          = 0x00800008;
+const uint32 FS_INODE           = 0x00800010;
+const uint32 FS_UTIL            = 0x00800020;
 
+// group: Unix style FileSystems
+const uint32 FS_UNIX            = 0x00804000;
+const uint32 INODE_TABLE        = 0x00804010;
+
+// group: concrete FS: Minix
+const uint32 FS_MINIX           = 0x00804100;
 
 #endif //DEBUG_H___
 

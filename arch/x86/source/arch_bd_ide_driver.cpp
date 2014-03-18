@@ -10,6 +10,8 @@
 #include "ports.h"
 #include "kmalloc.h"
 #include "string.h"
+#include "ArchInterrupts.h"
+#include "kprintf.h"
 
 uint32 IDEDriver::doDeviceDetection()
 {
@@ -31,7 +33,7 @@ uint32 IDEDriver::doDeviceDetection()
 
    for( cs = 0; cs < 4; cs ++)
    {
-      char *name = new char[5];
+      char name[5];
       name[0] = 'i';
       name[1] = 'd';
       name[2] = 'e';
@@ -79,10 +81,11 @@ uint32 IDEDriver::doDeviceDetection()
         outbp( base_regport , devCtrl | 0x04 ); // RESET
         outbp( base_regport , devCtrl );
 
-        while( inbp( base_port + 7 ) != 58 && jiffies ++ < 50000 )
-          ;
+        jiffies = 0;
+        while (!(inbp( base_port + 7 ) & 0x58) && jiffies++ < IO_TIMEOUT)
+          ArchInterrupts::yieldIfIFSet();
 
-        if( jiffies == 50000 )
+        if( jiffies >= IO_TIMEOUT )
           debug(IDE_DRIVER, "doDetection: Still busy after reset!\n ");
         else
         {
@@ -167,7 +170,6 @@ uint32 IDEDriver::doDeviceDetection()
       debug(IDE_DRIVER, "doDetection: Not found!\n ");
     }
 
-    delete name;
   }
 
    // TODO : verify if the device is ATA and not ATAPI or SATA 
@@ -196,7 +198,7 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
 
   if( mbr->signature == 0xAA55 )
   {
-    debug(IDE_DRIVER, "processMBR: | Valid PC MBR | ");
+    debug(IDE_DRIVER, "processMBR: | Valid PC MBR | \n");
     FP * fp = (FP *) mbr->parts;
     uint32 i;
     for(i = 0; i < 4; i++, fp++)
@@ -218,7 +220,7 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
           offset = fp->relsect;
           numsec = fp->numsect;
 
-          char *part_name = (char*) kmalloc( 6 );
+          char part_name[6];
           strncpy( part_name, name, 4 );
           part_name[4] = part_num + '0';
           part_name[5] = 0;
@@ -227,8 +229,10 @@ int32 IDEDriver::processMBR  ( ATADriver * drv, uint32 sector, uint32 SPT, char 
           BDVirtualDevice( drv, offset, numsec,
           drv->getSectorSize(), part_name, true);
 
+          // set Partition Type (FileSystem identifier)
+          bdv->setPartitionType(fp->systid);
+
           BDManager::getInstance()->addVirtualDevice( bdv );
-          kfree( part_name );
           break;
       }
     }

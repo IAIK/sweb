@@ -420,7 +420,6 @@ inline pair<ForwardIterator,ForwardIterator> equal_range (ForwardIterator first,
 	++ rv.second;
     return (rv);
 }
-
 /// Randomly permute the elements of the container.
 /// \ingroup GeneratorAlgorithms
 ///
@@ -430,8 +429,8 @@ void random_shuffle (RandomAccessIterator first, RandomAccessIterator last)
 {
     for (; first != last; ++ first)
 	iter_swap (first, first + (rand() % distance (first, last)));
-}*/
-
+}
+*/
 /// \brief Generic compare function adaptor to pass to qsort
 /// \ingroup FunctorObjects
 template <typename ConstPointer, typename Compare>

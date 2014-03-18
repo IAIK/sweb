@@ -76,9 +76,9 @@ class FiFo
     void clear();
 
   private:
-    Mutex *input_buffer_lock_;
-    Condition *something_to_read_;
-    Condition *space_to_write_;
+    Mutex input_buffer_lock_;
+    Condition something_to_read_;
+    Condition space_to_write_;
 
     uint32 input_buffer_size_;
     T *input_buffer_;
@@ -90,6 +90,8 @@ class FiFo
 
 template <class T>
 FiFo<T>::FiFo ( uint32 inputb_size, uint8 flags )
+  : input_buffer_lock_("FiFo input_buffer_lock_"), something_to_read_( &input_buffer_lock_ ),
+    space_to_write_( &input_buffer_lock_ )
 {
   if ( inputb_size < 2 )
     input_buffer_size_=512;
@@ -99,9 +101,6 @@ FiFo<T>::FiFo ( uint32 inputb_size, uint8 flags )
   input_buffer_=new T[input_buffer_size_];
   ib_write_pos_=1;
   ib_read_pos_=0;
-  input_buffer_lock_=new Mutex();
-  something_to_read_=new Condition ( input_buffer_lock_ );
-  space_to_write_=new Condition ( input_buffer_lock_ );
   flags_=flags;
 }
 
@@ -109,9 +108,6 @@ template <class T>
 FiFo<T>::~FiFo()
 {
   delete[] input_buffer_;
-  delete input_buffer_lock_;
-  delete something_to_read_;
-  delete space_to_write_;
 }
 
 //only put uses the fallback buffer -> so it doesn't need a lock
@@ -119,7 +115,7 @@ FiFo<T>::~FiFo()
 template <class T>
 void FiFo<T>::put ( T c )
 {
-  input_buffer_lock_->acquire();
+  input_buffer_lock_.acquire();
   if ( ib_write_pos_ == ib_read_pos_ )
   {
     if ( flags_ & FIFO_NOBLOCK_PUT )
@@ -128,27 +124,27 @@ void FiFo<T>::put ( T c )
         ib_read_pos_ = ( ib_read_pos_ +1 ) % input_buffer_size_; //move read pos ahead of us
       else
       {
-        input_buffer_lock_->release();
+        input_buffer_lock_.release();
         return;
       }
     }
     else
       while ( ib_write_pos_ == ib_read_pos_ )
-        space_to_write_->wait();
+        space_to_write_.wait();
   }
-  something_to_read_->signal();
+  something_to_read_.signal();
   input_buffer_[ib_write_pos_++]=c;
   ib_write_pos_ %= input_buffer_size_;
-  input_buffer_lock_->release();
+  input_buffer_lock_.release();
 }
 
 template <class T>
 void FiFo<T>::clear ( void )
 {
-  input_buffer_lock_->acquire();
+  input_buffer_lock_.acquire();
   ib_write_pos_=1;
   ib_read_pos_=0;
-  input_buffer_lock_->release();
+  input_buffer_lock_.release();
 }
 
 //now this routine could get preempted
@@ -156,16 +152,16 @@ template <class T>
 T FiFo<T>::get()
 {
   T ret=0;
-  input_buffer_lock_->acquire();
+  input_buffer_lock_.acquire();
 
   while ( ib_write_pos_ == ( ( ib_read_pos_+1 ) %input_buffer_size_ ) ) //nothing new to read
-    something_to_read_->wait(); //this implicates release & acquire
+    something_to_read_.wait(); //this implicates release & acquire
 
-  space_to_write_->signal();
+  space_to_write_.signal();
   ib_read_pos_ = ( ib_read_pos_+1 ) % input_buffer_size_;
   ret = input_buffer_[ib_read_pos_];
 
-  input_buffer_lock_->release();
+  input_buffer_lock_.release();
   return ret;
 }
 
@@ -173,25 +169,25 @@ T FiFo<T>::get()
 template <class T>
 bool FiFo<T>::peekAhead ( T &ret )
 {
-  input_buffer_lock_->acquire();
+  input_buffer_lock_.acquire();
 
   if ( ib_write_pos_ == ( ( ib_read_pos_+1 ) %input_buffer_size_ ) ) //nothing new to read
   {
-    input_buffer_lock_->release();
+    input_buffer_lock_.release();
     return false;
   }
 
   ret = input_buffer_[ ( ib_read_pos_ + 1 ) % input_buffer_size_];
-  input_buffer_lock_->release();
+  input_buffer_lock_.release();
   return true;
 }
 
 template <class T>
 uint32 FiFo<T>::countElementsAhead()
 {
-  input_buffer_lock_->acquire();
+  input_buffer_lock_.acquire();
   uint32 count = ib_write_pos_ - ib_read_pos_;
-  input_buffer_lock_->release();
+  input_buffer_lock_.release();
   if ( count == 0 )
     return input_buffer_size_;
   else if ( count > 0 )
