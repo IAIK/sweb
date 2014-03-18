@@ -37,7 +37,6 @@
 #include "fs/VfsSyscall.h"
 #include "fs/FsWorkingDirectory.h"
 
-#include "XenConsole.h"
 #include "console/TextConsole.h"
 #include "console/FrameBufferConsole.h"
 #include "console/Terminal.h"
@@ -60,9 +59,7 @@ extern unsigned char stab_end_address_nr;
 extern unsigned char stabstr_start_address_nr;
 extern unsigned char stabstr_end_address_nr;
 
-//HowTo Extend Kernel Memory ?:
-// see init_boottime_pagetables.cpp
-// then increase end_address appropriately
+extern Console* main_console;
 
 uint32 boot_completed;
 uint32 we_are_dying;
@@ -88,21 +85,8 @@ void startup()
 
   //SerialManager::getInstance()->do_detection( 1 );
 
-#ifdef isXenBuild
-  main_console = new XenConsole ( 4 );
-  writeLine2Bochs ( ( uint8 * ) "Xen Console created \n" );
-#else
-  if ( ArchCommon::haveVESAConsole() )
-  {
-    main_console = new FrameBufferConsole ( 4 );
-    writeLine2Bochs ( ( uint8 * ) "Frame Buffer Console created \n" );
-  }
-  else
-  {
-    main_console = new TextConsole ( 4 );
-    writeLine2Bochs ( ( uint8 * ) "Text Console created \n" );
-  }
-#endif
+  main_console = ArchCommon::createConsole(4);
+  writeLine2Bochs((uint8 *) "Console created \n");
 
   Terminal *term_0 = main_console->getTerminal ( 0 );
   Terminal *term_1 = main_console->getTerminal ( 1 );

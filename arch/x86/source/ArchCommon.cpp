@@ -9,6 +9,8 @@
 #include "offsets.h"
 #include "kprintf.h"
 #include "ArchMemory.h"
+#include "TextConsole.h"
+#include "FrameBufferConsole.h"
 
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
@@ -321,4 +323,13 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
 
   res ^= 0xFFFFFFFF;
   return res;
+}
+
+
+Console* ArchCommon::createConsole(uint32 count)
+{
+  if (haveVESAConsole())
+    return new FrameBufferConsole(count);
+  else
+    return new TextConsole(count);
 }

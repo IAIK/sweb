@@ -14,6 +14,8 @@
 #include "types.h"
 #include "paging-definitions.h"
 
+class Console;
+
 class ArchCommon
 {
 public:
@@ -155,6 +157,12 @@ public:
    */
   static uint32 getModuleEndAddress(uint32 num,uint32 is_paging_set_up = 1);
 
+  /**
+   * Generates the according console depending on the architecture
+   * @param count the number of consoles to create
+   * @return a pointer to the Console object
+   */
+  static Console* createConsole(uint32 count);
 };
 
 #endif

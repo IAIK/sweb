@@ -237,3 +237,9 @@ uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
   return modules_list_[0].end_address;
 }
+
+
+Console* ArchCommon::createConsole(uint32 count)
+{
+  return new XenConsole(count);
+}
