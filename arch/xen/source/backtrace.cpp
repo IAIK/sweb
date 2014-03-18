@@ -2,7 +2,6 @@
 #include "kprintf.h"
 #include "Thread.h"
 #include "backtrace.h"
-#include "InterruptUtils.h"
 #include "ArchThreads.h"
 #include "mm/KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "ustl/umap.h"
