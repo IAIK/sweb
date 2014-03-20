@@ -103,6 +103,9 @@ public:
   static uint32 get_PAddr_Of_VAddr_In_KernelMapping(uint32 virtual_addr);
   page_directory_pointer_table_entry* page_dir_pointer_table_;
 
+  static const size_t RESERVED_START = 0x80000ULL;
+  static const size_t RESERVED_END = 0xC0000ULL;
+
 private:
 
   void insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page);

@@ -73,7 +73,7 @@ extern int memcmp(const void *first_position, const void *second_position,
  * @return A pointer to the destination
  *
  */
-extern int memcpy(void *destination, const void *source,
+extern void* memcpy(void *destination, const void *source,
                   size_t number_of_bytes);
 
 /**

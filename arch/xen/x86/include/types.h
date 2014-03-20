@@ -58,17 +58,17 @@ typedef unsigned int uint32;
 typedef unsigned long long uint64;
 typedef long long int64;
 
-typedef unsigned int pointer;
-
-typedef unsigned int size_t;
-
-#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-typedef unsigned int mode_t;
-typedef unsigned int uid_t;
-typedef unsigned int gid_t;
-#endif
+typedef uint32 pointer;
 
 typedef uint32 l_off_t;
+
+#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
+typedef uint32 mode_t;
+typedef uint32 uid_t;
+typedef uint32 gid_t;
+typedef uint32 size_t;
+typedef int32 ssize_t;
+#endif
 
 #define Min(x,y) ((((x))<((y)))?((x)):((y)))
 #define Max(x,y) ((((x))>((y)))?((x)):((y)))

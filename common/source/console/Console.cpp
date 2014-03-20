@@ -7,11 +7,11 @@
 
 Console* main_console=0;
 
-Console::Console ( uint32 ) : Thread("ConsoleThread"), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_")
+Console::Console ( uint32 ) : Thread("ConsoleThread"), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
 {
 }
 
-Console::Console ( uint32, const char* name ) : Thread(name), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_")
+Console::Console ( uint32, const char* name ) : Thread(name), console_lock_("Console::console_lock_"), set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
 {
 }
 

@@ -11,6 +11,7 @@
 #include "ArchMemory.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
+#include "backtrace.h"
 
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
@@ -325,10 +326,23 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
   return res;
 }
 
+
 Console* ArchCommon::createConsole(uint32 count)
 {
   if (haveVESAConsole())
-    return new FrameBufferConsole(4);
+    return new FrameBufferConsole(count);
   else
-    return new TextConsole(4);
+    return new TextConsole(count);
 }
+
+void ArchCommon::initDebug()
+{
+  extern unsigned char stab_start_address_nr;
+  extern unsigned char stab_end_address_nr;
+
+  extern unsigned char stabstr_start_address_nr;
+  extern unsigned char stabstr_end_address_nr;
+
+  parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
+}
+

@@ -47,8 +47,7 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
     empty = checkAndRemove<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti);
   if (empty)
     empty = checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
-
-  assert(false); // you should never get here
+  return true;
 }
 
 
@@ -112,6 +111,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint32 user_
     return insert<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti, physical_page, 0, user_access, 1);
   }
   assert(false); // you should never get here
+  return false;
 }
 
 ArchMemory::~ArchMemory()

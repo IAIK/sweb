@@ -79,7 +79,7 @@ int memcmp(const void *first_position, const void *second_position,
  * @return A pointer to the destination
  *
  */
-int memcpy(void *destination, const void *source, size_t number_of_bytes)
+void* memcpy(void *destination, const void *source, size_t number_of_bytes)
 {
   char *byte_destination = (char*) destination;
   const char *byte_source = (const char*) source;
@@ -89,15 +89,15 @@ int memcpy(void *destination, const void *source, size_t number_of_bytes)
       (byte_source > byte_destination)) ||
      ((byte_destination < (byte_source + number_of_bytes)) &&
       (byte_destination > byte_source)))
-    return (int) destination;
+    return destination;
 
   if(number_of_bytes == 0 || source == destination)
-    return (int) destination;
+    return destination;
 
   while(number_of_bytes--)
     *byte_destination++ = *byte_source++;
 
-  return (int) destination;
+  return destination;
 }
 
 //----------------------------------------------------------------------

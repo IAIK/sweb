@@ -27,6 +27,7 @@
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "kprintf.h"
+#include "XenConsole.h"
 
 #define MAX_MEMORY_MAPS 10
 #define FOUR_ZEROS 0,0,0,0
