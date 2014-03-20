@@ -545,7 +545,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         }
         else
         {
-          page_table_entry *pte_base = (page_table_entry *) ArchMemory::get3GBAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_ppn);
+          page_table_entry *pte_base = (page_table_entry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_ppn);
           debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", address / PAGE_SIZE);
           debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
             pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);

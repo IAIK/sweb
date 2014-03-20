@@ -101,9 +101,8 @@ typedef uint16 uint16_t;
 typedef int16 int16_t;
 typedef uint8 uint8_t;
 typedef int8 int8_t;
-typedef int ptrdiff_t;
-typedef int ssize_t;
-typedef int off_t;
+typedef ssize_t ptrdiff_t;
+typedef ssize_t off_t;
 
 typedef size_t		uoff_t;		///< A type for storing offsets into blocks measured by size_t.
 typedef uint32_t	hashvalue_t;	///< Value type returned by the hash functions.
@@ -111,7 +110,7 @@ typedef size_t		streamsize;	///< Size of stream data
 typedef uoff_t		streamoff;	///< Offset into a stream
 
 typedef size_t uintptr_t;
-typedef int intptr_t;
+typedef ssize_t intptr_t;
 
 /*
 #if !defined(UINTPTR_MAX) || !defined(UINT32_C)

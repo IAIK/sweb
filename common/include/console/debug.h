@@ -26,7 +26,7 @@ const uint32 KPRINTF            = 0x00040001;
 //group kernel
 const uint32 KERNEL             = 0x00080000;
 const uint32 CONDITION          = 0x00080001;
-const uint32 LOADER             = 0x00080002;
+const uint32 LOADER             = 0x00080002 | OUTPUT_ENABLED;
 const uint32 SCHEDULER          = 0x00080004 | OUTPUT_ENABLED;
 const uint32 SYSCALL            = 0x00080008 | OUTPUT_ENABLED;
 const uint32 MAIN               = 0x00080010 | OUTPUT_ENABLED;
@@ -47,7 +47,7 @@ const uint32 IDE_DRIVER         = 0x00200002;
 
 //group arch
 const uint32 ARCH               = 0x00400000;
-const uint32 A_COMMON           = 0x00400001;
+const uint32 A_COMMON           = 0x00400001 | OUTPUT_ENABLED;
 const uint32 A_MEMORY           = 0x00400002 | OUTPUT_ENABLED;
 const uint32 A_SERIALPORT       = 0x00400004;
 const uint32 A_KB_MANAGER       = 0x00400008;

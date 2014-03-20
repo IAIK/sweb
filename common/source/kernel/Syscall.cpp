@@ -14,9 +14,9 @@
 #include "UserProcess.h"
 #include "MountMinix.h"
 
-uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5)
+size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
 {
-  uint32 return_value=0;
+  size_t return_value=0;
 
   if (syscall_number != sc_sched_yield || syscall_number == sc_outline) // no debug print because these might occur very often
     debug(SYSCALL,"Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n",syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
@@ -53,13 +53,13 @@ uint32 Syscall::syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2
   return return_value;
 }
 
-void Syscall::exit(uint32 exit_code)
+void Syscall::exit(size_t exit_code)
 {
   debug(SYSCALL, "Syscall::EXIT: called, exit_code: %d\n",exit_code);
   currentThread->kill();
 }
 
-uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
+size_t Syscall::write(size_t fd, pointer buffer, size_t size)
 {
   //WARNING: this might fail if Kernel PageFaults are not handled
   if ((buffer >= 2U*1024U*1024U*1024U) || (buffer+size > 2U*1024U*1024U*1024U))
@@ -78,13 +78,13 @@ uint32 Syscall::write(uint32 fd, pointer buffer, uint32 size)
   return size;
 }
 
-uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
+size_t Syscall::read(size_t fd, pointer buffer, size_t count)
 {
   if ((buffer >= 2U*1024U*1024U*1024U) || (buffer+count > 2U*1024U*1024U*1024U))
   {
     return -1U;
   }
-  uint32 num_read = 0;
+  size_t num_read = 0;
   if (fd == fd_stdin)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
@@ -92,7 +92,7 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
     debug(SYSCALL,"Syscall::read: %B\n",(char*) buffer,num_read);
     if(isDebugEnabled(SYSCALL))
     {
-      for (uint32 c=0; c<num_read; ++c)
+      for (size_t c=0; c<num_read; ++c)
         kprintfd("%c(%x) ",((char*)buffer)[c],((char*)buffer)[c]);
       kprintfd("\n");
     }
@@ -104,12 +104,12 @@ uint32 Syscall::read(uint32 fd, pointer buffer, uint32 count)
   return num_read;
 }
 
-uint32 Syscall::close(uint32 fd)
+size_t Syscall::close(size_t fd)
 {
   return VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
 }
 
-uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
+size_t Syscall::open(size_t path, size_t flags, size_t mode)
 {
   if (path >= 2U*1024U*1024U*1024U)
   {
@@ -118,7 +118,7 @@ uint32 Syscall::open(uint32 path, uint32 flags, uint32 mode)
   return VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (char*) path, flags | mode);
 }
 
-void Syscall::outline(uint32 port, pointer text)
+void Syscall::outline(size_t port, pointer text)
 {
   //WARNING: this might fail if Kernel PageFaults are not handled
   if (text >= 2U*1024U*1024U*1024U)
@@ -131,7 +131,7 @@ void Syscall::outline(uint32 port, pointer text)
   }
 }
 
-uint32 Syscall::createprocess(uint32 path, uint32 sleep)
+size_t Syscall::createprocess(size_t path, size_t sleep)
 {
   // THIS METHOD IS FOR TESTING PURPOSES ONLY!
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
@@ -141,13 +141,13 @@ uint32 Syscall::createprocess(uint32 path, uint32 sleep)
     return -1U;
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
-  uint32 fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
+  size_t fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
   if (fd == -1U)
   {
     return -1U;
   }
   VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
-  uint32 len = strlen((const char*) path) + 1;
+  size_t len = strlen((const char*) path) + 1;
   char* copy = new char[len];
   memcpy(copy, (const char*) path, len);
   Thread* thread = MountMinixAndStartUserProgramsThread::instance()->createProcess(copy);

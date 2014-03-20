@@ -36,7 +36,7 @@ class Syscall
  * @param syscall_number the first argument from userspace is the type of syscall
  * as defined in syscall-definitions.h
  */
-  static uint32 syscallException(uint32 syscall_number, uint32 arg1, uint32 arg2, uint32 arg3, uint32 arg4, uint32 arg5);
+  static size_t syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5);
 
 /**
  * exit is a basic example of a method handling the exit syscall
@@ -45,7 +45,7 @@ class Syscall
  * @param exit_code is the exit code transmitted from userspace, conceivably it
  *        could be stored or forwared to a waiting parent
  */
-  static void exit(uint32 exit_code);
+  static void exit(size_t exit_code);
 
 /**
  * write a text to a hardware i/o port (for reasons of testing and debugging)
@@ -57,7 +57,7 @@ class Syscall
  * @param port the port to write on
  * @param text the text which will be written
  */
-  static void outline(uint32 port, pointer text);
+  static void outline(size_t port, pointer text);
 
 /**
  * write is a basic example of a method handling the write syscall
@@ -69,7 +69,7 @@ class Syscall
  * @param buffer is a pointer to a userspace buffer
  * @param size is the size of the buffer
  */
-  static uint32 write(uint32 fd, pointer buffer, uint32 size);
+  static size_t write(size_t fd, pointer buffer, size_t size);
 
 /**
  * read is a basic example of a method handling the read syscall
@@ -81,7 +81,7 @@ class Syscall
  * @param buffer is a pointer to a userspace buffer
  * @param count is the maximum number of bytes to read
  */
-  static uint32 read(uint32 fd, pointer buffer, uint32 count);
+  static size_t read(size_t fd, pointer buffer, size_t count);
 
 /**
  * close is a basic example of a method handling the close syscall
@@ -90,7 +90,7 @@ class Syscall
  * @param fd File-Descriptor as described in syscall-definitions:
  *        fd_stdin,fd_stdout,fd_stderr or fd>2 is anything else a process has opened
  */
-  static uint32 close(uint32 fd);
+  static size_t close(size_t fd);
 
 /**
  * open is a basic example of a method handling the open syscall
@@ -100,7 +100,7 @@ class Syscall
  * @param flags file system flags
  * @param mode file system mode
  */
-  static uint32 open(uint32 path, uint32 flags, uint32 mode);
+  static size_t open(size_t path, size_t flags, size_t mode);
 
 /**
  * creates a new process
@@ -111,12 +111,12 @@ class Syscall
  * @param sleep until the new process terminated
  * @return -1 upon error, 0 otherwise
  */
-  static uint32 createprocess(uint32 path, uint32 sleep);
+  static size_t createprocess(size_t path, size_t sleep);
 
-  //static uint32 clone();
-  //static uint32 brk(..);
+  //static size_t clone();
+  //static size_t brk(..);
   //static void waitpid();
-  //static uint32 open(...);
+  //static size_t open(...);
   //static void close(...);
   //etc...
 

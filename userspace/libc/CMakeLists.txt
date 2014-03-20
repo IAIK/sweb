@@ -1,7 +1,5 @@
 project(sweb_libc)
-
-
-set(CMAKE_C_FLAGS "-Wall -g -m32 -fno-builtin -nostdinc -fno-stack-protector -fno-common")
+include(../../arch/${ARCH}/CMakeLists.userspace)
 
 include_directories(
     include
@@ -19,7 +17,7 @@ foreach(src start syscalls)
    add_custom_command(
      OUTPUT ${ASM_OBJECT}
      COMMAND ${NASM_EXECUTABLE}
-     ARGS    -f elf -o ${ASM_OBJECT} ${ASM_SOURCE}
+     ARGS    -f ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
      DEPENDS ${ASM_SOURCE}
      )
 ENDFOREACH(src)

@@ -17,8 +17,8 @@ inline void* operator new(size_t, void* p)
 }
 
 void __builtin_delete(void* address);
-void* __builtin_new(uint32 size);
-void* __builtin_vec_new(uint32 size);
+void* __builtin_new(size_t size);
+void* __builtin_vec_new(size_t size);
 void __builtin_vec_delete(void* address);
 
 

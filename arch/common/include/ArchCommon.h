@@ -43,10 +43,8 @@ public:
   /** 
    * @param is_paging_set_up inform function that paging is not yet up (=false) and
    * that it should behave accordingly
-   * if is_paging_set_up =1 default
-   *
    */
-  static uint32 haveVESAConsole(uint32 is_paging_set_up = 1);
+  static uint32 haveVESAConsole();
 
   /**
    * @return the hight of the VESA Console
@@ -68,21 +66,16 @@ public:
 
   /** 
    * @param is_paging_set_up 
-   *   on false: returns memory address in real memory
-   *   on true (default): returns mapped memory address
    * @return a Pointer to the location of the VESA Memory Region
    */
-  static pointer getVESAConsoleLFBPtr(uint32 is_paging_set_up=1);
+  static pointer getVESAConsoleLFBPtr();
 
   /**
    * returns a Pointer to the location of the FrameBuffer
    *
-   * @param is_paging_set_up 
-   *   on false: returns memory address in real memory
-   *   on true (default): returns mapped memory address
    * @return a Pointer to the location of the FrameBuffer
    */
-  static pointer getFBPtr(uint32 is_paging_set_up = 1);
+  static pointer getFBPtr();
 
 
   /** 
@@ -101,7 +94,7 @@ public:
    * @param &type of Useable Memory Region
    * @return 1 if region >= number_of_regions, 0 otherwise
    */
-  static uint32 getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type);
+  static uint32 getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
 
 
   /** 
@@ -129,33 +122,30 @@ public:
    * @return the CRC- like checksum over all PAGE_SIZE bytes of the page.
    */
   static uint32 checksumPage(uint32 phsical_page_number, uint32 page_size = PAGE_SIZE);
-
+  static uint32 checksum(uint32* src, uint32 count);
 
   /** 
    * Parses the Grub MultiBoot Info with regard to modules
    *
-   * @param is_paging_set_up set (default=1) set 0 if paging is not yet up
    * @return uint32 returns the number of modules loaded by grub
    */
-  static uint32 getNumModules(uint32 is_paging_set_up = 1);
+  static uint32 getNumModules();
 
   /**
    * Parses the Grub MultiBoot Info with regard to modules
    *
    * @param num the number of grub-loaded module which this is about
-   * @param is_paging_set_up set (default=1) set 0 if paging is not yet up
    * @return uint32 returns memory start address of module "num"
    */
-  static uint32 getModuleStartAddress(uint32 num,uint32 is_paging_set_up = 1);
+  static uint32 getModuleStartAddress(uint32 num);
 
   /**
    * Parses the Grub MultiBoot Info with regard to modules
    *
    * @param num the number of grub-loaded module which this is about
-   * @param is_paging_set_up set (default=1) set 0 if paging is not yet up
    * @return uint32 returns memory end address of module "num"
    */
-  static uint32 getModuleEndAddress(uint32 num,uint32 is_paging_set_up = 1);
+  static uint32 getModuleEndAddress(uint32 num);
 
   /**
    * Generates the according console depending on the architecture
@@ -163,6 +153,12 @@ public:
    * @return a pointer to the Console object
    */
   static Console* createConsole(uint32 count);
+
+  /**
+   * Generates the Debug info depending on the architecture
+   */
+  static void initDebug();
+
 };
 
 #endif

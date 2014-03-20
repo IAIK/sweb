@@ -61,7 +61,7 @@ void SpinLock::release(const char* debug_info)
     if (held_by_ != currentThread)
     {
       ArchInterrupts::disableInterrupts();
-      kprintfd_nosleep("(ERROR) SpinLock::release with held_by_ (%x) != currentThread (%x) debug_info: %s\n", held_by_, currentThread, debug_info);
+      kprintfd("(ERROR) SpinLock::release with held_by_ (%x) != currentThread (%x) debug_info: %s\n", held_by_, currentThread, debug_info);
       assert(false);
     }
     held_by_ = 0;
@@ -78,7 +78,7 @@ void SpinLock::checkInterrupts(const char* method, const char* debug_info)
   {
     ArchInterrupts::disableInterrupts();
     boot_completed = 0;
-    kprintfd_nosleep("(ERROR) %s: Spinlock %x (%s) with IF=%d (and SchedulingEnabled=%d) ! Now we're dead !!!\n"
+    kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d (and SchedulingEnabled=%d) ! Now we're dead !!!\n"
              "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",
              method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info);
     currentThread->printBacktrace();

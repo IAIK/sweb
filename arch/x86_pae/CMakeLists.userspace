@@ -1,0 +1,3 @@
+set(ASM_FORMAT elf)
+set(CMAKE_C_FLAGS "-Wall -g -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common")
+

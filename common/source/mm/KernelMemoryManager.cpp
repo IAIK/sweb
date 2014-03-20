@@ -26,13 +26,14 @@ uint32 KernelMemoryManager::createMemoryManager ( pointer start_address, pointer
 KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_address ) : lock_("KMM::lock_")
 {
   malloc_end_=end_address;
-  prenew_assert ( ( ( end_address-start_address-sizeof ( MallocSegment ) ) & 0x80000000 ) == 0 );
+  prenew_assert ( ( ( end_address-start_address-sizeof ( MallocSegment ) ) & 0xFFFFFFFF80000000 ) == 0 );
   first_=new ( ( void* ) start_address ) MallocSegment ( 0,0,end_address-start_address-sizeof ( MallocSegment ),false );
   last_=first_;
   debug ( KMM,"KernelMemoryManager::ctor: bytes avaible: %d \n",end_address-start_address );
-  ArchCommon::bzero((pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment));
-  debug(MAIN, "%x %x\n", start_address, end_address);
+  debug ( KMM,"ArchCommon::bzero((pointer) %x, %x,1);\n",(pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment));
+  ArchCommon::bzero((pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment),0);
 }
+
 
 pointer KernelMemoryManager::allocateMemory ( size_t requested_size )
 {

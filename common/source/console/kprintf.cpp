@@ -29,6 +29,8 @@ RingBuffer<char> *nosleep_rb_;
 
 void flushActiveConsole()
 {
+  assert(main_console);
+  assert(nosleep_rb_);
   assert ( ArchInterrupts::testIFSet() );
   char c=0;
   while ( nosleep_rb_->get ( c ) )
@@ -55,7 +57,7 @@ class KprintfNoSleepFlushingThread : public Thread
 
 void kprintf_nosleep_init()
 {
-  nosleep_rb_ = new RingBuffer<char> ( 10240 );
+  nosleep_rb_ = new RingBuffer<char> ( 1024 );
   debug ( KPRINTF,"Adding Important kprintf_nosleep Flush Thread\n" );
   Scheduler::instance()->addNewThread ( new KprintfNoSleepFlushingThread() );
 }
@@ -80,7 +82,7 @@ void oh_writeCharDebugNoSleep ( char c )
 
 void oh_writeStringDebugNoSleep ( char const* str )
 {
-  uint32 i = 251;
+  size_t i = 251;
   while (*str && --i)
   {
     oh_writeCharDebugNoSleep ( *str );
@@ -97,14 +99,14 @@ uint8 const LEFT  = 16;   /* left justified */
 uint8 const SPECIAL = 32;   /* 0x */
 uint8 const LARGE = 64;   /* use 'ABCDEF' instead of 'abcdef' */
 
-void output_number ( void ( *write_char ) ( char ), uint32 num, uint32 base, uint32 size, uint32 precision, uint8 type )
+void output_number ( void ( *write_char ) ( char ), size_t num, size_t base, size_t size, size_t precision, uint8 type )
 {
   char c;
   char sign,tmp[70];
   const char *digits;
   static const char small_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
   static const char large_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  uint32 i;
+  size_t i;
 
   digits = ( type & LARGE ) ? large_digits : small_digits;
   if ( type & LEFT )
@@ -118,10 +120,10 @@ void output_number ( void ( *write_char ) ( char ), uint32 num, uint32 base, uin
   sign = 0;
   if ( type & SIGN )
   {
-    if ( ( ( int32 ) num ) < 0 )
+    if ( ( ( ssize_t ) num ) < 0 )
     {
       sign = '-';
-      num = - ( int32 ) num;
+      num = - ( ssize_t ) num;
     }
     else if ( type & PLUS )
     {
@@ -182,9 +184,9 @@ void output_number ( void ( *write_char ) ( char ), uint32 num, uint32 base, uin
 //   }
 }
 
-uint32 atoi ( const char *&fmt )
+size_t atoi ( const char *&fmt )
 {
-  uint32 num=0;
+  size_t num=0;
   while ( *fmt >= '0' && *fmt <= '9' )
   {
     num*= 10;
@@ -194,9 +196,9 @@ uint32 atoi ( const char *&fmt )
   return num;
 }
 
-void vkprint_buffer ( void ( *write_char ) ( char ), char *buffer, uint32 size )
+void vkprint_buffer ( void ( *write_char ) ( char ), char *buffer, size_t size )
 {
-  for ( uint32 c=0; c<size; ++c )
+  for ( size_t c=0; c<size; ++c )
     write_char ( ( char ) buffer[c] );
 }
 
@@ -207,7 +209,7 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
   {
     if ( *fmt == '%' )
     {
-      int32 width = 0;
+      ssize_t width = 0;
       uint8 flag = 0;
       char *tmp=0;
       ++fmt;
@@ -250,7 +252,7 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
           //and is quite non-standard :)
         case 'B':
           tmp = ( char* ) va_arg ( args,char* );
-          width = ( uint32 ) va_arg ( args,uint32 );
+          width = ( size_t ) va_arg ( args,size_t );
           if ( tmp )
             vkprint_buffer ( write_char, tmp, width );
           else
@@ -259,7 +261,7 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
 
           //signed decimal
         case 'd':
-          output_number ( write_char, ( uint32 ) va_arg ( args,int32 ),10,width, 0, flag | SIGN );
+          output_number ( write_char, ( size_t ) va_arg ( args,ssize_t ),10,width, 0, flag | SIGN );
           break;
 
           //we don't do i until I see what it actually should do
@@ -268,20 +270,24 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
 
           //octal
         case 'o':
-          output_number ( write_char, ( uint32 ) va_arg ( args,uint32 ),8,width, 0, flag | SPECIAL );
+          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),8,width, 0, flag | SPECIAL );
           break;
 
           //unsigned
         case 'u':
-          output_number ( write_char, ( uint32 ) va_arg ( args,uint32 ),10,width, 0, flag );
+          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),10,width, 0, flag );
           break;
 
         case 'x':
-          output_number ( write_char, ( uint32 ) va_arg ( args,uint32 ),16,width, 0, flag | SPECIAL );
+          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag | SPECIAL );
+          break;
+
+        case 'y':
+          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag );
           break;
 
         case 'X':
-          output_number ( write_char, ( uint32 ) va_arg ( args,uint32 ), 16, width, 0, flag | SPECIAL | LARGE );
+          output_number ( write_char, ( size_t ) va_arg ( args,size_t ), 16, width, 0, flag | SPECIAL | LARGE );
           break;
 
           //no floating point yet
@@ -304,7 +310,7 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
 
           //we don't do unicode (yet)
         case 'c':
-          write_char ( ( char ) va_arg ( args,uint32 ) );
+          write_char ( ( char ) va_arg ( args,size_t ) );
           break;
 
         default:
@@ -347,31 +353,7 @@ void kprintfd ( const char *fmt, ... )
   va_end ( args );
 }
 
-void kprintf_nosleep ( const char *fmt, ... )
-{
-  va_list args;
-
-  va_start ( args, fmt );
-  //check if atomar or not in current context
-  //ALSO: this is a kind of lock on the kprintf_nosleep Datastructure, and therefore very important !
-  if ( ( ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() )
-          || ( main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree() ) )
-    vkprintf ( oh_writeStringWithSleep, oh_writeCharWithSleep, fmt, args );
-  else
-    vkprintf ( oh_writeStringNoSleep, oh_writeCharNoSleep, fmt, args );
-  va_end ( args );
-}
-
-void kprintfd_nosleep ( const char *fmt, ... )
-{
-  va_list args;
-
-  va_start ( args, fmt );
-  vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
-  va_end ( args );
-}
-
-void kprint_buffer ( char *buffer, uint32 size )
+void kprint_buffer ( char *buffer, size_t size )
 {
   if ( unlikely ( ArchInterrupts::testIFSet() ) )
     vkprint_buffer ( oh_writeCharWithSleep, buffer, size );
@@ -379,18 +361,18 @@ void kprint_buffer ( char *buffer, uint32 size )
     vkprint_buffer ( oh_writeCharNoSleep, buffer, size );
 }
 
-void kprintd_buffer ( char *buffer, uint32 size )
+void kprintd_buffer ( char *buffer, size_t size )
 {
     vkprint_buffer ( oh_writeCharDebugNoSleep, buffer, size );
 }
 
-bool isDebugEnabled ( uint32 flag )
+bool isDebugEnabled ( size_t flag )
 {
   bool group_enabled = false;
 
   if ( ! ( flag & OUTPUT_ENABLED ) )
   {
-    uint32 group_flag = flag & 0x7fff0000;
+    size_t group_flag = flag & 0x7fff0000;
     group_flag |= OUTPUT_ENABLED;
     switch ( group_flag )
     {
@@ -418,7 +400,7 @@ bool isDebugEnabled ( uint32 flag )
 #define COLORDEBUG(str, color) str
 #endif
 
-void debug ( uint32 flag, const char *fmt, ... )
+void debug ( size_t flag, const char *fmt, ... )
 {
   va_list args;
   va_start ( args, fmt );

@@ -30,7 +30,7 @@ coutclass::coutclass (void* p __attribute__((unused)), size_t n __attribute__((u
 }
 /// Creates an output string stream linked to the given memory area.
 coutclass::coutclass (void* p __attribute__((unused)), size_t n __attribute__((unused)), void (*m_kprintf)(const char*, ...),
-                      void (*m_kprint_buffer)(char*, uint32))
+                      void (*m_kprint_buffer)(char*, size_t))
 : ostream (),
   m_Flags (0),
   m_Width (0),
@@ -57,7 +57,7 @@ coutclass::coutclass ()
 
 /// Creates an output string stream, initializing the buffer with v.
 coutclass::coutclass (void (*m_kprintf)(const char*, ...),
-                      void (*m_kprint_buffer)(char*, uint32))
+                      void (*m_kprint_buffer)(char*, size_t))
 : ostream (),
   m_Flags (0),
   m_Width (0),

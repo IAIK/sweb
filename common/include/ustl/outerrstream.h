@@ -19,9 +19,9 @@ class coutclass : public ostream {
     coutclass();
     coutclass(void* p, size_t n);
     coutclass(void(*m_kprintf)(const char*, ...),
-              void(*m_kprint_buffer)(char*, uint32));
+              void(*m_kprint_buffer)(char*, size_t));
     coutclass(void* p, size_t n, void(*m_kprintf)(const char*, ...),
-              void(*m_kprint_buffer)(char*, uint32));
+              void(*m_kprint_buffer)(char*, size_t));
     void			iwrite (uint8_t v);
     void			iwrite (wchar_t v);
     inline void			iwrite (int v)			{ iformat (v); }
@@ -69,7 +69,7 @@ private:
     uint8_t			m_Base;			///< Numeric base for writing numbers.
     uint8_t			m_Precision;		///< Number of digits after the decimal separator.
     void (*m_kprintf)(const char*, ...);
-    void (*m_kprint_buffer)(char*, uint32);
+    void (*m_kprint_buffer)(char*, size_t);
 };
 
 //----------------------------------------------------------------------

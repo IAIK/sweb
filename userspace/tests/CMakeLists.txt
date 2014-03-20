@@ -1,10 +1,9 @@
 project(userspace_tests)
+include(../../arch/${ARCH}/CMakeLists.userspace)
 
 # Put userspace libraries and executables in seperated paths
 set(LIBRARY_OUTPUT_PATH  "${LIBRARY_OUTPUT_PATH}/userspace")
 set(EXECUTABLE_OUTPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/userspace")
-
-set(CMAKE_C_FLAGS "-O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector")
 
 # Reset userspace program names
 set($ENV{USERSPACE_NAMES} "")

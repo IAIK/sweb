@@ -438,7 +438,7 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   {
     debug(LOADER, "%x is in .bss\n", virtual_address);
     page = PageManager::instance()->getFreePhysicalPage();
-    ArchCommon::bzero ( ArchMemory::get3GBAddressOfPPN ( page ),PAGE_SIZE,false );
+    ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
     arch_memory_.mapPage(virtual_page, page, true);
     return;
   }
@@ -482,9 +482,9 @@ void Loader::loadOnePageSafeButSlow ( uint32 virtual_address )
   }
   page = PageManager::instance()->getFreePhysicalPage();
   debug(PM, "got new page %x\n", page);
-  ArchCommon::bzero ( ArchMemory::get3GBAddressOfPPN ( page ),PAGE_SIZE,false );
+  ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
   debug(PM, "bzero!\n");
-  uint8* dest = reinterpret_cast<uint8*> (ArchMemory::get3GBAddressOfPPN ( page ));
+  uint8* dest = reinterpret_cast<uint8*> (ArchMemory::getIdentAddressOfPPN ( page ));
   debug(PM, "copying %d elements\n", byte_map.size());
   written = 0;
   for(i=0; i < byte_map.size(); i++)

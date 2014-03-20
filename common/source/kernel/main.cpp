@@ -47,17 +47,9 @@
 #include "MountMinix.h"
 #include "ustl/outerrstream.h"
 
-#include "backtrace.h"
-
 extern void* kernel_end_address;
 
 extern "C" void startup();
-
-extern unsigned char stab_start_address_nr;
-extern unsigned char stab_end_address_nr;
-
-extern unsigned char stabstr_start_address_nr;
-extern unsigned char stabstr_end_address_nr;
 
 extern Console* main_console;
 
@@ -103,7 +95,7 @@ void startup()
 
   main_console->setActiveTerminal ( 0 );
 
-  kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, ( ( pointer ) &kernel_end_address )-2U*1024*1024*1024+1*1024*1024 );
+  kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, VIRTUAL_TO_PHYSICAL_BOOT( ( pointer ) &kernel_end_address )  );
 
   Scheduler::createScheduler();
 
@@ -115,7 +107,7 @@ void startup()
   debug ( MAIN, "Interupts init\n" );
   ArchInterrupts::initialise();
 
-  parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
+  ArchCommon::initDebug();
 
   debug ( MAIN, "Block Device creation\n" );
   BDManager::getInstance()->doDeviceDetection( );

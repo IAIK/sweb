@@ -47,13 +47,13 @@ void kprintfd_nosleep ( const char *fmt, ... );
  * @param buffer the buffer to print
  * @param size the buffer's size
  */
-void kprint_buffer ( char *buffer, uint32 size );
+void kprint_buffer ( char *buffer, size_t size );
 /**
  * prints out a whole buffer with the given size to the debug console.
  * @param buffer the buffer to print
  * @param size the buffer's size
  */
-void kprintd_buffer ( char *buffer, uint32 size );
+void kprintd_buffer ( char *buffer, size_t size );
 /**
  * Initializes the nosleep functionality and starts the flushing thread.
  */
@@ -68,14 +68,14 @@ void kprintf_nosleep_init();
  * @param fmt Format String with standard Format Syntax
  * @param args Possible multibple variable for printf as specified in Format String.
  */
-void debug ( uint32 flag, const char *fmt, ... );
+void debug ( size_t flag, const char *fmt, ... );
 
 /**
  * returns true if the Debug output for the given flag is enabled
  * @param flag the flag to check
  * @return true if debug is enabled
  */
-bool isDebugEnabled ( uint32 flage );
+bool isDebugEnabled ( size_t flage );
 
 /**
  * writes a string to the port 0xe9

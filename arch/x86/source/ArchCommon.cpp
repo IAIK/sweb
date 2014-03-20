@@ -11,6 +11,7 @@
 #include "ArchMemory.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
+#include "backtrace.h"
 
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
@@ -308,7 +309,7 @@ void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
 
 uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
 {
-  uint32 *src = (uint32*)ArchMemory::get3GBAddressOfPPN(physical_page_number);
+  uint32 *src = (uint32*)ArchMemory::getIdentAddressOfPPN(physical_page_number);
 
   uint32 poly = 0xEDB88320;
   int bit = 0, nbits = 32;
@@ -332,4 +333,15 @@ Console* ArchCommon::createConsole(uint32 count)
     return new FrameBufferConsole(count);
   else
     return new TextConsole(count);
+}
+
+void ArchCommon::initDebug()
+{
+  extern unsigned char stab_start_address_nr;
+  extern unsigned char stab_end_address_nr;
+
+  extern unsigned char stabstr_start_address_nr;
+  extern unsigned char stabstr_end_address_nr;
+
+  parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 }

@@ -11,6 +11,7 @@
 #include "mm/KernelMemoryManager.h"
 #include <ustl/ulist.h>
 #include "backtrace.h"
+#include "ArchThreads.h"
 
 #include "ustl/umap.h"
 #include "ustl/ustring.h"
@@ -52,6 +53,7 @@ class IdleThread : public Thread
       uint32 new_ticks = 0;
       while ( 1 )
       {
+        asm("hlt");/*
         Scheduler::instance()->cleanupDeadThreads();
         new_ticks = Scheduler::instance()->getTicks();
         if (new_ticks == last_ticks)
@@ -63,7 +65,7 @@ class IdleThread : public Thread
         {
           last_ticks = new_ticks;
           Scheduler::instance()->yield();
-        }
+        }*/
       }
     }
 };
@@ -165,6 +167,11 @@ uint32 Scheduler::schedule()
     return 0;
   }
 
+//  if (currentThread)
+//  {
+//    kprintfd("Schedule Out:  ");
+//    ArchThreads::printThreadRegisters(currentThread,0);
+//  }
   Thread* previousThread = currentThread;
   do
   {
@@ -188,6 +195,11 @@ uint32 Scheduler::schedule()
   while (currentThread->state_ != Running);
   //debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
 
+//  if (currentThread)
+//  {
+//    kprintfd("Schedule In:  ");
+//    ArchThreads::printThreadRegisters(currentThread,0);
+//  }
   uint32 ret = 1;
 
   if ( currentThread->switch_to_userspace_ )
@@ -203,8 +215,10 @@ uint32 Scheduler::schedule()
 
 void Scheduler::yield()
 {
+  assert(this);
   if ( ! ArchInterrupts::testIFSet() )
   {
+    assert(currentThread);
     kprintfd ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n", currentThread, currentThread->name_ );
     kprintf ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n" );
     currentThread->printBacktrace();

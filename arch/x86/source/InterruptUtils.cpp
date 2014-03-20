@@ -534,7 +534,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
         (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
 
-      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::get3GBAddressOfPPN(currentThread->loader_->arch_memory_.page_dir_page_);
+      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::getIdentAddressOfPPN(currentThread->loader_->arch_memory_.page_dir_page_);
       uint32 virtual_page = address / PAGE_SIZE;
       uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
       uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -548,7 +548,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         }
         else
         {
-          page_table_entry *pte_base = (page_table_entry *) ArchMemory::get3GBAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+          page_table_entry *pte_base = (page_table_entry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
           debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", virtual_page);
           debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", virtual_page,
             pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);

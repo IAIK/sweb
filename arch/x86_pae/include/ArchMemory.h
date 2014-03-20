@@ -11,7 +11,7 @@
 
 #define RESOLVEMAPPING(pdpt,vpage) ;\
   uint32 pdpte_vpn = vpage / (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES);\
-  page_directory_entry* page_directory = (page_directory_entry*) ArchMemory::get3GBAddressOfPPN(pdpt[pdpte_vpn].page_directory_ppn);\
+  page_directory_entry* page_directory = (page_directory_entry*) ArchMemory::getIdentAddressOfPPN(pdpt[pdpte_vpn].page_directory_ppn);\
   uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
   uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
 
@@ -74,7 +74,7 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-  static pointer get3GBAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
+  static pointer getIdentAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
   {
     return (3U*1024U*1024U*1024U) + (ppn * page_size);
   }

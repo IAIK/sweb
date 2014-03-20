@@ -1,7 +1,21 @@
 project(sweb)
 
 include(MakeOptions)
+#Find program executables needed during compilation
+find_program(NASM_EXECUTABLE nasm)
+find_program(LD_EXECUTABLE cc)
+find_program(AR_EXECUTABLE ar)
+find_program(DOXYGEN_EXECUTABLE doxygen)
+find_program(OBJCOPY_EXECUTABLE objcopy)
 
+#Initialize CMake output directories
+set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
+set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
+set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
+set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
+
+include(arch/${ARCH}/CMakeLists.include)
 cmake_minimum_required(VERSION 2.4)
 
 
@@ -17,7 +31,7 @@ MACRO(ASM2OBJ OUTPUTOBJNAMES)
 		add_custom_command(
 		OUTPUT ${ASM_OBJECT}
 		COMMAND ${NASM_EXECUTABLE}
-		ARGS    -f elf -o ${ASM_OBJECT} ${ASM_SOURCE}
+		ARGS    -f ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
 		DEPENDS ${ASM_SOURCE}
 		)
 	ENDFOREACH(src)
@@ -62,54 +76,9 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	endif(library_files)
 ENDMACRO(ADD_PROJECT_LIBRARY)
 
-# Searches for ASM files, Searches for c and cpp files
-# the additional arguments adds sub-directory files to the library
-# compiles ASM files and adds the library
-MACRO(ADD_PROJECT_LIBRARY_SUB_DIRECTORIES LIBRARY_NAME ...)
-	find_asm_files(asm_source)
-
-	asm2obj(asm_objs ${asm_source})
-
-	file(GLOB source_files ${SOURCE_WILDCARDS})
-
-	set(library_files)
-
-	if(source_files)
-		set(library_files ${source_files})
-	endif(source_files)
-	
-	if(asm_objs)
-		set(library_files ${library_files} ${asm_objs})
-	endif(asm_objs)
-	
-	#message(STATUS ${ARGV0})
-	foreach(add_src_file ${ARGV})
-		if(${add_src_file} STREQUAL ${ARGV0})
-			# do nothing - library name is not a source-file and therefore not added
-		else()
-			set(library_files ${library_files} ${add_src_file})
-    		#message(STATUS ${add_src_file})
-		endif()
-	endforeach(add_src_file)
-	
-	if(library_files)
-		#message(STATUS ${library_files})
-		add_library(${LIBRARY_NAME} ${library_files})
-		set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
-	endif(library_files)
-ENDMACRO(ADD_PROJECT_LIBRARY_SUB_DIRECTORIES)
-
 set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
-set (SUB_DIR_SOURCE_WILDCARDS */*.cpp */*.c */*.tcpp */*.S)
 set (ASM_WILDCARDS *.s)
 set (INFO_FILE info.file)
-
-
-#Find program executables needed during compilation
-find_program(NASM_EXECUTABLE nasm)
-find_program(LD_EXECUTABLE ld)
-find_program(AR_EXECUTABLE ar)
-find_program(DOXYGEN_EXECUTABLE doxygen)
 
 
 if(NOT BIN_DIR_PREFIX)
@@ -120,24 +89,10 @@ if(NOT BIN_DIR_NAME)
 	message(FATAL_ERROR "BIN_DIR_NAME not set, check MakeOptions file")
 endif(NOT BIN_DIR_NAME)
 
-
-#Set Compiler and compiterflags
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m32 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
-
-
 set(LIBRARY_FILENAMES)
 
 #Initialize global (environment) variables
 set(ENV{LIBRARY_NAMES})
-
-#Initialize CMake output directories
-set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
-set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
-set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
-set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 #Add the source directories
 add_subdirectory(arch)
@@ -156,16 +111,15 @@ set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 
 
 #Build the Linker command
-set(LD_ARGUMENT -melf_i386)
-set(LD_ARGUMENT ${LD_ARGUMENT} -g -u entry -T ${CMAKE_SOURCE_DIR}/arch/x86/utils/kernel-ld-script.ld)
+set(LD_ARGUMENT ${LD_ARGUMENT} -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld)
 set(LD_ARGUMENT ${LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
-set(LD_ARGUMENT ${LD_ARGUMENT} -Map ${PROJECT_BINARY_DIR}/kernel.map)
+set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
 
-set(LD_ARGUMENT ${LD_ARGUMENT} --start-group)
+set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,--start-group)
 foreach(libfile ${FINAL_LIB_NAMES})
-	set(LD_ARGUMENT ${LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
+set(LD_ARGUMENT ${LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
 endforeach(libfile)
-set(LD_ARGUMENT ${LD_ARGUMENT} --end-group)
+set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,--end-group)
 
 
 #Build userspace exe2minixfs command
@@ -185,6 +139,7 @@ endforeach(file)
 add_custom_command (OUTPUT kernel_image
 	DEPENDS ${FINAL_LIB_NAMES} sweb-img-util
 	COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT}
+  ${KERNEL_IMAGE_OBJCOPY}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 	)
 
@@ -299,24 +254,6 @@ add_custom_target(bochsgdb
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
 
-#Custom target: make kvm
-#Run kvm in non debugging mode
-add_custom_target(kvm
-        COMMAND qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
-        COMMENT "Going to qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        COMMAND reset -I
-        )
-
-#Custom target: make qemu
-#Run qemu in non debugging mode
-add_custom_target(qemu
-	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon /dev/stdout"
-	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-	COMMAND reset -I
-	)
-
 #Custom target: make emu
 #Run qemu in emu mode
 add_custom_target(emu
@@ -332,28 +269,10 @@ add_custom_target(format
 	COMMENT "(re)format image's user-progs partition..."
 	)
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
-add_custom_target(qemugdb
-	COMMAND	qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout
-	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon /dev/stdout on localhost:1234"
-	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-	COMMAND reset -I
-	)
-
-#Custom target: make qemutacos
-#Run qemu in pipe monitor mode for tacos
-add_custom_target(qemutacos
-  COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
-  COMMENT "Going to qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  #COMMAND reset -I
-  )
-
 #Custom target: make runddd
 #Run ddd with some presets
 add_custom_target(runddd
-	COMMAND ddd -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
+	COMMAND ddd -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
 	COMMENT "Going to ddd"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
@@ -361,7 +280,7 @@ add_custom_target(runddd
 #Custom target: make runcgdb
 #Run cgdb with some presets
 add_custom_target(runcgdb
-        COMMAND cgdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
+        COMMAND cgdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
         COMMENT "Going to cgdb"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         )
@@ -370,7 +289,7 @@ add_custom_target(runcgdb
 #Custom target: make rungdb
 #Run gdb with some presets
 add_custom_target(rungdb
-	COMMAND gdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/kernel.x
+	COMMAND gdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
 	COMMENT "Going to gdb"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
@@ -378,14 +297,14 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
-	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\"
+	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\" || true
 	COMMAND cmake .
 	)
 
 #Custom target: make mrsproper
 #Makes really clean (including the object files)
 add_custom_target(mrsproper
-        COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\"
+        COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\" || true
         COMMAND ./relocate_project.sh
         COMMAND cmake .
         )
@@ -396,47 +315,8 @@ add_custom_target(remove_cmake
 	COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
 	COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
 	COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
-	COMMAND rm -r \"${PROJECT_BINARY_DIR}/\"
+	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\" || true
 	)
-
-#Checks for assignment and group parameter
-add_custom_command(OUTPUT submit_check_param
-	#Check for assignment parameter
-	COMMAND if [ '$(assignment)' = '' ]\; then
-		printf \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\\n\"\;
-		printf \"assignment not specified\\n\\n\\n\"\;
-		exit 1\;
-	fi\;
-
-	COMMAND if [ '$(group)' = '' ]\; then
-		printf \"\\n\\n\\nSYNATX: make submit assignment=<1od.2> group=<group number, upper case>\\n\\n\\n\"\;
-		printf \"group not specified\\n\\n\\n\"\;
-		exit 1\;
-	fi\;
-	COMMENT "Checking for assignment and group parameter"
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	)
-
-
-#Build submit archive from dir
-add_custom_target(submit-nogit
-	DEPENDS submit_check_param
-	COMMAND printf \"\"\;
-	SUBMIT_FILE=./IMA$(assignment)GR$(group).tar.bz2\;
-	find . -name \"*~\" -or -iname \"*.bak\" -or -iname \"*.backup\" -or -iname \"*.swp\" -or -iname \"*.swap\" -or -iname \"*.sav\" -exec rm {} + \;
-	tar cjf \"`echo $$SUBMIT_FILE`\" --exclude \"CMakeCache.txt\" --exclude \"CMakeFiles\" --exclude \"cmake_install.cmake\" --exclude \"CVS\" --exclude \"\\.svn\" --exclude \"\\.git\" --exclude \"\\./images\" --exclude \"\\./bin\" --exclude \"\\./utils\" --exclude \"\\.[^/]*\" --exclude \"*.orig\" --exclude \"*.rej\" --exclude \"*.prj\" --exclude \"\\./IMA[^/]*\\.tar\\.bz2\"  ./ \;
-	printf \"\\n**********************************************************\\n\"\;
-	printf \"Created: $$SUBMIT_FILE\\n\" \;
-	printf \"Please Test with: tar tjfv \\\"$$SUBMIT_FILE\\\"  |less\\n\"\;
-	printf \"**********************************************************\\n\\n\"\;
-	if [ `ls -s -k \"$$SUBMIT_FILE\" | cut -f1 -d' '` -gt 600 ]\; then
-	printf \"\\nWARNING: The tar file created is unusually large !\\n\"\;
-	printf \"WARNING: make sure that you don't have unnecessary junk in your Repository!\\n\\n\\n\"\;
-	fi\;
-	COMMENT "Building submit archive (nogit)"
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	)
-
 
 #Forces generates bochs configuration
 add_custom_target(bochsconfig
