@@ -95,12 +95,12 @@ void startup()
 
   main_console->setActiveTerminal ( 0 );
 
-  kprintf ( "Kernel end address is %x and in physical %x\n",&kernel_end_address, VIRTUAL_TO_PHYSICAL_BOOT( ( pointer ) &kernel_end_address )  );
+  kprintf("Kernel end address is %x\n", &kernel_end_address);
 
   Scheduler::createScheduler();
 
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
-  kprintf_nosleep_init();
+  kprintf_init();
 
   debug ( MAIN, "Threads init\n" );
   ArchThreads::initialise();

@@ -100,7 +100,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
-  //kprintfd_nosleep("ArchThreads::create: values done\n");
+  //kprintfd("ArchThreads::create: values done\n");
 
 }
 
@@ -146,7 +146,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
   if (!info)
   {
-    kprintfd_nosleep("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
+    kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
   kprintfd("%sThread: %10x, info: %10x -- eax: %10x  ebx: %10x  ecx: %10x  edx: %10x -- esp: %10x  ebp: %10x  esp0 %10x -- eip: %10x  eflg: %10x  cr3: %x\n",

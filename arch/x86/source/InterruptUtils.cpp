@@ -128,8 +128,8 @@ char const *intel_manual =
     currentThread->switch_to_userspace_ = false;\
     currentThreadInfo = currentThread->kernel_arch_thread_info_;\
     ArchInterrupts::enableInterrupts();\
-    kprintfd_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    kprintf_nosleep("\nCPU Fault " #msg "\n\n%s", intel_manual);\
+    kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
+    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     currentThread->kill();\
   }
 
@@ -141,8 +141,8 @@ char const *intel_manual =
     currentThread->switch_to_userspace_ = false;\
     currentThreadInfo = currentThread->kernel_arch_thread_info_;\
     ArchInterrupts::enableInterrupts();\
-    kprintfd_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    kprintf_nosleep("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    kprintfd("DUMMY_HANDLER: Spurious INT " #x "\n");\
+    kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
     ArchInterrupts::disableInterrupts();\
     currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
     switch (currentThread->switch_to_userspace_)\
@@ -420,8 +420,8 @@ extern Thread *currentThread;
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
   extern "C" void irqHandler_##x ()  {  \
-    kprintfd_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
-    kprintf_nosleep("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
+    kprintfd("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
+    kprintf("IRQ_HANDLER: Spurious IRQ " #x "\n"); \
     ArchInterrupts::EndOfInterrupt(x); \
   }; \
 
@@ -463,15 +463,15 @@ extern "C" void irqHandler_0()
   switch (ret)
   {
     case 0:
-      // kprintfd_nosleep("irq0: Going to leave irq Handler 0 to kernel\n");
+      // kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      // kprintfd_nosleep("irq0: Going to leave irq Handler 0 to user\n");
+      // kprintfd("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadToUserPageDirChange();
     default:
-      kprintfd_nosleep("irq0: Panic in int 0 handler\n");
+      kprintfd("irq0: Panic in int 0 handler\n");
       for( ; ; ) ;
   }
 }
@@ -483,14 +483,14 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-      // kprintfd_nosleep("irq65: Going to leave int Handler 65 to kernel\n");
+      // kprintfd("irq65: Going to leave int Handler 65 to kernel\n");
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      // kprintfd_nosleep("irq65: Going to leave int Handler 65 to user\n");
+      // kprintfd("irq65: Going to leave int Handler 65 to user\n");
       arch_switchThreadToUserPageDirChange();
 
     default:
-      kprintfd_nosleep("irq65: Panic in int 65 handler\n");
+      kprintfd("irq65: Panic in int 65 handler\n");
       for( ; ; ) ;
   }
 }
@@ -637,32 +637,32 @@ extern "C" void irqHandler_1()
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
-  kprintfd_nosleep( "IRQ 3 called\n" );
+  kprintfd( "IRQ 3 called\n" );
   SerialManager::getInstance()->service_irq( 3 );
   ArchInterrupts::EndOfInterrupt(3);
-  kprintfd_nosleep( "IRQ 3 ended\n" );
+  kprintfd( "IRQ 3 ended\n" );
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
-  kprintfd_nosleep( "IRQ 4 called\n" );
+  kprintfd( "IRQ 4 called\n" );
   SerialManager::getInstance()->service_irq( 4 );
   ArchInterrupts::EndOfInterrupt(4);
-  kprintfd_nosleep( "IRQ 4 ended\n" );
+  kprintfd( "IRQ 4 ended\n" );
 }
 
 extern "C" void arch_irqHandler_6();
 extern "C" void irqHandler_6()
 {
-  kprintfd_nosleep( "IRQ 6 called\n" );
-  kprintfd_nosleep( "IRQ 6 ended\n" );
+  kprintfd( "IRQ 6 called\n" );
+  kprintfd( "IRQ 6 ended\n" );
 }
 
 extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
-  kprintfd_nosleep( "IRQ 9 called\n" );
+  kprintfd( "IRQ 9 called\n" );
   BDManager::getInstance()->serviceIRQ( 9 );
   ArchInterrupts::EndOfInterrupt(9);
 }
@@ -670,7 +670,7 @@ extern "C" void irqHandler_9()
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
-  kprintfd_nosleep( "IRQ 11 called\n" );
+  kprintfd( "IRQ 11 called\n" );
   BDManager::getInstance()->serviceIRQ( 11 );
   ArchInterrupts::EndOfInterrupt(11);
 }
@@ -678,7 +678,7 @@ extern "C" void irqHandler_11()
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
-  //kprintfd_nosleep( "IRQ 14 called\n" );
+  //kprintfd( "IRQ 14 called\n" );
   BDManager::getInstance()->serviceIRQ( 14 );
   ArchInterrupts::EndOfInterrupt(14);
 }
@@ -686,7 +686,7 @@ extern "C" void irqHandler_14()
 extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
-  //kprintfd_nosleep( "IRQ 15 called\n" );
+  //kprintfd( "IRQ 15 called\n" );
   BDManager::getInstance()->serviceIRQ( 15 );
   ArchInterrupts::EndOfInterrupt(15);
 }

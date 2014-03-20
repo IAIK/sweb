@@ -78,7 +78,7 @@ class Mutex
      *mutual exclusion is assured in some other way. Of course, if mutual exclusion
      *is assured in another way, why do you need to check a Lock in the first place ?
      *so there really is no good reason to use isFree() :-)
-     *(you can check an example use in kprintf_nosleep)
+     *(you can check an example use in kprintf)
      *
      * @return true if lock is set, false otherwise
      */

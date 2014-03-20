@@ -26,23 +26,6 @@ void kprintf ( const char *fmt, ... );
 void kprintfd ( const char *fmt, ... );
 
 /**
- * Usable like any other printf.
- * Outputs Text on the Console. It can safely be used even if
- * interrupts are turned off, but doesn't guarantee that it prints at all.
- * @param fmt Format String with standard Format Syntax
- * @param args Possible multibple variable for printf as specified in Format String.
- */
-void kprintf_nosleep ( const char *fmt, ... );
-
-/**
- * Usable like any other printf.
- * Outputs Text on the Serial Debug Console. It can safely be used even if
- * interrupts are turned off, but doesn't guarantee that it prints at all.
- * @param fmt Format String with standard Format Syntax
- * @param args Possible multibple variable for printf as specified in Format String.
- */
-void kprintfd_nosleep ( const char *fmt, ... );
-/**
  * prints out a whole buffer with the given size to the Console.
  * @param buffer the buffer to print
  * @param size the buffer's size
@@ -57,7 +40,7 @@ void kprintd_buffer ( char *buffer, size_t size );
 /**
  * Initializes the nosleep functionality and starts the flushing thread.
  */
-void kprintf_nosleep_init();
+void kprintf_init();
 
 /**
  * Displays the output only is the debug flag is set in debug.h

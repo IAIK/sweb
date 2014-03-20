@@ -74,7 +74,7 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
   ArchInterrupts::disableInterrupts();
   extern uint32 boot_completed;
   boot_completed = 0;
-  kprintfd_nosleep("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
-  kprintf_nosleep("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kpanict((uint8*) "Halting System\n");
 }

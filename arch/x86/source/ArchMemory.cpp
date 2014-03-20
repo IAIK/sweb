@@ -82,7 +82,7 @@ void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 
 void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-  //kprintfd_nosleep("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
+  //kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
   page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;

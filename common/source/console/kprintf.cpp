@@ -55,10 +55,10 @@ class KprintfNoSleepFlushingThread : public Thread
     }
 };
 
-void kprintf_nosleep_init()
+void kprintf_init()
 {
   nosleep_rb_ = new RingBuffer<char> ( 1024 );
-  debug ( KPRINTF,"Adding Important kprintf_nosleep Flush Thread\n" );
+  debug ( KPRINTF,"Adding Important kprintf Flush Thread\n" );
   Scheduler::instance()->addNewThread ( new KprintfNoSleepFlushingThread() );
 }
 
@@ -347,8 +347,6 @@ void kprintfd ( const char *fmt, ... )
   va_list args;
 
   va_start ( args, fmt );
-  // for a long time now, there was no difference between kprintd and kprintfd_nosleep
-  // now it's also immediately obvious
   vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );
   va_end ( args );
 }
