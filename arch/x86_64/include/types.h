@@ -18,20 +18,16 @@ typedef unsigned int uint32;
 typedef long unsigned int uint64;
 typedef long int int64;
 
-typedef unsigned int uint;
-
 typedef uint64 pointer;
-
-typedef uint64 size_t;
-
-typedef int64 ssize_t;
 
 typedef uint64 l_off_t;
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-typedef unsigned int mode_t;
-typedef unsigned int uid_t;
-typedef unsigned int gid_t;
+typedef uint64 mode_t;
+typedef uint64 uid_t;
+typedef uint64 gid_t;
+typedef uint64 size_t;
+typedef int64 ssize_t;
 #endif
 
 #define Min(x,y) (((x)<(y))?(x):(y))

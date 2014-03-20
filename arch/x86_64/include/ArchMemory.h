@@ -118,6 +118,10 @@ public:
   static ArchMemoryMapping resolveMapping(uint64 pml4,uint64 vpage);
 
   uint64 page_map_level_4_;
+
+  static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
+  static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
+
 private:
 
 /** 

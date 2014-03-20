@@ -92,6 +92,9 @@ public:
  */
   uint32 page_dir_page_;
 
+  static const size_t RESERVED_START = 0x80000ULL;
+  static const size_t RESERVED_END = 0xC0000ULL;
+
 private:
 
 /** 

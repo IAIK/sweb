@@ -44,7 +44,7 @@ public:
    * @param is_paging_set_up inform function that paging is not yet up (=false) and
    * that it should behave accordingly
    */
-  static uint32 haveVESAConsole();
+  static uint32 haveVESAConsole(uint32 is_paging_set_up = 1);
 
   /**
    * @return the hight of the VESA Console
@@ -68,14 +68,14 @@ public:
    * @param is_paging_set_up 
    * @return a Pointer to the location of the VESA Memory Region
    */
-  static pointer getVESAConsoleLFBPtr();
+  static pointer getVESAConsoleLFBPtr(uint32 is_paging_set_up = 1);
 
   /**
    * returns a Pointer to the location of the FrameBuffer
    *
    * @return a Pointer to the location of the FrameBuffer
    */
-  static pointer getFBPtr();
+  static pointer getFBPtr(uint32 is_paging_set_up = 1);
 
 
   /** 
@@ -129,7 +129,7 @@ public:
    *
    * @return uint32 returns the number of modules loaded by grub
    */
-  static uint32 getNumModules();
+  static uint32 getNumModules(uint32 is_paging_set_up = 1);
 
   /**
    * Parses the Grub MultiBoot Info with regard to modules
@@ -137,7 +137,7 @@ public:
    * @param num the number of grub-loaded module which this is about
    * @return uint32 returns memory start address of module "num"
    */
-  static uint32 getModuleStartAddress(uint32 num);
+  static uint32 getModuleStartAddress(uint32 num, uint32 is_paging_set_up = 1);
 
   /**
    * Parses the Grub MultiBoot Info with regard to modules
@@ -145,7 +145,7 @@ public:
    * @param num the number of grub-loaded module which this is about
    * @return uint32 returns memory end address of module "num"
    */
-  static uint32 getModuleEndAddress(uint32 num);
+  static uint32 getModuleEndAddress(uint32 num, uint32 is_paging_set_up = 1);
 
   /**
    * Generates the according console depending on the architecture
