@@ -115,11 +115,11 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   //therefore, mark as reserved everything >2gb und <3gb already used in PageDirectory
   debug(PM,"Ctor: Marking stuff mapped in above 2 and < 3 gig as used\n");
 //  uint32 last_page=0;
-  for (i=0xFFFFFFFF80000ULL; i<0xFFFFFFFFC0000ULL;++i)
+  for (i=ArchMemory::RESERVED_START; i<ArchMemory::RESERVED_END;++i)
   {
-    uint64 physical_page=0;
-    uint64 pte_page=0;
-    uint64 this_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(i,&physical_page,&pte_page);
+    size_t physical_page=0;
+    size_t pte_page=0;
+    size_t this_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(i,&physical_page,&pte_page);
     assert(this_page_size == 0 || this_page_size == PAGE_SIZE || this_page_size == PAGE_SIZE*PAGE_TABLE_ENTRIES);
     if (this_page_size > 0)
     {
