@@ -115,24 +115,48 @@ pointer ArchCommon::getFreeKernelMemoryEnd()
 }
 
 
-uint32 ArchCommon::haveVESAConsole()
+uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
 {
-  return mbr.have_vesa_console;
+  if (is_paging_set_up)
+    return mbr.have_vesa_console;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.have_vesa_console;
+  }
 }
 
-uint32 ArchCommon::getNumModules()
+uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
 {
-  return mbr.num_module_maps;
+  if (is_paging_set_up)
+    return mbr.num_module_maps;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.num_module_maps;
+  }
 }
 
-uint32 ArchCommon::getModuleStartAddress(uint32 num)
+uint32 ArchCommon::getModuleStartAddress(uint32 num,uint32 is_paging_set_up)
 {
-  return mbr.module_maps[num].start_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+  if (is_paging_set_up)
+    return mbr.module_maps[num].start_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.module_maps[num].start_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+  }
 }
 
-uint32 ArchCommon::getModuleEndAddress(uint32 num)
+uint32 ArchCommon::getModuleEndAddress(uint32 num,uint32 is_paging_set_up)
 {
-  return mbr.module_maps[num].end_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+  if (is_paging_set_up)
+    return mbr.module_maps[num].end_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.module_maps[num].end_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+  }
 }
 
 uint32 ArchCommon::getVESAConsoleHeight()
@@ -145,14 +169,23 @@ uint32 ArchCommon::getVESAConsoleWidth()
   return mbr.vesa_x_res;
 }
 
-pointer ArchCommon::getVESAConsoleLFBPtr()
+pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
-  return 0xFFFFFFFFC000000ULL - 1024U*1024U*16U;
+  if (is_paging_set_up)
+    return 0xFFFFFFFFC000000ULL - 1024U * 1024U * 16U;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.vesa_lfb_pointer;
+  }
 }
 
-pointer ArchCommon::getFBPtr()
+pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
 {
-  return PHYSICAL_TO_VIRTUAL_OFFSET | 0xB8000ULL;
+  if (is_paging_set_up)
+    return PHYSICAL_TO_VIRTUAL_OFFSET | 0xB8000ULL;
+  else
+    return 0xB8000ULL;
 }
 
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()

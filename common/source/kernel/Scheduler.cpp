@@ -53,7 +53,6 @@ class IdleThread : public Thread
       uint32 new_ticks = 0;
       while ( 1 )
       {
-        asm("hlt");/*
         Scheduler::instance()->cleanupDeadThreads();
         new_ticks = Scheduler::instance()->getTicks();
         if (new_ticks == last_ticks)
@@ -65,7 +64,7 @@ class IdleThread : public Thread
         {
           last_ticks = new_ticks;
           Scheduler::instance()->yield();
-        }*/
+        }
       }
     }
 };
