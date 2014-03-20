@@ -6,6 +6,7 @@ extern __syscall
 
 global _start
 _start:
+  jmp _start
 	; we dont touch parameters on stack, let main deal with them (argc,argv)
 	call main
 	push 0x00	; if we don't push stuff onto the stack prior to calling __syscall

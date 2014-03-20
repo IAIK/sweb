@@ -1,6 +1,8 @@
 #include "unistd.h"
 #include "stdio.h"
 #include "string.h"
+#include "stdlib.h"
+#include "nonstd.h"
 
 #define FORK_ENABLED 0
 #define EXECUTABLE_PREFIX       "/"          // "/user_progs/"
@@ -108,7 +110,7 @@ void handle_command(char* buffer,int buffer_size)
     if(pid == 0)
     {
       //child process, replace with new image
-      execv(command);
+      execv(command,0);
       printf("Command not understood\n");
     }
     else

@@ -353,6 +353,22 @@ extern void* sbrk(intptr_t increment);
  */
 extern unsigned int sleep(unsigned int seconds);
 
+//----------------------------------------------------------------------
+/**
+ * Replaces the current process image with a new one.
+ * The values provided with the argv array are the arguments for the new
+ * image starting with the filename of the file to be executed (by convention).
+ * This pointer array must be terminated by a NULL pointer (which has to be
+ * of type char *.
+ * If this function returns, an error has occured.
+ *
+ * @param path path to the file to execute
+ * @param argv an array containing the arguments
+ * @return 0 on success, -1 otherwise and errno is set appropriately
+ *
+ */
+int execv(const char *path __attribute__((unused)), char *const argv[] __attribute__((unused)));
+
 #endif // unistd_h___
 
 

@@ -11,4 +11,5 @@ int main(int argc, char *argv[])
 	printf("%s",str1);
 	printf("%s",str2);
 	printf("%s",str3);
+	return 0;
 }

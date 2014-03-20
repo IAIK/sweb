@@ -76,34 +76,6 @@ arch_saveThreadRegisters:
         mov qword[rbx + 16], rax
         store_general_regs
         ret
-
-global arch_saveThreadRegistersForPageFault
-arch_saveThreadRegistersForPageFault:
-        mov rbx, currentThreadInfo
-        mov rbx, [rbx]
-        fnsave [rbx + 224]
-        frstor [rbx + 224]
-        mov rax, qword[rsp + 160]  ; get cs
-        and rax, 0x03             ; check cpl is 3
-        cmp rax, 0x03
-        je .from_user
-.from_kernel:
-        mov rax, qword [rsp + 176]; save rsp
-        ;add rax, 0x18 ; remove the last 3 elements from stack
-        mov qword[rbx + 56], rax
-        jmp .end
-.from_user:
-        mov rax, qword[rsp + 176] ; save rsp3
-        mov qword[rbx + 56], rax
-.end:
-        mov rax, qword [rsp + 152]; save rip
-        mov qword[rbx], rax
-        mov rax, qword [rsp + 160]; save cs
-        mov qword[rbx + 8], rax
-        mov rax, qword [rsp + 168]; save rflags
-        mov qword[rbx + 16], rax
-        store_general_regs
-        ret
         
 global arch_switchThreadKernelToKernel
 arch_switchThreadKernelToKernel:
@@ -164,7 +136,6 @@ arch_switchThreadToUserPageDirChange:
         mov fs , word[rbx + 152]      ; restore fs
         mov gs , word[rbx + 152]      ; restore gs
 
-        push qword[rbx + 152]          ; push ss
         push qword[rbx + 152]          ; push ss
         push qword[rbx + 56]          ; push rsp
         push qword[rbx + 16]          ; push rflags

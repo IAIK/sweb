@@ -155,8 +155,8 @@ char const *intel_manual =
     currentThread->switch_to_userspace_ = false;\
     currentThreadInfo = currentThread->kernel_arch_thread_info_;\
     kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     asm("hlt");\
+    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     ArchInterrupts::enableInterrupts();\
     currentThread->kill();\
   }
@@ -244,13 +244,13 @@ extern "C" void irqHandler_0()
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-//      kprintfd("irq0: Going to leave irq Handler 0 to user\n");
+      kprintfd("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
-//      kprintfd("currentThread: %x\n", currentThread);
-//      if (currentThread)
-//        ArchThreads::printThreadRegisters(currentThread,0);
-//      if (currentThread)
-//        ArchThreads::printThreadRegisters(currentThread,1);
+      kprintfd("currentThread: %x\n", currentThread);
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,1);
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd("irq0: Panic in int 0 handler\n");
@@ -273,9 +273,11 @@ extern "C" void irqHandler_65()
 //        ArchThreads::printThreadRegisters(currentThread,0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
-      // kprintfd("irq65: Going to leave int Handler 65 to user\n");
-//      if (currentThread)
-//        ArchThreads::printThreadRegisters(currentThread,1);
+      kprintfd("irq65: Going to leave int Handler 65 to user\n");
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,1);
       arch_switchThreadToUserPageDirChange();
 
     default:
@@ -288,6 +290,8 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
+  ArchThreads::printThreadRegisters(currentThread,0);
+  ArchThreads::printThreadRegisters(currentThread,1);
   InterruptUtils::countPageFault(address);
   //--------Start "just for Debugging"-----------
 
@@ -357,48 +361,48 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
 
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
-  if (currentThread && currentThread->loader_)
+//  if (currentThread && currentThread->loader_)
+//  {
+//    kprintfd("%x\n",currentThread->loader_->arch_memory_.page_map_level_4_);
+//  ArchMemoryMapping m = ArchMemory::resolveMapping(currentThread->loader_->arch_memory_.page_map_level_4_, address / PAGE_SIZE);
+//  uint64 x,y,z,w;
+//  for (x = 0; x < PAGE_MAP_LEVEL_4_ENTRIES/2; ++x)
+//  {
+//    if (!m.pml4 || !m.pml4[x].present)
+//      continue;
+//    kprintfd("PML4[%d] is present\n",x);
+//    kprintfd("mapping[%d] = %x\n", x, m.pml4[x]);
+//    for (y = 0; y < PAGE_DIR_POINTER_TABLE_ENTRIES; ++y)
+//    {
+//      m.pdpt = (PageDirPointerTableEntry*) ArchMemory::getIdentAddressOfPPN(m.pml4[x].page_ppn);
+//      if (!m.pdpt || !m.pdpt[y].page.present)
+//        continue;
+//
+//      kprintfd("PDPT[%d] is present\n",y);
+//      kprintfd("mapping[%d][%d] = %x\n", x, y, m.pdpt[y]);
+//      for (z = 0; z < PAGE_DIR_ENTRIES; ++z)
+//      {
+//        m.pd = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(m.pdpt[y].pd.page_ppn);
+//        if (!m.pd || !m.pd[z].page.present)
+//          continue;
+//
+//        kprintfd("PD[%d] is present\n",z);
+//          kprintfd("mapping[%d][%d][%d] = %x\n", x, y, z, m.pd[z]);
+//          for (w = 0; w < PAGE_TABLE_ENTRIES; ++w)
+//          {
+//            m.pt = (PageTableEntry*) ArchMemory::getIdentAddressOfPPN(m.pd[z].pt.page_ppn);
+//            if (!m.pt || !m.pt[w].present)
+//              continue;
+//
+//            kprintfd("mapping[%d][%d][%d][%d] (%x) = %x\n", x, y, z, w, (x << 27) | (y << 18) | (z << 9) | w,m.pt[w]);
+//          }
+//      }
+//    }
+//  }
+//}
+  if (address == 0)
   {
-    kprintfd("%x\n",currentThread->loader_->arch_memory_.page_map_level_4_);
-  ArchMemoryMapping m = ArchMemory::resolveMapping(currentThread->loader_->arch_memory_.page_map_level_4_, address / PAGE_SIZE);
-  uint64 x,y,z,w;
-  for (x = 0; x < PAGE_MAP_LEVEL_4_ENTRIES/2; ++x)
-  {
-    if (!m.pml4 || !m.pml4[x].present)
-      continue;
-    kprintfd("PML4[%d] is present\n",x);
-    kprintfd("mapping[%d] = %x\n", x, m.pml4[x]);
-    for (y = 0; y < PAGE_DIR_POINTER_TABLE_ENTRIES; ++y)
-    {
-      m.pdpt = (PageDirPointerTableEntry*) ArchMemory::getIdentAddressOfPPN(m.pml4[x].page_ppn);
-      if (!m.pdpt || !m.pdpt[y].page.present)
-        continue;
-
-      kprintfd("PDPT[%d] is present\n",y);
-      kprintfd("mapping[%d][%d] = %x\n", x, y, m.pdpt[y]);
-      for (z = 0; z < PAGE_DIR_ENTRIES; ++z)
-      {
-        m.pd = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(m.pdpt[y].pd.page_ppn);
-        if (!m.pd || !m.pd[z].page.present)
-          continue;
-
-        kprintfd("PD[%d] is present\n",z);
-          kprintfd("mapping[%d][%d][%d] = %x\n", x, y, z, m.pd[z]);
-          for (w = 0; w < PAGE_TABLE_ENTRIES; ++w)
-          {
-            m.pt = (PageTableEntry*) ArchMemory::getIdentAddressOfPPN(m.pd[z].pt.page_ppn);
-            if (!m.pt || !m.pt[w].present)
-              continue;
-
-            kprintfd("mapping[%d][%d][%d][%d] (%x) = %x\n", x, y, z, w, (x << 27) | (y << 18) | (z << 9) | w,m.pt[w]);
-          }
-      }
-    }
-  }
-  }
-  if (!(error & FLAG_PF_USER))
-  {
-    //asm("hlt");
+    asm("hlt");
   }
   //--------End "just for Debugging"-----------
 
@@ -436,6 +440,10 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
       break; //we already are in kernel mode
     case 1:
       currentThreadInfo = currentThread->user_arch_thread_info_;
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,1);
       arch_switchThreadToUserPageDirChange();
       break; //not reached
     default:

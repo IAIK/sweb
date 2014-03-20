@@ -10,14 +10,8 @@
 #include "Scheduler.h"
 #include "Mutex.h"
 #include "ArchMemory.h"
+#include "ElfFormat.h"
 #include <ustl/uvector.h>
-
-
-struct sELF32_Phdr;
-typedef struct sELF32_Phdr ELF32_Phdr;
-
-struct sELF32_Ehdr;
-typedef struct sELF32_Ehdr ELF32_Ehdr;
 
 /**
 * @class Loader manages the Addressspace creation of a thread
@@ -32,7 +26,7 @@ class Loader
      * @param thread Thread to which the loader should belong
      * @return Loader instance
      */
-    Loader(int32 fd, Thread *thread);
+    Loader(ssize_t fd, Thread *thread);
 
     /**
      *Destructor
@@ -63,7 +57,7 @@ class Loader
      *zeros it out, copies the page, one byte at a time
      * @param virtual_address virtual address where to find the page to load
      */
-    void loadOnePageSafeButSlow ( uint32 virtual_address );
+    void loadOnePageSafeButSlow ( pointer virtual_address );
 
     ArchMemory arch_memory_;
 
@@ -76,10 +70,10 @@ class Loader
     bool readHeaders();
 
 
-    uint32 fd_;
+    size_t fd_;
     Thread *thread_;
-    ELF32_Ehdr *hdr_;
-    ustl::vector<ELF32_Phdr> phdrs_;
+    Elf::Ehdr *hdr_;
+    ustl::vector<Elf::Phdr> phdrs_;
     Mutex load_lock_;
 };
 

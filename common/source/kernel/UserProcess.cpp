@@ -28,7 +28,6 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
   }
 
   loader_= new Loader ( fd_, this );
-
   if(loader_ && loader_->loadExecutableAndInitProcess())
   {
     run_me_ = true;

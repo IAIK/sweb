@@ -10,8 +10,6 @@
 #include "ArchCommon.h"
 #include "PageManager.h"
 
-extern "C" uint32 kernel_page_directory_start;
-
 ArchMemory::ArchMemory()
 {
   page_map_level_4_ = PageManager::instance()->getFreePhysicalPage();
@@ -24,7 +22,7 @@ template<typename T>
 bool ArchMemory::checkAndRemove(pointer map_ptr, uint64 index)
 {
   T* map = (T*) map_ptr;
-  kprintfd("%s: page %x index %x\n", __PRETTY_FUNCTION__, map, index);
+  debug(A_MEMORY,"%s: page %x index %x\n", __PRETTY_FUNCTION__, map, index);
   ((uint64*)map)[index] = 0;
   for (uint64 i = 0; i < PAGE_DIR_ENTRIES; i++)
   {
@@ -36,7 +34,6 @@ bool ArchMemory::checkAndRemove(pointer map_ptr, uint64 index)
 
 bool ArchMemory::unmapPage(uint64 virtual_page)
 {
-  PageMapLevel4Entry* pml4p = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
 
   assert(m.page_ppn != 0 && m.page_size == PAGE_SIZE);
@@ -52,12 +49,15 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
 
 
 template<typename T>
-bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 size, uint64 user_access, uint64 writeable)
+bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable)
 {
   T* map = (T*) map_ptr;
-  kprintfd("%s: page %x index %x ppn %x user_access %x size %x\n", __PRETTY_FUNCTION__, map, index, ppn, user_access, size);
-  ArchCommon::bzero(getIdentAddressOfPPN(ppn), PAGE_SIZE);
-  assert(((uint64*)map)[index] == 0);
+  debug(A_MEMORY,"%s: page %x index %x ppn %x user_access %x size %x\n", __PRETTY_FUNCTION__, map, index, ppn, user_access, size);
+  if (bzero)
+  {
+    ArchCommon::bzero(getIdentAddressOfPPN(ppn), PAGE_SIZE);
+    assert(((uint64*)map)[index] == 0);
+  }
   map[index].size = size;
   map[index].writeable = writeable;
   map[index].page_ppn = ppn;
@@ -68,28 +68,28 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 size, 
 
 bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint32 user_access, uint32 page_size)
 {
-  kprintfd("%x %x %x %x %x\n",page_map_level_4_, virtual_page, physical_page, user_access, page_size);
+  debug(A_MEMORY,"%x %x %x %x %x\n",page_map_level_4_, virtual_page, physical_page, user_access, page_size);
   PageMapLevel4Entry* pml4p = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
-  kprintfd("%x\n", *pml4p);
+  debug(A_MEMORY,"%x\n", *pml4p);
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
 
   if (m.pdpt_ppn == 0)
   {
     m.pdpt_ppn = PageManager::instance()->getFreePhysicalPage();
-    insert<PageMapLevel4Entry>((pointer) m.pml4, m.pml4i, m.pdpt_ppn, 0, 1, 1);
+    insert<PageMapLevel4Entry>((pointer) m.pml4, m.pml4i, m.pdpt_ppn, 1, 0, 1, 1);
   }
 
   if (m.pd_ppn == 0)
   {
     if (page_size == PAGE_SIZE * PAGE_TABLE_ENTRIES * PAGE_DIR_ENTRIES)
     {
-      return insert<PageDirPointerTablePageEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdi, physical_page, 1,
+      return insert<PageDirPointerTablePageEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdi, physical_page, 0, 1,
                                                      user_access, 1);
     }
     else
     {
       m.pd_ppn = PageManager::instance()->getFreePhysicalPage();
-      insert<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti, m.pd_ppn, 0, 1, 1);
+      insert<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti, m.pd_ppn, 1, 0, 1, 1);
     }
   }
 
@@ -97,18 +97,18 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint32 user_
   {
     if (page_size == PAGE_SIZE * PAGE_TABLE_ENTRIES)
     {
-      return insert<PageDirPageEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, physical_page, 1, user_access, 1);
+      return insert<PageDirPageEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, physical_page, 0, 1, user_access, 1);
     }
     else if (m.pd == 0)
     {
       m.pt_ppn = PageManager::instance()->getFreePhysicalPage();
-      insert<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, m.pt_ppn, 0, 1, 1);
+      insert<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, m.pt_ppn, 1, 0, 1, 1);
     }
   }
 
   if (m.page_ppn == 0 && page_size == PAGE_SIZE)
   {
-    return insert<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti, physical_page, 0, user_access, 1);
+    return insert<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti, physical_page, 0, 0, user_access, 1);
   }
   assert(false); // you should never get here
   return false;
@@ -152,32 +152,6 @@ ArchMemory::~ArchMemory()
       PageManager::instance()->freePage(pml4[pml4i].page_ppn);
     }
   }
-//  {
-//    if (page_directory[pde_vpn].pt.present)
-//    {
-//      if (page_directory[pde_vpn].page.use_2_m_pages)
-//      {
-//        page_directory[pde_vpn].page.present=0;
-//          for (uint32 p=0;p<1024;++p)
-//            PageManager::instance()->freePage(page_directory[pde_vpn].page.page_ppn*1024 + p);
-//      }
-//      else
-//      {
-//        page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_ppn);
-//        for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
-//        {
-//          if (pte_base[pte_vpn].present)
-//          {
-//            pte_base[pte_vpn].present = 0;
-//            PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
-//          }
-//        }
-//        page_directory[pde_vpn].pt.present=0;
-//        PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_ppn);
-//      }
-//    }
-//  }
-//  PageManager::instance()->freePage(physical_page_directory_page);
 }
 
 bool ArchMemory::checkAddressValid(uint64 vaddress_to_check)
@@ -185,12 +159,12 @@ bool ArchMemory::checkAddressValid(uint64 vaddress_to_check)
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, vaddress_to_check / PAGE_SIZE);
   if (m.page != 0)
   {
-    kprintfd("checkAddressValid %x and %x -> true", page_map_level_4_, vaddress_to_check);
+    debug(A_MEMORY,"checkAddressValid %x and %x -> true\n", page_map_level_4_, vaddress_to_check);
     return true;
   }
   else
   {
-    kprintfd("checkAddressValid %x and %x -> false", page_map_level_4_, vaddress_to_check);
+    debug(A_MEMORY,"checkAddressValid %x and %x -> false\n", page_map_level_4_, vaddress_to_check);
     return false;
   }
   if (m.pml4 && m.pml4[m.pml4i].present)
@@ -249,7 +223,7 @@ ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4,uint64 vpage)
       m.pd_ppn = m.pdpt[m.pdpti].pd.page_ppn;
       if (m.pd_ppn > 2048)
       {
-        kprintfd("%x\n", m.pd_ppn);
+        debug(A_MEMORY,"%x\n", m.pd_ppn);
       }
       assert(m.pd_ppn <= 2048);
       m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pdpt[m.pdpti].pd.page_ppn);

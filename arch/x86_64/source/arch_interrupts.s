@@ -49,8 +49,16 @@ BITS 64
   pop rsp
 %endmacro
 
+%macro changeData 0
+        mov ax, 0x20
+        mov ss, ax
+        mov ds, ax
+        mov es, ax
+        mov fs, ax
+        mov gs, ax
+%endmacro
+
 extern arch_saveThreadRegisters
-extern arch_saveThreadRegistersForPageFault
 
 ; ; ; 
 ; macros for irq and int handlers
@@ -61,6 +69,7 @@ global arch_irqHandler_%1
 extern irqHandler_%1
 arch_irqHandler_%1:
         pushAll
+        changeData
         call arch_saveThreadRegisters
         call irqHandler_%1
         popAll
@@ -95,26 +104,14 @@ extern pageFaultHandler
 global arch_pageFaultHandler
 arch_pageFaultHandler:
         ;we are already on a new stack because a privliedge switch happened
-        
-        ; It's a bad idea to tamper with the EDI before the context was saved!
-        ; This can cause severe malfunction - e.g. a userspace program
-        ; executing something like rep movs DWORD PTR es:[edi],DWORD PTR ds:[esi]
-        ; may trigger a PF, when the src- operand (DWORD PTR ds:[esi]) is read.
-        ; When returning from the PF- handler, the programm expects EDI to still
-        ; contain a valid pointer, which isn't the case, because it was set to
-        ; 0xFFAAFFEE here (in the PF- handler).
-        ; Thus the next line is commented.
-        ;
-        ; mov edi, 0xFFAAFFEE
-                             
+        pop rsi
         pushAll ; pushes 144 bytes to stack
-        call arch_saveThreadRegistersForPageFault
-        mov  rsi, qword[rsp + 144] ; error cd
+        changeData
+        call arch_saveThreadRegisters
         mov rdi, cr2
-        sub rsp, 32
         call pageFaultHandler
-        add rsp, 32
         popAll ; pops 144 bytes from stack
+        push rsi
         iretq ; restore user stack
 
 %assign i 0
