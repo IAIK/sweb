@@ -77,7 +77,7 @@ class SpinLock
       * @note dont't use any stuff that needs memory allocation here
       * since the spinlock is used by the KernelMemoryManager
       */
-    uint32 nosleep_mutex_;
+    size_t nosleep_mutex_;
     Thread *held_by_;
 
     /**

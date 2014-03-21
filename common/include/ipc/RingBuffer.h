@@ -64,10 +64,10 @@ class RingBuffer
 
   private:
 
-    uint32 buffer_size_;
+    size_t buffer_size_;
     T *buffer_;
-    uint32 write_pos_;
-    uint32 read_pos_;
+    size_t write_pos_;
+    size_t read_pos_;
 };
 
 template <class T>
@@ -89,7 +89,7 @@ RingBuffer<T>::~RingBuffer()
 template <class T>
 void RingBuffer<T>::put ( T c )
 {
-  uint32 old_write_pos=write_pos_;
+  size_t old_write_pos=write_pos_;
   if ( old_write_pos == read_pos_ )
     return;
   buffer_[old_write_pos]=c;

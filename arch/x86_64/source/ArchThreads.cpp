@@ -109,8 +109,8 @@ void ArchThreads::yield()
   );
 }
 
-extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
-uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
+extern "C" size_t arch_TestAndSet(size_t new_value, size_t *lock);
+size_t ArchThreads::testSetLock(size_t &lock, size_t new_value)
 {
   return arch_TestAndSet(new_value, &lock);
 }

@@ -132,8 +132,8 @@ class SerialPort : public CharacterDevice
     void write_UART ( uint32 reg, uint8 what );
     uint8 read_UART ( uint32 reg );
 
-    uint32 WriteLock;
-    uint32 SerialLock;
+    size_t WriteLock;
+    size_t SerialLock;
 
   private:
     /**

@@ -107,7 +107,7 @@ class Mutex
 
   private:
 
-    uint32 mutex_;
+    size_t mutex_;
     ustl::list<Thread*> sleepers_;
     Thread *held_by_;
     SpinLock spinlock_;

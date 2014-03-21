@@ -190,8 +190,8 @@ class Scheduler
 
     bool kill_old_;
 
-    uint32 block_scheduling_;
+    size_t block_scheduling_;
 
-    uint32 ticks_;
+    size_t ticks_;
 };
 #endif

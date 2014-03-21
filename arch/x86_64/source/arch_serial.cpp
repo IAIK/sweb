@@ -114,7 +114,7 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
   if( offset != 0 )
     return -1;
     
-  uint32 jiffies = 0, bytes_written = 0;
+  size_t jiffies = 0, bytes_written = 0;
   
   while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < IO_TIMEOUT )
     ArchInterrupts::yieldIfIFSet();
