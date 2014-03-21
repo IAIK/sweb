@@ -28,9 +28,9 @@ BITS 64
 
 %macro popAll 0
   pop rax
-  mov ax, ds
+  mov ds, ax
   pop rax
-  mov ax, es
+  mov es, ax
   pop r15
   pop r14
   pop r13
@@ -111,7 +111,6 @@ arch_pageFaultHandler:
         mov rdi, cr2
         call pageFaultHandler
         popAll ; pops 144 bytes from stack
-        push rsi
         iretq ; restore user stack
 
 %assign i 0

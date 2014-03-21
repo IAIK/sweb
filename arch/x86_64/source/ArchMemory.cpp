@@ -51,6 +51,7 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
 template<typename T>
 bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable)
 {
+  assert(map_ptr & ~0xFFFFF00000000000ULL);
   T* map = (T*) map_ptr;
   debug(A_MEMORY,"%s: page %x index %x ppn %x user_access %x size %x\n", __PRETTY_FUNCTION__, map, index, ppn, user_access, size);
   if (bzero)
@@ -66,11 +67,10 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
   return true;
 }
 
-bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint32 user_access, uint32 page_size)
+bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access, uint64 page_size)
 {
   debug(A_MEMORY,"%x %x %x %x %x\n",page_map_level_4_, virtual_page, physical_page, user_access, page_size);
   PageMapLevel4Entry* pml4p = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
-  debug(A_MEMORY,"%x\n", *pml4p);
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
 
   if (m.pdpt_ppn == 0)
@@ -99,7 +99,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint32 user_
     {
       return insert<PageDirPageEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, physical_page, 0, 1, user_access, 1);
     }
-    else if (m.pd == 0)
+    else// if (m.pd == 0)
     {
       m.pt_ppn = PageManager::instance()->getFreePhysicalPage();
       insert<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, m.pt_ppn, 1, 0, 1, 1);

@@ -60,7 +60,7 @@ public:
  * @param page_size Optional, defaults to 4k pages, but you ned to set it to
  * 1024*4096 if you want to map a 4m page
  */
-  bool mapPage(uint64 virtual_page, uint64 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
+  bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access, uint64 page_size=PAGE_SIZE);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid

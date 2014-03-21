@@ -292,7 +292,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
-  InterruptUtils::countPageFault(address);
+  //InterruptUtils::countPageFault(address);
   //--------Start "just for Debugging"-----------
 
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",

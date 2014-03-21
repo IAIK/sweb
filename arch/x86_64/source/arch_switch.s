@@ -61,13 +61,7 @@ arch_saveThreadRegisters:
         je .from_user
 .from_kernel:
         mov rax, qword [rsp + 176]; save rsp
-        ;add rax, 0x18 ; remove the last 3 elements from stack
         mov qword[rbx + 56], rax
-        jmp .end
-.from_user:
-        mov rax, qword[rsp + 176] ; save rsp0
-        mov qword[rbx + 56], rax
-.end:
         mov rax, qword [rsp + 152]; save rip
         mov qword[rbx], rax
         mov rax, qword [rsp + 160]; save cs
@@ -76,6 +70,18 @@ arch_saveThreadRegisters:
         mov qword[rbx + 16], rax
         store_general_regs
         ret
+.from_user:
+        mov rax, qword[rsp + 176] ; save rsp0
+        mov qword[rbx + 56], rax
+        mov rax, qword [rsp + 152]; save rip
+        mov qword[rbx], rax
+        mov rax, qword [rsp + 160]; save cs
+        mov qword[rbx + 8], rax
+        mov rax, qword [rsp + 168]; save rflags
+        mov qword[rbx + 16], rax
+        store_general_regs
+        ret
+
         
 global arch_switchThreadKernelToKernel
 arch_switchThreadKernelToKernel:
