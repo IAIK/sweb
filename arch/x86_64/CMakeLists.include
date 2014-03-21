@@ -19,7 +19,7 @@ add_custom_target(kvm
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio -d int
+	COMMAND	qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio
 	COMMENT "Going to qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
