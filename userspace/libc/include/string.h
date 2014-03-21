@@ -29,22 +29,13 @@
 #ifndef string_h___
 #define string_h___
 
+#include "types.h"
 
 /**
  * NULL pointer constant
  *
  */
 #define NULL 0
-
-/**
- * Used for sizes of objects
- *
- */
-#ifndef SIZE_T_DEFINED
-#define SIZE_T_DEFINED
-typedef unsigned int size_t;
-#endif // SIZE_T_DEFINED
-
 
 /**
  * Compares the given number of bytes of the memory areas started by the

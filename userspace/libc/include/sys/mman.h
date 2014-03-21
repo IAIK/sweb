@@ -21,6 +21,7 @@
 #ifndef mman_h___
 #define mman_h___
 
+#include "types.h"
 
 #define PROT_NONE     0x00000000  // 00..00
 #define PROT_READ     0x00000001  // ..0001
@@ -29,34 +30,6 @@
 #define MAP_PRIVATE   0x00000000  // 00..00
 #define MAP_SHARED    0x40000000  // 0100..
 #define MAP_ANONYMOUS 0x80000000  // 1000..
-
-
-/**
- * Used for sizes of objects
- *
- */
-#ifndef SIZE_T_DEFINED
-#define SIZE_T_DEFINED
-typedef unsigned int size_t;
-#endif // SIZE_T_DEFINED
-
-/**
- * Used for shared mem modes
- *
- */
-#ifndef MODE_T_DEFINED
-#define MODE_T_DEFINED
-typedef unsigned int mode_t;
-#endif // MODE_T_DEFINED
-
-/**
- * Used for setting offsets
- *
- */
-#ifndef OFF_T_DEFINED
-#define OFF_T_DEFINED
-typedef unsigned int off_t;
-#endif // OFF_T_DEFINED
 
 /**
  * posix function signature

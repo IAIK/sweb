@@ -29,6 +29,8 @@
 #ifndef syscall_h___
 #define syscall_h___
 
+#include "types.h"
+
 /**
  * Low-level syscall function, takes 6 arguments where the first is the syscall
  * number as defined in the kernel syscall definitions.
@@ -36,8 +38,8 @@
  * e.g. __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
  * DO NOT CHANGE SIGNATURE.
  */
-extern int __syscall(int arg1, int arg2, int arg3, int arg4, int arg5,
-                     int arg6);
+extern size_t __syscall(size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5,
+                        size_t arg6);
 
 #endif // syscall_h___
 

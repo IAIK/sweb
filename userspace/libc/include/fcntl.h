@@ -229,15 +229,6 @@ struct flock
 };
 
 /**
- * Used for file attributes
- *
- */
-#ifndef MODE_T_DEFINED
-#define MODE_T_DEFINED
-typedef unsigned int mode_t;
-#endif // MODE_T_DEFINED
-
-/**
  * Equivalent to open() with flags equal to O_CREAT | O_WRONLY | O_TRUNC.
  *
  * @param path A pathname pointing to the file to open

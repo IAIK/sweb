@@ -523,12 +523,12 @@ extern "C" void syscallHandler()
   ArchInterrupts::enableInterrupts();
 
   currentThread->user_arch_thread_info_->rax =
-    Syscall::syscallException(currentThread->user_arch_thread_info_->rax,
-                  currentThread->user_arch_thread_info_->rbx,
-                  currentThread->user_arch_thread_info_->rcx,
-                  currentThread->user_arch_thread_info_->rdx,
+    Syscall::syscallException(currentThread->user_arch_thread_info_->rdi,
                   currentThread->user_arch_thread_info_->rsi,
-                  currentThread->user_arch_thread_info_->rdi);
+                  currentThread->user_arch_thread_info_->rdx,
+                  currentThread->user_arch_thread_info_->rcx,
+                  currentThread->user_arch_thread_info_->r8,
+                  currentThread->user_arch_thread_info_->r9);
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;

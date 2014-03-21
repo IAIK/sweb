@@ -151,17 +151,6 @@
  */
 typedef off_t fpos_t;
 
-
-/**
- * Used for sizes of objects
- *
- */
-#ifndef SIZE_T_DEFINED
-#define SIZE_T_DEFINED
-typedef unsigned int size_t;
-#endif // SIZE_T_DEFINED
-
-
 /**
  * Renames a file, moving it between directories if required.
  *

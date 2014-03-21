@@ -154,11 +154,11 @@ global arch_syscallHandler
 extern syscallHandler
 extern arch_restoreUserThreadRegisters
 arch_syscallHandler:
-mov rax, 01341h
-hlt
     pushAll
+    changeData
     call arch_saveThreadRegisters
     call syscallHandler
+    hlt
     popAll
     call arch_restoreUserThreadRegisters
-    iretd
+    iretq

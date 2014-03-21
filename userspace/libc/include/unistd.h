@@ -43,6 +43,7 @@
 
 #include "../../../common/include/kernel/syscall-definitions.h"
 #include "stdarg.h"
+#include "types.h"
 
 
 /**
@@ -114,53 +115,17 @@
  */
 #define STDERR_FILENO fd_stderr
 
-
-/**
- * Used for sizes of objects
- *
- */
-#ifndef SIZE_T_DEFINED
-#define SIZE_T_DEFINED
-typedef unsigned int size_t;
-#endif // SIZE_T_DEFINED
-
-/**
- * Used for a count of bytes or an error indication
- *
- */
-#ifndef SSIZE_T_DEFINED
-#define SSIZE_T_DEFINED
-typedef unsigned int ssize_t;
-#endif // SSIZE_T_DEFINED
-
-/**
- * Used for setting offsets
- *
- */
-#ifndef OFF_T_DEFINED
-#define OFF_T_DEFINED
-typedef unsigned int off_t;
-#endif // OFF_T_DEFINED
-/**
- * Used for process IDs and process group IDs
- *
- */
-#ifndef PID_T_DEFINED
-#define PID_T_DEFINED
-typedef int pid_t;
-#endif // PID_T_DEFINED
-
 /**
  * Time in microseconds
  *
  */
-typedef unsigned int useconds_t;
+typedef long unsigned int useconds_t;
 
 /**
  * Signed integral type large enough to hold any pointer
  *
  */
-typedef int intptr_t;
+typedef long int intptr_t;
 
 
 /**
