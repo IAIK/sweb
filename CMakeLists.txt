@@ -1,8 +1,13 @@
+include(MakeOptions)
+
+include(arch/${ARCH}/CMakeLists.compiler)
+
 project(sweb)
 
 include(MakeOptions)
+
 #Find program executables needed during compilation
-find_program(NASM_EXECUTABLE nasm)
+find_program(ASM_EXECUTABLE nasm)
 find_program(LD_EXECUTABLE cc)
 find_program(AR_EXECUTABLE ar)
 find_program(DOXYGEN_EXECUTABLE doxygen)
@@ -19,7 +24,7 @@ include(arch/${ARCH}/CMakeLists.include)
 cmake_minimum_required(VERSION 2.4)
 
 
-# Macro which processes NASM files
+# Macro which processes ASM files
 # OBJS are the names (without extension) in the current directory
 MACRO(ASM2OBJ OUTPUTOBJNAMES)
 
@@ -30,8 +35,8 @@ MACRO(ASM2OBJ OUTPUTOBJNAMES)
 
 		add_custom_command(
 		OUTPUT ${ASM_OBJECT}
-		COMMAND ${NASM_EXECUTABLE}
-		ARGS    -f ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
+		COMMAND ${ASM_EXECUTABLE}
+		ARGS    ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
 		DEPENDS ${ASM_SOURCE}
 		)
 	ENDFOREACH(src)
@@ -39,7 +44,7 @@ MACRO(ASM2OBJ OUTPUTOBJNAMES)
 	set(${OUTPUTOBJNAMES} ${ASM_OBJECTS})
 ENDMACRO(ASM2OBJ)
 
-# Finds and returns NASM source files in the current directory
+# Finds and returns ASM source files in the current directory
 MACRO(FIND_ASM_FILES OUTPUTFILES)
 	file(GLOB filenames ${ASM_WILDCARDS})
 

@@ -6,6 +6,7 @@
 #include "Thread.h"
 #include "arch_panic.h"
 #include "ArchThreads.h"
+#include "ArchCommon.h"
 #include "console/kprintf.h"
 #include "ArchInterrupts.h"
 #include "mm/KernelMemoryManager.h"
@@ -58,7 +59,7 @@ class IdleThread : public Thread
         if (new_ticks == last_ticks)
         {
           last_ticks = new_ticks + 1;
-          __asm__ __volatile__ ( "hlt" );
+          ArchCommon::idle();
         }
         else
         {

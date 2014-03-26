@@ -159,6 +159,11 @@ public:
    */
   static void initDebug();
 
+  /**
+   * let the cpu idle, f.e. wih the halt statement
+   */
+  static void idle();
+
 };
 
 #endif

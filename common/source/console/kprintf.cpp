@@ -315,7 +315,7 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
 
         default:
           //jump over unknown arg
-          ++args;
+          va_arg(args,size_t);
           break;
       }
 

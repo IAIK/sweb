@@ -308,3 +308,9 @@ Console* ArchCommon::createConsole(uint32 count)
 void ArchCommon::initDebug()
 {
 }
+
+
+void ArchCommon::idle()
+{
+  __asm__ __volatile__ ( "hlt" );
+}

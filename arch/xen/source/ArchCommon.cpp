@@ -244,3 +244,9 @@ Console* ArchCommon::createConsole(uint32 count)
 {
   return new XenConsole(count);
 }
+
+
+void ArchCommon::idle()
+{
+  __asm__ __volatile__ ( "hlt" );
+}

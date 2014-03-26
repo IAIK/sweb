@@ -1,1 +1,1 @@
-add_project_library(arch_x86)
+add_project_library(arch_x86_pae)

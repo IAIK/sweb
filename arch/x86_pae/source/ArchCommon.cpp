@@ -346,3 +346,9 @@ void ArchCommon::initDebug()
   parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 }
 
+
+
+void ArchCommon::idle()
+{
+  __asm__ __volatile__ ( "hlt" );
+}

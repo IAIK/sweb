@@ -54,8 +54,8 @@ void kpanict ( uint8 * message )
      pushl %%eax\n \
      movl %%esp, %%eax\n \
      movl %%eax, %0\n \
-     popl %%eax\n" 
-      : "=g" (esp_reg) 
+     popl %%eax\n"
+      : "=g" (esp_reg)
      );
 
   kprintfd( "esp_reg is > %x\n",  esp_reg );

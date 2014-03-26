@@ -16,8 +16,8 @@ foreach(src start syscalls)
    set(ASM_OBJECTS ${ASM_OBJECTS} ${ASM_OBJECT})
    add_custom_command(
      OUTPUT ${ASM_OBJECT}
-     COMMAND ${NASM_EXECUTABLE}
-     ARGS    -f ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
+     COMMAND ${ASM_EXECUTABLE}
+     ARGS    ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
      DEPENDS ${ASM_SOURCE}
      )
 ENDFOREACH(src)
