@@ -19,21 +19,20 @@ interrupt_vector_table:
 
 entry:
 .globl entry
-  ldr sp, =stack+0x10000 @ Set up the stack
-  bl initialiseBootTimePaging
+  ldr sp, =stack - 0x80000000+0x10000 @ Set up the stack
+  mov fp, #0
+  ldr r0, =initialiseBootTimePaging - 0x80000000
+  blx r0
   ldr r0, =kernel_page_directory_start - 0x80000000
   mcr p15, 0, r0, c2, c0, 0
+  mov r0, #0
+  mcr p15, 0, r0, c8, c7, 0
   mov r0, #0x3
   mcr p15, 0, r0, c3, c0, 0
   mrc p15, 0, r0, c1, c0, 0
   orr r0, r0, #0x1
   mcr p15, 0, r0, c1, c0, 0
-  ldr r0, =removeBootTimeIdentMapping
-2:
-  b 2 @ Halt
-
-upperHalf:
-.globl upperHalf
+  ldr sp, =stack - 0x80000000+0x10000 @ Set up the stack
   bl removeBootTimeIdentMapping
 3:
   b 3 @ Halt

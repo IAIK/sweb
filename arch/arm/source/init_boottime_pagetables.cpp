@@ -76,7 +76,7 @@ void initialiseBootTimePaging()
   PRINT_ADDRESS(pde_start);
 
   // we do not have to clear the pde since its in the bss
-  for (i = 0; i < 2048; ++i)
+  for (i = 0; i < 4096; ++i)
   {
     pde_start[i].pde1m.base = i;
     pde_start[i].pde1m.reserved_1 = 0;
@@ -87,21 +87,20 @@ void initialiseBootTimePaging()
     pde_start[i].pde1m.cachable = 0;
     pde_start[i].pde1m.bufferable = 0;
     pde_start[i].pde1m.size = 2;
-    pde_start[i+2048].pde1m.base = i;
-    pde_start[i+2048].pde1m.reserved_1 = 0;
-    pde_start[i+2048].pde1m.permissions = 3;
-    pde_start[i+2048].pde1m.reserved_2 = 0;
-    pde_start[i+2048].pde1m.domain = 0;
-    pde_start[i+2048].pde1m.reserved_3 = 0;
-    pde_start[i+2048].pde1m.cachable = 0;
-    pde_start[i+2048].pde1m.bufferable = 0;
-    pde_start[i+2048].pde1m.size = 2;
+//    pde_start[i+2048].pde1m.base = i;
+//    pde_start[i+2048].pde1m.reserved_1 = 0;
+//    pde_start[i+2048].pde1m.permissions = 3;
+//    pde_start[i+2048].pde1m.reserved_2 = 0;
+//    pde_start[i+2048].pde1m.domain = 0;
+//    pde_start[i+2048].pde1m.reserved_3 = 0;
+//    pde_start[i+2048].pde1m.cachable = 0;
+//    pde_start[i+2048].pde1m.bufferable = 0;
+//    pde_start[i+2048].pde1m.size = 2;
     PRINT_ADDRESS(pde_start + i);
-    PRINT_ADDRESS(pde_start + i + 2048);
+//    PRINT_ADDRESS(pde_start + i + 2048);
     PRINT_ADDRESS(*(uint32*)(pde_start + i));
   }
   kprintfd("initialiseBootTimePaging: done\n");
-
 }
 
 void removeBootTimeIdentMapping()

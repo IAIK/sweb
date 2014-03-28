@@ -6,6 +6,8 @@
 ENTRY(entry)
 LS_Virt = 0x80001000;
 LS_Phys = 0x1000;
+/* Specify the memory areas */
+
 SECTIONS
 {
   .text LS_Virt : AT(LS_Phys) 
@@ -34,9 +36,9 @@ SECTIONS
   {
     LS_Bss = .;
     bss_start_address = .;
-    . = ALIGN(4096);
+    . = ALIGN(16384);
     *(.bss*)
-    . = ALIGN(4096);
+    . = ALIGN(16384);
     *(COMMON*)
     bss_end_address = .;
 
