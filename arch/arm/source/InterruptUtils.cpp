@@ -121,7 +121,7 @@ char const *intel_manual =
                   "See Intel 64 and IA-32 Architectures Software Developer's Manual\n"
                   "Volume 3A: System Programming Guide\n"
                   "for further information on what happened\n\n";
-
+/*
 #define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
   extern "C" void errorHandler_##x () \
   {\
@@ -414,7 +414,7 @@ DUMMY_HANDLER(252)
 DUMMY_HANDLER(253)
 DUMMY_HANDLER(254)
 DUMMY_HANDLER(255)
-
+*/
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
@@ -425,10 +425,10 @@ extern Thread *currentThread;
     ArchInterrupts::EndOfInterrupt(x); \
   }; \
 
-extern "C" void arch_irqHandler_0();
-extern "C" void arch_switchThreadKernelToKernel();
-extern "C" void arch_switchThreadKernelToKernelPageDirChange();
-extern "C" void arch_switchThreadToUserPageDirChange();
+//TODO extern "C" void arch_irqHandler_0();
+//TODO extern "C" void arch_switchThreadKernelToKernel();
+//TODO extern "C" void arch_switchThreadKernelToKernelPageDirChange();
+//TODO extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
   static uint32 heart_beat_value = 0;
@@ -465,18 +465,18 @@ extern "C" void irqHandler_0()
     case 0:
       // kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
       ArchInterrupts::EndOfInterrupt(0);
-      arch_switchThreadKernelToKernelPageDirChange();
+      //TODO arch_switchThreadKernelToKernelPageDirChange();
     case 1:
       // kprintfd("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
-      arch_switchThreadToUserPageDirChange();
+      //TODO arch_switchThreadToUserPageDirChange();
     default:
       kprintfd("irq0: Panic in int 0 handler\n");
       for( ; ; ) ;
   }
 }
 
-extern "C" void arch_irqHandler_65();
+//TODO extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
   uint32 ret = Scheduler::instance()->schedule();
@@ -484,10 +484,10 @@ extern "C" void irqHandler_65()
   {
     case 0:
       // kprintfd("irq65: Going to leave int Handler 65 to kernel\n");
-      arch_switchThreadKernelToKernelPageDirChange();
+      //TODO arch_switchThreadKernelToKernelPageDirChange();
     case 1:
       // kprintfd("irq65: Going to leave int Handler 65 to user\n");
-      arch_switchThreadToUserPageDirChange();
+      //TODO arch_switchThreadToUserPageDirChange();
 
     default:
       kprintfd("irq65: Panic in int 65 handler\n");
@@ -496,7 +496,7 @@ extern "C" void irqHandler_65()
 }
 
 
-extern "C" void arch_pageFaultHandler();
+//TODO extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
   //--------Start "just for Debugging"-----------
@@ -620,21 +620,21 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       break; //we already are in kernel mode
     case 1:
       currentThreadInfo = currentThread->user_arch_thread_info_;
-      arch_switchThreadToUserPageDirChange();
+      //TODO arch_switchThreadToUserPageDirChange();
       break; //not reached
     default:
       kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
   }
 }
 
-extern "C" void arch_irqHandler_1();
+//TODO extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
   KeyboardManager::getInstance()->serviceIRQ( );
   ArchInterrupts::EndOfInterrupt(1);
 }
 
-extern "C" void arch_irqHandler_3();
+//TODO extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
   kprintfd( "IRQ 3 called\n" );
@@ -643,7 +643,7 @@ extern "C" void irqHandler_3()
   kprintfd( "IRQ 3 ended\n" );
 }
 
-extern "C" void arch_irqHandler_4();
+//TODO extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
   kprintfd( "IRQ 4 called\n" );
@@ -652,14 +652,14 @@ extern "C" void irqHandler_4()
   kprintfd( "IRQ 4 ended\n" );
 }
 
-extern "C" void arch_irqHandler_6();
+//TODO extern "C" void arch_irqHandler_6();
 extern "C" void irqHandler_6()
 {
   kprintfd( "IRQ 6 called\n" );
   kprintfd( "IRQ 6 ended\n" );
 }
 
-extern "C" void arch_irqHandler_9();
+//TODO extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
   kprintfd( "IRQ 9 called\n" );
@@ -667,7 +667,7 @@ extern "C" void irqHandler_9()
   ArchInterrupts::EndOfInterrupt(9);
 }
 
-extern "C" void arch_irqHandler_11();
+//TODO extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
   kprintfd( "IRQ 11 called\n" );
@@ -675,7 +675,7 @@ extern "C" void irqHandler_11()
   ArchInterrupts::EndOfInterrupt(11);
 }
 
-extern "C" void arch_irqHandler_14();
+//TODO extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
   //kprintfd( "IRQ 14 called\n" );
@@ -683,7 +683,7 @@ extern "C" void irqHandler_14()
   ArchInterrupts::EndOfInterrupt(14);
 }
 
-extern "C" void arch_irqHandler_15();
+//TODO extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
   //kprintfd( "IRQ 15 called\n" );
@@ -691,7 +691,7 @@ extern "C" void irqHandler_15()
   ArchInterrupts::EndOfInterrupt(15);
 }
 
-extern "C" void arch_syscallHandler();
+//TODO extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = false;
@@ -710,22 +710,22 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,1);
-  arch_switchThreadToUserPageDirChange();
+  //TODO arch_switchThreadToUserPageDirChange();
 }
 
 //IRQ_HANDLER(1)
-IRQ_HANDLER(2)
+//TODO IRQ_HANDLER(2)
 //IRQ_HANDLER(3)
 //IRQ_HANDLER(4)
-IRQ_HANDLER(5)
+//TODO IRQ_HANDLER(5)
 //IRQ_HANDLER(6)
-IRQ_HANDLER(7)
-IRQ_HANDLER(8)
+//TODO IRQ_HANDLER(7)
+//TODO IRQ_HANDLER(8)
 //IRQ_HANDLER(9)
-IRQ_HANDLER(10)
+//TODO IRQ_HANDLER(10)
 //IRQ_HANDLER(11)
-IRQ_HANDLER(12)
-IRQ_HANDLER(13)
+//TODO IRQ_HANDLER(12)
+//TODO IRQ_HANDLER(13)
 //IRQ_HANDLER(14)
 //IRQ_HANDLER(15)
 
@@ -736,7 +736,7 @@ extern "C" void arch_irqHandler();
 #define DUMMYHANDLER(X) {X, &arch_dummyHandler},
 #define ERRORHANDLER(X) {X, &arch_errorHandler},
 #define IRQHANDLER(X) {X + 32, &arch_irqHandler},
-InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
+InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {/*
   ERRORHANDLER(0)
   DUMMYHANDLER(1)
   DUMMYHANDLER(2)
@@ -993,5 +993,5 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(252)
   DUMMYHANDLER(253)
   DUMMYHANDLER(254)
-  DUMMYHANDLER(255)
+  DUMMYHANDLER(255)*/
 };

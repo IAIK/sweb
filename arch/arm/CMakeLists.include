@@ -4,6 +4,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -gstabs2 -Wall -Wextra -Wno-deprecat
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding")
 
 set(LD_ARGUMENT -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
+set(APPEND_LD_ARGUMENTS -Wl,-lgcc)
 set(KERNEL_IMAGE_OBJCOPY )
 
 #Custom target: make qemu

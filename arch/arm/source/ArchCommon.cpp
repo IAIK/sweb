@@ -77,7 +77,7 @@ extern "C" void parseMultibootHeader();
 
 void parseMultibootHeader()
 {
-  uint32 i;
+/*  uint32 i;
 
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT( (pointer)&multi_boot_structure_pointer);
 
@@ -125,7 +125,7 @@ void parseMultibootHeader()
       orig_mbr.memory_maps[i].end_address = map->base_addr_low + map->length_low;
       orig_mbr.memory_maps[i].type = map->type;
     }
-  }
+  }*/
 }
 
 pointer ArchCommon::getKernelEndAddress()

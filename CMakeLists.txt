@@ -125,7 +125,7 @@ foreach(libfile ${FINAL_LIB_NAMES})
 set(LD_ARGUMENT ${LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
 endforeach(libfile)
 set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,--end-group)
-
+set(LD_ARGUMENT ${LD_ARGUMENT} ${APPEND_LD_ARGUMENTS})
 
 #Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")

@@ -87,7 +87,7 @@ TSS *g_tss;
 
 static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type) 
 {
-    SegDesc *desc = (SegDesc*)&tss_selector;
+    SegDesc *desc = (SegDesc*)0;//TODO &tss_selector;
 
     desc->baseL  = (uint16)(base & 0xFFFF);
     desc->baseM  = (uint8)((base >> 16U) & 0xFF);
@@ -111,7 +111,7 @@ void SegmentUtils::initialise()
   // void *ptr = (void*)&gdt_ptr_new;
   uint16 val = 48;
 
-  reload_segements();
+  //TODO reload_segements();
 
   //asm volatile("lgdt %0\n" : /* no output */ : "m" (ptr));
   uint32 *gss_stack = new uint32[1024];

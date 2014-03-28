@@ -5,6 +5,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra    
 
 
 set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-size=0x1000 -Wl,-melf_x86_64 -nostdinc -nostdlib -nodefaultlibs)
+set(APPEND_LD_ARGUMENTS )
 set(KERNEL_IMAGE_OBJCOPY COMMAND mv ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel64.x && ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/kernel64.x ${PROJECT_BINARY_DIR}/kernel.x)
 
 #Custom target: make kvm
