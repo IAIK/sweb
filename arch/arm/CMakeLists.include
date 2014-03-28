@@ -15,3 +15,12 @@ add_custom_target(qemu
 	COMMAND reset -I
 	)
 
+#Custom target: make qemu
+#Run qemu in non debugging mode
+add_custom_target(qemugdb
+	COMMAND	qemu-system-arm -s -S -m 8M -kernel kernel.x -serial stdio
+	COMMENT "Going to qemu-system-arm -s -S -m 8M -kernel kernel.x -serial stdio"
+	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+	COMMAND reset -I
+	)
+

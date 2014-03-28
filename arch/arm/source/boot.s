@@ -1,20 +1,44 @@
+.text
+
+.comm kernel_page_directory_start, 0x4000 @ Reserve 16k space for page directory
+
+.bss
+.comm stack, 0x10000 @ Reserve 64k stack in the BSS
+
+.text
+
 interrupt_vector_table:
     b . @ Reset
-    b . 
+    b .
     b . @ SWI instruction
-    b . 
+    b .
     b .
     b .
     b .
     b .
 
-.comm stack, 0x10000 @ Reserve 64k stack in the BSS
 entry:
-    .globl entry
-    ldr sp, =stack+0x10000 @ Set up the stack
-    bl boot_main @ Jump to the main function
-1: 
-    b 1b @ Halt
+.globl entry
+  ldr sp, =stack+0x10000 @ Set up the stack
+  bl initialiseBootTimePaging
+  ldr r0, =kernel_page_directory_start - 0x80000000
+  mcr p15, 0, r0, c2, c0, 0
+  mov r0, #0x3
+  mcr p15, 0, r0, c3, c0, 0
+  mrc p15, 0, r0, c1, c0, 0
+  orr r0, r0, #0x1
+  mcr p15, 0, r0, c1, c0, 0
+  ldr r0, =removeBootTimeIdentMapping
+2:
+  b 2 @ Halt
+
+upperHalf:
+.globl upperHalf
+  bl removeBootTimeIdentMapping
+3:
+  b 3 @ Halt
+
+
 
 LS_Code:
     .globl LS_Code
@@ -40,8 +64,6 @@ stab_end_address_nr:
     .globl stab_end_address_nr
 tss_selector:
     .globl tss_selector
-kernel_page_directory_start:
-    .globl kernel_page_directory_start
 kernel_end_address:
     .globl kernel_end_address
 reload_segements:
@@ -70,4 +92,3 @@ __aeabi_uidiv:
     .globl __aeabi_uidiv
 1:
     b 1b @ Halt
-

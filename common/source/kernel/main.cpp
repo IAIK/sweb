@@ -65,20 +65,20 @@ void startup()
 {
   we_are_dying = 0;
   boot_completed = 0;
-  writeLine2Bochs ( ( uint8 * ) "SWEB starting...\n" );
+  writeLine2Bochs("SWEB starting...\n");
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
   //extend Kernel Memory here
-  KernelMemoryManager::createMemoryManager ( start_address,end_address );
-  writeLine2Bochs ( ( uint8 * ) "Kernel Memory Manager created \n" );
-  writeLine2Bochs ( ( uint8 * ) "Creating Page Manager...\n" );
+  KernelMemoryManager::createMemoryManager(start_address, end_address);
+  writeLine2Bochs("Kernel Memory Manager created \n");
+  writeLine2Bochs("Creating Page Manager...\n");
   PageManager::createPageManager();
-  writeLine2Bochs ( ( uint8 * ) "PageManager created \n" );
+  writeLine2Bochs("PageManager created \n");
 
   //SerialManager::getInstance()->do_detection( 1 );
 
   main_console = ArchCommon::createConsole(4);
-  writeLine2Bochs((uint8 *) "Console created \n");
+  writeLine2Bochs("Console created \n");
 
   Terminal *term_0 = main_console->getTerminal ( 0 );
   Terminal *term_1 = main_console->getTerminal ( 1 );

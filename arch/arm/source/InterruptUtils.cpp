@@ -538,24 +538,24 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       uint32 virtual_page = address / PAGE_SIZE;
       uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
       uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-      if (page_directory[pde_vpn].pde4k.present)
-      {
-        if (page_directory[pde_vpn].pde4m.use_4_m_pages)
-        {
-          debug(PM, "[PageFaultHandler] Page %d is a 4MiB Page\n", virtual_page);
-          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page,
-              page_directory[pde_vpn].pde4m.writeable, page_directory[pde_vpn].pde4m.user_access);
-        }
-        else
-        {
-          page_table_entry *pte_base = (page_table_entry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-          debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", virtual_page);
-          debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", virtual_page,
-            pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
-        }
-      }
-      else
-        debug(PM, "[PageFaultHandler] WTF? PDE non-present but Exception present flag was set\n");
+//      if (page_directory[pde_vpn].pde4k.present)
+//      {
+//        if (page_directory[pde_vpn].pde4m.use_4_m_pages)
+//        {
+//          debug(PM, "[PageFaultHandler] Page %d is a 4MiB Page\n", virtual_page);
+//          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page,
+//              page_directory[pde_vpn].pde4m.writeable, page_directory[pde_vpn].pde4m.user_access);
+//        }
+//        else
+//        {
+//          page_table_entry *pte_base = (page_table_entry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
+//          debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", virtual_page);
+//          debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", virtual_page,
+//            pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
+//        }
+//      }
+//      else
+//        debug(PM, "[PageFaultHandler] WTF? PDE non-present but Exception present flag was set\n");
     }
     else
     {
