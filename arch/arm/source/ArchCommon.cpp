@@ -4,7 +4,6 @@
  */
 
 #include "ArchCommon.h"
-#include "multiboot.h"
 #include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
@@ -13,120 +12,7 @@
 #include "FrameBufferConsole.h"
 #include "backtrace.h"
 
-#define MAX_MEMORY_MAPS 10
-#define MAX_MODULE_MAPS 10
-
-// macros for initializing memory_maps
-#define MEMMAP_INIT {0,0,0,0}
-#define TWO_MEMMAP_INIT MEMMAP_INIT,MEMMAP_INIT
-#define FOUR_MEMMAP_INIT TWO_MEMMAP_INIT,TWO_MEMMAP_INIT
-#define FIVE_MEMMAP_INIT FOUR_MEMMAP_INIT,MEMMAP_INIT
-#define TEN_MEMMAP_INIT FIVE_MEMMAP_INIT,FIVE_MEMMAP_INIT
-
-// macros for initializing module_maps
-#define FOUR_ZEROS 0,0,0,0
-#define EIGHT_ZEROS FOUR_ZEROS,FOUR_ZEROS
-#define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
-#define THIRTYTWO_ZEROS SIXTEEN_ZEROS,SIXTEEN_ZEROS
-#define SIXTYFOUR_ZEROS THIRTYTWO_ZEROS,THIRTYTWO_ZEROS
-#define HUNDREDTWENTYEIGHT_ZEROS SIXTYFOUR_ZEROS,SIXTYFOUR_ZEROS
-#define TWOHUNDREDFIFTYSIX_ZEROS HUNDREDTWENTYEIGHT_ZEROS,\
-                                 HUNDREDTWENTYEIGHT_ZEROS
-
-#define MODMAP_INIT {0,0,0,{TWOHUNDREDFIFTYSIX_ZEROS}}
-#define TWO_MODMAP_INIT MODMAP_INIT,MODMAP_INIT
-#define FOUR_MODMAP_INIT TWO_MODMAP_INIT,TWO_MODMAP_INIT
-#define FIVE_MODMAP_INIT FOUR_MODMAP_INIT,MODMAP_INIT
-#define TEN_MODMAP_INIT FIVE_MODMAP_INIT,FIVE_MODMAP_INIT
-
-struct multiboot_remainder
-{
-  uint32 memory_size;
-  uint32 vesa_x_res;
-  uint32 vesa_y_res;
-  uint32 vesa_bits_per_pixel;
-  uint32 have_vesa_console;
-  pointer vesa_lfb_pointer;
-  uint32 num_module_maps;
-
-  struct memory_maps
-  {
-    uint32 used;
-    pointer start_address;
-    pointer end_address;
-    uint32 type;
-  } __attribute__((__packed__)) memory_maps[MAX_MEMORY_MAPS];
-
-  struct module_maps
-  {
-    uint32 used;
-    pointer start_address;
-    pointer end_address;
-    uint8 name[256];
-  } __attribute__((__packed__)) module_maps[MAX_MODULE_MAPS];
-
-}__attribute__((__packed__));
-
 extern void* kernel_end_address;
-
-extern multiboot_info_t multi_boot_structure_pointer[];
-
-static struct multiboot_remainder mbr = {0,0,0,0,0,0,0,{TEN_MEMMAP_INIT},{TEN_MODMAP_INIT}};
-
-extern "C" void parseMultibootHeader();
-
-void parseMultibootHeader()
-{
-/*  uint32 i;
-
-  multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT( (pointer)&multi_boot_structure_pointer);
-
-  struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-
-  if (mb_infos && mb_infos->flags & 1<<11)
-  {
-    struct vbe_mode* mode_info = (struct vbe_mode*)mb_infos->vbe_mode_info;
-    orig_mbr.have_vesa_console = 1;
-    orig_mbr.vesa_lfb_pointer = mode_info->phys_base;
-    orig_mbr.vesa_x_res = mode_info->x_resolution;
-    orig_mbr.vesa_y_res = mode_info->y_resolution;
-    orig_mbr.vesa_bits_per_pixel = mode_info->bits_per_pixel;
-  }
-
-  if (mb_infos && mb_infos->flags & 1<<3)
-  {
-    module_t * mods = (module_t*)mb_infos->mods_addr;
-    for (i=0;i<mb_infos->mods_count;++i)
-    {
-      orig_mbr.module_maps[i].used = 1;
-      orig_mbr.module_maps[i].start_address = mods[i].mod_start;
-      orig_mbr.module_maps[i].end_address = mods[i].mod_end;
-      //FIXXXME, copy module name
-    }
-    orig_mbr.num_module_maps = mb_infos->mods_count;
-  }
-
-  for (i=0;i<MAX_MEMORY_MAPS;++i)
-  {
-    orig_mbr.memory_maps[i].used = 0;
-  }
-
-  if (mb_infos && mb_infos->flags & 1<<6)
-  {
-    uint32 mmap_size = sizeof(memory_map);
-    uint32 mmap_total_size = mb_infos->mmap_length;
-    uint32 num_maps = mmap_total_size / mmap_size;
-
-    for (i=0;i<num_maps;++i)
-    {
-      memory_map * map = (memory_map*)(mb_infos->mmap_addr+mmap_size*i);
-      orig_mbr.memory_maps[i].used = 1;
-      orig_mbr.memory_maps[i].start_address = map->base_addr_low;
-      orig_mbr.memory_maps[i].end_address = map->base_addr_low + map->length_low;
-      orig_mbr.memory_maps[i].type = map->type;
-    }
-  }*/
-}
 
 pointer ArchCommon::getKernelEndAddress()
 {
@@ -146,105 +32,59 @@ pointer ArchCommon::getFreeKernelMemoryEnd()
 
 uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
 {
-  if (is_paging_set_up)
-    return mbr.have_vesa_console;
-  else
-  {
-    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.have_vesa_console;
-  }
+  return false;
 }
 
 uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
 {
-  if (is_paging_set_up)
-    return mbr.num_module_maps;
-  else
-  {
-    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.num_module_maps;
-  }
-
+  return 1;
 }
 
 uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 {
-  if (is_paging_set_up)
-    return mbr.module_maps[num].start_address + 3*1024*1024*1024U;
-  else
-  {
-    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].start_address ;
-  }
-
+  return 0x80000000U;
 }
 
 uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
-  if (is_paging_set_up)
-    return mbr.module_maps[num].end_address + 3*1024*1024*1024U;
-  else
-  {
-    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].end_address;
-  }
-
+  return 0x80400000U;
 }
 
 uint32 ArchCommon::getVESAConsoleHeight()
 {
-  return mbr.vesa_y_res;
+  return 600;
 }
 
 uint32 ArchCommon::getVESAConsoleWidth()
 {
-  return mbr.vesa_x_res;
+  return 800;
 }
 
 pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
-  if (is_paging_set_up)
-    return 1024U*1024U*1024U*3U - 1024U*1024U*16U;
-  else
-  {
-    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.vesa_lfb_pointer;
-  }
+  return 0;
 }
 
 pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
 {
-  if (is_paging_set_up)
-    return 0xC00B8000;
-  else
-    return 0x000B8000;
+  return 0;
 }
 
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()
 {
-  return mbr.vesa_bits_per_pixel;
+  return 16;
 }
 
 uint32 ArchCommon::getNumUseableMemoryRegions()
 {
-  uint32 i;
-  for (i=0;i<MAX_MEMORY_MAPS;++i)
-  {
-    if (!mbr.memory_maps[i].used)
-      break;
-  }
-  return i;
+  return 1;
 }
 
 uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
-  if (region >= MAX_MEMORY_MAPS)
-    return 1;
-
-  start_address = mbr.memory_maps[region].start_address;
-  end_address = mbr.memory_maps[region].end_address;
-  type = mbr.memory_maps[region].type;
-
+  start_address = 0;
+  end_address = 8*1024*1024;
+  type = 1;
   return 0;
 }
 

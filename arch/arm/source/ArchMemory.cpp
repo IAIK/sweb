@@ -169,31 +169,13 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
-//  page_directory_entry *page_directory = &kernel_page_directory_start;
-//  //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
-//  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-//  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-//  if (page_directory[pde_vpn].pde4k.present) //the present bit is the same for 4k and 4m
-//  {
-//    if (page_directory[pde_vpn].pde4m.use_4_m_pages)
-//    {
-//      *physical_page = page_directory[pde_vpn].pde4m.page_base_address;
-//      return (PAGE_SIZE*1024U);
-//    }
-//    else
-//    {
-//      if (physical_pte_page)
-//        *physical_pte_page = page_directory[pde_vpn].pde4k.page_table_base_address;
-//      page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-//      if (pte_base[pte_vpn].present)
-//      {
-//        *physical_page = pte_base[pte_vpn].page_base_address;
-//        return PAGE_SIZE;
-//      }
-//      else
-//        return 0;
-//    }
-//  }
-//  else
-//    return 0;
+  page_directory_entry *page_directory = &kernel_page_directory_start;
+  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+  if (page_directory[pde_vpn].pde1m.size == 2) // 1m page
+  {
+    *physical_page = page_directory[pde_vpn].pde1m.base;
+    return 1024*1024;
+  }
+  else
+    return 0;
 }

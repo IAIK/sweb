@@ -24,13 +24,6 @@ extern "C"
    */
   extern void removeBootTimeIdentMapping();
 
-  /**
-   * This one shall be called when you've already set up the correct and final
-   * kernel mapping. Only call this once, after you've set up a new and final
-   * mapping
-   */
-  extern void freeBootTimePaging();
-
 #ifdef __cplusplus
 }
 #endif
