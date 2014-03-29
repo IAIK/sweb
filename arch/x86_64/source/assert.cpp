@@ -30,10 +30,10 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
       fb[i++] = 0x9f;
     }
 
-    writeLine2Bochs((uint8*) error_string);
-    writeChar2Bochs((uint8) '\n');
-    writeLine2Bochs((uint8*) file);
-    writeChar2Bochs((uint8) '\n');
+    writeLine2Bochs(error_string);
+    writeChar2Bochs('\n');
+    writeLine2Bochs(file);
+    writeChar2Bochs('\n');
     while (file && *file)
     {
       fb[i++] = *file++;
@@ -60,8 +60,8 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
       i-=3;
       line /= 10;
     }
-    writeLine2Bochs((uint8*) line_string);
-    writeChar2Bochs((uint8) '\n');
+    writeLine2Bochs(line_string);
+    writeChar2Bochs('\n');
     if (currentThread != 0)
       currentThread->printBacktrace(false);
     for ( ; ;) ;

@@ -15,7 +15,7 @@
 
 extern "C" int xenprintf(const char *fmt, ...);
 
-void writeChar2Bochs( uint8 char2Write )
+void writeChar2Bochs( char char2Write )
 {
   char tmp[2] = {char2Write,'\0'};
   xenprintf(tmp);
@@ -23,7 +23,7 @@ void writeChar2Bochs( uint8 char2Write )
 }
 
 
-void writeLine2Bochs( const uint8 * line2Write )
+void writeLine2Bochs( const char * line2Write )
 {
   xenprintf((char*)line2Write);
   return;

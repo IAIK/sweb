@@ -8,14 +8,14 @@
 #include "offsets.h"
 
 
-void writeChar2Bochs( uint8 char2Write )
+void writeChar2Bochs( char char2Write )
 {
   outportb( 0xE9, char2Write );
 }
 
-void writeLine2Bochs( const uint8 * line2Write )
+void writeLine2Bochs( const char * line2Write )
 {
-  const uint8 *currentChar;
+  const char *currentChar;
 
   uint8 counter = 0; // the message is cut off at 250 chars
 

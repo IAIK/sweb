@@ -7,17 +7,17 @@
 #include "ports.h"
 
 
-void writeChar2Bochs( uint8 char2Write )
+void writeChar2Bochs( char char2Write )
 {
   outportb( 0xE9, char2Write );
 }
 
-void writeLine2Bochs( const uint8 * line2Write )
+void writeLine2Bochs( const char * line2Write )
 {
   // TODO: It would be nice to have a sprintf function
   // so we can format the string
-  const uint8 *currentChar;
-  const uint8 *swebTag = ( uint8 * ) "[SWEB] ";
+  const char *currentChar;
+  const char *swebTag = ( char * ) "[SWEB] ";
 
   for( currentChar = swebTag; (*currentChar != '\0'); currentChar++ )
     writeChar2Bochs( *currentChar );
