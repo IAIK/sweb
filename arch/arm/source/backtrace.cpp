@@ -172,44 +172,44 @@ bool try_paste_operator(const char *& input, char *& buffer)
 
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {
-  if (!call_stack ||
-      (use_stored_registers && !thread) ||
-      (!use_stored_registers && thread != currentThread) ||
-      size <= 1)
-    return 0;
-
-  void *ebp = 0;
-
-  if (!use_stored_registers)
-  {
-//    __asm__ __volatile__(" \
-//       movl %%ebp, %0\n"
-//        : "=g" (ebp)
-//    );
-  }
-  else
-    ebp = (void*)thread->kernel_arch_thread_info_->ebp;
-
-  int i = 0;
-  StackFrame *CurrentFrame = (StackFrame*)ebp;
-  void *StackStart = (void*)((uint32)thread->stack_ + sizeof(thread->stack_)); // the stack "starts" at the high addresses...
-  void *StackEnd = (void*)thread->stack_; // ... and "ends" at the lower ones.
-
-  if (use_stored_registers)
-    call_stack[i++] = thread->kernel_arch_thread_info_->eip;
-
-  void *StartAddress = (void*)0x80000000;
-  void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();
-
-  while (i < size &&
-      ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
-      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
-  {
-    call_stack[i++] = (pointer)CurrentFrame->return_address;
-    CurrentFrame = CurrentFrame->previous_frame;
-  }
+//  if (!call_stack ||
+//      (use_stored_registers && !thread) ||
+//      (!use_stored_registers && thread != currentThread) ||
+//      size <= 1)
+//    return 0;
+//
+//  void *ebp = 0;
+//
+//  if (!use_stored_registers)
+//  {
+////    __asm__ __volatile__(" \
+////       movl %%ebp, %0\n"
+////        : "=g" (ebp)
+////    );
+//  }
+//  else
+//    ebp = (void*)thread->kernel_arch_thread_info_->ebp;
+//
+    int i = 0;
+//  StackFrame *CurrentFrame = (StackFrame*)ebp;
+//  void *StackStart = (void*)((uint32)thread->stack_ + sizeof(thread->stack_)); // the stack "starts" at the high addresses...
+//  void *StackEnd = (void*)thread->stack_; // ... and "ends" at the lower ones.
+//
+//  if (use_stored_registers)
+//    call_stack[i++] = thread->kernel_arch_thread_info_->eip;
+//
+//  void *StartAddress = (void*)0x80000000;
+//  void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();
+//
+//  while (i < size &&
+//      ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
+//      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
+//      ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
+//      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
+//  {
+//    call_stack[i++] = (pointer)CurrentFrame->return_address;
+//    CurrentFrame = CurrentFrame->previous_frame;
+//  }
 
   return i;
 }

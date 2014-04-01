@@ -3,8 +3,7 @@
 .comm kernel_page_directory_start, 0x4000 @ Reserve 16k space for page directory
 
 .bss
-.comm stack, 0x10000 @ Reserve 64k stack in the BSS
-.comm kstackexc, 0x10000 @ Reserve 64k stack in the BSS
+.comm stack, 0x4000 @ Reserve 4k stack in the BSS
 
 .text
 
@@ -21,7 +20,7 @@ interrupt_vector_table:
 
 entry:
 .globl entry
-  ldr sp, =stack - 0x80000000+0x10000 @ Set up the stack
+  ldr sp, =stack - 0x80000000+0x4000 @ Set up the stack
   mov fp, #0
   ldr r0, =initialiseBootTimePaging - 0x80000000
   blx r0
@@ -41,8 +40,7 @@ entry:
 
 PagingMode:
 .globl PagingMode
-  ldr sp, =stack+0x10000 @ Set up the stack
-  cpsie i
+  ldr sp, =stack+0x4000 @ Set up the stack
   bl removeBootTimeIdentMapping
   bl startup
 4:
@@ -51,16 +49,6 @@ PagingMode:
 arch_TestAndSet:
 .globl arch_TestAndSet
   swp r0, r0, [r1]
-  bx lr
-
-arch_enableInterrupts:
-.globl arch_enableInterrupts
-  cpsie i
-  bx lr
-
-arch_disableInterrupts:
-.globl arch_disableInterrupts
-  cpsid i
   bx lr
 
 arch_yield:

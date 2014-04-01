@@ -32,389 +32,159 @@
 #include "Syscall.h"
 #include "paging-definitions.h"
 //---------------------------------------------------------------------------*/
-#define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
-#define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
-
-#define GATE_SIZE_16_BIT     0 // use 16- bit push
-#define GATE_SIZE_32_BIT     1 // use 32- bit push
-
-#define TYPE_TRAP_GATE       7 // trap gate, i.e. IF flag is *not* cleared
-#define TYPE_INTERRUPT_GATE  6 // interrupt gate, i.e. IF flag *is* cleared
-
-#define DPL_KERNEL_SPACE     0 // kernelspace's protection level
-#define DPL_USER_SPACE       3 // userspaces's protection level
-
-#define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
-
-
-// --- Pagefault error flags.
-//     PF because/in/caused by/...
-
-#define FLAG_PF_PRESENT     0x01 // =0: pt/page not present
-                                 // =1: of protection violation
-
-#define FLAG_PF_RDWR        0x02 // =0: read access
-                                 // =1: write access
-
-#define FLAG_PF_USER        0x04 // =0: supervisormode (CPL < 3)
-                                 // =1: usermode (CPL == 3)
-
-#define FLAG_PF_RSVD        0x08 // =0: not a reserved bit
-                                 // =1: a reserved bit
-
-#define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
-                                 // =1: an instruction fetch (need PAE for that)
-//---------------------------------------------------------------------------*/
-struct GateDesc
-{
-  uint16 offset_low;       // low word of handler entry point's address
-  uint16 segment_selector; // (code) segment the handler resides in
-  uint8 reserved  : 5;     // reserved. set to zero
-  uint8 zeros     : 3;     // set to zero
-  uint8 type      : 3;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
-  uint8 gate_size : 1;     // set to GATE_SIZE_16_BIT or GATE_SIZE_32_BIT
-  uint8 unused    : 1;     // unsued - set to zero
-  uint8 dpl       : 2;     // descriptor protection level
-  uint8 present   : 1;     // present- flag - set to 1
-  uint16 offset_high;      // high word of handler entry point's address
-}__attribute__((__packed__));
-//---------------------------------------------------------------------------*/
-
-extern "C" void arch_dummyHandler();
 
 void InterruptUtils::initialise()
 {
-  // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
-
-  for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
-  {
-    interrupt_gates[i].offset_low = LO_WORD(handlers[i].offset);
-    interrupt_gates[i].offset_high = HI_WORD(handlers[i].offset);
-    interrupt_gates[i].gate_size = GATE_SIZE_32_BIT;
-    interrupt_gates[i].present = 1;
-    interrupt_gates[i].reserved = 0;
-    interrupt_gates[i].segment_selector = KERNEL_CS;
-    interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
-    interrupt_gates[i].unused = 0;
-    interrupt_gates[i].zeros = 0;
-    interrupt_gates[i].dpl = (handlers[i].number == SYSCALL_INTERRUPT ?
-        DPL_USER_SPACE : DPL_KERNEL_SPACE);
-  }
-
-  IDTR idtr;
-
-  idtr.base =  (uint32)interrupt_gates;
-  idtr.limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS - 1;
-  lidt(&idtr);
 }
 
-void InterruptUtils::lidt(IDTR *idtr)
+extern uint32* irq_switch_stack;
+
+void saveThreadRegisters()
 {
-  //asm volatile("lidt (%0) ": :"q" (idtr));
+  /* dont store registers on first switch */
+  if (currentThread) {
+    /*
+      1. store register on stack in thread struct
+      2. access hidden registers and store in thread struct
+    */
+    currentThreadInfo->pc = irq_switch_stack[-1];
+    currentThreadInfo->r15 = irq_switch_stack[-2];
+    currentThreadInfo->r14 = irq_switch_stack[-3];
+    currentThreadInfo->r13 = irq_switch_stack[-4];
+    currentThreadInfo->r12 = irq_switch_stack[-5];
+    currentThreadInfo->r11 = irq_switch_stack[-6];
+    currentThreadInfo->r10 = irq_switch_stack[-7];
+    currentThreadInfo->r9 = irq_switch_stack[-8];
+    currentThreadInfo->r8 = irq_switch_stack[-9];
+    currentThreadInfo->r7 = irq_switch_stack[-10];
+    currentThreadInfo->r6 = irq_switch_stack[-11];
+    currentThreadInfo->r5 = irq_switch_stack[-12];
+    currentThreadInfo->r4 = irq_switch_stack[-13];
+    currentThreadInfo->r3 = irq_switch_stack[-14];
+    currentThreadInfo->r2 = irq_switch_stack[-15];
+    currentThreadInfo->r1 = irq_switch_stack[-16];
+    currentThreadInfo->r0 = irq_switch_stack[-17];
+    currentThreadInfo->cpsr = irq_switch_stack[-18];
+
+    uint32      __lr, __sp;
+
+    /* switch to system mode get registers then switch back */
+    asm("    mrs r0, cpsr \n\
+       bic r0, r0, #0x1f \n\
+       orr r0, r0, #0x1f \n\
+       msr cpsr, r0 \n\
+       mov %[sp], sp \n\
+       mov %[lr], lr \n\
+       bic r0, r0, #0x1f \n\
+       orr r0, r0, #0x12 \n\
+       msr cpsr, r0 \n\
+       " : [sp]"=r" (__sp), [lr]"=r" (__lr));
+    currentThreadInfo->sp = __sp;
+    currentThreadInfo->lr = __lr;
+
+  }
 }
 
-// void InterruptUtils::enableInterrupts(){}
-// void InterruptUtils::disableInterrupts(){}
+void restoreThreadRegisters()
+{
+  /*
+    load registers
+  */
+  irq_switch_stack[-1] = currentThreadInfo->pc;
+  irq_switch_stack[-2] = currentThreadInfo->r15;
+  irq_switch_stack[-3] = currentThreadInfo->r14;
+  irq_switch_stack[-4] = currentThreadInfo->r13;
+  irq_switch_stack[-5] = currentThreadInfo->r12;
+  irq_switch_stack[-6] = currentThreadInfo->r11;
+  irq_switch_stack[-7] = currentThreadInfo->r10;
+  irq_switch_stack[-8] = currentThreadInfo->r9;
+  irq_switch_stack[-9] = currentThreadInfo->r8;
+  irq_switch_stack[-10] = currentThreadInfo->r7;
+  irq_switch_stack[-11] = currentThreadInfo->r6;
+  irq_switch_stack[-12] = currentThreadInfo->r5;
+  irq_switch_stack[-13] = currentThreadInfo->r4;
+  irq_switch_stack[-14] = currentThreadInfo->r3;
+  irq_switch_stack[-15] = currentThreadInfo->r2;
+  irq_switch_stack[-16] = currentThreadInfo->r1;
+  irq_switch_stack[-17] = currentThreadInfo->r0;
+  irq_switch_stack[-18] = currentThreadInfo->cpsr;
+  /* switch into system mode restore hidden registers then switch back */
+  asm("    mrs r0, cpsr \n\
+                             bic r0, r0, #0x1f \n\
+     orr r0, r0, #0x1f \n\
+     msr cpsr, r0 \n\
+     mov sp, %[sp] \n\
+     mov lr, %[lr] \n\
+                             bic r0, r0, #0x1f \n\
+     orr r0, r0, #0x12 \n\
+     msr cpsr, r0 \n\
+     " : : [sp]"r" (currentThreadInfo->sp), [lr]"r" (currentThreadInfo->lr));
+  /* go back through normal interrupt return process */
+}
 
-char const *intel_manual =
-                  "See Intel 64 and IA-32 Architectures Software Developer's Manual\n"
-                  "Volume 3A: System Programming Guide\n"
-                  "for further information on what happened\n\n";
-/*
-#define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
-  extern "C" void errorHandler_##x () \
-  {\
-    currentThread->switch_to_userspace_ = false;\
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
-    ArchInterrupts::enableInterrupts();\
-    kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    currentThread->kill();\
+
+extern "C" uint32 exceptionHandler(uint32 lr, uint32 type);
+uint32 exceptionHandler(uint32 lr, uint32 type) {
+  uint32      *t0mmio = (uint32*)0x13000000;
+  uint32      swi;
+
+  t0mmio[REG_INTCLR] = 1;
+
+  if (type == ARM4_XRQ_IRQ) {
+    //if (picmmio[PIC_IRQ_STATUS] & 0x20) // TODO we should check this
+    {
+      t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
+
+      saveThreadRegisters();
+
+      /* store registers on next switch */
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+      Scheduler::instance()->schedule();
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+
+      restoreThreadRegisters();
+
+      return lr;
+    }
+  }
+  /*
+    Get SWI argument (index).
+  */
+  if (type == ARM4_XRQ_SWINT) {
+    /*swi = ((uint32*)((uint32)lr - 4))[0] & 0xffff;
+
+    if (swi == 4) { // yield
+
+      saveThreadRegisters();
+
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+      Scheduler::instance()->schedule();
+      if (currentThread)
+        ArchThreads::printThreadRegisters(currentThread,0);
+
+      restoreThreadRegisters();
+while(1);
+      return lr;
+    }*/
+    return lr;
   }
 
-#define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_switchThreadToUserPageDirChange();\
-  extern "C" void dummyHandler_##x () \
-  {\
-    uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
-    currentThread->switch_to_userspace_ = false;\
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
-    ArchInterrupts::enableInterrupts();\
-    kprintfd("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    ArchInterrupts::disableInterrupts();\
-    currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
-    switch (currentThread->switch_to_userspace_)\
-    {\
-      case 0:\
-        break;\
-      case 1:\
-        currentThreadInfo = currentThread->user_arch_thread_info_;\
-        arch_switchThreadToUserPageDirChange();\
-        break;\
-      default:\
-        kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
-    }\
+  if (type != ARM4_XRQ_IRQ && type != ARM4_XRQ_FIQ && type != ARM4_XRQ_SWINT) {
+    /*
+      Ensure, the exception return code is correctly handling LR with the
+      correct offset. I am using the same return for everything except SWI,
+      which requires that LR not be offset before return.
+    */
+    kprintfd("CPU FAULT: type = %x, lr = %x\n",type,lr);
+    for(;;);
   }
 
-ERROR_HANDLER(0,#DE: Divide by Zero)
-DUMMY_HANDLER(1)
-DUMMY_HANDLER(2)
-DUMMY_HANDLER(3)
-ERROR_HANDLER(4,#OF: Overflow (INTO Instruction))
-ERROR_HANDLER(5,#BR: Bound Range Exceeded)
-ERROR_HANDLER(6,#OP: Invalid OP Code)
-ERROR_HANDLER(7,#NM: FPU Not Avaiable or Ready)
-ERROR_HANDLER(8,#DF: Double Fault)
-ERROR_HANDLER(9,#MF: FPU Segment Overrun)
-ERROR_HANDLER(10,#TS: Invalid Task State Segment (TSS))
-ERROR_HANDLER(11,#NP: Segment Not Present (WTF ?))
-ERROR_HANDLER(12,#SS: Stack Segment Fault)
-ERROR_HANDLER(13,#GF: General Protection Fault (unallowed memory reference) )
-//DUMMY_HANDLER(14)->PF-handler
-DUMMY_HANDLER(15)
-ERROR_HANDLER(16,#MF: Floting Point Error)
-ERROR_HANDLER(17,#AC: Alignment Error (Unaligned Memory Reference))
-ERROR_HANDLER(18,#MC: Machine Check Error)
-ERROR_HANDLER(19,#XF: SIMD Floting Point Error)
-DUMMY_HANDLER(20)
-DUMMY_HANDLER(21)
-DUMMY_HANDLER(22)
-DUMMY_HANDLER(23)
-DUMMY_HANDLER(24)
-DUMMY_HANDLER(25)
-DUMMY_HANDLER(26)
-DUMMY_HANDLER(27)
-DUMMY_HANDLER(28)
-DUMMY_HANDLER(29)
-DUMMY_HANDLER(30)
-DUMMY_HANDLER(31)
-DUMMY_HANDLER(32)
-DUMMY_HANDLER(33)
-DUMMY_HANDLER(34)
-DUMMY_HANDLER(35)
-DUMMY_HANDLER(36)
-DUMMY_HANDLER(37)
-DUMMY_HANDLER(38)
-DUMMY_HANDLER(39)
-DUMMY_HANDLER(40)
-DUMMY_HANDLER(41)
-DUMMY_HANDLER(42)
-DUMMY_HANDLER(43)
-DUMMY_HANDLER(44)
-DUMMY_HANDLER(45)
-DUMMY_HANDLER(46)
-DUMMY_HANDLER(47)
-DUMMY_HANDLER(48)
-DUMMY_HANDLER(49)
-DUMMY_HANDLER(50)
-DUMMY_HANDLER(51)
-DUMMY_HANDLER(52)
-DUMMY_HANDLER(53)
-DUMMY_HANDLER(54)
-DUMMY_HANDLER(55)
-DUMMY_HANDLER(56)
-DUMMY_HANDLER(57)
-DUMMY_HANDLER(58)
-DUMMY_HANDLER(59)
-DUMMY_HANDLER(60)
-DUMMY_HANDLER(61)
-DUMMY_HANDLER(62)
-DUMMY_HANDLER(63)
-DUMMY_HANDLER(64)
-DUMMY_HANDLER(65)
-DUMMY_HANDLER(66)
-DUMMY_HANDLER(67)
-DUMMY_HANDLER(68)
-DUMMY_HANDLER(69)
-DUMMY_HANDLER(70)
-DUMMY_HANDLER(71)
-DUMMY_HANDLER(72)
-DUMMY_HANDLER(73)
-DUMMY_HANDLER(74)
-DUMMY_HANDLER(75)
-DUMMY_HANDLER(76)
-DUMMY_HANDLER(77)
-DUMMY_HANDLER(78)
-DUMMY_HANDLER(79)
-DUMMY_HANDLER(80)
-DUMMY_HANDLER(81)
-DUMMY_HANDLER(82)
-DUMMY_HANDLER(83)
-DUMMY_HANDLER(84)
-DUMMY_HANDLER(85)
-DUMMY_HANDLER(86)
-DUMMY_HANDLER(87)
-DUMMY_HANDLER(88)
-DUMMY_HANDLER(89)
-DUMMY_HANDLER(90)
-DUMMY_HANDLER(91)
-DUMMY_HANDLER(92)
-DUMMY_HANDLER(93)
-DUMMY_HANDLER(94)
-DUMMY_HANDLER(95)
-DUMMY_HANDLER(96)
-DUMMY_HANDLER(97)
-DUMMY_HANDLER(98)
-DUMMY_HANDLER(99)
-DUMMY_HANDLER(100)
-DUMMY_HANDLER(101)
-DUMMY_HANDLER(102)
-DUMMY_HANDLER(103)
-DUMMY_HANDLER(104)
-DUMMY_HANDLER(105)
-DUMMY_HANDLER(106)
-DUMMY_HANDLER(107)
-DUMMY_HANDLER(108)
-DUMMY_HANDLER(109)
-DUMMY_HANDLER(110)
-DUMMY_HANDLER(111)
-DUMMY_HANDLER(112)
-DUMMY_HANDLER(113)
-DUMMY_HANDLER(114)
-DUMMY_HANDLER(115)
-DUMMY_HANDLER(116)
-DUMMY_HANDLER(117)
-DUMMY_HANDLER(118)
-DUMMY_HANDLER(119)
-DUMMY_HANDLER(120)
-DUMMY_HANDLER(121)
-DUMMY_HANDLER(122)
-DUMMY_HANDLER(123)
-DUMMY_HANDLER(124)
-DUMMY_HANDLER(125)
-DUMMY_HANDLER(126)
-DUMMY_HANDLER(127)
-//DUMMY_HANDLER(128)
-DUMMY_HANDLER(129)
-DUMMY_HANDLER(130)
-DUMMY_HANDLER(131)
-DUMMY_HANDLER(132)
-DUMMY_HANDLER(133)
-DUMMY_HANDLER(134)
-DUMMY_HANDLER(135)
-DUMMY_HANDLER(136)
-DUMMY_HANDLER(137)
-DUMMY_HANDLER(138)
-DUMMY_HANDLER(139)
-DUMMY_HANDLER(140)
-DUMMY_HANDLER(141)
-DUMMY_HANDLER(142)
-DUMMY_HANDLER(143)
-DUMMY_HANDLER(144)
-DUMMY_HANDLER(145)
-DUMMY_HANDLER(146)
-DUMMY_HANDLER(147)
-DUMMY_HANDLER(148)
-DUMMY_HANDLER(149)
-DUMMY_HANDLER(150)
-DUMMY_HANDLER(151)
-DUMMY_HANDLER(152)
-DUMMY_HANDLER(153)
-DUMMY_HANDLER(154)
-DUMMY_HANDLER(155)
-DUMMY_HANDLER(156)
-DUMMY_HANDLER(157)
-DUMMY_HANDLER(158)
-DUMMY_HANDLER(159)
-DUMMY_HANDLER(160)
-DUMMY_HANDLER(161)
-DUMMY_HANDLER(162)
-DUMMY_HANDLER(163)
-DUMMY_HANDLER(164)
-DUMMY_HANDLER(165)
-DUMMY_HANDLER(166)
-DUMMY_HANDLER(167)
-DUMMY_HANDLER(168)
-DUMMY_HANDLER(169)
-DUMMY_HANDLER(170)
-DUMMY_HANDLER(171)
-DUMMY_HANDLER(172)
-DUMMY_HANDLER(173)
-DUMMY_HANDLER(174)
-DUMMY_HANDLER(175)
-DUMMY_HANDLER(176)
-DUMMY_HANDLER(177)
-DUMMY_HANDLER(178)
-DUMMY_HANDLER(179)
-DUMMY_HANDLER(180)
-DUMMY_HANDLER(181)
-DUMMY_HANDLER(182)
-DUMMY_HANDLER(183)
-DUMMY_HANDLER(184)
-DUMMY_HANDLER(185)
-DUMMY_HANDLER(186)
-DUMMY_HANDLER(187)
-DUMMY_HANDLER(188)
-DUMMY_HANDLER(189)
-DUMMY_HANDLER(190)
-DUMMY_HANDLER(191)
-DUMMY_HANDLER(192)
-DUMMY_HANDLER(193)
-DUMMY_HANDLER(194)
-DUMMY_HANDLER(195)
-DUMMY_HANDLER(196)
-DUMMY_HANDLER(197)
-DUMMY_HANDLER(198)
-DUMMY_HANDLER(199)
-DUMMY_HANDLER(200)
-DUMMY_HANDLER(201)
-DUMMY_HANDLER(202)
-DUMMY_HANDLER(203)
-DUMMY_HANDLER(204)
-DUMMY_HANDLER(205)
-DUMMY_HANDLER(206)
-DUMMY_HANDLER(207)
-DUMMY_HANDLER(208)
-DUMMY_HANDLER(209)
-DUMMY_HANDLER(210)
-DUMMY_HANDLER(211)
-DUMMY_HANDLER(212)
-DUMMY_HANDLER(213)
-DUMMY_HANDLER(214)
-DUMMY_HANDLER(215)
-DUMMY_HANDLER(216)
-DUMMY_HANDLER(217)
-DUMMY_HANDLER(218)
-DUMMY_HANDLER(219)
-DUMMY_HANDLER(220)
-DUMMY_HANDLER(221)
-DUMMY_HANDLER(222)
-DUMMY_HANDLER(223)
-DUMMY_HANDLER(224)
-DUMMY_HANDLER(225)
-DUMMY_HANDLER(226)
-DUMMY_HANDLER(227)
-DUMMY_HANDLER(228)
-DUMMY_HANDLER(229)
-DUMMY_HANDLER(230)
-DUMMY_HANDLER(231)
-DUMMY_HANDLER(232)
-DUMMY_HANDLER(233)
-DUMMY_HANDLER(234)
-DUMMY_HANDLER(235)
-DUMMY_HANDLER(236)
-DUMMY_HANDLER(237)
-DUMMY_HANDLER(238)
-DUMMY_HANDLER(239)
-DUMMY_HANDLER(240)
-DUMMY_HANDLER(241)
-DUMMY_HANDLER(242)
-DUMMY_HANDLER(243)
-DUMMY_HANDLER(244)
-DUMMY_HANDLER(245)
-DUMMY_HANDLER(246)
-DUMMY_HANDLER(247)
-DUMMY_HANDLER(248)
-DUMMY_HANDLER(249)
-DUMMY_HANDLER(250)
-DUMMY_HANDLER(251)
-DUMMY_HANDLER(252)
-DUMMY_HANDLER(253)
-DUMMY_HANDLER(254)
-DUMMY_HANDLER(255)
-*/
+  return lr;
+}
+
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
@@ -500,7 +270,7 @@ extern "C" void irqHandler_65()
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
   //--------Start "just for Debugging"-----------
-
+/*
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
       address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getPID(),
       currentThread->getName(), currentThread->switch_to_userspace_);
@@ -624,7 +394,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       break; //not reached
     default:
       kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
-  }
+  }*/
 }
 
 //TODO extern "C" void arch_irqHandler_1();
@@ -698,13 +468,13 @@ extern "C" void syscallHandler()
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
 
-  currentThread->user_arch_thread_info_->eax =
-    Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
-                  currentThread->user_arch_thread_info_->ebx,
-                  currentThread->user_arch_thread_info_->ecx,
-                  currentThread->user_arch_thread_info_->edx,
-                  currentThread->user_arch_thread_info_->esi,
-                  currentThread->user_arch_thread_info_->edi);
+//  currentThread->user_arch_thread_info_->eax =
+//    Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
+//                  currentThread->user_arch_thread_info_->ebx,
+//                  currentThread->user_arch_thread_info_->ecx,
+//                  currentThread->user_arch_thread_info_->edx,
+//                  currentThread->user_arch_thread_info_->esi,
+//                  currentThread->user_arch_thread_info_->edi);
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;

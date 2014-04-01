@@ -13,6 +13,11 @@
 #include "Scheduler.h"
 
 
+extern "C" void ArchThreadStartHack()
+{
+  while(1)
+    kprintfd("A");
+}
 
 void ArchThreads::initialise()
 {
@@ -23,14 +28,14 @@ extern "C" uint32 kernel_page_directory_start;
 
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
-  thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
-  if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
+//  thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
+//  if (thread->user_arch_thread_info_)
+//    thread->user_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
 uint32 ArchThreads::getPageDirectory(Thread *thread)
 {
-  return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
+//  return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
   //TODO: should be the same for now, have to return only one
 }
 
@@ -41,31 +46,9 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
-  info->cs      = KERNEL_CS;
-  info->ds      = KERNEL_DS;
-  info->es      = KERNEL_DS;
-  info->ss      = KERNEL_SS;
-  info->eflags  = 0x200;
-  info->eax     = 0;
-  info->ecx     = 0;
-  info->edx     = 0;
-  info->ebx     = 0;
-  info->esi     = 0;
-  info->edi     = 0;
-  info->dpl     = DPL_KERNEL;
-  info->esp     = stack;
-  info->ebp     = stack;
-  info->eip     = start_function;
-  info->cr3     = pageDirectory;
-
- /* fpu (=fninit) */
-  info->fpu[0] = 0xFFFF037F;
-  info->fpu[1] = 0xFFFF0000;
-  info->fpu[2] = 0xFFFFFFFF;
-  info->fpu[3] = 0x00000000;
-  info->fpu[4] = 0x00000000;
-  info->fpu[5] = 0x00000000;
-  info->fpu[6] = 0xFFFF0000;
+  info->pc = (uint32)&ArchThreadStartHack;
+  info->cpsr = 0x60000013;
+  info->sp = stack & 0xFFFFFFF0;
 }
 
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
@@ -74,34 +57,9 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
-  info->cs      = USER_CS;
-  info->ds      = USER_DS;
-  info->es      = USER_DS;
-  info->ss      = USER_SS;
-  info->ss0     = KERNEL_SS;
-  info->eflags  = 0x200;
-  info->eax     = 0;
-  info->ecx     = 0;
-  info->edx     = 0;
-  info->ebx     = 0;
-  info->esi     = 0;
-  info->edi     = 0;
-  info->dpl     = DPL_USER;
-  info->esp     = user_stack;
-  info->ebp     = user_stack;
-  info->esp0    = kernel_stack;
-  info->eip     = start_function;
-  info->cr3     = pageDirectory;
-
- /* fpu (=fninit) */
-  info->fpu[0] = 0xFFFF037F;
-  info->fpu[1] = 0xFFFF0000;
-  info->fpu[2] = 0xFFFFFFFF;
-  info->fpu[3] = 0x00000000;
-  info->fpu[4] = 0x00000000;
-  info->fpu[5] = 0x00000000;
-  info->fpu[6] = 0xFFFF0000;
-  //kprintfd("ArchThreads::create: values done\n");
+  info->pc = (uint32)&ArchThreadStartHack;
+  info->cpsr = 0x60000010;
+  info->sp = user_stack & 0xFFFFFFF0;
 
 }
 
@@ -148,7 +106,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- eax: %10x  ebx: %10x  ecx: %10x  edx: %10x -- esp: %10x  ebp: %10x  esp0 %10x -- eip: %10x  eflg: %10x  cr3: %x\n",
-           userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
+  kprintfd("%sThread: %10x, info: %10x -- pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0: %10x  r1: %10x  r2: %10x  r3: %10x  r4: %10x  r5: %10x  r6 %10x  r7: %10x  r8: %10x  r9: %10x  r10: %10x  r11: %10x  r12 %10x  r13: %10x  r14: %10x  r15 %10x\n",
+           userspace_registers?"  User":"Kernel",thread,info,info->pc,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12,info->r13,info->r14,info->r15);
 
 }

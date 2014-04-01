@@ -20,6 +20,7 @@ const char* Thread::threadStatePrintable[3] = {"Running", "Sleeping", "ToBeDestr
 
 static void ThreadStartHack()
 {
+  kprintfd("ThreadStartHack\n");
   currentThread->setTerminal ( main_console->getActiveTerminal() );
   currentThread->Run();
   currentThread->kill();

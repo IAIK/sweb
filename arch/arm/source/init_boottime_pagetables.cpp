@@ -13,6 +13,7 @@
 extern page_directory_entry kernel_page_directory_start[];
 extern void* kernel_end_address;
 extern void* interrupt_vector_table;
+uint32 irq_switch_stack;
 
 extern "C" void initialiseBootTimePaging();
 extern "C" void removeBootTimeIdentMapping();
@@ -70,6 +71,9 @@ void initialiseBootTimePaging()
 //    PRINT_ADDRESS(*(uint32*)(pde_start + i));
   }
 //  kprintfd("initialiseBootTimePaging: done\n");
+  extern char* stack;
+  irq_switch_stack = (uint32)&stack;
+  irq_switch_stack += 0x4000;
 }
 
 void removeBootTimeIdentMapping()

@@ -162,7 +162,6 @@ void Scheduler::wake ( Thread* thread_to_wake )
 
 uint32 Scheduler::schedule()
 {
-  debug ( SCHEDULER,"schedule()\n" );
   if (block_scheduling_ != 0)
   {
     //no scheduling today...
@@ -177,7 +176,6 @@ uint32 Scheduler::schedule()
 //    kprintfd("Schedule Out:  ");
 //    ArchThreads::printThreadRegisters(currentThread,0);
 //  }
-  debug ( SCHEDULER,"schedule()\n" );
   Thread* previousThread = currentThread;
   do
   {
@@ -197,7 +195,6 @@ uint32 Scheduler::schedule()
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
       assert(false);
     }
-    debug ( SCHEDULER,"schedule() loop\n" );
   }
   while (currentThread->state_ != Running);
   debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
@@ -209,7 +206,6 @@ uint32 Scheduler::schedule()
 //  }
   uint32 ret = 1;
 
-  debug ( SCHEDULER,"schedule()\n" );
   if ( currentThread->switch_to_userspace_ )
     currentThreadInfo =  currentThread->user_arch_thread_info_;
   else
@@ -217,7 +213,6 @@ uint32 Scheduler::schedule()
     currentThreadInfo =  currentThread->kernel_arch_thread_info_;
     ret=0;
   }
-  debug ( SCHEDULER,"schedule()\n" );
 
   return ret;
 }
