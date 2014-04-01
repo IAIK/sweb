@@ -11,6 +11,8 @@
 #include "SegmentUtils.h"
 #include "ArchThreads.h"
 
+// parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
+
 bool ArchInterrupts::enabled = false;
 extern char* kstackexc;
 
