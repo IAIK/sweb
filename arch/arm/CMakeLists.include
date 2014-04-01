@@ -10,8 +10,8 @@ set(KERNEL_IMAGE_OBJCOPY )
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-arm -m 8M -kernel kernel.x -serial stdio
-	COMMENT "Going to qemu-system-arm -m 8M -kernel kernel.x -serial stdio"
+	COMMAND	qemu-system-arm -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk
+	COMMENT "Going to qemu-system-arm -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -19,8 +19,8 @@ add_custom_target(qemu
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-arm -s -S -m 8M -kernel kernel.x -serial stdio
-	COMMENT "Going to qemu-system-arm -s -S -m 8M -kernel kernel.x -serial stdio"
+	COMMAND	qemu-system-arm -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk
+	COMMENT "Going to qemu-system-arm -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)

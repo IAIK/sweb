@@ -995,3 +995,51 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {/*
   DUMMYHANDLER(254)
   DUMMYHANDLER(255)*/
 };
+
+extern "C" void arch_irq0_handler()
+{
+  kprintfd("arch_irq0_handler\n");
+  while(1);
+}
+
+extern "C" void arch_irq1_handler()
+{
+  kprintfd("arch_irq1_handler\n");
+  while(1);
+}
+
+extern "C" void arch_irq2_handler()
+{
+  while(1)
+  kprintfd("arch_irq2_handler\n");
+}
+
+extern "C" void arch_irq3_handler()
+{
+  kprintfd("arch_irq3_handler\n");
+  while(1);
+}
+
+extern "C" void arch_irq4_handler()
+{
+  while(1)
+    kprintfd("arch_irq4_handler\n");
+}
+
+extern "C" void arch_irq5_handler()
+{
+  while(1)
+  kprintfd("arch_irq5_handler\n");
+}
+
+extern "C" void arch_irq6_handler()
+{
+  while(1)
+  kprintfd("arch_irq6_handler\n");
+}
+
+extern "C" void arch_irq7_handler()
+{
+  while(1)
+    kprintfd("arch_irq7_handler\n");
+}

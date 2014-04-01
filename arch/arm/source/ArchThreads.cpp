@@ -10,6 +10,7 @@
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "Thread.h"
+#include "Scheduler.h"
 
 
 
@@ -111,18 +112,16 @@ void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
     delete info;
 }
 
+extern "C" void arch_yield();
 void ArchThreads::yield()
 {
-/*  __asm__ __volatile__("int $65"
-  :
-  :
-  );*/
+  arch_yield();
 }
 
 extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
-  //TODO return arch_TestAndSet(new_value, &lock);
+  return arch_TestAndSet(new_value, &lock);
 }
 
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)

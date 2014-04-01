@@ -92,11 +92,15 @@ Scheduler::Scheduler()
 
 void Scheduler::addNewThread ( Thread *thread )
 {
-  debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
+  debug ( SCHEDULER,"addNewThread: A %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   lockScheduling();
+  debug ( SCHEDULER,"addNewThread: B %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
+  debug ( SCHEDULER,"addNewThread: C %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   threads_.push_back ( thread );
+  debug ( SCHEDULER,"addNewThread: D %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   unlockScheduling();
+  debug ( SCHEDULER,"addNewThread: E %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
 }
 
 void Scheduler::removeCurrentThread()
@@ -158,6 +162,7 @@ void Scheduler::wake ( Thread* thread_to_wake )
 
 uint32 Scheduler::schedule()
 {
+  debug ( SCHEDULER,"schedule()\n" );
   if (block_scheduling_ != 0)
   {
     //no scheduling today...
@@ -172,6 +177,7 @@ uint32 Scheduler::schedule()
 //    kprintfd("Schedule Out:  ");
 //    ArchThreads::printThreadRegisters(currentThread,0);
 //  }
+  debug ( SCHEDULER,"schedule()\n" );
   Thread* previousThread = currentThread;
   do
   {
@@ -191,9 +197,10 @@ uint32 Scheduler::schedule()
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
       assert(false);
     }
+    debug ( SCHEDULER,"schedule() loop\n" );
   }
   while (currentThread->state_ != Running);
-  //debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
+  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
 
 //  if (currentThread)
 //  {
@@ -202,6 +209,7 @@ uint32 Scheduler::schedule()
 //  }
   uint32 ret = 1;
 
+  debug ( SCHEDULER,"schedule()\n" );
   if ( currentThread->switch_to_userspace_ )
     currentThreadInfo =  currentThread->user_arch_thread_info_;
   else
@@ -209,6 +217,7 @@ uint32 Scheduler::schedule()
     currentThreadInfo =  currentThread->kernel_arch_thread_info_;
     ret=0;
   }
+  debug ( SCHEDULER,"schedule()\n" );
 
   return ret;
 }
@@ -294,8 +303,10 @@ void Scheduler::printThreadList()
 
 void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 {
+  kprintfd("lockScheduling\n");
   if ( unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) ) )
     arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
+  kprintfd("lockScheduling2\n");
 }
 
 void Scheduler::unlockScheduling()

@@ -4,18 +4,20 @@
 
 .bss
 .comm stack, 0x10000 @ Reserve 64k stack in the BSS
+.comm kstackexc, 0x10000 @ Reserve 64k stack in the BSS
 
 .text
 
 interrupt_vector_table:
-    b . @ Reset
-    b .
-    b . @ SWI instruction
-    b .
-    b .
-    b .
-    b .
-    b .
+.globl interrupt_vector_table
+    ldr pc, =arch_irq0_handler @ Reset, supervisor
+    ldr pc, =arch_irq1_handler @ Undefined instruction, undefined
+    ldr pc, =arch_irq2_handler @ Software interrupt (SWI), supervisor
+    ldr pc, =arch_irq3_handler @ Prefetch Abort (instruction fetch memory abort), abort
+    ldr pc, =arch_irq4_handler @ Data Abort (data access memory abort), abort
+    ldr pc, =arch_irq5_handler @ not used
+    ldr pc, =arch_irq6_handler @ IRQ (interrupt), irq
+    ldr pc, =arch_irq7_handler @ FIQ (fast interrupt, fiq
 
 entry:
 .globl entry
@@ -32,7 +34,6 @@ entry:
   mrc p15, 0, r0, c1, c0, 0
   orr r0, r0, #0x1
   mcr p15, 0, r0, c1, c0, 0
-  ldr sp, =stack - 0x80000000+0x10000 @ Set up the stack
   ldr r0, =PagingMode
   bx r0
 3:
@@ -40,10 +41,32 @@ entry:
 
 PagingMode:
 .globl PagingMode
+  ldr sp, =stack+0x10000 @ Set up the stack
+  cpsie i
   bl removeBootTimeIdentMapping
   bl startup
 4:
   b 4 @ Halt
+
+arch_TestAndSet:
+.globl arch_TestAndSet
+  swp r0, r0, [r1]
+  bx lr
+
+arch_enableInterrupts:
+.globl arch_enableInterrupts
+  cpsie i
+  bx lr
+
+arch_disableInterrupts:
+.globl arch_disableInterrupts
+  cpsid i
+  bx lr
+
+arch_yield:
+.globl arch_yield
+  swi #4
+  bx lr
 
 __aeabi_atexit:
     .globl __aeabi_atexit

@@ -8,7 +8,6 @@
 #include "arch_bd_request.h"
 
 #include "ArchInterrupts.h"
-#include "8259.h"
 
 #include "Scheduler.h"
 #include "kprintf.h"
@@ -51,11 +50,11 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
   bool interrupt_context = ArchInterrupts::disableInterrupts();
   ArchInterrupts::enableInterrupts();
 
-  enableIRQ( irqnum );
-  if( irqnum > 8 )
-  {
-    enableIRQ( 2 );   // cascade
-  }
+//  enableIRQ( irqnum );
+//  if( irqnum > 8 )
+//  {
+//    enableIRQ( 2 );   // cascade
+//  }
 
   testIRQ( );
   if( !interrupt_context )

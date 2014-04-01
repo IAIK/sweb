@@ -11,5 +11,5 @@
 .global __syscall
 .type __syscall, %function
 __syscall:
-	svc #0
+	svc 0
 	bx lr

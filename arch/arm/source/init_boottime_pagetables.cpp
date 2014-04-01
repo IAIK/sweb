@@ -12,6 +12,7 @@
 
 extern page_directory_entry kernel_page_directory_start[];
 extern void* kernel_end_address;
+extern void* interrupt_vector_table;
 
 extern "C" void initialiseBootTimePaging();
 extern "C" void removeBootTimeIdentMapping();
@@ -73,7 +74,7 @@ void initialiseBootTimePaging()
 
 void removeBootTimeIdentMapping()
 {
-  uint32 i;
+//  uint32 i;
 //
 //  for (i=0;i<5;++i)
 //  {

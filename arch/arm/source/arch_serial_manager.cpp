@@ -9,7 +9,6 @@
 
 #include "debug_bochs.h"
 #include "kprintf.h"
-#include "8259.h"
 
 SerialManager * SerialManager::instance_ = 0;
 
@@ -46,7 +45,7 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
       archInfo->uart_type = SC::UART_OLD;  // TODO: UART type detection
       archInfo->irq_num = 4 - i%2;
       serial_ports[ num_ports ] = new SerialPort( (char*) sp_name, *archInfo );
-      enableIRQ( archInfo->irq_num );
+//      enableIRQ( archInfo->irq_num );
       num_ports++;
     }
   }
