@@ -22,8 +22,11 @@ static void ThreadStartHack()
 {
   kprintfd("ThreadStartHack\n");
   currentThread->setTerminal ( main_console->getActiveTerminal() );
+  kprintfd("ThreadStartHack 2\n");
   currentThread->Run();
+  kprintfd("ThreadStartHack 3\n");
   currentThread->kill();
+  kprintfd("ThreadStartHack 4\n");
   debug ( THREAD,"ThreadStartHack: Panic, thread couldn't be killed\n" );
   for ( ;; ) ;
 }

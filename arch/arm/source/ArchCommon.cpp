@@ -52,22 +52,22 @@ uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 
 uint32 ArchCommon::getVESAConsoleHeight()
 {
-  return 600;
+  return 480;
 }
 
 uint32 ArchCommon::getVESAConsoleWidth()
 {
-  return 800;
+  return 640;
 }
 
 pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
-  return 0;
+  return 0x200000;
 }
 
 pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
 {
-  return 0;
+  return 0x200000;
 }
 
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()
@@ -169,10 +169,38 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
 
 Console* ArchCommon::createConsole(uint32 count)
 {
-  if (haveVESAConsole())
-    return new FrameBufferConsole(count);
-  else
-    return new TextConsole(count);
+#define PL110_CR_EN   0x001
+#define PL110_CR_PWR    0x800
+#define PL110_IOBASE    0xc0000000
+#define PL110_PALBASE   (PL110_IOBASE + 0x200)
+
+typedef struct _PL110MMIO
+{
+  uint32    volatile tim0;    //0
+  uint32    volatile tim1;    //4
+  uint32    volatile tim2;    //8
+  uint32    volatile d;   //c
+  uint32    volatile upbase;  //10
+  uint32    volatile f;   //14
+  uint32    volatile g;   //18
+  uint32    volatile control; //1c
+} PL110MMIO;
+
+  PL110MMIO *plio;
+  int   x;
+  uint16    volatile *fb;
+
+  plio = (PL110MMIO*)PL110_IOBASE;
+
+  /* 640x480 pixels */
+  plio->tim0 = 0x3f1f3f9c;
+  plio->tim1 = 0x080b61df;
+  plio->upbase = getVESAConsoleLFBPtr();
+  /* 16-bit color */
+  plio->control = 0x1929; // 1 1000 0010 1001
+  fb = (uint16*)getVESAConsoleLFBPtr();
+
+  return new FrameBufferConsole(count);
 }
 
 void ArchCommon::initDebug()
@@ -186,7 +214,9 @@ void ArchCommon::initDebug()
   parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 }
 
+extern "C" void halt();
+
 void ArchCommon::idle()
 {
-  //__asm__ __volatile__ ( "hlt" );
+  halt();
 }

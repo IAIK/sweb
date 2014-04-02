@@ -54,6 +54,7 @@ class IdleThread : public Thread
       uint32 new_ticks = 0;
       while ( 1 )
       {
+        kprintfd("I");
         Scheduler::instance()->cleanupDeadThreads();
         new_ticks = Scheduler::instance()->getTicks();
         if (new_ticks == last_ticks)
@@ -92,15 +93,11 @@ Scheduler::Scheduler()
 
 void Scheduler::addNewThread ( Thread *thread )
 {
-  debug ( SCHEDULER,"addNewThread: A %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
+  debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   lockScheduling();
-  debug ( SCHEDULER,"addNewThread: B %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
-  debug ( SCHEDULER,"addNewThread: C %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   threads_.push_back ( thread );
-  debug ( SCHEDULER,"addNewThread: D %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
   unlockScheduling();
-  debug ( SCHEDULER,"addNewThread: E %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
 }
 
 void Scheduler::removeCurrentThread()

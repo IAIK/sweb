@@ -169,8 +169,6 @@ void startup()
   kprintf ( "Now enabling Interrupts...\n" );
   boot_completed = 1;
   ArchInterrupts::enableInterrupts();
-while(1)
-  kprintfd("A");
   Scheduler::instance()->yield();
 
   //not reached

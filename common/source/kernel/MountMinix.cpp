@@ -28,6 +28,7 @@ MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::inst
 
 void MountMinixAndStartUserProgramsThread::Run()
 {
+  while(1);
   if(!progs_ || !progs_[0])
     return;
 

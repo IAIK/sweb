@@ -23,9 +23,6 @@ struct ArchThreadInfo
   uint32 r10;       // 40
   uint32 r11;        // 44
   uint32 r12;        // 48
-  uint32 r13;
-  uint32 r14;
-  uint32 r15;
   uint32 sp;        // 52
   uint32 lr;        // 56
   uint32 cpsr;        // 60

@@ -56,6 +56,11 @@ arch_yield:
   swi #4
   bx lr
 
+halt:
+.globl halt
+  mcr     p15, 0, r0, c7, c0, 4           @ Wait for interrupt
+  mov     pc, lr
+
 __aeabi_atexit:
     .globl __aeabi_atexit
 raise:

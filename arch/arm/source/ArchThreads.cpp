@@ -12,13 +12,6 @@
 #include "Thread.h"
 #include "Scheduler.h"
 
-
-extern "C" void ArchThreadStartHack()
-{
-  while(1)
-    kprintfd("A");
-}
-
 void ArchThreads::initialise()
 {
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
@@ -46,7 +39,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
-  info->pc = (uint32)&ArchThreadStartHack;
+  info->pc = start_function;
   info->cpsr = 0x60000013;
   info->sp = stack & 0xFFFFFFF0;
 }
@@ -57,7 +50,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
-  info->pc = (uint32)&ArchThreadStartHack;
+  info->pc = start_function;
   info->cpsr = 0x60000010;
   info->sp = user_stack & 0xFFFFFFF0;
 
@@ -70,10 +63,10 @@ void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
     delete info;
 }
 
-extern "C" void arch_yield();
+extern "C" void halt();
 void ArchThreads::yield()
 {
-  arch_yield();
+  halt();
 }
 
 extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
@@ -106,7 +99,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0: %10x  r1: %10x  r2: %10x  r3: %10x  r4: %10x  r5: %10x  r6 %10x  r7: %10x  r8: %10x  r9: %10x  r10: %10x  r11: %10x  r12 %10x  r13: %10x  r14: %10x  r15 %10x\n",
-           userspace_registers?"  User":"Kernel",thread,info,info->pc,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12,info->r13,info->r14,info->r15);
+  kprintfd("%sThread: %10x, info: %10x -- pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
+           userspace_registers?"  User":"Kernel",thread,info,info->pc,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12);
 
 }

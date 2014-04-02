@@ -38,7 +38,7 @@ const uint32 BACKTRACE          = 0x00080100 | OUTPUT_ENABLED;
 //group memory management
 const uint32 MM                 = 0x00100000 | OUTPUT_ENABLED;
 const uint32 PM                 = 0x00100001 | OUTPUT_ENABLED;
-const uint32 KMM                = 0x00100002 | OUTPUT_ENABLED;
+const uint32 KMM                = 0x00100002;
 
 //group driver
 const uint32 DRIVER             = 0x00200000 | OUTPUT_ENABLED;

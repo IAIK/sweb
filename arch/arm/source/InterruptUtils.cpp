@@ -48,23 +48,20 @@ void saveThreadRegisters()
       2. access hidden registers and store in thread struct
     */
     currentThreadInfo->pc = irq_switch_stack[-1];
-    currentThreadInfo->r15 = irq_switch_stack[-2];
-    currentThreadInfo->r14 = irq_switch_stack[-3];
-    currentThreadInfo->r13 = irq_switch_stack[-4];
-    currentThreadInfo->r12 = irq_switch_stack[-5];
-    currentThreadInfo->r11 = irq_switch_stack[-6];
-    currentThreadInfo->r10 = irq_switch_stack[-7];
-    currentThreadInfo->r9 = irq_switch_stack[-8];
-    currentThreadInfo->r8 = irq_switch_stack[-9];
-    currentThreadInfo->r7 = irq_switch_stack[-10];
-    currentThreadInfo->r6 = irq_switch_stack[-11];
-    currentThreadInfo->r5 = irq_switch_stack[-12];
-    currentThreadInfo->r4 = irq_switch_stack[-13];
-    currentThreadInfo->r3 = irq_switch_stack[-14];
-    currentThreadInfo->r2 = irq_switch_stack[-15];
-    currentThreadInfo->r1 = irq_switch_stack[-16];
-    currentThreadInfo->r0 = irq_switch_stack[-17];
-    currentThreadInfo->cpsr = irq_switch_stack[-18];
+    currentThreadInfo->r12 = irq_switch_stack[-2];
+    currentThreadInfo->r11 = irq_switch_stack[-3];
+    currentThreadInfo->r10 = irq_switch_stack[-4];
+    currentThreadInfo->r9 = irq_switch_stack[-5];
+    currentThreadInfo->r8 = irq_switch_stack[-6];
+    currentThreadInfo->r7 = irq_switch_stack[-7];
+    currentThreadInfo->r6 = irq_switch_stack[-8];
+    currentThreadInfo->r5 = irq_switch_stack[-9];
+    currentThreadInfo->r4 = irq_switch_stack[-10];
+    currentThreadInfo->r3 = irq_switch_stack[-11];
+    currentThreadInfo->r2 = irq_switch_stack[-12];
+    currentThreadInfo->r1 = irq_switch_stack[-13];
+    currentThreadInfo->r0 = irq_switch_stack[-14];
+    currentThreadInfo->cpsr = irq_switch_stack[-15];
 
     uint32      __lr, __sp;
 
@@ -91,23 +88,20 @@ void restoreThreadRegisters()
     load registers
   */
   irq_switch_stack[-1] = currentThreadInfo->pc;
-  irq_switch_stack[-2] = currentThreadInfo->r15;
-  irq_switch_stack[-3] = currentThreadInfo->r14;
-  irq_switch_stack[-4] = currentThreadInfo->r13;
-  irq_switch_stack[-5] = currentThreadInfo->r12;
-  irq_switch_stack[-6] = currentThreadInfo->r11;
-  irq_switch_stack[-7] = currentThreadInfo->r10;
-  irq_switch_stack[-8] = currentThreadInfo->r9;
-  irq_switch_stack[-9] = currentThreadInfo->r8;
-  irq_switch_stack[-10] = currentThreadInfo->r7;
-  irq_switch_stack[-11] = currentThreadInfo->r6;
-  irq_switch_stack[-12] = currentThreadInfo->r5;
-  irq_switch_stack[-13] = currentThreadInfo->r4;
-  irq_switch_stack[-14] = currentThreadInfo->r3;
-  irq_switch_stack[-15] = currentThreadInfo->r2;
-  irq_switch_stack[-16] = currentThreadInfo->r1;
-  irq_switch_stack[-17] = currentThreadInfo->r0;
-  irq_switch_stack[-18] = currentThreadInfo->cpsr;
+  irq_switch_stack[-2] = currentThreadInfo->r12;
+  irq_switch_stack[-3] = currentThreadInfo->r11;
+  irq_switch_stack[-4] = currentThreadInfo->r10;
+  irq_switch_stack[-5] = currentThreadInfo->r9;
+  irq_switch_stack[-6] = currentThreadInfo->r8;
+  irq_switch_stack[-7] = currentThreadInfo->r7;
+  irq_switch_stack[-8] = currentThreadInfo->r6;
+  irq_switch_stack[-9] = currentThreadInfo->r5;
+  irq_switch_stack[-10] = currentThreadInfo->r4;
+  irq_switch_stack[-11] = currentThreadInfo->r3;
+  irq_switch_stack[-12] = currentThreadInfo->r2;
+  irq_switch_stack[-13] = currentThreadInfo->r1;
+  irq_switch_stack[-14] = currentThreadInfo->r0;
+  irq_switch_stack[-15] = currentThreadInfo->cpsr;
   /* switch into system mode restore hidden registers then switch back */
   asm("    mrs r0, cpsr \n\
                              bic r0, r0, #0x1f \n\
@@ -136,14 +130,7 @@ uint32 exceptionHandler(uint32 lr, uint32 type) {
       t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
 
       saveThreadRegisters();
-
-      /* store registers on next switch */
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
       Scheduler::instance()->schedule();
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
-
       restoreThreadRegisters();
 
       return lr;
@@ -153,22 +140,17 @@ uint32 exceptionHandler(uint32 lr, uint32 type) {
     Get SWI argument (index).
   */
   if (type == ARM4_XRQ_SWINT) {
-    /*swi = ((uint32*)((uint32)lr - 4))[0] & 0xffff;
+    swi = ((uint32*)((uint32)lr - 4))[0] & 0xffff;
 
     if (swi == 4) { // yield
 
       saveThreadRegisters();
 
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
       Scheduler::instance()->schedule();
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
 
       restoreThreadRegisters();
-while(1);
       return lr;
-    }*/
+    }
     return lr;
   }
 
@@ -178,7 +160,11 @@ while(1);
       correct offset. I am using the same return for everything except SWI,
       which requires that LR not be offset before return.
     */
-    kprintfd("CPU FAULT: type = %x, lr = %x\n",type,lr);
+    currentThread->switch_to_userspace_ = false;
+    currentThreadInfo = currentThread->kernel_arch_thread_info_;
+    currentThread->kill();
+    kprintfd("\nCPU Fault: type = %x, lr = %x\n",type,lr);
+    ArchThreads::printThreadRegisters(currentThread,0);
     for(;;);
   }
 

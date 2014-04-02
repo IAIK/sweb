@@ -16,7 +16,7 @@ extern char* irq_switch_stack;
 
 #define KEXP_TOPSWI \
   uint32      lr; \
-  asm("mov sp, %[ps]" : : [ps]"g" ((uint32)irq_switch_stack+4096)); \
+  asm("mov sp, %[ps]" : : [ps]"g" ((uint32)irq_switch_stack)); \
   asm("push {lr}"); \
   asm("push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}"); \
   asm("mov %[ps], lr" : [ps]"=r" (lr));
@@ -27,7 +27,7 @@ extern char* irq_switch_stack;
 
 #define KEXP_TOP3 \
   uint32      lr; \
-  asm("mov sp, %[ps]" : : [ps]"g" ((uint32)irq_switch_stack+4096)); \
+  asm("mov sp, %[ps]" : : [ps]"g" ((uint32)irq_switch_stack)); \
   asm("sub lr, lr, #4"); \
   asm("push {lr}"); \
   asm("push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}"); \
@@ -87,6 +87,7 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
+  kprintfd("enableTimer\n");
   uint32    *picmmio;
 
   /* initialize timer and PIC
@@ -103,18 +104,16 @@ void ArchInterrupts::enableTimer()
   uint32* t0mmio = (uint32*)0x13000000;
   t0mmio[REG_LOAD] = 0xffffff;
   t0mmio[REG_BGLOAD] = 0xffffff;
-  t0mmio[REG_CTRL] = CTRL_ENABLE | CTRL_MODE_PERIODIC | CTRL_SIZE_32 | CTRL_DIV_NONE | CTRL_INT_ENABLE;
+  t0mmio[REG_CTRL] = CTRL_ENABLE | CTRL_MODE_PERIODIC | CTRL_DIV_NONE | CTRL_INT_ENABLE;
   t0mmio[REG_INTCLR] = ~0;    /* make sure interrupt is clear (might not be mandatory) */
 
 }
 
 void ArchInterrupts::disableTimer()
 {
+  kprintfd("disableTimer\n");
   uint32* t0mmio = (uint32*)0x13000000;
-  t0mmio[REG_LOAD] = 0xffffff;
-  t0mmio[REG_BGLOAD] = 0xffffff;
   t0mmio[REG_CTRL] = 0;
-  t0mmio[REG_INTCLR] = ~0;    /* make sure interrupt is clear (might not be mandatory) */
 
 }
 
@@ -145,6 +144,7 @@ void ArchInterrupts::EndOfInterrupt(uint16 number)
 extern "C" void arch_enableInterrupts();
 void ArchInterrupts::enableInterrupts()
 {
+  kprintfd("enableInterrupts");
   arm4_xrqinstall(ARM4_XRQ_RESET, (void*)&k_exphandler_reset_entry);
   arm4_xrqinstall(ARM4_XRQ_UNDEF, (void*)&k_exphandler_undef_entry);
   arm4_xrqinstall(ARM4_XRQ_SWINT, (void*)&k_exphandler_swi_entry);
@@ -159,6 +159,7 @@ void ArchInterrupts::enableInterrupts()
 extern "C" void arch_disableInterrupts();
 bool ArchInterrupts::disableInterrupts()
 {
+  kprintfd("disableInterrupts");
   arm4_cpsrset(arm4_cpsrget() | (1 << 7));
 }
 
