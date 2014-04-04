@@ -68,7 +68,7 @@ VfsSyscall::VfsSyscall(char path_separator) : PATH_SEPARATOR(path_separator),
 {
   LAST_DEFINED_PATH_SEPARATOR = path_separator;
   debug(VFSSYSCALL, "starting to create VfsSyscall Singleton-instance\n");
-  //assert(initRootFs() == 0);
+  /*assert*/(initRootFs() == 0);
   debug(VFSSYSCALL, "VfsSyscall was successfully init\n");
 }
 
