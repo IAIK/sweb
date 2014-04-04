@@ -15,6 +15,11 @@
 
 uint32 IDEDriver::doDeviceDetection()
 {
+  BDVirtualDevice *bdv = new BDVirtualDevice( 0, 0, 0, 0, "idea1", false);
+  bdv->setPartitionType(0xDEAD);
+
+  BDManager::getInstance()->addVirtualDevice( bdv );
+
    uint32 jiffies = 0;
    uint16 base_port = 0x1F0;
    uint16 base_regport = 0x3F6; 

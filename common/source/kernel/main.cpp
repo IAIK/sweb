@@ -125,7 +125,7 @@ void startup()
 
   // initialize global and static objects
   ustl::coutclass::init();
-  //VfsSyscall::createVfsSyscall();
+  VfsSyscall::createVfsSyscall();
 
   extern ustl::list<FileDescriptor*> global_fd;
   new (&global_fd) ustl::list<FileDescriptor*>();
@@ -165,9 +165,9 @@ void startup()
   kprintf ( "Now enabling Interrupts...\n" );
   boot_completed = 1;
   ArchInterrupts::enableInterrupts();
-while(1);
-  Scheduler::instance()->yield();
 
+  Scheduler::instance()->yield();
+while(1);
   //not reached
   assert ( false );
 }

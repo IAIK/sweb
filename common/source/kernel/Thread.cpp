@@ -20,13 +20,9 @@ const char* Thread::threadStatePrintable[3] = {"Running", "Sleeping", "ToBeDestr
 
 static void ThreadStartHack()
 {
-  kprintfd("ThreadStartHack\n");
   currentThread->setTerminal ( main_console->getActiveTerminal() );
-  kprintfd("ThreadStartHack 2\n");
   currentThread->Run();
-  kprintfd("ThreadStartHack 3\n");
   currentThread->kill();
-  kprintfd("ThreadStartHack 4\n");
   debug ( THREAD,"ThreadStartHack: Panic, thread couldn't be killed\n" );
   for ( ;; ) ;
 }
@@ -103,8 +99,6 @@ void Thread::kill()
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
-    while(1);
-    assert(false);
   }
 }
 

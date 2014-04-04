@@ -155,7 +155,7 @@ void Scheduler::wake ( Thread* thread_to_wake )
 {
   thread_to_wake->state_=Running;
 }
-#include "MountMinix.h"
+
 uint32 Scheduler::schedule()
 {
   if (block_scheduling_ != 0)
@@ -193,14 +193,13 @@ uint32 Scheduler::schedule()
     }
   }
   while (currentThread->state_ != Running);
-  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
+  //debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
 
-  if (currentThread)
-  {
-    kprintfd("Schedule In:  ");
-    ArchThreads::printThreadRegisters(currentThread,0);
-  }
-
+//  if (currentThread)
+//  {
+//    kprintfd("Schedule In:  ");
+//    ArchThreads::printThreadRegisters(currentThread,0);
+//  }
   uint32 ret = 1;
 
   if ( currentThread->switch_to_userspace_ )
@@ -295,10 +294,8 @@ void Scheduler::printThreadList()
 
 void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 {
-  kprintfd("lockScheduling\n");
   if ( unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) ) )
     arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
-  kprintfd("lockScheduling2\n");
 }
 
 void Scheduler::unlockScheduling()
