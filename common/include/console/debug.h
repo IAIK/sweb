@@ -36,7 +36,7 @@ const uint32 MOUNTMINIX         = 0x00080080 | OUTPUT_ENABLED;
 const uint32 BACKTRACE          = 0x00080100 | OUTPUT_ENABLED;
 
 //group memory management
-const uint32 MM                 = 0x00100000 | OUTPUT_ENABLED;
+const uint32 MM                 = 0x00100000;
 const uint32 PM                 = 0x00100001 | OUTPUT_ENABLED;
 const uint32 KMM                = 0x00100002;
 

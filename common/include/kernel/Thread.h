@@ -59,7 +59,7 @@ class Thread
 
     ArchThreadInfo *kernel_arch_thread_info_;
     ArchThreadInfo *user_arch_thread_info_;
-    uint32 stack_[2048];
+    uint32 stack_[4096];
 
     uint32 switch_to_userspace_;
 

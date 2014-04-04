@@ -13,7 +13,7 @@
 extern page_directory_entry kernel_page_directory_start[];
 extern void* kernel_end_address;
 extern void* interrupt_vector_table;
-uint32 irq_switch_stack;
+extern char* currentStack;
 
 extern "C" void initialiseBootTimePaging();
 extern "C" void removeBootTimeIdentMapping();
@@ -59,8 +59,8 @@ void initialiseBootTimePaging()
     pde_start[i].pde1m.size = 2;
   }
   extern char* stack;
-  irq_switch_stack = (uint32)&stack;
-  irq_switch_stack += 0x4000;
+  currentStack = (char*)&stack;
+  currentStack += 0x4000;
 }
 
 void removeBootTimeIdentMapping()

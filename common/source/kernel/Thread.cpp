@@ -103,6 +103,8 @@ void Thread::kill()
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
+    while(1);
+    assert(false);
   }
 }
 

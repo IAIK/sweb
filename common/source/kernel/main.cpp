@@ -47,6 +47,8 @@
 #include "MountMinix.h"
 #include "ustl/outerrstream.h"
 
+#include "user_progs.h"
+
 extern void* kernel_end_address;
 
 extern "C" void startup();
@@ -55,6 +57,7 @@ extern Console* main_console;
 
 uint32 boot_completed;
 uint32 we_are_dying;
+FsWorkingDirectory default_working_dir;
 
 /**
  * startup called in @ref boot.s
@@ -131,7 +134,7 @@ void startup()
 
   // the default working directory info
   debug ( MAIN, "creating a default working Directory\n" );
-  FsWorkingDirectory default_working_dir;
+  new (&default_working_dir) FsWorkingDirectory();
   debug ( MAIN, "finished with creating working Directory\n" );
 
   debug ( MAIN, "make a deep copy of FsWorkingDir\n" );
@@ -153,15 +156,8 @@ void startup()
 
   Scheduler::instance()->addNewThread ( main_console );
 
-  // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!
-  char const *user_progs[] = {
-  // for reasons of automated testing
-                              "/stdin-test.sweb",
-                              0
-                             };
-
   Scheduler::instance()->addNewThread (
-       new MountMinixAndStartUserProgramsThread ( new FsWorkingDirectory(default_working_dir), user_progs )
+       new MountMinixAndStartUserProgramsThread ( new FsWorkingDirectory(default_working_dir), user_progs ) // see user_progs.h
    );
 
   Scheduler::instance()->printThreadList();
@@ -169,6 +165,7 @@ void startup()
   kprintf ( "Now enabling Interrupts...\n" );
   boot_completed = 1;
   ArchInterrupts::enableInterrupts();
+while(1);
   Scheduler::instance()->yield();
 
   //not reached

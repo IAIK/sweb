@@ -11,6 +11,7 @@
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "Console.h"
+#include "FrameBufferConsole.h"
 #include "Terminal.h"
 #include "kprintf.h"
 #include "Scheduler.h"
@@ -37,88 +38,47 @@ void InterruptUtils::initialise()
 {
 }
 
-extern uint32* irq_switch_stack;
-
-void saveThreadRegisters()
-{
-  /* dont store registers on first switch */
-  if (currentThread) {
-    /*
-      1. store register on stack in thread struct
-      2. access hidden registers and store in thread struct
-    */
-    currentThreadInfo->pc = irq_switch_stack[-1];
-    currentThreadInfo->r12 = irq_switch_stack[-2];
-    currentThreadInfo->r11 = irq_switch_stack[-3];
-    currentThreadInfo->r10 = irq_switch_stack[-4];
-    currentThreadInfo->r9 = irq_switch_stack[-5];
-    currentThreadInfo->r8 = irq_switch_stack[-6];
-    currentThreadInfo->r7 = irq_switch_stack[-7];
-    currentThreadInfo->r6 = irq_switch_stack[-8];
-    currentThreadInfo->r5 = irq_switch_stack[-9];
-    currentThreadInfo->r4 = irq_switch_stack[-10];
-    currentThreadInfo->r3 = irq_switch_stack[-11];
-    currentThreadInfo->r2 = irq_switch_stack[-12];
-    currentThreadInfo->r1 = irq_switch_stack[-13];
-    currentThreadInfo->r0 = irq_switch_stack[-14];
-    currentThreadInfo->cpsr = irq_switch_stack[-15];
-
-    uint32      __lr, __sp;
-
-    /* switch to system mode get registers then switch back */
-    asm("    mrs r0, cpsr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x1f \n\
-       msr cpsr, r0 \n\
-       mov %[sp], sp \n\
-       mov %[lr], lr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x12 \n\
-       msr cpsr, r0 \n\
-       " : [sp]"=r" (__sp), [lr]"=r" (__lr));
-    currentThreadInfo->sp = __sp;
-    currentThreadInfo->lr = __lr;
-
-  }
-}
+extern uint32* currentStack;
+extern Console* main_console;
 
 void restoreThreadRegisters()
 {
   /*
     load registers
   */
-  irq_switch_stack[-1] = currentThreadInfo->pc;
-  irq_switch_stack[-2] = currentThreadInfo->r12;
-  irq_switch_stack[-3] = currentThreadInfo->r11;
-  irq_switch_stack[-4] = currentThreadInfo->r10;
-  irq_switch_stack[-5] = currentThreadInfo->r9;
-  irq_switch_stack[-6] = currentThreadInfo->r8;
-  irq_switch_stack[-7] = currentThreadInfo->r7;
-  irq_switch_stack[-8] = currentThreadInfo->r6;
-  irq_switch_stack[-9] = currentThreadInfo->r5;
-  irq_switch_stack[-10] = currentThreadInfo->r4;
-  irq_switch_stack[-11] = currentThreadInfo->r3;
-  irq_switch_stack[-12] = currentThreadInfo->r2;
-  irq_switch_stack[-13] = currentThreadInfo->r1;
-  irq_switch_stack[-14] = currentThreadInfo->r0;
-  irq_switch_stack[-15] = currentThreadInfo->cpsr;
+  currentStack[-1] = currentThreadInfo->pc;
+  currentStack[-2] = currentThreadInfo->r12;
+  currentStack[-3] = currentThreadInfo->r11;
+  currentStack[-4] = currentThreadInfo->r10;
+  currentStack[-5] = currentThreadInfo->r9;
+  currentStack[-6] = currentThreadInfo->r8;
+  currentStack[-7] = currentThreadInfo->r7;
+  currentStack[-8] = currentThreadInfo->r6;
+  currentStack[-9] = currentThreadInfo->r5;
+  currentStack[-10] = currentThreadInfo->r4;
+  currentStack[-11] = currentThreadInfo->r3;
+  currentStack[-12] = currentThreadInfo->r2;
+  currentStack[-13] = currentThreadInfo->r1;
+  currentStack[-14] = currentThreadInfo->r0;
+  currentStack[-15] = currentThreadInfo->cpsr;
   /* switch into system mode restore hidden registers then switch back */
-  asm("    mrs r0, cpsr \n\
-                             bic r0, r0, #0x1f \n\
+  asm("mrs r0, cpsr \n\
+     bic r0, r0, #0x1f \n\
      orr r0, r0, #0x1f \n\
      msr cpsr, r0 \n\
      mov sp, %[sp] \n\
      mov lr, %[lr] \n\
-                             bic r0, r0, #0x1f \n\
+     bic r0, r0, #0x1f \n\
      orr r0, r0, #0x12 \n\
      msr cpsr, r0 \n\
      " : : [sp]"r" (currentThreadInfo->sp), [lr]"r" (currentThreadInfo->lr));
   /* go back through normal interrupt return process */
 }
 
-
-extern "C" uint32 exceptionHandler(uint32 lr, uint32 type);
-uint32 exceptionHandler(uint32 lr, uint32 type) {
+#include "MountMinix.h"
+extern "C" void exceptionHandler(uint32 type);
+void exceptionHandler(uint32 type) {
+  static uint32 heart_beat_value = 0;
   uint32      *t0mmio = (uint32*)0x13000000;
   uint32      swi;
 
@@ -129,29 +89,33 @@ uint32 exceptionHandler(uint32 lr, uint32 type) {
     {
       t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
 
-      saveThreadRegisters();
-      Scheduler::instance()->schedule();
-      restoreThreadRegisters();
+      const char* clock = "/-\\|";
+      ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
+      heart_beat_value = (heart_beat_value + 1) % 4;
 
-      return lr;
+      Scheduler::instance()->incTicks();
+      Scheduler::instance()->schedule();
+
+      return;
     }
   }
   /*
     Get SWI argument (index).
   */
   if (type == ARM4_XRQ_SWINT) {
-    swi = ((uint32*)((uint32)lr - 4))[0] & 0xffff;
+    swi = ((uint32*)((uint32)currentThreadInfo->lr - 4))[0] & 0xffff;
 
     if (swi == 4) { // yield
-
-      saveThreadRegisters();
+      kprintfd("SWI\n");
+      /*saveThreadRegisters();
 
       Scheduler::instance()->schedule();
-
       restoreThreadRegisters();
-      return lr;
+      currentStack = (uint32*)(currentThread->getStackStartPointer() & ~0xF);
+*/
+      return;
     }
-    return lr;
+    return;
   }
 
   if (type != ARM4_XRQ_IRQ && type != ARM4_XRQ_FIQ && type != ARM4_XRQ_SWINT) {
@@ -163,12 +127,12 @@ uint32 exceptionHandler(uint32 lr, uint32 type) {
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     currentThread->kill();
-    kprintfd("\nCPU Fault: type = %x, lr = %x\n",type,lr);
+    kprintfd("\nCPU Fault type = %x\n",type);
     ArchThreads::printThreadRegisters(currentThread,0);
     for(;;);
   }
 
-  return lr;
+  return;
 }
 
 extern ArchThreadInfo *currentThreadInfo;
@@ -187,49 +151,7 @@ extern Thread *currentThread;
 //TODO extern "C" void arch_switchThreadToUserPageDirChange();
 extern "C" void irqHandler_0()
 {
-  static uint32 heart_beat_value = 0;
-  // static uint32 leds = 0;
-  // static uint32 ctr = 0;
-  char* fb = (char*)0xC00B8000;
-  switch (heart_beat_value)
-  {
-    default:
-    case 0:
-    fb[0] = '/';
-    fb[1] = 0x9f;
-    break;
-    case 1:
-    fb[0] = '-';
-    fb[1] = 0x9f;
-    break;
-    case 2:
-    fb[0] = '\\';
-    fb[1] = 0x9f;
-    break;
-    case 3:
-    fb[0] = '|';
-    fb[1] = 0x9f;
-    break;
-  }
-  heart_beat_value = (heart_beat_value + 1) % 4;
 
-  Scheduler::instance()->incTicks();
-
-  uint32 ret = Scheduler::instance()->schedule();
-  switch (ret)
-  {
-    case 0:
-      // kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
-      ArchInterrupts::EndOfInterrupt(0);
-      //TODO arch_switchThreadKernelToKernelPageDirChange();
-    case 1:
-      // kprintfd("irq0: Going to leave irq Handler 0 to user\n");
-      ArchInterrupts::EndOfInterrupt(0);
-      //TODO arch_switchThreadToUserPageDirChange();
-    default:
-      kprintfd("irq0: Panic in int 0 handler\n");
-      for( ; ; ) ;
-  }
 }
 
 //TODO extern "C" void arch_irqHandler_65();

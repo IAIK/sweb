@@ -169,6 +169,7 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
 
 Console* ArchCommon::createConsole(uint32 count)
 {
+  // frame buffer initialization code from http://wiki.osdev.org/ARM_Integrator-CP_PL110_Dirty
 #define PL110_CR_EN   0x001
 #define PL110_CR_PWR    0x800
 #define PL110_IOBASE    0xc0000000

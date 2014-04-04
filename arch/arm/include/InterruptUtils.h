@@ -54,7 +54,7 @@ typedef struct {
     uint32 base;
 } __attribute__((__packed__)) IDTR ;
 
-extern "C" uint32 exceptionHandler(uint32 lr, uint32 type);
+extern "C" void exceptionHandler(uint32 type);
 
 class InterruptUtils
 {

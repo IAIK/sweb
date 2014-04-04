@@ -11,7 +11,7 @@
 MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::instance_ = 0;
 
 MountMinixAndStartUserProgramsThread::MountMinixAndStartUserProgramsThread
-                          ( FsWorkingDirectory *root_fs_info, char const *progs[] ) :
+                          ( FsWorkingDirectory *root_fs_info, char const ** progs ) :
   Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ),
   progs_(progs),
   progs_running_(0),
@@ -28,7 +28,6 @@ MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::inst
 
 void MountMinixAndStartUserProgramsThread::Run()
 {
-  while(1);
   if(!progs_ || !progs_[0])
     return;
 

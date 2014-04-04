@@ -40,8 +40,9 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
   info->pc = start_function;
-  info->cpsr = 0x60000013;
-  info->sp = stack & 0xFFFFFFF0;
+  info->irq_lr = start_function;
+  info->cpsr = 0x6000001F;
+  info->sp = stack & ~0xF;
 }
 
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
@@ -51,8 +52,9 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
   info->pc = start_function;
+  info->irq_lr = start_function;
   info->cpsr = 0x60000010;
-  info->sp = user_stack & 0xFFFFFFF0;
+  info->sp = user_stack & ~0xF;
 
 }
 
@@ -63,10 +65,10 @@ void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
     delete info;
 }
 
-extern "C" void halt();
+extern "C" void arch_yield();
 void ArchThreads::yield()
 {
-  halt();
+  arch_yield();
 }
 
 extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
@@ -77,6 +79,7 @@ uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
 {
+  while(1);
   int32 ret=increment;
   /*__asm__ __volatile__(
   "lock; xadd %0, %1;"

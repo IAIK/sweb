@@ -54,7 +54,6 @@ class IdleThread : public Thread
       uint32 new_ticks = 0;
       while ( 1 )
       {
-        kprintfd("I");
         Scheduler::instance()->cleanupDeadThreads();
         new_ticks = Scheduler::instance()->getTicks();
         if (new_ticks == last_ticks)
@@ -156,7 +155,7 @@ void Scheduler::wake ( Thread* thread_to_wake )
 {
   thread_to_wake->state_=Running;
 }
-
+#include "MountMinix.h"
 uint32 Scheduler::schedule()
 {
   if (block_scheduling_ != 0)
@@ -196,11 +195,12 @@ uint32 Scheduler::schedule()
   while (currentThread->state_ != Running);
   debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
 
-//  if (currentThread)
-//  {
-//    kprintfd("Schedule In:  ");
-//    ArchThreads::printThreadRegisters(currentThread,0);
-//  }
+  if (currentThread)
+  {
+    kprintfd("Schedule In:  ");
+    ArchThreads::printThreadRegisters(currentThread,0);
+  }
+
   uint32 ret = 1;
 
   if ( currentThread->switch_to_userspace_ )

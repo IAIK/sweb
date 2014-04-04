@@ -33,13 +33,6 @@ class FrameBufferConsole : public Console
      */
     bool isDisplayable ( uint32 key );
 
-  private:
-
-    /**
-     * Clears the console screen.
-     */
-    virtual void consoleClearScreen();
-
     /**
      * Sets the given character to the given position on the console.
      * @param row the row number
@@ -49,6 +42,13 @@ class FrameBufferConsole : public Console
      * @return 0
      */
     virtual uint32 consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state );
+
+  private:
+
+    /**
+     * Clears the console screen.
+     */
+    virtual void consoleClearScreen();
 
     /**
      * Returns the console's number of rows.

@@ -1,22 +1,9 @@
+.bss
+.comm stack, 0x4000 @ Reserve 16k stack in the BSS
+
 .text
 
 .comm kernel_page_directory_start, 0x4000 @ Reserve 16k space for page directory
-
-.bss
-.comm stack, 0x4000 @ Reserve 4k stack in the BSS
-
-.text
-
-interrupt_vector_table:
-.globl interrupt_vector_table
-    ldr pc, =arch_irq0_handler @ Reset, supervisor
-    ldr pc, =arch_irq1_handler @ Undefined instruction, undefined
-    ldr pc, =arch_irq2_handler @ Software interrupt (SWI), supervisor
-    ldr pc, =arch_irq3_handler @ Prefetch Abort (instruction fetch memory abort), abort
-    ldr pc, =arch_irq4_handler @ Data Abort (data access memory abort), abort
-    ldr pc, =arch_irq5_handler @ not used
-    ldr pc, =arch_irq6_handler @ IRQ (interrupt), irq
-    ldr pc, =arch_irq7_handler @ FIQ (fast interrupt, fiq
 
 entry:
 .globl entry
@@ -42,6 +29,10 @@ PagingMode:
 .globl PagingMode
   ldr sp, =stack+0x4000 @ Set up the stack
   bl removeBootTimeIdentMapping
+  mrs r0, cpsr
+  bic r0, r0, #0x1f
+  orr r0, r0, #0x1f
+  msr cpsr, r0
   bl startup
 4:
   b 4 @ Halt
