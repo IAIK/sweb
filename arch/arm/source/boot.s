@@ -44,7 +44,7 @@ arch_TestAndSet:
 
 arch_yield:
 .globl arch_yield
-  swi #4
+  swi #0xffff
   bx lr
 
 halt:

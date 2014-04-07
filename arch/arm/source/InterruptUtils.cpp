@@ -41,40 +41,6 @@ void InterruptUtils::initialise()
 extern uint32* currentStack;
 extern Console* main_console;
 
-void restoreThreadRegisters()
-{
-  /*
-    load registers
-  */
-  currentStack[-1] = currentThreadInfo->pc;
-  currentStack[-2] = currentThreadInfo->r12;
-  currentStack[-3] = currentThreadInfo->r11;
-  currentStack[-4] = currentThreadInfo->r10;
-  currentStack[-5] = currentThreadInfo->r9;
-  currentStack[-6] = currentThreadInfo->r8;
-  currentStack[-7] = currentThreadInfo->r7;
-  currentStack[-8] = currentThreadInfo->r6;
-  currentStack[-9] = currentThreadInfo->r5;
-  currentStack[-10] = currentThreadInfo->r4;
-  currentStack[-11] = currentThreadInfo->r3;
-  currentStack[-12] = currentThreadInfo->r2;
-  currentStack[-13] = currentThreadInfo->r1;
-  currentStack[-14] = currentThreadInfo->r0;
-  currentStack[-15] = currentThreadInfo->cpsr;
-  /* switch into system mode restore hidden registers then switch back */
-  asm("mrs r0, cpsr \n\
-     bic r0, r0, #0x1f \n\
-     orr r0, r0, #0x1f \n\
-     msr cpsr, r0 \n\
-     mov sp, %[sp] \n\
-     mov lr, %[lr] \n\
-     bic r0, r0, #0x1f \n\
-     orr r0, r0, #0x12 \n\
-     msr cpsr, r0 \n\
-     " : : [sp]"r" (currentThreadInfo->sp), [lr]"r" (currentThreadInfo->lr));
-  /* go back through normal interrupt return process */
-}
-
 #include "MountMinix.h"
 extern "C" void exceptionHandler(uint32 type);
 void exceptionHandler(uint32 type) {
@@ -87,6 +53,7 @@ void exceptionHandler(uint32 type) {
   if (type == ARM4_XRQ_IRQ) {
     //if (picmmio[PIC_IRQ_STATUS] & 0x20) // TODO we should check this
     {
+      assert(!ArchInterrupts::testIFSet());
       t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
 
       const char* clock = "/-\\|";
@@ -96,29 +63,29 @@ void exceptionHandler(uint32 type) {
       Scheduler::instance()->incTicks();
       Scheduler::instance()->schedule();
 
-      return;
     }
   }
   /*
     Get SWI argument (index).
   */
-  if (type == ARM4_XRQ_SWINT) {
-    swi = ((uint32*)((uint32)currentThreadInfo->lr - 4))[0] & 0xffff;
+  else if (type == ARM4_XRQ_SWINT) {
+    assert(!ArchInterrupts::testIFSet());
+    swi = *((uint32*)((uint32)currentThreadInfo->pc - 4)) & 0xffff;
 
-    if (swi == 4) { // yield
-      kprintfd("SWI\n");
-      /*saveThreadRegisters();
-
+    if (swi == 0xffff) // yield
+    {
       Scheduler::instance()->schedule();
-      restoreThreadRegisters();
-      currentStack = (uint32*)(currentThread->getStackStartPointer() & ~0xF);
-*/
-      return;
     }
-    return;
+    else
+    {
+      assert(false);
+      currentThreadInfo->r0 = Syscall::syscallException(swi, currentThreadInfo->r0, currentThreadInfo->r1,
+                                                             currentThreadInfo->r2, currentThreadInfo->r3,
+                                                             currentThreadInfo->r4);
+    }
   }
 
-  if (type != ARM4_XRQ_IRQ && type != ARM4_XRQ_FIQ && type != ARM4_XRQ_SWINT) {
+  else if (type != ARM4_XRQ_IRQ && type != ARM4_XRQ_FIQ && type != ARM4_XRQ_SWINT) {
     /*
       Ensure, the exception return code is correctly handling LR with the
       correct offset. I am using the same return for everything except SWI,
@@ -131,8 +98,6 @@ void exceptionHandler(uint32 type) {
     ArchThreads::printThreadRegisters(currentThread,0);
     for(;;);
   }
-
-  return;
 }
 
 extern ArchThreadInfo *currentThreadInfo;

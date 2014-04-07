@@ -58,9 +58,6 @@ void initialiseBootTimePaging()
     pde_start[i].pde1m.bufferable = 0;
     pde_start[i].pde1m.size = 2;
   }
-  extern char* stack;
-  currentStack = (char*)&stack;
-  currentStack += 0x4000;
 }
 
 void removeBootTimeIdentMapping()

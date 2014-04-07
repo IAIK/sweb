@@ -36,7 +36,7 @@ public:
    */
   typedef uint32 (*TimerHandlerCallback)();
 
-  /** 
+  /**
    * gives the arch a chance to set things up the way it wants to
    *
    */
@@ -82,13 +82,13 @@ public:
    */
   static void EndOfInterrupt(uint16 number);
 
-  /** 
+  /**
    * enable interrupts, no more lazy linear code execution time ;-)
    * (using sti on x86)
    */
   static void enableInterrupts();
 
-  /** 
+  /**
    *
    * disables Interrupts (by using cli (clear interrupts) on x86)
    * @return bool true if Interrupts were enabled, false otherwise
@@ -97,7 +97,7 @@ public:
 
   /**
    * on x86: tests if the IF Flag in EFLAGS is set, aka if the Interrupts are enabled
-   * 
+   *
    * @return bool true if Interrupts are enabled, false otherwise
    */
   static bool testIFSet();

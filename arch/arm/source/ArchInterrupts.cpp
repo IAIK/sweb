@@ -9,14 +9,11 @@
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
 
-ArchThreadInfo boot_thread_info;
-
 // parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
-extern char* irq_switch_stack;
-char* currentStack;
+
 #define KEXP_TOP3 \
-    asm("sub lr, lr, #4"); \
-    KEXP_TOPSWI
+  asm("sub lr, lr, #4"); \
+  KEXP_TOPSWI
 
 #define KEXP_TOPSWI \
   asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
@@ -47,6 +44,9 @@ char* currentStack;
        mov sp, r4 \n\
        mov %[sp], r4 \n\
        " : [sp]"=r" (currentThreadInfo->sp), [lr]"=r" (currentThreadInfo->lr));
+
+#define KEXP_BOTSWI \
+    KEXP_BOT3
 
 #define KEXP_BOT3 \
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
@@ -91,6 +91,7 @@ void arm4_cpsrset(uint32 r)
 {
     asm("msr cpsr, %[ps]" : : [ps]"r" (r));
 }
+extern uint32 stack;
 
 void __attribute__((naked)) k_exphandler_irq_entry() { KEXP_TOP3;  exceptionHandler(ARM4_XRQ_IRQ); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_fiq_entry() { KEXP_TOP3;  exceptionHandler(ARM4_XRQ_FIQ); KEXP_BOT3; }
@@ -98,7 +99,7 @@ void __attribute__((naked)) k_exphandler_reset_entry() { KEXP_TOP3; exceptionHan
 void __attribute__((naked)) k_exphandler_undef_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_UNDEF); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_abrtp_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_ABRTP); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_ABRTD); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI;   exceptionHandler(ARM4_XRQ_SWINT); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI; exceptionHandler(ARM4_XRQ_SWINT); KEXP_BOTSWI; }
 
 void arm4_xrqinstall(uint32 ndx, void *addr) {
   char buf[32];
@@ -119,8 +120,6 @@ void ArchInterrupts::initialise()
   arm4_xrqinstall(ARM4_XRQ_ABRTD, (void*)&k_exphandler_abrtd_entry);
   arm4_xrqinstall(ARM4_XRQ_IRQ, (void*)&k_exphandler_irq_entry);
   arm4_xrqinstall(ARM4_XRQ_FIQ, (void*)&k_exphandler_fiq_entry);
-
-  currentThreadInfo = &boot_thread_info;
 
   InterruptUtils::initialise();
 }
