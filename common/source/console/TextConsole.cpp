@@ -99,7 +99,7 @@ void TextConsole::consoleSetBackgroundColor ( BACKGROUNDCOLORS const &color )
 
 void TextConsole::Run ( void )
 {
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
   uint32 key= ( uint32 )-1;
   do
   {

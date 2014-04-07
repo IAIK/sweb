@@ -307,7 +307,7 @@ uint32 Terminal::remap ( uint32 key )
   uint32 number_table[] = { ')', '!', '@', '#', '$',
                             '%', '^', '&', '*', '('  };
 
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
 
   if ( isLetter ( key ) )
   {

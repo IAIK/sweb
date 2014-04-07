@@ -166,7 +166,7 @@ void FrameBufferConsole::consoleSetBackgroundColor ( BACKGROUNDCOLORS const &col
 
 void FrameBufferConsole::Run ( void )
 {
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
   uint32 key;
   do
   {

@@ -29,7 +29,7 @@ void Console::unLockConsoleForDrawing()
 
 void Console::handleKey ( uint32 key )
 {
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
 
   uint32 terminal_selected = key - KEY_F1;
 
