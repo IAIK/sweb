@@ -15,7 +15,9 @@ find_program(OBJCOPY_EXECUTABLE objcopy)
 
 #Initialize CMake output directories
 set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
-set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+  set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
+endif(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
@@ -302,16 +304,16 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
-	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\" || true
-	COMMAND cmake .
+	COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
+	COMMAND cmake ${PROJECT_SOURCE_DIR}
 	)
 
 #Custom target: make mrsproper
 #Makes really clean (including the object files)
 add_custom_target(mrsproper
-        COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\" || true
-        COMMAND ./relocate_project.sh
-        COMMAND cmake .
+        COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
+        COMMAND ${PROJECT_SOURCE_DIR}/relocate_project.sh
+        COMMAND cmake ${PROJECT_SOURCE_DIR}
         )
 
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )

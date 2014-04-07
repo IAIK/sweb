@@ -11,7 +11,7 @@ include_directories(
 set(ASM_OBJECTS)
 
 foreach(src start syscalls)
-   set(ASM_SOURCE ../../arch/${ARCH}/userspace/${src}.s)
+   set(ASM_SOURCE ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/${src}.s)
    set(ASM_OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${src}.o)
    set(ASM_OBJECTS ${ASM_OBJECTS} ${ASM_OBJECT})
    add_custom_command(
