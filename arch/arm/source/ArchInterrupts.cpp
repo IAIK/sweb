@@ -8,6 +8,9 @@
 #include "kprintf.h"
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
+#include "atkbd.h"
+
+extern struct KMI* kmi;
 
 // parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
 
@@ -126,22 +129,12 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  uint32    *picmmio;
-
-  /* initialize timer and PIC
-
-    The timer interrupt line connects to the PIC. You can make
-    the timer interrupt an IRQ or FIQ just by enabling the bit
-    needed in either the IRQ or FIQ registers. Here I use the
-    IRQ register. If you enable both IRQ and FIQ then FIQ will
-    take priority and be used.
-  */
-  picmmio = (uint32*)0x14000000;
-  picmmio[PIC_IRQ_ENABLESET] = (1<<5) | (1<<6) | (1<<7);
+  uint32* picmmio = (uint32*)0x14000000;
+  picmmio[PIC_IRQ_ENABLESET] = (1<<5);
 
   uint32* t0mmio = (uint32*)0x13000000;
-  t0mmio[REG_LOAD] = 0x2fffff;
-  t0mmio[REG_BGLOAD] = 0x2fffff;
+  t0mmio[REG_LOAD] = 0x2ffffff;
+  t0mmio[REG_BGLOAD] = 0x2ffffff;
   t0mmio[REG_CTRL] = CTRL_ENABLE | CTRL_MODE_PERIODIC | CTRL_DIV_NONE | CTRL_SIZE_32 | CTRL_INT_ENABLE;
   t0mmio[REG_INTCLR] = ~0;    /* make sure interrupt is clear (might not be mandatory) */
 
@@ -156,8 +149,13 @@ void ArchInterrupts::disableTimer()
 
 void ArchInterrupts::enableKBD()
 {
-//  enableIRQ(1);
-//  enableIRQ(9);
+  uint32* picmmio = (uint32*)0x14000000;
+  picmmio[PIC_IRQ_ENABLESET] = (1<<3);
+
+  kmi = (struct KMI*)0x18000000;
+  kmi->cr = 0x14;
+  kmi->data = 0xF4;
+  while(!kmi->stat & 0x10);
 }
 
 void ArchInterrupts::enableBDS()
@@ -171,7 +169,7 @@ void ArchInterrupts::enableBDS()
 
 void ArchInterrupts::disableKBD()
 {
-//  disableIRQ(1);
+  kmi->cr = 0x0;
 }
 
 void ArchInterrupts::EndOfInterrupt(uint16 number) 

@@ -45,13 +45,10 @@ extern Console* main_console;
 extern "C" void exceptionHandler(uint32 type);
 void exceptionHandler(uint32 type) {
   static uint32 heart_beat_value = 0;
-  uint32      *t0mmio = (uint32*)0x13000000;
-  uint32      swi;
-
-  t0mmio[REG_INTCLR] = 1;
+  uint32 *t0mmio = (uint32*)0x13000000;
 
   if (type == ARM4_XRQ_IRQ) {
-    //if (picmmio[PIC_IRQ_STATUS] & 0x20) // TODO we should check this
+    if ((t0mmio[REG_INTSTAT] & 0x1) != 0)
     {
       assert(!ArchInterrupts::testIFSet());
       t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
@@ -64,13 +61,18 @@ void exceptionHandler(uint32 type) {
       Scheduler::instance()->schedule();
 
     }
+    extern struct KMI* kmi;
+    while (kmi->stat & 0x10)
+    {
+      KeyboardManager::instance()->serviceIRQ();
+    }
   }
   /*
     Get SWI argument (index).
   */
   else if (type == ARM4_XRQ_SWINT) {
     assert(!ArchInterrupts::testIFSet());
-    swi = *((uint32*)((uint32)currentThreadInfo->pc - 4)) & 0xffff;
+    uint32 swi = *((uint32*)((uint32)currentThreadInfo->pc - 4)) & 0xffff;
 
     if (swi == 0xffff) // yield
     {
@@ -268,13 +270,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     default:
       kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
   }*/
-}
-
-//TODO extern "C" void arch_irqHandler_1();
-extern "C" void irqHandler_1()
-{
-  KeyboardManager::getInstance()->serviceIRQ( );
-  ArchInterrupts::EndOfInterrupt(1);
 }
 
 //TODO extern "C" void arch_irqHandler_3();

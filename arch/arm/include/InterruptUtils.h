@@ -23,7 +23,12 @@
 #define REG_LOAD    0x00
 #define REG_CTRL    0x02
 #define REG_INTCLR    0x03
+#define REG_INTSTAT   0x04
+#define REG_INTMASKED   0x05
 #define REG_BGLOAD    0x06
+#define REG_LOAD    0x07
+#define REG_CURRENT    0x07
+
 #define CTRL_ENABLE     0x80
 #define CTRL_MODE_PERIODIC  0x40
 #define CTRL_INT_ENABLE   (1<<5)
@@ -38,8 +43,6 @@
 #define ARM4_XRQ_RESV1   0x05
 #define ARM4_XRQ_IRQ     0x06
 #define ARM4_XRQ_FIQ     0x07
-
-#define PIC_IRQ_STATUS      0x0
 
 static uint32 const NUM_INTERRUPT_HANDLERS = 256;
 
