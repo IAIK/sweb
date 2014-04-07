@@ -113,7 +113,7 @@ public:
    * KeyboardManager is a Singleton
    *
    */
-  static KeyboardManager *getInstance()
+  static KeyboardManager *instance()
   {
     if( !instance_ )
       instance_ = new KeyboardManager();
@@ -162,7 +162,7 @@ private:
    * writes a byte to the given IO port
    *
    */
-  void send_cmd( uint8 cmd, uint8 port );
+  void send_cmd(uint8 cmd);
 
   RingBuffer<uint8> keyboard_buffer_;
 
