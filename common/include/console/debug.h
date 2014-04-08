@@ -44,7 +44,7 @@ const uint32 KMM                = 0x00100002;
 const uint32 DRIVER             = 0x00200000;
 const uint32 ATA_DRIVER         = 0x00200001;
 const uint32 IDE_DRIVER         = 0x00200002;
-
+const uint32 MMC_DRIVER         = 0x00200004;
 //group arch
 const uint32 ARCH               = 0x00400000;
 const uint32 A_COMMON           = 0x00400001;

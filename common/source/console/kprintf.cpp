@@ -457,6 +457,9 @@ void debug ( size_t flag, const char *fmt, ... )
       case ATA_DRIVER:
         kprintfd ( COLORDEBUG("[ATA_DRIVER ]", "33"));
         break;
+      case MMC_DRIVER:
+        kprintfd ( COLORDEBUG("[MMC_DRIVER ]", "33"));
+        break;
       case IDE_DRIVER:
         kprintfd ( COLORDEBUG("[IDE_DRIVER ]", "33"));
         break;
