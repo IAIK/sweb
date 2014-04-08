@@ -20,6 +20,8 @@
 #include "types.h"
 
 #define PIC_IRQ_ENABLESET   0x2
+#define PIC_IRQ_STATUS   0x0
+
 #define REG_LOAD    0x00
 #define REG_CTRL    0x02
 #define REG_INTCLR    0x03

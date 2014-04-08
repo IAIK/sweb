@@ -25,7 +25,7 @@ class BDVirtualDevice
      * Constructor
      *
      */
-    BDVirtualDevice( BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable);
+    BDVirtualDevice( BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name, bool writable);
 
     /**
      * adds the given request to the device given in the request

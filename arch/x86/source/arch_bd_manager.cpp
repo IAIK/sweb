@@ -76,7 +76,7 @@ BDVirtualDevice* BDManager::getDeviceByName( const char * dev_name )
   {
     if(strcmp(device_list_[ index ]->getName(),dev_name) == 0)
     {
-      debug(BD_MANAGER, "getDeviceByName%d: %s with id: %d",index, device_list_[ index ]->getName(), device_list_[ index ]->getDeviceNumber());
+      debug(BD_MANAGER, "getDeviceByName%d: %s with id: %d\n",index, device_list_[ index ]->getName(), device_list_[ index ]->getDeviceNumber());
 
       return device_list_[ index ];
     }

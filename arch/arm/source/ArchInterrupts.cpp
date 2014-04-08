@@ -158,24 +158,27 @@ void ArchInterrupts::enableKBD()
   while(!kmi->stat & 0x10);
 }
 
-void ArchInterrupts::enableBDS()
-{
-//  enableIRQ(2);
-//  enableIRQ(9);
-//  enableIRQ(11);
-//  enableIRQ(14);
-//  enableIRQ(15);
-}
-
 void ArchInterrupts::disableKBD()
 {
   kmi->cr = 0x0;
 }
 
-void ArchInterrupts::EndOfInterrupt(uint16 number) 
+void ArchInterrupts::enableMMC()
 {
-//  sendEOI(number);
+  uint32* picmmio = (uint32*)0x14000000;
+  picmmio[PIC_IRQ_ENABLESET] = (1<<3);
+
+  kmi = (struct KMI*)0x18000000;
+  kmi->cr = 0x14;
+  kmi->data = 0xF4;
+  while(!kmi->stat & 0x10);
 }
+
+void ArchInterrupts::disableMMC()
+{
+  kmi->cr = 0x0;
+}
+
 extern "C" void arch_enableInterrupts();
 void ArchInterrupts::enableInterrupts()
 {

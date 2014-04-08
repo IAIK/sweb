@@ -8,7 +8,7 @@
 
 #include "arch_bd_io.h"
 
-class ATADriver;
+class MMCDriver;
 
 class IDEDriver : public bdio
 {
@@ -57,7 +57,7 @@ public:
    * Master Boot Record process
    *
    */
-  int32 processMBR  ( ATADriver *, uint32, uint32, char* );
+  int32 processMBR  ( MMCDriver *, uint32, uint32, const char* );
 
   /**
    * detects devices
