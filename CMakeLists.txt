@@ -304,6 +304,7 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
+  COMMENT "rm -fRI \"${PROJECT_BINARY_DIR}/*\""
 	COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
 	COMMAND cmake ${PROJECT_SOURCE_DIR}
 	)
@@ -311,6 +312,7 @@ add_custom_target(mrproper
 #Custom target: make mrsproper
 #Makes really clean (including the object files)
 add_custom_target(mrsproper
+        COMMENT "rm -fRI \"${PROJECT_BINARY_DIR}/*\""
         COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
         COMMAND ${PROJECT_SOURCE_DIR}/relocate_project.sh
         COMMAND cmake ${PROJECT_SOURCE_DIR}
@@ -322,7 +324,8 @@ add_custom_target(remove_cmake
 	COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
 	COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
 	COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
-	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/\" || true
+  COMMENT "rm -fRI \"${PROJECT_BINARY_DIR}/*\""
+	COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
 	)
 
 #Forces generates bochs configuration

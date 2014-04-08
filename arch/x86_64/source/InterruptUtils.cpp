@@ -454,7 +454,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  KeyboardManager::getInstance()->serviceIRQ( );
+  KeyboardManager::instance()->serviceIRQ( );
   ArchInterrupts::EndOfInterrupt(1);
 }
 

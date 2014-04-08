@@ -102,7 +102,7 @@ void XenConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 
 void XenConsole::Run( void )
 {
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
   uint32 key=(uint32)-1;
   do 
   {
@@ -126,7 +126,7 @@ void XenConsole::Run( void )
 
 void XenConsole::handleKey( uint32 key )
 {
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
   
   uint32 terminal_selected = (key - KEY_F1);
   
@@ -170,7 +170,7 @@ uint32 XenConsole::remap( uint32 key )
   uint32 number_table[] = { ')', '!', '@', '#', '$', 
                             '%', '^', '&', '*', '('  };
   
-  KeyboardManager * km = KeyboardManager::getInstance();
+  KeyboardManager * km = KeyboardManager::instance();
   
   if ( isLetter( key ) )
   {
