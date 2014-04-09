@@ -11,9 +11,13 @@
 #include "offsets.h"
 #include "Thread.h"
 #include "Scheduler.h"
+#include "SpinLock.h"
+
+SpinLock global_atomic_add_lock("");
 
 void ArchThreads::initialise()
 {
+  new (&global_atomic_add_lock) SpinLock("global_atomic_add_lock");
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
 }
 
@@ -72,22 +76,20 @@ void ArchThreads::yield()
   arch_yield();
 }
 
-extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
+extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock);
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
-  return arch_TestAndSet(new_value, &lock);
+  return arch_TestAndSet(0,0,new_value, &lock);
 }
 
+extern "C" uint32 arch_atomic_add(uint32, uint32, uint32 increment, uint32 *value);
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
 {
-  while(1);
-  int32 ret=increment;
-  /*__asm__ __volatile__(
-  "lock; xadd %0, %1;"
-  :"=a" (ret), "=m" (value)
-  :"a" (ret)
-  :);*/
-  return ret;
+  global_atomic_add_lock.acquire("before atomic_add");
+  uint32 result = value;
+  value += increment;
+  global_atomic_add_lock.release("after atomic_add");
+  return result;
 }
 
 int32 ArchThreads::atomic_add(int32 &value, int32 increment)

@@ -135,8 +135,8 @@ void ArchInterrupts::enableTimer()
   picmmio[PIC_IRQ_ENABLESET] = (1<<5);
 
   uint32* t0mmio = (uint32*)0x13000000;
-  t0mmio[REG_LOAD] = 0x2ffffff;
-  t0mmio[REG_BGLOAD] = 0x2ffffff;
+  t0mmio[REG_LOAD] = 0x2fffff;
+  t0mmio[REG_BGLOAD] = 0x2fffff;
   t0mmio[REG_CTRL] = CTRL_ENABLE | CTRL_MODE_PERIODIC | CTRL_DIV_NONE | CTRL_SIZE_32 | CTRL_INT_ENABLE;
   t0mmio[REG_INTCLR] = ~0;    /* make sure interrupt is clear (might not be mandatory) */
 

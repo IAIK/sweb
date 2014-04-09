@@ -39,7 +39,12 @@ PagingMode:
 
 arch_TestAndSet:
 .globl arch_TestAndSet
-  swp r0, r0, [r1]
+  swp r0, r2, [r3]
+  @ this would be better according to arm manual, but it does not work:
+  @ ldrex r0, [r3]
+  @ strex r1, r2, [r3]
+  @ cmp r1, #0
+  @ bne arch_TestAndSet
   bx lr
 
 arch_yield:
