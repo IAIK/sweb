@@ -50,7 +50,7 @@ void initialiseBootTimePaging()
       pde_start[i].pde1m.base = i;
     }
     pde_start[i].pde1m.reserved_1 = 0;
-    pde_start[i].pde1m.permissions = 3;
+    pde_start[i].pde1m.permissions = 1;
     pde_start[i].pde1m.reserved_2 = 0;
     pde_start[i].pde1m.domain = 0;
     pde_start[i].pde1m.reserved_3 = 0;

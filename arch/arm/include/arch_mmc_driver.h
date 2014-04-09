@@ -7,7 +7,6 @@
 #define _ARCH_MMC_DRIVER_
 
 #include "arch_bd_driver.h"
-#include "arch_bd_io.h"
 #include "Mutex.h"
 
 struct MMCI
@@ -35,7 +34,7 @@ struct MMCI
 
 class BDRequest;
 
-class MMCDriver : public BDDriver, bdio
+class MMCDriver : public BDDriver
 {
   public:
     /**

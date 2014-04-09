@@ -25,15 +25,17 @@ extern "C" uint32 kernel_page_directory_start;
 
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
-//  thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
-//  if (thread->user_arch_thread_info_)
-//    thread->user_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
+  assert(arch_memory.page_dir_page_ != 0);
+  assert((arch_memory.page_dir_page_ & 0x3) == 0); // has to be aligned to 4 pages
+  thread->kernel_arch_thread_info_->ttbr0 = arch_memory.page_dir_page_ * PAGE_SIZE;
+  kprintfd("thread->kernel_arch_thread_info_->ttbr0 = %x\n",thread->kernel_arch_thread_info_->ttbr0);
+  if (thread->user_arch_thread_info_)
+    thread->user_arch_thread_info_->ttbr0 = arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
 uint32 ArchThreads::getPageDirectory(Thread *thread)
 {
-//  return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
-  //TODO: should be the same for now, have to return only one
+  return thread->kernel_arch_thread_info_->ttbr0 / PAGE_SIZE;
 }
 
 
@@ -42,12 +44,18 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
-
+  kprintfd("ttbr0 = %x\n",pageDirectory);
+  assert((pageDirectory) != 0);
+  assert(((pageDirectory) & 0x3FFF) == 0);
   info->pc = start_function;
   info->irq_lr = start_function;
   info->cpsr = 0x6000001F;
   info->sp = stack & ~0xF;
   info->fp = stack & ~0xF;
+  info->ttbr0 = pageDirectory;
+  kprintfd("ttbr0 = %x\n",pageDirectory);
+  assert((pageDirectory) != 0);
+  assert(((pageDirectory) & 0x3FFF) == 0);
 }
 
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
@@ -55,12 +63,18 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
-
+  kprintfd("ttbr0 = %x\n",pageDirectory);
+  assert((pageDirectory) != 0);
+  assert(((pageDirectory) & 0x3FFF) == 0);
   info->pc = start_function;
   info->irq_lr = start_function;
   info->cpsr = 0x60000010;
   info->sp = user_stack & ~0xF;
   info->fp = user_stack & ~0xF;
+  info->ttbr0 = pageDirectory;
+  kprintfd("ttbr0 = %x\n",pageDirectory);
+  assert((pageDirectory) != 0);
+  assert(((pageDirectory) & 0x3FFF) == 0);
 }
 
 void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
@@ -105,7 +119,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- pc: %10x  fp: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
+  kprintfd("%sThread: %10x, info: %10x -- ttbr0: %pc: %10x  fp: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
            userspace_registers?"  User":"Kernel",thread,info,info->pc,info->fp,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12);
 
 }

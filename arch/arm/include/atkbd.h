@@ -7,7 +7,7 @@
 #define _KMI_H_
 
 #include "types.h"
-#include "ports.h"
+
 struct KMI
 {
     uint32 cr;

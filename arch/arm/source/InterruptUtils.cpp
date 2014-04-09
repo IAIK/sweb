@@ -6,7 +6,6 @@
 #include "InterruptUtils.h"
 #include "new.h"
 #include "arch_panic.h"
-#include "ports.h"
 #include "ArchMemory.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
@@ -17,8 +16,6 @@
 #include "Scheduler.h"
 #include "debug_bochs.h"
 
-#include "arch_serial.h"
-#include "serial.h"
 #include "arch_keyboard_manager.h"
 #include "arch_bd_manager.h"
 #include "panic.h"
@@ -217,7 +214,6 @@ void arch_timer0_irq_handler()
 
     Scheduler::instance()->incTicks();
     Scheduler::instance()->schedule();
-
   }
 }
 
@@ -246,8 +242,10 @@ void arch_swi_irq_handler()
 }
 
 #define IRQ(X) picmmio[PIC_IRQ_STATUS] & (1 << X)
+extern "C" void switchTTBR0(uint32);
 
 extern "C" void exceptionHandler(uint32 type) {
+  kprintfd("exception\n");
   if (type == ARM4_XRQ_IRQ) {
     uint32* picmmio = (uint32*)0x14000000;
 
@@ -277,5 +275,11 @@ extern "C" void exceptionHandler(uint32 type) {
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     currentThread->kill();
     for(;;);
+  }
+  if (currentThread)
+  {
+    kprintfd("switch ttbr0 to %x\n",currentThreadInfo);
+    kprintfd("switch ttbr0 to %x\n",currentThreadInfo->ttbr0);
+    switchTTBR0(currentThreadInfo->ttbr0);
   }
 }

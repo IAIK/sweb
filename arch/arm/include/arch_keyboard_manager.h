@@ -17,10 +17,8 @@ extern "C"
 }
 #endif
 
-#include "ports.h"
 #include "RingBuffer.h"
 #include "atkbd.h"
-#include "arch_bd_io.h"
 
 #define E0_BASE      96
 #define E0_KPENTER   (E0_BASE +  1)
@@ -93,7 +91,7 @@ extern "C"
  * communication
  *
  */
-class KeyboardManager : public bdio
+class KeyboardManager
 {
 public:
 

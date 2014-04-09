@@ -4,7 +4,6 @@
  */
 
 #include "ArchInterrupts.h"
-#include "ports.h"
 #include "kprintf.h"
 #include "InterruptUtils.h"
 #include "ArchThreads.h"

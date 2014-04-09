@@ -47,6 +47,11 @@ arch_TestAndSet:
   @ bne arch_TestAndSet
   bx lr
 
+switchTTBR0:
+.globl switchTTBR0
+  mcr p15, 0, r0, c2, c0, 0
+  bx lr
+
 arch_yield:
 .globl arch_yield
   swi #0xffff

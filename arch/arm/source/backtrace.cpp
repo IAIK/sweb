@@ -31,8 +31,8 @@
 //-------------------------------------------------------------------------------------*/
 struct StackFrame
 {
-   StackFrame *previous_frame;
    void *return_address;
+   StackFrame *previous_frame;
 };
 
 struct StabEntry
@@ -188,12 +188,13 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
     fp = (void*)thread->kernel_arch_thread_info_->fp;
 
     int i = 0;
-  StackFrame *CurrentFrame = (StackFrame*)(fp-4);
+  StackFrame *CurrentFrame = (StackFrame*)(fp-8);
   void *StackStart = (void*)((uint32)thread->stack_ + sizeof(thread->stack_)); // the stack "starts" at the high addresses...
   void *StackEnd = (void*)thread->stack_; // ... and "ends" at the lower ones.
 
   if (use_stored_registers)
     call_stack[i++] = thread->kernel_arch_thread_info_->pc;
+
 
   void *StartAddress = (void*)0x80000000;
   void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();

@@ -4,7 +4,6 @@
  */
 
 #include "debug_bochs.h"
-#include "ports.h"
 
 #define SERIAL_BASE 0x16000000
 #define SERIAL_FLAG_REGISTER 0x18
