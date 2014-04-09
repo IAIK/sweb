@@ -37,9 +37,9 @@ SECTIONS
     LS_Bss = .;
     bss_start_address = .;
     . = ALIGN(16384);
-    *(.bss*)
+    *(.bss)
     . = ALIGN(16384);
-    *(COMMON*)
+    *(COMMON)
     bss_end_address = .;
 
   }
@@ -48,18 +48,24 @@ SECTIONS
   {
     LS_Stab = .;
     stab_start_address_nr = .;
+    . = ALIGN(16384);
     *(.stab)
+    . = ALIGN(16384);
     stab_end_address_nr = .;
   }
   
-
   .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
     stabstr_start_address_nr = .;
+    . = ALIGN(16384);
     *(.stabstr)
+    . = ALIGN(16384);
     stabstr_end_address_nr = .;
 
     PROVIDE(kernel_end_address = .);
   }
+  
+  .ARM.attributes 0 : { *(.ARM.attributes) }
+  .comment 0 : { *(.comment) }
 }

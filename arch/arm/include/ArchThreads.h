@@ -29,6 +29,7 @@ struct ArchThreadInfo
   uint32 spsr;        // 64
   uint32 pc;       // 68
   uint32 irq_lr;   // 72
+  uint32 fp;       // 76
 };
 
 class Thread;

@@ -46,7 +46,8 @@ extern struct KMI* kmi;
        msr cpsr, r0 \n\
        mov sp, r4 \n\
        mov %[sp], r4 \n\
-       " : [sp]"=r" (currentThreadInfo->sp), [lr]"=r" (currentThreadInfo->lr));
+       " : [sp]"=r" (currentThreadInfo->sp), [lr]"=r" (currentThreadInfo->lr));\
+  asm("mov %[v], fp" : [v]"=r" (currentThreadInfo->fp));
 
 #define KEXP_BOTSWI \
     KEXP_BOT3
@@ -68,6 +69,7 @@ extern struct KMI* kmi;
   asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
   asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
   asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
+  asm("mov fp, %[v]" : : [v]"r" (currentThreadInfo->fp));\
   asm("mrs r0, cpsr \n\
       bic r0, r0, #0x1f \n\
       orr r0, r0, #0x1f \n\
