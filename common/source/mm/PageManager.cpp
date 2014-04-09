@@ -180,9 +180,27 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
   {
     if (page_usage_table_[p] == PAGE_FREE)
     {
-      page_usage_table_[p] = type;
-      lock_.release();
-      return p;
+      if (type == PAGE_4_PAGES_16K_ALIGNED)
+      {
+        if ((p & 0x3) != 0)
+          continue;
+        if (page_usage_table_[p+1] == PAGE_FREE && page_usage_table_[p+2] == PAGE_FREE && page_usage_table_[p+3] == PAGE_FREE)
+        {
+          page_usage_table_[p] = type;
+          page_usage_table_[p+1] = type;
+          page_usage_table_[p+2] = type;
+          page_usage_table_[p+3] = type;
+        }
+        kprintfd("ALLOCATED 4 PAGES: %x\n", p);
+        lock_.release();
+        return p;
+      }
+      else
+      {
+        page_usage_table_[p] = type;
+        lock_.release();
+        return p;
+      }
     }
   }
   lock_.release();

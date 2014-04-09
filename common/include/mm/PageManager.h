@@ -14,6 +14,7 @@ typedef uint8 puttype;
 #define PAGE_RESERVED static_cast<puttype>(1<<0)
 #define PAGE_KERNEL static_cast<puttype>(1<<1)
 #define PAGE_USERSPACE static_cast<puttype>(1<<2)
+#define PAGE_4_PAGES_16K_ALIGNED static_cast<puttype>(1<<3)
 
 
 #define PAGE_FREE static_cast<puttype>(0)
