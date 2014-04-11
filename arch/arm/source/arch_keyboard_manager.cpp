@@ -74,6 +74,8 @@ void KeyboardManager::send_cmd(uint8 cmd)
 void KeyboardManager::serviceIRQ( void )
 {
   uint8 scancode = kmi->data;
+  if (scancode > 0x80)
+    return;
 
   if( extended_scancode == 0xE0 )
   {
@@ -106,7 +108,6 @@ void KeyboardManager::serviceIRQ( void )
 
   modifyKeyboardStatus( scancode );
   setLEDs();         // setting the leds
-
   keyboard_buffer_.put( scancode ); // put it inside the buffer
 
 }
