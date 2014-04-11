@@ -91,7 +91,6 @@ void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 
 void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-  kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",page_dir_page_, physical_page);
   page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -108,10 +107,6 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     pte_base[pte_vpn].reserved = 0;
     pte_base[pte_vpn].base = physical_page;
     pte_base[pte_vpn].size = 2;
-
-    kprintfd("ppn: %x base: %x entry: %x\n",physical_page,pte_base[pte_vpn].base,*(uint32*)(pte_base + pte_vpn));
-    kprintfd("should be: ppn: %x entry: %x\n",physical_page, physical_page * PAGE_SIZE | 0x1);
-
   }
   else if ((page_size==PAGE_SIZE*256) && (page_directory[pde_vpn].pde1m.size == 0))
   {
@@ -174,7 +169,7 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde4k.size == PDE_SIZE_PAGE)
   {
-    kprintfd("checkAddressValid: %x -> T (BIG PAGE)\n",vaddress_to_check);
+//    kprintfd("checkAddressValid: %x -> T (BIG PAGE)\n",vaddress_to_check);
     return true;
   }
   else if(page_directory[pde_vpn].pde4k.size == PDE_SIZE_PT)
@@ -182,11 +177,11 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
     page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.base >> 2);
     if (pte_base[pte_vpn].size == 2)
     {
-      kprintfd("checkAddressValid: %x -> T\n",vaddress_to_check);
+//      kprintfd("checkAddressValid: %x -> T\n",vaddress_to_check);
       return true;
     }
   }
-  kprintfd("checkAddressValid: %x -> F\n",vaddress_to_check);
+//  kprintfd("checkAddressValid: %x -> F\n",vaddress_to_check);
   return false;
 }
 

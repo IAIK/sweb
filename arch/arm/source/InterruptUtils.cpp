@@ -178,7 +178,6 @@ void arch_mouse_irq_handler()
 
 void arch_timer0_irq_handler()
 {
-  kprintfd("timer\n");
   static uint32 heart_beat_value = 0;
   uint32 *t0mmio = (uint32*)0x83000000;
   if ((t0mmio[REG_INTSTAT] & 0x1) != 0)
@@ -223,7 +222,7 @@ void arch_swi_irq_handler()
 extern "C" void switchTTBR0(uint32);
 
 extern "C" void exceptionHandler(uint32 type) {
-  kprintfd("exception type = %x\n", type);
+  //kprintfd("exception type = %x\n", type);
 
   if (type == ARM4_XRQ_IRQ) {
     uint32* picmmio = (uint32*)0x84000000;
@@ -261,7 +260,7 @@ extern "C" void exceptionHandler(uint32 type) {
     currentThread->kill();
     for(;;);
   }
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
+//  ArchThreads::printThreadRegisters(currentThread,0);
+//  ArchThreads::printThreadRegisters(currentThread,1);
   switchTTBR0(currentThreadInfo->ttbr0);
 }
