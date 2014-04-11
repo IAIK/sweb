@@ -39,46 +39,41 @@ ArchMemory::ArchMemory()
 
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 {
-  assert(false);
-//  page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
-//  page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-//  assert(page_directory[pde_vpn].pde4m.use_4_m_pages == 0);
-//
-//  if (!page_directory[pde_vpn].pde4k.present) return; // PT not present -> do nothing.
-//
-//  for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
-//    if (pte_base[pte_vpn].present > 0)
-//      return; //not empty -> do nothing
-//
-//  //else:
-//  page_directory[pde_vpn].pde4k.present = 0;
-//  PageManager::instance()->freePage(page_directory[pde_vpn].pde4k.page_table_base_address);
+  page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
+  page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(PAGE_1K_TO_4K(page_directory[pde_vpn].pde4k.base));
+  assert(page_directory[pde_vpn].pde4k.size != PDE_SIZE_PAGE);
+
+  if (page_directory[pde_vpn].pde4k.size != PDE_SIZE_PT) return; // PT not present -> do nothing.
+
+  for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+    if (pte_base[pte_vpn].size == 2)
+      return; //not empty -> do nothing
+
+  //else:
+  page_directory[pde_vpn].pde4k.size = PDE_SIZE_NONE;
+  PageManager::instance()->freePage(PAGE_1K_TO_4K(page_directory[pde_vpn].pde4k.base));
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
 {
-  assert(false);
-//  page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
-//  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-//  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-//
-//  if (page_directory[pde_vpn].pde4m.use_4_m_pages)
-//  {
-//    page_directory[pde_vpn].pde4m.present = 0;
-//    //PageManager manages Pages of size PAGE_SIZE only, so we have to free this_page_size/PAGE_SIZE Pages
-//    for (uint32 p=0;p<1024;++p)
-//      PageManager::instance()->freePage(page_directory[pde_vpn].pde4m.page_base_address*1024 + p);
-//  }
-//  else
-//  {
-//    page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-//    if (pte_base[pte_vpn].present)
-//    {
-//      pte_base[pte_vpn].present = 0;
-//      PageManager::instance()->freePage(pte_base[pte_vpn].page_base_address);
-//    }
-//    checkAndRemovePT(pde_vpn);
-//  }
+  page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
+  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+
+  if (page_directory[pde_vpn].pde4k.size == PDE_SIZE_PAGE)
+  {
+    assert(false);
+  }
+  else if (page_directory[pde_vpn].pde4k.size == PDE_SIZE_PT)
+  {
+    page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(PAGE_1K_TO_4K(page_directory[pde_vpn].pde4k.base));
+    if (pte_base[pte_vpn].size == 2)
+    {
+      pte_base[pte_vpn].size = 0;
+      PageManager::instance()->freePage(pte_base[pte_vpn].base);
+    }
+    checkAndRemovePT(pde_vpn);
+  }
 }
 
 void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
@@ -91,6 +86,7 @@ void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 
 void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
+//  kprintfd("ArchMemory::mapPage: v: %x to p: %x\n",virtual_page,physical_page);
   page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -108,20 +104,8 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     pte_base[pte_vpn].base = physical_page;
     pte_base[pte_vpn].size = 2;
   }
-  else if ((page_size==PAGE_SIZE*256) && (page_directory[pde_vpn].pde1m.size == 0))
-  {
-    page_directory[pde_vpn].pde1m.bufferable = 0;
-    page_directory[pde_vpn].pde1m.cachable = 0;
-    page_directory[pde_vpn].pde1m.domain = 0;
-    page_directory[pde_vpn].pde1m.reserved_1 = 0;
-    page_directory[pde_vpn].pde1m.reserved_2 = 0;
-    page_directory[pde_vpn].pde1m.reserved_3 = 0;
-    page_directory[pde_vpn].pde1m.base = physical_page;
-    page_directory[pde_vpn].pde1m.permissions = user_access ? 3 : 1;
-    page_directory[pde_vpn].pde1m.size = PDE_SIZE_PAGE;
-  }
   else
-    assert(false);
+    assert(false); // currently only 4K pages for the userspace
 }
 
 
@@ -129,36 +113,30 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
 // want to free Kernel Pages
 ArchMemory::~ArchMemory()
 {
-  assert(false);
-//  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page directory %x\n",page_dir_page_ );
-//  page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
-//  for (uint32 pde_vpn=0; pde_vpn < PAGE_TABLE_ENTRIES/2; ++pde_vpn)
-//  {
-//    if (page_directory[pde_vpn].pde4k.present)
-//    {
-//      if (page_directory[pde_vpn].pde4m.use_4_m_pages)
-//      {
-//        page_directory[pde_vpn].pde4m.present=0;
-//          for (uint32 p=0;p<1024;++p)
-//            PageManager::instance()->freePage(page_directory[pde_vpn].pde4m.page_base_address*1024 + p);
-//      }
-//      else
-//      {
-//        page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-//        for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
-//        {
-//          if (pte_base[pte_vpn].present)
-//          {
-//            pte_base[pte_vpn].present = 0;
-//            PageManager::instance()->freePage(pte_base[pte_vpn].page_base_address);
-//          }
-//        }
-//        page_directory[pde_vpn].pde4k.present=0;
-//        PageManager::instance()->freePage(page_directory[pde_vpn].pde4k.page_table_base_address);
-//      }
-//    }
-//  }
-//  PageManager::instance()->freePage(page_dir_page_);
+  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page directory %x\n",page_dir_page_ );
+  page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
+  for (uint32 pde_vpn=8; pde_vpn < PAGE_DIR_ENTRIES/2; ++pde_vpn)
+  {
+    if (page_directory[pde_vpn].pde4k.size == PDE_SIZE_PAGE)
+    {
+      assert(false); // currently not used and not implemented
+    }
+    else if (page_directory[pde_vpn].pde4k.size == PDE_SIZE_PT)
+    {
+      page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(PAGE_1K_TO_4K(page_directory[pde_vpn].pde4k.base));
+      for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+      {
+        if (pte_base[pte_vpn].size == 2)
+        {
+          pte_base[pte_vpn].size = 0;
+          PageManager::instance()->freePage(pte_base[pte_vpn].base);
+        }
+      }
+      page_directory[pde_vpn].pde4k.size=PDE_SIZE_NONE;
+      PageManager::instance()->freePage(PAGE_1K_TO_4K(page_directory[pde_vpn].pde4k.base));
+    }
+  }
+  PageManager::instance()->freePage(page_dir_page_);
 }
 
 bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
@@ -169,19 +147,16 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde4k.size == PDE_SIZE_PAGE)
   {
-//    kprintfd("checkAddressValid: %x -> T (BIG PAGE)\n",vaddress_to_check);
     return true;
   }
   else if(page_directory[pde_vpn].pde4k.size == PDE_SIZE_PT)
   {
-    page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.base >> 2);
+    page_table_entry *pte_base = (page_table_entry *) getIdentAddressOfPPN(PAGE_1K_TO_4K(page_directory[pde_vpn].pde4k.base));
     if (pte_base[pte_vpn].size == 2)
     {
-//      kprintfd("checkAddressValid: %x -> T\n",vaddress_to_check);
       return true;
     }
   }
-//  kprintfd("checkAddressValid: %x -> F\n",vaddress_to_check);
   return false;
 }
 

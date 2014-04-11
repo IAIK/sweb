@@ -41,75 +41,17 @@ extern Console* main_console;
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
-#define KEXP_USER_ENTRY \
-  KEXP_TOP3 \
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0));
-
-#define KEXP_TOP3 \
-  asm("sub lr, lr, #4"); \
-  KEXP_TOPSWI
-
-// parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
-#define KEXP_TOPSWI \
-  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
-  asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->r0));\
-  asm("mov %[v], r1" : [v]"=r" (currentThreadInfo->r1));\
-  asm("mov %[v], r2" : [v]"=r" (currentThreadInfo->r2));\
-  asm("mov %[v], r3" : [v]"=r" (currentThreadInfo->r3));\
-  asm("mov %[v], r4" : [v]"=r" (currentThreadInfo->r4));\
-  asm("mov %[v], r5" : [v]"=r" (currentThreadInfo->r5));\
-  asm("mov %[v], r6" : [v]"=r" (currentThreadInfo->r6));\
-  asm("mov %[v], r7" : [v]"=r" (currentThreadInfo->r7));\
-  asm("mov %[v], r8" : [v]"=r" (currentThreadInfo->r8));\
-  asm("mov %[v], r9" : [v]"=r" (currentThreadInfo->r9));\
-  asm("mov %[v], r10" : [v]"=r" (currentThreadInfo->r10));\
-  asm("mov %[v], r11" : [v]"=r" (currentThreadInfo->r11));\
-  asm("mov %[v], r12" : [v]"=r" (currentThreadInfo->r12));\
-  asm("mrs r0, spsr"); \
-  asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->cpsr));\
-  asm("mrs r0, cpsr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x1f \n\
-       msr cpsr, r0 \n\
-      ");\
-  asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
-  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));
-
-#define KEXP_BOTSWI \
-    KEXP_BOT3
-
-#define KEXP_BOT3 \
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
-  asm("mrs r0, cpsr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x13 \n\
-       msr cpsr, r0 \n\
-      ");\
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
-  asm("msr spsr, r0"); \
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->pc));\
-  asm("push {r0}"); \
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));\
-  asm("mov r1, %[v]" : : [v]"r" (currentThreadInfo->r1));\
-  asm("mov r2, %[v]" : : [v]"r" (currentThreadInfo->r2));\
-  asm("mov r3, %[v]" : : [v]"r" (currentThreadInfo->r3));\
-  asm("mov r4, %[v]" : : [v]"r" (currentThreadInfo->r4));\
-  asm("mov r5, %[v]" : : [v]"r" (currentThreadInfo->r5));\
-  asm("mov r6, %[v]" : : [v]"r" (currentThreadInfo->r6));\
-  asm("mov r7, %[v]" : : [v]"r" (currentThreadInfo->r7));\
-  asm("mov r8, %[v]" : : [v]"r" (currentThreadInfo->r8));\
-  asm("mov r9, %[v]" : : [v]"r" (currentThreadInfo->r9));\
-  asm("mov r10, %[v]" : : [v]"r" (currentThreadInfo->r10));\
-  asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
-  asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
-  asm("LDM sp!, {pc}^")
+uint32 last_address;
+uint32 count;
 
 //TODO extern "C" void arch_pageFaultHandler();
 void pageFaultHandler(uint32 address, uint32 type)
 {
+  if (type != 0x3)
+  {
+    asm("mrc p15, 0, r4, c6, c0, 0\n\
+         mov %[v], r4\n": [v]"=r" (address));
+  }
   debug(PM, "[PageFaultHandler] Address: %x (%s) - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
       address, type == 0x3 ? "Instruction Fetch" : "Data Access", currentThread, currentThread->getPID(), currentThread->getName(), currentThread->switch_to_userspace_);
   if (!currentThread->switch_to_userspace_)
@@ -117,6 +59,23 @@ void pageFaultHandler(uint32 address, uint32 type)
 
   if(!address)
     debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");
+
+  if(currentThread->loader_->arch_memory_.checkAddressValid(address))
+    debug(PM, "[PageFaultHandler] There is something wrong: The address is actually mapped!\n");
+
+  if (address != last_address)
+  {
+    count = 0;
+    last_address = address;
+  }
+  else
+  {
+    if (count++ == 5)
+    {
+      debug(PM, "[PageFaultHandler] 5 times the same pagefault? That should not happen -> kill Thread\n");
+      currentThread->kill();
+    }
+  }
 
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
@@ -129,7 +88,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   if (currentThread->loader_)
   {
     //lets hope this Exeption wasn't thrown during a TaskSwitch
-    if (address > 1U*1024U*1024U && address < 2U*1024U*1024U*1024U)
+    if (address > 8U*1024U*1024U && address < 2U*1024U*1024U*1024U)
     {
       currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
     }
@@ -203,27 +162,33 @@ void arch_swi_irq_handler()
   {
     Scheduler::instance()->schedule();
   }
-  else
+  else if (swi == 0x0) // syscall
   {
-    assert(false);
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     ArchInterrupts::enableInterrupts();
-    currentThreadInfo->r0 = Syscall::syscallException(swi, currentThreadInfo->r0, currentThreadInfo->r1,
-                                                           currentThreadInfo->r2, currentThreadInfo->r3,
-                                                           currentThreadInfo->r4);
+    currentThread->user_arch_thread_info_->r0 = Syscall::syscallException(currentThread->user_arch_thread_info_->r4,
+                                                                          currentThread->user_arch_thread_info_->r5,
+                                                                          currentThread->user_arch_thread_info_->r6,
+                                                                          currentThread->user_arch_thread_info_->r7,
+                                                                          currentThread->user_arch_thread_info_->r8,
+                                                                          currentThread->user_arch_thread_info_->r9);
     ArchInterrupts::disableInterrupts();
     currentThread->switch_to_userspace_ = true;
     currentThreadInfo =  currentThread->user_arch_thread_info_;
+  }
+  else
+  {
+    kprintfd("Invalid SWI: %x\n",swi);
+    assert(false);
   }
 }
 
 #define IRQ(X) picmmio[PIC_IRQ_STATUS] & (1 << X)
 extern "C" void switchTTBR0(uint32);
 
-extern "C" void exceptionHandler(uint32 type) {
-  //kprintfd("exception type = %x\n", type);
-
+extern "C" void exceptionHandler(uint32 type)
+{
   if (type == ARM4_XRQ_IRQ) {
     uint32* picmmio = (uint32*)0x84000000;
     if (IRQ(0))
@@ -245,11 +210,11 @@ extern "C" void exceptionHandler(uint32 type) {
   }
   else if (type == ARM4_XRQ_ABRTP)
   {
-    pageFaultHandler(currentThreadInfo->lr, type);
+    pageFaultHandler(currentThreadInfo->pc, type);
   }
   else if (type == ARM4_XRQ_ABRTD)
   {
-    pageFaultHandler(currentThreadInfo->lr, type);
+    pageFaultHandler(currentThreadInfo->pc - 4, type);
   }
   else {
     kprintfd("\nCPU Fault type = %x\n",type);

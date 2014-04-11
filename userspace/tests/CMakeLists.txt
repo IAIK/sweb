@@ -19,7 +19,7 @@ foreach(curFile ${userspace_tests_SOURCES})
 	get_filename_component(curName ${curFile} NAME_WE)
 
 	add_executable(${curName}.sweb ${curFile})
-	target_link_libraries(${curName}.sweb "-Wl,-Ttext=0x8000000 -Wl,-whole-archive" userspace_libc)
+	target_link_libraries(${curName}.sweb "-Wl,-Ttext=0x8000000 -Wl,-whole-archive" userspace_libc ${APPEND_LD_ARGUMENTS})
 
 	#Remember the userspace program names for dependency checking in the root CMakeLists
 	set(ENV{USERSPACE_NAMES} "$ENV{USERSPACE_NAMES};${curName}.sweb")
@@ -35,7 +35,7 @@ foreach(curProject ${userspace_tests_PROJECTS})
     if(curProject_SOURCES)
        get_filename_component(exename ${curProject} NAME)       
        add_executable(${exename}.sweb ${curProject_SOURCES})
-       target_link_libraries(${exename}.sweb "-Wl,-whole-archive" userspace_libc)
+       target_link_libraries(${exename}.sweb "-Wl,-whole-archive" userspace_libc ${APPEND_LD_ARGUMENTS})
        
        set(ENV{USERSPACE_NAMES} "$ENV{USERSPACE_NAMES};${exename}.sweb")
 	   set(ENV{USERSPACE_NAMES_EXE2MINIX} "$ENV{USERSPACE_NAMES_EXE2MINIX};${EXECUTABLE_OUTPUT_PATH}/${exename}.sweb;${exename}.sweb")

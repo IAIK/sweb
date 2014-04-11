@@ -30,7 +30,6 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
   assert(arch_memory.page_dir_page_ != 0);
   assert((arch_memory.page_dir_page_ & 0x3) == 0); // has to be aligned to 4 pages
   thread->kernel_arch_thread_info_->ttbr0 = arch_memory.page_dir_page_ * PAGE_SIZE;
-  kprintfd("thread->kernel_arch_thread_info_->ttbr0 = %x\n",thread->kernel_arch_thread_info_->ttbr0);
   if (thread->user_arch_thread_info_)
     thread->user_arch_thread_info_->ttbr0 = arch_memory.page_dir_page_ * PAGE_SIZE;
 }
@@ -69,6 +68,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->lr = start_function;
   info->cpsr = 0x60000010;
   info->sp = user_stack & ~0xF;
+  info->r11 = user_stack & ~0xF; // r11 is the fp
   info->sp0 = kernel_stack & ~0xF;
   info->ttbr0 = pageDirectory;
   assert((pageDirectory) != 0);

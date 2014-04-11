@@ -1,15 +1,39 @@
 _start:
-    .globl _start
-1: 
-    b 1b @ Halt
+.globl _start
+  bl main
+  bl _exit
 
-__aeabi_uidivmod:
-    .globl __aeabi_uidivmod
-1: 
-    b 1b @ Halt
+abort:
+.globl abort
+  bl _exit
+  b .
 
-__aeabi_uidiv:
-    .globl __aeabi_uidiv
-1: 
-    b 1b @ Halt
+raise:
+.globl raise
+  bl _exit
+  b .
 
+__write:
+.globl __write
+  bl _exit
+  b .
+
+stderr:
+.globl stderr
+  bl _exit
+  b .
+
+fflush:
+.globl fflush
+  bl _exit
+  b .
+
+__fprintf_chk:
+.globl __fprintf_chk
+  bl _exit
+  b .
+
+__aeabi_unwind_cpp_pr0:
+.globl __aeabi_unwind_cpp_pr0
+  bl _exit
+  b .
