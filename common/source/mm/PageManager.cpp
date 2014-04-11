@@ -69,9 +69,9 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   debug(PM,"Ctor: Pages used by Grub Modules %d\n",used_pages);
 
   //need at least 4 MiB for Kernel Memory + first physical MiB
-  if (number_of_pages_ < 1024+256)
+  if (number_of_pages_ < 1025)
   {
-    kprintfd("FATAL ERROR: Not enough Memory, Sweb needs at least %d KiB of RAM\n",(1024+256+ used_pages)*4096U);
+    kprintfd("FATAL ERROR: Not enough Memory, Sweb needs at least %d KiB of RAM\n",(1025)*4096U);
     prenew_assert(false);
   }
 

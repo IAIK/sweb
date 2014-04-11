@@ -19,7 +19,7 @@ foreach(curFile ${userspace_tests_SOURCES})
 	get_filename_component(curName ${curFile} NAME_WE)
 
 	add_executable(${curName}.sweb ${curFile})
-	target_link_libraries(${curName}.sweb "-Wl,-whole-archive" userspace_libc)
+	target_link_libraries(${curName}.sweb "-Wl,-Ttext=0x8000000 -Wl,-whole-archive" userspace_libc)
 
 	#Remember the userspace program names for dependency checking in the root CMakeLists
 	set(ENV{USERSPACE_NAMES} "$ENV{USERSPACE_NAMES};${curName}.sweb")
