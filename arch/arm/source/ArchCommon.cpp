@@ -12,6 +12,8 @@
 #include "FrameBufferConsole.h"
 #include "backtrace.h"
 
+#define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
+
 extern void* kernel_end_address;
 
 pointer ArchCommon::getKernelEndAddress()
@@ -26,13 +28,13 @@ pointer ArchCommon::getFreeKernelMemoryStart()
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
 {
-   return (pointer)(1024U*1024U*1024U*2U + 1024U*1024U*4U); //2GB+4MB Ende des Kernel Bereichs fuer den es derzeit Paging gibt
+   return (pointer)getModuleEndAddress(0);
 }
 
 
 uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
 {
-  return false;
+  return true;
 }
 
 uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
@@ -47,7 +49,7 @@ uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 
 uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
-  return 0x80400000U;
+  return 0x80400000U;  //2GB+4MB Ende des Kernel Bereichs
 }
 
 uint32 ArchCommon::getVESAConsoleHeight()
@@ -62,12 +64,12 @@ uint32 ArchCommon::getVESAConsoleWidth()
 
 pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
-  return 0x200000;
+  return ((PHYSICAL_MEMORY_AVAILABLE - getVESAConsoleWidth() * getVESAConsoleHeight() * getVESAConsoleBitsPerPixel() / 8) & ~0xFFF);
 }
 
 pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
 {
-  return 0x200000;
+  return getVESAConsoleLFBPtr();
 }
 
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()
@@ -83,7 +85,7 @@ uint32 ArchCommon::getNumUseableMemoryRegions()
 uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
   start_address = 0;
-  end_address = 8*1024*1024;
+  end_address = getVESAConsoleLFBPtr(0);
   type = 1;
   return 0;
 }
@@ -172,7 +174,7 @@ Console* ArchCommon::createConsole(uint32 count)
   // frame buffer initialization code from http://wiki.osdev.org/ARM_Integrator-CP_PL110_Dirty
 #define PL110_CR_EN   0x001
 #define PL110_CR_PWR    0x800
-#define PL110_IOBASE    0xc0000000
+#define PL110_IOBASE    0x90000000
 #define PL110_PALBASE   (PL110_IOBASE + 0x200)
 
 typedef struct _PL110MMIO

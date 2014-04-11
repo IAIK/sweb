@@ -41,135 +41,112 @@ extern Console* main_console;
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
+#define KEXP_USER_ENTRY \
+  KEXP_TOP3 \
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0));
+
+#define KEXP_TOP3 \
+  asm("sub lr, lr, #4"); \
+  KEXP_TOPSWI
+
+// parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
+#define KEXP_TOPSWI \
+  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
+  asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->r0));\
+  asm("mov %[v], r1" : [v]"=r" (currentThreadInfo->r1));\
+  asm("mov %[v], r2" : [v]"=r" (currentThreadInfo->r2));\
+  asm("mov %[v], r3" : [v]"=r" (currentThreadInfo->r3));\
+  asm("mov %[v], r4" : [v]"=r" (currentThreadInfo->r4));\
+  asm("mov %[v], r5" : [v]"=r" (currentThreadInfo->r5));\
+  asm("mov %[v], r6" : [v]"=r" (currentThreadInfo->r6));\
+  asm("mov %[v], r7" : [v]"=r" (currentThreadInfo->r7));\
+  asm("mov %[v], r8" : [v]"=r" (currentThreadInfo->r8));\
+  asm("mov %[v], r9" : [v]"=r" (currentThreadInfo->r9));\
+  asm("mov %[v], r10" : [v]"=r" (currentThreadInfo->r10));\
+  asm("mov %[v], r11" : [v]"=r" (currentThreadInfo->r11));\
+  asm("mov %[v], r12" : [v]"=r" (currentThreadInfo->r12));\
+  asm("mrs r0, spsr"); \
+  asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->cpsr));\
+  asm("mrs r0, cpsr \n\
+       bic r0, r0, #0x1f \n\
+       orr r0, r0, #0x1f \n\
+       msr cpsr, r0 \n\
+      ");\
+  asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
+  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));
+
+#define KEXP_BOTSWI \
+    KEXP_BOT3
+
+#define KEXP_BOT3 \
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
+  asm("mrs r0, cpsr \n\
+       bic r0, r0, #0x1f \n\
+       orr r0, r0, #0x13 \n\
+       msr cpsr, r0 \n\
+      ");\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
+  asm("msr spsr, r0"); \
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->pc));\
+  asm("push {r0}"); \
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));\
+  asm("mov r1, %[v]" : : [v]"r" (currentThreadInfo->r1));\
+  asm("mov r2, %[v]" : : [v]"r" (currentThreadInfo->r2));\
+  asm("mov r3, %[v]" : : [v]"r" (currentThreadInfo->r3));\
+  asm("mov r4, %[v]" : : [v]"r" (currentThreadInfo->r4));\
+  asm("mov r5, %[v]" : : [v]"r" (currentThreadInfo->r5));\
+  asm("mov r6, %[v]" : : [v]"r" (currentThreadInfo->r6));\
+  asm("mov r7, %[v]" : : [v]"r" (currentThreadInfo->r7));\
+  asm("mov r8, %[v]" : : [v]"r" (currentThreadInfo->r8));\
+  asm("mov r9, %[v]" : : [v]"r" (currentThreadInfo->r9));\
+  asm("mov r10, %[v]" : : [v]"r" (currentThreadInfo->r10));\
+  asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
+  asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
+  asm("LDM sp!, {pc}^")
+
 //TODO extern "C" void arch_pageFaultHandler();
-void pageFaultHandler(uint32 address, uint32 error)
+void pageFaultHandler(uint32 address, uint32 type)
 {
-  //--------Start "just for Debugging"-----------
-/*
-  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
-      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getPID(),
-      currentThread->getName(), currentThread->switch_to_userspace_);
-
-  debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
-
-  if (!(error & FLAG_PF_USER))
-  {
-    // The PF happened in kernel mode? Cool, let's look up the function that caused it.
-    // A word of warning: Due to the way the lookup is performed, we may be
-    // returned a wrong function name here! Especially routines residing inside
-    // ASM- modules are very likely to be detected incorrectly.
-    char FunctionName[255];
-    pointer StartAddr = get_function_name(currentThread->kernel_arch_thread_info_->eip, FunctionName);
-
-    if (StartAddr)
-      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
-          currentThread->kernel_arch_thread_info_->eip - StartAddr);
-  }
+  debug(PM, "[PageFaultHandler] Address: %x (%s) - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
+      address, type == 0x3 ? "Instruction Fetch" : "Data Access", currentThread, currentThread->getPID(), currentThread->getName(), currentThread->switch_to_userspace_);
+  if (!currentThread->switch_to_userspace_)
+    while(1);
 
   if(!address)
-  {
     debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");
-  }
-
-  if (error)
-  {
-    if (error & FLAG_PF_PRESENT)
-    {
-      debug(PM, "[PageFaultHandler] We got a pagefault even though the page mapping is present\n");
-      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
-        (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
-
-      page_directory_entry *page_directory = (page_directory_entry *) ArchMemory::getIdentAddressOfPPN(currentThread->loader_->arch_memory_.page_dir_page_);
-      uint32 virtual_page = address / PAGE_SIZE;
-      uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-      uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-//      if (page_directory[pde_vpn].pde4k.present)
-//      {
-//        if (page_directory[pde_vpn].pde4m.use_4_m_pages)
-//        {
-//          debug(PM, "[PageFaultHandler] Page %d is a 4MiB Page\n", virtual_page);
-//          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", virtual_page,
-//              page_directory[pde_vpn].pde4m.writeable, page_directory[pde_vpn].pde4m.user_access);
-//        }
-//        else
-//        {
-//          page_table_entry *pte_base = (page_table_entry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pde4k.page_table_base_address);
-//          debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", virtual_page);
-//          debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", virtual_page,
-//            pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
-//        }
-//      }
-//      else
-//        debug(PM, "[PageFaultHandler] WTF? PDE non-present but Exception present flag was set\n");
-    }
-    else
-    {
-      if (address >= 2U*1024U*1024U*1024U)
-      {
-        debug(PM, "[PageFaultHandler] The virtual page we accessed was not mapped to a physical page\n");
-        if (error & FLAG_PF_USER)
-        {
-          debug(PM, "[PageFaultHandler] WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
-          debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
-        }
-        else
-        {
-          // remove this error check if your implementation swaps out kernel pages
-          debug(PM, "[PageFaultHandler] WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
-          debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
-        }
-      }
-      else
-      {
-        //debug(A_INTERRUPTS | PM, "The virtual page we accessed was not mapped to a physical page\n");
-        //debug(A_INTERRUPTS | PM, "this is normal and the Loader will propably take care of it now\n");
-      }
-    }
-  }
 
   ArchThreads::printThreadRegisters(currentThread,0);
   ArchThreads::printThreadRegisters(currentThread,1);
 
-  //--------End "just for Debugging"-----------
-
-
   //save previous state on stack of currentThread
-  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
-  ArchInterrupts::enableInterrupts();
 
-  //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (! (error & FLAG_PF_PRESENT) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
+  ArchInterrupts::enableInterrupts();
+  if (currentThread->loader_)
   {
-    currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
+    //lets hope this Exeption wasn't thrown during a TaskSwitch
+    if (address > 1U*1024U*1024U && address < 2U*1024U*1024U*1024U)
+    {
+      currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
+    }
+    else
+    {
+      debug(PM, "[PageFaultHandler] Memory Access Violation: address: %x, loader_: %x\n", address, currentThread->loader_);
+      Syscall::exit(9999);
+    }
   }
   else
   {
-    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %x\n",
-        !(error & FLAG_PF_PRESENT), address < 2U*1024U*1024U*1024U, currentThread->loader_);
-
-    if (!(error & FLAG_PF_USER))
-      currentThread->printBacktrace(true);
-
-    if (currentThread->loader_)
-      Syscall::exit(9999);
-    else
-      currentThread->kill();
+    debug(PM, "[PageFaultHandler] Kernel Page Fault! Should never happen...\n");
+    currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
-  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
-  switch (currentThread->switch_to_userspace_)
-  {
-    case 0:
-      break; //we already are in kernel mode
-    case 1:
-      currentThreadInfo = currentThread->user_arch_thread_info_;
-      //TODO arch_switchThreadToUserPageDirChange();
-      break; //not reached
-    default:
-      kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
-  }*/
+  currentThread->switch_to_userspace_ = true;
+  currentThreadInfo = currentThread->user_arch_thread_info_;
 }
 
 void arch_uart0_irq_handler()
@@ -201,8 +178,9 @@ void arch_mouse_irq_handler()
 
 void arch_timer0_irq_handler()
 {
+  kprintfd("timer\n");
   static uint32 heart_beat_value = 0;
-  uint32 *t0mmio = (uint32*)0x13000000;
+  uint32 *t0mmio = (uint32*)0x83000000;
   if ((t0mmio[REG_INTSTAT] & 0x1) != 0)
   {
     assert(!ArchInterrupts::testIFSet());
@@ -245,10 +223,10 @@ void arch_swi_irq_handler()
 extern "C" void switchTTBR0(uint32);
 
 extern "C" void exceptionHandler(uint32 type) {
-  kprintfd("exception\n");
-  if (type == ARM4_XRQ_IRQ) {
-    uint32* picmmio = (uint32*)0x14000000;
+  kprintfd("exception type = %x\n", type);
 
+  if (type == ARM4_XRQ_IRQ) {
+    uint32* picmmio = (uint32*)0x84000000;
     if (IRQ(0))
       arch_swi_irq_handler();
     if (IRQ(1))
@@ -266,8 +244,15 @@ extern "C" void exceptionHandler(uint32 type) {
   else if (type == ARM4_XRQ_SWINT) {
     arch_swi_irq_handler();
   }
-
-  else if (type != ARM4_XRQ_IRQ && type != ARM4_XRQ_FIQ && type != ARM4_XRQ_SWINT) {
+  else if (type == ARM4_XRQ_ABRTP)
+  {
+    pageFaultHandler(currentThreadInfo->lr, type);
+  }
+  else if (type == ARM4_XRQ_ABRTD)
+  {
+    pageFaultHandler(currentThreadInfo->lr, type);
+  }
+  else {
     kprintfd("\nCPU Fault type = %x\n",type);
     ArchThreads::printThreadRegisters(currentThread,0);
     ArchThreads::printThreadRegisters(currentThread,1);
@@ -276,10 +261,7 @@ extern "C" void exceptionHandler(uint32 type) {
     currentThread->kill();
     for(;;);
   }
-  if (currentThread)
-  {
-    kprintfd("switch ttbr0 to %x\n",currentThreadInfo);
-    kprintfd("switch ttbr0 to %x\n",currentThreadInfo->ttbr0);
-    switchTTBR0(currentThreadInfo->ttbr0);
-  }
+  ArchThreads::printThreadRegisters(currentThread,0);
+  ArchThreads::printThreadRegisters(currentThread,1);
+  switchTTBR0(currentThreadInfo->ttbr0);
 }

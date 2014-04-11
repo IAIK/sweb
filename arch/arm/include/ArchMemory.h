@@ -63,7 +63,7 @@ public:
  */
   static pointer getIdentAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE)
   {
-    return 0xD0000000U + (ppn * page_size);
+    return 0xC0000000U + (ppn * page_size);
   }
 
 /**

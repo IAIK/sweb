@@ -14,8 +14,8 @@
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
-struct MMCI* mmci = (struct MMCI*) 0x1C000000;
-uint32* mmci_fifo = (uint32*) 0x1C000080;
+struct MMCI* mmci = (struct MMCI*) 0x8C000000;
+uint32* mmci_fifo = (uint32*) 0x8C000080;
 
 #define PL181_CMD_INDEX     0x3f
 #define PL181_CMD_RESPONSE  (1 << 6)
@@ -146,6 +146,7 @@ uint32 MMCDriver::addRequest( BDRequest * br)
 
 int32 MMCDriver::readBlock ( uint32 address, void *buffer )
 {
+  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %x\n",address, buffer);
   uint32 response;
   mmc_send_cmd(17,address,&response);
   mmci->datalength = 512;
@@ -166,6 +167,7 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
 
 int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
+  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
   {
     readBlock((start_sector + i) * sector_size_, buffer + i * sector_size_);

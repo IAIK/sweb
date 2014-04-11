@@ -61,7 +61,7 @@ struct page_table_entry_struct
     uint32 bufferable                :1;  // 2      | 0
     uint32 cachable                  :1;  // 3      | 0
     uint32 permissions               :2;  // 5:4    | 1
-    uint32 reserved                  :2;  // 11:6   | 0
+    uint32 reserved                  :6;  // 11:6   | 0
     uint32 base                      :20; // 31:12
 } __attribute__((__packed__));
 

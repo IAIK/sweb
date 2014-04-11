@@ -15,13 +15,15 @@
 
 SpinLock global_atomic_add_lock("");
 
+extern "C" uint32 kernel_page_directory_start;
+
 void ArchThreads::initialise()
 {
   new (&global_atomic_add_lock) SpinLock("global_atomic_add_lock");
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  currentThreadInfo->ttbr0 = pageDirectory;
 }
-
-extern "C" uint32 kernel_page_directory_start;
 
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
@@ -44,16 +46,14 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
-  kprintfd("ttbr0 = %x\n",pageDirectory);
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
   info->pc = start_function;
-  info->irq_lr = start_function;
+  info->lr = start_function;
   info->cpsr = 0x6000001F;
   info->sp = stack & ~0xF;
-  info->fp = stack & ~0xF;
+  info->sp0 = stack & ~0xF;
   info->ttbr0 = pageDirectory;
-  kprintfd("ttbr0 = %x\n",pageDirectory);
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
 }
@@ -63,16 +63,14 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
-  kprintfd("ttbr0 = %x\n",pageDirectory);
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
   info->pc = start_function;
-  info->irq_lr = start_function;
+  info->lr = start_function;
   info->cpsr = 0x60000010;
   info->sp = user_stack & ~0xF;
-  info->fp = user_stack & ~0xF;
+  info->sp0 = kernel_stack & ~0xF;
   info->ttbr0 = pageDirectory;
-  kprintfd("ttbr0 = %x\n",pageDirectory);
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
 }
@@ -119,7 +117,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- ttbr0: %pc: %10x  fp: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
-           userspace_registers?"  User":"Kernel",thread,info,info->pc,info->fp,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12);
+  kprintfd("%sThread: %10x, info: %10x -- ttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
+           userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12);
 
 }

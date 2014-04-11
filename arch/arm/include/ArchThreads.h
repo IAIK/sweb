@@ -10,27 +10,26 @@
 
 struct ArchThreadInfo
 {
-  uint32 r0;       // 0
-  uint32 r1;        // 4
-  uint32 r2;    // 8
-  uint32 r3;       // 12
-  uint32 r4;       // 16
-  uint32 r5;       // 20
-  uint32 r6;       // 24
-  uint32 r7;       // 28
-  uint32 r8;       // 32
-  uint32 r9;       // 36
-  uint32 r10;       // 40
-  uint32 r11;        // 44
-  uint32 r12;        // 48
-  uint32 sp;        // 52
-  uint32 lr;        // 56
-  uint32 cpsr;        // 60
-  uint32 spsr;        // 64
-  uint32 pc;       // 68
-  uint32 irq_lr;   // 72
-  uint32 fp;       // 76
-  uint32 ttbr0;    // 80
+  uint32 r0;
+  uint32 r1;
+  uint32 r2;
+  uint32 r3;
+  uint32 r4;
+  uint32 r5;
+  uint32 r6;
+  uint32 r7;
+  uint32 r8;
+  uint32 r9;
+  uint32 r10;
+  uint32 r11;
+  uint32 r12;
+  uint32 sp;
+  uint32 lr;
+  uint32 cpsr;
+  uint32 spsr;
+  uint32 pc;
+  uint32 ttbr0;
+  uint32 sp0;
 };
 
 class Thread;

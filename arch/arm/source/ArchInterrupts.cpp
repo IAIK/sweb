@@ -11,12 +11,15 @@
 
 extern struct KMI* kmi;
 
-// parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
+#define KEXP_USER_ENTRY \
+  KEXP_TOP3 \
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0));
 
 #define KEXP_TOP3 \
   asm("sub lr, lr, #4"); \
   KEXP_TOPSWI
 
+// parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
 #define KEXP_TOPSWI \
   asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
   asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->r0));\
@@ -38,22 +41,27 @@ extern struct KMI* kmi;
        bic r0, r0, #0x1f \n\
        orr r0, r0, #0x1f \n\
        msr cpsr, r0 \n\
-       mov r4, sp \n\
-       mov %[lr], lr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x12 \n\
-       msr cpsr, r0 \n\
-       mov sp, r4 \n\
-       mov %[sp], r4 \n\
-       " : [sp]"=r" (currentThreadInfo->sp), [lr]"=r" (currentThreadInfo->lr));\
-  asm("mov %[v], fp" : [v]"=r" (currentThreadInfo->fp));
+      ");\
+  asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
+  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));
 
 #define KEXP_BOTSWI \
     KEXP_BOT3
 
 #define KEXP_BOT3 \
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
+  asm("mrs r0, cpsr \n\
+       bic r0, r0, #0x1f \n\
+       orr r0, r0, #0x13 \n\
+       msr cpsr, r0 \n\
+      ");\
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
   asm("msr spsr, r0"); \
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->pc));\
+  asm("push {r0}"); \
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));\
   asm("mov r1, %[v]" : : [v]"r" (currentThreadInfo->r1));\
   asm("mov r2, %[v]" : : [v]"r" (currentThreadInfo->r2));\
@@ -67,50 +75,36 @@ extern struct KMI* kmi;
   asm("mov r10, %[v]" : : [v]"r" (currentThreadInfo->r10));\
   asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
   asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
-  asm("mov fp, %[v]" : : [v]"r" (currentThreadInfo->fp));\
-  asm("mrs r0, cpsr \n\
-      bic r0, r0, #0x1f \n\
-      orr r0, r0, #0x1f \n\
-      msr cpsr, r0 \n\
-      mov sp, %[sp] \n\
-      mov lr, %[lr] \n\
-      bic r0, r0, #0x1f \n\
-      orr r0, r0, #0x12 \n\
-      msr cpsr, r0 \n\
-      " : : [sp]"r" (currentThreadInfo->sp), [lr]"r" (currentThreadInfo->lr));\
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
-  asm("push {lr}"); \
   asm("LDM sp!, {pc}^")
 
 uint32 arm4_cpsrget()
 {
-    uint32      r;
+  uint32 r;
 
-    asm("mrs %[ps], cpsr" : [ps]"=r" (r));
-    return r;
+  asm("mrs %[ps], cpsr" : [ps]"=r" (r));
+  return r;
 }
 
 void arm4_cpsrset(uint32 r)
 {
-    asm("msr cpsr, %[ps]" : : [ps]"r" (r));
+  asm("msr cpsr, %[ps]" : : [ps]"r" (r));
 }
-extern uint32 stack;
 
-void __attribute__((naked)) k_exphandler_irq_entry() { KEXP_TOP3;  exceptionHandler(ARM4_XRQ_IRQ); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_fiq_entry() { KEXP_TOP3;  exceptionHandler(ARM4_XRQ_FIQ); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_reset_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_RESET); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_undef_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_UNDEF); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_abrtp_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_ABRTP); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_TOP3; exceptionHandler(ARM4_XRQ_ABRTD); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI; exceptionHandler(ARM4_XRQ_SWINT); KEXP_BOTSWI; }
+void __attribute__((naked)) k_exphandler_irq_entry() { KEXP_TOP3;  void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_IRQ); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_fiq_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_FIQ); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_reset_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_RESET); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_undef_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_UNDEF); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_abrtp_entry() { KEXP_USER_ENTRY; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTP); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_USER_ENTRY; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTD); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_SWINT); KEXP_BOTSWI; }
 
-void arm4_xrqinstall(uint32 ndx, void *addr) {
+void arm4_xrqinstall(uint32 ndx, void *addr)
+{
   char buf[32];
-    uint32      *v;
+  uint32 *v;
 
-    v = (uint32*)0x0;
-  v[ndx] = 0xEA000000 | (((uint32)addr - (8 + (4 * ndx))) >> 2);
+  v = (uint32*) 0x0;
+  v[ndx] = 0xEA000000 | (((uint32) addr - (8 + (4 * ndx))) >> 2);
 }
 
 extern "C" void initialisePL190();
@@ -130,10 +124,10 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  uint32* picmmio = (uint32*)0x14000000;
+  uint32* picmmio = (uint32*)0x84000000;
   picmmio[PIC_IRQ_ENABLESET] = (1<<5);
 
-  uint32* t0mmio = (uint32*)0x13000000;
+  uint32* t0mmio = (uint32*)0x83000000;
   t0mmio[REG_LOAD] = 0x2fffff;
   t0mmio[REG_BGLOAD] = 0x2fffff;
   t0mmio[REG_CTRL] = CTRL_ENABLE | CTRL_MODE_PERIODIC | CTRL_DIV_NONE | CTRL_SIZE_32 | CTRL_INT_ENABLE;
@@ -143,17 +137,17 @@ void ArchInterrupts::enableTimer()
 
 void ArchInterrupts::disableTimer()
 {
-  uint32* t0mmio = (uint32*)0x13000000;
+  uint32* t0mmio = (uint32*)0x83000000;
   t0mmio[REG_CTRL] = 0;
 
 }
 
 void ArchInterrupts::enableKBD()
 {
-  uint32* picmmio = (uint32*)0x14000000;
+  uint32* picmmio = (uint32*)0x84000000;
   picmmio[PIC_IRQ_ENABLESET] = (1<<3);
 
-  kmi = (struct KMI*)0x18000000;
+  kmi = (struct KMI*)0x88000000;
   kmi->cr = 0x14;
   kmi->data = 0xF4;
   while(!kmi->stat & 0x10);
@@ -166,10 +160,10 @@ void ArchInterrupts::disableKBD()
 
 void ArchInterrupts::enableMMC()
 {
-  uint32* picmmio = (uint32*)0x14000000;
+  uint32* picmmio = (uint32*)0x84000000;
   picmmio[PIC_IRQ_ENABLESET] = (1<<3);
 
-  kmi = (struct KMI*)0x18000000;
+  kmi = (struct KMI*)0x88000000;
   kmi->cr = 0x14;
   kmi->data = 0xF4;
   while(!kmi->stat & 0x10);
@@ -183,12 +177,12 @@ void ArchInterrupts::disableMMC()
 extern "C" void arch_enableInterrupts();
 void ArchInterrupts::enableInterrupts()
 {
-  arm4_cpsrset(arm4_cpsrget() & ~(1 << 7));
+  arm4_cpsrset(arm4_cpsrget() & ~((1 << 7) | (1 << 8)));
 }
 extern "C" void arch_disableInterrupts();
 bool ArchInterrupts::disableInterrupts()
 {
-  arm4_cpsrset(arm4_cpsrget() | (1 << 7));
+  arm4_cpsrset(arm4_cpsrget() | ((1 << 7) | (1 << 8)));
 }
 
 bool ArchInterrupts::testIFSet()

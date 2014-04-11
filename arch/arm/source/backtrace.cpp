@@ -185,7 +185,7 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
     asm("mov %[v], fp" : [v]"=r" (fp));
   }
   else
-    fp = (void*)thread->kernel_arch_thread_info_->fp;
+    fp = (void*)thread->kernel_arch_thread_info_->r11; // r11 is the fp register in gcc ;)
 
     int i = 0;
   StackFrame *CurrentFrame = (StackFrame*)(fp-8);
