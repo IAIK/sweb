@@ -6,7 +6,6 @@
 #ifndef KERNEL_MEMORY_MANAGER__
 #define KERNEL_MEMORY_MANAGER__
 
-#include "arch_panic.h"
 #include "mm/new.h"
 #include "kernel/SpinLock.h"
 

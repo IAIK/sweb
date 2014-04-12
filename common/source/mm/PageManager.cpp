@@ -5,7 +5,6 @@
 #include "mm/PageManager.h"
 #include "mm/new.h"
 #include "paging-definitions.h"
-#include "arch_panic.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "debug_bochs.h"
@@ -13,6 +12,7 @@
 #include "kernel/Scheduler.h"
 #include "ArchInterrupts.h"
 #include "assert.h"
+#include "panic.h"
 
 PageManager* PageManager::instance_=0;
 
@@ -203,7 +203,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
     }
   }
   lock_.release();
-  arch_panic((uint8*) "PageManager: Sorry, no more Pages Free !!!");
+  kpanict((uint8*) "PageManager: Sorry, no more Pages Free !!!");
   return 0;
 }
 

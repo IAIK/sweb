@@ -4,7 +4,7 @@
 
 #include "Scheduler.h"
 #include "Thread.h"
-#include "arch_panic.h"
+#include "panic.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "console/kprintf.h"
@@ -285,7 +285,7 @@ void Scheduler::printThreadList()
 void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 {
   if ( unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) ) )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
+    kpanict ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
 }
 
 void Scheduler::unlockScheduling()
@@ -296,7 +296,7 @@ void Scheduler::unlockScheduling()
 void Scheduler::waitForFreeSpinLock(SpinLock& lock)  //not as severe as stopping Interrupts
 {
   if ( block_scheduling_==0 )
-    arch_panic ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeSpinLock: This "
+    kpanict ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeSpinLock: This "
                             "is meant to be used while Scheduler is locked\n" );
 
   uint32 ticks = 0;

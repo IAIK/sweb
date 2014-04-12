@@ -5,7 +5,6 @@
 
 #include "InterruptUtils.h"
 #include "new.h"
-#include "arch_panic.h"
 #include "ArchMemory.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"

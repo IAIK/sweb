@@ -5,7 +5,6 @@
 
 #include <types.h>
 
-#include <arch_panic.h>
 #include <paging-definitions.h>
 
 #include "mm/new.h"
