@@ -2,9 +2,7 @@
 #include "kprintf.h"
 #include "Thread.h"
 #include "backtrace.h"
-#include "InterruptUtils.h"
 #include "ArchThreads.h"
-#include "mm/KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "ustl/umap.h"
 #include "ArchCommon.h"
 
@@ -29,11 +27,6 @@
 #define N_ECOML 0xe8    /* end common (local name): ,,address */
 #define N_LENG  0xfe    /* second stab entry with length information */
 //-------------------------------------------------------------------------------------*/
-struct StackFrame
-{
-   StackFrame *previous_frame;
-   void *return_address;
-};
 
 struct StabEntry
 {
@@ -170,58 +163,13 @@ bool try_paste_operator(const char *& input, char *& buffer)
 }
 //-------------------------------------------------------------------------------------*/
 
-int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
-{
-  if (!call_stack ||
-      (use_stored_registers && !thread) ||
-      (!use_stored_registers && thread != currentThread) ||
-      size <= 1)
-    return 0;
-
-  void *ebp = 0;
-
-  if (!use_stored_registers)
-  {
-    __asm__ __volatile__(" \
-       movl %%ebp, %0\n"
-        : "=g" (ebp)
-    );
-  }
-  else
-    ebp = (void*)thread->kernel_arch_thread_info_->ebp;
-
-  int i = 0;
-  StackFrame *CurrentFrame = (StackFrame*)ebp;
-  void *StackStart = (void*)((uint32)thread->stack_ + sizeof(thread->stack_)); // the stack "starts" at the high addresses...
-  void *StackEnd = (void*)thread->stack_; // ... and "ends" at the lower ones.
-
-  if (use_stored_registers)
-    call_stack[i++] = thread->kernel_arch_thread_info_->eip;
-
-  void *StartAddress = (void*)0x80000000;
-  void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();
-
-  while (i < size &&
-      ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
-      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
-  {
-    call_stack[i++] = (pointer)CurrentFrame->return_address;
-    CurrentFrame = CurrentFrame->previous_frame;
-  }
-
-  return i;
-}
-//-------------------------------------------------------------------------------------*/
-
 pointer get_function_name(pointer address, char function_name[])
 {
   if (symbol_table.size() == 0)
     return NULL;
   ustl::map<uint32, const char*>::iterator it = symbol_table.end();
 
-  if (ADDRESS_BETWEEN(address, symbol_table.at(0).first, &kernel_end_address))
+  if (ADDRESS_BETWEEN(address, symbol_table.at(0).first, ArchCommon::getKernelEndAddress()))
   {
     it = symbol_table.begin();
 
@@ -378,7 +326,7 @@ void paste_typename(const char *& input, char *& buffer)
       break;
 
     default:
-      Src = "<unknown>";
+      Src = "<?>";
       break;
     }
 
@@ -444,6 +392,7 @@ void demangle_name(const char* name, char *buffer)
     ++pData;
     int NameCount = 0;
 
+    uint32 repeat = 0;
     while (*pData != 'E')
     {
       if (NameCount++ && *pData != 'I')
@@ -469,6 +418,9 @@ void demangle_name(const char* name, char *buffer)
       }
       else
         try_paste_operator(pData, buffer);
+      if (repeat >= 2)
+        break;
+      ++repeat;
     }
     ++pData;
   }
@@ -498,12 +450,11 @@ void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_s
   for (StabEntry* current_stab = stab_start; current_stab < stab_end; ++current_stab)
   {
     if (unlikely((current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME) &&
-        ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, &kernel_end_address)))
+        ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, ArchCommon::getKernelEndAddress())))
     {
       symbol_table[current_stab->n_value] = stab_str+current_stab->n_strx;
     }
   }
-
   debug(MAIN, "found %d functions\n", symbol_table.size());
 }
 //-------------------------------------------------------------------------------------*/

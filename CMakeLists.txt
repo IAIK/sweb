@@ -318,6 +318,47 @@ add_custom_target(mrsproper
         COMMAND cmake ${PROJECT_SOURCE_DIR}
         )
 
+#Custom target: make x86
+#Changes MakeOptions ARCH setting to x86
+add_custom_target(x86
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
+#Custom target: make x86_pae
+#Changes MakeOptions ARCH setting to x86_pae
+add_custom_target(x86_pae
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86_pae)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86_pae\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
+#Custom target: make x86_64
+#Changes MakeOptions ARCH setting to x86_64
+add_custom_target(x86_64
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86_64)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86_64\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
+#Custom target: make xen
+#Changes MakeOptions ARCH setting to xen
+add_custom_target(xen
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH xen)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH xen\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
+#Custom target: make arm
+#Changes MakeOptions ARCH setting to arm
+add_custom_target(arm
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
+#Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 add_custom_target(remove_cmake
 	COMMAND make clean;

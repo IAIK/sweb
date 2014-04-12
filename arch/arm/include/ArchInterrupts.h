@@ -61,18 +61,6 @@ public:
   static void enableKBD();
 
   /**
-   * enables the MMC IRQs
-   *
-   */
-  static void enableMMC();
-
-  /**
-   * enables the MMC IRQs
-   *
-   */
-  static void disableMMC();
-
-  /**
    * disables the Keyboard IRQ (1)
    *
    */

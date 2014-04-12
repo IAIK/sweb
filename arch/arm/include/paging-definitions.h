@@ -33,7 +33,7 @@ struct page_directory_entry_1m_struct
   uint32 reserved_2                :1;  // 9      | 0
   uint32 permissions               :2;  // 11:10  | 1
   uint32 reserved_1                :8;  // 19:12  | 0
-  uint32 base                      :12; // 31:20
+  uint32 page_ppn                  :12; // 31:20
 } __attribute__((__packed__));
 
 struct page_directory_entry_4k_struct
@@ -44,7 +44,8 @@ struct page_directory_entry_4k_struct
   uint32 reserved_3                :1;  // 4      | 0
   uint32 domain                    :4;  // 8:5    | 0
   uint32 reserved_2                :1;  // 9      | 0
-  uint32 base                      :22; // 31:10
+  uint32 offset                    :2;  // 11:10  | 0 // 4 page tables would fit on 1 page
+  uint32 pt_ppn                    :20; // 31:10
 } __attribute__((__packed__));
 
 union page_directory_entry_union
@@ -62,7 +63,7 @@ struct page_table_entry_struct
     uint32 cachable                  :1;  // 3      | 0
     uint32 permissions               :2;  // 5:4    | 1
     uint32 reserved                  :6;  // 11:6   | 0
-    uint32 base                      :20; // 31:12
+    uint32 page_ppn                  :20; // 31:12
 } __attribute__((__packed__));
 
 typedef struct page_table_entry_struct page_table_entry;

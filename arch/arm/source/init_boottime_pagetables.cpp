@@ -40,7 +40,7 @@ static void mapPage(page_directory_entry *pde_start, uint32 pdi, uint32 ppn_1m)
   pde_start[pdi].pde1m.cachable = 0;
   pde_start[pdi].pde1m.bufferable = 0;
   pde_start[pdi].pde1m.size = 2;
-  pde_start[pdi].pde1m.base = ppn_1m;
+  pde_start[pdi].pde1m.page_ppn = ppn_1m;
 }
 
 void initialiseBootTimePaging()
