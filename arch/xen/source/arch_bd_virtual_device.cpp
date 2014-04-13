@@ -9,7 +9,7 @@
 
 #include "arch_bd_virtual_device.h"
 
-BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, char *name, bool writable)
+BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_blocks, uint32 block_size, const char *name, bool writable)
 {
 };
 

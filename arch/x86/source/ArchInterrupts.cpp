@@ -5,7 +5,6 @@
 
 #include "ArchInterrupts.h"
 #include "8259.h"
-#include "structures.h"
 #include "ports.h"
 #include "InterruptUtils.h"
 #include "SegmentUtils.h"

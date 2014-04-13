@@ -12,7 +12,7 @@
 #include "debug.h"
 #include "console/kprintf.h"
 
-BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, char *name, bool writable)
+BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name, bool writable)
 {
   offset_        = offset;
   num_sectors_   = num_sectors;
