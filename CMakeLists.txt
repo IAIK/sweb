@@ -318,27 +318,27 @@ add_custom_target(mrsproper
         COMMAND cmake ${PROJECT_SOURCE_DIR}
         )
 
-#Custom target: make x86
-#Changes MakeOptions ARCH setting to x86
-add_custom_target(x86
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+#Custom target: make x86_32
+#Changes MakeOptions ARCH setting to x86_32
+add_custom_target(x86_32
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
 
 #Custom target: make x86_pae
 #Changes MakeOptions ARCH setting to x86_pae
 add_custom_target(x86_pae
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86_pae)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86_pae\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/pae)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/pae\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
 
 #Custom target: make x86_64
 #Changes MakeOptions ARCH setting to x86_64
 add_custom_target(x86_64
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86_64)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86_64\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/64)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/64\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
 

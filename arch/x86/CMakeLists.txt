@@ -1,7 +1,6 @@
 include_directories(
-    include
+    common/include
 )
 
-add_subdirectory(source)
-
+add_subdirectory(common/source)
 

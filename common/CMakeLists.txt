@@ -1,7 +1,7 @@
 include_directories(
     include
     ../arch/common/include
-    ../arch/${ARCH}/include    
+    ../arch/${ARCH}/include
     include/console
     include/kernel
     include/drivers
@@ -15,6 +15,12 @@ include_directories(
     include/util
     include/ustl
 )
+
+if(${ARCH} MATCHES "^x86/.*")
+    include_directories(
+    ../arch/x86/common/include
+    )
+endif(${ARCH} MATCHES "^x86/.*")
 
 if(${ARCH} STREQUAL "xen")
     include_directories(

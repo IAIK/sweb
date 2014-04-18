@@ -12,7 +12,11 @@ include_directories(common/include
     ../common/include/ipc
     ../common/include/mm
     ../common/include/util
+    ${ARCH}/include
 )
 
+if(${ARCH} MATCHES "^x86/.*")
+  add_subdirectory(x86)
+endif(${ARCH} MATCHES "^x86/.*")
 
 add_subdirectory(${ARCH})
