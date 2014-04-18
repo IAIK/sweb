@@ -29,7 +29,7 @@ typedef struct {
 
 typedef struct {
     uint16 limit;
-    uint32 base;
+    size_t base;
 } __attribute__((__packed__)) IDTR ;
 
 
@@ -59,8 +59,15 @@ public:
    */
   static void lidt(IDTR *idtr);
 
+  /**
+   *
+   */
+  static void countPageFault(uint64 address);
+
 private:
   static InterruptHandlers handlers[NUM_INTERRUPT_HANDLERS];
+  static uint64 pf_address;
+  static uint64 pf_address_counter;
 };
 
 #endif

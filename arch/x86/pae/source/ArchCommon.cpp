@@ -13,60 +13,6 @@
 #include "FrameBufferConsole.h"
 #include "backtrace.h"
 
-#define MAX_MEMORY_MAPS 10
-#define MAX_MODULE_MAPS 10
-
-// macros for initializing memory_maps
-#define MEMMAP_INIT {0,0,0,0}
-#define TWO_MEMMAP_INIT MEMMAP_INIT,MEMMAP_INIT
-#define FOUR_MEMMAP_INIT TWO_MEMMAP_INIT,TWO_MEMMAP_INIT
-#define FIVE_MEMMAP_INIT FOUR_MEMMAP_INIT,MEMMAP_INIT
-#define TEN_MEMMAP_INIT FIVE_MEMMAP_INIT,FIVE_MEMMAP_INIT
-
-// macros for initializing module_maps
-#define FOUR_ZEROS 0,0,0,0
-#define EIGHT_ZEROS FOUR_ZEROS,FOUR_ZEROS
-#define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
-#define THIRTYTWO_ZEROS SIXTEEN_ZEROS,SIXTEEN_ZEROS
-#define SIXTYFOUR_ZEROS THIRTYTWO_ZEROS,THIRTYTWO_ZEROS
-#define HUNDREDTWENTYEIGHT_ZEROS SIXTYFOUR_ZEROS,SIXTYFOUR_ZEROS
-#define TWOHUNDREDFIFTYSIX_ZEROS HUNDREDTWENTYEIGHT_ZEROS,\
-                                 HUNDREDTWENTYEIGHT_ZEROS
-
-#define MODMAP_INIT {0,0,0,{TWOHUNDREDFIFTYSIX_ZEROS}}
-#define TWO_MODMAP_INIT MODMAP_INIT,MODMAP_INIT
-#define FOUR_MODMAP_INIT TWO_MODMAP_INIT,TWO_MODMAP_INIT
-#define FIVE_MODMAP_INIT FOUR_MODMAP_INIT,MODMAP_INIT
-#define TEN_MODMAP_INIT FIVE_MODMAP_INIT,FIVE_MODMAP_INIT
-
-struct multiboot_remainder
-{
-  uint32 memory_size;
-  uint32 vesa_x_res;
-  uint32 vesa_y_res;
-  uint32 vesa_bits_per_pixel;
-  uint32 have_vesa_console;
-  pointer vesa_lfb_pointer;
-  uint32 num_module_maps;
-
-  struct memory_maps
-  {
-    uint32 used;
-    pointer start_address;
-    pointer end_address;
-    uint32 type;
-  } __attribute__((__packed__)) memory_maps[MAX_MEMORY_MAPS];
-
-  struct module_maps
-  {
-    uint32 used;
-    pointer start_address;
-    pointer end_address;
-    uint8 name[256];
-  } __attribute__((__packed__)) module_maps[MAX_MODULE_MAPS];
-
-}__attribute__((__packed__));
-
 extern void* kernel_end_address;
 
 extern multiboot_info_t multi_boot_structure_pointer[];
