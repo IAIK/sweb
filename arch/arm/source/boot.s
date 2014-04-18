@@ -53,6 +53,7 @@ switchTTBR0:
   bx lr
 
 arch_yield:
+.stabs "arch_yield",36,0,0,arch_yield
 .globl arch_yield
   swi #0xffff
   bx lr
