@@ -172,28 +172,21 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
 Console* ArchCommon::createConsole(uint32 count)
 {
   // frame buffer initialization code from http://wiki.osdev.org/ARM_Integrator-CP_PL110_Dirty
-#define PL110_CR_EN   0x001
-#define PL110_CR_PWR    0x800
-#define PL110_IOBASE    0x90000000
-#define PL110_PALBASE   (PL110_IOBASE + 0x200)
-
-typedef struct _PL110MMIO
-{
-  uint32    volatile tim0;    //0
-  uint32    volatile tim1;    //4
-  uint32    volatile tim2;    //8
-  uint32    volatile d;   //c
-  uint32    volatile upbase;  //10
-  uint32    volatile f;   //14
-  uint32    volatile g;   //18
-  uint32    volatile control; //1c
-} PL110MMIO;
+  typedef struct _PL110MMIO
+  {
+      uint32 volatile tim0; //0
+      uint32 volatile tim1; //4
+      uint32 volatile tim2; //8
+      uint32 volatile d; //c
+      uint32 volatile upbase; //10
+      uint32 volatile f; //14
+      uint32 volatile g; //18
+      uint32 volatile control; //1c
+  } PL110MMIO;
 
   PL110MMIO *plio;
-  int   x;
-  uint16    volatile *fb;
 
-  plio = (PL110MMIO*)PL110_IOBASE;
+  plio = (PL110MMIO*) 0x90000000;
 
   /* 640x480 pixels */
   plio->tim0 = 0x3f1f3f9c;
@@ -201,7 +194,6 @@ typedef struct _PL110MMIO
   plio->upbase = getVESAConsoleLFBPtr();
   /* 16-bit color */
   plio->control = 0x1929; // 1 1000 0010 1001
-  fb = (uint16*)getVESAConsoleLFBPtr();
 
   return new FrameBufferConsole(count);
 }

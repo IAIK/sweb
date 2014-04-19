@@ -12,8 +12,8 @@
 void writeChar2Bochs( char char2Write )
 {
   /* Wait until the serial buffer is empty */
-//  while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER)
-//                                     & (SERIAL_BUFFER_FULL));
+  //  while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER)
+  //                                     & (SERIAL_BUFFER_FULL));
   /* Put our character, c, into the serial buffer */
   *(volatile unsigned long*)SERIAL_BASE = char2Write;
 }

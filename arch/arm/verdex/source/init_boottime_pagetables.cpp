@@ -60,14 +60,12 @@ void initialiseBootTimePaging()
   uint32 i;
   // the verdex board has physical ram mapped to 0xA0000000
   uint32 base = 0xA00;
-  for (i = 0; i < 4096; ++i)
-      mapPage(pde_start, i, i);
   // clear the page dir
   for (i = 0; i < 4096; ++i)
     *((uint32*)pde_start) = 0;
   // 1 : 1 mapping of the first 8 mbs
   for (i = 0; i < 8; ++i)
-    mapPage(pde_start, i, i);
+    mapPage(pde_start, i, base + i);
   // 1 : 1 mapping of the first 8 mbs of physical ram
   for (i = 0; i < 8; ++i)
     mapPage(pde_start, base + i, base + i);
@@ -79,6 +77,9 @@ void initialiseBootTimePaging()
     mapPage(pde_start, 0xC00 + i, base + i);
   // map devices from 0x81000000 upwards
   mapPage(pde_start,0x860,0x401);  // uart device
+  mapPage(pde_start,0x900,0x440);  // lcd controller
+  mapPage(pde_start,0x40D,0x40D);
+  mapPage(pde_start,0x40A,0x40A);
 }
 
 void removeBootTimeIdentMapping()
