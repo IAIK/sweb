@@ -5,16 +5,12 @@ set(CMAKE_CXX_FLAGS)
 
 include_directories(
     ../../common/include
-    #../../arch/common/include
     ../../arch/${ARCH}/include
+    ../../arch/${ARCH}/../common/include
     ../../arch/x86/include/
     ../../common/include/cache/
     ../../common/include/fs
     ../../common/include/fs/tests/
-    #../../common/include/ipc
-    #../../common/include/mm
-    #../../common/include/util
-    #../../common/include/ustl
     ./
     ./tasks
 )

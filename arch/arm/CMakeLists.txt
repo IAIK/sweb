@@ -1,7 +1,7 @@
 include_directories(
-    include
+    common/include
+    ../${ARCH}/include
 )
 
-add_subdirectory(source)
-
+add_subdirectory(common/source)
 

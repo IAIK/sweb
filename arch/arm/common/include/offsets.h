@@ -19,12 +19,12 @@
 /**
  * Our image will be at 1meg physical
  */
-#define LOAD_BASE 0x0
+#define LOAD_BASE 0xA0000000
 
 /**
  * this is the difference between link and load base
  */
-#define PHYSICAL_TO_VIRTUAL_OFFSET (LINK_BASE + LOAD_BASE)
+#define PHYSICAL_TO_VIRTUAL_OFFSET (LINK_BASE - LOAD_BASE)
 
 /**
  * returns the virtual address of a physical address by using the offset
