@@ -137,7 +137,7 @@ void arch_mouse_irq_handler()
 void arch_timer0_irq_handler()
 {
   static uint32 heart_beat_value = 0;
-  uint32 *ossr = (uint32*)0x40A00014;
+  uint32 *ossr = (uint32*)0x83000014;
   if ((*ossr & 0x1) != 0)
   {
     assert(!ArchInterrupts::testIFSet());
@@ -192,7 +192,7 @@ extern "C" void exceptionHandler(uint32 type)
 {
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
   if (type == ARM4_XRQ_IRQ) {
-    uint32* picmmio = (uint32*)0x40D00004;
+    uint32* picmmio = (uint32*)0x84000004;
     if (IRQ(0))
       arch_swi_irq_handler();
     if (IRQ(1))

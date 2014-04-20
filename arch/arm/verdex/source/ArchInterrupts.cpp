@@ -125,23 +125,23 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  uint32* picmmio = (uint32*)0x40D00004;
+  uint32* picmmio = (uint32*)0x84000004;
   *picmmio |= (1<<26);
 
-  uint32* osmr0 = (uint32*)0x40A00000;
+  uint32* osmr0 = (uint32*)0x83000000;
   *osmr0 = 100000;
-  uint32* oeir = (uint32*)0x40A0001C;
+  uint32* oeir = (uint32*)0x8300001C;
   *oeir |= 1;
-  uint32* oscr = (uint32*)0x40A00010;
+  uint32* oscr = (uint32*)0x83000010;
   *oscr = 0;
 }
 
 void ArchInterrupts::disableTimer()
 {
-  uint32* picmmio = (uint32*)0x40D00004;
+  uint32* picmmio = (uint32*)0x84000004;
   *picmmio &= ~(1<<26);
 
-  uint32* oeir = (uint32*)0x40A0001C;
+  uint32* oeir = (uint32*)0x8300001C;
   *oeir &= ~1;
 }
 

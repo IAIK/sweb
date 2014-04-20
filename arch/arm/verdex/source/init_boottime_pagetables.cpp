@@ -47,15 +47,6 @@ static void mapPage(page_directory_entry *pde_start, uint32 pdi, uint32 ppn_1m)
 void initialiseBootTimePaging()
 {
   page_directory_entry *pde_start = (page_directory_entry*)(((void*)kernel_page_directory_start) - PHYSICAL_TO_VIRTUAL_OFFSET);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,28);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,24);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,20);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,16);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,12);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,8);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,4);
-  *(volatile unsigned long*)(0x40100000) = TO_HEX(&writeChar2Bochs,0);
-  *(volatile unsigned long*)(0x40100000) = '\n';
 
   uint32 i;
   // the verdex board has physical ram mapped to 0xA0000000
@@ -78,12 +69,12 @@ void initialiseBootTimePaging()
   // map devices from 0x81000000 upwards
   mapPage(pde_start,0x860,0x401);  // uart device
   mapPage(pde_start,0x900,0x440);  // lcd controller
-  mapPage(pde_start,0x40D,0x40D);
-  mapPage(pde_start,0x40A,0x40A);
+  mapPage(pde_start,0x840,0x40D);  // interrupt controller
+  mapPage(pde_start,0x830,0x40A);  // timer
+  mapPage(pde_start,0x8C0,0x411);  // mmc controller
 }
 
 void removeBootTimeIdentMapping()
 {
-  *(volatile unsigned long*)(0x86000000) = 'R';
   // we will not remove anything because we need the first 8 mb 1:1 mapped
 }
