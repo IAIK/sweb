@@ -130,7 +130,7 @@ void ArchInterrupts::enableTimer()
   *picmmio |= (1<<26);
 
   uint32* osmr0 = (uint32*)0x83000000;
-  *osmr0 = 100000;
+  *osmr0 = 200000;
   uint32* oeir = (uint32*)0x8300001C;
   *oeir |= 1;
   uint32* oscr = (uint32*)0x83000010;
