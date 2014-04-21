@@ -29,9 +29,9 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
   assert(arch_memory.page_dir_page_ != 0);
   assert((arch_memory.page_dir_page_ & 0x3) == 0); // has to be aligned to 4 pages
-  thread->kernel_arch_thread_info_->ttbr0 = arch_memory.page_dir_page_ * PAGE_SIZE;
+  thread->kernel_arch_thread_info_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
   if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->ttbr0 = arch_memory.page_dir_page_ * PAGE_SIZE;
+    thread->user_arch_thread_info_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
 uint32 ArchThreads::getPageDirectory(Thread *thread)

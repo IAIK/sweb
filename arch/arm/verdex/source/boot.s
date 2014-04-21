@@ -12,12 +12,14 @@ entry:
   ldr r0, =initialiseBootTimePaging + 0x20000000
   blx r0
   ldr r0, =kernel_page_directory_start + 0x20000000
-  mcr p15, 0, r0, c2, c0, 0
-  mov r0, #0x1
-  mcr p15, 0, r0, c3, c0, 0 @ set buffer
+  mcr p15, 0, r0, c2, c0, 0 @ set ttbr0
+  mov r0, #0
+  mcr p15, 0, r0, c8, c7, 0 @ tlb flush
+  mov r0, #0x3
+  mcr p15, 0, r0, c3, c0, 0 @ set domain access control (full address space access for userspace)
   mrc p15, 0, r0, c1, c0, 0
   orr r0, r0, #0x1
-  mcr p15, 0, r0, c1, c0, 0
+  mcr p15, 0, r0, c1, c0, 0 @ enable paging
   ldr r0, =PagingMode
   bx r0
 3:

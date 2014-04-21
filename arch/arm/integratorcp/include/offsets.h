@@ -17,9 +17,9 @@
 #define LINK_BASE 0x80000000
 
 /**
- * Our image will be at 1meg physical
+ * physical ram starts at 0x0
  */
-#define LOAD_BASE 0xA0000000
+#define LOAD_BASE 0x0
 
 /**
  * this is the difference between link and load base
