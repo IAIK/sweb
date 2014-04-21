@@ -4,16 +4,13 @@
  */
 
 #include "debug_bochs.h"
-
-#define SERIAL_BASE 0x86000000
-#define SERIAL_FLAG_REGISTER 0x18
-#define SERIAL_BUFFER_FULL (1 << 5)
+#include "board_constants.h"
 
 void writeChar2Bochs( char char2Write )
 {
   /* Wait until the serial buffer is empty */
-  //  while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER)
-  //                                     & (SERIAL_BUFFER_FULL));
+  while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER)
+                                     & (SERIAL_BUFFER_FULL));
   /* Put our character, c, into the serial buffer */
   *(volatile unsigned long*)SERIAL_BASE = char2Write;
 }

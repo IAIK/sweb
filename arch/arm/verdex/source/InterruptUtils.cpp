@@ -121,11 +121,8 @@ void arch_uart1_irq_handler()
 
 void arch_keyboard_irq_handler()
 {
-  extern struct KMI* kmi;
-  while (kmi->stat & 0x10)
-  {
-    KeyboardManager::instance()->serviceIRQ();
-  }
+  kprintfd("arch_keyboard_irq_handler\n");
+  while(1);
 }
 
 void arch_mouse_irq_handler()
@@ -195,14 +192,6 @@ extern "C" void exceptionHandler(uint32 type)
     uint32* picmmio = (uint32*)0x84000004;
     if (IRQ(0))
       arch_swi_irq_handler();
-    if (IRQ(1))
-      arch_uart0_irq_handler();
-    if (IRQ(2))
-      arch_uart1_irq_handler();
-    if (IRQ(3))
-      arch_keyboard_irq_handler();
-    if (IRQ(4))
-      arch_mouse_irq_handler();
     if (IRQ(26))
       arch_timer0_irq_handler();
     // 6-10 and 22-28 not implemented

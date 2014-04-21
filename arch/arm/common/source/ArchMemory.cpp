@@ -87,7 +87,7 @@ void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 
 void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-  kprintfd("ArchMemory::mapPage: v: %x to p: %x\n",virtual_page,physical_page);
+//  kprintfd("ArchMemory::mapPage: v: %x to p: %x\n",virtual_page,physical_page);
   page_directory_entry *page_directory = (page_directory_entry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -103,8 +103,6 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     pte_base[pte_vpn].permissions = user_access ? 3 : 1;
     pte_base[pte_vpn].reserved = 0;
     pte_base[pte_vpn].page_ppn = physical_page + PHYS_OFFSET_4K;
-
-    kprintfd("mapPage ppn %x (%x) to vpn %x, pt_ppn = %x (%x), pd_ppn = %x (%x)\n",physical_page, pte_base[pte_vpn].page_ppn, virtual_page, page_directory[pde_vpn].pde4k.pt_ppn - PHYS_OFFSET_4K, page_directory[pde_vpn].pde4k.pt_ppn, page_dir_page_, page_dir_page_ + PHYS_OFFSET_4K);
     pte_base[pte_vpn].size = 2;
   }
   else
