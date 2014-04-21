@@ -148,6 +148,11 @@ void ArchInterrupts::disableTimer()
 
 void ArchInterrupts::enableKBD()
 {
+  uint32* picmmio = (uint32*)0x84000004;
+  *picmmio |= (1<<22);
+
+  *(uint32*)(SERIAL_BASE + 0x8) = 0x7;
+  *(uint32*)(SERIAL_BASE + 0x4) = 0x1;
 }
 
 void ArchInterrupts::disableKBD()

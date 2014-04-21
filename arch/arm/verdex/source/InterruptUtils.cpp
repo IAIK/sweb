@@ -14,6 +14,7 @@
 #include "kprintf.h"
 #include "Scheduler.h"
 #include "debug_bochs.h"
+#include "board_constants.h"
 
 #include "arch_keyboard_manager.h"
 #include "arch_bd_manager.h"
@@ -109,8 +110,8 @@ void pageFaultHandler(uint32 address, uint32 type)
 
 void arch_uart0_irq_handler()
 {
-  kprintfd("arch_uart0_irq_handler\n");
-  while(1);
+  KeyboardManager::instance()->serviceIRQ();
+  *(uint32*)(SERIAL_BASE + 0x8) = 0x6;
 }
 
 void arch_uart1_irq_handler()
@@ -192,6 +193,8 @@ extern "C" void exceptionHandler(uint32 type)
     uint32* picmmio = (uint32*)0x84000004;
     if (IRQ(0))
       arch_swi_irq_handler();
+    if (IRQ(22))
+      arch_uart0_irq_handler();
     if (IRQ(26))
       arch_timer0_irq_handler();
     // 6-10 and 22-28 not implemented

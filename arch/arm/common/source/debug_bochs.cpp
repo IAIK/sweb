@@ -5,12 +5,16 @@
 
 #include "debug_bochs.h"
 #include "board_constants.h"
+#include "arch_keyboard_manager.h"
 
 void writeChar2Bochs( char char2Write )
 {
   /* Wait until the serial buffer is empty */
   while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER)
-                                     & (SERIAL_BUFFER_FULL));
+                                     & (SERIAL_BUFFER_FULL))
+  {
+    KeyboardManager::instance()->serviceIRQ();
+  }
   /* Put our character, c, into the serial buffer */
   *(volatile unsigned long*)SERIAL_BASE = char2Write;
 }

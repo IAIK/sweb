@@ -5,6 +5,7 @@
 
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
+#include "board_constants.h"
 
   uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
@@ -73,43 +74,10 @@ void KeyboardManager::send_cmd(uint8 cmd)
 
 void KeyboardManager::serviceIRQ( void )
 {
-  uint8 scancode = kmi->data;
-  if (scancode > 0x80)
-    return;
-
-  if( extended_scancode == 0xE0 )
+  while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER) & (SERIAL_BUFFER_FULL))
   {
-    if( scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE )
-    {
-      extended_scancode = 0;
-    }
-
-    scancode = E0_KEYS[ scancode ];
+    keyboard_buffer_.put(*(volatile unsigned long*)SERIAL_BASE); // put it inside the buffer
   }
-  else if ( extended_scancode == 0xE1 && scancode == 0x1D )
-  {
-    extended_scancode = 0x100;
-  }
-  else if ( extended_scancode == 0x100 && scancode == 0x45 )
-    scancode = E1_PAUSE;
-
-  extended_scancode = 0;
-
-  if( scancode == 0xFF || scancode == 0xFA
-  || scancode == 0xFE || scancode ==0x00 ) // non parsable codes, ACK and keyb. buffer errors
-  {
-    debug(A_KB_MANAGER, "Non-parsable scancode %X \n", scancode );
-  }
-
-  if( scancode == 0xE0 || scancode == 0xE1 )
-  {
-    extended_scancode = scancode;
-  }
-
-  modifyKeyboardStatus( scancode );
-  setLEDs();         // setting the leds
-  keyboard_buffer_.put( scancode ); // put it inside the buffer
-
 }
 
 void KeyboardManager::modifyKeyboardStatus(uint8 sc )
@@ -230,7 +198,7 @@ bool KeyboardManager::getKeyFromKbd(uint32 &key)
   uint8 sc;
   if (keyboard_buffer_.get(sc))
   {
-    key = convertScancode(sc);
+    key = sc;
     return true;
   }
   else
