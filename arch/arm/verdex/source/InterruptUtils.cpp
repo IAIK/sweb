@@ -142,6 +142,8 @@ void arch_timer0_irq_handler()
   {
     assert(!ArchInterrupts::testIFSet());
     *ossr = 1;
+    uint32* oscr = (uint32*)0x83000010;
+    *oscr = 0;
 
     const char* clock = "/-\\|";
     ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
@@ -181,8 +183,6 @@ void arch_swi_irq_handler()
     kprintfd("Invalid SWI: %x\n",swi);
     assert(false);
   }
-  debug(A_INTERRUPTS, "InterruptUtils::arch_swi_irq_handler: returning from swi handler\n");
-  ArchThreads::printThreadRegisters(currentThread,0);
 }
 
 #define IRQ(X) *picmmio & (1 << X)
