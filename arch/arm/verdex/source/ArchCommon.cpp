@@ -168,12 +168,25 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
   return res;
 }
 
+uint32 frame_descriptor[4];
+
 Console* ArchCommon::createConsole(uint32 count)
 {
   uint32* LCCR = (uint32*) 0x90000000;
+//  uint32* DMA0 = (uint32*) 0x90000200;
+//  uint32 num_bytes = getVESAConsoleWidth() * getVESAConsoleHeight() * getVESAConsoleBitsPerPixel() / 8;
+//  frame_descriptor[3] = num_bytes << 2;
+//  frame_descriptor[2] = 0;
+//  frame_descriptor[1] = (uint32)getVESAConsoleLFBPtr() - 0xC0000000 + 0xA0000000;
+//  frame_descriptor[0] = (uint32)(frame_descriptor) - 0x80000000 + 0xA0000000;
+//  DMA0[0] = frame_descriptor[0];
+//  *(uint32*) 0x90000104 = (0x3 << 9);
+//  kprintfd("DMA0: %x, %x, %x, %x\n", DMA0[0], DMA0[1], DMA0[2], DMA0[3]);
+//  kprintfd("PRSR: %x\n", *(uint32*) 0x90000104);
+//  kprintfd("LCSR0: %x\n", *(uint32*) 0x90000038);
   LCCR[1] = 640;
   LCCR[2] = 480;
-  LCCR[0] = 0x89; // well this works, but i haven't found out how to manipulate the frame buffer or tell the lcd controller where it is
+  LCCR[0] = 0x1;// well this works, but i haven't found out how to manipulate the frame buffer or tell the lcd controller where it is
   return new FrameBufferConsole(count);
 }
 
