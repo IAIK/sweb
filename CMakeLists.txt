@@ -350,6 +350,14 @@ add_custom_target(verdex
         COMMAND make mrsproper
         )
 
+#Custom target: make rpi
+#Changes MakeOptions ARCH setting to rpi
+add_custom_target(rpi
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/rpi)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/rpi\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 #Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
 add_custom_target(remove_cmake
