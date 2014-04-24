@@ -52,9 +52,9 @@ extern struct KMI* kmi;
 
 KeyboardManager::KeyboardManager() : keyboard_buffer_( 256 ), extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
-  kmi = (struct KMI*)0x88000000;
-  kmi->cr = 0x1C;
-  kmi->data = 0xF4;
+//  kmi = (struct KMI*)0x88000000;
+//  kmi->cr = 0x1C;
+//  kmi->data = 0xF4;
 }
 
 KeyboardManager::~KeyboardManager()

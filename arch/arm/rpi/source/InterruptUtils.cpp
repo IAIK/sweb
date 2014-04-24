@@ -137,11 +137,12 @@ void arch_mouse_irq_handler()
 void arch_timer0_irq_handler()
 {
   static uint32 heart_beat_value = 0;
-  uint32 *t0mmio = (uint32*)0x83000000;
-  if ((t0mmio[REG_INTSTAT] & 0x1) != 0)
+  uint32* timer_raw = (uint32*)0x9000B410;
+  if ((*timer_raw & 0x1) != 0)
   {
     assert(!ArchInterrupts::testIFSet());
-    t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
+    uint32* timer_clear = (uint32*)0x9000B40C;
+    *timer_clear = 0x1;
 
     const char* clock = "/-\\|";
     ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
@@ -183,26 +184,16 @@ void arch_swi_irq_handler()
   }
 }
 
-#define IRQ(X) picmmio[PIC_IRQ_STATUS] & (1 << X)
+#define IRQ(X) ((*pic) & (1 << X))
 extern "C" void switchTTBR0(uint32);
 
 extern "C" void exceptionHandler(uint32 type)
 {
+  debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
   if (type == ARM4_XRQ_IRQ) {
-    uint32* picmmio = (uint32*)0x84000000;
+    uint32* pic = (uint32*)0x9000B200;
     if (IRQ(0))
-      arch_swi_irq_handler();
-    if (IRQ(1))
-      arch_uart0_irq_handler();
-    if (IRQ(2))
-      arch_uart1_irq_handler();
-    if (IRQ(3))
-      arch_keyboard_irq_handler();
-    if (IRQ(4))
-      arch_mouse_irq_handler();
-    if (IRQ(5))
       arch_timer0_irq_handler();
-    // 6-10 and 22-28 not implemented
   }
   else if (type == ARM4_XRQ_SWINT) {
     arch_swi_irq_handler();

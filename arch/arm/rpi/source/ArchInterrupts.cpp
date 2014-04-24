@@ -107,8 +107,6 @@ void arm4_xrqinstall(uint32 ndx, void *addr)
   v[ndx] = 0xEA000000 | (((uint32) addr - (8 + (4 * ndx))) >> 2);
 }
 
-extern "C" void initialisePL190();
-extern "C" void arch_enableIRQ(uint32);
 void ArchInterrupts::initialise()
 {
   arm4_xrqinstall(ARM4_XRQ_RESET, (void*)&k_exphandler_reset_entry);
@@ -124,33 +122,37 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  uint32* picmmio = (uint32*)0x84000000;
-  picmmio[PIC_IRQ_ENABLESET] = (1<<5);
+  uint32* pic_enable_2 = (uint32*)0x9000B214;
+  *pic_enable_2 = 0x1;
+  uint32* pic_base_enable = pic_enable_2 + 1;
+  *pic_base_enable = 0x1;
 
-  uint32* t0mmio = (uint32*)0x83000000;
-  t0mmio[REG_LOAD] = 0x2fffff;
-  t0mmio[REG_BGLOAD] = 0x2fffff;
-  t0mmio[REG_CTRL] = CTRL_ENABLE | CTRL_MODE_PERIODIC | CTRL_DIV_NONE | CTRL_SIZE_32 | CTRL_INT_ENABLE;
-  t0mmio[REG_INTCLR] = ~0;    /* make sure interrupt is clear (might not be mandatory) */
+  uint32* timer_load = (uint32*)0x9000B400;
+  uint32* timer_value = timer_load + 1;
+  *timer_load = 0x10000;
+  uint32* timer_control = timer_load + 2;
+  *timer_control = (1 << 7) | (1 << 5);
+  uint32* timer_clear = timer_load + 3;
+  *timer_clear = 0x1;
+
 
 }
 
 void ArchInterrupts::disableTimer()
 {
-  uint32* t0mmio = (uint32*)0x83000000;
-  t0mmio[REG_CTRL] = 0;
-
+  uint32* timer_load = (uint32*)0x9000B400;
+  uint32* timer_control = (uint32*)0x9000B40C;
 }
 
 void ArchInterrupts::enableKBD()
 {
-  uint32* picmmio = (uint32*)0x84000000;
-  picmmio[PIC_IRQ_ENABLESET] = (1<<3);
-
-  kmi = (struct KMI*)0x88000000;
-  kmi->cr = 0x14;
-  kmi->data = 0xF4;
-  while(!kmi->stat & 0x10);
+//  uint32* picmmio = (uint32*)0x84000000;
+//  picmmio[PIC_IRQ_ENABLESET] = (1<<3);
+//
+//  kmi = (struct KMI*)0x88000000;
+//  kmi->cr = 0x14;
+//  kmi->data = 0xF4;
+//  while(!kmi->stat & 0x10);
 }
 
 void ArchInterrupts::disableKBD()

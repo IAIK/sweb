@@ -62,9 +62,9 @@ void initialiseBootTimePaging()
     mapPage(pde_start, 3072 + i, i);
   // map devices from 0x81000000 upwards
   mapPage(pde_start,0x860,0x202);  // pl011
-  mapPage(pde_start,0x900,0x200);  // gpu
+  mapPage(pde_start,0x900,0x200);  // most devices (ic, timer, gpu, ...)
   for (i = 0; i < 8; ++i)
-    mapPage(pde_start,0xb00 + i,0x5c0 +i);  // framebuffer
+    mapPage(pde_start,0xb00 + i,0x5c0 +i);  // framebuffer TODO: this might be not necessary
   // still plenty of room for more memory mapped devices
 }
 
