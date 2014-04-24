@@ -1,0 +1,200 @@
+/**
+ * @file arch_mmc_driver.cpp
+ *
+ */
+ 
+#include "arch_mmc_driver.h"
+#include "arch_bd_manager.h"
+#include "arch_bd_request.h"
+
+#include "ArchInterrupts.h"
+
+#include "Scheduler.h"
+#include "kprintf.h"
+
+#define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
+
+struct MMCI* mmci = (struct MMCI*) 0x8C000000;
+uint32* mmci_fifo = (uint32*) 0x8C000080;
+
+#define PL181_CMD_INDEX     0x3f
+#define PL181_CMD_RESPONSE  (1 << 6)
+#define PL181_CMD_LONGRESP  (1 << 7)
+#define PL181_CMD_INTERRUPT (1 << 8)
+#define PL181_CMD_PENDING   (1 << 9)
+#define PL181_CMD_ENABLE    (1 << 10)
+
+#define PL181_DATA_ENABLE             (1 << 0)
+#define PL181_DATA_DIRECTION          (1 << 1)
+#define PL181_DATA_MODE               (1 << 2)
+#define PL181_DATA_DMAENABLE          (1 << 3)
+
+#define PL181_STATUS_CMDCRCFAIL       (1 << 0)
+#define PL181_STATUS_DATACRCFAIL      (1 << 1)
+#define PL181_STATUS_CMDTIMEOUT       (1 << 2)
+#define PL181_STATUS_DATATIMEOUT      (1 << 3)
+#define PL181_STATUS_TXUNDERRUN       (1 << 4)
+#define PL181_STATUS_RXOVERRUN        (1 << 5)
+#define PL181_STATUS_CMDRESPEND       (1 << 6)
+#define PL181_STATUS_CMDSENT          (1 << 7)
+#define PL181_STATUS_DATAEND          (1 << 8)
+#define PL181_STATUS_DATABLOCKEND     (1 << 10)
+#define PL181_STATUS_CMDACTIVE        (1 << 11)
+#define PL181_STATUS_TXACTIVE         (1 << 12)
+#define PL181_STATUS_RXACTIVE         (1 << 13)
+#define PL181_STATUS_TXFIFOHALFEMPTY  (1 << 14)
+#define PL181_STATUS_RXFIFOHALFFULL   (1 << 15)
+#define PL181_STATUS_TXFIFOFULL       (1 << 16)
+#define PL181_STATUS_RXFIFOFULL       (1 << 17)
+#define PL181_STATUS_TXFIFOEMPTY      (1 << 18)
+#define PL181_STATUS_RXFIFOEMPTY      (1 << 19)
+#define PL181_STATUS_TXDATAAVLBL      (1 << 20)
+#define PL181_STATUS_RXDATAAVLBL      (1 << 21)
+
+uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response)
+{
+//  kprintfd("---> command = %d, arg = %x\n",command,arg);
+  mmci->argument = arg;
+  if (response)
+    mmci->command = command | PL181_CMD_ENABLE | PL181_CMD_RESPONSE;
+  else
+    mmci->command = command | PL181_CMD_ENABLE;
+//#define BIT(X,Y) ((mmci->status & (1 << X)) ? Y : "")
+//    kprintfd("stats: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",BIT(0,"CmdCrcFail"),BIT(1,"DataCrcFail"),
+//             BIT(2,"CmdTimeOut"),
+//             BIT(3,"DataTimeOut"),
+//             BIT(4,"TxUnderrun"),
+//             BIT(5,"RxOverrun"),
+//             BIT(6,"CmdRespEnd"),
+//             BIT(7,"CmdSent"),
+//             BIT(8,"DataEnd"),
+//             BIT(9,"Reserved"),
+//             BIT(10,"DataBlockEnd"),
+//             BIT(11,"CmdActive"),
+//             BIT(12,"TxActive"),
+//             BIT(13,"RxActive"),
+//             BIT(14,"TxFifoHalfEmpty"),
+//             BIT(15,"RxFifoHalfFull"),
+//             BIT(16,"TxFifoFull"),
+//             BIT(17,"RxFifoFull"),
+//             BIT(18,"TxFifoEmpty"),
+//             BIT(19,"RxFifoEmpty"),
+//             BIT(20,"TxDataAvlbl"),
+//             BIT(21,"RxDataAvlbl"));
+//  kprintfd("resp0: %x\n",mmci->response0);
+//  kprintfd("resp1: %x\n",mmci->response1);
+//  kprintfd("resp2: %x\n",mmci->response2);
+//  kprintfd("resp3: %x\n",mmci->response3);
+  if (response)
+    *response = mmci->response0;
+  uint32 temp;
+  mmci->clear = mmci->status & 0x1FF;
+  return mmci->status;
+}
+
+uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
+{
+  uint32 first_response;
+  mmc_send_cmd(55, 0, &first_response);
+  return mmc_send_cmd(command, arg, response);
+}
+
+MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512)
+{
+  debug(MMC_DRIVER,"MMCDriver()\n");
+  uint32 response;
+  // protocol from sd card specification
+  mmc_send_cmd(0,0,0); // go to idle state
+  mmc_send_acmd(41,0xffff00ff,&response); // get ocr register 01 101001 0 0 0 1 000 0 1111111111
+  assert(response == 0x80ffff00);
+  mmc_send_cmd(2,0,0);
+  mmc_send_cmd(3,0,&response);
+  rca_ = response >> 16;
+  mmc_send_cmd(4,0,0);
+  mmc_send_cmd(7,rca_ << 16,0);
+}
+
+MMCDriver::~MMCDriver()
+{
+
+}
+
+uint32 MMCDriver::addRequest( BDRequest * br)
+{
+  MutexLock lock(lock_);
+  debug(MMC_DRIVER, "addRequest %d!\n", br->getCmd() );
+
+  int32 res = -1;
+
+  switch( br->getCmd() )
+  {
+    case BDRequest::BD_READ:
+      res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+      break;
+    case BDRequest::BD_WRITE:
+      res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+      break;
+    default:
+      res = -1;
+      break;
+  }
+
+  debug(MMC_DRIVER, "addRequest:No IRQ operation !!\n");
+  br->setStatus( BDRequest::BD_DONE );
+  return 0;
+}
+
+int32 MMCDriver::readBlock ( uint32 address, void *buffer )
+{
+  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %x\n",address, buffer);
+  uint32 response;
+  mmc_send_cmd(17,address,&response);
+  mmci->datalength = 512;
+  mmci->datactrl = PL181_DATA_ENABLE | PL181_DATA_DIRECTION | PL181_DATA_MODE;
+  for (uint32 j = 0; j < 8; j++)
+  {
+    while (mmci->status & PL181_STATUS_RXFIFOFULL)
+    {
+      uint32 i;
+      for (i = 0; i < 16; i++)
+      {
+        *((uint32*)buffer + j * 16 + i) = mmci_fifo[i];
+      }
+    }
+  }
+  return 0;
+}
+
+int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+{
+  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
+  for (uint32 i = 0; i < num_sectors; ++i)
+  {
+    readBlock((start_sector + i) * sector_size_, buffer + i * sector_size_);
+  }
+  return 0;
+}
+
+int32 MMCDriver::writeBlock ( uint32 address, void *buffer )
+{
+  return 0;
+}
+
+int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer  )
+{
+  while(1);
+}
+
+uint32 MMCDriver::getNumSectors()
+{
+  return 210672; // TODO
+}
+
+uint32 MMCDriver::getSectorSize()
+{
+  return sector_size_;
+}
+
+void MMCDriver::serviceIRQ()
+{
+}
