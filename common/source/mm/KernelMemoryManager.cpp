@@ -38,6 +38,8 @@ KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_ad
 pointer KernelMemoryManager::allocateMemory ( size_t requested_size )
 {
   prenew_assert ( ( requested_size & 0x80000000 ) == 0 );
+  if ((requested_size & 0xF) != 0)
+    requested_size += 0x10 - (requested_size & 0xF); // 16 byte alignment
   lockKMM();
   pointer ptr = private_AllocateMemory ( requested_size );
   if(ptr)
