@@ -166,7 +166,7 @@ void startup()
   ArchInterrupts::enableInterrupts();
 
   Scheduler::instance()->yield();
-while(1);
+
   //not reached
   assert ( false );
 }

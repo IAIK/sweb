@@ -25,7 +25,6 @@ set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 include(arch/${ARCH}/CMakeLists.include)
 cmake_minimum_required(VERSION 2.4)
 
-
 # Macro which processes ASM files
 # OBJS are the names (without extension) in the current directory
 MACRO(ASM2OBJ OUTPUTOBJNAMES)
@@ -164,11 +163,7 @@ add_custom_command (OUTPUT temp_dir
 	COMMAND mkdir "./temp"
 	COMMAND mkdir "./temp/boot"
 	COMMAND mkdir "./temp/boot/grub"
-
-	#COMMAND cp "../images/menu.lst.hda" "./temp/boot/grub"
-	#COMMAND test -e "./ramfs" || cp "../images/ramfs" "./ramfs"
 	COMMAND cp "./kernel.x" "./temp/boot"
-	#COMMAND cp "./ramfs" "./temp/boot"
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Creating temp dir..."
@@ -189,9 +184,6 @@ add_custom_command (OUTPUT helper_files
 	COMMAND cp "${CMAKE_SOURCE_DIR}/images/menu.lst.hda" "./temp/boot/grub/menu.lst"
 	COMMAND	cp "${CMAKE_SOURCE_DIR}/images/SWEB.vmdk" "./"
 	COMMAND cp "${CMAKE_SOURCE_DIR}/images/sweb.vmx" "./"
-	#COMMAND	cp "../images/SWEB-minix.vmdk" "./"
-	#COMMAND cp "../images/SWEB-flat-minix.vmdk.gz" "./"
-	#COMMAND gzip -df "./SWEB-flat-minix.vmdk.gz"
 	COMMAND cp "${CMAKE_SOURCE_DIR}/images/nvram" "./"
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -229,24 +221,9 @@ add_custom_target (userspace
 	DEPENDS userspace_to_image
 	)
 
-#Checks for bochs configuration and runs 'make bochsconfig' if configuration does not exist
-add_custom_command(OUTPUT check_for_bochs_config
-	COMMAND if [ -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc' ]\; then
-		printf \"\\nBochs configuration already exists, skipping 'make bochsconfig'\\n\\n\"\;
-	else
-		printf \"\\nBochs configuration does not exist, running 'make bochsconfig'\\n\\n\"\;
-		make bochsconfig\;
-	fi\;
-
-
-	COMMENT "Checking for bochs configuration"
-	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-	)
-
 #Custom target: make bochs
 #Run bochs in non debugging mode
 add_custom_target(bochs
-	DEPENDS check_for_bochs_config
 	COMMAND ${BOCHS_PATH} -q -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc
 	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -255,7 +232,6 @@ add_custom_target(bochs
 #Custom target: make bochsgdb
 #Run bochs in debugging mode
 add_custom_target(bochsgdb
-	DEPENDS check_for_bochs_config
 	COMMAND ${BOCHS_PATH} -q -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc' "gdbstub: enabled=1, port=1234"
 	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"gdbstub: enabled=1, port=1234\""
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -369,106 +345,6 @@ add_custom_target(remove_cmake
 	COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
 	)
 
-#Forces generates bochs configuration
-add_custom_target(bochsconfig
-
-	#Extracts Bochsversion from bochs --help
-	COMMAND ${BOCHS_PATH} --help 2>&1 |
-	grep -A 1 -m 1 \"=======\" |
-	grep -o -E \"\([[:alnum:]]|\\.\)+[[:space:]]*$$\" > bochs_version\;
-
-	IFS=.\; set -- $$\(echo \"`cat bochs_version`\"\)\;
-
-	printf \"\\nYour bochs version is \\\"$$1.$$2.$$3\\\"\\n\\n\"\;
-
-	major=\"$$1\"\;
-	minor=\"$$2\"\;
-	rev=\"$$3\"\;
-
-	#echo \"Major: $$major Minor: $$minor Rev: $$rev\"\;
-
-	#Empty revision string?
-	if [ \"$$rev\" = \"\" ]\; then
-		rev=\"0\"\;
-	fi\;
-
-	#preXXX revision string?
-	if [ \"`expr substr $$rev 1 3`\" = \"pre\" ]\; then
-		length=\"`expr length $$rev`\"\;
-		length=\"`expr $$length - 3`\"\;
-		rev=\"-`expr substr $$rev 4 $$length`\"\;
-	fi\;
-
-
-	#copy pattern file to real file
-	cp ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc.pattern ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
-
-
-	#major version < 2?
-	if [ \"$$major\" -lt \"2\" ] ||
-	#major version == 2 AND minor version < 2
-	\([ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -lt \"2\" ]\) ||
-	#major version == 2 AND minor version == 2 AND rev <= 0
-	\([ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -eq \"2\" ] && [ \"$$rev\" -le \"1\"  ]\)\; then
-		#Generate bochs config for bochs version <= 2.2
-		printf  \"\\nGenerating bochs config for bochs version <= 2.2.1\\n\\n\"\;
-		#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
-		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
-	else
-		#Generate bochs config for bochs version > 2.2
-		printf \"\\nGenerating bochs config for bochs version > 2.2.1\\n\\n\"\;
-		#replace $[ROMIMAGE] with file=$$BXSHARE\\/BIOS-bochs-latest, address=0xf0000
-		sed -i -e 's/\\$$\\[ROMIMAGE\\]$$/file=$$BXSHARE\\/BIOS-bochs-latest/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
-	fi\;
-
-	if [ \"$$major\" -eq \"2\" ] && [ \"$$minor\" -lt \"4\" ] \; then
-		#replace $[CPU] with ips: 10000000
-		sed -i -e 's/\\$$\\[CPU\\]$$/ips: 10000000/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
-	else
-		#Generate bochs config for bochs version > 2.4
-		printf \"\\nAdapting bochs config for bochs version > 2.4\\n\\n\"\;
-		#replace $[CPU] with cpu: count=1, ips=10000000
-		sed -i -e 's/\\$$\\[CPU\\]$$/cpu: count=1, ips=10000000, reset_on_triple_fault=0/' '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc'\;
-		#activate port_e9_hack option
-		sed -i -e 's/\#\\\(port_e9_hack: enabled=1\\\)/\\1/' ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc\;
-	fi\;
-	COMMAND rm bochs_version
-
-	COMMENT Generating Bochs configuration
-	)
-
-#Regenerates all configurations
-add_custom_target(config
-	COMMENT Generating configuration
-	)
-
-#Adds configuration dependencies to config target
-#They are not implemented as commands, because then there is no conditional calling possible
-#e.g. make bochsconfig during make bochs
-add_dependencies(config bochsconfig)
-
-#Outputs some information
-add_custom_target(info
-	COMMAND printf  \"\\nBOCHS:\\n\" > ${INFO_FILE}
-	COMMAND bochs --help 2>&1 | head -n 5 >> ${INFO_FILE}
-	COMMAND printf \"\\nGCC:\\n\" >> ${INFO_FILE}
-	COMMAND gcc --version >> ${INFO_FILE}
-	COMMAND printf \"\\nLD:\\n\" >> ${INFO_FILE}
-	COMMAND ld --version >> ${INFO_FILE}
-	COMMAND printf \"\\nMD5SUMS:\\n\" >> ${INFO_FILE}
-	COMMAND md5sum Makefile images/* >> ${INFO_FILE}
-	COMMAND printf \"\\nMAKE:\\n\" >> ${INFO_FILE}
-	COMMAND make -v >> ${INFO_FILE}
-	COMMAND printf \"\\nCPU:\\n\" >> ${INFO_FILE}
-	COMMAND cat /proc/cpuinfo >> ${INFO_FILE}
-	COMMAND printf \"\\nKERNEL:\\n\" >> ${INFO_FILE}
-	COMMAND cat /proc/version >> ${INFO_FILE}
-	COMMAND printf \"\\nENVIRONMENT:\\n\" >> ${INFO_FILE}
-	COMMAND env >> ${INFO_FILE}
-	COMMAND cat ${INFO_FILE}
-	COMMENT "Building info file"
-	)
-
 #Builds the doxygen documentation
 add_custom_target(doxygen
 	COMMAND cp \"${PROJECT_SOURCE_DIR}/doc/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
@@ -477,7 +353,6 @@ add_custom_target(doxygen
 	COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMENT "Building SWEB documentation"
 	)
-
 
 #Outputs help on build targets
 add_custom_target(help

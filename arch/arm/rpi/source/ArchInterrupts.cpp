@@ -122,9 +122,7 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  uint32* pic_enable_2 = (uint32*)0x9000B214;
-  *pic_enable_2 = 0x1;
-  uint32* pic_base_enable = pic_enable_2 + 1;
+  uint32* pic_base_enable = (uint32*)0x9000B218;
   *pic_base_enable = 0x1;
 
   uint32* timer_load = (uint32*)0x9000B400;

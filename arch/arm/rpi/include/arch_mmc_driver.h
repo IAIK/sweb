@@ -11,25 +11,23 @@
 
 struct MMCI
 {
-  uint32 power;
-  uint32 clock;
-  uint32 argument;
-  uint32 command;
-  uint32 respcmd;
-  uint32 response0;
-  uint32 response1;
-  uint32 response2;
-  uint32 response3;
-  uint32 datatimer;
-  uint32 datalength;
-  uint32 datactrl;
-  uint32 datacnt;
+  uint32 arg2;
+  uint32 blksizecnt;
+  uint32 arg1;
+  uint32 cmdtm;
+  uint32 resp0;
+  uint32 resp1;
+  uint32 resp2;
+  uint32 resp3;
+  uint32 data;
   uint32 status;
-  uint32 clear;
-  uint32 mask0;
-  uint32 mask1;
-  uint32 reserved;
-  uint32 fifo_cnt;
+  uint32 control0;
+  uint32 control1;
+  uint32 interrupt;
+  uint32 irpt_mask;
+  uint32 irpt_en;
+  uint32 control2;
+  uint32 force_irpt;
 };
 
 class BDRequest;
