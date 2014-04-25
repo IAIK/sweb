@@ -15,12 +15,19 @@
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 uint32* mmci_fifo = (uint32*) 0x8C000080;
 
-uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 write = 1, uint32 data = 0)
+uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 data = 0)
 {
 //  kprintfd("---> command = %d, arg = %x\n",command,arg);
   mmci->arg1 = arg;
-  mmci->cmdtm = ((command & 0x3F) << 24) | (data ? (1 << 21) : 0) | (response ? (1 << 16) : 0) | (write ? 0 : (1 << 4));
+  mmci->cmdtm = ((command & 0x3F) << 24) | (response ? (2 << 16) : 0) | (1 << 4) | (data ? (1 << 21) : 0);
 
+  for (uint32 i = 0; i < 0x10000; ++i);
+  if (command == 41)
+    for (uint32 i = 0; i < 0x100000; ++i);
+  while(!(mmci->status & 0x1) && !(mmci->interrupt & 0x1));
+  uint32 temp = 0;
+//  kprintfd("interrupt: %x\n",mmci->interrupt);
+  mmci->interrupt = 1;
 //  kprintfd("status: %x\n",mmci->status);
 //  kprintfd("resp0: %x\n",mmci->resp0);
 //  kprintfd("resp1: %x\n",mmci->resp1);
@@ -28,29 +35,45 @@ uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 write =
 //  kprintfd("resp3: %x\n",mmci->resp3);
   if (response)
     *response = mmci->resp0;
-  //mmci->clear = mmci->status & 0x1FF;
   return mmci->status;
 }
 
 uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
 {
-  uint32 first_response;
-  mmc_send_cmd(55, 0, &first_response);
-  return mmc_send_cmd(command, arg, response);
+  do
+  {
+    mmc_send_cmd(55, 0, response);
+    *response = 0;
+    mmc_send_cmd(command,arg,response);
+  }
+  while (!((*response) & (1 << 31)));
+  return 0;
 }
 
 MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512), num_sectors_(210672)
 {
+
+unsigned int check;
   debug(MMC_DRIVER,"MMCDriver()\n");
   uint32 response;
+  mmci->control1 = (1 << 24);
+  while (mmci->control1 & (1 << 24));
+  mmci->control1 = 0xF0F27;
+  mmci->control2 = 0x0;
+  mmci->blksizecnt = (1 << 16) | 512;
+  mmci->irpt_mask = 0xFFFFFFFF;
+  while (!(mmci->control1 & (1 << 1)));
+  debug(MMC_DRIVER,"MMC controller resetted\n");
   // protocol from sd card specification
   mmc_send_cmd(0,0,0); // go to idle state
-  mmc_send_acmd(41,0xffff00ff,&response); // get ocr register 01 101001 0 0 0 1 000 0 1111111111
-  assert(response == 0x80ffff00);
+  mmc_send_cmd(8,0x1AA,&response,1 << 16); // go to idle state
+  mmc_send_acmd(41,0x50FF0000,&response);
+  assert(response == 0x80ff8000);
   mmc_send_cmd(2,0,0);
   mmc_send_cmd(3,0,&response);
   rca_ = response >> 16;
   mmc_send_cmd(7,rca_ << 16,0);
+  mmci->irpt_mask = 0xFFFFFFFF;
 }
 
 MMCDriver::~MMCDriver()
@@ -87,16 +110,16 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
 {
   debug(MMC_DRIVER,"readBlock: address: %x, buffer: %x\n",address, buffer);
   uint32 response;
-  mmci->blksizecnt = (1 << 16) | 512;
-  mmc_send_cmd(17,address,&response,0,1);
+  mmc_send_cmd(17,address,&response,1);
   uint32* buffer32 = (uint32*) buffer;
+  uint8* buffer8 = (uint8*) buffer;
   uint32 i = 0;
-  uint32 temp;
-  while (i < (mmci->blksizecnt & 0x3FF) / sizeof(uint32))
+  while (i < 128)
   {
-    // we should check whether there is something to read...
+    while (!(mmci->interrupt & (1 << 5)));
     buffer32[i++] = mmci->data;
   }
+  kprintfd("\n");
   return 0;
 }
 

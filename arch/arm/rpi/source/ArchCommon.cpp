@@ -217,6 +217,7 @@ Console* ArchCommon::createConsole(uint32 count)
       read = *MAIL0_READ;
     }
     memory_barrier();
+    for (uint32 i = 0; i < 0x10000; ++i);
 //    kprintfd("fbs.width: %x\n",fbs.width);
 //    kprintfd("fbs.height: %x\n",fbs.height);
 //    kprintfd("fbs.vwidth: %x\n",fbs.vwidth);
