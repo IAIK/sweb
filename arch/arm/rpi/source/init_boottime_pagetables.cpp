@@ -64,6 +64,9 @@ void initialiseBootTimePaging()
   mapPage(pde_start,0x860,0x202);  // pl011
   mapPage(pde_start,0x8C0,0x203);  // emmc
   mapPage(pde_start,0x900,0x200);  // most devices (ic, timer, gpu, ...)
+
+  mapPage(pde_start,0x909,0x209);  // map for csud
+
   for (i = 0; i < 8; ++i)
     mapPage(pde_start,0xb00 + i,0x5c0 +i);  // framebuffer TODO: this might be not necessary
   // still plenty of room for more memory mapped devices

@@ -121,11 +121,7 @@ void arch_uart1_irq_handler()
 
 void arch_keyboard_irq_handler()
 {
-  extern struct KMI* kmi;
-  while (kmi->stat & 0x10)
-  {
-    KeyboardManager::instance()->serviceIRQ();
-  }
+  KeyboardManager::instance()->serviceIRQ();
 }
 
 void arch_mouse_irq_handler()
@@ -194,6 +190,7 @@ extern "C" void exceptionHandler(uint32 type)
     uint32* pic = (uint32*)0x9000B200;
     if (IRQ(0))
       arch_timer0_irq_handler();
+    arch_keyboard_irq_handler(); // TODO: this is not only ugly polling, but we're losing keys all the time
   }
   else if (type == ARM4_XRQ_SWINT) {
     arch_swi_irq_handler();

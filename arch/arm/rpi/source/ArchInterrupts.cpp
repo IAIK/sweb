@@ -127,7 +127,7 @@ void ArchInterrupts::enableTimer()
 
   uint32* timer_load = (uint32*)0x9000B400;
   uint32* timer_value = timer_load + 1;
-  *timer_load = 0xA000;
+  *timer_load = 0xC000;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
