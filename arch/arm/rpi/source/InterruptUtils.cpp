@@ -212,10 +212,12 @@ extern "C" void exceptionHandler(uint32 type)
     ArchThreads::printThreadRegisters(currentThread,1);
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
+    ArchInterrupts::enableInterrupts();
     currentThread->kill();
     for(;;);
   }
 //  ArchThreads::printThreadRegisters(currentThread,0);
 //  ArchThreads::printThreadRegisters(currentThread,1);
+  assert((currentThreadInfo->ttbr0 & 0x3FFF) == 0 && (currentThreadInfo->ttbr0 & ~0x3FFF) != 0);
   switchTTBR0(currentThreadInfo->ttbr0);
 }

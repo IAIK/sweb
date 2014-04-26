@@ -60,7 +60,7 @@ unsigned int check;
   while (mmci->control1 & (1 << 24));
   mmci->control1 = 0xF0F27;
   mmci->control2 = 0x0;
-  mmci->blksizecnt = (1 << 16) | 512;
+  mmci->blksizecnt = (1 << 16) | sector_size_;
   mmci->irpt_mask = 0xFFFFFFFF;
   while (!(mmci->control1 & (1 << 1)));
   debug(MMC_DRIVER,"MMC controller resetted\n");
@@ -68,7 +68,7 @@ unsigned int check;
   mmc_send_cmd(0,0,0); // go to idle state
   mmc_send_cmd(8,0x1AA,&response,1 << 16); // go to idle state
   mmc_send_acmd(41,0x50FF0000,&response);
-  assert(response == 0x80ff8000);
+  assert((response & 0x80ff8000) == 0x80ff8000);
   mmc_send_cmd(2,0,0);
   mmc_send_cmd(3,0,&response);
   rca_ = response >> 16;
@@ -114,12 +114,11 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
   uint32* buffer32 = (uint32*) buffer;
   uint8* buffer8 = (uint8*) buffer;
   uint32 i = 0;
-  while (i < 128)
+  while (i < sector_size_ / sizeof(uint32))
   {
     while (!(mmci->interrupt & (1 << 5)));
     buffer32[i++] = mmci->data;
   }
-  kprintfd("\n");
   return 0;
 }
 
