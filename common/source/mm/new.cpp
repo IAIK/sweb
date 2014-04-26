@@ -14,6 +14,7 @@ void* operator new ( size_t size )
 {
   // maybe we could take some precautions not to be interrupted while doing this
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory ( size );
+  assert(p > (void*)0x80000000 || p == (void*)0);
   return p;
 }
 
@@ -23,6 +24,7 @@ void* operator new ( size_t size )
  */
 void operator delete ( void* address )
 {
+  assert(address > (void*)0x80000000 || address == (void*)0);
   KernelMemoryManager::instance()->freeMemory ( ( pointer ) address );
   return;
 }
@@ -35,6 +37,7 @@ void operator delete ( void* address )
 void* operator new[] ( size_t size )
 {
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory ( size );
+  assert(p > (void*)0x80000000 || p == (void*)0);
   return p;
 }
 
@@ -44,6 +47,7 @@ void* operator new[] ( size_t size )
  */
 void operator delete[] ( void* address )
 {
+  assert(address > (void*)0x80000000 || address == (void*)0);
   KernelMemoryManager::instance()->freeMemory ( ( pointer ) address );
   return;
 }
