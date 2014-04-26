@@ -18,6 +18,9 @@ dev="$3"
 while [[ "$dev" = "" || ! -e "$dev" ]]; do
   echo "Which device to mount? (first partition of the sd card, i.e. /dev/mmcblk0p1)"
   read dev
+	if [[ "$dev" = "" || ! -e "$dev" ]]; then
+		dev="/dev/mmcblk0p1"
+	fi
 done
 echo "Mounting $dev using gvfs-mount ..."
 mountpoint=`gvfs-mount -d $dev`
