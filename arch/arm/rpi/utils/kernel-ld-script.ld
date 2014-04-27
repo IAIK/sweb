@@ -35,12 +35,13 @@ SECTIONS
   .bss : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;
-    bss_start_address = .;
     . = ALIGN(16384);
+    bss_start_address = .;
     *(.bss)
     . = ALIGN(16384);
     *(COMMON)
     bss_end_address = .;
+    . = ALIGN(16384);
 
   }
 
@@ -57,11 +58,11 @@ SECTIONS
   .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
+    . = ALIGN(16384);
     stabstr_start_address_nr = .;
-    . = ALIGN(16384);
     *(.stabstr)
-    . = ALIGN(16384);
     stabstr_end_address_nr = .;
+    . = ALIGN(16384);
 
     PROVIDE(kernel_end_address = .);
   }
