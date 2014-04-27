@@ -84,8 +84,6 @@ void KeyboardManager::serviceIRQ( void )
   else // numpad not yet implemented
     key = STANDARD_KEYMAP[scancode];
 
-  //kprintfd("key pressed: '%c' (%d / %x) [%d / %x]\n",key,key,key,scancode,scancode);
-
   keyboard_buffer_.put( key ); // put it inside the buffer
 
 }
@@ -134,8 +132,6 @@ bool KeyboardManager::isScroll()
 
 void KeyboardManager::emptyKbdBuffer()
 {
-  while (kbdBufferFull())
-    kbdGetScancode();
 }
 
 

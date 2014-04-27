@@ -54,7 +54,10 @@ void pageFaultHandler(uint32 address, uint32 type)
   debug(PM, "[PageFaultHandler] Address: %x (%s) - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
       address, type == 0x3 ? "Instruction Fetch" : "Data Access", currentThread, currentThread->getPID(), currentThread->getName(), currentThread->switch_to_userspace_);
   if (!currentThread->switch_to_userspace_)
+  {
+    currentThread->printBacktrace(true);
     while(1);
+  }
 
   if(!address)
     debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");

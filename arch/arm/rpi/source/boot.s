@@ -65,15 +65,18 @@ arch_yield:
 halt:
 .globl halt
   mcr     p15, 0, r0, c7, c0, 4           @ Wait for interrupt
-  mov     pc, lr
+  bx lr
 
-memory_barrier: @ from http://www.raspberrypi.org/forums/viewtopic.php?t=13959
+memory_barrier: @ from https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes
 .globl memory_barrier
-   mcr   p15, 0, ip, c7, c5, 0      @ invalidate I cache
-   mcr   p15, 0, ip, c7, c5, 6      @ invalidate BTB
-   mcr   p15, 0, ip, c7, c10, 4     @ drain write buffer
-   mcr   p15, 0, ip, c7, c5, 4      @ prefetch flush
-   mov   pc, lr
+   mov r0, #0
+   mcr p15, 0, r0, c8, c7, 0       @ tlb flush
+   mcr p15, 0, r0, C7, C6, 0       @ Invalidate Entire Data Cache
+   mcr p15, 0, r0, c7, c10, 0      @ Clean Entire Data Cache
+   mcr p15, 0, r0, c7, c14, 0      @ Clean and Invalidate Entire Data Cache
+   mcr p15, 0, r0, c7, c10, 4      @ Data Synchronization Barrier
+   mcr p15, 0, r0, c7, c10, 5      @ Data Memory Barrier
+   bx lr
 
 __aeabi_atexit:
     .globl __aeabi_atexit

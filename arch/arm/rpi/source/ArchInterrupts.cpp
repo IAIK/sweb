@@ -21,7 +21,6 @@ extern struct KMI* kmi;
 
 // parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
 #define KEXP_TOPSWI \
-  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
   asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->r0));\
   asm("mov %[v], r1" : [v]"=r" (currentThreadInfo->r1));\
   asm("mov %[v], r2" : [v]"=r" (currentThreadInfo->r2));\
@@ -35,6 +34,7 @@ extern struct KMI* kmi;
   asm("mov %[v], r10" : [v]"=r" (currentThreadInfo->r10));\
   asm("mov %[v], r11" : [v]"=r" (currentThreadInfo->r11));\
   asm("mov %[v], r12" : [v]"=r" (currentThreadInfo->r12));\
+  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
   asm("mrs r0, spsr"); \
   asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->cpsr));\
   asm("mrs r0, cpsr \n\
@@ -45,12 +45,9 @@ extern struct KMI* kmi;
   asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
   asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));
 
-#define KEXP_BOTSWI \
-    KEXP_BOT3
-
 #define KEXP_BOT3 \
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
   asm("mrs r0, cpsr \n\
        bic r0, r0, #0x1f \n\
        orr r0, r0, #0x13 \n\
@@ -59,22 +56,22 @@ extern struct KMI* kmi;
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
   asm("msr spsr, r0"); \
   asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->pc));\
   asm("push {r0}"); \
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));\
-  asm("mov r1, %[v]" : : [v]"r" (currentThreadInfo->r1));\
-  asm("mov r2, %[v]" : : [v]"r" (currentThreadInfo->r2));\
-  asm("mov r3, %[v]" : : [v]"r" (currentThreadInfo->r3));\
-  asm("mov r4, %[v]" : : [v]"r" (currentThreadInfo->r4));\
-  asm("mov r5, %[v]" : : [v]"r" (currentThreadInfo->r5));\
-  asm("mov r6, %[v]" : : [v]"r" (currentThreadInfo->r6));\
-  asm("mov r7, %[v]" : : [v]"r" (currentThreadInfo->r7));\
-  asm("mov r8, %[v]" : : [v]"r" (currentThreadInfo->r8));\
-  asm("mov r9, %[v]" : : [v]"r" (currentThreadInfo->r9));\
-  asm("mov r10, %[v]" : : [v]"r" (currentThreadInfo->r10));\
-  asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
   asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
+  asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
+  asm("mov r10, %[v]" : : [v]"r" (currentThreadInfo->r10));\
+  asm("mov r9, %[v]" : : [v]"r" (currentThreadInfo->r9));\
+  asm("mov r8, %[v]" : : [v]"r" (currentThreadInfo->r8));\
+  asm("mov r7, %[v]" : : [v]"r" (currentThreadInfo->r7));\
+  asm("mov r6, %[v]" : : [v]"r" (currentThreadInfo->r6));\
+  asm("mov r5, %[v]" : : [v]"r" (currentThreadInfo->r5));\
+  asm("mov r4, %[v]" : : [v]"r" (currentThreadInfo->r4));\
+  asm("mov r3, %[v]" : : [v]"r" (currentThreadInfo->r3));\
+  asm("mov r2, %[v]" : : [v]"r" (currentThreadInfo->r2));\
+  asm("mov r1, %[v]" : : [v]"r" (currentThreadInfo->r1));\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));\
   asm("LDM sp!, {pc}^")
 
 uint32 arm4_cpsrget()
@@ -95,8 +92,8 @@ void __attribute__((naked)) k_exphandler_fiq_entry() { KEXP_TOP3; void (*eh)(uin
 void __attribute__((naked)) k_exphandler_reset_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_RESET); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_undef_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_UNDEF); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_abrtp_entry() { KEXP_USER_ENTRY; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTP); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_USER_ENTRY; currentThreadInfo->pc -= 4; currentThreadInfo->lr -= 4; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTD); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_SWINT); KEXP_BOTSWI; }
+void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_USER_ENTRY; currentThreadInfo->pc -= 4; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTD); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_SWINT); KEXP_BOT3; }
 
 void arm4_xrqinstall(uint32 ndx, void *addr)
 {
@@ -127,7 +124,7 @@ void ArchInterrupts::enableTimer()
 
   uint32* timer_load = (uint32*)0x9000B400;
   uint32* timer_value = timer_load + 1;
-  *timer_load = 0xC000;
+  *timer_load = 0x8000;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
@@ -155,23 +152,23 @@ void ArchInterrupts::enableKBD()
 
 void ArchInterrupts::disableKBD()
 {
-  kmi->cr = 0x0;
+  //kmi->cr = 0x0;
 }
 
 extern "C" void arch_enableInterrupts();
 void ArchInterrupts::enableInterrupts()
 {
-  arm4_cpsrset(arm4_cpsrget() & ~((1 << 7) | (1 << 8)));
+  arm4_cpsrset(arm4_cpsrget() & ~((1 << 7) | (1 << 6)));
 }
 extern "C" void arch_disableInterrupts();
 bool ArchInterrupts::disableInterrupts()
 {
-  arm4_cpsrset(arm4_cpsrget() | ((1 << 7) | (1 << 8)));
+  arm4_cpsrset(arm4_cpsrget() | ((1 << 7) | (1 << 6)));
 }
 
 bool ArchInterrupts::testIFSet()
 {
-  return !(arm4_cpsrget() & (1 << 7));
+  return !(arm4_cpsrget() & ((1 << 7) | (1 << 6)));
 }
 
 void ArchInterrupts::yieldIfIFSet()
