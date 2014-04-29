@@ -21,152 +21,17 @@ void* MemoryReserve(u32 length, void* physicalAddress) {
 
 #endif
 
-#ifdef MEM_INTERNAL_MANAGER_DEFAULT 
-
-#define HEAP_END ((void*)0xFFFFFFFF)
-
-struct HeapAllocation {
-	u32 Length;
-	void* Address;
-	struct HeapAllocation *Next;
-};
-
-u8 Heap[0x4000] __attribute__((aligned(8))); // Support a maximum of 16KiB of allocations
-struct HeapAllocation Allocations[0x100]; // Support 256 allocations
-struct HeapAllocation *FirstAllocation = HEAP_END, *FirstFreeAllocation = NULL;
-u32 allocated = 0;
-
+#ifndef MEM_INTERNAL_MANAGER
 void* MemoryAllocate(u32 size) {
-	struct HeapAllocation *Current, *Next;
-	if (FirstFreeAllocation == NULL) {
-		LOG_DEBUG("Platform: First memory allocation, reserving 16KiB of heap, 256 entries.\n");
-		MemoryReserve(sizeof(Heap), &Heap);
-		MemoryReserve(sizeof(Allocations), &Allocations);
-
-		FirstFreeAllocation = &Allocations[0];
-	}
-
-	size += (8 - (size & 7)) & 7; // Align to 8
-
-	if (allocated + size > sizeof(Heap)) {
-		LOG("Platform: Out of memory! We should've had more heap space in platform.c.\n");
-		return NULL;
-	}
-	
-	if (FirstFreeAllocation == HEAP_END) {
-		LOG("Platform: Out of memory! We should've had more allocations in platform.c.\n");
-		return NULL;
-	}
-	Current = FirstAllocation;
-
-	while (Current != HEAP_END) {
-		if (Current->Next != HEAP_END) {
-			if ((u32)Current->Next->Address - (u32)Current->Address - Current->Length >= size) {
-				FirstFreeAllocation->Address = (void*)((u8*)Current->Address + Current->Length);
-				FirstFreeAllocation->Length = size;
-				Next = FirstFreeAllocation;
-				if (Next->Next == NULL)
-					if ((u32)(FirstFreeAllocation + 1) < (u32)((u8*)Allocations + sizeof(Allocations)))
-						FirstFreeAllocation = FirstFreeAllocation + 1;
-					else
-						FirstFreeAllocation = HEAP_END;
-				else
-					FirstFreeAllocation = Next->Next;
-				Next->Next = Current->Next;
-				Current->Next = Next;
-				allocated += size;
-				LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, Next->Address, allocated, sizeof(Heap));
-				return Next->Address;
-			}
-			else
-				Current = Current->Next;
-		} else {
-			if ((u32)&Heap[sizeof(Heap)] - (u32)Current->Next - Current->Length >= size) {
-				FirstFreeAllocation->Address = (void*)((u8*)Current->Address + Current->Length);
-				FirstFreeAllocation->Length = size;
-				Next = FirstFreeAllocation;
-				if (Next->Next == NULL)
-					if ((u32)(FirstFreeAllocation + 1) < (u32)((u8*)Allocations + sizeof(Allocations)))
-						FirstFreeAllocation = FirstFreeAllocation + 1;
-					else
-						FirstFreeAllocation = HEAP_END;
-				else
-					FirstFreeAllocation = Next->Next;
-				Next->Next = Current->Next;
-				Current->Next = Next;
-				allocated += size;
-				LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, Next->Address, allocated, sizeof(Heap));
-				return Next->Address;
-			}
-			else {
-				LOG("Platform: Out of memory! We should've had more heap space in platform.c.\n");
-				LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, NULL, allocated, sizeof(Heap));
-				return NULL;
-			}
-		}
-	}
-	
-	Next = FirstFreeAllocation->Next;
-	FirstAllocation = FirstFreeAllocation;
-	FirstAllocation->Next = HEAP_END;
-	FirstAllocation->Length = size;
-	FirstAllocation->Address = &Heap;
-	if (Next == NULL)
-		if ((u32)(FirstFreeAllocation + 1) < (u32)((u8*)Allocations + sizeof(Allocations)))
-			FirstFreeAllocation = FirstFreeAllocation + 1;
-		else
-			FirstFreeAllocation = HEAP_END;
-	else
-		FirstFreeAllocation = Next;
-	allocated += size;
-	LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, FirstAllocation->Address, allocated, sizeof(Heap));
-	return FirstAllocation->Address;
+  return kmalloc(size + 0x2000) + 0x1000;  // well i don't trust it totally right now...
 }
-
 void MemoryDeallocate(void* address) {
-	struct HeapAllocation *Current, **CurrentAddress;
-
-	CurrentAddress = &FirstAllocation;
-	Current = FirstAllocation;
-
-	while (Current != HEAP_END) {
-		if (Current->Address == address) {
-			allocated -= Current->Length;
-			*CurrentAddress = Current->Next;
-			Current->Next = FirstFreeAllocation;
-			FirstFreeAllocation = Current;
-			LOG_DEBUGF("Platform: free(%#x) (%d/%d)\n", address, allocated, sizeof(Heap));
-			return;
-		}
-		else {
-			Current = Current->Next;
-			CurrentAddress = &((*CurrentAddress)->Next);
-		}
-	}
-	
-	LOG_DEBUGF("Platform: free(%#x) (%d/%d)\n", address, allocated, sizeof(Heap));
-	LOG("Platform: Deallocated memory that was never allocated. Ignored, but you should look into it.\n");
+  kfree(address - 0x1000);
 }
-
-void MemoryCopy(void* destination, void* source, u32 length) {
-	u8 *d, *s;
-	
-	if (length == 0) return;
-
-	d = (u8*)destination;
-	s = (u8*)source;
-
-	if ((u32)s < (u32)d)
-		while (length-- > 0)
-			*d++ = *s++;
-	else {
-		d += length;
-		s += length;
-		while (length-- > 0)
-			*--d = *--s;
-	}
+void MemoryCopy(void* destination, void* source, u32 length)
+{
+  memcpy(destination, source, length);
 }
-
 #endif
 
 #define FLOAT_TEXT "Floats unsupported."
