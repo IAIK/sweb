@@ -166,6 +166,7 @@ void arch_swi_irq_handler()
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     ArchInterrupts::enableInterrupts();
+    arch_keyboard_irq_handler(); // TODO: this is not only ugly polling, but we're losing keys all the time
     currentThread->user_arch_thread_info_->r0 = Syscall::syscallException(currentThread->user_arch_thread_info_->r4,
                                                                           currentThread->user_arch_thread_info_->r5,
                                                                           currentThread->user_arch_thread_info_->r6,
@@ -189,11 +190,12 @@ extern "C" void switchTTBR0(uint32);
 extern "C" void exceptionHandler(uint32 type)
 {
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
+//  assert((currentThreadInfo->cpsr & (0xE0)) == 0);
+  currentThreadInfo->cpsr &= ~(0xE0);
   if (type == ARM4_XRQ_IRQ) {
     uint32* pic = (uint32*)0x9000B200;
     if (IRQ(0))
       arch_timer0_irq_handler();
-    arch_keyboard_irq_handler(); // TODO: this is not only ugly polling, but we're losing keys all the time
   }
   else if (type == ARM4_XRQ_SWINT) {
     arch_swi_irq_handler();
@@ -204,7 +206,7 @@ extern "C" void exceptionHandler(uint32 type)
   }
   else if (type == ARM4_XRQ_ABRTD)
   {
-    pageFaultHandler(currentThreadInfo->pc - 4, type);
+    pageFaultHandler(currentThreadInfo->pc, type);
   }
   else {
     kprintfd("\nCPU Fault type = %x\n",type);
@@ -219,5 +221,6 @@ extern "C" void exceptionHandler(uint32 type)
 //  ArchThreads::printThreadRegisters(currentThread,0);
 //  ArchThreads::printThreadRegisters(currentThread,1);
   assert((currentThreadInfo->ttbr0 & 0x3FFF) == 0 && (currentThreadInfo->ttbr0 & ~0x3FFF) != 0);
+  assert((currentThreadInfo->cpsr & 0xE0) == 0);
   switchTTBR0(currentThreadInfo->ttbr0);
 }
