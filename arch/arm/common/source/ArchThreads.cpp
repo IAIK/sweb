@@ -84,10 +84,10 @@ void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
     delete info;
 }
 
-extern "C" void arch_yield();
+extern "C" void arch_yield(uint32);
 void ArchThreads::yield()
 {
-  arch_yield();
+  arch_yield(0);
 }
 
 extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock);

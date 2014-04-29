@@ -28,30 +28,30 @@
   asm("mov %[v], r11" : [v]"=r" (currentThreadInfo->r11));\
   asm("mov %[v], r12" : [v]"=r" (currentThreadInfo->r12));\
   asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
-  asm("mrs r0, spsr"); \
-  asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->cpsr));\
-  asm("mrs r0, cpsr \n\
-       bic r0, r0, #0xdf \n\
-       orr r0, r0, #0xdf \n\
-       msr cpsr, r0 \n\
+  asm("mrs r12, spsr"); \
+  asm("mov %[v], r12" : [v]"=r" (currentThreadInfo->cpsr));\
+  asm("mrs r12, cpsr \n\
+       bic r12, r12, #0xdf \n\
+       orr r12, r12, #0xdf \n\
+       msr cpsr, r12 \n\
       ");\
   asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
   asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));\
-  if (currentThreadInfo->sp < 0x80000000) { asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0)); }
+  if (currentThreadInfo->sp < 0x80000000) { asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0)); }\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));
+
 
 #define KEXP_BOT3 \
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
   asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
-  asm("mrs r0, cpsr \n\
-       bic r0, r0, #0xdf \n\
-       orr r0, r0, #0xd3 \n\
-       msr cpsr, r0 \n\
+  asm("mrs r12, cpsr \n\
+       bic r12, r12, #0xdf \n\
+       orr r12, r12, #0xd3 \n\
+       msr cpsr, r12 \n\
       ");\
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
-  asm("msr spsr, r0"); \
+  asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
+  asm("msr spsr, r12"); \
   asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->pc));\
-  asm("push {r0}"); \
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
   asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
   asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
@@ -66,7 +66,7 @@
   asm("mov r2, %[v]" : : [v]"r" (currentThreadInfo->r2));\
   asm("mov r1, %[v]" : : [v]"r" (currentThreadInfo->r1));\
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->r0));\
-  asm("LDM sp!, {pc}^")
+  asm("movs pc, lr")
 
 uint32 arm4_cpsrget()
 {
@@ -114,7 +114,7 @@ void ArchInterrupts::enableTimer()
 
   uint32* timer_load = (uint32*)0x9000B400;
   uint32* timer_value = timer_load + 1;
-  *timer_load = 0x4000;
+  *timer_load = 0x1000;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
@@ -131,18 +131,11 @@ void ArchInterrupts::disableTimer()
 
 void ArchInterrupts::enableKBD()
 {
-//  uint32* picmmio = (uint32*)0x84000000;
-//  picmmio[PIC_IRQ_ENABLESET] = (1<<3);
-//
-//  kmi = (struct KMI*)0x88000000;
-//  kmi->cr = 0x14;
-//  kmi->data = 0xF4;
-//  while(!kmi->stat & 0x10);
+
 }
 
 void ArchInterrupts::disableKBD()
 {
-  //kmi->cr = 0x0;
 }
 
 extern "C" void arch_enableInterrupts();

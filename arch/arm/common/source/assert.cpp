@@ -18,6 +18,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
   char line_string[5];
   if (!condition)
   {
+    writeLine2Bochs("KERNEL_PANIC\n");
     ArchInterrupts::disableInterrupts();
     extern uint32 boot_completed;
     boot_completed = 0;

@@ -56,6 +56,8 @@ void pageFaultHandler(uint32 address, uint32 type)
   if (!currentThread->switch_to_userspace_)
   {
     currentThread->printBacktrace(true);
+    ArchThreads::printThreadRegisters(currentThread,0);
+    ArchThreads::printThreadRegisters(currentThread,1);
     while(1);
   }
 
@@ -166,7 +168,6 @@ void arch_swi_irq_handler()
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     ArchInterrupts::enableInterrupts();
-    arch_keyboard_irq_handler(); // TODO: this is not only ugly polling, but we're losing keys all the time
     currentThread->user_arch_thread_info_->r0 = Syscall::syscallException(currentThread->user_arch_thread_info_->r4,
                                                                           currentThread->user_arch_thread_info_->r5,
                                                                           currentThread->user_arch_thread_info_->r6,
@@ -190,7 +191,6 @@ extern "C" void switchTTBR0(uint32);
 extern "C" void exceptionHandler(uint32 type)
 {
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
-//  assert((currentThreadInfo->cpsr & (0xE0)) == 0);
   currentThreadInfo->cpsr &= ~(0xE0);
   if (type == ARM4_XRQ_IRQ) {
     uint32* pic = (uint32*)0x9000B200;

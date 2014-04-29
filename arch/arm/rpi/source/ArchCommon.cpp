@@ -258,9 +258,12 @@ void ArchCommon::initDebug()
 
 extern "C" void halt();
 extern "C" void arch_yield();
+extern void arch_keyboard_irq_handler();
 
 void ArchCommon::idle()
 {
-  arch_yield();
-  //halt();
+  arch_keyboard_irq_handler(); // TODO: this is not only ugly polling, but we're losing keys all the time
+  // and this is in an ugly place for keyboard handling! why is it here? we would have needed a whole new thread otherwise
+  // the usb stack should work with less dynamic memory and more stack variables, then it would be less complicated
+  halt();
 }

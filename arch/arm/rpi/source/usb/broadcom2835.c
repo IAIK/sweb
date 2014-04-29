@@ -23,8 +23,15 @@ void MicroDelay(u32 delay) {
 	volatile u64* timeStamp = (u64*)0x90003004;
 	u64 stop = *timeStamp + delay;
 
-	while (*timeStamp < stop) 
-		__asm__("nop");
+	while (*timeStamp < stop)
+	{
+		for (uint32 i = 0; i < 10000; ++i);
+		if (timeStamp != 0x90003004)
+		{
+		  LOG_DEBUGF("timeStamp != 0x90003004!!!\n",0);
+		  while(1);
+		}
+	}
 }
 
 Result PowerOnUsb() {
