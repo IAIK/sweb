@@ -47,6 +47,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
+  assert(!(start_function & 0x3));
   info->pc = start_function;
   info->lr = start_function;
   info->cpsr = 0x6000001F;
@@ -64,6 +65,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
+  assert(!(start_function & 0x3));
   info->pc = start_function;
   info->lr = start_function;
   info->cpsr = 0x60000010;

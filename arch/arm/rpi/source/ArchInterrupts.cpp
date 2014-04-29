@@ -9,17 +9,10 @@
 #include "ArchThreads.h"
 #include "atkbd.h"
 
-extern struct KMI* kmi;
-
-#define KEXP_USER_ENTRY \
-  KEXP_TOP3 \
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0));
-
 #define KEXP_TOP3 \
   asm("sub lr, lr, #4"); \
   KEXP_TOPSWI
 
-// parts of this code are taken from http://wiki.osdev.org/ARM_Integrator-CP_IRQTimerAndPIC
 #define KEXP_TOPSWI \
   asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->r0));\
   asm("mov %[v], r1" : [v]"=r" (currentThreadInfo->r1));\
@@ -43,7 +36,8 @@ extern struct KMI* kmi;
        msr cpsr, r0 \n\
       ");\
   asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
-  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));
+  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));\
+  if (currentThreadInfo->sp < 0x80000000) { asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0)); }
 
 #define KEXP_BOT3 \
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
@@ -87,21 +81,17 @@ void arm4_cpsrset(uint32 r)
   asm("msr cpsr, %[ps]" : : [ps]"r" (r));
 }
 
-void __attribute__((naked)) k_exphandler_irq_entry() { KEXP_TOP3;  void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_IRQ); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_irq_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_IRQ); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_fiq_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_FIQ); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_reset_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_RESET); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_undef_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_UNDEF); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_abrtp_entry() { KEXP_USER_ENTRY; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTP); KEXP_BOT3; }
-void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_USER_ENTRY; currentThreadInfo->pc -= 4; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTD); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_abrtp_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTP); KEXP_BOT3; }
+void __attribute__((naked)) k_exphandler_abrtd_entry() { KEXP_TOP3; currentThreadInfo->pc -= 4; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTD); KEXP_BOT3; }
 void __attribute__((naked)) k_exphandler_swi_entry() { KEXP_TOPSWI; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_SWINT); KEXP_BOT3; }
 
 void arm4_xrqinstall(uint32 ndx, void *addr)
 {
-  char buf[32];
-  uint32 *v;
-
-  v = (uint32*) 0x0;
-  v[ndx] = 0xEA000000 | (((uint32) addr - (8 + (4 * ndx))) >> 2);
+  ((uint32*) 0x0)[ndx] = 0xEA000000 | (((uint32) addr - (8 + (4 * ndx))) >> 2);
 }
 
 void ArchInterrupts::initialise()
@@ -124,7 +114,7 @@ void ArchInterrupts::enableTimer()
 
   uint32* timer_load = (uint32*)0x9000B400;
   uint32* timer_value = timer_load + 1;
-  *timer_load = 0x8000;
+  *timer_load = 0x1000;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
