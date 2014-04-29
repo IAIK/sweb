@@ -30,8 +30,8 @@ entry:
 PagingMode:
 .globl PagingMode
   mrs r0, cpsr
-  bic r0, r0, #0x1f
-  orr r0, r0, #0x1f
+  bic r0, r0, #0xdf
+  orr r0, r0, #0xdf
   msr cpsr, r0
   ldr sp, =stack+0x4000 @ Set up the stack
   bl removeBootTimeIdentMapping

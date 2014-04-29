@@ -31,8 +31,8 @@
   asm("mrs r0, spsr"); \
   asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->cpsr));\
   asm("mrs r0, cpsr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x1f \n\
+       bic r0, r0, #0xdf \n\
+       orr r0, r0, #0xdf \n\
        msr cpsr, r0 \n\
       ");\
   asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
@@ -43,8 +43,8 @@
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
   asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
   asm("mrs r0, cpsr \n\
-       bic r0, r0, #0x1f \n\
-       orr r0, r0, #0x13 \n\
+       bic r0, r0, #0xdf \n\
+       orr r0, r0, #0xd3 \n\
        msr cpsr, r0 \n\
       ");\
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
@@ -114,7 +114,7 @@ void ArchInterrupts::enableTimer()
 
   uint32* timer_load = (uint32*)0x9000B400;
   uint32* timer_value = timer_load + 1;
-  *timer_load = 0x1000;
+  *timer_load = 0x4000;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
