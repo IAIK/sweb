@@ -257,8 +257,10 @@ void ArchCommon::initDebug()
 }
 
 extern "C" void halt();
+extern "C" void arch_yield();
 
 void ArchCommon::idle()
 {
-  halt();
+  arch_yield();
+  //halt();
 }
