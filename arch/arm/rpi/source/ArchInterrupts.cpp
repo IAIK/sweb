@@ -51,7 +51,6 @@
       ");\
   asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
   asm("msr spsr, r12"); \
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
   asm("mov r12, %[v]" : : [v]"r" (currentThreadInfo->r12));\
   asm("mov r11, %[v]" : : [v]"r" (currentThreadInfo->r11));\
