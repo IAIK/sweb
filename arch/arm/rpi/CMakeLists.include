@@ -18,7 +18,7 @@ add_custom_target(sdcard
 #Custom target: make sdcardq
 #create an sdcard for the raspberry pi (quiet mode)
 add_custom_target(sdcardq
-  COMMAND ${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/makesdcard.sh "${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/boot/" y /dev/mmcblk0p1 
+  COMMAND ${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/makesdcard.sh "${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/boot/" y /dev/mmcblk0
   COMMENT "Creating the sdcard (quiet mode)"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )

@@ -16,18 +16,29 @@ if [ "$yn" != "y" ]; then
 fi
 dev="$3"
 while [[ "$dev" = "" || ! -e "$dev" ]]; do
-  echo "Which device to mount? (first partition of the sd card, i.e. /dev/mmcblk0p1)"
+  echo "Which device to mount? (the sd card, i.e. /dev/mmcblk0)"
   read dev
 	if [[ "$dev" = "" || ! -e "$dev" ]]; then
-		dev="/dev/mmcblk0p1"
+		dev="/dev/mmcblk0"
 	fi
 done
-echo "Mounting $dev using gvfs-mount ..."
-mountpoint=`gvfs-mount -d $dev`
+echo "Mounting ${dev}p1 using gvfs-mount ..."
+mountpoint=`gvfs-mount -d ${dev}p1`
 mountpoint=`echo $mountpoint | cut -d " " -f4-`
 echo "$mountpoint"
 arm-linux-gnueabi-objcopy kernel.x -O binary kernel.img
 cp kernel.img $mountpoint
 cp $1/* $mountpoint
+gvfs-mount -u $mountpoint
+echo "Mounting ${dev}p2 using gvfs-mount ..."
+mountpoint=`gvfs-mount -d ${dev}p2`
+mountpoint=`echo $mountpoint | cut -d " " -f4-`
+echo "$mountpoint"
+needsudo=0
+cp userspace/*.sweb $mountpoint
+if [[ $needsudo -eq 1 || $? -ne 0 ]]; then
+  echo "Partition can only be accesed with sudo..."
+  sudo cp userspace/*.sweb $mountpoint
+fi
 gvfs-mount -u $mountpoint
 
