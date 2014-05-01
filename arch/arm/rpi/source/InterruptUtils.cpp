@@ -191,7 +191,7 @@ extern "C" void switchTTBR0(uint32);
 extern "C" void exceptionHandler(uint32 type)
 {
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
-  currentThreadInfo->cpsr &= ~(0xE0);
+  assert((currentThreadInfo->cpsr & (0xE0)) == 0);
   if (type == ARM4_XRQ_IRQ) {
     uint32* pic = (uint32*)0x9000B200;
     if (IRQ(0))
