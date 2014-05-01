@@ -136,7 +136,7 @@ endforeach(file)
 
 file(GLOB userspace_data userspace/data/*)
 foreach(file ${userspace_data})
-    get_filename_component(datafile ${file} NAME)    
+    get_filename_component(datafile ${file} NAME)
     set(MINIXFS_ARGUMENT  ${MINIXFS_ARGUMENT} ${file} ${datafile})
 endforeach(file)
 
@@ -203,7 +203,9 @@ add_custom_command (OUTPUT copy_to_image
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
 	DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
-	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 1 ${MINIXFS_ARGUMENT}
+	COMMAND mkdir -p userspace/data
+  COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
+ 	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 1 ${MINIXFS_ARGUMENT}
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying userspace programs to image..."
 	)

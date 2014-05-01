@@ -28,7 +28,6 @@ endforeach(curFile)
 
 file(GLOB userspace_tests_PROJECTS */)
 
-
 foreach(curProject ${userspace_tests_PROJECTS})
     file(GLOB curProject_SOURCES ${curProject}/*.c)
 

@@ -36,6 +36,7 @@ mountpoint=`echo $mountpoint | cut -d " " -f4-`
 echo "$mountpoint"
 needsudo=0
 cp userspace/*.sweb $mountpoint
+cp userspace/data/* $mountpoint
 if [[ $needsudo -eq 1 || $? -ne 0 ]]; then
   echo "Partition can only be accesed with sudo..."
   sudo cp userspace/*.sweb $mountpoint
