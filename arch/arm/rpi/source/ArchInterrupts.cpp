@@ -58,7 +58,7 @@ void storeRegisters()
        msr cpsr, r0 \n\
       ");\
   asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
   asm("msr spsr, r0"); \
   asm("mov r3, %[v]" : : [v]"r" (currentThreadInfo->r12));\
   asm("push {r3}");\
@@ -146,7 +146,7 @@ void ArchInterrupts::enableTimer()
 
   uint32* timer_load = (uint32*)0x9000B400;
   uint32* timer_value = timer_load + 1;
-  *timer_load = 0xF000;
+  *timer_load = 0x800;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
