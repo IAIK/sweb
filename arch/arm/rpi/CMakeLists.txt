@@ -1,5 +1,5 @@
 include_directories(
-    ../../common/include
+    ../common/include/usb
     ../common/include
     include
 )

@@ -13,6 +13,7 @@
 #include "arch_keyboard_manager.h"
 #include "Scheduler.h"
 #include "FrameBufferConsole.h"
+#include "kprintf.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -128,8 +129,13 @@ void ArchBoardSpecific::timer0_irq_handler()
   }
 }
 
+void ArchBoardSpecific::uart0_irq_handler()
+{
+  kprintfd("arch_uart0_irq_handler\n");
+  while(1);
+}
+
 extern void arch_swi_irq_handler();
-extern void arch_uart0_irq_handler();
 extern void arch_uart1_irq_handler();
 extern void arch_mouse_irq_handler();
 
@@ -140,7 +146,7 @@ void ArchBoardSpecific::irq_handler()
   if (IRQ(0))
     arch_swi_irq_handler();
   if (IRQ(1))
-    arch_uart0_irq_handler();
+    uart0_irq_handler();
   if (IRQ(2))
     arch_uart1_irq_handler();
   if (IRQ(3))

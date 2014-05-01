@@ -1,5 +1,5 @@
 # Architecture to use: x86/32, x86/pae, x86/64, xen, arm/integratorcp, arm/verdex, arm/rpi
-SET (ARCH arm/verdex)
+SET (ARCH x86/32)
 
 # Added before the BIN_DIR_NAME (e.g. "../")
 SET (BIN_DIR_PREFIX "../")

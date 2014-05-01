@@ -3,4 +3,4 @@ include_directories(
   ../../include/usb/usbd
 )
 
-add_project_library(arch_arm_rpi_usb)
+add_project_library(arch_arm_usb)
