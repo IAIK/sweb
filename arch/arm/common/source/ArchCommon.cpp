@@ -4,6 +4,7 @@
  */
 
 #include "ArchCommon.h"
+#include "arch_board_specific.h"
 #include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
@@ -64,7 +65,7 @@ uint32 ArchCommon::getVESAConsoleWidth()
 
 pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
-  return ((PHYSICAL_MEMORY_AVAILABLE - getVESAConsoleWidth() * getVESAConsoleHeight() * getVESAConsoleBitsPerPixel() / 8) & ~0xFFF);
+  return ArchBoardSpecific::getVESAConsoleLFBPtr();
 }
 
 pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
@@ -84,10 +85,7 @@ uint32 ArchCommon::getNumUseableMemoryRegions()
 
 uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
-  start_address = 0;
-  end_address = getVESAConsoleLFBPtr(0);
-  type = 1;
-  return 0;
+  return ArchBoardSpecific::getUsableMemoryRegion(region, start_address, end_address, type);
 }
 
 #define MEMCOPY_LARGE_TYPE uint32
@@ -168,33 +166,11 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
   return res;
 }
 
+extern "C" void memory_barrier();
 
 Console* ArchCommon::createConsole(uint32 count)
 {
-  // frame buffer initialization code from http://wiki.osdev.org/ARM_Integrator-CP_PL110_Dirty
-  typedef struct _PL110MMIO
-  {
-      uint32 volatile tim0; //0
-      uint32 volatile tim1; //4
-      uint32 volatile tim2; //8
-      uint32 volatile d; //c
-      uint32 volatile upbase; //10
-      uint32 volatile f; //14
-      uint32 volatile g; //18
-      uint32 volatile control; //1c
-  } PL110MMIO;
-
-  PL110MMIO *plio;
-
-  plio = (PL110MMIO*) 0x90000000;
-
-  /* 640x480 pixels */
-  plio->tim0 = 0x3f1f3f9c;
-  plio->tim1 = 0x080b61df;
-  plio->upbase = getVESAConsoleLFBPtr();
-  /* 16-bit color */
-  plio->control = 0x1929; // 1 1000 0010 1001
-
+  ArchBoardSpecific::frameBufferInit();
   return new FrameBufferConsole(count);
 }
 
@@ -204,7 +180,6 @@ void ArchCommon::initDebug()
   extern unsigned char stab_end_address_nr;
 
   extern unsigned char stabstr_start_address_nr;
-  extern unsigned char stabstr_end_address_nr;
 
   parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 }
@@ -213,5 +188,6 @@ extern "C" void halt();
 
 void ArchCommon::idle()
 {
+  ArchBoardSpecific::onIdle();
   halt();
 }

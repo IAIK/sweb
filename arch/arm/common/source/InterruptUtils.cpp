@@ -23,11 +23,11 @@
 #include "ArchInterrupts.h"
 #include "backtrace.h"
 
-//remove this later
-#include "Thread.h"
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+#include "arch_board_specific.h"
+
 //---------------------------------------------------------------------------*/
 
 void InterruptUtils::initialise()
@@ -112,46 +112,16 @@ void pageFaultHandler(uint32 address, uint32 type)
   currentThreadInfo = currentThread->user_arch_thread_info_;
 }
 
-void arch_uart0_irq_handler()
-{
-  kprintfd("arch_uart0_irq_handler\n");
-  while(1);
-}
-
 void arch_uart1_irq_handler()
 {
   kprintfd("arch_uart1_irq_handler\n");
   while(1);
 }
 
-void arch_keyboard_irq_handler()
-{
-  KeyboardManager::instance()->serviceIRQ();
-}
-
 void arch_mouse_irq_handler()
 {
   kprintfd("arch_mouse_irq_handler\n");
   while(1);
-}
-
-void arch_timer0_irq_handler()
-{
-  static uint32 heart_beat_value = 0;
-  uint32* timer_raw = (uint32*)0x9000B410;
-  if ((*timer_raw & 0x1) != 0)
-  {
-    assert(!ArchInterrupts::testIFSet());
-    uint32* timer_clear = (uint32*)0x9000B40C;
-    *timer_clear = 0x1;
-
-    const char* clock = "/-\\|";
-    ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
-    heart_beat_value = (heart_beat_value + 1) % 4;
-
-    Scheduler::instance()->incTicks();
-    Scheduler::instance()->schedule();
-  }
 }
 
 void arch_swi_irq_handler()
@@ -185,7 +155,6 @@ void arch_swi_irq_handler()
   }
 }
 
-#define IRQ(X) ((*pic) & (1 << X))
 extern "C" void switchTTBR0(uint32);
 
 extern "C" void exceptionHandler(uint32 type)
@@ -193,9 +162,7 @@ extern "C" void exceptionHandler(uint32 type)
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
   assert((currentThreadInfo->cpsr & (0xE0)) == 0);
   if (type == ARM4_XRQ_IRQ) {
-    uint32* pic = (uint32*)0x9000B200;
-    if (IRQ(0))
-      arch_timer0_irq_handler();
+    ArchBoardSpecific::irq_handler();
   }
   else if (type == ARM4_XRQ_SWINT) {
     arch_swi_irq_handler();

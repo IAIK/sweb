@@ -7,7 +7,7 @@
 #include "kprintf.h"
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
-#include "atkbd.h"
+#include "arch_board_specific.h"
 
 extern uint32 interrupt_stack;
 
@@ -141,31 +141,22 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  uint32* pic_base_enable = (uint32*)0x9000B218;
-  *pic_base_enable = 0x1;
-
-  uint32* timer_load = (uint32*)0x9000B400;
-  uint32* timer_value = timer_load + 1;
-  *timer_load = 0x800;
-  uint32* timer_control = timer_load + 2;
-  *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
-  uint32* timer_clear = timer_load + 3;
-  *timer_clear = 0x1;
+  ArchBoardSpecific::enableTimer();
 }
 
 void ArchInterrupts::disableTimer()
 {
-  uint32* timer_load = (uint32*)0x9000B400;
-  uint32* timer_control = (uint32*)0x9000B40C;
+  ArchBoardSpecific::disableTimer();
 }
 
 void ArchInterrupts::enableKBD()
 {
-
+  ArchBoardSpecific::enableKBD();
 }
 
 void ArchInterrupts::disableKBD()
 {
+  ArchBoardSpecific::disableKBD();
 }
 
 extern "C" void arch_enableInterrupts();

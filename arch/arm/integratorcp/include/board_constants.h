@@ -10,4 +10,8 @@
 #define SERIAL_FLAG_REGISTER 0x18
 #define SERIAL_BUFFER_FULL (1 << 5)
 
+#define PIC_BASE 0x84000008
+
+#define BOARD_LOAD_BASE 0
+
 #endif

@@ -10,39 +10,7 @@
 #include "ArchCommon.h"
 #include "kprintf.h"
 #include "debug_bochs.h"
-
-extern page_directory_entry kernel_page_directory_start[];
-extern void* kernel_end_address;
-extern void* interrupt_vector_table;
-extern char* currentStack;
-
-extern "C" void initialiseBootTimePaging();
-extern "C" void removeBootTimeIdentMapping();
-
-#define TO_HEX(X,Y) ((((((uint32)X) >> Y) & 0xF) < 10) ? ((((uint32)X) >> Y) & 0xF) + '0' : ((((uint32)X) >> Y) & 0xF) - 0xA + 'A')
-#define PRINT_ADDRESS(X) do { \
-kprintfd("%c",TO_HEX(X,28)); \
-kprintfd("%c",TO_HEX(X,24)); \
-kprintfd("%c",TO_HEX(X,20)); \
-kprintfd("%c",TO_HEX(X,16)); \
-kprintfd("%c",TO_HEX(X,12)); \
-kprintfd("%c",TO_HEX(X,8)); \
-kprintfd("%c",TO_HEX(X,4)); \
-kprintfd("%c\n",TO_HEX(X,0)); \
-} while (0)
-
-static void mapPage(page_directory_entry *pde_start, uint32 pdi, uint32 ppn_1m)
-{
-  pde_start[pdi].pde1m.reserved_1 = 0;
-  pde_start[pdi].pde1m.permissions = 1;
-  pde_start[pdi].pde1m.reserved_2 = 0;
-  pde_start[pdi].pde1m.domain = 0;
-  pde_start[pdi].pde1m.reserved_3 = 0;
-  pde_start[pdi].pde1m.cachable = 0;
-  pde_start[pdi].pde1m.bufferable = 0;
-  pde_start[pdi].pde1m.size = 2;
-  pde_start[pdi].pde1m.page_ppn = ppn_1m;
-}
+#include "init_boottime_pagetables.h"
 
 void initialiseBootTimePaging()
 {

@@ -12,6 +12,9 @@ set(ASM_OBJECTS)
 
 foreach(src start syscalls)
    set(ASM_SOURCE ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/${src}.s)
+   if(NOT EXISTS ${ASM_SOURCE})
+     set(ASM_SOURCE ${CMAKE_SOURCE_DIR}/arch/${ARCH}/../common/userspace/${src}.s)
+   endif()
    set(ASM_OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${src}.o)
    set(ASM_OBJECTS ${ASM_OBJECTS} ${ASM_OBJECT})
    add_custom_command(

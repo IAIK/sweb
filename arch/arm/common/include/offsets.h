@@ -6,6 +6,8 @@
 #ifndef _offsets_h_
 #define _offsets_h_
 
+#include "board_constants.h"
+
  /**
   * These are the basic offsets for our memory layout
   */
@@ -19,7 +21,7 @@
 /**
  * physical ram starts at 0x0
  */
-#define LOAD_BASE 0x0
+#define LOAD_BASE BOARD_LOAD_BASE
 
 /**
  * this is the difference between link and load base
