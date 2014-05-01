@@ -218,31 +218,12 @@ Console* ArchCommon::createConsole(uint32 count)
     }
     memory_barrier();
     for (uint32 i = 0; i < 0x10000; ++i);
-//    kprintfd("fbs.width: %x\n",fbs.width);
-//    kprintfd("fbs.height: %x\n",fbs.height);
-//    kprintfd("fbs.vwidth: %x\n",fbs.vwidth);
-//    kprintfd("fbs.vheight: %x\n",fbs.vheight);
-//    kprintfd("fbs.pitch: %x\n",fbs.pitch);
-//    kprintfd("fbs.depth: %x\n",fbs.depth);
-//    kprintfd("fbs.xoffset: %x\n",fbs.xoffset);
-//    kprintfd("fbs.yoffset: %x\n",fbs.yoffset);
-//    kprintfd("fbs.pointer: %x\n",fbs.pointer);
-//    kprintfd("fbs.size: %x\n",fbs.size);
   }
   assert(fbs.pointer != 0);
   assert(fbs.width == fbs.vwidth);
   assert(fbs.height == fbs.vheight);
-  //assert(fbs.pitch == (fbs.width * fbs.depth / 8));
   assert(fbs.size == (fbs.width * fbs.height * fbs.depth / 8));
   framebuffer = (fbs.pointer & ~0xC0000000) + 0xC0000000;
-//  if (fbs.pointer + fbs.size < 0x40000000)
-//    framebuffer = fbs.pointer + 0xC0000000;
-//  else if ((fbs.pointer > 0x5c000000) && (fbs.pointer + fbs.size < 0x5c800000))
-//    framebuffer = fbs.pointer + 0xB0000000 - 0x5c000000;
-//  else
-//    assert(false);
-//  kprintfd("returning with framebuffer: %x and size: %x\n", fbs.pointer, fbs.size);
-//  kprintfd("returning with framebuffer: %x and size: %x\n", framebuffer, fbs.size);
   return new FrameBufferConsole(count);
 }
 
