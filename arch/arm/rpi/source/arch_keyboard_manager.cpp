@@ -75,7 +75,10 @@ void KeyboardManager::serviceIRQ( void )
   KeyboardPoll(usb_kbd_addr_);
   uint8 scancode = KeyboardGetKeyDown(usb_kbd_addr_,0);
   if (scancode > 0x80 || scancode == 0)
+  {
+    current_key_ = 0;
     return;
+  }
 
   struct KeyboardModifiers km = KeyboardGetModifiers(usb_kbd_addr_);
   uint8 key = 0;
@@ -84,8 +87,9 @@ void KeyboardManager::serviceIRQ( void )
   else // numpad not yet implemented
     key = STANDARD_KEYMAP[scancode];
 
-  keyboard_buffer_.put( key ); // put it inside the buffer
-
+  if (key != current_key_)
+    keyboard_buffer_.put( key ); // put it inside the buffer
+  current_key_ = key;
 }
 
 void KeyboardManager::modifyKeyboardStatus(uint8 sc )
