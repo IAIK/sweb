@@ -190,6 +190,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
           page_usage_table_[p+1] = type;
           page_usage_table_[p+2] = type;
           page_usage_table_[p+3] = type;
+          lowest_unreserved_page_ = p+4;
         }
         lock_.release();
         return p;
@@ -197,6 +198,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
       else
       {
         page_usage_table_[p] = type;
+        lowest_unreserved_page_ = p+1;
         lock_.release();
         return p;
       }
@@ -210,7 +212,7 @@ uint32 PageManager::getFreePhysicalPage(uint32 type)
 void PageManager::freePage(uint32 page_number)
 {
   lock_.acquire();
-  if ( page_number >= lowest_unreserved_page_ && page_number < number_of_pages_ && page_usage_table_[page_number] != PAGE_RESERVED )
+  if ( page_number < number_of_pages_ && page_usage_table_[page_number] != PAGE_RESERVED )
   {
     if ((page_number & 0x3) == 0 && page_usage_table_[page_number] == PAGE_4_PAGES_16K_ALIGNED
                                  && page_usage_table_[page_number + 1] == PAGE_4_PAGES_16K_ALIGNED
@@ -223,6 +225,8 @@ void PageManager::freePage(uint32 page_number)
       page_usage_table_[page_number + 3] = PAGE_FREE;
     }
     page_usage_table_[page_number] = PAGE_FREE;
+    if (page_number < lowest_unreserved_page_)
+      lowest_unreserved_page_ = page_number;
   }
   lock_.release();
 }
