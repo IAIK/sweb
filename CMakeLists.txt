@@ -226,16 +226,16 @@ add_custom_target (userspace
 #Custom target: make bochs
 #Run bochs in non debugging mode
 add_custom_target(bochs
-	COMMAND ${BOCHS_PATH} -q -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc
-	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc"
+	COMMAND ${BOCHS_PATH} -q -f ${PROJECT_SOURCE_DIR}/utils/bochsrc
+	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochsrc"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
 
 #Custom target: make bochsgdb
 #Run bochs in debugging mode
 add_custom_target(bochsgdb
-	COMMAND ${BOCHS_PATH} -q -f '${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc' "gdbstub: enabled=1, port=1234"
-	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochs/bochsrc \"gdbstub: enabled=1, port=1234\""
+	COMMAND ${BOCHS_PATH} -q -f '${PROJECT_SOURCE_DIR}/utils/bochsrc' "gdbstub: enabled=1, port=1234"
+	COMMENT "Going to ${BOCHS_PATH} -f ${PROJECT_SOURCE_DIR}/utils/bochsrc \"gdbstub: enabled=1, port=1234\""
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
 
@@ -257,7 +257,7 @@ add_custom_target(format
 #Custom target: make runddd
 #Run ddd with some presets
 add_custom_target(runddd
-	COMMAND ddd -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
+	COMMAND ddd -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
 	COMMENT "Going to ddd"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
@@ -265,7 +265,7 @@ add_custom_target(runddd
 #Custom target: make runcgdb
 #Run cgdb with some presets
 add_custom_target(runcgdb
-        COMMAND cgdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
+        COMMAND cgdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
         COMMENT "Going to cgdb"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         )
@@ -274,7 +274,7 @@ add_custom_target(runcgdb
 #Custom target: make rungdb
 #Run gdb with some presets
 add_custom_target(rungdb
-	COMMAND gdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdb/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
+	COMMAND gdb -cd ${PROJECT_SOURCE_DIR}/ -command ${PROJECT_SOURCE_DIR}/utils/gdbinit ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
 	COMMENT "Going to gdb"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
