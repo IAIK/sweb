@@ -25,7 +25,7 @@
 #include "assert.h"
 
 #include "arch_serial.h"
-#include "drivers/serial.h"
+#include "serial.h"
 
 #include "arch_keyboard_manager.h"
 #include "atkbd.h"

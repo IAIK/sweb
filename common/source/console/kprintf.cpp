@@ -8,7 +8,7 @@
 #include "Terminal.h"
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
-#include "ipc/RingBuffer.h"
+#include "RingBuffer.h"
 #include "Scheduler.h"
 #include "assert.h"
 #include "debug.h"
