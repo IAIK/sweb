@@ -324,11 +324,6 @@ bool Scheduler::isSchedulingEnabled()
     return false;
 }
 
-uint32 Scheduler::threadCount()
-{
-  return threads_.size();
-}
-
 uint32 Scheduler::getTicks()
 {
   return ticks_;
