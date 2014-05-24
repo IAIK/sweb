@@ -2,8 +2,8 @@ include_directories(
     include
     ../arch/common/include
     ../arch/${ARCH}/include
+    ../arch/${ARCH}/common/include
     ../arch/${ARCH}/../common/include
-    ../arch/${ARCH}/../include
     ../arch/${ARCH}/../../common/include
     include/console
     include/kernel

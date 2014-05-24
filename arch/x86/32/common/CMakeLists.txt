@@ -1,8 +1,6 @@
 include_directories(
     include
-    ../common/include
+		../include
 )
 
 add_subdirectory(source)
-
-

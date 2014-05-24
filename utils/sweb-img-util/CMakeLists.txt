@@ -8,6 +8,9 @@ include_directories(
     ../../arch/${ARCH}/include
     ../../arch/${ARCH}/../common/include
     ../../arch/x86/include/
+    ../../arch/x86/common/include/
+    ../../arch/x86/32/common/include/
+    ../../arch/x86/32/include/
     ../../common/include/cache/
     ../../common/include/fs
     ../../common/include/fs/tests/
