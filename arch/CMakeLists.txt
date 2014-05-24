@@ -14,5 +14,4 @@ include_directories(common/include
     ../common/include/util
 )
 
-add_subdirectory(${ARCH})
-add_subdirectory(${ARCH}/..)
+include(${ARCH}/CMakeLists.subfolders)

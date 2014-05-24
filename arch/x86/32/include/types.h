@@ -30,6 +30,8 @@ typedef uint32 size_t;
 typedef int32 ssize_t;
 #endif
 
+typedef uint32 l_off_t;
+
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 

@@ -6,6 +6,10 @@ project(sweb)
 
 include(MakeOptions)
 
+string(REPLACE "/" ";" ARCH_LIST ${ARCH})
+
+list(LENGTH ARCH_LIST ARCH_DEPTH)
+
 #Find program executables needed during compilation
 find_program(ASM_EXECUTABLE nasm)
 find_program(LD_EXECUTABLE cc)
@@ -23,7 +27,7 @@ set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.8)
 
 # Macro which processes ASM files
 # OBJS are the names (without extension) in the current directory

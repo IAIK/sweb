@@ -3,6 +3,8 @@ include_directories(
     ../arch/common/include
     ../arch/${ARCH}/include
     ../arch/${ARCH}/../common/include
+    ../arch/${ARCH}/../include
+    ../arch/${ARCH}/../../common/include
     include/console
     include/kernel
     include/drivers
