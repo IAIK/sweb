@@ -130,9 +130,10 @@ void ArchBoardSpecific::keyboard_irq_handler()
   KeyboardManager::instance()->serviceIRQ();
 }
 
+extern void timer_irq_handler();
+
 void ArchBoardSpecific::timer0_irq_handler()
 {
-  static uint32 heart_beat_value = 0;
   uint32* timer_raw = (uint32*)0x9000B410;
   if ((*timer_raw & 0x1) != 0)
   {
@@ -140,12 +141,7 @@ void ArchBoardSpecific::timer0_irq_handler()
     uint32* timer_clear = (uint32*)0x9000B40C;
     *timer_clear = 0x1;
 
-    const char* clock = "/-\\|";
-    ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
-    heart_beat_value = (heart_beat_value + 1) % 4;
-
-    Scheduler::instance()->incTicks();
-    Scheduler::instance()->schedule();
+    timer_irq_handler();
   }
 }
 

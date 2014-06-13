@@ -112,6 +112,17 @@ void pageFaultHandler(uint32 address, uint32 type)
   currentThreadInfo = currentThread->user_arch_thread_info_;
 }
 
+void timer_irq_handler()
+{
+  static uint32 heart_beat_value = 0;
+  const char* clock = "/-\\|";
+  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
+  heart_beat_value = (heart_beat_value + 1) % 4;
+
+  Scheduler::instance()->incTicks();
+  Scheduler::instance()->schedule();
+}
+
 void arch_uart1_irq_handler()
 {
   kprintfd("arch_uart1_irq_handler\n");

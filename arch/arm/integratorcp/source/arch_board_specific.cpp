@@ -111,21 +111,17 @@ void ArchBoardSpecific::keyboard_irq_handler()
   }
 }
 
+extern void timer_irq_handler();
+
 void ArchBoardSpecific::timer0_irq_handler()
 {
-  static uint32 heart_beat_value = 0;
   uint32 *t0mmio = (uint32*)0x83000000;
   if ((t0mmio[REG_INTSTAT] & 0x1) != 0)
   {
     assert(!ArchInterrupts::testIFSet());
     t0mmio[REG_INTCLR] = 1;     /* according to the docs u can write any value */
 
-    const char* clock = "/-\\|";
-    ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
-    heart_beat_value = (heart_beat_value + 1) % 4;
-
-    Scheduler::instance()->incTicks();
-    Scheduler::instance()->schedule();
+    timer_irq_handler();
   }
 }
 
