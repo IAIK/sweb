@@ -176,7 +176,7 @@ add_custom_command (OUTPUT temp_dir
 #Custom Command: Outputs empty ext2 disk image
 add_custom_command (OUTPUT hdd_image
 	DEPENDS temp_dir
-	COMMAND if [ ! -f ./SWEB-flat.vmdk ]; then cp "${CMAKE_SOURCE_DIR}/images/SWEB-flat.vmdk.gz" "." \; gzip -df "./SWEB-flat.vmdk.gz" \; fi
+	COMMAND if [ ! -f ./SWEB-flat.vmdk ]; then cp "${CMAKE_SOURCE_DIR}/utils/images/SWEB-flat.vmdk.gz" "." \; gzip -df "./SWEB-flat.vmdk.gz" \; fi
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Unpacking disk image..."
 	)
@@ -185,10 +185,10 @@ add_custom_command (OUTPUT hdd_image
 #Custom Command: Writes helper files to temp file structure
 add_custom_command (OUTPUT helper_files
 	DEPENDS hdd_image
-	COMMAND cp "${CMAKE_SOURCE_DIR}/images/menu.lst.hda" "./temp/boot/grub/menu.lst"
-	COMMAND	cp "${CMAKE_SOURCE_DIR}/images/SWEB.vmdk" "./"
-	COMMAND cp "${CMAKE_SOURCE_DIR}/images/sweb.vmx" "./"
-	COMMAND cp "${CMAKE_SOURCE_DIR}/images/nvram" "./"
+	COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/menu.lst.hda" "./temp/boot/grub/menu.lst"
+	COMMAND	cp "${CMAKE_SOURCE_DIR}/utils/images/SWEB.vmdk" "./"
+	COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/sweb.vmx" "./"
+	COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/nvram" "./"
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying helper files..."
@@ -353,7 +353,8 @@ add_custom_target(remove_cmake
 
 #Builds the doxygen documentation
 add_custom_target(doxygen
-	COMMAND cp \"${PROJECT_SOURCE_DIR}/doc/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
+	COMMAND mkdir -p \"${PROJECT_SOURCE_DIR}/doc\"
+	COMMAND cp \"${PROJECT_SOURCE_DIR}/utils/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMAND sed -i -e 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
 	COMMAND ${DOXYGEN_EXECUTABLE} \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
