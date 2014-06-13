@@ -166,8 +166,6 @@ uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
   return res;
 }
 
-extern "C" void memory_barrier();
-
 Console* ArchCommon::createConsole(uint32 count)
 {
   ArchBoardSpecific::frameBufferInit();

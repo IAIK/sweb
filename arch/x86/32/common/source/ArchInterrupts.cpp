@@ -36,15 +36,6 @@ void ArchInterrupts::enableKBD()
   enableIRQ(9);
 }
 
-void ArchInterrupts::enableBDS()
-{
-  enableIRQ(2);
-  enableIRQ(9);
-  enableIRQ(11);
-  enableIRQ(14);
-  enableIRQ(15);
-}
-
 void ArchInterrupts::disableKBD()
 {
   disableIRQ(1);
