@@ -11,9 +11,9 @@
 #include "ArchCommon.h"
 #include "assert.h"
 #include "kprintf.h"
-extern page_directory_pointer_table_entry kernel_page_directory_pointer_table[];
-extern page_directory_entry kernel_page_directory_start[];
-extern page_table_entry kernel_page_tables_start[];
+extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
+extern PageDirEntry kernel_page_directory_start[];
+extern PageTableEntry kernel_page_tables_start[];
 extern void* kernel_end_address;
 
 extern "C" void initialiseBootTimePaging();
@@ -79,8 +79,8 @@ void initialiseBootTimePaging()
 
   uint8 * fb = (uint8*) 0x000B8000;
   uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
-  page_directory_pointer_table_entry *pdpt_start = (page_directory_pointer_table_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_pointer_table);
-  page_directory_entry *pde_start = (page_directory_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
+  PageDirPointerTableEntry *pdpt_start = (PageDirPointerTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_pointer_table);
+  PageDirEntry *pde_start = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
   for (i = 0; i < 4; ++i)
   {
     pdpt_start[i].page_directory_ppn = ((uint32) pde_start) / PAGE_SIZE + i;
@@ -88,7 +88,7 @@ void initialiseBootTimePaging()
   }
 
   //uint8 *pde_start_bytes = (uint8 *)pde_start;
-  page_table_entry *pte_start = (page_table_entry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
+  PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
 
   uint32 kernel_last_page = ((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address)) / PAGE_SIZE;
   uint32 first_free_page = kernel_last_page + 1;
@@ -99,17 +99,17 @@ void initialiseBootTimePaging()
   // we do not have to clear the pde since its in the bss
   for (i = 0; i < 10; ++i)
   {
-    pde_start[i].pde2m.present = 1;
-    pde_start[i].pde2m.writeable = 1;
-    pde_start[i].pde2m.use_2_m_pages = 1;
-    pde_start[i].pde2m.page_ppn = i;
+    pde_start[i].page.present = 1;
+    pde_start[i].page.writeable = 1;
+    pde_start[i].page.size = 1;
+    pde_start[i].page.page_ppn = i;
   }
 
   for (i=0;i<8;++i)
   {
-    pde_start[i+1024].pde4k.present = 1;
-    pde_start[i+1024].pde4k.writeable = 1;
-    pde_start[i+1024].pde4k.page_table_ppn = ((pointer)&pte_start[PAGE_TABLE_ENTRIES*i])/PAGE_SIZE;
+    pde_start[i+1024].pt.present = 1;
+    pde_start[i+1024].pt.writeable = 1;
+    pde_start[i+1024].pt.page_table_ppn = ((pointer)&pte_start[PAGE_TABLE_ENTRIES*i])/PAGE_SIZE;
   }
 
   // ok, we currently only fill in mappings for the first 4 megs (aka one page table)
@@ -155,21 +155,21 @@ void initialiseBootTimePaging()
   {
     for (i=0;i<8;++i)
     {
-      pde_start[1528+i].pde2m.present = 1;
-      pde_start[1528+i].pde2m.writeable = 1;
-      pde_start[1528+i].pde2m.use_2_m_pages = 1;
-      pde_start[1528+i].pde2m.cache_disabled = 1;
-      pde_start[1528+i].pde2m.write_through = 1;
-      pde_start[1528+i].pde2m.page_ppn = (ArchCommon::getVESAConsoleLFBPtr(0) / (1024*1024*4))+i;
+      pde_start[1528+i].page.present = 1;
+      pde_start[1528+i].page.writeable = 1;
+      pde_start[1528+i].page.size = 1;
+      pde_start[1528+i].page.cache_disabled = 1;
+      pde_start[1528+i].page.write_through = 1;
+      pde_start[1528+i].page.page_ppn = (ArchCommon::getVESAConsoleLFBPtr(0) / (1024*1024*4))+i;
     }
   }
 
   for (i=0;i<PAGE_DIRECTORY_ENTRIES;++i)
   {
-    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].pde2m.present = 1;
-    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].pde2m.writeable = 1;
-    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].pde2m.use_2_m_pages = 1;
-    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].pde2m.page_ppn = i;
+    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].page.present = 1;
+    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].page.writeable = 1;
+    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].page.size = 1;
+    pde_start[i+PAGE_DIRECTORY_ENTRIES*3].page.page_ppn = i;
   }
 }
 
@@ -179,6 +179,6 @@ void removeBootTimeIdentMapping()
 
   for (i=0;i<10;++i)
   {
-    kernel_page_directory_start[i].pde2m.present=0;
+    kernel_page_directory_start[i].page.present=0;
   }
 }

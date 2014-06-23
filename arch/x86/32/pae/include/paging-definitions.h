@@ -3,6 +3,7 @@
  *
  */
 
+#ifdef CMAKE_X86_32_PAE
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__
 
@@ -38,9 +39,9 @@ typedef struct
   uint64 page_directory_ppn         :24; // MAXPHYADDR (36) - 12
   uint64 reserved_3                 :27; // must be 0
   uint64 execution_disabled         :1;
-} __attribute__((__packed__)) page_directory_pointer_table_entry;
+} __attribute__((__packed__)) PageDirPointerTableEntry;
 
-struct page_directory_entry_4k_struct
+struct PageDirPageTableEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -49,7 +50,7 @@ struct page_directory_entry_4k_struct
   uint64 cache_disabled            :1;
   uint64 accessed                  :1;
   uint64 avail_5                   :1;
-  uint64 use_2_m_pages             :1;
+  uint64 size                      :1;
   uint64 avail_4                   :1;
   uint64 avail_3                   :1;
   uint64 avail_2                   :1;
@@ -59,7 +60,7 @@ struct page_directory_entry_4k_struct
   uint64 execution_disabled        :1;
 } __attribute__((__packed__));
 
-struct page_directory_entry_2m_struct
+struct PageDirPageEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -68,7 +69,7 @@ struct page_directory_entry_2m_struct
   uint64 cache_disabled            :1;
   uint64 accessed                  :1;
   uint64 dirty                     :1;
-  uint64 use_2_m_pages             :1;
+  uint64 size                      :1;
   uint64 global_page               :1;
   uint64 avail_3                   :1;
   uint64 avail_2                   :1;
@@ -81,11 +82,11 @@ struct page_directory_entry_2m_struct
   uint64 execution_disabled        :1;
 } __attribute__((__packed__));
 
-typedef union page_directory_entry_union
+typedef union
 {
-  struct page_directory_entry_4k_struct pde4k;
-  struct page_directory_entry_2m_struct pde2m;
-} __attribute__((__packed__)) page_directory_entry;
+  struct PageDirPageTableEntry pt;
+  struct PageDirPageEntry page;
+} __attribute__((__packed__)) PageDirEntry;
 
 typedef struct
 {
@@ -104,8 +105,9 @@ typedef struct
   uint64 page_ppn                  :24; // MAXPHYADDR (36) - 12
   uint64 reserved_2                :27; // must be 0
   uint64 execution_disabled        :1;
-} __attribute__((__packed__)) page_table_entry;
+} __attribute__((__packed__)) PageTableEntry;
 
 
 
+#endif
 #endif

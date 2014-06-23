@@ -3,6 +3,7 @@
  *
  */
 
+#ifdef CMAKE_X86_32
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__
 
@@ -23,7 +24,7 @@
 #define PAGE_FAULT_PRESENT    0x00000001
 
 
-struct page_directory_entry_4k_struct
+struct PageDirPageTableEntry
 {
   uint32 present                   :1;
   uint32 writeable                 :1;
@@ -32,15 +33,15 @@ struct page_directory_entry_4k_struct
   uint32 cache_disabled            :1;
   uint32 accessed                  :1;
   uint32 reserved                  :1;
-  uint32 use_4_m_pages             :1;
+  uint32 size                      :1;
   uint32 global_page               :1;
   uint32 avail_1                   :1;
   uint32 avail_2                   :1;
   uint32 avail_3                   :1;
-  uint32 page_table_base_address   :20;
+  uint32 page_table_ppn            :20;
 } __attribute__((__packed__));
 
-struct page_directory_entry_4m_struct
+struct PageDirPageEntry
 {
   uint32 present                   :1;
   uint32 writeable                 :1;
@@ -49,7 +50,7 @@ struct page_directory_entry_4m_struct
   uint32 cache_disabled            :1;
   uint32 accessed                  :1;
   uint32 dirty                     :1;
-  uint32 use_4_m_pages             :1;
+  uint32 size                      :1;
   uint32 global_page               :1;
   uint32 avail_1                   :1;
   uint32 avail_2                   :1;
@@ -57,19 +58,16 @@ struct page_directory_entry_4m_struct
 
   uint32 pat                       :1;
   uint32 reserved                  :9;
-  uint32 page_base_address         :10;
+  uint32 page_ppn                  :10;
 } __attribute__((__packed__));
 
-union page_directory_entry_union
+typedef union
 {
-  struct page_directory_entry_4k_struct pde4k;
-  struct page_directory_entry_4m_struct pde4m;
-} __attribute__((__packed__));
+  struct PageDirPageTableEntry pt;
+  struct PageDirPageEntry page;
+} __attribute__((__packed__)) PageDirEntry;
 
-
-typedef union page_directory_entry_union page_directory_entry;
-
-struct page_table_entry_struct
+typedef struct
 {
   uint32 present                   :1;
   uint32 writeable                 :1;
@@ -83,9 +81,8 @@ struct page_table_entry_struct
   uint32 avail_1                   :1;
   uint32 avail_2                   :1;
   uint32 avail_3                   :1;
-  uint32 page_base_address         :20;
-} __attribute__((__packed__));
+  uint32 page_ppn                  :20;
+} __attribute__((__packed__)) PageTableEntry;
 
-typedef struct page_table_entry_struct page_table_entry;
-
+#endif
 #endif

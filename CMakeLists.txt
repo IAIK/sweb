@@ -1,3 +1,6 @@
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0005 NEW)
+endif(COMMAND cmake_policy)
 include(MakeOptions)
 
 include(arch/${ARCH}/CMakeLists.compiler)
@@ -7,6 +10,10 @@ project(sweb)
 include(MakeOptions)
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
+string(REPLACE "/" "_" ARCH_ESC ${ARCH})
+string(TOUPPER ${ARCH_ESC} ARCH_ESC)
+
+add_definitions(-DCMAKE_${ARCH_ESC}=1)
 
 list(LENGTH ARCH_LIST ARCH_DEPTH)
 

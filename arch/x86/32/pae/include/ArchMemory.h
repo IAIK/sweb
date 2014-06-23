@@ -3,6 +3,7 @@
  *
  */
 
+#ifdef CMAKE_X86_32_PAE
 #ifndef _ARCH_MEMORY_H_
 #define _ARCH_MEMORY_H_
 
@@ -11,7 +12,7 @@
 
 #define RESOLVEMAPPING(pdpt,vpage) ;\
   uint32 pdpte_vpn = vpage / (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES);\
-  page_directory_entry* page_directory = (page_directory_entry*) ArchMemory::getIdentAddressOfPPN(pdpt[pdpte_vpn].page_directory_ppn);\
+  PageDirEntry* page_directory = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(pdpt[pdpte_vpn].page_directory_ppn);\
   uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
   uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
 
@@ -101,7 +102,7 @@ public:
  */
   static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page=0);
   static uint32 get_PAddr_Of_VAddr_In_KernelMapping(uint32 virtual_addr);
-  page_directory_pointer_table_entry* page_dir_pointer_table_;
+  PageDirPointerTableEntry* page_dir_pointer_table_;
 
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0xC0000ULL;
@@ -118,7 +119,7 @@ private:
  * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
  * @param physical_page_table_page physical page of the new page table.
  */
-  void insertPT(page_directory_entry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page);
+  void insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page);
 
 /**
  * Removes a page directory entry from a given page directory if it is present
@@ -130,7 +131,7 @@ private:
  */
   void checkAndRemovePT(uint32 physical_page_directory_page, uint32 pde_vpn);
 
-  page_directory_pointer_table_entry page_dir_pointer_table_space_[2 * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
+  PageDirPointerTableEntry page_dir_pointer_table_space_[2 * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
   // why 2* ? this is a hack because this table has to be aligned to its own
   // size 0x20... this way we allow to set an aligned pointer in the constructor.
   // but why cant we just use __attribute__((aligned(0x20))) ? i'm not sure...
@@ -139,4 +140,5 @@ private:
   // gets not-aligned in memory -- DG
 };
 
+#endif
 #endif

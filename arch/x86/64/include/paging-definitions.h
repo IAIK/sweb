@@ -3,6 +3,7 @@
  *
  */
 
+#ifdef CMAKE_X86_64
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__
 
@@ -145,4 +146,5 @@ typedef struct
   uint64 execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
 
+#endif
 #endif
