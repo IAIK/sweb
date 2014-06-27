@@ -197,3 +197,8 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   else
     return 0;
 }
+
+uint32 ArchMemory::getRootOfPagingStructure()
+{
+  return page_dir_page_;
+}

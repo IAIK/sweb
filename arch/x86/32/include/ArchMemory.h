@@ -10,6 +10,11 @@
 #include "types.h"
 #include "paging-definitions.h"
 
+#define RESOLVEMAPPING(pd,vpage) ;\
+  PageDirEntry* page_directory = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(pd);\
+  uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
+  uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
+
 /**
  *
  * Collection of architecture dependant functions concerning Memory and Pages
@@ -92,6 +97,8 @@ public:
  * ppn of the page dir page
  */
   uint32 page_dir_page_;
+
+  uint32 getRootOfPagingStructure();
 
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0xC0000ULL;

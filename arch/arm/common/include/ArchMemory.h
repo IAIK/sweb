@@ -92,6 +92,8 @@ public:
  */
   uint32 page_dir_page_;
 
+  uint32 getRootOfPagingStructure();
+
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0x80400ULL;
 

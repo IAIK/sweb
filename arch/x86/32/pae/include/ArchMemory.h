@@ -104,6 +104,8 @@ public:
   static uint32 get_PAddr_Of_VAddr_In_KernelMapping(uint32 virtual_addr);
   PageDirPointerTableEntry* page_dir_pointer_table_;
 
+  PageDirPointerTableEntry* getRootOfPagingStructure();
+
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0xC0000ULL;
 

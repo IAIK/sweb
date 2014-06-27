@@ -120,6 +120,8 @@ public:
 
   uint64 page_map_level_4_;
 
+  uint64 getRootOfPagingStructure();
+
   static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
   static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
 

@@ -161,3 +161,8 @@ uint32 getPhysicalPageOfVirtualPageInKernelMapping(uint32 virtual_page, uint32 *
 {
   return 0;
 }
+
+uint32 ArchMemory::getRootOfPagingStructure()
+{
+  return page_dir_page_;
+}

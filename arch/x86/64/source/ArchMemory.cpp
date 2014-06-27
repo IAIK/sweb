@@ -268,3 +268,8 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(size_t virtual_page, size_t *
     *physical_pte_page = m.pt_ppn;
   return m.page_size;
 }
+
+uint64 ArchMemory::getRootOfPagingStructure()
+{
+  return page_dir_page_;
+}

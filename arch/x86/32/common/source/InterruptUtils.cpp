@@ -533,7 +533,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
         (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
 
-      RESOLVEMAPPING(currentThread->loader_->arch_memory_.page_dir_pointer_table_, address / PAGE_SIZE);
+      RESOLVEMAPPING(currentThread->loader_->arch_memory_.getRootOfPagingStructure(), address / PAGE_SIZE);
       if (page_directory[pde_vpn].pt.present)
       {
         if (page_directory[pde_vpn].page.size)
@@ -609,7 +609,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
-  asm volatile ("movl %cr3, %eax; movl %eax, %cr3;");
+  asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   switch (currentThread->switch_to_userspace_)
   {
