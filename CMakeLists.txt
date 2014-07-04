@@ -32,6 +32,7 @@ endif(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
+set(EXTRACT "if [ ! -f ./SWEB-flat.vmdk ]\; then cp \"${CMAKE_SOURCE_DIR}/images/SWEB-flat.vmdk.gz\" \".\" \; gzip -df \"./SWEB-flat.vmdk.gz\" \; fi")
 
 include(arch/${ARCH}/CMakeLists.include)
 cmake_minimum_required(VERSION 2.8)
@@ -183,7 +184,8 @@ add_custom_command (OUTPUT temp_dir
 #Custom Command: Outputs empty ext2 disk image
 add_custom_command (OUTPUT hdd_image
 	DEPENDS temp_dir
-	COMMAND if [ ! -f ./SWEB-flat.vmdk ]; then cp "${CMAKE_SOURCE_DIR}/utils/images/SWEB-flat.vmdk.gz" "." \; gzip -df "./SWEB-flat.vmdk.gz" \; fi
+        COMMAND /bin/sh
+        ARGS -c "${EXTRACT}"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Unpacking disk image..."
 	)
