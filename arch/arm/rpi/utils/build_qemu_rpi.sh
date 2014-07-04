@@ -5,6 +5,7 @@ echo $qemu_dir
 echo "Cloning https://github.com/Torlus/qemu.git to $qemu_dir"
 git clone https://github.com/Torlus/qemu.git $qemu_dir
 cd $qemu_dir
+git checkout rpi
 git pull
 echo "Configuring qemu-system-arm-rpi"
 ./configure --enable-curses --enable-sdl --target-list=arm-softmmu --disable-vnc --disable-xen --disable-docs --enable-debug --enable-debug-info --enable-linux-aio
