@@ -12,6 +12,27 @@
 #include "Scheduler.h"
 #include "kprintf.h"
 
+struct MMCI
+{
+  uint32 arg2;
+  uint32 blksizecnt;
+  uint32 arg1;
+  uint32 cmdtm;
+  uint32 resp0;
+  uint32 resp1;
+  uint32 resp2;
+  uint32 resp3;
+  uint32 data;
+  uint32 status;
+  uint32 control0;
+  uint32 control1;
+  uint32 interrupt;
+  uint32 irpt_mask;
+  uint32 irpt_en;
+  uint32 control2;
+  uint32 force_irpt;
+};
+
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 uint32* mmci_fifo = (uint32*) 0x8C000080;
 

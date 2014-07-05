@@ -14,6 +14,30 @@
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
+struct MMCI
+{
+  uint32 strpcl;
+  uint32 stat;
+  uint32 clkrt;
+  uint32 spi;
+  uint32 cmdat;
+  uint32 rest0;
+  uint32 rdt0;
+  uint32 blklen;
+  uint32 numblk;
+  uint32 prtbuf;
+  uint32 imask;
+  uint32 ireg;
+  uint32 cmd;
+  uint32 argh;
+  uint32 argl;
+  uint32 res;
+  uint32 rxfifo;
+  uint32 txfifo;
+  uint32 rdwait;
+  uint32 blks_rem;
+};
+
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 
 uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 write = 1, uint32 data = 0)

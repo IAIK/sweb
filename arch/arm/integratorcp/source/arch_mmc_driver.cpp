@@ -14,6 +14,29 @@
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
+struct MMCI
+{
+  uint32 power;
+  uint32 clock;
+  uint32 argument;
+  uint32 command;
+  uint32 respcmd;
+  uint32 response0;
+  uint32 response1;
+  uint32 response2;
+  uint32 response3;
+  uint32 datatimer;
+  uint32 datalength;
+  uint32 datactrl;
+  uint32 datacnt;
+  uint32 status;
+  uint32 clear;
+  uint32 mask0;
+  uint32 mask1;
+  uint32 reserved;
+  uint32 fifo_cnt;
+};
+
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 uint32* mmci_fifo = (uint32*) 0x8C000080;
 
