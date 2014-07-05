@@ -287,7 +287,6 @@ void ArchCommon::initDebug()
   extern unsigned char stab_end_address_nr;
 
   extern unsigned char stabstr_start_address_nr;
-  extern unsigned char stabstr_end_address_nr;
 
   parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
 }

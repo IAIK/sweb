@@ -26,8 +26,7 @@ uint32 getRandom()
 
 int main()
 {
-  int pos, num = 0;
-  int x, y, a, mult_pos = 0;
+  int x, y, a = 0;
 
 
   for (x = 0; x < ARRAY_SIZE; ++x)
