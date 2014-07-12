@@ -17,7 +17,7 @@ void kpanict ( uint8 * message )
   extern uint32 boot_completed;
   boot_completed = 0;
 
-  uint32* stack = (uint32*) currentThread->getStackStartPointer();
+  size_t* stack = (size_t*) currentThread->getStackStartPointer();
 
   kprintfd("%s \n", message );
   kprintf("%s \n", message );
@@ -31,9 +31,15 @@ void kpanict ( uint8 * message )
   Scheduler::instance()->printThreadList();
 
   ArchInterrupts::disableInterrupts();
+  ArchInterrupts::disableTimer();
+  //disable other IRQ's ???
 
   for(;;);
 
   kprintf("MAJOR KERNEL PANIC!: Should never reach here\n");
+
+  currentThread->printBacktrace(false);
+
+  Scheduler::instance()->printThreadList();
 
 }

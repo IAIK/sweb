@@ -82,32 +82,6 @@ uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response)
     mmci->command = command | PL181_CMD_ENABLE | PL181_CMD_RESPONSE;
   else
     mmci->command = command | PL181_CMD_ENABLE;
-//#define BIT(X,Y) ((mmci->status & (1 << X)) ? Y : "")
-//    kprintfd("stats: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",BIT(0,"CmdCrcFail"),BIT(1,"DataCrcFail"),
-//             BIT(2,"CmdTimeOut"),
-//             BIT(3,"DataTimeOut"),
-//             BIT(4,"TxUnderrun"),
-//             BIT(5,"RxOverrun"),
-//             BIT(6,"CmdRespEnd"),
-//             BIT(7,"CmdSent"),
-//             BIT(8,"DataEnd"),
-//             BIT(9,"Reserved"),
-//             BIT(10,"DataBlockEnd"),
-//             BIT(11,"CmdActive"),
-//             BIT(12,"TxActive"),
-//             BIT(13,"RxActive"),
-//             BIT(14,"TxFifoHalfEmpty"),
-//             BIT(15,"RxFifoHalfFull"),
-//             BIT(16,"TxFifoFull"),
-//             BIT(17,"RxFifoFull"),
-//             BIT(18,"TxFifoEmpty"),
-//             BIT(19,"RxFifoEmpty"),
-//             BIT(20,"TxDataAvlbl"),
-//             BIT(21,"RxDataAvlbl"));
-//  kprintfd("resp0: %x\n",mmci->response0);
-//  kprintfd("resp1: %x\n",mmci->response1);
-//  kprintfd("resp2: %x\n",mmci->response2);
-//  kprintfd("resp3: %x\n",mmci->response3);
   if (response)
     *response = mmci->response0;
   uint32 temp;
