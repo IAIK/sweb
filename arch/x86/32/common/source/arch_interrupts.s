@@ -72,21 +72,8 @@ extern pageFaultHandler
 global arch_pageFaultHandler
 arch_pageFaultHandler:
         ;we are already on a new stack because a privliedge switch happened
-        
-        ; It's a bad idea to tamper with the EDI before the context was saved!
-        ; This can cause severe malfunction - e.g. a userspace program
-        ; executing something like rep movs DWORD PTR es:[edi],DWORD PTR ds:[esi]
-        ; may trigger a PF, when the src- operand (DWORD PTR ds:[esi]) is read.
-        ; When returning from the PF- handler, the programm expects EDI to still
-        ; contain a valid pointer, which isn't the case, because it was set to
-        ; 0xFFAAFFEE here (in the PF- handler).
-        ; Thus the next line is commented.
-        ;
-        ; mov edi, 0xFFAAFFEE
-                             
         pushAll 
         changeData
-        ;call arch_saveThreadRegistersForPageFault
         call arch_saveThreadRegistersForPageFault
         push ebp
         mov  ebp, esp
@@ -99,19 +86,6 @@ arch_pageFaultHandler:
         leave
         popAll
         add esp, 0x04             ; remove error_cd
-
-
-
-        ;error code was pushed on the new stack by cpu, now 52 additional bytes have been pushed after it
-        ;let's get it for the pageFaultHandler
-;        push dword[esp+52]
-        ;lets get fault address from cr2 as well
- ;       mov eax, cr2
-  ;      push eax
-   ;     call pageFaultHandler
-    ;    add esp, 0x08
-     ;   popAll
-      ;  call arch_restoreUserThreadRegisters  ; restore registers that may have been changed in ArchUserThreadInfo by c++ code
         iretd ; restore user stack
 
   irqhandler 0
@@ -264,16 +238,12 @@ dummyhandler 127
 
 global arch_syscallHandler
 extern syscallHandler
-extern arch_restoreUserThreadRegisters
 arch_syscallHandler:
     pushAll
     changeData
     call arch_saveThreadRegisters
     call syscallHandler
-    popAll
-    call arch_restoreUserThreadRegisters
-    iretd
-
+    hlt
 
 dummyhandler 129
 dummyhandler 130

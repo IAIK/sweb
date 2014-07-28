@@ -82,33 +82,6 @@ arch_saveThreadRegisters:
         store_general_regs
         ret
 
-        
-global arch_switchThreadKernelToKernel
-arch_switchThreadKernelToKernel:
-        mov rax, 0x13370
-        hlt
-        mov rbx, currentThreadInfo
-        mov rbx, [rbx]
-        frstor [rbx + 80]
-        mov rcx, g_tss        ; tss
-        mov rax, qword[rbx + 68]     ; get rsp0
-        mov qword[rcx + 4], rax      ; restore rsp0
-        mov rax, qword[rbx + 12]     ; restore rax
-        mov rcx, qword[rbx + 16]     ; restore rcx
-        mov rdx, qword[rbx + 20]     ; restore rdx
-        mov rsp, qword[rbx + 28]     ; restore rsp
-        mov rbp, qword[rbx + 32]     ; restore rbp
-        mov rsi, qword[rbx + 36]     ; restore rsi
-        mov rdi, qword[rbx + 40]     ; restore rdi
-        mov es , word[rbx + 48]      ; restore es
-        mov ds , word[rbx + 44]      ; restore ds
-        push qword[rbx + 8]          ; push rflags
-        push qword[rbx + 4]          ; push cs
-        push qword[rbx + 0]          ; push rip
-        push qword[rbx + 24]
-        pop  rbx                     ; restore rbx
-        iretd                        ; switch to next
-        
 ;;----------------------------------------------------------------------
 ;; swtich thread to user and change page
 ;;----------------------------------------------------------------------
@@ -200,36 +173,3 @@ global arch_TestAndSet
                       ; ... memory location while you're swapping
     ret               ; return the old value that's in %rax
 
-
-global arch_restoreUserThreadRegisters
-  arch_restoreUserThreadRegisters:
-    mov rax, 0x1337A
-    hlt
-    mov rbx, currentThreadInfo
-    mov rbx, [rbx]
-    frstor [rbx + 80]
-    
-    mov rcx, g_tss        ; tss
-    mov rax, qword[rbx + 68]     ; get rsp0
-    mov qword[rcx + 4], rax      ; restore rsp0
-    mov rax, qword[rbx + 76]     ; page directory
-    mov cr3, rax                 ; change page directory pointer table
-    
-    mov rax, qword[rbx + 12]     ; restore rax
-    mov rcx, qword[rbx + 16]     ; restore rcx
-    mov rdx, qword[rbx + 20]     ; restore rdx
-    ;mov rsp, qword[rbx + 28]     ; restore rsp
-    mov rbp, qword[rbx + 32]     ; restore rbp
-    mov rsi, qword[rbx + 36]     ; restore rsi
-    mov rdi, qword[rbx + 40]     ; restore rdi
-    mov es , word[rbx + 48]      ; restore es
-    mov ds , word[rbx + 44]      ; restore ds
-    push qword[rbx + 60]         ; push ss  here dpl lowwer
-    push qword[rbx + 28]         ; push rsp here dpl lowwer
-    push qword[rbx + 8]          ; push rflags
-    push qword[rbx + 4]          ; push cs
-    push qword[rbx + 0]          ; push rip
-    push qword[rbx + 24]
-    
-    pop  rbx                     ; restore rbp
-    iret

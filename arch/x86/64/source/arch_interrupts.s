@@ -152,13 +152,9 @@ dummyhandler i
 
 global arch_syscallHandler
 extern syscallHandler
-extern arch_restoreUserThreadRegisters
 arch_syscallHandler:
     pushAll
     changeData
     call arch_saveThreadRegisters
     call syscallHandler
     hlt
-    popAll
-    call arch_restoreUserThreadRegisters
-    iretq
