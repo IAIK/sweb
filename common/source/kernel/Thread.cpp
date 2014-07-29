@@ -151,9 +151,14 @@ void Thread::printBacktrace(bool use_stored_registers)
   {
     char FunctionName[255];
     pointer StartAddr = get_function_name(CallStack[i], FunctionName);
-
     if (StartAddr)
-      debug(BACKTRACE, "   (%d): %x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
+    {
+      ssize_t line = get_function_line(StartAddr,CallStack[i] - StartAddr);
+      if (line > 0)
+        debug(BACKTRACE, "   (%d): %x (%s:%u)\n", i, CallStack[i], FunctionName, line - 1);
+      else
+        debug(BACKTRACE, "   (%d): %x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
+    }
     else
       debug(BACKTRACE, "   (%d): %x (<UNKNOWN FUNCTION>)\n", i, CallStack[i]);
   }

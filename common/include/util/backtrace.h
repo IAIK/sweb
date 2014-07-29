@@ -9,6 +9,7 @@ class Thread;
 struct StabEntry;
 //-------------------------------------------------------------------------------------*/
 pointer get_function_name(pointer address, char function_name[]);
+ssize_t get_function_line(pointer start, pointer offset);
 
 void demangle_name(const char* name, char *buffer);
 void parse_symtab(StabEntry* stab_start, StabEntry* stab_end, const char *stab_str);

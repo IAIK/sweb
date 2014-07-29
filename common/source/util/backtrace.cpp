@@ -28,6 +28,8 @@
 #define N_LENG  0xfe    /* second stab entry with length information */
 //-------------------------------------------------------------------------------------*/
 
+const char* stab_str_base = 0;
+
 struct StabEntry
 {
     uint32 n_strx;
@@ -38,7 +40,7 @@ struct StabEntry
 } __attribute__((packed));
 //-------------------------------------------------------------------------------------*/
 extern Thread* currentThread;
-ustl::map<uint32, const char*> symbol_table;
+ustl::map<size_t, StabEntry*> symbol_table;
 //-------------------------------------------------------------------------------------*/
 bool try_paste_operator(const char *&input, char *& buffer);
 int read_number(const char *& input);
@@ -162,12 +164,33 @@ bool try_paste_operator(const char *& input, char *& buffer)
   return true;
 }
 //-------------------------------------------------------------------------------------*/
+ssize_t get_function_line(pointer start, pointer offset)
+{
+  ssize_t line = -1;
+  ustl::map<size_t, StabEntry*>::iterator it = symbol_table.find(start);
+  if (it != symbol_table.end())
+  {
+    StabEntry* se = it->second + 1;
+    while (se->n_type == N_PSYM)
+      ++se;
+    while (se->n_type == N_SLINE)
+    {
+      if (offset < se->n_value)
+        return line;
+      else
+        line = se->n_desc;
+      ++se;
+    }
+  }
+  return line;
+}
+//-------------------------------------------------------------------------------------*/
 
 pointer get_function_name(pointer address, char function_name[])
 {
   if (symbol_table.size() == 0)
     return NULL;
-  ustl::map<uint32, const char*>::iterator it = symbol_table.end();
+  ustl::map<size_t, StabEntry*>::iterator it = symbol_table.end();
 
   if (ADDRESS_BETWEEN(address, symbol_table.at(0).first, ArchCommon::getKernelEndAddress()))
   {
@@ -180,7 +203,7 @@ pointer get_function_name(pointer address, char function_name[])
   if (it != symbol_table.end())
   {
     --it;
-    demangle_name(it->second, function_name);
+    demangle_name(stab_str_base + it->second->n_strx, function_name);
     return it->first;
   }
 
@@ -444,7 +467,8 @@ void demangle_name(const char* name, char *buffer)
 
 void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_str)
 {
-  new (&symbol_table) ustl::map<uint32, const char*>();
+  stab_str_base = stab_str;
+  new (&symbol_table) ustl::map<size_t, const char*>();
   symbol_table.reserve(2048);
 
   for (StabEntry* current_stab = stab_start; current_stab < stab_end; ++current_stab)
@@ -452,7 +476,7 @@ void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_s
     if (unlikely((current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME) &&
         ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, ArchCommon::getKernelEndAddress())))
     {
-      symbol_table[current_stab->n_value] = stab_str+current_stab->n_strx;
+      symbol_table[current_stab->n_value] = current_stab;
     }
   }
   debug(MAIN, "found %d functions\n", symbol_table.size());
