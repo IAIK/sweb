@@ -163,14 +163,7 @@ now_using_segments:
 
 ; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
 
-    mov word[0B800Ah], 9F35h
-; the following memory-clearing should already have been covered by the generic .bss-cleaning above,
-; since the stack is part of the .bss
- 	;mov edi,stack_start; load bss address
- 	;mov ecx, stack; end of bss and stack (!), this symbol is at the very end of the kernel
- 	;sub ecx, edi ; how much data do we have to clear
- 	;xor eax, eax ; we want to fill with 0
- 	;rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
+  mov word[0B800Ah], 9F35h
 
  	mov esp,stack
 
@@ -187,24 +180,6 @@ PagingMode:
 
    mov word[0C00B800Eh], 9F38h
 
-   ; this has already been done above and not undone so removed PL
-
-   ; ok, next thing to do is to load our own descriptor table
-   ; this one will spawn just one huge segment for the whole address space
-
-   ;lgdt [gdt_ptr_new]
-
-   ; now prepare all the segment registers to use our segments
-   ;mov ax, LINEAR_DATA_SEL
-   ;mov ds,ax
-   ;mov es,ax
-   ;mov ss,ax
-   ;mov fs,ax
-   ;mov gs,ax
-
-   ; use these segments
-   ;jmp LINEAR_CODE_SEL:(now_using_segments_new)
-
 now_using_segments_new:
 
    mov word[0C00B8010h], 9F39h
@@ -218,15 +193,9 @@ call removeBootTimeIdentMapping
 
    mov word[0C00B8012h], 4330h
 
-; me thinks this has already been done, so why again
-; mov     eax,kernel_page_directory_start - BASE; eax = &PD
-; mov     cr3,eax         ; cr3 = &PD
-
    mov word[0C00B8014h], 4331h
 
-
    mov word[0C00B801Ah], 4335h
-
 
 ; GRUB 0.90 leaves the NT bit set in EFLAGS. The first IRET we attempt
 ; will cause a TSS-based task-switch, which will cause Exception 10.
@@ -260,11 +229,7 @@ reload_segements:
 
 reload_segments_new:
 
-    ret;
-    
-    
-
-
+   ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 ;; this will help us to boot, this way we can tell grub
@@ -276,16 +241,6 @@ mboot:
    dd MULTIBOOT_HEADER_MAGIC
    dd MULTIBOOT_HEADER_FLAGS
    dd MULTIBOOT_CHECKSUM
-; aout kludge. These must be PHYSICAL addresses
-;   dd mboot - BASE
-;   dd text_start_address - BASE
-;   dd bss_start_address  - BASE
-;   dd kernel_end_address - BASE
-;   dd mboot - BASE
-;   dd 0
-;   dd 0
-;   dd 0
-;   dd 0
    dd 0 ; mode 
    dd 800 ;width
    dd 600 ; height
