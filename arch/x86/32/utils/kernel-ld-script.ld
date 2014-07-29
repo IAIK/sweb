@@ -5,11 +5,8 @@
  
 /* let the linker use its 'native' format  (ELF/COFF/PE) */
 OUTPUT_FORMAT("elf32-i386")
-/* no leading underscore for symbols handled in asm: */
 ENTRY(entry)
 LS_Phys = 0x100000; /* 1 meg */
-/*LS_Virt = 0x100000; /* 1 meg */
-/* use this line instead when paging works properly! */
 LS_Virt = 0x80000000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
 SECTIONS
 {
@@ -28,14 +25,6 @@ SECTIONS
     *(.rodata*)
     ro_data_end_address = .;
     . = ALIGN(4096);
-
-/*  stab_start_address_nr = .;
-    *(.stab)
-    stab_end_address_nr = .;
-    . = .;
-    stabstr_start_address_nr = .;
-    *(.stabstr)
-    stabstr_end_address_nr = .;*/
   }
 
   .data  ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
