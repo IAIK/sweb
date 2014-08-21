@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef _TYPES_H_
-#define _TYPES_H_
+#ifndef __TYPES_H_
+#define __TYPES_H_
 
 typedef long unsigned int off_t;
 typedef long unsigned int mode_t;
