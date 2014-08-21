@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef __TYPES_H_
-#define __TYPES_H_
+#ifndef TYPES_H_
+#define TYPES_H_
 
 typedef char int8;
 typedef unsigned char uint8;

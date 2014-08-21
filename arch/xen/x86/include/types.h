@@ -18,8 +18,8 @@
  * copied from: arch/x86/include/
  */
 
-#ifndef __TYPES_H_
-#define __TYPES_H_
+#ifndef TYPES_H_
+#define TYPES_H_
 
 #define isXenBuild
 
