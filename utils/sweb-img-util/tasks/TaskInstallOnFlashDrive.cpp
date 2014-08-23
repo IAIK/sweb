@@ -146,7 +146,7 @@ const char* TaskInstallOnFlashDrive::getDescription(void) const
 
 uint64_t TaskInstallOnFlashDrive::getDeviceSize(const char* device)
 {
-  int fd = open(device, O_RDONLY);
+  int fd = open(device, O_RDONLY | O_BINARY);
 
   if(fd < 0)
   {
@@ -172,7 +172,7 @@ uint64_t TaskInstallOnFlashDrive::getDeviceSize(const char* device)
 
 bool TaskInstallOnFlashDrive::copyImageToDevice(const char* device)
 {
-  int dev = open(device, O_WRONLY);
+  int dev = open(device, O_WRONLY | O_BINARY);
 
   if(dev < 0)
   {
@@ -190,7 +190,7 @@ bool TaskInstallOnFlashDrive::copyImageToDevice(const char* device)
   }
 
   // open the image-file for reading
-  int img = open(img_info->getFilename(), O_RDONLY);
+  int img = open(img_info->getFilename(), O_RDONLY | O_BINARY);
 
   if(img < 0)
   {

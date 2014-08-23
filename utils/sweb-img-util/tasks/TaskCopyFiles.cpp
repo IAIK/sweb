@@ -78,7 +78,7 @@ const char* TaskCopyFiles::getDescription(void) const
 bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const char* src, const char* dest)
 {
   // create the destination file
-  int32 fd = vfs->creat(wd_info, dest);
+  int32 fd = vfs->creat(wd_info, dest, O_BINARY);
 
   if(fd <= 0)
   {
@@ -87,7 +87,7 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const
   }
 
   // open the source-file
-  int src_file = open(src, O_RDONLY);
+  int src_file = open(src, O_RDONLY | O_BINARY);
 
   if(src_file <= 0)
   {

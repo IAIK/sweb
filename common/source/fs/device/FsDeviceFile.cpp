@@ -20,7 +20,7 @@ FsDeviceFile::FsDeviceFile(const char* image_file, sector_addr_t offset,
       block_size_(block_size), num_blocks_(0), image_size_(0)
 {
   // open the image file-for binary reading
-  img_fd_ = open(image_file, O_RDWR);
+  img_fd_ = open(image_file, O_RDWR | O_BINARY);
   assert(img_fd_ > 0);
   //image_file_ = fopen(image_file, "rb");
 
