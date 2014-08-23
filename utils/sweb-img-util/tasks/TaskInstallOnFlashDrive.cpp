@@ -146,7 +146,7 @@ const char* TaskInstallOnFlashDrive::getDescription(void) const
 
 uint64_t TaskInstallOnFlashDrive::getDeviceSize(const char* device)
 {
-  int fd = open(device, O_RDONLY | O_BINARY);
+  int fd = open(device, O_RDONLY);
 
   if(fd < 0)
   {
@@ -154,9 +154,8 @@ uint64_t TaskInstallOnFlashDrive::getDeviceSize(const char* device)
     return 0;
   }
 
-  // loff_t has to be at least 64bit (8byte) in order to deliver reliable values
-  assert( sizeof(loff_t) >= 8 );
-  if( sizeof(loff_t) < 8 )
+  assert( sizeof(uint64_t) >= 8 );
+  if( sizeof(uint64_t) < 8 )
   {
     return 0;
   }
@@ -172,7 +171,7 @@ uint64_t TaskInstallOnFlashDrive::getDeviceSize(const char* device)
 
 bool TaskInstallOnFlashDrive::copyImageToDevice(const char* device)
 {
-  int dev = open(device, O_WRONLY | O_BINARY);
+  int dev = open(device, O_WRONLY);
 
   if(dev < 0)
   {
@@ -190,7 +189,7 @@ bool TaskInstallOnFlashDrive::copyImageToDevice(const char* device)
   }
 
   // open the image-file for reading
-  int img = open(img_info->getFilename(), O_RDONLY | O_BINARY);
+  int img = open(img_info->getFilename(), O_RDONLY);
 
   if(img < 0)
   {
