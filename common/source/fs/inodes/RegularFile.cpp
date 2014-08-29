@@ -370,7 +370,7 @@ bool RegularFile::truncateUnprotected(void)
   // free all sectors, belonging to the file
   for(sector_addr_t i = getNumSectors(); i > 0; i--)
   {
-    if( !file_system_->removeLastSectorOfInode( this ) == 0 )
+    if( !(file_system_->removeLastSectorOfInode( this ) == 0) )
     {
       debug(FS_MINIX, "destroyInode - ERROR failed to free data-block!\n");
     }
