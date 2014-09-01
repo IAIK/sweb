@@ -39,7 +39,6 @@
 #ifndef O_TRUNC
 #define O_TRUNC     0x0040
 #endif
-
 #ifndef O_SYNC
 #define O_SYNC      0x0080
 #endif

@@ -78,8 +78,7 @@ class FsDeviceFile : public FsDevice
   private:
 
     // the image file to write / read to / from
-    int img_fd_;
-    //FILE* image_file_;
+    FILE* image_file_;
 
     // the beginning of the partition in bytes from the start of the file
     uint64 partition_offset_;

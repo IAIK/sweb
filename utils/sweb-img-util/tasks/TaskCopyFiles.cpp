@@ -10,6 +10,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -47,6 +48,8 @@ void TaskCopyFiles::execute(void)
   {
     std::string src_filename = image_util_.getArg(i);
     std::string dst_filename = image_util_.getArg(i+1);
+    if (dst_filename.at(0) != '/')
+      dst_filename = "/" + dst_filename;
 
     std::cout << "copying " << src_filename << " (as \"" << dst_filename << "\") to the image-file" << std::endl;
 
@@ -87,9 +90,9 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const
   }
 
   // open the source-file
-  int src_file = open(src, O_RDONLY);
+  FILE* src_file = fopen(src, "rb");
 
-  if(src_file <= 0)
+  if(src_file == 0)
   {
     std::cout << "ERROR - failed to open the source-file!" << std::endl;
 
@@ -98,11 +101,12 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const
   }
 
   // determine the file-size of the image:
-  loff_t file_size = lseek(src_file, 0, SEEK_END);
-  lseek(src_file, 0, SEEK_SET);
+  fseek(src_file, 0, SEEK_END);
+  uint64_t file_size = ftell(src_file);
+  fseek(src_file, 0, SEEK_SET);
 
   // copy the image's data
-  loff_t bytes_copied = 0;
+  uint64_t bytes_copied = 0;
   char* chunk_buf = new char[1024];
 
   while(bytes_copied < file_size)
@@ -114,12 +118,12 @@ bool TaskCopyFiles::copyFile(VfsSyscall* vfs, FsWorkingDirectory* wd_info, const
       buf_len = file_size - bytes_copied;
     }
 
-    assert( read(src_file, chunk_buf, buf_len) == buf_len );
+    assert( fread(chunk_buf, 1, buf_len, src_file) == buf_len );
     assert( vfs->write(wd_info, fd, chunk_buf, buf_len) == buf_len );
     bytes_copied += buf_len;
   }
 
-  close(src_file);
+  fclose(src_file);
 
   delete[] chunk_buf;
 

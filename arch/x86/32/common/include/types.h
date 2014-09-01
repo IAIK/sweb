@@ -26,8 +26,8 @@ typedef uint32 l_off_t;
 typedef uint32 mode_t;
 typedef uint32 size_t;
 typedef int32 ssize_t;
-#else
-typedef uint32 loff_t;
+//#else
+//typedef uint32 loff_t;
 #endif
 typedef uint32 uid_t;
 typedef uint32 gid_t;

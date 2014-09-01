@@ -154,9 +154,8 @@ uint64_t TaskInstallOnFlashDrive::getDeviceSize(const char* device)
     return 0;
   }
 
-  // loff_t has to be at least 64bit (8byte) in order to deliver reliable values
-  assert( sizeof(loff_t) >= 8 );
-  if( sizeof(loff_t) < 8 )
+  assert( sizeof(uint64_t) >= 8 );
+  if( sizeof(uint64_t) < 8 )
   {
     return 0;
   }
