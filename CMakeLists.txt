@@ -302,8 +302,8 @@ add_custom_target(mrproper
 #Custom target: make mrsproper
 #Makes really clean (including the object files)
 add_custom_target(mrsproper
-        COMMENT "rm -fRI ${PROJECT_BINARY_DIR}/*"
-        COMMAND rm -fRI ${PROJECT_BINARY_DIR}/* || true
+        COMMENT "rm -fR ${PROJECT_BINARY_DIR}/*"
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
         COMMAND ${PROJECT_SOURCE_DIR}/relocate_project.sh
         COMMAND cmake ${PROJECT_SOURCE_DIR}
         )
