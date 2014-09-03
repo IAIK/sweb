@@ -206,7 +206,7 @@ add_custom_command (OUTPUT helper_files
 add_custom_command (OUTPUT copy_to_image
 	DEPENDS helper_files sweb-img-util
 	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 0 ./kernel.x boot/kernel.x ./temp/boot/grub/menu.lst boot/grub/menu.lst
-	COMMAND rm -R temp
+	COMMAND rm -fR temp
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying files to image..."
@@ -294,8 +294,8 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
-  COMMENT "rm -fRI ${PROJECT_BINARY_DIR}/*"
-	COMMAND rm -fRI ${PROJECT_BINARY_DIR}/* || true
+  COMMENT "rm -fR ${PROJECT_BINARY_DIR}/*"
+	COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
 	COMMAND cmake ${PROJECT_SOURCE_DIR}
 	)
 
@@ -355,8 +355,8 @@ add_custom_target(remove_cmake
 	COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
 	COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
 	COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
-  COMMENT "rm -fRI \"${PROJECT_BINARY_DIR}/*\""
-	COMMAND rm -fRI \"${PROJECT_BINARY_DIR}/*\" || true
+  COMMENT "rm -fR \"${PROJECT_BINARY_DIR}/*\""
+	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/*\" || true
 	)
 
 #Builds the doxygen documentation
@@ -365,7 +365,7 @@ add_custom_target(doxygen
 	COMMAND cp \"${PROJECT_SOURCE_DIR}/utils/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMAND sed -i -e 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
 	COMMAND ${DOXYGEN_EXECUTABLE} \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
-	COMMAND rm \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
+	COMMAND rm -f \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMENT "Building SWEB documentation"
 	)
 
