@@ -295,24 +295,24 @@ add_custom_target(rungdb
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
   COMMENT "rm -fR ${PROJECT_BINARY_DIR}/*"
+	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively? "
 	COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
 	COMMAND cmake ${PROJECT_SOURCE_DIR}
 	)
-
-#Custom target: make mrsproper
-#Makes really clean (including the object files)
-add_custom_target(mrsproper
-        COMMENT "rm -fR ${PROJECT_BINARY_DIR}/*"
-        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-        COMMAND ${PROJECT_SOURCE_DIR}/relocate_project.sh
-        COMMAND cmake ${PROJECT_SOURCE_DIR}
-        )
 
 #Custom target: make x86_32
 #Changes MakeOptions ARCH setting to x86_32
 add_custom_target(x86_32
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
+        COMMAND make mrsproper
+        )
+
+#Custom target: make x86_32_pae
+#Changes MakeOptions ARCH setting to x86_32_pae
+add_custom_target(x86_32_pae
+        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32/pae)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
+        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\\\/pae\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
 
@@ -324,40 +324,29 @@ add_custom_target(x86_64
         COMMAND make mrsproper
         )
 
-#Custom target: make arm
-#Changes MakeOptions ARCH setting to arm
-add_custom_target(arm
+#Custom target: make arm_icp
+#Changes MakeOptions ARCH setting to arm_icp
+add_custom_target(arm_icp
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/integratorcp)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/integratorcp\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
 
-#Custom target: make verdex
-#Changes MakeOptions ARCH setting to verdex
-add_custom_target(verdex
+#Custom target: make arm_verdex
+#Changes MakeOptions ARCH setting to arm_verdex
+add_custom_target(arm_verdex
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/verdex)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/verdex\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
 
-#Custom target: make rpi
-#Changes MakeOptions ARCH setting to rpi
-add_custom_target(rpi
+#Custom target: make arm_rpi
+#Changes MakeOptions ARCH setting to arm_rpi
+add_custom_target(arm_rpi
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/rpi)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/rpi\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
         COMMAND make mrsproper
         )
-
-#Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
-#Enables relocation of the source files (moving from /home/user1/sweb -> /home/user1/foo/.. )
-add_custom_target(remove_cmake
-	COMMAND make clean;
-	COMMAND find . -name 'CMakeCache.txt' -exec rm {} +;
-	COMMAND find . -name 'CMakeFiles' -exec rm -f -r {} +;
-	COMMAND find . -name 'cmake_install.cmake' -exec rm -f -r {} +;
-  COMMENT "rm -fR \"${PROJECT_BINARY_DIR}/*\""
-	COMMAND rm -fR \"${PROJECT_BINARY_DIR}/*\" || true
-	)
 
 #Builds the doxygen documentation
 add_custom_target(doxygen
