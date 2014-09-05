@@ -295,7 +295,7 @@ add_custom_target(rungdb
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
   COMMENT "rm -fR ${PROJECT_BINARY_DIR}/*"
-	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively? "
+	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
 	COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
 	COMMAND cmake ${PROJECT_SOURCE_DIR}
 	)
