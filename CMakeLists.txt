@@ -3,6 +3,10 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 include(MakeOptions)
 
+if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+set(CMAKE_CROSSCOMPILING 1)
+endif(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+
 include(arch/${ARCH}/CMakeLists.compiler)
 
 project(sweb)
@@ -37,7 +41,7 @@ include(arch/${ARCH}/CMakeLists.include)
 cmake_minimum_required(VERSION 2.8)
 
 if(CMAKE_CROSSCOMPILING)
-  set(CMAKE_CROSS_COMPILE_FLAGS -DCMAKE_CROSSCOMPILING=1 -G "Unix Makefiles")
+  set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
 else(CMAKE_CROSSCOMPILING) # not cross compiling
   set(CMAKE_CROSS_COMPILE_FLAGS )
 endif(CMAKE_CROSSCOMPILING)
