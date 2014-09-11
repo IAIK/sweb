@@ -3,9 +3,11 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 include(MakeOptions)
 
-if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+if(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
+set(CMAKE_CROSSCOMPILING 2)
+elseif(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
 set(CMAKE_CROSSCOMPILING 1)
-endif(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+endif(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
 
 include(arch/${ARCH}/CMakeLists.compiler)
 
