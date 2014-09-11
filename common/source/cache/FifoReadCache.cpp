@@ -125,7 +125,7 @@ void FifoReadCache::clear(void)
     {
       delete (*it).item;
       delete (*it).ident;
-      fifo_items_.erase(it);
+      it = fifo_items_.erase(it);
     }
     else
     {

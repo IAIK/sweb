@@ -423,7 +423,7 @@ void *memchr ( const void *block, uint8 c, size_t size )
 
 void *memrchr ( const void *block, uint8 c, size_t size )
 {
-  const uint8 *b = ( const uint8* ) ( block + size - 1 );
+  const uint8 *b = (( const uint8* )  block + size - 1 );
 
   while ( size-- )
   {
