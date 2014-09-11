@@ -8,6 +8,8 @@
 #ifndef PARTITIONINFO_H_
 #define PARTITIONINFO_H_
 
+#include <string>
+
 /**
  * a Partition info object
  */
@@ -66,7 +68,7 @@ public:
 	 * @param part_type
 	 * @return fs-name as a string
 	 */
-	static const char* getPartitionTypeString(unsigned char part_type);
+	static std::string getPartitionTypeString(unsigned char part_type);
 
 protected:
 private:

@@ -20,7 +20,7 @@ PartitionInfo::~PartitionInfo()
 {
 }
 
-const char* PartitionInfo::getPartitionTypeString(unsigned char part_type)
+std::string PartitionInfo::getPartitionTypeString(unsigned char part_type)
 {
 	switch(part_type)
 	{
@@ -53,7 +53,7 @@ const char* PartitionInfo::getPartitionTypeString(unsigned char part_type)
 		// by default return the partition identifier as a string
 		std::stringstream str_stream;
 		str_stream << std::hex << ((int)part_type & 0xFF) << std::dec;
-		return str_stream.str().c_str();
+		return str_stream.str();
 	}
 	return "unknown fs";
 }

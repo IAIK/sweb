@@ -3,6 +3,10 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 include(MakeOptions)
 
+if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+set(CMAKE_CROSSCOMPILING 1)
+endif(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+
 include(arch/${ARCH}/CMakeLists.compiler)
 
 project(sweb)
@@ -35,6 +39,13 @@ set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
 cmake_minimum_required(VERSION 2.8)
+
+if(CMAKE_CROSSCOMPILING)
+  set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
+else(CMAKE_CROSSCOMPILING) # not cross compiling
+  set(CMAKE_CROSS_COMPILE_FLAGS )
+endif(CMAKE_CROSSCOMPILING)
+
 
 # Macro which processes ASM files
 # OBJS are the names (without extension) in the current directory
@@ -294,10 +305,9 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
-  COMMENT "rm -fR ${PROJECT_BINARY_DIR}/*"
-	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively? "
+	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
 	COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-	COMMAND cmake ${PROJECT_SOURCE_DIR}
+  COMMAND cmake ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 	)
 
 #Custom target: make x86_32
