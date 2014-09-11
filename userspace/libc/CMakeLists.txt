@@ -10,7 +10,7 @@ include_directories(
 #Assembly File processing
 set(ASM_OBJECTS)
 
-foreach(src start syscalls)
+foreach(src syscalls)
    set(ASM_SOURCE ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/${src}.s)
    if(NOT EXISTS ${ASM_SOURCE})
      set(ASM_SOURCE ${CMAKE_SOURCE_DIR}/arch/${ARCH}/../common/userspace/${src}.s)

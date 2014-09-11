@@ -315,7 +315,7 @@ add_custom_target(mrproper
 add_custom_target(x86_32
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrsproper
+        COMMAND make mrproper
         )
 
 #Custom target: make x86_32_pae
@@ -323,7 +323,7 @@ add_custom_target(x86_32
 add_custom_target(x86_32_pae
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32/pae)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\\\/pae\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrsproper
+        COMMAND make mrproper
         )
 
 #Custom target: make x86_64
@@ -331,7 +331,7 @@ add_custom_target(x86_32_pae
 add_custom_target(x86_64
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/64)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/64\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrsproper
+        COMMAND make mrproper
         )
 
 #Custom target: make arm_icp
@@ -339,7 +339,7 @@ add_custom_target(x86_64
 add_custom_target(arm_icp
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/integratorcp)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/integratorcp\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrsproper
+        COMMAND make mrproper
         )
 
 #Custom target: make arm_verdex
@@ -347,7 +347,7 @@ add_custom_target(arm_icp
 add_custom_target(arm_verdex
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/verdex)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/verdex\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrsproper
+        COMMAND make mrproper
         )
 
 #Custom target: make arm_rpi
@@ -355,7 +355,7 @@ add_custom_target(arm_verdex
 add_custom_target(arm_rpi
         COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/rpi)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
         COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/rpi\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrsproper
+        COMMAND make mrproper
         )
 
 #Builds the doxygen documentation
