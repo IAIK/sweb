@@ -47,7 +47,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
     }
 
     i-=4;
-    for (s=0; s<5; ++s)
+    for (s=0; s < (sizeof(line_string) - 1); ++s)
     {
       line_string[s]=' ';
     }
