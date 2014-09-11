@@ -1,17 +1,16 @@
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0005 NEW)
 endif(COMMAND cmake_policy)
-include(MakeOptions)
-
-if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
-set(CMAKE_CROSSCOMPILING 1)
-endif(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
-
-include(arch/${ARCH}/CMakeLists.compiler)
-
 project(sweb)
 
+if(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+    message("Enabling cross compilation.")
+    set(CMAKE_CROSSCOMPILING 1)
+endif(NOT(CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+
 include(MakeOptions)
+include(arch/${ARCH}/CMakeLists.compiler)
+
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
 string(REPLACE "/" "_" ARCH_ESC ${ARCH})
