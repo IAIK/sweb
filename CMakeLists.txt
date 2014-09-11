@@ -4,11 +4,13 @@ endif(COMMAND cmake_policy)
 include(MakeOptions)
 
 if(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
-set(CMAKE_CROSSCOMPILING 2)
+    message("Enabling cross compilation.")
+    set(CMAKE_CROSSCOMPILING 0)
 elseif(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
-set(CMAKE_CROSSCOMPILING 1)
+    set(CMAKE_CROSSCOMPILING 1)
 endif(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
 
+include(MakeOptions)
 include(arch/${ARCH}/CMakeLists.compiler)
 
 project(sweb)
