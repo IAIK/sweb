@@ -10,7 +10,6 @@ elseif(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
     set(CMAKE_CROSSCOMPILING 1)
 endif(CMAKE_SYSTEM_NAME MATCHES ".*Linux.*")
 
-include(MakeOptions)
 include(arch/${ARCH}/CMakeLists.compiler)
 
 project(sweb)
