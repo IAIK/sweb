@@ -33,3 +33,7 @@ utils/bochs/bochsrc
 
 #syntax: regexp
 #(.*/)?\#[^/]*\#$
+
+# Operating system artifacts
+*.DS_Store
+*Thumbs.db
