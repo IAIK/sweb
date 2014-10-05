@@ -4,7 +4,7 @@ endif(COMMAND cmake_policy)
 include(MakeOptions)
 
 if(UNIX AND NOT APPLE)
-  set(CMAKE_CROSSCOMPILING 0)
+  unset(CMAKE_CROSSCOMPILING)
 elseif(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
 endif(UNIX AND NOT APPLE)
