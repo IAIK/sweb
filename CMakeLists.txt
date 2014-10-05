@@ -3,11 +3,10 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 include(MakeOptions)
 
-if(UNIX AND NOT APPLE)
-  unset(CMAKE_CROSSCOMPILING)
-elseif(APPLE OR WIN32)
+unset(CMAKE_CROSSCOMPILING)
+if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
-endif(UNIX AND NOT APPLE)
+endif(APPLE OR WIN32)
 
 message("${CMAKE_CROSSCOMPILING}")
 
