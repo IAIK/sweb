@@ -26,7 +26,7 @@ add_custom_target(qemu
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio
+	COMMAND	qemu-system-i386 -no-kvm -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio
 	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio on localhost:1234"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
