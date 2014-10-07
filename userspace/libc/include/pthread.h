@@ -29,6 +29,10 @@ typedef unsigned int pthread_attr_t;
 typedef unsigned int pthread_mutex_t;
 typedef unsigned int pthread_mutexattr_t;
 
+//pthread spinlock typedefs
+#define PTHREAD_SPIN_T_DEFINED
+typedef unsigned int pthread_spin_t;
+
 //pthread cond typedefs
 typedef unsigned int pthread_cond_t;
 typedef unsigned int pthread_condattr_t;

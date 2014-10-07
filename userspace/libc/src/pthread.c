@@ -136,3 +136,48 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
   return -1;
 }
 
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_spin_destroy(pthread_spinlock_t *lock)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_spin_init(pthread_spinlock_t *lock, int pshared)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_spin_lock(pthread_spinlock_t *lock)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_spin_trylock(pthread_spinlock_t *lock)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_spin_unlock(pthread_spinlock_t *lock)
+{
+  return -1;
+}
+
