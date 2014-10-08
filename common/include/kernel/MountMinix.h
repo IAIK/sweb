@@ -40,6 +40,11 @@ class MountMinixAndStartUserProgramsThread : public Thread
     void processStart();
 
     /**
+     * Tells us how many processes are running
+     */
+    size_t processCount();
+
+    /**
      * returns instance
      */
     static MountMinixAndStartUserProgramsThread* instance();
@@ -47,7 +52,7 @@ class MountMinixAndStartUserProgramsThread : public Thread
     /**
      * creates a new process
      */
-    Thread* createProcess(const char* path);
+    void createProcess(const char* path);
 
   private:
 

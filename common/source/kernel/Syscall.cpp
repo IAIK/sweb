@@ -135,6 +135,8 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
 {
   // THIS METHOD IS FOR TESTING PURPOSES ONLY!
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
+  
+  // parameter check begin
   debug(SYSCALL,"Syscall::createprocess: path:%d sleep:%d\n",path,sleep);
   if (path >= 2U*1024U*1024U*1024U)
   {
@@ -147,13 +149,16 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
     return -1U;
   }
   VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
+  // parameter check end
+
   size_t len = strlen((const char*) path) + 1;
   char* copy = new char[len];
   memcpy(copy, (const char*) path, len);
-  Thread* thread = MountMinixAndStartUserProgramsThread::instance()->createProcess(copy);
+  size_t process_count = MountMinixAndStartUserProgramsThread::instance()->processCount();
+  MountMinixAndStartUserProgramsThread::instance()->createProcess(copy);
   if (sleep)
   {
-    while(Scheduler::instance()->checkThreadExists(thread)) // please note that this might fail ;)
+    while(MountMinixAndStartUserProgramsThread::instance()->processCount() > process_count) // please note that this will fail ;)
     {
       Scheduler::instance()->yield();
     }

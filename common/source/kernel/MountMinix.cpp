@@ -71,12 +71,17 @@ void MountMinixAndStartUserProgramsThread::processStart()
   counter_lock_.release();
 }
 
-Thread* MountMinixAndStartUserProgramsThread::createProcess(const char* path)
+size_t MountMinixAndStartUserProgramsThread::processCount()
+{
+  MutexLock lock(counter_lock_);
+  return progs_running_;
+}
+
+void MountMinixAndStartUserProgramsThread::createProcess(const char* path)
 {
   debug(MOUNTMINIX, "create process %s\n", path);
   Thread* process = new UserProcess(path, new FsWorkingDirectory(*working_dir_), this);
   debug(MOUNTMINIX, "created userprocess %s\n", path);
   Scheduler::instance()->addNewThread(process);
   debug(MOUNTMINIX, "added thread %s\n", path);
-  return process;
 }

@@ -143,11 +143,6 @@ class Scheduler
     void cleanupDeadThreads();
 
     /**
-     * returns the number of threads
-     */
-    uint32 threadCount();
-
-    /**
      * returns the ticks value stored
      */
     uint32 getTicks();
