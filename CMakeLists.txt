@@ -9,8 +9,6 @@ if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
 endif(APPLE OR WIN32)
 
-message("${CMAKE_CROSSCOMPILING}")
-
 include(arch/${ARCH}/CMakeLists.compiler)
 
 project(sweb)
