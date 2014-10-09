@@ -1,5 +1,5 @@
 if(COMMAND cmake_policy)
-  cmake_policy(VERSION 2.8.12)
+  cmake_policy(VERSION 2.6)
 endif(COMMAND cmake_policy)
 include(MakeOptions)
 
