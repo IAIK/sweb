@@ -1,6 +1,5 @@
 if(COMMAND cmake_policy)
-  cmake_policy(SET CMP0005 NEW)
-  cmake_policy(SET CMP0037 OLD)
+  cmake_policy(VERSION 2.8.12)
 endif(COMMAND cmake_policy)
 include(MakeOptions)
 
