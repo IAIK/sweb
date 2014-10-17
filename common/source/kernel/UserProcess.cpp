@@ -33,6 +33,11 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
     run_me_ = true;
     debug (USERPROCESS, "ctor: Done loading %s\n", minixfs_filename );
   }
+  
+  if ( main_console->getTerminal ( terminal_number_ ) )
+    setTerminal ( main_console->getTerminal ( terminal_number_ ) );
+
+  switch_to_userspace_ = 1;
 }
 
 UserProcess::~UserProcess()
@@ -45,17 +50,7 @@ UserProcess::~UserProcess()
 
 void UserProcess::Run()
 {
-  if ( run_me_ )
-    for ( ;; )
-    {
-      if ( main_console->getTerminal ( terminal_number_ ) )
-        setTerminal ( main_console->getTerminal ( terminal_number_ ) );
-      debug (USERPROCESS, "Run: %x  %d:%s Going to user, expect page fault\n", this, getPID(), getName() );
-      switch_to_userspace_ = 1;
-      Scheduler::instance()->yield();
-      //should not reach
-    }
-  else
-    kill();
+  debug (USERPROCESS, "UserProcess::Run: Fail-safe kernel panic - you probably have forgotten to set switch_to_userspace_ = 1\n");
+  assert(false);
 }
 
