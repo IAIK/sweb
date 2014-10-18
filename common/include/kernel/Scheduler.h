@@ -183,8 +183,6 @@ class Scheduler
     typedef ustl::list<Thread*> ThreadList;
     ThreadList threads_;
 
-    bool kill_old_;
-
     size_t block_scheduling_;
 
     size_t ticks_;

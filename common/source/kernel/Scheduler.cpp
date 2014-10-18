@@ -85,7 +85,6 @@ void Scheduler::createScheduler()
 
 Scheduler::Scheduler()
 {
-  kill_old_=false;
   block_scheduling_=0;
   ticks_=0;
 }
@@ -175,9 +174,6 @@ uint32 Scheduler::schedule()
     //          before this, currentThread may be 0 !!
     currentThread = threads_.front();
 
-    if ( kill_old_ == false && currentThread->state_ == ToBeDestroyed )
-      kill_old_=true;
-
     //this operation doesn't allocate or delete any kernel memory (important because Interrupts are disabled in this method)
     ustl::rotate(threads_.begin(),threads_.begin()+1, threads_.end());
 
@@ -232,43 +228,32 @@ bool Scheduler::checkThreadExists ( Thread* thread )
 
 void Scheduler::cleanupDeadThreads()
 {
-  //check outside of atmoarity for performance gain,
-  //worst case, dead threads are around a while longer
-  //then make sure we're atomar (can't really lock list, can I ;->)
-  //NOTE: currentThread is always last on list
-
-  if ( !kill_old_ )
-    return;
-
   lockScheduling();
   uint32 thread_count_max = threads_.size();
   if (thread_count_max > 1024)
     thread_count_max = 1024;
   Thread* destroy_list[thread_count_max];
   uint32 thread_count = 0;
-  debug ( SCHEDULER,"cleanupDeadThreads: now running\n" );
-  if ( kill_old_ )
+  for(uint32 i = 0; i < threads_.size(); ++i)
   {
-    for(uint32 i = 0; i < threads_.size(); ++i)
+    Thread* tmp = threads_[i];
+    if(tmp->state_ == ToBeDestroyed)
     {
-      Thread* tmp = threads_[i];
-      if(tmp->state_ == ToBeDestroyed)
-      {
-        destroy_list[thread_count++] = tmp;
-        threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
-        --i;
-      }
-      if (thread_count >= thread_count_max)
-        break;
+      destroy_list[thread_count++] = tmp;
+      threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
+      --i;
     }
-
-    kill_old_=false;
+    if (thread_count >= thread_count_max)
+      break;
   }
-  debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   unlockScheduling();
-  for(uint32 i = 0; i < thread_count; ++i)
+  if (thread_count > 0)
   {
-    delete destroy_list[i];
+    for(uint32 i = 0; i < thread_count; ++i)
+    {
+      delete destroy_list[i];
+    }
+    debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   }
 }
 
