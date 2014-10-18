@@ -150,17 +150,24 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pt.present) //the present bit is the same for 4k and 4m
   {
-    assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
-    if (physical_pte_page)
-      *physical_pte_page = page_directory[pde_vpn].pt.page_table_ppn;
-    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-    if (pte_base[pte_vpn].present)
+    if (page_directory[pde_vpn].page.size)
     {
-      *physical_page = pte_base[pte_vpn].page_ppn;
-      return PAGE_SIZE;
+      *physical_page = page_directory[pde_vpn].page.page_ppn;
+      return (PAGE_SIZE*1024U);
     }
     else
-      return 0;
+    {
+      if (physical_pte_page)
+        *physical_pte_page = page_directory[pde_vpn].pt.page_table_ppn;
+      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+      if (pte_base[pte_vpn].present)
+      {
+        *physical_page = pte_base[pte_vpn].page_ppn;
+        return PAGE_SIZE;
+      }
+      else
+        return 0;
+    }
   }
   else
     return 0;
