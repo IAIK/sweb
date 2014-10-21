@@ -155,7 +155,7 @@ void Thread::printBacktrace(bool use_stored_registers)
     {
       ssize_t line = get_function_line(StartAddr,CallStack[i] - StartAddr);
       if (line > 0)
-        debug(BACKTRACE, "   (%d): %x (%s:%u)\n", i, CallStack[i], FunctionName, line - 1);
+        debug(BACKTRACE, "   (%d): %x (%s:%u)\n", i, CallStack[i], FunctionName, line);
       else
         debug(BACKTRACE, "   (%d): %x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
     }

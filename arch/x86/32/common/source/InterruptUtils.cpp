@@ -239,10 +239,15 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     // ASM- modules are very likely to be detected incorrectly.
     char FunctionName[255];
     pointer StartAddr = get_function_name(currentThread->kernel_arch_thread_info_->eip, FunctionName);
-
     if (StartAddr)
-      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
-          currentThread->kernel_arch_thread_info_->eip - StartAddr);
+    {
+      ssize_t line = get_function_line(StartAddr,currentThread->kernel_arch_thread_info_->eip - StartAddr);
+      if (line > 0)
+        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", FunctionName, line);
+      else
+        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
+              currentThread->kernel_arch_thread_info_->eip - StartAddr);
+    }
   }
 
   if(!address)
