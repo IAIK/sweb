@@ -50,23 +50,14 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
 
-  if (page_directory[pde_vpn].page.size)
+  assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
+  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  if (pte_base[pte_vpn].present)
   {
-    page_directory[pde_vpn].page.present = 0;
-    //PageManager manages Pages of size PAGE_SIZE only, so we have to free this_page_size/PAGE_SIZE Pages
-    for (uint32 p=0;p<1024;++p)
-      PageManager::instance()->freePage(page_directory[pde_vpn].page.page_ppn*1024 + p);
+    pte_base[pte_vpn].present = 0;
+    PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
   }
-  else
-  {
-    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-    if (pte_base[pte_vpn].present)
-    {
-      pte_base[pte_vpn].present = 0;
-      PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
-    }
-    checkAndRemovePT(pde_vpn);
-  }
+  checkAndRemovePT(pde_vpn);
 }
 
 void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
@@ -98,14 +89,6 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     pte_base[pte_vpn].page_ppn = physical_page;
     pte_base[pte_vpn].present = 1;
   }
-  else if ((page_size==PAGE_SIZE*1024) && (page_directory[pde_vpn].page.present == 0))
-  {
-    page_directory[pde_vpn].page.writeable = 1;
-    page_directory[pde_vpn].page.size = 1;
-    page_directory[pde_vpn].page.page_ppn = physical_page;
-    page_directory[pde_vpn].page.user_access = user_access;
-    page_directory[pde_vpn].page.present = 1;
-  }
   else
     assert(false);
 }
@@ -121,26 +104,18 @@ ArchMemory::~ArchMemory()
   {
     if (page_directory[pde_vpn].pt.present)
     {
-      if (page_directory[pde_vpn].page.size)
+      assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
+      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+      for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
       {
-        page_directory[pde_vpn].page.present=0;
-          for (uint32 p=0;p<1024;++p)
-            PageManager::instance()->freePage(page_directory[pde_vpn].page.page_ppn*1024 + p);
-      }
-      else
-      {
-        PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-        for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+        if (pte_base[pte_vpn].present)
         {
-          if (pte_base[pte_vpn].present)
-          {
-            pte_base[pte_vpn].present = 0;
-            PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
-          }
+          pte_base[pte_vpn].present = 0;
+          PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
         }
-        page_directory[pde_vpn].pt.present=0;
-        PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_table_ppn);
       }
+      page_directory[pde_vpn].pt.present=0;
+      PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_table_ppn);
     }
   }
   PageManager::instance()->freePage(page_dir_page_);
