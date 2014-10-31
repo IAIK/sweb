@@ -39,11 +39,6 @@ class Loader
     void initUserspaceAddressSpace();
 
     /**
-     *Frees the page directory of the current Thread
-     */
-    void cleanupUserspaceAddressSpace();
-
-    /**
      *Initialises the Addressspace of the User, creates the Thread's
      *InfosUserspaceThread and sets the PageDirectory,
      *loads the ehdr and phdrs from executable
