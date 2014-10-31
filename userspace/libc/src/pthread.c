@@ -49,6 +49,15 @@ int pthread_join(pthread_t thread, void **value_ptr)
  * function stub
  * posix compatible signature - do not change the signature!
  */
+int pthread_detach(pthread_t thread)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
 int pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
   return -1;
