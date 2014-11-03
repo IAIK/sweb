@@ -300,22 +300,10 @@ extern ssize_t read(int file_descriptor, void *buffer, size_t count);
  */
 extern ssize_t write(int file_descriptor, const void *buffer, size_t count);
 
-/**
- * posix function signature
- * do not change the signature!
- */
 extern int brk(void *end_data_segment);
 
-/**
- * posix function signature
- * do not change the signature!
- */
 extern void* sbrk(intptr_t increment);
 
-/**
- * posix function signature
- * do not change the signature!
- */
 extern unsigned int sleep(unsigned int seconds);
 
 //----------------------------------------------------------------------

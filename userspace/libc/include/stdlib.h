@@ -77,21 +77,11 @@ extern void exit(int status);
  * register a function to be called at normal process termination
  * @param function the function to be called
  * @return 0 if successful, other-wise non-zero
- * posix function signature
- * do not change the signature!
  */
 extern int atexit(void (*function)(void));
 
-/**
- * posix function signature
- * do not change the signature!
- */
 extern void *malloc(unsigned int size);
 
-/**
- * posix function signature
- * do not change the signature!
- */
 extern void free(void *ptr);
 
 #endif // stdlib_h___

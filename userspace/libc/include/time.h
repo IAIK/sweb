@@ -8,10 +8,6 @@
 typedef unsigned int clock_t;
 #endif // CLOCK_T_DEFINED
 
-/**
- * posix function signature
- * do not change the signature!
- */
 extern clock_t clock(void);
 
 
