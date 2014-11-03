@@ -47,6 +47,13 @@ extern int pthread_join(pthread_t thread, void **value_ptr);
  * posix function signature
  * do not change the signature!
  */
+#define PTHREAD_DETACH_DEFINED
+extern int pthread_detach(pthread_t thread);
+
+/**
+ * posix function signature
+ * do not change the signature!
+ */
 extern int pthread_mutex_init(pthread_mutex_t *mutex,
                               const pthread_mutexattr_t *attr);
 

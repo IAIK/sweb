@@ -319,6 +319,15 @@ add_custom_target(x86_32
         COMMAND make mrproper
         )
 
+#Custom target: make x86_32_only
+#Changes MakeOptions ARCH setting to x86_32 AND REMOVE ALL other architectures
+add_custom_target(x86_32_only
+        COMMENT "rm -rf ${PROJECT_SOURCE_DIR}/arch/arm ${PROJECT_SOURCE_DIR}/arch/xen ${PROJECT_SOURCE_DIR}/arch/x86/64 ${PROJECT_SOURCE_DIR}/arch/x86/32/pae"
+        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/arch/arm ${PROJECT_SOURCE_DIR}/arch/xen ${PROJECT_SOURCE_DIR}/arch/x86/64 ${PROJECT_SOURCE_DIR}/arch/x86/32/pae
+        COMMAND make x86_32
+        )
+
+#Custom target: make x86_32_pae
 #Custom target: make x86_32_pae
 #Changes MakeOptions ARCH setting to x86_32_pae
 add_custom_target(x86_32_pae

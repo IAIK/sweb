@@ -130,7 +130,7 @@ int close(int file_descriptor)
 int open(const char *path, int flags, ...)
 {
   // taken from the uClibc open()
-  mode_t mode;
+  mode_t mode = 0;
 
   if(flags & O_CREAT)
   {
