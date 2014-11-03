@@ -98,18 +98,6 @@ void Scheduler::addNewThread ( Thread *thread )
   unlockScheduling();
 }
 
-void Scheduler::removeCurrentThread()
-{
-  debug ( SCHEDULER,"removeCurrentThread: %x %d:%s, threads_.size() %d\n",currentThread,currentThread->getPID(),currentThread->getName(),threads_.size() );
-  lockScheduling();
-  waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
-  if ( threads_.size() > 1 )
-  {
-    threads_.remove(currentThread);
-  }
-  unlockScheduling();
-}
-
 void Scheduler::sleep()
 {
   currentThread->state_=Sleeping;

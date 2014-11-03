@@ -46,15 +46,6 @@ class Scheduler
     void addNewThread ( Thread *thread );
 
     /**
-     * removes the currently active Thread from the scheduling list
-     * this method has actually no use right now and should propably not be used
-     * if you want to keep a thread from being scheduled use sleep() instead
-     * if you want to remove a thread permanently use Thread::kill() instead
-     * you can't remove the last thread
-     */
-    void removeCurrentThread();
-
-    /**
      * puts the currentThread to sleep and keeps it from being scheduled
      */
     void sleep();
