@@ -91,7 +91,7 @@ Scheduler::Scheduler()
 
 void Scheduler::addNewThread ( Thread *thread )
 {
-  debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getPID(), thread->getName() );
+  debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getTID(), thread->getName() );
   lockScheduling();
   waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
   threads_.push_back ( thread );
@@ -251,7 +251,7 @@ void Scheduler::printThreadList()
   lockScheduling();
   debug ( SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n",threads_.size() );
   for ( c=0; c<threads_.size();++c )
-    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),Thread::threadStatePrintable[threads_[c]->state_] );
+    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getTID(),threads_[c]->getName(),Thread::threadStatePrintable[threads_[c]->state_] );
   unlockScheduling();
 }
 
@@ -279,7 +279,7 @@ void Scheduler::waitForFreeSpinLock(SpinLock& lock)  //not as severe as stopping
     {
       kprintfd("WARNING: Scheduler::waitForFreeSpinLock: SpinLock <%s> is locked since more than %d ticks? Maybe there is something wrong!\n", lock.name_,ticks);
       Thread* t = lock.heldBy();
-      kprintfd("Thread holding SpinLock: %x  %d:%s     [%s]\n",t,t->getPID(),t->getName(),Thread::threadStatePrintable[t->state_]);
+      kprintfd("Thread holding SpinLock: %x  %d:%s     [%s]\n",t,t->getTID(),t->getName(),Thread::threadStatePrintable[t->state_]);
       t->printBacktrace();
       //assert(false);
     }

@@ -117,7 +117,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
     return;
   }
 
-  debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %d:%s\n",virtual_page,virtual_address,currentThread->getPID(),currentThread->getName() );
+  debug ( LOADER,"loadOnePageSafeButSlow: going to load virtual page %d (virtual_address=%d) for %d:%s\n",virtual_page,virtual_address,currentThread->getTID(),currentThread->getName() );
 
   debug ( LOADER,"loadOnePage: Num ents: %d\n",hdr_->e_phnum );
   debug ( LOADER,"loadOnePage: Entry: %x\n",hdr_->e_entry );

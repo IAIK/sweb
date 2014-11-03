@@ -85,9 +85,9 @@ class Thread
         return "<UNNAMED THREAD>";
     }
 
-    uint32 getPID()
+    size_t getTID()
     {
-      return pid_;
+      return tid_;
     }
 
     /**
@@ -143,8 +143,8 @@ class Thread
      */
     Thread &operator= ( Thread const &src );
 
-    uint64 num_jiffies_;
-    uint32 pid_;
+    size_t num_jiffies_;
+    size_t tid_;
 
     Terminal *my_terminal_;
 

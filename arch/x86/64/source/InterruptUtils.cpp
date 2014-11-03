@@ -283,7 +283,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   //--------Start "just for Debugging"-----------
 
   debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
-      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread ? currentThread->getPID() : -1ULL,
+      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread ? currentThread->getTID() : -1ULL,
       currentThread ? currentThread->getName() : 0, currentThread ? currentThread->switch_to_userspace_ : -1ULL);
 
   debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");

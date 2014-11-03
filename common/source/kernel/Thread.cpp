@@ -34,7 +34,7 @@ Thread::Thread(const char *name) :
   loader_(0),
   state_(Running),
   sleeping_on_mutex_(0),
-  pid_(0),
+  tid_(0),
   my_terminal_(0),
   working_dir_(0),
   name_(name)
@@ -51,7 +51,7 @@ Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
   loader_(0),
   state_(Running),
   sleeping_on_mutex_(0),
-  pid_(0),
+  tid_(0),
   my_terminal_(0),
   working_dir_(working_dir),
   name_(name)
