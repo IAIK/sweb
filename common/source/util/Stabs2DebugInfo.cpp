@@ -68,12 +68,6 @@ void Stabs2DebugInfo::initialiseSymbolTable()
   {
     if (current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME)
     {
-      if ((pointer)current_stab < 0x80000000)
-      {
-        char FunctionName[400];
-        demangleName(stabstr_buffer_ + current_stab->n_strx, FunctionName);
-        debug(US_BACKTRACE, "Found \"%s\" at %x\n",FunctionName, current_stab->n_value);
-      }
       function_symbols_[current_stab->n_value] = current_stab;
     }
   }
@@ -84,10 +78,11 @@ void Stabs2DebugInfo::initialiseSymbolTable()
 void Stabs2DebugInfo::printAllFunctions() const
 {
   char *buffer = new char[1000];
+  debug(MAIN, "Known symbols:\n");
   for (auto symbol : function_symbols_)
   {
     demangleName(stabstr_buffer_ + symbol.second->n_strx, buffer);
-    debug(MAIN, "Known symbol: \"%s\"\n", buffer);
+    debug(MAIN, "\t%s\n", buffer);
   }
 }
 
