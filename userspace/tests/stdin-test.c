@@ -3,6 +3,7 @@
 #include "string.h"
 #include "stdlib.h"
 #include "nonstd.h"
+#include "sys/syscall.h"
 
 #define FORK_ENABLED 0
 #define EXECUTABLE_PREFIX       "/"          // "/user_progs/"
@@ -15,6 +16,24 @@ char command[256];
 char executable[256+EXECUTABLE_PREFIX_LEN];
 char args[10][256];
 
+int other_fun(int blubb)
+{
+  if (!blubb)
+  {
+    __syscall(sc_trace, 0, 0, 0, 0, 0);
+    return 1;
+  }
+  return 1 + some_fun(blubb-1);
+}
+int some_fun(int para)
+{
+  if (!para)
+  {
+    __syscall(sc_trace, 0, 0, 0, 0, 0);
+    return 1;
+  }
+  return 2 + other_fun(para-1);
+}
 void handle_command(char* buffer,int buffer_size)
 {
   int c=0;
@@ -101,6 +120,10 @@ void handle_command(char* buffer,int buffer_size)
     exit_code=atoi(&buffer[c]);
     printf("Exiting Shell with exit_code %d\n",exit_code); 
     running=0;
+  }
+  else if (strcmp(command, "trace") == 0)
+  {
+    some_fun(10);
   }
   else if (FORK_ENABLED)
   {
