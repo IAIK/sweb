@@ -24,6 +24,7 @@
 #include "Thread.h"
 #include "ArchInterrupts.h"
 #include "backtrace.h"
+#include "Stabs2DebugInfo.h"
 
 //remove this later
 #include "Thread.h"
@@ -219,6 +220,7 @@ extern "C" void irqHandler_65()
   }
 }
 
+extern Stabs2DebugInfo const *kernel_debug_info;
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
@@ -238,10 +240,12 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     // returned a wrong function name here! Especially routines residing inside
     // ASM- modules are very likely to be detected incorrectly.
     char FunctionName[255];
-    pointer StartAddr = get_function_name(currentThread->kernel_arch_thread_info_->eip, FunctionName);
+    pointer StartAddr = 0;
+    if (kernel_debug_info)
+      StartAddr = kernel_debug_info->getFunctionName(currentThread->kernel_arch_thread_info_->eip, FunctionName);
     if (StartAddr)
     {
-      ssize_t line = get_function_line(StartAddr,currentThread->kernel_arch_thread_info_->eip - StartAddr);
+      ssize_t line = kernel_debug_info->getFunctionLine(StartAddr,currentThread->kernel_arch_thread_info_->eip - StartAddr);
       if (line > 0)
         debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", FunctionName, line);
       else
