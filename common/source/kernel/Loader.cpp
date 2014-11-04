@@ -32,6 +32,13 @@ void Loader::initUserspaceAddressSpace()
   arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
 }
 
+
+bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
+{
+  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, position, SEEK_SET);
+  return VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, buffer, count) - (int32)count;
+}
+
 bool Loader::readHeaders()
 {
   //the ehdr and the phdrs are saved as members, since they
@@ -46,23 +53,19 @@ bool Loader::readHeaders()
     return false;
   }
 
-  if (!Elf::headerCorrect(hdr_))
   //checking elf-magic-numbers, format (32/64bit) and a few more things
-  {
+  if (!Elf::headerCorrect(hdr_))
     return false;
-  }
+
 
   if(sizeof(Elf::Phdr) != hdr_->e_phentsize)
   {
+    debug(LOADER, "Expected program header size does not match advertised program header size\n");
     return false;
   }
 
   phdrs_.resize(hdr_->e_phnum, true);
-
-  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, hdr_->e_phoff, SEEK_SET);
-
-  if(VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(Elf::Phdr))
-      != static_cast<ssize_t>(sizeof(Elf::Phdr)*hdr_->e_phnum))
+  if(readFromBinary(reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phoff, hdr_->e_phnum*sizeof(Elf::Phdr)))
   {
     return false;
   }

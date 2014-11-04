@@ -65,6 +65,9 @@ class Loader
     bool readHeaders();
 
 
+    bool readFromBinary (char* buffer, l_off_t position, size_t count);
+
+
     size_t fd_;
     Thread *thread_;
     Elf::Ehdr *hdr_;
