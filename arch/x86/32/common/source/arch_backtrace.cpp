@@ -59,3 +59,37 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 
   return i;
 }
+
+int backtrace_user(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
+{
+  if (!call_stack || !size || thread != currentThread)
+    return 0;
+
+  debug(US_BACKTRACE, "Backtracing userspace user\n");
+
+  void *ebp = (void*)thread->user_arch_thread_info_->ebp;
+  StackFrame *CurrentFrame = (StackFrame*)ebp;
+
+  // the userspace stack is allowed to be anywhere in userspace
+  void *StackStart = (void*) (2U*1024U*1024U*1024U - sizeof ( pointer )); // the stack "starts" at the high addresses...
+  void *StackEnd = 0x0; // ... and "ends" at the lower ones.
+
+  debug(US_BACKTRACE, "Backtracing in user start %x %x\n", (void*)thread->user_arch_thread_info_->eip, ebp);
+
+  void *StartAddress = (void*)0x00000000;
+  void *EndAddress = (void*)0x80000000;
+
+  int i = 0;
+  while (i < size &&
+      ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
+      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
+      ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
+      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
+  {
+    debug(US_BACKTRACE, "Backtracing in user frame %p - %p\n",  (pointer)CurrentFrame->return_address, (pointer)CurrentFrame->previous_frame);
+    call_stack[i++] = (pointer)CurrentFrame->return_address;
+    CurrentFrame = CurrentFrame->previous_frame;
+  }
+
+  return i;
+}
