@@ -57,3 +57,5 @@
 #define sc_vfork 190
 #define sc_createprocess 191
 
+#define sc_trace 252
+

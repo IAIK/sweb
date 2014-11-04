@@ -152,7 +152,7 @@ now_using_segments:
 	or eax, 0x00000010;
 	mov cr4,eax;
 
-	;  2) setting CR0's PG bit to enable paging
+	;  2) setting CR0s PG bit to enable paging
 
     mov word[0B8008h], 9F34h
 

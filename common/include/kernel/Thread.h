@@ -123,6 +123,8 @@ class Thread
     void printBacktrace();
     void printBacktrace(bool use_stored_registers);
 
+    void printUserBacktrace();
+
     /**
      * debugging information for mutex deadlocks
      */
@@ -152,6 +154,8 @@ class Thread
     FsWorkingDirectory* working_dir_;
 
     const char *name_;
+
+
 };
 
 
