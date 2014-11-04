@@ -62,7 +62,7 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 
 int backtrace_user(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {
-  if (!call_stack || !size || thread != currentThread)
+  if (!call_stack || !size || thread != currentThread || !thread->user_arch_thread_info_)
     return 0;
 
   debug(US_BACKTRACE, "Backtracing userspace user\n");
