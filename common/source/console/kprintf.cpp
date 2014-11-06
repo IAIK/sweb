@@ -99,6 +99,94 @@ uint8 const LEFT  = 16;   /* left justified */
 uint8 const SPECIAL = 32;   /* 0x */
 uint8 const LARGE = 64;   /* use 'ABCDEF' instead of 'abcdef' */
 
+void output_number_long(void (*write_char)(char), uint64 num, uint64 base,
+                        size_t size, size_t precision, uint8 type)
+{
+  char c;
+  char sign, tmp[70];
+  const char* digits;
+  static const char small_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+  static const char large_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  size_t i;
+
+  digits = (type & LARGE) ? large_digits : small_digits;
+  if (type & LEFT)
+  {
+    type &= ~ZEROPAD;
+    size = 0;  // no padding then
+  }
+  if (base < 2 || base > 36)
+    return;
+  c = (type & ZEROPAD) ? '0' : ' ';
+  sign = 0;
+  if (type & SIGN)
+  {
+    if (((int64)num) < 0)
+    {
+      sign = '-';
+      num = -(int64)num;
+    }
+    else if (type & PLUS)
+    {
+      sign = '+';
+    }
+    else if (type & SPACE)
+    {
+      sign = ' ';
+    }
+  }
+  i = 0;
+  if (num == 0)
+    tmp[i++] = '0';
+  else
+    while (num != 0)
+    {
+      uint64 index = num % base;
+      tmp[i++] = digits[index];
+      num /= base;
+    }
+  //    size -= precision;
+  //    if (!(type&(ZEROPAD+LEFT))) {
+  //      while(size-- >0) {
+  //        console->write(' ');
+  //      }
+  //    }
+  if (sign)
+  {
+    tmp[i++] = sign;
+  }
+  if (type & SPECIAL)
+  {
+    precision = 0;  // no precision with special for now
+    if (base == 8)
+    {
+      tmp[i++] = '0';
+    }
+    else if (base == 16)
+    {
+      tmp[i++] = digits[33];
+      tmp[i++] = '0';
+    }
+  }
+
+  if (precision > size)
+    precision = size;
+
+  while (size-- - precision > i)
+    (write_char)((char)c);
+
+  while (precision-- > i)
+    (write_char)((char)'0');
+
+  while (i-- > 0)
+    (write_char)((char)tmp[i]);
+  //   while (size-- > 0) {
+  //   if (buf <= end)
+  //   *buf = ' ';
+  //   ++buf;
+  //   }
+}
+
 void output_number ( void ( *write_char ) ( char ), size_t num, size_t base, size_t size, size_t precision, uint8 type )
 {
   char c;
@@ -290,6 +378,26 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
           output_number ( write_char, ( size_t ) va_arg ( args,size_t ), 16, width, 0, flag | SPECIAL | LARGE );
           break;
 
+        case 'l':
+          switch (*(fmt + 1))
+          {
+            case 'u':
+              output_number_long(write_char, (uint64)va_arg(args, uint64), 10,
+                                 width, 0, flag);
+              fmt++;
+              break;
+            case 'x':
+              output_number_long(write_char, (uint64)va_arg(args, uint64), 16,
+                                 width, 0, flag);
+              fmt++;
+              break;
+            default:
+              output_number_long(write_char, (uint64)va_arg(args, uint64), 10,
+                                 width, 0, flag | SIGN);
+          }
+          break;
+
+
           //no floating point yet
           //case 'f':
           //  break;
@@ -434,7 +542,7 @@ void debug ( size_t flag, const char *fmt, ... )
         kprintfd ( COLORDEBUG("[SYSCALL    ]", "34"));
         break;
       case MAIN:
-        kprintfd ( COLORDEBUG("[MAIN       ]", "31")); 
+        kprintfd ( COLORDEBUG("[MAIN       ]", "31"));
         break;
       case THREAD:
         kprintfd ( COLORDEBUG("[THREAD     ]", "35"));
