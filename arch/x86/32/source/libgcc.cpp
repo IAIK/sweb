@@ -29,6 +29,13 @@ uint64 __udivdi3(uint64 num, uint64 den)
 	return __udivmoddi4(num, den, 0);
 }
 
+uint64 __umoddi3(uint64 a, uint64 b)
+{
+  uint64 r;
+  __udivmoddi4(a, b, &r);
+  return r;
+}
+
 uint64 __udivmoddi4(uint64 num, uint64 den, uint64 *rem_p)
 {
 	uint64 quot = 0, qbit = 1;
