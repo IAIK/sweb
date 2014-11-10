@@ -241,13 +241,21 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
 
   if(bytes_read != static_cast<ssize_t>(max_value - min_value))
   {
+    if (bytes_read == -1)
+    {
+      if (FileDescriptor::getFileDescriptor(fd_) == NULL)
+      {
+        kprintfd("Loader::loadOnePageSafeButSlow: ERROR cannot read from a closed file descriptor\n");
+        assert(false);
+      }
+    }
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
     //free buffer
     if (buffersize > PAGE_SIZE)
       delete[] buffer;
     load_lock_.release();
     Syscall::exit ( 9998 );
-  }
+   }
   page = PageManager::instance()->getFreePhysicalPage();
   debug(PM, "got new page %x\n", page);
   ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
@@ -264,11 +272,6 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
     assert(part.vaddr - min_value + part.length <= buffersize);
     assert(part.page_byte + part.length <= PAGE_SIZE);
     memcpy(dest + part.page_byte, buffer + part.vaddr - min_value, part.length);
-//    kprintfd("memcpy to %x from %x - %x bytes\n",(pointer)(dest + part.page_byte), (pointer)(buffer + part.vaddr - min_value), part.length);
-//    for (size_t k = 0; k < part.length; k++)
-//    {
-//      kprintfd("*%x = %x and *%x = %x\n", dest + part.page_byte + k, *(dest + part.page_byte + k), buffer + part.vaddr - min_value + k, *(buffer + part.vaddr - min_value + k));
-//    }
     written += part.length;
   }
 
@@ -276,10 +279,6 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
     delete[] buffer;
 
   arch_memory_.mapPage(virtual_page, page, true);
-//  for (size_t k = 0; k < 4096; k++)
-//  {
-//    kprintfd("*%x = %x\n", virtual_page * PAGE_SIZE + k, *(uint8*)(virtual_page * PAGE_SIZE + k));
-//  }
   debug ( PM,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
 
 }
