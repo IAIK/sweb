@@ -48,8 +48,23 @@
 
 KeyboardManager *KeyboardManager::instance_ = 0;
 
+void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
+{
+  kb_wait();
+  outbp( port, cmd );
+}
+ 
+  
 KeyboardManager::KeyboardManager() : keyboard_buffer_( 256 ), extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
+  send_cmd(0xAD);      // disable the keyboard
+  uint8 state = inportb( 0x64 );
+  while((state & 0x1))
+  {
+    inportb( 0x60 );
+    state = inportb( 0x64 );
+  }
+  send_cmd(0xAE);    // enable the keyboard
 }
 
 KeyboardManager::~KeyboardManager()
@@ -68,12 +83,6 @@ void KeyboardManager::kb_wait()
   }
   if (i>=0x10000)
     kprintfd("KeyboardManager::kb_wait: waiting on 0x02 didn't speed up things :-(\n");
-}
-
-void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
-{
-  kb_wait();
-  outbp( port, cmd );
 }
 
 void KeyboardManager::serviceIRQ( void )
