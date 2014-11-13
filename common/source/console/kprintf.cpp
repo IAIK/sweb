@@ -224,25 +224,38 @@ void output_number ( void ( *write_char ) ( char ), size_t num, size_t base, siz
   }
   i = 0;
   if ( num == 0 )
+  {
     tmp[i++]='0';
-  else while ( num != 0 )
+  }
+  else
+  {
+    while ( num != 0 )
     {
       tmp[i++] = digits[num%base];
       num /= base;
     }
-//    size -= precision;
-//    if (!(type&(ZEROPAD+LEFT))) {
-//      while(size-- >0) {
-//        console->write(' ');
-//      }
-//    }
+  }
+
+
+
   if ( sign )
   {
     tmp[i++] = sign;
   }
+
   if ( type & SPECIAL )
   {
     precision = 0; //no precision with special for now
+
+    // how many characters do we have left?
+    if (size > 0)
+    {
+      int additional_chars = (base == 8)?1:((base== 16)?2:0);
+      int still_left = (size - i - additional_chars);
+      for (int ctr = 0; ctr < still_left; ++ctr)
+        tmp[i++] = '0';
+    }
+
     if ( base==8 )
     {
       tmp[i++] = '0';
