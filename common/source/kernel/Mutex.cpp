@@ -95,8 +95,8 @@ void Mutex::release(const char* debug_info)
 {
   checkInvalidRelease("Mutex::release", debug_info);
   //kprintfd("Mutex::release %x %s, %s\n", this, name_, debug_info);
-  mutex_ = 0;
   held_by_=0;
+  mutex_ = 0;
   spinlock_.acquire();
   if ( ! sleepers_.empty() )
   {
