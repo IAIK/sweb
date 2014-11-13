@@ -12,15 +12,19 @@
 #include "Syscall.h"
 #include "fs/VfsSyscall.h"
 #include <ustl/uvector.h>
-
+#include "backtrace.h"
+#include "Stabs2DebugInfo.h"
+#include <ustl/umemory.h>
 
 Loader::Loader ( ssize_t fd, Thread *thread ) : fd_ ( fd ),
-    thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_")
+    thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_"),
+    userspace_debug_info_(0)
 {
 }
 
 Loader::~Loader()
 {
+  delete userspace_debug_info_;
   delete hdr_;
 }
 
@@ -30,6 +34,13 @@ void Loader::initUserspaceAddressSpace()
   size_t page_for_stack = PageManager::instance()->getFreePhysicalPage();
 
   arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
+}
+
+
+bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
+{
+  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, position, SEEK_SET);
+  return VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, buffer, count) - (int32)count;
 }
 
 bool Loader::readHeaders()
@@ -46,23 +57,19 @@ bool Loader::readHeaders()
     return false;
   }
 
-  if (!Elf::headerCorrect(hdr_))
   //checking elf-magic-numbers, format (32/64bit) and a few more things
-  {
+  if (!Elf::headerCorrect(hdr_))
     return false;
-  }
+
 
   if(sizeof(Elf::Phdr) != hdr_->e_phentsize)
   {
+    debug(LOADER, "Expected program header size does not match advertised program header size\n");
     return false;
   }
 
   phdrs_.resize(hdr_->e_phnum, true);
-
-  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, hdr_->e_phoff, SEEK_SET);
-
-  if(VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phnum*sizeof(Elf::Phdr))
-      != static_cast<ssize_t>(sizeof(Elf::Phdr)*hdr_->e_phnum))
+  if(readFromBinary(reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phoff, hdr_->e_phnum*sizeof(Elf::Phdr)))
   {
     return false;
   }
@@ -70,7 +77,7 @@ bool Loader::readHeaders()
   return true;
 }
 
-bool Loader::loadExecutableAndInitProcess()
+bool Loader::loadExecutableAndInitProcess(bool load_debugging_info)
 {
   debug ( LOADER,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
 
@@ -82,6 +89,9 @@ bool Loader::loadExecutableAndInitProcess()
   debug ( LOADER,"loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr_->e_entry, hdr_->e_phnum );
   if ( isDebugEnabled ( LOADER ) )
     Elf::printElfHeader ( *hdr_ );
+
+  if (load_debugging_info)
+    loadDebugInfoIfAvailable();
 
   ArchThreads::createThreadInfosUserspaceThread (
         thread_->user_arch_thread_info_,
@@ -101,9 +111,6 @@ struct PagePart
   size_t vaddr;
   size_t length;
 };
-
-#define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
-  ((((size_t)Value) >= ((size_t)LowerBound)) && (((size_t)Value) < ((size_t)UpperBound)))
 
 void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
 {
@@ -282,3 +289,106 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
   debug ( PM,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
 
 }
+
+
+bool Loader::loadDebugInfoIfAvailable()
+{
+  debug(US_BACKTRACE, "loadDebugInfoIfAvailable start\n");
+  if (sizeof(Elf::Shdr) != hdr_->e_shentsize)
+  {
+    debug(US_BACKTRACE, "Expected section header size does not match advertised section header size\n");
+    return false;
+  }
+
+  ustl::vector<Elf::Shdr> section_headers;
+  section_headers.resize(hdr_->e_shnum, true);
+  if (readFromBinary(reinterpret_cast<char*>(&section_headers[0]), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
+  {
+    debug(US_BACKTRACE, "Failed to load section headers!\n");
+    return false;
+  }
+
+
+  // now that we have loaded the section headers, we want to find and load the section that contains
+  // the section names
+  // in the simple case this section name section is only 0xFF00 bytes long, in that case
+  // loading is simple. we only support this case for now
+
+
+  auto section_name_section = hdr_->e_shstrndx;
+  auto section_name_size = section_headers[section_name_section].sh_size;
+  ustl::vector<char> section_names(section_name_size);
+
+  if (readFromBinary(&section_names[0], section_headers[section_name_section].sh_offset, section_name_size ))
+  {
+    debug(US_BACKTRACE, "Failed to load section name section\n");
+    return false;
+  }
+
+
+  // now that we have names we read through all the sections
+  // and load the two we're interested in
+
+  char *stab_data=0;
+  char *stabstr_data=0;
+  size_t stab_data_size=0;
+
+  for (auto const &section: section_headers)
+  {
+    if (section.sh_name)
+    {
+      if (!strcmp(&section_names[section.sh_name], ".stab"))
+      {
+        debug(US_BACKTRACE, "Found stab section, index is %d\n", section.sh_name);
+        if (stab_data)
+        {
+          debug(US_BACKTRACE, "Already loaded the stab section?, skipping\n");
+        }
+        else
+        {
+          auto size = section.sh_size;
+          stab_data = new char[size];
+          stab_data_size = size;
+          if (readFromBinary(stab_data, section.sh_offset, size))
+          {
+            debug(US_BACKTRACE, "Failed to load stab section!\n");
+            delete[] stab_data;
+            stab_data=0;
+          }
+        }
+      }
+      if (!strcmp(&section_names[section.sh_name], ".stabstr"))
+      {
+        debug(US_BACKTRACE, "Found stabstr section, index is %d\n", section.sh_name);
+        if (stabstr_data)
+        {
+          debug(US_BACKTRACE, "Already loaded the stabstr section?, skipping\n");
+        }
+        else
+        {
+          auto size = section.sh_size;
+          stabstr_data = new char[size];
+          if (readFromBinary(stabstr_data, section.sh_offset, size))
+          {
+            debug(US_BACKTRACE, "Failed to load stabstr section!\n");
+            delete[] stabstr_data;
+            stabstr_data=0;
+          }
+        }
+      }
+    }
+  }
+
+  if (!stab_data || !stabstr_data)
+  {
+    delete[] stab_data;
+    delete[] stabstr_data;
+    debug(US_BACKTRACE, "Failed to load necessary debug data!\n");
+    return false;
+  }
+
+  userspace_debug_info_ = new Stabs2DebugInfo(stab_data, stab_data + stab_data_size, stabstr_data);
+
+  return true;
+}
+
