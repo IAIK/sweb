@@ -148,7 +148,7 @@ class Elf
         Elf64_Half e_shstrndx;
     } __attribute__((__packed__));
 
-    typedef struct
+    struct sELF64_Shdr
     {
         Elf64_Word sh_name;
         Elf64_Word sh_type;
@@ -160,7 +160,7 @@ class Elf
         Elf64_Word sh_info;
         Elf64_Xword sh_addralign;
         Elf64_Xword sh_entsize;
-    } __attribute__((__packed__)) ELF64_Shdr;
+    } __attribute__((__packed__)) ;
 
     typedef struct
     {
@@ -198,7 +198,7 @@ class Elf
     } __attribute__((__packed__));
 
     typedef struct sELF64_Phdr Phdr;
-
+    typedef struct sELF64_Shdr Shdr;
     typedef struct sELF64_Ehdr Ehdr;
 
     static bool headerCorrect(Ehdr* hdr)
