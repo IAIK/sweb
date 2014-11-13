@@ -279,6 +279,9 @@ Console* ArchCommon::createConsole(uint32 count)
     return new TextConsole(count);
 }
 
+class Stabs2DebugInfo;
+Stabs2DebugInfo const *kernel_debug_info = 0;
+
 void ArchCommon::initDebug()
 {
 }
