@@ -340,7 +340,6 @@ void Scheduler::printUserSpaceTraces()
     {
       if ( t->switch_to_userspace_ )
       {
-        t->kernel_arch_thread_info_->eip = (pointer)printUserSpaceTracesHelper;
         ArchThreads::initialseThreadInfosKernelThread(t->kernel_arch_thread_info_,
             (pointer)printUserSpaceTracesHelper, t->getStackStartPointer());
         t->switch_to_userspace_ = 0;
