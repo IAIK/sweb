@@ -4,7 +4,7 @@
 #include "types.h"
 
 #define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
-  ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
+  ((((void*)(Value)) >= ((void*)(LowerBound))) && (((void*)(Value)) < ((void*)(UpperBound))))
 
 class Thread;
 
