@@ -6,6 +6,10 @@
  * library is required to.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _U	0x01	/* upper */
 #define _L	0x02	/* lower */
 #define _D	0x04	/* digit */
@@ -50,5 +54,10 @@ static inline unsigned char __toupper(unsigned char c)
 
 #define tolower(c) __tolower(c)
 #define toupper(c) __toupper(c)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

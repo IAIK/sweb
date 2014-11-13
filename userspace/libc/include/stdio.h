@@ -43,6 +43,11 @@
 
 #include "unistd.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Size of <stdio.h> buffers
  *
@@ -256,6 +261,9 @@ extern void perror(const char *error_msg);
  */
 extern int scanf(const char *format, ...);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // stdio_h___
 
