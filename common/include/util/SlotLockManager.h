@@ -44,7 +44,7 @@ public:
    * destructor
    */
   virtual ~SlotLockManager()
-  { assert(active_locks_.size() == 0); }
+  { assert(active_locks_.size() == 0 && "SlotLockManager: You probably killed threads while they were in the kernel."); }
 
   /**
    * acquires a lock to the given Slot

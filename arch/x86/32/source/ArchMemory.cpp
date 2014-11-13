@@ -33,7 +33,8 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(page_directory[pde_vpn].page.size == 0);
 
-  if (!page_directory[pde_vpn].pt.present) return; // PT not present -> do nothing.
+  assert(page_directory[pde_vpn].pt.present);
+  assert(!page_directory[pde_vpn].page.size);
 
   for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
     if (pte_base[pte_vpn].present > 0)
@@ -50,19 +51,19 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
 
+  assert(page_directory[pde_vpn].pt.present);
   assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  if (pte_base[pte_vpn].present)
-  {
-    pte_base[pte_vpn].present = 0;
-    PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
-  }
+  assert(pte_base[pte_vpn].present);
+  pte_base[pte_vpn].present = 0;
+  PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
   checkAndRemovePT(pde_vpn);
 }
 
 void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
+  assert(!page_directory[pde_vpn].pt.present);
   ArchCommon::bzero(getIdentAddressOfPPN(physical_page_table_page),PAGE_SIZE);
   page_directory[pde_vpn].pt.writeable = 1;
   page_directory[pde_vpn].pt.size = 0;
@@ -78,19 +79,17 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
 
-  if (page_size==PAGE_SIZE)
-  {
-    if (page_directory[pde_vpn].pt.present == 0)
-      insertPT(pde_vpn,PageManager::instance()->getFreePhysicalPage());
+  assert(page_size == PAGE_SIZE);
 
-    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-    pte_base[pte_vpn].writeable = 1;
-    pte_base[pte_vpn].user_access = user_access;
-    pte_base[pte_vpn].page_ppn = physical_page;
-    pte_base[pte_vpn].present = 1;
-  }
-  else
-    assert(false);
+  if (page_directory[pde_vpn].pt.present == 0)
+    insertPT(pde_vpn,PageManager::instance()->getFreePhysicalPage());
+
+  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  assert(!pte_base[pte_vpn].present);
+  pte_base[pte_vpn].writeable = 1;
+  pte_base[pte_vpn].user_access = user_access;
+  pte_base[pte_vpn].page_ppn = physical_page;
+  pte_base[pte_vpn].present = 1;
 }
 
 
