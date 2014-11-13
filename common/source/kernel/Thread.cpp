@@ -13,6 +13,7 @@
 #include "console/Terminal.h"
 #include "backtrace.h"
 #include "mm/KernelMemoryManager.h"
+#include "Stabs2DebugInfo.h"
 
 #define MAX_STACK_FRAMES 20
 
@@ -137,30 +138,40 @@ void Thread::setWorkingDirInfo(FsWorkingDirectory* working_dir)
   working_dir_ = working_dir;
 }
 
+extern Stabs2DebugInfo const *kernel_debug_info;
+
 void Thread::printBacktrace(bool use_stored_registers)
 {
+  if (!kernel_debug_info)
+  {
+    debug(BACKTRACE, "Kernel debug info not set up, backtrace won't look nice!\n");
+  }
+
   pointer CallStack[MAX_STACK_FRAMES];
   int Count = backtrace(CallStack, MAX_STACK_FRAMES,
       this, use_stored_registers);
 
-  debug(BACKTRACE, "=== Begin of backtrace for thread <%s> ===\n", getName());
+  debug(BACKTRACE, "=== Begin of backtrace for kernel thread <%s> ===\n", getName());
   debug(BACKTRACE, "   found <%d> stack %s:\n", Count, Count != 1 ? "frames" : "frame");
   debug(BACKTRACE, "\n");
 
   for (int i = 0; i < Count; ++i)
   {
     char FunctionName[255];
-    pointer StartAddr = get_function_name(CallStack[i], FunctionName);
+    pointer StartAddr = 0;
+    if (kernel_debug_info)
+      StartAddr = kernel_debug_info->getFunctionName(CallStack[i], FunctionName);
+
     if (StartAddr)
     {
-      ssize_t line = get_function_line(StartAddr,CallStack[i] - StartAddr);
+      ssize_t line = kernel_debug_info->getFunctionLine(StartAddr,CallStack[i] - StartAddr);
       if (line > 0)
-        debug(BACKTRACE, "   (%d): %x (%s:%u)\n", i, CallStack[i], FunctionName, line);
+        debug(BACKTRACE, "   (%d): %010x (%s:%u)\n", i, CallStack[i], FunctionName, line);
       else
-        debug(BACKTRACE, "   (%d): %x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
+        debug(BACKTRACE, "   (%d): %010x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
     }
     else
-      debug(BACKTRACE, "   (%d): %x (<UNKNOWN FUNCTION>)\n", i, CallStack[i]);
+      debug(BACKTRACE, "   (%d): %010x (<UNKNOWN FUNCTION>)\n", i, CallStack[i]);
   }
 
   debug(BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
