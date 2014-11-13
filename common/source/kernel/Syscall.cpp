@@ -47,6 +47,9 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
     case sc_outline:
       outline(arg1,arg2);
       break;
+    case sc_trace:
+    	trace();
+    	break;
     default:
       kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %d\n",syscall_number);
   }
@@ -164,5 +167,10 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
     }
   }
   return 0;
+}
+
+void Syscall::trace()
+{
+	currentThread->printUserBacktrace();
 }
 
