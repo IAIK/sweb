@@ -249,24 +249,16 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-//  kprintfd( "IRQ 65\n" );
+
   uint32 ret = Scheduler::instance()->schedule();
-//  kprintfd( "IRQ 65 new thread\n" );
   switch (ret)
   {
     case 0:
-      // kprintfd("irq65: Going to leave int Handler 65 to kernel\n");
-//      if (currentThread)
-//        ArchThreads::printThreadRegisters(currentThread,0);
       arch_switchThreadKernelToKernelPageDirChange();
+      break;
     case 1:
-      kprintfd("irq65: Going to leave int Handler 65 to user\n");
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,1);
       arch_switchThreadToUserPageDirChange();
-
+      break;
     default:
       kprintfd("irq65: Panic in int 65 handler\n");
       for( ; ; ) ;
