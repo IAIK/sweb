@@ -1,6 +1,10 @@
 #ifndef wait_h___
 #define wait_h___
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WEXITED 4
 
 //pid typedefs
@@ -12,6 +16,9 @@ typedef int pid_t;
 extern pid_t waitpid(pid_t pid, int *status, int options);
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // wait_h___
 

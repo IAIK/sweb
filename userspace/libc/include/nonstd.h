@@ -3,6 +3,10 @@
 
 #include "../../../common/include/kernel/syscall-definitions.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Creates a new process.
  *
@@ -12,6 +16,10 @@
  *
  */ 
 extern int createprocess(const char* path, int sleep);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // nonstd_h___
 
