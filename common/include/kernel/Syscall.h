@@ -120,6 +120,8 @@ class Syscall
   //static void close(...);
   //etc...
 
+  static void trace();
+
   private:
   //helper functions
 };
