@@ -37,6 +37,11 @@ uint32 ArchThreads::getPageDirectory(Thread *thread)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
+  initialseThreadInfosKernelThread(info, start_function, stack);
+}
+
+void ArchThreads::initialseThreadInfosKernelThread(ArchThreadInfo *info, pointer start_function, pointer stack)
+{
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
@@ -149,7 +154,10 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- eax: %10x  ebx: %10x  ecx: %10x  edx: %10x -- esp: %10x  ebp: %10x  esp0 %10x -- eip: %10x  eflg: %10x  cr3: %x\n",
-           userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
+  kprintfd("\t\t%sThread: %10x, info: %10x\n"\
+           "\t\t\t eax: %10x  ebx: %10x  ecx: %10x  edx: %10x\n"\
+           "\t\t\t esp: %10x  ebp: %10x  esp0 %10x  eip: %10x\n"\
+           "\t\t\teflg: %10x  cr3: %10x\n",
+           userspace_registers?"User-":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
 
 }
