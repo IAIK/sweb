@@ -5,5 +5,5 @@ CMAKE_FORCE_C_COMPILER(arm-linux-gnueabi-gcc GNU)
 find_program(ASM_EXECUTABLE arm-linux-gnueabi-as)
 set(APPEND_LD_ARGUMENTS -Wl,-lgcc)
 set(ASM_FORMAT )
-set(CMAKE_C_FLAGS "-Wall -g -O0 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common -mapcs -marm")
+set(CMAKE_C_FLAGS "-Wall -gstabs2 -O0 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common -mapcs -marm")
 
