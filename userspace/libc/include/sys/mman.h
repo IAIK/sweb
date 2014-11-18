@@ -3,6 +3,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #define PROT_NONE     0x00000000  // 00..00
 #define PROT_READ     0x00000001  // ..0001
 #define PROT_WRITE    0x00000002  // ..0010
@@ -19,6 +24,9 @@ extern int shm_open(const char* name, int oflag, mode_t mode);
 
 extern int shm_unlink(const char* name);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // mman_h___
 

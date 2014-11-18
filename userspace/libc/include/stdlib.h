@@ -29,6 +29,9 @@
 #ifndef stdlib_h___
 #define stdlib_h___
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * exit value constants
@@ -83,6 +86,10 @@ extern int atexit(void (*function)(void));
 extern void *malloc(unsigned int size);
 
 extern void free(void *ptr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // stdlib_h___
 

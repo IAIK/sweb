@@ -24,9 +24,15 @@ Boston, MA 02111-1307, USA.  */
    reasons why the executable file might be covered by the GNU General
    Public License.  */
 
+
+
 /*
  * ISO C Standard:  7.15  Variable arguments  <stdarg.h>
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef _STDARG_H
 #ifndef _ANSI_STDARG_H_
@@ -35,6 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #define _ANSI_STDARG_H_
 #endif /* not __need___va_list */
 #undef __need___va_list
+
+
 
 /* Define __gnuc_va_list.  */
 
@@ -131,3 +139,8 @@ typedef __gnuc_va_list va_list;
 
 #endif /* not _ANSI_STDARG_H_ */
 #endif /* not _STDARG_H */
+
+#ifdef __cplusplus
+}
+#endif
+

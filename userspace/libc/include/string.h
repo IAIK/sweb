@@ -31,6 +31,10 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * NULL pointer constant
  *
@@ -91,6 +95,10 @@ extern size_t strlen(const char* str);
  * Compares the 2 Strings, default implementation
  */
 extern int strcmp (const char * l, const char * r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // string_h___
 

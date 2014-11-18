@@ -31,6 +31,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Low-level syscall function, takes 6 arguments where the first is the syscall
  * number as defined in the kernel syscall definitions.
@@ -40,6 +45,10 @@
  */
 extern size_t __syscall(size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5,
                         size_t arg6);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // syscall_h___
 

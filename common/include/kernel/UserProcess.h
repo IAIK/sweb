@@ -23,10 +23,12 @@ class UserProcess : public Thread
      * @param minixfs_filename filename of the file in minixfs to execute
      * @param fs_info filesysteminfo-object to be used
      * @param terminal_number the terminal to run in (default 0)
-     * @param unregister_thread the thread which should be notified if the process exits
+     * @param load_debugging_info loads debug symbols for the process so stack tracing works
+     *
      */
     UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
-                  MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number = 0 );
+                  MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number = 0,
+                  bool load_debugging_info = true);
 
     /**
      * Destructor

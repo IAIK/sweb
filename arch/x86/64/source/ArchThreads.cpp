@@ -36,7 +36,11 @@ uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  //kprintfd("info = %x, start_function = %x, stack = %x\n", info, start_function, stack);
+  initialseThreadInfosKernelThread(info, start_function, stack);
+}
+
+void ArchThreads::initialseThreadInfosKernelThread(ArchThreadInfo *info, pointer start_function, pointer stack)
+{
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 

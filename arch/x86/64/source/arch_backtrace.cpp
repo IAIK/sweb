@@ -13,3 +13,9 @@ int backtrace(pointer *call_stack, int size, Thread *thread,
 {
   return 0;
 }
+
+int backtrace_user(pointer *call_stack, int size, Thread *thread,
+    bool use_stored_registers)
+{
+  return 0;
+}

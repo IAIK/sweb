@@ -569,6 +569,9 @@ void debug ( size_t flag, const char *fmt, ... )
       case BACKTRACE:
         kprintfd ( COLORDEBUG("[BACKTRACE  ]", "31"));
         break;
+      case US_BACKTRACE:
+        kprintfd ( COLORDEBUG("[USBACKTRACE]", "31"));
+        break;
       case PM:
         kprintfd ( COLORDEBUG("[PM         ]", "32"));
         break;

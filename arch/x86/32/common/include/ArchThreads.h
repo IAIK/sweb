@@ -78,6 +78,15 @@ public:
  */
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
 
+ /**
+  * initialises the ArchThreadInfo for an kernel thread into an already initialised thread info
+  * @param the ArchThreadInfo we will overwrite
+  * @param start_function instruction pointer is set so start function
+  * @param stack stackpointer
+  */
+  static void initialseThreadInfosKernelThread(ArchThreadInfo *info, pointer start_function, pointer stack);
+
+
 /**
  * creates the ArchThreadInfo for a user thread
  * @param info where the ArchThreadInfo is saved

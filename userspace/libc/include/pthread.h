@@ -1,6 +1,11 @@
 #ifndef pthread_h___
 #define pthread_h___
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //pthread typedefs
 typedef unsigned int pthread_t;
 typedef unsigned int pthread_attr_t;
@@ -48,6 +53,11 @@ extern int pthread_cond_signal(pthread_cond_t *cond);
 extern int pthread_cond_broadcast(pthread_cond_t *cond);
 
 extern int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // pthread_h___
 

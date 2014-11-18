@@ -40,6 +40,10 @@
 
 #include "unistd.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Duplicate file descriptor
  *
@@ -262,7 +266,9 @@ extern int creat(const char *path, mode_t mode);
  */
 extern int open(const char *path, int flags, ...);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif // fcntl_h___
 

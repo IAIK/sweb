@@ -45,6 +45,10 @@
 #include "stdarg.h"
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
  * NULL pointer constant
@@ -321,6 +325,11 @@ extern unsigned int sleep(unsigned int seconds);
  *
  */
 int execv(const char *path __attribute__((unused)), char *const argv[] __attribute__((unused)));
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif // unistd_h___
 

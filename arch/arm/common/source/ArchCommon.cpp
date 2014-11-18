@@ -12,6 +12,7 @@
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "backtrace.h"
+#include "Stabs2DebugInfo.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -172,6 +173,8 @@ Console* ArchCommon::createConsole(uint32 count)
   return new FrameBufferConsole(count);
 }
 
+Stabs2DebugInfo const *kernel_debug_info = 0;
+
 void ArchCommon::initDebug()
 {
   extern unsigned char stab_start_address_nr;
@@ -179,7 +182,10 @@ void ArchCommon::initDebug()
 
   extern unsigned char stabstr_start_address_nr;
 
-  parse_symtab((StabEntry*)&stab_start_address_nr, (StabEntry*)&stab_end_address_nr, (const char*)&stabstr_start_address_nr);
+  kernel_debug_info = new Stabs2DebugInfo((char const *)&stab_start_address_nr,
+                                          (char const *)&stab_end_address_nr,
+                                          (char const *)&stabstr_start_address_nr);
+
 }
 
 extern "C" void halt();
