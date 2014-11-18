@@ -63,8 +63,11 @@ FsWorkingDirectory default_working_dir;
  * starts up SWEB
  * Creates singletons, starts console, mounts devices, adds testing threads and start the scheduler.
  */
+extern "C" void removeBootTimeIdentMapping();
+
 void startup()
 {
+  removeBootTimeIdentMapping();
   we_are_dying = 0;
   boot_completed = 0;
   writeLine2Bochs("SWEB starting...\n");
