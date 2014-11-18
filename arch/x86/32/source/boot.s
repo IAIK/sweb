@@ -147,13 +147,6 @@ now_using_segments:
 ; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
 
     mov word[0B800Ah], 9F35h
-; the following memory-clearing should already have been covered by the generic .bss-cleaning above,
-; since the stack is part of the .bss
- 	;mov edi,stack_start; load bss address
- 	;mov ecx, stack; end of bss and stack (!), this symbol is at the very end of the kernel
- 	;sub ecx, edi ; how much data do we have to clear
- 	;xor eax, eax ; we want to fill with 0
- 	;rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
  	mov esp,stack
 
