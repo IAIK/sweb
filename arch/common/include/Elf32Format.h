@@ -168,7 +168,7 @@ class Elf
       foobar(e_shstrndx);
     }
 
-    typedef struct
+    struct sELF32_Shdr
     {
         Elf32_Word sh_name;
         Elf32_Word sh_type;
@@ -180,7 +180,8 @@ class Elf
         Elf32_Word sh_info;
         Elf32_Word sh_addralign;
         Elf32_Word sh_entsize;
-    } ELF32_Shdr;
+    };
+    typedef struct sELF32_Shdr Shdr;
 
     typedef struct
     {
@@ -218,6 +219,7 @@ class Elf
     };
 
     typedef struct sELF32_Phdr Phdr;
+
 
     static bool headerCorrect(Ehdr* hdr)
     {
