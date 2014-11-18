@@ -20,26 +20,6 @@ MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
 MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
-%macro writeTestOnScreen 0
-   mov word[0C00B8020h], 9F54h
-   mov word[0C00B8022h], 9F65h
-   mov word[0C00B8024h], 9F73h
-   mov word[0C00B8026h], 9F74h
-   mov word[0C00B802Ah], 9F21h
-%endmacro
-%macro writeTestOnScreenUnMapped 0
-   mov word[0B8000h], 9F54h
-   mov word[0B8002h], 9F65h
-   mov word[0B8004h], 9F73h
-   mov word[0B8006h], 9F74h
-   mov word[0B800Ah], 9F21h
-
-%endmacro
-
-%macro halt 0
-   jmp short $ ; now what does this do? it just jumps to this instruction until the end of all times
-%endmacro
-
 ; Text section == Code that can be exectuted
 
 SECTION .text
@@ -181,15 +161,10 @@ now_using_segments:
 
     mov word[0B800Ch], 9F36h
 
-	;; UNKLAR wozu das nötig ist? Aber ohne gehts net .. .:) Dokumentieren wär gut
+  EXTERN startup ; tell the assembler we have a main somewhere
 	mov eax, startup
-	call eax
-
-EXTERN startup ; tell the assembler we have a main somewhere
-   mov word[0C00B801Ch], 4336h
-
-   call startup ; hellloooo, here we are in c !
-   jmp $ ; suicide
+	call eax ; jump to C
+  jmp $ ; suicide
 
 global reload_segements
 reload_segements:
