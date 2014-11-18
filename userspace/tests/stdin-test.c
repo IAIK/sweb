@@ -24,6 +24,7 @@ void handle_command(char* buffer,int buffer_size)
   int pid;
 
   for(c=0; c<buffer_size; c++)
+  for(c=0; c<buffer_size && buffer[c]; c++)
   {
     if(argsCount > 10)
     {
@@ -135,12 +136,17 @@ void handle_command(char* buffer,int buffer_size)
 
 int main(int argc, char *argv[]) 
 {
-  char* str1="SWEB-Pseudo-Shell starting...\n";
-  char* preprompt="SWEB:";
-  char* prompt="> ";
+  char const* str1="SWEB-Pseudo-Shell starting...\n";
+  char const* preprompt="SWEB:";
+  char const* prompt="> ";
   char buffer[256];
+  memset(buffer, 0, sizeof(buffer));
+
   int a=0;
-  char cwd[256]="/";
+  char cwd[256];
+  memset(cwd, 0, sizeof(cwd));
+  cwd[0] = '/';
+
   exit_code=0;
   running = 1;
   printf("\n\%s\n",str1);

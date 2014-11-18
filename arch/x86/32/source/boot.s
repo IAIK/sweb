@@ -135,7 +135,7 @@ now_using_segments:
 	or eax, 0x00000010;
 	mov cr4,eax;
 
-	;  2) setting CR0's PG bit to enable paging
+	;  2) setting CR0s PG bit to enable paging
 
     mov word[0B8008h], 9F34h
 
@@ -154,6 +154,11 @@ now_using_segments:
 
     mov word[0B800Ch], 9F36h
 
+	;; we want to now move our instruction pointer from the initial low address 
+	;; to our new remapped kernel
+	;; if we just call PagingMode the assembler will figure out that it can do a 
+	;; relative call, with just a tiny offset. We want to make an absolute call though
+	;; so load the symbol into eax, and call eax instead
   EXTERN startup ; tell the assembler we have a main somewhere
 	mov eax, startup
 	call eax ; jump to C
@@ -317,7 +322,7 @@ idt:
 	dw 0				; offset 15:0
 	dw LINEAR_CODE_SEL		; selector
 	db 0				; (always 0 for interrupt gates)
-	db 8Eh				; present,ring 0,'386 interrupt gate
+	db 8Eh				; present,ring 0, ;386 interrupt gate
 	dw 0				; offset 31:16
 %endrep
 idt_end:
