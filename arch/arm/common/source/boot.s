@@ -78,6 +78,8 @@ memory_barrier: @ from https://github.com/raspberrypi/firmware/wiki/Accessing-ma
 
 __aeabi_atexit:
     .globl __aeabi_atexit
+__aeabi_unwind_cpp_pr0:
+    .globl __aeabi_unwind_cpp_pr0
 raise:
     .globl raise
 1:
