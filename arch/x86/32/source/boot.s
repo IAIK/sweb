@@ -194,16 +194,6 @@ mboot:
    dd MULTIBOOT_HEADER_MAGIC
    dd MULTIBOOT_HEADER_FLAGS
    dd MULTIBOOT_CHECKSUM
-; aout kludge. These must be PHYSICAL addresses
-;   dd mboot - BASE
-;   dd text_start_address - BASE
-;   dd bss_start_address  - BASE
-;   dd kernel_end_address - BASE
-;   dd mboot - BASE
-;   dd 0
-;   dd 0
-;   dd 0
-;   dd 0
    dd 0 ; mode 
    dd 800 ;width
    dd 600 ; height
