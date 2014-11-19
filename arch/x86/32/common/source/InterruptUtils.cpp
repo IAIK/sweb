@@ -312,8 +312,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     }
   }
 
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
+  ArchThreads::printThreadRegisters(currentThread,0, false);
+  ArchThreads::printThreadRegisters(currentThread,1, false);
 
   //--------End "just for Debugging"-----------
 
