@@ -146,6 +146,12 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
+void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
+{
+  printThreadRegisters(thread,0,verbose);
+  printThreadRegisters(thread,1,verbose);
+}
+
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
@@ -164,7 +170,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   }
   else
   {
-    kprintfd("\t\t%sThread %10x: ebp %10x eip %10x eflg %10x cr3 %10x\n",
-             userspace_registers?" User-":"Kernel",thread,info->ebp, info->eip,info->eflags,info->cr3);
+    kprintfd("\t%sThread %10x: info %10x eax %10x ebp %10x esp %10x esp0 %10x eip %10x cr3 %10x\n",
+             userspace_registers?" User-":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
   }
 }
