@@ -252,6 +252,13 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
               currentThread->kernel_arch_thread_info_->eip - StartAddr);
     }
+
+    if (currentThread->user_arch_thread_info_ &&
+          currentThread->user_arch_thread_info_->cr3 != currentThread->kernel_arch_thread_info_->cr3)
+    {
+      debug(PM, "[PageFaultHandler] User and Kernel CR3 register values differ, this most likely is a bug!");
+    }
+
   }
 
   if(!address)
