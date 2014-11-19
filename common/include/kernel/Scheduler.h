@@ -87,17 +87,6 @@ class Scheduler
     void sleepAndRelease ( Mutex &lock );
 
     /**
-     * yet another hack. Nelle's BD Driver needs to switch off Interrupts
-     * and put Threads to sleep.
-     * In order to avoid getting a wakeup before we put the Thread to sleep
-     * we need to first sleep and _then_ enable Interrupts
-     * Ohhh the Pain !!!
-     * Everybody else using this function in any other sychronisation mechanism
-     * where disabling Interrupts is not _absolutely_ neccessary is going to be lashed !
-     */
-    void sleepAndRestoreInterrupts ( bool interrupts );
-
-    /**
      * @ret true if Scheduling is enabled, false otherwis
      */
     bool isSchedulingEnabled();
@@ -130,7 +119,6 @@ class Scheduler
     uint32 getTicks();
     
   private:
-
     Scheduler();
 
     /**
@@ -145,20 +133,6 @@ class Scheduler
      * unlocks the thread-list
      */
     void unlockScheduling();
-
-    /**
-     * Scheduler internal lock abstraction method
-     * tests the thread-list-lock without setting it,
-     * use this _only_ in InterruptHandler-Context
-     * @return true if lock is set, false otherwise
-     */
-    bool testLock();
-
-    /**
-     * after blocking the Scheduler we need to test if all Locks we could possible
-     * acquire are really free, because otherwise we will deadlock.
-     */
-    void waitForFreeSpinLock(SpinLock& lock);
 
     static Scheduler *instance_;
 

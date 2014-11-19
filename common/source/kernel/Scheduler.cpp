@@ -92,8 +92,9 @@ Scheduler::Scheduler()
 void Scheduler::addNewThread ( Thread *thread )
 {
   debug ( SCHEDULER,"addNewThread: %x  %d:%s\n",thread,thread->getTID(), thread->getName() );
+  KernelMemoryManager::instance()->getKMMLock().acquire("in addNewThread");
   lockScheduling();
-  waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
+  KernelMemoryManager::instance()->getKMMLock().release("in addNewThread");
   threads_.push_back ( thread );
   unlockScheduling();
 }
@@ -116,26 +117,12 @@ void Scheduler::sleepAndRelease ( SpinLock &lock )
 
 void Scheduler::sleepAndRelease ( Mutex &lock )
 {
+  lock.spinlock_.acquire("in sleepAndRelease()");
   lockScheduling();
-  waitForFreeSpinLock(lock.spinlock_);
-  currentThread->state_=Sleeping;
+  lock.spinlock_.release("in sleepAndRelease()");
   lock.release();
   unlockScheduling();
   yield();
-}
-
-// beware using this funktion!
-void Scheduler::sleepAndRestoreInterrupts ( bool interrupts )
-{
-  // why do it get the feeling that misusing this function
-  // can mean a serious shot in the foot ?
-  currentThread->state_=Sleeping;
-  if ( interrupts )
-  {
-    assert(block_scheduling_ == 0);
-    ArchInterrupts::enableInterrupts();
-    yield();
-  }
 }
 
 void Scheduler::wake ( Thread* thread_to_wake )
@@ -250,29 +237,6 @@ void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
 void Scheduler::unlockScheduling()
 {
   block_scheduling_ = 0;
-}
-
-void Scheduler::waitForFreeSpinLock(SpinLock& lock)  //not as severe as stopping Interrupts
-{
-  if ( block_scheduling_==0 )
-    kpanict ( ( uint8* ) "FATAL ERROR: Scheduler::waitForFreeSpinLock: This "
-                            "is meant to be used while Scheduler is locked\n" );
-
-  uint32 ticks = 0;
-  while (!lock.isFree())
-  {
-    if (unlikely(++ticks > 50))
-    {
-      kprintfd("WARNING: Scheduler::waitForFreeSpinLock: SpinLock <%s> is locked since more than %d ticks? Maybe there is something wrong!\n", lock.name_,ticks);
-      Thread* t = lock.heldBy();
-      kprintfd("Thread holding SpinLock: %x  %d:%s     [%s]\n",t,t->getTID(),t->getName(),Thread::threadStatePrintable[t->state_]);
-      t->printBacktrace();
-      //assert(false);
-    }
-    unlockScheduling();
-    yield();
-    lockScheduling();
-  }
 }
 
 bool Scheduler::isSchedulingEnabled()

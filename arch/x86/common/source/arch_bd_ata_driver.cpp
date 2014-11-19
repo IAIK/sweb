@@ -13,6 +13,8 @@
 #include "Scheduler.h"
 #include "kprintf.h"
 
+#include "Thread.h"
+
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
 ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_("ATADriver::lock_")
@@ -344,8 +346,17 @@ uint32 ATADriver::addRequest( BDRequest *br )
     return 0;
   }
 
-  if( currentThread )
-    Scheduler::instance()->sleepAndRestoreInterrupts(interrupt_context);
+  if (currentThread)
+  {
+    if(interrupt_context)
+    {
+      currentThread->state_=Sleeping;
+      ArchInterrupts::enableInterrupts();
+      Scheduler::instance()->yield();
+    }
+    else
+      currentThread->state_=Sleeping;
+  }
 
   return 0;
 }
