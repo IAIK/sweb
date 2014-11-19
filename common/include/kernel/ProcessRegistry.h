@@ -1,5 +1,5 @@
 /**
- * @file MountMinix.h
+ * @file ProcessRegistry.h
  */
 
 #ifndef _MOUNTMINIX_H_
@@ -10,11 +10,11 @@
 #include "Condition.h"
 
 /**
- * @class MountMinixAndStartUserProgramsThread
+ * @class ProcessRegistry
  * Helper thread which mounts the second partition and starts the
  * selected userprograms on it
  */
-class MountMinixAndStartUserProgramsThread : public Thread
+class ProcessRegistry : public Thread
 {
   public:
     /**
@@ -22,7 +22,7 @@ class MountMinixAndStartUserProgramsThread : public Thread
      * @param root_fs_info the FileSystemInfo
      * @param progs a string-array of the userprograms which should be executed
      */
-    MountMinixAndStartUserProgramsThread ( FsWorkingDirectory *root_fs_info, char const *progs[] );
+    ProcessRegistry ( FsWorkingDirectory *root_fs_info, char const *progs[] );
 
     /**
      * Mounts the Minix-Partition with user-programs and creates processes
@@ -47,7 +47,7 @@ class MountMinixAndStartUserProgramsThread : public Thread
     /**
      * returns instance
      */
-    static MountMinixAndStartUserProgramsThread* instance();
+    static ProcessRegistry* instance();
 
     /**
      * creates a new process
@@ -60,7 +60,7 @@ class MountMinixAndStartUserProgramsThread : public Thread
     uint32 progs_running_;
     Mutex counter_lock_;
     Condition all_processes_killed_;
-    static MountMinixAndStartUserProgramsThread* instance_;
+    static ProcessRegistry* instance_;
 };
 
 #endif

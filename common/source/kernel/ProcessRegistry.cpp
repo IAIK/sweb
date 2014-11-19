@@ -1,32 +1,32 @@
 /**
- * @file MountMinix.cpp
+ * @file ProcessRegistry.cpp
  */
 
-#include "MountMinix.h"
+#include "ProcessRegistry.h"
 #include "Scheduler.h"
 #include "UserProcess.h"
 #include "kprintf.h"
 #include "fs/VfsSyscall.h"
 
-MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::instance_ = 0;
+ProcessRegistry* ProcessRegistry::instance_ = 0;
 
-MountMinixAndStartUserProgramsThread::MountMinixAndStartUserProgramsThread
+ProcessRegistry::ProcessRegistry
                           ( FsWorkingDirectory *root_fs_info, char const *progs[] ) :
-  Thread ( root_fs_info, "MountMinixAndStartUserProgramsThread" ),
+  Thread ( root_fs_info, "ProcessRegistry" ),
   progs_(progs),
   progs_running_(0),
-  counter_lock_("MountMinixAndStartUserProgramsThread::counter_lock_"),
+  counter_lock_("ProcessRegistry::counter_lock_"),
   all_processes_killed_(&counter_lock_)
 {
   instance_ = this; // instance_ is static! attention if you make changes in number of MountMinixThreads or similar
 }
 
-MountMinixAndStartUserProgramsThread* MountMinixAndStartUserProgramsThread::instance()
+ProcessRegistry* ProcessRegistry::instance()
 {
   return instance_;
 }
 
-void MountMinixAndStartUserProgramsThread::Run()
+void ProcessRegistry::Run()
 {
   if(!progs_ || !progs_[0])
     return;
@@ -54,7 +54,7 @@ void MountMinixAndStartUserProgramsThread::Run()
   kill();
 }
 
-void MountMinixAndStartUserProgramsThread::processExit()
+void ProcessRegistry::processExit()
 {
   counter_lock_.acquire();
 
@@ -64,20 +64,20 @@ void MountMinixAndStartUserProgramsThread::processExit()
   counter_lock_.release();
 }
 
-void MountMinixAndStartUserProgramsThread::processStart()
+void ProcessRegistry::processStart()
 {
   counter_lock_.acquire();
   ++progs_running_;
   counter_lock_.release();
 }
 
-size_t MountMinixAndStartUserProgramsThread::processCount()
+size_t ProcessRegistry::processCount()
 {
   MutexLock lock(counter_lock_);
   return progs_running_;
 }
 
-void MountMinixAndStartUserProgramsThread::createProcess(const char* path)
+void ProcessRegistry::createProcess(const char* path)
 {
   debug(MOUNTMINIX, "create process %s\n", path);
   Thread* process = new UserProcess(path, new FsWorkingDirectory(*working_dir_), this);

@@ -397,5 +397,3 @@ Stabs2DebugInfo const *Loader::getDebugInfos()const
   return userspace_debug_info_;
 }
 
-
-}

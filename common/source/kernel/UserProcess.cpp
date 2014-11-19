@@ -2,16 +2,16 @@
  * @file UserProcess.cpp
  */
 
+#include <ProcessRegistry.h>
 #include "UserProcess.h"
 #include "console/kprintf.h"
 #include "console/Console.h"
 #include "Loader.h"
-#include "MountMinix.h"
 #include "fs/fs_global.h"
 #include "fs/VfsSyscall.h"
 
 UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
-                           MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number) :
+                           ProcessRegistry *process_registry, uint32 terminal_number) :
   Thread ( fs_info, minixfs_filename ),
   run_me_(false),
   terminal_number_(terminal_number),

@@ -12,7 +12,7 @@
 #include "console/debug.h"
 #include "fs/VfsSyscall.h"
 #include "UserProcess.h"
-#include "MountMinix.h"
+#include "ProcessRegistry.h"
 
 size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
 {
@@ -157,11 +157,11 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   size_t len = strlen((const char*) path) + 1;
   char* copy = new char[len];
   memcpy(copy, (const char*) path, len);
-  size_t process_count = MountMinixAndStartUserProgramsThread::instance()->processCount();
-  MountMinixAndStartUserProgramsThread::instance()->createProcess(copy);
+  size_t process_count = ProcessRegistry::instance()->processCount();
+  ProcessRegistry::instance()->createProcess(copy);
   if (sleep)
   {
-    while(MountMinixAndStartUserProgramsThread::instance()->processCount() > process_count) // please note that this will fail ;)
+    while(ProcessRegistry::instance()->processCount() > process_count) // please note that this will fail ;)
     {
       Scheduler::instance()->yield();
     }

@@ -7,7 +7,7 @@
 
 #include "Thread.h"
 
-class MountMinixAndStartUserProgramsThread;
+class ProcessRegistry;
 
 /**
  * @class UserProcess
@@ -26,7 +26,7 @@ class UserProcess : public Thread
      *
      */
     UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
-                  MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number = 0);
+                  ProcessRegistry *process_registry, uint32 terminal_number = 0);
 
     /**
      * Destructor
@@ -43,7 +43,7 @@ class UserProcess : public Thread
     bool run_me_;
     uint32 terminal_number_;
     int32 fd_;
-    MountMinixAndStartUserProgramsThread *process_registry_;
+    ProcessRegistry *process_registry_;
 };
 
 #endif

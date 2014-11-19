@@ -3,6 +3,8 @@
  * starts up SWEB
  */
 
+#include <ProcessRegistry.h>
+
 #include <types.h>
 
 #include <paging-definitions.h>
@@ -43,7 +45,6 @@
 #include "fs/fs_global.h"
 
 #include "UserProcess.h"
-#include "MountMinix.h"
 #include "ustl/outerrstream.h"
 
 #include "user_progs.h"
@@ -159,7 +160,7 @@ void startup()
   Scheduler::instance()->addNewThread ( main_console );
 
   Scheduler::instance()->addNewThread (
-       new MountMinixAndStartUserProgramsThread ( new FsWorkingDirectory(default_working_dir), user_progs ) // see user_progs.h
+       new ProcessRegistry ( new FsWorkingDirectory(default_working_dir), user_progs ) // see user_progs.h
    );
 
   Scheduler::instance()->printThreadList();
