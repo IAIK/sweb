@@ -23,7 +23,6 @@ void handle_command(char* buffer,int buffer_size)
   int lastIndex = 0;
   int pid;
 
-  for(c=0; c<buffer_size; c++)
   for(c=0; c<buffer_size && buffer[c]; c++)
   {
     if(argsCount > 10)
