@@ -200,20 +200,6 @@ void Scheduler::yield()
   ArchThreads::yield();
 }
 
-bool Scheduler::checkThreadExists ( Thread* thread )
-{
-  bool retval=false;
-  lockScheduling();
-  for ( uint32 c=0; c<threads_.size();++c ) //fortunately this doesn't involve KMM
-    if ( threads_[c]==thread )
-    {
-      retval=true;
-      break;
-    }
-  unlockScheduling();
-  return retval;
-}
-
 void Scheduler::cleanupDeadThreads()
 {
   lockScheduling();

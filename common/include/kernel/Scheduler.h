@@ -98,15 +98,6 @@ class Scheduler
     void sleepAndRestoreInterrupts ( bool interrupts );
 
     /**
-     * compares all threads in the scheduler's list to the one given
-     * since the scheduler knows about all existing threads, this is
-     * a good way to see if a *thread is valid
-     * @param *thread Pointer to the Thread's instance we want to check its existance bevore accessing it
-     * @return true if *thread exists, fales otherwise
-     */
-    bool checkThreadExists ( Thread* thread );
-
-    /**
      * @ret true if Scheduling is enabled, false otherwis
      */
     bool isSchedulingEnabled();
