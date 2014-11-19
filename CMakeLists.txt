@@ -1,12 +1,21 @@
 if(COMMAND cmake_policy)
   cmake_policy(VERSION 2.6)
 endif(COMMAND cmake_policy)
+
+if ("${ARCH}" STREQUAL "")
+  MESSAGE("ARCH not defined, using default of x86/32")
+  set (ARCH "x86/32")
+endif("${ARCH}" STREQUAL "")
+
+
 include(MakeOptions)
 
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
 endif(APPLE OR WIN32)
+
+
 
 include(arch/${ARCH}/CMakeLists.compiler)
 
@@ -311,12 +320,13 @@ add_custom_target(mrproper
   COMMAND cmake ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 	)
 
+
 #Custom target: make x86_32
 #Changes MakeOptions ARCH setting to x86_32
 add_custom_target(x86_32
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrproper
+        COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+        COMMAND cmake -DARCH=x86/32 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
 #Custom target: make x86_32_only
@@ -328,44 +338,43 @@ add_custom_target(x86_32_only
         )
 
 #Custom target: make x86_32_pae
-#Custom target: make x86_32_pae
 #Changes MakeOptions ARCH setting to x86_32_pae
 add_custom_target(x86_32_pae
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/32/pae)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/32\\\\/pae\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrproper
+        COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+        COMMAND cmake -DARCH=x86/32/pae ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
 #Custom target: make x86_64
 #Changes MakeOptions ARCH setting to x86_64
 add_custom_target(x86_64
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH x86/64)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH x86\\\\/64\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrproper
+        COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+        COMMAND cmake -DARCH=x86/64 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
 #Custom target: make arm_icp
 #Changes MakeOptions ARCH setting to arm_icp
 add_custom_target(arm_icp
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/integratorcp)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/integratorcp\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrproper
+        COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+        COMMAND cmake -DARCH=arm/integratorcp ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
 #Custom target: make arm_verdex
 #Changes MakeOptions ARCH setting to arm_verdex
 add_custom_target(arm_verdex
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/verdex)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/verdex\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrproper
+        COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+        COMMAND cmake -DARCH=arm/verdex ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
 #Custom target: make arm_rpi
 #Changes MakeOptions ARCH setting to arm_rpi
 add_custom_target(arm_rpi
-        COMMENT "sed -i 's/SET (ARCH .*/SET (ARCH arm/rpi)/' ${PROJECT_SOURCE_DIR}/MakeOptions"
-        COMMAND sed -i "s/SET \\(ARCH .*/SET \\(ARCH arm\\\\/rpi\\)/" ${PROJECT_SOURCE_DIR}/MakeOptions
-        COMMAND make mrproper
+        COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+        COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+        COMMAND cmake -DARCH=arm/rpi ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
 #Builds the doxygen documentation
