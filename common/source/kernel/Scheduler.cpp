@@ -271,3 +271,36 @@ void Scheduler::printStackTraces()
 
   unlockScheduling();
 }
+
+static void printUserSpaceTracesHelper()
+{
+  currentThread->printUserBacktrace();
+  currentThread->switch_to_userspace_ = 1;
+  Scheduler::instance()->yield();
+}
+
+void Scheduler::printUserSpaceTraces()
+{
+  lockScheduling();
+  debug(USERTRACE, "Scheduling all userspace threads to print a stacktrace\n");
+  for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
+  {
+    Thread *t = *it;
+    if (t->user_arch_thread_info_)
+    {
+      if ( t->switch_to_userspace_ )
+      {
+        ArchThreads::changeInstructionPointer(t->kernel_arch_thread_info_,
+            (pointer)printUserSpaceTracesHelper);
+        t->switch_to_userspace_ = 0;
+      }
+      else
+      {
+        debug(USERTRACE, "Thread <%s> blocked in kernel, printing kernel backtrace instead\n", t->getName());
+        t->printBacktrace();
+      }
+    }
+  }
+  debug(USERTRACE, "Done scheduling all userspace threads to print a stacktrace\n");
+  unlockScheduling();
+}

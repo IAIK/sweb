@@ -86,6 +86,17 @@ public:
  * @param stack stackpointer
  */
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
+ 
+  /**
+   * changes an existing ArchThreadInfo so that execution will start / continue
+   * at the function specified
+   * it does not change anything else, and if the thread info / thread was currently
+   * executing something else this will lead to a lot of problems
+   * USE WITH CARE, or better, don't use at all if you're a student
+   * @param the ArchThreadInfo that we are going to mangle
+   * @param start_function instruction pointer for the next instruction that gets executed
+   */
+  static void changeInstructionPointer(ArchThreadInfo *info, pointer function);
 
 /**
  * creates the ArchThreadInfo for a user thread
@@ -145,7 +156,7 @@ public:
  * @param userspace_register
  *
  */
-  static void printThreadRegisters(Thread *thread, uint32 userspace_registers);
+  static void printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose = true);
 };
 
 #endif

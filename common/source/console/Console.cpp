@@ -44,9 +44,14 @@ void Console::handleKey ( uint32 key )
 // else...
   switch (key)
   {
+
+    case KEY_F10:
+      Scheduler::instance()->printUserSpaceTraces();
+      break;
+
     case KEY_F11:
       Scheduler::instance()->printStackTraces();
-       break;
+      break;
 
     case KEY_F12:
       Scheduler::instance()->printThreadList();

@@ -36,7 +36,6 @@ uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  //kprintfd("info = %x, start_function = %x, stack = %x\n", info, start_function, stack);
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 
@@ -60,6 +59,11 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
+}
+
+void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer function)
+{
+  info->rip = function;
 }
 
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
@@ -131,7 +135,7 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
-void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers)
+void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
   if (!info)

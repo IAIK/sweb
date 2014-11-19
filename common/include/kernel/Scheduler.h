@@ -72,6 +72,11 @@ class Scheduler
     void printStackTraces();
 
     /**
+     * schedules all currently known userspace threads to print a stack trace
+     */
+    void printUserSpaceTraces();
+
+    /**
      * it is somewhat of a hack, we need to release the Spinlock,
      * after we set the ThreadState Sleeping, but before we yield away
      * also we must not be interrupted and we want to avoid disabling Interrupts

@@ -1,6 +1,10 @@
 #ifndef semaphore_h___
 #define semaphore_h___
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //semaphores typedefs
 #ifndef SEM_T_DEFINED_
 #define SEM_T_DEFINED_
@@ -17,6 +21,9 @@ extern int sem_destroy(sem_t *sem);
 
 extern int sem_post(sem_t *sem);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif // semaphore_h___
 

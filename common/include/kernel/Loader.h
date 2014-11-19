@@ -13,6 +13,8 @@
 #include "ElfFormat.h"
 #include <ustl/uvector.h>
 
+class Stabs2DebugInfo;
+
 /**
 * @class Loader manages the Addressspace creation of a thread
 */
@@ -42,7 +44,6 @@ class Loader
      *Initialises the Addressspace of the User, creates the Thread's
      *InfosUserspaceThread and sets the PageDirectory,
      *loads the ehdr and phdrs from executable
-     *
      * @return true if this was successful, false otherwise
      */
     bool loadExecutableAndInitProcess();
@@ -53,6 +54,13 @@ class Loader
      * @param virtual_address virtual address where to find the page to load
      */
     void loadOnePageSafeButSlow ( pointer virtual_address );
+
+    /**
+     * Returns debug info for the loaded userspace program, if available
+     */
+    Stabs2DebugInfo const *getDebugInfos()const;
+
+
 
     ArchMemory arch_memory_;
 
@@ -65,11 +73,20 @@ class Loader
     bool readHeaders();
 
 
+    bool loadDebugInfoIfAvailable();
+
+
+    bool readFromBinary (char* buffer, l_off_t position, size_t count);
+
+
     size_t fd_;
     Thread *thread_;
     Elf::Ehdr *hdr_;
     ustl::vector<Elf::Phdr> phdrs_;
     Mutex load_lock_;
+
+    Stabs2DebugInfo *userspace_debug_info_;
+
 };
 
 #endif

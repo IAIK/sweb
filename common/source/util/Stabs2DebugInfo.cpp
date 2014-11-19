@@ -1,10 +1,12 @@
-//-------------------------------------------------------------------------------------*/
+
 #include "kprintf.h"
-#include "Thread.h"
-#include "backtrace.h"
-#include "ArchThreads.h"
-#include "ustl/umap.h"
+#include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
+
+
+#define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
+  ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
+
 
 //-------------------------------------------------------------------------------------*/
 #define N_GSYM  0x20    /* global symbol: name,,0,type,0 */
@@ -28,7 +30,6 @@
 #define N_LENG  0xfe    /* second stab entry with length information */
 //-------------------------------------------------------------------------------------*/
 
-const char* stab_str_base = 0;
 
 struct StabEntry
 {
@@ -38,16 +39,54 @@ struct StabEntry
     uint16 n_desc;
     uint32 n_value;
 } __attribute__((packed));
-//-------------------------------------------------------------------------------------*/
-extern Thread* currentThread;
-ustl::map<size_t, StabEntry*> symbol_table;
-//-------------------------------------------------------------------------------------*/
-bool try_paste_operator(const char *&input, char *& buffer);
-int read_number(const char *& input);
-void paste_typename(const char *& input, char *& buffer);
-//-------------------------------------------------------------------------------------*/
 
-bool try_paste_operator(const char *& input, char *& buffer)
+
+
+
+Stabs2DebugInfo::Stabs2DebugInfo(char const *stab_start, char const *stab_end, char const *stab_str) :
+  stab_start_ (reinterpret_cast<StabEntry const *>(stab_start)),
+  stab_end_ (reinterpret_cast<StabEntry const *>(stab_end)),
+  stabstr_buffer_(stab_str)
+{
+  initialiseSymbolTable();
+}
+
+Stabs2DebugInfo::~Stabs2DebugInfo()
+{
+  // we reinterpret casted this from normal character buffers
+  // so make sure we don't execute any potential dtors, no ctors were called anyway
+  operator delete[] (reinterpret_cast<void*>(const_cast<StabEntry *>(stab_start_)));
+  operator delete[] (reinterpret_cast<void*>(const_cast<char *>(stabstr_buffer_)));
+}
+
+void Stabs2DebugInfo::initialiseSymbolTable()
+{
+  function_symbols_.reserve(256);
+
+  // debug output for userspace symols
+  for (StabEntry const *current_stab = stab_start_; current_stab < stab_end_; ++current_stab)
+  {
+    if (current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME)
+    {
+      function_symbols_[current_stab->n_value] = current_stab;
+    }
+  }
+  debug(MAIN, "found %d functions\n", function_symbols_.size());
+
+}
+
+void Stabs2DebugInfo::printAllFunctions() const
+{
+  char *buffer = new char[1000];
+  debug(MAIN, "Known symbols:\n");
+  for (auto symbol : function_symbols_)
+  {
+    demangleName(stabstr_buffer_ + symbol.second->n_strx, buffer);
+    debug(MAIN, "\t%s\n", buffer);
+  }
+}
+
+bool Stabs2DebugInfo::tryPasteOoperator(const char *& input, char *& buffer) const
 {
   if (!input || !buffer) return false;
 
@@ -163,14 +202,14 @@ bool try_paste_operator(const char *& input, char *& buffer)
   input += 2;
   return true;
 }
-//-------------------------------------------------------------------------------------*/
-ssize_t get_function_line(pointer start, pointer offset)
+
+ssize_t Stabs2DebugInfo::getFunctionLine(pointer start, pointer offset) const
 {
   ssize_t line = -1;
-  ustl::map<size_t, StabEntry*>::iterator it = symbol_table.find(start);
-  if (it != symbol_table.end())
+  ustl::map<size_t, StabEntry const *>::const_iterator it = function_symbols_.find(start);
+  if (it != function_symbols_.end())
   {
-    StabEntry* se = it->second + 1;
+    StabEntry const *se = it->second + 1;
     while (se->n_type == N_PSYM)
       ++se;
     while (se->n_type == N_SLINE)
@@ -184,34 +223,34 @@ ssize_t get_function_line(pointer start, pointer offset)
   }
   return line;
 }
-//-------------------------------------------------------------------------------------*/
 
-pointer get_function_name(pointer address, char function_name[])
+
+pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[]) const
 {
-  if (symbol_table.size() == 0)
-    return NULL;
-  ustl::map<size_t, StabEntry*>::iterator it = symbol_table.end();
+  if (function_symbols_.size() == 0)
+    return 0;
 
-  if (ADDRESS_BETWEEN(address, symbol_table.at(0).first, ArchCommon::getKernelEndAddress()))
+  ustl::map<size_t, StabEntry const *>::const_iterator it = function_symbols_.end();
+
+  if (ADDRESS_BETWEEN(address, function_symbols_.at(0).first, ArchCommon::getKernelEndAddress()))
   {
-    it = symbol_table.begin();
+    it = function_symbols_.begin();
 
-    while (it != symbol_table.end() && it->first <= address)
+    while (it != function_symbols_.end() && it->first <= address)
       ++it;
   }
 
-  if (it != symbol_table.end())
+  if (it != function_symbols_.end())
   {
     --it;
-    demangle_name(stab_str_base + it->second->n_strx, function_name);
+    demangleName(stabstr_buffer_ + it->second->n_strx, function_name);
     return it->first;
   }
 
-  return NULL;
+  return 0;
 }
-//-------------------------------------------------------------------------------------*/
 
-int read_number(const char *& input)
+int Stabs2DebugInfo::readNumber(const char *& input) const
 {
   if (!input) return -1;
 
@@ -225,9 +264,8 @@ int read_number(const char *& input)
 
   return Result;
 }
-//-------------------------------------------------------------------------------------*/
 
-void paste_typename(const char *& input, char *& buffer)
+void Stabs2DebugInfo::pasteTypename(const char *& input, char *& buffer) const
 {
   bool IsReference = false, IsPointer = false;
   int OffsetInput, Count;
@@ -256,7 +294,7 @@ void paste_typename(const char *& input, char *& buffer)
 
   if (*input >= '0' && *input <= '9')
   {
-    Count = read_number(input);
+    Count = readNumber(input);
     OffsetInput = Count;
     Src = input;
   }
@@ -367,9 +405,8 @@ void paste_typename(const char *& input, char *& buffer)
   if (IsReference)
     *buffer++ = '&';
 }
-//-------------------------------------------------------------------------------------*/
 
-void paste_arguments(const char *& input, char *& buffer, char delimiter)
+void Stabs2DebugInfo::pasteArguments(const char *& input, char *& buffer, char delimiter) const
 {
   if (!input || !buffer) return;
 
@@ -383,12 +420,11 @@ void paste_arguments(const char *& input, char *& buffer, char delimiter)
       *buffer++ = ' ';
     }
 
-    paste_typename(input, buffer);
+    pasteTypename(input, buffer);
   }
 }
-//-------------------------------------------------------------------------------------*/
 
-void demangle_name(const char* name, char *buffer)
+void Stabs2DebugInfo::demangleName(const char* name, char *buffer) const
 {
   const char *pData = name;
 
@@ -426,7 +462,7 @@ void demangle_name(const char* name, char *buffer)
 
       if (*pData >= '0' && *pData <= '9') // part of nested name
       {
-        int Count = read_number(pData);
+        int Count = readNumber(pData);
 
         memcpy(buffer, pData, Count);
         pData += Count;
@@ -435,12 +471,12 @@ void demangle_name(const char* name, char *buffer)
       else if (*pData == 'I') // parse template params
       {
         *buffer++ = '<';
-        paste_arguments(++pData, buffer, 'E');
+        pasteArguments(++pData, buffer, 'E');
         *buffer++ = '>';
         ++pData;
       }
       else
-        try_paste_operator(pData, buffer);
+        tryPasteOoperator(pData, buffer);
       if (repeat >= 2)
         break;
       ++repeat;
@@ -452,33 +488,15 @@ void demangle_name(const char* name, char *buffer)
     if (*pData == 'L') // we've got a local name
       ++pData;
 
-    int Count = read_number(pData);
+    int Count = readNumber(pData);
     memcpy(buffer, pData, Count);
     buffer += Count;
     pData += Count;
   }
 
   *buffer++ = '(';
-  paste_arguments(pData, buffer, ':');
+  pasteArguments(pData, buffer, ':');
   *buffer++ = ')';
   *buffer = '\0';
 }
-//-------------------------------------------------------------------------------------*/
 
-void parse_symtab(StabEntry *stab_start, StabEntry *stab_end, const char *stab_str)
-{
-  stab_str_base = stab_str;
-  new (&symbol_table) ustl::map<size_t, const char*>();
-  symbol_table.reserve(2048);
-
-  for (StabEntry* current_stab = stab_start; current_stab < stab_end; ++current_stab)
-  {
-    if (unlikely((current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME) &&
-        ADDRESS_BETWEEN(current_stab->n_value, 0x80000000, ArchCommon::getKernelEndAddress())))
-    {
-      symbol_table[current_stab->n_value] = current_stab;
-    }
-  }
-  debug(MAIN, "found %d functions\n", symbol_table.size());
-}
-//-------------------------------------------------------------------------------------*/

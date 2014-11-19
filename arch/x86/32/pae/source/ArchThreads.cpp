@@ -66,6 +66,12 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[6] = 0xFFFF0000;
 }
 
+void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer function)
+{
+  info->eip = function;
+}
+
+
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
@@ -140,7 +146,7 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
-void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers)
+void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
   if (!info)
