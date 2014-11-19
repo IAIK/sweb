@@ -44,10 +44,9 @@ class Loader
      *Initialises the Addressspace of the User, creates the Thread's
      *InfosUserspaceThread and sets the PageDirectory,
      *loads the ehdr and phdrs from executable
-     * @param load_debugging_info will also load and init all information necessary to print a stack trace
      * @return true if this was successful, false otherwise
      */
-    bool loadExecutableAndInitProcess(bool load_debugging_info = true);
+    bool loadExecutableAndInitProcess();
 
     /**
      *loads one page slow by its virtual address: gets a free page, maps it,
@@ -56,9 +55,14 @@ class Loader
      */
     void loadOnePageSafeButSlow ( pointer virtual_address );
 
-    ArchMemory arch_memory_;
+    /**
+     * Returns debug info for the loaded userspace program, if available
+     */
+    Stabs2DebugInfo const *getDebugInfos()const;
 
-    Stabs2DebugInfo const *getDebugInfos()const {return userspace_debug_info_;}
+
+
+    ArchMemory arch_memory_;
 
   private:
 

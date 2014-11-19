@@ -11,7 +11,7 @@
 #include "fs/VfsSyscall.h"
 
 UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
-                           MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number, bool load_debugging_info) :
+                           MountMinixAndStartUserProgramsThread *process_registry, uint32 terminal_number) :
   Thread ( fs_info, minixfs_filename ),
   run_me_(false),
   terminal_number_(terminal_number),
@@ -28,7 +28,7 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
   }
 
   loader_= new Loader ( fd_, this );
-  if(loader_ && loader_->loadExecutableAndInitProcess(load_debugging_info))
+  if(loader_ && loader_->loadExecutableAndInitProcess())
   {
     run_me_ = true;
     debug (USERPROCESS, "ctor: Done loading %s\n", minixfs_filename );

@@ -77,7 +77,7 @@ bool Loader::readHeaders()
   return true;
 }
 
-bool Loader::loadExecutableAndInitProcess(bool load_debugging_info)
+bool Loader::loadExecutableAndInitProcess()
 {
   debug ( LOADER,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
 
