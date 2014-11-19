@@ -181,15 +181,15 @@ void Thread::printUserBacktrace()
 {
   if (!user_arch_thread_info_)
   {
-    debug(US_BACKTRACE, "=== Can not do userspace stacktracing of thread <%s> since it has no userspace! ===\n", getName());
+    debug(USERTRACE, "=== Can not do userspace stacktracing of thread <%s> since it has no userspace! ===\n", getName());
   }
 
   pointer CallStack[MAX_STACK_FRAMES];
   int Count = backtrace_user(CallStack, MAX_STACK_FRAMES, this, 0);
 
-  debug(US_BACKTRACE, "=== Begin of backtrace for user thread <%s> ===\n", getName());
-  debug(US_BACKTRACE, "   found <%d> stack %s:\n", Count, Count != 1 ? "frames" : "frame");
-  debug(US_BACKTRACE, "\n");
+  debug(USERTRACE, "=== Begin of backtrace for user thread <%s> ===\n", getName());
+  debug(USERTRACE, "   found <%d> stack %s:\n", Count, Count != 1 ? "frames" : "frame");
+  debug(USERTRACE, "\n");
 
   Stabs2DebugInfo const *deb = 0;
   if (loader_)
@@ -206,15 +206,15 @@ void Thread::printUserBacktrace()
     {
       ssize_t line = deb->getFunctionLine(StartAddr,CallStack[i] - StartAddr);
       if (line > 0)
-        debug(US_BACKTRACE, "   (%d): %010x (%s:%u)\n", i, CallStack[i], FunctionName, line);
+        debug(USERTRACE, "   (%d): %010x (%s:%u)\n", i, CallStack[i], FunctionName, line);
       else
-        debug(US_BACKTRACE, "   (%d): %010x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
+        debug(USERTRACE, "   (%d): %010x (%s+%x)\n", i, CallStack[i], FunctionName, CallStack[i] - StartAddr);
     }
     else
-      debug(US_BACKTRACE, "   (%d): %010x (<UNKNOWN FUNCTION>)\n", i, CallStack[i]);
+      debug(USERTRACE, "   (%d): %010x (<UNKNOWN FUNCTION>)\n", i, CallStack[i]);
   }
 
-  debug(US_BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
+  debug(USERTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
 }
 
 

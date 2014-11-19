@@ -90,7 +90,7 @@ bool Loader::loadExecutableAndInitProcess(bool load_debugging_info)
   if ( isDebugEnabled ( LOADER ) )
     Elf::printElfHeader ( *hdr_ );
 
-  if (load_debugging_info)
+  if (isDebugEnabled(USERTRACE))
     loadDebugInfoIfAvailable();
 
   ArchThreads::createThreadInfosUserspaceThread (
@@ -293,10 +293,10 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
 
 bool Loader::loadDebugInfoIfAvailable()
 {
-  debug(US_BACKTRACE, "loadDebugInfoIfAvailable start\n");
+  debug(USERTRACE, "loadDebugInfoIfAvailable start\n");
   if (sizeof(Elf::Shdr) != hdr_->e_shentsize)
   {
-    debug(US_BACKTRACE, "Expected section header size does not match advertised section header size\n");
+    debug(USERTRACE, "Expected section header size does not match advertised section header size\n");
     return false;
   }
 
@@ -304,7 +304,7 @@ bool Loader::loadDebugInfoIfAvailable()
   section_headers.resize(hdr_->e_shnum, true);
   if (readFromBinary(reinterpret_cast<char*>(&section_headers[0]), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
   {
-    debug(US_BACKTRACE, "Failed to load section headers!\n");
+    debug(USERTRACE, "Failed to load section headers!\n");
     return false;
   }
 
@@ -321,7 +321,7 @@ bool Loader::loadDebugInfoIfAvailable()
 
   if (readFromBinary(&section_names[0], section_headers[section_name_section].sh_offset, section_name_size ))
   {
-    debug(US_BACKTRACE, "Failed to load section name section\n");
+    debug(USERTRACE, "Failed to load section name section\n");
     return false;
   }
 
@@ -339,10 +339,10 @@ bool Loader::loadDebugInfoIfAvailable()
     {
       if (!strcmp(&section_names[section.sh_name], ".stab"))
       {
-        debug(US_BACKTRACE, "Found stab section, index is %d\n", section.sh_name);
+        debug(USERTRACE, "Found stab section, index is %d\n", section.sh_name);
         if (stab_data)
         {
-          debug(US_BACKTRACE, "Already loaded the stab section?, skipping\n");
+          debug(USERTRACE, "Already loaded the stab section?, skipping\n");
         }
         else
         {
@@ -351,7 +351,7 @@ bool Loader::loadDebugInfoIfAvailable()
           stab_data_size = size;
           if (readFromBinary(stab_data, section.sh_offset, size))
           {
-            debug(US_BACKTRACE, "Failed to load stab section!\n");
+            debug(USERTRACE, "Failed to load stab section!\n");
             delete[] stab_data;
             stab_data=0;
           }
@@ -359,10 +359,10 @@ bool Loader::loadDebugInfoIfAvailable()
       }
       if (!strcmp(&section_names[section.sh_name], ".stabstr"))
       {
-        debug(US_BACKTRACE, "Found stabstr section, index is %d\n", section.sh_name);
+        debug(USERTRACE, "Found stabstr section, index is %d\n", section.sh_name);
         if (stabstr_data)
         {
-          debug(US_BACKTRACE, "Already loaded the stabstr section?, skipping\n");
+          debug(USERTRACE, "Already loaded the stabstr section?, skipping\n");
         }
         else
         {
@@ -370,7 +370,7 @@ bool Loader::loadDebugInfoIfAvailable()
           stabstr_data = new char[size];
           if (readFromBinary(stabstr_data, section.sh_offset, size))
           {
-            debug(US_BACKTRACE, "Failed to load stabstr section!\n");
+            debug(USERTRACE, "Failed to load stabstr section!\n");
             delete[] stabstr_data;
             stabstr_data=0;
           }
@@ -383,7 +383,7 @@ bool Loader::loadDebugInfoIfAvailable()
   {
     delete[] stab_data;
     delete[] stabstr_data;
-    debug(US_BACKTRACE, "Failed to load necessary debug data!\n");
+    debug(USERTRACE, "Failed to load necessary debug data!\n");
     return false;
   }
 
@@ -392,3 +392,10 @@ bool Loader::loadDebugInfoIfAvailable()
   return true;
 }
 
+Stabs2DebugInfo const *Loader::getDebugInfos()const
+{
+  return userspace_debug_info_;
+}
+
+
+}
