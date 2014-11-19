@@ -120,6 +120,7 @@ void Scheduler::sleepAndRelease ( Mutex &lock )
   lock.spinlock_.acquire("in sleepAndRelease()");
   lockScheduling();
   lock.spinlock_.release("in sleepAndRelease()");
+  currentThread->state_=Sleeping;
   lock.release();
   unlockScheduling();
   yield();
