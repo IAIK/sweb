@@ -37,11 +37,6 @@ uint32 ArchThreads::getPageDirectory(Thread *thread)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  initialseThreadInfosKernelThread(info, start_function, stack);
-}
-
-void ArchThreads::initialseThreadInfosKernelThread(ArchThreadInfo *info, pointer start_function, pointer stack)
-{
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
 
@@ -70,6 +65,11 @@ void ArchThreads::initialseThreadInfosKernelThread(ArchThreadInfo *info, pointer
   info->fpu[4] = 0x00000000;
   info->fpu[5] = 0x00000000;
   info->fpu[6] = 0xFFFF0000;
+}
+
+void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer function)
+{
+  info->eip = function;
 }
 
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
