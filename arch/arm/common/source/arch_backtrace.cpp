@@ -78,9 +78,5 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
 
   return i;
 }
-extern "C"
-{
-void fprintf(){}
-}
 
 
