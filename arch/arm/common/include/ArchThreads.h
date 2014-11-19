@@ -146,7 +146,7 @@ public:
  * @param userspace_register
  *
  */
-  static void printThreadRegisters(Thread *thread, uint32 userspace_registers);
+  static void printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose = true);
 };
 
 #endif
