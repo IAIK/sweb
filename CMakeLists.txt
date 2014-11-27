@@ -7,21 +7,29 @@ if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/32")
 endif("${ARCH}" STREQUAL "")
 
+if ("${BIN_DIR_PREFIX}" STREQUAL "")
+  MESSAGE("BIN_DIR_PREFIX not defined, using default of \"../\"")
+  SET (BIN_DIR_PREFIX "../")
+endif ("${BIN_DIR_PREFIX}" STREQUAL "")
 
-include(MakeOptions)
+if ("${BIN_DIR_NAME}" STREQUAL "")
+  MESSAGE("BIN_DIR_NAME not defined, using default of \"sweb-bin\"")
+  SET (BIN_DIR_NAME "..\\/")
+endif ("${BIN_DIR_NAME}" STREQUAL "")
+
+if ("${DOC_DIR}" STREQUAL "")
+  MESSAGE("DOC_DIR not defined, using default of \"sweb-docs\"")
+  SET (DOC_DIR "..\\/sweb-docs")
+endif ("${DOC_DIR}" STREQUAL "")
 
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
 endif(APPLE OR WIN32)
 
-
-
 include(arch/${ARCH}/CMakeLists.compiler)
 
 project(sweb)
-
-include(MakeOptions)
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
 string(REPLACE "/" "_" ARCH_ESC ${ARCH})
@@ -117,15 +125,6 @@ ENDMACRO(ADD_PROJECT_LIBRARY)
 set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
 set (ASM_WILDCARDS *.s)
 set (INFO_FILE info.file)
-
-
-if(NOT BIN_DIR_PREFIX)
-	message(FATAL_ERROR "BIN_DIR_PREFIX not set, check MakeOptions file")
-endif(NOT BIN_DIR_PREFIX)
-
-if(NOT BIN_DIR_NAME)
-	message(FATAL_ERROR "BIN_DIR_NAME not set, check MakeOptions file")
-endif(NOT BIN_DIR_NAME)
 
 set(LIBRARY_FILENAMES)
 
@@ -322,7 +321,6 @@ add_custom_target(mrproper
 
 
 #Custom target: make x86_32
-#Changes MakeOptions ARCH setting to x86_32
 add_custom_target(x86_32
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
@@ -330,7 +328,6 @@ add_custom_target(x86_32
         )
 
 #Custom target: make x86_32_pae
-#Changes MakeOptions ARCH setting to x86_32_pae
 add_custom_target(x86_32_pae
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
@@ -338,7 +335,6 @@ add_custom_target(x86_32_pae
         )
 
 #Custom target: make x86_64
-#Changes MakeOptions ARCH setting to x86_64
 add_custom_target(x86_64
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
@@ -346,7 +342,6 @@ add_custom_target(x86_64
         )
 
 #Custom target: make arm_icp
-#Changes MakeOptions ARCH setting to arm_icp
 add_custom_target(arm_icp
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
@@ -354,7 +349,6 @@ add_custom_target(arm_icp
         )
 
 #Custom target: make arm_verdex
-#Changes MakeOptions ARCH setting to arm_verdex
 add_custom_target(arm_verdex
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
@@ -362,7 +356,6 @@ add_custom_target(arm_verdex
         )
 
 #Custom target: make arm_rpi
-#Changes MakeOptions ARCH setting to arm_rpi
 add_custom_target(arm_rpi
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
