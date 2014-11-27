@@ -317,7 +317,7 @@ add_custom_target(rungdb
 add_custom_target(mrproper
 	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
 	COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-  COMMAND cmake ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
+  COMMAND cmake -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 	)
 
 
@@ -327,14 +327,6 @@ add_custom_target(x86_32
         COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
         COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
         COMMAND cmake -DARCH=x86/32 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-        )
-
-#Custom target: make x86_32_only
-#Changes MakeOptions ARCH setting to x86_32 AND REMOVE ALL other architectures
-add_custom_target(x86_32_only
-        COMMENT "rm -rf ${PROJECT_SOURCE_DIR}/arch/arm ${PROJECT_SOURCE_DIR}/arch/xen ${PROJECT_SOURCE_DIR}/arch/x86/64 ${PROJECT_SOURCE_DIR}/arch/x86/32/pae"
-        COMMAND rm -rf ${PROJECT_SOURCE_DIR}/arch/arm ${PROJECT_SOURCE_DIR}/arch/xen ${PROJECT_SOURCE_DIR}/arch/x86/64 ${PROJECT_SOURCE_DIR}/arch/x86/32/pae
-        COMMAND make x86_32
         )
 
 #Custom target: make x86_32_pae

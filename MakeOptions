@@ -15,6 +15,3 @@ SET (BOCHS_PATH "bochs")
 #'true' to enable verbose compile output
 set(CMAKE_VERBOSE_MAKEFILE false)
 
-# for windows/mingw this is necessary
-SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-SET(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "")
