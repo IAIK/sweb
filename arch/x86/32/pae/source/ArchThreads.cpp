@@ -146,6 +146,12 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
+void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
+{
+  printThreadRegisters(thread,0,verbose);
+  printThreadRegisters(thread,1,verbose);
+}
+
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
@@ -154,7 +160,17 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- eax: %10x  ebx: %10x  ecx: %10x  edx: %10x -- esp: %10x  ebp: %10x  esp0 %10x -- eip: %10x  eflg: %10x  cr3: %x\n",
-           userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
-
+  if (verbose)
+  {
+    kprintfd("\t\t%sThread: %10x, info: %10x\n"\
+             "\t\t\t eax: %10x  ebx: %10x  ecx: %10x  edx: %10x\n"\
+             "\t\t\t esp: %10x  ebp: %10x  esp0 %10x  eip: %10x\n"\
+             "\t\t\teflg: %10x  cr3: %10x\n",
+             userspace_registers?"User-":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
+  }
+  else
+  {
+    kprintfd("\t%sThread %10x: info %10x eax %10x ebp %10x esp %10x esp0 %10x eip %10x cr3 %10x\n",
+             userspace_registers?" User-":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
+  }
 }

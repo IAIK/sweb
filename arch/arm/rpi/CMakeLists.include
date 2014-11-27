@@ -1,7 +1,7 @@
 set(ASM_FORMAT --defsym BOARD_LOAD_BASE=0)
 set(KERNEL_BINARY kernel.x)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -gstabs2 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -Wno-strict-aliasing -Wa,-march=armv6 -Wa,-mcpu=arm1176jzf-s -fshort-wchar")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -std=c99 -Wno-strict-aliasing -march=armv6 -Wa,-mcpu=arm1176jzf-s -fshort-wchar")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -std=gnu11 -O0 -gstabs2 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -std=c99 -Wno-strict-aliasing -march=armv6 -Wa,-mcpu=arm1176jzf-s -fshort-wchar")
 
 set(LD_ARGUMENT -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
 set(APPEND_LD_ARGUMENTS -Wl,-lgcc)

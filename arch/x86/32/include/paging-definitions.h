@@ -3,7 +3,6 @@
  *
  */
 
-#ifdef CMAKE_X86_32
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__
 
@@ -85,5 +84,4 @@ typedef struct
   uint32 page_ppn                  :20;
 } __attribute__((__packed__)) PageTableEntry;
 
-#endif
 #endif

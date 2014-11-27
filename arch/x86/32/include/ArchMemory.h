@@ -3,7 +3,6 @@
  *
  */
 
-#ifdef CMAKE_X86_32
 #ifndef _ARCH_MEMORY_H_
 #define _ARCH_MEMORY_H_
 
@@ -124,4 +123,4 @@ private:
 };
 
 #endif
-#endif
+

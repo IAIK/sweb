@@ -227,7 +227,7 @@ extern "C" void irqHandler_0()
     case 0:
 //      kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
 //      if (currentThread)
-//        ArchThreads::printThreadRegisters(currentThread,0);
+//        ArchThreads::printThreadRegisters(currentThread,false);
       ArchInterrupts::EndOfInterrupt(0);
       arch_switchThreadKernelToKernelPageDirChange();
     case 1:
@@ -235,9 +235,7 @@ extern "C" void irqHandler_0()
       ArchInterrupts::EndOfInterrupt(0);
       kprintfd("currentThread: %x\n", currentThread);
       if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,1);
+        ArchThreads::printThreadRegisters(currentThread,false);
       arch_switchThreadToUserPageDirChange();
     default:
       kprintfd("irq0: Panic in int 0 handler\n");
@@ -269,8 +267,6 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
   //InterruptUtils::countPageFault(address);
   //--------Start "just for Debugging"-----------
 
@@ -338,8 +334,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
     }
   }
 
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
+  ArchThreads::printThreadRegisters(currentThread,false);
   //--------End "just for Debugging"-----------
 
 
@@ -377,9 +372,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
     case 1:
       currentThreadInfo = currentThread->user_arch_thread_info_;
       if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,0);
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,1);
+        ArchThreads::printThreadRegisters(currentThread,false);
       arch_switchThreadToUserPageDirChange();
       break; //not reached
     default:
@@ -469,7 +462,7 @@ extern "C" void syscallHandler()
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
-  //ArchThreads::printThreadRegisters(currentThread,1);
+  ArchThreads::printThreadRegisters(currentThread,false);
   arch_switchThreadToUserPageDirChange();
 }
 

@@ -446,7 +446,7 @@ extern "C" void syscallHandler()
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
-  //ArchThreads::printThreadRegisters(currentThread,1);
+  //ArchThreads::printThreadRegisters(currentThread,false);
   arch_switchThreadToUserPageDirChange();
 }
 

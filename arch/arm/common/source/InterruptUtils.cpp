@@ -56,8 +56,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   if (!currentThread->switch_to_userspace_)
   {
     currentThread->printBacktrace(true);
-    ArchThreads::printThreadRegisters(currentThread,0);
-    ArchThreads::printThreadRegisters(currentThread,1);
+    ArchThreads::printThreadRegisters(currentThread,false);
     while(1);
   }
 
@@ -81,8 +80,7 @@ void pageFaultHandler(uint32 address, uint32 type)
     }
   }
 
-  ArchThreads::printThreadRegisters(currentThread,0);
-  ArchThreads::printThreadRegisters(currentThread,1);
+  ArchThreads::printThreadRegisters(currentThread,false);
 
   //save previous state on stack of currentThread
   currentThread->switch_to_userspace_ = false;
@@ -188,16 +186,14 @@ extern "C" void exceptionHandler(uint32 type)
   }
   else {
     kprintfd("\nCPU Fault type = %x\n",type);
-    ArchThreads::printThreadRegisters(currentThread,0);
-    ArchThreads::printThreadRegisters(currentThread,1);
+    ArchThreads::printThreadRegisters(currentThread,false);
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     ArchInterrupts::enableInterrupts();
     currentThread->kill();
     for(;;);
   }
-//  ArchThreads::printThreadRegisters(currentThread,0);
-//  ArchThreads::printThreadRegisters(currentThread,1);
+//  ArchThreads::printThreadRegisters(currentThread,false);
   assert((currentThreadInfo->ttbr0 & 0x3FFF) == 0 && (currentThreadInfo->ttbr0 & ~0x3FFF) != 0);
   assert((currentThreadInfo->cpsr & 0xE0) == 0);
   switchTTBR0(currentThreadInfo->ttbr0);

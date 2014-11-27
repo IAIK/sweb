@@ -135,15 +135,32 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
+
+void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
+{
+  printThreadRegisters(thread,0,verbose);
+  printThreadRegisters(thread,1,verbose);
+}
+
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
   ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
   if (!info)
   {
-    kprintfd("%sThread: %10x, has no %s registers\n",userspace_registers?"Kernel":"  User",thread,userspace_registers ? "userspace" : "kernelspace");
+    kprintfd("%sThread: %18x, has no %s registers\n",userspace_registers?"Kernel":"  User",thread,userspace_registers ? "userspace" : "kernelspace");
     return;
   }
-  kprintfd("%sThread: %10x, info: %10x -- rax: %10x  rbx: %10x  rcx: %10x  rdx: %10x -- rsp: %10x  rbp: %10x  rsp0 %10x -- rip: %10x  rflg: %10x  cr3: %x\n",
-           userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
-
+  if (verbose)
+  {
+    kprintfd("\t\t%sThread: %18x, info: %18x\n"\
+             "\t\t\t rax: %18x  rbx: %18x  rcx: %18x  rdx: %18x\n"\
+             "\t\t\t rsp: %18x  rbp: %18x  rsp0 %18x  rip: %18x\n"\
+             "\t\t\trflg: %18x  cr3: %x\n",
+             userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
+  }
+  else
+  {
+    kprintfd("%sThread: %18x, info: %18x -- rax: %18x  rbx: %18x  rcx: %18x  rdx: %18x -- rsp: %18x  rbp: %18x  rsp0 %18x -- rip: %18x  rflg: %18x  cr3: %x\n",
+             userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
+  }
 }

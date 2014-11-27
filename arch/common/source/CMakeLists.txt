@@ -3,6 +3,7 @@ include_directories(
     ../../${ARCH}/include
     ../../${ARCH}/common/include
     ../../${ARCH}/../common/include
+    ../../${ARCH}/../../common/include
 )
 
 add_project_library(arch_common)

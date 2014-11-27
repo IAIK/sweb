@@ -3,7 +3,6 @@
  *
  */
 
-#ifdef CMAKE_X86_32_PAE
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__
 
@@ -110,4 +109,4 @@ typedef struct
 
 
 #endif
-#endif
+
