@@ -1,4 +1,3 @@
-
 LINK_BASE           EQU     80000000h              ; Base address (virtual) (kernel is linked to start at this address)
 LOAD_BASE           EQU     00100000h              ; Base address (physikal) (kernel is actually loaded at this address)
 BASE                EQU     (LINK_BASE - LOAD_BASE) ; difference to calculate physical adress from virtual address until paging is set up
@@ -45,10 +44,7 @@ entry:
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
-
-
    mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
-
 
    mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
    cmp eax, DATA_SEGMENT_MAGIC
@@ -137,22 +133,19 @@ now_using_segments:
 
 	;  2) setting CR0s PG bit to enable paging
 
-    mov word[0B8008h], 9F34h
-
+  mov word[0B8008h], 9F34h
 
 	mov     eax,cr0
 	or      eax,0x80010001   ; Set PG bit
 	mov     cr0,eax         ; Paging is on!
 
-; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
+  ; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
 
-    mov word[0B800Ah], 9F35h
+  mov word[0B800Ah], 9F35h
 
  	mov esp,stack
 
-
-
-    mov word[0B800Ch], 9F36h
+  mov word[0B800Ch], 9F36h
 
 	;; we want to now move our instruction pointer from the initial low address 
 	;; to our new remapped kernel
@@ -307,11 +300,6 @@ gdt_ptr_very_new:
 
 	dw gdt_real_end - gdt - 1
 	dd gdt
-	
-
-%rep 1024
- dd 0
-%endrep
 
 SECTION .data
 ds_magic:
@@ -326,29 +314,15 @@ multi_boot_structure_pointer:
 	dd 0
    
 SECTION .bss
-   ; here we create lots of room for our stack: 16 kiB (actually this is done by the resd 4096 )
-   GLOBAL stack_start
+GLOBAL kernel_page_directory_start
+kernel_page_directory_start:
+  resd 1024
+GLOBAL kernel_page_tables_start:
+kernel_page_tables_start:
+  resd 4096
+
+GLOBAL stack_start
 stack_start:
    resd 4096
    GLOBAL stack
 stack:
-SECTION .paging_stuff
-GLOBAL kernel_page_directory_start
-kernel_page_directory_start:
-%rep 1024
-  dd 0
-%endrep
-GLOBAL kernel_page_tables_start:
-kernel_page_tables_start:
-%rep 1024
-  dd 0
-%endrep
-%rep 1024
-  dd 0
-%endrep
-%rep 1024
-  dd 0
-%endrep
-%rep 1024
-  dd 0
-%endrep
