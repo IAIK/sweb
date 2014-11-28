@@ -30,7 +30,8 @@ struct ArchThreadInfo
   uint32  esp0;      // 68
   uint32  ss0;       // 72
   uint32  cr3;       // 76
-  uint32  fpu[27];   // 80
+  uint32  gs0;       // 80
+  uint32  fpu[27];   // 84
 };
 
 class Thread;
@@ -39,8 +40,8 @@ class ArchMemory;
  * this is where the thread info for task switching is stored
  *
  */
-extern ArchThreadInfo *currentThreadInfo;
-extern Thread *currentThread;
+extern __thread ArchThreadInfo *currentThreadInfo;
+extern __thread Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching

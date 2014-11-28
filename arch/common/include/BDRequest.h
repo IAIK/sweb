@@ -26,7 +26,7 @@
 
 class Thread;
 
-extern Thread * currentThread;
+extern __thread Thread * currentThread;
 
 class BDRequest
 {

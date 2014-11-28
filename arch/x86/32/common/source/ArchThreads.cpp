@@ -34,6 +34,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
+  info->gs      = KERNEL_GS_CORE0;
   info->ss      = KERNEL_SS;
   info->eflags  = 0x200;
   info->dpl     = DPL_KERNEL;
@@ -61,6 +62,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->es      = USER_DS;
   info->ss      = USER_SS;
   info->ss0     = KERNEL_SS;
+  info->gs0     = KERNEL_GS_CORE0;
   info->dpl     = DPL_USER;
   info->esp0    = kernel_stack;
 }

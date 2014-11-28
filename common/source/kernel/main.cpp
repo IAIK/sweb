@@ -44,6 +44,8 @@ extern "C" void removeBootTimeIdentMapping();
 extern "C" void startup()
 {
   writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
+  currentThread = 0;
+  currentThreadInfo = 0;
   removeBootTimeIdentMapping();
   we_are_dying = 0;
   boot_completed = 0;
@@ -77,6 +79,7 @@ extern "C" void startup()
   debug(MAIN, "Threads init\n");
   ArchThreads::initialise();
   debug(MAIN, "Interupts init\n");
+
   ArchInterrupts::initialise();
 
   ArchCommon::initDebug();

@@ -46,9 +46,8 @@ SECTIONS
     LS_Bss = .;
     bss_start_address = .;
     *(.bss)
-    . = ALIGN(4096);
     bss_end_address = .;
-
+    . = ALIGN(4096);
   }
 
   .stab : AT(LS_Phys + (LS_Stab - LS_Code))
@@ -71,5 +70,11 @@ SECTIONS
 
     PROVIDE(kernel_end_address = .);
   }
+
+  .tbss LS_Virt (NOLOAD) : AT(LS_Virt)
+  {
+    *(.tbss)
+  }
+
 
 }

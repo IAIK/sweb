@@ -15,8 +15,8 @@
 
 extern ustl::map<uint32, ustl::string> symbol_table;
 
-ArchThreadInfo *currentThreadInfo;
-Thread *currentThread;
+__thread ArchThreadInfo *currentThreadInfo;
+__thread Thread *currentThread;
 
 Scheduler *Scheduler::instance_ = 0;
 

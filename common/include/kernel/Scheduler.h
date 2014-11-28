@@ -13,6 +13,8 @@
 class Thread;
 class Mutex;
 class SpinLock;
+extern __thread ArchThreadInfo *currentThreadInfo;
+extern __thread Thread *currentThread;
 
 
 /**

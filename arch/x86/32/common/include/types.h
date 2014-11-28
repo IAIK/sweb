@@ -35,7 +35,8 @@ typedef uint32 gid_t;
 #define KERNEL_CS  (8*3)
 #define KERNEL_DS  (8*2)
 #define KERNEL_SS  (8*2)
-#define KERNEL_TSS (8*6)
+#define KERNEL_GS_CORE0 (8*6)
+#define KERNEL_TSS (8*7)
 #define DPL_KERNEL  0
 #define DPL_USER    3
 #define USER_CS ((8*5)|DPL_USER)

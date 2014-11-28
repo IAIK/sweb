@@ -18,6 +18,8 @@ BITS 32
 %endmacro
 
 %macro changeData 0
+        mov ax, 0x30
+        mov gs, ax
         mov ax, KERNEL_DS
         mov es, ax
         mov ax, KERNEL_DS

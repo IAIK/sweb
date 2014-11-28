@@ -137,8 +137,8 @@ DUMMY_HANDLER(125)
 DUMMY_HANDLER(126)
 DUMMY_HANDLER(127)
 
-extern ArchThreadInfo *currentThreadInfo;
-extern Thread *currentThread;
+extern __thread ArchThreadInfo *currentThreadInfo;
+extern __thread Thread *currentThread;
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
   extern "C" void irqHandler_##x ()  {  \
