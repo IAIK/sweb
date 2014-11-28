@@ -93,10 +93,6 @@ void initialisePaging()
 
 void removeBootTimeIdentMapping()
 {
-}
-
-void removeBootTimeMapping()
-{
   uint64* pml4 = (uint64*)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
   pml4[0] = 0;
   pml4[1] = 0;

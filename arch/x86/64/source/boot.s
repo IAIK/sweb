@@ -19,21 +19,6 @@ MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
 MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
-%macro writeTestOnScreen 0
-   mov word[0C00B8020h], 9F54h
-   mov word[0C00B8022h], 9F65h
-   mov word[0C00B8024h], 9F73h
-   mov word[0C00B8026h], 9F74h
-   mov word[0C00B802Ah], 9F21h
-%endmacro
-%macro writeTestOnScreenUnMapped 0
-   mov word[0B8000h], 9F54h
-   mov word[0B8002h], 9F65h
-   mov word[0B8004h], 9F73h
-   mov word[0B8006h], 9F74h
-   mov word[0B800Ah], 9F21h
-
-%endmacro
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 ;; this will help us to boot, this way we can tell grub
 ;; what to do
@@ -73,8 +58,6 @@ entry:
    sub ecx, edi ; how much data do we have to clear
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
-
-
 
    mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
 
@@ -144,8 +127,6 @@ data_segment_ok:
 
     mov word[0B8004h], 9F32h
 
-  pop eax
-
   call initialiseBootTimePaging
 
   ; set bit 0x4 to 1 in cr4 to enable PSE
@@ -189,9 +170,9 @@ data_segment_ok:
   shr eax, 8
   mov byte[tss.base_high_word_high - BASE], al
 
-  mov dword[g_tss.low0 - BASE], kernel_stack - PHYS_BASE
+  mov dword[g_tss.low0 - BASE], stack - PHYS_BASE
   mov dword[g_tss.high0 - BASE], 0FFFFFFFFh
-  mov dword[g_tss.istl1 - BASE], kernel_stack - PHYS_BASE
+  mov dword[g_tss.istl1 - BASE], stack - PHYS_BASE
   mov dword[g_tss.isth1 - BASE], 0FFFFFFFFh
 
   lgdt [gdt_ptr - BASE]
@@ -241,9 +222,6 @@ EXTERN initialisePaging
    mov rcx,higherHalf
    jmp rcx
 higherHalf:
-
-EXTERN removeBootTimeMapping
-   call removeBootTimeMapping
 
 EXTERN startup ; tell the assembler we have a main somewhere
    call startup
@@ -337,28 +315,6 @@ gdt_ptr_new:
  dw gdt_end - gdt - 1
  dq gdt
 
-; 256 ring 0 interrupt gates
-; we certainly miss one ring 3 interrupt gate (for syscalls)
-SECTION .idt_stuff
-GLOBAL idt
-idt:
-%rep 256
-  dw 0               ; offset 15:0
-  dw LINEAR_CODE_SEL ; selector
-  db 0               ; (always 0 for interrupt gates)
-  db 8Eh             ; present,ring 0,'386 interrupt gate 10001110
-  dw 0               ; offset 31:16
-  dd 0               ; offset 63:32
-  dd 0               ; reserved
-%endrep
-idt_end:
-
-GLOBAL idt_ptr
-
-idt_ptr:
-   dw idt_end - idt - 1    ; IDT limit
-   dq idt  ; linear adr of IDT
-
 GLOBAL g_tss
 g_tss:
    dd 0 ; reserved
@@ -443,9 +399,3 @@ stack_start:
 resd 4096
 GLOBAL stack
 stack:
-
-GLOBAL kernel_stack_start
-kernel_stack_start:
-resd 4096
-GLOBAL kernel_stack
-kernel_stack:
