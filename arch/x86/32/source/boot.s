@@ -313,26 +313,6 @@ gdt_ptr_very_new:
  dd 0
 %endrep
 
-; 256 ring 0 interrupt gates
-; we certainly miss one ring 3 interrupt gate (for syscalls)
-SECTION .idt_stuff
-GLOBAL idt
-idt:
-%rep 256
-	dw 0				; offset 15:0
-	dw LINEAR_CODE_SEL		; selector
-	db 0				; (always 0 for interrupt gates)
-	db 8Eh				; present,ring 0, ;386 interrupt gate
-	dw 0				; offset 31:16
-%endrep
-idt_end:
-
-GLOBAL idt_ptr
-
-idt_ptr:
-   dw idt_end - idt - 1    ; IDT limit
-   dd idt                  ; linear adr of IDT
-
 SECTION .data
 ds_magic:
    dd DATA_SEGMENT_MAGIC
