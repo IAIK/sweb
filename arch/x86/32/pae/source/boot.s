@@ -310,6 +310,7 @@ multi_boot_structure_pointer:
 	dd 0
    
 SECTION .bss
+ALIGN 4096
 GLOBAL kernel_page_directory_start
 kernel_page_directory_start:
   resd 4096

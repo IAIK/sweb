@@ -382,6 +382,7 @@ multi_boot_structure_pointer:
 
 SECTION .bss
 BITS 64
+ALIGN 4096
 GLOBAL kernel_page_directory
 kernel_page_directory:
 resd 2048
