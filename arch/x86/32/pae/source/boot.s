@@ -20,26 +20,6 @@ MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
 MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
-%macro writeTestOnScreen 0
-   mov word[0C00B8020h], 9F54h
-   mov word[0C00B8022h], 9F65h
-   mov word[0C00B8024h], 9F73h
-   mov word[0C00B8026h], 9F74h
-   mov word[0C00B802Ah], 9F21h
-%endmacro
-%macro writeTestOnScreenUnMapped 0
-   mov word[0B8000h], 9F54h
-   mov word[0B8002h], 9F65h
-   mov word[0B8004h], 9F73h
-   mov word[0B8006h], 9F74h
-   mov word[0B800Ah], 9F21h
-
-%endmacro
-
-%macro halt 0
-   jmp short $ ; now what does this do? it just jumps to this instruction until the end of all times
-%endmacro
-
 ; Text section == Code that can be exectuted
 
 SECTION .text
@@ -65,10 +45,7 @@ entry:
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
-
-
    mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
-
 
    mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
    cmp eax, DATA_SEGMENT_MAGIC
@@ -123,10 +100,12 @@ now_using_segments:
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
    ; setup the stack pointer to point to our stack in the just cleared bss section
-    mov esp,stack - BASE
+   mov esp,stack - BASE
 
-    mov word[0B8004h], 9F32h
+   push dword 2
+   popf
 
+   mov word[0B8004h], 9F32h
 
 	EXTERN parseMultibootHeader;
 
@@ -154,60 +133,29 @@ now_using_segments:
 
 	;  2) setting CR0's PG bit to enable paging
 
-    mov word[0B8008h], 9F34h
+  mov word[0B8008h], 9F34h
 
 	mov     eax,cr0
 	or      eax,0x80010001   ; Set PG bit
 	mov     cr0,eax         ; Paging is on!
 
-; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
+  ; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
 
   mov word[0B800Ah], 9F35h
 
  	mov esp,stack
 
+  mov word[0B800Ch], 9F36h
 
-
-    mov word[0B800Ch], 9F36h
-
-	;; UNKLAR wozu das nötig ist? Aber ohne gehts net .. .:) Dokumentieren wär gut
-	mov eax, PagingMode
-	call eax
-
-
-PagingMode:
-
-   mov word[0C00B800Eh], 9F38h
-
-now_using_segments_new:
-
-   mov word[0C00B8010h], 9F39h
-
-
-
-EXTERN removeBootTimeIdentMapping
-
-call removeBootTimeIdentMapping
-
-
-   mov word[0C00B8012h], 4330h
-
-   mov word[0C00B8014h], 4331h
-
-   mov word[0C00B801Ah], 4335h
-
-; GRUB 0.90 leaves the NT bit set in EFLAGS. The first IRET we attempt
-; will cause a TSS-based task-switch, which will cause Exception 10.
-; Let's prevent that:
-
-   push dword 2
-   popf
-
-EXTERN startup ; tell the assembler we have a main somewhere
-   mov word[0C00B801Ch], 4336h
-
-   call startup ; hellloooo, here we are in c !
-   jmp $ ; suicide
+  ;; we want to now move our instruction pointer from the initial low address
+  ;; to our new remapped kernel
+  ;; if we just call PagingMode the assembler will figure out that it can do a
+  ;; relative call, with just a tiny offset. We want to make an absolute call though
+  ;; so load the symbol into eax, and call eax instead
+  EXTERN startup ; tell the assembler we have a main somewhere
+  mov eax, startup
+  call eax ; jump to C
+  jmp $ ; suicide
 
 global reload_segements
 reload_segements:
@@ -348,31 +296,6 @@ gdt_ptr_very_new:
 
 	dw gdt_real_end - gdt - 1
 	dd gdt
-	
-
-%rep 1024
- dd 0
-%endrep
-
-; 256 ring 0 interrupt gates
-; we certainly miss one ring 3 interrupt gate (for syscalls)
-SECTION .idt_stuff
-GLOBAL idt
-idt:
-%rep 256
-	dw 0				; offset 15:0
-	dw LINEAR_CODE_SEL		; selector
-	db 0				; (always 0 for interrupt gates)
-	db 8Eh				; present,ring 0,'386 interrupt gate
-	dw 0				; offset 31:16
-%endrep
-idt_end:
-
-GLOBAL idt_ptr
-
-idt_ptr:
-   dw idt_end - idt - 1    ; IDT limit
-   dd idt                  ; linear adr of IDT
 
 SECTION .data
 ds_magic:
@@ -387,25 +310,18 @@ multi_boot_structure_pointer:
 	dd 0
    
 SECTION .bss
-   ; here we create lots of room for our stack: 16 kiB (actually this is done by the resd 4096 )
-   GLOBAL stack_start
+GLOBAL kernel_page_directory_start
+kernel_page_directory_start:
+  resd 4096
+GLOBAL kernel_page_tables_start:
+kernel_page_tables_start:
+  resd 8192
+GLOBAL kernel_page_directory_pointer_table
+kernel_page_directory_pointer_table:
+  resd 8
+
+GLOBAL stack_start
 stack_start:
    resd 4096
    GLOBAL stack
 stack:
-SECTION .paging_stuff
-GLOBAL kernel_page_directory_start
-kernel_page_directory_start:
-%rep 4096
-  dd 0
-%endrep
-GLOBAL kernel_page_tables_start:
-kernel_page_tables_start:
-%rep 8192
-  dd 0
-%endrep
-GLOBAL kernel_page_directory_pointer_table
-kernel_page_directory_pointer_table:
-%rep 8
-  dd 0
-%endrep
