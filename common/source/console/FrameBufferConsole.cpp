@@ -89,12 +89,6 @@ void FrameBufferConsole::setPixel ( uint32 x,uint32 y,uint8 r,uint8 g,uint8 b )
   color|= ( r>>3 ) <<11;
 
   lfb[offset] = color;
-  /*
-  lfb[offset + 0] = b;
-  lfb[offset + 1] = g;
-  lfb[offset + 2] = r;
-  lfb[offset + 3] = 0;
-  */
 }
 
 uint32 FrameBufferConsole::consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const __attribute__((unused)) &state )
