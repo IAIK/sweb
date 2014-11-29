@@ -55,12 +55,17 @@ static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 
     gdt[index].typeL  = (tss ? 0x89 : 0x92) | (dpl << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
+extern char core0_local_storage;
+#include "kprintf.h"
 void SegmentUtils::initialise()
 {
   setSegmentDescriptor(2, 0, -1U, 0, 0, 0);
   setSegmentDescriptor(3, 0, -1U, 0, 1, 0);
   setSegmentDescriptor(4, 0, -1U, 3, 0, 0);
   setSegmentDescriptor(5, 0, -1U, 3, 1, 0); // 89 C0
+  void* core0_local_storage_end =  (&core0_local_storage) - 4096;
+  asm volatile("mov    %0,%%eax\n"
+               "mov %%eax,%%gs:0x0\n": "=m" (core0_local_storage_end));
 
   g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
   memset((void*)g_tss, 0, sizeof(TSS));
