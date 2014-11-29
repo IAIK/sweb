@@ -77,7 +77,8 @@ void Mutex::acquire(const char* debug_info)
 
       checkCircularDeadlock("Mutex::acquire", debug_info, currentThread, false);
       spinlock_.acquire();
-      sleepers_.push_back ( currentThread );
+      Thread* t = currentThread;
+      sleepers_.push_back(t);
       currentThread->sleeping_on_mutex_ = this;
       Scheduler::instance()->sleepAndRelease(spinlock_);
       currentThread->sleeping_on_mutex_ = 0;

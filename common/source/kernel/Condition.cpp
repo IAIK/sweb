@@ -28,9 +28,11 @@ void Condition::wait()
   if (likely(boot_completed))
   {
     // list is protected, because we assume, the lock is being held
+    assert(currentThread);
     assert(lock_->isHeldBy(currentThread));
     assert(ArchInterrupts::testIFSet());
-    sleepers_.push_back(currentThread);
+    Thread* t = currentThread;
+    sleepers_.push_back(t);
     //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
     debug(CONDITION, "Condition::wait: Thread %x  %d:%s wating on Condition %x\n",currentThread,currentThread->getTID(),currentThread->getName(),this);
     Scheduler::instance()->sleepAndRelease(*lock_);
@@ -44,9 +46,11 @@ void Condition::waitWithoutReAcquire()
   if (likely(boot_completed))
   {
     // list is protected, because we assume, the lock is being held
+    assert(currentThread);
     assert(lock_->isHeldBy(currentThread));
     assert(ArchInterrupts::testIFSet());
-    sleepers_.push_back(currentThread);
+    Thread* t = currentThread;
+    sleepers_.push_back(t);
     //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
     debug(CONDITION, "Condition::wait: Thread %x  %d:%s wating on Condition %x\n",currentThread,currentThread->getTID(),currentThread->getName(),this);
     Scheduler::instance()->sleepAndRelease(*lock_);
@@ -64,6 +68,7 @@ void Condition::signal()
     if (!sleepers_.empty())
     {
       thread = sleepers_.front();
+      assert(thread && "null pointer on sleepers list!");
       if (thread->state_ == Sleeping)
       {
         //Solution to above Problem: Wake and Remove from List only Threads which are actually sleeping
