@@ -3,22 +3,22 @@ if(COMMAND cmake_policy)
 endif(COMMAND cmake_policy)
 
 if ("${ARCH}" STREQUAL "")
-  MESSAGE("ARCH not defined, using default of x86/32")
   set (ARCH "x86/32")
 endif("${ARCH}" STREQUAL "")
+MESSAGE("-- Target architecture: ${ARCH}")
 
 if ("${BIN_DIR_PREFIX}" STREQUAL "")
-  MESSAGE("BIN_DIR_PREFIX not defined, using default of \"../\"")
+  #MESSAGE("BIN_DIR_PREFIX not defined, using default of \"../\"")
   SET (BIN_DIR_PREFIX "../")
 endif ("${BIN_DIR_PREFIX}" STREQUAL "")
 
 if ("${BIN_DIR_NAME}" STREQUAL "")
-  MESSAGE("BIN_DIR_NAME not defined, using default of \"sweb-bin\"")
+  #MESSAGE("BIN_DIR_NAME not defined, using default of \"sweb-bin\"")
   SET (BIN_DIR_NAME "..\\/")
 endif ("${BIN_DIR_NAME}" STREQUAL "")
 
 if ("${DOC_DIR}" STREQUAL "")
-  MESSAGE("DOC_DIR not defined, using default of \"sweb-docs\"")
+  #MESSAGE("DOC_DIR not defined, using default of \"sweb-docs\"")
   SET (DOC_DIR "..\\/sweb-docs")
 endif ("${DOC_DIR}" STREQUAL "")
 
