@@ -93,3 +93,54 @@ void ArchInterrupts::yieldIfIFSet()
     __asm__ __volatile__("nop");
   }
 }
+
+struct context_switch_registers {
+  uint32 es;
+  uint32 ds;
+  uint32 edi;
+  uint32 esi;
+  uint32 ebp;
+  uint32 esp;
+  uint32 ebx;
+  uint32 edx;
+  uint32 ecx;
+  uint32 eax;
+  uint32 eip;
+  uint32 cs;
+  uint32 eflags;
+  uint32 esp3;
+  uint32 ss3;
+};
+
+extern "C" void arch_saveThreadRegisters()
+{
+  register ArchThreadInfo* info = currentThreadInfo;
+  asm("fnsave (%0)\n"
+      "frstor (%0)\n"
+      :
+      : "r"((void*)(&(info->fpu)))
+      :);
+  struct context_switch_registers* registers;
+  registers = (struct context_switch_registers*) (((uint32*) &registers) + 4);
+  if (registers->cs & 0x3)
+  {
+    info->ss = registers->ss3;
+    info->esp = registers->esp3;
+  }
+  else
+  {
+    info->esp = registers->esp + 0xc;
+  }
+  info->eip = registers->eip;
+  info->cs = registers->cs;
+  info->eflags = registers->eflags;
+  info->eax = registers->eax;
+  info->ecx = registers->ecx;
+  info->edx = registers->edx;
+  info->ebx = registers->ebx;
+  info->ebp = registers->ebp;
+  info->esi = registers->esi;
+  info->edi = registers->edi;
+  info->ds = registers->ds;
+  info->es = registers->es;
+}
