@@ -82,6 +82,39 @@ arch_saveThreadRegisters:
         store_general_regs
         ret
 
+global arch_saveThreadRegistersForPageFault
+arch_saveThreadRegistersForPageFault:
+        mov rbx, currentThreadInfo
+        mov rbx, [rbx]
+        fnsave [rbx + 224]
+        frstor [rbx + 224]
+        mov rax, qword[rsp + 168]  ; get cs
+        and rax, 0x03             ; check cpl is 3
+        cmp rax, 0x03
+        je .from_user
+.from_kernel:
+        mov rax, qword [rsp + 184]; save rsp
+        mov qword[rbx + 56], rax
+        mov rax, qword [rsp + 160]; save rip
+        mov qword[rbx], rax
+        mov rax, qword [rsp + 168]; save cs
+        mov qword[rbx + 8], rax
+        mov rax, qword [rsp + 176]; save rflags
+        mov qword[rbx + 16], rax
+        store_general_regs
+        ret
+.from_user:
+        mov rax, qword[rsp + 184] ; save rsp0
+        mov qword[rbx + 56], rax
+        mov rax, qword [rsp + 160]; save rip
+        mov qword[rbx], rax
+        mov rax, qword [rsp + 168]; save cs
+        mov qword[rbx + 8], rax
+        mov rax, qword [rsp + 176]; save rflags
+        mov qword[rbx + 16], rax
+        store_general_regs
+        ret
+
 ;;----------------------------------------------------------------------
 ;; swtich thread to user and change page
 ;;----------------------------------------------------------------------

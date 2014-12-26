@@ -59,6 +59,7 @@ BITS 64
 %endmacro
 
 extern arch_saveThreadRegisters
+extern arch_saveThreadRegistersForPageFault
 
 ; ; ; 
 ; macros for irq and int handlers
@@ -101,11 +102,10 @@ section .text
 extern pageFaultHandler
 global arch_pageFaultHandler
 arch_pageFaultHandler:
-        ;we are already on a new stack because a privliedge switch happened
-        pop rsi
         pushAll ; pushes 144 bytes to stack
         changeData
-        call arch_saveThreadRegisters
+        call arch_saveThreadRegistersForPageFault
+        mov rsi, [rsp + 144]
         mov rdi, cr2
         call pageFaultHandler
         hlt
