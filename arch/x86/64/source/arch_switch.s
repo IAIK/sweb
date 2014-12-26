@@ -94,12 +94,3 @@ arch_switchThreadKernelToKernelPageDirChange:
         mov rbx, qword[rbx + 48]
 
         iretq                        ; switch to next
-
-global arch_TestAndSet
-  arch_TestAndSet:
-    mov rax, rdi      ; get new_value into %rax
-    xchg  [rsi], rax  ; swap %rax with what is stored in (%rdx)
-                      ; ... and don't let any other cpu touch that
-                      ; ... memory location while you're swapping
-    ret               ; return the old value that's in %rax
-

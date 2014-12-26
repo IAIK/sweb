@@ -124,10 +124,9 @@ void ArchThreads::yield()
   );
 }
 
-extern "C" uint32 arch_TestAndSet(uint32 new_value, uint32 *lock);
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
-  return arch_TestAndSet(new_value, &lock);
+  return __sync_lock_test_and_set(&lock,new_value);
 }
 
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
