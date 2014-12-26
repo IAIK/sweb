@@ -75,18 +75,12 @@ arch_pageFaultHandler:
         pushAll 
         changeData
         call arch_saveThreadRegistersForPageFault
-        push ebp
-        mov  ebp, esp
-        sub  esp, 8
         mov  eax, dword[esp + 52] ; error cd
         mov  dword[esp + 4], eax
         mov  eax, cr2             ; page fault address
         mov  dword[esp + 0], eax
         call pageFaultHandler
-        leave
-        popAll
-        add esp, 0x04             ; remove error_cd
-        iretd ; restore user stack
+        hlt
 
   irqhandler 0
   irqhandler 1

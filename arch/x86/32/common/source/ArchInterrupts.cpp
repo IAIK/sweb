@@ -105,6 +105,9 @@ struct context_switch_registers {
   uint32 edx;
   uint32 ecx;
   uint32 eax;
+};
+
+struct interrupt_registers {
   uint32 eip;
   uint32 cs;
   uint32 eflags;
@@ -112,28 +115,30 @@ struct context_switch_registers {
   uint32 ss3;
 };
 
-extern "C" void arch_saveThreadRegisters()
+extern "C" void arch_saveThreadRegistersGeneric(uint32 error)
 {
+  register struct context_switch_registers* registers;
+  registers = (struct context_switch_registers*) (((uint32*) &error) + 3);
+  register struct interrupt_registers* iregisters;
+  iregisters = (struct interrupt_registers*) (((uint32*) &error) + 13 + error);
   register ArchThreadInfo* info = currentThreadInfo;
   asm("fnsave (%0)\n"
       "frstor (%0)\n"
       :
       : "r"((void*)(&(info->fpu)))
       :);
-  struct context_switch_registers* registers;
-  registers = (struct context_switch_registers*) (((uint32*) &registers) + 4);
-  if (registers->cs & 0x3)
+  if (iregisters->cs & 0x3)
   {
-    info->ss = registers->ss3;
-    info->esp = registers->esp3;
+    info->ss = iregisters->ss3;
+    info->esp = iregisters->esp3;
   }
   else
   {
     info->esp = registers->esp + 0xc;
   }
-  info->eip = registers->eip;
-  info->cs = registers->cs;
-  info->eflags = registers->eflags;
+  info->eip = iregisters->eip;
+  info->cs = iregisters->cs;
+  info->eflags = iregisters->eflags;
   info->eax = registers->eax;
   info->ecx = registers->ecx;
   info->edx = registers->edx;
@@ -143,4 +148,14 @@ extern "C" void arch_saveThreadRegisters()
   info->edi = registers->edi;
   info->ds = registers->ds;
   info->es = registers->es;
+}
+
+extern "C" void arch_saveThreadRegisters()
+{
+  arch_saveThreadRegistersGeneric(0);
+}
+
+extern "C" void arch_saveThreadRegistersForPageFault()
+{
+  arch_saveThreadRegistersGeneric(1);
 }
