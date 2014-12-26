@@ -90,16 +90,17 @@ void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
     delete info;
 }
 
-extern "C" void arch_yield(uint32);
 void ArchThreads::yield()
 {
-  arch_yield(0);
+  asm("swi #0xffff");
 }
 
 extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock);
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
-  return arch_TestAndSet(0,0,new_value, &lock);
+  uint32 result;
+  asm("swp %[r], %[n], [%[l]]" : [r]"=r"(result) : [n]"r"(new_value), [l]"r"(&lock));
+  return result;
 }
 
 extern "C" uint32 arch_atomic_add(uint32, uint32, uint32 increment, uint32 *value);

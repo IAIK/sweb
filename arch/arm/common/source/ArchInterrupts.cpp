@@ -187,3 +187,21 @@ void ArchInterrupts::yieldIfIFSet()
     __asm__ __volatile__("nop");
   }
 }
+
+extern "C" void switchTTBR0(uint32 ttbr0)
+{
+  asm("mcr p15, 0, %[v], c2, c0, 0" : : [v]"r" (ttbr0));
+}
+
+
+extern "C" void memory_barrier() // from https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes
+{
+  asm("mcr p15, 0, %[v], c8, c7, 0\n"  //      tlb flush
+      "mcr p15, 0, %[v], c7, c6, 0\n"  //      Invalidate Entire Data Cache
+      "mcr p15, 0, %[v], c7, c10, 0\n" //      Clean Entire Data Cache
+      "mcr p15, 0, %[v], c7, c14, 0\n" //      Clean and Invalidate Entire Data Cache
+      "mcr p15, 0, %[v], c7, c10, 4\n" //      Data Synchronization Barrier
+      "mcr p15, 0, %[v], c7, c10, 5\n" //      Data Memory Barrier
+      :
+      : [v]"r"(0));
+}
