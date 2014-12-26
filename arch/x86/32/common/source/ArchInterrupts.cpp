@@ -118,9 +118,9 @@ struct interrupt_registers {
 extern "C" void arch_saveThreadRegistersGeneric(uint32 error)
 {
   register struct context_switch_registers* registers;
-  registers = (struct context_switch_registers*) (((uint32*) &error) + 3);
+  registers = (struct context_switch_registers*) (((uint32*) &error) + 3); // function call with 1 argument -> 3 ints
   register struct interrupt_registers* iregisters;
-  iregisters = (struct interrupt_registers*) (((uint32*) &error) + 13 + error);
+  iregisters = (struct interrupt_registers*) (((uint32*) &error) + 3 + sizeof(struct context_switch_registers)/sizeof(uint32) + error);
   register ArchThreadInfo* info = currentThreadInfo;
   asm("fnsave (%0)\n"
       "frstor (%0)\n"
