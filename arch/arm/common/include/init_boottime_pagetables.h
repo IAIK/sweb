@@ -6,6 +6,8 @@
 #ifndef INIT_BOOTTIME_PAGETABLES_H_
 #define INIT_BOOTTIME_PAGETABLES_H_
 
+#include "paging-definitions.h"
+
 extern page_directory_entry kernel_page_directory_start[];
 extern void* kernel_end_address;
 extern void* interrupt_vector_table;
