@@ -51,8 +51,6 @@
 
 extern void* kernel_end_address;
 
-extern "C" void startup();
-
 extern Console* main_console;
 
 uint32 boot_completed;
@@ -66,7 +64,7 @@ FsWorkingDirectory default_working_dir;
  */
 extern "C" void removeBootTimeIdentMapping();
 
-void startup()
+extern "C" void startup()
 {
   removeBootTimeIdentMapping();
   we_are_dying = 0;
