@@ -1,5 +1,3 @@
-LINEAR_DATA_SEL equ 0x20
-
 ; ok, this is our main interrupt handling stuff
 BITS 64
 
@@ -49,8 +47,10 @@ BITS 64
   pop rsp
 %endmacro
 
+%define KERNEL_DS 0x20
+
 %macro changeData 0
-        mov ax, 0x20
+        mov ax, KERNEL_DS
         mov ss, ax
         mov ds, ax
         mov es, ax
@@ -80,8 +80,6 @@ arch_irqHandler_%1:
 global arch_dummyHandler_%1
 extern dummyHandler_%1
 arch_dummyHandler_%1:
-mov rax, 01338h
-hlt
         pushAll
         call dummyHandler_%1
         popAll
@@ -110,8 +108,7 @@ arch_pageFaultHandler:
         call arch_saveThreadRegisters
         mov rdi, cr2
         call pageFaultHandler
-        popAll ; pops 144 bytes from stack
-        iretq ; restore user stack
+        hlt
 
 %assign i 0
 %rep 16
