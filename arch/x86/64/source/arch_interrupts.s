@@ -71,6 +71,7 @@ extern irqHandler_%1
 arch_irqHandler_%1:
         pushAll
         changeData
+        mov rdi, rsp
         call arch_saveThreadRegisters
         call irqHandler_%1
         popAll
@@ -104,6 +105,7 @@ global arch_pageFaultHandler
 arch_pageFaultHandler:
         pushAll ; pushes 144 bytes to stack
         changeData
+        mov rdi, rsp
         call arch_saveThreadRegistersForPageFault
         mov rsi, [rsp + 144]
         mov rdi, cr2
@@ -152,6 +154,7 @@ extern syscallHandler
 arch_syscallHandler:
     pushAll
     changeData
+    mov rdi, rsp
     call arch_saveThreadRegisters
     call syscallHandler
     hlt

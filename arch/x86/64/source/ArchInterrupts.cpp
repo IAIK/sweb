@@ -92,3 +92,81 @@ void ArchInterrupts::yieldIfIFSet()
     __asm__ __volatile__("nop");
   }
 }
+
+
+struct context_switch_registers {
+  uint64 ds;
+  uint64 es;
+  uint64 r15;
+  uint64 r14;
+  uint64 r13;
+  uint64 r12;
+  uint64 r11;
+  uint64 r10;
+  uint64 r9;
+  uint64 r8;
+  uint64 rdi;
+  uint64 rsi;
+  uint64 rbp;
+  uint64 rbx;
+  uint64 rdx;
+  uint64 rcx;
+  uint64 rax;
+  uint64 rsp;
+};
+
+struct interrupt_registers {
+  uint64 rip;
+  uint64 cs;
+  uint64 rflags;
+  uint64 rsp;
+  uint64 ss;
+};
+
+#include "kprintf.h"
+
+extern "C" void arch_saveThreadRegistersGeneric(uint64* base, uint64 error)
+{
+  register struct context_switch_registers* registers;
+  registers = (struct context_switch_registers*) base;
+  register struct interrupt_registers* iregisters;
+  iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
+  register ArchThreadInfo* info = currentThreadInfo;
+  asm("fnsave (%0)\n"
+      "frstor (%0)\n"
+      :
+      : "r"((void*)(&(info->fpu)))
+      :);
+  info->rsp = iregisters->rsp;
+  info->rip = iregisters->rip;
+  info->cs = iregisters->cs;
+  info->rflags = iregisters->rflags;
+  info->es = registers->es;
+  info->ds = registers->ds;
+  info->r15 = registers->r15;
+  info->r14 = registers->r14;
+  info->r13 = registers->r13;
+  info->r12 = registers->r12;
+  info->r11 = registers->r11;
+  info->r10 = registers->r10;
+  info->r9 = registers->r9;
+  info->r8 = registers->r8;
+  info->rdi = registers->rdi;
+  info->rsi = registers->rsi;
+  info->rbx = registers->rbx;
+  info->rdx = registers->rdx;
+  info->rcx = registers->rcx;
+  info->rax = registers->rax;
+  info->rbp = registers->rbp;
+}
+
+extern "C" void arch_saveThreadRegisters(uint64* base)
+{
+  arch_saveThreadRegistersGeneric(base, 0);
+}
+
+extern "C" void arch_saveThreadRegistersForPageFault(uint64* base)
+{
+  arch_saveThreadRegistersGeneric(base, 1);
+}
+
