@@ -188,10 +188,29 @@ void ArchCommon::initDebug()
 
 }
 
-extern "C" void halt();
+extern "C" void halt()
+{
+  asm("mcr p15, 0, %[v], c7, c0, 4" : : [v]"r" (0)); // Wait for interrupt
+}
 
 void ArchCommon::idle()
 {
   ArchBoardSpecific::onIdle();
   halt();
+}
+
+
+extern "C" void __aeabi_atexit()
+{
+  assert(false && "would not make sense in a kernel");
+}
+
+extern "C" void __aeabi_unwind_cpp_pr0()
+{
+  assert(false && "no exception handling implemented");
+}
+
+extern "C" void raise()
+{
+  assert(false && "no exception handling implemented");
 }
