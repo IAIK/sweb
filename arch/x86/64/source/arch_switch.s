@@ -4,19 +4,10 @@ BITS 64
 
 extern g_tss;
 
-;;;;;; this one is different from the mona approach
-;;;;;; they have one global pointer to the current thread
-;;;;;; we however have two of them, one to the thread
-;;;;;; and one to the thread info
-;;;;;; This is way more robust against changes in the thread class
 extern currentThreadInfo
-global currentThreadInfo
 
-;;----------------------------------------------------------------------
-;; swtich thread to user and change page
-;;----------------------------------------------------------------------
-global arch_switchThreadToUserPageDirChange
-arch_switchThreadToUserPageDirChange:
+arch_contextSwitchToUser
+arch_contextSwitchToUser:
         mov rbx, currentThreadInfo
         mov rbx, [rbx]
         frstor [rbx + 224]
@@ -55,11 +46,8 @@ arch_switchThreadToUserPageDirChange:
 
         iretq                        ; switch to next
 
-;;----------------------------------------------------------------------
-;; switch thread and change page
-;;----------------------------------------------------------------------
-global arch_switchThreadKernelToKernelPageDirChange
-arch_switchThreadKernelToKernelPageDirChange:
+arch_contextSwitchToKernel
+arch_contextSwitchToKernel:
         mov rbx, currentThreadInfo
         mov rbx, [rbx]
         frstor [rbx + 224]
@@ -94,3 +82,5 @@ arch_switchThreadKernelToKernelPageDirChange:
         mov rbx, qword[rbx + 48]
 
         iretq                        ; switch to next
+global arch_switchThread
+arch_switchThread:

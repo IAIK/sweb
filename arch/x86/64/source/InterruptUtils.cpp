@@ -156,7 +156,7 @@ void InterruptUtils::countPageFault(uint64 address)
   }
 
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_switchThreadToUserPageDirChange();\
+  extern "C" void arch_contextSwitchToUser();\
   extern "C" void dummyHandler_##x () \
   {\
     asm("mov %rax, 0xDEAD2");\
@@ -175,7 +175,7 @@ void InterruptUtils::countPageFault(uint64 address)
         break;\
       case 1:\
         currentThreadInfo = currentThread->user_arch_thread_info_;\
-        arch_switchThreadToUserPageDirChange();\
+        arch_contextSwitchToUser();\
         break;\
       default:\
         kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
@@ -186,9 +186,8 @@ extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_switchThreadKernelToKernel();
-extern "C" void arch_switchThreadKernelToKernelPageDirChange();
-extern "C" void arch_switchThreadToUserPageDirChange();
+extern "C" void arch_contextSwitchToKernel();
+extern "C" void arch_contextSwitchToUser();
 extern "C" void irqHandler_0()
 {
   //  kprintfd( "IRQ 0\n" );
@@ -229,14 +228,14 @@ extern "C" void irqHandler_0()
 //      if (currentThread)
 //        ArchThreads::printThreadRegisters(currentThread,false);
       ArchInterrupts::EndOfInterrupt(0);
-      arch_switchThreadKernelToKernelPageDirChange();
+      arch_contextSwitchToKernel();
     case 1:
       kprintfd("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
       kprintfd("currentThread: %x\n", currentThread);
       if (currentThread)
         ArchThreads::printThreadRegisters(currentThread,false);
-      arch_switchThreadToUserPageDirChange();
+      arch_contextSwitchToUser();
     default:
       kprintfd("irq0: Panic in int 0 handler\n");
       for( ; ; ) ;
@@ -252,10 +251,10 @@ extern "C" void irqHandler_65()
   switch (ret)
   {
     case 0:
-      arch_switchThreadKernelToKernelPageDirChange();
+      arch_contextSwitchToKernel();
       break;
     case 1:
-      arch_switchThreadToUserPageDirChange();
+      arch_contextSwitchToUser();
       break;
     default:
       kprintfd("irq65: Panic in int 65 handler\n");
@@ -373,7 +372,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
       currentThreadInfo = currentThread->user_arch_thread_info_;
       if (currentThread)
         ArchThreads::printThreadRegisters(currentThread,false);
-      arch_switchThreadToUserPageDirChange();
+      arch_contextSwitchToUser();
       break; //not reached
     default:
       kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
@@ -463,7 +462,7 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   ArchThreads::printThreadRegisters(currentThread,false);
-  arch_switchThreadToUserPageDirChange();
+  arch_contextSwitchToUser();
 }
 
 #include "DummyHandlers.h" // dummy and error handler definitions and irq forwarding definitions
