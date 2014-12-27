@@ -30,6 +30,8 @@ typedef uint32 size_t;
 typedef int32 ssize_t;
 #endif
 
+#define __naked__ __attribute__((naked))
+
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 

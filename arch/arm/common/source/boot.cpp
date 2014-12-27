@@ -4,14 +4,14 @@
 #include "assert.h"
 
 extern "C" void startup();
-extern "C" void __attribute__((naked)) PagingMode();
+extern "C" void __naked__ PagingMode();
 
 uint8 interrupt_stack[0x4000] __attribute__((aligned(0x4000)));
 page_directory_entry kernel_page_directory_start[0x1000] __attribute__((aligned(0x4000))); // space for page directory
 
 #define BOOT_OFFSET (BOARD_LOAD_BASE - 0x80000000)
 
-extern "C" void __attribute__((naked)) entry()
+extern "C" void __naked__ entry()
 {
   asm("mov fp, #0\n"
       "mov sp, %[v]" : : [v]"r"(interrupt_stack + BOOT_OFFSET + 0x4000)); // Set up the stack
@@ -31,7 +31,7 @@ extern "C" void __attribute__((naked)) entry()
   assert(false && "it should be impossible to get to this point");
 }
 
-extern "C" void __attribute__((naked)) PagingMode()
+extern "C" void __naked__ PagingMode()
 {
   asm("mrs r0, cpsr\n"
       "bic r0, r0, #0xdf\n"
