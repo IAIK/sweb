@@ -147,12 +147,12 @@ void arch_swi_irq_handler()
     currentThread->switch_to_userspace_ = false;
     currentThreadInfo = currentThread->kernel_arch_thread_info_;
     ArchInterrupts::enableInterrupts();
-    currentThread->user_arch_thread_info_->r0 = Syscall::syscallException(currentThread->user_arch_thread_info_->r4,
-                                                                          currentThread->user_arch_thread_info_->r5,
-                                                                          currentThread->user_arch_thread_info_->r6,
-                                                                          currentThread->user_arch_thread_info_->r7,
-                                                                          currentThread->user_arch_thread_info_->r8,
-                                                                          currentThread->user_arch_thread_info_->r9);
+    currentThread->user_arch_thread_info_->r0 = Syscall::syscallException(currentThread->user_arch_thread_info_->r0,
+                                                                          currentThread->user_arch_thread_info_->r1,
+                                                                          currentThread->user_arch_thread_info_->r2,
+                                                                          currentThread->user_arch_thread_info_->r3,
+                                                                          currentThread->user_arch_thread_info_->r4,
+                                                                          currentThread->user_arch_thread_info_->r5);
     ArchInterrupts::disableInterrupts();
     currentThread->switch_to_userspace_ = true;
     currentThreadInfo =  currentThread->user_arch_thread_info_;
