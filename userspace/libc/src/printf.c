@@ -247,6 +247,7 @@ extern int printf(const char *format, ...)
 
   c_string output_string;
   int character_count = 256;
+  output_string.size = character_count;
 
 #ifdef STATIC_MEMORY__
   char buffer[character_count];
@@ -258,7 +259,6 @@ extern int printf(const char *format, ...)
 
   output_string.ptr = output_string.start;
   output_string.length = 0;
-  output_string.size = character_count;
 
 
   va_list args;

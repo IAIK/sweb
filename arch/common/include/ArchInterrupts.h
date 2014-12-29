@@ -16,7 +16,7 @@
 #ifndef _ARCH_INTERRUPTS_H_
 #define _ARCH_INTERRUPTS_H_
 
-#define IO_TIMEOUT 200000
+#define IO_TIMEOUT (2U*1000U*1000U)
 
 #include "types.h"
 
