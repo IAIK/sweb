@@ -32,12 +32,6 @@ class FileDescriptor
      */
     file_size_t cursor_pos_;
 
-    /**
-     * the Thread owing the FD (used to avoid FD-Hijacking)
-     * NOTE: potential locking-problem!!!
-     */
-    Thread* owner_;
-
     // append mode?
     bool append_mode_;
 

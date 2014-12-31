@@ -119,7 +119,7 @@ FileDescriptor::FileDescriptor ( File* file, bool append_mode,
 }
 
 FileDescriptor::FileDescriptor(const FileDescriptor& cpy) : fd_(cpy.fd_),
-    file_(cpy.file_), cursor_pos_(cpy.cursor_pos_), owner_(cpy.owner_),
+    file_(cpy.file_), cursor_pos_(cpy.cursor_pos_),
     append_mode_(cpy.append_mode_), nonblocking_mode_(cpy.nonblocking_mode_),
     read_mode_(cpy.read_mode_), write_mode_(cpy.write_mode_),
     synchronous_(cpy.synchronous_)
