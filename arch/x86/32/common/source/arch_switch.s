@@ -5,18 +5,15 @@ section .text
 
 extern g_tss;
 
-extern currentThreadInfo
-
 global arch_contextSwitchToUser
 arch_contextSwitchToUser:
-        mov ebx, dword[currentThreadInfo]
+        mov ebx, dword[esp + 4]
         push dword[ebx + 60]         ; push ss  here dpl lowwer
         push dword[ebx + 28]         ; push esp here dpl lowwer
         jmp arch_contextSwitch
-
 global arch_contextSwitchToKernel
 arch_contextSwitchToKernel:
-        mov ebx, dword[currentThreadInfo]
+        mov ebx, dword[esp + 4]
         mov esp, dword[ebx + 28]     ; restore esp
 global arch_contextSwitch
 arch_contextSwitch:
