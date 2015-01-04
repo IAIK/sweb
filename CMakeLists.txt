@@ -210,10 +210,7 @@ add_custom_command (OUTPUT hdd_image
 #Custom Command: Writes helper files to temp file structure
 add_custom_command (OUTPUT helper_files
 	DEPENDS hdd_image
-	COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/menu.lst.hda" "./temp/boot/grub/menu.lst"
-	COMMAND	cp "${CMAKE_SOURCE_DIR}/utils/images/SWEB.vmdk" "./"
-	#COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/sweb.vmx" "./"
-	#COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/nvram" "./"
+	COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" "./temp/boot/grub/menu.lst"
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying helper files..."
