@@ -75,6 +75,9 @@ arch_pageFaultHandler:
         pushAll 
         changeData
         call arch_saveThreadRegistersForPageFault
+        push ebp
+        mov  ebp, esp
+        sub  esp, 8
         mov  eax, dword[esp + 52] ; error cd
         mov  dword[esp + 4], eax
         mov  eax, cr2             ; page fault address
