@@ -38,7 +38,11 @@ extern irqHandler_%1
 arch_irqHandler_%1:
         pushAll
         changeData
+        push ebp
+        mov  ebp, esp
+        push 0
         call arch_saveThreadRegisters
+        leave
         call irqHandler_%1
         popAll
         iretd
@@ -72,9 +76,13 @@ extern pageFaultHandler
 global arch_pageFaultHandler
 arch_pageFaultHandler:
         ;we are already on a new stack because a privliedge switch happened
-        pushAll 
+        pushAll
         changeData
-        call arch_saveThreadRegistersForPageFault
+        push ebp
+        mov  ebp, esp
+        push 1
+        call arch_saveThreadRegisters
+        leave
         push ebp
         mov  ebp, esp
         sub  esp, 8
@@ -127,6 +135,10 @@ extern syscallHandler
 arch_syscallHandler:
     pushAll
     changeData
+    push ebp
+    mov  ebp, esp
+    push 0
     call arch_saveThreadRegisters
+    leave
     call syscallHandler
     hlt
