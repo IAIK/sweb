@@ -9,6 +9,7 @@
 #include "InterruptUtils.h"
 #include "SegmentUtils.h"
 #include "ArchThreads.h"
+#include "assert.h"
 
 void ArchInterrupts::initialise()
 {
@@ -148,4 +149,35 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   info->edi = registers->edi;
   info->ds = registers->ds;
   info->es = registers->es;
+}
+
+extern TSS *g_tss;
+
+extern "C" void arch_contextSwitch(ArchThreadInfo* pinfo, uint32 switch_to_userspace)
+{
+  ArchThreadInfo info = *pinfo;
+  if (switch_to_userspace)
+  {
+    asm("push %[ss]" : : [ss]"m"(info.ss));
+    asm("push %[esp]" : : [esp]"m"(info.esp));
+  }
+  else
+  {
+    asm("mov %[esp], %%esp\n" : : [esp]"m"(info.esp));
+  }
+  g_tss->esp0 = info.esp0;
+  asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
+  asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
+  asm("push %[eflags]\n" : : [eflags]"m"(info.eflags));
+  asm("push %[cs]\n" : : [cs]"m"(info.cs));
+  asm("push %[eip]\n" : : [eip]"m"(info.eip));
+  asm("mov %[esi], %%esi\n" : : [esi]"m"(info.esi));
+  asm("mov %[edi], %%edi\n" : : [edi]"m"(info.edi));
+  asm("mov %[es], %%es\n" : : [es]"m"(info.es));
+  asm("mov %[ds], %%ds\n" : : [ds]"m"(info.ds));
+  asm("push %[ebp]\n" : : [ebp]"m"(info.ebp));
+  asm("" : : "a"(info.eax), "b"(info.ebx), "c"(info.ecx), "d"(info.edx));
+  asm("pop %ebp\n"
+      "iret");
+  assert(false);
 }
