@@ -123,10 +123,10 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (&error + 2 + sizeof(struct context_switch_registers)/sizeof(uint32) + (error));
   register ArchThreadInfo* info = currentThreadInfo;
-  asm("fnsave (%0)\n"
-      "frstor (%0)\n"
+  asm("fnsave %[fpu]\n"
+      "frstor %[fpu]\n"
       :
-      : "r"((void*)(&(info->fpu)))
+      : [fpu]"m"((info->fpu))
       :);
   if (iregisters->cs & 0x3)
   {
@@ -176,8 +176,7 @@ extern "C" void arch_contextSwitch(ArchThreadInfo* pinfo, uint32 switch_to_users
   asm("mov %[es], %%es\n" : : [es]"m"(info.es));
   asm("mov %[ds], %%ds\n" : : [ds]"m"(info.ds));
   asm("push %[ebp]\n" : : [ebp]"m"(info.ebp));
-  asm("" : : "a"(info.eax), "b"(info.ebx), "c"(info.ecx), "d"(info.edx));
-  asm("pop %ebp\n"
-      "iret");
+  asm("pop %%ebp\n"
+      "iret" : : "a"(info.eax), "b"(info.ebx), "c"(info.ecx), "d"(info.edx));
   assert(false);
 }

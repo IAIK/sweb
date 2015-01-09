@@ -137,16 +137,10 @@ void InterruptUtils::lidt(IDTR *idtr)
     kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
     ArchInterrupts::disableInterrupts();\
     currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
-    switch (currentThread->switch_to_userspace_)\
+    if (currentThread->switch_to_userspace_)\
     {\
-      case 0:\
-        break;\
-      case 1:\
-        currentThreadInfo = currentThread->user_arch_thread_info_;\
-        arch_contextSwitch(currentThreadInfo,1);\
-        break;\
-      default:\
-        kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
+      currentThreadInfo = currentThread->user_arch_thread_info_;\
+      arch_contextSwitch(currentThreadInfo,1);\
     }\
   }
 
@@ -183,39 +177,17 @@ extern "C" void irqHandler_0()
   Scheduler::instance()->incTicks();
 
   uint32 ret = Scheduler::instance()->schedule();
-  switch (ret)
-  {
-    case 0:
-      // kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
-      ArchInterrupts::EndOfInterrupt(0);
-      arch_contextSwitch(currentThreadInfo,0);
-    case 1:
-      // kprintfd("irq0: Going to leave irq Handler 0 to user\n");
-      ArchInterrupts::EndOfInterrupt(0);
-      arch_contextSwitch(currentThreadInfo,1);
-    default:
-      kprintfd("irq0: Panic in int 0 handler\n");
-      for( ; ; ) ;
-  }
+  // kprintfd("irq0: Going to leave irq Handler 0\n");
+  ArchInterrupts::EndOfInterrupt(0);
+  arch_contextSwitch(currentThreadInfo,ret);
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
   uint32 ret = Scheduler::instance()->schedule();
-  switch (ret)
-  {
-    case 0:
-      // kprintfd("irq65: Going to leave int Handler 65 to kernel\n");
-      arch_contextSwitch(currentThreadInfo,0);
-    case 1:
-      // kprintfd("irq65: Going to leave int Handler 65 to user\n");
-      arch_contextSwitch(currentThreadInfo,1);
-
-    default:
-      kprintfd("irq65: Panic in int 65 handler\n");
-      for( ; ; ) ;
-  }
+  // kprintfd("irq65: Going to leave int Handler 65 to user\n");
+  arch_contextSwitch(currentThreadInfo,ret);
 }
 
 extern Stabs2DebugInfo const *kernel_debug_info;
@@ -349,16 +321,10 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchInterrupts::disableInterrupts();
   asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
-  switch (currentThread->switch_to_userspace_)
+  if (currentThread->switch_to_userspace_)
   {
-    case 0:
-      break; //we already are in kernel mode
-    case 1:
-      currentThreadInfo = currentThread->user_arch_thread_info_;
-      arch_contextSwitch(currentThreadInfo,1);
-      break; //not reached
-    default:
-      kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
+    currentThreadInfo = currentThread->user_arch_thread_info_;
+    arch_contextSwitch(currentThreadInfo,1);
   }
 }
 
