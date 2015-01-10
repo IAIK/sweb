@@ -10,6 +10,7 @@
 #include "SegmentUtils.h"
 #include "ArchThreads.h"
 #include "assert.h"
+#include "Thread.h"
 
 void ArchInterrupts::initialise()
 {
@@ -153,10 +154,10 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
 
 extern TSS *g_tss;
 
-extern "C" void arch_contextSwitch(ArchThreadInfo* pinfo, uint32 switch_to_userspace)
+extern "C" void arch_contextSwitch()
 {
-  ArchThreadInfo info = *pinfo;
-  if (switch_to_userspace)
+  ArchThreadInfo info = *currentThreadInfo; // optimization: local copy produces more efficient code in this case
+  if (currentThread->switch_to_userspace_)
   {
     asm("push %[ss]" : : [ss]"m"(info.ss));
     asm("push %[esp]" : : [esp]"m"(info.esp));

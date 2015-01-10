@@ -126,7 +126,7 @@ void InterruptUtils::lidt(IDTR *idtr)
   }
 
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_contextSwitch(ArchThreadInfo* info,uint32 switch_to_userspace);\
+  extern "C" void arch_contextSwitch();\
   extern "C" void dummyHandler_##x () \
   {\
     uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
@@ -140,12 +140,12 @@ void InterruptUtils::lidt(IDTR *idtr)
     if (currentThread->switch_to_userspace_)\
     {\
       currentThreadInfo = currentThread->user_arch_thread_info_;\
-      arch_contextSwitch(currentThreadInfo,1);\
+      arch_contextSwitch();\
     }\
   }
 
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_contextSwitch(ArchThreadInfo* info,uint32 switch_to_userspace);
+extern "C" void arch_contextSwitch();
 extern "C" void irqHandler_0()
 {
   static uint32 heart_beat_value = 0;
@@ -176,18 +176,18 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  uint32 ret = Scheduler::instance()->schedule();
+  Scheduler::instance()->schedule();
   // kprintfd("irq0: Going to leave irq Handler 0\n");
   ArchInterrupts::EndOfInterrupt(0);
-  arch_contextSwitch(currentThreadInfo,ret);
+  arch_contextSwitch();
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  uint32 ret = Scheduler::instance()->schedule();
+  Scheduler::instance()->schedule();
   // kprintfd("irq65: Going to leave int Handler 65 to user\n");
-  arch_contextSwitch(currentThreadInfo,ret);
+  arch_contextSwitch();
 }
 
 extern Stabs2DebugInfo const *kernel_debug_info;
@@ -324,7 +324,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   if (currentThread->switch_to_userspace_)
   {
     currentThreadInfo = currentThread->user_arch_thread_info_;
-    arch_contextSwitch(currentThreadInfo,1);
+    arch_contextSwitch();
   }
 }
 
@@ -411,7 +411,7 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,false);
-  arch_contextSwitch(currentThreadInfo,1);
+  arch_contextSwitch();
 }
 
 #include "DummyHandlers.h" // dummy and error handler definitions and irq forwarding definitions
