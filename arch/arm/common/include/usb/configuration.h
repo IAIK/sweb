@@ -28,4 +28,3 @@
 #define LIB_HID
 #define LIB_HUB
 #define LIB_KBD
-#define LIB_MOUSE

@@ -36,9 +36,6 @@ void HubLoad();
 #ifdef LIB_KBD
 void KbdLoad();
 #endif
-#ifdef LIB_MOUSE
-void MouseLoad();
-#endif
 
 void ConfigurationLoad() {
 	// Call each libraries load method here. Watch out for the order, load more
@@ -62,8 +59,5 @@ void ConfigurationLoad() {
 #endif
 #ifdef LIB_KBD
 	KbdLoad();
-#endif
-#ifdef LIB_MOUSE
-	MouseLoad();
 #endif
 }
