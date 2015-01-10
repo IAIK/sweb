@@ -16,6 +16,8 @@ class Loader;
 class Terminal;
 class Mutex;
 
+extern Thread* currentThread;
+
 /**
  * @class Thread
  * thread base class

@@ -140,17 +140,17 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
   
   // parameter check begin
-  debug(SYSCALL,"Syscall::createprocess: path:%d sleep:%d\n",path,sleep);
   if (path >= 2U*1024U*1024U*1024U)
   {
     return -1U;
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
-  size_t fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
-  if (fd == -1U)
+  ssize_t fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
+  if (fd == -1)
   {
-    return -1U;
+    return -1;
   }
+  debug(SYSCALL,"Syscall::createprocess: fd:%d\n",fd);
   VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
   // parameter check end
 
