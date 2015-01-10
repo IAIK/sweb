@@ -156,7 +156,7 @@ void InterruptUtils::countPageFault(uint64 address)
   }
 
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_contextSwitchToUser();\
+  extern "C" void arch_contextSwitch();\
   extern "C" void dummyHandler_##x () \
   {\
     asm("mov %rax, 0xDEAD2");\
@@ -169,16 +169,10 @@ void InterruptUtils::countPageFault(uint64 address)
     kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
     ArchInterrupts::disableInterrupts();\
     currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
-    switch (currentThread->switch_to_userspace_)\
+    if (currentThread->switch_to_userspace_)\
     {\
-      case 0:\
-        break;\
-      case 1:\
-        currentThreadInfo = currentThread->user_arch_thread_info_;\
-        arch_contextSwitchToUser();\
-        break;\
-      default:\
-        kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
+      currentThreadInfo = currentThread->user_arch_thread_info_;\
+      arch_contextSwitch();\
     }\
   }
 
@@ -186,8 +180,7 @@ extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_contextSwitchToKernel();
-extern "C" void arch_contextSwitchToUser();
+extern "C" void arch_contextSwitch();
 extern "C" void irqHandler_0()
 {
   //  kprintfd( "IRQ 0\n" );
@@ -219,47 +212,19 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  uint32 ret = Scheduler::instance()->schedule();
+  Scheduler::instance()->schedule();
 
-  switch (ret)
-  {
-    case 0:
-//      kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
-//      if (currentThread)
-//        ArchThreads::printThreadRegisters(currentThread,false);
-      ArchInterrupts::EndOfInterrupt(0);
-      arch_contextSwitchToKernel();
-    case 1:
-      kprintfd("irq0: Going to leave irq Handler 0 to user\n");
-      ArchInterrupts::EndOfInterrupt(0);
-      kprintfd("currentThread: %x\n", currentThread);
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,false);
-      arch_contextSwitchToUser();
-    default:
-      kprintfd("irq0: Panic in int 0 handler\n");
-      for( ; ; ) ;
-  }
+  //kprintfd("irq0: Going to leave irq Handler 0\n");
+  ArchInterrupts::EndOfInterrupt(0);
+  arch_contextSwitch();
   assert(false);
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-
-  uint32 ret = Scheduler::instance()->schedule();
-  switch (ret)
-  {
-    case 0:
-      arch_contextSwitchToKernel();
-      break;
-    case 1:
-      arch_contextSwitchToUser();
-      break;
-    default:
-      kprintfd("irq65: Panic in int 65 handler\n");
-      for( ; ; ) ;
-  }
+  Scheduler::instance()->schedule();
+  arch_contextSwitch();
 }
 
 
@@ -364,18 +329,12 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   ArchInterrupts::disableInterrupts();
   asm volatile ("movq %cr3, %rax; movq %rax, %cr3;");
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
-  switch (currentThread->switch_to_userspace_)
+  if (currentThread->switch_to_userspace_)
   {
-    case 0:
-      break; //we already are in kernel mode
-    case 1:
-      currentThreadInfo = currentThread->user_arch_thread_info_;
-      if (currentThread)
-        ArchThreads::printThreadRegisters(currentThread,false);
-      arch_contextSwitchToUser();
-      break; //not reached
-    default:
-      kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
+    currentThreadInfo = currentThread->user_arch_thread_info_;
+    if (currentThread)
+      ArchThreads::printThreadRegisters(currentThread,false);
+    arch_contextSwitch();
   }
 }
 
@@ -462,7 +421,7 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   ArchThreads::printThreadRegisters(currentThread,false);
-  arch_contextSwitchToUser();
+  arch_contextSwitch();
 }
 
 #include "DummyHandlers.h" // dummy and error handler definitions and irq forwarding definitions

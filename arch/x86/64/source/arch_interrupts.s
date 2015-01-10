@@ -59,7 +59,6 @@ BITS 64
 %endmacro
 
 extern arch_saveThreadRegisters
-extern arch_saveThreadRegistersForPageFault
 
 ; ; ; 
 ; macros for irq and int handlers
@@ -72,6 +71,7 @@ arch_irqHandler_%1:
         pushAll
         changeData
         mov rdi, rsp
+        mov rsi, 0
         call arch_saveThreadRegisters
         call irqHandler_%1
         popAll
@@ -106,7 +106,8 @@ arch_pageFaultHandler:
         pushAll ; pushes 144 bytes to stack
         changeData
         mov rdi, rsp
-        call arch_saveThreadRegistersForPageFault
+        mov rsi, 1
+        call arch_saveThreadRegisters
         mov rsi, [rsp + 144]
         mov rdi, cr2
         call pageFaultHandler
@@ -155,6 +156,7 @@ arch_syscallHandler:
     pushAll
     changeData
     mov rdi, rsp
+    mov rsi, 0
     call arch_saveThreadRegisters
     call syscallHandler
     hlt

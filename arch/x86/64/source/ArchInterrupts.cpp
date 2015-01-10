@@ -8,6 +8,7 @@
 #include "ports.h"
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
+#include "assert.h"
 
 void ArchInterrupts::initialise()
 {
@@ -125,17 +126,17 @@ struct interrupt_registers {
 
 #include "kprintf.h"
 
-extern "C" void arch_saveThreadRegistersGeneric(uint64* base, uint64 error)
+extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
 {
   register struct context_switch_registers* registers;
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
   register ArchThreadInfo* info = currentThreadInfo;
-  asm("fnsave (%0)\n"
-      "frstor (%0)\n"
+  asm("fnsave %[fpu]\n"
+      "frstor %[fpu]\n"
       :
-      : "r"((void*)(&(info->fpu)))
+      : [fpu]"m"((info->fpu))
       :);
   info->rsp = iregisters->rsp;
   info->rip = iregisters->rip;
@@ -160,13 +161,43 @@ extern "C" void arch_saveThreadRegistersGeneric(uint64* base, uint64 error)
   info->rbp = registers->rbp;
 }
 
-extern "C" void arch_saveThreadRegisters(uint64* base)
-{
-  arch_saveThreadRegistersGeneric(base, 0);
-}
+typedef struct {
+    uint32 padding;
+    uint64 rsp0; // actually the TSS has more fields, but we don't need them
+} __attribute__((__packed__))TSS;
 
-extern "C" void arch_saveThreadRegistersForPageFault(uint64* base)
-{
-  arch_saveThreadRegistersGeneric(base, 1);
-}
+extern TSS g_tss;
 
+extern "C" void _arch_contextSwitch();
+
+extern "C" void arch_contextSwitch()
+{
+  ArchThreadInfo info = *currentThreadInfo; // optimization: local copy produces more efficient code in this case
+  g_tss.rsp0 = info.rsp0;
+  asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
+  asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
+  asm("push %[ss]" : : [ss]"m"(info.ss));
+  asm("push %[rsp]" : : [rsp]"m"(info.rsp));
+  asm("push %[rflags]\n" : : [rflags]"m"(info.rflags));
+  asm("push %[cs]\n" : : [cs]"m"(info.cs));
+  asm("push %[rip]\n" : : [rip]"m"(info.rip));
+  asm("mov %[rsi], %%rsi\n" : : [rsi]"m"(info.rsi));
+  asm("mov %[rdi], %%rdi\n" : : [rdi]"m"(info.rdi));
+  asm("mov %[es], %%es\n" : : [es]"m"(info.es));
+  asm("mov %[ds], %%ds\n" : : [ds]"m"(info.ds));
+  asm("mov %[r8], %%r8\n" : : [r8]"m"(info.r8));
+  asm("mov %[r9], %%r9\n" : : [r9]"m"(info.r9));
+  asm("mov %[r10], %%r10\n" : : [r10]"m"(info.r10));
+  asm("mov %[r11], %%r11\n" : : [r11]"m"(info.r11));
+  asm("mov %[r12], %%r12\n" : : [r12]"m"(info.r12));
+  asm("mov %[r13], %%r13\n" : : [r13]"m"(info.r13));
+  asm("mov %[r14], %%r14\n" : : [r14]"m"(info.r14));
+  asm("mov %[r15], %%r15\n" : : [r15]"m"(info.r15));
+  asm("mov %[rdx], %%rdx\n" : : [rdx]"m"(info.rdx));
+  asm("mov %[rcx], %%rcx\n" : : [rcx]"m"(info.rcx));
+  asm("mov %[rbx], %%rbx\n" : : [rbx]"m"(info.rbx));
+  asm("mov %[rax], %%rax\n" : : [rax]"m"(info.rax));
+  asm("mov %[rbp], %%rbp\n" : : [rbp]"m"(info.rbp));
+  asm("iretq");
+  assert(false);
+}

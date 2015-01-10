@@ -8,14 +8,14 @@
 #include "ustl/umap.h"
 #include "ArchCommon.h"
 
-int backtrace(pointer *call_stack, int size, Thread *thread,
-    bool use_stored_registers)
+int backtrace(pointer *call_stack __attribute__((unused)), int size __attribute__((unused)),
+              Thread *thread __attribute__((unused)), bool use_stored_registers __attribute__((unused)))
 {
   return 0;
 }
 
-int backtrace_user(pointer *call_stack, int size, Thread *thread,
-    bool use_stored_registers)
+int backtrace_user(pointer *call_stack __attribute__((unused)), int size __attribute__((unused)),
+                   Thread *thread __attribute__((unused)), bool use_stored_registers __attribute__((unused)))
 {
   return 0;
 }

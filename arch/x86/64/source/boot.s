@@ -363,7 +363,7 @@ g_tss:
    dd 0
    dd 0
    dw 0
-.iobase
+.iobase:
    dw 0
 
 SECTION .data

@@ -70,7 +70,6 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
 bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access, uint64 page_size)
 {
   debug(A_MEMORY,"%x %x %x %x %x\n",page_map_level_4_, virtual_page, physical_page, user_access, page_size);
-  PageMapLevel4Entry* pml4p = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
 
   if (m.pdpt_ppn == 0)
