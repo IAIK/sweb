@@ -4,7 +4,11 @@
 
 #ifndef FIFO_H__
 #define FIFO_H__
-#include "console/kprintf.h"
+#include "kprintf.h"
+#include "new.h"
+#include "Mutex.h"
+#include "Condition.h"
+#include "Scheduler.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -14,11 +18,6 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
-#include "mm/new.h"
-#include "kernel/Mutex.h"
-#include "kernel/Condition.h"
-#include "kernel/Scheduler.h"
 
 #define FIFO_NOBLOCK_PUT 1
 #define FIFO_NOBLOCK_PUT_OVERWRITE_OLD 2

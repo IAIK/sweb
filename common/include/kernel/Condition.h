@@ -6,8 +6,9 @@
 #define CONDITION__
 
 #include <ustl/ulist.h>
-#include "Thread.h"
-#include "Mutex.h"
+
+class Thread;
+class Mutex;
 
 /**
  * @class Condition For Conditionmanagement

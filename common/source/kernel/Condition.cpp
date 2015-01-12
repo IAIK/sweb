@@ -3,6 +3,8 @@
  */
 
 #include "Condition.h"
+#include "Thread.h"
+#include "Mutex.h"
 #include "Scheduler.h"
 #include "assert.h"
 #include "console/kprintf.h"
