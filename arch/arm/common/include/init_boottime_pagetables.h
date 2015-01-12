@@ -28,7 +28,7 @@ kprintfd("%c",TO_HEX((uint32)X,4)); \
 kprintfd("%c\n",TO_HEX((uint32)X,0)); \
 } while (0)
 
-static void mapPage(page_directory_entry *pde_start, uint32 pdi, uint32 ppn_1m)
+static void mapBootTimePage(page_directory_entry *pde_start, uint32 pdi, uint32 ppn_1m)
 {
   pde_start[pdi].pde1m.reserved_1 = 0;
   pde_start[pdi].pde1m.permissions = 1;

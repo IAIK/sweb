@@ -24,22 +24,22 @@ void initialiseBootTimePaging()
     *((uint32*)pde_start) = 0;
   // 1 : 1 mapping of the first 8 mbs
   for (i = 0; i < 8; ++i)
-    mapPage(pde_start, i, base + i);
+    mapBootTimePage(pde_start, i, base + i);
   // 1 : 1 mapping of the first 8 mbs of physical ram
   for (i = 0; i < 8; ++i)
-    mapPage(pde_start, base + i, base + i);
+    mapBootTimePage(pde_start, base + i, base + i);
   // map first 4 mb for kernel
   for (i = 0; i < 4; ++i)
-    mapPage(pde_start, 0x800 + i, base + i);
+    mapBootTimePage(pde_start, 0x800 + i, base + i);
   // 3gb 1:1 mapping
   for (i = 0; i < 1024; ++i)
-    mapPage(pde_start, 0xC00 + i, base + i);
+    mapBootTimePage(pde_start, 0xC00 + i, base + i);
   // map devices from 0x81000000 upwards
-  mapPage(pde_start,0x860,0x401);  // uart device
-  mapPage(pde_start,0x900,0x440);  // lcd controller
-  mapPage(pde_start,0x840,0x40D);  // interrupt controller
-  mapPage(pde_start,0x830,0x40A);  // timer
-  mapPage(pde_start,0x8C0,0x411);  // mmc controller
+  mapBootTimePage(pde_start,0x860,0x401);  // uart device
+  mapBootTimePage(pde_start,0x900,0x440);  // lcd controller
+  mapBootTimePage(pde_start,0x840,0x40D);  // interrupt controller
+  mapBootTimePage(pde_start,0x830,0x40A);  // timer
+  mapBootTimePage(pde_start,0x8C0,0x411);  // mmc controller
 }
 
 void removeBootTimeIdentMapping()
