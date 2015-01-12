@@ -7,7 +7,7 @@
 #include "sostream.h"
 #include "ustring.h"
 #include "ualgo.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 
 namespace ustl {
 

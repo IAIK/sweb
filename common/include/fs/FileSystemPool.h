@@ -10,7 +10,7 @@
 #define FILESYSTEMPOOL_H_
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "ustl/uvector.h"
+#include "uvector.h"
 #else
 #include <vector>
 #endif

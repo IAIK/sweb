@@ -6,7 +6,7 @@
 #ifndef _BD_DEVICE_MANAGER_
 #define _BD_DEVICE_MANAGER_
 
-#include <ustl/ulist.h>
+#include <ulist.h>
 
 class BDRequest;
 class BDVirtualDevice;

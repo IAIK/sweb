@@ -8,7 +8,7 @@
 #include "types.h"
 #include "paging-definitions.h"
 #include "new.h"
-#include "kernel/Mutex.h"
+#include "Mutex.h"
 
 typedef uint8 puttype;
 #define PAGE_RESERVED static_cast<puttype>(1<<0)

@@ -2,13 +2,13 @@
  * @file KernelMemoryManager.cpp
  */
 
-#include "mm/KernelMemoryManager.h"
+#include "KernelMemoryManager.h"
 #include "ArchCommon.h"
 #include "assert.h"
 #include "debug_bochs.h"
-#include "console/kprintf.h"
-#include "console/debug.h"
-#include "kernel/Scheduler.h"
+#include "kprintf.h"
+#include "debug.h"
+#include "Scheduler.h"
 #include "ArchInterrupts.h"
 
 extern uint32 boot_completed;

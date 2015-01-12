@@ -6,7 +6,7 @@
 #define _SPINLOCK_H_
 
 #include "types.h"
-#include <ustl/ulist.h>
+#include <ulist.h>
 
 class Thread;
 

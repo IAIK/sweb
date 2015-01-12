@@ -5,7 +5,7 @@
 #ifndef CONDITION__
 #define CONDITION__
 
-#include <ustl/ulist.h>
+#include <ulist.h>
 
 class Thread;
 class Mutex;

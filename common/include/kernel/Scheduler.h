@@ -6,7 +6,7 @@
 #define SCHEDULER_H__
 
 #include "types.h"
-#include <ustl/ulist.h>
+#include <ulist.h>
 
 class Thread;
 class ArchThreadInfo;

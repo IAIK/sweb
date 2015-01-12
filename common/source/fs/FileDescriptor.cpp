@@ -6,7 +6,7 @@
 #include "fs/FileSystem.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include <ustl/ulist.h>
+#include <ulist.h>
 #include "ArchThreads.h"
 
 #include "Mutex.h"

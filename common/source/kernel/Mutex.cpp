@@ -3,7 +3,7 @@
  */
 
 #include "Mutex.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
 #include "debug_bochs.h"

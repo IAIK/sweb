@@ -4,11 +4,11 @@
 
 #include <ProcessRegistry.h>
 #include "UserProcess.h"
-#include "console/kprintf.h"
-#include "console/Console.h"
+#include "kprintf.h"
+#include "Console.h"
 #include "Loader.h"
-#include "fs/fs_global.h"
-#include "fs/VfsSyscall.h"
+#include "fs_global.h"
+#include "VfsSyscall.h"
 
 UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
                            ProcessRegistry *process_registry, uint32 terminal_number) :

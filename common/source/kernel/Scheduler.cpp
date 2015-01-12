@@ -7,15 +7,15 @@
 #include "panic.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 #include "ArchInterrupts.h"
-#include "mm/KernelMemoryManager.h"
-#include <ustl/ulist.h>
+#include "KernelMemoryManager.h"
+#include <ulist.h>
 #include "backtrace.h"
 #include "ArchThreads.h"
 #include "Mutex.h"
-#include "ustl/umap.h"
-#include "ustl/ustring.h"
+#include "umap.h"
+#include "ustring.h"
 
 extern ustl::map<uint32, ustl::string> symbol_table;
 

@@ -10,7 +10,7 @@
 #include "kmalloc.h"
 #include "string.h"
 #include "debug.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 
 BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name, bool writable)
 {

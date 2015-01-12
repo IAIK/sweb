@@ -9,17 +9,17 @@
 
 #include <paging-definitions.h>
 
-#include "mm/new.h"
-#include "mm/PageManager.h"
-#include "mm/KernelMemoryManager.h"
+#include "new.h"
+#include "PageManager.h"
+#include "KernelMemoryManager.h"
 #include "ArchInterrupts.h"
 #include "ArchThreads.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 #include "Thread.h"
 #include "Scheduler.h"
 #include "ArchCommon.h"
 #include "ArchThreads.h"
-#include "kernel/Mutex.h"
+#include "Mutex.h"
 #include "panic.h"
 #include "debug_bochs.h"
 #include "ArchMemory.h"
@@ -35,17 +35,17 @@
 #include "arch_bd_manager.h"
 #include "arch_bd_virtual_device.h"
 
-#include "fs/VfsSyscall.h"
-#include "fs/FsWorkingDirectory.h"
+#include "VfsSyscall.h"
+#include "FsWorkingDirectory.h"
 
-#include "console/TextConsole.h"
-#include "console/FrameBufferConsole.h"
-#include "console/Terminal.h"
+#include "TextConsole.h"
+#include "FrameBufferConsole.h"
+#include "Terminal.h"
 
-#include "fs/fs_global.h"
+#include "fs_global.h"
 
 #include "UserProcess.h"
-#include "ustl/outerrstream.h"
+#include "outerrstream.h"
 
 #include "user_progs.h"
 

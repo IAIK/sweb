@@ -12,7 +12,7 @@
 #ifdef USE_FILE_SYSTEM_ON_GUEST_OS
 #include <vector>
 #else
-#include "ustl/uvector.h"
+#include "uvector.h"
 #endif
 
 #include "GeneralCache.h"

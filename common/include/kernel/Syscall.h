@@ -9,7 +9,7 @@
 #include <types.h>
 #include "Thread.h"
 #include "Scheduler.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 
 
 /**

@@ -6,9 +6,9 @@
  * Author: chris
  */
 
-#include "fs/FsWorkingDirectory.h"
+#include "FsWorkingDirectory.h"
 
-#include "fs/VfsSyscall.h"
+#include "VfsSyscall.h"
 #include "fs/inodes/Inode.h"
 #include "fs/inodes/Directory.h"
 
@@ -17,7 +17,7 @@
 #include <string>
 #include "debug_print.h"
 #else
-#include "ustl/ustring.h"
+#include "ustring.h"
 #include "kprintf.h"
 #endif
 

@@ -9,7 +9,7 @@
 #include "umemory.h"
 #include "fstream.h"
 //#include <errno.h>
-#include "mm/kmalloc.h"
+#include "kmalloc.h"
 #include "panic.h"
 
 namespace ustl {

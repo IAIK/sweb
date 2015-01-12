@@ -9,12 +9,12 @@
 #ifndef WRITEBACKCACHE_H_
 #define WRITEBACKCACHE_H_
 
-#include "cache/GeneralCache.h"
-#include "cache/CacheStrategy.h"
+#include "GeneralCache.h"
+#include "CacheStrategy.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 #include "kprintf.h"
-#include "ustl/uvector.h"
+#include "uvector.h"
 #else
 #include "debug_print.h"
 #include <vector>

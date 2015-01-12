@@ -11,8 +11,7 @@
 #ifndef FILEBLOCKDEVICE_H_
 #define FILEBLOCKDEVICE_H_
 
-//#include "fs/inodes/SpecialFile.h"
-#include "fs/inodes/File.h"
+#include "File.h"
 #include "arch_bd_virtual_device.h"
 
 /**

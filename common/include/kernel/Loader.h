@@ -11,7 +11,7 @@
 #include "Mutex.h"
 #include "ArchMemory.h"
 #include "ElfFormat.h"
-#include <ustl/uvector.h>
+#include <uvector.h>
 
 class Stabs2DebugInfo;
 

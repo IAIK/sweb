@@ -3,18 +3,18 @@
  */
 
 #include "Loader.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 #include "ArchThreads.h"
-#include "mm/PageManager.h"
+#include "PageManager.h"
 #include "ArchMemory.h"
 #include "ArchCommon.h"
 #include "ArchInterrupts.h"
 #include "Syscall.h"
-#include "fs/VfsSyscall.h"
-#include <ustl/uvector.h>
+#include "VfsSyscall.h"
+#include <uvector.h>
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
-#include <ustl/umemory.h>
+#include <umemory.h>
 
 Loader::Loader ( ssize_t fd, Thread *thread ) : fd_ ( fd ),
     thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_"),

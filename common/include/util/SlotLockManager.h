@@ -15,7 +15,7 @@
 #endif
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "ustl/umap.h"
+#include "umap.h"
 #define STL_NAMESPACE_PREFIX    ustl::
 using ustl::map;
 #else

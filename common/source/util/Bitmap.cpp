@@ -3,7 +3,7 @@
  */
 
 #include "Bitmap.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 #include "assert.h"
 
 static const uint8 BIT_COUNT[] =

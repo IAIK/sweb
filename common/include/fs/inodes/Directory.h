@@ -10,9 +10,9 @@
 #define DIRECTORY_H_
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "ustl/ustring.h"
-#include "ustl/umap.h"
-#include "ustl/ustack.h"
+#include "ustring.h"
+#include "umap.h"
+#include "ustack.h"
 #else
 #include <string>
 #include <map>

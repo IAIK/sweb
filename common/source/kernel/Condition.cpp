@@ -7,9 +7,9 @@
 #include "Mutex.h"
 #include "Scheduler.h"
 #include "assert.h"
-#include "console/kprintf.h"
+#include "kprintf.h"
 #include "ArchInterrupts.h"
-#include "console/debug.h"
+#include "debug.h"
 
 extern uint32 boot_completed;
 

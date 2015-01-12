@@ -4,9 +4,6 @@
 
 #include "types.h"
 #include "Console.h"
-#include "Thread.h"
-#include "FiFo.h"
-
 #include "chardev.h"
 
 /**

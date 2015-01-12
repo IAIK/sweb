@@ -12,7 +12,7 @@
 #include <map>
 #include "types.h"
 #else
-#include "ustl/umap.h"
+#include "umap.h"
 #include "Mutex.h"
 #endif
 

@@ -2,8 +2,8 @@
  * @file string.c basic string and array manipulation
  */
 
-#include "util/string.h"
-#include "mm/kmalloc.h"
+#include "string.h"
+#include "kmalloc.h"
 #include "assert.h"
 
 #ifndef NULL

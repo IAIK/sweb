@@ -13,7 +13,7 @@ extern "C"
 }
 #endif
 
-#include "mm/new.h"
+#include "new.h"
 #include "ArchThreads.h"
 #include "assert.h"
 

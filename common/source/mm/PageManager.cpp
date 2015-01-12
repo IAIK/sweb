@@ -2,14 +2,14 @@
  * @file PageManager.cpp
  */
 
-#include "mm/PageManager.h"
-#include "mm/new.h"
+#include "PageManager.h"
+#include "new.h"
 #include "paging-definitions.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "debug_bochs.h"
-#include "console/kprintf.h"
-#include "kernel/Scheduler.h"
+#include "kprintf.h"
+#include "Scheduler.h"
 #include "ArchInterrupts.h"
 #include "assert.h"
 #include "panic.h"
