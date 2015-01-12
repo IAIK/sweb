@@ -17,25 +17,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-/**
- * CVS Log Info for $RCSfile: atoi.c,v $
- *
- * $Id: atoi.c,v 1.3 2006/11/24 18:10:39 aniederl Exp $
- * $Log: atoi.c,v $
- * Revision 1.2  2006/11/24 17:56:21  aniederl
- * fix defective behaviour of atoi and atol
- *
- * Revision 1.1  2005/09/13 20:45:44  aniederl
- * initial import of atoi
- *
- */
-
-
 #include "stdlib.h"
 
-//----------------------------------------------------------------------
 /**
  * parses the given string and returns its value as integer
  * @param string the string for parsing
@@ -71,7 +54,6 @@ int atoi(const char *string)
   return number;
 }
 
-//----------------------------------------------------------------------
 /**
  * parses the given string and returns its value as long
  * @param string the string for parsing

@@ -17,15 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-/**
- * CVS Log Info for $RCSfile: stdlib.h,v $
- *
- * $Id: stdlib.h,v 1.1 2005/09/13 20:46:38 aniederl Exp $
- * $Log$
- */
-
-
 #ifndef stdlib_h___
 #define stdlib_h___
 

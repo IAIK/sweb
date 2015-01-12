@@ -48,10 +48,6 @@ inode_id_t UnixInodeIdent::getInodeID(void) const
   return inode_id_;
 }
 
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-
 UnixInodeCacheItem::UnixInodeCacheItem(Inode* inode) : Item(),
     inode_(inode)
 {

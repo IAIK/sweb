@@ -13,9 +13,10 @@
 #include <vector>
 #else
 #include "uvector.h"
+#include "Mutex.h"
 #endif
 
-#include "GeneralCache.h"
+#include "CacheStrategy.h"
 
 namespace Cache
 {

@@ -17,31 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-/**
- * CVS Log Info for $RCSfile: scanf.c,v $
- *
- * $Id: scanf.c,v 1.6 2005/09/27 21:24:43 btittelbach Exp $
- * $Log: scanf.c,v $
- * Revision 1.5  2005/09/24 16:09:02  btittelbach
- * fixes
- *
- * Revision 1.4  2005/09/21 22:33:02  aniederl
- * gets now also tests for '\r' (Carriage Return)
- *
- * Revision 1.3  2005/09/21 21:32:25  aniederl
- * repaired read loop in function gets()
- *
- * Revision 1.2  2005/09/21 16:44:46  aniederl
- * changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
- *
- * Revision 1.1  2005/09/16 05:00:58  aniederl
- * import of getchar, gets and a stub for scanf
- *
- */
-
-
 #include "unistd.h"
 #include "stdio.h"
 #include "stdlib.h"
@@ -61,7 +36,6 @@
 #define INT_MAX         ((int)(~0U>>1))
 
 
-//----------------------------------------------------------------------
 /**
  * simple_strtoul - convert a string to an unsigned long
  * @cp: The start of the string
@@ -97,7 +71,6 @@ unsigned long simple_strtoul(const char *cp,char **endp,unsigned int base)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * simple_strtol - convert a string to a signed long
  * @cp: The start of the string
@@ -112,7 +85,6 @@ long simple_strtol(const char *cp,char **endp,unsigned int base)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * simple_strtoull - convert a string to an unsigned long long
  * @cp: The start of the string
@@ -148,7 +120,6 @@ unsigned long long simple_strtoull(const char *cp,char **endp,unsigned int base)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * simple_strtoll - convert a string to a signed long long
  * @cp: The start of the string
@@ -395,7 +366,6 @@ int vsscanf(const char * buf, const char * fmt, va_list args)
  */
 #define INPUT_BUFFER_SIZE 256
 
-//----------------------------------------------------------------------
 /**
  * Reads input from stdin according to the given format and
  * assigns read values to the given variables.

@@ -53,10 +53,6 @@ sector_len_t SectorCacheIdent::getSectorSize(void) const
   return block_size_;
 }
 
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-
 SectorCacheItem::SectorCacheItem(char* sector_data) : Item(),
     sector_(sector_data)
 {

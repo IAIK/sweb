@@ -17,15 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-/**
- * CVS Log Info for $RCSfile: syscall.h,v $
- *
- * $Id: syscall.h,v 1.1 2005/09/20 14:40:54 aniederl Exp $
- * $Log$
- */
-
-
 #ifndef syscall_h___
 #define syscall_h___
 

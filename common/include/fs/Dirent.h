@@ -17,7 +17,7 @@
  */
 struct Dirent
 {
-  Dirent(inode_id_t inode_id, const char* filename) : inode_id_(inode_id)
+  Dirent(inode_id_t inode_id, const char* filename) : inode_id_(inode_id), offset_(0), len_(0), type_(0)
   {
     if(filename != NULL)
     {

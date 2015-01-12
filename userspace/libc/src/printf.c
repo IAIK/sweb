@@ -17,37 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-/**
- * CVS Log Info for $RCSfile: printf.c,v $
- *
- * $Id: printf.c,v 1.8 2005/09/21 16:44:46 aniederl Exp $
- * $Log: printf.c,v $
- * Revision 1.7  2005/09/21 03:31:52  aniederl
- * repaired writeNumber function (didn't increase string length)
- *
- * Revision 1.6  2005/09/20 14:16:08  aniederl
- * repaired wrong macro query
- *
- * Revision 1.5  2005/09/16 03:13:58  aniederl
- * fixed error recognition in putchar and puts
- *
- * Revision 1.4  2005/09/14 23:01:04  aniederl
- * added putchar and puts
- *
- * Revision 1.3  2005/09/13 18:37:58  aniederl
- * modified printf for static memory
- *
- * Revision 1.2  2005/09/11 10:22:36  aniederl
- * now freeing the memory of the output string
- *
- * Revision 1.1  2005/09/11 09:46:15  aniederl
- * initial import of printf
- *
- */
-
-
 #include "unistd.h"
 #include "stdio.h"
 #include "stdlib.h"
@@ -83,7 +52,6 @@ unsigned char const LEFT	= 16;		/* left justified */
 unsigned char const SPECIAL	= 32;		/* 0x */
 unsigned char const LARGE	= 64;		/* use 'ABCDEF' instead of 'abcdef' */
 
-//----------------------------------------------------------------------
 /**
  * Resizes the string in the given c_string structure..
  *
@@ -114,7 +82,6 @@ void resizeString(c_string *str, unsigned int new_size)
 }
 #endif // STATIC_MEMORY__
 
-//----------------------------------------------------------------------
 
 /**
  * Writes a number of fill chars into a string
@@ -227,7 +194,6 @@ void writeNumber(c_string *output_string, unsigned int number,
 	//~ }
 }
 
-//----------------------------------------------------------------------
 /**
  * Writes output to stdout.
  * A detailed description of the format is given in the
@@ -479,7 +445,6 @@ extern int printf(const char *format, ...)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Writes the given character to stdout.
  * The character is casted to unsigned char.
@@ -499,7 +464,6 @@ int putchar(int character)
   return (int) output_char;
 }
 
-//----------------------------------------------------------------------
 /**
  * Writes the given string followed by a newline to stdout.
  *

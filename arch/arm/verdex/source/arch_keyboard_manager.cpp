@@ -51,7 +51,8 @@ KeyboardManager *KeyboardManager::instance_ = 0;
 
 extern struct KMI* kmi;
 
-KeyboardManager::KeyboardManager() : keyboard_buffer_( 256 ), extended_scancode( 0 ), keyboard_status_ ( 0 )
+KeyboardManager::KeyboardManager() :
+    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), current_key_(0), usb_kbd_addr_(0)
 {
 //  kmi = (struct KMI*)0x88000000;
 //  kmi->cr = 0x1C;

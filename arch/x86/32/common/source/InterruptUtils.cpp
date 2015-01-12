@@ -26,12 +26,11 @@
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
 
-//remove this later
 #include "Thread.h"
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
-//---------------------------------------------------------------------------*/
+
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
 #define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
 
@@ -64,7 +63,7 @@
 
 #define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
                                  // =1: an instruction fetch (need PAE for that)
-//---------------------------------------------------------------------------*/
+
 struct GateDesc
 {
   uint16 offset_low;       // low word of handler entry point's address
@@ -78,7 +77,6 @@ struct GateDesc
   uint8 present   : 1;     // present- flag - set to 1
   uint16 offset_high;      // high word of handler entry point's address
 }__attribute__((__packed__));
-//---------------------------------------------------------------------------*/
 
 extern "C" void arch_dummyHandler();
 

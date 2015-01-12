@@ -18,26 +18,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-/**
- * CVS Log Info for $RCSfile: file_alloc.c,v $
- *
- * $Id: file_alloc.c,v 1.4 2005/09/20 14:39:56 aniederl Exp $
- * $Log: file_alloc.c,v $
- * Revision 1.3  2005/09/20 13:48:42  aniederl
- * changed syscalls for using __syscall asm function
- *
- * Revision 1.2  2005/09/11 13:12:50  aniederl
- * fixed syscall access
- *
- * Revision 1.1  2005/09/07 03:48:06  aniederl
- * import of file (de)allocation functions
- *
- *
- */
-
-
 #include "unistd.h"
 #include "fcntl.h"
 #include "stdarg.h"
@@ -45,7 +25,6 @@
 #include "../../../common/include/kernel/syscall-definitions.h"
 
 
-//----------------------------------------------------------------------
 /**
  * Creates a new hard link to an existing file.
  * If new_path exists it will not be overwritten.
@@ -60,7 +39,6 @@ int link(const char *old_path, const char *new_path)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Deletes a name from the filesystem.
  * If that name was the last link to a file and no processes have the file
@@ -79,7 +57,6 @@ int unlink(const char *path)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Closes the given file descriptor, so that it no longer refers to any file
  * and may be reused.
@@ -100,7 +77,6 @@ int close(int file_descriptor)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Converts a pathname into a file descriptor which can be used in subsequent
  * read and write operations.
@@ -144,7 +120,6 @@ int open(const char *path, int flags, ...)
   return __syscall(sc_open, (long) path, flags, mode, 0x00, 0x00);
 }
 
-//----------------------------------------------------------------------
 /**
  * Equivalent to open() with flags equal to O_CREAT | O_WRONLY | O_TRUNC.
  *
@@ -159,7 +134,6 @@ int creat(const char *path, mode_t mode)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Creates a pipe.
  * A pair of file descriptors pointing to a pipe inode is created and placed
@@ -178,7 +152,6 @@ int pipe(int file_descriptor_array[2])
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Creates a copy of the given file descriptor using the lowest-numbered
  * unused descriptor.
@@ -196,7 +169,6 @@ int dup(int file_descriptor)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Creates a copy of the given file descriptor using the given new descriptor
  * and closing it first if necessary.
@@ -216,7 +188,6 @@ int dup2(int old_file_descriptor, int new_file_descriptor)
 }
 
 
-//----------------------------------------------------------------------
 /**
  * Renames a file, moving it between directories if required.
  *

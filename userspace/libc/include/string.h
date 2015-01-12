@@ -17,15 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-/**
- * CVS Log Info for $RCSfile: string.h,v $
- *
- * $Id: string.h,v 1.1 2005/10/10 06:15:55 aniederl Exp $
- * $Log$
- */
-
-
 #ifndef string_h___
 #define string_h___
 

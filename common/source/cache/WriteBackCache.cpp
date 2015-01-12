@@ -6,7 +6,13 @@
  * Author: chris
  */
 
+#include "cache/GeneralCache.h"
 #include "cache/WriteBackCache.h"
+#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
+#include "kprintf.h"
+#else
+#include "debug_print.h"
+#endif
 
 namespace Cache
 {
@@ -123,4 +129,18 @@ void WriteBackCache::removeItem(const Cache::ItemIdentity& ident)
   }
 }
 
+WriteBackCache::WriteBackItem::WriteBackItem(Cache::ItemIdentity* id, Cache::Item* it_data, bool delete_itm) :
+    ident(id), item(it_data), delete_item(delete_itm)
+{
+}
+
+WriteBackCache::WriteBackItem::~WriteBackItem()
+{
+  debug(WRITE_CACHE, "~WriteBackItem CALL\n");
+
+  if(delete_item) delete item;
+  delete ident;
+}
+
 } // end of namespace
+

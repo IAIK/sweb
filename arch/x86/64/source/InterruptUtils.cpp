@@ -1,8 +1,3 @@
-/**
- * @file InterruptUtils.cpp
- *
- */
-
 #include "InterruptUtils.h"
 #include "new.h"
 #include "ports.h"
@@ -31,7 +26,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
-//---------------------------------------------------------------------------*/
+
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFFULL)
 #define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFFULL)
 #define LO_DWORD(x) (((uint64)(x)) & 0x00000000FFFFFFFFULL)
@@ -63,7 +58,7 @@
 
 #define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
                                  // =1: an instruction fetch (need PAE for that)
-//---------------------------------------------------------------------------*/
+
 struct GateDesc
 {
   uint16 offset_ld_lw : 16;     // low word / low dword of handler entry point's address
@@ -78,7 +73,7 @@ struct GateDesc
   uint32 offset_hd : 32;        // high dword of handler entry point's address
   uint32 reserved : 32;
 }__attribute__((__packed__));
-//---------------------------------------------------------------------------*/
+
 
 extern "C" void arch_dummyHandler();
 

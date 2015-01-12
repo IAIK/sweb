@@ -17,31 +17,10 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-/**
- * CVS Log Info for $RCSfile: write.c,v $
- *
- * $Id: write.c,v 1.4 2005/09/20 14:39:56 aniederl Exp $
- * $Log: write.c,v $
- * Revision 1.3  2005/09/20 13:48:42  aniederl
- * changed syscalls for using __syscall asm function
- *
- * Revision 1.2  2005/09/11 10:20:11  aniederl
- * fixed include statements
- *
- * Revision 1.1  2005/09/07 03:49:45  aniederl
- * import of read/write functions
- *
- *
- */
-
-
 #include "unistd.h"
 #include "sys/syscall.h"
 #include "../../../common/include/kernel/syscall-definitions.h"
 
-//----------------------------------------------------------------------
 /**
  * Writes to a file descriptor.
  * Up to count bytes from the provided buffer are written to the given file.

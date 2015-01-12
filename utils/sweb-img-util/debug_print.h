@@ -9,6 +9,7 @@
 #ifndef DEBUG_PRINT_H_
 #define DEBUG_PRINT_H_
 
+#include <types.h>
 #include <stdarg.h>
 #include <stdint.h>
 

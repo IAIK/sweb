@@ -7,6 +7,7 @@
  */
 
 #include "FifoReadCache.h"
+#include "GeneralCache.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 #include "assert.h"

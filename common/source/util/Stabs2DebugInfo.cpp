@@ -1,14 +1,10 @@
-
 #include "kprintf.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
 
-
 #define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
   ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
 
-
-//-------------------------------------------------------------------------------------*/
 #define N_GSYM  0x20    /* global symbol: name,,0,type,0 */
 #define N_FNAME 0x22    /* procedure name (f77 kludge): name,,0 */
 #define N_FUN   0x24    /* procedure: name,,0,linenumber,address */
@@ -28,8 +24,6 @@
 #define N_ECOMM 0xe4    /* end common: name,, */
 #define N_ECOML 0xe8    /* end common (local name): ,,address */
 #define N_LENG  0xfe    /* second stab entry with length information */
-//-------------------------------------------------------------------------------------*/
-
 
 struct StabEntry
 {

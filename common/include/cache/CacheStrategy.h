@@ -9,8 +9,6 @@
 #ifndef CACHESTRATEGY_H_
 #define CACHESTRATEGY_H_
 
-#include "GeneralCache.h"
-
 namespace Cache
 {
 

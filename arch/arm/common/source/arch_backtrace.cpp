@@ -1,4 +1,3 @@
-//-------------------------------------------------------------------------------------*/
 #include "kprintf.h"
 #include "Thread.h"
 #include "arch_backtrace.h"
@@ -7,7 +6,7 @@
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "umap.h"
 #include "ArchCommon.h"
-//-------------------------------------------------------------------------------------*/
+
 struct StackFrame
 {
   pointer pc;
@@ -15,9 +14,8 @@ struct StackFrame
   pointer sp;
   StackFrame *prev_fp;
 };
-//-------------------------------------------------------------------------------------*/
+
 extern Thread* currentThread;
-//-------------------------------------------------------------------------------------*/
 
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {

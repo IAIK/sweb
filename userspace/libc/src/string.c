@@ -17,25 +17,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-
-/**
- * CVS Log Info for $RCSfile: string.c,v $
- *
- * $Id: string.c,v 1.2 2006/09/19 20:40:24 aniederl Exp $
- * $Log: string.c,v $
- * Revision 1.1  2005/10/10 06:15:55  aniederl
- * included memset, memcpy and memcmp because gcc uses them even with the -nostdlib flag
- *
- */
-
-// implementations for memcmp, memcpy and memset taken from
-// ../../../common/source/util/string.c
-
 #include "string.h"
 
-
-//----------------------------------------------------------------------
 /**
  * Compares the given number of bytes of the memory areas started by the
  * given pointers.
@@ -68,7 +51,6 @@ int memcmp(const void *first_position, const void *second_position,
   return 0;
 }
 
-//----------------------------------------------------------------------
 /**
  * Copies the given number of bytes from memory area source to memory area
  * destination. The memory areas should not overlap.
@@ -100,7 +82,6 @@ void* memcpy(void *destination, const void *source, size_t number_of_bytes)
   return destination;
 }
 
-//----------------------------------------------------------------------
 /**
  * Fills the given number of bytes of the memory area pointed to by the given
  * position with the given value.

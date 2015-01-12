@@ -17,24 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-/**
- * CVS Log Info for $RCSfile: stdio.h,v $
- *
- * $Id: stdio.h,v 1.4 2006/11/18 20:27:02 aniederl Exp $
- * $Log: stdio.h,v $
- * Revision 1.3  2005/09/21 16:44:46  aniederl
- * changed gets function which takes now the buffer size as 2nd argument and included a scanf function which is based on vsscanf from the linux kernel
- *
- * Revision 1.2  2005/09/20 15:58:38  aniederl
- * included unistd.h
- *
- * Revision 1.1  2005/09/14 23:11:29  aniederl
- * import of stdio.h
- *
- */
-
-
 #ifndef stdio_h___
 #define stdio_h___
 

@@ -34,7 +34,6 @@ private:
   virtual ~Util();
 };
 
-//------------------------------------------------------------------------------
 template<class T>
 bool Util::strToType(const std::string& str, T& value)
 {

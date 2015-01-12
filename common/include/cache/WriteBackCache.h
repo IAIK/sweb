@@ -9,14 +9,11 @@
 #ifndef WRITEBACKCACHE_H_
 #define WRITEBACKCACHE_H_
 
-#include "GeneralCache.h"
 #include "CacheStrategy.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "kprintf.h"
 #include "uvector.h"
 #else
-#include "debug_print.h"
 #include <vector>
 #endif
 
@@ -85,25 +82,16 @@ public:
 
 private:
 
-  struct WriteBackItem
+  class WriteBackItem
   {
-    WriteBackItem(Cache::ItemIdentity* id, Cache::Item* it_data,
-        bool delete_itm) :
-          ident(id), item(it_data), delete_item(delete_itm)
-    {
-    }
+    public:
+      WriteBackItem(Cache::ItemIdentity* id, Cache::Item* it_data, bool delete_itm);
 
-    ~WriteBackItem()
-    {
-      debug(WRITE_CACHE, "~WriteBackItem CALL\n");
+      ~WriteBackItem();
 
-      if(delete_item) delete item;
-      delete ident;
-    }
-
-    Cache::ItemIdentity* ident;
-    Cache::Item* item;
-    bool delete_item; // flag: delete item after writing
+      Cache::ItemIdentity* ident;
+      Cache::Item* item;
+      bool delete_item; // flag: delete item after writing
   };
 
   // use a vector as a waiting queue for write operations

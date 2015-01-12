@@ -1,8 +1,3 @@
-/**
- * @file InterruptUtils.cpp
- *
- */
-
 #include "InterruptUtils.h"
 #include "new.h"
 #include "ArchMemory.h"
@@ -27,8 +22,6 @@
 #include "Syscall.h"
 #include "paging-definitions.h"
 #include "arch_board_specific.h"
-
-//---------------------------------------------------------------------------*/
 
 void InterruptUtils::initialise()
 {
