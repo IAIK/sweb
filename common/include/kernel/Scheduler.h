@@ -6,12 +6,12 @@
 #define SCHEDULER_H__
 
 #include "types.h"
-#include "SpinLock.h"
-#include "Mutex.h"
 #include <ustl/ulist.h>
 
 class Thread;
 class ArchThreadInfo;
+class Mutex;
+class SpinLock;
 
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;

@@ -2,7 +2,7 @@
  * @file Thread.cpp
  */
 
-#include "kernel/Thread.h"
+#include "Thread.h"
 #include "ArchCommon.h"
 #include "console/kprintf.h"
 #include "ArchThreads.h"
@@ -12,8 +12,9 @@
 #include "console/Console.h"
 #include "console/Terminal.h"
 #include "backtrace.h"
-#include "mm/KernelMemoryManager.h"
+#include "KernelMemoryManager.h"
 #include "Stabs2DebugInfo.h"
+#include "FsWorkingDirectory.h"
 
 #define MAX_STACK_FRAMES 20
 

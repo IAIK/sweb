@@ -6,7 +6,6 @@
 #define _THREAD_H_
 
 #include "types.h"
-#include "fs/FsWorkingDirectory.h"
 
 enum ThreadState {Running, Sleeping, ToBeDestroyed};
 
@@ -15,6 +14,7 @@ class ArchThreadInfo;
 class Loader;
 class Terminal;
 class Mutex;
+class FsWorkingDirectory;
 
 extern Thread* currentThread;
 

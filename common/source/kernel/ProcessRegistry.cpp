@@ -6,7 +6,8 @@
 #include "Scheduler.h"
 #include "UserProcess.h"
 #include "kprintf.h"
-#include "fs/VfsSyscall.h"
+#include "VfsSyscall.h"
+#include "FsWorkingDirectory.h"
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
 
