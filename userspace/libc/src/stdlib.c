@@ -1,28 +1,25 @@
 #include "stdlib.h"
 
-/**
- * function stub
- * posix compatible signature - do not change the signature!
- */
 void *malloc(unsigned int size)
 {
-  return NULL;
+  return 0;
 }
 
-/**
- * function stub
- * posix compatible signature - do not change the signature!
- */
 void free(void *ptr)
 {
 }
 
-/**
- * function stub
- * posix compatible signature - do not change the signature!
- */
 int atexit(void (*function)(void))
 {
   return -1;
 }
 
+void *calloc(size_t nmemb, size_t size)
+{
+  return 0;
+}
+
+void *realloc(void *ptr, size_t size)
+{
+  return 0;
+}

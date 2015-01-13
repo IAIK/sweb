@@ -76,6 +76,10 @@ extern int atexit(void (*function)(void));
 
 extern void *malloc(unsigned int size);
 
+extern void *calloc(size_t nmemb, size_t size);
+
+extern void *realloc(void *ptr, size_t size);
+
 extern void free(void *ptr);
 
 #ifdef __cplusplus
