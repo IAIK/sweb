@@ -183,6 +183,9 @@ data_segment_ok:
 
 global initialiseBootTimePaging
 initialiseBootTimePaging:
+  EXTERN kernel_page_map_level_4
+  EXTERN kernel_page_directory_pointer_table
+  EXTERN kernel_page_directory
   mov dword[kernel_page_map_level_4 - BASE + 0], $kernel_page_directory_pointer_table - BASE + 3
   mov dword[kernel_page_map_level_4 - BASE + 4], 0
   mov dword[kernel_page_directory_pointer_table - BASE + 0], $kernel_page_directory - BASE + 3
@@ -382,19 +385,6 @@ multi_boot_structure_pointer:
 
 SECTION .bss
 BITS 64
-ALIGN 4096
-GLOBAL kernel_page_directory
-kernel_page_directory:
-resd 2048
-
-GLOBAL kernel_page_directory_pointer_table
-kernel_page_directory_pointer_table:
-resd 2048
-
-GLOBAL kernel_page_map_level_4
-kernel_page_map_level_4:
-resd 1024
-
 GLOBAL stack_start
 stack_start:
 resd 4096

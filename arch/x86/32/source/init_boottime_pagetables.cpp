@@ -9,9 +9,8 @@
 #include "offsets.h"
 #include "multiboot.h"
 #include "ArchCommon.h"
+#include "ArchMemory.h"
 
-extern PageDirEntry kernel_page_directory_start[];
-extern PageTableEntry kernel_page_tables_start[];
 extern void* kernel_end_address;
 
 extern "C" void initialiseBootTimePaging();
@@ -77,10 +76,10 @@ void initialiseBootTimePaging()
 
   uint8 * fb = (uint8*) 0x000B8000;
   uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
-  PageDirEntry *pde_start = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
+  PageDirEntry *pde_start = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory);
 
   //uint8 *pde_start_bytes = (uint8 *)pde_start;
-  PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
+  PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_tables);
 
   uint32 kernel_last_page = ((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address)) / PAGE_SIZE;
   uint32 first_free_page = kernel_last_page + 1;
@@ -171,6 +170,6 @@ void removeBootTimeIdentMapping()
 
   for (i=0;i<5;++i)
   {
-    kernel_page_directory_start[i].page.present=0;
+    kernel_page_directory[i].page.present=0;
   }
 }

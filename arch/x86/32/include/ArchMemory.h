@@ -14,6 +14,9 @@
   uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
   uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
 
+extern PageDirEntry kernel_page_directory[];
+extern PageTableEntry kernel_page_tables[];
+
 /**
  *
  * Collection of architecture dependant functions concerning Memory and Pages

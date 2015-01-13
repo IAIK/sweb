@@ -20,8 +20,7 @@
 #define PHYS_OFFSET_4K (LOAD_BASE / PAGE_SIZE)
 #define PHYS_OFFSET_1M (PHYS_OFFSET_4K / PAGE_TABLE_ENTRIES)
 
-//extern "C" uint32 kernel_page_directory_start;
-extern "C" page_directory_entry kernel_page_directory_start;
+extern "C" page_directory_entry kernel_page_directory;
 
 ArchMemory::ArchMemory()
 {
@@ -30,7 +29,7 @@ ArchMemory::ArchMemory()
 
   page_directory_entry *new_page_directory = (page_directory_entry*) getIdentAddressOfPPN(page_dir_page_);
 
-  ArchCommon::memcpy((pointer) new_page_directory,(pointer) &kernel_page_directory_start, PD_SIZE);
+  ArchCommon::memcpy((pointer) new_page_directory,(pointer) kernel_page_directory, PD_SIZE);
   for (uint32 p = 8; p < PAGE_DIR_ENTRIES / 2; ++p) //we're concerned with first two gig, rest stays as is
   {
     new_page_directory[p].pde4k.size = PDE_SIZE_NONE;
@@ -163,7 +162,7 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
-  page_directory_entry *page_directory = &kernel_page_directory_start;
+  page_directory_entry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pde1m.size == PDE_SIZE_PAGE) // 1m page
   {

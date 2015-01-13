@@ -9,8 +9,8 @@
 #include "ArchCommon.h"
 #include "PageManager.h"
 
-//extern "C" uint32 kernel_page_directory_start;
-extern "C" PageDirEntry kernel_page_directory_start;
+PageDirEntry kernel_page_directory[PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
+PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
 ArchMemory::ArchMemory()
 {
@@ -19,7 +19,7 @@ ArchMemory::ArchMemory()
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
 
-  ArchCommon::memcpy((pointer) new_page_directory,(pointer) &kernel_page_directory_start, PAGE_SIZE);
+  ArchCommon::memcpy((pointer) new_page_directory,(pointer) kernel_page_directory, PAGE_SIZE);
   for (uint32 p = 0; p < 512; ++p) //we're concerned with first two gig, rest stays as is
   {
     new_page_directory[p].pt.present=0;
@@ -143,7 +143,7 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
-  PageDirEntry *page_directory = &kernel_page_directory_start;
+  PageDirEntry *page_directory = kernel_page_directory;
   //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;

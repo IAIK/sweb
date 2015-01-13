@@ -19,8 +19,6 @@ void ArchThreads::initialise()
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
 }
 
-extern "C" uint32 kernel_page_directory_pointer_table;
-
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
   void* pdpt = arch_memory.page_dir_pointer_table_;

@@ -11,9 +11,8 @@
 #include "ArchCommon.h"
 #include "assert.h"
 #include "kprintf.h"
-extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
-extern PageDirEntry kernel_page_directory_start[];
-extern PageTableEntry kernel_page_tables_start[];
+#include "ArchMemory.h"
+
 extern void* kernel_end_address;
 
 extern "C" void initialiseBootTimePaging();
@@ -79,8 +78,8 @@ void initialiseBootTimePaging()
 
   uint8 * fb = (uint8*) 0x000B8000;
   uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
-  PageDirPointerTableEntry *pdpt_start = (PageDirPointerTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_pointer_table);
-  PageDirEntry *pde_start = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory_start);
+  PageDirPointerTableEntry *pdpt_start = (PageDirPointerTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory_pointer_table);
+  PageDirEntry *pde_start = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory);
   for (i = 0; i < 4; ++i)
   {
     pdpt_start[i].page_directory_ppn = ((uint32) pde_start) / PAGE_SIZE + i;
@@ -88,7 +87,7 @@ void initialiseBootTimePaging()
   }
 
   //uint8 *pde_start_bytes = (uint8 *)pde_start;
-  PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_tables_start);
+  PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_tables);
 
   uint32 kernel_last_page = ((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address)) / PAGE_SIZE;
   uint32 first_free_page = kernel_last_page + 1;
@@ -179,6 +178,6 @@ void removeBootTimeIdentMapping()
 
   for (i=0;i<10;++i)
   {
-    kernel_page_directory_start[i].page.present=0;
+    kernel_page_directory[i].page.present=0;
   }
 }

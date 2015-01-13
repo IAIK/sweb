@@ -128,6 +128,7 @@ now_using_segments:
 
   ; prepare paging, set CR3 register to start of page directory
 
+  EXTERN kernel_page_directory_pointer_table
   mov     eax,kernel_page_directory_pointer_table - BASE; eax = &PD
   mov     cr3,eax         ; cr3 = &PD
 
@@ -310,17 +311,6 @@ multi_boot_structure_pointer:
 	dd 0
    
 SECTION .bss
-ALIGN 4096
-GLOBAL kernel_page_directory_start
-kernel_page_directory_start:
-  resd 4096
-GLOBAL kernel_page_tables_start:
-kernel_page_tables_start:
-  resd 8192
-GLOBAL kernel_page_directory_pointer_table
-kernel_page_directory_pointer_table:
-  resd 8
-
 GLOBAL stack_start
 stack_start:
    resd 4096

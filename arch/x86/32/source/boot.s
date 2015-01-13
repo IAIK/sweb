@@ -121,7 +121,9 @@ now_using_segments:
 
 	; prepare paging, set CR3 register to start of page directory
 
-	mov     eax,kernel_page_directory_start - BASE; eax = &PD
+  EXTERN kernel_page_directory
+
+	mov     eax,kernel_page_directory - BASE; eax = &PD
 	mov     cr3,eax         ; cr3 = &PD
 
 
@@ -196,13 +198,6 @@ mboot:
    dd 800 ;width
    dd 600 ; height
    dd 32; depth
-
-section .text
-; this is the data section
-; you can see that the first thing we have here is our magic value
-
-GLOBAL diediedie
-diediedie:		jmp $
 
 SECTION .gdt_stuff
 ; have a look at http://www.intel.com/Assets/ja_JP/PDF/manual/253668.pdf
@@ -314,14 +309,6 @@ multi_boot_structure_pointer:
 	dd 0
    
 SECTION .bss
-ALIGN 4096
-GLOBAL kernel_page_directory_start
-kernel_page_directory_start:
-  resd 1024
-GLOBAL kernel_page_tables_start:
-kernel_page_tables_start:
-  resd 4096
-
 GLOBAL stack_start
 stack_start:
    resd 4096

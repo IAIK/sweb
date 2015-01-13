@@ -7,7 +7,7 @@ extern "C" void startup();
 extern "C" void __naked__ PagingMode();
 
 uint8 interrupt_stack[0x4000] __attribute__((aligned(0x4000)));
-page_directory_entry kernel_page_directory_start[0x1000] __attribute__((aligned(0x4000))); // space for page directory
+page_directory_entry kernel_page_directory[0x1000] __attribute__((aligned(0x4000))); // space for page directory
 
 #define BOOT_OFFSET (BOARD_LOAD_BASE - 0x80000000)
 
@@ -17,7 +17,7 @@ extern "C" void __naked__ entry()
       "mov sp, %[v]" : : [v]"r"(interrupt_stack + BOOT_OFFSET + 0x4000)); // Set up the stack
   void (*initialiseBootTimePagingPTR)() = (void(*)())((uint8*)&initialiseBootTimePaging + BOOT_OFFSET);
   initialiseBootTimePagingPTR();
-  asm("mcr p15, 0, %[v], c2, c0, 0\n" : : [v]"r"(((uint8*)kernel_page_directory_start) + BOOT_OFFSET)); // set ttbr0
+  asm("mcr p15, 0, %[v], c2, c0, 0\n" : : [v]"r"(((uint8*)kernel_page_directory) + BOOT_OFFSET)); // set ttbr0
   asm("mcr p15, 0, %[v], c8, c7, 0\n" : : [v]"r"(0)); // tlb flush
   asm("mcr p15, 0, %[v], c3, c0, 0\n" : : [v]"r"(3)); // set domain access control (full address space access for userspace)
   asm("mrc p15, 0, r0, c1, c0, 0\n"

@@ -18,8 +18,6 @@ void ArchThreads::initialise()
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
 }
 
-extern "C" uint32 kernel_page_directory_start;
-
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
   thread->kernel_arch_thread_info_->cr3 = arch_memory.page_dir_page_ * PAGE_SIZE;
@@ -38,7 +36,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
 
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
@@ -76,7 +74,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;

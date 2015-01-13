@@ -9,8 +9,9 @@
 #include "ArchCommon.h"
 #include "PageManager.h"
 
-//extern "C" uint32 kernel_page_directory_start;
-extern "C" PageDirPointerTableEntry kernel_page_directory_pointer_table;
+PageDirPointerTableEntry kernel_page_directory_pointer_table[PAGE_DIRECTORY_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x20)));
+PageDirEntry kernel_page_directory[4 * PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
+PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
 ArchMemory::ArchMemory() : page_dir_pointer_table_((PageDirPointerTableEntry*) (((uint32) page_dir_pointer_table_space_ + 0x20) & (~0x1F)))
 {
@@ -18,8 +19,8 @@ ArchMemory::ArchMemory() : page_dir_pointer_table_((PageDirPointerTableEntry*) (
   bzero(page_dir_pointer_table_,sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES);
   page_dir_pointer_table_[0].present = 0; // will be created on demand
   page_dir_pointer_table_[1].present = 0; // will be created on demand
-  page_dir_pointer_table_[2] = (&kernel_page_directory_pointer_table)[2]; // kernel
-  page_dir_pointer_table_[3] = (&kernel_page_directory_pointer_table)[3]; // 1:1 mapping
+  page_dir_pointer_table_[2] = kernel_page_directory_pointer_table[2]; // kernel
+  page_dir_pointer_table_[3] = kernel_page_directory_pointer_table[3]; // 1:1 mapping
   debug ( A_MEMORY,"ArchMemory::ArchMemory(): Initialised the page dir pointer table\n" );
 }
 
@@ -188,7 +189,7 @@ uint32 ArchMemory::get_PAddr_Of_VAddr_In_KernelMapping(uint32 virtual_addr)
 
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page)
 {
-  PageDirPointerTableEntry *pdpt = &kernel_page_directory_pointer_table;
+  PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
   if (pdpt[pdpte_vpn].present)
   {

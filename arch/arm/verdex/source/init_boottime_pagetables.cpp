@@ -14,7 +14,7 @@
 
 void initialiseBootTimePaging()
 {
-  page_directory_entry *pde_start = (page_directory_entry*)(((void*)kernel_page_directory_start) - PHYSICAL_TO_VIRTUAL_OFFSET);
+  page_directory_entry *pde_start = (page_directory_entry*)(((void*)kernel_page_directory) - PHYSICAL_TO_VIRTUAL_OFFSET);
 
   uint32 i;
   // the verdex board has physical ram mapped to 0xA0000000

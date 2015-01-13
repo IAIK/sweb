@@ -15,13 +15,13 @@
 
 SpinLock global_atomic_add_lock("");
 
-extern "C" uint32 kernel_page_directory_start;
+extern "C" uint32 kernel_page_directory;
 
 void ArchThreads::initialise()
 {
   new (&global_atomic_add_lock) SpinLock("global_atomic_add_lock");
   currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   currentThreadInfo->ttbr0 = pageDirectory;
 }
 
@@ -44,7 +44,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
   assert(!(start_function & 0x3));
@@ -68,7 +68,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
-  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)&kernel_page_directory_start));
+  pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
   assert(!(start_function & 0x3));

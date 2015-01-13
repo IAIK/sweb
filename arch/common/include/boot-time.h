@@ -20,7 +20,7 @@ extern "C"
   extern void initialiseBootTimePaging();
 
   /**
-   * zeros the kernel_page_directory_start entries
+   * zeros the kernel_page_directory entries
    */
   extern void removeBootTimeIdentMapping();
 

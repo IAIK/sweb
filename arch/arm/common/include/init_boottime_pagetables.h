@@ -8,7 +8,7 @@
 
 #include "paging-definitions.h"
 
-extern page_directory_entry kernel_page_directory_start[];
+extern page_directory_entry kernel_page_directory[];
 extern void* kernel_end_address;
 extern void* interrupt_vector_table;
 extern char* currentStack;
