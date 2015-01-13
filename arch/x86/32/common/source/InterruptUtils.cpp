@@ -4,24 +4,16 @@
  */
 
 #include "InterruptUtils.h"
-#include "new.h"
-#include "ports.h"
 #include "ArchMemory.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
-#include "Console.h"
-#include "Terminal.h"
 #include "kprintf.h"
 #include "Scheduler.h"
-#include "debug_bochs.h"
 
 #include "arch_serial.h"
 #include "serial.h"
 #include "arch_keyboard_manager.h"
 #include "arch_bd_manager.h"
-#include "panic.h"
-
-#include "Thread.h"
 #include "ArchInterrupts.h"
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"

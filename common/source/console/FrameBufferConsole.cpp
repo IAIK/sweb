@@ -8,6 +8,7 @@
 #include "image.h"
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
+#include "Scheduler.h"
 
 FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_terminals, "VESAConsoleThrd")
 {

@@ -9,12 +9,8 @@
 #include <ulist.h>
 
 class Thread;
-class ArchThreadInfo;
 class Mutex;
 class SpinLock;
-
-extern ArchThreadInfo *currentThreadInfo;
-extern Thread *currentThread;
 
 
 /**

@@ -8,7 +8,6 @@
 #include "new.h"
 #include "Mutex.h"
 #include "Condition.h"
-#include "Scheduler.h"
 
 #ifdef __cplusplus
 extern "C"

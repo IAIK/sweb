@@ -135,9 +135,6 @@ uint32 Scheduler::schedule()
 {
   if (block_scheduling_ != 0)
   {
-    //no scheduling today...
-    //keep currentThread as it was
-    //and stay in Kernel Kontext
     debug ( SCHEDULER,"schedule: currently blocked\n" );
     return 0;
   }
@@ -145,13 +142,9 @@ uint32 Scheduler::schedule()
   Thread* previousThread = currentThread;
   do
   {
-    // WARNING: do not read currentThread before is has been set here
-    //          the first time scheduler is called.
-    //          before this, currentThread may be 0 !!
     currentThread = threads_.front();
 
-    //this operation doesn't allocate or delete any kernel memory (important because Interrupts are disabled in this method)
-    ustl::rotate(threads_.begin(),threads_.begin()+1, threads_.end());
+    ustl::rotate(threads_.begin(),threads_.begin()+1, threads_.end()); // no new/delete here - important because interrupts are disabled
 
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
     {
@@ -182,7 +175,6 @@ void Scheduler::yield()
   {
     assert(currentThread);
     kprintfd ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n", currentThread, currentThread->name_ );
-    kprintf ( "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ?\n" );
     currentThread->printBacktrace();
   }
   ArchThreads::yield();
