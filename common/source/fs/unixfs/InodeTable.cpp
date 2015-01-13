@@ -15,6 +15,12 @@
 
 #include "fs/inodes/Inode.h"
 
+#ifdef USE_FILE_SYSTEM_ON_GUEST_OS
+#include "debug_print.h"
+#else
+#include "kprintf.h"
+#endif
+
 InodeTable::InodeTable(FileSystemUnix* fs, FsVolumeManager* volume_manager,
     sector_addr_t inode_table_sector_start, sector_addr_t num_sectors,
     sector_addr_t inode_bitmap_start, sector_addr_t inode_bitmap_end,

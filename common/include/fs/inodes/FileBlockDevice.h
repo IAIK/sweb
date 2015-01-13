@@ -12,7 +12,7 @@
 #define FILEBLOCKDEVICE_H_
 
 #include "File.h"
-#include "arch_bd_virtual_device.h"
+class BDVirtualDevice;
 
 /**
  * @class Special-File BlockDevice, this class makes a BlockDevice accessible

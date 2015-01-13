@@ -9,8 +9,6 @@
 
 #include "Inode.h"
 
-//typedef uint32 l_off_t;
-
 class FileDescriptor;
 
 /**
@@ -29,7 +27,6 @@ class File : public Inode
      * @param ref_count
      * @param size
      */
-    //File(const Inode& inode, uint32 ref_count, uint32 size);
     File(uint32 inode_number, uint32 device_sector, uint32 sector_offset,
         FileSystem* file_system, unix_time_stamp access_time,
         unix_time_stamp mod_time, unix_time_stamp c_time,
@@ -45,18 +42,6 @@ class File : public Inode
      * @return the I-Node type
      */
     virtual InodeType getType(void) const;
-
-    /**
-     * getting the file-size
-     * @return the file size
-     */
-    //virtual file_size_t getFileSize(void) const;
-
-    /**
-     * sets a new File-size
-     * @param size new file-size
-     */
-    //void setFileSize(file_size_t size);
 
     /**
      * read data from the file
@@ -100,11 +85,6 @@ class File : public Inode
      * @return true / false
      */
     virtual bool truncateProtected(void);
-
-  protected:
-
-    // the file-size -> moved to Inode.h
-    //file_size_t size_;
 };
 
 #endif

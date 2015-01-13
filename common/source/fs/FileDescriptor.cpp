@@ -11,10 +11,12 @@
 
 #include "Mutex.h"
 #include "MutexLock.h"
+#include "kprintf.h"
 
 #define STL_NAMESPACE_PREFIX      ustl::
 #else
 #include <list>
+#include "debug_print.h"
 #define STL_NAMESPACE_PREFIX      std::
 #endif
 

@@ -20,8 +20,10 @@
 
 #ifdef USE_FILE_SYSTEM_ON_GUEST_OS
 #include <math.h>
+#include "debug_print.h"
 #else
-#include "util/math.h"
+#include "kprintf.h"
+#include "math.h"
 #endif
 
 InodeTableMinixV2::InodeTableMinixV2(FileSystemUnix* fs, FsVolumeManager* volume_manager,

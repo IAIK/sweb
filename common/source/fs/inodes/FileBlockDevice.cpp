@@ -10,6 +10,7 @@
 
 #include "fs/FileDescriptor.h"
 #include "fs/inodes/FileBlockDevice.h"
+#include "arch_bd_virtual_device.h"
 
 FileBlockDevice::FileBlockDevice(BDVirtualDevice* block_dev) : File(0,0,0,NULL,0,0,0,0,0), block_dev_(block_dev)
 {

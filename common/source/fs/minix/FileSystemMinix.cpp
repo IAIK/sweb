@@ -23,6 +23,9 @@
 
 #ifdef USE_FILE_SYSTEM_ON_GUEST_OS
 #include <cstring>
+#include "debug_print.h"
+#else
+#include "kprintf.h"
 #endif
 
 FileSystemMinix::FileSystemMinix(FsDevice* device, uint32 mount_flags,

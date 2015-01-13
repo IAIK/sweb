@@ -16,6 +16,9 @@
 
 #ifdef USE_FILE_SYSTEM_ON_GUEST_OS
 #include <cstring>
+#include "debug_print.h"
+#else
+#include "kprintf.h"
 #endif
 
 RegularFile::RegularFile(uint32 inode_number, uint32 device_sector,

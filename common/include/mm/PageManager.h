@@ -78,7 +78,7 @@ class PageManager
      * must not be implemented
      */
     PageManager ( PageManager const& );
-    //PageManager &operator=(PageManager const&){};
+
     static PageManager* instance_;
 
     puttype  *page_usage_table_;

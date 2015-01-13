@@ -15,6 +15,9 @@
 #ifdef USE_FILE_SYSTEM_ON_GUEST_OS
 #include <cstring>
 #include <string.h>
+#include "debug_print.h"
+#else
+#include "kprintf.h"
 #endif
 
 FsVolumeManager::FsVolumeManager(FileSystem* file_system, FsDevice* device,

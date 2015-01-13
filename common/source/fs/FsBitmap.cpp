@@ -10,6 +10,12 @@
 #include "fs/FileSystem.h"
 #include "fs/FsVolumeManager.h"
 
+#ifdef USE_FILE_SYSTEM_ON_GUEST_OS
+#include "debug_print.h"
+#else
+#include "kprintf.h"
+#endif
+
 FsBitmap::FsBitmap(FileSystem* file_system, FsVolumeManager* fs_volume_manager,
     sector_addr_t start_sector, sector_addr_t end_sector,
     bitmap_t num_bits) : file_system_(file_system),

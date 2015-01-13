@@ -8,13 +8,11 @@
 #include "types.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "kprintf.h"
 #include <ulist.h>
 #include <umap.h>
 #else
 #include <vector>
 #include <map>
-#include "debug_print.h"
 #endif
 
 #include "fs/FsDefinitions.h"

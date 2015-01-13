@@ -15,8 +15,10 @@
 #ifdef USE_FILE_SYSTEM_ON_GUEST_OS
 #include <cstring>
 #include <math.h>
+#include "debug_print.h"
 #else
-#include "util/math.h"
+#include "kprintf.h"
+#include "math.h"
 #endif
 
 FileSystemUnix::FileSystemUnix(FsDevice* device, uint32 mount_flags) : FileSystem(device, mount_flags),

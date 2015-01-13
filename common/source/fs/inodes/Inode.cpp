@@ -6,12 +6,13 @@
 #include "fs/FileSystem.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "util/string.h"
-//#include "MutexLock.h"
+#include "string.h"
+#include "kprintf.h"
 #else
 #include <string>
 #include <cstring>
 #include <assert.h>
+#include "debug_print.h"
 #endif
 
 Inode::Inode(inode_id_t inode_number,
@@ -23,7 +24,6 @@ Inode::Inode(inode_id_t inode_number,
              uint32 uid, uint32 gid) :
   number_(inode_number), name_(NULL),
   device_sector_(device_sector), sector_offset_(sector_offset), data_sectors_(),
-  //parent_(NULL),
   inode_lock_(NULL), file_system_(file_system),
   access_time_(access_time), mod_time_(mod_time), c_time_(c_time),
   uid_(uid), gid_(gid), permissions_(0755),
