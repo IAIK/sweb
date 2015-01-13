@@ -76,7 +76,6 @@ void initialisePaging()
   }
   extern struct multiboot_remainder mbr;
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-  uint32 j;
   if (orig_mbr.have_vesa_console)
   {
     for (i = 0; i < 8; ++i) // map the 16 MiB (8 pages) framebuffer

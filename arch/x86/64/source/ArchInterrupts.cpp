@@ -48,36 +48,26 @@ void ArchInterrupts::EndOfInterrupt(uint16 number)
 
 void ArchInterrupts::enableInterrupts()
 {
-     __asm__ __volatile__("sti"
-   :
-   :
-   );
+   asm("sti");
 }
 
 bool ArchInterrupts::disableInterrupts()
 {
-   uint64 ret_val;
-
- __asm__ __volatile__("pushfq\n"
-                      "popq %0\n"
-                      "cli"
- : "=a"(ret_val)
- :);
-
-return (ret_val & (1 << 9));  //testing IF Flag
-
+  uint64 ret_val;
+  asm("pushfq\n"
+      "popq %0\n"
+      "cli"
+      : "=a"(ret_val));
+  return (ret_val & (1 << 9));  //testing IF Flag
 }
 
 bool ArchInterrupts::testIFSet()
 {
   uint64 ret_val;
 
-  __asm__ __volatile__(
-  "pushfq\n"
-  "popq %0\n"
-  : "=a"(ret_val)
-  :);
-
+  asm("pushfq\n"
+      "popq %0\n"
+      : "=a"(ret_val));
   return (ret_val & (1 << 9));  //testing IF Flag
 }
 
@@ -90,7 +80,7 @@ void ArchInterrupts::yieldIfIFSet()
   }
   else
   {
-    __asm__ __volatile__("nop");
+    asm("nop");
   }
 }
 
@@ -167,8 +157,6 @@ typedef struct {
 } __attribute__((__packed__))TSS;
 
 extern TSS g_tss;
-
-extern "C" void _arch_contextSwitch();
 
 extern "C" void arch_contextSwitch()
 {

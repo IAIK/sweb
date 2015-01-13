@@ -32,12 +32,12 @@ struct PageDirPageTableEntry
   uint32 write_through             :1;
   uint32 cache_disabled            :1;
   uint32 accessed                  :1;
-  uint32 reserved                  :1;
+  uint32 ignored_5                 :1;
   uint32 size                      :1;
-  uint32 global_page               :1;
-  uint32 avail_1                   :1;
-  uint32 avail_2                   :1;
-  uint32 avail_3                   :1;
+  uint32 ignored_4                 :1;
+  uint32 ignored_3                 :1;
+  uint32 ignored_2                 :1;
+  uint32 ignored_1                 :1;
   uint32 page_table_ppn            :20;
 } __attribute__((__packed__));
 
@@ -52,9 +52,9 @@ struct PageDirPageEntry
   uint32 dirty                     :1;
   uint32 size                      :1;
   uint32 global_page               :1;
-  uint32 avail_1                   :1;
-  uint32 avail_2                   :1;
-  uint32 avail_3                   :1;
+  uint32 ignored_3                 :1;
+  uint32 ignored_2                 :1;
+  uint32 ignored_1                 :1;
 
   uint32 pat                       :1;
   uint32 reserved                  :9;
@@ -78,9 +78,9 @@ typedef struct
   uint32 dirty                     :1;
   uint32 pat                       :1;
   uint32 global_page               :1;
-  uint32 avail_1                   :1;
-  uint32 avail_2                   :1;
-  uint32 avail_3                   :1;
+  uint32 ignored_3                 :1;
+  uint32 ignored_2                 :1;
+  uint32 ignored_1                 :1;
   uint32 page_ppn                  :20;
 } __attribute__((__packed__)) PageTableEntry;
 
