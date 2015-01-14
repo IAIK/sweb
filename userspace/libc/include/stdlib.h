@@ -20,6 +20,8 @@
 #ifndef stdlib_h___
 #define stdlib_h___
 
+#include "types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,7 +76,7 @@ extern void exit(int status);
  */
 extern int atexit(void (*function)(void));
 
-extern void *malloc(unsigned int size);
+extern void *malloc(size_t size);
 
 extern void *calloc(size_t nmemb, size_t size);
 

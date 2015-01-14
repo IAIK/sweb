@@ -1,6 +1,6 @@
 #include "stdlib.h"
 
-void *malloc(unsigned int size)
+void *malloc(size_t size)
 {
   return 0;
 }
