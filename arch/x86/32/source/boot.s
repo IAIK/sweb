@@ -150,40 +150,11 @@ now_using_segments:
 
   mov word[0B800Ch], 9F36h
 
-	;; we want to now move our instruction pointer from the initial low address 
-	;; to our new remapped kernel
-	;; if we just call PagingMode the assembler will figure out that it can do a 
-	;; relative call, with just a tiny offset. We want to make an absolute call though
-	;; so load the symbol into eax, and call eax instead
-  EXTERN startup ; tell the assembler we have a main somewhere
+	;; force absolute call by moving function address to eax first
+  EXTERN startup
 	mov eax, startup
 	call eax ; jump to C
   jmp $ ; suicide
-
-global reload_segements
-reload_segements:
-   ; ok, next thing to do is to load our own descriptor table
-   ; this one will spawn just one huge segment for the whole address space
-   lgdt [gdt_ptr_very_new]
-
-   ; now prepare all the segment registers to use our segments
-   mov ax, LINEAR_DATA_SEL
-   mov ds,ax
-   mov es,ax
-   mov ss,ax
-   mov fs,ax
-   mov gs,ax
-
-   ; use these segments
-   jmp LINEAR_CODE_SEL:(reload_segments_new)
-
-reload_segments_new:
-
-    ret;
-    
-    
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 ;; this will help us to boot, this way we can tell grub

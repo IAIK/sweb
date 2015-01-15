@@ -9,8 +9,6 @@
 extern uint32 tss_selector;
 extern uint32 gdt_ptr_new;
 
-extern "C" void reload_segements();
-
 typedef struct {
     uint16 limitL;
     uint16 baseL;
@@ -32,6 +30,24 @@ TSS *g_tss;
 #define SEGMENT_DPL1    0x20
 #define SEGMENT_DPL2    0x40
 #define SEGMENT_DPL3    0x60
+
+extern uint32 gdt_ptr_very_new;
+
+extern "C" void reload_segments()
+{
+  // reload the gdt with the newly set up segments
+  asm("lgdt (%[gdt_ptr])" : : [gdt_ptr]"m"(gdt_ptr_very_new));
+  // now prepare all the segment registers to use our segments
+  asm("mov %%ax, %%ds\n"
+      "mov %%ax, %%es\n"
+      "mov %%ax, %%ss\n"
+      "mov %%ax, %%fs\n"
+      "mov %%ax, %%gs\n"
+      : : "a"(KERNEL_DS));
+  // jump onto the new code segment
+  asm("ljmp %[cs],$1f\n"
+      "1:": : [cs]"i"(KERNEL_CS));
+}
 
 static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type) 
 {
@@ -58,7 +74,7 @@ void SegmentUtils::initialise()
   // we have to reload our segment stuff
   uint16 val = 8 * 6;
 
-  reload_segements();
+  reload_segments();
 
   g_tss->ss0  = KERNEL_SS;
 
