@@ -76,6 +76,8 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 
   assert(page_directory[pde_vpn].pt.present);
   assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
+  assert(!page_directory[pde_vpn].pt.present); // PT must be present
+
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(pte_base[pte_vpn].present);
   pte_base[pte_vpn].present = 0;
