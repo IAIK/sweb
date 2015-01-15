@@ -164,6 +164,10 @@ public:
    */
   static void idle();
 
+  /**
+   * draw a heartbeat character
+   */
+  static void drawHeartBeat();
 };
 
 #endif

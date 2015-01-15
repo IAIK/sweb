@@ -297,8 +297,16 @@ void ArchCommon::initDebug()
 
 }
 
-
 void ArchCommon::idle()
 {
-  __asm__ __volatile__ ( "hlt" );
+  asm volatile("hlt");
+}
+
+void ArchCommon::drawHeartBeat()
+{
+  const char* clock = "/-\\|";
+  static uint32 heart_beat_value = 0;
+  char* fb = (char*)getFBPtr();
+  fb[0] = clock[heart_beat_value++ % 4];
+  fb[1] = 0x9f;
 }

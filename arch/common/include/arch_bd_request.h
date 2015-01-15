@@ -30,7 +30,10 @@ extern Thread * currentThread;
 
 class BDRequest
 {
-  public:
+  protected:
+    friend class BDVirtualDevice;
+    friend class ATADriver;
+    friend class BDManager;
 
     /**
      * Enumeration containing the possible commands

@@ -304,7 +304,7 @@ extern "C" void entry64()
   // jump onto the new code segment
   //asm("ljmp %[cs],$1f\n"
   //  "1:": : [cs]"i"(KERNEL_CS));
-  asm("jmp %[startup]" : : [startup]"r"(startup));
+  asm("jmp *%[startup]" : : [startup]"r"(startup));
   while (1);
 }
 
@@ -315,8 +315,16 @@ void ArchCommon::initDebug()
 {
 }
 
-
 void ArchCommon::idle()
 {
-  __asm__ __volatile__ ( "hlt" );
+  asm volatile("hlt");
+}
+
+void ArchCommon::drawHeartBeat()
+{
+  const char* clock = "/-\\|";
+  static uint32 heart_beat_value = 0;
+  char* fb = (char*)getFBPtr();
+  fb[0] = clock[heart_beat_value++ % 4];
+  fb[1] = 0x9f;
 }

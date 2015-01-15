@@ -138,31 +138,7 @@ extern "C" void arch_irqHandler_0();
 extern "C" void arch_contextSwitch();
 extern "C" void irqHandler_0()
 {
-  static uint32 heart_beat_value = 0;
-  // static uint32 leds = 0;
-  // static uint32 ctr = 0;
-  char* fb = (char*)0xC00B8000;
-  switch (heart_beat_value)
-  {
-    default:
-    case 0:
-    fb[0] = '/';
-    fb[1] = 0x9f;
-    break;
-    case 1:
-    fb[0] = '-';
-    fb[1] = 0x9f;
-    break;
-    case 2:
-    fb[0] = '\\';
-    fb[1] = 0x9f;
-    break;
-    case 3:
-    fb[0] = '|';
-    fb[1] = 0x9f;
-    break;
-  }
-  heart_beat_value = (heart_beat_value + 1) % 4;
+  ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
 
