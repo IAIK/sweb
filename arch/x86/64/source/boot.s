@@ -1,7 +1,5 @@
-LINK_BASE             EQU     0FFFFFFFF80000000h         ; Base address (virtual) (kernel is linked to start at this address)
-PHYS_BASE             EQU     0FFFFFFFF00000000h
-LOAD_BASE             EQU     00000000h                  ; Base address (physikal) (kernel is actually loaded at this address)
-BASE                  EQU     (LINK_BASE - LOAD_BASE)    ; difference to calculate physical adress from virtual address until paging is set up
+BASE             EQU     0FFFFFFFF80000000h         ; Base address (virtual) (kernel is linked to start at this address)
+PHYS_BASE        EQU     0FFFFFFFF00000000h
 
 ; this is a magic number which will be at the start
 ; of the data segment
@@ -122,10 +120,11 @@ data_segment_ok:
    xor eax, eax ; we want to fill with 0
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
+   EXTERN boot_stack
    ; setup the stack pointer to point to our stack in the just cleared bss section
-    mov esp,stack - BASE
+   mov esp,boot_stack + 0x4000 - BASE
 
-    mov word[0B8004h], 9F32h
+   mov word[0B8004h], 9F32h
 
   call initialiseBootTimePaging
 
@@ -170,9 +169,9 @@ data_segment_ok:
   shr eax, 8
   mov byte[tss.base_high_word_high - BASE], al
 
-  mov dword[g_tss.low0 - BASE], stack - PHYS_BASE
+  mov dword[g_tss.low0 - BASE], boot_stack + 0x4000 - PHYS_BASE
   mov dword[g_tss.high0 - BASE], 0FFFFFFFFh
-  mov dword[g_tss.istl1 - BASE], stack - PHYS_BASE
+  mov dword[g_tss.istl1 - BASE], boot_stack + 0x4000 - PHYS_BASE
   mov dword[g_tss.isth1 - BASE], 0FFFFFFFFh
 
   lgdt [gdt_ptr - BASE]
@@ -208,8 +207,8 @@ EXTERN initialisePaging
 
    mov rax,kernel_page_map_level_4 - BASE; rax = &PML4
    mov cr3,rax         ; cr3 = &PD
-   mov rsp,stack
-   mov rbp,stack
+   mov rsp,boot_stack + 0x4000
+   mov rbp,boot_stack + 0x4000
 
    mov rax, gdt_ptr_new
    lgdt [rax]
@@ -382,11 +381,3 @@ multi_boot_magic_number:
 GLOBAL multi_boot_structure_pointer
 multi_boot_structure_pointer:
   dd 0
-
-SECTION .bss
-BITS 64
-GLOBAL stack_start
-stack_start:
-resd 4096
-GLOBAL stack
-stack:

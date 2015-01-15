@@ -100,7 +100,8 @@ now_using_segments:
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
    ; setup the stack pointer to point to our stack in the just cleared bss section
-   mov esp,stack - BASE
+   extern boot_stack
+   mov esp,boot_stack - BASE
 
    push dword 2
    popf
@@ -144,7 +145,7 @@ now_using_segments:
 
   mov word[0B800Ah], 9F35h
 
- 	mov esp,stack
+ 	mov esp,boot_stack
 
   mov word[0B800Ch], 9F36h
 
@@ -309,10 +310,3 @@ multi_boot_magic_number:
 GLOBAL multi_boot_structure_pointer
 multi_boot_structure_pointer:
 	dd 0
-   
-SECTION .bss
-GLOBAL stack_start
-stack_start:
-   resd 4096
-   GLOBAL stack
-stack:

@@ -25,7 +25,7 @@ void initialisePaging()
   PageMapLevel4Entry *pml4 = (PageMapLevel4Entry*)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
   PageDirPointerTableEntry *pdpt1 = (PageDirPointerTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory_pointer_table);
   PageDirPointerTableEntry *pdpt2 = pdpt1 + PAGE_DIR_POINTER_TABLE_ENTRIES;
-  PageDirEntry *pd1 = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory);
+  PageDirEntry *pd1 = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory);
   PageDirEntry *pd2 = pd1 + PAGE_DIR_ENTRIES;
 
   // Note: the only valid address ranges are currently:

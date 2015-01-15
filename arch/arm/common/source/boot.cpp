@@ -6,15 +6,15 @@
 extern "C" void startup();
 extern "C" void __naked__ PagingMode();
 
-uint8 interrupt_stack[0x4000] __attribute__((aligned(0x4000)));
-page_directory_entry kernel_page_directory[0x1000] __attribute__((aligned(0x4000))); // space for page directory
+extern PageDirEntry kernel_page_directory[];
+extern uint8 boot_stack[];
 
 #define BOOT_OFFSET (BOARD_LOAD_BASE - 0x80000000)
 
 extern "C" void __naked__ entry()
 {
   asm("mov fp, #0\n"
-      "mov sp, %[v]" : : [v]"r"(interrupt_stack + BOOT_OFFSET + 0x4000)); // Set up the stack
+      "mov sp, %[v]" : : [v]"r"(((uint32*)boot_stack) + BOOT_OFFSET + 0x4000)); // Set up the stack
   void (*initialiseBootTimePagingPTR)() = (void(*)())((uint8*)&initialiseBootTimePaging + BOOT_OFFSET);
   initialiseBootTimePagingPTR();
   asm("mcr p15, 0, %[v], c2, c0, 0\n" : : [v]"r"(((uint8*)kernel_page_directory) + BOOT_OFFSET)); // set ttbr0
@@ -37,7 +37,7 @@ extern "C" void __naked__ PagingMode()
       "bic r0, r0, #0xdf\n"
       "orr r0, r0, #0xdf\n"
       "msr cpsr, r0\n");
-  asm("mov sp, %[v]\n" : : [v]"r"(interrupt_stack+4096)); // Set up the stack
+  asm("mov sp, %[v]\n" : : [v]"r"(((uint32*)boot_stack)+4096)); // Set up the stack
   removeBootTimeIdentMapping();
   void (*startupPTR)() = &startup; // create a blx jump instead of a bl jump
   startupPTR();

@@ -23,7 +23,7 @@
 #define PAGE_FAULT_WRITEABLE  0x00000002
 #define PAGE_FAULT_PRESENT    0x00000001
 
-struct page_directory_entry_1m_struct
+struct PageDirPageEntry
 {
   uint32 size                      :2;  // 1:0    | 2
   uint32 bufferable                :1;  // 2      | 0
@@ -36,7 +36,7 @@ struct page_directory_entry_1m_struct
   uint32 page_ppn                  :12; // 31:20
 } __attribute__((__packed__));
 
-struct page_directory_entry_4k_struct
+struct PageDirPageTableEntry
 {
   uint32 size                      :2;  // 1:0    | 1
   uint32 bufferable                :1;  // 2      | 0
@@ -48,15 +48,13 @@ struct page_directory_entry_4k_struct
   uint32 pt_ppn                    :20; // 31:10
 } __attribute__((__packed__));
 
-union page_directory_entry_union
+typedef union
 {
-  struct page_directory_entry_4k_struct pde4k;
-  struct page_directory_entry_1m_struct pde1m;
-} __attribute__((__packed__));
+  struct PageDirPageTableEntry pt;
+  struct PageDirPageEntry page;
+} __attribute__((__packed__)) PageDirEntry;
 
-typedef union page_directory_entry_union page_directory_entry;
-
-struct page_table_entry_struct
+typedef struct
 {
     uint32 size                      :2;  // 1:0    | 2
     uint32 bufferable                :1;  // 2      | 0
@@ -64,8 +62,6 @@ struct page_table_entry_struct
     uint32 permissions               :2;  // 5:4    | 1
     uint32 reserved                  :6;  // 11:6   | 0
     uint32 page_ppn                  :20; // 31:12
-} __attribute__((__packed__));
-
-typedef struct page_table_entry_struct page_table_entry;
+} __attribute__((__packed__)) PageTableEntry;
 
 #endif

@@ -15,7 +15,7 @@
 
 SpinLock global_atomic_add_lock("");
 
-extern "C" uint32 kernel_page_directory;
+extern PageDirEntry kernel_page_directory[];
 
 void ArchThreads::initialise()
 {

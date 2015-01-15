@@ -53,6 +53,8 @@ extern void* kernel_end_address;
 
 extern Console* main_console;
 
+uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
+
 uint32 boot_completed;
 uint32 we_are_dying;
 FsWorkingDirectory default_working_dir;

@@ -8,7 +8,7 @@
 
 #include "paging-definitions.h"
 
-extern page_directory_entry kernel_page_directory[];
+extern PageDirEntry kernel_page_directory[];
 extern void* kernel_end_address;
 extern void* interrupt_vector_table;
 extern char* currentStack;
@@ -28,17 +28,17 @@ kprintfd("%c",TO_HEX((uint32)X,4)); \
 kprintfd("%c\n",TO_HEX((uint32)X,0)); \
 } while (0)
 
-static void mapBootTimePage(page_directory_entry *pde_start, uint32 pdi, uint32 ppn_1m)
+static void mapBootTimePage(PageDirEntry *pde_start, uint32 pdi, uint32 ppn_1m)
 {
-  pde_start[pdi].pde1m.reserved_1 = 0;
-  pde_start[pdi].pde1m.permissions = 1;
-  pde_start[pdi].pde1m.reserved_2 = 0;
-  pde_start[pdi].pde1m.domain = 0;
-  pde_start[pdi].pde1m.reserved_3 = 0;
-  pde_start[pdi].pde1m.cachable = 0;
-  pde_start[pdi].pde1m.bufferable = 0;
-  pde_start[pdi].pde1m.size = 2;
-  pde_start[pdi].pde1m.page_ppn = ppn_1m;
+  pde_start[pdi].page.reserved_1 = 0;
+  pde_start[pdi].page.permissions = 1;
+  pde_start[pdi].page.reserved_2 = 0;
+  pde_start[pdi].page.domain = 0;
+  pde_start[pdi].page.reserved_3 = 0;
+  pde_start[pdi].page.cachable = 0;
+  pde_start[pdi].page.bufferable = 0;
+  pde_start[pdi].page.size = 2;
+  pde_start[pdi].page.page_ppn = ppn_1m;
 }
 
 

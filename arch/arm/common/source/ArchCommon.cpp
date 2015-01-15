@@ -34,22 +34,22 @@ pointer ArchCommon::getFreeKernelMemoryEnd()
 }
 
 
-uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
+uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up __attribute__((unused)))
 {
   return true;
 }
 
-uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
+uint32 ArchCommon::getNumModules(uint32 is_paging_set_up __attribute__((unused)))
 {
   return 1;
 }
 
-uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+uint32 ArchCommon::getModuleStartAddress(uint32 num __attribute__((unused)), uint32 is_paging_set_up __attribute__((unused)))
 {
   return 0x80000000U;
 }
 
-uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
+uint32 ArchCommon::getModuleEndAddress(uint32 num __attribute__((unused)), uint32 is_paging_set_up __attribute__((unused)))
 {
   return 0x80400000U;  //2GB+4MB Ende des Kernel Bereichs
 }
@@ -64,12 +64,12 @@ uint32 ArchCommon::getVESAConsoleWidth()
   return 640;
 }
 
-pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
+pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up __attribute__((unused)))
 {
   return ArchBoardSpecific::getVESAConsoleLFBPtr();
 }
 
-pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
+pointer ArchCommon::getFBPtr(uint32 is_paging_set_up __attribute__((unused)))
 {
   return getVESAConsoleLFBPtr();
 }

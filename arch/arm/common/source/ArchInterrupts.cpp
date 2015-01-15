@@ -10,7 +10,7 @@
 #include "ArchThreads.h"
 #include "arch_board_specific.h"
 
-extern uint32 interrupt_stack;
+extern uint8 boot_stack[];
 
 #define KEXP_TOP3 \
   asm("sub lr, lr, #4"); \
@@ -34,7 +34,7 @@ extern uint32 interrupt_stack;
 
 void storeRegisters()
 {
-  uint32* stack = (&interrupt_stack) + 0x1000;
+  uint32* stack = ((uint32*)boot_stack) + 0x1000;
   currentThreadInfo->r12 = stack[-1];
   currentThreadInfo->r11 = stack[-2];
   currentThreadInfo->r10 = stack[-3];
@@ -118,7 +118,7 @@ void arm4_xrqinstall(uint32 ndx, void *addr, uint32 mode)
          bic r0, r0, #0xdf \n\
          orr r0, r0, %[v] \n\
          msr cpsr, r0" : : [v]"r" (mode));
-  uint32* stack = (&interrupt_stack) + 0x1000;
+  uint32* stack = ((uint32*)boot_stack) + 0x1000;
   asm("mov sp, %[v]" : : [v]"r" (stack));
   asm("mrs r0, cpsr \n\
        bic r0, r0, #0xdf \n\
