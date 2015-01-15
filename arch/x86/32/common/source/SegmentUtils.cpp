@@ -31,7 +31,7 @@ TSS *g_tss;
 #define SEGMENT_DPL2    0x40
 #define SEGMENT_DPL3    0x60
 
-extern uint32 gdt_ptr_very_new;
+extern "C" uint32 gdt_ptr_very_new;
 
 extern "C" void reload_segments()
 {

@@ -43,6 +43,7 @@ typedef int64 ssize_t;
 #define KERNEL_CS 0x10
 #define KERNEL_DS 0x20
 #define KERNEL_SS 0x20
+#define KERNEL_TSS 0x50
 #define DPL_KERNEL  0
 #define DPL_USER    3
 #define USER_CS (0x30|DPL_USER)

@@ -279,6 +279,35 @@ Console* ArchCommon::createConsole(uint32 count)
     return new TextConsole(count);
 }
 
+extern "C" size_t gdt_ptr_new;
+extern "C" void startup();
+extern "C" void initialisePaging();
+extern uint8 boot_stack[0x4000];
+
+extern "C" void entry64()
+{
+  parseMultibootHeader();
+  initialisePaging();
+  asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
+  asm("mov %[stack], %%rsp\n"
+      "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
+  // reload the gdt with the newly set up segments
+  asm("lgdt (%%rax)" : : "a"(&gdt_ptr_new));
+  // now prepare all the segment registers to use our segments
+  asm("mov %%ax, %%ds\n"
+      "mov %%ax, %%es\n"
+      "mov %%ax, %%ss\n"
+      "mov %%ax, %%fs\n"
+      "mov %%ax, %%gs\n"
+      : : "a"(KERNEL_DS));
+  asm("ltr %%ax" : : "a"(KERNEL_TSS));
+  // jump onto the new code segment
+  //asm("ljmp %[cs],$1f\n"
+  //  "1:": : [cs]"i"(KERNEL_CS));
+  asm("jmp %[startup]" : : [startup]"r"(startup));
+  while (1);
+}
+
 class Stabs2DebugInfo;
 Stabs2DebugInfo const *kernel_debug_info = 0;
 

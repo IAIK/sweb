@@ -123,6 +123,7 @@ data_segment_ok:
    EXTERN boot_stack
    ; setup the stack pointer to point to our stack in the just cleared bss section
    mov esp,boot_stack + 0x4000 - BASE
+   mov ebp,esp
 
    mov word[0B8004h], 9F32h
 
@@ -176,6 +177,7 @@ data_segment_ok:
 
   lgdt [gdt_ptr - BASE]
 
+EXTERN entry64
   jmp LINEAR_CODE_SEL:(entry64-BASE)
 
    hlt
@@ -192,42 +194,6 @@ initialiseBootTimePaging:
   mov dword[kernel_page_directory - BASE + 0], 083h
   mov dword[kernel_page_directory - BASE + 4], 0
   ret
-
-SECTION .text
-BITS 64
-
-; this is where we will start
-; first check if the loader did a good job
-GLOBAL entry64
-entry64:
-EXTERN parseMultibootHeader
-   call parseMultibootHeader
-EXTERN initialisePaging
-   call initialisePaging
-
-   mov rax,kernel_page_map_level_4 - BASE; rax = &PML4
-   mov cr3,rax         ; cr3 = &PD
-   mov rsp,boot_stack + 0x4000
-   mov rbp,boot_stack + 0x4000
-
-   mov rax, gdt_ptr_new
-   lgdt [rax]
-   mov rax, LINEAR_DATA_SEL
-   mov ds,ax
-   mov es,ax
-   mov ss,ax
-   mov fs,ax
-   mov gs,ax
-   mov rax, TSS_SEL
-   ltr ax
-
-   mov rcx,higherHalf
-   jmp rcx
-higherHalf:
-
-EXTERN startup ; tell the assembler we have a main somewhere
-   call startup
-   jmp $ ; suicide
 
 SECTION .gdt_stuff
 BITS 32
@@ -313,6 +279,7 @@ gdt_ptr:
  dw gdt_end - gdt - 1
  dd gdt - BASE
 
+GLOBAL gdt_ptr_new
 gdt_ptr_new:
  dw gdt_end - gdt - 1
  dq gdt
