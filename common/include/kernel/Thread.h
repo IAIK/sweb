@@ -7,6 +7,8 @@
 
 #include "types.h"
 
+#define STACK_CANARY (0xDEADDEAD)
+
 enum ThreadState {Running, Sleeping, ToBeDestroyed};
 
 class Thread;

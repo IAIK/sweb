@@ -44,6 +44,7 @@ Thread::Thread(const char *name) :
   debug ( THREAD,"Thread ctor, this is %x; stack is %x\n", this, stack_ );
   debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
+  stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
 
 Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
@@ -62,6 +63,7 @@ Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
   debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
   debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", working_dir_ );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
+  stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
 
 Thread::~Thread()
