@@ -68,10 +68,10 @@ extern "C" void removeBootTimeIdentMapping();
 
 extern "C" void startup()
 {
+  writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();
   we_are_dying = 0;
   boot_completed = 0;
-  writeLine2Bochs("SWEB starting...\n");
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
   //extend Kernel Memory here
@@ -126,7 +126,7 @@ extern "C" void startup()
 
   }
 
-  // initialize global and static objects
+  // initialise global and static objects
   ustl::coutclass::init();
   VfsSyscall::createVfsSyscall();
 
