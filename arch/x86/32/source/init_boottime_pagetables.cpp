@@ -9,38 +9,15 @@
 #include "offsets.h"
 #include "multiboot.h"
 #include "ArchCommon.h"
+#include "debug_bochs.h"
 #include "ArchMemory.h"
 
 extern void* kernel_end_address;
 
 extern "C" void initialiseBootTimePaging();
-#define print(x)     fb_start += 2; \
-    { \
-      uint32 divisor; \
-      uint32 current; \
-      uint32 remainder; \
-      current = (uint32)x; \
-      divisor = 1000000000; \
-      while (divisor > 0) \
-      { \
-        remainder = current % divisor; \
-        current = current / divisor; \
-        \
-        fb[fb_start++] = (uint8)current + '0' ; \
-        fb[fb_start++] = 0x9f ; \
-    \
-        divisor = divisor / 10; \
-        current = remainder; \
-      }      \
-    }
-
-
-uint32 fb_start_hack = 0;
 
 uint32 isPageUsed(uint32 page_number)
 {
-   uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
-   uint8 *fb = (uint8*) 0x000B8000;
    uint32 i;
    uint32 num_modules = ArchCommon::getNumModules(0);
    for (i=0;i<num_modules;++i)
@@ -50,8 +27,6 @@ uint32 isPageUsed(uint32 page_number)
 
       if ( start_page <= page_number && end_page >= page_number)
       {
-         print(page_number);
-
          return 1;
       }
    }
@@ -66,26 +41,16 @@ uint32 getNextFreePage(uint32 page_number)
    return page_number;
 }
 
-// Be careful, this works because the beloved compiler generates
-// relative calls in this case.
-// if the compiler generated an absolut call we'd be screwed since we
-// have not set up paging yet :)
 void initialiseBootTimePaging()
 {
   uint32 i;
 
-  uint8 * fb = (uint8*) 0x000B8000;
-  uint32 &fb_start = *((uint32*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&fb_start_hack));
   PageDirEntry *pde_start = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory);
 
-  //uint8 *pde_start_bytes = (uint8 *)pde_start;
   PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_tables);
 
   uint32 kernel_last_page = ((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address)) / PAGE_SIZE;
   uint32 first_free_page = kernel_last_page + 1;
-
-  print((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address));
-  print(first_free_page);
 
   // we do not have to clear the pde since its in the bss
   for (i = 0; i < 5; ++i)
@@ -122,8 +87,6 @@ void initialiseBootTimePaging()
     pte_start[i].writeable = 0;
     pte_start[i].page_ppn = i+256;
   }
-  print(first_free_page);
-
   for (i=last_ro_data_page;i<(first_free_page-256);++i)
   {
     pte_start[i].present = 1;

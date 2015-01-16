@@ -16,13 +16,11 @@
 
 extern void* kernel_end_address;
 
-extern multiboot_info_t multi_boot_structure_pointer[];
+multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
 
 static struct multiboot_remainder mbr = {0,0,0,0,0,0,0,{TEN_MEMMAP_INIT},{TEN_MODMAP_INIT}};
 
-extern "C" void parseMultibootHeader();
-
-void parseMultibootHeader()
+extern "C" void parseMultibootHeader()
 {
   uint32 i;
 
