@@ -177,6 +177,11 @@ uint32 ArchMemory::getRootOfPagingStructure()
   return page_dir_page_;
 }
 
+PageDirEntry* ArchMemory::getRootOfKernelPagingStructure()
+{
+  return kernel_page_directory;
+}
+
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)
 {
   return (3U*1024U*1024U*1024U) + (ppn * page_size);

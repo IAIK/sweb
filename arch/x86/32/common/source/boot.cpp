@@ -5,6 +5,7 @@
 #include "offsets.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
+#include "paging-definitions.h"
 
 #define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs(VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
 #define DATA_SEGMENT_MAGIC 0x3544DA2A
@@ -38,11 +39,14 @@ extern "C" void entry()
   PRINT("Initializing Kernel Paging Structures...\n");
   initialiseBootTimePaging();
   PRINT("Setting CR3 Register...\n");
-  asm("mov %[pd],%%cr3" : : [pd]"r"(VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_page_directory)));
+  asm("mov %[pd],%%cr3" : : [pd]"r"(VIRTUAL_TO_PHYSICAL_BOOT((pointer)ArchMemory::getRootOfKernelPagingStructure())));
   PRINT("Enable Page Size Extensions...\n");
-  asm("mov %cr4,%eax\n"
-      "or $0x10,%eax\n"
-      "mov %eax,%cr4\n");
+  uint32 cr4;
+  asm("mov %%cr4,%[v]\n" : [v]"=r"(cr4));
+  cr4 |= 0x10;
+  if (PAGE_DIRECTORY_ENTRIES == 512)
+    cr4 |= 0x20;
+  asm("mov %[v],%%cr4\n" : : [v]"r"(cr4));
   PRINT("Enable Paging...\n");
   asm("mov %cr0,%eax\n"
       "or $0x80010001,%eax\n"
