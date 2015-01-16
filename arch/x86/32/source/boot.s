@@ -1,14 +1,6 @@
 LINK_BASE           EQU     80000000h              ; Base address (virtual) (kernel is linked to start at this address)
 LOAD_BASE           EQU     00100000h              ; Base address (physikal) (kernel is actually loaded at this address)
 BASE                EQU     (LINK_BASE - LOAD_BASE) ; difference to calculate physical adress from virtual address until paging is set up
-PHYS_OFFSET EQU 0C0000000h
-
-; this is a magic number which will be at the start
-; of the data segment
-; used to verify that the bootloader really loaded everything
-DATA_SEGMENT_MAGIC equ 3544DA2Ah
-
-EXTERN text_start_address, text_end_address,bss_start_address, bss_end_address, kernel_end_address
 
 ; this is really really bad voodoo ...
 ; grub needs this, or it will refuse to boot
@@ -18,147 +10,6 @@ MULTIBOOT_WANT_VESA equ 1<<2
 MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
 MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
 MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-
-; Text section == Code that can be exectuted
-
-SECTION .text
-BITS 32 ; we want 32bit code
-
-; this is where we will start
-; first check if the loader did a good job
-GLOBAL entry
-entry:
-
-   ; we get these from grub
-   ;
-   ; until paging is properly set up, all addresses are "corrected" using the "xx - BASE" - construct
-   ; xx is a virtual address above 2GB, BASE is the offset to subtract to get the actual physical address.
-   ;
-   mov [multi_boot_magic_number-BASE], eax;
-   mov [multi_boot_structure_pointer-BASE], ebx;
-
-
-   mov edi,0B8000h; load frame buffer start
-   mov ecx,0B8FA0h; end of frame buffer
-   sub ecx, edi ; how much data do we have to clear
-   xor eax, eax ; we want to fill with 0
-   rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
-
-   mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
-
-   mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
-   cmp eax, DATA_SEGMENT_MAGIC
-
-   ; comment this next statement to just see a few characters on the screen, really impressive :)
-   je data_segment_ok ; if its the same then everything is good
-
-; if we end up here the data segment is _not_ ok
-; write something to the frame buffer and halt
-
-   mov word[0B8000h], 9F44h
-   mov word[0B8002h], 9F61h
-   mov word[0B8004h], 9F74h
-   mov word[0B8006h], 9F61h
-   mov word[0B800Ah], 9F45h
-   mov word[0B800Ch], 9F72h
-   mov word[0B800Eh], 9F72h
-   mov word[0B8010h], 9F6fh
-   mov word[0B8012h], 9F72h
-
-   jmp short $ ; now what does this do? it just jumps to itself looping until the end of all times
-
-data_segment_ok:
-
-    mov word[0B8002h], 9F31h ; show something on screen just in case we get stuck, so that we know where
-
-   ; ok, next thing to do is to load our own descriptor table
-   ; this one will spawn just one huge segment for the whole address space
-   lgdt [gdt_ptr - BASE]
-
-   ; now prepare all the segment registers to use our segments
-   mov ax, LINEAR_DATA_SEL
-   mov ds,ax
-   mov es,ax
-   mov ss,ax
-   mov fs,ax
-   mov gs,ax
-
-   ; use these segments
-   jmp LINEAR_CODE_SEL:(now_using_segments - BASE)
-
-now_using_segments:
-
-
-   ; next thing to do to be c compliant is to
-   ; clear the bss (uninitialised data)
-
-   mov edi,bss_start_address - BASE; load bss address
-   mov ecx, bss_end_address - BASE; end of bss and stack (!), this symbol is at the very end of the kernel
-   sub ecx, edi ; how much data do we have to clear
-   xor eax, eax ; we want to fill with 0
-   rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
-
-   ; setup the stack pointer to point to our stack in the just cleared bss section
-   EXTERN boot_stack
-   mov esp,boot_stack - BASE
-
-   push dword 2
-   popf
-
-   mov word[0B8004h], 9F32h
-
-
-	EXTERN parseMultibootHeader;
-
-	mov eax,parseMultibootHeader - BASE
-	call eax
-
-	EXTERN initialiseBootTimePaging
-
-	mov eax,initialiseBootTimePaging - BASE
-	call eax
-
-    mov word[0B8006h], 9F33h
-
-	; prepare paging, set CR3 register to start of page directory
-
-  EXTERN kernel_page_directory
-
-	mov     eax,kernel_page_directory - BASE; eax = &PD
-	mov     cr3,eax         ; cr3 = &PD
-
-
-	; set bit 0x4 to 1 in cr4 to enable PSE
-	; need a pentium cpu for this but it will give us 4mbyte pages
-	mov eax,cr4;
-	or eax, 0x00000010;
-	mov cr4,eax;
-
-	;  2) setting CR0s PG bit to enable paging
-
-  mov word[0B8008h], 9F34h
-
-	mov     eax,cr0
-	or      eax,0x80010001   ; Set PG bit
-	mov     cr0,eax         ; Paging is on!
-
-  ; now paging is on, we no longer need the -BASE-correction since everything is now done using pageing!
-
-  mov word[0B800Ah], 9F35h
-
- 	mov esp,boot_stack
-
-  mov word[0B800Ch], 9F36h
-
-	;; force absolute call by moving function address to eax first
-  EXTERN startup
-	mov eax, startup
-	call eax ; jump to C
-  jmp $ ; suicide
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
-;; this will help us to boot, this way we can tell grub
-;; what to do
 
 SECTION .mboot
 GLOBAL mboot
@@ -267,15 +118,3 @@ gdt_ptr_very_new:
 
 	dw gdt_real_end - gdt - 1
 	dd gdt
-
-SECTION .data
-ds_magic:
-   dd DATA_SEGMENT_MAGIC
-
-SECTION .data
-GLOBAL multi_boot_magic_number
-multi_boot_magic_number:
-	dd 0
-GLOBAL multi_boot_structure_pointer
-multi_boot_structure_pointer:
-	dd 0
