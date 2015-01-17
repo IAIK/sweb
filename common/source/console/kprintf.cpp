@@ -56,6 +56,7 @@ class KprintfNoSleepFlushingThread : public Thread
 
     KprintfNoSleepFlushingThread() : Thread("KprintfNoSleepFlushingThread")
     {
+      state_ = Worker;
     }
 
     virtual void Run()
