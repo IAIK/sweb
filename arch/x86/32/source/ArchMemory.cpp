@@ -27,6 +27,29 @@ ArchMemory::ArchMemory()
   debug ( A_MEMORY,"ArchMemory::ArchMemory(): Initialised the page dir\n" );
 }
 
+// only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT want to free Kernel Pages
+ArchMemory::~ArchMemory()
+{
+  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page directory %x\n",page_dir_page_ );
+  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
+  for (uint32 pde_vpn=0; pde_vpn < PAGE_TABLE_ENTRIES/2; ++pde_vpn)
+  {
+    if (page_directory[pde_vpn].pt.present)
+    {
+      assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
+      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+      for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+      {
+        if (pte_base[pte_vpn].present)
+        {
+          unmapPage(pde_vpn * PAGE_TABLE_ENTRIES + pte_vpn);
+        }
+      }
+    }
+  }
+  PageManager::instance()->freePage(page_dir_page_);
+}
+
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
@@ -90,34 +113,6 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
   pte_base[pte_vpn].user_access = user_access;
   pte_base[pte_vpn].page_ppn = physical_page;
   pte_base[pte_vpn].present = 1;
-}
-
-
-// only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT
-// want to free Kernel Pages
-ArchMemory::~ArchMemory()
-{
-  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page directory %x\n",page_dir_page_ );
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
-  for (uint32 pde_vpn=0; pde_vpn < PAGE_TABLE_ENTRIES/2; ++pde_vpn)
-  {
-    if (page_directory[pde_vpn].pt.present)
-    {
-      assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
-      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-      for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
-      {
-        if (pte_base[pte_vpn].present)
-        {
-          pte_base[pte_vpn].present = 0;
-          PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
-        }
-      }
-      page_directory[pde_vpn].pt.present=0;
-      PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_table_ppn);
-    }
-  }
-  PageManager::instance()->freePage(page_dir_page_);
 }
 
 bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
