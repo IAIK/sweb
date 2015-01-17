@@ -93,6 +93,7 @@ public:
       {
         Scheduler::instance()->cleanupDeadThreads();
       }
+      Scheduler::instance()->yield();
     }
   }
 };
