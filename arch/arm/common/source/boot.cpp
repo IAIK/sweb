@@ -14,7 +14,7 @@ extern uint8 boot_stack[];
 extern "C" void __naked__ entry()
 {
   asm("mov fp, #0\n"
-      "mov sp, %[v]" : : [v]"r"(((uint32*)boot_stack) + BOOT_OFFSET + 0x4000)); // Set up the stack
+      "mov sp, %[v]" : : [v]"r"(((uint8*)boot_stack) + BOOT_OFFSET + 0x4000)); // Set up the stack
   void (*initialiseBootTimePagingPTR)() = (void(*)())((uint8*)&initialiseBootTimePaging + BOOT_OFFSET);
   initialiseBootTimePagingPTR();
   asm("mcr p15, 0, %[v], c2, c0, 0\n" : : [v]"r"(((uint8*)kernel_page_directory) + BOOT_OFFSET)); // set ttbr0
