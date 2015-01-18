@@ -1,4 +1,7 @@
 #include "types.h"
+
+extern "C" void __naked__ entry();
+
 #include "board_constants.h"
 #include "init_boottime_pagetables.h"
 #include "assert.h"
@@ -42,4 +45,17 @@ extern "C" void __naked__ PagingMode()
   void (*startupPTR)() = &startup; // create a blx jump instead of a bl jump
   startupPTR();
   assert(false && "you should never get to this point");
+}
+
+void mapBootTimePage(PageDirEntry *pde_start, uint32 pdi, uint32 ppn_1m)
+{
+  pde_start[pdi].page.reserved_1 = 0;
+  pde_start[pdi].page.permissions = 1;
+  pde_start[pdi].page.reserved_2 = 0;
+  pde_start[pdi].page.domain = 0;
+  pde_start[pdi].page.reserved_3 = 0;
+  pde_start[pdi].page.cachable = 0;
+  pde_start[pdi].page.bufferable = 0;
+  pde_start[pdi].page.size = 2;
+  pde_start[pdi].page.page_ppn = ppn_1m;
 }
