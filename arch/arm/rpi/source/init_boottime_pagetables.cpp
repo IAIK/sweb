@@ -7,8 +7,6 @@
 #include "boot-time.h"
 #include "paging-definitions.h"
 #include "offsets.h"
-#include "ArchCommon.h"
-#include "kprintf.h"
 #include "init_boottime_pagetables.h"
 
 void initialiseBootTimePaging()
