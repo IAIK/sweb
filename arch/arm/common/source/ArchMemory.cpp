@@ -24,7 +24,7 @@ PageDirEntry kernel_page_directory[4096] __attribute__((aligned(0x4000))); // sp
 
 ArchMemory::ArchMemory()
 {
-  page_dir_page_ = PageManager::instance()->allocPPN(PAGE_4_PAGES_16K_ALIGNED);
+  page_dir_page_ = PageManager::instance()->allocPPN(4 * PAGE_SIZE);
   debug ( A_MEMORY,"ArchMemory::ArchMemory(): Got new Page no. %x\n",page_dir_page_ );
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
@@ -159,7 +159,7 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   return false;
 }
 
-uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
+uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page __attribute__((unused)))
 {
   PageDirEntry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;

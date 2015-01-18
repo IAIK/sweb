@@ -33,6 +33,7 @@ class BDRequest
   protected:
     friend class BDVirtualDevice;
     friend class ATADriver;
+    friend class MMCDriver;
     friend class BDManager;
 
     /**

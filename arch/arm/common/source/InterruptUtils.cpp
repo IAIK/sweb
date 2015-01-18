@@ -190,6 +190,6 @@ extern "C" void exceptionHandler(uint32 type)
 //  ArchThreads::printThreadRegisters(currentThread,false);
   assert((currentThreadInfo->ttbr0 & 0x3FFF) == 0 && (currentThreadInfo->ttbr0 & ~0x3FFF) != 0);
   assert((currentThreadInfo->cpsr & 0xE0) == 0);
-  assert(currentThread->stack_[0] == STACK_CANARY);
+  assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
   switchTTBR0(currentThreadInfo->ttbr0);
 }
