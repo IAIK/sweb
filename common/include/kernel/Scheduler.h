@@ -7,6 +7,8 @@
 
 #include "types.h"
 #include <ulist.h>
+#include "IdleThread.h"
+#include "CleanupThread.h"
 
 class Thread;
 class Mutex;
@@ -44,7 +46,7 @@ class Scheduler
     /**
      * Tells the scheduler that there is a thread that has been killed (adds cleanup job)
      */
-    void addKilledThread();
+    void invokeCleanup();
 
     /**
      * puts the currentThread to sleep and keeps it from being scheduled
@@ -150,6 +152,7 @@ class Scheduler
 
     size_t ticks_;
 
-    Thread* cleanup_thread_;
+    IdleThread idle_thread_;
+    CleanupThread cleanup_thread_;
 };
 #endif

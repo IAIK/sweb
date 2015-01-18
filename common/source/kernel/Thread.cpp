@@ -99,6 +99,8 @@ void Thread::kill()
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
 
+  Scheduler::instance()->invokeCleanup();
+
   if ( currentThread == this )
   {
     ArchInterrupts::enableInterrupts();
@@ -225,7 +227,7 @@ void Thread::addJob()
   jobs_scheduled_++;
 }
 
-void Thread::completeJob()
+void Thread::jobDone()
 {
   jobs_done_++;
 }
@@ -233,5 +235,10 @@ void Thread::completeJob()
 bool Thread::hasWork()
 {
   return jobs_done_ < jobs_scheduled_;
+}
+
+bool Thread::schedulable()
+{
+  return (state_ == Running) || (state_ == Worker && hasWork());
 }
 

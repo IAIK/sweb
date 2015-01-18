@@ -29,75 +29,6 @@ Scheduler *Scheduler::instance()
   return instance_;
 }
 
-/**
- * @class IdleThread
- * periodically calls cleanUpDeadThreads
- */
-class IdleThread : public Thread
-{
-  public:
-
-    /**
-     * Constructor
-     * @return IdleThread instance
-     */
-    IdleThread() : Thread("IdleThread")
-    {
-    }
-
-    /**
-     * calls cleanUpDeadThreads
-     */
-    virtual void Run()
-    {
-      uint32 last_ticks = 0;
-      uint32 new_ticks = 0;
-      while ( 1 )
-      {
-        new_ticks = Scheduler::instance()->getTicks();
-        if (new_ticks == last_ticks)
-        {
-          last_ticks = new_ticks + 1;
-          ArchCommon::idle();
-        }
-        else
-        {
-          last_ticks = new_ticks;
-          Scheduler::instance()->yield();
-        }
-      }
-    }
-};
-
-class CleanupThread : public Thread
-{
-public:
-
-  /**
-   * Constructor
-   * @return CleanupThread instance
-   */
-  CleanupThread() : Thread("CleanupThread")
-  {
-      state_ = Worker;
-  }
-
-  /**
-   * calls cleanUpDeadThreads
-   */
-  virtual void Run()
-  {
-    while ( 1 )
-    {
-      while(hasWork())
-      {
-        Scheduler::instance()->cleanupDeadThreads();
-      }
-      Scheduler::instance()->yield();
-    }
-  }
-};
-
 void Scheduler::createScheduler()
 {
   if (instance_)
@@ -111,9 +42,8 @@ Scheduler::Scheduler()
   block_scheduling_=0;
   ticks_=0;
   // Create and add the cleanup and idle thread
-  cleanup_thread_ = new CleanupThread();
-  addNewThread(cleanup_thread_);
-  addNewThread(new IdleThread());
+  addNewThread(&cleanup_thread_);
+  addNewThread(&idle_thread_);
 }
 
 void Scheduler::addNewThread ( Thread *thread )
@@ -126,9 +56,9 @@ void Scheduler::addNewThread ( Thread *thread )
   unlockScheduling();
 }
 
-void Scheduler::addKilledThread()
+void Scheduler::invokeCleanup()
 {
-  cleanup_thread_->addJob();
+  cleanup_thread_.addJob();
 }
 
 void Scheduler::sleep()
@@ -183,7 +113,7 @@ uint32 Scheduler::schedule()
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
     }
   }
-  while(currentThread->state_ != Running && !(currentThread->state_ == Worker && currentThread->hasWork()));
+  while(!currentThread->schedulable());
   //debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
 
   uint32 ret = 1;
@@ -237,7 +167,7 @@ void Scheduler::cleanupDeadThreads()
     for(uint32 i = 0; i < thread_count; ++i)
     {
       delete destroy_list[i];
-      cleanup_thread_->completeJob();
+      cleanup_thread_.jobDone();
     }
     debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   }

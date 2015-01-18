@@ -38,7 +38,7 @@ void flushActiveConsole()
   while ( nosleep_rb_->get ( c ) )
   {
     main_console->getActiveTerminal()->write ( c );
-    flush_thread_->completeJob();
+    flush_thread_->jobDone();
     found = true;
   }
   if(!found)
@@ -46,7 +46,7 @@ void flushActiveConsole()
     // There are open jobs but nothing in the ring-buffer, maybe the buffer was
     // full at any time and a char has been discarded, lets just complete a job
     // to catch up again.
-    flush_thread_->completeJob();
+    flush_thread_->jobDone();
   }
 }
 
