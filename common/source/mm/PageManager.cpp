@@ -12,7 +12,8 @@
 #include "Scheduler.h"
 #include "ArchInterrupts.h"
 #include "assert.h"
-#include "panic.h"
+#include "Thread.h"
+#include "Bitmap.h"
 
 PageManager* PageManager::instance_=0;
 
@@ -25,6 +26,11 @@ void PageManager::createPageManager()
     return;
 
   instance_ = new PageManager();
+}
+
+PageManager* PageManager::instance()
+{
+  return instance_;
 }
 
 PageManager::PageManager() : lock_("PageManager::lock_")
@@ -83,14 +89,14 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   //(calculated with sizeof(puttype)=1)
   //currently we have 4MiB of kernel memory (1024 mapped pages starting at linear addr.: 2GiB)
   //if our kernel image becomes too large, the following command might fail
-  page_usage_table_ = new puttype[number_of_pages_];
+  page_usage_table_ = new Bitmap(number_of_pages_);
 
   // since we have gaps in the memory maps we can not give out everything
   // first mark everything as reserved, just to be sure
   debug(PM,"Ctor: Initializing page_usage_table_ with all pages reserved\n");
   for (i=0;i<number_of_pages_;++i)
   {
-    page_usage_table_[i] = PAGE_RESERVED;
+    page_usage_table_->setBit(i);
   }
 
   //now mark as free, everything that might be useable
@@ -107,7 +113,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
 
     for (k=Max(start_page, lowest_unreserved_page_); k<Min(end_page, number_of_pages_);++k)
     {
-      page_usage_table_[k] = PAGE_FREE;
+      page_usage_table_->unsetBit(k);
     }
   }
 
@@ -127,10 +133,10 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       uint64 num_4kpages = this_page_size / PAGE_SIZE; //should be 1 on 4k pages and 1024 on 4m pages
       for (uint64 p=0;p<num_4kpages;++p)
         if (physical_page*num_4kpages + p < number_of_pages_)
-          page_usage_table_[physical_page*num_4kpages + p] = PAGE_RESERVED;
+          page_usage_table_->setBit(physical_page*num_4kpages + p);
       i+=(num_4kpages-1); //+0 in most cases
       if (num_4kpages == 1 && i % 1024 == 0 && pte_page < number_of_pages_)
-        page_usage_table_[pte_page] = PAGE_RESERVED;
+        page_usage_table_->setBit(pte_page);
     }
   }
 
@@ -142,13 +148,13 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     uint32 end_page=( ArchCommon::getModuleEndAddress(i) & 0x7FFFFFFF ) / PAGE_SIZE;
     debug(PM,"Ctor: module: start_page: %d, end_page: %d, type: %d\n",start_page, end_page, type);
     for (k = Min(start_page,number_of_pages_); k <= Min(end_page,number_of_pages_-1); ++k)
-      page_usage_table_[k] = PAGE_RESERVED;
+      page_usage_table_->setBit(k);
   }
 
   debug(PM,"Ctor: find lowest unreserved page\n");
   for (uint32 p=lowest_unreserved_page_; p<number_of_pages_; ++p)
   {
-    if (page_usage_table_[p] == PAGE_FREE)
+    if (!page_usage_table_->getBit(p))
     {
       lowest_unreserved_page_=p;
       break;
@@ -167,66 +173,58 @@ uint32 PageManager::getTotalNumPages() const
   return number_of_pages_;
 }
 
-//used by loader.cpp ArchMemory.cpp
-uint32 PageManager::getFreePhysicalPage(uint32 type)
+bool PageManager::reservePages(uint32 ppn, uint32 num)
 {
-  if (type == PAGE_FREE || type == PAGE_RESERVED)  //what a stupid thing that would be to do
-    return 0;
-
-  lock_.acquire();
-
-  //first 1024 pages are the 4MiB for Kernel Space
-  for (uint32 p=lowest_unreserved_page_; p<number_of_pages_; ++p)
+  assert(lock_.isHeldBy(currentThread));
+  kprintfd("reserve: %d - %d\n", ppn, num);
+  if (ppn < number_of_pages_ && !page_usage_table_->getBit(ppn))
   {
-    if (page_usage_table_[p] == PAGE_FREE)
+    if (num == 1 || reservePages(ppn + 1, num - 1))
     {
-      if (type == PAGE_4_PAGES_16K_ALIGNED)
-      {
-        if ((p & 0x3) != 0)
-          continue;
-        if (page_usage_table_[p+1] == PAGE_FREE && page_usage_table_[p+2] == PAGE_FREE && page_usage_table_[p+3] == PAGE_FREE)
-        {
-          page_usage_table_[p] = type;
-          page_usage_table_[p+1] = type;
-          page_usage_table_[p+2] = type;
-          page_usage_table_[p+3] = type;
-          lowest_unreserved_page_ = p+4;
-        }
-        lock_.release();
-        return p;
-      }
-      else
-      {
-        page_usage_table_[p] = type;
-        lowest_unreserved_page_ = p+1;
-        lock_.release();
-        return p;
-      }
+      page_usage_table_->setBit(ppn);
+      return true;
     }
   }
-  lock_.release();
-  kpanict((uint8*) "PageManager: Sorry, no more Pages Free !!!");
+  kprintfd("%s:%d\n",__FILE__,__LINE__);
+  return false;
+}
+
+//used by loader.cpp ArchMemory.cpp
+uint32 PageManager::getFreePhysicalPage(uint32 page_size)
+{
+  assert((page_size % PAGE_SIZE) == 0);
+  while (1)
+  {
+    kprintfd("%s:%d\n",__FILE__,__LINE__);
+    lock_.acquire();
+    uint32 p;
+    bool found;
+    kprintfd("%s:%d\n",__FILE__,__LINE__);
+    for (p = lowest_unreserved_page_; !found && p < number_of_pages_; ++p)
+    {
+      if ((p % (page_size / PAGE_SIZE)) != 0)
+        continue;
+      found = reservePages(p, page_size / PAGE_SIZE);
+    }
+    while (lowest_unreserved_page_ < number_of_pages_ && page_usage_table_->getBit(lowest_unreserved_page_))
+      ++lowest_unreserved_page_;
+    lock_.release();
+    return p;
+    kprintfd("ERROR: PageManager: Sorry, no more Pages Free !!!\n");
+  }
   return 0;
 }
 
-void PageManager::freePage(uint32 page_number)
+void PageManager::freePage(uint32 page_number, uint32 page_size)
 {
+  assert((page_size % PAGE_SIZE) == 0);
   lock_.acquire();
-  if ( page_number < number_of_pages_ && page_usage_table_[page_number] != PAGE_RESERVED )
+  if (page_number < lowest_unreserved_page_)
+    lowest_unreserved_page_ = page_number;
+  for (uint32 p = page_number; p < (page_number + page_size / PAGE_SIZE); ++p)
   {
-    if ((page_number & 0x3) == 0 && page_usage_table_[page_number] == PAGE_4_PAGES_16K_ALIGNED
-                                 && page_usage_table_[page_number + 1] == PAGE_4_PAGES_16K_ALIGNED
-                                 && page_usage_table_[page_number + 2] == PAGE_4_PAGES_16K_ALIGNED
-                                 && page_usage_table_[page_number + 3] == PAGE_4_PAGES_16K_ALIGNED)
-    {
-      page_usage_table_[page_number] = PAGE_FREE;
-      page_usage_table_[page_number + 1] = PAGE_FREE;
-      page_usage_table_[page_number + 2] = PAGE_FREE;
-      page_usage_table_[page_number + 3] = PAGE_FREE;
-    }
-    page_usage_table_[page_number] = PAGE_FREE;
-    if (page_number < lowest_unreserved_page_)
-      lowest_unreserved_page_ = page_number;
+    assert(page_usage_table_->getBit(p))
+    page_usage_table_->unsetBit(p);
   }
   lock_.release();
 }
