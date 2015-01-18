@@ -8,6 +8,7 @@
 #include "usbd/usbd.h"
 #include "device/hid/hid.h"
 #include "device/hid/keyboard.h"
+#include "Console.h"
 
   uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
@@ -89,7 +90,14 @@ void KeyboardManager::serviceIRQ( void )
     key = STANDARD_KEYMAP[scancode];
 
   if (key != current_key_)
-    keyboard_buffer_.put( key ); // put it inside the buffer
+  {
+    if(main_console)
+    {
+      keyboard_buffer_.put( key ); // put it inside the buffer
+      main_console->addJob();
+    }
+  }
+
   current_key_ = key;
 }
 

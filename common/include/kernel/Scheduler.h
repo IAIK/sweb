@@ -42,6 +42,11 @@ class Scheduler
     void addNewThread ( Thread *thread );
 
     /**
+     * Tells the scheduler that there is a thread that has been killed (adds cleanup job)
+     */
+    void addKilledThread();
+
+    /**
      * puts the currentThread to sleep and keeps it from being scheduled
      */
     void sleep();
@@ -108,6 +113,7 @@ class Scheduler
 
   protected:
     friend class IdleThread;
+    friend class CleanupThread;
     /**
      * this method is periodically called by the idle-Thread
      * it removes and deletes Threads in state ToBeDestroyed
@@ -143,5 +149,7 @@ class Scheduler
     size_t block_scheduling_;
 
     size_t ticks_;
+
+    Thread* cleanup_thread_;
 };
 #endif

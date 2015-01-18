@@ -79,6 +79,18 @@ class Console : public Thread
     Console ( uint32 num_terminals, const char *name );
 
     /**
+     * Writes input from the keyboard to the active terminal
+     */
+    virtual void Run();
+
+    /**
+     * Checks if the given key is displayable.
+     * @param key the key to check
+     * @return true if displayable
+     */
+    bool isDisplayable ( uint32 key );
+
+    /**
      * Destructor
      */
     virtual ~Console() {}
@@ -118,11 +130,6 @@ class Console : public Thread
      * Releases the drawing lock.
      */
     void unLockConsoleForDrawing();
-
-    /**
-     * not implemented here
-     */
-    virtual void Run() = 0;
 
     /**
      * Checks if all Console locks are free.

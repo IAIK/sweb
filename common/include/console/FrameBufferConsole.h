@@ -22,18 +22,6 @@ class FrameBufferConsole : public Console
     FrameBufferConsole ( uint32 num_terminals );
 
     /**
-     * Writes input from the keyboard to the active terminal
-     */
-    virtual void Run();
-
-    /**
-     * Checks if the given key is displayable.
-     * @param key the key to check
-     * @return true if displayable
-     */
-    bool isDisplayable ( uint32 key );
-
-    /**
      * Sets the given character to the given position on the console.
      * @param row the row number
      * @param column the column number

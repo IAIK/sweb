@@ -6,6 +6,7 @@
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
 #include "board_constants.h"
+#include "Console.h"
 
   uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
@@ -77,7 +78,11 @@ void KeyboardManager::serviceIRQ( void )
 {
   while (*(volatile unsigned long*)(SERIAL_BASE + SERIAL_FLAG_REGISTER) & (SERIAL_BUFFER_FULL))
   {
-    keyboard_buffer_.put(*(volatile unsigned long*)SERIAL_BASE); // put it inside the buffer
+    if(main_console)
+    {
+      keyboard_buffer_.put(*(volatile unsigned long*)SERIAL_BASE); // put it inside the buffer
+      main_console->addJob();
+    }
   }
 }
 

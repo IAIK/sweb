@@ -22,18 +22,6 @@ class TextConsole : public Console
      */
     TextConsole ( uint32 num_terminals );
 
-    /**
-     * Writes input from the keyboard to the active terminal
-     */
-    virtual void Run();
-
-    /**
-     * Checks if the given key is displayable.
-     * @param key the key to check
-     * @return true if displayable
-     */
-    bool isDisplayable ( uint32 );
-
   private:
 
     /**
