@@ -145,6 +145,11 @@ class Thread
      */
     virtual bool hasWork();
 
+    /**
+     * Tells the scheduler if this thread is ready for scheduling
+     * @return true if ready for scheduling
+     */
+    bool schedulable();
 
     /**
      * debugging information for mutex deadlocks

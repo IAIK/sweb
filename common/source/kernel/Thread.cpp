@@ -237,3 +237,8 @@ bool Thread::hasWork()
   return jobs_done_ < jobs_scheduled_;
 }
 
+bool Thread::schedulable()
+{
+  return (state_ == Running) || (state_ == Worker && hasWork());
+}
+
