@@ -21,6 +21,7 @@ SECTIONS
     text_start_address = .;
     *(.mboot)
     *(.text)
+    *(.text.*)
     text_end_address = .;
     *(.gnu.linkonce.r.*)
     ro_data_start_address = .;

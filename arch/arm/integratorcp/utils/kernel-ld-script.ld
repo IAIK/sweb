@@ -18,6 +18,7 @@ SECTIONS
 
     text_start_address = .;
     *(.text)
+    *(.text.*)
     text_end_address = .;
     ro_data_start_address = .;
     *(.rodata*)
