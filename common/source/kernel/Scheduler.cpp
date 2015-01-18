@@ -29,75 +29,6 @@ Scheduler *Scheduler::instance()
   return instance_;
 }
 
-/**
- * @class IdleThread
- * periodically calls cleanUpDeadThreads
- */
-class IdleThread : public Thread
-{
-  public:
-
-    /**
-     * Constructor
-     * @return IdleThread instance
-     */
-    IdleThread() : Thread("IdleThread")
-    {
-    }
-
-    /**
-     * calls cleanUpDeadThreads
-     */
-    virtual void Run()
-    {
-      uint32 last_ticks = 0;
-      uint32 new_ticks = 0;
-      while ( 1 )
-      {
-        new_ticks = Scheduler::instance()->getTicks();
-        if (new_ticks == last_ticks)
-        {
-          last_ticks = new_ticks + 1;
-          ArchCommon::idle();
-        }
-        else
-        {
-          last_ticks = new_ticks;
-          Scheduler::instance()->yield();
-        }
-      }
-    }
-};
-
-class CleanupThread : public Thread
-{
-public:
-
-  /**
-   * Constructor
-   * @return CleanupThread instance
-   */
-  CleanupThread() : Thread("CleanupThread")
-  {
-      state_ = Worker;
-  }
-
-  /**
-   * calls cleanUpDeadThreads
-   */
-  virtual void Run()
-  {
-    while ( 1 )
-    {
-      while(hasWork())
-      {
-        Scheduler::instance()->cleanupDeadThreads();
-      }
-      Scheduler::instance()->yield();
-    }
-  }
-};
-
 void Scheduler::createScheduler()
 {
   if (instance_)
@@ -111,9 +42,8 @@ Scheduler::Scheduler()
   block_scheduling_=0;
   ticks_=0;
   // Create and add the cleanup and idle thread
-  cleanup_thread_ = new CleanupThread();
-  addNewThread(cleanup_thread_);
-  addNewThread(new IdleThread());
+  addNewThread(&cleanup_thread_);
+  addNewThread(&idle_thread_);
 }
 
 void Scheduler::addNewThread ( Thread *thread )
@@ -128,7 +58,7 @@ void Scheduler::addNewThread ( Thread *thread )
 
 void Scheduler::invokeCleanup()
 {
-  cleanup_thread_->addJob();
+  cleanup_thread_.addJob();
 }
 
 void Scheduler::sleep()
@@ -237,7 +167,7 @@ void Scheduler::cleanupDeadThreads()
     for(uint32 i = 0; i < thread_count; ++i)
     {
       delete destroy_list[i];
-      cleanup_thread_->completeJob();
+      cleanup_thread_.completeJob();
     }
     debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   }

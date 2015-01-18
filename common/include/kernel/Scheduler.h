@@ -7,6 +7,8 @@
 
 #include "types.h"
 #include <ulist.h>
+#include "IdleThread.h"
+#include "CleanupThread.h"
 
 class Thread;
 class Mutex;
@@ -150,6 +152,7 @@ class Scheduler
 
     size_t ticks_;
 
-    Thread* cleanup_thread_;
+    IdleThread idle_thread_;
+    CleanupThread cleanup_thread_;
 };
 #endif
