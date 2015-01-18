@@ -5,6 +5,7 @@
 
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
+#include "Console.h"
 
   uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
@@ -50,6 +51,7 @@ KeyboardManager *KeyboardManager::instance_ = 0;
 
 KeyboardManager::KeyboardManager() : keyboard_buffer_( 256 ), extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
+  emptyKbdBuffer();
 }
 
 KeyboardManager::~KeyboardManager()
@@ -129,7 +131,11 @@ void KeyboardManager::serviceIRQ( void )
     return;
   }
 
-  keyboard_buffer_.put( scancode ); // put it inside the buffer
+  if(main_console)
+  {
+    keyboard_buffer_.put( scancode ); // put it inside the buffer
+    main_console->addJob();
+  }
 
   send_cmd(0xAE);    // enable the keyboard
 }

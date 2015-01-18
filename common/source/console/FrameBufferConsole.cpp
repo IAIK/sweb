@@ -158,28 +158,3 @@ void FrameBufferConsole::consoleSetBackgroundColor ( BACKGROUNDCOLORS const &col
   if ( color )
     return;
 }
-
-void FrameBufferConsole::Run ( void )
-{
-  KeyboardManager * km = KeyboardManager::instance();
-  uint32 key;
-  do
-  {
-    while ( km->getKeyFromKbd ( key ) )
-      if ( isDisplayable ( key ) )
-      {
-        key = terminals_[active_terminal_]->remap ( key );
-        terminals_[active_terminal_]->write ( key );
-        terminals_[active_terminal_]->putInBuffer ( key );
-      }
-      else
-        handleKey ( key );
-    Scheduler::instance()->yield();
-  }
-  while ( 1 ); // until the end of time
-
-}
-bool FrameBufferConsole::isDisplayable ( uint32 key )
-{
-  return ( ( ( key & 127 ) >= ' ' ) || ( key == '\n' ) || ( key == '\b' ) );
-}

@@ -18,7 +18,7 @@
 
 #define MAX_STACK_FRAMES 20
 
-const char* Thread::threadStatePrintable[3] = {"Running", "Sleeping", "ToBeDestroyed"};
+const char* Thread::threadStatePrintable[4] = {"Running", "Sleeping", "ToBeDestroyed", "Worker"};
 
 static void ThreadStartHack()
 {
@@ -220,4 +220,18 @@ void Thread::printUserBacktrace()
   debug(USERTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
 }
 
+void Thread::addJob()
+{
+  jobs_scheduled_++;
+}
+
+void Thread::completeJob()
+{
+  jobs_done_++;
+}
+
+bool Thread::hasWork()
+{
+  return jobs_done_ < jobs_scheduled_;
+}
 

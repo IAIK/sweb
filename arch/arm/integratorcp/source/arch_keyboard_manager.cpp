@@ -5,6 +5,7 @@
 
 #include "arch_keyboard_manager.h"
 #include "kprintf.h"
+#include "Console.h"
 
   uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
@@ -109,7 +110,11 @@ void KeyboardManager::serviceIRQ( void )
 
   modifyKeyboardStatus( scancode );
   setLEDs();         // setting the leds
-  keyboard_buffer_.put( scancode ); // put it inside the buffer
+  if(main_console)
+  {
+    keyboard_buffer_.put( scancode ); // put it inside the buffer
+    main_console->addJob();
+  }
 
 }
 

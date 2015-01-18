@@ -41,4 +41,20 @@ add_custom_target(qemutacos
   #COMMAND reset -I
   )
 
+#Custom target: make net
+#Run qemu with network support, make sure to use make net-init first
+add_custom_target(net
+  COMMAND sudo qemu-system-i386 -m 8M -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio
+  COMMENT "sudo qemu-system-i386 -m 8M -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio"
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  COMMAND reset -I
+  )
 
+#Custom target: make net-init
+#Initializes br0 for make net
+add_custom_target(net-init
+  COMMAND sudo ${PROJECT_SOURCE_DIR}/utils/netinit.sh
+  COMMENT "sudo utils/netinit.sh"
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  COMMAND reset -I
+  )

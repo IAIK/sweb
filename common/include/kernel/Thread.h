@@ -9,7 +9,7 @@
 
 #define STACK_CANARY (0xDEADDEAD)
 
-enum ThreadState {Running, Sleeping, ToBeDestroyed};
+enum ThreadState {Running, Sleeping, ToBeDestroyed, Worker};
 
 class Thread;
 class ArchThreadInfo;
@@ -29,7 +29,7 @@ class Thread
     friend class Scheduler;
   public:
 
-    static const char* threadStatePrintable[3];
+    static const char* threadStatePrintable[4];
 
     /**
      * Constructor
@@ -130,6 +130,23 @@ class Thread
     void printUserBacktrace();
 
     /**
+     * Adds a new job to the thread
+     */
+    void addJob();
+
+    /**
+     * Marks a job as completed
+     */
+    void completeJob();
+
+    /**
+     * Are there open jobs?
+     * @return true if jobs_scheduled_ > jobs_done_
+     */
+    virtual bool hasWork();
+
+
+    /**
      * debugging information for mutex deadlocks
      */
     Mutex* sleeping_on_mutex_;
@@ -158,7 +175,8 @@ class Thread
     FsWorkingDirectory* working_dir_;
 
     const char *name_;
-
+    uint64 jobs_scheduled_;
+    uint64 jobs_done_;
 
 };
 

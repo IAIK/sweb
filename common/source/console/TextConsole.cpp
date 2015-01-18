@@ -96,32 +96,3 @@ void TextConsole::consoleSetBackgroundColor ( BACKGROUNDCOLORS const &color )
   if ( color )
     return;
 }
-
-void TextConsole::Run ( void )
-{
-  KeyboardManager * km = KeyboardManager::instance();
-  uint32 key= ( uint32 )-1;
-  do
-  {
-    while ( km->getKeyFromKbd ( key ) )
-      if ( isDisplayable ( key ) )
-      {
-        key = terminals_[active_terminal_]->remap ( key );
-        terminals_[active_terminal_]->write ( key );
-        terminals_[active_terminal_]->putInBuffer ( key );
-      }
-      else
-        handleKey ( key );
-    Scheduler::instance()->yield();
-    if ( key== ( uint32 )-1 )
-      km->emptyKbdBuffer();
-    //we assume above here, that irq1 has never been fired, presumeably because
-    //something was in the kbd buffer bevore irq1 got enabled
-  }
-  while ( 1 ); // until the end of time
-}
-
-bool TextConsole::isDisplayable ( uint32 key )
-{
-  return ( ( ( key & 127 ) >= ' ' ) || ( key == '\n' ) || ( key == '\b' ) );
-}

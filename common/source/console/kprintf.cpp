@@ -26,6 +26,7 @@ void oh_writeStringWithSleep ( char const* str )
 }
 
 RingBuffer<char> *nosleep_rb_;
+Thread *flush_thread_;
 
 void flushActiveConsole()
 {
@@ -33,8 +34,20 @@ void flushActiveConsole()
   assert(nosleep_rb_);
   assert ( ArchInterrupts::testIFSet() );
   char c=0;
+  bool found = false;
   while ( nosleep_rb_->get ( c ) )
+  {
     main_console->getActiveTerminal()->write ( c );
+    flush_thread_->completeJob();
+    found = true;
+  }
+  if(!found)
+  {
+    // There are open jobs but nothing in the ring-buffer, maybe the buffer was
+    // full at any time and a char has been discarded, lets just complete a job
+    // to catch up again.
+    flush_thread_->completeJob();
+  }
 }
 
 class KprintfNoSleepFlushingThread : public Thread
@@ -43,13 +56,17 @@ class KprintfNoSleepFlushingThread : public Thread
 
     KprintfNoSleepFlushingThread() : Thread("KprintfNoSleepFlushingThread")
     {
+      state_ = Worker;
     }
 
     virtual void Run()
     {
-      while ( true )
+      while( true )
       {
-        flushActiveConsole();
+        while( hasWork() )
+        {
+          flushActiveConsole();
+        }
         Scheduler::instance()->yield();
       }
     }
@@ -59,12 +76,14 @@ void kprintf_init()
 {
   nosleep_rb_ = new RingBuffer<char> ( 1024 );
   debug ( KPRINTF,"Adding Important kprintf Flush Thread\n" );
-  Scheduler::instance()->addNewThread ( new KprintfNoSleepFlushingThread() );
+  flush_thread_ = new KprintfNoSleepFlushingThread();
+  Scheduler::instance()->addNewThread(flush_thread_);
 }
 
 void oh_writeCharNoSleep ( char c )
 {
   nosleep_rb_->put ( c );
+  flush_thread_->addJob();
 }
 void oh_writeStringNoSleep ( char const* str )
 {
