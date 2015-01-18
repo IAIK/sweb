@@ -126,7 +126,7 @@ void Scheduler::addNewThread ( Thread *thread )
   unlockScheduling();
 }
 
-void Scheduler::addKilledThread()
+void Scheduler::invokeCleanup()
 {
   cleanup_thread_->addJob();
 }

@@ -99,6 +99,8 @@ void Thread::kill()
   switch_to_userspace_ = false;
   state_=ToBeDestroyed;
 
+  Scheduler::instance()->invokeCleanup();
+
   if ( currentThread == this )
   {
     ArchInterrupts::enableInterrupts();
