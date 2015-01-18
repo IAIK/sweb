@@ -8,8 +8,6 @@
 #include "paging-definitions.h"
 
 #define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs(VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
-#define DATA_SEGMENT_MAGIC 0x3544DA2A
-uint32 ds_magic = DATA_SEGMENT_MAGIC;
 
 extern "C" void _entry();
 extern "C" void parseMultibootHeader();
@@ -23,11 +21,6 @@ extern "C" void entry()
   PRINT("Booting...\n");
   PRINT("Clearing Framebuffer...\n");
   ArchCommon::bzero(ArchCommon::getFBPtr(0),80 * 25 * 2);
-  if (VIRTUAL_TO_PHYSICAL_BOOT(ds_magic) == DATA_SEGMENT_MAGIC)
-  {
-    PRINT("ERROR: Data Segment Error!\n");
-    asm("hlt");
-  }
   PRINT("Clearing BSS...\n");
   extern uint32 bss_start_address;
   extern uint32 bss_end_address;
