@@ -23,6 +23,7 @@ class ProcessRegistry : public Thread
      * @param progs a string-array of the userprograms which should be executed
      */
     ProcessRegistry ( FsWorkingDirectory *root_fs_info, char const *progs[] );
+    ~ProcessRegistry();
 
     /**
      * Mounts the Minix-Partition with user-programs and creates processes

@@ -16,7 +16,7 @@ PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(
 
 ArchMemory::ArchMemory()
 {
-  page_map_level_4_ = PageManager::instance()->getFreePhysicalPage();
+  page_map_level_4_ = PageManager::instance()->allocPPN();
   PageMapLevel4Entry* new_pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   ArchCommon::memcpy((pointer) new_pml4,(pointer)kernel_page_map_level_4, PAGE_SIZE);
   bzero(new_pml4,PAGE_SIZE / 2); // should be zero, this is just for safety
@@ -78,7 +78,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
 
   if (m.pdpt_ppn == 0)
   {
-    m.pdpt_ppn = PageManager::instance()->getFreePhysicalPage();
+    m.pdpt_ppn = PageManager::instance()->allocPPN();
     insert<PageMapLevel4Entry>((pointer) m.pml4, m.pml4i, m.pdpt_ppn, 1, 0, 1, 1);
   }
 
@@ -91,7 +91,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
     }
     else
     {
-      m.pd_ppn = PageManager::instance()->getFreePhysicalPage();
+      m.pd_ppn = PageManager::instance()->allocPPN();
       insert<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti, m.pd_ppn, 1, 0, 1, 1);
     }
   }
@@ -104,7 +104,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
     }
     else// if (m.pd == 0)
     {
-      m.pt_ppn = PageManager::instance()->getFreePhysicalPage();
+      m.pt_ppn = PageManager::instance()->allocPPN();
       insert<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, m.pt_ppn, 1, 0, 1, 1);
     }
   }
@@ -140,19 +140,19 @@ ArchMemory::~ArchMemory()
                 if (pt[pti].present)
                 {
                   pt[pti].present = 0;
-                  PageManager::instance()->freePage(pt[pti].page_ppn);
+                  PageManager::instance()->freePPN(pt[pti].page_ppn);
                 }
               }
               pd[pdi].pt.present = 0;
-              PageManager::instance()->freePage(pd[pdi].pt.page_ppn);
+              PageManager::instance()->freePPN(pd[pdi].pt.page_ppn);
             }
           }
           pdpt[pdpti].pd.present = 0;
-          PageManager::instance()->freePage(pdpt[pdpti].pd.page_ppn);
+          PageManager::instance()->freePPN(pdpt[pdpti].pd.page_ppn);
         }
       }
       pml4[pml4i].present = 0;
-      PageManager::instance()->freePage(pml4[pml4i].page_ppn);
+      PageManager::instance()->freePPN(pml4[pml4i].page_ppn);
     }
   }
 }

@@ -14,7 +14,7 @@ PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned
 
 ArchMemory::ArchMemory()
 {
-  page_dir_page_ = PageManager::instance()->getFreePhysicalPage();
+  page_dir_page_ = PageManager::instance()->allocPPN();
   debug ( A_MEMORY,"ArchMemory::ArchMemory(): Got new Page no. %x\n",page_dir_page_ );
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
@@ -47,7 +47,7 @@ ArchMemory::~ArchMemory()
       }
     }
   }
-  PageManager::instance()->freePage(page_dir_page_);
+  PageManager::instance()->freePPN(page_dir_page_);
 }
 
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
@@ -65,7 +65,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 
   //else:
   page_directory[pde_vpn].pt.present = 0;
-  PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_table_ppn);
+  PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_table_ppn);
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
@@ -79,7 +79,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(pte_base[pte_vpn].present);
   pte_base[pte_vpn].present = 0;
-  PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
+  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
   checkAndRemovePT(pde_vpn);
 }
 
@@ -105,7 +105,7 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
   assert(page_size == PAGE_SIZE);
 
   if (page_directory[pde_vpn].pt.present == 0)
-    insertPT(pde_vpn,PageManager::instance()->getFreePhysicalPage());
+    insertPT(pde_vpn,PageManager::instance()->allocPPN());
 
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(!pte_base[pte_vpn].present);

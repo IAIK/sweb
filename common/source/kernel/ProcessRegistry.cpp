@@ -11,8 +11,7 @@
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
 
-ProcessRegistry::ProcessRegistry
-                          ( FsWorkingDirectory *root_fs_info, char const *progs[] ) :
+ProcessRegistry::ProcessRegistry(FsWorkingDirectory *root_fs_info, char const *progs[]) :
   Thread ( root_fs_info, "ProcessRegistry" ),
   progs_(progs),
   progs_running_(0),
@@ -20,6 +19,10 @@ ProcessRegistry::ProcessRegistry
   all_processes_killed_(&counter_lock_)
 {
   instance_ = this; // instance_ is static! attention if you make changes in number of MountMinixThreads or similar
+}
+
+ProcessRegistry::~ProcessRegistry()
+{
 }
 
 ProcessRegistry* ProcessRegistry::instance()

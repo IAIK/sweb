@@ -38,7 +38,7 @@ void ArchMemory::checkAndRemovePT(uint32 physical_page_directory_page, uint32 pd
 
   //else:
   page_directory[pde_vpn].pt.present = 0;
-  PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_table_ppn);
+  PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_table_ppn);
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
@@ -52,7 +52,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
       page_directory[pde_vpn].page.present = 0;
       //PageManager manages Pages of size PAGE_SIZE only, so we have to free this_page_size/PAGE_SIZE Pages
       for (uint32 p=0;p<PAGE_TABLE_ENTRIES;++p)
-        PageManager::instance()->freePage(page_directory[pde_vpn].page.page_ppn*1024 + p);
+        PageManager::instance()->freePPN(page_directory[pde_vpn].page.page_ppn*1024 + p);
     }
     else
     {
@@ -60,7 +60,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
       if (pte_base[pte_vpn].present)
       {
         pte_base[pte_vpn].present = 0;
-        PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
+        PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
       }
       checkAndRemovePT(page_dir_pointer_table_[pdpte_vpn].page_directory_ppn, pde_vpn);
     }
@@ -95,7 +95,7 @@ void ArchMemory::mapPage(uint32 virtual_page,
 
   if (page_dir_pointer_table_[pdpte_vpn].present == 0)
   {
-    uint32 ppn = PageManager::instance()->getFreePhysicalPage();
+    uint32 ppn = PageManager::instance()->allocPPN();
     page_directory = (PageDirEntry*) getIdentAddressOfPPN(ppn);
     insertPD(pdpte_vpn, ppn);
   }
@@ -103,7 +103,7 @@ void ArchMemory::mapPage(uint32 virtual_page,
   if (page_size==PAGE_SIZE)
   {
     if (page_directory[pde_vpn].pt.present == 0)
-      insertPT(page_directory,pde_vpn,PageManager::instance()->getFreePhysicalPage());
+      insertPT(page_directory,pde_vpn,PageManager::instance()->allocPPN());
 
     PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
     pte_base[pte_vpn].writeable = 1;
@@ -141,7 +141,7 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
       {
         page_directory[pde_vpn].page.present=0;
           for (uint32 p=0;p<1024;++p)
-            PageManager::instance()->freePage(page_directory[pde_vpn].page.page_ppn*1024 + p);
+            PageManager::instance()->freePPN(page_directory[pde_vpn].page.page_ppn*1024 + p);
       }
       else
       {
@@ -151,15 +151,15 @@ void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
           if (pte_base[pte_vpn].present)
           {
             pte_base[pte_vpn].present = 0;
-            PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn);
+            PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
           }
         }
         page_directory[pde_vpn].pt.present=0;
-        PageManager::instance()->freePage(page_directory[pde_vpn].pt.page_table_ppn);
+        PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_table_ppn);
       }
     }
   }
-  PageManager::instance()->freePage(physical_page_directory_page);
+  PageManager::instance()->freePPN(physical_page_directory_page);
 }
 
 bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)

@@ -9,6 +9,7 @@
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
 #include "assert.h"
+#include "Thread.h"
 
 void ArchInterrupts::initialise()
 {

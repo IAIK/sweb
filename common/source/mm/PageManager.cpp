@@ -12,7 +12,6 @@
 #include "Scheduler.h"
 #include "ArchInterrupts.h"
 #include "assert.h"
-#include "Thread.h"
 #include "Bitmap.h"
 
 PageManager* PageManager::instance_=0;
@@ -189,33 +188,32 @@ bool PageManager::reservePages(uint32 ppn, uint32 num)
   return false;
 }
 
-//used by loader.cpp ArchMemory.cpp
-uint32 PageManager::getFreePhysicalPage(uint32 page_size)
+uint32 PageManager::allocPPN(uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
   while (1)
   {
-    kprintfd("%s:%d\n",__FILE__,__LINE__);
     lock_.acquire();
     uint32 p;
-    bool found;
-    kprintfd("%s:%d\n",__FILE__,__LINE__);
+    uint32 found = 0;
     for (p = lowest_unreserved_page_; !found && p < number_of_pages_; ++p)
     {
       if ((p % (page_size / PAGE_SIZE)) != 0)
         continue;
-      found = reservePages(p, page_size / PAGE_SIZE);
+      if (reservePages(p, page_size / PAGE_SIZE))
+        found = p;
     }
     while (lowest_unreserved_page_ < number_of_pages_ && page_usage_table_->getBit(lowest_unreserved_page_))
       ++lowest_unreserved_page_;
     lock_.release();
-    return p;
-    kprintfd("ERROR: PageManager: Sorry, no more Pages Free !!!\n");
+    if (found != 0)
+      return found;
+    Scheduler::instance()->yield();
   }
   return 0;
 }
 
-void PageManager::freePage(uint32 page_number, uint32 page_size)
+void PageManager::freePPN(uint32 page_number, uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
   lock_.acquire();

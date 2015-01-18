@@ -24,7 +24,7 @@ PageDirEntry kernel_page_directory[4096] __attribute__((aligned(0x4000))); // sp
 
 ArchMemory::ArchMemory()
 {
-  page_dir_page_ = PageManager::instance()->getFreePhysicalPage(PAGE_4_PAGES_16K_ALIGNED);
+  page_dir_page_ = PageManager::instance()->allocPPN(PAGE_4_PAGES_16K_ALIGNED);
   debug ( A_MEMORY,"ArchMemory::ArchMemory(): Got new Page no. %x\n",page_dir_page_ );
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
@@ -50,7 +50,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 
   //else:
   page_directory[pde_vpn].pt.size = PDE_SIZE_NONE;
-  PageManager::instance()->freePage(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
+  PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
@@ -69,7 +69,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
     if (pte_base[pte_vpn].size == 2)
     {
       pte_base[pte_vpn].size = 0;
-      PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+      PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
     }
     checkAndRemovePT(pde_vpn);
   }
@@ -93,7 +93,7 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
   if (page_size==PAGE_SIZE)
   {
     if (page_directory[pde_vpn].pt.size == 0)
-      insertPT(pde_vpn,PageManager::instance()->getFreePhysicalPage());
+      insertPT(pde_vpn,PageManager::instance()->allocPPN());
 
     PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     pte_base[pte_vpn].bufferable = 0;
@@ -128,14 +128,14 @@ ArchMemory::~ArchMemory()
         if (pte_base[pte_vpn].size == 2)
         {
           pte_base[pte_vpn].size = 0;
-          PageManager::instance()->freePage(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+          PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
         }
       }
       page_directory[pde_vpn].pt.size=PDE_SIZE_NONE;
-      PageManager::instance()->freePage(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
+      PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     }
   }
-  PageManager::instance()->freePage(page_dir_page_);
+  PageManager::instance()->freePPN(page_dir_page_);
 }
 
 bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)

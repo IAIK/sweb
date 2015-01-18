@@ -302,8 +302,6 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   if (currentThread->switch_to_userspace_)
   {
     currentThreadInfo = currentThread->user_arch_thread_info_;
-    if (currentThread)
-      ArchThreads::printThreadRegisters(currentThread,false);
     arch_contextSwitch();
   }
 }
@@ -390,7 +388,6 @@ extern "C" void syscallHandler()
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
-  ArchThreads::printThreadRegisters(currentThread,false);
   arch_contextSwitch();
 }
 

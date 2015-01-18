@@ -43,8 +43,9 @@ class PageManager
     /**
      * returns the number of the lowest free Page
      * and marks that Page as used.
+     * returns always 4kb ppns!
      */
-    uint32 getFreePhysicalPage(uint32 page_size = PAGE_SIZE); //marks page as used
+    uint32 allocPPN(uint32 page_size = PAGE_SIZE); //marks page as used
     bool reservePages(uint32 ppn, uint32 num = 1); // used internally to mark as reserved
 
     /**
@@ -52,7 +53,7 @@ class PageManager
      * user or kernel space.
      * @param page_number Physcial Page to mark as unused
      */
-    void freePage(uint32 page_number, uint32 page_size = PAGE_SIZE);
+    void freePPN(uint32 page_number, uint32 page_size = PAGE_SIZE);
 
   private:
 

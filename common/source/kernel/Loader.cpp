@@ -31,7 +31,7 @@ Loader::~Loader()
 
 void Loader::initUserspaceAddressSpace()
 {
-  size_t page_for_stack = PageManager::instance()->getFreePhysicalPage();
+  size_t page_for_stack = PageManager::instance()->allocPPN();
 
   arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
 }
@@ -213,7 +213,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
   if(max_value == 0 && min_value == 0xffffffff)
   {
     debug(LOADER, "%x is in .bss\n", virtual_address);
-    page = PageManager::instance()->getFreePhysicalPage();
+    page = PageManager::instance()->allocPPN();
     ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
     arch_memory_.mapPage(virtual_page, page, true);
     return;
@@ -263,7 +263,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
     load_lock_.release();
     Syscall::exit ( 9998 );
    }
-  page = PageManager::instance()->getFreePhysicalPage();
+  page = PageManager::instance()->allocPPN();
   debug(PM, "got new page %x\n", page);
   ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
   debug(PM, "bzero!\n");
