@@ -227,7 +227,7 @@ void Thread::addJob()
   jobs_scheduled_++;
 }
 
-void Thread::completeJob()
+void Thread::jobDone()
 {
   jobs_done_++;
 }

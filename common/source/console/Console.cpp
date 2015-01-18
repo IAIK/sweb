@@ -116,7 +116,7 @@ void Console::Run ( void )
             handleKey ( key );
           }
         }
-        this->completeJob();
+        this->jobDone();
       }
       Scheduler::instance()->yield();
     }

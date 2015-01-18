@@ -167,7 +167,7 @@ void Scheduler::cleanupDeadThreads()
     for(uint32 i = 0; i < thread_count; ++i)
     {
       delete destroy_list[i];
-      cleanup_thread_.completeJob();
+      cleanup_thread_.jobDone();
     }
     debug ( SCHEDULER, "cleanupDeadThreads: done\n" );
   }

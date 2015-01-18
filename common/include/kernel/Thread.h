@@ -137,7 +137,7 @@ class Thread
     /**
      * Marks a job as completed
      */
-    void completeJob();
+    void jobDone();
 
     /**
      * Are there open jobs?
