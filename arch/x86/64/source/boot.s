@@ -1,11 +1,6 @@
 BASE             EQU     0FFFFFFFF80000000h         ; Base address (virtual) (kernel is linked to start at this address)
 PHYS_BASE        EQU     0FFFFFFFF00000000h
 
-; this is a magic number which will be at the start
-; of the data segment
-; used to verify that the bootloader really loaded everything
-DATA_SEGMENT_MAGIC equ 3544DA2Ah
-
 EXTERN text_start_address, text_end_address,bss_start_address, bss_end_address, kernel_end_address
 
 ; this is really really bad voodoo ...
@@ -41,91 +36,32 @@ BITS 32 ; we want 32bit code
 ; first check if the loader did a good job
 GLOBAL entry
 entry:
-   ; we get these from grub
-   ;
-   ; until paging is properly set up, all addresses are "corrected" using the "xx - BASE" - construct
-   ; xx is a virtual address above 2GB, BASE is the offset to subtract to get the actual physical address.
-   ;
+  ; we get these from grub
+  ;
+  ; until paging is properly set up, all addresses are "corrected" using the "xx - BASE" - construct
+  ; xx is a virtual address above 2GB, BASE is the offset to subtract to get the actual physical address.
 
-   mov [multi_boot_magic_number-BASE], eax;
-   mov [multi_boot_structure_pointer-BASE], ebx;
+  mov [multi_boot_structure_pointer-BASE], ebx;
 
+  mov edi,0B8000h; load frame buffer start
+  mov ecx,0B8FA0h; end of frame buffer
+  sub ecx, edi ; how much data do we have to clear
+  xor eax, eax ; we want to fill with 0
+  rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
-   mov edi,0B8000h; load frame buffer start
-   mov ecx,0B8FA0h; end of frame buffer
-   sub ecx, edi ; how much data do we have to clear
-   xor eax, eax ; we want to fill with 0
-   rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
+  ; next thing to do to be c compliant is to
+  ; clear the bss (uninitialised data)
 
-   mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
+  mov edi,bss_start_address - BASE; load bss address
+  mov ecx, bss_end_address - BASE; end of bss and stack (!), this symbol is at the very end of the kernel
+  sub ecx, edi ; how much data do we have to clear
+  xor eax, eax ; we want to fill with 0
+  rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
-   ; from http://wiki.osdev.org/User:Stephanvanschaik/Setting_Up_Long_Mode
-   mov eax, 0x80000000    ; Set the A-register to 0x80000000.
-   cpuid                  ; CPU identification.
-   cmp eax, 0x80000001    ; Compare the A-register with 0x80000001.
-   jb NoLongMode
-
-   mov eax, 0x80000001    ; Set the A-register to 0x80000001.
-   cpuid                  ; CPU identification.
-   test edx, 1 << 29      ; Test if the LM-bit, which is bit 29, is set in the D-register.
-   jz NoLongMode          ; They aren't, there is no long mode.
-
-   ;test edx, 1 << 26      ; check for 1 GiB paging
-   ;jz No1GBMode
-   mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
-   cmp eax, DATA_SEGMENT_MAGIC
-
-   ; comment this next statement to just see a few characters on the screen, really impressive :)
-   je data_segment_ok ; if its the same then everything is good
-
-; if we end up here the data segment is _not_ ok
-; write something to the frame buffer and halt
-
-   mov word[0B8000h], 9F44h
-   mov word[0B8002h], 9F61h
-   mov word[0B8004h], 9F74h
-   mov word[0B8006h], 9F61h
-   mov word[0B800Ah], 9F45h
-   mov word[0B800Ch], 9F72h
-   mov word[0B800Eh], 9F72h
-   mov word[0B8010h], 9F6fh
-   mov word[0B8012h], 9F72h
-
-   hlt
-
-NoLongMode:
-   mov word[0B8000h], 9F4Eh
-   mov word[0B8002h], 9F4Fh
-   mov word[0B8006h], 9F4Ch
-   mov word[0B8008h], 9F4Fh
-   mov word[0B800Ah], 9F4Eh
-   mov word[0B800Ch], 9F47h
-   mov word[0B8010h], 9F4Dh
-   mov word[0B8012h], 9F4Fh
-   mov word[0B8014h], 9F44h
-   mov word[0B8016h], 9F45h
-
-   hlt
-
-data_segment_ok:
-
-    mov word[0B8002h], 9F31h ; show something on screen just in case we get stuck, so that we know where
-
-   ; next thing to do to be c compliant is to
-   ; clear the bss (uninitialised data)
-
-   mov edi,bss_start_address - BASE; load bss address
-   mov ecx, bss_end_address - BASE; end of bss and stack (!), this symbol is at the very end of the kernel
-   sub ecx, edi ; how much data do we have to clear
-   xor eax, eax ; we want to fill with 0
-   rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
-
-   EXTERN boot_stack
-   ; setup the stack pointer to point to our stack in the just cleared bss section
-   mov esp,boot_stack + 0x4000 - BASE
-   mov ebp,esp
-
-   mov word[0B8004h], 9F32h
+  EXTERN boot_stack
+  ; setup the stack pointer to point to our stack in the just cleared bss section
+  mov esp,boot_stack + 0x4000 - BASE
+  mov ebp,esp
 
   call initialiseBootTimePaging
 
@@ -145,19 +81,14 @@ data_segment_ok:
   or eax, 0x100
   wrmsr
 
-  mov word[0B8010h], 9F39h
-
 ; GRUB 0.90 leaves the NT bit set in EFLAGS. The first IRET we attempt
 ; will cause a TSS-based task-switch, which will cause Exception 10.
 ; Let's prevent that:
 
   push dword 2
   popf
-  mov word[0B801Ch], 4336h
 
   ;  2) setting CR0's PG bit to enable paging
-
-  mov word[0B8008h], 9F34h
 
   mov     eax,cr0         ; Set PG bit
   or eax,0x80000001
@@ -170,17 +101,12 @@ data_segment_ok:
   shr eax, 8
   mov byte[tss.base_high_word_high - BASE], al
 
-  mov dword[g_tss.low0 - BASE], boot_stack + 0x4000 - PHYS_BASE
-  mov dword[g_tss.high0 - BASE], 0FFFFFFFFh
-  mov dword[g_tss.istl1 - BASE], boot_stack + 0x4000 - PHYS_BASE
-  mov dword[g_tss.isth1 - BASE], 0FFFFFFFFh
-
   lgdt [gdt_ptr - BASE]
 
-EXTERN entry64
+  EXTERN entry64
   jmp LINEAR_CODE_SEL:(entry64-BASE)
 
-   hlt
+  hlt
 
 global initialiseBootTimePaging
 initialiseBootTimePaging:
@@ -287,64 +213,35 @@ gdt_ptr_new:
 GLOBAL g_tss
 g_tss:
    dd 0 ; reserved
-.low0:
-   dd 0 ; rsp0 lower
-.high0:
-   dd 0 ; rsp0 higher
-.low1:
+   dd boot_stack + 0x4000 - PHYS_BASE ; rsp0 lower
+   dd 0FFFFFFFFh ; rsp0 higher
    dd 0 ; rsp1 lower
-.high1:
    dd 0 ; rsp1 higher
-.low2:
    dd 0 ; rsp2 lower
-.high2:
    dd 0 ; rsp2 higher
    dd 0 ; reserved
    dd 0 ; reserved
-.istl1:
-   dd 0 ; ist1 lower
-.isth1:
-   dd 0 ; ist1 higher
-.istl2:
+   dd boot_stack + 0x4000 - PHYS_BASE ; ist1 lower
+   dd 0FFFFFFFFh ; ist1 higher
    dd 0
-.isth2:
    dd 0
-.istl3:
    dd 0
-.isth3:
    dd 0
-.istl4:
    dd 0
-.isth4:
    dd 0
-.istl5:
    dd 0
-.isth5:
    dd 0
-.istl6:
    dd 0
-.isth6:
    dd 0
-.istl7:
    dd 0
-.isth7:
    dd 0
    dd 0
    dd 0
    dw 0
-.iobase:
    dw 0
 
 SECTION .data
 BITS 32
-ds_magic:
-   dd DATA_SEGMENT_MAGIC
-
-SECTION .data
-BITS 32
-GLOBAL multi_boot_magic_number
-multi_boot_magic_number:
-  dd 0
 GLOBAL multi_boot_structure_pointer
 multi_boot_structure_pointer:
   dd 0
