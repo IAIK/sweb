@@ -107,13 +107,6 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
 
 }
 
-void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
-{
-  //avoid NULL-Pointer
-  if (info)
-    delete info;
-}
-
 void ArchThreads::yield()
 {
   __asm__ __volatile__("int $65"
@@ -129,18 +122,12 @@ uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
 {
-  int32 ret=increment;
-  __asm__ __volatile__(
-  "lock; xadd %0, %1;"
-  :"=a" (ret), "=m" (value)
-  :"a" (ret)
-  :);
-  return ret;
+  return __sync_fetch_and_add(&value,increment);
 }
 
 int32 ArchThreads::atomic_add(int32 &value, int32 increment)
 {
-  return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
+  return __sync_fetch_and_add(&value,increment);
 }
 
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)

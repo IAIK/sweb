@@ -56,20 +56,6 @@ public:
   static void initialise();
 
 /**
- * not implemented
- *
- */
-  static void switchToThreadOnIret(Thread *thread);
-
-/**
- * deletes the info if not null
- *
- * @param info to be cleaned up
- *
- */
-  static void cleanupThreadInfos(ArchThreadInfo *&info);
-
-/**
  * creates the ArchThreadInfo for a kernel thread
  * @param info where the ArchThreadInfo is saved
  * @param start_function instruction pointer is set so start function
@@ -111,14 +97,6 @@ public:
  * @param arch_memory a reference to the arch memory object to use
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
-
-/**
- * function to get the PageDirectory of a given thread
- *
- * @param *thread Pointer to Thread Object
- * @return returns pde page of *thread
- */
-  static uint32 getPageDirectory(Thread *thread);
 
 /**
  * uninterruptable locked operation

@@ -75,9 +75,9 @@ Thread::~Thread()
     loader_ = 0;
   }
   debug ( THREAD,"~Thread: freeing ThreadInfos\n" );
-  ArchThreads::cleanupThreadInfos ( user_arch_thread_info_ ); //yes that's safe
+  delete user_arch_thread_info_;
   user_arch_thread_info_ = 0;
-  ArchThreads::cleanupThreadInfos ( kernel_arch_thread_info_ );
+  delete kernel_arch_thread_info_;
   kernel_arch_thread_info_ = 0;
   if ( working_dir_ )
   {
