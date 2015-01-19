@@ -10,7 +10,7 @@ include_directories(
 #Assembly File processing
 set(ASM_OBJECTS)
 
-FILE(GLOB userspace_libc_asm_SOURCES ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/*.s ${CMAKE_SOURCE_DIR}/arch/${ARCH}/../common/userspace/*.s)
+FILE(GLOB userspace_libc_asm_SOURCES ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/*.s ${CMAKE_SOURCE_DIR}/arch/${ARCH}/../common/userspace/*.s ${CMAKE_SOURCE_DIR}/arch/${ARCH}/common/userspace/*.s)
 foreach(src ${userspace_libc_asm_SOURCES})
    set(ASM_SOURCE ${src})
    GET_FILENAME_COMPONENT(src ${src} NAME_WE)
@@ -27,7 +27,7 @@ ENDFOREACH(src)
 
 
 set(LIBRARY_OUTPUT_PATH  "${LIBRARY_OUTPUT_PATH}/userspace")
-FILE(GLOB userspace_libc_SOURCES src/*.c ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/*.c ${CMAKE_SOURCE_DIR}/arch/${ARCH}/../common/userspace/*.c)
+FILE(GLOB userspace_libc_SOURCES src/*.c ${CMAKE_SOURCE_DIR}/arch/${ARCH}/userspace/*.c ${CMAKE_SOURCE_DIR}/arch/${ARCH}/../common/userspace/*.c ${CMAKE_SOURCE_DIR}/arch/${ARCH}/common/userspace/*.c)
 
 ADD_LIBRARY(userspace_libc ${userspace_libc_SOURCES} ${ASM_OBJECTS})
 
