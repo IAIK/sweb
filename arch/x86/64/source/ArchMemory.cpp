@@ -276,3 +276,8 @@ uint64 ArchMemory::getRootOfPagingStructure()
 {
   return page_map_level_4_;
 }
+
+PageMapLevel4Entry* ArchMemory::getRootOfKernelPagingStructure()
+{
+  return kernel_page_map_level_4;
+}
