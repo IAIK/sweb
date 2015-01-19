@@ -13,30 +13,25 @@ typedef struct {
     uint16 limitL;
     uint16 baseL;
     uint8 baseM;
-    uint8 type;
-    uint8 limitH;
+    uint8 typeL;
+    uint8 limitH : 4;
+    uint8 typeH  : 4;
     uint8 baseH;
-} __attribute__((__packed__))SegDesc;
+} __attribute__((__packed__))SegmentDescriptor;
+
+SegmentDescriptor gdt[7];
+struct GDTPtr
+{
+  uint16 limit;
+  uint32 addr;
+} __attribute__((__packed__)) gdt_ptr;
 
 TSS *g_tss;
-
-
-#define GDT_ENTRY_NUM 8192
-#define GDT_SIZE      (GDT_ENTRY_NUM * 8)
-
-#define SEGMENT_ABSENT  0x00
-#define SEGMENT_PRESENT 0x80
-#define SEGMENT_DPL0    0x00
-#define SEGMENT_DPL1    0x20
-#define SEGMENT_DPL2    0x40
-#define SEGMENT_DPL3    0x60
-
-extern "C" uint32 gdt_ptr_very_new;
 
 extern "C" void reload_segments()
 {
   // reload the gdt with the newly set up segments
-  asm("lgdt (%[gdt_ptr])" : : [gdt_ptr]"m"(gdt_ptr_very_new));
+  asm("lgdt (%[gdt_ptr])" : : [gdt_ptr]"m"(gdt_ptr));
   // now prepare all the segment registers to use our segments
   asm("mov %%ax, %%ds\n"
       "mov %%ax, %%es\n"
@@ -49,35 +44,33 @@ extern "C" void reload_segments()
       "1:": : [cs]"i"(KERNEL_CS));
 }
 
-static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type) 
+static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
 {
-    SegDesc *desc = (SegDesc*)&tss_selector;
-
-    desc->baseL  = (uint16)(base & 0xFFFF);
-    desc->baseM  = (uint8)((base >> 16U) & 0xFF);
-    desc->baseH  = (uint8)((base >> 24U) & 0xFF);
-    desc->limitL = (uint16)(limit & 0xFFFF);
-    // 4KB unit & 32bit segment
-    desc->limitH = (uint8) (((limit >> 16U) & 0x0F) | 0xC0); 
-    desc->type   = type;
+    gdt[index].baseL  = (uint16)(base & 0xFFFF);
+    gdt[index].baseM  = (uint8)((base >> 16U) & 0xFF);
+    gdt[index].baseH  = (uint8)((base >> 24U) & 0xFF);
+    gdt[index].limitL = (uint16)(limit & 0xFFFF);
+    gdt[index].limitH = (uint8) (((limit >> 16U) & 0xF));
+    gdt[index].typeH  = 0xC; // 4kb + 32bit
+    gdt[index].typeL  = (tss ? 0x89 : 0x92) | (dpl << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
     return;
 }
 
 void SegmentUtils::initialise()
 {
+  setSegmentDescriptor(2, 0, -1U, 0, 0, 0);
+  setSegmentDescriptor(3, 0, -1U, 0, 1, 0);
+  setSegmentDescriptor(4, 0, -1U, 3, 0, 0);
+  setSegmentDescriptor(5, 0, -1U, 3, 1, 0); // 89 C0
+
   g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
   ArchCommon::bzero((pointer)g_tss,sizeof(TSS));
-
   g_tss->ss0 = KERNEL_SS;
-  setTSSSegDesc((uint32)g_tss, 0x00000067, SEGMENT_PRESENT | SEGMENT_DPL0 | 0x00 | 0x09);
-
+  setSegmentDescriptor(6, (uint32)g_tss, sizeof(TSS)-1, 0, 0, 1);
   // we have to reload our segment stuff
-  uint16 val = 8 * 6;
-
+  gdt_ptr.limit = sizeof(gdt) - 1;
+  gdt_ptr.addr = (uint32)gdt;
   reload_segments();
-
-  g_tss->ss0  = KERNEL_SS;
-
-  // now use our damned tss
-  asm volatile("ltr %0\n": "=m" (val));
+  int val = KERNEL_TSS;
+  asm volatile("ltr %0\n" : : "m" (val));
 }

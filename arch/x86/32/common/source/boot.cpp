@@ -51,5 +51,7 @@ extern "C" void entry()
   PRINT("Calling startup()...\n");
   asm("call *%%eax" : : "a"(startup));
   PRINT("Returned from startup()? This should never happen.\n");
+  extern uint32 mboot;
+  mboot = 0; // just for referencing so that the compiler does not throw that away...
   while(1);
 }
