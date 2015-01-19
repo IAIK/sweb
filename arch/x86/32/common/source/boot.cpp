@@ -9,7 +9,23 @@
 
 #define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs(VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
 
-extern "C" void _entry();
+#define MULTIBOOT_PAGE_ALIGN (1<<0)
+#define MULTIBOOT_MEMORY_INFO (1<<1)
+#define MULTIBOOT_WANT_VESA (1<<2)
+#define MULTIBOOT_HEADER_MAGIC (0x1BADB002)
+#define MULTIBOOT_HEADER_FLAGS (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA)
+#define MULTIBOOT_CHECKSUM (-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS))
+
+static const struct {
+  uint32 magic = MULTIBOOT_HEADER_MAGIC;
+  uint32 flags = MULTIBOOT_HEADER_FLAGS;
+  uint32 checksum = MULTIBOOT_CHECKSUM;
+  uint32 mode = 0;
+  uint32 widht = 800;
+  uint32 height = 600;
+  uint32 depth = 32;
+} mboot __attribute__ ((section (".mboot")));
+
 extern "C" void parseMultibootHeader();
 extern "C" void initialiseBootTimePaging();
 extern "C" void startup();
@@ -51,7 +67,5 @@ extern "C" void entry()
   PRINT("Calling startup()...\n");
   asm("call *%%eax" : : "a"(startup));
   PRINT("Returned from startup()? This should never happen.\n");
-  extern uint32 mboot;
-  mboot = 0; // just for referencing so that the compiler does not throw that away...
   while(1);
 }
