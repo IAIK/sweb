@@ -34,8 +34,8 @@ BITS 32 ; we want 32bit code
 
 ; this is where we will start
 ; first check if the loader did a good job
-GLOBAL entry
-entry:
+GLOBAL _entry
+_entry:
   ; we get these from grub
   ;
   ; until paging is properly set up, all addresses are "corrected" using the "xx - BASE" - construct

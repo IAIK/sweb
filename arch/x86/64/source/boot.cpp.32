@@ -1,0 +1,10 @@
+#include "types.h"
+
+extern "C" void _entry();
+
+extern "C" void entry()
+{
+  asm("outb %b0, %w1" : : "a"('B'), "d"(0xe9));
+  asm("hlt");
+  _entry();
+}

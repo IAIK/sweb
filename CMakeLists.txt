@@ -97,6 +97,8 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	find_asm_files(asm_source)
 
 	asm2obj(asm_objs ${asm_source})
+	
+	arch2obj(arch_objs)
 
 	file(GLOB source_files ${SOURCE_WILDCARDS})
 
@@ -109,6 +111,10 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	if(asm_objs)
 		set(library_files ${library_files} ${asm_objs})
 	endif(asm_objs)
+
+  if(arch_objs)
+    set(library_files ${library_files} ${arch_objs})
+  endif(arch_objs)
 
 	if(library_files)
 		add_library(${LIBRARY_NAME} ${library_files})
