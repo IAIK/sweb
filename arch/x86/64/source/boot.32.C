@@ -1,5 +1,6 @@
 asm(".code32");
 asm(".equ BASE,0xFFFFFFFF80000000");
+asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "types.h"
 #include "offsets.h"
 #include "multiboot.h"
@@ -22,71 +23,85 @@ static const struct {
 } mboot __attribute__ ((section (".mboot")));
 
 extern "C" void _entry();
-
-extern "C" void print(const char* c)
+/*
+extern "C" void //PRINT(uint64 c)
 {
-  asm("outb %b0, %w1" : : "a"(c), "d"(0xe9));
+  const char* p = (const char*)VIRTUAL_TO_PHYSICAL_BOOT(c);
+  while (*p)
+  {
+    asm("outb %b0, %w1" : : "a"(*p), "d"(0xe9));
+    ++p;
+  }
 }
-
-extern "C" void _entry()
+#define //PRINT(X) do { asm("1: .text #X"); } while (0)
+*/
+extern "C" void entry()
 {
   asm("mov %ebx,multi_boot_structure_pointer - BASE");
-
+  //PRINT("Booting...\n");
+  //PRINT("Clearing Framebuffer...\n");
   asm("mov $0xB8000, %edi\n"
       "mov $0xB8FA0, %ecx\n"
       "sub %edi, %ecx\n"
       "xor %eax, %eax\n"
       "rep stosb\n");
+
+  //PRINT("Clearing BSS...\n");
   asm("mov $bss_start_address - BASE, %edi\n"
       "mov $bss_end_address - BASE, %ecx\n"
       "sub %edi, %ecx\n"
       "xor %eax, %eax\n"
       "rep stosb\n");
 
+  //PRINT("Switch to our own stack...\n");
   asm("mov $boot_stack + 0x4000 - BASE, %esp\n"
       "mov %esp, %ebp\n");
 
+  //PRINT("Initializing Kernel Paging Structures...\n");
   asm("call initialiseBootTimePaging\n");
 
+  //PRINT("Enable PSE and PAE...\n");
   asm("mov %cr4,%eax\n"
       "bts $4, %eax\n"
       "bts $5, %eax\n"
       "mov %eax,%cr4\n");
 
+  //PRINT("Setting CR3 Register...\n");
   asm("mov $kernel_page_map_level_4 - BASE,%eax\n"
       "mov %eax,%cr3\n");
 
+  //PRINT("Enable EFER.LME...\n");
   asm("mov $0xC0000080,%ecx\n"
       "rdmsr\n"
       "or $0x100,%eax\n"
-      "rdmsr\n");
+      "wrmsr\n");
 
   asm("push $2\n"
       "popf\n");
 
+  //PRINT("Enable Paging...\n");
   asm("mov %cr0,%eax\n"
       "or $0x80000001,%eax\n"
       "mov %eax,%cr0\n");
 
-  /*
-  mov eax, g_tss - PHYS_BASE
-  mov word[tss.base_low - BASE], ax
-  shr eax, 16
-  mov byte[tss.base_high_word_low - BASE], al
-  shr eax, 8
-  mov byte[tss.base_high_word_high - BASE], al
+  asm("mov $g_tss - PHYS_BASE, %eax\n"
+      "mov %ax, tss.base_low - BASE\n"
+      "shr $16, %eax\n"
+      "mov %al, tss.base_high_word_low - BASE\n"
+      "shr $8, %eax\n"
+      "mov %al, tss.base_high_word_high - BASE\n");
 
-  lgdt [gdt_ptr - BASE]
-
-  EXTERN entry64
-  jmp LINEAR_CODE_SEL:(entry64-BASE)
-
-  hlt
-
-  ret
-*/
+  asm("lgdt gdt_ptr - BASE");
+  asm("mov %%ax, %%ds\n"
+      "mov %%ax, %%es\n"
+      "mov %%ax, %%ss\n"
+      "mov %%ax, %%fs\n"
+      "mov %%ax, %%gs\n"
+      : : "a"(KERNEL_DS));
+  //PRINT("Calling startup()...\n");
+  asm("ljmp %[cs],$entry64-BASE\n" : : [cs]"i"(KERNEL_CS));
+  //PRINT("Returned from entry64()? This should never happen.\n");
   asm("hlt");
-  _entry();
 }
 
 extern "C" void initialiseBootTimePaging()

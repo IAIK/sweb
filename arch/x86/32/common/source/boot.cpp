@@ -80,5 +80,4 @@ extern "C" void entry()
 
   PRINT("Returned from startup()? This should never happen.\n");
   asm("hlt");
-  while(1);
 }
