@@ -206,7 +206,7 @@ extern "C" void entry64()
 {
   parseMultibootHeader();
   initialisePaging();
-  asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
+  asm("mov %%rax, %%cr3" : : "a"(ArchMemory::getRootOfKernelPagingStructure()));
   asm("mov %[stack], %%rsp\n"
       "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
   // reload the gdt with the newly set up segments

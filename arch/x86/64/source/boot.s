@@ -3,30 +3,6 @@ PHYS_BASE        EQU     0FFFFFFFF00000000h
 
 EXTERN text_start_address, text_end_address,bss_start_address, bss_end_address, kernel_end_address
 
-; this is really really bad voodoo ...
-; grub needs this, or it will refuse to boot
-MULTIBOOT_PAGE_ALIGN    equ 1<<0
-MULTIBOOT_MEMORY_INFO   equ 1<<1
-MULTIBOOT_WANT_VESA equ 1<<2
-MULTIBOOT_HEADER_MAGIC  equ 0x1BADB002
-MULTIBOOT_HEADER_FLAGS  equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA
-MULTIBOOT_CHECKSUM      equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
-;; this will help us to boot, this way we can tell grub
-;; what to do
-
-SECTION .mboot
-GLOBAL mboot
-mboot:
-   dd MULTIBOOT_HEADER_MAGIC
-   dd MULTIBOOT_HEADER_FLAGS
-   dd MULTIBOOT_CHECKSUM
-   dd 0 ; mode
-   dd 800 ;width
-   dd 600 ; height
-   dd 32; depth
-
 ; Text section == Code that can be exectuted
 
 SECTION .text
@@ -34,8 +10,8 @@ BITS 32 ; we want 32bit code
 
 ; this is where we will start
 ; first check if the loader did a good job
-GLOBAL _entry
-_entry:
+GLOBAL entry
+entry:
   ; we get these from grub
   ;
   ; until paging is properly set up, all addresses are "corrected" using the "xx - BASE" - construct
@@ -63,7 +39,7 @@ _entry:
   mov esp,boot_stack + 0x4000 - BASE
   mov ebp,esp
 
-  call initialiseBootTimePaging
+  call _initialiseBootTimePaging
 
   ; set bit 0x4 to 1 in cr4 to enable PSE
   ; need a pentium cpu for this but it will give us 4mbyte pages
@@ -105,11 +81,12 @@ _entry:
 
   EXTERN entry64
   jmp LINEAR_CODE_SEL:(entry64-BASE)
-
+EXTERN _entry
+call _entry
   hlt
 
-global initialiseBootTimePaging
-initialiseBootTimePaging:
+global _initialiseBootTimePaging
+_initialiseBootTimePaging:
   EXTERN kernel_page_map_level_4
   EXTERN kernel_page_directory_pointer_table
   EXTERN kernel_page_directory

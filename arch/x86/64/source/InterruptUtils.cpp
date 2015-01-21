@@ -225,7 +225,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
       debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
         (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
 
-      ArchMemoryMapping m = ArchMemory::resolveMapping((currentThread && currentThread->loader_) ? currentThread->loader_->arch_memory_.page_map_level_4_ : PML4_KERNEL_PAGE, address / PAGE_SIZE);
+      ArchMemoryMapping m = ArchMemory::resolveMapping((currentThread && currentThread->loader_) ? currentThread->loader_->arch_memory_.page_map_level_4_ : ((uint64)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), address / PAGE_SIZE);
 
       if (m.pd && m.pd[m.pdi].pt.present)
       {
