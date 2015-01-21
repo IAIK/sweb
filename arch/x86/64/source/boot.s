@@ -126,9 +126,3 @@ g_tss:
    dd 0
    dw 0
    dw 0
-
-SECTION .data
-BITS 32
-GLOBAL multi_boot_structure_pointer
-multi_boot_structure_pointer:
-  dd 0
