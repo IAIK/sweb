@@ -43,18 +43,6 @@ public:
   static void initialise();
 
   /**
-   * not implemented
-   * function from ArchInterrupts is used instead
-   */
-  static void enableInterrupts();
-
-  /**
-   * not implemented
-   * function from ArchInterrupts is used instead
-   */
-  static void disableInterrupts();
-
-  /**
    *
    */
   static void lidt(IDTR *idtr);
