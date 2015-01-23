@@ -135,9 +135,6 @@ void ArchInterrupts::initialise()
   arm4_xrqinstall(ARM4_XRQ_ABRTD, (void*)&k_exphandler_abrtd_entry, 0xD7);
   arm4_xrqinstall(ARM4_XRQ_IRQ, (void*)&k_exphandler_irq_entry, 0xD2);
   arm4_xrqinstall(ARM4_XRQ_FIQ, (void*)&k_exphandler_fiq_entry, 0xD1);
-
-
-  InterruptUtils::initialise();
 }
 
 void ArchInterrupts::enableTimer()
@@ -160,15 +157,16 @@ void ArchInterrupts::disableKBD()
   ArchBoardSpecific::disableKBD();
 }
 
-extern "C" void arch_enableInterrupts();
 void ArchInterrupts::enableInterrupts()
 {
   arm4_cpsrset(arm4_cpsrget() & ~((1 << 7) | (1 << 6)));
 }
-extern "C" void arch_disableInterrupts();
+
 bool ArchInterrupts::disableInterrupts()
 {
-  arm4_cpsrset(arm4_cpsrget() | ((1 << 7) | (1 << 6)));
+  uint32 r = arm4_cpsrget();
+  arm4_cpsrset(r | ((1 << 7) | (1 << 6)));
+  return !(r & ((1 << 7) | (1 << 6)));
 }
 
 bool ArchInterrupts::testIFSet()

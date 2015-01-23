@@ -123,10 +123,8 @@ errorhandler 18
 errorhandler 19
 
 %assign i 20
-%rep 236 ; generate dummyhandler 20-255
-%if i != 128
+%rep 108 ; generate dummyhandler 20-128
 dummyhandler i
-%endif
 %assign i i+1
 %endrep
 

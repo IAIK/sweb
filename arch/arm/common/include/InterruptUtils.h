@@ -22,7 +22,7 @@
 #define PIC_IRQ_ENABLESET   0x2
 #define PIC_IRQ_STATUS   0x0
 
-#define REG_LOAD    0x00
+//#define REG_LOAD    0x00 TODO: should this be here?
 #define REG_CTRL    0x02
 #define REG_INTCLR    0x03
 #define REG_INTSTAT   0x04
@@ -46,49 +46,6 @@
 #define ARM4_XRQ_IRQ     0x06
 #define ARM4_XRQ_FIQ     0x07
 
-static uint32 const NUM_INTERRUPT_HANDLERS = 256;
-
-typedef struct {
-  uint32  number;      // handler number
-  void (*offset)();    // pointer to handler function
-}  __attribute__((__packed__)) InterruptHandlers;
-
-
-typedef struct {
-    uint16 limit;
-    uint32 base;
-} __attribute__((__packed__)) IDTR ;
-
 extern "C" void exceptionHandler(uint32 type);
-
-class InterruptUtils
-{
-public:
-
-  /**
-   * initialises all items of the interrupthandlers
-   */
-  static void initialise();
-
-  /**
-   * not implemented
-   * function from ArchInterrupts is used instead
-   */
-  static void enableInterrupts();
-
-  /**
-   * not implemented
-   * function from ArchInterrupts is used instead
-   */
-  static void disableInterrupts();
-
-  /**
-   *
-   */
-  static void lidt(IDTR *idtr);
-
-private:
-  static InterruptHandlers handlers[NUM_INTERRUPT_HANDLERS];
-};
 
 #endif

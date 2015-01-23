@@ -95,7 +95,6 @@ public:
    * @return bool true if Interrupts are enabled, false otherwise
    */
   static bool testIFSet();
-  //static void setOldInterruptState(uint32 const &flags);
 
   /**
    * yields if the IF Flag is set, else does hlt

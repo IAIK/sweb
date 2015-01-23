@@ -19,7 +19,7 @@
 
 #include "types.h"
 
-static uint32 const NUM_INTERRUPT_HANDLERS = 256;
+static uint32 const NUM_INTERRUPT_HANDLERS = 128+32;
 
 typedef struct {
   uint32  number;      // handler number

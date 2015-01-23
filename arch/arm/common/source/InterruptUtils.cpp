@@ -23,10 +23,6 @@
 #include "paging-definitions.h"
 #include "arch_board_specific.h"
 
-void InterruptUtils::initialise()
-{
-}
-
 extern uint32* currentStack;
 extern Console* main_console;
 
