@@ -34,12 +34,6 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_arch_thread_info_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
-uint32 ArchThreads::getPageDirectory(Thread *thread)
-{
-  return thread->kernel_arch_thread_info_->ttbr0 / PAGE_SIZE;
-}
-
-
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
@@ -83,13 +77,6 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   assert(((pageDirectory) & 0x3FFF) == 0);
 }
 
-void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
-{
-  //avoid NULL-Pointer
-  if (info)
-    delete info;
-}
-
 void ArchThreads::yield()
 {
   asm("swi #0xffff");
@@ -99,7 +86,7 @@ extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
   uint32 result;
-  asm("swp %[r], %[n], [%[l]]" : [r]"=r"(result) : [n]"r"(new_value), [l]"r"(&lock));
+  asm("swp %[r], %[n], [%[l]]" : [r]"&=r"(result) : [n]"r"(new_value), [l]"r"(&lock));
   return result;
 }
 
