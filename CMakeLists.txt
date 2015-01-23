@@ -48,6 +48,7 @@ find_program(OBJCOPY_EXECUTABLE objcopy)
 #Initialize CMake output directories
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
+set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
 
