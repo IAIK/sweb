@@ -3,10 +3,6 @@
 *.sw?
 .#*
 *#
-
-utils/e2fsimage/Local.mak
-utils/e2fsimage/e2fsimage
-utils/exe2pseudofs/exe2pseudofs
 doc/html/
 doc/latex/
 Doxyfile
@@ -18,22 +14,10 @@ Makefile
 ./bin
 info.file
 utils/bochs/bochsrc
-
-/GPATH
-/GRTAGS
-/GSYMS
-/GTAGS
-
-# eclipse project files
 .settings
 .project
 .cproject
 .cdtproject
 .cdtbuild
-
-#syntax: regexp
-#(.*/)?\#[^/]*\#$
-
-# Operating system artifacts
 *.DS_Store
 *Thumbs.db

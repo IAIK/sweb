@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 if(COMMAND cmake_policy)
   cmake_policy(VERSION 2.6)
 endif(COMMAND cmake_policy)
@@ -18,7 +21,6 @@ endif ("${BIN_DIR_NAME}" STREQUAL "")
 if ("${DOC_DIR}" STREQUAL "")
   SET (DOC_DIR "..\\/sweb-docs")
 endif ("${DOC_DIR}" STREQUAL "")
-
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
@@ -44,16 +46,10 @@ find_program(DOXYGEN_EXECUTABLE doxygen)
 find_program(OBJCOPY_EXECUTABLE objcopy)
 
 #Initialize CMake output directories
-set(CMAKE_BINARY_DIR "${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
-  set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}/${BIN_DIR_PREFIX}${BIN_DIR_NAME}")
-endif(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
-set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
-cmake_minimum_required(VERSION 2.8)
 
 if(CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
@@ -308,6 +304,7 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
+  COMMAND make clean
 	COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
 	COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
   COMMAND cmake -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
@@ -360,7 +357,7 @@ add_custom_target(arm_rpi
 add_custom_target(doxygen
 	COMMAND mkdir -p \"${PROJECT_SOURCE_DIR}/doc\"
 	COMMAND cp \"${PROJECT_SOURCE_DIR}/utils/sweb.dox\" \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
-	COMMAND sed -i -e 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/${DOC_DIR}/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
+	COMMAND sed -i -e 's/\\$$\\[DOC_OUTPUT_DIR\\]$$/docs/' '${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox'
 	COMMAND ${DOXYGEN_EXECUTABLE} \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMAND rm -f \"${PROJECT_SOURCE_DIR}/doc/sweb_cmake.dox\"
 	COMMENT "Building SWEB documentation"
