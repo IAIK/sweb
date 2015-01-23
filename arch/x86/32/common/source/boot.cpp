@@ -67,5 +67,6 @@ extern "C" void entry()
   PRINT("Calling startup()...\n");
   asm("call *%%eax" : : "a"(startup));
   PRINT("Returned from startup()? This should never happen.\n");
+  asm("hlt");
   while(1);
 }
