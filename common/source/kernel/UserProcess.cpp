@@ -7,15 +7,15 @@
 #include "kprintf.h"
 #include "Console.h"
 #include "Loader.h"
-#include "fs_global.h"
 #include "VfsSyscall.h"
+#include "fs/File.h"
 
-UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
+UserProcess::UserProcess ( const char *minixfs_filename, FileSystemInfo *fs_info,
                            ProcessRegistry *process_registry, uint32 terminal_number) :
   Thread ( fs_info, minixfs_filename ),
   run_me_(false),
   terminal_number_(terminal_number),
-  fd_(VfsSyscall::instance()->open ( fs_info, minixfs_filename, O_RDONLY ) ),
+  fd_(VfsSyscall::open ( minixfs_filename, O_RDONLY ) ),
   process_registry_(process_registry)
 {
   process_registry_->processStart();//should also be called if you fork a process
@@ -40,10 +40,12 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
   switch_to_userspace_ = 1;
 }
 
+extern VfsSyscall vfs_syscall;
+
 UserProcess::~UserProcess()
 {
   if(fd_ > 0)
-    VfsSyscall::instance()->close(this->getWorkingDirInfo(), fd_);
+    vfs_syscall.close(fd_);
 
   process_registry_->processExit();
 }

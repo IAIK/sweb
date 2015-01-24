@@ -6,6 +6,7 @@
 #define _THREAD_H_
 
 #include "types.h"
+#include "fs/FileSystemInfo.h"
 
 #define STACK_CANARY (0xDEADDEAD)
 
@@ -17,6 +18,8 @@ class Loader;
 class Terminal;
 class Mutex;
 class FsWorkingDirectory;
+
+extern Thread* currentThread;
 
 extern Thread* currentThread;
 
@@ -43,7 +46,7 @@ class Thread
      * @param name Thread's name
      * @return Thread instance
      */
-    Thread ( FsWorkingDirectory* working_dir, const char* name );
+    Thread ( FileSystemInfo* working_dir, const char* name );
 
     /**
      * Destructor
@@ -111,13 +114,13 @@ class Thread
      * Thread
      * @return the thread's FsWorkingDirectory
      */
-    FsWorkingDirectory* getWorkingDirInfo(void);
+    FileSystemInfo* getWorkingDirInfo(void);
 
     /**
      * sets the working directory informations of the this Thread
      * @param working_dir the new working directory informations
      */
-    void setWorkingDirInfo(FsWorkingDirectory* working_dir);
+    void setWorkingDirInfo(FileSystemInfo* working_dir);
 
     /**
      * prints a backtrace (i.e. the call stack) to the
@@ -177,20 +180,12 @@ class Thread
     Terminal *my_terminal_;
 
   protected:
-    FsWorkingDirectory* working_dir_;
+    FileSystemInfo* working_dir_;
 
     const char *name_;
     uint64 jobs_scheduled_;
     uint64 jobs_done_;
 
 };
-
-
-
-
-
-
-
-
 
 #endif

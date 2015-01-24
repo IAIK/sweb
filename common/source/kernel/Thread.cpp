@@ -14,7 +14,6 @@
 #include "backtrace.h"
 #include "KernelMemoryManager.h"
 #include "Stabs2DebugInfo.h"
-#include "FsWorkingDirectory.h"
 
 #define MAX_STACK_FRAMES 20
 
@@ -47,7 +46,7 @@ Thread::Thread(const char *name) :
   stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
 
-Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
+Thread::Thread ( FileSystemInfo *working_dir, const char *name ) :
   kernel_arch_thread_info_(0),
   user_arch_thread_info_(0),
   switch_to_userspace_(0),
@@ -133,12 +132,12 @@ void Thread::printBacktrace()
   printBacktrace(currentThread != this);
 }
 
-FsWorkingDirectory* Thread::getWorkingDirInfo(void)
+FileSystemInfo* Thread::getWorkingDirInfo(void)
 {
   return working_dir_;
 }
 
-void Thread::setWorkingDirInfo(FsWorkingDirectory* working_dir)
+void Thread::setWorkingDirInfo(FileSystemInfo* working_dir)
 {
   working_dir_ = working_dir;
 }

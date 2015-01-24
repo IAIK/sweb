@@ -15,6 +15,10 @@
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
 #include <umemory.h>
+#include "File.h"
+#include "FileDescriptor.h"
+
+extern VfsSyscall vfs_syscall;
 
 Loader::Loader ( ssize_t fd, Thread *thread ) : fd_ ( fd ),
     thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_"),
@@ -39,8 +43,8 @@ void Loader::initUserspaceAddressSpace()
 
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 {
-  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, position, SEEK_SET);
-  return VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, buffer, count) - (int32)count;
+  VfsSyscall::lseek(fd_, position, File::SEEK_SET);
+  return VfsSyscall::read(fd_, buffer, count) - (int32)count;
 }
 
 bool Loader::readHeaders()
@@ -50,8 +54,8 @@ bool Loader::readHeaders()
 
   hdr_ = new Elf::Ehdr;
 
-  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, 0, SEEK_SET);
-  if(!hdr_ || VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, reinterpret_cast<char*>(hdr_),
+  VfsSyscall::lseek(fd_, 0, File::SEEK_SET);
+  if(!hdr_ || VfsSyscall::read(fd_, reinterpret_cast<char*>(hdr_),
               sizeof(Elf::Ehdr)) != sizeof(Elf::Ehdr))
   {
     return false;
@@ -243,14 +247,14 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
   }
 
 
-  VfsSyscall::instance()->lseek(currentThread->getWorkingDirInfo(), fd_, min_value, SEEK_SET);
-  ssize_t bytes_read = VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd_, (char*)buffer, max_value - min_value);
+  VfsSyscall::lseek(fd_, min_value, File::SEEK_SET);
+  ssize_t bytes_read = VfsSyscall::read(fd_, (char*)buffer, max_value - min_value);
 
   if(bytes_read != static_cast<ssize_t>(max_value - min_value))
   {
     if (bytes_read == -1)
     {
-      if (FileDescriptor::getFileDescriptor(fd_) == NULL)
+      if (VfsSyscall::getFileDescriptor(fd_) == 0)
       {
         kprintfd("Loader::loadOnePageSafeButSlow: ERROR cannot read from a closed file descriptor\n");
         assert(false);

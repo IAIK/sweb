@@ -168,7 +168,7 @@ endforeach(file)
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 add_custom_command (OUTPUT kernel_image
-	DEPENDS ${FINAL_LIB_NAMES} sweb-img-util
+	DEPENDS ${FINAL_LIB_NAMES} exe2minixfs
 	COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT}
   ${KERNEL_IMAGE_OBJCOPY}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
@@ -215,20 +215,20 @@ add_custom_command (OUTPUT helper_files
 
 #Custom Command: invoke exe2minixfs and copy the temp dir to our hd image
 add_custom_command (OUTPUT copy_to_image
-	DEPENDS helper_files sweb-img-util
-	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 0 ./kernel.x boot/kernel.x ./temp/boot/grub/menu.lst boot/grub/menu.lst
-	COMMAND rm -fR temp
+  DEPENDS helper_files exe2minixfs
+  COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./kernel.x /boot/kernel.x ./temp/boot/grub/menu.lst /boot/grub/menu.lst
+  COMMAND rm -R temp
 
-	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-	COMMENT "Copying files to image..."
-	)
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  COMMENT "Copying files to image..."
+  )
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
 	DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
 	COMMAND mkdir -p userspace/data
   COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
- 	COMMAND ./sweb-img-util -x SWEB-flat.vmdk 1 ${MINIXFS_ARGUMENT}
+  COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying userspace programs to image..."
 	)

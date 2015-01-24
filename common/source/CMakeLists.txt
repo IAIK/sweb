@@ -1,4 +1,3 @@
-add_subdirectory(cache)
 add_subdirectory(console)
 add_subdirectory(fs)
 add_subdirectory(kernel)

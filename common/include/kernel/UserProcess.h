@@ -25,7 +25,7 @@ class UserProcess : public Thread
      * @param terminal_number the terminal to run in (default 0)
      *
      */
-    UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_info,
+    UserProcess ( const char *minixfs_filename, FileSystemInfo *fs_info,
                   ProcessRegistry *process_registry, uint32 terminal_number = 0);
 
     /**

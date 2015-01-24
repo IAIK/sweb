@@ -22,7 +22,7 @@ class ProcessRegistry : public Thread
      * @param root_fs_info the FileSystemInfo
      * @param progs a string-array of the userprograms which should be executed
      */
-    ProcessRegistry ( FsWorkingDirectory *root_fs_info, char const *progs[] );
+    ProcessRegistry ( FileSystemInfo *root_fs_info, char const *progs[] );
     ~ProcessRegistry();
 
     /**

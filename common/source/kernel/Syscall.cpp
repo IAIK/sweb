@@ -13,6 +13,7 @@
 #include "VfsSyscall.h"
 #include "UserProcess.h"
 #include "ProcessRegistry.h"
+#include "File.h"
 
 size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
 {
@@ -76,7 +77,7 @@ size_t Syscall::write(size_t fd, pointer buffer, size_t size)
   }
   else
   {
-    VfsSyscall::instance()->write(currentThread->getWorkingDirInfo(), fd, (char*) buffer, size);
+    VfsSyscall::write(fd, (char*) buffer, size);
   }
   return size;
 }
@@ -102,14 +103,14 @@ size_t Syscall::read(size_t fd, pointer buffer, size_t count)
   }
   else
   {
-    num_read = VfsSyscall::instance()->read(currentThread->getWorkingDirInfo(), fd, (char*) buffer, count);
+    num_read = VfsSyscall::read(fd, (char*) buffer, count);
   }
   return num_read;
 }
 
 size_t Syscall::close(size_t fd)
 {
-  return VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
+  return VfsSyscall::close(fd);
 }
 
 size_t Syscall::open(size_t path, size_t flags, size_t mode)
@@ -118,7 +119,7 @@ size_t Syscall::open(size_t path, size_t flags, size_t mode)
   {
     return -1U;
   }
-  return VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (char*) path, flags | mode);
+  return VfsSyscall::open((char*) path, flags | mode);
 }
 
 void Syscall::outline(size_t port, pointer text)
@@ -145,13 +146,12 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
     return -1U;
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
-  ssize_t fd = VfsSyscall::instance()->open(currentThread->getWorkingDirInfo(), (const char*) path, O_RDONLY);
+  size_t fd = VfsSyscall::open((const char*) path, O_RDONLY);
   if (fd == -1)
   {
     return -1;
   }
-  debug(SYSCALL,"Syscall::createprocess: fd:%d\n",fd);
-  VfsSyscall::instance()->close(currentThread->getWorkingDirInfo(), fd);
+  VfsSyscall::close(fd);
   // parameter check end
 
   size_t len = strlen((const char*) path) + 1;

@@ -36,13 +36,14 @@
 #include "arch_bd_virtual_device.h"
 
 #include "VfsSyscall.h"
-#include "FsWorkingDirectory.h"
+#include "fs/FileSystemInfo.h"
+#include "fs/Dentry.h"
+#include "fs/devicefs/DeviceFSType.h"
+#include "fs/VirtualFileSystem.h"
 
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
-
-#include "fs_global.h"
 
 #include "UserProcess.h"
 #include "outerrstream.h"
@@ -57,7 +58,7 @@ uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
 
 uint32 boot_completed;
 uint32 we_are_dying;
-FsWorkingDirectory default_working_dir;
+FileSystemInfo* default_working_dir;
 
 /**
  * startup called in @ref boot.s
@@ -106,6 +107,12 @@ extern "C" void startup()
 
   ArchCommon::initDebug();
 
+  vfs.initialize();
+  debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
+  DeviceFSType *devfs = new DeviceFSType();
+  vfs.registerFileSystem ( devfs );
+  default_working_dir = vfs.root_mount ( "devicefs", 0 );
+
   debug ( MAIN, "Block Device creation\n" );
   BDManager::getInstance()->doDeviceDetection( );
   debug ( MAIN, "Block Device done\n" );
@@ -114,29 +121,25 @@ extern "C" void startup()
   {
     BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber ( i );
     debug ( MAIN, "Detected Devices %d: %s :: %d\n",i, bdvd->getName(), bdvd->getDeviceNumber() );
-
   }
 
   // initialise global and static objects
-  ustl::coutclass::init();
-  VfsSyscall::createVfsSyscall();
-
   extern ustl::list<FileDescriptor*> global_fd;
   new (&global_fd) ustl::list<FileDescriptor*>();
   extern Mutex global_fd_lock;
   new (&global_fd_lock) Mutex("global_fd_lock");
 
-  // the default working directory info
-  debug ( MAIN, "creating a default working Directory\n" );
-  new (&default_working_dir) FsWorkingDirectory();
-  debug ( MAIN, "finished with creating working Directory\n" );
-
   debug ( MAIN, "make a deep copy of FsWorkingDir\n" );
-  main_console->setWorkingDirInfo(new FsWorkingDirectory(default_working_dir));
+  main_console->setWorkingDirInfo(new FileSystemInfo(*default_working_dir));
   debug ( MAIN, "main_console->setWorkingDirInfo done\n" );
 
-  debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n",
-      main_console->getWorkingDirInfo()->getRootDirPath(), main_console->getWorkingDirInfo()->getWorkingDirPath() );
+  ustl::coutclass::init();
+  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot()->getName(), default_working_dir->getPwd()->getName());
+  if (main_console->getWorkingDirInfo())
+  {
+    delete main_console->getWorkingDirInfo();
+  }
+  main_console->setWorkingDirInfo(default_working_dir);
 
   debug ( MAIN, "Timer enable\n" );
   ArchInterrupts::enableTimer();
@@ -149,7 +152,7 @@ extern "C" void startup()
   Scheduler::instance()->addNewThread ( main_console );
 
   Scheduler::instance()->addNewThread (
-       new ProcessRegistry ( new FsWorkingDirectory(default_working_dir), user_progs ) // see user_progs.h
+       new ProcessRegistry ( new FileSystemInfo(*default_working_dir), user_progs ) // see user_progs.h
    );
 
   Scheduler::instance()->printThreadList();
