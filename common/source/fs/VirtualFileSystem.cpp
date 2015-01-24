@@ -12,8 +12,8 @@
 #include "util/string.h"
 #include "assert.h"
 #include "mm/kmalloc.h"
-#include "arch_bd_manager.h"
-#include "arch_bd_virtual_device.h"
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
 #include "kernel/Thread.h"
 
 #include "console/kprintf.h"

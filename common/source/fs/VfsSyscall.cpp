@@ -21,10 +21,7 @@
 #include "fs/PathWalker.h"
 #include "fs/VfsMount.h"
 
-#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "BDVirtualDevice.h"
-#include "BDManager.h"
-#include "console/debug.h"
+#include "console/kprintf.h"
 
 #define SEPARATOR '/'
 #define CHAR_DOT '.'

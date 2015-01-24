@@ -8,7 +8,7 @@
 #include "fs/minixfs/MinixFSFile.h"
 #include "fs/Dentry.h"
 #include "assert.h"
-#include "arch_bd_manager.h"
+#include "BDManager.h"
 #include "kmalloc.h"
 #include "ArchCommon.h"
 
