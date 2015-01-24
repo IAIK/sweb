@@ -3,7 +3,7 @@
  */
 #include "Console.h"
 #include "Terminal.h"
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 #include "Scheduler.h"
 
 Console* main_console=0;

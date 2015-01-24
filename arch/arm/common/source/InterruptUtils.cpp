@@ -1,4 +1,8 @@
 #include "InterruptUtils.h"
+
+#include "ArchBoardSpecific.h"
+#include "BDManager.h"
+#include "KeyboardManager.h"
 #include "new.h"
 #include "ArchMemory.h"
 #include "ArchThreads.h"
@@ -10,8 +14,6 @@
 #include "Scheduler.h"
 #include "debug_bochs.h"
 
-#include "arch_keyboard_manager.h"
-#include "arch_bd_manager.h"
 #include "panic.h"
 
 #include "Thread.h"
@@ -21,7 +23,6 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
-#include "arch_board_specific.h"
 
 extern uint32* currentStack;
 extern Console* main_console;

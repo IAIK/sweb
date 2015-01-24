@@ -1,4 +1,7 @@
 #include "InterruptUtils.h"
+
+#include "ArchSerialInfo.h"
+#include "BDManager.h"
 #include "new.h"
 #include "ports.h"
 #include "ArchMemory.h"
@@ -11,10 +14,8 @@
 #include "debug_bochs.h"
 #include "offsets.h"
 
-#include "arch_serial.h"
-#include "serial.h"
-#include "arch_keyboard_manager.h"
-#include "arch_bd_manager.h"
+#include "SerialManager.h"
+#include "KeyboardManager.h"
 #include "panic.h"
 
 #include "Thread.h"

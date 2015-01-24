@@ -8,7 +8,7 @@
 #include "kprintf.h"
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
-#include "arch_board_specific.h"
+#include "ArchBoardSpecific.h"
 
 extern uint8 boot_stack[];
 

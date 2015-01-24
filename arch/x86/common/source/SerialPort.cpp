@@ -3,9 +3,9 @@
  *
  */
 
+#include "ArchSerialInfo.h"
 #include "ports.h"
-#include "arch_serial.h"
-#include "serial.h"
+#include "SerialManager.h"
 
 #include "ArchInterrupts.h"
 #include "ArchThreads.h"

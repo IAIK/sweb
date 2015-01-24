@@ -5,7 +5,7 @@
 #include "Terminal.h"
 #include "Console.h"
 
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 
 #include "kprintf.h"
 

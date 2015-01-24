@@ -4,8 +4,9 @@
  */
 
 #include "debug_bochs.h"
+
+#include "KeyboardManager.h"
 #include "board_constants.h"
-#include "arch_keyboard_manager.h"
 
 void writeChar2Bochs( char char2Write )
 {

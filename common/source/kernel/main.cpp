@@ -8,6 +8,9 @@
 #include <types.h>
 
 #include <paging-definitions.h>
+#include "ArchSerialInfo.h"
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
 
 #include "new.h"
 #include "PageManager.h"
@@ -26,14 +29,10 @@
 #include "Loader.h"
 #include "assert.h"
 
-#include "arch_serial.h"
-#include "serial.h"
+#include "SerialManager.h"
 
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 #include "atkbd.h"
-
-#include "arch_bd_manager.h"
-#include "arch_bd_virtual_device.h"
 
 #include "VfsSyscall.h"
 #include "fs/FileSystemInfo.h"
