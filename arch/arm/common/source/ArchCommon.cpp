@@ -4,7 +4,7 @@
  */
 
 #include "ArchCommon.h"
-#include "arch_board_specific.h"
+#include "ArchBoardSpecific.h"
 #include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
