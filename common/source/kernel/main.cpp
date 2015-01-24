@@ -86,18 +86,12 @@ extern "C" void startup()
   main_console = ArchCommon::createConsole(4);
   writeLine2Bochs("Console created \n");
 
-  Terminal *term_0 = main_console->getTerminal ( 0 );
-  Terminal *term_1 = main_console->getTerminal ( 1 );
-  Terminal *term_2 = main_console->getTerminal ( 2 );
-  Terminal *term_3 = main_console->getTerminal ( 3 );
+  Terminal *term_0 = main_console->getTerminal ( 0 ); // add more if you need more...
 
   term_0->setBackgroundColor ( Console::BG_BLACK );
   term_0->setForegroundColor ( Console::FG_GREEN );
   kprintfd ( "Init debug printf\n" );
   term_0->writeString ( "This is on term 0, you should see me now\n" );
-  term_1->writeString ( "This is on term 1, you should not see me, unless you switched to term 1\n" );
-  term_2->writeString ( "This is on term 2, you should not see me, unless you switched to term 2\n" );
-  term_3->writeString ( "This is on term 3, you should not see me, unless you switched to term 3\n" );
 
   main_console->setActiveTerminal ( 0 );
 
@@ -152,8 +146,6 @@ extern "C" void startup()
 
   KeyboardManager::instance();
   ArchInterrupts::enableKBD();
-
-  debug ( MAIN, "Thread creation\n" );
 
   debug ( MAIN, "Adding Kernel threads\n" );
 
