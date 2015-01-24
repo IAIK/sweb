@@ -7,12 +7,11 @@
 #define _ATA_DEVICE_DRIVER_
 
 #include "BDDriver.h"
-#include "arch_bd_io.h"
 #include "Mutex.h"
 
 class BDRequest;
 
-class ATADriver : public BDDriver, bdio
+class ATADriver : public BDDriver
 {
   public:
   

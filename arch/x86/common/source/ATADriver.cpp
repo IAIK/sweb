@@ -27,9 +27,9 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
 
   debug(ATA_DRIVER, "ctor: Requesting disk geometry !!\n");
 
-  outbp (port + 6, drive);  // Get first drive
-  outbp (port + 7, 0xEC);   // Get drive info data
-  while (  inbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT )
+  outportbp (port + 6, drive);  // Get first drive
+  outportbp (port + 7, 0xEC);   // Get drive info data
+  while (  inportbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT )
     ArchInterrupts::yieldIfIFSet();
 
   if( jiffies >= IO_TIMEOUT )
@@ -39,7 +39,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
   }
 
   for (dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
-    dd [dd_off] = inw ( port );
+    dd [dd_off] = inportw ( port );
 
   debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
 
@@ -105,7 +105,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   //MutexLock mlock(lock_);
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if(jiffies >= IO_TIMEOUT)
   {
@@ -142,15 +142,15 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
   //debug(ATA_DRIVER, "readSector:(drive | head): %d, num_sectors: %d, sect: %d, lo: %d, high: %d!!\n",(drive | head),num_sectors,sect,lo,high);
 
-  outbp(port + 6, (drive | head)); // drive and head selection
-  outbp(port + 2, num_sectors); // number of sectors to read
-  outbp(port + 3, sect); // starting sector
-  outbp(port + 4, lo); // cylinder low
-  outbp(port + 5, high); // cylinder high
+  outportbp(port + 6, (drive | head)); // drive and head selection
+  outportbp(port + 2, num_sectors); // number of sectors to read
+  outportbp(port + 3, sect); // starting sector
+  outportbp(port + 4, lo); // cylinder low
+  outportbp(port + 5, high); // cylinder high
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while (!(inbp(port + 7) & 0x40) && jiffies++ < IO_TIMEOUT)
+  while (!(inportbp(port + 7) & 0x40) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if (jiffies >= IO_TIMEOUT)
   {
@@ -163,13 +163,13 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   {
 
     /* Write the command code to the command register */
-    outbp(port + 7, 0x20); // command
+    outportbp(port + 7, 0x20); // command
 
     if (mode != BD_PIO_NO_IRQ)
       return 0;
 
     jiffies = 0;
-    while (inbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT)
+    while (inportbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT)
       ArchInterrupts::yieldIfIFSet();
     if (jiffies >= IO_TIMEOUT)
     {
@@ -186,11 +186,11 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   uint32 counter;
   uint16 *word_buff = (uint16 *) buffer;
   for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
-      word_buff [counter] = inw ( port );
+      word_buff [counter] = inportw ( port );
  
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if(jiffies >= IO_TIMEOUT)
   {
@@ -208,7 +208,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   //MutexLock mlock(lock_);
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if(jiffies >= IO_TIMEOUT)
   {
@@ -231,15 +231,15 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   uint8 high = cyls >> 8;
   uint8 lo = cyls & 0x00FF;
-  outbp( port + 6, (drive | head) ); // drive and head selection
-  outbp( port + 2, num_sectors );    // number of sectors to write
-  outbp( port + 3, sect );           // starting sector
-  outbp( port + 4, lo );             // cylinder low
-  outbp( port + 5, high );           // cylinder high
+  outportbp( port + 6, (drive | head) ); // drive and head selection
+  outportbp( port + 2, num_sectors );    // number of sectors to write
+  outportbp( port + 3, sect );           // starting sector
+  outportbp( port + 4, lo );             // cylinder low
+  outportbp( port + 5, high );           // cylinder high
 
   /* Wait for drive to set DRDY */
   jiffies = 0;
-  while(!(inbp(port+7) & 0x40) && jiffies++ < IO_TIMEOUT)
+  while(!(inportbp(port+7) & 0x40) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if(jiffies >= IO_TIMEOUT)
   {
@@ -249,10 +249,10 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
 
   /* Write the command code to the command register */
-  outbp( port + 7, 0x30 );           // command
+  outportbp( port + 7, 0x30 );           // command
 
   jiffies = 0;
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
+  while( inportbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
 
   if(jiffies >= IO_TIMEOUT )
@@ -268,11 +268,11 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
   uint32 counter;
   for (counter = 0; counter != count2; counter++) 
-      outw ( port, word_buff [counter] );
+      outportw ( port, word_buff [counter] );
  
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if(jiffies >= IO_TIMEOUT)
   {
@@ -281,11 +281,11 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   }
 
   /* Write flush code to the command register */
-  outbp (port + 7, 0xE7);
+  outportbp (port + 7, 0xE7);
     
   /* Wait for drive to clear BUSY */
   jiffies = 0;
-  while((inbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
+  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
   if(jiffies >= IO_TIMEOUT)
   {
@@ -364,7 +364,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
 bool ATADriver::waitForController( bool resetIfFailed = true )
 {
   uint32 jiffies = 0;
-  while( inbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
+  while( inportbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
 
   if(jiffies >= IO_TIMEOUT )
@@ -373,8 +373,8 @@ bool ATADriver::waitForController( bool resetIfFailed = true )
     if( resetIfFailed )
     {
       debug(ATA_DRIVER, "waitForController: reseting\n");
-      outbp( port + 0x206, 0x04 );
-      outbp( port + 0x206, 0x00 ); // RESET
+      outportbp( port + 0x206, 0x04 );
+      outportbp( port + 0x206, 0x00 ); // RESET
     }
     return false;
   }
@@ -389,8 +389,8 @@ void ATADriver::serviceIRQ()
   if( request_list_ == 0 )
   {
     debug(ATA_DRIVER, "serviceIRQ: IRQ without request!!\n");
-    outbp( port + 0x206, 0x04 );
-    outbp( port + 0x206, 0x00 ); // RESET COTROLLER
+    outportbp( port + 0x206, 0x04 );
+    outportbp( port + 0x206, 0x00 ); // RESET COTROLLER
     debug(ATA_DRIVER, "serviceIRQ: Reset controller!!\n");
     return; // not my interrupt
   }
@@ -414,7 +414,7 @@ void ATADriver::serviceIRQ()
     }
 
     for(counter = blocks_done * 256; counter!=(blocks_done + 1) * 256; counter++ )
-      word_buff [counter] = inw ( port );
+      word_buff [counter] = inportw ( port );
 
     blocks_done++;
     br->setBlocksDone( blocks_done );
@@ -453,7 +453,7 @@ void ATADriver::serviceIRQ()
       }
 	
       for(counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
-        outw ( port, word_buff [counter] );
+        outportw ( port, word_buff [counter] );
 
       br->setBlocksDone( blocks_done );
     }

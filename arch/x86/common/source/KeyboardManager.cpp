@@ -75,7 +75,7 @@ void KeyboardManager::kb_wait()
 void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
 {
   kb_wait();
-  outbp( port, cmd );
+  outportbp( port, cmd );
 }
 
 void KeyboardManager::serviceIRQ( void )
