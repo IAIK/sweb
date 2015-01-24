@@ -53,7 +53,6 @@ static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 
     gdt[index].limitH = (uint8) (((limit >> 16U) & 0xF));
     gdt[index].typeH  = 0xC; // 4kb + 32bit
     gdt[index].typeL  = (tss ? 0x89 : 0x92) | (dpl << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
-    return;
 }
 
 void SegmentUtils::initialise()
