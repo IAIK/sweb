@@ -3,8 +3,8 @@
  *
  */
 
-#include "arch_serial.h"
-#include "serial.h"
+#include "ArchSerialInfo.h"
+#include "SerialManager.h"
 #include "string.h"
 
 #include "debug_bochs.h"

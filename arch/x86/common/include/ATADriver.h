@@ -6,7 +6,7 @@
 #ifndef _ATA_DEVICE_DRIVER_
 #define _ATA_DEVICE_DRIVER_
 
-#include "arch_bd_driver.h"
+#include "BDDriver.h"
 #include "arch_bd_io.h"
 #include "Mutex.h"
 

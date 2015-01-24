@@ -3,10 +3,9 @@
  *
  */
  
-#include "arch_mmc_driver.h"
-#include "arch_bd_manager.h"
-#include "arch_bd_request.h"
-
+#include "BDManager.h"
+#include "BDRequest.h"
+#include "MMCDriver.h"
 #include "ArchInterrupts.h"
 
 #include "Scheduler.h"

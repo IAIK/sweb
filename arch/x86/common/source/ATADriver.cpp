@@ -2,11 +2,11 @@
  * @file arch_bd_ata_driver.cpp
  *
  */
- 
-#include "arch_bd_ata_driver.h"
-#include "arch_bd_manager.h"
-#include "arch_bd_request.h"
 
+#include "ATADriver.h"
+
+#include "BDManager.h"
+#include "BDRequest.h"
 #include "ArchInterrupts.h"
 #include "8259.h"
 

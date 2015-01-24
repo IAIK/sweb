@@ -3,7 +3,7 @@
  *
  */
 
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 #include "kprintf.h"
 #include "usbd/usbd.h"
 #include "device/hid/hid.h"

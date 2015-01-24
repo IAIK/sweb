@@ -4,9 +4,9 @@
  */
 
 #include "ArchInterrupts.h"
-#include "arch_bd_virtual_device.h"
-#include "arch_bd_driver.h"
-#include "arch_bd_request.h"
+#include "BDDriver.h"
+#include "BDRequest.h"
+#include "BDVirtualDevice.h"
 #include "kmalloc.h"
 #include "string.h"
 #include "debug.h"

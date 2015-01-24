@@ -6,7 +6,7 @@
 #ifndef _ARCH_MMC_DRIVER_
 #define _ARCH_MMC_DRIVER_
 
-#include "arch_bd_driver.h"
+#include "BDDriver.h"
 #include "Mutex.h"
 
 class BDRequest;

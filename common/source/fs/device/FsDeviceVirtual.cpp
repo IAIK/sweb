@@ -9,7 +9,7 @@
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 
 #include "fs/device/FsDeviceVirtual.h"
-#include "arch_bd_virtual_device.h"
+#include "BDVirtualDevice.h"
 
 #include "kprintf.h"
 

@@ -3,7 +3,7 @@
  *
  */
 
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 #include "kprintf.h"
 #include "board_constants.h"
 #include "Console.h"

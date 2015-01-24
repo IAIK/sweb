@@ -3,10 +3,11 @@
  *
  */
  
-#include "arch_bd_ide_driver.h"
-#include "arch_bd_ata_driver.h"
-#include "arch_bd_virtual_device.h"
-#include "arch_bd_manager.h"
+#include "IDEDriver.h"
+
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
+#include "ATADriver.h"
 #include "ports.h"
 #include "kmalloc.h"
 #include "string.h"

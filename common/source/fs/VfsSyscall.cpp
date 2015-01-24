@@ -30,8 +30,8 @@
 #include "fs/device/FsDeviceVirtual.h"
 
 #ifndef USE_FILE_SYSTEM_ON_GUEST_OS
-#include "arch_bd_virtual_device.h"
-#include "arch_bd_manager.h"
+#include "BDVirtualDevice.h"
+#include "BDManager.h"
 #include "console/kprintf.h"
 #else
 #include "debug_print.h"

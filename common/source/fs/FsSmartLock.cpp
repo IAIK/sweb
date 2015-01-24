@@ -6,8 +6,8 @@
  * Author: chris
  */
 
-#include "../../include/fs/FsSmartLock.h"
-#include "../../include/fs/FileSystemLock.h"
+#include "fs/FsSmartLock.h"
+#include "fs/FileSystemLock.h"
 
 FsSmartLock::FsSmartLock(FileSystemLock* fs_lock) : fs_lock_(fs_lock), relase_on_destruction_(false)
 {

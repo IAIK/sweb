@@ -4,16 +4,17 @@
  */
 
 #include "InterruptUtils.h"
+
+#include "ArchSerialInfo.h"
+#include "BDManager.h"
 #include "ArchMemory.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "kprintf.h"
 #include "Scheduler.h"
 
-#include "arch_serial.h"
-#include "serial.h"
-#include "arch_keyboard_manager.h"
-#include "arch_bd_manager.h"
+#include "SerialManager.h"
+#include "KeyboardManager.h"
 #include "ArchInterrupts.h"
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"

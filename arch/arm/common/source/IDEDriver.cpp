@@ -3,10 +3,10 @@
  *
  */
  
-#include "arch_bd_ide_driver.h"
-#include "arch_mmc_driver.h"
-#include "arch_bd_virtual_device.h"
-#include "arch_bd_manager.h"
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
+#include "IDEDriver.h"
+#include "MMCDriver.h"
 #include "kmalloc.h"
 #include "string.h"
 #include "ArchInterrupts.h"
