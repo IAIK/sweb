@@ -98,6 +98,7 @@ public:
   uint32 page_dir_page_;
 
   uint32 getRootOfPagingStructure();
+  uint32 getValueForCR3();
   static PageDirEntry* getRootOfKernelPagingStructure();
 
   static const size_t RESERVED_START = 0x80000ULL;

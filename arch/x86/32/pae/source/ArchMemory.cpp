@@ -6,6 +6,7 @@
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
+#include "offsets.h"
 #include "ArchCommon.h"
 #include "PageManager.h"
 
@@ -224,6 +225,13 @@ PageDirPointerTableEntry* ArchMemory::getRootOfPagingStructure()
 PageDirPointerTableEntry* ArchMemory::getRootOfKernelPagingStructure()
 {
   return kernel_page_directory_pointer_table;
+}
+
+uint32 ArchMemory::getValueForCR3()
+{
+  // last 5 bits must be zero!
+  assert(((uint32)page_dir_pointer_table_ & 0x1F) == 0);
+  return VIRTUAL_TO_PHYSICAL_BOOT((uint32)page_dir_pointer_table_);
 }
 
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)

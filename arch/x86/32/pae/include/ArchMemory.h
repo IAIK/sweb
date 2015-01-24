@@ -106,6 +106,7 @@ public:
 
   PageDirPointerTableEntry* page_dir_pointer_table_;
   PageDirPointerTableEntry* getRootOfPagingStructure();
+  uint32 getValueForCR3();
   static PageDirPointerTableEntry* getRootOfKernelPagingStructure();
 
   static const size_t RESERVED_START = 0x80000ULL;
