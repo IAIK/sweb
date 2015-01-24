@@ -19,14 +19,15 @@ typedef struct {
     uint8 baseH;
 } __attribute__((__packed__))SegmentDescriptor;
 
-SegmentDescriptor gdt[7];
+SegmentDescriptor gdt[8];
 struct GDTPtr
 {
   uint16 limit;
   uint32 addr;
 } __attribute__((__packed__)) gdt_ptr;
 
-TSS *g_tss;
+TSS g_tss;
+uint32 core0_local_storage[1024] __attribute__((__aligned__(4096)));
 
 extern "C" void reload_segments()
 {
@@ -37,13 +38,14 @@ extern "C" void reload_segments()
       "mov %%ax, %%es\n"
       "mov %%ax, %%ss\n"
       "mov %%ax, %%fs\n"
-      "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
+  asm("mov %%ax, %%gs\n" : : "a"(KERNEL_GS_CORE0));
   // jump onto the new code segment
   asm("ljmp %[cs],$1f\n"
       "1:": : [cs]"i"(KERNEL_CS));
 }
 
+#include "kprintf.h"
 static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
 {
     gdt[index].baseL  = (uint16)(base & 0xFFFF);
@@ -55,26 +57,26 @@ static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 
     gdt[index].typeL  = (tss ? 0x89 : 0x92) | (dpl << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
-extern char core0_local_storage;
-#include "kprintf.h"
 void SegmentUtils::initialise()
 {
   setSegmentDescriptor(2, 0, -1U, 0, 0, 0);
   setSegmentDescriptor(3, 0, -1U, 0, 1, 0);
   setSegmentDescriptor(4, 0, -1U, 3, 0, 0);
-  setSegmentDescriptor(5, 0, -1U, 3, 1, 0); // 89 C0
-  void* core0_local_storage_end =  (&core0_local_storage) - 4096;
-  asm volatile("mov    %0,%%eax\n"
-               "mov %%eax,%%gs:0x0\n": "=m" (core0_local_storage_end));
+  setSegmentDescriptor(5, 0, -1U, 3, 1, 0);
+  setSegmentDescriptor(6, (uint32)(core0_local_storage), 1, 0, 0, 0);
 
-  g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
-  memset((void*)g_tss, 0, sizeof(TSS));
-  g_tss->ss0 = KERNEL_SS;
-  setSegmentDescriptor(6, (uint32)g_tss, sizeof(TSS)-1, 0, 0, 1);
+  g_tss.ss0 = KERNEL_SS;
+  setSegmentDescriptor(7, (uint32)&g_tss, sizeof(TSS)-1, 0, 0, 1);
+
   // we have to reload our segment stuff
   gdt_ptr.limit = sizeof(gdt) - 1;
   gdt_ptr.addr = (uint32)gdt;
   reload_segments();
+
   int val = KERNEL_TSS;
   asm volatile("ltr %0\n" : : "m" (val));
+
+  uint32* core0_local_storage_end = core0_local_storage;
+  asm volatile("mov    %0,%%eax\n"
+               "mov %%eax,%%gs:0x0\n": : "m" (core0_local_storage_end));
 }

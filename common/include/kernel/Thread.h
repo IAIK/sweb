@@ -18,7 +18,7 @@ class Terminal;
 class Mutex;
 class FsWorkingDirectory;
 
-extern Thread* currentThread;
+extern __thread Thread* currentThread;
 
 class Thread
 {

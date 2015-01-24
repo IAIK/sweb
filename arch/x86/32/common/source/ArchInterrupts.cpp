@@ -153,7 +153,7 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
 }
 
-extern TSS *g_tss;
+extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
@@ -168,7 +168,7 @@ extern "C" void arch_contextSwitch()
   {
     asm("mov %[esp], %%esp\n" : : [esp]"m"(info.esp));
   }
-  g_tss->esp0 = info.esp0;
+  g_tss.esp0 = info.esp0;
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[eflags]\n" : : [eflags]"m"(info.eflags));
