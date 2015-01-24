@@ -101,10 +101,8 @@ class KernelMemoryManager
   public:
     /**
      * createMemoryManager is called by startup() and does exatly what it's name promises
-     * @param start_address the first free memory address
-     * @param end_address the last address where memory is accessible (i.e. pages mapped)
      */
-    static uint32 createMemoryManager ( pointer start_address, pointer end_address );
+    static uint32 createMemoryManager ();
 
     /**
      * the access method to the singleton instance

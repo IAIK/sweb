@@ -72,18 +72,15 @@ extern "C" void startup()
   removeBootTimeIdentMapping();
   we_are_dying = 0;
   boot_completed = 0;
-  pointer start_address = ArchCommon::getFreeKernelMemoryStart();
-  pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
   //extend Kernel Memory here
-  KernelMemoryManager::createMemoryManager(start_address, end_address);
+  KernelMemoryManager::createMemoryManager();
   writeLine2Bochs("Kernel Memory Manager created \n");
-  writeLine2Bochs("Creating Page Manager...\n");
   PageManager::createPageManager();
   writeLine2Bochs("PageManager created \n");
 
   //SerialManager::getInstance()->do_detection( 1 );
 
-  main_console = ArchCommon::createConsole(4);
+  main_console = ArchCommon::createConsole(1);
   writeLine2Bochs("Console created \n");
 
   Terminal *term_0 = main_console->getTerminal ( 0 ); // add more if you need more...

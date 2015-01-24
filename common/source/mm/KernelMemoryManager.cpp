@@ -15,8 +15,10 @@ extern uint32 boot_completed;
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
-uint32 KernelMemoryManager::createMemoryManager ( pointer start_address, pointer end_address )
+uint32 KernelMemoryManager::createMemoryManager ()
 {
+  pointer start_address = ArchCommon::getFreeKernelMemoryStart();
+  pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
   //start_address will propably be &kernel_end_address defined in linker script
   //since we don't have memory management before creating the MemoryManager, we use "placement new"
   instance_ = new ( ( void* ) start_address ) KernelMemoryManager ( start_address + sizeof ( KernelMemoryManager ),end_address );
