@@ -28,7 +28,8 @@ int32 FileSystemInfo::setName ( const char* pathname, uint32 length )
     path_len = length + 1;
 
   pathname_ = new char[path_len];
-  strlcpy ( pathname_, pathname, path_len );
+  strncpy ( pathname_, pathname, path_len );
+  pathname_[path_len-1] = 0;
 
   return 0;
 }

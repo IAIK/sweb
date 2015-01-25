@@ -240,7 +240,8 @@ char* PathWalker::getNextPart ( const char* path, int32 &npart_len )
   if ( length != 0 )
   {
     npart = new char[length];
-    strlcpy ( npart, path, length );
+    strncpy ( npart, path, length );
+    npart[length-1] = 0;
   }
 
   return npart;

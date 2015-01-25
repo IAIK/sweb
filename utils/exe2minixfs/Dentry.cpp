@@ -97,7 +97,8 @@ void Dentry::setName ( const char* name )
   uint32 name_len = strlen ( name ) + 1;
   d_name_ = new char[name_len];
 
-  strlcpy ( d_name_, name, name_len );
+  strncpy ( d_name_, name, name_len );
+  d_name_[name_len-1];
   //std::cout << "name: " << name << std::endl;
 }
 
