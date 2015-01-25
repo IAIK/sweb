@@ -10,7 +10,14 @@
 #include <sstream>
 #include <stdlib.h>
 
+#include "Dentry.h"
+#include "FileSystemInfo.h"
+#include "Superblock.h"
+#include "MinixFSSuperblock.h"
 #include "VfsSyscall.h"
+
+Superblock* superblock_;
+extern FileSystemInfo* fs_info;
 
 int main (int argc, char *argv[])
 {
@@ -32,8 +39,8 @@ int main (int argc, char *argv[])
   try
   {
     std::istringstream stream(argv[2]);
-    uint64 asdf;
-    stream >> asdf;
+    uint64 offset;
+    stream >> offset;
     if(stream.fail() || !stream.eof())
     {
       close(image_fd);
@@ -41,7 +48,14 @@ int main (int argc, char *argv[])
       return -1;
     }
 
-    VfsSyscall vfs_syscall(image_fd, asdf);
+    superblock_ = (Superblock*) new MinixFSSuperblock(0, image_fd, offset);
+    Dentry *mount_point = superblock_->getMountPoint();
+    mount_point->setMountPoint ( mount_point );
+    Dentry *root = superblock_->getRoot();
+
+    fs_info = new FileSystemInfo();
+    fs_info->setFsRoot ( root);
+    fs_info->setFsPwd ( root);
 
     for(int32 i=2; i <= argc/2; i++)
     {
@@ -61,18 +75,21 @@ int main (int argc, char *argv[])
       read(src_file, buf, size);
       close(src_file);
 
-      vfs_syscall.rm(argv[2*i]);
-      int32 fd = vfs_syscall.open(argv[2*i], O_RDWR);
+      VfsSyscall::rm(argv[2*i]);
+      int32 fd = VfsSyscall::open(argv[2*i], 2 | 4); // O_RDWR | O_CREAT
       if(fd < 0)
       {
+        std::cout << "no success" << std::endl;
         delete[] buf;
         continue;
       }
-      vfs_syscall.write(fd, buf, size);
-      vfs_syscall.close(fd);
+      VfsSyscall::write(fd, buf, size);
+      VfsSyscall::close(fd);
 
       delete[] buf;
     }
+    delete fs_info;
+    delete superblock_;
   }
   catch(std::bad_alloc const &exc)
   {
@@ -86,7 +103,6 @@ int main (int argc, char *argv[])
     close(image_fd);
     return -1;
   }
-
   close(image_fd);
   return 0;
 }

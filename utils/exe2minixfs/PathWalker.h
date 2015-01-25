@@ -9,9 +9,7 @@
 
 // forward declarations
 class Dentry;
-class PathWalker;
-
-extern PathWalker path_walker;
+class VfsMount;
 
 #define MAX_NAME_LEN 100
 
@@ -67,18 +65,6 @@ enum {
 };
 
 /**
- * @enum Error Codes for the path init
- */
-enum
-{
-    PI_SUCCESS = 0,
-    /**
-     * The path was not found
-     */
-    PI_ENOTFOUND
-};
-
-/**
  * @enum Error Codes for the path walk
  */
 enum
@@ -94,12 +80,6 @@ enum
     PW_EINVALID
 };
 
-
-/**
- * The maximal length of a filename
- */
-//#define MAX_NAME_LENGTH 4096 --- depending on file system
-
 /**
  * @class PathWalker
  * this class illustrate how the VFS derives an inode from the corresponding
@@ -108,35 +88,32 @@ enum
  */
 class PathWalker
 {
+  public:
+
+    /**
+     * check the first character of the path (begins with '/' or
+     * with pwd). Initialize the flags_.
+     * takes care of the lookup operation and stores the pointers
+     * to the dentry_ object and mounted filesystem object relative to the last
+     * component of the pathname.
+     * @param pathname A pointer to the file pathname to be resolved
+     * @param flags The vlaue of flags that represent how to look-up file is going
+     *         to be accessed
+     * @return On success, it is returned 0. On error, it return a non-Null value.
+     */
+    static int32 pathWalk ( const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_, VfsMount*& vfs_mount_ );
 
   protected:
 
-    /**
-     * The resluting Dentry after the lookup has succeded
-     */
-    Dentry *dentry_;
 
     /**
-     * The Mount the path is located in
+     * extract the first part of a path
+     * @param path is a char* containing the path to get the next part from.
+     * @param npart_len will be set to the length of the next part
+     * @return length of the next part
      */
-    //VfsMount* vfs_mount_;
-
-    /**
-     * The lookup flags
-     */
-    int32 flags_;
-
-    /**
-     * Flag indicating the type of the last path component.
-     */
-    int32 last_type_;
-
-    /**
-     * The last path component
-     */
-    char* last_;
-
-  public:
+    static int32 getNextPartLen ( const char* path, int32& npart_len );
+  private:
 
     /**
      * The Constructor
@@ -147,62 +124,6 @@ class PathWalker
      * The destructor
      */
     ~PathWalker();
-
-    /**
-     * this method check the first character of the path (begins with '/' or
-     * with pwd). Initialize the flags_.
-     * @param pathname A pointer to the file pathname to be resolved
-     * @param flags The vlaue of flags that represent how to look-up file is going
-     *         to be accessed
-     * @return On success, it is returned 0. On error, it return a non-Null value.
-     */
-    int32 pathInit ( const char* pathname, uint32 flags );
-
-    /**
-     * this method takes care of the lookup operation and stores the pointers
-     * to the dentry_ object and mounted filesystem object relative to the last
-     * component of the pathname.
-     * @param pathname A pointer to the file pathname to be resolved
-     * @return On success, it is returned 0. On error, it return a non-Null value.
-     */
-    int32 pathWalk ( const char* pathname );
-
-    /**
-     * this method terminate the pathname lookup of the mount point.
-     */
-    void pathRelease();
-
-    /**
-     * get the dentry from the class
-     * @return the dentry
-     */
-    Dentry* getDentry() { return dentry_; }
-
-    /**
-     * get the VfsMount from the class
-     * @return the VfsMount
-     */
-    //VfsMount* getVfsMount() { return vfs_mount_; }
-
-  protected:
-
-
-    /**
-     * extract the first part of a path
-     * @param path is a char* cantaining the path to get the next part from.
-     * @param npart will be filled with a newly allocated copy of the next part.
-     * @return is the start position of the extracted part in path.
-     *          It is empty if there is no next part
-     *          In case of an error a null pointer is returned.
-     */
-    char* getNextPart ( const char* path, int32 &npart_len );
-
-    /**
-     * Skip any leading slashes on path.
-     * @return is a pointer to the first charachter that is not a '/'.
-     */
-    //char *skipSeparator ( char const */*path*/ ) const;
-
 };
 
 #endif

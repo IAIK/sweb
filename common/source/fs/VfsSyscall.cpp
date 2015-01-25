@@ -233,7 +233,7 @@ int32 VfsSyscall::chdir(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
-    kprintfd("Error: (chdir) the directory does not exist.\n");
+    debug(VFSSYSCALL,"Error: (chdir) the directory does not exist.\n");
     fs_info->putName();
     return -1;
   }
@@ -260,7 +260,7 @@ int32 VfsSyscall::rm(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
-    kprintfd("Error: (rm) the directory does not exist.\n");
+    debug(VFSSYSCALL,"Error: (rm) the directory does not exist.\n");
     fs_info->putName();
     return -1;
   }
@@ -302,7 +302,7 @@ int32 VfsSyscall::rmdir(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
-    kprintfd("Error: (rmdir) the directory does not exist.\n");
+    debug(VFSSYSCALL,"Error: (rmdir) the directory does not exist.\n");
     fs_info->putName();
     return -1;
   }
@@ -351,7 +351,7 @@ int32 VfsSyscall::close(uint32 fd)
 
   if (file_descriptor == 0)
   {
-    kprintfd("(close) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL,"(close) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -431,7 +431,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     if (current_inode->getType() != I_DIR)
     {
-      kprintfd("(open) Error: This path is not a directory\n\n");
+      debug(VFSSYSCALL,"(open) Error: This path is not a directory\n\n");
       return -1;
     }
 
@@ -472,7 +472,7 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
   if (file_descriptor == 0)
   {
-    kprintfd("(read) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL,"(read) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -488,7 +488,7 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 
   if (file_descriptor == 0)
   {
-    kprintfd("(write) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL,"(write) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -502,7 +502,7 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 
   if (file_descriptor == 0)
   {
-    kprintfd("(lseek) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL,"(lseek) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -518,7 +518,7 @@ int32 VfsSyscall::flush(uint32 fd)
 
   if (file_descriptor == 0)
   {
-    kprintfd("(read) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL,"(read) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -555,7 +555,7 @@ uint32 VfsSyscall::getFileSize(uint32 fd)
 
   if (file_descriptor == 0)
   {
-    kprintfd("(read) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL,"(read) Error: the fd does not exist.\n");
     return -1;
   }
 
