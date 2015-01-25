@@ -3,12 +3,22 @@
  */
 
 #include "FileDescriptor.h"
-#include "PointList.h"
-//#include "ArchThreads.h"
+#include <list>
 
-PointList<FileDescriptor> global_fd;
+std::list<FileDescriptor*> global_fd;
+
 
 static uint32 fd_num_ = 3;
+
+void FileDescriptor::add(FileDescriptor* fd)
+{
+  global_fd.push_back(fd);
+}
+
+void FileDescriptor::remove(FileDescriptor* fd)
+{
+  global_fd.remove(fd);
+}
 
 FileDescriptor::FileDescriptor(File* file)
 {

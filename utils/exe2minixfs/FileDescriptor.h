@@ -6,8 +6,12 @@
 #define FILEDESCRIPTOR_H__
 
 #include "MinixFSTypes.h"
+#include <list>
 
 class File;
+class FileDescriptor;
+
+extern std::list<FileDescriptor*> global_fd;
 
 /**
  * @class FileDescriptor
@@ -48,6 +52,18 @@ class FileDescriptor
      * @return the file
      */
     File* getFile() { return file_; }
+
+    /**
+     * add fd to global fd list
+     * @param fd
+     */
+    static void add(FileDescriptor* fd);
+
+    /**
+     * remove fd from global fd list
+     * @param fd
+     */
+    static void remove(FileDescriptor* fd);
 };
 
 #endif // FILEDESCRIPTOR_H_

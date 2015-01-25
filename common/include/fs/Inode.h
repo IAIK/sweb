@@ -46,20 +46,12 @@ class Inode
 {
   protected:
     /**
-     * The i_list_ linked list links inodes in various states. There is the
-     * inode_in_use list which lists unchanged inodes that are in active use.
-     * inode_unused which lists unused inodes, and the s_dirty_ of Superblock
-     * class store all the dirty inodes on the given file system.
-     */
-    // PointList<Inode> i_list_;
-
-    /**
      * The dentry of this inode. (dir)
      */
     Dentry *i_dentry_;
 
     /**
-     * The dentry-PointList of this inode. (file)
+     * The dentry-List of this inode. (file)
      */
     ustl::list<Dentry*> i_dentry_link_;
 
@@ -82,16 +74,6 @@ class Inode
      * current file size in bytes
      */
     uint32 i_size_;
-
-    /**
-     * The basic block size of inode.
-     */
-    // uint64 i_blksize_;
-
-    /**
-     * The power of 2 that i_blksize_ is.
-     */
-    // uint32 i_blocks_;
 
     /**
      * There are three possible inode type bits: I_FILE, I_DIR, I_LNK

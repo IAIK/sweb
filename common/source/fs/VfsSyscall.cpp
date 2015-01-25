@@ -29,18 +29,15 @@
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
   extern Mutex global_fd_lock;
-  FileDescriptor* file_descriptor = 0;
   MutexLock mlock(global_fd_lock);
-  for (ustl::list<FileDescriptor*>::iterator it = global_fd.begin(); it != global_fd.end(); it++)
+  for (auto it : global_fd)
   {
-    if ((*it)->getFd() == fd)
+    if (it->getFd() == fd)
     {
-      file_descriptor = *it;
       debug(VFSSYSCALL, "found the fd\n");
-      break;
+      return it;
     }
   }
-  return file_descriptor;
 }
 
 int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount )

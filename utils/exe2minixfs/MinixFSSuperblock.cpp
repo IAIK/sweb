@@ -24,7 +24,7 @@
 
 #define ROOT_NAME "/"
 
-extern PointList<FileDescriptor> global_fd;
+extern std::list<FileDescriptor*> global_fd;
 
 
 MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev, uint64 offset ) : Superblock ( s_root, s_dev )
@@ -360,7 +360,7 @@ int32 MinixFSSuperblock::createFd ( Inode* inode, uint32 flag )
   File* file = inode->link ( flag );
   FileDescriptor* fd = new FileDescriptor ( file );
   s_files_.pushBack ( fd );
-  global_fd.pushBack ( fd );
+  global_fd.push_back ( fd );
 
   if ( !used_inodes_.included ( inode ) )
   {

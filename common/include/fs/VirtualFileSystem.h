@@ -33,12 +33,12 @@ class VirtualFileSystem
   protected:
 
     /**
-     * PoinList of Superblock
+     * List of Superblock
      */
     ustl::list<Superblock*> superblocks_;
 
     /**
-     * PointList of mounted Filesystems
+     * List of mounted Filesystems
      */
     ustl::list<VfsMount*> mounts_;
 

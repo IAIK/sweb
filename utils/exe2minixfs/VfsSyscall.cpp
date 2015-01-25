@@ -17,7 +17,7 @@
 #include "string.h"
 
 extern FileSystemInfo *fs_info;
-extern PointList<FileDescriptor> global_fd;
+extern std::list<FileDescriptor*> global_fd;
 
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
@@ -43,18 +43,14 @@ VfsSyscall::~VfsSyscall()
 
 FileDescriptor* VfsSyscall::getFileDescriptor ( uint32 fd )
 {
-  FileDescriptor* file_descriptor = 0;
-  uint32 num = global_fd.getLength();
-  for ( uint32 counter = 0; counter < num; counter++ )
+  for (auto it : global_fd)
   {
-    if ( global_fd.at ( counter )->getFd() == fd )
+    if (it->getFd() == fd)
     {
-      file_descriptor = global_fd.at ( counter );
-      //debug ( VFSSYSCALL,"found the fd\n" );
-      break;
+      debug(VFSSYSCALL, "found the fd\n");
+      return it;
     }
   }
-  return file_descriptor;
 }
 
 

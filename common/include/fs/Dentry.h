@@ -21,11 +21,6 @@ class Dentry
   protected:
 
     /**
-     * Dentry object usage count
-     */
-    // int32 d_count_;
-
-    /**
      * The pointer to the inode related to this name.
      */
     Inode *d_inode_;
@@ -43,25 +38,11 @@ class Dentry
     ustl::list<Dentry*> d_child_;
 
     /**
-     * This is the head of the d_child list that links all the children of this
-     * dentry. Of course, elements may refer to file and not just
-     * sub-directories.
-     */
-    // PointList<Dentry> d_subdirs_;
-
-    /**
      * For a directory that has had a file-system mounted on it, this points to
      * the mount point of that current file-system. For other dentries, this
      * points back to the dentry itself.
      */
     Dentry *d_mounts_;
-
-    /**
-     * This is the inverse of d_mounts_. For the root of a mounted file-system,
-     * this points to the dentry of the directory that it is mounted on. For
-     * other dentrys, this points to the dentry itself.
-     */
-    // Dentry *d_covers_;
 
     /**
      * The d_name field contains the name of this entry, together with its hash
@@ -193,23 +174,6 @@ class Dentry
      * destructor
      */
     virtual ~Dentry();
-
-    /**
-     * This method is called whenever a path lookup uses an entry in the dcache,
-     * in odrder to see if the entry is still valid. It is only needed if the
-     * file-system is likely to change without the VFS layer doing anything.
-     * @param dentry the input dentry.
-     * @param lookup_falgs gives the flags relevant to this lookup.
-     * @return It returns 1 if the entry can still be trusted, else 0. The
-     * default is to assume a return value of 1.
-     */
-    // virtual int32 d_revalidate(Dentry *dentry, int lookup_flags) {return 0;}
-
-    /**
-     * This is called when the reference count reaches zero, before the dentry
-     * is placed on the dentry_unused list.
-     */
-    // virtual void d_delete();
 };
 
 
