@@ -83,7 +83,8 @@ int32 PathWalker::pathWalk ( const char* pathname, uint32 flags_ __attribute__ (
     int32 npart_pos = 0;
     int32 npart_len = getNextPartLen ( pathname, npart_pos );
     char npart[npart_len];
-    strlcpy ( npart, pathname, npart_len );
+    strncpy ( npart, pathname, npart_len );
+    npart[npart_len-1] = 0;
     debug ( PATHWALKER,  "pathWalk> npart : %s\n", npart );
     debug ( PATHWALKER,  "pathWalk> npart_pos : %d\n", npart_pos );
     if ( npart_pos < 0 )

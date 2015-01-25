@@ -9,12 +9,6 @@
 #include "Inode.h"
 #include "string.h"
 #include <iostream>
-//extern size_t strlcpy ( char* dest, const char* src, size_t size );
-
-#define STRLCOPY_ERR "strlcpy error"
-
-//#include "console/kprintf.h"
-//#include "console/debug.h"
 
 Dentry::Dentry ( const char* name ) : d_name_(0)
 {

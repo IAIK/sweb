@@ -9,8 +9,6 @@
 #include "fs/Inode.h"
 #include <ustl/ualgo.h>
 
-#define STRLCOPY_ERR "strlcpy error"
-
 #include "console/kprintf.h"
 #include "console/debug.h"
 
@@ -87,7 +85,8 @@ void Dentry::setName ( const char* name )
   uint32 name_len = strlen ( name ) + 1;
   d_name_ = ( char* ) kmalloc ( name_len * sizeof ( char ) );
 
-  strlcpy ( d_name_, name, name_len );
+  strncpy ( d_name_, name, name_len );
+  d_name_[name_len-1] = 0;
 }
 
 

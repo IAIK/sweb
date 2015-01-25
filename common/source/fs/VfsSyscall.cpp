@@ -73,7 +73,8 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
     char *path_tmp_ptr = path_tmp;
     *path_tmp_ptr++ = CHAR_DOT;
     *path_tmp_ptr++ = SEPARATOR;
-    strlcpy(path_tmp_ptr, pathname, path_len);
+    strncpy(path_tmp_ptr, pathname, path_len);
+    path_tmp_ptr[path_len - 1] = 0;
 
     fs_info->setName(path_tmp);
   }
@@ -100,7 +101,8 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   }
   debug(VFSSYSCALL, "(mkdir) pathRelease();\n");
   char path_tmp[strlen(fs_info->getName()) + 1];
-  strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+  strncpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+  path_tmp[strlen(fs_info->getName())] = 0;
   fs_info->putName();
 
   char* char_tmp = strrchr(path_tmp, SEPARATOR);
@@ -136,7 +138,8 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   char_tmp++;
   uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
   char path_next_name[path_next_len];
-  strlcpy(path_next_name, char_tmp, path_next_len);
+  strncpy(path_next_name, char_tmp, path_next_len);
+  path_next_name[path_next_len-1] = 0;
 
   // create a new dentry
   Dentry *sub_dentry = new Dentry(current_dentry);
@@ -163,7 +166,8 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
     char path_tmp[strlen(fs_info->getName()) + 1];
-    strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+    strncpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+    path_tmp[strlen(fs_info->getName())] = 0;
     fs_info->putName();
 
     char* char_tmp = strrchr(path_tmp, SEPARATOR);
@@ -418,7 +422,8 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
     char path_tmp[strlen(fs_info->getName()) + 1];
-    strlcpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+    strncpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
+    path_tmp[strlen(fs_info->getName())] = 0;
     fs_info->putName();
 
     char* char_tmp = strrchr(path_tmp, SEPARATOR);
@@ -454,7 +459,8 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     char_tmp++;
     uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
     char path_next_name[path_next_len];
-    strlcpy(path_next_name, char_tmp, path_next_len);
+    strncpy(path_next_name, char_tmp, path_next_len);
+    path_next_name[path_next_len-1] = 0;
 
     // create a new dentry
     Dentry *sub_dentry = new Dentry(current_dentry);

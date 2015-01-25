@@ -27,7 +27,8 @@ class CharacterDevice
     {
       uint32 name_len = strlen ( name ) + 1;
       device_name = new char[name_len];
-      strlcpy ( device_name, name, name_len );
+      strncpy ( device_name, name, name_len );
+      device_name[name_len-1] = 0;
     };
 
     /**

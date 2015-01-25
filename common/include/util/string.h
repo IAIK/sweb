@@ -16,7 +16,7 @@ extern "C"
 
   /**
    * Calculate the length of a string.
-   * @param str is a NULL-terminated charachter string.
+   * @param str is a NULL-terminated character string.
    * @returns the length of str.
    */
   size_t strlen ( const char* str );
@@ -54,18 +54,10 @@ extern "C"
   /**
    * Copys size chars from the string src to the string dest up to and including the terminating
    * '\0' char. If size is smaller than the length of src no terminating '\0' is written. If
-   * size is greater than the length of src the rest is filled up with '\0' charachters.\
+   * size is greater than the length of src the rest is filled up with '\0' characters.\
    * @return is the value of dest.
    */
   char *strncpy ( char *dest, const char* src, size_t size );
-
-  /**
-   * Copys at most size-1 characters from src to dest. If size is smaller than the length of src
-   * only the number of characters in src will be copied. The resulting string is
-   * NULL-terminated, unless size == 0, in which case nothing is done.
-   * @return is the size of src.
-   */
-  size_t strlcpy ( char* dest, const char* src, size_t size );
 
   /**
    * Copys src into a newly allocated string.
@@ -74,14 +66,14 @@ extern "C"
   char *strdup ( const char *src );
 
   /**
-   * Appends append to the end to dest replacing the '\0' charachter marking the end of dest.
+   * Appends append to the end to dest replacing the '\0' character marking the end of dest.
    * @return is the pointer dest.
    */
   char *strcat ( char *dest, const char*append );
 
   /**
-   * Appends size charachters of append to the end to dest replacing the '\0' charachter marking
-   * the end of dest. A '\0' charachter is also appended to dest.
+   * Appends size characters of append to the end to dest replacing the '\0' character marking
+   * the end of dest. A '\0' character is also appended to dest.
    *
    * @return is the pointer dest.
    */
@@ -118,7 +110,7 @@ extern "C"
   int32 strcmp ( const char *str1, const char *str2 );
 
   /**
-   * Compares n charachters of the strings str1 and str2.
+   * Compares n characters of the strings str1 and str2.
    * @return is an value smaller than 0 if str1, 0 if the strings are equal and greater than 0
    * if str1 is greater.
    */
