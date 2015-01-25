@@ -147,9 +147,9 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   }
   debug(SYSCALL,"Syscall::createprocess: path:%s sleep:%d\n",(char*) path,sleep);
   size_t fd = VfsSyscall::open((const char*) path, O_RDONLY);
-  if (fd == -1)
+  if (fd == -1U)
   {
-    return -1;
+    return -1U;
   }
   VfsSyscall::close(fd);
   // parameter check end
