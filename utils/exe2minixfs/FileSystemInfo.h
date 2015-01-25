@@ -28,29 +28,9 @@ class FileSystemInfo
   Dentry* root_;
 
   /**
-   * the root vfsmount-struct
-   */
-  //VfsMount* root_mnt_;
-
-  /**
    * the current-position-directory
    */
   Dentry* pwd_;
-
-  /**
-   * the current-position vfsmount-struct
-   */
-  //VfsMount* pwd_mnt_;
-
-  /**
-   * the alternative-root-directory
-   */
-  //Dentry* alt_root_;
-
-  /**
-   * the alternative-root vfsmount-struct
-   */
-  //VfsMount* alt_root_mnt_;
 
   /**
    * the pathname of a fs_info
@@ -86,48 +66,16 @@ class FileSystemInfo
     { pwd_ = pwd; }// pwd_mnt_ = pwd_mnt; }
 
   /**
-   * set the alternative-info to the class
-   * @param alt_root the alternative root dentry to set
-   * @param the alternative root mount point to set
-   */
-  // void setFsAltRoot(Dentry* alt_root, VfsMount* alt_root_mnt)
-  // { alt_root_ = alt_root; alt_root_mnt_ = alt_root_mnt; }
-
-  /**
    * get the ROOT-info (ROOT-directory) from the class
    * @return the root dentry
    */
   Dentry* getRoot() { return root_; }
 
   /**
-   * get the ROOT-info (ROOT-VfsMount-info) from the class
-   * @return the VfsMount
-   */
-  //VfsMount* getRootMnt() { return root_mnt_; }
-
-  /**
    * get the PWD-info (PWD-directory) from the class
    * @return the dentry of the current directory
    */
   Dentry* getPwd() { return pwd_; }
-
-  /**
-   * get the PWD-info (PWD-VfsMount-info) from the class
-   * @return the VfsMount of the current directory
-   */
-  //VfsMount* getPwdMnt() { return pwd_mnt_; }
-
-  /**
-   * get the alternative-ROOT-info (alt-ROOT-directory) from the class
-   * @return the alternative root dentry
-   */
-  // Dentry* getAltRoot() { return alt_root_; }
-
-  /**
-   * get the alternative-ROOT-info (alt-VfsMount-directory) from the class
-   * @return the VfsMount of the alternative directory
-   */
-  // VfsMount* getAltRootMnt() { return alt_root_mnt_; }
 
   /**
    * read/copy the file pathname of the process
