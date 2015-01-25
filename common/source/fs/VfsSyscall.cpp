@@ -38,6 +38,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
       return it;
     }
   }
+  return 0;
 }
 
 int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount )
@@ -384,30 +385,11 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     debug(VFSSYSCALL, "(open) current_inode->getSuperblock()\n");
     Superblock* current_sb = current_inode->getSuperblock();
     debug(VFSSYSCALL, "(open)getNumOpenedFile() \n");
-    uint32 num = current_inode->getNumOpenedFile();
-    if (num > 0)
+
+    if (current_inode->getType() != I_FILE)
     {
-      debug(VFSSYSCALL, "(open) repeated open\n");
-      // check the existing file
-      /*if ( !(flag & O_RDONLY) )
-       {
-       kprintfd ( "(open) Error: The flag is not READ_ONLY\n" );
-       return -1;
-       }*/
-
-      if (current_inode->getType() != I_FILE)
-      {
-        kprintfd("(open) Error: This path is not a file\n\n");
-        return -1;
-      }
-
-      /*File* file = current_inode->getFirstFile();
-       uint32 file_flag = file->getFlag();
-       if ( !(file_flag & O_RDONLY) )
-       {
-       kprintfd ( "(open) Error: The file flag is not READ_ONLY\n" );
-       return -1;
-       }*/
+      debug(VFSSYSCALL,"(open) Error: This path is not a file\n");
+      return -1;
     }
 
     int32 fd = current_sb->createFd(current_inode, flag & 0xFFFFFFFB);

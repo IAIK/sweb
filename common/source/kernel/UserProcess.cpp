@@ -24,6 +24,7 @@ UserProcess::UserProcess ( const char *minixfs_filename, FileSystemInfo *fs_info
   {
     debug (USERPROCESS, "Error: file %s does not exist!\n", minixfs_filename );
     loader_ = 0;
+    kill();
     return;
   }
 

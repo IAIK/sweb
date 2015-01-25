@@ -10,9 +10,6 @@
 #include "StorageManager.h"
 
 class Iattr;
-//class Statfs;
-//class WaitQueue;
-//class FileSystemType;
 class VirtualFileSystem;
 class FileDescriptor;
 
@@ -35,11 +32,6 @@ class Superblock
     friend class VirtualFileSystem;
 
   protected:
-
-    /**
-     * The file system type.
-     */
-    //const FileSystemType *s_type_;
 
     /**
      * The device that this file-system is mounted on.
@@ -190,19 +182,6 @@ class Superblock
     virtual void write_super() {}
 
     /**
-     * This method is needed to implement statfs(2) system call
-     */
-    //virtual int32 statfs ( Superblock*, Statfs*, int32 ) { return 0; }
-
-    /**
-     * This method called when file-system is being remounted, i.e. if the
-     * MS_REMOUNT flag is specified with the mount system call. This can be used
-     * to change various mount options without unmounting the file-system. A
-     * common usage is to change a readonly file-system into a writable.
-     */
-    //virtual int32 remount_fs ( Superblock*, int32*, char* ) { return 0; }
-
-    /**
      * Optional method, call when VFS clears the inode. This is needed (at
      * least) by file-system which attaches kmalloced data to the inode
      * sturcture, as particularly might be the case for file-systems using the
@@ -248,12 +227,6 @@ class Superblock
      * @return the superblocks mount point dentry
      */
     Dentry *getMountPoint();
-
-    /**
-     * Get the File System Type of the Superblock
-     * @return the file system type
-     */
-    //FileSystemType *getFSType() {return ( FileSystemType * ) s_type_;}
 
 };
 
