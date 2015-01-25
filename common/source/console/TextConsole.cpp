@@ -9,7 +9,7 @@
 
 #include "Scheduler.h"
 
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 #include "kprintf.h"
 
 TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxTConsoleThrd")

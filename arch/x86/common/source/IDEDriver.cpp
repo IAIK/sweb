@@ -3,10 +3,11 @@
  *
  */
  
-#include "arch_bd_ide_driver.h"
-#include "arch_bd_ata_driver.h"
-#include "arch_bd_virtual_device.h"
-#include "arch_bd_manager.h"
+#include "IDEDriver.h"
+
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
+#include "ATADriver.h"
 #include "ports.h"
 #include "kmalloc.h"
 #include "string.h"
@@ -48,7 +49,7 @@ uint32 IDEDriver::doDeviceDetection()
         base_regport = 0x376;
       }
 
-      outbp( base_regport, devCtrl ); // init the device with interupts
+      outportbp( base_regport, devCtrl ); // init the device with interupts
 
       uint8 value = (cs % 2 == 0 ? 0xA0 : 0xB0 );
       uint16 bpp6 = base_port + 6;
@@ -78,29 +79,29 @@ uint32 IDEDriver::doDeviceDetection()
 
       if ( ( sc == 0x55 ) && ( sn == 0xAA ) )
       {
-        outbp( base_regport , devCtrl | 0x04 ); // RESET
-        outbp( base_regport , devCtrl );
+        outportbp( base_regport , devCtrl | 0x04 ); // RESET
+        outportbp( base_regport , devCtrl );
 
         jiffies = 0;
-        while (!(inbp( base_port + 7 ) & 0x58) && jiffies++ < IO_TIMEOUT)
+        while (!(inportbp( base_port + 7 ) & 0x58) && jiffies++ < IO_TIMEOUT)
           ArchInterrupts::yieldIfIFSet();
 
         if( jiffies >= IO_TIMEOUT )
           debug(IDE_DRIVER, "doDetection: Still busy after reset!\n ");
         else
         {
-          outbp( base_port + 6, (cs % 2 == 0 ? 0xA0 : 0xB0 ) );  
+          outportbp( base_port + 6, (cs % 2 == 0 ? 0xA0 : 0xB0 ) );
 
-          uint8 c1 = inbp( base_port + 2 ); 
-          uint8 c2 = inbp( base_port + 3 );
+          uint8 c1 = inportbp( base_port + 2 );
+          uint8 c2 = inportbp( base_port + 3 );
 
           if( c1 != 0x01 && c2 != 0x01 )
             debug(IDE_DRIVER, "doDetection: Not found after reset ! \n");
           else
           {
-            uint8 c3 = inbp( base_port + 7 );
-            uint8 c4 = inbp( base_port + 4 );
-            uint8 c5 = inbp( base_port + 5 );
+            uint8 c3 = inportbp( base_port + 7 );
+            uint8 c4 = inportbp( base_port + 4 );
+            uint8 c5 = inportbp( base_port + 5 );
 
             if(((c4 == 0x14) && (c5 == 0xEB)) || ((c4 == 0x69) && (c5 == 0x96)))
             {

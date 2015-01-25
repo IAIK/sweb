@@ -3,7 +3,7 @@
  *
  */
 
-#include "arch_keyboard_manager.h"
+#include "KeyboardManager.h"
 #include "kprintf.h"
 #include "Console.h"
 
@@ -49,14 +49,9 @@
 
 KeyboardManager *KeyboardManager::instance_ = 0;
 
-extern struct KMI* kmi;
-
-KeyboardManager::KeyboardManager() :
-    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), current_key_(0), usb_kbd_addr_(0)
+KeyboardManager::KeyboardManager() : keyboard_buffer_( 256 ), extended_scancode( 0 ), keyboard_status_ ( 0 )
 {
-  kmi = (struct KMI*)0x88000000;
-  kmi->cr = 0x1C;
-  kmi->data = 0xF4;
+  emptyKbdBuffer();
 }
 
 KeyboardManager::~KeyboardManager()
@@ -65,25 +60,38 @@ KeyboardManager::~KeyboardManager()
 
 void KeyboardManager::kb_wait()
 {
+  uint32 i;
+
+  for(i=0; i<0x10000; i++)
+  {
+    uint8 stat = inportb(0x64);
+    if((stat & 0x02) == 0)
+      break;
+  }
+  if (i>=0x10000)
+    kprintfd("KeyboardManager::kb_wait: waiting on 0x02 didn't speed up things :-(\n");
 }
 
-void KeyboardManager::send_cmd(uint8 cmd)
+void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
 {
   kb_wait();
-  kmi->data = cmd;
+  outportbp( port, cmd );
 }
 
 void KeyboardManager::serviceIRQ( void )
 {
-  uint8 scancode = kmi->data;
-  if (scancode > 0x80)
-    return;
+  send_cmd(0xAD);      // disable the keyboard
+  kb_wait();
+
+  uint8 scancode = inportb( 0x60 );
 
   if( extended_scancode == 0xE0 )
   {
     if( scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE )
     {
       extended_scancode = 0;
+      send_cmd(0xAE);  // enable the keyboard
+      return;
     }
 
     scancode = E0_KEYS[ scancode ];
@@ -91,6 +99,8 @@ void KeyboardManager::serviceIRQ( void )
   else if ( extended_scancode == 0xE1 && scancode == 0x1D )
   {
     extended_scancode = 0x100;
+    send_cmd(0xAE);  // enable the keyboard
+    return;
   }
   else if ( extended_scancode == 0x100 && scancode == 0x45 )
     scancode = E1_PAUSE;
@@ -101,21 +111,33 @@ void KeyboardManager::serviceIRQ( void )
   || scancode == 0xFE || scancode ==0x00 ) // non parsable codes, ACK and keyb. buffer errors
   {
     debug(A_KB_MANAGER, "Non-parsable scancode %X \n", scancode );
+    send_cmd(0xAE);  // enable the keyboard
+    return;
   }
 
   if( scancode == 0xE0 || scancode == 0xE1 )
   {
     extended_scancode = scancode;
+    send_cmd(0xAE);  // enable the keyboard
+    return;
   }
 
   modifyKeyboardStatus( scancode );
   setLEDs();         // setting the leds
+
+  if( (scancode & 0200 ) ) // if a key was released just ignore it
+  {
+    send_cmd(0xAE);  // enable the keyboard
+    return;
+  }
+
   if(main_console)
   {
     keyboard_buffer_.put( scancode ); // put it inside the buffer
     main_console->addJob();
   }
 
+  send_cmd(0xAE);    // enable the keyboard
 }
 
 void KeyboardManager::modifyKeyboardStatus(uint8 sc )
@@ -214,9 +236,9 @@ void KeyboardManager::setLEDs( void )
     leds |= 4;
   if(last_leds != leds)
   {
-    send_cmd( 0xF4 );  // enable keyboard command
-    send_cmd( 0xED );  // "set LEDs" command
-    send_cmd( leds );  // bottom 3 bits set LEDs
+    send_cmd( 0xF4, 0x60 );  // enable keyboard command
+    send_cmd( 0xED, 0x60 );  // "set LEDs" command
+    send_cmd( leds, 0x60 );  // bottom 3 bits set LEDs
     last_leds = leds;
   }
 }

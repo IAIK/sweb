@@ -1,11 +1,23 @@
 /**
- * @file arch_keyboard_manager.h
+ * @file KeyboardManager.h
  *
  */
  
 #ifndef _KEYBOARD_MANAGER_H
 #define _KEYBOARD_MANAGER_H
 
+#ifdef __cplusplus
+
+extern "C"
+{
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#include "ports.h"
 #include "RingBuffer.h"
 #include "atkbd.h"
 
@@ -149,7 +161,7 @@ private:
    * writes a byte to the given IO port
    *
    */
-  void send_cmd(uint8 cmd);
+  void send_cmd( uint8 cmd, uint8 port );
 
   RingBuffer<uint8> keyboard_buffer_;
 
@@ -177,8 +189,6 @@ private:
 
   uint32 extended_scancode;
   uint32 keyboard_status_;
-  uint32 usb_kbd_addr_;
-  uint32 current_key_;
 
 protected:
 

@@ -8,7 +8,7 @@
 #include "fs/Superblock.h"
 #include "MinixStorageManager.h"
 #include "ustl/umap.h"
-#include "arch_bd_virtual_device.h"
+#include "BDVirtualDevice.h"
 
 class Inode;
 class MinixFSInode;

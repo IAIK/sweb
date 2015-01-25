@@ -6,11 +6,11 @@
 #ifndef _IDE_BUS_DEVICE_DRIVER_
 #define _IDE_BUS_DEVICE_DRIVER_
 
-#include "arch_bd_io.h"
+#include "types.h"
 
 class ATADriver;
 
-class IDEDriver : public bdio
+class IDEDriver
 {
 public:
 

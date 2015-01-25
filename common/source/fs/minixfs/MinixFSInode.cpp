@@ -10,7 +10,7 @@
 #include "MinixFSSuperblock.h"
 #include "MinixFSFile.h"
 #include "Dentry.h"
-#include "arch_bd_manager.h"
+#include "BDManager.h"
 #include "ArchMemory.h"
 #include "ArchCommon.h"
 

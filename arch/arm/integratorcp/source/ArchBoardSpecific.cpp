@@ -3,14 +3,15 @@
  *
  */
 
-#include "arch_board_specific.h"
+#include "ArchBoardSpecific.h"
+
+#include "KeyboardManager.h"
 #include "board_constants.h"
 #include "InterruptUtils.h"
 #include "ArchCommon.h"
 #include "assert.h"
 #include "offsets.h"
 #include "ArchInterrupts.h"
-#include "arch_keyboard_manager.h"
 #include "Scheduler.h"
 #include "FrameBufferConsole.h"
 #include "kprintf.h"

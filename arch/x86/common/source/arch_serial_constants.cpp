@@ -3,7 +3,7 @@
  *
  */
  
-#include "arch_serial.h"
+#include "ArchSerialInfo.h"
 
 
 uint32 SC::IER = 1;
