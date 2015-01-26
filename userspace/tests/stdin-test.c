@@ -5,8 +5,8 @@
 #include "nonstd.h"
 
 #define FORK_ENABLED 0
-#define EXECUTABLE_PREFIX       "/"          // "/user_progs/"
-#define EXECUTABLE_PREFIX_LEN   1            //12
+#define EXECUTABLE_PREFIX       "/usr/"
+#define EXECUTABLE_PREFIX_LEN   5
 
 int running;
 int exit_code;
@@ -49,18 +49,6 @@ void handle_command(char* buffer,int buffer_size)
       
     }
   }
-
-
-  /*
-  printf("Command: '%s' len: %d\n", command, strlen(command));
-
-  for(c=0; c<argsCount; c++)
-  {
-    printf("Argument #%d: '%s' len: %d\n", c, args[c], strlen(args[c]));
-  }
-  */
-
-
   if (strcmp(command, "ls") == 0)
     printf("Sorry, Filesystem Syscalls not implemented yet\n");
   else if (strcmp(command, "ps") == 0)
