@@ -58,7 +58,7 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev, uint64 offs
   Buffer *bm_buffer = new Buffer ( BLOCK_SIZE*bm_size );
   readBlocks ( 2, bm_size, bm_buffer );
   //debug ( M_SB,"---creating Storage Manager\n" );
-  storage_manager_ = new MinixStorageManager ( bm_buffer,
+  storage_manager_ = new MinixStorageManager ( bm_buffer->getBuffer(),
                      s_num_inode_bm_blocks_,
                      s_num_zone_bm_blocks_,
                      s_num_inodes_, s_num_zones_ );
@@ -68,7 +68,7 @@ MinixFSSuperblock::MinixFSSuperblock ( Dentry* s_root, uint32 s_dev, uint64 offs
   }*/
   delete bm_buffer;
 
-  //std::cout << storage_manager_->isInodeSet ( 0 ) << " " << storage_manager_->isInodeSet ( 1 ) << " " << 
+  //std::cout << storage_manager_->isInodeSet ( 0 ) << " " << storage_manager_->isInodeSet ( 1 ) << " " <<
     //storage_manager_->isInodeSet ( 2 ) << " " << storage_manager_->isInodeSet ( 3 ) << " " << storage_manager_->isInodeSet ( 4 ) << " " << storage_manager_->isInodeSet ( 5 ) << std::endl;
 
   initInodes();
