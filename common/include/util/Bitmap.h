@@ -1,7 +1,3 @@
-/**
- * @file Bitmap.h
- */
-
 #ifndef BITMAP_H__
 #define BITMAP_H__
 

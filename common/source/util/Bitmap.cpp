@@ -1,7 +1,3 @@
-/**
- * @file Bitmap.cpp
- */
-
 #include "Bitmap.h"
 #include "kprintf.h"
 #include "assert.h"

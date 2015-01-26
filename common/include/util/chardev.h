@@ -6,7 +6,7 @@
 #define CHAR_DEV_H__
 
 
-#include "string.h"
+#include "kstring.h"
 #include "FiFo.h"
 
 /**

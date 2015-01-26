@@ -2,7 +2,7 @@
  * @file string.c basic string and array manipulation
  */
 
-#include "string.h"
+#include "kstring.h"
 #include "kmalloc.h"
 #include "assert.h"
 
