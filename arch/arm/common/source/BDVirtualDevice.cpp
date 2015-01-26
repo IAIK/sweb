@@ -8,7 +8,7 @@
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
 #include "kmalloc.h"
-#include "string.h"
+#include "kstring.h"
 #include "debug.h"
 #include "kprintf.h"
 

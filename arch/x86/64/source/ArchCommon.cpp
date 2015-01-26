@@ -9,7 +9,7 @@
 #include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
-#include "string.h"
+#include "kstring.h"
 #include "ArchMemory.h"
 #include "FrameBufferConsole.h"
 #include "TextConsole.h"

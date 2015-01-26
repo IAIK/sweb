@@ -22,23 +22,14 @@ typedef uint64 pointer;
 
 typedef uint64 l_off_t;
 
-#ifndef USE_FILE_SYSTEM_ON_GUEST_OS
 typedef uint64 mode_t;
 typedef uint64 uid_t;
 typedef uint64 gid_t;
 typedef uint64 size_t;
 typedef int64 ssize_t;
-#endif
 
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
-
-#ifndef NO_POISON
-//#pragma GCC poison int
-//#pragma GCC poison short
-//#pragma GCC poison long
-//#pragma GCC poison unsigned
-#endif
 
 #define KERNEL_CS 0x10
 #define KERNEL_DS 0x20

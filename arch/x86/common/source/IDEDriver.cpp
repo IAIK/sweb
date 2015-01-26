@@ -10,7 +10,7 @@
 #include "ATADriver.h"
 #include "ports.h"
 #include "kmalloc.h"
-#include "string.h"
+#include "kstring.h"
 #include "ArchInterrupts.h"
 #include "kprintf.h"
 

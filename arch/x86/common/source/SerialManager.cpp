@@ -5,7 +5,7 @@
 
 #include "ArchSerialInfo.h"
 #include "SerialManager.h"
-#include "string.h"
+#include "kstring.h"
 
 #include "debug_bochs.h"
 #include "kprintf.h"

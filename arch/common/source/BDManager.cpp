@@ -10,7 +10,7 @@
 #include "IDEDriver.h"
 #include "kprintf.h"
 #include "debug.h"
-#include "string.h"
+#include "kstring.h"
 
 BDManager *BDManager::getInstance()
 {
