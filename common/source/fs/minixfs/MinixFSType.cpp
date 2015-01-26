@@ -1,9 +1,6 @@
-/**
- * @file MinixFSType.cpp
- */
-
-#include "fs/minixfs/MinixFSType.h"
-#include "fs/minixfs/MinixFSSuperblock.h"
+#include "MinixFSType.h"
+#include "MinixFSSuperblock.h"
+#include "BDManager.h"
 
 MinixFSType::MinixFSType() : FileSystemType("minixfs")
 {
@@ -26,6 +23,7 @@ Superblock *MinixFSType::createSuper(Dentry *root, uint32 s_dev) const
   if (s_dev == (uint32) -1)
     return 0;
 
-  Superblock *super = new MinixFSSuperblock(root, s_dev);
+  BDManager::getInstance()->getDeviceByNumber(s_dev)->setBlockSize( BLOCK_SIZE);
+  Superblock *super = new MinixFSSuperblock(root, s_dev, 0);
   return super;
 }

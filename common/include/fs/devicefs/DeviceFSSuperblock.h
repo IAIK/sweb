@@ -31,7 +31,7 @@ class DeviceFSSuperBlock : public Superblock
      * @param type the type of the new inode
      * @return the inode
      */
-    virtual Inode* createInode ( Dentry* dentry, uint32 type );
+    virtual Inode* createInode(Dentry* dentry, uint32 type);
 
     /**
      * creates a file descriptor for the given inode
@@ -39,22 +39,22 @@ class DeviceFSSuperBlock : public Superblock
      * @param flag the flag of the fd
      * @return the file descriptor
      */
-    virtual int32  createFd ( Inode* inode, uint32 flag );
+    virtual int32 createFd(Inode* inode, uint32 flag);
 
     /**
      * addsa new device to the superblock
      * @param inode the inode of the device to add
      * @param device_name the device name
      */
-    void addDevice ( Inode* inode, const char* device_name );
+    void addDevice(Inode* inode, const char* device_name);
 
     /**
      * Access method to the singleton instance
      */
     static DeviceFSSuperBlock* getInstance()
     {
-      if ( !instance_ )
-        instance_ = new DeviceFSSuperBlock ( 0 , 0 );
+      if (!instance_)
+        instance_ = new DeviceFSSuperBlock(0, 0);
       return instance_;
     }
 
@@ -65,10 +65,10 @@ class DeviceFSSuperBlock : public Superblock
      * @param s_root the root Dentry of the new Filesystem
      * @param s_dev the device number of the new Filesystem
      */
-    DeviceFSSuperBlock ( Dentry* s_root, uint32 s_dev );
+    DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev);
 
-    Inode*   cDevice;
-    Dentry*  s_dev_dentry_;
+    Inode* cDevice;
+    Dentry* s_dev_dentry_;
 
   protected:
     static DeviceFSSuperBlock* instance_;

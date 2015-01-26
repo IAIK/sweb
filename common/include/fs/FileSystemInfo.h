@@ -66,7 +66,7 @@ class FileSystemInfo
   /**
    * destructor
    */
-  ~FileSystemInfo() {}
+  ~FileSystemInfo();
 
   /**
    * copy contructor
@@ -88,14 +88,6 @@ class FileSystemInfo
    */
   void setFsPwd(Dentry* pwd, VfsMount* pwd_mnt)
     { pwd_ = pwd; pwd_mnt_ = pwd_mnt; }
-
-  /**
-   * set the alternative-info to the class
-   * @param alt_root the alternative root dentry to set
-   * @param the alternative root mount point to set
-   */
-  // void setFsAltRoot(Dentry* alt_root, VfsMount* alt_root_mnt)
-  // { alt_root_ = alt_root; alt_root_mnt_ = alt_root_mnt; }
 
   /**
    * get the ROOT-info (ROOT-directory) from the class
@@ -120,18 +112,6 @@ class FileSystemInfo
    * @return the VfsMount of the current directory
    */
   VfsMount* getPwdMnt() { return pwd_mnt_; }
-
-  /**
-   * get the alternative-ROOT-info (alt-ROOT-directory) from the class
-   * @return the alternative root dentry
-   */
-  // Dentry* getAltRoot() { return alt_root_; }
-
-  /**
-   * get the alternative-ROOT-info (alt-VfsMount-directory) from the class
-   * @return the VfsMount of the alternative directory
-   */
-  // VfsMount* getAltRootMnt() { return alt_root_mnt_; }
 
   /**
    * read/copy the file pathname of the process

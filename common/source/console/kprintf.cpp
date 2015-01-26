@@ -353,111 +353,91 @@ void vkprintf ( void ( *write_string ) ( char const* ), void ( *write_char ) ( c
       if ( *fmt > '0' && *fmt <= '9' )
         width = atoi ( fmt );  //this advances *fmt as well
 
-      //handle diouxXfeEgGcs
-      switch ( *fmt )
+      do
       {
-        case '%':
-          write_char ( *fmt );
-          break;
+        //handle diouxXfeEgGcs
+        switch ( *fmt )
+        {
+          case '%':
+            write_char ( *fmt );
+            break;
 
-        case 's':
-          tmp = ( char* ) va_arg ( args,char const* );
-          if ( tmp )
-            write_string ( tmp );
-          else
-            write_string ( "(null)" );
-          break;
+          case 's':
+            tmp = ( char* ) va_arg ( args,char const* );
+            if ( tmp )
+              write_string ( tmp );
+            else
+              write_string ( "(null)" );
+            break;
 
-          //print a Buffer, this expects the buffer size as next argument
-          //and is quite non-standard :)
-        case 'B':
-          tmp = ( char* ) va_arg ( args,char* );
-          width = ( size_t ) va_arg ( args,size_t );
-          if ( tmp )
-            vkprint_buffer ( write_char, tmp, width );
-          else
-            write_string ( "(null)" );
-          break;
+            //print a Buffer, this expects the buffer size as next argument
+            //and is quite non-standard :)
+          case 'B':
+            tmp = ( char* ) va_arg ( args,char* );
+            width = ( size_t ) va_arg ( args,size_t );
+            if ( tmp )
+              vkprint_buffer ( write_char, tmp, width );
+            else
+              write_string ( "(null)" );
+            break;
 
-          //signed decimal
-        case 'd':
-          output_number ( write_char, ( size_t ) va_arg ( args,ssize_t ),10,width, 0, flag | SIGN );
-          break;
+          case 'd':
+            output_number ( write_char, ( size_t ) va_arg ( args,ssize_t ),10,width, 0, flag | SIGN );
+            break;
 
-          //we don't do i until I see what it actually should do
-          //case 'i':
-          //  break;
+          case 'o':
+            output_number ( write_char, ( size_t ) va_arg ( args,size_t ),8,width, 0, flag | SPECIAL );
+            break;
 
-          //octal
-        case 'o':
-          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),8,width, 0, flag | SPECIAL );
-          break;
+          case 'p':
+            output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag | SPECIAL );
+            break;
 
-          //unsigned
-        case 'u':
-          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),10,width, 0, flag );
-          break;
+          case 'u':
+            output_number ( write_char, ( size_t ) va_arg ( args,size_t ),10,width, 0, flag );
+            break;
 
-        case 'x':
-          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag | SPECIAL );
-          break;
+          case 'x':
+            output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag | SPECIAL );
+            break;
 
-        case 'y':
-          output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag );
-          break;
+          case 'y':
+            output_number ( write_char, ( size_t ) va_arg ( args,size_t ),16,width, 0, flag );
+            break;
 
-        case 'X':
-          output_number ( write_char, ( size_t ) va_arg ( args,size_t ), 16, width, 0, flag | SPECIAL | LARGE );
-          break;
+          case 'X':
+            output_number ( write_char, ( size_t ) va_arg ( args,size_t ), 16, width, 0, flag | SPECIAL | LARGE );
+            break;
 
-        case 'l':
-          switch (*(fmt + 1))
-          {
-            case 'u':
-              output_number_long(write_char, (uint64)va_arg(args, uint64), 10,
-                                 width, 0, flag);
-              fmt++;
-              break;
-            case 'x':
-              output_number_long(write_char, (uint64)va_arg(args, uint64), 16,
-                                 width, 0, flag);
-              fmt++;
-              break;
-            default:
-              output_number_long(write_char, (uint64)va_arg(args, uint64), 10,
-                                 width, 0, flag | SIGN);
-          }
-          break;
+          case 'l':
+            switch (*(fmt + 1))
+            {
+              case 'd':
+                output_number_long(write_char, (int64) va_arg(args, int64), 10, width, 0, flag | SIGN);
+                break;
+              case 'u':
+                output_number_long(write_char, (uint64) va_arg(args, uint64), 10, width, 0, flag);
+                fmt++;
+                break;
+              case 'x':
+                output_number_long(write_char, (uint64) va_arg(args, uint64), 16, width, 0, flag);
+                fmt++;
+                break;
+              default:
+                output_number_long(write_char, (uint64) va_arg(args, uint64), 10, width, 0, flag | SIGN);
+            }
+            break;
 
+          case 'c':
+            write_char ( ( char ) va_arg ( args,size_t ) );
+            break;
 
-          //no floating point yet
-          //case 'f':
-          //  break;
-
-          //no scientific notation (yet)
-          //case 'e':
-          //  break;
-
-          //case 'E':
-          //  break;
-
-          //no floating point yet
-          //case 'g':
-          //  break;
-
-          //case 'G':
-          //  break;
-
-          //we don't do unicode (yet)
-        case 'c':
-          write_char ( ( char ) va_arg ( args,size_t ) );
-          break;
-
-        default:
-          //jump over unknown arg
-          va_arg(args,size_t);
-          break;
-      }
+          default:
+            //jump over unknown arg
+            va_arg(args,size_t);
+            break;
+        }
+      } while (0);
 
     }
     else

@@ -9,9 +9,6 @@
 #include <string>
 
 class Dentry;
-//class VfsMount;
-
-
 
 /**
  * @class FileSystemInfo The information of the file system
@@ -54,16 +51,14 @@ class FileSystemInfo
    * @param root the root dentry to set
    * @param root_mnt the root_mnt to set
    */
-  void setFsRoot(Dentry* root)//, VfsMount* root_mnt)
-    { root_ = root; }// root_mnt_ = root_mnt; }
+  void setFsRoot(Dentry* root) { root_ = root; }
 
   /**
    * set the PWD-info to the class (PWD: print working directory)
    * @param pwd the current path to set
    * @param pwd_mnt the mount point of the current path to set
    */
-  void setFsPwd(Dentry* pwd)//, VfsMount* pwd_mnt)
-    { pwd_ = pwd; }// pwd_mnt_ = pwd_mnt; }
+  void setFsPwd(Dentry* pwd) { pwd_ = pwd; }
 
   /**
    * get the ROOT-info (ROOT-directory) from the class

@@ -1,29 +1,29 @@
-/**
- * @file MinixFSFile.cpp
- */
-
 #include "MinixFSFile.h"
 #include "MinixFSInode.h"
 #include "Inode.h"
 
-MinixFSFile::MinixFSFile ( Inode* inode, Dentry* dentry, uint32 flag ) : File ( inode, dentry, flag )
+MinixFSFile::MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
+    File(inode, dentry, flag)
 {
   f_superblock_ = inode->getSuperblock();
   // to get the real mode implement it in the inode constructor and get it from there
   // if you do so implement chmod and createInode with mode
-  mode_ = ( A_READABLE ^ A_WRITABLE ) ^ A_EXECABLE;
+  mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
   offset_ = 0;
 }
 
-
 MinixFSFile::~MinixFSFile()
-{}
-
-
-int32 MinixFSFile::read ( char *buffer, size_t count, l_off_t offset )
 {
-  if ( ( ( flag_ == O_RDONLY ) || ( flag_ == O_RDWR ) ) && ( mode_ & A_READABLE ) )
-    return ( f_inode_->readData ( offset, count, buffer ) );
+}
+
+int32 MinixFSFile::read(char *buffer, size_t count, l_off_t offset)
+{
+  if (((flag_ == O_RDONLY) || (flag_ == O_RDWR)) && (mode_ & A_READABLE))
+  {
+    int32 read_bytes = f_inode_->readData(offset_ + offset, count, buffer);
+    offset_ += read_bytes;
+    return read_bytes;
+  }
   else
   {
     // ERROR_FF
@@ -31,11 +31,14 @@ int32 MinixFSFile::read ( char *buffer, size_t count, l_off_t offset )
   }
 }
 
-
-int32 MinixFSFile::write ( const char *buffer, size_t count, l_off_t offset )
+int32 MinixFSFile::write(const char *buffer, size_t count, l_off_t offset)
 {
-  if ( ( ( flag_ == O_WRONLY ) || ( flag_ == O_RDWR ) ) && ( mode_ & A_WRITABLE ) )
-    return ( f_inode_->writeData ( offset, count, buffer ) );
+  if (((flag_ == O_WRONLY) || (flag_ == O_RDWR)) && (mode_ & A_WRITABLE))
+  {
+    int32 written = f_inode_->writeData(offset_ + offset, count, buffer);
+    offset_ += written;
+    return written;
+  }
   else
   {
     // ERROR_FF
@@ -45,7 +48,7 @@ int32 MinixFSFile::write ( const char *buffer, size_t count, l_off_t offset )
 
 int32 MinixFSFile::flush()
 {
-  f_inode_->flush();
+  ((MinixFSInode *) f_inode_)->flush();
   return 0;
 }
 

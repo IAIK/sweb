@@ -287,7 +287,7 @@ class Inode
      * get the first file object.
      * @return the first file
      */
-    File* getFirstFile() { return i_files_.at ( 0 ); }
+    File* getFirstFile() { return i_files_.front(); }
 
     /**
      * returns the number of opened files on this inode

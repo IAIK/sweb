@@ -9,6 +9,7 @@
 #include "PointList.h"
 #include "Inode.h"
 #include "MinixFSZone.h"
+#include <iostream>
 
 /**
  * @class MinixFSInode represents an inode on a minix file system and handles the corresponding functions
@@ -191,7 +192,7 @@ class MinixFSInode : public Inode
      */
     bool children_loaded_;
 
-    PointList<Dentry> other_dentries_;
+    std::list<Dentry*> other_dentries_;
 
 
 };

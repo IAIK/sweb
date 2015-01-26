@@ -90,9 +90,6 @@ class MinixStorageManager : public StorageManager
 
   private:
 
-    uint32 inodes_set();
-    uint32 zones_set();
-
     size_t curr_zone_pos_;
     size_t curr_inode_pos_;
 

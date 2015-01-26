@@ -6,8 +6,9 @@
 #define MinixFSInode_h___
 
 #include "types.h"
-#include "fs/Inode.h"
+#include "Inode.h"
 #include "MinixFSZone.h"
+#include "ArchCommon.h"
 #include <ustl/ulist.h>
 
 /**

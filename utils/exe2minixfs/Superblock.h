@@ -8,15 +8,17 @@
 #include "MinixFSTypes.h"
 #include "PointList.h"
 #include "StorageManager.h"
+#include <list>
 
 class Iattr;
+class FileSystemType;
 class VirtualFileSystem;
 class FileDescriptor;
+class Statfs;
 
 class Dentry;
 class Inode;
 class File;
-
 
 /**
  * @class Superblock
@@ -27,11 +29,12 @@ class File;
  */
 class Superblock
 {
-  public:
-
-    friend class VirtualFileSystem;
-
   protected:
+    friend class VirtualFileSystem;
+    /**
+     * The file system type.
+     */
+    const FileSystemType *s_type_;
 
     /**
      * The device that this file-system is mounted on.
@@ -69,12 +72,12 @@ class Superblock
     /**
      * A list of dirty inodes.
      */
-    PointList<Inode> dirty_inodes_;
+    std::list<Inode*> dirty_inodes_;
 
     /**
      * A list of used inodes. It is only used to open-file.
      */
-    PointList<Inode> used_inodes_;
+    std::list<Inode*> used_inodes_;
 
     /**
      * inodes of the superblock.
@@ -86,7 +89,7 @@ class Superblock
      * file-system. It is used, for example, to check if there are any files
      * open for write before remounting the file-system as read-only.
      */
-    PointList<FileDescriptor> s_files_;
+    std::list<FileDescriptor*> s_files_;
 
   public:
 
@@ -95,15 +98,8 @@ class Superblock
      * @param s_root the root dentry of the new filesystme
      * @param s_dev the device number of the new filesystem
      */
-    Superblock ( Dentry* s_root, uint32 s_dev )
-    {
-      s_root_ = s_root;
-      s_dev_ = s_dev;
-    }
+    Superblock(Dentry* s_root, uint32 s_dev);
 
-    /**
-     * destructor
-     */
     virtual ~Superblock();
 
     /**
@@ -112,7 +108,7 @@ class Superblock
      * @param type the inode type
      * @return the created inode
      */
-    virtual Inode* createInode ( Dentry* /*dentry*/, uint32 /*type*/ ) { return 0; }
+    virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*type*/) = 0;
 
     /**
      * This method is called to read a specific inode from a mounted
@@ -120,25 +116,14 @@ class Superblock
      * @param inode the inode to read
      * @return 0 on success
      */
-    virtual int32 readInode ( Inode* /*inode*/ ) { return 0; }
+    virtual int32 readInode(Inode* /*inode*/) { return 0; };
 
     /**
      * This method is called to write a specific inode to a mounted file-system,
      * and gets called on inodes which have been marked dirty.
      * @param inode the inode to write
      */
-    virtual void writeInode ( Inode* /*inode*/ ) {}
-
-    /**
-     * This method is called whenever the reference count on an inode is
-     * decreased put_inode called before the i_count field is decreased, so if
-     * put_inode wants to check if this is the last reference, it should check
-     * if i_count is 1 or not. This method used it to do some special handling
-     * when the last reference to the inode is release. i.e. when i_count is 1
-     * and is about to be come zero.
-     * @param inode the inode
-     */
-    virtual void put_inode ( Inode* /*inode*/ ) {}
+    virtual void writeInode(Inode* /*inode*/) {};
 
     /**
      * This method is called whenever the reference count on an inode reaches 0,
@@ -148,56 +133,7 @@ class Superblock
      * used.
      * @param inode the inode to delete
      */
-    virtual void delete_inode ( Inode* /*inode*/ );
-
-    /**
-     * This is called when inode attributed are changed, the argument class
-     * Iattr* pointing to the new set of attributes. If the file-system does
-     * not define this method (i.e. it is NULL) then VFS uses the routine
-     * (inode_change_ok) which implements POSIX standard attributes
-     * verification. Then VFS marks the inode as dirty. If the file-system
-     * implements its own notify_change then it should call mark_inode_dirty
-     * (Inode).
-     * @param dentry the dentry to notify
-     * @param iattr the changed attributes
-     * @return 0 on success
-     */
-    virtual int32 notify_change ( Dentry* /*dentry*/, Iattr* /*iattr*/ ) { return 0; }
-
-    /**
-     * This method is called with super-block lock held. A typical
-     * implementation would free file-system-private resources specific for
-     * his mount instance, such as inode bitmaps, block bitmaps, a buffer
-     * header containing super-block and decrement mount hold count if the
-     * file-system is implemented as a dynamically loadable module.
-     * Implementation: destructure of the Superblock.
-     */
-    virtual void put_super() {}
-
-    /**
-     * This method called when VFS decides that the super-block needs to be
-     * written to disk. It check the SuperBlock->s_dirty_, if it is true write
-     * the super block return to the Disc.
-     */
-    virtual void write_super() {}
-
-    /**
-     * Optional method, call when VFS clears the inode. This is needed (at
-     * least) by file-system which attaches kmalloced data to the inode
-     * sturcture, as particularly might be the case for file-systems using the
-     * generic_ip field in class Inode.
-     * @param inode the inode to clear
-     */
-    virtual void clear_inode ( Inode* /*inode*/ ) {}
-
-    /**
-     * This method is called early in the unmounting process if the MNT_FORCE
-     * flag was given to umount. The intentions is that it should cause any
-     * incomplete transaction on the file-system to fail quickly rather than
-     * block waiting on some external event such as a remote server responding.
-     * @param superblock the superblock to unmount
-     */
-    virtual void umount_begin ( Superblock* /*super_block*/ ) {}
+    virtual void delete_inode(Inode* /*inode*/);
 
     /**
      * create a file with the given flag and  a file descriptor with the given
@@ -206,7 +142,7 @@ class Superblock
      * @param flag the flag
      * @return the fd
      */
-    virtual int32 createFd ( Inode* /*inode*/, uint32 /*flag*/ ) {return 0;}
+    virtual int32 createFd(Inode* /*inode*/, uint32 /*flag*/) = 0;
 
     /**
      * remove the corresponding file descriptor.
@@ -214,7 +150,7 @@ class Superblock
      * @param file the fd to remove
      * @return 0 on success
      */
-    virtual int32 removeFd ( Inode* /*inode*/, FileDescriptor* /*file*/ ) { return 0;}
+    virtual int32 removeFd(Inode* /*inode*/, FileDescriptor* /*file*/) { return 0; };
 
     /**
      * Get the root Dentry of the Superblock
@@ -228,8 +164,12 @@ class Superblock
      */
     Dentry *getMountPoint();
 
+    /**
+     * Get the File System Type of the Superblock
+     * @return the file system type
+     */
+    FileSystemType *getFSType();
 };
 
 #endif // Superblock_h___
-
 

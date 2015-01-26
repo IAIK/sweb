@@ -32,11 +32,9 @@ class MinixStorageManager : public StorageManager
      * @param num_inodes the max number of inodes
      * @param num_zones the max number of zones
      */
-    MinixStorageManager ( char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones );
+    MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes,
+                        uint16 num_zones);
 
-    /**
-     * destructor
-     */
     virtual ~MinixStorageManager();
 
     /**
@@ -55,21 +53,20 @@ class MinixStorageManager : public StorageManager
      * unsets the zone at the given index
      * @param index the index
      */
-    virtual void freeZone ( size_t index );
+    virtual void freeZone(size_t index);
 
     /**
      * unsets the inode at the given index
      * @param index the index
      */
-    virtual void freeInode ( size_t index );
+    virtual void freeInode(size_t index);
 
     /**
      * checks if inode is set
      * @param index the inode index
      * @return true if the inode is set
      */
-    virtual bool isInodeSet ( size_t index );
-
+    virtual bool isInodeSet(size_t index);
 
     /**
      * get the number of inodes in use
@@ -81,7 +78,7 @@ class MinixStorageManager : public StorageManager
      * writes the bitmaps to the minix file system
      * @param superblock the superblock of the minix file system to write to
      */
-    void flush ( MinixFSSuperblock *superblock );
+    void flush(MinixFSSuperblock *superblock);
 
     /**
      * prints the bitmaps to the command line
@@ -97,7 +94,6 @@ class MinixStorageManager : public StorageManager
     uint32 num_zone_bm_blocks_;
 
 };
-
 
 #endif //MINIX_STORAGE_MANAGER__
 

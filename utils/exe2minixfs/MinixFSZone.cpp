@@ -1,7 +1,3 @@
- /**
- * @file MinixFSZone.cpp
- */
-
 #include "MinixFSZone.h"
 #include "MinixFSSuperblock.h"
 

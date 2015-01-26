@@ -11,7 +11,7 @@
 class File;
 class FileDescriptor;
 
-extern std::list<FileDescriptor*> global_fd;
+extern ustl::list<FileDescriptor*> global_fd;
 
 /**
  * @class FileDescriptor

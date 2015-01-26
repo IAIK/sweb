@@ -5,9 +5,9 @@
 #ifndef MinixFSSuperblock_h___
 #define MinixFSSuperblock_h___
 
-#include "PointList.h"
 #include "Superblock.h"
 #include "MinixStorageManager.h"
+#include <map>
 
 class Inode;
 class MinixFSInode;
@@ -75,6 +75,18 @@ class MinixFSSuperblock : public Superblock
     virtual void delete_inode(Inode* inode);
 
     /**
+     * add an inode to the all_inodes_ data structures
+     * @param inode to add
+     */
+    void all_inodes_add_inode(Inode* inode);
+
+    /**
+     * remove an inode to the all_inodes_ data structures
+     * @param inode to remove
+     */
+    void all_inodes_remove_inode(Inode* inode);
+
+    /**
      * create a file with the given flag and a file descriptor with the given inode.
      * @param inode the inode to link the file with
      * @param flag the flag to create the file with
@@ -89,10 +101,10 @@ class MinixFSSuperblock : public Superblock
     virtual uint16 allocateZone();
 
     /**
-     * frees one zone on the file system
-     * @param zone the zone nr
+     * frees zone on the file system
+     * @param index the zone index
      */
-    virtual void freeZone(uint16 zone);
+    virtual void freeZone(uint16 index);
 
   protected:
 
@@ -102,6 +114,16 @@ class MinixFSSuperblock : public Superblock
      * @return the Inode object
      */
     MinixFSInode *getInode(uint16 i_num);
+
+    /**
+     * creates an Inode object with the given number from the file system
+     * this overloaded version should be used; directories usually have
+     * "." and ".." entries, which are pointing to already loaded inodes!!!
+     * by now this method is only called from MinixFSInode::loadChildren
+     * @param i_num the inode number
+     * @param is_already_loaded should be set to true if already loaded
+     * @return the Inode object
+     */
     MinixFSInode *getInode(uint16 i_num, bool &is_already_loaded);
 
     /**
@@ -156,6 +178,10 @@ class MinixFSSuperblock : public Superblock
      */
     int32 readBytes(uint32 block, uint32 offset, uint32 size, char *buffer);
 
+    /**
+     * reads the fs header
+     */
+    void readHeader();
   private:
 
     /**
@@ -191,12 +217,15 @@ class MinixFSSuperblock : public Superblock
      * maximum file size on this device
      */
     uint32 s_max_file_size_;
-    /**
-     * the storage manager
-     */
+
     MinixStorageManager* storage_manager_;
 
+    /**
+     * offset in the image file (in image util)
+     */
     uint64 offset_;
+
+    std::map<uint32, Inode*> all_inodes_set_;
 };
 
 #endif // MinixFSSuperblock_h___

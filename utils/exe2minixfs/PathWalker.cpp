@@ -1,7 +1,3 @@
-/**
- * @file PathWalker.cpp
- */
-
 #include "MinixFSTypes.h"
 #include "PathWalker.h"
 
