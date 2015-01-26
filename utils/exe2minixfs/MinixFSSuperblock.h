@@ -32,7 +32,7 @@ class MinixFSSuperblock : public Superblock
      * @param s_dev
      * @return
      */
-    MinixFSSuperblock ( Dentry* s_root, uint32 s_dev, uint64 offset );
+    MinixFSSuperblock(Dentry* s_root, uint32 s_dev, uint64 offset);
 
     /**
      * destructor
@@ -46,7 +46,7 @@ class MinixFSSuperblock : public Superblock
      * @param type the file type of the new inode (I_DIR, I_FILE)
      * @return the new inode
      */
-    virtual Inode* createInode ( Dentry* dentry, uint32 type );
+    virtual Inode* createInode(Dentry* dentry, uint32 type);
 
     /**
      *  remove the corresponding file descriptor and unlinks it from the inode.
@@ -54,26 +54,26 @@ class MinixFSSuperblock : public Superblock
      * @param fd the file descriptor
      * @return 0 on success
      */
-    virtual int32 removeFd ( Inode* inode, FileDescriptor* fd );
+    virtual int32 removeFd(Inode* inode, FileDescriptor* fd);
 
     /**
      * reads one inode from the mounted file system
      * @param inode the inode to read
      * @return 0 on success
      */
-    virtual int32 readInode ( Inode* inode );
+    virtual int32 readInode(Inode* inode);
 
     /**
      * writes the inode from the mounted file system
      * @param inode the inode to write
      */
-    virtual void writeInode ( Inode* inode );
+    virtual void writeInode(Inode* inode);
 
     /**
      * removes one inode from the file system and frees all its resources
      * @param inode the inode to delete
      */
-    virtual void delete_inode ( Inode* inode );
+    virtual void delete_inode(Inode* inode);
 
     /**
      * create a file with the given flag and a file descriptor with the given inode.
@@ -81,7 +81,7 @@ class MinixFSSuperblock : public Superblock
      * @param flag the flag to create the file with
      * @return the file descriptor
      */
-    virtual int32 createFd ( Inode* inode, uint32 flag );
+    virtual int32 createFd(Inode* inode, uint32 flag);
 
     /**
      * allocates one zone on the file system
@@ -95,7 +95,6 @@ class MinixFSSuperblock : public Superblock
      */
     virtual void freeZone(uint16 zone);
 
-
   protected:
 
     /**
@@ -103,15 +102,15 @@ class MinixFSSuperblock : public Superblock
      * @param i_num the inode number
      * @return the Inode object
      */
-    MinixFSInode *getInode ( uint16 i_num );
-    MinixFSInode *getInode ( uint16 i_num, bool &is_already_loaded );
+    MinixFSInode *getInode(uint16 i_num);
+    MinixFSInode *getInode(uint16 i_num, bool &is_already_loaded);
 
     /**
      * reads one Zone from the file system to the given buffer
      * @param zone the zone index to read
      * @param buffer the buffer to write in
      */
-    void readZone ( uint16 zone, Buffer *buffer );
+    void readZone(uint16 zone, char *buffer);
 
     /**
      * reads the given number of blocks from the file system to the given buffer
@@ -119,14 +118,14 @@ class MinixFSSuperblock : public Superblock
      * @param num_blocks the number of blcoks to read
      * @param buffer the buffer to write in
      */
-    void readBlocks ( uint16 block, uint32 num_blocks, Buffer *buffer );
+    void readBlocks(uint16 block, uint32 num_blocks, char *buffer);
 
     /**
      * writes one zone from the given buffer to the file system
      * @param zone the zone index to write
      * @param buffer the buffer to write
      */
-    void writeZone ( uint16 zone, Buffer *buffer );
+    void writeZone(uint16 zone, char *buffer);
 
     /**
      * writes the given number of blcoks to the file system from the given buffer
@@ -134,7 +133,7 @@ class MinixFSSuperblock : public Superblock
      * @param num_blocks the number of blocks to write
      * @param buffer the buffer to write
      */
-    void writeBlocks ( uint16 block, uint32 num_blocks, Buffer *buffer );
+    void writeBlocks(uint16 block, uint32 num_blocks, char *buffer);
 
     /**
      * writes the given number of bytes to the filesystem
@@ -145,7 +144,7 @@ class MinixFSSuperblock : public Superblock
      * @param buffer the buffer with the bytes to write
      * @return the number of bytes written
      */
-    int32 writeBytes ( uint32 block, uint32 offset, uint32 size, Buffer *buffer );
+    int32 writeBytes(uint32 block, uint32 offset, uint32 size, char *buffer);
 
     /**
      * reads the given number of bytes from the disc
@@ -156,7 +155,7 @@ class MinixFSSuperblock : public Superblock
      * @param buffer the buffer to write to
      * @return the number of bytes read
      */
-    int32 readBytes ( uint32 block, uint32 offset, uint32 size, Buffer *buffer );
+    int32 readBytes(uint32 block, uint32 offset, uint32 size, char *buffer);
 
   private:
 

@@ -185,7 +185,7 @@ void MinixStorageManager::flush ( MinixFSSuperblock *superblock )
   inode_bitmap_.bmprint();
   zone_bitmap_.bmprint();
   //bm_buffer->print();
-  superblock->writeBlocks ( 2,num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer );
+  superblock->writeBlocks ( 2,num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer->getBuffer() );
   delete bm_buffer;
   //debug ( M_STORAGE_MANAGER, "flush: flushing finished\n" );
 }

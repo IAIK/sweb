@@ -1,8 +1,3 @@
-/**
- * @file StorageManager.h
- *
- */
- 
 #ifndef STORAGE_MANAGER__
 #define STORAGE_MANAGER__
 
@@ -20,9 +15,6 @@ class StorageManager
      */
     StorageManager(uint16 num_inodes, uint16 num_zones);
 
-    /**
-     * destructor
-     */
     virtual ~StorageManager();
 
     /**

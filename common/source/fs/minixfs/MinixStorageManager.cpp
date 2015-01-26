@@ -9,37 +9,41 @@
 #include "console/debug.h"
 
 
-MinixStorageManager::MinixStorageManager ( char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones ) : StorageManager ( num_inodes, num_zones )
+MinixStorageManager::MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks,
+                                         uint16 num_inodes, uint16 num_zones) :
+    StorageManager(num_inodes, num_zones)
 {
-  debug ( M_STORAGE_MANAGER, "Constructor: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n",num_inodes,num_inode_bm_blocks,num_zones,num_zone_bm_blocks );
+  debug(M_STORAGE_MANAGER,
+        "Constructor: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n", num_inodes,
+        num_inode_bm_blocks, num_zones, num_zone_bm_blocks);
 //   bm_buffer->print();
 
   num_inode_bm_blocks_ = num_inode_bm_blocks;
   num_zone_bm_blocks_ = num_zone_bm_blocks;
 
   uint32 i_byte = 0;
-  for ( ; i_byte < num_inodes / 8; i_byte ++ )
+  for (; i_byte < num_inodes / 8; i_byte++)
   {
-    inode_bitmap_.setByte ( i_byte, bm_buffer[i_byte] );
+    inode_bitmap_.setByte(i_byte, bm_buffer[i_byte]);
   }
-  for ( uint32 i_bit = 0; i_bit < num_inodes % 8; i_bit ++ )
+  for (uint32 i_bit = 0; i_bit < num_inodes % 8; i_bit++)
   {
     uint8 byte = bm_buffer[i_byte];
-    if ( ( byte >> i_bit ) & 0x01 )
-      inode_bitmap_.setBit ( i_byte * 8 + i_bit );
+    if ((byte >> i_bit) & 0x01)
+      inode_bitmap_.setBit(i_byte * 8 + i_bit);
   }
   //read zone bitmap
   uint32 z_byte = num_inode_bm_blocks * BLOCK_SIZE;
   uint32 z_bm_byte = 0;
-  for ( ; z_bm_byte < num_zones / 8; z_byte ++, z_bm_byte++ )
+  for (; z_bm_byte < num_zones / 8; z_byte++, z_bm_byte++)
   {
-    zone_bitmap_.setByte ( z_bm_byte, bm_buffer[z_byte] );
+    zone_bitmap_.setByte(z_bm_byte, bm_buffer[z_byte]);
   }
-  for ( uint32 z_bit = 0; z_bit < num_zones % 8; z_bit ++ )
+  for (uint32 z_bit = 0; z_bit < num_zones % 8; z_bit++)
   {
     uint8 byte = bm_buffer[z_byte];
-    if ( ( byte >> z_bit ) & 0x01 )
-      zone_bitmap_.setBit ( z_bm_byte * 8 + z_bit );
+    if ((byte >> z_bit) & 0x01)
+      zone_bitmap_.setBit(z_bm_byte * 8 + z_bit);
   }
   curr_inode_pos_ = 0;
   curr_zone_pos_ = 0;
