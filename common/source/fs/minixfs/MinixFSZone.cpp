@@ -2,9 +2,8 @@
 #include "MinixFSSuperblock.h"
 
 #include "kprintf.h"
-
+#include <assert.h>
 #include "minix_fs_consts.h"
-#include "ArchCommon.h"
 
 MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)
 {

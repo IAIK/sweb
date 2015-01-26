@@ -27,9 +27,6 @@ class Dentry;
 #define A_WRITABLE  0x0002
 #define A_EXECABLE  0x0004
 
-typedef uint32 l_off_t;
-
-
 /**
  * @class File
  * A file object is used where-ever there is a need to read from or write to
@@ -39,22 +36,6 @@ typedef uint32 l_off_t;
 class File
 {
   public:
-
-    /**
-     * Seek from the start of the file.
-     */
-    //static const uint8 SEEK_SET = 0;
-
-    /**
-     * Seek from the current position in the file.
-     */
-    //static const uint8 SEEK_CUR = 1;
-
-    /**
-     * Seek from the end of the file.
-     */
-    //static const uint8 SEEK_END = 2;
-
     typedef uint32 mode_t;
 
     /**
@@ -97,16 +78,6 @@ class File
     Dentry* f_dentry_;
 
     /**
-     * Mounted filesystem containing the file
-     */
-    // VfsMount *vfs_mount_;
-
-    /**
-     * usage counter of the file
-     */
-    // int32 count_;
-
-    /**
      * The flags specified when the file was opened
      */
     uint32 flag_;
@@ -142,11 +113,8 @@ class File
      * @param dentry the files dentry
      * @param flag the files flag
      */
-    File ( Inode* inode, Dentry* dentry, uint32 flag )
+    File ( Inode* inode, Dentry* dentry, uint32 flag ) : f_superblock_(0), f_inode_(inode), f_dentry_(dentry), flag_(flag)
     {
-      f_inode_ = inode;
-      f_dentry_ = dentry;
-      flag_ = flag;
     }
 
     /**

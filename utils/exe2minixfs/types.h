@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <algorithm>
 #include <sys/types.h>
 #include "kprintf.h"
 
@@ -12,18 +13,20 @@
 #include "../../common/include/console/debug.h"
 
 typedef int8_t int8;
-typedef u_int8_t uint8;
+typedef uint8_t uint8;
 
 typedef int16_t int16;
-typedef u_int16_t uint16;
+typedef uint16_t uint16;
 
 typedef int32_t int32;
-typedef u_int32_t uint32;
+typedef uint32_t uint32;
 
-typedef u_int64_t uint64;
+typedef uint64_t uint64;
 typedef int64_t int64;
 
 typedef void* pointer;
+
+typedef loff_t l_off_t;
 
 class ArchCommon
 {

@@ -6,6 +6,7 @@
 #define MINIX_FS_ZONE__
 
 #include "types.h"
+#include "ArchCommon.h"
 
 typedef uint16 zone_add_type;
 

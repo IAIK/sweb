@@ -1,16 +1,8 @@
-/**
- * @file DEntry.cpp
- */
-
-#include "fs/Dentry.h"
-#include "kstring.h"
+#include "Dentry.h"
 #include "assert.h"
-#include "mm/kmalloc.h"
-#include "fs/Inode.h"
-#include <ustl/ualgo.h>
+#include "Inode.h"
 
-#include "console/kprintf.h"
-#include "console/debug.h"
+#include "kprintf.h"
 
 Dentry::Dentry(const char* name) :
     d_name_(0)
@@ -32,10 +24,10 @@ Dentry::Dentry(Dentry *parent) :
 
 Dentry::~Dentry()
 {
-  debug(DENTRY, "deleting Dentry with Name %s, d_parent_: %d, this: %d\n", d_name_, d_parent_, this);
+  debug(DENTRY, "deleting Dentry with Name %s, d_parent_: %p, this: %p\n", d_name_, d_parent_, this);
   if (d_parent_ && (d_parent_ != this))
   {
-    debug(DENTRY, "deleting Dentry child remove d_parent_: %d\n", d_parent_);
+    debug(DENTRY, "deleting Dentry child remove d_parent_: %p\n", d_parent_);
     d_parent_->childRemove(this);
   }
   for (Dentry* dentry : d_child_)
@@ -64,7 +56,7 @@ void Dentry::childInsert(Dentry *child_dentry)
 int32 Dentry::childRemove(Dentry *child_dentry)
 {
   debug(DENTRY, "Dentry childRemove entering\n");
-  debug(DENTRY, "Dentry childRemove d_child_ length: %d \n", d_child_.size());
+  debug(DENTRY, "Dentry childRemove d_child_ length: %ld \n", d_child_.size());
 
   debug(DENTRY, "Dentry childRemove d_child_ included: %d\n",
         ustl::find(d_child_.begin(), d_child_.end(), child_dentry ) != d_child_.end());

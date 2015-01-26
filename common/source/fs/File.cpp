@@ -1,8 +1,4 @@
-/**
- * @file File.cpp
- */
-
-#include "fs/File.h"
+#include "File.h"
 #include "Inode.h"
 
 File::File ( Inode* inode, Dentry* dentry, uint32 flag )

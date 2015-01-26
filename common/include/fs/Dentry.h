@@ -3,6 +3,8 @@
  */
 #include "types.h"
 #include <ustl/ulist.h>
+#include "kstring.h"
+#include <ustl/ualgo.h>
 
 #ifndef DENTRY_h__
 #define DENTRY_h__

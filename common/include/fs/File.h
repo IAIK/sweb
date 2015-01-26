@@ -27,9 +27,6 @@ class Dentry;
 #define A_WRITABLE  0x0002
 #define A_EXECABLE  0x0004
 
-//typedef uint32 l_off_t;
-
-
 /**
  * @class File
  * A file object is used where-ever there is a need to read from or write to
@@ -95,16 +92,6 @@ class File
      * The dentry pointing to this file/
      */
     Dentry* f_dentry_;
-
-    /**
-     * Mounted filesystem containing the file
-     */
-    // VfsMount *vfs_mount_;
-
-    /**
-     * usage counter of the file
-     */
-    // int32 count_;
 
     /**
      * The flags specified when the file was opened
