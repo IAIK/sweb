@@ -1,18 +1,12 @@
-/**
- * @file types.h
- *
- */
-
+// WARNING: You are looking for the a different types.h - this one is just for the exe2minixfs tool!
 #ifndef _MINIXFSTYPES_H_
 #define _MINIXFSTYPES_H_
 
 #include <cstdio>
 #include <cstring>
 #include <sys/types.h>
+#include "kprintf.h"
 
-#define kprintfd(fmt,args...) do { printf(fmt, ## args); } while (0)
-#define debug(flag,fmt,args...) do { if (flag & 0x80000000) { printf(fmt,## args); } } while(0)
-#define isDebugEnabled(flag) (flag & 0x80000000)
 #define ustl std
 
 #include "../../common/include/console/debug.h"

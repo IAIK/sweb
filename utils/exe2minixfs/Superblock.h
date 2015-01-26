@@ -5,8 +5,7 @@
 #ifndef SUPERBLOCK_H__
 #define SUPERBLOCK_H__
 
-#include "MinixFSTypes.h"
-#include "PointList.h"
+#include "types.h"
 #include "StorageManager.h"
 #include <list>
 
@@ -72,24 +71,24 @@ class Superblock
     /**
      * A list of dirty inodes.
      */
-    std::list<Inode*> dirty_inodes_;
+    ustl::list<Inode*> dirty_inodes_;
 
     /**
      * A list of used inodes. It is only used to open-file.
      */
-    std::list<Inode*> used_inodes_;
+    ustl::list<Inode*> used_inodes_;
 
     /**
      * inodes of the superblock.
      */
-    PointList<Inode> all_inodes_;
+    ustl::list<Inode*> all_inodes_;
 
     /**
      * This is a list of files (linked on f_list) of open files on this
      * file-system. It is used, for example, to check if there are any files
      * open for write before remounting the file-system as read-only.
      */
-    std::list<FileDescriptor*> s_files_;
+    ustl::list<FileDescriptor*> s_files_;
 
   public:
 

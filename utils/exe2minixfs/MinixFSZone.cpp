@@ -3,7 +3,6 @@
 
 #include <assert.h>
 #include <iostream>
-#include "Buffer.h"
 #include "minix_fs_consts.h"
 
 MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)

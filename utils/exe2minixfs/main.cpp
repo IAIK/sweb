@@ -1,5 +1,5 @@
 
-#include "MinixFSTypes.h"
+#include "types.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdio>

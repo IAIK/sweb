@@ -1,11 +1,11 @@
-#include "MinixFSTypes.h"
+#include "types.h"
 #include "PathWalker.h"
 
 #include "Inode.h"
 #include "Dentry.h"
 #include "Superblock.h"
 #include "FileSystemInfo.h"
-#include "string.h"
+#include <cstring>
 
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'

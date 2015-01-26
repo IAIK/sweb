@@ -5,7 +5,7 @@
 #ifndef FILEDESCRIPTOR_H__
 #define FILEDESCRIPTOR_H__
 
-#include "MinixFSTypes.h"
+#include "types.h"
 #include <list>
 
 class File;

@@ -5,7 +5,7 @@
 #include "FileSystemInfo.h"
 #include "Dentry.h"
 #include <assert.h>
-#include "string.h"
+#include <cstring>
 
 FileSystemInfo *fs_info = 0;
 

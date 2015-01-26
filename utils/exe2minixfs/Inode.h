@@ -5,8 +5,7 @@
 #ifndef INODE_H__
 #define INODE_H__
 
-#include "MinixFSTypes.h"
-#include "PointList.h"
+#include "types.h"
 #include <list>
 
 class Dentry;

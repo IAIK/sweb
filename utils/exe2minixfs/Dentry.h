@@ -1,8 +1,8 @@
 /**
  * @file Dentry.h
  */
-#include "MinixFSTypes.h"
-#include "PointList.h"
+#include "types.h"
+#include <list>
 
 #ifndef DENTRY_h__
 #define DENTRY_h__
@@ -19,7 +19,7 @@ class Inode;
 class Dentry
 {
   protected:
-
+    friend class MinixFSInode;
     /**
      * The pointer to the inode related to this name.
      */
@@ -35,7 +35,7 @@ class Dentry
     /**
      * This list_head is used to link together all the children of the dentry.
      */
-    PointList<Dentry> d_child_;
+    ustl::list<Dentry*> d_child_;
 
     /**
      * For a directory that has had a file-system mounted on it, this points to
@@ -56,74 +56,98 @@ class Dentry
      * set the inode to the dentry
      * @param inode the inode to set
      */
-    void setInode ( Inode *inode );
+    void setInode(Inode *inode);
 
     /**
      * release the inode to the dentry
      */
-    void releaseInode() { d_inode_ = 0; }
+    void releaseInode()
+    {
+      d_inode_ = 0;
+    }
 
     /**
      * get the inode to dentry
      * @return the inode
      */
-    Inode* getInode() { return d_inode_; }
+    Inode* getInode()
+    {
+      return d_inode_;
+    }
 
     /**
      * return the parent of the dentry
      * @return the dentry
      */
-    Dentry* getParent() { return d_parent_; }
+    Dentry* getParent()
+    {
+      return d_parent_;
+    }
 
     /**
      * set the parent dentry
      * @param parent the parent dentry to set
      */
-    void setParent ( Dentry *parent ) { d_parent_ = parent; }
+    void setParent(Dentry *parent)
+    {
+      d_parent_ = parent;
+    }
 
     /**
      * return the mount_point of the current file-system
      * @return the dentry of the mount point
      */
-    Dentry* getMountPoint() { return d_mounts_; }
+    Dentry* getMountPoint()
+    {
+      return d_mounts_;
+    }
 
     /**
      * set the mount point
      * @param mount_point the dentry to set the mount point to
      */
-    void setMountPoint ( Dentry *mount_point ) { d_mounts_ = mount_point; }
+    void setMountPoint(Dentry *mount_point)
+    {
+      d_mounts_ = mount_point;
+    }
 
     /**
      * set the child to the dentry
      * @param dentry the child dentry to set
      * @return 0 on success
      */
-    int32 setChild ( Dentry *dentry );
+    int32 setChild(Dentry *dentry);
 
     /**
      * check the existance of the child-list
      * @return true is empty
      */
-    bool emptyChild() { return d_child_.empty(); }
+    bool emptyChild()
+    {
+      return d_child_.empty();
+    }
 
     /**
      * get the number of the child
      * @return the number of childs
      */
-    uint32 getNumChild() { return d_child_.getLength(); }
+    uint32 getNumChild()
+    {
+      return d_child_.size();
+    }
 
     /**
      * get the child of the child-list
      * @param indes the index of the child to get
      * @return the found child dentry
      */
-    Dentry* getChild ( uint32 index );
+    Dentry* getChild(uint32 index);
 
     /**
      * set the name to the dentry
      * @param name the name to set
      */
-    void setName ( const char* name );
+    void setName(const char* name);
 
     /**
      * return the name of the dentry
@@ -136,20 +160,20 @@ class Dentry
      * It should return the Dentry if it exists the same name in the list,
      * @return the dentry found, 0 if doesn't exist.
      */
-    virtual Dentry* checkName ( const char* name );
+    virtual Dentry* checkName(const char* name);
 
     /**
      * remove a child_dentry from the d_child_ list.
      * @param child_dentry the child dentry of the curent dentry.
      * @return 0 on success
      */
-    virtual int32 childRemove ( Dentry *child_dentry );
+    virtual int32 childRemove(Dentry *child_dentry);
 
     /**
      * insert a child dentry to the d_child_ list.
      * @param child_dentry the child dentry of the current dentry.
      */
-    virtual void childInsert ( Dentry *child_dentry );
+    virtual void childInsert(Dentry *child_dentry);
 
   public:
 
@@ -159,7 +183,7 @@ class Dentry
      * contructor.
      * @param name the name
      */
-    Dentry ( const char* name );
+    Dentry(const char* name);
 
     /**
      * Constructor of a new dentry.
@@ -167,7 +191,7 @@ class Dentry
      * contructor.
      * @param parent the parent
      */
-    Dentry ( Dentry *parent );
+    Dentry(Dentry *parent);
 
     /**
      * Delete the pointer in all parent-dentrys before to calling this
@@ -175,6 +199,5 @@ class Dentry
      */
     virtual ~Dentry();
 };
-
 
 #endif // Dentry_h___

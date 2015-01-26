@@ -4,14 +4,14 @@
 #include "MinixFSFile.h"
 #include "Dentry.h"
 
-#include "MinixFSTypes.h"
+#include "types.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include <unistd.h>
 #include <iostream>
-#include "Buffer.h"
 #include <assert.h>
 #include <algorithm>
 
@@ -156,19 +156,19 @@ MinixFSSuperblock::~MinixFSSuperblock()
 
   assert(s_files_.empty() == true);
 
-  num = all_inodes_.getLength();
+  num = all_inodes_.size();
 
   debug(M_SB, "~MinixSuperblock num: %d inodes to delete\n", num);
 
   if (isDebugEnabled(M_SB))
   {
-    for (uint32 i = 0; i < num; i++)
-      debug(M_SB, "Inode: %p\n", all_inodes_.at(i));
+    for (auto it : all_inodes_)
+      debug(M_SB, "Inode: %p\n", it);
   }
 
   for (uint32 counter = 0; counter < num; counter++)
   {
-    Inode* inode = all_inodes_.at(0);
+    Inode* inode = all_inodes_.front();
 
     debug(M_SB, "~MinixSuperblock writing inode to disc\n");
     writeInode(inode);
@@ -230,7 +230,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
 {
   assert(inode);
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
-  //TODO assert(ustl::find(all_inodes_, inode) != all_inodes_.end());
+  assert(ustl::find(all_inodes_.begin(),all_inodes_.end(), inode) != all_inodes_.end());
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
@@ -252,7 +252,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
 void MinixFSSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
-  //TODO assert(ustl::find(all_inodes_, inode) != all_inodes_.end());
+  assert(ustl::find(all_inodes_.begin(),all_inodes_.end(), inode) != all_inodes_.end());
   //flush zones
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
@@ -289,7 +289,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
 
 void MinixFSSuperblock::all_inodes_add_inode(Inode* inode)
 {
-  all_inodes_.pushBack(inode);
+  all_inodes_.push_back(inode);
   all_inodes_set_[((MinixFSInode*) inode)->i_num_] = inode;
 }
 

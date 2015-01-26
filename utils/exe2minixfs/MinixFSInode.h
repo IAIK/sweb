@@ -5,11 +5,12 @@
 #ifndef MinixFSInode_h___
 #define MinixFSInode_h___
 
-#include "MinixFSTypes.h"
-#include "PointList.h"
+#include "types.h"
+#include <list>
 #include "Inode.h"
 #include "MinixFSZone.h"
 #include <iostream>
+#include <cstring>
 
 /**
  * @class MinixFSInode represents an inode on a minix file system and handles the corresponding functions

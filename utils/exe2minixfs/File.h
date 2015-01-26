@@ -5,8 +5,8 @@
 #ifndef FILE_H__
 #define FILE_H__
 
-#include "MinixFSTypes.h"
-#include "PointList.h"
+#include "types.h"
+#include <list>
 #include "Inode.h"
 
 // forward declarations

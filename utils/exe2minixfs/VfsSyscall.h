@@ -5,7 +5,7 @@
 #ifndef VFS_SYSCALL_H___
 #define VFS_SYSCALL_H___
 
-#include "MinixFSTypes.h"
+#include "types.h"
 #include "PathWalker.h"
 
 class Dirent;
