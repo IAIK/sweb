@@ -7,7 +7,7 @@
 #include "fs/PseudoFS.h"
 #include "fs/Dentry.h"
 
-#include "util/string.h"
+#include "kstring.h"
 
 
 PseudoFSInode::PseudoFSInode ( Superblock *super_block, uint32 inode_type )

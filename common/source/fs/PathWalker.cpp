@@ -10,7 +10,7 @@
 #include "fs/Superblock.h"
 
 #include "assert.h"
-#include "util/string.h"
+#include "kstring.h"
 
 #include "mm/kmalloc.h"
 #include "console/kprintf.h"

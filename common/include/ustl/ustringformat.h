@@ -3,7 +3,7 @@
 
 #include "utypes.h"
 #include "console/stdarg.h"
-#include "string.h"
+#include "kstring.h"
 
 #define MAXNBUF 20
 

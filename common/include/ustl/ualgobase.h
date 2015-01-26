@@ -7,7 +7,7 @@
 #define UALGOBASE_H_683A0BE77546133C4CE0E3622CFAA2EB
 
 #include "uutility.h"
-#include <string.h>
+#include <kstring.h>
 
 namespace ustl {
 

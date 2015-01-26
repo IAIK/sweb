@@ -9,6 +9,10 @@ include_directories(
     include/kernel
     include/drivers
     include/fs
+    include/fs/devicefs
+    include/fs/minixfs
+    include/fs/pseudofs
+    include/fs/ramfs
     include/ipc
     include/mm
     include/util

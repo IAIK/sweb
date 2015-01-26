@@ -6,6 +6,7 @@
 #define MinixFSInode_h___
 
 #include "types.h"
+#include "kstring.h"
 #include "Inode.h"
 #include "MinixFSZone.h"
 #include "ArchCommon.h"

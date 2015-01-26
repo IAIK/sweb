@@ -9,7 +9,7 @@
 #include "fs/Dentry.h"
 #include "fs/Superblock.h"
 #include "fs/VfsMount.h"
-#include "util/string.h"
+#include "kstring.h"
 #include "assert.h"
 #include "mm/kmalloc.h"
 #include "BDManager.h"

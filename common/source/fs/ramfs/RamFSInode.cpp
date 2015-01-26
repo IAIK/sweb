@@ -5,7 +5,7 @@
 #include "fs/ramfs/RamFSInode.h"
 
 #include "mm/kmalloc.h"
-#include "util/string.h"
+#include "kstring.h"
 #include "assert.h"
 #include "fs/ramfs/RamFSSuperblock.h"
 #include "fs/ramfs/RamFSFile.h"

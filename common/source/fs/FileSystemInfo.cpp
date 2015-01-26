@@ -5,7 +5,7 @@
 #include "fs/FileSystemInfo.h"
 #include "fs/Dentry.h"
 #include "fs/VfsMount.h"
-#include "util/string.h"
+#include "kstring.h"
 #include "mm/kmalloc.h"
 
 FileSystemInfo::FileSystemInfo() :

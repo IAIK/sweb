@@ -2,26 +2,26 @@
  * @file VfsSyscall.cpp
  */
 
-#include "fs/VfsSyscall.h"
-#include "util/string.h"
+#include "VfsSyscall.h"
+#include "kstring.h"
 #include "assert.h"
-#include "mm/kmalloc.h"
-#include "fs/Dirent.h"
-#include "kernel/Thread.h"
-#include "kernel/Mutex.h"
+#include "kmalloc.h"
+#include "Dirent.h"
+#include "Thread.h"
+#include "Mutex.h"
 
-#include "fs/Inode.h"
-#include "fs/Dentry.h"
-#include "fs/Superblock.h"
-#include "fs/File.h"
-#include "fs/FileDescriptor.h"
-#include "fs/FileSystemType.h"
-#include "fs/VirtualFileSystem.h"
-#include "fs/minixfs/MinixFSType.h"
-#include "fs/PathWalker.h"
-#include "fs/VfsMount.h"
+#include "Inode.h"
+#include "Dentry.h"
+#include "Superblock.h"
+#include "File.h"
+#include "FileDescriptor.h"
+#include "FileSystemType.h"
+#include "VirtualFileSystem.h"
+#include "MinixFSType.h"
+#include "PathWalker.h"
+#include "VfsMount.h"
 
-#include "console/kprintf.h"
+#include "kprintf.h"
 
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
@@ -196,10 +196,8 @@ Dirent* VfsSyscall::readdir(const char* pathname)
     }
 
     debug(VFSSYSCALL, "listing dir %s:\n", dentry->getName());
-    uint32 num_child = dentry->getNumChild();
-    for (uint32 i = 0; i < num_child; i++)
+    for (Dentry* sub_dentry : dentry->d_child_)
     {
-      Dentry *sub_dentry = dentry->getChild(i);
       Inode* sub_inode = sub_dentry->getInode();
       uint32 inode_type = sub_inode->getType();
       switch (inode_type)

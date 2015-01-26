@@ -1,6 +1,5 @@
 #include "MinixFSInode.h"
 
-#include "string.h"
 #include <assert.h>
 #include "MinixFSSuperblock.h"
 #include "MinixFSFile.h"
@@ -294,9 +293,9 @@ int32 MinixFSInode::rmdir()
 
   //the "." and ".." dentries will be deleted in some inode-dtor
   //("." in this inodes-dtor, ".." in the parent-dentry-inodes-dtor)
-  for (uint32 i = 0; i < dentry->getNumChild(); i++)
+  for (Dentry* child : dentry->d_child_)
   {
-    if (strcmp(dentry->getChild(i)->getName(), ".") != 0 && strcmp(dentry->getChild(i)->getName(), "..") != 0)
+    if (strcmp(child->getName(), ".") != 0 && strcmp(child->getName(), "..") != 0)
     {
       //if directory contains other entries than "." or ".."
       //-> directory not empty
