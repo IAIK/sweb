@@ -131,29 +131,29 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
     --last_used_zone;
     i_size_ = offset;
   }
-  // TODO BEGIN OF THIS IS NOT YET UPDATED
   uint32 zone_offset = offset % ZONE_SIZE;
-  Buffer* wbuffer = new Buffer(num_zones * ZONE_SIZE);
-  wbuffer->clear();
-  //debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",offset-zone_offset,zone_offset);
-  readData(offset - zone_offset, zone_offset, wbuffer->getBuffer());
+  char* wbuffer_array = new char[num_zones * ZONE_SIZE];
+  char* wbuffer = wbuffer_array;
+  ArchCommon::bzero((pointer) wbuffer, num_zones * ZONE_SIZE);
+  debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",
+        offset - zone_offset, zone_offset);
+  readData(offset - zone_offset, zone_offset, wbuffer);
   for (uint32 index = 0, pos = zone_offset; index < size; pos++, index++)
   {
-    wbuffer->setByte(pos, buffer[index]);
+    wbuffer[pos] = buffer[index];
   }
   for (uint32 zone_index = 0; zone_index < num_zones; zone_index++)
   {
-    //debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n",zone_index,i_zones_->getZone(zone));
-    wbuffer->setOffset(zone_index * ZONE_SIZE);
-    //std::cout << "zone: " << zone << " zone_index: " << zone_index << std::endl;
-    ((MinixFSSuperblock *) i_superblock_)->writeZone(i_zones_->getZone(zone + zone_index), wbuffer->getBuffer());
+    debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n", zone_index,
+          i_zones_->getZone(zone));
+    ((MinixFSSuperblock *) i_superblock_)->writeZone(i_zones_->getZone(zone_index + zone), wbuffer);
+    wbuffer += ZONE_SIZE;
   }
   if (i_size_ < offset + size)
   {
     i_size_ = offset + size;
   }
-  delete wbuffer;
-  // TODO END OF THIS IS NOT YET UPDATED
+  delete[] wbuffer_array;
   return size;
 }
 

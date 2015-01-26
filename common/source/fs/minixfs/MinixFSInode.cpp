@@ -136,13 +136,16 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",
         offset - zone_offset, zone_offset);
   readData(offset - zone_offset, zone_offset, wbuffer);
-  memcpy(wbuffer + zone_offset, buffer, size);
+  for (uint32 index = 0, pos = zone_offset; index < size; pos++, index++)
+  {
+    wbuffer[pos] = buffer[index];
+  }
   for (uint32 zone_index = 0; zone_index < num_zones; zone_index++)
   {
     debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n", zone_index,
           i_zones_->getZone(zone));
-    wbuffer += zone_index * ZONE_SIZE;
     ((MinixFSSuperblock *) i_superblock_)->writeZone(i_zones_->getZone(zone_index + zone), wbuffer);
+    wbuffer += ZONE_SIZE;
   }
   if (i_size_ < offset + size)
   {

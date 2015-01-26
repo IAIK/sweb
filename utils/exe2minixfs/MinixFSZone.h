@@ -29,7 +29,7 @@ class MinixFSZone
      * @param superblock the superblock
      * @param zones the zone array from the file system
      */
-    MinixFSZone ( MinixFSSuperblock *superblock, zone_add_type *zones );
+    MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones);
 
     /**
      * destructor
@@ -41,39 +41,42 @@ class MinixFSZone
      * @param index the zone index
      * @return the address
      */
-    zone_add_type getZone ( uint32 index );
+    zone_add_type getZone(uint32 index);
 
     /**
      * sets the zone address at the given index
      * @param index the index
      * @param zone the zone address
      */
-    void setZone ( uint32 index, zone_add_type zone );
+    void setZone(uint32 index, zone_add_type zone);
 
     /**
      * adds one zone with the given address
      * @param zone the address
      */
-    void addZone ( zone_add_type zone );
+    void addZone(zone_add_type zone);
 
     /**
      * returns the number of zones
      * @return the number of zones
      */
-    uint32 getNumZones() { return num_zones_; }
+    uint32 getNumZones()
+    {
+      return num_zones_;
+    }
 
     /**
      * flushes the zones to the file system
      * @param i_num the inode number of the inode to flush the zones to
      */
-    void flush ( uint32 i_num );
+    void flush(uint32 i_num);
 
     void freeZones();
 
   private:
 
     MinixFSSuperblock *superblock_;
-    zone_add_type *direct_zones_;
+    zone_add_type direct_zones_[9];
     zone_add_type *indirect_zones_;
     zone_add_type *double_indirect_linking_zone_;
     zone_add_type **double_indirect_zones_;
