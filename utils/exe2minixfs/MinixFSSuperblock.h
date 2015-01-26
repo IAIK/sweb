@@ -8,7 +8,6 @@
 #include "PointList.h"
 #include "Superblock.h"
 #include "MinixStorageManager.h"
-#include "Buffer.h"
 
 class Inode;
 class MinixFSInode;

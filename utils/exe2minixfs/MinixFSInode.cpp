@@ -4,16 +4,13 @@
 
 #include "MinixFSInode.h"
 
-//#include "mm/kmalloc.h"
 #include "string.h"
 #include <iostream>
 #include <assert.h>
 #include "MinixFSSuperblock.h"
 #include "MinixFSFile.h"
 #include "Dentry.h"
-//#include "arch_bd_manager.h"
-
-//#include "console/kprintf.h"
+#include "Buffer.h"
 
 #define ERROR_DNE "Error: the dentry does not exist.\n"
 #define ERROR_DU  "Error: inode is used.\n"

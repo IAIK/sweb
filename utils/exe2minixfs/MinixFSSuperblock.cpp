@@ -14,13 +14,8 @@
 #include <cstdio>
 #include <unistd.h>
 #include <iostream>
-
-//#include "fs_global.h"
+#include "Buffer.h"
 #include <assert.h>
-//#include "arch_bd_manager.h"
-//#include "kmalloc.h"
-
-//#include "console/kprintf.h"
 
 #define ROOT_NAME "/"
 
