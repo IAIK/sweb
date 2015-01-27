@@ -1,6 +1,7 @@
 #include "MinixFSType.h"
 #include "MinixFSSuperblock.h"
 #include "BDManager.h"
+#include "BDVirtualDevice.h"
 
 MinixFSType::MinixFSType() : FileSystemType("minixfs")
 {

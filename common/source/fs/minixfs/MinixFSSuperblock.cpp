@@ -4,9 +4,13 @@
 #include "MinixFSFile.h"
 #include "Dentry.h"
 #include "assert.h"
-#include "ArchCommon.h"
-#include "BDManager.h"
 #include "kprintf.h"
+#ifdef EXE2MINIXFS
+#include <unistd.h>
+#else
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
+#endif
 
 #define ROOT_NAME "/"
 
@@ -370,8 +374,13 @@ void MinixFSSuperblock::readZone(uint16 zone, char* buffer)
 void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer)
 {
   assert(buffer);
+#ifdef EXE2MINIXFS
+  lseek(s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
+  read(s_dev_, buffer, BLOCK_SIZE * num_blocks);
+#else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   bdvd->readData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
+#endif
 }
 
 void MinixFSSuperblock::writeZone(uint16 zone, char* buffer)
@@ -381,8 +390,13 @@ void MinixFSSuperblock::writeZone(uint16 zone, char* buffer)
 
 void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffer)
 {
+#ifdef EXE2MINIXFS
+  lseek(s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
+  write(s_dev_, buffer, BLOCK_SIZE * num_blocks);
+#else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   bdvd->writeData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
+#endif
 }
 
 int32 MinixFSSuperblock::readBytes(uint32 block, uint32 offset, uint32 size, char* buffer)

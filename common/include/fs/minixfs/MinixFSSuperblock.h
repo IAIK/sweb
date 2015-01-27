@@ -5,10 +5,9 @@
 #ifndef MinixFSSuperblock_h___
 #define MinixFSSuperblock_h___
 
-#include "fs/Superblock.h"
+#include "Superblock.h"
 #include "MinixStorageManager.h"
 #include "ustl/umap.h"
-#include "BDVirtualDevice.h"
 
 class Inode;
 class MinixFSInode;
