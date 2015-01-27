@@ -5,12 +5,13 @@ include_directories(
   ../../common/include/fs/minixfs
 )
 
-set(CMAKE_C_FLAGS "-DEXE2MINIXFS -std=gnu11 -g")
-set(CMAKE_CXX_FLAGS "-DEXE2MINIXFS -std=gnu++11 -g")
+set(CMAKE_C_FLAGS "-DEXE2MINIXFS -std=gnu11")
+set(CMAKE_CXX_FLAGS "-DEXE2MINIXFS -std=gnu++11")
 
 file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/util/Bitmap.cpp
                                    ../../common/source/fs/Dentry.cpp
+                                   ../../common/source/fs/FileSystemInfo.cpp
                                    ../../common/source/fs/Superblock.cpp
                                    ../../common/source/fs/minixfs/MinixFSFile.cpp
                                    ../../common/source/fs/minixfs/MinixFSInode.cpp

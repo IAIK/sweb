@@ -1,7 +1,4 @@
-/**
- * @file File.h
- */
-
+#ifdef EXE2MINIXFS
 #ifndef FILE_H__
 #define FILE_H__
 
@@ -171,4 +168,4 @@ class File
 
 
 #endif
-
+#endif

@@ -1,4 +1,3 @@
-
 #include "types.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -17,18 +16,19 @@
 #include "VfsSyscall.h"
 
 Superblock* superblock_;
-extern FileSystemInfo* fs_info;
+FileSystemInfo* fs_info;
+VfsMount vfs_dummy_;
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   if (argc < 3 || argc % 2 == 0)
   {
     std::cout << "Syntax:" << argv[0] << "<filename of minixfs-formatted image> <offset in bytes> [file1-src file1-dest"
-              << " [file2-src file2-dest [....]]]" << std::endl << std::endl;
+        << " [file2-src file2-dest [....]]]" << std::endl << std::endl;
     return -1;
   }
 
-  int32 image_fd = open(argv[1],  O_RDWR);
+  int32 image_fd = open(argv[1], O_RDWR);
 
   if (image_fd < 0)
   {
@@ -41,7 +41,7 @@ int main (int argc, char *argv[])
     std::istringstream stream(argv[2]);
     uint64 offset;
     stream >> offset;
-    if(stream.fail() || !stream.eof())
+    if (stream.fail() || !stream.eof())
     {
       close(image_fd);
       std::cout << "offset has to be a number!" << std::endl;
@@ -50,34 +50,34 @@ int main (int argc, char *argv[])
 
     superblock_ = (Superblock*) new MinixFSSuperblock(0, image_fd, offset);
     Dentry *mount_point = superblock_->getMountPoint();
-    mount_point->setMountPoint ( mount_point );
+    mount_point->setMountPoint(mount_point);
     Dentry *root = superblock_->getRoot();
 
     fs_info = new FileSystemInfo();
-    fs_info->setFsRoot ( root);
-    fs_info->setFsPwd ( root);
+    fs_info->setFsRoot(root, &vfs_dummy_);
+    fs_info->setFsPwd(root, &vfs_dummy_);
 
-    for(int32 i=2; i <= argc/2; i++)
+    for (int32 i = 2; i <= argc / 2; i++)
     {
-      int32 src_file = open(argv[2*i-1], O_RDONLY);
-  
-      if(src_file < 0)
+      int32 src_file = open(argv[2 * i - 1], O_RDONLY);
+
+      if (src_file < 0)
       {
-        std::cout << "Wasn't able to open file " << argv[2*i-1] << std::endl;
+        std::cout << "Wasn't able to open file " << argv[2 * i - 1] << std::endl;
         break;
       }
-  
+
       size_t size = lseek(src_file, 0, SEEK_END);
-  
+
       char *buf = new char[size];
-  
-      lseek(src_file, 0, SEEK_SET);  
+
+      lseek(src_file, 0, SEEK_SET);
       read(src_file, buf, size);
       close(src_file);
 
-      VfsSyscall::rm(argv[2*i]);
-      int32 fd = VfsSyscall::open(argv[2*i], 2 | 4); // O_RDWR | O_CREAT
-      if(fd < 0)
+      VfsSyscall::rm(argv[2 * i]);
+      int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4); // O_RDWR | O_CREAT
+      if (fd < 0)
       {
         std::cout << "no success" << std::endl;
         delete[] buf;
@@ -91,13 +91,13 @@ int main (int argc, char *argv[])
     delete fs_info;
     delete superblock_;
   }
-  catch(std::bad_alloc const &exc)
+  catch (std::bad_alloc const &exc)
   {
     std::cout << "std::bad_alloc - exception caught: " << exc.what() << std::endl;
     close(image_fd);
     return -1;
   }
-  catch(...)
+  catch (...)
   {
     std::cout << "caught unknown exception in main()!" << std::endl;
     close(image_fd);

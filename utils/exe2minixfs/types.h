@@ -1,4 +1,5 @@
 // WARNING: You are looking for the a different types.h - this one is just for the exe2minixfs tool!
+#ifdef EXE2MINIXFS
 #ifndef _MINIXFSTYPES_H_
 #define _MINIXFSTYPES_H_
 
@@ -32,4 +33,7 @@ class ArchCommon
     static void bzero(void* s, size_t n) { ::bzero(s,n); };
 };
 
+class VfsMount {};
+
+#endif
 #endif

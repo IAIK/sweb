@@ -1,12 +1,7 @@
-/**
- * @file FileSystemInfo.cpp
- */
-
-#include "fs/FileSystemInfo.h"
-#include "fs/Dentry.h"
-#include "fs/VfsMount.h"
+#include "FileSystemInfo.h"
+#include "Dentry.h"
 #include "kstring.h"
-#include "mm/kmalloc.h"
+#include "assert.h"
 
 FileSystemInfo::FileSystemInfo() :
     root_(0), pwd_(0), pathname_(0)

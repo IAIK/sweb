@@ -5,7 +5,7 @@
 #ifndef MinixFSFile_h___
 #define MinixFSFile_h___
 
-#include "fs/File.h"
+#include "File.h"
 
 /**
  * @class MinixFSFile handles files on a minix file system

@@ -6,7 +6,6 @@
 #define PATH_WALKER_H__
 
 #include "types.h"
-#include "Mutex.h"
 
 // forward declarations
 class Dentry;
