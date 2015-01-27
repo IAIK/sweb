@@ -15,13 +15,12 @@ extern Thread* currentThread;
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {
   char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
-  char line_string[5];
-  writeLine2Bochs("KERNEL_PANIC\n");
+  writeLine2Bochs(error_string);
   writeLine2Bochs(condition);
   writeChar2Bochs('\n');
   writeLine2Bochs(file);
   writeChar2Bochs('\n');
-  int i = 1000;
+  size_t i = 1000;
   do
   {
     i /= 10;
