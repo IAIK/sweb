@@ -12,7 +12,7 @@
 
 extern Thread* currentThread;
 
-void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
+__attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {
   char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
@@ -29,7 +29,7 @@ void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
 }
 
 
-void sweb_assert(const char *condition, uint32 line, const char* file)
+__attribute__((noreturn)) void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
   extern uint32 boot_completed;

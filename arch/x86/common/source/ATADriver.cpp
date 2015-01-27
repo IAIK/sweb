@@ -183,11 +183,13 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
       break;
   }
 
-  uint32 counter;
-  uint16 *word_buff = (uint16 *) buffer;
-  for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
-      word_buff [counter] = inportw ( port );
- 
+  if (buffer)
+  {
+    uint32 counter;
+    uint16 *word_buff = (uint16 *) buffer;
+    for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
+        word_buff [counter] = inportw ( port );
+  }
   /* Wait for drive to clear BUSY */
   jiffies = 0;
   while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
