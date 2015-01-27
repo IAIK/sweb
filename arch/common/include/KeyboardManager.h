@@ -160,7 +160,7 @@ private:
    * writes a byte to the given IO port
    *
    */
-  void send_cmd( uint8 cmd, uint8 port );
+  void send_cmd(uint8 cmd, uint8 port = 0);
 
   RingBuffer<uint8> keyboard_buffer_;
 
