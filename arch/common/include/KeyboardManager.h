@@ -17,7 +17,6 @@ extern "C"
 }
 #endif
 
-#include "ports.h"
 #include "RingBuffer.h"
 #include "atkbd.h"
 

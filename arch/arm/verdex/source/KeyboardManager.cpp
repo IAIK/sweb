@@ -68,7 +68,7 @@ void KeyboardManager::kb_wait()
 {
 }
 
-void KeyboardManager::send_cmd(uint8 cmd)
+void KeyboardManager::send_cmd(uint8 cmd, uint8 port)
 {
   kb_wait();
   kmi->data = cmd;

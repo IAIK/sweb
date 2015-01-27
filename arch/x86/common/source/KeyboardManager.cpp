@@ -6,6 +6,7 @@
 #include "KeyboardManager.h"
 #include "kprintf.h"
 #include "Console.h"
+#include "ports.h"
 
   uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] =
   {
