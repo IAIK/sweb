@@ -67,7 +67,7 @@ class KprintfNoSleepFlushingThread : public Thread
         {
           flushActiveConsole();
         }
-        Scheduler::instance()->yield();
+        waitForNextJob();
       }
     }
 };

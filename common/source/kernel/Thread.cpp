@@ -231,6 +231,12 @@ void Thread::jobDone()
   jobs_done_++;
 }
 
+void Thread::waitForNextJob()
+{
+  state_ = Worker;
+  Scheduler::instance()->yield();
+}
+
 bool Thread::hasWork()
 {
   return jobs_done_ < jobs_scheduled_;

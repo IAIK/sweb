@@ -143,6 +143,11 @@ class Thread
     void jobDone();
 
     /**
+     * Should be called by worker threads instead of Scheduler::yield()
+     */
+    void waitForNextJob();
+
+    /**
      * Are there open jobs?
      * @return true if jobs_scheduled_ > jobs_done_
      */

@@ -118,7 +118,7 @@ void Console::Run ( void )
         }
         this->jobDone();
       }
-      Scheduler::instance()->yield();
+      waitForNextJob();
     }
     while ( 1 ); // until the end of time
 }
