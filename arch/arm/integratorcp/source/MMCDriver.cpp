@@ -83,7 +83,6 @@ uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response)
     mmci->command = command | PL181_CMD_ENABLE;
   if (response)
     *response = mmci->response0;
-  uint32 temp;
   mmci->clear = mmci->status & 0x1FF;
   return mmci->status;
 }
@@ -137,7 +136,7 @@ uint32 MMCDriver::addRequest( BDRequest * br)
 
   debug(MMC_DRIVER, "addRequest:No IRQ operation !!\n");
   br->setStatus( BDRequest::BD_DONE );
-  return 0;
+  return res;
 }
 
 int32 MMCDriver::readBlock ( uint32 address, void *buffer )
@@ -163,22 +162,24 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
 
 int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
-  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
+  debug(MMC_DRIVER, "readSector: start: %x, num: %x, buffer: %x\n", start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
   {
-    readBlock((start_sector + i) * sector_size_, buffer + i * sector_size_);
+    readBlock((start_sector + i) * sector_size_, (char*) buffer + i * sector_size_);
   }
   return 0;
 }
 
-int32 MMCDriver::writeBlock ( uint32 address, void *buffer )
+int32 MMCDriver::writeBlock(uint32 address __attribute__((unused)), void *buffer __attribute__((unused)))
 {
   return 0;
 }
 
-int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer  )
+int32 MMCDriver::writeSector(uint32 start_sector __attribute__((unused)), uint32 num_sectors __attribute__((unused)),
+                             void * buffer __attribute__((unused)))
 {
-  while(1);
+  while (1);
+  return 0;
 }
 
 uint32 MMCDriver::getNumSectors()

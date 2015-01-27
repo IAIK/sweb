@@ -86,7 +86,7 @@ extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
   uint32 result;
-  asm("swp %[r], %[n], [%[l]]" : [r]"&=r"(result) : [n]"r"(new_value), [l]"r"(&lock));
+  asm("swp %[r], %[n], [%[l]]" : [r]"=&r"(result) : [n]"r"(new_value), [l]"r"(&lock));
   return result;
 }
 

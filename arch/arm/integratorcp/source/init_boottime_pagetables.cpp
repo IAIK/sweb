@@ -11,7 +11,7 @@
 
 void initialiseBootTimePaging()
 {
-  PageDirEntry *pde_start = (PageDirEntry*)(((void*)kernel_page_directory) - PHYSICAL_TO_VIRTUAL_OFFSET);
+  PageDirEntry *pde_start = (PageDirEntry*)(((char*)kernel_page_directory) - PHYSICAL_TO_VIRTUAL_OFFSET);
 
   uint32 i;
   // clear the page dir
