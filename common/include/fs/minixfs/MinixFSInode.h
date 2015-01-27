@@ -9,7 +9,6 @@
 #include "kstring.h"
 #include "Inode.h"
 #include "MinixFSZone.h"
-#include "ArchCommon.h"
 #include <ustl/ulist.h>
 
 /**

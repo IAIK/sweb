@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "-DEXE2MINIXFS -std=gnu++11 -g")
 file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/util/Bitmap.cpp
                                    ../../common/source/fs/Dentry.cpp
+                                   ../../common/source/fs/Superblock.cpp
                                    ../../common/source/fs/minixfs/MinixFSFile.cpp
                                    ../../common/source/fs/minixfs/MinixFSInode.cpp
                                    ../../common/source/fs/minixfs/MinixFSSuperblock.cpp

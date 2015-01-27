@@ -1,5 +1,7 @@
 #include "MinixFSInode.h"
-
+#ifndef EXE2MINIXFS
+#include "ArchCommon.h"
+#endif
 #include <assert.h>
 #include "MinixFSSuperblock.h"
 #include "MinixFSFile.h"

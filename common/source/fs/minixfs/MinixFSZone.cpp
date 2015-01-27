@@ -1,6 +1,8 @@
 #include "MinixFSZone.h"
 #include "MinixFSSuperblock.h"
-
+#ifndef EXE2MINIXFS
+#include "ArchCommon.h"
+#endif
 #include "kprintf.h"
 #include <assert.h>
 #include "minix_fs_consts.h"

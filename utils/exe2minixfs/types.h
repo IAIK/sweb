@@ -2,11 +2,9 @@
 #ifndef _MINIXFSTYPES_H_
 #define _MINIXFSTYPES_H_
 
-#include <cstdio>
-#include <cstring>
-#include <algorithm>
+#include <stdint.h>
+#include <string.h>
 #include <sys/types.h>
-#include "kprintf.h"
 
 #define ustl std
 

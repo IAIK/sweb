@@ -8,6 +8,7 @@
 #ifdef EXE2MINIXFS
 #include <unistd.h>
 #else
+#include "ArchCommon.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #endif
