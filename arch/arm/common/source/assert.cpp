@@ -16,16 +16,25 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 {
   char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
-  if (!condition)
+  writeLine2Bochs("KERNEL_PANIC\n");
+  writeLine2Bochs(condition);
+  writeChar2Bochs('\n');
+  writeLine2Bochs(file);
+  writeChar2Bochs('\n');
+  int i = 1000;
+  do
   {
-    writeLine2Bochs("KERNEL_PANIC\n");
-    ArchInterrupts::disableInterrupts();
-    extern uint32 boot_completed;
-    boot_completed = 0;
-    if (currentThread != 0)
-      currentThread->printBacktrace(false);
-    for ( ; ;) ;
-  }
+    i /= 10;
+    if (line > i)
+      writeChar2Bochs('0' + ((line / i) % 10));
+  } while (i > 0);
+  writeChar2Bochs('\n');
+  ArchInterrupts::disableInterrupts();
+  extern uint32 boot_completed;
+  boot_completed = 0;
+  if (currentThread != 0)
+    currentThread->printBacktrace(false);
+  while(1);
 }
 
 
@@ -37,4 +46,5 @@ __attribute__((noreturn)) void sweb_assert(const char *condition, uint32 line, c
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kpanict((uint8*) "Halting System\n");
+  while(1);
 }
