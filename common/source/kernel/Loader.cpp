@@ -152,7 +152,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
       {
         Elf::Phdr& h = phdrs_[k];
 
-        debug ( LOADER,"loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h.p_vaddr,h.p_paddr,h.p_type,h.p_memsz,h.p_filesz,h.p_offset );
+        debug ( LOADER,"loadOnePage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .flags=%x .memsz=%x .filez=%x .poff=%x\r\n",k,h.p_vaddr,h.p_paddr,h.p_type,h.p_flags,h.p_memsz,h.p_filesz,h.p_offset );
 
         if (ADDRESS_BETWEEN(load_byte_from_address, h.p_paddr, h.p_paddr + h.p_filesz))
         {
