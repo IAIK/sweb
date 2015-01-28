@@ -81,11 +81,14 @@ void ArchThreads::yield()
   asm("swi #0xffff");
 }
 
+extern "C" void memory_barrier();
 extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock);
 uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 {
   uint32 result;
+  memory_barrier();
   asm("swp %[r], %[n], [%[l]]" : [r]"=&r"(result) : [n]"r"(new_value), [l]"r"(&lock));
+  memory_barrier();
   return result;
 }
 

@@ -29,7 +29,7 @@ extern uint8 boot_stack[];
       ");\
   asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
   asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));\
-  if (currentThreadInfo->sp < 0x80000000) { asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0)); }\
+  if (!(currentThreadInfo->cpsr & 0xf)) { asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0)); }\
   storeRegisters();
 
 void storeRegisters()
