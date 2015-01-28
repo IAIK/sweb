@@ -103,7 +103,7 @@ typedef enum {
 	Low = 2,
 } UsbSpeed;
 
-static inline char* SpeedToChar(UsbSpeed speed) {
+static inline const char* SpeedToChar(UsbSpeed speed) {
 	if (speed == High) return "480 Mb/s";
 	else if (speed == Low) return "1.5 Mb/s";
 	else if (speed == Full) return "12 Mb/s";

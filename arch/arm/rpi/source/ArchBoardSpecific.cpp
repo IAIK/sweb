@@ -39,7 +39,7 @@ pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
   return framebuffer;
 }
 
-uint32 ArchBoardSpecific::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
+uint32 ArchBoardSpecific::getUsableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
 {
   start_address = 0;
   end_address = ((PHYSICAL_MEMORY_AVAILABLE - ArchCommon::getVESAConsoleWidth() * ArchCommon::getVESAConsoleHeight() * ArchCommon::getVESAConsoleBitsPerPixel() / 8) & ~0xFFF);
@@ -73,7 +73,7 @@ void ArchBoardSpecific::frameBufferInit()
     *MAIL0_WRITE = VIRTUAL_TO_PHYSICAL_BOOT(((uint32)&fbs) & ~0xF) | (0x1);
     memory_barrier();
     uint32 read = 0;
-    while (read & 0xF != 1)
+    while ((read & 0xF) != 1)
     {
       while (*MAIL0_STATUS & (1 << 30));
       read = *MAIL0_READ;
@@ -103,7 +103,7 @@ void ArchBoardSpecific::enableTimer()
   *pic_base_enable = 0x1;
 
   uint32* timer_load = (uint32*)0x9000B400;
-  uint32* timer_value = timer_load + 1;
+  //uint32* timer_value = timer_load + 1;
   *timer_load = 0x800;
   uint32* timer_control = timer_load + 2;
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
@@ -113,8 +113,8 @@ void ArchBoardSpecific::enableTimer()
 
 void ArchBoardSpecific::disableTimer()
 {
-  uint32* timer_load = (uint32*)0x9000B400;
-  uint32* timer_control = (uint32*)0x9000B40C;
+  //uint32* timer_load = (uint32*)0x9000B400;
+  //uint32* timer_control = (uint32*)0x9000B40C;
 }
 
 void ArchBoardSpecific::enableKBD()

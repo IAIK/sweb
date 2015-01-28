@@ -267,7 +267,7 @@ struct KeyboardLeds KeyboardGetLedSupport(u32 keyboardAddress) {
 	struct KeyboardDevice *data;
 	
 	keyboardNumber = KeyboardIndex(keyboardAddress);
-	if (keyboardNumber == 0xffffffff) return (struct KeyboardLeds) { };
+	if (keyboardNumber == 0xffffffff) return (struct KeyboardLeds) { 0, 0, 0, 0, 0, 0, 0, 0 };
 	data = (struct KeyboardDevice*)((struct HidDevice*)keyboards[keyboardNumber]->DriverData)->DriverData;
 	return data->LedSupport;
 }
@@ -320,7 +320,7 @@ struct KeyboardModifiers KeyboardGetModifiers(u32 keyboardAddress) {
 	struct KeyboardDevice *data;
 	
 	keyboardNumber = KeyboardIndex(keyboardAddress);
-	if (keyboardNumber == 0xffffffff) return (struct KeyboardModifiers) { };
+	if (keyboardNumber == 0xffffffff) return (struct KeyboardModifiers) {  0, 0, 0, 0, 0, 0, 0, 0 };
 	data = (struct KeyboardDevice*)((struct HidDevice*)keyboards[keyboardNumber]->DriverData)->DriverData;
 	return data->Modifiers;
 }

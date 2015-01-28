@@ -45,7 +45,7 @@ uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 data = 
   if (command == 41)
     for (uint32 i = 0; i < 0x100000; ++i);
   while(!(mmci->status & 0x1) && !(mmci->interrupt & 0x1));
-  uint32 temp = 0;
+//  uint32 temp = 0;
 //  kprintfd("interrupt: %x\n",mmci->interrupt);
   mmci->interrupt = 1;
 //  kprintfd("status: %x\n",mmci->status);
@@ -72,8 +72,7 @@ uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
 
 MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512), num_sectors_(210672)
 {
-
-unsigned int check;
+//  unsigned int check;
   debug(MMC_DRIVER,"MMCDriver()\n");
   uint32 response;
   mmci->control1 = (1 << 24);
@@ -132,7 +131,7 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
   uint32 response;
   mmc_send_cmd(17,address,&response,1);
   uint32* buffer32 = (uint32*) buffer;
-  uint8* buffer8 = (uint8*) buffer;
+//  uint8* buffer8 = (uint8*) buffer;
   uint32 i = 0;
   while (i < sector_size_ / sizeof(uint32))
   {
@@ -152,12 +151,12 @@ int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   return 0;
 }
 
-int32 MMCDriver::writeBlock ( uint32 address, void *buffer )
+int32 MMCDriver::writeBlock ( uint32 address __attribute__((unused)), void *buffer __attribute__((unused)))
 {
   return 0;
 }
 
-int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer  )
+int32 MMCDriver::writeSector ( uint32 start_sector __attribute__((unused)), uint32 num_sectors __attribute__((unused)), void * buffer __attribute__((unused)) )
 {
   while(1);
   return 0;

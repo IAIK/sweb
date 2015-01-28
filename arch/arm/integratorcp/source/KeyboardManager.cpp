@@ -118,7 +118,7 @@ void KeyboardManager::serviceIRQ( void )
 
 }
 
-void KeyboardManager::modifyKeyboardStatus(uint8 sc )
+void KeyboardManager::modifyKeyboardStatus(uint8 sc)
 {
   bool key_released = sc & 0200;
 

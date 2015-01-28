@@ -47,7 +47,7 @@ KeyboardManager *KeyboardManager::instance_ = 0;
 extern struct UsbDevice *Devices[];
 
 KeyboardManager::KeyboardManager() :
-    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), current_key_(0), usb_kbd_addr_(0)
+    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0)
 {
   UsbInitialise();
   for (uint32 i = 0; i < 32; ++i)
@@ -68,7 +68,7 @@ void KeyboardManager::kb_wait()
 {
 }
 
-void KeyboardManager::send_cmd(uint8 cmd, uint8 port)
+void KeyboardManager::send_cmd(uint8 cmd __attribute__((unused)), uint8 port __attribute__((unused)))
 {
 }
 
@@ -101,7 +101,7 @@ void KeyboardManager::serviceIRQ( void )
   current_key_ = key;
 }
 
-void KeyboardManager::modifyKeyboardStatus(uint8 sc )
+void KeyboardManager::modifyKeyboardStatus(uint8 sc __attribute__((unused)))
 {
   return;
 }
