@@ -161,7 +161,11 @@ extern "C" void exceptionHandler(uint32 type)
   assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
   assert((currentThreadInfo->cpsr & (0xE0)) == 0);
-  if (type == ARM4_XRQ_IRQ) {
+  if (!currentThread)
+  {
+    Scheduler::instance()->schedule();
+  }
+  else if (type == ARM4_XRQ_IRQ) {
     ArchBoardSpecific::irq_handler();
   }
   else if (type == ARM4_XRQ_SWINT) {
@@ -187,6 +191,7 @@ extern "C" void exceptionHandler(uint32 type)
 //  ArchThreads::printThreadRegisters(currentThread,false);
   assert((currentThreadInfo->ttbr0 & 0x3FFF) == 0 && (currentThreadInfo->ttbr0 & ~0x3FFF) != 0);
   assert((currentThreadInfo->cpsr & 0xE0) == 0);
+  assert(currentThread->switch_to_userspace_ == 0 || (currentThreadInfo->cpsr & 0xF) == 0);
   assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
   switchTTBR0(currentThreadInfo->ttbr0);
 }

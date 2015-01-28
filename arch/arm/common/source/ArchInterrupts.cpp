@@ -58,8 +58,8 @@ void storeRegisters()
        orr r0, r0, #0xd3 \n\
        msr cpsr, r0 \n\
       ");\
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
   asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
   asm("msr spsr, r0"); \
   asm("mov r3, %[v]" : : [v]"r" (currentThreadInfo->r12));\
   asm("push {r3}");\
