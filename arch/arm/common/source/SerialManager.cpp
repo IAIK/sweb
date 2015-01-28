@@ -28,13 +28,13 @@ uint32 SerialManager::get_num_ports()
   return num_ports;
 };
 
-uint32 SerialManager::do_detection( uint32 is_paging_set_up )
+uint32 SerialManager::do_detection(uint32 is_paging_set_up __attribute__((unused)))
 {
   assert(false);
   return num_ports;
 }
 
-void SerialManager::service_irq( uint32 irq_num )
+void SerialManager::service_irq(uint32 irq_num __attribute__((unused)))
 {
   assert(false);
 }

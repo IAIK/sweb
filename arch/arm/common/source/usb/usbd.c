@@ -201,7 +201,7 @@ Result UsbReadString(struct UsbDevice *device, u8 stringIndex, char* buffer, u32
 		return result;
  
 	descriptorLength = descriptor->DescriptorLength;
-	for (i = 0; i < length - 1 && i < (descriptorLength - 2) >> 1; i++) {
+	for (i = 0; i < (u32)(length - 1) && i < (u32)(descriptorLength - 2) >> 1; i++) {
 		if (descriptor->Data[i] > 0xff)
 			buffer[i] = '?';
 		else {

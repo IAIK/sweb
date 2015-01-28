@@ -192,7 +192,7 @@ Result HidReadDevice(struct UsbDevice *device, u8 reportNumber) {
 						field->Value.Pointer,
 						j * field->Size, 
 						field->Size, 
-						field->LogicalMinimum < 0 ? BitGetSigned(
+						field->LogicalMinimum < 0 ? (u32)BitGetSigned(
 							report->ReportBuffer, 
 							field->Offset + j * field->Size, 
 							field->Size

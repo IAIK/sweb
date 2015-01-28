@@ -345,7 +345,7 @@ void HubChildDetached(struct UsbDevice *device, struct UsbDevice *child) {
 	
 	data = (struct HubDevice*)device->DriverData;
 	
-	if (child->Parent == device && child->PortNumber >= 0 && child->PortNumber < data->MaxChildren &&
+	if (child->Parent == device && child->PortNumber < data->MaxChildren &&
 		data->Children[child->PortNumber] == child)
 		data->Children[child->PortNumber] = NULL;
 }
@@ -355,7 +355,7 @@ Result HubChildReset(struct UsbDevice *device, struct UsbDevice *child) {
 	
 	data = (struct HubDevice*)device->DriverData;
 	
-	if (child->Parent == device && child->PortNumber >= 0 && child->PortNumber < data->MaxChildren &&
+	if (child->Parent == device && child->PortNumber < data->MaxChildren &&
 		data->Children[child->PortNumber] == child)
 		return HubPortReset(device, child->PortNumber);
 	else
@@ -368,7 +368,7 @@ Result HubCheckConnectionDevice(struct UsbDevice *device, struct UsbDevice *chil
 
 	data = (struct HubDevice*)device->DriverData;
 	
-	if (child->Parent == device && child->PortNumber >= 0 && child->PortNumber < data->MaxChildren &&
+	if (child->Parent == device && child->PortNumber < data->MaxChildren &&
 		data->Children[child->PortNumber] == child) {
 		if ((result = HubCheckConnection(device, child->PortNumber)) != OK)
 			return result;

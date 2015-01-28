@@ -63,8 +63,8 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   void *StackStart = (void*) (2U*1024U*1024U*1024U - sizeof ( pointer )); // the stack "starts" at the high addresses...
   void *StackEnd = 0x0; // ... and "ends" at the lower ones.
 
-  void *StartAddress = (void*)0x00000000;
-  void *EndAddress = (void*)  0x80000000;
+  //void *StartAddress = (void*)0x00000000;
+  //void *EndAddress = (void*)  0x80000000;
 
   int i = 0;
   while (i < size &&

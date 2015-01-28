@@ -20,6 +20,7 @@ uint32 IDEDriver::doDeviceDetection()
   BDManager::getInstance()->addVirtualDevice( bdv );
   debug(IDE_DRIVER, "doDetection: initialized with MMCDriver!\n ");
   processMBR( drv, 0, drv->SPT, name );
+  return 1;
 }
 
 int32 IDEDriver::processMBR  ( MMCDriver * drv, uint32 sector, uint32 SPT, const char *name )

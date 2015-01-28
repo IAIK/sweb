@@ -12,10 +12,12 @@
 #include <stdarg.h>
 #include "debug.h"
 #include "board_constants.h"
+#include "kmalloc.h"
+#include "kstring.h"
 
 #ifdef MEM_NO_RESERVE
 
-void* MemoryReserve(u32 length, void* physicalAddress) {
+void* MemoryReserve(u32 length __attribute__((unused)), void* physicalAddress) {
 	return physicalAddress;
 }
 
@@ -23,7 +25,7 @@ void* MemoryReserve(u32 length, void* physicalAddress) {
 
 #ifndef MEM_INTERNAL_MANAGER
 void* MemoryAllocate(u32 size) {
-  return kmalloc(size + 0x2000) + 0x1000;  // well i don't trust it totally right now...
+  return (void*)(kmalloc(size + 0x2000) + 0x1000);  // well i don't trust it totally right now...
 }
 void MemoryDeallocate(void* address) {
   kfree(address - 0x1000);

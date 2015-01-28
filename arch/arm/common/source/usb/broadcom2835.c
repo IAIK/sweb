@@ -26,7 +26,7 @@ void MicroDelay(u32 delay) {
 	while (*timeStamp < stop)
 	{
 		for (uint32 i = 0; i < 10000; ++i);
-		if (timeStamp != 0x90003004)
+		if (timeStamp != (u64*)0x90003004)
 		{
 		  LOG_DEBUGF("timeStamp != 0x90003004!!!\n",0);
 		  while(1);

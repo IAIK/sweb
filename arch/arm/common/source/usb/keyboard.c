@@ -49,7 +49,7 @@ u32 KeyboardIndex(u32 address) {
 u32 KeyboardGetAddress(u32 index) {
 	if (index > keyboardCount) return 0;
 
-	for (u32 i = 0; index >= 0 && i < KeyboardMaxKeyboards; i++) {
+	for (u32 i = 0; i < KeyboardMaxKeyboards; i++) {
 		if (keyboardAddresses[i] != 0)
 			if (index-- == 0)
 				return keyboardAddresses[i];
@@ -83,7 +83,7 @@ void KeyboardDeallocate(struct UsbDevice *device) {
 	((struct HidDevice*)device->DriverData)->HidDetached = NULL;
 }
 
-Result KeyboardAttach(struct UsbDevice *device, u32 interface) {
+Result KeyboardAttach(struct UsbDevice *device, u32 interface __attribute__((unused))) {
 	u32 keyboardNumber;
 	struct HidDevice *hidData;
 	struct KeyboardDevice *data;

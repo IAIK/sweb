@@ -341,7 +341,7 @@ Result HcdChannelInterruptToError(struct UsbDevice *device, struct ChannelInterr
 }
 
 Result HcdChannelSendWaitOne(struct UsbDevice *device, 
-	struct UsbPipeAddress *pipe, u8 channel, void* buffer, u32 bufferLength, u32 bufferOffset,
+	struct UsbPipeAddress *pipe, u8 channel, void* buffer, u32 bufferLength __attribute__((unused)), u32 bufferOffset,
 	struct UsbDeviceRequest *request) {
 	Result result;
 	u32 timeout, tries, globalTries, actualTries;
