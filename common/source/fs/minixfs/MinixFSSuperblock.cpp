@@ -8,7 +8,7 @@
 #ifdef EXE2MINIXFS
 #include <unistd.h>
 #else
-#include "ArchCommon.h"
+#include "kstring.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #endif
@@ -257,7 +257,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   char buffer[INODE_SIZE];
-  ArchCommon::bzero((pointer) buffer, sizeof(buffer));
+  memset((void*)buffer, 0, sizeof(buffer));
   debug(M_SB, "writeInode> reading block %d with offset %d from disc\n", block, offset);
   readBytes(block, offset, INODE_SIZE, buffer);
   debug(M_SB, "writeInode> read data from disc\n");
@@ -315,7 +315,7 @@ void MinixFSSuperblock::delete_inode(Inode* inode)
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   char buffer[INODE_SIZE];
-  ArchCommon::bzero((pointer) buffer, sizeof(buffer));
+  memset((void*)buffer, 0, sizeof(buffer));
   writeBytes(block, offset, INODE_SIZE, buffer);
   delete inode;
 }

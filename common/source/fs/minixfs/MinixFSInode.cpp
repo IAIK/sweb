@@ -1,6 +1,6 @@
 #include "MinixFSInode.h"
 #ifndef EXE2MINIXFS
-#include "ArchCommon.h"
+#include "kstring.h"
 #endif
 #include <assert.h>
 #include "MinixFSSuperblock.h"
@@ -80,7 +80,7 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   debug(M_INODE, "readData: zone: %d, zone_offset %d, num_zones: %d\n", start_zone, zone_offset, num_zones);
   for (uint32 zone = start_zone; zone < start_zone + num_zones; zone++)
   {
-    bzero(rbuffer, sizeof(rbuffer));
+    memset(rbuffer, 0, sizeof(rbuffer));
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
     uint32 count = size - index;
     uint32 zone_diff = ZONE_SIZE - zone_offset;
@@ -115,7 +115,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
     debug(M_INODE, "writeData: have to clean memory\n");
     uint32 zone_size_offset = i_size_ % ZONE_SIZE;
     char fill_buffer[ZONE_SIZE];
-    bzero(fill_buffer, sizeof(fill_buffer));
+    memset(fill_buffer, 0, sizeof(fill_buffer));
     if (zone_size_offset)
     {
       readData(i_size_ - zone_size_offset, zone_size_offset, fill_buffer);
@@ -124,7 +124,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
     ++last_used_zone;
     for (; last_used_zone <= offset / ZONE_SIZE; last_used_zone++)
     {
-      bzero(fill_buffer, sizeof(fill_buffer));
+      memset(fill_buffer, 0, sizeof(fill_buffer));
       ((MinixFSSuperblock *) i_superblock_)->writeZone(last_used_zone, fill_buffer);
     }
     --last_used_zone;
@@ -133,7 +133,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   uint32 zone_offset = offset % ZONE_SIZE;
   char* wbuffer_array = new char[num_zones * ZONE_SIZE];
   char* wbuffer = wbuffer_array;
-  ArchCommon::bzero((pointer) wbuffer, num_zones * ZONE_SIZE);
+  memset((void*)wbuffer, 0, num_zones * ZONE_SIZE);
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",
         offset - zone_offset, zone_offset);
   readData(offset - zone_offset, zone_offset, wbuffer);

@@ -7,8 +7,8 @@
 #include "ArchInterrupts.h"
 #include "kprintf.h"
 #include "assert.h"
-#include "ArchCommon.h"
 #include "PageManager.h"
+#include "kstring.h"
 
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -18,8 +18,8 @@ ArchMemory::ArchMemory()
 {
   page_map_level_4_ = PageManager::instance()->allocPPN();
   PageMapLevel4Entry* new_pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
-  ArchCommon::memcpy((pointer) new_pml4,(pointer)kernel_page_map_level_4, PAGE_SIZE);
-  bzero(new_pml4,PAGE_SIZE / 2); // should be zero, this is just for safety
+  memcpy((void*)new_pml4, (void*)kernel_page_map_level_4, PAGE_SIZE);
+  memset(new_pml4, 0, PAGE_SIZE / 2); // should be zero, this is just for safety
 }
 
 template<typename T>
@@ -60,7 +60,7 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
   debug(A_MEMORY,"%s: page %x index %x ppn %x user_access %x size %x\n", __PRETTY_FUNCTION__, map, index, ppn, user_access, size);
   if (bzero)
   {
-    ArchCommon::bzero(getIdentAddressOfPPN(ppn), PAGE_SIZE);
+    memset((void*)getIdentAddressOfPPN(ppn), 0, PAGE_SIZE);
     assert(((uint64*)map)[index] == 0);
   }
   map[index].size = size;

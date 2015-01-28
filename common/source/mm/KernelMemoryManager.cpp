@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "Scheduler.h"
 #include "ArchInterrupts.h"
+#include "kstring.h"
 
 extern uint32 boot_completed;
 
@@ -33,7 +34,7 @@ KernelMemoryManager::KernelMemoryManager ( pointer start_address, pointer end_ad
   last_=first_;
   debug ( KMM,"KernelMemoryManager::ctor: bytes avaible: %d \n",end_address-start_address );
   debug ( KMM,"ArchCommon::bzero((pointer) %x, %x,1);\n",(pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment));
-  ArchCommon::bzero((pointer) first_ + sizeof(MallocSegment), end_address - start_address - sizeof(MallocSegment),0);
+  memset((void*)((size_t)first_ + sizeof(MallocSegment)), 0, end_address - start_address - sizeof(MallocSegment));
 }
 
 
@@ -147,7 +148,7 @@ pointer KernelMemoryManager::reallocateMemory ( pointer virtual_address, size_t 
       assert(false);
       return 0;
     }
-    ArchCommon::memcpy ( new_address,virtual_address, m_segment->getSize() );
+    memcpy((void*)new_address, (void*)virtual_address, m_segment->getSize());
     freeSegment ( m_segment );
     unlockKMM();
     return new_address;
@@ -282,7 +283,7 @@ void KernelMemoryManager::freeSegment ( MallocSegment *this_one )
   //of allocating it with this MemoryManager
   //is something is suddenly zero, we immediatly know there was a
   //problem with someones pointer
-  ArchCommon::bzero ( ( ( pointer ) this_one ) + sizeof ( MallocSegment ), this_one->getSize(), 0 );
+  memset((void*)((size_t)this_one + sizeof(MallocSegment)), 0, this_one->getSize());
 
   //~ //debug code:
   if ( isDebugEnabled ( KMM ) )
@@ -319,7 +320,7 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment ( MallocSegment *this_on
         next_one->next_->prev_=this_one;
       }
 
-      ArchCommon::bzero ( ( pointer ) next_one, sizeof ( MallocSegment ), 0 );
+      memset((void*)next_one, 0, sizeof(MallocSegment));
 
       //have to check again, could have changed...
       if ( this_one->next_ == 0 )

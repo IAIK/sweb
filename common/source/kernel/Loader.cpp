@@ -7,7 +7,7 @@
 #include "ArchThreads.h"
 #include "PageManager.h"
 #include "ArchMemory.h"
-#include "ArchCommon.h"
+#include "kstring.h"
 #include "ArchInterrupts.h"
 #include "Syscall.h"
 #include "VfsSyscall.h"
@@ -218,7 +218,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
   {
     debug(LOADER, "%x is in .bss\n", virtual_address);
     page = PageManager::instance()->allocPPN();
-    ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
+    memset((void*)ArchMemory::getIdentAddressOfPPN(page), 0, PAGE_SIZE);
     arch_memory_.mapPage(virtual_page, page, true);
     return;
   }
@@ -269,7 +269,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
    }
   page = PageManager::instance()->allocPPN();
   debug(PM, "got new page %x\n", page);
-  ArchCommon::bzero ( ArchMemory::getIdentAddressOfPPN ( page ),PAGE_SIZE,false );
+  memset((void*)ArchMemory::getIdentAddressOfPPN(page), 0, PAGE_SIZE);
   debug(PM, "bzero!\n");
   uint8* dest = reinterpret_cast<uint8*> (ArchMemory::getIdentAddressOfPPN ( page ));
   debug(PM, "copying %d elements\n", byte_map.size());

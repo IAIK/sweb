@@ -25,29 +25,22 @@ size_t strlen ( const char *str )
 
 void *memcpy ( void *dest, const void *src, size_t length )
 {
-  uint8 *dest8 = ( uint8* ) dest;
-  const uint8 *src8 = ( const uint8* ) src;
-
-#ifdef STRING_SAVE
-  if ( ( ( src8 < ( dest8 + length ) ) && ( src8 > dest8 ) )
-          || ( ( dest8 < ( src8 + length ) ) && ( dest8 > src8 ) ) )
-  {
+    size_t i;
+    size_t* s = (size_t*)src;
+    size_t* d = (size_t*)dest;
+    size_t num_large_copies = length / sizeof(size_t);
+    size_t num_rest_copies = length % sizeof(size_t);
+    for (size_t i = 0; i < num_large_copies; ++i)
+    {
+      *d++ = *s++;
+    }
+    uint8* s8 = (uint8*)s;
+    uint8* d8 = (uint8*)d;
+    for (i = 0; i < num_rest_copies; ++i)
+    {
+      *d8++ = *s8++;
+    }
     return dest;
-    // error because strings overlap with is not allowed for memcpy
-  }
-#endif
-
-  if ( length == 0 || src == dest )
-  {
-    return dest;
-  }
-
-  while ( length-- )
-  {
-    *dest8++ = *src8++;
-  }
-
-  return dest;
 }
 
 
@@ -109,16 +102,27 @@ void *memccpy ( void *dest, const void *src, uint8 c, size_t length )
 
 void *memset ( void *block, uint8 c, size_t size )
 {
-  uint8 *block8 = ( uint8* ) block;
-
-  if ( size )
+  if(size)
   {
-    while ( size-- )
+    size_t i;
+    size_t* d = (size_t*)block;
+    size_t large_c = c;
+    for(i = 0; i < sizeof(size_t); i++)
     {
-      *block8++ = c;
+      large_c = (large_c << 8) | c;
+    }
+    size_t num_large_copies = size / sizeof(size_t);
+    size_t num_rest_copies = size % sizeof(size_t);
+    for (i = 0; i < num_large_copies; ++i)
+    {
+      *d++ = large_c;
+    }
+    uint8* d8 = (uint8*)d;
+    for (i = 0; i < num_rest_copies; ++i)
+    {
+      *d8++ = c;
     }
   }
-
   return block;
 }
 
@@ -272,22 +276,6 @@ void bcopy ( void *src, void* dest, size_t length )
   }
 
 }
-
-
-void bzero ( void *block, size_t size )
-{
-  uint8 *block8 = ( uint8* ) block;
-
-  if ( size )
-  {
-    while ( size-- )
-    {
-      *block8++ = 0;
-    }
-  }
-
-}
-
 
 int32 memcmp ( const void *region1, const void *region2, size_t size )
 {

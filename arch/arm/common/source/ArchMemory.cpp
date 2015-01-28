@@ -6,9 +6,9 @@
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
-#include "ArchCommon.h"
 #include "PageManager.h"
 #include "offsets.h"
+#include "kstring.h"
 
 #define PT_SIZE 1024
 #define PD_SIZE 16384
@@ -28,7 +28,7 @@ ArchMemory::ArchMemory()
   debug ( A_MEMORY,"ArchMemory::ArchMemory(): Got new Page no. %x\n",page_dir_page_ );
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
-  ArchCommon::memcpy((pointer) new_page_directory,(pointer) kernel_page_directory, PD_SIZE);
+  memcpy((void*) new_page_directory,(const void*) kernel_page_directory, PD_SIZE);
   for (uint32 p = 8; p < PAGE_DIR_ENTRIES / 2; ++p) //we're concerned with first two gig, rest stays as is
   {
     new_page_directory[p].pt.size = PDE_SIZE_NONE;
@@ -78,7 +78,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
-  ArchCommon::bzero(getIdentAddressOfPPN(physical_page_table_page),PT_SIZE);
+  memset((void*)getIdentAddressOfPPN(physical_page_table_page), 0, PT_SIZE);
   page_directory[pde_vpn].pt.pt_ppn = physical_page_table_page + PHYS_OFFSET_4K;
   page_directory[pde_vpn].pt.size = PDE_SIZE_PT;
 }

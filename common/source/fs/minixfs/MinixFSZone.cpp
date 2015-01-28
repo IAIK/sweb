@@ -1,7 +1,7 @@
 #include "MinixFSZone.h"
 #include "MinixFSSuperblock.h"
 #ifndef EXE2MINIXFS
-#include "ArchCommon.h"
+#include "kstring.h"
 #endif
 #include "kprintf.h"
 #include <assert.h>
@@ -196,7 +196,7 @@ void MinixFSZone::flush(uint32 i_num)
     char ind_buffer[ZONE_SIZE];
     debug(M_ZONE, "MinixFSZone::flush writing indirect\n");
     assert(indirect_zones_);
-    ArchCommon::bzero((pointer) ind_buffer, sizeof(ind_buffer));
+    memset((void*)ind_buffer, 0, sizeof(ind_buffer));
     for (uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++)
     {
       *(uint16*) (ind_buffer + i * 2) = indirect_zones_[i];
@@ -218,7 +218,7 @@ void MinixFSZone::flush(uint32 i_num)
     {
       if (double_indirect_linking_zone_[ind_zone])
       {
-        ArchCommon::bzero((pointer) dbl_ind_buffer, sizeof(dbl_ind_buffer));
+        memset((void*)dbl_ind_buffer, 0, sizeof(dbl_ind_buffer));
         for (uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES; d_ind_zone++)
         {
           *(uint16*) (dbl_ind_buffer + d_ind_zone * 2) = double_indirect_zones_[ind_zone][d_ind_zone];

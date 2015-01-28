@@ -6,8 +6,8 @@
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
-#include "ArchCommon.h"
 #include "PageManager.h"
+#include "kstring.h"
 
 PageDirEntry kernel_page_directory[PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -19,7 +19,7 @@ ArchMemory::ArchMemory()
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
 
-  ArchCommon::memcpy((pointer) new_page_directory,(pointer) kernel_page_directory, PAGE_SIZE);
+  memcpy((void*)new_page_directory, (const void*)kernel_page_directory, PAGE_SIZE);
   for (uint32 p = 0; p < 512; ++p) //we're concerned with first two gig, rest stays as is
   {
     new_page_directory[p].pt.present=0;
@@ -88,7 +88,7 @@ void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   assert(!page_directory[pde_vpn].pt.present);
-  ArchCommon::bzero(getIdentAddressOfPPN(physical_page_table_page),PAGE_SIZE);
+  memset((void*)getIdentAddressOfPPN(physical_page_table_page), 0, PAGE_SIZE);
   page_directory[pde_vpn].pt.writeable = 1;
   page_directory[pde_vpn].pt.size = 0;
   page_directory[pde_vpn].pt.page_table_ppn = physical_page_table_page;

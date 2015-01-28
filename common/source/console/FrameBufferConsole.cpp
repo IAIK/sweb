@@ -9,6 +9,7 @@
 #include "KeyboardManager.h"
 #include "kprintf.h"
 #include "Scheduler.h"
+#include "kstring.h"
 
 FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_terminals, "VESAConsoleThrd")
 {
@@ -56,7 +57,7 @@ void FrameBufferConsole::consoleClearScreen()
   uint8 *lfb = ( uint8* ) ArchCommon::getVESAConsoleLFBPtr();
   uint32 i,k;
 
-  ArchCommon::bzero ( ( pointer ) lfb,x_res_*y_res_*bytes_per_pixel_ );
+  memset((void*)lfb, 0, x_res_*y_res_*bytes_per_pixel_ );
 
   uint32 off = ( x_res_ - logo.width ) / 2;
 
@@ -128,9 +129,10 @@ uint32 FrameBufferConsole::consoleSetCharacter ( uint32 const &row, uint32 const
 void FrameBufferConsole::consoleScrollUp()
 {
   pointer fb = ArchCommon::getVESAConsoleLFBPtr();
-  ArchCommon::memcpy ( fb, fb+ ( consoleGetNumColumns() *bytes_per_pixel_*8*16 ),
-                       ( consoleGetNumRows()-1 ) *consoleGetNumColumns() *bytes_per_pixel_*8*16 );
-  ArchCommon::bzero ( fb+ ( ( consoleGetNumRows()-1 ) *consoleGetNumColumns() *bytes_per_pixel_*8*16 ),consoleGetNumColumns() *bytes_per_pixel_*8*16 );
+  memcpy((void*)fb, (void*)(fb + (consoleGetNumColumns() *bytes_per_pixel_*8*16)),
+      (consoleGetNumRows()-1 ) *consoleGetNumColumns() *bytes_per_pixel_*8*16 );
+  memset((void*)(fb + ((consoleGetNumRows() - 1) * consoleGetNumColumns() *bytes_per_pixel_*8*16 )),
+      0, consoleGetNumColumns() *bytes_per_pixel_*8*16 );
 
 }
 

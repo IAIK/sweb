@@ -11,6 +11,7 @@
 
 #include "KeyboardManager.h"
 #include "kprintf.h"
+#include "kstring.h"
 
 TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxTConsoleThrd")
 {
@@ -78,9 +79,9 @@ uint32 TextConsole::consoleSetCharacter ( uint32 const &row, uint32 const&column
 void TextConsole::consoleScrollUp()
 {
   pointer fb = ArchCommon::getFBPtr();
-  ArchCommon::memcpy ( fb, fb+ ( consoleGetNumColumns() *2 ),
-                       ( consoleGetNumRows()-1 ) *consoleGetNumColumns() *2 );
-  ArchCommon::bzero ( fb+ ( ( consoleGetNumRows()-1 ) *consoleGetNumColumns() *2 ),consoleGetNumColumns() *2 );
+  memcpy((void*)fb, (void*)(fb + (consoleGetNumColumns() * 2)),
+      (consoleGetNumRows() - 1) * consoleGetNumColumns() * 2);
+  memset((void*)(fb + ((consoleGetNumRows() - 1)) * consoleGetNumColumns() *2), 0, consoleGetNumColumns() * 2);
 }
 
 

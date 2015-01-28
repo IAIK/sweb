@@ -4,7 +4,6 @@
  */
 
 #include "ArchThreads.h"
-#include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
@@ -37,7 +36,7 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
@@ -61,7 +60,7 @@ void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer functio
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);

@@ -27,12 +27,6 @@ typedef void* pointer;
 
 typedef loff_t l_off_t;
 
-class ArchCommon
-{
-  public:
-    static void bzero(void* s, size_t n) { ::bzero(s,n); };
-};
-
 class VfsMount {};
 
 #endif

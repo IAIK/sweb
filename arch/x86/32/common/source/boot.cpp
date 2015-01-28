@@ -6,6 +6,7 @@
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "paging-definitions.h"
+#include "kstring.h"
 
 #define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs(VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
 
@@ -37,12 +38,12 @@ extern "C" void entry()
   PRINT("Booting...\n");
 
   PRINT("Clearing Framebuffer...\n");
-  ArchCommon::bzero(ArchCommon::getFBPtr(0),80 * 25 * 2);
+  memset((void*)(ArchCommon::getFBPtr(0)), 0, 80 * 25 * 2);
 
   PRINT("Clearing BSS...\n");
   extern uint32 bss_start_address;
   extern uint32 bss_end_address;
-  ArchCommon::bzero(VIRTUAL_TO_PHYSICAL_BOOT((pointer)&bss_start_address),(uint32)&bss_end_address - (uint32)&bss_start_address);
+  memset((void*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&bss_start_address), 0, (uint32)&bss_end_address - (uint32)&bss_start_address);
 
   asm("push $2\n"
       "popf\n");

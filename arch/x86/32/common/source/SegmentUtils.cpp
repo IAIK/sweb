@@ -4,7 +4,7 @@
  */
 
 #include "SegmentUtils.h"
-#include "ArchCommon.h"
+#include "kstring.h"
 
 extern uint32 tss_selector;
 extern uint32 gdt_ptr_new;
@@ -63,7 +63,7 @@ void SegmentUtils::initialise()
   setSegmentDescriptor(5, 0, -1U, 3, 1, 0); // 89 C0
 
   g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
-  ArchCommon::bzero((pointer)g_tss,sizeof(TSS));
+  memset((void*)g_tss, 0, sizeof(TSS));
   g_tss->ss0 = KERNEL_SS;
   setSegmentDescriptor(6, (uint32)g_tss, sizeof(TSS)-1, 0, 0, 1);
   // we have to reload our segment stuff

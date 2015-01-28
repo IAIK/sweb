@@ -13,6 +13,7 @@
 #include "Scheduler.h"
 #include "debug_bochs.h"
 #include "offsets.h"
+#include "kstring.h"
 
 #include "SerialManager.h"
 #include "KeyboardManager.h"
@@ -85,7 +86,7 @@ void InterruptUtils::initialise()
 {
   // allocate some memory for our handlers
   GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
-  ArchCommon::bzero((pointer)interrupt_gates,sizeof(GateDesc));
+  memset((void*)interrupt_gates, 0, sizeof(GateDesc));
 
   for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
   {

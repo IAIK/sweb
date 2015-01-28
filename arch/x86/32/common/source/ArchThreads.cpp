@@ -4,12 +4,12 @@
  */
 
 #include "ArchThreads.h"
-#include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "Thread.h"
+#include "kstring.h"
 
 
 
@@ -28,7 +28,7 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
   info->cs      = KERNEL_CS;

@@ -7,8 +7,8 @@
 #include "kprintf.h"
 #include "assert.h"
 #include "offsets.h"
-#include "ArchCommon.h"
 #include "PageManager.h"
+#include "kstring.h"
 
 PageDirPointerTableEntry kernel_page_directory_pointer_table[PAGE_DIRECTORY_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x20)));
 PageDirEntry kernel_page_directory[4 * PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
@@ -17,7 +17,7 @@ PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned
 ArchMemory::ArchMemory() : page_dir_pointer_table_((PageDirPointerTableEntry*) (((uint32) page_dir_pointer_table_space_ + 0x20) & (~0x1F)))
 {
 
-  bzero(page_dir_pointer_table_,sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES);
+  memset((void*)page_dir_pointer_table_, 0, sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES);
   page_dir_pointer_table_[0].present = 0; // will be created on demand
   page_dir_pointer_table_[1].present = 0; // will be created on demand
   page_dir_pointer_table_[2] = kernel_page_directory_pointer_table[2]; // kernel
@@ -71,8 +71,8 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)
 {
   kprintfd("insertPD: pdpt %x pdpt_vpn %x physical_page_table_page %x\n",page_dir_pointer_table_,pdpt_vpn,physical_page_directory_page);
-  ArchCommon::bzero(getIdentAddressOfPPN(physical_page_directory_page),PAGE_SIZE);
-  ArchCommon::bzero((pointer)(page_dir_pointer_table_ + pdpt_vpn),sizeof(PageDirPointerTableEntry));
+  memset((void*)getIdentAddressOfPPN(physical_page_directory_page), 0,PAGE_SIZE);
+  memset((void*)(page_dir_pointer_table_ + pdpt_vpn), 0, sizeof(PageDirPointerTableEntry));
   page_dir_pointer_table_[pdpt_vpn].page_directory_ppn = physical_page_directory_page;
   page_dir_pointer_table_[pdpt_vpn].present = 1;
 }
@@ -80,8 +80,8 @@ void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)
 void ArchMemory::insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page)
 {
   kprintfd("insertPT: page_directory %x pde_vpn %x physical_page_table_page %x\n",page_directory,pde_vpn,physical_page_table_page);
-  ArchCommon::bzero(getIdentAddressOfPPN(physical_page_table_page),PAGE_SIZE);
-  ArchCommon::bzero((pointer)(page_directory + pde_vpn),sizeof(PageDirPointerTableEntry));
+  memset((void*)getIdentAddressOfPPN(physical_page_table_page), 0, PAGE_SIZE);
+  memset((void*)(page_directory + pde_vpn), 0, sizeof(PageDirPointerTableEntry));
   page_directory[pde_vpn].pt.writeable = 1;
   page_directory[pde_vpn].pt.size = 0;
   page_directory[pde_vpn].pt.page_table_ppn = physical_page_table_page;

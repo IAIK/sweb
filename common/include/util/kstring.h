@@ -88,11 +88,6 @@ extern "C"
   void bcopy ( void *src, void* dest, size_t length );
 
   /**
-   * overwrite size bytes of block with 0
-   */
-  void bzero ( void *block, size_t size );
-
-  /**
    * Compare size bytes of region1 and region2
    * @return the differenc between the first differing bytes or zero on equality
    */

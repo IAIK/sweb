@@ -190,65 +190,6 @@ uint32 ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, 
   return 0;
 }
 
-#define MEMCOPY_LARGE_TYPE uint32
-
-void ArchCommon::memcpy(pointer dest, pointer src, size_t size)
-{
-  MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)src;
-  MEMCOPY_LARGE_TYPE *d64 = (MEMCOPY_LARGE_TYPE*)dest;
-
-  uint32 i;
-  uint32 num_64_bit_copies = size / (sizeof(MEMCOPY_LARGE_TYPE)*8);
-  uint32 num_8_bit_copies = size % (sizeof(MEMCOPY_LARGE_TYPE)*8);
-
-  for (i=0;i<num_64_bit_copies;++i)
-  {
-    d64[0] = s64[0];
-    d64[1] = s64[1];
-    d64[2] = s64[2];
-    d64[3] = s64[3];
-    d64[4] = s64[4];
-    d64[5] = s64[5];
-    d64[6] = s64[6];
-    d64[7] = s64[7];
-    d64 += 8;
-    s64 += 8;
-  }
-
-  uint8 *s8 = (uint8*)s64;
-  uint8 *d8 = (uint8*)d64;
-
-  for (i=0;i<num_8_bit_copies;++i)
-  {
-    *d8 = *s8;
-    ++d8;
-    ++s8;
-  }
-}
-
-void ArchCommon::bzero(pointer s, size_t n, uint32 debug)
-{
-  if (debug) kprintfd("Bzero start %x\n",s);
-  MEMCOPY_LARGE_TYPE *s64 = (MEMCOPY_LARGE_TYPE*)s;
-  uint32 num_64_bit_zeros = n / sizeof(MEMCOPY_LARGE_TYPE);
-  uint32 num_8_bit_zeros = n % sizeof(MEMCOPY_LARGE_TYPE);
-  uint32 i;
-  if (debug) kprintfd("Bzero next %x\n", s64);
-  for (i=0;i<num_64_bit_zeros;++i)
-  {
-    *s64 = 0;
-    ++s64;
-  }
-  uint8 *s8 = (uint8*)s64;
-  if (debug) kprintfd("Bzero middle %x\n", s8);
-  for (i=0;i<num_8_bit_zeros;++i)
-  {
-    *s8 = 0;
-    ++s8;
-  }
-  if (debug) kprintfd("Bzero end, %x\n", s8);
-}
-
 uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
 {
   return ArchCommon::checksum((uint32*)ArchMemory::getIdentAddressOfPPN(physical_page_number),page_size / sizeof(uint32));

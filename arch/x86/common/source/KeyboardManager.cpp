@@ -73,8 +73,9 @@ void KeyboardManager::kb_wait()
     kprintfd("KeyboardManager::kb_wait: waiting on 0x02 didn't speed up things :-(\n");
 }
 
-void KeyboardManager::send_cmd( uint8 cmd, uint8 port = 0x64 )
+void KeyboardManager::send_cmd( uint8 cmd, uint8 port)
 {
+  port = 0x64;
   kb_wait();
   outportbp( port, cmd );
 }

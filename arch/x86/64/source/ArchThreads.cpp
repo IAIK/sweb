@@ -4,13 +4,13 @@
  */
 
 #include "ArchThreads.h"
-#include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "assert.h"
 #include "Thread.h"
+#include "kstring.h"
 
 extern PageMapLevel4Entry kernel_page_map_level_4[];
 
@@ -36,7 +36,7 @@ uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
 void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 
   info->cs      = KERNEL_CS;
@@ -69,7 +69,7 @@ void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer functio
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  ArchCommon::bzero((pointer)info,sizeof(ArchThreadInfo));
+  memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 
   info->cs      = USER_CS;

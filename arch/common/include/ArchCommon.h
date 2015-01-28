@@ -4,8 +4,6 @@
  * Collection of architecture dependent stuff
  * + FrameBuffer Info
  * + Grub Info (usable memory regions, modules)
- * + memcpy
- * + bzero
  */
 
 #ifndef _ARCH_COMMON_H_
@@ -95,25 +93,6 @@ public:
    * @return 1 if region >= number_of_regions, 0 otherwise
    */
   static uint32 getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
-
-
-  /** 
-   * Copy Memory, fast
-   *
-   * @param dest Destination to copy to
-   * @param src Source to read from
-   * @param size Number of Bytes to copy
-   */
-  static void memcpy(pointer dest, pointer src, size_t size);
-
-  /** 
-   * Sets the first n bytes of the memory area starting at s to zero.
-   *
-   * @param s (start zeroing here)
-   * @param n (zero n bytes)
-   * @param debug (set to 1 for debugging info)
-   */
-  static void bzero(pointer s, size_t n, uint32 debug = 0);
 
   /**
    * Computes a CRC- like checksum over a given physical page.
