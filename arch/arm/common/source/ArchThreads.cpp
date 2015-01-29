@@ -69,7 +69,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->lr = start_function;
   info->cpsr = 0x60000010;
   info->sp = user_stack & ~0xF;
-  info->r11 = user_stack & ~0xF; // r11 is the fp
+  info->r[11] = user_stack & ~0xF; // r11 is the fp
   info->sp0 = kernel_stack & ~0xF;
   info->ttbr0 = pageDirectory;
   assert((pageDirectory) != 0);
@@ -126,12 +126,12 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("\t\t%sThread: %10x, info: %10x\n"\
              "\t\t\tttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x\n"\
              "\t\t\tr0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
-             userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12);
+             userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r[0],info->r[1],info->r[2],info->r[3],info->r[4],info->r[5],info->r[6],info->r[7],info->r[8],info->r[9],info->r[10],info->r[11],info->r[12]);
 
   }
   else
   {
     kprintfd("%sThread: %10x, info: %10x -- ttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
-             userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r0,info->r1,info->r2,info->r3,info->r4,info->r5,info->r6,info->r7,info->r8,info->r9,info->r10,info->r11,info->r12);
+             userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r[0],info->r[1],info->r[2],info->r[3],info->r[4],info->r[5],info->r[6],info->r[7],info->r[8],info->r[9],info->r[10],info->r[11],info->r[12]);
   }
 }

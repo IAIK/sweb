@@ -5,7 +5,6 @@
 #include "FrameBufferConsole.h"
 #include "ArchCommon.h"
 #include "Terminal.h"
-#include "image.h"
 #include "KeyboardManager.h"
 #include "kprintf.h"
 #include "Scheduler.h"
@@ -54,25 +53,12 @@ FrameBufferConsole::FrameBufferConsole ( uint32 num_terminals ) : Console ( num_
 
 void FrameBufferConsole::consoleClearScreen()
 {
-  uint8 *lfb = ( uint8* ) ArchCommon::getVESAConsoleLFBPtr();
-  uint32 i,k;
-
-  memset((void*)lfb, 0, x_res_*y_res_*bytes_per_pixel_ );
-
-  uint32 off = ( x_res_ - logo.width ) / 2;
-
-  for ( i=0;i<logo.height;++i )
-  {
-    for ( k=0;k<logo.width;++k )
-    {
-      setPixel ( off+k, ( y_res_-65+i ),logo.pixel_data[ ( i*logo.width+k ) *3],logo.pixel_data[ ( i*logo.width+k ) *3+1],logo.pixel_data[ ( i*logo.width+k ) *3+2] );
-    }
-  }
+  memset((void*)ArchCommon::getVESAConsoleLFBPtr(), 0, x_res_*y_res_*bytes_per_pixel_ );
 }
 
 uint32 FrameBufferConsole::consoleGetNumRows() const
 {
-  return ( y_res_-65 ) / 16;
+  return y_res_ / 16;
 }
 
 uint32 FrameBufferConsole::consoleGetNumColumns() const

@@ -32,7 +32,7 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
     asm("mov %[v], fp" : [v]"=r" (fp));
   }
   else
-    fp = (StackFrame*)thread->kernel_arch_thread_info_->r11; // r11 is the fp register in gcc ;)
+    fp = (StackFrame*)thread->kernel_arch_thread_info_->r[11]; // r11 is the fp register in gcc ;)
 
     int i = 0;
 
@@ -56,7 +56,7 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   if (!call_stack || !size || thread != currentThread || !thread->user_arch_thread_info_)
     return 0;
 
-  void *ebp = (void*)thread->user_arch_thread_info_->r11;
+  void *ebp = (void*)thread->user_arch_thread_info_->r[11];
   StackFrame *CurrentFrame = (StackFrame*)ebp;
 
   // the userspace stack is allowed to be anywhere in userspace
