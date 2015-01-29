@@ -70,9 +70,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 
 void ArchMemory::unmapPage(uint32 virtual_page)
 {
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
-  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  RESOLVEMAPPING(page_dir_page_,virtual_page);
 
   assert(page_directory[pde_vpn].pt.present);
   assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
@@ -98,10 +96,7 @@ void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
 
 void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-  //kprintfd("ArchMemory::mapPage: pys1 %x, pyhs2 %x\n",physical_page_directory_page, physical_page);
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
-  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  RESOLVEMAPPING(page_dir_page_,virtual_page);
 
   assert(page_size == PAGE_SIZE);
 
@@ -118,10 +113,8 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
 
 bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 {
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
-  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  RESOLVEMAPPING(page_dir_page_,virtual_page);
   if (page_directory[pde_vpn].pt.present)
   {
     if (page_directory[pde_vpn].page.size)
@@ -140,7 +133,6 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page)
 {
   PageDirEntry *page_directory = kernel_page_directory;
-  //uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pt.present) //the present bit is the same for 4k and 4m
