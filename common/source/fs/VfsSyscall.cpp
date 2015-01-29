@@ -41,7 +41,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
   return 0;
 }
 
-int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount )
+int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount)
 {
   FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
   if (pathname == 0)
@@ -104,7 +104,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   fs_info->putName();
 
   char* char_tmp = strrchr(path_tmp, SEPARATOR);
-  assert ( char_tmp != 0 );
+  assert(char_tmp != 0);
   debug(VFSSYSCALL, "(mkdir)setName \n");
   // set directory
   uint32 path_prev_len = char_tmp - path_tmp + 1;
@@ -137,22 +137,18 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
   char path_next_name[path_next_len];
   strncpy(path_next_name, char_tmp, path_next_len);
-  path_next_name[path_next_len-1] = 0;
+  path_next_name[path_next_len - 1] = 0;
 
   // create a new dentry
   Dentry *sub_dentry = new Dentry(current_dentry);
   sub_dentry->setName(path_next_name);
-  debug(VFSSYSCALL, "(mkdir) creating Inode: current_dentry->getName(): %s\n",
-        current_dentry->getName());
-  debug(VFSSYSCALL, "(mkdir) creating Inode: sub_dentry->getName(): %s\n",
-        sub_dentry->getName());
+  debug(VFSSYSCALL, "(mkdir) creating Inode: current_dentry->getName(): %s\n", current_dentry->getName());
+  debug(VFSSYSCALL, "(mkdir) creating Inode: sub_dentry->getName(): %s\n", sub_dentry->getName());
   debug(VFSSYSCALL, "(mkdir) current_sb: %d\n", current_sb);
-  debug(VFSSYSCALL, "(mkdir) current_sb->getFSType(): %d\n",
-        current_sb->getFSType());
+  debug(VFSSYSCALL, "(mkdir) current_sb->getFSType(): %d\n", current_sb->getFSType());
 
   current_sb->createInode(sub_dentry, I_DIR);
-  debug(VFSSYSCALL, "(mkdir) sub_dentry->getInode(): %d\n",
-        sub_dentry->getInode());
+  debug(VFSSYSCALL, "(mkdir) sub_dentry->getInode(): %d\n", sub_dentry->getInode());
   return 0;
 }
 
@@ -169,7 +165,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
     fs_info->putName();
 
     char* char_tmp = strrchr(path_tmp, SEPARATOR);
-    assert ( char_tmp != 0 );
+    assert(char_tmp != 0);
 
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
@@ -231,7 +227,7 @@ int32 VfsSyscall::chdir(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
-    debug(VFSSYSCALL,"Error: (chdir) the directory does not exist.\n");
+    debug(VFSSYSCALL, "Error: (chdir) the directory does not exist.\n");
     fs_info->putName();
     return -1;
   }
@@ -258,15 +254,14 @@ int32 VfsSyscall::rm(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
-    debug(VFSSYSCALL,"Error: (rm) the directory does not exist.\n");
+    debug(VFSSYSCALL, "Error: (rm) the directory does not exist.\n");
     fs_info->putName();
     return -1;
   }
   debug(VFSSYSCALL, "(rm) \n");
   fs_info->putName();
   Dentry* current_dentry = pw_dentry;
-  debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n",
-        current_dentry->getName());
+  debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", current_dentry->getName());
   Inode* current_inode = current_dentry->getInode();
   debug(VFSSYSCALL, "(rm) current_inode: %d\n", current_inode);
 
@@ -279,8 +274,7 @@ int32 VfsSyscall::rm(const char* pathname)
   Superblock* sb = current_inode->getSuperblock();
   if (current_inode->rm() == INODE_DEAD)
   {
-    debug(VFSSYSCALL, "remove the inode %d from the list of sb: %d\n",
-          current_inode, sb);
+    debug(VFSSYSCALL, "remove the inode %d from the list of sb: %d\n", current_inode, sb);
     sb->delete_inode(current_inode);
     debug(VFSSYSCALL, "removed\n");
   }
@@ -300,7 +294,7 @@ int32 VfsSyscall::rmdir(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
-    debug(VFSSYSCALL,"Error: (rmdir) the directory does not exist.\n");
+    debug(VFSSYSCALL, "Error: (rmdir) the directory does not exist.\n");
     fs_info->putName();
     return -1;
   }
@@ -312,12 +306,6 @@ int32 VfsSyscall::rmdir(const char* pathname)
   //if directory is read from a real file system,
   //it can't ever be empty, "." and ".." are still
   //contained; this has to be checked in Inode::rmdir()
-
-  /*if ( current_dentry->getNumChild() != 0 )
-   {
-   debug ( VFSSYSCALL,"This directory is not empty\n" );
-   return -1;
-   }*/
 
   if (current_inode->getType() != I_DIR)
   {
@@ -349,7 +337,7 @@ int32 VfsSyscall::close(uint32 fd)
 
   if (file_descriptor == 0)
   {
-    debug(VFSSYSCALL,"(close) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL, "(close) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -357,7 +345,7 @@ int32 VfsSyscall::close(uint32 fd)
   Inode* current_inode = file->getInode();
   Superblock *current_sb = current_inode->getSuperblock();
   int32 tmp = current_sb->removeFd(current_inode, file_descriptor);
-  assert ( tmp == 0 );
+  assert(tmp == 0);
 
   return 0;
 }
@@ -386,7 +374,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     if (current_inode->getType() != I_FILE)
     {
-      debug(VFSSYSCALL,"(open) Error: This path is not a file\n");
+      debug(VFSSYSCALL, "(open) Error: This path is not a file\n");
       return -1;
     }
 
@@ -404,7 +392,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     fs_info->putName();
 
     char* char_tmp = strrchr(path_tmp, SEPARATOR);
-    assert ( char_tmp != 0 )
+    assert(char_tmp != 0)
 
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
@@ -429,7 +417,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     if (current_inode->getType() != I_DIR)
     {
-      debug(VFSSYSCALL,"(open) Error: This path is not a directory\n\n");
+      debug(VFSSYSCALL, "(open) Error: This path is not a directory\n\n");
       return -1;
     }
 
@@ -437,7 +425,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
     char path_next_name[path_next_len];
     strncpy(path_next_name, char_tmp, path_next_len);
-    path_next_name[path_next_len-1] = 0;
+    path_next_name[path_next_len - 1] = 0;
 
     // create a new dentry
     Dentry *sub_dentry = new Dentry(current_dentry);
@@ -450,8 +438,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       delete sub_dentry;
       return -1;
     }
-    debug(VFSSYSCALL, "(open) created Inode with dentry name %s\n",
-          sub_inode->getDentry()->getName());
+    debug(VFSSYSCALL, "(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName());
 
     int32 fd = current_sb->createFd(sub_inode, flag & 0xFFFFFFFB);
     debug(VFSSYSCALL, "the fd-num: %d\n", fd);
@@ -470,7 +457,7 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
   if (file_descriptor == 0)
   {
-    debug(VFSSYSCALL,"(read) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -486,7 +473,7 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 
   if (file_descriptor == 0)
   {
-    debug(VFSSYSCALL,"(write) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL, "(write) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -500,7 +487,7 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 
   if (file_descriptor == 0)
   {
-    debug(VFSSYSCALL,"(lseek) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL, "(lseek) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -516,7 +503,7 @@ int32 VfsSyscall::flush(uint32 fd)
 
   if (file_descriptor == 0)
   {
-    debug(VFSSYSCALL,"(read) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
   }
 
@@ -525,8 +512,7 @@ int32 VfsSyscall::flush(uint32 fd)
   return file->flush();
 }
 
-int32 VfsSyscall::mount(const char *device_name, const char *dir_name,
-                        const char *file_system_name, int32 flag)
+int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
 {
   FileSystemType* type = vfs.getFsType(file_system_name);
   if (!type && strcmp(file_system_name, "minixfs") == 0)
@@ -553,7 +539,7 @@ uint32 VfsSyscall::getFileSize(uint32 fd)
 
   if (file_descriptor == 0)
   {
-    debug(VFSSYSCALL,"(read) Error: the fd does not exist.\n");
+    debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
   }
 

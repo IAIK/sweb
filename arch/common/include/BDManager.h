@@ -11,83 +11,72 @@
 class BDRequest;
 class BDVirtualDevice;
 
-
 class BDManager
 {
-public:
-  
-  
-  /**
-   * Constructor
-   */
-  BDManager();
-  
-  
-  /**
-   * Destructor
-   */
-  ~BDManager();
-  
-  /**
-   * returns singleton instance
-   * @return the block device manager instance
-   */
-  static BDManager *getInstance();
-  
-  /**
-   * detects all devices present
-   */
-  void doDeviceDetection();
-  
-  /**
-   * adds the given device to the manager
-   * @param dev the device to add
-   */
-  void addVirtualDevice(BDVirtualDevice *dev);
-  
-  /**
-   * returns the device with the given number
-   * @param dev_num the device number
-   * @return the device
-   */
-  BDVirtualDevice *getDeviceByNumber(uint32 dev_num);
+  public:
+    BDManager();
+    ~BDManager();
 
-  /**
-   * returns the device with the given name
-   * @param dev_name the device name
-   * @return the device
-   */
-  BDVirtualDevice *getDeviceByName(const char *dev_name);
+    /**
+     * returns singleton instance
+     * @return the block device manager instance
+     */
+    static BDManager *getInstance();
 
-  /**
-   * returns the number of devices in the bd manager
-   * @return the number of devices
-   */
-  uint32 getNumberOfDevices();
-  
-  /**
-   * adds the given request to the device given in the request
-   * @param bdr the request
-   */
-  void addRequest(BDRequest *bdr);
+    /**
+     * detects all devices present
+     */
+    void doDeviceDetection();
 
-  /**
-   * calls seviceIRQ on the device the irq with the given number is on
-   * after that probeIRQ is false
-   * @param irq_num the irq number
-   */
-  void serviceIRQ(uint32 irq_num);
+    /**
+     * adds the given device to the manager
+     * @param dev the device to add
+     */
+    void addVirtualDevice(BDVirtualDevice *dev);
 
-  /**
-   * gets false when the irq is serviced
-   */
-  bool probeIRQ;
+    /**
+     * returns the device with the given number
+     * @param dev_num the device number
+     * @return the device
+     */
+    BDVirtualDevice *getDeviceByNumber(uint32 dev_num);
 
-private:
-  ustl::list< BDVirtualDevice *> device_list_;
+    /**
+     * returns the device with the given name
+     * @param dev_name the device name
+     * @return the device
+     */
+    BDVirtualDevice *getDeviceByName(const char *dev_name);
 
-protected:
-  static BDManager *instance_;
+    /**
+     * returns the number of devices in the bd manager
+     * @return the number of devices
+     */
+    uint32 getNumberOfDevices();
+
+    /**
+     * adds the given request to the device given in the request
+     * @param bdr the request
+     */
+    void addRequest(BDRequest *bdr);
+
+    /**
+     * calls seviceIRQ on the device the irq with the given number is on
+     * after that probeIRQ is false
+     * @param irq_num the irq number
+     */
+    void serviceIRQ(uint32 irq_num);
+
+    /**
+     * gets false when the irq is serviced
+     */
+    bool probeIRQ;
+
+  private:
+    ustl::list<BDVirtualDevice *> device_list_;
+
+  protected:
+    static BDManager *instance_;
 };
 
 #endif

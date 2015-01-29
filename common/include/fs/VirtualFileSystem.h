@@ -66,14 +66,14 @@ class VirtualFileSystem
      * @return 0 on success, -1 if a file-system-type with that name has
      * already been registered
      */
-    int32 registerFileSystem ( FileSystemType *file_system_type );
+    int32 registerFileSystem(FileSystemType *file_system_type);
 
     /**
      * unregister the file-system-typt to the vfs
      * @param file_system_type the file system type to unregister
      * @return 0 on success
      */
-    int32 unregisterFileSystem ( FileSystemType *file_system_type );
+    int32 unregisterFileSystem(FileSystemType *file_system_type);
 
     /**
      * The getFsType function receives a filesystem name as its parameter, scans
@@ -83,7 +83,7 @@ class VirtualFileSystem
      * @param fs_name the name of the filesystem
      * @return the file system type
      */
-    FileSystemType *getFsType ( const char* fs_name );
+    FileSystemType *getFsType(const char* fs_name);
 
     /**
      * found the VfsMount from mounts_ list with given dentry.
@@ -91,7 +91,7 @@ class VirtualFileSystem
      * @param is_mount_point if it is false, check with root-dentry,
      *         else mount-point-dentry
      */
-    VfsMount *getVfsMount ( const Dentry* dentry, bool is_root = false );
+    VfsMount *getVfsMount(const Dentry* dentry, bool is_root = false);
 
     /**
      * mount the dev_name (device name) to the directory specified by dir_name.
@@ -104,8 +104,7 @@ class VirtualFileSystem
      * @param data contain arbitray fs-dependent information (or be NULL)
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    int32 mount ( const char* dev_name, const char* dir_name,
-                  const char* fs_name, uint32 flags/*, void *data*/ );
+    int32 mount(const char* dev_name, const char* dir_name, const char* fs_name, uint32 flags/*, void *data*/);
 
     /**
      * unmount the filesystem
@@ -113,7 +112,7 @@ class VirtualFileSystem
      * @param flags the umount flags
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    int32 umount ( const char* dir_name, uint32 flags );
+    int32 umount(const char* dir_name, uint32 flags);
 
     /**
      * mount the ROOT to the VFS. (special of the mount)
@@ -121,14 +120,13 @@ class VirtualFileSystem
      * @param flags the mount flags
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    FileSystemInfo *root_mount ( const char* fs_name, uint32 flags );
+    FileSystemInfo *root_mount(const char* fs_name, uint32 flags);
 
     /**
      * umount the ROOT from the VFS (special of the umount)
      * @return On success, zero is returned. On error, -1 is returned.
      */
     int32 rootUmount();
-
 
 };
 

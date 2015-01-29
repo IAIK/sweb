@@ -21,11 +21,10 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev, uint64 offset
   offset_ = offset;
   //read Superblock data from disc
   readHeader();
-  debug(
-      M_SB,
-      "s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\ns_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %lu\n",
-      s_num_inodes_, s_num_zones_, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_1st_datazone_, s_log_zone_size_,
-      s_max_file_size_, s_magic_);
+  debug(M_SB, "s_num_inodes_ : %d\ns_num_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\n"
+        "s_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_magic_ : %lu\n",
+        s_num_inodes_, s_num_zones_, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_1st_datazone_, s_log_zone_size_,
+        s_max_file_size_, s_magic_);
 
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;

@@ -24,7 +24,7 @@ class VfsSyscall
      * @param pathname the input pathname
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 dupChecking ( const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount );
+    static int32 dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount);
 
   public:
 
@@ -36,7 +36,7 @@ class VfsSyscall
      * @param type the permission.
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 mkdir ( const char* pathname, int32 /*type*/ );
+    static int32 mkdir(const char* pathname, int32 /*type*/);
 
     /**
      * The readdir() display the names from all childs and returns a pointer
@@ -44,28 +44,28 @@ class VfsSyscall
      * @param pathname the destination-directory.
      * @return the dirent
      */
-    static Dirent* readdir ( const char* pathname );
+    static Dirent* readdir(const char* pathname);
 
     /**
      * chdir() changes the current directory to the specified directory.
      * @param dir the destination-directory.
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 chdir ( const char* pathname );
+    static int32 chdir(const char* pathname);
 
     /**
      * delete a directory, which must be empty.
      * @param pathname the removed directory
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 rmdir ( const char* pathname );
+    static int32 rmdir(const char* pathname);
 
     /**
      * remove a directory (which must be empty) or a file
      * @param pathname the removed directory or file
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 rm ( const char* pathname );
+    static int32 rm(const char* pathname);
 
     /**
      * The open() is used to convert a pathname into a file descriptor, if the
@@ -74,14 +74,14 @@ class VfsSyscall
      * @param flag specified when the file was opened
      * @return On success, file descriptor is returned. On error, -1 is returned.
      */
-    static int32 open ( const char* pathname, uint32 flag );
+    static int32 open(const char* pathname, uint32 flag);
 
     /**
      * The close() closes a file descriptor.
      * @param fd the file descriptor
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 close ( uint32 fd );
+    static int32 close(uint32 fd);
 
     /**
      * The read() attempts to read up to count bytes from file descriptor fd
@@ -93,7 +93,7 @@ class VfsSyscall
      *         end of file), and the file position is advanced by this number.
      *         On error, -1 is returned.
      */
-    static int32 read ( uint32 fd, char* buffer, uint32 count );
+    static int32 read(uint32 fd, char* buffer, uint32 count);
 
     /**
      * Sets the file position relative to the start of the file, the end of the
@@ -103,7 +103,7 @@ class VfsSyscall
      * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
      * @returns the offset from the start off the file or -1 on failure.
      */
-    static l_off_t lseek ( uint32 fd, l_off_t offset, uint8 origin );
+    static l_off_t lseek(uint32 fd, l_off_t offset, uint8 origin);
 
     /**
      * write  writes  up  to  count  bytes  to the file referenced by the file
@@ -114,7 +114,7 @@ class VfsSyscall
      * @return On success, the number of bytes written are returned (zero
      *         indicates nothing was written). On error, -1 is returned
      */
-    static int32 write ( uint32 fd, const char *buffer, uint32 count );
+    static int32 write(uint32 fd, const char *buffer, uint32 count);
 
     /**
      * flushes the file with the given file descriptor to the disc
@@ -122,7 +122,7 @@ class VfsSyscall
      * @param fd the file descriptor
      * @return 0 on success, -1 on error
      */
-    static int32 flush ( uint32 fd );
+    static int32 flush(uint32 fd);
 
     /**
      * mounts a file system
@@ -132,28 +132,28 @@ class VfsSyscall
      * @param flag the flag indicates if mounted readonly etc.
      * @return 0 on success
      */
-    static int32 mount ( const char *device_name, const char *dir_name, const char *file_system_name, int32 flag );
+    static int32 mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag);
 
     /** unmounts a filesystem
      * @param dir_name the directory where the filesystem to unmount is mounted
      * @param flag not used
      * @return 0 on success
      */
-    static int32 umount ( const char *dir_name, int32 flag );
+    static int32 umount(const char *dir_name, int32 flag);
 
     /**
      * returns the size of a file
      * @param fd the file looking for
      * @return the size
      */
-    static uint32 getFileSize ( uint32 fd );
+    static uint32 getFileSize(uint32 fd);
 
     /**
      * get the File descriptor object from the global variable
      * @param the fd int
      * @return the file descriptor object
      */
-    static FileDescriptor* getFileDescriptor ( uint32 fd );
+    static FileDescriptor* getFileDescriptor(uint32 fd);
 
   private:
     /**
