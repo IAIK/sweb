@@ -16,11 +16,10 @@ class PseudoFS
 
     typedef struct
     {
-      char  *file_name;
-      char  *file_start;
-      uint32 file_length;
-    }
-    FileIndexStruct;
+        char *file_name;
+        char *file_start;
+        size_t file_length;
+    } FileIndexStruct;
 
     /**
      * Sigleton access method
@@ -33,27 +32,27 @@ class PseudoFS
      * @param file_name the file name
      * @return the file pointer
      */
-    uint8 *getFilePtr ( const char *file_name );
+    uint8 *getFilePtr(const char *file_name);
 
     /**
      * returns the files index
      * @param file_name the wanted file name
      * @return the file index
      */
-    FileIndexStruct* getFileIndex ( const char *file_name );
+    FileIndexStruct* getFileIndex(const char *file_name);
 
     /**
      * returns the number of files
      * @return the number of files
      */
-    uint32 getNumFiles() const;
+    size_t getNumFiles() const;
 
     /**
      * returns the file by the given number
      * @param number the number looking for
      * @return the file
      */
-    char* getFileNameByNumber ( uint32 number ) const;
+    char* getFileNameByNumber(size_t number) const;
 
   private:
 

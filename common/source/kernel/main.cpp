@@ -59,11 +59,7 @@ uint32 boot_completed;
 uint32 we_are_dying;
 FileSystemInfo* default_working_dir;
 
-/**
- * startup called in @ref boot.s
- * starts up SWEB
- * Creates singletons, starts console, mounts devices, adds testing threads and start the scheduler.
- */
+extern "C" void initialiseBootTimePaging();
 extern "C" void removeBootTimeIdentMapping();
 
 extern "C" void startup()

@@ -5,7 +5,6 @@
 
 #include "ArchCommon.h"
 #include "multiboot.h"
-#include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
 #include "ArchMemory.h"

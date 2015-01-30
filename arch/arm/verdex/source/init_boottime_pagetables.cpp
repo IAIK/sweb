@@ -4,12 +4,11 @@
  */
 
 #include "types.h"
-#include "boot-time.h"
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "init_boottime_pagetables.h"
 
-void initialiseBootTimePaging()
+extern "C" void initialiseBootTimePaging()
 {
   PageDirEntry *pde_start = (PageDirEntry*)(((char*)kernel_page_directory) - PHYSICAL_TO_VIRTUAL_OFFSET);
 
@@ -39,7 +38,7 @@ void initialiseBootTimePaging()
   mapBootTimePage(pde_start,0x8C0,0x411);  // mmc controller
 }
 
-void removeBootTimeIdentMapping()
+extern "C" void removeBootTimeIdentMapping()
 {
   // we will not remove anything because we need the first 8 mb 1:1 mapped
 }

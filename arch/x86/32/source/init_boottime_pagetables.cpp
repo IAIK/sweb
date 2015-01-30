@@ -4,7 +4,6 @@
  */
 
 #include "types.h"
-#include "boot-time.h"
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "multiboot.h"
@@ -13,8 +12,6 @@
 #include "ArchMemory.h"
 
 extern void* kernel_end_address;
-
-extern "C" void initialiseBootTimePaging();
 
 uint32 isPageUsed(uint32 page_number)
 {
@@ -41,7 +38,7 @@ uint32 getNextFreePage(uint32 page_number)
    return page_number;
 }
 
-void initialiseBootTimePaging()
+extern "C" void initialiseBootTimePaging()
 {
   uint32 i;
 
@@ -127,7 +124,7 @@ void initialiseBootTimePaging()
   }
 }
 
-void removeBootTimeIdentMapping()
+extern "C" void removeBootTimeIdentMapping()
 {
   uint32 i;
 

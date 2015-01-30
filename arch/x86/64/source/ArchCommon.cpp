@@ -6,7 +6,6 @@
 #include "ArchCommon.h"
 #include "multiboot.h"
 #include "debug_bochs.h"
-#include "boot-time.h"
 #include "offsets.h"
 #include "kprintf.h"
 #include "kstring.h"

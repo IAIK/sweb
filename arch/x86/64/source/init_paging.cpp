@@ -4,7 +4,6 @@
  */
 
 #include "types.h"
-#include "boot-time.h"
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "multiboot.h"
@@ -15,10 +14,7 @@ extern PageDirEntry kernel_page_directory[];
 extern PageTableEntry kernel_page_table[];
 extern PageMapLevel4Entry kernel_page_map_level_4[];
 
-extern "C" void initialisePaging();
-extern "C" void removeBootTimeMapping();
-
-void initialisePaging()
+extern "C" void initialisePaging()
 {
   uint32 i;
 
@@ -90,7 +86,7 @@ void initialisePaging()
   }
 }
 
-void removeBootTimeIdentMapping()
+extern "C" void removeBootTimeIdentMapping()
 {
   uint64* pml4 = (uint64*)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
   pml4[0] = 0;
