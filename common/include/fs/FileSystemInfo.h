@@ -6,11 +6,10 @@
 #define FILESYSTEMINFO_H__
 
 #include "types.h"
+#include "ustring.h"
 
 class Dentry;
 class VfsMount;
-
-
 
 /**
  * @class FileSystemInfo The information of the file system
@@ -20,117 +19,101 @@ class VfsMount;
  */
 class FileSystemInfo
 {
- protected:
-  /**
-   * the root-directory
-   */
-  Dentry* root_;
+  protected:
+    /**
+     * the root-directory
+     */
+    Dentry* root_;
 
-  /**
-   * the root vfsmount-struct
-   */
-  VfsMount* root_mnt_;
+    /**
+     * the root vfsmount-struct
+     */
+    VfsMount* root_mnt_;
 
-  /**
-   * the current-position-directory
-   */
-  Dentry* pwd_;
+    /**
+     * the current-position-directory
+     */
+    Dentry* pwd_;
 
-  /**
-   * the current-position vfsmount-struct
-   */
-  VfsMount* pwd_mnt_;
+    /**
+     * the current-position vfsmount-struct
+     */
+    VfsMount* pwd_mnt_;
 
-  /**
-   * the alternative-root-directory
-   */
-  Dentry* alt_root_;
+    /**
+     * the alternative-root-directory
+     */
+    Dentry* alt_root_;
 
-  /**
-   * the alternative-root vfsmount-struct
-   */
-  VfsMount* alt_root_mnt_;
+    /**
+     * the alternative-root vfsmount-struct
+     */
+    VfsMount* alt_root_mnt_;
 
-  /**
-   * the pathname of a fs_info
-   */
-  char* pathname_;
+  public:
+    FileSystemInfo();
+    ~FileSystemInfo();
+    FileSystemInfo(const FileSystemInfo& fsi);
 
- public:
+    /**
+     * set the ROOT-info to the class
+     * @param root the root dentry to set
+     * @param root_mnt the root_mnt to set
+     */
+    void setFsRoot(Dentry* root, VfsMount* root_mnt)
+    {
+      root_ = root;
+      root_mnt_ = root_mnt;
+    }
 
-  /**
-   * contructor
-   */
-  FileSystemInfo();
+    /**
+     * set the PWD-info to the class (PWD: print working directory)
+     * @param pwd the current path to set
+     * @param pwd_mnt the mount point of the current path to set
+     */
+    void setFsPwd(Dentry* pwd, VfsMount* pwd_mnt)
+    {
+      pwd_ = pwd;
+      pwd_mnt_ = pwd_mnt;
+    }
 
-  /**
-   * destructor
-   */
-  ~FileSystemInfo();
+    /**
+     * get the ROOT-info (ROOT-directory) from the class
+     * @return the root dentry
+     */
+    Dentry* getRoot()
+    {
+      return root_;
+    }
 
-  /**
-   * copy contructor
-   */
-  FileSystemInfo(const FileSystemInfo& fsi);
+    /**
+     * get the ROOT-info (ROOT-VfsMount-info) from the class
+     * @return the VfsMount
+     */
+    VfsMount* getRootMnt()
+    {
+      return root_mnt_;
+    }
 
-  /**
-   * set the ROOT-info to the class
-   * @param root the root dentry to set
-   * @param root_mnt the root_mnt to set
-   */
-  void setFsRoot(Dentry* root, VfsMount* root_mnt)
-    { root_ = root; root_mnt_ = root_mnt; }
+    /**
+     * get the PWD-info (PWD-directory) from the class
+     * @return the dentry of the current directory
+     */
+    Dentry* getPwd()
+    {
+      return pwd_;
+    }
 
-  /**
-   * set the PWD-info to the class (PWD: print working directory)
-   * @param pwd the current path to set
-   * @param pwd_mnt the mount point of the current path to set
-   */
-  void setFsPwd(Dentry* pwd, VfsMount* pwd_mnt)
-    { pwd_ = pwd; pwd_mnt_ = pwd_mnt; }
+    /**
+     * get the PWD-info (PWD-VfsMount-info) from the class
+     * @return the VfsMount of the current directory
+     */
+    VfsMount* getPwdMnt()
+    {
+      return pwd_mnt_;
+    }
 
-  /**
-   * get the ROOT-info (ROOT-directory) from the class
-   * @return the root dentry
-   */
-  Dentry* getRoot() { return root_; }
-
-  /**
-   * get the ROOT-info (ROOT-VfsMount-info) from the class
-   * @return the VfsMount
-   */
-  VfsMount* getRootMnt() { return root_mnt_; }
-
-  /**
-   * get the PWD-info (PWD-directory) from the class
-   * @return the dentry of the current directory
-   */
-  Dentry* getPwd() { return pwd_; }
-
-  /**
-   * get the PWD-info (PWD-VfsMount-info) from the class
-   * @return the VfsMount of the current directory
-   */
-  VfsMount* getPwdMnt() { return pwd_mnt_; }
-
-  /**
-   * read/copy the file pathname of the process
-   * @param pathname the name to set
-   * @param length the names length
-   * @return 0 on success
-   */
-  int32 setName(const char* pathname, uint32 length = 0);
-
-  /**
-   * return the file pathname from the class
-   * @return the pathname
-   */
-   const char* getName() const { return pathname_; }
-
-  /**
-   * release the file pathname
-   */
-  void putName();
+    ustl::string pathname_;
 };
 
 #endif // FILESYSTEMINFO_H___

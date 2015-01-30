@@ -1,5 +1,6 @@
 include_directories(
   .
+  ustl
   ../../common/include/util
   ../../common/include/fs
   ../../common/include/fs/minixfs

@@ -50,7 +50,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
 
   debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
 
-  debug(PATHWALKER, "pathWalk> fs_info->getName() : %s\n", fs_info->getName());
+  debug(PATHWALKER, "pathWalk> fs_info->getName() : %s\n", fs_info->pathname_.c_str());
   if (pathname == 0)
   {
     debug(PATHWALKER, "pathWalk> return pathname not found\n");

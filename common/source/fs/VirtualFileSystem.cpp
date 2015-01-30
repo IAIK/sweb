@@ -128,12 +128,10 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   if (!fst)
     return -1;
 
-  fs_info->setName(dir_name);
-  const char* test_name = fs_info->getName();
+  fs_info->pathname_ = dir_name;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
-  int32 success = PathWalker::pathWalk(test_name, 0, pw_dentry, pw_vfs_mount);
-  fs_info->putName();
+  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
   if (success != 0)
     return -1;
@@ -176,13 +174,10 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
   if (dir_name == 0)
     return -1;
 
-  fs_info->setName(dir_name);
-  const char* test_name = fs_info->getName();
+  fs_info->pathname_ = dir_name;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
-  int32 success = PathWalker::pathWalk(test_name, 0, pw_dentry, pw_vfs_mount);
-
-  fs_info->putName();
+  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
   if (success != 0)
     return -1;

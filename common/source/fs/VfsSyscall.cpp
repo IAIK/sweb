@@ -74,15 +74,12 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
     strncpy(path_tmp_ptr, pathname, path_len);
     path_tmp_ptr[path_len - 1] = 0;
 
-    fs_info->setName(path_tmp);
+    fs_info->pathname_ = path_tmp;
   }
   else
-    fs_info->setName(pathname);
+    fs_info->pathname_ = pathname;
 
-  int32 success = PathWalker::pathWalk(fs_info->getName(), 0, pw_dentry, pw_vfs_mount);
-
-  // checked
-  return success;
+  return PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 }
 
 int32 VfsSyscall::mkdir(const char* pathname, int32)
@@ -94,28 +91,26 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
     debug(VFSSYSCALL, "(mkdir) the pathname exists\n");
-    fs_info->putName();
     return -1;
   }
   debug(VFSSYSCALL, "(mkdir) pathRelease();\n");
-  char path_tmp[strlen(fs_info->getName()) + 1];
-  strncpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
-  path_tmp[strlen(fs_info->getName())] = 0;
-  fs_info->putName();
+  char path_tmp[strlen(fs_info->pathname_.c_str()) + 1];
+  strncpy(path_tmp, fs_info->pathname_.c_str(), (strlen(fs_info->pathname_.c_str()) + 1));
+  path_tmp[strlen(fs_info->pathname_.c_str())] = 0;
 
   char* char_tmp = strrchr(path_tmp, SEPARATOR);
   assert(char_tmp != 0);
   debug(VFSSYSCALL, "(mkdir)setName \n");
   // set directory
   uint32 path_prev_len = char_tmp - path_tmp + 1;
-  fs_info->setName(path_tmp, path_prev_len);
+  fs_info->pathname_ = path_tmp;
+  fs_info->pathname_ = fs_info->pathname_.substr(0,path_prev_len);
 
-  const char* path_prev_name = fs_info->getName();
+  const char* path_prev_name = fs_info->pathname_.c_str();
   debug(VFSSYSCALL, "(mkdir) path_prev_name: %s\n", path_prev_name);
   pw_dentry = 0;
   pw_vfs_mount = 0;
   int32 success = PathWalker::pathWalk(path_prev_name, 0, pw_dentry, pw_vfs_mount);
-  fs_info->putName();
 
   if (success != 0)
   {
@@ -159,23 +154,22 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
-    char path_tmp[strlen(fs_info->getName()) + 1];
-    strncpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
-    path_tmp[strlen(fs_info->getName())] = 0;
-    fs_info->putName();
+    char path_tmp[strlen(fs_info->pathname_.c_str()) + 1];
+    strncpy(path_tmp, fs_info->pathname_.c_str(), (strlen(fs_info->pathname_.c_str()) + 1));
+    path_tmp[strlen(fs_info->pathname_.c_str())] = 0;
 
     char* char_tmp = strrchr(path_tmp, SEPARATOR);
     assert(char_tmp != 0);
 
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
-    fs_info->setName(path_tmp, path_prev_len - 1);
+    fs_info->pathname_ = path_tmp;
+    fs_info->pathname_ = fs_info->pathname_.substr(0,path_prev_len - 1);
 
-    const char* path_prev_name = fs_info->getName();
+    const char* path_prev_name = fs_info->pathname_.c_str();
     Dentry* pw_dentry = 0;
     VfsMount* pw_vfs_mount = 0;
     int32 success = PathWalker::pathWalk(path_prev_name, 0, pw_dentry, pw_vfs_mount);
-    fs_info->putName();
 
     if (success != 0)
     {
@@ -228,11 +222,9 @@ int32 VfsSyscall::chdir(const char* pathname)
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
     debug(VFSSYSCALL, "Error: (chdir) the directory does not exist.\n");
-    fs_info->putName();
     return -1;
   }
 
-  fs_info->putName();
   Dentry* current_dentry = pw_dentry;
   Inode* current_inode = current_dentry->getInode();
   if (current_inode->getType() != I_DIR)
@@ -249,17 +241,14 @@ int32 VfsSyscall::chdir(const char* pathname)
 int32 VfsSyscall::rm(const char* pathname)
 {
   debug(VFSSYSCALL, "(rm) name: %s\n", pathname);
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
     debug(VFSSYSCALL, "Error: (rm) the directory does not exist.\n");
-    fs_info->putName();
     return -1;
   }
   debug(VFSSYSCALL, "(rm) \n");
-  fs_info->putName();
   Dentry* current_dentry = pw_dentry;
   debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", current_dentry->getName());
   Inode* current_inode = current_dentry->getInode();
@@ -289,17 +278,14 @@ int32 VfsSyscall::rm(const char* pathname)
 
 int32 VfsSyscall::rmdir(const char* pathname)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
     debug(VFSSYSCALL, "Error: (rmdir) the directory does not exist.\n");
-    fs_info->putName();
     return -1;
   }
 
-  fs_info->putName();
   Dentry* current_dentry = pw_dentry;
   Inode* current_inode = current_dentry->getInode();
 
@@ -362,8 +348,6 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
-    debug(VFSSYSCALL, "(open) putName\n");
-    fs_info->putName();
     Dentry* current_dentry = pw_dentry;
     debug(VFSSYSCALL, "(open) pathRelease\n");
     debug(VFSSYSCALL, "(open)current_dentry->getInode() \n");
@@ -386,24 +370,23 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   else if (flag & O_CREAT)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
-    char path_tmp[strlen(fs_info->getName()) + 1];
-    strncpy(path_tmp, fs_info->getName(), (strlen(fs_info->getName()) + 1));
-    path_tmp[strlen(fs_info->getName())] = 0;
-    fs_info->putName();
+    char path_tmp[strlen(fs_info->pathname_.c_str()) + 1];
+    strncpy(path_tmp, fs_info->pathname_.c_str(), (strlen(fs_info->pathname_.c_str()) + 1));
+    path_tmp[strlen(fs_info->pathname_.c_str())] = 0;
 
     char* char_tmp = strrchr(path_tmp, SEPARATOR);
     assert(char_tmp != 0)
 
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
-    fs_info->setName(path_tmp, path_prev_len);
+    fs_info->pathname_ = path_tmp;
+    fs_info->pathname_ = fs_info->pathname_.substr(0,path_prev_len);
 
-    const char* path_prev_name = fs_info->getName();
+    const char* path_prev_name = fs_info->pathname_.c_str();
 
     Dentry* pw_dentry = 0;
     VfsMount* pw_vfs_mount = 0;
     int32 success = PathWalker::pathWalk(path_prev_name, 0, pw_dentry, pw_vfs_mount);
-    fs_info->putName();
 
     if (success != 0)
     {
