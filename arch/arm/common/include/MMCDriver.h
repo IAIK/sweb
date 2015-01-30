@@ -2,7 +2,7 @@
  * @file arch_mmc_driver.h
  *
  */
- 
+
 #ifndef _ARCH_MMC_DRIVER_
 #define _ARCH_MMC_DRIVER_
 
@@ -32,7 +32,7 @@ class MMCDriver : public BDDriver
      * or the function returns otherwise.
      *
      */
-    uint32 addRequest( BDRequest * );
+    uint32 addRequest(BDRequest *);
 
     /**
      * @param 1 sector where it should be started to read
@@ -40,7 +40,7 @@ class MMCDriver : public BDDriver
      * @param 3 buffer where to save all that was read
      *
      */
-    int32 readSector( uint32, uint32, void * );
+    int32 readSector(uint32, uint32, void *);
 
     /**
      * @param 1 sector where it should be started to write
@@ -48,7 +48,7 @@ class MMCDriver : public BDDriver
      * @param 3 buffer, which content should be written to the sectors
      *
      */
-    int32 writeSector( uint32, uint32, void * );
+    int32 writeSector(uint32, uint32, void *);
 
     /**
      * @return number of sectors
@@ -76,14 +76,14 @@ class MMCDriver : public BDDriver
      * @param 2 buffer where to save the block that was read
      *
      */
-    int32 readBlock( uint32, void * );
+    int32 readBlock(uint32, void *);
 
     /**
      * @param 1 start address
      * @param 2 buffer, which content should be written to the bloc
      *
      */
-    int32 writeBlock( uint32, void * );
+    int32 writeBlock(uint32, void *);
     Mutex lock_;
 
     uint32 rca_;

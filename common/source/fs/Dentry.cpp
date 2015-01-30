@@ -5,20 +5,16 @@
 #include "kprintf.h"
 
 Dentry::Dentry(const char* name) :
-    d_name_(0)
+    d_inode_(0), d_parent_(this), d_mounts_(0), d_name_(0)
 {
   this->setName(name);
-  d_parent_ = this; // the parent of the root
-  d_inode_ = 0;
   debug(DENTRY, "created Dentry with Name %s\n", name);
 }
 
 Dentry::Dentry(Dentry *parent) :
-    d_name_(0)
+    d_inode_(0), d_parent_(parent), d_mounts_(0), d_name_(0)
 {
-  d_parent_ = parent;
   parent->setChild(this);
-  d_inode_ = 0;
   this->setName("NamELLEss");
 }
 

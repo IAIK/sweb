@@ -2,7 +2,7 @@
  * @file arch_mmc_driver.cpp
  *
  */
- 
+
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "MMCDriver.h"
@@ -15,25 +15,25 @@
 
 struct MMCI
 {
-  uint32 power;
-  uint32 clock;
-  uint32 argument;
-  uint32 command;
-  uint32 respcmd;
-  uint32 response0;
-  uint32 response1;
-  uint32 response2;
-  uint32 response3;
-  uint32 datatimer;
-  uint32 datalength;
-  uint32 datactrl;
-  uint32 datacnt;
-  uint32 status;
-  uint32 clear;
-  uint32 mask0;
-  uint32 mask1;
-  uint32 reserved;
-  uint32 fifo_cnt;
+    uint32 power;
+    uint32 clock;
+    uint32 argument;
+    uint32 command;
+    uint32 respcmd;
+    uint32 response0;
+    uint32 response1;
+    uint32 response2;
+    uint32 response3;
+    uint32 datatimer;
+    uint32 datalength;
+    uint32 datactrl;
+    uint32 datacnt;
+    uint32 status;
+    uint32 clear;
+    uint32 mask0;
+    uint32 mask1;
+    uint32 reserved;
+    uint32 fifo_cnt;
 };
 
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
@@ -94,19 +94,20 @@ uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
   return mmc_send_cmd(command, arg, response);
 }
 
-MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512)
+MMCDriver::MMCDriver() :
+    SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512), num_sectors_(0)
 {
-  debug(MMC_DRIVER,"MMCDriver()\n");
+  debug(MMC_DRIVER, "MMCDriver()\n");
   uint32 response;
   // protocol from sd card specification
-  mmc_send_cmd(0,0,0); // go to idle state
-  mmc_send_acmd(41,0xffff00ff,&response); // get ocr register 01 101001 0 0 0 1 000 0 1111111111
+  mmc_send_cmd(0, 0, 0); // go to idle state
+  mmc_send_acmd(41, 0xffff00ff, &response); // get ocr register 01 101001 0 0 0 1 000 0 1111111111
   assert(response == 0x80ffff00);
-  mmc_send_cmd(2,0,0);
-  mmc_send_cmd(3,0,&response);
+  mmc_send_cmd(2, 0, 0);
+  mmc_send_cmd(3, 0, &response);
   rca_ = response >> 16;
-  mmc_send_cmd(4,0,0);
-  mmc_send_cmd(7,rca_ << 16,0);
+  mmc_send_cmd(4, 0, 0);
+  mmc_send_cmd(7, rca_ << 16, 0);
 }
 
 MMCDriver::~MMCDriver()
@@ -114,20 +115,20 @@ MMCDriver::~MMCDriver()
 
 }
 
-uint32 MMCDriver::addRequest( BDRequest * br)
+uint32 MMCDriver::addRequest(BDRequest * br)
 {
   MutexLock lock(lock_);
-  debug(MMC_DRIVER, "addRequest %d!\n", br->getCmd() );
+  debug(MMC_DRIVER, "addRequest %d!\n", br->getCmd());
 
   int32 res = -1;
 
-  switch( br->getCmd() )
+  switch (br->getCmd())
   {
     case BDRequest::BD_READ:
-      res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+      res = readSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
     case BDRequest::BD_WRITE:
-      res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+      res = writeSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
     default:
       res = -1;
@@ -135,15 +136,15 @@ uint32 MMCDriver::addRequest( BDRequest * br)
   }
 
   debug(MMC_DRIVER, "addRequest:No IRQ operation !!\n");
-  br->setStatus( BDRequest::BD_DONE );
+  br->setStatus(BDRequest::BD_DONE);
   return res;
 }
 
-int32 MMCDriver::readBlock ( uint32 address, void *buffer )
+int32 MMCDriver::readBlock(uint32 address, void *buffer)
 {
-  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %x\n",address, buffer);
+  debug(MMC_DRIVER, "readBlock: address: %x, buffer: %x\n", address, buffer);
   uint32 response;
-  mmc_send_cmd(17,address,&response);
+  mmc_send_cmd(17, address, &response);
   mmci->datalength = 512;
   mmci->datactrl = PL181_DATA_ENABLE | PL181_DATA_DIRECTION | PL181_DATA_MODE;
   for (uint32 j = 0; j < 8; j++)
@@ -153,14 +154,14 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
       uint32 i;
       for (i = 0; i < 16; i++)
       {
-        *((uint32*)buffer + j * 16 + i) = mmci_fifo[i];
+        *((uint32*) buffer + j * 16 + i) = mmci_fifo[i];
       }
     }
   }
   return 0;
 }
 
-int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+int32 MMCDriver::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
 {
   debug(MMC_DRIVER, "readSector: start: %x, num: %x, buffer: %x\n", start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
@@ -178,7 +179,8 @@ int32 MMCDriver::writeBlock(uint32 address __attribute__((unused)), void *buffer
 int32 MMCDriver::writeSector(uint32 start_sector __attribute__((unused)), uint32 num_sectors __attribute__((unused)),
                              void * buffer __attribute__((unused)))
 {
-  while (1);
+  while (1)
+    ;
   return 0;
 }
 

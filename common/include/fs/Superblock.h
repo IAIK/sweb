@@ -119,14 +119,21 @@ class Superblock
      * @param inode the inode to read
      * @return 0 on success
      */
-    virtual int32 readInode(Inode* /*inode*/) { return 0; };
+    virtual int32 readInode(Inode* /*inode*/)
+    {
+      return 0;
+    }
+    ;
 
     /**
      * This method is called to write a specific inode to a mounted file-system,
      * and gets called on inodes which have been marked dirty.
      * @param inode the inode to write
      */
-    virtual void writeInode(Inode* /*inode*/) {};
+    virtual void writeInode(Inode* /*inode*/)
+    {
+    }
+    ;
 
     /**
      * This method is called whenever the reference count on an inode reaches 0,
@@ -153,7 +160,11 @@ class Superblock
      * @param file the fd to remove
      * @return 0 on success
      */
-    virtual int32 removeFd(Inode* /*inode*/, FileDescriptor* /*file*/) { return 0; };
+    virtual int32 removeFd(Inode* /*inode*/, FileDescriptor* /*file*/)
+    {
+      return 0;
+    }
+    ;
 
     /**
      * Get the root Dentry of the Superblock

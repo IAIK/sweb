@@ -8,10 +8,9 @@
 #include "Dentry.h"
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
-    Inode(super_block, inode_type)
+    Inode(super_block, inode_type), i_zones_(0), i_num_(0), children_loaded_(false)
 {
   debug(M_INODE, "Simple Constructor\n");
-  i_zones_ = 0;
   i_size_ = 0;
   i_nlink_ = 0;
   i_dentry_ = 0;
@@ -20,15 +19,13 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
 MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 __attribute__((unused)) i_uid, uint32 i_size,
                            uint32 __attribute__((unused)) i_modtime, uint8 __attribute__((unused)) i_gid,
                            uint8 i_nlinks, uint16* i_zones, uint32 i_num) :
-    Inode(super_block, 0)
+    Inode(super_block, 0), i_zones_(new MinixFSZone((MinixFSSuperblock*) super_block, i_zones)), i_num_(i_num),
+    children_loaded_(false)
 {
   i_size_ = i_size;
   i_nlink_ = i_nlinks;
   i_dentry_ = 0;
   i_state_ = I_UNUSED;
-  i_zones_ = new MinixFSZone((MinixFSSuperblock*) super_block, i_zones);
-  i_num_ = i_num;
-  children_loaded_ = false;
   if (i_mode & 0x8000)
   {
     i_type_ = I_FILE;
@@ -133,7 +130,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   uint32 zone_offset = offset % ZONE_SIZE;
   char* wbuffer_array = new char[num_zones * ZONE_SIZE];
   char* wbuffer = wbuffer_array;
-  memset((void*)wbuffer, 0, num_zones * ZONE_SIZE);
+  memset((void*) wbuffer, 0, num_zones * ZONE_SIZE);
   debug(M_INODE, "writeData: reading data at the beginning of zone: offset-zone_offset: %d,zone_offset: %d\n",
         offset - zone_offset, zone_offset);
   readData(offset - zone_offset, zone_offset, wbuffer);
