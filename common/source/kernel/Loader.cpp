@@ -319,8 +319,8 @@ bool Loader::loadDebugInfoIfAvailable()
   // loading is simple. we only support this case for now
 
 
-  auto section_name_section = hdr_->e_shstrndx;
-  auto section_name_size = section_headers[section_name_section].sh_size;
+  size_t section_name_section = hdr_->e_shstrndx;
+  size_t section_name_size = section_headers[section_name_section].sh_size;
   ustl::vector<char> section_names(section_name_size);
 
   if (readFromBinary(&section_names[0], section_headers[section_name_section].sh_offset, section_name_size ))
@@ -337,7 +337,7 @@ bool Loader::loadDebugInfoIfAvailable()
   char *stabstr_data=0;
   size_t stab_data_size=0;
 
-  for (auto const &section: section_headers)
+  for (Elf::Shdr const &section: section_headers)
   {
     if (section.sh_name)
     {
@@ -350,7 +350,7 @@ bool Loader::loadDebugInfoIfAvailable()
         }
         else
         {
-          auto size = section.sh_size;
+          size_t size = section.sh_size;
           stab_data = new char[size];
           stab_data_size = size;
           if (readFromBinary(stab_data, section.sh_offset, size))
@@ -370,7 +370,7 @@ bool Loader::loadDebugInfoIfAvailable()
         }
         else
         {
-          auto size = section.sh_size;
+          size_t size = section.sh_size;
           stabstr_data = new char[size];
           if (readFromBinary(stabstr_data, section.sh_offset, size))
           {

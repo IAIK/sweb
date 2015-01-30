@@ -65,31 +65,19 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
 {
   assert(dirty_inodes_.empty() == true);
 
-  uint32 num = s_files_.size();
-  for (uint32 counter = 0; counter < num; counter++)
+  for (FileDescriptor* fd : s_files_)
   {
-    FileDescriptor *fd = s_files_.at(0);
-    File* file = fd->getFile();
-    s_files_.remove(fd);
-
-    delete file;
+    delete fd->getFile();
     delete fd;
   }
+  s_files_.clear();
 
-  assert(s_files_.empty() == true);
-
-  num = all_inodes_.size();
-  for (uint32 counter = 0; counter < num; counter++)
+  for (Inode* inode : all_inodes_)
   {
-    Inode* inode = all_inodes_.at(0);
-    all_inodes_.remove(inode);
-    Dentry* dentry = inode->getDentry();
-    delete dentry;
-
+    delete inode->getDentry();
     delete inode;
   }
-
-  assert(all_inodes_.empty() == true);
+  all_inodes_.clear();
 }
 
 void DeviceFSSuperBlock::addDevice(Inode* device, const char* device_name)

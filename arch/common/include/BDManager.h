@@ -72,7 +72,6 @@ class BDManager
      */
     bool probeIRQ;
 
-  private:
     ustl::list<BDVirtualDevice *> device_list_;
 
   protected:

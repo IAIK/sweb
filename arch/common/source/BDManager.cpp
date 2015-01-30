@@ -72,14 +72,12 @@ BDVirtualDevice* BDManager::getDeviceByNumber(uint32 dev_num)
 BDVirtualDevice* BDManager::getDeviceByName(const char * dev_name)
 {
   debug(BD_MANAGER, "getDeviceByName: %s", dev_name);
-  for (uint32 index = 0; index < device_list_.size(); index++)
+  for (BDVirtualDevice* dev : device_list_)
   {
-    if (strcmp(device_list_[index]->getName(), dev_name) == 0)
+    if (strcmp(dev->getName(), dev_name) == 0)
     {
-      debug(BD_MANAGER, "getDeviceByName%d: %s with id: %d\n", index, device_list_[index]->getName(),
-            device_list_[index]->getDeviceNumber());
-
-      return device_list_[index];
+      debug(BD_MANAGER, "getDeviceByName: %s with id: %d\n", dev->getName(), dev->getDeviceNumber());
+      return dev;
     }
   }
   return 0;

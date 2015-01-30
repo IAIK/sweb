@@ -35,10 +35,10 @@
 #include "atkbd.h"
 
 #include "VfsSyscall.h"
-#include "fs/FileSystemInfo.h"
-#include "fs/Dentry.h"
-#include "fs/devicefs/DeviceFSType.h"
-#include "fs/VirtualFileSystem.h"
+#include "FileSystemInfo.h"
+#include "Dentry.h"
+#include "DeviceFSType.h"
+#include "VirtualFileSystem.h"
 
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
@@ -83,14 +83,14 @@ extern "C" void startup()
   main_console = ArchCommon::createConsole(1);
   writeLine2Bochs("Console created \n");
 
-  Terminal *term_0 = main_console->getTerminal ( 0 ); // add more if you need more...
+  Terminal *term_0 = main_console->getTerminal(0); // add more if you need more...
 
-  term_0->setBackgroundColor ( Console::BG_BLACK );
-  term_0->setForegroundColor ( Console::FG_GREEN );
-  kprintfd ( "Init debug printf\n" );
-  term_0->writeString ( "This is on term 0, you should see me now\n" );
+  term_0->setBackgroundColor(Console::BG_BLACK);
+  term_0->setForegroundColor(Console::FG_GREEN);
+  kprintfd("Init debug printf\n");
+  term_0->writeString("This is on term 0, you should see me now\n");
 
-  main_console->setActiveTerminal ( 0 );
+  main_console->setActiveTerminal(0);
 
   kprintf("Kernel end address is %x\n", &kernel_end_address);
 
@@ -99,27 +99,26 @@ extern "C" void startup()
   //needs to be done after scheduler and terminal, but prior to enableInterrupts
   kprintf_init();
 
-  debug ( MAIN, "Threads init\n" );
+  debug(MAIN, "Threads init\n");
   ArchThreads::initialise();
-  debug ( MAIN, "Interupts init\n" );
+  debug(MAIN, "Interupts init\n");
   ArchInterrupts::initialise();
 
   ArchCommon::initDebug();
 
   vfs.initialize();
-  debug ( MAIN, "Mounting DeviceFS under /dev/\n" );
+  debug(MAIN, "Mounting DeviceFS under /dev/\n");
   DeviceFSType *devfs = new DeviceFSType();
-  vfs.registerFileSystem ( devfs );
-  default_working_dir = vfs.root_mount ( "devicefs", 0 );
+  vfs.registerFileSystem(devfs);
+  default_working_dir = vfs.root_mount("devicefs", 0);
 
-  debug ( MAIN, "Block Device creation\n" );
-  BDManager::getInstance()->doDeviceDetection( );
-  debug ( MAIN, "Block Device done\n" );
+  debug(MAIN, "Block Device creation\n");
+  BDManager::getInstance()->doDeviceDetection();
+  debug(MAIN, "Block Device done\n");
 
-  for ( uint32 i = 0; i < BDManager::getInstance()->getNumberOfDevices(); i++ )
+  for (BDVirtualDevice* bdvd : BDManager::getInstance()->device_list_)
   {
-    BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber ( i );
-    debug ( MAIN, "Detected Devices %d: %s :: %d\n",i, bdvd->getName(), bdvd->getDeviceNumber() );
+    debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
   }
 
   // initialise global and static objects
@@ -128,40 +127,40 @@ extern "C" void startup()
   extern Mutex global_fd_lock;
   new (&global_fd_lock) Mutex("global_fd_lock");
 
-  debug ( MAIN, "make a deep copy of FsWorkingDir\n" );
+  debug(MAIN, "make a deep copy of FsWorkingDir\n");
   main_console->setWorkingDirInfo(new FileSystemInfo(*default_working_dir));
-  debug ( MAIN, "main_console->setWorkingDirInfo done\n" );
+  debug(MAIN, "main_console->setWorkingDirInfo done\n");
 
   ustl::coutclass::init();
-  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot()->getName(), default_working_dir->getPwd()->getName());
+  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot()->getName(),
+        default_working_dir->getPwd()->getName());
   if (main_console->getWorkingDirInfo())
   {
     delete main_console->getWorkingDirInfo();
   }
   main_console->setWorkingDirInfo(default_working_dir);
 
-  debug ( MAIN, "Timer enable\n" );
+  debug(MAIN, "Timer enable\n");
   ArchInterrupts::enableTimer();
 
   KeyboardManager::instance();
   ArchInterrupts::enableKBD();
 
-  debug ( MAIN, "Adding Kernel threads\n" );
+  debug(MAIN, "Adding Kernel threads\n");
 
-  Scheduler::instance()->addNewThread ( main_console );
+  Scheduler::instance()->addNewThread(main_console);
 
-  Scheduler::instance()->addNewThread (
-       new ProcessRegistry ( new FileSystemInfo(*default_working_dir), user_progs ) // see user_progs.h
-   );
+  Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs) // see user_progs.h
+                                                          );
 
   Scheduler::instance()->printThreadList();
 
-  kprintf ( "Now enabling Interrupts...\n" );
+  kprintf("Now enabling Interrupts...\n");
   boot_completed = 1;
   ArchInterrupts::enableInterrupts();
 
   Scheduler::instance()->yield();
 
   //not reached
-  assert ( false );
+  assert(false);
 }

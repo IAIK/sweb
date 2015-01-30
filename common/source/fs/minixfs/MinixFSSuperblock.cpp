@@ -140,22 +140,13 @@ MinixFSSuperblock::~MinixFSSuperblock()
   debug(M_SB, "~MinixSuperblock\n");
   assert(dirty_inodes_.empty() == true);
   storage_manager_->flush(this);
-  uint32 num = s_files_.size();
-  for (uint32 counter = 0; counter < num; counter++)
+  for (FileDescriptor* fd : s_files_)
   {
-    FileDescriptor *fd = s_files_.front();
-    File* file = fd->getFile();
-    s_files_.remove(fd);
-
-    delete file;
+    delete fd->getFile();
     delete fd;
   }
-
+  s_files_.clear();
   assert(s_files_.empty() == true);
-
-  num = all_inodes_.size();
-
-  debug(M_SB, "~MinixSuperblock num: %d inodes to delete\n", num);
 
   if (isDebugEnabled(M_SB))
   {
@@ -163,15 +154,12 @@ MinixFSSuperblock::~MinixFSSuperblock()
       debug(M_SB, "Inode: %p\n", it);
   }
 
-  for (uint32 counter = 0; counter < num; counter++)
+  for (Inode* inode : all_inodes_)
   {
-    Inode* inode = all_inodes_.front();
-
     debug(M_SB, "~MinixSuperblock writing inode to disc\n");
     writeInode(inode);
 
     debug(M_SB, "~MinixSuperblock inode written to disc\n");
-    all_inodes_remove_inode(inode);
     Dentry* dentry = inode->getDentry();
 
     debug(M_SB, "~MinixSuperblock deleteing denty->getName() : %s\n", dentry->getName());
@@ -180,10 +168,10 @@ MinixFSSuperblock::~MinixFSSuperblock()
     debug(M_SB, "~MinixSuperblock deleting inode\n");
     delete inode;
   }
-
   delete storage_manager_;
 
-  assert(all_inodes_.empty() == true);
+  all_inodes_.clear();
+  all_inodes_set_.clear();
 
   debug(M_SB, "~MinixSuperblock finished\n");
 }
@@ -227,7 +215,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
 {
   assert(inode);
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
-  assert(ustl::find(all_inodes_.begin(),all_inodes_.end(), inode) != all_inodes_.end());
+  assert(ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
@@ -249,14 +237,14 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
 void MinixFSSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
-  assert(ustl::find(all_inodes_.begin(),all_inodes_.end(), inode) != all_inodes_.end());
+  assert(ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
   //flush zones
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   char buffer[INODE_SIZE];
-  memset((void*)buffer, 0, sizeof(buffer));
+  memset((void*) buffer, 0, sizeof(buffer));
   debug(M_SB, "writeInode> reading block %d with offset %d from disc\n", block, offset);
   readBytes(block, offset, INODE_SIZE, buffer);
   debug(M_SB, "writeInode> read data from disc\n");
@@ -264,12 +252,12 @@ void MinixFSSuperblock::writeInode(Inode* inode)
         minix_inode->i_nlink_, minix_inode->i_size_);
   if (minix_inode->i_type_ == I_FILE)
   {
-    debug(M_SB, "writeInode> setting mode to file : %x\n", *(uint16* ) buffer | 0x81FF);
+    debug(M_SB, "writeInode> setting mode to file : %x\n", *(uint16*) buffer | 0x81FF);
     *(uint16*) buffer = *(uint16*) buffer | 0x81FF;
   }
   else if (minix_inode->i_type_ == I_DIR)
   {
-    debug(M_SB, "writeInode> setting mode to dir : %x\n", *(uint16* ) buffer | 0x41FF);
+    debug(M_SB, "writeInode> setting mode to dir : %x\n", *(uint16*) buffer | 0x41FF);
     *(uint16*) buffer = *(uint16*) buffer | 0x41FF;
   }
   else
@@ -314,7 +302,7 @@ void MinixFSSuperblock::delete_inode(Inode* inode)
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
   char buffer[INODE_SIZE];
-  memset((void*)buffer, 0, sizeof(buffer));
+  memset((void*) buffer, 0, sizeof(buffer));
   writeBytes(block, offset, INODE_SIZE, buffer);
   delete inode;
 }

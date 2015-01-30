@@ -125,19 +125,13 @@ class Dentry
      * check the existance of the child-list
      * @return true is empty
      */
-    bool emptyChild()
-    {
-      return d_child_.empty();
-    }
+    bool emptyChild();
 
     /**
      * get the number of the child
      * @return the number of childs
      */
-    uint32 getNumChild()
-    {
-      return d_child_.size();
-    }
+    uint32 getNumChild();
 
     /**
      * get the child of the child-list

@@ -59,7 +59,7 @@ int32 Dentry::childRemove(Dentry *child_dentry)
   debug(DENTRY, "Dentry childRemove d_child_ length: %ld \n", d_child_.size());
 
   debug(DENTRY, "Dentry childRemove d_child_ included: %d\n",
-        ustl::find(d_child_.begin(), d_child_.end(), child_dentry ) != d_child_.end());
+        ustl::find(d_child_.begin(), d_child_.end(), child_dentry) != d_child_.end());
   assert(child_dentry != 0);
   d_child_.remove(child_dentry);
   child_dentry->d_parent_ = 0;
@@ -108,4 +108,14 @@ Dentry* Dentry::checkName(const char* name)
   }
 
   return 0;
+}
+
+uint32 Dentry::getNumChild()
+{
+  return d_child_.size();
+}
+
+bool Dentry::emptyChild()
+{
+  return d_child_.empty();
 }
