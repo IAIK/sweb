@@ -30,14 +30,14 @@ class MinixFSType : public FileSystemType
      * @param data the data given to the mount system call
      * @return the superblock
      */
-    virtual Superblock *readSuper ( Superblock *superblock, void *data ) const;
+    virtual Superblock *readSuper(Superblock *superblock, void *data) const;
 
     /**
      * creates an Superblock object for the actual file system type
      * @param root the root dentry
      * @param s_dev the device number
      */
-    virtual Superblock *createSuper ( Dentry *root, uint32 s_dev ) const;
+    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 };
 
 #endif

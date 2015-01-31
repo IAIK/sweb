@@ -2,7 +2,7 @@
  * @file KeyboardManager.h
  *
  */
- 
+
 #ifndef _KEYBOARD_MANAGER_H
 #define _KEYBOARD_MANAGER_H
 
@@ -11,7 +11,6 @@
 extern "C"
 {
 #endif
-
 
 #ifdef __cplusplus
 }
@@ -44,7 +43,6 @@ extern "C"
 #define E0_F17       (E0_BASE + 21)
 #define E0_KPMINPLUS (E0_BASE + 22)
 #define E1_PAUSE     (E0_BASE + 23)
-
 
 #define KEY_MAPPING_SIZE 0x80
 
@@ -93,107 +91,71 @@ extern "C"
  */
 class KeyboardManager
 {
-public:
+  public:
+    KeyboardManager();
+    ~KeyboardManager();
+    static KeyboardManager *instance()
+    {
+      if (!instance_)
+        instance_ = new KeyboardManager();
+      return instance_;
+    }
+    ;
 
-  /**
-   * Constructor
-   *
-   */
-  KeyboardManager();
+    bool getKeyFromKbd(uint32 &key);
+    void serviceIRQ(void);
 
-  /**
-   * Destructor
-   *
-   */
-  ~KeyboardManager();
+    bool isShift();
+    bool isCtrl();
+    bool isAlt();
+    bool isAltGr();
+    bool isCaps();
+    bool isNum();
+    bool isScroll();
 
-  /**
-   * KeyboardManager is a Singleton
-   *
-   */
-  static KeyboardManager *instance()
-  {
-    if( !instance_ )
-      instance_ = new KeyboardManager();
-    return instance_;
-  };
+    void emptyKbdBuffer();
 
-  /**
-   * reads in the input key
-   *
-   */
-  bool getKeyFromKbd(uint32 &key);
+  private:
 
-  /**
-   * handles the active requests
-   *
-   */
-  void serviceIRQ( void );
+    /**
+     * function is called when the Keyboard has to wait
+     *
+     */
+    void kb_wait();
 
-  /**
-   * bool functions to check the input key
-   *
-   */
-  bool isShift();
-  bool isCtrl();
-  bool isAlt();
-  bool isAltGr();
-  bool isCaps();
-  bool isNum();
-  bool isScroll();
+    /**
+     * writes a byte to the given IO port
+     *
+     */
+    void send_cmd(uint8 cmd, uint8 port = 0);
 
-  /**
-   * empties the Kbd Buffer
-   *
-   */
-  void emptyKbdBuffer();
+    RingBuffer<uint8> keyboard_buffer_;
 
-private:
+    static uint32 const STANDARD_KEYMAP[];
+    static uint32 const E0_KEYS[];
 
-  /**
-   * function is called when the Keyboard has to wait
-   *
-   */
-  void kb_wait();
+    /**
+     * converts the scancode into a key by looking in the Standard KeyMap
+     *
+     */
+    uint32 convertScancode(uint8 scancode);
 
-  /**
-   * writes a byte to the given IO port
-   *
-   */
-  void send_cmd(uint8 cmd, uint8 port = 0);
+    /**
+     * function is called to handle num, caps, scroll, shift, ctrl and alt
+     *
+     */
+    void modifyKeyboardStatus(uint8 sc);
 
-  RingBuffer<uint8> keyboard_buffer_;
+    void setLEDs(void);
 
-  static uint32 const STANDARD_KEYMAP[];
-  static uint32 const E0_KEYS[];
+    uint32 extended_scancode;
+    uint32 keyboard_status_;
+    uint32 usb_kbd_addr_;
+    uint32 current_key_;
 
+  protected:
 
-  /**
-   * converts the scancode into a key by looking in the Standard KeyMap
-   *
-   */
-  uint32 convertScancode( uint8 scancode );
-
-  /**
-   * function is called to handle num, caps, scroll, shift, ctrl and alt
-   *
-   */
-  void modifyKeyboardStatus(uint8 sc );
-
-  /**
-   * setting the leds
-   *
-   */
-  void setLEDs( void );
-
-  uint32 extended_scancode;
-  uint32 keyboard_status_;
-  uint32 usb_kbd_addr_;
-  uint32 current_key_;
-
-protected:
-
-  static KeyboardManager *instance_;
+    static KeyboardManager *instance_;
 };
 
 #endif

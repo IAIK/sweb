@@ -5,48 +5,15 @@
 
 uint8 const bits_per_bitmap_atom_ = 8;
 
-/**
- * @class Bitmap
- */
 class Bitmap
 {
 
 public:
-
-  /**
-   * Constructor
-   * @param number_of_bits the size of the bitmap to create
-   */
   Bitmap (size_t number_of_bits);
-
-  /**
-   * Destructor
-   */
   ~Bitmap ();
-
-  /**
-   * sets the bit of the given number
-   * @param bit_number the bit number
-   */
   void setBit(size_t bit_number);
-
-  /**
-   * returns the bits value of the given number
-   * @param bit_number the bit number
-   * @return true if the bit is set
-   */
   bool getBit(size_t bit_number);
-
-  /**
-   * unsets the bit of the given number
-   * @param bit_number the bit number
-   */
   void unsetBit(size_t bit_number);
-
-  /**
-   * returns the size of the bitmap
-   * @return the size
-   */
   size_t getSize() { return size_; }
 
   /**
@@ -66,7 +33,6 @@ public:
    */
   void bmprint();
 
-  //protected:
   /**
    * sets a whole byte in the bitmap
    * only use if you know what you are doing

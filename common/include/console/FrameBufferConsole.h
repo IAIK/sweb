@@ -19,7 +19,7 @@ class FrameBufferConsole : public Console
      * @param num_terminals the number of terminals to create
      * @return FramebufferConsole instance
      */
-    FrameBufferConsole ( uint32 num_terminals );
+    FrameBufferConsole(uint32 num_terminals);
 
     /**
      * Sets the given character to the given position on the console.
@@ -29,7 +29,8 @@ class FrameBufferConsole : public Console
      * @param state not implemented - should change the output color
      * @return 0
      */
-    virtual uint32 consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state );
+    virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
+                                       uint8 const &state);
 
   private:
 
@@ -59,14 +60,13 @@ class FrameBufferConsole : public Console
      * Not implemented.
      * @param color ignored.
      */
-    virtual void consoleSetForegroundColor ( FOREGROUNDCOLORS const &color );
+    virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color);
 
     /**
      * Not implemented.
      * @param color ignored.
      */
-    virtual void consoleSetBackgroundColor ( BACKGROUNDCOLORS const &color );
-
+    virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color);
 
     /**
      * Sets the Pixel at the given position in the given color.
@@ -76,7 +76,7 @@ class FrameBufferConsole : public Console
      * @param g the green color component
      * @param b the blue color component
      */
-    void setPixel ( uint32 x,uint32 y,uint8 r,uint8 g,uint8 b );
+    void setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b);
 
     uint32 x_res_;
     uint32 y_res_;

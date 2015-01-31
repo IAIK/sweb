@@ -14,16 +14,7 @@ class BDRequest;
 class MMCDriver : public BDDriver
 {
   public:
-    /**
-     * Constructor
-     *
-     */
     MMCDriver();
-
-    /**
-     * Destructor
-     *
-     */
     virtual ~MMCDriver();
 
     /**
@@ -50,24 +41,9 @@ class MMCDriver : public BDDriver
      */
     int32 writeSector(uint32, uint32, void *);
 
-    /**
-     * @return number of sectors
-     *
-     */
     uint32 getNumSectors();
-
-    /**
-     * @return size of a sector
-     *
-     */
     uint32 getSectorSize();
-
-    /**
-     * handles the active requests
-     *
-     */
     void serviceIRQ();
-
     uint32 SPT;
   private:
 

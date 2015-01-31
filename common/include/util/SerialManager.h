@@ -1,7 +1,3 @@
-/**
- * @file serial.h
- */
-
 #ifndef SERIAL_H__
 #define SERIAL_H__
 
@@ -27,60 +23,44 @@ class SerialPort : public CharacterDevice
      */
     typedef enum _br
     {
-        BR_9600,
-        BR_14400,
-        BR_19200,
-        BR_38400,
-        BR_55600,
-        BR_115200
-    }
-    BAUD_RATE_E;
+      BR_9600, BR_14400, BR_19200, BR_38400, BR_55600, BR_115200
+    } BAUD_RATE_E;
 
     /**
      * @enum _par The parity for serial communication
      */
     typedef enum _par
     {
-        ODD_PARITY,
-        EVEN_PARITY,
-        NO_PARITY
-    }
-    PARITY_E;
+      ODD_PARITY, EVEN_PARITY, NO_PARITY
+    } PARITY_E;
 
     /**
      * @enum _db Number of data bits used in serial communication
      */
     typedef enum _db
     {
-        DATA_7,
-        DATA_8
-    }
-    DATA_BITS_E;
+      DATA_7, DATA_8
+    } DATA_BITS_E;
 
     /**
      * @enum _sb Number of stop bits used in serial communication
      */
     typedef enum _sb
     {
-        STOP_ONE,
-        STOP_TWO,
-        STOP_ONEANDHALF
-    }
-    STOP_BITS_E;
+      STOP_ONE, STOP_TWO, STOP_ONEANDHALF
+    } STOP_BITS_E;
 
     /**
      * @enum _sres Results returned by serial port functions
      */
     typedef enum _sres
     {
-        SR_OK,
-        SR_ERROR // you might want to add elements for common errors that can appear
-    }
-    SRESULT;
+      SR_OK, SR_ERROR // you might want to add elements for common errors that can appear
+    } SRESULT;
 
-    SerialPort ( char*, ArchSerialInfo port_info );
+    SerialPort(char*, ArchSerialInfo port_info);
 
-    ~SerialPort ();
+    ~SerialPort();
 
     /**
      * Opens a serial port for reading or writing
@@ -90,7 +70,7 @@ class SerialPort : public CharacterDevice
      * @param parity Parity @see PARITY_E
      * @return Result @see SERIAL_ERROR_E
      */
-    SRESULT setup_port ( BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity );
+    SRESULT setup_port(BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity);
 
     /**
      * Writes size bytes to serial port
@@ -99,20 +79,8 @@ class SerialPort : public CharacterDevice
      * @param buffer The data to be written
      * @return Number of bytes actualy written or -1 in case of an error
      */
-    virtual int32 writeData ( uint32 offset, uint32 size, const char*buffer );
+    virtual int32 writeData(uint32 offset, uint32 size, const char*buffer);
 
-//  /**
-//  * Reads size bytes from the serial port
-//  * @param offset Not used with serial ports
-//  * @param size Number of bytes to be read
-//  * @param buffer The buffer to store the data (must be preallocated)
-//  * @return Number of bytes actualy read or -1 in case of an error
-//  */
-//  virtual int32 readData(int32 offset, int32 size, char *buffer);
-
-    /**
-     * Handles the irq of this serial port \sa get_info()
-     */
     void irq_handler();
 
     /**
@@ -126,23 +94,20 @@ class SerialPort : public CharacterDevice
     ArchSerialInfo get_info()
     {
       return port_info_;
-    };
+    }
+    ;
 
   private:
-    void write_UART ( uint32 reg, uint8 what );
-    uint8 read_UART ( uint32 reg );
+    void write_UART(uint32 reg, uint8 what);
+    uint8 read_UART(uint32 reg);
 
     size_t WriteLock;
     size_t SerialLock;
 
   private:
-    /**
-     * Architecture specific data for serial ports
-     */
     ArchSerialInfo port_info_;
 
 };
-
 
 /**
  * @class SerialManager Class that manages serial ports
@@ -172,55 +137,24 @@ class SerialManager
   public:
     static SerialManager *instance_;
 
-    /**
-     * returns the singleton Instance
-     * @return the SerialManager instance
-     */
     static SerialManager * getInstance()
     {
-      if ( !instance_ )
+      if (!instance_)
         instance_ = new SerialManager();
 
       return instance_;
-    };
+    }
+    ;
 
-    /**
-     * Constructor
-     */
     SerialManager();
-
-    /**
-     * Destructor
-     */
     ~SerialManager();
 
-    SerialPort * serial_ports[ MAX_PORTS ];
+    SerialPort * serial_ports[ MAX_PORTS];
 
-    /**
-     * detects all serial ports
-     * @param is_paging_set_up 1 if up 0 if not
-     * @return number of ports found
-     */
-    uint32 do_detection ( uint32 is_paging_set_up );
-
-    /**
-     * returns the number of serial ports
-     * @return the number of ports
-     */
+    uint32 do_detection(uint32 is_paging_set_up);
     uint32 get_num_ports();
-
-    /**
-     * returns the port number by name
-     * @param friendly_name the name
-     * @return the port number
-     */
-    uint32 get_port_number ( const uint8* friendly_name );
-
-    /**
-     * tells the serial port to handle the irq given by its number
-     * @param irq_num the number of the irg to handle
-     */
-    void service_irq ( uint32 irq_num );
+    uint32 get_port_number(const uint8* friendly_name);
+    void service_irq(uint32 irq_num);
 
   private:
     uint32 num_ports;

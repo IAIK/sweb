@@ -54,7 +54,7 @@ extern struct KMI* kmi;
 KeyboardManager::KeyboardManager() :
     keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0)
 {
-  kmi = (struct KMI*)0x88000000;
+  kmi = (struct KMI*) 0x88000000;
   kmi->cr = 0x1C;
   kmi->data = 0xF4;
 }
@@ -73,46 +73,45 @@ void KeyboardManager::send_cmd(uint8 cmd, uint8 port __attribute__((unused)))
   kmi->data = cmd;
 }
 
-void KeyboardManager::serviceIRQ( void )
+void KeyboardManager::serviceIRQ(void)
 {
   uint8 scancode = kmi->data;
   if (scancode > 0x80)
     return;
 
-  if( extended_scancode == 0xE0 )
+  if (extended_scancode == 0xE0)
   {
-    if( scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE )
+    if (scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE)
     {
       extended_scancode = 0;
     }
 
-    scancode = E0_KEYS[ scancode ];
+    scancode = E0_KEYS[scancode];
   }
-  else if ( extended_scancode == 0xE1 && scancode == 0x1D )
+  else if (extended_scancode == 0xE1 && scancode == 0x1D)
   {
     extended_scancode = 0x100;
   }
-  else if ( extended_scancode == 0x100 && scancode == 0x45 )
+  else if (extended_scancode == 0x100 && scancode == 0x45)
     scancode = E1_PAUSE;
 
   extended_scancode = 0;
 
-  if( scancode == 0xFF || scancode == 0xFA
-  || scancode == 0xFE || scancode ==0x00 ) // non parsable codes, ACK and keyb. buffer errors
+  if (scancode == 0xFF || scancode == 0xFA || scancode == 0xFE || scancode == 0x00) // non parsable codes, ACK and keyb. buffer errors
   {
-    debug(A_KB_MANAGER, "Non-parsable scancode %X \n", scancode );
+    debug(A_KB_MANAGER, "Non-parsable scancode %X \n", scancode);
   }
 
-  if( scancode == 0xE0 || scancode == 0xE1 )
+  if (scancode == 0xE0 || scancode == 0xE1)
   {
     extended_scancode = scancode;
   }
 
-  modifyKeyboardStatus( scancode );
-  setLEDs();         // setting the leds
-  if(main_console)
+  modifyKeyboardStatus(scancode);
+  setLEDs(); // setting the leds
+  if (main_console)
   {
-    keyboard_buffer_.put( scancode ); // put it inside the buffer
+    keyboard_buffer_.put(scancode); // put it inside the buffer
     main_console->addJob();
   }
 
@@ -122,33 +121,33 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc)
 {
   bool key_released = sc & 0200;
 
-  if( key_released )
+  if (key_released)
     sc &= 0x7f;
 
-  uint32 key = convertScancode( sc );
+  uint32 key = convertScancode(sc);
 
   uint32 simple_key = key & 0xFF;
   uint32 control_key = key & 0xFF00;
 
-  if( simple_key )
+  if (simple_key)
     return;
 
-  if( key_released )
+  if (key_released)
   {
-    if(!((control_key & KBD_META_CAPS) || (control_key & KBD_META_NUM) || (control_key & KBD_META_SCRL)))
+    if (!((control_key & KBD_META_CAPS) || (control_key & KBD_META_NUM) || (control_key & KBD_META_SCRL)))
       keyboard_status_ &= ~control_key;
   }
   else
   {
-    if(control_key & KBD_META_CAPS)
+    if (control_key & KBD_META_CAPS)
     {
       keyboard_status_ ^= KBD_META_CAPS;
     }
-    else if(control_key & KBD_META_NUM)
+    else if (control_key & KBD_META_NUM)
     {
       keyboard_status_ ^= KBD_META_NUM;
     }
-    else if(control_key & KBD_META_SCRL)
+    else if (control_key & KBD_META_SCRL)
     {
       keyboard_status_ ^= KBD_META_SCRL;
     }
@@ -157,7 +156,6 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc)
   }
   return;
 }
-
 
 bool KeyboardManager::isShift()
 {
@@ -171,28 +169,27 @@ bool KeyboardManager::isCtrl()
 
 bool KeyboardManager::isAlt()
 {
-  return (keyboard_status_ & KBD_META_LALT) ;
+  return (keyboard_status_ & KBD_META_LALT);
 }
 
 bool KeyboardManager::isAltGr()
 {
-  return (keyboard_status_ & KBD_META_RALT) ;
+  return (keyboard_status_ & KBD_META_RALT);
 }
-
 
 bool KeyboardManager::isCaps()
 {
-  return (keyboard_status_ & KBD_META_CAPS) ;
+  return (keyboard_status_ & KBD_META_CAPS);
 }
 
 bool KeyboardManager::isNum()
 {
-  return (keyboard_status_ & KBD_META_NUM) ;
+  return (keyboard_status_ & KBD_META_NUM);
 }
 
 bool KeyboardManager::isScroll()
 {
-  return (keyboard_status_ & KBD_META_SCRL) ;
+  return (keyboard_status_ & KBD_META_SCRL);
 }
 
 void KeyboardManager::emptyKbdBuffer()
@@ -201,30 +198,29 @@ void KeyboardManager::emptyKbdBuffer()
     kbdGetScancode();
 }
 
-
-void KeyboardManager::setLEDs( void )
+void KeyboardManager::setLEDs(void)
 {
   static uint32 last_leds = 0;
   uint32 leds = 0;
-  if(keyboard_status_ & KBD_META_SCRL)
+  if (keyboard_status_ & KBD_META_SCRL)
     leds |= 1;
-  if(keyboard_status_ & KBD_META_NUM)
+  if (keyboard_status_ & KBD_META_NUM)
     leds |= 2;
-  if(keyboard_status_ & KBD_META_CAPS)
+  if (keyboard_status_ & KBD_META_CAPS)
     leds |= 4;
-  if(last_leds != leds)
+  if (last_leds != leds)
   {
-    send_cmd( 0xF4 );  // enable keyboard command
-    send_cmd( 0xED );  // "set LEDs" command
-    send_cmd( leds );  // bottom 3 bits set LEDs
+    send_cmd(0xF4); // enable keyboard command
+    send_cmd(0xED); // "set LEDs" command
+    send_cmd(leds); // bottom 3 bits set LEDs
     last_leds = leds;
   }
 }
 
-uint32 KeyboardManager::convertScancode( uint8 scancode )
+uint32 KeyboardManager::convertScancode(uint8 scancode)
 {
-  uint32 simple_key = STANDARD_KEYMAP[ scancode ] & 0xFF;
-  uint32 control_key = STANDARD_KEYMAP[ scancode ] & 0xFF00;
+  uint32 simple_key = STANDARD_KEYMAP[scancode] & 0xFF;
+  uint32 control_key = STANDARD_KEYMAP[scancode] & 0xFF00;
 
   uint32 key = control_key | simple_key;
   return key;

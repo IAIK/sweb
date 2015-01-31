@@ -1,8 +1,3 @@
-/**
- * @file arch_serial.h
- *
- */
- 
 #ifndef _ARCH_SERIAL_H_
 #define _ARCH_SERIAL_H_
 

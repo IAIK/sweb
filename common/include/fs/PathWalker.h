@@ -114,15 +114,7 @@ class PathWalker
      */
     static int32 getNextPartLen(const char* path, int32& npart_len);
   private:
-
-    /**
-     * The Constructor
-     */
     PathWalker();
-
-    /**
-     * The destructor
-     */
     ~PathWalker();
 };
 

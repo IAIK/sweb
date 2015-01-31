@@ -1,7 +1,3 @@
-/**
- * @file SpinLock.h
- */
-
 #ifndef _SPINLOCK_H_
 #define _SPINLOCK_H_
 
@@ -9,7 +5,6 @@
 #include <ulist.h>
 
 class Thread;
-
 
 /**
  * @class SpinLock
@@ -30,26 +25,9 @@ class Thread;
 class SpinLock
 {
   public:
-
-    /**
-     * Constructor
-     * @return SpinLock instance
-     */
     SpinLock(const char* name);
-
-    /**
-     * acquires the SpinLock.
-     */
     void acquire(const char* debug_info = 0);
-
-    /**
-     * acquires the SpinLock non blocking.
-     */
     bool acquireNonBlocking(const char* debug_info = 0);
-
-    /**
-     * releases the SpinLock.
-     */
     void release(const char* debug_info = 0);
 
     /**
@@ -59,11 +37,6 @@ class SpinLock
      */
     bool isFree();
 
-    /**
-     * Returns the thread holding the lock
-     *
-     * @return the thread holding the lock
-     */
     Thread* heldBy()
     {
       return held_by_;
@@ -72,23 +45,11 @@ class SpinLock
     const char* name_;
 
   private:
-
-    /**
-      * @note dont't use any stuff that needs memory allocation here
-      * since the spinlock is used by the KernelMemoryManager
-      */
     size_t nosleep_mutex_;
     Thread *held_by_;
 
-    /**
-      * Copy Constructor - you _really_ don't want to copy a SpinLock!
-      */
-    SpinLock ( SpinLock const & );
-
-    /**
-      * operator = - you _really_ don't want to copy a SpinLock!
-      */
-    SpinLock &operator= ( SpinLock const& );
+    SpinLock(SpinLock const &);
+    SpinLock &operator=(SpinLock const&);
 
     /**
      * verifies that interrupts are enabled

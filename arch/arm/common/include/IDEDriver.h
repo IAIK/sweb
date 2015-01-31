@@ -2,7 +2,7 @@
  * @file arch_bd_ide_driver.h
  *
  */
- 
+
 #ifndef _IDE_BUS_DEVICE_DRIVER_
 #define _IDE_BUS_DEVICE_DRIVER_
 
@@ -12,58 +12,41 @@ class MMCDriver;
 
 class IDEDriver
 {
-public:
+  public:
 
-  /**
-   * Constructor
-   *
-   */
-  IDEDriver()
-  {
-    doDeviceDetection();
-  };
+    IDEDriver()
+    {
+      doDeviceDetection();
+    }
 
-  /**
-   * Destructor
-   *
-   */
-  ~IDEDriver()
-  {
-  };
+    ~IDEDriver()
+    {
+    }
 
-  typedef struct fdisk_partition
-  {
-    uint8 bootid;   // bootable?  0=no, 128=yes
-    uint8 beghead;
-    uint8 begcyl;
-    uint8 begsect;
-    uint8 systid;   // Operating System type indicator code
-    uint8 endhead;
-    uint8 endcyl;
-    uint8 endsect;
-    uint32 relsect; // first sector relative to start of disk - We actually need only theese two params
-    uint32 numsect; // number of sectors in partition
-  } FP;
+    typedef struct fdisk_partition
+    {
+        uint8 bootid; // bootable?  0=no, 128=yes
+        uint8 beghead;
+        uint8 begcyl;
+        uint8 begsect;
+        uint8 systid; // Operating System type indicator code
+        uint8 endhead;
+        uint8 endcyl;
+        uint8 endsect;
+        uint32 relsect; // first sector relative to start of disk - We actually need only theese two params
+        uint32 numsect; // number of sectors in partition
+    } FP;
 
-  typedef struct master_boot_record 
-  {
-    uint8 bootinst[446];           // GRUB space
-    uint8 parts[ 4*sizeof(FP) ];
-    uint16 signature;              // set to 0xAA55 for PC MBR
-  } MBR;
+    typedef struct master_boot_record
+    {
+        uint8 bootinst[446]; // GRUB space
+        uint8 parts[4 * sizeof(FP)];
+        uint16 signature; // set to 0xAA55 for PC MBR
+    } MBR;
 
+    int32 processMBR(MMCDriver *, uint32, uint32, const char*);
 
-  /**
-   * Master Boot Record process
-   *
-   */
-  int32 processMBR  ( MMCDriver *, uint32, uint32, const char* );
-
-  /**
-   * detects devices
-   *
-   */
-  uint32 doDeviceDetection ( );
+    uint32 doDeviceDetection();
 
 };
 

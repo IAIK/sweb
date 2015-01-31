@@ -58,7 +58,8 @@ class File
      * @class Owner
      */
     class Owner
-      {};
+    {
+    };
 
     /**
      * The user id of the file
@@ -74,7 +75,6 @@ class File
      * interna version number.
      */
     uint32 version;
-
 
   protected:
 
@@ -119,7 +119,10 @@ class File
      * returns the files flag
      * @return the flag
      */
-    uint32 getFlag() {return flag_;}
+    uint32 getFlag()
+    {
+      return flag_;
+    }
 
   public:
 
@@ -129,24 +132,20 @@ class File
      * @param dentry the files dentry
      * @param flag the files flag
      */
-    File ( Inode* inode, Dentry* dentry, uint32 flag );
+    File(Inode* inode, Dentry* dentry, uint32 flag);
 
-    /**
-     * The Destructor
-     */
-    virtual  ~File() {}
+    virtual ~File()
+    {
+    }
 
-    /**
-     * Getter Method for the dentry.
-     * @return is the dentry associated to the File.
-     */
-    Dentry *getDentry() { return f_dentry_;}
-
-    /**
-     * Get Method for the inode.
-     * @return is the dentry associated to the inode.
-     */
-    Inode* getInode() { return f_inode_; }
+    Dentry *getDentry()
+    {
+      return f_dentry_;
+    }
+    Inode* getInode()
+    {
+      return f_inode_;
+    }
 
     /**
      * Sets the file position relative to the start of the file, the end of the
@@ -155,7 +154,7 @@ class File
      * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
      * @returns the offset from the start off the file or -1 on failure.
      */
-    l_off_t lseek ( l_off_t offset, uint8 origin );
+    l_off_t lseek(l_off_t offset, uint8 origin);
 
     /**
      * not implemented here
@@ -164,8 +163,10 @@ class File
      * @param count is the number of bytes to read.
      * @param offset is the offset to read from counted from the current file position.
      */
-    virtual int32 read ( char */*buffer*/, size_t /*count*/, l_off_t /*offset*/ )
-    {return 0;}
+    virtual int32 read(char */*buffer*/, size_t /*count*/, l_off_t /*offset*/)
+    {
+      return 0;
+    }
 
     /**
      * not implemented here
@@ -174,14 +175,19 @@ class File
      * @param count is the number of bytes to write.
      * @param offset is the offset to write from counted from the current file position
      */
-    virtual  int32 write ( const char */*buffer*/, size_t /*count*/, l_off_t /*offset*/ )
-    {return 0;}
+    virtual int32 write(const char */*buffer*/, size_t /*count*/, l_off_t /*offset*/)
+    {
+      return 0;
+    }
 
     /**
      * Opens the file
      * @param inode is the inode the read the file from.
      */
-    virtual  int32 open ( uint32 ) {return 0;}
+    virtual int32 open(uint32)
+    {
+      return 0;
+    }
 
     /**
      * not implemented here
@@ -189,22 +195,27 @@ class File
      * @param inode is close, the superblock has the information, that this
      * inode is not use anymore.
      */
-    virtual  int32 close() {return 0;}
+    virtual int32 close()
+    {
+      return 0;
+    }
 
     /**
      * not implemented here
      * Flush all off the file's write operations. The File will be written to disk.
      * @return is the error code of the flush operation.
      */
-    virtual  int32 flush() {return 0;}
+    virtual int32 flush()
+    {
+      return 0;
+    }
 
     /**
      * returns the file size
      * @return the size
      */
-    virtual  uint32 getSize();
+    virtual uint32 getSize();
 };
-
 
 #endif
 
