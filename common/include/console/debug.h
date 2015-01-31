@@ -34,7 +34,7 @@ const size_t THREAD             = 0x00080020 | OUTPUT_ENABLED;
 const size_t USERPROCESS        = 0x00080040 | OUTPUT_ENABLED;
 const size_t MOUNTMINIX         = 0x00080080 | OUTPUT_ENABLED;
 const size_t BACKTRACE          = 0x00080100 | OUTPUT_ENABLED;
-const size_t USERTRACE          = 0x00080200 | OUTPUT_ENABLED;
+const size_t USERTRACE          = 0x00080200;// | OUTPUT_ENABLED;
 //group memory management
 const size_t MM                 = 0x00100000;
 const size_t PM                 = 0x00100001 | OUTPUT_ENABLED;
