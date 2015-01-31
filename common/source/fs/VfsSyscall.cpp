@@ -181,8 +181,7 @@ int32 VfsSyscall::chdir(const char* pathname)
     return -1;
   }
 
-  Dentry* current_dentry = pw_dentry;
-  Inode* current_inode = current_dentry->getInode();
+  Inode* current_inode = pw_dentry->getInode();
   if (current_inode->getType() != I_DIR)
   {
     debug(VFSSYSCALL, "This path is not a directory\n\n");
@@ -314,9 +313,10 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   else if (flag & O_CREAT)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
-    ustl::string sub_dentry_name = fs_info->pathname_.substr(fs_info->pathname_.find_last_of("/") + 1);
+    size_t len = fs_info->pathname_.find_last_of("/");
+    ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 1, fs_info->pathname_.length() - len);
     // set directory
-    fs_info->pathname_ = fs_info->pathname_.substr(0, fs_info->pathname_.find_last_of("/") + 1);
+    fs_info->pathname_ = fs_info->pathname_.substr(0, len + 1);
 
     Dentry* pw_dentry = 0;
     VfsMount* pw_vfs_mount = 0;
