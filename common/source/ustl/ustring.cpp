@@ -21,20 +21,22 @@ const uoff_t string::npos;
 string::string (const string& s)
 : memblock ((s.size()+1) & (s.is_linked()-1))	// Allocate with terminator if not linked (can't call virtuals from base ctor)
 {
-    if (s.is_linked())
-	relink (s.c_str(), s.size());
-    else {
+//    if (s.is_linked())
+//	relink (s.c_str(), s.size());
+//    else {
 	copy_n (s.begin(), size(), begin());
 	relink (begin(), size()-1);	// --m_Size
-    }
+//    }
 }
 
 /// Links to \p s
 string::string (const_pointer s)
-: memblock ()
+: memblock (strlen(s)+1)
 {
     if (!s) s = "";
-    relink (s, strlen(s));
+//    relink (s, strlen(s));
+    copy_n (s, size(), begin());
+    relink (begin(), size()-1); // --m_Size
 }
 
 /// Creates a string of length \p n filled with character \p c.
