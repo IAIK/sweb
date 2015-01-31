@@ -34,6 +34,7 @@
 #define sc_rmdir 40
 #define sc_dup 41
 #define sc_pipe 42
+#define sc_pseudols 43
 //....
 #define sc_brk  45
 //....

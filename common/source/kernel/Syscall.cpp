@@ -51,6 +51,9 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
     case sc_trace:
     	trace();
     	break;
+    case sc_pseudols:
+      VfsSyscall::readdir((const char*)arg1);
+      break;
     default:
       kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %d\n",syscall_number);
   }
