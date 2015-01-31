@@ -7,7 +7,6 @@
 #define _BD_VIRTUAL_DEVICE_
 
 #include "types.h"
-
 #include "ulist.h"
 
 class BDDriver;
@@ -19,50 +18,35 @@ class BDRequest;
 class BDVirtualDevice
 {
   public:
+    BDVirtualDevice(BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name,
+                    bool writable);
 
-    /**
-     * Constructor
-     *
-     */
-    BDVirtualDevice( BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name, bool writable);
-
-    /**
-     * adds the given request to the device given in the request
-     * @param command the request
-     *
-     */
     void addRequest(BDRequest *command);
 
-    /**
-     * @return returns the size of one block
-     * now 1024
-     *
-     */
-    uint32 getBlockSize() const { return block_size_; };
+    uint32 getBlockSize() const
+    {
+      return block_size_;
+    }
 
-    /**
-     * @return returns the current device number
-     *
-     */
-    uint32 getDeviceNumber() const { return dev_number_; };
+    uint32 getDeviceNumber() const
+    {
+      return dev_number_;
+    }
 
-    /**
-     * @return returns the current driver
-     *
-     */
-    BDDriver *getDriver() { return driver_; };
+    BDDriver *getDriver()
+    {
+      return driver_;
+    }
 
-    /**
-     * @return returns the current name
-     *
-     */
-    char *getName() { return name_; };
+    const char *getName()
+    {
+      return name_;
+    }
 
-    /**
-     * calculates the number of blocks
-     *
-     */
-    uint32 getNumBlocks() { return num_sectors_ / (block_size_/sector_size_); };
+    uint32 getNumBlocks()
+    {
+      return num_sectors_ / (block_size_ / sector_size_);
+    }
 
     /**
      * reads the data from the inode on the current device
@@ -96,29 +80,18 @@ class BDVirtualDevice
      */
     uint8 getPartitionType(void) const;
 
-    /**
-     * sets the device number
-     *
-     */
-    void setDeviceNumber( uint32 number ) { dev_number_ = number; };
+    void setDeviceNumber(uint32 number)
+    {
+      dev_number_ = number;
+    }
 
-    /**
-     * sets the blocksize
-     *
-     */
-    void setBlockSize( uint32 block_size )
+    void setBlockSize(uint32 block_size)
     {
       assert(block_size % sector_size_ == 0);
       block_size_ = block_size;
-    };
-
+    }
 
   private:
-
-    /**
-     * private Constuctor, should not be used!
-     *
-     */
     BDVirtualDevice();
     uint32 dev_number_;
     uint32 block_size_;
@@ -126,8 +99,8 @@ class BDVirtualDevice
     uint32 num_sectors_;
     uint32 offset_;
     bool writable_;
-    char *name_;
-    BDDriver * driver_;
+    char* name_;
+    BDDriver* driver_;
     uint8 partition_type_;
 };
 

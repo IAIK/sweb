@@ -297,6 +297,12 @@ class Inode
      */
     uint32 getSize() { return i_size_; }
 
+    /**
+     * flushes the inode to the file system
+     * @return 0 on success
+     */
+    int32 flush() { return 0; };
+
 };
 
 

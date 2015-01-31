@@ -38,7 +38,7 @@ DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev) :
   all_inodes_.push_back(root_inode);
 
   Dentry *device_root_dentry = new Dentry(root_dentry);
-  device_root_dentry->setName(DEVICE_ROOT_NAME);
+  device_root_dentry->d_name_ = DEVICE_ROOT_NAME;
 
   // create the inode for the device_root_dentry
   Inode *device_root_inode = (Inode*) (new RamFSInode(this, I_DIR));
@@ -76,7 +76,7 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
 void DeviceFSSuperBlock::addDevice(Inode* device, const char* device_name)
 {
   Dentry* fdntr = new Dentry(s_dev_dentry_);
-  fdntr->setName(device_name);
+  fdntr->d_name_ = device_name;
 
   cDevice = (Inode *) device;
   cDevice->mknod(fdntr);

@@ -133,12 +133,6 @@ class Dentry
     Dentry* getChild(uint32 index);
 
     /**
-     * set the name to the dentry
-     * @param name the name to set
-     */
-    void setName(const char* name);
-
-    /**
      * return the name of the dentry
      * @return the dentry's name
      */

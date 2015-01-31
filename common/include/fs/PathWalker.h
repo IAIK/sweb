@@ -33,35 +33,35 @@ class VfsMount;
  */
 #define LOOKUP_PARENT     0x0008
 
-
 /**
  * @enum Type of the last component on LOOKUP_PARENT
  */
-enum {
-    /**
-     * The last component is a regular filename
-     */
-    LAST_NORM,
+enum
+{
+  /**
+   * The last component is a regular filename
+   */
+  LAST_NORM,
 
-    /**
-     * The last component is the root directory
-     */
-    LAST_ROOT,
+  /**
+   * The last component is the root directory
+   */
+  LAST_ROOT,
 
-    /**
-     * The last component is "."
-     */
-    LAST_DOT,
+  /**
+   * The last component is "."
+   */
+  LAST_DOT,
 
-    /**
-     * The last component is ".."
-     */
-    LAST_DOTDOT,
+  /**
+   * The last component is ".."
+   */
+  LAST_DOTDOT,
 
-    /**
-     * The last component is a symbolic link into a special filesystem
-     */
-    LAST_BIND
+  /**
+   * The last component is a symbolic link into a special filesystem
+   */
+  LAST_BIND
 };
 
 /**
@@ -69,15 +69,15 @@ enum {
  */
 enum
 {
-    PW_SUCCESS = 0,
-    /**
-     * The path was not found
-     */
-    PW_ENOTFOUND,
-    /**
-     * The path to look up is invalid
-     */
-    PW_EINVALID
+  PW_SUCCESS = 0,
+  /**
+   * The path was not found
+   */
+  PW_ENOTFOUND,
+  /**
+   * The path to look up is invalid
+   */
+  PW_EINVALID
 };
 
 /**
@@ -101,10 +101,10 @@ class PathWalker
      *         to be accessed
      * @return On success, it is returned 0. On error, it return a non-Null value.
      */
-    static int32 pathWalk ( const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_, VfsMount*& vfs_mount_ );
+    static int32 pathWalk(const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_,
+                          VfsMount*& vfs_mount_);
 
   protected:
-
 
     /**
      * extract the first part of a path
@@ -112,7 +112,7 @@ class PathWalker
      * @param npart_len will be set to the length of the next part
      * @return length of the next part
      */
-    static int32 getNextPartLen ( const char* path, int32& npart_len );
+    static int32 getNextPartLen(const char* path, int32& npart_len);
   private:
 
     /**

@@ -56,11 +56,6 @@ int32 Dentry::childRemove(Dentry *child_dentry)
   return 0;
 }
 
-void Dentry::setName(const char* name)
-{
-  d_name_ = name;
-}
-
 const char* Dentry::getName()
 {
   return d_name_.c_str();

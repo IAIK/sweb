@@ -332,6 +332,7 @@ int32 MinixFSInode::rm()
   Dentry* dentry = i_dentry_;
   if (dentry->emptyChild())
   {
+    i_type_ = INODE_DEAD;
     Dentry* parent_dentry = dentry->getParent();
     parent_dentry->childRemove(dentry);
     char ch = '\0';

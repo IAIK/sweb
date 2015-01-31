@@ -138,7 +138,6 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     Inode* current_inode = pw_dentry->getInode();
     debug(VFSSYSCALL, "(open) current_inode->getSuperblock()\n");
     Superblock* current_sb = current_inode->getSuperblock();
-    debug(VFSSYSCALL, "(open)getNumOpenedFile() \n");
 
     if (current_inode->getType() != I_FILE)
     {
@@ -154,17 +153,10 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   else if (flag & O_CREAT)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
-    char path_tmp[strlen(fs_info->pathname_.c_str()) + 1];
-    strncpy(path_tmp, fs_info->pathname_.c_str(), (strlen(fs_info->pathname_.c_str()) + 1));
-    path_tmp[strlen(fs_info->pathname_.c_str())] = 0;
-
-    char* char_tmp = strrchr(path_tmp, SEPARATOR);
-    assert(char_tmp != 0);
-
+    size_t len = fs_info->pathname_.find_last_of("/");
+    ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 1, fs_info->pathname_.length() - len);
     // set directory
-    uint32 path_prev_len = char_tmp - path_tmp + 1;
-    fs_info->pathname_ = path_tmp;
-    fs_info->pathname_ = fs_info->pathname_.substr(0, path_prev_len);
+    fs_info->pathname_ = fs_info->pathname_.substr(0, len + 1);
 
     Dentry* pw_dentry = 0;
     VfsMount* pw_vfs_mount = 0;
@@ -176,8 +168,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    Dentry* current_dentry = pw_dentry;
-    Inode* current_inode = current_dentry->getInode();
+    Inode* current_inode = pw_dentry->getInode();
     Superblock* current_sb = current_inode->getSuperblock();
 
     if (current_inode->getType() != I_DIR)
@@ -186,16 +177,10 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    char_tmp++;
-    uint32 path_next_len = strlen(path_tmp) - path_prev_len + 1;
-    char path_next_name[path_next_len];
-    strncpy(path_next_name, char_tmp, path_next_len);
-    path_next_name[path_next_len - 1] = 0;
-
     // create a new dentry
-    Dentry *sub_dentry = new Dentry(current_dentry);
-    sub_dentry->setName(path_next_name);
-    sub_dentry->setParent(current_dentry);
+    Dentry *sub_dentry = new Dentry(pw_dentry);
+    sub_dentry->d_name_ = sub_dentry_name;
+    sub_dentry->setParent(pw_dentry);
     debug(VFSSYSCALL, "(open) calling create Inode\n");
     Inode* sub_inode = current_sb->createInode(sub_dentry, I_FILE);
     if (!sub_inode)
