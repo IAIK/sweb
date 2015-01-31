@@ -2,9 +2,9 @@
 yn="$2"
 if [ "$yn" != "y" ]; then
   echo "You have to partition an sd card as follows:"
-  echo "First partition: the boot partition. FAT32, at least 16 MiB. There are no reasons why it should be much larger than that. Recommendation: 2/16 of the space of the sd card."
-  echo "Second partition: the user progs partition. MinixFS, at least 16 MiB, maybe acquire the whole space? Recommendation: 7/16 of the space of the sd card."
-  echo "Third partition: SWEB usually has a third partition which is unused by default and may be used for implementing Swapping/Suspend to Disk/etc. Recommendation: 7/16 of the space of the sd card."
+  echo "First partition: the boot partition. FAT32, at least 16 MiB, less than 64 MiB."
+  echo "Second partition: the user progs partition. MinixFS, at least 16 MiB, less than 64 MiB."
+  echo "Third partition: the rest."
   while [[ "$yn" != "y" && "$yn" != "n" ]]; do
     echo "Do you have a properly partitioned sd card? [y/n]"
     read yn
