@@ -171,16 +171,32 @@ int32 MMCDriver::readSector(uint32 start_sector, uint32 num_sectors, void *buffe
   return 0;
 }
 
-int32 MMCDriver::writeBlock(uint32 address __attribute__((unused)), void *buffer __attribute__((unused)))
+int32 MMCDriver::writeBlock(uint32 address, void *buffer)
 {
+  debug(MMC_DRIVER, "writeBlock: address: %x, buffer: %x\n", address, buffer);
+  uint32 response;
+  mmc_send_cmd(24, address, &response);
+  mmci->datalength = 512;
+  mmci->datactrl = PL181_DATA_ENABLE | PL181_DATA_DIRECTION | PL181_DATA_MODE;
+  for (uint32 j = 0; j < 8; j++)
+  {
+    uint32 i;
+    for (i = 0; i < 16; i++)
+    {
+       mmci_fifo[i] = *((uint32*) buffer + j * 16 + i);
+    }
+    while ((mmci->status & PL181_STATUS_TXFIFOEMPTY));
+  }
   return 0;
 }
 
-int32 MMCDriver::writeSector(uint32 start_sector __attribute__((unused)), uint32 num_sectors __attribute__((unused)),
-                             void * buffer __attribute__((unused)))
+int32 MMCDriver::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
 {
-  while (1)
-    ;
+  debug(MMC_DRIVER, "writeSector: start: %x, num: %x, buffer: %x\n", start_sector, num_sectors, buffer);
+  for (uint32 i = 0; i < num_sectors; ++i)
+  {
+    writeBlock((start_sector + i) * sector_size_, (char*) buffer + i * sector_size_);
+  }
   return 0;
 }
 
