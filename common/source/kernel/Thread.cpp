@@ -17,74 +17,64 @@
 
 #define MAX_STACK_FRAMES 20
 
-const char* Thread::threadStatePrintable[4] = {"Running", "Sleeping", "ToBeDestroyed", "Worker"};
+const char* Thread::threadStatePrintable[4] =
+{
+"Running", "Sleeping", "ToBeDestroyed", "Worker"
+};
 
 static void ThreadStartHack()
 {
-  currentThread->setTerminal ( main_console->getActiveTerminal() );
+  currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
   currentThread->kill();
-  debug ( THREAD,"ThreadStartHack: Panic, thread couldn't be killed\n" );
-  for ( ;; ) ;
+  debug(THREAD, "ThreadStartHack: Panic, thread couldn't be killed\n");
+  for (;;)
+    ;
 }
 
 Thread::Thread(const char *name) :
-  kernel_arch_thread_info_(0),
-  user_arch_thread_info_(0),
-  switch_to_userspace_(0),
-  loader_(0),
-  state_(Running),
-  sleeping_on_mutex_(0),
-  tid_(0),
-  my_terminal_(0),
-  working_dir_(0),
-  name_(name)
+    kernel_arch_thread_info_(0), user_arch_thread_info_(0), switch_to_userspace_(0), loader_(0), state_(Running),
+    sleeping_on_mutex_(0), tid_(0), my_terminal_(0), working_dir_(0), name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x; stack is %x\n", this, stack_ );
-  debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
-  ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
+  debug(THREAD, "Thread ctor, this is %x; stack is %x\n", this, stack_);
+  debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
+  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_, (pointer) &ThreadStartHack,
+                                             getStackStartPointer());
   stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
 
-Thread::Thread ( FileSystemInfo *working_dir, const char *name ) :
-  kernel_arch_thread_info_(0),
-  user_arch_thread_info_(0),
-  switch_to_userspace_(0),
-  loader_(0),
-  state_(Running),
-  sleeping_on_mutex_(0),
-  tid_(0),
-  my_terminal_(0),
-  working_dir_(working_dir),
-  name_(name)
+Thread::Thread(FileSystemInfo *working_dir, const char *name) :
+    kernel_arch_thread_info_(0), user_arch_thread_info_(0), switch_to_userspace_(0), loader_(0), state_(Running),
+    sleeping_on_mutex_(0), tid_(0), my_terminal_(0), working_dir_(working_dir), name_(name)
 {
-  debug ( THREAD,"Thread ctor, this is %x, stack is %x\n", this, stack_);
-  debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
-  debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", working_dir_ );
-  ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
+  debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, stack_);
+  debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
+  debug(THREAD, "Thread ctor, fs_info ptr: %x\n", working_dir_);
+  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_, (pointer) &ThreadStartHack,
+                                             getStackStartPointer());
   stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
 
 Thread::~Thread()
 {
-  if ( loader_ )
+  if (loader_)
   {
-    debug ( THREAD,"~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n" );
+    debug(THREAD, "~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n");
     delete loader_;
     loader_ = 0;
   }
-  debug ( THREAD,"~Thread: freeing ThreadInfos\n" );
+  debug(THREAD, "~Thread: freeing ThreadInfos\n");
   delete user_arch_thread_info_;
   user_arch_thread_info_ = 0;
   delete kernel_arch_thread_info_;
   kernel_arch_thread_info_ = 0;
-  if ( working_dir_ )
+  if (working_dir_)
   {
-    debug ( THREAD,"~Thread deleting fs info\n" );
+    debug(THREAD, "~Thread deleting fs info\n");
     delete working_dir_;
     working_dir_ = 0;
   }
-  debug ( THREAD,"~Thread: done (%s)\n", name_ );
+  debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
   assert(KernelMemoryManager::instance()->KMMLockHeldBy() != this);
 }
 
@@ -92,15 +82,15 @@ Thread::~Thread()
 // DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
-  debug ( THREAD,"kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
-      currentThread, getName(), this);
+  debug(THREAD, "kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
+        currentThread, getName(), this);
 
   switch_to_userspace_ = false;
-  state_=ToBeDestroyed;
+  state_ = ToBeDestroyed;
 
   Scheduler::instance()->invokeCleanup();
 
-  if ( currentThread == this )
+  if (currentThread == this)
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
@@ -109,22 +99,22 @@ void Thread::kill()
 
 pointer Thread::getStackStartPointer()
 {
-  pointer stack = ( pointer ) stack_;
-  stack += sizeof ( stack_ ) - sizeof ( uint32 );
+  pointer stack = (pointer) stack_;
+  stack += sizeof(stack_) - sizeof(uint32);
   return stack;
 }
 
 Terminal *Thread::getTerminal()
 {
-  if ( my_terminal_ )
+  if (my_terminal_)
     return my_terminal_;
   else
-    return ( main_console->getActiveTerminal() );
+    return (main_console->getActiveTerminal());
 }
 
-void Thread::setTerminal ( Terminal *my_term )
+void Thread::setTerminal(Terminal *my_term)
 {
-  my_terminal_=my_term;
+  my_terminal_ = my_term;
 }
 
 void Thread::printBacktrace()
@@ -152,8 +142,7 @@ void Thread::printBacktrace(bool use_stored_registers)
   }
 
   pointer CallStack[MAX_STACK_FRAMES];
-  int Count = backtrace(CallStack, MAX_STACK_FRAMES,
-      this, use_stored_registers);
+  int Count = backtrace(CallStack, MAX_STACK_FRAMES, this, use_stored_registers);
 
   debug(BACKTRACE, "=== Begin of backtrace for kernel thread <%s> ===\n", getName());
   debug(BACKTRACE, "   found <%d> stack %s:\n", Count, Count != 1 ? "frames" : "frame");
@@ -168,7 +157,7 @@ void Thread::printBacktrace(bool use_stored_registers)
 
     if (StartAddr)
     {
-      ssize_t line = kernel_debug_info->getFunctionLine(StartAddr,CallStack[i] - StartAddr);
+      ssize_t line = kernel_debug_info->getFunctionLine(StartAddr, CallStack[i] - StartAddr);
       if (line > 0)
         debug(BACKTRACE, "   (%d): %010x (%s:%u)\n", i, CallStack[i], FunctionName, line);
       else
@@ -185,7 +174,8 @@ void Thread::printUserBacktrace()
 {
   if (!user_arch_thread_info_)
   {
-    debug(USERTRACE, "=== Can not do userspace stacktracing of thread <%s> since it has no userspace! ===\n", getName());
+    debug(USERTRACE, "=== Can not do userspace stacktracing of thread <%s> since it has no userspace! ===\n",
+          getName());
   }
 
   pointer CallStack[MAX_STACK_FRAMES];
@@ -208,7 +198,7 @@ void Thread::printUserBacktrace()
 
     if (StartAddr)
     {
-      ssize_t line = deb->getFunctionLine(StartAddr,CallStack[i] - StartAddr);
+      ssize_t line = deb->getFunctionLine(StartAddr, CallStack[i] - StartAddr);
       if (line > 0)
         debug(USERTRACE, "   (%d): %010x (%s:%u)\n", i, CallStack[i], FunctionName, line);
       else

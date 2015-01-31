@@ -14,13 +14,6 @@
 #include "console/kprintf.h"
 
 #define BASIC_ALLOC 256
-#define ERROR_DNE "Error: the dentry does not exist.\n"
-#define ERROR_DU  "Error: inode is used.\n"
-#define ERROR_IC  "Error: invalid command (only for Directory).\n"
-#define ERROR_NNE "Error: the name does not exist in the current directory.\n"
-#define ERROR_HLI "Error: hard link invalid.\n"
-#define ERROR_DNEILL "Error: the dentry does not exist in the link list.\n"
-#define ERROR_DEC "Error: the dentry exists child.\n"
 
 RamFSInode::RamFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type), data_(0)

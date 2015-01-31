@@ -13,36 +13,36 @@
 #include "kprintf.h"
 #include "kstring.h"
 
-TextConsole::TextConsole ( uint32 num_terminals ) :Console ( num_terminals, "TxTConsoleThrd")
+TextConsole::TextConsole(uint32 num_terminals) :
+    Console(num_terminals, "TxTConsoleThrd")
 {
   uint32 i, j = 10, log = 1, k = 0, l = 0;
 
-  while ( num_terminals / j )
+  while (num_terminals / j)
   {
     j *= 10;
     log++;
   }
 
-  char term_name[ log + 5 ];
-  term_name[ 0 ] = 't';
-  term_name[ 1 ] = 'e';
-  term_name[ 2 ] = 'r';
-  term_name[ 3 ] = 'm';
-  term_name[ log + 4 ] = 0;
+  char term_name[log + 5];
+  term_name[0] = 't';
+  term_name[1] = 'e';
+  term_name[2] = 'r';
+  term_name[3] = 'm';
+  term_name[log + 4] = 0;
 
-  for ( i=0;i<num_terminals;++i )
+  for (i = 0; i < num_terminals; ++i)
   {
     uint32 cterm = i;
-    for ( l = 4, k = j/10; k > 0 ; k /= 10, l++ )
+    for (l = 4, k = j / 10; k > 0; k /= 10, l++)
     {
-      term_name[ l ] = cterm/k + '0';
-      cterm -= ( ( cterm/k ) * k );
+      term_name[l] = cterm / k + '0';
+      cterm -= ((cterm / k) * k);
     }
-    
-    Terminal *term = new Terminal ( term_name, this,consoleGetNumColumns(),consoleGetNumRows() );
-    terminals_.push_back ( term );
-  }
 
+    Terminal *term = new Terminal(term_name, this, consoleGetNumColumns(), consoleGetNumRows());
+    terminals_.push_back(term);
+  }
 
   active_terminal_ = 0;
 }
@@ -59,19 +59,20 @@ uint32 TextConsole::consoleGetNumColumns() const
 
 void TextConsole::consoleClearScreen()
 {
-  char *fb = ( char* ) ArchCommon::getFBPtr();
+  char *fb = (char*) ArchCommon::getFBPtr();
   uint32 i;
-  for ( i=0;i<consoleGetNumRows() *consoleGetNumColumns() *2;++i )
+  for (i = 0; i < consoleGetNumRows() * consoleGetNumColumns() * 2; ++i)
   {
-    fb[i]=0;
+    fb[i] = 0;
   }
 }
 
-uint32 TextConsole::consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state )
+uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
+                                        uint8 const &state)
 {
-  char *fb = ( char* ) ArchCommon::getFBPtr();
-  fb[ ( column + row*consoleGetNumColumns() ) *2] = character;
-  fb[ ( column + row*consoleGetNumColumns() ) *2+1] = state;
+  char *fb = (char*) ArchCommon::getFBPtr();
+  fb[(column + row * consoleGetNumColumns()) * 2] = character;
+  fb[(column + row * consoleGetNumColumns()) * 2 + 1] = state;
 
   return 0;
 }
@@ -79,21 +80,19 @@ uint32 TextConsole::consoleSetCharacter ( uint32 const &row, uint32 const&column
 void TextConsole::consoleScrollUp()
 {
   pointer fb = ArchCommon::getFBPtr();
-  memcpy((void*)fb, (void*)(fb + (consoleGetNumColumns() * 2)),
-      (consoleGetNumRows() - 1) * consoleGetNumColumns() * 2);
-  memset((void*)(fb + ((consoleGetNumRows() - 1)) * consoleGetNumColumns() *2), 0, consoleGetNumColumns() * 2);
+  memcpy((void*) fb, (void*) (fb + (consoleGetNumColumns() * 2)),
+         (consoleGetNumRows() - 1) * consoleGetNumColumns() * 2);
+  memset((void*) (fb + ((consoleGetNumRows() - 1)) * consoleGetNumColumns() * 2), 0, consoleGetNumColumns() * 2);
 }
 
-
-
-void TextConsole::consoleSetForegroundColor ( FOREGROUNDCOLORS const &color )
+void TextConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
 {
-  if ( color )
+  if (color)
     return;
 }
 
-void TextConsole::consoleSetBackgroundColor ( BACKGROUNDCOLORS const &color )
+void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
 {
-  if ( color )
+  if (color)
     return;
 }

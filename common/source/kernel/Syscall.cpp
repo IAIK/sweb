@@ -157,11 +157,8 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   VfsSyscall::close(fd);
   // parameter check end
 
-  size_t len = strlen((const char*) path) + 1;
-  char* copy = new char[len];
-  memcpy(copy, (const char*) path, len);
   size_t process_count = ProcessRegistry::instance()->processCount();
-  ProcessRegistry::instance()->createProcess(copy);
+  ProcessRegistry::instance()->createProcess((const char*)path);
   if (sleep)
   {
     while(ProcessRegistry::instance()->processCount() > process_count) // please note that this will fail ;)

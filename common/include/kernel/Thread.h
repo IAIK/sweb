@@ -1,7 +1,3 @@
-/**
- * @file Thread.h
- */
-
 #ifndef _THREAD_H_
 #define _THREAD_H_
 
@@ -10,7 +6,10 @@
 
 #define STACK_CANARY (0xDEADDEAD)
 
-enum ThreadState {Running, Sleeping, ToBeDestroyed, Worker};
+enum ThreadState
+{
+  Running, Sleeping, ToBeDestroyed, Worker
+};
 
 class Thread;
 class ArchThreadInfo;
@@ -21,12 +20,6 @@ class FsWorkingDirectory;
 
 extern Thread* currentThread;
 
-extern Thread* currentThread;
-
-/**
- * @class Thread
- * thread base class
- */
 class Thread
 {
     friend class Scheduler;
@@ -34,10 +27,6 @@ class Thread
 
     static const char* threadStatePrintable[4];
 
-    /**
-     * Constructor
-     * @return Thread instance
-     */
     Thread(const char* name);
 
     /**
@@ -46,11 +35,8 @@ class Thread
      * @param name Thread's name
      * @return Thread instance
      */
-    Thread ( FileSystemInfo* working_dir, const char* name );
+    Thread(FileSystemInfo* working_dir, const char* name);
 
-    /**
-     * Destructor
-     */
     virtual ~Thread();
 
     /**
@@ -70,26 +56,15 @@ class Thread
 
     uint32 switch_to_userspace_;
 
-    /**
-     * Returns the stack's start pointer.
-     * @return the pointer
-     */
     pointer getStackStartPointer();
 
     Loader *loader_;
 
     ThreadState state_;
 
-    /**
-     * Returns the thread's name.
-     * @return the name
-     */
     const char *getName()
     {
-      if ( name_ )
-        return name_;
-      else
-        return "<UNNAMED THREAD>";
+      return name_.c_str();
     }
 
     size_t getTID()
@@ -97,17 +72,9 @@ class Thread
       return tid_;
     }
 
-    /**
-     * Returns thread's current terminal
-     * @return
-     */
     Terminal *getTerminal();
 
-    /**
-     * Sets the thread's terminal
-     * @param my_term the new terminal
-     */
-    void setTerminal ( Terminal *my_term );
+    void setTerminal(Terminal *my_term);
 
     /**
      * getting the informations about the working Directory of this
@@ -129,28 +96,14 @@ class Thread
      */
     void printBacktrace();
     void printBacktrace(bool use_stored_registers);
-
     void printUserBacktrace();
 
     /**
-     * Adds a new job to the thread
+     * jobs are only for worker threads
      */
     void addJob();
-
-    /**
-     * Marks a job as completed
-     */
     void jobDone();
-
-    /**
-     * Should be called by worker threads instead of Scheduler::yield()
-     */
     void waitForNextJob();
-
-    /**
-     * Are there open jobs?
-     * @return true if jobs_scheduled_ > jobs_done_
-     */
     virtual bool hasWork();
 
     /**
@@ -164,20 +117,8 @@ class Thread
      */
     Mutex* sleeping_on_mutex_;
   private:
-
-    /**
-     * Copy Constructor (not implemented)
-     * @param src the object to copy
-     * @return the new object
-     */
-    Thread ( Thread const &src );
-
-    /**
-     * Operator = using Copy Constructor (not implemented)
-     * @param src the object to copy
-     * @return the new object
-     */
-    Thread &operator= ( Thread const &src );
+    Thread(Thread const &src);
+    Thread &operator=(Thread const &src);
 
     size_t num_jiffies_;
     size_t tid_;
@@ -187,7 +128,7 @@ class Thread
   protected:
     FileSystemInfo* working_dir_;
 
-    const char *name_;
+    ustl::string name_;
     uint64 jobs_scheduled_;
     uint64 jobs_done_;
 
