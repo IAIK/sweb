@@ -51,7 +51,7 @@ void handle_command(char* buffer,int buffer_size)
     }
   }
   if (strcmp(command, "ls") == 0)
-    __syscall(sc_pseudols,(size_t)args[0],0,0,0,0);
+    __syscall(sc_pseudols,(size_t)(argsCount > 0 ? args[0] : ""),0,0,0,0);
   else if (buffer[0]=='h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
   {
     printf("Command Help:\nhelp                  yes, here we are\nexit [exit_code]      is really the only command that does something right now\nls                    pseudo ls\n\n");
