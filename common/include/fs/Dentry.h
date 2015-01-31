@@ -1,13 +1,11 @@
-/**
- * @file Dentry.h
- */
+#ifndef DENTRY_h__
+#define DENTRY_h__
+
 #include "types.h"
 #include <ustl/ulist.h>
 #include "kstring.h"
 #include <ustl/ualgo.h>
-
-#ifndef DENTRY_h__
-#define DENTRY_h__
+#include "ustring.h"
 
 class Inode;
 
@@ -46,12 +44,6 @@ class Dentry
      * points back to the dentry itself.
      */
     Dentry *d_mounts_;
-
-    /**
-     * The d_name field contains the name of this entry, together with its hash
-     * value.
-     */
-    char *d_name_;
 
   public:
 
@@ -150,7 +142,7 @@ class Dentry
      * return the name of the dentry
      * @return the dentry's name
      */
-    char* getName();
+    const char* getName();
 
     /**
      * This should compare the name with the all names of the d_child_ list.
@@ -173,28 +165,10 @@ class Dentry
     virtual void childInsert(Dentry *child_dentry);
 
   public:
-
-    /**
-     * Constructor of a new dentry.
-     * construct a new dentry with the name,  the root-directory call this
-     * contructor.
-     * @param name the name
-     */
     Dentry(const char* name);
-
-    /**
-     * Constructor of a new dentry.
-     * It muss to check the double name in the parent dentry before to call this
-     * contructor.
-     * @param parent the parent
-     */
     Dentry(Dentry *parent);
-
-    /**
-     * Delete the pointer in all parent-dentrys before to calling this
-     * destructor
-     */
     virtual ~Dentry();
+    ustl::string d_name_;
 };
 
 #endif // Dentry_h___

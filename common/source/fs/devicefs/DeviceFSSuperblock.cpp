@@ -15,15 +15,8 @@
 
 extern Console* main_console;
 
-const char DeviceFSSuperBlock::ROOT_NAME[] =
-{
-'/', 0
-};
-
-const char DeviceFSSuperBlock::DEVICE_ROOT_NAME[] =
-{
-'d', 'e', 'v', 0
-};
+const char DeviceFSSuperBlock::ROOT_NAME[] = "/";
+const char DeviceFSSuperBlock::DEVICE_ROOT_NAME[] = "dev";
 
 DeviceFSSuperBlock* DeviceFSSuperBlock::instance_ = 0;
 

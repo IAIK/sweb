@@ -1,7 +1,3 @@
-/**
- * @file VfsSyscall.cpp
- */
-
 #include "VfsSyscall.h"
 #include "kstring.h"
 #include "assert.h"
@@ -9,7 +5,6 @@
 #include "Dirent.h"
 #include "Thread.h"
 #include "Mutex.h"
-
 #include "Inode.h"
 #include "Dentry.h"
 #include "Superblock.h"
@@ -20,7 +15,6 @@
 #include "MinixFSType.h"
 #include "PathWalker.h"
 #include "VfsMount.h"
-
 #include "kprintf.h"
 
 #define SEPARATOR '/'
@@ -65,19 +59,11 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
 
   if (prepend_slash_dot)
   {
-    uint32 path_len = strlen(pathname) + 1;
-    char path_tmp[path_len + 2];
-    // path_tmp = "./" + pathname + '\0'
-    char *path_tmp_ptr = path_tmp;
-    *path_tmp_ptr++ = CHAR_DOT;
-    *path_tmp_ptr++ = SEPARATOR;
-    strncpy(path_tmp_ptr, pathname, path_len);
-    path_tmp_ptr[path_len - 1] = 0;
-
-    fs_info->pathname_ = path_tmp;
+    fs_info->pathname_ = "./";
   }
   else
-    fs_info->pathname_ = pathname;
+    fs_info->pathname_ = "";
+  fs_info->pathname_ += pathname;
 
   return PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 }
@@ -104,7 +90,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   // set directory
   uint32 path_prev_len = char_tmp - path_tmp + 1;
   fs_info->pathname_ = path_tmp;
-  fs_info->pathname_ = fs_info->pathname_.substr(0,path_prev_len);
+  fs_info->pathname_ = fs_info->pathname_.substr(0, path_prev_len);
 
   const char* path_prev_name = fs_info->pathname_.c_str();
   debug(VFSSYSCALL, "(mkdir) path_prev_name: %s\n", path_prev_name);
@@ -164,7 +150,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
     fs_info->pathname_ = path_tmp;
-    fs_info->pathname_ = fs_info->pathname_.substr(0,path_prev_len - 1);
+    fs_info->pathname_ = fs_info->pathname_.substr(0, path_prev_len - 1);
 
     const char* path_prev_name = fs_info->pathname_.c_str();
     Dentry* pw_dentry = 0;
@@ -248,10 +234,8 @@ int32 VfsSyscall::rm(const char* pathname)
     debug(VFSSYSCALL, "Error: (rm) the directory does not exist.\n");
     return -1;
   }
-  debug(VFSSYSCALL, "(rm) \n");
-  Dentry* current_dentry = pw_dentry;
-  debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", current_dentry->getName());
-  Inode* current_inode = current_dentry->getInode();
+  debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", pw_dentry->getName());
+  Inode* current_inode = pw_dentry->getInode();
   debug(VFSSYSCALL, "(rm) current_inode: %d\n", current_inode);
 
   if (current_inode->getType() != I_FILE)
@@ -314,12 +298,10 @@ int32 VfsSyscall::rmdir(const char* pathname)
   return 0;
 }
 
+
 int32 VfsSyscall::close(uint32 fd)
 {
-  File* file = 0;
-  FileDescriptor* file_descriptor = 0;
-
-  file_descriptor = getFileDescriptor(fd);
+  FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
   {
@@ -327,11 +309,9 @@ int32 VfsSyscall::close(uint32 fd)
     return -1;
   }
 
-  file = file_descriptor->getFile();
-  Inode* current_inode = file->getInode();
+  Inode* current_inode = file_descriptor->getFile()->getInode();
   Superblock *current_sb = current_inode->getSuperblock();
-  int32 tmp = current_sb->removeFd(current_inode, file_descriptor);
-  assert(tmp == 0);
+  assert(current_sb->removeFd(current_inode, file_descriptor) == 0);
 
   return 0;
 }
@@ -348,10 +328,8 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
-    Dentry* current_dentry = pw_dentry;
-    debug(VFSSYSCALL, "(open) pathRelease\n");
     debug(VFSSYSCALL, "(open)current_dentry->getInode() \n");
-    Inode* current_inode = current_dentry->getInode();
+    Inode* current_inode = pw_dentry->getInode();
     debug(VFSSYSCALL, "(open) current_inode->getSuperblock()\n");
     Superblock* current_sb = current_inode->getSuperblock();
     debug(VFSSYSCALL, "(open)getNumOpenedFile() \n");
@@ -380,7 +358,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     // set directory
     uint32 path_prev_len = char_tmp - path_tmp + 1;
     fs_info->pathname_ = path_tmp;
-    fs_info->pathname_ = fs_info->pathname_.substr(0,path_prev_len);
+    fs_info->pathname_ = fs_info->pathname_.substr(0, path_prev_len);
 
     const char* path_prev_name = fs_info->pathname_.c_str();
 
@@ -394,8 +372,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    Dentry* current_dentry = pw_dentry;
-    Inode* current_inode = current_dentry->getInode();
+    Inode* current_inode = pw_dentry->getInode();
     Superblock* current_sb = current_inode->getSuperblock();
 
     if (current_inode->getType() != I_DIR)
@@ -411,9 +388,9 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     path_next_name[path_next_len - 1] = 0;
 
     // create a new dentry
-    Dentry *sub_dentry = new Dentry(current_dentry);
+    Dentry *sub_dentry = new Dentry(pw_dentry);
     sub_dentry->setName(path_next_name);
-    sub_dentry->setParent(current_dentry);
+    sub_dentry->setParent(pw_dentry);
     debug(VFSSYSCALL, "(open) calling create Inode\n");
     Inode* sub_inode = current_sb->createInode(sub_dentry, I_FILE);
     if (!sub_inode)
@@ -450,9 +427,7 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
 int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 {
-  FileDescriptor* file_descriptor = 0;
-
-  file_descriptor = getFileDescriptor(fd);
+  FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
   {
@@ -460,8 +435,7 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
     return -1;
   }
 
-  File* file = file_descriptor->getFile();
-  return (file->write(buffer, count, 0));
+  return file_descriptor->getFile()->write(buffer, count, 0);
 }
 
 l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
@@ -474,15 +448,12 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
     return -1;
   }
 
-  File* file = file_descriptor->getFile();
-  return file->lseek(offset, origin);
+  return file_descriptor->getFile()->lseek(offset, origin);
 }
 
 int32 VfsSyscall::flush(uint32 fd)
 {
-  FileDescriptor* file_descriptor = 0;
-
-  file_descriptor = getFileDescriptor(fd);
+  FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
   {
@@ -490,9 +461,7 @@ int32 VfsSyscall::flush(uint32 fd)
     return -1;
   }
 
-  File* file = file_descriptor->getFile();
-
-  return file->flush();
+  return file_descriptor->getFile()->flush();
 }
 
 int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
@@ -516,9 +485,7 @@ int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 
 uint32 VfsSyscall::getFileSize(uint32 fd)
 {
-  FileDescriptor* file_descriptor = 0;
-
-  file_descriptor = getFileDescriptor(fd);
+  FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
   {
@@ -526,6 +493,5 @@ uint32 VfsSyscall::getFileSize(uint32 fd)
     return -1;
   }
 
-  File* file = file_descriptor->getFile();
-  return file->getSize();
+  return file_descriptor->getFile()->getSize();
 }

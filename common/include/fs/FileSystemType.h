@@ -21,7 +21,6 @@ class Dentry;
  */
 #define MAX_FILE_SYSTEM_TYPES 16
 
-
 /**
  * @class FileSystemType
  * FileSystemType is used to register the file system to the vfs.
@@ -57,11 +56,11 @@ class FileSystemType
     /**
      * the assign operator
      */
-    FileSystemType const &operator = ( FileSystemType const &instance )
+    FileSystemType const &operator =(FileSystemType const &instance)
     {
       fs_name_ = instance.fs_name_;
       fs_flags_ = instance.fs_flags_;
-      return ( *this );
+      return (*this);
     }
 
     /**
@@ -74,7 +73,7 @@ class FileSystemType
      * set the name to the file-system-type
      * @param fs_name the name to set
      */
-    void setFSName ( const char* fs_name );
+    void setFSName(const char* fs_name);
 
     /**
      * get the flags from the file-system-type
@@ -86,7 +85,7 @@ class FileSystemType
      * set the flags to the file-system-type
      * @param flags the flags to set
      */
-    void setFSFlags ( int32 fs_flags );
+    void setFSFlags(int32 fs_flags);
 
     /**
      * Reads the superblock from the device.
@@ -94,7 +93,7 @@ class FileSystemType
      * @param data is the data given to the mount system call.
      * @return is a pointer to the resulting superblock.
      */
-    virtual Superblock *readSuper ( Superblock *superblock, void *data ) const;
+    virtual Superblock *readSuper(Superblock *superblock, void *data) const;
 
     /**
      * Creates an Superblock object for the actual file system type.
@@ -103,7 +102,7 @@ class FileSystemType
      * @return a pointer to the Superblock object, 0 if wasn't possible to
      * create a Superblock with the given device number
      */
-    virtual Superblock *createSuper ( Dentry *root, uint32 s_dev ) const;
+    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 
 };
 

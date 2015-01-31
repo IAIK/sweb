@@ -5,22 +5,20 @@
 #include "kprintf.h"
 
 Dentry::Dentry(const char* name) :
-    d_inode_(0), d_parent_(this), d_mounts_(0), d_name_(0)
+    d_inode_(0), d_parent_(this), d_mounts_(0), d_name_(name)
 {
-  this->setName(name);
   debug(DENTRY, "created Dentry with Name %s\n", name);
 }
 
 Dentry::Dentry(Dentry *parent) :
-    d_inode_(0), d_parent_(parent), d_mounts_(0), d_name_(0)
+    d_inode_(0), d_parent_(parent), d_mounts_(0), d_name_("NamELLEss")
 {
   parent->setChild(this);
-  this->setName("NamELLEss");
 }
 
 Dentry::~Dentry()
 {
-  debug(DENTRY, "deleting Dentry with Name %s, d_parent_: %p, this: %p\n", d_name_, d_parent_, this);
+  debug(DENTRY, "deleting Dentry with Name %s, d_parent_: %p, this: %p\n", d_name_.c_str(), d_parent_, this);
   if (d_parent_ && (d_parent_ != this))
   {
     debug(DENTRY, "deleting Dentry child remove d_parent_: %p\n", d_parent_);
@@ -29,11 +27,6 @@ Dentry::~Dentry()
   for (Dentry* dentry : d_child_)
   {
     dentry->d_parent_ = 0;
-  }
-  if (d_name_)
-  {
-    debug(DENTRY, "deleting Dentry name\n");
-    delete[] d_name_;
   }
   debug(DENTRY, "deleting Dentry finished\n");
 }
@@ -65,17 +58,12 @@ int32 Dentry::childRemove(Dentry *child_dentry)
 
 void Dentry::setName(const char* name)
 {
-  delete[] d_name_;
-  uint32 name_len = strlen(name) + 1;
-  d_name_ = new char[name_len * sizeof(char)];
-
-  strncpy(d_name_, name, name_len);
-  d_name_[name_len - 1] = 0;
+  d_name_ = name;
 }
 
-char* Dentry::getName()
+const char* Dentry::getName()
 {
-  return d_name_;
+  return d_name_.c_str();
 }
 
 int32 Dentry::setChild(Dentry *dentry)
