@@ -40,7 +40,7 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       return_value = read(arg1,arg2,arg3);
       break;
     case sc_open:
-      return_value = open(arg1,arg2,arg3);
+      return_value = open(arg1,arg2);
       break;
     case sc_close:
       return_value = close(arg1);
@@ -116,13 +116,13 @@ size_t Syscall::close(size_t fd)
   return VfsSyscall::close(fd);
 }
 
-size_t Syscall::open(size_t path, size_t flags, size_t mode)
+size_t Syscall::open(size_t path, size_t flags)
 {
   if (path >= 2U*1024U*1024U*1024U)
   {
     return -1U;
   }
-  return VfsSyscall::open((char*) path, flags | mode);
+  return VfsSyscall::open((char*) path, flags);
 }
 
 void Syscall::outline(size_t port, pointer text)

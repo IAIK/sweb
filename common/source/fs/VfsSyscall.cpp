@@ -119,6 +119,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
 Dirent* VfsSyscall::readdir(const char* pathname)
 {
+  kprintfd("%s\n",pathname);
   FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
@@ -284,6 +285,7 @@ int32 VfsSyscall::close(uint32 fd)
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
   FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  kprintfd("%x > %x\n", flag, O_CREAT | O_RDWR);
   if (flag > (O_CREAT | O_RDWR))
   {
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");

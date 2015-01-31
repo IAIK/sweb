@@ -98,9 +98,8 @@ class Syscall
  * @pre IF==1
  * @pre path < 2gb
  * @param flags file system flags
- * @param mode file system mode
  */
-  static size_t open(size_t path, size_t flags, size_t mode);
+  static size_t open(size_t path, size_t flags);
 
 /**
  * creates a new process
