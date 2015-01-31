@@ -151,14 +151,29 @@ int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   return 0;
 }
 
-int32 MMCDriver::writeBlock ( uint32 address __attribute__((unused)), void *buffer __attribute__((unused)))
+int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
 {
+  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %x\n",address, buffer);
+  uint32 response;
+  mmc_send_cmd(24, address, &response,1);
+  uint32* buffer32 = (uint32*) buffer;
+  //  uint8* buffer8 = (uint8*) buffer;
+  uint32 i = 0;
+  while (i < sector_size_ / sizeof(uint32))
+  {
+    while (!(mmci->interrupt & (1 << 5)));
+    mmci->data = buffer32[i++];
+  }
   return 0;
 }
 
-int32 MMCDriver::writeSector ( uint32 start_sector __attribute__((unused)), uint32 num_sectors __attribute__((unused)), void * buffer __attribute__((unused)) )
+int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer)
 {
-  while(1);
+  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
+  for (uint32 i = 0; i < num_sectors; ++i)
+  {
+    writeBlock((start_sector + i) * sector_size_, (char*)buffer + i * sector_size_);
+  }
   return 0;
 }
 
