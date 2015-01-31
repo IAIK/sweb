@@ -262,7 +262,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 
 
   //save previous state on stack of currentThread
-  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
@@ -287,12 +286,10 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   ArchInterrupts::disableInterrupts();
   asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
-  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
-  if (currentThread->switch_to_userspace_)
-  {
-    currentThreadInfo = currentThread->user_arch_thread_info_;
-    arch_contextSwitch();
-  }
+  currentThread->switch_to_userspace_ = true;
+  currentThreadInfo = currentThread->user_arch_thread_info_;
+  arch_contextSwitch();
+  assert(false);
 }
 
 extern "C" void arch_irqHandler_1();
