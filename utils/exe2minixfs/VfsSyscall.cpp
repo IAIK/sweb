@@ -209,5 +209,7 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
     return -1;
   }
 
+  if (count == 0)
+    return 0;
   return file_descriptor->getFile()->write(buffer, count, 0);
 }

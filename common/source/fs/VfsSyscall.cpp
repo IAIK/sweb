@@ -369,6 +369,8 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
     return -1;
   }
 
+  if (count == 0)
+    return 0;
   return file_descriptor->getFile()->read(buffer, count, 0);
 }
 
@@ -382,6 +384,8 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
     return -1;
   }
 
+  if (count == 0)
+    return 0;
   return file_descriptor->getFile()->write(buffer, count, 0);
 }
 
