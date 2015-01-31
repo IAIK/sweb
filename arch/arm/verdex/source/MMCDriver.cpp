@@ -89,6 +89,7 @@ uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
 
 MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512)
 {
+  num_sectors_ = 210672; // Todo
   debug(MMC_DRIVER,"MMCDriver()\n");
   uint32 response;
   // protocol from sd card specification
@@ -98,7 +99,6 @@ MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_siz
   mmc_send_cmd(2,0,0);
   mmc_send_cmd(3,0,&response);
   rca_ = response;
-  mmc_send_cmd(4,0,0);
   mmc_send_cmd(7,rca_,0);
 }
 
@@ -162,14 +162,33 @@ int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   return 0;
 }
 
-int32 MMCDriver::writeBlock ( uint32 address __attribute__((unused)), void *buffer __attribute__((unused)))
+int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
 {
+  debug(MMC_DRIVER,"writeBlock: address: %x, buffer: %x\n",address, buffer);
+  uint32 response;
+  mmci->blklen = 512;
+  mmci->numblk = 1;
+  mmc_send_cmd(24, address, &response, 1, 1);
+  uint32* buffer32 = (uint32*) buffer;
+  uint32 i = 0;
+  uint32 temp;
+  // actually we should check this according to the manual, but it misses the last 28 bytes!: (!(mmci->stat & (1 << 11))) || (mmci->ireg & (1 << 5)))
+  while (i < mmci->blklen / sizeof(uint32))
+  {
+    temp = ((buffer32[i] & 0xFF) << 24) | ((buffer32[i] & 0xFF00) << 8) | ((buffer32[i] & 0xFF0000) >> 8) | ((buffer32[i] & 0xFF000000) >> 24);
+    mmci->txfifo = temp;
+    i++;
+  }
   return 0;
 }
 
-int32 MMCDriver::writeSector ( uint32 start_sector __attribute__((unused)), uint32 num_sectors __attribute__((unused)), void * buffer __attribute__((unused)))
+int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer)
 {
-  while(1);
+  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
+  for (uint32 i = 0; i < num_sectors; ++i)
+  {
+    writeBlock((start_sector + i) * sector_size_, (void*)((size_t)buffer + i * sector_size_));
+  }
   return 0;
 }
 
