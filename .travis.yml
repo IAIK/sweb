@@ -1,0 +1,12 @@
+language: cpp
+compiler: gcc
+#install dependencies
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install nasm clang
+#basic build
+script:
+# run clang static analysis while building
+# see http://clang-analyzer.llvm.org/
+- scan-build cmake .
+- scan-build make
