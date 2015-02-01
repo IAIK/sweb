@@ -1,18 +1,8 @@
-/**
- * @file main.cpp
- * starts up SWEB
- */
-
 #include <ProcessRegistry.h>
-
 #include <types.h>
-
-#include <paging-definitions.h>
 #include "ArchSerialInfo.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
-
-#include "new.h"
 #include "PageManager.h"
 #include "KernelMemoryManager.h"
 #include "ArchInterrupts.h"
@@ -23,38 +13,27 @@
 #include "ArchCommon.h"
 #include "ArchThreads.h"
 #include "Mutex.h"
-#include "panic.h"
 #include "debug_bochs.h"
 #include "ArchMemory.h"
 #include "Loader.h"
 #include "assert.h"
-
 #include "SerialManager.h"
-
 #include "KeyboardManager.h"
-#include "atkbd.h"
-
 #include "VfsSyscall.h"
 #include "FileSystemInfo.h"
 #include "Dentry.h"
 #include "DeviceFSType.h"
 #include "VirtualFileSystem.h"
-
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
-
-#include "UserProcess.h"
 #include "outerrstream.h"
-
 #include "user_progs.h"
 
 extern void* kernel_end_address;
-
 extern Console* main_console;
 
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
-
 uint32 boot_completed;
 uint32 we_are_dying;
 FileSystemInfo* default_working_dir;

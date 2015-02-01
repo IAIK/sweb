@@ -29,6 +29,8 @@ extern "C" void __naked__ entry()
       "orr r0, r0, #0x400000\n"     // set unaligned memory access bit
       "mcr p15, 0, r0, c1, c0, 0\n" // enable paging
      );
+//  asm("b %[cs],$1f\n"
+//      "1:": : [cs]"i"(KERNEL_CS));
   void (*PagingModePTR)() = &PagingMode; // create a blx jump instead of a bl jump
   PagingModePTR();
   assert(false && "it should be impossible to get to this point");
