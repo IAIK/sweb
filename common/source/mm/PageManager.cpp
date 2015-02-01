@@ -43,7 +43,6 @@ PageManager::PageManager() :
   }
 
   number_of_pages_ = highest_address / PAGE_SIZE;
-  debug(PM, "Ctor: Number of physical pages: %d\n", number_of_pages_);
 
   //Determine RAM Used by Grub Modules
   for (i = 0; i < ArchCommon::getNumModules(); ++i)
@@ -138,10 +137,9 @@ PageManager::PageManager() :
       break;
     }
   }
-
-  debug(PM, "Ctor: lowest_unreserved_page_=%d\n", lowest_unreserved_page_);
+  debug(PM, "Ctor: Physical pages - free: %u used: %u total: %u\n", page_usage_table_->getNumFreeBits(),
+        page_usage_table_->getNumBitsSet(), number_of_pages_);
   prenew_assert(lowest_unreserved_page_ < number_of_pages_);
-  debug(PM, "Ctor done\n");
 }
 
 uint32 PageManager::getTotalNumPages() const

@@ -11,12 +11,12 @@
 #ifndef USB_TYPES_H
 #define USB_TYPES_H
 
-#include <configuration.h>
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#define NULL ((void*)0)
 
 /** Unsigned 8 bit type */
 typedef unsigned	char		u8;

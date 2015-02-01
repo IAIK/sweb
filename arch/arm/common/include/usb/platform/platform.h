@@ -17,7 +17,6 @@ extern "C"
 {
 #endif
 
-#include <configuration.h>
 #include <usb_types.h>
 
 /**
@@ -111,8 +110,7 @@ void PowerOffUsb();
 void MicroDelay(u32 delay);
 
 
-#include "arm/armv6.h"
-#include "arm/broadcom2835.h"
+#include "none/byteorder.h"
 
 #ifdef __cplusplus
 }
