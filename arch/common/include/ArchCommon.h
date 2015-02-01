@@ -1,11 +1,3 @@
-/**
- * @file ArchCommon.h
- *
- * Collection of architecture dependent stuff
- * + FrameBuffer Info
- * + Grub Info (usable memory regions, modules)
- */
-
 #ifndef _ARCH_COMMON_H_
 #define _ARCH_COMMON_H_
 
@@ -17,25 +9,8 @@ class Console;
 class ArchCommon
 {
 public:
-
-  /** 
-   * @return returns the end address of the kernel
-   *
-   */
   static pointer getKernelEndAddress();
-
-  /** 
-   * @return returns the start address of the free memory block used
-   * for dynamic kernel memory
-   *
-   */
   static pointer getFreeKernelMemoryStart();
-
-  /** 
-   * @return returns the end address of the free memory block used
-   * for dynamic kernel memory
-   *
-   */
   static pointer getFreeKernelMemoryEnd();
 
   /** 
@@ -43,41 +18,21 @@ public:
    * that it should behave accordingly
    */
   static uint32 haveVESAConsole(uint32 is_paging_set_up = 1);
-
-  /**
-   * @return the hight of the VESA Console
-   *
-   */
   static uint32 getVESAConsoleHeight();
-
-  /** 
-   * @return the width of the VESA Console
-   *
-   */
   static uint32 getVESAConsoleWidth();
-
- /** 
-  * @return the bits per pixel of the VESA Console
-  *
-  */
   static uint32 getVESAConsoleBitsPerPixel();
 
   /** 
-   * @param is_paging_set_up 
    * @return a Pointer to the location of the VESA Memory Region
    */
   static pointer getVESAConsoleLFBPtr(uint32 is_paging_set_up = 1);
 
   /**
-   * returns a Pointer to the location of the FrameBuffer
-   *
    * @return a Pointer to the location of the FrameBuffer
    */
   static pointer getFBPtr(uint32 is_paging_set_up = 1);
 
-
   /** 
-   * tells you the number of Useable Memory Regions just as grub told us
    * @return number of Useable Memory Regions
    */
   static uint32 getNumUseableMemoryRegions();
@@ -94,18 +49,7 @@ public:
    */
   static uint32 getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
 
-  /**
-   * Computes a CRC- like checksum over a given physical page.
-   *
-   * @param physical_page_number the number of the physical page.
-   * @return the CRC- like checksum over all PAGE_SIZE bytes of the page.
-   */
-  static uint32 checksumPage(uint32 phsical_page_number, uint32 page_size = PAGE_SIZE);
-  static uint32 checksum(uint32* src, uint32 count);
-
   /** 
-   * Parses the Grub MultiBoot Info with regard to modules
-   *
    * @return uint32 returns the number of modules loaded by grub
    */
   static uint32 getNumModules(uint32 is_paging_set_up = 1);

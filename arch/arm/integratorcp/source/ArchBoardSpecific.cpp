@@ -61,8 +61,6 @@ void ArchBoardSpecific::frameBufferInit()
   plio->control = 0x1929; // 1 1000 0010 1001
 }
 
-extern void arch_keyboard_irq_handler();
-
 void ArchBoardSpecific::onIdle()
 {
 }

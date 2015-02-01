@@ -88,25 +88,6 @@ uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, 
   return ArchBoardSpecific::getUsableMemoryRegion(region, start_address, end_address, type);
 }
 
-uint32 ArchCommon::checksumPage(uint32 physical_page_number, uint32 page_size)
-{
-  uint32 *src = (uint32*)ArchMemory::getIdentAddressOfPPN(physical_page_number);
-
-  uint32 poly = 0xEDB88320;
-  int bit = 0, nbits = 32;
-  uint32 res = 0xFFFFFFFF;
-
-  for (uint32 i = 0; i < page_size/sizeof(*src); ++i)
-    for (bit = nbits - 1; bit >= 0; --bit)
-      if ((res & 1) != ((src[i] >> bit) & 1))
-        res = (res >> 1) ^ poly;
-      else
-        res = (res >> 1) + 7;
-
-  res ^= 0xFFFFFFFF;
-  return res;
-}
-
 Console* ArchCommon::createConsole(uint32 count)
 {
   ArchBoardSpecific::frameBufferInit();
