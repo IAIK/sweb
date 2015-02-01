@@ -20,8 +20,6 @@ extern "C"
 
 #include <platform/platform.h>
 
-#ifdef HCD_DESIGNWARE_20
-
 #define ReceiveFifoSize 20480 /* 16 to 32768 */
 #define NonPeriodicFifoSize 20480 /* 16 to 32768 */
 #define PeriodicFifoSize 20480 /* 16 to 32768 */
@@ -54,12 +52,10 @@ enum CoreRegisters {
 	RegVendorId = 0x40,
 	RegHardware = 0x44,
 	RegLowPowerModeConfiguation = 0x48,
-#ifdef BROADCOM_2835
 	RegMdioControl = 0x80,
 	RegMdioRead = 0x84,
 	RegMdioWrite = 0x84,
 	RegMiscControl = 0x88,
-#endif
 	RegPeriodicFifoSize = 0x100,
 	RegPeriodicFifoBase = 0x104,
 	RegPower = 0xe00,
@@ -200,7 +196,6 @@ extern volatile struct CoreGlobalRegs {
 	} __attribute__ ((__packed__)) OtgInterrupt; // +0x4
 	volatile struct {
 		volatile bool InterruptEnable : 1; // @0
-#ifdef BROADCOM_2835
 		// In accordance with the SoC-Peripherals manual, broadcom redefines 
 		// the meaning of bits 1:4 in this structure.
 		volatile enum {
@@ -211,15 +206,6 @@ extern volatile struct CoreGlobalRegs {
 		} AxiBurstLength : 2; // @1
 		volatile unsigned _reserved3 : 1; // @3
 		volatile bool WaitForAxiWrites : 1; // @4
-#else
-		volatile enum {
-			Single,
-			Incremental,
-			Incremental4 = 3,
-			Incremental8 = 5,
-			Incremental16 = 7,
-		} DmaBurstType : 4; // @1
-#endif
 		volatile bool DmaEnable : 1; // @5
 		volatile unsigned _reserved6 : 1; // @6
 		volatile enum EmptyLevel {
@@ -458,7 +444,6 @@ extern volatile struct CoreGlobalRegs {
 		volatile bool InverseSelectHsic : 1; // @31
 	} __attribute__ ((__packed__)) LowPowerModeConfiguration; // +0x54
 	volatile const u8 _reserved58_80[0x80 - 0x58]; // No read or write +0x58
-#ifdef BROADCOM_2835
 	volatile struct {
 		volatile const unsigned Read : 16; // Read Only @0
 		volatile unsigned ClockRatio : 4; // @16
@@ -488,9 +473,6 @@ extern volatile struct CoreGlobalRegs {
 		volatile unsigned AxiPriorityLevel : 4; // @16
 		volatile unsigned _reserved20_31 : 12; // @20
 	} __attribute__ ((__packed__)) MiscControl; // +0x88
-#else
-	volatile u32 _reserved80_8c[3]; // +0x80
-#endif
 	volatile u8 _reserved8c_100[0x100-0x8c]; // +0x8c
 	volatile struct {
 		volatile struct FifoSize HostSize; // +0x100
@@ -705,8 +687,6 @@ void ClearReg(volatile const void* reg);
 	interrutps to 1 in preparation for reseting the interrupt flags.
 */
 void SetReg(volatile const void* reg);
-
-#endif // HCD_DESIGNWARE_20
 
 #ifdef __cplusplus
 }

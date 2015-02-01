@@ -1,8 +1,3 @@
-/**
- * @file board_constants.h
- *
- */
-
 #ifndef _BOARD_CONSTANTS_H_
 #define _BOARD_CONSTANTS_H_
 
@@ -11,7 +6,7 @@
 #define SERIAL_BUFFER_FULL (1 << 5)
 
 #define PIC_BASE 0x9000B200
-
+#define HCD_DESIGNWARE_BASE ((void*)0x90980000)
 #define BOARD_LOAD_BASE 0
 
 #endif

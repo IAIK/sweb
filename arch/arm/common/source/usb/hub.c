@@ -504,14 +504,12 @@ Result HubAttach(struct UsbDevice *device, u32 interfaceNumber) {
 	LOG_DEBUGF("HUB: Hub power to good: %dms.\n", hubDescriptor->PowerGoodDelay * 2);
 	LOG_DEBUGF("HUB: Hub current required: %dmA.\n", hubDescriptor->MaximumHubPower * 2);
 	LOG_DEBUGF("HUB: Hub ports: %d.\n", hubDescriptor->PortCount);
-#if DEBUG
 	for (u32 i = 0; i < data->MaxChildren; i++) {
 		if (hubDescriptor->Data[(i + 1) >> 3] & 1 << ((i + 1) & 0x7)) 
 			LOG_DEBUGF("HUB: Hub port %d is not removable.\n", i + 1);
 		else
 			LOG_DEBUGF("HUB: Hub port %d is removable.\n", i + 1);
 	}
-#endif
 	
 	if ((result = HubGetStatus(device)) != OK) {
 		LOGF("HUB: Failed to get hub status for %s.\n", UsbGetDescription(device));

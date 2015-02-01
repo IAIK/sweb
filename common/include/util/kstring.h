@@ -44,13 +44,10 @@ extern "C"
   int32 bcmp(const void *region1, const void *region2, size_t size);
 
   /**
-   * Computes a CRC- like checksum over a given physical page.
-   *
-   * @param physical_page_number the number of the physical page.
-   * @return the CRC- like checksum over all PAGE_SIZE bytes of the page.
+   * Computes a CRC- like checksum
    */
-  uint32 checksumPage(uint32 phsical_page_number, uint32 page_size = PAGE_SIZE);
-  uint32 checksum(uint32* src, uint32 count);
+  uint32 checksum(uint32* src, uint32 nbytes);
+
 #ifdef __cplusplus
 }
 #endif

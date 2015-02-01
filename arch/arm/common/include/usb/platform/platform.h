@@ -85,17 +85,10 @@ void LogPrintF(char* format, u32 formatLength, ...);
 #define LOGF(x, ...) (LogPrintF(x, sizeof(x), __VA_ARGS__))
 #define LOGFL(x, len, ...) (LogPrintF(x, len, __VA_ARGS__))
 #endif
-#ifdef DEBUG
 #define LOG_DEBUG(x) LOG(x)
 #define LOG_DEBUGL(x, len) LOGL(x, len)
 #define LOG_DEBUGF(x, ...) LOGF(x, __VA_ARGS__)
 #define LOG_DEBUGFL(x, len, ...) LOGFL(x, len, __VA_ARGS__)
-#else
-#define LOG_DEBUG(x) 
-#define LOG_DEBUGL(x, len) 
-#define LOG_DEBUGF(x, ...) 
-#define LOG_DEBUGFL(x, len, ...) 
-#endif
 
 /**
 	\brief Turns on the USB host controller.
@@ -118,18 +111,8 @@ void PowerOffUsb();
 void MicroDelay(u32 delay);
 
 
-#ifdef ARM
-#	ifdef ARM_V6
-#		include "arm/armv6.h"
-#		ifdef BROADCOM_2835
-#		include "arm/broadcom2835.h"
-#		endif // BROADCOM_2835
-#	else
-#	error Unrecognised ARM Version
-#	endif // ARM_V6
-#else
-#error Unrecognised Processor Family
-#endif // ARM
+#include "arm/armv6.h"
+#include "arm/broadcom2835.h"
 
 #ifdef __cplusplus
 }

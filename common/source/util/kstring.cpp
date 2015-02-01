@@ -530,18 +530,13 @@ extern "C" char* itoa(int value, char* str, int base)
   return str;
 }
 
-extern "C" uint32 checksumPage(uint32 physical_page_number, uint32 page_size)
-{
-  return checksum((uint32*)ArchMemory::getIdentAddressOfPPN(physical_page_number),page_size / sizeof(uint32));
-}
-
-extern "C" uint32 checksum(uint32* src, uint32 count)
+extern "C" uint32 checksum(uint32* src, uint32 nbytes)
 {
   uint32 poly = 0xEDB88320;
   int bit = 0, nbits = 32;
   uint32 res = 0xFFFFFFFF;
 
-  for (uint32 i = 0; i < count; ++i)
+  for (uint32 i = 0; i < nbytes; ++i)
     for (bit = nbits - 1; bit >= 0; --bit)
       if ((res & 1) != ((src[i] >> bit) & 1))
         res = (res >> 1) ^ poly;

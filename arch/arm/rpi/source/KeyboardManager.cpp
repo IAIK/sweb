@@ -1,8 +1,3 @@
-/**
- * @file arch_keyboard_manager.cpp
- *
- */
-
 #include "KeyboardManager.h"
 #include "kprintf.h"
 #include "usbd/usbd.h"

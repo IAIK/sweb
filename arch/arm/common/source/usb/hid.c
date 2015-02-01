@@ -332,7 +332,6 @@ void HidEnumerateReport(void* descriptor, u16 length, void(*action)(void* data, 
 	}
 }
 
-#if DEBUG
 void HidEnumerateActionCountReport(void* data, u16 tag, u32 value) {
 	struct {
 		u8 reportCount;
@@ -433,32 +432,6 @@ void HidEnumerateActionCountReport(void* data, u16 tag, u32 value) {
 		break;
 	}
 }
-#else
-void HidEnumerateActionCountReport(void* data, u16 tag, u32 value) {
-	struct {
-		u8 reportCount;
-		u8 indent;
-		bool input, output, feature;
-	} *reports = data;
-
-	switch (tag) {
-	case TagMainInput:
-		if (!reports->input) { reports->reportCount++; reports->input = true; }
-		break;
-	case TagMainOutput:
-		if (!reports->output) { reports->reportCount++; reports->output = true; }
-		break;
-	case TagMainFeature:
-		if (!reports->feature) { reports->reportCount++; reports->feature = true; }
-		break;
-	case TagGlobalReportId:
-		reports->input = reports->output = reports->feature = false;
-		break;
-	default:
-		break;
-	}
-}
-#endif
 
 void HidEnumerateActionCountField(void* data, u16 tag, u32 value) {
 	struct reportFields_t {

@@ -1,8 +1,3 @@
-/**
- * @file arch_mmc_driver.cpp
- *
- */
- 
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "MMCDriver.h"
