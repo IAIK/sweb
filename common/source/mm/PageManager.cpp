@@ -1,7 +1,3 @@
-/**
- * @file PageManager.cpp
- */
-
 #include "PageManager.h"
 #include "new.h"
 #include "paging-definitions.h"
@@ -18,17 +14,10 @@ PageManager* PageManager::instance_ = 0;
 
 extern void* kernel_end_address;
 
-void PageManager::createPageManager()
-{
-
-  if (instance_)
-    return;
-
-  instance_ = new PageManager();
-}
-
 PageManager* PageManager::instance()
 {
+  if (unlikely(!instance_))
+    instance_ = new PageManager();
   return instance_;
 }
 

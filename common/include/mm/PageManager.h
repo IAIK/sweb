@@ -1,7 +1,3 @@
-/**
- * @file PageManger.h
- */
-
 #ifndef PAGEMANAGER_H__
 #define PAGEMANAGER_H__
 
@@ -11,26 +7,9 @@
 
 class Bitmap;
 
-/**
- * @class PageManager is in issence a BitMap managing free or used pages of size PAGE_SIZE only
- */
 class PageManager
 {
   public:
-
-    /**
-     * Creates a new instance (and THE ONLY ONE) of our page manager
-     * This one will also automagically initialise itself accordingly
-     * i.e. mark pages used by the kernel already as used
-     * @param next_usable_address Pointer to memory the page manager can use
-     * @return 0 on failure, otherwise a pointer to the next free memory location
-     */
-    static void createPageManager ();
-
-    /**
-    * the access method to the singleton instance
-    * @return the instance
-     */
     static PageManager *instance();
 
     /**
@@ -45,8 +24,7 @@ class PageManager
      * and marks that Page as used.
      * returns always 4kb ppns!
      */
-    uint32 allocPPN(uint32 page_size = PAGE_SIZE); //marks page as used
-    bool reservePages(uint32 ppn, uint32 num = 1); // used internally to mark as reserved
+    uint32 allocPPN(uint32 page_size = PAGE_SIZE);
 
     /**
      * marks physical page <page_number> as free, if it was used in
@@ -56,18 +34,16 @@ class PageManager
     void freePPN(uint32 page_number, uint32 page_size = PAGE_SIZE);
 
   private:
-
     /**
-     * the singleton constructor
-     * @param start_of_structure the start address of the memory after the page manager
+     * used internally to mark pages as reserved
+     * @param ppn
+     * @param num
+     * @return
      */
-    PageManager ();
+    bool reservePages(uint32 ppn, uint32 num = 1);
 
-    /**
-     * Copy Constructor
-     * must not be implemented
-     */
-    PageManager ( PageManager const& );
+    PageManager();
+    PageManager(PageManager const&);
 
     static PageManager* instance_;
 

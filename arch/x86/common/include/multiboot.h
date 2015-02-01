@@ -1,16 +1,6 @@
-/**
- * @file multiboot.h
- *
- */
-
 #ifndef _MULTIBOOT_H_
 #define _MULTIBOOT_H_
 
-
-/**
- * VBE controller information.
- *
- */
 struct vbe_controller
 {
   uint8 signature[4];
@@ -27,10 +17,6 @@ struct vbe_controller
   uint8 oem_data[256];
 } __attribute__ ((packed));
 
-/**
- * VBE mode information
- *
- */
 struct vbe_mode
 {
   uint16 mode_attributes;
@@ -89,10 +75,6 @@ struct vbe_mode
   uint8 reserved3[189];
 } __attribute__ ((packed));
 
-/**
- * The Multiboot header
- *
- */
 typedef struct multiboot_header
 {
    uint32 magic			: 32;
@@ -109,22 +91,6 @@ typedef struct multiboot_header
    uint32 depth			: 32;
 } __attribute__((__packed__)) multiboot_header_t;
 
-/**
- * The symbol table for a.out
- *
- */
-typedef struct aout_symbol_table
-{
-  uint32 tabsize;
-  uint32 strsize;
-  uint32 addr;
-  uint32 reserved;
-} __attribute__((__packed__)) aout_symbol_table_t;
-
-/**
- * The section header table for ELF
- *
- */
 typedef struct elf_section_header_table
 {
   uint32 num;
@@ -133,10 +99,6 @@ typedef struct elf_section_header_table
   uint32 shndx;
 } __attribute__((__packed__)) elf_section_header_table_t;
 
-/**
- * The Multiboot information
- *
- */
 typedef struct multiboot_info
 {
   uint32 flags			: 32;
@@ -146,11 +108,7 @@ typedef struct multiboot_info
   uint32 cmdline		: 32;
   uint32 mods_count		: 32;
   uint32 mods_addr		: 32;
-  union
-  {
-     aout_symbol_table_t aout_sym;
-     elf_section_header_table_t elf_sec;
-  } u;
+  elf_section_header_table_t elf_sec;
   uint32 mmap_length		: 32;
   uint32 mmap_addr		: 32;
   uint32 drives_length		: 32;
@@ -166,10 +124,6 @@ typedef struct multiboot_info
   uint32 vbe_interface_len	: 32;
 } __attribute__((__packed__)) multiboot_info_t;
 
-/**
- * The module structure
- *
- */
 typedef struct module
 {
   uint32 mod_start;
@@ -178,39 +132,8 @@ typedef struct module
   uint32 reserved;
 }__attribute__((__packed__)) module_t;
 
- /**
-  * The memory map. Be careful that the offset 0 is base_addr_low
-  * but no size.
-  *
-  */
-
-
 #define MAX_MEMORY_MAPS 10
 #define MAX_MODULE_MAPS 10
-
-// macros for initializing memory_maps
-#define MEMMAP_INIT {0,0,0,0}
-#define TWO_MEMMAP_INIT MEMMAP_INIT,MEMMAP_INIT
-#define FOUR_MEMMAP_INIT TWO_MEMMAP_INIT,TWO_MEMMAP_INIT
-#define FIVE_MEMMAP_INIT FOUR_MEMMAP_INIT,MEMMAP_INIT
-#define TEN_MEMMAP_INIT FIVE_MEMMAP_INIT,FIVE_MEMMAP_INIT
-
-// macros for initializing module_maps
-#define FOUR_ZEROS 0,0,0,0
-#define EIGHT_ZEROS FOUR_ZEROS,FOUR_ZEROS
-#define SIXTEEN_ZEROS EIGHT_ZEROS,EIGHT_ZEROS
-#define THIRTYTWO_ZEROS SIXTEEN_ZEROS,SIXTEEN_ZEROS
-#define SIXTYFOUR_ZEROS THIRTYTWO_ZEROS,THIRTYTWO_ZEROS
-#define HUNDREDTWENTYEIGHT_ZEROS SIXTYFOUR_ZEROS,SIXTYFOUR_ZEROS
-#define TWOHUNDREDFIFTYSIX_ZEROS HUNDREDTWENTYEIGHT_ZEROS,\
-                                 HUNDREDTWENTYEIGHT_ZEROS
-
-#define MODMAP_INIT {0,0,0,{TWOHUNDREDFIFTYSIX_ZEROS}}
-#define TWO_MODMAP_INIT MODMAP_INIT,MODMAP_INIT
-#define FOUR_MODMAP_INIT TWO_MODMAP_INIT,TWO_MODMAP_INIT
-#define FIVE_MODMAP_INIT FOUR_MODMAP_INIT,MODMAP_INIT
-#define TEN_MODMAP_INIT FIVE_MODMAP_INIT,FIVE_MODMAP_INIT
-
 
 typedef struct memory_map
 {
