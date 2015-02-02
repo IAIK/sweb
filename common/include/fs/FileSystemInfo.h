@@ -1,7 +1,3 @@
-/**
- * @file FileSystemInfo.h
- */
-
 #ifndef FILESYSTEMINFO_H__
 #define FILESYSTEMINFO_H__
 

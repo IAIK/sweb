@@ -1,6 +1,5 @@
-/**
- * @file minix_fs_consts.h
- */
+#ifndef MINIX_FS_CONSTS__
+#define MINIX_FS_CONSTS__
 
 #define NUM_ZONE_ADDRESSES 512
 #define ZONE_SIZE 1024
@@ -10,3 +9,5 @@
 #define MAX_NAME_LENGTH 30
 #define INODE_SIZE 32
 #define DENTRY_PER_BLOCK 32
+
+#endif

@@ -1,7 +1,3 @@
-/**
- * @file MinixFSFile.h
- */
-
 #ifndef MinixFSFile_h___
 #define MinixFSFile_h___
 

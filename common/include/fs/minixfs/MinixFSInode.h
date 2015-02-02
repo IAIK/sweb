@@ -1,7 +1,3 @@
-/**
- * @file MinixFSInode.h
- */
-
 #ifndef MinixFSInode_h___
 #define MinixFSInode_h___
 
@@ -9,7 +5,7 @@
 #include "kstring.h"
 #include "Inode.h"
 #include "MinixFSZone.h"
-#include <ustl/ulist.h>
+#include <ulist.h>
 
 /**
  * @class MinixFSInode represents an inode on a minix file system and handles the corresponding functions

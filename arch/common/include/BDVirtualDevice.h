@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_virtual_device.h
- *
- */
-
 #ifndef _BD_VIRTUAL_DEVICE_
 #define _BD_VIRTUAL_DEVICE_
 

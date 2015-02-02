@@ -1,8 +1,3 @@
-/**
- * @file paging-definitions.h
- *
- */
-
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__
 

@@ -1,8 +1,3 @@
-/**
- * @file assert.h
- *
- */
- 
 #ifndef ASSSERT_H__
 #define ASSSERT_H__
 

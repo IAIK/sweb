@@ -1,7 +1,3 @@
-/**
- * @file kprintf.cpp
- */
-
 #include "stdarg.h"
 #include "kprintf.h"
 #include "Console.h"

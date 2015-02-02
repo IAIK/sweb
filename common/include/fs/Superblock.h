@@ -1,12 +1,8 @@
-/**
- * @file Superblock.h
- */
-
 #ifndef SUPERBLOCK_H__
 #define SUPERBLOCK_H__
 
 #include "types.h"
-#include <ustl/ulist.h>
+#include <ulist.h>
 
 class Iattr;
 class Statfs;

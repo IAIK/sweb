@@ -2,9 +2,9 @@
 #define DENTRY_h__
 
 #include "types.h"
-#include <ustl/ulist.h>
+#include <ulist.h>
 #include "kstring.h"
-#include <ustl/ualgo.h>
+#include <ualgo.h>
 #include "ustring.h"
 
 class Inode;

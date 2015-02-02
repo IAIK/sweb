@@ -1,13 +1,9 @@
-/**
- * @file MinixFSSuperblock.h
- */
-
 #ifndef MinixFSSuperblock_h___
 #define MinixFSSuperblock_h___
 
 #include "Superblock.h"
 #include "MinixStorageManager.h"
-#include "ustl/umap.h"
+#include "umap.h"
 
 class Inode;
 class MinixFSInode;

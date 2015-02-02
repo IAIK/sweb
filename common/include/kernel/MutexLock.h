@@ -1,6 +1,3 @@
-/**
- * @file MutexLock.h
- */
 #ifndef _MUTEXLOCK_H_
 #define _MUTEXLOCK_H_
 

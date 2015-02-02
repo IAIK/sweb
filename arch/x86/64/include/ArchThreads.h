@@ -1,8 +1,3 @@
-/**
- * @file ArchThreads.h
- *
- */
-
 #ifndef _ARCH_THREADS_H_
 #define _ARCH_THREADS_H_
 

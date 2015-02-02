@@ -1,8 +1,3 @@
-/**
- * @file ArchThreads.cpp
- *
- */
-
 #include "ArchThreads.h"
 #include "ArchMemory.h"
 #include "kprintf.h"

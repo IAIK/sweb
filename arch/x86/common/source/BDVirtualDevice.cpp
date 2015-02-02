@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_virtual_device.cpp
- *
- */
-
 #include "ArchInterrupts.h"
 #include "BDDriver.h"
 #include "BDRequest.h"

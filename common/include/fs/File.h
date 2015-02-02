@@ -1,7 +1,3 @@
-/**
- * @file File.h
- */
-
 #ifndef FILE_H__
 #define FILE_H__
 

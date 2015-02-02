@@ -13,28 +13,27 @@ int running;
 int exit_code;
 
 char command[256];
-char executable[256+EXECUTABLE_PREFIX_LEN];
+char executable[256 + EXECUTABLE_PREFIX_LEN];
 char args[10][256];
 
-void handle_command(char* buffer,int buffer_size)
+void handle_command(char* buffer, int buffer_size)
 {
-  int c=0;
-  int num=0;
+  int c = 0;
   int argsCount = -1;
   int lastIndex = 0;
   int pid;
 
-  for(c=0; c<buffer_size && buffer[c]; c++)
+  for (c = 0; c < buffer_size && buffer[c]; c++)
   {
-    if(argsCount > 10)
+    if (argsCount > 10)
     {
       argsCount = 10;
       printf("Argument Count is limited to 10 (no dynamic memory allocation) all other arguments will be ignores\n");
       break;
     }
-    if(buffer[c] == '\r' || buffer[c] == '\n' || buffer[c] == ' ')
+    if (buffer[c] == '\r' || buffer[c] == '\n' || buffer[c] == ' ')
     {
-      if(argsCount == -1)
+      if (argsCount == -1)
       {
         memcpy(command, buffer + lastIndex, c - lastIndex);
         command[c - lastIndex] = 0;
@@ -46,34 +45,34 @@ void handle_command(char* buffer,int buffer_size)
       }
       argsCount++;
       lastIndex = c + 1;
-      
-      
+
     }
   }
   if (strcmp(command, "ls") == 0)
-    __syscall(sc_pseudols,(size_t)(argsCount > 0 ? args[0] : ""),0,0,0,0);
-  else if (buffer[0]=='h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
+    __syscall(sc_pseudols, (size_t) (argsCount > 0 ? args[0] : ""), 0, 0, 0, 0);
+  else if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
   {
-    printf("Command Help:\nhelp                  yes, here we are\nexit [exit_code]      is really the only command that does something right now\nls                    pseudo ls\n\n");
+    printf(
+        "Command Help:\nhelp                  yes, here we are\nexit [exit_code]      is really the only command that does something right now\nls                    pseudo ls\n\n");
   }
   else if (strcmp(command, "exit") == 0)
   {
-    c=4;
-    while (buffer[c] ==' ')
+    c = 4;
+    while (buffer[c] == ' ')
       c++;
-    exit_code=atoi(&buffer[c]);
-    printf("Exiting Shell with exit_code %d\n",exit_code); 
-    running=0;
+    exit_code = atoi(&buffer[c]);
+    printf("Exiting Shell with exit_code %d\n", exit_code);
+    running = 0;
   }
   else if (FORK_ENABLED)
   {
     pid = fork();
     printf("NewPid: %d\n", pid);
 
-    if(pid == 0)
+    if (pid == 0)
     {
       //child process, replace with new image
-      execv(command,0);
+      execv(command, 0);
       printf("Command not understood\n");
     }
     else
@@ -82,7 +81,6 @@ void handle_command(char* buffer,int buffer_size)
       printf("Join on child process\n");
     }
 
-    
   }
   else
   {
@@ -101,31 +99,31 @@ void handle_command(char* buffer,int buffer_size)
   }
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
-  char const* str1="SWEB-Pseudo-Shell starting...\n";
-  char const* preprompt="SWEB:";
-  char const* prompt="> ";
+  char const* str1 = "SWEB-Pseudo-Shell starting...\n";
+  char const* preprompt = "SWEB:";
+  char const* prompt = "> ";
   char buffer[256];
   memset(buffer, 0, sizeof(buffer));
 
-  int a=0;
+  int a = 0;
   char cwd[256];
   memset(cwd, 0, sizeof(cwd));
   cwd[0] = '/';
 
-  exit_code=0;
+  exit_code = 0;
   running = 1;
-  printf("\n\%s\n",str1);
-  do 
+  printf("\n\%s\n", str1);
+  do
   {
-    printf("\n%s %s%s",preprompt,cwd,prompt);
-    gets(buffer,255);
-    buffer[255]=0;
-    handle_command(buffer,256);
-    for (a=0; a<256; a++)
-      buffer[a]=0;
-    
+    printf("\n%s %s%s", preprompt, cwd, prompt);
+    gets(buffer, 255);
+    buffer[255] = 0;
+    handle_command(buffer, 256);
+    for (a = 0; a < 256; a++)
+      buffer[a] = 0;
+
   } while (running);
 
   return exit_code;

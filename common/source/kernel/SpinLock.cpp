@@ -1,7 +1,3 @@
-/**
- * @file SpinLock.cpp
- */
-
 #include "SpinLock.h"
 #include "kprintf.h"
 #include "ArchThreads.h"

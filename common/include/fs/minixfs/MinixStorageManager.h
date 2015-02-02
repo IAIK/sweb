@@ -1,7 +1,3 @@
-/**
- * @file MinixStorageManager.h
- */
-
 #ifndef MINIX_STORAGE_MANAGER__
 #define MINIX_STORAGE_MANAGER__
 

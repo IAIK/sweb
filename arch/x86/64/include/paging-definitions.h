@@ -1,8 +1,3 @@
-/**
- * @file paging-definitions.h
- *
- */
-
 #ifdef CMAKE_X86_64
 #ifndef __PAGING_DEFINITIONS_H__
 #define __PAGING_DEFINITIONS_H__

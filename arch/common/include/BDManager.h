@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_manager.h
- *
- */
-
 #ifndef _BD_DEVICE_MANAGER_
 #define _BD_DEVICE_MANAGER_
 

@@ -1,7 +1,3 @@
-/**
- * @file MutexLock.cpp
- */
-
 #include "Mutex.h"
 #include "MutexLock.h"
 

@@ -1,7 +1,3 @@
-/**
- * @file FileSystemType.h
- */
-
 #ifndef FILE_SYSTEM_TYPE_H__
 #define FILE_SYSTEM_TYPE_H__
 

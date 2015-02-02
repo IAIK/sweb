@@ -1,6 +1,5 @@
-/**
- * @file kprintf.h
- */
+#ifndef KPRINTF_H__
+#define KPRINTF_H__
 
 #include "stdarg.h"
 #include "types.h"
@@ -65,3 +64,5 @@ bool isDebugEnabled ( size_t flage );
  * @param str the string to write
  */
 void oh_writeStringDebugNoSleep ( char const* str );
+
+#endif

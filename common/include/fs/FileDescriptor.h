@@ -1,12 +1,8 @@
-/**
- * @file FileDescriptor.h
- */
-
 #ifndef FILEDESCRIPTOR_H__
 #define FILEDESCRIPTOR_H__
 
 #include "types.h"
-#include "ustl/ulist.h"
+#include "ulist.h"
 
 class File;
 class FileDescriptor;

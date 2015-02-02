@@ -1,7 +1,3 @@
-/**
- * @file debug.h
- */
-
 #ifndef DEBUG_H___
 #define DEBUG_H___
 

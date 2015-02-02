@@ -1,7 +1,3 @@
-/**
- * @file MinixFSZone.h
- */
-
 #ifndef MINIX_FS_ZONE__
 #define MINIX_FS_ZONE__
 

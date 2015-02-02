@@ -2,7 +2,7 @@
 #define __USTRINGFORMAT_H_
 
 #include "utypes.h"
-#include "console/stdarg.h"
+#include "stdarg.h"
 #include "kstring.h"
 
 #define MAXNBUF 20

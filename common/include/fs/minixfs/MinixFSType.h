@@ -1,10 +1,7 @@
-/**
- * @file MinixFSType.h
- */
 #ifndef _MINIXFS_TYPE_H_
 #define _MINIXFS_TYPE_H_
 
-#include "fs/FileSystemType.h"
+#include "FileSystemType.h"
 
 /**
  * @class MinixFSType is used to register the file system to the vfs.
