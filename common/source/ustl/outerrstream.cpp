@@ -11,8 +11,8 @@ coutclass& cerr = cerr_obj;
 
 void coutclass::init()
 {
-  new (&cout_obj) coutclass(&kprintf, &kprint_buffer);
-  new (&cerr_obj) coutclass(&kprintfd, &kprintd_buffer);
+  new (&cout_obj) coutclass(&kprintf);
+  new (&cerr_obj) coutclass(&kprintfd);
 }
 
 
@@ -23,21 +23,18 @@ coutclass::coutclass (void* p __attribute__((unused)), size_t n __attribute__((u
   m_Width (0),
   m_Base (10),
   m_Precision (2),
-  m_kprintf(&kprintf),
-  m_kprint_buffer(&kprint_buffer)
+  m_kprintf(&kprintf)
 {
     exceptions (goodbit);
 }
 /// Creates an output string stream linked to the given memory area.
-coutclass::coutclass (void* p __attribute__((unused)), size_t n __attribute__((unused)), void (*m_kprintf)(const char*, ...),
-                      void (*m_kprint_buffer)(char*, size_t))
+coutclass::coutclass (void* p __attribute__((unused)), size_t n __attribute__((unused)), void (*m_kprintf)(const char*, ...))
 : ostream (),
   m_Flags (0),
   m_Width (0),
   m_Base (10),
   m_Precision (2),
-  m_kprintf(m_kprintf),
-  m_kprint_buffer(m_kprint_buffer)
+  m_kprintf(m_kprintf)
 {
     exceptions (goodbit);
 }
@@ -49,22 +46,19 @@ coutclass::coutclass ()
   m_Width (0),
   m_Base (10),
   m_Precision (2),
-  m_kprintf(&kprintf),
-  m_kprint_buffer(&kprint_buffer)
+  m_kprintf(&kprintf)
 {
     exceptions (goodbit);
 }
 
 /// Creates an output string stream, initializing the buffer with v.
-coutclass::coutclass (void (*m_kprintf)(const char*, ...),
-                      void (*m_kprint_buffer)(char*, size_t))
+coutclass::coutclass (void (*m_kprintf)(const char*, ...))
 : ostream (),
   m_Flags (0),
   m_Width (0),
   m_Base (10),
   m_Precision (2),
-  m_kprintf(m_kprintf),
-  m_kprint_buffer(m_kprint_buffer)
+  m_kprintf(m_kprintf)
 {
     exceptions (goodbit);
 }
@@ -79,8 +73,7 @@ void coutclass::iwrite (uint8_t v)
 /// Writes the contents of \p buffer of \p size into the stream.
 coutclass& coutclass::write (const void* buffer, size_type sz)
 {
-    m_kprint_buffer((char*)buffer, sz);
-    
+    kprintf("%.*s",sz,buffer);
     return (*this);
 }
 
