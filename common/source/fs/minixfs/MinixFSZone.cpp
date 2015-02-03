@@ -199,7 +199,7 @@ void MinixFSZone::flush(uint32 i_num)
     memset((void*)ind_buffer, 0, sizeof(ind_buffer));
     for (uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++)
     {
-      *(uint16*) (ind_buffer + i * 2) = indirect_zones_[i];
+      *(uint32*) (ind_buffer + i * 4) = indirect_zones_[i];
     }
     superblock_->writeZone(direct_zones_[7], ind_buffer);
   }
@@ -211,7 +211,7 @@ void MinixFSZone::flush(uint32 i_num)
     assert(double_indirect_zones_);
     for (uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++)
     {
-      *(uint32*) (dbl_ind_buffer + ind_zone * 2) = double_indirect_linking_zone_[ind_zone];
+      *(uint32*) (dbl_ind_buffer + ind_zone * 4) = double_indirect_linking_zone_[ind_zone];
     }
     superblock_->writeZone(direct_zones_[8], dbl_ind_buffer);
     for (uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++)
@@ -221,7 +221,7 @@ void MinixFSZone::flush(uint32 i_num)
         memset((void*)dbl_ind_buffer, 0, sizeof(dbl_ind_buffer));
         for (uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES; d_ind_zone++)
         {
-          *(uint32*) (dbl_ind_buffer + d_ind_zone * 2) = double_indirect_zones_[ind_zone][d_ind_zone];
+          *(uint32*) (dbl_ind_buffer + d_ind_zone * 4) = double_indirect_zones_[ind_zone][d_ind_zone];
         }
         superblock_->writeZone(double_indirect_linking_zone_[ind_zone], dbl_ind_buffer);
       }

@@ -52,12 +52,12 @@ const size_t A_INTERRUPTS       = 0x00400020;
 
 //group file system
 const size_t FS                 = 0x00800000 | OUTPUT_ENABLED;
-const size_t RAMFS              = 0x00800001;
+const size_t RAMFS              = 0x00800001 | OUTPUT_ENABLED;
 const size_t DENTRY             = 0x00800002 | OUTPUT_ENABLED;
-const size_t PATHWALKER         = 0x00800004;
-const size_t PSEUDOFS           = 0x00800008;
+const size_t PATHWALKER         = 0x00800004 | OUTPUT_ENABLED;
+const size_t PSEUDOFS           = 0x00800008 | OUTPUT_ENABLED;
 const size_t VFSSYSCALL         = 0x00800010 | OUTPUT_ENABLED;
-const size_t VFS                = 0x00800020;
+const size_t VFS                = 0x00800020 | OUTPUT_ENABLED;
 
 #endif //DEBUG_H___
 

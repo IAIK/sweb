@@ -420,7 +420,7 @@ void MinixFSInode::loadChildren()
         }
 
         char name[MAX_NAME_LENGTH + 1];
-        strncpy(name, dbuffer + curr_dentry + 2, MAX_NAME_LENGTH);
+        strncpy(name, dbuffer + curr_dentry + 4, MAX_NAME_LENGTH);
 
         name[MAX_NAME_LENGTH] = 0;
 
