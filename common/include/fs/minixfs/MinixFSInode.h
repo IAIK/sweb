@@ -45,16 +45,12 @@ class MinixFSInode : public Inode
      * constructor of an inode existing on disc with all data given
      * @param super_block the superblock the inode is on
      * @param i_mode the mode containing the rights and the inode type (I_FILE, I_DIR)
-     * @param i_uid the user id
      * @param i_size the inodes size
-     * @param i_modtime the modification time
-     * @param i_gid the group id
      * @param i_nlinks the number of links to this inode
      * @param i_zones the first 9 zone addresses
      * @param i_num the inode number
      */
-    MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 i_uid, uint32 i_size, uint32 i_modtime, uint8 i_gid,
-                 uint8 i_nlinks, uint16* i_zones, uint32 i_num);
+    MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones, uint32 i_num);
 
     /**
      * destructor

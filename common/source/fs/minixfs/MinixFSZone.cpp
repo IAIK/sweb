@@ -11,7 +11,7 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)
 {
   superblock_ = superblock;
   num_zones_ = 0;
-  for (uint32 i = 0; i < 9; i++)
+  for (uint32 i = 0; i < 10; i++)
   {
     direct_zones_[i] = zones[i];
     if (zones[i] && i < 7)
@@ -19,7 +19,7 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)
     debug(M_ZONE, "zone: %x\t", zones[i]);
   }
   char buffer[ZONE_SIZE];
-  uint16* temp = (uint16*) buffer;
+  uint32* temp = (uint32*) buffer;
   if (zones[7])
   {
     indirect_zones_ = new zone_add_type[NUM_ZONE_ADDRESSES];
@@ -41,7 +41,7 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)
     double_indirect_linking_zone_ = new zone_add_type[NUM_ZONE_ADDRESSES];
     superblock_->readZone(zones[8], buffer);
     char ind_buffer[ZONE_SIZE];
-    uint16* ind_temp = (uint16*) ind_buffer;
+    uint32* ind_temp = (uint32*) ind_buffer;
     for (uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++)
     {
       double_indirect_linking_zone_[ind_zone] = temp[ind_zone];
@@ -74,7 +74,7 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones)
     kprintfd("=========Zones:======%d=======\n", num_zones_);
     kprintfd("====direct Zones:====\n");
     uint32 print_num_zones = 0;
-    for (uint32 i = 0; i < 9; i++, print_num_zones++)
+    for (uint32 i = 0; i < 10; i++, print_num_zones++)
     {
       kprintfd("====zone: %x\t", direct_zones_[i]);
     }
@@ -182,14 +182,14 @@ void MinixFSZone::addZone(zone_add_type zone)
 void MinixFSZone::flush(uint32 i_num)
 {
   debug(M_ZONE, "MinixFSZone::flush i_num : %d; %p\n", i_num, this);
-  char buffer[18];
-  for (uint32 index = 0; index < 9; index++)
+  char buffer[40];
+  for (uint32 index = 0; index < 10; index++)
   {
-    *(uint16*) (buffer + index * 2) = direct_zones_[index];
+    *(uint32*) (buffer + index * 2) = direct_zones_[index];
   }
   uint32 block = 2 + superblock_->s_num_inode_bm_blocks_ + superblock_->s_num_zone_bm_blocks_
       + ((i_num - 1) * INODE_SIZE) / BLOCK_SIZE;
-  superblock_->writeBytes(block, ((i_num - 1) * INODE_SIZE) % BLOCK_SIZE + 14, 18, buffer);
+  superblock_->writeBytes(block, ((i_num - 1) * INODE_SIZE) % BLOCK_SIZE + 24, 40, buffer);
   debug(M_ZONE, "MinixFSZone::flush direct written\n");
   if (direct_zones_[7])
   {
@@ -211,7 +211,7 @@ void MinixFSZone::flush(uint32 i_num)
     assert(double_indirect_zones_);
     for (uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++)
     {
-      *(uint16*) (dbl_ind_buffer + ind_zone * 2) = double_indirect_linking_zone_[ind_zone];
+      *(uint32*) (dbl_ind_buffer + ind_zone * 2) = double_indirect_linking_zone_[ind_zone];
     }
     superblock_->writeZone(direct_zones_[8], dbl_ind_buffer);
     for (uint32 ind_zone = 0; ind_zone < NUM_ZONE_ADDRESSES; ind_zone++)
@@ -221,7 +221,7 @@ void MinixFSZone::flush(uint32 i_num)
         memset((void*)dbl_ind_buffer, 0, sizeof(dbl_ind_buffer));
         for (uint32 d_ind_zone = 0; d_ind_zone < NUM_ZONE_ADDRESSES; d_ind_zone++)
         {
-          *(uint16*) (dbl_ind_buffer + d_ind_zone * 2) = double_indirect_zones_[ind_zone][d_ind_zone];
+          *(uint32*) (dbl_ind_buffer + d_ind_zone * 2) = double_indirect_zones_[ind_zone][d_ind_zone];
         }
         superblock_->writeZone(double_indirect_linking_zone_[ind_zone], dbl_ind_buffer);
       }
@@ -231,7 +231,7 @@ void MinixFSZone::flush(uint32 i_num)
 
 void MinixFSZone::freeZones()
 {
-  for (uint32 i = 0; i < 9; i++)
+  for (uint32 i = 0; i < 10; i++)
     if (direct_zones_[i])
       superblock_->freeZone(direct_zones_[i]);
 

@@ -188,11 +188,7 @@ class MinixFSSuperblock : public Superblock
     /**
      * # usable inodes on the minor device
      */
-    uint16 s_num_inodes_;
-    /**
-     * total device size including bit maps etc.
-     */
-    uint16 s_num_zones_;
+    uint32 s_num_inodes_;
     /**
      * # of blocks used by inode bit map
      */
@@ -213,6 +209,12 @@ class MinixFSSuperblock : public Superblock
      * maximum file size on this device
      */
     uint32 s_max_file_size_;
+
+    uint32 s_zones_;
+
+    uint16 s_block_size_;
+
+    uint8 s_disk_version_;
 
     MinixStorageManager* storage_manager_;
 

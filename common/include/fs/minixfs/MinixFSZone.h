@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-typedef uint16 zone_add_type;
+typedef uint32 zone_add_type;
 
 class MinixFSSuperblock;
 

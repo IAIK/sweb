@@ -16,9 +16,8 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
   i_dentry_ = 0;
 }
 
-MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint16 __attribute__((unused)) i_uid, uint32 i_size,
-                           uint32 __attribute__((unused)) i_modtime, uint8 __attribute__((unused)) i_gid,
-                           uint8 i_nlinks, uint16* i_zones, uint32 i_num) :
+MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones,
+                           uint32 i_num) :
     Inode(super_block, 0), i_zones_(new MinixFSZone((MinixFSSuperblock*) super_block, i_zones)), i_num_(i_num),
     children_loaded_(false)
 {
@@ -230,7 +229,7 @@ int32 MinixFSInode::findDentry(uint32 i_num)
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
     for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
+      uint32 inode_index = *(uint32*) (dbuffer + curr_dentry);
       if (inode_index == i_num)
       {
         debug(M_INODE, "findDentry: found pos: %d\n", (zone * ZONE_SIZE + curr_dentry));
@@ -254,7 +253,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   char dbuffer[ZONE_SIZE];
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
   ((MinixFSSuperblock *) i_superblock_)->readZone(zone, dbuffer);
-  *(uint16*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
+  *(uint32*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
   strncpy(dbuffer + dentry_pos % ZONE_SIZE + 2, name, MAX_NAME_LENGTH);
   ((MinixFSSuperblock *) i_superblock_)->writeZone(zone, dbuffer);
 
@@ -402,7 +401,7 @@ void MinixFSInode::loadChildren()
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
     for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
+      uint32 inode_index = *(uint32*) (dbuffer + curr_dentry);
       if (inode_index)
       {
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
