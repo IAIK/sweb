@@ -254,7 +254,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
   ((MinixFSSuperblock *) i_superblock_)->readZone(zone, dbuffer);
   *(uint32*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
-  strncpy(dbuffer + dentry_pos % ZONE_SIZE + 2, name, MAX_NAME_LENGTH);
+  strncpy(dbuffer + dentry_pos % ZONE_SIZE + 4, name, MAX_NAME_LENGTH);
   ((MinixFSSuperblock *) i_superblock_)->writeZone(zone, dbuffer);
 
   if (dest_i_num == 0 && i_size_ < (uint32) dentry_pos + DENTRY_SIZE)
