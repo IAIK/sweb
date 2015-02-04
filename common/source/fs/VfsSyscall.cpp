@@ -20,6 +20,8 @@
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
 
+extern FileSystemInfo* default_working_dir;
+
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
   extern Mutex global_fd_lock;
@@ -37,7 +39,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 
 int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   if (pathname == 0)
     return -1;
 
@@ -119,8 +121,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
 Dirent* VfsSyscall::readdir(const char* pathname)
 {
-  kprintfd("%s\n",pathname);
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)

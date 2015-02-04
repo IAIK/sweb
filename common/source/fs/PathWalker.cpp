@@ -22,6 +22,8 @@
 #define CHAR_ROOT '/'
 #define SEPARATOR '/'
 
+extern FileSystemInfo* default_working_dir;
+
 int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_,
                            VfsMount*& vfs_mount_)
 {
@@ -31,7 +33,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
   // The last path component
   char* last_ = 0;
 
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   if (pathname == 0)
   {
     return PW_ENOTFOUND;
@@ -62,7 +64,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
   debug(PATHWALKER, "PathWalk> return success - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_);
 
   debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
-  fs_info = currentThread->getWorkingDirInfo();
+  fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   debug(PATHWALKER, "pathWalk> fs_info->pathname_.c_str() : %s\n", fs_info->pathname_.c_str());
   if (pathname == 0)
   {

@@ -216,7 +216,7 @@ add_custom_command (OUTPUT helper_files
 #Custom Command: invoke exe2minixfs and copy the temp dir to our hd image
 add_custom_command (OUTPUT copy_to_image
   DEPENDS helper_files exe2minixfs
-  COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./kernel.x /boot/kernel.x ./temp/boot/grub/menu.lst /boot/grub/menu.lst
+  COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./temp/boot/grub/menu.lst /boot/grub/menu.lst ./kernel.x /boot/kernel.x
   COMMAND rm -R temp
 
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}

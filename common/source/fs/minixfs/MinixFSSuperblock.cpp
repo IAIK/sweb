@@ -230,7 +230,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
   }
   MinixFSZone *to_delete_i_zones = minix_inode->i_zones_;
   minix_inode->i_zones_ = new MinixFSZone(this, i_zones);
-  minix_inode->i_nlink_ = buffer[1];
+  minix_inode->i_nlink_ = *(uint16*) (buffer + 2);
   minix_inode->i_size_ = *(uint32*) (buffer + 8);
   delete to_delete_i_zones;
   return 0;
@@ -266,7 +266,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   {
     // link etc. unhandled
   }
-  buffer[1] = minix_inode->i_nlink_;
+  *(uint16*) (buffer + 2) = minix_inode->i_nlink_;
   *(uint32*) (buffer + 8) = minix_inode->i_size_;
   debug(M_SB, "writeInode> writing bytes to disc on block %d with offset %d\n", block, offset);
   writeBytes(block, offset, INODE_SIZE, buffer);
