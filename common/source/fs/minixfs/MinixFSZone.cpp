@@ -185,7 +185,7 @@ void MinixFSZone::flush(uint32 i_num)
   char buffer[40];
   for (uint32 index = 0; index < 10; index++)
   {
-    *(uint32*) (buffer + index * 2) = direct_zones_[index];
+    *(uint32*) (buffer + index * 4) = direct_zones_[index];
   }
   uint32 block = 2 + superblock_->s_num_inode_bm_blocks_ + superblock_->s_num_zone_bm_blocks_
       + ((i_num - 1) * INODE_SIZE) / BLOCK_SIZE;

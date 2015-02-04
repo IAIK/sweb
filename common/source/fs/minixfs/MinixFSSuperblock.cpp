@@ -129,7 +129,7 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   uint32 i_zones[10];
   for (uint32 num_zone = 0; num_zone < 10; num_zone++)
   {
-    i_zones[num_zone] = *(uint32*) (ibuffer + 24 + (num_zone * 2));
+    i_zones[num_zone] = *(uint32*) (ibuffer + 24 + (num_zone * 4));
   }
   debug(M_SB, "getInode:: calling creating Inode\n");
   inode = new MinixFSInode(this, *(uint16*) (ibuffer + 0), *(uint32*) (ibuffer + 8), *(uint16*) (ibuffer + 2), i_zones,
@@ -227,7 +227,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
   uint32 *i_zones = new uint32[10];
   for (uint32 num_zone = 0; num_zone < 10; num_zone++)
   {
-    i_zones[num_zone] = *(uint32*) (buffer + 24 + (num_zone * 2));
+    i_zones[num_zone] = *(uint32*) (buffer + 24 + (num_zone * 4));
   }
   MinixFSZone *to_delete_i_zones = minix_inode->i_zones_;
   minix_inode->i_zones_ = new MinixFSZone(this, i_zones);
