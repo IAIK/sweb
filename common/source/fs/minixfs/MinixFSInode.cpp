@@ -229,7 +229,7 @@ int32 MinixFSInode::findDentry(uint32 i_num)
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
     for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint32 inode_index = *(uint32*) (dbuffer + curr_dentry);
+      uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
       if (inode_index == i_num)
       {
         debug(M_INODE, "findDentry: found pos: %d\n", (zone * ZONE_SIZE + curr_dentry));
@@ -253,7 +253,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   char dbuffer[ZONE_SIZE];
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
   ((MinixFSSuperblock *) i_superblock_)->readZone(zone, dbuffer);
-  *(uint32*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
+  *(uint16*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
   strncpy(dbuffer + dentry_pos % ZONE_SIZE + 4, name, MAX_NAME_LENGTH);
   ((MinixFSSuperblock *) i_superblock_)->writeZone(zone, dbuffer);
 
