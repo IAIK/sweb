@@ -401,7 +401,7 @@ void MinixFSInode::loadChildren()
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
     for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
     {
-      uint32 inode_index = *(uint32*) (dbuffer + curr_dentry);
+      uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
       if (inode_index)
       {
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
