@@ -7,7 +7,6 @@
 #define INODE_SIZE 64
 #define INODES_PER_BLOCK(b) ((b)/INODE_SIZE)
 #define DENTRY_SIZE 64
-#define MAX_NAME_LENGTH 30
-#define DENTRY_PER_BLOCK 32
+#define MAX_NAME_LENGTH 60
 
 #endif
