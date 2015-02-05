@@ -94,13 +94,7 @@ size_t Syscall::read(size_t fd, pointer buffer, size_t count)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
     num_read = currentThread->getTerminal()->readLineRaw((char*) buffer, count);
-    debug(SYSCALL, "Syscall::read: %.*s", num_read, (char*) buffer);
-    if (isDebugEnabled(SYSCALL))
-    {
-      for (size_t c = 0; c < num_read; ++c)
-        kprintfd("%c(%x) ", ((char*) buffer)[c], ((char*) buffer)[c]);
-      kprintfd("\n");
-    }
+    debug(SYSCALL, "Syscall::read: %.*s\n", num_read, (char*) buffer);
   }
   else
   {

@@ -60,6 +60,7 @@ void MinixFSSuperblock::readHeader()
     s_num_inodes_ = *(uint16*) (buffer + 0);
     s_magic_ = *(uint16*) (buffer + 16);
     s_zones_ = *(uint16*) (buffer + 2);
+    s_block_size_ = 1024;
   }
   s_num_inode_bm_blocks_ = *(uint16*) (buffer + (s_magic_ == MINIX_V3 ? 6 : 4));
   s_num_zone_bm_blocks_ = *(uint16*) (buffer + (s_magic_ == MINIX_V3 ? 8 : 6));
