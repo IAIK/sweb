@@ -8,6 +8,7 @@
 #define INODES_PER_BLOCK(X) ((X==MINIX_V3) ? 16 : 32)
 #define DENTRY_SIZE(X) ((X==MINIX_V3) ? 64 : 32)
 #define MAX_NAME_LENGTH(X) ((X==MINIX_V3) ? 60 : 30)
+#define NUM_ZONES(X) ((X==MINIX_V3) ? 10 : 9)
 #define MINIX_V3 0x4d5a
 
 #endif

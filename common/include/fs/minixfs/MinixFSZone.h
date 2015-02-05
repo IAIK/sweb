@@ -3,8 +3,6 @@
 
 #include "types.h"
 
-typedef uint32 zone_add_type;
-
 class MinixFSSuperblock;
 
 /**
@@ -25,7 +23,7 @@ class MinixFSZone
      * @param superblock the superblock
      * @param zones the zone array from the file system
      */
-    MinixFSZone(MinixFSSuperblock *superblock, zone_add_type *zones);
+    MinixFSZone(MinixFSSuperblock *superblock, uint32 *zones);
 
     /**
      * destructor
@@ -37,20 +35,20 @@ class MinixFSZone
      * @param index the zone index
      * @return the address
      */
-    zone_add_type getZone(uint32 index);
+    uint32 getZone(uint32 index);
 
     /**
      * sets the zone address at the given index
      * @param index the index
      * @param zone the zone address
      */
-    void setZone(uint32 index, zone_add_type zone);
+    void setZone(uint32 index, uint32 zone);
 
     /**
      * adds one zone with the given address
      * @param zone the address
      */
-    void addZone(zone_add_type zone);
+    void addZone(uint32 zone);
 
     /**
      * returns the number of zones
@@ -75,10 +73,10 @@ class MinixFSZone
   private:
 
     MinixFSSuperblock *superblock_;
-    zone_add_type direct_zones_[9];
-    zone_add_type *indirect_zones_;
-    zone_add_type *double_indirect_linking_zone_;
-    zone_add_type **double_indirect_zones_;
+    uint32 direct_zones_[10];
+    uint32 *indirect_zones_;
+    uint32 *double_indirect_linking_zone_;
+    uint32 **double_indirect_zones_;
 
     uint32 num_zones_;
 
