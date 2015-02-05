@@ -4,11 +4,11 @@
 #define OUTPUT_ENABLED 0x80000000
 
 //group minix
-const size_t MINIX              = 0x00010000 | OUTPUT_ENABLED;
-const size_t M_STORAGE_MANAGER  = 0x00010001 | OUTPUT_ENABLED;
-const size_t M_INODE            = 0x00010002 | OUTPUT_ENABLED;
-const size_t M_SB               = 0x00010004 | OUTPUT_ENABLED;
-const size_t M_ZONE             = 0x00010008 | OUTPUT_ENABLED;
+const size_t MINIX              = 0x00010000;// | OUTPUT_ENABLED;
+const size_t M_STORAGE_MANAGER  = 0x00010001;// | OUTPUT_ENABLED;
+const size_t M_INODE            = 0x00010002;// | OUTPUT_ENABLED;
+const size_t M_SB               = 0x00010004;// | OUTPUT_ENABLED;
+const size_t M_ZONE             = 0x00010008;// | OUTPUT_ENABLED;
 
 //group Block Device
 const size_t BD                 = 0x00020000;
@@ -51,13 +51,13 @@ const size_t A_KB_MANAGER       = 0x00400010;
 const size_t A_INTERRUPTS       = 0x00400020;
 
 //group file system
-const size_t FS                 = 0x00800000 | OUTPUT_ENABLED;
-const size_t RAMFS              = 0x00800001 | OUTPUT_ENABLED;
-const size_t DENTRY             = 0x00800002 | OUTPUT_ENABLED;
-const size_t PATHWALKER         = 0x00800004 | OUTPUT_ENABLED;
-const size_t PSEUDOFS           = 0x00800008 | OUTPUT_ENABLED;
-const size_t VFSSYSCALL         = 0x00800010 | OUTPUT_ENABLED;
-const size_t VFS                = 0x00800020 | OUTPUT_ENABLED;
+const size_t FS                 = 0x00800000;// | OUTPUT_ENABLED;
+const size_t RAMFS              = 0x00800001;// | OUTPUT_ENABLED;
+const size_t DENTRY             = 0x00800002;// | OUTPUT_ENABLED;
+const size_t PATHWALKER         = 0x00800004;// | OUTPUT_ENABLED;
+const size_t PSEUDOFS           = 0x00800008;// | OUTPUT_ENABLED;
+const size_t VFSSYSCALL         = 0x00800010;// | OUTPUT_ENABLED;
+const size_t VFS                = 0x00800020;// | OUTPUT_ENABLED;
 
 #endif //DEBUG_H___
 
