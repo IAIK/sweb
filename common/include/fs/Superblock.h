@@ -28,6 +28,12 @@ class Superblock
 
     friend class VirtualFileSystem;
 
+    /**
+     * This records an identification number that has been read from the device
+     * to confirm that the data on the device corresponds to the file-system
+     */
+    uint64 s_magic_;
+
   protected:
 
     /**
@@ -39,12 +45,6 @@ class Superblock
      * The device that this file-system is mounted on.
      */
     uint32 s_dev_;
-
-    /**
-     * This records an identification number that has been read from the device
-     * to confirm that the data on the device corresponds to the file-system
-     */
-    uint64 s_magic_;
 
     /**
      * This is a list of flags which are logically with the flags in each

@@ -232,7 +232,7 @@ int32 MinixFSInode::findDentry(uint32 i_num)
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
-    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
+    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += INODE_SIZE(i_superblock_->s_magic_))
     {
       uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
       if (inode_index == i_num)
@@ -259,11 +259,11 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
   ((MinixFSSuperblock *) i_superblock_)->readZone(zone, dbuffer);
   *(uint16*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
-  strncpy(dbuffer + dentry_pos % ZONE_SIZE + 4, name, MAX_NAME_LENGTH);
+  strncpy(dbuffer + dentry_pos % ZONE_SIZE + 4, name, MAX_NAME_LENGTH(i_superblock_->s_magic_));
   ((MinixFSSuperblock *) i_superblock_)->writeZone(zone, dbuffer);
 
-  if (dest_i_num == 0 && i_size_ < (uint32) dentry_pos + DENTRY_SIZE)
-    i_size_ += DENTRY_SIZE;
+  if (dest_i_num == 0 && i_size_ < (uint32) dentry_pos + INODE_SIZE(i_superblock_->s_magic_))
+    i_size_ += INODE_SIZE(i_superblock_->s_magic_);
 
 }
 
@@ -404,7 +404,7 @@ void MinixFSInode::loadChildren()
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
     ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
-    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += DENTRY_SIZE)
+    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += INODE_SIZE(i_superblock_->s_magic_))
     {
       uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
       if (inode_index)
@@ -424,10 +424,10 @@ void MinixFSInode::loadChildren()
           continue;
         }
 
-        char name[MAX_NAME_LENGTH + 1];
-        strncpy(name, dbuffer + curr_dentry + 4, MAX_NAME_LENGTH);
+        char name[MAX_NAME_LENGTH(i_superblock_->s_magic_) + 1];
+        strncpy(name, dbuffer + curr_dentry + 4, MAX_NAME_LENGTH(i_superblock_->s_magic_));
 
-        name[MAX_NAME_LENGTH] = 0;
+        name[MAX_NAME_LENGTH(i_superblock_->s_magic_)] = 0;
 
         debug(M_INODE, "loadChildren: dentry name: %s\n", name);
         Dentry *new_dentry = new Dentry(name);
