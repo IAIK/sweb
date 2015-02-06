@@ -259,10 +259,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
   ((MinixFSSuperblock *) i_superblock_)->readZone(zone, dbuffer);
   *(uint16*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
-  if (i_superblock_->s_magic_ == MINIX_V3)
-    strncpy(dbuffer + dentry_pos % ZONE_SIZE + 4, name, MAX_NAME_LENGTH(i_superblock_->s_magic_));
-  else
-    strncpy(dbuffer + dentry_pos % ZONE_SIZE + 2, name, MAX_NAME_LENGTH(i_superblock_->s_magic_));
+  strncpy(dbuffer + dentry_pos % ZONE_SIZE + (i_superblock_->s_magic_ == MINIX_V3 ? 4 : 2), name, MAX_NAME_LENGTH(i_superblock_->s_magic_));
   ((MinixFSSuperblock *) i_superblock_)->writeZone(zone, dbuffer);
 
   if (dest_i_num == 0 && i_size_ < (uint32) dentry_pos + INODE_SIZE(i_superblock_->s_magic_))
@@ -428,10 +425,7 @@ void MinixFSInode::loadChildren()
         }
 
         char name[MAX_NAME_LENGTH(i_superblock_->s_magic_) + 1];
-        if (i_superblock_->s_magic_ == MINIX_V3)
-          strncpy(name, dbuffer + curr_dentry + 4, MAX_NAME_LENGTH(i_superblock_->s_magic_));
-        else
-          strncpy(name, dbuffer + curr_dentry + 2, MAX_NAME_LENGTH(i_superblock_->s_magic_));
+        strncpy(name, dbuffer + curr_dentry + (i_superblock_->s_magic_ == MINIX_V3 ? 4 : 2), MAX_NAME_LENGTH(i_superblock_->s_magic_));
 
         name[MAX_NAME_LENGTH(i_superblock_->s_magic_)] = 0;
 
