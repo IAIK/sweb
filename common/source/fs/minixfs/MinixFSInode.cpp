@@ -82,7 +82,7 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   for (uint32 zone = start_zone; zone < start_zone + num_zones; zone++)
   {
     memset(rbuffer, 0, sizeof(rbuffer));
-    ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
+    ((MinixFSSuperblock *) superblock_)->readZone(i_zones_->getZone(zone), rbuffer);
     uint32 count = size - index;
     uint32 zone_diff = ZONE_SIZE - zone_offset;
     count = count < zone_diff ? count : zone_diff;
@@ -105,7 +105,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
     uint32 num_new_zones = (size + offset - i_size_) / ZONE_SIZE + 1;
     for (uint32 new_zones = 0; new_zones < num_new_zones; new_zones++, last_zone++)
     {
-      MinixFSSuperblock* sb = (MinixFSSuperblock*) i_superblock_;
+      MinixFSSuperblock* sb = (MinixFSSuperblock*) superblock_;
       debug(M_INODE, "writeData: allocating new Zone\n");
       uint16 new_zone = sb->allocateZone();
       i_zones_->setZone(i_zones_->getNumZones(), new_zone);
@@ -120,13 +120,13 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
     if (zone_size_offset)
     {
       readData(i_size_ - zone_size_offset, zone_size_offset, fill_buffer);
-      ((MinixFSSuperblock *) i_superblock_)->writeZone(last_used_zone, fill_buffer);
+      ((MinixFSSuperblock *) superblock_)->writeZone(last_used_zone, fill_buffer);
     }
     ++last_used_zone;
     for (; last_used_zone <= offset / ZONE_SIZE; last_used_zone++)
     {
       memset(fill_buffer, 0, sizeof(fill_buffer));
-      ((MinixFSSuperblock *) i_superblock_)->writeZone(last_used_zone, fill_buffer);
+      ((MinixFSSuperblock *) superblock_)->writeZone(last_used_zone, fill_buffer);
     }
     --last_used_zone;
     i_size_ = offset;
@@ -146,7 +146,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   {
     debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n", zone_index,
           i_zones_->getZone(zone));
-    ((MinixFSSuperblock *) i_superblock_)->writeZone(i_zones_->getZone(zone_index + zone), wbuffer);
+    ((MinixFSSuperblock *) superblock_)->writeZone(i_zones_->getZone(zone_index + zone), wbuffer);
     wbuffer += ZONE_SIZE;
   }
   if (i_size_ < offset + size)
@@ -231,8 +231,8 @@ int32 MinixFSInode::findDentry(uint32 i_num)
   char dbuffer[ZONE_SIZE];
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
-    ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
-    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += INODE_SIZE(i_superblock_))
+    ((MinixFSSuperblock *) superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
+    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += INODE_SIZE)
     {
       uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
       if (inode_index == i_num)
@@ -252,18 +252,18 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
   int32 dentry_pos = findDentry(dest_i_num);
   if (dentry_pos < 0 && dest_i_num == 0)
   {
-    i_zones_->addZone(((MinixFSSuperblock *) i_superblock_)->allocateZone());
+    i_zones_->addZone(((MinixFSSuperblock *) superblock_)->allocateZone());
     dentry_pos = (i_zones_->getNumZones() - 1) * ZONE_SIZE;
   }
   char dbuffer[ZONE_SIZE];
   uint32 zone = i_zones_->getZone(dentry_pos / ZONE_SIZE);
-  ((MinixFSSuperblock *) i_superblock_)->readZone(zone, dbuffer);
+  ((MinixFSSuperblock *) superblock_)->readZone(zone, dbuffer);
   *(uint16*) (dbuffer + (dentry_pos % ZONE_SIZE)) = src_i_num;
-  strncpy(dbuffer + dentry_pos % ZONE_SIZE + (i_superblock_->s_magic_ == MINIX_V3 ? 4 : 2), name, MAX_NAME_LENGTH(i_superblock_));
-  ((MinixFSSuperblock *) i_superblock_)->writeZone(zone, dbuffer);
+  strncpy(dbuffer + dentry_pos % ZONE_SIZE + INODE_BYTES, name, MAX_NAME_LENGTH);
+  ((MinixFSSuperblock *) superblock_)->writeZone(zone, dbuffer);
 
-  if (dest_i_num == 0 && i_size_ < (uint32) dentry_pos + INODE_SIZE(i_superblock_))
-    i_size_ += INODE_SIZE(i_superblock_);
+  if (dest_i_num == 0 && i_size_ < (uint32) dentry_pos + INODE_SIZE)
+    i_size_ += INODE_SIZE;
 
 }
 
@@ -403,8 +403,8 @@ void MinixFSInode::loadChildren()
   char dbuffer[ZONE_SIZE];
   for (uint32 zone = 0; zone < i_zones_->getNumZones(); zone++)
   {
-    ((MinixFSSuperblock *) i_superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
-    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += INODE_SIZE(i_superblock_))
+    ((MinixFSSuperblock *) superblock_)->readZone(i_zones_->getZone(zone), dbuffer);
+    for (uint32 curr_dentry = 0; curr_dentry < BLOCK_SIZE; curr_dentry += INODE_SIZE)
     {
       uint16 inode_index = *(uint16*) (dbuffer + curr_dentry);
       if (inode_index)
@@ -412,7 +412,7 @@ void MinixFSInode::loadChildren()
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
         bool is_already_loaded = false;
 
-        Inode* inode = ((MinixFSSuperblock *) i_superblock_)->getInode(inode_index, is_already_loaded);
+        Inode* inode = ((MinixFSSuperblock *) superblock_)->getInode(inode_index, is_already_loaded);
 
         if (!inode)
         {
@@ -424,10 +424,10 @@ void MinixFSInode::loadChildren()
           continue;
         }
 
-        char name[MAX_NAME_LENGTH(i_superblock_) + 1];
-        strncpy(name, dbuffer + curr_dentry + (i_superblock_->s_magic_ == MINIX_V3 ? 4 : 2), MAX_NAME_LENGTH(i_superblock_));
+        char name[MAX_NAME_LENGTH + 1];
+        strncpy(name, dbuffer + curr_dentry + INODE_BYTES, MAX_NAME_LENGTH);
 
-        name[MAX_NAME_LENGTH(i_superblock_)] = 0;
+        name[MAX_NAME_LENGTH] = 0;
 
         debug(M_INODE, "loadChildren: dentry name: %s\n", name);
         Dentry *new_dentry = new Dentry(name);
@@ -436,7 +436,7 @@ void MinixFSInode::loadChildren()
         if (!is_already_loaded)
         {
           ((MinixFSInode *) inode)->i_dentry_ = new_dentry;
-          ((MinixFSSuperblock *) i_superblock_)->all_inodes_add_inode(inode);
+          ((MinixFSSuperblock *) superblock_)->all_inodes_add_inode(inode);
         }
         else
           ((MinixFSInode *) inode)->other_dentries_.push_back(new_dentry);
@@ -449,7 +449,7 @@ void MinixFSInode::loadChildren()
 
 int32 MinixFSInode::flush()
 {
-  i_superblock_->writeInode(this);
+  superblock_->writeInode(this);
   debug(M_INODE, "flush: flushed\n");
   return 0;
 }

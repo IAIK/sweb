@@ -225,6 +225,11 @@ class MinixFSSuperblock : public Superblock
 
 
     ustl::map<uint32, Inode*> all_inodes_set_;
+
+    /**
+     * pointer to self for compatability
+     */
+    Superblock* superblock_;
 };
 
 #endif // MinixFSSuperblock_h___

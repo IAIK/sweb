@@ -25,9 +25,7 @@ Dentry::~Dentry()
     d_parent_->childRemove(this);
   }
   for (Dentry* dentry : d_child_)
-  {
     dentry->d_parent_ = 0;
-  }
   debug(DENTRY, "deleting Dentry finished\n");
 }
 
@@ -44,9 +42,6 @@ void Dentry::childInsert(Dentry *child_dentry)
 
 int32 Dentry::childRemove(Dentry *child_dentry)
 {
-  debug(DENTRY, "Dentry childRemove entering\n");
-  debug(DENTRY, "Dentry childRemove d_child_ length: %ld \n", d_child_.size());
-
   debug(DENTRY, "Dentry childRemove d_child_ included: %d\n",
         ustl::find(d_child_.begin(), d_child_.end(), child_dentry) != d_child_.end());
   assert(child_dentry != 0);
@@ -63,10 +58,7 @@ const char* Dentry::getName()
 
 int32 Dentry::setChild(Dentry *dentry)
 {
-  if (dentry == 0)
-    return -1;
-
-  if (ustl::find(d_child_.begin(), d_child_.end(), dentry) != d_child_.end())
+  if (dentry == 0 || ustl::find(d_child_.begin(), d_child_.end(), dentry) != d_child_.end())
     return -1;
 
   d_child_.push_back(dentry);
@@ -81,9 +73,7 @@ Dentry* Dentry::checkName(const char* name)
     const char *tmp_name = dentry->getName();
     debug(DENTRY, "(checkname) name : %s\n", tmp_name);
     if (strcmp(tmp_name, name) == 0)
-    {
       return dentry;
-    }
   }
 
   return 0;
