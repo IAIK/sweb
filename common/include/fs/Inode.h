@@ -83,30 +83,33 @@ class Inode
 
   public:
 
-
     /**
-    * contructor
+     * contructor
      * @param super_block the superblock to create the inode on
      * @param inode_type the inode type
      */
-    Inode ( Superblock *super_block, uint32 inode_type ):
-      i_dentry_(0),
-      i_nlink_(0),
-      i_size_ (0),
-      i_state_( I_UNUSED )
-    { i_superblock_ = super_block, i_type_ = inode_type; }
+    Inode(Superblock *super_block, uint32 inode_type) :
+        i_dentry_(0), i_nlink_(0), i_size_(0), i_state_( I_UNUSED)
+    {
+      i_superblock_ = super_block, i_type_ = inode_type;
+    }
 
     /**
      * destructor
      */
-    virtual ~Inode() {}
+    virtual ~Inode()
+    {
+    }
 
     /**
      * Create a directory with the given dentry.
      * @param dentry the dentry
      * @return 0 on success
      */
-    virtual int32 create ( Dentry * ) { return 0; }
+    virtual int32 create(Dentry *)
+    {
+      return 0;
+    }
 
     /**
      * lookup should check if that name (given by the char-array) exists in the
@@ -116,7 +119,10 @@ class Inode
      * @param name the name to look for
      * @return the dentry found
      */
-    virtual Dentry* lookup ( const char* /*name*/ ) {return 0;}
+    virtual Dentry* lookup(const char* /*name*/)
+    {
+      return 0;
+    }
 
     /**
      * The link method should make a hard link to the name referred to by the
@@ -125,7 +131,10 @@ class Inode
      * @param flag the flag
      * @return the link file
      */
-    virtual File* link ( uint32 /*flag*/ ) {return 0;}
+    virtual File* link(uint32 /*flag*/)
+    {
+      return 0;
+    }
 
     /**
      * This should remove the name refered to by the Dentry from the directory
@@ -133,7 +142,10 @@ class Inode
      * @param file the file to unlink
      * @retunr 0 on success
      */
-    virtual int32 unlink ( File* /*file*/ ) {return 0;}
+    virtual int32 unlink(File* /*file*/)
+    {
+      return 0;
+    }
 
     /**
      * This should create a symbolic link in the given directory with the given
@@ -144,48 +156,68 @@ class Inode
      * @param link_name the name of the link to create
      * @return 0 on success
      */
-    virtual int32 symlink ( Inode */*inode*/, Dentry */*dentry*/,
-                            const char */*link_name*/ ) {return 0;}
+    virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, const char */*link_name*/)
+    {
+      return 0;
+    }
 
     /**
      * Create a directory with the given dentry.
      * @param the dentry
      * @return 0 on success
      */
-    virtual int32 mkdir ( Dentry * ) {return 0;}
+    virtual int32 mkdir(Dentry *)
+    {
+      return 0;
+    }
 
     /**
      * Create a file with the given dentry.
      * @param dentry the dentry
      * @return 0 on success
      */
-    virtual int32 mkfile ( Dentry */*dentry*/ ) { return 0; }
+    virtual int32 mkfile(Dentry */*dentry*/)
+    {
+      return 0;
+    }
 
     /**
      * Remove the named directory (if empty).
      * @return 0 on success
      */
-    virtual int32 rmdir() {return 0;}
+    virtual int32 rmdir()
+    {
+      return 0;
+    }
 
     /**
      * Remove the named directory (if empty) or file
      * @return 0 on success
      */
-    virtual int32 rm() {return 0;}
+    virtual int32 rm()
+    {
+      return 0;
+    }
 
     /**
      * Create a directory with the given dentry.
      * @param the dentry
      * @return 0 on success
      */
-    virtual int32 mknod ( Dentry * ) {return 0;}
+    virtual int32 mknod(Dentry *)
+    {
+      return 0;
+    }
 
     /**
      * change the name to new_name
      * @param new name the new name
      * @retunr 0 on success
      */
-    virtual int32 rename ( const char* /*new_name*/ ) {return 0;}
+    virtual int32 rename(const char* /*new_name*/)
+    {
+      return 0;
+    }
 
     /**
      * The symbolic link referred to by the dentry is read and the value is
@@ -195,8 +227,10 @@ class Inode
      * @param max_length the maximum length
      * @return the number of bytes read
      */
-    virtual int32 readlink ( Dentry */*dentry*/, char*, int32 /*max_length*/ )
-    {return 0;}
+    virtual int32 readlink(Dentry */*dentry*/, char*, int32 /*max_length*/)
+    {
+      return 0;
+    }
 
     /**
      * If the directory (parent dentry) have a directory and a name within that
@@ -206,8 +240,10 @@ class Inode
      * @param chd_dentry the child dentry
      * @return the dentry
      */
-    virtual Dentry* followLink ( Dentry */*prt_dentry*/, Dentry */*chd_dentry*/ )
-    {return 0;}
+    virtual Dentry* followLink(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/)
+    {
+      return 0;
+    }
 
     /**
      * read the data from the inode
@@ -216,8 +252,10 @@ class Inode
      * @param buffer where to store the read data
      * @return the number of bytes read
      */
-    virtual int32 readData ( uint32 /*offset*/, uint32 /*size*/, char */*buffer*/ )
-    {return 0;}
+    virtual int32 readData(uint32 /*offset*/, uint32 /*size*/, char */*buffer*/)
+    {
+      return 0;
+    }
 
     /**
      * write the data to the inode
@@ -226,43 +264,49 @@ class Inode
      * @param buffer where to write the data to
      * @return number of bytes written
      */
-    virtual int32 writeData ( uint32 /*offset*/, uint32 /*size*/, const char*/*buffer*/ )
-    {return 0;}
-
-  public:
+    virtual int32 writeData(uint32 /*offset*/, uint32 /*size*/, const char*/*buffer*/)
+    {
+      return 0;
+    }
 
     /**
      * insert the opened file point to the file_list of this inode.
      * @param file the file to insert
      * @return 0 on success
      */
-    int32 insertOpenedFiles ( File* );
+    int32 insertOpenedFiles(File*);
 
     /**
      * remove the opened file point from the file_list of this inode.
      * @param file the file to remove
      * @return 0 on success
      */
-    int32 removeOpenedFiles ( File* );
+    int32 removeOpenedFiles(File*);
 
     /**
      * check the existance of the open-file-list
      * @return true if empty
      */
-    bool openedFilesEmpty() { return ( i_files_.empty() );}
+    bool openedFilesEmpty()
+    {
+      return (i_files_.empty());
+    }
 
     /**
      * return the Superblock where this inode is located
      * @return the superblock
      */
-    Superblock* getSuperblock() { return i_superblock_; }
+    Superblock* getSuperblock()
+    {
+      return i_superblock_;
+    }
 
     /**
      * setting the superblock is neccessary because the devices
      * are created before the DeviceFS is created
      * @param sb the superblock to set
      */
-    void setSuperBlock ( Superblock * sb )
+    void setSuperBlock(Superblock * sb)
     {
       i_superblock_ = sb;
     }
@@ -271,39 +315,57 @@ class Inode
      * get the type from inode
      * @return the inodes type
      */
-    uint32 getType() { return i_type_; }
+    uint32 getType()
+    {
+      return i_type_;
+    }
 
     /**
      * get the pointer of the dentry
      * @return the inodes dentry
      */
-    Dentry* getDentry() { return i_dentry_; }
+    Dentry* getDentry()
+    {
+      return i_dentry_;
+    }
 
     /**
      * get the first file object.
      * @return the first file
      */
-    File* getFirstFile() { return i_files_.front(); }
+    File* getFirstFile()
+    {
+      return i_files_.front();
+    }
 
     /**
      * returns the number of opened files on this inode
      * @return the number of files
      */
-    uint32 getNumOpenedFile() { return i_files_.size(); }
+    uint32 getNumOpenedFile()
+    {
+      return i_files_.size();
+    }
 
     /**
      * returns the size
      * @return the size
      */
-    uint32 getSize() { return i_size_; }
+    uint32 getSize()
+    {
+      return i_size_;
+    }
 
     /**
      * flushes the inode to the file system
      * @return 0 on success
      */
-    int32 flush() { return 0; };
+    int32 flush()
+    {
+      return 0;
+    }
+    ;
 
 };
-
 
 #endif // Inode_h___

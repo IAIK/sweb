@@ -126,18 +126,18 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
     return 0;
   }
   uint32 inodes_start = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_ + 2;
-  uint32 inode_block_num = inodes_start + (i_num - 1) / INODES_PER_BLOCK(BLOCK_SIZE);
+  uint32 inode_block_num = inodes_start + (i_num - 1) / INODES_PER_BLOCK(this);
   MinixFSInode *inode = 0;
   char ibuffer_array[BLOCK_SIZE];
   char* ibuffer = ibuffer_array;
   debug(M_SB, "getInode::reading block num: %d\n", inode_block_num);
   readBlocks(inode_block_num, 1, ibuffer);
   debug(M_SB, "getInode:: returned reading block num: %d\n", inode_block_num);
-  uint32 offset = ((i_num - 1) % INODES_PER_BLOCK(BLOCK_SIZE)) * INODE_SIZE(s_magic_);
+  uint32 offset = ((i_num - 1) % INODES_PER_BLOCK(this)) * INODE_SIZE(this);
   debug(M_SB, "getInode:: setting offset: %d\n", offset);
   ibuffer += offset;
-  uint32 i_zones[NUM_ZONES(s_magic_)];
-  for (uint32 num_zone = 0; num_zone < NUM_ZONES(s_magic_); num_zone++)
+  uint32 i_zones[NUM_ZONES(this)];
+  for (uint32 num_zone = 0; num_zone < NUM_ZONES(this); num_zone++)
   {
     if (s_magic_ == MINIX_V3)
       i_zones[num_zone] = *(uint32*) (ibuffer + 24 + (num_zone * 4));
@@ -176,10 +176,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
     writeInode(inode);
 
     debug(M_SB, "~MinixSuperblock inode written to disc\n");
-    Dentry* dentry = inode->getDentry();
-
-    debug(M_SB, "~MinixSuperblock deleteing denty->getName() : %s\n", dentry->getName());
-    delete dentry;
+    delete inode->getDentry();
 
     debug(M_SB, "~MinixSuperblock deleting inode\n");
     delete inode;
@@ -200,12 +197,12 @@ Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
   else if (type == I_DIR)
     mode |= 0x4000;
   //else link etc.
-  uint32 zones[NUM_ZONES(s_magic_)];
-  for (uint32 i = 0; i < NUM_ZONES(s_magic_); i++)
+  uint32 zones[NUM_ZONES(this)];
+  for (uint32 i = 0; i < NUM_ZONES(this); i++)
     zones[i] = 0;
-  uint32 i_num = storage_manager_->acquireInode();
+  uint32 i_num = storage_manager_->allocInode();
   debug(M_SB, "createInode> acquired inode %d mode: %d\n", i_num, mode);
-  Inode *inode = (Inode*) (new MinixFSInode(this, mode, 0, 0, zones, i_num));
+  Inode *inode = new MinixFSInode(this, mode, 0, 0, zones, i_num);
   debug(M_SB, "createInode> created Inode\n");
   all_inodes_add_inode(inode);
   debug(M_SB, "createInode> calling write Inode to Disc\n");
@@ -233,12 +230,12 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   assert(ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
-      + ((minix_inode->i_num_ - 1) * INODE_SIZE(s_magic_) / BLOCK_SIZE);
-  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE(s_magic_)) % BLOCK_SIZE;
-  char buffer[INODE_SIZE(s_magic_)];
-  readBytes(block, offset, INODE_SIZE(s_magic_), buffer);
-  uint32 *i_zones = new uint32[NUM_ZONES(s_magic_)];
-  for (uint32 num_zone = 0; num_zone < NUM_ZONES(s_magic_); num_zone++)
+      + ((minix_inode->i_num_ - 1) * INODE_SIZE(this) / BLOCK_SIZE);
+  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE(this)) % BLOCK_SIZE;
+  char buffer[INODE_SIZE(this)];
+  readBytes(block, offset, INODE_SIZE(this), buffer);
+  uint32 *i_zones = new uint32[NUM_ZONES(this)];
+  for (uint32 num_zone = 0; num_zone < NUM_ZONES(this); num_zone++)
   {
     if (s_magic_ == MINIX_V3)
       i_zones[num_zone] = *(uint32*) (buffer + 24 + (num_zone * 4));
@@ -249,15 +246,10 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
   minix_inode->i_zones_ = new MinixFSZone(this, i_zones);
 
   if (s_magic_ == MINIX_V3)
-  {
     minix_inode->i_nlink_ = *(uint16*) (buffer + 2);
-    minix_inode->i_size_ = *(uint32*) (buffer + 8);
-  }
   else
-  {
     minix_inode->i_nlink_ = *(uint8*) (buffer + 13);
-    minix_inode->i_size_ = *(uint32*) (buffer + 4);
-  }
+  minix_inode->i_size_ = *(uint32*) (buffer + (s_magic_ == MINIX_V3 ? 8 : 4));
   delete to_delete_i_zones;
   return 0;
 }
@@ -269,12 +261,12 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   //flush zones
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
-      + ((minix_inode->i_num_ - 1) * INODE_SIZE(s_magic_) / BLOCK_SIZE);
-  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE(s_magic_)) % BLOCK_SIZE;
-  char buffer[INODE_SIZE(s_magic_)];
+      + ((minix_inode->i_num_ - 1) * INODE_SIZE(this) / BLOCK_SIZE);
+  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE(this)) % BLOCK_SIZE;
+  char buffer[INODE_SIZE(this)];
   memset((void*) buffer, 0, sizeof(buffer));
   debug(M_SB, "writeInode> reading block %d with offset %d from disc\n", block, offset);
-  readBytes(block, offset, INODE_SIZE(s_magic_), buffer);
+  readBytes(block, offset, INODE_SIZE(this), buffer);
   debug(M_SB, "writeInode> read data from disc\n");
   debug(M_SB, "writeInode> the inode: i_type_: %d, i_nlink_: %d, i_size_: %d\n", minix_inode->i_type_,
         minix_inode->i_nlink_, minix_inode->i_size_);
@@ -303,7 +295,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
     *(uint32*) (buffer + 4) = minix_inode->i_size_;
   }
   debug(M_SB, "writeInode> writing bytes to disc on block %d with offset %d\n", block, offset);
-  writeBytes(block, offset, INODE_SIZE(s_magic_), buffer);
+  writeBytes(block, offset, INODE_SIZE(this), buffer);
   debug(M_SB, "writeInode> flushing zones of inode %p\n", inode);
   minix_inode->i_zones_->flush(minix_inode->i_num_);
 }
@@ -335,11 +327,11 @@ void MinixFSSuperblock::delete_inode(Inode* inode)
   minix_inode->i_zones_->freeZones();
   storage_manager_->freeInode(minix_inode->i_num_);
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
-      + ((minix_inode->i_num_ - 1) * INODE_SIZE(s_magic_) / BLOCK_SIZE);
-  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE(s_magic_)) % BLOCK_SIZE;
-  char buffer[INODE_SIZE(s_magic_)];
+      + ((minix_inode->i_num_ - 1) * INODE_SIZE(this) / BLOCK_SIZE);
+  uint32 offset = ((minix_inode->i_num_ - 1) * INODE_SIZE(this)) % BLOCK_SIZE;
+  char buffer[INODE_SIZE(this)];
   memset((void*) buffer, 0, sizeof(buffer));
-  writeBytes(block, offset, INODE_SIZE(s_magic_), buffer);
+  writeBytes(block, offset, INODE_SIZE(this), buffer);
   delete inode;
 }
 
@@ -384,7 +376,7 @@ int32 MinixFSSuperblock::removeFd(Inode* inode, FileDescriptor* fd)
 uint16 MinixFSSuperblock::allocateZone()
 {
   debug(M_SB, "MinixFSSuperblock allocateZone>\n");
-  uint16 ret = (storage_manager_->acquireZone() + s_1st_datazone_ - 1); // -1 because the zone nr 0 is set in the bitmap and should never be used!
+  uint16 ret = (storage_manager_->allocZone() + s_1st_datazone_ - 1); // -1 because the zone nr 0 is set in the bitmap and should never be used!
   debug(M_SB, "MinixFSSuperblock allocateZone> returning %d\n", ret);
   return ret;
 }

@@ -58,7 +58,7 @@ uint32 MinixStorageManager::getNumUsedInodes()
   return inode_bitmap_.getNumBitsSet();
 }
 
-size_t MinixStorageManager::acquireZone()
+size_t MinixStorageManager::allocZone()
 {
   size_t pos = curr_zone_pos_ + 1;
   for (; pos != curr_zone_pos_; pos++)
@@ -78,7 +78,7 @@ size_t MinixStorageManager::acquireZone()
   return 0;
 }
 
-size_t MinixStorageManager::acquireInode()
+size_t MinixStorageManager::allocInode()
 {
   size_t pos = curr_inode_pos_ + 1;
   for (; pos != curr_inode_pos_; pos++)

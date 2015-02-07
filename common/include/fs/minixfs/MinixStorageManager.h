@@ -37,13 +37,13 @@ class MinixStorageManager : public StorageManager
      * returns the next free zone index and sets it as used
      * @return the zone index
      */
-    virtual size_t acquireZone();
+    virtual size_t allocZone();
 
     /**
      * returns the next free inode index and sets it as used
      * @return the inode index
      */
-    virtual size_t acquireInode();
+    virtual size_t allocInode();
 
     /**
      * unsets the zone at the given index
