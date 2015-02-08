@@ -27,13 +27,17 @@ static const struct {
   uint32 depth = 32;
 } mboot __attribute__ ((section (".mboot")));
 
+extern multiboot_info_t* multi_boot_structure_pointer;
+extern uint32 bss_start_address;
+extern uint32 bss_end_address;
+extern uint8 boot_stack[];
+
 extern "C" void parseMultibootHeader();
 extern "C" void initialiseBootTimePaging();
 extern "C" void startup();
 
 extern "C" void entry()
 {
-  extern multiboot_info_t* multi_boot_structure_pointer;
   asm("mov %%ebx,%0": "=m"(*((multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer))));
   PRINT("Booting...\n");
 
@@ -41,8 +45,6 @@ extern "C" void entry()
   memset((void*)(ArchCommon::getFBPtr(0)), 0, 80 * 25 * 2);
 
   PRINT("Clearing BSS...\n");
-  extern uint32 bss_start_address;
-  extern uint32 bss_end_address;
   memset((void*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&bss_start_address), 0, (uint32)&bss_end_address - (uint32)&bss_start_address);
 
   asm("push $2\n"
@@ -71,9 +73,8 @@ extern "C" void entry()
       "mov %eax,%cr0\n");
 
   PRINT("Switch to our own stack...\n");
-  extern uint8 boot_stack[];
   asm("mov %[v],%%esp\n"
-      "mov %%esp,%%ebp\n" : : [v]"i"(&boot_stack));
+      "mov %%esp,%%ebp\n" : : [v]"i"(boot_stack + 0x4000));
 
   PRINT("Calling startup()...\n");
   asm("call *%%eax" : : "a"(startup));

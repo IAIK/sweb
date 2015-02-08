@@ -60,7 +60,7 @@ void SegmentUtils::initialise()
   setSegmentDescriptor(2, 0, -1U, 0, 0, 0);
   setSegmentDescriptor(3, 0, -1U, 0, 1, 0);
   setSegmentDescriptor(4, 0, -1U, 3, 0, 0);
-  setSegmentDescriptor(5, 0, -1U, 3, 1, 0); // 89 C0
+  setSegmentDescriptor(5, 0, -1U, 3, 1, 0);
 
   g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
   memset((void*)g_tss, 0, sizeof(TSS));
