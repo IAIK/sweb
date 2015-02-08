@@ -194,21 +194,40 @@ Console* ArchCommon::createConsole(uint32 count)
     return new TextConsole(count);
 }
 
-extern "C" size_t gdt_ptr_new;
+
+#if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
+#define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
+#else
+#define PRINT(X)
+#endif
+
+extern SegmentDescriptor gdt[7];
 extern "C" void startup();
 extern "C" void initialisePaging();
 extern uint8 boot_stack[0x4000];
 
+struct GDTPtr
+{
+    uint16 limit;
+    uint64 addr;
+}__attribute__((__packed__)) gdt_ptr;
+
 extern "C" void entry64()
 {
+  PRINT("Parsing Multiboot Header...\n");
   parseMultibootHeader();
+  PRINT("Initializing Kernel Paging Structures...\n");
   initialisePaging();
+  PRINT("Setting CR3 Register...\n");
   asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure())));
+  PRINT("Switch to our own stack...\n");
   asm("mov %[stack], %%rsp\n"
       "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
-  // reload the gdt with the newly set up segments
-  asm("lgdt (%%rax)" : : "a"(&gdt_ptr_new));
-  // now prepare all the segment registers to use our segments
+  PRINT("Loading Long Mode Segments...\n");
+
+  gdt_ptr.limit = sizeof(gdt) - 1;
+  gdt_ptr.addr = (uint64)gdt;
+  asm("lgdt (%%rax)" : : "a"(&gdt_ptr));
   asm("mov %%ax, %%ds\n"
       "mov %%ax, %%es\n"
       "mov %%ax, %%ss\n"
@@ -216,9 +235,7 @@ extern "C" void entry64()
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
   asm("ltr %%ax" : : "a"(KERNEL_TSS));
-  // jump onto the new code segment
-  //asm("ljmp %[cs],$1f\n"
-  //  "1:": : [cs]"i"(KERNEL_CS));
+  PRINT("Calling startup()...\n");
   asm("jmp *%[startup]" : : [startup]"r"(startup));
   while (1);
 }

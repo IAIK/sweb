@@ -5,12 +5,53 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "offsets.h"
 #include "multiboot.h"
 
+#if A_BOOT == A_BOOT | OUTPUT_ENABLED
+#define PRINT(X) print(TRUNCATE(X))
+#else
+#define PRINT(X)
+#endif
+
+#define TRUNCATE(X) (char*)(((unsigned int)(((char*)X)+0x7FFFFFFF))+1) // virtual to physical address
+
 #define MULTIBOOT_PAGE_ALIGN (1<<0)
 #define MULTIBOOT_MEMORY_INFO (1<<1)
 #define MULTIBOOT_WANT_VESA (1<<2)
 #define MULTIBOOT_HEADER_MAGIC (0x1BADB002)
 #define MULTIBOOT_HEADER_FLAGS (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA)
 #define MULTIBOOT_CHECKSUM (-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS))
+
+extern uint32 bss_start_address;
+extern uint32 bss_end_address;
+extern uint8 boot_stack[];
+extern PageMapLevel4Entry kernel_page_map_level_4[];
+
+extern uint32 tss_selector;
+
+SegmentDescriptor gdt[7];
+
+struct GDT32Ptr
+{
+    uint16 limit;
+    uint32 addr;
+}__attribute__((__packed__));
+
+typedef struct
+{
+    uint32 reserved_0;
+    uint32 rsp0_l;
+    uint32 rsp0_h;
+    uint32 rsp1_l;
+    uint32 rsp1_h;
+    uint32 rsp2_l;
+    uint32 rsp2_h;
+    uint32 reserved_1;
+    uint32 reserved_2;
+    uint32 ist0_l;
+    uint32 ist0_h;
+    uint32 reserved_3[15];
+}__attribute__((__packed__)) TSS;
+
+TSS g_tss;
 
 static const struct
 {
@@ -23,36 +64,46 @@ static const struct
     uint32 depth = 32;
 } mboot __attribute__ ((section (".mboot")));
 
-extern "C" void print(const char* p)
+void print(const char* p)
 {
-  while (*p) { asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9)); }
+  while (*p)
+    asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
 }
 
-#define CALL32(X,Y) do { asm("push %[ptr]-BASE\n call %[f]" : : [ptr]"i"(Y), [f]"m"(X)); } while (0)
+static void memset(char* block, char c, size_t length)
+{
+  for (size_t i = 0; i < length; ++i)
+    block[i] = c;
+}
+
+extern uint8 boot_stack[];
+
+static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code,
+                                 uint8 tss)
+{
+  SegmentDescriptor* gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
+  gdt_p[index].baseLL = (uint16) (baseL & 0xFFFF);
+  gdt_p[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+  gdt_p[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+  gdt_p[index].baseH = baseH;
+  gdt_p[index].limitL = (uint16) (limit & 0xFFFF);
+  gdt_p[index].limitH = (uint8) (((limit >> 16U) & 0xF));
+  gdt_p[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
+  gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
+}
 
 extern "C" void entry()
 {
   asm("mov %ebx,multi_boot_structure_pointer - BASE");
-  CALL32(print,"Booting...\n");
-  CALL32(print,"Clearing Framebuffer...\n");
-  asm("mov $0xB8000, %edi\n"
-      "mov $0xB8FA0, %ecx\n"
-      "sub %edi, %ecx\n"
-      "xor %eax, %eax\n"
-      "rep stosb\n");
+  PRINT("Booting...\n");
+  PRINT("Clearing Framebuffer...\n");
+  memset((char*) 0xB8000, 0, 80 * 25 * 2);
 
-  CALL32(print,"Clearing BSS...\n");
-  asm("mov $bss_start_address - BASE, %edi\n"
-      "mov $bss_end_address - BASE, %ecx\n"
-      "sub %edi, %ecx\n"
-      "xor %eax, %eax\n"
-      "rep stosb\n");
+  PRINT("Clearing BSS...\n");
+  char* bss_start = TRUNCATE(&bss_start_address);
+  memset(bss_start, 0, TRUNCATE(&bss_end_address) - bss_start);
 
-  CALL32(print,"Switch to our own stack...\n");
-  asm("mov $boot_stack + 0x4000 - BASE, %esp\n"
-      "mov %esp, %ebp\n");
-
-  CALL32(print,"Initializing Kernel Paging Structures...\n");
+  PRINT("Initializing Kernel Paging Structures...\n");
   asm("movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n"
       "movl $0, kernel_page_map_level_4 - BASE + 4\n");
   asm("movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
@@ -60,17 +111,15 @@ extern "C" void entry()
   asm("movl $0x83, kernel_page_directory - BASE\n"
       "movl $0, kernel_page_directory - BASE + 4\n");
 
-  CALL32(print,"Enable PSE and PAE...\n");
+  PRINT("Enable PSE and PAE...\n");
   asm("mov %cr4,%eax\n"
-      "bts $4, %eax\n"
-      "bts $5, %eax\n"
+      "or $0x20, %eax\n"
       "mov %eax,%cr4\n");
 
-  CALL32(print,"Setting CR3 Register...\n");
-  asm("mov $kernel_page_map_level_4 - BASE,%eax\n"
-      "mov %eax,%cr3\n");
+  PRINT("Setting CR3 Register...\n");
+  asm("mov %[pd],%%cr3" : : [pd]"r"(TRUNCATE(kernel_page_map_level_4)));
 
-  CALL32(print,"Enable EFER.LME...\n");
+  PRINT("Enable EFER.LME...\n");
   asm("mov $0xC0000080,%ecx\n"
       "rdmsr\n"
       "or $0x100,%eax\n"
@@ -79,28 +128,45 @@ extern "C" void entry()
   asm("push $2\n"
       "popf\n");
 
-  CALL32(print,"Enable Paging...\n");
+  PRINT("Enable Paging...\n");
   asm("mov %cr0,%eax\n"
       "or $0x80000001,%eax\n"
       "mov %eax,%cr0\n");
 
-  asm("mov $g_tss - PHYS_BASE, %eax\n"
-      "mov %ax, tss.base_low - BASE\n"
-      "shr $16, %eax\n"
-      "mov %al, tss.base_high_word_low - BASE\n"
-      "shr $8, %eax\n"
-      "mov %al, tss.base_high_word_high - BASE\n");
+  PRINT("Setup TSS...\n");
+  TSS* g_tss_p = (TSS*) TRUNCATE(&g_tss);
+  g_tss_p->ist0_h = -1U;
+  g_tss_p->ist0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
+  g_tss_p->rsp0_h = -1U;
+  g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
 
-  asm("lgdt gdt_ptr - BASE");
+  PRINT("Setup Segments...\n");
+  setSegmentDescriptor(1, 0, 0, 0, 0, 1, 0);
+  setSegmentDescriptor(2, 0, 0, 0, 0, 0, 0);
+  setSegmentDescriptor(3, 0, 0, 0, 3, 1, 0);
+  setSegmentDescriptor(4, 0, 0, 0, 3, 0, 0);
+  setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
+
+  PRINT("Loading Long Mode GDT...\n");
+
+  struct GDT32Ptr gdt32_ptr;
+  gdt32_ptr.limit = sizeof(gdt) - 1;
+  gdt32_ptr.addr = (uint32) TRUNCATE(gdt);
+  asm("lgdt %[gdt_ptr]" : : [gdt_ptr]"m"(gdt32_ptr));
+  asm("mov %%ax, %%ds\n" : : "a"(KERNEL_DS));
+
+  PRINT("Setting Long Mode Segment Selectors...\n");
   asm("mov %%ax, %%ds\n"
       "mov %%ax, %%es\n"
       "mov %%ax, %%ss\n"
       "mov %%ax, %%fs\n"
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
-  CALL32(print,"Calling startup()...\n");
+
+  PRINT("Calling entry64()...\n");
   asm("ljmp %[cs],$entry64-BASE\n" : : [cs]"i"(KERNEL_CS));
-  CALL32(print,"Returned from entry64()? This should never happen.\n");
+
+  PRINT("Returned from entry64()? This should never happen.\n");
   asm("hlt");
 }
 asm(".code64");
