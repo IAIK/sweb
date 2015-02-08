@@ -1,12 +1,8 @@
-/**
- * @file init_paging.cpp
- *
- */
-
 #include "types.h"
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "multiboot.h"
+#include "ArchCommon.h"
 #include "kprintf.h"
 
 extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
@@ -70,9 +66,7 @@ extern "C" void initialisePaging()
     pd2[i].page.writeable = 1;
     pd2[i].page.present = 1;
   }
-  extern struct multiboot_remainder mbr;
-  struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-  if (orig_mbr.have_vesa_console)
+  if (ArchCommon::haveVESAConsole(0))
   {
     for (i = 0; i < 8; ++i) // map the 16 MiB (8 pages) framebuffer
     {
@@ -81,7 +75,7 @@ extern "C" void initialisePaging()
       pd2[504+i].page.size = 1;
       pd2[504+i].page.cache_disabled = 1;
       pd2[504+i].page.write_through = 1;
-      pd2[504+i].page.page_ppn = (orig_mbr.vesa_lfb_pointer / (PAGE_SIZE * PAGE_TABLE_ENTRIES))+i;
+      pd2[504+i].page.page_ppn = (ArchCommon::getVESAConsoleLFBPtr(0) / (PAGE_SIZE * PAGE_TABLE_ENTRIES))+i;
     }
   }
 }
