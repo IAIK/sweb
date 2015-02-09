@@ -1,4 +1,3 @@
-#include <iostream>
 #include "VfsSyscall.h"
 #include <assert.h>
 #include "Inode.h"
@@ -154,7 +153,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
     size_t len = fs_info->pathname_.find_last_of("/");
-    ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 1, fs_info->pathname_.length() - len);
+    std::string sub_dentry_name = fs_info->pathname_.substr(len + 1, fs_info->pathname_.length() - len);
     // set directory
     fs_info->pathname_ = fs_info->pathname_.substr(0, len + 1);
 

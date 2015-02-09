@@ -2,7 +2,7 @@
 #ifdef EXE2MINIXFS
 #ifndef KPRINTF_H_
 #define KPRINTF_H_
-#include <iostream>
+#include <stdio.h>
 
 #define kprintfd(fmt,args...) do { printf(fmt, ## args); } while (0)
 #define debug(flag,fmt,args...) do { if (flag & 0x80000000) { printf(fmt,## args); } } while(0)

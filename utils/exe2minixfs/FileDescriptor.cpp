@@ -5,7 +5,7 @@
 #include "FileDescriptor.h"
 #include <list>
 
-ustl::list<FileDescriptor*> global_fd;
+std::list<FileDescriptor*> global_fd;
 
 
 static uint32 fd_num_ = 3;

@@ -3,12 +3,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-
 #include <assert.h>
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <stdlib.h>
 
 #include "Dentry.h"
 #include "FileSystemInfo.h"
@@ -24,8 +19,9 @@ int main(int argc, char *argv[])
 {
   if (argc < 3 || argc % 2 == 0)
   {
-    std::cout << "Syntax:" << argv[0] << "<filename of minixfs-formatted image> <offset in bytes> [file1-src file1-dest"
-        << " [file2-src file2-dest [....]]]" << std::endl << std::endl;
+    printf(
+        "Syntax: %s <filename of minixfs-formatted image> <offset in bytes> [file1-src file1-dest [file2-src file2-dest [....]]]\n",
+        argv[0]);
     return -1;
   }
 
@@ -33,17 +29,16 @@ int main(int argc, char *argv[])
 
   if (image_fd < 0)
   {
-    std::cout << "Error opening " << argv[1] << std::endl;
+    printf("Error opening %s\n", argv[1]);
     return -1;
   }
 
-  std::istringstream stream(argv[2]);
-  uint64 offset;
-  stream >> offset;
-  if (stream.fail() || !stream.eof())
+  char* end;
+  size_t offset = strtoul(argv[2],&end,10);
+  if (strlen(end) != 0)
   {
     close(image_fd);
-    std::cout << "offset has to be a number!" << std::endl;
+    printf("offset has to be a number!\n");
     return -1;
   }
 
@@ -62,7 +57,7 @@ int main(int argc, char *argv[])
 
     if (src_file < 0)
     {
-      std::cout << "Wasn't able to open file " << argv[2 * i - 1] << std::endl;
+      printf("Wasn't able to open file %s\n", argv[2 * i - 1]);
       break;
     }
 
@@ -78,7 +73,7 @@ int main(int argc, char *argv[])
     int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4); // O_RDWR | O_CREAT
     if (fd < 0)
     {
-      std::cout << "no success" << std::endl;
+      printf("no success\n");
       delete[] buf;
       continue;
     }
