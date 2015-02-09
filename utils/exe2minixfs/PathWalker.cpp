@@ -3,7 +3,7 @@
 #include "Inode.h"
 #include "Dentry.h"
 #include "FileSystemInfo.h"
-#include <cstring>
+#include <string.h>
 
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'

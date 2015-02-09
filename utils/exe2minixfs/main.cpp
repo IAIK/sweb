@@ -1,9 +1,10 @@
 #include "types.h"
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <cstdio>
+#include <stdio.h>
 #include <unistd.h>
 
+#include <assert.h>
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -65,12 +66,12 @@ int main(int argc, char *argv[])
       break;
     }
 
-    size_t size = lseek(src_file, 0, SEEK_END);
+    ssize_t size = lseek(src_file, 0, SEEK_END);
 
     char *buf = new char[size];
 
     lseek(src_file, 0, SEEK_SET);
-    read(src_file, buf, size);
+    assert(read(src_file, buf, size) == size);
     close(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
