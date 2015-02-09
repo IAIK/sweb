@@ -213,12 +213,19 @@ void Thread::printUserBacktrace()
 
 void Thread::addJob()
 {
-  jobs_scheduled_++;
+  if(!ArchInterrupts::testIFSet())
+  {
+    jobs_scheduled_++;
+  }
+  else
+  {
+    ArchThreads::atomic_add(jobs_scheduled_, 1);
+  }
 }
 
 void Thread::jobDone()
 {
-  jobs_done_++;
+  ArchThreads::atomic_add(jobs_done_, 1);
 }
 
 void Thread::waitForNextJob()

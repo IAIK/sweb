@@ -90,6 +90,16 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return __sync_fetch_and_add(&value,increment);
 }
 
+uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
+{
+  return __sync_fetch_and_add(&value,increment);
+}
+
+int64 ArchThreads::atomic_add(int64 &value, int64 increment)
+{
+  return __sync_fetch_and_add(&value,increment);
+}
+
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
   printThreadRegisters(thread,0,verbose);

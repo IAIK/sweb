@@ -107,6 +107,20 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
   return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
 
+uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
+{
+  global_atomic_add_lock.acquire("before atomic_add");
+  uint64 result = value;
+  value += increment;
+  global_atomic_add_lock.release("after atomic_add");
+  return result;
+}
+
+int64 ArchThreads::atomic_add(int64 &value, int64 increment)
+{
+  return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
+}
+
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
   printThreadRegisters(thread,0,verbose);
