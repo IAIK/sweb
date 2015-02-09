@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_ata_driver.cpp
- *
- */
-
 #include "ATADriver.h"
 
 #include "BDManager.h"
@@ -17,6 +12,14 @@
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
+#define TIMEOUT_CHECK(CONDITION,BODY) jiffies = 0;\
+                                       while((CONDITION) && jiffies++ < IO_TIMEOUT)\
+                                         ArchInterrupts::yieldIfIFSet();\
+                                       if(jiffies >= IO_TIMEOUT)\
+                                       {\
+                                         BODY;\
+                                       }
+
 ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_("ATADriver::lock_")
 {
   debug(ATA_DRIVER, "ctor: Entered with irgnum %d and baseport %d!!\n", irqnum, baseport);
@@ -29,14 +32,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
 
   outportbp (port + 6, drive);  // Get first drive
   outportbp (port + 7, 0xEC);   // Get drive info data
-  while (  inportbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT )
-    ArchInterrupts::yieldIfIFSet();
-
-  if( jiffies >= IO_TIMEOUT )
-  {
-    TIMEOUT_WARNING();
-    return;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return;);
 
   for (dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
     dd [dd_off] = inportw ( port );
@@ -102,23 +98,9 @@ int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *
 int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
   assert(buffer || (start_sector == 0 && num_sectors == 1));
-  //MutexLock mlock(lock_);
   /* Wait for drive to clear BUSY */
-  jiffies = 0;
-  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
-  //The equations to convert from LBA to CHS follow:
-  //CYL = LBA / (HPC * SPT)
-  //TEMP = LBA % (HPC * SPT)
-  //HEAD = TEMP / SPT
-  //SECT = TEMP % SPT + 1
-  //Where:
   //LBA: linear base address of the block
   //CYL: value of the cylinder CHS coordinate
   //HPC: number of heads per cylinder for the disk
@@ -126,10 +108,6 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   //SPT: number of sectors per track for the disk
   //SECT: value of the sector CHS coordinate
   //TEMP: buffer to hold a temporary value
-  //
-  // This equation is used very often by operating systems such as DOS 
-  // (or SWEB) to calculate the CHS values it needs to send to the disk 
-  // controller or INT13h in order to read or write data.
 
   uint32 LBA = start_sector;
   uint32 cyls = LBA / (HPC * SPT);
@@ -149,15 +127,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   outportbp(port + 5, high); // cylinder high
 
   /* Wait for drive to set DRDY */
-  jiffies = 0;
-  while (!(inportbp(port + 7) & 0x40) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if (jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
-
+  TIMEOUT_CHECK(!inportbp(port + 7) & 0x40,TIMEOUT_WARNING(); return -1;);
 
   for (int i = 0;; ++i)
   {
@@ -191,14 +161,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
         word_buff [counter] = inportw ( port );
   }
   /* Wait for drive to clear BUSY */
-  jiffies = 0;
-  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
   //debug(ATA_DRIVER, "readSector:Read successfull !!\n");
   return 0;  
@@ -209,20 +172,9 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   assert(buffer);
   //MutexLock mlock(lock_);
   /* Wait for drive to clear BUSY */
-  jiffies = 0;
-  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
   uint16 *word_buff = (uint16 *) buffer;
-
-  // This equation is used very often by operating systems such as DOS 
-  // (or SWEB) to calculate the CHS values it needs to send to the disk 
-  // controller or INT13h in order to read or write data.
 
   uint32 LBA = start_sector;
   uint32 cyls = LBA / (HPC * SPT);
@@ -240,28 +192,12 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   outportbp( port + 5, high );           // cylinder high
 
   /* Wait for drive to set DRDY */
-  jiffies = 0;
-  while(!(inportbp(port+7) & 0x40) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
-
+  TIMEOUT_CHECK(!inportbp(port + 7) & 0x40,TIMEOUT_WARNING(); return -1;);
 
   /* Write the command code to the command register */
   outportbp( port + 7, 0x30 );           // command
 
-  jiffies = 0;
-  while( inportbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-
-  if(jiffies >= IO_TIMEOUT )
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return -1;);
 
 
   uint32 count2 = (256*num_sectors);
@@ -273,27 +209,13 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
       outportw ( port, word_buff [counter] );
  
   /* Wait for drive to clear BUSY */
-  jiffies = 0;
-  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
   /* Write flush code to the command register */
   outportbp (port + 7, 0xE7);
     
   /* Wait for drive to clear BUSY */
-  jiffies = 0;
-  while((inportbp(port+7) & 0x80) && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
-  if(jiffies >= IO_TIMEOUT)
-  {
-    TIMEOUT_WARNING();
-    return -1;
-  }
+  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
   return 0;
 }

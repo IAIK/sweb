@@ -28,23 +28,23 @@ Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_
 
 void Terminal::clearBuffer()
 {
-  _in_buffer.clear();
+  in_buffer_.clear();
 }
 
 void Terminal::putInBuffer(uint32 what)
 {
-  _in_buffer.put(what);
+  in_buffer_.put(what);
 }
 
 char Terminal::read()
 {
-  return (char) _in_buffer.get();
+  return (char) in_buffer_.get();
 }
 
 void Terminal::backspace(void)
 {
-  if (_in_buffer.countElementsAhead())
-    _in_buffer.get();
+  if (in_buffer_.countElementsAhead())
+    in_buffer_.get();
 
   if (current_column_)
   {
@@ -61,7 +61,7 @@ uint32 Terminal::readLine(char *line, uint32 size)
     return 0;
   do
   {
-    cchar = _in_buffer.get();
+    cchar = in_buffer_.get();
 
     line[counter++] = (char) cchar;
   } while (cchar != '\n' && cchar != '\r' && counter < size);

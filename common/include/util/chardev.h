@@ -1,7 +1,7 @@
 #ifndef CHAR_DEV_H__
 #define CHAR_DEV_H__
 
-#include "kstring.h"
+#include "ustring.h"
 #include "FiFo.h"
 
 /**
@@ -18,13 +18,10 @@ class CharacterDevice
      * @param inode_type the inode type (cahracter device)
      */
     CharacterDevice(const char* name) :
-        _in_buffer(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
-        _out_buffer(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD)
+        in_buffer_(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
+        out_buffer_(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
+        name_(name)
     {
-      uint32 name_len = strlen(name) + 1;
-      device_name = new char[name_len];
-      strncpy(device_name, name, name_len);
-      device_name[name_len - 1] = 0;
     }
 
     ~CharacterDevice()
@@ -46,7 +43,7 @@ class CharacterDevice
       char *bptr = buffer;
       do
       {
-        *bptr++ = _in_buffer.get();
+        *bptr++ = in_buffer_.get();
       } while ((bptr - buffer) < (int32) size);
 
       return (bptr - buffer);
@@ -67,33 +64,33 @@ class CharacterDevice
       const char *bptr = buffer;
       do
       {
-        _out_buffer.put(*bptr++);
+        out_buffer_.put(*bptr++);
       } while ((bptr - buffer) < (int32) size);
 
       return (bptr - buffer);
     }
 
-    char *getDeviceName() const
+    const char *getDeviceName() const
     {
-      return device_name;
+      return name_.c_str();
     }
 
   protected:
     static const uint32 CD_BUFFER_SIZE = 1024;
 
-    FiFo<uint8> _in_buffer;
-    FiFo<uint8> _out_buffer;
+    FiFo<uint8> in_buffer_;
+    FiFo<uint8> out_buffer_;
 
-    char *device_name;
+    ustl::string name_;
 
     void processInBuffer()
     {
-      _in_buffer.get();
+      in_buffer_.get();
     }
 
     void processOutBuffer()
     {
-      _out_buffer.get();
+      out_buffer_.get();
     }
 
 };
