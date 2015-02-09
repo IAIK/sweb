@@ -63,63 +63,11 @@ uint32 Terminal::readLine(char *line, uint32 size)
   {
     cchar = _in_buffer.get();
 
-    if (cchar == '\b')
-    {
-      if (counter > 0)
-        counter--;
-    }
-    else
-      line[counter++] = (char) cchar;
-  } while (cchar != '\n' && cchar != '\r' && counter < size);
-
-  if (size - counter)
-    line[counter] = '\0';
-  return counter;
-}
-
-uint32 Terminal::readLineRaw(char *line, uint32 size)
-{
-  uint32 cchar;
-  uint32 counter = 0;
-  if (size < 1)
-    return 0;
-  do
-  {
-    cchar = _in_buffer.get();
-
     line[counter++] = (char) cchar;
   } while (cchar != '\n' && cchar != '\r' && counter < size);
 
   if (size - counter)
     line[counter] = '\0';
-  return counter;
-}
-
-uint32 Terminal::readLineNoBlock(char *line, uint32 size)
-{
-  uint32 cchar;
-  uint32 counter = 0;
-
-  if (size < 1)
-    return 0;
-
-  while (_in_buffer.countElementsAhead())
-  {
-    cchar = _in_buffer.get();
-
-    if (cchar == '\b')
-    {
-      if (counter > 0)
-        counter--;
-    }
-    else
-      line[counter++] = (char) cchar;
-
-    //if ( cchar != '\n' && cchar != '\r' && counter < ( size-1 ) );
-  }
-
-  line[counter] = '\0';
-
   return counter;
 }
 

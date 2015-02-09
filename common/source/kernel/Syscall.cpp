@@ -93,7 +93,7 @@ size_t Syscall::read(size_t fd, pointer buffer, size_t count)
   if (fd == fd_stdin)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
-    num_read = currentThread->getTerminal()->readLineRaw((char*) buffer, count);
+    num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
     debug(SYSCALL, "Syscall::read: %.*s\n", num_read, (char*) buffer);
   }
   else
