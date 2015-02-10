@@ -23,7 +23,7 @@ uint32 IDEDriver::doDeviceDetection()
   return 1;
 }
 
-int32 IDEDriver::processMBR(MMCDriver * drv, uint32 sector, uint32 SPT, const char *name)
+int32 IDEDriver::processMBR(BDDriver * drv, uint32 sector, uint32 SPT, const char *name)
 {
   uint32 offset = 0, numsec = 0;
   uint16 buff[256]; // read buffer

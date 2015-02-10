@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_driver.h
- *
- */
- 
 #ifndef _BD_DEVICE_DRIVER_
 #define _BD_DEVICE_DRIVER_
 
@@ -19,17 +14,15 @@ class BDDriver
 {
   public:
 
-    /**
-     * Destructor
-     *
-     */
-    virtual ~BDDriver() {};
+    virtual ~BDDriver()
+    {
+    }
 
-    virtual uint32 addRequest( BDRequest * ) = 0;
+    virtual uint32 addRequest(BDRequest *) = 0;
 
-    virtual int32 readSector ( uint32, uint32, void * ) = 0;
+    virtual int32 readSector(uint32, uint32, void *) = 0;
 
-    virtual int32 writeSector ( uint32, uint32, void *  ) = 0;
+    virtual int32 writeSector(uint32, uint32, void *) = 0;
 
     virtual uint32 getNumSectors() = 0;
 

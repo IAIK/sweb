@@ -8,17 +8,15 @@
 
 #include "types.h"
 
-class MMCDriver;
+class BDDriver;
 
 class IDEDriver
 {
   public:
-
     IDEDriver()
     {
       doDeviceDetection();
     }
-
     ~IDEDriver()
     {
     }
@@ -44,7 +42,7 @@ class IDEDriver
         uint16 signature; // set to 0xAA55 for PC MBR
     } MBR;
 
-    int32 processMBR(MMCDriver *, uint32, uint32, const char*);
+    int32 processMBR(BDDriver *, uint32, uint32, const char*);
 
     uint32 doDeviceDetection();
 
