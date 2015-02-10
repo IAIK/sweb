@@ -85,14 +85,6 @@ class MinixFSInode : public Inode
     virtual int32 unlink(File* file);
 
     /**
-     * not implemented
-     */
-    virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, const char */*link_name*/)
-    {
-      return 0;
-    }
-
-    /**
      * creates a directory with the given dentry. It is only used to with directory.
      * @param dentry the dentry to create with
      * @return 0 on success
@@ -124,30 +116,6 @@ class MinixFSInode : public Inode
      * @return 0 on success
      */
     virtual int32 mkfile(Dentry *dentry);
-
-    /**
-     * not implemented
-     */
-    virtual int32 rename(const char* /*new_name*/)
-    {
-      return 0;
-    }
-
-    /**
-     * not implemented
-     */
-    virtual int32 readlink(Dentry */*dentry*/, char*, int32 /*max_length*/)
-    {
-      return 0;
-    }
-
-    /**
-     * not implemented
-     */
-    virtual Dentry* followLink(Dentry */*prt_dentry*/, Dentry */*chd_dentry*/)
-    {
-      return 0;
-    }
 
     /**
      * read the data from the inode

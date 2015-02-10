@@ -93,13 +93,6 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
 
 }
 
-void ArchThreads::cleanupThreadInfos(ArchThreadInfo *&info)
-{
-  //avoid NULL-Pointer
-  if (info)
-    delete info;
-}
-
 void ArchThreads::yield()
 {
   __asm__ __volatile__("int $65"

@@ -71,19 +71,6 @@ class RamFSInode : public Inode
     virtual int32 unlink ( File* file );
 
     /**
-     * not implemented
-     * This should create a symbolic link in the given directory with the given
-     * name having the given value. It should d_instantiate the new inode into
-     * the dentry on success.
-     * @param inode the inode to create the link to
-     * @param dentry the dentry where to create the link
-     * @param link_name the name of the link
-     * @return 0 on success
-     */
-    virtual int32 symlink ( Inode */*inode*/, Dentry */*dentry*/,
-                            const char */*link_name*/ ) {return 0;}
-
-    /**
      * Create a directory with the given dentry. It is only used to with directory.
      * @param dentry the dentry
      * @return 0 on success
@@ -115,14 +102,6 @@ class RamFSInode : public Inode
      * @return 0 on success
      */
     virtual int32 mkfile ( Dentry *dentry );
-
-    /**
-     * not implemented
-     * changes the inodes name to the new_name
-     * @param new_name the new name
-     * @return 0 on success
-     */
-    virtual int32 rename ( const char* /*new_name*/ ) {return 0;}
 
     /// The symbolic link referred to by the dentry is read and the value is
     /// copied into the user buffer (with copy_to_user) with a maximum length

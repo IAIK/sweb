@@ -156,22 +156,6 @@ class Terminal : public CharacterDevice
     uint32 setCharacter(uint32 row, uint32 column, uint8 character);
 
     /**
-     * not implemented
-     */
-    void processInBuffer()
-    {
-    }
-    ;
-
-    /**
-     * not implemented
-     */
-    void processOutBuffer()
-    {
-    }
-    ;
-
-    /**
      * Scrolls up the terminal.
      */
     void scrollUp();

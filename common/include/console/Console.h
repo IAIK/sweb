@@ -153,40 +153,13 @@ class Console : public Thread
      */
     void handleKey(uint32 key);
 
-    /**
-     * not implemented here
-     */
     virtual void consoleClearScreen() =0;
-
-    /**
-     * not implemented here
-     */
     virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
                                        uint8 const &state) =0;
-
-    /**
-     * not implemented here
-     */
     virtual uint32 consoleGetNumRows() const=0;
-
-    /**
-     * not implemented here
-     */
     virtual uint32 consoleGetNumColumns() const=0;
-
-    /**
-     * not implemented here
-     */
     virtual void consoleScrollUp() =0;
-
-    /**
-     * not implemented here
-     */
     virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color) =0;
-
-    /**
-     * not implemented here
-     */
     virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color) =0;
 
     ustl::list<Terminal *> terminals_;
