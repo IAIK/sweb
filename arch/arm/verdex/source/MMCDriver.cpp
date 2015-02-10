@@ -89,6 +89,7 @@ uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
 
 MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512)
 {
+  irq = 0;
   num_sectors_ = 210672; // Todo
   debug(MMC_DRIVER,"MMCDriver()\n");
   uint32 response;

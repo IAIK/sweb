@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "ulist.h"
+#include "ustring.h"
 
 class BDDriver;
 class BDRequest;
@@ -35,7 +36,7 @@ class BDVirtualDevice
 
     const char *getName()
     {
-      return name_;
+      return name_.c_str();
     }
 
     uint32 getNumBlocks()
@@ -89,14 +90,14 @@ class BDVirtualDevice
   private:
     BDVirtualDevice();
     uint32 dev_number_;
-    uint32 block_size_;
-    uint32 sector_size_;
-    uint32 num_sectors_;
     uint32 offset_;
+    uint32 num_sectors_;
+    uint32 sector_size_;
+    uint32 block_size_;
     bool writable_;
-    char* name_;
     BDDriver* driver_;
     uint8 partition_type_;
+    ustl::string name_;
 };
 
 #endif
