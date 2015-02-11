@@ -1,10 +1,4 @@
-/**
- * @file RamFSInode.cpp
- */
-
 #include "fs/ramfs/RamFSInode.h"
-
-#include "mm/kmalloc.h"
 #include "kstring.h"
 #include "assert.h"
 #include "fs/ramfs/RamFSSuperblock.h"

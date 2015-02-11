@@ -1,18 +1,10 @@
-/**
- * @file PathWalker.cpp
- */
-
 #include "fs/PathWalker.h"
-
 #include "fs/Inode.h"
 #include "fs/Dentry.h"
 #include "fs/VfsMount.h"
 #include "fs/Superblock.h"
-
 #include "assert.h"
 #include "kstring.h"
-
-#include "mm/kmalloc.h"
 #include "console/kprintf.h"
 #include "kernel/Mutex.h"
 #include "kernel/Thread.h"

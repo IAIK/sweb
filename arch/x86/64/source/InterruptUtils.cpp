@@ -79,7 +79,7 @@ struct GateDesc
 
 extern "C" void arch_dummyHandler();
 
-uint64 InterruptUtils:: pf_address;
+uint64 InterruptUtils::pf_address;
 uint64 InterruptUtils::pf_address_counter;
 
 void InterruptUtils::initialise()

@@ -7,7 +7,6 @@
 #include "BDVirtualDevice.h"
 #include "IDEDriver.h"
 #include "MMCDriver.h"
-#include "kmalloc.h"
 #include "kstring.h"
 #include "ArchInterrupts.h"
 #include "kprintf.h"

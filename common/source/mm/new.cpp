@@ -1,7 +1,3 @@
-/**
- * @file new.cpp
- */
-
 #include "new.h"
 #include "KernelMemoryManager.h"
 
@@ -61,17 +57,14 @@ extern "C" void* __dso_handle;
 
 void __cxa_pure_virtual()
 {
-//  g_console->printf("__cxa_pure_virtual called\n");
 }
 
 void _pure_virtual()
 {
-//  g_console->printf("_pure_virtual called\n");
 }
 
 void __pure_virtual()
 {
-//  g_console->printf("_pure_virtual called\n");
 }
 
 uint32 atexit ( void ( * ) ( void ) ) {return ( uint32 )-1;}

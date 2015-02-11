@@ -59,6 +59,7 @@ void Stabs2DebugInfo::printAllFunctions() const
     demangleName(stabstr_buffer_ + symbol.second->n_strx, buffer);
     debug(MAIN, "\t%s\n", buffer);
   }
+  delete[] buffer;
 }
 
 struct StabsOperator

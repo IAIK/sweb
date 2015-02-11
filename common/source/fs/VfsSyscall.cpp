@@ -1,7 +1,6 @@
 #include "VfsSyscall.h"
 #include "kstring.h"
 #include "assert.h"
-#include "kmalloc.h"
 #include "Dirent.h"
 #include "Thread.h"
 #include "Mutex.h"
