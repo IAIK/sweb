@@ -4,7 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #include "cmemlink.h"
-#include "ofstream.h"
+//#include "ofstream.h"
 #include "strmsize.h"
 #include "ualgo.h"
 #include "panic.h"
