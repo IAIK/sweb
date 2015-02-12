@@ -309,7 +309,6 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
       this_one->prev_ = 0;
       last_ = this_one->prev_;
-      memset((void*) ((size_t)this_one ), 0,  sizeof(MallocSegment));
       ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
     }
     else
