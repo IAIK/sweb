@@ -7,6 +7,7 @@
 #include "Scheduler.h"
 #include "ArchInterrupts.h"
 #include "ArchMemory.h"
+#include "PageManager.h"
 #include "kstring.h"
 
 extern uint32 boot_completed;
@@ -33,7 +34,7 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_addr
   malloc_end_ = end_address;
   base_break_ = kernel_break_ = start_address;
   prenew_assert(((end_address - start_address - sizeof(MallocSegment)) & 0xFFFFFFFF80000000) == 0);
-  first_ = new (ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
+  first_ = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
   last_ = first_;
   debug(KMM, "KernelMemoryManager::ctor: bytes avaible: %d \n", end_address - start_address);
   debug(KMM, "ArchCommon::bzero((pointer) %x, %x,1);\n", (pointer) first_ + sizeof(MallocSegment),
@@ -186,16 +187,16 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   if(last_->getUsed())
   {
     // In this case we have to create a new segment...
-    MallocSegment* new_segment = new (ksbrk(sizeof(MallocSegment))) MallocSegment(last_, 0, requested_size, 0);
+    MallocSegment* new_segment = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(last_, 0, requested_size, 0);
     last_->next_ = new_segment;
     last_ = new_segment;
   }
   else
   {
     // else we just increase the size of the last segment
-    size_t needed_size = requestet_size - last_->getSize();
+    size_t needed_size = requested_size - last_->getSize();
     ksbrk(needed_size);
-    last_->setSize(requestet_size);
+    last_->setSize(requested_size);
   }
 
   return last_;
@@ -300,6 +301,23 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   }
 
   mergeWithFollowingFreeSegment(this_one);
+
+  // Change break if this is the last segment
+  if(this_one == last_)
+  {
+    if(this_one != first_)
+    {
+      prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
+      this_one->prev_ = 0;
+      last_ = this_one->prev_;
+      ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
+    }
+    else
+    {
+      ksbrk(-(this_one->getSize()));
+      this_one->setSize(0);
+    }
+  }
 
   memset((void*) ((size_t) this_one + sizeof(MallocSegment)), 0, this_one->getSize()); // ease debugging
 
