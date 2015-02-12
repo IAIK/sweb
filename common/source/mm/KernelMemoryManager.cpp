@@ -198,7 +198,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
     last_->setSize(requestet_size);
   }
 
-  return 0;
+  return last_;
 }
 
 void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_size, uint32 zero_check)
