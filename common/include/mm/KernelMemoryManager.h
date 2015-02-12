@@ -179,7 +179,6 @@ class KernelMemoryManager
     MallocSegment* last_;
     pointer base_break_;
     pointer kernel_break_;
-    pointer malloc_end_;
 
     void lockKMM();
     void unlockKMM();
