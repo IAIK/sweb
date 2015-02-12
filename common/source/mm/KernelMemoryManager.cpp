@@ -182,6 +182,21 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 
     current = current->next_;
   }
+  // No free segment found, could we allocate more memory?
+  if(last_->getUsed())
+  {
+    // In this case we have to create a new segment...
+    MallocSegment* new_segment = new (ksbrk(sizeof(MallocSegment))) MallocSegment(last_, 0, requested_size, 0);
+    last_->next_ = new_segment;
+    last_ = new_segment;
+  }
+  else
+  {
+    // else we just increase the size of the last segment
+    size_t needed_size = requestet_size - last_->getSize();
+    ksbrk(needed_size);
+    last_->setSize(requestet_size);
+  }
 
   return 0;
 }
@@ -340,29 +355,28 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
   prenew_assert((size_t)kernel_break_ + size > malloc_end_ && base_break_ <= (size_t)kernel_break_ + size);
-  if(size > 0)
+  if(size != 0)
   {
     uint32 old_brk = kernel_break_;
     uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
     kernel_break_ = (uint32)kernel_break_ + size;
     uint32 new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
-    while(cur_top_vpn != new_top_vpn)
+    if(size > 0)
     {
-      cur_top_vpn++;
-      ArchMemory::mapKernelPage(cur_top_vpn, PageManager::instance()->allocPPN());
+      while(cur_top_vpn != new_top_vpn)
+      {
+        cur_top_vpn++;
+        ArchMemory::mapKernelPage(cur_top_vpn, PageManager::instance()->allocPPN());
+      }
+
     }
-    return old_brk;
-  }
-  else if(size < 0)
-  {
-    uint32 old_brk = kernel_break_;
-    uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
-    kernel_break_ = (uint32)kernel_break_ + size;
-    uint32 new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
-    while(cur_top_vpn != new_top_vpn)
+    else
     {
-      ArchMemory::unmapKernelPage(cur_top_vpn);
-      cur_top_vpn--;
+      while(cur_top_vpn != new_top_vpn)
+      {
+        ArchMemory::unmapKernelPage(cur_top_vpn);
+        cur_top_vpn--;
+      }
     }
     return old_brk;
   }
