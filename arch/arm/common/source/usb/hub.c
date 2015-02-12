@@ -106,32 +106,6 @@ Result HubPortGetStatus(struct UsbDevice *device, u8 port) {
 	return OK;
 }
 
-Result HubChangeFeature(struct UsbDevice *device, enum HubFeature feature, bool set) {
-	Result result;
-	
-	if ((result = UsbControlMessage(
-		device, 
-		(struct UsbPipeAddress) { 
-			.Type = Control, 
-			.Speed = device->Speed, 
-			.EndPoint = 0, 
-			.Device = device->Number, 
-			.Direction = Out,
-			.MaxSize = SizeFromNumber(device->Descriptor.MaxPacketSize0),
-		},
-		NULL,
-		0,
-		&(struct UsbDeviceRequest) {
-			.Request = set ? SetFeature : ClearFeature,
-			.Type = 0x20,
-			.Value = (u8)feature,
-		},
-		ControlMessageTimeout)) != OK) 
-		return result;
-
-	return OK;
-}
-
 Result HubChangePortFeature(struct UsbDevice *device, enum HubPortFeature feature, u8 port, bool set) {
 	Result result;
 	
