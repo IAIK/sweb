@@ -160,6 +160,32 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
     return 0;
 }
 
+void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
+{
+  PageDirEntry *page_directory = kernel_page_directory;
+  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  assert(page_directory[pde_vpn].pt.present);
+  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  assert(!pte_base[pte_vpn].present);
+  pte_base[pte_vpn].present = 1;
+  pte_base[pte_vpn].writeable = 1;
+  pte_base[pte_vpn].page_ppn = physical_page;
+}
+
+void ArchMemory::unmapKernelPage(uint32 virtual_page)
+{
+  PageDirEntry *page_directory = kernel_page_directory;
+  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
+  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
+  assert(page_directory[pde_vpn].pt.present);
+  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  assert(pte_base[pte_vpn].present);
+  pte_base[pte_vpn].present = 0;
+  pte_base[pte_vpn].writeable = 0;
+  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
+}
+
 uint32 ArchMemory::getRootOfPagingStructure()
 {
   return page_dir_page_;

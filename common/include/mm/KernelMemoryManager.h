@@ -170,8 +170,14 @@ class KernelMemoryManager
      */
     inline pointer private_AllocateMemory(size_t requested_size);
 
+    pointer ksbrk(uint32 size);
+
+    void kbrk();
+
     MallocSegment* first_; //first_ must _never_ be NULL
     MallocSegment* last_;
+    pointer base_break_;
+    pointer kernel_break_;
     pointer malloc_end_;
 
     void lockKMM();

@@ -28,9 +28,11 @@ KernelMemoryManager* KernelMemoryManager::instance()
 KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
+  assert((start_address % PAGE_SIZE) == 0 && (end_address % PAGE_SIZE) == 0)
   malloc_end_ = end_address;
+  base_break_ = kernel_break_ = start_address;
   prenew_assert(((end_address - start_address - sizeof(MallocSegment)) & 0xFFFFFFFF80000000) == 0);
-  first_ = new ((void*) start_address) MallocSegment(0, 0, end_address - start_address - sizeof(MallocSegment), false);
+  first_ = new (ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
   last_ = first_;
   debug(KMM, "KernelMemoryManager::ctor: bytes avaible: %d \n", end_address - start_address);
   debug(KMM, "ArchCommon::bzero((pointer) %x, %x,1);\n", (pointer) first_ + sizeof(MallocSegment),
@@ -332,6 +334,20 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
     }
   }
   return false;
+}
+
+pointer KernelMemoryManager::ksbrk(uint32 size)
+{
+  prenew_assert((uint32)kernel_break_ + size > malloc_end_);
+  uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
+  kenrel_break += size;
+  uint32 new_top_vpn = kernel_break_ / PAGE_SIZE;
+  return 0;
+}
+
+void KernelMemoryManager::kbrk()
+{
+
 }
 
 Thread* KernelMemoryManager::KMMLockHeldBy()
