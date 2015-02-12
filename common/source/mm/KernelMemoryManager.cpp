@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "Scheduler.h"
 #include "ArchInterrupts.h"
+#include "ArchMemory.h"
 #include "kstring.h"
 
 extern uint32 boot_completed;
@@ -336,18 +337,39 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
   return false;
 }
 
-pointer KernelMemoryManager::ksbrk(uint32 size)
+pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
-  prenew_assert((uint32)kernel_break_ + size > malloc_end_);
-  uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
-  kenrel_break += size;
-  uint32 new_top_vpn = kernel_break_ / PAGE_SIZE;
-  return 0;
-}
-
-void KernelMemoryManager::kbrk()
-{
-
+  prenew_assert((size_t)kernel_break_ + size > malloc_end_ && base_break_ <= (size_t)kernel_break_ + size);
+  if(size > 0)
+  {
+    uint32 old_brk = kernel_break_;
+    uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
+    kernel_break_ = (uint32)kernel_break_ + size;
+    uint32 new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
+    while(cur_top_vpn != new_top_vpn)
+    {
+      cur_top_vpn++;
+      ArchMemory::mapKernelPage(cur_top_vpn, PageManager::instance()->allocPPN());
+    }
+    return old_brk;
+  }
+  else if(size < 0)
+  {
+    uint32 old_brk = kernel_break_;
+    uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
+    kernel_break_ = (uint32)kernel_break_ + size;
+    uint32 new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
+    while(cur_top_vpn != new_top_vpn)
+    {
+      ArchMemory::unmapKernelPage(cur_top_vpn);
+      cur_top_vpn--;
+    }
+    return old_brk;
+  }
+  else
+  {
+    return kernel_break_;
+  }
 }
 
 Thread* KernelMemoryManager::KMMLockHeldBy()
