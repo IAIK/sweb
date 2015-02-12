@@ -162,7 +162,6 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
 
 void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
 {
-  kprintfd("Mapping page %d\n", virtual_page);
   PageDirEntry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
