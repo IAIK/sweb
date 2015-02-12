@@ -84,22 +84,11 @@ extern "C" void initialiseBootTimePaging()
     pte_start[i].writeable = 0;
     pte_start[i].page_ppn = i+256;
   }
-  for (i=last_ro_data_page;i<(first_free_page-256);++i)
+  for (i=last_ro_data_page;i<first_free_page;++i)
   {
     pte_start[i].present = 1;
     pte_start[i].writeable = 1;
     pte_start[i].page_ppn = i+256;
-  }
-  uint32 start_page = first_free_page;
-
-  //HACK Example: Extend Kernel Memory (by Bernhard T.):
-  // just change 1024 here to anything <= 3*1024  (because we have 3 pte's in bss which were mapped in the pde above)
-  for (i=first_free_page-256;i<1024;++i)
-  {
-    pte_start[i].present = 1;
-    pte_start[i].writeable = 1;
-    pte_start[i].page_ppn = getNextFreePage(start_page);
-    start_page = pte_start[i].page_ppn+1;
   }
 
   if (ArchCommon::haveVESAConsole(0))

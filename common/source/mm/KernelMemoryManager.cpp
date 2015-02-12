@@ -12,6 +12,9 @@
 
 extern uint32 boot_completed;
 
+
+KernelMemoryManager kmm;
+
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
 KernelMemoryManager* KernelMemoryManager::instance()
@@ -19,27 +22,24 @@ KernelMemoryManager* KernelMemoryManager::instance()
   if (unlikely(!instance_))
   {
     pointer start_address = ArchCommon::getFreeKernelMemoryStart();
-    pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
-    //start_address will propably be &kernel_end_address defined in linker script
     //since we don't have memory management before creating the MemoryManager, we use "placement new"
-    instance_ = new ((void*) start_address) KernelMemoryManager(start_address + sizeof(KernelMemoryManager), end_address);
+    instance_ = new (&kmm) KernelMemoryManager(start_address + sizeof(KernelMemoryManager));
   }
   return instance_;
 }
 
-KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address) :
+KernelMemoryManager::KernelMemoryManager(pointer start_address) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
-  assert(((start_address - sizeof(KernelMemoryManager)) % PAGE_SIZE) == 0 && (end_address % PAGE_SIZE) == 0)
-  malloc_end_ = end_address;
+  assert(((start_address - sizeof(KernelMemoryManager)) % PAGE_SIZE) == 0);
+  malloc_end_ = start_address;
   base_break_ = kernel_break_ = start_address;
-  prenew_assert(((end_address - start_address - sizeof(MallocSegment)) & 0xFFFFFFFF80000000) == 0);
   first_ = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
   last_ = first_;
-  debug(KMM, "KernelMemoryManager::ctor: bytes avaible: %d \n", end_address - start_address);
+  debug(KMM, "KernelMemoryManager::ctor: bytes avaible: %d \n", malloc_end_ - start_address);
   debug(KMM, "ArchCommon::bzero((pointer) %x, %x,1);\n", (pointer) first_ + sizeof(MallocSegment),
-        end_address - start_address - sizeof(MallocSegment));
-  memset((void*) ((size_t) first_ + sizeof(MallocSegment)), 0, end_address - start_address - sizeof(MallocSegment));
+        malloc_end_ - start_address - sizeof(MallocSegment));
+  memset((void*) ((size_t) first_ + sizeof(MallocSegment)), 0, malloc_end_ - start_address - sizeof(MallocSegment));
 }
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)

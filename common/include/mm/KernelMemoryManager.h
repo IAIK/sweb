@@ -124,13 +124,16 @@ class KernelMemoryManager
     SpinLock& getKMMLock();
 
     Thread* KMMLockHeldBy();
+
+    KernelMemoryManager() : lock_(0) { assert(false && "dummy constructor - do not use!"); };
+
   private:
     /**
      * Constructor - private because its a singleton
      * @param start_address the start address of the memory
      * @param end_address the end address of the memory
      */
-    KernelMemoryManager(pointer start_address = (pointer) &kernel_end_address, pointer end_address = 0x80400000);
+    KernelMemoryManager(pointer start_address);
 
     /**
      * returns a free memory segment of the requested size
@@ -188,7 +191,6 @@ class KernelMemoryManager
     size_t approx_memory_free_;
 
     static KernelMemoryManager *instance_;
-
 };
 
 #endif
