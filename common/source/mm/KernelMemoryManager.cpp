@@ -30,7 +30,7 @@ KernelMemoryManager* KernelMemoryManager::instance()
 KernelMemoryManager::KernelMemoryManager(pointer start_address, pointer end_address) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
-  assert((start_address % PAGE_SIZE) == 0 && (end_address % PAGE_SIZE) == 0)
+  assert(((start_address - sizeof(KernelMemoryManager)) % PAGE_SIZE) == 0 && (end_address % PAGE_SIZE) == 0)
   malloc_end_ = end_address;
   base_break_ = kernel_break_ = start_address;
   prenew_assert(((end_address - start_address - sizeof(MallocSegment)) & 0xFFFFFFFF80000000) == 0);
@@ -187,7 +187,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   if(last_->getUsed())
   {
     // In this case we have to create a new segment...
-    MallocSegment* new_segment = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(last_, 0, requested_size, 0);
+    MallocSegment* new_segment = new ((void*)ksbrk(sizeof(MallocSegment) + requested_size)) MallocSegment(last_, 0, requested_size, 0);
     last_->next_ = new_segment;
     last_ = new_segment;
   }
@@ -256,6 +256,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 {
+  debug(KMM, "KernelMemoryManager::freeSegment(%x)\n", this_one);
   prenew_assert(this_one != 0);
   prenew_assert(this_one->marker_ == 0xdeadbeef);
 
@@ -302,6 +303,8 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
   mergeWithFollowingFreeSegment(this_one);
 
+  memset((void*) ((size_t) this_one + sizeof(MallocSegment)), 0, this_one->getSize()); // ease debugging
+
   // Change break if this is the last segment
   if(this_one == last_)
   {
@@ -310,6 +313,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
       this_one->prev_ = 0;
       last_ = this_one->prev_;
+      memset((void*) ((size_t)this_one ), 0,  sizeof(MallocSegment));
       ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
     }
     else
@@ -318,8 +322,6 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       this_one->setSize(0);
     }
   }
-
-  memset((void*) ((size_t) this_one + sizeof(MallocSegment)), 0, this_one->getSize()); // ease debugging
 
   if (isDebugEnabled(KMM))
   {
@@ -372,7 +374,8 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
-  prenew_assert((size_t)kernel_break_ + size > malloc_end_ && base_break_ <= (size_t)kernel_break_ + size);
+  debug(KMM, "KernelMemoryManager::ksbrk(%d)\n", size);
+  prenew_assert((size_t)kernel_break_ + size < malloc_end_ && base_break_ <= (size_t)kernel_break_ + size);
   if(size != 0)
   {
     uint32 old_brk = kernel_break_;
