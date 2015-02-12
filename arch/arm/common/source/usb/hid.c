@@ -339,97 +339,54 @@ void HidEnumerateActionCountReport(void* data, u16 tag, u32 value) {
 		bool input, output, feature;
 	} *reports = data;
 
-	switch (tag) {
-	case TagMainInput:
-		if (!reports->input) { reports->reportCount++; reports->input = true; }
-		LOG_DEBUGF("HID: %.*sInput(%03o)\n", reports->indent, "           ", value);
-		break;
-	case TagMainOutput:
-		if (!reports->output) { reports->reportCount++; reports->output = true; }
-		LOG_DEBUGF("HID: %.*sOutput(%03o)\n", reports->indent, "           ", value);
-		break;
-	case TagMainFeature:
-		if (!reports->feature) { reports->reportCount++; reports->feature = true; }
-		LOG_DEBUGF("HID: %.*sFeature(%03o)\n", reports->indent, "           ", value);
-		break;
-	case TagMainCollection:
-		LOG_DEBUGF("HID: %.*sCollection(%d)\n", reports->indent, "           ", value);
-		reports->indent++;
-		break;
-	case TagMainEndCollection:
-		reports->indent--;
-		LOG_DEBUGF("HID: %.*sEnd Collection\n", reports->indent, "           ");
-		break;
-	case TagGlobalUsagePage:
-		LOG_DEBUGF("HID: %.*sUsage Page(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalLogicalMinimum:
-		LOG_DEBUGF("HID: %.*sLogical Minimum(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalLogicalMaximum:
-		LOG_DEBUGF("HID: %.*sLogical Maximum(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalPhysicalMinimum:
-		LOG_DEBUGF("HID: %.*sPhysical Minimum(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalPhysicalMaximum:
-		LOG_DEBUGF("HID: %.*sPhysical Maximum(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalUnitExponent:
-		LOG_DEBUGF("HID: %.*sUnit Exponent(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalUnit:
-		LOG_DEBUGF("HID: %.*sUnit(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalReportSize:
-		LOG_DEBUGF("HID: %.*sReport Size(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalReportId:
-		reports->input = reports->output = reports->feature = false;
-		LOG_DEBUGF("HID: %.*sReport ID(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalReportCount:
-		LOG_DEBUGF("HID: %.*sReport Count(%d)\n", reports->indent, "           ", value);
-		break;
-	case TagGlobalPush:
-		LOG_DEBUGF("HID: %.*sPush\n", reports->indent, "           ");
-		break;
-	case TagGlobalPop:
-		LOG_DEBUGF("HID: %.*sPop\n", reports->indent, "           ");
-		break;
-	case TagLocalUsage:
-		LOG_DEBUGF("HID: %.*sUsage(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalUsageMinimum:
-		LOG_DEBUGF("HID: %.*sUsage Minimum(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalUsageMaximum:
-		LOG_DEBUGF("HID: %.*sUsage Maximum(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalDesignatorIndex:
-		LOG_DEBUGF("HID: %.*sDesignator Index(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalDesignatorMinimum:
-		LOG_DEBUGF("HID: %.*sDesignator Minimum(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalDesignatorMaximum:
-		LOG_DEBUGF("HID: %.*sDesignator Maximum(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalStringIndex:
-		LOG_DEBUGF("HID: %.*sString Index(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalStringMinimum:
-		LOG_DEBUGF("HID: %.*sString Minimum(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalStringMaximum:
-		LOG_DEBUGF("HID: %.*sString Maximum(%u)\n", reports->indent, "           ", value);
-		break;
-	case TagLocalDelimiter:
-		LOG_DEBUGF("HID: %.*sDelimiter\n", reports->indent, "           ");
-		break;
-	default:
+  struct messages
+  {
+    u8 tag;
+    const char* msg;
+  } msgs[] =
+  {
+    { TagMainInput, "HID: %.*sInput(%03o)\n" }, { TagMainOutput, "HID: %.*sOutput(%03o)\n" },
+    { TagMainFeature, "HID: %.*sFeature(%03o)\n" }, { TagMainCollection, "HID: %.*sCollection(%d)\n" },
+    { TagMainEndCollection, "HID: %.*sEnd Collection\n" }, { TagGlobalReportId, "HID: %.*sReport ID(%d)\n" },
+    { TagGlobalUsagePage, "HID: %.*sUsage Page(%d)\n" }, { TagGlobalLogicalMinimum, "HID: %.*sLogical Minimum(%d)\n" },
+    { TagGlobalLogicalMaximum, "HID: %.*sLogical Maximum(%d)\n" }, { TagGlobalPhysicalMinimum, "HID: %.*sPhysical Minimum(%d)\n" },
+    { TagGlobalPhysicalMaximum, "HID: %.*sPhysical Maximum(%d)\n" }, { TagGlobalUnitExponent, "HID: %.*sUnit Exponent(%d)\n" },
+    { TagGlobalUnit, "HID: %.*sUnit(%d)\n" }, { TagGlobalReportSize, "HID: %.*sReport Size(%d)\n" },
+    { TagGlobalReportCount, "HID: %.*sReport Count(%d)\n" }, { TagGlobalPush, "HID: %.*sPush\n" },
+    { TagGlobalPop, "HID: %.*sPop\n" }, { TagLocalUsage, "HID: %.*sUsage(%u)\n" },
+    { TagLocalUsageMinimum, "HID: %.*sUsage Minimum(%u)\n" }, { TagLocalUsageMaximum, "HID: %.*sUsage Maximum(%u)\n" },
+    { TagLocalDesignatorIndex, "HID: %.*sDesignator Index(%u)\n" }, { TagLocalDesignatorMinimum, "HID: %.*sDesignator Minimum(%u)\n" },
+    { TagLocalDesignatorMaximum, "HID: %.*sDesignator Maximum(%u)\n" }, { TagLocalStringIndex, "HID: %.*sString Index(%u)\n" },
+    { TagLocalStringMinimum, "HID: %.*sString Minimum(%u)\n" }, { TagLocalStringMaximum, "HID: %.*sString Maximum(%u)\n" },
+    { TagLocalDelimiter, "HID: %.*sDelimiter\n" }
+  };
+  u8 found = 0;
+  switch (tag) {
+  case TagMainInput:
+    if (!reports->input) { reports->reportCount++; reports->input = true; }
+    break;
+  case TagMainOutput:
+    if (!reports->output) { reports->reportCount++; reports->output = true; }
+    break;
+  case TagMainFeature:
+    if (!reports->feature) { reports->reportCount++; reports->feature = true; }
+    break;
+  case TagGlobalReportId:
+    reports->input = reports->output = reports->feature = false;
+    break;
+  }
+	for (size_t i = 0; i < sizeof(msgs)/sizeof(msgs[0]); ++i)
+	{
+    if (tag == msgs[i].tag)
+    {
+      found = 1;
+      LOG_DEBUGF(msgs[i].msg, reports->indent, "           ", value);
+      break;
+    }
+	}
+	if (!found)
+	{
 		LOG_DEBUGF("HID: Unexpected tag in report %d = %x.\n", tag, value);
-		break;
 	}
 }
 

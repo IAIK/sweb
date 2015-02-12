@@ -31,7 +31,7 @@ void MemoryCopy(void* destination, void* source, u32 length)
 #define FLOAT_TEXT "Floats unsupported."
 
 #ifndef NO_LOG
-void LogPrintF(char* format, u32 formatLength, ...) {
+void LogPrintF(const char* format, u32 formatLength, ...) {
 	va_list args;
 	char messageBuffer[160];
 	u32 messageIndex, width = 0, precision = 1, characters;

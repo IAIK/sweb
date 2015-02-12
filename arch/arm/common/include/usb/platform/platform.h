@@ -77,7 +77,7 @@ void LogPrint(const char* message, u32 messageLength);
 	Implemented in platform.c, by calling LogPrint. Messages truncated to 160
 	characters.
 */
-void LogPrintF(char* format, u32 formatLength, ...);
+void LogPrintF(const char* format, u32 formatLength, ...);
 
 #define LOG(x) (LogPrint(x, sizeof(x)))
 #define LOGL(x, len) (LogPrint(x, len))
