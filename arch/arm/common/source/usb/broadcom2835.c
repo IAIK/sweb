@@ -11,11 +11,6 @@
 #include <platform/platform.h>
 #include <usb_types.h>
 
-void Bcm2835Load()
-{
-	LOG_DEBUG("CSUD: Broadcom2835 driver version 0.1.\n");
-}
-
 #ifndef TYPE_DRIVER
 
 void MicroDelay(u32 delay) {

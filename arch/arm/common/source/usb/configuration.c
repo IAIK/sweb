@@ -17,10 +17,6 @@
 
 // Add load methods for new modules wrapped in ifdefs here:
 void UsbLoad();
-void PlatformLoad();
-void Arm6Load();
-void Bcm2835Load();
-void DwcLoad();
 void HidLoad();
 void HubLoad();
 void KbdLoad();
@@ -28,11 +24,7 @@ void KbdLoad();
 void ConfigurationLoad() {
 	// Call each libraries load method here. Watch out for the order, load more
 	// generic libraries first.
-	PlatformLoad();
-	Arm6Load();
-	Bcm2835Load();
 	UsbLoad();
-	DwcLoad();
 	HidLoad();
 	HubLoad();
 	KbdLoad();

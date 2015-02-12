@@ -24,11 +24,6 @@ volatile struct PowerReg *PowerPhysical, *Power = NULL;
 bool PhyInitialised = false;
 u8* databuffer = NULL;
 
-void DwcLoad() 
-{
-	LOG_DEBUG("CSUD: DesignWare Hi-Speed USB 2.0 On-The-Go (HS OTG) Controller driver version 0.1\n"); 
-}
-
 void WriteThroughReg(volatile const void* reg) {
 	WriteThroughRegMask(reg, 0);
 }

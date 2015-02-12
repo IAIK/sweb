@@ -316,11 +316,3 @@ void LogPrint(const char* message, u32 messageLength)
     *(volatile unsigned long*)SERIAL_BASE = *message;
   }
 }
-
-void PlatformLoad()
-{
-#ifdef MEM_INTERNAL_MANAGER_DEFAULT 
-	FirstAllocation = HEAP_END;
-	FirstFreeAllocation = NULL;
-#endif
-}
