@@ -33,6 +33,8 @@ class PageManager
      */
     void freePPN(uint32 page_number, uint32 page_size = PAGE_SIZE);
 
+    Thread* heldBy() { return lock_.heldBy(); }
+
   private:
     /**
      * used internally to mark pages as reserved
@@ -51,7 +53,7 @@ class PageManager
     uint32 number_of_pages_;
     uint32 lowest_unreserved_page_;
 
-    Mutex lock_;
+    SpinLock lock_;
 
 };
 

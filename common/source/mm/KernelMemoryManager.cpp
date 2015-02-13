@@ -379,6 +379,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
       while(cur_top_vpn != new_top_vpn)
       {
         cur_top_vpn++;
+        assert(pm_ready_);
         size_t new_page = PageManager::instance()->allocPPN();
         memset((void*)ArchMemory::getIdentAddressOfPPN(new_page), 0 , PAGE_SIZE);
         ArchMemory::mapKernelPage(cur_top_vpn, new_page);
@@ -389,6 +390,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     {
       while(cur_top_vpn != new_top_vpn)
       {
+        assert(pm_ready_);
         ArchMemory::unmapKernelPage(cur_top_vpn);
         cur_top_vpn--;
       }
@@ -408,11 +410,13 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
+  assert(!pm_ready_ || PageManager::instance()->heldBy() != currentThread);
   lock_.acquire();
 }
 
 void KernelMemoryManager::unlockKMM()
 {
+  assert(!pm_ready_ || PageManager::instance()->heldBy() != currentThread);
   lock_.release();
 }
 

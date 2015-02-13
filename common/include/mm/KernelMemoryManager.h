@@ -125,7 +125,7 @@ class KernelMemoryManager
 
     Thread* KMMLockHeldBy();
 
-    KernelMemoryManager() : lock_(0) { assert(false && "dummy constructor - do not use!"); };
+    KernelMemoryManager() : lock_(0), pm_ready_(0) { assert(false && "dummy constructor - do not use!"); };
 
   private:
     /**
@@ -188,6 +188,9 @@ class KernelMemoryManager
     uint32 segments_used_;
     uint32 segments_free_;
     size_t approx_memory_free_;
+
+    void setPMReady() { pm_ready_ = 1; }
+    size_t pm_ready_;
 
     static KernelMemoryManager *instance_;
 };
