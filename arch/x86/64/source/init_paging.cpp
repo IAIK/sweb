@@ -73,8 +73,8 @@ extern "C" void initialisePaging()
   uint64 kernel_last_page = (((uint64)(&kernel_end_address)) - 0xFFFFFFFF80000000)/PAGE_SIZE;
   uint64 first_free_page = kernel_last_page + 1;
 
-  // Map the kernel page tables
-  for (i = 0; i < first_free_page; i++)
+  // Map the kernel page tables (first 640kib = 184 pages are unused)
+  for (i = 184; i < first_free_page; i++)
   {
     pt[i].present = 1;
     pt[i].writeable = 1;

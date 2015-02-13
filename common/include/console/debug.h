@@ -34,7 +34,7 @@ const size_t USERTRACE          = 0x00080200;// | OUTPUT_ENABLED;
 //group memory management
 const size_t MM                 = 0x00100000;
 const size_t PM                 = 0x00100001 | OUTPUT_ENABLED;
-const size_t KMM                = 0x00100002 | OUTPUT_ENABLED;;
+const size_t KMM                = 0x00100002;// | OUTPUT_ENABLED;;
 
 //group driver
 const size_t DRIVER             = 0x00200000;
