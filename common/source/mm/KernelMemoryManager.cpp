@@ -373,10 +373,10 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
   prenew_assert(base_break_ <= (size_t)kernel_break_ + size);
   if(size != 0)
   {
-    uint32 old_brk = kernel_break_;
-    uint32 cur_top_vpn = kernel_break_ / PAGE_SIZE;
+    size_t old_brk = kernel_break_;
+    size_t cur_top_vpn = kernel_break_ / PAGE_SIZE;
     kernel_break_ = (uint32)kernel_break_ + size;
-    uint32 new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
+    size_t new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
     if(size > 0)
     {
       while(cur_top_vpn != new_top_vpn)

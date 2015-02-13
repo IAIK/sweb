@@ -118,6 +118,23 @@ public:
   static uint64 get_PAddr_Of_VAddr_In_KernelMapping(uint64 virtual_addr);
   static ArchMemoryMapping resolveMapping(uint64 pml4,uint64 vpage);
 
+/**
+ *
+ * maps a virtual page to a physical page in kernel mapping
+ *
+ * @param virtual_page
+ * @param physical_page
+ */
+  static void mapKernelPage(uint64 virtual_page, uint64 physical_page);
+
+/**
+ * removes the mapping to a virtual_page by marking its PTE Entry as non valid
+ * in kernel mapping
+ *
+ * @param virtual_page which will be invalidated
+ */
+  static void unmapKernelPage(uint64 virtual_page);
+
   uint64 page_map_level_4_;
 
   uint64 getRootOfPagingStructure();
