@@ -108,22 +108,35 @@ size_t ArchThreads::testSetLock(size_t &lock, size_t new_value)
 
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
 {
-  return __sync_fetch_and_add(&value,increment);
+  int32 ret=increment;
+  __asm__ __volatile__(
+  "lock; xadd %0, %1;"
+  :"=a" (ret), "=m" (value)
+  :"a" (ret)
+  :);
+  return ret;
 }
 
 int32 ArchThreads::atomic_add(int32 &value, int32 increment)
 {
-  return __sync_fetch_and_add(&value,increment);
+  return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
 }
+
 
 uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
 {
-  return __sync_fetch_and_add(&value,increment);
+  int64 ret= increment;
+  __asm__ __volatile__(
+  "lock; xadd %0, %1;"
+  :"=a" (ret), "=m" (value)
+  :"a" (ret)
+  :);
+  return ret;
 }
 
 int64 ArchThreads::atomic_add(int64 &value, int64 increment)
 {
-  return __sync_fetch_and_add(&value,increment);
+  return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
 }
 
 

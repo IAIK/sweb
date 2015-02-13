@@ -208,13 +208,11 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
   uint32* mem = (uint32*) (this_one + 1);
   if (zero_check)
   {
-    uint32 checked = 0;
     for (uint32 i = 0; i < requested_size / 4; ++i)
     {
       if(unlikely(mem[i] != 0))
       {
-        checked = 1;
-        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %x:\n", mem + i);
+        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %x\n", mem + i);
         mem[i] = 0;
       }
     }
