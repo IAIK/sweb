@@ -103,6 +103,23 @@ public:
   static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page=0);
   static uint32 get_PAddr_Of_VAddr_In_KernelMapping(uint32 virtual_addr);
 
+/**
+ *
+ * maps a virtual page to a physical page in kernel mapping
+ *
+ * @param virtual_page
+ * @param physical_page
+ */
+  static void mapKernelPage(uint32 virtual_page, uint32 physical_page);
+
+/**
+ * removes the mapping to a virtual_page by marking its PTE Entry as non valid
+ * in kernel mapping
+ *
+ * @param virtual_page which will be invalidated
+ */
+  static void unmapKernelPage(uint32 virtual_page);
+
 
   PageDirPointerTableEntry* page_dir_pointer_table_;
   PageDirPointerTableEntry* getRootOfPagingStructure();
