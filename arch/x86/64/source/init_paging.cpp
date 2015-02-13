@@ -5,6 +5,8 @@
 #include "ArchCommon.h"
 #include "kprintf.h"
 
+extern void* kernel_end_address;
+
 extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
 extern PageDirEntry kernel_page_directory[];
 extern PageTableEntry kernel_page_table[];
@@ -19,6 +21,8 @@ extern "C" void initialisePaging()
   PageDirPointerTableEntry *pdpt2 = pdpt1 + PAGE_DIR_POINTER_TABLE_ENTRIES;
   PageDirEntry *pd1 = (PageDirEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory);
   PageDirEntry *pd2 = pd1 + PAGE_DIR_ENTRIES;
+
+  PageTableEntry *pt =  (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_table);
 
   // Note: the only valid address ranges are currently:
   //         * 0000 0000 0 to * 7FFF FFFF F
@@ -58,14 +62,25 @@ extern "C" void initialisePaging()
     pd1[i].page.writeable = 1;
     pd1[i].page.present = 1;
   }
-  // kernel map 4 MiB (2 pages)
-  for (i = 0; i < 2; ++i)
+  // Map 8 page directories (8*512*4kb = max 16mb)
+  for (i = 0; i < 8; ++i)
   {
-    pd2[i].page.page_ppn = i;
-    pd2[i].page.size = 1;
-    pd2[i].page.writeable = 1;
-    pd2[i].page.present = 1;
+    pd2[i].pt.writeable = 1;
+    pd2[i].pt.present = 1;
+    pd2[i].pt.page_ppn = ((pointer)&pt[512*i])/PAGE_SIZE;;
   }
+
+  uint64 kernel_last_page = (((uint64)(&kernel_end_address)) - 0xFFFFFFFF80000000)/PAGE_SIZE;
+  uint64 first_free_page = kernel_last_page + 1;
+
+  // Map the kernel page tables
+  for (i = 0; i < first_free_page; i++)
+  {
+    pt[i].present = 1;
+    pt[i].writeable = 1;
+    pt[i].page_ppn = i;
+  }
+
   if (ArchCommon::haveVESAConsole(0))
   {
     for (i = 0; i < 8; ++i) // map the 16 MiB (8 pages) framebuffer

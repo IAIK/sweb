@@ -13,6 +13,7 @@
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(0x1000)));
+PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));;
 
 ArchMemory::ArchMemory()
 {
@@ -274,15 +275,34 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(size_t virtual_page, size_t *
 
 void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
 {
-  kprintfd("mapKernelPage(%u, %u)\n", virtual_page, physical_page);
-  PageManager::instance()->freePPN(physical_page);
-  //assert(false);
+  ArchMemoryMapping mapping = resolveMapping(((uint64)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),virtual_page);
+  PageMapLevel4Entry* pml4 = kernel_page_map_level_4;
+  assert(pml4[mapping.pml4i].present);
+  PageDirPointerTableEntry *pdpt = (PageDirPointerTableEntry*)getIdentAddressOfPPN(pml4[mapping.pml4i].page_ppn);
+  assert(pdpt[mapping.pdpti].pd.present);
+  PageDirEntry *pd = (PageDirEntry*)getIdentAddressOfPPN(pdpt[mapping.pdpti].pd.page_ppn);
+  assert(pd[mapping.pdi].pt.present);
+  PageTableEntry *pt = (PageTableEntry*)getIdentAddressOfPPN(pd[mapping.pdi].pt.page_ppn);
+  assert(!pt[mapping.pti].present);
+  pt[mapping.pti].present = 1;
+  pt[mapping.pti].writeable = 1;
+  pt[mapping.pti].page_ppn = physical_page;
 }
 
 void ArchMemory::unmapKernelPage(size_t virtual_page)
 {
-  kprintfd("unmapKernelPage(%u)\n", virtual_page);
-  //assert(false);
+  ArchMemoryMapping mapping = resolveMapping(((uint64)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),virtual_page);
+  PageMapLevel4Entry* pml4 = kernel_page_map_level_4;
+  assert(pml4[mapping.pml4i].present);
+  PageDirPointerTableEntry *pdpt = (PageDirPointerTableEntry*)getIdentAddressOfPPN(pml4[mapping.pml4i].page_ppn);
+  assert(pdpt[mapping.pdpti].pd.present);
+  PageDirEntry *pd = (PageDirEntry*)getIdentAddressOfPPN(pdpt[mapping.pdpti].pd.page_ppn);
+  assert(pd[mapping.pdi].pt.present);
+  PageTableEntry *pt = (PageTableEntry*)getIdentAddressOfPPN(pd[mapping.pdi].pt.page_ppn);
+  assert(pt[mapping.pti].present);
+  pt[mapping.pti].present = 0;
+  pt[mapping.pti].writeable = 0;
+  PageManager::instance()->freePPN(pt[mapping.pti].page_ppn);
 }
 
 uint64 ArchMemory::getRootOfPagingStructure()
