@@ -274,11 +274,13 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(size_t virtual_page, size_t *
 
 void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
 {
+  kprintfd("mapKernelPage(%u, %u)\n", virtual_page, physical_page);
   assert(false);
 }
 
 void ArchMemory::unmapKernelPage(size_t virtual_page)
 {
+  kprintfd("unmapKernelPage(%u)\n", virtual_page);
   assert(false);
 }
 

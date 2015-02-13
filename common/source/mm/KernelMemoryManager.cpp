@@ -33,9 +33,11 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address) :
 {
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = kernel_break_ = start_address;
+  debug(KMM, "Going to sbrk\n");
   first_ = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
+  debug(KMM, "First sbrk done\n");
   last_ = first_;
-  debug(KMM, "KernelMemoryManager::ctor\n");
+  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x\n", start_address);
 }
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
@@ -375,7 +377,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
   {
     size_t old_brk = kernel_break_;
     size_t cur_top_vpn = kernel_break_ / PAGE_SIZE;
-    kernel_break_ = (uint32)kernel_break_ + size;
+    kernel_break_ = ((size_t)kernel_break_) + size;
     size_t new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
     if(size > 0)
     {
