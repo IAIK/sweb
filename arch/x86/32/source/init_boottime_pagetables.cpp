@@ -46,7 +46,7 @@ extern "C" void initialiseBootTimePaging()
 
   PageTableEntry *pte_start = (PageTableEntry*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_tables);
 
-  uint32 kernel_last_page = ((uint32)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address)) / PAGE_SIZE;
+  uint32 kernel_last_page = (((pointer)&kernel_end_address)-LINK_BASE)/PAGE_SIZE;
   uint32 first_free_page = kernel_last_page + 1;
 
   // we do not have to clear the pde since its in the bss
@@ -73,9 +73,8 @@ extern "C" void initialiseBootTimePaging()
   // will be write protected.
 
   extern uint32 ro_data_end_address;
-  pointer rod = (pointer)&ro_data_end_address;
 
-  uint32 last_ro_data_page = (rod-LINK_BASE)/PAGE_SIZE;
+  uint32 last_ro_data_page = (((pointer)&ro_data_end_address)-LINK_BASE)/PAGE_SIZE;
 
 //  last_ro_data_page = 0;
   for (i=0;i<last_ro_data_page;++i)
