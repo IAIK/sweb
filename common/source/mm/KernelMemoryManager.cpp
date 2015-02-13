@@ -382,7 +382,9 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
       while(cur_top_vpn != new_top_vpn)
       {
         cur_top_vpn++;
-        ArchMemory::mapKernelPage(cur_top_vpn, PageManager::instance()->allocPPN());
+        size_t new_page = PageManager::instance()->allocPPN();
+        memset((void*)ArchMemory::getIdentAddressOfPPN(new_page), 0 , PAGE_SIZE);
+        ArchMemory::mapKernelPage(cur_top_vpn, new_page);
       }
 
     }
