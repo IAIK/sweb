@@ -33,9 +33,9 @@ KernelMemoryManager::KernelMemoryManager(pointer start_address) :
 {
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = kernel_break_ = start_address;
-  debug(KMM, "Going to sbrk\n");
+  debug(KMM, "Clearing first heap page\n");
+  memset((void*)start_address, 0, PAGE_SIZE);
   first_ = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
-  debug(KMM, "First sbrk done\n");
   last_ = first_;
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x\n", start_address);
 }
