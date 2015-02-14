@@ -107,7 +107,7 @@ public:
     inline void			assign (const_wpointer s1)			{ clear(); append (s1); }
     inline void			assign (const string& s)			{ assign (s.begin(), s.end()); }
     inline void			assign (const string& s, uoff_t o, size_type n)	{ assign (s.iat(o), s.iat(o+n)); }
-    size_type			copyto (pointer p, size_type n, const_iterator start = NULL) const;
+    size_type			copyto (pointer p, size_type n, const_iterator start = (const_iterator)NULL) const;
     inline int			compare (const string& s) const	{ return (compare (begin(), end(), s.begin(), s.end())); }
     inline int			compare (const_pointer s) const	{ return (compare (begin(), end(), s, s + strlen(s))); }
     static int			compare (const_iterator first1, const_iterator last1, const_iterator first2, const_iterator last2);

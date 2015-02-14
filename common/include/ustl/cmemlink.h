@@ -50,7 +50,7 @@ public:
     typedef const_iterator	iterator;
     typedef const cmemlink&	rcself_t;
 public:
-    inline		cmemlink (void)				: m_Data (NULL), m_Size (0) { }
+    inline		cmemlink (void)				: m_Data ((const_pointer)NULL), m_Size (0) { }
     inline		cmemlink (const void* p, size_type n)	: m_Data (const_pointer(p)), m_Size (n) { assert (p || !n); }
     inline		cmemlink (const cmemlink& l)		: m_Data (l.m_Data), m_Size (l.m_Size) {}
     inline virtual     ~cmemlink (void) throw()			{}
