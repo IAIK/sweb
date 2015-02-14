@@ -63,8 +63,6 @@ PageManager::PageManager() :
   }
   lowest_unreserved_page_ = last_end_page;
 
-  debug(PM, "Ctor: Pages used by Grub Modules %d\n", used_pages);
-
   //need at least 4 MiB for Kernel Memory + first physical MiB
   if (number_of_pages_ < 1000)
   {

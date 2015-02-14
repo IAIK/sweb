@@ -222,12 +222,12 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
   assert(pdpt[pdpte_vpn].present);
-  assert(page_directory[pde_vpn].pt.present);
+  assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(!pte_base[pte_vpn].present);
-  pte_base[pte_vpn].present = 1;
   pte_base[pte_vpn].writeable = 1;
   pte_base[pte_vpn].page_ppn = physical_page;
+  pte_base[pte_vpn].present = 1;
 }
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page)
@@ -235,7 +235,7 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
   assert(pdpt[pdpte_vpn].present);
-  assert(page_directory[pde_vpn].pt.present);
+  assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(pte_base[pte_vpn].present);
   pte_base[pte_vpn].present = 0;

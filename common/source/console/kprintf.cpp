@@ -189,7 +189,7 @@ void debug(size_t flag, const char *fmt, ...)
         kprintfd(COLORDEBUG("[USERPROCESS]", "36"));
         break;
       case MOUNTMINIX:
-        kprintfd(COLORDEBUG("[MOUNTMINIX ]", "36"));
+        kprintfd(COLORDEBUG("[PROCESS_REG]", "36"));
         break;
       case BACKTRACE:
         kprintfd(COLORDEBUG("[BACKTRACE  ]", "31"));
