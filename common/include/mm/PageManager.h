@@ -32,9 +32,17 @@ class PageManager
      */
     void freePPN(uint32 page_number, uint32 page_size = PAGE_SIZE);
 
-    Thread* heldBy() { return lock_.heldBy(); }
+    Thread* heldBy()
+    {
+      return lock_.heldBy();
+    }
 
     PageManager();
+
+    void printBitmap()
+    {
+      page_usage_table_->bmprint();
+    }
 
   private:
     /**
@@ -46,7 +54,6 @@ class PageManager
     bool reservePages(uint32 ppn, uint32 num = 1);
 
     PageManager(PageManager const&);
-
 
     Bitmap* page_usage_table_;
     uint32 number_of_pages_;

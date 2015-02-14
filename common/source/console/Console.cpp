@@ -1,10 +1,8 @@
-/**
- * @file Console.cpp
- */
 #include "Console.h"
 #include "Terminal.h"
 #include "KeyboardManager.h"
 #include "Scheduler.h"
+#include "PageManager.h"
 
 Console* main_console = 0;
 
@@ -51,6 +49,9 @@ void Console::handleKey(uint32 key)
 // else...
   switch (key)
   {
+    case KEY_F9:
+      PageManager::instance()->printBitmap();
+      break;
 
     case KEY_F10:
       Scheduler::instance()->printUserSpaceTraces();
