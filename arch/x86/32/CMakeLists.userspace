@@ -1,4 +1,12 @@
 set(ASM_FORMAT -f elf)
-set(CMAKE_C_FLAGS "-Wall -gstabs2 -fno-omit-frame-pointer -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common")
-set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -gstabs2 -fno-omit-frame-pointer -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-common")
+set(CMAKE_C_FLAGS "-Wall -fno-omit-frame-pointer -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common")
+if(CMAKE_COMPILER_IS_GNUCC)
+# The -gstabs2 option is needed for stack traces but only supported by GCC
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gstabs2")
+endif(CMAKE_COMPILER_IS_GNUCC)
 
+set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -fno-omit-frame-pointer -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-common")
+if(CMAKE_COMPILER_IS_GNUCXX)
+# The -gstabs2 option is needed for stack traces but only supported by GCC
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gstabs2")
+endif(CMAKE_COMPILER_IS_GNUCXX)
