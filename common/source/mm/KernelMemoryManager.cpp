@@ -153,7 +153,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
       kprintfd("Are we having a memory leak in the kernel??\n");
       kprintfd(
           "This might as well be caused by running too many threads/processes, which partially reside in the kernel.\n");
-      assert(false);
+      prenew_assert(false);
       return 0;
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
@@ -387,6 +387,12 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
         cur_top_vpn++;
         assert(pm_ready_);
         size_t new_page = PageManager::instance()->allocPPN();
+        if(unlikely(new_page == 0))
+        {
+          kprintfd("KernelMemoryManager::freeSegment: FATAL ERROR\n");
+          kprintfd("KernelMemoryManager::freeSegment: no more physical memory\n");
+          prenew_assert(new_page != 0);
+        }
         memset((void*)ArchMemory::getIdentAddressOfPPN(new_page), 0 , PAGE_SIZE);
         ArchMemory::mapKernelPage(cur_top_vpn, new_page);
       }
@@ -396,7 +402,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     {
       while(cur_top_vpn != new_top_vpn)
       {
-        assert(pm_ready_);
+        prenew_assert(pm_ready_);
         ArchMemory::unmapKernelPage(cur_top_vpn);
         cur_top_vpn--;
       }

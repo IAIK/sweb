@@ -193,9 +193,13 @@ uint32 PageManager::allocPPN(uint32 page_size)
     while (lowest_unreserved_page_ < number_of_pages_ && page_usage_table_->getBit(lowest_unreserved_page_))
       ++lowest_unreserved_page_;
     lock_.release();
-    if (found != 0)
-      return found;
-    Scheduler::instance()->yield();
+    if (unlikely(found == 0))
+    {
+      debug(PM, "PageManager::allocPPN: FATAL ERROR!\n");
+      debug(PM, "PageManager::allocPPN: Out of phyiscal pages!\n");
+      assert(found);
+    }
+    return found;
   }
   return 0;
 }
