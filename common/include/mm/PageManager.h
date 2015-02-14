@@ -4,8 +4,7 @@
 #include "types.h"
 #include "paging-definitions.h"
 #include "Mutex.h"
-
-class Bitmap;
+#include "Bitmap.h"
 
 class PageManager
 {
@@ -35,6 +34,8 @@ class PageManager
 
     Thread* heldBy() { return lock_.heldBy(); }
 
+    PageManager();
+
   private:
     /**
      * used internally to mark pages as reserved
@@ -44,16 +45,16 @@ class PageManager
      */
     bool reservePages(uint32 ppn, uint32 num = 1);
 
-    PageManager();
     PageManager(PageManager const&);
 
-    static PageManager* instance_;
 
     Bitmap* page_usage_table_;
     uint32 number_of_pages_;
     uint32 lowest_unreserved_page_;
 
     SpinLock lock_;
+
+    static PageManager* instance_;
 
 };
 

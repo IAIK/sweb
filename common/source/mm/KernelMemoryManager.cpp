@@ -16,28 +16,33 @@ extern uint32 boot_completed;
 KernelMemoryManager kmm;
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
+size_t KernelMemoryManager::pm_ready_ = 0;
 
 KernelMemoryManager* KernelMemoryManager::instance()
 {
   if (unlikely(!instance_))
   {
-    pointer start_address = ArchCommon::getFreeKernelMemoryStart();
-    //since we don't have memory management before creating the MemoryManager, we use "placement new"
-    instance_ = new (&kmm) KernelMemoryManager(start_address);
+    assert(false && "you can not use KernelMemoryManager::instance before the PageManager is ready!");
   }
   return instance_;
 }
 
-KernelMemoryManager::KernelMemoryManager(pointer start_address) :
+KernelMemoryManager::KernelMemoryManager(size_t num_pages) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
+  assert(instance_ == 0);
+  instance_ = this;
+  pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
-  base_break_ = kernel_break_ = start_address;
-  debug(KMM, "Clearing first heap page\n");
-  memset((void*)start_address, 0, PAGE_SIZE);
-  first_ = new ((void*)ksbrk(sizeof(MallocSegment))) MallocSegment(0, 0, 0, false);
+  base_break_ = start_address;
+  kernel_break_ = start_address + num_pages * PAGE_SIZE;
+  debug(KMM, "Clearing initial heap pages\n");
+  memset((void*)start_address, 0, num_pages * PAGE_SIZE);
+  first_ = (MallocSegment*)start_address;
+  kprintfd("%x\n",start_address);
+  new ((void*)start_address) MallocSegment(0, 0, num_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
-  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x\n", start_address);
+  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x and initially ends at %x\n", start_address, start_address + num_pages * PAGE_SIZE);
 }
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
@@ -70,6 +75,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
   }
 
   fillSegment(new_pointer, requested_size);
+
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 }
 
@@ -410,13 +416,13 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
-  assert(!pm_ready_ || PageManager::instance()->heldBy() != currentThread);
+  assert(!boot_completed || PageManager::instance()->heldBy() != currentThread);
   lock_.acquire();
 }
 
 void KernelMemoryManager::unlockKMM()
 {
-  assert(!pm_ready_ || PageManager::instance()->heldBy() != currentThread);
+  assert(!boot_completed || PageManager::instance()->heldBy() != currentThread);
   lock_.release();
 }
 

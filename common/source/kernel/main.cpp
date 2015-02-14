@@ -48,10 +48,8 @@ extern "C" void startup()
   we_are_dying = 0;
   boot_completed = 0;
   //extend Kernel Memory here
-  KernelMemoryManager::instance();
-  writeLine2Bochs("Kernel Memory Manager created \n");
   PageManager::instance();
-  writeLine2Bochs("PageManager created \n");
+  writeLine2Bochs("PageManager and KernelMemoryManager created \n");
 
   //SerialManager::getInstance()->do_detection( 1 );
 
