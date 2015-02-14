@@ -128,8 +128,8 @@ public:
  * @param increment can be positive or negative
  * @returns old value of value
  */
-  static uint32 atomic_add(uint32 &value, int32 increment);
-  static int32 atomic_add(int32 &value, int32 increment);
+  static uint64 atomic_add(uint64 &value, int64 increment);
+  static int64 atomic_add(int64 &value, int64 increment);
 
 /**
  *

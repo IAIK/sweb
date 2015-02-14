@@ -7,7 +7,7 @@
 ustl::list<FileDescriptor*> global_fd;
 Mutex global_fd_lock("global_fd_lock");
 
-static uint32 fd_num_ = 3;
+static size_t fd_num_ = 3;
 
 void FileDescriptor::add(FileDescriptor* fd)
 {

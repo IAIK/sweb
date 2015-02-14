@@ -15,7 +15,10 @@
 #include "kmalloc.h"
 #include "kstring.h"
 
-#ifndef MEM_INTERNAL_MANAGER
+void* MemoryReserve(u32 length __attribute__((unused)), void* physicalAddress) {
+  return physicalAddress;
+}
+
 void* MemoryAllocate(u32 size) {
   return (void*)(kmalloc(size + 0x2000) + 0x1000);  // well i don't trust it totally right now...
 }
@@ -26,7 +29,6 @@ void MemoryCopy(void* destination, void* source, u32 length)
 {
   memcpy(destination, source, length);
 }
-#endif
 
 #define FLOAT_TEXT "Floats unsupported."
 
