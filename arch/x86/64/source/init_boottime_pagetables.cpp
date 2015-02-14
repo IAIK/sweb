@@ -70,11 +70,19 @@ extern "C" void initialisePaging()
     pd2[i].pt.page_ppn = ((pointer)&pt[512*i])/PAGE_SIZE;;
   }
 
-  uint64 kernel_last_page = (((uint64)(&kernel_end_address)) - 0xFFFFFFFF80000000)/PAGE_SIZE;
-  uint64 first_free_page = kernel_last_page + 1;
+  size_t kernel_last_page = (size_t)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address) / PAGE_SIZE;
+
+  extern size_t ro_data_end_address;
+  size_t last_ro_data_page = (size_t)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&ro_data_end_address) / PAGE_SIZE;
 
   // Map the kernel page tables (first 640kib = 184 pages are unused)
-  for (i = 184; i < first_free_page; i++)
+  for (i = 184; i < last_ro_data_page - 256; ++i)
+  {
+    pt[i].present = 1;
+    pt[i].writeable = 0;
+    pt[i].page_ppn = i;
+  }
+  for (; i < kernel_last_page; ++i)
   {
     pt[i].present = 1;
     pt[i].writeable = 1;
