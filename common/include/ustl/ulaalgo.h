@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef ULAALGO_H_2E403D182E83FB596AFB800E68B255A1
-#define ULAALGO_H_2E403D182E83FB596AFB800E68B255A1
-
+#pragma once
 #include "umatrix.h"
 #include "simd.h"
 
@@ -35,7 +33,7 @@ matrix<NY,NY,T> operator* (const matrix<NX,NY,T>& m1, const matrix<NY,NX,T>& m2)
 	    mr[ry][rx] = dpv;
 	}
     }
-    return (mr);
+    return mr;
 }
 
 /// \brief Transforms vector \p t with matrix \p m
@@ -50,7 +48,7 @@ tuple<NX,T> operator* (const tuple<NY,T>& t, const matrix<NX,NY,T>& m)
 	    dpv += t[y] * m[y][x];
 	tr[x] = dpv;
     }
-    return (tr);
+    return tr;
 }
 
 /// \brief Transposes (exchanges rows and columns) matrix \p m.
@@ -130,7 +128,7 @@ inline tuple<4,float> operator* (const tuple<4,float>& t, const matrix<4,4,float
     _sse_load_matrix (m.begin());
     asm ("movups %0, %%xmm0" : : "m"(t[0]), "m"(t[1]), "m"(t[2]), "m"(t[3]) : "xmm0", "memory");
     _sse_transform_to_vector (result.begin());
-    return (result);
+    return result;
 }
 
 template <>
@@ -142,7 +140,7 @@ inline matrix<4,4,float> operator* (const matrix<4,4,float>& m1, const matrix<4,
 	asm ("movups %0, %%xmm0" : : "m"(m1[r][0]), "m"(m1[r][1]), "m"(m1[r][2]), "m"(m1[r][3]) : "xmm0", "memory");
 	_sse_transform_to_vector (result[r]);
     }
-    return (result);
+    return result;
 }
 
 #elif CPU_HAS_3DNOW
@@ -198,7 +196,7 @@ static tuple<4,float> operator* (const tuple<4,float>& t, const matrix<4,4,float
     );
     asm ("":::"memory");
     simd::reset_mmx();
-    return (result);
+    return result;
 }
 
 #else	// If no processor extensions, just unroll the multiplication
@@ -209,12 +207,10 @@ template <> inline tuple<4,float> operator* (const tuple<4,float>& t, const matr
     tuple<4,float> tr;
     for (uoff_t i = 0; i < 4; ++ i)
 	tr[i] = t[0] * m[0][i] + t[1] * m[1][i] + t[2] * m[2][i] + t[3] * m[3][i];
-    return (tr);
+    return tr;
 }
 
 #endif	// CPU_HAS_3DNOW
 #endif	// WANT_UNROLLED_COPY
 
 } // namespace ustl
-
-#endif

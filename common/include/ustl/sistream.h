@@ -3,13 +3,11 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef SISTREAM_H_0CCA102229A49F5D65EE852E62B27CE2
-#define SISTREAM_H_0CCA102229A49F5D65EE852E62B27CE2
-
+#pragma once
 #include "mistream.h"
 #include "ustring.h"
 #ifndef EOF
-#define EOF (-1)
+    #define EOF (-1)
 #endif
 
 namespace ustl {
@@ -23,9 +21,9 @@ class istringstream : public istream {
 public:
     static const size_type	c_MaxDelimiters = 16;	///< Maximum number of word delimiters.
 public:
-    				istringstream (void);
-				istringstream (const void* p, size_type n);
-    explicit			istringstream (const cmemlink& source);
+				istringstream (void) noexcept;
+				istringstream (const void* p, size_type n) noexcept;
+    explicit			istringstream (const cmemlink& source) noexcept;
     void			iread (int8_t& v)	{ v = skip_delimiters(); }
     void			iread (int32_t& v);
     void			iread (double& v);
@@ -38,35 +36,35 @@ public:
 #if HAVE_LONG_LONG && (!HAVE_INT64_T || SIZE_OF_LONG_LONG > 8)
     void			iread (long long& v);
 #endif
-    inline string		str (void) const	{ string s; s.link (*this); return (s); }
-    inline istringstream&	str (const string& s)	{ link (s); return (*this); }
-    inline istringstream&	get (char& c)	{ return (read (&c, sizeof(c))); }
-    inline int			get (void)	{ char c = EOF; get(c); return (c); }
+    inline string		str (void) const	{ string s; s.link (*this); return s; }
+    inline istringstream&	str (const string& s)	{ link (s); return *this; }
+    inline istringstream&	get (char& c)	{ return read (&c, sizeof(c)); }
+    inline int			get (void)	{ char c = EOF; get(c); return c; }
     istringstream&		get (char* p, size_type n, char delim = '\n');
     istringstream&		get (string& s, char delim = '\n');
     istringstream&		getline (char* p, size_type n, char delim = '\n');
     istringstream&		getline (string& s, char delim = '\n');
     istringstream&		ignore (size_type n, char delim = '\0');
-    inline char			peek (void)	{ int8_t v; iread (v); ungetc(); return (v); }
-    inline istringstream&	putback (char)	{ ungetc(); return (*this); }
-    inline istringstream&	unget (void)	{ ungetc(); return (*this); }
+    inline char			peek (void)	{ int8_t v; iread (v); ungetc(); return v; }
+    inline istringstream&	putback (char)	{ ungetc(); return *this; }
+    inline istringstream&	unget (void)	{ ungetc(); return *this; }
     inline void			set_delimiters (const char* delimiters);
     inline void			set_base (short base);
     inline void			set_decimal_separator (char)	{ }
     inline void			set_thousand_separator (char)	{ }
     istringstream&		read (void* buffer, size_type size);
-    inline istringstream&	read (memlink& buf)		{ return (read (buf.begin(), buf.size())); }
-    inline istringstream&	seekg (off_t p, seekdir d =beg)	{ istream::seekg(p,d); return (*this); }
-    inline int			sync (void)			{ skip (remaining()); return (0); }
+    inline istringstream&	read (memlink& buf)		{ return read (buf.begin(), buf.size()); }
+    inline istringstream&	seekg (off_t p, seekdir d =beg)	{ istream::seekg(p,d); return *this; }
+    inline int			sync (void)			{ skip (remaining()); return 0; }
 protected:
     char			skip_delimiters (void);
 private:
     inline void			read_strz (string&)	{ assert (!"Reading nul characters is not allowed from text streams"); }
-    inline bool			is_delimiter (char c) const;
+    inline bool			is_delimiter (char c) const noexcept;
     template <typename T> void	read_number (T& v);
 private:
-    char			m_Delimiters [c_MaxDelimiters];
-    uint8_t			m_Base;
+    char			_delimiters [c_MaxDelimiters];
+    uint8_t			_base;
 };
 
 //----------------------------------------------------------------------
@@ -74,7 +72,7 @@ private:
 /// Sets the numeric base used to read numbers.
 inline void istringstream::set_base (short base)
 {
-    m_Base = base;
+    _base = base;
 }
 
 /// Sets delimiters to the contents of \p delimiters.
@@ -82,11 +80,11 @@ inline void istringstream::set_delimiters (const char* delimiters)
 {
 #if (__i386__ || __x86_64__) && CPU_HAS_SSE && HAVE_VECTOR_EXTENSIONS
     typedef uint32_t v16ud_t __attribute__((vector_size(16)));
-    asm("xorps\t%%xmm0, %%xmm0\n\tmovups\t%%xmm0, %0":"=m"(*noalias_cast<v16ud_t*>(m_Delimiters))::"xmm0");
+    asm("xorps\t%%xmm0, %%xmm0\n\tmovups\t%%xmm0, %0":"=m"(*noalias_cast<v16ud_t*>(_delimiters))::"xmm0");
 #else
-    memset (m_Delimiters, 0, sizeof(m_Delimiters));
+    memset (_delimiters, 0, sizeof(_delimiters));
 #endif
-    memcpy (m_Delimiters, delimiters, min (strlen(delimiters),sizeof(m_Delimiters)-1));
+    memcpy (_delimiters, delimiters, min (strlen(delimiters),sizeof(_delimiters)-1));
 }
 
 /// Reads one type as another.
@@ -100,7 +98,7 @@ inline void _cast_read (istringstream& is, RealT& v)
 
 /// Reads a line of text from \p is into \p s
 inline istringstream& getline (istringstream& is, string& s)
-    { return (is.getline (s)); }
+    { return is.getline (s); }
 
 //----------------------------------------------------------------------
 
@@ -115,7 +113,7 @@ inline istringstream& operator>> (istringstream& is, T& v) {
     typedef typename tm::Select <numeric_limits<T>::is_integral,
 	integral_text_object_reader<T>, object_text_reader<T> >::Result object_reader_t;
     object_reader_t()(is, v);
-    return (is);
+    return is;
 }
 
 //----------------------------------------------------------------------
@@ -149,5 +147,3 @@ ISTRSTREAM_CAST_OPERATOR (unsigned long long, long long)
 #undef ISTRSTREAM_CAST_OPERATOR
 
 } // namespace ustl
-
-#endif

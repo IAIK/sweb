@@ -6,8 +6,7 @@
 /// \file metamac.h
 /// \brief Macros for complex metaprogramming involving pseudoiteration.
 
-#ifndef METAMAC_H_7235D14A209C29332F2330EF553B81AF
-#define METAMAC_H_7235D14A209C29332F2330EF553B81AF
+#pragma once
 
 //----------------------------------------------------------------------
 // Functors and general utilities.
@@ -88,5 +87,3 @@
 #define LARG_MT_PARAM_BY_REF(type,name,N)	type##N& name##N
 
 //----------------------------------------------------------------------
-
-#endif

@@ -14,33 +14,33 @@
 
 namespace ustl {
 
-memblock::memblock (void)			: memlink (), m_Capacity (0) { }
-memblock::memblock (const void* p, size_type n) : memlink (), m_Capacity (0) { assign (p, n); }
-memblock::memblock (size_type n)		: memlink (), m_Capacity (0) { resize (n); }
-memblock::memblock (const cmemlink& b)		: memlink (), m_Capacity (0) { assign (b); }
-memblock::memblock (const memlink& b)		: memlink (), m_Capacity (0) { assign (b); }
-memblock::memblock (const memblock& b)		: memlink (), m_Capacity (0) { assign (b); }
-memblock::~memblock (void) throw()		{ deallocate(); }
+memblock::memblock (void) noexcept		: memlink(), _capacity (0) { }
+memblock::memblock (const void* p, size_type n) : memlink(), _capacity (0) { assign (p, n); }
+memblock::memblock (size_type n)		: memlink(), _capacity (0) { resize (n); }
+memblock::memblock (const cmemlink& b)		: memlink(), _capacity (0) { assign (b); }
+memblock::memblock (const memlink& b)		: memlink(), _capacity (0) { assign (b); }
+memblock::memblock (const memblock& b)		: memlink(), _capacity (0) { assign (b); }
+memblock::~memblock (void) noexcept		{ deallocate(); }
 
-void memblock::unlink (void) throw()
+void memblock::unlink (void) noexcept
 {
-    m_Capacity = 0;
+    _capacity = 0;
     memlink::unlink();
 }
 
 /// resizes the block to \p newSize bytes, reallocating if necessary.
 void memblock::resize (size_type newSize, bool bExact)
 {
-    if (m_Capacity < newSize + minimumFreeCapacity())
+    if (_capacity < newSize + minimumFreeCapacity())
 	reserve (newSize, bExact);
     memlink::resize (newSize);
 }
 
 /// Frees internal data.
-void memblock::deallocate (void) throw()
+void memblock::deallocate (void) noexcept
 {
-    if (m_Capacity) {
-	assert (cdata() && "Internal error: space allocated, but the pointer is NULL");
+    if (_capacity) {
+	assert (cdata() && "Internal error: space allocated, but the pointer is nullptr");
 	assert (data() && "Internal error: read-only block is marked as allocated space");
 	kfree (data());
     }
@@ -49,12 +49,12 @@ void memblock::deallocate (void) throw()
 
 /// Assumes control of the memory block \p p of size \p n.
 /// The block assigned using this function will be freed in the destructor.
-void memblock::manage (void* p, size_type n)
+void memblock::manage (void* p, size_type n) noexcept
 {
     assert (p || !n);
-    assert (!m_Capacity && "Already managing something. deallocate or unlink first.");
+    assert (!_capacity && "Already managing something. deallocate or unlink first.");
     link (p, n);
-    m_Capacity = n;
+    _capacity = n;
 }
 
 /// "Instantiate" a linked block by allocating and copying the linked data.
@@ -72,7 +72,7 @@ void memblock::assign (const void* p, size_type n)
 {
     assert ((p != (const void*) cdata() || size() == n) && "Self-assignment can not resize");
     resize (n);
-    copy_n (pointer(p), n, begin());
+    copy_n (const_pointer(p), n, begin());
 }
 
 /// \brief Reallocates internal block to hold at least \p newSize bytes.
@@ -87,40 +87,53 @@ void memblock::assign (const void* p, size_type n)
 ///
 void memblock::reserve (size_type newSize, bool bExact)
 {
-    if ((newSize += minimumFreeCapacity()) <= m_Capacity)
+    if ((newSize += minimumFreeCapacity()) <= _capacity)
 	return;
-    pointer oldBlock (is_linked() ? NULL : data());
-    const size_t alignedSize (Align (newSize, 64));
+    pointer oldBlock (is_linked() ? nullptr : data());
+    const size_t alignedSize (NextPow2 (newSize));
     if (!bExact)
 	newSize = alignedSize;
     pointer newBlock = (pointer) krealloc (oldBlock, newSize);
     if (!newBlock)
       kpanict((uint8_t*)"bad_alloc");
-      //throw bad_alloc (newSize);
-    if (!oldBlock & (cdata() != NULL))
+    if (!oldBlock & (cdata() != nullptr))
 	copy_n (cdata(), min (size() + 1, newSize), newBlock);
     link (newBlock, size());
-    m_Capacity = newSize;
+    _capacity = newSize;
+}
+
+/// Reduces capacity to match size
+void memblock::shrink_to_fit (void)
+{
+    if (is_linked())
+	return;
+    pointer newBlock = (pointer) krealloc (begin(), size());
+    if (!newBlock && size())
+      kpanict((uint8_t*)"bad_alloc");
+    _capacity = size();
+    memlink::relink (newBlock, size());
 }
 
 /// Shifts the data in the linked block from \p start to \p start + \p n.
-memblock::iterator memblock::insert (iterator start, size_type n)
+memblock::iterator memblock::insert (const_iterator start, size_type n)
 {
     const uoff_t ip = start - begin();
     assert (ip <= size());
     resize (size() + n, false);
     memlink::insert (iat(ip), n);
-    return (iat (ip));
+    return iat (ip);
 }
 
 /// Shifts the data in the linked block from \p start + \p n to \p start.
-memblock::iterator memblock::erase (iterator start, size_type n)
+memblock::iterator memblock::erase (const_iterator start, size_type n)
 {
     const uoff_t ep = start - begin();
     assert (ep + n <= size());
-    memlink::erase (start, n);
+    reserve (size() - n);
+    iterator iep = iat(ep);
+    memlink::erase (iep, n);
     memlink::resize (size() - n);
-    return (iat (ep));
+    return iep;
 }
 
 /// Reads the object from stream \p s
@@ -148,6 +161,6 @@ void memblock::read_file (const char* filename)
     resize (fsize);
 }*/
 
-memblock::size_type memblock::minimumFreeCapacity (void) const throw() { return (0); }
+memblock::size_type memblock::minimumFreeCapacity (void) const noexcept { return 0; }
 
 } // namespace ustl

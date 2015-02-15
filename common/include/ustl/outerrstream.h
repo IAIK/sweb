@@ -1,5 +1,4 @@
-#ifndef MOUTERRSTREAM_H_24A8C5397E0848216573E5670930FC9A
-#define MOUTERRSTREAM_H_24A8C5397E0848216573E5670930FC9A
+#pragma once
 
 #include "sostream.h"
 #include "kprintf.h"
@@ -136,4 +135,3 @@ COUTCLASS_CAST_OPERATOR (char,			uint8_t)
 
 };
 
-#endif

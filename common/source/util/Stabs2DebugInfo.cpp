@@ -132,7 +132,7 @@ pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[]) 
 
   ustl::map<size_t, StabEntry const *>::const_iterator it = function_symbols_.end();
 
-  if (ADDRESS_BETWEEN(address, function_symbols_.at(0).first, ArchCommon::getKernelEndAddress()))
+  if (ADDRESS_BETWEEN(address, function_symbols_.begin()->first, ArchCommon::getKernelEndAddress()))
   {
     it = function_symbols_.begin();
 

@@ -6,9 +6,7 @@
 /// \file uiterator.h
 /// \brief Contains various iterator adapters.
 
-#ifndef UITERATOR_H_5BCA176C7214A30F2069E2614D2DC226
-#define UITERATOR_H_5BCA176C7214A30F2069E2614D2DC226
-
+#pragma once
 #include "utypes.h"
 
 namespace ustl {
@@ -84,25 +82,25 @@ public:
     typedef typename iterator_traits<Iterator>::pointer		pointer;
     typedef typename iterator_traits<Iterator>::reference	reference;
 public:
-    				reverse_iterator (void) : m_i() {}
-    explicit			reverse_iterator (Iterator iter) : m_i (iter) {}
-    inline bool			operator== (const reverse_iterator& iter) const { return (m_i == iter.m_i); }
-    inline bool			operator< (const reverse_iterator& iter) const { return (iter.m_i < m_i); }
-    inline Iterator		base (void) const { return (m_i); }
-    inline reference		operator* (void) const { Iterator prev (m_i); --prev; return (*prev); }
-    inline pointer		operator-> (void) const { return (&(operator*())); }
-    inline reverse_iterator&	operator++ (void) { -- m_i; return (*this); }
-    inline reverse_iterator&	operator-- (void) { ++ m_i; return (*this); }
-    inline reverse_iterator	operator++ (int) { reverse_iterator prev (*this); -- m_i; return (prev); }
-    inline reverse_iterator	operator-- (int) { reverse_iterator prev (*this); ++ m_i; return (prev); }
-    inline reverse_iterator&	operator+= (size_t n) { m_i -= n; return (*this); }
-    inline reverse_iterator&	operator-= (size_t n) { m_i += n; return (*this); }
-    inline reverse_iterator	operator+ (size_t n) const { return (reverse_iterator (m_i - n)); }
-    inline reverse_iterator	operator- (size_t n) const { return (reverse_iterator (m_i + n)); }
-    inline reference		operator[] (uoff_t n) const { return (*(*this + n)); }
-    inline difference_type	operator- (const reverse_iterator& i) const { return (distance (m_i, i.m_i)); }
+				reverse_iterator (void) : _i() {}
+    explicit			reverse_iterator (Iterator iter) : _i (iter) {}
+    inline bool			operator== (const reverse_iterator& iter) const { return _i == iter._i; }
+    inline bool			operator< (const reverse_iterator& iter) const { return iter._i < _i; }
+    inline Iterator		base (void) const { return _i; }
+    inline reference		operator* (void) const { Iterator prev (_i); --prev; return *prev; }
+    inline pointer		operator-> (void) const { return &(operator*()); }
+    inline reverse_iterator&	operator++ (void) { -- _i; return *this; }
+    inline reverse_iterator&	operator-- (void) { ++ _i; return *this; }
+    inline reverse_iterator	operator++ (int) { reverse_iterator prev (*this); -- _i; return prev; }
+    inline reverse_iterator	operator-- (int) { reverse_iterator prev (*this); ++ _i; return prev; }
+    inline reverse_iterator&	operator+= (size_t n) { _i -= n; return *this; }
+    inline reverse_iterator&	operator-= (size_t n) { _i += n; return *this; }
+    inline reverse_iterator	operator+ (size_t n) const { return reverse_iterator (_i - n); }
+    inline reverse_iterator	operator- (size_t n) const { return reverse_iterator (_i + n); }
+    inline reference		operator[] (uoff_t n) const { return *(*this + n); }
+    inline difference_type	operator- (const reverse_iterator& i) const { return distance (_i, i._i); }
 protected:
-    Iterator		m_i;
+    Iterator			_i;
 };
 
 //----------------------------------------------------------------------
@@ -120,22 +118,22 @@ public:
     typedef typename Container::reference	reference;
     typedef typename Container::iterator	iterator;
 public:
-    explicit			insert_iterator (Container& ctr, iterator ip) : m_rCtr (ctr), m_ip (ip) {}
+    explicit			insert_iterator (Container& ctr, iterator ip) : _rctr (ctr), _ip (ip) {}
     inline insert_iterator&	operator= (typename Container::const_reference v)
-    				    { m_ip = m_rCtr.insert (m_ip, v); return (*this); }
-    inline insert_iterator&	operator* (void)  { return (*this); }
-    inline insert_iterator&	operator++ (void) { ++ m_ip; return (*this); }
-    inline insert_iterator	operator++ (int)  { insert_iterator prev (*this); ++m_ip; return (prev); }
+				    { _ip = _rctr.insert (_ip, v); return *this; }
+    inline insert_iterator&	operator* (void)  { return *this; }
+    inline insert_iterator&	operator++ (void) { ++ _ip; return *this; }
+    inline insert_iterator	operator++ (int)  { insert_iterator prev (*this); ++_ip; return prev; }
 protected:
-    Container&			m_rCtr;
-    iterator			m_ip;
+    Container&			_rctr;
+    iterator			_ip;
 };
 
 /// Returns the insert_iterator for \p ctr.
 template <class Container>
 inline insert_iterator<Container> inserter (Container& ctr, typename Container::iterator ip)
 {
-    return (insert_iterator<Container> (ctr, ip));
+    return insert_iterator<Container> (ctr, ip);
 }
 
 //----------------------------------------------------------------------
@@ -152,21 +150,21 @@ public:
     typedef typename Container::pointer		pointer;
     typedef typename Container::reference	reference;
 public:
-    explicit				back_insert_iterator (Container& ctr) : m_rCtr (ctr) {}
+    explicit				back_insert_iterator (Container& ctr) : _rctr (ctr) {}
     inline back_insert_iterator&	operator= (typename Container::const_reference v)
-    					    { m_rCtr.push_back (v); return (*this); }
-    inline back_insert_iterator&	operator* (void)  { return (*this); }
-    inline back_insert_iterator&	operator++ (void) { return (*this); }
-    inline back_insert_iterator		operator++ (int)  { return (*this); }
+					    { _rctr.push_back (v); return *this; }
+    inline back_insert_iterator&	operator* (void)  { return *this; }
+    inline back_insert_iterator&	operator++ (void) { return *this; }
+    inline back_insert_iterator		operator++ (int)  { return *this; }
 protected:
-    Container&		m_rCtr;
+    Container&		_rctr;
 };
 
 /// Returns the back_insert_iterator for \p ctr.
 template <class Container>
 inline back_insert_iterator<Container> back_inserter (Container& ctr)
 {
-    return (back_insert_iterator<Container> (ctr));
+    return back_insert_iterator<Container> (ctr);
 }
 
 //----------------------------------------------------------------------
@@ -187,35 +185,35 @@ public:
     typedef RandomAccessIterator*	pointer;
     typedef RandomAccessIterator	reference;
 public:
-    				index_iterate (void) : m_Base(), m_i() {}
-				index_iterate (RandomAccessIterator ibase, IndexIterator iindex) : m_Base (ibase), m_i (iindex) {}
-    inline bool			operator== (const index_iterate& i) const { return (m_i == i.m_i); }
-    inline bool			operator< (const index_iterate& i) const { return (m_i < i.m_i); }
-    inline bool			operator== (const RandomAccessIterator& i) const { return (m_Base == i); }
-    inline bool			operator< (const RandomAccessIterator& i) const { return (m_Base < i); }
-    inline IndexIterator	base (void) const { return (m_i); }
-    inline reference		operator* (void) const { return (advance(m_Base, *m_i)); }
-    inline pointer		operator-> (void) const { return (&(operator*())); }
-    inline index_iterate&	operator++ (void) { ++ m_i; return (*this); }
-    inline index_iterate&	operator-- (void) { -- m_i; return (*this); }
-    inline index_iterate	operator++ (int) { index_iterate prev (*this); ++ m_i; return (prev); }
-    inline index_iterate	operator-- (int) { index_iterate prev (*this); -- m_i; return (prev); }
-    inline index_iterate&	operator+= (size_t n) { m_i += n; return (*this); }
-    inline index_iterate&	operator-= (size_t n) { m_i -= n; return (*this); }
-    inline index_iterate	operator+ (size_t n) const { return (index_iterate (m_Base, m_i + n)); }
-    inline index_iterate	operator- (size_t n) const { return (index_iterate (m_Base, m_i - n)); }
-    inline reference		operator[] (uoff_t n) const { return (*(*this + n)); }
-    inline difference_type	operator- (const index_iterate& i) const { return (distance (m_i, i.m_i)); }
+				index_iterate (void) : _base(), _i() {}
+				index_iterate (RandomAccessIterator ibase, IndexIterator iindex) : _base (ibase), _i (iindex) {}
+    inline bool			operator== (const index_iterate& i) const { return _i == i._i; }
+    inline bool			operator< (const index_iterate& i) const { return _i < i._i; }
+    inline bool			operator== (const RandomAccessIterator& i) const { return _base == i; }
+    inline bool			operator< (const RandomAccessIterator& i) const { return _base < i; }
+    inline IndexIterator	base (void) const { return _i; }
+    inline reference		operator* (void) const { return advance(_base, *_i); }
+    inline pointer		operator-> (void) const { return &(operator*()); }
+    inline index_iterate&	operator++ (void) { ++_i; return *this; }
+    inline index_iterate&	operator-- (void) { --_i; return *this; }
+    inline index_iterate	operator++ (int) { index_iterate prev (*this); ++_i; return prev; }
+    inline index_iterate	operator-- (int) { index_iterate prev (*this); --_i; return prev; }
+    inline index_iterate&	operator+= (size_t n) { _i += n; return *this; }
+    inline index_iterate&	operator-= (size_t n) { _i -= n; return *this; }
+    inline index_iterate	operator+ (size_t n) const { return index_iterate (_base, _i + n); }
+    inline index_iterate	operator- (size_t n) const { return index_iterate (_base, _i - n); }
+    inline reference		operator[] (uoff_t n) const { return *(*this + n); }
+    inline difference_type	operator- (const index_iterate& i) const { return distance (_i, i._i); }
 private:
-    RandomAccessIterator	m_Base;
-    IndexIterator		m_i;
+    RandomAccessIterator	_base;
+    IndexIterator		_i;
 };
 
 /// Returns an index_iterate for \p ibase over \p iindex.
 template <typename RandomAccessIterator, typename IndexIterator>
 inline index_iterate<RandomAccessIterator, IndexIterator> index_iterator (RandomAccessIterator ibase, IndexIterator iindex)
 {
-    return (index_iterate<RandomAccessIterator, IndexIterator> (ibase, iindex));
+    return index_iterate<RandomAccessIterator, IndexIterator> (ibase, iindex);
 }
 
 /// Converts the indexes in \p xc to iterators in \p ic of base \p ibase.
@@ -232,16 +230,16 @@ inline void indexv_to_iteratorv (typename IteratorContainer::value_type ibase, c
 ///
 template <typename Container>
 inline typename Container::iterator unconst (typename Container::const_iterator i, Container&)
-    { return (const_cast<typename Container::iterator>(i)); }
+    { return const_cast<typename Container::iterator>(i); }
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #define IBYI(Iter1, Iter2, Ctr1, Ctr2)	\
 template <typename Container1, typename Container2>	\
 inline typename Container2::Iter2 ibyi (typename Container1::Iter1 idx, Ctr1& ctr1, Ctr2& ctr2)	\
-{							\
-    assert (ctr1.size() == ctr2.size());		\
-    return (ctr2.begin() + (idx - ctr1.begin()));	\
+{						\
+    assert (ctr1.size() == ctr2.size());	\
+    return ctr2.begin() + (idx - ctr1.begin());	\
 }
 
 IBYI(const_iterator, const_iterator, const Container1, const Container2)
@@ -251,7 +249,7 @@ IBYI(iterator, const_iterator, Container1, const Container2)
 
 #else // DOXYGEN
 
-#error This declaration is for doxygen only; it is not compiled.
+#error "This declaration is for doxygen only; it is not compiled."
 
 /// Converts a const_iterator in one container into a const_iterator in another container.
 template <typename Container1, typename Container2>
@@ -262,5 +260,3 @@ inline typename Container2::iterator ibyi (typename Container1::iterator idx, Co
 //----------------------------------------------------------------------
 
 } // namespace ustl
-
-#endif

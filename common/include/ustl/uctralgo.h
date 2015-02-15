@@ -3,8 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UCTRALGO_H_0D1AEDFA74B09791489FE25B1EC644B0
-#define UCTRALGO_H_0D1AEDFA74B09791489FE25B1EC644B0
+#pragma once
 
 namespace ustl {
 
@@ -19,7 +18,7 @@ namespace ustl {
 template <typename Container, typename OutputIterator>
 inline OutputIterator copy (const Container& ctr, OutputIterator result)
 {
-    return (copy (ctr.begin(), ctr.end(), result));
+    return copy (ctr.begin(), ctr.end(), result);
 }
 
 /// Copy_if copies elements from the range [first, last) to the range
@@ -29,7 +28,7 @@ inline OutputIterator copy (const Container& ctr, OutputIterator result)
 template <typename Container, typename OutputIterator, typename Predicate>
 inline OutputIterator copy_if (Container& ctr, OutputIterator result, Predicate pred)
 {
-    return (copy_if (ctr.begin(), ctr.end(), result, pred));
+    return copy_if (ctr.begin(), ctr.end(), result, pred);
 }
 
 /// For_each applies the function object f to each element in the range
@@ -41,7 +40,7 @@ inline OutputIterator copy_if (Container& ctr, OutputIterator result, Predicate 
 template <typename Container, typename UnaryFunction>
 inline UnaryFunction for_each (Container& ctr, UnaryFunction f)
 {
-    return (for_each (ctr.begin(), ctr.end(), f));
+    return for_each (ctr.begin(), ctr.end(), f);
 }
 
 /// For_each applies the function object f to each element in the range
@@ -53,7 +52,7 @@ inline UnaryFunction for_each (Container& ctr, UnaryFunction f)
 template <typename Container, typename UnaryFunction>
 inline UnaryFunction for_each (const Container& ctr, UnaryFunction f)
 {
-    return (for_each (ctr.begin(), ctr.end(), f));
+    return for_each (ctr.begin(), ctr.end(), f);
 }
 
 /// Returns the first iterator i in the range [first, last) such that
@@ -63,12 +62,12 @@ inline UnaryFunction for_each (const Container& ctr, UnaryFunction f)
 template <typename Container, typename EqualityComparable>
 inline typename Container::const_iterator find (const Container& ctr, const EqualityComparable& value)
 {
-    return (find (ctr.begin(), ctr.end(), value));
+    return find (ctr.begin(), ctr.end(), value);
 }
 template <typename Container, typename EqualityComparable>
 inline typename Container::iterator find (Container& ctr, const EqualityComparable& value)
 {
-    return (find (ctr.begin(), ctr.end(), value));
+    return find (ctr.begin(), ctr.end(), value);
 }
 
 /// Returns the first iterator i in the range [first, last) such that
@@ -78,12 +77,12 @@ inline typename Container::iterator find (Container& ctr, const EqualityComparab
 template <typename Container, typename Predicate>
 inline typename Container::const_iterator find_if (const Container& ctr, Predicate pred)
 {
-    return (find_if (ctr.begin(), ctr.end(), pred));
+    return find_if (ctr.begin(), ctr.end(), pred);
 }
 template <typename Container, typename Predicate>
 inline typename Container::iterator find_if (Container& ctr, Predicate pred)
 {
-    return (find_if (ctr.begin(), ctr.end(), pred));
+    return find_if (ctr.begin(), ctr.end(), pred);
 }
 
 /// Count finds the number of elements in [first, last) that are equal
@@ -94,7 +93,7 @@ inline typename Container::iterator find_if (Container& ctr, Predicate pred)
 template <typename Container, typename EqualityComparable>
 inline size_t count (const Container& ctr, const EqualityComparable& value)
 {
-    return (count (ctr.begin(), ctr.end(), value));
+    return count (ctr.begin(), ctr.end(), value);
 }
 
 /// Count_if finds the number of elements in [first, last) that satisfy the
@@ -105,7 +104,7 @@ inline size_t count (const Container& ctr, const EqualityComparable& value)
 template <typename Container, typename Predicate>
 inline size_t count_if (const Container& ctr, Predicate pred)
 {
-    return (count_if (ctr.begin(), ctr.end(), pred));
+    return count_if (ctr.begin(), ctr.end(), pred);
 }
 
 /// The first version of transform performs the operation op(*i) for each
@@ -133,7 +132,7 @@ inline void transform (Container& ctr, UnaryFunction op)
 template <typename Container, typename OutputIterator, typename UnaryFunction>
 inline OutputIterator transform (Container& ctr, OutputIterator result, UnaryFunction op)
 {
-    return (transform (ctr.begin(), ctr.end(), result, op));
+    return transform (ctr.begin(), ctr.end(), result, op);
 }
 
 /// The second version of transform is very similar, except that it uses a
@@ -149,7 +148,7 @@ inline OutputIterator transform (Container& ctr, OutputIterator result, UnaryFun
 template <typename Container, typename InputIterator, typename OutputIterator, typename BinaryFunction>
 inline OutputIterator transform (Container& ctr, InputIterator first, OutputIterator result, BinaryFunction op)
 {
-    return (transform (ctr.begin(), ctr.end(), first, result, op));
+    return transform (ctr.begin(), ctr.end(), first, result, op);
 }
 
 /// Replace replaces every element in the range [first, last) equal to
@@ -185,7 +184,7 @@ inline void replace_if (Container& ctr, Predicate pred, const T& new_value)
 template <typename Container, typename OutputIterator, typename T>
 inline OutputIterator replace_copy (const Container& ctr, OutputIterator result, const T& old_value, const T& new_value)
 {
-    return (replace_copy (ctr.begin(), ctr.end(), result, old_value, new_value));
+    return replace_copy (ctr.begin(), ctr.end(), result, old_value, new_value);
 }
 
 /// Replace_copy_if copies elements from the range [first, last) to the range
@@ -199,7 +198,7 @@ inline OutputIterator replace_copy (const Container& ctr, OutputIterator result,
 template <typename Container, typename OutputIterator, typename Predicate, typename T>
 inline OutputIterator replace_copy_if (const Container& ctr, OutputIterator result, Predicate pred, const T& new_value) 
 {
-    return (replace_copy_if (ctr.begin(), ctr.end(), result, pred, new_value));
+    return replace_copy_if (ctr.begin(), ctr.end(), result, pred, new_value);
 }
 
 /// Fill assigns the value value to every element in the range [first, last).
@@ -242,7 +241,7 @@ inline void random_shuffle (Container& ctr)
 template <typename Container, typename OutputIterator, typename T>
 inline OutputIterator remove_copy (const Container& ctr, OutputIterator result, const T& value)
 {
-    return (remove_copy (ctr.begin(), ctr.end(), result, value));
+    return remove_copy (ctr.begin(), ctr.end(), result, value);
 }
 
 /// Remove_copy_if copies elements from the range [first, last) to a range
@@ -255,7 +254,7 @@ inline OutputIterator remove_copy (const Container& ctr, OutputIterator result, 
 template <typename Container, typename OutputIterator, typename Predicate>
 inline OutputIterator remove_copy_if (const Container& ctr, OutputIterator result, Predicate pred)
 {
-    return (remove_copy_if (ctr.begin(), ctr.end(), result, pred));
+    return remove_copy_if (ctr.begin(), ctr.end(), result, pred);
 }
 
 /// Remove removes from the range [first, last) all elements that are equal to
@@ -310,7 +309,7 @@ inline void remove_if (Container& ctr, Predicate pred)
 template <typename Container, typename OutputIterator>
 inline OutputIterator unique_copy (const Container& ctr, OutputIterator result)
 {
-    return (unique_copy (ctr.begin(), ctr.end(), result));
+    return unique_copy (ctr.begin(), ctr.end(), result);
 }
 
 /// Every time a consecutive group of duplicate elements appears in the range
@@ -377,12 +376,12 @@ inline void rotate (Container& ctr, off_t offset)
 template <typename Container, typename LessThanComparable>
 inline typename Container::const_iterator lower_bound (const Container& ctr, const LessThanComparable& value)
 {
-    return (lower_bound (ctr.begin(), ctr.end(), value));
+    return lower_bound (ctr.begin(), ctr.end(), value);
 }
 template <typename Container, typename LessThanComparable>
 inline typename Container::iterator lower_bound (Container& ctr, const LessThanComparable& value)
 {
-    return (lower_bound (ctr.begin(), ctr.end(), value));
+    return lower_bound (ctr.begin(), ctr.end(), value);
 }
 
 /// Returns the furthermost iterator i in [first,last) such that for
@@ -392,12 +391,12 @@ inline typename Container::iterator lower_bound (Container& ctr, const LessThanC
 template <typename Container, typename LessThanComparable>
 inline typename Container::const_iterator upper_bound (const Container& ctr, const LessThanComparable& value)
 {
-    return (upper_bound (ctr.begin(), ctr.end(), value));
+    return upper_bound (ctr.begin(), ctr.end(), value);
 }
 template <typename Container, typename LessThanComparable>
 inline typename Container::iterator upper_bound (Container& ctr, const LessThanComparable& value)
 {
-    return (upper_bound (ctr.begin(), ctr.end(), value));
+    return upper_bound (ctr.begin(), ctr.end(), value);
 }
 
 /// Performs a binary search for \p value.
@@ -407,12 +406,12 @@ inline typename Container::iterator upper_bound (Container& ctr, const LessThanC
 template <typename Container>
 inline bool binary_search (const Container& ctr, const typename Container::value_type& value)
 {
-    return (binary_search (ctr.begin(), ctr.end(), value));
+    return binary_search (ctr.begin(), ctr.end(), value);
 }
 template <typename Container>
 inline bool binary_search (Container& ctr, const typename Container::value_type& value)
 {
-    return (binary_search (ctr.begin(), ctr.end(), value));
+    return binary_search (ctr.begin(), ctr.end(), value);
 }
 
 /// Returns pair<lower_bound,upper_bound>
@@ -421,12 +420,12 @@ inline bool binary_search (Container& ctr, const typename Container::value_type&
 template <typename Container, typename LessThanComparable>
 inline pair<typename Container::const_iterator,typename Container::const_iterator> equal_range (const Container& ctr, const LessThanComparable& value)
 {
-    return (equal_range (ctr.begin(), ctr.end(), value));
+    return equal_range (ctr.begin(), ctr.end(), value);
 }
 template <typename Container, typename LessThanComparable>
 inline pair<typename Container::iterator,typename Container::iterator> equal_range (Container& ctr, const LessThanComparable& value)
 {
-    return (equal_range (ctr.begin(), ctr.end(), value));
+    return equal_range (ctr.begin(), ctr.end(), value);
 }
 
 /// Sorts the container
@@ -466,5 +465,3 @@ inline void stable_sort (Container& ctr, Compare comp)
 }
 
 } // namespace ustl
-
-#endif

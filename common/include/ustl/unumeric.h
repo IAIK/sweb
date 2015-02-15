@@ -3,8 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UNUMERIC_H_6C99D6F6363832C644A6FFF336E84E18
-#define UNUMERIC_H_6C99D6F6363832C644A6FFF336E84E18
+#pragma once
 
 namespace ustl {
 
@@ -16,7 +15,7 @@ inline T accumulate (InputIterator first, InputIterator last, T init)
 {
     while (first < last)
 	init += *first++;
-    return (init);
+    return init;
 }
 
 /// Returns the sum of all elements in [first, last) via \p op, added to \p init.
@@ -27,7 +26,7 @@ inline T accumulate (InputIterator first, InputIterator last, T init, BinaryFunc
 {
     while (first < last)
 	init = binary_op (init, *first++);
-    return (init);
+    return init;
 }
 
 /// Assigns range [value, value + (last - first)) to [first, last)
@@ -48,7 +47,7 @@ inline T inner_product (InputIterator1 first1, InputIterator1 last1, InputIterat
 {
     while (first1 < last1)
 	init += *first1++ * *first2++;
-    return (init);
+    return init;
 }
 
 /// Returns the sum of products of respective elements in the given ranges.
@@ -62,7 +61,7 @@ inline T inner_product
 {
     while (first1 < last1)
 	init = sumOp (init, productOp (*first1++, *first2++));
-    return (init);
+    return init;
 }
 
 /// Writes result such that result[i] = sum (first...first+i)
@@ -75,7 +74,7 @@ inline OutputIterator partial_sum (InputIterator first, InputIterator last, Outp
 	*result = *first++;
     while (first < last)
 	*++result = *first++ + *result;
-    return (result);
+    return result;
 }
 
 /// Writes result such that result[i] = sumOp (first...first+i)
@@ -88,7 +87,7 @@ inline OutputIterator partial_sum (InputIterator first, InputIterator last, Outp
 	*result = *first++;
     while (first < last)
 	*++result = sumOp (*first++, *result);
-    return (result);
+    return result;
 }
 
 /// Writes result such that result[i] = first[i] - first[i - 1]
@@ -101,7 +100,7 @@ inline OutputIterator adjacent_difference (InputIterator first, InputIterator la
 	*result++ = *first++;
     while (first < last)
 	*result++ = *first - *(first - 1);
-    return (result);
+    return result;
 }
 
 /// Writes result such that result[i] = differenceOp (first[i], first[i - 1])
@@ -114,7 +113,7 @@ inline OutputIterator adjacent_difference (InputIterator first, InputIterator la
 	*result++ = *first++;
     while (first < last)
 	*result++ = differenceOp (*first, *(first - 1));
-    return (result);
+    return result;
 }
 
 /// \brief Returns x^n.
@@ -130,7 +129,7 @@ inline T power (T x, unsigned n)
 	if (n % 2)
 	    result *= x;
     }
-    return (result);
+    return result;
 }
 
 /// \brief Returns x^n, using \p op instead of multiplication.
@@ -146,9 +145,7 @@ inline T power (T x, unsigned n, BinaryOperation op)
 	if (n % 2)
 	    result = op (result, x);
     }
-    return (result);
+    return result;
 }
 
 } // namespace ustl
-
-#endif

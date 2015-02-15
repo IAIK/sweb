@@ -15,7 +15,7 @@ namespace ustl {
 template <typename T> static inline void stosv (T*& p, size_t n, T v)
     { while (n--) *p++ = v; }
 
-#if defined(__i386__) || defined(__x86_64__)
+#if __i386__ || __x86_64__
 
 //----------------------------------------------------------------------
 // Copy functions
@@ -110,7 +110,7 @@ static inline void simd_block_cleanup (void)
 }
 
 /// The fastest optimized raw memory copy.
-void copy_n_fast (const void* src, size_t nBytes, void* dest) throw()
+void copy_n_fast (const void* src, size_t nBytes, void* dest) noexcept
 {
     movsb_dir_up();
     size_t nHeadBytes = Align(uintptr_t(src), MMX_ALIGN) - uintptr_t(src);
@@ -133,7 +133,7 @@ void copy_n_fast (const void* src, size_t nBytes, void* dest) throw()
 #endif // CPU_HAS_MMX
 
 /// The fastest optimized backwards raw memory copy.
-void copy_backward_fast (const void* first, const void* last, void* result) throw()
+void copy_backward_fast (const void* first, const void* last, void* result) noexcept
 {
     prefetch (first, 0, 0);
     prefetch (result, 1, 0);
@@ -205,20 +205,20 @@ static inline void fill_n_fast (T* dest, size_t count, T v)
     stosv (dest, count, v);
 }
 
-void fill_n8_fast (uint8_t* dest, size_t count, uint8_t v) throw()
+void fill_n8_fast (uint8_t* dest, size_t count, uint8_t v) noexcept
     { fill_n_fast (dest, count, v); }
-void fill_n16_fast (uint16_t* dest, size_t count, uint16_t v) throw()
+void fill_n16_fast (uint16_t* dest, size_t count, uint16_t v) noexcept
     { fill_n_fast (dest, count, v); }
-void fill_n32_fast (uint32_t* dest, size_t count, uint32_t v) throw()
+void fill_n32_fast (uint32_t* dest, size_t count, uint32_t v) noexcept
     { fill_n_fast (dest, count, v); }
 #else
-void fill_n8_fast (uint8_t* dest, size_t count, uint8_t v) throw() { memset (dest, v, count); }
-void fill_n16_fast (uint16_t* dest, size_t count, uint16_t v) throw() { stosv (dest, count, v); }
-void fill_n32_fast (uint32_t* dest, size_t count, uint32_t v) throw() { stosv (dest, count, v); }
+void fill_n8_fast (uint8_t* dest, size_t count, uint8_t v) noexcept { memset (dest, v, count); }
+void fill_n16_fast (uint16_t* dest, size_t count, uint16_t v) noexcept { stosv (dest, count, v); }
+void fill_n32_fast (uint32_t* dest, size_t count, uint32_t v) noexcept { stosv (dest, count, v); }
 #endif // CPU_HAS_MMX
 
 /// Exchanges ranges [first, middle) and [middle, last)
-void rotate_fast (void* first, void* middle, void* last) throw()
+void rotate_fast (void* first, void* middle, void* last) noexcept
 {
 #if HAVE_ALLOCA_H
     const size_t half1 (distance (first, middle)), half2 (distance (middle, last));
@@ -254,21 +254,21 @@ void rotate_fast (void* first, void* middle, void* last) throw()
 }
 
 #if __GNUC__ < 4
-size_t popcount (uint32_t v)
+size_t popcount (uint32_t v) noexcept
 {
     const uint32_t w = v - ((v >> 1) & 0x55555555); // Algorithm from AMD optimization guide
     const uint32_t x = (w & 0x33333333) + ((w >> 2) & 0x33333333);
-    return (((x + (x >> 4) & 0x0F0F0F0F) * 0x01010101) >> 24);
+    return ((x + (x >> 4) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
 
 #if HAVE_INT64_T
 /// \brief Returns the number of 1s in \p v in binary.
-size_t popcount (uint64_t v)
+size_t popcount (uint64_t v) noexcept
 {
     v -= (v >> 1) & UINT64_C(0x5555555555555555);		// Algorithm from Wikipedia
     v = (v & UINT64_C(0x3333333333333333)) + ((v >> 2) & UINT64_C(0x3333333333333333));
     v = (v + (v >> 4)) & UINT64_C(0x0F0F0F0F0F0F0F0F);
-    return ((v * UINT64_C(0x0101010101010101)) >> 56);
+    return (v * UINT64_C(0x0101010101010101)) >> 56;
 }
 #endif	// HAVE_INT64_T
 #endif	// !__GNUC__

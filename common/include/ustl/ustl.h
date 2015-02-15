@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef USTL_H_6A5A10410D2CD7FC2D78FE470F045EB7
-#define USTL_H_6A5A10410D2CD7FC2D78FE470F045EB7
-
+#pragma once
 #include "ustl/uspecial.h"
 #include "ustl/umap.h"
 #include "ustl/umultimap.h"
@@ -16,8 +14,6 @@
 #include "ustl/ulist.h"
 #include "ustl/uheap.h"
 #include "ustl/ustdxept.h"
-
-#endif
 
 /// \mainpage
 ///

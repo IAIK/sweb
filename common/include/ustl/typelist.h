@@ -5,9 +5,7 @@
 // This implementation is adapted from the Loki library, distributed under
 // the MIT license with Copyright (c) 2001 by Andrei Alexandrescu.
 
-#ifndef TYPELIST_H_2A8F84704780530D531716D41B3EA3FE
-#define TYPELIST_H_2A8F84704780530D531716D41B3EA3FE
-
+#pragma once
 #include "metamac.h"
 #include "typet.h"
 
@@ -219,5 +217,3 @@ public:
 } // namespace tl
 } // namespace tm
 } // namespace ustl
-
-#endif

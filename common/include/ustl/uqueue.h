@@ -3,8 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UQUEUE_H_27F01FDB0D59B75277E0E5C41ABC6B5B
-#define UQUEUE_H_27F01FDB0D59B75277E0E5C41ABC6B5B
+#pragma once
 
 namespace ustl {
 
@@ -27,43 +26,41 @@ public:
     typedef T*			pointer;
     typedef const T*		const_pointer;
 public:
-    inline			queue (void)			: m_Storage (), m_Front (0) { }
-    explicit inline		queue (const vector<T>& s)	: m_Storage (s), m_Front (0) { }
-    explicit inline		queue (const queue& s)		: m_Storage (s.m_Storage), m_Front (0) { }
-    inline size_type		size (void) const		{ return (m_Storage.size() - m_Front); }
-    inline bool			empty (void) const		{ return (!size()); }
-    inline reference		front (void)			{ return (m_Storage [m_Front]); }
-    inline const_reference	front (void) const		{ return (m_Storage [m_Front]); }
-    inline reference		back (void)			{ return (m_Storage.back()); }
-    inline const_reference	back (void) const		{ return (m_Storage.back()); }
+    inline			queue (void)			: _storage(), _front (0) { }
+    explicit inline		queue (const vector<T>& s)	: _storage (s), _front (0) { }
+    explicit inline		queue (const queue& s)		: _storage (s._storage), _front (0) { }
+    inline size_type		size (void) const		{ return _storage.size() - _front; }
+    inline bool			empty (void) const		{ return !size(); }
+    inline reference		front (void)			{ return _storage [_front]; }
+    inline const_reference	front (void) const		{ return _storage [_front]; }
+    inline reference		back (void)			{ return _storage.back(); }
+    inline const_reference	back (void) const		{ return _storage.back(); }
     inline void			push (const value_type& v);
     inline void			pop (void);
-    inline bool			operator== (const queue& s) const	{ return (m_Storage == s.m_Storage && m_Front == s.m_Front); }
-    inline bool			operator< (const queue& s) const	{ return (size() < s.size()); }
+    inline bool			operator== (const queue& s) const	{ return _storage == s._storage && _front == s._front; }
+    inline bool			operator< (const queue& s) const	{ return size() < s.size(); }
 private:
-    vector<T>			m_Storage;	///< Where the data actually is.
-    size_type			m_Front;	///< Index of the element returned by next pop.
+    vector<T>			_storage;	///< Where the data actually is.
+    size_type			_front;	///< Index of the element returned by next pop.
 };
 
 /// Pushes \p v on the queue.
 template <typename T>
 inline void queue<T>::push (const value_type& v)
 {
-    if (m_Front) {
-	m_Storage.erase (m_Storage.begin(), m_Front);
-	m_Front = 0;
+    if (_front) {
+	_storage.erase (_storage.begin(), _front);
+	_front = 0;
     }
-    m_Storage.push_back (v);
+    _storage.push_back (v);
 }
 
 /// Pops the topmost element from the queue.
 template <typename T>
 inline void queue<T>::pop (void)
 {
-    if (++m_Front >= m_Storage.size())
-	m_Storage.resize (m_Front = 0);
+    if (++_front >= _storage.size())
+	_storage.resize (_front = 0);
 }
 
 } // namespace ustl
-
-#endif
