@@ -382,5 +382,5 @@ extern "C" void syscallHandler()
   arch_contextSwitch();
 }
 
-#include "ErrorHandlers.h" // dummy and error handler definitions and irq forwarding definitions
+#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
 

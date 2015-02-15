@@ -84,15 +84,21 @@ uint64 InterruptUtils::pf_address_counter;
 
 void InterruptUtils::initialise()
 {
+  uint32 num_handlers = 0;
+  for (uint32 i = 0; handlers[i].offset != 0; ++i)
+    num_handlers = handlers[i].number;
+  ++num_handlers;
   // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
-  memset((void*)interrupt_gates, 0, sizeof(GateDesc));
+  GateDesc *interrupt_gates = new GateDesc[num_handlers];
 
-  for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
+  uint32 j = 0;
+  for (uint32 i = 0; i < num_handlers; ++i)
   {
-    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD(handlers[i].offset));
-    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD(handlers[i].offset));
-    interrupt_gates[i].offset_hd = HI_DWORD(handlers[i].offset);
+    while (handlers[j].number < i && handlers[j].offset != 0)
+      ++j;
+    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? handlers[j].offset : arch_dummyHandler));
+    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? handlers[j].offset : arch_dummyHandler));
+    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? handlers[j].offset : arch_dummyHandler);
     interrupt_gates[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
     interrupt_gates[i].present = 1;
     interrupt_gates[i].segment_selector = KERNEL_CS;
@@ -100,8 +106,7 @@ void InterruptUtils::initialise()
     interrupt_gates[i].zero_1 = 0;
     interrupt_gates[i].zeros = 0;
     interrupt_gates[i].reserved = 0;
-    interrupt_gates[i].dpl = (handlers[i].number == SYSCALL_INTERRUPT ?
-        DPL_USER_SPACE : DPL_KERNEL_SPACE);
+    interrupt_gates[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
     debug(A_INTERRUPTS,
         "%x -- offset = %x, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
         interrupt_gates[i].offset_ld_lw, interrupt_gates[i].offset_ld_hw,
@@ -111,8 +116,8 @@ void InterruptUtils::initialise()
   }
   IDTR idtr;
 
-  idtr.base =  (pointer)interrupt_gates;
-  idtr.limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS - 1;
+  idtr.base = (pointer) interrupt_gates;
+  idtr.limit = sizeof(GateDesc) * num_handlers - 1;
   lidt(&idtr);
   pf_address = 0xdeadbeef;
   pf_address_counter = 0;
@@ -152,32 +157,28 @@ void InterruptUtils::countPageFault(uint64 address)
     currentThread->kill();\
   }
 
-#define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_contextSwitch();\
-  extern "C" void dummyHandler_##x () \
-  {\
-    asm("mov %rax, 0xDEAD2");\
-    asm("hlt");\
-    uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
-    currentThread->switch_to_userspace_ = false;\
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
-    ArchInterrupts::enableInterrupts();\
-    kprintfd("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    ArchInterrupts::disableInterrupts();\
-    currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
-    if (currentThread->switch_to_userspace_)\
-    {\
-      currentThreadInfo = currentThread->user_arch_thread_info_;\
-      arch_contextSwitch();\
-    }\
+extern "C" void arch_dummyHandler();
+extern "C" void arch_contextSwitch();
+extern "C" void dummyHandler()
+{
+  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
+  currentThread->switch_to_userspace_ = false;
+  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  ArchInterrupts::enableInterrupts();
+  kprintfd("DUMMY_HANDLER: Spurious INT\n");
+  ArchInterrupts::disableInterrupts();
+  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
+  if (currentThread->switch_to_userspace_)
+  {
+    currentThreadInfo = currentThread->user_arch_thread_info_;
+    arch_contextSwitch();
   }
+}
 
 extern ArchThreadInfo *currentThreadInfo;
 extern Thread *currentThread;
 
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_contextSwitch();
 extern "C" void irqHandler_0()
 {
   ArchCommon::drawHeartBeat();
@@ -393,5 +394,5 @@ extern "C" void syscallHandler()
   arch_contextSwitch();
 }
 
-#include "DummyHandlers.h" // dummy and error handler definitions and irq forwarding definitions
+#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
 
