@@ -43,7 +43,7 @@ void Loader::initUserspaceAddressSpace()
 
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 {
-  VfsSyscall::lseek(fd_, position, File::SEEK_SET);
+  VfsSyscall::lseek(fd_, position, SEEK_SET);
   return VfsSyscall::read(fd_, buffer, count) - (int32)count;
 }
 
@@ -54,7 +54,7 @@ bool Loader::readHeaders()
 
   hdr_ = new Elf::Ehdr;
 
-  VfsSyscall::lseek(fd_, 0, File::SEEK_SET);
+  VfsSyscall::lseek(fd_, 0, SEEK_SET);
   if(!hdr_ || VfsSyscall::read(fd_, reinterpret_cast<char*>(hdr_),
               sizeof(Elf::Ehdr)) != sizeof(Elf::Ehdr))
   {
@@ -247,7 +247,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
   }
 
 
-  VfsSyscall::lseek(fd_, min_value, File::SEEK_SET);
+  VfsSyscall::lseek(fd_, min_value, SEEK_SET);
   ssize_t bytes_read = VfsSyscall::read(fd_, (char*)buffer, max_value - min_value);
 
   if(bytes_read != static_cast<ssize_t>(max_value - min_value))

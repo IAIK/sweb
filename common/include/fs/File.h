@@ -23,6 +23,20 @@ class Dentry;
 #define A_WRITABLE  0x0002
 #define A_EXECABLE  0x0004
 
+
+/**
+ * Seek positioners
+ */
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif
+#ifndef SEEK_CUR
+#define SEEK_CUR 1
+#endif
+#ifndef SEEK_END
+#define SEEK_END 2
+#endif
+
 /**
  * @class File
  * A file object is used where-ever there is a need to read from or write to
@@ -32,21 +46,6 @@ class Dentry;
 class File
 {
   public:
-
-    /**
-     * Seek from the start of the file.
-     */
-    static const uint8 SEEK_SET = 0;
-
-    /**
-     * Seek from the current position in the file.
-     */
-    static const uint8 SEEK_CUR = 1;
-
-    /**
-     * Seek from the end of the file.
-     */
-    static const uint8 SEEK_END = 2;
 
     typedef uint32 mode_t;
 
