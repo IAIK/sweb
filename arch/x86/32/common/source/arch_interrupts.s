@@ -48,16 +48,14 @@ arch_irqHandler_%1:
         iretd
 %endmacro
 
-%macro dummyhandler  1
-global arch_dummyHandler_%1
-extern dummyHandler_%1
-arch_dummyHandler_%1:
+global arch_dummyHandler
+extern dummyHandler
+arch_dummyHandler:
         pushAll
         changeData
-        call dummyHandler_%1
+        call dummyHandler
         popAll
         iretd
-%endmacro
 
 %macro errorhandler  1
 global arch_errorHandler_%1
@@ -102,9 +100,6 @@ irqhandler i
 irqhandler 65
   
 errorhandler 0
-dummyhandler 1
-dummyhandler 2
-dummyhandler 3
 errorhandler 4
 errorhandler 5
 errorhandler 6
@@ -115,18 +110,10 @@ errorhandler 10
 errorhandler 11
 errorhandler 12
 errorhandler 13
-;dummyhandler 14
-dummyhandler 15
 errorhandler 16
 errorhandler 17
 errorhandler 18
 errorhandler 19
-
-%assign i 20
-%rep 108 ; generate dummyhandler 20-128
-dummyhandler i
-%assign i i+1
-%endrep
 
 global arch_syscallHandler
 extern syscallHandler
