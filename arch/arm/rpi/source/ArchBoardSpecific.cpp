@@ -88,8 +88,6 @@ void ArchBoardSpecific::frameBufferInit()
   framebuffer = (fbs.pointer & ~0xC0000000) + 0xC0000000;
 }
 
-extern void arch_keyboard_irq_handler();
-
 void ArchBoardSpecific::onIdle()
 {
   keyboard_irq_handler(); // TODO: this is not only ugly polling, but we're losing keys all the time

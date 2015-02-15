@@ -85,8 +85,7 @@ class ATADriver : public BDDriver
 
   private:
 
-    uint16 dd[256]; // read buffer if we need one
-    uint32 dd_off; // read buffer counter
+    int32 selectSector(uint32 start_sector, uint32 num_sectors);
 
     uint32 numsec;
 
