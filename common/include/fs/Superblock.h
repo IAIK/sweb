@@ -44,7 +44,7 @@ class Superblock
     /**
      * The device that this file-system is mounted on.
      */
-    uint32 s_dev_;
+    size_t s_dev_;
 
     /**
      * This is a list of flags which are logically with the flags in each
@@ -97,7 +97,7 @@ class Superblock
      * @param s_root the root dentry of the new filesystme
      * @param s_dev the device number of the new filesystem
      */
-    Superblock(Dentry* s_root, uint32 s_dev);
+    Superblock(Dentry* s_root, size_t s_dev);
 
     virtual ~Superblock();
 

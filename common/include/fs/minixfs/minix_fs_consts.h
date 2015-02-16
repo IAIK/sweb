@@ -5,8 +5,8 @@
 #define V3_ARRAY(PTR,IDX) ((superblock_->s_magic_==MINIX_V3) ? ((uint32*)(PTR))[(IDX)] : ((uint16*)(PTR))[(IDX)])
 #define SET_V3_ARRAY(PTR,IDX,VAL) do { if (superblock_->s_magic_==MINIX_V3) ((uint32*)(PTR))[(IDX)] = VAL; else ((uint16*)(PTR))[(IDX)] = VAL; } while (0)
 #define NUM_ZONE_ADDRESSES ((superblock_->s_magic_==MINIX_V3) ? 256 : 512)
-#define ZONE_SIZE 1024
-#define BLOCK_SIZE 1024
+#define ZONE_SIZE 1024U
+#define BLOCK_SIZE 1024U
 #define INODE_BYTES ((superblock_->s_magic_==MINIX_V3) ? 4 : 2)
 #define INODE_SIZE ((superblock_->s_magic_==MINIX_V3) ? 64 : 32)
 #define INODES_PER_BLOCK ((superblock_->s_magic_==MINIX_V3) ? 16 : 32)

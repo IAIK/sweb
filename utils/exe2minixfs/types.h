@@ -25,7 +25,7 @@ typedef int64_t int64;
 
 typedef void* pointer;
 
-typedef loff_t l_off_t;
+typedef uint64_t l_off_t;
 
 class VfsMount {};
 

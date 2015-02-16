@@ -17,6 +17,7 @@ VfsMount vfs_dummy_;
 
 int main(int argc, char *argv[])
 {
+  printf("hello\n");
   if (argc < 3 || argc % 2 == 0)
   {
     printf(
@@ -25,9 +26,9 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  int32 image_fd = open(argv[1], O_RDWR);
+  FILE* image_fd = fopen(argv[1], "r+b");
 
-  if (image_fd < 0)
+  if (image_fd == 0)
   {
     printf("Error opening %s\n", argv[1]);
     return -1;
@@ -37,12 +38,12 @@ int main(int argc, char *argv[])
   size_t offset = strtoul(argv[2],&end,10);
   if (strlen(end) != 0)
   {
-    close(image_fd);
+    fclose(image_fd);
     printf("offset has to be a number!\n");
     return -1;
   }
 
-  superblock_ = (Superblock*) new MinixFSSuperblock(0, image_fd, offset);
+  superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, offset);
   Dentry *mount_point = superblock_->getMountPoint();
   mount_point->setMountPoint(mount_point);
   Dentry *root = superblock_->getRoot();
@@ -53,24 +54,26 @@ int main(int argc, char *argv[])
 
   for (int32 i = 2; i <= argc / 2; i++)
   {
-    int32 src_file = open(argv[2 * i - 1], O_RDONLY);
+    FILE* src_file = fopen(argv[2 * i - 1], "rb");
 
-    if (src_file < 0)
+    if (src_file == 0)
     {
       printf("Wasn't able to open file %s\n", argv[2 * i - 1]);
       break;
     }
 
-    ssize_t size = lseek(src_file, 0, SEEK_END);
+    fseek(src_file, 0, SEEK_END);
+    ssize_t size = ftell(src_file);
 
     char *buf = new char[size];
 
-    lseek(src_file, 0, SEEK_SET);
-    assert(read(src_file, buf, size) == size);
-    close(src_file);
+    fseek(src_file, 0, SEEK_SET);
+    assert(fread(buf, 1, size, src_file) == size);
+    fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
-    int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4); // O_RDWR | O_CREAT
+    printf("%s\n",argv[2 * i]);
+    int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
     if (fd < 0)
     {
       printf("no success\n");
@@ -84,7 +87,7 @@ int main(int argc, char *argv[])
   }
   delete fs_info;
   delete superblock_;
-  close(image_fd);
+  fclose(image_fd);
   return 0;
 }
 

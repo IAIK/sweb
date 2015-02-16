@@ -4,7 +4,7 @@
 #include "Inode.h"
 #include "File.h"
 
-Superblock::Superblock(Dentry* s_root, uint32 s_dev) :
+Superblock::Superblock(Dentry* s_root, size_t s_dev) :
     s_magic_(0), s_type_(0), s_dev_(s_dev), s_flags_(0), s_root_(s_root), mounted_over_(0)
 {
 }
