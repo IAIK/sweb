@@ -17,7 +17,6 @@ VfsMount vfs_dummy_;
 
 int main(int argc, char *argv[])
 {
-  printf("hello\n");
   if (argc < 3 || argc % 2 == 0)
   {
     printf(
@@ -63,7 +62,7 @@ int main(int argc, char *argv[])
     }
 
     fseek(src_file, 0, SEEK_END);
-    ssize_t size = ftell(src_file);
+    size_t size = ftell(src_file);
 
     char *buf = new char[size];
 
@@ -72,7 +71,6 @@ int main(int argc, char *argv[])
     fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
-    printf("%s\n",argv[2 * i]);
     int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
     if (fd < 0)
     {
