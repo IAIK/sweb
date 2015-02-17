@@ -1,3 +1,4 @@
+#ifdef EXE2MINIXFS
 #include "types.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -14,6 +15,7 @@
 Superblock* superblock_;
 FileSystemInfo* fs_info;
 VfsMount vfs_dummy_;
+FakeClass* currentThread;
 
 int main(int argc, char *argv[])
 {
@@ -89,3 +91,4 @@ int main(int argc, char *argv[])
   return 0;
 }
 
+#endif

@@ -209,6 +209,7 @@ template <> inline uint32_t* unrolled_fill (uint32_t* result, size_t count, uint
 template <> inline float* unrolled_fill (float* result, size_t count, float value)
     { fill_n32_fast ((uint32_t*) result, count, *noalias_cast<uint32_t*>(&value)); return advance (result, count); }
 
+#endif // WANT_UNROLLED_COPY
 
 // Specializations for void* and char*, aliasing the above optimized versions.
 //

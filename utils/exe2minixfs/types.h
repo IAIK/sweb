@@ -29,5 +29,7 @@ typedef uint64_t l_off_t;
 
 class VfsMount {};
 
+class FakeClass { void* getWorkingDirInfo() { return 0; } };
+
 #endif
 #endif
