@@ -1,13 +1,16 @@
-#include "fs/PathWalker.h"
-#include "fs/Inode.h"
-#include "fs/Dentry.h"
-#include "fs/VfsMount.h"
-#include "fs/Superblock.h"
+#include "PathWalker.h"
+#include "Inode.h"
+#include "Dentry.h"
+#include "VfsMount.h"
+#include "Superblock.h"
 #include "assert.h"
 #include "kstring.h"
-#include "console/kprintf.h"
-#include "kernel/Mutex.h"
-#include "kernel/Thread.h"
+#include "kprintf.h"
+#include "FileSystemInfo.h"
+#ifndef EXE2MINIXFS
+#include "Mutex.h"
+#include "Thread.h"
+#endif
 
 #define CHAR_DOT '.'
 #define NULL_CHAR '\0'
@@ -50,10 +53,10 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
 
   if ((dentry_ == 0) || (vfs_mount_ == 0))
   {
-    kprintfd("PathWalker: PathWalk> ERROR return not found - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_);
+    kprintfd("PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
     return PW_ENOTFOUND;
   }
-  debug(PATHWALKER, "PathWalk> return success - dentry: %d, vfs_mount: %d\n", dentry_, vfs_mount_);
+  debug(PATHWALKER, "PathWalk> return success - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
 
   debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
   fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
@@ -131,7 +134,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
         // because the ROOT has not parent from VfsMount.
         continue;
       }
-
+#ifndef EXE2MINIXFS
       VfsMount* vfs_mount = vfs.getVfsMount(dentry_, true);
       if (vfs_mount != 0)
       {
@@ -139,6 +142,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
         vfs_mount_ = vfs_mount->getParent();
         dentry_ = vfs_mount->getMountPoint();
       }
+#endif
       Dentry* parent_dentry = dentry_->getParent();
       dentry_ = parent_dentry;
       continue;
@@ -162,6 +166,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
         debug(PATHWALKER, "pathWalk> return dentry not found\n");
         return PW_ENOTFOUND;
       }
+#ifndef EXE2MINIXFS
       VfsMount* vfs_mount = vfs.getVfsMount(dentry_);
       if (vfs_mount != 0)
       {
@@ -174,6 +179,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
         dentry_ = vfs_mount_->getRoot();
 
       }
+#endif
     }
 
     while (*pathname == SEPARATOR)
@@ -192,7 +198,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
 int32 PathWalker::getNextPartLen(const char* path, int32 &npart_len)
 {
   char* tmp = 0;
-  tmp = strchr(path, SEPARATOR);
+  tmp = strchr((char*) path, SEPARATOR);
 
   npart_len = (size_t) (tmp - path + 1);
 
