@@ -18,6 +18,13 @@ FileSystemInfo* default_working_dir;
 VfsMount vfs_dummy_;
 FakeThread* currentThread = 0;
 
+// obviously NOT atomic, we need this for compatability in single threaded host code
+size_t atomic_add(size_t& x,size_t y)
+{
+  x += y;
+  return x-y;
+}
+
 int main(int argc, char *argv[])
 {
   if (argc < 3 || argc % 2 == 0)

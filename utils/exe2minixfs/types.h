@@ -3,8 +3,9 @@
 #ifndef _MINIXFSTYPES_H_
 #define _MINIXFSTYPES_H_
 
-#define Mutex int
-#define MutexLock __attribute__((unused)) int
+#define Mutex const char*
+#define MutexLock __attribute__((unused)) const char*
+#define ArchThreads
 
 #include <stdint.h>
 #include <string.h>
@@ -35,6 +36,8 @@ class FileSystemInfo;
 class FakeThread { public: FileSystemInfo* getWorkingDirInfo() { return 0; } };
 
 extern FakeThread* currentThread;
+
+size_t atomic_add(size_t& x,size_t y);
 
 #endif
 #endif
