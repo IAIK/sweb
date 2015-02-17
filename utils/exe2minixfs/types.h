@@ -3,6 +3,9 @@
 #ifndef _MINIXFSTYPES_H_
 #define _MINIXFSTYPES_H_
 
+#define Mutex int
+#define MutexLock __attribute__((unused)) int
+
 #include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
@@ -27,9 +30,11 @@ typedef void* pointer;
 
 typedef uint64_t l_off_t;
 
-class VfsMount {};
+class FileSystemInfo;
 
-class FakeClass { void* getWorkingDirInfo() { return 0; } };
+class FakeThread { public: FileSystemInfo* getWorkingDirInfo() { return 0; } };
+
+extern FakeThread* currentThread;
 
 #endif
 #endif

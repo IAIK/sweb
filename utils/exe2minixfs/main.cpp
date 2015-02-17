@@ -11,11 +11,12 @@
 #include "Superblock.h"
 #include "MinixFSSuperblock.h"
 #include "VfsSyscall.h"
+#include "VfsMount.h"
 
 Superblock* superblock_;
-FileSystemInfo* fs_info;
+FileSystemInfo* default_working_dir;
 VfsMount vfs_dummy_;
-FakeClass* currentThread;
+FakeThread* currentThread = 0;
 
 int main(int argc, char *argv[])
 {
@@ -49,9 +50,9 @@ int main(int argc, char *argv[])
   mount_point->setMountPoint(mount_point);
   Dentry *root = superblock_->getRoot();
 
-  fs_info = new FileSystemInfo();
-  fs_info->setFsRoot(root, &vfs_dummy_);
-  fs_info->setFsPwd(root, &vfs_dummy_);
+  default_working_dir = new FileSystemInfo();
+  default_working_dir->setFsRoot(root, &vfs_dummy_);
+  default_working_dir->setFsPwd(root, &vfs_dummy_);
 
   for (int32 i = 2; i <= argc / 2; i++)
   {
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
 
     delete[] buf;
   }
-  delete fs_info;
+  delete default_working_dir;
   delete superblock_;
   fclose(image_fd);
   return 0;

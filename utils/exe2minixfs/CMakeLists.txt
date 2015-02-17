@@ -15,6 +15,8 @@ file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/fs/FileSystemInfo.cpp
                                    ../../common/source/fs/Superblock.cpp
                                    ../../common/source/fs/File.cpp
+                                   ../../common/source/fs/VfsMount.cpp
+                                   ../../common/source/fs/VfsSyscall.cpp
                                    ../../common/source/fs/minixfs/MinixFSFile.cpp
                                    ../../common/source/fs/minixfs/MinixFSInode.cpp
                                    ../../common/source/fs/minixfs/MinixFSSuperblock.cpp

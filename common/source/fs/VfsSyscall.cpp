@@ -2,19 +2,22 @@
 #include "kstring.h"
 #include "assert.h"
 #include "Dirent.h"
-#include "Thread.h"
-#include "Mutex.h"
 #include "Inode.h"
 #include "Dentry.h"
 #include "Superblock.h"
 #include "File.h"
 #include "FileDescriptor.h"
 #include "FileSystemType.h"
+#include "FileSystemInfo.h"
 #include "VirtualFileSystem.h"
 #include "MinixFSType.h"
 #include "PathWalker.h"
 #include "VfsMount.h"
 #include "kprintf.h"
+#ifndef EXE2MINIXFS
+#include "Mutex.h"
+#include "Thread.h"
+#endif
 
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
@@ -72,7 +75,7 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   debug(VFSSYSCALL, "(mkdir) \n");
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
@@ -172,7 +175,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
 
 int32 VfsSyscall::chdir(const char* pathname)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
@@ -283,7 +286,7 @@ int32 VfsSyscall::close(uint32 fd)
 
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   if (flag > (O_CREAT | O_RDWR))
   {
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
@@ -414,6 +417,7 @@ int32 VfsSyscall::flush(uint32 fd)
   return file_descriptor->getFile()->flush();
 }
 
+#ifndef EXE2MINIXFS
 int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
 {
   FileSystemType* type = vfs.getFsType(file_system_name);
@@ -431,7 +435,7 @@ int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 {
   return vfs.umount(dir_name, flag);
 }
-
+#endif
 uint32 VfsSyscall::getFileSize(uint32 fd)
 {
   FileDescriptor* file_descriptor = getFileDescriptor(fd);

@@ -10,7 +10,7 @@
 #define CHAR_ROOT '/'
 #define SEPARATOR '/'
 
-extern FileSystemInfo* fs_info;
+extern FileSystemInfo* default_working_dir;
 
 int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_,
                            VfsMount*& vfs_mount_)
@@ -33,12 +33,12 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
     // altroot check
 
     // start with ROOT
-    dentry_ = fs_info->getRoot();
+    dentry_ = default_working_dir->getRoot();
   }
   else
   {
     // start with PWD
-    dentry_ = fs_info->getPwd();
+    dentry_ = default_working_dir->getPwd();
   }
 
   if ((dentry_ == 0))
@@ -50,7 +50,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
 
   debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
 
-  debug(PATHWALKER, "pathWalk> fs_info->getName() : %s\n", fs_info->pathname_.c_str());
+  debug(PATHWALKER, "pathWalk> fs_info->getName() : %s\n", default_working_dir->pathname_.c_str());
   if (pathname == 0)
   {
     debug(PATHWALKER, "pathWalk> return pathname not found\n");
@@ -118,7 +118,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
       debug(PATHWALKER, "pathWalk> follow last dotdot\n");
       last_ = 0;
 
-      if ((dentry_ == fs_info->getRoot()))
+      if ((dentry_ == default_working_dir->getRoot()))
       {
         // the dentry_ is the root of file-system
         // because the ROOT has not parent from VfsMount.
