@@ -95,8 +95,6 @@ private:
 
 } // namespace ustl
 
-#include "simd.h"
-
 namespace ustl {
 
 template <size_t N, typename T>

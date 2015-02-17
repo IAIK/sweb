@@ -5,7 +5,6 @@
 
 #pragma once
 #include "umatrix.h"
-#include "simd.h"
 
 namespace ustl {
 
