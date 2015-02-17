@@ -209,29 +209,6 @@ template <> inline uint32_t* unrolled_fill (uint32_t* result, size_t count, uint
 template <> inline float* unrolled_fill (float* result, size_t count, float value)
     { fill_n32_fast ((uint32_t*) result, count, *noalias_cast<uint32_t*>(&value)); return advance (result, count); }
 
-#if CPU_HAS_MMX
-#define UNROLLED_COPY_SPECIALIZATION(type)						\
-template <> inline type* copy (const type* first, const type* last, type* result)	\
-{ return unrolled_copy (first, distance (first, last), result); }			\
-template <> inline type* copy_n (const type* first, size_t count, type* result)		\
-{ return unrolled_copy (first, count, result); }
-#define UNROLLED_FILL_SPECIALIZATION(type)						\
-template <> inline void fill (type* first, type* last, const type& value)		\
-{ unrolled_fill (first, distance (first, last), value); }				\
-template <> inline type* fill_n (type* first, size_t count, const type& value)		\
-{ return unrolled_fill (first, count, value); }
-UNROLLED_COPY_SPECIALIZATION(uint8_t)
-UNROLLED_FILL_SPECIALIZATION(uint8_t)
-UNROLLED_COPY_SPECIALIZATION(uint16_t)
-UNROLLED_FILL_SPECIALIZATION(uint16_t)
-UNROLLED_COPY_SPECIALIZATION(uint32_t)
-UNROLLED_FILL_SPECIALIZATION(uint32_t)
-UNROLLED_COPY_SPECIALIZATION(float)
-UNROLLED_FILL_SPECIALIZATION(float)
-#undef UNROLLED_FILL_SPECIALIZATION
-#undef UNROLLED_COPY_SPECIALIZATION
-#endif // WANT_UNROLLED_COPY
-#endif // CPU_HAS_MMX
 
 // Specializations for void* and char*, aliasing the above optimized versions.
 //

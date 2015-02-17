@@ -227,25 +227,6 @@ inline tuple<N,T1> operator/ (const tuple<N,T1>& t1, const tuple<N,T2>& t2)
     for (uoff_t i = 0; i < N; ++ i) result[i] = T1(t1[i] / t2[i]);
     return result;
 }
-
-//----------------------------------------------------------------------
-// Define SIMD specializations for member functions.
-
-#if CPU_HAS_SSE
-#define SSE_TUPLE_SPECS(n,type)							\
-template <> inline tuple<n,type>::tuple (void)					\
-{ asm("xorps %%xmm0, %%xmm0\n\tmovups %%xmm0, %0":"+m"(_v[0])::"xmm0","memory"); } \
-template<> inline void tuple<n,type>::swap (tuple<n,type>& v)			\
-{										\
-    asm ("movups %0,%%xmm0\n\tmovups %1,%%xmm1\n\t"				\
-	"movups %%xmm0,%1\n\tmovups %%xmm1,%0"					\
-	: "+m"(_v[0]), "+m"(v._v[0]) :: "xmm0","xmm1","memory");		\
-}
-SSE_TUPLE_SPECS(4,float)
-SSE_TUPLE_SPECS(4,int32_t)
-SSE_TUPLE_SPECS(4,uint32_t)
-#undef SSE_TUPLE_SPECS
-#endif
 #if SIZE_OF_LONG == 8 && __GNUC__
 #define LONG_TUPLE_SPECS(n,type)		\
 template <> inline tuple<n,type>::tuple (void)	\
@@ -264,25 +245,6 @@ LONG_TUPLE_SPECS(2,uint32_t)
 LONG_TUPLE_SPECS(8,int8_t)
 LONG_TUPLE_SPECS(8,uint8_t)
 #undef LONG_TUPLE_SPECS
-#elif CPU_HAS_MMX
-#define MMX_TUPLE_SPECS(n,type)		\
-template <> inline tuple<n,type>::tuple (void)	\
-{  asm ("pxor %%mm0, %%mm0\n\tmovq %%mm0, %0"	\
-	:"=m"(_v[0])::"mm0","st","memory"); simd::reset_mmx(); }	\
-template<> inline void tuple<n,type>::swap (tuple<n,type>& v)		\
-{  asm ("movq %2,%%mm0\n\tmovq %3,%%mm1\n\t"				\
-	"movq %%mm0,%1\n\tmovq %%mm1,%0"				\
-	:"=m"(_v[0]),"=m"(v._v[0]):"m"(_v[0]),"m"(v._v[0]):"mm0","mm1","st","st(1)","memory"); \
-   simd::reset_mmx();							\
-}
-MMX_TUPLE_SPECS(2,float)
-MMX_TUPLE_SPECS(4,int16_t)
-MMX_TUPLE_SPECS(4,uint16_t)
-MMX_TUPLE_SPECS(2,int32_t)
-MMX_TUPLE_SPECS(2,uint32_t)
-MMX_TUPLE_SPECS(8,int8_t)
-MMX_TUPLE_SPECS(8,uint8_t)
-#undef MMX_TUPLE_SPECS
 #endif
 
 #if __i386__ || __x86_64__
@@ -328,35 +290,5 @@ UINT32_TUPLE_SPECS(uint16_t,int16_t)
 #undef TUPLEV_R2
 #undef TUPLEV_W1
 #undef TUPLEV_W2
-
-#define SIMD_TUPLE_PACKOP(N,T)	\
-template <> inline tuple<N,T>& operator+= (tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { simd::padd (t2, t1); return t1; }						\
-template <> inline tuple<N,T>& operator-= (tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { simd::psub (t2, t1); return t1; }						\
-template <> inline tuple<N,T>& operator*= (tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { simd::pmul (t2, t1); return t1; }						\
-template <> inline tuple<N,T>& operator/= (tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { simd::pdiv (t2, t1); return t1; }						\
-template <> inline tuple<N,T> operator+ (const tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { tuple<N,T> result (t1); simd::padd (t2, result); return result; }		\
-template <> inline tuple<N,T> operator- (const tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { tuple<N,T> result (t1); simd::psub (t2, result); return result; }		\
-template <> inline tuple<N,T> operator* (const tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { tuple<N,T> result (t1); simd::pmul (t2, result); return result; }		\
-template <> inline tuple<N,T> operator/ (const tuple<N,T>& t1, const tuple<N,T>& t2)	\
-    { tuple<N,T> result (t1); simd::pdiv (t2, result); return result; }
-SIMD_TUPLE_PACKOP(4,float)
-SIMD_TUPLE_PACKOP(2,float)
-SIMD_TUPLE_PACKOP(2,double)
-SIMD_TUPLE_PACKOP(4,int32_t)
-SIMD_TUPLE_PACKOP(4,uint32_t)
-SIMD_TUPLE_PACKOP(4,int16_t)
-SIMD_TUPLE_PACKOP(4,uint16_t)
-SIMD_TUPLE_PACKOP(2,int32_t)
-SIMD_TUPLE_PACKOP(2,uint32_t)
-SIMD_TUPLE_PACKOP(8,int8_t)
-SIMD_TUPLE_PACKOP(8,uint8_t)
-#undef SIMD_TUPLE_PACKOP
 
 } // namespace ustl
