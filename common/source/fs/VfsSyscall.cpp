@@ -45,28 +45,16 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
   if (pathname == 0)
     return -1;
 
-  bool prepend_slash_dot = true;
   uint32 len = strlen(pathname);
+  fs_info->pathname_ = "./";
 
-  if (len > 0 && pathname[0] == SEPARATOR)
-    prepend_slash_dot = false;
-  else if (pathname[0] == CHAR_DOT)
+  for (size_t i = 0; i < 3; ++i)
   {
-    if (len > 1 && pathname[1] == SEPARATOR)
-      prepend_slash_dot = false;
-    else if (pathname[1] == CHAR_DOT)
-    {
-      if (len > 2 && pathname[2] == SEPARATOR)
-        prepend_slash_dot = false;
-    }
+    if (len > i && pathname[i] == SEPARATOR)
+      fs_info->pathname_ = "";
+    else if (pathname[i] != CHAR_DOT)
+      break;
   }
-
-  if (prepend_slash_dot)
-  {
-    fs_info->pathname_ = "./";
-  }
-  else
-    fs_info->pathname_ = "";
   fs_info->pathname_ += pathname;
 
   return PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
@@ -147,8 +135,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
     debug(VFSSYSCALL, "listing dir %s:\n", pw_dentry->getName());
     for (Dentry* sub_dentry : pw_dentry->d_child_)
     {
-      Inode* sub_inode = sub_dentry->getInode();
-      uint32 inode_type = sub_inode->getType();
+      uint32 inode_type = sub_dentry->getInode()->getType();
       switch (inode_type)
       {
         case I_DIR:

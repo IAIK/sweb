@@ -62,11 +62,6 @@ int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
   debug(M_INODE, "readData: offset: %d, size; %d,i_size_: %d\n", offset, size, i_size_);
   if ((size + offset) > i_size_)
   {
-    //kprintfd("MinixFSInode: readData: the size is bigger than size of the file - aborting\n");
-    //assert(false);
-    //why the hell we should abort? its standard behaviour to read what we can read and return
-    //the number of bytes we could read...
-
     if (i_size_ <= offset)
       return 0;
     else
