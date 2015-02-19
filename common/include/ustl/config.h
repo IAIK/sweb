@@ -191,7 +191,7 @@
 #undef HAVE_THREE_CHAR_TYPES
 
 // Define to 1 if you have 64 bit types available
-#define HAVE_INT64_T 1
+#undef HAVE_INT64_T
 
 // Define to 1 if you have the long long type
 #undef HAVE_LONG_LONG
