@@ -11,7 +11,7 @@ extern "C" void initialiseBootTimePaging()
   uint32 i;
   // clear the page dir
   for (i = 0; i < 4096; ++i)
-    *((uint32*)pde_start) = 0;
+    *((uint32*)pde_start + i) = 0;
   // 1 : 1 mapping of the first 8 mbs
   for (i = 0; i < 8; ++i)
     mapBootTimePage(pde_start, i, i);
@@ -19,11 +19,12 @@ extern "C" void initialiseBootTimePaging()
   for (i = 0; i < 16; ++i)
   {
     pde_start[2048 + i].pt.size = 1;
+    pde_start[2048 + i].pt.offset = i % 4;
     pde_start[2048 + i].pt.pt_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE;
   }
   // clear the page tables
-  for (i = 0; i < 8 * PAGE_TABLE_ENTRIES; ++i)
-    *((uint32*)pte_start) = 0;
+  for (i = 0; i < 16 * PAGE_TABLE_ENTRIES; ++i)
+    *((uint32*)pte_start + i) = 0;
   // map kernel into PTs
   size_t kernel_last_page = (size_t)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address) / PAGE_SIZE;
   extern size_t ro_data_end_address;
