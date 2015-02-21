@@ -220,7 +220,7 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
   PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
   assert(pte_base[pte_vpn].size == 0);
   pte_base[pte_vpn].permissions = 1;
-  pte_base[pte_vpn].page_ppn = physical_page;
+  pte_base[pte_vpn].page_ppn = physical_page + PHYS_OFFSET_4K;
   pte_base[pte_vpn].size = 2;
 }
 
@@ -234,7 +234,7 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
   assert(pte_base[pte_vpn].size == 2);
   pte_base[pte_vpn].size = 0;
   pte_base[pte_vpn].permissions = 0;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
+  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
 }
 
 uint32 ArchMemory::getRootOfPagingStructure()
