@@ -81,7 +81,7 @@ extern "C" void initialiseBootTimePaging()
       pde_start[1528 + i].page.size = 1;
       pde_start[1528 + i].page.cache_disabled = 1;
       pde_start[1528 + i].page.write_through = 1;
-      pde_start[1528 + i].page.page_ppn = (ArchCommon::getVESAConsoleLFBPtr(0) / (1024 * 1024 * 4)) + i;
+      pde_start[1528 + i].page.page_ppn = (ArchCommon::getVESAConsoleLFBPtr(0) / (1024 * 1024 * 2)) + i;
     }
   }
 

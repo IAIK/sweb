@@ -252,7 +252,7 @@ uint32 ArchMemory::getValueForCR3()
 {
   // last 5 bits must be zero!
   assert(((uint32)page_dir_pointer_table_ & 0x1F) == 0);
-  return VIRTUAL_TO_PHYSICAL_BOOT((uint32)page_dir_pointer_table_);
+  return get_PAddr_Of_VAddr_In_KernelMapping((uint32)page_dir_pointer_table_);
 }
 
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)
