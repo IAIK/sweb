@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.cpp
- *
- */
-
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
@@ -221,6 +216,7 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
 {
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
+  assert(pdpte_vpn == 2);
   assert(pdpt[pdpte_vpn].present);
   assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
@@ -234,6 +230,7 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
 {
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
+  assert(pdpte_vpn == 2);
   assert(pdpt[pdpte_vpn].present);
   assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);

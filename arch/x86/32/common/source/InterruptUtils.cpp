@@ -1,8 +1,3 @@
-/**
- * @file InterruptUtils.cpp
- *
- */
-
 #include "InterruptUtils.h"
 
 #include "ArchSerialInfo.h"

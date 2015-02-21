@@ -181,5 +181,6 @@ extern "C" void arch_contextSwitch()
   asm("push %[ebp]\n" : : [ebp]"m"(info.ebp));
   asm("pop %%ebp\n"
       "iret" : : "a"(info.eax), "b"(info.ebx), "c"(info.ecx), "d"(info.edx));
+  asm("hlt");
   assert(false);
 }
