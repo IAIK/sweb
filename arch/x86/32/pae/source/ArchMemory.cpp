@@ -16,13 +16,8 @@ PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned
 
 ArchMemory::ArchMemory() : page_dir_pointer_table_((PageDirPointerTableEntry*) (((uint32) page_dir_pointer_table_space_ + 0x20) & (~0x1F)))
 {
-
-  memset((void*)page_dir_pointer_table_, 0, sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES);
-  page_dir_pointer_table_[0].present = 0; // will be created on demand
-  page_dir_pointer_table_[1].present = 0; // will be created on demand
-  page_dir_pointer_table_[2] = kernel_page_directory_pointer_table[2]; // kernel
-  page_dir_pointer_table_[3] = kernel_page_directory_pointer_table[3]; // 1:1 mapping
-  debug ( A_MEMORY,"ArchMemory::ArchMemory(): Initialised the page dir pointer table\n" );
+  memcpy(page_dir_pointer_table_, kernel_page_directory_pointer_table, sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES);
+  memset(page_dir_pointer_table_, 0, sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES/2); // should be zero, this is just for safety
 }
 
 void ArchMemory::checkAndRemovePT(uint32 physical_page_directory_page, uint32 pde_vpn)

@@ -99,6 +99,8 @@ extern "C" void removeBootTimeIdentMapping()
 {
   uint32 i;
 
+  kernel_page_directory_pointer_table[0].present = 0;
+  kernel_page_directory_pointer_table[1].present = 0;
   for (i = 0; i < 10; ++i)
   {
     kernel_page_directory[i].page.present = 0;

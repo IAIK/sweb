@@ -10,16 +10,9 @@ PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned
 ArchMemory::ArchMemory()
 {
   page_dir_page_ = PageManager::instance()->allocPPN();
-  debug(A_MEMORY, "ArchMemory::ArchMemory(): Got new Page no. %x\n", page_dir_page_);
-
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
-
-  memcpy((void*) new_page_directory, (const void*) kernel_page_directory, PAGE_SIZE);
-  for (uint32 p = 0; p < 512; ++p) //we're concerned with first two gig, rest stays as is
-  {
-    new_page_directory[p].pt.present = 0;
-  }
-  debug(A_MEMORY, "ArchMemory::ArchMemory(): Initialised the page dir\n");
+  memcpy(new_page_directory, kernel_page_directory, PAGE_SIZE);
+  memset(new_page_directory, 0, PAGE_SIZE / 2); // should be zero, this is just for safety
 }
 
 // only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT want to free Kernel Pages

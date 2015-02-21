@@ -142,7 +142,7 @@ uint32 ArchCommon::getVESAConsoleWidth()
 pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
 {
   if (is_paging_set_up)
-    return 0xFFFFFFFFC000000ULL - 1024U * 1024U * 16U;
+    return 0xFFFFFFFFC000000ULL - 1024ULL * 1024ULL * 16ULL;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
