@@ -72,9 +72,9 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
     return -1;
   }
   uint32 len = fs_info->pathname_.find_last_of("/");
-  ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 2, fs_info->pathname_.length() - len - 1);
+  ustl::string sub_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len);
   // set directory
-  fs_info->pathname_ = fs_info->pathname_.substr(0, len + 2);
+  fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
   debug(VFSSYSCALL, "(mkdir) path_prev_name: %s\n", fs_info->pathname_.c_str());
   pw_dentry = 0;
@@ -302,10 +302,10 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   else if (flag & O_CREAT)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
-    size_t len = fs_info->pathname_.find_last_of("/");
-    ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 1, fs_info->pathname_.length() - len);
+    uint32 len = fs_info->pathname_.find_last_of("/");
+    ustl::string sub_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len);
     // set directory
-    fs_info->pathname_ = fs_info->pathname_.substr(0, len + 1);
+    fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
     Dentry* pw_dentry = 0;
     VfsMount* pw_vfs_mount = 0;

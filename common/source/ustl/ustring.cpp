@@ -33,10 +33,10 @@ string::string (const string& s)
 
 /// Links to \p s
 string::string (const_pointer s) noexcept
-: memblock (strlen(s))
+: memblock (strlen(s)+1)
 {
     if (!s) s = "";
-    copy_n (s, strlen(s), begin());
+    copy_n (s, strlen(s)+1, begin());
     relink (begin(), size()-1); // --m_Size
 }
 
