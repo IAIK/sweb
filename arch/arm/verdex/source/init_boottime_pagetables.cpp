@@ -25,7 +25,7 @@ extern "C" void initialiseBootTimePaging()
   {
     pde_start[2048 + i].pt.size = 1;
     pde_start[2048 + i].pt.offset = i % 4;
-    pde_start[2048 + i].pt.pt_ppn = (((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE) + base_4k;
+    pde_start[2048 + i].pt.pt_ppn = (((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE);
   }
   // clear the page tables
   for (i = 0; i < 16 * PAGE_TABLE_ENTRIES; ++i)
@@ -52,9 +52,6 @@ extern "C" void initialiseBootTimePaging()
   // 1 : 1 mapping of the first 8 mbs of physical ram
   for (i = 0; i < 8; ++i)
     mapBootTimePage(pde_start, base + i, base + i);
-  // map first 4 mb for kernel TODO: remove this loop!
-  for (i = 0; i < 4; ++i)
-    mapBootTimePage(pde_start, 0x800 + i, base + i);
   // 3gb 1:1 mapping
   for (i = 0; i < 1024; ++i)
     mapBootTimePage(pde_start, 0xC00 + i, base + i);
