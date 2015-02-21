@@ -34,14 +34,13 @@ extern "C" void initialiseBootTimePaging()
   size_t kernel_last_page = (size_t)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address) / PAGE_SIZE;
   extern size_t ro_data_end_address;
   size_t last_ro_data_page = (size_t)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&ro_data_end_address) / PAGE_SIZE;
-
-  for (i = 0; i < last_ro_data_page; ++i)
+  for (i = 0; i < last_ro_data_page - base_4k; ++i)
   {
     pte_start[i].size = 2;
     pte_start[i].permissions = 1;
     pte_start[i].page_ppn = i + base_4k;
   }
-  for (; i < kernel_last_page; ++i)
+  for (; i < kernel_last_page - base_4k; ++i)
   {
     pte_start[i].size = 2;
     pte_start[i].permissions = 1;
