@@ -117,7 +117,7 @@ class KernelMemoryManager
 
     void setMinimumReservedMemory(size_t bytes_to_reserve_min);
 
-    void setMaximumReservedMemroy(size_t bytes_to_reserve_max);
+    void setMaximumReservedMemory(size_t bytes_to_reserve_max);
 
     /**
      * called from startup() after the scheduler has been created and just

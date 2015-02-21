@@ -310,16 +310,41 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   {
     if(this_one != first_)
     {
-      // TODO: Fix it!
-      prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
-      this_one->prev_->next_ = 0;
-      last_ = this_one->prev_;
-      ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
+      // Default case, there are three sub cases
+      // 1. we can free the whole segment because it is above the reserved minimum
+      // 2. we can not touch the segment because it is below the reserved minimum
+      // 3. we can shrink the size of the segment because a part of it is above the reserved minimum
+      if((size_t)this_one > base_break_ + reserved_min_)
+      {
+        // Case 1
+        prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
+        this_one->prev_->next_ = 0;
+        last_ = this_one->prev_;
+        ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
+      }
+      else if((size_t)this_one + sizeof(MallocSegment) + this_one->getSize() <= reserved_min_)
+      {
+        // Case 2
+        // This is easy, just relax and do nothing
+      }
+      else
+      {
+        // Case 3
+        // First calculate the new size of the segment
+        size_t segment_size = (base_break_ + reserved_min_) - ((size_t)this_one + sizeof(MallocSegment));
+        // Calculate how much we have to sbrk
+        ssize_t sub = this_one->getSize() - segment_size;
+        ksbrk(sub);
+        this_one->setSize(segment_size);
+      }
     }
     else
     {
-      ksbrk(-(this_one->getSize() - reserved_min_));
-      this_one->setSize(reserved_min_);
+      if((this_one->getSize() - reserved_min_))
+      {
+        ksbrk(-(this_one->getSize() - reserved_min_));
+        this_one->setSize(reserved_min_);
+      }
     }
   }
 
@@ -376,7 +401,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
   debug(KMM, "KernelMemoryManager::ksbrk(%d)\n", size);
   prenew_assert(base_break_ <= (size_t)kernel_break_ + size);
-  prenew_assert(reserved_max_ != 0 || kernel_break_ + size > reserved_max_);
+  prenew_assert(reserved_max_ == 0 || ((kernel_break_ - base_break_) + size) <= reserved_max_);
   if(size != 0)
   {
     size_t old_brk = kernel_break_;
@@ -443,11 +468,12 @@ void KernelMemoryManager::setMinimumReservedMemory(size_t bytes_to_reserve_min)
   }
 }
 
-void KernelMemoryManager::setMaximumReservedMemroy(size_t bytes_to_reserve_max)
+void KernelMemoryManager::setMaximumReservedMemory(size_t bytes_to_reserve_max)
 {
+  kprintfd("%u %u %u %u", bytes_to_reserve_max, kernel_break_, base_break_, (kernel_break_ - base_break_));
   prenew_assert((bytes_to_reserve_max % PAGE_SIZE) == 0);
   prenew_assert(reserved_min_ == 0 || bytes_to_reserve_max >= reserved_min_);
-  prenew_assert(bytes_to_reserve_max > (kernel_break_ - base_break_));
+  prenew_assert(bytes_to_reserve_max >= (kernel_break_ - base_break_));
   reserved_max_ = bytes_to_reserve_max;
 }
 

@@ -49,6 +49,8 @@ extern "C" void startup()
   boot_completed = 0;
   //extend Kernel Memory here
   PageManager::instance();
+  KernelMemoryManager::instance()->setMinimumReservedMemory(1024 * 1024);
+  KernelMemoryManager::instance()->setMaximumReservedMemory(1024 * 1024 * 2);
   writeLine2Bochs("PageManager and KernelMemoryManager created \n");
 
   //SerialManager::getInstance()->do_detection( 1 );
@@ -127,6 +129,14 @@ extern "C" void startup()
                                                           );
 
   Scheduler::instance()->printThreadList();
+
+  size_t *dummy;
+  size_t counter = 0;
+  while(1)
+  {
+    dummy = new size_t[1024];
+    kprintfd("%d\n", counter++);
+  }
 
   kprintf("Now enabling Interrupts...\n");
   boot_completed = 1;
