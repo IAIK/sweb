@@ -50,9 +50,9 @@ extern "C" void startup()
 
   PageManager::instance();
   // Sets the reserved memory by the KernelMemoryManager (Kernel Heap)
-  // If you erase the following two lines the memory will be allocated dynamically
+  // If you erase the following two lines the memory will be reserved dynamically
   // please note that this means that the KMM depends on the page manager and you
-  // will have a harder time implementing swapping. Pro's only!
+  // will have a harder time implementing swapping. Pros only!
   KernelMemoryManager::instance()->setMinimumReservedMemory(1024 * 1024);
   KernelMemoryManager::instance()->setMaximumReservedMemory(1024 * 1024);
   writeLine2Bochs("PageManager and KernelMemoryManager created \n");

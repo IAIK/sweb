@@ -218,7 +218,7 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn);
-  //assert(pte_base[pte_vpn].size == 0);
+  assert(pte_base[pte_vpn].size == 0);
   pte_base[pte_vpn].permissions = 1;
   pte_base[pte_vpn].page_ppn = physical_page;
   pte_base[pte_vpn].size = 2;
