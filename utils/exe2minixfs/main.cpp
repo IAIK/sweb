@@ -1,3 +1,4 @@
+#ifdef EXE2MINIXFS
 #include "types.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -10,10 +11,19 @@
 #include "Superblock.h"
 #include "MinixFSSuperblock.h"
 #include "VfsSyscall.h"
+#include "VfsMount.h"
 
 Superblock* superblock_;
-FileSystemInfo* fs_info;
+FileSystemInfo* default_working_dir;
 VfsMount vfs_dummy_;
+FakeThread* currentThread = 0;
+
+// obviously NOT atomic, we need this for compatability in single threaded host code
+size_t atomic_add(size_t& x,size_t y)
+{
+  x += y;
+  return x-y;
+}
 
 int main(int argc, char *argv[])
 {
@@ -25,9 +35,9 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  int32 image_fd = open(argv[1], O_RDWR);
+  FILE* image_fd = fopen(argv[1], "r+b");
 
-  if (image_fd < 0)
+  if (image_fd == 0)
   {
     printf("Error opening %s\n", argv[1]);
     return -1;
@@ -37,40 +47,41 @@ int main(int argc, char *argv[])
   size_t offset = strtoul(argv[2],&end,10);
   if (strlen(end) != 0)
   {
-    close(image_fd);
+    fclose(image_fd);
     printf("offset has to be a number!\n");
     return -1;
   }
 
-  superblock_ = (Superblock*) new MinixFSSuperblock(0, image_fd, offset);
+  superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, offset);
   Dentry *mount_point = superblock_->getMountPoint();
   mount_point->setMountPoint(mount_point);
   Dentry *root = superblock_->getRoot();
 
-  fs_info = new FileSystemInfo();
-  fs_info->setFsRoot(root, &vfs_dummy_);
-  fs_info->setFsPwd(root, &vfs_dummy_);
+  default_working_dir = new FileSystemInfo();
+  default_working_dir->setFsRoot(root, &vfs_dummy_);
+  default_working_dir->setFsPwd(root, &vfs_dummy_);
 
   for (int32 i = 2; i <= argc / 2; i++)
   {
-    int32 src_file = open(argv[2 * i - 1], O_RDONLY);
+    FILE* src_file = fopen(argv[2 * i - 1], "rb");
 
-    if (src_file < 0)
+    if (src_file == 0)
     {
       printf("Wasn't able to open file %s\n", argv[2 * i - 1]);
       break;
     }
 
-    ssize_t size = lseek(src_file, 0, SEEK_END);
+    fseek(src_file, 0, SEEK_END);
+    size_t size = ftell(src_file);
 
     char *buf = new char[size];
 
-    lseek(src_file, 0, SEEK_SET);
-    assert(read(src_file, buf, size) == size);
-    close(src_file);
+    fseek(src_file, 0, SEEK_SET);
+    assert(fread(buf, 1, size, src_file) == size);
+    fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
-    int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4); // O_RDWR | O_CREAT
+    int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
     if (fd < 0)
     {
       printf("no success\n");
@@ -82,9 +93,10 @@ int main(int argc, char *argv[])
 
     delete[] buf;
   }
-  delete fs_info;
+  delete default_working_dir;
   delete superblock_;
-  close(image_fd);
+  fclose(image_fd);
   return 0;
 }
 
+#endif

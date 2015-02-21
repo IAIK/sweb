@@ -3,11 +3,8 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UALGO_H_711AB4214D417A51166694D47A662D6E
-#define UALGO_H_711AB4214D417A51166694D47A662D6E
-
+#pragma once
 #include "upair.h"
-#include "ualgobase.h"
 #include "ufunction.h"
 #include "umemory.h"
 //#include <stdlib.h>	// for rand()
@@ -22,7 +19,7 @@ inline ForwardIterator2 swap_ranges (ForwardIterator1 first, ForwardIterator2 la
 {
     for (; first != last; ++first, ++result)
 	iter_swap (first, result);
-    return (result);
+    return result;
 }
 
 /// Returns the first iterator i in the range [first, last) such that
@@ -34,7 +31,7 @@ inline InputIterator find (InputIterator first, InputIterator last, const Equali
 {
     while (first != last && !(*first == value))
 	++ first;
-    return (first);
+    return first;
 }
 
 /// Returns the first iterator such that *i == *(i + 1)
@@ -46,8 +43,8 @@ ForwardIterator adjacent_find (ForwardIterator first, ForwardIterator last)
     if (first != last)
 	for (ForwardIterator prev = first; ++first != last; ++ prev)
 	    if (*prev == *first)
-		return (prev);
-    return (last);
+		return prev;
+    return last;
 }
 
 /// Returns the pointer to the first pair of unequal elements.
@@ -59,7 +56,7 @@ mismatch (InputIterator first1, InputIterator last1, InputIterator first2)
 {
     while (first1 != last1 && *first1 == *first2)
 	++ first1, ++ first2;
-    return (make_pair (first1, first2));
+    return make_pair (first1, first2);
 }
 
 /// \brief Returns true if two ranges are equal.
@@ -69,7 +66,7 @@ mismatch (InputIterator first1, InputIterator last1, InputIterator first2)
 template <typename InputIterator>
 inline bool equal (InputIterator first1, InputIterator last1, InputIterator first2)
 {
-    return (mismatch (first1, last1, first2).first == last1);
+    return mismatch (first1, last1, first2).first == last1;
 }
 
 /// Count finds the number of elements in [first, last) that are equal
@@ -84,7 +81,7 @@ inline size_t count (InputIterator first, InputIterator last, const EqualityComp
     for (; first != last; ++first)
 	if (*first == value)
 	    ++ total;
-    return (total);
+    return total;
 }
 
 ///
@@ -102,7 +99,7 @@ inline OutputIterator transform (InputIterator first, InputIterator last, Output
 {
     for (; first != last; ++result, ++first)
 	*result = op (*first);
-    return (result);
+    return result;
 }
 
 ///
@@ -122,7 +119,7 @@ inline OutputIterator transform (InputIterator1 first1, InputIterator1 last1, In
 {
     for (; first1 != last1; ++result, ++first1, ++first2)
 	*result = op (*first1, *first2);
-    return (result);
+    return result;
 }
 
 /// Replace replaces every element in the range [first, last) equal to
@@ -176,7 +173,7 @@ inline OutputIterator generate_n (OutputIterator first, size_t n, Generator gen)
 {
     for (uoff_t i = 0; i != n; ++i, ++first)
 	*first = gen();
-    return (first);
+    return first;
 }
 
 /// \brief Reverse reverses a range.
@@ -199,7 +196,7 @@ inline OutputIterator reverse_copy (BidirectionalIterator first, BidirectionalIt
 {
     for (; first != last; ++result)
 	*result = *--last;
-    return (result);
+    return result;
 }
 
 /// \brief Exchanges ranges [first, middle) and [middle, last)
@@ -209,13 +206,13 @@ template <typename ForwardIterator>
 ForwardIterator rotate (ForwardIterator first, ForwardIterator middle, ForwardIterator last)
 {
     if (first == middle || middle == last)
-	return (first);
+	return first;
     reverse (first, middle);
     reverse (middle, last);
     for (;first != middle && middle != last; ++first)
 	iter_swap (first, --last);
     reverse (first, (first == middle ? last : middle));
-    return (first);
+    return first;
 }
 
 /// Specialization for pointers, which can be treated identically.
@@ -223,7 +220,7 @@ template <typename T>
 inline T* rotate (T* first, T* middle, T* last)
 {
     rotate_fast (first, middle, last);
-    return (first);
+    return first;
 }
  
 
@@ -233,7 +230,7 @@ inline T* rotate (T* first, T* middle, T* last)
 template <typename ForwardIterator, typename OutputIterator>
 inline OutputIterator rotate_copy (ForwardIterator first, ForwardIterator middle, ForwardIterator last, OutputIterator result)
 {
-    return (copy (first, middle, copy (middle, last, result)));
+    return copy (first, middle, copy (middle, last, result));
 }
 
 /// \brief Combines two sorted ranges.
@@ -250,9 +247,9 @@ OutputIterator merge (InputIterator1 first1, InputIterator1 last1,
 	    *result = *first2++;
     }
     if (first1 < last1)
-	return (copy (first1, last1, result));
+	return copy (first1, last1, result);
     else
-	return (copy (first2, last2, result));
+	return copy (first2, last2, result);
 }
 
 /// Combines two sorted ranges from the same container.
@@ -285,7 +282,7 @@ OutputIterator remove_copy (InputIterator first, InputIterator last, OutputItera
 	    ++ result;
 	}
     }
-    return (result);
+    return result;
 }
 
 /// Remove_copy copies elements pointed to by iterators in [rfirst, rlast)
@@ -307,7 +304,7 @@ OutputIterator remove_copy (InputIterator first, InputIterator last, OutputItera
 	    ++ result;
 	}
     }
-    return (result);
+    return result;
 }
 
 /// Remove removes from the range [first, last) all elements that are equal to
@@ -322,7 +319,7 @@ OutputIterator remove_copy (InputIterator first, InputIterator last, OutputItera
 template <typename ForwardIterator, typename T>
 inline ForwardIterator remove (ForwardIterator first, ForwardIterator last, const T& value)
 {
-    return (remove_copy (first, last, first, value));
+    return remove_copy (first, last, first, value);
 }
 
 /// Unique_copy copies elements from the range [first, last) to a range
@@ -342,7 +339,7 @@ OutputIterator unique_copy (InputIterator first, InputIterator last, OutputItera
 		*++result = *first;
 	++ result;
     }
-    return (result);
+    return result;
 }
 
 /// Every time a consecutive group of duplicate elements appears in the range
@@ -358,7 +355,7 @@ OutputIterator unique_copy (InputIterator first, InputIterator last, OutputItera
 template <typename ForwardIterator>
 inline ForwardIterator unique (ForwardIterator first, ForwardIterator last)
 {
-    return (unique_copy (first, last, first));
+    return unique_copy (first, last, first);
 }
 
 /// Returns the furthermost iterator i in [first, last) such that,
@@ -371,13 +368,13 @@ ForwardIterator lower_bound (ForwardIterator first, ForwardIterator last, const 
 {
     ForwardIterator mid;
     while (first != last) {
-	mid = advance (first, distance (first,last) / 2);
+	mid = advance (first, size_t(distance (first,last)) / 2);
 	if (*mid < value)
 	    first = mid + 1;
 	else
 	    last = mid;
     }
-    return (first);
+    return first;
 }
 
 /// Performs a binary search inside the sorted range.
@@ -387,7 +384,7 @@ template <typename ForwardIterator, typename LessThanComparable>
 inline bool binary_search (ForwardIterator first, ForwardIterator last, const LessThanComparable& value)
 {
     ForwardIterator found = lower_bound (first, last, value);
-    return (found != last && !(value < *found));
+    return found != last && !(value < *found);
 }
 
 /// Returns the furthermost iterator i in [first,last) such that for
@@ -399,13 +396,13 @@ ForwardIterator upper_bound (ForwardIterator first, ForwardIterator last, const 
 {
     ForwardIterator mid;
     while (first != last) {
-	mid = advance (first, distance (first,last) / 2);
+	mid = advance (first, size_t(distance (first,last)) / 2);
 	if (value < *mid)
 	    last = mid;
 	else
 	    first = mid + 1;
     }
-    return (last);
+    return last;
 }
 
 /// Returns pair<lower_bound,upper_bound>
@@ -418,7 +415,7 @@ inline pair<ForwardIterator,ForwardIterator> equal_range (ForwardIterator first,
     rv.second = rv.first = lower_bound (first, last, value);
     while (rv.second != last && !(value < *(rv.second)))
 	++ rv.second;
-    return (rv);
+    return rv;
 }
 /// Randomly permute the elements of the container.
 /// \ingroup GeneratorAlgorithms
@@ -439,7 +436,7 @@ int qsort_adapter (const void* p1, const void* p2)
     ConstPointer i1 = reinterpret_cast<ConstPointer>(p1);
     ConstPointer i2 = reinterpret_cast<ConstPointer>(p2);
     Compare comp;
-    return (comp (*i1, *i2) ? -1 : (comp (*i2, *i1) ? 1 : 0));
+    return comp (*i1, *i2) ? -1 : (comp (*i2, *i1) ? 1 : 0);
 }
 
 /// Sorts the container
@@ -494,7 +491,7 @@ template <typename ForwardIterator1, typename ForwardIterator2>
 inline ForwardIterator1 search (ForwardIterator1 first1, ForwardIterator1 last1, ForwardIterator2 first2, ForwardIterator2 last2)
 {
     typedef typename iterator_traits<ForwardIterator1>::value_type value_type;
-    return (search (first1, last1, first2, last2, equal_to<value_type>()));
+    return search (first1, last1, first2, last2, equal_to<value_type>());
 }
 
 /// \brief Searches for the last subsequence [first2,last2) in [first1,last1)
@@ -503,7 +500,7 @@ template <typename ForwardIterator1, typename ForwardIterator2>
 inline ForwardIterator1 find_end (ForwardIterator1 first1, ForwardIterator1 last1, ForwardIterator2 first2, ForwardIterator2 last2)
 {
     typedef typename iterator_traits<ForwardIterator1>::value_type value_type;
-    return (find_end (first1, last1, first2, last2, equal_to<value_type>()));
+    return find_end (first1, last1, first2, last2, equal_to<value_type>());
 }
 
 /// \brief Searches for the first occurence of \p count \p values in [first, last)
@@ -512,7 +509,7 @@ template <typename Iterator, typename T>
 inline Iterator search_n (Iterator first, Iterator last, size_t count, const T& value)
 {
     typedef typename iterator_traits<Iterator>::value_type value_type;
-    return (search_n (first, last, count, value, equal_to<value_type>()));
+    return search_n (first, last, count, value, equal_to<value_type>());
 }
 
 /// \brief Searches [first1,last1) for the first occurrence of an element from [first2,last2)
@@ -521,7 +518,7 @@ template <typename InputIterator, typename ForwardIterator>
 inline InputIterator find_first_of (InputIterator first1, InputIterator last1, ForwardIterator first2, ForwardIterator last2)
 {
     typedef typename iterator_traits<InputIterator>::value_type value_type;
-    return (find_first_of (first1, last1, first2, last2, equal_to<value_type>()));
+    return find_first_of (first1, last1, first2, last2, equal_to<value_type>());
 }
 
 /// \brief Returns true if [first2,last2) is a subset of [first1,last1)
@@ -531,7 +528,7 @@ template <typename InputIterator1, typename InputIterator2>
 inline bool includes (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2)
 {
     typedef typename iterator_traits<InputIterator1>::value_type value_type;
-    return (includes (first1, last1, first2, last2, less<value_type>()));
+    return includes (first1, last1, first2, last2, less<value_type>());
 }
 
 /// \brief Merges [first1,last1) with [first2,last2)
@@ -544,7 +541,7 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 inline OutputIterator set_union (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result)
 {
     typedef typename iterator_traits<InputIterator1>::value_type value_type;
-    return (set_union (first1, last1, first2, last2, result, less<value_type>()));
+    return set_union (first1, last1, first2, last2, result, less<value_type>());
 }
 
 /// \brief Creates a set containing elements shared by the given ranges.
@@ -553,7 +550,7 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 inline OutputIterator set_intersection (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result)
 {
     typedef typename iterator_traits<InputIterator1>::value_type value_type;
-    return (set_intersection (first1, last1, first2, last2, result, less<value_type>()));
+    return set_intersection (first1, last1, first2, last2, result, less<value_type>());
 }
 
 /// \brief Removes from [first1,last1) elements present in [first2,last2)
@@ -562,7 +559,7 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 inline OutputIterator set_difference (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result)
 {
     typedef typename iterator_traits<InputIterator1>::value_type value_type;
-    return (set_difference (first1, last1, first2, last2, result, less<value_type>()));
+    return set_difference (first1, last1, first2, last2, result, less<value_type>());
 }
 
 /// \brief Performs union of sets A-B and B-A.
@@ -571,7 +568,7 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 inline OutputIterator set_symmetric_difference (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result)
 {
     typedef typename iterator_traits<InputIterator1>::value_type value_type;
-    return (set_symmetric_difference (first1, last1, first2, last2, result, less<value_type>()));
+    return set_symmetric_difference (first1, last1, first2, last2, result, less<value_type>());
 }
 
 /// \brief Returns true if the given range is sorted.
@@ -580,7 +577,7 @@ template <typename ForwardIterator>
 inline bool is_sorted (ForwardIterator first, ForwardIterator last)
 {
     typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-    return (is_sorted (first, last, less<value_type>()));
+    return is_sorted (first, last, less<value_type>());
 }
 
 /// \brief Compares two given containers like strcmp compares strings.
@@ -589,7 +586,7 @@ template <typename InputIterator1, typename InputIterator2>
 inline bool lexicographical_compare (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2)
 {
     typedef typename iterator_traits<InputIterator1>::value_type value_type;
-    return (lexicographical_compare (first1, last1, first2, last2, less<value_type>()));
+    return lexicographical_compare (first1, last1, first2, last2, less<value_type>());
 }
 
 /// \brief Creates the next lexicographical permutation of [first,last).
@@ -599,7 +596,7 @@ template <typename BidirectionalIterator>
 inline bool next_permutation (BidirectionalIterator first, BidirectionalIterator last)
 {
     typedef typename iterator_traits<BidirectionalIterator>::value_type value_type;
-    return (next_permutation (first, last, less<value_type>()));
+    return next_permutation (first, last, less<value_type>());
 }
 
 /// \brief Creates the previous lexicographical permutation of [first,last).
@@ -609,7 +606,7 @@ template <typename BidirectionalIterator>
 inline bool prev_permutation (BidirectionalIterator first, BidirectionalIterator last)
 {
     typedef typename iterator_traits<BidirectionalIterator>::value_type value_type;
-    return (prev_permutation (first, last, less<value_type>()));
+    return prev_permutation (first, last, less<value_type>());
 }
 
 /// \brief Returns iterator to the max element in [first,last)
@@ -618,7 +615,7 @@ template <typename ForwardIterator>
 inline ForwardIterator max_element (ForwardIterator first, ForwardIterator last)
 {
     typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-    return (max_element (first, last, less<value_type>()));
+    return max_element (first, last, less<value_type>());
 }
 
 /// \brief Returns iterator to the min element in [first,last)
@@ -627,7 +624,7 @@ template <typename ForwardIterator>
 inline ForwardIterator min_element (ForwardIterator first, ForwardIterator last)
 {
     typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-    return (min_element (first, last, less<value_type>()));
+    return min_element (first, last, less<value_type>());
 }
 
 /// \brief Makes [first,middle) a part of the sorted array.
@@ -658,9 +655,7 @@ template <typename InputIterator, typename RandomAccessIterator>
 inline RandomAccessIterator partial_sort_copy (InputIterator first, InputIterator last, RandomAccessIterator result_first, RandomAccessIterator result_last)
 {
     typedef typename iterator_traits<InputIterator>::value_type value_type;
-    return (partial_sort_copy (first, last, result_first, result_last, less<value_type>()));
+    return partial_sort_copy (first, last, result_first, result_last, less<value_type>());
 }
 
 } // namespace ustl
-
-#endif

@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef MEMLINK_H_798D25827C8E322D2D7E734B169FF5FC
-#define MEMLINK_H_798D25827C8E322D2D7E734B169FF5FC
-
+#pragma once
 #include "cmemlink.h"
 #include "ualgo.h"
 
@@ -46,16 +44,17 @@ public:
     inline		memlink (const void* p, size_type n)	: cmemlink (p, n) {}
     inline		memlink (rcself_t l)			: cmemlink (l) {}
     inline explicit	memlink (const cmemlink& l)		: cmemlink (l) {}
-    inline pointer	data (void)				{ return (const_cast<pointer>(cdata())); }
-    inline iterator	begin (void)				{ return (iterator (data())); }
-    inline iterator	iat (size_type i)			{ assert (i <= size()); return (begin() + i); }
-    inline iterator	end (void)				{ return (iat (size())); }
-    inline const_iterator	begin (void) const		{ return (cmemlink::begin()); }
-    inline const_iterator	end (void) const		{ return (cmemlink::end()); }
-    inline const_iterator	iat (size_type i) const		{ return (cmemlink::iat (i)); }
-    size_type		writable_size (void) const		{ return (size()); }
-    inline rcself_t	operator= (const cmemlink& l)		{ cmemlink::operator= (l); return (*this); }
-    inline rcself_t	operator= (rcself_t l)			{ cmemlink::operator= (l); return (*this); }
+    inline pointer	data (void)				{ return const_cast<pointer>(cmemlink::data()); }
+   inline const_pointer	data (void) const			{ return cmemlink::data(); }
+    inline iterator	begin (void)				{ return iterator (data()); }
+    inline iterator	iat (size_type i)			{ assert (i <= size()); return begin() + i; }
+    inline iterator	end (void)				{ return iat (size()); }
+    inline const_iterator	begin (void) const		{ return cmemlink::begin(); }
+    inline const_iterator	end (void) const		{ return cmemlink::end(); }
+    inline const_iterator	iat (size_type i) const		{ return cmemlink::iat (i); }
+    size_type		writable_size (void) const		{ return size(); }
+    inline rcself_t	operator= (const cmemlink& l)		{ cmemlink::operator= (l); return *this; }
+    inline rcself_t	operator= (rcself_t l)			{ cmemlink::operator= (l); return *this; }
     inline void		link (const void* p, size_type n)	{ cmemlink::link (p, n); }
     inline void		link (void* p, size_type n)		{ cmemlink::link (p, n); }
     inline void		link (const cmemlink& l)		{ cmemlink::link (l); }
@@ -65,29 +64,31 @@ public:
     inline void		relink (const void* p, size_type n)	{ cmemlink::relink (p, n); }
     inline void		relink (void* p, size_type n)		{ cmemlink::relink (p, n); }
     inline void		swap (memlink& l)			{ cmemlink::swap (l); }
-    void		fill (iterator start, const void* p, size_type elsize, size_type elCount = 1);
-    inline void		insert (iterator start, size_type size);
-    inline void		erase (iterator start, size_type size);
+    void		fill (const_iterator start, const void* p, size_type elsize, size_type elCount = 1) noexcept;
+    inline void		insert (const_iterator start, size_type size);
+    inline void		erase (const_iterator start, size_type size);
     //void		read (istream& is);
 };
 
 /// Shifts the data in the linked block from \p start to \p start + \p n.
 /// The contents of the uncovered bytes is undefined.
-inline void memlink::insert (iterator start, size_type n)
+inline void memlink::insert (const_iterator cstart, size_type n)
 {
     assert (data() || !n);
     assert (cmemlink::begin() || !n);
-    assert (start >= begin() && start + n <= end());
+    assert (cstart >= begin() && cstart + n <= end());
+    iterator start = const_cast<iterator>(cstart);
     rotate (start, end() - n, end());
 }
 
 /// Shifts the data in the linked block from \p start + \p n to \p start.
 /// The contents of the uncovered bytes is undefined.
-inline void memlink::erase (iterator start, size_type n)
+inline void memlink::erase (const_iterator cstart, size_type n)
 {
     assert (data() || !n);
     assert (cmemlink::begin() || !n);
-    assert (start >= begin() && start + n <= end());
+    assert (cstart >= begin() && cstart + n <= end());
+    iterator start = const_cast<iterator>(cstart);
     rotate (start, start + n, end());
 }
 
@@ -95,5 +96,3 @@ inline void memlink::erase (iterator start, size_type n)
 #define alloca_link(m,n)	(m).link (alloca (n), (n))
 
 } // namespace ustl
-
-#endif

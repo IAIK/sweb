@@ -5,14 +5,11 @@
 // This implementation is adapted from the Loki library, distributed under
 // the MIT license with Copyright (c) 2001 by Andrei Alexandrescu.
 
-#ifndef TRAITS_H_4AA3DDE15E16C947392711ED08FB1FF6
-#define TRAITS_H_4AA3DDE15E16C947392711ED08FB1FF6
-
+#pragma once
 #include "typelist.h"
 
 namespace ustl {
 namespace tm {
-namespace {
 
 //----------------------------------------------------------------------
 // Type classes and type modifiers
@@ -24,14 +21,20 @@ typedef tl::Seq<signed char, short, int, long>::Type	StdSignedInts;
 typedef tl::Seq<bool, char, wchar_t>::Type		StdOtherInts;
 typedef tl::Seq<float, double>::Type			StdFloats;
 
-template <typename U> struct AddPointer		{ typedef U* Result; };
-template <typename U> struct AddPointer<U&>	{ typedef U* Result; };
-template <typename U> struct AddReference	{ typedef U& Result; };
-template <typename U> struct AddReference<U&>	{ typedef U& Result; };
-template <>           struct AddReference<void>	{ typedef NullType Result; };
-template <typename U> struct AddParameterType	{ typedef const U& Result; };
-template <typename U> struct AddParameterType<U&> { typedef U& Result; };
-template <>           struct AddParameterType<void> { typedef NullType Result; };
+template <typename U> struct Identity			{ typedef U Result; };
+template <typename U> struct AddPointer			{ typedef U* Result; };
+template <typename U> struct AddPointer<U&>		{ typedef U* Result; };
+template <typename U> struct AddReference		{ typedef U& Result; };
+template <typename U> struct AddReference<U&>		{ typedef U& Result; };
+template <>           struct AddReference<void>		{ typedef NullType Result; };
+template <typename U> struct AddParameterType		{ typedef const U& Result; };
+template <typename U> struct AddParameterType<U&>	{ typedef U& Result; };
+template <>           struct AddParameterType<void>	{ typedef NullType Result; };
+template <typename U> struct RemoveReference		{ typedef U Result; };
+template <typename U> struct RemoveReference<U&>	{ typedef U Result; };
+template <bool, typename T> struct EnableIf		{ typedef void Result; };
+template <typename T> struct EnableIf<true, T>		{ typedef T Result; };
+
 
 //----------------------------------------------------------------------
 // Function pointer testers
@@ -129,8 +132,6 @@ LIST (TM_FPR_MAXN, TM_CMFPR_SPEC_ELLIPSIS, ;);
 #undef TM_FPR_TYPE
 #undef TM_FPR_MAXN
 
-} // namespace
-    
 //----------------------------------------------------------------------
 // Type traits template
 //----------------------------------------------------------------------
@@ -142,6 +143,8 @@ LIST (TM_FPR_MAXN, TM_CMFPR_SPEC_ELLIPSIS, ;);
 /// - PointeeType     : returns the type to which T points if T is a pointer 
 ///                     type, NullType otherwise
 /// - isReference     : returns true if T is a reference type
+/// - isLValue        : returns true if T is an lvalue
+/// - isRValue        : returns true if T is an rvalue
 /// - ReferredType    : returns the type to which T refers if T is a reference 
 ///                     type, NullType otherwise
 /// - isMemberPointer : returns true if T is a pointer to member type
@@ -173,8 +176,8 @@ class TypeTraits {
 private:
     #define TMTT1	template <typename U> struct
     #define TMTT2	template <typename U, typename V> struct
-    TMTT1 ReferenceTraits	{ enum { result = false }; typedef U ReferredType; };
-    TMTT1 ReferenceTraits<U&>	{ enum { result = true  }; typedef U ReferredType; };
+    TMTT1 ReferenceTraits	{ enum { result = false, lvalue = true, rvalue = false }; typedef U ReferredType; };
+    TMTT1 ReferenceTraits<U&>	{ enum { result = true,  lvalue = true, rvalue = false }; typedef U ReferredType; };
     TMTT1 PointerTraits		{ enum { result = false }; typedef NullType PointeeType; };
     TMTT1 PointerTraits<U*>	{ enum { result = true  }; typedef U PointeeType; };
     TMTT1 PointerTraits<U*&>	{ enum { result = true  }; typedef U PointeeType; };
@@ -189,6 +192,13 @@ private:
     TMTT1 UnVolatile		{ typedef U Result;  enum { isVolatile = false }; };
     TMTT1 UnVolatile<volatile U>{ typedef U Result;  enum { isVolatile = true  }; };
     TMTT1 UnVolatile<volatile U&> {typedef U& Result;enum { isVolatile = true  }; };
+#if HAVE_CPP11
+    TMTT1 ReferenceTraits<U&&>	{ enum { result = true,  lvalue = false, rvalue = true }; typedef U ReferredType; };
+    TMTT1 PointerTraits<U*&&>	{ enum { result = true  }; typedef U PointeeType; };
+    TMTT2 PToMTraits<U V::*&&>	{ enum { result = true  }; };
+    TMTT1 UnConst<const U&&>	{ typedef U&& Result; enum { isConst = true  }; };
+    TMTT1 UnVolatile<volatile U&&> {typedef U&& Result;enum { isVolatile = true  }; };
+#endif
     #undef TMTT2
     #undef TMTT1
 public:
@@ -203,42 +213,44 @@ public:
     typedef typename ReferenceTraits<T>::ReferredType 
 	ReferredType;
 
-    enum { isConst          = UnConst<T>::isConst };
-    enum { isVolatile       = UnVolatile<T>::isVolatile };
-    enum { isReference      = ReferenceTraits<UnqualifiedType>::result };
-    enum { isFunction       = FunctionPointerTraits<typename AddPointer<T>::Result >::result };
-    enum { isFunctionPointer= FunctionPointerTraits<
+    enum { isConst		= UnConst<T>::isConst };
+    enum { isVolatile		= UnVolatile<T>::isVolatile };
+    enum { isReference		= ReferenceTraits<UnqualifiedType>::result };
+    enum { isLValue		= ReferenceTraits<UnqualifiedType>::lvalue };
+    enum { isRValue		= ReferenceTraits<UnqualifiedType>::rvalue };
+    enum { isFunction		= FunctionPointerTraits<typename AddPointer<T>::Result >::result };
+    enum { isFunctionPointer	= FunctionPointerTraits<
 				    typename ReferenceTraits<UnqualifiedType>::ReferredType >::result };
     enum { isMemberFunctionPointer= PToMFunctionTraits<
 				    typename ReferenceTraits<UnqualifiedType>::ReferredType >::result };
-    enum { isMemberPointer  = PToMTraits<
+    enum { isMemberPointer	= PToMTraits<
 				    typename ReferenceTraits<UnqualifiedType>::ReferredType >::result ||
 				    isMemberFunctionPointer };
-    enum { isPointer        = PointerTraits<
+    enum { isPointer		= PointerTraits<
 				    typename ReferenceTraits<UnqualifiedType>::ReferredType >::result ||
 				    isFunctionPointer };
-    enum { isStdUnsignedInt = tl::IndexOf<StdUnsignedInts, UnqualifiedType>::value >= 0 ||
-			      tl::IndexOf<StdUnsignedInts, 
-				    typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
-    enum { isStdSignedInt   = tl::IndexOf<StdSignedInts, UnqualifiedType>::value >= 0 ||
-			      tl::IndexOf<StdSignedInts, 
-				    typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
-    enum { isStdIntegral    = isStdUnsignedInt || isStdSignedInt ||
-			      tl::IndexOf<StdOtherInts, UnqualifiedType>::value >= 0 ||
-			      tl::IndexOf<StdOtherInts, 
-				    typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
-    enum { isStdFloat       = tl::IndexOf<StdFloats, UnqualifiedType>::value >= 0 ||
-			      tl::IndexOf<StdFloats, 
-				    typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
-    enum { isStdArith       = isStdIntegral || isStdFloat };
-    enum { isStdFundamental = isStdArith || isStdFloat || Conversion<T, void>::sameType };
+    enum { isStdUnsignedInt	= tl::IndexOf<StdUnsignedInts, UnqualifiedType>::value >= 0 ||
+				    tl::IndexOf<StdUnsignedInts,
+					typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
+    enum { isStdSignedInt	= tl::IndexOf<StdSignedInts, UnqualifiedType>::value >= 0 ||
+				    tl::IndexOf<StdSignedInts,
+					typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
+    enum { isStdIntegral	= isStdUnsignedInt || isStdSignedInt ||
+				    tl::IndexOf<StdOtherInts, UnqualifiedType>::value >= 0 ||
+				    tl::IndexOf<StdOtherInts,
+					typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
+    enum { isStdFloat		= tl::IndexOf<StdFloats, UnqualifiedType>::value >= 0 ||
+				    tl::IndexOf<StdFloats,
+					typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
+    enum { isStdArith		= isStdIntegral || isStdFloat };
+    enum { isStdFundamental	= isStdArith || isStdFloat || Conversion<T, void>::sameType };
 	
-    enum { isUnsignedInt    = isStdUnsignedInt };
-    enum { isSignedInt      = isStdSignedInt };
-    enum { isIntegral       = isStdIntegral || isUnsignedInt || isSignedInt };
-    enum { isFloat          = isStdFloat };
-    enum { isArith          = isIntegral || isFloat };
-    enum { isFundamental    = isStdFundamental || isArith };
+    enum { isUnsignedInt	= isStdUnsignedInt };
+    enum { isSignedInt		= isStdSignedInt };
+    enum { isIntegral		= isStdIntegral || isUnsignedInt || isSignedInt };
+    enum { isFloat		= isStdFloat };
+    enum { isArith		= isIntegral || isFloat };
+    enum { isFundamental	= isStdFundamental || isArith };
     
     typedef typename Select<isStdArith || isPointer || isMemberPointer, T, 
 	    typename AddParameterType<T>::Result>::Result 
@@ -247,5 +259,3 @@ public:
 
 } // namespace tm
 } // namespace ustl
-
-#endif

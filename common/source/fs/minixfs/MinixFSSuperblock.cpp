@@ -15,14 +15,14 @@
 
 #define ROOT_NAME "/"
 
-MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, uint32 s_dev, uint64 offset) :
+MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset) :
     Superblock(s_root, s_dev), superblock_(this)
 {
   offset_ = offset;
   //read Superblock data from disc
   readHeader();
   debug(M_SB, "s_num_inodes_ : %d\ns_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\n"
-        "s_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_block_size_ : %d\ns_magic_ : %lu\n",
+        "s_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_block_size_ : %d\ns_magic_ : %llu\n",
         s_num_inodes_, s_zones_, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_1st_datazone_, s_log_zone_size_,
         s_max_file_size_, s_block_size_, s_magic_);
   assert(s_log_zone_size_ == 0);
@@ -376,8 +376,8 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
 {
   assert(buffer);
 #ifdef EXE2MINIXFS
-  lseek(s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
-  assert(read(s_dev_, buffer, BLOCK_SIZE * num_blocks) == BLOCK_SIZE * num_blocks);
+  fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
+  (fread(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
 #else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   bdvd->readData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
@@ -392,8 +392,8 @@ void MinixFSSuperblock::writeZone(uint16 zone, char* buffer)
 void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffer)
 {
 #ifdef EXE2MINIXFS
-  lseek(s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
-  assert(write(s_dev_, buffer, BLOCK_SIZE * num_blocks) == BLOCK_SIZE * num_blocks);
+  fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
+  (fwrite(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
 #else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   bdvd->writeData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);

@@ -19,8 +19,6 @@
 
 #include "types.h"
 
-static uint32 const NUM_INTERRUPT_HANDLERS = 128+32;
-
 typedef struct {
   uint32  number;      // handler number
   void (*offset)();    // pointer to handler function
@@ -53,7 +51,7 @@ public:
   static void countPageFault(uint64 address);
 
 private:
-  static InterruptHandlers handlers[NUM_INTERRUPT_HANDLERS];
+  static InterruptHandlers handlers[];
   static uint64 pf_address;
   static uint64 pf_address_counter;
 };

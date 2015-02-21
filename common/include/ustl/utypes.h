@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UTYPES_H_118BBB3B50B7DBF22F5460C52E515C83
-#define UTYPES_H_118BBB3B50B7DBF22F5460C52E515C83
-
+#pragma once
 #include "config.h"
 /*#ifndef STDC_HEADERS
     #error "This library requires standard C and C++ headers to compile."
@@ -22,12 +20,13 @@
 #else
     #error "Need standard integer types definitions, usually in stdint.h"
 #endif
+#if HAVE_SYS_TYPES_H
+    #include <sys/types.h>
+#endif
 #include <stddef.h>		// For ptrdiff_t, size_t
 #include <limits.h>
 #include <float.h>
-#if HAVE_SYS_TYPES_H
-    #include <sys/types.h>
-#endif*/
+#include <unistd.h>*/
 #ifndef SIZE_MAX
     #define SIZE_MAX		UINT_MAX
 #endif
@@ -111,9 +110,7 @@ typedef uoff_t		streamoff;	///< Offset into a stream
 
 typedef size_t uintptr_t;
 typedef ssize_t intptr_t;
-
 /*
 #if !defined(UINTPTR_MAX) || !defined(UINT32_C)
     #error "If you include stdint.h before ustl.h, define __STDC_LIMIT_MACROS and __STDC_CONSTANT_MACROS first"
 #endif*/
-#endif

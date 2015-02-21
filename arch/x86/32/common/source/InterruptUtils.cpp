@@ -75,13 +75,20 @@ extern "C" void arch_dummyHandler();
 
 void InterruptUtils::initialise()
 {
+  uint32 num_handlers = 0;
+  for (uint32 i = 0; handlers[i].offset != 0; ++i)
+    num_handlers = handlers[i].number;
+  ++num_handlers;
   // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
+  GateDesc *interrupt_gates = new GateDesc[num_handlers];
 
-  for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
+  uint32 j = 0;
+  for (uint32 i = 0; i < num_handlers; ++i)
   {
-    interrupt_gates[i].offset_low = LO_WORD(handlers[i].offset);
-    interrupt_gates[i].offset_high = HI_WORD(handlers[i].offset);
+    while (handlers[j].number < i && handlers[j].offset != 0)
+      ++j;
+    interrupt_gates[i].offset_low = LO_WORD((handlers[j].number == i && handlers[j].offset != 0) ? handlers[j].offset : arch_dummyHandler);
+    interrupt_gates[i].offset_high = HI_WORD((handlers[j].number == i && handlers[j].offset != 0) ? handlers[j].offset : arch_dummyHandler);
     interrupt_gates[i].gate_size = GATE_SIZE_32_BIT;
     interrupt_gates[i].present = 1;
     interrupt_gates[i].reserved = 0;
@@ -89,14 +96,13 @@ void InterruptUtils::initialise()
     interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
     interrupt_gates[i].unused = 0;
     interrupt_gates[i].zeros = 0;
-    interrupt_gates[i].dpl = (handlers[i].number == SYSCALL_INTERRUPT ?
-        DPL_USER_SPACE : DPL_KERNEL_SPACE);
+    interrupt_gates[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
   }
 
   IDTR idtr;
 
-  idtr.base =  (uint32)interrupt_gates;
-  idtr.limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS - 1;
+  idtr.base = (uint32) interrupt_gates;
+  idtr.limit = sizeof(GateDesc) * num_handlers - 1;
   lidt(&idtr);
 }
 
@@ -116,24 +122,23 @@ void InterruptUtils::lidt(IDTR *idtr)
     currentThread->kill();\
   }
 
-#define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_contextSwitch();\
-  extern "C" void dummyHandler_##x () \
-  {\
-    uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
-    currentThread->switch_to_userspace_ = false;\
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
-    ArchInterrupts::enableInterrupts();\
-    kprintfd("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    kprintf("DUMMY_HANDLER: Spurious INT " #x "\n");\
-    ArchInterrupts::disableInterrupts();\
-    currentThread->switch_to_userspace_ = saved_switch_to_userspace;\
-    if (currentThread->switch_to_userspace_)\
-    {\
-      currentThreadInfo = currentThread->user_arch_thread_info_;\
-      arch_contextSwitch();\
-    }\
+extern "C" void arch_dummyHandler();
+extern "C" void arch_contextSwitch();
+extern "C" void dummyHandler()
+{
+  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
+  currentThread->switch_to_userspace_ = false;
+  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  ArchInterrupts::enableInterrupts();
+  kprintfd("DUMMY_HANDLER: Spurious INT\n");
+  ArchInterrupts::disableInterrupts();
+  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
+  if (currentThread->switch_to_userspace_)
+  {
+    currentThreadInfo = currentThread->user_arch_thread_info_;
+    arch_contextSwitch();
   }
+}
 
 extern "C" void arch_irqHandler_0();
 extern "C" void arch_contextSwitch();
@@ -260,21 +265,20 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 
   //--------End "just for Debugging"-----------
 
-
   //save previous state on stack of currentThread
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
 
   //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (! (error & FLAG_PF_PRESENT) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
+  if (!(error & FLAG_PF_PRESENT) && address < 2U * 1024U * 1024U * 1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
   }
   else
   {
     debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %x\n",
-        !(error & FLAG_PF_PRESENT), address < 2U*1024U*1024U*1024U, currentThread->loader_);
+          !(error & FLAG_PF_PRESENT), address < 2U * 1024U * 1024U * 1024U, currentThread->loader_);
 
     if (!(error & FLAG_PF_USER))
       currentThread->printBacktrace(true);
@@ -285,7 +289,8 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
-  asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
+  asm volatile ("movl %cr3, %eax; movl %eax, %cr3;");
+  // only required in PAE mode
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo = currentThread->user_arch_thread_info_;
   arch_contextSwitch();
@@ -295,48 +300,48 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  KeyboardManager::instance()->serviceIRQ( );
+  KeyboardManager::instance()->serviceIRQ();
   ArchInterrupts::EndOfInterrupt(1);
 }
 
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
-  kprintfd( "IRQ 3 called\n" );
-  SerialManager::getInstance()->service_irq( 3 );
+  kprintfd("IRQ 3 called\n");
+  SerialManager::getInstance()->service_irq(3);
   ArchInterrupts::EndOfInterrupt(3);
-  kprintfd( "IRQ 3 ended\n" );
+  kprintfd("IRQ 3 ended\n");
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
-  kprintfd( "IRQ 4 called\n" );
-  SerialManager::getInstance()->service_irq( 4 );
+  kprintfd("IRQ 4 called\n");
+  SerialManager::getInstance()->service_irq(4);
   ArchInterrupts::EndOfInterrupt(4);
-  kprintfd( "IRQ 4 ended\n" );
+  kprintfd("IRQ 4 ended\n");
 }
 
 extern "C" void arch_irqHandler_6();
 extern "C" void irqHandler_6()
 {
-  kprintfd( "IRQ 6 called\n" );
-  kprintfd( "IRQ 6 ended\n" );
+  kprintfd("IRQ 6 called\n");
+  kprintfd("IRQ 6 ended\n");
 }
 
 extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
-  kprintfd( "IRQ 9 called\n" );
-  BDManager::getInstance()->serviceIRQ( 9 );
+  kprintfd("IRQ 9 called\n");
+  BDManager::getInstance()->serviceIRQ(9);
   ArchInterrupts::EndOfInterrupt(9);
 }
 
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
-  kprintfd( "IRQ 11 called\n" );
-  BDManager::getInstance()->serviceIRQ( 11 );
+  kprintfd("IRQ 11 called\n");
+  BDManager::getInstance()->serviceIRQ(11);
   ArchInterrupts::EndOfInterrupt(11);
 }
 
@@ -344,7 +349,7 @@ extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
   //kprintfd( "IRQ 14 called\n" );
-  BDManager::getInstance()->serviceIRQ( 14 );
+  BDManager::getInstance()->serviceIRQ(14);
   ArchInterrupts::EndOfInterrupt(14);
 }
 
@@ -352,7 +357,7 @@ extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
   //kprintfd( "IRQ 15 called\n" );
-  BDManager::getInstance()->serviceIRQ( 15 );
+  BDManager::getInstance()->serviceIRQ(15);
   ArchInterrupts::EndOfInterrupt(15);
 }
 
@@ -363,20 +368,19 @@ extern "C" void syscallHandler()
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
 
-  currentThread->user_arch_thread_info_->eax =
-    Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
-                  currentThread->user_arch_thread_info_->ebx,
-                  currentThread->user_arch_thread_info_->ecx,
-                  currentThread->user_arch_thread_info_->edx,
-                  currentThread->user_arch_thread_info_->esi,
-                  currentThread->user_arch_thread_info_->edi);
+  currentThread->user_arch_thread_info_->eax = Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
+                                                                         currentThread->user_arch_thread_info_->ebx,
+                                                                         currentThread->user_arch_thread_info_->ecx,
+                                                                         currentThread->user_arch_thread_info_->edx,
+                                                                         currentThread->user_arch_thread_info_->esi,
+                                                                         currentThread->user_arch_thread_info_->edi);
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = true;
-  currentThreadInfo =  currentThread->user_arch_thread_info_;
+  currentThreadInfo = currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,false);
   arch_contextSwitch();
 }
 
-#include "DummyHandlers.h" // dummy and error handler definitions and irq forwarding definitions
+#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
 

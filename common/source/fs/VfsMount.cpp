@@ -1,8 +1,4 @@
-/**
- * @file VfsMount.cpp
- */
-
-#include "fs/VfsMount.h"
+#include "VfsMount.h"
 
 
 VfsMount::VfsMount() :

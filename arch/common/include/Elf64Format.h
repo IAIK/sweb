@@ -65,63 +65,6 @@ class Elf
     static const uint32 ELFDATA2LSB = 1;
     static const uint32 ELFDATA2MSB = 2;
 
-// ELF SECTION HEADERS
-
-    static const uint32 SHN_UNDEF = 0;
-    static const uint32 SHN_LORESERVE = 0xff00;
-    static const uint32 SHN_LOPROC = 0xff00;
-    static const uint32 SHN_HIPROC = 0xff1f;
-    static const uint32 SHN_ABS = 0xfff1;
-    static const uint32 SHN_COMMON = 0xfff2;
-    static const uint32 SHN_HIRESERVE = 0xffff;
-
-    static const uint32 SHT_NULL = 0;
-    static const uint32 SHT_PROGBITS = 1;
-    static const uint32 SHT_SYMTAB = 2;
-    static const uint32 SHT_STRTAB = 3;
-    static const uint32 SHT_RELA = 4;
-    static const uint32 SHT_HASH = 5;
-    static const uint32 SHT_DYNAMIC = 6;
-    static const uint32 SHT_NOTE = 7;
-    static const uint32 SHT_NOBITS = 8;
-    static const uint32 SHT_REL = 9;
-    static const uint32 SHT_SHLIB = 10;
-    static const uint32 SHT_DYNSYM = 11;
-    static const uint32 SHT_LOPROC = 0x70000000;
-    static const uint32 SHT_HIPROC = 0x7fffffff;
-    static const uint32 SHT_LOUSER = 0x80000000;
-    static const uint32 SHT_HIUSER = 0xffffffff;
-
-// ELF Relocation types
-
-    static const uint32 R_386_NONE = 0;
-    static const uint32 R_386_32 = 1;
-    static const uint32 R_386_PC32 = 2;
-    static const uint32 R_386_GOT32 = 3;
-    static const uint32 R_386_PLT32 = 4;
-    static const uint32 R_386_COPY = 5;
-    static const uint32 R_386_GLOB_DAT = 6;
-    static const uint32 R_386_JMP_SLOT = 7;
-    static const uint32 R_386_RELATIVE = 8;
-    static const uint32 R_386_GOTOFF = 9;
-    static const uint32 R_386_GOTPC = 10;
-
-// ELF PROGRAM SEGMENT TYPES
-
-    static const uint32 PT_NULL = 0;
-    static const uint32 PT_LOAD = 1;
-    static const uint32 PT_DYNAMIC = 2;
-    static const uint32 PT_INTERP = 3;
-    static const uint32 PT_NOTE = 4;
-    static const uint32 PT_SHLIB = 5;
-    static const uint32 PT_PHDR = 6;
-    static const uint32 PT_LOPROC = 0x70000000;
-    static const uint32 PT_HIPROC = 0x7fffffff;
-
-    static const uint32 EXECUTEABLE = 1;
-    static const uint32 WRITEABLE = 2;
-    static const uint32 READABLE = 4;
-
     typedef uint64 Elf64_Addr;
     typedef uint16 Elf64_Half;
     typedef uint64 Elf64_Off;
@@ -161,29 +104,6 @@ class Elf
         Elf64_Xword sh_addralign;
         Elf64_Xword sh_entsize;
     } __attribute__((__packed__)) ;
-
-    typedef struct
-    {
-        Elf64_Word st_name;
-        uint8 st_info;
-        uint8 st_other;
-        Elf64_Half st_shndx;
-        Elf64_Addr st_value;
-        Elf64_Xword st_size;
-    } __attribute__((__packed__)) ELF64_Sym;
-
-    typedef struct
-    {
-        Elf64_Addr r_offset;
-        Elf64_Xword r_info;
-    } __attribute__((__packed__)) ELF64_Rel;
-
-    typedef struct
-    {
-        Elf64_Addr r_offset;
-        Elf64_Xword r_info;
-        Elf64_Sxword r_added;
-    } __attribute__((__packed__)) ELF64_Rela;
 
     struct sELF64_Phdr
     {

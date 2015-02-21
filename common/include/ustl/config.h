@@ -1,17 +1,14 @@
 // config.h - Generated from config.h.in by configure.
-
-#ifndef CONFIG_H_01E33670634DAAC779EE5FF41CCBB36F
-#define CONFIG_H_01E33670634DAAC779EE5FF41CCBB36F
+#pragma once
 
 // Define to the one symbol short name of this package.
 #define USTL_NAME	"ustl"
 // Define to the full name and version of this package.
-#define USTL_STRING	"ustl v1.5"
+#define USTL_STRING	"ustl v2.2-3-gf0abf84"
 // Define to the version of this package.
-#define USTL_VERSION	0x150
+#define USTL_VERSION	0x220
 // Define to the address where bug reports for this package should be sent.
 #define USTL_BUGREPORT	"Mike Sharov <msharov@users.sourceforge.net>"
-
 
 /// Define to 1 if you want stream operations to throw exceptions on
 /// insufficient data or insufficient space. All these errors should
@@ -21,19 +18,11 @@
 ///
 #define WANT_STREAM_BOUNDS_CHECKING 0
 
-#if !defined(WANT_STREAM_BOUNDS_CHECKING) && !defined(NDEBUG)
-    #define WANT_STREAM_BOUNDS_CHECKING 1
-#endif
-
 /// Define to 1 if you want backtrace symbols demangled.
 /// This adds some 15k to the library size, and requires that you link it and
 /// any executables you make with the -rdynamic flag (increasing library size
 /// even more). By default only the debug build does this.
 #undef WANT_NAME_DEMANGLING
-
-#if !defined(WANT_NAME_DEMANGLING) && !defined(NDEBUG)
-    #define WANT_NAME_DEMANGLING 1
-#endif
 
 /// Define to 1 if you want to build without libstdc++
 #define WITHOUT_LIBSTDCPP 1
@@ -48,7 +37,7 @@
 	#define __attribute__(p)
     #endif
 #endif
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if __GNUC__ >= 4
     #define DLL_EXPORT		__attribute__((visibility("default")))
     #define DLL_LOCAL		__attribute__((visibility("hidden")))
     #define INLINE		__attribute__((always_inline))
@@ -57,13 +46,23 @@
     #define DLL_LOCAL
     #define INLINE
 #endif
-//#if defined(__GNUC__) && __GNUC__ >= 3 && (__i386__ || __x86_64__)
+#if __cplusplus >= 201103L && (!__GNUC__ || (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 2)) || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
+    #define HAVE_CPP11 1
+#endif
+#if !HAVE_CPP11
+    #define constexpr
+    #define override
+    #define final
+    #define nullptr		NULL
+    #define noexcept		throw()
+#endif
+#if __GNUC__ >= 3 && (__i386__ || __x86_64__)
     /// GCC 3+ supports the prefetch directive, which some CPUs use to improve caching
-//    #define prefetch(p,rw,loc)	__builtin_prefetch(p,rw,loc)
-//#else
+    #define prefetch(p,rw,loc)	__builtin_prefetch(p,rw,loc)
+#else
     #define prefetch(p,rw,loc)
 #endif
-#if !defined(__GNUC__) || __GNUC__ < 3
+#if __GNUC__ < 3
     /// __alignof__ returns the recommended alignment for the type
     #define __alignof__(v)	min(sizeof(v), sizeof(void*))
     /// This macro returns 1 if the value of x is known at compile time.
@@ -151,6 +150,9 @@
 // Define to 1 if you have the <sys/types.h> header file.
 #undef HAVE_SYS_TYPES_H
 
+// Define to 1 if you have the <sys/mman.h> header file.
+#undef HAVE_SYS_MMAN_H
+
 // Define to 1 if you have the <time.h> header file.
 #undef HAVE_TIME_H
 
@@ -159,6 +161,9 @@
 
 // Define to 1 if you have the <math.h> header file.
 #undef HAVE_MATH_H
+
+// Define to 1 if you have the <execinfo.h> header file.
+#undef HAVE_EXECINFO_H
 
 // Define to 1 if you have the <cxxabi.h> header file.
 #if __GNUC__ >= 3
@@ -169,19 +174,16 @@
 #undef HAVE_RINTF
 
 // STDC_HEADERS is defined to 1 on sane systems.
-#if defined(HAVE_ASSERT_H) && defined(HAVE_CTYPE_H) &&\
-    defined(HAVE_ERRNO_H) && defined(HAVE_FLOAT_H) &&\
-    defined(HAVE_LIMITS_H) && defined(HAVE_LOCALE_H) &&\
-    defined(HAVE_MATH_H) && defined(HAVE_SIGNAL_H) &&\
-    defined(HAVE_STDARG_H) && defined(HAVE_STDDEF_H) &&\
-    defined(HAVE_STDIO_H) && defined(HAVE_STDLIB_H) &&\
-    defined(HAVE_STRING_H) && defined(HAVE_TIME_H)
-#define STDC_HEADERS 1
+#if HAVE_ASSERT_H && HAVE_CTYPE_H  && HAVE_ERRNO_H && HAVE_FLOAT_H &&\
+    HAVE_LIMITS_H && HAVE_LOCALE_H && HAVE_MATH_H  && HAVE_SIGNAL_H &&\
+    HAVE_STDARG_H && HAVE_STDDEF_H && HAVE_STDIO_H && HAVE_STDLIB_H &&\
+    HAVE_STRING_H && HAVE_TIME_H
+    #define STDC_HEADERS 1
 #endif
 
 // STDC_HEADERS is defined to 1 on unix systems.
-#if defined(HAVE_FCNTL_H) && defined(HAVE_SYS_STAT_H) && defined(HAVE_UNISTD_H)
-#define STDUNIX_HEADERS 1
+#if HAVE_FCNTL_H && HAVE_SYS_STAT_H && HAVE_UNISTD_H
+    #define STDUNIX_HEADERS 1
 #endif
 
 // Define to 1 if your compiler treats char as a separate type along with
@@ -189,7 +191,7 @@
 #undef HAVE_THREE_CHAR_TYPES
 
 // Define to 1 if you have 64 bit types available
-#define HAVE_INT64_T 1
+#undef HAVE_INT64_T
 
 // Define to 1 if you have the long long type
 #undef HAVE_LONG_LONG
@@ -238,14 +240,12 @@
 #endif
 
 // GCC vector extensions
-#if (defined(CPU_HAS_MMX) || defined(CPU_HAS_SSE)) && __GNUC__ >= 3
+#if (CPU_HAS_MMX || CPU_HAS_SSE) && __GNUC__ >= 3
     #undef HAVE_VECTOR_EXTENSIONS
 #endif
 
-#if CPU_HAS_SSE && defined(__GNUC__)
+#if CPU_HAS_SSE && __GNUC__
     #define __sse_align	__attribute__((aligned(16)))
 #else
     #define __sse_align	
 #endif
-
-//#endif

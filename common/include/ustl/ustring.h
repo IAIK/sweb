@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef USTRING_H_1249CB7A098A9010763AAC6D37B133CF
-#define USTRING_H_1249CB7A098A9010763AAC6D37B133CF
-
+#pragma once
 #include "memblock.h"
 #include "utf8.h"
 #include <stdarg.h>	// for va_list, va_start, and va_end (in string::format)
@@ -55,126 +53,170 @@ public:
     typedef ::ustl::reverse_iterator<iterator>		reverse_iterator;
     typedef ::ustl::reverse_iterator<const_iterator>	const_reverse_iterator;
     typedef utf8in_iterator<const_iterator>		utf8_iterator;
+    typedef std::initializer_list<value_type>		initlist_t;
     static const size_type npos = INT_MAX;		///< Value that means the end of string.
 public:
-    inline			string (void)		: memblock () { relink ("",0); }
+    inline			string (void) noexcept		: memblock () { relink ("",0); }
 				string (const string& s);
-    inline			string (const string& s, uoff_t o, size_type n);
+    inline			string (const string& s, size_type o, size_type n = npos);
     inline explicit		string (const cmemlink& l);
-				string (const_pointer s);
+				string (const_pointer s) noexcept;
     inline			string (const_pointer s, size_type len);
     inline			string (const_pointer s1, const_pointer s2);
-    explicit			string (size_type n, value_type c = 0);
-    inline pointer		data (void)		{ return (string::pointer (memblock::data())); }
-    inline const_pointer	c_str (void) const	{ return (string::const_pointer (memblock::cdata())); }
-    inline size_type		max_size (void) const	{ size_type s (memblock::max_size()); return (s - !!s); }
-    inline size_type		capacity (void) const	{ size_type c (memblock::capacity()); return (c - !!c); }
+				string (size_type n, value_type c);
+    inline			~string (void) noexcept		{ }
+    inline pointer		data (void)			{ return string::pointer (memblock::data()); }
+    inline const_pointer	data (void) const		{ return string::const_pointer (memblock::data()); }
+    inline const_pointer	c_str (void) const		{ return string::const_pointer (memblock::cdata()); }
+    inline size_type		max_size (void) const		{ size_type s (memblock::max_size()); return s - !!s; }
+    inline size_type		capacity (void) const		{ size_type c (memblock::capacity()); return c - !!c; }
     void			resize (size_type n);
     inline void			resize (size_type n, value_type c);
-    inline void			clear (void)		{ resize (0); }
-    inline const_iterator	begin (void) const	{ return (const_iterator (memblock::begin())); }
-    inline iterator		begin (void)		{ return (iterator (memblock::begin())); }
-    inline const_iterator	end (void) const	{ return (const_iterator (memblock::end())); }
-    inline iterator		end (void)		{ return (iterator (memblock::end())); }
-  inline const_reverse_iterator	rbegin (void) const	{ return (const_reverse_iterator (end())); }
-    inline reverse_iterator	rbegin (void)		{ return (reverse_iterator (end())); }
-  inline const_reverse_iterator	rend (void) const	{ return (const_reverse_iterator (begin())); }
-    inline reverse_iterator	rend (void)		{ return (reverse_iterator (begin())); }
-    inline utf8_iterator	utf8_begin (void) const	{ return (utf8_iterator (begin())); }
-    inline utf8_iterator	utf8_end (void) const	{ return (utf8_iterator (end())); }
-    inline const_reference	at (uoff_t pos) const	{ assert (pos <= size() && begin()); return (begin()[pos]); }
-    inline reference		at (uoff_t pos)		{ assert (pos <= size() && begin()); return (begin()[pos]); }
-    inline const_iterator	iat (uoff_t pos) const	{ return (begin() + (__builtin_constant_p(pos) && pos >= npos ? size() : min(pos,size()))); }
-    inline iterator		iat (uoff_t pos)	{ return (const_cast<iterator>(const_cast<const string*>(this)->iat(pos))); }
-    const_iterator		wiat (uoff_t i) const;
-    inline iterator		wiat (uoff_t i)		{ return (const_cast<iterator>(const_cast<const string*>(this)->wiat(i))); }
-    inline const_reference	back (void) const	{ return (at(size()-1)); }
-    inline reference		back (void)		{ return (at(size()-1)); }
-    inline size_type		length (void) const	{ return (distance (utf8_begin(), utf8_end())); }
-    inline void			append (const_iterator i1, const_iterator i2)	{ append (i1, distance (i1, i2)); }
-    void	   		append (const_pointer s, size_type len);
-    void	   		append (const_pointer s);
-    void			append (size_type n, const_reference c);
-    inline void			append (size_type n, wvalue_type c)		{ insert (size(), c, n); }
-    inline void			append (const_wpointer s1, const_wpointer s2)	{ insert (size(), s1, s2); }
-    inline void			append (const_wpointer s)			{ const_wpointer se (s); for (;se&&*se;++se) ; append (s, se); }
-    inline void			append (const string& s)			{ append (s.begin(), s.end()); }
-    inline void			append (const string& s, uoff_t o, size_type n)	{ append (s.iat(o), s.iat(o+n)); }
-    inline void			assign (const_iterator i1, const_iterator i2)	{ assign (i1, distance (i1, i2)); }
-    void	    		assign (const_pointer s, size_type len);
-    void	    		assign (const_pointer s);
-    inline void			assign (const_wpointer s1, const_wpointer s2)	{ clear(); append (s1, s2); }
-    inline void			assign (const_wpointer s1)			{ clear(); append (s1); }
-    inline void			assign (const string& s)			{ assign (s.begin(), s.end()); }
-    inline void			assign (const string& s, uoff_t o, size_type n)	{ assign (s.iat(o), s.iat(o+n)); }
-    size_type			copyto (pointer p, size_type n, const_iterator start = (const_iterator)NULL) const;
-    inline int			compare (const string& s) const	{ return (compare (begin(), end(), s.begin(), s.end())); }
-    inline int			compare (const_pointer s) const	{ return (compare (begin(), end(), s, s + strlen(s))); }
-    static int			compare (const_iterator first1, const_iterator last1, const_iterator first2, const_iterator last2);
+    inline void			clear (void)			{ resize (0); }
+    inline iterator		begin (void)			{ return iterator (memblock::begin()); }
+    inline const_iterator	begin (void) const		{ return const_iterator (memblock::begin()); }
+    inline const_iterator	cbegin (void) const		{ return begin(); }
+    inline iterator		end (void)			{ return iterator (memblock::end()); }
+    inline const_iterator	end (void) const		{ return const_iterator (memblock::end()); }
+    inline const_iterator	cend (void) const		{ return end(); }
+    inline reverse_iterator	rbegin (void)			{ return reverse_iterator (end()); }
+  inline const_reverse_iterator	rbegin (void) const		{ return const_reverse_iterator (end()); }
+  inline const_reverse_iterator	crbegin (void) const		{ return rbegin(); }
+    inline reverse_iterator	rend (void)			{ return reverse_iterator (begin()); }
+  inline const_reverse_iterator	rend (void) const		{ return const_reverse_iterator (begin()); }
+  inline const_reverse_iterator	crend (void) const		{ return rend(); }
+    inline utf8_iterator	utf8_begin (void) const		{ return utf8_iterator (begin()); }
+    inline utf8_iterator	utf8_end (void) const		{ return utf8_iterator (end()); }
+    inline const_reference	at (size_type pos) const	{ assert (pos <= size() && begin()); return begin()[pos]; }
+    inline reference		at (size_type pos)		{ assert (pos <= size() && begin()); return begin()[pos]; }
+    inline const_iterator	iat (size_type pos) const	{ return begin() + (__builtin_constant_p(pos) && pos >= npos ? size() : min(pos,size())); }
+    inline iterator		iat (size_type pos)		{ return const_cast<iterator>(const_cast<const string*>(this)->iat(pos)); }
+    const_iterator		wiat (size_type i) const noexcept;
+    inline iterator		wiat (size_type i)		{ return const_cast<iterator>(const_cast<const string*>(this)->wiat(i)); }
+    inline const_reference	front (void) const		{ return at(0); }
+    inline reference		front (void)			{ return at(0); }
+    inline const_reference	back (void) const		{ return at(size()-1); }
+    inline reference		back (void)			{ return at(size()-1); }
+    inline size_type		length (void) const		{ return distance (utf8_begin(), utf8_end()); }
+    inline string&		append (const_iterator i1, const_iterator i2)	{ return append (i1, distance (i1, i2)); }
+    string&	   		append (const_pointer s, size_type len);
+    string&	   		append (const_pointer s);
+    string&			append (size_type n, value_type c);
+    inline string&		append (size_type n, wvalue_type c)		{ insert (size(), n, c); return *this; }
+    inline string&		append (const_wpointer s1, const_wpointer s2)	{ insert (size(), s1, s2); return *this; }
+    inline string&		append (const_wpointer s)			{ const_wpointer se (s); for (;se&&*se;++se) {} return append (s, se); }
+    inline string&		append (const string& s)			{ return append (s.begin(), s.end()); }
+    inline string&		append (const string& s, size_type o, size_type n)	{ return append (s.iat(o), s.iat(o+n)); }
+    inline string&		assign (const_iterator i1, const_iterator i2)	{ return assign (i1, distance (i1, i2)); }
+    string&	    		assign (const_pointer s, size_type len);
+    string&	    		assign (const_pointer s);
+    inline string&		assign (const_wpointer s1, const_wpointer s2)	{ clear(); return append (s1, s2); }
+    inline string&		assign (const_wpointer s1)			{ clear(); return append (s1); }
+    inline string&		assign (const string& s)			{ return assign (s.begin(), s.end()); }
+    inline string&		assign (const string& s, size_type o, size_type n)	{ return assign (s.iat(o), s.iat(o+n)); }
+    inline string&		assign (size_type n, value_type c)		{ clear(); return append (n, c); }
+    inline string&		assign (size_type n, wvalue_type c)		{ clear(); return append (n, c); }
+    size_type			copy (pointer p, size_type n, size_type pos = 0) const noexcept;
+    inline size_type		copyto (pointer p, size_type n, size_type pos = 0) const noexcept { size_type bc = copy(p,n-1,pos); p[bc]=0; return bc; }
+    inline int			compare (const string& s) const		{ return compare (begin(), end(), s.begin(), s.end()); }
+    inline int			compare (size_type start, size_type len, const string& s) const	{ return compare (iat(start), iat(start+len), s.begin(), s.end()); }
+    inline int			compare (size_type s1, size_type l1, const string& s, size_type s2, size_type l2) const	{ return compare (iat(s1), iat(s1+l1), s.iat(s2), s.iat(s2+l2)); }
+    inline int			compare (const_pointer s) const		{ return compare (begin(), end(), s, s + strlen(s)); }
+    inline int			compare (size_type s1, size_type l1, const_pointer s, size_type l2) const { return compare (iat(s1), iat(s1+l1), s, s+l2); }
+    inline int			compare (size_type s1, size_type l1, const_pointer s) const { return compare (s1, l1, s, strlen(s)); }
+    static int			compare (const_iterator first1, const_iterator last1, const_iterator first2, const_iterator last2) noexcept;
     inline			operator const value_type* (void) const;
     inline			operator value_type* (void);
-    inline const string&	operator= (const string& s)	{ assign (s.begin(), s.end()); return (*this); }
-    inline const string&	operator= (const_reference c)	{ assign (&c, 1); return (*this); }
-    inline const string&	operator= (const_pointer s)	{ assign (s); return (*this); }
-    inline const string&	operator= (const_wpointer s)	{ assign (s); return (*this); }
-    inline const string&	operator+= (const string& s)	{ append (s.begin(), s.size()); return (*this); }
-    inline const string&	operator+= (const_reference c)	{ append (1, c); return (*this); }
-    inline const string&	operator+= (const_pointer s)	{ append (s); return (*this); }
-    inline const string&	operator+= (wvalue_type c)	{ append (1, c); return (*this); }
-    inline const string&	operator+= (const_wpointer s)	{ append (s); return (*this); }
+    inline const string&	operator= (const string& s)		{ return assign (s.begin(), s.end()); }
+    inline const string&	operator= (const_reference c)		{ return assign (&c, 1); }
+    inline const string&	operator= (const_pointer s)		{ return assign (s); }
+    inline const string&	operator= (const_wpointer s)		{ return assign (s); }
+    inline const string&	operator+= (const string& s)		{ return append (s.begin(), s.size()); }
+    inline const string&	operator+= (value_type c)		{ return append (1, c); }
+    inline const string&	operator+= (const_pointer s)		{ return append (s); }
+    inline const string&	operator+= (wvalue_type c)		{ return append (1, c); }
+    inline const string&	operator+= (const_wpointer s)		{ return append (s); }
     inline string		operator+ (const string& s) const;
-    inline bool			operator== (const string& s) const	{ return (memblock::operator== (s)); }
-    bool			operator== (const_pointer s) const;
-    inline bool			operator== (const_reference c) const	{ return (size() == 1 && c == at(0)); }
-    inline bool			operator!= (const string& s) const	{ return (!operator== (s)); }
-    inline bool			operator!= (const_pointer s) const	{ return (!operator== (s)); }
-    inline bool			operator!= (const_reference c) const	{ return (!operator== (c)); }
-    inline bool			operator< (const string& s) const	{ return (0 > compare (s)); }
-    inline bool			operator< (const_pointer s) const	{ return (0 > compare (s)); }
-    inline bool			operator< (const_reference c) const	{ return (0 > compare (begin(), end(), &c, &c + 1)); }
-    inline bool			operator> (const_pointer s) const	{ return (0 < compare (s)); }
-    void			insert (const uoff_t ip, wvalue_type c, size_type n = 1);
-    void			insert (const uoff_t ip, const_wpointer first, const_wpointer last, const size_type n = 1);
-    iterator			insert (iterator start, const_reference c, size_type n = 1);
-    iterator			insert (iterator start, const_pointer s, size_type n = 1);
-    iterator			insert (iterator start, const_pointer first, const_iterator last, size_type n = 1);
-    inline void			insert (uoff_t ip, const_pointer s, size_type nlen)		{ insert (iat(ip), s, s + nlen); }
-    inline void			insert (uoff_t ip, size_type n, value_type c)			{ insert (iat(ip), c, n); }
-    inline void			insert (uoff_t ip, const string& s, uoff_t sp, size_type slen)	{ insert (iat(ip), s.iat(sp), s.iat(sp + slen)); }
-    iterator			erase (iterator epo, size_type n = 1);
-    void			erase (uoff_t epo = 0, size_type n = 1);
-    inline iterator		erase (iterator first, const_iterator last)	{ return (erase (first, size_type(distance(first,last)))); }
-    inline void			eraser (uoff_t first, uoff_t last)		{ erase (iat(first), iat(last)); }
-    inline void			push_back (const_reference c)	{ append (1, c); }
+    inline bool			operator== (const string& s) const	{ return memblock::operator== (s); }
+    bool			operator== (const_pointer s) const noexcept;
+    inline bool			operator== (value_type c) const		{ return size() == 1 && c == at(0); }
+    inline bool			operator!= (const string& s) const	{ return !operator== (s); }
+    inline bool			operator!= (const_pointer s) const	{ return !operator== (s); }
+    inline bool			operator!= (value_type c) const		{ return !operator== (c); }
+    inline bool			operator< (const string& s) const	{ return 0 > compare (s); }
+    inline bool			operator< (const_pointer s) const	{ return 0 > compare (s); }
+    inline bool			operator< (value_type c) const		{ return 0 > compare (begin(), end(), &c, &c + 1); }
+    inline bool			operator> (const_pointer s) const	{ return 0 < compare (s); }
+    inline string&		insert (size_type ip, size_type n, value_type c)			{ insert (iat(ip), n, c); return *this; }
+    inline string&		insert (size_type ip, const_pointer s)					{ insert (iat(ip), s, s + strlen(s)); return *this; }
+    inline string&		insert (size_type ip, const_pointer s, size_type nlen)			{ insert (iat(ip), s, s + nlen); return *this; }
+    inline string&		insert (size_type ip, const string& s)					{ insert (iat(ip), s.c_str(), s.size()); return *this; }
+    inline string&		insert (size_type ip, const string& s, size_type sp, size_type slen)	{ insert (iat(ip), s.iat(sp), s.iat(sp + slen)); return *this; }
+    string&			insert (size_type ip, size_type n, wvalue_type c);
+    string&			insert (size_type ip, const_wpointer first, const_wpointer last, size_type n = 1);
+    iterator			insert (const_iterator start, size_type n, value_type c);
+    inline iterator		insert (const_iterator start, value_type c)				{ return insert (start, 1u, c); }
+    iterator			insert (const_iterator start, const_pointer s, size_type n);
+    iterator			insert (const_iterator start, const_pointer first, const_iterator last, size_type n = 1);
+    iterator			erase (const_iterator epo, size_type n = 1);
+    string&			erase (size_type epo = 0, size_type n = npos);
+    inline iterator		erase (const_iterator first, const_iterator last)	{ return erase (first, size_type(distance(first,last))); }
+    inline iterator		eraser (size_type first, size_type last)		{ return erase (iat(first), iat(last)); }
+    inline void			push_back (value_type c)	{ append (1, c); }
     inline void			push_back (wvalue_type c)	{ append (1, c); }
     inline void			pop_back (void)			{ resize (size() - 1); }
-    void			replace (iterator first, iterator last, const_pointer s);
-    void			replace (iterator first, iterator last, const_pointer i1, const_pointer i2, size_type n = 1);
-    inline void			replace (iterator first, iterator last, const string& s)			{ replace (first, last, s.begin(), s.end()); }
-    inline void			replace (iterator first, iterator last, const_pointer s, size_type slen)	{ replace (first, last, s, s + slen); }
-    inline void			replace (iterator first, iterator last, size_type n, value_type c)		{ replace (first, last, &c, &c + 1, n); }
-    inline void			replace (uoff_t rp, size_type n, const string& s)				{ replace (iat(rp), iat(rp + n), s); }
-    inline void			replace (uoff_t rp, size_type n, const string& s, uoff_t sp, size_type slen)	{ replace (iat(rp), iat(rp + n), s.iat(sp), s.iat(sp + slen)); }
-    inline void			replace (uoff_t rp, size_type n, const_pointer s, size_type slen)		{ replace (iat(rp), iat(rp + n), s, s + slen); }
-    inline void			replace (uoff_t rp, size_type n, const_pointer s)				{ replace (iat(rp), iat(rp + n), string(s)); }
-    inline void			replace (uoff_t rp, size_type n, size_type count, value_type c)			{ replace (iat(rp), iat(rp + n), count, c); }
-    inline string		substr (uoff_t o, size_type n = npos) const	{ return (string (*this, o, n)); }
-    uoff_t			find (const_reference c, uoff_t pos = 0) const;
-    uoff_t			find (const string& s, uoff_t pos = 0) const;
-    uoff_t			rfind (const_reference c, uoff_t pos = npos) const;
-    uoff_t			rfind (const string& s, uoff_t pos = npos) const;
-    uoff_t			find_first_of (const string& s, uoff_t pos = 0) const;
-    uoff_t			find_first_not_of (const string& s, uoff_t pos = 0) const;
-    uoff_t			find_last_of (const string& s, uoff_t pos = npos) const;
-    uoff_t			find_last_not_of (const string& s, uoff_t pos = npos) const;
+    string&			replace (const_iterator first, const_iterator last, const_pointer i1, const_pointer i2, size_type n);
+    template <typename InputIt>
+    string&			replace (const_iterator first, const_iterator last, InputIt first2, InputIt last2)	{ return replace (first, last, first2, last2, 1); }
+    inline string&		replace (const_iterator first, const_iterator last, const string& s)			{ return replace (first, last, s.begin(), s.end()); }
+    string&			replace (const_iterator first, const_iterator last, const_pointer s);
+    inline string&		replace (const_iterator first, const_iterator last, const_pointer s, size_type slen)	{ return replace (first, last, s, s + slen); }
+    inline string&		replace (const_iterator first, const_iterator last, size_type n, value_type c)		{ return replace (first, last, &c, &c + 1, n); }
+    inline string&		replace (size_type rp, size_type n, const string& s)					{ return replace (iat(rp), iat(rp + n), s); }
+    inline string&		replace (size_type rp, size_type n, const string& s, uoff_t sp, size_type slen)		{ return replace (iat(rp), iat(rp + n), s.iat(sp), s.iat(sp + slen)); }
+    inline string&		replace (size_type rp, size_type n, const_pointer s, size_type slen)			{ return replace (iat(rp), iat(rp + n), s, s + slen); }
+    inline string&		replace (size_type rp, size_type n, const_pointer s)					{ return replace (iat(rp), iat(rp + n), string(s)); }
+    inline string&		replace (size_type rp, size_type n, size_type count, value_type c)			{ return replace (iat(rp), iat(rp + n), count, c); }
+    inline string		substr (size_type o = 0, size_type n = npos) const	{ return string (*this, o, n); }
+    inline void			swap (string& v)					{ memblock::swap (v); }
+    size_type			find (value_type c, uoff_t pos = 0) const noexcept;
+    size_type			find (const string& s, uoff_t pos = 0) const noexcept;
+    inline size_type		find (const_pointer p, size_type pos, size_type count) const	{ string sp; sp.link (p,count); return find (sp, pos); }
+    size_type			rfind (value_type c, uoff_t pos = npos) const noexcept;
+    size_type			rfind (const string& s, uoff_t pos = npos) const noexcept;
+    inline size_type		rfind (const_pointer p, size_type pos, size_type count) const	{ string sp; sp.link (p,count); return rfind (sp, pos); }
+    size_type			find_first_of (const string& s, uoff_t pos = 0) const noexcept;
+    inline size_type		find_first_of (value_type c, uoff_t pos = 0) const				{ string sp (1, c); return find_first_of(sp,pos); }
+    inline size_type		find_first_of (const_pointer p, size_type pos, size_type count) const		{ string sp; sp.link (p,count); return find_first_of (sp, pos); }
+    size_type			find_first_not_of (const string& s, uoff_t pos = 0) const noexcept;
+    inline size_type		find_first_not_of (value_type c, uoff_t pos = 0) const				{ string sp (1, c); return find_first_not_of(sp,pos); }
+    inline size_type		find_first_not_of (const_pointer p, size_type pos, size_type count) const	{ string sp; sp.link (p,count); return find_first_not_of (sp, pos); }
+    size_type			find_last_of (const string& s, uoff_t pos = npos) const noexcept;
+    inline size_type		find_last_of (value_type c, uoff_t pos = 0) const				{ string sp (1, c); return find_last_of(sp,pos); }
+    inline size_type		find_last_of (const_pointer p, size_type pos, size_type count) const		{ string sp; sp.link (p,count); return find_last_of (sp, pos); }
+    size_type			find_last_not_of (const string& s, uoff_t pos = npos) const noexcept;
+    inline size_type		find_last_not_of (value_type c, uoff_t pos = 0) const				{ string sp (1, c); return find_last_not_of(sp,pos); }
+    inline size_type		find_last_not_of (const_pointer p, size_type pos, size_type count) const	{ string sp; sp.link (p,count); return find_last_not_of (sp, pos); }
     int				vformat (const char* fmt, va_list args);
     int				format (const char* fmt, ...) __attribute__((__format__(__printf__, 2, 3)));
     //void			read (istream&);
     //void			write (ostream& os) const;
-    size_t			stream_size (void) const;
-    static hashvalue_t		hash (const char* f1, const char* l1);
-protected:
-    virtual size_type		minimumFreeCapacity (void) const throw() __attribute__((const));
+    size_t			stream_size (void) const noexcept;
+    static hashvalue_t		hash (const char* f1, const char* l1) noexcept;
+#if HAVE_CPP11
+    inline			string (string&& v)		: memblock (move(v)) {}
+    inline			string (initlist_t v)		: memblock() { assign (v.begin(), v.size()); }
+    inline string&		assign (string&& v)		{ swap (v); return *this; }
+    inline string&		assign (initlist_t v)		{ return assign (v.begin(), v.size()); }
+    inline string&		append (initlist_t v)		{ return append (v.begin(), v.size()); }
+    inline string&		operator+= (initlist_t v)	{ return append (v.begin(), v.size()); }
+    inline string&		operator= (string&& v)		{ return assign (move(v)); }
+    inline string&		operator= (initlist_t v)	{ return assign (v.begin(), v.size()); }
+    inline iterator		insert (const_iterator ip, initlist_t v)	{ return insert (ip, v.begin(), v.end()); }
+    inline string&		replace (const_iterator first, const_iterator last, initlist_t v)	{ return replace (first, last, v.begin(), v.end()); }
+#endif
+private:
+    virtual size_type		minimumFreeCapacity (void) const noexcept final override __attribute__((const));
 };
 
 //----------------------------------------------------------------------
@@ -187,7 +229,7 @@ inline string::string (const cmemlink& s)
 }
 
 /// Assigns itself a [o,o+n) substring of \p s.
-inline string::string (const string& s, uoff_t o, size_type n)
+inline string::string (const string& s, size_type o, size_type n)
 : memblock()
 {
     assign (s, o, n);
@@ -212,14 +254,14 @@ inline string::string (const_pointer s1, const_pointer s2)
 inline string::operator const string::value_type* (void) const
 {
     assert ((!end() || !*end()) && "This string is linked to data that is not 0-terminated. This may cause serious security problems. Please assign the data instead of linking.");
-    return (begin());
+    return begin();
 }
 
 /// Returns the pointer to the first character.
 inline string::operator string::value_type* (void)
 {
     assert ((end() && !*end()) && "This string is linked to data that is not 0-terminated. This may cause serious security problems. Please assign the data instead of linking.");
-    return (begin());
+    return begin();
 }
 
 /// Concatenates itself with \p s
@@ -227,7 +269,7 @@ inline string string::operator+ (const string& s) const
 {
     string result (*this);
     result += s;
-    return (result);
+    return result;
 }
 
 /// Resize to \p n and fill new entries with \p c
@@ -251,17 +293,15 @@ PTR_STRING_CMP (operator>,  (s2 <  s1))
 PTR_STRING_CMP (operator>=, (s2 <= s1))
 #undef PTR_STRING_CMP
 
-inline string operator+ (const char* cs, const string& ss) { string r; r.reserve (strlen(cs)+ss.size()); r += cs; r += ss; return (r); }
+inline string operator+ (const char* cs, const string& ss) { string r; r.reserve (strlen(cs)+ss.size()); r += cs; r += ss; return r; }
 
 //----------------------------------------------------------------------
 
 inline hashvalue_t hash_value (const char* first, const char* last)
-{ return (string::hash (first, last)); }
+{ return string::hash (first, last); }
 inline hashvalue_t hash_value (const char* v)
-{ return (hash_value (v, v + strlen(v))); }
+{ return hash_value (v, v + strlen(v)); }
 
 //----------------------------------------------------------------------
 
 } // namespace ustl
-
-#endif

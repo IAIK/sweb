@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UHEAP_H_574B9EAF271A1C107190B4D575A356C5
-#define UHEAP_H_574B9EAF271A1C107190B4D575A356C5
-
+#pragma once
 #include "ualgobase.h"
 
 namespace ustl {
@@ -22,8 +20,8 @@ bool is_heap (RandomAccessIterator first, RandomAccessIterator last, Compare com
     RandomAccessIterator iChild (first);
     for (; ++iChild < last; ++first)
 	if (comp (*first, *iChild) || (++iChild < last && comp (*first, *iChild)))
-	    return (false);
-    return (true);
+	    return false;
+    return true;
 }
 
 /// \brief make_heap turns the range [first, last) into a heap
@@ -98,7 +96,7 @@ template <typename RandomAccessIterator>\
 inline rtype name (RandomAccessIterator first, RandomAccessIterator last)		\
 {											\
     typedef typename iterator_traits<RandomAccessIterator>::value_type value_type;	\
-    return (name (first, last, less<value_type>()));					\
+    return name (first, last, less<value_type>());					\
 }
 HEAP_FN_WITH_LESS (bool, is_heap)
 HEAP_FN_WITH_LESS (void, make_heap)
@@ -124,19 +122,17 @@ public:
     typedef typename base_ctr::const_pointer	const_pointer;
     typedef typename base_ctr::const_reference	reference;
 public:
-			priority_queue (const Comp& c = Comp()) : m_v(), m_c (c) {}
+			priority_queue (const Comp& c = Comp()) : _v(), _c (c) {}
 			priority_queue (const_pointer f, const_pointer l, const Comp& c = Comp())
-			    : m_v (f, l), m_c (c) { make_heap (m_v.begin(), m_v.end(), m_c); }
-    inline size_type	size (void) const	{ return (m_v.size()); }
-    inline bool		empty (void) const	{ return (m_v.empty()); }
-    inline reference	top (void) const	{ return (m_v.at(0)); }
-    inline void		push (reference v)	{ m_v.push_back (v); make_heap (m_v.begin(), m_v.end(), m_c); }
-    inline void		pop (void)		{ pop_heap (m_v.begin(), m_v.end()); m_v.pop_back(); }
+			    : _v (f, l), _c (c) { make_heap (_v.begin(), _v.end(), _c); }
+    inline size_type	size (void) const	{ return _v.size(); }
+    inline bool		empty (void) const	{ return _v.empty(); }
+    inline reference	top (void) const	{ return _v.at(0); }
+    inline void		push (reference v)	{ _v.push_back (v); make_heap (_v.begin(), _v.end(), _c); }
+    inline void		pop (void)		{ pop_heap (_v.begin(), _v.end()); _v.pop_back(); }
 private:
-    base_ctr		m_v;	///< Element container.
-    Comp		m_c;	///< Comparison functor by value.
+    base_ctr		_v;	///< Element container.
+    Comp		_c;	///< Comparison functor by value.
 };
 
 } // namespace ustl
-
-#endif

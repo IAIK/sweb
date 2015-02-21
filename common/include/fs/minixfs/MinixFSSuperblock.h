@@ -27,7 +27,7 @@ class MinixFSSuperblock : public Superblock
      * @param s_dev
      * @return
      */
-    MinixFSSuperblock(Dentry* s_root, uint32 s_dev, uint64 offset);
+    MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset);
 
     /**
      * destructor

@@ -5,8 +5,7 @@
 // This implementation is adapted from the Loki library, distributed under
 // the MIT license with Copyright (c) 2001 by Andrei Alexandrescu.
 
-#ifndef TYPET_H_70B4C9693A05E0B405B225F356DE5450
-#define TYPET_H_70B4C9693A05E0B405B225F356DE5450
+#pragma once
 
 namespace ustl {
 /// Template metaprogramming tools
@@ -88,12 +87,12 @@ struct SuperSubclassStrict {
 		    !::ustl::tm::Conversion<const volatile T*, const volatile U*>::sameType };
 };
 
+#if !HAVE_CPP11
 // static assert support
 template <bool> struct CompileTimeError;
 template <> struct CompileTimeError<true> {};
 #define static_assert(cond,msg)	{ ::ustl::tm::CompileTimeError<!!(cond)> ERROR_##msg; (void) ERROR_##msg; }
+#endif
 
 } // namespace tm
 } // namespace ustl
-
-#endif

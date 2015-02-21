@@ -18,7 +18,7 @@ class FileDescriptor
     /**
      * the file descriptor
      */
-    uint32 fd_;
+    size_t fd_;
 
     /**
      * the file object

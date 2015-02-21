@@ -2,19 +2,22 @@
 #include "kstring.h"
 #include "assert.h"
 #include "Dirent.h"
-#include "Thread.h"
-#include "Mutex.h"
 #include "Inode.h"
 #include "Dentry.h"
 #include "Superblock.h"
 #include "File.h"
 #include "FileDescriptor.h"
 #include "FileSystemType.h"
+#include "FileSystemInfo.h"
 #include "VirtualFileSystem.h"
 #include "MinixFSType.h"
 #include "PathWalker.h"
 #include "VfsMount.h"
 #include "kprintf.h"
+#ifndef EXE2MINIXFS
+#include "Mutex.h"
+#include "Thread.h"
+#endif
 
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
@@ -42,28 +45,16 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
   if (pathname == 0)
     return -1;
 
-  bool prepend_slash_dot = true;
   uint32 len = strlen(pathname);
+  fs_info->pathname_ = "./";
 
-  if (len > 0 && pathname[0] == SEPARATOR)
-    prepend_slash_dot = false;
-  else if (pathname[0] == CHAR_DOT)
+  for (size_t i = 0; i < 3; ++i)
   {
-    if (len > 1 && pathname[1] == SEPARATOR)
-      prepend_slash_dot = false;
-    else if (pathname[1] == CHAR_DOT)
-    {
-      if (len > 2 && pathname[2] == SEPARATOR)
-        prepend_slash_dot = false;
-    }
+    if (len > i && pathname[i] == SEPARATOR)
+      fs_info->pathname_ = "";
+    else if (pathname[i] != CHAR_DOT)
+      break;
   }
-
-  if (prepend_slash_dot)
-  {
-    fs_info->pathname_ = "./";
-  }
-  else
-    fs_info->pathname_ = "";
   fs_info->pathname_ += pathname;
 
   return PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
@@ -72,7 +63,7 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   debug(VFSSYSCALL, "(mkdir) \n");
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
@@ -81,9 +72,9 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
     return -1;
   }
   uint32 len = fs_info->pathname_.find_last_of("/");
-  ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 2, fs_info->pathname_.length() - len - 1);
+  ustl::string sub_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len);
   // set directory
-  fs_info->pathname_ = fs_info->pathname_.substr(0, len + 2);
+  fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
   debug(VFSSYSCALL, "(mkdir) path_prev_name: %s\n", fs_info->pathname_.c_str());
   pw_dentry = 0;
@@ -144,8 +135,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
     debug(VFSSYSCALL, "listing dir %s:\n", pw_dentry->getName());
     for (Dentry* sub_dentry : pw_dentry->d_child_)
     {
-      Inode* sub_inode = sub_dentry->getInode();
-      uint32 inode_type = sub_inode->getType();
+      uint32 inode_type = sub_dentry->getInode()->getType();
       switch (inode_type)
       {
         case I_DIR:
@@ -172,7 +162,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
 
 int32 VfsSyscall::chdir(const char* pathname)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
@@ -283,7 +273,7 @@ int32 VfsSyscall::close(uint32 fd)
 
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
   if (flag > (O_CREAT | O_RDWR))
   {
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
@@ -312,10 +302,10 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   else if (flag & O_CREAT)
   {
     debug(VFSSYSCALL, "(open) create a new file\n");
-    size_t len = fs_info->pathname_.find_last_of("/");
-    ustl::string sub_dentry_name = fs_info->pathname_.substr(len + 1, fs_info->pathname_.length() - len);
+    uint32 len = fs_info->pathname_.find_last_of("/");
+    ustl::string sub_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len);
     // set directory
-    fs_info->pathname_ = fs_info->pathname_.substr(0, len + 1);
+    fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
     Dentry* pw_dentry = 0;
     VfsMount* pw_vfs_mount = 0;
@@ -414,6 +404,7 @@ int32 VfsSyscall::flush(uint32 fd)
   return file_descriptor->getFile()->flush();
 }
 
+#ifndef EXE2MINIXFS
 int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
 {
   FileSystemType* type = vfs.getFsType(file_system_name);
@@ -431,7 +422,7 @@ int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 {
   return vfs.umount(dir_name, flag);
 }
-
+#endif
 uint32 VfsSyscall::getFileSize(uint32 fd)
 {
   FileDescriptor* file_descriptor = getFileDescriptor(fd);

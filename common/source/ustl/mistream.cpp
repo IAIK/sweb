@@ -23,14 +23,14 @@ void ios_base::overrun (__attribute__((unused)) const char* op, __attribute__((u
 //--------------------------------------------------------------------
 
 /// Attaches to the block pointed to by source of size source.pos()
-istream::istream (const ostream& source)
-: cmemlink (source.begin(), source.pos()),
-  m_Pos (0)
+istream::istream (const ostream& source) noexcept
+: cmemlink (source.begin(), source.pos())
+,_pos (0)
 {
 }
 
-void istream::unlink (void) 			{ cmemlink::unlink(); m_Pos = 0; }
-void ostream::unlink (void) 		{ memlink::unlink(); m_Pos = 0; }
+void istream::unlink (void) noexcept		{ cmemlink::unlink(); _pos = 0; }
+void ostream::unlink (void) noexcept		{ memlink::unlink(); _pos = 0; }
 
 /// Writes all unread bytes into \p os.
 void istream::write (ostream& os) const
@@ -52,7 +52,7 @@ void istream::read_strz (string& str)
 	zp = ipos();
     const size_type strl = distance (ipos(), zp);
     str.assign (ipos(), strl);
-    m_Pos += strl + 1;
+    _pos += strl + 1;
 }
 
 /// Reads at most \p n bytes into \p s.
@@ -62,7 +62,7 @@ istream::size_type istream::readsome (void* s, size_type n)
 	underflow (n);
     const size_type ntr (min (n, remaining()));
     read (s, ntr);
-    return (ntr);
+    return ntr;
 }
 
 //--------------------------------------------------------------------
@@ -81,7 +81,7 @@ void ostream::align (size_type grain)
     assert (remaining() >= nb && "Buffer overrun. Check your stream size calculations.");
 #endif
     memset (ip, '\x0', nb);
-    m_Pos += nb;
+    _pos += nb;
 }
 
 /// Writes \p str as a null-terminated string.
@@ -106,14 +106,14 @@ void ostream::read (istream& is)
 /// Inserts an empty area of \p size, at \p start.
 void ostream::insert (iterator start, size_type s)
 {
-    m_Pos += s;
+    _pos += s;
     memlink::insert (start, s);
 }
 
 /// Erases an area of \p size, at \p start.
 void ostream::erase (iterator start, size_type s)
 {
-    m_Pos -= s;
+    _pos -= s;
     memlink::erase (start, s);
 }
 

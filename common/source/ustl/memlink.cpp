@@ -30,10 +30,11 @@ namespace ustl {
 /// \arg elCount Number of times to write the pattern.
 /// Total number of bytes written is \p elSize * \p elCount.
 ///
-void memlink::fill (iterator start, const void* p, size_type elSize, size_type elCount)
+void memlink::fill (const_iterator cstart, const void* p, size_type elSize, size_type elCount) noexcept
 {
     assert (data() || !elCount || !elSize);
-    assert (start >= begin() && start + elSize * elCount <= end());
+    assert (cstart >= begin() && cstart + elSize * elCount <= end());
+    iterator start = const_cast<iterator>(cstart);
     if (elSize == 1)
 	fill_n (start, elCount, *reinterpret_cast<const uint8_t*>(p));
     else while (elCount--)

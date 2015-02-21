@@ -3,12 +3,11 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef MOSTREAM_H_24A8C5397E0848216573E5670930FC9A
-#define MOSTREAM_H_24A8C5397E0848216573E5670930FC9A
-
+#pragma once
 #include "memlink.h"
 #include "utf8.h"
 #include "uios.h"
+#include "strmsize.h"
 #if WANT_STREAM_BOUNDS_CHECKING
     #include "typeinfo.h"
 #endif
@@ -50,17 +49,17 @@ class string;
 ///
 class ostream : public memlink, public ios_base {
 public:
-    inline		ostream (void);
-    inline		ostream (void* p, streamsize n);
-    inline explicit	ostream (const memlink& source);
-    inline iterator	end (void)		{ return (memlink::end()); }
-    inline const_iterator end (void) const	{ return (memlink::end()); }
+    inline		ostream (void)			: memlink(), _pos(0) {}
+    inline		ostream (void* p, streamsize n)	: memlink (p, n), _pos (0) {}
+    inline explicit	ostream (const memlink& source)	: memlink (source), _pos (0) {}
+    inline iterator	end (void)			{ return memlink::end(); }
+    inline const_iterator end (void) const		{ return memlink::end(); }
     inline void		seek (uoff_t newPos);
     inline void		iseek (const_iterator newPos);
     inline void		skip (streamsize nBytes);
-    inline uoff_t	pos (void) const	{ return (m_Pos); }
-    inline iterator	ipos (void)		{ return (begin() + pos()); }
-    inline const_iterator ipos (void) const	{ return (begin() + pos()); }
+    inline uoff_t	pos (void) const		{ return _pos; }
+    inline iterator	ipos (void)			{ return begin() + pos(); }
+    inline const_iterator ipos (void) const		{ return begin() + pos(); }
     inline streamsize	remaining (void) const;
     inline bool		aligned (streamsize grain = c_DefaultAlignment) const;
     bool		verify_remaining (const char* op, const char* type, size_t n);
@@ -72,25 +71,25 @@ public:
     void		read (istream& is);
     inline void		write (ostream& os) const	{ os.write (begin(), pos()); }
     //void		text_write (ostringstream& os) const;
-    inline size_t	stream_size (void) const	{ return (pos()); }
+    inline size_t	stream_size (void) const	{ return pos(); }
     void		insert (iterator start, streamsize size);
     void		erase (iterator start, streamsize size);
     inline void		swap (ostream& os);
     template <typename T>
     inline void		iwrite (const T& v);
-    inline virtual streamsize	overflow (streamsize = 1){ return (remaining()); }
-    virtual void	unlink (void) throw();
+    inline virtual streamsize	overflow (streamsize=1)	{ return remaining(); }
+    virtual void	unlink (void) noexcept override;
     inline void		link (void* p, streamsize n)	{ memlink::link (p, n); }
     inline void		link (memlink& l)		{ memlink::link (l.data(), l.writable_size()); }
     inline void		link (void* f, void* l)		{ memlink::link (f, l); }
-    inline void		relink (void* p, streamsize n)	{ memlink::relink (p, n); m_Pos = 0; }
+    inline void		relink (void* p, streamsize n)	{ memlink::relink (p, n); _pos = 0; }
     inline void		relink (memlink& l)		{ relink (l.data(), l.writable_size()); }
     inline void		seekp (off_t p, seekdir d = beg);
-    inline off_t	tellp (void) const		{ return (pos()); }
+    inline off_t	tellp (void) const		{ return pos(); }
 protected:
-    inline void		SetPos (uoff_t newPos)		{ m_Pos = newPos; }
+    inline void		SetPos (uoff_t newPos)		{ _pos = newPos; }
 private:
-    streamoff		m_Pos;	///< Current write position.
+    streamoff		_pos;	///< Current write position.
 };
 
 //----------------------------------------------------------------------
@@ -110,22 +109,22 @@ public:
     typedef typename Stream::size_type	size_type;
 public:
     inline explicit		ostream_iterator (Stream& os)
-				    : m_Os (os) {}
+				    : _os (os) {}
     inline			ostream_iterator (const ostream_iterator& iter)
-				    : m_Os (iter.m_Os) {} 
+				    : _os (iter._os) {}
     /// Writes \p v into the stream.
     inline ostream_iterator&	operator= (const T& v)
-				    { m_Os << v; return (*this); }
-    inline ostream_iterator&	operator* (void) { return (*this); }
-    inline ostream_iterator&	operator++ (void) { return (*this); }
-    inline ostream_iterator	operator++ (int) { return (*this); }
-    inline ostream_iterator&	operator+= (streamsize n) { m_Os.skip (n); return (*this); }
+				    { _os << v; return *this; }
+    inline ostream_iterator&	operator* (void) { return *this; }
+    inline ostream_iterator&	operator++ (void) { return *this; }
+    inline ostream_iterator	operator++ (int) { return *this; }
+    inline ostream_iterator&	operator+= (streamsize n) { _os.skip (n); return *this; }
     inline bool			operator== (const ostream_iterator& i) const
-				    { return (m_Os.pos() == i.m_Os.pos()); }
+				    { return _os.pos() == i._os.pos(); }
     inline bool			operator< (const ostream_iterator& i) const
-				    { return (m_Os.pos() < i.m_Os.pos()); }
+				    { return _os.pos() < i._os.pos(); }
 private:
-    Stream&	m_Os;
+    Stream&	_os;
 };
 
 //----------------------------------------------------------------------
@@ -137,34 +136,10 @@ typedef utf8out_iterator<ostream_iterator_for_utf8> utf8ostream_iterator;
 inline utf8ostream_iterator utf8out (ostream& os)
 {
     ostream_iterator_for_utf8 si (os);
-    return (utf8ostream_iterator (si));
+    return utf8ostream_iterator (si);
 }
 
 //----------------------------------------------------------------------
-
-/// \brief Constructs a stream attached to nothing.
-/// A stream attached to nothing is not usable. Call Link() functions
-/// inherited from memlink to attach to some memory block.
-///
-inline ostream::ostream (void)
-: memlink (),
-  m_Pos (0)
-{
-}
-
-/// Attaches the stream to a block at \p p of size \p n.
-inline ostream::ostream (void* p, streamsize n)
-: memlink (p, n),
-  m_Pos (0)
-{
-}
-
-/// Attaches to the block pointed to by \p source.
-inline ostream::ostream (const memlink& source)
-: memlink (source),
-  m_Pos (0)
-{
-}
 
 /// Checks that \p n bytes are available in the stream, or else throws.
 inline bool ostream::verify_remaining (const char* op, const char* type, size_t n)
@@ -172,7 +147,7 @@ inline bool ostream::verify_remaining (const char* op, const char* type, size_t 
     const size_t rem = remaining();
     bool enough = n <= rem;
     if (!enough) overrun (op, type, n, pos(), rem);
-    return (enough);
+    return enough;
 }
 
 /// Move the write pointer to \p newPos
@@ -212,20 +187,19 @@ inline void ostream::skip (streamsize nBytes)
 /// Returns number of bytes remaining in the write buffer.
 inline streamsize ostream::remaining (void) const
 {
-    return (size() - pos());
+    return size() - pos();
 }
 
 /// Returns \c true if the write pointer is aligned on \p grain
 inline bool ostream::aligned (streamsize grain) const
 {
-    assert (uintptr_t(begin()) % grain == 0 && "Streams should be attached aligned at the maximum element grain to avoid bus errors.");
-    return (pos() % grain == 0);
+    return pos() % grain == 0;
 }
 
 /// Returns the number of bytes to skip to be aligned on \p grain.
 inline streamsize ostream::align_size (streamsize grain) const
 {
-    return (Align (pos(), grain) - pos());
+    return Align (pos(), grain) - pos();
 }
 
 /// Writes \p n bytes from \p buffer.
@@ -238,7 +212,7 @@ inline void ostream::write (const void* buffer, size_type n)
     assert (remaining() >= n && "Buffer overrun. Check your stream size calculations.");
 #endif
     memcpy (ipos(), const_iterator(buffer), n);
-    m_Pos += n;
+    _pos += n;
 }
 
 /// Writes the contents of \p buf into the stream as a raw dump.
@@ -266,7 +240,7 @@ inline void ostream::iwrite (const T& v)
 inline void ostream::swap (ostream& os)
 {
     memlink::swap (os);
-    ::ustl::swap (m_Pos, os.m_Pos);
+    ::ustl::swap (_pos, os._pos);
 }
 
 //----------------------------------------------------------------------
@@ -282,11 +256,9 @@ inline ostream& operator<< (ostream& os, const T& v) {
     typedef typename tm::Select <numeric_limits<T>::is_integral,
 	integral_object_writer<T>, object_writer<T> >::Result object_writer_t;
     object_writer_t()(os, v);
-    return (os);
+    return os;
 }
 
 //----------------------------------------------------------------------
 
 } // namespace ustl
-
-#endif

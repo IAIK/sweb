@@ -9,7 +9,7 @@ namespace ustl {
 
 /// Copies bits from \p v of size \p n into \p buf as MSB "1011001..." LSB
 /// If \p buf is too small, MSB bits will be truncated.
-void convert_to_bitstring (const bitset_value_type* v, size_t n, string& buf)
+void convert_to_bitstring (const bitset_value_type* v, size_t n, string& buf) noexcept
 {
     string::iterator stri = buf.end();
     for (size_t i = 0; i < n && stri > buf.begin(); ++ i)
@@ -18,7 +18,7 @@ void convert_to_bitstring (const bitset_value_type* v, size_t n, string& buf)
 }
 
 /// Copies bits from \p buf as MSB "1011001..." LSB into \p v of size \p n.
-void convert_from_bitstring (const string& buf, bitset_value_type* v, size_t n)
+void convert_from_bitstring (const string& buf, bitset_value_type* v, size_t n) noexcept
 {
     string::const_iterator stri = buf.end();
     for (size_t i = 0; i < n; ++ i) {

@@ -34,7 +34,9 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
   outportbp (port + 7, 0xEC);   // Get drive info data
   TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return;);
 
-  for (dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
+  uint16 dd[256];
+
+  for (uint32 dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
     dd [dd_off] = inportw ( port );
 
   debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
@@ -95,9 +97,8 @@ int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *
   return result;
 }
 
-int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
 {
-  assert(buffer || (start_sector == 0 && num_sectors == 1));
   /* Wait for drive to clear BUSY */
   TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
@@ -129,9 +130,17 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   /* Wait for drive to set DRDY */
   TIMEOUT_CHECK(!inportbp(port + 7) & 0x40,TIMEOUT_WARNING(); return -1;);
 
+  return 0;
+}
+
+int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+{
+  assert(buffer || (start_sector == 0 && num_sectors == 1));
+  if (selectSector(start_sector, num_sectors) != 0)
+    return -1;
+
   for (int i = 0;; ++i)
   {
-
     /* Write the command code to the command register */
     outportbp(port + 7, 0x20); // command
 
@@ -170,29 +179,10 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer )
 {
   assert(buffer);
-  //MutexLock mlock(lock_);
-  /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+  if (selectSector(start_sector, num_sectors) != 0)
+    return -1;
 
   uint16 *word_buff = (uint16 *) buffer;
-
-  uint32 LBA = start_sector;
-  uint32 cyls = LBA / (HPC * SPT);
-  uint32 TEMP = LBA % (HPC * SPT);
-  uint32 head = TEMP / SPT;
-  uint32 sect = TEMP % SPT + 1;
-
-
-  uint8 high = cyls >> 8;
-  uint8 lo = cyls & 0x00FF;
-  outportbp( port + 6, (drive | head) ); // drive and head selection
-  outportbp( port + 2, num_sectors );    // number of sectors to write
-  outportbp( port + 3, sect );           // starting sector
-  outportbp( port + 4, lo );             // cylinder low
-  outportbp( port + 5, high );           // cylinder high
-
-  /* Wait for drive to set DRDY */
-  TIMEOUT_CHECK(!inportbp(port + 7) & 0x40,TIMEOUT_WARNING(); return -1;);
 
   /* Write the command code to the command register */
   outportbp( port + 7, 0x30 );           // command

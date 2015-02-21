@@ -3,9 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef UIOSFUNC_H_730C16E316F7650E3A02E1C6611B789A
-#define UIOSFUNC_H_730C16E316F7650E3A02E1C6611B789A
-
+#pragma once
 #include "sostream.h"
 
 namespace ustl {
@@ -20,14 +18,14 @@ public:
     ///
     class align {
     public:
-	inline explicit		align (size_t grain = c_DefaultAlignment) : m_Grain(grain) {}
-	inline istream&		apply (istream& is) const { is.align (m_Grain); return (is); }
-	inline ostream&		apply (ostream& os) const { os.align (m_Grain); return (os); }
+	inline explicit		align (size_t grain = c_DefaultAlignment) : _grain(grain) {}
+	inline istream&		apply (istream& is) const { is.align (_grain); return is; }
+	inline ostream&		apply (ostream& os) const { os.align (_grain); return os; }
 	inline void		read (istream& is) const  { apply (is); }
 	inline void		write (ostream& os) const { apply (os); }
-	inline size_t		stream_size (void) const  { return (m_Grain - 1); }
+	inline size_t		stream_size (void) const  { return _grain - 1; }
     private:
-	const size_t		m_Grain;
+	const size_t		_grain;
     };
 
     /// \class talign uiosfunc.h ustl.h
@@ -47,14 +45,14 @@ public:
     ///
     class skip {
     public:
-	inline explicit 	skip (size_t nBytes) : m_nBytes(nBytes) {}
-	inline istream&		apply (istream& is) const { is.skip (m_nBytes); return (is); }
-	inline ostream&		apply (ostream& os) const { os.skip (m_nBytes); return (os); }
+	inline explicit 	skip (size_t nBytes) : _nBytes(nBytes) {}
+	inline istream&		apply (istream& is) const { is.skip (_nBytes); return is; }
+	inline ostream&		apply (ostream& os) const { os.skip (_nBytes); return os; }
 	inline void		read (istream& is) const  { apply (is); }
 	inline void		write (ostream& os) const { apply (os); }
-	inline size_t		stream_size (void) const  { return (m_nBytes); }
+	inline size_t		stream_size (void) const  { return _nBytes; }
     private:
-	const size_t		m_nBytes;
+	const size_t		_nBytes;
     };
 
     /// \class width uiosfunc.h ustl.h
@@ -65,11 +63,11 @@ public:
     ///
     class width {
     public:
-	inline explicit		width (size_t nBytes) : m_nBytes(nBytes) {}
-	inline ostringstream&	apply (ostringstream& os) const { os.set_width (m_nBytes); return (os); }
+	inline explicit		width (size_t nBytes) : _nBytes(nBytes) {}
+	inline ostringstream&	apply (ostringstream& os) const { os.set_width (_nBytes); return os; }
 	inline void		text_write (ostringstream& os) const { apply (os); }
     private:
-	const size_t		m_nBytes;
+	const size_t		_nBytes;
     };
 
     /// \class base uiosfunc.h ustl.h
@@ -80,11 +78,11 @@ public:
     ///
     class base {
     public:
-	inline explicit		base (size_t n) : m_Base(n) {}
-	inline ostringstream&	apply (ostringstream& os) const { os.set_base (m_Base); return (os); }
+	inline explicit		base (size_t n) : _base(n) {}
+	inline ostringstream&	apply (ostringstream& os) const { os.set_base (_base); return os; }
 	inline void		text_write (ostringstream& os) const { apply (os); }
     private:
-	const size_t		m_Base;
+	const size_t		_base;
     };
 };
 
@@ -92,5 +90,3 @@ public:
 
 CAST_STREAMABLE(ustl::ios::fmtflags, uint32_t)
 NUMERIC_LIMITS(ustl::ios::fmtflags, ustl::ios::boolalpha, ustl::ios::floatfield, false, true, true)
-
-#endif

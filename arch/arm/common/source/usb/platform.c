@@ -16,7 +16,7 @@
 #include "kstring.h"
 
 void* MemoryReserve(u32 length __attribute__((unused)), void* physicalAddress) {
- return physicalAddress;
+  return physicalAddress;
 }
 
 void* MemoryAllocate(u32 size) {
