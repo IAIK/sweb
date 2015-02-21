@@ -1,13 +1,9 @@
-/**
- * @file ArchMemory.h
- *
- */
-
 #ifndef _ARCH_MEMORY_H_
 #define _ARCH_MEMORY_H_
 
 #include "types.h"
 #include "paging-definitions.h"
+#include "uvector.h"
 
 /**
  *
@@ -107,7 +103,7 @@ private:
  * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
  * @param physical_page_table_page physical page of the new page table.
  */
-  void insertPT(uint32 pde_vpn, uint32 physical_page_table_page);
+  void insertPT(uint32 pde_vpn);
 
 /**
  * Removes a page directory entry from a given page directory if it is present
@@ -117,6 +113,8 @@ private:
  * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
  */
   void checkAndRemovePT(uint32 pde_vpn);
+
+  ustl::vector<uint32> pt_ppns_;
 
 };
 
