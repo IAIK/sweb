@@ -50,7 +50,7 @@ uint32 ArchCommon::getModuleStartAddress(uint32 num __attribute__((unused)), uin
 
 uint32 ArchCommon::getModuleEndAddress(uint32 num __attribute__((unused)), uint32 is_paging_set_up __attribute__((unused)))
 {
-  return 0x80400000U;  //2GB+4MB Ende des Kernel Bereichs
+  return getKernelEndAddress();
 }
 
 uint32 ArchCommon::getVESAConsoleHeight()
