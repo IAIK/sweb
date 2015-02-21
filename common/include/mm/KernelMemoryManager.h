@@ -115,8 +115,18 @@ class KernelMemoryManager
      */
     pointer reallocateMemory(pointer virtual_address, size_t new_size);
 
+    /**
+     * sets the minimum reserved memory by the kmm (in bytes)
+     * the kmm will take care that there is always enough reserved memory
+     * @param bytes_to_reserve_min the limit in bytes
+     */
     void setMinimumReservedMemory(size_t bytes_to_reserve_min);
 
+    /**
+     * sets the maximum reserved memory by the kmm (in bytes)
+     * the kmm will take care that there will nevever be more reserved memory
+     * @param bytes_to_reserve_max the limit in bytes
+     */
     void setMaximumReservedMemory(size_t bytes_to_reserve_max);
 
     /**
