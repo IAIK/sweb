@@ -122,23 +122,6 @@ int64 ArchThreads::atomic_add(int64 &value, int64 increment)
   return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
 }
 
-uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
-{
-  int64 ret= increment;
-  __asm__ __volatile__(
-  "lock; xadd %0, %1;"
-  :"=a" (ret), "=m" (value)
-  :"a" (ret)
-  :);
-  return ret;
-}
-
-int64 ArchThreads::atomic_add(int64 &value, int64 increment)
-{
-  return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
-}
-
-
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
   printThreadRegisters(thread,0,verbose);

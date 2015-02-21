@@ -130,8 +130,6 @@ public:
  */
   static uint64 atomic_add(uint64 &value, int64 increment);
   static int64 atomic_add(int64 &value, int64 increment);
-  static uint64 atomic_add(uint64 &value, int64 increment);
-  static int64 atomic_add(int64 &value, int64 increment);
 
 /**
  *
