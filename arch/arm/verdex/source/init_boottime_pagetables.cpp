@@ -10,8 +10,8 @@
 
 extern "C" void initialiseBootTimePaging()
 {
-  PageDirEntry *pde_start = (PageDirEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer )kernel_page_directory);
-  PageTableEntry *pte_start = (PageTableEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer )kernel_page_tables);
+  PageDirEntry *pde_start = (PageDirEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_directory);
+  PageTableEntry *pte_start = (PageTableEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer)kernel_page_tables);
 
   uint32 i;
   // the verdex board has physical ram mapped to 0xA0000000
@@ -25,7 +25,7 @@ extern "C" void initialiseBootTimePaging()
   {
     pde_start[2048 + i].pt.size = 1;
     pde_start[2048 + i].pt.offset = i % 4;
-    pde_start[2048 + i].pt.pt_ppn = (((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE) + base_4k/4;
+    pde_start[2048 + i].pt.pt_ppn = (((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE) + base_4k;
   }
   // clear the page tables
   for (i = 0; i < 16 * PAGE_TABLE_ENTRIES; ++i)
@@ -46,12 +46,15 @@ extern "C" void initialiseBootTimePaging()
     pte_start[i].permissions = 1;
     pte_start[i].page_ppn = i + base_4k;
   }
-
+  // 1 : 1 mapping of the first 8 mbs
   for (i = 0; i < 8; ++i)
     mapBootTimePage(pde_start, i, base + i);
   // 1 : 1 mapping of the first 8 mbs of physical ram
   for (i = 0; i < 8; ++i)
     mapBootTimePage(pde_start, base + i, base + i);
+  // map first 4 mb for kernel TODO: remove this loop!
+  for (i = 0; i < 4; ++i)
+    mapBootTimePage(pde_start, 0x800 + i, base + i);
   // 3gb 1:1 mapping
   for (i = 0; i < 1024; ++i)
     mapBootTimePage(pde_start, 0xC00 + i, base + i);
