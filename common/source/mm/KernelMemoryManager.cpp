@@ -318,8 +318,8 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     }
     else
     {
-      ksbrk(-(this_one->getSize() - min_reserved_));
-      this_one->setSize(min_reserved_);
+      ksbrk(-(this_one->getSize() - reserved_min_));
+      this_one->setSize(reserved_min_);
     }
   }
 
