@@ -40,7 +40,6 @@ KernelMemoryManager::KernelMemoryManager(size_t num_pages) :
   debug(KMM, "Clearing initial heap pages\n");
   memset((void*)start_address, 0, num_pages * PAGE_SIZE);
   first_ = (MallocSegment*)start_address;
-  kprintfd("%x\n",start_address);
   new ((void*)start_address) MallocSegment(0, 0, num_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x and initially ends at %x\n", start_address, start_address + num_pages * PAGE_SIZE);

@@ -27,10 +27,9 @@ SECTIONS
     ro_data_start_address = .;
     *(.rodata*)
     ro_data_end_address = .;
-    . = ALIGN(4096);
   }
 
-  .data : AT(ADDR(.data) - LS_Virt)
+  .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
   {
     LS_Data = .;
     data_start_address = .;
@@ -38,20 +37,18 @@ SECTIONS
     . = ALIGN(4096);
     *(.gdt_stuff)
     data_end_address = .;
-    . = ALIGN(4096);
   }
 
-  .bss : AT(ADDR(.bss) - LS_Virt)
+  .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;
     bss_start_address = .;
-    . = ALIGN(4096);
     *(.bss)
-    . = ALIGN(4096);
     *(COMMON) /* common symbols, usually placed in .bss */
     . = ALIGN(4096);
     bss_end_address = .;
+
+    PROVIDE(kernel_end_address = .);
   }
-  
-  PROVIDE(kernel_end_address = .);
+
 }

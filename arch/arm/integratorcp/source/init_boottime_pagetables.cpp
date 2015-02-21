@@ -1,8 +1,3 @@
-/**
- * @file init_boottime_pagetables.cpp
- *
- */
-
 #include "types.h"
 #include "paging-definitions.h"
 #include "offsets.h"
@@ -73,5 +68,5 @@ extern "C" void initialiseBootTimePaging()
 
 extern "C" void removeBootTimeIdentMapping()
 {
-  // we will not remove anything because we need the first 8 mb 1:1 mapped
+  // we could remove parts of the mapping but we need the interrupt vector at 0x0
 }

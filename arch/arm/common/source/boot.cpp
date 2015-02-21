@@ -44,7 +44,6 @@ extern "C" void __naked__ PagingMode()
       "orr r0, r0, #0xdf\n"
       "msr cpsr, r0\n");
   asm("mov sp, %[v]\n" : : [v]"r"(((uint32*)boot_stack)+4096)); // Set up the stack
-  removeBootTimeIdentMapping();
   void (*startupPTR)() = &startup; // create a blx jump instead of a bl jump
   startupPTR();
   assert(false && "you should never get to this point");

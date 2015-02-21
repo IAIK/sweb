@@ -25,7 +25,7 @@ SECTIONS
     ro_data_end_address = .;
   }
   
-  .data : AT(LS_Phys + (LS_Data - LS_Code))
+  .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
   {
     LS_Data = .;
     data_start_address = .;
@@ -33,37 +33,32 @@ SECTIONS
     data_end_address = .;
   }
   
-  .bss : AT(LS_Phys + (LS_Bss - LS_Code))
+  .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;
-    . = ALIGN(16384);
     bss_start_address = .;
     *(.bss)
-    . = ALIGN(16384);
+    . = ALIGN(4096);
     *(COMMON)
     bss_end_address = .;
-    . = ALIGN(16384);
 
   }
 
-  .stab : AT(LS_Phys + (LS_Stab - LS_Code))
+  .stab ALIGN(4096) : AT(LS_Phys + (LS_Stab - LS_Code))
   {
     LS_Stab = .;
     stab_start_address_nr = .;
-    . = ALIGN(16384);
     *(.stab)
-    . = ALIGN(16384);
     stab_end_address_nr = .;
   }
   
-  .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
+  .stabstr ALIGN(4096) : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
-    . = ALIGN(16384);
     stabstr_start_address_nr = .;
     *(.stabstr)
+    . = ALIGN(4096);
     stabstr_end_address_nr = .;
-    . = ALIGN(16384);
 
     PROVIDE(kernel_end_address = .);
   }
