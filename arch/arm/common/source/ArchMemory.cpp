@@ -52,9 +52,9 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 
   //else:
   page_directory[pde_vpn].pt.size = PDE_SIZE_NONE;
-  pt_ppns_.push_back(page_directory[pde_vpn].pt.pt_ppn * 4 + page_directory[pde_vpn].pt.offset);
+  pt_ppns_.push_back((page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K) * 4 + page_directory[pde_vpn].pt.offset);
   for (size_t i = 0; i < 4; ++i)
-    if (ustl::find(pt_ppns_,page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
+    if (ustl::find(pt_ppns_,(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K) * 4 + i) == pt_ppns_.end())
       return;
   PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
 }
@@ -153,9 +153,9 @@ ArchMemory::~ArchMemory()
         }
       }
       page_directory[pde_vpn].pt.size = PDE_SIZE_NONE;
-      pt_ppns_.push_back(page_directory[pde_vpn].pt.pt_ppn * 4 + page_directory[pde_vpn].pt.offset);
+      pt_ppns_.push_back((page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K) * 4 + page_directory[pde_vpn].pt.offset);
       for (size_t i = 0; i < 4; ++i)
-        if (ustl::find(pt_ppns_, page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
+        if (ustl::find(pt_ppns_, (page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K) * 4 + i) == pt_ppns_.end())
           return;
       PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     }
@@ -192,17 +192,17 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].page.size == PDE_SIZE_PAGE) // 1m page
   {
-    *physical_page = page_directory[pde_vpn].page.page_ppn + PHYS_OFFSET_1M;
+    *physical_page = page_directory[pde_vpn].page.page_ppn - PHYS_OFFSET_1M;
     return 1024 * 1024;
   }
   else if (page_directory[pde_vpn].page.size == PDE_SIZE_PT) // 4k page
   {
     if (physical_pte_page)
-      *physical_pte_page = page_directory[pde_vpn].pt.pt_ppn;
+      *physical_pte_page = page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K;
     PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn);
     if (pte_base[pte_vpn].size == 2)
     {
-      *physical_page = pte_base[pte_vpn].page_ppn;
+      *physical_page = pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K;
       return PAGE_SIZE;
     }
     else
