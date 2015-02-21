@@ -49,9 +49,7 @@ SECTIONS
   {
     LS_Stab = .;
     stab_start_address_nr = .;
-    . = ALIGN(16384);
     *(.stab)
-    . = ALIGN(16384);
     stab_end_address_nr = .;
   }
   
@@ -59,11 +57,9 @@ SECTIONS
   {
     LS_Stabstr = .;
     stabstr_start_address_nr = .;
-    . = ALIGN(16384);
     *(.stabstr)
-    . = ALIGN(16384);
     stabstr_end_address_nr = .;
-
+    . = ALIGN(4096);
     PROVIDE(kernel_end_address = .);
   }
   
