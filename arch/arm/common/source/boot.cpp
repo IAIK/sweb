@@ -2,9 +2,12 @@
 #include "board_constants.h"
 #include "init_boottime_pagetables.h"
 #include "assert.h"
+#include "kstring.h"
 
 extern "C" void __naked__ PagingMode();
 extern "C" void startup();
+extern uint8 bss_start_address;
+extern uint8 bss_end_address;
 extern PageDirEntry kernel_page_directory[];
 extern uint8 boot_stack[];
 
@@ -14,6 +17,10 @@ extern "C" void __naked__ entry()
 {
   asm("mov fp, #0\n"
       "mov sp, %[v]" : : [v]"r"(((uint8*)boot_stack) + BOOT_OFFSET + 0x4000)); // Set up the stack
+
+  void (*memsetPTR)(void*,uint8,size_t) = (void(*)(void*,uint8,size_t))((uint8*)&memset + BOOT_OFFSET);
+  memsetPTR((void*)(&bss_start_address - BOOT_OFFSET), 0, (uint32)&bss_end_address - (uint32)&bss_start_address);
+
   void (*initialiseBootTimePagingPTR)() = (void(*)())((uint8*)&initialiseBootTimePaging + BOOT_OFFSET);
   initialiseBootTimePagingPTR();
   asm("mcr p15, 0, %[v], c2, c0, 0\n" : : [v]"r"(((uint8*)kernel_page_directory) + BOOT_OFFSET)); // set ttbr0

@@ -28,8 +28,8 @@ static const struct {
 } mboot __attribute__ ((section (".mboot")));
 
 extern multiboot_info_t* multi_boot_structure_pointer;
-extern uint32 bss_start_address;
-extern uint32 bss_end_address;
+extern uint8 bss_start_address;
+extern uint8 bss_end_address;
 extern uint8 boot_stack[];
 
 extern "C" void parseMultibootHeader();

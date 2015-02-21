@@ -21,7 +21,7 @@
 #define PHYS_OFFSET_1M (PHYS_OFFSET_4K / PAGE_TABLE_ENTRIES)
 
 PageDirEntry kernel_page_directory[PAGE_DIR_ENTRIES] __attribute__((aligned(0x4000))); // space for page directory
-PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(1024))); // space for 8 page tables
+PageTableEntry kernel_page_tables[16 * PAGE_TABLE_ENTRIES] __attribute__((aligned(1024))); // space for 8 page tables
 
 ArchMemory::ArchMemory()
 {
