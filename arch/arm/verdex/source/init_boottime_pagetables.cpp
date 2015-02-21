@@ -19,14 +19,13 @@ extern "C" void initialiseBootTimePaging()
   uint32 base_4k = 0xA0000;
   // clear the page dir
   for (i = 0; i < 4096; ++i)
-    *((uint32*)pde_start) = 0;
-  // 1 : 1 mapping of the first 8 mbs
+    *((uint32*)pde_start + i) = 0;
   // map 16 mb PTs for kernel
   for (i = 0; i < 16; ++i)
   {
     pde_start[2048 + i].pt.size = 1;
     pde_start[2048 + i].pt.offset = i % 4;
-    pde_start[2048 + i].pt.pt_ppn = (((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE) + base_4k;
+    pde_start[2048 + i].pt.pt_ppn = (((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE) + base_4k/4;
   }
   // clear the page tables
   for (i = 0; i < 16 * PAGE_TABLE_ENTRIES; ++i)
