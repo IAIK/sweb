@@ -1,3 +1,8 @@
+/**
+ * @file ArchMemory.cpp
+ *
+ */
+
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
@@ -194,7 +199,7 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *
       if (page_directory[pde_vpn].page.size)
       {
         *physical_page = page_directory[pde_vpn].page.page_ppn;
-        return (PAGE_SIZE*1024U);
+        return (PAGE_SIZE*PAGE_TABLE_ENTRIES);
       }
       else
       {
@@ -216,7 +221,6 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
 {
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
-  assert(pdpte_vpn == 2);
   assert(pdpt[pdpte_vpn].present);
   assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
@@ -230,7 +234,6 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
 {
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
   RESOLVEMAPPING(pdpt, virtual_page);
-  assert(pdpte_vpn == 2);
   assert(pdpt[pdpte_vpn].present);
   assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);

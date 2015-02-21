@@ -27,7 +27,6 @@ extern "C" void initialiseBootTimePaging()
     pdpt_start[i].present = 1;
   }
 
-  //uint8 *pde_start_bytes = (uint8 *)pde_start;
   PageTableEntry *pte_start = (PageTableEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer )kernel_page_tables);
 
   uint32 kernel_last_page = VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address) / PAGE_SIZE;
