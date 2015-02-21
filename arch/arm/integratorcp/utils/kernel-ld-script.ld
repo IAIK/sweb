@@ -23,8 +23,9 @@ SECTIONS
     ro_data_start_address = .;
     *(.rodata*)
     ro_data_end_address = .;
+    . = ALIGN(4096);
   }
-  
+
   .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
   {
     LS_Data = .;
@@ -33,7 +34,7 @@ SECTIONS
     data_end_address = .;
   }
   
-  .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_Code))
+  .bss : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;
     bss_start_address = .;
@@ -44,7 +45,7 @@ SECTIONS
 
   }
 
-  .stab ALIGN(4096) : AT(LS_Phys + (LS_Stab - LS_Code))
+  .stab : AT(LS_Phys + (LS_Stab - LS_Code))
   {
     LS_Stab = .;
     stab_start_address_nr = .;
@@ -52,7 +53,7 @@ SECTIONS
     stab_end_address_nr = .;
   }
   
-  .stabstr ALIGN(4096) : AT(LS_Phys + (LS_Stabstr - LS_Code))
+  .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
     stabstr_start_address_nr = .;
