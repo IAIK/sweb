@@ -24,7 +24,7 @@ extern "C" void initialiseBootTimePaging()
   for (i = 0; i < 16; ++i)
   {
     pde_start[2048 + i].pt.size = 1;
-    pde_start[2048 + i].pt.offset = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) % 4;
+    pde_start[2048 + i].pt.offset = i % 4;
     pde_start[2048 + i].pt.pt_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE;
   }
   // clear the page tables
