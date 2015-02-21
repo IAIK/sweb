@@ -322,7 +322,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
         last_ = this_one->prev_;
         ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
       }
-      else if((size_t)this_one + sizeof(MallocSegment) + this_one->getSize() <= reserved_min_)
+      else if((size_t)this_one + sizeof(MallocSegment) + this_one->getSize() <= base_break_ + reserved_min_)
       {
         // Case 2
         // This is easy, just relax and do nothing
@@ -333,7 +333,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
         // First calculate the new size of the segment
         size_t segment_size = (base_break_ + reserved_min_) - ((size_t)this_one + sizeof(MallocSegment));
         // Calculate how much we have to sbrk
-        ssize_t sub = this_one->getSize() - segment_size;
+        ssize_t sub = segment_size - this_one->getSize();
         ksbrk(sub);
         this_one->setSize(segment_size);
       }
