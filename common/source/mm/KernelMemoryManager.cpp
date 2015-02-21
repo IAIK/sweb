@@ -31,6 +31,7 @@ KernelMemoryManager::KernelMemoryManager(size_t num_pages) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
   assert(instance_ == 0);
+  reserved_max_ = reserved_min_ = 0;
   instance_ = this;
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
@@ -309,6 +310,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   {
     if(this_one != first_)
     {
+      // TODO: Fix it!
       prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
       this_one->prev_->next_ = 0;
       last_ = this_one->prev_;
@@ -316,8 +318,8 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     }
     else
     {
-      ksbrk(-(this_one->getSize()));
-      this_one->setSize(0);
+      ksbrk(-(this_one->getSize() - min_reserved_));
+      this_one->setSize(min_reserved_);
     }
   }
 
@@ -374,6 +376,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
   debug(KMM, "KernelMemoryManager::ksbrk(%d)\n", size);
   prenew_assert(base_break_ <= (size_t)kernel_break_ + size);
+  prenew_assert(reserved_max_ != 0 || kernel_break_ + size > reserved_max_);
   if(size != 0)
   {
     size_t old_brk = kernel_break_;
@@ -413,6 +416,39 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
   {
     return kernel_break_;
   }
+}
+
+void KernelMemoryManager::setMinimumReservedMemory(size_t bytes_to_reserve_min)
+{
+  prenew_assert((bytes_to_reserve_min % PAGE_SIZE) == 0);
+  prenew_assert(reserved_max_ == 0 || bytes_to_reserve_min <= reserved_max_);
+  reserved_min_ = bytes_to_reserve_min;
+  size_t current_size, needed_size;
+  current_size = kernel_break_ - base_break_;
+  prenew_assert(reserved_min_ > current_size);
+  needed_size = reserved_min_ - current_size;
+  if(last_->getUsed())
+  {
+    // In this case we have to create a new segment...
+    MallocSegment* new_segment = new ((void*)ksbrk(needed_size))
+        MallocSegment(last_, 0, needed_size - sizeof(MallocSegment), 0);
+    last_->next_ = new_segment;
+    last_ = new_segment;
+  }
+  else
+  {
+    // else we just increase the size of the last segment
+    ksbrk(needed_size);
+    last_->setSize(last_->getSize() + needed_size);
+  }
+}
+
+void KernelMemoryManager::setMaximumReservedMemroy(size_t bytes_to_reserve_max)
+{
+  prenew_assert((bytes_to_reserve_max % PAGE_SIZE) == 0);
+  prenew_assert(reserved_min_ == 0 || bytes_to_reserve_max >= reserved_min_);
+  prenew_assert(bytes_to_reserve_max > (kernel_break_ - base_break_));
+  reserved_max_ = bytes_to_reserve_max;
 }
 
 Thread* KernelMemoryManager::KMMLockHeldBy()
