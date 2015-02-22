@@ -52,6 +52,9 @@ extern "C" void initialiseBootTimePaging()
   // 1 : 1 mapping of the first 8 mbs of physical ram
   for (i = 0; i < 8; ++i)
     mapBootTimePage(pde_start, base + i, base + i);
+//  // map first 4 mb for kernel TODO: remove this loop!
+//  for (i = 0; i < 4; ++i)
+//    mapBootTimePage(pde_start, 0x800 + i, base + i);
   // 3gb 1:1 mapping
   for (i = 0; i < 1024; ++i)
     mapBootTimePage(pde_start, 0xC00 + i, base + i);

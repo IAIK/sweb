@@ -25,7 +25,7 @@ pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
 uint32 ArchBoardSpecific::getUsableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
 {
   start_address = 0;
-  end_address = getVESAConsoleLFBPtr();
+  end_address = getVESAConsoleLFBPtr() & ~0xC0000000;
   type = 1;
   return 0;
 }
