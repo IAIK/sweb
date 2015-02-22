@@ -4,6 +4,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 if(COMMAND cmake_policy)
   cmake_policy(VERSION 2.6)
 endif(COMMAND cmake_policy)
+enable_language(ASM)
 
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/32")
@@ -39,7 +40,6 @@ add_definitions(-DCMAKE_${ARCH_ESC}=1)
 list(LENGTH ARCH_LIST ARCH_DEPTH)
 
 #Find program executables needed during compilation
-find_program(ASM_EXECUTABLE nasm)
 find_program(LD_EXECUTABLE cc)
 find_program(AR_EXECUTABLE ar)
 find_program(DOXYGEN_EXECUTABLE doxygen)
@@ -51,6 +51,7 @@ set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
+set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}")
 
 if(CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
@@ -58,46 +59,9 @@ else(CMAKE_CROSSCOMPILING) # not cross compiling
   set(CMAKE_CROSS_COMPILE_FLAGS )
 endif(CMAKE_CROSSCOMPILING)
 
-
-# Macro which processes ASM files
-# OBJS are the names (without extension) in the current directory
-MACRO(ASM2OBJ OUTPUTOBJNAMES)
-
-	foreach(src ${ARGN})
-		set(ASM_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/${src}.s)
-		set(ASM_OBJECT ${CMAKE_CURRENT_BINARY_DIR}/${src}.o)
-		set(ASM_OBJECTS ${ASM_OBJECTS} ${ASM_OBJECT})
-
-		add_custom_command(
-		OUTPUT ${ASM_OBJECT}
-		COMMAND ${ASM_EXECUTABLE}
-		ARGS    ${ASM_FORMAT} -o ${ASM_OBJECT} ${ASM_SOURCE}
-		DEPENDS ${ASM_SOURCE}
-		)
-	ENDFOREACH(src)
-
-	set(${OUTPUTOBJNAMES} ${ASM_OBJECTS})
-ENDMACRO(ASM2OBJ)
-
-# Finds and returns ASM source files in the current directory
-MACRO(FIND_ASM_FILES OUTPUTFILES)
-	file(GLOB filenames ${ASM_WILDCARDS})
-
-	set(TEMPOUTPUTLIST)
-	foreach(src ${filenames})
-		get_filename_component(TEMPOUTPUT ${src} NAME_WE)
-		set(TEMPOUTPUTLIST ${TEMPOUTPUTLIST} ${TEMPOUTPUT})
-	endforeach(src)
-	set(${OUTPUTFILES} ${TEMPOUTPUTLIST})
-ENDMACRO(FIND_ASM_FILES)
-
 # Searches for ASM files, Searches for c and cpp files
 # compiles ASM files and adds the library
 MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
-	find_asm_files(asm_source)
-
-	asm2obj(asm_objs ${asm_source})
-	
 	arch2obj(arch_objs)
 
 	file(GLOB source_files ${SOURCE_WILDCARDS})
@@ -107,10 +71,6 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	if(source_files)
 		set(library_files ${source_files})
 	endif(source_files)
-
-	if(asm_objs)
-		set(library_files ${library_files} ${asm_objs})
-	endif(asm_objs)
 
   if(arch_objs)
     set(library_files ${library_files} ${arch_objs})
@@ -122,8 +82,7 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	endif(library_files)
 ENDMACRO(ADD_PROJECT_LIBRARY)
 
-set (SOURCE_WILDCARDS *.cpp *.c *.tcpp *.S)
-set (ASM_WILDCARDS *.s)
+set (SOURCE_WILDCARDS *.cpp *.c *.S)
 set (INFO_FILE info.file)
 
 set(LIBRARY_FILENAMES)
