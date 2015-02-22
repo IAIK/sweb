@@ -40,6 +40,7 @@ add_definitions(-DCMAKE_${ARCH_ESC}=1)
 list(LENGTH ARCH_LIST ARCH_DEPTH)
 
 #Find program executables needed during compilation
+find_program(ASM_EXECUTABLE cc)
 find_program(LD_EXECUTABLE cc)
 find_program(AR_EXECUTABLE ar)
 find_program(DOXYGEN_EXECUTABLE doxygen)
@@ -59,8 +60,7 @@ else(CMAKE_CROSSCOMPILING) # not cross compiling
   set(CMAKE_CROSS_COMPILE_FLAGS )
 endif(CMAKE_CROSSCOMPILING)
 
-# Searches for ASM files, Searches for c and cpp files
-# compiles ASM files and adds the library
+# Searches for asm, c and cpp files and adds the library
 MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	arch2obj(arch_objs)
 
