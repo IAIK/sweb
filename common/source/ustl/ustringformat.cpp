@@ -60,7 +60,7 @@ kvprintf(char const *fmt, void (*func)(int, void*), void *arg, int radix, va_lis
                                 return retval;
                         PCHAR(ch);
                 }
-                lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
+                lflag = (sizeof(size_t) == 8); ladjust = 0; sharpflag = 0; neg = 0;
                 sign = 0; dot = 0; dwidth = 0;
 reswitch:       switch (ch = (u_char)*fmt++) {
                 case '.':
@@ -125,7 +125,7 @@ reswitch:       switch (ch = (u_char)*fmt++) {
                 case 'p':
                         ul = (uintptr_t)va_arg(ap, void *);
                         base = 16;
-                        sharpflag = (width == 0);
+                        sharpflag = 1;
                         goto nosign;
                 case 'n':
                 case 'r':
@@ -159,8 +159,9 @@ reswitch:       switch (ch = (u_char)*fmt++) {
                         base = 10;
                         goto nosign;
                 case 'x':
-                        ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+                        ul = (uintptr_t)va_arg(ap, void *);
                         base = 16;
+                        sharpflag = 1;
                         goto nosign;
                 case 'z':
                         ul = lflag ? va_arg(ap, u_long) :

@@ -1,4 +1,3 @@
-set(ASM_FORMAT -f elf64)
 set(KERNEL_BINARY kernel64.x)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -std=gnu11 -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
