@@ -199,7 +199,7 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   {
     if (physical_pte_page)
       *physical_pte_page = page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K;
-    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn);
+    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     if (pte_base[pte_vpn].size == 2)
     {
       *physical_page = pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K;
