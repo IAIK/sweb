@@ -44,9 +44,7 @@ add_definitions(-DCMAKE_${ARCH_ESC}=1)
 list(LENGTH ARCH_LIST ARCH_DEPTH)
 
 #Find program executables needed during compilation
-find_program(ASM_EXECUTABLE cc)
 find_program(LD_EXECUTABLE cc)
-find_program(AR_EXECUTABLE ar)
 find_program(DOXYGEN_EXECUTABLE doxygen)
 find_program(OBJCOPY_EXECUTABLE objcopy)
 
