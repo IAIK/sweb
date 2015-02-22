@@ -28,6 +28,7 @@ endif ("${DOC_DIR}" STREQUAL "")
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
+  MESSAGE("-- Cross-Compiling on Apple/Windows")
 endif(APPLE OR WIN32)
 
 include(arch/${ARCH}/CMakeLists.compiler)
