@@ -17,17 +17,8 @@
 #define MULTIBOOT_HEADER_FLAGS (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA)
 #define MULTIBOOT_CHECKSUM (-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS))
 
-struct mboot_t {
-  mboot_t() {}
-  uint32 magic = MULTIBOOT_HEADER_MAGIC;
-  uint32 flags = MULTIBOOT_HEADER_FLAGS;
-  uint32 checksum = MULTIBOOT_CHECKSUM;
-  uint32 mode = 0;
-  uint32 width = 800;
-  uint32 height = 600;
-  uint32 depth = 32;
-};
-const static mboot_t mboot __attribute__ ((section (".mboot")));
+uint32 mboot[7] __attribute__ ((section (".mboot")))
+= { MULTIBOOT_HEADER_MAGIC, MULTIBOOT_HEADER_FLAGS, (uint32)MULTIBOOT_CHECKSUM, 0, 800, 600, 32 };
 
 extern multiboot_info_t* multi_boot_structure_pointer;
 extern uint32 bss_start_address;
