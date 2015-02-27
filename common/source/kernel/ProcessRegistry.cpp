@@ -14,7 +14,8 @@ ProcessRegistry* ProcessRegistry::instance_ = 0;
 
 ProcessRegistry::ProcessRegistry(FileSystemInfo *root_fs_info, char const *progs[]) :
     Thread(root_fs_info, "ProcessRegistry"), progs_(progs), progs_running_(0),
-    counter_lock_("ProcessRegistry::counter_lock_"), all_processes_killed_(&counter_lock_)
+    counter_lock_("ProcessRegistry::counter_lock_"),
+    all_processes_killed_(&counter_lock_, "ProcessRegistry::all_processes_killed_")
 {
   instance_ = this; // instance_ is static! -> Singleton-like behaviour
 }

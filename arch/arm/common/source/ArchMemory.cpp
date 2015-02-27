@@ -52,7 +52,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
   page_directory[pde_vpn].pt.size = PDE_SIZE_NONE;
   pt_ppns_.push_back(page_directory[pde_vpn].pt.pt_ppn * 4 + page_directory[pde_vpn].pt.offset);
   for (size_t i = 0; i < 4; ++i)
-    if (ustl::find(pt_ppns_,page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
+    if (ustl::find(pt_ppns_.begin(), pt_ppns_.end(),page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
       return;
   PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
 }
@@ -154,7 +154,7 @@ ArchMemory::~ArchMemory()
       page_directory[pde_vpn].pt.size = PDE_SIZE_NONE;
       pt_ppns_.push_back(page_directory[pde_vpn].pt.pt_ppn * 4 + page_directory[pde_vpn].pt.offset);
       for (size_t i = 0; i < 4; ++i)
-        if (ustl::find(pt_ppns_, page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
+        if (ustl::find(pt_ppns_.begin(), pt_ppns_.end(), page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
           return;
       PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     }

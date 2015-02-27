@@ -3,6 +3,13 @@
 
 #include "types.h"
 
+/**
+ * The flag for full barrier synchronization.
+ */
+#ifndef __ATOMIC_SEQ_CST
+#define __ATOMIC_SEQ_CST 5
+#endif
+
 struct ArchThreadInfo
 {
   uint64  rip;       //   0
@@ -130,6 +137,17 @@ public:
  */
   static uint64 atomic_add(uint64 &value, int64 increment);
   static int64 atomic_add(int64 &value, int64 increment);
+
+  /**
+   * Atomically set a target to another value.
+   *
+   * @param target The target which shall be set
+   * @param value The value which shall be set
+   */
+  static void atomic_set(uint32 &target, uint32 value);
+  static void atomic_set(int32 &target, int32 value);
+  static void atomic_set(uint64 &target, uint64 value);
+  static void atomic_set(int64 &target, int64 value);
 
 /**
  *

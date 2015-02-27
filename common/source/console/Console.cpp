@@ -52,6 +52,10 @@ void Console::handleKey(uint32 key)
   switch (key)
   {
 
+    case KEY_F9:
+      Scheduler::instance()->printLockingInformation();
+      break;
+
     case KEY_F10:
       Scheduler::instance()->printUserSpaceTraces();
       break;

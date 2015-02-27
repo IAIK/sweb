@@ -43,6 +43,7 @@ typedef int64 ssize_t;
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
+#define unreachable()    __builtin_unreachable()
 
 typedef struct
 {

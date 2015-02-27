@@ -40,7 +40,7 @@ const size_t BD_VIRT_DEVICE     = Ansi_Yellow;
 const size_t KPRINTF            = Ansi_Yellow;
 
 //group kernel
-const size_t CONDITION          = Ansi_Yellow;
+const size_t LOCK               = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t LOADER             = Ansi_White;
 const size_t SCHEDULER          = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t SYSCALL            = Ansi_Blue    | OUTPUT_ENABLED;

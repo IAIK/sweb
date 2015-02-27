@@ -123,8 +123,7 @@ extern "C" void startup()
 
   Scheduler::instance()->addNewThread(main_console);
 
-  Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs) // see user_progs.h
-                                                          );
+  Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
 
   Scheduler::instance()->printThreadList();
 
@@ -133,7 +132,6 @@ extern "C" void startup()
   ArchInterrupts::enableInterrupts();
 
   Scheduler::instance()->yield();
-
   //not reached
   assert(false);
 }

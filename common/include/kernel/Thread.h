@@ -20,6 +20,7 @@ class Loader;
 class Terminal;
 class Mutex;
 class FsWorkingDirectory;
+class Lock;
 
 extern Thread* currentThread;
 
@@ -115,10 +116,27 @@ class Thread
      */
     bool schedulable();
 
-    /**
-     * debugging information for mutex deadlocks
-     */
-    Mutex* sleeping_on_mutex_;
+
+	/**
+	 * A part of the single-chained waiters list for the locks.
+	 * It references to the next element of the list.
+	 * In case of a spinlock it is a busy-waiter, else usually it is a sleeper ^^.
+	 */
+	Thread* next_thread_in_lock_waiters_list_;
+
+	/**
+	 * The information which lock the thread is currently waiting on.
+	 */
+	Lock* lock_waiting_on_;
+
+	/**
+	 * A single chained list containing all the locks held by the thread at the moment.
+	 * This list is not locked. It may only be accessed by the thread himself,
+	 * or by other threads in case they can ENSURE that this thread is not able to run at this moment.
+	 * Changing the list has to be done atomic, else it cannot be ensured that the list is valid at any moment!
+	 */
+	Lock* holding_lock_list_;
+
   private:
     Thread(Thread const &src);
     Thread &operator=(Thread const &src);

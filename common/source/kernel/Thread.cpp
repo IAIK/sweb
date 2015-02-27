@@ -34,7 +34,8 @@ static void ThreadStartHack()
 
 Thread::Thread(const char *name) :
     kernel_arch_thread_info_(0), user_arch_thread_info_(0), switch_to_userspace_(0), loader_(0), state_(Running),
-    sleeping_on_mutex_(0), tid_(0), my_terminal_(0), working_dir_(0), name_(name)
+    next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), tid_(0),
+    my_terminal_(0), working_dir_(0), name_(name)
 {
   debug(THREAD, "Thread ctor, this is %x; stack is %x\n", this, stack_);
   debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
@@ -45,7 +46,8 @@ Thread::Thread(const char *name) :
 
 Thread::Thread(FileSystemInfo *working_dir, const char *name) :
     kernel_arch_thread_info_(0), user_arch_thread_info_(0), switch_to_userspace_(0), loader_(0), state_(Running),
-    sleeping_on_mutex_(0), tid_(0), my_terminal_(0), working_dir_(working_dir), name_(name)
+    next_thread_in_lock_waiters_list_(NULL), lock_waiting_on_(NULL), holding_lock_list_(NULL), tid_(0),
+    my_terminal_(0), working_dir_(working_dir), name_(name)
 {
   debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, stack_);
   debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
