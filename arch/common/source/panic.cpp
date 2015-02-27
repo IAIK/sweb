@@ -13,9 +13,8 @@
 
 void kpanict ( uint8 * message )
 {
+  system_state = KPANIC;
   ArchInterrupts::disableInterrupts();
-  extern uint32 boot_completed;
-  boot_completed = 0;
 
   size_t* stack = (size_t*) currentThread->getStackStartPointer();
 

@@ -74,8 +74,7 @@ bool ArchInterrupts::testIFSet()
 
 void ArchInterrupts::yieldIfIFSet()
 {
-  extern uint32 boot_completed;
-  if (boot_completed && currentThread && testIFSet())
+  if (system_state == RUNNING && currentThread && testIFSet())
   {
     ArchThreads::yield();
   }

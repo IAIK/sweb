@@ -6,8 +6,6 @@
 #include "Scheduler.h"
 #include "Thread.h"
 
-extern uint32 boot_completed;
-
 SpinLock::SpinLock(const char* name) :
     name_(name), nosleep_mutex_(0), held_by_(0)
 {
@@ -15,7 +13,7 @@ SpinLock::SpinLock(const char* name) :
 
 bool SpinLock::acquireNonBlocking(__attribute__((unused)) const char* debug_info)
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     if (ArchThreads::testSetLock(nosleep_mutex_, 1))
     {
@@ -29,7 +27,7 @@ bool SpinLock::acquireNonBlocking(__attribute__((unused)) const char* debug_info
 
 void SpinLock::acquire(const char* debug_info)
 {
-  if (likely (boot_completed))
+  if (likely(system_state == RUNNING))
   {
     checkInterrupts("SpinLock::acquire", debug_info);
     while (ArchThreads::testSetLock(nosleep_mutex_, 1))
@@ -52,7 +50,7 @@ bool SpinLock::isFree()
 
 void SpinLock::release(const char* debug_info)
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     if (held_by_ != currentThread)
     {
@@ -73,7 +71,7 @@ void SpinLock::checkInterrupts(const char* method, const char* debug_info)
   if ( unlikely ( ArchInterrupts::testIFSet() == false))
   {
     ArchInterrupts::disableInterrupts();
-    boot_completed = 0;
+    system_state = KPANIC;
     kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d (and SchedulingEnabled=%d) ! Now we're dead !!!\n"
              "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",
              method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info);

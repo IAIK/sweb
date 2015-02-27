@@ -11,8 +11,6 @@
 #include "Thread.h"
 #include "panic.h"
 
-extern uint32 boot_completed;
-
 Mutex::Mutex(const char* name) :
   mutex_(0),
   sleepers_(),
@@ -34,14 +32,14 @@ Mutex::~Mutex()
 
 bool Mutex::acquireNonBlocking(const char* debug_info)
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     checkDeadlock("Mutex::acquireNonBlocking", debug_info);
-    if (likely(boot_completed) && ArchThreads::testSetLock ( mutex_,1 ) )
+    if (likely(system_state == RUNNING) && ArchThreads::testSetLock ( mutex_,1 ) )
     {
       if(threadOnList(currentThread))
       {
-        boot_completed = 0;
+        system_state = KPANIC;
         kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
                    "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
         if (debug_info)
@@ -58,7 +56,7 @@ bool Mutex::acquireNonBlocking(const char* debug_info)
 
 void Mutex::acquire(const char* debug_info)
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     //kprintfd("Mutex::acquire %x %s, %s\n", this, name_, debug_info);
     checkDeadlock("Mutex::acquire", debug_info);
@@ -67,7 +65,7 @@ void Mutex::acquire(const char* debug_info)
     {
       if(threadOnList(currentThread))
       {
-        boot_completed = 0;
+        system_state = KPANIC;
         kprintfd ( "Mutex::acquire: thread %s going to sleep is already on sleepers-list of mutex %s (%x)\n"
                    "you shouldn't use Scheduler::wake() with a thread sleeping on a mutex\n", currentThread->getName(), name_, this );
         if (debug_info)
@@ -161,9 +159,9 @@ void Mutex::checkCircularDeadlock(const char* method, const char* debug_info, Th
 
 void Mutex::checkInvalidRelease(const char* method, const char* debug_info)
 {
-  if (boot_completed && held_by_ != currentThread) // this is a mutex - not a binary semaphore!
+  if (likely(system_state == RUNNING) && held_by_ != currentThread) // this is a mutex - not a binary semaphore!
   { // ... and yes - I'm pretty sure, we can safely do this without the spinlock.
-    boot_completed = 0;
+    system_state = KPANIC;
 
     kprintfd("\n\n%s: Mutex %s (%x) currently not held by currentThread!\n"
         "held_by <%s (%x)> currentThread <%s (%x)>\ndebug info: %s\n\n", method, name_, this,

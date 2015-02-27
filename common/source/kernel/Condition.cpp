@@ -11,8 +11,6 @@
 #include "ArchInterrupts.h"
 #include "debug.h"
 
-extern uint32 boot_completed;
-
 Condition::Condition(Mutex *lock) : sleepers_(), lock_(lock)
 {
 }
@@ -25,7 +23,7 @@ Condition::~Condition()
 
 void Condition::wait()
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     // list is protected, because we assume, the lock is being held
     assert(lock_->isHeldBy(currentThread));
@@ -41,7 +39,7 @@ void Condition::wait()
 
 void Condition::waitWithoutReAcquire()
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     // list is protected, because we assume, the lock is being held
     assert(lock_->isHeldBy(currentThread));
@@ -55,7 +53,7 @@ void Condition::waitWithoutReAcquire()
 
 void Condition::signal()
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     if (! lock_->isHeldBy(currentThread))
       return;
@@ -78,7 +76,7 @@ void Condition::signal()
 
 void Condition::broadcast()
 {
-  if (likely(boot_completed))
+  if (likely(system_state == RUNNING))
   {
     if (! lock_->isHeldBy(currentThread))
       return;

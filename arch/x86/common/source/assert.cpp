@@ -14,11 +14,10 @@ extern Thread* currentThread;
 
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {
+  system_state = KPANIC;
   char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
   ArchInterrupts::disableInterrupts();
-  extern uint32 boot_completed;
-  boot_completed = 0;
   uint8 * fb = (uint8*)0xC00B8000;
   uint32 s=0;
   uint32 i=0;
@@ -71,8 +70,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
-  extern uint32 boot_completed;
-  boot_completed = 0;
+  system_state = KPANIC;
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
   kpanict((uint8*) "Halting System\n");

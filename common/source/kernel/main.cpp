@@ -34,8 +34,7 @@ extern void* kernel_end_address;
 extern Console* main_console;
 
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
-uint32 boot_completed;
-uint32 we_are_dying;
+SystemState system_state;
 FileSystemInfo* default_working_dir;
 
 extern "C" void initialiseBootTimePaging();
@@ -45,8 +44,7 @@ extern "C" void startup()
 {
   writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();
-  we_are_dying = 0;
-  boot_completed = 0;
+  system_state = BOOTING;
   //extend Kernel Memory here
   KernelMemoryManager::instance();
   writeLine2Bochs("Kernel Memory Manager created \n");
@@ -131,7 +129,7 @@ extern "C" void startup()
   Scheduler::instance()->printThreadList();
 
   kprintf("Now enabling Interrupts...\n");
-  boot_completed = 1;
+  system_state = RUNNING;
   ArchInterrupts::enableInterrupts();
 
   Scheduler::instance()->yield();

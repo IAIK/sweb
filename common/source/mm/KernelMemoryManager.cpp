@@ -8,8 +8,6 @@
 #include "ArchInterrupts.h"
 #include "kstring.h"
 
-extern uint32 boot_completed;
-
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
 
 KernelMemoryManager* KernelMemoryManager::instance()

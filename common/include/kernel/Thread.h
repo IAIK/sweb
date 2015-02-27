@@ -11,6 +11,9 @@ enum ThreadState
   Running, Sleeping, ToBeDestroyed, Worker
 };
 
+enum SystemState { BOOTING, RUNNING, KPANIC };
+extern SystemState system_state;
+
 class Thread;
 class ArchThreadInfo;
 class Loader;
