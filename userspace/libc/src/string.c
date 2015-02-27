@@ -113,10 +113,10 @@ void *memset(void *position, int value, size_t number_of_bytes)
  */
 size_t strlen(const char* str) 
 {
-	size_t count=0;
-	while(str[count] != '\0')
-		count++;
-	return count;
+  size_t count=0;
+  while(str[count] != '\0')
+    count++;
+  return count;
 }
 
 /**

@@ -67,7 +67,7 @@ coutclass::coutclass (void (*m_kprintf)(const char*, ...))
 void coutclass::iwrite (uint8_t v)
 {
   //debug(SCHEDULER, "writing single character: %d\n", v);
-	m_kprintf("%c", v);
+  m_kprintf("%c", v);
 }
 
 /// Writes the contents of \p buffer of \p size into the stream.
@@ -81,7 +81,7 @@ coutclass& coutclass::write (const void* buffer, size_type sz)
 inline char* coutclass::encode_dec (char* fmt, uint32_t n) const
 {
     do {
-	*fmt++ = '0' + n % 10;
+  *fmt++ = '0' + n % 10;
     } while (n /= 10);
     return (fmt);
 }
@@ -91,23 +91,23 @@ void coutclass::fmtstring (char* fmt, const char* typestr, bool bInteger) const
 {
     *fmt++ = '%';
     if (m_Width)
-	fmt = encode_dec (fmt, m_Width);
+  fmt = encode_dec (fmt, m_Width);
     if (m_Flags & left)
-	*fmt++ = '-';
+  *fmt++ = '-';
     if (!bInteger) {
-	*fmt++ = '.';
-	fmt = encode_dec (fmt, m_Precision);
+  *fmt++ = '.';
+  fmt = encode_dec (fmt, m_Precision);
     }
     while (*typestr)
-	*fmt++ = *typestr++;
+  *fmt++ = *typestr++;
     if (bInteger) {
-	if (m_Base == 16)
-	    fmt[-1] = 'X';
-	else if (m_Base == 8)
-	    fmt[-1] = 'o';
+  if (m_Base == 16)
+      fmt[-1] = 'X';
+  else if (m_Base == 8)
+      fmt[-1] = 'o';
     } else {
-	if (m_Flags & scientific)
-	    fmt[-1] = 'E';
+  if (m_Flags & scientific)
+      fmt[-1] = 'E';
     }
     *fmt = 0;
 }

@@ -3,7 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#ifndef NDEBUG	// Optimized code here. asserts slow it down, and are checked elsewhere.
+#ifndef NDEBUG  // Optimized code here. asserts slow it down, and are checked elsewhere.
 #define NDEBUG
 #endif
 
@@ -27,17 +27,17 @@ static inline void movsb_dir_down (void) { asm volatile ("std"); }
 static inline void movsb (const void*& src, size_t nBytes, void*& dest)
 {
     asm volatile ("rep;\n\tmovsb"
-	: "=&S"(src), "=&D"(dest), "=&c"(nBytes)
-	: "0"(src), "1"(dest), "2"(nBytes)
-	: "memory");
+  : "=&S"(src), "=&D"(dest), "=&c"(nBytes)
+  : "0"(src), "1"(dest), "2"(nBytes)
+  : "memory");
 }
 
 static inline void movsd (const void*& src, size_t nWords, void*& dest)
 {
     asm volatile ("rep;\n\tmovsl"
-	: "=&S"(src), "=&D"(dest), "=&c"(nWords)
-	: "0"(src), "1"(dest), "2"(nWords)
-	: "memory");
+  : "=&S"(src), "=&D"(dest), "=&c"(nWords)
+  : "0"(src), "1"(dest), "2"(nWords)
+  : "memory");
 }
 
 template <> inline void stosv (uint8_t*& p, size_t n, uint8_t v)
@@ -61,11 +61,11 @@ void copy_backward_fast (const void* first, const void* last, void* result) noex
     movsb (last, nHeadBytes, result);
     nBytes -= nHeadBytes;
     if (uintptr_t(result) % 4 == 3) {
-	const size_t nMiddleBlocks = nBytes / 4;
-	last = advance (last, -3);
-	result = advance (result, -3);
-	movsd (last, nMiddleBlocks, result);
-	nBytes %= 4;
+  const size_t nMiddleBlocks = nBytes / 4;
+  last = advance (last, -3);
+  result = advance (result, -3);
+  movsd (last, nMiddleBlocks, result);
+  nBytes %= 4;
     }
     movsb (last, nBytes, result);
     movsb_dir_up();
@@ -84,16 +84,16 @@ void fill_n32_fast (uint32_t* dest, size_t count, uint32_t v) noexcept { stosv (
 void rotate_fast (void* first, void* middle, void* last) noexcept
 {
     if (first == middle || middle == last)
-	return;
+  return;
     {
-	char* f = (char*) first;
-	char* m = (char*) middle;
-	char* l = (char*) last;
-	reverse (f, m);
-	reverse (m, l);
-	while (f != m && m != l)
-	    iter_swap (f++, --l);
-	reverse (f, (f == m ? l : m));
+  char* f = (char*) first;
+  char* m = (char*) middle;
+  char* l = (char*) last;
+  reverse (f, m);
+  reverse (m, l);
+  while (f != m && m != l)
+      iter_swap (f++, --l);
+  reverse (f, (f == m ? l : m));
     }
 }
 
@@ -109,13 +109,13 @@ size_t popcount (uint32_t v) noexcept
 /// \brief Returns the number of 1s in \p v in binary.
 size_t popcount (uint64_t v) noexcept
 {
-    v -= (v >> 1) & UINT64_C(0x5555555555555555);		// Algorithm from Wikipedia
+    v -= (v >> 1) & UINT64_C(0x5555555555555555);   // Algorithm from Wikipedia
     v = (v & UINT64_C(0x3333333333333333)) + ((v >> 2) & UINT64_C(0x3333333333333333));
     v = (v + (v >> 4)) & UINT64_C(0x0F0F0F0F0F0F0F0F);
     return (v * UINT64_C(0x0101010101010101)) >> 56;
 }
-#endif	// HAVE_INT64_T
-#endif	// !__GNUC__
+#endif  // HAVE_INT64_T
+#endif  // !__GNUC__
 
 //----------------------------------------------------------------------
 // Miscellaneous instantiated stuff from headers which don't have enough

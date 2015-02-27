@@ -62,7 +62,7 @@ cmemlink::size_type cmemlink::stream_size (void) const noexcept
 bool cmemlink::operator== (const cmemlink& l) const noexcept
 {
     return l._size == _size &&
-	    (l._data == _data || 0 == memcmp (l._data, _data, _size));
+      (l._data == _data || 0 == memcmp (l._data, _data, _size));
 }
 
 } // namespace ustl

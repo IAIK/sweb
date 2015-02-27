@@ -46,9 +46,9 @@ private:
     static T MakeT (void);
 public:
     enum {
-	exists = sizeof(UT) == sizeof(Test(MakeT())),
-	exists2Way = exists && Conversion<U,T>::exists,
-	sameType = false
+  exists = sizeof(UT) == sizeof(Test(MakeT())),
+  exists2Way = exists && Conversion<U,T>::exists,
+  sameType = false
     };
 };
 template <typename T>
@@ -64,8 +64,8 @@ struct Conversion<void, void> { enum { exists = true, exists2Way = true, sameTyp
 template <typename T, typename U>
 struct SuperSubclass {
     enum { value = (::ustl::tm::Conversion<const volatile U*, const volatile T*>::exists &&
-		    !::ustl::tm::Conversion<const volatile T*, const volatile void*>::sameType) };
-    enum { dontUseWithIncompleteTypes = sizeof(T)==sizeof(U) };	// Dummy enum to make sure that both classes are fully defined.
+        !::ustl::tm::Conversion<const volatile T*, const volatile void*>::sameType) };
+    enum { dontUseWithIncompleteTypes = sizeof(T)==sizeof(U) }; // Dummy enum to make sure that both classes are fully defined.
 };
 template <>
 struct SuperSubclass<void, void> { enum { value = false }; };
@@ -84,14 +84,14 @@ struct SuperSubclass<T, void> {
 template <typename T, typename U>
 struct SuperSubclassStrict {
     enum { value = SuperSubclass<T,U>::value &&
-		    !::ustl::tm::Conversion<const volatile T*, const volatile U*>::sameType };
+        !::ustl::tm::Conversion<const volatile T*, const volatile U*>::sameType };
 };
 
 #if !HAVE_CPP11
 // static assert support
 template <bool> struct CompileTimeError;
 template <> struct CompileTimeError<true> {};
-#define static_assert(cond,msg)	{ ::ustl::tm::CompileTimeError<!!(cond)> ERROR_##msg; (void) ERROR_##msg; }
+#define static_assert(cond,msg) { ::ustl::tm::CompileTimeError<!!(cond)> ERROR_##msg; (void) ERROR_##msg; }
 #endif
 
 } // namespace tm

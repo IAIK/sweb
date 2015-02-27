@@ -16,51 +16,51 @@ namespace ustl {
 
 #if __GNUC__
     /// Returns the number of elements in a static vector
-    #define VectorSize(v)	(sizeof(v) / sizeof(*v))
+    #define VectorSize(v) (sizeof(v) / sizeof(*v))
 #else
     // Old compilers will not be able to evaluate *v on an empty vector.
     // The tradeoff here is that VectorSize will not be able to measure arrays of local structs.
-    #define VectorSize(v)	(sizeof(v) / ustl::size_of_elements(1, v))
+    #define VectorSize(v) (sizeof(v) / ustl::size_of_elements(1, v))
 #endif
 
 /// Returns the end() for a static vector
 template <typename T, size_t N> inline constexpr T* VectorEnd (T(&a)[N]) { return &a[N]; }
 
 /// Expands into a ptr,size expression for the given static vector; useful as link arguments.
-#define VectorBlock(v)	&(v)[0], VectorSize(v)
+#define VectorBlock(v)  &(v)[0], VectorSize(v)
 /// Expands into a begin,end expression for the given static vector; useful for algorithm arguments.
-#define VectorRange(v)	&(v)[0], VectorEnd(v)
+#define VectorRange(v)  &(v)[0], VectorEnd(v)
 
 /// Returns the number of bits in the given type
-#define BitsInType(t)	(sizeof(t) * CHAR_BIT)
+#define BitsInType(t) (sizeof(t) * CHAR_BIT)
 
 /// Returns the mask of type \p t with the lowest \p n bits set.
-#define BitMask(t,n)	(t(~t(0)) >> (BitsInType(t) - (n)))
+#define BitMask(t,n)  (t(~t(0)) >> (BitsInType(t) - (n)))
 
 /// Argument that is used only in debug builds (as in an assert)
 #ifndef NDEBUG
-    #define DebugArg(x)	x
+    #define DebugArg(x) x
 #else
     #define DebugArg(x)
 #endif
 
 /// Shorthand for container iteration.
-#define foreach(type,i,ctr)	for (type i = (ctr).begin(); i != (ctr).end(); ++ i)
+#define foreach(type,i,ctr) for (type i = (ctr).begin(); i != (ctr).end(); ++ i)
 /// Shorthand for container reverse iteration.
-#define eachfor(type,i,ctr)	for (type i = (ctr).rbegin(); i != (ctr).rend(); ++ i)
+#define eachfor(type,i,ctr) for (type i = (ctr).rbegin(); i != (ctr).rend(); ++ i)
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 // Macro for passing template types as macro arguments.
 // These are deprecated. Use metamac macros instead. Will remove by next release.
-#define TEMPLATE_FULL_DECL1(d1,t1)		template <d1 t1>
-#define TEMPLATE_FULL_DECL2(d1,t1,d2,t2)	template <d1 t1, d2 t2>
-#define TEMPLATE_FULL_DECL3(d1,t1,d2,t2,d3,t3)	template <d1 t1, d2 t2, d3 t3>
-#define TEMPLATE_DECL1(t1)		TEMPLATE_FULL_DECL1(typename,t1)
-#define TEMPLATE_DECL2(t1,t2)		TEMPLATE_FULL_DECL2(typename,t1,typename,t2)
-#define TEMPLATE_DECL3(t1,t2,t3)	TEMPLATE_FULL_DECL3(typename,t1,typename,t2,typename,t3)
-#define TEMPLATE_TYPE1(type,a1)		type<a1>
-#define TEMPLATE_TYPE2(type,a1,a2)	type<a1,a2>
-#define TEMPLATE_TYPE3(type,a1,a2,a3)	type<a1,a2,a3>
+#define TEMPLATE_FULL_DECL1(d1,t1)    template <d1 t1>
+#define TEMPLATE_FULL_DECL2(d1,t1,d2,t2)  template <d1 t1, d2 t2>
+#define TEMPLATE_FULL_DECL3(d1,t1,d2,t2,d3,t3)  template <d1 t1, d2 t2, d3 t3>
+#define TEMPLATE_DECL1(t1)    TEMPLATE_FULL_DECL1(typename,t1)
+#define TEMPLATE_DECL2(t1,t2)   TEMPLATE_FULL_DECL2(typename,t1,typename,t2)
+#define TEMPLATE_DECL3(t1,t2,t3)  TEMPLATE_FULL_DECL3(typename,t1,typename,t2,typename,t3)
+#define TEMPLATE_TYPE1(type,a1)   type<a1>
+#define TEMPLATE_TYPE2(type,a1,a2)  type<a1,a2>
+#define TEMPLATE_TYPE3(type,a1,a2,a3) type<a1,a2,a3>
 #endif
 
 /// Returns the minimum of \p a and \p b
@@ -196,10 +196,10 @@ inline constexpr size_t size_of_elements (size_t n, const T*)
 
 inline uint16_t bswap_16 (uint16_t v)
 {
-#if CPU_HAS_CMPXCHG8	// If it has that, it has bswap.
+#if CPU_HAS_CMPXCHG8  // If it has that, it has bswap.
     if (!__builtin_constant_p(v)) asm ("rorw $8, %0":"+r"(v)); else
 #endif
-	v = v << 8 | v >> 8;
+  v = v << 8 | v >> 8;
     return v;
 }
 inline uint32_t bswap_32 (uint32_t v)
@@ -207,7 +207,7 @@ inline uint32_t bswap_32 (uint32_t v)
 #if CPU_HAS_CMPXCHG8
     if (!__builtin_constant_p(v)) asm ("bswap %0":"+r"(v)); else
 #endif
-	v = v << 24 | (v & 0xFF00) << 8 | ((v >> 8) & 0xFF00) | v >> 24;
+  v = v << 24 | (v & 0xFF00) << 8 | ((v >> 8) & 0xFF00) | v >> 24;
     return v;
 }
 #if HAVE_INT64_T
@@ -216,7 +216,7 @@ inline uint64_t bswap_64 (uint64_t v)
 #if x86_64
     if (!__builtin_constant_p(v)) asm ("bswap %0":"+r"(v)); else
 #endif
-	v = (uint64_t(bswap_32(v)) << 32) | bswap_32(v >> 32);
+  v = (uint64_t(bswap_32(v)) << 32) | bswap_32(v >> 32);
     return v;
 }
 #endif
@@ -226,11 +226,11 @@ template <typename T>
 inline T bswap (const T& v)
 {
     switch (BitsInType(T)) {
-	default:	return v;
-	case 16:	return T (bswap_16 (uint16_t (v)));
-	case 32:	return T (bswap_32 (uint32_t (v)));
+  default:  return v;
+  case 16:  return T (bswap_16 (uint16_t (v)));
+  case 32:  return T (bswap_32 (uint32_t (v)));
 #if HAVE_INT64_T
-	case 64:	return T (bswap_64 (uint64_t (v)));
+  case 64:  return T (bswap_64 (uint64_t (v)));
 #endif
     }
 }
@@ -289,7 +289,7 @@ inline void pack_type (TSmall s, TBig& b)
 {
     b = s;
     for (unsigned h = BitsInType(TSmall); h < BitsInType(TBig); h *= 2)
-	b = (b << h)|b;
+  b = (b << h)|b;
 }
 
 /// \brief Divides \p n1 by \p n2 and rounds the result up.
@@ -299,7 +299,7 @@ inline T1 DivRU (T1 n1, T2 n2)
 {
     T2 adj = n2 - 1;
     if (is_negative (n1))
-	adj = -adj;
+  adj = -adj;
     return (n1 + adj) / n2;
 }
 
@@ -310,17 +310,17 @@ inline bool TestAndSet (int* pm)
     bool rv;
     int oldVal (1);
     asm volatile ( // cmpxchg compares to %eax and swaps if equal
-	"cmpxchgl %3, %1\n\t"
-	"sete %0"
-	: "=a" (rv), "=m" (*pm), "=r" (oldVal)
-	: "2" (oldVal), "a" (0)
-	: "memory");
+  "cmpxchgl %3, %1\n\t"
+  "sete %0"
+  : "=a" (rv), "=m" (*pm), "=r" (oldVal)
+  : "2" (oldVal), "a" (0)
+  : "memory");
     return rv;
 #elif __i386__ || __x86_64__
     int oldVal (1);
     asm volatile ("xchgl %0, %1" : "=r"(oldVal), "=m"(*pm) : "0"(oldVal), "m"(*pm) : "memory");
     return !oldVal;
-#elif __sparc32__	// This has not been tested
+#elif __sparc32__ // This has not been tested
     int rv;
     asm volatile ("ldstub %1, %0" : "=r"(rv), "=m"(*pm) : "m"(pm));
     return !rv;

@@ -28,33 +28,33 @@ namespace ustl {
 template <typename T>
 class auto_ptr {
 public:
-    typedef T		value_type;
-    typedef T*		pointer;
-    typedef T&		reference;
+    typedef T   value_type;
+    typedef T*    pointer;
+    typedef T&    reference;
 public:
     /// Takes ownership of \p p.
-    inline explicit	auto_ptr (pointer p = nullptr)	: _p (p) {}
+    inline explicit auto_ptr (pointer p = nullptr)  : _p (p) {}
     /// Takes ownership of pointer in \p p. \p p relinquishes ownership.
-    inline		auto_ptr (auto_ptr<T>& p)	: _p (p.release()) {}
+    inline    auto_ptr (auto_ptr<T>& p) : _p (p.release()) {}
     /// Deletes the owned pointer.
-    inline		~auto_ptr (void)		{ delete _p; }
+    inline    ~auto_ptr (void)    { delete _p; }
     /// Returns the pointer without relinquishing ownership.
-    inline pointer	get (void) const		{ return _p; }
+    inline pointer  get (void) const    { return _p; }
     /// Returns the pointer and gives up ownership.
-    inline pointer	release (void)			{ pointer rv (_p); _p = nullptr; return rv; }
+    inline pointer  release (void)      { pointer rv (_p); _p = nullptr; return rv; }
     /// Deletes the pointer and sets it equal to \p p.
-    inline void		reset (pointer p)		{ if (p != _p) { delete _p; _p = p; } }
+    inline void   reset (pointer p)   { if (p != _p) { delete _p; _p = p; } }
     /// Takes ownership of \p p.
-    inline auto_ptr<T>&	operator= (pointer p)		{ reset (p); return *this; }
+    inline auto_ptr<T>& operator= (pointer p)   { reset (p); return *this; }
     /// Takes ownership of pointer in \p p. \p p relinquishes ownership.
-    inline auto_ptr<T>&	operator= (auto_ptr<T>& p)	{ reset (p.release()); return *this; }
-    inline reference	operator* (void) const		{ return *_p; }
-    inline pointer	operator-> (void) const		{ return _p; }
-    inline bool		operator== (const pointer p) const	{ return _p == p; }
-    inline bool		operator== (const auto_ptr<T>& p) const	{ return _p == p._p; }
-    inline bool		operator< (const auto_ptr<T>& p) const	{ return p._p < _p; }
+    inline auto_ptr<T>& operator= (auto_ptr<T>& p)  { reset (p.release()); return *this; }
+    inline reference  operator* (void) const    { return *_p; }
+    inline pointer  operator-> (void) const   { return _p; }
+    inline bool   operator== (const pointer p) const  { return _p == p; }
+    inline bool   operator== (const auto_ptr<T>& p) const { return _p == p._p; }
+    inline bool   operator< (const auto_ptr<T>& p) const  { return p._p < _p; }
 private:
-    pointer		_p;
+    pointer   _p;
 };
 
 /// Calls the placement new on \p p.
@@ -74,10 +74,10 @@ inline void construct (ForwardIterator first, ForwardIterator last)
 {
     typedef typename iterator_traits<ForwardIterator>::value_type value_type;
     if (numeric_limits<value_type>::is_integral)
-	memset ((void*) first, 0, max(distance(first,last),0)*sizeof(value_type));
+  memset ((void*) first, 0, max(distance(first,last),0)*sizeof(value_type));
     else
-	for (--last; intptr_t(first) <= intptr_t(last); ++first)
-	    construct (&*first);
+  for (--last; intptr_t(first) <= intptr_t(last); ++first)
+      construct (&*first);
 }
 
 /// Calls the placement new on \p p.
@@ -138,11 +138,11 @@ inline pair<T*, ptrdiff_t> make_temporary_buffer (void* p, size_t n, const T* pt
 #if HAVE_ALLOCA_H
     /// \brief Allocates a temporary buffer, if possible.
     /// \ingroup RawStorageAlgorithms
-    #define get_temporary_buffer(size, ptype)	make_temporary_buffer (alloca(size_of_elements(size, ptype)), size, ptype)
+    #define get_temporary_buffer(size, ptype) make_temporary_buffer (alloca(size_of_elements(size, ptype)), size, ptype)
     #define return_temporary_buffer(p)
 #else
-    #define get_temporary_buffer(size, ptype)	make_temporary_buffer (malloc(size_of_elements(size, ptype)), size, ptype)
-    #define return_temporary_buffer(p)		if (p) free (p), p = nullptr
+    #define get_temporary_buffer(size, ptype) make_temporary_buffer (malloc(size_of_elements(size, ptype)), size, ptype)
+    #define return_temporary_buffer(p)    if (p) free (p), p = nullptr
 #endif
 
 /// Copies [first, last) into result by calling copy constructors in result.
@@ -152,7 +152,7 @@ template <typename InputIterator, typename ForwardIterator>
 ForwardIterator uninitialized_copy (InputIterator first, InputIterator last, ForwardIterator result)
 {
     for (; first < last; ++result, ++first)
-	construct (&*result, *first);
+  construct (&*result, *first);
     return result;
 }
 
@@ -163,7 +163,7 @@ template <typename InputIterator, typename ForwardIterator>
 ForwardIterator uninitialized_copy_n (InputIterator first, size_t n, ForwardIterator result)
 {
     for (++n; --n; ++result, ++first)
-	construct (&*result, *first);
+  construct (&*result, *first);
     return result;
 }
 
@@ -174,7 +174,7 @@ template <typename ForwardIterator, typename T>
 void uninitialized_fill (ForwardIterator first, ForwardIterator last, const T& v)
 {
     for (; first < last; ++first)
-	construct (&*first, v);
+  construct (&*first, v);
 }
 
 /// Calls construct on all elements in [first, first + n) with value \p v.
@@ -184,36 +184,36 @@ template <typename ForwardIterator, typename T>
 ForwardIterator uninitialized_fill_n (ForwardIterator first, size_t n, const T& v)
 {
     for (++n; --n; ++first)
-	construct (&*first, v);
+  construct (&*first, v);
     return first;
 }
     
 } // namespace ustl
 
-namespace std {	// Internal stuff must be in std::
+namespace std { // Internal stuff must be in std::
 
 /// Internal class for compiler support of C++11 initializer lists
 template <typename T>
 class initializer_list {
 public:
-    typedef T 			value_type;
-    typedef size_t 		size_type;
-    typedef const T& 		const_reference;
-    typedef const_reference	reference;
-    typedef const T* 		const_iterator;
-    typedef const_iterator	iterator;
+    typedef T       value_type;
+    typedef size_t    size_type;
+    typedef const T&    const_reference;
+    typedef const_reference reference;
+    typedef const T*    const_iterator;
+    typedef const_iterator  iterator;
 private:
     /// This object is only constructed by the compiler when the {1,2,3}
     /// syntax is used, so the constructor must be private
-    inline constexpr		initializer_list (const_iterator p, size_type sz) noexcept : _data(p), _size(sz) {}
+    inline constexpr    initializer_list (const_iterator p, size_type sz) noexcept : _data(p), _size(sz) {}
 public:
-    inline constexpr		initializer_list (void)noexcept	: _data(nullptr), _size(0) {}
-    inline constexpr size_type	size (void) const noexcept	{ return _size; }
-    inline constexpr const_iterator begin() const noexcept	{ return _data; }
-    inline constexpr const_iterator end() const noexcept	{ return begin()+size(); }
+    inline constexpr    initializer_list (void)noexcept : _data(nullptr), _size(0) {}
+    inline constexpr size_type  size (void) const noexcept  { return _size; }
+    inline constexpr const_iterator begin() const noexcept  { return _data; }
+    inline constexpr const_iterator end() const noexcept  { return begin()+size(); }
 private:
-    iterator			_data;
-    size_type			_size;
+    iterator      _data;
+    size_type     _size;
 };
 
 template <typename T>
