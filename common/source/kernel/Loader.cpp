@@ -225,27 +225,8 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
 
   //read once the bytes we need (and a few more, probably, depends on elf-format)
   size_t buffersize = max_value - min_value;
-  uint8* buffer = 0;
-  uint8 page_buffer[PAGE_SIZE];
-  assert(buffersize <= PAGE_SIZE && "how could the other case occur and how would we handle it?");
-  if (buffersize <= PAGE_SIZE)
-  {
-    buffer = page_buffer;
-  }
-  else
-  {
-    buffer = new uint8[buffersize];
-  }
-  debug(PM, "buffer is %d bytes long\n", buffersize);
-
-  if(!buffer)
-  {
-    kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR not enough heap memory\n");
-    load_lock_.release();
-    //free unmapped page
-    Syscall::exit ( 9996 );
-  }
-
+  uint8 buffer[PAGE_SIZE];
+  assert(buffersize <= PAGE_SIZE && "this should never occur");
 
   VfsSyscall::lseek(fd_, min_value, SEEK_SET);
   ssize_t bytes_read = VfsSyscall::read(fd_, (char*)buffer, max_value - min_value);
@@ -261,9 +242,6 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
       }
     }
     kprintfd ( "Loader::loadOnePageSafeButSlow: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
-    //free buffer
-    if (buffersize > PAGE_SIZE)
-      delete[] buffer;
     load_lock_.release();
     Syscall::exit ( 9998 );
    }
@@ -285,9 +263,6 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
     memcpy(dest + part.page_byte, buffer + part.vaddr - min_value, part.length);
     written += part.length;
   }
-
-  if (buffersize > PAGE_SIZE)
-    delete[] buffer;
 
   arch_memory_.mapPage(virtual_page, page, true);
   debug ( PM,"loadOnePageSafeButSlow: wrote a total of %d bytes\n",written );
