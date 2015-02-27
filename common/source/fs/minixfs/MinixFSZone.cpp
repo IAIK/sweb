@@ -67,7 +67,7 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, uint32 *zones)
     double_indirect_linking_zone_ = 0;
   }
 
-  if (isDebugEnabled(M_ZONE))
+  if (M_ZONE & OUTPUT_ENABLED)
   {
     kprintfd("=========Zones:======%d=======\n", num_zones_);
     kprintfd("====direct Zones:====\n");

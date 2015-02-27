@@ -34,7 +34,7 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset
   debug(M_SB, "---creating Storage Manager\n");
   storage_manager_ = new MinixStorageManager(bm_buffer, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_num_inodes_,
                                              s_zones_);
-  if (isDebugEnabled(M_SB))
+  if (M_SB & OUTPUT_ENABLED)
   {
     storage_manager_->printBitmap();
   }
@@ -160,7 +160,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
   s_files_.clear();
   assert(s_files_.empty() == true);
 
-  if (isDebugEnabled(M_SB))
+  if (M_SB & OUTPUT_ENABLED)
   {
     for (auto it : all_inodes_)
       debug(M_SB, "Inode: %p\n", it);

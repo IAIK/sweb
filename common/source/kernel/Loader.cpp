@@ -91,10 +91,10 @@ bool Loader::loadExecutableAndInitProcess()
     return false;
 
   debug ( LOADER,"loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr_->e_entry, hdr_->e_phnum );
-  if ( isDebugEnabled ( LOADER ) )
+  if (LOADER & OUTPUT_ENABLED)
     Elf::printElfHeader ( *hdr_ );
 
-  if (isDebugEnabled(USERTRACE))
+  if (USERTRACE & OUTPUT_ENABLED)
     loadDebugInfoIfAvailable();
 
   ArchThreads::createThreadInfosUserspaceThread (

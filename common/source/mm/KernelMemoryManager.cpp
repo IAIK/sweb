@@ -283,7 +283,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
   memset((void*) ((size_t) this_one + sizeof(MallocSegment)), 0, this_one->getSize()); // ease debugging
 
-  if (isDebugEnabled(KMM))
+  if (KMM & OUTPUT_ENABLED)
   {
     MallocSegment *current = first_;
     while (current != 0)

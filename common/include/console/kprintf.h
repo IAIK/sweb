@@ -28,22 +28,4 @@ void kprintfd ( const char *fmt, ... );
  */
 void kprintf_init();
 
-/**
- * Displays the output only is the debug flag is set in debug.h
- * needs a debug flag as first parameter otherwise usable like any other printf
- * adds an additional prompt depending on the debug flag
- * please add your custom debug flag here if needed
- * @param flag the debug flag
- * @param fmt Format String with standard Format Syntax
- * @param args Possible multibple variable for printf as specified in Format String.
- */
-void debug ( size_t flag, const char *fmt, ... );
-
-/**
- * returns true if the Debug output for the given flag is enabled
- * @param flag the flag to check
- * @return true if debug is enabled
- */
-bool isDebugEnabled ( size_t flage );
-
 #endif
