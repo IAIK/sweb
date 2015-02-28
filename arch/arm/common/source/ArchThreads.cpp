@@ -154,8 +154,8 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
 
 void ArchThreads::atomic_set(uint32& target, uint32 value)
 {
-	// just re-use the method for exchange. Under ARM the build-ins do not work...
-	testSetLock(target, value);
+  // just re-use the method for exchange. Under ARM the build-ins do not work...
+  testSetLock(target, value);
 }
 
 void ArchThreads::atomic_set(int32& target, int32 value)
