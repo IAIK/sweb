@@ -59,23 +59,15 @@ Thread::Thread(FileSystemInfo *working_dir, const char *name) :
 
 Thread::~Thread()
 {
-  if (loader_)
-  {
-    debug(THREAD, "~Thread: cleaning up UserspaceAddressSpace (freeing Pages)\n");
-    delete loader_;
-    loader_ = 0;
-  }
+  delete loader_;
+  loader_ = 0;
   debug(THREAD, "~Thread: freeing ThreadInfos\n");
   delete user_arch_thread_info_;
   user_arch_thread_info_ = 0;
   delete kernel_arch_thread_info_;
   kernel_arch_thread_info_ = 0;
-  if (working_dir_)
-  {
-    debug(THREAD, "~Thread deleting fs info\n");
-    delete working_dir_;
-    working_dir_ = 0;
-  }
+  delete working_dir_;
+  working_dir_ = 0;
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
   assert(KernelMemoryManager::instance()->KMMLockHeldBy() != this);
 }
