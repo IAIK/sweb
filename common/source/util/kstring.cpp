@@ -3,10 +3,6 @@
 #include "assert.h"
 #include "ArchMemory.h"
 
-#ifndef NULL
-#define NULL    0
-#endif
-
 extern "C" size_t strlen(const char *str)
 {
   const char *pos = str;
@@ -406,16 +402,16 @@ extern "C" char *strrchr(const char* str, char c)
 
 extern "C" char* strtok(char* str, const char* delimiters)
 {
-  static char* str_to_tok = NULL;
-  if (str != NULL)
+  static char* str_to_tok = 0;
+  if (str != 0)
     str_to_tok = str;
 
   // no delimiters, so just return the rest-string
-  if (delimiters == NULL)
+  if (delimiters == 0)
     return str_to_tok;
 
-  if (str_to_tok == NULL)
-    return NULL;
+  if (str_to_tok == 0)
+    return 0;
 
   // determine token start and end
   uint32 tok_start = 0;
@@ -470,7 +466,7 @@ extern "C" char* strtok(char* str, const char* delimiters)
   if (tok_end == -1U)
   {
     // finished, no next token
-    str_to_tok = NULL;
+    str_to_tok = 0;
   }
   else
   {
