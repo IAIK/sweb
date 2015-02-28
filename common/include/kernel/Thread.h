@@ -31,8 +31,6 @@ class Thread
 
     static const char* threadStatePrintable[4];
 
-    Thread(const char* name);
-
     /**
      * Constructor with FsWorkingDirectory given
      * @param working_dir working directory informations for the new Thread

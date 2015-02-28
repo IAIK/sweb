@@ -42,8 +42,7 @@ class KprintfNoSleepFlushingThread : public Thread
 {
   public:
 
-    KprintfNoSleepFlushingThread() :
-        Thread("KprintfNoSleepFlushingThread")
+    KprintfNoSleepFlushingThread() : Thread(0, "KprintfNoSleepFlushingThread")
     {
       state_ = Worker;
     }

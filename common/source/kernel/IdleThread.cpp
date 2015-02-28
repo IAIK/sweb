@@ -2,8 +2,7 @@
 #include "Scheduler.h"
 #include "ArchCommon.h"
 
-IdleThread::IdleThread() :
-    Thread("IdleThread")
+IdleThread::IdleThread() : Thread(0, "IdleThread")
 {
 }
 

@@ -74,8 +74,6 @@ class Console : public Thread
      * @param num_terminals ignored
      * @return Console instance
      */
-    Console(uint32 num_terminals);
-
     Console(uint32 num_terminals, const char *name);
 
     /**
