@@ -53,7 +53,7 @@ const size_t USERTRACE          = Ansi_Red;
 
 //group memory management
 const size_t PM                 = Ansi_Green | OUTPUT_ENABLED;
-const size_t KMM                = Ansi_Yellow;
+const size_t KMM                = Ansi_Yellow | OUTPUT_ENABLED;
 
 //group driver
 const size_t DRIVER             = Ansi_Yellow;

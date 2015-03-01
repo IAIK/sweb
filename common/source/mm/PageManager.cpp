@@ -78,7 +78,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     prenew_assert(false);
   }
 
-  size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 2;
+  size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
   size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
   size_t last_free_page = number_of_pages_-1;
   size_t temp_page_size = 0;
@@ -87,7 +87,10 @@ PageManager::PageManager() : lock_("PageManager::lock_")
                                     num_reserved_heap_pages < MIN_HEAP_PAGES; ++num_reserved_heap_pages)
   {
     if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
+    {
       ArchMemory::mapKernelPage(start_vpn++,last_free_page--);
+    }
+    kprintfd("map %x -> %x\n", start_vpn - 1, last_free_page + 1);
   }
   extern KernelMemoryManager kmm;
   new (&kmm) KernelMemoryManager(num_reserved_heap_pages,MAX_HEAP_PAGES);
