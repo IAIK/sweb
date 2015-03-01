@@ -17,7 +17,8 @@ PageManager* PageManager::instance_ = 0;
 
 extern void* kernel_end_address;
 
-#define MIN_HEAP_PAGES 0 // set this to 400 for Assignment 2
+#define MIN_HEAP_PAGES 1 // set this to 400 for Assignment 2
+#define MAX_HEAP_PAGES 4096 // maximum heap size is 16MiB
 
 PageManager* PageManager::instance()
 {
@@ -83,7 +84,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       ArchMemory::mapKernelPage(start_vpn++,last_free_page--);
   }
   extern KernelMemoryManager kmm;
-  new (&kmm) KernelMemoryManager(num_reserved_pages);
+  new (&kmm) KernelMemoryManager(num_reserved_pages,MAX_HEAP_PAGES);
   page_usage_table_ = new Bitmap(number_of_pages_);
 
   // since we have gaps in the memory maps we can not give out everything

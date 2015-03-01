@@ -24,7 +24,7 @@ KernelMemoryManager* KernelMemoryManager::instance()
   return instance_;
 }
 
-KernelMemoryManager::KernelMemoryManager(size_t num_pages) :
+KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
   assert(instance_ == 0);
@@ -32,14 +32,14 @@ KernelMemoryManager::KernelMemoryManager(size_t num_pages) :
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = start_address;
-  kernel_break_ = start_address + num_pages * PAGE_SIZE;
-  reserved_max_ = reserved_min_ = num_pages * PAGE_SIZE;
+  kernel_break_ = start_address + min_heap_pages * PAGE_SIZE;
+  reserved_max_ = reserved_min_ = min_heap_pages * PAGE_SIZE;
   debug(KMM, "Clearing initial heap pages\n");
-  memset((void*)start_address, 0, num_pages * PAGE_SIZE);
+  memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);
   first_ = (MallocSegment*)start_address;
-  new ((void*)start_address) MallocSegment(0, 0, num_pages * PAGE_SIZE - sizeof(MallocSegment), false);
+  new ((void*)start_address) MallocSegment(0, 0, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
-  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x and initially ends at %x\n", start_address, start_address + num_pages * PAGE_SIZE);
+  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x and initially ends at %x\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
 }
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
