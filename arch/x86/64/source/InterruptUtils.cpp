@@ -265,8 +265,8 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
       }
       else
       {
-        debug(A_INTERRUPTS | PM, "The virtual page we accessed was not mapped to a physical page\n");
-        debug(A_INTERRUPTS | PM, "this is normal and the Loader will propably take care of it now\n");
+//        debug(PM, "The virtual page we accessed was not mapped to a physical page\n");
+//        debug(PM, "this is normal and the Loader will propably take care of it now\n");
       }
     }
   }
