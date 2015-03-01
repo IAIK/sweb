@@ -116,16 +116,6 @@ class KernelMemoryManager
      */
     pointer reallocateMemory(pointer virtual_address, size_t new_size);
 
-    void setMinimumReservedMemory(size_t bytes_to_reserve_min);
-
-    void setMaximumReservedMemory(size_t bytes_to_reserve_max);
-
-    /**
-     * called from startup() after the scheduler has been created and just
-     * before the Interrupts are turned on
-     */
-    void startUsingSyncMechanism();
-
     SpinLock& getKMMLock();
 
     Thread* KMMLockHeldBy();

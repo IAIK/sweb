@@ -33,7 +33,8 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = start_address;
   kernel_break_ = start_address + min_heap_pages * PAGE_SIZE;
-  reserved_max_ = reserved_min_ = min_heap_pages * PAGE_SIZE;
+  reserved_min_ = min_heap_pages * PAGE_SIZE;
+  reserved_max_ = max_heap_pages * PAGE_SIZE;
   debug(KMM, "Clearing initial heap pages\n");
   memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);
   first_ = (MallocSegment*)start_address;
@@ -436,40 +437,6 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
   {
     return kernel_break_;
   }
-}
-
-void KernelMemoryManager::setMinimumReservedMemory(size_t bytes_to_reserve_min)
-{
-  prenew_assert((bytes_to_reserve_min % PAGE_SIZE) == 0);
-  prenew_assert(bytes_to_reserve_min <= reserved_max_);
-  reserved_min_ = bytes_to_reserve_min;
-  size_t current_size, needed_size;
-  current_size = kernel_break_ - base_break_;
-  prenew_assert(reserved_min_ > current_size);
-  needed_size = reserved_min_ - current_size;
-  if(last_->getUsed())
-  {
-    // In this case we have to create a new segment...
-    MallocSegment* new_segment = new ((void*)ksbrk(needed_size))
-        MallocSegment(last_, 0, needed_size - sizeof(MallocSegment), 0);
-    last_->next_ = new_segment;
-    last_ = new_segment;
-  }
-  else
-  {
-    // else we just increase the size of the last segment
-    ksbrk(needed_size);
-    last_->setSize(last_->getSize() + needed_size);
-  }
-}
-
-void KernelMemoryManager::setMaximumReservedMemory(size_t bytes_to_reserve_max)
-{
-  kprintfd("%u %u %u %u", bytes_to_reserve_max, kernel_break_, base_break_, (kernel_break_ - base_break_));
-  prenew_assert((bytes_to_reserve_max % PAGE_SIZE) == 0);
-  prenew_assert(bytes_to_reserve_max >= reserved_min_);
-  prenew_assert(bytes_to_reserve_max >= (kernel_break_ - base_break_));
-  reserved_max_ = bytes_to_reserve_max;
 }
 
 Thread* KernelMemoryManager::KMMLockHeldBy()

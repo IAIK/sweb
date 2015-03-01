@@ -17,8 +17,14 @@ PageManager* PageManager::instance_ = 0;
 
 extern void* kernel_end_address;
 
-#define MIN_HEAP_PAGES 1 // set this to 400 for Assignment 2
-#define MAX_HEAP_PAGES 4096 // maximum heap size is 16MiB
+// Between min and max KMM heap memory is reserved dynamically!
+// Please note that this means that the KMM depends on the page manager and you
+// will have a harder time implementing swapping. Pros only!
+// Please also note that the implementation of *dynamic* KMM is rather new - please report any strange behavior.
+
+// we recommend setting both values to 400 for Assignment 2:
+#define MIN_HEAP_PAGES 1
+#define MAX_HEAP_PAGES 4096 // 4096 pages, because maximum heap size is 16MiB
 
 PageManager* PageManager::instance()
 {
@@ -76,15 +82,15 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
   size_t last_free_page = number_of_pages_-1;
   size_t temp_page_size = 0;
-  size_t num_reserved_pages = 0;
-  for (num_reserved_pages = 0; num_reserved_pages < num_pages_for_bitmap || temp_page_size != 0 ||
-                               num_reserved_pages < MIN_HEAP_PAGES; ++num_reserved_pages)
+  size_t num_reserved_heap_pages = 0;
+  for (num_reserved_heap_pages = 0; num_reserved_heap_pages < num_pages_for_bitmap || temp_page_size != 0 ||
+                                    num_reserved_heap_pages < MIN_HEAP_PAGES; ++num_reserved_heap_pages)
   {
     if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
       ArchMemory::mapKernelPage(start_vpn++,last_free_page--);
   }
   extern KernelMemoryManager kmm;
-  new (&kmm) KernelMemoryManager(num_reserved_pages,MAX_HEAP_PAGES);
+  new (&kmm) KernelMemoryManager(num_reserved_heap_pages,MAX_HEAP_PAGES);
   page_usage_table_ = new Bitmap(number_of_pages_);
 
   // since we have gaps in the memory maps we can not give out everything

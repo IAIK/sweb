@@ -63,9 +63,9 @@ void Thread::kill()
         currentThread, getName(), this);
 
   switch_to_userspace_ = false;
-  state_ = ToBeDestroyed;
 
   Scheduler::instance()->invokeCleanup();
+  state_ = ToBeDestroyed;
 
   if (currentThread == this)
   {
