@@ -10,7 +10,6 @@
 #include "PageManager.h"
 #include "kstring.h"
 
-
 KernelMemoryManager kmm;
 
 KernelMemoryManager * KernelMemoryManager::instance_ = 0;
@@ -29,12 +28,12 @@ KernelMemoryManager::KernelMemoryManager(size_t num_pages) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
   assert(instance_ == 0);
-  reserved_max_ = reserved_min_ = 0;
   instance_ = this;
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = start_address;
   kernel_break_ = start_address + num_pages * PAGE_SIZE;
+  reserved_max_ = reserved_min_ = num_pages * PAGE_SIZE;
   debug(KMM, "Clearing initial heap pages\n");
   memset((void*)start_address, 0, num_pages * PAGE_SIZE);
   first_ = (MallocSegment*)start_address;
@@ -442,7 +441,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
 void KernelMemoryManager::setMinimumReservedMemory(size_t bytes_to_reserve_min)
 {
   prenew_assert((bytes_to_reserve_min % PAGE_SIZE) == 0);
-  prenew_assert(reserved_max_ == 0 || bytes_to_reserve_min <= reserved_max_);
+  prenew_assert(bytes_to_reserve_min <= reserved_max_);
   reserved_min_ = bytes_to_reserve_min;
   size_t current_size, needed_size;
   current_size = kernel_break_ - base_break_;
@@ -468,7 +467,7 @@ void KernelMemoryManager::setMaximumReservedMemory(size_t bytes_to_reserve_max)
 {
   kprintfd("%u %u %u %u", bytes_to_reserve_max, kernel_break_, base_break_, (kernel_break_ - base_break_));
   prenew_assert((bytes_to_reserve_max % PAGE_SIZE) == 0);
-  prenew_assert(reserved_min_ == 0 || bytes_to_reserve_max >= reserved_min_);
+  prenew_assert(bytes_to_reserve_max >= reserved_min_);
   prenew_assert(bytes_to_reserve_max >= (kernel_break_ - base_break_));
   reserved_max_ = bytes_to_reserve_max;
 }
@@ -480,13 +479,13 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
-  assert(!boot_completed || PageManager::instance()->heldBy() != currentThread);
+  assert(!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread);
   lock_.acquire();
 }
 
 void KernelMemoryManager::unlockKMM()
 {
-  assert(!boot_completed || PageManager::instance()->heldBy() != currentThread);
+  assert(!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread);
   lock_.release();
 }
 

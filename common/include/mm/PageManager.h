@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "paging-definitions.h"
-#include "Mutex.h"
+#include "SpinLock.h"
 #include "Bitmap.h"
 
 class PageManager

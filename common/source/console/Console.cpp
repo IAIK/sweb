@@ -41,7 +41,7 @@ void Console::handleKey(uint32 key)
 // else...
   switch (key)
   {
-    case KEY_F9:
+    case KEY_F8:
       PageManager::instance()->printBitmap();
       break;
 
