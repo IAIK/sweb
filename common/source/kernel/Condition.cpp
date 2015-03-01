@@ -1,108 +1,89 @@
-/**
- * @file Condition.cpp
- */
-
 #include "Condition.h"
 #include "Thread.h"
 #include "Mutex.h"
 #include "Scheduler.h"
 #include "assert.h"
 #include "kprintf.h"
-#include "ArchInterrupts.h"
 #include "debug.h"
 
 extern uint32 boot_completed;
 
-Condition::Condition(Mutex *lock) : sleepers_(), lock_(lock)
+Condition::Condition(Mutex* mutex, const char* name) :
+  Lock(name), mutex_(mutex)
 {
 }
 
-Condition::~Condition()
+void Condition::wait(const char* debug_info, bool re_acquire_mutex)
 {
-  if (sleepers_.size() != 0)
-    kprintfd("WARNING: Condition::~Condition (%x) with sleepers_.size() != 0 and currentThread (%x)\n", this, currentThread);
-}
+  if(unlikely(system_state != RUNNING))
+    return;
+  //debug(LOCK, "Condition::wait: Thread %s (%p) waiting on condition %s (%p).\n",
+  //      currentThread->getName(), currentThread, getName(), this);
+  assert(mutex_->isHeldBy(currentThread));
+  // check if the interrupts are enabled and the thread is not waiting for some other locks
+  checkInterrupts("Condition::wait", debug_info);
+  checkCurrentThreadStillWaitingOnAnotherLock(debug_info);
 
-void Condition::wait()
-{
-  if (likely(boot_completed))
+  assert(currentThread->holding_lock_list_);
+  if(currentThread->holding_lock_list_->hasNextOnHoldingList())
   {
-    // list is protected, because we assume, the lock is being held
-    assert(lock_->isHeldBy(currentThread));
-    assert(ArchInterrupts::testIFSet());
-    sleepers_.push_back(currentThread);
-    //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
-    debug(CONDITION, "Condition::wait: Thread %x  %d:%s wating on Condition %x\n",currentThread,currentThread->getTID(),currentThread->getName(),this);
-    Scheduler::instance()->sleepAndRelease(*lock_);
-    assert(lock_);
-    lock_->acquire();
+    debug(LOCK, "Condition::wait: Warning: The thread %s (%p) is holding some locks when going to sleep on condition %s (%p).\n"
+          "This may lower the performance of the system, and cause undetectable deadlocks!\n",
+          currentThread->getName(), currentThread, getName(), this);
+    printHoldingList(currentThread);
+  }
+  lockWaitersList();
+  // The mutex can be released here, because for waking up another thread, the list lock is needed, which is still held by the thread.
+  mutex_->release();
+  Scheduler::instance()->sleepAndRelease(*(Lock*)this);
+  if(re_acquire_mutex)
+  {
+    assert(mutex_);
+    mutex_->acquire();
   }
 }
 
-void Condition::waitWithoutReAcquire()
+void Condition::signal(const char* debug_info)
 {
-  if (likely(boot_completed))
+  if(unlikely(system_state != RUNNING))
+    return;
+  assert(mutex_->isHeldBy(currentThread));
+  checkInterrupts("Condition::signal", debug_info);
+  lockWaitersList();
+  Thread* thread_to_be_woken_up = popBackThreadFromWaitersList();
+  unlockWaitersList();
+
+  if(thread_to_be_woken_up)
   {
-    // list is protected, because we assume, the lock is being held
-    assert(lock_->isHeldBy(currentThread));
-    assert(ArchInterrupts::testIFSet());
-    sleepers_.push_back(currentThread);
-    //<-- an interrupt and signal could happen here or during "sleep()"  ! problem: Thread* gets deleted before thread goes to sleep -> no wakeup call possible on next signal
-    debug(CONDITION, "Condition::wait: Thread %x  %d:%s wating on Condition %x\n",currentThread,currentThread->getTID(),currentThread->getName(),this);
-    Scheduler::instance()->sleepAndRelease(*lock_);
+    if(likely(thread_to_be_woken_up->state_ == Sleeping))
+    {
+      // In this case we can access the pointer of the other thread without locking,
+      // because we can ensure that the thread is sleeping.
+
+      //debug(LOCK, "Condition: Thread %s (%p) being signaled for condition %s (%p).\n",
+      //      thread_to_be_woken_up->getName(), thread_to_be_woken_up, getName(), this);
+      thread_to_be_woken_up->lock_waiting_on_ = 0;
+      Scheduler::instance()->wake(thread_to_be_woken_up);
+    }
+    else
+    {
+      debug(LOCK, "ERROR: Condition %s (%p): Thread %s (%p) is in state %s AND waiting on the condition!\n",
+            getName(), this, thread_to_be_woken_up->getName(), thread_to_be_woken_up,
+            Thread::threadStatePrintable[thread_to_be_woken_up->state_]);
+      if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
+      assert(false);
+    }
   }
 }
 
-void Condition::signal()
+void Condition::broadcast(const char* debug_info)
 {
-  if (likely(boot_completed))
+  if(unlikely(system_state != RUNNING))
+    return;
+  assert(mutex_->isHeldBy(currentThread));
+  // signal em all
+  while(threadsAreOnWaitersList())
   {
-    if (! lock_->isHeldBy(currentThread))
-      return;
-    assert(ArchInterrupts::testIFSet());
-    Thread *thread=0;
-    if (!sleepers_.empty())
-    {
-      thread = sleepers_.front();
-      if (thread->state_ == Sleeping)
-      {
-        //Solution to above Problem: Wake and Remove from List only Threads which are actually sleeping
-        Scheduler::instance()->wake(thread);
-        sleepers_.pop_front();
-      }
-    }
-    if (thread)
-      debug(CONDITION,"Condition::signal: Thread %x  %d:%s being signaled for Condition %x\n",thread,thread->getTID(),thread->getName(),this);
-  }
-}
-
-void Condition::broadcast()
-{
-  if (likely(boot_completed))
-  {
-    if (! lock_->isHeldBy(currentThread))
-      return;
-    assert(ArchInterrupts::testIFSet());
-    Thread *thread;
-    ustl::list<Thread*> tmp_threads;
-    while (!sleepers_.empty())
-    {
-      thread = sleepers_.front();
-      sleepers_.pop_front();
-      if (thread->state_ == Sleeping)
-        Scheduler::instance()->wake(thread);
-      else
-      {
-        assert(thread->state_ != Running && "Why is a *Running* thread on the sleepers list of this condition? bug?");
-        tmp_threads.push_back(thread);
-      }
-      debug(CONDITION,"Condition::broadcast: Thread %x  %d:%s being signaled for Condition %x\n",thread,thread->getTID(),thread->getName(),this);
-    }
-    while (!tmp_threads.empty())
-    {
-      Thread* temp = tmp_threads.front();
-      sleepers_.push_back(temp);
-      tmp_threads.pop_front();
-    }
+    signal(debug_info);
   }
 }

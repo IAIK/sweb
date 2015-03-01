@@ -44,13 +44,13 @@ typedef struct c_string
 
 } c_string;
 
-unsigned char const ZEROPAD	= 1;		/* pad with zero */
-unsigned char const SIGN	= 2;		/* unsigned/signed long */
-unsigned char const PLUS	= 4;		/* show plus */
-unsigned char const SPACE	= 8;		/* space if plus */
-unsigned char const LEFT	= 16;		/* left justified */
-unsigned char const SPECIAL	= 32;		/* 0x */
-unsigned char const LARGE	= 64;		/* use 'ABCDEF' instead of 'abcdef' */
+unsigned char const ZEROPAD = 1;    /* pad with zero */
+unsigned char const SIGN  = 2;    /* unsigned/signed long */
+unsigned char const PLUS  = 4;    /* show plus */
+unsigned char const SPACE = 8;    /* space if plus */
+unsigned char const LEFT  = 16;   /* left justified */
+unsigned char const SPECIAL = 32;   /* 0x */
+unsigned char const LARGE = 64;   /* use 'ABCDEF' instead of 'abcdef' */
 
 /**
  * Resizes the string in the given c_string structure..
@@ -111,59 +111,59 @@ void writeNumber(c_string *output_string, unsigned int number,
                  unsigned int precision, unsigned char type)
 {
   // code taken from kprintf's output_number()
-	char c;
+  char c;
   char sign,tmp[70];
-	const char *digits;
-	static const char small_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-	static const char large_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	unsigned int i;
+  const char *digits;
+  static const char small_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+  static const char large_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  unsigned int i;
 
-	digits = (type & LARGE) ? large_digits : small_digits;
-	if (type & LEFT)
+  digits = (type & LARGE) ? large_digits : small_digits;
+  if (type & LEFT)
   {
-		type &= ~ZEROPAD;
+    type &= ~ZEROPAD;
     size = 0;  //no padding then
   }
-	if (base < 2 || base > 36)
-		return;
-	c = (type & ZEROPAD) ? '0' : ' ';
-	sign = 0;
-	if (type & SIGN) {
-		if (((int) number) < 0) {
-			sign = '-';
-			number = - (int) number;
-		} else if (type & PLUS) {
-			sign = '+';
-		} else if (type & SPACE) {
-			sign = ' ';
-		}
-	}
-	i = 0;
-	if (number == 0)
-		tmp[i++]='0';
-	else while (number != 0)
+  if (base < 2 || base > 36)
+    return;
+  c = (type & ZEROPAD) ? '0' : ' ';
+  sign = 0;
+  if (type & SIGN) {
+    if (((int) number) < 0) {
+      sign = '-';
+      number = - (int) number;
+    } else if (type & PLUS) {
+      sign = '+';
+    } else if (type & SPACE) {
+      sign = ' ';
+    }
+  }
+  i = 0;
+  if (number == 0)
+    tmp[i++]='0';
+  else while (number != 0)
   {
-		tmp[i++] = digits[number%base];
+    tmp[i++] = digits[number%base];
     number /= base;
   }
-	//size -= precision;
-	//~ if (!(type&(ZEROPAD+LEFT))) {
-		//~ while(size-- >0) {
+  //size -= precision;
+  //~ if (!(type&(ZEROPAD+LEFT))) {
+    //~ while(size-- >0) {
       //~ console->write(' ');
     //~ }
-	//~ }
-	if (sign) {
+  //~ }
+  if (sign) {
     tmp[i++] = sign;
   }
-	if (type & SPECIAL) {
+  if (type & SPECIAL) {
     precision = 0; //no precision with special for now
-		if (base==8) {
+    if (base==8) {
         tmp[i++] = '0';
-		} else if (base==16) {
+    } else if (base==16) {
         tmp[i++] = digits[33];
         tmp[i++] = '0';
       }
-	}
+  }
 
   if (precision > size)
     precision = size;
@@ -180,18 +180,18 @@ void writeNumber(c_string *output_string, unsigned int number,
     ++output_string->length;
   }
 
-	while (i-- > 0)
+  while (i-- > 0)
   {
     *output_string->ptr++ = tmp[i];
     ++output_string->length;
   }
 
 
-	//~ while (size-- > 0) {
-		//~ if (buf <= end)
-			//~ *buf = ' ';
-		//~ ++buf;
-	//~ }
+  //~ while (size-- > 0) {
+    //~ if (buf <= end)
+      //~ *buf = ' ';
+    //~ ++buf;
+  //~ }
 }
 
 /**

@@ -1,4 +1,5 @@
 #include "new.h"
+#include "assert.h"
 #include "KernelMemoryManager.h"
 
 /**

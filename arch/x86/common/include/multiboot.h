@@ -77,18 +77,18 @@ struct vbe_mode
 
 typedef struct multiboot_header
 {
-   uint32 magic			: 32;
-   uint32 flags			: 32;
-   uint32 checksum		: 32;
-   uint32 header_addr		: 32;
-   uint32 load_addr		: 32;
-   uint32 load_end_addr		: 32;
-   uint32 bss_end_addr		: 32;
-   uint32 entry_addr		: 32;
-   uint32 mode_type		: 32;
-   uint32 width			: 32;
-   uint32 height		: 32;
-   uint32 depth			: 32;
+   uint32 magic     : 32;
+   uint32 flags     : 32;
+   uint32 checksum    : 32;
+   uint32 header_addr   : 32;
+   uint32 load_addr   : 32;
+   uint32 load_end_addr   : 32;
+   uint32 bss_end_addr    : 32;
+   uint32 entry_addr    : 32;
+   uint32 mode_type   : 32;
+   uint32 width     : 32;
+   uint32 height    : 32;
+   uint32 depth     : 32;
 } __attribute__((__packed__)) multiboot_header_t;
 
 typedef struct elf_section_header_table
@@ -101,27 +101,27 @@ typedef struct elf_section_header_table
 
 typedef struct multiboot_info
 {
-  uint32 flags			: 32;
-  uint32 mem_lower		: 32;
-  uint32 mem_upper		: 32;
-  uint32 boot_device	: 32;
-  uint32 cmdline		: 32;
-  uint32 mods_count		: 32;
-  uint32 mods_addr		: 32;
+  uint32 flags      : 32;
+  uint32 mem_lower    : 32;
+  uint32 mem_upper    : 32;
+  uint32 boot_device  : 32;
+  uint32 cmdline    : 32;
+  uint32 mods_count   : 32;
+  uint32 mods_addr    : 32;
   elf_section_header_table_t elf_sec;
-  uint32 mmap_length		: 32;
-  uint32 mmap_addr		: 32;
-  uint32 drives_length		: 32;
-  uint32 drives_addr		: 32;
-  uint32 config_table		: 32;
-  uint32 boot_loader_name	: 32;
-  uint32 apm_table		: 32;
-  uint32 vbe_control_info	: 32;
-  uint32 vbe_mode_info		: 32;
-  uint32 vbe_mode		: 32;
-  uint32 vbe_interface_seg	: 32;
-  uint32 vbe_interface_off	: 32;
-  uint32 vbe_interface_len	: 32;
+  uint32 mmap_length    : 32;
+  uint32 mmap_addr    : 32;
+  uint32 drives_length    : 32;
+  uint32 drives_addr    : 32;
+  uint32 config_table   : 32;
+  uint32 boot_loader_name : 32;
+  uint32 apm_table    : 32;
+  uint32 vbe_control_info : 32;
+  uint32 vbe_mode_info    : 32;
+  uint32 vbe_mode   : 32;
+  uint32 vbe_interface_seg  : 32;
+  uint32 vbe_interface_off  : 32;
+  uint32 vbe_interface_len  : 32;
 } __attribute__((__packed__)) multiboot_info_t;
 
 typedef struct module

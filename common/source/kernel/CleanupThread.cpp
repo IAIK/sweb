@@ -1,8 +1,7 @@
 #include "CleanupThread.h"
 #include "Scheduler.h"
 
-CleanupThread::CleanupThread() :
-    Thread("CleanupThread")
+CleanupThread::CleanupThread() : Thread(0, "CleanupThread")
 {
   state_ = Worker;
 }

@@ -2,13 +2,13 @@
 #pragma once
 
 // Define to the one symbol short name of this package.
-#define USTL_NAME	"ustl"
+#define USTL_NAME "ustl"
 // Define to the full name and version of this package.
-#define USTL_STRING	"ustl v2.2-3-gf0abf84"
+#define USTL_STRING "ustl v2.2-3-gf0abf84"
 // Define to the version of this package.
-#define USTL_VERSION	0x220
+#define USTL_VERSION  0x220
 // Define to the address where bug reports for this package should be sent.
-#define USTL_BUGREPORT	"Mike Sharov <msharov@users.sourceforge.net>"
+#define USTL_BUGREPORT  "Mike Sharov <msharov@users.sourceforge.net>"
 
 /// Define to 1 if you want stream operations to throw exceptions on
 /// insufficient data or insufficient space. All these errors should
@@ -34,13 +34,13 @@
     /// function calls.  Just in case '__attribute__' is undefined, make a dummy.
     /// 
     #ifndef __attribute__
-	#define __attribute__(p)
+  #define __attribute__(p)
     #endif
 #endif
 #if __GNUC__ >= 4
-    #define DLL_EXPORT		__attribute__((visibility("default")))
-    #define DLL_LOCAL		__attribute__((visibility("hidden")))
-    #define INLINE		__attribute__((always_inline))
+    #define DLL_EXPORT    __attribute__((visibility("default")))
+    #define DLL_LOCAL   __attribute__((visibility("hidden")))
+    #define INLINE    __attribute__((always_inline))
 #else
     #define DLL_EXPORT
     #define DLL_LOCAL
@@ -53,21 +53,21 @@
     #define constexpr
     #define override
     #define final
-    #define nullptr		NULL
-    #define noexcept		throw()
+    #define nullptr   NULL
+    #define noexcept    throw()
 #endif
 #if __GNUC__ >= 3 && (__i386__ || __x86_64__)
     /// GCC 3+ supports the prefetch directive, which some CPUs use to improve caching
-    #define prefetch(p,rw,loc)	__builtin_prefetch(p,rw,loc)
+    #define prefetch(p,rw,loc)  __builtin_prefetch(p,rw,loc)
 #else
     #define prefetch(p,rw,loc)
 #endif
 #if __GNUC__ < 3
     /// __alignof__ returns the recommended alignment for the type
-    #define __alignof__(v)	min(sizeof(v), sizeof(void*))
+    #define __alignof__(v)  min(sizeof(v), sizeof(void*))
     /// This macro returns 1 if the value of x is known at compile time.
     #ifndef __builtin_constant_p
-	#define __builtin_constant_p(x)	0
+  #define __builtin_constant_p(x) 0
     #endif
 #endif
 
@@ -214,9 +214,9 @@
 #undef SIZE_T_IS_LONG
 
 // Byte order macros, converted in utypes.h
-#define USTL_LITTLE_ENDIAN	4321
-#define USTL_BIG_ENDIAN		1234
-#define USTL_BYTE_ORDER		USTL_LITTLE_ENDIAN
+#define USTL_LITTLE_ENDIAN  4321
+#define USTL_BIG_ENDIAN   1234
+#define USTL_BYTE_ORDER   USTL_LITTLE_ENDIAN
 
 // Extended CPU capabilities
 #undef CPU_HAS_FPU
@@ -245,7 +245,7 @@
 #endif
 
 #if CPU_HAS_SSE && __GNUC__
-    #define __sse_align	__attribute__((aligned(16)))
+    #define __sse_align __attribute__((aligned(16)))
 #else
-    #define __sse_align	
+    #define __sse_align 
 #endif

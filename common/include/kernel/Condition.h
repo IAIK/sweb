@@ -1,76 +1,64 @@
-/**
- * @file Condition.h
- */
-
 #ifndef CONDITION__
 #define CONDITION__
 
-#include <ulist.h>
+#include "Lock.h"
 
 class Thread;
 class Mutex;
 
 /**
- * @class Condition For Conditionmanagement
- *Conditions are very important to achieve mutual exclusion,
- *without busy waiting
+ * @class Condition For Condition management
+ * Conditions are very important to achieve mutual exclusion,
+ * without busy waiting
  *
- *We need a Mutex*, because the only sane and working way to protect the list
- *in the CV is with the very same lock, the threads using the CV use.
- *Extra lock inside the CV won't work -> deadlock possibility
- *mixing lock and switching of interrupts wont work -> irq during time I have lock
- *only way: interrupts off or same lock
- *and interrupts off we want to avoid
+ * We need a Mutex*, because the only sane and working way to protect the list
+ * in the CV is with the very same lock, the threads using the CV use.
+ * Extra lock inside the CV won't work -> deadlock possibility
+ * mixing lock and switching of interrupts wont work -> irq during time I have lock
+ * only way: interrupts off or same lock
+ * and interrupts off we want to avoid
  */
-class Condition
+class Condition : public Lock
 {
   public:
+    /**
+   * Constructor
+   * A Conditon needs a Mutex for creation. Only one thread can acquire this Mutex
+   * and enter the critical section
+   * @param mutex the Mutex
+   * @param name the name of the condition
+   * @return Condtition instance
+   */
+  Condition ( Mutex *mutex, const char* name);
 
     /**
-     *Constructor
-     *A Conditon needs a Mutex for creation. Only one thread can acquire this Mutex
-     *and enter the critical section
+     * Only possible if the current Thread has acquired the Mutex.
+     * The Thread is put on the list of sleepers, releases the Mutex and goes to sleep
+     * Acquires the Mutex when waking up.
+     * @param re_acquire_mutex Automatically re-acquire the mutex after the wake-up.
+     *        In case the mutex (or even the condition) does not exists any longer after wake-up,
+     *        this flag has to be set to false. Then the mutex is not accessed any longer after wake up.
      *
-     * @param lock the Mutex
-     * @return Condtition instance
      */
-    Condition ( Mutex *lock );
+    void wait(const char* debug_info = 0, bool re_acquire_mutex = true);
 
     /**
-     *Destructor
-     *Deletes the list of sleeping threads, which are waiting for the Mutex
+     * Wakes up the first Thread on the sleepers list.
+     * If the list is empty, signal is being lost.
      */
-    ~Condition();
+    void signal(const char* debug_info = 0);
 
     /**
-     *Only possible if the current Thread has acquired the Mutex.
-     *The Thread is put on the list of sleepers, releases the Mutex and goes to sleep
-     *Acquires the Mutex when waking up.
+     * Wakes up all Threads on the sleepers list.
+     * If the list is empty, signal is being lost.
      */
-    void wait();
-
-    /**
-     *Only possible if the current Thread has acquired the Mutex.
-     *The Thread is put on the list of sleepers, releases the Mutex and goes to sleep
-     *Does NOT acquire the Mutex when waking up and is therefore safe to use if Condition and Mutex get deleted before being scheduled after wake()
-     */
-    void waitWithoutReAcquire();
-
-    /**
-     *Wakes up the first Thread on the sleepers list.
-     *If the list is empty, signal is being lost.
-     */
-    void signal();
-
-    /**
-     *Wakes up all Threads on the sleepers list.
-     *If the list is empty, signal is being lost.
-     */
-    void broadcast();
+    void broadcast(const char* debug_info = 0);
 
   private:
-    ustl::list<Thread *> sleepers_;
-    Mutex *lock_;
+    /**
+     * The mutex which is bound to this condition.
+     */
+    Mutex *mutex_;
 
 };
 

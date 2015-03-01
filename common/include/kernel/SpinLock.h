@@ -2,8 +2,7 @@
 #define _SPINLOCK_H_
 
 #include "types.h"
-#include <ulist.h>
-
+#include "Lock.h"
 class Thread;
 
 /**
@@ -15,19 +14,36 @@ class Thread;
  * repeatedly checking until the lock becomes available. This is also known as "busy waiting"
  * because the thread remains active but isn't performing a useful task.
  *
- * In Sweb we use SpinLocks in situations where we cannot allocate any kernel memory
- * i.e. because we are locking the KMM itself.
- * The SpinLock however is not meant to be used in a context where the InterruptFlag is not set,
+ * The SpinLock is not meant to be used in a context where the InterruptFlag is not set,
  * because as with any lock, no taskswitch can happen and deadlock would occur if acquiring the SpinLock should
  * not succeed in an IF==0 context.
  * Also, in sweb, the Spinlock uses yield()s instead of a simple do-nothing-loop
  */
-class SpinLock
+class SpinLock : public Lock
 {
   public:
+
     SpinLock(const char* name);
+
+    /**
+     * Acquire the spinlock.
+     * @param debug_info Additional debug information
+     */
     void acquire(const char* debug_info = 0);
+
+    /**
+    * Try to acquire the spinlock. If the spinlock is held by another thread at the moment,
+    * this method instantly returns (and (of course) the spinlock has not been acquired).
+    * @param debug_info Additional debug information
+    * @return true in case the spinlock has been acquired
+    * @return false in case the spinlock was held by another thread
+    */
     bool acquireNonBlocking(const char* debug_info = 0);
+
+    /**
+     * Release the spinlock.
+     * @param debug_info Additional debug information
+     */
     void release(const char* debug_info = 0);
 
     /**
@@ -37,27 +53,19 @@ class SpinLock
      */
     bool isFree();
 
-    Thread* heldBy()
-    {
-      return held_by_;
-    }
-
-    const char* name_;
 
   private:
-    size_t nosleep_mutex_;
-    Thread *held_by_;
-
-    SpinLock(SpinLock const &);
-    SpinLock &operator=(SpinLock const&);
+    /**
+     * The basic spinlock is just a variable which is
+     */
+    size_t lock_;
 
     /**
-     * verifies that interrupts are enabled
-     * @param method in which the check is done
-     * @param debug_info additional debug info
+     * Do not use the copy constructor of the spinlock!
+     * It is set to private to prevent it.
      */
-    void checkInterrupts(const char* method, const char* debug_info);
-
+    SpinLock(SpinLock const &);
+    SpinLock &operator=(SpinLock const&);
 };
 
 #endif

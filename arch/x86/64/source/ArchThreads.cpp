@@ -122,6 +122,26 @@ int64 ArchThreads::atomic_add(int64 &value, int64 increment)
   return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
 }
 
+void ArchThreads::atomic_set(uint32& target, uint32 value)
+{
+  __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
+}
+
+void ArchThreads::atomic_set(int32& target, int32 value)
+{
+  __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
+}
+
+void ArchThreads::atomic_set(uint64& target, uint64 value)
+{
+  __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
+}
+
+void ArchThreads::atomic_set(int64& target, int64 value)
+{
+  __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
+}
+
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
   printThreadRegisters(thread,0,verbose);

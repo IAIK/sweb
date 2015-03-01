@@ -1,7 +1,3 @@
-/**
- * @file UserProcess.h
- */
-
 #ifndef _USERPROCESS_H_
 #define _USERPROCESS_H_
 
@@ -28,15 +24,9 @@ class UserProcess : public Thread
     UserProcess(const char *minixfs_filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
                 uint32 terminal_number = 0);
 
-    /**
-     * Destructor
-     */
     virtual ~UserProcess();
 
-    /**
-     * Starts the process
-     */
-    virtual void Run();
+    virtual void Run(); // not used
 
   private:
 

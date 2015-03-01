@@ -6,78 +6,85 @@
 #include "Scheduler.h"
 #include "Thread.h"
 
-extern uint32 boot_completed;
-
 SpinLock::SpinLock(const char* name) :
-    name_(name), nosleep_mutex_(0), held_by_(0)
+  Lock::Lock(name), lock_(0)
 {
 }
 
-bool SpinLock::acquireNonBlocking(__attribute__((unused)) const char* debug_info)
+bool SpinLock::acquireNonBlocking(const char* debug_info)
 {
-  if (likely(boot_completed))
+  if(unlikely(system_state != RUNNING))
+    return true;
+  // There may be some cases where the pre-checks may not be wished here.
+  // But these cases are usually dirty implemented, and it would not be necessary to call this method there.
+  // So in case you see this comment, re-think your implementation and don't just comment out this line!
+  doChecksBeforeWaiting(debug_info);
+
+  if(ArchThreads::testSetLock(lock_, 1))
   {
-    if (ArchThreads::testSetLock(nosleep_mutex_, 1))
-    {
-      return false;
-    }
-    assert(held_by_ == 0);
-    held_by_ = currentThread;
+    // The spinlock is held by another thread at the moment
+    return false;
   }
+  // The spinlock is now held by the current thread.
+  assert(held_by_ == 0);
+  held_by_ = currentThread;
+  pushFrontToCurrentThreadHoldingList();
   return true;
 }
 
 void SpinLock::acquire(const char* debug_info)
 {
-  if (likely (boot_completed))
+  if(unlikely(system_state != RUNNING))
+    return;
+  //  debug(LOCK, "Spinlock::acquire: Acquire spinlock %s (%p) with thread %s (%p)\n",
+  //        getName(), this, currentThread->getName(), currentThread);
+  if(ArchThreads::testSetLock(lock_, 1))
   {
-    checkInterrupts("SpinLock::acquire", debug_info);
-    while (ArchThreads::testSetLock(nosleep_mutex_, 1))
+    // We did not directly managed to acquire the spinlock, need to check for deadlocks and
+    // to push the current thread to the waiters list.
+    doChecksBeforeWaiting(debug_info);
+
+    currentThread->lock_waiting_on_ = this;
+    lockWaitersList();
+    pushFrontCurrentThreadToWaitersList();
+    unlockWaitersList();
+
+    // here comes the basic spinlock
+    while(ArchThreads::testSetLock(lock_, 1))
     {
-      //SpinLock: Simplest of Locks, do the next best thing to busy wating
+      //SpinLock: Simplest of Locks, do the next best thing to busy waiting
       Scheduler::instance()->yield();
     }
-    assert(held_by_ == 0);
-    held_by_ = currentThread;
+    // Now we managed to acquire the spinlock. Remove the current thread from the waiters list.
+    lockWaitersList();
+    removeCurrentThreadFromWaitersList();
+    unlockWaitersList();
+    currentThread->lock_waiting_on_ = 0;
   }
+  // The current thread is now holding the spinlock
+  held_by_ = currentThread;
+  pushFrontToCurrentThreadHoldingList();
 }
 
 bool SpinLock::isFree()
 {
-  if ( unlikely ( ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() ) )
-    kpanict ( ( uint8* ) ( "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n" ) );
-
-  return (nosleep_mutex_ == 0);
+  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()))
+  {
+    debug(LOCK, "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
+    assert(false);
+  }
+  return (lock_ == 0);
 }
 
 void SpinLock::release(const char* debug_info)
 {
-  if (likely(boot_completed))
-  {
-    if (held_by_ != currentThread)
-    {
-      ArchInterrupts::disableInterrupts();
-      kprintfd("(ERROR) SpinLock::release with held_by_ (%x) != currentThread (%x) debug_info: %s\n", held_by_, currentThread, debug_info);
-      assert(false);
-    }
-    held_by_ = 0;
-    nosleep_mutex_ = 0;
-  }
+  if(unlikely(system_state != RUNNING))
+    return;
+  //debug(LOCK, "Spinlock::release: Release spinlock %s (%p) with thread %s (%p)\n",
+  //      getName(), this, currentThread->getName(), currentThread);
+  checkInvalidRelease("SpinLock::release", debug_info);
+  removeFromCurrentThreadHoldingList();
+  held_by_ = 0;
+  lock_ = 0;
 }
 
-void SpinLock::checkInterrupts(const char* method, const char* debug_info)
-{
-  // it would be nice to assert Scheduler::instance()->isSchedulingEnabled() as well.
-  // unfortunately this is difficult because we might want to acquire/release locks
-  // while scheduling is disabled
-  if ( unlikely ( ArchInterrupts::testIFSet() == false))
-  {
-    ArchInterrupts::disableInterrupts();
-    boot_completed = 0;
-    kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d (and SchedulingEnabled=%d) ! Now we're dead !!!\n"
-             "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",
-             method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info);
-    currentThread->printBacktrace();
-    assert(false);
-  }
-}

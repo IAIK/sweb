@@ -10,9 +10,9 @@ CMAKE_FORCE_CXX_COMPILER(arm-linux-gnueabi-g++ GNU)
 
 # which compilers to use for C and C++
 #
+set(CMAKE_ASM_COMPILER arm-linux-gnueabi-gcc)
 set(CMAKE_C_COMPILER arm-linux-gnueabi-gcc)
 set(CMAKE_CXX_COMPILER arm-linux-gnueabi-g++)
 
-find_program(ASM_EXECUTABLE arm-linux-gnueabi-gcc)
 find_program(LD_EXECUTABLE arm-linux-gnueabi-gcc)
 

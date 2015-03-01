@@ -149,3 +149,17 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
              userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r[0],info->r[1],info->r[2],info->r[3],info->r[4],info->r[5],info->r[6],info->r[7],info->r[8],info->r[9],info->r[10],info->r[11],info->r[12]);
   }
 }
+
+
+
+void ArchThreads::atomic_set(uint32& target, uint32 value)
+{
+  // just re-use the method for exchange. Under ARM the build-ins do not work...
+  testSetLock(target, value);
+}
+
+void ArchThreads::atomic_set(int32& target, int32 value)
+{
+  atomic_set((uint32&)target, (uint32)value);
+}
+

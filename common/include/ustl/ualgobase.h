@@ -68,7 +68,7 @@ template <typename InputIterator, typename OutputIterator>
 inline OutputIterator copy (InputIterator first, InputIterator last, OutputIterator result)
 {
     for (; first != last; ++result, ++first)
-	*result = *first;
+  *result = *first;
     return result;
 }
 
@@ -84,7 +84,7 @@ template <typename InputIterator, typename OutputIterator>
 inline OutputIterator copy_n (InputIterator first, size_t count, OutputIterator result)
 {
     for (; count; --count, ++result, ++first)
-	*result = *first;
+  *result = *first;
     return result;
 }
 
@@ -96,7 +96,7 @@ template <typename InputIterator, typename OutputIterator>
 inline OutputIterator copy_backward (InputIterator first, InputIterator last, OutputIterator result)
 {
     while (first != last)
-	*--result = *--last;
+  *--result = *--last;
     return result;
 }
 
@@ -110,7 +110,7 @@ template <typename InputIterator, typename UnaryFunction>
 inline UnaryFunction for_each (InputIterator first, InputIterator last, UnaryFunction f)
 {
     for (; first != last; ++first)
-	f (*first);
+  f (*first);
     return f;
 }
 
@@ -123,7 +123,7 @@ template <typename ForwardIterator, typename T>
 inline void fill (ForwardIterator first, ForwardIterator last, const T& value)
 {
     for (; first != last; ++first)
-	*first = value;
+  *first = value;
 }
 
 /// Fill_n assigns the value value to every element in the range
@@ -135,7 +135,7 @@ template <typename OutputIterator, typename T>
 inline OutputIterator fill_n (OutputIterator first, size_t count, const T& value)
 {
     for (; count; --count, ++first)
-	*first = value;
+  *first = value;
     return first;
 }
 
@@ -162,16 +162,16 @@ extern "C" void rotate_fast (void* first, void* middle, void* last) noexcept;
 #if __GNUC__ >= 4
 /// \brief Computes the number of 1 bits in a number.
 /// \ingroup ConditionAlgorithms
-inline size_t popcount (uint32_t v)	{ return __builtin_popcount (v); }
+inline size_t popcount (uint32_t v) { return __builtin_popcount (v); }
 #if HAVE_INT64_T
-inline size_t popcount (uint64_t v)	{ return __builtin_popcountll (v); }
+inline size_t popcount (uint64_t v) { return __builtin_popcountll (v); }
 #endif
 #else
 size_t popcount (uint32_t v) noexcept;
 #if HAVE_INT64_T
 size_t popcount (uint64_t v) noexcept;
-#endif	// HAVE_INT64_T
-#endif	// __GNUC__
+#endif  // HAVE_INT64_T
+#endif  // __GNUC__
 
 //----------------------------------------------------------------------
 // Optimized versions for standard types
@@ -197,7 +197,7 @@ template <typename T>
 inline T* unrolled_fill (T* result, size_t count, T value)
 {
     for (; count; --count, ++result)
-	*result = value;
+  *result = value;
     return result;
 }
 template <> inline uint8_t* unrolled_fill (uint8_t* result, size_t count, uint8_t value)
@@ -218,8 +218,8 @@ template <> inline float* unrolled_fill (float* result, size_t count, float valu
 // pointers not const in the caller's context, such as local variables.
 // These are all inline, but they sure slow down compilation... :(
 //
-#define COPY_ALIAS_FUNC(ctype, type, alias_type)			\
-template <> inline type* copy (ctype* first, ctype* last, type* result)	\
+#define COPY_ALIAS_FUNC(ctype, type, alias_type)      \
+template <> inline type* copy (ctype* first, ctype* last, type* result) \
 { return (type*) copy ((const alias_type*) first, (const alias_type*) last, (alias_type*) result); }
 #if WANT_UNROLLED_COPY
 #if HAVE_THREE_CHAR_TYPES
@@ -241,8 +241,8 @@ COPY_ALIAS_FUNC(uint32_t, uint32_t, uint32_t)
 COPY_ALIAS_FUNC(const void, void, uint8_t)
 COPY_ALIAS_FUNC(void, void, uint8_t)
 #undef COPY_ALIAS_FUNC
-#define COPY_BACKWARD_ALIAS_FUNC(ctype, type, alias_type)				\
-template <> inline type* copy_backward (ctype* first, ctype* last, type* result)	\
+#define COPY_BACKWARD_ALIAS_FUNC(ctype, type, alias_type)       \
+template <> inline type* copy_backward (ctype* first, ctype* last, type* result)  \
 { return (type*) copy_backward ((const alias_type*) first, (const alias_type*) last, (alias_type*) result); }
 #if WANT_UNROLLED_COPY
 #if HAVE_THREE_CHAR_TYPES
@@ -258,8 +258,8 @@ COPY_BACKWARD_ALIAS_FUNC(const int16_t, int16_t, uint8_t)
 COPY_BACKWARD_ALIAS_FUNC(void, void, uint8_t)
 COPY_BACKWARD_ALIAS_FUNC(const void, void, uint8_t)
 #undef COPY_BACKWARD_ALIAS_FUNC
-#define FILL_ALIAS_FUNC(type, alias_type, v_type)				\
-template <> inline void fill (type* first, type* last, const v_type& value)	\
+#define FILL_ALIAS_FUNC(type, alias_type, v_type)       \
+template <> inline void fill (type* first, type* last, const v_type& value) \
 { fill ((alias_type*) first, (alias_type*) last, (const alias_type) value); }
 FILL_ALIAS_FUNC(void, uint8_t, char)
 FILL_ALIAS_FUNC(void, uint8_t, uint8_t)
@@ -275,8 +275,8 @@ FILL_ALIAS_FUNC(int32_t, uint32_t, int32_t)
 #endif
 #endif
 #undef FILL_ALIAS_FUNC
-#define COPY_N_ALIAS_FUNC(ctype, type, alias_type)					\
-template <> inline type* copy_n (ctype* first, size_t count, type* result)	\
+#define COPY_N_ALIAS_FUNC(ctype, type, alias_type)          \
+template <> inline type* copy_n (ctype* first, size_t count, type* result)  \
 { return (type*) copy_n ((const alias_type*) first, count, (alias_type*) result); }
 COPY_N_ALIAS_FUNC(const void, void, uint8_t)
 COPY_N_ALIAS_FUNC(void, void, uint8_t)
@@ -298,8 +298,8 @@ COPY_N_ALIAS_FUNC(const int32_t, int32_t, uint32_t)
 #endif
 #endif
 #undef COPY_N_ALIAS_FUNC
-#define FILL_N_ALIAS_FUNC(type, alias_type, v_type)				\
-template <> inline type* fill_n (type* first, size_t n, const v_type& value)	\
+#define FILL_N_ALIAS_FUNC(type, alias_type, v_type)       \
+template <> inline type* fill_n (type* first, size_t n, const v_type& value)  \
 { return (type*) fill_n ((alias_type*) first, n, (const alias_type) value); }
 FILL_N_ALIAS_FUNC(void, uint8_t, char)
 FILL_N_ALIAS_FUNC(void, uint8_t, uint8_t)

@@ -321,7 +321,7 @@ void ATADriver::serviceIRQ()
     if( !waitForController() )
     {
       br->setStatus( BDRequest::BD_ERROR );
-      if( br->getThread() )		
+      if( br->getThread() )   
         Scheduler::instance()->wake( br->getThread() );
       request_list_ = br->getNextRequest();
       return;
@@ -365,7 +365,7 @@ void ATADriver::serviceIRQ()
         request_list_ = br->getNextRequest();
         return;
       }
-	
+  
       for(counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
         outportw ( port, word_buff [counter] );
 

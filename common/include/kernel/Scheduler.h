@@ -13,12 +13,13 @@
 class Thread;
 class Mutex;
 class SpinLock;
+class Lock;
 
 
 /**
  * @class Scheduler
  *
- * This is a singelton class, it is instantiated in startup() and must be accessed via Scheduler::instance()->....
+ * This is a singleton class, it is instantiated in startup() and must be accessed via Scheduler::instance()->....
  * The Scheduler knows about all running and sleeping threads and decides which thread to run next
  */
 class Scheduler
@@ -26,15 +27,10 @@ class Scheduler
   public:
 
     /**
-     * Singelton Class Instance Access Method
+     * Singleton Class Instance Access Method
      * @return Pointer to Scheduler
      */
     static Scheduler *instance();
-
-    /**
-     * createScheduler is called by startup() and does exatly what it's name implies.
-     */
-    static void createScheduler();
 
     /**
      * adds a new Thread and prepares to run it
@@ -80,28 +76,28 @@ class Scheduler
     void printUserSpaceTraces();
 
     /**
-     * it is somewhat of a hack, we need to release the Spinlock,
-     * after we set the ThreadState Sleeping, but before we yield away
-     * also we must not be interrupted and we want to avoid disabling Interrupts
-     * (even though it would be possible in this case, as we don't allocate memory)
-     * @param &lock The SpinLock we want to release
+     * Print out the locks held by the threads, and the locks they are waiting on.
      */
-    void sleepAndRelease ( SpinLock &lock );
+    void printLockingInformation();
 
     /**
-     * Overloading for Mutex
-     * @param &lock the Mutex we want to release
+     * Sleep on a lock and release the waiters list.
+     * This operations have to be done when the scheduler is disabled,
+     * else it may happen that a thread sleeps forever.
+     * The thread is pushed onto the waiters list before.
+     * @param lock The lock which shall be waiting on
      */
-    void sleepAndRelease ( Mutex &lock );
+    void sleepAndRelease ( Lock &lock );
 
     /**
-     * @ret true if Scheduling is enabled, false otherwis
+     * Check if scheduling is enabled
+     * @return true if Scheduling is enabled, false otherwise
      */
     bool isSchedulingEnabled();
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
-     * this is the methode that decides which threads will be scheduled next
+     * this is the method that decides which threads will be scheduled next
      * it is called by either the timer interrupt handler or the yield interrupt handler
      * and changes the global variables currentThread and currentThreadInfo
      * @return 1 if the InterruptHandler should switch to Usercontext or 0 if we can stay in Kernelcontext

@@ -10,8 +10,6 @@
 #include "PageManager.h"
 #include "kstring.h"
 
-extern uint32 boot_completed;
-
 
 KernelMemoryManager kmm;
 
@@ -347,7 +345,6 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     }
   }
 
-  if (isDebugEnabled(KMM))
   {
     MallocSegment *current = first_;
     while (current != 0)
