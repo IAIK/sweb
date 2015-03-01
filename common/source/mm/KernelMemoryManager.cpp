@@ -470,7 +470,7 @@ void KernelMemoryManager::unlockKMM()
   lock_.release();
 }
 
-SpinLock& KernelMemoryManager::getKMMLock()
+Mutex& KernelMemoryManager::getKMMLock()
 {
   return lock_;
 }
