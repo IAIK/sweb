@@ -1,14 +1,10 @@
-/**
- * @file UserProcess.cpp
- */
-
-#include <ProcessRegistry.h>
+#include "ProcessRegistry.h"
 #include "UserProcess.h"
 #include "kprintf.h"
 #include "Console.h"
 #include "Loader.h"
 #include "VfsSyscall.h"
-#include "fs/File.h"
+#include "File.h"
 
 UserProcess::UserProcess(const char *minixfs_filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
                          uint32 terminal_number) :
@@ -50,8 +46,7 @@ UserProcess::~UserProcess()
 
 void UserProcess::Run()
 {
-  debug(USERPROCESS,
-        "UserProcess::Run: Fail-safe kernel panic - you probably have forgotten to set switch_to_userspace_ = 1\n");
+  debug(USERPROCESS, "Run: Fail-safe kernel panic - you probably have forgotten to set switch_to_userspace_ = 1\n");
   assert(false);
 }
 
