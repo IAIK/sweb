@@ -135,7 +135,7 @@ class KernelMemoryManager
   protected:
     friend class PageManager;
 
-    KernelMemoryManager(pointer start_address);
+    KernelMemoryManager(size_t num_pages);
 
     static size_t pm_ready_;
 

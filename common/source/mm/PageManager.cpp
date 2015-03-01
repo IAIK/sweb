@@ -73,12 +73,15 @@ PageManager::PageManager() :
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 2;
   size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
   size_t last_free_page = number_of_pages_-1;
-  for (size_t i = 0; i < num_pages_for_bitmap+1; ++i)
+  size_t temp_page_size = 0;
+  size_t num_reserved_pages = 0;
+  for (num_reserved_pages = 0; num_reserved_pages < num_pages_for_bitmap || temp_page_size != 0; ++num_reserved_pages)
   {
-    ArchMemory::mapKernelPage(start_vpn++,last_free_page--);
+    if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
+      ArchMemory::mapKernelPage(start_vpn++,last_free_page--);
   }
   extern KernelMemoryManager kmm;
-  new (&kmm) KernelMemoryManager(num_pages_for_bitmap);
+  new (&kmm) KernelMemoryManager(num_reserved_pages);
   page_usage_table_ = new Bitmap(number_of_pages_);
 
   // since we have gaps in the memory maps we can not give out everything

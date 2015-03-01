@@ -192,7 +192,8 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].page.size == PDE_SIZE_PAGE) // 1m page
   {
-    *physical_page = page_directory[pde_vpn].page.page_ppn - PHYS_OFFSET_1M;
+    if (physical_page)
+      *physical_page = page_directory[pde_vpn].page.page_ppn - PHYS_OFFSET_1M;
     return 1024 * 1024;
   }
   else if (page_directory[pde_vpn].page.size == PDE_SIZE_PT) // 4k page
@@ -202,7 +203,8 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
     PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     if (pte_base[pte_vpn].size == 2)
     {
-      *physical_page = pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K;
+      if (physical_page)
+        *physical_page = pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K;
       return PAGE_SIZE;
     }
     else
