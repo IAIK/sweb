@@ -53,7 +53,7 @@ extern "C" void startup()
   // will have a harder time implementing swapping. Pros only!
   // Please also note that the implementation of dynamic KMM is EXPERIMENTAL,
   // please report any strange behavior.
-  //KernelMemoryManager::instance()->setMaximumReservedMemory(16 * 1024 * 1024);
+  KernelMemoryManager::instance()->setMaximumReservedMemory(16 * 1024 * 1024);
   writeLine2Bochs("PageManager and KernelMemoryManager created \n");
 
   //SerialManager::getInstance()->do_detection( 1 );

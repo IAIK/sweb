@@ -17,6 +17,8 @@ PageManager* PageManager::instance_ = 0;
 
 extern void* kernel_end_address;
 
+#define MIN_HEAP_PAGES 0 // set this to 400 for Assignment 2
+
 PageManager* PageManager::instance()
 {
   if (unlikely(!instance_))
@@ -24,8 +26,7 @@ PageManager* PageManager::instance()
   return instance_;
 }
 
-PageManager::PageManager() :
-    lock_("PageManager::lock_")
+PageManager::PageManager() : lock_("PageManager::lock_")
 {
   assert(instance_ == 0);
   instance_ = this;
@@ -75,7 +76,8 @@ PageManager::PageManager() :
   size_t last_free_page = number_of_pages_-1;
   size_t temp_page_size = 0;
   size_t num_reserved_pages = 0;
-  for (num_reserved_pages = 0; num_reserved_pages < num_pages_for_bitmap || temp_page_size != 0; ++num_reserved_pages)
+  for (num_reserved_pages = 0; num_reserved_pages < num_pages_for_bitmap || temp_page_size != 0 ||
+                               num_reserved_pages < MIN_HEAP_PAGES; ++num_reserved_pages)
   {
     if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
       ArchMemory::mapKernelPage(start_vpn++,last_free_page--);
