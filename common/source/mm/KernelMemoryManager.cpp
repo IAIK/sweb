@@ -32,7 +32,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   prenew_assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = start_address;
-  kernel_break_ = start_address + min_heap_pages * PAGE_SIZE - 1;
+  kernel_break_ = start_address + min_heap_pages * PAGE_SIZE;
   reserved_min_ = min_heap_pages * PAGE_SIZE;
   reserved_max_ = max_heap_pages * PAGE_SIZE;
   debug(KMM, "Clearing initial heap pages\n");
@@ -404,8 +404,12 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     debug(KMM, "KernelMemoryManager::ksbrk(%d)0\n", size);
     size_t old_brk = kernel_break_;
     size_t cur_top_vpn = kernel_break_ / PAGE_SIZE;
+    if ((kernel_break_ % PAGE_SIZE) == 0)
+      cur_top_vpn--;
     kernel_break_ = ((size_t)kernel_break_) + size;
     size_t new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
+    if ((kernel_break_ % PAGE_SIZE) == 0)
+      new_top_vpn--;
     debug(KMM, "KernelMemoryManager::ksbrk(%d)1\n", size);
     if(size > 0)
     {
