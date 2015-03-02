@@ -115,12 +115,14 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
 
 void FrameBufferConsole::consoleScrollUp()
 {
+  uint32 set = 0;
+  set |= current_background_color_ << 16;
+  set |= current_background_color_;
   pointer fb = ArchCommon::getVESAConsoleLFBPtr();
   memcpy((void*) fb, (void*) (fb + (consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)),
          (consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16);
-  memset((void*) (fb + ((consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)), 0,
+  memset((void*) (fb + ((consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)), set,
          consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16);
-
 }
 
 void FrameBufferConsole::consoleSetForegroundColor(CONSOLECOLOR const &color)
