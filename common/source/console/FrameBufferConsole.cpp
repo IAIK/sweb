@@ -47,8 +47,8 @@ FrameBufferConsole::FrameBufferConsole(uint32 num_terminals) :
   }
 
   active_terminal_ = 0;
-  consoleSetForegroundColor(FG_BLACK);
-  consoleSetBackgroundColor(BG_WHITE);
+  consoleSetForegroundColor(BLACK);
+  consoleSetBackgroundColor(WHITE);
   consoleClearScreen();
 }
 
@@ -123,124 +123,67 @@ void FrameBufferConsole::consoleScrollUp()
 
 }
 
-void FrameBufferConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
+void FrameBufferConsole::consoleSetForegroundColor(CONSOLECOLOR const &color)
 {
-  uint8 r, g, b;
-  switch(color)
-  {
-  case FG_BLACK:
-    r = 0; g = 0; b = 0;
-    break;
-  case FG_BLUE:
-    r = 0; g = 0; b = 255;
-    break;
-  case FG_GREEN:
-    r = 0; g = 200; b = 0;
-    break;
-  case FG_CYAN:
-    r = 0; g = 255; b = 255;
-    break;
-  case FG_RED:
-    r = 255; g = 0; b = 0;
-    break;
-  case FG_MAGENTA:
-    r = 255; g = 0; b = 255;
-    break;
-  case FG_BROWN:
-    r = 165; g = 42; b = 42;
-    break;
-  case FG_WHITE:
-    r = 245; g = 245; b = 245;
-    break;
-  case FG_DARK_GREY:
-    r = 169; g = 169; b = 169;
-    break;
-  case FG_BRIGHT_BLUE:
-    r = 144, g = 144; b = 238;
-    break;
-  case FG_BRIGHT_GREEN:
-    r = 144; g = 238; b = 144;
-    break;
-  case FG_BRIGHT_CYAN:
-    r = 224; g = 255; b = 255;
-    break;
-  case FG_PINK:
-    r = 255; g = 192; b = 203;
-    break;
-  case FG_BRIGHT_MAGENTA:
-    r = 255; g = 100; b = 255;
-    break;
-  case FG_YELLOW:
-    r = 255; g = 255; b = 0;
-    break;
-  case FG_BRIGHT_WHITE:
-    r = 255; g = 255; b = 255;
-    break;
-  }
-  if(bits_per_pixel_ == 16)
-  {
-    uint16 scaled_r = ((uint16)(r * 31)) / 255;
-    uint16 scaled_g = ((uint16)(g * 63)) / 255;
-    uint16 scaled_b = ((uint16)(b * 31)) / 255;
-    current_foreground_color_ =  scaled_b | (scaled_g << 5) | (scaled_r << 11);
-  }
-  else
-  {
-    current_foreground_color_ = (r << 16) + (g << 8) + (b);
-  }
+  current_foreground_color_ = convertConsoleColor(color);
 }
 
-void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
+void FrameBufferConsole::consoleSetBackgroundColor(CONSOLECOLOR const &color)
+{
+  current_background_color_ = convertConsoleColor(color);
+}
+
+uint32 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
 {
   uint8 r, g, b;
   switch(color)
   {
-  case BG_BLACK:
+  case BLACK:
     r = 0; g = 0; b = 0;
     break;
-  case BG_BLUE:
+  case BLUE:
     r = 0; g = 0; b = 255;
     break;
-  case BG_GREEN:
+  case GREEN:
     r = 0; g = 200; b = 0;
     break;
-  case BG_CYAN:
+  case CYAN:
     r = 0; g = 255; b = 255;
     break;
-  case BG_RED:
+  case RED:
     r = 255; g = 0; b = 0;
     break;
-  case BG_MAGENTA:
+  case MAGENTA:
     r = 255; g = 0; b = 255;
     break;
-  case BG_BROWN:
+  case BROWN:
     r = 165; g = 42; b = 42;
     break;
-  case BG_WHITE:
+  case WHITE:
     r = 245; g = 245; b = 245;
     break;
-  case BG_DARK_GREY:
+  case DARK_GREY:
     r = 169; g = 169; b = 169;
     break;
-  case BG_BRIGHT_BLUE:
+  case BRIGHT_BLUE:
     r = 144, g = 144; b = 238;
     break;
-  case BG_BRIGHT_GREEN:
+  case BRIGHT_GREEN:
     r = 144; g = 238; b = 144;
     break;
-  case BG_BRIGHT_CYAN:
+  case BRIGHT_CYAN:
     r = 224; g = 255; b = 255;
     break;
-  case BG_PINK:
+  case PINK:
     r = 255; g = 192; b = 203;
     break;
-  case BG_BRIGHT_MAGENTA:
+  case BRIGHT_MAGENTA:
     r = 255; g = 100; b = 255;
     break;
-  case BG_YELLOW:
+  case YELLOW:
     r = 255; g = 255; b = 0;
     break;
-  case BG_BRIGHT_WHITE:
+  case BRIGHT_WHITE:
     r = 255; g = 255; b = 255;
     break;
   }
@@ -249,10 +192,10 @@ void FrameBufferConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color
     uint16 scaled_r = ((uint16)(r * 31)) / 255;
     uint16 scaled_g = ((uint16)(g * 63)) / 255;
     uint16 scaled_b = ((uint16)(b * 31)) / 255;
-    current_background_color_ =  scaled_b | (scaled_g << 5) | (scaled_r << 11);
+    return scaled_b | (scaled_g << 5) | (scaled_r << 11);
   }
   else
   {
-    current_background_color_ = (r << 16) + (g << 8) + (b);
+    return (r << 16) + (g << 8) + (b);
   }
 }

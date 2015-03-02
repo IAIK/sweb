@@ -63,8 +63,8 @@ class Terminal : public CharacterDevice
      */
     virtual int32 writeData(uint32 offset, uint32 size, const char*buffer);
 
-    void setForegroundColor(Console::FOREGROUNDCOLORS const &color);
-    void setBackgroundColor(Console::BACKGROUNDCOLORS const &color);
+    void setForegroundColor(Console::CONSOLECOLOR const &color);
+    void setBackgroundColor(Console::CONSOLECOLOR const &color);
 
     /**
      * Reads one character.from the input

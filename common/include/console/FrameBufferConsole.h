@@ -60,13 +60,13 @@ class FrameBufferConsole : public Console
      * Not implemented.
      * @param color ignored.
      */
-    virtual void consoleSetForegroundColor(FOREGROUNDCOLORS const &color);
+    virtual void consoleSetForegroundColor(CONSOLECOLOR const &color);
 
     /**
      * Not implemented.
      * @param color ignored.
      */
-    virtual void consoleSetBackgroundColor(BACKGROUNDCOLORS const &color);
+    virtual void consoleSetBackgroundColor(CONSOLECOLOR const &color);
 
     /**
      * Sets the Pixel at the given position in the given color.
@@ -77,6 +77,8 @@ class FrameBufferConsole : public Console
      * @param b the blue color component
      */
     void setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b);
+
+    uint32 convertConsoleColor(CONSOLECOLOR color);
 
     uint32 x_res_;
     uint32 y_res_;

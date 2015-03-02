@@ -56,8 +56,8 @@ extern "C" void startup()
 
   Terminal *term_0 = main_console->getTerminal(0); // add more if you need more...
 
-  term_0->setBackgroundColor(Console::BG_BLACK);
-  term_0->setForegroundColor(Console::FG_GREEN);
+  term_0->setBackgroundColor(Console::BLACK);
+  term_0->setForegroundColor(Console::GREEN);
   kprintfd("Init debug printf\n");
   term_0->writeString("This is on term 0, you should see me now\n");
 

@@ -63,13 +63,13 @@ class TextConsole : public Console
      * Not implemented.
      * @param color ignored.
      */
-    virtual void consoleSetForegroundColor ( FOREGROUNDCOLORS const &color );
+    virtual void consoleSetForegroundColor ( CONSOLECOLOR const &color );
 
     /**
      * Not implemented.
      * @param color ignored.
      */
-    virtual void consoleSetBackgroundColor ( BACKGROUNDCOLORS const &color );
+    virtual void consoleSetBackgroundColor ( CONSOLECOLOR const &color );
 
 };
 

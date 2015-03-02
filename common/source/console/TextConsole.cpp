@@ -85,13 +85,13 @@ void TextConsole::consoleScrollUp()
   memset((void*) (fb + ((consoleGetNumRows() - 1)) * consoleGetNumColumns() * 2), 0, consoleGetNumColumns() * 2);
 }
 
-void TextConsole::consoleSetForegroundColor(FOREGROUNDCOLORS const &color)
+void TextConsole::consoleSetForegroundColor(CONSOLECOLOR const &color)
 {
   if (color)
     return;
 }
 
-void TextConsole::consoleSetBackgroundColor(BACKGROUNDCOLORS const &color)
+void TextConsole::consoleSetBackgroundColor(CONSOLECOLOR const &color)
 {
   if (color)
     return;
