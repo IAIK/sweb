@@ -173,6 +173,7 @@ void Terminal::setForegroundColor(Console::FOREGROUNDCOLORS const &color)
   uint8 mask = 15;
   current_state_ = current_state_ & ~mask;
   current_state_ |= color;
+  console_->consoleSetForegroundColor(color);
 }
 
 void Terminal::setBackgroundColor(Console::BACKGROUNDCOLORS const &color)
@@ -183,6 +184,7 @@ void Terminal::setBackgroundColor(Console::BACKGROUNDCOLORS const &color)
   uint8 col = color;
   current_state_ = current_state_ & ~mask;
   current_state_ |= col << 4;
+  console_->consoleSetBackgroundColor(color);
 }
 
 void Terminal::scrollUp()
