@@ -54,19 +54,7 @@ class FrameBufferConsole : public Console
     /**
      * Scrolls up the console.
      */
-    virtual void consoleScrollUp();
-
-    /**
-     * Not implemented.
-     * @param color ignored.
-     */
-    virtual void consoleSetForegroundColor(CONSOLECOLOR const &color);
-
-    /**
-     * Not implemented.
-     * @param color ignored.
-     */
-    virtual void consoleSetBackgroundColor(CONSOLECOLOR const &color);
+    virtual void consoleScrollUp(uint8 const &state);
 
     /**
      * Sets the Pixel at the given position in the given color.
@@ -78,15 +66,13 @@ class FrameBufferConsole : public Console
      */
     void setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b);
 
-    uint32 convertConsoleColor(CONSOLECOLOR color);
+    uint16 convertConsoleColor(CONSOLECOLOR color);
+    void colorsFromState(uint8 const &state, CONSOLECOLOR &fg, CONSOLECOLOR &bg);
 
     uint32 x_res_;
     uint32 y_res_;
     uint32 bits_per_pixel_;
     uint32 bytes_per_pixel_;
-    uint32 current_foreground_color_;
-    uint32 current_background_color_;
-
 };
 
 #endif

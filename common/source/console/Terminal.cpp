@@ -75,6 +75,10 @@ void Terminal::writeInternal(char character)
 {
   if (character == '\n' || character == '\r')
   {
+    while(current_column_ < num_columns_)
+    {
+      setCharacter(num_rows_ - 1, current_column_++, ' ');
+    }
     scrollUp();
     current_column_ = 0;
   }
@@ -141,7 +145,7 @@ void Terminal::clearScreen()
   for (i = 0; i < len_; ++i)
   {
     characters_[i] = ' ';
-    character_states_[i] = 0;
+    character_states_[i] = current_state_;
   }
   console_->consoleClearScreen();
 }
@@ -173,7 +177,6 @@ void Terminal::setForegroundColor(Console::CONSOLECOLOR const &color)
   uint8 mask = 15;
   current_state_ = current_state_ & ~mask;
   current_state_ |= color;
-  console_->consoleSetForegroundColor(color);
 }
 
 void Terminal::setBackgroundColor(Console::CONSOLECOLOR const &color)
@@ -184,7 +187,14 @@ void Terminal::setBackgroundColor(Console::CONSOLECOLOR const &color)
   uint8 col = color;
   current_state_ = current_state_ & ~mask;
   current_state_ |= col << 4;
-  console_->consoleSetBackgroundColor(color);
+}
+
+void Terminal::initTerminalColors(Console::CONSOLECOLOR fg, Console::CONSOLECOLOR bg)
+{
+  setForegroundColor(fg);
+  setBackgroundColor(bg);
+  clearScreen();
+  fullRedraw();
 }
 
 void Terminal::scrollUp()
@@ -208,7 +218,7 @@ void Terminal::scrollUp()
     ++runner;
   }
   if (active_)
-    console_->consoleScrollUp();
+    console_->consoleScrollUp(current_state_);
 
 }
 void Terminal::fullRedraw()

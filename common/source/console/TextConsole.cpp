@@ -77,22 +77,14 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
   return 0;
 }
 
-void TextConsole::consoleScrollUp()
+void TextConsole::consoleScrollUp(uint8 const &state)
 {
-  pointer fb = ArchCommon::getFBPtr();
+  char* fb = (char*) ArchCommon::getFBPtr();
   memcpy((void*) fb, (void*) (fb + (consoleGetNumColumns() * 2)),
          (consoleGetNumRows() - 1) * consoleGetNumColumns() * 2);
-  memset((void*) (fb + ((consoleGetNumRows() - 1)) * consoleGetNumColumns() * 2), 0, consoleGetNumColumns() * 2);
-}
-
-void TextConsole::consoleSetForegroundColor(CONSOLECOLOR const &color)
-{
-  if (color)
-    return;
-}
-
-void TextConsole::consoleSetBackgroundColor(CONSOLECOLOR const &color)
-{
-  if (color)
-    return;
+  for(size_t i = 0; i < consoleGetNumColumns(); i++)
+  {
+    fb[(i + (consoleGetNumRows() - 1) * consoleGetNumColumns()) * 2] = ' ';
+    fb[(i + (consoleGetNumRows() - 1) * consoleGetNumColumns()) * 2 + 1] = state;
+  }
 }

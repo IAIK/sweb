@@ -47,8 +47,6 @@ FrameBufferConsole::FrameBufferConsole(uint32 num_terminals) :
   }
 
   active_terminal_ = 0;
-  consoleSetForegroundColor(BLACK);
-  consoleSetBackgroundColor(WHITE);
   consoleClearScreen();
 }
 
@@ -81,8 +79,12 @@ void FrameBufferConsole::setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b)
 }
 
 uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
-                                               uint8 const __attribute__((unused)) &state)
+                                               uint8 const &state)
 {
+  CONSOLECOLOR fg, bg;
+  colorsFromState(state, fg, bg);
+  uint16 bg_color = convertConsoleColor(bg);
+  uint16 fg_color = convertConsoleColor(fg);
   uint32 i, k;
   uint32 character_index = character * 16;
 
@@ -100,11 +102,11 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
       temp &= 1 << (7 - k);
       if (temp)
       {
-        lfb[top_left_pixel + k + i * x_res_] = current_foreground_color_;
+        lfb[top_left_pixel + k + i * x_res_] = fg_color;
       }
       else
       {
-        lfb[top_left_pixel + k + i * x_res_] = current_background_color_;
+        lfb[top_left_pixel + k + i * x_res_] = bg_color;
       }
     }
 
@@ -113,29 +115,24 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
   return 0;
 }
 
-void FrameBufferConsole::consoleScrollUp()
+void FrameBufferConsole::consoleScrollUp(uint8 const &state)
 {
-  uint32 set = 0;
-  set |= current_background_color_ << 16;
-  set |= current_background_color_;
+  CONSOLECOLOR fg, bg;
+  colorsFromState(state, fg, bg);
+  uint16 bg_color = convertConsoleColor(bg);
   pointer fb = ArchCommon::getVESAConsoleLFBPtr();
+  uint16* fb16 = (uint16*)fb;
   memcpy((void*) fb, (void*) (fb + (consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)),
          (consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16);
-  memset((void*) (fb + ((consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)), set,
-         consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16);
+
+  for(uint32 index = ((consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16) / 2;
+      index < x_res_ * y_res_; index++)
+  {
+    fb16[index] = bg_color;
+  }
 }
 
-void FrameBufferConsole::consoleSetForegroundColor(CONSOLECOLOR const &color)
-{
-  current_foreground_color_ = convertConsoleColor(color);
-}
-
-void FrameBufferConsole::consoleSetBackgroundColor(CONSOLECOLOR const &color)
-{
-  current_background_color_ = convertConsoleColor(color);
-}
-
-uint32 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
+uint16 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
 {
   uint8 r, g, b;
   switch(color)
@@ -189,15 +186,15 @@ uint32 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
     r = 255; g = 255; b = 255;
     break;
   }
-  if(bits_per_pixel_ == 16)
-  {
-    uint16 scaled_r = ((uint16)(r * 31)) / 255;
-    uint16 scaled_g = ((uint16)(g * 63)) / 255;
-    uint16 scaled_b = ((uint16)(b * 31)) / 255;
-    return scaled_b | (scaled_g << 5) | (scaled_r << 11);
-  }
-  else
-  {
-    return (r << 16) + (g << 8) + (b);
-  }
+
+  uint16 scaled_r = ((uint16)(r * 31)) / 255;
+  uint16 scaled_g = ((uint16)(g * 63)) / 255;
+  uint16 scaled_b = ((uint16)(b * 31)) / 255;
+  return scaled_b | (scaled_g << 5) | (scaled_r << 11);
+}
+
+void FrameBufferConsole::colorsFromState(uint8 const &state, CONSOLECOLOR &fg, CONSOLECOLOR &bg)
+{
+  fg = (CONSOLECOLOR) (state & 15);
+  bg = (CONSOLECOLOR) ((state & 240) >> 4);
 }

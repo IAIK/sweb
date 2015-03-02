@@ -133,9 +133,7 @@ class Console : public Thread
                                        uint8 const &state) =0;
     virtual uint32 consoleGetNumRows() const=0;
     virtual uint32 consoleGetNumColumns() const=0;
-    virtual void consoleScrollUp() =0;
-    virtual void consoleSetForegroundColor(CONSOLECOLOR const &color) =0;
-    virtual void consoleSetBackgroundColor(CONSOLECOLOR const &color) =0;
+    virtual void consoleScrollUp(uint8 const &state) =0;
 
     ustl::list<Terminal *> terminals_;
     Mutex console_lock_;
