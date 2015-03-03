@@ -7,7 +7,6 @@ endif(COMMAND cmake_policy)
 if(POLICY CMP0037)
   cmake_policy(SET CMP0037 OLD)
 endif(POLICY CMP0037)
-enable_language(ASM)
 
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/32")
@@ -32,6 +31,8 @@ if(APPLE OR WIN32)
 endif(APPLE OR WIN32)
 
 include(arch/${ARCH}/CMakeLists.compiler)
+
+enable_language(ASM)
 
 project(sweb)
 

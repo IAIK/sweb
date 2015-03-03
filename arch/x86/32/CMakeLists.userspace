@@ -1,2 +1,2 @@
 set(CMAKE_C_FLAGS "-Wall -gstabs2 -fno-omit-frame-pointer -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common")
-set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -gstabs2 -fno-omit-frame-pointer -O0 -m32 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-common")
+set(CMAKE_C_LINK_FLAGS "")
