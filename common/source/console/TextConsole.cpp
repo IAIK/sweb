@@ -45,10 +45,6 @@ TextConsole::TextConsole(uint32 num_terminals) :
   }
 
   active_terminal_ = 0;
-
-  // deactivate cursor
-  outportb(0x3d4, 0xa);
-  outportb(0x3d5, 0b00100000);
 }
 
 uint32 TextConsole::consoleGetNumRows() const
