@@ -107,6 +107,7 @@ class Thread
     void jobDone();
     void waitForNextJob();
     virtual bool hasWork();
+    bool isWorker() const;
 
     /**
      * Tells the scheduler if this thread is ready for scheduling

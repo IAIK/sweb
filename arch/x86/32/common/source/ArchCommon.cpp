@@ -7,6 +7,7 @@
 #include "FrameBufferConsole.h"
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
+#include "ports.h"
 
 extern void* kernel_end_address;
 

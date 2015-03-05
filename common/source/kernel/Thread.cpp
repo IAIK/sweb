@@ -207,7 +207,7 @@ void Thread::jobDone()
 
 void Thread::waitForNextJob()
 {
-  state_ = Worker;
+  assert(state_ == Worker);
   Scheduler::instance()->yield();
 }
 
@@ -216,8 +216,14 @@ bool Thread::hasWork()
   return jobs_done_ < jobs_scheduled_;
 }
 
+bool Thread::isWorker() const
+{
+  // If it is a worker thread, the thread state may be sleeping.
+  // But in this case, the thread has at least one job scheduled.
+  return (state_ == Worker) || (jobs_scheduled_ > 0);
+}
+
 bool Thread::schedulable()
 {
   return (state_ == Running) || (state_ == Worker && hasWork());
 }
-

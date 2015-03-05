@@ -96,7 +96,7 @@ void Scheduler::sleep()
 
 void Scheduler::wake(Thread* thread_to_wake)
 {
-  thread_to_wake->state_ = Running;
+  thread_to_wake->state_ = thread_to_wake->isWorker() ? Worker : Running;
 }
 
 void Scheduler::yield()
