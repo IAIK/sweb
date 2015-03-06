@@ -14,8 +14,6 @@
 #include "ustring.h"
 #include "Lock.h"
 
-extern ustl::map<uint32, ustl::string> symbol_table;
-
 ArchThreadInfo *currentThreadInfo;
 Thread *currentThread;
 
