@@ -38,11 +38,11 @@ void flushActiveConsole()
   }
 }
 
-class KprintfNoSleepFlushingThread : public Thread
+class KprintfFlushingThread : public Thread
 {
   public:
 
-    KprintfNoSleepFlushingThread() : Thread(0, "KprintfNoSleepFlushingThread")
+    KprintfFlushingThread() : Thread(0, "KprintfFlushingThread")
     {
       state_ = Worker;
     }
@@ -64,7 +64,7 @@ void kprintf_init()
 {
   nosleep_rb_ = new RingBuffer<char>(1024);
   debug(KPRINTF, "Adding Important kprintf Flush Thread\n");
-  flush_thread_ = new KprintfNoSleepFlushingThread();
+  flush_thread_ = new KprintfFlushingThread();
   Scheduler::instance()->addNewThread(flush_thread_);
 }
 

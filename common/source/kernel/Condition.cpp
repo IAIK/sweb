@@ -6,8 +6,6 @@
 #include "kprintf.h"
 #include "debug.h"
 
-extern uint32 boot_completed;
-
 Condition::Condition(Mutex* mutex, const char* name) :
   Lock(name), mutex_(mutex)
 {

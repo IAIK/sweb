@@ -7,11 +7,13 @@ int64 __divdi3(int64 num, int64 den)
   int minus = 0;
   int64 v;
 
-  if ( num < 0 ) {
+  if ( num < 0 )
+  {
     num = -num;
     minus = 1;
   }
-  if ( den < 0 ) {
+  if ( den < 0 )
+  {
     den = -den;
     minus ^= 1;
   }
@@ -39,21 +41,21 @@ uint64 __umoddi3(uint64 a, uint64 b)
 uint64 __udivmoddi4(uint64 num, uint64 den, uint64 *rem_p)
 {
   uint64 quot = 0, qbit = 1;
-
   if ( den == 0 )
   {
     assert(0);
-    //kpanict((uint8*) "DIVISION BY ZERO\n");
   }
 
-  /* Left-justify denominator and count shift */
-  while ( (int64)den >= 0 ) {
+  while ( (int64)den >= 0 )
+  {
     den <<= 1;
     qbit <<= 1;
   }
 
-  while ( qbit ) {
-    if ( den <= num ) {
+  while ( qbit )
+  {
+    if ( den <= num )
+    {
       num -= den;
       quot += qbit;
     }

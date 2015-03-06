@@ -15,8 +15,6 @@ PageManager pm;
 
 PageManager* PageManager::instance_ = 0;
 
-extern void* kernel_end_address;
-
 // Between min and max KMM heap memory is reserved dynamically!
 // Please note that this means that the KMM depends on the page manager and you
 // will have a harder time implementing swapping. Pros only!

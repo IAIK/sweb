@@ -11,7 +11,7 @@
 #include "kstring.h"
 
 FrameBufferConsole::FrameBufferConsole(uint32 num_terminals) :
-    Console(num_terminals, "VESAConsoleThrd")
+    Console(num_terminals, "VESAConsoleThread")
 {
   x_res_ = ArchCommon::getVESAConsoleWidth();
   y_res_ = ArchCommon::getVESAConsoleHeight();
@@ -186,7 +186,6 @@ uint16 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
     r = 255; g = 255; b = 255;
     break;
   }
-
   uint16 scaled_r = ((uint16)(r * 31)) / 255;
   uint16 scaled_g = ((uint16)(g * 63)) / 255;
   uint16 scaled_b = ((uint16)(b * 31)) / 255;

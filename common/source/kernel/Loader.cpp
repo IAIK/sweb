@@ -18,8 +18,6 @@
 #include "File.h"
 #include "FileDescriptor.h"
 
-extern VfsSyscall vfs_syscall;
-
 Loader::Loader ( ssize_t fd, Thread *thread ) : fd_ ( fd ),
     thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_"),
     userspace_debug_info_(0)
@@ -49,9 +47,6 @@ bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 
 bool Loader::readHeaders()
 {
-  //the ehdr and the phdrs are saved as members, since they
-  //are often needed
-
   hdr_ = new Elf::Ehdr;
 
   VfsSyscall::lseek(fd_, 0, SEEK_SET);

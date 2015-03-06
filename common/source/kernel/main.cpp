@@ -49,8 +49,6 @@ extern "C" void startup()
   PageManager::instance();
   writeLine2Bochs("PageManager and KernelMemoryManager created \n");
 
-  //SerialManager::getInstance()->do_detection( 1 );
-
   main_console = ArchCommon::createConsole(1);
   writeLine2Bochs("Console created \n");
 
@@ -116,11 +114,8 @@ extern "C" void startup()
   ArchInterrupts::enableKBD();
 
   debug(MAIN, "Adding Kernel threads\n");
-
   Scheduler::instance()->addNewThread(main_console);
-
   Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
-
   Scheduler::instance()->printThreadList();
 
   kprintf("Now enabling Interrupts...\n");

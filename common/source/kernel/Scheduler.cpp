@@ -30,7 +30,6 @@ Scheduler::Scheduler()
 {
   block_scheduling_ = 0;
   ticks_ = 0;
-  // Create and add the cleanup and idle thread
   addNewThread(&cleanup_thread_);
   addNewThread(&idle_thread_);
 }

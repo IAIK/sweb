@@ -83,7 +83,7 @@ class ArchCommon
     static void initDebug();
 
     /**
-     * let the cpu idle, f.e. wih the halt statement
+     * let the CPU idle, f.e. with the halt statement
      */
     static void idle();
 
