@@ -4,7 +4,7 @@
 #include "Scheduler.h"
 #include "PageManager.h"
 
-Console* main_console = 0;
+Console* main_console;
 
 Console::Console(uint32, const char* name) : Thread(0, name), console_lock_("Console::console_lock_"),
     set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
@@ -120,7 +120,7 @@ void Console::Run(void)
       this->jobDone();
     }
     waitForNextJob();
-  } while (1); // until the end of time
+  } while (1);
 }
 bool Console::isDisplayable(uint32 key)
 {

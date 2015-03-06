@@ -6,9 +6,6 @@
 #include "SegmentUtils.h"
 #include "kstring.h"
 
-extern uint32 tss_selector;
-extern uint32 gdt_ptr_new;
-
 typedef struct {
     uint16 limitL;
     uint16 baseL;

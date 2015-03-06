@@ -12,8 +12,8 @@
 
 KernelMemoryManager kmm;
 
-KernelMemoryManager * KernelMemoryManager::instance_ = 0;
-size_t KernelMemoryManager::pm_ready_ = 0;
+KernelMemoryManager * KernelMemoryManager::instance_;
+size_t KernelMemoryManager::pm_ready_;
 
 KernelMemoryManager* KernelMemoryManager::instance()
 {

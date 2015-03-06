@@ -14,7 +14,7 @@
 #include "kstring.h"
 
 TextConsole::TextConsole(uint32 num_terminals) :
-    Console(num_terminals, "TxTConsoleThrd")
+    Console(num_terminals, "TxTConsoleThread")
 {
   uint32 i, j = 10, log = 1, k = 0, l = 0;
 
