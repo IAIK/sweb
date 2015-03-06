@@ -6,8 +6,8 @@ include_directories(
   ../../common/include/fs/minixfs
 )
 
-set(CMAKE_C_FLAGS "-DEXE2MINIXFS -std=gnu11 -O0 -g -Wall -Wextra -Wno-deprecated -fno-builtin -fno-rtti -fno-exceptions")
-set(CMAKE_CXX_FLAGS "-DEXE2MINIXFS -std=gnu++11 -O0 -g -Wall -Wextra -Wno-deprecated -fno-builtin -fno-rtti -fno-exceptions")
+set(CMAKE_C_FLAGS "-DEXE2MINIXFS   -std=gnu11   -O0 -g -Wall -Wextra -fno-builtin -fno-rtti -fno-exceptions")
+set(CMAKE_CXX_FLAGS "-DEXE2MINIXFS -std=gnu++11 -O0 -g -Wall -Wextra -fno-builtin -fno-rtti -fno-exceptions")
 
 file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/util/Bitmap.cpp

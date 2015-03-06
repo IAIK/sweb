@@ -101,11 +101,11 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   sub_dentry->d_name_ = sub_dentry_name;
   debug(VFSSYSCALL, "(mkdir) creating Inode: current_dentry->getName(): %s\n", pw_dentry->getName());
   debug(VFSSYSCALL, "(mkdir) creating Inode: sub_dentry->getName(): %s\n", sub_dentry->getName());
-  debug(VFSSYSCALL, "(mkdir) current_sb: %d\n", current_sb);
-  debug(VFSSYSCALL, "(mkdir) current_sb->getFSType(): %d\n", current_sb->getFSType());
+  debug(VFSSYSCALL, "(mkdir) current_sb: %p\n", current_sb);
+  debug(VFSSYSCALL, "(mkdir) current_sb->getFSType(): %p\n", current_sb->getFSType());
 
   current_sb->createInode(sub_dentry, I_DIR);
-  debug(VFSSYSCALL, "(mkdir) sub_dentry->getInode(): %d\n", sub_dentry->getInode());
+  debug(VFSSYSCALL, "(mkdir) sub_dentry->getInode(): %p\n", sub_dentry->getInode());
   return 0;
 }
 
@@ -195,7 +195,7 @@ int32 VfsSyscall::rm(const char* pathname)
   }
   debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", pw_dentry->getName());
   Inode* current_inode = pw_dentry->getInode();
-  debug(VFSSYSCALL, "(rm) current_inode: %d\n", current_inode);
+  debug(VFSSYSCALL, "(rm) current_inode: %p\n", current_inode);
 
   if (current_inode->getType() != I_FILE)
   {
@@ -206,7 +206,7 @@ int32 VfsSyscall::rm(const char* pathname)
   Superblock* sb = current_inode->getSuperblock();
   if (current_inode->rm() == INODE_DEAD)
   {
-    debug(VFSSYSCALL, "remove the inode %d from the list of sb: %d\n", current_inode, sb);
+    debug(VFSSYSCALL, "remove the inode %p from the list of sb: %p\n", current_inode, sb);
     sb->delete_inode(current_inode);
     debug(VFSSYSCALL, "removed\n");
   }
