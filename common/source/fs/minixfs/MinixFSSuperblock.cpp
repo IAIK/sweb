@@ -377,7 +377,7 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
   assert(buffer);
 #ifdef EXE2MINIXFS
   fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
-  (fread(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
+  assert(fread(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
 #else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   bdvd->readData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
@@ -393,7 +393,7 @@ void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffe
 {
 #ifdef EXE2MINIXFS
   fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
-  (fwrite(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
+  assert(fwrite(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
 #else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   bdvd->writeData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
