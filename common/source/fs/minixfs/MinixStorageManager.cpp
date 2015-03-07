@@ -69,7 +69,7 @@ size_t MinixStorageManager::allocZone()
     {
       zone_bitmap_.setBit(pos);
       curr_zone_pos_ = pos;
-      debug(M_STORAGE_MANAGER, "acquireZone: Zone %lld acquired\n", pos);
+      debug(M_STORAGE_MANAGER, "acquireZone: Zone %zu acquired\n", pos);
       return pos;
     }
   }
@@ -89,7 +89,7 @@ size_t MinixStorageManager::allocInode()
     {
       inode_bitmap_.setBit(pos);
       curr_inode_pos_ = pos;
-      debug(M_STORAGE_MANAGER, "acquireInode: Inode %lld acquired\n", pos);
+      debug(M_STORAGE_MANAGER, "acquireInode: Inode %zu acquired\n", pos);
       return pos;
     }
   }
@@ -101,13 +101,13 @@ size_t MinixStorageManager::allocInode()
 void MinixStorageManager::freeZone(size_t index)
 {
   zone_bitmap_.unsetBit(index);
-  debug(M_STORAGE_MANAGER, "freeZone: Zone %lld freed\n", index);
+  debug(M_STORAGE_MANAGER, "freeZone: Zone %zu freed\n", index);
 }
 
 void MinixStorageManager::freeInode(size_t index)
 {
   inode_bitmap_.unsetBit(index);
-  debug(M_STORAGE_MANAGER, "freeInode: Inode %lld freed\n", index);
+  debug(M_STORAGE_MANAGER, "freeInode: Inode %zu freed\n", index);
 }
 
 void MinixStorageManager::flush(MinixFSSuperblock *superblock)
