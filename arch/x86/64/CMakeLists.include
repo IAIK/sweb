@@ -1,6 +1,6 @@
 set(KERNEL_BINARY kernel64.x)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -std=gnu11 -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra                 -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
 
 MACRO(ARCH2OBJ OUTPUTOBJNAMES)
 
@@ -15,7 +15,7 @@ MACRO(ARCH2OBJ OUTPUTOBJNAMES)
 
     add_custom_command(
     OUTPUT ${ARCH_OBJECT}
-    COMMAND ${CMAKE_CXX_COMPILER} -momit-leaf-frame-pointer -S "$(CXX_DEFINES)" -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR}/../../common/include -std=gnu++11 -m32 -O0 -g0 -Wall -Wextra -Wno-deprecated -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow -c -o ${ARCH_ASM} ${ARCH_SOURCE}
+    COMMAND ${CMAKE_CXX_COMPILER} -momit-leaf-frame-pointer -S "$(CXX_DEFINES)" -I${CMAKE_CURRENT_SOURCE_DIR}/../include -I${CMAKE_CURRENT_SOURCE_DIR}/../../common/include -std=gnu++11 -m32 -O0 -g0 -Wall -Wextra  -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow -c -o ${ARCH_ASM} ${ARCH_SOURCE}
     COMMAND ${CMAKE_CXX_COMPILER} "$(CXX_DEFINES)" "$(CXX_FLAGS)" -c -o ${ARCH_OBJECT} ${ARCH_ASM}
     DEPENDS ${ARCH_SOURCE}
     )
