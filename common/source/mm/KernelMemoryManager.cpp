@@ -314,7 +314,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       if((size_t)this_one > base_break_ + reserved_min_)
       {
         // Case 1
-        prenew_assert(this_one->prev_->marker_ == 0xdeadbeef);
+        prenew_assert(this_one && this_one->prev_ && this_one->prev_->marker_ == 0xdeadbeef);
         this_one->prev_->next_ = 0;
         last_ = this_one->prev_;
         ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
