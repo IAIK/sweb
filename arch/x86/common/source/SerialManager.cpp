@@ -51,9 +51,7 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
 
 void SerialManager::service_irq( uint32 irq_num )
 {
-  uint32 i = num_ports;
-
-  for( i = 0;i < num_ports; i++)
+  for(size_t i = 0;i < num_ports; i++)
     if( serial_ports[ i ]->get_info().irq_num == irq_num )
       serial_ports[ i ]->irq_handler();
 }
