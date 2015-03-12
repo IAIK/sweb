@@ -29,8 +29,7 @@ int main(int argc, char *argv[])
 {
   if (argc < 3 || argc % 2 == 0)
   {
-    printf(
-        "Syntax: %s <filename of minixfs-formatted image> <offset in bytes> [file1-src file1-dest [file2-src file2-dest [....]]]\n",
+    printf("Syntax: %s <filename of minixfs-formatted image> <offset in bytes> [file1-src file1-dest [file2-src file2-dest [....]]]\n",
         argv[0]);
     return -1;
   }

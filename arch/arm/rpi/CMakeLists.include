@@ -28,8 +28,8 @@ add_custom_target(sdcardq
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemu
-  COMMAND qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -monitor stdio -d guest_errors,unimp
-  COMMENT "qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -monitor stdio -d guest_errors,unimp"
+  COMMAND qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp
+  COMMENT "qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
@@ -37,8 +37,8 @@ add_custom_target(qemu
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-  COMMAND qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -monitor stdio -d guest_errors,unimp
-  COMMENT "qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -monitor stdio -d guest_errors,unimp"
+  COMMAND qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp
+  COMMENT "qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )

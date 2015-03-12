@@ -104,7 +104,7 @@ void timer_irq_handler()
 {
   static uint32 heart_beat_value = 0;
   const char* clock = "/-\\|";
-  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],0);
+  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],Console::GREEN);
   heart_beat_value = (heart_beat_value + 1) % 4;
 
   Scheduler::instance()->incTicks();

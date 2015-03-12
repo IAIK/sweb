@@ -31,7 +31,7 @@ struct RPiFrameBufferStructure
   uint32 size;
   uint16 cmap[256];
 };
-struct RPiFrameBufferStructure fbs __attribute__ ((aligned (0x10)));
+struct RPiFrameBufferStructure fbs __attribute__ ((aligned (0x20)));
 pointer framebuffer;
 
 pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
