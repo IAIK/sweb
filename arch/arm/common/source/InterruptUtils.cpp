@@ -73,6 +73,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   ArchThreads::printThreadRegisters(currentThread,false);
 
   //save previous state on stack of currentThread
+  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = false;
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
 
@@ -96,8 +97,9 @@ void pageFaultHandler(uint32 address, uint32 type)
     currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
-  currentThread->switch_to_userspace_ = true;
-  currentThreadInfo = currentThread->user_arch_thread_info_;
+  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
+  if (currentThread->switch_to_userspace_)
+    currentThreadInfo = currentThread->user_arch_thread_info_;
 }
 
 void timer_irq_handler()

@@ -288,10 +288,9 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
-  {
     currentThreadInfo = currentThread->user_arch_thread_info_;
-    arch_contextSwitch();
-  }
+  arch_contextSwitch();
+  assert(false);
 }
 
 extern "C" void arch_irqHandler_1();

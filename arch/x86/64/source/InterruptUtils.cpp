@@ -303,10 +303,9 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   asm volatile ("movq %cr3, %rax; movq %rax, %cr3;");
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
-  {
     currentThreadInfo = currentThread->user_arch_thread_info_;
-    arch_contextSwitch();
-  }
+  arch_contextSwitch();
+  assert(false);
 }
 
 extern "C" void arch_irqHandler_1();
