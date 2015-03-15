@@ -12,6 +12,7 @@
 #include "ArchMemory.h"
 #include "FrameBufferConsole.h"
 #include "TextConsole.h"
+#include "ports.h"
 
 extern void* kernel_end_address;
 
@@ -188,6 +189,9 @@ uint32 ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, 
 
 Console* ArchCommon::createConsole(uint32 count)
 {
+  // deactivate cursor
+  outportb(0x3d4, 0xa);
+  outportb(0x3d5, 0b00100000);
   if (haveVESAConsole())
     return new FrameBufferConsole(count);
   else
