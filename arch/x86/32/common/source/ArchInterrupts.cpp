@@ -123,11 +123,10 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (&error + 2 + sizeof(struct context_switch_registers)/sizeof(uint32) + (error));
   register ArchThreadInfo* info = currentThreadInfo;
-  asm("fnsave %[fpu]\n"
-      "frstor %[fpu]\n"
+  asm("fnsave (%[fpu])\n"
+      "frstor (%[fpu])\n"
       :
-      : [fpu]"m"((info->fpu))
-      :);
+      : [fpu]"r"(&info->fpu));
   if (iregisters->cs & 0x3)
   {
     info->ss = iregisters->ss3;
@@ -168,7 +167,7 @@ extern "C" void arch_contextSwitch()
     asm("mov %[esp], %%esp\n" : : [esp]"m"(info.esp));
   }
   g_tss->esp0 = info.esp0;
-  asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
+  asm("frstor (%[fpu])\n" : : [fpu]"r"(&info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[eflags]\n" : : [eflags]"m"(info.eflags));
   asm("push %[cs]\n" : : [cs]"m"(info.cs));
