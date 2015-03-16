@@ -62,7 +62,7 @@ void Thread::kill()
   debug(THREAD, "kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
         currentThread, getName(), this);
 
-  switch_to_userspace_ = false;
+  switch_to_userspace_ = 0;
 
   Scheduler::instance()->invokeCleanup();
   state_ = ToBeDestroyed;
