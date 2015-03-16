@@ -127,7 +127,7 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
       "frstor (%[fpu])\n"
       :
       : [fpu]"r"(&info->fpu));
-  if (iregisters->cs & 0x3)
+  if ((iregisters->cs & 0x3) == 0x3)
   {
     info->ss = iregisters->ss3;
     info->esp = iregisters->esp3;
