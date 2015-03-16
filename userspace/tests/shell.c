@@ -9,12 +9,14 @@
 #define EXECUTABLE_PREFIX       "/usr/"
 #define EXECUTABLE_PREFIX_LEN   5
 
-int running;
-int exit_code;
+int running = 1;
+int exit_code = 0;
 
+char cwd[256];
 char command[256];
 char executable[256 + EXECUTABLE_PREFIX_LEN];
 char args[10][256];
+char buffer[256] __attribute__((aligned(4096)));
 
 void handle_command(char* buffer, int buffer_size)
 {
@@ -101,27 +103,16 @@ void handle_command(char* buffer, int buffer_size)
 
 int main(int argc, char *argv[])
 {
-  char const* str1 = "SWEB-Pseudo-Shell starting...\n";
-  char const* preprompt = "SWEB:";
-  char const* prompt = "> ";
-  char buffer[256];
-  memset(buffer, 0, sizeof(buffer));
-
-  int a = 0;
-  char cwd[256];
-  memset(cwd, 0, sizeof(cwd));
   cwd[0] = '/';
 
-  exit_code = 0;
-  running = 1;
-  printf("\n\%s\n", str1);
+  printf("\n\%s\n", "SWEB-Pseudo-Shell starting...\n");
   do
   {
-    printf("\n%s %s%s", preprompt, cwd, prompt);
+    printf("\n%s %s%s", "SWEB:", cwd, "> ");
     gets(buffer, 255);
     buffer[255] = 0;
     handle_command(buffer, 256);
-    for (a = 0; a < 256; a++)
+    for (size_t a = 0; a < 256; a++)
       buffer[a] = 0;
 
   } while (running);

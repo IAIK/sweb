@@ -432,27 +432,29 @@ int getchar()
  */
 char *gets(char *input_buffer, size_t buffer_size)
 {
-  char cchar=0;
+  char* cchar = input_buffer;
   unsigned int counter = 0;
   if (!buffer_size)
     return input_buffer;
-  
-  do {
-    cchar=0;
-    read(STDIN_FILENO, (void*) &cchar, 1);
-    
-    if( cchar == '\b' )
+
+  do
+  {
+    cchar = input_buffer + counter;
+    read(STDIN_FILENO, (void*) cchar, 1);
+
+    if (*cchar == '\b')
     {
-      if (counter>0)
+      if (counter > 0)
         counter--;
     }
     else
-      input_buffer[counter++] = cchar;
-  }
-  while( cchar != '\n' && cchar != '\r' && counter < buffer_size );
+    {
+      counter++;
+    }
+  } while (*cchar != '\n' && *cchar != '\r' && counter < buffer_size);
 
-  if(buffer_size-counter)
-  input_buffer[counter]= '\0';
+  if (buffer_size - counter)
+    input_buffer[counter] = '\0';
 
   return input_buffer;
 }
