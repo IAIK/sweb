@@ -190,7 +190,6 @@ extern "C" void irqHandler_0()
   //kprintfd("irq0: Going to leave irq Handler 0\n");
   ArchInterrupts::EndOfInterrupt(0);
   arch_contextSwitch();
-  assert(false);
 }
 
 extern "C" void arch_irqHandler_65();
@@ -303,9 +302,10 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   asm volatile ("movq %cr3, %rax; movq %rax, %cr3;");
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
+  {
     currentThreadInfo = currentThread->user_arch_thread_info_;
-  arch_contextSwitch();
-  assert(false);
+    arch_contextSwitch();
+  }
 }
 
 extern "C" void arch_irqHandler_1();

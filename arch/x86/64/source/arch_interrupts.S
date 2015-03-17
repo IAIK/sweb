@@ -102,6 +102,9 @@ arch_pageFaultHandler:
         movq 144(%rsp),%rsi
         movq %cr2, %rdi
         call pageFaultHandler
+        popall
+        addq $8,%rsp
+        iretq
         hlt
 
 
