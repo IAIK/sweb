@@ -127,7 +127,7 @@ void Thread::printBacktrace(bool use_stored_registers)
 
   for (int i = 0; i < Count; ++i)
   {
-    char FunctionName[255];
+    char FunctionName[512];
     pointer StartAddr = 0;
     if (kernel_debug_info)
       StartAddr = kernel_debug_info->getFunctionName(CallStack[i], FunctionName);
@@ -168,7 +168,7 @@ void Thread::printUserBacktrace()
 
   for (int i = 0; i < Count; ++i)
   {
-    char FunctionName[255];
+    char FunctionName[512];
     pointer StartAddr = 0;
     if (deb)
       StartAddr = deb->getFunctionName(CallStack[i], FunctionName);

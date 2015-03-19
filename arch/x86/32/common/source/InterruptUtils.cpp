@@ -176,7 +176,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     // A word of warning: Due to the way the lookup is performed, we may be
     // returned a wrong function name here! Especially routines residing inside
     // ASM- modules are very likely to be detected incorrectly.
-    char FunctionName[255];
+    char FunctionName[512];
     pointer StartAddr = 0;
     if (kernel_debug_info)
       StartAddr = kernel_debug_info->getFunctionName(currentThread->kernel_arch_thread_info_->eip, FunctionName);
