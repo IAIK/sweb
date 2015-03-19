@@ -11,7 +11,7 @@ public:
   ~Stabs2DebugInfo();
 
   ssize_t getFunctionLine(pointer start, pointer offset) const;
-  pointer getFunctionName(pointer address, char function_name[])  const;
+  pointer getFunctionName(pointer address, char function_name[], size_t size)  const;
 
   void printAllFunctions() const;
 
@@ -20,11 +20,12 @@ private:
   void initialiseSymbolTable();
 
 
-  bool tryPasteOoperator(const char *& input, char *& buffer) const;
+  bool tryPasteOoperator(const char *& input, char *& buffer, size_t& size) const;
   int readNumber(const char *& input) const;
-  void pasteTypename(const char *& input, char *& buffer) const;
-  void pasteArguments(const char *& input, char *& buffer, char delimiter) const;
-  void demangleName(const char* name, char *buffer) const;
+  void pasteTypename(const char *& input, char *& buffer, size_t& size) const;
+  void pasteArguments(const char *& input, char *& buffer, char delimiter, size_t& size) const;
+  void demangleName(const char* name, char *buffer, size_t size) const;
+  size_t putChar2Buffer(char*& buffer, char c, size_t& size) const;
 
 
   StabEntry const *stab_start_;

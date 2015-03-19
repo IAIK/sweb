@@ -176,18 +176,18 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     // A word of warning: Due to the way the lookup is performed, we may be
     // returned a wrong function name here! Especially routines residing inside
     // ASM- modules are very likely to be detected incorrectly.
-    char FunctionName[512];
-    pointer StartAddr = 0;
+    char function_name[512];
+    pointer start_addr = 0;
     if (kernel_debug_info)
-      StartAddr = kernel_debug_info->getFunctionName(currentThread->kernel_arch_thread_info_->eip, FunctionName);
-    if (StartAddr)
+      start_addr = kernel_debug_info->getFunctionName(currentThread->kernel_arch_thread_info_->eip, function_name, 256);
+    if (start_addr)
     {
-      ssize_t line = kernel_debug_info->getFunctionLine(StartAddr,currentThread->kernel_arch_thread_info_->eip - StartAddr);
+      ssize_t line = kernel_debug_info->getFunctionLine(start_addr,currentThread->kernel_arch_thread_info_->eip - start_addr);
       if (line > 0)
-        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", FunctionName, line);
+        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", function_name, line);
       else
-        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", FunctionName,
-              currentThread->kernel_arch_thread_info_->eip - StartAddr);
+        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", function_name,
+              currentThread->kernel_arch_thread_info_->eip - start_addr);
     }
 
     if (currentThread->user_arch_thread_info_ &&
@@ -285,7 +285,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
-  asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
+  asm volatile ("movl %%cr3, %%eax\nmovl %%eax, %%cr3" : : : "eax"); // only required in PAE mode
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {

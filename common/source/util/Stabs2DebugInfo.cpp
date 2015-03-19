@@ -52,14 +52,13 @@ void Stabs2DebugInfo::initialiseSymbolTable()
 
 void Stabs2DebugInfo::printAllFunctions() const
 {
-  char *buffer = new char[1000];
+  char buffer[512];
   debug(MAIN, "Known symbols:\n");
   for (auto symbol : function_symbols_)
   {
-    demangleName(stabstr_buffer_ + symbol.second->n_strx, buffer);
+    demangleName(stabstr_buffer_ + symbol.second->n_strx, buffer, 512);
     debug(MAIN, "\t%s\n", buffer);
   }
-  delete[] buffer;
 }
 
 struct StabsOperator
@@ -75,31 +74,32 @@ struct StabsOperator
   {"cl","()"}, {"ix","[]"}, {"qu","?"}, {"st","sizeof"}, {"sz","sizeof"}
 };
 
-bool Stabs2DebugInfo::tryPasteOoperator(const char *& input, char *& buffer) const
+bool Stabs2DebugInfo::tryPasteOoperator(const char *& input, char *& buffer, size_t& size) const
 {
   if (!input || !buffer)
     return false;
 
-  const char* operatorName = 0;
+  const char* operator_name = 0;
 
   for (StabsOperator op : operators)
   {
     if (input[0] == op.mangled[0] && input[1] == op.mangled[1])
     {
-      operatorName = op.demangled;
+      operator_name = op.demangled;
       break;
     }
   }
 
-  if (operatorName == 0)
+  if (operator_name == 0)
     return false;
 
-  int n = strlen(operatorName);
+  size_t n = strlen(operator_name);
 
-  memcpy(buffer, "operator", 8);
-  buffer += 8;
-  memcpy(buffer, operatorName, n);
-  buffer += n;
+  const char* op_str = "operator";
+  while (*op_str)
+    putChar2Buffer(buffer,*op_str++,size);
+  for (size_t i = 0; i < n; ++i)
+    putChar2Buffer(buffer,*operator_name++,size);
   input += 2;
   return true;
 }
@@ -125,7 +125,7 @@ ssize_t Stabs2DebugInfo::getFunctionLine(pointer start, pointer offset) const
   return line;
 }
 
-pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[]) const
+pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[], size_t size) const
 {
   if (function_symbols_.size() == 0)
     return 0;
@@ -143,7 +143,7 @@ pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[]) 
   if (it != function_symbols_.end())
   {
     --it;
-    demangleName(stabstr_buffer_ + it->second->n_strx, function_name);
+    demangleName(stabstr_buffer_ + it->second->n_strx, function_name, size);
     return it->first;
   }
 
@@ -155,15 +155,15 @@ int Stabs2DebugInfo::readNumber(const char *& input) const
   if (!input)
     return -1;
 
-  int Result = 0;
+  int result = 0;
 
   while (*input >= '0' && *input <= '9')
   {
-    Result = 10 * Result + (*input - '0');
+    result = 10 * result + (*input - '0');
     ++input;
   }
 
-  return Result;
+  return result;
 }
 
 struct StabsTypename
@@ -177,10 +177,10 @@ struct StabsTypename
   {'e',"long double"}, {'g',"__float128"}, {'z',"ellipsis"}
 };
 
-void Stabs2DebugInfo::pasteTypename(const char *& input, char *& buffer) const
+void Stabs2DebugInfo::pasteTypename(const char *& input, char *& buffer, size_t& size) const
 {
-  bool isReference = false, isPointer = false;
-  int offsetInput, count;
+  bool is_reference = false, is_pointer = false;
+  size_t offset_input, count;
   char const* src = "<?>";
 
   if (!input || !buffer)
@@ -189,26 +189,27 @@ void Stabs2DebugInfo::pasteTypename(const char *& input, char *& buffer) const
   if (*input == 'R')
   {
     ++input;
-    isReference = true;
+    is_reference = true;
   }
 
   if (*input == 'P')
   {
     ++input;
-    isPointer = true;
+    is_pointer = true;
   }
 
   if (*input == 'K')
   {
-    memcpy(buffer, "const ", 6);
+    const char* const_str = "const";
+    while (*const_str)
+      putChar2Buffer(buffer,*const_str++,size);
     ++input;
-    buffer += 6;
   }
 
   if (*input >= '0' && *input <= '9')
   {
     count = readNumber(input);
-    offsetInput = count;
+    offset_input = count;
     src = input;
   }
   else
@@ -223,114 +224,120 @@ void Stabs2DebugInfo::pasteTypename(const char *& input, char *& buffer) const
       }
     }
     count = strlen(src);
-    offsetInput = 1;
+    offset_input = 1;
   }
 
-  memcpy(buffer, src, count);
-  buffer += count;
-  input += offsetInput;
+  for (size_t i = 0; i < count; ++i)
+    putChar2Buffer(buffer,*src++,size);
+  input += offset_input;
 
-  if (isPointer)
-    *buffer++ = '*';
+  if (is_pointer)
+    putChar2Buffer(buffer,'*',size);
 
-  if (isReference)
-    *buffer++ = '&';
+  if (is_reference)
+    putChar2Buffer(buffer,'&',size);
 }
 
-void Stabs2DebugInfo::pasteArguments(const char *& input, char *& buffer, char delimiter) const
+void Stabs2DebugInfo::pasteArguments(const char *& input, char *& buffer, char delimiter, size_t& size) const
 {
   if (!input || !buffer)
     return;
 
-  int ArgNr = 0;
+  int arg_nr = 0;
 
   while (*input != delimiter)
   {
-    if (ArgNr++)
+    if (arg_nr++)
     {
-      *buffer++ = ',';
-      *buffer++ = ' ';
+      putChar2Buffer(buffer,',',size);
+      putChar2Buffer(buffer,' ',size);
     }
 
-    pasteTypename(input, buffer);
+    pasteTypename(input, buffer, size);
   }
 }
 
-void Stabs2DebugInfo::demangleName(const char* name, char *buffer) const
+size_t Stabs2DebugInfo::putChar2Buffer(char*& buffer, char c, size_t& size) const
 {
-  const char *pData = name;
+  if (size <= 1)
+    return -1;
+  *buffer++ = c;
+  *buffer = 0;
+  --size;
+  return 0;
+}
 
-  if (!buffer || !pData)
+void Stabs2DebugInfo::demangleName(const char* name, char *buffer, size_t size) const
+{
+  const char *p_data = name;
+
+  if (!buffer || !p_data)
     return;
 
-  if (pData[0] != '_' || pData[1] != 'Z') // is the name mangled?
+  if (p_data[0] != '_' || p_data[1] != 'Z') // is the name mangled?
   {
     size_t length = strlen(name);
     for (size_t i = 0; i < length; ++i) // copy unmangled name
     {
-      if (*pData == ':')
+      if (*p_data == ':')
         break;
 
-      *buffer++ = *pData++;
+      putChar2Buffer(buffer,*p_data++,size);
     }
-
-    *buffer = '\0';
-    return;
-  }
-
-  pData += 2; // skip "_Z", which indicates a mangled name
-
-  if (*pData == 'N') // we've got a nested name
-  {
-    ++pData;
-    int NameCount = 0;
-
-    uint32 repeat = 0;
-    while (*pData != 'E')
-    {
-      if (NameCount++ && *pData != 'I')
-      {
-        *buffer++ = ':';
-        *buffer++ = ':';
-      }
-
-      if (*pData >= '0' && *pData <= '9') // part of nested name
-      {
-        int Count = readNumber(pData);
-
-        memcpy(buffer, pData, Count);
-        pData += Count;
-        buffer += Count;
-      }
-      else if (*pData == 'I') // parse template params
-      {
-        *buffer++ = '<';
-        pasteArguments(++pData, buffer, 'E');
-        *buffer++ = '>';
-        ++pData;
-      }
-      else
-        tryPasteOoperator(pData, buffer);
-      if (repeat >= 2)
-        break;
-      ++repeat;
-    }
-    ++pData;
   }
   else
   {
-    if (*pData == 'L') // we've got a local name
-      ++pData;
+    p_data += 2; // skip "_Z", which indicates a mangled name
 
-    int Count = readNumber(pData);
-    memcpy(buffer, pData, Count);
-    buffer += Count;
-    pData += Count;
+    if (*p_data == 'N') // we've got a nested name
+    {
+      ++p_data;
+      int name_count = 0;
+
+      uint32 repeat = 0;
+      while (*p_data != 'E')
+      {
+        if (name_count++ && *p_data != 'I')
+        {
+          putChar2Buffer(buffer,':',size);
+          putChar2Buffer(buffer,':',size);
+        }
+
+        if (*p_data >= '0' && *p_data <= '9') // part of nested name
+        {
+          size_t Count = readNumber(p_data);
+
+          for (size_t i = 0; i < Count; ++i)
+            putChar2Buffer(buffer,*p_data++,size);
+        }
+        else if (*p_data == 'I') // parse template params
+        {
+          putChar2Buffer(buffer,'<',size);
+          pasteArguments(++p_data, buffer, 'E', size);
+          putChar2Buffer(buffer,'>',size);
+          ++p_data;
+        }
+        else
+          tryPasteOoperator(p_data, buffer, size);
+        if (repeat >= 2)
+          break;
+        ++repeat;
+      }
+      ++p_data;
+    }
+    else
+    {
+      if (*p_data == 'L') // we've got a local name
+        ++p_data;
+
+      size_t count = readNumber(p_data);
+      for (size_t i = 0; i < count; ++i)
+        putChar2Buffer(buffer,*p_data++,size);
+    }
+
+    putChar2Buffer(buffer,'(',size);
+    pasteArguments(p_data, buffer, ':', size);
+    putChar2Buffer(buffer,')',size);
   }
-
-  *buffer++ = '(';
-  pasteArguments(pData, buffer, ':');
-  *buffer++ = ')';
-  *buffer = '\0';
 }
 
