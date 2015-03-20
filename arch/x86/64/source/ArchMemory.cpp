@@ -160,30 +160,18 @@ ArchMemory::~ArchMemory()
   }
 }
 
-bool ArchMemory::checkAddressValid(uint64 vaddress_to_check)
+pointer ArchMemory::checkAddressValid(uint64 vaddress_to_check)
 {
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, vaddress_to_check / PAGE_SIZE);
   if (m.page != 0)
   {
     debug(A_MEMORY, "checkAddressValid %x and %x -> true\n", page_map_level_4_, vaddress_to_check);
-    return true;
+    return getIdentAddressOfPPN(m.page,m.page_size) | (vaddress_to_check % m.page_size);
   }
   else
   {
     debug(A_MEMORY, "checkAddressValid %x and %x -> false\n", page_map_level_4_, vaddress_to_check);
-    return false;
-  }
-  if (m.pml4 && m.pml4[m.pml4i].present)
-  {
-    if (m.pdpt && m.pdpt[m.pdpti].pd.present && !m.pdpt[m.pdpti].pd.size) // 1gb page ?
-    {
-      if (m.pd && m.pd[m.pdi].pt.present && !m.pd[m.pdi].pt.size && m.pt[m.pti].present) // 2mb page ?
-        return true;
-      else if (m.pd && m.pd[m.pdi].page.present)
-        return true;
-    }
-    else if (m.pdpt && m.pdpt[m.pdpti].page.present)
-      return true;
+    return 0;
   }
 }
 

@@ -158,7 +158,7 @@ ArchMemory::~ArchMemory()
   PageManager::instance()->freePPN(page_dir_page_);
 }
 
-bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
+pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
@@ -166,17 +166,17 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   if (page_directory[pde_vpn].pt.size == PDE_SIZE_PAGE)
   {
-    return true;
+    return getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_ppn,PDE_SIZE_PAGE) | (vaddress_to_check % PDE_SIZE_PAGE);
   }
   else if (page_directory[pde_vpn].pt.size == PDE_SIZE_PT)
   {
     PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
     if (pte_base[pte_vpn].size == 2)
     {
-      return true;
+      return getIdentAddressOfPPN(pte_base[pte_vpn].page_ppn,PDE_SIZE_PT) | (vaddress_to_check % PDE_SIZE_PAGE);
     }
   }
-  return false;
+  return 0;
 }
 
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page,

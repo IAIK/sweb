@@ -6,12 +6,9 @@
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "umap.h"
 #include "ArchCommon.h"
-
-struct StackFrame
-{
-   StackFrame *previous_frame;
-   void *return_address;
-};
+#include "ArchMemory.h"
+#include "Loader.h"
+#include "arch_backtrace.h"
 
 extern Thread* currentThread;
 
@@ -61,28 +58,31 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 
 int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_stored_registers*/)
 {
-  if (!call_stack || !size || thread != currentThread || !thread->user_registers_)
+  if (!call_stack || !size || !thread->user_registers_)
     return 0;
 
   void *ebp = (void*)thread->user_registers_->ebp;
   StackFrame *CurrentFrame = (StackFrame*)ebp;
+  StackFrame *CurrentFrameI = (StackFrame*)thread->loader_->arch_memory_.checkAddressValid(ebp);
 
   // the userspace stack is allowed to be anywhere in userspace
-  void *StackStart = (void*) (2U*1024U*1024U*1024U - sizeof ( pointer )); // the stack "starts" at the high addresses...
-  void *StackEnd = 0x0; // ... and "ends" at the lower ones.
+  void *StackStart = (void*)0x7fffffff;
+  void *StackEnd = (void*)thread->user_arch_thread_info_->esp;
 
-  void *StartAddress = (void*)0x00000000;
+  void *StartAddress = (void*)0x1;
   void *EndAddress = (void*)0x80000000;
 
   int i = 0;
   while (i < size &&
       ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
-      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
       ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
+      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress) &&
+      CurrentFrameI &&
+      ADDRESS_BETWEEN(CurrentFrameI->return_address, StartAddress, EndAddress))
   {
-    call_stack[i++] = (pointer)CurrentFrame->return_address;
-    CurrentFrame = CurrentFrame->previous_frame;
+    call_stack[i++] = (pointer)CurrentFrameI->return_address;
+    CurrentFrame = CurrentFrameI->previous_frame;
+    CurrentFrameI = (StackFrame*)thread->loader_->arch_memory_.checkAddressValid((uint32)CurrentFrameI->previous_frame);
   }
 
   return i;
