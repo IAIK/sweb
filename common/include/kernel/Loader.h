@@ -36,11 +36,6 @@ class Loader
     ~Loader();
 
     /**
-     *Creates a new PageDirectory and a new Page for the stack and initialises them
-     */
-    void initUserspaceAddressSpace();
-
-    /**
      *Initialises the Addressspace of the User, creates the Thread's
      *InfosUserspaceThread and sets the PageDirectory,
      *loads the ehdr and phdrs from executable
