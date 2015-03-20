@@ -41,6 +41,7 @@ UserProcess::UserProcess(const char *minixfs_filename, FileSystemInfo *fs_info, 
 
 UserProcess::~UserProcess()
 {
+  assert(Scheduler::instance()->isCurrentlyCleaningUp());
   delete loader_;
   loader_ = 0;
 

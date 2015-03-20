@@ -171,6 +171,11 @@ bool Scheduler::isSchedulingEnabled()
     return false;
 }
 
+bool Scheduler::isCurrentlyCleaningUp()
+{
+  return currentThread == &cleanup_thread_;
+}
+
 uint32 Scheduler::getTicks()
 {
   return ticks_;

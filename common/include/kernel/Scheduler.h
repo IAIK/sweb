@@ -96,6 +96,11 @@ class Scheduler
     bool isSchedulingEnabled();
 
     /**
+     * Check if the cleanup thread is is running atm
+     */
+    bool isCurrentlyCleaningUp();
+
+    /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
      * this is the method that decides which threads will be scheduled next
      * it is called by either the timer interrupt handler or the yield interrupt handler
