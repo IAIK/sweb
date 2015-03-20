@@ -30,15 +30,6 @@ Loader::~Loader()
   delete hdr_;
 }
 
-
-void Loader::initUserspaceAddressSpace()
-{
-  size_t page_for_stack = PageManager::instance()->allocPPN();
-
-  arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
-}
-
-
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 {
   VfsSyscall::lseek(fd_, position, SEEK_SET);
@@ -79,8 +70,6 @@ bool Loader::readHeaders()
 bool Loader::loadExecutableAndInitProcess()
 {
   debug ( LOADER,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
-
-  initUserspaceAddressSpace();
 
   if(!readHeaders())
     return false;

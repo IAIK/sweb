@@ -5,6 +5,8 @@
 #include "Loader.h"
 #include "VfsSyscall.h"
 #include "File.h"
+#include "ArchMemory.h"
+#include "PageManager.h"
 
 UserProcess::UserProcess(const char *minixfs_filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
                          uint32 terminal_number) :
@@ -24,6 +26,9 @@ UserProcess::UserProcess(const char *minixfs_filename, FileSystemInfo *fs_info, 
   loader_ = new Loader(fd_, this);
   if (loader_ && loader_->loadExecutableAndInitProcess())
   {
+    size_t page_for_stack = PageManager::instance()->allocPPN();
+    loader_->arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
+
     run_me_ = true;
     debug(USERPROCESS, "ctor: Done loading %s\n", minixfs_filename);
   }
