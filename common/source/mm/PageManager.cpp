@@ -210,7 +210,7 @@ uint32 PageManager::allocPPN(uint32 page_size)
       debug(PM, "PageManager::allocPPN: Out of phyiscal pages!\n");
       assert(found);
     }
-    memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, PAGE_SIZE);
+    memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, page_size);
     return found;
   }
   return 0;
