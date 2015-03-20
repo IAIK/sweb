@@ -11,6 +11,9 @@ class Dirent;
 class Dentry;
 class VfsMount;
 class FileDescriptor;
+class VfsSyscall;
+
+extern VfsSyscall vfs_syscall;
 
 /**
  * @class VfsSyscall

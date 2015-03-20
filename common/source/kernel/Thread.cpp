@@ -42,15 +42,11 @@ Thread::Thread(FileSystemInfo *working_dir, const char *name) :
 
 Thread::~Thread()
 {
-  delete loader_;
-  loader_ = 0;
   debug(THREAD, "~Thread: freeing ThreadInfos\n");
   delete user_arch_thread_info_;
   user_arch_thread_info_ = 0;
   delete kernel_arch_thread_info_;
   kernel_arch_thread_info_ = 0;
-  delete working_dir_;
-  working_dir_ = 0;
   if(unlikely(holding_lock_list_ != 0))
   {
     debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n",
