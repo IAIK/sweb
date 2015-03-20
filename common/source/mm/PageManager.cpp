@@ -207,7 +207,7 @@ uint32 PageManager::allocPPN(uint32 page_size)
     {
       assert(false && "PageManager::allocPPN: Out of memory / No more free physical pages");
     }
-    memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, PAGE_SIZE);
+    memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, page_size);
     return found;
   }
   return 0;
