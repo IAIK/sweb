@@ -20,24 +20,19 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_arch_thread_info_->cr3 = arch_memory.getValueForCR3();
 }
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
+void ArchThreads::createBaseThreadInfo(ArchThreadInfo *&info, pointer start_function, pointer stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
-  info->cs      = KERNEL_CS;
-  info->ds      = KERNEL_DS;
-  info->es      = KERNEL_DS;
-  info->ss      = KERNEL_SS;
-  info->eflags  = 0x200;
-  info->dpl     = DPL_KERNEL;
   info->esp     = stack;
   info->ebp     = stack;
+  info->eflags  = 0x200;
   info->eip     = start_function;
   info->cr3     = root_of_kernel_paging_structure;
 
- /* fpu (=fninit) */
+  /* fpu (=fninit) */
   info->fpu[0] = 0xFFFF037F;
   info->fpu[1] = 0xFFFF0000;
   info->fpu[2] = 0xFFFFFFFF;
@@ -47,16 +42,27 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[6] = 0xFFFF0000;
 }
 
+void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
+{
+  createBaseThreadInfo(info,start_function,stack);
+
+  info->cs      = KERNEL_CS;
+  info->ds      = KERNEL_DS;
+  info->es      = KERNEL_DS;
+  info->ss      = KERNEL_SS;
+  info->dpl     = DPL_KERNEL;
+}
+
 void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
 {
-  createThreadInfosKernelThread(info,start_function,user_stack);
+  createBaseThreadInfo(info,start_function,user_stack);
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;
   info->es      = USER_DS;
   info->ss      = USER_SS;
-  info->ss0     = KERNEL_SS;
   info->dpl     = DPL_USER;
+  info->ss0     = KERNEL_SS;
   info->esp0    = kernel_stack;
 }
 

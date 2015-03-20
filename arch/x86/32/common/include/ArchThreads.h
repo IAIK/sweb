@@ -80,7 +80,6 @@ public:
  */
   static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
 
-
   /**
    * changes an existing ArchThreadInfo so that execution will start / continue
    * at the function specified
@@ -165,6 +164,17 @@ public:
  */
   static void printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose = true);
   static void printThreadRegisters(Thread *thread, bool verbose = true);
+
+private:
+
+/**
+ * creates the ArchThreadInfo for a kernel thread
+ * @param info where the ArchThreadInfo is saved
+ * @param start_function instruction pointer is set so start function
+ * @param stack stackpointer
+ */
+  static void createBaseThreadInfo(ArchThreadInfo *&info, pointer start_function, pointer stack);
+
 };
 
 #endif
