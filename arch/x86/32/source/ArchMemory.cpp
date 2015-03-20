@@ -99,23 +99,20 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
   pte_base[pte_vpn].present = 1;
 }
 
-bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
+pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 {
   uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
   RESOLVEMAPPING(page_dir_page_, virtual_page);
   if (page_directory[pde_vpn].pt.present)
   {
     if (page_directory[pde_vpn].page.size)
-      return true;
+      return getIdentAddressOfPPN(page_directory[pde_vpn].page.page_ppn,PAGE_SIZE * PAGE_TABLE_ENTRIES) | (vaddress_to_check % (PAGE_SIZE * PAGE_TABLE_ENTRIES));
 
     PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
     if (pte_base[pte_vpn].present)
-      return true;
-    else
-      return false;
+      return getIdentAddressOfPPN(pte_base[pte_vpn].page_ppn) | (vaddress_to_check % PAGE_SIZE);
   }
-  else
-    return false;
+  return 0;
 }
 
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page,

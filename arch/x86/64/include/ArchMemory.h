@@ -101,7 +101,7 @@ public:
  * @return true: if mapping exists\nfalse: if the given virtual address is unmapped
  * and accessing it would result in a pageFault
  */
-  bool checkAddressValid(uint64 vaddress_to_check);
+  pointer checkAddressValid(uint64 vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
