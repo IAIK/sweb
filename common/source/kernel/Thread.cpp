@@ -51,8 +51,14 @@ Thread::~Thread()
   kernel_arch_thread_info_ = 0;
   delete working_dir_;
   working_dir_ = 0;
+  if(unlikely(holding_lock_list_ != 0))
+  {
+    debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n",
+          getName(), this);
+    Lock::printHoldingList(this);
+    assert(false);
+  }
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
-  assert(KernelMemoryManager::instance()->KMMLockHeldBy() != this);
 }
 
 //if the Thread we want to kill, is the currentThread, we better not return
