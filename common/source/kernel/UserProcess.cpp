@@ -39,12 +39,16 @@ UserProcess::UserProcess(const char *minixfs_filename, FileSystemInfo *fs_info, 
   switch_to_userspace_ = 1;
 }
 
-extern VfsSyscall vfs_syscall;
-
 UserProcess::~UserProcess()
 {
+  delete loader_;
+  loader_ = 0;
+
   if (fd_ > 0)
     vfs_syscall.close(fd_);
+
+  delete working_dir_;
+  working_dir_ = 0;
 
   process_registry_->processExit();
 }
