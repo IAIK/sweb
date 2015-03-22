@@ -19,10 +19,4 @@ include_directories(
     include/ustl
 )
 
-if(${ARCH} STREQUAL "xen")
-    include_directories(
-    ../arch/xen/x86/include
-    )
-endif(${ARCH} STREQUAL "xen")
-
 add_subdirectory(source)
