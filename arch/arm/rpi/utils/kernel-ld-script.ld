@@ -44,18 +44,21 @@ SECTIONS
 
   }
 
-  .stab ALIGN(4096) : AT(LS_Phys + (LS_Stab - LS_Code))
+  .stab : AT(LS_Phys + (LS_Stab - LS_Code))
   {
     LS_Stab = .;
     stab_start_address_nr = .;
+    . = ALIGN(4096);
     *(.stab)
+    . = ALIGN(4096);
     stab_end_address_nr = .;
   }
   
-  .stabstr ALIGN(4096) : AT(LS_Phys + (LS_Stabstr - LS_Code))
+  .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
     stabstr_start_address_nr = .;
+    . = ALIGN(4096);
     *(.stabstr)
     . = ALIGN(4096);
     stabstr_end_address_nr = .;
