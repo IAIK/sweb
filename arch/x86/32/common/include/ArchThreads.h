@@ -59,20 +59,6 @@ public:
   static void initialise();
 
 /**
- * not implemented
- *
- */
-  static void switchToThreadOnIret(Thread *thread);
-
-/**
- * deletes the info if not null
- *
- * @param info to be cleaned up
- *
- */
-  static void cleanupThreadInfos(ArchThreadInfo *&info);
-
-/**
  * creates the ArchThreadInfo for a kernel thread
  * @param info where the ArchThreadInfo is saved
  * @param start_function instruction pointer is set so start function
