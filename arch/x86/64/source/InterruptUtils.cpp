@@ -149,7 +149,7 @@ void InterruptUtils::countPageFault(uint64 address)
   extern "C" void errorHandler_##x () \
   {\
     currentThread->switch_to_userspace_ = false;\
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
+    currentThreadRegisters = currentThread->kernel_registers_;\
     kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     asm("hlt");\
     kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
