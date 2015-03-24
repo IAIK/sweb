@@ -28,25 +28,24 @@ static void threadStartHack()
 }
 
 Thread::Thread(FileSystemInfo *working_dir, const char *name) :
-    kernel_arch_thread_info_(0), user_arch_thread_info_(0), switch_to_userspace_(0), loader_(0), state_(Running),
+    kernel_registers_(0), user_registers_(0), switch_to_userspace_(0), loader_(0), state_(Running),
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name)
 {
-  debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, stack_);
-  debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
+  debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, kernel_stack_);
+  debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(kernel_stack_), name_.c_str());
   debug(THREAD, "Thread ctor, fs_info ptr: %x\n", working_dir_);
-  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_, (void*)threadStartHack,
-                                             getStackStartPointer());
-  stack_[0] = STACK_CANARY; // stack canary / end of stack
+  ArchThreads::createKernelRegisters(kernel_registers_, (void*)threadStartHack, getStackStartPointer());
+  kernel_stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
 
 Thread::~Thread()
 {
   debug(THREAD, "~Thread: freeing ThreadInfos\n");
-  delete user_arch_thread_info_;
-  user_arch_thread_info_ = 0;
-  delete kernel_arch_thread_info_;
-  kernel_arch_thread_info_ = 0;
+  delete user_registers_;
+  user_registers_ = 0;
+  delete kernel_registers_;
+  kernel_registers_ = 0;
   if(unlikely(holding_lock_list_ != 0))
   {
     debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n",
@@ -78,8 +77,8 @@ void Thread::kill()
 
 void* Thread::getStackStartPointer()
 {
-  pointer stack = (pointer) stack_;
-  stack += sizeof(stack_) - sizeof(uint32);
+  pointer stack = (pointer) kernel_stack_;
+  stack += sizeof(kernel_stack_) - sizeof(uint32);
   return (void*)stack;
 }
 
@@ -151,7 +150,7 @@ void Thread::printBacktrace(bool use_stored_registers)
 
 void Thread::printUserBacktrace()
 {
-  if (!user_arch_thread_info_)
+  if (!user_registers_)
   {
     debug(USERTRACE, "=== Can not do userspace stacktracing of thread <%s> since it has no userspace! ===\n",
           getName());

@@ -19,24 +19,24 @@ extern PageDirEntry kernel_page_directory[];
 void ArchThreads::initialise()
 {
   new (&global_atomic_add_lock) SpinLock("global_atomic_add_lock");
-  currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
+  currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
-  currentThreadInfo->ttbr0 = pageDirectory;
+  currentThreadRegisters->ttbr0 = pageDirectory;
 }
 
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
   assert(arch_memory.page_dir_page_ != 0);
   assert((arch_memory.page_dir_page_ & 0x3) == 0); // has to be aligned to 4 pages
-  thread->kernel_arch_thread_info_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
-  if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
+  thread->kernel_registers_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
+  if (thread->user_registers_)
+    thread->user_registers_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack)
+void ArchThreads::createThreadInfosKernelThread(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  memset((void*)info, 0, sizeof(ArchThreadInfo));
+  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
+  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
@@ -51,16 +51,16 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* sta
   assert(((pageDirectory) & 0x3FFF) == 0);
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, void* function)
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
 {
   info->pc = function;
   info->lr = function;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack)
+void ArchThreads::createThreadInfosUserspaceThread(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
-  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  memset((void*)info, 0, sizeof(ArchThreadInfo));
+  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
+  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
@@ -129,7 +129,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
+  ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);

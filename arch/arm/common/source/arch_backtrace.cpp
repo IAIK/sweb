@@ -32,15 +32,15 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
     asm("mov %[v], fp" : [v]"=r" (fp));
   }
   else
-    fp = (StackFrame*)thread->kernel_arch_thread_info_->r[11]; // r11 is the fp register in gcc ;)
+    fp = (StackFrame*)thread->kernel_registers_->r[11]; // r11 is the fp register in gcc ;)
 
     int i = 0;
 
-  void *StackStart = (void*)((uint32)thread->stack_ + sizeof(thread->stack_)); // the stack "starts" at the high addresses...
-  void *StackEnd = (void*)thread->stack_; // ... and "ends" at the lower ones.
+  void *StackStart = (void*)((uint32)thread->kernel_stack_ + sizeof(thread->kernel_stack_)); // the stack "starts" at the high addresses...
+  void *StackEnd = (void*)thread->kernel_stack_; // ... and "ends" at the lower ones.
 
   if (use_stored_registers)
-    call_stack[i++] = thread->kernel_arch_thread_info_->pc;
+    call_stack[i++] = thread->kernel_registers_->pc;
 
   while (i < size && ADDRESS_BETWEEN(fp, StackEnd, StackStart))
   {
@@ -53,10 +53,10 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 
 int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_stored_registers*/)
 {
-  if (!call_stack || !size || thread != currentThread || !thread->user_arch_thread_info_)
+  if (!call_stack || !size || thread != currentThread || !thread->user_registers_)
     return 0;
 
-  void *ebp = (void*)thread->user_arch_thread_info_->r[11];
+  void *ebp = (void*)thread->user_registers_->r[11];
   StackFrame *CurrentFrame = (StackFrame*)ebp;
 
   // the userspace stack is allowed to be anywhere in userspace

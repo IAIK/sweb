@@ -110,7 +110,7 @@ void InterruptUtils::lidt(IDTR *idtr)
   extern "C" void errorHandler_##x () \
   {\
     currentThread->switch_to_userspace_ = false;\
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;\
+    currentThreadRegisters = currentThread->kernel_registers_;\
     ArchInterrupts::enableInterrupts();\
     kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
@@ -123,14 +123,14 @@ extern "C" void dummyHandler()
 {
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
   kprintfd("DUMMY_HANDLER: Spurious INT\n");
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {
-    currentThreadInfo = currentThread->user_arch_thread_info_;
+    currentThreadRegisters = currentThread->user_registers_;
     arch_contextSwitch();
   }
 }
@@ -179,19 +179,19 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     char function_name[512];
     pointer start_addr = 0;
     if (kernel_debug_info)
-      start_addr = kernel_debug_info->getFunctionName(currentThread->kernel_arch_thread_info_->eip, function_name, 256);
+      start_addr = kernel_debug_info->getFunctionName(currentThread->kernel_registers_->eip, function_name, 256);
     if (start_addr)
     {
-      ssize_t line = kernel_debug_info->getFunctionLine(start_addr,currentThread->kernel_arch_thread_info_->eip - start_addr);
+      ssize_t line = kernel_debug_info->getFunctionLine(start_addr,currentThread->kernel_registers_->eip - start_addr);
       if (line > 0)
         debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", function_name, line);
       else
         debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", function_name,
-              currentThread->kernel_arch_thread_info_->eip - start_addr);
+              currentThread->kernel_registers_->eip - start_addr);
     }
 
-    if (currentThread->user_arch_thread_info_ &&
-          currentThread->user_arch_thread_info_->cr3 != currentThread->kernel_arch_thread_info_->cr3)
+    if (currentThread->user_registers_ &&
+          currentThread->user_registers_->cr3 != currentThread->kernel_registers_->cr3)
     {
       debug(PM, "[PageFaultHandler] User and Kernel CR3 register values differ, this most likely is a bug!");
     }
@@ -263,7 +263,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
   //lets hope this Exeption wasn't thrown during a TaskSwitch
@@ -289,7 +289,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {
-    currentThreadInfo = currentThread->user_arch_thread_info_;
+    currentThreadRegisters = currentThread->user_registers_;
     arch_contextSwitch();
   }
 }
@@ -362,19 +362,19 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
-  currentThread->user_arch_thread_info_->eax = Syscall::syscallException(currentThread->user_arch_thread_info_->eax,
-                                                                         currentThread->user_arch_thread_info_->ebx,
-                                                                         currentThread->user_arch_thread_info_->ecx,
-                                                                         currentThread->user_arch_thread_info_->edx,
-                                                                         currentThread->user_arch_thread_info_->esi,
-                                                                         currentThread->user_arch_thread_info_->edi);
+  currentThread->user_registers_->eax = Syscall::syscallException(currentThread->user_registers_->eax,
+                                                                         currentThread->user_registers_->ebx,
+                                                                         currentThread->user_registers_->ecx,
+                                                                         currentThread->user_registers_->edx,
+                                                                         currentThread->user_registers_->esi,
+                                                                         currentThread->user_registers_->edi);
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;
-  currentThreadInfo = currentThread->user_arch_thread_info_;
+  currentThreadRegisters = currentThread->user_registers_;
   //ArchThreads::printThreadRegisters(currentThread,false);
   arch_contextSwitch();
 }

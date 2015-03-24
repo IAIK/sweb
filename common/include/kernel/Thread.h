@@ -15,7 +15,7 @@ enum SystemState { BOOTING, RUNNING, KPANIC };
 extern SystemState system_state;
 
 class Thread;
-class ArchThreadInfo;
+class ArchThreadRegisters;
 class Loader;
 class Terminal;
 class Mutex;
@@ -50,25 +50,25 @@ class Thread
     /**
      * runs whatever the user wants it to run;
      */
-    virtual void Run() =0;
+    virtual void Run() = 0;
 
-    ArchThreadInfo *kernel_arch_thread_info_;
-    ArchThreadInfo *user_arch_thread_info_;
-    uint32 stack_[2048];
+    ArchThreadRegisters* kernel_registers_;
+    ArchThreadRegisters* user_registers_;
+    uint32 kernel_stack_[2048];
 
     uint32 switch_to_userspace_;
 
     void* getStackStartPointer();
 
-    Loader *loader_;
+    Loader* loader_;
 
     ThreadState state_;
 
-    const char *getName();
+    const char* getName();
 
     size_t getTID();
 
-    Terminal *getTerminal();
+    Terminal* getTerminal();
 
     void setTerminal(Terminal *my_term);
 
@@ -136,7 +136,7 @@ class Thread
 
     size_t tid_;
 
-    Terminal *my_terminal_;
+    Terminal* my_terminal_;
 
   protected:
     FileSystemInfo* working_dir_;

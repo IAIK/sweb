@@ -163,19 +163,19 @@ extern "C" void dummyHandler()
 {
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
   kprintfd("DUMMY_HANDLER: Spurious INT\n");
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {
-    currentThreadInfo = currentThread->user_arch_thread_info_;
+    currentThreadRegisters = currentThread->user_registers_;
     arch_contextSwitch();
   }
 }
 
-extern ArchThreadInfo *currentThreadInfo;
+extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
 extern "C" void arch_irqHandler_0();
@@ -277,7 +277,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
   //lets hope this Exeption wasn't thrown during a TaskSwitch
@@ -303,7 +303,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {
-    currentThreadInfo = currentThread->user_arch_thread_info_;
+    currentThreadRegisters = currentThread->user_registers_;
     arch_contextSwitch();
   }
 }
@@ -376,20 +376,20 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
-  currentThread->user_arch_thread_info_->rax =
-    Syscall::syscallException(currentThread->user_arch_thread_info_->rdi,
-                  currentThread->user_arch_thread_info_->rsi,
-                  currentThread->user_arch_thread_info_->rdx,
-                  currentThread->user_arch_thread_info_->rcx,
-                  currentThread->user_arch_thread_info_->r8,
-                  currentThread->user_arch_thread_info_->r9);
+  currentThread->user_registers_->rax =
+    Syscall::syscallException(currentThread->user_registers_->rdi,
+                  currentThread->user_registers_->rsi,
+                  currentThread->user_registers_->rdx,
+                  currentThread->user_registers_->rcx,
+                  currentThread->user_registers_->r8,
+                  currentThread->user_registers_->r9);
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;
-  currentThreadInfo =  currentThread->user_arch_thread_info_;
+  currentThreadRegisters =  currentThread->user_registers_;
   arch_contextSwitch();
 }
 

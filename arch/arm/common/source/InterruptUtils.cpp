@@ -27,7 +27,7 @@
 extern uint32* currentStack;
 extern Console* main_console;
 
-extern ArchThreadInfo *currentThreadInfo;
+extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
 uint32 last_address;
@@ -69,7 +69,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
-  currentThreadInfo = currentThread->kernel_arch_thread_info_;
+  currentThreadRegisters = currentThread->kernel_registers_;
 
   ArchInterrupts::enableInterrupts();
   if (currentThread->loader_)
@@ -93,7 +93,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
-    currentThreadInfo = currentThread->user_arch_thread_info_;
+    currentThreadRegisters = currentThread->user_registers_;
 }
 
 void timer_irq_handler()
@@ -122,7 +122,7 @@ void arch_mouse_irq_handler()
 void arch_swi_irq_handler()
 {
   assert(!ArchInterrupts::testIFSet());
-  uint32 swi = *((uint32*)((uint32)currentThreadInfo->pc - 4)) & 0xffff;
+  uint32 swi = *((uint32*)((uint32)currentThreadRegisters->pc - 4)) & 0xffff;
 
   if (swi == 0xffff) // yield
   {
@@ -131,17 +131,17 @@ void arch_swi_irq_handler()
   else if (swi == 0x0) // syscall
   {
     currentThread->switch_to_userspace_ = 0;
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;
+    currentThreadRegisters = currentThread->kernel_registers_;
     ArchInterrupts::enableInterrupts();
-    currentThread->user_arch_thread_info_->r[0] = Syscall::syscallException(currentThread->user_arch_thread_info_->r[0],
-                                                                          currentThread->user_arch_thread_info_->r[1],
-                                                                          currentThread->user_arch_thread_info_->r[2],
-                                                                          currentThread->user_arch_thread_info_->r[3],
-                                                                          currentThread->user_arch_thread_info_->r[4],
-                                                                          currentThread->user_arch_thread_info_->r[5]);
+    currentThread->user_registers_->r[0] = Syscall::syscallException(currentThread->user_registers_->r[0],
+                                                                          currentThread->user_registers_->r[1],
+                                                                          currentThread->user_registers_->r[2],
+                                                                          currentThread->user_registers_->r[3],
+                                                                          currentThread->user_registers_->r[4],
+                                                                          currentThread->user_registers_->r[5]);
     ArchInterrupts::disableInterrupts();
     currentThread->switch_to_userspace_ = 1;
-    currentThreadInfo =  currentThread->user_arch_thread_info_;
+    currentThreadRegisters =  currentThread->user_registers_;
   }
   else
   {
@@ -154,9 +154,9 @@ extern "C" void switchTTBR0(uint32);
 
 extern "C" void exceptionHandler(uint32 type)
 {
-  assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
+  assert(!currentThread || currentThread->kernel_stack_[0] == STACK_CANARY);
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
-  assert((currentThreadInfo->cpsr & (0xE0)) == 0);
+  assert((currentThreadRegisters->cpsr & (0xE0)) == 0);
   if (!currentThread)
   {
     Scheduler::instance()->schedule();
@@ -169,25 +169,25 @@ extern "C" void exceptionHandler(uint32 type)
   }
   else if (type == ARM4_XRQ_ABRTP)
   {
-    pageFaultHandler(currentThreadInfo->pc, type);
+    pageFaultHandler(currentThreadRegisters->pc, type);
   }
   else if (type == ARM4_XRQ_ABRTD)
   {
-    pageFaultHandler(currentThreadInfo->pc, type);
+    pageFaultHandler(currentThreadRegisters->pc, type);
   }
   else {
     kprintfd("\nCPU Fault type = %x\n",type);
     ArchThreads::printThreadRegisters(currentThread,false);
     currentThread->switch_to_userspace_ = 0;
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;
+    currentThreadRegisters = currentThread->kernel_registers_;
     ArchInterrupts::enableInterrupts();
     currentThread->kill();
     for(;;);
   }
 //  ArchThreads::printThreadRegisters(currentThread,false);
-  assert((currentThreadInfo->ttbr0 & 0x3FFF) == 0 && (currentThreadInfo->ttbr0 & ~0x3FFF) != 0);
-  assert((currentThreadInfo->cpsr & 0xE0) == 0);
-  assert(currentThread->switch_to_userspace_ == 0 || (currentThreadInfo->cpsr & 0xF) == 0);
-  assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
-  switchTTBR0(currentThreadInfo->ttbr0);
+  assert((currentThreadRegisters->ttbr0 & 0x3FFF) == 0 && (currentThreadRegisters->ttbr0 & ~0x3FFF) != 0);
+  assert((currentThreadRegisters->cpsr & 0xE0) == 0);
+  assert(currentThread->switch_to_userspace_ == 0 || (currentThreadRegisters->cpsr & 0xF) == 0);
+  assert(!currentThread || currentThread->kernel_stack_[0] == STACK_CANARY);
+  switchTTBR0(currentThreadRegisters->ttbr0);
 }
