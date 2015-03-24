@@ -25,10 +25,9 @@ class Loader
     /**
      *Constructor
      * @param fd the file descriptor of the executable
-     * @param thread Thread to which the loader should belong
      * @return Loader instance
      */
-    Loader(ssize_t fd, Thread *thread);
+    Loader(ssize_t fd);
 
     /**
      *Destructor
@@ -48,14 +47,17 @@ class Loader
      *zeros it out, copies the page, one byte at a time
      * @param virtual_address virtual address where to find the page to load
      */
-    void loadOnePageSafeButSlow ( pointer virtual_address );
+    void loadPage(pointer virtual_address);
 
     /**
      * Returns debug info for the loaded userspace program, if available
      */
-    Stabs2DebugInfo const *getDebugInfos()const;
+    Stabs2DebugInfo const* getDebugInfos() const;
 
-
+    /**
+     * Returns debug info for the loaded userspace program, if available
+     */
+    void* getEntryFunction() const;
 
     ArchMemory arch_memory_;
 
@@ -75,7 +77,6 @@ class Loader
 
 
     size_t fd_;
-    Thread *thread_;
     Elf::Ehdr *hdr_;
     ustl::vector<Elf::Phdr> phdrs_;
     Mutex load_lock_;

@@ -28,7 +28,7 @@ uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
 }
 
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
+void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   memset((void*)info, 0, sizeof(ArchThreadInfo));
@@ -40,9 +40,9 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->ss      = KERNEL_SS;
   info->rflags  = 0x200;
   info->dpl     = DPL_KERNEL;
-  info->rsp     = stack;
-  info->rbp     = stack;
-  info->rip     = start_function;
+  info->rsp     = (size_t)stack;
+  info->rbp     = (size_t)stack;
+  info->rip     = (size_t)start_function;
   info->cr3     = pml4;
   assert(info->cr3);
 
@@ -56,12 +56,12 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->fpu[6] = 0xFFFF0000;
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer function)
+void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, void* function)
 {
-  info->rip = function;
+  info->rip = (size_t)function;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
+void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   memset((void*)info, 0, sizeof(ArchThreadInfo));
@@ -74,10 +74,10 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->ss0     = KERNEL_SS;
   info->rflags  = 0x200;
   info->dpl     = DPL_USER;
-  info->rsp     = user_stack;
-  info->rbp     = user_stack;
-  info->rsp0    = kernel_stack;
-  info->rip     = start_function;
+  info->rsp     = (size_t)user_stack;
+  info->rbp     = (size_t)user_stack;
+  info->rsp0    = (size_t)kernel_stack;
+  info->rip     = (size_t)start_function;
   info->cr3     = pml4;
   assert(info->cr3);
 

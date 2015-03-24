@@ -1,7 +1,3 @@
-/**
- * @file Loader.cpp
- */
-
 #include "Loader.h"
 #include "kprintf.h"
 #include "ArchThreads.h"
@@ -18,9 +14,7 @@
 #include "File.h"
 #include "FileDescriptor.h"
 
-Loader::Loader ( ssize_t fd, Thread *thread ) : fd_ ( fd ),
-    thread_ ( thread ), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_"),
-    userspace_debug_info_(0)
+Loader::Loader(ssize_t fd) : fd_(fd), hdr_(0), phdrs_(), load_lock_("Loader::load_lock_"), userspace_debug_info_(0)
 {
 }
 
@@ -67,6 +61,11 @@ bool Loader::readHeaders()
   return true;
 }
 
+void* Loader::getEntryFunction() const
+{
+  return (void*)hdr_->e_entry;
+}
+
 bool Loader::loadExecutableAndInitProcess()
 {
   debug ( LOADER,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
@@ -81,15 +80,6 @@ bool Loader::loadExecutableAndInitProcess()
   if (USERTRACE & OUTPUT_ENABLED)
     loadDebugInfoIfAvailable();
 
-  ArchThreads::createThreadInfosUserspaceThread (
-        thread_->user_arch_thread_info_,
-        hdr_->e_entry,
-        2U*1024U*1024U*1024U - sizeof ( pointer ),
-        thread_->getStackStartPointer()
-  );
-
-  ArchThreads::setAddressSpace(thread_, arch_memory_);
-
   return true;
 }
 
@@ -100,7 +90,7 @@ struct PagePart
   size_t length;
 };
 
-void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
+void Loader::loadPage ( pointer virtual_address )
 {
   size_t virtual_page = virtual_address / PAGE_SIZE;
 

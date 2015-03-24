@@ -18,7 +18,7 @@ const char* Thread::threadStatePrintable[4] =
 "Running", "Sleeping", "ToBeDestroyed", "Worker"
 };
 
-static void ThreadStartHack()
+static void threadStartHack()
 {
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
@@ -35,7 +35,7 @@ Thread::Thread(FileSystemInfo *working_dir, const char *name) :
   debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, stack_);
   debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
   debug(THREAD, "Thread ctor, fs_info ptr: %x\n", working_dir_);
-  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_, (pointer) &ThreadStartHack,
+  ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_, (void*)threadStartHack,
                                              getStackStartPointer());
   stack_[0] = STACK_CANARY; // stack canary / end of stack
 }
@@ -76,11 +76,11 @@ void Thread::kill()
   }
 }
 
-pointer Thread::getStackStartPointer()
+void* Thread::getStackStartPointer()
 {
   pointer stack = (pointer) stack_;
   stack += sizeof(stack_) - sizeof(uint32);
-  return stack;
+  return (void*)stack;
 }
 
 Terminal *Thread::getTerminal()
@@ -228,4 +228,14 @@ bool Thread::isWorker() const
 bool Thread::schedulable()
 {
   return (state_ == Running) || (state_ == Worker && hasWork());
+}
+
+const char *Thread::getName()
+{
+  return name_.c_str();
+}
+
+size_t Thread::getTID()
+{
+  return tid_;
 }

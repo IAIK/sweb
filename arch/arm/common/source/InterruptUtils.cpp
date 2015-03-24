@@ -77,7 +77,7 @@ void pageFaultHandler(uint32 address, uint32 type)
     //lets hope this Exeption wasn't thrown during a TaskSwitch
     if (address > 8U*1024U*1024U && address < 2U*1024U*1024U*1024U)
     {
-      currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
+      currentThread->loader_->loadPage(address); //load stuff
     }
     else
     {

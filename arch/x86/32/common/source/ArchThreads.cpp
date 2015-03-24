@@ -20,16 +20,16 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_arch_thread_info_->cr3 = arch_memory.getValueForCR3();
 }
 
-void ArchThreads::createBaseThreadInfo(ArchThreadInfo *&info, pointer start_function, pointer stack)
+void ArchThreads::createBaseThreadInfo(ArchThreadInfo *&info, void* start_function, void* stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   memset((void*)info, 0, sizeof(ArchThreadInfo));
   pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
-  info->esp     = stack;
-  info->ebp     = stack;
+  info->esp     = (size_t)stack;
+  info->ebp     = (size_t)stack;
   info->eflags  = 0x200;
-  info->eip     = start_function;
+  info->eip     = (size_t)start_function;
   info->cr3     = root_of_kernel_paging_structure;
 
   /* fpu (=fninit) */
@@ -42,7 +42,7 @@ void ArchThreads::createBaseThreadInfo(ArchThreadInfo *&info, pointer start_func
   info->fpu[6] = 0xFFFF0000;
 }
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
+void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack)
 {
   createBaseThreadInfo(info,start_function,stack);
 
@@ -53,7 +53,7 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   info->dpl     = DPL_KERNEL;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
+void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
   createBaseThreadInfo(info,start_function,user_stack);
 
@@ -63,12 +63,12 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointe
   info->ss      = USER_SS;
   info->dpl     = DPL_USER;
   info->ss0     = KERNEL_SS;
-  info->esp0    = kernel_stack;
+  info->esp0    = (size_t)kernel_stack;
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer function)
+void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, void* function)
 {
-  info->eip = function;
+  info->eip = (size_t)function;
 }
 
 void ArchThreads::yield()

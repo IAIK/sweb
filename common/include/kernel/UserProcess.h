@@ -29,9 +29,6 @@ class UserProcess : public Thread
     virtual void Run(); // not used
 
   private:
-
-    bool run_me_;
-    uint32 terminal_number_;
     int32 fd_;
     ProcessRegistry *process_registry_;
 };

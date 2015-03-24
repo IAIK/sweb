@@ -283,7 +283,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   if (! (error & FLAG_PF_PRESENT) && address < 0xFFFFFFFF00000000ULL && currentThread->loader_)
   {
-    currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
+    currentThread->loader_->loadPage(address); //load stuff
   }
   else
   {

@@ -58,21 +58,15 @@ class Thread
 
     uint32 switch_to_userspace_;
 
-    pointer getStackStartPointer();
+    void* getStackStartPointer();
 
     Loader *loader_;
 
     ThreadState state_;
 
-    const char *getName()
-    {
-      return name_.c_str();
-    }
+    const char *getName();
 
-    size_t getTID()
-    {
-      return tid_;
-    }
+    size_t getTID();
 
     Terminal *getTerminal();
 
@@ -116,31 +110,30 @@ class Thread
     bool schedulable();
 
 
-	/**
-	 * A part of the single-chained waiters list for the locks.
-	 * It references to the next element of the list.
-	 * In case of a spinlock it is a busy-waiter, else usually it is a sleeper ^^.
-	 */
-	Thread* next_thread_in_lock_waiters_list_;
+    /**
+     * A part of the single-chained waiters list for the locks.
+     * It references to the next element of the list.
+     * In case of a spinlock it is a busy-waiter, else usually it is a sleeper ^^.
+     */
+    Thread* next_thread_in_lock_waiters_list_;
 
-	/**
-	 * The information which lock the thread is currently waiting on.
-	 */
-	Lock* lock_waiting_on_;
+    /**
+     * The information which lock the thread is currently waiting on.
+     */
+    Lock* lock_waiting_on_;
 
-	/**
-	 * A single chained list containing all the locks held by the thread at the moment.
-	 * This list is not locked. It may only be accessed by the thread himself,
-	 * or by other threads in case they can ENSURE that this thread is not able to run at this moment.
-	 * Changing the list has to be done atomic, else it cannot be ensured that the list is valid at any moment!
-	 */
-	Lock* holding_lock_list_;
+    /**
+     * A single chained list containing all the locks held by the thread at the moment.
+     * This list is not locked. It may only be accessed by the thread himself,
+     * or by other threads in case they can ENSURE that this thread is not able to run at this moment.
+     * Changing the list has to be done atomic, else it cannot be ensured that the list is valid at any moment!
+     */
+    Lock* holding_lock_list_;
 
   private:
     Thread(Thread const &src);
     Thread &operator=(Thread const &src);
 
-    size_t num_jiffies_;
     size_t tid_;
 
     Terminal *my_terminal_;

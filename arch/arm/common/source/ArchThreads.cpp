@@ -33,7 +33,7 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_arch_thread_info_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack)
+void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   memset((void*)info, 0, sizeof(ArchThreadInfo));
@@ -51,13 +51,13 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, pointer s
   assert(((pageDirectory) & 0x3FFF) == 0);
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, pointer function)
+void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, void* function)
 {
   info->pc = function;
   info->lr = function;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack)
+void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
   info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
   memset((void*)info, 0, sizeof(ArchThreadInfo));
