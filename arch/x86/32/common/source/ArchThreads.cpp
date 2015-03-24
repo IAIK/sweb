@@ -10,20 +10,20 @@
 
 void ArchThreads::initialise()
 {
-  currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
+  currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
 }
 
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
-  thread->kernel_arch_thread_info_->cr3 = arch_memory.getValueForCR3();
-  if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->cr3 = arch_memory.getValueForCR3();
+  thread->kernel_registers_->cr3 = arch_memory.getValueForCR3();
+  if (thread->user_registers_)
+    thread->user_registers_->cr3 = arch_memory.getValueForCR3();
 }
 
-void ArchThreads::createBaseThreadInfo(ArchThreadInfo *&info, void* start_function, void* stack)
+void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  memset((void*)info, 0, sizeof(ArchThreadInfo));
+  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
+  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
   info->esp     = (size_t)stack;
@@ -42,9 +42,9 @@ void ArchThreads::createBaseThreadInfo(ArchThreadInfo *&info, void* start_functi
   info->fpu[6] = 0xFFFF0000;
 }
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack)
+void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  createBaseThreadInfo(info,start_function,stack);
+  createBaseThreadRegisters(info,start_function,stack);
 
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
@@ -53,9 +53,9 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* sta
   info->dpl     = DPL_KERNEL;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack)
+void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
-  createBaseThreadInfo(info,start_function,user_stack);
+  createBaseThreadRegisters(info,start_function,user_stack);
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;
@@ -66,7 +66,7 @@ void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* 
   info->esp0    = (size_t)kernel_stack;
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, void* function)
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
 {
   info->eip = (size_t)function;
 }
@@ -131,7 +131,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
+  ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
     kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);

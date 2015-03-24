@@ -24,7 +24,7 @@ ERROR_HANDLER(17,#AC: Alignment Error (Unaligned Memory Reference))
 ERROR_HANDLER(18,#MC: Machine Check Error)
 ERROR_HANDLER(19,#XF: SIMD Floting Point Error)
 
-extern ArchThreadInfo *currentThreadInfo;
+extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \

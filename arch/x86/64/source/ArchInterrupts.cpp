@@ -122,7 +122,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
-  register ArchThreadInfo* info = currentThreadInfo;
+  register ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
       :
@@ -149,7 +149,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   info->rcx = registers->rcx;
   info->rax = registers->rax;
   info->rbp = registers->rbp;
-  assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
+  assert(!currentThread || currentThread->kernel_stack_[0] == STACK_CANARY);
 }
 
 typedef struct {
@@ -161,8 +161,8 @@ extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-  assert(currentThread->stack_[0] == STACK_CANARY);
-  ArchThreadInfo info = *currentThreadInfo; // optimization: local copy produces more efficient code in this case
+  assert(currentThread->kernel_stack_[0] == STACK_CANARY);
+  ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
   g_tss.rsp0 = info.rsp0;
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));

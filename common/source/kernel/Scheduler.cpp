@@ -14,7 +14,7 @@
 #include "ustring.h"
 #include "Lock.h"
 
-ArchThreadInfo *currentThreadInfo;
+ArchThreadRegisters *currentThreadRegisters;
 Thread *currentThread;
 
 Scheduler *Scheduler::instance_ = 0;
@@ -59,10 +59,10 @@ uint32 Scheduler::schedule()
   uint32 ret = 1;
 
   if (currentThread->switch_to_userspace_)
-    currentThreadInfo = currentThread->user_arch_thread_info_;
+    currentThreadRegisters = currentThread->user_registers_;
   else
   {
-    currentThreadInfo = currentThread->kernel_arch_thread_info_;
+    currentThreadRegisters = currentThread->kernel_registers_;
     ret = 0;
   }
 
@@ -243,11 +243,11 @@ void Scheduler::printUserSpaceTraces()
   for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
   {
     Thread *t = *it;
-    if (t->user_arch_thread_info_)
+    if (t->user_registers_)
     {
       if (t->switch_to_userspace_)
       {
-        ArchThreads::changeInstructionPointer(t->kernel_arch_thread_info_, (void*) printUserSpaceTracesHelper);
+        ArchThreads::changeInstructionPointer(t->kernel_registers_, (void*) printUserSpaceTracesHelper);
         t->switch_to_userspace_ = 0;
       }
       else

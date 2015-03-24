@@ -11,27 +11,27 @@ extern PageMapLevel4Entry kernel_page_map_level_4[];
 
 void ArchThreads::initialise()
 {
-  currentThreadInfo = (ArchThreadInfo*) new uint8[sizeof(ArchThreadInfo)];
+  currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
 
 }
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
   assert(arch_memory.page_map_level_4_);
-  thread->kernel_arch_thread_info_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
-  if (thread->user_arch_thread_info_)
-    thread->user_arch_thread_info_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
+  thread->kernel_registers_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
+  if (thread->user_registers_)
+    thread->user_registers_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
 }
 
 uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
 {
-  return thread->kernel_arch_thread_info_->cr3 / PAGE_SIZE;
+  return thread->kernel_registers_->cr3 / PAGE_SIZE;
 }
 
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack)
+void ArchThreads::createKernelThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  memset((void*)info, 0, sizeof(ArchThreadInfo));
+  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
+  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 
   info->cs      = KERNEL_CS;
@@ -56,15 +56,15 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadInfo *&info, void* sta
   info->fpu[6] = 0xFFFF0000;
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadInfo *info, void* function)
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
 {
   info->rip = (size_t)function;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack)
+void ArchThreads::createUserThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
-  info = (ArchThreadInfo*)new uint8[sizeof(ArchThreadInfo)];
-  memset((void*)info, 0, sizeof(ArchThreadInfo));
+  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
+  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 
   info->cs      = USER_CS;
@@ -150,7 +150,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadInfo *info = userspace_registers?thread->user_arch_thread_info_:thread->kernel_arch_thread_info_;
+  ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
     kprintfd("%sThread: %18x, has no %s registers\n",userspace_registers?"Kernel":"  User",thread,userspace_registers ? "userspace" : "kernelspace");

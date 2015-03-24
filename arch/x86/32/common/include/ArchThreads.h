@@ -10,7 +10,7 @@
 #define __ATOMIC_SEQ_CST 5
 #endif
 
-struct ArchThreadInfo
+struct ArchThreadRegisters
 {
   uint32  eip;       // 0
   uint32  cs;        // 4
@@ -41,7 +41,7 @@ class ArchMemory;
  * this is where the thread info for task switching is stored
  *
  */
-extern ArchThreadInfo *currentThreadInfo;
+extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
 /**
@@ -64,7 +64,7 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack);
+  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
 
   /**
    * changes an existing ArchThreadInfo so that execution will start / continue
@@ -75,7 +75,7 @@ public:
    * @param the ArchThreadInfo that we are going to mangle
    * @param start_function instruction pointer for the next instruction that gets executed
    */
-  static void changeInstructionPointer(ArchThreadInfo *info, void* function);
+  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
 /**
  * creates the ArchThreadInfo for a user thread
@@ -84,7 +84,7 @@ public:
  * @param user_stack pointer to the userstack
  * @param kernel_stack pointer to the kernel stack
  */
-  static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack);
+  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
 
 /**
  *
@@ -154,12 +154,12 @@ public:
 private:
 
 /**
- * creates the ArchThreadInfo for a kernel thread
- * @param info where the ArchThreadInfo is saved
+ * creates the ArchThreadRegisters for a thread
+ * @param info where the ArchThreadRegisters is saved
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createBaseThreadInfo(ArchThreadInfo *&info, void* start_function, void* stack);
+  static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
 
 };
 

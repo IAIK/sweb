@@ -122,7 +122,7 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   registers = (struct context_switch_registers*) (&error + 2);
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (&error + 2 + sizeof(struct context_switch_registers)/sizeof(uint32) + (error));
-  register ArchThreadInfo* info = currentThreadInfo;
+  register ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave (%[fpu])\n"
       "frstor (%[fpu])\n"
       :
@@ -148,15 +148,15 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   info->edi = registers->edi;
   info->ds = registers->ds;
   info->es = registers->es;
-  assert(!currentThread || currentThread->stack_[0] == STACK_CANARY);
+  assert(!currentThread || currentThread->kernel_stack_[0] == STACK_CANARY);
 }
 
 extern TSS *g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-  assert(currentThread->stack_[0] == STACK_CANARY);
-  ArchThreadInfo info = *currentThreadInfo; // optimization: local copy produces more efficient code in this case
+  assert(currentThread->kernel_stack_[0] == STACK_CANARY);
+  ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
   if (currentThread->switch_to_userspace_)
   {
     asm("push %[ss]" : : [ss]"m"(info.ss));
