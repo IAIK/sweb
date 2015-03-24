@@ -62,38 +62,38 @@ class ArchThreads
 public:
 
 /**
- * allocates space for the currentThreadInfo
+ * allocates space for the currentThreadRegisters
  *
  */
   static void initialise();
 
 /**
- * creates the ArchThreadInfo for a kernel thread
- * @param info where the ArchThreadInfo is saved
+ * creates the ArchThreadRegisters for a kernel thread
+ * @param info where the ArchThreadRegisters is saved
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createKernelThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
+  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
  
   /**
-   * changes an existing ArchThreadInfo so that execution will start / continue
+   * changes an existing ArchThreadRegisters so that execution will start / continue
    * at the function specified
    * it does not change anything else, and if the thread info / thread was currently
    * executing something else this will lead to a lot of problems
    * USE WITH CARE, or better, don't use at all if you're a student
-   * @param the ArchThreadInfo that we are going to mangle
+   * @param the ArchThreadRegisters that we are going to mangle
    * @param start_function instruction pointer for the next instruction that gets executed
    */
   static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
 /**
- * creates the ArchThreadInfo for a user thread
- * @param info where the ArchThreadInfo is saved
+ * creates the ArchThreadRegisters for a user thread
+ * @param info where the ArchThreadRegisters is saved
  * @param start_function instruction pointer is set so start function
  * @param user_stack pointer to the userstack
  * @param kernel_stack pointer to the kernel stack
  */
-  static void createUserThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
+  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
 
 /**
  *
@@ -109,14 +109,6 @@ public:
  * @param arch_memory the arch memory object for the address space
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
-
-/**
- * function to get the PageDirectory of a given thread
- *
- * @param *thread Pointer to Thread Object
- * @return returns pde page of *thread
- */
-  static uint32 getPageDirPointerTable(Thread *thread);
 
 /**
  * uninterruptable locked operation

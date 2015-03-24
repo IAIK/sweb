@@ -16,31 +16,31 @@ extern uint8 boot_stack[];
 #define KEXP_TOPSWI \
   asm("push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}");\
   asm("add sp, sp, #0x34");\
-  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->pc));\
+  asm("mov %[v], lr" : [v]"=r" (currentThreadRegisters->pc));\
   asm("mrs r0, spsr"); \
-  asm("mov %[v], r0" : [v]"=r" (currentThreadInfo->cpsr));\
+  asm("mov %[v], r0" : [v]"=r" (currentThreadRegisters->cpsr));\
   asm("mrs r0, cpsr \n\
        bic r0, r0, #0xdf \n\
        orr r0, r0, #0xdf \n\
        msr cpsr, r0 \n\
       ");\
-  asm("mov %[v], sp" : [v]"=r" (currentThreadInfo->sp));\
-  asm("mov %[v], lr" : [v]"=r" (currentThreadInfo->lr));\
-  if (!(currentThreadInfo->cpsr & 0xf)) { asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp0)); }\
-  memcpy(currentThreadInfo->r,((uint32*)boot_stack) + 0x1000 - 13,sizeof(currentThreadInfo->r));
+  asm("mov %[v], sp" : [v]"=r" (currentThreadRegisters->sp));\
+  asm("mov %[v], lr" : [v]"=r" (currentThreadRegisters->lr));\
+  if (!(currentThreadRegisters->cpsr & 0xf)) { asm("mov sp, %[v]" : : [v]"r" (currentThreadRegisters->sp0)); }\
+  memcpy(currentThreadRegisters->r,((uint32*)boot_stack) + 0x1000 - 13,sizeof(currentThreadRegisters->r));
 
 #define KEXP_BOT3 \
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->lr));\
-  asm("mov sp, %[v]" : : [v]"r" (currentThreadInfo->sp));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadRegisters->lr));\
+  asm("mov sp, %[v]" : : [v]"r" (currentThreadRegisters->sp));\
   asm("mrs r0, cpsr \n\
        bic r0, r0, #0xdf \n\
        orr r0, r0, #0xd3 \n\
        msr cpsr, r0 \n\
       ");\
   asm("sub sp, sp, #0x34");\
-  memcpy(((uint32*)boot_stack) + 0x1000 - 13,currentThreadInfo->r,sizeof(currentThreadInfo->r));\
-  asm("mov lr, %[v]" : : [v]"r" (currentThreadInfo->pc));\
-  asm("mov r0, %[v]" : : [v]"r" (currentThreadInfo->cpsr));\
+  memcpy(((uint32*)boot_stack) + 0x1000 - 13,currentThreadRegisters->r,sizeof(currentThreadRegisters->r));\
+  asm("mov lr, %[v]" : : [v]"r" (currentThreadRegisters->pc));\
+  asm("mov r0, %[v]" : : [v]"r" (currentThreadRegisters->cpsr));\
   asm("msr spsr, r0"); \
   asm("pop {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}");\
   asm("movs pc, lr");

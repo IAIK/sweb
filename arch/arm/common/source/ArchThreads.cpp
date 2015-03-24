@@ -33,19 +33,19 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_registers_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
-void ArchThreads::createThreadInfosKernelThread(ArchThreadRegisters *&info, void* start_function, void* stack)
+void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
   memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
-  assert(!(start_function & 0x3));
-  info->pc = start_function;
-  info->lr = start_function;
+  assert(!((pointer)start_function & 0x3));
+  info->pc = (pointer)start_function;
+  info->lr = (pointer)start_function;
   info->cpsr = 0x6000001F;
-  info->sp = stack & ~0xF;
-  info->sp0 = stack & ~0xF;
+  info->sp = (pointer)stack & ~0xF;
+  info->sp0 = (pointer)stack & ~0xF;
   info->ttbr0 = pageDirectory;
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
@@ -53,24 +53,24 @@ void ArchThreads::createThreadInfosKernelThread(ArchThreadRegisters *&info, void
 
 void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
 {
-  info->pc = function;
-  info->lr = function;
+  info->pc = (pointer)function;
+  info->lr = (pointer)function;
 }
 
-void ArchThreads::createThreadInfosUserspaceThread(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
+void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
   memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
-  assert(!(start_function & 0x3));
-  info->pc = start_function;
-  info->lr = start_function;
+  assert(!((pointer)start_function & 0x3));
+  info->pc = (pointer)start_function;
+  info->lr = (pointer)start_function;
   info->cpsr = 0x60000010;
-  info->sp = user_stack & ~0xF;
-  info->r[11] = user_stack & ~0xF; // r11 is the fp
-  info->sp0 = kernel_stack & ~0xF;
+  info->sp = (pointer)user_stack & ~0xF;
+  info->r[11] = (pointer)user_stack & ~0xF; // r11 is the fp
+  info->sp0 = (pointer)kernel_stack & ~0xF;
   info->ttbr0 = pageDirectory;
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);

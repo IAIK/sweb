@@ -28,7 +28,7 @@ uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
 }
 
 
-void ArchThreads::createKernelThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
   memset((void*)info, 0, sizeof(ArchThreadRegisters));
@@ -61,7 +61,7 @@ void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* func
   info->rip = (size_t)function;
 }
 
-void ArchThreads::createUserThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
+void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
   memset((void*)info, 0, sizeof(ArchThreadRegisters));
