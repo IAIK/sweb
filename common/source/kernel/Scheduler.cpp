@@ -247,7 +247,7 @@ void Scheduler::printUserSpaceTraces()
     {
       if (t->switch_to_userspace_)
       {
-        ArchThreads::changeInstructionPointer(t->kernel_arch_thread_info_, (pointer) printUserSpaceTracesHelper);
+        ArchThreads::changeInstructionPointer(t->kernel_arch_thread_info_, (void*) printUserSpaceTracesHelper);
         t->switch_to_userspace_ = 0;
       }
       else

@@ -56,7 +56,7 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createThreadInfosKernelThread(ArchThreadInfo *&info, pointer start_function, pointer stack);
+  static void createThreadInfosKernelThread(ArchThreadInfo *&info, void* start_function, void* stack);
 
   /**
    * changes an existing ArchThreadInfo so that execution will start / continue
@@ -67,7 +67,7 @@ public:
    * @param the ArchThreadInfo that we are going to mangle
    * @param start_function instruction pointer for the next instruction that gets executed
    */
-  static void changeInstructionPointer(ArchThreadInfo *info, pointer function);
+  static void changeInstructionPointer(ArchThreadInfo *info, void* function);
 
 /**
  * creates the ArchThreadInfo for a user thread
@@ -76,7 +76,7 @@ public:
  * @param user_stack pointer to the userstack
  * @param kernel_stack pointer to the kernel stack
  */
-  static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, pointer start_function, pointer user_stack, pointer kernel_stack);
+  static void createThreadInfosUserspaceThread(ArchThreadInfo *&info, void* start_function, void* user_stack, void* kernel_stack);
 
 /**
  *
