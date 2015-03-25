@@ -8,12 +8,6 @@
 
 class Thread;
 
-struct StackFrame
-{
-   StackFrame *previous_frame;
-   void *return_address;
-};
-
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers);
 int backtrace_user(pointer *call_stack, int size, Thread *thread, bool use_stored_registers);
 
