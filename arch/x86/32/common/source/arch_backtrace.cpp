@@ -12,6 +12,12 @@
 
 extern Thread* currentThread;
 
+struct StackFrame
+{
+   StackFrame *previous_frame;
+   void *return_address;
+};
+
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {
   if (!call_stack ||
