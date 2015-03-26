@@ -4,7 +4,7 @@
 #include "assert.h"
 #include "kstring.h"
 
-extern "C" void __naked__ PagingMode();
+extern "C" void __attribute__((naked)) PagingMode();
 extern "C" void startup();
 extern uint8 bss_start_address;
 extern uint8 bss_end_address;
@@ -13,7 +13,7 @@ extern uint8 boot_stack[];
 
 #define BOOT_OFFSET (BOARD_LOAD_BASE - 0x80000000)
 
-extern "C" void __naked__ entry()
+extern "C" void __attribute__((naked)) entry()
 {
   asm("mov fp, #0\n"
       "mov sp, %[v]" : : [v]"r"(((uint8*)boot_stack) + BOOT_OFFSET + 0x4000)); // Set up the stack
@@ -37,7 +37,7 @@ extern "C" void __naked__ entry()
   assert(false && "it should be impossible to get to this point");
 }
 
-extern "C" void __naked__ PagingMode()
+extern "C" void __attribute__((naked)) PagingMode()
 {
   asm("mrs r0, cpsr\n"
       "bic r0, r0, #0xdf\n"

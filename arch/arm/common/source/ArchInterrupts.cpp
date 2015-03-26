@@ -9,11 +9,11 @@
 
 extern uint8 boot_stack[];
 
-#define KEXP_TOP3 \
+#define INTERRUPT_ENTRY() \
   asm("sub lr, lr, #4"); \
-  KEXP_TOPSWI
+  SWI_ENTRY()
 
-#define KEXP_TOPSWI \
+#define SWI_ENTRY() \
   asm("push {r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12}");\
   asm("add sp, sp, #0x34");\
   asm("mov %[v], lr" : [v]"=r" (currentThreadRegisters->pc));\
@@ -29,7 +29,7 @@ extern uint8 boot_stack[];
   if (!(currentThreadRegisters->cpsr & 0xf)) { asm("mov sp, %[v]" : : [v]"r" (currentThreadRegisters->sp0)); }\
   memcpy(currentThreadRegisters->r,((uint32*)boot_stack) + 0x1000 - 13,sizeof(currentThreadRegisters->r));
 
-#define KEXP_BOT3 \
+#define INTERRUPT_EXIT() \
   asm("mov lr, %[v]" : : [v]"r" (currentThreadRegisters->lr));\
   asm("mov sp, %[v]" : : [v]"r" (currentThreadRegisters->sp));\
   asm("mrs r0, cpsr \n\
@@ -58,17 +58,41 @@ void arm4_cpsrset(uint32 r)
   asm volatile ("msr cpsr, %[ps]" : : [ps]"r" (r));
 }
 
-void __naked__ k_exphandler_irq_entry() { KEXP_TOP3;  void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_IRQ); KEXP_BOT3; }
-void __naked__ k_exphandler_fiq_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_FIQ); KEXP_BOT3; }
-void __naked__ k_exphandler_reset_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_RESET); KEXP_BOT3; }
-void __naked__ k_exphandler_undef_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_UNDEF); KEXP_BOT3; }
-void __naked__ k_exphandler_abrtp_entry() { KEXP_TOP3; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTP); KEXP_BOT3; }
-void __naked__ k_exphandler_abrtd_entry() { KEXP_TOP3; currentThreadRegisters->pc -= 4; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_ABRTD); KEXP_BOT3; }
-void __naked__ k_exphandler_swi_entry() { KEXP_TOPSWI; void (*eh)(uint32 type) = &exceptionHandler; eh(ARM4_XRQ_SWINT); KEXP_BOT3; }
+#define INTERRUPT_HANDLER(TYPE) \
+  void __attribute__((naked)) arch_irqHandler_##TYPE() \
+  {\
+    INTERRUPT_ENTRY();\
+    void (*handler)(uint32 type) = &exceptionHandler;\
+    handler(TYPE);\
+    INTERRUPT_EXIT();\
+  }\
+  void __attribute__((naked)) arch_irqHandler_##TYPE()
 
-void arm4_xrqinstall(uint32 ndx, void *addr, uint32 mode)
+INTERRUPT_HANDLER(ARM4_XRQ_IRQ);
+INTERRUPT_HANDLER(ARM4_XRQ_FIQ);
+INTERRUPT_HANDLER(ARM4_XRQ_RESET);
+INTERRUPT_HANDLER(ARM4_XRQ_UNDEF);
+INTERRUPT_HANDLER(ARM4_XRQ_ABRTP);
+
+void __attribute__((naked)) arch_irqHandler_ARM4_XRQ_ABRTD()
 {
-  ((uint32*) 0x0)[ndx] = 0xEA000000 | (((uint32) addr - (8 + (4 * ndx))) >> 2);
+  INTERRUPT_ENTRY();
+  currentThreadRegisters->pc -= 4;
+  void (*eh)(uint32 type) = &exceptionHandler;
+  eh(ARM4_XRQ_ABRTD);
+  INTERRUPT_EXIT();
+}
+void __attribute__((naked)) arch_irqHandler_ARM4_XRQ_SWINT()
+{
+  SWI_ENTRY();
+  void (*eh)(uint32 type) = &exceptionHandler;
+  eh(ARM4_XRQ_SWINT);
+  INTERRUPT_EXIT();
+}
+
+void installInterruptHandler(uint32 index, void *addr, uint32 mode)
+{
+  ((uint32*) 0x0)[index] = 0xEA000000 | (((uint32) addr - (8 + (4 * index))) >> 2);
   asm("mrs r0, cpsr \n\
          bic r0, r0, #0xdf \n\
          orr r0, r0, %[v] \n\
@@ -81,20 +105,21 @@ void arm4_xrqinstall(uint32 ndx, void *addr, uint32 mode)
        "msr cpsr, r0");
 }
 
+#define INSTALL_INTERRUPT_HANDLER(TYPE,MODE) installInterruptHandler(TYPE, (void*)&arch_irqHandler_ ## TYPE, MODE);
 void ArchInterrupts::initialise()
 {
-  arm4_xrqinstall(ARM4_XRQ_RESET, (void*)&k_exphandler_reset_entry, 0xD3);
-  arm4_xrqinstall(ARM4_XRQ_UNDEF, (void*)&k_exphandler_undef_entry, 0xDB);
-  arm4_xrqinstall(ARM4_XRQ_SWINT, (void*)&k_exphandler_swi_entry, 0xD3);
-  arm4_xrqinstall(ARM4_XRQ_ABRTP, (void*)&k_exphandler_abrtp_entry, 0xD7);
-  arm4_xrqinstall(ARM4_XRQ_ABRTD, (void*)&k_exphandler_abrtd_entry, 0xD7);
-  arm4_xrqinstall(ARM4_XRQ_IRQ, (void*)&k_exphandler_irq_entry, 0xD2);
-  arm4_xrqinstall(ARM4_XRQ_FIQ, (void*)&k_exphandler_fiq_entry, 0xD1);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_RESET, 0xD3);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_UNDEF, 0xDB);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_SWINT, 0xD3);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTP, 0xD7);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTD, 0xD7);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_IRQ, 0xD2);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_FIQ, 0xD1);
 }
 
 void ArchInterrupts::enableTimer()
 {
-  ArchBoardSpecific::enableTimer();
+  ArchBoardSpecific::enableTimer()
 }
 
 void ArchInterrupts::disableTimer()
