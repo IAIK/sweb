@@ -246,6 +246,8 @@ void Loader::loadPage ( pointer virtual_address )
 
 bool Loader::loadDebugInfoIfAvailable()
 {
+  assert(!userspace_debug_info_ && "You may not load User Debug Info twice!");
+
   debug(USERTRACE, "loadDebugInfoIfAvailable start\n");
   if (sizeof(Elf::Shdr) != hdr_->e_shentsize)
   {
