@@ -119,7 +119,7 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  ArchBoardSpecific::enableTimer()
+  ArchBoardSpecific::enableTimer();
 }
 
 void ArchInterrupts::disableTimer()
