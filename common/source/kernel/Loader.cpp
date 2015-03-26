@@ -148,13 +148,7 @@ void Loader::loadPage(pointer virtual_address)
         }
       }
 
-      if (!found)
-      {
-        debug(LOADER, "Byte not found, byte virtual address is %x\n", load_byte_from_address);
-        // this is expected behaviour. Our Loader tries to find every bytes on a needed page in the ELF Header.
-        // Of course, often only parts of a page are listed in the ELF Hedaer
-      }
-      else if (found > 1)
+      if (found > 1)
       {
         kprintfd("Loader::loadOnePage, byte (%x) in two different segments\n", load_byte_from_address);
       }
