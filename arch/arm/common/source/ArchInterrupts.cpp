@@ -9,6 +9,13 @@
 
 extern uint8 boot_stack[];
 
+#define SWITCH_CPU_MODE(MODE) \
+    asm("mrs r0, cpsr \n\
+         bic r0, r0, #0xdf \n\
+         orr r0, r0, # " MODE " \n\
+         msr cpsr, r0 \n\
+        ");\
+
 #define INTERRUPT_ENTRY() \
   asm("sub lr, lr, #4"); \
   SWI_ENTRY()
@@ -19,11 +26,7 @@ extern uint8 boot_stack[];
   asm("mov %[v], lr" : [v]"=r" (currentThreadRegisters->pc));\
   asm("mrs r0, spsr"); \
   asm("mov %[v], r0" : [v]"=r" (currentThreadRegisters->cpsr));\
-  asm("mrs r0, cpsr \n\
-       bic r0, r0, #0xdf \n\
-       orr r0, r0, #0xdf \n\
-       msr cpsr, r0 \n\
-      ");\
+  SWITCH_CPU_MODE("0xdf");\
   asm("mov %[v], sp" : [v]"=r" (currentThreadRegisters->sp));\
   asm("mov %[v], lr" : [v]"=r" (currentThreadRegisters->lr));\
   if (!(currentThreadRegisters->cpsr & 0xf)) { asm("mov sp, %[v]" : : [v]"r" (currentThreadRegisters->sp0)); }\
@@ -32,11 +35,7 @@ extern uint8 boot_stack[];
 #define INTERRUPT_EXIT() \
   asm("mov lr, %[v]" : : [v]"r" (currentThreadRegisters->lr));\
   asm("mov sp, %[v]" : : [v]"r" (currentThreadRegisters->sp));\
-  asm("mrs r0, cpsr \n\
-       bic r0, r0, #0xdf \n\
-       orr r0, r0, #0xd3 \n\
-       msr cpsr, r0 \n\
-      ");\
+  SWITCH_CPU_MODE("0xd3");\
   asm("sub sp, sp, #0x34");\
   memcpy(((uint32*)boot_stack) + 0x1000 - 13,currentThreadRegisters->r,sizeof(currentThreadRegisters->r));\
   asm("mov lr, %[v]" : : [v]"r" (currentThreadRegisters->pc));\
@@ -90,31 +89,22 @@ void __attribute__((naked)) arch_irqHandler_ARM4_XRQ_SWINT()
   INTERRUPT_EXIT();
 }
 
-void installInterruptHandler(uint32 index, void *addr, uint32 mode)
-{
-  ((uint32*) 0x0)[index] = 0xEA000000 | (((uint32) addr - (8 + (4 * index))) >> 2);
-  asm("mrs r0, cpsr \n\
-         bic r0, r0, #0xdf \n\
-         orr r0, r0, %[v] \n\
-         msr cpsr, r0" : : [v]"r" (mode));
-  uint32* stack = ((uint32*)boot_stack) + 0x1000;
-  asm("mov sp, %[v]" : : [v]"r" (stack));
-  asm("mrs r0, cpsr\n"
-       "bic r0, r0, #0xdf\n"
-       "orr r0, r0, #0xdf\n"
-       "msr cpsr, r0");
-}
+#define B_OPCODE 0xEA000000
+#define INSTALL_INTERRUPT_HANDLER(TYPE,MODE) \
+  ((uint32*) 0x0)[TYPE] = B_OPCODE | (((uint32) &arch_irqHandler_ ## TYPE - (8 + (4 * TYPE))) >> 2);\
+  SWITCH_CPU_MODE(MODE);\
+  asm("mov sp, %[v]" : : [v]"r" (((uint32*)boot_stack) + 0x1000));\
+  SWITCH_CPU_MODE("0xdf");
 
-#define INSTALL_INTERRUPT_HANDLER(TYPE,MODE) installInterruptHandler(TYPE, (void*)&arch_irqHandler_ ## TYPE, MODE);
 void ArchInterrupts::initialise()
 {
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_RESET, 0xD3);
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_UNDEF, 0xDB);
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_SWINT, 0xD3);
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTP, 0xD7);
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTD, 0xD7);
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_IRQ, 0xD2);
-  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_FIQ, 0xD1);
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_RESET, "0xD3");
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_UNDEF, "0xDB");
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_SWINT, "0xD3");
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTP, "0xD7");
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTD, "0xD7");
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_IRQ, "0xD2");
+  INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_FIQ, "0xD1");
 }
 
 void ArchInterrupts::enableTimer()
