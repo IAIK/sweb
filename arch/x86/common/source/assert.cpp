@@ -18,6 +18,13 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
   ArchInterrupts::disableInterrupts();
+  writeChar2Bochs('\n');
+  writeLine2Bochs(condition);
+  writeChar2Bochs('\n');
+  writeLine2Bochs(error_string);
+  writeChar2Bochs('\n');
+  writeLine2Bochs(file);
+  writeChar2Bochs('\n');
   if (currentThread != 0)
     currentThread->printBacktrace(false);
   uint8 * fb = (uint8*)0xC00B8000;
@@ -28,13 +35,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
     fb[i++] = error_string[s];
     fb[i++] = 0x9f;
   }
-  writeChar2Bochs('\n');
-  writeLine2Bochs(condition);
-  writeChar2Bochs('\n');
-  writeLine2Bochs(error_string);
-  writeChar2Bochs('\n');
-  writeLine2Bochs(file);
-  writeChar2Bochs('\n');
+
   while (file && *file)
   {
     fb[i++] = *file++;
@@ -73,7 +74,8 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
   ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
-  currentThread->printBacktrace(false);
+  if (currentThread != 0)
+    currentThread->printBacktrace(false);
   while(1);
   unreachable();
 }
