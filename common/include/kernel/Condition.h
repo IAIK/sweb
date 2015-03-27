@@ -41,6 +41,7 @@ class Condition : public Lock
      *
      */
     void wait(const char* debug_info = 0, bool re_acquire_mutex = true);
+    void waitAndRelease(const char* debug_info = 0);
 
     /**
      * Wakes up the first Thread on the sleepers list.

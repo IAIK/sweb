@@ -11,6 +11,11 @@ Condition::Condition(Mutex* mutex, const char* name) :
 {
 }
 
+void Condition::waitAndRelease(const char* debug_info)
+{
+  wait(debug_info, false);
+}
+
 void Condition::wait(const char* debug_info, bool re_acquire_mutex)
 {
   if(unlikely(system_state != RUNNING))
