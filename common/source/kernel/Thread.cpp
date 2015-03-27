@@ -53,6 +53,7 @@ Thread::~Thread()
     Lock::printHoldingList(this);
     assert(false);
   }
+  Scheduler::instance()->printStackTraces();
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
 

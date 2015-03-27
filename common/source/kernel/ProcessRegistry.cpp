@@ -34,12 +34,12 @@ void ProcessRegistry::Run()
   if (!progs_ || !progs_[0])
     return;
 
-  debug(MOUNTMINIX, "mounting userprog-partition \n");
+  debug(PROCESS_REG, "mounting userprog-partition \n");
 
   vfs_syscall.mkdir("/usr", 0);
-  debug(MOUNTMINIX, "mkdir /usr\n");
+  debug(PROCESS_REG, "mkdir /usr\n");
   vfs_syscall.mount("idea1", "/usr", "minixfs", 0);
-  debug(MOUNTMINIX, "mount idea1\n");
+  debug(PROCESS_REG, "mount idea1\n");
 
   for (uint32 i = 0; progs_[i]; i++)
   {
@@ -53,9 +53,11 @@ void ProcessRegistry::Run()
 
   counter_lock_.release();
 
-  debug(MOUNTMINIX, "unmounting userprog-partition because all processes terminated \n");
+  debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
   vfs_syscall.umount("/user_progs", 0);
+
+  Scheduler::instance()->printThreadList();
 
   kill();
 }
@@ -85,9 +87,9 @@ size_t ProcessRegistry::processCount()
 
 void ProcessRegistry::createProcess(const char* path)
 {
-  debug(MOUNTMINIX, "create process %s\n", path);
+  debug(PROCESS_REG, "create process %s\n", path);
   Thread* process = new UserProcess(path, new FileSystemInfo(*working_dir_), this);
-  debug(MOUNTMINIX, "created userprocess %s\n", path);
+  debug(PROCESS_REG, "created userprocess %s\n", path);
   Scheduler::instance()->addNewThread(process);
-  debug(MOUNTMINIX, "added thread %s\n", path);
+  debug(PROCESS_REG, "added thread %s\n", path);
 }
