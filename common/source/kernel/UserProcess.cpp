@@ -9,7 +9,7 @@
 #include "PageManager.h"
 #include "ArchThreads.h"
 
-UserProcess::UserProcess(const char *filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
+UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
                          uint32 terminal_number) :
     Thread(fs_info, filename), fd_(VfsSyscall::open(filename, O_RDONLY)), process_registry_(process_registry)
 {
@@ -20,7 +20,7 @@ UserProcess::UserProcess(const char *filename, FileSystemInfo *fs_info, ProcessR
 
   if (!loader_ || !loader_->loadExecutableAndInitProcess())
   {
-    debug(USERPROCESS, "Error: loading %s failed!\n", filename);
+    debug(USERPROCESS, "Error: loading %s failed!\n", filename.c_str());
     loader_ = 0;
     kill();
     return;
@@ -35,7 +35,7 @@ UserProcess::UserProcess(const char *filename, FileSystemInfo *fs_info, ProcessR
 
   ArchThreads::setAddressSpace(this, loader_->arch_memory_);
 
-  debug(USERPROCESS, "ctor: Done loading %s\n", filename);
+  debug(USERPROCESS, "ctor: Done loading %s\n", filename.c_str());
 
   if (main_console->getTerminal(terminal_number))
     setTerminal(main_console->getTerminal(terminal_number));

@@ -37,7 +37,7 @@ class Thread
      * @param name Thread's name
      * @return Thread instance
      */
-    Thread(FileSystemInfo* working_dir, const char* name);
+    Thread(FileSystemInfo* working_dir, ustl::string name);
 
     virtual ~Thread();
 
