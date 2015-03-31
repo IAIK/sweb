@@ -27,7 +27,7 @@ static void threadStartHack()
   while(1);
 }
 
-Thread::Thread(FileSystemInfo *working_dir, const char *name) :
+Thread::Thread(FileSystemInfo *working_dir, ustl::string name) :
     kernel_registers_(0), user_registers_(0), switch_to_userspace_(0), loader_(0), state_(Running),
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name)
