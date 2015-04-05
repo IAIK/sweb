@@ -176,13 +176,6 @@ bool ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   return false;
 }
 
-uint32 ArchMemory::get_PAddr_Of_VAddr_In_KernelMapping(uint32 virtual_addr)
-{
-  size_t physical_addr;
-  uint32 page_size = get_PPN_Of_VPN_In_KernelMapping(virtual_addr / PAGE_SIZE, &physical_addr);
-  return physical_addr * page_size + (virtual_addr % PAGE_SIZE);
-}
-
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page)
 {
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
@@ -254,7 +247,11 @@ uint32 ArchMemory::getValueForCR3()
 {
   // last 5 bits must be zero!
   assert(((uint32)page_dir_pointer_table_ & 0x1F) == 0);
-  return get_PAddr_Of_VAddr_In_KernelMapping((uint32)page_dir_pointer_table_);
+  size_t ppn = 0;
+  if (get_PPN_Of_VPN_In_KernelMapping(((size_t)page_dir_pointer_table_) / PAGE_SIZE,&ppn) > 0)
+    return ppn * PAGE_SIZE + ((size_t)page_dir_pointer_table_ % PAGE_SIZE);
+  assert(false);
+  return 0;
 }
 
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)

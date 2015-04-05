@@ -1,6 +1,7 @@
 #include "kprintf.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
+#include "ArchMemory.h"
 
 #define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
   ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
@@ -41,7 +42,7 @@ void Stabs2DebugInfo::initialiseSymbolTable()
   // debug output for userspace symols
   for (StabEntry const *current_stab = stab_start_; current_stab < stab_end_; ++current_stab)
   {
-    if (current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME)
+    if (ArchMemory::get_PPN_Of_VPN_In_KernelMapping((size_t)current_stab / PAGE_SIZE,0,0) && (current_stab->n_type == N_FUN || current_stab->n_type == N_FNAME))
     {
       function_symbols_[current_stab->n_value] = current_stab;
     }

@@ -86,7 +86,6 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   {
     if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
       ArchMemory::mapKernelPage(start_vpn,last_free_page--);
-    kprintfd("map %x -> %x\n", start_vpn, last_free_page-1);
     start_vpn++;
   }
   extern KernelMemoryManager kmm;
