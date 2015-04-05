@@ -22,12 +22,6 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_registers_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
 }
 
-uint32 ArchThreads::getPageDirPointerTable(Thread *thread)
-{
-  return thread->kernel_registers_->cr3 / PAGE_SIZE;
-}
-
-
 void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];

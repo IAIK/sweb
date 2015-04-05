@@ -187,13 +187,6 @@ bool ArchMemory::checkAddressValid(uint64 vaddress_to_check)
   }
 }
 
-uint64 ArchMemory::get_PAddr_Of_VAddr_In_KernelMapping(uint64 virtual_addr)
-{
-  uint64 physical_addr;
-  uint32 page_size = get_PPN_Of_VPN_In_KernelMapping(virtual_addr / PAGE_SIZE, &physical_addr);
-  return physical_addr * page_size + (virtual_addr % PAGE_SIZE);
-}
-
 ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
 {
   ArchMemoryMapping m;
