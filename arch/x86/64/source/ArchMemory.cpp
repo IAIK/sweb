@@ -292,6 +292,7 @@ void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
   pt[mapping.pti].present = 1;
   pt[mapping.pti].writeable = 1;
   pt[mapping.pti].page_ppn = physical_page;
+  asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
 
 void ArchMemory::unmapKernelPage(size_t virtual_page)
@@ -309,6 +310,7 @@ void ArchMemory::unmapKernelPage(size_t virtual_page)
   pt[mapping.pti].present = 0;
   pt[mapping.pti].writeable = 0;
   PageManager::instance()->freePPN(pt[mapping.pti].page_ppn);
+  asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
 
 uint64 ArchMemory::getRootOfPagingStructure()
