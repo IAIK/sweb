@@ -48,6 +48,7 @@ class Loader
      * @param virtual_address virtual address where to find the page to load
      */
     void loadPage(pointer virtual_address);
+    void loadPageFast(pointer virtual_address);
 
     /**
      * Returns debug info for the loaded userspace program, if available
@@ -68,6 +69,12 @@ class Loader
      * @return true if this was successful, false otherwise
      */
     bool readHeaders();
+
+
+    /**
+     * clean up and sort the elf headers for faster access.
+     */
+    void cleanAndSortHeaders();
 
 
     bool loadDebugInfoIfAvailable();

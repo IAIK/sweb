@@ -24,8 +24,110 @@ Loader::~Loader()
   delete hdr_;
 }
 
+void Loader::loadPageFast(pointer virtual_address)
+{
+  MutexLock lock(program_binary_lock_);
+  if(arch_memory_.checkAddressValid(virtual_address))
+  {
+    // the page has been mapped meanwhile
+    return;
+  }
+
+  size_t ppn = PageManager::instance()->allocPPN();
+
+  // TODO: Move the defines to a better address
+  const pointer virt_page_start_addr = virtual_address & ~(PAGE_SIZE - 1);
+  const pointer virt_page_end_addr = virt_page_start_addr + PAGE_SIZE;
+  ustl::vector<Elf::Phdr>::iterator it;
+  debug(THREAD, "Start %x, End %x, addr %x\n", virt_page_start_addr, virt_page_end_addr, virtual_address);
+
+  bool page_in_binary = false;
+  // load the parts from the binary
+
+#define HERE() do{debug(BACKTRACE, "Here, line is %lu.\n", __LINE__);}while(0)
+  // find the start point
+  for(it = phdrs_.begin(); it != phdrs_.end(); it++)
+  {
+
+    debug(THREAD, "cleanAndSortHeaders: .vaddr=%x .paddr=%x .type=%x .flags=%x .memsz=%x .filez=%x .poff=%x, PAGE_START: %p, PAGE_END: %p, virt_addr: %p\r\n",
+                 (*it).p_vaddr, (*it).p_paddr, (*it).p_type, (*it).p_flags, (*it).p_memsz, (*it).p_filesz, (*it).p_offset, virt_page_start_addr, virt_page_end_addr, virtual_address);
+
+    // check if the section
+    if(ADDRESS_BETWEEN((*it).p_vaddr, virt_page_start_addr, virt_page_end_addr) ||
+       ADDRESS_BETWEEN((*it).p_vaddr + (*it).p_memsz, virt_page_start_addr , virt_page_end_addr) ||
+       ADDRESS_BETWEEN((*it).p_vaddr + (*it).p_filesz, virt_page_start_addr , virt_page_end_addr) ||
+       ADDRESS_BETWEEN(virt_page_start_addr, (*it).p_vaddr, (*it).p_vaddr + (*it).p_filesz) ||
+       ADDRESS_BETWEEN(virt_page_start_addr, (*it).p_vaddr, (*it).p_vaddr + (*it).p_memsz))
+    {
+      page_in_binary = true;
+      break;
+    }
+  }
+  if(!page_in_binary)
+  {
+    HERE();
+    PageManager::instance()->freePPN(ppn);
+    program_binary_lock_.release();
+    Syscall::exit(9999);
+  }
+
+  pointer bin_start_addr;
+  pointer bin_end_addr;
+  pointer virt_start_addr;
+  pointer virt_end_addr;
+  for(; it != phdrs_.end() && (*it).p_vaddr < virt_page_end_addr; it++)
+  {
+    HERE();
+    if((*it).p_filesz && (*it).p_vaddr + (*it).p_filesz >= virt_page_start_addr)
+    {
+      virt_start_addr = ustl::max(virt_page_start_addr, (*it).p_vaddr);
+      virt_end_addr = ustl::min(virt_page_end_addr, (*it).p_vaddr + (*it).p_filesz);
+      bin_start_addr = (*it).p_offset + (virt_start_addr - (*it).p_vaddr);
+      assert(!(virt_start_addr - virt_page_start_addr));
+//      HERE();
+//      // a file has to be load
+//      // get the binary start address
+//
+//      if((*it).p_vaddr >= virt_page_start_addr)
+//      {
+//        HERE();
+//        bin_start_addr = (*it).p_offset;
+//        virt_start_addr = (*it).p_vaddr;
+//      }
+//      else
+//      {
+//        HERE();
+//        const size_t diff = virt_page_start_addr - (*it).p_vaddr;
+//        debug(BACKTRACE, "DIFF: %d\n", diff);
+//        bin_start_addr = (*it).p_offset + diff;
+//        virt_start_addr = virt_page_start_addr;
+//      }
+//
+//      if(((*it).p_vaddr + (*it).p_filesz) < virt_page_end_addr)
+//      {
+//        HERE();
+//        bin_end_addr = (*it).p_offset + (*it).p_filesz;
+//        virt_size = (*it).p_filesz;
+//      }
+//      else
+//      {
+//        //((*it).p_vaddr + (*it).p_filesz) >= virt_page_end_addr
+//        const size_t diff = ((*it).p_offset + (*it).p_filesz) - PAGE_SIZE;
+//        debug(BACKTRACE, "DIFF2: %d\n", diff);
+//        bin_end_addr = (*it).p_offset + (*it).p_filesz - diff;
+//        virt_size = (*it).p_filesz - diff;
+//      }
+//      HERE();
+      debug(THREAD, "Bin-start: %x, mem_start: %x, Bin-size: %x\n", bin_start_addr, (virt_start_addr - virt_page_start_addr), (virt_end_addr - virt_start_addr));
+      readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + (virt_start_addr - virt_page_start_addr), bin_start_addr,  (virt_end_addr - virt_start_addr));
+    }
+  }
+  arch_memory_.mapPage(virt_page_start_addr >> 12, ppn, true, PAGE_SIZE);
+}
+
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 {
+  debug(THREAD, "%x %x %x\n", buffer, position, count);
   VfsSyscall::lseek(fd_, position, SEEK_SET);
   return VfsSyscall::read(fd_, buffer, count) - (int32)count;
 }
@@ -57,7 +159,7 @@ bool Loader::readHeaders()
   {
     return false;
   }
-
+  cleanAndSortHeaders();
   return true;
 }
 
@@ -95,6 +197,7 @@ struct PagePart
 
 void Loader::loadPage(pointer virtual_address)
 {
+  loadPageFast(virtual_address); return;
   size_t virtual_page = virtual_address / PAGE_SIZE;
 
   MutexLock program_binary_lock(program_binary_lock_);
@@ -132,7 +235,7 @@ void Loader::loadPage(pointer virtual_address)
           byte_map.push_back(PagePart(i, byte_to_load, byte_count));
 
           i += byte_count - 1;
-
+          if(min_byte_to_load > byte_to_load) debug(THREAD, "Byte to load: %x, h.p_offset %x,  load_byte_from_address %x,  h.p_paddr %x\n", byte_to_load,  h.p_offset, load_byte_from_address, h.p_paddr);
           min_byte_to_load = Min(min_byte_to_load, byte_to_load);
           max_byte_to_load = Max(byte_to_load + byte_count, max_byte_to_load);
 
@@ -179,6 +282,7 @@ void Loader::loadPage(pointer virtual_address)
   uint8 buffer[PAGE_SIZE];
   assert(buffersize <= PAGE_SIZE && "this should never occur");
 
+  debug(THREAD, "bin_start: %x, bin_size: %x\n", min_byte_to_load, max_byte_to_load - min_byte_to_load);
   VfsSyscall::lseek(fd_, min_byte_to_load, SEEK_SET);
   ssize_t bytes_read = VfsSyscall::read(fd_, (char*) buffer, max_byte_to_load - min_byte_to_load);
 
@@ -326,3 +430,46 @@ Stabs2DebugInfo const *Loader::getDebugInfos()const
   return userspace_debug_info_;
 }
 
+void Loader::cleanAndSortHeaders()
+{
+  // sort the headers by the virtual start address
+  // and throw away empty sections
+  // TODO: To be implemented as lambda
+  // now its just a simple sort
+  {
+    ustl::vector<Elf::Phdr>::iterator it1, it2;
+    for(it1 = phdrs_.begin(); it1 != phdrs_.end() - 1; it1++)
+    {
+      for(it2 = it1 + 1; it2 != phdrs_.end(); it2++)
+      {
+        if((*it1).p_vaddr > (*it2).p_vaddr)
+        {
+          Elf::Phdr tmp = (*it1);
+          (*it1) = (*it2);
+          (*it2) = tmp;
+        }
+      }
+    }
+
+    // REMOVE EMPTY ELEMENTS
+    // TODO: Rework
+    for(it1 = phdrs_.begin(); it1 != phdrs_.end(); it1++)
+    {
+      debug(THREAD, "cleanAndSortHeaders: .vaddr=%x .paddr=%x .type=%x .flags=%x .memsz=%x .filez=%x .poff=%x\r\n",
+                    (*it1).p_vaddr, (*it1).p_paddr, (*it1).p_type, (*it1).p_flags, (*it1).p_memsz, (*it1).p_filesz, (*it1).p_offset);
+      // TODO: Define the types of phdr->p_type
+      if(((*it1).p_memsz == 0 && (*it1).p_filesz == 0) || (*it1).p_type != 1)
+      {
+        it1 = phdrs_.erase(it1);
+        it1--;
+      }
+      else
+      {
+        debug(THREAD, "cleanAndSortHeaders: .vaddr=%x .paddr=%x .type=%x .flags=%x .memsz=%x .filez=%x .poff=%x\r\n",
+              (*it1).p_vaddr, (*it1).p_paddr, (*it1).p_type, (*it1).p_flags, (*it1).p_memsz, (*it1).p_filesz, (*it1).p_offset);
+      }
+    }
+  }
+
+
+}
