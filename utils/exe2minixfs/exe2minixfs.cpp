@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     char *buf = new char[size];
 
     fseek(src_file, 0, SEEK_SET);
-    assert(fread(buf, 1, size, src_file) == size);
+    assert(fread(buf, 1, size, src_file) == size && "fread was not able to read all bytes of the file");
     fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);

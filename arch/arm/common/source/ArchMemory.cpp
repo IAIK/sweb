@@ -41,7 +41,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
-  assert(page_directory[pde_vpn].pt.size != PDE_SIZE_PAGE);
+  assert(page_directory[pde_vpn].pt.size != PDE_SIZE_PAGE && "Trying to remove a PT but here is a large page");
 
   if (page_directory[pde_vpn].pt.size != PDE_SIZE_PT)
     return; // PT not present -> do nothing.
@@ -65,11 +65,9 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
 
-  if (page_directory[pde_vpn].pt.size == PDE_SIZE_PAGE)
-  {
-    assert(false);
-  }
-  else if (page_directory[pde_vpn].pt.size == PDE_SIZE_PT)
+  assert(page_directory[pde_vpn].pt.size != PDE_SIZE_PAGE && "Trying to unmap a small page but here is a large page");
+
+  if (page_directory[pde_vpn].pt.size == PDE_SIZE_PT)
   {
     PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
     if (pte_base[pte_vpn].size == 2)
@@ -126,7 +124,7 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     pte_base[pte_vpn].size = 2;
   }
   else
-    assert(false); // currently only 4K pages for the userspace
+    assert(false && "currently only 4K pages for the userspace");
 }
 
 // only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT
@@ -137,11 +135,8 @@ ArchMemory::~ArchMemory()
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   for (uint32 pde_vpn = 8; pde_vpn < PAGE_DIR_ENTRIES / 2; ++pde_vpn)
   {
-    if (page_directory[pde_vpn].pt.size == PDE_SIZE_PAGE)
-    {
-      assert(false); // currently not used and not implemented
-    }
-    else if (page_directory[pde_vpn].pt.size == PDE_SIZE_PT)
+    assert(page_directory[pde_vpn].pt.size != PDE_SIZE_PAGE && "How the hell did a large page get into a page dir?");
+    if (page_directory[pde_vpn].pt.size == PDE_SIZE_PT)
     {
       PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
       for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
@@ -218,9 +213,9 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
   PageDirEntry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-  assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT);
+  assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT && "kernel page table has to be mapped already");
   PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
-  assert(pte_base[pte_vpn].size == 0);
+  assert(pte_base[pte_vpn].size == 0 && "tried to map page but there was already a page mapped");
   pte_base[pte_vpn].permissions = 1;
   pte_base[pte_vpn].page_ppn = physical_page + PHYS_OFFSET_4K;
   pte_base[pte_vpn].size = 2;
@@ -231,9 +226,9 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
   PageDirEntry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-  assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT);
+  assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT && "kernel page table has to be mapped already");
   PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
-  assert(pte_base[pte_vpn].size == 2);
+  assert(pte_base[pte_vpn].size == 2 && "tried to unmap page but there was no page mapped");
   pte_base[pte_vpn].size = 0;
   pte_base[pte_vpn].permissions = 0;
   PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
