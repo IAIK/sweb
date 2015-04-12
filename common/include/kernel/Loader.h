@@ -48,7 +48,6 @@ class Loader
      * @param virtual_address virtual address where to find the page to load
      */
     void loadPage(pointer virtual_address);
-    void loadPageFast(pointer virtual_address);
 
     /**
      * Returns debug info for the loaded userspace program, if available
@@ -74,7 +73,7 @@ class Loader
     /**
      * clean up and sort the elf headers for faster access.
      */
-    void cleanAndSortHeaders();
+    bool cleanAndSortHeaders();
 
 
     bool loadDebugInfoIfAvailable();
@@ -85,7 +84,7 @@ class Loader
 
     size_t fd_;
     Elf::Ehdr *hdr_;
-    ustl::vector<Elf::Phdr> phdrs_;
+    ustl::list<Elf::Phdr> phdrs_;
     Mutex program_binary_lock_;
 
     Stabs2DebugInfo *userspace_debug_info_;
