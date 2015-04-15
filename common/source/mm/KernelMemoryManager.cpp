@@ -287,6 +287,11 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
         prenew_assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
         this_one->next_->prev_ = previous_one;
       }
+      else
+      {
+    	  prenew_assert(this_one == last_ && "this should never happen, there must be a bug in KMM");
+    	  last_ = previous_one;
+      }
 
       debug(KMM, "freeSegment: post premerge, pre postmerge\n");
       debug(KMM, "freeSegment: previous_one: %x size: %d used: %d\n", previous_one,
