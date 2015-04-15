@@ -237,14 +237,6 @@ add_custom_target(emu
 	WORKING_DIRECTORY ${UTILS_DIR}
 	)
 
-#Custom target: make format
-#invoke sweb-img-util and re-formats the user-progs partition
-add_custom_target(format
-	COMMAND ./sweb-img-util -f SWEB-flat.vmdk 1 minix 0 1 30
-	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-	COMMENT "(re)format image's user-progs partition..."
-	)
-
 #Custom target: make runddd
 #Run ddd with some presets
 add_custom_target(runddd
