@@ -151,3 +151,27 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
              userspace_registers?" User-":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
   }
 }
+
+extern "C" void threadStartHack();
+
+void ArchThreads::debugCheckNewThread(Thread* thread)
+{
+  assert(currentThread);
+  ArchThreads::printThreadRegisters(currentThread,false);
+  ArchThreads::printThreadRegisters(thread,false);
+  assert(thread->kernel_registers_ != 0 && thread->kernel_registers_ != currentThread->kernel_registers_ && "all threads need to have their own register sets");
+  assert(thread->kernel_registers_->esp0 == 0 && "kernel register set needs no backup of kernel esp");
+  assert(thread->kernel_registers_->esp == thread->kernel_registers_->ebp && "new kernel stack must be empty");
+  assert(thread->kernel_registers_->esp != currentThread->kernel_registers_->esp && thread->kernel_registers_->ebp != currentThread->kernel_registers_->ebp && "all threads need their own stack");
+  assert(thread->kernel_registers_->cr3 < 0x80000000 && "cr3 contains the physical page dir address");
+  if (thread->user_registers_ == 0)
+    return;
+  assert(thread->kernel_registers_->eip == (size_t)threadStartHack && "threads should not start execution in kernel mode");
+  assert(thread->switch_to_userspace_ == 1 && "new threads must start in userspace");
+  assert(thread->kernel_registers_->esp == thread->user_registers_->esp0 && "esp0 should point to kernel stack");
+  assert(thread->kernel_registers_->cr3 == thread->user_registers_->cr3 && "user and kernel part of a thread need to have the same page dir");
+  assert(thread->user_registers_->eip != 0 && "user eip needs to be valid... execution will start there");
+  if (currentThread->user_registers_ == 0)
+    return;
+  assert(currentThread->user_registers_->esp0 != thread->user_registers_->esp0 && "no 2 threads may have the same esp0 value");
+}
