@@ -2,7 +2,7 @@
 #define KERNEL_MEMORY_MANAGER__
 
 #include "new.h"
-#include "Mutex.h"
+#include "SpinLock.h"
 #include "assert.h"
 
 /**
@@ -116,7 +116,7 @@ class KernelMemoryManager
      */
     pointer reallocateMemory(pointer virtual_address, size_t new_size);
 
-    Mutex& getKMMLock();
+    SpinLock& getKMMLock();
 
     Thread* KMMLockHeldBy();
 
@@ -183,7 +183,7 @@ class KernelMemoryManager
     void lockKMM();
     void unlockKMM();
 
-    Mutex lock_;
+    SpinLock lock_;
 
     uint32 segments_used_;
     uint32 segments_free_;
