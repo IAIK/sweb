@@ -72,6 +72,8 @@ uint32 Scheduler::schedule()
 void Scheduler::addNewThread(Thread *thread)
 {
   debug(SCHEDULER, "addNewThread: %x  %d:%s\n", thread, thread->getTID(), thread->getName());
+  if (currentThread)
+    ArchThreads::debugCheckNewThread(thread);
   KernelMemoryManager::instance()->getKMMLock().acquire("in addNewThread");
   lockScheduling();
   KernelMemoryManager::instance()->getKMMLock().release("in addNewThread");

@@ -149,6 +149,12 @@ public:
  */
   static void printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose = true);
   static void printThreadRegisters(Thread *thread, bool verbose = true);
+
+  /**
+   * check thread state for sanity
+   * @param thread
+   */
+  static void debugCheckNewThread(Thread* thread);
 };
 
 #endif

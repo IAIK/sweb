@@ -18,7 +18,7 @@ const char* Thread::threadStatePrintable[4] =
 "Running", "Sleeping", "ToBeDestroyed", "Worker"
 };
 
-static void threadStartHack()
+extern "C" void threadStartHack()
 {
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
