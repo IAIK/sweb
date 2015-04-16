@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "paging-definitions.h"
-#include "Mutex.h"
+#include "SpinLock.h"
 #include "Bitmap.h"
 
 class PageManager
@@ -59,7 +59,7 @@ class PageManager
     uint32 number_of_pages_;
     uint32 lowest_unreserved_page_;
 
-    Mutex lock_;
+    SpinLock lock_;
 
     static PageManager* instance_;
 
