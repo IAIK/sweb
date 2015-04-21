@@ -285,7 +285,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
       currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
-  asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
+  asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax"); // only required in PAE mode
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {

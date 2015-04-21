@@ -21,7 +21,7 @@ PageManager* PageManager::instance_ = 0;
 // Please also note that the implementation of *dynamic* KMM is rather new - please report any strange behavior.
 
 // we recommend setting both values to 400 for Assignment 2:
-#define MIN_HEAP_PAGES 1
+#define MIN_HEAP_PAGES 400
 #define MAX_HEAP_PAGES 4096 // 4096 pages, because maximum heap size is 16MiB
 
 PageManager* PageManager::instance()
