@@ -31,6 +31,8 @@ ArchMemory::~ArchMemory()
         if (pte_base[pte_vpn].present)
         {
           unmapPage(pde_vpn * PAGE_TABLE_ENTRIES + pte_vpn);
+          if(!page_directory[pde_vpn].pt.present)
+        	  break;
         }
       }
     }
