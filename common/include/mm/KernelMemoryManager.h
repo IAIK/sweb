@@ -5,6 +5,8 @@
 #include "SpinLock.h"
 #include "assert.h"
 
+#define MAGIC_SEGMENT 0xDEADBEE0
+
 /**
  * @class MallocSegment
  *
@@ -26,40 +28,31 @@ class MallocSegment
      *        (this + sizeof(MallocSegment) + size is usually the start of the next segment)
      * @param used describes if the segment is allocated or free
      */
-    MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used)
+    MallocSegment(MallocSegment *prev, MallocSegment *next, bool used)
     {
+      marker_flag_ = MAGIC_SEGMENT;
       prev_ = prev;
-      marker_ = 0xdeadbeef;
-      size_flag_ = (size & 0x7FFFFFFF); //size to max 2^31-1
       next_ = next;
-      if (used)
-        size_flag_ |= 0x80000000; //this is the used flag
+      if(used)
+      {
+        marker_flag_ |= 0x1;
+      }
+    }
 
-    }
-    /**
-     * returns the size of the segment in bytes (maximum 2^31-1 bytes)
-     * @return the size
-     */
-    size_t getSize()
+    void init()
     {
-      return (size_flag_ & 0x7FFFFFFF);
+      marker_flag_ = MAGIC_SEGMENT;
+      prev_ = 0;
+      next_ = 0;
     }
-    /**
-     * sets the sizeof the segment in bytes (maximum 2^31-1 bytes)
-     * @param size the size to set
-     */
-    void setSize(size_t size)
-    {
-      size_flag_ &= 0x80000000;
-      size_flag_ |= (size & 0x7FFFFFFF);
-    }
+
     /**
      * checks if the segment is allocated
      * @return true if the segment is allocated, false it it is unused
      */
     bool getUsed()
     {
-      return (size_flag_ & 0x80000000);
+      return marker_flag_ & 1;
     }
 
     /**
@@ -68,17 +61,29 @@ class MallocSegment
      */
     void setUsed(bool used)
     {
-      size_flag_ &= 0x7FFFFFFF;
-      if (used)
-        size_flag_ |= 0x80000000; //this is the used flag
+      if(used)
+      {
+        marker_flag_ = MAGIC_SEGMENT | 0x1;
+      }
+      else
+      {
+        marker_flag_ = MAGIC_SEGMENT;
+      }
     }
 
-    uint32 marker_; // = 0xdeadbeef;
+    pointer getUserAdress()
+    {
+    	return (pointer)((size_t)this + sizeof(MallocSegment));
+    }
+
+    bool validate()
+    {
+      return (marker_flag_ & MAGIC_SEGMENT) == MAGIC_SEGMENT;
+    }
+
+    uint32 marker_flag_;  // = 0xdeadbee0;
     MallocSegment *next_; // = NULL;
     MallocSegment *prev_; // = NULL;
-
-  private:
-    size_t size_flag_; // = 0; //max size is 2^31-1
 };
 
 extern void* kernel_end_address;
@@ -133,43 +138,17 @@ class KernelMemoryManager
 
   private:
 
-    /**
-     * returns a free memory segment of the requested size
-     * @param requested_size the size
-     * @return the segment
-     */
-    MallocSegment *findFreeSegment(size_t requested_size);
-
-    /**
-     * creates a new segment after the given one if the space is big enough
-     * @param this_one the segment
-     * @param size the size to used
-     * @param zero_check whether memory is zero'd
-     */
-    void fillSegment(MallocSegment *this_one, size_t size, uint32 zero_check = 1);
-
     void freeSegment(MallocSegment *this_one);
 
-    /**
-     * returns the segment the virtual address is pointing to
-     * @param virtual_address the address
-     * @return the segment
-     */
-    MallocSegment *getSegmentFromAddress(pointer virtual_address);
-
-    /**
-     * merges the given segment with the following one
-     * @param this_one the segmnet
-     * @return true on success
-     */
-    bool mergeWithFollowingFreeSegment(MallocSegment *this_one);
-
-    /**
-     * This really implements the allocateMemory behaviour, but 
-     * does not lock the KMM, so we can also use it within the
-     * reallocate method
-     */
-    inline pointer private_AllocateMemory(size_t requested_size);
+    size_t calculateSegmentSize(MallocSegment* to_calculate);
+    size_t calculateRealSegmentSize(size_t requested_size);
+    MallocSegment* getFreeSegment(size_t size);
+    void splitSegment(MallocSegment* to_split, size_t left_chunk_size);
+    void linkSegments(MallocSegment* leftSegment, MallocSegment* rightSegment);
+    bool mergeSegments(MallocSegment* leftSegment, MallocSegment* rightSegment);
+    MallocSegment* addSegment(size_t segment_size);
+    void printAllSegments();
+    void printSegment(MallocSegment* segment);
 
     pointer ksbrk(ssize_t size);
 
@@ -184,10 +163,6 @@ class KernelMemoryManager
     void unlockKMM();
 
     SpinLock lock_;
-
-    uint32 segments_used_;
-    uint32 segments_free_;
-    size_t approx_memory_free_;
 };
 
 #endif
