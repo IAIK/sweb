@@ -24,8 +24,6 @@ class MallocSegment
      * Constructor
      * @param *prev Pointer to the previous MallocSegment in the list
      * @param *next Pointer to the next MallocSegment in the list
-     * @param size Number of Bytes the described segment is large
-     *        (this + sizeof(MallocSegment) + size is usually the start of the next segment)
      * @param used describes if the segment is allocated or free
      */
     MallocSegment(MallocSegment *prev, MallocSegment *next, bool used)
@@ -37,13 +35,6 @@ class MallocSegment
       {
         marker_flag_ |= 0x1;
       }
-    }
-
-    void init()
-    {
-      marker_flag_ = MAGIC_SEGMENT;
-      prev_ = 0;
-      next_ = 0;
     }
 
     /**
@@ -125,7 +116,8 @@ class KernelMemoryManager
 
     Thread* KMMLockHeldBy();
 
-    KernelMemoryManager() : lock_(0) { assert(false && "dummy constructor - do not use!"); };
+    KernelMemoryManager() : first_(0), last_(0), base_break_(0), kernel_break_(0), reserved_max_(0),
+        reserved_min_(0), lock_(0) { assert(false && "dummy constructor - do not use!"); };
 
   protected:
     friend class PageManager;

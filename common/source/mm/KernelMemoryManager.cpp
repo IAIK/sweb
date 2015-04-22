@@ -36,10 +36,86 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   reserved_max_ = max_heap_pages * PAGE_SIZE;
   debug(KMM, "Clearing initial heap pages\n");
   memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);
-  first_ = (MallocSegment*)start_address;
-  first_->init();
-  last_ = first_;
+  first_ = last_ =  new ((void*)start_address) MallocSegment(0, 0, false);
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x and initially ends at %x\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
+}
+
+pointer KernelMemoryManager::allocateMemory(size_t requested_size)
+{
+  prenew_assert((requested_size & 0x80000000) == 0 && "requested too much memory");
+  requested_size = calculateRealSegmentSize(requested_size);
+  MallocSegment* new_segment = 0;
+  lockKMM();
+  if(!(new_segment = getFreeSegment(requested_size)))
+  {
+    new_segment = addSegment(requested_size);
+  }
+  pointer ptr = new_segment->getUserAdress();
+  debug(KMM, "allocateMemory returns address: %x with size: %d for segment %x \n", ptr, requested_size, new_segment);
+  unlockKMM();
+  return ptr;
+}
+
+pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size)
+{
+  if(virtual_address == 0) return allocateMemory(new_size);
+  lockKMM();
+  MallocSegment *to_resize = (MallocSegment*)((size_t)virtual_address - sizeof(MallocSegment));
+  prenew_assert(to_resize->validate() && "reallocateMemory: reallocated invalid segment");
+  size_t original_chunk_size = calculateSegmentSize(to_resize);
+  size_t new_chunk_size = calculateRealSegmentSize(new_size);
+  if(new_chunk_size == original_chunk_size)
+  {
+    //Nothing to do here
+    unlockKMM();
+    return virtual_address;
+  }
+  else if (new_chunk_size < original_chunk_size)
+  {
+    splitSegment(to_resize, new_chunk_size);
+    unlockKMM();
+    return virtual_address;
+  }
+  else
+  {
+    unlockKMM(); // TODO: WRONG!!!!
+    pointer new_ptr = allocateMemory(new_size);
+    prenew_assert(new_ptr && "reallocateMemory: could not allocate new segment");
+    memcpy((void*)new_ptr, (void*)virtual_address, calculateSegmentSize(to_resize) - sizeof(MallocSegment));
+    freeMemory(virtual_address);
+    return new_ptr;
+  }
+}
+
+bool KernelMemoryManager::freeMemory(pointer virtual_address)
+{
+  if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= kernel_break_)
+    return false;
+
+  MallocSegment *to_delete = (MallocSegment *)((size_t) virtual_address - sizeof(MallocSegment));
+  lockKMM();
+  prenew_assert(to_delete != 0 && "free: delete null pointer?");
+  prenew_assert(to_delete->validate());
+  to_delete->setUsed(false);
+
+  MallocSegment *prev = to_delete->prev_;
+  if(mergeSegments(to_delete->prev_, to_delete))
+  {
+    to_delete = prev;
+  }
+  mergeSegments(to_delete, to_delete->next_);
+  //if it was the last set the brk
+  if(to_delete == last_)
+  {
+    ssize_t size = -(calculateSegmentSize(to_delete));
+    ksbrk(size);
+    last_ = to_delete->prev_;
+    linkSegments(last_, 0);
+    if(to_delete == first_)
+      first_ = last_ = 0;
+  }
+  unlockKMM();
+  return true;
 }
 
 size_t KernelMemoryManager::calculateSegmentSize(MallocSegment* to_calculate)
@@ -76,23 +152,6 @@ size_t KernelMemoryManager::calculateRealSegmentSize(size_t requested_size)
   return total_size+1;
 }
 
-pointer KernelMemoryManager::allocateMemory(size_t requested_size)
-{
-  prenew_assert((requested_size & 0x80000000) == 0 && "requested too much memory");
-  requested_size = calculateRealSegmentSize(requested_size);
-  MallocSegment* new_segment = 0;
-  lockKMM();
-  if(!(new_segment = getFreeSegment(requested_size)))
-  {
-    new_segment = addSegment(requested_size);
-  }
-  pointer ptr = new_segment->getUserAdress();
-  debug(KMM, "allocateMemory returns address: %x with size: %d for segment %x \n", ptr, requested_size, new_segment);
-  printAllSegments();
-  unlockKMM();
-  return ptr;
-}
-
 MallocSegment* KernelMemoryManager::getFreeSegment(size_t size)
 {
   MallocSegment *current = first_;
@@ -122,9 +181,7 @@ void KernelMemoryManager::splitSegment(MallocSegment* to_split, size_t left_chun
   if(original_chunk_size == left_chunk_size)
     return;
 
-  MallocSegment *right_segment = (MallocSegment*)((size_t)to_split + (size_t)left_chunk_size);
-  right_segment->init();
-  right_segment->setUsed(false);
+  MallocSegment *right_segment = new ((void*)((size_t)to_split + (size_t)left_chunk_size)) MallocSegment(0, 0, false);
   linkSegments(right_segment, to_split->next_);
   linkSegments(to_split, right_segment);
   mergeSegments(right_segment, right_segment->next_);
@@ -168,7 +225,7 @@ bool KernelMemoryManager::mergeSegments(MallocSegment* leftSegment, MallocSegmen
 MallocSegment* KernelMemoryManager::addSegment(size_t segment_size)
 {
   //skip checking of chunk_size because it is only used in malloc
-  MallocSegment* new_segment = (MallocSegment*)ksbrk(segment_size);
+  MallocSegment* new_segment = new ((void*)ksbrk(segment_size)) MallocSegment(0, 0, true);
   prenew_assert(new_segment != 0 && "addSegment: ran out of kernel memory");
   if(first_ == 0)
   {
@@ -178,8 +235,6 @@ MallocSegment* KernelMemoryManager::addSegment(size_t segment_size)
     }
     first_ = new_segment;
   }
-  new_segment->init();
-  new_segment->setUsed(true);
 
   linkSegments(last_, new_segment);
   linkSegments(new_segment, 0);
@@ -202,71 +257,6 @@ void KernelMemoryManager::printAllSegments()
 void KernelMemoryManager::printSegment(MallocSegment* segment)
 {
   debug(KMM, "current: %x size: %d used: %d \n", segment, calculateSegmentSize(segment), segment->getUsed());
-}
-
-bool KernelMemoryManager::freeMemory(pointer virtual_address)
-{
-  if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= kernel_break_)
-    return false;
-
-  MallocSegment *to_delete = (MallocSegment *)((size_t) virtual_address - sizeof(MallocSegment));
-  lockKMM();
-  prenew_assert(to_delete != 0 && "free: delete null pointer?");
-  prenew_assert(to_delete->validate());
-  to_delete->setUsed(false);
-
-  MallocSegment *prev = to_delete->prev_;
-  if(mergeSegments(to_delete->prev_, to_delete))
-  {
-    to_delete = prev;
-  }
-  mergeSegments(to_delete, to_delete->next_);
-  //if it was the last set the brk
-  if(to_delete == last_)
-  {
-    ssize_t size = -(calculateSegmentSize(to_delete));
-    ksbrk(size);
-    last_ = to_delete->prev_;
-    linkSegments(last_, 0);
-    if(to_delete == first_)
-      first_ = last_ = 0;
-  }
-  unlockKMM();
-  return true;
-}
-
-pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size)
-{
-  if(virtual_address == 0)
-    return allocateMemory(new_size);
-  MallocSegment *to_resize = (MallocSegment*)((size_t)virtual_address - sizeof(MallocSegment));
-  lockKMM();
-  printAllSegments();
-  debug(BACKTRACE, "address: %x segment: %x\n", virtual_address, to_resize);
-  prenew_assert(to_resize->validate() && "reallocateMemory: reallocated invalid segment");
-  size_t original_chunk_size = calculateSegmentSize(to_resize);
-  size_t new_chunk_size = calculateRealSegmentSize(new_size);
-  if(new_chunk_size == original_chunk_size)
-  {
-    //Nothing to do here
-    unlockKMM();
-    return virtual_address;
-  }
-  else if (new_chunk_size < original_chunk_size)
-  {
-    splitSegment(to_resize, new_chunk_size);
-    unlockKMM();
-    return virtual_address;
-  }
-  else
-  {
-    unlockKMM(); // TODO: WRONG!!!!
-    pointer new_ptr = allocateMemory(new_size);
-    prenew_assert(new_ptr && "reallocateMemory: could not allocate new segment");
-    memcpy((void*)new_ptr, (void*)virtual_address, calculateSegmentSize(to_resize) - sizeof(MallocSegment));
-    freeMemory(virtual_address);
-    return new_ptr;
-  }
 }
 
 pointer KernelMemoryManager::ksbrk(ssize_t size)
