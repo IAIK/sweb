@@ -4,8 +4,10 @@
 #include "new.h"
 #include "SpinLock.h"
 #include "assert.h"
+#include "debug.h"
+#include "kprintf.h"
 
-#define MAGIC_SEGMENT 0xDEADBEE0
+#define MAGIC_SEGMENT 0xDEADBEEF
 
 /**
  * @class MallocSegment
@@ -28,13 +30,10 @@ class MallocSegment
      */
     MallocSegment(MallocSegment *prev, MallocSegment *next, bool used)
     {
-      marker_flag_ = MAGIC_SEGMENT;
+      marker_ = MAGIC_SEGMENT;
       prev_ = prev;
       next_ = next;
-      if(used)
-      {
-        marker_flag_ |= 0x1;
-      }
+      flag_ = used;
     }
 
     /**
@@ -43,7 +42,7 @@ class MallocSegment
      */
     bool getUsed()
     {
-      return marker_flag_ & 1;
+      return flag_;
     }
 
     /**
@@ -52,14 +51,7 @@ class MallocSegment
      */
     void setUsed(bool used)
     {
-      if(used)
-      {
-        marker_flag_ = MAGIC_SEGMENT | 0x1;
-      }
-      else
-      {
-        marker_flag_ = MAGIC_SEGMENT;
-      }
+      flag_ = used;
     }
 
     pointer getUserAdress()
@@ -69,10 +61,16 @@ class MallocSegment
 
     bool validate()
     {
-      return (marker_flag_ & MAGIC_SEGMENT) == MAGIC_SEGMENT;
+      if(unlikely(marker_ != MAGIC_SEGMENT))
+      {
+        debug(KMM, "marker for %x was %x instead of 0xdeadbeef\n", this, marker_);
+        return false;
+      }
+      return true;
     }
 
-    uint32 marker_flag_;  // = 0xdeadbee0;
+    uint32 marker_;       // = 0xdeadbee0;
+    uint32 flag_;
     MallocSegment *next_; // = NULL;
     MallocSegment *prev_; // = NULL;
 };
@@ -132,6 +130,7 @@ class KernelMemoryManager
 
     void freeSegment(MallocSegment *this_one);
 
+    pointer internalAllocateMemory(size_t requested_size);
     size_t calculateSegmentSize(MallocSegment* to_calculate);
     size_t calculateRealSegmentSize(size_t requested_size);
     MallocSegment* getFreeSegment(size_t size);
