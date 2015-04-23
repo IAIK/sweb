@@ -27,6 +27,7 @@
 .macro irqhandler num
 .global arch_irqHandler_\num
 .extern irqHandler_\num
+.stabs "arch_irqHandler_\num()",36,0,0,arch_irqHandler_\num
 arch_irqHandler_\num:
   pushall
   pushl %ebp
@@ -41,6 +42,7 @@ arch_irqHandler_\num:
 
 .global arch_dummyHandler
 .extern dummyHandler
+.stabs "arch_dummyHandler()",36,0,0,arch_dummyHandler
 arch_dummyHandler:
   pushall
   call dummyHandler
@@ -50,6 +52,7 @@ arch_dummyHandler:
 .macro errorhandler num
 .global arch_errorHandler_\num
 .extern errorHandler_\num
+.stabs "arch_errorHandler_\num()",36,0,0,arch_errorHandler_\num
 arch_errorHandler_\num:
   pushall
   call errorHandler_\num
@@ -59,6 +62,7 @@ arch_errorHandler_\num:
 
 .extern pageFaultHandler
 .global arch_pageFaultHandler
+.stabs "arch_pageFaultHandler()",36,0,0,arch_pageFaultHandler
 arch_pageFaultHandler:
   #we are already on a new stack because a privliedge switch happened
   pushall
@@ -91,6 +95,7 @@ errorhandler \num
 
 .global arch_syscallHandler
 .extern syscallHandler
+.stabs "arch_syscallHandler",36,0,0,arch_syscallHandler
 arch_syscallHandler:
   pushall
   pushl %ebp
