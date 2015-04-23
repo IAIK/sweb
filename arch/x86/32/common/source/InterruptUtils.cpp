@@ -170,32 +170,28 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 
   debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
 
-  if (!(error & FLAG_PF_USER))
+  char function_name[512];
+  pointer start_addr = 0;
+  const Stabs2DebugInfo* deb = kernel_debug_info;
+  assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
+  ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
+  if (error & FLAG_PF_USER)
   {
-    // The PF happened in kernel mode? Cool, let's look up the function that caused it.
-    // A word of warning: Due to the way the lookup is performed, we may be
-    // returned a wrong function name here! Especially routines residing inside
-    // ASM- modules are very likely to be detected incorrectly.
-    char function_name[512];
-    pointer start_addr = 0;
-    if (kernel_debug_info)
-      start_addr = kernel_debug_info->getFunctionName(currentThread->kernel_registers_->eip, function_name, 256);
-    if (start_addr)
-    {
-      ssize_t line = kernel_debug_info->getFunctionLine(start_addr,currentThread->kernel_registers_->eip - start_addr);
-      if (line > 0)
-        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", function_name, line);
-      else
-        debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", function_name,
-              currentThread->kernel_registers_->eip - start_addr);
-    }
-
-    if (currentThread->user_registers_ &&
-          currentThread->user_registers_->cr3 != currentThread->kernel_registers_->cr3)
-    {
-      debug(PM, "[PageFaultHandler] User and Kernel CR3 register values differ, this most likely is a bug!");
-    }
-
+    assert(currentThread->loader_ && "User Threads need to have a Loader");
+    assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
+           "[PageFaultHandler] User and Kernel CR3 register values differ, this most likely is a bug!"));
+    deb = currentThread->loader_->getDebugInfos();
+    registers_ = currentThread->user_registers_;
+  }
+  if (deb != 0)
+    start_addr = deb->getFunctionName(registers_->eip, function_name, 256);
+  if (start_addr)
+  {
+    ssize_t line = deb->getFunctionLine(start_addr,registers_->eip - start_addr);
+    if (line > 0)
+      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", function_name, line);
+    else
+      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", function_name, registers_->eip - start_addr);
   }
 
   if(!address)
