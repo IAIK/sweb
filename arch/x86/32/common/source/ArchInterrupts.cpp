@@ -148,14 +148,14 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   info->edi = registers->edi;
   info->ds = registers->ds;
   info->es = registers->es;
-  assert(!currentThread || currentThread->kernel_stack_[0] == STACK_CANARY);
+  assert(!currentThread || currentThread->isStackCanaryOK());
 }
 
 extern TSS *g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-  assert(currentThread->kernel_stack_[0] == STACK_CANARY);
+  assert(currentThread->isStackCanaryOK());
   ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
   if (currentThread->switch_to_userspace_)
   {

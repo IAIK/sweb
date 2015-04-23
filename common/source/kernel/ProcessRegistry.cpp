@@ -55,7 +55,9 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
-  vfs_syscall.umount("/user_progs", 0);
+  vfs_syscall.umount("/usr", 0);
+
+  Scheduler::instance()->printStackTraces();
 
   Scheduler::instance()->printThreadList();
 

@@ -36,7 +36,8 @@ Thread::Thread(FileSystemInfo *working_dir, ustl::string name) :
   debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(kernel_stack_), name_.c_str());
   debug(THREAD, "Thread ctor, fs_info ptr: %x\n", working_dir_);
   ArchThreads::createKernelRegisters(kernel_registers_, (void*)threadStartHack, getStackStartPointer());
-  kernel_stack_[0] = STACK_CANARY; // stack canary / end of stack
+  kernel_stack_[2047] = STACK_CANARY;
+  kernel_stack_[0] = STACK_CANARY;
 }
 
 Thread::~Thread()
@@ -53,7 +54,6 @@ Thread::~Thread()
     Lock::printHoldingList(this);
     assert(false);
   }
-  Scheduler::instance()->printStackTraces();
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
 
@@ -81,6 +81,11 @@ void* Thread::getStackStartPointer()
   pointer stack = (pointer) kernel_stack_;
   stack += sizeof(kernel_stack_) - sizeof(uint32);
   return (void*)stack;
+}
+
+bool Thread::isStackCanaryOK()
+{
+  return ((kernel_stack_[0] == STACK_CANARY) && (kernel_stack_[2047] == STACK_CANARY));
 }
 
 Terminal *Thread::getTerminal()

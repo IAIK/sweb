@@ -4,7 +4,7 @@
 #include "types.h"
 #include "fs/FileSystemInfo.h"
 
-#define STACK_CANARY (0xDEADDEAD)
+#define STACK_CANARY ((size_t)0xDEADDEAD ^ (size_t)this)
 
 enum ThreadState
 {
@@ -52,17 +52,9 @@ class Thread
      */
     virtual void Run() = 0;
 
-    ArchThreadRegisters* kernel_registers_;
-    ArchThreadRegisters* user_registers_;
-    uint32 kernel_stack_[2048];
-
-    uint32 switch_to_userspace_;
-
     void* getStackStartPointer();
 
-    Loader* loader_;
-
-    ThreadState state_;
+    bool isStackCanaryOK();
 
     const char* getName();
 
@@ -109,6 +101,16 @@ class Thread
      */
     bool schedulable();
 
+
+    ArchThreadRegisters* kernel_registers_;
+    ArchThreadRegisters* user_registers_;
+    uint32 kernel_stack_[2048];
+
+    uint32 switch_to_userspace_;
+
+    Loader* loader_;
+
+    ThreadState state_;
 
     /**
      * A part of the single-chained waiters list for the locks.
