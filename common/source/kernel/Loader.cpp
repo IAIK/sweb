@@ -205,7 +205,7 @@ void Loader::loadPage(pointer virtual_address)
   size_t written = 0;
   for (PagePart& part : byte_map)
   {
-    debug(PM, "copying from %x to %x ;   page byte: %d, length_: %d\n", buffer+part.vaddr_ - min_byte_to_load, dest + part.page_byte_, part.page_byte_, part.length_);
+    debug(PM, "copying from %p to %p ;   page byte: %d, length_: %d\n", buffer+part.vaddr_ - min_byte_to_load, dest + part.page_byte_, part.page_byte_, part.length_);
 
     assert(part.vaddr_ - min_byte_to_load + part.length_ <= buffersize);
     assert(part.page_byte_ + part.length_ <= PAGE_SIZE);

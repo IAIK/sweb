@@ -201,7 +201,7 @@ extern int puts(const char *output_string);
  value is returned on failure
  *
  */
-extern int printf(const char *format, ...);
+extern int printf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
  * Prints an error message on the standard error output describing the last
@@ -241,7 +241,7 @@ extern void perror(const char *error_msg);
  end-of-file) occurs before any items have been read
  *
  */
-extern int scanf(const char *format, ...);
+extern int scanf(const char *format, ...) __attribute__ ((format (scanf, 1, 2)));
 
 #ifdef __cplusplus
 }

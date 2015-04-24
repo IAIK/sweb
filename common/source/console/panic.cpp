@@ -21,7 +21,7 @@ void kpanict ( uint8 * message )
   kprintfd("%s \n", message );
   kprintf("%s \n", message );
 
-  kprintfd( "KPANICT: stack is > %x ",  stack );
+  kprintfd( "KPANICT: stack is > %p ",  stack );
   //kprintf( "KPANICT: stack is > %x ",  stack );
 
   if (currentThread)

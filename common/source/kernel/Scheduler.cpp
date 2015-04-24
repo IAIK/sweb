@@ -54,7 +54,7 @@ uint32 Scheduler::schedule()
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
     }
   } while (!currentThread->schedulable());
-//  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
+//  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
 
   uint32 ret = 1;
 
@@ -71,7 +71,7 @@ uint32 Scheduler::schedule()
 
 void Scheduler::addNewThread(Thread *thread)
 {
-  debug(SCHEDULER, "addNewThread: %x  %d:%s\n", thread, thread->getTID(), thread->getName());
+  debug(SCHEDULER, "addNewThread: %p  %d:%s\n", thread, thread->getTID(), thread->getName());
   if (currentThread)
     ArchThreads::debugCheckNewThread(thread);
   KernelMemoryManager::instance()->getKMMLock().acquire("in addNewThread");
@@ -104,7 +104,7 @@ void Scheduler::yield()
   if (!ArchInterrupts::testIFSet())
   {
     assert(currentThread);
-    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %x %s)\n",
+    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %p %s)\n",
              currentThread, currentThread->name_.c_str());
     currentThread->printBacktrace();
   }
@@ -149,7 +149,7 @@ void Scheduler::printThreadList()
   lockScheduling();
   debug(SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n", threads_.size());
   for (c = 0; c < threads_.size(); ++c)
-    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n", c, threads_[c],
+    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %p  %d:%s     [%s]\n", c, threads_[c],
           threads_[c]->getTID(), threads_[c]->getName(), Thread::threadStatePrintable[threads_[c]->state_]);
   unlockScheduling();
 }
@@ -230,7 +230,7 @@ void Scheduler::printLockingInformation()
     thread = threads_[thread_count];
     if(thread->lock_waiting_on_ != 0)
     {
-      debug(LOCK, "Thread %s (0x%x) is waiting on lock: %s (0x%x).\n", thread->getName(), thread,
+      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p).\n", thread->getName(), thread,
             thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_ );
     }
   }

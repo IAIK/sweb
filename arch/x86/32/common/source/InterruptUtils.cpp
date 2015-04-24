@@ -164,7 +164,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
   //--------Start "just for Debugging"-----------
 
-  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
+  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %p %d:%s, switch_to_userspace_: %d\n",
       address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getTID(),
       currentThread->getName(), currentThread->switch_to_userspace_);
 
@@ -269,7 +269,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   }
   else
   {
-    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %x\n",
+    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %p\n",
           !(error & FLAG_PF_PRESENT), address < 2U * 1024U * 1024U * 1024U, currentThread->loader_);
 
     if (!(error & FLAG_PF_USER))

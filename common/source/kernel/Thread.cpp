@@ -32,9 +32,7 @@ Thread::Thread(FileSystemInfo *working_dir, ustl::string name) :
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name)
 {
-  debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, kernel_stack_);
-  debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(kernel_stack_), name_.c_str());
-  debug(THREAD, "Thread ctor, fs_info ptr: %x\n", working_dir_);
+  debug(THREAD, "Thread ctor, this is %p, stack is %p, fs_info ptr: %p\n", this, kernel_stack_, working_dir_);
   ArchThreads::createKernelRegisters(kernel_registers_, (void*)threadStartHack, getStackStartPointer());
   kernel_stack_[2047] = STACK_CANARY;
   kernel_stack_[0] = STACK_CANARY;
@@ -61,7 +59,7 @@ Thread::~Thread()
 // DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
-  debug(THREAD, "kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
+  debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
         currentThread, getName(), this);
 
   switch_to_userspace_ = 0;
@@ -143,12 +141,12 @@ void Thread::printBacktrace(bool use_stored_registers)
     {
       ssize_t line = kernel_debug_info->getFunctionLine(start_addr, call_stack[i] - start_addr);
       if (line > 0)
-        debug(BACKTRACE, "   (%d): %10p (%s:%u)\n", i, call_stack[i], function_name, line);
+        debug(BACKTRACE, "   (%d): %10x (%s:%u)\n", i, call_stack[i], function_name, line);
       else
-        debug(BACKTRACE, "   (%d): %10p (%s+%x)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
+        debug(BACKTRACE, "   (%d): %10x (%s+%x)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
     }
     else
-      debug(BACKTRACE, "   (%d): %10p (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
+      debug(BACKTRACE, "   (%d): %10x (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
   }
 
   debug(BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
@@ -184,12 +182,12 @@ void Thread::printUserBacktrace()
     {
       ssize_t line = deb->getFunctionLine(start_addr, call_stack[i] - start_addr);
       if (line > 0)
-        debug(USERTRACE, "   (%d): %10p (%s:%u)\n", i, call_stack[i], function_name, line);
+        debug(USERTRACE, "   (%d): %10x (%s:%u)\n", i, call_stack[i], function_name, line);
       else
-        debug(USERTRACE, "   (%d): %10p (%s+%x)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
+        debug(USERTRACE, "   (%d): %10x (%s+%x)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
     }
     else
-      debug(USERTRACE, "   (%d): %10p (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
+      debug(USERTRACE, "   (%d): %10x (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
   }
 
   debug(USERTRACE, "=== End of backtrace for thread <%s> ===\n", getName());

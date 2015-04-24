@@ -177,7 +177,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   MallocSegment *current = first_;
   while (current != 0)
   {
-    debug(KMM, "findFreeSegment: current: %x size: %d used: %d \n", current, current->getSize() + sizeof(MallocSegment),
+    debug(KMM, "findFreeSegment: current: %p size: %d used: %d \n", current, current->getSize() + sizeof(MallocSegment),
           current->getUsed());
     prenew_assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
@@ -216,7 +216,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     {
       if(unlikely(mem[i] != 0))
       {
-        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %x\n", mem + i);
+        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p\n", mem + i);
         mem[i] = 0;
       }
     }
@@ -253,7 +253,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 {
-  debug(KMM, "KernelMemoryManager::freeSegment(%x)\n", this_one);
+  debug(KMM, "KernelMemoryManager::freeSegment(%p)\n", this_one);
   prenew_assert(this_one != 0 && "trying to access a nullpointer");
   prenew_assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
 
@@ -264,7 +264,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     prenew_assert(false && "probably double free");
   }
 
-  debug(KMM, "fillSegment: freeing block: %x of bytes: %d \n", this_one, this_one->getSize() + sizeof(MallocSegment));
+  debug(KMM, "fillSegment: freeing block: %p of bytes: %d \n", this_one, this_one->getSize() + sizeof(MallocSegment));
 
   this_one->setUsed(false);
   prenew_assert(this_one->getUsed() == false && "trying to clear a used segment");
@@ -294,9 +294,9 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       }
 
       debug(KMM, "freeSegment: post premerge, pre postmerge\n");
-      debug(KMM, "freeSegment: previous_one: %x size: %d used: %d\n", previous_one,
+      debug(KMM, "freeSegment: previous_one: %p size: %d used: %d\n", previous_one,
             previous_one->getSize() + sizeof(MallocSegment), previous_one->getUsed());
-      debug(KMM, "freeSegment: this_one: %x size: %d used: %d\n", this_one, this_one->getSize() + sizeof(MallocSegment),
+      debug(KMM, "freeSegment: this_one: %p size: %d used: %d\n", this_one, this_one->getSize() + sizeof(MallocSegment),
             this_one->getUsed());
 
       this_one = previous_one;
@@ -354,7 +354,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     MallocSegment *current = first_;
     while (current != 0)
     {
-      debug(KMM, "freeSegment: current: %x prev: %x next: %x size: %d used: %d\n", current, current->prev_,
+      debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %d used: %d\n", current, current->prev_,
             current->next_, current->getSize() + sizeof(MallocSegment), current->getUsed());
       prenew_assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
       current = current->next_;

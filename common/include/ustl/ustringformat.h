@@ -5,12 +5,15 @@
 #include "stdarg.h"
 #include "kstring.h"
 
-#define MAXNBUF 20
+#define MAXNBUF 40
 
 #define hex2ascii(hex)  (hex2ascii_data[hex])
+#define hex2asciiupper(hex)  (hex2ascii_data_upper[hex])
 char const hex2ascii_data[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+char const hex2ascii_data_upper[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 typedef unsigned char u_char;
+typedef unsigned short u_short;
 typedef unsigned long u_long;
 typedef unsigned int u_int;
 /*typedef unsigned int size_t;*/

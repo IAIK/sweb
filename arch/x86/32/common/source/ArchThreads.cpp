@@ -139,7 +139,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   }
   if (verbose)
   {
-    kprintfd("\t\t%sThread: %10x, info: %10x\n"\
+    kprintfd("\t\t%sThread: %10p, info: %10p\n"\
              "\t\t\t eax: %10x  ebx: %10x  ecx: %10x  edx: %10x\n"\
              "\t\t\t esp: %10x  ebp: %10x  esp0 %10x  eip: %10x\n"\
              "\t\t\teflg: %10x  cr3: %10x\n",
@@ -147,7 +147,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   }
   else
   {
-    kprintfd("\t%sThread %10x: info %10x eax %10x ebp %10x esp %10x esp0 %10x eip %10x cr3 %10x\n",
+    kprintfd("\t%sThread %10p: info %10p eax %10x ebp %10x esp %10x esp0 %10x eip %10x cr3 %10x\n",
              userspace_registers?" User-":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
   }
 }

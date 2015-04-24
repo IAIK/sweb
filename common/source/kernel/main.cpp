@@ -59,7 +59,7 @@ extern "C" void startup()
 
   main_console->setActiveTerminal(0);
 
-  kprintf("Kernel end address is %x\n", &kernel_end_address);
+  kprintf("Kernel end address is %p\n", &kernel_end_address);
 
   Scheduler::instance();
 
