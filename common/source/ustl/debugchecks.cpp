@@ -17,7 +17,7 @@ namespace ustl
         kprintfd("(ERROR) checkKMMDeadlock: Using a not resize-safe ustl container method with IF=%d and SchedulingEnabled=%d ! This will fail!!!\n",
                  ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled());
         currentThread->printBacktrace(true);
-        prenew_assert(false);
+        assert(false);
       }
     }
   }

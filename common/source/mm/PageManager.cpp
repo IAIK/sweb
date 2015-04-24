@@ -73,7 +73,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   if (number_of_pages_ < 1000)
   {
     kprintfd("FATAL ERROR: Not enough Memory, Sweb needs at least %d KiB of RAM\n", 1000 * 4096U);
-    prenew_assert(false);
+    assert(false);
   }
 
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
@@ -161,7 +161,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   }
   debug(PM, "Ctor: Physical pages - free: %u used: %u total: %u\n", page_usage_table_->getNumFreeBits(),
         page_usage_table_->getNumBitsSet(), number_of_pages_);
-  prenew_assert(lowest_unreserved_page_ < number_of_pages_);
+  assert(lowest_unreserved_page_ < number_of_pages_);
   KernelMemoryManager::pm_ready_ = 1;
 }
 
