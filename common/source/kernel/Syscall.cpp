@@ -74,7 +74,7 @@ size_t Syscall::write(size_t fd, pointer buffer, size_t size)
   if (fd == fd_stdout) //stdout
   {
     debug(SYSCALL, "Syscall::write: %.*s\n", size, (char*) buffer);
-    kprintf("%.*s", size, buffer);
+    kprintf("%.*s", size, (char*) buffer);
   }
   else
   {

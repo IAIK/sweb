@@ -32,9 +32,7 @@ Thread::Thread(FileSystemInfo *working_dir, const char *name) :
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name)
 {
-  debug(THREAD, "Thread ctor, this is %x, stack is %x\n", this, stack_);
-  debug(THREAD, "sizeof stack is %x; my name: %s\n", sizeof(stack_), name_.c_str());
-  debug(THREAD, "Thread ctor, fs_info ptr: %x\n", working_dir_);
+  debug(THREAD, "Thread ctor, this is %p, stack is %p, fs_info ptr: %p\n", this, stack_, working_dir_);
   ArchThreads::createThreadInfosKernelThread(kernel_arch_thread_info_, (pointer) &ThreadStartHack,
                                              getStackStartPointer());
   stack_[0] = STACK_CANARY; // stack canary / end of stack
@@ -65,7 +63,7 @@ Thread::~Thread()
 // DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
-  debug(THREAD, "kill: Called by <%s (%x)>. Preparing Thread <%s (%x)> for destruction\n", currentThread->getName(),
+  debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
         currentThread, getName(), this);
 
   switch_to_userspace_ = 0;

@@ -94,7 +94,7 @@ class Elf
 
     static void printElfHeader(Ehdr &hdr)
     {
-      kprintfd("hdr addr: %x\n", &hdr);
+      kprintfd("hdr addr: %p\n", &hdr);
 #define foobar(x) kprintfd("hdr " #x ": %x\n",hdr. x)
       foobar(e_type);
       foobar(e_machine);

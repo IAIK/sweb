@@ -88,7 +88,7 @@ uint8 Bitmap::getByte(size_t byte_number)
 
 void Bitmap::bmprint()
 {
-  kprintfd("\n-----Bitmap: size=%ld, num_bits_set=%ld-----\n",size_,num_bits_set_);
+  kprintfd("\n-----Bitmap: size=%zd, num_bits_set=%zd-----\n",size_,num_bits_set_);
   for(uint32 i = 0; i < size_; i++)
   {
     kprintfd( "%d", getBit( i));

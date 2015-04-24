@@ -251,7 +251,7 @@ void Loader::loadOnePageSafeButSlow ( pointer virtual_address )
   {
     part = byte_map[i];
 
-    debug(PM, "copying %dth element from %x to %x ;   page byte: %d, length: %d\n", i, buffer+part.vaddr - min_value, dest + part.page_byte, part.page_byte, part.length);
+    debug(PM, "copying %dth element from %p to %p ;   page byte: %d, length: %d\n", i, buffer+part.vaddr - min_value, dest + part.page_byte, part.page_byte, part.length);
 
     assert(part.vaddr - min_value + part.length <= buffersize);
     assert(part.page_byte + part.length <= PAGE_SIZE);

@@ -24,8 +24,8 @@ Lock::~Lock()
   Thread* held_by = held_by_;
   if(waiter)
   {
-    debug(LOCK, "ERROR: Lock::~Lock %s (%x): At least thread %x is still waiting on this lock,\n"
-        "currentThread is: %x, the thread holding this lock is: %x\n",
+    debug(LOCK, "ERROR: Lock::~Lock %s (%p): At least thread %p is still waiting on this lock,\n"
+        "currentThread is: %p, the thread holding this lock is: %p\n",
         name_, this, waiter, currentThread, held_by);
     lockWaitersList();
     printWaitersList();
@@ -34,7 +34,7 @@ Lock::~Lock()
   }
   if(held_by)
   {
-    debug(LOCK, "Warning: Lock::~Lock %s (%x): Thread %x is still holding this lock, currentThread is: %x\n",
+    debug(LOCK, "Warning: Lock::~Lock %s (%p): Thread %p is still holding this lock, currentThread is: %p\n",
         name_, this, held_by, currentThread);
   }
 }
@@ -45,7 +45,7 @@ void Lock::printWaitersList()
   size_t count = 0;
   for(Thread* thread = waiters_list_; thread != 0; thread = thread->next_thread_in_lock_waiters_list_)
   {
-    kprintfd("%u: %s (%x)\n", ++count, thread->getName(), thread);
+    kprintfd("%u: %s (%p)\n", ++count, thread->getName(), thread);
   }
 }
 
@@ -158,14 +158,14 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start, const c
 
 void Lock::printOutCircularDeadLock(Thread* starting)
 {
-  debug(LOCK, "CIRCULAR DEADLOCK when waiting for %s (%p) with thread %s (%x)!\n"
+  debug(LOCK, "CIRCULAR DEADLOCK when waiting for %s (%p) with thread %s (%p)!\n"
         "Printing out the circular deadlock:\n",
         getName(), this, currentThread->getName(), currentThread);
   currentThread->lock_waiting_on_ = this;
   // in this case we can access the other threads, because we KNOW that they are indirectly waiting on the current thread.
   for(Thread* thread = starting; thread != 0; thread = thread->lock_waiting_on_->held_by_)
   {
-    debug(LOCK, "Thread %s (%x) holding lock %s (%p), waiting for lock %s (%x)\n",
+    debug(LOCK, "Thread %s (%p) holding lock %s (%p), waiting for lock %s (%p)\n",
           thread->getName(), thread, thread->lock_waiting_on_->getName(),
           thread->lock_waiting_on_, thread->lock_waiting_on_->held_by_->lock_waiting_on_->getName(),
           thread->lock_waiting_on_->held_by_->lock_waiting_on_);
