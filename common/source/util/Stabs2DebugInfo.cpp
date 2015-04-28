@@ -47,7 +47,7 @@ void Stabs2DebugInfo::initialiseSymbolTable()
       function_symbols_[current_stab->n_value] = current_stab;
     }
   }
-  debug(MAIN, "found %d functions\n", function_symbols_.size());
+  debug(MAIN, "found %zd functions\n", function_symbols_.size());
 
 }
 

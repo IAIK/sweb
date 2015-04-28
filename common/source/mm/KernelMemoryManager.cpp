@@ -40,7 +40,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   first_ = (MallocSegment*)start_address;
   new ((void*)start_address) MallocSegment(0, 0, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
-  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %x and initially ends at %x\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
+  debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
 }
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size)
@@ -53,7 +53,7 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size)
   if (ptr)
     unlockKMM();
 
-  debug(KMM, "allocateMemory returns address: %x \n", ptr);
+  debug(KMM, "allocateMemory returns address: %zx \n", ptr);
   return ptr;
 }
 pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
@@ -172,12 +172,12 @@ MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
 
 MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 {
-  debug(KMM, "findFreeSegment: seeking memory block of bytes: %d \n", requested_size + sizeof(MallocSegment));
+  debug(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n", requested_size + sizeof(MallocSegment));
 
   MallocSegment *current = first_;
   while (current != 0)
   {
-    debug(KMM, "findFreeSegment: current: %p size: %d used: %d \n", current, current->getSize() + sizeof(MallocSegment),
+    debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n", current, current->getSize() + sizeof(MallocSegment),
           current->getUsed());
     assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
@@ -248,7 +248,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     if (new_segment->next_ == 0)
       last_ = new_segment;
   }
-  debug(KMM, "fillSegment: filled memory block of bytes: %d \n", this_one->getSize() + sizeof(MallocSegment));
+  debug(KMM, "fillSegment: filled memory block of bytes: %zd \n", this_one->getSize() + sizeof(MallocSegment));
 }
 
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
@@ -264,7 +264,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     assert(false && "probably double free");
   }
 
-  debug(KMM, "fillSegment: freeing block: %p of bytes: %d \n", this_one, this_one->getSize() + sizeof(MallocSegment));
+  debug(KMM, "fillSegment: freeing block: %p of bytes: %zd \n", this_one, this_one->getSize() + sizeof(MallocSegment));
 
   this_one->setUsed(false);
   assert(this_one->getUsed() == false && "trying to clear a used segment");
@@ -294,9 +294,9 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       }
 
       debug(KMM, "freeSegment: post premerge, pre postmerge\n");
-      debug(KMM, "freeSegment: previous_one: %p size: %d used: %d\n", previous_one,
+      debug(KMM, "freeSegment: previous_one: %p size: %zd used: %d\n", previous_one,
             previous_one->getSize() + sizeof(MallocSegment), previous_one->getUsed());
-      debug(KMM, "freeSegment: this_one: %p size: %d used: %d\n", this_one, this_one->getSize() + sizeof(MallocSegment),
+      debug(KMM, "freeSegment: this_one: %p size: %zd used: %d\n", this_one, this_one->getSize() + sizeof(MallocSegment),
             this_one->getUsed());
 
       this_one = previous_one;
@@ -354,7 +354,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     MallocSegment *current = first_;
     while (current != 0)
     {
-      debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %d used: %d\n", current, current->prev_,
+      debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %zd used: %d\n", current, current->prev_,
             current->next_, current->getSize() + sizeof(MallocSegment), current->getUsed());
       assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
       current = current->next_;
@@ -400,13 +400,13 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
-  debug(KMM, "KernelMemoryManager::ksbrk(%d)\n", size);
+  debug(KMM, "KernelMemoryManager::ksbrk(%zd)\n", size);
   assert(base_break_ <= (size_t)kernel_break_ + size && "kernel heap break value corrupted");
   assert((reserved_max_ == 0 || ((kernel_break_ - base_break_) + size) <= reserved_max_) && "maximum kernel heap size reached");
-  debug(KMM, "KernelMemoryManager::ksbrk(%d)\n", size);
+  debug(KMM, "KernelMemoryManager::ksbrk(%zd)\n", size);
   if(size != 0)
   {
-    debug(KMM, "KernelMemoryManager::ksbrk(%d)0\n", size);
+    debug(KMM, "KernelMemoryManager::ksbrk(%zd)0\n", size);
     size_t old_brk = kernel_break_;
     size_t cur_top_vpn = kernel_break_ / PAGE_SIZE;
     if ((kernel_break_ % PAGE_SIZE) == 0)
@@ -415,24 +415,24 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     size_t new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
     if ((kernel_break_ % PAGE_SIZE) == 0)
       new_top_vpn--;
-    debug(KMM, "KernelMemoryManager::ksbrk(%d)1\n", size);
+    debug(KMM, "KernelMemoryManager::ksbrk(%zd)1\n", size);
     if(size > 0)
     {
-      debug(KMM, "%x != %x\n", cur_top_vpn, new_top_vpn);
+      debug(KMM, "%zx != %zx\n", cur_top_vpn, new_top_vpn);
       while(cur_top_vpn != new_top_vpn)
       {
-        debug(KMM, "%x != %x\n", cur_top_vpn, new_top_vpn);
+        debug(KMM, "%zx != %zx\n", cur_top_vpn, new_top_vpn);
         cur_top_vpn++;
         assert(pm_ready_ && "Kernel Heap should not be used before PageManager is ready");
         size_t new_page = PageManager::instance()->allocPPN();
         if(unlikely(new_page == 0))
         {
-          debug(KMM, "KernelMemoryManager::ksbrk(%d)4\n", size);
+          debug(KMM, "KernelMemoryManager::ksbrk(%zd)4\n", size);
           kprintfd("KernelMemoryManager::freeSegment: FATAL ERROR\n");
           kprintfd("KernelMemoryManager::freeSegment: no more physical memory\n");
           assert(new_page != 0 && "Kernel Heap is out of memory");
         }
-        debug(KMM, "kbsrk: map %x -> %x\n", cur_top_vpn, new_page);
+        debug(KMM, "kbsrk: map %zx -> %zx\n", cur_top_vpn, new_page);
         memset((void*)ArchMemory::getIdentAddressOfPPN(new_page), 0 , PAGE_SIZE);
         ArchMemory::mapKernelPage(cur_top_vpn, new_page);
       }
@@ -440,7 +440,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     }
     else
     {
-      debug(KMM, "KernelMemoryManager::ksbrk(%d)7\n", size);
+      debug(KMM, "KernelMemoryManager::ksbrk(%zd)7\n", size);
       while(cur_top_vpn != new_top_vpn)
       {
         assert(pm_ready_ && "Kernel Heap should not be used before PageManager is ready");
@@ -448,12 +448,12 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
         cur_top_vpn--;
       }
     }
-    debug(KMM, "KernelMemoryManager::ksbrk(%d)8\n", size);
+    debug(KMM, "KernelMemoryManager::ksbrk(%zd)8\n", size);
     return old_brk;
   }
   else
   {
-    debug(KMM, "KernelMemoryManager::ksbrk(%d)9\n", size);
+    debug(KMM, "KernelMemoryManager::ksbrk(%zd)9\n", size);
     return kernel_break_;
   }
 }

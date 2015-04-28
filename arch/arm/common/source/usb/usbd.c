@@ -572,7 +572,7 @@ Result UsbAttachDevice(struct UsbDevice *device) {
     }
     else
     {
-      LOGF("USBD: Started the driver for %s (%x).\n", UsbGetDescription(device), device);
+      LOGF("USBD: Started the driver for %s (%p).\n", UsbGetDescription(device), device);
     }
   }
 

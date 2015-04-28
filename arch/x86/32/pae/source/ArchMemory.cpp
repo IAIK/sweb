@@ -65,7 +65,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 
 void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)
 {
-  kprintfd("insertPD: pdpt %x pdpt_vpn %x physical_page_table_page %x\n",page_dir_pointer_table_,pdpt_vpn,physical_page_directory_page);
+  kprintfd("insertPD: pdpt %p pdpt_vpn %x physical_page_table_page %x\n",page_dir_pointer_table_,pdpt_vpn,physical_page_directory_page);
   memset((void*)getIdentAddressOfPPN(physical_page_directory_page), 0,PAGE_SIZE);
   memset((void*)(page_dir_pointer_table_ + pdpt_vpn), 0, sizeof(PageDirPointerTableEntry));
   page_dir_pointer_table_[pdpt_vpn].page_directory_ppn = physical_page_directory_page;
@@ -74,7 +74,7 @@ void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)
 
 void ArchMemory::insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page)
 {
-  kprintfd("insertPT: page_directory %x pde_vpn %x physical_page_table_page %x\n",page_directory,pde_vpn,physical_page_table_page);
+  kprintfd("insertPT: page_directory %p pde_vpn %x physical_page_table_page %x\n",page_directory,pde_vpn,physical_page_table_page);
   memset((void*)getIdentAddressOfPPN(physical_page_table_page), 0, PAGE_SIZE);
   memset((void*)(page_directory + pde_vpn), 0, sizeof(PageDirPointerTableEntry));
   page_directory[pde_vpn].pt.writeable = 1;
@@ -121,7 +121,7 @@ void ArchMemory::mapPage(uint32 virtual_page,
 
 ArchMemory::~ArchMemory()
 {
-  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page dir pointer table %x\n",page_dir_pointer_table_ );
+  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page dir pointer table %p\n",page_dir_pointer_table_ );
   freePageDirectory(page_dir_pointer_table_[0].page_directory_ppn); // 0-1 GiB
   freePageDirectory(page_dir_pointer_table_[1].page_directory_ppn); // 1-2 GiB
 }

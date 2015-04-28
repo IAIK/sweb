@@ -272,7 +272,6 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
         upper = 1;
       case 'x':
         sharpflag = 1;
-        zflag = 1;
         base = 16;
         goto handle_nosign;
       case 'y':

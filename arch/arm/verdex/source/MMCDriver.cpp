@@ -135,7 +135,7 @@ uint32 MMCDriver::addRequest( BDRequest * br)
 
 int32 MMCDriver::readBlock ( uint32 address, void *buffer )
 {
-  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %x\n",address, buffer);
+  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n",address, buffer);
   uint32 response;
   mmci->blklen = 512;
   mmci->numblk = 1;
@@ -155,7 +155,7 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
 
 int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
-  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
+  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %p\n",start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
   {
     readBlock((start_sector + i) * sector_size_, (void*)((size_t)buffer + i * sector_size_));
@@ -165,7 +165,7 @@ int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
 
 int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
 {
-  debug(MMC_DRIVER,"writeBlock: address: %x, buffer: %x\n",address, buffer);
+  debug(MMC_DRIVER,"writeBlock: address: %x, buffer: %p\n",address, buffer);
   uint32 response;
   mmci->blklen = 512;
   mmci->numblk = 1;
@@ -185,7 +185,7 @@ int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
 
 int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer)
 {
-  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %x\n",start_sector, num_sectors, buffer);
+  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %p\n",start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
   {
     writeBlock((start_sector + i) * sector_size_, (void*)((size_t)buffer + i * sector_size_));

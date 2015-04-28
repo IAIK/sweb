@@ -168,7 +168,7 @@ Result HidReadDevice(struct UsbDevice *device, u8 reportNumber) {
   }
   if ((result = HidGetReport(device, report->Type, report->Id, data->ParserResult->Interface, size, report->ReportBuffer)) != OK) {
     if (result != ErrorDisconnected)
-      LOGF("HID: Could not read %s report %d.\n", UsbGetDescription(device), report);
+      LOGF("HID: Could not read %s report %p.\n", UsbGetDescription(device), report);
     return result;
   }
   
@@ -251,7 +251,7 @@ Result HidWriteDevice(struct UsbDevice *device, u8 reportNumber) {
   
   if ((result = HidSetReport(device, report->Type, report->Id, data->ParserResult->Interface, size, report->ReportBuffer)) != OK) {
     if (result != ErrorDisconnected)
-      LOGF("HID: Coult not read %s report %d.\n", UsbGetDescription(device), report);
+      LOGF("HID: Coult not read %s report %p.\n", UsbGetDescription(device), report);
     return result;
   }
 

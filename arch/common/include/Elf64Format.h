@@ -141,21 +141,22 @@ class Elf
 
     static void printElfHeader ( Ehdr &hdr )
     {
-      kprintfd ( "hdr addr: %x\n",&hdr );
-    #define foobar(x) kprintfd("hdr " #x ": %x\n",hdr. x)
-      foobar ( e_type );
-      foobar ( e_machine );
-      foobar ( e_version );
-      foobar ( e_entry );
-      foobar ( e_phoff );
-      foobar ( e_shoff );
-      foobar ( e_flags );
-      foobar ( e_ehsize );
-      foobar ( e_phentsize );
-      foobar ( e_phnum );
-      foobar ( e_shentsize );
-      foobar ( e_shnum );
-      foobar ( e_shstrndx );
+      kprintfd("hdr addr: %p\n", &hdr);
+#define foobar(f,x) do { kprintfd("hdr " #x ": " #f "\n",hdr. x); } while(0)
+      foobar("%x", e_type);
+      foobar("%x", e_machine);
+      foobar("%x", e_version);
+      foobar("%zx", e_entry);
+      foobar("%zx", e_phoff);
+      foobar("%zx", e_shoff);
+      foobar("%x", e_flags);
+      foobar("%x", e_ehsize);
+      foobar("%x", e_phentsize);
+      foobar("%x", e_phnum);
+      foobar("%x", e_shentsize);
+      foobar("%x", e_shnum);
+      foobar("%x", e_shstrndx);
+#undef foobar
     }
 
 };

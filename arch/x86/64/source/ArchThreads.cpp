@@ -147,20 +147,20 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
-    kprintfd("%sThread: %18x, has no %s registers\n",userspace_registers?"Kernel":"  User",thread,userspace_registers ? "userspace" : "kernelspace");
+    kprintfd("%sThread: %18p, has no %s registers\n",userspace_registers?"Kernel":"  User",thread,userspace_registers ? "userspace" : "kernelspace");
     return;
   }
   if (verbose)
   {
-    kprintfd("\t\t%sThread: %18x, info: %18x\n"\
-             "\t\t\t rax: %18x  rbx: %18x  rcx: %18x  rdx: %18x\n"\
-             "\t\t\t rsp: %18x  rbp: %18x  rsp0 %18x  rip: %18x\n"\
-             "\t\t\trflg: %18x  cr3: %x\n",
+    kprintfd("\t\t%sThread: %18p, info: %18p\n"\
+             "\t\t\t rax: %18zx  rbx: %18zx  rcx: %18zx  rdx: %18zx\n"\
+             "\t\t\t rsp: %18zx  rbp: %18zx  rsp0 %18zx  rip: %18zx\n"\
+             "\t\t\trflg: %18zx  cr3: %zx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
   else
   {
-    kprintfd("%sThread: %18x, info: %18x -- rax: %18x  rbx: %18x  rcx: %18x  rdx: %18x -- rsp: %18x  rbp: %18x  rsp0 %18x -- rip: %18x  rflg: %18x  cr3: %x\n",
+    kprintfd("%sThread: %18p, info: %18p -- rax: %18zx  rbx: %18zx  rcx: %18zx  rdx: %18zx -- rsp: %18zx  rbp: %18zx  rsp0 %18zx -- rip: %18zx  rflg: %18zx  cr3: %zx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
 }

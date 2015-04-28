@@ -214,14 +214,14 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
         {
           debug(PM, "[PageFaultHandler] Page %d is a 4MiB Page\n", address / PAGE_SIZE);
           debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
-              page_directory[pde_vpn].page.writeable, page_directory[pde_vpn].page.user_access);
+              (int)page_directory[pde_vpn].page.writeable, (int)page_directory[pde_vpn].page.user_access);
         }
         else
         {
           PageTableEntry *pte_base = (PageTableEntry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
           debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", address / PAGE_SIZE);
           debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
-            pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
+                (int)pte_base[pte_vpn].present, (int)pte_base[pte_vpn].writeable, (int)pte_base[pte_vpn].user_access);
         }
       }
       else

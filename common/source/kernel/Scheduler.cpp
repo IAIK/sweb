@@ -71,7 +71,7 @@ uint32 Scheduler::schedule()
 
 void Scheduler::addNewThread(Thread *thread)
 {
-  debug(SCHEDULER, "addNewThread: %p  %d:%s\n", thread, thread->getTID(), thread->getName());
+  debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
   if (currentThread)
     ArchThreads::debugCheckNewThread(thread);
   KernelMemoryManager::instance()->getKMMLock().acquire("in addNewThread");
@@ -145,11 +145,10 @@ void Scheduler::cleanupDeadThreads()
 
 void Scheduler::printThreadList()
 {
-  uint32 c = 0;
   lockScheduling();
-  debug(SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n", threads_.size());
-  for (c = 0; c < threads_.size(); ++c)
-    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %p  %d:%s     [%s]\n", c, threads_[c],
+  debug(SCHEDULER, "Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
+  for (size_t c = 0; c < threads_.size(); ++c)
+    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%zd]: %p  %zd:%s     [%s]\n", c, threads_[c],
           threads_[c]->getTID(), threads_[c]->getName(), Thread::threadStatePrintable[threads_[c]->state_]);
   unlockScheduling();
 }
@@ -191,7 +190,7 @@ void Scheduler::incTicks()
 void Scheduler::printStackTraces()
 {
   lockScheduling();
-  debug(BACKTRACE, "printing the backtraces of <%d> threads:\n", threads_.size());
+  debug(BACKTRACE, "printing the backtraces of <%zd> threads:\n", threads_.size());
 
   for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
   {

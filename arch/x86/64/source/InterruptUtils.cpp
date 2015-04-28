@@ -108,7 +108,7 @@ void InterruptUtils::initialise()
     interrupt_gates[i].reserved = 0;
     interrupt_gates[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
     debug(A_INTERRUPTS,
-        "%x -- offset = %x, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
+        "%x -- offset = %p, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
         interrupt_gates[i].offset_ld_lw, interrupt_gates[i].offset_ld_hw,
         interrupt_gates[i].offset_hd, interrupt_gates[i].ist,
         interrupt_gates[i].present, interrupt_gates[i].segment_selector,
@@ -206,9 +206,9 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   //InterruptUtils::countPageFault(address);
   //--------Start "just for Debugging"-----------
 
-  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
-      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread ? currentThread->getTID() : -1ULL,
-      currentThread ? currentThread->getName() : 0, currentThread ? currentThread->switch_to_userspace_ : -1ULL);
+  debug(PM, "[PageFaultHandler] Address: %zx, Present: %zd, Writing: %zd, User: %zd, Rsvc: %zd - currentThread: %p %zd:%s, switch_to_userspace_: %d\n",
+      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread ? currentThread->getTID() : -1UL,
+      currentThread ? currentThread->getName() : 0, currentThread ? currentThread->switch_to_userspace_ : -1);
 
   debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
 
@@ -222,7 +222,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
     if (error & FLAG_PF_PRESENT)
     {
       debug(PM, "[PageFaultHandler] We got a pagefault even though the page mapping is present\n");
-      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
+      debug(PM, "[PageFaultHandler] %s tried to %s address %zx\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
         (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
 
       ArchMemoryMapping m = ArchMemory::resolveMapping((currentThread && currentThread->loader_) ? currentThread->loader_->arch_memory_.page_map_level_4_ : ((uint64)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), address / PAGE_SIZE);
@@ -231,14 +231,14 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
       {
         if (m.pd[m.pdi].page.size)
         {
-          debug(PM, "[PageFaultHandler] Page %d is a 2MiB Page\n", address / PAGE_SIZE);
-          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
+          debug(PM, "[PageFaultHandler] Page %zd is a 2MiB Page\n", address / PAGE_SIZE);
+          debug(PM, "[PageFaultHandler] Page %zd Flags are: writeable:%zd, userspace_accessible:%zd,\n", address / PAGE_SIZE,
                 m.pd[m.pdi].page.writeable, m.pd[m.pdi].page.user_access);
         }
         else
         {
-          debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", address / PAGE_SIZE);
-          debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
+          debug(PM, "[PageFaultHandler] Page %zd is a 4KiB Page\n", address / PAGE_SIZE);
+          debug(PM, "[PageFaultHandler] Page %zd Flags are: present:%zd, writeable:%zd, userspace_accessible:%zd,\n", address / PAGE_SIZE,
                 m.pt[m.pti].present, m.pt[m.pti].writeable, m.pt[m.pti].user_access);
         }
       }
@@ -287,7 +287,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   }
   else
   {
-    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %x\n",
+    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %p\n",
         !(error & FLAG_PF_PRESENT), address < 0xFFFFFFFF00000000ULL, currentThread->loader_);
 
     if (!(error & FLAG_PF_USER))

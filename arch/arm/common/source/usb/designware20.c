@@ -266,7 +266,7 @@ void HcdTransmitChannel(u8 channel, void* buffer) {
   WriteThroughReg(&Host->Channel[channel].SplitControl);
 
   if (((u32)buffer & 3) != 0)
-    LOG_DEBUGF("HCD: Transfer buffer %#x is not DWORD aligned. Ignored, but dangerous.\n", buffer);
+    LOG_DEBUGF("HCD: Transfer buffer %p is not DWORD aligned. Ignored, but dangerous.\n", buffer);
   Host->Channel[channel].DmaAddress = buffer;
   WriteThroughReg(&Host->Channel[channel].DmaAddress);
 

@@ -24,7 +24,7 @@ MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset
   debug(M_SB, "s_num_inodes_ : %d\ns_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\n"
         "s_1st_datazone_ : %d\ns_log_zone_size_ : %d\ns_max_file_size_ : %d\ns_block_size_ : %d\ns_magic_ : %llu\n",
         s_num_inodes_, s_zones_, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_1st_datazone_, s_log_zone_size_,
-        s_max_file_size_, s_block_size_, s_magic_);
+        s_max_file_size_, s_block_size_, (long long unsigned)s_magic_);
   assert(s_log_zone_size_ == 0);
   assert(s_block_size_ == 1024);
   //create Storage Manager

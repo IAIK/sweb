@@ -137,7 +137,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   }
   if (verbose)
   {
-    kprintfd("\t\t%sThread: %10x, info: %10x\n"\
+    kprintfd("\t\t%sThread: %10p, info: %10p\n"\
              "\t\t\tttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x\n"\
              "\t\t\tr0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
              userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r[0],info->r[1],info->r[2],info->r[3],info->r[4],info->r[5],info->r[6],info->r[7],info->r[8],info->r[9],info->r[10],info->r[11],info->r[12]);
@@ -145,7 +145,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   }
   else
   {
-    kprintfd("%sThread: %10x, info: %10x -- ttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
+    kprintfd("%sThread: %10p, info: %10p -- ttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x -- r0:%10x r1:%10x r2:%10x r3:%10x r4:%10x r5:%10x r6:%10x r7:%10x r8:%10x r9:%10x r10:%10x r11:%10x r12:%10x\n",
              userspace_registers?"  User":"Kernel",thread,info,info->ttbr0,info->pc,info->sp,info->lr,info->cpsr,info->r[0],info->r[1],info->r[2],info->r[3],info->r[4],info->r[5],info->r[6],info->r[7],info->r[8],info->r[9],info->r[10],info->r[11],info->r[12]);
   }
 }

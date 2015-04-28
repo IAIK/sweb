@@ -73,7 +73,7 @@ void coutclass::iwrite (uint8_t v)
 /// Writes the contents of \p buffer of \p size into the stream.
 coutclass& coutclass::write (const void* buffer, size_type sz)
 {
-    kprintf("%.*s",sz,(const char*)buffer);
+    kprintf("%.*s",(int)sz,(const char*)buffer);
     return (*this);
 }
 

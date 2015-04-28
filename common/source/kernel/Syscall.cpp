@@ -17,8 +17,8 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
   size_t return_value = 0;
 
   if (syscall_number != sc_sched_yield || syscall_number == sc_outline) // no debug print because these might occur very often
-    debug(SYSCALL, "Syscall %d called with arguments %d(=%x) %d(=%x) %d(=%x) %d(=%x) %d(=%x)\n", syscall_number, arg1,
-          arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
+    debug(SYSCALL, "Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx)\n",
+          syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
 
   switch (syscall_number)
   {
@@ -53,14 +53,14 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       VfsSyscall::readdir((const char*) arg1);
       break;
     default:
-      kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %d\n", syscall_number);
+      kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %zd\n", syscall_number);
   }
   return return_value;
 }
 
 void Syscall::exit(size_t exit_code)
 {
-  debug(SYSCALL, "Syscall::EXIT: called, exit_code: %d\n", exit_code);
+  debug(SYSCALL, "Syscall::EXIT: called, exit_code: %zd\n", exit_code);
   currentThread->kill();
 }
 
@@ -73,8 +73,8 @@ size_t Syscall::write(size_t fd, pointer buffer, size_t size)
   }
   if (fd == fd_stdout) //stdout
   {
-    debug(SYSCALL, "Syscall::write: %.*s\n", size, (char*) buffer);
-    kprintf("%.*s", size, (char*) buffer);
+    debug(SYSCALL, "Syscall::write: %.*s\n", (int)size, (char*) buffer);
+    kprintf("%.*s", (int)size, (char*) buffer);
   }
   else
   {
@@ -94,7 +94,7 @@ size_t Syscall::read(size_t fd, pointer buffer, size_t count)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
     num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
-    debug(SYSCALL, "Syscall::read: %.*s\n", num_read, (char*) buffer);
+    debug(SYSCALL, "Syscall::read: %.*s\n", (int)num_read, (char*) buffer);
   }
   else
   {
@@ -140,7 +140,7 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   {
     return -1U;
   }
-  debug(SYSCALL, "Syscall::createprocess: path:%s sleep:%d\n", (char*) path, sleep);
+  debug(SYSCALL, "Syscall::createprocess: path:%s sleep:%zd\n", (char*) path, sleep);
   ssize_t fd = VfsSyscall::open((const char*) path, O_RDONLY);
   if (fd == -1)
   {

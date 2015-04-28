@@ -28,7 +28,7 @@ template<typename T>
 bool ArchMemory::checkAndRemove(pointer map_ptr, uint64 index)
 {
   T* map = (T*) map_ptr;
-  debug(A_MEMORY, "%s: page %x index %x\n", __PRETTY_FUNCTION__, map, index);
+  debug(A_MEMORY, "%s: page %p index %zx\n", __PRETTY_FUNCTION__, map, index);
   ((uint64*) map)[index] = 0;
   for (uint64 i = 0; i < PAGE_DIR_ENTRIES; i++)
   {
@@ -59,7 +59,7 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
 {
   assert(map_ptr & ~0xFFFFF00000000000ULL);
   T* map = (T*) map_ptr;
-  debug(A_MEMORY, "%s: page %x index %x ppn %x user_access %x size %x\n", __PRETTY_FUNCTION__, map, index, ppn,
+  debug(A_MEMORY, "%s: page %p index %zx ppn %zx user_access %zx size %zx\n", __PRETTY_FUNCTION__, map, index, ppn,
         user_access, size);
   if (bzero)
   {
@@ -76,7 +76,7 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
 
 bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access, uint64 page_size)
 {
-  debug(A_MEMORY, "%x %x %x %x %x\n", page_map_level_4_, virtual_page, physical_page, user_access, page_size);
+  debug(A_MEMORY, "%zx %zx %zx %zx %zx\n", page_map_level_4_, virtual_page, physical_page, user_access, page_size);
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
 
   if (m.pdpt_ppn == 0)
@@ -165,12 +165,12 @@ pointer ArchMemory::checkAddressValid(uint64 vaddress_to_check)
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, vaddress_to_check / PAGE_SIZE);
   if (m.page != 0)
   {
-    debug(A_MEMORY, "checkAddressValid %x and %x -> true\n", page_map_level_4_, vaddress_to_check);
+    debug(A_MEMORY, "checkAddressValid %zx and %zx -> true\n", page_map_level_4_, vaddress_to_check);
     return getIdentAddressOfPPN(m.page,m.page_size) | (vaddress_to_check % m.page_size);
   }
   else
   {
-    debug(A_MEMORY, "checkAddressValid %x and %x -> false\n", page_map_level_4_, vaddress_to_check);
+    debug(A_MEMORY, "checkAddressValid %zx and %zx -> false\n", page_map_level_4_, vaddress_to_check);
     return 0;
   }
 }
@@ -210,7 +210,7 @@ ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
       m.pd_ppn = m.pdpt[m.pdpti].pd.page_ppn;
       if (m.pd_ppn > 2048)
       {
-        debug(A_MEMORY, "%x\n", m.pd_ppn);
+        debug(A_MEMORY, "%zx\n", m.pd_ppn);
       }
       assert(m.pd_ppn <= 2048);
       m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pdpt[m.pdpti].pd.page_ppn);

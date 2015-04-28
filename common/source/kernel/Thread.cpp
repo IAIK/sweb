@@ -124,13 +124,13 @@ void Thread::printBacktrace(bool use_stored_registers)
   }
 
   pointer call_stack[MAX_STACK_FRAMES];
-  int count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
+  size_t count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
 
   debug(BACKTRACE, "=== Begin of backtrace for kernel thread <%s> ===\n", getName());
-  debug(BACKTRACE, "   found <%d> stack %s:\n", count, count != 1 ? "frames" : "frame");
+  debug(BACKTRACE, "   found <%zd> stack %s:\n", count, count != 1 ? "frames" : "frame");
   debug(BACKTRACE, "\n");
 
-  for (int i = 0; i < count; ++i)
+  for (size_t i = 0; i < count; ++i)
   {
     char function_name[512];
     pointer start_addr = 0;
@@ -141,12 +141,12 @@ void Thread::printBacktrace(bool use_stored_registers)
     {
       ssize_t line = kernel_debug_info->getFunctionLine(start_addr, call_stack[i] - start_addr);
       if (line > 0)
-        debug(BACKTRACE, "   (%d): %10x (%s:%u)\n", i, call_stack[i], function_name, line);
+        debug(BACKTRACE, "   (%zd): %10zx (%s:%zu)\n", i, call_stack[i], function_name, line);
       else
-        debug(BACKTRACE, "   (%d): %10x (%s+%x)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
+        debug(BACKTRACE, "   (%zd): %10zx (%s+%zx)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
     }
     else
-      debug(BACKTRACE, "   (%d): %10x (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
+      debug(BACKTRACE, "   (%zd): %10zx (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
   }
 
   debug(BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
@@ -161,17 +161,17 @@ void Thread::printUserBacktrace()
   }
 
   pointer call_stack[MAX_STACK_FRAMES];
-  int count = backtrace_user(call_stack, MAX_STACK_FRAMES, this, 0);
+  size_t count = backtrace_user(call_stack, MAX_STACK_FRAMES, this, 0);
 
   debug(USERTRACE, "=== Begin of backtrace for user thread <%s> ===\n", getName());
-  debug(USERTRACE, "   found <%d> stack %s:\n", count, count != 1 ? "frames" : "frame");
+  debug(USERTRACE, "   found <%zd> stack %s:\n", count, count != 1 ? "frames" : "frame");
   debug(USERTRACE, "\n");
 
   Stabs2DebugInfo const *deb = 0;
   if (loader_)
     deb = loader_->getDebugInfos();
 
-  for (int i = 0; i < count; ++i)
+  for (size_t i = 0; i < count; ++i)
   {
     char function_name[512];
     pointer start_addr = 0;
@@ -182,12 +182,12 @@ void Thread::printUserBacktrace()
     {
       ssize_t line = deb->getFunctionLine(start_addr, call_stack[i] - start_addr);
       if (line > 0)
-        debug(USERTRACE, "   (%d): %10x (%s:%u)\n", i, call_stack[i], function_name, line);
+        debug(USERTRACE, "   (%zd): %10zx (%s:%zu)\n", i, call_stack[i], function_name, line);
       else
-        debug(USERTRACE, "   (%d): %10x (%s+%x)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
+        debug(USERTRACE, "   (%zd): %10zx (%s+%zx)\n", i, call_stack[i], function_name, call_stack[i] - start_addr);
     }
     else
-      debug(USERTRACE, "   (%d): %10x (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
+      debug(USERTRACE, "   (%zd): %10zx (<UNKNOWN FUNCTION>)\n", i, call_stack[i]);
   }
 
   debug(USERTRACE, "=== End of backtrace for thread <%s> ===\n", getName());

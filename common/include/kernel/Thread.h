@@ -4,7 +4,7 @@
 #include "types.h"
 #include "fs/FileSystemInfo.h"
 
-#define STACK_CANARY ((size_t)0xDEADDEAD ^ (size_t)this)
+#define STACK_CANARY ((uint32)0xDEADDEAD ^ (uint32)(size_t)this)
 
 enum ThreadState
 {

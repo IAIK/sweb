@@ -45,7 +45,7 @@ void Lock::printWaitersList()
   size_t count = 0;
   for(Thread* thread = waiters_list_; thread != 0; thread = thread->next_thread_in_lock_waiters_list_)
   {
-    kprintfd("%u: %s (%p)\n", ++count, thread->getName(), thread);
+    kprintfd("%zu: %s (%p)\n", ++count, thread->getName(), thread);
   }
 }
 

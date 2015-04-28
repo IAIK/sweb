@@ -31,7 +31,7 @@ PseudoFS::PseudoFS()
   size_t start_address = ArchCommon::getModuleStartAddress(0);
   size_t end_address = ArchCommon::getModuleEndAddress(0);
 
-  debug(PSEUDOFS, "Start Addr %x End Addr %x\n", start_address, end_address);
+  debug(PSEUDOFS, "Start Addr %zx End Addr %zx\n", start_address, end_address);
 
   size_t *start = (size_t*) start_address;
   size_t i;
@@ -43,7 +43,7 @@ PseudoFS::PseudoFS()
   {
     files[i].file_name = (char *) ((size_t) files[i].file_name + start_address);
     files[i].file_start = (char *) ((size_t) files[i].file_start + start_address);
-    debug(PSEUDOFS, "Filename %s, filesize %d\n", files[i].file_name, files[i].file_length);
+    debug(PSEUDOFS, "Filename %s, filesize %zd\n", files[i].file_name, files[i].file_length);
   }
 
 }
@@ -63,7 +63,7 @@ uint8 *PseudoFS::getFilePtr(const char *file_name)
   size_t start_address = ArchCommon::getModuleStartAddress(0);
   size_t end_address = ArchCommon::getModuleEndAddress(0);
 
-  debug(PSEUDOFS, "Start Addr %x End Addr %x\n", start_address, end_address);
+  debug(PSEUDOFS, "Start Addr %zx End Addr %zx\n", start_address, end_address);
 
   size_t *start = (size_t*) start_address;
   size_t i;
@@ -101,7 +101,7 @@ size_t PseudoFS::getNumFiles() const
   size_t start_address = ArchCommon::getModuleStartAddress(0);
   size_t end_address = ArchCommon::getModuleEndAddress(0);
 
-  debug(PSEUDOFS, "Start Addr %x End Addr %x\n", start_address, end_address);
+  debug(PSEUDOFS, "Start Addr %zx End Addr %zx\n", start_address, end_address);
 
   size_t *start = (size_t*) start_address;
   size_t num_files = start[1];
@@ -123,7 +123,7 @@ char* PseudoFS::getFileNameByNumber(size_t number) const
   size_t start_address = ArchCommon::getModuleStartAddress(0);
   size_t end_address = ArchCommon::getModuleEndAddress(0);
 
-  debug(PSEUDOFS, "Start Addr %x End Addr %x\n", start_address, end_address);
+  debug(PSEUDOFS, "Start Addr %zx End Addr %zx\n", start_address, end_address);
 
   size_t *start = (size_t*) start_address;
   size_t num_files = start[1];
@@ -153,7 +153,7 @@ PseudoFS::FileIndexStruct* PseudoFS::getFileIndex(const char *file_name)
   size_t start_address = ArchCommon::getModuleStartAddress(0);
   size_t end_address = ArchCommon::getModuleEndAddress(0);
 
-  debug(PSEUDOFS, "Start Addr %x End Addr %x\n", start_address, end_address);
+  debug(PSEUDOFS, "Start Addr %zx End Addr %zx\n", start_address, end_address);
 
   size_t *start = (size_t*) start_address;
   size_t i;

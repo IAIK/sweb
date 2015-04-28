@@ -41,7 +41,7 @@ void pageFaultHandler(uint32 address, uint32 type)
     asm("mrc p15, 0, r4, c6, c0, 0\n\
          mov %[v], r4\n": [v]"=r" (address));
   }
-  debug(PM, "[PageFaultHandler] Address: %x (%s) - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
+  debug(PM, "[PageFaultHandler] Address: %x (%s) - currentThread: %p %d:%s, switch_to_userspace_: %d\n",
       address, type == 0x3 ? "Instruction Fetch" : "Data Access", currentThread, currentThread->getTID(), currentThread->getName(), currentThread->switch_to_userspace_);
 
   if(!address)
@@ -81,7 +81,7 @@ void pageFaultHandler(uint32 address, uint32 type)
     }
     else
     {
-      debug(PM, "[PageFaultHandler] Memory Access Violation: address: %x, loader_: %x\n", address, currentThread->loader_);
+      debug(PM, "[PageFaultHandler] Memory Access Violation: address: %x, loader_: %p\n", address, currentThread->loader_);
       Syscall::exit(9999);
     }
   }

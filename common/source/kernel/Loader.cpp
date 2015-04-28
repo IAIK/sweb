@@ -73,7 +73,7 @@ bool Loader::loadExecutableAndInitProcess()
   if(!readHeaders())
     return false;
 
-  debug ( LOADER,"loadExecutableAndInitProcess: Entry: %x, num Sections %x\n",hdr_->e_entry, hdr_->e_phnum );
+  debug(LOADER, "loadExecutableAndInitProcess: Entry: %zx, num Sections %x\n", hdr_->e_entry, hdr_->e_phnum);
   if (LOADER & OUTPUT_ENABLED)
     Elf::printElfHeader ( *hdr_ );
 
@@ -101,11 +101,11 @@ void Loader::loadPage(pointer virtual_address)
   //check if page has not been loaded meanwhile
   if (arch_memory_.checkAddressValid(virtual_address))
   {
-    debug(LOADER, "loadPage: Page %d (virtual_address=%d) has already been mapped, probably by another thread between pagefault and reaching loader.\n", virtual_page, virtual_address);
+    debug(LOADER, "loadPage: Page %zd (virtual_address=%zx) has already been mapped, probably by another thread between pagefault and reaching loader.\n", virtual_page, virtual_address);
     return;
   }
 
-  debug(LOADER, "loadPage: going to load virtual page %d (virtual_address=%d) for %d:%s\n", virtual_page, virtual_address, currentThread->getTID(), currentThread->getName());
+  debug(LOADER, "loadPage: going to load virtual page %zd (virtual_address=%zx) for %zd:%s\n", virtual_page, virtual_address, currentThread->getTID(), currentThread->getName());
 
   ustl::vector<PagePart> byte_map;
   size_t min_byte_to_load = 0xFFFFFFFF;
@@ -119,7 +119,7 @@ void Loader::loadPage(pointer virtual_address)
       size_t k = 0;
       for (Elf::Phdr& h : phdrs_)
       {
-        debug(LOADER, "loadPage: PHdr[%d].vaddr=%x .paddr=%x .type=%x .flags=%x .memsz=%x .filez=%x .poff=%x\r\n", k++, h.p_vaddr, h.p_paddr, h.p_type, h.p_flags, h.p_memsz, h.p_filesz, h.p_offset);
+        debug(LOADER, "loadPage: PHdr[%zd].vaddr=%zx .paddr=%zx .type=%x .flags=%x .memsz=%zx .filez=%zx .poff=%zx\r\n", k++, h.p_vaddr, h.p_paddr, h.p_type, h.p_flags, h.p_memsz, h.p_filesz, h.p_offset);
 
         if (ADDRESS_BETWEEN(load_byte_from_address, h.p_paddr, h.p_paddr + h.p_filesz))
         {
@@ -150,14 +150,14 @@ void Loader::loadPage(pointer virtual_address)
 
       if (found > 1)
       {
-        kprintfd("Loader::loadPage, byte (%x) in two different segments\n", load_byte_from_address);
+        kprintfd("Loader::loadPage, byte (%zx) in two different segments\n", load_byte_from_address);
       }
     }
   }
 
   if (!found)
   {
-    kprintfd("Loader::loadPage: ERROR Request for Unknown Memory Location: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
+    kprintfd("Loader::loadPage: ERROR Request for Unknown Memory Location: v_adddr=%zx, v_page=%zd\n", virtual_address, virtual_page);
     program_binary_lock_.release();
     //free unmapped page
     Syscall::exit(9997);
@@ -167,7 +167,7 @@ void Loader::loadPage(pointer virtual_address)
   //in this case all bytes are in bss-section, but not in file
   if (max_byte_to_load == 0 && min_byte_to_load == 0xffffffff)
   {
-    debug(LOADER, "%x is in .bss\n", virtual_address);
+    debug(LOADER, "%zx is in .bss\n", virtual_address);
     page = PageManager::instance()->allocPPN();
     memset((void*) ArchMemory::getIdentAddressOfPPN(page), 0, PAGE_SIZE);
     arch_memory_.mapPage(virtual_page, page, true);
@@ -192,20 +192,20 @@ void Loader::loadPage(pointer virtual_address)
         assert(false);
       }
     }
-    kprintfd("Loader::loadPage: ERROR part of executable not present in file: v_adddr=%x, v_page=%d\n", virtual_address, virtual_page);
+    kprintfd("Loader::loadPage: ERROR part of executable not present in file: v_adddr=%zx, v_page=%zd\n", virtual_address, virtual_page);
     program_binary_lock_.release();
     Syscall::exit(9998);
   }
   page = PageManager::instance()->allocPPN();
-  debug(PM, "got new page %x\n", page);
+  debug(PM, "got new page %zx\n", page);
   memset((void*) ArchMemory::getIdentAddressOfPPN(page), 0, PAGE_SIZE);
   debug(PM, "bzero!\n");
   uint8* dest = reinterpret_cast<uint8*>(ArchMemory::getIdentAddressOfPPN(page));
-  debug(PM, "copying %d elements\n", byte_map.size());
+  debug(PM, "copying %zd elements\n", byte_map.size());
   size_t written = 0;
   for (PagePart& part : byte_map)
   {
-    debug(PM, "copying from %p to %p ;   page byte: %d, length_: %d\n", buffer+part.vaddr_ - min_byte_to_load, dest + part.page_byte_, part.page_byte_, part.length_);
+    debug(PM, "copying from %p to %p ;   page byte: %zd, length_: %zd\n", buffer+part.vaddr_ - min_byte_to_load, dest + part.page_byte_, part.page_byte_, part.length_);
 
     assert(part.vaddr_ - min_byte_to_load + part.length_ <= buffersize);
     assert(part.page_byte_ + part.length_ <= PAGE_SIZE);
@@ -214,7 +214,7 @@ void Loader::loadPage(pointer virtual_address)
   }
 
   arch_memory_.mapPage(virtual_page, page, true);
-  debug(PM, "loadPage: wrote a total of %d bytes\n", written);
+  debug(PM, "loadPage: wrote a total of %zd bytes\n", written);
 }
 
 

@@ -48,7 +48,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   for (size_t i = 0; i < num_mmaps; ++i)
   {
     ArchCommon::getUsableMemoryRegion(i, start_address, end_address, type);
-    debug(PM, "Ctor: usable memory region from physical %x to %x of type %d\n", start_address, end_address, type);
+    debug(PM, "Ctor: usable memory region from physical %zx to %zx of type %zd\n", start_address, end_address, type);
     if (type == 1)
       highest_address = Max(highest_address, end_address & 0x7FFFFFFF);
   }
@@ -108,7 +108,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       continue;
     uint32 start_page = start_address / PAGE_SIZE;
     uint32 end_page = end_address / PAGE_SIZE;
-    debug(PM, "Ctor: usable memory region: start_page: %d, end_page: %d, type: %d\n", start_page, end_page, type);
+    debug(PM, "Ctor: usable memory region: start_page: %d, end_page: %d, type: %zd\n", start_page, end_page, type);
 
     for (size_t k = Max(start_page, lowest_unreserved_page_); k < Min(end_page, number_of_pages_); ++k)
     {
@@ -145,7 +145,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   {
     uint32 start_page = (ArchCommon::getModuleStartAddress(i) & 0x7FFFFFFF) / PAGE_SIZE;
     uint32 end_page = (ArchCommon::getModuleEndAddress(i) & 0x7FFFFFFF) / PAGE_SIZE;
-    debug(PM, "Ctor: module: start_page: %d, end_page: %d, type: %d\n", start_page, end_page, type);
+    debug(PM, "Ctor: module: start_page: %d, end_page: %d, type: %zd\n", start_page, end_page, type);
     for (size_t k = Min(start_page, number_of_pages_); k <= Min(end_page, number_of_pages_ - 1); ++k)
       page_usage_table_->setBit(k);
   }
@@ -159,7 +159,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       break;
     }
   }
-  debug(PM, "Ctor: Physical pages - free: %u used: %u total: %u\n", page_usage_table_->getNumFreeBits(),
+  debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %u\n", page_usage_table_->getNumFreeBits(),
         page_usage_table_->getNumBitsSet(), number_of_pages_);
   assert(lowest_unreserved_page_ < number_of_pages_);
   KernelMemoryManager::pm_ready_ = 1;
