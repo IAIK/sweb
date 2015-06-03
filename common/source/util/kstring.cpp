@@ -528,6 +528,7 @@ extern "C" char* itoa(int value, char* str, int base)
 
 extern "C" uint32 checksum(uint32* src, uint32 nbytes)
 {
+  nbytes /= sizeof(uint32);
   uint32 poly = 0xEDB88320;
   int bit = 0, nbits = 32;
   uint32 res = 0xFFFFFFFF;
