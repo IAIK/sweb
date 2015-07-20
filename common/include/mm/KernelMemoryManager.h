@@ -26,12 +26,13 @@ class MallocSegment
      *        (this + sizeof(MallocSegment) + size is usually the start of the next segment)
      * @param used describes if the segment is allocated or free
      */
-    MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used)
+    MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used) :
+      marker_(0xdeadbeef),
+      next_(next),
+      prev_(prev),
+      freed_at_(0)
     {
-      prev_ = prev;
-      marker_ = 0xdeadbeef;
       size_flag_ = (size & 0x7FFFFFFF); //size to max 2^31-1
-      next_ = next;
       if (used)
         size_flag_ |= 0x80000000; //this is the used flag
 
@@ -76,6 +77,8 @@ class MallocSegment
     uint32 marker_; // = 0xdeadbeef;
     MallocSegment *next_; // = NULL;
     MallocSegment *prev_; // = NULL;
+    // the address where this chunk has been allocated or released at last
+    pointer freed_at_;
 
   private:
     size_t size_flag_; // = 0; //max size is 2^31-1
@@ -103,7 +106,7 @@ class KernelMemoryManager
      * @param virtual_address memory address that was originally returned by allocateMemory
      * @return true if segment was freed or false if address was wrong
      */
-    bool freeMemory(pointer virtual_address);
+    bool freeMemory(pointer virtual_address, pointer called_by);
 
     /**
      * reallocateMemory is not used anywhere as of now
@@ -114,13 +117,16 @@ class KernelMemoryManager
      * @param new_size the new size (acts like free if size == 0)
      * @return the (possibly altered) pointer to resized memory segment or 0 if unable to resize
      */
-    pointer reallocateMemory(pointer virtual_address, size_t new_size);
+    pointer reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by);
 
     SpinLock& getKMMLock();
 
     Thread* KMMLockHeldBy();
 
-    KernelMemoryManager() : lock_(0) { assert(false && "dummy constructor - do not use!"); };
+    KernelMemoryManager() : lock_("")
+    {
+      assert(false && "dummy constructor - do not use!");
+    };
 
   protected:
     friend class PageManager;

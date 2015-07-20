@@ -95,10 +95,10 @@ uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
 extern "C" uint32 arch_atomic_add(uint32, uint32, uint32 increment, uint32 *value);
 uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
 {
-  global_atomic_add_lock.acquire("before atomic_add");
+  global_atomic_add_lock.acquire();
   uint32 result = value;
   value += increment;
-  global_atomic_add_lock.release("after atomic_add");
+  global_atomic_add_lock.release();
   return result;
 }
 
@@ -109,10 +109,10 @@ int32 ArchThreads::atomic_add(int32 &value, int32 increment)
 
 uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
 {
-  global_atomic_add_lock.acquire("before atomic_add");
+  global_atomic_add_lock.acquire();
   uint64 result = value;
   value += increment;
-  global_atomic_add_lock.release("after atomic_add");
+  global_atomic_add_lock.release();
   return result;
 }
 

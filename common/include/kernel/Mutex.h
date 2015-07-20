@@ -27,23 +27,29 @@ public:
    * like acquire, but instead of blocking the currentThread until the Lock is free
    * acquireNonBlocking() immediately returns True or False, depending on whether the Lock
    * was acquired successfully or already held by another Thread.
+     * @param called_by A pointer to the call point of this function.
+     *                  Can be set in case this method is called by a wrapper function.
    */
-  bool acquireNonBlocking(const char* debug_info = (const char*)0);
+  bool acquireNonBlocking(pointer called_by = 0);
 
   /**
    * acquire sets the Lock and must be called at the start of
    * a critical region, assuring that code between acquire and release,
    * can not be run by two threads at the same time.
    * Threads calling acquire on a already set lock, will be put to sleep
+     * @param called_by A pointer to the call point of this function.
+     *                  Can be set in case this method is called by a wrapper function.
    */
-  void acquire(const char* debug_info = (const char*)0);
+  void acquire(pointer called_by = 0);
 
   /**
    * release frees the Lock. It must be called at the end of
    * a critical region, allowing other threads to execute code
    * in the critical region and to wake up the next sleeping thread.
+     * @param called_by A pointer to the call point of this function.
+     *                  Can be set in case this method is called by a wrapper function.
    */
-  void release(const char* debug_info = (const char*)0);
+  void release(pointer called_by = 0);
 
   /**
    * allows us to check if the Lock is set or not.

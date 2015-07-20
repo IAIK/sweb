@@ -2,6 +2,11 @@
 
 #include "umap.h"
 
+
+// The limit for function names, after that, they will get capped
+#define CALL_FUNC_NAME_LIMIT 256
+#define CALL_FUNC_NAME_LIMIT_STR macroToString(CALL_FUNC_NAME_LIMIT)
+
 class StabEntry;
 class Stabs2DebugInfo
 {
@@ -11,7 +16,9 @@ public:
   ~Stabs2DebugInfo();
 
   ssize_t getFunctionLine(pointer start, pointer offset) const;
+  void getCallNameAndLine(pointer address, const char*& mangled_name, ssize_t &line) const;
   pointer getFunctionName(pointer address, char function_name[], size_t size)  const;
+  void printCallInformation(pointer address) const;
 
   void printAllFunctions() const;
 

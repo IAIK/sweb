@@ -38,22 +38,28 @@ class Condition : public Lock
      * @param re_acquire_mutex Automatically re-acquire the mutex after the wake-up.
      *        In case the mutex (or even the condition) does not exists any longer after wake-up,
      *        this flag has to be set to false. Then the mutex is not accessed any longer after wake up.
+     * @param called_by A pointer to the call point of this function.
+     *                  Can be set in case this method is called by a wrapper function.
      *
      */
-    void wait(const char* debug_info = 0, bool re_acquire_mutex = true);
-    void waitAndRelease(const char* debug_info = 0);
+    void wait(bool re_acquire_mutex = true, pointer called_by = 0);
+    void waitAndRelease(pointer called_by = 0);
 
     /**
      * Wakes up the first Thread on the sleepers list.
      * If the list is empty, signal is being lost.
+     * @param called_by A pointer to the call point of this function.
+     *                  Can be set in case this method is called by a wrapper function.
      */
-    void signal(const char* debug_info = 0);
+    void signal(pointer called_by = 0);
 
     /**
      * Wakes up all Threads on the sleepers list.
      * If the list is empty, signal is being lost.
+     * @param called_by A pointer to the call point of this function.
+     *                  Can be set in case this method is called by a wrapper function.
      */
-    void broadcast(const char* debug_info = 0);
+    void broadcast(pointer called_by = 0);
 
   private:
     /**

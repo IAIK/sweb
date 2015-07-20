@@ -6,6 +6,12 @@
 #include "types.h"
 #include "paging-definitions.h"
 
+// convert a define to a string
+#ifndef xstr
+#define macroToStringWrapper(s) #s
+#define macroToString(_s) macroToStringWrapper(_s)
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

@@ -1,35 +1,22 @@
 #include "Mutex.h"
 #include "MutexLock.h"
+#include "backtrace.h"
 
 MutexLock::MutexLock(Mutex &m) :
-  mutex_(m), use_mutex_(true), debug_info_("")
+  mutex_(m), use_mutex_(true)
 {
-  mutex_.acquire("");
-}
-
-MutexLock::MutexLock(Mutex &m, const char* debug_info) :
-  mutex_(m), use_mutex_(true), debug_info_(debug_info)
-{
-  mutex_.acquire(debug_info);
+  mutex_.acquire(getCalledBefore(1));
 }
 
 MutexLock::MutexLock(Mutex &m, bool b) :
-  mutex_(m), use_mutex_(b), debug_info_("")
+  mutex_(m), use_mutex_(b)
 {
   if (likely (use_mutex_))
-    mutex_.acquire("");
-}
-
-MutexLock::MutexLock(Mutex &m, bool b, const char* debug_info) :
-  mutex_(m), use_mutex_(b), debug_info_(debug_info)
-{
-  if (likely (use_mutex_))
-    mutex_.acquire(debug_info);
-
+    mutex_.acquire(getCalledBefore(1));
 }
 
 MutexLock::~MutexLock()
 {
   if (likely (use_mutex_))
-    mutex_.release(debug_info_);
+    mutex_.release(getCalledBefore(1));
 }

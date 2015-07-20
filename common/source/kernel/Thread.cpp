@@ -119,7 +119,7 @@ extern Stabs2DebugInfo const *kernel_debug_info;
 
 void Thread::printBacktrace(bool use_stored_registers)
 {
-  if (!kernel_debug_info)
+  if(!kernel_debug_info)
   {
     debug(BACKTRACE, "Kernel debug info not set up, backtrace won't look nice!\n");
   }
@@ -127,43 +127,26 @@ void Thread::printBacktrace(bool use_stored_registers)
   pointer call_stack[MAX_STACK_FRAMES];
   size_t count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
 
-  Stabs2DebugInfo const *deb = kernel_debug_info;
-
-  debug(BACKTRACE, "=== Begin of backtrace for %s thread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
-  for (size_t j = 0; j < 2; ++j)
+  debug(BACKTRACE, "=== Begin of backtrace for kernel thread <%s> ===\n", getName());
+  for(size_t i = 0; i < count; ++i)
   {
-    for (size_t i = 0; i < count; ++i)
-    {
-      char function_name[256];
-      pointer start_addr = 0;
-      if (deb)
-        start_addr = deb->getFunctionName(call_stack[i], function_name, 255);
-
-      if (start_addr)
-      {
-        ssize_t line = deb->getFunctionLine(start_addr, call_stack[i] - start_addr);
-        if (line > 0)
-          debug(BACKTRACE, "    %02zu/%02zu  %10zx  %s:%zu\n", i + 1, count, call_stack[i], function_name, line);
-        else
-          debug(BACKTRACE, "    %02zu/%02zu  %10zx  %s+%zx\n", i + 1, count, call_stack[i], function_name,
-                call_stack[i] - start_addr);
-      }
-      else
-        debug(BACKTRACE, "    %02zu/%02zu  %10zx  <UNKNOWN FUNCTION>\n", i + 1, count, call_stack[i]);
-    }
-
-    if (!user_registers_ || deb != kernel_debug_info)
-      break;
-    debug(BACKTRACE, "    -----   Userspace  --------------------\n");
-    count = backtrace_user(call_stack, MAX_STACK_FRAMES, this, 0);
-
-    if (loader_)
-      deb = loader_->getDebugInfos();
-    else
-      deb = 0;
+    debug(BACKTRACE, " ");
+    kernel_debug_info->printCallInformation(call_stack[i]);
   }
-
-  debug(BACKTRACE, "=== End of backtrace for %s thread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
+  if(user_registers_)
+  {
+    Stabs2DebugInfo const *deb = loader_->getDebugInfos();
+    count = backtrace_user(call_stack, MAX_STACK_FRAMES, this, 0);
+    debug(BACKTRACE, " ----- Userspace --------------------\n");
+    if(!deb)
+      debug(BACKTRACE, "Userspace debug info not set up, backtrace won't look nice!\n");
+    for(size_t i = 0; i < count; ++i)
+    {
+      debug(BACKTRACE, " ");
+      deb->printCallInformation(call_stack[i]);
+    }
+  }
+  debug(BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
 }
 
 void Thread::addJob()

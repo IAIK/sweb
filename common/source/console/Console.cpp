@@ -3,6 +3,7 @@
 #include "KeyboardManager.h"
 #include "Scheduler.h"
 #include "PageManager.h"
+#include "backtrace.h"
 
 Console* main_console;
 
@@ -14,14 +15,14 @@ Console::Console(uint32, const char* name) : Thread(0, name), console_lock_("Con
 
 void Console::lockConsoleForDrawing()
 {
-  console_lock_.acquire();
+  console_lock_.acquire(getCalledBefore(1));
   locked_for_drawing_ = 1;
 }
 
 void Console::unLockConsoleForDrawing()
 {
   locked_for_drawing_ = 0;
-  console_lock_.release();
+  console_lock_.release(getCalledBefore(1));
 }
 
 void Console::handleKey(uint32 key)

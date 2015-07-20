@@ -19,53 +19,55 @@ class Thread;
  * not succeed in an IF==0 context.
  * Also, in sweb, the Spinlock uses yield()s instead of a simple do-nothing-loop
  */
-class SpinLock : public Lock
+class SpinLock: public Lock
 {
-  public:
+public:
 
-    SpinLock(const char* name);
+  SpinLock(const char* name);
 
-    /**
-     * Acquire the spinlock.
-     * @param debug_info Additional debug information
-     */
-    void acquire(const char* debug_info = 0);
+  /**
+   * Acquire the spinlock.
+   * @param called_by A pointer to the call point of this function.
+   *                  Can be set in case this method is called by a wrapper function.
+   */
+  void acquire(pointer called_by = 0);
 
-    /**
-    * Try to acquire the spinlock. If the spinlock is held by another thread at the moment,
-    * this method instantly returns (and (of course) the spinlock has not been acquired).
-    * @param debug_info Additional debug information
-    * @return true in case the spinlock has been acquired
-    * @return false in case the spinlock was held by another thread
-    */
-    bool acquireNonBlocking(const char* debug_info = 0);
+  /**
+   * Try to acquire the spinlock. If the spinlock is held by another thread at the moment,
+   * this method instantly returns (and (of course) the spinlock has not been acquired).
+   * @param called_by A pointer to the call point of this function.
+   *                  Can be set in case this method is called by a wrapper function.
+   * @return true in case the spinlock has been acquired
+   * @return false in case the spinlock was held by another thread
+   */
+  bool acquireNonBlocking(pointer called_by = 0);
 
-    /**
-     * Release the spinlock.
-     * @param debug_info Additional debug information
-     */
-    void release(const char* debug_info = 0);
+  /**
+   * Release the spinlock.
+   * @param called_by A pointer to the call point of this function.
+   *                  Can be set in case this method is called by a wrapper function.
+   */
+  void release(pointer called_by = 0);
 
-    /**
-     * allows you to check if the SpinLock is set or not.
-     * trust the return value only if the SpinLock can't be acquired or releases
-     * when you're not locking. (= only use in atomic state)
-     */
-    bool isFree();
+  /**
+   * allows you to check if the SpinLock is set or not.
+   * trust the return value only if the SpinLock can't be acquired or releases
+   * when you're not locking. (= only use in atomic state)
+   */
+  bool isFree();
 
+private:
+  /**
+   * The basic spinlock is just a variable which is
+   */
+  size_t lock_;
 
-  private:
-    /**
-     * The basic spinlock is just a variable which is
-     */
-    size_t lock_;
-
-    /**
-     * Do not use the copy constructor of the spinlock!
-     * It is set to private to prevent it.
-     */
-    SpinLock(SpinLock const &);
-    SpinLock &operator=(SpinLock const&);
+  /**
+   * Do not use the copy constructor of the spinlock!
+   * It is set to private to prevent it.
+   */
+  SpinLock(SpinLock const &);
+  SpinLock &operator=(SpinLock const&);
 };
 
 #endif

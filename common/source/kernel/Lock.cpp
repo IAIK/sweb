@@ -5,10 +5,13 @@
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
+#include "Stabs2DebugInfo.h"
+extern Stabs2DebugInfo const* kernel_debug_info;
 
 Lock::Lock(const char *name) :
   held_by_(0),
   next_lock_on_holding_list_(0),
+  last_accessed_at_(0),
   name_(name ? name : ""),
   waiters_list_(0),
   waiters_list_lock_(0)
@@ -67,7 +70,33 @@ void Lock::pushFrontToCurrentThreadHoldingList()
   ArchThreads::atomic_set((pointer&)(currentThread->holding_lock_list_), (pointer)this);
 }
 
-void Lock::checkForDeadLock(const char* debug_info)
+
+void Lock::printStatus()
+{
+  Thread *thread = held_by_;
+  pointer last_accessed_at = last_accessed_at_;
+  if(!last_accessed_at && !thread)
+  {
+    debug(LOCK, "Lock %s (%p) probably has not been used yet.\n", getName(), this);
+    return;
+  }
+
+  if(kernel_debug_info)
+  {
+    if(thread)
+    {
+      debug(LOCK, "Lock %s (%p) has been acquired by thread %s (%p) at: ",
+            getName(), this, thread->getName(), thread);
+    }
+    else
+    {
+      debug(LOCK, "Lock %s (%p) has been released at: ", getName(), this);
+    }
+    kernel_debug_info->printCallInformation(last_accessed_at);
+  }
+}
+
+void Lock::checkForDeadLock()
 {
   if(!currentThread)
     return;
@@ -75,11 +104,10 @@ void Lock::checkForDeadLock(const char* debug_info)
   {
     debug(LOCK, "Deadlock: Lock: %s (%p), held already by currentThread: %s (%p).\n",
           name_, this, currentThread->getName(), currentThread);
-    if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
-
+    printStatus();
     assert(false);
   }
-  checkForCircularDeadLock(currentThread, this, debug_info);
+  checkForCircularDeadLock(currentThread, this);
 }
 
 void Lock::removeFromCurrentThreadHoldingList()
@@ -106,31 +134,37 @@ void Lock::removeFromCurrentThreadHoldingList()
   return;
 }
 
-void Lock::checkCurrentThreadStillWaitingOnAnotherLock(const char* debug_info)
+void Lock::checkCurrentThreadStillWaitingOnAnotherLock()
 {
   if(!currentThread)
     return;
   if(currentThread->lock_waiting_on_ != 0)
   {
-    debug(LOCK, "ERROR: Lock: Thread %s (%p) is already waiting on lock %s (%p).\n"
+    debug(LOCK, "ERROR: Lock: Thread %s (%p) is trying to lock %s (%p), eventhough is already waiting on lock %s (%p).\n"
           "You shouldn't use Scheduler::wake() with a thread sleeping on a lock!\n",
-          currentThread->getName(), currentThread, name_, this);
-    if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
+          currentThread->getName(), currentThread, name_, this,
+          currentThread->lock_waiting_on_->getName(), currentThread->lock_waiting_on_);
+    if(kernel_debug_info)
+    {
+      debug(LOCK, "The other lock has been acquired by ");
+      kernel_debug_info->printCallInformation(currentThread->lock_waiting_on_->last_accessed_at_);
+    }
     assert(false);
   }
 }
 
-void Lock::doChecksBeforeWaiting(const char* debug_info)
+void Lock::doChecksBeforeWaiting()
 {
   // Check if the interrupts are set. Else, we maybe wait forever
-  checkInterrupts("Lock::doPreChecks", debug_info);
+  checkInterrupts("Lock::doChecksBeforeWaiting");
   // Check if the thread has been waken up even if he is already waiting on another lock.
-  checkCurrentThreadStillWaitingOnAnotherLock(debug_info);
+  checkCurrentThreadStillWaitingOnAnotherLock();
   // Check if locking this lock would result in a deadlock.
-  checkForDeadLock(debug_info);
+  checkForDeadLock();
 }
 
-void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start, const char* debug_info)
+
+void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start)
 {
   // Check all locks which are held by the target thread.
   // This can be done, because we know that the list may not be modified
@@ -142,7 +176,6 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start, const c
     if(lock == start)
     {
       printOutCircularDeadLock(thread_waiting);
-      if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
       assert(false);
     }
     for(Thread* thread_waiting = lock->waiters_list_; thread_waiting != 0;
@@ -151,31 +184,38 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start, const c
       // The method has to be called recursively, so it is possible to check indirect
       // deadlocks. The recursive approach may be slower than other checking methods,
       // but it is safe and more precise
-      checkForCircularDeadLock(thread_waiting, start, debug_info);
+      checkForCircularDeadLock(thread_waiting, start);
     }
   }
 }
 
 void Lock::printOutCircularDeadLock(Thread* starting)
 {
-  debug(LOCK, "CIRCULAR DEADLOCK when waiting for %s (%p) with thread %s (%p)!\n"
-        "Printing out the circular deadlock:\n",
+  debug(LOCK, "CIRCULAR DEADLOCK when waiting for %s (%p) with thread %s (%p)!\n",
         getName(), this, currentThread->getName(), currentThread);
+  debug(LOCK, "Printing out the circular deadlock:\n");
   currentThread->lock_waiting_on_ = this;
   // in this case we can access the other threads, because we KNOW that they are indirectly waiting on the current thread.
   for(Thread* thread = starting; thread != 0; thread = thread->lock_waiting_on_->held_by_)
   {
-    debug(LOCK, "Thread %s (%p) holding lock %s (%p), waiting for lock %s (%p)\n",
-          thread->getName(), thread, thread->lock_waiting_on_->getName(),
-          thread->lock_waiting_on_, thread->lock_waiting_on_->held_by_->lock_waiting_on_->getName(),
-          thread->lock_waiting_on_->held_by_->lock_waiting_on_);
+    Thread * holding = thread->lock_waiting_on_->held_by_;
+    Lock* lock = thread->lock_waiting_on_;
+    debug(LOCK, "Thread %-40.40s (%p) holding lock %-40.40s (%p), waiting for lock %-40.40s (%p)\n",
+          holding->getName(), holding, lock->getName(),
+          lock, holding->lock_waiting_on_->getName(),
+          holding->lock_waiting_on_);
+    if(kernel_debug_info)
+    {
+      debug(LOCK, "This lock has been locked at ");
+      kernel_debug_info->printCallInformation(lock->last_accessed_at_);
+    }
     // In the thread we are looking at is the current one, we have to stop.
     // It would result in an endless loop (circular print out ^^).
     if(thread == currentThread) break;
   }
 }
 
-void Lock::checkInterrupts(const char* method, const char* debug_info)
+void Lock::checkInterrupts(const char* method)
 {
   // it would be nice to assert Scheduler::instance()->isSchedulingEnabled() as well.
   // unfortunately this is difficult because we might want to acquire/release locks
@@ -183,10 +223,9 @@ void Lock::checkInterrupts(const char* method, const char* debug_info)
   if(unlikely(ArchInterrupts::testIFSet() == false))
   {
     ArchInterrupts::disableInterrupts();
-    debug(LOCK, "(ERROR) %s: Lock %s (%p) with IF=%d and SchedulingEnabled=%d ! Now we're dead !!!\n"
+    debug(LOCK, "(ERROR) %s: Lock %s (%p) with IF=0 and SchedulingEnabled=%d ! Now we're dead !!!\n"
           "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\n\n",
-          method, name_, this, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled());
-    if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
+          method, name_, this, Scheduler::instance()->isSchedulingEnabled());
     assert(false);
   }
 }
@@ -277,19 +316,19 @@ void Lock::removeCurrentThreadFromWaitersList()
   return;
 }
 
-void Lock::checkInvalidRelease(const char* method, const char* debug_info)
+void Lock::checkInvalidRelease(const char* method)
 {
   if(unlikely(held_by_ != currentThread))
   {
-    // push held by onto the stack, so the variable may not be modified meanwhile we are printing the name out
+    // push the information onto the stack, so the variable may not be modified meanwhile we are working with it
     Thread* holding = held_by_;
 
-    debug(LOCK, "%s: Lock %s (%p) currently not held by currentThread!\n"
-          "held_by %s (%p), currentThread %s (%p)\n", method, name_, this,
-          (holding ? holding->getName() : "(0)"), holding, currentThread->getName(),
+    debug(LOCK, "%s: Lock %s (%p) currently not held by currentThread! "
+          "Held by %s (%p), currentThread is %s (%p)\n", method, name_, this,
+          (holding ? holding->getName() : "UNKNOWN THREAD"), holding, currentThread->getName(),
           currentThread);
-    if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
-
+    printStatus();
     assert(false);
   }
 }
+

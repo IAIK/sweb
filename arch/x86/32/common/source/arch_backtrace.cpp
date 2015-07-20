@@ -20,45 +20,45 @@ struct StackFrame
 
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {
-  if (!call_stack ||
-      (use_stored_registers && !thread) ||
-      (!use_stored_registers && thread != currentThread) ||
-      size <= 1)
+  if (!call_stack || (use_stored_registers && !thread) ||
+      (!use_stored_registers && thread != currentThread) || size <= 1)
+  {
     return 0;
+  }
 
-  void *ebp = 0;
+  StackFrame *CurrentFrame;
+  int i;
 
   if (!use_stored_registers)
   {
     __asm__ __volatile__(" \
        movl %%ebp, %0\n"
-        : "=g" (ebp)
+        : "=g" (CurrentFrame)
     );
+    i = 0;
   }
   else
-    ebp = (void*)thread->kernel_registers_->ebp;
+  {
+    CurrentFrame = (StackFrame*)thread->kernel_registers_->ebp;
+    call_stack[0] = thread->kernel_registers_->eip;
+    i = 1;
+  }
 
-  int i = 0;
-  StackFrame *CurrentFrame = (StackFrame*)ebp;
-  void *StackStart = (void*)((uint32)thread->kernel_stack_ + sizeof(thread->kernel_stack_)); // the stack "starts" at the high addresses...
+  void *StackStart = (void*)((size_t)thread->kernel_stack_ + sizeof(thread->kernel_stack_)); // the stack "starts" at the high addresses...
   void *StackEnd = (void*)thread->kernel_stack_; // ... and "ends" at the lower ones.
-
-  if (use_stored_registers)
-    call_stack[i++] = thread->kernel_registers_->eip;
-
   void *StartAddress = (void*)0x80000000;
   void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();
 
+  if(StackEnd > EndAddress || StackStart < StartAddress)
+    return 0;
+
   while (i < size &&
       ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
-      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&
-      ADDRESS_BETWEEN(StackStart, StartAddress, EndAddress))
+      ADDRESS_BETWEEN(CurrentFrame->return_address, StartAddress, EndAddress))
   {
     call_stack[i++] = (pointer)CurrentFrame->return_address;
     CurrentFrame = CurrentFrame->previous_frame;
   }
-
   return i;
 }
 

@@ -5,23 +5,34 @@
 #include "Scheduler.h"
 #include "Thread.h"
 #include "panic.h"
+#include "backtrace.h"
+#include "assert.h"
+#include "Stabs2DebugInfo.h"
+extern Stabs2DebugInfo const* kernel_debug_info;
 
 Mutex::Mutex(const char* name) :
   Lock::Lock(name), mutex_(0)
 {
 }
 
-bool Mutex::acquireNonBlocking(const char* debug_info)
+bool Mutex::acquireNonBlocking(pointer called_by)
 {
   if(unlikely(system_state != RUNNING))
     return true;
-  //debug(LOCK, "Mutex::acquireNonBlocking:  Mutex: %s (%p), currentThread: %s (%p).\n",
-  //         getName(), this, currentThread->getName(), currentThread);
+  if(!called_by)
+    called_by = getCalledBefore(1);
+//  debug(LOCK, "Mutex::acquireNonBlocking:  Mutex: %s (%p), currentThread: %s (%p).\n",
+//           getName(), this, currentThread->getName(), currentThread);
+//  if(kernel_debug_info)
+//  {
+//    debug(LOCK, "The acquire is called by: ");
+//    kernel_debug_info->printCallInformation(called_by);
+//  }
 
   // There may be some cases where the pre-checks may not be wished here.
   // But these cases are usually dirty implemented, and it would not be necessary to call this method there.
   // So in case you see this comment, re-think your implementation and don't just comment out this line!
-  doChecksBeforeWaiting(debug_info);
+  doChecksBeforeWaiting();
 
   if(ArchThreads::testSetLock(mutex_, 1))
   {
@@ -30,20 +41,28 @@ bool Mutex::acquireNonBlocking(const char* debug_info)
     return false;
   }
   assert(held_by_ == 0);
+  last_accessed_at_ = called_by;
   held_by_ = currentThread;
   pushFrontToCurrentThreadHoldingList();
   return true;
 }
 
-void Mutex::acquire(const char* debug_info)
+void Mutex::acquire(pointer called_by)
 {
   if(unlikely(system_state != RUNNING))
     return;
-  //debug(LOCK, "Mutex::acquire:  Mutex: %s (%p), currentThread: %s (%p).\n",
-  //         getName(), this, currentThread->getName(), currentThread);
+  if(!called_by)
+    called_by = getCalledBefore(1);
+//  debug(LOCK, "Mutex::acquire:  Mutex: %s (%p), currentThread: %s (%p).\n",
+//           getName(), this, currentThread->getName(), currentThread);
+//  if(kernel_debug_info)
+//  {
+//    debug(LOCK, "The acquire is called by: ");
+//    kernel_debug_info->printCallInformation(called_by);
+//  }
   while(ArchThreads::testSetLock(mutex_, 1))
   {
-    checkCurrentThreadStillWaitingOnAnotherLock(debug_info);
+    checkCurrentThreadStillWaitingOnAnotherLock();
     lockWaitersList();
     // Here we have to check for the lock again, in case some one released it in between, we might sleep forever.
     if(!ArchThreads::testSetLock(mutex_, 1))
@@ -52,7 +71,7 @@ void Mutex::acquire(const char* debug_info)
       break;
     }
     // check for deadlocks, interrupts...
-    doChecksBeforeWaiting(debug_info);
+    doChecksBeforeWaiting();
     Scheduler::instance()->sleepAndRelease(*(Lock*)this);
     // We have been waken up again.
     currentThread->lock_waiting_on_ = 0;
@@ -60,17 +79,26 @@ void Mutex::acquire(const char* debug_info)
 
   assert(held_by_ == 0);
   pushFrontToCurrentThreadHoldingList();
+  last_accessed_at_ = called_by;
   held_by_ = currentThread;
 }
 
-void Mutex::release(const char* debug_info)
+void Mutex::release(pointer called_by)
 {
   if(unlikely(system_state != RUNNING))
     return;
-  //debug(LOCK, "Mutex::release:  Mutex: %s (%p), currentThread: %s (%p).\n",
-  //         getName(), this, currentThread->getName(), currentThread);
-  checkInvalidRelease("Mutex::release", debug_info);
+  if(!called_by)
+    called_by = getCalledBefore(1);
+//  debug(LOCK, "Mutex::release:  Mutex: %s (%p), currentThread: %s (%p).\n",
+//           getName(), this, currentThread->getName(), currentThread);
+//  if(kernel_debug_info)
+//  {
+//    debug(LOCK, "The release is called by: ");
+//    kernel_debug_info->printCallInformation(called_by);
+//  }
+  checkInvalidRelease("Mutex::release");
   removeFromCurrentThreadHoldingList();
+  last_accessed_at_ = called_by;
   held_by_ = 0;
   mutex_ = 0;
   // Wake up a sleeping thread. It is okay that the mutex is not held by the current thread any longer.

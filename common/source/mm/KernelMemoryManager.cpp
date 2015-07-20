@@ -9,6 +9,9 @@
 #include "ArchMemory.h"
 #include "PageManager.h"
 #include "kstring.h"
+#include "Stabs2DebugInfo.h"
+#include "backtrace.h"
+extern Stabs2DebugInfo const* kernel_debug_info;
 
 KernelMemoryManager kmm;
 
@@ -73,11 +76,12 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
   }
 
   fillSegment(new_pointer, requested_size);
+  new_pointer->freed_at_ = 0;
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 }
 
-bool KernelMemoryManager::freeMemory(pointer virtual_address)
+bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 {
   if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= kernel_break_)
     return false;
@@ -91,18 +95,19 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address)
     return false;
   }
   freeSegment(m_segment);
+  m_segment->freed_at_ = called_by;
 
   unlockKMM();
   return true;
 }
 
-pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size)
+pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by)
 {
   assert((new_size & 0x80000000) == 0 && "requested too much memory");
   if (new_size == 0)
   {
     //in case you're wondering: we really don't want to lock here yet :) guess why
-    freeMemory(virtual_address);
+    freeMemory(virtual_address, called_by);
     return 0;
   }
   //iff the old segment is no segment ;) -> we create a new one
@@ -156,6 +161,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
     freeSegment(m_segment);
+    m_segment->freed_at_ = called_by;
     unlockKMM();
     return new_address;
   }
@@ -216,7 +222,17 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     {
       if(unlikely(mem[i] != 0))
       {
+
         kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p\n", mem + i);
+        if(this_one->freed_at_)
+        {
+          if(kernel_debug_info)
+          {
+            kprintfd("KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
+            kernel_debug_info->printCallInformation(this_one->freed_at_);
+          }
+          assert(false);
+        }
         mem[i] = 0;
       }
     }
@@ -261,13 +277,20 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
   {
     kprintfd("KernelMemoryManager::freeSegment: FATAL ERROR\n");
     kprintfd("KernelMemoryManager::freeSegment: tried freeing not used memory block\n");
-    assert(false && "probably double free");
+    if(this_one->freed_at_)
+    {
+      if(kernel_debug_info)
+      {
+        kprintfd("KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
+        kernel_debug_info->printCallInformation(this_one->freed_at_);
+      }
+    }
+    assert(false);
   }
 
   debug(KMM, "fillSegment: freeing block: %p of bytes: %zd \n", this_one, this_one->getSize() + sizeof(MallocSegment));
 
   this_one->setUsed(false);
-  assert(this_one->getUsed() == false && "trying to clear a used segment");
 
   if (this_one->prev_ != 0)
   {
@@ -458,13 +481,13 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 void KernelMemoryManager::lockKMM()
 {
   assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
-  lock_.acquire();
+  lock_.acquire(getCalledBefore(1));
 }
 
 void KernelMemoryManager::unlockKMM()
 {
   assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
-  lock_.release();
+  lock_.release(getCalledBefore(1));
 }
 
 SpinLock& KernelMemoryManager::getKMMLock()

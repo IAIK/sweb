@@ -1,6 +1,31 @@
 #include "new.h"
 #include "assert.h"
 #include "KernelMemoryManager.h"
+#include "backtrace.h"
+
+/**
+ * Allocate new memory. This function is used by the wrappers.
+ * @param size the size of the memory to allocate
+ * @return the pointer to the new memory
+ */
+static void* _new(size_t size)
+{
+  // maybe we could take some precautions not to be interrupted while doing this
+  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size);
+  assert(p > (void*)0x80000000 || p == (void*)0);
+  return p;
+}
+/**
+ * delete (free) memory. This function is used by the wrappers.
+ * @param address the address of the memory to delete
+ */
+static void _delete(void* address)
+{
+  pointer called_by = getCalledBefore(2);
+  assert(address > (void*)0x80000000 || address == (void*)0);
+  KernelMemoryManager::instance()->freeMemory ( ( pointer ) address, called_by);
+  return;
+}
 
 /**
  * overloaded normal new operator
@@ -9,10 +34,7 @@
  */
 void* operator new ( size_t size )
 {
-  // maybe we could take some precautions not to be interrupted while doing this
-  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory ( size );
-  assert(p > (void*)0x80000000 || p == (void*)0);
-  return p;
+  return _new(size);
 }
 
 /**
@@ -21,9 +43,7 @@ void* operator new ( size_t size )
  */
 void operator delete ( void* address )
 {
-  assert(address > (void*)0x80000000 || address == (void*)0);
-  KernelMemoryManager::instance()->freeMemory ( ( pointer ) address );
-  return;
+  _delete(address);
 }
 
 /**
@@ -33,9 +53,7 @@ void operator delete ( void* address )
  */
 void* operator new[] ( size_t size )
 {
-  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory ( size );
-  assert(p > (void*)0x80000000 || p == (void*)0);
-  return p;
+  return _new(size);
 }
 
 /**
@@ -44,9 +62,7 @@ void* operator new[] ( size_t size )
  */
 void operator delete[] ( void* address )
 {
-  assert(address > (void*)0x80000000 || address == (void*)0);
-  KernelMemoryManager::instance()->freeMemory ( ( pointer ) address );
-  return;
+  _delete(address);
 }
 
 extern "C" void __cxa_pure_virtual();

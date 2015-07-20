@@ -170,8 +170,6 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 
   debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
 
-  char function_name[512];
-  pointer start_addr = 0;
   const Stabs2DebugInfo* deb = kernel_debug_info;
   assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
   ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
@@ -183,15 +181,11 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
     deb = currentThread->loader_->getDebugInfos();
     registers_ = currentThread->user_registers_;
   }
-  if (deb != 0)
-    start_addr = deb->getFunctionName(registers_->eip, function_name, 256);
-  if (start_addr)
+  if(deb && registers_->eip)
   {
-    ssize_t line = deb->getFunctionLine(start_addr,registers_->eip - start_addr);
-    if (line > 0)
-      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s:%d>\n", function_name, line);
-    else
-      debug(PM, "[PageFaultHandler] This pagefault was probably caused by function <%s+%x>\n", function_name, registers_->eip - start_addr);
+    debug(PM, "EIP: %x\n", registers_->eip);
+    debug(PM, "[PageFaultHandler] This pagefault was probably caused by:");
+    deb->printCallInformation(registers_->eip);
   }
 
   if(!address)

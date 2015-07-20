@@ -5,27 +5,39 @@
 #include "assert.h"
 #include "kprintf.h"
 #include "debug.h"
+#include "Stabs2DebugInfo.h"
+#include "backtrace.h"
 
 Condition::Condition(Mutex* mutex, const char* name) :
   Lock(name), mutex_(mutex)
 {
 }
 
-void Condition::waitAndRelease(const char* debug_info)
+void Condition::waitAndRelease(pointer called_by)
 {
-  wait(debug_info, false);
+  if(!called_by)
+    called_by = getCalledBefore(1);
+  wait(false, called_by);
 }
 
-void Condition::wait(const char* debug_info, bool re_acquire_mutex)
+void Condition::wait(bool re_acquire_mutex, pointer called_by)
 {
   if(unlikely(system_state != RUNNING))
     return;
-  //debug(LOCK, "Condition::wait: Thread %s (%p) waiting on condition %s (%p).\n",
-  //      currentThread->getName(), currentThread, getName(), this);
+  if(!called_by)
+    called_by = getCalledBefore(1);
+//  debug(LOCK, "Condition::wait: Thread %s (%p) is waiting on condition %s (%p).\n",
+//        currentThread->getName(), currentThread, getName(), this);
+//  if(kernel_debug_info)
+//  {
+//    debug(LOCK, "The wait is called by: ");
+//    kernel_debug_info->printCallInformation(called_by);
+//  }
+
   assert(mutex_->isHeldBy(currentThread));
   // check if the interrupts are enabled and the thread is not waiting for some other locks
-  checkInterrupts("Condition::wait", debug_info);
-  checkCurrentThreadStillWaitingOnAnotherLock(debug_info);
+  checkInterrupts("Condition::wait");
+  checkCurrentThreadStillWaitingOnAnotherLock();
 
   assert(currentThread->holding_lock_list_);
   if(currentThread->holding_lock_list_->hasNextOnHoldingList())
@@ -36,23 +48,32 @@ void Condition::wait(const char* debug_info, bool re_acquire_mutex)
     printHoldingList(currentThread);
   }
   lockWaitersList();
+  last_accessed_at_ = called_by;
   // The mutex can be released here, because for waking up another thread, the list lock is needed, which is still held by the thread.
-  mutex_->release();
+  mutex_->release(called_by);
   Scheduler::instance()->sleepAndRelease(*(Lock*)this);
   if(re_acquire_mutex)
   {
     assert(mutex_);
-    mutex_->acquire();
+    mutex_->acquire(called_by);
   }
 }
 
-void Condition::signal(const char* debug_info)
+void Condition::signal(pointer called_by)
 {
   if(unlikely(system_state != RUNNING))
     return;
+  if(!called_by)
+    called_by = getCalledBefore(1);
+//  debug(LOCK, "Condition::signal: Thread %s (%p) is signaling condition %s (%p).\n",
+//        currentThread->getName(), currentThread, getName(), this);
+//  debug(LOCK, "The signal is called by: ");
+//  kernel_debug_info->printCallInformation(called_by);
+
   assert(mutex_->isHeldBy(currentThread));
-  checkInterrupts("Condition::signal", debug_info);
+  checkInterrupts("Condition::signal");
   lockWaitersList();
+  last_accessed_at_ = called_by;
   Thread* thread_to_be_woken_up = popBackThreadFromWaitersList();
   unlockWaitersList();
 
@@ -73,20 +94,21 @@ void Condition::signal(const char* debug_info)
       debug(LOCK, "ERROR: Condition %s (%p): Thread %s (%p) is in state %s AND waiting on the condition!\n",
             getName(), this, thread_to_be_woken_up->getName(), thread_to_be_woken_up,
             Thread::threadStatePrintable[thread_to_be_woken_up->state_]);
-      if(debug_info) debug(LOCK, "Debug Info: %s\n", debug_info);
       assert(false);
     }
   }
 }
 
-void Condition::broadcast(const char* debug_info)
+void Condition::broadcast(pointer called_by)
 {
   if(unlikely(system_state != RUNNING))
     return;
+  if(!called_by)
+    called_by = getCalledBefore(1);
   assert(mutex_->isHeldBy(currentThread));
   // signal em all
   while(threadsAreOnWaitersList())
   {
-    signal(debug_info);
+    signal(called_by);
   }
 }

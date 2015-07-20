@@ -73,6 +73,11 @@ protected:
   Lock* next_lock_on_holding_list_;
 
   /**
+   * The call point which used the specified lock the last time.
+   */
+  pointer last_accessed_at_;
+
+  /**
    * Remove the current thread from the holding list.
    */
   void removeCurrentThreadFromWaitersList();
@@ -95,43 +100,37 @@ protected:
   /**
    * Check if a deadlock would happen in case the current thread would wait for this lock.
    * The circular check is done within this lock.
-   * @param debug_info Additional debug information
    */
-  void checkForDeadLock(const char* debug_info = (const char*)0);
+  void checkForDeadLock();
 
   /**
    * Check if the current thread wants to wait on a lock, even if he is still waiting for
    * another one. This is bad!
-   * @param debug_info Additional debug information
    */
-  void checkCurrentThreadStillWaitingOnAnotherLock(const char* debug_info = (const char*)0);
+  void checkCurrentThreadStillWaitingOnAnotherLock();
 
   /**
    * Do some checks before start to wait on another lock.
    * This is done to prevent the kernel from crushing, and is only
    * useful for the kernel programmer.
-   * @param debug_info Additional debug information
    */
-  void doChecksBeforeWaiting(const char* debug_info = (const char*)0);
+  void doChecksBeforeWaiting();
 
   /**
    * Verifies that interrupts are enabled.
-   * @param method in which the check is done
-   * @param debug_info Additional debug information
    */
-  void checkInterrupts(const char* method, const char* debug_info = (const char*)0);
+  void checkInterrupts(const char* method);
 
-    /**
-     * Verifies that the lock is held by this thread.
-     * @param method in which the check is done
-     * @param debug_info Additional debug information
-     */
-    void checkInvalidRelease(const char* method, const char* debug_info = (const char*)0);
+  /**
+   * Verifies that the lock is held by this thread.
+   * @param method in which the check is done
+   */
+  void checkInvalidRelease(const char* method);
 
-    /**
-     * Lock the waiters list, so it may be modified.
-     * The lock may not be held in case the list is read out in some special cases.
-     */
+  /**
+   * Lock the waiters list, so it may be modified.
+   * The lock may not be held in case the list is read out in some special cases.
+   */
   void lockWaitersList();
 
   /**
@@ -162,6 +161,11 @@ protected:
    */
   void pushFrontCurrentThreadToWaitersList();
 
+  /**
+   * Print the lock status.
+   */
+  void printStatus();
+
 private:
 
   /**
@@ -188,9 +192,8 @@ private:
    * Check if a deadlock would happen in combination with other locks.
    * @param thread_waiting The thread which wants to wait on the lock
    * @param start The lock which the thread wants to wait on
-   * @param debug_info Additional debug information
    */
-  void checkForCircularDeadLock(Thread* thread_waiting, Lock* start, const char* debug_info = (const char*)0);
+  void checkForCircularDeadLock(Thread* thread_waiting, Lock* start);
 
   /**
    * Print out a circular deadlock hierarchy.

@@ -126,19 +126,68 @@ ssize_t Stabs2DebugInfo::getFunctionLine(pointer start, pointer offset) const
   return line;
 }
 
+
+void Stabs2DebugInfo::getCallNameAndLine(pointer address, const char*& mangled_name, ssize_t &line) const
+{
+  mangled_name = 0;
+  line = 0;
+
+  if (!this || function_symbols_.size() == 0 ||
+      !(ADDRESS_BETWEEN(address, function_symbols_.begin()->first, ArchCommon::getKernelEndAddress())))
+    return;
+
+  ustl::map<size_t, StabEntry const *>::const_iterator it;
+  for(it = function_symbols_.begin(); it != function_symbols_.end() && it->first <= address; ++it);
+
+  if (it == function_symbols_.end())
+    return;
+
+  --it;
+  mangled_name = stabstr_buffer_ + it->second->n_strx;
+  size_t offset = address - it->first;
+  line = -offset;
+
+  StabEntry const *se;
+  // run the iterator until it finds line informations
+  for(se = it->second + 1; se->n_type == N_PSYM; ++se)
+    ;
+
+  for(; se->n_type == N_SLINE && offset >= se->n_value; ++se)
+  {
+    line = se->n_desc;
+  }
+}
+
+
+
+void Stabs2DebugInfo::printCallInformation(pointer address) const
+{
+  const char* mangled_name;
+  ssize_t line;
+  getCallNameAndLine(address, mangled_name, line);
+  char name[CALL_FUNC_NAME_LIMIT] = "UNKNOWN FUNCTION";
+  if(mangled_name)
+  {
+    demangleName(mangled_name, name, CALL_FUNC_NAME_LIMIT);
+  }
+  if(line >= 0)
+  {
+    kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s: %zu \n", address, name, line );
+  }
+  else
+  {
+    kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s+ %zx\n", address, name, -line);
+  }
+}
+
 pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[], size_t size) const
 {
-  if (function_symbols_.size() == 0)
+  if (function_symbols_.size() == 0 || !(ADDRESS_BETWEEN(address, function_symbols_.begin()->first, ArchCommon::getKernelEndAddress())))
     return 0;
 
-  ustl::map<size_t, StabEntry const *>::const_iterator it = function_symbols_.end();
-
-  if (ADDRESS_BETWEEN(address, function_symbols_.begin()->first, ArchCommon::getKernelEndAddress()))
+  ustl::map<size_t, StabEntry const *>::const_iterator it;
+  for(it = function_symbols_.begin(); it != function_symbols_.end() && it->first <= address; ++it)
   {
-    it = function_symbols_.begin();
-
-    while (it != function_symbols_.end() && it->first <= address)
-      ++it;
   }
 
   if (it != function_symbols_.end())

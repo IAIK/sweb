@@ -23,26 +23,9 @@ class MutexLock
      *Constructor
      *acquires the mutex
      * @param m the Mutex of the class Mutex
-     * @param debug_info text for debug output
-     */
-    MutexLock(Mutex &m, const char* debug_info);
-
-    /**
-     *Constructor
-     *acquires the mutex
-     * @param m the Mutex of the class Mutex
      * @param b whether the Mutex should be acquired or we still are in an interrupt free context
      */
     MutexLock(Mutex &m, bool b);
-
-    /**
-     *Constructor
-     *acquires the mutex
-     * @param m the Mutex of the class Mutex
-     * @param b whether the Mutex should be acquired or we still are in an interrupt free context
-     * @param debug_info text for debug output
-     */
-    MutexLock(Mutex &m, bool b, const char* debug_info);
 
     /**
      *Destructor
@@ -67,7 +50,6 @@ class MutexLock
 
     Mutex &mutex_;
     bool use_mutex_;
-    const char* debug_info_;
 };
 
 #endif
