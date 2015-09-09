@@ -133,12 +133,6 @@ bool Loader::loadExecutableAndInitProcess()
   return true;
 }
 
-    PagePart(size_t page_byte, size_t vaddr, size_t length) : page_byte_(page_byte), vaddr_(vaddr), length_(length)
-    {
-    }
-          size_t byte_count = (h.p_paddr + h.p_filesz) - load_byte_from_address;
-          max_byte_to_load = Max(byte_to_load + byte_count, max_byte_to_load);
-  size_t page = 0;
 bool Loader::loadDebugInfoIfAvailable()
 {
   assert(!userspace_debug_info_ && "You may not load User Debug Info twice!");
