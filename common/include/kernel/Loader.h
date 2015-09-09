@@ -70,6 +70,12 @@ class Loader
     bool readHeaders();
 
 
+    /**
+     * clean up and sort the elf headers for faster access.
+     */
+    bool cleanAndSortHeaders();
+
+
     bool loadDebugInfoIfAvailable();
 
 
@@ -78,7 +84,7 @@ class Loader
 
     size_t fd_;
     Elf::Ehdr *hdr_;
-    ustl::vector<Elf::Phdr> phdrs_;
+    ustl::list<Elf::Phdr> phdrs_;
     Mutex program_binary_lock_;
 
     Stabs2DebugInfo *userspace_debug_info_;

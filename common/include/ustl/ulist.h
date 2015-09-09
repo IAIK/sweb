@@ -40,9 +40,17 @@ public:
     inline void     remove (const T& v)   { ::ustl::remove (*this, v); }
     template <typename Predicate>
     inline void     remove_if (Predicate p)   { ::ustl::remove_if (*this, p); }
+    template <typename Constraint>
+    inline iterator find_if(Constraint constraint) { return ::ustl::find_if (*this, constraint); }
+    template <typename Func>
+    inline void for_each(Func func) { ::ustl::for_each (*this, func); }
+    template <typename Func>
+    inline void for_each(const_iterator from, const_iterator to, Func func) { ::ustl::for_each (from, to, func); }
     inline void     reverse (void)      { ::ustl::reverse (*this); }
     inline void     unique (void)     { ::ustl::unique (*this); }
     inline void     sort (void)     { ::ustl::sort (*this); }
+    template <typename Constraint>
+    inline void sort(Constraint constraint) { ::ustl::stable_sort (*this, constraint); }
     void      merge (list<T>& l);
     void      splice (iterator ip, list<T>& l, iterator first = nullptr, iterator last = nullptr);
 #if HAVE_CPP11

@@ -24,6 +24,52 @@ Loader::~Loader()
   delete hdr_;
 }
 
+void Loader::loadPage(pointer virtual_address)
+{
+  MutexLock lock(program_binary_lock_);
+  debug(LOADER, "Loader:loadPage: Request to load the page for address %p.\n", virtual_address);
+  if(arch_memory_.checkAddressValid(virtual_address))
+  {
+    debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
+    program_binary_lock_.release();
+    return;
+  }
+  const pointer virt_page_start = virtual_address & ~(PAGE_SIZE - 1);
+  const pointer virt_page_end = virt_page_start + PAGE_SIZE;
+  ustl::list<Elf::Phdr>::iterator it;
+  // Find the first section which intersects with this page.
+  it = phdrs_.find_if([&](const Elf::Phdr & el) -> bool
+       {
+         return (el.p_paddr < virt_page_end) && ((el.p_vaddr + ustl::max(el.p_memsz, el.p_filesz)) > virt_page_start);
+       });
+
+  if(it == phdrs_.end())
+  {
+    debug(LOADER, "Loader::loadPage: ERROR! No section refers to the given address.\n");
+    program_binary_lock_.release();
+    Syscall::exit(666);
+  }
+  // get a new page for the mapping
+  size_t ppn = PageManager::instance()->allocPPN();
+  // Iterate through all sections and load them into the page.
+  // The rest of the page is automatically zeroed when the page is allocated.
+  // The sections are sorted, so there is no need to check the sections out of range.
+  for(; it != phdrs_.end() && (*it).p_vaddr < virt_page_end; it++)
+  {
+    if((*it).p_filesz && (*it).p_vaddr + (*it).p_filesz >= virt_page_start)
+    {
+      const pointer virt_start_addr = ustl::max(virt_page_start, (*it).p_vaddr);
+      const size_t  bin_start_addr = (*it).p_offset + (virt_start_addr - (*it).p_vaddr);
+      const size_t  bytes_to_load = ustl::min(virt_page_end, (*it).p_vaddr + (*it).p_filesz) - virt_start_addr;
+      const size_t  virt_offs = virt_start_addr - virt_page_start;
+      //debug(LOADER, "Loader::loadPage: Loading %d bytes from binary address %p to virtual address %p\n",
+      //      bytes_to_load, bin_start_addr, virt_start_addr);
+      readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs, bin_start_addr,  bytes_to_load);
+    }
+  }
+  arch_memory_.mapPage(virt_page_start / PAGE_SIZE, ppn, true, PAGE_SIZE);
+  debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", virtual_address);
+}
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 {
   VfsSyscall::lseek(fd_, position, SEEK_SET);
@@ -34,30 +80,34 @@ bool Loader::readHeaders()
 {
   hdr_ = new Elf::Ehdr;
 
-  VfsSyscall::lseek(fd_, 0, SEEK_SET);
-  if(!hdr_ || VfsSyscall::read(fd_, reinterpret_cast<char*>(hdr_),
-              sizeof(Elf::Ehdr)) != sizeof(Elf::Ehdr))
+  if(readFromBinary((char*)hdr_, 0, sizeof(Elf::Ehdr)))
   {
+    debug(LOADER, "Loader::readHeaders: ERROR! The headers could not be load.\n");
     return false;
   }
 
   //checking elf-magic-numbers, format (32/64bit) and a few more things
   if (!Elf::headerCorrect(hdr_))
+  {
+    debug(LOADER, "Loader::readHeaders: ERROR! The headers are invalid.\n");
     return false;
-
+  }
 
   if(sizeof(Elf::Phdr) != hdr_->e_phentsize)
   {
     debug(LOADER, "Expected program header size does not match advertised program header size\n");
     return false;
   }
-
   phdrs_.resize(hdr_->e_phnum, true);
   if(readFromBinary(reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phoff, hdr_->e_phnum*sizeof(Elf::Phdr)))
   {
     return false;
   }
-
+  if(!cleanAndSortHeaders())
+  {
+    debug(LOADER, "Loader::readHeaders: ERROR! There are no valid sections in the elf file.\n");
+    return false;
+  }
   return true;
 }
 
@@ -83,141 +133,12 @@ bool Loader::loadExecutableAndInitProcess()
   return true;
 }
 
-struct PagePart
-{
-    size_t page_byte_;
-    size_t vaddr_;
-    size_t length_;
     PagePart(size_t page_byte, size_t vaddr, size_t length) : page_byte_(page_byte), vaddr_(vaddr), length_(length)
     {
     }
-};
-
-void Loader::loadPage(pointer virtual_address)
-{
-  size_t virtual_page = virtual_address / PAGE_SIZE;
-
-  MutexLock program_binary_lock(program_binary_lock_);
-  //check if page has not been loaded meanwhile
-  if (arch_memory_.checkAddressValid(virtual_address))
-  {
-    debug(LOADER, "loadPage: Page %zd (virtual_address=%zx) has already been mapped, probably by another thread between pagefault and reaching loader.\n", virtual_page, virtual_address);
-    return;
-  }
-
-  debug(LOADER, "loadPage: going to load virtual page %zd (virtual_address=%zx) for %zd:%s\n", virtual_page, virtual_address, currentThread->getTID(), currentThread->getName());
-
-  ustl::vector<PagePart> byte_map;
-  size_t min_byte_to_load = 0xFFFFFFFF;
-  size_t max_byte_to_load = 0;
-  size_t found = 0;
-  if (virtual_address != 0)
-  {
-    for (size_t i = 0; i < PAGE_SIZE; ++i)
-    {
-      size_t load_byte_from_address = virtual_page * PAGE_SIZE + i;
-      size_t k = 0;
-      for (Elf::Phdr& h : phdrs_)
-      {
-        debug(LOADER, "loadPage: PHdr[%zd].vaddr=%zx .paddr=%zx .type=%x .flags=%x .memsz=%zx .filez=%zx .poff=%zx\r\n", k++, h.p_vaddr, h.p_paddr, h.p_type, h.p_flags, h.p_memsz, h.p_filesz, h.p_offset);
-
-        if (ADDRESS_BETWEEN(load_byte_from_address, h.p_paddr, h.p_paddr + h.p_filesz))
-        {
-          size_t byte_to_load = h.p_offset + load_byte_from_address - h.p_paddr;
           size_t byte_count = (h.p_paddr + h.p_filesz) - load_byte_from_address;
-
-          if (byte_count + i > PAGE_SIZE)
-            byte_count = PAGE_SIZE - i;
-
-          byte_map.push_back(PagePart(i, byte_to_load, byte_count));
-
-          i += byte_count - 1;
-
-          min_byte_to_load = Min(min_byte_to_load, byte_to_load);
           max_byte_to_load = Max(byte_to_load + byte_count, max_byte_to_load);
-
-          ++found;
-        }
-        // bss is not in the file but in memory
-        else if (ADDRESS_BETWEEN(load_byte_from_address, h.p_paddr, h.p_paddr + h.p_memsz))
-        {
-          // skip ahead to end of section
-          i += (h.p_paddr + h.p_memsz) - load_byte_from_address - 1;
-          debug ( LOADER,"In segment but not on file, this is .bss\n" );
-          ++found;
-        }
-      }
-
-      if (found > 1)
-      {
-        kprintfd("Loader::loadPage, byte (%zx) in two different segments\n", load_byte_from_address);
-      }
-    }
-  }
-
-  if (!found)
-  {
-    kprintfd("Loader::loadPage: ERROR Request for Unknown Memory Location: v_adddr=%zx, v_page=%zd\n", virtual_address, virtual_page);
-    program_binary_lock_.release();
-    //free unmapped page
-    Syscall::exit(9997);
-  }
-
   size_t page = 0;
-  //in this case all bytes are in bss-section, but not in file
-  if (max_byte_to_load == 0 && min_byte_to_load == 0xffffffff)
-  {
-    debug(LOADER, "%zx is in .bss\n", virtual_address);
-    page = PageManager::instance()->allocPPN();
-    memset((void*) ArchMemory::getIdentAddressOfPPN(page), 0, PAGE_SIZE);
-    arch_memory_.mapPage(virtual_page, page, true);
-    return;
-  }
-
-  //read once the bytes we need (and a few more, probably, depends on elf-format)
-  size_t buffersize = max_byte_to_load - min_byte_to_load;
-  uint8 buffer[PAGE_SIZE];
-  assert(buffersize <= PAGE_SIZE && "this should never occur");
-
-  VfsSyscall::lseek(fd_, min_byte_to_load, SEEK_SET);
-  ssize_t bytes_read = VfsSyscall::read(fd_, (char*) buffer, max_byte_to_load - min_byte_to_load);
-
-  if (bytes_read != static_cast<ssize_t>(max_byte_to_load - min_byte_to_load))
-  {
-    if (bytes_read == -1)
-    {
-      if (VfsSyscall::getFileDescriptor(fd_) == 0)
-      {
-        kprintfd("Loader::loadPage: ERROR cannot read from a closed file descriptor\n");
-        assert(false);
-      }
-    }
-    kprintfd("Loader::loadPage: ERROR part of executable not present in file: v_adddr=%zx, v_page=%zd\n", virtual_address, virtual_page);
-    program_binary_lock_.release();
-    Syscall::exit(9998);
-  }
-  page = PageManager::instance()->allocPPN();
-  debug(PM, "got new page %zx\n", page);
-  memset((void*) ArchMemory::getIdentAddressOfPPN(page), 0, PAGE_SIZE);
-  debug(PM, "bzero!\n");
-  uint8* dest = reinterpret_cast<uint8*>(ArchMemory::getIdentAddressOfPPN(page));
-  debug(PM, "copying %zd elements\n", byte_map.size());
-  size_t written = 0;
-  for (PagePart& part : byte_map)
-  {
-    debug(PM, "copying from %p to %p ;   page byte: %zd, length_: %zd\n", buffer+part.vaddr_ - min_byte_to_load, dest + part.page_byte_, part.page_byte_, part.length_);
-
-    assert(part.vaddr_ - min_byte_to_load + part.length_ <= buffersize);
-    assert(part.page_byte_ + part.length_ <= PAGE_SIZE);
-    memcpy(dest + part.page_byte_, buffer + part.vaddr_ - min_byte_to_load, part.length_);
-    written += part.length_;
-  }
-
-  arch_memory_.mapPage(virtual_page, page, true);
-  debug(PM, "loadPage: wrote a total of %zd bytes\n", written);
-}
-
-
 bool Loader::loadDebugInfoIfAvailable()
 {
   assert(!userspace_debug_info_ && "You may not load User Debug Info twice!");
@@ -237,12 +158,10 @@ bool Loader::loadDebugInfoIfAvailable()
     return false;
   }
 
-
   // now that we have loaded the section headers, we want to find and load the section that contains
   // the section names
   // in the simple case this section name section is only 0xFF00 bytes long, in that case
   // loading is simple. we only support this case for now
-
 
   size_t section_name_section = hdr_->e_shstrndx;
   size_t section_name_size = section_headers[section_name_section].sh_size;
@@ -253,7 +172,6 @@ bool Loader::loadDebugInfoIfAvailable()
     debug(USERTRACE, "Failed to load section name section\n");
     return false;
   }
-
 
   // now that we have names we read through all the sections
   // and load the two we're interested in
@@ -326,3 +244,20 @@ Stabs2DebugInfo const *Loader::getDebugInfos()const
   return userspace_debug_info_;
 }
 
+bool Loader::cleanAndSortHeaders()
+{
+  // sort the headers by the virtual start address
+  // and throw away empty sections
+  // as well as all sections which shall not be load
+  phdrs_.sort([](const Elf::Phdr & elem1,const Elf::Phdr & elem2) -> bool
+    {
+      return elem1.p_vaddr < elem2.p_vaddr;
+    });
+
+  phdrs_.remove_if([](const Elf::Phdr & elem) -> bool
+    {
+      return !((elem.p_memsz == 0 && elem.p_filesz == 0) || elem.p_type != 1);
+    });
+  return phdrs_.size();
+
+}

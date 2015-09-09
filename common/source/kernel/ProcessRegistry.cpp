@@ -61,6 +61,8 @@ void ProcessRegistry::Run()
 
   Scheduler::instance()->printThreadList();
 
+  Scheduler::instance()->printThreadList();
+
   kill();
 }
 
