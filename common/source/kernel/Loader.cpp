@@ -27,7 +27,7 @@ Loader::~Loader()
 void Loader::loadPage(pointer virtual_address)
 {
   MutexLock lock(program_binary_lock_);
-  debug(LOADER, "Loader:loadPage: Request to load the page for address %p.\n", virtual_address);
+  debug(LOADER, "Loader:loadPage: Request to load the page for address %p.\n", (void*)virtual_address);
   if(arch_memory_.checkAddressValid(virtual_address))
   {
     debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
@@ -68,7 +68,7 @@ void Loader::loadPage(pointer virtual_address)
     }
   }
   arch_memory_.mapPage(virt_page_start / PAGE_SIZE, ppn, true, PAGE_SIZE);
-  debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", virtual_address);
+  debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
 {
