@@ -3,7 +3,6 @@
 
 CleanupThread::CleanupThread() : Thread(0, "CleanupThread")
 {
-  state_ = Worker;
 }
 
 CleanupThread::~CleanupThread()
@@ -20,11 +19,8 @@ void CleanupThread::Run()
 {
   while (1)
   {
-    while (hasWork())
-    {
-      Scheduler::instance()->cleanupDeadThreads();
-    }
-    waitForNextJob();
+    Scheduler::instance()->cleanupDeadThreads();
+    Scheduler::instance()->yield();
   }
 }
 

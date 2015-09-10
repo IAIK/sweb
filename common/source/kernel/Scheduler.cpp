@@ -81,11 +81,6 @@ void Scheduler::addNewThread(Thread *thread)
   unlockScheduling();
 }
 
-void Scheduler::invokeCleanup()
-{
-  cleanup_thread_.addJob();
-}
-
 void Scheduler::sleep()
 {
   currentThread->state_ = Sleeping;
@@ -95,7 +90,7 @@ void Scheduler::sleep()
 
 void Scheduler::wake(Thread* thread_to_wake)
 {
-  thread_to_wake->state_ = thread_to_wake->isWorker() ? Worker : Running;
+  thread_to_wake->state_ = Running;
 }
 
 void Scheduler::yield()
@@ -137,7 +132,6 @@ void Scheduler::cleanupDeadThreads()
     for (uint32 i = 0; i < thread_count; ++i)
     {
       delete destroy_list[i];
-      cleanup_thread_.jobDone();
     }
     debug(SCHEDULER, "cleanupDeadThreads: done\n");
   }

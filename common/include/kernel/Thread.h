@@ -8,7 +8,7 @@
 
 enum ThreadState
 {
-  Running, Sleeping, ToBeDestroyed, Worker
+  Running, Sleeping, ToBeDestroyed
 };
 
 enum SystemState { BOOTING, RUNNING, KPANIC };
@@ -29,7 +29,7 @@ class Thread
     friend class Scheduler;
   public:
 
-    static const char* threadStatePrintable[4];
+    static const char* threadStatePrintable[3];
 
     /**
      * Constructor with FsWorkingDirectory given
@@ -84,15 +84,6 @@ class Thread
      */
     void printBacktrace();
     void printBacktrace(bool use_stored_registers);
-
-    /**
-     * jobs are only for worker threads
-     */
-    void addJob();
-    void jobDone();
-    void waitForNextJob();
-    virtual bool hasWork();
-    bool isWorker() const;
 
     /**
      * Tells the scheduler if this thread is ready for scheduling

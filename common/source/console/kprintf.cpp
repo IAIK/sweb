@@ -22,20 +22,11 @@ void flushActiveConsole()
   assert(nosleep_rb_);
   assert(ArchInterrupts::testIFSet());
   char c = 0;
-  bool found = false;
   while (nosleep_rb_->get(c))
   {
     main_console->getActiveTerminal()->write(c);
-    flush_thread_->jobDone();
-    found = true;
   }
-  if (!found)
-  {
-    // There are open jobs but nothing in the ring-buffer, maybe the buffer was
-    // full at any time and a char has been discarded, lets just complete a job
-    // to catch up again.
-    flush_thread_->jobDone();
-  }
+  Scheduler::instance()->yield();
 }
 
 class KprintfFlushingThread : public Thread
@@ -44,18 +35,13 @@ class KprintfFlushingThread : public Thread
 
     KprintfFlushingThread() : Thread(0, "KprintfFlushingThread")
     {
-      state_ = Worker;
     }
 
     virtual void Run()
     {
       while (true)
       {
-        while (hasWork())
-        {
-          flushActiveConsole();
-        }
-        waitForNextJob();
+        flushActiveConsole();
       }
     }
 };
@@ -79,7 +65,6 @@ void kprintf_func(int ch, void *arg __attribute__((unused)))
   else
   {
     nosleep_rb_->put(ch);
-    flush_thread_->addJob();
   }
 }
 

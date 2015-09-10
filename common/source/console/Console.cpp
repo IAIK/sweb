@@ -10,7 +10,6 @@ Console* main_console;
 Console::Console(uint32, const char* name) : Thread(0, name), console_lock_("Console::console_lock_"),
     set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
 {
-  state_ = Worker;
 }
 
 void Console::lockConsoleForDrawing()
@@ -99,24 +98,20 @@ void Console::Run(void)
   uint32 key;
   do
   {
-    while (this->hasWork())
+    while (km->getKeyFromKbd(key))
     {
-      if (km->getKeyFromKbd(key))
+      if (isDisplayable(key))
       {
-        if (isDisplayable(key))
-        {
-          key = terminals_[active_terminal_]->remap(key);
-          terminals_[active_terminal_]->write(key);
-          terminals_[active_terminal_]->putInBuffer(key);
-        }
-        else
-        {
-          handleKey(key);
-        }
+        key = terminals_[active_terminal_]->remap(key);
+        terminals_[active_terminal_]->write(key);
+        terminals_[active_terminal_]->putInBuffer(key);
       }
-      this->jobDone();
+      else
+      {
+        handleKey(key);
+      }
     }
-    waitForNextJob();
+    Scheduler::instance()->yield();
   } while (1);
 }
 bool Console::isDisplayable(uint32 key)

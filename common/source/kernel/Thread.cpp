@@ -13,9 +13,9 @@
 
 #define MAX_STACK_FRAMES 20
 
-const char* Thread::threadStatePrintable[4] =
+const char* Thread::threadStatePrintable[3] =
 {
-"Running", "Sleeping", "ToBeDestroyed", "Worker"
+"Running", "Sleeping", "ToBeDestroyed"
 };
 
 extern "C" void threadStartHack()
@@ -65,7 +65,6 @@ void Thread::kill()
 
   switch_to_userspace_ = 0;
 
-  Scheduler::instance()->invokeCleanup();
   state_ = ToBeDestroyed;
 
   if (currentThread == this)
@@ -149,44 +148,9 @@ void Thread::printBacktrace(bool use_stored_registers)
   debug(BACKTRACE, "=== End of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
 }
 
-void Thread::addJob()
-{
-  if(!ArchInterrupts::testIFSet())
-  {
-    jobs_scheduled_++;
-  }
-  else
-  {
-    ArchThreads::atomic_add(jobs_scheduled_, 1);
-  }
-}
-
-void Thread::jobDone()
-{
-  ArchThreads::atomic_add(jobs_done_, 1);
-}
-
-void Thread::waitForNextJob()
-{
-  assert(state_ == Worker);
-  Scheduler::instance()->yield();
-}
-
-bool Thread::hasWork()
-{
-  return jobs_done_ < jobs_scheduled_;
-}
-
-bool Thread::isWorker() const
-{
-  // If it is a worker thread, the thread state may be sleeping.
-  // But in this case, the thread has at least one job scheduled.
-  return (state_ == Worker) || (jobs_scheduled_ > 0);
-}
-
 bool Thread::schedulable()
 {
-  return (state_ == Running) || (state_ == Worker && hasWork());
+  return (state_ == Running);
 }
 
 const char *Thread::getName()
