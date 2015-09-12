@@ -13,6 +13,7 @@ enum AnsiColor
 };
 
 #define OUTPUT_ENABLED 0x80000000
+#define OUTPUT_ADVANCED 0x70000000
 
 #ifndef NOCOLOR
 #define DEBUG_FORMAT_STRING "\033[0;%zum[%-11s]\033[1;m"

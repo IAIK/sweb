@@ -124,7 +124,7 @@ bool Loader::loadExecutableAndInitProcess()
     return false;
 
   debug(LOADER, "loadExecutableAndInitProcess: Entry: %zx, num Sections %x\n", hdr_->e_entry, hdr_->e_phnum);
-  if (LOADER & OUTPUT_ENABLED)
+  if (LOADER & OUTPUT_ADVANCED)
     Elf::printElfHeader ( *hdr_ );
 
   if (USERTRACE & OUTPUT_ENABLED)
