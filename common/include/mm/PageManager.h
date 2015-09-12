@@ -63,6 +63,7 @@ class PageManager
 
     static PageManager* instance_;
 
+    size_t HEAP_PAGES;
 };
 
 #endif

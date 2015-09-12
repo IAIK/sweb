@@ -15,14 +15,9 @@ PageManager pm;
 
 PageManager* PageManager::instance_ = 0;
 
-// Between min and max KMM heap memory is reserved dynamically!
-// Please note that this means that the KMM depends on the page manager and you
-// will have a harder time implementing swapping. Pros only!
-// Please also note that the implementation of *dynamic* KMM is rather new - please report any strange behavior.
+#define DYNAMIC_KMM (0) // Please note that this means that the KMM depends on the page manager
+// and you will have a harder time implementing swapping. Pros only!
 
-// we recommend setting both values to 400 for Assignment 2:
-#define MIN_HEAP_PAGES 400
-#define MAX_HEAP_PAGES 4096 // 4096 pages, because maximum heap size is 16MiB
 
 PageManager* PageManager::instance()
 {
@@ -41,7 +36,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
 
   size_t num_mmaps = ArchCommon::getNumUseableMemoryRegions();
 
-  pointer start_address = 0, end_address = 0, last_end_page = lowest_unreserved_page_;
+  pointer start_address = 0, end_address = 0, last_end_page = 0;
   size_t highest_address = 0, type = 0, used_pages = 0;
 
   //Determine Amount of RAM
@@ -55,6 +50,8 @@ PageManager::PageManager() : lock_("PageManager::lock_")
 
   number_of_pages_ = highest_address / PAGE_SIZE;
 
+  lowest_unreserved_page_ = 0;
+
   //Determine RAM Used by Grub Modules
   for (size_t i = 0; i < ArchCommon::getNumModules(); ++i)
   {
@@ -66,8 +63,45 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       break;
     used_pages += end_page - start_page + ((i > 0 && end_page == last_end_page) ? 0 : 1);
     last_end_page = end_page;
+    if (start_page <= lowest_unreserved_page_)
+      lowest_unreserved_page_ = end_page;
   }
-  lowest_unreserved_page_ = last_end_page;
+
+  for (size_t i = ArchMemory::RESERVED_START; i < ArchMemory::RESERVED_END; ++i)
+  {
+    size_t physical_page = 0;
+    size_t pte_page = 0;
+    size_t this_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(i, &physical_page, &pte_page);
+    assert(this_page_size == 0 || this_page_size == PAGE_SIZE || this_page_size == PAGE_SIZE*PAGE_TABLE_ENTRIES);
+    if (this_page_size > 0)
+    {
+      size_t skip = 0;
+      for (size_t i = 0; i < ArchCommon::getNumModules(); ++i)
+      {
+        uint32 start_page = (ArchCommon::getModuleStartAddress(i) & 0x3FFFFFFF) / PAGE_SIZE;
+        uint32 end_page = (ArchCommon::getModuleEndAddress(i) & 0x3FFFFFFF) / PAGE_SIZE;
+        if (start_page == physical_page)
+        {
+          skip = end_page - start_page;
+          break;
+        }
+      }
+      if (skip > 0)
+      {
+        i += skip - 1;
+        continue;
+      }
+      //our bitmap only knows 4k pages for now
+      uint64 num_4kpages = this_page_size / PAGE_SIZE; //should be 1 on 4k pages and 1024 on 4m pages
+      used_pages += num_4kpages;
+      i += (num_4kpages - 1); //+0 in most cases
+      if (num_4kpages == 1 && i % 1024 == 0 && pte_page < number_of_pages_)
+        used_pages += num_4kpages;
+    }
+  }
+
+  debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %u\n", number_of_pages_ - used_pages,
+        used_pages, number_of_pages_);
 
   //need at least 4 MiB for Kernel Memory + first physical MiB
   if (number_of_pages_ < 1000)
@@ -76,20 +110,25 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     assert(false);
   }
 
+  HEAP_PAGES = 3 * number_of_pages_ / 8;
+  if (number_of_pages_ > 2048)
+    HEAP_PAGES += (number_of_pages_ - Min(number_of_pages_,2048)) / 8;
+  HEAP_PAGES = Min(HEAP_PAGES, HEAP_PAGES - used_pages);
+
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
   size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
-  size_t last_free_page = number_of_pages_-1;
+  size_t last_free_page = number_of_pages_ - 1;
   size_t temp_page_size = 0;
   size_t num_reserved_heap_pages = 0;
   for (num_reserved_heap_pages = 0; num_reserved_heap_pages < num_pages_for_bitmap || temp_page_size != 0 ||
-                                    num_reserved_heap_pages < MIN_HEAP_PAGES; ++num_reserved_heap_pages)
+                                    num_reserved_heap_pages < ((DYNAMIC_KMM || (number_of_pages_ < 512)) ? 0 : HEAP_PAGES); ++num_reserved_heap_pages)
   {
     if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
       ArchMemory::mapKernelPage(start_vpn,last_free_page--);
     start_vpn++;
   }
   extern KernelMemoryManager kmm;
-  new (&kmm) KernelMemoryManager(num_reserved_heap_pages,MAX_HEAP_PAGES);
+  new (&kmm) KernelMemoryManager(num_reserved_heap_pages,HEAP_PAGES);
   page_usage_table_ = new Bitmap(number_of_pages_);
 
   // since we have gaps in the memory maps we can not give out everything
