@@ -134,21 +134,21 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
-    kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
-    return;
+    kprintfd("\t%sThread %10p has no %sThread registers. %s\n",
+             userspace_registers?"Kernel":"  User",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
   }
-  if (verbose)
+  else if (verbose)
   {
     kprintfd("\t\t%sThread: %10p, info: %10p\n"\
              "\t\t\t eax: %10x  ebx: %10x  ecx: %10x  edx: %10x\n"\
              "\t\t\t esp: %10x  ebp: %10x  esp0 %10x  eip: %10x\n"\
              "\t\t\teflg: %10x  cr3: %10x\n",
-             userspace_registers?"User-":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
+             userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
   }
   else
   {
     kprintfd("\t%sThread %10p: info %10p eax %10x ebp %10x esp %10x esp0 %10x eip %10x cr3 %10x\n",
-             userspace_registers?" User-":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
+             userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
   }
 }
 
