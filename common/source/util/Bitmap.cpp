@@ -2,77 +2,85 @@
 #include "kprintf.h"
 #include "assert.h"
 
+uint8 const Bitmap::bits_per_bitmap_atom_ = 8;
+
 static const uint8 BIT_COUNT[] =
 {
-  0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3,
-  3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4,
-  3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4,
-  4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5,
-  3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2,
-  2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5,
-  4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5,
-  5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-  3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5,
-  5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4,
+2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6,
+4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5,
+3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
-Bitmap::Bitmap (size_t number_of_bits)
+Bitmap::Bitmap(size_t number_of_bits)
 {
   size_ = number_of_bits;
   num_bits_set_ = 0;
-  size_t byte_count = number_of_bits / bits_per_bitmap_atom_
-               + ((number_of_bits % bits_per_bitmap_atom_ > 0)?1:0);
-  bitmap_ = new uint8[byte_count];
-  for (size_t byte = 0; byte < byte_count; ++byte)
-    *(bitmap_+byte) = static_cast<uint8>(0);
+  bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)];
+  for (size_t byte = 0; byte < BITMAP_BYTE_COUNT(number_of_bits); ++byte)
+    bitmap_[byte] = static_cast<uint8>(0);
 }
 
-Bitmap::~Bitmap ()
+Bitmap::~Bitmap()
 {
   delete[] bitmap_;
 }
 
-void Bitmap::setBit(size_t bit_number)
+#define BYTE (b[bit_number / bits_per_bitmap_atom_])
+#define MASK (1 << (bit_number % bits_per_bitmap_atom_))
+
+bool Bitmap::setBit(size_t bit_number)
 {
   assert(bit_number < size_);
-  const size_t byte_number = bit_number / bits_per_bitmap_atom_;
-  const size_t bit_offset = bit_number % bits_per_bitmap_atom_;
-  const uint8 mask = 1 << bit_offset;
-  uint8& byte = bitmap_[byte_number];
+  return setBit(bitmap_, num_bits_set_, bit_number);
+}
 
-  if (!(byte & mask))
+bool Bitmap::setBit(uint8* b, size_t& num_bits_set, size_t bit_number)
+{
+  //kprintfd("bitmap %p, %zu, %zu\n",b,num_bits_set, bit_number);
+  if (!(BYTE & MASK))
   {
-    byte |= mask;
-    ++num_bits_set_;
+    BYTE |= MASK;
+    ++num_bits_set;
+    return true;
   }
+  return false;
 }
 
 bool Bitmap::getBit(size_t bit_number)
 {
   assert(bit_number < size_);
-  size_t byte_number = bit_number / bits_per_bitmap_atom_;
-  size_t bit_offset = bit_number % bits_per_bitmap_atom_;
-  return (*(bitmap_+byte_number) & (1 << bit_offset));
+  return getBit(bitmap_, bit_number);
 }
 
-void Bitmap::unsetBit(size_t bit_number)
+bool Bitmap::getBit(uint8* b, size_t bit_number)
+{
+  return BYTE & MASK;
+}
+
+bool Bitmap::unsetBit(size_t bit_number)
 {
   assert(bit_number < size_);
-  size_t byte_number = bit_number / bits_per_bitmap_atom_;
-  size_t bit_offset = bit_number % bits_per_bitmap_atom_;
-  const uint8 mask = 1 << bit_offset;
-  uint8& byte = bitmap_[byte_number];
+  return unsetBit(bitmap_, num_bits_set_, bit_number);
+}
 
-  if (byte & mask)
+bool Bitmap::unsetBit(uint8* b, size_t& num_bits_set, size_t bit_number)
+{
+  if (BYTE & MASK)
   {
-    byte &= ~(1 << bit_offset);
-    --num_bits_set_;
+    BYTE &= ~MASK;
+    --num_bits_set;
+    return true;
   }
+  return false;
 }
 
 void Bitmap::setByte(size_t byte_number, uint8 byte)
 {
-  assert(byte_number*bits_per_bitmap_atom_ < size_);
+  assert(byte_number * bits_per_bitmap_atom_ < size_);
   uint8& b = bitmap_[byte_number];
 
   num_bits_set_ -= BIT_COUNT[b];
@@ -82,16 +90,36 @@ void Bitmap::setByte(size_t byte_number, uint8 byte)
 
 uint8 Bitmap::getByte(size_t byte_number)
 {
-  assert(byte_number*bits_per_bitmap_atom_ < size_);
+  assert(byte_number * bits_per_bitmap_atom_ < size_);
   return bitmap_[byte_number];
 }
 
 void Bitmap::bmprint()
 {
-  kprintfd("\n-----Bitmap: size=%zd, num_bits_set=%zd-----\n",size_,num_bits_set_);
-  for(uint32 i = 0; i < size_; i++)
+  bmprint(bitmap_, size_, num_bits_set_);
+}
+
+void Bitmap::bmprint(uint8* b, size_t n, size_t num_bits_set)
+{
+  kprintfd("\n-----Bitmap: size=%zd, num_bits_set=%zd-----\n", n, num_bits_set);
+  for (uint32 i = 0; i < n; i++)
   {
-    kprintfd( "%d", getBit( i));
+    kprintfd("%d", getBit(b, i));
   }
   kprintfd("\n-----Bitmap:end------\n");
+}
+
+size_t Bitmap::getSize()
+{
+  return size_;
+}
+
+size_t Bitmap::getNumBitsSet()
+{
+  return num_bits_set_;
+}
+
+size_t Bitmap::getNumFreeBits()
+{
+  return size_ - num_bits_set_;
 }
