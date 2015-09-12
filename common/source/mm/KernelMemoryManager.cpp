@@ -400,13 +400,10 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
-  debug(KMM, "KernelMemoryManager::ksbrk(%zd)\n", size);
   assert(base_break_ <= (size_t)kernel_break_ + size && "kernel heap break value corrupted");
   assert((reserved_max_ == 0 || ((kernel_break_ - base_break_) + size) <= reserved_max_) && "maximum kernel heap size reached");
-  debug(KMM, "KernelMemoryManager::ksbrk(%zd)\n", size);
   if(size != 0)
   {
-    debug(KMM, "KernelMemoryManager::ksbrk(%zd)0\n", size);
     size_t old_brk = kernel_break_;
     size_t cur_top_vpn = kernel_break_ / PAGE_SIZE;
     if ((kernel_break_ % PAGE_SIZE) == 0)
@@ -415,7 +412,6 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     size_t new_top_vpn = (kernel_break_ )  / PAGE_SIZE;
     if ((kernel_break_ % PAGE_SIZE) == 0)
       new_top_vpn--;
-    debug(KMM, "KernelMemoryManager::ksbrk(%zd)1\n", size);
     if(size > 0)
     {
       debug(KMM, "%zx != %zx\n", cur_top_vpn, new_top_vpn);
@@ -427,7 +423,6 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
         size_t new_page = PageManager::instance()->allocPPN();
         if(unlikely(new_page == 0))
         {
-          debug(KMM, "KernelMemoryManager::ksbrk(%zd)4\n", size);
           kprintfd("KernelMemoryManager::freeSegment: FATAL ERROR\n");
           kprintfd("KernelMemoryManager::freeSegment: no more physical memory\n");
           assert(new_page != 0 && "Kernel Heap is out of memory");
@@ -440,7 +435,6 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     }
     else
     {
-      debug(KMM, "KernelMemoryManager::ksbrk(%zd)7\n", size);
       while(cur_top_vpn != new_top_vpn)
       {
         assert(pm_ready_ && "Kernel Heap should not be used before PageManager is ready");
@@ -448,12 +442,10 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
         cur_top_vpn--;
       }
     }
-    debug(KMM, "KernelMemoryManager::ksbrk(%zd)8\n", size);
     return old_brk;
   }
   else
   {
-    debug(KMM, "KernelMemoryManager::ksbrk(%zd)9\n", size);
     return kernel_break_;
   }
 }
