@@ -19,6 +19,42 @@ extern "C"
 #include "RingBuffer.h"
 #include "atkbd.h"
 
+#define STANDARD_KEYMAP_DEF { 0, 0x1B, '1', '2', '3', '4', '5' , '6', \
+                              '7', '8', '9', '0', '-', '^', '\b', '\t', \
+                              'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', \
+                              'o', 'p', '[', ']', '\n', KBD_META_CTRL, 'a', 's', \
+                              'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', \
+                              '\'', '`', KBD_META_SHIFT, '\\', 'z', 'x', 'c', 'v', \
+                              'b', 'n', 'm', ',', '.', '/',KBD_META_SHIFT, '*', \
+                              KBD_META_LALT, ' ', KBD_META_CAPS, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, \
+                              KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KBD_META_NUM, KBD_META_SCRL, '7', \
+                              '8', '9', '-', '4', '5', '6', '+', '1', \
+                              '2', '3', '0', '.', 0, 0, 0, KEY_F11  , \
+                              KEY_F12, 0, 0, 0, 0, 0, 0, 0, \
+                              0, '\n', KBD_META_CTRL, '/', KEY_PRNT, KBD_META_RALT, 0, KEY_HOME, \
+                              KEY_UP, KEY_PGUP, KEY_LFT, KEY_RT, KEY_END, KEY_DN, KEY_PGDN, KEY_INS, \
+                              0, 0, 0, 0, 0, 0, 0, 0, \
+                              0, 0, 0, 0, 0, 0, 0, 0, \
+                            }
+
+#define E0_KEYS_DEF { 0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, E0_KPENTER, E0_RCTRL, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, E0_KPSLASH, 0, E0_PRSCR, \
+                      E0_RALT, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, E0_HOME,  \
+                      E0_UP, E0_PGUP, 0, E0_LEFT, 0, E0_RIGHT, 0, E0_END, \
+                      E0_DOWN, E0_PGDN, E0_INS, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                      0, 0, 0, 0, 0, 0, 0, 0, \
+                    }
+
 #define E0_BASE      96
 #define E0_KPENTER   (E0_BASE +  1)
 #define E0_RCTRL     (E0_BASE +  2)
@@ -100,18 +136,56 @@ class KeyboardManager
         instance_ = new KeyboardManager();
       return instance_;
     }
-    ;
 
-    bool getKeyFromKbd(uint32 &key);
+    bool getKeyFromKbd(uint32 &key)
+    {
+      //peeking should not block
+      uint8 sc;
+      if (keyboard_buffer_.get(sc))
+      {
+        key = convertScancode(sc);
+        return true;
+      }
+      else
+        return false;
+    }
+
     void serviceIRQ(void);
 
-    bool isShift();
-    bool isCtrl();
-    bool isAlt();
-    bool isAltGr();
-    bool isCaps();
-    bool isNum();
-    bool isScroll();
+    bool isShift()
+    {
+      return keyboard_status_ & KBD_META_SHIFT;
+    }
+
+    bool isCtrl()
+    {
+      return keyboard_status_ & KBD_META_CTRL;
+    }
+
+    bool isAlt()
+    {
+      return (keyboard_status_ & KBD_META_LALT);
+    }
+
+    bool isAltGr()
+    {
+      return (keyboard_status_ & KBD_META_RALT);
+    }
+
+    bool isCaps()
+    {
+      return (keyboard_status_ & KBD_META_CAPS);
+    }
+
+    bool isNum()
+    {
+      return (keyboard_status_ & KBD_META_NUM);
+    }
+
+    bool isScroll()
+    {
+      return (keyboard_status_ & KBD_META_SCRL);
+    }
 
     void emptyKbdBuffer();
 

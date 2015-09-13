@@ -101,43 +101,6 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc __attribute__((unused)))
   return;
 }
 
-
-bool KeyboardManager::isShift()
-{
-  return keyboard_status_ & KBD_META_SHIFT;
-}
-
-bool KeyboardManager::isCtrl()
-{
-  return keyboard_status_ & KBD_META_CTRL;
-}
-
-bool KeyboardManager::isAlt()
-{
-  return (keyboard_status_ & KBD_META_LALT) ;
-}
-
-bool KeyboardManager::isAltGr()
-{
-  return (keyboard_status_ & KBD_META_RALT) ;
-}
-
-
-bool KeyboardManager::isCaps()
-{
-  return (keyboard_status_ & KBD_META_CAPS) ;
-}
-
-bool KeyboardManager::isNum()
-{
-  return (keyboard_status_ & KBD_META_NUM) ;
-}
-
-bool KeyboardManager::isScroll()
-{
-  return (keyboard_status_ & KBD_META_SCRL) ;
-}
-
 void KeyboardManager::emptyKbdBuffer()
 {
 }
@@ -150,17 +113,4 @@ void KeyboardManager::setLEDs( void )
 uint32 KeyboardManager::convertScancode( uint8 scancode )
 {
   return scancode;
-}
-
-bool KeyboardManager::getKeyFromKbd(uint32 &key)
-{
-  //peeking should not block
-  uint8 sc;
-  if (keyboard_buffer_.get(sc))
-  {
-    key = convertScancode(sc);
-    return true;
-  }
-  else
-    return false;
 }
