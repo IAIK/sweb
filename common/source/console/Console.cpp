@@ -41,16 +41,12 @@ void Console::handleKey(uint32 key)
 // else...
   switch (key)
   {
-    case KEY_F8:
+    case KEY_F9:
       PageManager::instance()->printBitmap();
       break;
 
-    case KEY_F9:
-      Scheduler::instance()->printLockingInformation();
-      break;
-
     case KEY_F10:
-      Scheduler::instance()->printUserSpaceTraces();
+      Scheduler::instance()->printLockingInformation();
       break;
 
     case KEY_F11:

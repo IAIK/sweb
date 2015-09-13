@@ -163,6 +163,6 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
 
 void Syscall::trace()
 {
-  currentThread->printUserBacktrace();
+  currentThread->printBacktrace();
 }
 

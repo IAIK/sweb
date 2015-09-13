@@ -202,13 +202,6 @@ void Scheduler::printStackTraces()
   unlockScheduling();
 }
 
-static void printUserSpaceTracesHelper()
-{
-  currentThread->printUserBacktrace();
-  currentThread->switch_to_userspace_ = 1;
-  Scheduler::instance()->yield();
-}
-
 void Scheduler::printLockingInformation()
 {
   size_t thread_count;
@@ -234,30 +227,6 @@ void Scheduler::printLockingInformation()
     }
   }
   debug(LOCK, "Scheduler::printLockingInformation finished\n");
-  unlockScheduling();
-}
-
-void Scheduler::printUserSpaceTraces()
-{
-  lockScheduling();
-  debug(USERTRACE, "Scheduling all userspace threads to print a stacktrace\n");
-  for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
-  {
-    Thread *t = *it;
-    if (t->user_registers_)
-    {
-      if (t->switch_to_userspace_)
-      {
-        ArchThreads::changeInstructionPointer(t->kernel_registers_, (void*) printUserSpaceTracesHelper);
-        t->switch_to_userspace_ = 0;
-      }
-      else
-      {
-        t->printUserBacktrace();
-      }
-    }
-  }
-  debug(USERTRACE, "Done scheduling all userspace threads to print a stacktrace\n");
   unlockScheduling();
 }
 

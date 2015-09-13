@@ -15,7 +15,6 @@ class Mutex;
 class SpinLock;
 class Lock;
 
-
 /**
  * @class Scheduler
  *
@@ -37,7 +36,7 @@ class Scheduler
      * this is the method that should be used to start a new Thread
      * @param *thread Pointer to the instance of a Class derived from Thread that contains the Thread to be started
      */
-    void addNewThread ( Thread *thread );
+    void addNewThread(Thread *thread);
 
     /**
      * Tells the scheduler that there is a thread that has been killed (adds cleanup job)
@@ -53,7 +52,7 @@ class Scheduler
      * wakes up a sleeping thread
      * @param *thread_to_wake, Pointer to the Thread that will be woken up
      */
-    void wake ( Thread *thread_to_wake );
+    void wake(Thread *thread_to_wake);
 
     /**
      * forces a task switch without waiting for the next timer interrupt
@@ -71,11 +70,6 @@ class Scheduler
     void printStackTraces();
 
     /**
-     * schedules all currently known userspace threads to print a stack trace
-     */
-    void printUserSpaceTraces();
-
-    /**
      * Print out the locks held by the threads, and the locks they are waiting on.
      */
     void printLockingInformation();
@@ -87,7 +81,7 @@ class Scheduler
      * The thread is pushed onto the waiters list before.
      * @param lock The lock which shall be waiting on
      */
-    void sleepAndRelease ( Lock &lock );
+    void sleepAndRelease(Lock &lock);
 
     /**
      * Check if scheduling is enabled
@@ -127,7 +121,7 @@ class Scheduler
      * returns the ticks value stored
      */
     uint32 getTicks();
-    
+
   private:
     Scheduler();
 

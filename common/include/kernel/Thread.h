@@ -84,7 +84,6 @@ class Thread
      */
     void printBacktrace();
     void printBacktrace(bool use_stored_registers);
-    void printUserBacktrace();
 
     /**
      * jobs are only for worker threads
