@@ -9,20 +9,18 @@ set(LD_ARGUMENT -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -n
 set(APPEND_LD_ARGUMENTS -lgcc)
 set(KERNEL_IMAGE_OBJCOPY )
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk
-	COMMENT "Going to qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk"
+	COMMAND	qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot
+	COMMENT "Executing `qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk
-	COMMENT "Going to qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk"
+	COMMAND	qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot
+	COMMENT "Executing `qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)

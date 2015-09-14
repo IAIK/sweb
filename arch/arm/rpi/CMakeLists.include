@@ -1,6 +1,6 @@
 set(KERNEL_BINARY kernel.x)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -gstabs2 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -Wno-strict-aliasing -march=armv6 -fshort-wchar")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11 -O0 -gstabs2 -Wall -Wextra           -nostdinc -nostartfiles -nodefaultlibs -nostdlib   -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -Wno-strict-aliasing -march=armv6 -fshort-wchar")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -O0 -gstabs2 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -Wno-strict-aliasing -march=armv6 -fshort-wchar")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -O0 -gstabs2 -Wall -Wextra           -nostdinc -nostartfiles -nodefaultlibs -nostdlib   -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -Wno-strict-aliasing -march=armv6 -fshort-wchar")
 
 MACRO(ARCH2OBJ OUTPUTOBJNAMES)
 ENDMACRO(ARCH2OBJ)
@@ -9,41 +9,37 @@ set(LD_ARGUMENT -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -n
 set(APPEND_LD_ARGUMENTS -Wl,-lgcc)
 set(KERNEL_IMAGE_OBJCOPY )
 
-#Custom target: make sdcard
-#create an sdcard for the raspberry pi
+# sdcard: Create an sdcard for the raspberry pi
 add_custom_target(sdcard
   COMMAND ${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/makesdcard.sh "${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/boot/"
-  COMMENT "Creating the sdcard"
+  COMMENT "Creating SD card"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 
-#Custom target: make sdcardq
-#create an sdcard for the raspberry pi (quiet mode)
+# sdcardq: Create an sdcard for the raspberry pi (quiet mode)
 add_custom_target(sdcardq
   COMMAND ${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/makesdcard.sh "${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/boot/" y /dev/mmcblk0
-  COMMENT "Creating the sdcard (quiet mode)"
+  COMMENT "Creating SD card in quiet mode"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemu: Run qemu in non debugging mode
 add_custom_target(qemu
   COMMAND qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp
-  COMMENT "qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp"
+  COMMENT "Executing `qemu-system-arm-rpi -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemugdb: Run qemu in non debugging mode
 add_custom_target(qemugdb
   COMMAND qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp
-  COMMENT "qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp"
+  COMMENT "Executing `qemu-system-arm-rpi -s -S -kernel kernel.x -cpu arm1176 -m 512 -M raspi -no-reboot -sd SWEB-flat.vmdk -device usb-kbd -device usb-mouse -serial stdio -d guest_errors,unimp`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
 
-#Custom target: build_qemu_rpi
+# build_qemu_rpi: Build qemu with raspberry pi support (includes source download)
 add_custom_target(build_qemu_rpi
   COMMAND ${PROJECT_SOURCE_DIR}/arch/arm/rpi/utils/build_qemu_rpi.sh
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
