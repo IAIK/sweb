@@ -1,6 +1,6 @@
 set(KERNEL_BINARY kernel.x)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m32 -O0 -gstabs2 -Wall -Wextra  -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -std=gnu11   -m32 -O0 -gstabs2 -Wall -Wextra  -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -m32 -O0 -gstabs2 -Wall -Wextra  -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector")
 
 MACRO(ARCH2OBJ OUTPUTOBJNAMES)
 ENDMACRO(ARCH2OBJ)
@@ -9,38 +9,35 @@ set(LD_ARGUMENT -m32 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-siz
 set(APPEND_LD_ARGUMENTS )
 set(KERNEL_IMAGE_OBJCOPY )
 
+# kvm: Run kvm in non debugging mode
 add_custom_target(kvm
-	COMMAND qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio
-  COMMENT "Going to qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio"
+	COMMAND qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot
+  COMMENT "Executing `qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio
-	COMMENT "Going to qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio"
+	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot
+	COMMENT "Executing `qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemugdb: Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio
-	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio on localhost:1234"
+	COMMAND	qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio -no-reboot
+	COMMENT "Executing `gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio -no-reboot on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
-#Custom target: make qemutacos
-#Run qemu in pipe monitor mode for tacos
+# qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
   COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio
-  COMMENT "Going to qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio"
+  COMMENT "Executing `qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio -no-reboot`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  #COMMAND reset -I
   )
 
 

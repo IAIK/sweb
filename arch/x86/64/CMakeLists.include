@@ -28,39 +28,35 @@ set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-siz
 set(APPEND_LD_ARGUMENTS )
 set(KERNEL_IMAGE_OBJCOPY COMMAND mv ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel64.x && ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/kernel64.x ${PROJECT_BINARY_DIR}/kernel.x)
 
-#Custom target: make kvm
-#Run kvm in non debugging mode
+# kvm: Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND qemu-system-x86_64 -m 8M -cpu kvm64 -hda SWEB-flat.vmdk -debugcon stdio
-        COMMENT "Going to qemu-system-x86_64 -m 8M -cpu kvm64 -hda SWEB-flat.vmdk -debugcon stdio"
+        COMMAND qemu-system-x86_64 -m 8M -cpu kvm64 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot
+        COMMENT "Executing `qemu-system-x86_64 -m 8M -cpu kvm64 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot`"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMAND reset -I
         )
 
-#Custom target: make qemu
-#Run qemu in non debugging mode
+# qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio
-	COMMENT "Going to qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio"
-	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-	COMMAND reset -I
-	)
-#Custom target: make qemu
-#Run qemu in non debugging mode
-add_custom_target(qemugdb
-	COMMAND	qemu-system-x86_64 -s -m 8M -hda SWEB-flat.vmdk -debugcon stdio
-	COMMENT "Going to gdb qemu-system-x86_64 -s -m 8M -hda SWEB-flat.vmdk -debugcon stdio on localhost:1234"
+	COMMAND	qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot
+	COMMENT "Executing `qemu-system-x86_64 -m 8M -cpu qemu64 -hda SWEB-flat.vmdk -debugcon stdio -no-reboot`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
-#Custom target: make qemutacos
-#Run qemu in pipe monitor mode for tacos
+# qemugdb: Run qemu in debugging mode
+add_custom_target(qemugdb
+	COMMAND	qemu-system-x86_64 -s -m 8M -hda SWEB-flat.vmdk -debugcon stdio -no-reboot
+	COMMENT "Executing `gdb qemu-system-x86_64 -s -m 8M -hda SWEB-flat.vmdk -debugcon stdio -no-reboot on localhost:1234`"
+	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+	COMMAND reset -I
+	)
+
+# qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
   COMMAND qemu-system-x86_64 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio
-  COMMENT "Going to qemu-system-x86_64 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio"
+  COMMENT "Executing `qemu-system-x86_64 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  #COMMAND reset -I
   )
 
 
