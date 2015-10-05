@@ -31,49 +31,58 @@ void Loader::loadPage(pointer virtual_address)
   if(arch_memory_.checkAddressValid(virtual_address))
   {
     debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
-    program_binary_lock_.release();
     return;
   }
-  const pointer virt_page_start = virtual_address & ~(PAGE_SIZE - 1);
-  const pointer virt_page_end = virt_page_start + PAGE_SIZE;
-  ustl::list<Elf::Phdr>::iterator it;
-  // Find the first section which intersects with this page.
-  it = phdrs_.find_if([&](const Elf::Phdr & el) -> bool
-       {
-         return (el.p_paddr < virt_page_end) && ((el.p_vaddr + ustl::max(el.p_memsz, el.p_filesz)) > virt_page_start);
-       });
-
-  if(it == phdrs_.end())
+  const pointer virt_page_start_addr = virtual_address & ~(PAGE_SIZE - 1);
+  const pointer virt_page_end_addr = virt_page_start_addr + PAGE_SIZE;
+  bool found_page_content = false;
+  // get a new page for the mapping
+  size_t ppn = PageManager::instance()->allocPPN();
+  // Iterate through all sections and load the ones intersecting into the page.
+  for(ustl::list<Elf::Phdr>::iterator it = phdrs_.begin(); it != phdrs_.end(); it++)
   {
+    if((*it).p_vaddr < virt_page_end_addr)
+    {
+      if((*it).p_vaddr + (*it).p_filesz > virt_page_start_addr)
+      {
+        const pointer  virt_start_addr = ustl::max(virt_page_start_addr, (*it).p_vaddr);
+        const size_t   virt_offs_on_page = virt_start_addr - virt_page_start_addr;
+        const l_off_t  bin_start_addr = (*it).p_offset + (virt_start_addr - (*it).p_vaddr);
+        const size_t   bytes_to_load = ustl::min(virt_page_end_addr, (*it).p_vaddr + (*it).p_filesz) - virt_start_addr;
+        //debug(LOADER, "Loader::loadPage: Loading %d bytes from binary address %p to virtual address %p\n",
+        //      bytes_to_load, bin_start_addr, virt_start_addr);
+        if(readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs_on_page, bin_start_addr, bytes_to_load))
+        {
+          PageManager::instance()->freePPN(ppn);
+          debug(LOADER, "ERROR! Some parts of the content could not be load from the binary.\n");
+          program_binary_lock_.release();
+          Syscall::exit(999);
+        }
+        found_page_content = true;
+      }
+      else if((*it).p_vaddr + (*it).p_memsz > virt_page_start_addr)
+      {
+        found_page_content = true;
+      }
+    }
+  }
+
+  if(!found_page_content)
+  {
+    PageManager::instance()->freePPN(ppn);
     debug(LOADER, "Loader::loadPage: ERROR! No section refers to the given address.\n");
     program_binary_lock_.release();
     Syscall::exit(666);
   }
-  // get a new page for the mapping
-  size_t ppn = PageManager::instance()->allocPPN();
-  // Iterate through all sections and load them into the page.
-  // The rest of the page is automatically zeroed when the page is allocated.
-  // The sections are sorted, so there is no need to check the sections out of range.
-  for(; it != phdrs_.end() && (*it).p_vaddr < virt_page_end; it++)
-  {
-    if((*it).p_filesz && (*it).p_vaddr + (*it).p_filesz >= virt_page_start)
-    {
-      const pointer virt_start_addr = ustl::max(virt_page_start, (*it).p_vaddr);
-      const size_t  bin_start_addr = (*it).p_offset + (virt_start_addr - (*it).p_vaddr);
-      const size_t  bytes_to_load = ustl::min(virt_page_end, (*it).p_vaddr + (*it).p_filesz) - virt_start_addr;
-      const size_t  virt_offs = virt_start_addr - virt_page_start;
-      //debug(LOADER, "Loader::loadPage: Loading %d bytes from binary address %p to virtual address %p\n",
-      //      bytes_to_load, bin_start_addr, virt_start_addr);
-      readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs, bin_start_addr,  bytes_to_load);
-    }
-  }
-  arch_memory_.mapPage(virt_page_start / PAGE_SIZE, ppn, true, PAGE_SIZE);
+
+  arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true, PAGE_SIZE);
   debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }
-bool Loader::readFromBinary (char* buffer, l_off_t position, size_t count)
+
+bool Loader::readFromBinary (char* buffer, l_off_t position, size_t length)
 {
   VfsSyscall::lseek(fd_, position, SEEK_SET);
-  return VfsSyscall::read(fd_, buffer, count) - (int32)count;
+  return VfsSyscall::read(fd_, buffer, length) - (ssize_t)length;
 }
 
 bool Loader::readHeaders()
@@ -103,9 +112,9 @@ bool Loader::readHeaders()
   {
     return false;
   }
-  if(!cleanAndSortHeaders())
+  if(!prepareHeaders())
   {
-    debug(LOADER, "Loader::readHeaders: ERROR! There are no valid sections in the elf file.\n");
+    debug(LOADER, "Loader::readHeaders: ERROR! There are no valid sections in the binary.\n");
     return false;
   }
   return true;
@@ -123,7 +132,7 @@ bool Loader::loadExecutableAndInitProcess()
   if(!readHeaders())
     return false;
 
-  debug(LOADER, "loadExecutableAndInitProcess: Entry: %zx, num Sections %x\n", hdr_->e_entry, hdr_->e_phnum);
+  debug ( LOADER,"loadExecutableAndInitProcess: Entry: %zx, num Sections %zx\n",hdr_->e_entry, (size_t)hdr_->e_phnum );
   if (LOADER & OUTPUT_ADVANCED)
     Elf::printElfHeader ( *hdr_ );
 
@@ -238,20 +247,27 @@ Stabs2DebugInfo const *Loader::getDebugInfos()const
   return userspace_debug_info_;
 }
 
-bool Loader::cleanAndSortHeaders()
+bool Loader::prepareHeaders()
 {
-  // sort the headers by the virtual start address
-  // and throw away empty sections
-  // as well as all sections which shall not be load
-  phdrs_.sort([](const Elf::Phdr & elem1,const Elf::Phdr & elem2) -> bool
+  ustl::list<Elf::Phdr>::iterator it, it2;
+  for(it = phdrs_.begin(); it != phdrs_.end(); it++)
+  {
+    // remove sections which shall not be load from anywhere
+    if((*it).p_type != Elf::PT_LOAD || ((*it).p_memsz == 0 && (*it).p_filesz == 0))
     {
-      return elem1.p_vaddr < elem2.p_vaddr;
-    });
-
-  phdrs_.remove_if([](const Elf::Phdr & elem) -> bool
+      it = phdrs_.erase(it, 1) - 1;
+      continue;
+    }
+    // check if some sections shall load data from the binary to the same location
+    for(it2 = phdrs_.begin(); it2 != it; it2++)
     {
-      return !((elem.p_memsz == 0 && elem.p_filesz == 0) || elem.p_type != 1);
-    });
-  return phdrs_.size();
-
+      if(ustl::max((*it).p_vaddr, (*it2).p_vaddr) <
+         ustl::min((*it).p_vaddr + (*it).p_filesz, (*it2).p_vaddr + (*it2).p_filesz))
+      {
+        debug(LOADER, "Loader::cleanAndSortHeaders: Failed to load the segments, some of them overlap!\n");
+        return false;
+      }
+    }
+  }
+  return phdrs_.size() > 0;
 }

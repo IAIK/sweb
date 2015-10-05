@@ -43,8 +43,7 @@ class Loader
     bool loadExecutableAndInitProcess();
 
     /**
-     *loads one page slow by its virtual address: gets a free page, maps it,
-     *zeros it out, copies the page, one byte at a time
+     * loads one page by its virtual address: gets a free page, copies the page, maps it
      * @param virtual_address virtual address where to find the page to load
      */
     void loadPage(pointer virtual_address);
@@ -72,14 +71,15 @@ class Loader
 
     /**
      * clean up and sort the elf headers for faster access.
+     * @return true in case the headers could be prepared
      */
-    bool cleanAndSortHeaders();
+    bool prepareHeaders();
 
 
     bool loadDebugInfoIfAvailable();
 
 
-    bool readFromBinary (char* buffer, l_off_t position, size_t count);
+    bool readFromBinary (char* buffer, l_off_t position, size_t length);
 
 
     size_t fd_;

@@ -159,16 +159,21 @@ extern "C" void irqHandler_65()
 
 extern Stabs2DebugInfo const *kernel_debug_info;
 
-extern "C" void arch_pageFaultHandler();
-extern "C" void pageFaultHandler(uint32 address, uint32 error)
+
+extern "C" inline void printPageFaultInfo(uint32_t address, uint32_t error)
 {
   //--------Start "just for Debugging"-----------
+  const bool present = error & FLAG_PF_PRESENT;
+  const bool userspace = error & FLAG_PF_USER;
+  const bool writing = error & FLAG_PF_RDWR;
+  const bool reserved = error & FLAG_PF_RSVD;
+  const bool caused_by = error & FLAG_PF_INSTR_FETCH;
 
-  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %p %d:%s, switch_to_userspace_: %d\n",
-      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getTID(),
-      currentThread->getName(), currentThread->switch_to_userspace_);
 
-  debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
+  debug(PAGEFAULT, "Address: %x, Present: %d, Writing: %d, Userspace: %d, Rsvc: %d, caused by: %s fetch"
+        " - currentThread: %p %d"":%s, switch_to_userspace_: %d\n",
+        address, present, writing, userspace, reserved,  caused_by ? "instruction" : "operand",
+        currentThread, currentThread->getTID(), currentThread->getName(), currentThread->switch_to_userspace_);
 
   const Stabs2DebugInfo* deb = kernel_debug_info;
   assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
@@ -177,78 +182,81 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   {
     assert(currentThread->loader_ && "User Threads need to have a Loader");
     assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
-           "[PageFaultHandler] User and Kernel CR3 register values differ, this most likely is a bug!"));
+           "User and Kernel CR3 register values differ, this most likely is a bug!"));
     deb = currentThread->loader_->getDebugInfos();
     registers_ = currentThread->user_registers_;
   }
   if(deb && registers_->eip)
   {
-    debug(PM, "EIP: %x\n", registers_->eip);
-    debug(PM, "[PageFaultHandler] This pagefault was probably caused by:");
+    debug(PAGEFAULT, "This pagefault was probably caused by:");
     deb->printCallInformation(registers_->eip);
   }
 
   if(!address)
   {
-    debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");
+    debug(PAGEFAULT, "Maybe you're dereferencing a null-pointer!\n");
   }
-
   if (error)
   {
-    if (error & FLAG_PF_PRESENT)
+    if (present)
     {
-      debug(PM, "[PageFaultHandler] We got a pagefault even though the page mapping is present\n");
-      debug(PM, "[PageFaultHandler] %s tried to %s address %x\n", (error & FLAG_PF_USER) ? "A userprogram" : "Some kernel code",
-        (error & FLAG_PF_RDWR) ? "write to" : "read from", address);
+      debug(PAGEFAULT, "We got a pagefault even though the page mapping is present\n");
+      debug(PAGEFAULT, "%s tried to %s address %x\n", userspace ? "A userprogram" : "Some kernel code",
+            writing ? "write to" : "read from", address);
 
       RESOLVEMAPPING(currentThread->loader_->arch_memory_.getRootOfPagingStructure(), address / PAGE_SIZE);
+
       if (page_directory[pde_vpn].pt.present)
       {
         if (page_directory[pde_vpn].page.size)
         {
-          debug(PM, "[PageFaultHandler] Page %d is a 4MiB Page\n", address / PAGE_SIZE);
-          debug(PM, "[PageFaultHandler] Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
-              (int)page_directory[pde_vpn].page.writeable, (int)page_directory[pde_vpn].page.user_access);
+          debug(PAGEFAULT, "Page %d is a 4MiB Page\n", address / PAGE_SIZE);
+          debug(PAGEFAULT, "Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
+                page_directory[pde_vpn].page.writeable, page_directory[pde_vpn].page.user_access);
         }
         else
         {
           PageTableEntry *pte_base = (PageTableEntry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-          debug(PM, "[PageFaultHandler] Page %d is a 4KiB Page\n", address / PAGE_SIZE);
-          debug(PM, "[PageFaultHandler] Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
-                (int)pte_base[pte_vpn].present, (int)pte_base[pte_vpn].writeable, (int)pte_base[pte_vpn].user_access);
+          debug(PAGEFAULT, "Page %d is a 4KiB Page\n", address / PAGE_SIZE);
+          debug(PAGEFAULT, "Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
+                pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
         }
       }
       else
-        debug(PM, "[PageFaultHandler] WTF? PDE non-present but Exception present flag was set\n");
+        debug(PAGEFAULT, "WTF? PDE non-present but Exception present flag was set\n");
     }
     else
     {
       if (address >= 2U*1024U*1024U*1024U)
       {
-        debug(PM, "[PageFaultHandler] The virtual page we accessed was not mapped to a physical page\n");
-        if (error & FLAG_PF_USER)
+        debug(PAGEFAULT, "The virtual page we accessed was not mapped to a physical page\n");
+        if (userspace)
         {
-          debug(PM, "[PageFaultHandler] WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
-          debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
+          debug(PAGEFAULT, "WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
+          debug(PAGEFAULT, "WARNING: Most likey there is an pointer error somewhere\n");
         }
         else
         {
           // remove this error check if your implementation swaps out kernel pages
-          debug(PM, "[PageFaultHandler] WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
-          debug(PM, "[PageFaultHandler] WARNING: Most likey there is an pointer error somewhere\n");
+          debug(PAGEFAULT, "WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
+          debug(PAGEFAULT, "WARNING: Most likey there is an pointer error somewhere\n");
         }
       }
       else
       {
-        //debug(PM, "The virtual page we accessed was not mapped to a physical page\n");
-        //debug(PM, "this is normal and the Loader will propably take care of it now\n");
+        //debug(PAGEFAULT, "The virtual page we accessed was not mapped to a physical page\n");
+        //debug(PAGEFAULT, "this is normal and the Loader will propably take care of it now\n");
       }
     }
   }
-
   ArchThreads::printThreadRegisters(currentThread, false);
+}
 
-  //--------End "just for Debugging"-----------
+extern "C" void arch_pageFaultHandler();
+extern "C" void pageFaultHandler(uint32 address, uint32 error)
+{
+
+  printPageFaultInfo(address, error);
 
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
@@ -256,17 +264,21 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
+  const bool page_present = (error & FLAG_PF_PRESENT);
+  const bool user_pagefault = (error & FLAG_PF_PRESENT);
   //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (!(error & FLAG_PF_PRESENT) && address < 2U * 1024U * 1024U * 1024U && currentThread->loader_)
+  if (!page_present && address < 2U * 1024U * 1024U * 1024U && currentThread->loader_)
   {
-    currentThread->loader_->loadPage(address); //load stuff
+    currentThread->loader_->loadPage(address);
   }
   else
   {
-    debug(PM, "[PageFaultHandler] !(error & FLAG_PF_PRESENT): %x, address: %x, loader_: %p\n",
-          !(error & FLAG_PF_PRESENT), address < 2U * 1024U * 1024U * 1024U, currentThread->loader_);
+    debug(PAGEFAULT, "ERROR: The virtual page of address %x (%s-address) is present,"
+          "the pagefault was triggered by thread %s(%p), which is a %s""thread.\n",
+          address, address > 2U * 1024U * 1024U * 1024U ? "kernel" : "user", currentThread->getName(),
+          currentThread, currentThread->user_registers_ ? "user" : "kernel");
 
-    if (!(error & FLAG_PF_USER))
+    if(user_pagefault)
       currentThread->printBacktrace(true);
 
     if (currentThread->loader_)

@@ -71,6 +71,18 @@ class Elf
     typedef int32 Elf32_Sword;
     typedef uint32 Elf32_Word;
 
+// PHDR SECTION TYPES
+    static const Elf32_Word PT_NULL      = 0;
+    static const Elf32_Word PT_LOAD      = 1;
+    static const Elf32_Word PT_DYNAMIC   = 2;
+    static const Elf32_Word PT_INTERP    = 3;
+    static const Elf32_Word PT_NOTE      = 4;
+    static const Elf32_Word PT_SHLIB     = 5;
+    static const Elf32_Word PT_PHDR      = 6;
+    static const Elf32_Word PT_LOPROC    = 7;
+    static const Elf32_Word PT_HIPROC    = 8;
+    static const Elf32_Word PT_GNU_STACK = 9;
+
     struct sELF32_Ehdr
     {
         uint8 e_ident[EI_NIDENT];

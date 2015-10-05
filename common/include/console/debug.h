@@ -14,10 +14,11 @@ enum AnsiColor
 
 #define OUTPUT_ENABLED 0x80000000
 #define OUTPUT_ADVANCED 0x70000000
+#define OUTPUT_FLAGS (OUTPUT_ENABLED | OUTPUT_ADVANCED)
 
 #ifndef NOCOLOR
 #define DEBUG_FORMAT_STRING "\033[0;%zum[%-11s]\033[1;m"
-#define COLOR_PARAM(flag) (flag & ~OUTPUT_ENABLED), #flag
+#define COLOR_PARAM(flag) (flag & ~OUTPUT_FLAGS), #flag
 #else
 #define DEBUG_FORMAT_STRING "[%-11s]"
 #define COLOR_PARAM(flag)
@@ -54,6 +55,7 @@ const size_t USERTRACE          = Ansi_Red     | OUTPUT_ENABLED;
 
 //group memory management
 const size_t PM                 = Ansi_Green | OUTPUT_ENABLED;
+const size_t PAGEFAULT          = Ansi_Green | OUTPUT_ENABLED;
 const size_t KMM                = Ansi_Yellow;
 
 //group driver

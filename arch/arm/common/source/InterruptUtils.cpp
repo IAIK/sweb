@@ -41,14 +41,14 @@ void pageFaultHandler(uint32 address, uint32 type)
     asm("mrc p15, 0, r4, c6, c0, 0\n\
          mov %[v], r4\n": [v]"=r" (address));
   }
-  debug(PM, "[PageFaultHandler] Address: %x (%s) - currentThread: %p %d:%s, switch_to_userspace_: %d\n",
+  debug(PAGEFAULT, "Address: %x (%s) - currentThread: %p %d:%s, switch_to_userspace_: %d\n",
       address, type == 0x3 ? "Instruction Fetch" : "Data Access", currentThread, currentThread->getTID(), currentThread->getName(), currentThread->switch_to_userspace_);
 
   if(!address)
-    debug(PM, "[PageFaultHandler] Maybe you're dereferencing a null-pointer!\n");
+    debug(PAGEFAULT, "Maybe you're dereferencing a null-pointer!\n");
 
   if(currentThread->loader_->arch_memory_.checkAddressValid(address))
-    debug(PM, "[PageFaultHandler] There is something wrong: The address is actually mapped!\n");
+    debug(PAGEFAULT, "There is something wrong: The address is actually mapped!\n");
 
   if (address != last_address)
   {
@@ -59,7 +59,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   {
     if (count++ == 5)
     {
-      debug(PM, "[PageFaultHandler] 5 times the same pagefault? That should not happen -> kill Thread\n");
+      debug(PAGEFAULT, "5 times the same pagefault? That should not happen -> kill Thread\n");
       currentThread->kill();
     }
   }
@@ -81,13 +81,13 @@ void pageFaultHandler(uint32 address, uint32 type)
     }
     else
     {
-      debug(PM, "[PageFaultHandler] Memory Access Violation: address: %x, loader_: %p\n", address, currentThread->loader_);
+      debug(PAGEFAULT, "Memory Access Violation: address: %x, loader_: %p\n", address, currentThread->loader_);
       Syscall::exit(9999);
     }
   }
   else
   {
-    debug(PM, "[PageFaultHandler] Kernel Page Fault! Should never happen...\n");
+    debug(PAGEFAULT, "Kernel Page Fault! Should never happen...\n");
     currentThread->kill();
   }
   ArchInterrupts::disableInterrupts();
