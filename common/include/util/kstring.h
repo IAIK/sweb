@@ -6,10 +6,15 @@
 #include "types.h"
 #include "paging-definitions.h"
 
-// convert a define to a string
-#ifndef xstr
-#define macroToStringWrapper(s) #s
-#define macroToString(_s) macroToStringWrapper(_s)
+/**
+ * Convert a define to a string.
+ * This macro is used to fi. resolve defined numbers within a constant string.
+ * @param _s the macro to convert to a string
+ * @return the string which is resolved by the macro
+ */
+#ifndef macroToString
+#define _macroToString(_s) #_s
+#define macroToString(_s) _macroToString(_s)
 #endif
 
 #ifdef __cplusplus

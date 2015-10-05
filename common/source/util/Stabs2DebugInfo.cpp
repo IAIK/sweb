@@ -172,11 +172,11 @@ void Stabs2DebugInfo::printCallInformation(pointer address) const
   }
   if(line >= 0)
   {
-    kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s: %zu \n", address, name, line );
+    kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s:%zu \n", address, name, line );
   }
   else
   {
-    kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s+ %zx\n", address, name, -line);
+    kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s+%zx\n", address, name, -line);
   }
 }
 

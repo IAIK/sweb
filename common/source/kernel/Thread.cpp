@@ -127,7 +127,7 @@ void Thread::printBacktrace(bool use_stored_registers)
   pointer call_stack[MAX_STACK_FRAMES];
   size_t count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
 
-  debug(BACKTRACE, "=== Begin of backtrace for kernel thread <%s> ===\n", getName());
+  debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
   for(size_t i = 0; i < count; ++i)
   {
     debug(BACKTRACE, " ");
@@ -146,7 +146,7 @@ void Thread::printBacktrace(bool use_stored_registers)
       deb->printCallInformation(call_stack[i]);
     }
   }
-  debug(BACKTRACE, "=== End of backtrace for thread <%s> ===\n", getName());
+  debug(BACKTRACE, "=== End of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
 }
 
 void Thread::addJob()
