@@ -102,7 +102,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     uint32 end_page = (ArchCommon::getModuleEndAddress(i) & 0x7FFFFFFF) / PAGE_SIZE;
     debug(PM, "Ctor: module: start_page: %d, end_page: %d\n", start_page, end_page);
     for (size_t k = Min(start_page, number_of_pages_); k <= Min(end_page, number_of_pages_ - 1); ++k)
-      Bitmap::unsetBit(page_usage_table, used_pages, k);
+      Bitmap::setBit(page_usage_table, used_pages, k);
   }
   // determine lowest unreserved page
   for (size_t i = 0; i < boot_bitmap_size; ++i)

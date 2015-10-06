@@ -22,57 +22,57 @@
 
 typedef struct
 {
-  uint64 present                    :1;
-  uint64 reserved_1                 :2;  // must be 0
-  uint64 write_through              :1;
-  uint64 cache_disabled             :1;
-  uint64 reserved_2                 :4;  // must be 0
-  uint64 ignored_3                  :1;
-  uint64 ignored_2                  :1;
-  uint64 ignored_1                  :1;
-  uint64 page_directory_ppn         :24; // MAXPHYADDR (36) - 12
-  uint64 reserved_3                 :28; // must be 0
+  size_t present                    :1;
+  size_t reserved_1                 :2;  // must be 0
+  size_t write_through              :1;
+  size_t cache_disabled             :1;
+  size_t reserved_2                 :4;  // must be 0
+  size_t ignored_3                  :1;
+  size_t ignored_2                  :1;
+  size_t ignored_1                  :1;
+  size_t page_directory_ppn         :24; // MAXPHYADDR (36) - 12
+  size_t reserved_3                 :28; // must be 0
 } __attribute__((__packed__)) PageDirPointerTableEntry;
 
 struct PageDirPageTableEntry
 {
-  uint64 present                   :1;
-  uint64 writeable                 :1;
-  uint64 user_access               :1;
-  uint64 write_through             :1;
-  uint64 cache_disabled            :1;
-  uint64 accessed                  :1;
-  uint64 ignored_5                 :1;
-  uint64 size                      :1;
-  uint64 ignored_4                 :1;
-  uint64 ignored_3                 :1;
-  uint64 ignored_2                 :1;
-  uint64 ignored_1                 :1;
-  uint64 page_table_ppn            :24; // MAXPHYADDR (36) - 12
-  uint64 reserved_2                :27; // must be 0
-  uint64 execution_disabled        :1;
+  size_t present                   :1;
+  size_t writeable                 :1;
+  size_t user_access               :1;
+  size_t write_through             :1;
+  size_t cache_disabled            :1;
+  size_t accessed                  :1;
+  size_t ignored_5                 :1;
+  size_t size                      :1;
+  size_t ignored_4                 :1;
+  size_t ignored_3                 :1;
+  size_t ignored_2                 :1;
+  size_t ignored_1                 :1;
+  size_t page_table_ppn            :24; // MAXPHYADDR (36) - 12
+  size_t reserved_2                :27; // must be 0
+  size_t execution_disabled        :1;
 } __attribute__((__packed__));
 
 struct PageDirPageEntry
 {
-  uint64 present                   :1;
-  uint64 writeable                 :1;
-  uint64 user_access               :1;
-  uint64 write_through             :1;
-  uint64 cache_disabled            :1;
-  uint64 accessed                  :1;
-  uint64 dirty                     :1;
-  uint64 size                      :1;
-  uint64 global_page               :1;
-  uint64 ignored_3                 :1;
-  uint64 ignored_2                 :1;
-  uint64 ignored_1                 :1;
+  size_t present                   :1;
+  size_t writeable                 :1;
+  size_t user_access               :1;
+  size_t write_through             :1;
+  size_t cache_disabled            :1;
+  size_t accessed                  :1;
+  size_t dirty                     :1;
+  size_t size                      :1;
+  size_t global_page               :1;
+  size_t ignored_3                 :1;
+  size_t ignored_2                 :1;
+  size_t ignored_1                 :1;
 
-  uint64 pat                       :1;
-  uint64 reserved                  :8;
-  uint64 page_ppn                  :15; // MAXPHYADDR (36) - 21
-  uint64 reserved_2                :27; // must be 0
-  uint64 execution_disabled        :1;
+  size_t pat                       :1;
+  size_t reserved                  :8;
+  size_t page_ppn                  :15; // MAXPHYADDR (36) - 21
+  size_t reserved_2                :27; // must be 0
+  size_t execution_disabled        :1;
 } __attribute__((__packed__));
 
 typedef union
@@ -83,21 +83,21 @@ typedef union
 
 typedef struct
 {
-  uint64 present                   :1;
-  uint64 writeable                 :1;
-  uint64 user_access               :1;
-  uint64 write_through             :1;
-  uint64 cache_disabled            :1;
-  uint64 accessed                  :1;
-  uint64 dirty                     :1;
-  uint64 pat                       :1;
-  uint64 global_page               :1;
-  uint64 ignored_3                 :1;
-  uint64 ignored_2                 :1;
-  uint64 ignored_1                 :1;
-  uint64 page_ppn                  :24; // MAXPHYADDR (36) - 12
-  uint64 reserved_2                :27; // must be 0
-  uint64 execution_disabled        :1;
+  size_t present                   :1;
+  size_t writeable                 :1;
+  size_t user_access               :1;
+  size_t write_through             :1;
+  size_t cache_disabled            :1;
+  size_t accessed                  :1;
+  size_t dirty                     :1;
+  size_t pat                       :1;
+  size_t global_page               :1;
+  size_t ignored_3                 :1;
+  size_t ignored_2                 :1;
+  size_t ignored_1                 :1;
+  size_t page_ppn                  :24; // MAXPHYADDR (36) - 12
+  size_t reserved_2                :27; // must be 0
+  size_t execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
 
 

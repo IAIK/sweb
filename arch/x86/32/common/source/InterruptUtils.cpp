@@ -160,7 +160,7 @@ extern "C" void irqHandler_65()
 extern Stabs2DebugInfo const *kernel_debug_info;
 
 
-extern "C" inline void printPageFaultInfo(uint32_t address, uint32_t error)
+extern "C" inline void printPageFaultInfo(size_t address, size_t error)
 {
   //--------Start "just for Debugging"-----------
   const bool present = error & FLAG_PF_PRESENT;
@@ -210,15 +210,15 @@ extern "C" inline void printPageFaultInfo(uint32_t address, uint32_t error)
       {
         if (page_directory[pde_vpn].page.size)
         {
-          debug(PAGEFAULT, "Page %d is a 4MiB Page\n", address / PAGE_SIZE);
-          debug(PAGEFAULT, "Page %d Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
+          debug(PAGEFAULT, "Page 0x%zx is a 4MiB Page\n", address / PAGE_SIZE);
+          debug(PAGEFAULT, "Page 0x%zx Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
                 page_directory[pde_vpn].page.writeable, page_directory[pde_vpn].page.user_access);
         }
         else
         {
           PageTableEntry *pte_base = (PageTableEntry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-          debug(PAGEFAULT, "Page %d is a 4KiB Page\n", address / PAGE_SIZE);
-          debug(PAGEFAULT, "Page %d Flags are: present:%d, writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
+          debug(PAGEFAULT, "Page 0x%zx is a 4KiB Page\n", address / PAGE_SIZE);
+          debug(PAGEFAULT, "Page 0x%zx Flags are: present:%zu, writeable:%zu, userspace_accessible:%zu,\n", address / PAGE_SIZE,
                 pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
         }
       }
