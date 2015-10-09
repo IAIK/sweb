@@ -45,7 +45,7 @@ class Thread
      * Marks the thread to be deleted by the scheduler.
      * DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
      */
-    void kill();
+    virtual void kill();
 
     /**
      * runs whatever the user wants it to run;
