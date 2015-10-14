@@ -87,6 +87,25 @@ void kprintfd(const char *fmt, ...)
   va_list args;
 
   va_start(args, fmt);
-  kvprintf(fmt, kprintfd_func, 0, 10, args);
+
+  int string_size = 0;
+  while(fmt[string_size] != '\0')
+  {
+    string_size++;
+  }
+
+  // only append a newline character if there isn't one already
+  // and the string is not part of context coloring
+  if (fmt[string_size - 1] == '\n'
+      || !strncmp(fmt, DEBUG_FORMAT_STRING, string_size))
+  {
+    kvprintf(fmt, kprintfd_func, 0, 10, args);
+  }
+  else
+  {
+    kvprintf(fmt, kprintfd_func, 0, 10, args);
+    kvprintf("\n", kprintfd_func, 0, 10, args);
+  }
+
   va_end(args);
 }
