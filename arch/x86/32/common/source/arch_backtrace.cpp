@@ -20,8 +20,8 @@ struct StackFrame
 
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {
-  if (!call_stack || (use_stored_registers && !thread) ||
-      (!use_stored_registers && thread != currentThread) || size <= 1)
+  if (!call_stack || (use_stored_registers && !thread) || (!use_stored_registers && thread != currentThread) ||
+      size <= 1 || (thread && thread->switch_to_userspace_))
   {
     return 0;
   }
@@ -75,10 +75,17 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   void *StackStart = (void*)0x7fffffff;
   void *StackEnd = (void*)thread->user_registers_->esp;
 
+  int i = 0;
+  if (thread->switch_to_userspace_)
+  {
+    CurrentFrame = (StackFrame*)thread->user_registers_->ebp;
+    call_stack[0] = thread->user_registers_->eip;
+    i = 1;
+  }
+
   void *StartAddress = (void*)0x1;
   void *EndAddress = (void*)0x80000000;
 
-  int i = 0;
   while (i < size &&
       ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
       ADDRESS_BETWEEN(StackEnd, StartAddress, EndAddress) &&

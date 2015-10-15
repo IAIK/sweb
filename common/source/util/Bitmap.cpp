@@ -101,12 +101,19 @@ void Bitmap::bmprint()
 
 void Bitmap::bmprint(uint8* b, size_t n, size_t num_bits_set)
 {
-  kprintfd("\n-----Bitmap: size=%zd, num_bits_set=%zd-----\n", n, num_bits_set);
-  for (uint32 i = 0; i < n; i++)
+  kprintfd("\n---------------------Bitmap: size=%zd, num_bits_set=%zd---------------------\n"
+      "       0x0      0x8      0x10     0x18     0x20     0x28     0x30     0x38\n", n, num_bits_set);
+  for (size_t i = 0; i < n; i++)
   {
+    if (i % 64 == 0)
+      kprintfd("%05zx| ",i);
     kprintfd("%d", getBit(b, i));
+    if (i % 8 == 7)
+      kprintfd(" ");
+    if (i % 64 == 63)
+      kprintfd("\n");
   }
-  kprintfd("\n-----Bitmap:end------\n");
+  kprintfd("\n----------------------------------Bitmap:end----------------------------------\n");
 }
 
 size_t Bitmap::getSize()

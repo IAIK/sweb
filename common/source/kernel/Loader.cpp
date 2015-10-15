@@ -264,7 +264,7 @@ bool Loader::prepareHeaders()
       if(ustl::max((*it).p_vaddr, (*it2).p_vaddr) <
          ustl::min((*it).p_vaddr + (*it).p_filesz, (*it2).p_vaddr + (*it2).p_filesz))
       {
-        debug(LOADER, "Loader::cleanAndSortHeaders: Failed to load the segments, some of them overlap!\n");
+        debug(LOADER, "Loader::prepareHeaders: Failed to load the segments, some of them overlap!\n");
         return false;
       }
     }
