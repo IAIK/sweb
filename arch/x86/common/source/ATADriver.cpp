@@ -128,7 +128,7 @@ int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
   outportbp(port + 5, high); // cylinder high
 
   /* Wait for drive to set DRDY */
-  TIMEOUT_CHECK(!inportbp(port + 7) & 0x40,TIMEOUT_WARNING(); return -1;);
+  TIMEOUT_CHECK((!inportbp(port + 7)) & 0x40,TIMEOUT_WARNING(); return -1;);
 
   return 0;
 }
