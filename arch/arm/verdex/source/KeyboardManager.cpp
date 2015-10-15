@@ -45,7 +45,6 @@ void KeyboardManager::serviceIRQ( void )
     if(main_console)
     {
       keyboard_buffer_.put(*(volatile unsigned long*)SERIAL_BASE); // put it inside the buffer
-      main_console->addJob();
     }
   }
 }
