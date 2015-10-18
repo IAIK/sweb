@@ -15,10 +15,6 @@ PageManager pm;
 
 PageManager* PageManager::instance_ = 0;
 
-#define DYNAMIC_KMM (0) // Please note that this means that the KMM depends on the page manager
-// and you will have a harder time implementing swapping. Pros only!
-
-
 PageManager* PageManager::instance()
 {
   if (unlikely(!instance_))

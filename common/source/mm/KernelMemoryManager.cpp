@@ -95,7 +95,8 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
     return false;
   }
   freeSegment(m_segment);
-  m_segment->freed_at_ = called_by;
+  if (m_segment->marker_ == 0xdeadbeef)
+    m_segment->freed_at_ = called_by;
 
   unlockKMM();
   return true;
@@ -161,7 +162,8 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
     freeSegment(m_segment);
-    m_segment->freed_at_ = called_by;
+    if (m_segment->marker_ == 0xdeadbeef)
+      m_segment->freed_at_ = called_by;
     unlockKMM();
     return new_address;
   }
@@ -223,7 +225,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
       if(unlikely(mem[i] != 0))
       {
 
-        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p\n", mem + i);
+        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%x)\n", mem + i, mem[i]);
         if(this_one->freed_at_)
         {
           if(kernel_debug_info)
@@ -425,6 +427,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
   assert(base_break_ <= (size_t)kernel_break_ + size && "kernel heap break value corrupted");
   assert((reserved_max_ == 0 || ((kernel_break_ - base_break_) + size) <= reserved_max_) && "maximum kernel heap size reached");
+  assert(DYNAMIC_KMM && "ksbrk should only be called if DYNAMIC_KMM is 1 - not in baseline SWEB");
   if(size != 0)
   {
     size_t old_brk = kernel_break_;
