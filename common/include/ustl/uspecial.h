@@ -126,61 +126,6 @@ istringstream& operator>> (istringstream& is, bitset<Size>& v)
     return is;
 }
 
-//----{ tuple }---------------------------------------------------------
-
-template <size_t N, typename T>
-inline istream& operator>> (istream& is, tuple<N,T>& v)
-    { v.read (is); return is; }
-template <size_t N, typename T>
-inline ostream& operator<< (ostream& os, const tuple<N,T>& v)
-    { v.write (os); return os; }
-template <size_t N, typename T>
-inline ostringstream& operator<< (ostringstream& os, const tuple<N,T>& v)
-    { v.text_write (os); return os; }
-
-template <size_t N, typename T>
-struct numeric_limits<tuple<N,T> > {
-    typedef numeric_limits<T> value_limits;
-    static inline tuple<N,T> min (void) { tuple<N,T> v; fill (v, value_limits::min()); return v; }
-    static inline tuple<N,T> max (void) { tuple<N,T> v; fill (v, value_limits::max()); return v; }
-    static const bool is_signed = value_limits::is_signed;
-    static const bool is_integer = value_limits::is_integer;
-    static const bool is_integral = value_limits::is_integral;
-};
-
-template <size_t N, typename T>
-inline size_t stream_align_of (const tuple<N,T>&) { return stream_align_of (NullValue<T>()); }
-
-template <typename T, typename IntT>
-inline ostringstream& chartype_text_write (ostringstream& os, const T& v)
-{
-    os.format (_FmtPrtChr[!isprint(v)], v);
-    return os;
-}
-
-template <>
-inline ostringstream& container_element_text_write (ostringstream& os, const uint8_t& v)
-{ return chartype_text_write<uint8_t, unsigned int> (os, v); }
-template <>
-inline ostringstream& container_element_text_write (ostringstream& os, const int8_t& v)
-{ return chartype_text_write<int8_t, int> (os, v); }
-
-//----{ matrix }--------------------------------------------------------
-
-/// Writes tuple \p v into stream \p os.
-template <size_t NX, size_t NY, typename T>
-ostringstream& operator<< (ostringstream& os, const matrix<NX,NY,T>& v)
-{
-    os << '(';
-    for (uoff_t row = 0; row < NY; ++ row) {
-  os << '(';
-        for (uoff_t column = 0; column < NX; ++column)
-      os << v[row][column] << ",)"[column == NX-1];
-    }
-    os << ')';
-    return os;
-}
-
 //----{ long4grain }----------------------------------------------------
 
 #if SIZE_OF_LONG == 8 && HAVE_INT64_T
