@@ -12,7 +12,8 @@ set(KERNEL_IMAGE_OBJCOPY )
 # pflash: Create the flash image for the verdex board
 add_custom_target(pflash ALL
   DEPENDS kernel
-	COMMAND	${PROJECT_SOURCE_DIR}/arch/arm/verdex/utils/makeflash.sh ${PROJECT_SOURCE_DIR}/arch/arm/verdex/utils/u-boot-verdex-400-r1604.bin
+  COMMAND chmod +x ${PROJECT_SOURCE_DIR}/arch/arm/verdex/utils/makeflash.sh
+  COMMAND ${PROJECT_SOURCE_DIR}/arch/arm/verdex/utils/makeflash.sh ${PROJECT_SOURCE_DIR}/arch/arm/verdex/utils/u-boot-verdex-400-r1604.bin
 	COMMENT "Creating the flash image"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	)
