@@ -163,14 +163,32 @@ void initialiseBootTimePaging()
     pde_start[i+768].page.size = 1;
     pde_start[i+768].page.page_ppn = i;
   }
+
+  pde_start[763].page.present = 1;
+  pde_start[763].page.writeable = 1;
+  pde_start[763].page.size = 1;
+  //pde_start[763].page.use_4_m_pages = 1;
+  pde_start[763].page.cache_disabled = 1;
+  pde_start[763].page.write_through = 1;
+  pde_start[763].page.page_ppn = 1019;
+
+  // page used for AP start up
+  pde_start[762].page.present = 1;
+  pde_start[762].page.writeable = 1;
+  pde_start[762].page.size = 1;
+  //pde_start[762].page.use_4_m_pages = 1;
+  pde_start[762].page.cache_disabled = 1;
+  pde_start[762].page.write_through = 1;
+  pde_start[762].page.page_ppn = 0;
 }
 
 void removeBootTimeIdentMapping()
 {
   uint32 i;
-
+/*
   for (i=0;i<5;++i)
   {
     kernel_page_directory_start[i].page.present=0;
   }
+  */
 }

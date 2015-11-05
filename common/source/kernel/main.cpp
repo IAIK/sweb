@@ -17,6 +17,7 @@
 #include "Scheduler.h"
 #include "ArchCommon.h"
 #include "ArchThreads.h"
+#include "SegmentUtils.h"
 #include "kernel/Mutex.h"
 #include "panic.h"
 #include "debug_bochs.h"
@@ -48,6 +49,10 @@
 
 #include "user_progs.h"
 
+#include "mp_info.h"
+#include "cpuid.h"
+#include "ipi_manager.h"
+
 extern void* kernel_end_address;
 
 extern "C" void startup();
@@ -56,6 +61,8 @@ extern Console* main_console;
 
 uint32 boot_completed;
 uint32 we_are_dying;
+uint32 ap_boot_completed;
+uint32 bsp_boot_completed;
 FsWorkingDirectory default_working_dir;
 
 /**
@@ -65,8 +72,12 @@ FsWorkingDirectory default_working_dir;
  */
 void startup()
 {
+  currentThread = 0;
+  currentThreadInfo = 0;
   we_are_dying = 0;
   boot_completed = 0;
+  ap_boot_completed = 0;
+  bsp_boot_completed = 0;
   writeLine2Bochs("SWEB starting...\n");
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   pointer end_address = ArchCommon::getFreeKernelMemoryEnd();
@@ -108,7 +119,11 @@ void startup()
   ArchThreads::initialise();
   debug ( MAIN, "Interupts init\n" );
   ArchInterrupts::initialise();
+  debug ( MAIN, "Segments init\n" );
+  SegmentUtils::load(0);
+  core = 0;
 
+  debug ( MAIN, "Debug init\n" );
   ArchCommon::initDebug();
 
   debug ( MAIN, "Block Device creation\n" );
@@ -131,6 +146,11 @@ void startup()
   extern Mutex global_fd_lock;
   new (&global_fd_lock) Mutex("global_fd_lock");
 
+  // pint mc info and init multiprocessing
+  MultiProcessorInfo::getInstance()->printSystemInfo();
+  // init Application Processors
+  IPIManager::getInstance()->initAPs();
+
   // the default working directory info
   debug ( MAIN, "creating a default working Directory\n" );
   new (&default_working_dir) FsWorkingDirectory();
@@ -141,7 +161,7 @@ void startup()
   debug ( MAIN, "main_console->setWorkingDirInfo done\n" );
 
   debug ( MAIN, "root_fs_info root name: %s\t pwd name: %s\n",
-      main_console->getWorkingDirInfo()->getRootDirPath(), main_console->getWorkingDirInfo()->getWorkingDirPath() );
+  main_console->getWorkingDirInfo()->getRootDirPath(), main_console->getWorkingDirInfo()->getWorkingDirPath() );
 
   debug ( MAIN, "Timer enable\n" );
   ArchInterrupts::enableTimer();
@@ -161,12 +181,20 @@ void startup()
 
   Scheduler::instance()->printThreadList();
 
-  kprintf ( "Now enabling Interrupts...\n" );
+  bsp_boot_completed = 1;
+  debug ( MAIN, "BSP now waiting for AP...\n" );
+
+  while(!ap_boot_completed);
+  debug ( MAIN, "BSP gets AP finished signal...\n" );
+
   boot_completed = 1;
   ArchInterrupts::enableInterrupts();
 
-  Scheduler::instance()->yield();
+  while(1);
 
-  //not reached
+  debug ( MAIN, "Now going to yield...\n" );
+  ArchThreads::yield();
+
   assert ( false );
 }
+

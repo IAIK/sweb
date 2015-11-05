@@ -13,8 +13,9 @@
 class Thread;
 class ArchThreadInfo;
 
-extern ArchThreadInfo *currentThreadInfo;
-extern Thread *currentThread;
+extern __thread ArchThreadInfo *currentThreadInfo;
+extern __thread Thread *currentThread;
+extern __thread uint32 core;
 
 
 /**
@@ -74,6 +75,8 @@ class Scheduler
      * prints a List of all Threads using kprintfd
      */
     void printThreadList();
+
+    void printThreadListNoLocking();
 
     /**
      * prints a stack trace for each thread
@@ -156,7 +159,7 @@ class Scheduler
      * locks the thread-list against concurrent access by prohibiting a thread switch
      * don't call this from an Interrupt-Handler, since Atomicity won't be guaranteed
      */
-    void lockScheduling();
+    bool lockScheduling(uint32 by_schedule = 0);
 
     /**
      * Scheduler internal lock abstraction method

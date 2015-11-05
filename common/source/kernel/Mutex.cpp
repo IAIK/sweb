@@ -60,7 +60,7 @@ void Mutex::acquire(const char* debug_info)
 {
   if (likely(boot_completed))
   {
-    //kprintfd("Mutex::acquire %x %s, %s\n", this, name_, debug_info);
+    kprintfd("Mutex::acquire %x %s, %s\n", this, name_, debug_info);
     checkDeadlock("Mutex::acquire", debug_info);
 
     while ( ArchThreads::testSetLock ( mutex_,1 ) )
@@ -77,7 +77,7 @@ void Mutex::acquire(const char* debug_info)
 
       checkCircularDeadlock("Mutex::acquire", debug_info, currentThread, false);
       spinlock_.acquire();
-      sleepers_.push_back ( currentThread );
+      sleepers_.push_back(currentThread);
       currentThread->sleeping_on_mutex_ = this;
       Scheduler::instance()->sleepAndRelease(spinlock_);
       currentThread->sleeping_on_mutex_ = 0;
@@ -90,7 +90,7 @@ void Mutex::acquire(const char* debug_info)
 void Mutex::release(const char* debug_info)
 {
   checkInvalidRelease("Mutex::release", debug_info);
-  //kprintfd("Mutex::release %x %s, %s\n", this, name_, debug_info);
+  kprintfd("Mutex::release %x %s, %s\n", this, name_, debug_info);
   held_by_=0;
   mutex_ = 0;
   spinlock_.acquire();

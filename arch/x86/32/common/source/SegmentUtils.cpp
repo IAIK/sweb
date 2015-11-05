@@ -5,11 +5,19 @@
 
 #include "SegmentUtils.h"
 #include "ArchCommon.h"
+#include "kprintf.h"
 
+class Thread;
+
+extern uint32 core0_local_storage;
+extern uint32 core1_local_storage;
 extern uint32 tss_selector;
-extern uint32 gdt_ptr_new;
+extern uint32 core_local_selector;
+extern __thread Thread *currentThread;
+//extern uint32 gdt_ptr_new;
 
 extern "C" void reload_segements();
+extern "C" void reload_segments_core1();
 
 typedef struct {
     uint16 limitL;
@@ -21,48 +29,9 @@ typedef struct {
 } __attribute__((__packed__))SegDesc;
 
 
-typedef struct {
-    uint16  backlink; //0
-    uint16  pad0;
-    uint32 esp0;      //1
-    uint16  ss0;      //2
-    uint16  pad1;
-    uint32 esp1;
-    uint16  ss1;
-    uint16  pad2;
-    uint32 esp2;
-    uint16  ss2;
-    uint16  pad3;
-    uint32 cr3;
-    uint32 eip;
-    uint32 eflags;
-    uint32 eax;
-    uint32 ecx;
-    uint32 edx;
-    uint32 ebx;
-    uint32 esp;
-    uint32 ebp;
-    uint32 esi;
-    uint32 edi;
-    uint16  es;
-    uint16  pad4;
-    uint16  cs;
-    uint16  pad5;
-    uint16  ss;
-    uint16  pad6;
-    uint16  ds;
-    uint16  pad7;
-    uint16  fs;
-    uint16  pad8;
-    uint16  gs;
-    uint16  pad9;
-    uint16  ldt;
-    uint16  padA;
-    uint16  debugtrap;
-    uint16  iobase;
-} __attribute__((__packed__))TSS;
-
-TSS *g_tss;
+__thread TSS *g_tss;
+TSS* tss_core0;
+TSS* tss_core1;
 
 
 #define GDT_ENTRY_NUM 8192
@@ -75,9 +44,9 @@ TSS *g_tss;
 #define SEGMENT_DPL2    0x40
 #define SEGMENT_DPL3    0x60
 
-static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type) 
+static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type, int8 core)
 {
-    SegDesc *desc = (SegDesc*)&tss_selector;
+    SegDesc *desc = ((SegDesc*)&tss_selector)+core;
 
     desc->baseL  = (uint16)(base & 0xFFFF);
     desc->baseM  = (uint8)((base >> 16U) & 0xFF);
@@ -89,21 +58,91 @@ static void setTSSSegDesc(uint32 base, uint32 limit, uint8 type)
     return;
 }
 
+void SegmentUtils::load_gs(int8 core)
+{
+	void* core_local_storage_end =  (core == 0 ? &core0_local_storage : &core1_local_storage) - 4096;
+
+	asm volatile("mov    %0,%%eax\n"
+                 "mov %%eax,%%gs:0x0\n":: "m" (core_local_storage_end));
+}
+
+static void setCoreLocalStorageSel(int8 core)
+{
+    SegDesc *desc = ((SegDesc*)&core_local_selector)+core;
+
+    uint32 core_local_storage = (uint32) (core ? &core1_local_storage : &core0_local_storage);
+    // TODO: dynamic
+    // uint32 core_local_storage = (uint32) (&core0_local_storage + core * 1024);
+
+    debug ( MC_INIT, "Core %d core local storage sel; desc = %x, local storage = %x\n", core, desc, core_local_storage);
+
+    desc->baseL  = (uint16)((uint32)core_local_storage & 0xFFFF);
+    desc->baseM  = (uint8)(((uint32)core_local_storage >> 16U) & 0xFF);
+    desc->baseH  = (uint8)(((uint32)core_local_storage >> 24U) & 0xFF);
+    desc->limitL = (uint16)(0x1);
+    desc->limitH = (uint8)(0x0CF);	//0CFh  ; 1 1 0 0 granularity:page (4 gig limit), 32-bit, not a 64 bit code segment;
+    desc->type   = (uint8)(0x92);	//92h   ; 1 00 1 0010 == present, ring 0, data, expand-up, writable;
+    return;
+}
+
 void SegmentUtils::initialise()
 {
-  g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
-  ArchCommon::bzero((pointer)g_tss,sizeof(TSS));
+  SegmentUtils::initialiseCore(0, tss_core0);
+  setCoreLocalStorageSel(0);
 
-  g_tss->ss0 = KERNEL_SS;
-  setTSSSegDesc((uint32)g_tss, 0x00000067, SEGMENT_PRESENT | SEGMENT_DPL0 | 0x00 | 0x09);
+  SegmentUtils::initialiseCore(1, tss_core1);
+  setCoreLocalStorageSel(1);
 
+  debug ( MC_INIT, "Core 0 global tss is %x\n",tss_core0);
+  debug ( MC_INIT, "Core 1 global tss is %x\n",tss_core1);
+
+	/*
+  for (int i = 0; i < 2; i++)
+  {
+	  SegmentUtils::initialiseCore(i);
+	  setCoreLocalStorageSel(i);
+  }
+  */
+}
+
+void SegmentUtils::initialiseCore(uint32 core, TSS* &tss)
+{
+  tss = (TSS*)new uint8[sizeof(TSS)];
+  ArchCommon::bzero((pointer)tss,sizeof(TSS));
+
+  tss->ss0 = KERNEL_SS;
+  setTSSSegDesc((uint32)tss, 0x00000067, SEGMENT_PRESENT | SEGMENT_DPL0 | 0x00 | 0x09, core);
+
+  debug ( MC_INIT, "Core %d initialised tss %x\n", core, tss);
+}
+
+void SegmentUtils::load(int8 core)
+{
   // we have to reload our segment stuff
-  uint16 val = 8 * 6;
+  // TODO: (6 + COUNT_CORES)
+  //uint16 val = (8 * (6 + 2)) + (core * 8);
 
-  reload_segements();
+	// TODO: or maybe just 1??
+  uint16 val = (8 * (6 + 2)) + (core * 8);
 
-  g_tss->ss0  = KERNEL_SS;
+  debug ( MC_INIT, "Core %d reloading segments\n", core);
 
-  // now use our damned tss
-  asm volatile("ltr %0\n": "=m" (val));
+  if (core == 0)
+  {
+	  reload_segements();
+	  load_gs(0);
+	  g_tss = tss_core0;
+  }
+  else
+  {
+	  reload_segments_core1();
+	  load_gs(1);
+	  g_tss = tss_core1;
+  }
+  debug ( MC_INIT, "Core %d uses tss %x\n", core, g_tss);
+
+   // now use our damned tss
+   asm volatile("ltr %0\n": "=m" (val));
+
+   debug ( MC_INIT, "Core %d done loading tr\n", core);
 }

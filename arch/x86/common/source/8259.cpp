@@ -5,9 +5,15 @@
  
 #include "8259.h"
 #include "ports.h"
+#include "debug.h"
+#include "kprintf.h"
+#include "apic.h"
 
 
 uint32 cached_mask = 0xFFFF;
+
+extern uint32 boot_completed;
+extern __thread uint32 core;
 
 void initialise8259s()
 {
@@ -59,8 +65,15 @@ void disableIRQ(uint16 number)
 
 void sendEOI(uint16 number)
 {
-  if (number > 7)
-    outportb(PIC_2_CONTROL_PORT,0x20);
+  if (boot_completed && core == 1)
+  {
+	  apicSendEOI();
+  }
+  else
+  {
+	  if (number > 7)
+	    outportb(PIC_2_CONTROL_PORT,0x20);
 
-  outportb(PIC_1_CONTROL_PORT,0x20);
+	  outportb(PIC_1_CONTROL_PORT,0x20);
+  }
 }

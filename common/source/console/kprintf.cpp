@@ -50,6 +50,7 @@ class KprintfNoSleepFlushingThread : public Thread
       while ( true )
       {
         flushActiveConsole();
+        debug ( KPRINTF,"going to yield\n" );
         Scheduler::instance()->yield();
       }
     }
@@ -500,10 +501,11 @@ bool isDebugEnabled ( size_t flag )
   return false;
 }
 
+extern __thread uint32 core;
 #ifndef NO_COLOR
-#define COLORDEBUG(str, color) "\033[0;%sm%s\033[1;m", color, str
+#define COLORDEBUG(str, color) "%d: \033[0;%sm%s\033[1;m", core, color, str
 #else
-#define COLORDEBUG(str, color) str
+#define COLORDEBUG(str, color) "%d: %s",core,str
 #endif
 
 void debug ( size_t flag, const char *fmt, ... )
@@ -551,7 +553,7 @@ void debug ( size_t flag, const char *fmt, ... )
         kprintfd ( COLORDEBUG("[USERPROCESS]", "36"));
         break;
       case MOUNTMINIX:
-        kprintfd ( COLORDEBUG("[MOUNTMINIX ]", "36"));
+        kprintfd ( COLORDEBUG("[MOUNTMINIX]", "36"));
         break;
       case BACKTRACE:
         kprintfd ( COLORDEBUG("[BACKTRACE  ]", "31"));
@@ -618,6 +620,9 @@ void debug ( size_t flag, const char *fmt, ... )
         break;
       case FS_MINIX:
         kprintfd ( COLORDEBUG("[FS_MINIX   ]", "32"));
+        break;
+      case MC_INIT:
+        kprintfd ( COLORDEBUG("[MC_INIT    ]", "32"));
         break;
     }
     vkprintf ( oh_writeStringDebugNoSleep, oh_writeCharDebugNoSleep, fmt, args );

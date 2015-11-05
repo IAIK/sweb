@@ -265,8 +265,8 @@ DUMMY_HANDLER(253)
 DUMMY_HANDLER(254)
 DUMMY_HANDLER(255)
 
-extern ArchThreadInfo *currentThreadInfo;
-extern Thread *currentThread;
+extern __thread ArchThreadInfo *currentThreadInfo;
+extern __thread Thread *currentThread;
 
 #define IRQ_HANDLER(x) extern "C" void arch_irqHandler_##x(); \
   extern "C" void irqHandler_##x ()  {  \
@@ -407,7 +407,7 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(107)
   DUMMYHANDLER(108)
   DUMMYHANDLER(109)
-  DUMMYHANDLER(110)// NOT TODO: interrupt number
+  DUMMYHANDLER(110)
   DUMMYHANDLER(111)
   DUMMYHANDLER(112)
   DUMMYHANDLER(113)
@@ -425,7 +425,6 @@ InterruptHandlers InterruptUtils::handlers[NUM_INTERRUPT_HANDLERS] = {
   DUMMYHANDLER(125)
   DUMMYHANDLER(126)
   DUMMYHANDLER(127)
-//  DUMMYHANDLER(128)
   {128, &arch_syscallHandler},
   DUMMYHANDLER(129)
   DUMMYHANDLER(130)

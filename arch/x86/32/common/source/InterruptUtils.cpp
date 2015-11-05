@@ -24,6 +24,7 @@
 #include "Thread.h"
 #include "ArchInterrupts.h"
 #include "backtrace.h"
+#include "SegmentUtils.h"
 
 //remove this later
 #include "Thread.h"
@@ -64,6 +65,7 @@
 #define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
                                  // =1: an instruction fetch (need PAE for that)
 //---------------------------------------------------------------------------*/
+/*
 struct GateDesc
 {
   uint16 offset_low;       // low word of handler entry point's address
@@ -77,14 +79,17 @@ struct GateDesc
   uint8 present   : 1;     // present- flag - set to 1
   uint16 offset_high;      // high word of handler entry point's address
 }__attribute__((__packed__));
+*/
 //---------------------------------------------------------------------------*/
 
 extern "C" void arch_dummyHandler();
 
+GateDesc* InterruptUtils::interrupt_gates = 0;
+
 void InterruptUtils::initialise()
 {
   // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
+  interrupt_gates = new GateDesc[NUM_INTERRUPT_HANDLERS];
 
   for (uint32 i = 0; i < NUM_INTERRUPT_HANDLERS; ++i)
   {
@@ -108,6 +113,15 @@ void InterruptUtils::initialise()
   lidt(&idtr);
 }
 
+void InterruptUtils::initialise_ap()
+{
+  IDTR idtr;
+
+  idtr.base =  (uint32)interrupt_gates;
+  idtr.limit = sizeof(GateDesc)*NUM_INTERRUPT_HANDLERS - 1;
+  lidt(&idtr);
+}
+
 void InterruptUtils::lidt(IDTR *idtr)
 {
   asm volatile("lidt (%0) ": :"q" (idtr));
@@ -119,13 +133,17 @@ void InterruptUtils::lidt(IDTR *idtr)
     currentThread->switch_to_userspace_ = false;\
     currentThreadInfo = currentThread->kernel_arch_thread_info_;\
     ArchInterrupts::enableInterrupts();\
+	uint32 local_gs;\
+	asm volatile("xor %%eax,%%eax\nmov %%gs,%%ax\nmov %%eax,%0\n": "=m" (local_gs) :: "eax");\
+	currentThread->printBacktrace(true);\
+	kprintfd("\nCore:%x\n",local_gs);\
     kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     currentThread->kill();\
   }
 
 #define DUMMY_HANDLER(x) extern "C" void arch_dummyHandler_##x(); \
-  extern "C" void arch_switchThreadToUserPageDirChange();\
+  extern "C" void arch_contextSwitchToUser(ArchThreadInfo* info, ThreadState* last_state, TSS* tss);\
   extern "C" void dummyHandler_##x () \
   {\
     uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;\
@@ -142,22 +160,24 @@ void InterruptUtils::lidt(IDTR *idtr)
         break;\
       case 1:\
         currentThreadInfo = currentThread->user_arch_thread_info_;\
-        arch_switchThreadToUserPageDirChange();\
+        arch_contextSwitchToUser(currentThreadInfo, lastThreadState, g_tss);\
         break;\
       default:\
         kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");\
     }\
   }
 
+
+extern __thread ThreadState* lastThreadState;
+extern __thread ArchThreadInfo* currentThreadInfo;
+extern __thread TSS* g_tss;
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_switchThreadKernelToKernel();
-extern "C" void arch_switchThreadKernelToKernelPageDirChange();
-extern "C" void arch_switchThreadToUserPageDirChange();
+extern "C" void arch_contextSwitchToKernel(ArchThreadInfo* info, ThreadState* last_state, TSS* tss);
+extern "C" void arch_contextSwitchToUser(ArchThreadInfo* info, ThreadState* last_state, TSS* tss);
 extern "C" void irqHandler_0()
 {
+  kprintfd("IRQ0\n");
   static uint32 heart_beat_value = 0;
-  // static uint32 leds = 0;
-  // static uint32 ctr = 0;
   char* fb = (char*)0xC00B8000;
   switch (heart_beat_value)
   {
@@ -184,34 +204,40 @@ extern "C" void irqHandler_0()
   Scheduler::instance()->incTicks();
 
   uint32 ret = Scheduler::instance()->schedule();
+
+  kprintfd("irq0: tss%x\n", g_tss);
+
   switch (ret)
   {
     case 0:
-      // kprintfd("irq0: Going to leave irq Handler 0 to kernel\n");
       ArchInterrupts::EndOfInterrupt(0);
-      arch_switchThreadKernelToKernelPageDirChange();
+      arch_contextSwitchToKernel(currentThreadInfo, lastThreadState, g_tss);
     case 1:
-      // kprintfd("irq0: Going to leave irq Handler 0 to user\n");
       ArchInterrupts::EndOfInterrupt(0);
-      arch_switchThreadToUserPageDirChange();
+      arch_contextSwitchToUser(currentThreadInfo, lastThreadState, g_tss);
     default:
       kprintfd("irq0: Panic in int 0 handler\n");
       for( ; ; ) ;
   }
 }
 
+extern __thread uint32 core;
+extern uint32 boot_completed;
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
+	//assert(!boot_completed || core == 0);
   uint32 ret = Scheduler::instance()->schedule();
+
+  kprintfd("irq65: tss%x\n", g_tss);
+
   switch (ret)
   {
     case 0:
-      // kprintfd("irq65: Going to leave int Handler 65 to kernel\n");
-      arch_switchThreadKernelToKernelPageDirChange();
+    	arch_contextSwitchToKernel(currentThreadInfo, lastThreadState, g_tss);
     case 1:
-      // kprintfd("irq65: Going to leave int Handler 65 to user\n");
-      arch_switchThreadToUserPageDirChange();
+    	kprintfd("irq65: before switch to user\n");
+    	arch_contextSwitchToUser(currentThreadInfo, lastThreadState, g_tss);
 
     default:
       kprintfd("irq65: Panic in int 65 handler\n");
@@ -223,11 +249,21 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
+	debug(PM, "[PageFaultHandler] !!");
+	uint32 local_gs;
+	  asm volatile("xor %%eax,%%eax\n"
+			       "mov %%gs,%%ax\n"
+	               "mov %%eax,%0\n": "=m" (local_gs) :: "eax");
+
+	  //debug(PM, "core_gs:%x", local_gs);
   //--------Start "just for Debugging"-----------
 
-  debug(PM, "[PageFaultHandler] Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
-      address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getPID(),
+  debug(PM, "[PageFaultHandler] Core_gs: %x Address: %x, Present: %d, Writing: %d, User: %d, Rsvc: %d - currentThread: %x %d:%s, switch_to_userspace_: %d\n",
+      local_gs, address, error & FLAG_PF_PRESENT, (error & FLAG_PF_RDWR) >> 1, (error & FLAG_PF_USER) >> 2, (error & FLAG_PF_RSVD) >> 3, currentThread, currentThread->getPID(),
       currentThread->getName(), currentThread->switch_to_userspace_);
+
+  ArchThreads::printThreadRegisters(currentThread,0);
+  ArchThreads::printThreadRegisters(currentThread,1);
 
   debug(PM, "[PageFaultHandler] The Pagefault was caused by an %s fetch\n", error & FLAG_PF_INSTR_FETCH ? "instruction" : "operand");
 
@@ -320,7 +356,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   currentThreadInfo = currentThread->kernel_arch_thread_info_;
   ArchInterrupts::enableInterrupts();
 
-  //lets hope this Exeption wasn't thrown during a TaskSwitch
+  //lets hope this Exception wasn't thrown during a TaskSwitch
   if (! (error & FLAG_PF_PRESENT) && address < 2U*1024U*1024U*1024U && currentThread->loader_)
   {
     currentThread->loader_->loadOnePageSafeButSlow(address); //load stuff
@@ -341,13 +377,17 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchInterrupts::disableInterrupts();
   asm volatile ("movl %cr3, %eax; movl %eax, %cr3;"); // only required in PAE mode
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
+
+  debug(PM, "[PageFaultHandler] switching back to userspace, switch_to_userspace_ = %x\n", currentThread->switch_to_userspace_);
+
   switch (currentThread->switch_to_userspace_)
   {
     case 0:
       break; //we already are in kernel mode
     case 1:
       currentThreadInfo = currentThread->user_arch_thread_info_;
-      arch_switchThreadToUserPageDirChange();
+      //TODO: switch back to arch_contextSwitchToUser
+      arch_contextSwitchToUser(currentThreadInfo, lastThreadState, g_tss);
       break; //not reached
     default:
       kpanict((uint8*)"PageFaultHandler: Undefinded switch_to_userspace value\n");
@@ -437,7 +477,7 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = true;
   currentThreadInfo =  currentThread->user_arch_thread_info_;
   //ArchThreads::printThreadRegisters(currentThread,1);
-  arch_switchThreadToUserPageDirChange();
+  arch_contextSwitchToUser(currentThreadInfo, lastThreadState, g_tss);
 }
 
 #include "DummyHandlers.h" // dummy and error handler definitions and irq forwarding definitions

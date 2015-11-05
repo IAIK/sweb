@@ -26,6 +26,7 @@ void Condition::wait()
   if (likely(boot_completed))
   {
     // list is protected, because we assume, the lock is being held
+	assert(currentThread);
     assert(lock_->isHeldBy(currentThread));
     assert(ArchInterrupts::testIFSet());
     sleepers_.push_back(currentThread);
@@ -48,6 +49,8 @@ void Condition::signal()
     if (!sleepers_.empty())
     {
       thread = sleepers_.front();
+      debug(CONDITION, "Condition::signal: Thread %x woken up on Condition %x\n",thread,this);
+      assert(thread && "null pointer on sleepers list!");
       if (thread->state_ == Sleeping)
       {
         //Solution to above Problem: Wake and Remove from List only Threads which are actually sleeping
@@ -77,7 +80,7 @@ void Condition::broadcast()
         Scheduler::instance()->wake(thread);
       else
       {
-        assert(thread->state_ != Running && "Why is a *Running* thread on the sleepers list of this condition? bug?");
+        assert(thread->state_ != Running && thread->state_ != Ready && "Why is a *Running* thread on the sleepers list of this condition? bug?");
         tmp_threads.push_back(thread);
       }
       debug(CONDITION,"Condition::broadcast: Thread %x  %d:%s being signaled for Condition %x\n",thread,thread->getPID(),thread->getName(),this);

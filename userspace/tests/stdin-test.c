@@ -135,6 +135,7 @@ void handle_command(char* buffer,int buffer_size)
 
 int main(int argc, char *argv[]) 
 {
+  printf("Starting stdin test\n");
   char* str1="SWEB-Pseudo-Shell starting...\n";
   char* preprompt="SWEB:";
   char* prompt="> ";

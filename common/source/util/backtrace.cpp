@@ -39,7 +39,7 @@ struct StabEntry
     uint32 n_value;
 } __attribute__((packed));
 //-------------------------------------------------------------------------------------*/
-extern Thread* currentThread;
+extern __thread Thread* currentThread;
 ustl::map<size_t, StabEntry*> symbol_table;
 //-------------------------------------------------------------------------------------*/
 bool try_paste_operator(const char *&input, char *& buffer);

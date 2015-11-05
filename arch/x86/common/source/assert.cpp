@@ -10,7 +10,7 @@
 #include "Thread.h"
 #include "ArchInterrupts.h"
 
-extern Thread* currentThread;
+extern __thread Thread* currentThread;
 
 void pre_new_sweb_assert(uint32 condition, uint32 line, const char* file)
 {

@@ -8,7 +8,7 @@
 #include "types.h"
 #include "fs/FsWorkingDirectory.h"
 
-enum ThreadState {Running, Sleeping, ToBeDestroyed};
+enum ThreadState {Running, Sleeping, ToBeDestroyed, Ready};
 
 class Thread;
 class ArchThreadInfo;
@@ -25,7 +25,7 @@ class Thread
     friend class Scheduler;
   public:
 
-    static const char* threadStatePrintable[3];
+    static const char* threadStatePrintable[4];
 
     /**
      * Constructor

@@ -66,12 +66,12 @@ entry:
    rep stosb ;  Fill (E)CX bytes at ES:[(E)DI] with AL, in our case 0
 
 
-
    mov word[0B8000h], 9F30h ; show something on screen just in case we get stuck, so that we know where
 
 
    mov eax,[ds_magic - BASE] ; value of memory pointed to by ds_magic symbol into eax
    cmp eax, DATA_SEGMENT_MAGIC
+
 
    ; comment this next statement to just see a few characters on the screen, really impressive :)
    je data_segment_ok ; if its the same then everything is good
@@ -92,12 +92,14 @@ entry:
    jmp short $ ; now what does this do? it just jumps to itself looping until the end of all times
 
 data_segment_ok:
-
+	
     mov word[0B8002h], 9F31h ; show something on screen just in case we get stuck, so that we know where
 
    ; ok, next thing to do is to load our own descriptor table
    ; this one will spawn just one huge segment for the whole address space
    lgdt [gdt_ptr - BASE]
+   
+   
 
    ; now prepare all the segment registers to use our segments
    mov ax, LINEAR_DATA_SEL
@@ -105,13 +107,14 @@ data_segment_ok:
    mov es,ax
    mov ss,ax
    mov fs,ax
+   ;mov ax,LINEAR_CORE0_SEL
    mov gs,ax
 
    ; use these segments
    jmp LINEAR_CODE_SEL:(now_using_segments - BASE)
 
-now_using_segments:
 
+now_using_segments:
 
    ; next thing to do to be c compliant is to
    ; clear the bss (uninitialised data)
@@ -126,6 +129,16 @@ now_using_segments:
     mov esp,stack - BASE
 
     mov word[0B8004h], 9F32h
+
+
+    ; ----------------------get mc info out of ft and mp table----------------------
+
+    ;parse multi process info
+    EXTERN parseMPTable;
+    mov eax,parseMPTable - BASE
+    call eax
+
+    ; ----------------------get mc info out of ft and mp table END----------------------
 
 
 	EXTERN parseMultibootHeader;
@@ -234,6 +247,7 @@ call removeBootTimeIdentMapping
 
    push dword 2
    popf
+   
 
 EXTERN startup ; tell the assembler we have a main somewhere
    mov word[0C00B801Ch], 4336h
@@ -253,6 +267,7 @@ reload_segements:
    mov es,ax
    mov ss,ax
    mov fs,ax
+   mov ax,LINEAR_CORE0_SEL
    mov gs,ax
 
    ; use these segments
@@ -262,8 +277,100 @@ reload_segments_new:
 
     ret;
     
-    
+section .mc_text
+BITS 16 ; we want 16bit code
+global ap_startup
+ap_startup:
+   ; ok, next thing to do is to load our own descriptor table
+   ; this one will spawn just one huge segment for the whole address space
 
+    cli
+
+	mov ax, cs
+	mov ds, ax
+
+    lgdt [gdt_ptr2 - ap_startup]
+
+	mov     eax,0x0001   	; Set PE bit
+	mov     cr0,eax         ; Protected mode enabled
+
+    mov eax, LINEAR_CORE1_SEL
+
+    mov ax, LINEAR_DATA_SEL
+    mov ds,ax
+    mov es,ax
+    mov ss,ax
+    mov fs,ax
+
+   ; use these segments
+   jmp LINEAR_CODE_SEL:(protected_mode_bootup_ap - ap_startup)
+
+; workaround because AP can only load from low memory right now
+; at the address 0x800 actually is the GDT because be coppied it before
+gdt_ptr2:
+	dw 0x2f
+	dd 0x800
+gdt_ptr2_end:
+
+BITS 32 ; we want 32bit code
+global set_cpu_registers_for_ap
+protected_mode_bootup_ap:
+
+	mov     eax,kernel_page_directory_start - LINK_BASE + LOAD_BASE	; eax = &PD
+	mov     cr3,eax         										; cr3 = &PD
+
+
+	; set bit 0x4 to 1 in cr4 to enable PSE
+	; need a pentium cpu for this but it will give us 4mbyte pages
+	mov eax,cr4;
+	or eax, 0x00000010;
+	mov cr4,eax;
+
+	mov     eax,cr0
+	or      eax,0x80010001   	; Set PG bit
+	mov     cr0,eax         	; Paging is on!
+	; now paging is on, we no longer need the -LINK_BASE-correction since everything is now done using pageing!
+
+ 	mov esp,stack
+ 	
+ 	; The NT flag is set at this point, therefore the first IRET we attempt
+	; will cause a TSS-based (nested) task-switch, which will cause Exception 10.
+	; Let's prevent that:
+	; push new EFLAGS value (NT bit == bit number 14 NOT set) to the stack and
+	; load one dword from the stack into the EFLAGS
+ 	push dword 2
+    popf
+
+	EXTERN ap_complete_startup
+    mov eax, ap_complete_startup
+    call eax
+
+    jmp $
+
+global ap_startup_end
+ap_startup_end:
+
+global reload_segments_core1
+reload_segments_core1:
+   ; ok, next thing to do is to load our own descriptor table
+   ; this one will spawn just one huge segment for the whole address space
+   lgdt [gdt_ptr_very_new]
+   
+   
+
+   ; now prepare all the segment registers to use our segments
+   mov ax, LINEAR_DATA_SEL
+   mov ds,ax
+   mov es,ax
+   mov ss,ax
+   mov fs,ax
+   mov ax,LINEAR_CORE1_SEL
+   mov gs,ax
+   
+   
+
+   ; use these segments
+   jmp LINEAR_CODE_SEL:(reload_segments_new)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
@@ -300,6 +407,7 @@ diediedie:		jmp $
 
 SECTION .gdt_stuff
 ; have a look at http://www.intel.com/Assets/ja_JP/PDF/manual/253668.pdf
+GLOBAL gdt
 gdt:
 
 ; this is the first global descriptor table
@@ -365,7 +473,50 @@ gdt:
 	db 0FAh			; present,ring 3,code,execute, readable
 	db 0CFh                 ; page-granular (4 gig limit), 32-bit
 	db 0
-  gdt_end:
+	
+; the first interesting descriptor; this one is for data
+
+; TODO: adresse jetzt: 80 07 9000 --> local_core0_storage
+
+;global core_local_selector
+;core_local_selector:
+;   LINEAR_CORE0_SEL  equ $-gdt
+;    dw 01h  ; the limit, since the page-granular bit is turned on this is shifted 12 bits to the left
+;               ; in our case this means that the segment spawns the whole 32bit address space
+;    dw 9000h   ; since it also starts at 0
+;    db 07h
+;    db 92h   ; 1 00 1 0010 == present, ring 0, data, expand-up, writable
+;    db 0CFh  ; 1 1 0 0 granularity:page (4 gig limit), 32-bit, not a 64 bit code segment
+;    db 80h
+    
+;   LINEAR_CORE1_SEL  equ $-gdt
+;    dw 01h  ; the limit, since the page-granular bit is turned on this is shifted 12 bits to the left
+               ; in our case this means that the segment spawns the whole 32bit address space
+;    dw 0A000h   ; since it also starts at 0
+;    db 07h
+;    db 92h   ; 1 00 1 0010 == present, ring 0, data, expand-up, writable
+;    db 0CFh  ; 1 1 0 0 granularity:page (4 gig limit), 32-bit, not a 64 bit code segment
+;    db 80h
+    
+global core_local_selector
+core_local_selector:
+   LINEAR_CORE0_SEL  equ $-gdt
+	dw 0
+	dw 0
+	db 0
+	db 0
+	db 0
+	db 0
+    
+   LINEAR_CORE1_SEL  equ $-gdt
+	dw 0
+	dw 0
+	db 0
+	db 0
+	db 0
+	db 0
+GLOBAL gdt_end
+gdt_end:
 
 ; dummy TSS Segment Descriptor
 global tss_selector
@@ -377,11 +528,27 @@ tss_selector:
 	db 0			; present,ring 3,code,non-conforming,readable
 	db 0                 ; page-granular (4 gig limit), 32-bit
 	db 0
+
+; dummy TSS Segment Descriptor for 2nd Core
+global tss_selector2
+tss_selector2:
+ TSS_SEL2	equ	$-gdt
+	dw 0
+	dw 0
+	db 0
+	db 0			; present,ring 3,code,non-conforming,readable
+	db 0                 ; page-granular (4 gig limit), 32-bit
+	db 0
 gdt_real_end:
 
 gdt_ptr:
 	dw gdt_end - gdt - 1
 	dd gdt - BASE
+
+gdtr:
+    dw 00
+    dd 00
+
   
 global gdt_ptr_new
 gdt_ptr_new:
@@ -431,14 +598,28 @@ multi_boot_magic_number:
 GLOBAL multi_boot_structure_pointer
 multi_boot_structure_pointer:
 	dd 0
+GLOBAL cpu_info_pointer
+cpu_info_pointer:
+	dd 0
+
+GLOBAL mp_table
+mp_table:
+	dd 0
    
 SECTION .bss
    ; here we create lots of room for our stack: 16 kiB (actually this is done by the resd 4096 )
-   GLOBAL stack_start
+GLOBAL stack_start
 stack_start:
    resd 4096
    GLOBAL stack
 stack:
+   resd 1024
+GLOBAL core0_local_storage
+core0_local_storage:
+   resd 1024
+GLOBAL core1_local_storage
+core1_local_storage:
+
 SECTION .paging_stuff
 GLOBAL kernel_page_directory_start
 kernel_page_directory_start:

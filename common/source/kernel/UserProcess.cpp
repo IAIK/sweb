@@ -18,6 +18,7 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
   fd_(VfsSyscall::instance()->open ( fs_info, minixfs_filename, O_RDONLY ) ),
   process_registry_(process_registry)
 {
+  debug (USERPROCESS, "Creating UserProcess\n" );
   process_registry_->processStart();//should also be called if you fork a process
 
   if ( fd_ < 0 )
@@ -33,9 +34,11 @@ UserProcess::UserProcess ( const char *minixfs_filename, FsWorkingDirectory *fs_
     run_me_ = true;
     debug (USERPROCESS, "ctor: Done loading %s\n", minixfs_filename );
   }
-  
+
   if ( main_console->getTerminal ( terminal_number_ ) )
     setTerminal ( main_console->getTerminal ( terminal_number_ ) );
+
+  debug (USERPROCESS, "Now switching to userspace\n" );
 
   switch_to_userspace_ = 1;
 }

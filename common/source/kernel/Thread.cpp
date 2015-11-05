@@ -16,12 +16,15 @@
 
 #define MAX_STACK_FRAMES 20
 
-const char* Thread::threadStatePrintable[3] = {"Running", "Sleeping", "ToBeDestroyed"};
+const char* Thread::threadStatePrintable[4] = {"Running", "Sleeping", "ToBeDestroyed", "Ready"};
 
 static void ThreadStartHack()
 {
+  debug ( THREAD,"ThreadStartHack: going to set Terminal\n" );
   currentThread->setTerminal ( main_console->getActiveTerminal() );
+  debug ( THREAD,"ThreadStartHack: going to run user program\n" );
   currentThread->Run();
+  debug ( THREAD,"ThreadStartHack: going to kill user program\n" );
   currentThread->kill();
   debug ( THREAD,"ThreadStartHack: Panic, thread couldn't be killed\n" );
   for ( ;; ) ;
@@ -32,7 +35,7 @@ Thread::Thread(const char *name) :
   user_arch_thread_info_(0),
   switch_to_userspace_(0),
   loader_(0),
-  state_(Running),
+  state_(Ready),
   sleeping_on_mutex_(0),
   pid_(0),
   my_terminal_(0),
@@ -49,7 +52,7 @@ Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
   user_arch_thread_info_(0),
   switch_to_userspace_(0),
   loader_(0),
-  state_(Running),
+  state_(Ready),
   sleeping_on_mutex_(0),
   pid_(0),
   my_terminal_(0),
@@ -60,6 +63,7 @@ Thread::Thread ( FsWorkingDirectory *working_dir, const char *name ) :
   debug ( THREAD,"sizeof stack is %x; my name: %s\n", sizeof ( stack_ ), name_ ); 
   debug ( THREAD,"Thread ctor, fs_info ptr: %x\n", working_dir_ );
   ArchThreads::createThreadInfosKernelThread ( kernel_arch_thread_info_, ( pointer ) &ThreadStartHack,getStackStartPointer() );
+  debug ( THREAD,"Done creating thread\n");
 }
 
 Thread::~Thread()

@@ -14,7 +14,7 @@ struct StackFrame
    void *return_address;
 };
 
-extern Thread* currentThread;
+extern __thread Thread* currentThread;
 
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {

@@ -19,8 +19,10 @@
 
 extern ustl::map<uint32, ustl::string> symbol_table;
 
-ArchThreadInfo *currentThreadInfo;
-Thread *currentThread;
+__thread ArchThreadInfo *currentThreadInfo;
+__thread Thread *currentThread;
+__thread ThreadState* lastThreadState;
+__thread uint32 core;
 
 Scheduler *Scheduler::instance_=0;
 
@@ -54,16 +56,20 @@ class IdleThread : public Thread
       uint32 new_ticks = 0;
       while ( 1 )
       {
+    	debug ( SCHEDULER,"Idle Thread cleans up dead threads\n");
         Scheduler::instance()->cleanupDeadThreads();
         new_ticks = Scheduler::instance()->getTicks();
+        debug ( SCHEDULER,"Idle Thread finished cleaning up dead threads\n");
         if (new_ticks == last_ticks)
         {
           last_ticks = new_ticks + 1;
+          debug ( SCHEDULER,"Idle Thread is idle\n");
           ArchCommon::idle();
         }
         else
         {
           last_ticks = new_ticks;
+          debug ( SCHEDULER,"Idle Thread yields\n");
           Scheduler::instance()->yield();
         }
       }
@@ -79,6 +85,7 @@ void Scheduler::createScheduler()
 
   // create idle thread, this one really does not do too much
 
+  // TODO: give every CPU an IdleThread!!
   Thread *idle = new IdleThread();
   instance_->addNewThread ( idle );
 }
@@ -96,6 +103,7 @@ void Scheduler::addNewThread ( Thread *thread )
   waitForFreeSpinLock(KernelMemoryManager::instance()->getKMMLock());
   threads_.push_back ( thread );
   unlockScheduling();
+  debug ( SCHEDULER,"finished addNewThread\n");
 }
 
 void Scheduler::removeCurrentThread()
@@ -144,7 +152,7 @@ void Scheduler::sleepAndRestoreInterrupts ( bool interrupts )
   currentThread->state_=Sleeping;
   if ( interrupts )
   {
-    assert(block_scheduling_ == 0);
+    //assert(block_scheduling_ == 0);
     ArchInterrupts::enableInterrupts();
     yield();
   }
@@ -152,41 +160,67 @@ void Scheduler::sleepAndRestoreInterrupts ( bool interrupts )
 
 void Scheduler::wake ( Thread* thread_to_wake )
 {
-  thread_to_wake->state_=Running;
+  thread_to_wake->state_=Ready;
 }
 
 uint32 Scheduler::schedule()
 {
-  if (block_scheduling_ != 0)
+
+  while (!lockScheduling(1))
   {
-    //no scheduling today...
-    //keep currentThread as it was
-    //and stay in Kernel Kontext
-    debug ( SCHEDULER,"schedule: currently blocked\n" );
-    return 0;
+	  if (currentThread && currentThread->state_ == Running)
+		  return currentThread->switch_to_userspace_;
   }
 
+
+  uint32 local_gs;
+  asm volatile("xor %%eax,%%eax\n"
+		       "mov %%gs,%%ax\n"
+               "mov %%eax,%0\n": "=m" (local_gs) :: "eax");
+
+
   Thread* previousThread = currentThread;
+  lastThreadState = &previousThread->state_;
+  size_t num_threads = 0;
+
   do
   {
     // WARNING: do not read currentThread before is has been set here
     //          the first time scheduler is called.
     //          before this, currentThread may be 0 !!
+
     currentThread = threads_.front();
+    num_threads++;
 
     //this operation doesn't allocate or delete any kernel memory (important because Interrupts are disabled in this method)
     ustl::rotate(threads_.begin(),threads_.begin()+1, threads_.end());
 
-    if ((currentThread == previousThread) && (currentThread->state_ != Running))
+    // TODO: is it save to use num_threads + threads_.size() here instead of currentThread == previousThread????????
+    if ((num_threads == threads_.size()) && !((currentThread->state_ == Running) || (currentThread->state_ == Ready)))
     {
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
+      printThreadListNoLocking();
       assert(false);
     }
+
+    //printThreadListNoLocking();
+
   }
-  while (currentThread->state_ != Running);
-//  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %x %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
+  while (currentThread->state_ != Ready);
+
+  currentThread->state_ = Running;
+
+
+
+  unlockScheduling();
+
 
   uint32 ret = 1;
+
+  debug ( SCHEDULER,"Scheduler::schedule: core:%x new currentThread is %x %s, switch_userspace:%d\n",local_gs, currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 3);
+
+  //debug ( SCHEDULER,"Scheduler::schedule: gs:%x\n",local_gs);
+
 
   if ( currentThread->switch_to_userspace_ )
     currentThreadInfo =  currentThread->user_arch_thread_info_;
@@ -195,6 +229,13 @@ uint32 Scheduler::schedule()
     currentThreadInfo =  currentThread->kernel_arch_thread_info_;
     ret=0;
   }
+ // debug ( SCHEDULER,"Scheduler::schedule: new currentThreadInfo: %x\n", currentThreadInfo);
+
+  currentThreadInfo->gs = local_gs;
+  currentThreadInfo->gs0 = local_gs;
+
+  debug ( SCHEDULER,"Scheduler::schedule: finished schedule()\n");
+
 
   return ret;
 }
@@ -210,6 +251,7 @@ void Scheduler::yield()
     currentThread->printBacktrace();
   }
   ArchThreads::yield();
+  //kprintf ( "Scheduler::yield\n" );
 }
 
 bool Scheduler::checkThreadExists ( Thread* thread )
@@ -267,14 +309,23 @@ void Scheduler::printThreadList()
   unlockScheduling();
 }
 
-void Scheduler::lockScheduling()  //not as severe as stopping Interrupts
+void Scheduler::printThreadListNoLocking()
 {
-  if ( unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) ) )
-    kpanict ( ( uint8* ) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n" );
+  uint32 c=0;
+  debug ( SCHEDULER, "Scheduler::printThreadList: %d Threads in List\n",threads_.size() );
+  for ( c=0; c<threads_.size();++c )
+    debug ( SCHEDULER, "Scheduler::printThreadList: threads_[%d]: %x  %d:%s     [%s]\n",c,threads_[c],threads_[c]->getPID(),threads_[c]->getName(),Thread::threadStatePrintable[threads_[c]->state_] );
+}
+
+bool Scheduler::lockScheduling(uint32 by_schedule)  //not as severe as stopping Interrupts
+{
+  return ! unlikely ( ArchThreads::testSetLock ( block_scheduling_,1 ) );
+
 }
 
 void Scheduler::unlockScheduling()
 {
+  //scheduling_blocked_by_schedule_ = 0;
   block_scheduling_ = 0;
 }
 

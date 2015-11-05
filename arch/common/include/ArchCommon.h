@@ -20,6 +20,8 @@ class ArchCommon
 {
 public:
 
+	//static pointer getLowestUnmappedPage();
+
   /** 
    * @return returns the end address of the kernel
    *

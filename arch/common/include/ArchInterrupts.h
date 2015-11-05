@@ -42,6 +42,8 @@ public:
    */
   static void initialise();
 
+  static void initialise_ap();
+
   /**
    * enables the Timer IRQ (0)
    *

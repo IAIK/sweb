@@ -13,7 +13,12 @@
 extern uint32 boot_completed;
 
 SpinLock::SpinLock(const char* name) :
-    name_(name), nosleep_mutex_(0), held_by_(0)
+    name_(name), nosleep_mutex_(0), held_by_(0), busy_wait_(false)
+{
+}
+
+SpinLock::SpinLock(const char* name, bool busy_wait) :
+    name_(name), nosleep_mutex_(0), held_by_(0), busy_wait_(busy_wait)
 {
 }
 
@@ -39,7 +44,8 @@ void SpinLock::acquire(const char* debug_info)
     while (ArchThreads::testSetLock(nosleep_mutex_, 1))
     {
       //SpinLock: Simplest of Locks, do the next best thing to busy wating
-      Scheduler::instance()->yield();
+      if (!busy_wait_)
+    	  Scheduler::instance()->yield();
     }
     assert(held_by_ == 0);
     held_by_ = currentThread;
@@ -69,6 +75,8 @@ void SpinLock::release(const char* debug_info)
   }
 }
 
+extern __thread size_t core;
+
 void SpinLock::checkInterrupts(const char* method, const char* debug_info)
 {
   // it would be nice to assert Scheduler::instance()->isSchedulingEnabled() as well.
@@ -79,9 +87,11 @@ void SpinLock::checkInterrupts(const char* method, const char* debug_info)
     ArchInterrupts::disableInterrupts();
     boot_completed = 0;
     kprintfd("(ERROR) %s: Spinlock %x (%s) with IF=%d (and SchedulingEnabled=%d) ! Now we're dead !!!\n"
-             "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n",
-             method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info);
+             "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\ndebug info:%s\n\ncore:%s",
+             method, this, name_, ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), debug_info, core);
     currentThread->printBacktrace();
+
     assert(false);
   }
 }
+

@@ -10,14 +10,16 @@ LS_Phys = 0x100000; /* 1 meg */
 LS_Virt = 0x80000000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
 SECTIONS
 {
+  
   .text LS_Virt : AT(LS_Phys)
   {
     PROVIDE(kernel_start_address = ABSOLUTE(.));
 
     LS_Code = .;
-
     text_start_address = .;
     *(.mboot)
+    . = ALIGN(4096);
+    *(.mc_text)
     *(.text)
     text_end_address = .;
     *(.gnu.linkonce.r.*)
@@ -48,10 +50,10 @@ SECTIONS
   {
     LS_Bss = .;
     bss_start_address = .;
-    *(.bss)
     . = ALIGN(4096);
+    *(.bss)
     bss_end_address = .;
-
+    . = ALIGN(4096);
   }
 
   .stab : AT(LS_Phys + (LS_Stab - LS_Code))
@@ -74,5 +76,11 @@ SECTIONS
 
     PROVIDE(kernel_end_address = .);
   }
+
+  .tbss LS_Virt (NOLOAD) : AT(LS_Virt)
+  {
+    *(.tbss)
+  }
+
 
 }

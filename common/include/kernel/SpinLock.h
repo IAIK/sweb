@@ -37,6 +37,8 @@ class SpinLock
      */
     SpinLock(const char* name);
 
+    SpinLock(const char* name, bool busy_wait);
+
     /**
      * acquires the SpinLock.
      */
@@ -79,6 +81,8 @@ class SpinLock
       */
     size_t nosleep_mutex_;
     Thread *held_by_;
+
+    bool busy_wait_;
 
     /**
       * Copy Constructor - you _really_ don't want to copy a SpinLock!

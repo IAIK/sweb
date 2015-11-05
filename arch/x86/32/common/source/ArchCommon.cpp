@@ -70,9 +70,18 @@ void parseMultibootHeader()
       orig_mbr.memory_maps[i].start_address = map->base_addr_low;
       orig_mbr.memory_maps[i].end_address = map->base_addr_low + map->length_low;
       orig_mbr.memory_maps[i].type = map->type;
+
+      //if (map->length_low)
+
     }
   }
 }
+/*
+pointer ArchCommon::getLowestUnmappedPage()
+{
+   return (pointer)&kernel_end_address;
+}
+*/
 
 pointer ArchCommon::getKernelEndAddress()
 {

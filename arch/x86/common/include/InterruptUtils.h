@@ -32,6 +32,22 @@ typedef struct {
     size_t base;
 } __attribute__((__packed__)) IDTR ;
 
+//---------------------------------------------------------------------------*/
+struct GateDesc
+{
+  uint16 offset_low;       // low word of handler entry point's address
+  uint16 segment_selector; // (code) segment the handler resides in
+  uint8 reserved  : 5;     // reserved. set to zero
+  uint8 zeros     : 3;     // set to zero
+  uint8 type      : 3;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
+  uint8 gate_size : 1;     // set to GATE_SIZE_16_BIT or GATE_SIZE_32_BIT
+  uint8 unused    : 1;     // unsued - set to zero
+  uint8 dpl       : 2;     // descriptor protection level
+  uint8 present   : 1;     // present- flag - set to 1
+  uint16 offset_high;      // high word of handler entry point's address
+}__attribute__((__packed__));
+//---------------------------------------------------------------------------*/
+
 
 class InterruptUtils
 {
@@ -41,6 +57,8 @@ public:
    * initialises all items of the interrupthandlers
    */
   static void initialise();
+
+  static void initialise_ap();
 
   /**
    * not implemented
@@ -63,6 +81,8 @@ public:
    *
    */
   static void countPageFault(uint64 address);
+
+  static GateDesc* interrupt_gates;
 
 private:
   static InterruptHandlers handlers[NUM_INTERRUPT_HANDLERS];

@@ -8,17 +8,18 @@ set(APPEND_LD_ARGUMENTS )
 set(KERNEL_IMAGE_OBJCOPY )
 
 add_custom_target(kvm
-	COMMAND qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio
-  COMMENT "Going to qemu-system-i386 -m 8M -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio"
+	COMMAND qemu-system-i386 -m 8M -smp 2 -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio
+  COMMENT "Going to qemu-system-i386 -m 8M -smp 2 -cpu kvm32 -hda SWEB-flat.vmdk -debugcon stdio"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
 
 #Custom target: make qemu
 #Run qemu in non debugging mode
+#COMMAND	qemu-system-i386 -m 8M -smp 2 -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio -monitor stdio -d cpu_reset
 add_custom_target(qemu
-	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio
-	COMMENT "Going to qemu-system-i386 -m 8M -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio"
+	COMMAND	qemu-system-i386 -m 8M -smp 2 -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio
+	COMMENT "Going to qemu-system-i386 -m 8M -smp 2 -cpu qemu32 -hda SWEB-flat.vmdk -debugcon stdio"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -26,8 +27,8 @@ add_custom_target(qemu
 #Custom target: make qemu
 #Run qemu in non debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-i386 -no-kvm -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio
-	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -hda SWEB-flat.vmdk -debugcon stdio on localhost:1234"
+	COMMAND	qemu-system-i386 -no-kvm -s -S -m 8M -smp 2 -hda SWEB-flat.vmdk -debugcon stdio
+	COMMENT "Going to gdb qemu-system-i386 -s -S -m 8M -smp 2 -hda SWEB-flat.vmdk -debugcon stdio on localhost:1234"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
@@ -35,8 +36,8 @@ add_custom_target(qemugdb
 #Custom target: make qemutacos
 #Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
-  COMMENT "Going to qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
+  COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -smp 2 -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
+  COMMENT "Going to qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -smp 2 -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   #COMMAND reset -I
   )
