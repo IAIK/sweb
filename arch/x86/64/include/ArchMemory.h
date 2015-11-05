@@ -165,6 +165,9 @@ private:
  */
   template<typename T> static bool checkAndRemove(pointer map_ptr, uint64 index);
 
+  ArchMemory(ArchMemory const &src); // not yet implemented
+  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
+
 };
 
 #endif

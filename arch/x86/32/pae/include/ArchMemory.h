@@ -159,6 +159,11 @@ private:
   // i think because were in a class and the object will be allocated by the
   // KMM which will just return some not-aligned block, thus this aligned block
   // gets not-aligned in memory -- DG
+
+
+  ArchMemory(ArchMemory const &src); // not yet implemented
+  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
+
 };
 
 #endif
