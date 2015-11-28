@@ -173,7 +173,7 @@ pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
     PageTableEntry *pte_base = ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
     if (pte_base[pte_vpn].size == 2)
     {
-      return getIdentAddressOfPPN(pte_base[pte_vpn].page_ppn,PDE_SIZE_PT) | (vaddress_to_check % PDE_SIZE_PAGE);
+      return getIdentAddressOfPPN(pte_base[pte_vpn].page_ppn) | (vaddress_to_check % PAGE_SIZE);
     }
   }
   return 0;
