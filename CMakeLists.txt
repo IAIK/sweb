@@ -9,7 +9,7 @@ if(POLICY CMP0037)
 endif(POLICY CMP0037)
 
 if ("${ARCH}" STREQUAL "")
-  set (ARCH "arm/integratorcp")
+  set (ARCH "x86/32")
 endif("${ARCH}" STREQUAL "")
 MESSAGE("-- Target architecture: ${ARCH}")
 
