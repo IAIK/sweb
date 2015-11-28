@@ -166,7 +166,7 @@ pointer ArchMemory::checkAddressValid(uint64 vaddress_to_check)
   if (m.page != 0)
   {
     debug(A_MEMORY, "checkAddressValid %zx and %zx -> true\n", page_map_level_4_, vaddress_to_check);
-    return getIdentAddressOfPPN(m.page,m.page_size) | (vaddress_to_check % m.page_size);
+    return m.page | (vaddress_to_check % m.page_size);
   }
   else
   {
