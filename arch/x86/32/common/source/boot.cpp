@@ -56,6 +56,15 @@ extern "C" void entry()
   PRINT("Initializing Kernel Paging Structures...\n");
   initialiseBootTimePaging();
 
+  if (PAGE_DIRECTORY_ENTRIES == 512)
+  {
+    PRINT("Enable EFER.NXE...\n");
+    asm("mov $0xC0000080,%ecx\n"
+        "rdmsr\n"
+        "or $0x800,%eax\n"
+        "wrmsr\n");
+  }
+
   PRINT("Setting CR3 Register...\n");
   asm("mov %[pd],%%cr3" : : [pd]"r"(VIRTUAL_TO_PHYSICAL_BOOT((pointer)ArchMemory::getRootOfKernelPagingStructure())));
 

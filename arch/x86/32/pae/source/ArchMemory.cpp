@@ -122,8 +122,10 @@ void ArchMemory::mapPage(uint32 virtual_page,
 ArchMemory::~ArchMemory()
 {
   debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page dir pointer table %p\n",page_dir_pointer_table_ );
-  freePageDirectory(page_dir_pointer_table_[0].page_directory_ppn); // 0-1 GiB
-  freePageDirectory(page_dir_pointer_table_[1].page_directory_ppn); // 1-2 GiB
+  if(page_dir_pointer_table_[0].present)
+    freePageDirectory(page_dir_pointer_table_[0].page_directory_ppn); // 0-1 GiB
+  if(page_dir_pointer_table_[1].present)
+    freePageDirectory(page_dir_pointer_table_[1].page_directory_ppn); // 1-2 GiB
 }
 
 void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
