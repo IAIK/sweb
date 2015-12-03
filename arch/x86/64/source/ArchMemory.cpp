@@ -32,7 +32,7 @@ bool ArchMemory::checkAndRemove(pointer map_ptr, uint64 index)
   ((uint64*) map)[index] = 0;
   for (uint64 i = 0; i < PAGE_DIR_ENTRIES; i++)
   {
-    if (map[index].present != 0)
+    if (map[i].present != 0)
       return false;
   }
   return true;
@@ -43,13 +43,23 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
 
   assert(m.page_ppn != 0 && m.page_size == PAGE_SIZE);
+  PageManager::instance()->freePPN(m.pt_ppn, PAGE_SIZE);
   bool empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
-  if (empty)
-    empty = checkAndRemove<PageDirPageEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi);
-  if (empty)
+  if (empty) 
+  {
+    PageManager::instance()->freePPN(m.pt_ppn, PAGE_SIZE);
+    empty = checkAndRemove<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi);
+  }
+  if (empty) 
+  {
+    PageManager::instance()->freePPN(m.pd_ppn, PAGE_SIZE);
     empty = checkAndRemove<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti);
-  if (empty)
+  }
+  if (empty) 
+  {
+    PageManager::instance()->freePPN(m.pdpt_ppn, PAGE_SIZE);
     empty = checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
+  }
   return true;
 }
 
