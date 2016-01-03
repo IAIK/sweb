@@ -51,7 +51,7 @@ uint32 Scheduler::schedule()
 
     if ((currentThread == previousThread) && (currentThread->state_ != Running))
     {
-      debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.");
+      debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.\n");
     }
   } while (!currentThread->schedulable());
 //  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
