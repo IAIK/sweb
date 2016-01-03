@@ -100,14 +100,6 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     for (size_t k = Min(start_page, number_of_pages_); k <= Min(end_page, number_of_pages_ - 1); ++k)
       Bitmap::setBit(page_usage_table, used_pages, k);
   }
-  // determine lowest unreserved page
-  for (size_t i = 0; i < boot_bitmap_size; ++i)
-  {
-    if (!Bitmap::getBit(page_usage_table, i))
-      break;
-    else
-      ++lowest_unreserved_page_;
-  }
 
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
 
@@ -140,7 +132,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   }
 
   debug(PM, "Ctor: find lowest unreserved page\n");
-  for (size_t p = lowest_unreserved_page_; p < number_of_pages_; ++p)
+  for (size_t p = 0; p < number_of_pages_; ++p)
   {
     if (!page_usage_table_->getBit(p))
     {
