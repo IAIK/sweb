@@ -30,11 +30,8 @@ ArchMemory::ArchMemory()
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
   memcpy((void*) new_page_directory, (const void*) kernel_page_directory, PD_SIZE);
-  for (uint32 p = 8; p < PAGE_DIR_ENTRIES / 2; ++p) //we're concerned with first two gig, rest stays as is
-  {
+  for (uint32 p = 8; p < PAGE_DIR_ENTRIES / 2; ++p) // should be zero, this is just for safety
     new_page_directory[p].pt.size = PDE_SIZE_NONE;
-  }
-  debug(A_MEMORY, "ArchMemory::ArchMemory(): Initialised the page dir\n");
 }
 
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
@@ -57,6 +54,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
     if (ustl::find(pt_ppns_.begin(), pt_ppns_.end(),page_directory[pde_vpn].pt.pt_ppn * 4 + i) == pt_ppns_.end())
       return;
   PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
+  ((uint32*)page_directory)[pde_vpn] = 0; // for easier debugging
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
@@ -74,6 +72,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
     {
       pte_base[pte_vpn].size = 0;
       PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+      ((uint32*)pte_base)[pte_vpn] = 0; // for easier debugging
     }
     checkAndRemovePT(pde_vpn);
   }

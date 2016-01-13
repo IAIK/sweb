@@ -35,6 +35,7 @@ void ArchMemory::checkAndRemovePT(uint32 physical_page_directory_page, uint32 pd
   //else:
   page_directory[pde_vpn].pt.present = 0;
   PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_table_ppn);
+  ((uint64*)page_directory)[pde_vpn] = 0; // for easier debugging
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
@@ -49,6 +50,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
       //PageManager manages Pages of size PAGE_SIZE only, so we have to free this_page_size/PAGE_SIZE Pages
       for (uint32 p=0;p<PAGE_TABLE_ENTRIES;++p)
         PageManager::instance()->freePPN(page_directory[pde_vpn].page.page_ppn*1024 + p);
+      ((uint64*)page_directory)[pde_vpn] = 0; // for easier debugging
     }
     else
     {
@@ -57,6 +59,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
       {
         pte_base[pte_vpn].present = 0;
         PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
+        ((uint64*)pte_base)[pte_vpn] = 0; // for easier debugging
       }
       checkAndRemovePT(page_dir_pointer_table_[pdpte_vpn].page_directory_ppn, pde_vpn);
     }

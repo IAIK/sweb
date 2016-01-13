@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.cpp
- *
- */
-
 #include "ArchMemory.h"
 #include "ArchInterrupts.h"
 #include "kprintf.h"
