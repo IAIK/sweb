@@ -1,4 +1,4 @@
 # sweb
 SWEB Educational OS
 
-Please have a look at https://swebwiki.student.iaik.tugraz.at/
+Please have a look at https://teaching.iaik.tugraz.at/bs/

@@ -161,7 +161,12 @@ extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-  assert(currentThread->isStackCanaryOK());
+  if (currentThread->switch_to_userspace_)
+  {
+    assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
+    assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+  }
+  assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
   ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
   g_tss.rsp0 = info.rsp0;
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));

@@ -142,6 +142,9 @@ private:
  */
   void checkAndRemovePT(uint32 pde_vpn);
 
+  ArchMemory(ArchMemory const &src); // not yet implemented
+  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
+
 };
 
 #endif

@@ -119,10 +119,10 @@ extern "C" void entry()
   PRINT("Setting CR3 Register...\n");
   asm("mov %[pd],%%cr3" : : [pd]"r"(TRUNCATE(kernel_page_map_level_4)));
 
-  PRINT("Enable EFER.LME...\n");
+  PRINT("Enable EFER.LME and EFER.NXE...\n");
   asm("mov $0xC0000080,%ecx\n"
       "rdmsr\n"
-      "or $0x100,%eax\n"
+      "or $0x900,%eax\n"
       "wrmsr\n");
 
   asm("push $2\n"
