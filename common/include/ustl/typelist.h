@@ -6,6 +6,7 @@
 // the MIT license with Copyright (c) 2001 by Andrei Alexandrescu.
 
 #pragma once
+
 #include "metamac.h"
 #include "typet.h"
 

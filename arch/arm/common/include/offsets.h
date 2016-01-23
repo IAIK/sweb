@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _offsets_h_
-#define _offsets_h_
+#pragma once
 
 #include "board_constants.h"
 
@@ -38,5 +37,3 @@
  */
 #define VIRTUAL_TO_PHYSICAL_BOOT(x) ((x) - PHYSICAL_TO_VIRTUAL_OFFSET)
 
-
-#endif

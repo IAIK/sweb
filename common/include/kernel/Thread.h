@@ -1,5 +1,4 @@
-#ifndef _THREAD_H_
-#define _THREAD_H_
+#pragma once
 
 #include "types.h"
 #include "fs/FileSystemInfo.h"
@@ -141,4 +140,3 @@ class Thread
 
 };
 
-#endif

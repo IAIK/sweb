@@ -2,8 +2,7 @@
  * @file TextConsole.h
  */
 
-#ifndef _TEXTCONSOLE_H_
-#define _TEXTCONSOLE_H_
+#pragma once
 
 #include "Console.h"
 
@@ -60,4 +59,3 @@ class TextConsole : public Console
     virtual void consoleScrollUp(uint8 const &state);
 };
 
-#endif

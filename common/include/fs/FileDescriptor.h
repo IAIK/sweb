@@ -1,5 +1,4 @@
-#ifndef FILEDESCRIPTOR_H__
-#define FILEDESCRIPTOR_H__
+#pragma once
 
 #include "types.h"
 #include "ulist.h"
@@ -62,4 +61,3 @@ class FileDescriptor
     static void remove(FileDescriptor* fd);
 };
 
-#endif // FILEDESCRIPTOR_H_

@@ -4,6 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #pragma once
+
 #include "config.h"
 /*#ifndef STDC_HEADERS
     #error "This library requires standard C and C++ headers to compile."

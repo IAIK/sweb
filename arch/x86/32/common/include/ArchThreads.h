@@ -1,5 +1,4 @@
-#ifndef _ARCH_THREADS_H_
-#define _ARCH_THREADS_H_
+#pragma once
 
 #include "types.h"
 
@@ -161,4 +160,3 @@ private:
 
 };
 
-#endif

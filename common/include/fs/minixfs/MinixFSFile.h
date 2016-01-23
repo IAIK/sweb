@@ -1,5 +1,4 @@
-#ifndef MinixFSFile_h___
-#define MinixFSFile_h___
+#pragma once
 
 #include "File.h"
 
@@ -46,4 +45,3 @@ class MinixFSFile : public File
     virtual int32 flush();
 };
 
-#endif // MinixFSFile_h___

@@ -2,8 +2,7 @@
  * @file Syscall.h
  */
 
-#ifndef _SYSCALL_H_
-#define _SYSCALL_H_
+#pragma once
 
 
 #include <types.h>
@@ -125,4 +124,3 @@ class Syscall
   //helper functions
 };
 
-#endif

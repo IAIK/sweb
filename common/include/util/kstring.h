@@ -1,5 +1,4 @@
-#ifndef KSTRING_H__
-#define KSTRING_H__
+#pragma once
 
 #define STRING_SAVE
 
@@ -63,4 +62,3 @@ extern "C"
 }
 #endif
 
-#endif

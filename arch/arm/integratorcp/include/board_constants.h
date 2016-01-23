@@ -1,5 +1,4 @@
-#ifndef _BOARD_CONSTANTS_H_
-#define _BOARD_CONSTANTS_H_
+#pragma once
 
 #define SERIAL_BASE 0x86000000
 #define SERIAL_FLAG_REGISTER 0x18
@@ -9,4 +8,3 @@
 #define HCD_DESIGNWARE_BASE ((void*)0x0)
 #define BOARD_LOAD_BASE 0
 
-#endif

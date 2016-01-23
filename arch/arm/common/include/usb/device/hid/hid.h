@@ -9,8 +9,7 @@
 * devices. Information about the hid reports is in device/hid/report.h.
 ******************************************************************************/
 
-#ifndef HID_H_
-#define HID_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -124,4 +123,3 @@ Result HidAttach(struct UsbDevice *device, u32 interfaceNumber);
 }
 #endif
 
-#endif //HID_H_

@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _KMI_H_
-#define _KMI_H_
+#pragma once
 
 #include "types.h"
 
@@ -53,4 +52,3 @@ void kbdSetCapslock(bool on);
  */
 void kbdSetScrolllock(bool on);
 
-#endif

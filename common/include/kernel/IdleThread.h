@@ -1,5 +1,4 @@
-#ifndef IDLETHREAD_H_
-#define IDLETHREAD_H_
+#pragma once
 
 #include "Thread.h"
 
@@ -11,4 +10,3 @@ class IdleThread : public Thread
     virtual void Run();
 };
 
-#endif /* IDLETHREAD_H_ */

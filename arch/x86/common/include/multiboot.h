@@ -1,5 +1,4 @@
-#ifndef _MULTIBOOT_H_
-#define _MULTIBOOT_H_
+#pragma once
 
 struct vbe_controller
 {
@@ -179,4 +178,3 @@ struct mb_offsets {
     uint64 entry;
 } __attribute__((__packed__));
 
-#endif

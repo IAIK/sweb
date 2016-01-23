@@ -2,8 +2,7 @@
  * @file ProcessRegistry.h
  */
 
-#ifndef _MOUNTMINIX_H_
-#define _MOUNTMINIX_H_
+#pragma once
 
 #include "Thread.h"
 #include "Mutex.h"
@@ -64,4 +63,3 @@ class ProcessRegistry : public Thread
     static ProcessRegistry* instance_;
 };
 
-#endif

@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _ARCH_MEMORY_H_
-#define _ARCH_MEMORY_H_
+#pragma once
 
 #include "types.h"
 #include "paging-definitions.h"
@@ -166,5 +165,4 @@ private:
 
 };
 
-#endif
 

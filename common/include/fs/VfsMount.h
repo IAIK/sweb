@@ -2,8 +2,7 @@
  * @file VfsMount.h
  */
 
-#ifndef VFS_MOUNT_H__
-#define VFS_MOUNT_H__
+#pragma once
 
 #include "types.h"
 #include "VirtualFileSystem.h"
@@ -135,6 +134,5 @@ class VfsMount
 
 };
 
-#endif // Vfsmount_h___
 
 

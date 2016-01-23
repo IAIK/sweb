@@ -1,5 +1,4 @@
-#ifndef KMALLOC_H__
-#define KMALLOC_H__
+#pragma once
 
 #include "types.h"
 
@@ -28,4 +27,3 @@ extern "C"
 }
 #endif
 
-#endif

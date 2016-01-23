@@ -10,8 +10,7 @@
 * structure are an implementation detail, matching Linux in this case to 
 * aid compatibility.
 ******************************************************************************/
-#ifndef _USBD_PIPE_H
-#define _USBD_PIPE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -47,4 +46,3 @@ struct UsbPipeAddress {
 }
 #endif
 
-#endif // _USBD_PIPE_H

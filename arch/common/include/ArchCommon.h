@@ -1,5 +1,4 @@
-#ifndef _ARCH_COMMON_H_
-#define _ARCH_COMMON_H_
+#pragma once
 
 #include "types.h"
 #include "paging-definitions.h"
@@ -93,4 +92,3 @@ class ArchCommon
     static void drawHeartBeat();
 };
 
-#endif

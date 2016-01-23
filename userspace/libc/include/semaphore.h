@@ -1,5 +1,4 @@
-#ifndef semaphore_h___
-#define semaphore_h___
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +24,5 @@ extern int sem_post(sem_t *sem);
 }
 #endif
 
-#endif // semaphore_h___
 
 

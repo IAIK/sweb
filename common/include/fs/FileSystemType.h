@@ -1,5 +1,4 @@
-#ifndef FILE_SYSTEM_TYPE_H__
-#define FILE_SYSTEM_TYPE_H__
+#pragma once
 
 #include "types.h"
 
@@ -102,4 +101,3 @@ class FileSystemType
 
 };
 
-#endif // FileSystemType_h___

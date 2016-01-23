@@ -1,5 +1,4 @@
-#ifndef wait_h___
-#define wait_h___
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,6 +19,5 @@ extern pid_t waitpid(pid_t pid, int *status, int options);
 }
 #endif
 
-#endif // wait_h___
 
 

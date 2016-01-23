@@ -2,8 +2,7 @@
  * @file DeviceFSType.h
  */
 
-#ifndef _DEVICEFS_TYPE_H_
-#define _DEVICEFS_TYPE_H_
+#pragma once
 
 #include "fs/FileSystemType.h"
 
@@ -38,4 +37,3 @@ class DeviceFSType : public FileSystemType
     virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 };
 
-#endif

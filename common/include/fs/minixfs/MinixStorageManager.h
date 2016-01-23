@@ -1,5 +1,4 @@
-#ifndef MINIX_STORAGE_MANAGER__
-#define MINIX_STORAGE_MANAGER__
+#pragma once
 
 #include "StorageManager.h"
 #include "types.h"
@@ -91,5 +90,4 @@ class MinixStorageManager : public StorageManager
 
 };
 
-#endif //MINIX_STORAGE_MANAGER__
 

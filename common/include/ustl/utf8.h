@@ -15,6 +15,7 @@
 // U-80000000 - U-FFFFFFFF: 11111110 100000xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 
 #pragma once
+
 #include "uiterator.h"
 
 namespace ustl {

@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef __PANIC__H__
-#define __PANIC__H__
+#pragma once
 
 #include "types.h"
 
@@ -15,4 +14,3 @@
  */
 void kpanict( uint8 *message );
 
-#endif

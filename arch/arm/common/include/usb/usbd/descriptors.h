@@ -8,8 +8,7 @@
 * usbd/descriptors.h contains structures defined in the USB standard that
 * describe various aspects of USB.
 ******************************************************************************/
-#ifndef _USBD_DESCRIPTORS_H
-#define _USBD_DESCRIPTORS_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -240,4 +239,3 @@ struct UsbStringDescriptor {
 }
 #endif
 
-#endif // _USBD_DESCRIPTORS_H

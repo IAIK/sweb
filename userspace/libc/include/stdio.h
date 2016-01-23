@@ -17,8 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef stdio_h___
-#define stdio_h___
+#pragma once
 
 // stdarg.h is taken from gcc
 #include <stdarg.h>
@@ -246,7 +245,5 @@ extern int scanf(const char *format, ...) __attribute__ ((format (scanf, 1, 2)))
 #ifdef __cplusplus
 }
 #endif
-
-#endif // stdio_h___
 
 

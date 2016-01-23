@@ -1,5 +1,4 @@
-#ifndef KERNEL_MEMORY_MANAGER__
-#define KERNEL_MEMORY_MANAGER__
+#pragma once
 
 #include "new.h"
 #include "SpinLock.h"
@@ -196,4 +195,3 @@ class KernelMemoryManager
     size_t approx_memory_free_;
 };
 
-#endif

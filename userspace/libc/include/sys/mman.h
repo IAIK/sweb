@@ -1,5 +1,4 @@
-#ifndef mman_h___
-#define mman_h___
+#pragma once
 
 #include "types.h"
 
@@ -27,7 +26,5 @@ extern int shm_unlink(const char* name);
 #ifdef __cplusplus
 }
 #endif
-
-#endif // mman_h___
 
 

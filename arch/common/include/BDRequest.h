@@ -19,8 +19,7 @@
  *
  */
  
-#ifndef _BD_REQUEST_H_
-#define _BD_REQUEST_H_
+#pragma once
 
 #include "types.h"
 
@@ -220,4 +219,3 @@ class BDRequest
     BDRequest *next_request_;
 };
 
-#endif

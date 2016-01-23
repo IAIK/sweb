@@ -1,5 +1,5 @@
-#ifndef FIFO_H__
-#define FIFO_H__
+#pragma once
+
 #include "kprintf.h"
 #include "new.h"
 #include "Mutex.h"
@@ -181,4 +181,3 @@ uint32 FiFo<T>::countElementsAhead()
     return (input_buffer_size_ + count);
 }
 
-#endif

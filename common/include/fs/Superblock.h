@@ -1,5 +1,4 @@
-#ifndef SUPERBLOCK_H__
-#define SUPERBLOCK_H__
+#pragma once
 
 #include "types.h"
 #include <ulist.h>
@@ -181,5 +180,4 @@ class Superblock
     FileSystemType *getFSType();
 };
 
-#endif // Superblock_h___
 

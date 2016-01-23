@@ -1,5 +1,4 @@
-#ifndef CLEANUPTHREAD_H_
-#define CLEANUPTHREAD_H_
+#pragma once
 
 #include "Thread.h"
 
@@ -12,4 +11,3 @@ class CleanupThread : public Thread
     virtual void Run();
 };
 
-#endif /* CLEANUPTHREAD_H_ */

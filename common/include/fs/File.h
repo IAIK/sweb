@@ -1,5 +1,4 @@
-#ifndef FILE_H__
-#define FILE_H__
+#pragma once
 
 #include "types.h"
 
@@ -212,5 +211,4 @@ class File
     virtual uint32 getSize();
 };
 
-#endif
 

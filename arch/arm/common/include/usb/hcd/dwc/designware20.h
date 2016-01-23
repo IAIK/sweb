@@ -10,8 +10,7 @@
 *
 * THIS SOFTWARE IS NOT AFFILIATED WITH NOR ENDORSED BY SYNOPSYS IP.
 ******************************************************************************/
-#ifndef _HCD_DWC_DESIGNWARE_H
-#define _HCD_DWC_DESIGNWARE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -692,4 +691,3 @@ void SetReg(volatile const void* reg);
 }
 #endif
 
-#endif // _HCD_DWC_DESIGNWARE_H

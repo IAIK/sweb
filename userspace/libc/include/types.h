@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef __TYPES_H_
-#define __TYPES_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,4 +25,3 @@ typedef long int pid_t;
 }
 #endif
 
-#endif

@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _ATKBD_H_
-#define _ATKBD_H_
+#pragma once
 
 #include "types.h"
 #include "ports.h"
@@ -53,4 +52,3 @@ void kbdSetCapslock(bool on);
  */
 void kbdSetScrolllock(bool on);
 
-#endif

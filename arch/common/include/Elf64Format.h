@@ -1,6 +1,7 @@
 /**
  * ElfFormat.h
  */
+#pragma once
 
 #include "types.h"
 #include "kprintf.h"

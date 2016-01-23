@@ -1,5 +1,4 @@
-#ifndef STORAGE_MANAGER__
-#define STORAGE_MANAGER__
+#pragma once
 
 #include "Bitmap.h"
 #include "types.h"
@@ -43,4 +42,3 @@ class StorageManager
 
 };
 
-#endif //STORAGE_MANAGER__
