@@ -4,6 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #pragma once
+
 #include "memblock.h"
 #include "utf8.h"
 #include <stdarg.h> // for va_list, va_start, and va_end (in string::format)

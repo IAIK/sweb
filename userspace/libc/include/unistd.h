@@ -17,8 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef unistd_h___
-#define unistd_h___
+#pragma once
 
 #include "../../../common/include/kernel/syscall-definitions.h"
 #include "stdarg.h"
@@ -308,7 +307,5 @@ int execv(const char *path __attribute__((unused)), char *const argv[] __attribu
 }
 #endif
 
-
-#endif // unistd_h___
 
 

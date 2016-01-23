@@ -2,8 +2,7 @@
  * @file Scheduler.h
  */
 
-#ifndef SCHEDULER_H__
-#define SCHEDULER_H__
+#pragma once
 
 #include "types.h"
 #include <ulist.h>
@@ -150,4 +149,3 @@ class Scheduler
     IdleThread idle_thread_;
     CleanupThread cleanup_thread_;
 };
-#endif

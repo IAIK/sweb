@@ -8,8 +8,7 @@
 * device/hub.h contains definitions relating to the USB hub device.
 ******************************************************************************/
 
-#ifndef HUB_H_
-#define HUB_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -209,4 +208,3 @@ void HubRecursiveCheck(struct UsbDevice *device);
 }
 #endif
 
-#endif

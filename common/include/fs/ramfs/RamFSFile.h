@@ -2,8 +2,7 @@
  * @file RamFSFile.h
  */
 
-#ifndef RAM_FS_FILE_H__
-#define RAM_FS_FILE_H__
+#pragma once
 
 #include "fs/File.h"
 
@@ -74,4 +73,3 @@ class RamFSFile: public File
     virtual int32 flush();
 };
 
-#endif // RamFsFile_h___

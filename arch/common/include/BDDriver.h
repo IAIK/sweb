@@ -1,5 +1,4 @@
-#ifndef _BD_DEVICE_DRIVER_
-#define _BD_DEVICE_DRIVER_
+#pragma once
 
 #include "types.h"
 class BDRequest;
@@ -33,5 +32,4 @@ class BDDriver
     uint16 irq;
 };
 
-#endif
 

@@ -1,5 +1,4 @@
-#ifndef _MUTEX_H_
-#define _MUTEX_H_
+#pragma once
 
 #include "types.h"
 #include "MutexLock.h"
@@ -86,4 +85,3 @@ private:
 
 };
 
-#endif

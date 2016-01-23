@@ -2,8 +2,7 @@
  * @file RamFSInode.h
  */
 
-#ifndef RAM_FS_INODE_H__
-#define RAM_FS_INODE_H__
+#pragma once
 
 #include "types.h"
 #include "fs/Inode.h"
@@ -134,4 +133,3 @@ class RamFSInode : public Inode
 
 };
 
-#endif // Inode_h___

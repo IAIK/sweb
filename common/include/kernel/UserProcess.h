@@ -1,5 +1,4 @@
-#ifndef _USERPROCESS_H_
-#define _USERPROCESS_H_
+#pragma once
 
 #include "Thread.h"
 
@@ -33,4 +32,3 @@ class UserProcess : public Thread
     ProcessRegistry *process_registry_;
 };
 
-#endif

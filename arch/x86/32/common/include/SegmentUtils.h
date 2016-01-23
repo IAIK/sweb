@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _SEGMENT_UTILS_H_
-#define _SEGMENT_UTILS_H_
+#pragma once
 
 #include "types.h"
 
@@ -60,4 +59,3 @@ public:
 
 };
 
-#endif

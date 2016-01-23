@@ -9,8 +9,7 @@
 * the USB implementation.
 ******************************************************************************/
 
-#ifndef HCD_H_
-#define HCD_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -79,4 +78,3 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 }
 #endif
 
-#endif

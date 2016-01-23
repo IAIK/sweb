@@ -7,6 +7,7 @@
 /// \brief Contains various iterator adapters.
 
 #pragma once
+
 #include "utypes.h"
 
 namespace ustl {

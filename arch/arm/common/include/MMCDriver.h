@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _ARCH_MMC_DRIVER_
-#define _ARCH_MMC_DRIVER_
+#pragma once
 
 #include "BDDriver.h"
 #include "Mutex.h"
@@ -67,4 +66,3 @@ class MMCDriver : public BDDriver
     uint32 num_sectors_;
 };
 
-#endif

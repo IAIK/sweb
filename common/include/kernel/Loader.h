@@ -2,8 +2,7 @@
  * @file Loader.h
  */
 
-#ifndef __LOADER_H__
-#define __LOADER_H__
+#pragma once
 
 #include "types.h"
 #include "Thread.h"
@@ -91,4 +90,3 @@ class Loader
 
 };
 
-#endif

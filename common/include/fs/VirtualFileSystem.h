@@ -2,8 +2,7 @@
  * @file VirtualFileSystem.h
  */
 
-#ifndef VIRTUAL_FILE_SYSTEM__
-#define VIRTUAL_FILE_SYSTEM__
+#pragma once
 
 #include "types.h"
 #include <ustl/ulist.h>
@@ -132,4 +131,3 @@ class VirtualFileSystem
 
 extern VirtualFileSystem vfs;
 
-#endif

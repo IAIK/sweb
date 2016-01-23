@@ -1,8 +1,7 @@
 /**
  * @file RingBuffer.h
  */
-#ifndef _RINGBUFFER_H_
-#define _RINGBUFFER_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -116,4 +115,3 @@ bool RingBuffer<T>::get ( T &c )
   return true;
 }
 
-#endif

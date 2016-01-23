@@ -1,5 +1,4 @@
-#ifndef BACKTRACE_H_
-#define BACKTRACE_H_
+#pragma once
 
 #include "arch_backtrace.h"
 
@@ -14,4 +13,3 @@
  */
 pointer getCalledBefore(size_t offset);
 
-#endif // BACKTRACE_H_

@@ -1,5 +1,4 @@
-#ifndef INODE_H__
-#define INODE_H__
+#pragma once
 
 #include "types.h"
 #include "kprintf.h"
@@ -368,4 +367,3 @@ class Inode
 
 };
 
-#endif // Inode_h___

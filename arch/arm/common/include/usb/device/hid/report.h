@@ -10,8 +10,7 @@
 * device.
 ******************************************************************************/
 
-#ifndef REPORT_H_
-#define REPORT_H_
+#pragma once
 
 #include <usb_types.h>
 
@@ -346,4 +345,3 @@ s32 HidGetFieldValue(struct HidParserField *field, u32 index);
 }
 #endif
 
-#endif

@@ -1,8 +1,7 @@
 /**
  * @file user_progs.h
  */
-#ifndef _USER_PROGS_H_
-#define _USER_PROGS_H_
+#pragma once
 
 // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!
 char const *user_progs[] = {
@@ -11,4 +10,3 @@ char const *user_progs[] = {
                             0
                            };
 
-#endif

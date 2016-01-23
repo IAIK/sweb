@@ -2,8 +2,7 @@
  * @file PathWalker.h
  */
 
-#ifndef PATH_WALKER_H__
-#define PATH_WALKER_H__
+#pragma once
 
 #include "types.h"
 
@@ -118,5 +117,4 @@ class PathWalker
     ~PathWalker();
 };
 
-#endif
 

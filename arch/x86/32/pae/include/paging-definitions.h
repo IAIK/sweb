@@ -1,5 +1,4 @@
-#ifndef __PAGING_DEFINITIONS_H__
-#define __PAGING_DEFINITIONS_H__
+#pragma once
 
 #include "types.h"
 
@@ -102,5 +101,4 @@ typedef struct
 
 
 
-#endif
 

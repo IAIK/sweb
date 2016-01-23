@@ -1,5 +1,4 @@
-#ifndef CONDITION__
-#define CONDITION__
+#pragma once
 
 #include "Lock.h"
 
@@ -69,4 +68,3 @@ class Condition : public Lock
 
 };
 
-#endif

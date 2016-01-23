@@ -1,5 +1,4 @@
-#ifndef MINIX_FS_ZONE__
-#define MINIX_FS_ZONE__
+#pragma once
 
 #include "types.h"
 
@@ -82,4 +81,3 @@ class MinixFSZone
 
 };
 
-#endif //MINIX_FS_ZONE__

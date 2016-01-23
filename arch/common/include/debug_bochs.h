@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _DEBUG_BOCHS_H_
-#define _DEBUG_BOCHS_H_
+#pragma once
 #include "types.h"
 
 /**
@@ -20,4 +19,3 @@ void writeChar2Bochs( char char2Write );
  */
 void writeLine2Bochs( const char *line2Write );
 
-#endif

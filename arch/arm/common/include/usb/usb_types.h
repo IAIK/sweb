@@ -8,8 +8,7 @@
 * types.h contains definitions of standardised types used ubiquitously.
 ******************************************************************************/
 
-#ifndef USB_TYPES_H
-#define USB_TYPES_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -168,4 +167,3 @@ static inline u32 SizeToNumber(UsbPacketSize size) {
 */
 #define Max3(x, y, type) ({ type __x = (x); type __y = (y); __x < __y ? __y : __x; })
 
-#endif // USB_TYPES_H

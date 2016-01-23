@@ -1,5 +1,4 @@
-#ifndef DEBUG_H___
-#define DEBUG_H___
+#pragma once
 
 enum AnsiColor
 {
@@ -81,5 +80,4 @@ const size_t PSEUDOFS           = Ansi_Yellow;
 const size_t VFSSYSCALL         = Ansi_Yellow;
 const size_t VFS                = Ansi_Yellow;
 
-#endif //DEBUG_H___
 

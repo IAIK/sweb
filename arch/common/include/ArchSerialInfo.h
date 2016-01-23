@@ -1,5 +1,4 @@
-#ifndef _ARCH_SERIAL_H_
-#define _ARCH_SERIAL_H_
+#pragma once
 
 #include "types.h"
 
@@ -43,4 +42,3 @@ public:
   static uint32 MAX_ARCH_PORTS;  /// Maximum serial ports registered in BIOS
 };
 
-#endif

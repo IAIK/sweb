@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _IDE_BUS_DEVICE_DRIVER_
-#define _IDE_BUS_DEVICE_DRIVER_
+#pragma once
 
 #include "types.h"
 
@@ -48,4 +47,3 @@ class IDEDriver
 
 };
 
-#endif

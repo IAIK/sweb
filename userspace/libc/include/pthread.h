@@ -1,5 +1,4 @@
-#ifndef pthread_h___
-#define pthread_h___
+#pragma once
 
 
 #ifdef __cplusplus
@@ -57,8 +56,5 @@ extern int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif // pthread_h___
 
 

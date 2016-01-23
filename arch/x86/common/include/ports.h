@@ -4,8 +4,7 @@
  */
 
 
-#ifndef _PORTS_H_
-#define _PORTS_H_
+#pragma once
 
 #include "types.h"
 
@@ -112,4 +111,3 @@ static inline void outportwp(uint16 port, uint16 value)
   asm volatile ("outb %al,$0x80");
 }
 
-#endif

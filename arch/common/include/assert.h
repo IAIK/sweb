@@ -1,5 +1,4 @@
-#ifndef ASSSERT_H__
-#define ASSSERT_H__
+#pragma once
 
 #include "types.h"
 
@@ -25,4 +24,3 @@ __attribute__((noreturn)) void sweb_assert(const char *condition, uint32 line, c
 }
 #endif
 
-#endif

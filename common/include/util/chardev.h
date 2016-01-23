@@ -1,5 +1,4 @@
-#ifndef CHAR_DEV_H__
-#define CHAR_DEV_H__
+#pragma once
 
 #include "ustring.h"
 #include "FiFo.h"
@@ -95,5 +94,4 @@ class CharacterDevice
 
 };
 
-#endif
 

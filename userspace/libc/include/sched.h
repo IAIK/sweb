@@ -1,5 +1,4 @@
-#ifndef sched_h___
-#define sched_h___
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +12,5 @@ extern int sched_yield(void);
 }
 #endif
 
-#endif // unistd_h___
 
 

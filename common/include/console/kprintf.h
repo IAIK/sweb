@@ -1,5 +1,4 @@
-#ifndef KPRINTF_H__
-#define KPRINTF_H__
+#pragma once
 
 #include "stdarg.h"
 #include "types.h"
@@ -28,4 +27,3 @@ void kprintfd(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
  */
 void kprintf_init();
 
-#endif

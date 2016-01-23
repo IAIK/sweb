@@ -1,5 +1,4 @@
-#ifndef _SPINLOCK_H_
-#define _SPINLOCK_H_
+#pragma once
 
 #include "types.h"
 #include "Lock.h"
@@ -70,4 +69,3 @@ private:
   SpinLock &operator=(SpinLock const&);
 };
 
-#endif
