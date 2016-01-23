@@ -265,7 +265,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   ArchInterrupts::enableInterrupts();
 
   const bool page_present = (error & FLAG_PF_PRESENT);
-  const bool user_pagefault = (error & FLAG_PF_PRESENT);
+  const bool user_pagefault = (error & FLAG_PF_USER);
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   if (!page_present && address < 2U * 1024U * 1024U * 1024U && currentThread->loader_)
   {
