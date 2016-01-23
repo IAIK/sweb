@@ -1,5 +1,4 @@
-#ifndef DENTRY_h__
-#define DENTRY_h__
+#pragma once
 
 #include "types.h"
 #include <ulist.h>
@@ -165,4 +164,3 @@ class Dentry
     ustl::string d_name_;
 };
 
-#endif // Dentry_h___

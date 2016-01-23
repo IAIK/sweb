@@ -17,8 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef syscall_h___
-#define syscall_h___
+#pragma once
 
 #include "types.h"
 
@@ -41,6 +40,5 @@ extern size_t __syscall(size_t arg1, size_t arg2, size_t arg3, size_t arg4, size
 }
 #endif
 
-#endif // syscall_h___
 
 

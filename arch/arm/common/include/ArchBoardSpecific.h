@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _BOARD_SPECIFIC_H_
-#define _BOARD_SPECIFIC_H_
+#pragma once
 
 #include "types.h"
 
@@ -25,4 +24,3 @@ class ArchBoardSpecific
     static void uart0_irq_handler();
 };
 
-#endif

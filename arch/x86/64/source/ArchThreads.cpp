@@ -179,8 +179,8 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->kernel_registers_->cr3 < 0x80000000 && "cr3 contains the physical page dir address");
   if (thread->user_registers_ == 0)
     return;
-  assert(thread->kernel_registers_->rip == (size_t)threadStartHack && "threads should not start execution in kernel mode");
-  assert(thread->switch_to_userspace_ == 1 && "new threads must start in userspace");
+  assert(thread->kernel_registers_->rip == 0 && "user threads should not start execution in kernel mode");
+  assert(thread->switch_to_userspace_ == 1 && "new user threads must start in userspace");
   assert(thread->kernel_registers_->rsp == thread->user_registers_->rsp0 && "esp0 should point to kernel stack");
   assert(thread->kernel_registers_->cr3 == thread->user_registers_->cr3 && "user and kernel part of a thread need to have the same page dir");
   assert(thread->user_registers_->rip != 0 && "user eip needs to be valid... execution will start there");

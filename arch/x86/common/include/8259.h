@@ -3,8 +3,7 @@
  *
  */
  
-#ifndef _8259_H_
-#define _8259_H_
+#pragma once
 
 #include "types.h"
 #include "ports.h"
@@ -41,4 +40,3 @@ void disableIRQ(uint16 number);
  */
 void sendEOI(uint16 number);
 
-#endif

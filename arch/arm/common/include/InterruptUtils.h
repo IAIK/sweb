@@ -13,9 +13,7 @@
  *
  */
 
-
-#ifndef _INTERRUPT_UTILS_H_
-#define _INTERRUPT_UTILS_H_
+#pragma once
 
 #include "types.h"
 
@@ -48,4 +46,3 @@
 
 extern "C" void exceptionHandler(uint32 type);
 
-#endif

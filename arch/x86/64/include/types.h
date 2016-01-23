@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef TYPES_H_
-#define TYPES_H_
+#pragma once
 
 typedef char int8;
 typedef unsigned char uint8;
@@ -58,4 +57,3 @@ typedef struct
     uint32 reserved;
 }__attribute__((__packed__)) SegmentDescriptor;
 
-#endif

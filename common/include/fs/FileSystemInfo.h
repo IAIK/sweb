@@ -1,5 +1,4 @@
-#ifndef FILESYSTEMINFO_H__
-#define FILESYSTEMINFO_H__
+#pragma once
 
 #include "types.h"
 #include "ustring.h"
@@ -112,4 +111,3 @@ class FileSystemInfo
     ustl::string pathname_;
 };
 
-#endif // FILESYSTEMINFO_H___

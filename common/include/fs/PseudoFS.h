@@ -2,8 +2,7 @@
  * @file PseudoFS.h
  */
 
-#ifndef PSEUDO_FS_H__
-#define PSEUDO_FS_H__
+#pragma once
 
 #include "types.h"
 
@@ -65,4 +64,3 @@ class PseudoFS
 
 };
 
-#endif

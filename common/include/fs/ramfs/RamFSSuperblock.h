@@ -2,8 +2,7 @@
  * @file RamFSSuperblock.h
  */
 
-#ifndef RAM_FS_SUPERBLOCK_H__
-#define RAM_FS_SUPERBLOCK_H__
+#pragma once
 
 #include "fs/Superblock.h"
 
@@ -80,4 +79,3 @@ class RamFSSuperblock : public Superblock
 };
 //-----------------------------------------------------------------------------
 
-#endif // RamFSSuperblock_h___

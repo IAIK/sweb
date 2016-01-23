@@ -8,8 +8,7 @@
 * usbd/devicerequest.h contains a definition of the standard device 
 * request structure defined in USB2.0
 ******************************************************************************/
-#ifndef _DEVICEREQUEST_H
-#define _DEVICEREQUEST_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -60,4 +59,3 @@ struct UsbDeviceRequest {
 }
 #endif
 
-#endif // _DEVICEREQUEST_H

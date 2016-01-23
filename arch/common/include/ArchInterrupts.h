@@ -13,8 +13,7 @@
  *
  */
 
-#ifndef _ARCH_INTERRUPTS_H_
-#define _ARCH_INTERRUPTS_H_
+#pragma once
 
 #define IO_TIMEOUT (400000)
 
@@ -104,4 +103,3 @@ public:
   static bool enabled;
 };
 
-#endif

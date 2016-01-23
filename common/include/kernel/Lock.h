@@ -1,5 +1,4 @@
-#ifndef __LOCK_H__
-#define __LOCK_H__
+#pragma once
 
 #include "types.h"
 
@@ -203,4 +202,3 @@ private:
 
 };
 
-#endif

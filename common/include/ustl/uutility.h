@@ -7,6 +7,7 @@
 /// \brief Utility templates.
 
 #pragma once
+
 #include "utypes.h"
 #include "traits.h"
 #include "ulimits.h"

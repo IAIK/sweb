@@ -1,5 +1,4 @@
-#ifndef time_h___
-#define time_h___
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +16,4 @@ extern clock_t clock(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif // time_h___
-
 

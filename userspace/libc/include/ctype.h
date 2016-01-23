@@ -1,5 +1,4 @@
-#ifndef _LINUX_CTYPE_H
-#define _LINUX_CTYPE_H
+#pragma once
 
 /*
  * NOTE! This ctype does not handle EOF like the standard C
@@ -60,4 +59,3 @@ static inline unsigned char __toupper(unsigned char c)
 }
 #endif
 
-#endif

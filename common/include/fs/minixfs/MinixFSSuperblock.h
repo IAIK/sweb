@@ -1,5 +1,4 @@
-#ifndef MinixFSSuperblock_h___
-#define MinixFSSuperblock_h___
+#pragma once
 
 #include "Superblock.h"
 #include "MinixStorageManager.h"
@@ -232,4 +231,3 @@ class MinixFSSuperblock : public Superblock
     Superblock* superblock_;
 };
 
-#endif // MinixFSSuperblock_h___

@@ -1,5 +1,4 @@
-#ifndef _THREAD_H_
-#define _THREAD_H_
+#pragma once
 
 #include "types.h"
 #include "fs/FileSystemInfo.h"
@@ -31,13 +30,15 @@ class Thread
 
     static const char* threadStatePrintable[3];
 
+    enum TYPE { KERNEL_THREAD, USER_THREAD };
+
     /**
      * Constructor with FsWorkingDirectory given
      * @param working_dir working directory informations for the new Thread
      * @param name Thread's name
      * @return Thread instance
      */
-    Thread(FileSystemInfo* working_dir, ustl::string name);
+    Thread(FileSystemInfo* working_dir, ustl::string name, Thread::TYPE type);
 
     virtual ~Thread();
 
@@ -139,4 +140,3 @@ class Thread
 
 };
 
-#endif

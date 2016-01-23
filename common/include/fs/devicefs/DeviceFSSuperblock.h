@@ -2,8 +2,7 @@
  * @file DeviceFSSuperBlock.h
  */
 
-#ifndef DEVICEFS_SUPERBLOCK_H__
-#define DEVICEFS_SUPERBLOCK_H__
+#pragma once
 
 #include "fs/Superblock.h"
 
@@ -75,4 +74,3 @@ class DeviceFSSuperBlock : public Superblock
 
 };
 
-#endif

@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _KEYBOARD_MANAGER_H
-#define _KEYBOARD_MANAGER_H
+#pragma once
 
 #ifdef __cplusplus
 
@@ -232,4 +231,3 @@ class KeyboardManager
     static KeyboardManager *instance_;
 };
 
-#endif

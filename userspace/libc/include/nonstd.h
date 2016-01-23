@@ -1,5 +1,4 @@
-#ifndef nonstd_h___
-#define nonstd_h___
+#pragma once
 
 #include "../../../common/include/kernel/syscall-definitions.h"
 
@@ -21,6 +20,5 @@ extern int createprocess(const char* path, int sleep);
 }
 #endif
 
-#endif // nonstd_h___
 
 

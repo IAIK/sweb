@@ -1,5 +1,4 @@
-#ifndef TERMINAL_H__
-#define TERMINAL_H__
+#pragma once
 
 #include "types.h"
 #include "Console.h"
@@ -195,4 +194,3 @@ class Terminal : public CharacterDevice
 
 };
 
-#endif

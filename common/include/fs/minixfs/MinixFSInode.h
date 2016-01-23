@@ -1,5 +1,4 @@
-#ifndef MinixFSInode_h___
-#define MinixFSInode_h___
+#pragma once
 
 #include "types.h"
 #include "kstring.h"
@@ -166,4 +165,3 @@ class MinixFSInode : public Inode
 
 };
 
-#endif // Inode_h___

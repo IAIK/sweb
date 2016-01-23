@@ -11,7 +11,7 @@
 
 UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
                          uint32 terminal_number) :
-    Thread(fs_info, filename), fd_(VfsSyscall::open(filename, O_RDONLY)), process_registry_(process_registry)
+    Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename, O_RDONLY)), process_registry_(process_registry)
 {
   process_registry_->processStart(); //should also be called if you fork a process
 

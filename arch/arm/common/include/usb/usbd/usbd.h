@@ -10,8 +10,7 @@
 * across all systems, and in fact its implementation varies little either.
 ******************************************************************************/
 
-#ifndef USBD_H_
-#define USBD_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -111,4 +110,3 @@ void UsbCheckForChange();
 }
 #endif
 
-#endif

@@ -2,8 +2,7 @@
  * @file VfsSyscall.h
  */
 
-#ifndef VFS_SYSCALL_H___
-#define VFS_SYSCALL_H___
+#pragma once
 
 #include "types.h"
 
@@ -170,4 +169,3 @@ class VfsSyscall
     ~VfsSyscall();
 };
 
-#endif // VFS_SYSCALL_H___

@@ -9,8 +9,7 @@
 * the system will run on.
 ******************************************************************************/
 
-#ifndef _PLATFORM_H
-#define _PLATFORM_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -116,4 +115,3 @@ void MicroDelay(u32 delay);
 }
 #endif
 
-#endif

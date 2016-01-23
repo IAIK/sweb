@@ -8,8 +8,7 @@
 * device/hid/keyboard.h contains definitions relating to keyboards.
 ******************************************************************************/
 
-#ifndef KEYBOARD_H_
-#define KEYBOARD_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -173,4 +172,3 @@ u32 KeyboardGetAddress(u32 index);
 }
 #endif
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef BITMAP_H__
-#define BITMAP_H__
+#pragma once
 
 #include "types.h"
 
@@ -65,4 +64,3 @@ class Bitmap
     uint8 *bitmap_;
 };
 
-#endif /* BITMAP_H__ */

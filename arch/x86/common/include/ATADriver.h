@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _ATA_DEVICE_DRIVER_
-#define _ATA_DEVICE_DRIVER_
+#pragma once
 
 #include "BDDriver.h"
 #include "Mutex.h"
@@ -102,4 +101,3 @@ class ATADriver : public BDDriver
     Mutex lock_;
 };
 
-#endif

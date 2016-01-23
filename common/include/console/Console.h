@@ -2,8 +2,7 @@
  * @file Console.h
  */
 
-#ifndef CONSOLE_H__
-#define CONSOLE_H__
+#pragma once
 
 #include "types.h"
 #include <ulist.h>
@@ -146,4 +145,3 @@ class Console : public Thread
 
 extern Console* main_console;
 
-#endif

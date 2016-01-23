@@ -8,8 +8,7 @@
 * usbd/device.h contains a definition of a device structure used for 
 * storing devices and the device tree.
 ******************************************************************************/
-#ifndef _DEVICE_H
-#define _DEVICE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -155,4 +154,3 @@ extern Result (*InterfaceClassAttach[InterfaceClassAttachCount])(struct UsbDevic
 }
 #endif
 
-#endif // _DEVICE_H

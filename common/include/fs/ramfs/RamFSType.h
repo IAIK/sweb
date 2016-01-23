@@ -2,8 +2,7 @@
  * @file RamFSType.h
  */
 
-#ifndef RAM_FS_TYPE_H__
-#define RAM_FS_TYPE_H__
+#pragma once
 
 #include "fs/FileSystemType.h"
 
@@ -39,4 +38,3 @@ class RamFSType : public FileSystemType
     virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 };
 
-#endif

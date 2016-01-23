@@ -2,8 +2,7 @@
  * @file FrameBufferConsole.h
  */
 
-#ifndef FRAMEBUFFERCONSOLE_H__
-#define FRAMEBUFFERCONSOLE_H__
+#pragma once
 
 #include "Console.h"
 
@@ -75,4 +74,3 @@ class FrameBufferConsole : public Console
     uint32 bytes_per_pixel_;
 };
 
-#endif

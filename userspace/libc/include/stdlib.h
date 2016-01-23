@@ -17,8 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#ifndef stdlib_h___
-#define stdlib_h___
+#pragma once
 
 #include "types.h"
 
@@ -88,6 +87,5 @@ extern void free(void *ptr);
 }
 #endif
 
-#endif // stdlib_h___
 
 

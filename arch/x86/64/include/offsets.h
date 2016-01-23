@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef _offsets_h_
-#define _offsets_h_
+#pragma once
 
 #include "types.h"
 #include "paging-definitions.h"
@@ -23,4 +22,3 @@
  */
 #define VIRTUAL_TO_PHYSICAL_BOOT(x) ((void*)(~PHYSICAL_TO_VIRTUAL_OFFSET & ((uint64)x)))
 
-#endif

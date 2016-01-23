@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef TYPES_H_
-#define TYPES_H_
+#pragma once
 
 typedef char int8;
 typedef unsigned char uint8;
@@ -35,4 +34,3 @@ typedef int32 ssize_t;
 #define unlikely(x)     __builtin_expect((x),0)
 #define unreachable()    __builtin_unreachable()
 
-#endif

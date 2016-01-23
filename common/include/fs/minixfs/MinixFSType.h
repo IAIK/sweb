@@ -1,5 +1,4 @@
-#ifndef _MINIXFS_TYPE_H_
-#define _MINIXFS_TYPE_H_
+#pragma once
 
 #include "FileSystemType.h"
 
@@ -37,4 +36,3 @@ class MinixFSType : public FileSystemType
     virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
 };
 
-#endif

@@ -1,7 +1,6 @@
 // WARNING: You are looking for the a different types.h - this one is just for the exe2minixfs tool!
 #ifdef EXE2MINIXFS
-#ifndef _MINIXFSTYPES_H_
-#define _MINIXFSTYPES_H_
+#pragma once
 
 #define Mutex const char*
 #define MutexLock __attribute__((unused)) const char*
@@ -39,5 +38,4 @@ extern FakeThread* currentThread;
 
 size_t atomic_add(size_t& x,size_t y);
 
-#endif
 #endif

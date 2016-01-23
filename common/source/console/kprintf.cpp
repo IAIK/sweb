@@ -33,7 +33,7 @@ class KprintfFlushingThread : public Thread
 {
   public:
 
-    KprintfFlushingThread() : Thread(0, "KprintfFlushingThread")
+    KprintfFlushingThread() : Thread(0, "KprintfFlushingThread", Thread::KERNEL_THREAD)
     {
     }
 

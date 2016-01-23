@@ -1,5 +1,4 @@
-#ifndef __PAGING_DEFINITIONS_H__
-#define __PAGING_DEFINITIONS_H__
+#pragma once
 
 #include "types.h"
 
@@ -59,4 +58,3 @@ typedef struct
     uint32 page_ppn                  :20; // 31:12
 } __attribute__((__packed__)) PageTableEntry;
 
-#endif

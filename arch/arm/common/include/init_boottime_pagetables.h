@@ -3,8 +3,7 @@
  *
  */
 
-#ifndef INIT_BOOTTIME_PAGETABLES_H_
-#define INIT_BOOTTIME_PAGETABLES_H_
+#pragma once
 
 #include "paging-definitions.h"
 
@@ -31,4 +30,3 @@ kprintfd("%c\n",TO_HEX((uint32)X,0)); \
 
 extern void mapBootTimePage(PageDirEntry *pde_start, uint32 pdi, uint32 ppn_1m);
 
-#endif // INIT_BOOTTIME_PAGETABLES_H_

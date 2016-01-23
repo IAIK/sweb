@@ -4,6 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #pragma once
+
 #include "ualgo.h"
 
 namespace ustl {

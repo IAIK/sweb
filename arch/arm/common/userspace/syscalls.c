@@ -21,33 +21,3 @@ void abort()
 {
   exit(-127);
 }
-
-void raise()
-{
-  exit(-127);
-}
-
-void __write()
-{
-  exit(-127);
-}
-
-void stderr()
-{
-  exit(-127);
-}
-
-void fflush()
-{
-  exit(-127);
-}
-
-void __fprintf_chk()
-{
-  exit(-127);
-}
-
-void __aeabi_unwind_cpp_pr0()
-{
-  exit(-127);
-}

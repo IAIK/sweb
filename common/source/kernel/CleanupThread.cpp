@@ -1,7 +1,7 @@
 #include "CleanupThread.h"
 #include "Scheduler.h"
 
-CleanupThread::CleanupThread() : Thread(0, "CleanupThread")
+CleanupThread::CleanupThread() : Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
 {
 }
 

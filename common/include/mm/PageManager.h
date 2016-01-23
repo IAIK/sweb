@@ -1,5 +1,4 @@
-#ifndef PAGEMANAGER_H__
-#define PAGEMANAGER_H__
+#pragma once
 
 #include "types.h"
 #include "paging-definitions.h"
@@ -69,4 +68,3 @@ class PageManager
     size_t HEAP_PAGES;
 };
 
-#endif

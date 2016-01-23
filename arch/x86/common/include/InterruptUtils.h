@@ -14,8 +14,7 @@
  */
 
 
-#ifndef _INTERRUPT_UTILS_H_
-#define _INTERRUPT_UTILS_H_
+#pragma once
 
 #include "types.h"
 
@@ -56,4 +55,3 @@ private:
   static uint64 pf_address_counter;
 };
 
-#endif

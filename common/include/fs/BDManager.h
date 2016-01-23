@@ -1,5 +1,4 @@
-#ifndef _BD_DEVICE_MANAGER_
-#define _BD_DEVICE_MANAGER_
+#pragma once
 
 #include <ulist.h>
 
@@ -73,5 +72,4 @@ class BDManager
     static BDManager *instance_;
 };
 
-#endif
 

@@ -1,5 +1,4 @@
-#ifndef MINIX_FS_CONSTS__
-#define MINIX_FS_CONSTS__
+#pragma once
 
 #define V3_OFFSET ((superblock_->s_magic_==MINIX_V3) ? 1 : 0)
 #define V3_ARRAY(PTR,IDX) ((superblock_->s_magic_==MINIX_V3) ? ((uint32*)(PTR))[(IDX)] : ((uint16*)(PTR))[(IDX)])
@@ -15,4 +14,3 @@
 #define NUM_ZONES ((superblock_->s_magic_==MINIX_V3) ? 10 : 9)
 #define MINIX_V3 0x4d5a
 
-#endif

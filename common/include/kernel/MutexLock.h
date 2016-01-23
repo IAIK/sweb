@@ -1,5 +1,4 @@
-#ifndef _MUTEXLOCK_H_
-#define _MUTEXLOCK_H_
+#pragma once
 
 #include "types.h"
 
@@ -52,4 +51,3 @@ class MutexLock
     bool use_mutex_;
 };
 
-#endif

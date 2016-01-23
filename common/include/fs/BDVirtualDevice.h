@@ -1,5 +1,4 @@
-#ifndef _BD_VIRTUAL_DEVICE_
-#define _BD_VIRTUAL_DEVICE_
+#pragma once
 
 #include "types.h"
 #include "ulist.h"
@@ -100,4 +99,3 @@ class BDVirtualDevice
     ustl::string name_;
 };
 
-#endif

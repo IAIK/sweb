@@ -1,5 +1,4 @@
-#ifndef SERIAL_H__
-#define SERIAL_H__
+#pragma once
 
 #include "types.h"
 #include "chardev.h"
@@ -160,4 +159,3 @@ class SerialManager
     uint32 num_ports;
 };
 
-#endif

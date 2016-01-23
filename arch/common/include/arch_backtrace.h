@@ -1,5 +1,4 @@
-#ifndef ARCH_BACKTRACE_H_
-#define ARCH_BACKTRACE_H_
+#pragma once
 
 #include "types.h"
 
@@ -12,4 +11,3 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 int backtrace_user(pointer *call_stack, int size, Thread *thread, bool use_stored_registers);
 
 
-#endif // ARCH_BACKTRACE_H_
