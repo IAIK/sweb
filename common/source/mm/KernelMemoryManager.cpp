@@ -27,6 +27,27 @@ KernelMemoryManager* KernelMemoryManager::instance()
   return instance_;
 }
 
+
+
+void KernelMemoryManager::printChunks()
+{
+  MallocSegment *current = first_;
+  kprintfd("--- KMM-Chunks ---\n");
+  while (current != 0)
+  {
+    bool free = !current->getUsed();
+    size_t size = current->getSize();
+    void* address = current + sizeof(MallocSegment);
+    bool corrupt = current->marker_ != 0xdeadbeef;
+    kprintfd("Address: %8p, Size: %8x, Used: %s, Corrupt: %s, %s at: ",
+          address, size, free ? "F" : "U", corrupt ? "Y" : "N", free? "   freed" : "alloced");
+    kernel_debug_info->printCallInformation(current->freed_at_);
+
+    current = current->next_;
+  }
+  kprintfd("--- KMM-Chunks finished ---\n");
+}
+
 KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages) :
     lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
@@ -46,20 +67,20 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
 }
 
-pointer KernelMemoryManager::allocateMemory(size_t requested_size)
+pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer called_by)
 {
   assert((requested_size & 0x80000000) == 0 && "requested too much memory");
   if ((requested_size & 0xF) != 0)
     requested_size += 0x10 - (requested_size & 0xF); // 16 byte alignment
   lockKMM();
-  pointer ptr = private_AllocateMemory(requested_size);
+  pointer ptr = private_AllocateMemory(requested_size, called_by);
   if (ptr)
     unlockKMM();
 
   debug(KMM, "allocateMemory returns address: %zx \n", ptr);
   return ptr;
 }
-pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
+pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
   // find next free pointer of neccessary size + sizeof(MallocSegment);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
@@ -76,7 +97,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
   }
 
   fillSegment(new_pointer, requested_size);
-  new_pointer->freed_at_ = 0;
+  new_pointer->freed_at_ = called_by;
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 }
@@ -113,7 +134,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   }
   //iff the old segment is no segment ;) -> we create a new one
   if (virtual_address == 0)
-    return allocateMemory(new_size);
+    return allocateMemory(new_size, called_by);
 
   lockKMM();
 
@@ -146,7 +167,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     //or not.. lets search for larger space
 
     //thx to Philipp Toeglhofer we are not going to deadlock here anymore ;)
-    pointer new_address = private_AllocateMemory(new_size);
+    pointer new_address = private_AllocateMemory(new_size, called_by);
     if (new_address == 0)
     {
       //we are not freeing the old semgent in here, so that the data is not

@@ -90,13 +90,15 @@ class KernelMemoryManager
   public:
     static KernelMemoryManager *instance();
 
+    void printChunks();
+
     /**
      * allocateMemory is called by new
      * searches the MallocSegment-List for a free segment with size >= requested_size
      * @param requested_size number of bytes to allocate
      * @return pointer to Memory Address or 0 if Not Enough Memory
      */
-    pointer allocateMemory(size_t requested_size);
+    pointer allocateMemory(size_t requested_size, pointer called_by);
 
     /**
      * freeMemory is called by delete
@@ -174,7 +176,7 @@ class KernelMemoryManager
      * does not lock the KMM, so we can also use it within the
      * reallocate method
      */
-    inline pointer private_AllocateMemory(size_t requested_size);
+    inline pointer private_AllocateMemory(size_t requested_size, pointer called_by);
 
     pointer ksbrk(ssize_t size);
 

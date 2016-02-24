@@ -8,7 +8,7 @@
 
 void* kmalloc(size_t size)
 {
-  return (void*)KernelMemoryManager::instance()->allocateMemory(size);
+  return (void*)KernelMemoryManager::instance()->allocateMemory(size, getCalledBefore(1));
 }
 
 void kfree(void * address)
