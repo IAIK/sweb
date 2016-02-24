@@ -11,7 +11,6 @@ class Dentry;
 class VfsMount;
 class FileDescriptor;
 class VfsSyscall;
-
 extern VfsSyscall vfs_syscall;
 
 /**
@@ -142,6 +141,13 @@ class VfsSyscall
      * @return 0 on success
      */
     static int32 umount(const char *dir_name, int32 flag);
+
+
+    /**
+     * unregister all file systems which are mounted at the moment;
+     * @return 0 on success
+     */
+    static int32 unregisterFileSystems();
 
     /**
      * returns the size of a file

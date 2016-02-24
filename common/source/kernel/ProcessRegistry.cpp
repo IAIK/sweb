@@ -7,6 +7,7 @@
 #include "UserProcess.h"
 #include "kprintf.h"
 #include "VfsSyscall.h"
+#include "KernelMemoryManager.h"
 
 extern VfsSyscall vfs_syscall;
 
@@ -22,6 +23,9 @@ ProcessRegistry::ProcessRegistry(FileSystemInfo *root_fs_info, char const *progs
 
 ProcessRegistry::~ProcessRegistry()
 {
+  delete working_dir_;
+  working_dir_ = 0;
+  KernelMemoryManager::instance()->printChunks(false);
 }
 
 ProcessRegistry* ProcessRegistry::instance()
@@ -54,13 +58,11 @@ void ProcessRegistry::Run()
   counter_lock_.release();
 
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
-
   vfs_syscall.umount("/usr", 0);
+  vfs_syscall.unregisterFileSystems();
 
   Scheduler::instance()->printStackTraces();
-
   Scheduler::instance()->printThreadList();
-
   kill();
 }
 

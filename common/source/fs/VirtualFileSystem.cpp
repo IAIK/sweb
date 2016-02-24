@@ -54,6 +54,16 @@ int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
   return 0;
 }
 
+int32 VirtualFileSystem::unregisterAllFileSystems()
+{
+  while(file_system_types_.begin() != file_system_types_.end())
+  {
+    delete *(file_system_types_.begin());
+    file_system_types_.pop_front();
+  }
+  return 0;
+}
+
 FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
 {
   assert(fs_name);

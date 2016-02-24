@@ -90,7 +90,7 @@ class KernelMemoryManager
   public:
     static KernelMemoryManager *instance();
 
-    void printChunks();
+    void printChunks(bool print_freed = false);
 
     /**
      * allocateMemory is called by new

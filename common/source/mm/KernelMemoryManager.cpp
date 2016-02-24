@@ -29,7 +29,7 @@ KernelMemoryManager* KernelMemoryManager::instance()
 
 
 
-void KernelMemoryManager::printChunks()
+void KernelMemoryManager::printChunks(bool print_freed)
 {
   MallocSegment *current = first_;
   kprintfd("--- KMM-Chunks ---\n");
@@ -39,9 +39,12 @@ void KernelMemoryManager::printChunks()
     size_t size = current->getSize();
     void* address = current + sizeof(MallocSegment);
     bool corrupt = current->marker_ != 0xdeadbeef;
-    kprintfd("Address: %8p, Size: %8x, Used: %s, Corrupt: %s, %s at: ",
-          address, size, free ? "F" : "U", corrupt ? "Y" : "N", free? "   freed" : "alloced");
-    kernel_debug_info->printCallInformation(current->freed_at_);
+    if(current->freed_at_ && (print_freed || !free))
+    {
+      kprintfd("Address: %8p, Size: %8x, Used: %s, Corrupt: %s, %s at: ",
+            address, size, free ? "F" : "U", corrupt ? "Y" : "N", free? "   freed" : "alloced");
+      kernel_debug_info->printCallInformation(current->freed_at_);
+    }
 
     current = current->next_;
   }

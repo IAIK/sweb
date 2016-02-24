@@ -73,6 +73,7 @@ class VirtualFileSystem
      * @return 0 on success
      */
     int32 unregisterFileSystem(FileSystemType *file_system_type);
+    int32 unregisterAllFileSystems();
 
     /**
      * The getFsType function receives a filesystem name as its parameter, scans

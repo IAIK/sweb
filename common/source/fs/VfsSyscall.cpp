@@ -422,6 +422,12 @@ int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 {
   return vfs.umount(dir_name, flag);
 }
+
+int32 VfsSyscall::unregisterFileSystems()
+{
+  return vfs.unregisterAllFileSystems();
+}
+
 #endif
 uint32 VfsSyscall::getFileSize(uint32 fd)
 {
@@ -435,3 +441,5 @@ uint32 VfsSyscall::getFileSize(uint32 fd)
 
   return file_descriptor->getFile()->getSize();
 }
+
+
