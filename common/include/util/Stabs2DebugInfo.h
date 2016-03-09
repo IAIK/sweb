@@ -1,10 +1,7 @@
 #pragma once
 
 #include "umap.h"
-
-
-#define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
-  ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
+#include "arch_backtrace.h"
 
 // The limit for function names, after that, they will get capped
 #define CALL_FUNC_NAME_LIMIT 256
