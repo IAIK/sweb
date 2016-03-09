@@ -13,7 +13,7 @@ class SmapDebugInfo : public Stabs2DebugInfo
 public:
 
   SmapDebugInfo(char const *smap_begin, char const *smap_end);
-  ~SmapDebugInfo();
+  virtual ~SmapDebugInfo();
 
   virtual void getCallNameAndLine(pointer address, const char*& mangled_name, ssize_t &line) const;
   virtual void printCallInformation(pointer address) const;

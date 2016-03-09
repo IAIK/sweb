@@ -13,7 +13,7 @@ class Stabs2DebugInfo
 public:
 
   Stabs2DebugInfo(char const *stab_begin, char const *stab_end, char const *stab_str);
-  ~Stabs2DebugInfo();
+  virtual ~Stabs2DebugInfo();
 
   virtual void getCallNameAndLine(pointer address, const char*& mangled_name, ssize_t &line) const;
   virtual void printCallInformation(pointer address) const;
