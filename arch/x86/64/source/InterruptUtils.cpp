@@ -215,6 +215,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   if(!address)
   {
     debug(PAGEFAULT, "Maybe you're dereferencing a null-pointer!\n");
+    asm("hlt");
   }
 
   if (error)

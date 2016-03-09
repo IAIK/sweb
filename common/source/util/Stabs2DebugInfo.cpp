@@ -3,9 +3,6 @@
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 
-#define ADDRESS_BETWEEN(Value, LowerBound, UpperBound) \
-  ((((void*)Value) >= ((void*)LowerBound)) && (((void*)Value) < ((void*)UpperBound)))
-
 #define N_FNAME 0x22    /* procedure name (f77 kludge): name,,0 */
 #define N_FUN   0x24    /* procedure: name,,0,linenumber,address */
 #define N_SLINE 0x44    /* src line: 0,,0,linenumber,address */
@@ -24,7 +21,8 @@ Stabs2DebugInfo::Stabs2DebugInfo(char const *stab_start, char const *stab_end, c
     stab_start_(reinterpret_cast<StabEntry const *>(stab_start)),
     stab_end_(reinterpret_cast<StabEntry const *>(stab_end)), stabstr_buffer_(stab_str)
 {
-  initialiseSymbolTable();
+  if (stabstr_buffer_)
+    initialiseSymbolTable();
 }
 
 Stabs2DebugInfo::~Stabs2DebugInfo()
@@ -49,17 +47,6 @@ void Stabs2DebugInfo::initialiseSymbolTable()
   }
   debug(MAIN, "found %zd functions\n", function_symbols_.size());
 
-}
-
-void Stabs2DebugInfo::printAllFunctions() const
-{
-  char buffer[512];
-  debug(MAIN, "Known symbols:\n");
-  for (auto symbol : function_symbols_)
-  {
-    demangleName(stabstr_buffer_ + symbol.second->n_strx, buffer, 512);
-    debug(MAIN, "\t%s\n", buffer);
-  }
 }
 
 struct StabsOperator
