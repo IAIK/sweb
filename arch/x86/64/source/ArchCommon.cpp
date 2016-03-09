@@ -13,6 +13,7 @@
 #include "FrameBufferConsole.h"
 #include "TextConsole.h"
 #include "ports.h"
+#include "SmapDebugInfo.h"
 
 extern void* kernel_end_address;
 
@@ -77,7 +78,10 @@ pointer ArchCommon::getKernelEndAddress()
 
 pointer ArchCommon::getFreeKernelMemoryStart()
 {
-   return (pointer)&kernel_end_address;
+  pointer free_kernel_memory_start = (pointer)&kernel_end_address;
+  for (size_t i = 0; i < getNumModules(); ++i)
+    free_kernel_memory_start = Max(getModuleEndAddress(i),free_kernel_memory_start);
+  return ((free_kernel_memory_start - 1) | 0xFFF) + 1;
 }
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
@@ -86,7 +90,7 @@ pointer ArchCommon::getFreeKernelMemoryEnd()
 }
 
 
-uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
+size_t ArchCommon::haveVESAConsole(size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return mbr.have_vesa_console;
@@ -97,50 +101,50 @@ uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up)
   }
 }
 
-uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
+size_t ArchCommon::getNumModules(size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return mbr.num_module_maps;
   else
   {
-    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.num_module_maps;
+    struct multiboot_remainder* orig_mbr = &(struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr->num_module_maps;
   }
 }
 
-uint32 ArchCommon::getModuleStartAddress(uint32 num,uint32 is_paging_set_up)
+size_t ArchCommon::getModuleStartAddress(size_t num,size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return mbr.module_maps[num].start_address | PHYSICAL_TO_VIRTUAL_OFFSET;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].start_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+    return orig_mbr.module_maps[num].start_address;
   }
 }
 
-uint32 ArchCommon::getModuleEndAddress(uint32 num,uint32 is_paging_set_up)
+size_t ArchCommon::getModuleEndAddress(size_t num,size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return mbr.module_maps[num].end_address | PHYSICAL_TO_VIRTUAL_OFFSET;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].end_address | PHYSICAL_TO_VIRTUAL_OFFSET;
+    return orig_mbr.module_maps[num].end_address;
   }
 }
 
-uint32 ArchCommon::getVESAConsoleHeight()
+size_t ArchCommon::getVESAConsoleHeight()
 {
   return mbr.vesa_y_res;
 }
 
-uint32 ArchCommon::getVESAConsoleWidth()
+size_t ArchCommon::getVESAConsoleWidth()
 {
   return mbr.vesa_x_res;
 }
 
-pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
+pointer ArchCommon::getVESAConsoleLFBPtr(size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return 0xFFFFFFFFC000000ULL - 1024ULL * 1024ULL * 16ULL;
@@ -151,7 +155,7 @@ pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up)
   }
 }
 
-pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
+pointer ArchCommon::getFBPtr(size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return PHYSICAL_TO_VIRTUAL_OFFSET | 0xB8000ULL;
@@ -159,12 +163,12 @@ pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
     return 0xB8000ULL;
 }
 
-uint32 ArchCommon::getVESAConsoleBitsPerPixel()
+size_t ArchCommon::getVESAConsoleBitsPerPixel()
 {
   return mbr.vesa_bits_per_pixel;
 }
 
-uint32 ArchCommon::getNumUseableMemoryRegions()
+size_t ArchCommon::getNumUseableMemoryRegions()
 {
   uint32 i;
   for (i=0;i<MAX_MEMORY_MAPS;++i)
@@ -175,7 +179,7 @@ uint32 ArchCommon::getNumUseableMemoryRegions()
   return i;
 }
 
-uint32 ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
+size_t ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
 {
   if (region >= MAX_MEMORY_MAPS)
     return 1;
@@ -187,7 +191,7 @@ uint32 ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, 
   return 0;
 }
 
-Console* ArchCommon::createConsole(uint32 count)
+Console* ArchCommon::createConsole(size_t count)
 {
   // deactivate cursor
   outportb(0x3d4, 0xa);
@@ -249,6 +253,12 @@ Stabs2DebugInfo const *kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {
+  for (size_t i = 0; i < getNumModules(); ++i)
+  {
+    if (memcmp("SMAP\n",(char const *)getModuleStartAddress(i),5) == 0)
+      kernel_debug_info = new SmapDebugInfo((char const *)getModuleStartAddress(i)+5,
+                                              (char const *)getModuleEndAddress(i));
+  }
 }
 
 void ArchCommon::idle()
