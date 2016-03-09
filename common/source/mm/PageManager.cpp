@@ -1,5 +1,6 @@
 #include "PageManager.h"
 #include "new.h"
+#include "offsets.h"
 #include "paging-definitions.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
