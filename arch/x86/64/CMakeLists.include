@@ -1,6 +1,6 @@
 set(KERNEL_BINARY kernel64.x)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -m64 -O0 -gdwarf-2 -g3 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m64 -O0 -g0 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -m64 -O0 -g0 -Wall -Wextra -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow")
 
 MACRO(ARCH2OBJ OUTPUTOBJNAMES)
 
@@ -26,7 +26,11 @@ ENDMACRO(ARCH2OBJ)
 
 set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-size=0x1000 -Wl,-melf_x86_64 -nostdinc -nostdlib -nodefaultlibs)
 set(APPEND_LD_ARGUMENTS )
-set(KERNEL_IMAGE_OBJCOPY COMMAND mv ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel64.x && ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/kernel64.x ${PROJECT_BINARY_DIR}/kernel.x)
+set(KERNEL_IMAGE_OBJCOPY
+  #COMMAND grep -E "^ *0x[0123456789abcdef]{16} {16}" ${PROJECT_BINARY_DIR}/kernel.map | sort -u | tr -s ' ' > ${PROJECT_BINARY_DIR}/kernel.smap
+  COMMAND ${OBJCOPY_EXECUTABLE} ${PROJECT_BINARY_DIR}/kernel.x --strip-debug --strip-unneeded ${PROJECT_BINARY_DIR}/kernel.x
+  COMMAND mv ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel64.x && ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/kernel64.x ${PROJECT_BINARY_DIR}/kernel.x
+)
 
 # kvm: Run kvm in non debugging mode
 add_custom_target(kvm
