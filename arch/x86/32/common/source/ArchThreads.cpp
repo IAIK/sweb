@@ -1,5 +1,6 @@
 #include "ArchThreads.h"
 #include "ArchMemory.h"
+#include "Loader.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
 #include "offsets.h"
@@ -170,6 +171,7 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->switch_to_userspace_ == 1 && "new user threads must start in userspace");
   assert(thread->kernel_registers_->esp == thread->user_registers_->esp0 && "esp0 should point to kernel stack");
   assert(thread->kernel_registers_->cr3 == thread->user_registers_->cr3 && "user and kernel part of a thread need to have the same page dir");
+  assert(thread->kernel_registers_->cr3 == thread->loader_->arch_memory_.getValueForCR3() && "thread and loader need to have the same page dir");
   assert(thread->user_registers_->eip != 0 && "user eip needs to be valid... execution will start there");
   if (currentThread->user_registers_ == 0)
     return;
