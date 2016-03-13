@@ -314,8 +314,10 @@ extern "C" int32 strncmp(const char *str1, const char *str2, size_t n)
     ++str1;
     ++str2;
   }
-
-  return (*(uint8 *) str1 - *(uint8 *) str2);
+  if (n == 0)
+    return 0;
+  else
+    return (*(uint8 *) str1 - *(uint8 *) str2);
 }
 
 extern "C" int32 bcmp(const void *region1, const void *region2, size_t size)
