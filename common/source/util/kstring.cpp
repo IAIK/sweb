@@ -305,7 +305,7 @@ extern "C" int32 strcmp(const char *str1, const char *str2)
 
 extern "C" int32 strncmp(const char *str1, const char *str2, size_t n)
 {
-  while (n-- && (*str1) && (*str2))
+  while (n && (*str1) && (*str2))
   {
     if (*str1 != *str2)
     {
@@ -313,6 +313,7 @@ extern "C" int32 strncmp(const char *str1, const char *str2, size_t n)
     }
     ++str1;
     ++str2;
+    --n;
   }
   if (n == 0)
     return 0;
