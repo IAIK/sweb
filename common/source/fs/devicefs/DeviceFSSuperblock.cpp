@@ -122,3 +122,25 @@ int32 DeviceFSSuperBlock::createFd(Inode* inode, uint32 flag)
 
   return (fd->getFd());
 }
+
+
+int32 DeviceFSSuperBlock::removeFd(Inode* inode, FileDescriptor* fd)
+{
+  assert(inode);
+  assert(fd);
+
+  s_files_.remove(fd);
+  FileDescriptor::remove(fd);
+
+  File* file = fd->getFile();
+  int32 tmp = inode->unlink(file);
+
+  debug(RAMFS, "remove the fd num: %d\n", fd->getFd());
+  if (inode->getNumOpenedFile() == 0)
+  {
+    used_inodes_.remove(inode);
+  }
+  delete fd;
+
+  return tmp;
+}
