@@ -325,6 +325,13 @@ add_custom_target(arm_rpi
         COMMAND cmake -DARCH=arm/rpi ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
         )
 
+#Custom target: make arm_rpi2
+add_custom_target(arm_rpi2
+		COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
+		COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+		COMMAND cmake -DARCH=arm/rpi -DRPI2=1 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
+		)
+
 #Builds the doxygen documentation
 add_custom_target(doxygen
 	COMMAND mkdir -p \"${PROJECT_SOURCE_DIR}/doc\"

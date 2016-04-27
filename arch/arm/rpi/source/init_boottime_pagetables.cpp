@@ -46,11 +46,17 @@ extern "C" void initialiseBootTimePaging()
   for (i = 0; i < 1024; ++i)
     mapBootTimePage(pde_start, 3072 + i, i);
   // map devices from 0x81000000 upwards
-  mapBootTimePage(pde_start,0x860,0x3F2);  // pl011
-  mapBootTimePage(pde_start,0x8C0,0x3F3);  // emmc
-  mapBootTimePage(pde_start,0x900,0x3F0);  // most devices (ic, timer, gpu, ...)
 
-  mapBootTimePage(pde_start,0x909,0x3F9);  // map for csud
+  unsigned int mmio_base = 0x200;
+#ifdef RPI2
+  mmio_base += 0x1f0;
+#endif
+
+  mapBootTimePage(pde_start,0x860,mmio_base + 2);  // pl011
+  mapBootTimePage(pde_start,0x8C0,mmio_base + 3);  // emmc
+  mapBootTimePage(pde_start,0x900,mmio_base);  // most devices (ic, timer, gpu, ...)
+
+  mapBootTimePage(pde_start,0x909,mmio_base + 9);  // map for csud
 
   for (i = 0; i < 8; ++i)
     mapBootTimePage(pde_start,0xb00 + i,0x5c0 +i);  // framebuffer TODO: this might be not necessary
