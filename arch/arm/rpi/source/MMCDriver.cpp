@@ -43,7 +43,7 @@ struct MMCI {
     uint32_t spi_int_spt;
     uint32_t rsvd7[2];
     uint32_t slotisr_ver;
-}__attribute__((packed));
+};
 
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 
