@@ -29,7 +29,7 @@ struct MMCI {
     uint32_t rsvd1;
     uint32_t rsvd2;
     uint32 force_irpt;
-    uint8_t rsvd3[0x22];
+    uint8_t rsvd3[0x1c];
     uint32_t boot_timeout;
     uint32_t dbg_sel;
     uint32_t rsvd4;
@@ -39,11 +39,11 @@ struct MMCI {
     uint32_t tune_step;
     uint32_t tune_steps_std;
     uint32_t tune_steps_ddr;
-    uint8_t rsvd6[86];
+    uint8_t rsvd6[80];
     uint32_t spi_int_spt;
     uint32_t rsvd7[2];
     uint32_t slotisr_ver;
-};
+}__attribute__((packed, aligned(4)));
 
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 
@@ -98,7 +98,6 @@ MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_siz
   uint32_t sdversion = (ver >> 16) & 0xff;
   uint32_t slot_status = ver & 0xff;
   debug(MMC_DRIVER, "EMMC: vendor %x, sdversion %x, slot_status %x\n", vendor, sdversion, slot_status);
-  uint32_t hci_ver = sdversion;
 
   // Read the capabilities registers
   uint32_t capabilities_0 = mmci->cap0;
