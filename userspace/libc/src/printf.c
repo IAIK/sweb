@@ -195,6 +195,189 @@ void writeNumber(c_string *output_string, unsigned int number,
 }
 
 /**
+ * Calculates the integer logarithm of base 10.
+ *
+ * @param n Value of which the logarithm should be calculated
+ *
+ */
+int _log10(double n) 
+{
+  int log = 0;
+  while(n >= 10) 
+  {
+    n /= 10.0;
+    log++;
+  }
+  return log;
+}
+
+/**
+ * Calculates 10.0^x for integer x.
+ *
+ * @param p Exponent, can be positive and negative
+ *
+ */
+double _pow10(int p) 
+{
+    double res = 1;
+    while(p > 0) 
+    {
+        res *= 10.0;
+        p--;
+    }
+    while(p < 0) 
+    {
+        res /= 10.0;
+        p++;
+    }
+    return res;
+}
+
+/**
+ * Writes a floating point number into a string using the given precision.
+ * Based on http://stackoverflow.com/a/7097567/5259559
+ *
+ * @param s Structure containing information for the output string
+ * @param n The floating point number for writing
+ * @param precision Precision for output
+ *
+ */
+void writeFloat(c_string *output_string, double n, unsigned int width, unsigned int prec, unsigned char flags)
+{
+    c_string s;
+    int character_count = 70;
+    s.size = character_count;
+    char buffer[character_count];
+    s.start = (char *) &buffer;
+    s.ptr = s.start;
+    s.length = 0;
+    double precision = _pow10(-prec);
+  
+    // special cases
+    if (__builtin_isnan(n)) 
+    {
+        if(flags & LARGE) 
+        {
+          *s.ptr++ = 'N'; *s.ptr++ = 'A'; *s.ptr++ = 'N';
+        } else {
+          *s.ptr++ = 'n'; *s.ptr++ = 'a'; *s.ptr++ = 'n';
+        }
+        s.length += 3;
+    } 
+    else if (__builtin_isinf(n)) 
+    {
+        if(flags & LARGE) 
+        {
+          *s.ptr++ = 'I'; *s.ptr++ = 'N'; *s.ptr++ = 'F';
+        } else {
+          *s.ptr++ = 'i'; *s.ptr++ = 'n'; *s.ptr++ = 'f';
+        }
+        s.length += 3;
+    } 
+    else if (n == 0.0) 
+    {
+        *(s.ptr++) = '0';
+        s.length++;
+    } 
+    else 
+    {
+        int digit, m, m1;
+        int neg = (n < 0);
+        if (neg)
+            n = -n;
+        // calculate magnitude
+        m = _log10(n);
+        int useExp = (m >= 14 || (neg && m >= 9) || m <= -9);
+        if (neg) 
+        {
+            *(s.ptr++) = '-';
+            s.length++;
+        }
+        // set up for scientific notation
+        if (useExp) 
+        {
+            if (m < 0)
+               m -= 1.0;
+            n = n / _pow10(m);
+            m1 = m;
+            m = 0;
+        }
+        if (m < 1.0) 
+        {
+            m = 0;
+        }
+        // convert the number
+        while (n > precision || m >= 0) 
+        {
+            double weight = _pow10(m);
+            if (weight > 0 && !__builtin_isinf(weight)) 
+            {
+                digit = (int)(n / weight);
+                n -= (digit * weight);
+                *(s.ptr++) = '0' + digit;
+                s.length++;
+            }
+            if (m == 0 && n > 0) 
+            {
+                *(s.ptr++) = '.';
+                s.length++;
+            }
+            m--;
+        }
+        if (useExp) 
+        {
+            // convert the exponent
+            int i, j;
+            *(s.ptr++) = 'e';
+            s.length++;
+            if (m1 > 0) 
+            {
+                *(s.ptr++) = '+';
+                s.length++;
+            } 
+            else 
+            {
+                *(s.ptr++) = '-';
+                s.length++;
+                m1 = -m1;
+            }
+            m = 0;
+            while (m1 > 0) 
+            {
+                *(s.ptr++) = '0' + m1 % 10;
+                s.length++;
+                m1 /= 10;
+                m++;
+            }
+            s.ptr -= m;
+            char tmp;
+            for (i = 0, j = m-1; i<j; i++, j--) 
+            {
+                tmp = s.ptr[i];
+                s.ptr[i] = s.ptr[j];
+                s.ptr[j] = tmp;
+            }
+            s.ptr += m;
+        }
+    }
+    
+    int i;
+    char* start = s.start;
+    if(width > s.length) {
+        for(i = 0; i < width - s.length; i++) {
+            if(flags & ZEROPAD) *output_string->ptr++ = '0';
+            else *output_string->ptr++ = ' ';
+            output_string->length++;
+        }
+    }
+    for(i = 0; i < s.length; i++) {
+        *output_string->ptr++ = *start++;
+    }
+    output_string->length += s.length;
+
+}
+
+/**
  * Writes output to stdout.
  * A detailed description of the format is given in the
  * 'Linux Programmer's Manual'.
@@ -248,6 +431,7 @@ extern int printf(const char *format, ...)
     if (*format == '%')
     {
       int width = 0;
+      int precision = 14;
       unsigned char flag = 0;
       ++format;
       switch (*format)
@@ -269,7 +453,7 @@ extern int printf(const char *format, ...)
       }
       size_t c = 0;
       char num[4];
-      for(; *format > '0' && *format <= '9'; ++format, ++c)
+      for(; *format >= (c ? '0' : '1') && *format <= '9'; ++format, ++c)
         if( c < 4 )
           num[c] = *format;
       num[c < 4 ? c : 3] = 0;
@@ -288,7 +472,21 @@ extern int printf(const char *format, ...)
         }
 #endif // STATIC_MEMORY__
       }
-
+      
+      if(*format == '.') {
+        format++;   
+        char num[4];
+        c = 0;
+        for(; *format >= (c ? '0' : '1') && *format <= '9'; ++format, ++c)
+            if( c < 4 )
+                num[c] = *format;
+        num[c < 4 ? c : 3] = 0;
+        if( c )
+        {
+            precision = atoi(num); //this advances *format as well
+        }
+      }
+      
       //handle diouxXfeEgGcs
       switch (*format)
       {
@@ -390,9 +588,14 @@ extern int printf(const char *format, ...)
           writeNumber(&output_string,(unsigned int) va_arg(args,unsigned int), 16, width, 0, flag | SPECIAL | LARGE);
           break;
 
-        //no floating point yet
-        //case 'f':
-        //  break;
+        //float
+        case 'f':
+          writeFloat(&output_string,(double) va_arg(args,double), width, precision, flag);
+          break;
+          
+        case 'F':
+          writeFloat(&output_string,(double) va_arg(args,double), width, precision, flag | LARGE);
+          break;            
 
         //no scientific notation (yet)
         //case 'e':
