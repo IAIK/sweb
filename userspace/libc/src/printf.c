@@ -417,7 +417,8 @@ extern int printf(const char *format, ...)
         default:
           //jump over unknown arg
           //++args;
-          va_arg(args,void);
+          *output_string.ptr++ = '%';
+          ++output_string.length;
           break;
       }
 
