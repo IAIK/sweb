@@ -50,7 +50,7 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
   assert(offset % block_size_ == 0 && "we can only read multiples of block_size_ from the device");
   assert(size % block_size_ == 0 && "we can only read multiples of block_size_ from the device");
 
-  assert((offset + size < getNumBlocks() * block_size_) && "tried reading out of range");
+  assert((offset + size <= getNumBlocks() * block_size_) && "tried reading out of range");
 
   debug(BD_VIRT_DEVICE, "readData\n");
   uint32 blocks2read = size / block_size_, jiffies = 0;
@@ -85,7 +85,7 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
   assert(offset % block_size_ == 0 && "we can only write multiples of block_size_ to the device");
   assert(size % block_size_ == 0 && "we can only write multiples of block_size_ to the device");
 
-  assert((offset + size < getNumBlocks() * block_size_) && "tried writing out of range");
+  assert((offset + size <= getNumBlocks() * block_size_) && "tried writing out of range");
 
   debug(BD_VIRT_DEVICE, "writeData\n");
   uint32 blocks2write = size / block_size_, jiffies = 0;
