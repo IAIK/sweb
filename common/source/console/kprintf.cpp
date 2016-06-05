@@ -57,13 +57,10 @@ void kprintf_init()
 void kprintf_func(int ch, void *arg __attribute__((unused)))
 {
   //check if atomar or not in current context
-  bool active_free = main_console->getActiveTerminal()->isLockFree();
-  bool current_free = currentThread && currentThread->getTerminal()->isLockFree();
-
   if ((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
-      || (main_console->areLocksFree() && (active_free || current_free)))
+      || main_console->areLocksFree())
   {
-    if(current_free)
+    if(currentThread)
       currentThread->getTerminal()->write(ch);
     else
       main_console->getActiveTerminal()->write(ch);
