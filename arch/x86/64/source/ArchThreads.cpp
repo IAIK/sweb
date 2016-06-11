@@ -13,6 +13,14 @@ void ArchThreads::initialise()
 {
   currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
 
+  /** Enable SSE for floating point instructions in long mode **/
+  asm volatile ("movq %cr0, %rax\n"
+          "and $0xFFFB, %ax\n"
+          "or $0x2, %ax\n"
+          "movq %rax, %cr0\n"
+          "movq %cr4, %rax\n"
+          "orq $0x200, %rax\n"
+          "movq %rax, %cr4\n");
 }
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
