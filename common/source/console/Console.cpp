@@ -1,3 +1,4 @@
+#include <mm/KernelMemoryManager.h>
 #include "Console.h"
 #include "Terminal.h"
 #include "KeyboardManager.h"
@@ -43,6 +44,7 @@ void Console::handleKey(uint32 key)
   {
     case KEY_F9:
       PageManager::instance()->printBitmap();
+      kprintfd("Used kernel memory: %lu\n", KernelMemoryManager::instance()->getUsedKernelMemory());
       break;
 
     case KEY_F10:

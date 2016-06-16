@@ -497,3 +497,16 @@ SpinLock& KernelMemoryManager::getKMMLock()
 {
   return lock_;
 }
+
+size_t KernelMemoryManager::getUsedKernelMemory() {
+    MallocSegment *current = first_;
+  size_t size = 0;
+    while (current != 0)
+    {
+      if (current->getUsed())
+        size += current->getSize();
+
+      current = current->next_;
+    }
+    return size;
+}

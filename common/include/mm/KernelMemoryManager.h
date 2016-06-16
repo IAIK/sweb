@@ -127,6 +127,9 @@ class KernelMemoryManager
       assert(false && "dummy constructor - do not use!");
     };
 
+
+    size_t getUsedKernelMemory();
+
   protected:
     friend class PageManager;
 
@@ -176,7 +179,9 @@ class KernelMemoryManager
      */
     inline pointer private_AllocateMemory(size_t requested_size);
 
-    pointer ksbrk(ssize_t size);
+
+
+        pointer ksbrk(ssize_t size);
 
     MallocSegment* first_; //first_ must _never_ be NULL
     MallocSegment* last_;
