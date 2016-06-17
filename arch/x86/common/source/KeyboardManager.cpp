@@ -89,7 +89,7 @@ void KeyboardManager::serviceIRQ(void)
   }
 
   modifyKeyboardStatus(scancode);
-  setLEDs(); // setting the leds
+  //setLEDs(); // setting the leds
 
   if ((scancode & 0200)) // if a key was released just ignore it
   {
@@ -161,6 +161,7 @@ void KeyboardManager::setLEDs(void)
     leds |= 2;
   if (keyboard_status_ & KBD_META_CAPS)
     leds |= 4;
+
   if (last_leds != leds)
   {
     send_cmd(0xF4, 0x60); // enable keyboard command
@@ -168,6 +169,7 @@ void KeyboardManager::setLEDs(void)
     send_cmd(leds, 0x60); // bottom 3 bits set LEDs
     last_leds = leds;
   }
+
 }
 
 uint32 KeyboardManager::convertScancode(uint8 scancode)
