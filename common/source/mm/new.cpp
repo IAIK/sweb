@@ -11,7 +11,8 @@
 static void* _new(size_t size)
 {
   // maybe we could take some precautions not to be interrupted while doing this
-  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size);
+  pointer called_by = getCalledBefore(2);
+  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size, called_by);
   assert(p > (void*)0x80000000 || p == (void*)0);
   return p;
 }

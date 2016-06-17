@@ -2,6 +2,7 @@
  * @file ProcessRegistry.cpp
  */
 
+#include <mm/KernelMemoryManager.h>
 #include "ProcessRegistry.h"
 #include "Scheduler.h"
 #include "UserProcess.h"
@@ -40,6 +41,8 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "mkdir /usr\n");
   vfs_syscall.mount("idea1", "/usr", "minixfs", 0);
   debug(PROCESS_REG, "mount idea1\n");
+
+  KernelMemoryManager::instance()->startTracing();
 
   for (uint32 i = 0; progs_[i]; i++)
   {
