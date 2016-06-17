@@ -29,7 +29,8 @@ class MallocSegment
       marker_(0xdeadbeef),
       next_(next),
       prev_(prev),
-      freed_at_(0)
+      freed_at_(0),
+      alloc_at_(0)
     {
       size_flag_ = (size & 0x7FFFFFFF); //size to max 2^31-1
       if (used)
@@ -78,6 +79,8 @@ class MallocSegment
     MallocSegment *prev_; // = NULL;
     // the address where this chunk has been allocated or released at last
     pointer freed_at_;
+    pointer alloc_at_;
+    pointer alloc_by_;
 
   private:
     size_t size_flag_; // = 0; //max size is 2^31-1
@@ -96,7 +99,7 @@ class KernelMemoryManager
      * @param requested_size number of bytes to allocate
      * @return pointer to Memory Address or 0 if Not Enough Memory
      */
-    pointer allocateMemory(size_t requested_size);
+    pointer allocateMemory(size_t requested_size, pointer called_by);
 
     /**
      * freeMemory is called by delete
@@ -128,7 +131,9 @@ class KernelMemoryManager
     };
 
 
-    size_t getUsedKernelMemory();
+    size_t getUsedKernelMemory(bool show_allocs);
+    void startTracing();
+    void stopTracing();
 
   protected:
     friend class PageManager;
@@ -177,7 +182,7 @@ class KernelMemoryManager
      * does not lock the KMM, so we can also use it within the
      * reallocate method
      */
-    inline pointer private_AllocateMemory(size_t requested_size);
+    inline pointer private_AllocateMemory(size_t requested_size, pointer called_by);
 
 
 
@@ -189,6 +194,7 @@ class KernelMemoryManager
     pointer kernel_break_;
     size_t reserved_max_;
     size_t reserved_min_;
+    bool tracing_;
 
     void lockKMM();
     void unlockKMM();

@@ -28,7 +28,7 @@ KernelMemoryManager* KernelMemoryManager::instance()
 }
 
 KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages) :
-    lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
+        tracing_(false), lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
   assert(instance_ == 0);
   instance_ = this;
@@ -46,20 +46,20 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
 }
 
-pointer KernelMemoryManager::allocateMemory(size_t requested_size)
+pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer called_by)
 {
   assert((requested_size & 0x80000000) == 0 && "requested too much memory");
   if ((requested_size & 0xF) != 0)
     requested_size += 0x10 - (requested_size & 0xF); // 16 byte alignment
   lockKMM();
-  pointer ptr = private_AllocateMemory(requested_size);
+  pointer ptr = private_AllocateMemory(requested_size, called_by);
   if (ptr)
     unlockKMM();
 
   debug(KMM, "allocateMemory returns address: %zx \n", ptr);
   return ptr;
 }
-pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
+pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
   // find next free pointer of neccessary size + sizeof(MallocSegment);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
@@ -77,6 +77,8 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size)
 
   fillSegment(new_pointer, requested_size);
   new_pointer->freed_at_ = 0;
+  new_pointer->alloc_at_ = tracing_ ? called_by : 0;
+  new_pointer->alloc_by_ = (pointer)currentThread;
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 }
@@ -113,7 +115,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   }
   //iff the old segment is no segment ;) -> we create a new one
   if (virtual_address == 0)
-    return allocateMemory(new_size);
+    return allocateMemory(new_size, called_by);
 
   lockKMM();
 
@@ -146,11 +148,11 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     //or not.. lets search for larger space
 
     //thx to Philipp Toeglhofer we are not going to deadlock here anymore ;)
-    pointer new_address = private_AllocateMemory(new_size);
+    pointer new_address = private_AllocateMemory(new_size, called_by);
     if (new_address == 0)
     {
       //we are not freeing the old semgent in here, so that the data is not
-      //getting lost, although we could not allocate more memory 
+      //getting lost, although we could not allocate more memory
 
       //just if you wonder: the KMM is already unlocked
       kprintfd("KernelMemoryManager::reallocateMemory: Not enough Memory left\n");
@@ -498,15 +500,37 @@ SpinLock& KernelMemoryManager::getKMMLock()
   return lock_;
 }
 
-size_t KernelMemoryManager::getUsedKernelMemory() {
+size_t KernelMemoryManager::getUsedKernelMemory(bool show_allocs = false) {
     MallocSegment *current = first_;
-  size_t size = 0;
+    size_t size = 0, blocks = 0, unused = 0;
+    if(show_allocs) kprintfd("Kernel Memory Usage\n\n");
     while (current != 0)
     {
-      if (current->getUsed())
+      if (current->getUsed()) {
         size += current->getSize();
+        blocks++;
+        if(current->alloc_at_ && show_allocs)
+        {
+            if(kernel_debug_info)
+            {
+                kprintfd("%8lu bytes (by %p) at: ", current->getSize(), (void*)current->alloc_by_);
+                kernel_debug_info->printCallInformation(current->alloc_at_);
+            }
+        }
+      } else {
+          unused += current->getSize();
+      }
 
       current = current->next_;
     }
+    if(show_allocs) kprintfd("\n%lu bytes in %lu blocks are in use (%lu%%)\n", size, blocks, 100 * size / (size + unused));
     return size;
+}
+
+void KernelMemoryManager::startTracing() {
+    tracing_ = true;
+}
+
+void KernelMemoryManager::stopTracing() {
+    tracing_ = false;
 }

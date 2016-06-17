@@ -120,6 +120,7 @@ extern "C" void startup()
 
   kprintf("Now enabling Interrupts...\n");
   system_state = RUNNING;
+
   ArchInterrupts::enableInterrupts();
 
   Scheduler::instance()->yield();

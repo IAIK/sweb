@@ -44,7 +44,7 @@ void Console::handleKey(uint32 key)
   {
     case KEY_F9:
       PageManager::instance()->printBitmap();
-      kprintfd("Used kernel memory: %lu\n", KernelMemoryManager::instance()->getUsedKernelMemory());
+      kprintfd("Used kernel memory: %lu\n", KernelMemoryManager::instance()->getUsedKernelMemory(true));
       break;
 
     case KEY_F10:
