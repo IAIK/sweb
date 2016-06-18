@@ -10,6 +10,7 @@
 #include <uvector.h>
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
+#include "SWEBDebugInfo.h"
 #include <umemory.h>
 #include "File.h"
 #include "FileDescriptor.h"
@@ -181,7 +182,9 @@ bool Loader::loadDebugInfoIfAvailable()
 
   char *stab_data=0;
   char *stabstr_data=0;
+  char* sweb_data=0;
   size_t stab_data_size=0;
+  size_t sweb_data_size=0;
 
   for (Elf::Shdr const &section: section_headers)
   {
@@ -226,10 +229,21 @@ bool Loader::loadDebugInfoIfAvailable()
           }
         }
       }
+      if (!strcmp(&section_names[section.sh_name], ".swebdbg")) {
+        debug(USERTRACE, "Found SWEBDbg Infos\n");
+        size_t size = section.sh_size;
+        sweb_data = new char[size];
+        sweb_data_size = size;
+        if(readFromBinary(sweb_data, section.sh_offset, size)) {
+          debug(USERTRACE, "Could not read swebdbg section!\n");
+          delete[] sweb_data;
+          sweb_data = 0;
+        }
+      }
     }
   }
 
-  if (!stab_data || !stabstr_data)
+  if ((!stab_data || !stabstr_data) && !sweb_data)
   {
     delete[] stab_data;
     delete[] stabstr_data;
@@ -237,8 +251,11 @@ bool Loader::loadDebugInfoIfAvailable()
     return false;
   }
 
-  userspace_debug_info_ = new Stabs2DebugInfo(stab_data, stab_data + stab_data_size, stabstr_data);
-
+    if(sweb_data) {
+        userspace_debug_info_ = new SWEBDebugInfo(sweb_data, sweb_data + sweb_data_size);
+    } else {
+        userspace_debug_info_ = new Stabs2DebugInfo(stab_data, stab_data + stab_data_size, stabstr_data);
+    }
   return true;
 }
 
