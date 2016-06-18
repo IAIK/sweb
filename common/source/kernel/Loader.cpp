@@ -251,10 +251,10 @@ bool Loader::loadDebugInfoIfAvailable()
     return false;
   }
 
-    if(sweb_data) {
-        userspace_debug_info_ = new SWEBDebugInfo(sweb_data, sweb_data + sweb_data_size);
+    if(stab_data) {
+      userspace_debug_info_ = new Stabs2DebugInfo(stab_data, stab_data + stab_data_size, stabstr_data);
     } else {
-        userspace_debug_info_ = new Stabs2DebugInfo(stab_data, stab_data + stab_data_size, stabstr_data);
+      userspace_debug_info_ = new SWEBDebugInfo(sweb_data, sweb_data + sweb_data_size);
     }
   return true;
 }
