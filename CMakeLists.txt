@@ -193,11 +193,20 @@ add_custom_command (OUTPUT copy_to_image
   COMMENT "Copying files to image..."
   )
 
+#Custom Command: compile add-debug to add debug infos to binaries
+add_custom_command (OUTPUT add-debug
+    COMMENT "Building add-debug"
+    COMMAND make -C "${CMAKE_SOURCE_DIR}/utils/add-debug"
+    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg" ${PROJECT_BINARY_DIR}
+    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg.sh" ${PROJECT_BINARY_DIR}
+  )
+  
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
-	DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
+	DEPENDS hdd_image add-debug ${FINAL_USERSPACE_NAMES}
 	COMMAND mkdir -p userspace/data
   COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
+  COMMAND ./add-dbg.sh ${MINIXFS_ARGUMENT}
   COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying userspace programs to image..."
