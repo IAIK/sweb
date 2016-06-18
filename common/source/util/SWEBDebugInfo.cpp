@@ -15,10 +15,10 @@ SWEBDebugInfo::~SWEBDebugInfo() {
 
 char *SWEBDebugInfo::readFilename(char **pdata) {
     char *data = *pdata;
-    char *fn = new char[data[0] + 1];
-    memcpy(fn, data + 1, (size_t) data[0]);
-    fn[(size_t) fn[0]] = 0;
-    *pdata += data[0] + 1;
+    char *fn = new char[*(unsigned char*)data + 1];
+    memcpy(fn, data + 1, *(unsigned char*) data);
+    fn[*(unsigned char*) fn] = 0;
+    *pdata += *(unsigned char*)data + 1;
     return fn;
 }
 
