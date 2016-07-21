@@ -165,6 +165,7 @@ ArchMemory::~ArchMemory()
       PageManager::instance()->freePPN(pml4[pml4i].page_ppn);
     }
   }
+  PageManager::instance()->freePPN(page_map_level_4_);
 }
 
 pointer ArchMemory::checkAddressValid(uint64 vaddress_to_check)
