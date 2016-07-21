@@ -284,6 +284,9 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   if (! (error & FLAG_PF_PRESENT) && address < 0xFFFFFFFF00000000ULL && currentThread->loader_)
   {
+    if (!(error & FLAG_PF_USER) && address < PAGE_SIZE)
+      currentThread->printBacktrace(true);
+
     currentThread->loader_->loadPage(address); //load stuff
   }
   else
