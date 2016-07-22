@@ -269,6 +269,9 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   //lets hope this Exeption wasn't thrown during a TaskSwitch
   if (!page_present && address < 2U * 1024U * 1024U * 1024U && currentThread->loader_)
   {
+    if (!user_pagefault && address < PAGE_SIZE)
+      currentThread->printBacktrace(true);
+
     currentThread->loader_->loadPage(address);
   }
   else
@@ -278,8 +281,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
           address, address > 2U * 1024U * 1024U * 1024U ? "kernel" : "user", currentThread->getName(),
           currentThread, currentThread->user_registers_ ? "user" : "kernel");
 
-    if(user_pagefault)
-      currentThread->printBacktrace(true);
+    currentThread->printBacktrace(true);
 
     if (currentThread->loader_)
       Syscall::exit(9999);
