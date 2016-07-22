@@ -281,8 +281,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
           address, address > 2U * 1024U * 1024U * 1024U ? "kernel" : "user", currentThread->getName(),
           currentThread, currentThread->user_registers_ ? "user" : "kernel");
 
-    if (!user_pagefault)
-      currentThread->printBacktrace(true);
+    currentThread->printBacktrace(true);
 
     if (currentThread->loader_)
       Syscall::exit(9999);
