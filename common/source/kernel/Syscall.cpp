@@ -1,11 +1,7 @@
+#include "offsets.h"
 #include "Syscall.h"
 #include "syscall-definitions.h"
-#include "assert.h"
-#include "kprintf.h"
-#include "ArchCommon.h"
-#include "ArchInterrupts.h"
 #include "Terminal.h"
-#include "debug.h"
 #include "debug_bochs.h"
 #include "VfsSyscall.h"
 #include "UserProcess.h"
@@ -67,7 +63,7 @@ void Syscall::exit(size_t exit_code)
 size_t Syscall::write(size_t fd, pointer buffer, size_t size)
 {
   //WARNING: this might fail if Kernel PageFaults are not handled
-  if ((buffer >= 2U * 1024U * 1024U * 1024U) || (buffer + size > 2U * 1024U * 1024U * 1024U))
+  if ((buffer >= USER_BREAK) || (buffer + size > USER_BREAK))
   {
     return -1U;
   }
@@ -85,7 +81,7 @@ size_t Syscall::write(size_t fd, pointer buffer, size_t size)
 
 size_t Syscall::read(size_t fd, pointer buffer, size_t count)
 {
-  if ((buffer >= 2U * 1024U * 1024U * 1024U) || (buffer + count > 2U * 1024U * 1024U * 1024U))
+  if ((buffer >= USER_BREAK) || (buffer + count > USER_BREAK))
   {
     return -1U;
   }
@@ -110,7 +106,7 @@ size_t Syscall::close(size_t fd)
 
 size_t Syscall::open(size_t path, size_t flags)
 {
-  if (path >= 2U * 1024U * 1024U * 1024U)
+  if (path >= USER_BREAK)
   {
     return -1U;
   }
@@ -120,7 +116,7 @@ size_t Syscall::open(size_t path, size_t flags)
 void Syscall::outline(size_t port, pointer text)
 {
   //WARNING: this might fail if Kernel PageFaults are not handled
-  if (text >= 2U * 1024U * 1024U * 1024U)
+  if (text >= USER_BREAK)
   {
     return;
   }
@@ -136,7 +132,7 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
 
   // parameter check begin
-  if (path >= 2U * 1024U * 1024U * 1024U)
+  if (path >= USER_BREAK)
   {
     return -1U;
   }
