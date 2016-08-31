@@ -22,3 +22,7 @@
  */
 #define VIRTUAL_TO_PHYSICAL_BOOT(x) ((void*)(~PHYSICAL_TO_VIRTUAL_OFFSET & ((uint64)x)))
 
+/**
+ * Use only the lower canonical half for userspace
+ */
+#define USER_BREAK 0x0000800000000000ULL
