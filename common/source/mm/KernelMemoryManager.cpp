@@ -513,7 +513,7 @@ size_t KernelMemoryManager::getUsedKernelMemory(bool show_allocs = false) {
         {
             if(kernel_debug_info)
             {
-                kprintfd("%8lu bytes (by %p) at: ", current->getSize(), (void*)current->alloc_by_);
+                kprintfd("%8zu bytes (by %p) at: ", current->getSize(), (void*)current->alloc_by_);
                 kernel_debug_info->printCallInformation(current->alloc_at_);
             }
         }
@@ -523,7 +523,7 @@ size_t KernelMemoryManager::getUsedKernelMemory(bool show_allocs = false) {
 
       current = current->next_;
     }
-    if(show_allocs) kprintfd("\n%lu bytes in %lu blocks are in use (%lu%%)\n", size, blocks, 100 * size / (size + unused));
+    if(show_allocs) kprintfd("\n%zu bytes in %zu blocks are in use (%zu%%)\n", size, blocks, 100 * size / (size + unused));
     return size;
 }
 
