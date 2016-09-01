@@ -18,6 +18,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+#include "offsets.h"
 
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
 #define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
@@ -267,7 +268,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   const bool page_present = (error & FLAG_PF_PRESENT);
   const bool user_pagefault = (error & FLAG_PF_USER);
   //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (!page_present && address < 2U * 1024U * 1024U * 1024U && currentThread->loader_)
+  if (!page_present && address < USER_BREAK && currentThread->loader_)
   {
     if (!user_pagefault && address < PAGE_SIZE)
       currentThread->printBacktrace(true);
@@ -278,7 +279,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   {
     debug(PAGEFAULT, "ERROR: The virtual page of address %x (%s-address) is present,"
           "the pagefault was triggered by thread %s(%p), which is a %s""thread.\n",
-          address, address > 2U * 1024U * 1024U * 1024U ? "kernel" : "user", currentThread->getName(),
+          address, address > USER_BREAK ? "kernel" : "user", currentThread->getName(),
           currentThread, currentThread->user_registers_ ? "user" : "kernel");
 
     currentThread->printBacktrace(true);

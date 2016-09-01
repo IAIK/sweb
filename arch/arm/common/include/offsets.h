@@ -37,3 +37,8 @@
  */
 #define VIRTUAL_TO_PHYSICAL_BOOT(x) ((x) - PHYSICAL_TO_VIRTUAL_OFFSET)
 
+/**
+ * Only addresses below 2gig virtual belong to the user space
+ */
+#define USER_BREAK LINK_BASE
+
