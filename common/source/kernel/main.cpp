@@ -71,6 +71,8 @@ extern "C" void startup()
   debug(MAIN, "Interupts init\n");
   ArchInterrupts::initialise();
 
+  ArchInterrupts::setTimerFrequency(IRQ0_TIMER_FREQUENCY);
+
   ArchCommon::initDebug();
 
   vfs.initialize();

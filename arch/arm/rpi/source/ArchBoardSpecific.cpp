@@ -14,6 +14,7 @@
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
 #include "FrameBufferConsole.h"
+#include "kprintf.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -107,6 +108,12 @@ void ArchBoardSpecific::enableTimer()
   *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
   uint32* timer_clear = timer_load + 3;
   *timer_clear = 0x1;
+}
+
+void ArchBoardSpecific::setTimerFrequency(uint32 freq)
+{
+  (void)freq;
+  debug(A_BOOT, "Sorry, setTimerFrequency not implemented!\n");
 }
 
 void ArchBoardSpecific::disableTimer()

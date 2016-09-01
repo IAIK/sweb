@@ -16,6 +16,7 @@
 #pragma once
 
 #define IO_TIMEOUT (400000)
+#define IRQ0_TIMER_FREQUENCY 0
 
 #include "types.h"
 
@@ -47,7 +48,14 @@ public:
    */
   static void enableTimer();
 
+
   /**
+   * sets the frequency of Timer IRQ (0)
+   *
+   */
+  static void setTimerFrequency(uint32 freq);
+
+    /**
    * disables the Timer IRQ (0)
    *
    */

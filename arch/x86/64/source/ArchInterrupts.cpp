@@ -26,6 +26,18 @@ void ArchInterrupts::enableTimer()
   enableIRQ(0);
 }
 
+void ArchInterrupts::setTimerFrequency(uint32 freq) {
+  uint16_t divisor;
+  if(freq < (uint32)(1193180. / (1 << 16) + 1)) {
+    divisor = 0;
+  } else {
+    divisor = (uint16)(1193180 / freq);
+  }
+  outportb(0x43, 0x36);
+  outportb(0x40, divisor & 0xFF);
+  outportb(0x40, divisor >> 8);
+}
+
 void ArchInterrupts::disableTimer()
 {
   disableIRQ(0);
