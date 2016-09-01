@@ -112,6 +112,11 @@ void ArchInterrupts::enableTimer()
   ArchBoardSpecific::enableTimer();
 }
 
+void ArchInterrupts::setTimerFrequency(uint32 freq)
+{
+  ArchBoardSpecific::setTimerFrequency(freq);
+}
+
 void ArchInterrupts::disableTimer()
 {
   ArchBoardSpecific::disableTimer();

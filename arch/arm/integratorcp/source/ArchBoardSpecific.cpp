@@ -77,6 +77,12 @@ void ArchBoardSpecific::enableTimer()
   t0mmio[REG_INTCLR] = ~0;    /* make sure interrupt is clear (might not be mandatory) */
 }
 
+void ArchBoardSpecific::setTimerFrequency(uint32 freq)
+{
+  (void)freq;
+  debug(A_BOOT, "Sorry, setTimerFrequency not implemented!\n");
+}
+
 void ArchBoardSpecific::disableTimer()
 {
   uint32* t0mmio = (uint32*)0x83000000;

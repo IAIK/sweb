@@ -15,6 +15,7 @@ class ArchBoardSpecific
     static void frameBufferInit();
     static void onIdle();
     static void enableTimer();
+    static void setTimerFrequency(uint32 freq);
     static void disableTimer();
     static void enableKBD();
     static void disableKBD();
