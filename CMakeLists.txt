@@ -157,8 +157,8 @@ add_custom_command (OUTPUT temp_dir
 	COMMAND mkdir "./temp/boot"
 	COMMAND mkdir "./temp/boot/grub"
   COMMAND cp "./kernel.x" "./temp/boot"
-  COMMAND touch "./kernel.smap"
-  COMMAND cp "./kernel.smap" "./temp/boot"
+  COMMAND touch "./kernel.dbg"
+  COMMAND cp "./kernel.dbg" "./temp/boot"
 
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Creating temp dir..."
@@ -186,7 +186,7 @@ add_custom_command (OUTPUT helper_files
 #Custom Command: invoke exe2minixfs and copy the temp dir to our hd image
 add_custom_command (OUTPUT copy_to_image
   DEPENDS helper_files exe2minixfs
-  COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./temp/boot/grub/menu.lst boot/grub/menu.lst ./kernel.x boot/kernel.x ./kernel.smap boot/kernel.smap 
+  COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./temp/boot/grub/menu.lst boot/grub/menu.lst ./kernel.x boot/kernel.x ./kernel.dbg boot/kernel.dbg 
   COMMAND rm -R temp
 
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}

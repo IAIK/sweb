@@ -14,10 +14,12 @@ using namespace std;
 /*
  * Debug File Format
  *
- * - For each source file that has symbol infos in the binary:
- *
  * Name               Len (bytes)
  * -----------------------------------------
+ * id                 8
+ *
+ * - For each source file that has symbol infos in the binary:
+ *
  * functions          2
  * filename_len       1
  * filename           filename_len
@@ -94,6 +96,9 @@ int main(int argc, char **argv) {
 
     char *debug = (char *) malloc(1024 * 1024);
     char *debug_start = debug;
+
+    memcpy(debug, "SWEBDBG1", 8);
+    debug += 8;
 
     map <string, map<uint64_t, int>> line_info;
 
@@ -205,13 +210,13 @@ int main(int argc, char **argv) {
                 if (!fnc_written[f.first]) unwritten[f.first] = f.second;
             }
 
-            printf("%zu unwritten functions\n", unwritten.size());
-            // write fileheader
+            // write zero fileheader
             FileHeader fh;
             fh.functions = unwritten.size();
             fh.filename_len = 0;
             WRITE_FIX(fh, FileHeader, 255);
 
+            // write functions without line information
             for (auto &u : unwritten) {
                 FunctionHeader fnh;
                 fnh.offset = u.second.start;
@@ -225,11 +230,10 @@ int main(int argc, char **argv) {
             fncs.clear();
         }
 
-        printf("Got %d bytes of debug info\n", (int) (debug - debug_start));
+        //printf("Got %d bytes of debug info\n", (int) (debug - debug_start));
         fwrite(debug_start, debug - debug_start, 1, d);
 
     } catch (...) {
-        printf("Not good...\n");
     }
 
     fclose(d);

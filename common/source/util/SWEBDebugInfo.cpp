@@ -35,7 +35,7 @@ void SWEBDebugInfo::initialiseSymbolTable() {
     function_defs_.reserve(256);
     file_addrs_.reserve(256);
 
-    char *data = (char *) stab_start_;
+    char *data = (char *) stab_start_ + 8;
 
     char buffer[256];
     do {
