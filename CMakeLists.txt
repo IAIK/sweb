@@ -112,7 +112,7 @@ set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 #Build the Linker command
 set(LD_ARGUMENT ${LD_ARGUMENT} -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld)
 set(LD_ARGUMENT ${LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
-set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
+#set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
 
 set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,--start-group)
 foreach(libfile ${FINAL_LIB_NAMES})
@@ -136,7 +136,7 @@ endforeach(file)
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 add_custom_command (OUTPUT kernel_image
-	DEPENDS ${FINAL_LIB_NAMES} exe2minixfs
+	DEPENDS ${FINAL_LIB_NAMES} exe2minixfs add-debug
 	COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT}
   ${KERNEL_IMAGE_OBJCOPY}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
