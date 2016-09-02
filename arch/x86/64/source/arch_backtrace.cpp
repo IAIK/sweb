@@ -70,7 +70,7 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   StackFrame *CurrentFrameI = (StackFrame*)thread->loader_->arch_memory_.checkAddressValid((pointer)rbp);
 
   // the userspace stack is allowed to be anywhere in userspace
-  void *StackStart = (void*)0x7fffffff;
+  void *StackStart = (void*)0x7fffffffffff;
   void *StackEnd = (void*)thread->user_registers_->rsp;
 
   int i = 0;
@@ -82,7 +82,7 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   }
 
   void *StartAddress = (void*)0x1;
-  void *EndAddress = (void*)0x80000000;
+  void *EndAddress = (void*)0x800000000000;
 
   while (i < size &&
       ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
