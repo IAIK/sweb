@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ustring.h"
 #include "umap.h"
 #include "Stabs2DebugInfo.h"
 
