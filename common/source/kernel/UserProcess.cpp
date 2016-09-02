@@ -30,7 +30,7 @@ UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, Process
   loader_->arch_memory_.mapPage(1024*512-1, page_for_stack, 1); // (1024 * 512 - 1) * 4 KiB is exactly 2GiB - 4KiB
 
   ArchThreads::createUserRegisters(user_registers_, loader_->getEntryFunction(),
-                                   (void*) (2U * 1024U * 1024U * 1024U - sizeof(pointer)), // 2GiB - 4 Byte
+                                   (void*) (USER_BREAK - sizeof(pointer)), // 2GiB - 4 Byte
                                    getStackStartPointer());
 
   ArchThreads::setAddressSpace(this, loader_->arch_memory_);
