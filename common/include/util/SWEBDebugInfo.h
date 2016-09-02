@@ -26,15 +26,8 @@ public:
     virtual void printCallInformation(pointer address) const;
 
 private:
-    ustl::map<size_t, const char*> function_files_;
-
-
-    char *readFilename(char **data);
-
-    size_t readEntries(char **data);
-
-    SWEBDebugEntry readEntry(char **data);
-
+    ustl::map<size_t, ustl::string> file_addrs_;
+    ustl::map<size_t, const char*> function_defs_;
 
     virtual void initialiseSymbolTable();
 
