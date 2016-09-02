@@ -1,3 +1,4 @@
+#include <util/SWEBDebugInfo.h>
 #include "ArchCommon.h"
 #include "multiboot.h"
 #include "offsets.h"
@@ -217,7 +218,6 @@ void ArchCommon::initDebug()
   kernel_debug_info = new Stabs2DebugInfo((char const *)&stab_start_address_nr,
                                           (char const *)&stab_end_address_nr,
                                           (char const *)&stabstr_start_address_nr);
-
 }
 
 void ArchCommon::idle()

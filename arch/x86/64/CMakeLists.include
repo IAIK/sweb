@@ -27,9 +27,7 @@ ENDMACRO(ARCH2OBJ)
 set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-size=0x1000 -Wl,-melf_x86_64 -nostdinc -nostdlib -nodefaultlibs)
 set(APPEND_LD_ARGUMENTS )
 set(KERNEL_IMAGE_OBJCOPY
-  COMMAND echo "SMAP" > ${PROJECT_BINARY_DIR}/kernel.smap
-  COMMAND grep -E "^ *0x[0123456789abcdef]{16} {16}" ${PROJECT_BINARY_DIR}/kernel.map | sort -u | tr -s ' ' >> ${PROJECT_BINARY_DIR}/kernel.smap
-  COMMAND cp ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel.dwarf.x
+  COMMAND ${PROJECT_BINARY_DIR}/add-dbg ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel.dbg
   COMMAND ${OBJCOPY_EXECUTABLE} ${PROJECT_BINARY_DIR}/kernel.x --strip-unneeded ${PROJECT_BINARY_DIR}/kernel.x
   COMMAND mv ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel64.x && ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/kernel64.x ${PROJECT_BINARY_DIR}/kernel.x
 )

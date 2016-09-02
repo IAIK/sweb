@@ -13,7 +13,7 @@
 #include "FrameBufferConsole.h"
 #include "TextConsole.h"
 #include "ports.h"
-#include "SmapDebugInfo.h"
+#include "SWEBDebugInfo.h"
 
 extern void* kernel_end_address;
 
@@ -255,8 +255,8 @@ void ArchCommon::initDebug()
 {
   for (size_t i = 0; i < getNumModules(); ++i)
   {
-    if (memcmp("SMAP\n",(char const *)getModuleStartAddress(i),5) == 0)
-      kernel_debug_info = new SmapDebugInfo((char const *)getModuleStartAddress(i)+5,
+    if (memcmp("SWEBDBG1\n",(char const *)getModuleStartAddress(i),8) == 0)
+      kernel_debug_info = new SWEBDebugInfo((char const *)getModuleStartAddress(i),
                                               (char const *)getModuleEndAddress(i));
   }
 }
