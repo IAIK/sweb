@@ -279,7 +279,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
   {
     debug(PAGEFAULT, "ERROR: The virtual page of address %x (%s-address) is present,"
           "the pagefault was triggered by thread %s(%p), which is a %s""thread.\n",
-          address, address > USER_BREAK ? "kernel" : "user", currentThread->getName(),
+          address, address >= USER_BREAK ? "kernel" : "user", currentThread->getName(),
           currentThread, currentThread->user_registers_ ? "user" : "kernel");
 
     currentThread->printBacktrace(true);

@@ -40,5 +40,5 @@
 /**
  * Only addresses below 2gig virtual belong to the user space
  */
-#define USER_BREAK LINK_BASE
+#define USER_BREAK 0x80000000
 
