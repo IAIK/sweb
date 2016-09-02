@@ -44,7 +44,7 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
 
   void *StackStart = (void*)((size_t)thread->kernel_stack_ + sizeof(thread->kernel_stack_)); // the stack "starts" at the high addresses...
   void *StackEnd = (void*)thread->kernel_stack_; // ... and "ends" at the lower ones.
-  void *StartAddress = (void*)0x80000000;
+  void *StartAddress = (void*)USER_BREAK;
   void *EndAddress = (void*)ArchCommon::getFreeKernelMemoryEnd();
 
   if(StackEnd > EndAddress || StackStart < StartAddress)
@@ -70,7 +70,7 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   StackFrame *CurrentFrameI = (StackFrame*)thread->loader_->arch_memory_.checkAddressValid((pointer)rbp);
 
   // the userspace stack is allowed to be anywhere in userspace
-  void *StackStart = (void*)0x7fffffffffff;
+  void *StackStart = (void*)(USER_BREAK - 1);
   void *StackEnd = (void*)thread->user_registers_->rsp;
 
   int i = 0;
@@ -82,7 +82,7 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   }
 
   void *StartAddress = (void*)0x1;
-  void *EndAddress = (void*)0x800000000000;
+  void *EndAddress = (void*)USER_BREAK;
 
   while (i < size &&
       ADDRESS_BETWEEN(CurrentFrame, StackEnd, StackStart) &&
