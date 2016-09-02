@@ -1,4 +1,4 @@
-CXXFLAGS+=-g -O2 -Werror
+CXXFLAGS+=-g -O2 
 override CXXFLAGS+=-std=c++11 -Wall
 
 CLEAN :=

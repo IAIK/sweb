@@ -1,62 +1,65 @@
+#include <ustl/ustring.h>
 #include "kprintf.h"
 #include "SWEBDebugInfo.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 
+
+struct FileHeader {
+    uint16_t functions;
+    uint8_t filename_len;
+} __attribute__((packed));
+
+struct FunctionHeader {
+    uint64_t offset;
+    uint16_t line_entries;
+    uint8_t name_len;
+} __attribute__((packed));
+
+struct LineHeader {
+    uint16_t offset;
+    uint16_t number;
+} __attribute__((packed));
+
+
 SWEBDebugInfo::SWEBDebugInfo(char const *sweb_start, char const *sweb_end) : Stabs2DebugInfo(sweb_start, sweb_end, 0) {
     initialiseSymbolTable();
 }
 
 SWEBDebugInfo::~SWEBDebugInfo() {
-    ustl::map<size_t, const char *>::const_iterator f_it;
-    for (f_it = function_files_.begin(); f_it != function_files_.end(); ++f_it) delete[] f_it->second;
 }
 
-char *SWEBDebugInfo::readFilename(char **pdata) {
-    char *data = *pdata;
-    char *fn = new char[*(unsigned char*)data + 1];
-    memcpy(fn, data + 1, *(unsigned char*) data);
-    fn[*(unsigned char*) fn] = 0;
-    *pdata += *(unsigned char*)data + 1;
-    return fn;
-}
-
-size_t SWEBDebugInfo::readEntries(char **pdata) {
-    char *data = *pdata;
-    size_t entries = *(uint32_t * )(data);
-    *pdata += 4;
-    return entries;
-}
-
-SWEBDebugEntry SWEBDebugInfo::readEntry(char **pdata) {
-    char *data = *pdata;
-    SWEBDebugEntry e;
-    e.address = *(uint64_t * )(data);
-    e.line = *(uint32_t * )(data + 8);
-    *pdata += 12;
-    return e;
-}
 
 void SWEBDebugInfo::initialiseSymbolTable() {
-    function_symbols_.reserve(256);
-    function_files_.reserve(256);
+    function_defs_.reserve(256);
+    file_addrs_.reserve(256);
 
-    size_t i;
     char *data = (char *) stab_start_;
 
+    char buffer[256];
     do {
-        char *filename = readFilename(&data);
-        size_t entries = readEntries(&data);
+        FileHeader *fh = (FileHeader *) data;
+        data += sizeof(FileHeader);
+        strncpy(buffer, data, fh->filename_len);
+        buffer[fh->filename_len] = 0;
+        data += fh->filename_len;
+        ustl::string filename(buffer);
 
-        for (i = 0; i < entries; i++) {
-            SWEBDebugEntry entry = readEntry(&data);
-
-            function_symbols_[entry.address] = (StabEntry *) (pointer)entry.line;
-            if (i == 0) function_files_[entry.address] = filename;
+        for(int fn = 0; fn < fh->functions; fn++) {
+            FunctionHeader* fnh = (FunctionHeader*)data;
+            if(fn == 0) {
+                file_addrs_[fnh->offset] = filename;
+            }
+            function_defs_[fnh->offset] = data;
+            data += sizeof(FunctionHeader);
+            data += fnh->name_len;
+            data += fnh->line_entries * sizeof(LineHeader);
         }
-    } while (data < (char *) stab_end_);
-    debug(USERTRACE, "found %zd sweb debug functions\n", function_symbols_.size());
+
+    } while(data != (char*)stab_end_);
+
+    debug(USERTRACE, "found %zd sweb debug functions\n", function_defs_.size());
 
 }
 
@@ -64,23 +67,31 @@ void SWEBDebugInfo::getCallNameAndLine(pointer address, const char *&name, ssize
     name = "UNKNOWN FUNCTION";
     line = 0;
 
-    if (!this || function_symbols_.size() == 0 ||
-        !(ADDRESS_BETWEEN(address, function_symbols_.front().first, function_symbols_.back().first)))
+    if (!this || function_defs_.size() == 0 ||
+        !(ADDRESS_BETWEEN(address, function_defs_.front().first, function_defs_.back().first)))
         return;
 
-    ustl::map < size_t, StabEntry const * > ::const_reverse_iterator it;
-    for (it = function_symbols_.rbegin(); it != function_symbols_.rend() && it->first > address; ++it);
+    auto function = function_defs_.lower_bound(address);
+    function--;
 
-    if (it == function_symbols_.rend())
-        return;
+    FunctionHeader* fh = (FunctionHeader*)function->second;
+    name = ((char*)fh) + sizeof(FunctionHeader);
 
-    ustl::map<size_t, const char *>::const_reverse_iterator f_it;
-    for (f_it = function_files_.rbegin(); f_it != function_files_.rend() && f_it->first > address; ++f_it);
-    if(f_it != function_files_.rend()) {
-        name = f_it->second;
+    LineHeader* lh = (LineHeader*)((char*)(fh + 1) + fh->name_len);
+    bool found = false;
+    for(int e = 0; e < fh->line_entries; e++) {
+        if(address < fh->offset + lh->offset) {
+            lh--;
+            found = true;
+            break;
+        } else if(address == fh->offset + lh->offset) {
+            found = true;
+            break;
+        }
+        lh++;
     }
 
-    line = (ssize_t) it->second;
+    line = found ? lh->number : -(int)(address - fh->offset);
 }
 
 
