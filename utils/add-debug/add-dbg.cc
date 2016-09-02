@@ -185,8 +185,9 @@ int main(int argc, char **argv) {
                         FunctionHeader fnh;
                         fnh.offset = func.start;
                         fnh.line_entries = (uint16_t) offsets.size();
-                        fnh.name_len = func.name.size() <= 255 ? func.name.size() : 255;
+                        fnh.name_len = func.name.size() <= 254 ? func.name.size() + 1 : 255;
                         strncpy(fnh.name, func.name.c_str(), 255);
+                        fnh.name[func.name.size()] = 0;
                         WRITE_FIX(fnh, FunctionHeader, 255 - fnh.name_len);
 
                         // write line infos

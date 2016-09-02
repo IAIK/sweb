@@ -9,12 +9,6 @@
 #define CALL_FUNC_NAME_LIMIT 256
 #define CALL_FUNC_NAME_LIMIT_STR macroToString(CALL_FUNC_NAME_LIMIT)
 
-
-struct SWEBDebugEntry {
-    uint64_t address;
-    uint32_t line;
-};
-
 class SWEBDebugInfo : public Stabs2DebugInfo {
 public:
 
