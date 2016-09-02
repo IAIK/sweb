@@ -77,14 +77,7 @@ void ATADriver::testIRQ( )
   BDManager::getInstance()->probeIRQ = true;
   readSector( 0, 1, 0 );
 
-  jiffies = 0;
-  while( BDManager::getInstance()->probeIRQ && jiffies++ < IO_TIMEOUT )
-    ArchInterrupts::yieldIfIFSet();
-
-  if( jiffies >= IO_TIMEOUT )
-  {
-    mode = BD_PIO_NO_IRQ; 
-  }
+  TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_PIO_NO_IRQ;);
 }
 
 int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
@@ -266,7 +259,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
     {
       currentThread->state_=Sleeping;
       ArchInterrupts::enableInterrupts();
-      Scheduler::instance()->yield();
+      // Scheduler::instance()->yield(); // this is probably not necessary...
     }
     else
       currentThread->state_=Sleeping;
