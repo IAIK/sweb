@@ -8,6 +8,7 @@
 #include "ArchMemory.h"
 #include "PageManager.h"
 #include "ArchThreads.h"
+#include "offsets.h"
 
 UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
                          uint32 terminal_number) :
