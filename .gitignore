@@ -14,6 +14,9 @@ Makefile
 ./bin
 info.file
 utils/bochs/bochsrc
+utils/add-debug/add-dbg
+utils/add-debug/*.o
+utils/add-debug/*.d
 .settings
 .project
 .cproject
