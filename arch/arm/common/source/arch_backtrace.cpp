@@ -34,7 +34,7 @@ int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_reg
   else
     fp = (StackFrame*)thread->kernel_registers_->r[11]; // r11 is the fp register in gcc ;)
 
-    int i = 0;
+  int i = 0;
 
   void *StackStart = (void*)((uint32)thread->kernel_stack_ + sizeof(thread->kernel_stack_)); // the stack "starts" at the high addresses...
   void *StackEnd = (void*)thread->kernel_stack_; // ... and "ends" at the lower ones.

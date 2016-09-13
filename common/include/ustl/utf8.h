@@ -47,7 +47,7 @@ inline size_t Utf8Bytes (wchar_t v)
   static const uint32_t c_Bounds[7] = { 0x0000007F, 0x000007FF, 0x0000FFFF, 0x001FFFFF, 0x03FFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
   for (n = 0; c_Bounds[n++] < uint32_t(v););
     #endif
-    return n;
+  return n;
 }
 
 /// Measures the size of a wchar_t array in UTF-8 encoding.
