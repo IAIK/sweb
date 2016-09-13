@@ -16,7 +16,7 @@ enum AnsiColor
 #define OUTPUT_FLAGS (OUTPUT_ENABLED | OUTPUT_ADVANCED)
 
 #ifndef NOCOLOR
-#define DEBUG_FORMAT_STRING "\033[0;%zum[%-11s]\033[1;m"
+#define DEBUG_FORMAT_STRING "\033[1;%zum[%-11s]\033[0;39m"
 #define COLOR_PARAM(flag) (flag & ~OUTPUT_FLAGS), #flag
 #else
 #define DEBUG_FORMAT_STRING "[%-11s]"
