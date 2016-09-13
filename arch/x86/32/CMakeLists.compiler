@@ -11,5 +11,6 @@ set(CMAKE_C_COMPILER i686-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER i686-linux-gnu-g++)
 
 find_program(LD_EXECUTABLE i686-linux-gnu-gcc)
+find_program(OBJCOPY_EXECUTABLE objcopy)
 
 endif(CMAKE_CROSSCOMPILING)
