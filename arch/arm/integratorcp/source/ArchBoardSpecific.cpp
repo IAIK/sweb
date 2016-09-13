@@ -99,7 +99,7 @@ void ArchBoardSpecific::enableKBD()
   kmi = (struct KMI*)0x88000000;
   kmi->cr = 0x14;
   kmi->data = 0xF4;
-  while(!kmi->stat & 0x10);
+  while(!(kmi->stat & 0x10));
 }
 
 void ArchBoardSpecific::disableKBD()
