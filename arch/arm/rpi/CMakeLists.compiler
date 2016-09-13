@@ -15,4 +15,5 @@ set(CMAKE_C_COMPILER arm-none-eabi-gcc)
 set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 
 find_program(LD_EXECUTABLE arm-none-eabi-gcc)
+find_program(OBJCOPY_EXECUTABLE arm-none-eabi-objcopy)
 

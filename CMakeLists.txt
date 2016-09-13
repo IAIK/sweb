@@ -47,7 +47,6 @@ list(LENGTH ARCH_LIST ARCH_DEPTH)
 #Find program executables needed during compilation
 find_program(LD_EXECUTABLE cc)
 find_program(DOXYGEN_EXECUTABLE doxygen)
-find_program(OBJCOPY_EXECUTABLE objcopy)
 
 #Initialize CMake output directories
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
@@ -206,7 +205,7 @@ add_custom_command (OUTPUT userspace_to_image
 	DEPENDS hdd_image add-debug ${FINAL_USERSPACE_NAMES}
 	COMMAND mkdir -p userspace/data
   COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-  COMMAND ./add-dbg.sh ${MINIXFS_ARGUMENT}
+  COMMAND ./add-dbg.sh ${OBJCOPY_EXECUTABLE} ${MINIXFS_ARGUMENT}
   COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMENT "Copying userspace programs to image..."
