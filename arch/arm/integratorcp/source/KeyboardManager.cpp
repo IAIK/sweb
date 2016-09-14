@@ -11,12 +11,24 @@ uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] = STANDARD_KEYMA
 
 uint32 const KeyboardManager::E0_KEYS[KEY_MAPPING_SIZE] = E0_KEYS_DEF;
 
+uint8 const KeyboardManager::SET1_SCANCODES[KEY_MAPPING_SIZE + 1] = {127, 67, 0, 63, 61, 59, 60, 88, 100, 68, 66, 64, 62, 15, 41, 0, 101,
+                                                 56, 42, 0, 29, 16,
+                                                 2, 0, 102, 0, 44, 31, 30, 17, 3, 91, 103, 46, 45, 32, 18, 5, 4, 92,
+                                                 104, 57, 47, 33, 20,
+                                                 19, 6, 93, 105, 49, 48, 35, 34, 21, 7, 0, 106, 0, 50, 36, 22, 8, 9, 0,
+                                                 107, 51, 37, 23,
+                                                 24, 11, 10, 0, 108, 52, 53, 38, 39, 25, 12, 0, 109, 0, 40, 0, 26, 13,
+                                                 0, 0, 58, 54, 28,
+                                                 27, 0, 43, 99, 0, 0, 86, 0, 0, 0, 0, 14, 0, 0, 79, 0, 75, 71, 0, 0,
+                                                 111, 82, 83, 80, 76,
+                                                 77, 72, 1, 69, 87, 78, 81, 74, 55, 73, 70, 0, 128};
+
 KeyboardManager *KeyboardManager::instance_ = 0;
 
 extern struct KMI* kmi;
 
 KeyboardManager::KeyboardManager() :
-    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0)
+    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0), next_is_up_(0)
 {
   kmi = (struct KMI*) 0x88000000;
   kmi->cr = 0x1C;
@@ -40,8 +52,22 @@ void KeyboardManager::send_cmd(uint8 cmd, uint8 port __attribute__((unused)))
 void KeyboardManager::serviceIRQ(void)
 {
   uint8 scancode = kmi->data;
+#if QEMU_SENDS_SCANCODE_SET2
+  if(scancode == 0xf0)
+    next_is_up_ = 1;
+#endif
   if (scancode > 0x80)
     return;
+
+#if QEMU_SENDS_SCANCODE_SET2
+  scancode = SET1_SCANCODES[scancode];
+  if(next_is_up_)
+  {
+    next_is_up_ = 0;
+    modifyKeyboardStatus(scancode | 0x80);
+    return;
+  }
+#endif
 
   if (extended_scancode == 0xE0)
   {
