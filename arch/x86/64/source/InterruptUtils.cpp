@@ -383,12 +383,12 @@ extern "C" void syscallHandler()
   ArchInterrupts::enableInterrupts();
 
   currentThread->user_registers_->rax =
-    Syscall::syscallException(currentThread->user_registers_->rdi,
-                  currentThread->user_registers_->rsi,
-                  currentThread->user_registers_->rdx,
+    Syscall::syscallException(currentThread->user_registers_->rax,
+                  currentThread->user_registers_->rbx,
                   currentThread->user_registers_->rcx,
-                  currentThread->user_registers_->r8,
-                  currentThread->user_registers_->r9);
+                  currentThread->user_registers_->rdx,
+                  currentThread->user_registers_->rsi,
+                  currentThread->user_registers_->rdi);
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;
