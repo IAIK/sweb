@@ -49,6 +49,8 @@ find_program(LD_EXECUTABLE cc)
 find_program(DOXYGEN_EXECUTABLE doxygen)
 find_program(STAT_EXECUTABLE stat)
 
+set(ColourReset "")
+set(BoldRed     "")
 if(NOT WIN32)
   string(ASCII 27 Esc)
   set(ColourReset "${Esc}[m")
