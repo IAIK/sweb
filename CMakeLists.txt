@@ -47,6 +47,20 @@ list(LENGTH ARCH_LIST ARCH_DEPTH)
 #Find program executables needed during compilation
 find_program(LD_EXECUTABLE cc)
 find_program(DOXYGEN_EXECUTABLE doxygen)
+find_program(STAT_EXECUTABLE stat)
+
+if(NOT WIN32)
+  string(ASCII 27 Esc)
+  set(ColourReset "${Esc}[m")
+  set(BoldRed     "${Esc}[1;31m")
+endif()
+set(TMPFS_CHECK "none")
+execute_process(COMMAND ${STAT_EXECUTABLE} --file-system --format=%T ${PROJECT_BINARY_DIR}
+                OUTPUT_VARIABLE TMPFS_CHECK
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT("${TMPFS_CHECK}" STREQUAL "tmpfs"))
+  MESSAGE("-- ${BoldRed}WARNING: build folder is not tmpfs - compilation will be slow and bad for the hard disk${ColourReset}")
+endif(NOT("${TMPFS_CHECK}" STREQUAL "tmpfs"))
 
 #Initialize CMake output directories
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
