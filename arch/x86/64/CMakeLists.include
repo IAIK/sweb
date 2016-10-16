@@ -24,7 +24,7 @@ MACRO(ARCH2OBJ OUTPUTOBJNAMES)
   set(${OUTPUTOBJNAMES} ${ARCH_OBJECTS})
 ENDMACRO(ARCH2OBJ)
 
-set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-size=0x1000 -Wl,-melf_x86_64 -nostdinc -nostdlib -nodefaultlibs)
+set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-size=0x1000 -Wl,-melf_x86_64 -nostdinc -nostdlib -nodefaultlibs -no-pie)
 set(APPEND_LD_ARGUMENTS )
 set(KERNEL_IMAGE_OBJCOPY
   COMMAND ${PROJECT_BINARY_DIR}/add-dbg ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel.dbg
