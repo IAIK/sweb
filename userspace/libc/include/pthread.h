@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 //pthread typedefs
-typedef unsigned int pthread_t;
+typedef long unsigned int pthread_t;
 typedef unsigned int pthread_attr_t;
 
 //pthread mutex typedefs
