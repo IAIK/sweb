@@ -1,12 +1,13 @@
 #pragma once
 
+#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //pthread typedefs
-typedef unsigned int pthread_t;
+typedef size_t pthread_t;
 typedef unsigned int pthread_attr_t;
 
 //pthread mutex typedefs
