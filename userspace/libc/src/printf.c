@@ -51,6 +51,7 @@ unsigned char const SPACE = 8;    /* space if plus */
 unsigned char const LEFT  = 16;   /* left justified */
 unsigned char const SPECIAL = 32;   /* 0x */
 unsigned char const LARGE = 64;   /* use 'ABCDEF' instead of 'abcdef' */
+unsigned char const LONG = 128;   /* sizeof(number) == sizeof(size_t) */
 
 /**
  * Resizes the string in the given c_string structure..
@@ -106,7 +107,7 @@ void writeFillChars(c_string *output_string, int size, char fill )
  * @param type Output type
  *
  */
-void writeNumber(c_string *output_string, unsigned int number,
+void writeNumber(c_string *output_string, size_t number,
                  unsigned int base, unsigned int size,
                  unsigned int precision, unsigned char type)
 {
@@ -129,7 +130,10 @@ void writeNumber(c_string *output_string, unsigned int number,
   c = (type & ZEROPAD) ? '0' : ' ';
   sign = 0;
   if (type & SIGN) {
-    if (((int) number) < 0) {
+    if ((type & LONG) && ((ssize_t)number) < 0) {
+      sign = '-';
+      number = - (ssize_t) number;
+    } else if (!(type & LONG) && ((int)number) < 0) {
       sign = '-';
       number = - (int) number;
     } else if (type & PLUS) {
@@ -448,6 +452,10 @@ extern int printf(const char *format, ...)
           flag |= ZEROPAD;
           ++format;
           break;
+        case 'z':
+          flag |= LONG;
+          ++format;
+          break;
         default:
           break;
       }
@@ -563,7 +571,7 @@ extern int printf(const char *format, ...)
 
         //signed decimal
         case 'd':
-          writeNumber(&output_string,(unsigned int) va_arg(args,int),10,width, 0, flag | SIGN);
+          writeNumber(&output_string,(size_t) va_arg(args,size_t),10,width, 0, flag | SIGN);
           break;
 
         //we don't do i until I see what it actually should do
@@ -572,20 +580,21 @@ extern int printf(const char *format, ...)
 
         //octal
         case 'o':
-          writeNumber(&output_string,(unsigned int) va_arg(args,unsigned int),8,width, 0, flag | SPECIAL);
+          writeNumber(&output_string,(size_t) va_arg(args,size_t),8,width, 0, flag | SPECIAL);
           break;
 
         //unsigned
         case 'u':
-          writeNumber(&output_string,(unsigned int) va_arg(args,unsigned int),10,width, 0, flag );
+          writeNumber(&output_string,(size_t) va_arg(args,size_t),10,width, 0, flag );
           break;
 
+        case 'p':
         case 'x':
-          writeNumber(&output_string,(unsigned int) va_arg(args,unsigned int),16,width, 0, flag | SPECIAL);
+          writeNumber(&output_string,(size_t) va_arg(args,size_t),16,width, 0, flag | SPECIAL);
           break;
 
         case 'X':
-          writeNumber(&output_string,(unsigned int) va_arg(args,unsigned int), 16, width, 0, flag | SPECIAL | LARGE);
+          writeNumber(&output_string,(size_t) va_arg(args,size_t), 16, width, 0, flag | SPECIAL | LARGE);
           break;
 
         //float
