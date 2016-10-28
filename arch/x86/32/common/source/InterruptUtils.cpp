@@ -257,7 +257,6 @@ extern "C" inline void printPageFaultInfo(size_t address, size_t error)
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-
   printPageFaultInfo(address, error);
 
   //save previous state on stack of currentThread
