@@ -45,7 +45,7 @@ add_definitions(-DCMAKE_${ARCH_ESC}=1)
 list(LENGTH ARCH_LIST ARCH_DEPTH)
 
 #Find program executables needed during compilation
-find_program(LD_EXECUTABLE cc)
+find_program(LD_EXECUTABLE gcc)
 find_program(OBJCOPY_EXECUTABLE objcopy)
 find_program(DOXYGEN_EXECUTABLE doxygen)
 find_program(STAT_EXECUTABLE stat)
@@ -64,6 +64,21 @@ execute_process(COMMAND ${STAT_EXECUTABLE} --file-system --format=%T ${PROJECT_B
 if(NOT("${TMPFS_CHECK}" STREQUAL "tmpfs"))
   MESSAGE("-- ${BoldRed}WARNING: build folder is not tmpfs - compilation will be slow and bad for the hard disk${ColourReset}")
 endif(NOT("${TMPFS_CHECK}" STREQUAL "tmpfs"))
+
+set(NOPIEFLAG -no-pie)
+execute_process(COMMAND "${LD_EXECUTABLE} ${NOPIEFLAG} 2>&1 | grep -o unrecognized"
+                OUTPUT_VARIABLE PIE_CHECK
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT("${PIE_CHECK}" STREQUAL "unrecognized"))
+set(NOPIEFLAG )
+endif(NOT("${PIE_CHECK}" STREQUAL "unrecognized"))
+set(NOPICFLAG -fno-PIC)
+execute_process(COMMAND "${CMAKE_C_COMPILER} ${NOPICFLAG} 2>&1 | grep -o unrecognized"
+                OUTPUT_VARIABLE PIC_CHECK
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT("${PIC_CHECK}" STREQUAL "unrecognized"))
+set(NOPICFLAG )
+endif(NOT("${PIC_CHECK}" STREQUAL "unrecognized"))
 
 #Initialize CMake output directories
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
