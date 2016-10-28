@@ -27,10 +27,10 @@ void handle_command(char* buffer, int buffer_size)
 
   for (c = 0; c < buffer_size && buffer[c]; c++)
   {
-    if (argsCount > 10)
+    if (argsCount >= 10)
     {
       argsCount = 10;
-      printf("Argument Count is limited to 10 (no dynamic memory allocation) all other arguments will be ignores\n");
+      printf("Argument count is limited to 10 (no dynamic memory allocation) - all other arguments will be ignored\n");
       break;
     }
     if (buffer[c] == '\r' || buffer[c] == '\n' || buffer[c] == ' ')
