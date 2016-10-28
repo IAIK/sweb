@@ -171,10 +171,11 @@ extern "C" inline void printPageFaultInfo(size_t address, size_t error)
   const bool caused_by = error & FLAG_PF_INSTR_FETCH;
 
 
-  debug(PAGEFAULT, "Address: %x, Present: %d, Writing: %d, Userspace: %d, Rsvc: %d, caused by: %s fetch"
-        " - currentThread: %p %d"":%s, switch_to_userspace_: %d\n",
-        address, present, writing, userspace, reserved,  caused_by ? "instruction" : "operand",
-        currentThread, currentThread->getTID(), currentThread->getName(), currentThread->switch_to_userspace_);
+  debug(PAGEFAULT, "Address: %zx, Present: %zd, Writing: %zd, Userspace: %zd, Rsvc: %zd, caused by: %zs fetch"
+        " - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
+        address, present, writing, userspace, reserved, caused_by ? "instruction" : "operand", currentThread,
+        currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
+        currentThread ? currentThread->switch_to_userspace_ : -1);
 
   const Stabs2DebugInfo* deb = kernel_debug_info;
   assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
