@@ -73,7 +73,7 @@ if("${PIE_CHECK}" MATCHES ".*unrecognized.*")
 set(NOPIEFLAG )
 endif()
 set(NOPICFLAG -fno-PIC)
-execute_process(COMMAND ${CMAKE_C_COMPILER} ${NOPIEFLAG}
+execute_process(COMMAND ${CMAKE_C_COMPILER} ${NOPICFLAG}
                 ERROR_VARIABLE PIE_CHECK
                 ERROR_STRIP_TRAILING_WHITESPACE)
 if("${PIC_CHECK}" MATCHES ".*unrecognized.*")
