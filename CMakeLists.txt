@@ -66,19 +66,19 @@ if(NOT("${TMPFS_CHECK}" STREQUAL "tmpfs"))
 endif(NOT("${TMPFS_CHECK}" STREQUAL "tmpfs"))
 
 set(NOPIEFLAG -no-pie)
-execute_process(COMMAND "${LD_EXECUTABLE} ${NOPIEFLAG} 2>&1 | grep -o unrecognized"
-                OUTPUT_VARIABLE PIE_CHECK
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT("${PIE_CHECK}" STREQUAL "unrecognized"))
+execute_process(COMMAND ${LD_EXECUTABLE} ${NOPIEFLAG}
+                ERROR_VARIABLE PIE_CHECK
+                ERROR_STRIP_TRAILING_WHITESPACE)
+if("${PIE_CHECK}" MATCHES ".*unrecognized.*")
 set(NOPIEFLAG )
-endif(NOT("${PIE_CHECK}" STREQUAL "unrecognized"))
+endif()
 set(NOPICFLAG -fno-PIC)
-execute_process(COMMAND "${CMAKE_C_COMPILER} ${NOPICFLAG} 2>&1 | grep -o unrecognized"
-                OUTPUT_VARIABLE PIC_CHECK
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT("${PIC_CHECK}" STREQUAL "unrecognized"))
+execute_process(COMMAND ${CMAKE_C_COMPILER} ${NOPIEFLAG}
+                ERROR_VARIABLE PIE_CHECK
+                ERROR_STRIP_TRAILING_WHITESPACE)
+if("${PIC_CHECK}" MATCHES ".*unrecognized.*")
 set(NOPICFLAG )
-endif(NOT("${PIC_CHECK}" STREQUAL "unrecognized"))
+endif()
 
 #Initialize CMake output directories
 set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
