@@ -1,4 +1,4 @@
-CXXFLAGS+=-g -O2 -fPIC
+CXXFLAGS+=-g -O2
 override CXXFLAGS+=-std=c++11 -Wall
 
 CLEAN :=

@@ -115,7 +115,8 @@ int main(int argc, char **argv) {
                 (void) line;
                 lines++;
             }
-            if (!lines) continue;
+            if (!lines || lt.begin() == lt.end() || (begin(lt)->file) == 0)
+              continue;
 
             string file(basename(begin(lt)->file->path));
 
@@ -235,6 +236,7 @@ int main(int argc, char **argv) {
         fwrite(debug_start, debug - debug_start, 1, d);
 
     } catch (...) {
+      printf("No debug infos for '%s' available (binary too small).\n",argv[1]);
     }
 
     fclose(d);

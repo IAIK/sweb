@@ -7,7 +7,7 @@ do
         filename=$(basename "$var")
         extension="${filename##*.}"
         if [[ "$extension" == "sweb" ]]; then
-            ./add-dbg "$var" "$var.dbg"  &> /dev/null 
+            ./add-dbg "$var" "$var.dbg"
             if [ -f "$var.dbg" ]; then
                 $OBJCPY --remove-section .swebdbg "$var"
                 $OBJCPY --add-section .swebdbg="$var.dbg" --set-section-flags .swebdbg=noload,readonly "$var"

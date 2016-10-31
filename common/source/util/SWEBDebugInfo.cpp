@@ -67,14 +67,17 @@ void SWEBDebugInfo::getCallNameAndLine(pointer address, const char *&name, ssize
     name = "UNKNOWN FUNCTION";
     line = 0;
 
-    if (!this || function_defs_.size() == 0 ||
-        !(ADDRESS_BETWEEN(address, function_defs_.front().first, function_defs_.back().first)))
+    if (!this || function_defs_.size() == 0)
         return;
 
-    auto function = function_defs_.lower_bound(address);
-    function--;
+    FunctionHeader* fh = 0;
+    for(auto f : function_defs_) {
+      if (address >= f.first)
+        fh = (FunctionHeader*)f.second;
+    }
+    if (fh == 0)
+      return;
 
-    FunctionHeader* fh = (FunctionHeader*)function->second;
     name = ((char*)fh) + sizeof(FunctionHeader);
 
     LineHeader* lh = (LineHeader*)((char*)(fh + 1) + fh->name_len);
