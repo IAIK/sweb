@@ -27,7 +27,6 @@ Loader::~Loader()
 
 void Loader::loadPage(pointer virtual_address)
 {
-  MutexLock lock(program_binary_lock_);
   debug(LOADER, "Loader:loadPage: Request to load the page for address %p.\n", (void*)virtual_address);
   if(arch_memory_.checkAddressValid(virtual_address))
   {
@@ -39,6 +38,9 @@ void Loader::loadPage(pointer virtual_address)
   bool found_page_content = false;
   // get a new page for the mapping
   size_t ppn = PageManager::instance()->allocPPN();
+
+  program_binary_lock_.acquire();
+
   // Iterate through all sections and load the ones intersecting into the page.
   for(ustl::list<Elf::Phdr>::iterator it = phdrs_.begin(); it != phdrs_.end(); it++)
   {
@@ -54,9 +56,9 @@ void Loader::loadPage(pointer virtual_address)
         //      bytes_to_load, bin_start_addr, virt_start_addr);
         if(readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs_on_page, bin_start_addr, bytes_to_load))
         {
+          program_binary_lock_.release();
           PageManager::instance()->freePPN(ppn);
           debug(LOADER, "ERROR! Some parts of the content could not be load from the binary.\n");
-          program_binary_lock_.release();
           Syscall::exit(999);
         }
         found_page_content = true;
@@ -67,12 +69,12 @@ void Loader::loadPage(pointer virtual_address)
       }
     }
   }
+  program_binary_lock_.release();
 
   if(!found_page_content)
   {
     PageManager::instance()->freePPN(ppn);
     debug(LOADER, "Loader::loadPage: ERROR! No section refers to the given address.\n");
-    program_binary_lock_.release();
     Syscall::exit(666);
   }
 
@@ -82,12 +84,14 @@ void Loader::loadPage(pointer virtual_address)
 
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t length)
 {
+  assert(program_binary_lock_.isHeldBy(currentThread));
   VfsSyscall::lseek(fd_, position, SEEK_SET);
   return VfsSyscall::read(fd_, buffer, length) - (ssize_t)length;
 }
 
 bool Loader::readHeaders()
 {
+  MutexLock lock(program_binary_lock_);
   hdr_ = new Elf::Ehdr;
 
   if(readFromBinary((char*)hdr_, 0, sizeof(Elf::Ehdr)))
@@ -153,6 +157,8 @@ bool Loader::loadDebugInfoIfAvailable()
     debug(USERTRACE, "Expected section header size does not match advertised section header size\n");
     return false;
   }
+
+  MutexLock lock(program_binary_lock_);
 
   ustl::vector<Elf::Shdr> section_headers;
   section_headers.resize(hdr_->e_shnum, true);
