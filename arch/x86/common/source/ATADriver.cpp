@@ -205,7 +205,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
 uint32 ATADriver::addRequest( BDRequest *br )
 {
-  MutexLock lock(lock_);
+  MutexLock lock(lock_); // this lock might serialize stuff too much...
   bool interrupt_context = false;
   debug(ATA_DRIVER, "addRequest %d!\n", br->getCmd() );
   if( mode != BD_PIO_NO_IRQ )
@@ -259,7 +259,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
     {
       currentThread->state_=Sleeping;
       ArchInterrupts::enableInterrupts();
-      // Scheduler::instance()->yield(); // this is probably not necessary...
+      Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
     }
     else
       currentThread->state_=Sleeping;
