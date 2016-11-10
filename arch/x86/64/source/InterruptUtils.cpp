@@ -131,17 +131,17 @@ void InterruptUtils::lidt(IDTR *idtr)
 
 void InterruptUtils::countPageFault(uint64 address)
 {
-  if (address == pf_address)
+  if ((address ^ (uint64)currentThread) == pf_address)
   {
     pf_address_counter++;
   }
   else
   {
-    pf_address = address;
+    pf_address = address ^ (uint64)currentThread;
   }
-  if (pf_address_counter >= 100)
+  if (pf_address_counter >= 10)
   {
-    kprintfd("same pagefault for 100 times in a row. most likely you have an error in your code\n");
+    kprintfd("same pagefault from the same thread for 10 times in a row. most likely you have an error in your code\n");
     asm("hlt");
   }
 }
