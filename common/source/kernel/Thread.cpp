@@ -125,13 +125,18 @@ void Thread::printBacktrace(bool use_stored_registers)
   }
 
   pointer call_stack[MAX_STACK_FRAMES];
-  size_t count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
+  size_t count = 0;
 
-  debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
-  for(size_t i = 0; i < count; ++i)
+  if(kernel_debug_info)
   {
-    debug(BACKTRACE, " ");
-    kernel_debug_info->printCallInformation(call_stack[i]);
+    count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
+
+    debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
+    for(size_t i = 0; i < count; ++i)
+    {
+        debug(BACKTRACE, " ");
+        kernel_debug_info->printCallInformation(call_stack[i]);
+    }
   }
   if(user_registers_)
   {
