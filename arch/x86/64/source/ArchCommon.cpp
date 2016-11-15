@@ -259,6 +259,8 @@ void ArchCommon::initDebug()
       kernel_debug_info = new SWEBDebugInfo((char const *)getModuleStartAddress(i),
                                               (char const *)getModuleEndAddress(i));
   }
+  if (!kernel_debug_info)
+    kernel_debug_info = new SWEBDebugInfo(0, 0);
 }
 
 void ArchCommon::idle()
