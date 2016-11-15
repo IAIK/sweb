@@ -21,8 +21,8 @@ LDLIBS+=./elf/libelf++.a ./dwarf/libdwarf++.a
 CPPFLAGS+=-MD -MP -MF .$@.d
 -include .*.d
 
-add-dbg: add-dbg.o
-	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+add-dbg: add-dbg.o libdwarf libelf
+	$(LINK.cc) add-dbg.o $(LOADLIBES) $(LDLIBS) -o $@
 CLEAN += add-dbg add-dbg.o
 
 clean:

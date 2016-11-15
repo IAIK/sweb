@@ -255,7 +255,7 @@ void ArchCommon::initDebug()
 {
   for (size_t i = 0; i < getNumModules(); ++i)
   {
-    if (memcmp("SWEBDBG1\n",(char const *)getModuleStartAddress(i),8) == 0)
+    if (memcmp("SWEBDBG1",(char const *)getModuleStartAddress(i),8) == 0)
       kernel_debug_info = new SWEBDebugInfo((char const *)getModuleStartAddress(i),
                                               (char const *)getModuleEndAddress(i));
   }
