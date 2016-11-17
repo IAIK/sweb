@@ -27,7 +27,6 @@ public:
     explicit      istringstream (const cmemlink& source) noexcept;
     void      iread (int8_t& v) { v = skip_delimiters(); }
     void      iread (int32_t& v);
-    void      iread (double& v);
     void      iread (bool& v);
     void      iread (wchar_t& v);
     void      iread (string& v);
@@ -131,7 +130,6 @@ ISTRSTREAM_CAST_OPERATOR (uint8_t,  int8_t)
 ISTRSTREAM_CAST_OPERATOR (int16_t,  int32_t)
 ISTRSTREAM_CAST_OPERATOR (uint16_t, int32_t)
 ISTRSTREAM_CAST_OPERATOR (uint32_t, int32_t)
-ISTRSTREAM_CAST_OPERATOR (float,  double)
 #if HAVE_THREE_CHAR_TYPES
 ISTRSTREAM_CAST_OPERATOR (char,   int8_t)
 #endif

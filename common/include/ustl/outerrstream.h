@@ -25,8 +25,6 @@ class coutclass : public ostream {
     inline void     iwrite (unsigned int v)   { iformat (v); }
     inline void     iwrite (long int v)   { iformat (v); }
     inline void     iwrite (unsigned long int v)  { iformat (v); }
-    inline void     iwrite (float v)    { iformat (v); }
-    inline void     iwrite (double v)   { iformat (v); }
     void      iwrite (bool v);
     inline void     iwrite (const char* s)    { write (s, strlen(s)); }
     inline void     iwrite (const string& v)  { write (v.begin(), v.size()); }

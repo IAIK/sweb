@@ -20,7 +20,6 @@ typedef tl::Seq<unsigned char, unsigned short, unsigned, unsigned long>::Type
               StdUnsignedInts;
 typedef tl::Seq<signed char, short, int, long>::Type  StdSignedInts;
 typedef tl::Seq<bool, char, wchar_t>::Type    StdOtherInts;
-typedef tl::Seq<float, double>::Type      StdFloats;
 
 template <typename U> struct Identity     { typedef U Result; };
 template <typename U> struct AddPointer     { typedef U* Result; };
@@ -240,17 +239,13 @@ public:
             tl::IndexOf<StdOtherInts, UnqualifiedType>::value >= 0 ||
             tl::IndexOf<StdOtherInts,
           typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
-    enum { isStdFloat   = tl::IndexOf<StdFloats, UnqualifiedType>::value >= 0 ||
-            tl::IndexOf<StdFloats,
-          typename ReferenceTraits<UnqualifiedType>::ReferredType>::value >= 0};
-    enum { isStdArith   = isStdIntegral || isStdFloat };
-    enum { isStdFundamental = isStdArith || isStdFloat || Conversion<T, void>::sameType };
+    enum { isStdArith   = isStdIntegral };
+    enum { isStdFundamental = isStdArith || Conversion<T, void>::sameType };
   
     enum { isUnsignedInt  = isStdUnsignedInt };
     enum { isSignedInt    = isStdSignedInt };
     enum { isIntegral   = isStdIntegral || isUnsignedInt || isSignedInt };
-    enum { isFloat    = isStdFloat };
-    enum { isArith    = isIntegral || isFloat };
+    enum { isArith    = isIntegral };
     enum { isFundamental  = isStdFundamental || isArith };
     
     typedef typename Select<isStdArith || isPointer || isMemberPointer, T, 

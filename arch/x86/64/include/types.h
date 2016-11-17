@@ -27,6 +27,8 @@ typedef uint64 gid_t;
 typedef uint64 size_t;
 typedef int64 ssize_t;
 
+#pragma GCC poison double float
+
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 
