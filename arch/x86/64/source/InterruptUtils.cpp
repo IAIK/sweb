@@ -151,10 +151,9 @@ void InterruptUtils::countPageFault(uint64 address)
   {\
     currentThread->switch_to_userspace_ = false;\
     currentThreadRegisters = currentThread->kernel_registers_;\
-    kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    asm("hlt");\
-    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     ArchInterrupts::enableInterrupts();\
+    kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
+    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
     currentThread->kill();\
   }
 
