@@ -54,14 +54,17 @@ void KeyboardManager::serviceIRQ(void)
 
   if (extended_scancode == 0xE0)
   {
-    if (scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE)
+    if ((scancode == 0x2A || scancode == 0x36 || scancode >= E0_BASE) && !(scancode & KEY_MAPPING_SIZE))
     {
       extended_scancode = 0;
       send_cmd(0xAE); // enable the keyboard
       return;
     }
 
-    scancode = E0_KEYS[scancode];
+    if (scancode & KEY_MAPPING_SIZE)
+      scancode = (E0_KEYS[scancode - KEY_MAPPING_SIZE]) + KEY_MAPPING_SIZE;
+    else
+      scancode = E0_KEYS[scancode];
   }
   else if (extended_scancode == 0xE1 && scancode == 0x1D)
   {
