@@ -72,22 +72,33 @@ arch_irqHandler_\num:
         iretq
 .endm
 
-.global arch_dummyHandler
 .extern dummyHandler
+.global arch_dummyHandler
 arch_dummyHandler:
         pushall
+        movq %rsp,%rdi
+        movq $1,%rsi
+        call arch_saveThreadRegisters
+        movq 152(%rsp),%rdx
+        movq 160(%rsp), %rsi
+        movq $0,%rdi
         call dummyHandler
-        popall
-        iretq
+        hlt # will iretq somewhere else
 
+
+.extern errorHandler
 .macro errorhandler num
 .global arch_errorHandler_\num
-.extern errorHandler_\num
 arch_errorHandler_\num:
         pushall
-        call errorHandler_\num
-        popall
-        iretq
+        movq %rsp,%rdi
+        movq $1,%rsi
+        call arch_saveThreadRegisters
+        movq 160(%rsp),%rdx
+        movq 152(%rsp), %rsi
+        movq $\num,%rdi
+        call errorHandler
+        hlt # will iretq somewhere else
 .endm
 
 .text
@@ -108,7 +119,7 @@ arch_pageFaultHandler:
         hlt
 
 
-.irp num,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,65
+.irp num,0,1,3,4,6,9,11,14,15,65
 irqhandler \num
 .endr
 

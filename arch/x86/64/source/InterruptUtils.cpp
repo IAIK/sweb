@@ -147,26 +147,57 @@ void InterruptUtils::countPageFault(uint64 address)
   }
 }
 
-#define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
-  extern "C" void errorHandler_##x () \
-  {\
-    currentThread->switch_to_userspace_ = false;\
-    currentThreadRegisters = currentThread->kernel_registers_;\
-    ArchInterrupts::enableInterrupts();\
-    kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    currentThread->kill();\
+extern Stabs2DebugInfo const *kernel_debug_info;
+
+extern const char* errors[];
+
+extern "C" void arch_errorHandler();
+extern "C" void errorHandler(size_t num, size_t rip, size_t cs)
+{
+  currentThread->switch_to_userspace_ = false;
+  currentThreadRegisters = currentThread->kernel_registers_;
+  ArchInterrupts::enableInterrupts();
+  assert(num < 32 && "there are only 32 error handlers");
+  const bool userspace = (cs & 0x30);
+
+  debug(INTERRUPT, "%s\n", errors[num]);
+  debug(INTERRUPT, "Instruction Pointer: %p, Userspace: %d - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
+        rip, userspace, currentThread,
+        currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
+        currentThread ? currentThread->switch_to_userspace_ : -1);
+
+  const Stabs2DebugInfo* deb = kernel_debug_info;
+  assert(currentThread && "there should be no pagefault before there is a current thread");
+  assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
+  ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
+  if (userspace)
+  {
+    assert(currentThread->loader_ && "User Threads need to have a Loader");
+    assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
+           "User and Kernel CR3 register values differ, this most likely is a bug!"));
+    deb = currentThread->loader_->getDebugInfos();
+    registers_ = currentThread->user_registers_;
   }
+  if(deb && registers_->rip)
+  {
+    debug(INTERRUPT, "This Fault was probably caused by:");
+    deb->printCallInformation(registers_->rip);
+  }
+  ArchThreads::printThreadRegisters(currentThread, false);
+  currentThread->printBacktrace(false);
+  debug(INTERRUPT, "Terminating process...\n");
+  currentThread->kill();
+}
 
 extern "C" void arch_dummyHandler();
 extern "C" void arch_contextSwitch();
-extern "C" void dummyHandler()
+extern "C" void dummyHandler(size_t num)
 {
-  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
+  size_t saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
   currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
-  kprintfd("DUMMY_HANDLER: Spurious INT\n");
+  debug(INTERRUPT,"DUMMY_HANDLER: Spurious INT %zx (%zu)\n",num,num);
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
@@ -199,8 +230,6 @@ extern "C" void irqHandler_65()
   Scheduler::instance()->schedule();
   arch_contextSwitch();
 }
-
-extern Stabs2DebugInfo const *kernel_debug_info;
 
 extern "C" inline void printPageFaultInfo(size_t address, size_t error)
 {
