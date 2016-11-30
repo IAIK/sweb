@@ -256,13 +256,22 @@ uint32 ATADriver::addRequest( BDRequest *br )
   if (currentThread)
   {
     if(interrupt_context)
-    {
-      currentThread->state_=Sleeping;
       ArchInterrupts::enableInterrupts();
-      Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
+    jiffies = 0;
+    while (br->getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
+    if (jiffies >= IO_TIMEOUT*10)
+      TIMEOUT_WARNING();
+    if (br->getStatus() == BDRequest::BD_QUEUED)
+    {
+      ArchInterrupts::disableInterrupts();
+      if (br->getStatus() == BDRequest::BD_QUEUED)
+      {
+        currentThread->state_=Sleeping;
+        ArchInterrupts::enableInterrupts();
+        Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
+      }
+      ArchInterrupts::enableInterrupts();
     }
-    else
-      currentThread->state_=Sleeping;
   }
 
   return 0;
