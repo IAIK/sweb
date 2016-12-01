@@ -50,9 +50,6 @@ ERROR_HANDLER(19)
 extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
-extern "C" void arch_dummyHandler();
-
-#define DUMMYHANDLER(X) {X, &arch_dummyHandler},
 #define ERRORHANDLER(X) {X, &arch_errorHandler_##X},
 #define IRQHANDLER(X) {X + 32, &arch_irqHandler_##X},
 InterruptHandlers InterruptUtils::handlers[] = {

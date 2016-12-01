@@ -55,7 +55,7 @@ const size_t USERTRACE          = Ansi_Red     | OUTPUT_ENABLED;
 //group memory management
 const size_t PM                 = Ansi_Green | OUTPUT_ENABLED;
 const size_t PAGEFAULT          = Ansi_Green | OUTPUT_ENABLED;
-const size_t INTERRUPT          = Ansi_Green | OUTPUT_ENABLED;
+const size_t CPU_ERROR          = Ansi_Red   | OUTPUT_ENABLED;
 const size_t KMM                = Ansi_Yellow;
 
 //group driver
