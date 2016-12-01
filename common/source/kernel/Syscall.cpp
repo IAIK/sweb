@@ -81,7 +81,6 @@ size_t Syscall::write(size_t fd, pointer buffer, size_t size)
 
 size_t Syscall::read(size_t fd, pointer buffer, size_t count)
 {
-  asm("int $2");
   if ((buffer >= USER_BREAK) || (buffer + count > USER_BREAK))
   {
     return -1U;
