@@ -97,9 +97,9 @@ void InterruptUtils::initialise()
   {
     while (handlers[j].number < i && handlers[j].offset != 0)
       ++j;
-    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i)));
-    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i)));
-    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i));
+    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*8)));
+    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*8)));
+    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*8));
     interrupt_gates[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
     interrupt_gates[i].present = 1;
     interrupt_gates[i].segment_selector = KERNEL_CS;
@@ -185,7 +185,6 @@ extern "C" inline void printPageFaultInfo(size_t address, size_t error)
   const bool writing = error & FLAG_PF_RDWR;
   const bool reserved = error & FLAG_PF_RSVD;
   const bool caused_by = error & FLAG_PF_INSTR_FETCH;
-
   debug(PAGEFAULT, "Address: %zx, Present: %d, Writing: %d, Userspace: %d, Rsvc: %d, caused by: %s fetch"
         " - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
         address, present, writing, userspace, reserved, caused_by ? "instruction" : "operand", currentThread,
@@ -280,6 +279,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   currentThread->switch_to_userspace_ = 0;
   currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
+
   const bool page_present = (error & FLAG_PF_PRESENT);
   const bool user_pagefault = (error & FLAG_PF_USER);
   //lets hope this Exeption wasn't thrown during a TaskSwitch
@@ -404,6 +404,7 @@ extern const char* errors[];
 extern "C" void arch_errorHandler();
 extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 {
+  kprintfd("%zx\n",cs);
   if (spurious)
     debug(CPU_ERROR, "Spurious Interrupt %zu (%zx)\n", num, num);
   else

@@ -72,19 +72,30 @@ arch_irqHandler_\num:
         iretq
 .endm
 
+dummyhandlerscratchvariable:
+  .long 0
+  .long 0
+
 .extern dummyHandler
 .global arch_dummyHandler
 arch_dummyHandler:
+.rept 128
+        decq dummyhandlerscratchvariable
+.endr
         pushall
         movq %rsp,%rdi
-        movq $1,%rsi
+        movq $0,%rsi
         call arch_saveThreadRegisters
         movq $1,%rcx
         movq 152(%rsp),%rdx
         movq 144(%rsp), %rsi
-        movq $0,%rdi
+        movq dummyhandlerscratchvariable,%rdi
+        addq $128, %rdi
+        movq $0,dummyhandlerscratchvariable
         call errorHandler
-        hlt # will iretq somewhere else
+        popall
+        iretq
+        hlt
 
 
 .extern errorHandler
@@ -93,7 +104,7 @@ arch_dummyHandler:
 arch_errorHandler_\num:
         pushall
         movq %rsp,%rdi
-        movq $1,%rsi
+        movq $0,%rsi
         call arch_saveThreadRegisters
         movq $0,%rcx
         movq 152(%rsp),%rdx
@@ -102,6 +113,7 @@ arch_errorHandler_\num:
         call errorHandler
         popall
         iretq
+        hlt
 .endm
 
 .macro errorhandlerWithCode num
@@ -117,7 +129,9 @@ arch_errorHandler_\num:
         movq $\num,%rdi
         call errorHandler
         popall
+        addq $8,%rsp
         iretq
+        hlt
 .endm
 
 .text
