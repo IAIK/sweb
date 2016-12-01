@@ -406,7 +406,10 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 {
   kprintfd("%zx\n",cs);
   if (spurious)
+  {
+    assert(num >= 0 && num < 128 && "there are only 128 interrupts");
     debug(CPU_ERROR, "Spurious Interrupt %zu (%zx)\n", num, num);
+  }
   else
   {
     assert(num < 32 && "there are only 32 CPU errors");
