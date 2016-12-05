@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
                         fnh.line_entries = (uint16_t) offsets.size();
                         fnh.name_len = func.name.size() <= 254 ? func.name.size() + 1 : 255;
                         strncpy(fnh.name, func.name.c_str(), 255);
-                        fnh.name[func.name.size()] = 0;
+                        fnh.name[fnh.name_len] = 0;
                         WRITE_FIX(fnh, FunctionHeader, 255 - fnh.name_len);
 
                         // write line infos
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
                 fnh.line_entries = 0;
                 fnh.name_len = u.second.name.size() <= 254 ? u.second.name.size() + 1 : 255;
                 strncpy(fnh.name, u.second.name.c_str(), 255);
-                fnh.name[u.second.name.size()] = 0;
+                fnh.name[fnh.name_len] = 0;
                 WRITE_FIX(fnh, FunctionHeader, 255 - fnh.name_len);
             }
 
