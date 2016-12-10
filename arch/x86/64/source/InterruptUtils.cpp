@@ -138,6 +138,7 @@ void InterruptUtils::countPageFault(uint64 address)
   else
   {
     pf_address = address ^ (uint64)currentThread;
+    pf_address_counter = 0;
   }
   if (pf_address_counter >= 10)
   {
