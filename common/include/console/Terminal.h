@@ -113,11 +113,6 @@ class Terminal : public CharacterDevice
 
     void setLayout(Terminal::LAYOUTS layout);
 
-    bool isLockFree()
-    {
-      return mutex_.isFree();
-    }
-
   protected:
 
     void setAsActiveTerminal();
