@@ -35,7 +35,7 @@ bool ArchMemory::checkAndRemove(pointer map_ptr, uint64 index)
 
 bool ArchMemory::unmapPage(uint64 virtual_page)
 {
-  ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
+  ArchMemoryMapping m = resolveMapping(virtual_page);
 
   assert(m.page_ppn != 0 && m.page_size == PAGE_SIZE && m.pt[m.pti].present);
   m.pt[m.pti].present = 0;
@@ -181,6 +181,11 @@ pointer ArchMemory::checkAddressValid(uint64 vaddress_to_check)
     debug(A_MEMORY, "checkAddressValid %zx and %zx -> false\n", page_map_level_4_, vaddress_to_check);
     return 0;
   }
+}
+
+ArchMemoryMapping ArchMemory::resolveMapping(uint64 vpage)
+{
+  return resolveMapping(page_map_level_4_, vpage);
 }
 
 ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
