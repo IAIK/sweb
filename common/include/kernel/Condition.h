@@ -49,8 +49,10 @@ class Condition : public Lock
      * If the list is empty, signal is being lost.
      * @param called_by A pointer to the call point of this function.
      *                  Can be set in case this method is called by a wrapper function.
+     * @param lock_waiters_list Lock the waiters list before accessing it.
+     *                  Must be set to false in case the waiters list is already locked in the calling function.
      */
-    void signal(pointer called_by = 0, bool locked_waiters_list = false);
+    void signal(pointer called_by = 0, bool lock_waiters_list = true);
 
     /**
      * Wakes up all Threads on the sleepers list.
