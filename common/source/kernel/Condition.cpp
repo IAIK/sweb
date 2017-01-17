@@ -59,7 +59,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   }
 }
 
-void Condition::signal(pointer called_by)
+void Condition::signal(pointer called_by, bool lock_waiters_list)
 {
   if(unlikely(system_state != RUNNING))
     return;
@@ -72,10 +72,12 @@ void Condition::signal(pointer called_by)
 
   assert(mutex_->isHeldBy(currentThread));
   checkInterrupts("Condition::signal");
-  lockWaitersList();
+  if(lock_waiters_list)
+    lockWaitersList();
   last_accessed_at_ = called_by;
   Thread* thread_to_be_woken_up = popBackThreadFromWaitersList();
-  unlockWaitersList();
+  if(lock_waiters_list)
+    unlockWaitersList();
 
   if(thread_to_be_woken_up)
   {
@@ -107,8 +109,10 @@ void Condition::broadcast(pointer called_by)
     called_by = getCalledBefore(1);
   assert(mutex_->isHeldBy(currentThread));
   // signal em all
+  lockWaitersList();
   while(threadsAreOnWaitersList())
   {
-    signal(called_by);
+    signal(called_by, false);
   }
+  unlockWaitersList();
 }
