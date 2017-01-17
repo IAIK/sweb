@@ -59,7 +59,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   }
 }
 
-void Condition::signal(pointer called_by)
+void Condition::signal(pointer called_by, bool broadcast)
 {
   if(unlikely(system_state != RUNNING))
     return;
@@ -72,43 +72,39 @@ void Condition::signal(pointer called_by)
 
   assert(mutex_->isHeldBy(currentThread));
   checkInterrupts("Condition::signal");
-  lockWaitersList();
-  last_accessed_at_ = called_by;
-  Thread* thread_to_be_woken_up = popBackThreadFromWaitersList();
-  unlockWaitersList();
-
-  if(thread_to_be_woken_up)
+  while (broadcast)
   {
-    if(likely(thread_to_be_woken_up->state_ == Sleeping))
-    {
-      // In this case we can access the pointer of the other thread without locking,
-      // because we can ensure that the thread is sleeping.
+    lockWaitersList();
+    last_accessed_at_ = called_by;
+    Thread* thread_to_be_woken_up = popBackThreadFromWaitersList();
+    unlockWaitersList();
 
-      //debug(LOCK, "Condition: Thread %s (%p) being signaled for condition %s (%p).\n",
-      //      thread_to_be_woken_up->getName(), thread_to_be_woken_up, getName(), this);
-      thread_to_be_woken_up->lock_waiting_on_ = 0;
-      Scheduler::instance()->wake(thread_to_be_woken_up);
+    if(thread_to_be_woken_up)
+    {
+      if(likely(thread_to_be_woken_up->state_ == Sleeping))
+      {
+        // In this case we can access the pointer of the other thread without locking,
+        // because we can ensure that the thread is sleeping.
+
+        //debug(LOCK, "Condition: Thread %s (%p) being signaled for condition %s (%p).\n",
+        //      thread_to_be_woken_up->getName(), thread_to_be_woken_up, getName(), this);
+        thread_to_be_woken_up->lock_waiting_on_ = 0;
+        Scheduler::instance()->wake(thread_to_be_woken_up);
+      }
+      else
+      {
+        debug(LOCK, "ERROR: Condition %s (%p): Thread %s (%p) is in state %s AND waiting on the condition!\n",
+              getName(), this, thread_to_be_woken_up->getName(), thread_to_be_woken_up,
+              Thread::threadStatePrintable[thread_to_be_woken_up->state_]);
+        assert(false);
+      }
     }
     else
-    {
-      debug(LOCK, "ERROR: Condition %s (%p): Thread %s (%p) is in state %s AND waiting on the condition!\n",
-            getName(), this, thread_to_be_woken_up->getName(), thread_to_be_woken_up,
-            Thread::threadStatePrintable[thread_to_be_woken_up->state_]);
-      assert(false);
-    }
+      break;
   }
 }
 
 void Condition::broadcast(pointer called_by)
 {
-  if(unlikely(system_state != RUNNING))
-    return;
-  if(!called_by)
-    called_by = getCalledBefore(1);
-  assert(mutex_->isHeldBy(currentThread));
-  // signal em all
-  while(threadsAreOnWaitersList())
-  {
-    signal(called_by);
-  }
+  signal(called_by, true);
 }

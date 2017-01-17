@@ -50,7 +50,7 @@ class Condition : public Lock
      * @param called_by A pointer to the call point of this function.
      *                  Can be set in case this method is called by a wrapper function.
      */
-    void signal(pointer called_by = 0);
+    void signal(pointer called_by = 0, bool broadcast = false);
 
     /**
      * Wakes up all Threads on the sleepers list.
