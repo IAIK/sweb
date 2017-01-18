@@ -72,7 +72,7 @@ void Condition::signal(pointer called_by, bool broadcast)
 
   assert(mutex_->isHeldBy(currentThread));
   checkInterrupts("Condition::signal");
-  while (broadcast)
+  do
   {
     lockWaitersList();
     last_accessed_at_ = called_by;
@@ -101,7 +101,7 @@ void Condition::signal(pointer called_by, bool broadcast)
     }
     else
       break;
-  }
+  } while (broadcast);
 }
 
 void Condition::broadcast(pointer called_by)
