@@ -9,7 +9,7 @@ extern "C"
 #endif
 
 
-#define assert(cond) (cond) ? (void)0 : sweb_assert( #cond ,__LINE__,__FILE__);
+#define assert(cond) do { (cond) ? (void)0 : sweb_assert( #cond ,__LINE__,__FILE__); } while (0)
 
 /** 
  * called when assertion is used and true
