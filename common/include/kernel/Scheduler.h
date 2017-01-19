@@ -38,11 +38,6 @@ class Scheduler
     void addNewThread(Thread *thread);
 
     /**
-     * Tells the scheduler that there is a thread that has been killed (adds cleanup job)
-     */
-    void invokeCleanup();
-
-    /**
      * puts the currentThread to sleep and keeps it from being scheduled
      */
     void sleep();
@@ -52,6 +47,12 @@ class Scheduler
      * @param *thread_to_wake, Pointer to the Thread that will be woken up
      */
     void wake(Thread *thread_to_wake);
+
+    /**
+     * Set a thread running.
+     * @param *thread, Pointer to the Thread that shall be run
+     */
+    void run(Thread *thread);
 
     /**
      * forces a task switch without waiting for the next timer interrupt
@@ -72,15 +73,6 @@ class Scheduler
      * Print out the locks held by the threads, and the locks they are waiting on.
      */
     void printLockingInformation();
-
-    /**
-     * Sleep on a lock and release the waiters list.
-     * This operations have to be done when the scheduler is disabled,
-     * else it may happen that a thread sleeps forever.
-     * The thread is pushed onto the waiters list before.
-     * @param lock The lock which shall be waiting on
-     */
-    void sleepAndRelease(Lock &lock);
 
     /**
      * Check if scheduling is enabled

@@ -90,7 +90,15 @@ void Scheduler::sleep()
 
 void Scheduler::wake(Thread* thread_to_wake)
 {
-  thread_to_wake->state_ = Running;
+  // wait until the thread is sleeping
+  while(thread_to_wake->state_ != Sleeping)
+    yield();
+  run(thread_to_wake);
+}
+
+void Scheduler::run(Thread *thread)
+{
+  thread->state_ = Running;
 }
 
 void Scheduler::yield()
@@ -222,18 +230,4 @@ void Scheduler::printLockingInformation()
   }
   debug(LOCK, "Scheduler::printLockingInformation finished\n");
   unlockScheduling();
-}
-
-void Scheduler::sleepAndRelease(Lock &lock)
-{
-  assert(lock.waitersListIsLocked());
-  // push back the current thread onto the waiters list
-  currentThread->lock_waiting_on_ = &lock;
-  lock.pushFrontCurrentThreadToWaitersList();
-
-  lockScheduling();
-  currentThread->state_ = Sleeping;
-  lock.unlockWaitersList();
-  unlockScheduling();
-  yield();
 }

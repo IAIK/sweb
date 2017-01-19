@@ -324,7 +324,7 @@ void ATADriver::serviceIRQ()
     {
       br->setStatus( BDRequest::BD_ERROR );
       if( br->getThread() )   
-        Scheduler::instance()->wake( br->getThread() );
+        Scheduler::instance()->run( br->getThread() );
       request_list_ = br->getNextRequest();
       return;
     }
@@ -340,7 +340,7 @@ void ATADriver::serviceIRQ()
       br->setStatus( BDRequest::BD_DONE );
       request_list_ = br->getNextRequest();
       if( br->getThread() )
-        Scheduler::instance()->wake( br->getThread() );
+        Scheduler::instance()->run( br->getThread() );
     }
   }
   else if( br->getCmd() == BDRequest::BD_WRITE )
@@ -354,7 +354,7 @@ void ATADriver::serviceIRQ()
       request_list_ = br->getNextRequest();
 
       if( br->getThread() )
-        Scheduler::instance()->wake( br->getThread() );
+        Scheduler::instance()->run( br->getThread() );
 
     }
     else
@@ -363,7 +363,7 @@ void ATADriver::serviceIRQ()
       {
         br->setStatus( BDRequest::BD_ERROR );
         if( br->getThread() )
-           Scheduler::instance()->wake( br->getThread() );
+           Scheduler::instance()->run( br->getThread() );
         request_list_ = br->getNextRequest();
         return;
       }
@@ -380,7 +380,7 @@ void ATADriver::serviceIRQ()
     br->setStatus( BDRequest::BD_ERROR );
     request_list_ = br->getNextRequest();
     if( br->getThread() )
-      Scheduler::instance()->wake( br->getThread() );
+      Scheduler::instance()->run( br->getThread() );
   }
 
   debug(ATA_DRIVER, "serviceIRQ:Request handled!!\n");

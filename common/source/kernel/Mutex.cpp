@@ -72,7 +72,7 @@ void Mutex::acquire(pointer called_by)
     }
     // check for deadlocks, interrupts...
     doChecksBeforeWaiting();
-    Scheduler::instance()->sleepAndRelease(*(Lock*)this);
+    sleepAndRelease();
     // We have been waken up again.
     currentThread->lock_waiting_on_ = 0;
   }

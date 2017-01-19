@@ -165,6 +165,11 @@ protected:
    */
   void printStatus();
 
+  /**
+   * Release the lock, and set the thread to sleeping.
+   */
+  void sleepAndRelease();
+
 private:
 
   /**

@@ -51,7 +51,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   last_accessed_at_ = called_by;
   // The mutex can be released here, because for waking up another thread, the list lock is needed, which is still held by the thread.
   mutex_->release(called_by);
-  Scheduler::instance()->sleepAndRelease(*(Lock*)this);
+  sleepAndRelease();
   if(re_acquire_mutex)
   {
     assert(mutex_);
