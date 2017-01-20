@@ -12,13 +12,13 @@
 #include "KeyboardManager.h"
 #include "ArchInterrupts.h"
 #include "backtrace.h"
-#include "Stabs2DebugInfo.h"
 
 #include "Thread.h"
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
 #include "offsets.h"
+#include "PageFaultHandler.h"
 
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
 #define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
@@ -158,145 +158,17 @@ extern "C" void irqHandler_65()
   arch_contextSwitch();
 }
 
-extern Stabs2DebugInfo const *kernel_debug_info;
-
-
-extern "C" inline void printPageFaultInfo(size_t address, size_t error)
-{
-  //--------Start "just for Debugging"-----------
-  const bool present = error & FLAG_PF_PRESENT;
-  const bool userspace = error & FLAG_PF_USER;
-  const bool writing = error & FLAG_PF_RDWR;
-  const bool reserved = error & FLAG_PF_RSVD;
-  const bool caused_by = error & FLAG_PF_INSTR_FETCH;
-
-
-  debug(PAGEFAULT, "Address: %zx, Present: %zd, Writing: %zd, Userspace: %zd, Rsvc: %zd, caused by: %zs fetch"
-        " - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
-        address, present, writing, userspace, reserved, caused_by ? "instruction" : "operand", currentThread,
-        currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
-        currentThread ? currentThread->switch_to_userspace_ : -1);
-
-  const Stabs2DebugInfo* deb = kernel_debug_info;
-  assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
-  ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
-  if (error & FLAG_PF_USER)
-  {
-    assert(currentThread->loader_ && "User Threads need to have a Loader");
-    assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
-           "User and Kernel CR3 register values differ, this most likely is a bug!"));
-    deb = currentThread->loader_->getDebugInfos();
-    registers_ = currentThread->user_registers_;
-  }
-  if(deb && registers_->eip)
-  {
-    debug(PAGEFAULT, "This pagefault was probably caused by:");
-    deb->printCallInformation(registers_->eip);
-  }
-
-  if(!address)
-  {
-    debug(PAGEFAULT, "Maybe you're dereferencing a null-pointer!\n");
-  }
-  if (error)
-  {
-    if (present)
-    {
-      debug(PAGEFAULT, "We got a pagefault even though the page mapping is present\n");
-      debug(PAGEFAULT, "%s tried to %s address %x\n", userspace ? "A userprogram" : "Some kernel code",
-            writing ? "write to" : "read from", address);
-
-      RESOLVEMAPPING(currentThread->loader_->arch_memory_.getRootOfPagingStructure(), address / PAGE_SIZE);
-
-      if (page_directory[pde_vpn].pt.present)
-      {
-        if (page_directory[pde_vpn].page.size)
-        {
-          debug(PAGEFAULT, "Page 0x%zx is a 4MiB Page\n", address / PAGE_SIZE);
-          debug(PAGEFAULT, "Page 0x%zx Flags are: writeable:%d, userspace_accessible:%d,\n", address / PAGE_SIZE,
-                page_directory[pde_vpn].page.writeable, page_directory[pde_vpn].page.user_access);
-        }
-        else
-        {
-          PageTableEntry *pte_base = (PageTableEntry *) ArchMemory::getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-          debug(PAGEFAULT, "Page 0x%zx is a 4KiB Page\n", address / PAGE_SIZE);
-          debug(PAGEFAULT, "Page 0x%zx Flags are: present:%zu, writeable:%zu, userspace_accessible:%zu,\n", address / PAGE_SIZE,
-                pte_base[pte_vpn].present, pte_base[pte_vpn].writeable, pte_base[pte_vpn].user_access);
-        }
-      }
-      else
-        debug(PAGEFAULT, "WTF? PDE non-present but Exception present flag was set\n");
-    }
-    else
-    {
-      if (address >= 2U*1024U*1024U*1024U)
-      {
-        debug(PAGEFAULT, "The virtual page we accessed was not mapped to a physical page\n");
-        if (userspace)
-        {
-          debug(PAGEFAULT, "WARNING: Your Userspace Programm tried to read from an unmapped address >2GiB\n");
-          debug(PAGEFAULT, "WARNING: Most likey there is an pointer error somewhere\n");
-        }
-        else
-        {
-          // remove this error check if your implementation swaps out kernel pages
-          debug(PAGEFAULT, "WARNING: This is unusual for addresses above 2Gb, unless you are swapping kernel pages\n");
-          debug(PAGEFAULT, "WARNING: Most likey there is an pointer error somewhere\n");
-        }
-      }
-      else
-      {
-        //debug(PAGEFAULT, "The virtual page we accessed was not mapped to a physical page\n");
-        //debug(PAGEFAULT, "this is normal and the Loader will propably take care of it now\n");
-      }
-    }
-  }
-  ArchThreads::printThreadRegisters(currentThread, false);
-}
-
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
-  printPageFaultInfo(address, error);
-
-  //save previous state on stack of currentThread
-  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
-  currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
-  ArchInterrupts::enableInterrupts();
-
-  const bool page_present = (error & FLAG_PF_PRESENT);
-  const bool user_pagefault = (error & FLAG_PF_USER);
-  //lets hope this Exeption wasn't thrown during a TaskSwitch
-  if (!page_present && address < USER_BREAK && currentThread->loader_)
-  {
-    if (!user_pagefault && address < PAGE_SIZE)
-      currentThread->printBacktrace(true);
-
-    currentThread->loader_->loadPage(address);
-  }
-  else
-  {
-    debug(PAGEFAULT, "ERROR: The virtual page of address %x (%s-address) is present,"
-          "the pagefault was triggered by thread %s(%p), which is a %s""thread.\n",
-          address, address >= USER_BREAK ? "kernel" : "user", currentThread->getName(),
-          currentThread, currentThread->user_registers_ ? "user" : "kernel");
-
-    currentThread->printBacktrace(true);
-
-    if (currentThread->loader_)
-      Syscall::exit(9999);
-    else
-      currentThread->kill();
-  }
-  ArchInterrupts::disableInterrupts();
-  asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
-  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
+  PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
+                                   error & FLAG_PF_PRESENT,
+                                   error & FLAG_PF_RDWR,
+                                   error & FLAG_PF_INSTR_FETCH);
   if (currentThread->switch_to_userspace_)
-  {
-    currentThreadRegisters = currentThread->user_registers_;
     arch_contextSwitch();
-  }
+  else
+    asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 
 extern "C" void arch_irqHandler_1();

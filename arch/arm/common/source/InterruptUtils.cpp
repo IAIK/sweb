@@ -23,6 +23,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+#include "PageFaultHandler.h"
 
 extern uint32* currentStack;
 extern Console* main_console;
@@ -33,67 +34,49 @@ extern Thread *currentThread;
 uint32 last_address;
 uint32 count;
 
+
+#define FLAG_FAULT_WRITING (1 << 10)
+#define FLAG_STATUS_MASK ((1 << 3) - 1)
+#define FLAG_TRANSLATION_PAGE (7)
+#define FLAG_TRANSLATION_SECTION (5)
 //TODO extern "C" void arch_pageFaultHandler();
 void pageFaultHandler(uint32 address, uint32 type)
 {
-  if (type != 0x3)
+  if(type != ARM4_XRQ_ABRTP)
   {
     asm("mrc p15, 0, r4, c6, c0, 0\n\
          mov %[v], r4\n": [v]"=r" (address));
   }
-  debug(PAGEFAULT, "Address: %x (%s) - currentThread: %p %d:%s, switch_to_userspace_: %d\n",
-      address, type == 0x3 ? "Instruction Fetch" : "Data Access", currentThread, currentThread->getTID(), currentThread->getName(), currentThread->switch_to_userspace_);
 
-  if(!address)
-    debug(PAGEFAULT, "Maybe you're dereferencing a null-pointer!\n");
+  size_t fault = 0;
+  size_t data_fault = 0;
 
-  if(currentThread->loader_->arch_memory_.checkAddressValid(address))
-    debug(PAGEFAULT, "There is something wrong: The address is actually mapped!\n");
+  asm("mrc p15, 0, r4, c5, c0, 0\n\
+       mov %[v], r4\n": [v]"=r" (data_fault));
+  asm("mov r4, #0x0\n\
+      mcr p15, 0, r4, c5, c0, 0");
+  asm("mrc p15, 0, r4, c5, c0, 1\n\
+       mov %[v], r4\n": [v]"=r" (instruction_fault));
+  asm("mov r4, #0x0\n\
+      mcr p15, 0, r4, c5, c0, 1");
 
-  if (address != last_address)
+  bool present, writing, fetch;
+  size_t status;
+  if(data_fault)
   {
-    count = 0;
-    last_address = address;
+    fetch = 0;
+    writing = data_fault & FLAG_FAULT_WRITING;
+    status = data_fault & FLAG_STATUS_MASK;
   }
   else
   {
-    if (count++ == 5)
-    {
-      debug(PAGEFAULT, "5 times the same pagefault? That should not happen -> kill Thread\n");
-      currentThread->kill();
-    }
+    fetch = 1;
+    writing = false;
+    status = instruction_fault & FLAG_STATUS_MASK;
   }
+  present = !((status == FLAG_TRANSLATION_PAGE) || (status == FLAG_TRANSLATION_SECTION));
 
-  ArchThreads::printThreadRegisters(currentThread,false);
-
-  //save previous state on stack of currentThread
-  uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
-  currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
-
-  ArchInterrupts::enableInterrupts();
-  if (currentThread->loader_)
-  {
-    //lets hope this Exeption wasn't thrown during a TaskSwitch
-    if (address > 8U*1024U*1024U && address < 2U*1024U*1024U*1024U)
-    {
-      currentThread->loader_->loadPage(address); //load stuff
-    }
-    else
-    {
-      debug(PAGEFAULT, "Memory Access Violation: address: %x, loader_: %p\n", address, currentThread->loader_);
-      Syscall::exit(9999);
-    }
-  }
-  else
-  {
-    debug(PAGEFAULT, "Kernel Page Fault! Should never happen...\n");
-    currentThread->kill();
-  }
-  ArchInterrupts::disableInterrupts();
-  currentThread->switch_to_userspace_ = saved_switch_to_userspace;
-  if (currentThread->switch_to_userspace_)
-    currentThreadRegisters = currentThread->user_registers_;
+  PageFaultHandler::enterPageFault(address, currentThread->switch_to_userspace_,  present, writing, fetch);
 }
 
 void timer_irq_handler()

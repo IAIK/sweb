@@ -73,13 +73,9 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
   void *StackStart = (void*)(USER_BREAK - 1);
   void *StackEnd = (void*)thread->user_registers_->rsp;
 
-  int i = 0;
-  if (thread->switch_to_userspace_)
-  {
-    CurrentFrame = (StackFrame*)thread->user_registers_->rbp;
-    call_stack[0] = thread->user_registers_->rip;
-    i = 1;
-  }
+  int i = 1;
+  CurrentFrame = (StackFrame*)thread->user_registers_->rbp;
+  call_stack[0] = thread->user_registers_->rip;
 
   void *StartAddress = (void*)0x1;
   void *EndAddress = (void*)USER_BREAK;

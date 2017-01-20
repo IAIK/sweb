@@ -163,7 +163,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
     kprintfd("\t\t%sThread: %18p, info: %18p\n"\
              "\t\t\t rax: %18zx  rbx: %18zx  rcx: %18zx  rdx: %18zx\n"\
              "\t\t\t rsp: %18zx  rbp: %18zx  rsp0 %18zx  rip: %18zx\n"\
-             "\t\t\trflg: %18zx  cr3: %zx\n",
+             "\t\t\trflg: %18zx  cr3: %18zx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
   else
