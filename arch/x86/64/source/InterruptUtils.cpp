@@ -1,7 +1,6 @@
 #include "InterruptUtils.h"
 
 #include "ArchSerialInfo.h"
-#include "BDManager.h"
 #include "new.h"
 #include "ports.h"
 #include "ArchMemory.h"
@@ -23,8 +22,7 @@
 #include "ArchInterrupts.h"
 #include "backtrace.h"
 
-//remove this later
-#include "Thread.h"
+#include "SWEBDebugInfo.h"
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
@@ -147,7 +145,7 @@ void InterruptUtils::countPageFault(uint64 address)
   }
 }
 
-extern Stabs2DebugInfo const *kernel_debug_info;
+extern SWEBDebugInfo const *kernel_debug_info;
 
 
 extern "C" void arch_contextSwitch();
@@ -282,7 +280,7 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
   kprintfd("%zx\n",cs);
   if (spurious)
   {
-    assert(num >= 0 && num < 128 && "there are only 128 interrupts");
+    assert(num < 128 && "there are only 128 interrupts");
     debug(CPU_ERROR, "Spurious Interrupt %zu (%zx)\n", num, num);
   }
   else
