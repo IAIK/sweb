@@ -150,15 +150,14 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
   printThreadRegisters(thread,1,verbose);
 }
 
-void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
+void ArchThreads::printThreadRegisters(Thread *thread, size_t userspace_registers, bool verbose)
 {
   ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
-    kprintfd("%sThread: %18p, has no %s registers\n",userspace_registers?"Kernel":"  User",thread,userspace_registers ? "userspace" : "kernelspace");
-    return;
+    kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
   }
-  if (verbose)
+  else if (verbose)
   {
     kprintfd("\t\t%sThread: %18p, info: %18p\n"\
              "\t\t\t rax: %18zx  rbx: %18zx  rcx: %18zx  rdx: %18zx\n"\

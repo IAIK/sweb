@@ -132,10 +132,9 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
-    kprintfd("Error, this thread's archthreadinfo is 0 for use userspace regs: %d\n",userspace_registers);
-    return;
+    kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
   }
-  if (verbose)
+  else if (verbose)
   {
     kprintfd("\t\t%sThread: %10p, info: %10p\n"\
              "\t\t\tttbr0: %10x  pc: %10x  sp: %10x  lr: %10x  cpsr: %10x\n"\

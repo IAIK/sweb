@@ -135,8 +135,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
   if (!info)
   {
-    kprintfd("\t%sThread %10p has no %sThread registers. %s\n",
-             userspace_registers?"Kernel":"  User",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
+    kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
   }
   else if (verbose)
   {

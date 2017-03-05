@@ -46,10 +46,11 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
                                           bool present, bool writing,
                                           bool fetch, bool switch_to_us)
 {
-  debug(PAGEFAULT, "\n");
-  debug(PAGEFAULT, "PF on address %18zx from thread %s - %zu (%p) with flags:\n",
-        address, currentThread->getName(), currentThread->getTID(), currentThread);
-  debug(PAGEFAULT, "%spresent, %s-mode, %s, %s-fetch, switch to userspace: %1d\n",
+  if (PAGEFAULT & OUTPUT_ENABLED)
+    kprintfd("\n");
+  debug(PAGEFAULT, "Address: %18zx - Thread %zu: %s (%p)\n",
+        address, currentThread->getTID(), currentThread->getName(), currentThread);
+  debug(PAGEFAULT, "Flags: %spresent, %s-mode, %s, %s-fetch, switch to userspace: %1d\n",
         present ? "    " : "not ",
         user ? "  user" : "kernel",
         writing ? "writing" : "reading",
@@ -72,7 +73,7 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
     else
       currentThread->kill();
   }
-  debug(PAGEFAULT, "PF on address %18zx finished.\n", address);
+  debug(PAGEFAULT, "Address: %18zx. Page fault handling finished.\n", address);
 }
 
 void PageFaultHandler::enterPageFault(size_t address, bool user,
