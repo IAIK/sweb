@@ -107,26 +107,26 @@ void InterruptUtils::lidt(IDTR *idtr)
   asm volatile("lidt (%0) ": :"q" (idtr));
 }
 
-#define ERROR_HANDLER(x,msg) extern "C" void arch_errorHandler_##x(); \
-  extern "C" void errorHandler_##x () \
-  {\
-    currentThread->switch_to_userspace_ = false;\
-    currentThreadRegisters = currentThread->kernel_registers_;\
-    ArchInterrupts::enableInterrupts();\
-    kprintfd("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    kprintf("\nCPU Fault " #msg "\n\n%s", intel_manual);\
-    currentThread->kill();\
-  }
+extern "C" void arch_errorHandler();
+extern "C" void errorHandler(const char* msg)
+{
+  currentThread->switch_to_userspace_ = false;
+  currentThreadRegisters = currentThread->kernel_registers_;
+  ArchInterrupts::enableInterrupts();
+  debug("\nCPU Fault " #msg "\n\n");
+  kprintf("\nCPU Fault " #msg "\n");
+  currentThread->kill();
+}
 
 extern "C" void arch_dummyHandler();
 extern "C" void arch_contextSwitch();
-extern "C" void dummyHandler()
+extern "C" void dummyHandler(size_t num)
 {
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
   currentThread->switch_to_userspace_ = 0;
   currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
-  kprintfd("DUMMY_HANDLER: Spurious INT\n");
+  debug(INTERRUPT,"DUMMY_HANDLER: Spurious INT %zx (%zu)\n",num,num);
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)

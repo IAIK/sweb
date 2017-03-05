@@ -72,22 +72,66 @@ arch_irqHandler_\num:
         iretq
 .endm
 
-.global arch_dummyHandler
+dummyhandlerscratchvariable:
+  .long 0
+  .long 0
+
 .extern dummyHandler
+.global arch_dummyHandler
 arch_dummyHandler:
+.rept 128
+        decq dummyhandlerscratchvariable
+.endr
         pushall
-        call dummyHandler
+        movq %rsp,%rdi
+        movq $0,%rsi
+        call arch_saveThreadRegisters
+        movq $1,%rcx
+        movq 152(%rsp),%rdx
+        movq 144(%rsp), %rsi
+        movq dummyhandlerscratchvariable,%rdi
+        addq $128, %rdi
+        movq $0,dummyhandlerscratchvariable
+        call errorHandler
         popall
         iretq
+        hlt
 
+
+.extern errorHandler
 .macro errorhandler num
 .global arch_errorHandler_\num
-.extern errorHandler_\num
 arch_errorHandler_\num:
         pushall
-        call errorHandler_\num
+        movq %rsp,%rdi
+        movq $0,%rsi
+        call arch_saveThreadRegisters
+        movq $0,%rcx
+        movq 152(%rsp),%rdx
+        movq 144(%rsp), %rsi
+        movq $\num,%rdi
+        call errorHandler
         popall
         iretq
+        hlt
+.endm
+
+.macro errorhandlerWithCode num
+.global arch_errorHandler_\num
+arch_errorHandler_\num:
+        pushall
+        movq %rsp,%rdi
+        movq $1,%rsi
+        call arch_saveThreadRegisters
+        movq $0,%rcx
+        movq 160(%rsp),%rdx
+        movq 152(%rsp), %rsi
+        movq $\num,%rdi
+        call errorHandler
+        popall
+        addq $8,%rsp
+        iretq
+        hlt
 .endm
 
 .text
@@ -108,11 +152,15 @@ arch_pageFaultHandler:
         hlt
 
 
-.irp num,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,65
+.irp num,0,1,3,4,6,9,11,14,15,65
 irqhandler \num
 .endr
 
-.irp num,0,4,5,6,7,8,9,10,11,12,13,16,17,18,19
+.irp num,8,10,11,12,13,14,17
+errorhandlerWithCode \num
+.endr
+
+.irp num,0,4,5,6,7,9,16,18,19
 errorhandler \num
 .endr
 

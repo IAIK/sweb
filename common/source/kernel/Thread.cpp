@@ -11,7 +11,7 @@
 #include "KernelMemoryManager.h"
 #include "Stabs2DebugInfo.h"
 
-#define MAX_STACK_FRAMES 20
+#define BACKTRACE_MAX_FRAMES 20
 
 
 
@@ -124,12 +124,13 @@ void Thread::printBacktrace(bool use_stored_registers)
     debug(BACKTRACE, "Kernel debug info not set up, backtrace won't look nice!\n");
   }
 
-  pointer call_stack[MAX_STACK_FRAMES];
+  assert(BACKTRACE_MAX_FRAMES < 128);
+  pointer call_stack[BACKTRACE_MAX_FRAMES];
   size_t count = 0;
 
   if(kernel_debug_info)
   {
-    count = backtrace(call_stack, MAX_STACK_FRAMES, this, use_stored_registers);
+    count = backtrace(call_stack, BACKTRACE_MAX_FRAMES, this, use_stored_registers);
 
     debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
     for(size_t i = 0; i < count; ++i)
@@ -141,7 +142,7 @@ void Thread::printBacktrace(bool use_stored_registers)
   if(user_registers_)
   {
     Stabs2DebugInfo const *deb = loader_->getDebugInfos();
-    count = backtrace_user(call_stack, MAX_STACK_FRAMES, this, 0);
+    count = backtrace_user(call_stack, BACKTRACE_MAX_FRAMES, this, 0);
     debug(BACKTRACE, " ----- Userspace --------------------\n");
     if(!deb)
       debug(BACKTRACE, "Userspace debug info not set up, backtrace won't look nice!\n");
