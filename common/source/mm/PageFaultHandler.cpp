@@ -73,7 +73,7 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
     else
       currentThread->kill();
   }
-  debug(PAGEFAULT, "Address: %18zx. Page fault handling finished.\n", address);
+  debug(PAGEFAULT, "Page fault handling finished for Address: %18zx.\n", address);
 }
 
 void PageFaultHandler::enterPageFault(size_t address, bool user,
