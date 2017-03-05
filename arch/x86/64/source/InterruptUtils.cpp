@@ -1,6 +1,7 @@
 #include "InterruptUtils.h"
 
 #include "ArchSerialInfo.h"
+#include "BDManager.h"
 #include "new.h"
 #include "ports.h"
 #include "ArchMemory.h"
