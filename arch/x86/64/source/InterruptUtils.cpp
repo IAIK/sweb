@@ -276,7 +276,7 @@ extern "C" void syscallHandler()
 
 extern const char* errors[];
 extern "C" void arch_errorHandler();
-extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
+extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 {
   kprintfd("%zx\n",cs);
   if (spurious)
@@ -291,7 +291,7 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
   }
   const bool userspace = (cs & 0x3);
   debug(CPU_ERROR, "Instruction Pointer: %zx, Userspace: %d - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
-        rip, userspace, currentThread,
+        eip, userspace, currentThread,
         currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
         currentThread ? currentThread->switch_to_userspace_ : -1);
 

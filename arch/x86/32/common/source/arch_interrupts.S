@@ -58,24 +58,25 @@ arch_dummyHandler:
         leave
         pushl %ebp
         movl %esp,%ebp
-        subl $8,%esp
-        movl 52(%esp),%eax        # error cd
+        subl $16,%esp
+        movl $1, 12(%esp)
+        movl 56(%esp),%eax
+        movl %eax, 8(%esp)
+        movl 52(%esp),%eax
         movl %eax, 4(%esp)
-        movl %cr2, %eax           # page fault address
+        movl dummyhandlerscratchvariable,%eax
+        movl $0,dummyhandlerscratchvariable
+        addl $128, %eax
         movl %eax, 0(%esp)
         call errorHandler
-        leave
         popall
-        addl $4,%esp
         iretl
         hlt
-
 
 .extern errorHandler
 .macro errorhandler num
 .global arch_errorHandler_\num
 arch_errorHandler_\num:
-hlt # work in progress
         pushall
         pushl %ebp
         movl %esp,%ebp
@@ -84,11 +85,13 @@ hlt # work in progress
         leave
         pushl %ebp
         movl %esp,%ebp
-        subl $8,%esp
-        movl 52(%esp),%eax        # error cd
+        subl $16,%esp
+        movl $0, 12(%esp)
+        movl 56(%esp),%eax
+        movl %eax, 8(%esp)
+        movl 52(%esp),%eax
         movl %eax, 4(%esp)
-        movl %cr2, %eax           # page fault address
-        movl %eax, 0(%esp)
+        movl $\num,0(%esp)
         call errorHandler
         leave
         popall
@@ -100,7 +103,6 @@ hlt # work in progress
 .macro errorhandlerWithCode num
 .global arch_errorHandler_\num
 arch_errorHandler_\num:
-hlt # work in progress
         pushall
         pushl %ebp
         movl %esp,%ebp
@@ -109,11 +111,13 @@ hlt # work in progress
         leave
         pushl %ebp
         movl %esp,%ebp
-        subl $8,%esp
-        movl 52(%esp),%eax        # error cd
+        subl $16,%esp
+        movl $0, 12(%esp)
+        movl 60(%esp),%eax
+        movl %eax, 8(%esp)
+        movl 56(%esp),%eax
         movl %eax, 4(%esp)
-        movl %cr2, %eax           # page fault address
-        movl %eax, 0(%esp)
+        movl $\num,0(%esp)
         call errorHandler
         leave
         popall
