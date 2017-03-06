@@ -1,4 +1,3 @@
-#ifdef CMAKE_X86_64
 #pragma once
 
 #include "types.h"
@@ -139,5 +138,3 @@ typedef struct
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
-
-#endif
