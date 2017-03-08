@@ -135,8 +135,6 @@ class Thread
     FileSystemInfo* working_dir_;
 
     ustl::string name_;
-    uint64 jobs_scheduled_;
-    uint64 jobs_done_;
 
 };
 
