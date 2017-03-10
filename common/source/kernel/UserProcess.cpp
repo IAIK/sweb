@@ -10,11 +10,10 @@
 #include "ArchThreads.h"
 #include "offsets.h"
 
-UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
-                         uint32 terminal_number) :
-    Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename, O_RDONLY)), process_registry_(process_registry)
+UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
+    Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename, O_RDONLY))
 {
-  process_registry_->processStart(); //should also be called if you fork a process
+  ProcessRegistry::instance()->processStart(); //should also be called if you fork a process
 
   if (fd_ >= 0)
     loader_ = new Loader(fd_);
@@ -56,7 +55,7 @@ UserProcess::~UserProcess()
   delete working_dir_;
   working_dir_ = 0;
 
-  process_registry_->processExit();
+  ProcessRegistry::instance()->processExit();
 }
 
 void UserProcess::Run()
