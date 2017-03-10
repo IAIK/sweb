@@ -2,8 +2,6 @@
 
 #include "Thread.h"
 
-class ProcessRegistry;
-
 /**
  * @class UserProcess
  * Thread used to execute a file in minixfs.
@@ -20,8 +18,7 @@ class UserProcess : public Thread
      * @param terminal_number the terminal to run in (default 0)
      *
      */
-    UserProcess(ustl::string minixfs_filename, FileSystemInfo *fs_info, ProcessRegistry *process_registry,
-                uint32 terminal_number = 0);
+    UserProcess(ustl::string minixfs_filename, FileSystemInfo *fs_info, uint32 terminal_number = 0);
 
     virtual ~UserProcess();
 
@@ -29,6 +26,5 @@ class UserProcess : public Thread
 
   private:
     int32 fd_;
-    ProcessRegistry *process_registry_;
 };
 
