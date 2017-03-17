@@ -78,6 +78,7 @@ struct GateDesc
 
 
 extern "C" void arch_dummyHandler();
+extern "C" void arch_dummyHandlerMiddle();
 
 uint64 InterruptUtils::pf_address;
 uint64 InterruptUtils::pf_address_counter;
@@ -90,15 +91,18 @@ void InterruptUtils::initialise()
   ++num_handlers;
   // allocate some memory for our handlers
   GateDesc *interrupt_gates = new GateDesc[num_handlers];
+  size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
+  assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
+  dummy_handler_sled_size /= 128;
 
   uint32 j = 0;
   for (uint32 i = 0; i < num_handlers; ++i)
   {
     while (handlers[j].number < i && handlers[j].offset != 0)
       ++j;
-    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*8)));
-    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*8)));
-    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*8));
+    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
+    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
+    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
     interrupt_gates[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
     interrupt_gates[i].present = 1;
     interrupt_gates[i].segment_selector = KERNEL_CS;
@@ -276,7 +280,7 @@ extern "C" void syscallHandler()
 
 extern const char* errors[];
 extern "C" void arch_errorHandler();
-extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
+extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 {
   kprintfd("%zx\n",cs);
   if (spurious)
@@ -291,7 +295,7 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
   }
   const bool userspace = (cs & 0x3);
   debug(CPU_ERROR, "Instruction Pointer: %zx, Userspace: %d - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
-        rip, userspace, currentThread,
+        eip, userspace, currentThread,
         currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
         currentThread ? currentThread->switch_to_userspace_ : -1);
 

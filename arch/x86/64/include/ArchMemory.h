@@ -3,7 +3,6 @@
  *
  */
 
-#ifdef CMAKE_X86_64
 #pragma once
 
 #include "types.h"
@@ -170,4 +169,3 @@ private:
 
 };
 
-#endif
