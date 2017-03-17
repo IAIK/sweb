@@ -48,8 +48,11 @@ dummyhandlerscratchvariable:
 .global arch_dummyHandler
 arch_dummyHandler:
 .rept 128
-        decl dummyhandlerscratchvariable
+        call arch_dummyHandlerMiddle
 .endr
+.extern dummyHandlerMiddle
+.global arch_dummyHandlerMiddle
+arch_dummyHandlerMiddle:
         pushall
         pushl %ebp
         movl %esp,%ebp
@@ -58,18 +61,23 @@ arch_dummyHandler:
         leave
         pushl %ebp
         movl %esp,%ebp
+        pushl 44(%esp)
+        call arch_computeDummyHandler
+        mov %eax,%ebx
+        leave
+        pushl %ebp
+        movl %esp,%ebp
         subl $16,%esp
         movl $1, 12(%esp)
-        movl 56(%esp),%eax
+        movl 64(%esp),%eax
         movl %eax, 8(%esp)
-        movl 52(%esp),%eax
+        movl 60(%esp),%eax
         movl %eax, 4(%esp)
-        movl dummyhandlerscratchvariable,%eax
-        movl $0,dummyhandlerscratchvariable
-        addl $128, %eax
-        movl %eax, 0(%esp)
+        movl %ebx, 0(%esp)
         call errorHandler
+        leave
         popall
+        addl $4,%esp
         iretl
         hlt
 
@@ -80,22 +88,21 @@ arch_errorHandler_\num:
         pushall
         pushl %ebp
         movl %esp,%ebp
-        pushl $1
+        pushl $0
         call arch_saveThreadRegisters
         leave
         pushl %ebp
         movl %esp,%ebp
         subl $16,%esp
         movl $0, 12(%esp)
-        movl 56(%esp),%eax
+        movl 64(%esp),%eax
         movl %eax, 8(%esp)
-        movl 52(%esp),%eax
+        movl 60(%esp),%eax
         movl %eax, 4(%esp)
         movl $\num,0(%esp)
         call errorHandler
         leave
         popall
-        addl $4,%esp
         iretl
         hlt
 .endm
@@ -113,9 +120,9 @@ arch_errorHandler_\num:
         movl %esp,%ebp
         subl $16,%esp
         movl $0, 12(%esp)
-        movl 60(%esp),%eax
+        movl 68(%esp),%eax
         movl %eax, 8(%esp)
-        movl 56(%esp),%eax
+        movl 64(%esp),%eax
         movl %eax, 4(%esp)
         movl $\num,0(%esp)
         call errorHandler

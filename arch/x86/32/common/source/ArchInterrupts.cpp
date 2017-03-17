@@ -128,6 +128,21 @@ struct interrupt_registers {
   uint32 esp3;
   uint32 ss3;
 };
+#include "kprintf.h"
+
+
+extern "C" void arch_dummyHandler();
+extern "C" void arch_dummyHandlerMiddle();
+extern "C" size_t arch_computeDummyHandler(uint32 eip)
+{
+  size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
+  assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
+  dummy_handler_sled_size /= 128;
+  assert((eip <= (size_t) arch_dummyHandlerMiddle) && "calling dummy handler cannot be outside of dummy handler sled");
+  assert((eip >= (size_t) arch_dummyHandler) && "calling dummy handler cannot be outside of dummy handler sled");
+  size_t calling_dummy_handler = (eip - (size_t) arch_dummyHandler) / dummy_handler_sled_size - 1;
+  return calling_dummy_handler;
+}
 
 extern "C" void arch_saveThreadRegisters(uint32 error)
 {
@@ -136,6 +151,7 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (&error + 2 + sizeof(struct context_switch_registers)/sizeof(uint32) + (error));
   register ArchThreadRegisters* info = currentThreadRegisters;
+
   asm("fnsave (%[fpu])\n"
       "frstor (%[fpu])\n"
       :

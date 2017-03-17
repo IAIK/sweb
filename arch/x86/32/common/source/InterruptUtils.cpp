@@ -69,6 +69,7 @@ struct GateDesc
 }__attribute__((__packed__));
 
 extern "C" void arch_dummyHandler();
+extern "C" void arch_dummyHandlerMiddle();
 
 void InterruptUtils::initialise()
 {
@@ -78,14 +79,17 @@ void InterruptUtils::initialise()
   ++num_handlers;
   // allocate some memory for our handlers
   GateDesc *interrupt_gates = new GateDesc[num_handlers];
+  size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
+  assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
+  dummy_handler_sled_size /= 128;
 
   uint32 j = 0;
   for (uint32 i = 0; i < num_handlers; ++i)
   {
     while (handlers[j].number < i && handlers[j].offset != 0)
       ++j;
-    interrupt_gates[i].offset_low = LO_WORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*4));
-    interrupt_gates[i].offset_high = HI_WORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*4));
+    interrupt_gates[i].offset_low = LO_WORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
+    interrupt_gates[i].offset_high = HI_WORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
     interrupt_gates[i].gate_size = GATE_SIZE_32_BIT;
     interrupt_gates[i].present = 1;
     interrupt_gates[i].reserved = 0;
@@ -233,7 +237,6 @@ extern const char* errors[];
 extern "C" void arch_errorHandler();
 extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 {
-  kprintfd("%zx\n",cs);
   if (spurious)
   {
     assert(num < 128 && "there are only 128 interrupts");
