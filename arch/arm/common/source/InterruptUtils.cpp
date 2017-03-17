@@ -48,7 +48,7 @@ void pageFaultHandler(uint32 address, uint32 type)
          mov %[v], r4\n": [v]"=r" (address));
   }
 
-  size_t fault = 0;
+  size_t instruction_fault = 0;
   size_t data_fault = 0;
 
   asm("mrc p15, 0, r4, c5, c0, 0\n\
