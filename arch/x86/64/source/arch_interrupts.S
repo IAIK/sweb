@@ -82,6 +82,9 @@ arch_dummyHandler:
 .rept 128
         decq dummyhandlerscratchvariable
 .endr
+.extern dummyHandlerMiddle
+.global arch_dummyHandlerMiddle
+arch_dummyHandlerMiddle:
         pushall
         movq %rsp,%rdi
         movq $0,%rsi
