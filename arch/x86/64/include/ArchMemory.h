@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.h
- *
- */
-
 #pragma once
 
 #include "types.h"
@@ -32,19 +27,9 @@ class ArchMemoryMapping
     uint64 pti;
 };
 
-/**
- *
- * Collection of architecture dependant functions concerning Memory and Pages
- *
- */
 class ArchMemory
 {
 public:
-
-/**
- * initializes a new page map level 4
- * @param pml4_page page to initialize
- */
     ArchMemory();
 
 /** 
@@ -57,7 +42,7 @@ public:
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  * @param page_size Optional, defaults to 4k pages, but you ned to set it to
- * 1024*4096 if you want to map a 4m page
+ * 512*4096 if you want to map a 2m page
  */
   bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access, uint64 page_size=PAGE_SIZE);
 
@@ -68,10 +53,7 @@ public:
  * @param virtual_page which will be invalidated
  */
   bool unmapPage(uint64 virtual_page);
-/**
- * Destructor. Recursively deletes the pml4
- *
- */
+
   ~ArchMemory();
 
 /**
@@ -164,8 +146,8 @@ private:
  */
   template<typename T> static bool checkAndRemove(pointer map_ptr, uint64 index);
 
-  ArchMemory(ArchMemory const &src); // not yet implemented
-  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
+  ArchMemory(ArchMemory const &src);
+  ArchMemory &operator=(ArchMemory const &src);
 
 };
 

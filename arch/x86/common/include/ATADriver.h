@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_ata_driver.h
- *
- */
-
 #pragma once
 
 #include "BDDriver.h"

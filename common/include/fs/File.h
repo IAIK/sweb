@@ -2,30 +2,19 @@
 
 #include "types.h"
 
-// forward declarations
 class Superblock;
 class Inode;
 class Dentry;
 
-/**
- * The basic flags for files
- */
 #define O_RDONLY    0x0000
 #define O_WRONLY    0x0001
 #define O_RDWR      0x0002
 #define O_CREAT     0x0004
 
-/**
- * The basic access modes for files
- */
 #define A_READABLE  0x0001
 #define A_WRITABLE  0x0002
 #define A_EXECABLE  0x0004
 
-
-/**
- * Seek positioners
- */
 #ifndef SEEK_SET
 #define SEEK_SET 0
 #endif
@@ -36,33 +25,17 @@ class Dentry;
 #define SEEK_END 2
 #endif
 
-/**
- * @class File
- * A file object is used where-ever there is a need to read from or write to
- * something. This includes accessing objects within file-system. Files are
- * accessible to processes through their file descriptors.
- */
 class File
 {
   public:
 
     typedef uint32 mode_t;
 
-    /**
-     * @class Owner
-     */
     class Owner
     {
     };
 
-    /**
-     * The user id of the file
-     */
     uint32 uid;
-
-    /**
-     * The group id of the file
-     */
     uint32 gid;
 
     /**
@@ -204,10 +177,6 @@ class File
       return 0;
     }
 
-    /**
-     * returns the file size
-     * @return the size
-     */
     virtual uint32 getSize();
 };
 

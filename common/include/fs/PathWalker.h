@@ -1,12 +1,7 @@
-/**
- * @file PathWalker.h
- */
-
 #pragma once
 
 #include "types.h"
 
-// forward declarations
 class Dentry;
 class VfsMount;
 
@@ -79,12 +74,6 @@ enum
   PW_EINVALID
 };
 
-/**
- * @class PathWalker
- * this class illustrate how the VFS derives an inode from the corresponding
- * file pathname. Pathname lookup is performed by three methods: pathInit(),
- * pathWalk() and pathRelease().
- */
 class PathWalker
 {
   public:

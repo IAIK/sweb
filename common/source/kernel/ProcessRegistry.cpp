@@ -1,7 +1,3 @@
-/**
- * @file ProcessRegistry.cpp
- */
-
 #include <mm/KernelMemoryManager.h>
 #include "ProcessRegistry.h"
 #include "Scheduler.h"

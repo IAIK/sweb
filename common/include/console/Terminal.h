@@ -4,9 +4,6 @@
 #include "Console.h"
 #include "chardev.h"
 
-/**
- * @class Terminal terminal used by a console
- */
 class Terminal : public CharacterDevice
 {
 
@@ -14,9 +11,6 @@ class Terminal : public CharacterDevice
 
   public:
 
-    /**
-     * @enum LAYOUTS the keyboard layouts
-     */
     enum LAYOUTS
     {
       EN = 0, DE = 1
@@ -132,45 +126,13 @@ class Terminal : public CharacterDevice
      */
     void writeInternal(char character);
 
-
-    /**
-     * Returns the number of the terminal's rows.
-     * @return the number of rows
-     */
     uint32 getNumRows() const;
-
-    /**
-     * Returns the number of the terminal's columns.
-     * @return the number of columns
-     */
     uint32 getNumColumns() const;
 
-    /**
-     * Sets the given character in the terminal.
-     * @param row the row number
-     * @param column the column number
-     * @param character the character to set
-     * @return 0
-     */
     uint32 setCharacter(uint32 row, uint32 column, uint8 character);
-
-    /**
-     * Scrolls up the terminal.
-     */
     void scrollUp();
 
-    /**
-     * Checks if the given key is a lower case letter.
-     * @param key the key to check
-     * @return true if key is letter
-     */
     bool isLetter(uint32 key);
-
-    /**
-     * Checks if the given key is a number.
-     * @param key the key to check
-     * @return true if key is a number
-     */
     bool isNumber(uint32 key);
 
     void clearScreen();

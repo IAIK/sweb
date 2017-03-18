@@ -1,8 +1,3 @@
-/**
- * @file atkbd.cpp
- *
- */
- 
 #include "atkbd.h"
 
 struct KMI* kmi = (struct KMI*)0x18000000;

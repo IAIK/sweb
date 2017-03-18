@@ -1,8 +1,3 @@
-/**
- * @file arch_serial_manager.cpp
- *
- */
-
 #include "ArchSerialInfo.h"
 #include "SerialManager.h"
 #include "kstring.h"

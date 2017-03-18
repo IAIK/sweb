@@ -4,16 +4,6 @@
 #include "SpinLock.h"
 #include "assert.h"
 
-/**
- * @class MallocSegment
- *
- * This is a collection of 4 32bit values holding information about an allocated memory segment
- * it is used as a ListNode by the KernelMemoryManager and is placed immediatly in front
- * of an memory segment.
- * If by error, some code should write beyond it's allocated memory segment, it would
- * "surely"(read maybe) write into the next MallocSegment instance, therefore
- * overwriting the marker_ by which we hope to detect such an error
- */
 class MallocSegment
 {
   public:
@@ -37,36 +27,23 @@ class MallocSegment
         size_flag_ |= 0x80000000; //this is the used flag
 
     }
-    /**
-     * returns the size of the segment in bytes (maximum 2^31-1 bytes)
-     * @return the size
-     */
+
     size_t getSize()
     {
       return (size_flag_ & 0x7FFFFFFF);
     }
-    /**
-     * sets the sizeof the segment in bytes (maximum 2^31-1 bytes)
-     * @param size the size to set
-     */
+
     void setSize(size_t size)
     {
       size_flag_ &= 0x80000000;
       size_flag_ |= (size & 0x7FFFFFFF);
     }
-    /**
-     * checks if the segment is allocated
-     * @return true if the segment is allocated, false it it is unused
-     */
+
     bool getUsed()
     {
       return (size_flag_ & 0x80000000);
     }
 
-    /**
-     * sets the segment as used (=true) or free (=false)
-     * @param used used (=true) or free (=false)
-     */
     void setUsed(bool used)
     {
       size_flag_ &= 0x7FFFFFFF;
@@ -145,12 +122,6 @@ class KernelMemoryManager
     static KernelMemoryManager *instance_;
 
   private:
-
-    /**
-     * returns a free memory segment of the requested size
-     * @param requested_size the size
-     * @return the segment
-     */
     MallocSegment *findFreeSegment(size_t requested_size);
 
     /**
@@ -162,19 +133,7 @@ class KernelMemoryManager
     void fillSegment(MallocSegment *this_one, size_t size, uint32 zero_check = 1);
 
     void freeSegment(MallocSegment *this_one);
-
-    /**
-     * returns the segment the virtual address is pointing to
-     * @param virtual_address the address
-     * @return the segment
-     */
     MallocSegment *getSegmentFromAddress(pointer virtual_address);
-
-    /**
-     * merges the given segment with the following one
-     * @param this_one the segmnet
-     * @return true on success
-     */
     bool mergeWithFollowingFreeSegment(MallocSegment *this_one);
 
     /**

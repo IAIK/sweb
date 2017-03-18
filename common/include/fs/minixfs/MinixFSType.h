@@ -2,22 +2,10 @@
 
 #include "FileSystemType.h"
 
-/**
- * @class MinixFSType is used to register the file system to the vfs.
- * It also reads the minix superblock from the block device.
- */
 class MinixFSType : public FileSystemType
 {
   public:
-
-    /**
-     * constructor
-     */
     MinixFSType();
-
-    /**
-     * destructor
-     */
     virtual ~MinixFSType();
 
     /**

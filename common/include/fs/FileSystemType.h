@@ -5,52 +5,22 @@
 class Superblock;
 class Dentry;
 
-/**
- * File system flag indicating if the system in question requires an device.
- */
 #define FS_REQUIRES_DEV   0x0001 // located on a physical disk device
 #define FS_NOMOUNT        0x0010 // Filesystem has no mount point
 
-/**
- * The maximal number of file system types.
- */
 #define MAX_FILE_SYSTEM_TYPES 16
 
-/**
- * @class FileSystemType
- * FileSystemType is used to register the file system to the vfs.
- * It also reads the superblock from the block device.
- */
 class FileSystemType
 {
 
   protected:
-
-    /**
-     * the name of the File-system-type
-     */
     const char *fs_name_;
-
-    /**
-     * the flags of the File-system-type
-     */
     int32 fs_flags_;
 
   public:
-
-    /**
-     * contructor
-     */
     FileSystemType(const char *fs_name);
-
-    /**
-     * destructor
-     */
     virtual ~FileSystemType();
 
-    /**
-     * the assign operator
-     */
     FileSystemType const &operator =(FileSystemType const &instance)
     {
       fs_name_ = instance.fs_name_;
@@ -58,28 +28,9 @@ class FileSystemType
       return (*this);
     }
 
-    /**
-     * get the name from the file-system-type
-     * @return the file system name
-     */
     const char* getFSName() const;
-
-    /**
-     * set the name to the file-system-type
-     * @param fs_name the name to set
-     */
     void setFSName(const char* fs_name);
-
-    /**
-     * get the flags from the file-system-type
-     * @return the flags
-     */
     int32 getFSFlags() const;
-
-    /**
-     * set the flags to the file-system-type
-     * @param flags the flags to set
-     */
     void setFSFlags(int32 fs_flags);
 
     /**

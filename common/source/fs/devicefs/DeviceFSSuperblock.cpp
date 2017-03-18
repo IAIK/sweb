@@ -1,7 +1,3 @@
-/**
- * @file DeviceFSSuperblock.cpp
- */
-
 #include "fs/devicefs/DeviceFSSuperblock.h"
 #include "fs/ramfs/RamFSInode.h"
 #include "fs/Dentry.h"

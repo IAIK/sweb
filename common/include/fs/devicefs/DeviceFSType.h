@@ -1,7 +1,3 @@
-/**
- * @file DeviceFSType.h
- */
-
 #pragma once
 
 #include "fs/FileSystemType.h"
@@ -9,15 +5,8 @@
 class DeviceFSType : public FileSystemType
 {
   public:
-
-    /**
-     * constructor
-     */
     DeviceFSType();
 
-    /**
-     * destructor
-     */
     virtual ~DeviceFSType();
 
     /**

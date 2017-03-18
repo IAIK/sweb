@@ -1,6 +1,3 @@
-/**
- * @file RingBuffer.h
- */
 #pragma once
 
 #ifdef __cplusplus
@@ -16,49 +13,14 @@ extern "C"
 #include "ArchThreads.h"
 #include "assert.h"
 
-/**
- * @class RingBuffer
- * Nice text from Jack:
- * The key attribute of a ringbuffer is that it can be safely accessed by two threads
- * simultaneously, one reading from the buffer and the other writing to it, without using
- * any synchronization or mutual exclusion primitives. For this to work correctly,
- * there can only be a single reader and a single writer thread. Their identities
- * cannot be interchanged.
- */
 template<class T>
 class RingBuffer
 {
   public:
-
-    /**
-     * Constuctor
-     * @pre size > 1
-     * @param size the size of the ringbuffer (default 128)
-     * @return RingBuffer instance
-     */
     RingBuffer ( uint32 size=128 );
-
-    /**
-     * Desturctor
-     */
     ~RingBuffer();
-
-    /**
-     * Stores an element from the ringbuffer in the given parameter and returns if there was something to get.
-     * @param c the parameter to store the element in
-     * @return true if there was something to get
-     */
     bool get ( T &c );
-
-    /**
-     * Puts the given element in the ringbuffer.
-     * @param c the element to store
-     */
     void put ( T c );
-
-    /**
-     * Clears the ringbuffer.
-     */
     void clear();
 
   private:

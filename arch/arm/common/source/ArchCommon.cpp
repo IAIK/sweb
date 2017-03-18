@@ -1,8 +1,3 @@
-/**
- * @file ArchCommon.cpp
- *
- */
-
 #include "ArchCommon.h"
 #include "ArchBoardSpecific.h"
 #include "offsets.h"

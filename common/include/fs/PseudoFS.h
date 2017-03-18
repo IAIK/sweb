@@ -1,14 +1,7 @@
-/**
- * @file PseudoFS.h
- */
-
 #pragma once
 
 #include "types.h"
 
-/**
- * @class PseudoFS
- */
 class PseudoFS
 {
   public:
@@ -54,10 +47,6 @@ class PseudoFS
     char* getFileNameByNumber(size_t number) const;
 
   private:
-
-    /**
-     * constructor
-     */
     PseudoFS();
 
     static PseudoFS *instance_;

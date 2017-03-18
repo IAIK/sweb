@@ -1,8 +1,3 @@
-/**
- * @file arch_mmc_driver.cpp
- *
- */
- 
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "MMCDriver.h"
@@ -41,7 +36,6 @@ struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 
 uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 write = 1, uint32 data = 0)
 {
-//  kprintfd("---> command = %d, arg = %x\n",command,arg);
   mmci->cmd = command & 0xFFFF;
   mmci->argh = (arg >> 16) & 0xFFFF;
   mmci->argl = arg & 0xFFFF;
@@ -49,26 +43,6 @@ uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 write =
   mmci->spi = 0;
   mmci->rest0 = 0x7F;
   mmci->cmdat = (write ? (1 << 3) : 0) | (response ? (1 << 0) : 0) | (data ? (1 << 2) : 0);
-//  #define BIT(X,Y) ((mmci->stat & (1 << X)) ? Y : "")
-//    kprintfd("stats: %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
-//             BIT(0,"TimeOutRead"),
-//             BIT(1,"TimeOutRes"),
-//             BIT(2,"CrcWrErr"),
-//             BIT(3,"CrcRdErr"),
-//             BIT(4,"DatErrToken"),
-//             BIT(5,"ResCrcErr"),
-//             BIT(6,"RES"),
-//             BIT(7,"RES"),
-//             BIT(8,"ClkEn"),
-//             BIT(9,"FlashErr"),
-//             BIT(10,"SpiWrErr"),
-//             BIT(11,"DataTranDone"),
-//             BIT(12,"PrgDone"),
-//             BIT(12,"EndCmdRes"),
-//             BIT(13,"RdStalled"),
-//             BIT(14,"SdioInt"),
-//             BIT(15,"SdioSuspendAck"));
-//  kprintfd("mmci->stat = %x\n",mmci->stat);
   if (response)
   {
     *response = 0;

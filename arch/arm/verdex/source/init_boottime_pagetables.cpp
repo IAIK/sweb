@@ -1,8 +1,3 @@
-/**
- * @file init_boottime_pagetables.cpp
- *
- */
-
 #include "types.h"
 #include "paging-definitions.h"
 #include "offsets.h"

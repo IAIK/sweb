@@ -1,18 +1,9 @@
-/**
- * @file ProcessRegistry.h
- */
-
 #pragma once
 
 #include "Thread.h"
 #include "Mutex.h"
 #include "Condition.h"
 
-/**
- * @class ProcessRegistry
- * Helper thread which mounts the second partition and starts the
- * selected userprograms on it
- */
 class ProcessRegistry : public Thread
 {
   public:
@@ -44,14 +35,7 @@ class ProcessRegistry : public Thread
      */
     size_t processCount();
 
-    /**
-     * returns instance
-     */
     static ProcessRegistry* instance();
-
-    /**
-     * creates a new process
-     */
     void createProcess(const char* path);
 
   private:

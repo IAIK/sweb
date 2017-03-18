@@ -6,12 +6,6 @@
 class Dentry;
 class VfsMount;
 
-/**
- * @class FileSystemInfo The information of the file system
- *
- * This class used to store the system-information (i.e. the root-directory-info,
- * the current-directory-info).
- */
 class FileSystemInfo
 {
   protected:

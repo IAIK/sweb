@@ -1,7 +1,3 @@
-/**
- * @file DeviceFSType.cpp
- */
-
 #include "fs/devicefs/DeviceFSType.h"
 #include "fs/devicefs/DeviceFSSuperblock.h"
 

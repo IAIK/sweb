@@ -1,8 +1,3 @@
-/**
- * @file font_sun8x16.c
- * shamelessly stolen from the linux kernel
- */
-
 #include "types.h"
 #define FONTDATAMAX 4096
 

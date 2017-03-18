@@ -1,7 +1,3 @@
-/**
- * @file RamFSSuperblock.h
- */
-
 #pragma once
 
 #include "fs/Superblock.h"
@@ -9,23 +5,15 @@
 class Inode;
 class Superblock;
 
-/**
- * @class RamFSSuperblock
- */
 class RamFSSuperblock : public Superblock
 {
   public:
-
     /**
      * constructor
      * @param s_root the root dentry of the new filesystem
      * @param s_dev the device number of the new filesystem
      */
     RamFSSuperblock ( Dentry* s_root, uint32 s_dev );
-
-    /**
-     * destructor
-     */
     virtual ~RamFSSuperblock();
 
     /**

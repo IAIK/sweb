@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_manager.cpp
- *
- */
-
 #include "BDDriver.h"
 #include "BDManager.h"
 #include "BDRequest.h"

@@ -1,8 +1,3 @@
-/**
- * @file ArchCommon.cpp
- *
- */
-
 #include "ArchCommon.h"
 #include "multiboot.h"
 #include "debug_bochs.h"

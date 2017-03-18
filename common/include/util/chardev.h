@@ -3,9 +3,6 @@
 #include "ustring.h"
 #include "FiFo.h"
 
-/**
- * @class CharacterDevice Links the character devices to the Device File System.
- */
 class CharacterDevice
 {
   public:

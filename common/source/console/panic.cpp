@@ -1,8 +1,3 @@
-/**
- * @file panic.cpp
- *
- */
-
 #include <types.h>
 #include <Thread.h>
 #include <Scheduler.h>

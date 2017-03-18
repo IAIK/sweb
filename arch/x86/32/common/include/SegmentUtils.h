@@ -1,8 +1,3 @@
-/**
- * @file SegmentUtils.h
- *
- */
-
 #pragma once
 
 #include "types.h"
@@ -52,9 +47,6 @@ class SegmentUtils
 {
 public:
 
-  /**
-   * initialisation
-   */
   static void initialise();
 
 };

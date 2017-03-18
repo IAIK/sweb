@@ -1,7 +1,3 @@
-/**
- * @file Scheduler.h
- */
-
 #pragma once
 
 #include "types.h"
@@ -14,76 +10,22 @@ class Mutex;
 class SpinLock;
 class Lock;
 
-/**
- * @class Scheduler
- *
- * This is a singleton class, it is instantiated in startup() and must be accessed via Scheduler::instance()->....
- * The Scheduler knows about all running and sleeping threads and decides which thread to run next
- */
 class Scheduler
 {
   public:
-
-    /**
-     * Singleton Class Instance Access Method
-     * @return Pointer to Scheduler
-     */
     static Scheduler *instance();
 
-    /**
-     * adds a new Thread and prepares to run it
-     * this is the method that should be used to start a new Thread
-     * @param *thread Pointer to the instance of a Class derived from Thread that contains the Thread to be started
-     */
     void addNewThread(Thread *thread);
-
-    /**
-     * puts the currentThread to sleep and keeps it from being scheduled
-     */
     void sleep();
-
-    /**
-     * wakes up a sleeping thread
-     * @param *thread_to_wake, Pointer to the Thread that will be woken up
-     */
     void wake(Thread *thread_to_wake);
-
-    /**
-     * Set a thread running.
-     * @param *thread, Pointer to the Thread that shall be run
-     */
-    void run(Thread *thread);
-
-    /**
-     * forces a task switch without waiting for the next timer interrupt
-     */
     void yield();
-
-    /**
-     * prints a List of all Threads using kprintfd
-     */
     void printThreadList();
-
-    /**
-     * prints a stack trace for each thread
-     */
     void printStackTraces();
-
-    /**
-     * Print out the locks held by the threads, and the locks they are waiting on.
-     */
     void printLockingInformation();
-
-    /**
-     * Check if scheduling is enabled
-     * @return true if Scheduling is enabled, false otherwise
-     */
     bool isSchedulingEnabled();
-
-    /**
-     * Check if the cleanup thread is is running atm
-     */
     bool isCurrentlyCleaningUp();
+    void incTicks();
+    uint32 getTicks();
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
@@ -94,24 +36,11 @@ class Scheduler
      */
     uint32 schedule();
 
-    /**
-     * increments the stored ticks value by 1
-     */
-    void incTicks();
-
   protected:
     friend class IdleThread;
     friend class CleanupThread;
-    /**
-     * this method is periodically called by the idle-Thread
-     * it removes and deletes Threads in state ToBeDestroyed
-     */
-    void cleanupDeadThreads();
 
-    /**
-     * returns the ticks value stored
-     */
-    uint32 getTicks();
+    void cleanupDeadThreads();
 
   private:
     Scheduler();

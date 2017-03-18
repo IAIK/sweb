@@ -1,8 +1,3 @@
-/**
- * @file 8259.cpp
- *
- */
- 
 #include "8259.h"
 #include "ports.h"
 

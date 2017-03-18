@@ -1,24 +1,10 @@
-/**
- * @file TextConsole.h
- */
-
 #pragma once
 
 #include "Console.h"
 
-/**
- * @class TextConsole the text console implementation
- */
-
 class TextConsole : public Console
 {
   public:
-
-    /**
-     * Constructor creates a TextConsole Thread with the given number of terminals.
-     * @param num_terminals the number of terminals to create
-     * @return TextConsole instance
-     */
     TextConsole ( uint32 num_terminals );
 
   private:

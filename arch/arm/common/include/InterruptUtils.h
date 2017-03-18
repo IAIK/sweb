@@ -1,18 +1,3 @@
-/**
- * @file InterruptUtils.h
- *
- * Block devices update.
- * See BDRequest and BDManager on how to use this.
- * Currently ATADriver is functional. The driver tries to detect if IRQ
- * mode is available and adjusts the mode of operation. Currently PIO
- * modes with IRQ or without it are supported.
- *
- * TODO:
- * - add block PIO mode to read or write multiple sectors within one IRQ
- * - add DMA and UDMA mode :)
- *
- */
-
 #pragma once
 
 #include "types.h"
@@ -20,7 +5,6 @@
 #define PIC_IRQ_ENABLESET   0x2
 #define PIC_IRQ_STATUS   0x0
 
-//#define REG_LOAD    0x00 TODO: should this be here?
 #define REG_CTRL    0x02
 #define REG_INTCLR    0x03
 #define REG_INTSTAT   0x04

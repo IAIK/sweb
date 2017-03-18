@@ -3,12 +3,6 @@
 #include "types.h"
 
 
-/**
- * @class ArchSerialInfo
- *
- * Class that contains architecture specific parameters for serial port communication
- *
- */
 class ArchSerialInfo
 {
 public:
@@ -17,12 +11,6 @@ public:
   uint8  irq_num;    /// IRQ number
 };
 
-/**
- * @class SC
- *
- * Class that contains constants. Cleaner OO solution than #defining constants
- *
- */
 class SC
 {
 public:

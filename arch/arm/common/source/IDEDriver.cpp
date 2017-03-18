@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_ide_driver.cpp
- *
- */
-
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #include "IDEDriver.h"

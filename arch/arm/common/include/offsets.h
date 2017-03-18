@@ -1,16 +1,10 @@
-/**
- * @file offset.h
- *
- */
-
 #pragma once
 
 #include "board_constants.h"
 
- /**
-  * These are the basic offsets for our memory layout
-  */
-
+/**
+ * These are the basic offsets for our memory layout
+ */
 
 /**
  * Our image will be at 2gig virtual

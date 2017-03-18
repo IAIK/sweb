@@ -1,26 +1,11 @@
-/**
- * @file RamFSType.h
- */
-
 #pragma once
 
 #include "fs/FileSystemType.h"
 
-/**
- * @class RamFSType
- */
 class RamFSType : public FileSystemType
 {
   public:
-
-    /**
-     * constructor
-     */
     RamFSType();
-
-    /**
-     * destructor
-     */
     virtual ~RamFSType();
 
     /**

@@ -1,7 +1,3 @@
-/**
- * @file FileSystemType.cpp
- */
-
 #include "fs/FileSystemType.h"
 #include "assert.h"
 

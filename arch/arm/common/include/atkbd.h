@@ -1,8 +1,3 @@
-/**
- * @file atkbd.h
- *
- */
-
 #pragma once
 
 #include "types.h"
@@ -16,39 +11,10 @@ struct KMI
 };
 
 
-/**
- * something to get?
- *
- */
 bool kbdBufferFull();
-
-/**
- * get scancode
- *
- */
 uint8 kbdGetScancode();
-
-/**
- * reset
- *
- */
 void kbdReset();
-
-/**
- * sets Numlock
- *
- */
 void kbdSetNumlock(bool on);
-
-/**
- * sets Capslock
- *
- */
 void kbdSetCapslock(bool on);
-
-/**
- * sets scrolllock
- *
- */
 void kbdSetScrolllock(bool on);
 

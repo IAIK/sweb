@@ -1,8 +1,3 @@
-/**
- * @file ArchThreads.h
- *
- */
-
 #pragma once
 
 #include "types.h"

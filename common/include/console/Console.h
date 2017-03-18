@@ -1,7 +1,3 @@
-/**
- * @file Console.h
- */
-
 #pragma once
 
 #include "types.h"
@@ -12,9 +8,6 @@
 
 class Terminal;
 
-/**
- * @class Console Base Class Console
- */
 class Console : public Thread
 {
     friend class Terminal;
@@ -22,9 +15,6 @@ class Console : public Thread
 
   public:
 
-    /**
-     * enum Console Foregroundcolors
-     */
     enum CONSOLECOLOR
     {
       BLACK = 0,
@@ -45,11 +35,6 @@ class Console : public Thread
       BRIGHT_WHITE
     };
 
-    /**
-     * Constructor creates a Console Thread
-     * @param num_terminals ignored
-     * @return Console instance
-     */
     Console(uint32 num_terminals, const char *name);
 
     /**
@@ -64,31 +49,13 @@ class Console : public Thread
      */
     bool isDisplayable(uint32 key);
 
-    /**
-     * Destructor
-     */
     virtual ~Console()
     {
     }
 
-    /**
-     * Returns the number of terminals.
-     * @return number of terminals
-     */
     uint32 getNumTerminals() const;
-
-    /**
-     * Returns a Terminal pointer to the active terminal.
-     * @return the Terminal pointer
-     */
-    Terminal *getActiveTerminal();
-
-    /**
-     * Returns the Terminal pointer to the terminal with the given number.
-     * @param term the terminal number
-     * @return the Terminal pointer
-     */
-    Terminal *getTerminal(uint32 term);
+    Terminal* getActiveTerminal();
+    Terminal* getTerminal(uint32 term);
 
     /**
      * Sets the terminal with the given number active.
@@ -97,14 +64,7 @@ class Console : public Thread
      */
     void setActiveTerminal(uint32 term);
 
-    /**
-     * Acquires the drawing lock.
-     */
     void lockConsoleForDrawing();
-
-    /**
-     * Releases the drawing lock.
-     */
     void unLockConsoleForDrawing();
 
     /**
@@ -134,7 +94,7 @@ class Console : public Thread
     virtual uint32 consoleGetNumColumns() const=0;
     virtual void consoleScrollUp(uint8 const &state) =0;
 
-    ustl::list<Terminal *> terminals_;
+    ustl::list<Terminal* > terminals_;
     Mutex console_lock_;
     Mutex set_active_lock_;
     uint8 locked_for_drawing_;

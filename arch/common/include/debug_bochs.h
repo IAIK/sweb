@@ -1,8 +1,3 @@
-/**
- * @file debug_bochs.h
- *
- */
-
 #pragma once
 #include "types.h"
 

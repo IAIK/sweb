@@ -1,8 +1,3 @@
-/**
- * @file arch_board_specific.cpp
- *
- */
-
 #include "ArchBoardSpecific.h"
 
 #include "KeyboardManager.h"

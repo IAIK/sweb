@@ -1,7 +1,3 @@
-/**
- * @file PseudoFS.cpp
- */
-
 #include "PseudoFS.h"
 #include "ArchCommon.h"
 #include "console/kprintf.h"

@@ -9,7 +9,6 @@
 class Inode;
 
 /**
- * @class Dentry
  * The VFS layer does all management of path names of files, and converts them
  * into entries in the dentry before passing allowing the underlying
  * file-system to see them. The dentry object associates the component to its

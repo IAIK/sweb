@@ -1,7 +1,3 @@
-/**
- * @file syscall-definitions.h
- * defines the various syscall names used by class @ref Syscall
- */
 #pragma once
 
 #define fd_stdin 0

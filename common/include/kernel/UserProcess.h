@@ -4,12 +4,6 @@
 
 class ProcessRegistry;
 
-/**
- * @class UserProcess
- * Thread used to execute a file in minixfs.
- * NOTE: this process is only ONE thread; if you want to implement mulithreading,
- * each thread has to be inherited from @ref Thread
- */
 class UserProcess : public Thread
 {
   public:

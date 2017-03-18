@@ -1,8 +1,3 @@
-/**
- * @file arch_board_specific.h
- *
- */
-
 #pragma once
 
 #include "types.h"

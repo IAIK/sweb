@@ -1,8 +1,3 @@
-/**
- * @file arch_mmc_driver.h
- *
- */
-
 #pragma once
 
 #include "BDDriver.h"

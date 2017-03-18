@@ -1,8 +1,3 @@
-/**
- * @file types.h
- *
- */
-
 #pragma once
 
 #ifdef __cplusplus

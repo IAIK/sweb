@@ -1,38 +1,20 @@
-/**
- * @file RamFSInode.h
- */
-
 #pragma once
 
 #include "types.h"
 #include "fs/Inode.h"
 
-/**
- * @class RamFsInode
- */
 class RamFSInode : public Inode
 {
   protected:
-
-    /**
-     * the data of the inode
-     */
     char* data_;
 
   public:
-
-
-
     /**
      * constructor
      * @param super_block the superblock to create the inode on
      * @param inode_type the inode type
      */
     RamFSInode ( Superblock *super_block, uint32 inode_type );
-
-    /**
-     * destructor
-     */
     virtual ~RamFSInode();
 
     /**

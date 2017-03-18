@@ -1,7 +1,3 @@
-/**
- * @file VirtualFileSystem.h
- */
-
 #pragma once
 
 #include "types.h"
@@ -24,39 +20,16 @@ class VfsMount;
 class Dentry;
 class FileSystemInfo;
 
-/**
- * @class VirtualFileSystem
- */
 class VirtualFileSystem
 {
   protected:
-
-    /**
-     * List of Superblock
-     */
     ustl::list<Superblock*> superblocks_;
-
-    /**
-     * List of mounted Filesystems
-     */
     ustl::list<VfsMount*> mounts_;
-
-    /**
-     * A null-terminated array of file system types.
-     */
     ustl::list<FileSystemType*> file_system_types_;
 
   public:
     void initialize();
-
-    /**
-     * The constructor
-     */
     VirtualFileSystem();
-
-    /**
-     * The destructor
-     */
     ~VirtualFileSystem();
 
     /**

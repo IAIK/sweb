@@ -1,7 +1,3 @@
-/**
- * @file DeviceFSSuperBlock.h
- */
-
 #pragma once
 
 #include "fs/Superblock.h"
@@ -10,18 +6,12 @@ class Inode;
 class Superblock;
 class CharacterDevice;
 
-/**
- * @class DeviceFSSuperBlock
- */
 class DeviceFSSuperBlock : public Superblock
 {
   public:
     static const char ROOT_NAME[];
     static const char DEVICE_ROOT_NAME[];
 
-    /**
-     * Destructor
-     */
     virtual ~DeviceFSSuperBlock();
 
     /**

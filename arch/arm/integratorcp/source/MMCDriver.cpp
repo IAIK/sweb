@@ -1,8 +1,3 @@
-/**
- * @file arch_mmc_driver.cpp
- *
- */
-
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "MMCDriver.h"
@@ -75,7 +70,6 @@ uint32* mmci_fifo = (uint32*) 0x8C000080;
 
 uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response)
 {
-//  kprintfd("---> command = %d, arg = %x\n",command,arg);
   mmci->argument = arg;
   if (response)
     mmci->command = command | PL181_CMD_ENABLE | PL181_CMD_RESPONSE;
@@ -202,7 +196,7 @@ int32 MMCDriver::writeSector(uint32 start_sector, uint32 num_sectors, void * buf
 
 uint32 MMCDriver::getNumSectors()
 {
-  return 210672; // TODO
+  return 210672; // fixed number of sectors for now
 }
 
 uint32 MMCDriver::getSectorSize()

@@ -4,31 +4,12 @@
 #include "Lock.h"
 class Thread;
 
-/**
- * @class SpinLock
- *
- * WikiPedia about SpinLocks:
- * @url http://en.wikipedia.org/wiki/Spinlock
- * In software engineering, a spinlock is a lock where the thread simply waits in a loop ("spins")
- * repeatedly checking until the lock becomes available. This is also known as "busy waiting"
- * because the thread remains active but isn't performing a useful task.
- *
- * The SpinLock is not meant to be used in a context where the InterruptFlag is not set,
- * because as with any lock, no taskswitch can happen and deadlock would occur if acquiring the SpinLock should
- * not succeed in an IF==0 context.
- * Also, in sweb, the Spinlock uses yield()s instead of a simple do-nothing-loop
- */
 class SpinLock: public Lock
 {
 public:
 
   SpinLock(const char* name);
 
-  /**
-   * Acquire the spinlock.
-   * @param called_by A pointer to the call point of this function.
-   *                  Can be set in case this method is called by a wrapper function.
-   */
   void acquire(pointer called_by = 0);
 
   /**
@@ -41,11 +22,6 @@ public:
    */
   bool acquireNonBlocking(pointer called_by = 0);
 
-  /**
-   * Release the spinlock.
-   * @param called_by A pointer to the call point of this function.
-   *                  Can be set in case this method is called by a wrapper function.
-   */
   void release(pointer called_by = 0);
 
   /**
@@ -61,10 +37,6 @@ private:
    */
   size_t lock_;
 
-  /**
-   * Do not use the copy constructor of the spinlock!
-   * It is set to private to prevent it.
-   */
   SpinLock(SpinLock const &);
   SpinLock &operator=(SpinLock const&);
 };
