@@ -147,8 +147,7 @@ int creat(const char *path, mode_t mode)
  */
 int pipe(int file_descriptor_array[2])
 {
-  return __syscall(sc_pipe, (long) file_descriptor_array, 0x00, 0x00, 0x00,
-                   0x00);
+  return -1;
 }
 
 
@@ -165,7 +164,7 @@ int pipe(int file_descriptor_array[2])
  */
 int dup(int file_descriptor)
 {
-  return __syscall(sc_dup, file_descriptor, 0x00, 0x00, 0x00, 0x00);
+  return -1;
 }
 
 
@@ -183,8 +182,7 @@ int dup(int file_descriptor)
  */
 int dup2(int old_file_descriptor, int new_file_descriptor)
 {
-  return __syscall(sc_dup2, old_file_descriptor, new_file_descriptor, 0x00,
-                   0x00, 0x00);
+  return -1;
 }
 
 
@@ -198,6 +196,5 @@ int dup2(int old_file_descriptor, int new_file_descriptor)
  */
 int rename(const char *old_path, const char *new_path)
 {
-  return __syscall(sc_rename, (long) old_path, (long) new_path, 0x00, 0x00,
-                   0x00);
+  return -1;
 }
