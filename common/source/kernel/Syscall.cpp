@@ -12,9 +12,11 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
 {
   size_t return_value = 0;
 
-  if (syscall_number != sc_sched_yield || syscall_number == sc_outline) // no debug print because these might occur very often
+  if ((syscall_number != sc_sched_yield) && (syscall_number != sc_outline)) // no debug print because these might occur very often
+  {
     debug(SYSCALL, "Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx)\n",
           syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
+  }
 
   switch (syscall_number)
   {
