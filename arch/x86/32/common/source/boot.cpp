@@ -86,7 +86,7 @@ extern "C" void entry()
       "mov %%esp,%%ebp\n" : : [v]"i"(boot_stack + 0x4000));
 
   PRINT("Calling startup()...\n");
-  asm("call *%%eax" : : "a"(startup));
+  asm("jmp *%%eax" : : "a"(startup));
 
   PRINT("Returned from startup()? This should never happen.\n");
   asm("hlt");
