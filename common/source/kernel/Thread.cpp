@@ -57,14 +57,12 @@ Thread::~Thread()
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
 
-//if the Thread we want to kill, is the currentThread, we better not return
-// DO Not use new / delete in this Method, as it sometimes called from an Interrupt Handler with Interrupts disabled
+// If the Thread we want to kill is the currentThread, we better not return
+// DO NOT use new / delete in this Method, as it is sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
   debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
         currentThread, getName(), this);
-
-  switch_to_userspace_ = 0;
 
   state_ = ToBeDestroyed;
 
