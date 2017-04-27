@@ -58,11 +58,7 @@ uint32 Scheduler::schedule()
   currentThread = *bestThread;
   ustl::rotate(threads_.begin(), bestThread + 1, threads_.end());
 
-//   debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d, schedulable: %u\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0, currentThread->schedulable());
-//   if(currentThread->kernel_registers_) //this helps when debugging memory corruption
-//   {
-//     ArchThreads::printThreadRegisters(currentThread,false);
-//   }
+  //debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d, schedulable: %u\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0, currentThread->schedulable());
   
   uint32 ret = 1;
 
