@@ -42,20 +42,28 @@ uint32 Scheduler::schedule()
     return 0;
   }
 
-  Thread* previousThread = currentThread;
-  do
+  ThreadList::iterator thr, bestThread = threads_.end();
+  
+  for(thr = threads_.begin(); thr != threads_.end(); ++thr)
   {
-    currentThread = threads_.front();
-
-    ustl::rotate(threads_.begin(), threads_.begin() + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
-
-    if ((currentThread == previousThread) && (currentThread->state_ != Running))
+    if((*thr)->schedulable())
     {
-      debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.\n");
+      bestThread = thr;
+      break;
     }
-  } while (!currentThread->schedulable());
-//  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
+  }
+  
+  assert(bestThread != threads_.end() && "all threads sleeping?");
+  
+  currentThread = *bestThread;
+  ustl::rotate(threads_.begin(), bestThread + 1, threads_.end());
 
+//   debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d, schedulable: %u\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0, currentThread->schedulable());
+//   if(currentThread->kernel_registers_) //this helps when debugging memory corruption
+//   {
+//     ArchThreads::printThreadRegisters(currentThread,false);
+//   }
+  
   uint32 ret = 1;
 
   if (currentThread->switch_to_userspace_)
