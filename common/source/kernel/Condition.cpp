@@ -52,6 +52,9 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   // The mutex can be released here, because for waking up another thread, the list lock is needed, which is still held by the thread.
   mutex_->release(called_by);
   sleepAndRelease();
+  // Thread has been woken up again
+  currentThread->lock_waiting_on_ = 0;
+
   if(re_acquire_mutex)
   {
     assert(mutex_);
@@ -62,9 +65,13 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
 void Condition::signal(pointer called_by, bool broadcast)
 {
   if(unlikely(system_state != RUNNING))
+  {
     return;
+  }
   if(!called_by)
+  {
     called_by = getCalledBefore(1);
+  }
 //  debug(LOCK, "Condition::signal: Thread %s (%p) is signaling condition %s (%p).\n",
 //        currentThread->getName(), currentThread, getName(), this);
 //  debug(LOCK, "The signal is called by: ");
@@ -81,26 +88,15 @@ void Condition::signal(pointer called_by, bool broadcast)
 
     if(thread_to_be_woken_up)
     {
-      if(likely(thread_to_be_woken_up->state_ == Sleeping))
-      {
-        // In this case we can access the pointer of the other thread without locking,
-        // because we can ensure that the thread is sleeping.
+      //debug(LOCK, "Condition: Thread %s (%p) being signaled for condition %s (%p).\n",
+      //      thread_to_be_woken_up->getName(), thread_to_be_woken_up, getName(), this);
 
-        //debug(LOCK, "Condition: Thread %s (%p) being signaled for condition %s (%p).\n",
-        //      thread_to_be_woken_up->getName(), thread_to_be_woken_up, getName(), this);
-        thread_to_be_woken_up->lock_waiting_on_ = 0;
-        Scheduler::instance()->wake(thread_to_be_woken_up);
-      }
-      else
-      {
-        debug(LOCK, "ERROR: Condition %s (%p): Thread %s (%p) is in state %s AND waiting on the condition!\n",
-              getName(), this, thread_to_be_woken_up->getName(), thread_to_be_woken_up,
-              Thread::threadStatePrintable[thread_to_be_woken_up->state_]);
-        assert(false);
-      }
+      Scheduler::instance()->wake(thread_to_be_woken_up);
     }
     else
+    {
       break;
+    }
   } while (broadcast);
 }
 
