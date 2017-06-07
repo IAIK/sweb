@@ -36,7 +36,7 @@ extern "C" void parseMultibootHeader()
     orig_mbr.vesa_bits_per_pixel = mode_info->bits_per_pixel;
   }
 
-  if (mb_infos && mb_infos->flags && 1<<3)
+  if (mb_infos && mb_infos->flags & 1<<3)
   {
     module_t * mods = (module_t*)(uint64)mb_infos->mods_addr;
     for (i=0;i<mb_infos->mods_count;++i)
