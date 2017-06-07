@@ -111,6 +111,7 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
           padc = '0';
           goto reswitch;
         }
+        // fall-through
       case '1':
       case '2':
       case '3':
@@ -270,6 +271,7 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
         goto handle_nosign;
       case 'X':
         upper = 1;
+        // fall-through
       case 'x':
         sharpflag = 1;
         base = 16;

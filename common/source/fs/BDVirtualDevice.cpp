@@ -36,6 +36,7 @@ void BDVirtualDevice::addRequest(BDRequest * command)
       //start block and num blocks will be interpreted as start sector and num sectors
       command->setStartBlock(command->getStartBlock() * (block_size_ / sector_size_) + offset_);
       command->setNumBlocks(command->getNumBlocks() * (block_size_ / sector_size_));
+      // fall-through
     default:
       command->setResult(driver_->addRequest(command));
       break;
