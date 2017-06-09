@@ -92,10 +92,16 @@ set $bt_pagefault_arg0 = 0
 # Don't stop on page faults
 #handle SIGSEGV nostop noprint nopass
 
+file /tmp/sweb/kernel64.x
+set architecture i386:x86-64
+
 # Connect to Bochs' gdbstub
-target remote localhost:1234
+target remote 127.0.0.1:1234
 
 # Welcome message
 echo \n\n
 echo You can now set trace and breakpoints.\n
 echo Enter 'continue' (or 'c') when you're done.\n
+
+set var cont=true
+break sweb_assert

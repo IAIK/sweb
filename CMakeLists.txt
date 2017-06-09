@@ -94,6 +94,11 @@ else(CMAKE_CROSSCOMPILING) # not cross compiling
   set(CMAKE_CROSS_COMPILE_FLAGS )
 endif(CMAKE_CROSSCOMPILING)
 
+if ("${DEBUG}" STREQUAL "1")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG=1")
+endif()
+
+
 # Searches for asm, c and cpp files and adds the library
 MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 	arch2obj(arch_objs)
