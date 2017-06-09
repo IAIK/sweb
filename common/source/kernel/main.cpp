@@ -42,6 +42,13 @@ extern "C" void removeBootTimeIdentMapping();
 
 extern "C" void startup()
 {
+#ifdef DEBUG
+  //software breakpoint for debugging
+  writeLine2Bochs("Wait for GDB!\n");
+  bool cont = false;
+  while(!cont);
+#endif
+
   writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();
   system_state = BOOTING;
