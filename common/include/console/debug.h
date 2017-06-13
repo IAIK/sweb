@@ -20,7 +20,7 @@ enum AnsiColor
 #define COLOR_PARAM(flag) (flag & ~OUTPUT_FLAGS), #flag
 #else
 #define DEBUG_FORMAT_STRING "[%-11s]"
-#define COLOR_PARAM(flag)
+#define COLOR_PARAM(flag) #flag
 #endif
 
 #ifndef EXE2MINIXFS
