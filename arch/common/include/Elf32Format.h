@@ -31,6 +31,7 @@ class Elf
     static const uint32 EM_88K = 5;
     static const uint32 EM_860 = 7;
     static const uint32 EM_MIPS = 8;
+    static const uint32 EM_ARM = 40;
     static const uint32 EM_AMD64 = 62;
 
 // Elf version
@@ -180,14 +181,15 @@ class Elf
     static bool headerCorrect(Ehdr* hdr)
     {
       if (hdr->e_ident[Elf::EI_MAG0]  == 0x7f
-          ||  hdr->e_ident[Elf::EI_MAG1]  == 'E'
-          ||  hdr->e_ident[Elf::EI_MAG2]  == 'L'
-          ||  hdr->e_ident[Elf::EI_MAG3]  == 'F'
-          ||  hdr->e_ident[Elf::EI_CLASS] == Elf::ELFCLASS32
-          ||  hdr->e_ident[Elf::EI_DATA]  == Elf::ELFDATA2LSB
-          ||  hdr->e_type            == Elf::ET_EXEC
-          ||  hdr->e_machine         == Elf::EM_386
-          ||  hdr->e_version         == Elf::EV_CURRENT)
+          &&  hdr->e_ident[Elf::EI_MAG1]  == 'E'  
+          &&  hdr->e_ident[Elf::EI_MAG2]  == 'L'
+          &&  hdr->e_ident[Elf::EI_MAG3]  == 'F'
+          &&  hdr->e_ident[Elf::EI_CLASS] == Elf::ELFCLASS32
+          &&  hdr->e_ident[Elf::EI_DATA]  == Elf::ELFDATA2LSB
+          &&  hdr->e_type                 == Elf::ET_EXEC
+          &&  (hdr->e_machine             == Elf::EM_386 
+              || hdr->e_machine		        == Elf::EM_ARM)
+          &&  hdr->e_version              == Elf::EV_CURRENT)
       {
         return true;
       }

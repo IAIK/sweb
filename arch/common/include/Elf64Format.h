@@ -137,14 +137,14 @@ class Elf
     static bool headerCorrect(Ehdr* hdr)
     {
       if (hdr->e_ident[Elf::EI_MAG0]  == 0x7f
-          ||  hdr->e_ident[Elf::EI_MAG1]  == 'E'
-          ||  hdr->e_ident[Elf::EI_MAG2]  == 'L'
-          ||  hdr->e_ident[Elf::EI_MAG3]  == 'F'
-          ||  hdr->e_ident[Elf::EI_CLASS] == Elf::ELFCLASS64
-          ||  hdr->e_ident[Elf::EI_DATA]  == Elf::ELFDATA2LSB
-          ||  hdr->e_type            == Elf::ET_EXEC
-          ||  hdr->e_machine         == Elf::EM_AMD64
-          ||  hdr->e_version         == Elf::EV_CURRENT)
+          &&  hdr->e_ident[Elf::EI_MAG1]  == 'E'
+          &&  hdr->e_ident[Elf::EI_MAG2]  == 'L'
+          &&  hdr->e_ident[Elf::EI_MAG3]  == 'F'
+          &&  hdr->e_ident[Elf::EI_CLASS] == Elf::ELFCLASS64
+          &&  hdr->e_ident[Elf::EI_DATA]  == Elf::ELFDATA2LSB
+          &&  hdr->e_type            == Elf::ET_EXEC
+          &&  hdr->e_machine         == Elf::EM_AMD64
+          &&  hdr->e_version         == Elf::EV_CURRENT)
       {
         return true;
       }
