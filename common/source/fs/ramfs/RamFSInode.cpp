@@ -13,7 +13,7 @@ RamFSInode::RamFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type), data_(0)
 {
   if (inode_type == I_FILE)
-    data_ = new char[BASIC_ALLOC];
+    data_ = new char[BASIC_ALLOC]();
 
   i_size_ = BASIC_ALLOC;
   i_nlink_ = 0;
