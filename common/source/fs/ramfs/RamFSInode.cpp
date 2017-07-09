@@ -27,30 +27,36 @@ RamFSInode::~RamFSInode()
 
 int32 RamFSInode::readData(uint32 offset, uint32 size, char *buffer)
 {
-  if ((size + offset) > BASIC_ALLOC)
+  if(offset >= getSize())
   {
-    kprintfd("RamFSInode::ERROR: the size is bigger than size of the file\n");
-    assert(true);
+    return 0;
   }
 
+  uint32 read_size = Min(size, getSize() - offset);
+
   char *ptr_offset = data_ + offset;
-  memcpy(buffer, ptr_offset, size);
-  return size;
+  memcpy(buffer, ptr_offset, read_size);
+  return read_size;
 }
 
 int32 RamFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 {
-  if ((size + offset) > BASIC_ALLOC)
-  {
-    kprintfd("RamFSInode::ERROR: the size is bigger than size of the file\n");
-    assert(true);
-  }
-
   assert(i_type_ == I_FILE);
 
+  if(offset >= getSize())
+  {
+    return 0;
+  }
+
+  uint32 write_size = Min(size, getSize() - offset);
+  if(write_size != size)
+  {
+    debug(RAMFS, "WARNING: RamFS currently does not support expanding files via the write syscall\n");
+  }
+
   char *ptr_offset = data_ + offset;
-  memcpy(ptr_offset, buffer, size);
-  return size;
+  memcpy(ptr_offset, buffer, write_size);
+  return write_size;
 }
 
 int32 RamFSInode::mknod(Dentry *dentry)

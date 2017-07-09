@@ -26,7 +26,9 @@ RamFSFile::~RamFSFile()
 int32 RamFSFile::read(char *buffer, size_t count, l_off_t offset)
 {
   if ((flag_ == O_RDONLY) || (flag_ == O_RDWR))
-    return (f_inode_->readData(offset_ + offset, count, buffer));
+  {
+    return f_inode_->readData(offset_ + offset, count, buffer);
+  }
   else
   {
     // ERROR_FF
@@ -37,7 +39,9 @@ int32 RamFSFile::read(char *buffer, size_t count, l_off_t offset)
 int32 RamFSFile::write(const char *buffer, size_t count, l_off_t offset)
 {
   if ((flag_ == O_WRONLY) || (flag_ == O_RDWR))
-    return (f_inode_->writeData(offset_ + offset, count, buffer));
+  {
+    return f_inode_->writeData(offset_ + offset, count, buffer);
+  }
   else
   {
     // ERROR_FF
