@@ -69,16 +69,20 @@ size_t Syscall::write(size_t fd, pointer buffer, size_t size)
   {
     return -1U;
   }
+
+  size_t num_written = 0;
+
   if (fd == fd_stdout) //stdout
   {
     debug(SYSCALL, "Syscall::write: %.*s\n", (int)size, (char*) buffer);
     kprintf("%.*s", (int)size, (char*) buffer);
+    num_written = size;
   }
   else
   {
-    VfsSyscall::write(fd, (char*) buffer, size);
+    num_written = VfsSyscall::write(fd, (char*) buffer, size);
   }
-  return size;
+  return num_written;
 }
 
 size_t Syscall::read(size_t fd, pointer buffer, size_t count)
@@ -87,7 +91,9 @@ size_t Syscall::read(size_t fd, pointer buffer, size_t count)
   {
     return -1U;
   }
+
   size_t num_read = 0;
+
   if (fd == fd_stdin)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
