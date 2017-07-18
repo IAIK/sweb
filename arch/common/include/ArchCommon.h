@@ -90,5 +90,10 @@ class ArchCommon
      * draw a heartbeat character
      */
     static void drawHeartBeat();
+
+    /**
+    * draw some infos/statistics
+    */
+    static void drawStat();
 };
 

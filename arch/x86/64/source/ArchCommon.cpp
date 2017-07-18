@@ -268,11 +268,27 @@ void ArchCommon::idle()
   asm volatile("hlt");
 }
 
+void ArchCommon::drawStat() {
+    const char* text  = "F9 MemInfo   F10 Locks   F11 Stacktrace   F12 Threads";
+    const char* color = "xx           xxx         xxx              xxx        ";
+    size_t offset = 52;
+
+    char* fb = (char*)getFBPtr();
+    size_t i = 0;
+    while(text[i]) {
+        fb[i * 2 + offset] = text[i];
+        fb[i * 2 + offset + 1] = (char)(color[i] == 'x' ? 0x80 : 0x08);
+        i++;
+    }
+}
+
 void ArchCommon::drawHeartBeat()
 {
   const char* clock = "/-\\|";
   static uint32 heart_beat_value = 0;
   char* fb = (char*)getFBPtr();
   fb[0] = clock[heart_beat_value++ % 4];
-  fb[1] = 0x9f;
+  fb[1] = (char)0x9f;
+
+  drawStat();
 }
