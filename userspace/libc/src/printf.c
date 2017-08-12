@@ -365,7 +365,7 @@ void writeFloat(c_string *output_string, double n, unsigned int width, unsigned 
         }
     }
     
-    int i;
+    size_t i;
     char* start = s.start;
     if(width > s.length) {
         for(i = 0; i < width - s.length; i++) {

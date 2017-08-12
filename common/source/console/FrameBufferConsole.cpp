@@ -134,7 +134,7 @@ void FrameBufferConsole::consoleScrollUp(uint8 const &state)
 
 uint16 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
 {
-  uint8 r, g, b;
+  uint8 r = 0, g = 0, b = 0;
   switch(color)
   {
   case BLACK:

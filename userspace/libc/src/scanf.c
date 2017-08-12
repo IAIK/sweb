@@ -264,7 +264,8 @@ int vsscanf(const char * buf, const char * fmt, va_list args)
       base = 16;
       break;
     case 'i':
-                        base = 0;
+      base = 0;
+      // fall through
     case 'd':
       is_sign = 1;
     case 'u':
