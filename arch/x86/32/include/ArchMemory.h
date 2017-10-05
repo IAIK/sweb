@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.h
- *
- */
-
 #pragma once
 
 #include "types.h"
@@ -16,21 +11,9 @@
 extern PageDirEntry kernel_page_directory[];
 extern PageTableEntry kernel_page_tables[];
 
-/**
- *
- * Collection of architecture dependant functions concerning Memory and Pages
- *
- */
 class ArchMemory
 {
 public:
-
-/** 
- * Constructor
- * creates a new Page-Directory for a UserProccess by copying the
- * Kernel-Page-Directory
- *
- */
   ArchMemory();
 
 /** 
@@ -53,10 +36,6 @@ public:
  */
   void unmapPage(uint32 virtual_page);
 
-/**
- * Destructor. Recursively deletes the page directory and all page tables
- *
- */
   ~ArchMemory();
 
 /**

@@ -5,18 +5,6 @@
 class Thread;
 class Mutex;
 
-/**
- * @class Condition For Condition management
- * Conditions are very important to achieve mutual exclusion,
- * without busy waiting
- *
- * We need a Mutex*, because the only sane and working way to protect the list
- * in the CV is with the very same lock, the threads using the CV use.
- * Extra lock inside the CV won't work -> deadlock possibility
- * mixing lock and switching of interrupts wont work -> irq during time I have lock
- * only way: interrupts off or same lock
- * and interrupts off we want to avoid
- */
 class Condition : public Lock
 {
   public:

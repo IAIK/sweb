@@ -1,7 +1,3 @@
-/**
- * @file VfsMount.h
- */
-
 #pragma once
 
 #include "types.h"
@@ -20,11 +16,6 @@ extern VirtualFileSystem vfs;
  */
 #define MS_RDONLY 1
 
-/**
- * @class VfsMount
- * Definitions for mount interface. This describes the in the kernel
- * build linkedlist with mounted filesystems.
- */
 class VfsMount
 {
  protected:
@@ -56,22 +47,7 @@ class VfsMount
    */
   int32 mnt_flags_;
 
-  /**
-   * Head of the parent list of descriptors (relative to this filesystem).
-   */
-  // List *mnt_mounts_;
-
-  /**
-   * Pointers for the parent list of descriptors (relative to the parent
-   * filesystem).
-   */
-  // List *mnt_child_;
-
  public:
-
-  /**
-   * default-constructor
-   */
   VfsMount();
 
 
@@ -86,16 +62,7 @@ class VfsMount
   VfsMount(VfsMount* parent, Dentry * mountpoint, Dentry* root,
       Superblock* superblock, int32 flags);
 
-  /**
-   * destructor
-   */
   virtual ~VfsMount();
-
-  // void put_mnt(VfsMount *mnt);
-
-  // void remove_mnt(VfsMount *mnt);
-
-  // VfsMount* get_mnt();
 
   /**
    * get the parent-VfsMount of the VfsMount

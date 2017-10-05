@@ -2,10 +2,6 @@
 
 #include "File.h"
 
-/**
- * @class MinixFSFile handles files on a minix file system
- * basically read and write
- */
 class MinixFSFile : public File
 {
   public:

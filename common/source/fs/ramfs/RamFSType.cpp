@@ -1,7 +1,3 @@
-/**
- * @file RamFSType.h
- */
-
 #include "fs/ramfs/RamFSType.h"
 #include "fs/ramfs/RamFSSuperblock.h"
 

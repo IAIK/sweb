@@ -1,8 +1,3 @@
-/**
- * @file atkbd.cpp
- *
- */
- 
 #include "atkbd.h"
 
 bool kbdBufferFull()

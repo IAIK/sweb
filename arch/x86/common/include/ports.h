@@ -1,9 +1,3 @@
-/**
- * @file ports.h
- *
- */
-
-
 #pragma once
 
 #include "types.h"

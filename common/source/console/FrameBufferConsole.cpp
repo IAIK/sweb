@@ -1,7 +1,3 @@
-/**
- * @file FrameBufferConsole.cpp
- */
-
 #include "FrameBufferConsole.h"
 #include "ArchCommon.h"
 #include "Terminal.h"

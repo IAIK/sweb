@@ -1,8 +1,3 @@
-/**
- * @file assert.cpp
- *
- */
-
 #include "assert.h"
 #include "kprintf.h"
 #include "panic.h"

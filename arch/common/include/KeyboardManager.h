@@ -1,8 +1,3 @@
-/**
- * @file KeyboardManager.h
- *
- */
-
 #pragma once
 
 #ifdef __cplusplus
@@ -120,12 +115,6 @@ extern "C"
 #define KEY_RWIN   (KEY_INS + 13)
 #define KEY_MENU   (KEY_INS + 14)
 
-/** @class KeyboardManager
- *
- * Class that contains architecture specific parameters for AT keyboard
- * communication
- *
- */
 class KeyboardManager
 {
   public:

@@ -8,11 +8,6 @@ class Inode;
 class MinixFSInode;
 class Superblock;
 
-/**
- * @class MinixFSSuperblock stores the data of the superblock on a minix file system.
- * handles its inodes and memory
- * knows how to read and write data from and to the file system
- */
 class MinixFSSuperblock : public Superblock
 {
   public:
@@ -20,18 +15,7 @@ class MinixFSSuperblock : public Superblock
     friend class MinixFSZone;
     friend class MinixStorageManager;
 
-    /**
-     * constructor
-     * @param s_root
-     * @param s_dev
-     * @return
-     */
     MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset);
-
-    /**
-     * destructor
-     * @return
-     */
     virtual ~MinixFSSuperblock();
 
     /**

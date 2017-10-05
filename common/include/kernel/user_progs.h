@@ -1,6 +1,3 @@
-/**
- * @file user_progs.h
- */
 #pragma once
 
 // DO NOT CHANGE THE NAME OR THE TYPE OF THE user_progs VARIABLE!

@@ -6,10 +6,6 @@
 #include "MinixFSZone.h"
 #include <ulist.h>
 
-/**
- * @class MinixFSInode represents an inode on a minix file system and handles the corresponding functions
- *
- */
 class MinixFSInode : public Inode
 {
     friend class MinixFSSuperblock;
@@ -50,10 +46,6 @@ class MinixFSInode : public Inode
      * @param i_num the inode number
      */
     MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones, uint32 i_num);
-
-    /**
-     * destructor
-     */
     virtual ~MinixFSInode();
 
     /**

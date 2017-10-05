@@ -32,22 +32,10 @@ class Superblock;
 // opend.
 #define INODE_DEAD 666
 
-/**
- * @class Inode
- * All information needed by the filesystem to handle a file is included in a
- * data class called an inode.
- */
 class Inode
 {
   protected:
-    /**
-     * The dentry of this inode. (dir)
-     */
     Dentry *i_dentry_;
-
-    /**
-     * The dentry-List of this inode. (file)
-     */
     ustl::list<Dentry*> i_dentry_link_;
 
     /**
@@ -60,9 +48,6 @@ class Inode
      */
     uint32 i_nlink_;
 
-    /**
-     * reference of superblock
-     */
     Superblock *superblock_;
 
     /**
@@ -93,9 +78,6 @@ class Inode
       superblock_ = super_block, i_type_ = inode_type;
     }
 
-    /**
-     * destructor
-     */
     virtual ~Inode()
     {
     }
@@ -282,19 +264,11 @@ class Inode
      */
     int32 removeOpenedFiles(File*);
 
-    /**
-     * check the existance of the open-file-list
-     * @return true if empty
-     */
     bool openedFilesEmpty()
     {
       return (i_files_.empty());
     }
 
-    /**
-     * return the Superblock where this inode is located
-     * @return the superblock
-     */
     Superblock* getSuperblock()
     {
       return superblock_;
@@ -310,55 +284,31 @@ class Inode
       superblock_ = sb;
     }
 
-    /**
-     * get the type from inode
-     * @return the inodes type
-     */
     uint32 getType()
     {
       return i_type_;
     }
 
-    /**
-     * get the pointer of the dentry
-     * @return the inodes dentry
-     */
     Dentry* getDentry()
     {
       return i_dentry_;
     }
 
-    /**
-     * get the first file object.
-     * @return the first file
-     */
     File* getFirstFile()
     {
       return i_files_.front();
     }
 
-    /**
-     * returns the number of opened files on this inode
-     * @return the number of files
-     */
     uint32 getNumOpenedFile()
     {
       return i_files_.size();
     }
 
-    /**
-     * returns the size
-     * @return the size
-     */
     uint32 getSize()
     {
       return i_size_;
     }
 
-    /**
-     * flushes the inode to the file system
-     * @return 0 on success
-     */
     int32 flush()
     {
       return 0;

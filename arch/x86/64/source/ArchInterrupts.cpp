@@ -1,8 +1,3 @@
-/**
- * @file ArchInterrupts.cpp
- *
- */
-
 #include "ArchInterrupts.h"
 #include "8259.h"
 #include "ports.h"

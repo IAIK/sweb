@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_ata_driver.h
- *
- */
-
 #pragma once
 
 #include "BDDriver.h"
@@ -25,7 +20,8 @@ class ATADriver : public BDDriver
      * or the function returns otherwise.
      *
      */
-    uint32 addRequest(BDRequest *);
+    uint32 addRequest(BDRequest* br);
+    void nextRequest(BDRequest* br);
     ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum);
     virtual ~ATADriver()
     {

@@ -14,13 +14,6 @@ class Dentry;
 class Inode;
 class File;
 
-/**
- * @class Superblock
- * The first block of the virtual-file-system. It contains for instance the
- * configuration of the file system. Source information concerning a mounted
- * filesystem. (For disk-based filesystems, this object usually corresponds
- * to a filesystem control block stored on disk.)
- */
 class Superblock
 {
   public:
@@ -35,9 +28,6 @@ class Superblock
 
   protected:
 
-    /**
-     * The file system type.
-     */
     const FileSystemType *s_type_;
 
     /**

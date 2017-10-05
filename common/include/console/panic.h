@@ -1,8 +1,3 @@
-/**
- * @file panic.h
- *
- */
-
 #pragma once
 
 #include "types.h"

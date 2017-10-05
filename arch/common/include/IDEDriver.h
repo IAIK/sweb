@@ -1,8 +1,3 @@
-/**
- * @file arch_bd_ide_driver.h
- *
- */
-
 #pragma once
 
 #include "types.h"

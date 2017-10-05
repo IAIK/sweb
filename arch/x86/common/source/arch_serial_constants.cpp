@@ -1,8 +1,3 @@
-/**
- * @file arch_serial_constants.cpp
- *
- */
- 
 #include "ArchSerialInfo.h"
 
 

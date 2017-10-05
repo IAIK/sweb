@@ -1,7 +1,3 @@
-/**
- * @file Loader.h
- */
-
 #pragma once
 
 #include "types.h"
@@ -14,23 +10,10 @@
 
 class Stabs2DebugInfo;
 
-/**
-* @class Loader manages the Addressspace creation of a thread
-*/
 class Loader
 {
   public:
-
-    /**
-     *Constructor
-     * @param fd the file descriptor of the executable
-     * @return Loader instance
-     */
     Loader(ssize_t fd);
-
-    /**
-     *Destructor
-     */
     ~Loader();
 
     /**
@@ -47,14 +30,8 @@ class Loader
      */
     void loadPage(pointer virtual_address);
 
-    /**
-     * Returns debug info for the loaded userspace program, if available
-     */
     Stabs2DebugInfo const* getDebugInfos() const;
 
-    /**
-     * Returns debug info for the loaded userspace program, if available
-     */
     void* getEntryFunction() const;
 
     ArchMemory arch_memory_;

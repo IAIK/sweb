@@ -1,10 +1,3 @@
-/**
- * @file PageFault
- *
- * Handle page faults.
- *
- */
-
 #pragma once
 
 #include "types.h"

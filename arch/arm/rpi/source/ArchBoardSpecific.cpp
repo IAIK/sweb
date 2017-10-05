@@ -1,8 +1,3 @@
-/**
- * @file arch_board_specific.cpp
- *
- */
-
 #include "ArchBoardSpecific.h"
 
 #include "KeyboardManager.h"
@@ -118,8 +113,6 @@ void ArchBoardSpecific::setTimerFrequency(uint32 freq)
 
 void ArchBoardSpecific::disableTimer()
 {
-  //uint32* timer_load = (uint32*)0x9000B400;
-  //uint32* timer_control = (uint32*)0x9000B40C;
 }
 
 void ArchBoardSpecific::enableKBD()

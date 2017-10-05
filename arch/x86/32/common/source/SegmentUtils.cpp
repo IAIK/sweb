@@ -1,8 +1,3 @@
-/**
- * @file SegmentUtils.cpp
- *
- */
-
 #include "SegmentUtils.h"
 #include "kstring.h"
 

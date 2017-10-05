@@ -1,28 +1,14 @@
-/**
- * @file RamFSFile.h
- */
-
 #pragma once
 
 #include "fs/File.h"
 
 
-/**
- * @class RamFSFile
- *
- */
 class RamFSFile: public File
 {
   public:
 
-    /**
-     * constructor of RamFSFile
-     */
     RamFSFile ( Inode* inode, Dentry* dentry, uint32 flag );
 
-    /**
-     * destructor of RamFSFile
-     */
     virtual ~RamFSFile();
 
     /**

@@ -1,16 +1,11 @@
-/**
- * @file offset.h
- *
- */
-
 #pragma once
 
 #include "types.h"
 #include "paging-definitions.h"
 
- /**
-  * These are the basic offsets for our memory layout
-  */
+/**
+ * These are the basic offsets for our memory layout
+ */
 
 /**
  * this is the difference between link and load base

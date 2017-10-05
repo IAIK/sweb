@@ -1,7 +1,3 @@
-/**
- * @file kmalloc.cpp
- */
-
 #include "kmalloc.h"
 #include "KernelMemoryManager.h"
 #include "backtrace.h"

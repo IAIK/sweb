@@ -1,8 +1,3 @@
-/**
- * @file arch_serial.cpp
- *
- */
-
 #include "ArchSerialInfo.h"
 #include "ports.h"
 #include "SerialManager.h"

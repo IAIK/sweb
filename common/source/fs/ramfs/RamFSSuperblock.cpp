@@ -1,7 +1,3 @@
-/**
- * @file RamFSSuperblock.cpp
- */
-
 #include "fs/FileDescriptor.h"
 #include "fs/ramfs/RamFSSuperblock.h"
 #include "fs/ramfs/RamFSInode.h"

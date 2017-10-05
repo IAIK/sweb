@@ -1,8 +1,3 @@
-/**
- * @file init_boottime_pagetables.h
- *
- */
-
 #pragma once
 
 #include "paging-definitions.h"

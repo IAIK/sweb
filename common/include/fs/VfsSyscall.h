@@ -1,7 +1,3 @@
-/**
- * @file VfsSyscall.h
- */
-
 #pragma once
 
 #include "types.h"
@@ -14,9 +10,6 @@ class VfsSyscall;
 
 extern VfsSyscall vfs_syscall;
 
-/**
- * @class VfsSyscall
- */
 class VfsSyscall
 {
   protected:
@@ -158,14 +151,7 @@ class VfsSyscall
     static FileDescriptor* getFileDescriptor(uint32 fd);
 
   private:
-    /**
-     * constructor
-     */
     VfsSyscall();
-
-    /**
-     * destructor
-     */
     ~VfsSyscall();
 };
 

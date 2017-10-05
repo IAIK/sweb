@@ -3,12 +3,6 @@
 #include "types.h"
 class BDRequest;
 
-/**
- * @class BDDriver
- * abstract class
- * all functions are implemented in derived classes
- *
- */
 class BDDriver
 {
   public:

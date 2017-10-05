@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.h
- *
- */
-
 #pragma once
 
 #include "types.h"
@@ -18,19 +13,9 @@ extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
 extern PageDirEntry kernel_page_directory[];
 extern PageTableEntry kernel_page_tables[];
 
-/**
- *
- * Collection of architecture dependant functions concerning Memory and Pages
- *
- */
 class ArchMemory
 {
 public:
-
-/**
- * constructor: initializes a new pdpt
- * @param pdpt
- */
   ArchMemory();
 
 /** 
@@ -55,18 +40,14 @@ public:
  */
   void unmapPage(uint32 virtual_page);
 
-  /**
-   * Destructor. Recursively deletes the page directory and all page tables
-   *
-   */
-    ~ArchMemory();
+  ~ArchMemory();
 
-  /**
-   * recursively remove a PageDirectoryEntry and all its Pages and PageTables
-   *
-   * @param physical_page_directory_page of PDE to remove
-   */
-    void freePageDirectory(uint32 physical_page_directory_page);
+/**
+ * recursively remove a PageDirectoryEntry and all its Pages and PageTables
+ *
+ * @param physical_page_directory_page of PDE to remove
+ */
+  void freePageDirectory(uint32 physical_page_directory_page);
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than

@@ -1,13 +1,8 @@
-/**
- * @file offset.h
- *
- */
-
 #pragma once
 
- /**
-  * These are the basic offsets for our memory layout
-  */
+/**
+ * These are the basic offsets for our memory layout
+ */
 
 
 /**

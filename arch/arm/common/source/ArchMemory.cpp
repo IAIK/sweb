@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.cpp
- *
- */
-
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"
@@ -104,7 +99,6 @@ void ArchMemory::insertPT(uint32 pde_vpn)
 
 void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
 {
-//  kprintfd("ArchMemory::mapPage: v: %x to p: %x\n",virtual_page,physical_page);
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
@@ -126,8 +120,6 @@ void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     assert(false && "currently only 4K pages for the userspace");
 }
 
-// only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT
-// want to free Kernel Pages
 ArchMemory::~ArchMemory()
 {
   debug(A_MEMORY, "ArchMemory::~ArchMemory(): Freeing page directory %x\n", page_dir_page_);

@@ -7,51 +7,29 @@
 
 class ArchSerialInfo;
 
-/**
- * @class SerialPort Class that describes Serial port
- *
- * The serial port class must not be instantiated ...
- * Use the SerialManager class and its serial_ports member for
- * serial port access ...
- */
 class SerialPort : public CharacterDevice
 {
   public:
-    /**
-     * @enum _br The baudrate for serial communication
-     */
     typedef enum _br
     {
       BR_9600, BR_14400, BR_19200, BR_38400, BR_55600, BR_115200
     } BAUD_RATE_E;
 
-    /**
-     * @enum _par The parity for serial communication
-     */
     typedef enum _par
     {
       ODD_PARITY, EVEN_PARITY, NO_PARITY
     } PARITY_E;
 
-    /**
-     * @enum _db Number of data bits used in serial communication
-     */
     typedef enum _db
     {
       DATA_7, DATA_8
     } DATA_BITS_E;
 
-    /**
-     * @enum _sb Number of stop bits used in serial communication
-     */
     typedef enum _sb
     {
       STOP_ONE, STOP_TWO, STOP_ONEANDHALF
     } STOP_BITS_E;
 
-    /**
-     * @enum _sres Results returned by serial port functions
-     */
     typedef enum _sres
     {
       SR_OK, SR_ERROR // you might want to add elements for common errors that can appear
@@ -107,29 +85,6 @@ class SerialPort : public CharacterDevice
     ArchSerialInfo port_info_;
 
 };
-
-/**
- * @class SerialManager Class that manages serial ports
- *
- * To access the serial ports use get_num_ports to find out
- * how many there are. Then access the wanted port with serial_ports[ port_number ].
- *
- * The following code will print out the names of the ports registered on system
- *
- * SerialManager *sm = SerialManager::getInstance();
- * uint32 num_ports = sm->get_num_ports();
- * for( uint32 i=0; i < num_ports; i++ )
- *   kprintf( "Port number : %d, Port name : %s", i , sm->serial_ports[i]->friendly_name );
- *
- * Or if you want to access the specific port
- *
- * SerialManager *sm = SerialManager::getInstance();
- * uint32 port_num = sm->get_port_number( (uint8 *) "COM1" ); // or "ttyS0"
- * SerialPort *com1 = sm->serial_ports[ port_num ];
- * // now do whatever you want with com1
- *
- * @see SerialPort
- */
 
 class SerialManager
 {

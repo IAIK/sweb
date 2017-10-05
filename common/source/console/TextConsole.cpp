@@ -1,7 +1,3 @@
-/**
- * @file TextConsole.cpp
- */
-
 #include "TextConsole.h"
 #include "Terminal.h"
 #include "ArchCommon.h"

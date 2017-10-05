@@ -1,8 +1,3 @@
-/**
- * @file ArchMemory.cpp
- *
- */
-
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "assert.h"

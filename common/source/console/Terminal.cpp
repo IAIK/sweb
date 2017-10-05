@@ -1,7 +1,3 @@
-/**
- * @file Terminal.cpp
- */
-
 #include "Terminal.h"
 #include "Console.h"
 
