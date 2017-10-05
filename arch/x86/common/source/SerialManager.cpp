@@ -10,16 +10,16 @@ SerialManager * SerialManager::instance_ = 0;
 
 SerialManager::SerialManager() : num_ports( 0 )
 {
-};
+}
 
 SerialManager::~SerialManager()
 {
-};
+}
 
 uint32 SerialManager::get_num_ports()
 {
   return num_ports;
-};
+}
 
 uint32 SerialManager::do_detection( uint32 is_paging_set_up )
 {
