@@ -13,7 +13,7 @@ BDManager *BDManager::getInstance()
     instance_ = new BDManager();
   return instance_;
 }
-;
+
 
 BDManager::BDManager() :
     probeIRQ(false)

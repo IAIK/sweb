@@ -43,7 +43,7 @@ void BDVirtualDevice::addRequest(BDRequest * command)
   }
   return;
 }
-;
+
 
 int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
@@ -79,7 +79,7 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
   }
   return size;
 }
-;
+
 
 int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
 {
@@ -112,7 +112,7 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
   else
     return size;
 }
-;
+
 
 void BDVirtualDevice::setPartitionType(uint8 part_type)
 {

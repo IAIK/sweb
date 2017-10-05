@@ -16,11 +16,11 @@ SerialPort::SerialPort ( char *name, ArchSerialInfo port_info ) : CharacterDevic
   SerialLock = 0;
   
   setup_port( BR_9600, DATA_8, STOP_ONE, NO_PARITY );
-};
+}
 
 SerialPort::~SerialPort ()
 {
-};
+}
 
 SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity )
 {
@@ -102,7 +102,7 @@ SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E d
   write_UART( SC::IER , 0x0F);  
   
   return SR_OK;
-};
+}
 
 int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
 {
@@ -142,7 +142,7 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
     
   SerialLock = 0;
   return bytes_written;
-};
+}
 
 void SerialPort::irq_handler()
 {
@@ -178,9 +178,9 @@ void SerialPort::irq_handler()
 void SerialPort::write_UART( uint32 reg, uint8 what )
 {
    outportb( this->port_info_.base_port + reg, what );
-};
+}
 
 uint8 SerialPort::read_UART( uint32 reg )
 {
   return inportb( this->port_info_.base_port + reg );
-};
+}
