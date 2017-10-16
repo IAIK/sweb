@@ -21,7 +21,6 @@ define hook-stop
 	echo 's' to step\n
 end
 
-file /tmp/sweb/kernel64.x
 set architecture i386:x86-64
 
 # Connect to Bochs' gdbstub
