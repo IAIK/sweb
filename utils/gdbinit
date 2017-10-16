@@ -1,25 +1,9 @@
-
-
-define btpf_enable_full
-	set $bt_pagefault_arg0 = 1
-end
-document btpf_enable_full
-	Enables full output of backtrace_pagefault
-end
-
-define btpf_disable_full
-	set $bt_pagefault_arg0 = 0
-end
-document btpf_disable_full
-	Disables full output of backtrace_pagefault
-end
-
 define stop_on_pagefault
 	handle SIGSEGV stop print pass
 	echo Now stopping on every pagefault\n
 end
 document stop_on_pagefault
-	Tells GDB to stop on every pagefault (in userspace and kernelspace) (default)
+	Tells GDB to stop on every pagefault (default)
 end
 
 define continue_on_pagefault
@@ -27,70 +11,15 @@ define continue_on_pagefault
 	echo Now continueing on every pagefault\n
 end
 document continue_on_pagefault
-	Tells GDB to ignore pagefaults (also ignores kernelspace pagefaults)
+	Tells GDB to ignore pagefaults
 end 
-
 
 # Special Macro definition that GDB calls on every break
 define hook-stop
-	check_for_page_fault	
-	
 	echo \n
 	echo 'c' to continue execution\n
 	echo 's' to step\n
 end
-
-
-# Called by hook-stop to check if we got a page fault
-define check_for_page_fault
-	# We are only interested in breaks that come from the PageFaultHandler
-	if($pc == arch_pageFaultHandler)
-		
-		# Check where the Pagefault occured
-		echo \n\n
-		if(((void**)$esp)[1]  < 0xC000000)
-			# We got a userspace Pagefault
-			echo Pagefault in USERSPACE, loader should load the desired page...\n
-		else
-			# We got a PageFault in the kernel, show the backtrace
-			echo Pagefault in KERNELSPACE, show the backtrace\n
-			backtrace_pagefault
-		end
-
-	end
-end
-document check_for_page_fault
-	Internally used on every break, to check if we got a page fault
-end
-
-# Gets the return address and temporary modifies the instruction pointer
-define backtrace_pagefault
-	# Save the original instruction pointer
-	set $original_eip = $eip
-
-	# Puts the return address into the instruction pointer
-	set $eip = ((void**)$esp)[1]
-
-	# Shows the backtrace
-	if($bt_pagefault_arg0 == 1)
-		backtrace full
-	else
-		backtrace
-	end
-
-	# Restore the saved instruction pointer
-	set $eip = $original_eip
-
-end
-document backtrace_pagefault
-	Modifies the Instruction Pointer to show the backtrace of the occured page fault
-end
-
-# Initialize page fault backtrace output to small output
-set $bt_pagefault_arg0 = 0
-
-# Don't stop on page faults
-#handle SIGSEGV nostop noprint nopass
 
 file /tmp/sweb/kernel64.x
 set architecture i386:x86-64
