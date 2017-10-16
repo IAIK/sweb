@@ -44,7 +44,7 @@ end
 # Called by hook-stop to check if we got a page fault
 define check_for_page_fault
 	# We are only interested in breaks that come from the PageFaultHandler
-	if($eip == arch_pageFaultHandler)
+	if($pc == arch_pageFaultHandler)
 		
 		# Check where the Pagefault occured
 		echo \n\n
