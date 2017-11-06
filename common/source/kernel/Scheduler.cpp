@@ -111,6 +111,10 @@ void Scheduler::yield()
 
 void Scheduler::cleanupDeadThreads()
 {
+  /* Before adding new functionality to this function, consider if that
+     functionality could be implemented more cleanly in another place.
+     (e.g. Thread/Process destructor) */
+
   lockScheduling();
   uint32 thread_count_max = threads_.size();
   if (thread_count_max > 1024)
