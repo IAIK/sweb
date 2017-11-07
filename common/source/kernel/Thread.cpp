@@ -30,8 +30,8 @@ extern "C" void threadStartHack()
 }
 
 Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type) :
-    kernel_registers_(0), user_registers_(0), switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0), loader_(0), state_(Running),
-    next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), tid_(0),
+    kernel_registers_(0), user_registers_(0), switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0), loader_(0),
+    next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), state_(Running), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name)
 {
   debug(THREAD, "Thread ctor, this is %p, stack is %p, fs_info ptr: %p\n", this, kernel_stack_, working_dir_);
@@ -64,7 +64,7 @@ void Thread::kill()
   debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
         currentThread, getName(), this);
 
-  state_ = ToBeDestroyed;
+  setState(ToBeDestroyed);
 
   if (currentThread == this)
   {
@@ -158,7 +158,7 @@ void Thread::printBacktrace(bool use_stored_registers)
 
 bool Thread::schedulable()
 {
-  return (state_ == Running);
+  return (getState() == Running);
 }
 
 const char *Thread::getName()
@@ -169,4 +169,17 @@ const char *Thread::getName()
 size_t Thread::getTID()
 {
   return tid_;
+}
+
+ThreadState Thread::getState() const
+{
+  return state_;
+}
+
+void Thread::setState(ThreadState new_state)
+{
+  assert(!((state_ == ToBeDestroyed) && (new_state != ToBeDestroyed)) && "Tried to change thread state when thread was already set to be destroyed");
+  assert(!((new_state == Sleeping) && (currentThread != this)) && "Setting other threads to sleep is not thread-safe");
+
+  state_ = new_state;
 }

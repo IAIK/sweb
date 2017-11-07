@@ -101,7 +101,8 @@ class Thread
 
     Loader* loader_;
 
-    ThreadState state_;
+
+    void setState(ThreadState state);
 
     /**
      * A part of the single-chained waiters list for the locks.
@@ -127,11 +128,15 @@ class Thread
     Thread(Thread const &src);
     Thread &operator=(Thread const &src);
 
+    volatile ThreadState state_;
+
     size_t tid_;
 
     Terminal* my_terminal_;
 
   protected:
+    ThreadState getState() const;
+
     FileSystemInfo* working_dir_;
 
     ustl::string name_;
