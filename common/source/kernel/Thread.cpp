@@ -64,7 +64,7 @@ void Thread::kill()
   debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
         currentThread, getName(), this);
 
-  setState(ToBeDestroyed);
+  setState(ToBeDestroyed); // vvv Code below this line may not be executed vvv
 
   if (currentThread == this)
   {
