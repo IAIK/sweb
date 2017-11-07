@@ -36,6 +36,7 @@ Scheduler::Scheduler()
 
 uint32 Scheduler::schedule()
 {
+  assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
   if (block_scheduling_ != 0)
   {
     debug(SCHEDULER, "schedule: currently blocked\n");
@@ -49,7 +50,7 @@ uint32 Scheduler::schedule()
 
     ustl::rotate(threads_.begin(), threads_.begin() + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
 
-    if ((currentThread == previousThread) && (currentThread->state_ != Running))
+    if ((currentThread == previousThread) && (currentThread->getState() != Running))
     {
       debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.\n");
     }
@@ -83,7 +84,7 @@ void Scheduler::addNewThread(Thread *thread)
 
 void Scheduler::sleep()
 {
-  currentThread->state_ = Sleeping;
+  currentThread->setState(Sleeping);
   assert(block_scheduling_ == 0);
   yield();
 }
@@ -91,9 +92,9 @@ void Scheduler::sleep()
 void Scheduler::wake(Thread* thread_to_wake)
 {
   // wait until the thread is sleeping
-  while(thread_to_wake->state_ != Sleeping)
+  while(thread_to_wake->getState() != Sleeping)
     yield();
-  thread_to_wake->state_ = Running;
+  thread_to_wake->setState(Running);
 }
 
 void Scheduler::yield()
@@ -124,7 +125,7 @@ void Scheduler::cleanupDeadThreads()
   for (uint32 i = 0; i < threads_.size(); ++i)
   {
     Thread* tmp = threads_[i];
-    if (tmp->state_ == ToBeDestroyed)
+    if (tmp->getState() == ToBeDestroyed)
     {
       destroy_list[thread_count++] = tmp;
       threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
