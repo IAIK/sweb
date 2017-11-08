@@ -26,15 +26,23 @@ typedef uint32 gid_t;
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 
-#define KERNEL_CS  (8*3)
-#define KERNEL_DS  (8*2)
-#define KERNEL_SS  (8*2)
-#define KERNEL_TSS (8*6)
+#define KERNEL_CS_INDEX  3
+#define KERNEL_DS_INDEX  2
+#define KERNEL_TSS_INDEX 6
+#define USER_CS_INDEX 5
+#define USER_DS_INDEX 4
+
 #define DPL_KERNEL  0
 #define DPL_USER    3
-#define USER_CS ((8*5)|DPL_USER)
-#define USER_DS ((8*4)|DPL_USER)
-#define USER_SS ((8*4)|DPL_USER)
+
+#define KERNEL_CS  (8*KERNEL_CS_INDEX)
+#define KERNEL_DS  (8*KERNEL_DS_INDEX)
+#define KERNEL_SS  (8*KERNEL_DS_INDEX)
+#define KERNEL_TSS (8*KERNEL_TSS_INDEX)
+
+#define USER_CS ((8*USER_CS_INDEX)|DPL_USER)
+#define USER_DS ((8*USER_DS_INDEX)|DPL_USER)
+#define USER_SS ((8*USER_DS_INDEX)|DPL_USER)
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)

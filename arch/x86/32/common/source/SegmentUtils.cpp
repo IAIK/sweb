@@ -49,15 +49,15 @@ static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 
 
 void SegmentUtils::initialise()
 {
-  setSegmentDescriptor(2, 0, -1U, 0, 0, 0);
-  setSegmentDescriptor(3, 0, -1U, 0, 1, 0);
-  setSegmentDescriptor(4, 0, -1U, 3, 0, 0);
-  setSegmentDescriptor(5, 0, -1U, 3, 1, 0);
+  setSegmentDescriptor(KERNEL_DS_INDEX, 0, -1U, DPL_KERNEL, 0, 0);
+  setSegmentDescriptor(KERNEL_CS_INDEX, 0, -1U, DPL_KERNEL, 1, 0);
+  setSegmentDescriptor(USER_DS_INDEX, 0, -1U, DPL_USER, 0, 0);
+  setSegmentDescriptor(USER_CS_INDEX, 0, -1U, DPL_USER, 1, 0);
 
-  g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
+  g_tss = (TSS*)new uint8[sizeof(TSS)];
   memset((void*)g_tss, 0, sizeof(TSS));
   g_tss->ss0 = KERNEL_SS;
-  setSegmentDescriptor(6, (uint32)g_tss, sizeof(TSS)-1, 0, 0, 1);
+  setSegmentDescriptor(KERNEL_TSS_INDEX, (uint32)g_tss, sizeof(TSS)-1, DPL_KERNEL, 0, 1);
   // we have to reload our segment stuff
   gdt_ptr.limit = sizeof(gdt) - 1;
   gdt_ptr.addr = (uint32)gdt;

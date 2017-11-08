@@ -175,7 +175,7 @@ extern "C" void arch_contextSwitch()
   }
   assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
   ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
-  g_tss.rsp0 = info.rsp0;
+  g_tss.rsp0 = info.rsp0; // Setup TSS to use kernel stack of new thread when a change to privilege level 0 occurs
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[ss]" : : [ss]"m"(info.ss));

@@ -230,14 +230,14 @@ extern "C" void entry64()
 
   gdt_ptr.limit = sizeof(gdt) - 1;
   gdt_ptr.addr = (uint64)gdt;
-  asm("lgdt (%%rax)" : : "a"(&gdt_ptr));
+  asm("lgdt (%%rax)" : : "a"(&gdt_ptr)); // Load GDT
   asm("mov %%ax, %%ds\n"
       "mov %%ax, %%es\n"
       "mov %%ax, %%ss\n"
       "mov %%ax, %%fs\n"
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
-  asm("ltr %%ax" : : "a"(KERNEL_TSS));
+  asm("ltr %%ax" : : "a"(KERNEL_TSS)); // Load TSS
   PRINT("Calling startup()...\n");
   asm("jmp *%[startup]" : : [startup]"r"(startup));
   while (1);

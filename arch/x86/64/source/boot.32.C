@@ -141,11 +141,11 @@ extern "C" void entry()
   g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
 
   PRINT("Setup Segments...\n");
-  setSegmentDescriptor(1, 0, 0, 0, 0, 1, 0);
-  setSegmentDescriptor(2, 0, 0, 0, 0, 0, 0);
-  setSegmentDescriptor(3, 0, 0, 0, 3, 1, 0);
-  setSegmentDescriptor(4, 0, 0, 0, 3, 0, 0);
-  setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
+  setSegmentDescriptor(KERNEL_CS_INDEX, 0, 0, 0, DPL_KERNEL, 1, 0);
+  setSegmentDescriptor(KERNEL_DS_INDEX, 0, 0, 0, DPL_KERNEL, 0, 0);
+  setSegmentDescriptor(USER_CS_INDEX, 0, 0, 0, DPL_USER, 1, 0);
+  setSegmentDescriptor(USER_DS_INDEX, 0, 0, 0, DPL_USER, 0, 0);
+  setSegmentDescriptor(KERNEL_TSS_INDEX, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1); // TSS entry in GDT
 
   PRINT("Loading Long Mode GDT...\n");
 
