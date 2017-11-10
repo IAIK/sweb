@@ -23,9 +23,8 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
-  pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
+  info = new ArchThreadRegisters();
+  pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT((pointer)ArchMemory::getRootOfKernelPagingStructure());
 
   info->esp     = (size_t)stack;
   info->ebp     = (size_t)stack;
