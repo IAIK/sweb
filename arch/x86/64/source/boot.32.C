@@ -155,7 +155,7 @@ extern "C" void entry()
   setSegmentDescriptor(gdt_p + KERNEL_DS_INDEX, 0, 0, 0, D_T_DATA | D_DPL0 | D_PRESENT | D_G_PAGE | D_SIZE  | D_WRITEABLE);
   setSegmentDescriptor(gdt_p + USER_CS_INDEX,   0, 0, 0, D_T_CODE | D_DPL3 | D_PRESENT | D_G_PAGE | D_64BIT | D_READABLE);
   setSegmentDescriptor(gdt_p + USER_DS_INDEX,   0, 0, 0, D_T_DATA | D_DPL3 | D_PRESENT | D_G_PAGE | D_SIZE  | D_WRITEABLE);
-  setSegmentDescriptor(gdt_p + KERNEL_TSS_INDEX, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, D_T_TSS_AVAIL | D_DPL0 | D_PRESENT | D_G_PAGE | D_SIZE);
+  setSegmentDescriptor(gdt_p + KERNEL_TSS_INDEX, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, D_T_TSS_AVAIL | D_DPL0 | D_PRESENT);
 
   PRINT("Loading Long Mode GDT...\n");
 
