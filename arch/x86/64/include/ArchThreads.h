@@ -37,9 +37,8 @@ struct ArchThreadRegisters
   uint64  ss;        // 184
   uint64  dpl;       // 192
   uint64  rsp0;      // 200
-  uint64  ss0;       // 208
-  uint64  cr3;       // 216
-  uint32  fpu[28];   // 224
+  uint64  cr3;       // 208
+  uint32  fpu[28];   // 216
 };
 
 class Thread;

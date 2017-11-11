@@ -4,6 +4,7 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "types.h"
 #include "offsets.h"
 #include "multiboot.h"
+#include "segment-definitions.h"
 
 #if A_BOOT == A_BOOT | OUTPUT_ENABLED
 #define PRINT(X) print(TRUNCATE(X))

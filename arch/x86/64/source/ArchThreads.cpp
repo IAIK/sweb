@@ -2,6 +2,7 @@
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
+#include "segment-definitions.h"
 #include "offsets.h"
 #include "assert.h"
 #include "Thread.h"
