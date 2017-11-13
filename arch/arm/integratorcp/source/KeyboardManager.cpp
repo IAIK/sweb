@@ -51,7 +51,8 @@ void KeyboardManager::serviceIRQ(void)
   if(scancode == 0xf0)
     next_is_up_ = 1;
 #endif
-  if (scancode > 0x80)
+  // left shift release (0xAA) and right shift release (0xB6) must not be ignored when scancode set 1 is sent by qemu:
+  if (scancode > 0x80 && scancode != 0xAA && scancode != 0xB6)
     return;
 
 #if QEMU_SENDS_SCANCODE_SET2
