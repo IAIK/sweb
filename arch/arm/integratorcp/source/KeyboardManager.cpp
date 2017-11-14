@@ -22,6 +22,8 @@ KeyboardManager *KeyboardManager::instance_ = 0;
 
 extern struct KMI* kmi;
 
+#define KMI_GOT_STUFF_TO_READ (kmi->stat & (1<<4))
+
 KeyboardManager::KeyboardManager() :
     keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0), next_is_up_(0)
 {
