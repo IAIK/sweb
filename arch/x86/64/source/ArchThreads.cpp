@@ -60,7 +60,6 @@ void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
   info->ss      = KERNEL_SS;
-  info->dpl     = DPL_KERNEL;
 
   assert(info->cr3);
 }
@@ -73,7 +72,6 @@ void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_fu
   info->ds      = USER_DS;
   info->es      = USER_DS;
   info->ss      = USER_SS;
-  info->dpl     = DPL_USER;
 
   info->rsp0    = (size_t)kernel_stack;
 
