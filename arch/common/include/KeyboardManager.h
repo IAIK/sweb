@@ -13,8 +13,6 @@ extern "C"
 #include "RingBuffer.h"
 #include "atkbd.h"
 
-#define QEMU_SENDS_SCANCODE_SET2 1
-
 #define STANDARD_KEYMAP_DEF { 0, 0x1B, '1', '2', '3', '4', '5' , '6', \
                               '7', '8', '9', '0', '-', '^', '\b', '\t', \
                               'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', \
