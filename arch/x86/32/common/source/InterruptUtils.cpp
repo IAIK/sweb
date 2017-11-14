@@ -17,6 +17,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+#include "SegmentUtils.h"
 #include "offsets.h"
 #include "PageFaultHandler.h"
 #include "Stabs2DebugInfo.h"

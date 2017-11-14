@@ -6,6 +6,7 @@
 #include "offsets.h"
 #include "Thread.h"
 #include "kstring.h"
+#include "SegmentUtils.h"
 
 
 
