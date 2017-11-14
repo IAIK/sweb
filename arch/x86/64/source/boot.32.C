@@ -4,6 +4,7 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "types.h"
 #include "offsets.h"
 #include "multiboot.h"
+#include "segment-definitions.h"
 
 #if A_BOOT == A_BOOT | OUTPUT_ENABLED
 #define PRINT(X) print(TRUNCATE(X))
@@ -24,8 +25,6 @@ extern uint32 bss_start_address;
 extern uint32 bss_end_address;
 extern uint8 boot_stack[];
 extern PageMapLevel4Entry kernel_page_map_level_4[];
-
-extern uint32 tss_selector;
 
 SegmentDescriptor gdt[7];
 
@@ -78,18 +77,31 @@ static void memset(char* block, char c, size_t length)
 
 extern uint8 boot_stack[];
 
-static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code,
-                                 uint8 tss)
+
+static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint16 type)
 {
+  if((baseH != 0) && (type & 0x10))
+  {
+    PRINT("WARNING: Only TSS and LDT segment descriptors have a 64-bit base address\n");
+  }
+  if((type & D_64BIT) && (type & D_SIZE))
+  {
+    PRINT("WARNING: 64 bit and size flags must not be used at the same time in segment descriptors\n");
+  }
+
   SegmentDescriptor* gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
+
   gdt_p[index].baseLL = (uint16) (baseL & 0xFFFF);
   gdt_p[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
   gdt_p[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
   gdt_p[index].baseH = baseH;
   gdt_p[index].limitL = (uint16) (limit & 0xFFFF);
   gdt_p[index].limitH = (uint8) (((limit >> 16U) & 0xF));
-  gdt_p[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
-  gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
+
+  // Bytes 5 + 6 contain segment type
+  type &= 0xF0FF;
+  *((uint16*)(((uint8*)(gdt_p + index)) + 5)) |= type;
+
 }
 
 extern "C" void entry()
@@ -141,17 +153,18 @@ extern "C" void entry()
   g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
 
   PRINT("Setup Segments...\n");
-  setSegmentDescriptor(1, 0, 0, 0, 0, 1, 0);
-  setSegmentDescriptor(2, 0, 0, 0, 0, 0, 0);
-  setSegmentDescriptor(3, 0, 0, 0, 3, 1, 0);
-  setSegmentDescriptor(4, 0, 0, 0, 3, 0, 0);
-  setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
+
+  setSegmentDescriptor(KERNEL_CS_INDEX, 0, 0, 0, D_T_CODE | D_DPL0 | D_PRESENT | D_G_PAGE | D_64BIT | D_READABLE);
+  setSegmentDescriptor(KERNEL_DS_INDEX, 0, 0, 0, D_T_DATA | D_DPL0 | D_PRESENT | D_G_PAGE | D_SIZE  | D_WRITEABLE);
+  setSegmentDescriptor(USER_CS_INDEX,   0, 0, 0, D_T_CODE | D_DPL3 | D_PRESENT | D_G_PAGE | D_64BIT | D_READABLE);
+  setSegmentDescriptor(USER_DS_INDEX,   0, 0, 0, D_T_DATA | D_DPL3 | D_PRESENT | D_G_PAGE | D_SIZE  | D_WRITEABLE);
+  setSegmentDescriptor(KERNEL_TSS_INDEX, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, D_T_TSS_AVAIL | D_DPL0 | D_PRESENT);
 
   PRINT("Loading Long Mode GDT...\n");
 
   struct GDT32Ptr gdt32_ptr;
   gdt32_ptr.limit = sizeof(gdt) - 1;
-  gdt32_ptr.addr = (uint32) TRUNCATE(gdt);
+  gdt32_ptr.addr = (uint32) TRUNCATE(&gdt);;
   asm("lgdt %[gdt_ptr]" : : [gdt_ptr]"m"(gdt32_ptr));
   asm("mov %%ax, %%ds\n" : : "a"(KERNEL_DS));
 

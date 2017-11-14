@@ -2,6 +2,7 @@
 #include "ArchMemory.h"
 #include "kprintf.h"
 #include "paging-definitions.h"
+#include "segment-definitions.h"
 #include "offsets.h"
 #include "assert.h"
 #include "Thread.h"
@@ -11,7 +12,7 @@ extern PageMapLevel4Entry kernel_page_map_level_4[];
 
 void ArchThreads::initialise()
 {
-  currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
+  currentThreadRegisters = new ArchThreadRegisters();
 
   /** Enable SSE for floating point instructions in long mode **/
   asm volatile ("movq %%cr0, %%rax\n"
@@ -30,69 +31,56 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_registers_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
 }
 
+void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+{
+  info = new ArchThreadRegisters();
+  pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT((pointer)ArchMemory::getRootOfKernelPagingStructure());
+
+  info->rflags  = 0x200;
+  info->cr3     = pml4;
+  info->rsp     = (size_t)stack;
+  info->rbp     = (size_t)stack;
+  info->rip     = (size_t)start_function;
+
+  /* fpu (=fninit) */
+  info->fpu[0] = 0xFFFF037F;
+  info->fpu[1] = 0xFFFF0000;
+  info->fpu[2] = 0xFFFFFFFF;
+  info->fpu[3] = 0x00000000;
+  info->fpu[4] = 0x00000000;
+  info->fpu[5] = 0x00000000;
+  info->fpu[6] = 0xFFFF0000;
+}
+
 void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
-  pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
+  createBaseThreadRegisters(info, start_function, stack);
 
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
   info->ss      = KERNEL_SS;
-  info->rflags  = 0x200;
-  info->dpl     = DPL_KERNEL;
-  info->rsp     = (size_t)stack;
-  info->rbp     = (size_t)stack;
-  info->rip     = (size_t)start_function;
-  info->cr3     = pml4;
+
   assert(info->cr3);
-
- /* fpu (=fninit) */
-  info->fpu[0] = 0xFFFF037F;
-  info->fpu[1] = 0xFFFF0000;
-  info->fpu[2] = 0xFFFFFFFF;
-  info->fpu[3] = 0x00000000;
-  info->fpu[4] = 0x00000000;
-  info->fpu[5] = 0x00000000;
-  info->fpu[6] = 0xFFFF0000;
-}
-
-void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
-{
-  info->rip = (size_t)function;
 }
 
 void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
-  pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
+  createBaseThreadRegisters(info, start_function, user_stack);
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;
   info->es      = USER_DS;
   info->ss      = USER_SS;
-  info->ss0     = KERNEL_SS;
-  info->rflags  = 0x200;
-  info->dpl     = DPL_USER;
-  info->rsp     = (size_t)user_stack;
-  info->rbp     = (size_t)user_stack;
+
   info->rsp0    = (size_t)kernel_stack;
-  info->rip     = (size_t)start_function;
-  info->cr3     = pml4;
+
   assert(info->cr3);
+}
 
- /* fpu (=fninit) */
-  info->fpu[0] = 0xFFFF037F;
-  info->fpu[1] = 0xFFFF0000;
-  info->fpu[2] = 0xFFFFFFFF;
-  info->fpu[3] = 0x00000000;
-  info->fpu[4] = 0x00000000;
-  info->fpu[5] = 0x00000000;
-  info->fpu[6] = 0xFFFF0000;
-  //kprintfd("ArchThreads::create: values done\n");
-
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
+{
+  info->rip = (size_t)function;
 }
 
 void ArchThreads::yield()

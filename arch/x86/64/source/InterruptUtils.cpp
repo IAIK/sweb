@@ -27,6 +27,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "paging-definitions.h"
+#include "segment-definitions.h"
 #include "PageFaultHandler.h"
 
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFFULL)

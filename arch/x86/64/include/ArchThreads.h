@@ -35,11 +35,9 @@ struct ArchThreadRegisters
   uint64  fs;        // 168
   uint64  gs;        // 176
   uint64  ss;        // 184
-  uint64  dpl;       // 192
-  uint64  rsp0;      // 200
-  uint64  ss0;       // 208
-  uint64  cr3;       // 216
-  uint32  fpu[28];   // 224
+  uint64  rsp0;      // 192
+  uint64  cr3;       // 200
+  uint32  fpu[28];   // 208
 };
 
 class Thread;
@@ -66,14 +64,31 @@ public:
  */
   static void initialise();
 
+  /**
+   * creates and initializes the common ArchThreadRegisters for a thread
+   * @param info where the ArchThreadRegisters is saved
+   * @param start_function instruction pointer is set so start function
+   * @param stack stackpointer
+   */
+  static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
+
 /**
- * creates the ArchThreadRegisters for a kernel thread
+ * initializes the ArchThreadRegisters for a kernel thread
  * @param info where the ArchThreadRegisters is saved
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
   static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
- 
+
+  /**
+   * initializes the ArchThreadRegisters for a user thread
+   * @param info where the ArchThreadRegisters is saved
+   * @param start_function instruction pointer is set so start function
+   * @param user_stack pointer to the userstack
+   * @param kernel_stack pointer to the kernel stack
+   */
+  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
+
   /**
    * changes an existing ArchThreadRegisters so that execution will start / continue
    * at the function specified
@@ -84,15 +99,6 @@ public:
    * @param start_function instruction pointer for the next instruction that gets executed
    */
   static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
-
-/**
- * creates the ArchThreadRegisters for a user thread
- * @param info where the ArchThreadRegisters is saved
- * @param start_function instruction pointer is set so start function
- * @param user_stack pointer to the userstack
- * @param kernel_stack pointer to the kernel stack
- */
-  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
 
 /**
  *

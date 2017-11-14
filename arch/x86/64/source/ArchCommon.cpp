@@ -9,6 +9,7 @@
 #include "TextConsole.h"
 #include "ports.h"
 #include "SWEBDebugInfo.h"
+#include "segment-definitions.h"
 
 extern void* kernel_end_address;
 
