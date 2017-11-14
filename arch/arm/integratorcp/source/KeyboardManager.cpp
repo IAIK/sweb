@@ -22,12 +22,24 @@ KeyboardManager *KeyboardManager::instance_ = 0;
 
 extern struct KMI* kmi;
 
+#define KMI_GOT_STUFF_TO_READ (kmi->stat & (1<<4))
+
 KeyboardManager::KeyboardManager() :
     keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0), next_is_up_(0)
 {
   kmi = (struct KMI*) 0x88000000;
   kmi->cr = 0x1C;
   kmi->data = 0xF4;
+  while(!KMI_GOT_STUFF_TO_READ) {}; //wait for RX of answer
+  if(kmi->data != 0xFA)
+    assert(false && "Keyboard did not answer with the expected ack...");
+  while(KMI_GOT_STUFF_TO_READ && kmi->data == 0xFA) {}; //keyboard sends more than one ack.. synchronizing communication with that while...
+  send_cmd(0xF0); //scancode set command
+  send_cmd(0x02); //set scancode set to scancode set 2.. 
+  while(!KMI_GOT_STUFF_TO_READ) {}; //wait for RX of answer
+  if(kmi->data != 0xFA)
+    assert(false && "Keyboard did not answer with the expected ack...");
+  while(KMI_GOT_STUFF_TO_READ && kmi->data == 0xFA) {}; //keyboard sends more than one ack.. synchronizing communication with that while...
 }
 
 KeyboardManager::~KeyboardManager()
@@ -36,6 +48,18 @@ KeyboardManager::~KeyboardManager()
 
 void KeyboardManager::kb_wait()
 {
+  //basically implemented like x86, but with wait for TX data reg empty flag
+  //this function waits for the command buffer to be empty...
+  uint32 i;
+
+  for (i = 0; i < 0x10000; i++)
+  {
+    uint8 stat = kmi->stat;
+    if ((stat & (1<<6)))
+      break;
+  }
+  if (i >= 0x10000)
+    kprintfd("KeyboardManager::kb_wait: waiting on TX data reg empty did not work :-( kmi->stat=%zx\n", kmi->stat);
 }
 
 void KeyboardManager::send_cmd(uint8 cmd, uint8 port __attribute__((unused)))
@@ -47,15 +71,11 @@ void KeyboardManager::send_cmd(uint8 cmd, uint8 port __attribute__((unused)))
 void KeyboardManager::serviceIRQ(void)
 {
   uint8 scancode = kmi->data;
-#if QEMU_SENDS_SCANCODE_SET2
   if(scancode == 0xf0)
     next_is_up_ = 1;
-#endif
-  // left shift release (0xAA) and right shift release (0xB6) must not be ignored when scancode set 1 is sent by qemu:
-  if (scancode > 0x80 && scancode != 0xAA && scancode != 0xB6)
+  if (scancode > 0x80)
     return;
 
-#if QEMU_SENDS_SCANCODE_SET2
   scancode = SET1_SCANCODES[scancode];
   if(next_is_up_)
   {
@@ -63,7 +83,6 @@ void KeyboardManager::serviceIRQ(void)
     modifyKeyboardStatus(scancode | 0x80);
     return;
   }
-#endif
 
   if (extended_scancode == 0xE0)
   {
