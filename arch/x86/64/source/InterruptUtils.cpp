@@ -345,13 +345,16 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 }
 
 
-static uint64_t* syscall_rsp = 0;
 
 extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error);
-extern "C" void arch_syscallHandler()
-{
-  {
+extern "C" void arch_syscallHandlerWrapper() {
   asm("popq %rbp\n"
+      "jmp arch_syscallHandlerAfterProlog\n");
+}
+
+extern "C" void archSyscallHandler() {
+  uint64_t* rsp = 0;
+  asm("arch_syscallHandlerAfterProlog:\n"
       "pushq %rsp\n"
       "pushq %rax\n"
       "pushq %rcx\n"
@@ -378,12 +381,9 @@ extern "C" void arch_syscallHandler()
       "movw %ax,%es\n"
       "movw %ax,%fs\n"
       "movw %ax,%gs\n");
-  }
-  {
-  asm("movq %%rsp,%0\n" : "=m"(syscall_rsp));
-  arch_saveThreadRegisters(syscall_rsp,0);
+  asm("movq %%rsp,%0\n" : "=m"(rsp));
+  arch_saveThreadRegisters(rsp, 0);
   syscallHandler();
-  }
   asm("hlt");
 }
 
