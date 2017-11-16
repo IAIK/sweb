@@ -171,16 +171,3 @@ errorhandlerWithCode \num
 .irp num,0,4,5,6,7,9,16,18,19
 errorhandler \num
 .endr
-
-.global arch_syscallHandler
-.extern syscallHandler
-.stabs "arch_syscallHandler",36,0,0,arch_syscallHandler
-arch_syscallHandler:
-  pushall
-  pushl %ebp
-  movl %esp,%ebp
-  pushl $0
-  call arch_saveThreadRegisters
-  leave
-  call syscallHandler
-  hlt

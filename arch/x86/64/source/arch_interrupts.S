@@ -166,13 +166,3 @@ errorhandlerWithCode \num
 .irp num,0,4,5,6,7,9,16,18,19
 errorhandler \num
 .endr
-
-.global arch_syscallHandler
-.extern syscallHandler
-arch_syscallHandler:
-    pushAll
-    movq %rsp,%rdi
-    movq $0,%rsi
-    call arch_saveThreadRegisters
-    call syscallHandler
-    hlt

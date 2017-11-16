@@ -41,5 +41,5 @@ public:
    * yields if the IF Flag is set, else does hlt
    */
   static void yieldIfIFSet();
-};
 
+};

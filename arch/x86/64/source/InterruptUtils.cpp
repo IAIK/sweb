@@ -344,5 +344,49 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   }
 }
 
-#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
 
+static uint64_t* syscall_rsp = 0;
+
+extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error);
+extern "C" void arch_syscallHandler()
+{
+  {
+  asm("popq %rbp\n"
+      "pushq %rsp\n"
+      "pushq %rax\n"
+      "pushq %rcx\n"
+      "pushq %rdx\n"
+      "pushq %rbx\n"
+      "pushq %rbp\n"
+      "pushq %rsi\n"
+      "pushq %rdi\n"
+      "pushq %r8\n"
+      "pushq %r9\n"
+      "pushq %r10\n"
+      "pushq %r11\n"
+      "pushq %r12\n"
+      "pushq %r13\n"
+      "pushq %r14\n"
+      "pushq %r15\n"
+      "movw %es,%ax\n"
+      "pushq %rax\n"
+      "movw %ds,%ax\n"
+      "pushq %rax\n"
+      "movw $0x20, %ax\n"
+      "movw %ax,%ss\n"
+      "movw %ax,%ds\n"
+      "movw %ax,%es\n"
+      "movw %ax,%fs\n"
+      "movw %ax,%gs\n");
+  }
+  {
+  asm("movq %%rsp,%0\n" : "=m"(syscall_rsp));
+  arch_saveThreadRegisters(syscall_rsp,0);
+  syscallHandler();
+  }
+  asm("hlt");
+}
+
+
+
+#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions

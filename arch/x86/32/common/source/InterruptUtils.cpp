@@ -222,7 +222,7 @@ extern "C" void irqHandler_15()
 }
 
 extern "C" void arch_syscallHandler();
-extern "C" void syscallHandler()
+extern "C" __attribute__((fastcall)) void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
   currentThreadRegisters = currentThread->kernel_registers_;
@@ -297,6 +297,28 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
     currentThread->kill();
   }
 }
+
+//static uint32_t* syscall_esp = 0;
+
+extern "C" void arch_saveThreadRegisters(uint32 error);
+extern "C" void arch_syscallHandler()
+{
+  asm("pop %ebp\n"
+      "pushal\n"
+      "push %ds\n"
+      "push %es\n"
+      "movw $0x10, %ax\n"
+      "movw %ax,%es\n"
+      "movw $0x10, %ax\n"
+      "movw %ax,%ds\n"
+      "pushl %ebp\n"
+      "movl %esp,%ebp\n"
+      "pushl $0\n"
+      "call arch_saveThreadRegisters\n"
+      "call syscallHandler\n"
+      "hlt\n");
+}
+
 
 #include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
 
