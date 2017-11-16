@@ -298,12 +298,17 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
   }
 }
 
-//static uint32_t* syscall_esp = 0;
-
 extern "C" void arch_saveThreadRegisters(uint32 error);
-extern "C" void arch_syscallHandler()
+
+extern "C" void arch_syscallHandlerWrapper()
 {
   asm("pop %ebp\n"
+      "jmp arch_syscallHandlerAfterProlog\n");
+}
+
+extern "C" void arch_syscallHandler()
+{
+  asm("arch_syscallHandlerAfterProlog:\n"
       "pushal\n"
       "push %ds\n"
       "push %es\n"
