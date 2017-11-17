@@ -456,6 +456,10 @@ extern int printf(const char *format, ...)
           flag |= LONG;
           ++format;
           break;
+        case 'l':
+          flag |= LONG;
+          ++format;
+          break;
         default:
           break;
       }
