@@ -24,8 +24,8 @@ extern "C"
                               'b', 'n', 'm', ',', '.', '/',KBD_META_SHIFT, '*', \
                               KBD_META_LALT, ' ', KBD_META_CAPS, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, \
                               KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KBD_META_NUM, KBD_META_SCRL, '7', \
-                              '8', '9', '-', '4', '5', '6', '+', '1', \
-                              '2', '3', '0', '.', 0, 0, 0, KEY_F11  , \
+                              KEY_UP, '9', '-', KEY_LFT, '5', KEY_RT, '+', '1', \
+                              KEY_DN, '3', '0', '.', 0, 0, 0, KEY_F11  , \
                               KEY_F12, 0, 0, 0, 0, 0, 0, 0, \
                               0, '\n', KBD_META_CTRL, '/', KEY_PRNT, KBD_META_RALT, 0, KEY_HOME, \
                               KEY_UP, KEY_PGUP, KEY_LFT, KEY_RT, KEY_END, KEY_DN, KEY_PGDN, KEY_INS, \
