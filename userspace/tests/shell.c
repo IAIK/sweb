@@ -25,7 +25,7 @@ void handle_command(char* buffer, int buffer_size)
   int lastIndex = 0;
   int pid;
 
-  for (c = 0; c < buffer_size && buffer[c]; c++)
+  for (c = 0; c < buffer_size; c++) //Do check for null termination at end of for loop to have one last run with \0
   {
     if (argsCount >= 10)
     {
@@ -33,7 +33,7 @@ void handle_command(char* buffer, int buffer_size)
       printf("Argument count is limited to 10 (no dynamic memory allocation) - all other arguments will be ignored\n");
       break;
     }
-    if (buffer[c] == '\r' || buffer[c] == '\n' || buffer[c] == ' ')
+    if (buffer[c] == '\r' || buffer[c] == '\n' || buffer[c] == ' ' || buffer[c] == '\0')
     {
       if (argsCount == -1)
       {
@@ -48,6 +48,11 @@ void handle_command(char* buffer, int buffer_size)
       argsCount++;
       lastIndex = c + 1;
 
+    }
+
+    if (buffer[c] == '\0')
+    {
+      break;
     }
   }
   if (strcmp(command, "ls") == 0)
