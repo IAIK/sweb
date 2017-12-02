@@ -433,17 +433,26 @@ int getchar()
  */
 char *gets(char *input_buffer, size_t buffer_size)
 {
-  char* cchar = input_buffer;
   unsigned int counter = 0;
   if (!buffer_size)
     return input_buffer;
 
-  do
-  {
-    cchar = input_buffer + counter;
-    read(STDIN_FILENO, (void*) cchar, 1);
+  int cchar = 0;
 
-    if (*cchar == '\b')
+  while((cchar = getchar()) != EOF)
+  {
+
+    if(cchar == '\r' || cchar == '\n' || (counter + 1) >= buffer_size) // there must be one space left for the \0 at end
+    {
+      *(input_buffer + counter) = '\0';
+      break;
+    }
+    else
+    {
+      *(input_buffer + counter) = (char)cchar;
+    }
+
+    if (cchar == '\b')
     {
       if (counter > 0)
         counter--;
@@ -452,10 +461,8 @@ char *gets(char *input_buffer, size_t buffer_size)
     {
       counter++;
     }
-  } while (*cchar != '\n' && *cchar != '\r' && counter < buffer_size);
 
-  if (buffer_size - counter)
-    input_buffer[counter] = '\0';
+  }
 
   return input_buffer;
 }
