@@ -169,6 +169,8 @@ extern int getchar();
  */
 extern char *gets(char *input_buffer, size_t buffer_size);
 
+extern char *fgets(char *str, int num, int fd);
+
 /**
  * Equivalent to putc(character, stdout).
  *
@@ -241,6 +243,8 @@ extern void perror(const char *error_msg);
  *
  */
 extern int scanf(const char *format, ...) __attribute__ ((format (scanf, 1, 2)));
+
+extern int sscanf(const char *buffer, const char *fmt, ...) __attribute__((format (scanf, 2, 3)));
 
 #ifdef __cplusplus
 }
