@@ -401,6 +401,21 @@ int scanf(const char *fmt, ...)
 }
 
 
+int sscanf(const char *buffer, const char *fmt, ...)
+{
+  va_list args;
+  int return_val = 0;
+
+  va_start(args, fmt);
+
+  return_val = vsscanf(buffer, fmt, args);
+
+  va_end(args);
+
+  return return_val;
+}
+
+
 /**
  * Reads the next character from stdin.
  * The read value will be returned as unsigned char cast to an int
@@ -465,4 +480,52 @@ char *gets(char *input_buffer, size_t buffer_size)
   }
 
   return input_buffer;
+}
+
+
+char *fgets(char *str, int num, int fd)
+{
+  unsigned int counter = 0;
+  ssize_t readCount = 0;
+  char buffer[128];
+  off_t oldOffset = lseek(fd, 0, SEEK_CUR);
+
+  if (!num)
+    return str;
+
+  do
+  {
+    readCount = read(fd, buffer, 128);
+    for (ssize_t i = 0; i < readCount; i++)
+    {
+      if (buffer[i] == '\r' || buffer[i] == '\n' || (counter+1) >= num)
+      {
+        *(str + counter) = '\0';
+        lseek(fd, oldOffset+counter+1, SEEK_SET);
+        return str;
+      }
+      else
+      {
+        *(str + counter) = buffer[i];
+      }
+
+      if (buffer[i] == '\b')
+      {
+        if (counter > 0)
+          counter--;
+      }
+      else
+      {
+        counter++;
+      }
+    }
+  } while (readCount > 0);
+
+  if (num - counter)
+    str[counter] = '\0';
+
+  if (counter == 0)
+    return 0;
+
+  return str;
 }
