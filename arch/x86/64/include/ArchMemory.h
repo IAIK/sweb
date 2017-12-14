@@ -95,8 +95,8 @@ public:
  * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
  */
   static uint64 get_PPN_Of_VPN_In_KernelMapping(uint64 virtual_page, uint64 *physical_page, uint64 *physical_pte_page=0);
-  ArchMemoryMapping resolveMapping(uint64 vpage);
-  static ArchMemoryMapping resolveMapping(uint64 pml4,uint64 vpage);
+  const ArchMemoryMapping resolveMapping(uint64 vpage);
+  static const ArchMemoryMapping resolveMapping(uint64 pml4,uint64 vpage);
 
 /**
  *
