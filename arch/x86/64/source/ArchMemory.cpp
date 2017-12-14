@@ -183,12 +183,12 @@ pointer ArchMemory::checkAddressValid(uint64 vaddress_to_check)
   }
 }
 
-ArchMemoryMapping ArchMemory::resolveMapping(uint64 vpage)
+const ArchMemoryMapping ArchMemory::resolveMapping(uint64 vpage)
 {
   return resolveMapping(page_map_level_4_, vpage);
 }
 
-ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
+const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
 {
   ArchMemoryMapping m;
 
