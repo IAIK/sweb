@@ -438,55 +438,62 @@ extern int printf(const char *format, ...)
       int precision = 14;
       unsigned char flag = 0;
       ++format;
-      switch (*format)
+      while (1)
       {
-        case '-':
-          flag |= LEFT;
-          ++format;
-          break;
-        case '+':
-          flag |= PLUS;
-          ++format;
-          break;
-        case '0':
-          flag |= ZEROPAD;
-          ++format;
-          break;
-        case 'z':
-          flag |= LONG;
-          ++format;
-          break;
-        case 'l':
-          flag |= LONG;
-          ++format;
-          break;
-        default:
-          break;
-      }
-      size_t c = 0;
-      char num[4];
-      for(; *format >= (c ? '0' : '1') && *format <= '9'; ++format, ++c)
-        if( c < 4 )
-          num[c] = *format;
-      num[c < 4 ? c : 3] = 0;
-      if( c )
-      {
-        width = atoi(num); //this advances *format as well
+        switch (*format) // prefix specifiers (there might be multiple)
+        {
+          case '-':
+            flag |= LEFT;
+            ++format;
+            continue;
+          case '+':
+            flag |= PLUS;
+            ++format;
+            continue;
+          case '0':
+            flag |= ZEROPAD;
+            ++format;
+            continue;
+          case 'z':
+          case 'l':
+            flag |= LONG;
+            ++format;
+            continue;
+          default:
+            break;
+        }
+        if (width)
+          break; // only look for width specifier if we didn't have one yet
+        
+        size_t c = 0;
+        char num[4];
+        for(; *format >= (c ? '0' : '1') && *format <= '9'; ++format, ++c)
+          if( c < 4 )
+            num[c] = *format;
+        num[c < 4 ? c : 3] = 0;
+        if( c )
+        {
+          width = atoi(num);
 
 #ifdef STATIC_MEMORY__
-        if(character_count < width)
-          width = character_count;
+          if(character_count < width)
+            width = character_count;
 #else
-        while(character_count < width)
-        {
-          character_count = output_string.size;
-          resizeString(&output_string, output_string.size * 2);
-        }
+          while(character_count < width)
+          {
+            character_count = output_string.size;
+            resizeString(&output_string, output_string.size * 2);
+          }
 #endif // STATIC_MEMORY__
+
+          continue; // there might be another prefix character after this...
+        }
+        
+        break; // prefix is done
       }
       
       if(*format == '.') {
-        format++;   
+        ++format; 
         char num[4];
         c = 0;
         for(; *format >= (c ? '0' : '1') && *format <= '9'; ++format, ++c)
@@ -495,7 +502,7 @@ extern int printf(const char *format, ...)
         num[c < 4 ? c : 3] = 0;
         if( c )
         {
-            precision = atoi(num); //this advances *format as well
+            precision = atoi(num);
         }
       }
       
