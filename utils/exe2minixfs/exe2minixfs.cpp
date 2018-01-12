@@ -16,7 +16,8 @@
 Superblock* superblock_;
 FileSystemInfo* default_working_dir;
 VfsMount vfs_dummy_;
-FakeThread* currentThread = 0;
+
+FileSystemInfo* getcwd() { return default_working_dir; }
 
 // obviously NOT atomic, we need this for compatability in single threaded host code
 size_t atomic_add(size_t& x,size_t y)

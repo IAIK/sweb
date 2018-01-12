@@ -32,10 +32,6 @@ typedef uint64_t l_off_t;
 
 class FileSystemInfo;
 
-class FakeThread { public: FileSystemInfo* getWorkingDirInfo() { return 0; } };
-
-extern FakeThread* currentThread;
-
 size_t atomic_add(size_t& x,size_t y);
 
 #endif

@@ -495,7 +495,7 @@ extern int printf(const char *format, ...)
       if(*format == '.') {
         ++format; 
         char num[4];
-        c = 0;
+        size_t c = 0;
         for(; *format >= (c ? '0' : '1') && *format <= '9'; ++format, ++c)
             if( c < 4 )
                 num[c] = *format;

@@ -22,8 +22,6 @@
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
 
-extern FileSystemInfo* default_working_dir;
-
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
   extern Mutex global_fd_lock;
@@ -41,7 +39,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 
 int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount)
 {
-  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
+  FileSystemInfo *fs_info = getcwd();
   if (pathname == 0)
     return -1;
 
@@ -63,7 +61,7 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   debug(VFSSYSCALL, "(mkdir) \n");
-  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
+  FileSystemInfo *fs_info = getcwd();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
@@ -111,7 +109,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
 Dirent* VfsSyscall::readdir(const char* pathname)
 {
-  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
+  FileSystemInfo *fs_info = getcwd();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
@@ -162,7 +160,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
 
 int32 VfsSyscall::chdir(const char* pathname)
 {
-  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
+  FileSystemInfo *fs_info = getcwd();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
@@ -273,7 +271,7 @@ int32 VfsSyscall::close(uint32 fd)
 
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
-  FileSystemInfo *fs_info = currentThread ? currentThread->getWorkingDirInfo() : default_working_dir;
+  FileSystemInfo *fs_info = getcwd();
   if (flag > (O_CREAT | O_RDWR))
   {
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
