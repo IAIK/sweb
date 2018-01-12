@@ -108,6 +108,13 @@ FileSystemInfo* Thread::getWorkingDirInfo(void)
   return working_dir_;
 }
 
+FileSystemInfo* getcwd()
+{
+  if (FileSystemInfo* info = currentThread->getWorkingDirInfo())
+    return info;
+  return default_working_dir;
+}
+
 void Thread::setWorkingDirInfo(FileSystemInfo* working_dir)
 {
   working_dir_ = working_dir;
