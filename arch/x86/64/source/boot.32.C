@@ -130,7 +130,7 @@ extern "C" void entry()
 
   PRINT("Enable Paging...\n");
   asm("mov %cr0,%eax\n"
-      "or $0x80000001,%eax\n"
+      "or $0x80010001,%eax\n"
       "mov %eax,%cr0\n");
 
   PRINT("Setup TSS...\n");
