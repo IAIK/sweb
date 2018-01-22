@@ -34,8 +34,6 @@ PageTableEntry* ArchMemory::getIdentAddressOfPT(PageDirEntry* page_directory, ui
 
 PageTableEntry* ArchMemory::getPTE(size_t vpn)
 {
-  assert(archmem_lock_.isHeldBy(currentThread));
-
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = vpn / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = vpn % PAGE_TABLE_ENTRIES;
@@ -186,7 +184,8 @@ ArchMemory::~ArchMemory()
         auto it = ustl::find(pt_ppns_.begin(), pt_ppns_.end(), page_directory[pde_vpn].pt.pt_ppn * 4 + i);
         if (it == pt_ppns_.end())
           free_pt_page = false;
-        pt_ppns_.erase(it);
+        else
+          pt_ppns_.erase(it);
       }
       if (free_pt_page)
         PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
