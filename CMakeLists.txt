@@ -13,6 +13,10 @@ if ("${ARCH}" STREQUAL "")
 endif("${ARCH}" STREQUAL "")
 MESSAGE("-- Target architecture: ${ARCH}")
 
+if ("${ARCH}" MATCHES "arm.*")
+  add_definitions(-DARM)
+endif("${ARCH}" MATCHES "arm.*")
+
 if ("${BIN_DIR_PREFIX}" STREQUAL "")
   SET (BIN_DIR_PREFIX "../")
 endif ("${BIN_DIR_PREFIX}" STREQUAL "")
