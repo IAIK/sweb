@@ -25,3 +25,4 @@ utils/add-debug/*.d
 *.DS_Store
 *Thumbs.db
 .idea
+cmake-build-debug/*
