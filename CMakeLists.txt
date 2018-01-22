@@ -17,17 +17,6 @@ if ("${ARCH}" MATCHES "arm.*")
   add_definitions(-DARM)
 endif("${ARCH}" MATCHES "arm.*")
 
-if ("${BIN_DIR_PREFIX}" STREQUAL "")
-  SET (BIN_DIR_PREFIX "../")
-endif ("${BIN_DIR_PREFIX}" STREQUAL "")
-
-if ("${BIN_DIR_NAME}" STREQUAL "")
-  SET (BIN_DIR_NAME "sweb-bin")
-endif ("${BIN_DIR_NAME}" STREQUAL "")
-
-if ("${DOC_DIR}" STREQUAL "")
-  SET (DOC_DIR "..\\/sweb-docs")
-endif ("${DOC_DIR}" STREQUAL "")
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
@@ -85,7 +74,6 @@ set(NOPICFLAG )
 endif()
 
 #Initialize CMake output directories
-set(UTILS_DIR "${PROJECT_BINARY_DIR}/../sweb/utils")
 set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
@@ -126,7 +114,6 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 ENDMACRO(ADD_PROJECT_LIBRARY)
 
 set (SOURCE_WILDCARDS *.cpp *.c *.S)
-set (INFO_FILE info.file)
 
 set(LIBRARY_FILENAMES)
 
@@ -285,7 +272,6 @@ add_custom_target(bochsgdb
 #Run qemu in emu mode
 add_custom_target(emu
 	COMMAND	cat '${PROJECT_SOURCE_DIR}/utils/emu.txt'
-	WORKING_DIRECTORY ${UTILS_DIR}
 	)
 
 #Custom target: make runddd
