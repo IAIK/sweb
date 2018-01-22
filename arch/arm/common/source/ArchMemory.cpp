@@ -27,6 +27,25 @@
 PageDirEntry kernel_page_directory[PAGE_DIR_ENTRIES] __attribute__((aligned(0x4000))); // space for page directory
 PageTableEntry kernel_page_tables[16 * PAGE_TABLE_ENTRIES] __attribute__((aligned(1024))); // space for 8 page tables
 
+PageTableEntry* ArchMemory::getIdentAddressOfPT(PageDirEntry* page_directory, uint32 pde_vpn)
+{
+  return ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
+}
+
+PageTableEntry* ArchMemory::getPTE(size_t vpn)
+{
+  assert(archmem_lock_.isHeldBy(currentThread));
+
+  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
+  uint32 pde_vpn = vpn / PAGE_TABLE_ENTRIES;
+  uint32 pte_vpn = vpn % PAGE_TABLE_ENTRIES;
+
+  if (page_directory[pde_vpn].pt.size == PDE_SIZE_NONE)
+    return nullptr;
+
+  return &getIdentAddressOfPT(page_directory, pde_vpn)[pte_vpn];
+}
+
 ArchMemory::ArchMemory()
 {
   page_dir_page_ = PageManager::instance()->allocPPN(4 * PAGE_SIZE);
