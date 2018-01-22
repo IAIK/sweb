@@ -25,11 +25,12 @@ extern "C" void __attribute__((naked)) entry()
   initialiseBootTimePagingPTR();
   asm("mcr p15, 0, %[v], c2, c0, 0\n" : : [v]"r"(((uint8*)kernel_page_directory) + BOOT_OFFSET)); // set ttbr0
   asm("mcr p15, 0, %[v], c8, c7, 0\n" : : [v]"r"(0)); // tlb flush
-  asm("mcr p15, 0, %[v], c3, c0, 0\n" : : [v]"r"(3)); // set domain access control (full address space access for userspace)
+  asm("mcr p15, 0, %[v], c3, c0, 0\n" : : [v]"r"(0b111)); // set domain access control (domain 0 in manager mode, domain 1 in usr mode)
   asm("mrc p15, 0, r0, c1, c0, 0\n"
       "orr r0, r0, #0x1\n"          // set paging bit
       "bic r0, r0, #0x2\n"          // disable alignment fault bit
       "orr r0, r0, #0x400000\n"     // set unaligned memory access bit
+      "orr r0, r0, #0x800000\n"     // set disable subpages bit
       "mcr p15, 0, r0, c1, c0, 0\n" // enable paging
      );
   void (*PagingModePTR)() = &PagingMode; // create a blx jump instead of a bl jump
