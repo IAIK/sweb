@@ -6,8 +6,7 @@ include_directories(
   ../../common/include/fs/minixfs
 )
 
-set(CMAKE_C_FLAGS   "-DEXE2MINIXFS -std=gnu11   -O0 -g -Wall -Wextra -Werror -fno-builtin -fno-rtti -fno-exceptions -Werror=implicit-function-declaration")
-set(CMAKE_CXX_FLAGS "-DEXE2MINIXFS -std=gnu++11 -O0 -g -Wall -Wextra -Werror -fno-builtin -fno-rtti -fno-exceptions -Werror=implicit-function-declaration")
+add_definitions(-DEXE2MINIXFS)
 
 file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/util/Bitmap.cpp
