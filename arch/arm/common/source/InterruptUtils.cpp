@@ -35,10 +35,11 @@ uint32 last_address;
 uint32 count;
 
 
-#define FLAG_FAULT_WRITING (1 << 10)
-#define FLAG_STATUS_MASK ((1 << 3) - 1)
+#define FLAG_FAULT_WRITING (0x800)
+#define FLAG_STATUS_MASK (0xf)
 #define FLAG_TRANSLATION_PAGE (7)
 #define FLAG_TRANSLATION_SECTION (5)
+
 //TODO extern "C" void arch_pageFaultHandler();
 void pageFaultHandler(uint32 address, uint32 type)
 {
@@ -65,6 +66,7 @@ void pageFaultHandler(uint32 address, uint32 type)
   if(data_fault)
   {
     fetch = 0;
+    // the writing bit is actually useless as it was introduced only in ARMv6
     writing = data_fault & FLAG_FAULT_WRITING;
     status = data_fault & FLAG_STATUS_MASK;
   }
