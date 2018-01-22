@@ -177,9 +177,7 @@ add_custom_target (kernel ALL
 add_custom_command (OUTPUT temp_dir
 	#Create folder structure for the disk image
 	COMMAND rm -rf "./temp"
-	COMMAND mkdir "./temp"
-	COMMAND mkdir "./temp/boot"
-	COMMAND mkdir "./temp/boot/grub"
+	COMMAND mkdir -p "./temp/boot/grub"
   COMMAND cp "./kernel.x" "./temp/boot"
   COMMAND touch "./kernel.dbg"
   COMMAND cp "./kernel.dbg" "./temp/boot"
