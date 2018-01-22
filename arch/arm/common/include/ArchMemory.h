@@ -111,7 +111,10 @@ public:
 
 private:
 
-/** 
+  PageTableEntry* getPTE(size_t vpn);
+  static PageTableEntry* getIdentAddressOfPT(PageDirEntry *page_directory, uint32 pde_vpn);
+
+/**
  * Adds a page directory entry to the given page directory.
  * (In other words, adds the reference to a new page table to a given
  * page directory.)
