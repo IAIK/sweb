@@ -217,12 +217,10 @@ add_custom_command (OUTPUT copy_to_image
   COMMENT "Copying files to image..."
   )
 
-#Custom Command: compile add-debug to add debug infos to binaries
+# Custom Command: copy add-dbg.sh to add debug info to binaries; make sure add-dbg binary is built
 add_custom_command (OUTPUT add-debug
-    COMMENT "Building add-debug"
-    COMMAND make -C "${CMAKE_SOURCE_DIR}/utils/add-debug"
-    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg" ${PROJECT_BINARY_DIR}
     COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg.sh" ${PROJECT_BINARY_DIR}
+    DEPENDS add-dbg
   )
   
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
