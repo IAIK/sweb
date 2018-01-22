@@ -133,6 +133,7 @@ void ArchMemory::insertPT(uint32 pde_vpn)
   memset(((PageTableEntry *)getIdentAddressOfPPN(physical_page_table_page)) + offset * PAGE_TABLE_ENTRIES, 0, PT_SIZE);
   page_directory[pde_vpn].pt.pt_ppn = physical_page_table_page + PHYS_OFFSET_4K;
   page_directory[pde_vpn].pt.offset = offset;
+  page_directory[pde_vpn].pt.domain = 1;
   page_directory[pde_vpn].pt.size = PDE_SIZE_PT;
 }
 
