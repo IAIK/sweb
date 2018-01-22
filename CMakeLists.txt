@@ -1,12 +1,9 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0.2)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-if(COMMAND cmake_policy)
-  cmake_policy(VERSION 2.6)
-endif(COMMAND cmake_policy)
-if(POLICY CMP0037)
-  cmake_policy(SET CMP0037 OLD)
-endif(POLICY CMP0037)
+
+# Needed for reserved targets like "install" and "help"
+cmake_policy(SET CMP0037 OLD)
 
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/64")
