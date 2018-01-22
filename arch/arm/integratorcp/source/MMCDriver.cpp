@@ -171,15 +171,15 @@ int32 MMCDriver::writeBlock(uint32 address, void *buffer)
   uint32 response;
   mmc_send_cmd(24, address, &response);
   mmci->datalength = 512;
-  mmci->datactrl = PL181_DATA_ENABLE | PL181_DATA_DIRECTION | PL181_DATA_MODE;
+  mmci->datactrl = PL181_DATA_ENABLE | PL181_DATA_MODE;
   for (uint32 j = 0; j < 8; j++)
   {
+    while (!(mmci->status & PL181_STATUS_TXFIFOEMPTY));
     uint32 i;
     for (i = 0; i < 16; i++)
     {
-       mmci_fifo[i] = *((uint32*) buffer + j * 16 + i);
+      mmci_fifo[i] = *((uint32 *) buffer + j * 16 + i);
     }
-    while ((mmci->status & PL181_STATUS_TXFIFOEMPTY));
   }
   return 0;
 }
