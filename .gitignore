@@ -3,26 +3,26 @@
 *.sw?
 .#*
 *#
-doc/html/
-doc/latex/
-Doxyfile
-sweb.kdev*
+doc/
 CMakeFiles
 CMakeCache.txt
 *.cmake
 Makefile
 ./bin
-info.file
-utils/bochs/bochsrc
-utils/add-debug/add-dbg
-utils/add-debug/*.o
-utils/add-debug/*.d
+
+# Generated C++ files
+utils/add-debug/*/to_string.cc
+
+# IDE Files
+sweb.kdev*
 .settings
 .project
 .cproject
 .cdtproject
 .cdtbuild
+.idea
+cmake-build-*/*
+
+# OS-specific files
 *.DS_Store
 *Thumbs.db
-.idea
-cmake-build-debug/*
