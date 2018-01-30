@@ -174,6 +174,8 @@ add_custom_target (kernel ALL
 #Custom Command: Outputs bochs image
 #Generates a image usable by bochs
 add_custom_command (OUTPUT temp_dir
+    DEPENDS kernel_image
+
     #Create folder structure for the disk image
     COMMAND rm -rf "./temp"
     COMMAND mkdir -p "./temp/boot/grub"
