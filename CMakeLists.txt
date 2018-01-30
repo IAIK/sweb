@@ -90,7 +90,7 @@ endif()
 
 # Searches for asm, c and cpp files and adds the library
 MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
-  arch2obj(arch_objs)
+  arch2obj(archobj_libname ${LIBRARY_NAME})
 
   file(GLOB source_files ${SOURCE_WILDCARDS})
 
@@ -100,12 +100,17 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
     set(library_files ${source_files})
   endif(source_files)
 
-  if(arch_objs)
-    set(library_files ${library_files} ${arch_objs})
-  endif(arch_objs)
+  if(archobj_libname)
+    set(library_files ${library_files} $<TARGET_OBJECTS:${archobj_libname}>)
+  endif(archobj_libname)
 
   if(library_files)
     add_library(${LIBRARY_NAME} ${library_files})
+
+    if(archobj_libname)
+      add_dependencies(${LIBRARY_NAME} ${archobj_libname})
+    endif(archobj_libname)
+
     set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
   endif(library_files)
 ENDMACRO(ADD_PROJECT_LIBRARY)
