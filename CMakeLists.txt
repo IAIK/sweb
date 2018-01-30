@@ -219,7 +219,7 @@ add_custom_command (OUTPUT add-debug
     COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg.sh" ${PROJECT_BINARY_DIR}
     DEPENDS add-dbg
 )
-  
+
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
     DEPENDS hdd_image add-debug ${FINAL_USERSPACE_NAMES}
