@@ -11,7 +11,7 @@
 
 void ArchThreads::initialise()
 {
-  currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
+  currentThreadRegisters = new ArchThreadRegisters{};
 }
 
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
@@ -23,15 +23,14 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
+  info = new ArchThreadRegisters{};
   pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
+  info->eflags  = 0x200;
+  info->cr3     = root_of_kernel_paging_structure;
   info->esp     = (size_t)stack;
   info->ebp     = (size_t)stack;
-  info->eflags  = 0x200;
   info->eip     = (size_t)start_function;
-  info->cr3     = root_of_kernel_paging_structure;
 
   /* fpu (=fninit) */
   info->fpu[0] = 0xFFFF037F;
@@ -43,9 +42,9 @@ void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* st
   info->fpu[6] = 0xFFFF0000;
 }
 
-void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* kernel_stack)
 {
-  createBaseThreadRegisters(info,start_function,stack);
+  createBaseThreadRegisters(info, start_function, kernel_stack);
 
   info->cs      = KERNEL_CS;
   info->ds      = KERNEL_DS;
@@ -55,7 +54,7 @@ void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_
 
 void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
-  createBaseThreadRegisters(info,start_function,user_stack);
+  createBaseThreadRegisters(info, start_function, user_stack);
 
   info->cs      = USER_CS;
   info->ds      = USER_DS;
