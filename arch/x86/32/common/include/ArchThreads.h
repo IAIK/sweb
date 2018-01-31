@@ -51,7 +51,6 @@ public:
 
 /**
  * allocates space for the currentThreadRegisters
- *
  */
   static void initialise();
 
@@ -61,18 +60,7 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
-
-  /**
-   * changes an existing ArchThreadRegisters so that execution will start / continue
-   * at the function specified
-   * it does not change anything else, and if the thread info / thread was currently
-   * executing something else this will lead to a lot of problems
-   * USE WITH CARE, or better, don't use at all if you're a student
-   * @param the ArchThreadRegisters that we are going to mangle
-   * @param start_function instruction pointer for the next instruction that gets executed
-   */
-  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
+  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* kernel_stack);
 
 /**
  * creates the ArchThreadRegisters for a user thread
@@ -82,6 +70,17 @@ public:
  * @param kernel_stack pointer to the kernel stack
  */
   static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
+
+/**
+ * changes an existing ArchThreadRegisters so that execution will start / continue
+ * at the function specified
+ * it does not change anything else, and if the thread info / thread was currently
+ * executing something else this will lead to a lot of problems
+ * USE WITH CARE, or better, don't use at all if you're a student
+ * @param the ArchThreadRegisters that we are going to mangle
+ * @param start_function instruction pointer for the next instruction that gets executed
+ */
+  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
 /**
  *
@@ -149,12 +148,11 @@ public:
 private:
 
 /**
- * creates the ArchThreadRegisters for a thread
+ * creates the ArchThreadRegisters for a thread (common setup for kernel and user registers)
  * @param info where the ArchThreadRegisters is saved
- * @param start_function instruction pointer is set so start function
+ * @param start_function instruction pointer is set to start function
  * @param stack stackpointer
  */
   static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
-
 };
 
