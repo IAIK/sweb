@@ -51,7 +51,6 @@ void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
   info->ss      = KERNEL_SS;
-  info->dpl     = DPL_KERNEL;
 }
 
 void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
@@ -62,8 +61,6 @@ void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_fu
   info->ds      = USER_DS;
   info->es      = USER_DS;
   info->ss      = USER_SS;
-  info->dpl     = DPL_USER;
-  info->ss0     = KERNEL_SS;
   info->esp0    = (size_t)kernel_stack;
 }
 

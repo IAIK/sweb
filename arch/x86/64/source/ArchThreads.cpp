@@ -41,7 +41,6 @@ void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_
   info->es      = KERNEL_DS;
   info->ss      = KERNEL_SS;
   info->rflags  = 0x200;
-  info->dpl     = DPL_KERNEL;
   info->rsp     = (size_t)stack;
   info->rbp     = (size_t)stack;
   info->rip     = (size_t)start_function;
@@ -73,9 +72,7 @@ void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_fu
   info->ds      = USER_DS;
   info->es      = USER_DS;
   info->ss      = USER_SS;
-  info->ss0     = KERNEL_SS;
   info->rflags  = 0x200;
-  info->dpl     = DPL_USER;
   info->rsp     = (size_t)user_stack;
   info->rbp     = (size_t)user_stack;
   info->rsp0    = (size_t)kernel_stack;
