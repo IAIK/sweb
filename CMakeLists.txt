@@ -5,6 +5,9 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 # Needed for reserved targets like "install" and "help"
 cmake_policy(SET CMP0037 OLD)
 
+# Include custom CMake modules from the cmake/ subdirectory
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/64")
 endif("${ARCH}" STREQUAL "")
@@ -19,6 +22,9 @@ if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
   MESSAGE("-- Cross-Compiling on Apple/Windows")
 endif(APPLE OR WIN32)
+
+# add-dbg for userspace binaries
+include(AddDebugInfo)
 
 include(arch/${ARCH}/CMakeLists.compiler)
 
@@ -165,7 +171,7 @@ endforeach(file)
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 add_custom_command (OUTPUT kernel_image
-    DEPENDS ${FINAL_LIB_NAMES} exe2minixfs add-debug
+    DEPENDS ${FINAL_LIB_NAMES} exe2minixfs add-dbg
     COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 )
@@ -221,18 +227,11 @@ add_custom_command (OUTPUT copy_to_image
     COMMENT "Copying files to image..."
 )
 
-# Custom Command: copy add-dbg.sh to add debug info to binaries; make sure add-dbg binary is built
-add_custom_command (OUTPUT add-debug
-    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg.sh" ${PROJECT_BINARY_DIR}
-    DEPENDS add-dbg
-)
-
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
-    DEPENDS hdd_image add-debug ${FINAL_USERSPACE_NAMES}
+    DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./add-dbg.sh ${OBJCOPY_EXECUTABLE} ${MINIXFS_ARGUMENT}
     COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
