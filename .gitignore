@@ -6,7 +6,7 @@
 doc/
 CMakeFiles
 CMakeCache.txt
-*.cmake
+cmake_install.cmake
 Makefile
 ./bin
 
