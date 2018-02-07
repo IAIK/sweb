@@ -58,7 +58,7 @@ void Loader::loadPage(pointer virtual_address)
         {
           program_binary_lock_.release();
           PageManager::instance()->freePPN(ppn);
-          debug(LOADER, "ERROR! Some parts of the content could not be load from the binary.\n");
+          debug(LOADER, "ERROR! Some parts of the content could not be loaded from the binary.\n");
           Syscall::exit(999);
         }
         found_page_content = true;
@@ -78,7 +78,7 @@ void Loader::loadPage(pointer virtual_address)
     Syscall::exit(666);
   }
 
-  arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true, PAGE_SIZE);
+  arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true);
   debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }
 

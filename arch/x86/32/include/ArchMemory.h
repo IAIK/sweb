@@ -24,10 +24,8 @@ public:
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
- * @param page_size Optional, defaults to 4k pages, but you ned to set it to
- * 1024*4096 if you want to map a 4m page
  */
-  void mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size=PAGE_SIZE);
+  bool mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid

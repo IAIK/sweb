@@ -135,27 +135,31 @@ void ArchMemory::insertPT(uint32 pde_vpn)
   page_directory[pde_vpn].pt.size = PDE_SIZE_PT;
 }
 
-void ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access, uint32 page_size)
+bool ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
 
-  if (page_size == PAGE_SIZE)
+  if (page_directory[pde_vpn].pt.size == PDE_SIZE_NONE)
   {
-    if (page_directory[pde_vpn].pt.size == PDE_SIZE_NONE)
-      insertPT(pde_vpn);
+    insertPT(pde_vpn);
+  }
 
-    PageTableEntry *pte_base = getIdentAddressOfPT(page_directory, pde_vpn);
+  PageTableEntry *pte_base = getIdentAddressOfPT(page_directory, pde_vpn);
+  if (pte_base[pte_vpn].size == PDE_SIZE_NONE)
+  {
     pte_base[pte_vpn].bufferable = 0;
     pte_base[pte_vpn].cachable = 0;
     pte_base[pte_vpn].permissions = user_access ? PAGE_PERMISSION_WRITE : PAGE_PERMISSION_KERNEL;
     pte_base[pte_vpn].reserved = 0;
     pte_base[pte_vpn].page_ppn = physical_page + PHYS_OFFSET_4K;
     pte_base[pte_vpn].size = PTE_SIZE_SMALL;
+    return true;
   }
-  else
-    assert(false && "currently only 4K pages for the userspace");
+
+  assert(false);
+  return false;
 }
 
 ArchMemory::~ArchMemory()
