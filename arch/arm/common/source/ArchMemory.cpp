@@ -46,7 +46,7 @@ PageTableEntry* ArchMemory::getPTE(size_t vpn)
 
 ArchMemory::ArchMemory()
 {
-  page_dir_page_ = PageManager::instance()->allocPPN(4 * PAGE_SIZE);
+  page_dir_page_ = PageManager::instance()->allocPPN(PD_SIZE);
   debug(A_MEMORY, "ArchMemory::ArchMemory(): Got new Page no. %x\n", page_dir_page_);
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
@@ -195,7 +195,7 @@ ArchMemory::~ArchMemory()
         PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     }
   }
-  PageManager::instance()->freePPN(page_dir_page_);
+  PageManager::instance()->freePPN(page_dir_page_, PD_SIZE);
 }
 
 pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
