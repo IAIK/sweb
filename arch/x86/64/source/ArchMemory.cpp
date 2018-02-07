@@ -39,22 +39,22 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
 
   assert(m.page_ppn != 0 && m.page_size == PAGE_SIZE && m.pt[m.pti].present);
   m.pt[m.pti].present = 0;
-  PageManager::instance()->freePPN(m.page_ppn, PAGE_SIZE);
+  PageManager::instance()->freePPN(m.page_ppn);
   ((uint64*)m.pt)[m.pti] = 0; // for easier debugging
   bool empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
-  if (empty) 
+  if (empty)
   {
-    PageManager::instance()->freePPN(m.pt_ppn, PAGE_SIZE);
+    PageManager::instance()->freePPN(m.pt_ppn);
     empty = checkAndRemove<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi);
   }
-  if (empty) 
+  if (empty)
   {
-    PageManager::instance()->freePPN(m.pd_ppn, PAGE_SIZE);
+    PageManager::instance()->freePPN(m.pd_ppn);
     empty = checkAndRemove<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti);
   }
-  if (empty) 
+  if (empty)
   {
-    PageManager::instance()->freePPN(m.pdpt_ppn, PAGE_SIZE);
+    PageManager::instance()->freePPN(m.pdpt_ppn);
     empty = checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
   }
   return true;
@@ -81,10 +81,11 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
   return true;
 }
 
-bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access, uint64 page_size)
+bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access)
 {
-  debug(A_MEMORY, "%zx %zx %zx %zx %zx\n", page_map_level_4_, virtual_page, physical_page, user_access, page_size);
+  debug(A_MEMORY, "%zx %zx %zx %zx\n", page_map_level_4_, virtual_page, physical_page, user_access);
   ArchMemoryMapping m = resolveMapping(page_map_level_4_, virtual_page);
+  assert((m.page_size == 0) || (m.page_size == PAGE_SIZE));
 
   if (m.pdpt_ppn == 0)
   {
@@ -94,32 +95,17 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
 
   if (m.pd_ppn == 0)
   {
-    if (page_size == PAGE_SIZE * PAGE_TABLE_ENTRIES * PAGE_DIR_ENTRIES)
-    {
-      return insert<PageDirPointerTablePageEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti, physical_page, 0, 1,
-                                                  user_access, 1);
-    }
-    else
-    {
-      m.pd_ppn = PageManager::instance()->allocPPN();
-      insert<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti, m.pd_ppn, 1, 0, 1, 1);
-    }
+    m.pd_ppn = PageManager::instance()->allocPPN();
+    insert<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti, m.pd_ppn, 1, 0, 1, 1);
   }
 
   if (m.pt_ppn == 0)
   {
-    if (page_size == PAGE_SIZE * PAGE_TABLE_ENTRIES)
-    {
-      return insert<PageDirPageEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, physical_page, 0, 1, user_access, 1);
-    }
-    else // if (m.pd == 0)
-    {
-      m.pt_ppn = PageManager::instance()->allocPPN();
-      insert<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, m.pt_ppn, 1, 0, 1, 1);
-    }
+    m.pt_ppn = PageManager::instance()->allocPPN();
+    insert<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi, m.pt_ppn, 1, 0, 1, 1);
   }
 
-  if (m.page_ppn == 0 && page_size == PAGE_SIZE)
+  if (m.page_ppn == 0)
   {
     return insert<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti, physical_page, 0, 0, user_access, 1);
   }
@@ -137,13 +123,15 @@ ArchMemory::~ArchMemory()
       PageDirPointerTableEntry* pdpt = (PageDirPointerTableEntry*) getIdentAddressOfPPN(pml4[pml4i].page_ppn);
       for (uint64 pdpti = 0; pdpti < PAGE_DIR_POINTER_TABLE_ENTRIES; pdpti++)
       {
-        if (pdpt[pdpti].pd.present && !pdpt[pdpti].pd.size) // not 1gb page ?
+        if (pdpt[pdpti].pd.present)
         {
+          assert(pdpt[pdpti].pd.size == 0);
           PageDirEntry* pd = (PageDirEntry*) getIdentAddressOfPPN(pdpt[pdpti].pd.page_ppn);
           for (uint64 pdi = 0; pdi < PAGE_DIR_ENTRIES; pdi++)
           {
-            if (pd[pdi].pt.present && !pd[pdi].pt.size) // not 2mb page ?
+            if (pd[pdi].pt.present)
             {
+              assert(pd[pdi].pt.size == 0);
               PageTableEntry* pt = (PageTableEntry*) getIdentAddressOfPPN(pd[pdi].pt.page_ppn);
               for (uint64 pti = 0; pti < PAGE_TABLE_ENTRIES; pti++)
               {

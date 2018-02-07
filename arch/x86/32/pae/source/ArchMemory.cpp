@@ -82,39 +82,35 @@ void ArchMemory::insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 p
   page_directory[pde_vpn].pt.present = 1;
 }
 
-void ArchMemory::mapPage(uint32 virtual_page,
-    uint32 physical_page, uint32 user_access, uint32 page_size)
+bool ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access)
 {
   RESOLVEMAPPING(page_dir_pointer_table_,virtual_page);
 
   if (page_dir_pointer_table_[pdpte_vpn].present == 0)
   {
-    uint32 ppn = PageManager::instance()->allocPPN();
-    page_directory = (PageDirEntry*) getIdentAddressOfPPN(ppn);
-    insertPD(pdpte_vpn, ppn);
+    uint32 pd_ppn = PageManager::instance()->allocPPN();
+    page_directory = (PageDirEntry*) getIdentAddressOfPPN(pd_ppn);
+    insertPD(pdpte_vpn, pd_ppn);
   }
 
-  if (page_size==PAGE_SIZE)
+  if (page_directory[pde_vpn].pt.present == 0)
   {
-    if (page_directory[pde_vpn].pt.present == 0)
-      insertPT(page_directory,pde_vpn,PageManager::instance()->allocPPN());
+    insertPT(page_directory, pde_vpn, PageManager::instance()->allocPPN());
+  }
+  assert(page_directory[pde_vpn].page.size == 0);
 
-    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  if(pte_base[pte_vpn].present == 0)
+  {
     pte_base[pte_vpn].writeable = 1;
     pte_base[pte_vpn].user_access = user_access;
     pte_base[pte_vpn].page_ppn = physical_page;
     pte_base[pte_vpn].present = 1;
+    return true;
   }
-  else if ((page_size==PAGE_SIZE*PAGE_TABLE_ENTRIES) && (page_directory[pde_vpn].page.present == 0))
-  {
-    page_directory[pde_vpn].page.writeable = 1;
-    page_directory[pde_vpn].page.size = 1;
-    page_directory[pde_vpn].page.page_ppn = physical_page;
-    page_directory[pde_vpn].page.user_access = user_access;
-    page_directory[pde_vpn].page.present = 1;
-  }
-  else
-    assert(false);
+
+  assert(false);
+  return false;
 }
 
 ArchMemory::~ArchMemory()
