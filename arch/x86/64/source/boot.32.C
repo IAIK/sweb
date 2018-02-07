@@ -76,8 +76,6 @@ static void memset(char* block, char c, size_t length)
     block[i] = c;
 }
 
-extern uint8 boot_stack[];
-
 static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code,
                                  uint8 tss)
 {
