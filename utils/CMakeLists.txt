@@ -1,6 +1,8 @@
 # do not cross compile host tools
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_C_COMPILER gcc)
+set(CMAKE_AR ar)
+set(CMAKE_RANLIB ranlib)
 
 # Ugly hack for preventing kernel CFLAGS from preventing utils build
 # TODO: These should not be set for utils/ in the first place
