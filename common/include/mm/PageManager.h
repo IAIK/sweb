@@ -16,9 +16,15 @@ class PageManager
     /**
      * returns the number of 4k Pages avaible to sweb.
      * ((size of the first usable memory region or max 1Gb) / PAGESIZE)
-     * @return number of avilable pages
+     * @return number of available pages
      */
     uint32 getTotalNumPages() const;
+
+    /**
+     * returns the number of currently free pages
+     * @return number of free pages
+     */
+    size_t getNumFreePages() const;
 
     /**
      * returns the number of the lowest free Page
@@ -67,4 +73,3 @@ class PageManager
 
     size_t HEAP_PAGES;
 };
-
