@@ -37,28 +37,17 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 {
   RESOLVEMAPPING(page_dir_pointer_table_,virtual_page);
 
-  if (page_dir_pointer_table_[pdpte_vpn].present)
-  {
-    if (page_directory[pde_vpn].page.size)
-    {
-      page_directory[pde_vpn].page.present = 0;
-      //PageManager manages Pages of size PAGE_SIZE only, so we have to free this_page_size/PAGE_SIZE Pages
-      for (uint32 p=0;p<PAGE_TABLE_ENTRIES;++p)
-        PageManager::instance()->freePPN(page_directory[pde_vpn].page.page_ppn*1024 + p);
-      ((uint64*)page_directory)[pde_vpn] = 0; // for easier debugging
-    }
-    else
-    {
-      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-      if (pte_base[pte_vpn].present)
-      {
-        pte_base[pte_vpn].present = 0;
-        PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
-        ((uint64*)pte_base)[pte_vpn] = 0; // for easier debugging
-      }
-      checkAndRemovePT(page_dir_pointer_table_[pdpte_vpn].page_directory_ppn, pde_vpn);
-    }
-  }
+  assert(page_dir_pointer_table_[pdpte_vpn].present);
+  assert(!page_directory[pde_vpn].page.size);
+
+  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+  assert(pte_base[pte_vpn].present);
+
+  pte_base[pte_vpn].present = 0;
+  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
+  ((uint64*)pte_base)[pte_vpn] = 0; // for easier debugging
+
+  checkAndRemovePT(page_dir_pointer_table_[pdpte_vpn].page_directory_ppn, pde_vpn);
 }
 
 void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)

@@ -68,9 +68,11 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 
   PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
   assert(pte_base[pte_vpn].present);
+
   pte_base[pte_vpn].present = 0;
   PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
   ((uint32*)pte_base)[pte_vpn] = 0; // for easier debugging
+
   checkAndRemovePT(pde_vpn);
 }
 
