@@ -96,18 +96,16 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
 
   assert(page_directory[pde_vpn].pt.size != PDE_SIZE_PAGE && "Trying to unmap a small page but here is a large page");
+  assert(page_directory[pde_vpn].pt.size == PDE_SIZE_PT);
 
-  if (page_directory[pde_vpn].pt.size == PDE_SIZE_PT)
-  {
-    PageTableEntry *pte_base = getIdentAddressOfPT(page_directory, pde_vpn);
-    if (pte_base[pte_vpn].size == PTE_SIZE_SMALL)
-    {
-      pte_base[pte_vpn].size = PTE_SIZE_NONE;
-      PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
-      ((uint32*)pte_base)[pte_vpn] = 0; // for easier debugging
-    }
-    checkAndRemovePT(pde_vpn);
-  }
+  PageTableEntry *pte_base = getIdentAddressOfPT(page_directory, pde_vpn);
+  assert(pte_base[pte_vpn].size == PTE_SIZE_SMALL);
+
+  pte_base[pte_vpn].size = PTE_SIZE_NONE;
+  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+  ((uint32*)pte_base)[pte_vpn] = 0; // for easier debugging
+
+  checkAndRemovePT(pde_vpn);
 }
 
 void ArchMemory::insertPT(uint32 pde_vpn)
