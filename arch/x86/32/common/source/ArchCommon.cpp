@@ -9,6 +9,7 @@
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
 #include "ports.h"
+#include "PageManager.h"
 
 extern void* kernel_end_address;
 
@@ -225,6 +226,31 @@ void ArchCommon::idle()
   asm volatile("hlt");
 }
 
+#define STATS_OFFSET 22
+#define FREE_PAGES_OFFSET STATS_OFFSET + 11*2
+
+void ArchCommon::drawStat() {
+  const char* text  = "Free pages      F9 MemInfo   F10 Locks   F11 Stacktrace   F12 Threads";
+  const char* color = "xxxxxxxxxx      xx           xxx         xxx              xxx        ";
+
+  char* fb = (char*)getFBPtr();
+  size_t i = 0;
+  while(text[i]) {
+    fb[i * 2 + STATS_OFFSET] = text[i];
+    fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? 0x80 : 0x08);
+    i++;
+  }
+
+  char itoa_buffer[33];
+  memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+  itoa(PageManager::instance()->getNumFreePages(), itoa_buffer, 10);
+
+  for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+  {
+    fb[i * 2 + FREE_PAGES_OFFSET] = itoa_buffer[i];
+  }
+}
+
 void ArchCommon::drawHeartBeat()
 {
   const char* clock = "/-\\|";
@@ -232,4 +258,6 @@ void ArchCommon::drawHeartBeat()
   char* fb = (char*)getFBPtr();
   fb[0] = clock[heart_beat_value++ % 4];
   fb[1] = 0x9f;
+
+  drawStat();
 }

@@ -156,6 +156,11 @@ uint32 PageManager::getTotalNumPages() const
   return number_of_pages_;
 }
 
+size_t PageManager::getNumFreePages() const
+{
+  return page_usage_table_->getNumFreeBits();
+}
+
 bool PageManager::reservePages(uint32 ppn, uint32 num)
 {
   assert(lock_.heldBy() == currentThread);
