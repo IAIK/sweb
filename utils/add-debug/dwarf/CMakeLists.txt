@@ -8,9 +8,8 @@ set(CMAKE_CXX_STANDARD 11)
 add_custom_command(
     OUTPUT to_string.cc
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/../elf/enum-print.py" "${CMAKE_CURRENT_BINARY_DIR}/../elf/enum-print.py"
     COMMAND make to_string.cc
-    DEPENDS ../elf/enum-print.py dwarf++.hh data.hh Makefile internal.hh
+    DEPENDS elf++ ../elf/enum-print.py dwarf++.hh data.hh Makefile internal.hh
 )
 
 add_library(dwarf++ STATIC
