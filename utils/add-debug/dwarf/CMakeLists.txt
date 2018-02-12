@@ -7,10 +7,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_custom_command(
     OUTPUT to_string.cc
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/../elf/enum-print.py" "${CMAKE_CURRENT_BINARY_DIR}/../elf/enum-print.py"
-    COMMAND make to_string.cc
-    DEPENDS ../elf/enum-print.py dwarf++.hh data.hh Makefile internal.hh
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gen_to_string.sh ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/to_string.cc
+    DEPENDS ../elf/enum-print.py dwarf++.hh data.hh internal.hh
 )
 
 add_library(dwarf++ STATIC
@@ -18,3 +16,6 @@ add_library(dwarf++ STATIC
     expr.cc rangelist.cc line.cc attrs.cc
     die_str_map.cc elf.cc to_string.cc
 )
+
+# This is needed for the out-of-source generated to_string.cc
+target_include_directories(dwarf++ PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
