@@ -99,8 +99,7 @@ class Thread
 
     uint32 switch_to_userspace_;
 
-    Loader* loader_;
-
+    Loader* getLoader();
 
     void setState(ThreadState state);
 
@@ -136,6 +135,8 @@ class Thread
 
   protected:
     ThreadState getState() const;
+
+    Loader* loader_;
 
     FileSystemInfo* working_dir_;
 

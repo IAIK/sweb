@@ -15,7 +15,7 @@ inline bool PageFaultHandler::checkPageFaultIsValid(size_t address, bool user,
                                                     bool present, bool switch_to_us)
 {
   assert((user == switch_to_us) && "Thread is in user mode even though is should not be.");
-  assert(!(address < USER_BREAK && currentThread->loader_ == 0) && "Thread accesses the user space, but has no loader.");
+  assert(!(address < USER_BREAK && currentThread->getLoader() == 0) && "Thread accesses the user space, but has no loader.");
   assert(!(user && currentThread->user_registers_ == 0) && "Thread is in user mode, but has no valid registers.");
 
   if(address < null_reference_check_border_)
@@ -61,14 +61,14 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
 
   if (checkPageFaultIsValid(address, user, present, switch_to_us))
   {
-    currentThread->loader_->loadPage(address);
+    currentThread->getLoader()->loadPage(address);
   }
   else
   {
     // the page-fault seems to be faulty, print out the thread stack traces
     ArchThreads::printThreadRegisters(currentThread, true);
     currentThread->printBacktrace(true);
-    if (currentThread->loader_)
+    if (currentThread->getLoader())
       Syscall::exit(9999);
     else
       currentThread->kill();
