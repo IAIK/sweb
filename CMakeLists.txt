@@ -159,13 +159,13 @@ set(LD_ARGUMENT ${LD_ARGUMENT} ${APPEND_LD_ARGUMENTS})
 #Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")
 foreach(file $ENV{USERSPACE_NAMES_EXE2MINIX})
-  set(MINIXFS_ARGUMENT ${MINIXFS_ARGUMENT} ${file})
+  list(APPEND MINIXFS_ARGUMENT ${file})
 endforeach(file)
 
 file(GLOB userspace_data userspace/data/*)
 foreach(file ${userspace_data})
   get_filename_component(datafile ${file} NAME)
-  set(MINIXFS_ARGUMENT  ${MINIXFS_ARGUMENT} ${file} ${datafile})
+  list(APPEND MINIXFS_ARGUMENT ${file} ${datafile})
 endforeach(file)
 
 #Custom Command: Outputs kernel_image
