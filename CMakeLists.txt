@@ -182,47 +182,20 @@ add_custom_target (kernel ALL
     DEPENDS kernel_image
 )
 
-#Custom Command: Outputs bochs image
-#Generates a image usable by bochs
-add_custom_command (OUTPUT temp_dir
-    DEPENDS kernel_image
-
-    #Create folder structure for the disk image
-    COMMAND rm -rf "./temp"
-    COMMAND mkdir -p "./temp/boot/grub"
-    COMMAND cp "./kernel.x" "./temp/boot"
-    COMMAND touch "./kernel.dbg"
-    COMMAND cp "./kernel.dbg" "./temp/boot"
-
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Creating temp dir..."
-)
-
 #Custom Command: Outputs empty ext2 disk image
 add_custom_command (OUTPUT hdd_image
-    DEPENDS temp_dir
     COMMAND ${PROJECT_SOURCE_DIR}/utils/images/extract_image.sh
     ARGS ${PROJECT_SOURCE_DIR}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Unpacking disk image..."
 )
 
-
-#Custom Command: Writes helper files to temp file structure
-add_custom_command (OUTPUT helper_files
-    DEPENDS hdd_image
-    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" "./temp/boot/grub/menu.lst"
-
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Copying helper files..."
-)
-
-#Custom Command: invoke exe2minixfs and copy the temp dir to our hd image
+#Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_command (OUTPUT copy_to_image
-    DEPENDS helper_files exe2minixfs
-    COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./temp/boot/grub/menu.lst boot/grub/menu.lst ./kernel.x boot/kernel.x ./kernel.dbg boot/kernel.dbg
-    COMMAND rm -R temp
-
+    DEPENDS hdd_image kernel_image exe2minixfs
+    COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
+                                               ./kernel.x boot/kernel.x
+                                               ./kernel.dbg boot/kernel.dbg
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying files to image..."
 )
