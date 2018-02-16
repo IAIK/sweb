@@ -287,54 +287,20 @@ add_custom_target(debug
     COMMAND cmake -DDEBUG=1 -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 )
 
-#Custom target: make x86_32
-add_custom_target(x86_32
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=x86/32 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
 
-#Custom target: make x86_32_pae
-add_custom_target(x86_32_pae
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=x86/32/pae ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
+# Define the "make ${ARCH}" targets
+include(MakeArchTarget)
 
-#Custom target: make x86_64
-add_custom_target(x86_64
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=x86/64 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
+MAKE_ARCH_TARGET(x86_32 x86/32 "")
+MAKE_ARCH_TARGET(x86_32_pae x86/32/pae "")
+MAKE_ARCH_TARGET(x86_64 x86/64 "")
 
-#Custom target: make arm_icp
-add_custom_target(arm_icp
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=arm/integratorcp ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
+MAKE_ARCH_TARGET(arm_icp arm/integratorcp "")
+MAKE_ARCH_TARGET(arm_verdex arm/verdex "")
+MAKE_ARCH_TARGET(arm_rpi arm/rpi "")
+MAKE_ARCH_TARGET(arm_rpi2 arm/rpi "-DRPI2=1")
 
-#Custom target: make arm_verdex
-add_custom_target(arm_verdex
-   COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-   COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-   COMMAND cmake -DARCH=arm/verdex ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
 
-#Custom target: make arm_rpi
-add_custom_target(arm_rpi
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=arm/rpi ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
-
-#Custom target: make arm_rpi2
-add_custom_target(arm_rpi2
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=arm/rpi -DRPI2=1 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
 
 #Builds the doxygen documentation
 add_custom_target(doxygen
