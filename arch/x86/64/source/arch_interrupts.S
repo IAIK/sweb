@@ -63,12 +63,12 @@
 .global arch_irqHandler_\num
 .extern irqHandler_\num
 arch_irqHandler_\num:
-        pushall
+        pushAll
         movq %rsp,%rdi
         movq $0,%rsi
         call arch_saveThreadRegisters
         call irqHandler_\num
-        popall
+        popAll
         iretq
 .endm
 
@@ -85,7 +85,7 @@ arch_dummyHandler:
 .extern dummyHandlerMiddle
 .global arch_dummyHandlerMiddle
 arch_dummyHandlerMiddle:
-        pushall
+        pushAll
         movq %rsp,%rdi
         movq $0,%rsi
         call arch_saveThreadRegisters
@@ -96,7 +96,7 @@ arch_dummyHandlerMiddle:
         addq $128, %rdi
         movq $0,dummyhandlerscratchvariable
         call errorHandler
-        popall
+        popAll
         iretq
         hlt
 
@@ -105,7 +105,7 @@ arch_dummyHandlerMiddle:
 .macro errorhandler num
 .global arch_errorHandler_\num
 arch_errorHandler_\num:
-        pushall
+        pushAll
         movq %rsp,%rdi
         movq $0,%rsi
         call arch_saveThreadRegisters
@@ -114,7 +114,7 @@ arch_errorHandler_\num:
         movq 144(%rsp), %rsi
         movq $\num,%rdi
         call errorHandler
-        popall
+        popAll
         iretq
         hlt
 .endm
@@ -122,7 +122,7 @@ arch_errorHandler_\num:
 .macro errorhandlerWithCode num
 .global arch_errorHandler_\num
 arch_errorHandler_\num:
-        pushall
+        pushAll
         movq %rsp,%rdi
         movq $1,%rsi
         call arch_saveThreadRegisters
@@ -131,7 +131,7 @@ arch_errorHandler_\num:
         movq 152(%rsp), %rsi
         movq $\num,%rdi
         call errorHandler
-        popall
+        popAll
         addq $8,%rsp
         iretq
         hlt
@@ -142,14 +142,14 @@ arch_errorHandler_\num:
 .extern pageFaultHandler
 .global arch_pageFaultHandler
 arch_pageFaultHandler:
-        pushall
+        pushAll
         movq %rsp,%rdi
         movq $1,%rsi
         call arch_saveThreadRegisters
         movq 144(%rsp),%rsi
         movq %cr2, %rdi
         call pageFaultHandler
-        popall
+        popAll
         addq $8,%rsp
         iretq
         hlt
@@ -170,7 +170,7 @@ errorhandler \num
 .global arch_syscallHandler
 .extern syscallHandler
 arch_syscallHandler:
-    pushall
+    pushAll
     movq %rsp,%rdi
     movq $0,%rsi
     call arch_saveThreadRegisters
