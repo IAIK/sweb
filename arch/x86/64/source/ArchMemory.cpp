@@ -190,7 +190,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
   m.pdpti %= PAGE_DIR_POINTER_TABLE_ENTRIES;
   m.pml4i %= PAGE_MAP_LEVEL_4_ENTRIES;
 
-  assert(pml4 <= 2048);
+  assert(pml4 < PageManager::instance()->getTotalNumPages());
   m.pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(pml4);
   m.pdpt = 0;
   m.pd = 0;
@@ -209,22 +209,22 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
     if (m.pdpt[m.pdpti].pd.present && !m.pdpt[m.pdpti].pd.size) // 1gb page ?
     {
       m.pd_ppn = m.pdpt[m.pdpti].pd.page_ppn;
-      if (m.pd_ppn > 2048)
+      if (m.pd_ppn > PageManager::instance()->getTotalNumPages())
       {
         debug(A_MEMORY, "%zx\n", m.pd_ppn);
       }
-      assert(m.pd_ppn <= 2048);
+      assert(m.pd_ppn < PageManager::instance()->getTotalNumPages());
       m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pdpt[m.pdpti].pd.page_ppn);
       if (m.pd[m.pdi].pt.present && !m.pd[m.pdi].pt.size) // 2mb page ?
       {
         m.pt_ppn = m.pd[m.pdi].pt.page_ppn;
-        assert(m.pt_ppn <= 2048);
+        assert(m.pt_ppn < PageManager::instance()->getTotalNumPages());
         m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pd[m.pdi].pt.page_ppn);
         if (m.pt[m.pti].present)
         {
           m.page = getIdentAddressOfPPN(m.pt[m.pti].page_ppn);
           m.page_ppn = m.pt[m.pti].page_ppn;
-          assert(m.page_ppn <= 2048);
+          assert(m.page_ppn < PageManager::instance()->getTotalNumPages());
           m.page_size = PAGE_SIZE;
         }
       }
@@ -232,7 +232,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
       {
         m.page_size = PAGE_SIZE * PAGE_TABLE_ENTRIES;
         m.page_ppn = m.pd[m.pdi].page.page_ppn;
-        assert(m.page_ppn <= 2048);
+        assert(m.page_ppn < PageManager::instance()->getTotalNumPages());
         m.page = getIdentAddressOfPPN(m.pd[m.pdi].page.page_ppn);
       }
     }
@@ -240,7 +240,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
     {
       m.page_size = PAGE_SIZE * PAGE_TABLE_ENTRIES * PAGE_DIR_ENTRIES;
       m.page_ppn = m.pdpt[m.pdpti].page.page_ppn;
-      assert(m.page_ppn <= 2048);
+      assert(m.page_ppn < PageManager::instance()->getTotalNumPages());
       m.page = getIdentAddressOfPPN(m.pdpt[m.pdpti].page.page_ppn);
     }
   }
