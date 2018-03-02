@@ -5,6 +5,9 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 # Needed for reserved targets like "install" and "help"
 cmake_policy(SET CMP0037 OLD)
 
+# Include custom CMake modules from the cmake/ subdirectory
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/64")
 endif("${ARCH}" STREQUAL "")
@@ -19,6 +22,9 @@ if(APPLE OR WIN32)
   set(CMAKE_CROSSCOMPILING 1)
   MESSAGE("-- Cross-Compiling on Apple/Windows")
 endif(APPLE OR WIN32)
+
+# add-dbg for userspace binaries
+include(AddDebugInfo)
 
 include(arch/${ARCH}/CMakeLists.compiler)
 
@@ -64,7 +70,7 @@ set(NOPIEFLAG )
 endif()
 set(NOPICFLAG -fno-PIC)
 execute_process(COMMAND ${CMAKE_C_COMPILER} ${NOPICFLAG}
-                ERROR_VARIABLE PIE_CHECK
+                ERROR_VARIABLE PIC_CHECK
                 ERROR_STRIP_TRAILING_WHITESPACE)
 if("${PIC_CHECK}" MATCHES ".*unrecognized.*")
 set(NOPICFLAG )
@@ -153,19 +159,19 @@ set(LD_ARGUMENT ${LD_ARGUMENT} ${APPEND_LD_ARGUMENTS})
 #Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")
 foreach(file $ENV{USERSPACE_NAMES_EXE2MINIX})
-  set(MINIXFS_ARGUMENT ${MINIXFS_ARGUMENT} ${file})
+  list(APPEND MINIXFS_ARGUMENT ${file})
 endforeach(file)
 
 file(GLOB userspace_data userspace/data/*)
 foreach(file ${userspace_data})
   get_filename_component(datafile ${file} NAME)
-  set(MINIXFS_ARGUMENT  ${MINIXFS_ARGUMENT} ${file} ${datafile})
+  list(APPEND MINIXFS_ARGUMENT ${file} ${datafile})
 endforeach(file)
 
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 add_custom_command (OUTPUT kernel_image
-    DEPENDS ${FINAL_LIB_NAMES} exe2minixfs add-debug
+    DEPENDS ${FINAL_LIB_NAMES} exe2minixfs add-dbg
     COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 )
@@ -176,63 +182,29 @@ add_custom_target (kernel ALL
     DEPENDS kernel_image
 )
 
-#Custom Command: Outputs bochs image
-#Generates a image usable by bochs
-add_custom_command (OUTPUT temp_dir
-    DEPENDS kernel_image
-
-    #Create folder structure for the disk image
-    COMMAND rm -rf "./temp"
-    COMMAND mkdir -p "./temp/boot/grub"
-    COMMAND cp "./kernel.x" "./temp/boot"
-    COMMAND touch "./kernel.dbg"
-    COMMAND cp "./kernel.dbg" "./temp/boot"
-
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Creating temp dir..."
-)
-
 #Custom Command: Outputs empty ext2 disk image
 add_custom_command (OUTPUT hdd_image
-    DEPENDS temp_dir
     COMMAND ${PROJECT_SOURCE_DIR}/utils/images/extract_image.sh
     ARGS ${PROJECT_SOURCE_DIR}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Unpacking disk image..."
 )
 
-
-#Custom Command: Writes helper files to temp file structure
-add_custom_command (OUTPUT helper_files
-    DEPENDS hdd_image
-    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" "./temp/boot/grub/menu.lst"
-
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Copying helper files..."
-)
-
-#Custom Command: invoke exe2minixfs and copy the temp dir to our hd image
+#Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_command (OUTPUT copy_to_image
-    DEPENDS helper_files exe2minixfs
-    COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 ./temp/boot/grub/menu.lst boot/grub/menu.lst ./kernel.x boot/kernel.x ./kernel.dbg boot/kernel.dbg
-    COMMAND rm -R temp
-
+    DEPENDS hdd_image kernel_image exe2minixfs
+    COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
+                                               ./kernel.x boot/kernel.x
+                                               ./kernel.dbg boot/kernel.dbg
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying files to image..."
 )
 
-# Custom Command: copy add-dbg.sh to add debug info to binaries; make sure add-dbg binary is built
-add_custom_command (OUTPUT add-debug
-    COMMAND cp "${CMAKE_SOURCE_DIR}/utils/add-debug/add-dbg.sh" ${PROJECT_BINARY_DIR}
-    DEPENDS add-dbg
-)
-
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
-    DEPENDS hdd_image add-debug ${FINAL_USERSPACE_NAMES}
+    DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./add-dbg.sh ${OBJCOPY_EXECUTABLE} ${MINIXFS_ARGUMENT}
     COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
@@ -315,54 +287,20 @@ add_custom_target(debug
     COMMAND cmake -DDEBUG=1 -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 )
 
-#Custom target: make x86_32
-add_custom_target(x86_32
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=x86/32 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
 
-#Custom target: make x86_32_pae
-add_custom_target(x86_32_pae
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=x86/32/pae ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
+# Define the "make ${ARCH}" targets
+include(MakeArchTarget)
 
-#Custom target: make x86_64
-add_custom_target(x86_64
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=x86/64 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
+MAKE_ARCH_TARGET(x86_32 x86/32 "")
+MAKE_ARCH_TARGET(x86_32_pae x86/32/pae "")
+MAKE_ARCH_TARGET(x86_64 x86/64 "")
 
-#Custom target: make arm_icp
-add_custom_target(arm_icp
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=arm/integratorcp ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
+MAKE_ARCH_TARGET(arm_icp arm/integratorcp "")
+MAKE_ARCH_TARGET(arm_verdex arm/verdex "")
+MAKE_ARCH_TARGET(arm_rpi arm/rpi "")
+MAKE_ARCH_TARGET(arm_rpi2 arm/rpi "-DRPI2=1")
 
-#Custom target: make arm_verdex
-add_custom_target(arm_verdex
-   COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-   COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-   COMMAND cmake -DARCH=arm/verdex ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
 
-#Custom target: make arm_rpi
-add_custom_target(arm_rpi
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=arm/rpi ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
-
-#Custom target: make arm_rpi2
-add_custom_target(arm_rpi2
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=arm/rpi -DRPI2=1 ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
-)
 
 #Builds the doxygen documentation
 add_custom_target(doxygen
