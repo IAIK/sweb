@@ -231,7 +231,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
       else if (m.pd[m.pdi].page.present)
       {
         m.page_size = PAGE_SIZE * PAGE_TABLE_ENTRIES;
-        m.page_ppn = m.pd[m.pdi].page.page_ppn;;
+        m.page_ppn = m.pd[m.pdi].page.page_ppn;
         m.page = getIdentAddressOfPPN(m.pd[m.pdi].page.page_ppn);
       }
     }
