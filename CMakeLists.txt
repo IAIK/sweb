@@ -193,6 +193,9 @@ add_custom_command (OUTPUT hdd_image
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_command (OUTPUT copy_to_image
     DEPENDS hdd_image kernel_image exe2minixfs
+
+    # x86/32 doesn't generate kernel.dbg
+    COMMAND touch "./kernel.dbg"
     COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
                                                ./kernel.x boot/kernel.x
                                                ./kernel.dbg boot/kernel.dbg
