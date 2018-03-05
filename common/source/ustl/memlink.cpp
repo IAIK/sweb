@@ -15,9 +15,9 @@ namespace ustl {
     written_size_type n = 0;
     is >> n;
     if (!is.verify_remaining ("read", "ustl::memlink", n))
-  return;
+	return;
     if (n > size())
-  throw length_error ("memlink can not increase the size of the linked storage for reading");
+	throw length_error ("memlink can not increase the size of the linked storage for reading");
     resize (n);
     is.read (data(), n);
     is.align (stream_align_of (n));
@@ -36,9 +36,9 @@ void memlink::fill (const_iterator cstart, const void* p, size_type elSize, size
     assert (cstart >= begin() && cstart + elSize * elCount <= end());
     iterator start = const_cast<iterator>(cstart);
     if (elSize == 1)
-  fill_n (start, elCount, *reinterpret_cast<const uint8_t*>(p));
+	fill_n (start, elCount, *reinterpret_cast<const uint8_t*>(p));
     else while (elCount--)
-  start = copy_n (const_iterator(p), elSize, start);
+	start = copy_n (const_iterator(p), elSize, start);
 }
 
 } // namespace ustl

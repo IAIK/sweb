@@ -112,7 +112,7 @@ bool Loader::readHeaders()
     debug(LOADER, "Expected program header size does not match advertised program header size\n");
     return false;
   }
-  phdrs_.resize(hdr_->e_phnum, true);
+  phdrs_.resize(hdr_->e_phnum);
   if(readFromBinary(reinterpret_cast<char*>(&phdrs_[0]), hdr_->e_phoff, hdr_->e_phnum*sizeof(Elf::Phdr)))
   {
     return false;
@@ -161,7 +161,7 @@ bool Loader::loadDebugInfoIfAvailable()
   MutexLock lock(program_binary_lock_);
 
   ustl::vector<Elf::Shdr> section_headers;
-  section_headers.resize(hdr_->e_shnum, true);
+  section_headers.resize(hdr_->e_shnum);
   if (readFromBinary(reinterpret_cast<char*>(&section_headers[0]), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
   {
     debug(USERTRACE, "Failed to load section headers!\n");

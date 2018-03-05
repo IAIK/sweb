@@ -4,7 +4,6 @@
 // This file is free software, distributed under the MIT License.
 
 #pragma once
-
 #include "sostream.h"
 
 namespace ustl {
@@ -19,14 +18,14 @@ public:
     ///
     class align {
     public:
-  inline explicit   align (size_t grain = c_DefaultAlignment) : _grain(grain) {}
-  inline istream&   apply (istream& is) const { is.align (_grain); return is; }
-  inline ostream&   apply (ostream& os) const { os.align (_grain); return os; }
-  inline void   read (istream& is) const  { apply (is); }
-  inline void   write (ostream& os) const { apply (os); }
-  inline size_t   stream_size (void) const  { return _grain - 1; }
+	inline explicit		align (size_t grain = c_DefaultAlignment) : _grain(grain) {}
+	inline istream&		apply (istream& is) const { is.align (_grain); return is; }
+	inline ostream&		apply (ostream& os) const { os.align (_grain); return os; }
+	inline void		read (istream& is) const  { apply (is); }
+	inline void		write (ostream& os) const { apply (os); }
+	inline size_t		stream_size (void) const  { return _grain - 1; }
     private:
-  const size_t    _grain;
+	const size_t		_grain;
     };
 
     /// \class talign uiosfunc.h ustl.h
@@ -35,7 +34,7 @@ public:
     template <typename T>
     class talign : public align {
     public:
-  inline explicit   talign (void) : align (stream_align_of (NullValue<T>())) {}
+	inline explicit		talign (void) : align (stream_align_of (NullValue<T>())) {}
     };
 
     /// \class skip uiosfunc.h ustl.h
@@ -46,14 +45,14 @@ public:
     ///
     class skip {
     public:
-  inline explicit   skip (size_t nBytes) : _nBytes(nBytes) {}
-  inline istream&   apply (istream& is) const { is.skip (_nBytes); return is; }
-  inline ostream&   apply (ostream& os) const { os.skip (_nBytes); return os; }
-  inline void   read (istream& is) const  { apply (is); }
-  inline void   write (ostream& os) const { apply (os); }
-  inline size_t   stream_size (void) const  { return _nBytes; }
+	inline explicit 	skip (size_t nBytes) : _nBytes(nBytes) {}
+	inline istream&		apply (istream& is) const { is.skip (_nBytes); return is; }
+	inline ostream&		apply (ostream& os) const { os.skip (_nBytes); return os; }
+	inline void		read (istream& is) const  { apply (is); }
+	inline void		write (ostream& os) const { apply (os); }
+	inline size_t		stream_size (void) const  { return _nBytes; }
     private:
-  const size_t    _nBytes;
+	const size_t		_nBytes;
     };
 
     /// \class width uiosfunc.h ustl.h
@@ -64,30 +63,20 @@ public:
     ///
     class width {
     public:
-  inline explicit   width (size_t nBytes) : _nBytes(nBytes) {}
-  inline ostringstream& apply (ostringstream& os) const { os.set_width (_nBytes); return os; }
-  inline void   text_write (ostringstream& os) const { apply (os); }
+	inline explicit		width (size_t nBytes) : _nBytes(nBytes) {}
+	inline ostringstream&	apply (ostringstream& os) const { os.width (_nBytes); return os; }
+	inline void		text_write (ostringstream& os) const { apply (os); }
     private:
-  const size_t    _nBytes;
+	const size_t		_nBytes;
     };
 
-    /// \class base uiosfunc.h ustl.h
-    /// \ingroup StreamFunctors
-    /// \brief Stream functor to allow inline set_base() calls.
-    ///
-    /// Example: os << ios::base(15);
-    ///
-    class base {
-    public:
-  inline explicit   base (size_t n) : _base(n) {}
-  inline ostringstream& apply (ostringstream& os) const { os.set_base (_base); return os; }
-  inline void   text_write (ostringstream& os) const { apply (os); }
+    // Deprecated way to set output format base. Use setiosflags manipulator instead.
+    struct base {
+	inline explicit		base (size_t n) : _f (n == 16 ? hex : (n == 8 ? oct : dec)) {}
+	inline void		text_write (ostringstream& os) const { os.setf (_f, basefield); }
     private:
-  const size_t    _base;
+	fmtflags		_f;
     };
 };
 
 } // namespace ustl
-
-CAST_STREAMABLE(ustl::ios::fmtflags, uint32_t)
-NUMERIC_LIMITS(ustl::ios::fmtflags, ustl::ios::boolalpha, ustl::ios::floatfield, false, true, true)

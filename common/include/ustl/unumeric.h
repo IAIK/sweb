@@ -14,7 +14,7 @@ template <typename InputIterator, typename T>
 inline T accumulate (InputIterator first, InputIterator last, T init)
 {
     while (first < last)
-  init += *first++;
+	init += *first++;
     return init;
 }
 
@@ -25,7 +25,7 @@ template <typename InputIterator, typename T, typename BinaryFunction>
 inline T accumulate (InputIterator first, InputIterator last, T init, BinaryFunction binary_op)
 {
     while (first < last)
-  init = binary_op (init, *first++);
+	init = binary_op (init, *first++);
     return init;
 }
 
@@ -36,7 +36,7 @@ template <typename ForwardIterator, typename T>
 inline void iota (ForwardIterator first, ForwardIterator last, T value)
 {
     while (first < last)
-  *first++ = value++;
+	*first++ = value++;
 }
 
 /// Returns the sum of products of respective elements in the given ranges.
@@ -46,7 +46,7 @@ template <typename InputIterator1, typename InputIterator2, typename T>
 inline T inner_product (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, T init)
 {
     while (first1 < last1)
-  init += *first1++ * *first2++;
+	init += *first1++ * *first2++;
     return init;
 }
 
@@ -54,13 +54,13 @@ inline T inner_product (InputIterator1 first1, InputIterator1 last1, InputIterat
 /// \ingroup NumericAlgorithms
 ///
 template <typename InputIterator1, typename InputIterator2, typename T,
-        typename BinaryOperation1, typename BinaryOperation2>
+    	  typename BinaryOperation1, typename BinaryOperation2>
 inline T inner_product
 (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, T init,
  BinaryOperation1 sumOp, BinaryOperation2 productOp)
 {
     while (first1 < last1)
-  init = sumOp (init, productOp (*first1++, *first2++));
+	init = sumOp (init, productOp (*first1++, *first2++));
     return init;
 }
 
@@ -71,9 +71,9 @@ template <typename InputIterator, typename OutputIterator>
 inline OutputIterator partial_sum (InputIterator first, InputIterator last, OutputIterator result)
 {
     if (first < last)
-  *result = *first++;
+	*result = *first++;
     while (first < last)
-  *++result = *first++ + *result;
+	*++result = *first++ + *result;
     return result;
 }
 
@@ -84,9 +84,9 @@ template <typename InputIterator, typename OutputIterator, typename BinaryOperat
 inline OutputIterator partial_sum (InputIterator first, InputIterator last, OutputIterator result, BinaryOperation sumOp)
 {
     if (first < last)
-  *result = *first++;
+	*result = *first++;
     while (first < last)
-  *++result = sumOp (*first++, *result);
+	*++result = sumOp (*first++, *result);
     return result;
 }
 
@@ -97,9 +97,9 @@ template <typename InputIterator, typename OutputIterator>
 inline OutputIterator adjacent_difference (InputIterator first, InputIterator last, OutputIterator result)
 {
     if (first < last)
-  *result++ = *first++;
+	*result++ = *first++;
     while (first < last)
-  *result++ = *first - *(first - 1);
+	*result++ = *first - *(first - 1);
     return result;
 }
 
@@ -110,9 +110,9 @@ template <typename InputIterator, typename OutputIterator, typename BinaryOperat
 inline OutputIterator adjacent_difference (InputIterator first, InputIterator last, OutputIterator result, BinaryOperation differenceOp)
 {
     if (first < last)
-  *result++ = *first++;
+	*result++ = *first++;
     while (first < last)
-  *result++ = differenceOp (*first, *(first - 1));
+	*result++ = differenceOp (*first, *(first - 1));
     return result;
 }
 
@@ -125,9 +125,9 @@ inline T power (T x, unsigned n)
 {
     T result (n % 2 ? x : 1);
     while (n /= 2) {
-  x *= x;
-  if (n % 2)
-      result *= x;
+	x *= x;
+	if (n % 2)
+	    result *= x;
     }
     return result;
 }
@@ -141,9 +141,9 @@ inline T power (T x, unsigned n, BinaryOperation op)
 {
     T result (n % 2 ? x : 1);
     while (n /= 2) {
-  x = op (x, x);
-  if (n % 2)
-      result = op (result, x);
+	x = op (x, x);
+	if (n % 2)
+	    result = op (result, x);
     }
     return result;
 }

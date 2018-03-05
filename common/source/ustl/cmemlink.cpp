@@ -19,7 +19,7 @@ namespace ustl {
 void cmemlink::link (const void* p, size_type n)
 {
     if (!p && n)
-      kpanict((uint8_t*)"bad_alloc");
+      kpanict("bad_alloc");
       //throw bad_alloc (n);
     unlink();
     relink (p, n);
@@ -62,7 +62,7 @@ cmemlink::size_type cmemlink::stream_size (void) const noexcept
 bool cmemlink::operator== (const cmemlink& l) const noexcept
 {
     return l._size == _size &&
-      (l._data == _data || 0 == memcmp (l._data, _data, _size));
+	    (l._data == _data || 0 == memcmp (l._data, _data, _size));
 }
 
 } // namespace ustl
