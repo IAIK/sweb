@@ -8,6 +8,7 @@
 #include "ustring.h"
 #include "ualgo.h"
 #include "kprintf.h"
+#include "panic.h"
 
 namespace ustl {
 
@@ -17,7 +18,7 @@ namespace ustl {
 void ios_base::overrun (__attribute__((unused)) const char* op, __attribute__((unused)) const char* type, __attribute__((unused)) uint32_t n, __attribute__((unused)) uint32_t pos, uint32_t rem)
 {
     if (set_and_throw (rem ? failbit : (failbit | eofbit)))
-  /*  throw stream_bounds_exception (op, type, pos, n, rem)*/{ kprintfd("ERROR stream_bounds_exception: %s:%d", __FILE__, __LINE__); }
+            /*  throw stream_bounds_exception (op, type, pos, n, rem)*/{ kprintfd("ERROR stream_bounds_exception: %s:%d", __FILE__, __LINE__); kpanict("ERROR stream_bounds_exception " LOCATION); }
 }
 
 //--------------------------------------------------------------------
@@ -29,8 +30,8 @@ istream::istream (const ostream& source) noexcept
 {
 }
 
-void istream::unlink (void) noexcept    { cmemlink::unlink(); _pos = 0; }
-void ostream::unlink (void) noexcept    { memlink::unlink(); _pos = 0; }
+void istream::unlink (void) noexcept		{ cmemlink::unlink(); _pos = 0; }
+void ostream::unlink (void) noexcept		{ memlink::unlink(); _pos = 0; }
 
 /// Writes all unread bytes into \p os.
 void istream::write (ostream& os) const
@@ -49,7 +50,7 @@ void istream::read_strz (string& str)
 {
     const_iterator zp = find (ipos(), end(), '\0');
     if (zp == end())
-  zp = ipos();
+	zp = ipos();
     const size_type strl = distance (ipos(), zp);
     str.assign (ipos(), strl);
     _pos += strl + 1;
@@ -59,10 +60,16 @@ void istream::read_strz (string& str)
 istream::size_type istream::readsome (void* s, size_type n)
 {
     if (remaining() < n)
-  underflow (n);
+	underflow (n);
     const size_type ntr (min (n, remaining()));
     read (s, ntr);
     return ntr;
+}
+
+streamsize istream::underflow (streamsize n)
+{
+    verify_remaining ("read", "byte", n);
+    return remaining();
 }
 
 //--------------------------------------------------------------------
@@ -76,7 +83,7 @@ void ostream::align (size_type grain)
     size_t nb = distance (ip, ipa);
 #if WANT_STREAM_BOUNDS_CHECKING
     if (!verify_remaining ("align", "padding", nb))
-  return;
+	return;
 #else
     assert (remaining() >= nb && "Buffer overrun. Check your stream size calculations.");
 #endif

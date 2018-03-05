@@ -3,7 +3,7 @@
 // Copyright (c) 2005 by Mike Sharov <msharov@users.sourceforge.net>
 // This file is free software, distributed under the MIT License.
 
-#include "mistream.h" // for istream_iterator, referenced in utf8.h
+#include "mistream.h"	// for istream_iterator, referenced in utf8.h
 #include "sostream.h"
 #include "ustring.h"
 #include "ulimits.h"
@@ -18,8 +18,8 @@ ostringstream::ostringstream (void* p, size_t n) noexcept
 ,_buffer()
 ,_flags (0)
 ,_width (0)
-,_base (10)
 ,_precision (2)
+,_fill (0)
 {
     exceptions (goodbit);
     link (p, n);
@@ -31,8 +31,8 @@ ostringstream::ostringstream (const string& v)
 ,_buffer (v)
 ,_flags (0)
 ,_width (0)
-,_base (10)
 ,_precision (2)
+,_fill (0)
 {
     exceptions (goodbit);
     ostream::link (_buffer);
@@ -47,10 +47,10 @@ void ostringstream::str (const string& s)
 }
 
 /// Writes a single character into the stream.
-void ostringstream::iwrite (uint8_t v)
+void ostringstream::iwrite (unsigned char v)
 {
     if (remaining() >= 1 || overflow() >= 1)
-  ostream::iwrite (v);
+	ostream::iwrite (v);
 }
 
 /// Writes the contents of \p buffer of \p size into the stream.
@@ -58,7 +58,7 @@ ostringstream& ostringstream::write (const void* buffer, size_type sz)
 {
     const char* buf = (const char*) buffer;
     for (size_type bw = 0; (bw = min(sz, remaining() ? remaining() : overflow(sz))); buf += bw, sz -= bw)
-  ostream::write (buf, bw);
+	ostream::write (buf, bw);
     return *this;
 }
 
@@ -66,7 +66,7 @@ ostringstream& ostringstream::write (const void* buffer, size_type sz)
 inline char* ostringstream::encode_dec (char* fmt, uint32_t n) const noexcept
 {
     do {
-  *fmt++ = '0' + n % 10;
+	*fmt++ = '0' + n % 10;
     } while (n /= 10);
     return fmt;
 }
@@ -75,25 +75,31 @@ inline char* ostringstream::encode_dec (char* fmt, uint32_t n) const noexcept
 void ostringstream::fmtstring (char* fmt, const char* typestr, bool bInteger) const
 {
     *fmt++ = '%';
-    if (_width)
-  fmt = encode_dec (fmt, _width);
-    if (_flags & left)
-  *fmt++ = '-';
-    if (!bInteger) {
-  *fmt++ = '.';
-  fmt = encode_dec (fmt, _precision);
+    if (_width) {
+	if (_fill == '0')
+	    *fmt++ = '0';
+	fmt = encode_dec (fmt, _width);
+    }
+    if (_flags.f & left)
+	*fmt++ = '-';
+    if (bInteger) {
+	if (_flags.f & showpos)
+	    *fmt++ = '+';
+	if (_flags.f & showbase)
+	    *fmt++ = '#';
+    } else {
+	*fmt++ = '.';
+	fmt = encode_dec (fmt, _precision);
     }
     while (*typestr)
-  *fmt++ = *typestr++;
+	*fmt++ = *typestr++;
     if (bInteger) {
-  if (_base == 16)
-      fmt[-1] = 'X';
-  else if (_base == 8)
-      fmt[-1] = 'o';
-    } else {
-  if (_flags & scientific)
-      fmt[-1] = 'E';
-    }
+	if (_flags.f & hex)
+	    fmt[-1] = (_flags.f & uppercase) ? 'X' : 'x';
+	else if (_flags.f & oct)
+	    fmt[-1] = 'o';
+    } else if (_flags.f & scientific)
+	fmt[-1] = 'E';
     *fmt = 0;
 }
 
@@ -124,10 +130,10 @@ int ostringstream::vformat (const char* fmt, va_list args)
 #endif
     int rv, space;
     do {
-  space = remaining();
-  __va_copy (args2, args);
-  if (0 > (rv = vsnprintf (ipos(), space, fmt, args2)))
-      return rv;
+	space = remaining();
+	__va_copy (args2, args);
+	if (0 > (rv = vsnprintf (ipos(), space, fmt, args2)))
+	    return rv;
     } while (rv >= space && rv < (int)overflow(rv+1));
     SetPos (pos() + min (rv, space));
     return rv;
@@ -154,12 +160,12 @@ void ostringstream::link (void* p, size_type n) noexcept
 /// Attempts to create more output space. Returns remaining().
 ostringstream::size_type ostringstream::overflow (size_type n)
 {
-    if (n > remaining()) {
-  const uoff_t oldPos (pos());
-  _buffer.reserve (oldPos + n, false);
-  _buffer.resize (oldPos + n);
-  ostream::link (_buffer);
-  SetPos (oldPos);
+    if (n > remaining() && (good() || n <= capacity() - pos())) {
+	const uoff_t oldPos (pos());
+	_buffer.reserve (oldPos + n, false);
+	_buffer.resize (oldPos + n);
+	ostream::link (_buffer);
+	SetPos (oldPos);
     }
     verify_remaining ("write", "text", n);
     return remaining();

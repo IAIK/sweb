@@ -363,9 +363,9 @@ inline void rotate (Container& ctr, off_t offset)
 {
     assert (size_t(offset > 0 ? offset : -offset) < ctr.size());
     if (offset > 0)
-  rotate (ctr.begin(), ctr.end() - offset, ctr.end());
+	rotate (ctr.begin(), ctr.end() - offset, ctr.end());
     else
-  rotate (ctr.begin(), ctr.begin() - offset, ctr.end());
+	rotate (ctr.begin(), ctr.begin() - offset, ctr.end());
 }
 
 /// Returns the furthermost iterator i in [first, last) such that,

@@ -158,7 +158,7 @@ void Scheduler::printThreadList()
 void Scheduler::lockScheduling() //not as severe as stopping Interrupts
 {
   if (unlikely(ArchThreads::testSetLock(block_scheduling_, 1)))
-    kpanict((uint8*) "FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+    kpanict("FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
 }
 
 void Scheduler::unlockScheduling()

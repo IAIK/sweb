@@ -6,7 +6,7 @@
 #include "panic.h"
 #include "debug_bochs.h"
 
-void kpanict ( uint8 * message )
+void kpanict ( const char * message )
 {
   system_state = KPANIC;
   ArchInterrupts::disableInterrupts();

@@ -13,8 +13,8 @@ void convert_to_bitstring (const bitset_value_type* v, size_t n, string& buf) no
 {
     string::iterator stri = buf.end();
     for (size_t i = 0; i < n && stri > buf.begin(); ++ i)
-  for (bitset_value_type b = 1; b && stri > buf.begin(); b <<= 1)
-      *--stri = (v[i] & b) ? '1' : '0';
+	for (bitset_value_type b = 1; b && stri > buf.begin(); b <<= 1)
+	    *--stri = (v[i] & b) ? '1' : '0';
 }
 
 /// Copies bits from \p buf as MSB "1011001..." LSB into \p v of size \p n.
@@ -22,12 +22,12 @@ void convert_from_bitstring (const string& buf, bitset_value_type* v, size_t n) 
 {
     string::const_iterator stri = buf.end();
     for (size_t i = 0; i < n; ++ i) {
-  for (bitset_value_type b = 1; b; b <<= 1) {
-      if (stri == buf.begin() || *--stri == '0')
-    v[i] &= ~b;
-      else
-    v[i] |= b;
-  }
+	for (bitset_value_type b = 1; b; b <<= 1) {
+	    if (stri == buf.begin() || *--stri == '0')
+		v[i] &= ~b;
+	    else
+		v[i] |= b;
+	}
     }
 }
 

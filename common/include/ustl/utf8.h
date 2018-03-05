@@ -15,14 +15,13 @@
 // U-80000000 - U-FFFFFFFF: 11111110 100000xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 
 #pragma once
-
 #include "uiterator.h"
 
 namespace ustl {
 
 //----------------------------------------------------------------------
 
-typedef uint8_t utf8subchar_t;  ///< Type for the encoding subcharacters.
+typedef uint8_t utf8subchar_t;	///< Type for the encoding subcharacters.
 
 //----------------------------------------------------------------------
 
@@ -36,18 +35,18 @@ inline size_t Utf8SequenceBytes (wchar_t c) __attribute__((const));
 inline size_t Utf8Bytes (wchar_t v)
 {
     if ((uint32_t) v < 128)
-  return 1;
+	return 1;
     size_t n;
-    #if __i386__ || __x86_64__
+    #if __x86__
         uint32_t r = 0;
-  asm ("bsr\t%2, %%eax\n\t"
-      "add\t$4, %0\n\t"
-      "div\t%3":"=a"(n),"+d"(r):"r"(v),"c"(5));
+	asm ("bsr\t%2, %%eax\n\t"
+	    "add\t$4, %0\n\t"
+	    "div\t%3":"=a"(n),"+d"(r):"r"(v),"c"(5));
     #else
-  static const uint32_t c_Bounds[7] = { 0x0000007F, 0x000007FF, 0x0000FFFF, 0x001FFFFF, 0x03FFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
-  for (n = 0; c_Bounds[n++] < uint32_t(v););
+	static const uint32_t c_Bounds[7] = { 0x0000007F, 0x000007FF, 0x0000FFFF, 0x001FFFFF, 0x03FFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
+	for (n = 0; c_Bounds[n++] < uint32_t(v););
     #endif
-  return n;
+    return n;
 }
 
 /// Measures the size of a wchar_t array in UTF-8 encoding.
@@ -55,24 +54,24 @@ inline size_t Utf8Bytes (const wchar_t* first, const wchar_t* last)
 {
     size_t bc = 0;
     for (; first < last; ++first)
-  bc += Utf8Bytes(*first);
+	bc += Utf8Bytes(*first);
     return bc;
 }
 
 /// Returns the number of bytes in a UTF-8 sequence that starts with \p c.
-inline size_t Utf8SequenceBytes (wchar_t c) // a wchar_t to keep c in a full register
+inline size_t Utf8SequenceBytes (wchar_t c)	// a wchar_t to keep c in a full register
 {
     // Count the leading bits. Header bits are 1 * nBytes followed by a 0.
-    //  0 - single byte character. Take 7 bits (0xFF >> 1)
-    //  1 - error, in the middle of the character. Take 6 bits (0xFF >> 2)
-    //      so you will keep reading invalid entries until you hit the next character.
-    //  >2 - multibyte character. Take remaining bits, and get the next bytes.
+    //	0 - single byte character. Take 7 bits (0xFF >> 1)
+    //	1 - error, in the middle of the character. Take 6 bits (0xFF >> 2)
+    //	    so you will keep reading invalid entries until you hit the next character.
+    //	>2 - multibyte character. Take remaining bits, and get the next bytes.
     // All errors are ignored, since the user can not correct them.
     //
     wchar_t mask = 0x80;
     size_t nBytes = 0;
     for (; c & mask; ++nBytes)
-  mask >>= 1;
+	mask >>= 1;
     return nBytes ? nBytes : 1; // A sequence is always at least 1 byte.
 }
 
@@ -98,29 +97,30 @@ inline size_t Utf8SequenceBytes (wchar_t c) // a wchar_t to keep c in a full reg
 template <typename Iterator, typename WChar = wchar_t>
 class utf8in_iterator {
 public:
-    typedef typename iterator_traits<Iterator>::value_type  value_type;
-    typedef typename iterator_traits<Iterator>::difference_type difference_type;
-    typedef typename iterator_traits<Iterator>::pointer   pointer;
-    typedef typename iterator_traits<Iterator>::reference reference;
+    typedef typename iterator_traits<Iterator>::value_type	value_type;
+    typedef typename iterator_traits<Iterator>::difference_type	difference_type;
+    typedef typename iterator_traits<Iterator>::pointer		pointer;
+    typedef typename iterator_traits<Iterator>::reference	reference;
+    typedef input_iterator_tag					iterator_category;
 public:
-    explicit      utf8in_iterator (const Iterator& is)    : _i (is), _v (0) { Read(); }
-        utf8in_iterator (const utf8in_iterator& i)  : _i (i._i), _v (i._v) {}
-    inline const utf8in_iterator& operator= (const utf8in_iterator& i)    { _i = i._i; _v = i._v; return *this; }
-    inline Iterator   base (void) const { return _i - (Utf8Bytes(_v) - 1); }
+    explicit			utf8in_iterator (const Iterator& is)		: _i (is), _v (0) { Read(); }
+				utf8in_iterator (const utf8in_iterator& i)	: _i (i._i), _v (i._v) {}
+    inline const utf8in_iterator& operator= (const utf8in_iterator& i)		{ _i = i._i; _v = i._v; return *this; }
+    inline Iterator		base (void) const	{ return _i - (Utf8Bytes(_v) - 1); }
     /// Reads and returns the next value.
-    inline WChar    operator* (void) const  { return _v; }
-    inline utf8in_iterator& operator++ (void) { ++_i; Read(); return *this; }
-    inline utf8in_iterator  operator++ (int)  { utf8in_iterator old (*this); operator++(); return old; }
-    inline utf8in_iterator& operator+= (uoff_t n) { while (n--) operator++(); return *this; }
-    inline utf8in_iterator  operator+ (uoff_t n)  { utf8in_iterator v (*this); return v += n; }
-    inline bool     operator== (const utf8in_iterator& i) const { return _i == i._i; }
-    inline bool     operator< (const utf8in_iterator& i) const  { return _i < i._i; }
-    difference_type   operator- (const utf8in_iterator& i) const;
+    inline WChar		operator* (void) const	{ return _v; }
+    inline utf8in_iterator&	operator++ (void)	{ ++_i; Read(); return *this; }
+    inline utf8in_iterator	operator++ (int)	{ utf8in_iterator old (*this); operator++(); return old; }
+    inline utf8in_iterator&	operator+= (uoff_t n)	{ while (n--) operator++(); return *this; }
+    inline utf8in_iterator	operator+ (uoff_t n)	{ utf8in_iterator v (*this); return v += n; }
+    inline bool			operator== (const utf8in_iterator& i) const	{ return _i == i._i; }
+    inline bool			operator< (const utf8in_iterator& i) const	{ return _i < i._i; }
+    difference_type		operator- (const utf8in_iterator& i) const;
 private:
-    void      Read (void);
+    void			Read (void);
 private:
-    Iterator      _i;
-    WChar     _v;
+    Iterator			_i;
+    WChar			_v;
 };
 
 /// Steps to the next character and updates current returnable value.
@@ -129,9 +129,9 @@ void utf8in_iterator<Iterator,WChar>::Read (void)
 {
     const utf8subchar_t c = *_i;
     size_t nBytes = Utf8SequenceBytes (c);
-    _v = c & (0xFF >> nBytes);  // First byte contains bits after the header.
-    while (--nBytes && *++_i) // Each subsequent byte has 6 bits.
-  _v = (_v << 6) | (*_i & 0x3F);
+    _v = c & (0xFF >> nBytes);	// First byte contains bits after the header.
+    while (--nBytes && *++_i)	// Each subsequent byte has 6 bits.
+	_v = (_v << 6) | (*_i & 0x3F);
 }
 
 /// Returns the distance in characters (as opposed to the distance in bytes).
@@ -141,7 +141,7 @@ utf8in_iterator<Iterator,WChar>::operator- (const utf8in_iterator<Iterator,WChar
 {
     difference_type dist = 0;
     for (Iterator first (last._i); first < _i; ++dist)
-  first = advance (first, Utf8SequenceBytes (*first));
+	first = advance (first, Utf8SequenceBytes (*first));
     return dist;
 }
 
@@ -155,23 +155,24 @@ utf8in_iterator<Iterator,WChar>::operator- (const utf8in_iterator<Iterator,WChar
 template <typename Iterator, typename WChar = wchar_t>
 class utf8out_iterator {
 public:
-    typedef typename iterator_traits<Iterator>::value_type  value_type;
-    typedef typename iterator_traits<Iterator>::difference_type difference_type;
-    typedef typename iterator_traits<Iterator>::pointer   pointer;
-    typedef typename iterator_traits<Iterator>::reference reference;
+    typedef typename iterator_traits<Iterator>::value_type	value_type;
+    typedef typename iterator_traits<Iterator>::difference_type	difference_type;
+    typedef typename iterator_traits<Iterator>::pointer		pointer;
+    typedef typename iterator_traits<Iterator>::reference	reference;
+    typedef output_iterator_tag					iterator_category;
 public:
-    explicit      utf8out_iterator (const Iterator& os) : _i (os) {}
-        utf8out_iterator (const utf8out_iterator& i) : _i (i._i) {} 
-    inline const Iterator&  base (void) const { return _i; }
+    explicit			utf8out_iterator (const Iterator& os) : _i (os) {}
+				utf8out_iterator (const utf8out_iterator& i) : _i (i._i) {}
+    inline const Iterator&	base (void) const { return _i; }
     /// Writes \p v into the stream.
-    utf8out_iterator&   operator= (WChar v);
-    inline utf8out_iterator&  operator* (void) { return *this; }
-    inline utf8out_iterator&  operator++ (void) { return *this; }
-    inline utf8out_iterator operator++ (int) { return *this; }
-    inline bool     operator== (const utf8out_iterator& i) const { return _i == i._i; }
-    inline bool     operator< (const utf8out_iterator& i) const { return _i < i._i; }
+    utf8out_iterator&		operator= (WChar v);
+    inline utf8out_iterator&	operator* (void) { return *this; }
+    inline utf8out_iterator&	operator++ (void) { return *this; }
+    inline utf8out_iterator&	operator++ (int) { return *this; }
+    inline bool			operator== (const utf8out_iterator& i) const { return _i == i._i; }
+    inline bool			operator< (const utf8out_iterator& i) const { return _i < i._i; }
 private:
-    Iterator      _i;
+    Iterator			_i;
 };
 
 /// Writes \p v into the stream.
@@ -180,14 +181,14 @@ utf8out_iterator<Iterator,WChar>& utf8out_iterator<Iterator,WChar>::operator= (W
 {
     const size_t nBytes = Utf8Bytes (v);
     if (nBytes > 1) {
-  // Write the bits 6 bits at a time, except for the first one,
-  // which may be less than 6 bits.
-  register wchar_t shift = nBytes * 6;
-  *_i++ = ((v >> (shift -= 6)) & 0x3F) | (0xFF << (8 - nBytes));
-  while (shift)
-      *_i++ = ((v >> (shift -= 6)) & 0x3F) | 0x80;
-    } else  // If only one byte, there is no header.
-  *_i++ = v;
+	// Write the bits 6 bits at a time, except for the first one,
+	// which may be less than 6 bits.
+	wchar_t shift = nBytes * 6;
+	*_i++ = ((v >> (shift -= 6)) & 0x3F) | (0xFF << (8 - nBytes));
+	while (shift)
+	    *_i++ = ((v >> (shift -= 6)) & 0x3F) | 0x80;
+    } else	// If only one byte, there is no header.
+	*_i++ = v;
     return *this;
 }
 
