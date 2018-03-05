@@ -6,7 +6,6 @@
 // the MIT license with Copyright (c) 2001 by Andrei Alexandrescu.
 
 #pragma once
-
 #include "metamac.h"
 #include "typet.h"
 
@@ -26,26 +25,26 @@ namespace tl {
 //----------------------------------------------------------------------
 // Seq template definitions. The macros expand to a spec per arg count
 //
-#define TL_MAX_SEQ_TYPES    9
-#define TL_MAX_SEQ_SPECS    8
-#define TL_SEQ_TYPE(n)      T##n
-#define TL_SEQ_TYPENAME(n)    typename TL_SEQ_TYPE(n)
-#define TL_SEQ_NULLTYPE_DEFAULT(n)  TL_SEQ_TYPENAME(n)=NullType
-#define TL_SEQ_TL_END(n)    > 
-#define TL_SEQ_ONE_TYPELIST(n)    Typelist<TL_SEQ_TYPE(n)
+#define TL_MAX_SEQ_TYPES		9
+#define TL_MAX_SEQ_SPECS		8
+#define TL_SEQ_TYPE(n)			T##n
+#define TL_SEQ_TYPENAME(n)		typename TL_SEQ_TYPE(n)
+#define TL_SEQ_NULLTYPE_DEFAULT(n)	TL_SEQ_TYPENAME(n)=NullType
+#define TL_SEQ_TL_END(n)		>
+#define TL_SEQ_ONE_TYPELIST(n)		Typelist<TL_SEQ_TYPE(n)
 
 /// Creates a typelist from a sequence of types
 template <COMMA_LIST(TL_MAX_SEQ_TYPES,TL_SEQ_NULLTYPE_DEFAULT)>
 struct Seq {
     typedef COMMA_LIST(TL_MAX_SEQ_TYPES,TL_SEQ_ONE_TYPELIST),
-  NullType REPEAT(TL_MAX_SEQ_TYPES,TL_SEQ_TL_END) Type;
+	NullType REPEAT(TL_MAX_SEQ_TYPES,TL_SEQ_TL_END) Type;
 };
 
-#define TL_SEQ_SPEC(n)  \
-template <COMMA_LIST (n, TL_SEQ_TYPENAME)>  \
-struct Seq<COMMA_LIST (n, TL_SEQ_TYPE)> { \
-    typedef COMMA_LIST(n,TL_SEQ_ONE_TYPELIST),  \
-  NullType REPEAT(n,TL_SEQ_TL_END) Type;  \
+#define TL_SEQ_SPEC(n)	\
+template <COMMA_LIST (n, TL_SEQ_TYPENAME)>	\
+struct Seq<COMMA_LIST (n, TL_SEQ_TYPE)> {	\
+    typedef COMMA_LIST(n,TL_SEQ_ONE_TYPELIST),	\
+	NullType REPEAT(n,TL_SEQ_TL_END) Type;	\
 }
 LIST(TL_MAX_SEQ_SPECS,TL_SEQ_SPEC, ;);
 

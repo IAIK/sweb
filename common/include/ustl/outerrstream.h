@@ -79,13 +79,13 @@ void coutclass::iformat (T v)
 /// Sets the flag \p f in the stream.
 inline void coutclass::iwrite (fmtflags f)
 {
-    switch (f) {
+    switch (f.f) {
   case oct: set_base (8); break;
   case dec: set_base (10);  break;
   case hex: set_base (16);  break;
   case left:  m_Flags |= left; m_Flags &= ~right; break;
   case right: m_Flags |= right; m_Flags &= ~left; break;
-  default:  m_Flags |= f; break;
+  default:  m_Flags |= f.f; break;
     }
 }
 

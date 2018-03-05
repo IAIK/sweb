@@ -4,7 +4,6 @@
 // This file is free software, distributed under the MIT License.
 
 #pragma once
-
 #include "ualgo.h"
 
 namespace ustl {
@@ -18,10 +17,10 @@ template <typename InputIterator, typename OutputIterator, typename Predicate>
 inline OutputIterator copy_if (InputIterator first, InputIterator last, OutputIterator result, Predicate pred)
 {
     for (; first != last; ++first) {
-  if (pred(*first)) {
-      *result = *first;
-      ++ result;
-  }
+	if (pred(*first)) {
+	    *result = *first;
+	    ++ result;
+	}
     }
     return result;
 }
@@ -35,7 +34,7 @@ template <typename InputIterator, typename Predicate>
 inline InputIterator find_if (InputIterator first, InputIterator last, Predicate pred)
 {
     while (first != last && !pred (*first))
-  ++ first;
+	++ first;
     return first;
 }
 
@@ -47,9 +46,9 @@ template <typename ForwardIterator, typename BinaryPredicate>
 inline ForwardIterator adjacent_find (ForwardIterator first, ForwardIterator last, BinaryPredicate p)
 {
     if (first != last)
-  for (ForwardIterator prev = first; ++first != last; ++ prev)
-      if (p (*prev, *first))
-    return prev;
+	for (ForwardIterator prev = first; ++first != last; ++ prev)
+	    if (p (*prev, *first))
+		return prev;
     return last;
 }
 
@@ -62,7 +61,7 @@ inline pair<InputIterator,InputIterator>
 mismatch (InputIterator first1, InputIterator last1, InputIterator first2, BinaryPredicate comp)
 {
     while (first1 != last1 && comp(*first1, *first2))
-  ++ first1, ++ first2;
+	++ first1, ++ first2;
     return make_pair (first1, first2);
 }
 
@@ -88,8 +87,8 @@ inline size_t count_if (InputIterator first, InputIterator last, Predicate pred)
 {
     size_t total = 0;
     for (; first != last; ++first)
-  if (pred (*first))
-      ++ total;
+	if (pred (*first))
+	    ++ total;
     return total;
 }
 
@@ -103,8 +102,8 @@ template <typename ForwardIterator, typename Predicate, typename T>
 inline void replace_if (ForwardIterator first, ForwardIterator last, Predicate pred, const T& new_value)
 {
     for (; first != last; ++first)
-  if (pred (*first))
-      *first = new_value;
+	if (pred (*first))
+	    *first = new_value;
 }
 
 /// Replace_copy_if copies elements from the range [first, last) to the range
@@ -135,8 +134,8 @@ template <typename InputIterator, typename OutputIterator, typename Predicate>
 inline OutputIterator remove_copy_if (InputIterator first, InputIterator last, OutputIterator result, Predicate pred)
 {
     for (; first != last; ++first)
-  if (pred (*first))
-      *result++ = *first;
+	if (!pred (*first))
+	    *result++ = *first;
     return result;
 }
 
@@ -171,11 +170,11 @@ template <typename InputIterator, typename OutputIterator, typename BinaryPredic
 OutputIterator unique_copy (InputIterator first, InputIterator last, OutputIterator result, BinaryPredicate binary_pred)
 {
     if (first != last) {
-  *result = *first;
-  while (++first != last)
-      if (!binary_pred (*first, *result))
-    *++result = *first;
-  ++ result;
+	*result = *first;
+	while (++first != last)
+	    if (!binary_pred (*first, *result))
+		*++result = *first;
+	++ result;
     }
     return result;
 }
@@ -208,11 +207,11 @@ ForwardIterator lower_bound (ForwardIterator first, ForwardIterator last, const 
 {
     ForwardIterator mid;
     while (first != last) {
-  mid = advance (first, size_t(distance (first,last)) / 2);
-  if (comp (*mid, value))
-      first = mid + 1;
-  else
-      last = mid;
+	mid = advance (first, size_t(distance (first,last)) / 2);
+	if (comp (*mid, value))
+	    first = mid + 1;
+	else
+	    last = mid;
     }
     return first;
 }
@@ -238,11 +237,11 @@ ForwardIterator upper_bound (ForwardIterator first, ForwardIterator last, const 
 {
     ForwardIterator mid;
     while (first != last) {
-  mid = advance (first, size_t(distance (first,last)) / 2);
-  if (comp (value, *mid))
-      last = mid;
-  else
-      first = mid + 1;
+	mid = advance (first, size_t(distance (first,last)) / 2);
+	if (comp (value, *mid))
+	    last = mid;
+	else
+	    first = mid + 1;
     }
     return last;
 }
@@ -257,7 +256,7 @@ inline pair<ForwardIterator,ForwardIterator> equal_range (ForwardIterator first,
     pair<ForwardIterator,ForwardIterator> rv;
     rv.second = rv.first = lower_bound (first, last, value, comp);
     while (rv.second != last && !comp(value, *(rv.second)))
-  ++ rv.second;
+	++ rv.second;
     return rv;
 }
 
@@ -282,11 +281,11 @@ ForwardIterator1 search (ForwardIterator1 first1, ForwardIterator1 last1, Forwar
 {
     const ForwardIterator1 slast = last1 - distance(first2, last2) + 1;
     for (; first1 < slast; ++first1) {
-  ForwardIterator2 i = first2;
-  ForwardIterator1 j = first1;
-  for (; i != last2 && comp(*j, *i); ++i, ++j) ;
-  if (i == last2)
-      return first1;
+	ForwardIterator2 i = first2;
+	ForwardIterator1 j = first1;
+	for (; i != last2 && comp(*j, *i); ++i, ++j) ;
+	if (i == last2)
+	    return first1;
     }
     return last1;
 }
@@ -299,10 +298,10 @@ ForwardIterator1 find_end (ForwardIterator1 first1, ForwardIterator1 last1, Forw
 {
     ForwardIterator1 s = last1 - distance(first2, last2);
     for (; first1 < s; --s) {
-  ForwardIterator2 i = first2, j = s;
-  for (; i != last2 && comp(*j, *i); ++i, ++j) ;
-  if (i == last2)
-      return s;
+	ForwardIterator2 i = first2, j = s;
+	for (; i != last2 && comp(*j, *i); ++i, ++j) ;
+	if (i == last2)
+	    return s;
     }
     return last1;
 }
@@ -315,10 +314,10 @@ Iterator search_n (Iterator first, Iterator last, size_t count, const T& value, 
 {
     size_t n = 0;
     for (; first != last; ++first) {
-  if (!comp (*first, value))
-      n = 0;
-  else if (++n == count)
-      return first - --n;
+	if (!comp (*first, value))
+	    n = 0;
+	else if (++n == count)
+	    return first - --n;
     }
     return last;
 }
@@ -330,9 +329,9 @@ template <typename InputIterator, typename ForwardIterator, typename BinaryPredi
 InputIterator find_first_of (InputIterator first1, InputIterator last1, ForwardIterator first2, ForwardIterator last2, BinaryPredicate comp)
 {
     for (; first1 != last1; ++first1)
-  for (ForwardIterator i = first2; i != last2; ++i)
-      if (comp (*first1, *i))
-    return first1;
+	for (ForwardIterator i = first2; i != last2; ++i)
+	    if (comp (*first1, *i))
+		return first1;
     return first1;
 }
 
@@ -344,9 +343,9 @@ template <typename InputIterator1, typename InputIterator2, typename StrictWeakO
 bool includes (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, StrictWeakOrdering comp)
 {
     for (; (first1 != last1) & (first2 != last2); ++first1) {
-  if (comp (*first2, *first1))
-      return false;
-  first2 += !comp (*first1, *first2);
+	if (comp (*first2, *first1))
+	    return false;
+	first2 += !comp (*first1, *first2);
     }
     return first2 == last2;
 }
@@ -362,12 +361,12 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 OutputIterator set_union (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, StrictWeakOrdering comp)
 {
     for (; (first1 != last1) & (first2 != last2); ++result) {
-  if (comp (*first2, *first1))
-      *result = *first2++;
-  else {
-      first2 += !comp (*first1, *first2);
-      *result = *first1++;
-  }
+	if (comp (*first2, *first1))
+	    *result = *first2++;
+	else {
+	    first2 += !comp (*first1, *first2);
+	    *result = *first1++;
+	}
     }
     return copy (first2, last2, copy (first1, last1, result));
 }
@@ -379,11 +378,11 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 OutputIterator set_intersection (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, StrictWeakOrdering comp)
 {
     while ((first1 != last1) & (first2 != last2)) {
-  bool b1ge2 = !comp (*first1, *first2), b2ge1 = !comp (*first2, *first1);
-  if (b1ge2 & b2ge1)
-      *result++ = *first1;
-  first1 += b2ge1;
-  first2 += b1ge2;
+	bool b1ge2 = !comp (*first1, *first2), b2ge1 = !comp (*first2, *first1);
+	if (b1ge2 & b2ge1)
+	    *result++ = *first1;
+	first1 += b2ge1;
+	first2 += b1ge2;
     }
     return result;
 }
@@ -395,11 +394,11 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 OutputIterator set_difference (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, StrictWeakOrdering comp)
 {
     while ((first1 != last1) & (first2 != last2)) {
-  bool b1ge2 = !comp (*first1, *first2), b2ge1 = !comp (*first2, *first1);
-  if (!b1ge2)
-      *result++ = *first1;
-  first1 += b2ge1;
-  first2 += b1ge2;
+	bool b1ge2 = !comp (*first1, *first2), b2ge1 = !comp (*first2, *first1);
+	if (!b1ge2)
+	    *result++ = *first1;
+	first1 += b2ge1;
+	first2 += b1ge2;
     }
     return copy (first1, last1, result);
 }
@@ -411,13 +410,13 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 OutputIterator set_symmetric_difference (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, StrictWeakOrdering comp)
 {
     while ((first1 != last1) & (first2 != last2)) {
-  bool b1l2 = comp (*first1, *first2), b2l1 = comp (*first2, *first1);
-  if (b1l2)
-      *result++ = *first1;
-  else if (b2l1)
-      *result++ = *first2;
-  first1 += !b2l1;
-  first2 += !b1l2;
+	bool b1l2 = comp (*first1, *first2), b2l1 = comp (*first2, *first1);
+	if (b1l2)
+	    *result++ = *first1;
+	else if (b2l1)
+	    *result++ = *first2;
+	first1 += !b2l1;
+	first2 += !b1l2;
     }
     return copy (first2, last2, copy (first1, last1, result));
 }
@@ -429,8 +428,8 @@ template <typename ForwardIterator, typename StrictWeakOrdering>
 bool is_sorted (ForwardIterator first, ForwardIterator last, StrictWeakOrdering comp)
 {
     for (ForwardIterator i = first; ++i < last; ++first)
-  if (comp (*i, *first))
-      return false;
+	if (comp (*i, *first))
+	    return false;
     return true;
 }
 
@@ -441,10 +440,10 @@ template <typename InputIterator1, typename InputIterator2, typename BinaryPredi
 bool lexicographical_compare (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, BinaryPredicate comp)
 {
     for (; (first1 != last1) & (first2 != last2); ++first1, ++first2) {
-  if (comp (*first1, *first2))
-      return true;
-  if (comp (*first2, *first1))
-      return false;
+	if (comp (*first1, *first2))
+	    return true;
+	if (comp (*first2, *first1))
+	    return false;
     }
     return (first1 == last1) & (first2 != last2);
 }
@@ -457,17 +456,17 @@ template <typename BidirectionalIterator, typename StrictWeakOrdering>
 bool next_permutation (BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering comp)
 {
     if (distance (first, last) < 2)
-  return false;
+	return false;
     BidirectionalIterator i = last;
     for (--i; i != first; ) {
-  --i;
-  if (comp (i[0], i[1])) {
-      BidirectionalIterator j = last;
-      while (!comp (*i, *--j)) ;
-      iter_swap (i, j);
-      reverse (i + 1, last);
-      return true;
-  }
+	--i;
+	if (comp (i[0], i[1])) {
+	    BidirectionalIterator j = last;
+	    while (!comp (*i, *--j)) ;
+	    iter_swap (i, j);
+	    reverse (i + 1, last);
+	    return true;
+	}
     }
     reverse (first, last);
     return false;
@@ -481,17 +480,17 @@ template <typename BidirectionalIterator, typename StrictWeakOrdering>
 bool prev_permutation (BidirectionalIterator first, BidirectionalIterator last, StrictWeakOrdering comp)
 {
     if (distance (first, last) < 2)
-  return false;
+	return false;
     BidirectionalIterator i = last;
     for (--i; i != first; ) {
-  --i;
-  if (comp(i[1], i[0])) {
-      BidirectionalIterator j = last;
-      while (!comp (*--j, *i)) ;
-      iter_swap (i, j);
-      reverse (i + 1, last);
-      return true;
-  }
+	--i;
+	if (comp(i[1], i[0])) {
+	    BidirectionalIterator j = last;
+	    while (!comp (*--j, *i)) ;
+	    iter_swap (i, j);
+	    reverse (i + 1, last);
+	    return true;
+	}
     }
     reverse (first, last);
     return false;
@@ -505,8 +504,8 @@ inline ForwardIterator max_element (ForwardIterator first, ForwardIterator last,
 {
     ForwardIterator result = first;
     for (; first != last; ++first)
-  if (comp (*result, *first))
-      result = first;
+	if (comp (*result, *first))
+	    result = first;
     return result;
 }
 
@@ -518,8 +517,8 @@ inline ForwardIterator min_element (ForwardIterator first, ForwardIterator last,
 {
     ForwardIterator result = first;
     for (; first != last; ++first)
-  if (comp (*first, *result))
-      result = first;
+	if (comp (*first, *result))
+	    result = first;
     return result;
 }
 
@@ -541,13 +540,13 @@ RandomAccessIterator partial_sort_copy (InputIterator first, InputIterator last,
 {
     RandomAccessIterator rend = result_first;
     for (; first != last; ++first) {
-  RandomAccessIterator i = result_first;
-  for (; i != rend && comp (*i, *first); ++i) ;
-  if (i == result_last)
-      continue;
-  rend += (rend < result_last);
-  copy_backward (i, rend - 1, rend);
-  *i = *first;
+	RandomAccessIterator i = result_first;
+	for (; i != rend && comp (*i, *first); ++i) ;
+	if (i == result_last)
+	    continue;
+	rend += (rend < result_last);
+	copy_backward (i, rend - 1, rend);
+	*i = *first;
     }
     return rend;
 }
@@ -559,10 +558,10 @@ template <typename ForwardIterator, typename Predicate>
 ForwardIterator stable_partition (ForwardIterator first, ForwardIterator last, Predicate pred)
 {
     if (first == last)
-  return first;
+	return first;
     ForwardIterator l, r, m = advance (first, distance (first, last) / 2);
     if (first == m)
-  return pred(*first) ? last : first;
+	return pred(*first) ? last : first;
     l = stable_partition (first, m, pred);
     r = stable_partition (m, last, pred);
     rotate (l, m, r);

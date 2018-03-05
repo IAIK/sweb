@@ -2,11 +2,13 @@
 #pragma once
 
 // Define to the one symbol short name of this package.
-#define USTL_NAME "ustl"
+#define USTL_NAME	"ustl"
 // Define to the full name and version of this package.
-#define USTL_STRING "ustl v2.2-3-gf0abf84"
+// More or less. Was manually merged and updated from version ustl v2.2-3-gf0abf84 with SWEB specific changes. config.h file was mostly left as it is and not updated
+// Based on ustl upstream commit c19d8291a471c47c808b5ef303f163df166cd388
+#define USTL_STRING	"ustl v2.6-2-gc19d829"
 // Define to the version of this package.
-#define USTL_VERSION  0x220
+#define USTL_VERSION	0x260
 // Define to the address where bug reports for this package should be sent.
 #define USTL_BUGREPORT  "Mike Sharov <msharov@users.sourceforge.net>"
 
@@ -34,9 +36,10 @@
     /// function calls.  Just in case '__attribute__' is undefined, make a dummy.
     /// 
     #ifndef __attribute__
-  #define __attribute__(p)
+    #define __attribute__(p)
     #endif
 #endif
+#define WEAKALIAS(sym)		__attribute__((weak,alias(sym)))
 #if __GNUC__ >= 4
     #define DLL_EXPORT    __attribute__((visibility("default")))
     #define DLL_LOCAL   __attribute__((visibility("hidden")))
@@ -48,6 +51,9 @@
 #endif
 #if __cplusplus >= 201103L && (!__GNUC__ || (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 2)) || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)))
     #define HAVE_CPP11 1
+    #if __cplusplus >= 201402
+    #define HAVE_CPP14 1
+    #endif
 #endif
 #if !HAVE_CPP11
     #define constexpr
@@ -67,7 +73,7 @@
     #define __alignof__(v)  min(sizeof(v), sizeof(void*))
     /// This macro returns 1 if the value of x is known at compile time.
     #ifndef __builtin_constant_p
-  #define __builtin_constant_p(x) 0
+    #define __builtin_constant_p(x) 0
     #endif
 #endif
 
@@ -217,6 +223,10 @@
 #define USTL_LITTLE_ENDIAN  4321
 #define USTL_BIG_ENDIAN   1234
 #define USTL_BYTE_ORDER   USTL_LITTLE_ENDIAN
+
+#if __i386__ || __x86_64__
+#define __x86__ 1
+#endif
 
 // Extended CPU capabilities
 #undef CPU_HAS_FPU
