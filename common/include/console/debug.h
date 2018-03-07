@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kprintf.h"
+
 enum AnsiColor
 {
   Ansi_Red = 31,
