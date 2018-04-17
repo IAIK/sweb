@@ -49,8 +49,10 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
 pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer called_by)
 {
   assert((requested_size & 0x80000000) == 0 && "requested too much memory");
-  if ((requested_size & 0xF) != 0)
-    requested_size += 0x10 - (requested_size & 0xF); // 16 byte alignment
+
+  // 16 byte alignment
+  requested_size = (requested_size + 0xF) & ~0xF;
+
   lockKMM();
   pointer ptr = private_AllocateMemory(requested_size, called_by);
   if (ptr)
@@ -61,6 +63,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer calle
 }
 pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
+  assert((requested_size & 0xF) == 0 && "Attempt to allocate block with unaligned size");
+
   // find next free pointer of neccessary size + sizeof(MallocSegment);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
 
@@ -116,6 +120,9 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   //iff the old segment is no segment ;) -> we create a new one
   if (virtual_address == 0)
     return allocateMemory(new_size, called_by);
+
+  // 16 byte alignment
+  new_size = (new_size + 0xF) & ~0xF;
 
   lockKMM();
 
@@ -219,6 +226,8 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
   assert(this_one != 0 && "trying to access a nullpointer");
   assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
   assert(this_one->getSize() >= requested_size && "segment is too small for requested size");
+  assert((requested_size & 0xF) == 0 && "Attempt to fill segment with unaligned size");
+
   uint32* mem = (uint32*) (this_one + 1);
   if (zero_check)
   {
