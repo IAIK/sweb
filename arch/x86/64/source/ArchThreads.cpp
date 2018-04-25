@@ -81,10 +81,7 @@ void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* func
 
 void ArchThreads::yield()
 {
-  __asm__ __volatile__("int $65"
-  :
-  :
-  );
+  __asm__ __volatile__("int $65");
 }
 
 size_t ArchThreads::testSetLock(size_t &lock, size_t new_value)

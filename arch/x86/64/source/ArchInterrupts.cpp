@@ -168,6 +168,11 @@ extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
+  if(outstanding_EOIs)
+  {
+          debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
+          assert(!outstanding_EOIs);
+  }
   if (currentThread->switch_to_userspace_)
   {
     assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");

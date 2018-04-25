@@ -60,7 +60,9 @@ uint32 Scheduler::schedule()
   uint32 ret = 1;
 
   if (currentThread->switch_to_userspace_)
+  {
     currentThreadRegisters = currentThread->user_registers_;
+  }
   else
   {
     currentThreadRegisters = currentThread->kernel_registers_;
