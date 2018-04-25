@@ -94,18 +94,12 @@ size_t ArchThreads::testSetLock(size_t &lock, size_t new_value)
 
 uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
 {
-  int32 ret=increment;
-  __asm__ __volatile__(
-  "lock; xadd %0, %1;"
-  :"=a" (ret), "=m" (value)
-  :"a" (ret)
-  :);
-  return ret;
+  return __sync_fetch_and_add(&value,increment);
 }
 
 int64 ArchThreads::atomic_add(int64 &value, int64 increment)
 {
-  return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
+  return __sync_fetch_and_add(&value,increment);
 }
 
 void ArchThreads::atomic_set(uint32& target, uint32 value)
