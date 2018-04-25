@@ -21,6 +21,8 @@
 #include "PageFaultHandler.h"
 #include "Stabs2DebugInfo.h"
 
+#include "8259.h"
+
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
 #define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
 
@@ -116,6 +118,7 @@ extern "C" void arch_irqHandler_0();
 extern "C" void arch_contextSwitch();
 extern "C" void irqHandler_0()
 {
+  ++outstanding_EOIs;
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
@@ -150,6 +153,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
+  ++outstanding_EOIs;
   KeyboardManager::instance()->serviceIRQ();
   ArchInterrupts::EndOfInterrupt(1);
 }
@@ -158,6 +162,7 @@ extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
   kprintfd("IRQ 3 called\n");
+  ++outstanding_EOIs;
   SerialManager::getInstance()->service_irq(3);
   ArchInterrupts::EndOfInterrupt(3);
   kprintfd("IRQ 3 ended\n");
@@ -167,6 +172,7 @@ extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
   kprintfd("IRQ 4 called\n");
+  ++outstanding_EOIs;
   SerialManager::getInstance()->service_irq(4);
   ArchInterrupts::EndOfInterrupt(4);
   kprintfd("IRQ 4 ended\n");
@@ -183,6 +189,7 @@ extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
   kprintfd("IRQ 9 called\n");
+  ++outstanding_EOIs;
   BDManager::getInstance()->serviceIRQ(9);
   ArchInterrupts::EndOfInterrupt(9);
 }
@@ -191,6 +198,7 @@ extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
   kprintfd("IRQ 11 called\n");
+  ++outstanding_EOIs;
   BDManager::getInstance()->serviceIRQ(11);
   ArchInterrupts::EndOfInterrupt(11);
 }
@@ -199,6 +207,7 @@ extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
   //kprintfd( "IRQ 14 called\n" );
+  ++outstanding_EOIs;
   BDManager::getInstance()->serviceIRQ(14);
   ArchInterrupts::EndOfInterrupt(14);
 }
@@ -207,6 +216,7 @@ extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
   //kprintfd( "IRQ 15 called\n" );
+  ++outstanding_EOIs;
   BDManager::getInstance()->serviceIRQ(15);
   ArchInterrupts::EndOfInterrupt(15);
 }

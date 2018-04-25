@@ -7,6 +7,8 @@
 #define PIC_1_DATA_PORT 0x21
 #define PIC_2_DATA_PORT 0xA1
 
+extern volatile size_t outstanding_EOIs;
+
 /**
  * sends the initialisation and operational command words to CPU
  *

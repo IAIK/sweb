@@ -180,6 +180,11 @@ extern TSS *g_tss;
 extern "C" void arch_contextSwitch()
 {
   assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
+  if(outstanding_EOIs)
+  {
+          debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler/IRQ0)\n", outstanding_EOIs);
+          assert(!outstanding_EOIs);
+  }
   ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
   if (currentThread->switch_to_userspace_)
   {

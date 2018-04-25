@@ -1,6 +1,8 @@
 #include "8259.h"
 #include "ports.h"
+#include "debug.h"
 
+volatile size_t outstanding_EOIs = 0;
 
 uint32 cached_mask = 0xFFFF;
 
@@ -22,6 +24,8 @@ void initialise8259s()
 
   for (i=0;i<16;++i)
     sendEOI(i);
+
+  outstanding_EOIs = 0;
 }
 
 void enableIRQ(uint16 number)
@@ -54,6 +58,8 @@ void disableIRQ(uint16 number)
 
 void sendEOI(uint16 number)
 {
+  --outstanding_EOIs;
+  debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs);
   if (number > 7)
     outportb(PIC_2_CONTROL_PORT,0x20);
 
