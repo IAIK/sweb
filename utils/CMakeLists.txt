@@ -13,4 +13,4 @@ set(CMAKE_CXX_FLAGS "-std=gnu++11 ${UTILS_CFLAGS}")
 
 add_subdirectory(exe2minixfs)
 add_subdirectory(add-debug)
-
+add_subdirectory(images)
