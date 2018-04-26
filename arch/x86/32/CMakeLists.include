@@ -1,6 +1,9 @@
 set(KERNEL_BINARY kernel.x)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -m32 -O0 -gstabs2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector ${NOPICFLAG}")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -m32 -O0 -gstabs2 -Wall -Wextra -Werror -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector ${NOPICFLAG}")
+
+set(ARCH_X86_32_CFLAGS "-m32 -O0 -gstabs2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${NOPICFLAG}")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -nostdinc++ -fno-rtti ${ARCH_X86_32_CFLAGS}")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_32_CFLAGS}")
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
@@ -12,40 +15,46 @@ if ("${DEBUG}" STREQUAL "1")
   set(KERNEL_IMAGE_OBJCOPY )
 endif()
 
+set(AVAILABLE_MEMORY 8M)
+
+set(QEMU_BIN qemu-system-i386)
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot)
+string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
+
 add_custom_target(kvm
-	COMMAND qemu-system-i386 -m 8M -cpu kvm32 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio
-  COMMENT "Executing `qemu-system-i386 -m 8M -cpu kvm32 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio`"
+  COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu kvm32
+  COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu kvm32`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
 
 # qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-i386 -m 8M -cpu qemu32 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot
-	COMMENT "Executing `qemu-system-i386 -m 8M -cpu qemu32 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw SWEB-flat.vmdk -debugcon stdio -no-reboot`"
+	COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu qemu32
+	COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu qemu32`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-i386 -no-kvm -s -S -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot
-	COMMENT "Executing `gdb qemu-system-i386 -s -S -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot on localhost:1234`"
+	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -no-kvm -s -S
+	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -no-kvm -s -S on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
+  COMMAND ${QEMU_BIN} -hda SWEB-flat.vmdk -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
   COMMENT "Executing `qemu-system-i386 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 
 # net: Run qemu with network support, make sure to run after target "net-init"
 add_custom_target(net
-  COMMAND sudo qemu-system-i386 -m 8M -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio
-  COMMENT "Executing `sudo qemu-system-i386 -m 8M -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio`"
+  COMMAND sudo ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32
+  COMMENT "Executing `sudo ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )

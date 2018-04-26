@@ -1,6 +1,7 @@
 set(KERNEL_BINARY kernel64.x)
 
 set(ARCH_X86_64_CFLAGS "-m64 -O0 -gdwarf-2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${NOPICFLAG}")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -nostdinc++ -fno-rtti ${ARCH_X86_64_CFLAGS}")
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_64_CFLAGS}")
 
@@ -30,36 +31,42 @@ set(KERNEL_IMAGE_OBJCOPY
   COMMAND ${PROJECT_BINARY_DIR}/add-dbg ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel.dbg
   ${KERNEL_IMAGE_OBJCOPY}
   COMMAND mv ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel64.x && ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/kernel64.x ${PROJECT_BINARY_DIR}/kernel.x
-)
+  )
+
+set(AVAILABLE_MEMORY 8M)
+
+set(QEMU_BIN qemu-system-x86_64)
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot)
+string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 # kvm: Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND qemu-system-x86_64 -m 8M -cpu kvm64 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot
-        COMMENT "Executing `qemu-system-x86_64 -m 8M -cpu kvm64 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot`"
+        COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu kvm64
+        COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu kvm64`"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMAND reset -I
         )
 
 # qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-x86_64 -m 8M -cpu qemu64 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot
-	COMMENT "Executing `qemu-system-x86_64 -m 8M -cpu qemu64 -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot`"
+	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu qemu64
+	COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu qemu64`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-x86_64 -s -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot
-	COMMENT "Executing `gdb qemu-system-x86_64 -s -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot on localhost:1234`"
+	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s
+	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND qemu-system-x86_64 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio
-  COMMENT "Executing `qemu-system-x86_64 -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio`"
+  COMMAND ${QEMU_BIN} -hda SWEB-flat.vmdk -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon stdio
+  COMMENT "Executing `${QEMU_BIN} -hda SWEB-flat.vmdk -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 
