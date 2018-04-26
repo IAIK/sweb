@@ -1,7 +1,7 @@
 # This macro adds a post-build hook to the specified target in order to attach
 # SWEB-readable debug info.
 
-macro(ADD_DEBUG_INFO TARGET)
+function(ADD_DEBUG_INFO TARGET)
   set(dbg_binary $<TARGET_FILE:${TARGET}>)
 
   add_custom_command(TARGET ${TARGET}
@@ -15,4 +15,4 @@ macro(ADD_DEBUG_INFO TARGET)
 
   # Requires add-dbg to be built first.
   add_dependencies(${TARGET} add-dbg)
-endmacro(ADD_DEBUG_INFO)
+endfunction(ADD_DEBUG_INFO)
