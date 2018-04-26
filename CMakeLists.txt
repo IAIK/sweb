@@ -28,9 +28,8 @@ include(AddDebugInfo)
 
 include(arch/${ARCH}/CMakeLists.compiler)
 
-enable_language(ASM)
-
-project(sweb)
+project(sweb
+  LANGUAGES C CXX ASM)
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
 string(REPLACE "/" "_" ARCH_ESC ${ARCH})
@@ -182,17 +181,9 @@ add_custom_target (kernel ALL
     DEPENDS kernel_image
 )
 
-#Custom Command: Outputs empty ext2 disk image
-add_custom_command (OUTPUT hdd_image
-    COMMAND ${PROJECT_SOURCE_DIR}/utils/images/extract_image.sh
-    ARGS ${PROJECT_SOURCE_DIR}
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-    COMMENT "Unpacking disk image..."
-)
-
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
-add_custom_command (OUTPUT copy_to_image
-    DEPENDS hdd_image kernel_image exe2minixfs
+add_custom_command (OUTPUT kernel_to_image
+    DEPENDS blank_hdd_image kernel_image exe2minixfs
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND touch "./kernel.dbg"
@@ -205,7 +196,7 @@ add_custom_command (OUTPUT copy_to_image
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_command (OUTPUT userspace_to_image
-    DEPENDS hdd_image ${FINAL_USERSPACE_NAMES}
+    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES}
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
     COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
@@ -216,7 +207,7 @@ add_custom_command (OUTPUT userspace_to_image
 #Custom Target: install
 #Creates the hd image and copies all files to it
 add_custom_target (install ALL
-    DEPENDS copy_to_image userspace_to_image
+    DEPENDS kernel_to_image userspace_to_image
 )
 
 #The kernel must be built before installing
