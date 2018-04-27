@@ -792,7 +792,7 @@ public:
          * Return the value stored in register regnum.  This is used
          * to implement DW_OP_breg* operations.
          */
-        virtual taddr reg(unsigned regnum)
+        virtual taddr reg([[gnu::unused]] unsigned regnum)
         {
                 throw expr_error("DW_OP_breg* operations not supported");
         }
@@ -800,7 +800,7 @@ public:
         /**
          * Implement DW_OP_deref_size.
          */
-        virtual taddr deref_size(taddr address, unsigned size)
+        virtual taddr deref_size([[gnu::unused]] taddr address, [[gnu::unused]] unsigned size)
         {
                 throw expr_error("DW_OP_deref_size operations not supported");
         }
@@ -808,7 +808,7 @@ public:
         /**
          * Implement DW_OP_xderef_size.
          */
-        virtual taddr xderef_size(taddr address, taddr asid, unsigned size)
+        virtual taddr xderef_size([[gnu::unused]] taddr address, [[gnu::unused]] taddr asid, [[gnu::unused]] unsigned size)
         {
                 throw expr_error("DW_OP_xderef_size operations not supported");
         }
@@ -816,7 +816,7 @@ public:
         /**
          * Implement DW_OP_form_tls_address.
          */
-        virtual taddr form_tls_address(taddr address)
+        virtual taddr form_tls_address([[gnu::unused]] taddr address)
         {
                 throw expr_error("DW_OP_form_tls_address operations not supported");
         }
