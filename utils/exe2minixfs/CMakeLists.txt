@@ -1,12 +1,3 @@
-include_directories(
-  .
-  ustl
-  ../../common/include/util
-  ../../common/include/fs
-  ../../common/include/fs/minixfs
-)
-
-add_definitions(-DEXE2MINIXFS)
 
 file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/util/Bitmap.cpp
@@ -27,3 +18,13 @@ file(GLOB util_exe2minixfs_SOURCES *.cpp
 
 add_executable(exe2minixfs ${util_exe2minixfs_SOURCES})
 
+target_include_directories(exe2minixfs
+  PRIVATE
+    .
+    ustl
+    ../../common/include/util
+    ../../common/include/fs
+    ../../common/include/fs/minixfs
+)
+
+target_compile_definitions(exe2minixfs PRIVATE EXE2MINIXFS=1)
