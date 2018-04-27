@@ -157,13 +157,13 @@ AT_FLAG(artificial);
 AT_ENUM(calling_convention, DW_CC);
 AT_UDYNAMIC(count);
 expr_result
-at_data_member_location(const die &d, expr_context *ctx, taddr base, taddr pc)
+at_data_member_location(const die &d, expr_context *ctx, taddr base, [[gnu::unused]] taddr pc)
 {
         value v(d[DW_AT::data_member_location]);
         switch (v.get_type()) {
         case value::type::constant:
         case value::type::uconstant:
-                return {expr_result::type::address, base + v.as_uconstant()};
+                return {expr_result::type::address, base + v.as_uconstant(), nullptr, 0};
         case value::type::exprloc:
                 return v.as_exprloc().evaluate(ctx, base);
         case value::type::loclist:
