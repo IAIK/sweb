@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -nostdinc++ -fno-rtti ${ARC
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_64_CFLAGS}")
 
 
-MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
+function(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
   file(GLOB arch_files "*.32.C")
 
   if(arch_files)
@@ -17,9 +17,9 @@ MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
     # Other flags are inherited
     target_compile_options(${ARCHOBJS_TARGET} PRIVATE -m32 -g0 -mcmodel=32 -momit-leaf-frame-pointer -Wa,--64)
 
-    set(${ARCHOBJ_LIBNAME} ${ARCHOBJS_TARGET})
+    set(${ARCHOBJ_LIBNAME} ${ARCHOBJS_TARGET} PARENT_SCOPE)
   endif(arch_files)
-ENDMACRO(ARCH2OBJ)
+endfunction(ARCH2OBJ)
 
 set(LD_ARGUMENT -m64 -Wl,--build-id=none -mcmodel=kernel -Wl,-z -Wl,max-page-size=0x1000 -Wl,-melf_x86_64 -nostdinc -nostdlib -nodefaultlibs ${NOPIEFLAG})
 set(APPEND_LD_ARGUMENTS )
