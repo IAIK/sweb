@@ -10,7 +10,7 @@ function(ADD_DEBUG_INFO TARGET)
       COMMAND "${OBJCOPY_EXECUTABLE}" --remove-section .swebdbg "${dbg_binary}"
       COMMAND "${OBJCOPY_EXECUTABLE}" --add-section .swebdbg="${dbg_binary}.dbg"
                                       --set-section-flags .swebdbg=noload,readonly "${dbg_binary}"
-      COMMAND rm -f "${dbg_binary}.dbg"
+      COMMAND ${CMAKE_COMMAND} -E remove -f "${dbg_binary}.dbg"
   )
 
   # Requires add-dbg to be built first.
