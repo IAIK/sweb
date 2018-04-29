@@ -94,7 +94,7 @@ endif()
 
 
 # Searches for asm, c and cpp files and adds the library
-MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
+function(ADD_PROJECT_LIBRARY LIBRARY_NAME)
   arch2obj(archobj_libname ${LIBRARY_NAME})
 
   file(GLOB source_files ${SOURCE_WILDCARDS})
@@ -116,9 +116,9 @@ MACRO(ADD_PROJECT_LIBRARY LIBRARY_NAME)
       add_dependencies(${LIBRARY_NAME} ${archobj_libname})
     endif(archobj_libname)
 
-    set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
+    set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}" PARENT_SCOPE)
   endif(library_files)
-ENDMACRO(ADD_PROJECT_LIBRARY)
+endfunction(ADD_PROJECT_LIBRARY)
 
 set (SOURCE_WILDCARDS *.cpp *.c *.S)
 
@@ -186,7 +186,7 @@ add_custom_command (OUTPUT kernel_to_image
     DEPENDS blank_hdd_image kernel_image exe2minixfs
 
     # x86/32 doesn't generate kernel.dbg
-    COMMAND touch "./kernel.dbg"
+    COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
     COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
                                                ./kernel.x boot/kernel.x
                                                ./kernel.dbg boot/kernel.dbg
@@ -207,11 +207,8 @@ add_custom_command (OUTPUT userspace_to_image
 #Custom Target: install
 #Creates the hd image and copies all files to it
 add_custom_target (install ALL
-    DEPENDS kernel_to_image userspace_to_image
+    DEPENDS kernel kernel_to_image userspace_to_image
 )
-
-#The kernel must be built before installing
-add_dependencies(install kernel)
 
 add_custom_target (userspace
     DEPENDS userspace_to_image
