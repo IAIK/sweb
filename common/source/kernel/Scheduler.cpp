@@ -43,19 +43,21 @@ uint32 Scheduler::schedule()
     return 0;
   }
 
-  Thread* previousThread = currentThread;
-  do
+  auto it = threads_.begin();
+  for(; it != threads_.end(); ++it)
   {
-    currentThread = threads_.front();
-
-    ustl::rotate(threads_.begin(), threads_.begin() + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
-
-    if ((currentThread == previousThread) && (currentThread->getState() != Running))
+    if((*it)->schedulable())
     {
-      debug(SCHEDULER, "Scheduler::schedule: ERROR: currentThread == previousThread! Either no thread is in state Running or you added the same thread more than once.\n");
+      currentThread = *it;
+      break;
     }
-  } while (!currentThread->schedulable());
-//  debug ( SCHEDULER,"Scheduler::schedule: new currentThread is %p %s, switch_userspace:%d\n",currentThread,currentThread ? currentThread->getName() : 0,currentThread ? currentThread->switch_to_userspace_ : 0);
+  }
+
+  assert(it != threads_.end() && "No schedulable thread found");
+
+  ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
+
+  //debug(SCHEDULER, "Scheduler::schedule: new currentThread is %p %s, switch_to_userspace: %d\n", currentThread, currentThread->getName(), currentThread->switch_to_userspace_);
 
   uint32 ret = 1;
 
@@ -74,6 +76,7 @@ uint32 Scheduler::schedule()
 
 void Scheduler::addNewThread(Thread *thread)
 {
+  assert(thread);
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
   if (currentThread)
     ArchThreads::debugCheckNewThread(thread);
