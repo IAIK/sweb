@@ -41,7 +41,6 @@ int shm_unlink(const char* name)
  * function stub
  * posix compatible signature - do not change the signature!
  */
-#define MPROTECT_DEFINED 1
 int mprotect(void *addr, size_t len, int prot)
 {
   return -1;
