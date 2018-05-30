@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.0.2)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-# Needed for reserved targets like "install" and "help"
-cmake_policy(SET CMP0037 OLD)
-
 # Include custom CMake modules from the cmake/ subdirectory
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -204,9 +201,9 @@ add_custom_command (OUTPUT userspace_to_image
     COMMENT "Copying userspace programs to image..."
 )
 
-#Custom Target: install
+#Custom Target: hdd_image
 #Creates the hd image and copies all files to it
-add_custom_target (install ALL
+add_custom_target (hdd_image ALL
     DEPENDS kernel kernel_to_image userspace_to_image
 )
 
@@ -303,7 +300,7 @@ add_custom_target(doxygen
 )
 
 #Outputs help on build targets
-add_custom_target(help
+add_custom_target(showhelp
     COMMAND printf \"\\nBuild target summary:\\n\\n\"
     COMMAND printf \"<default target>\\tbuild changed files, generate kernel,\\n\\t\\t\\textract hdd image, copy kernel\\n\\t\\t\\tand userspace file to image\\n\"
     COMMAND printf \"\\nclean\\t\\tclean up object files\\n\"
@@ -316,6 +313,6 @@ add_custom_target(help
     COMMAND printf \"\\nruncgdb\\t\\truns cgdb, connecting to localhost:1234\\n\"
     COMMAND printf \"\\nrungdb\\t\\truns gdb, connecting to localhost:1234\\n\"
     COMMAND printf \"\\ndoxygen\\t\\tbuilds the html and latex source documentation of SWEB\\n\"
-    COMMAND printf \"\\nhelp\\t\\tshows this target summary\\n\"
+    COMMAND printf \"\\nshowhelp\\t\\tshows this target summary\\n\"
     COMMAND printf \"\\n\\n\"
 )
