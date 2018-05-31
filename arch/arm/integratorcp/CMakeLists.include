@@ -1,12 +1,19 @@
 set(KERNEL_BINARY kernel.x)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -O0 -gstabs2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -march=armv5te -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG}")
-set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -std=gnu11   -O0 -gstabs2 -Wall -Wextra -Werror -nostdinc -nostdlib -nostartfiles -nodefaultlibs             -fno-builtin           -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -march=armv5te -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG}")
+
+set(ARCH_ARM_ICP_KERNEL_CFLAGS -O0 -gstabs2 -Wall -Wextra -Werror -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mapcs -marm -march=armv5te -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
+
+set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-nonnull-compare -nostdinc++ -fno-rtti ${ARCH_ARM_ICP_KERNEL_CFLAGS})
+set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_ARM_ICP_KERNEL_CFLAGS})
+
+set(ARCH_LD_ARGUMENTS -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
+set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} ${NOPIEFLAG})
+set(ARCH_APPEND_LD_ARGUMENTS -lgcc)
+
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
 
-set(LD_ARGUMENT -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs ${NOPIEFLAG})
-set(APPEND_LD_ARGUMENTS -lgcc)
+
 set(KERNEL_IMAGE_OBJCOPY )
 
 # qemu: Run qemu in non debugging mode

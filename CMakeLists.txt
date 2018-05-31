@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.3)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
@@ -77,7 +77,9 @@ set(LIBRARY_OUTPUT_PATH  "${PROJECT_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
-set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}")
+include(arch/${ARCH}/CMakeLists.userspace)
+string (REPLACE ";" " " KERNEL_CMAKE_C_FLAGS_STR "${KERNEL_CMAKE_C_FLAGS}")
+set(CMAKE_ASM_FLAGS ${KERNEL_CMAKE_C_FLAGS_STR})
 
 if(CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
@@ -113,6 +115,11 @@ function(ADD_PROJECT_LIBRARY LIBRARY_NAME)
       add_dependencies(${LIBRARY_NAME} ${archobj_libname})
     endif(archobj_libname)
 
+    target_compile_options(${LIBRARY_NAME} PRIVATE
+      $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
+      $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
+      )
+
     set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}" PARENT_SCOPE)
   endif(library_files)
 endfunction(ADD_PROJECT_LIBRARY)
@@ -123,6 +130,10 @@ set(LIBRARY_FILENAMES)
 
 #Initialize global (environment) variables
 set(ENV{LIBRARY_NAMES})
+
+#Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
+add_library(userspace_libc "")
+target_compile_options(userspace_libc PUBLIC ${ARCH_USERSPACE_COMPILE_OPTIONS})
 
 #Add the source directories
 add_subdirectory(arch)
@@ -141,16 +152,16 @@ set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 
 
 #Build the Linker command
-set(LD_ARGUMENT ${LD_ARGUMENT} -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld)
-set(LD_ARGUMENT ${LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
-#set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
+set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld)
+set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
+#set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
 
-set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,--start-group)
+set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,--start-group)
 foreach(libfile ${FINAL_LIB_NAMES})
-  set(LD_ARGUMENT ${LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
+  set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
 endforeach(libfile)
-set(LD_ARGUMENT ${LD_ARGUMENT} -Wl,--end-group)
-set(LD_ARGUMENT ${LD_ARGUMENT} ${APPEND_LD_ARGUMENTS})
+set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,--end-group)
+set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} ${ARCH_APPEND_LD_ARGUMENTS})
 
 #Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")
@@ -187,7 +198,7 @@ add_custom_target (kernel_to_image
 #Executes the linker command after all libraries where build successfully
 add_custom_target (kernel_image
     DEPENDS ${FINAL_LIB_NAMES} add-dbg
-    COMMAND ${LD_EXECUTABLE} ${LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 )
 

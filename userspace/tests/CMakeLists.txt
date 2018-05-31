@@ -8,8 +8,11 @@ set(EXECUTABLE_OUTPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/userspace")
 # Reset userspace program names
 set($ENV{USERSPACE_NAMES} "")
 
-link_directories(${LIBRARY_OUTPUT_PATH})
-include_directories(../libc/include)
+set(USERSPACE_TESTS_COMPILE_OPTIONS)
+set(USERSPACE_TESTS_LINKER_OPTIONS -Wl,-Ttext=0x8000000 -Wl,--build-id=none -Wl,-whole-archive)
+
+set(FINAL_USERSPACE_TESTS_COMPILE_OPTIONS ${ARCH_USERSPACE_COMPILE_OPTIONS} ${USERSPACE_TESTS_COMPILE_OPTIONS})
+set(FINAL_USERSPACE_TESTS_LINKER_OPTIONS ${ARCH_LD_ARGUMENTS} ${ARCH_USERSPACE_LINKER_OPTIONS} ${USERSPACE_TESTS_LINKER_OPTIONS})
 
 file(GLOB userspace_tests_SOURCES ${SOURCE_WILDCARDS})
 
@@ -18,7 +21,7 @@ foreach(curFile ${userspace_tests_SOURCES})
   get_filename_component(curName ${curFile} NAME_WE)
 
   add_executable(${curName}.sweb ${curFile})
-  target_link_libraries(${curName}.sweb "-Wl,-Ttext=0x8000000 -Wl,--build-id=none -Wl,-whole-archive"  userspace_libc ${APPEND_LD_ARGUMENTS})
+  target_link_libraries(${curName}.sweb ${FINAL_USERSPACE_TESTS_LINKER_OPTIONS} userspace_libc ${ARCH_APPEND_LD_ARGUMENTS})
 
   ADD_DEBUG_INFO(${curName}.sweb)
 
@@ -35,7 +38,7 @@ file(GLOB curProject_SOURCES ${curProject}/*.c)
   if(curProject_SOURCES)
     get_filename_component(exename ${curProject} NAME)
     add_executable(${exename}.sweb ${curProject_SOURCES})
-    target_link_libraries(${exename}.sweb "-Wl,-whole-archive" userspace_libc ${APPEND_LD_ARGUMENTS})
+    target_link_libraries(${exename}.sweb "-Wl,-whole-archive" userspace_libc ${ARCH_APPEND_LD_ARGUMENTS})
 
     ADD_DEBUG_INFO(${curName}.sweb)
 
