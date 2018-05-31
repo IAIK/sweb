@@ -6,4 +6,4 @@ include_directories(
 
 add_subdirectory(common/source)
 add_subdirectory(common/source/usb)
-
+add_subdirectory(common/userspace)
