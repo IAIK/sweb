@@ -270,9 +270,9 @@ void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
   assert(pd[mapping.pdi].pt.present);
   PageTableEntry *pt = (PageTableEntry*) getIdentAddressOfPPN(pd[mapping.pdi].pt.page_ppn);
   assert(!pt[mapping.pti].present);
-  pt[mapping.pti].present = 1;
   pt[mapping.pti].writeable = 1;
   pt[mapping.pti].page_ppn = physical_page;
+  pt[mapping.pti].present = 1;
   asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
 
