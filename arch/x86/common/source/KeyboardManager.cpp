@@ -35,8 +35,6 @@ void KeyboardManager::kb_wait()
 
 void KeyboardManager::send_cmd(uint8 cmd, uint8 port)
 {
-  if(port == 0)
-    port = 0x64;
   kb_wait();
   outportbp(port, cmd);
 }

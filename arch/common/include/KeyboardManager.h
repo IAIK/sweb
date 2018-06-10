@@ -189,7 +189,7 @@ class KeyboardManager
      * writes a byte to the given IO port
      *
      */
-    void send_cmd(uint8 cmd, uint8 port = 0);
+    void send_cmd(uint8 cmd, uint8 port = 0x64);
 
     RingBuffer<uint8> keyboard_buffer_;
 
@@ -220,4 +220,3 @@ class KeyboardManager
 
     static KeyboardManager *instance_;
 };
-
