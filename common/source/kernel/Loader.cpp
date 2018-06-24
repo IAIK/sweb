@@ -238,12 +238,17 @@ bool Loader::loadDebugInfoIfAvailable()
       if (!strcmp(&section_names[section.sh_name], ".swebdbg")) {
         debug(USERTRACE, "Found SWEBDbg Infos\n");
         size_t size = section.sh_size;
-        sweb_data = new char[size];
-        sweb_data_size = size;
-        if(readFromBinary(sweb_data, section.sh_offset, size)) {
-          debug(USERTRACE, "Could not read swebdbg section!\n");
-          delete[] sweb_data;
-          sweb_data = 0;
+        if(size) {
+          sweb_data = new char[size];
+          sweb_data_size = size;
+          if (readFromBinary(sweb_data, section.sh_offset, size)) {
+            debug(USERTRACE, "Could not read swebdbg section!\n");
+            delete[] sweb_data;
+            sweb_data = 0;
+          }
+        } else {
+          debug(USERTRACE, "SWEBDbg Infos are empty\n");
+          return false;
         }
       }
     }
