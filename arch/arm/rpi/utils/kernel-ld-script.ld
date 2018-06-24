@@ -66,6 +66,16 @@ SECTIONS
     PROVIDE(kernel_end_address = .);
   }
   
+  .multicore : AT(LS_Phys + (LS_Multicore - LS_Code))
+  {
+    LS_Multicore = .;
+    multicore_start_address = .;
+    . = ALIGN(4096);
+    *(.multicore)
+    . = ALIGN(4096);
+    multicore_end_address = .;
+  }
+  
   .ARM.attributes 0 : { *(.ARM.attributes) }
   .comment 0 : { *(.comment) }
 }
