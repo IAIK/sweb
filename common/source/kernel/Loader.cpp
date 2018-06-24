@@ -28,11 +28,6 @@ Loader::~Loader()
 void Loader::loadPage(pointer virtual_address)
 {
   debug(LOADER, "Loader:loadPage: Request to load the page for address %p.\n", (void*)virtual_address);
-  if(arch_memory_.checkAddressValid(virtual_address))
-  {
-    debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
-    return;
-  }
   const pointer virt_page_start_addr = virtual_address & ~(PAGE_SIZE - 1);
   const pointer virt_page_end_addr = virt_page_start_addr + PAGE_SIZE;
   bool found_page_content = false;
