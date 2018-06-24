@@ -53,7 +53,7 @@ class Thread
      */
     virtual void Run() = 0;
 
-    void* getStackStartPointer();
+    void* getKernelStackStartPointer();
 
     bool isStackCanaryOK();
 

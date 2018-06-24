@@ -30,7 +30,7 @@ UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 
 
   ArchThreads::createUserRegisters(user_registers_, loader_->getEntryFunction(),
                                    (void*) (USER_BREAK - sizeof(pointer)),
-                                   getStackStartPointer());
+                                   getKernelStackStartPointer());
 
   ArchThreads::setAddressSpace(this, loader_->arch_memory_);
 
