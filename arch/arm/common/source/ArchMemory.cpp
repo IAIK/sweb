@@ -156,7 +156,6 @@ bool ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
     return true;
   }
 
-  assert(false);
   return false;
 }
 

@@ -26,7 +26,8 @@ UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 
   }
 
   size_t page_for_stack = PageManager::instance()->allocPPN();
-  loader_->arch_memory_.mapPage(USER_BREAK / PAGE_SIZE - 1, page_for_stack, 1);
+  bool vpn_mapped = loader_->arch_memory_.mapPage(USER_BREAK / PAGE_SIZE - 1, page_for_stack, 1);
+  assert(vpn_mapped && "Virtual page for stack was already mapped");
 
   ArchThreads::createUserRegisters(user_registers_, loader_->getEntryFunction(),
                                    (void*) (USER_BREAK - sizeof(pointer)),
