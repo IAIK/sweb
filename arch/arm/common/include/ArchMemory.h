@@ -30,7 +30,7 @@ public:
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
-  bool mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access);
+  __attribute__((warn_unused_result)) bool mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid

@@ -73,7 +73,8 @@ void Loader::loadPage(pointer virtual_address)
     Syscall::exit(666);
   }
 
-  arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true);
+  bool page_mapped = arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true);
+  assert(page_mapped && "Page was already present");
   debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }
 

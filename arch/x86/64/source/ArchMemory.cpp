@@ -109,7 +109,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
   {
     return insert<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti, physical_page, 0, 0, user_access, 1);
   }
-  assert(false); // you should never get here
+
   return false;
 }
 
