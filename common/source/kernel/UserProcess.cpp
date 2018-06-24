@@ -50,7 +50,7 @@ UserProcess::~UserProcess()
   loader_ = 0;
 
   if (fd_ > 0)
-    vfs_syscall.close(fd_);
+    VfsSyscall::close(fd_);
 
   delete working_dir_;
   working_dir_ = 0;
