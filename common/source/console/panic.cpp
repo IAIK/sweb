@@ -11,7 +11,7 @@ void kpanict ( const char * message )
   system_state = KPANIC;
   ArchInterrupts::disableInterrupts();
 
-  size_t* stack = (size_t*) currentThread->getStackStartPointer();
+  size_t* stack = (size_t*) currentThread->getKernelStackStartPointer();
 
   kprintfd("%s \n", message );
   kprintf("%s \n", message );
