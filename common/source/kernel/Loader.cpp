@@ -75,7 +75,10 @@ void Loader::loadPage(pointer virtual_address)
 
   bool page_mapped = arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true);
   if (!page_mapped)
+  {
     debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
+    PageManager::instance()->freePPN(ppn);
+  }
   debug(LOADER, "Loader::loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }
 
