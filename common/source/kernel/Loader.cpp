@@ -74,8 +74,9 @@ void Loader::loadPage(pointer virtual_address)
   }
 
   bool page_mapped = arch_memory_.mapPage(virt_page_start_addr / PAGE_SIZE, ppn, true);
-  assert(page_mapped && "Page was already present");
-  debug(LOADER, "Loader:loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
+  if (!page_mapped)
+    debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
+  debug(LOADER, "Loader::loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }
 
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t length)
