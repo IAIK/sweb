@@ -5,7 +5,6 @@
 #include "kprintf.h"
 #include "VfsSyscall.h"
 
-extern VfsSyscall vfs_syscall;
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
 
@@ -33,9 +32,9 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "mounting userprog-partition \n");
 
-  vfs_syscall.mkdir("/usr", 0);
+  VfsSyscall::mkdir("/usr", 0);
   debug(PROCESS_REG, "mkdir /usr\n");
-  vfs_syscall.mount("idea1", "/usr", "minixfs", 0);
+  VfsSyscall::mount("idea1", "/usr", "minixfs", 0);
   debug(PROCESS_REG, "mount idea1\n");
 
   KernelMemoryManager::instance()->startTracing();
@@ -54,7 +53,7 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
-  vfs_syscall.umount("/usr", 0);
+  VfsSyscall::umount("/usr", 0);
 
   Scheduler::instance()->printStackTraces();
 

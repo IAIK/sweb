@@ -8,8 +8,6 @@ class VfsMount;
 class FileDescriptor;
 class VfsSyscall;
 
-extern VfsSyscall vfs_syscall;
-
 class VfsSyscall
 {
   protected:
