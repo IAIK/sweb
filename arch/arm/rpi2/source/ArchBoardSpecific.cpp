@@ -152,5 +152,13 @@ void ArchBoardSpecific::irq_handler()
     timer0_irq_handler();
 }
 
-
-
+extern "C" void ArchBoardSpecific::disableMulticore(uint32* spin) {
+  asm("mov r1, #0x1\n"
+          "multicore_spin:\n"
+          "ldrex r0, [%[r]]\n" // load the sync value
+          "cmp r0, #0\n" // check whether this is the first core
+          "strexeq r0, r1, [%[r]]\n"  // if yes, claim the sync value
+          "cmpeq r0, #0\n" // did this succeed?
+          "bne multicore_spin\n" // no - we are not the first core, spin indefinitely
+  : : [r]"r"(spin));
+}

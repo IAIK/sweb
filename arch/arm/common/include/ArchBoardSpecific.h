@@ -18,5 +18,6 @@ class ArchBoardSpecific
     static void timer0_irq_handler();
     static void irq_handler();
     static void uart0_irq_handler();
+    static void disableMulticore(uint32* spin);
 };
 

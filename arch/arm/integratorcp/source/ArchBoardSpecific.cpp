@@ -155,4 +155,6 @@ void ArchBoardSpecific::irq_handler()
 }
 
 
-
+extern "C" void ArchBoardSpecific::disableMulticore(uint32* spin) {
+  (void)spin;
+}
