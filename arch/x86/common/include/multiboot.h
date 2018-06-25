@@ -100,24 +100,44 @@ typedef struct elf_section_header_table
 
 typedef struct multiboot_info
 {
-  uint32 flags      : 32;
-  uint32 mem_lower    : 32;
-  uint32 mem_upper    : 32;
-  uint32 boot_device  : 32;
-  uint32 cmdline    : 32;
-  uint32 mods_count   : 32;
-  uint32 mods_addr    : 32;
+  union
+  {
+    uint32 flags            : 32;
+    struct
+    {
+      uint32 f_mem          : 1;  // 0
+      uint32 f_boot_dev     : 1;  // 1
+      uint32 f_cmdline      : 1;  // 2
+      uint32 f_mods         : 1;  // 3
+      uint32 f_aout_symtab  : 1;  // 4
+      uint32 f_elf_shdr     : 1;  // 5
+      uint32 f_mmap         : 1;  // 6
+      uint32 f_drives       : 1;  // 7
+      uint32 f_conf_tab     : 1;  // 8
+      uint32 f_bootl_name   : 1;  // 9
+      uint32 f_apm          : 1;  // 10
+      uint32 f_vbe          : 1;  // 11
+      uint32 f_fb           : 1;  // 12
+      uint32 f_other        : 19; // 13-31
+    } __attribute__((__packed__));
+  };
+  uint32 mem_lower          : 32;
+  uint32 mem_upper          : 32;
+  uint32 boot_device        : 32;
+  uint32 cmdline            : 32;
+  uint32 mods_count         : 32;
+  uint32 mods_addr          : 32;
   elf_section_header_table_t elf_sec;
-  uint32 mmap_length    : 32;
-  uint32 mmap_addr    : 32;
-  uint32 drives_length    : 32;
-  uint32 drives_addr    : 32;
-  uint32 config_table   : 32;
-  uint32 boot_loader_name : 32;
-  uint32 apm_table    : 32;
-  uint32 vbe_control_info : 32;
-  uint32 vbe_mode_info    : 32;
-  uint32 vbe_mode   : 32;
+  uint32 mmap_length        : 32;
+  uint32 mmap_addr          : 32;
+  uint32 drives_length      : 32;
+  uint32 drives_addr        : 32;
+  uint32 config_table       : 32;
+  uint32 boot_loader_name   : 32;
+  uint32 apm_table          : 32;
+  uint32 vbe_control_info   : 32;
+  uint32 vbe_mode_info      : 32;
+  uint32 vbe_mode           : 32;
   uint32 vbe_interface_seg  : 32;
   uint32 vbe_interface_off  : 32;
   uint32 vbe_interface_len  : 32;
