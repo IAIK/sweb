@@ -47,10 +47,7 @@ extern "C" void initialiseBootTimePaging()
     mapBootTimePage(pde_start, 3072 + i, i);
   // map devices from 0x81000000 upwards
 
-  unsigned int mmio_base = 0x200;
-#ifdef RPI2
-  mmio_base += 0x1f0;
-#endif
+  unsigned int mmio_base = 0x3f0;
 
   mapBootTimePage(pde_start,0x860,mmio_base + 2);  // pl011
   mapBootTimePage(pde_start,0x8C0,mmio_base + 3);  // emmc
