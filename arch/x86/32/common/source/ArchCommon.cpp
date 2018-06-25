@@ -24,7 +24,7 @@ extern "C" void parseMultibootHeader()
 
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
 
-  if (mb_infos && (mb_infos->flags & 1<<11))
+  if (mb_infos && mb_infos->f_vbe)
   {
     struct vbe_mode* mode_info = (struct vbe_mode*)mb_infos->vbe_mode_info;
     orig_mbr.have_vesa_console = 1;
@@ -34,7 +34,7 @@ extern "C" void parseMultibootHeader()
     orig_mbr.vesa_bits_per_pixel = mode_info->bits_per_pixel;
   }
 
-  if (mb_infos && (mb_infos->flags & 1<<3))
+  if (mb_infos && mb_infos->f_mods)
   {
     module_t * mods = (module_t*)mb_infos->mods_addr;
     for (i=0;i<mb_infos->mods_count;++i)
@@ -42,7 +42,7 @@ extern "C" void parseMultibootHeader()
       orig_mbr.module_maps[i].used = 1;
       orig_mbr.module_maps[i].start_address = mods[i].mod_start;
       orig_mbr.module_maps[i].end_address = mods[i].mod_end;
-      //FIXXXME, copy module name
+      strncpy((char*)(uint32)orig_mbr.module_maps[i].name, (const char*)(uint32)mods[i].string, 256);
     }
     orig_mbr.num_module_maps = mb_infos->mods_count;
   }
@@ -52,26 +52,20 @@ extern "C" void parseMultibootHeader()
     orig_mbr.memory_maps[i].used = 0;
   }
 
-  if (mb_infos && (mb_infos->flags & 1<<6))
+  if (mb_infos && mb_infos->f_mmap)
   {
-    uint32 mmap_size = sizeof(memory_map);
-    uint32 mmap_total_size = mb_infos->mmap_length;
-    uint32 num_maps = mmap_total_size / mmap_size;
-
-    for (i=0;i<num_maps;++i)
+    size_t i = 0;
+    memory_map * map = (memory_map*)(uint64)(mb_infos->mmap_addr);
+    while((uint64)map < (uint64)(mb_infos->mmap_addr + mb_infos->mmap_length))
     {
-      memory_map * map = (memory_map*)(mb_infos->mmap_addr+mmap_size*i);
-      if(map->base_addr_high == 0)
-      {
-        orig_mbr.memory_maps[i].used = 1;
-        orig_mbr.memory_maps[i].start_address = map->base_addr_low;
-        orig_mbr.memory_maps[i].end_address = map->base_addr_low + map->length_low;
-        orig_mbr.memory_maps[i].type = map->type;
-      }
-      else
-      {
-        orig_mbr.memory_maps[i].used = 0;
-      }
+      orig_mbr.memory_maps[i].used          = 1;
+      orig_mbr.memory_maps[i].start_address = ((uint64)map->base_addr_high << 32) | ((uint64)map->base_addr_low);
+      orig_mbr.memory_maps[i].end_address   = orig_mbr.memory_maps[i].start_address
+              + (((uint64)map->length_high << 32) | ((uint64)map->length_low));
+      orig_mbr.memory_maps[i].type          = map->type;
+
+      map = (memory_map*)(((uint64)(map)) + map->size + sizeof(map->size));
+      ++i;
     }
   }
 }
