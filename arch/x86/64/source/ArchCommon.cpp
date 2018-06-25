@@ -52,17 +52,16 @@ extern "C" void parseMultibootHeader()
 
   if (mb_infos && mb_infos->f_mmap)
   {
-    uint32 mmap_size = sizeof(memory_map);
-    uint32 mmap_total_size = mb_infos->mmap_length;
-    uint32 num_maps = mmap_total_size / mmap_size;
+    uint32 num_maps = mb_infos->mmap_length / sizeof(memory_map);
 
     for (i=0;i<num_maps;++i)
     {
-      memory_map * map = (memory_map*)(uint64)(mb_infos->mmap_addr+mmap_size*i);
-      orig_mbr.memory_maps[i].used = 1;
-      orig_mbr.memory_maps[i].start_address = map->base_addr_low;
-      orig_mbr.memory_maps[i].end_address = map->base_addr_low + map->length_low;
-      orig_mbr.memory_maps[i].type = map->type;
+      memory_map * map = (memory_map*)(uint64)(mb_infos->mmap_addr + sizeof(memory_map)*i);
+      orig_mbr.memory_maps[i].used          = 1;
+      orig_mbr.memory_maps[i].start_address = ((uint64)map->base_addr_high << 32) | ((uint64)map->base_addr_low);
+      orig_mbr.memory_maps[i].end_address   = orig_mbr.memory_maps[i].start_address
+                                              + (((uint64)map->length_high << 32) | ((uint64)map->length_low));
+      orig_mbr.memory_maps[i].type          = map->type;
     }
   }
 }
