@@ -23,6 +23,8 @@ extern int shm_open(const char* name, int oflag, mode_t mode);
 
 extern int shm_unlink(const char* name);
 
+extern int mprotect(void *addr, size_t len, int prot);
+
 #ifdef __cplusplus
 }
 #endif
