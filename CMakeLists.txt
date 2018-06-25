@@ -300,8 +300,7 @@ MAKE_ARCH_TARGET(x86_64 x86/64 "")
 
 MAKE_ARCH_TARGET(arm_icp arm/integratorcp "")
 MAKE_ARCH_TARGET(arm_verdex arm/verdex "")
-MAKE_ARCH_TARGET(arm_rpi arm/rpi "")
-MAKE_ARCH_TARGET(arm_rpi2 arm/rpi "-DRPI2=1")
+MAKE_ARCH_TARGET(arm_rpi2 arm/rpi2 "")
 
 
 
