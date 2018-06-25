@@ -178,8 +178,8 @@ struct multiboot_remainder
   struct memory_maps
   {
     uint32 used;
-    uint32 start_address;
-    uint32 end_address;
+    uint64 start_address;
+    uint64 end_address;
     uint32 type;
   } __attribute__((__packed__)) memory_maps[MAX_MEMORY_MAPS];
 
