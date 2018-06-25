@@ -102,7 +102,7 @@ void *memset(void *position, int value, size_t number_of_bytes)
       *byte_block++ = (char) value;
   }
 
-  return (void *) byte_block;
+  return position;
 }
 
 /**
