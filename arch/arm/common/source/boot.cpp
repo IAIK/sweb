@@ -3,6 +3,7 @@
 #include "init_boottime_pagetables.h"
 #include "assert.h"
 #include "kstring.h"
+#include "ArchBoardSpecific.h"
 
 extern "C" void __attribute__((naked)) PagingMode();
 extern "C" void startup();
@@ -19,15 +20,9 @@ extern "C" void __attribute__((naked)) entry()
   asm("mov fp, #0\n"
       "mov sp, %[v]" : : [v]"r"(((uint8*)boot_stack) + BOOT_OFFSET + 0x4000)); // Set up the stack
 
-  // only cpu 0 is allowed to continue, stop all other cores here
-  register uint32 result asm ("r4");
-  asm("swp %[r], %[n], [%[l]]" : [r]"=&r"(result) : [n]"r"(1), [l]"r"((uint32*)(((uint8*)&multicore_sync) + BOOT_OFFSET)));
-
-  if(result) {
-    while(1) {
-      asm volatile("mcr p15, 0, r0, c7, c0, 4" : : : "r0"); // hint to set cpu core to sleep mode
-    }
-  }
+  // Only cpu 0 is allowed to continue, stop all other cores here using a spinlock
+  void (*disableMulticorePTR)(uint32*) = (void(*)(uint32*))((uint8*)ArchBoardSpecific::disableMulticore + BOOT_OFFSET);
+  disableMulticorePTR((uint32 * )(((uint8 * ) & multicore_sync) + BOOT_OFFSET));
 
   void (*memsetPTR)(void*,uint8,size_t) = (void(*)(void*,uint8,size_t))((uint8*)&memset + BOOT_OFFSET);
   memsetPTR((void*)(&bss_start_address - BOOT_OFFSET), 0, (uint32)&bss_end_address - (uint32)&bss_start_address);
