@@ -7,12 +7,9 @@ SET(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # which compilers to use for C and C++
 #
-set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
-set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
-
-CMAKE_FORCE_CXX_COMPILER(${CMAKE_CXX_COMPILER} STATIC_LIBRARY)
-CMAKE_FORCE_C_COMPILER(${CMAKE_C_COMPILER} STATIC_LIBRARY)
+find_program(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
+find_program(CMAKE_C_COMPILER arm-none-eabi-gcc)
+find_program(CMAKE_CXX_COMPILER arm-none-eabi-g++)
 
 find_program(LD_EXECUTABLE arm-none-eabi-gcc)
 find_program(OBJCOPY_EXECUTABLE arm-none-eabi-objcopy)
