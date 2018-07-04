@@ -30,6 +30,10 @@
 #include "outerrstream.h"
 #include "user_progs.h"
 
+
+#include "ACPI.h"
+#include "APIC.h"
+
 extern void* kernel_end_address;
 extern Console* main_console;
 
@@ -48,6 +52,8 @@ extern "C" void startup()
   bool cont = false;
   while(!cont);
 #endif
+
+  ArchCommon::postBootInit();
 
   writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();

@@ -34,9 +34,11 @@ extern "C" void initialisePaging()
   pml4[0].page_ppn = (uint64)pdpt1 / PAGE_SIZE;
   pml4[0].writeable = 1;
   pml4[0].present = 1;
+
   pml4[480].page_ppn = (uint64)pdpt1 / PAGE_SIZE;
   pml4[480].writeable = 1;
   pml4[480].present = 1;
+
   pml4[511].page_ppn = (uint64)pdpt2 / PAGE_SIZE;
   pml4[511].writeable = 1;
   pml4[511].present = 1;
@@ -57,6 +59,7 @@ extern "C" void initialisePaging()
   for (i = 0; i < PAGE_DIR_ENTRIES; ++i)
   {
     pd2[i].page.present = 0;
+
     pd1[i].page.page_ppn = i;
     pd1[i].page.size = 1;
     pd1[i].page.writeable = 1;
@@ -67,7 +70,7 @@ extern "C" void initialisePaging()
   {
     pd2[i].pt.writeable = 1;
     pd2[i].pt.present = 1;
-    pd2[i].pt.page_ppn = ((pointer)&pt[512*i])/PAGE_SIZE;;
+    pd2[i].pt.page_ppn = ((pointer)&pt[512*i])/PAGE_SIZE;
   }
 
   size_t kernel_last_page = (size_t)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address) / PAGE_SIZE;

@@ -95,5 +95,7 @@ class ArchCommon
     * draw some infos/statistics
     */
     static void drawStat();
+
+    static void postBootInit();
 };
 

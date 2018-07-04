@@ -138,3 +138,21 @@ typedef struct
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
+
+
+struct VAddr
+{
+        union
+        {
+                uint64 addr;
+                struct
+                {
+                        uint64 offset   : 12;
+                        uint64 pti      : 9;
+                        uint64 pdi      : 9;
+                        uint64 pdpti    : 9;
+                        uint64 pml4i    : 9;
+                        uint64 reserved : 16;
+                } __attribute__((__packed__));;
+        } __attribute__((__packed__));;
+} __attribute__((__packed__));

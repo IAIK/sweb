@@ -10,6 +10,7 @@
 #include "ports.h"
 #include "SWEBDebugInfo.h"
 #include "PageManager.h"
+#include "ACPI.h"
 
 extern void* kernel_end_address;
 
@@ -299,4 +300,10 @@ void ArchCommon::drawHeartBeat()
   fb[1] = (char)0x9f;
 
   drawStat();
+}
+
+
+void ArchCommon::postBootInit()
+{
+  initACPI();
 }
