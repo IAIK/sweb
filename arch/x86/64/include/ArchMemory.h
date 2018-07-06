@@ -4,6 +4,8 @@
 #include "offsets.h"
 #include "paging-definitions.h"
 
+extern PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
+
 class ArchMemoryMapping
 {
   public:

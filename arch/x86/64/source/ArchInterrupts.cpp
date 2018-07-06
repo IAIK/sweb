@@ -5,11 +5,30 @@
 #include "ArchThreads.h"
 #include "assert.h"
 #include "Thread.h"
+#include "APIC.h"
+#include "debug.h"
+#include "ArchMemory.h"
+#include "PageManager.h"
 
 void ArchInterrupts::initialise()
 {
   uint16 i;
   disableInterrupts();
+
+  if(local_APIC)
+  {
+          local_APIC->mapAt(APIC_VADDR);
+          local_APIC->registers.s_int_vect.setSpuriousInterruptNumber(0xFF);
+          //local_APIC->registers.lvt_timer.setVector(90);
+          local_APIC->registers.lvt_timer.setVector(0x20);
+          local_APIC->registers.lvt_timer.setMode(1);
+          local_APIC->registers.lvt_timer.setMask(true);
+          local_APIC->registers.timer_divide_config.setTimerDivisor(16);
+          local_APIC->setTimerPeriod(0x1000000);
+          local_APIC->enable(true);
+          IO_APIC.mapAt((void*)IOAPIC_VADDR);
+  }
+
   initialise8259s();
   InterruptUtils::initialise();
   for (i=0;i<16;++i)
@@ -18,7 +37,15 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  enableIRQ(0);
+
+  if(local_APIC)
+  {
+          local_APIC->registers.lvt_timer.setMask(false);
+  }
+  else
+  {
+          enableIRQ(0);
+  }
 }
 
 void ArchInterrupts::setTimerFrequency(uint32 freq) {
@@ -35,7 +62,14 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
 
 void ArchInterrupts::disableTimer()
 {
-  disableIRQ(0);
+  if(local_APIC)
+  {
+          local_APIC->registers.lvt_timer.setMask(true);
+  }
+  else
+  {
+          disableIRQ(0);
+  }
 }
 
 void ArchInterrupts::enableKBD()
@@ -52,6 +86,10 @@ void ArchInterrupts::disableKBD()
 void ArchInterrupts::EndOfInterrupt(uint16 number) 
 {
   sendEOI(number);
+  if(local_APIC)
+  {
+          local_APIC->sendEOI(number);
+  }
 }
 
 void ArchInterrupts::enableInterrupts()
