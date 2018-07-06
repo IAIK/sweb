@@ -4,6 +4,7 @@
 #include "BDRequest.h"
 #include "ArchInterrupts.h"
 #include "8259.h"
+#include "APIC.h"
 
 #include "Scheduler.h"
 #include "kprintf.h"
@@ -51,10 +52,17 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
   bool interrupt_context = ArchInterrupts::disableInterrupts();
   ArchInterrupts::enableInterrupts();
 
-  enableIRQ( irqnum );
-  if( irqnum > 8 )
+  if(IOAPIC::initialized)
   {
-    enableIRQ( 2 );   // cascade
+          IO_APIC.setIRQMask(irqnum, false);
+  }
+  else
+  {
+          PIC8259::enableIRQ(irqnum);
+          if( irqnum > 8 )
+          {
+                  PIC8259::enableIRQ( 2 );   // cascade
+          }
   }
 
   testIRQ( );

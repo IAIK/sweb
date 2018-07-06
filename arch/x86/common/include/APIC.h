@@ -242,51 +242,94 @@ private:
 class IOAPIC
 {
 public:
-        struct IOAPIC_r0
+
+        enum IOAPICRegisterOffsets
         {
-                volatile uint32 reserved1  : 24; //  0-23
-                volatile uint32 io_apic_id :  4; // 24-27
-                volatile uint32 reserved2  :  4; // 28-31
+                IOAPICID  =        0x00,
+                IOAPICVER =        0x01,
+                IOAPICARB =        0x02,
         };
 
-        struct IOAPIC_r1
+        struct IOAPIC_r_ID
         {
-                const volatile uint32 version   : 8; //  0- 7
-                const volatile uint32 reserved1 : 8; //  8-15
-                const volatile uint32 max_redir : 8; // 16-23
-                const volatile uint32 reserved2 : 8; // 24-31
-        };
+                union
+                {
+                        volatile uint32 word;
+                        struct
+                        {
+                                volatile uint32 reserved1  : 24; //  0-23
+                                volatile uint32 io_apic_id :  4; // 24-27
+                                volatile uint32 reserved2  :  4; // 28-31
+                        } __attribute__((packed));
+                };
+        } __attribute__((packed));
 
-        struct IOAPIC_r2
+        struct IOAPIC_r_VER
         {
-                volatile uint32 reserved1            : 24; // 0-23
-                volatile uint32 arbitration_priority : 4;  // 24-27
-                volatile uint32 reserved2            : 4;  // 27-31
-        };
+                union
+                {
+                        volatile uint32 word;
+                        struct
+                        {
+                                volatile uint32 version   : 8; //  0- 7
+                                volatile uint32 reserved1 : 8; //  8-15
+                                volatile uint32 max_redir : 8; // 16-23
+                                volatile uint32 reserved2 : 8; // 24-31
+                        } __attribute__((packed));
+                };
+        } __attribute__((packed));
+
+        struct IOAPIC_r_ARB
+        {
+                union
+                {
+                        volatile uint32 word;
+                        struct
+                        {
+                                volatile uint32 reserved1            : 24; // 0-23
+                                volatile uint32 arbitration_priority : 4;  // 24-27
+                                volatile uint32 reserved2            : 4;  // 27-31
+                        } __attribute__((packed));
+                };
+        } __attribute__((packed));
 
         struct IOAPIC_redir_entry
         {
-                volatile uint32 interrupt_vector : 8; // Allowed values: 0x10-0xFE
-                volatile uint32 delivery_mode    : 3;
-                volatile uint32 destination_mode : 1;
-          const volatile uint32 pending_busy     : 1;
-                volatile uint32 polarity         : 1;
-                volatile uint32 lvl_trig_recvd   : 1;
-                volatile uint32 trigger_mode     : 1;
-                volatile uint32 interrupt_mask   : 1;
-                volatile uint32 reserved1        : 15;
+                union
+                {
+                        volatile uint32 word_l;
+                        struct
+                        {
+                                volatile uint32 interrupt_vector : 8; // Allowed values: 0x10-0xFE
+                                volatile uint32 delivery_mode    : 3;
+                                volatile uint32 destination_mode : 1;
+                                volatile uint32 pending_busy     : 1;
+                                volatile uint32 polarity         : 1;
+                                volatile uint32 lvl_trig_recvd   : 1;
+                                volatile uint32 trigger_mode     : 1;
+                                volatile uint32 mask             : 1;
+                                volatile uint32 reserved1        : 15;
+                        };
+                };
 
-                volatile uint32 reserved2        : 24;
-                volatile uint32 destination      : 8;
-        };
+                union
+                {
+                        volatile uint32 word_h;
+                        struct
+                        {
+                                volatile uint32 reserved2        : 24;
+                                volatile uint32 destination      : 8;
+                        };
+                };
+        } __attribute__((packed));
 
         struct IOAPICRegisters
         {
-                volatile IOAPIC_r0 r0;
-                volatile IOAPIC_r1 r1;
-                volatile IOAPIC_r2 r2;
-                volatile IOAPIC_redir_entry redir[0x18];
-        };
+                volatile IOAPIC_r_ID r_id;
+                volatile IOAPIC_r_VER r_ver;
+                volatile IOAPIC_r_ARB r_arb;
+                volatile IOAPIC_redir_entry r_redir[0x18];
+        } __attribute__((packed));
 
         struct IOAPIC_MMIORegs
         {
@@ -299,15 +342,35 @@ public:
         static IOAPIC_MMIORegs* phys_addr;
 
         explicit IOAPIC();
-        IOAPIC(IOAPIC_MMIORegs* regs);
+        IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base);
+
+        void init();
+        void initRedirections();
 
         void mapAt(void* addr);
 
         uint32 read(uint8 offset);
         void write(uint8 offset, uint32 value);
 
+        IOAPIC_redir_entry readRedirEntry(uint32 entry_no);
+        void writeRedirEntry(uint32 entry_no, const IOAPIC_redir_entry& value);
+
+        uint32 getGlobalInterruptBase();
+        uint32 getMaxRedirEntry();
+
+        void setIRQMask(uint32 irq_num, bool value);
+
 private:
-        IOAPIC_MMIORegs* reg_;
+        uint8 redirEntryOffset(uint32 entry_no);
+
+        static const uint32 IRQ_OFFSET = 0x20;
+
+        IOAPIC_MMIORegs* reg_paddr_;
+        IOAPIC_MMIORegs* reg_vaddr_;
+
+        uint32 id_;
+        uint32 max_redir_;
+        uint32 g_sys_int_base_;
 };
 
 

@@ -26,24 +26,25 @@ void ArchInterrupts::initialise()
           local_APIC->setTimerPeriod(0x1000000);
           local_APIC->enable(true);
           IO_APIC.mapAt((void*)IOAPIC_VADDR);
+          IO_APIC.init();
   }
 
-  initialise8259s();
+  PIC8259::initialise8259s();
   InterruptUtils::initialise();
   for (i=0;i<16;++i)
-    disableIRQ(i);
+          PIC8259::disableIRQ(i);
 }
 
 void ArchInterrupts::enableTimer()
 {
-
   if(local_APIC)
   {
-          local_APIC->registers.lvt_timer.setMask(false);
+          //local_APIC->registers.lvt_timer.setMask(false);
+          IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2
   }
   else
   {
-          enableIRQ(0);
+          PIC8259::enableIRQ(0);
   }
 }
 
@@ -67,27 +68,45 @@ void ArchInterrupts::disableTimer()
   }
   else
   {
-          disableIRQ(0);
+          PIC8259::disableIRQ(0);
   }
 }
 
 void ArchInterrupts::enableKBD()
 {
-  enableIRQ(1);
-  enableIRQ(9);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(1, false);
+                IO_APIC.setIRQMask(9, false);
+        }
+        else
+        {
+                PIC8259::enableIRQ(1);
+                PIC8259::enableIRQ(9);
+        }
 }
 
 void ArchInterrupts::disableKBD()
 {
-  disableIRQ(1);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(1, true);
+        }
+        else
+        {
+                PIC8259::disableIRQ(1);
+        }
 }
 
 void ArchInterrupts::EndOfInterrupt(uint16 number) 
 {
-  sendEOI(number);
   if(local_APIC)
   {
-          local_APIC->sendEOI(number);
+          local_APIC->sendEOI(number + 0x20);
+  }
+  else
+  {
+          PIC8259::sendEOI(number);
   }
 }
 

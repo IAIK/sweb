@@ -9,7 +9,6 @@ LocalAPIC* local_APIC = nullptr;
 
 IOAPIC IO_APIC;
 bool IOAPIC::initialized = false;
-IOAPIC::IOAPIC_MMIORegs* IOAPIC::phys_addr = nullptr;
 
 LocalAPIC* initAPIC(ACPI_MADTHeader* madt)
 {
@@ -34,8 +33,7 @@ LocalAPIC* initAPIC(ACPI_MADTHeader* madt)
       debug(APIC, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
       if(!IOAPIC::initialized)
       {
-              IOAPIC::phys_addr = (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address;
-              new (&IO_APIC) IOAPIC(IOAPIC::phys_addr);
+              new (&IO_APIC) IOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, entry->global_system_interrupt_base);
       }
       break;
     }
@@ -126,21 +124,65 @@ void LocalAPIC::enable(bool enable)
 
 
 IOAPIC::IOAPIC() :
-        reg_(nullptr)
+        reg_paddr_(nullptr),
+        reg_vaddr_(nullptr)
 {}
 
-IOAPIC::IOAPIC(IOAPIC_MMIORegs* regs) :
-        reg_(regs)
-
+IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
+        reg_paddr_(regs),
+        reg_vaddr_(regs),
+        id_(id),
+        g_sys_int_base_(g_sys_int_base)
 {
-        debug(APIC, "IOAPIC at %p\n", regs);
-        assert(reg_);
+        debug(APIC, "IOAPIC %x at phys %p, g_sys_int_base: %x\n", id_, reg_paddr_, g_sys_int_base_);
+        assert(reg_paddr_);
+        initialized = true;
+}
+
+void IOAPIC::init()
+{
+        IOAPIC_r_ID id;
+        IOAPIC_r_VER version;
+        id.word = IO_APIC.read(IOAPICID);
+        version.word = IO_APIC.read(IOAPICVER);
+        max_redir_ = version.max_redir;
+        debug(APIC, "IOAPIC id: %x\n", id.io_apic_id);
+        debug(APIC, "IOAPIC version: %x\n", version.version);
+        debug(APIC, "IOAPIC max redir: %x\n", getMaxRedirEntry());
+        debug(APIC, "IOAPIC g_sys_int base: %x\n", getGlobalInterruptBase());
+
+        IO_APIC.initRedirections();
+}
+
+void IOAPIC::initRedirections()
+{
+        for(uint32 i = 0; i <= max_redir_; ++i)
+        {
+                IOAPIC_redir_entry r = readRedirEntry(i);
+                if(getGlobalInterruptBase() + i == 2)
+                {
+                        // Hardcoded interrupt source override for timer (2 -> 0)
+                        // TODO: Dynamically read interrupt source override tables in ACPI->MADT
+                        r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + 0;
+                }
+                else
+                {
+                        r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + i;
+                }
+                writeRedirEntry(i, r);
+        }
+
+        for(uint32 i = 0; i <= max_redir_; ++i)
+        {
+                IOAPIC_redir_entry r = readRedirEntry(i);
+                debug(APIC, "IOAPIC redir entry %u -> vector %u, destination: %u, mask: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask);
+        }
 }
 
 
 void IOAPIC::mapAt(void* addr)
 {
-  debug(APIC, "Map IOAPIC at phys %p to %p\n", phys_addr, addr);
+  debug(APIC, "Map IOAPIC at phys %p to %p\n", reg_paddr_, addr);
   assert(addr);
   auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)addr/PAGE_SIZE);
   if(m.pml4[m.pml4i].present)
@@ -171,8 +213,8 @@ void IOAPIC::mapAt(void* addr)
     }
   }
 
-  ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)phys_addr)/PAGE_SIZE);
-  reg_ = (IOAPIC_MMIORegs*)addr;
+  ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE);
+  reg_vaddr_ = (IOAPIC_MMIORegs*)addr;
 }
 
 
@@ -285,12 +327,56 @@ bool LocalAPIC::checkISR(uint8 num) volatile
 
 uint32 IOAPIC::read(uint8 offset)
 {
-        reg_->io_reg_sel = offset;
-        return reg_->io_win;
+        reg_vaddr_->io_reg_sel = offset;
+        return reg_vaddr_->io_win;
 }
 
 void IOAPIC::write(uint8 offset, uint32 value)
 {
-        reg_->io_reg_sel = offset;
-        reg_->io_win = value;
+        reg_vaddr_->io_reg_sel = offset;
+        reg_vaddr_->io_win = value;
+}
+
+uint8 IOAPIC::redirEntryOffset(uint32 entry_no)
+{
+        return (0x10 + 2 * entry_no);
+}
+
+IOAPIC::IOAPIC_redir_entry IOAPIC::readRedirEntry(uint32 entry_no)
+{
+        assert(entry_no <= max_redir_);
+        uint8 offset = redirEntryOffset(entry_no);
+
+        IOAPIC_redir_entry temp;
+        temp.word_l = read(offset);
+        temp.word_h = read(offset + 1);
+        return temp;
+}
+
+void IOAPIC::writeRedirEntry(uint32 entry_no, const IOAPIC::IOAPIC_redir_entry& value)
+{
+        assert(entry_no <= max_redir_);
+        uint8 offset = redirEntryOffset(entry_no);
+
+        write(offset, value.word_l);
+        write(offset + 1, value.word_h);
+}
+
+uint32 IOAPIC::getGlobalInterruptBase()
+{
+        return g_sys_int_base_;
+}
+
+uint32 IOAPIC::getMaxRedirEntry()
+{
+        return max_redir_;
+}
+
+
+void IOAPIC::setIRQMask(uint32 irq_num, bool value)
+{
+        debug(APIC, "Set IRQ %x mask: %u\n", irq_num, value);
+        IOAPIC_redir_entry r = readRedirEntry(irq_num);
+        r.mask = (value ? 1: 0);
+        writeRedirEntry(irq_num, r);
 }

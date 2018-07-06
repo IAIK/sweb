@@ -4,7 +4,7 @@
 
 volatile size_t outstanding_EOIs = 0;
 
-uint32 cached_mask = 0xFFFF;
+uint32 PIC8259::cached_mask = 0xFFFF;
 
 #define PIC_ICW1_INIT   0x11
 #define PIC_ICW2_OFFSET 0x20
@@ -12,7 +12,7 @@ uint32 cached_mask = 0xFFFF;
 
 #define PIC_EOI 0x20
 
-void initialise8259s()
+void PIC8259::initialise8259s()
 {
   outportb(PIC_1_CONTROL_PORT, PIC_ICW1_INIT); /* ICW1 */
   outportb(PIC_1_DATA_PORT, PIC_ICW2_OFFSET); /* ICW2: route IRQs 0...7 to INTs 20h...27h */
@@ -34,7 +34,7 @@ void initialise8259s()
   outstanding_EOIs = 0;
 }
 
-void enableIRQ(uint16 number)
+void PIC8259::enableIRQ(uint16 number)
 {
   uint32 mask = 1 << number;
   cached_mask &= ~mask;
@@ -48,7 +48,7 @@ void enableIRQ(uint16 number)
   }
 }
 
-void disableIRQ(uint16 number)
+void PIC8259::disableIRQ(uint16 number)
 {
   uint32 mask = 1 << number;
   cached_mask |= mask;
@@ -62,7 +62,7 @@ void disableIRQ(uint16 number)
   }
 }
 
-void sendEOI(uint16 number)
+void PIC8259::sendEOI(uint16 number)
 {
   --outstanding_EOIs;
   debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs);
