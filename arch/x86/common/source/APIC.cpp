@@ -9,7 +9,7 @@ LocalAPIC* local_APIC = nullptr;
 
 IOAPIC IO_APIC;
 bool IOAPIC::initialized = false;
-IOAPIC::IOAPICRegisters* IOAPIC::phys_addr = nullptr;
+IOAPIC::IOAPIC_MMIORegs* IOAPIC::phys_addr = nullptr;
 
 LocalAPIC* initAPIC(ACPI_MADTHeader* madt)
 {
@@ -34,7 +34,7 @@ LocalAPIC* initAPIC(ACPI_MADTHeader* madt)
       debug(APIC, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
       if(!IOAPIC::initialized)
       {
-              IOAPIC::phys_addr = (IOAPIC::IOAPICRegisters*)(size_t)entry->address;
+              IOAPIC::phys_addr = (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address;
               new (&IO_APIC) IOAPIC(IOAPIC::phys_addr);
       }
       break;
@@ -129,7 +129,7 @@ IOAPIC::IOAPIC() :
         reg_(nullptr)
 {}
 
-IOAPIC::IOAPIC(IOAPICRegisters* regs) :
+IOAPIC::IOAPIC(IOAPIC_MMIORegs* regs) :
         reg_(regs)
 
 {
@@ -172,7 +172,7 @@ void IOAPIC::mapAt(void* addr)
   }
 
   ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)phys_addr)/PAGE_SIZE);
-  reg_ = (IOAPICRegisters*)addr;
+  reg_ = (IOAPIC_MMIORegs*)addr;
 }
 
 
@@ -279,4 +279,18 @@ bool LocalAPIC::checkISR(uint8 num) volatile
         uint8 bit_offset = num % 8;
 
         return registers.ISR[byte_offset].isr & (1 << bit_offset);
+}
+
+
+
+uint32 IOAPIC::read(uint8 offset)
+{
+        reg_->io_reg_sel = offset;
+        return reg_->io_win;
+}
+
+void IOAPIC::write(uint8 offset, uint32 value)
+{
+        reg_->io_reg_sel = offset;
+        reg_->io_win = value;
 }

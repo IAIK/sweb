@@ -19,7 +19,6 @@ void ArchInterrupts::initialise()
   {
           local_APIC->mapAt(APIC_VADDR);
           local_APIC->registers.s_int_vect.setSpuriousInterruptNumber(0xFF);
-          //local_APIC->registers.lvt_timer.setVector(90);
           local_APIC->registers.lvt_timer.setVector(0x20);
           local_APIC->registers.lvt_timer.setMode(1);
           local_APIC->registers.lvt_timer.setMask(true);

@@ -288,15 +288,26 @@ public:
                 volatile IOAPIC_redir_entry redir[0x18];
         };
 
+        struct IOAPIC_MMIORegs
+        {
+                volatile uint32 io_reg_sel;
+                char padding[12];
+                volatile uint32 io_win;
+        } __attribute__((packed));
+
         static bool initialized;
-        static IOAPICRegisters* phys_addr;
+        static IOAPIC_MMIORegs* phys_addr;
 
         explicit IOAPIC();
-        IOAPIC(IOAPICRegisters* regs);
+        IOAPIC(IOAPIC_MMIORegs* regs);
 
         void mapAt(void* addr);
+
+        uint32 read(uint8 offset);
+        void write(uint8 offset, uint32 value);
+
 private:
-        IOAPICRegisters* reg_;
+        IOAPIC_MMIORegs* reg_;
 };
 
 
