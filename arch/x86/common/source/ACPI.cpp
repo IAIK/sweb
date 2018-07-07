@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "kstring.h"
 #include "assert.h"
+#include "new.h"
 
 RSDPDescriptor* RSDP = nullptr;
 
@@ -98,14 +99,11 @@ void initACPI()
     if(memcmp(entry_header->Signature, "APIC", 4) == 0)
     {
       ACPI_MADTHeader* madt = (ACPI_MADTHeader*)entry_header;
-      assert(initAPIC(madt));
+      madt->parse();
     }
   }
 
   /*
-  debug(APIC, "APIC spurious interrupt vector: %x, enabled: %x, focus checking: %x\n", apic_vaddr->s_int_vect.vector, apic_vaddr->s_int_vect.enable, apic_vaddr->s_int_vect.focus_checking);
-  debug(APIC, "APIC id: %x\n", (apic_vaddr->local_apic_id >> 24));
-  apic_vaddr->s_int_vect.enable = 1;
   debug(APIC, "Sending init IPI to APIC ID %x, ICR low: %p, ICR high: %p\n", 0, &apic_vaddr->ICR_low, &apic_vaddr->ICR_high);
   apic_vaddr->ICR_high.target_apic_id = 1;
 
@@ -162,4 +160,58 @@ ACPISDTHeader* ACPISDTHeader::getEntry(size_t i)
 {
   ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint32*)(this + 1))[i]);
   return entry_ptr;
+}
+
+void ACPI_MADTHeader::parse()
+{
+  if(!LocalAPIC::initialized)
+  {
+          new (&local_APIC) LocalAPIC(this);
+  }
+
+  MADTEntryDescriptor* madt_entry = (MADTEntryDescriptor*)(this + 1);
+  while((size_t)madt_entry < (size_t)this + std_header.Length)
+  {
+    switch(madt_entry->type)
+    {
+    case 0:
+    {
+      MADTProcLocalAPIC* entry = (MADTProcLocalAPIC*)(madt_entry + 1);
+      debug(ACPI, "[%p] Processor local APIC, ACPI Processor ID: %4x, APIC ID: %4x, enabled: %u\n", entry, entry->proc_id, entry->apic_id, entry->flags.enabled);
+      break;
+    }
+    case 1:
+    {
+      MADT_IO_APIC* entry = (MADT_IO_APIC*)(madt_entry + 1);
+      debug(ACPI, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
+      if(!IOAPIC::initialized)
+      {
+              new (&IO_APIC) IOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, entry->global_system_interrupt_base);
+      }
+      break;
+    }
+    case 2:
+    {
+      MADTInterruptSourceOverride* entry = (MADTInterruptSourceOverride*)(madt_entry + 1);
+      debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags.polarity, entry->flags.trigger_mode);
+      break;
+    }
+    case 4:
+    {
+      MADTNonMaskableInterrupts* entry = (MADTNonMaskableInterrupts*)(madt_entry + 1);
+      debug(ACPI, "[%p] Non maskable interrupts, proc_id: %x, flags: %x, lint_num: %x\n", entry, entry->processor_id, entry->flags, entry->lint_num);
+      break;
+    }
+    case 5:
+    {
+      MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
+      debug(ACPI, "[%p] Local APIC address override, addr: %zx\n", entry, entry->local_apic_addr);
+      break;
+    }
+    default:
+      debug(ACPI, "[%p] Unknown MADT entry type %x\n", madt_entry + 1, madt_entry->type);
+      break;
+    }
+    madt_entry = (MADTEntryDescriptor*)((size_t)madt_entry + madt_entry->length);
+  }
 }

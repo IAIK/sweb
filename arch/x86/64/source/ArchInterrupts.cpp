@@ -14,30 +14,30 @@ void ArchInterrupts::initialise()
 {
   uint16 i;
   disableInterrupts();
+  InterruptUtils::initialise();
 
-  if(local_APIC)
+  if(LocalAPIC::initialized)
   {
-          local_APIC->mapAt(APIC_VADDR);
-          local_APIC->registers.s_int_vect.setSpuriousInterruptNumber(0xFF);
-          local_APIC->registers.lvt_timer.setVector(0x20);
-          local_APIC->registers.lvt_timer.setMode(1);
-          local_APIC->registers.lvt_timer.setMask(true);
-          local_APIC->registers.timer_divide_config.setTimerDivisor(16);
-          local_APIC->setTimerPeriod(0x1000000);
-          local_APIC->enable(true);
+          local_APIC.mapAt(APIC_VADDR);
+          local_APIC.setSpuriousInterruptNumber(0xFF);
+          local_APIC.initTimer();
+          local_APIC.enable(true);
+  }
+
+  if(IOAPIC::initialized)
+  {
           IO_APIC.mapAt((void*)IOAPIC_VADDR);
           IO_APIC.init();
   }
 
   PIC8259::initialise8259s();
-  InterruptUtils::initialise();
   for (i=0;i<16;++i)
           PIC8259::disableIRQ(i);
 }
 
 void ArchInterrupts::enableTimer()
 {
-  if(local_APIC)
+  if(IOAPIC::initialized)
   {
           //local_APIC->registers.lvt_timer.setMask(false);
           IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2
@@ -62,9 +62,10 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
 
 void ArchInterrupts::disableTimer()
 {
-  if(local_APIC)
+  if(IOAPIC::initialized)
   {
-          local_APIC->registers.lvt_timer.setMask(true);
+          //local_APIC.registers.lvt_timer.setMask(true);
+          IO_APIC.setIRQMask(2, true); // IRQ source override in APIC: 0 -> 2
   }
   else
   {
@@ -100,9 +101,9 @@ void ArchInterrupts::disableKBD()
 
 void ArchInterrupts::EndOfInterrupt(uint16 number) 
 {
-  if(local_APIC)
+  if(LocalAPIC::initialized)
   {
-          local_APIC->sendEOI(number + 0x20);
+          local_APIC.sendEOI(number + 0x20);
   }
   else
   {

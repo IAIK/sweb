@@ -225,18 +225,28 @@ static_assert(sizeof(LocalAPICRegisters) == 0x400);
 class LocalAPIC
 {
 public:
-        LocalAPICRegisters registers;
+        explicit LocalAPIC();
+        LocalAPIC(ACPI_MADTHeader*);
+
+        static bool initialized;
+
         void sendEOI(size_t num);
         void mapAt(size_t addr);
         void enable(bool = true);
+
+        void initTimer() volatile;
         void setTimerPeriod(uint32 count) volatile;
+
+        void setSpuriousInterruptNumber(uint8 num) volatile;
 
         bool checkIRR(uint8 num) volatile;
         bool checkISR(uint8 num) volatile;
 private:
-        LocalAPIC() = delete;
         LocalAPIC(const LocalAPIC&) = delete;
         LocalAPIC& operator=(const LocalAPIC&) = delete;
+
+        LocalAPICRegisters* reg_paddr_;
+        LocalAPICRegisters* reg_vaddr_;
 };
 
 class IOAPIC
@@ -323,13 +333,14 @@ public:
                 };
         } __attribute__((packed));
 
+        /* These are not actually memory mapped
         struct IOAPICRegisters
         {
                 volatile IOAPIC_r_ID r_id;
                 volatile IOAPIC_r_VER r_ver;
                 volatile IOAPIC_r_ARB r_arb;
                 volatile IOAPIC_redir_entry r_redir[0x18];
-        } __attribute__((packed));
+        } __attribute__((packed));*/
 
         struct IOAPIC_MMIORegs
         {
@@ -376,5 +387,5 @@ private:
 
 LocalAPIC* initAPIC(ACPI_MADTHeader* madt);
 
-extern LocalAPIC* local_APIC;
+extern LocalAPIC local_APIC;
 extern IOAPIC IO_APIC;

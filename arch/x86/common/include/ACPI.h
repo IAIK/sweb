@@ -48,6 +48,8 @@ struct ACPI_MADTHeader
 {
         ACPISDTHeader std_header;
         MADTExtendedHeader ext_header;
+
+        void parse();
 } __attribute__ ((packed));
 
 struct MADTEntryDescriptor
@@ -60,7 +62,11 @@ struct MADTProcLocalAPIC
 {
         uint8 proc_id;
         uint8 apic_id;
-        uint32 flags;
+        struct
+        {
+                uint32 enabled  :  1;
+                uint32 reserved : 31;
+        } __attribute__ ((packed)) flags;
 } __attribute__ ((packed));
 
 struct MADT_IO_APIC
@@ -76,8 +82,30 @@ struct MADTInterruptSourceOverride
         uint8 bus_source;
         uint8 irq_source;
         uint32 global_system_interrupt;
-        uint16 flags;
+        struct
+        {
+                uint16 polarity     : 2;
+                uint16 trigger_mode : 2;
+                uint16 reserved     : 12;
+        } __attribute__ ((packed)) flags;
 } __attribute__ ((packed));
+
+enum
+{
+        ACPI_MADT_POLARITY_CONFORMS    = 0,
+        ACPI_MADT_POLARITY_ACTIVE_HIGH = 1,
+        ACPI_MADT_POLARITY_RESERVED    = 2,
+        ACPI_MADT_POLARITY_ACTIVE_LOW  = 3,
+};
+
+enum
+{
+        ACPI_MADT_TRIGGER_CONFORMS = (0),
+        ACPI_MADT_TRIGGER_EDGE     = (1<<2),
+        ACPI_MADT_TRIGGER_RESERVED = (2<<2),
+        ACPI_MADT_TRIGGER_LEVEL    = (3<<2),
+};
+
 
 struct MADTNonMaskableInterrupts
 {
