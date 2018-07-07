@@ -102,29 +102,6 @@ void initACPI()
       madt->parse();
     }
   }
-
-  /*
-  debug(APIC, "Sending init IPI to APIC ID %x, ICR low: %p, ICR high: %p\n", 0, &apic_vaddr->ICR_low, &apic_vaddr->ICR_high);
-  apic_vaddr->ICR_high.target_apic_id = 1;
-
-  {
-    APIC_InterruptCommandRegisterLow v_low;
-    v_low.vector = 0xF0;
-    v_low.destination_mode = 0;
-    v_low.delivery_mode = 0b110;
-    v_low.destination_shorthand = 0;
-    v_low.INIT_level_de_assert_clear = 1;
-    apic_vaddr->ICR_low = v_low;
-  }
-  {
-    APIC_InterruptCommandRegisterLow v_low;
-    v_low.vector = 0;
-    v_low.destination_mode = 0;
-    v_low.delivery_mode = 0b101;
-    v_low.destination_shorthand = 0;
-    v_low.INIT_level_de_assert_clear = 1;
-    apic_vaddr->ICR_low = v_low;
-    }*/
 }
 
 

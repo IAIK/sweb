@@ -117,7 +117,8 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     HEAP_PAGES = 1024 + (HEAP_PAGES - Min(HEAP_PAGES,1024))/8;
 
   size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
-  size_t free_page = 0;
+  size_t free_page = 0x01;
+  //size_t free_page = 0;
   size_t temp_page_size = 0;
   size_t num_reserved_heap_pages = 0;
   for (num_reserved_heap_pages = 0; num_reserved_heap_pages < num_pages_for_bitmap || temp_page_size != 0 ||

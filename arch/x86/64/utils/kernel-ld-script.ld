@@ -8,6 +8,8 @@ ENTRY(entry)
 LS_Phys = 0x100000;
 LS_Virt = 0xFFFFFFFF80000000;
 UpperToLower = 0xFFFFFFFF00000000;
+
+AP_STARTUP = 0xd000;
 SECTIONS
 {
   . = LS_Virt + LS_Phys;
@@ -27,6 +29,15 @@ SECTIONS
     ro_data_start_address = .;
     *(.rodata*)
     ro_data_end_address = .;
+  }
+
+  .apstartup ALIGN(4096) : AT(LS_Phys + (LS_APSTARTUP - LS_Code))
+  {
+    LS_APSTARTUP = .;
+
+    apstartup_begin = .;
+    *(.apstartup)
+    apstartup_end = .;
   }
 
   .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))

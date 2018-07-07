@@ -4,6 +4,7 @@
 #include "ArchMemory.h"
 #include "PageManager.h"
 #include "new.h"
+#include "kstring.h"
 
 LocalAPIC local_APIC;
 IOAPIC IO_APIC;
@@ -58,8 +59,6 @@ void LocalAPIC::mapAt(size_t addr)
         size_t pt_ppn = PageManager::instance()->allocPPN();
         m.pd[m.pdi].pt.page_ppn = pt_ppn;
         m.pd[m.pdi].pt.writeable = 1;
-        m.pd[m.pdi].pt.write_through = 1;
-        m.pd[m.pdi].pt.cache_disabled = 1;
         m.pd[m.pdi].pt.present = 1;
         m.pt = (PageTableEntry*)ArchMemory::getIdentAddressOfPPN(pt_ppn);
         debug(APIC, "Mapped PDI %zx to ppn: %zx\n", m.pdi, pt_ppn);
@@ -68,6 +67,10 @@ void LocalAPIC::mapAt(size_t addr)
   }
 
   ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE);
+  auto m2 = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), addr/PAGE_SIZE);
+  assert(m2.pt);
+  m2.pt[m2.pti].write_through = 1;
+  m2.pt[m2.pti].cache_disabled = 1;
   reg_vaddr_ = (LocalAPICRegisters*)addr;
 }
 
@@ -201,6 +204,95 @@ bool LocalAPIC::checkISR(uint8 num) volatile
 }
 
 
+extern char apstartup_begin;
+extern char apstartup_end;
+
+__attribute((section(".apstartup"))) void APstartup()
+{
+        debug(APIC,"AP startup function\n");
+        while(1);
+}
+
+void LocalAPIC::sendIPI(uint32 id) volatile
+{
+        debug(APIC, "Sending init IPI to APIC ID %x, ICR low: %p, ICR high: %p\n", 0, &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
+
+        size_t apstartup_size = (size_t)(&apstartup_end - &apstartup_begin);
+        debug(APIC, "&APstartup() = %p, apstartup_begin: %p, apstartup_end: %p, size: %zx\n", &APstartup, &apstartup_begin, &apstartup_end, apstartup_size);
+
+        pointer paddr0 = ArchMemory::getIdentAddress(AP_STARTUP_PADDR);
+
+        auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
+        debug(APIC, "paddr0 ppn: %zx\n", m.page_ppn);
+        memcpy((void*)paddr0, (void*)&APstartup, apstartup_size);
+        assert(memcmp((void*)paddr0, (void*)&APstartup, apstartup_size) == 0);
+
+/*
+        LocalAPIC_InterruptCommandRegisterHigh v_high{};
+        v_high.destination = id;
+
+        LocalAPIC_InterruptCommandRegisterLow v_low{};
+        v_low.vector = 0;
+        v_low.delivery_mode = 5;
+        v_low.destination_mode = 0;
+        v_low.level = 1;
+        v_low.trigger_mode = 0;
+        v_low.destination_shorthand = 3;
+
+        // *(volatile uint32*)&reg_vaddr_->ICR_high = *(uint32*)&v_high;
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        v_low.vector = 90;
+        v_low.delivery_mode = 6;
+
+        *(volatile uint32*)&reg_vaddr_->ICR_high = *(uint32*)&v_high;
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        debug(APIC, "Finished sending IPI to APIC ID %x\n", id);
+        */
+
+        LocalAPIC_InterruptCommandRegisterLow v_low{};
+        v_low.vector = 0;
+        v_low.delivery_mode = 5;
+        v_low.destination_mode = 0;
+        v_low.level = 1;
+        v_low.trigger_mode = 0;
+        v_low.destination_shorthand = 3;
+
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        // TODO: 10ms delay here
+        debug(APIC, "Start delay 1\n");
+        for(size_t i = 0; i < 0xFFFFFF; ++i)
+        {
+        }
+        debug(APIC, "End delay 1\n");
+
+        static_assert(AP_STARTUP_PADDR/PAGE_SIZE <= 0xFF);
+        v_low.vector = AP_STARTUP_PADDR/PAGE_SIZE;
+        v_low.delivery_mode = 6;
+
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        // TODO: 200ms delay here
+        debug(APIC, "Start delay 2\n");
+        for(size_t i = 0; i < 0xFFFFFFFF; ++i)
+        {
+        }
+        debug(APIC, "End delay 2\n");
+
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        debug(APIC, "Finished sending IPI to APIC ID %x\n", id);
+}
+
+
+
+
+
+
+
+
 IOAPIC::IOAPIC() :
         reg_paddr_(nullptr),
         reg_vaddr_(nullptr)
@@ -282,8 +374,6 @@ void IOAPIC::mapAt(void* addr)
         size_t pt_ppn = PageManager::instance()->allocPPN();
         m.pd[m.pdi].pt.page_ppn = pt_ppn;
         m.pd[m.pdi].pt.writeable = 1;
-        m.pd[m.pdi].pt.write_through = 1;
-        m.pd[m.pdi].pt.cache_disabled = 1;
         m.pd[m.pdi].pt.present = 1;
         m.pt = (PageTableEntry*)ArchMemory::getIdentAddressOfPPN(pt_ppn);
         debug(APIC, "Mapped PDI %zx to ppn: %zx\n", m.pdi, pt_ppn);
@@ -292,6 +382,10 @@ void IOAPIC::mapAt(void* addr)
   }
 
   ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE);
+  auto m2 = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)addr/PAGE_SIZE);
+  assert(m2.pt);
+  m2.pt[m2.pti].write_through = 1;
+  m2.pt[m2.pti].cache_disabled = 1;
   reg_vaddr_ = (IOAPIC_MMIORegs*)addr;
 }
 

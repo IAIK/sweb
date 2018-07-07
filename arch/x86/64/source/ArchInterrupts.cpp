@@ -30,6 +30,11 @@ void ArchInterrupts::initialise()
           IO_APIC.init();
   }
 
+  if(LocalAPIC::initialized)
+  {
+          local_APIC.sendIPI(0);
+  }
+
   PIC8259::initialise8259s();
   for (i=0;i<16;++i)
           PIC8259::disableIRQ(i);
