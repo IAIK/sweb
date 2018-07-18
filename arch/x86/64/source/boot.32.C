@@ -16,8 +16,9 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #define TRUNCATE_A(X) (unsigned int)(((char*)X)+0x7FFFFFFF)
 #define TRUNCATE_B(X) (char*)(X+1)
 
-static inline char * truncate_b(volatile unsigned long truncate_a_res) {
-    return TRUNCATE_B(truncate_a_res);
+static inline char * truncate_b(unsigned long truncate_a_res) {
+    volatile unsigned long temp = truncate_a_res;
+    return TRUNCATE_B(temp);
 }
 
 #define TRUNCATE(X) truncate_b(TRUNCATE_A(X))
