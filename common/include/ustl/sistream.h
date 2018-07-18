@@ -25,9 +25,9 @@ public:
 				istringstream (const void* p, size_type n) noexcept;
     explicit			istringstream (const cmemlink& source) noexcept;
     inline fmtflags		flags (void) const		{ return _flags; }
-    inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags = f; return of; }
-    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags |= f; return of; }
-    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags &= ~f; return of; }
+    inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags.f = f.f; return of; }
+    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags.f |= f.f; return of; }
+    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags.f &= ~f.f; return of; }
     inline fmtflags		setf (fmtflags f, fmtflags m)	{ unsetf(m); return setf(f); }
     inline void			iread (char& v)			{ v = skip_delimiters(); }
     inline void			iread (unsigned char& v)	{ char c; iread(c); v = c; }
@@ -47,14 +47,12 @@ public:
     /*inline void			iread (float& v)		{ double c; iread(c); v = c; }
     inline void			iread (long double& v)		{ double c; iread(c); v = c; }*/
     inline void			iread (fmtflags_bits f);
-    inline void			iread (unsigned long long& v)	{ long long c; iread(c); v = c; }
     /*void			iread (double& v);
     inline void			iread (float& v)		{ double c; iread(c); v = c; }
     inline void			iread (long double& v)		{ double c; iread(c); v = c; }*/
     void			iread (bool& v);
     void			iread (wchar_t& v);
     void			iread (string& v);
-    inline void			iread (fmtflags_bits f);
     inline string		str (void) const	{ string s; s.link (*this); return s; }
     inline istringstream&	str (const string& s)	{ link (s); return *this; }
     inline istringstream&	get (char& c)	{ return read (&c, sizeof(c)); }
