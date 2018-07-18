@@ -21,9 +21,9 @@ public:
 				ostringstream (const string& v = "");
 				ostringstream (void* p, size_t n) noexcept;
     inline fmtflags		flags (void) const		{ return _flags; }
-    inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags = f; return of; }
-    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags |= f; return of; }
-    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags &= ~f; return of; }
+    inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags.f = f.f; return of; }
+    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags.f |= f.f; return of; }
+    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags.f &= ~f.f; return of; }
     inline fmtflags		setf (fmtflags f, fmtflags m)	{ unsetf(m); return setf(f); }
     void			iwrite (unsigned char v);
     void			iwrite (wchar_t v);
