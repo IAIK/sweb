@@ -6,6 +6,7 @@
 #pragma once
 #include "memblock.h"
 #include "utf8.h"
+#include <stdarg.h>
 
 namespace ustl {
 

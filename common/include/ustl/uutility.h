@@ -9,6 +9,7 @@
 #pragma once
 #include "utypes.h"
 #include "ulimits.h"
+#include "assert.h"
 
 namespace ustl {
 
