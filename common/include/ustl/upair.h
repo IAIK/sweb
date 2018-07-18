@@ -34,7 +34,7 @@ public:
     inline pair&	operator= (const pair<T3,T4>& p2) { first = p2.first; second = p2.second; return *this; }
     inline bool		operator== (const pair& v)const	{ return first == v.first && second == v.second; }
     inline bool		operator< (const pair& v) const	{ return first < v.first || (first == v.first && second < v.second); }
-    inline void		swap (pair& v)			{ swap(first,v.first); swap(second,v.second); }
+    inline void		swap (pair& v)			{ ::ustl::swap(first,v.first); ::ustl::swap(second,v.second); }
     inline void		read (istream& is);
     inline void		write (ostream& os) const;
     void		text_write (ostringstream& os) const;
@@ -49,6 +49,7 @@ public:
     inline pair&	operator= (pair&& p2)		{ first = move(p2.first); second = move(p2.second); return *this; }
     template <typename T3, typename T4>
     inline pair&	operator= (pair<T3,T4>&& p2)	{ first = forward<T3>(p2.first); second = forward<T4>(p2.second); return *this; }
+    inline void		swap (pair&& v)			{ ::ustl::swap(first,v.first); ::ustl::swap(second,v.second); }
 #endif
 public:
     first_type		first;

@@ -5,6 +5,7 @@
 
 #include "mistream.h"
 #include "sostream.h"
+#include "ustdxept.h"
 #include "ustring.h"
 #include "ualgo.h"
 #include "kprintf.h"

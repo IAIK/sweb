@@ -16,9 +16,9 @@ template <typename T, T v>
 struct integral_constant {
     using value_type = T;
     using type = integral_constant<value_type,v>;
-    static constexpr const value_type value = v;
+    static constexpr const T value = v;
     constexpr operator value_type() const	{ return value; }
-    constexpr value_type operator()() const	{ return value; }
+    constexpr T operator()() const		{ return value; }
 };
 template <typename T, T v> constexpr const T integral_constant<T,v>::value;
 
@@ -178,7 +178,6 @@ UNARY_TRAIT_DEFN (__is_floating_point);
 //UNARY_TRAIT_TRUE (__is_floating_point, double);
 //UNARY_TRAIT_TRUE (__is_floating_point, long double);
 UNARY_TRAIT_DEFB (is_floating_point, __is_floating_point<remove_cv_t<T>>::value);
-
 
 template <typename T> struct __is_pointer : public false_type {};
 template <typename T> struct __is_pointer<T*> : public true_type {};
@@ -371,7 +370,7 @@ struct __is_move_constructible {
 };
 template <typename T> struct is_move_constructible : public decltype(__is_move_constructible::test<T>(0)) {};
 
-#if __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)
+#if __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9) || __GNUC__ >= 8
 template <typename T, typename U> struct is_assignable : public integral_constant<bool, __is_assignable(T,U)> {};
 #else
 struct __is_assignable {

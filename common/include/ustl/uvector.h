@@ -80,8 +80,8 @@ public:
     inline reference		back (void)			{ assert (!empty()); return end()[-1]; }
     inline const_reference	back (void) const		{ assert (!empty()); return end()[-1]; }
     inline void			push_back (const T& v = T());
-    inline void			pop_back (void)			{ destroy (end()-1); _data.memlink::resize (_data.size() - sizeof(T)); }
-    inline void			clear (void)			{ destroy (begin(), end()); _data.clear(); }
+    inline void			pop_back (void)			{ size_type nsz = _data.size()-sizeof(T); destroy (iterator(_data.begin()+nsz)); _data.memlink::resize (nsz); }
+    inline void			clear (void)			{ destroy_all(); _data.clear(); }
     inline void			shrink_to_fit (void)		{ _data.shrink_to_fit(); }
     inline void			deallocate (void) noexcept;
     inline void			assign (const_iterator i1, const_iterator i2);
@@ -123,6 +123,8 @@ protected:
 private:
     inline iterator		insert_hole (const_iterator ip, size_type n);
     inline iterator		append_hole (size_type n);
+    void			destroy_all (void)
+				    { if (!is_linked()) destroy (begin(), end()); }
 private:
     memblock			_data;	///< Raw element data, consecutively stored.
 };
@@ -131,26 +133,30 @@ private:
 template <typename T>
 inline void vector<T>::reserve (size_type n, bool bExact)
 {
-    _data.reserve (n * sizeof(T), bExact);
+    _data.reserve (n*sizeof(T), bExact);
 }
 
 template <typename T>
 inline typename vector<T>::iterator vector<T>::append_hole (size_type n)
 {
-    _data.reserve (_data.size() + n*sizeof(T));
-    _data.memlink::resize (_data.size()+n*sizeof(T));
-    return end()-n;
+    size_type nsz = _data.size() + n*sizeof(T);
+    _data.reserve (nsz);
+    iterator hp = end();
+    _data.memlink::resize (nsz);
+    return hp;
 }
 
 /// Resizes the vector to contain \p n elements.
 template <typename T>
 void vector<T>::resize (size_type n)
 {
-    destroy (begin()+n, end());
-    const size_type nb = n * sizeof(T);
-    if (_data.capacity() < nb)
-	reserve (n);
-    uninitialized_default_construct_n (end(), (nb - _data.size())/sizeof(T));
+    size_type nb = n*sizeof(T);
+    _data.reserve (nb);
+    iterator inewend = iterator(_data.begin()+nb);
+    if (nb < _data.size())
+	destroy (inewend, end());
+    else
+	uninitialized_default_construct (end(), inewend);
     _data.memlink::resize (nb);
 }
 
@@ -158,11 +164,13 @@ void vector<T>::resize (size_type n)
 template <typename T>
 void vector<T>::resize (size_type n, const_reference v)
 {
-    destroy (begin()+n, end());
-    const size_type nb = n * sizeof(T);
-    if (_data.capacity() < nb)
-	reserve (n);
-    uninitialized_fill_n (end(), (nb - _data.size())/sizeof(T), v);
+    size_type nb = n*sizeof(T);
+    _data.reserve (nb);
+    iterator inewend = iterator(_data.begin()+nb);
+    if (nb < _data.size())
+	destroy (inewend, end());
+    else
+	uninitialized_fill (end(), inewend, v);
     _data.memlink::resize (nb);
 }
 
@@ -170,7 +178,7 @@ void vector<T>::resize (size_type n, const_reference v)
 template <typename T>
 inline void vector<T>::deallocate (void) noexcept
 {
-    destroy (begin(), end());
+    destroy_all();
     _data.deallocate();
 }
 
@@ -217,7 +225,7 @@ vector<T>::vector (const_iterator i1, const_iterator i2)
 template <typename T>
 inline vector<T>::~vector (void) noexcept
 {
-    destroy (begin(), end());
+    destroy_all();
 }
 
 /// Copies the range [\p i1, \p i2]

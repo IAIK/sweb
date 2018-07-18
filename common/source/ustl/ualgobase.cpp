@@ -55,8 +55,8 @@ template <> inline void stosv (uint32_t*& p, size_t n, uint32_t v)
 
 static inline void simd_block_copy (const void* src, void* dest)
 {
-    const char* csrc ((const char*) src);
-    char* cdest ((char*) dest);
+    const char* csrc = static_cast<const char*>(src);
+    char* cdest = static_cast<char*>(dest);
     #if __SSE__
     asm (
 	"movaps\t%2, %%xmm0	\n\t"
@@ -200,10 +200,10 @@ static inline void fill_n_fast (T* dest, size_t count, T v)
     stosv (dest, nHead, v);
     count -= nHead;
     build_block (v);
-    uint8_t* bdest = (uint8_t*) dest;
+    uint8_t* bdest = reinterpret_cast<uint8_t*>(dest);
     simd_block_fill_loop (bdest, count * sizeof(T) / MMX_BS);
     count %= MMX_BS;
-    dest = (T*) bdest;
+    dest = reinterpret_cast<T*>(bdest);
     stosv (dest, count, v);
 }
 
@@ -244,9 +244,9 @@ void rotate_fast (void* first, void* middle, void* last) noexcept
 	return;
 #endif
     {
-	char* f = (char*) first;
-	char* m = (char*) middle;
-	char* l = (char*) last;
+	char* f = static_cast<char*>(first);
+	char* m = static_cast<char*>(middle);
+	char* l = static_cast<char*>(last);
 	reverse (f, m);
 	reverse (m, l);
 	while (f != m && m != l)

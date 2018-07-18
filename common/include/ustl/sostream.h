@@ -22,12 +22,12 @@ public:
 				ostringstream (void* p, size_t n) noexcept;
     inline fmtflags		flags (void) const		{ return _flags; }
     inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags = f; return of; }
-    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags.f |= f.f; return of; }
-    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags.f &= ~f.f; return of; }
+    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags |= f; return of; }
+    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags &= ~f; return of; }
     inline fmtflags		setf (fmtflags f, fmtflags m)	{ unsetf(m); return setf(f); }
     void			iwrite (unsigned char v);
     void			iwrite (wchar_t v);
-    inline void			iwrite (char v)			{ iwrite ((unsigned char) v); }
+    inline void			iwrite (char v)			{ iwrite (static_cast<unsigned char>(v)); }
     inline void			iwrite (short v)		{ iformat (v); }
     inline void			iwrite (unsigned short v)	{ iformat (v); }
     inline void			iwrite (int v)			{ iformat (v); }
@@ -39,11 +39,11 @@ public:
     inline void			iwrite (long double v)		{ iformat (v); }*/
     void			iwrite (bool v);
     inline void			iwrite (const char* s)		{ write (s, strlen(s)); }
-    inline void			iwrite (const unsigned char* s)	{ iwrite ((const char*) s); }
+    inline void			iwrite (const unsigned char* s)	{ iwrite (reinterpret_cast<const char*>(s)); }
     inline void			iwrite (const string& v)	{ write (v.begin(), v.size()); }
     inline void			iwrite (fmtflags_bits f);
 #if HAVE_THREE_CHAR_TYPES
-    inline void			iwrite (signed char v)		{ iwrite ((char) v); }
+    inline void			iwrite (signed char v)		{ iwrite (static_cast<char>(v)); }
 #endif
 #if HAVE_LONG_LONG
     inline void			iwrite (long long v)		{ iformat (v); }
@@ -155,7 +155,7 @@ template <> struct object_text_writer<string> {
 };
 template <typename T> struct integral_text_object_writer<T*> {
     inline void operator() (ostringstream& os, const T* const& v) const
-	{ os.iwrite ((uintptr_t)(v)); }
+	{ os.iwrite (uintptr_t(v)); }
 };
 
 //----------------------------------------------------------------------

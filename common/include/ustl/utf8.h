@@ -34,7 +34,7 @@ inline size_t Utf8SequenceBytes (wchar_t c) __attribute__((const));
 /// Returns the number of bytes required to UTF-8 encode \p v.
 inline size_t Utf8Bytes (wchar_t v)
 {
-    if ((uint32_t) v < 128)
+    if (uint32_t(v) < 128)
 	return 1;
     size_t n;
     #if __x86__

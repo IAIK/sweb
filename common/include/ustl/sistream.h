@@ -25,9 +25,9 @@ public:
 				istringstream (const void* p, size_type n) noexcept;
     explicit			istringstream (const cmemlink& source) noexcept;
     inline fmtflags		flags (void) const		{ return _flags; }
-    inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags.f = f.f; return of; }
-    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags.f |= f.f; return of; }
-    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags.f &= ~f.f; return of; }
+    inline fmtflags		flags (fmtflags f)		{ fmtflags of (_flags); _flags = f; return of; }
+    inline fmtflags		setf (fmtflags f)		{ fmtflags of (_flags); _flags |= f; return of; }
+    inline fmtflags		unsetf (fmtflags f)		{ fmtflags of (_flags); _flags &= ~f; return of; }
     inline fmtflags		setf (fmtflags f, fmtflags m)	{ unsetf(m); return setf(f); }
     inline void			iread (char& v)			{ v = skip_delimiters(); }
     inline void			iread (unsigned char& v)	{ char c; iread(c); v = c; }
@@ -44,6 +44,10 @@ public:
     void			iread (long long& v);
     inline void			iread (unsigned long long& v)	{ long long c; iread(c); v = c; }
 #endif
+    inline void			iread (float& v)		{ double c; iread(c); v = c; }
+    inline void			iread (long double& v)		{ double c; iread(c); v = c; }
+    inline void			iread (fmtflags_bits f);
+    inline void			iread (unsigned long long& v)	{ long long c; iread(c); v = c; }
     /*void			iread (double& v);
     inline void			iread (float& v)		{ double c; iread(c); v = c; }
     inline void			iread (long double& v)		{ double c; iread(c); v = c; }*/
@@ -84,7 +88,7 @@ private:
 
 void istringstream::iread (fmtflags_bits f)
 {
-        if (f & basefield) setf (f, basefield);
+    if (f & basefield) setf (f, basefield);
     else if (f & floatfield) setf (f, floatfield);
     else if (f & adjustfield) setf (f, adjustfield);
     setf (f);

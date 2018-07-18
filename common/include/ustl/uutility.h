@@ -9,7 +9,6 @@
 #pragma once
 #include "utypes.h"
 #include "ulimits.h"
-#include <assert.h>
 
 namespace ustl {
 
@@ -148,7 +147,7 @@ inline constexpr ptrdiff_t distance (T1 i1, T2 i2)
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define UNVOID_DISTANCE(T1const,T2const)   \
 template <> inline constexpr ptrdiff_t distance (T1const void* p1, T2const void* p2) \
-{ return (T2const uint8_t*)(p2) - (T1const uint8_t*)(p1); }
+{ return static_cast<T2const uint8_t*>(p2) - static_cast<T1const uint8_t*>(p1); }
 UNVOID_DISTANCE(,)
 UNVOID_DISTANCE(const,const)
 UNVOID_DISTANCE(,const)
@@ -424,7 +423,7 @@ inline DEST noalias (const DEST&, SRC* s)
 {
     asm("":"+g"(s)::"memory");
     union UPun { SRC s; DEST d; };
-    return ((UPun*)(s))->d;
+    return reinterpret_cast<UPun*>(s)->d;
 }
 
 template <typename DEST, typename SRC>

@@ -15,7 +15,7 @@
 #include "ufunction.h"
 #include "uctrstrm.h"
 #include "sistream.h"
-#include <ctype.h>
+#include "uchrono.h"
 
 namespace ustl {
 
