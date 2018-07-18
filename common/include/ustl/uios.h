@@ -70,7 +70,7 @@ public:
     enum { default_stream_buffer_size = 4095 };
 
     typedef uint32_t		openmode;	///< Holds openmode_bits.
-    struct fmtflags{ fmtflags(const uint32_t& flags) : f(flags){}; fmtflags() = default; uint32_t f; };	///< Holds fmtflags_bits for a string stream.
+    typedef uint32_t		fmtflags;	///< Holds fmtflags_bits for a string stream.
     typedef uint32_t		iostate;	///< Holds iostate_bits for a file stream.
     typedef file_exception	failure;	///< Thrown by fstream on errors.
 

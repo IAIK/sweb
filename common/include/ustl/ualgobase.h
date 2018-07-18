@@ -23,12 +23,13 @@ template <typename T>
 inline constexpr T&& forward (typename tm::RemoveReference<T>::Result&& v) noexcept
     { return static_cast<T&&>(v); }
 
-template <typename T>
-inline void swap (T& a, T& b)
+#if HAVE_CPP14
+template <typename T, typename U = T>
+auto exchange (T& a, U&& b)
 {
-    T t = move(a);
-    a = move(b);
-    b = move(t);
+    auto t = move(a);
+    a = forward<U>(b);
+    return t;
 }
 
 template <typename T, typename U = T>
@@ -38,22 +39,31 @@ T exchange (T& a, U&& b)
     a = forward<U>(b);
     return t;
 }
+#endif
 
 #else
+
+template <typename T>
+inline constexpr typename tm::RemoveReference<T>::Result& move (T& v) noexcept
+    { return v; }
+
+template <typename T>
+inline constexpr T& forward (typename tm::RemoveReference<T>::Result& v) noexcept
+    { return v; }
+
+#endif
 
 /// Assigns the contents of a to b and the contents of b to a.
 /// This is used as a primitive operation by many other algorithms. 
 /// \ingroup SwapAlgorithms
 ///
-template <typename Assignable> 
-inline void swap (Assignable& a, Assignable& b)
+template <typename T>
+inline void swap (T& a, T& b)
 {
-    Assignable tmp = a;
-    a = b;
-    b = tmp;
+    typename tm::RemoveReference<T>::Result t = move(a);
+    a = move(b);
+    b = move(t);
 }
-
-#endif
 
 /// Equivalent to swap (*a, *b)
 /// \ingroup SwapAlgorithms
@@ -215,7 +225,7 @@ template <> inline uint16_t* unrolled_fill (uint16_t* result, size_t count, uint
 template <> inline uint32_t* unrolled_fill (uint32_t* result, size_t count, uint32_t value)
     { fill_n32_fast (result, count, value); return advance (result, count); }
 /*template <> inline float* unrolled_fill (float* result, size_t count, float value)
-  { fill_n32_fast ((uint32_t*) result, count, *noalias_cast<uint32_t*>(&value)); return advance (result, count); }*/
+    { fill_n32_fast (reinterpret_cast<uint32_t*>(result), count, *noalias_cast<uint32_t*>(&value)); return advance (result, count); }*/
 
 #if __MMX__
 #define UNROLLED_COPY_SPECIALIZATION(type)						\
@@ -250,7 +260,7 @@ UNROLLED_FILL_SPECIALIZATION(float)
 //
 #define COPY_ALIAS_FUNC(ctype, type, alias_type)			\
 template <> inline type* copy (ctype* first, ctype* last, type* result)	\
-{ return (type*) copy ((const alias_type*) first, (const alias_type*) last, (alias_type*) result); }
+{ return reinterpret_cast<type*> (copy (reinterpret_cast<const alias_type*>(first), reinterpret_cast<const alias_type*>(last), reinterpret_cast<alias_type*>(result))); }
 #if WANT_UNROLLED_COPY
 #if HAVE_THREE_CHAR_TYPES
 COPY_ALIAS_FUNC(const char, char, uint8_t)
@@ -273,7 +283,7 @@ COPY_ALIAS_FUNC(void, void, uint8_t)
 #undef COPY_ALIAS_FUNC
 #define COPY_BACKWARD_ALIAS_FUNC(ctype, type, alias_type)				\
 template <> inline type* copy_backward (ctype* first, ctype* last, type* result)	\
-{ return (type*) copy_backward ((const alias_type*) first, (const alias_type*) last, (alias_type*) result); }
+{ return reinterpret_cast<type*> (copy_backward (reinterpret_cast<const alias_type*>(first), reinterpret_cast<const alias_type*>(last), reinterpret_cast<alias_type*>(result))); }
 #if WANT_UNROLLED_COPY
 #if HAVE_THREE_CHAR_TYPES
 COPY_BACKWARD_ALIAS_FUNC(char, char, uint8_t)
@@ -290,7 +300,7 @@ COPY_BACKWARD_ALIAS_FUNC(const void, void, uint8_t)
 #undef COPY_BACKWARD_ALIAS_FUNC
 #define FILL_ALIAS_FUNC(type, alias_type, v_type)				\
 template <> inline void fill (type* first, type* last, const v_type& value)	\
-{ fill ((alias_type*) first, (alias_type*) last, (const alias_type) value); }
+{ fill (reinterpret_cast<alias_type*>(first), reinterpret_cast<alias_type*>(last), alias_type(value)); }
 FILL_ALIAS_FUNC(void, uint8_t, char)
 FILL_ALIAS_FUNC(void, uint8_t, uint8_t)
 #if WANT_UNROLLED_COPY
@@ -307,7 +317,7 @@ FILL_ALIAS_FUNC(int32_t, uint32_t, int32_t)
 #undef FILL_ALIAS_FUNC
 #define COPY_N_ALIAS_FUNC(ctype, type, alias_type)					\
 template <> inline type* copy_n (ctype* first, size_t count, type* result)	\
-{ return (type*) copy_n ((const alias_type*) first, count, (alias_type*) result); }
+{ return reinterpret_cast<type*> (copy_n (reinterpret_cast<const alias_type*>(first), count, reinterpret_cast<alias_type*>(result))); }
 COPY_N_ALIAS_FUNC(const void, void, uint8_t)
 COPY_N_ALIAS_FUNC(void, void, uint8_t)
 #if WANT_UNROLLED_COPY
@@ -330,7 +340,7 @@ COPY_N_ALIAS_FUNC(const int32_t, int32_t, uint32_t)
 #undef COPY_N_ALIAS_FUNC
 #define FILL_N_ALIAS_FUNC(type, alias_type, v_type)				\
 template <> inline type* fill_n (type* first, size_t n, const v_type& value)	\
-{ return (type*) fill_n ((alias_type*) first, n, (const alias_type) value); }
+{ return reinterpret_cast<type*> (fill_n (reinterpret_cast<alias_type*>(first), n, alias_type(value))); }
 FILL_N_ALIAS_FUNC(void, uint8_t, char)
 FILL_N_ALIAS_FUNC(void, uint8_t, uint8_t)
 #if WANT_UNROLLED_COPY

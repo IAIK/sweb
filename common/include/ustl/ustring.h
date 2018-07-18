@@ -6,7 +6,6 @@
 #pragma once
 #include "memblock.h"
 #include "utf8.h"
-#include <stdarg.h> // for va_list, va_start, and va_end (in string::format)
 
 namespace ustl {
 

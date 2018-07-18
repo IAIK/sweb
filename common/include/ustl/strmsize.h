@@ -70,7 +70,7 @@ namespace ustl {		\
 /// Declares that T is to be cast into TSUB for streaming.
 #define CAST_STREAMABLE(T,TSUB)	\
     namespace ustl {		\
-	inline istream& operator>> (istream& is, T& v)		{ TSUB sv; is >> sv; v = (T)(sv); return is; }	\
+	inline istream& operator>> (istream& is, T& v)		{ TSUB sv; is >> sv; v = T(sv); return is; }	\
 	inline ostream& operator<< (ostream& os, const T& v)	{ os << TSUB(v); return os; }			\
 	template<> inline streamsize stream_size_of(const T& v)	{ return stream_size_of (TSUB(v)); }		\
     }

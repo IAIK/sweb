@@ -5,15 +5,10 @@
 
 #pragma once
 
-#include "config.h"
-/*#ifndef STDC_HEADERS
-    #error "This library requires standard C and C++ headers to compile."
-#endif
-#ifndef STDUNIX_HEADERS
-    #error "This library compiles only on UNIX systems."
-#endif
+/*
 #define __STDC_LIMIT_MACROS // For WCHAR_MIN and WCHAR_MAX in stdint.
 #define __STDC_CONSTANT_MACROS  // For UINT??_C macros to avoid using L and UL suffixes on constants.
+#include "config.h"
 #if HAVE_STDINT_H
     #include <stdint.h>
 #elif HAVE_INTTYPES_H
@@ -25,9 +20,27 @@
     #include <sys/types.h>
 #endif
 #include <stddef.h>   // For ptrdiff_t, size_t
+#include <stdarg.h>
 #include <limits.h>
 #include <float.h>
-#include <unistd.h>*/
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#if HAVE_ALLOCA_H
+    #include <alloca.h>
+#endif
+#ifndef WITHOUT_LIBSTDCPP
+    #include <exception>
+    #include <typeinfo>
+    #include <new>
+    #if HAVE_CPP11
+	#include <initializer_list>
+    #endif
+#endif
+*/
 #ifndef SIZE_MAX
     #define SIZE_MAX    UINT_MAX
 #endif
@@ -115,3 +128,6 @@ typedef ssize_t intptr_t;
 #if !defined(UINTPTR_MAX) || !defined(UINT32_C)
     #error "If you include stdint.h before ustl.h, define __STDC_LIMIT_MACROS and __STDC_CONSTANT_MACROS first"
 #endif*/
+#if WANT_ALWAYS_INLINE
+    #define inline INLINE inline
+#endif

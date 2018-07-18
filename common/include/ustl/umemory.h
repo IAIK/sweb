@@ -337,7 +337,7 @@ inline void uninitialized_default_construct (ForwardIterator first, ForwardItera
 #else
     if (numeric_limits<value_type>::is_integral)
 #endif
-	memset ((void*) first, 0, max(distance(first,last),0)*sizeof(value_type));
+	memset (reinterpret_cast<void*>(first), 0, max(distance(first,last),0)*sizeof(value_type));
     else
 	for (--last; intptr_t(first) <= intptr_t(last); ++first)
 	    construct_at (&*first);
@@ -408,8 +408,10 @@ inline void destroy_n (ForwardIterator first, size_t n) noexcept
 //}}}-------------------------------------------------------------------
 //{{{ Raw storage algorithms
 
-/// Casts \p p to the type of the second pointer argument.
-template <typename T> inline T* cast_to_type (void* p, const T*) { return (T*) p; }
+//}}}-------------------------------------------------------------------
+//{{{ Raw storage algorithms
+
+template <typename T> inline T* cast_to_type (void* p, const T*) { return reinterpret_cast<T*>(p); }
 
 /// \brief Creates a temporary buffer pair from \p p and \p n
 /// This is intended to be used with alloca to create temporary buffers.

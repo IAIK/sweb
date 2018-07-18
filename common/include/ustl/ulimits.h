@@ -218,6 +218,42 @@ template <> struct numeric_limits<long double> {
     static constexpr const unsigned digits = LDBL_MANT_DIG;
     static constexpr const unsigned digits10 = LDBL_DIG;
     static constexpr const unsigned max_digits10 = LDBL_MANT_DIG;
+};
+
+template <> struct numeric_limits<long double> {
+    static inline constexpr long double min (void)		{ return LDBL_MIN; }
+    static inline constexpr long double max (void)		{ return LDBL_MAX; }
+    static inline constexpr long double lowest (void)		{ return -LDBL_MAX; }
+    static inline constexpr long double epsilon (void)		{ return LDBL_EPSILON; }
+    static inline constexpr long double round_error (void)	{ return 0.5l; }
+    static inline constexpr long double infinity (void)		{ return __builtin_huge_vall(); }
+    static inline constexpr long double quiet_NaN (void)	{ return __builtin_nanl(""); }
+    static inline constexpr long double signaling_NaN (void)	{ return __builtin_nansl(""); }
+    static inline constexpr long double denorm_min (void)	{ return __LDBL_DENORM_MIN__; }
+    static constexpr const bool is_specialized = true;
+    static constexpr const bool is_signed = true;
+    static constexpr const bool is_integer = false;
+    static constexpr const bool is_exact = false;
+    static constexpr const bool is_integral = true;
+    static constexpr const bool is_iec559 = true;
+    static constexpr const bool is_bounded = true;
+    static constexpr const bool is_modulo = false;
+    static constexpr const bool has_infinity = __LDBL_HAS_INFINITY__;
+    static constexpr const bool has_quiet_NaN = __LDBL_HAS_QUIET_NAN__;
+    static constexpr const bool has_signaling_NaN = __LDBL_HAS_QUIET_NAN__;
+    static constexpr const bool has_denorm_loss = true;
+    static constexpr const bool traps = false;
+    static constexpr const bool tinyness_before = true;
+    static constexpr const int radix = FLT_RADIX;
+    static constexpr const int min_exponent = LDBL_MIN_EXP;
+    static constexpr const int min_exponent10 = LDBL_MIN_10_EXP;
+    static constexpr const int max_exponent = LDBL_MAX_EXP;
+    static constexpr const int max_exponent10 = LDBL_MAX_10_EXP;
+    static constexpr const float_denorm_style has_denorm = denorm_present;
+    static constexpr const float_round_style round_style = round_to_nearest;
+    static constexpr const unsigned digits = LDBL_MANT_DIG;
+    static constexpr const unsigned digits10 = LDBL_DIG;
+    static constexpr const unsigned max_digits10 = LDBL_MANT_DIG;
     };*/
 
 #define _NUMERIC_LIMITS(type, minVal, maxVal, bSigned, bInteger, bIntegral)	\

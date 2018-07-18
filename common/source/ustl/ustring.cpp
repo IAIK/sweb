@@ -242,7 +242,7 @@ string& string::replace (const_iterator first, const_iterator last, const_pointe
 string::pos_type string::find (value_type c, pos_type pos) const noexcept
 {
     const_iterator found = ::ustl::find (iat(pos), end(), c);
-    return found < end() ? (pos_type) distance(begin(),found) : npos;
+    return found < end() ? pos_type (distance(begin(),found)) : npos;
 }
 
 /// Returns the offset of the first occurence of substring \p s of length \p n after \p pos.
@@ -281,7 +281,7 @@ string::pos_type string::rfind (const string& s, pos_type pos) const noexcept
 	for (i = 0; size_type(i) < s.size(); ++ i)
 	    if (m[-i] != d[-i])
 		break;
-    return d > sp ? (pos_type) distance (begin(), d + 2 - s.size()) : npos;
+    return d > sp ? pos_type (distance (begin(), d + 2 - s.size())) : npos;
 }
 
 /// Returns the offset of the first occurence of one of characters in \p s of size \p n after \p pos.

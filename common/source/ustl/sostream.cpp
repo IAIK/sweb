@@ -56,7 +56,7 @@ void ostringstream::iwrite (unsigned char v)
 /// Writes the contents of \p buffer of \p size into the stream.
 ostringstream& ostringstream::write (const void* buffer, size_type sz)
 {
-    const char* buf = (const char*) buffer;
+    const char* buf = static_cast<const char*>(buffer);
     for (size_type bw = 0; (bw = min(sz, remaining() ? remaining() : overflow(sz))); buf += bw, sz -= bw)
 	ostream::write (buf, bw);
     return *this;
@@ -83,9 +83,9 @@ void ostringstream::fmtstring (char* fmt, const char* typestr, bool bInteger) co
     if (_flags.f & left)
 	*fmt++ = '-';
     if (bInteger) {
-	if (_flags.f & showpos)
+	if (_flags & showpos)
 	    *fmt++ = '+';
-	if (_flags.f & showbase)
+	if (_flags & showbase)
 	    *fmt++ = '#';
     } else {
 	*fmt++ = '.';
@@ -94,11 +94,11 @@ void ostringstream::fmtstring (char* fmt, const char* typestr, bool bInteger) co
     while (*typestr)
 	*fmt++ = *typestr++;
     if (bInteger) {
-	if (_flags.f & hex)
-	    fmt[-1] = (_flags.f & uppercase) ? 'X' : 'x';
-	else if (_flags.f & oct)
+	if (_flags & hex)
+	    fmt[-1] = (_flags & uppercase) ? 'X' : 'x';
+	else if (_flags & oct)
 	    fmt[-1] = 'o';
-    } else if (_flags.f & scientific)
+    } else if (_flags & scientific)
 	fmt[-1] = 'E';
     *fmt = 0;
 }
@@ -134,7 +134,7 @@ int ostringstream::vformat (const char* fmt, va_list args)
 	__va_copy (args2, args);
 	if (0 > (rv = vsnprintf (ipos(), space, fmt, args2)))
 	    return rv;
-    } while (rv >= space && rv < (int)overflow(rv+1));
+    } while (rv >= space && rv < int(overflow(rv+1)));
     SetPos (pos() + min (rv, space));
     return rv;
 }

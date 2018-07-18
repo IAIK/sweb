@@ -32,6 +32,9 @@ template <typename U> struct AddParameterType<U&>	{ typedef U& Result; };
 template <>           struct AddParameterType<void>	{ typedef NullType Result; };
 template <typename U> struct RemoveReference		{ typedef U Result; };
 template <typename U> struct RemoveReference<U&>	{ typedef U Result; };
+#if HAVE_CPP11
+template <typename U> struct RemoveReference<U&&>	{ typedef U Result; };
+#endif
 template <bool, typename T> struct EnableIf		{ typedef void Result; };
 template <typename T> struct EnableIf<true, T>		{ typedef T Result; };
 
