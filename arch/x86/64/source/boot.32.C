@@ -11,17 +11,7 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #define PRINT(X)
 #endif
 
-// virtual (linker VMA) address to physical (linker LMA) address
-// workaround for GCC 8
-#define TRUNCATE_A(X) (unsigned int)(((char*)X)+0x7FFFFFFF)
-#define TRUNCATE_B(X) (char*)(X+1)
-
-static inline char * truncate_b(unsigned int truncate_a_res) {
-    volatile unsigned int temp = truncate_a_res;
-    return TRUNCATE_B(temp);
-}
-
-#define TRUNCATE(X) truncate_b(TRUNCATE_A(X))
+#define TRUNCATE(X) ({ volatile unsigned int x = (unsigned int)(((char*)X)+0x7FFFFFFF); (char*)(x+1); })
 
 #define MULTIBOOT_PAGE_ALIGN (1<<0)
 #define MULTIBOOT_MEMORY_INFO (1<<1)
