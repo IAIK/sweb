@@ -80,12 +80,12 @@ void ostringstream::fmtstring (char* fmt, const char* typestr, bool bInteger) co
 	    *fmt++ = '0';
 	fmt = encode_dec (fmt, _width);
     }
-    if (_flags & left)
+    if (_flags.f & left)
 	*fmt++ = '-';
     if (bInteger) {
-	if (_flags & showpos)
+	if (_flags.f & showpos)
 	    *fmt++ = '+';
-	if (_flags & showbase)
+	if (_flags.f & showbase)
 	    *fmt++ = '#';
     } else {
 	*fmt++ = '.';
@@ -94,11 +94,11 @@ void ostringstream::fmtstring (char* fmt, const char* typestr, bool bInteger) co
     while (*typestr)
 	*fmt++ = *typestr++;
     if (bInteger) {
-	if (_flags & hex)
-	    fmt[-1] = (_flags & uppercase) ? 'X' : 'x';
-	else if (_flags & oct)
+	if (_flags.f & hex)
+	    fmt[-1] = (_flags.f & uppercase) ? 'X' : 'x';
+	else if (_flags.f & oct)
 	    fmt[-1] = 'o';
-    } else if (_flags & scientific)
+    } else if (_flags.f & scientific)
 	fmt[-1] = 'E';
     *fmt = 0;
 }
