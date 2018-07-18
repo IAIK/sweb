@@ -69,9 +69,9 @@ resolve_type(DW_AT name, DW_FORM form)
                 case DW_AT::ranges:
                         goto sec_offset;
                 default:
-                        // Fall through
+                        // fallthrough
                         break;
-                }
+                } // fallthrough
         case DW_FORM::data1:
         case DW_FORM::data2:
                 return value::type::constant;

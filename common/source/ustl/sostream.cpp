@@ -80,7 +80,7 @@ void ostringstream::fmtstring (char* fmt, const char* typestr, bool bInteger) co
 	    *fmt++ = '0';
 	fmt = encode_dec (fmt, _width);
     }
-    if (_flags.f & left)
+    if (_flags & left)
 	*fmt++ = '-';
     if (bInteger) {
 	if (_flags & showpos)

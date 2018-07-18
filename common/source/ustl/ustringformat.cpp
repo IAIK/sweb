@@ -390,7 +390,7 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
 
 void snprintf_func(int ch, void *arg)
 {
-  snprintf_arg * const info = (snprintf_arg* const ) arg;
+  snprintf_arg * info = (snprintf_arg* ) arg;
 
   if (info->remain >= 2)
   {

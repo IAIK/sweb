@@ -44,8 +44,8 @@ public:
     void			iread (long long& v);
     inline void			iread (unsigned long long& v)	{ long long c; iread(c); v = c; }
 #endif
-    inline void			iread (float& v)		{ double c; iread(c); v = c; }
-    inline void			iread (long double& v)		{ double c; iread(c); v = c; }
+    /*inline void			iread (float& v)		{ double c; iread(c); v = c; }
+    inline void			iread (long double& v)		{ double c; iread(c); v = c; }*/
     inline void			iread (fmtflags_bits f);
     inline void			iread (unsigned long long& v)	{ long long c; iread(c); v = c; }
     /*void			iread (double& v);
