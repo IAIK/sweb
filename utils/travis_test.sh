@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Building architecture $1"
-#yes | make $1
-#make
+yes | make $1
+make
 
 echo "Running architecture $1"
 
@@ -11,15 +11,16 @@ mkfifo -m a=rw /tmp/qemu.out
 
 if [[ "$1" == "x86_64" ]]; 
 then
-    qemu-system-x86_64 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic > /dev/null 2> /dev/null &
+    qemu-system-x86_64 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
 fi
 if [[ "$1" == "x86_32" ]] || [[ "$1" == "x86_32_pae" ]]; 
 then
-    qemu-system-i386 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic > /dev/null 2> /dev/null &
+    qemu-system-i386 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
 fi
 if [[ "$1" == "arm_rpi2" ]]; 
 then
     qemu-system-arm -kernel kernel.x -cpu arm1176 -m 512 -M raspi2 -no-reboot -drive if=sd,format=raw,file=SWEB-flat.vmdk -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
+    sleep 2
 fi
 if [[ "$1" == "arm_icp" ]]; 
 then
@@ -27,8 +28,7 @@ then
 fi
 if [[ "$1" == "arm_verdex" ]]; 
 then
-    qemu-system-arm -M verdex -m 2M -kernel kernel.x -sd SWEB-flat.vmdk -pflash flash.img -no-reboot -serial file:/tmp/out.log -d guest_errors,unimp -monitor stdio
-    exit 0
+    qemu-system-arm -M verdex -m 2M -kernel kernel.x -sd SWEB-flat.vmdk -pflash flash.img -no-reboot -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null  &
     sleep 10
 fi
 
