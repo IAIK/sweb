@@ -168,7 +168,7 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->kernel_registers_->sp0 == 0 && "kernel register set needs no backup of kernel esp");
   assert(thread->kernel_registers_->sp == thread->kernel_registers_->r[11] && "new kernel stack must be empty");
   assert(thread->kernel_registers_->sp != currentThread->kernel_registers_->sp && thread->kernel_registers_->r[11] != currentThread->kernel_registers_->r[11] && "all threads need their own stack");
-  assert(thread->kernel_registers_->ttbr0 < 0x80000000 && "ttbr0 contains the physical page dir address");
+  assert(thread->kernel_registers_->ttbr0 < 0x80000000 - BOARD_LOAD_BASE && "ttbr0 contains the physical page dir address");
   if (thread->user_registers_ == 0)
     return;
   assert(thread->kernel_registers_->pc == 0 && "user threads should not start execution in kernel mode");

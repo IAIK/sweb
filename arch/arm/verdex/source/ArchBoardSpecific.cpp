@@ -11,7 +11,7 @@
 #include "FrameBufferConsole.h"
 #include "kprintf.h"
 
-#define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
+#define PHYSICAL_MEMORY_AVAILABLE 16*1024*1024
 
 pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
 {
