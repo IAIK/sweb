@@ -9,7 +9,7 @@ matrix:
         apt:
             update: true
             sources:
-                - ubuntu-toolchain-r-test
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
             packages:
                 - cmake
                 - gcc-arm-none-eabi
@@ -27,7 +27,7 @@ matrix:
         apt:
             update: true
             sources:
-                - ubuntu-toolchain-r-test
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
             packages:
                 - cmake
                 - gcc-arm-none-eabi
@@ -45,7 +45,7 @@ matrix:
         apt:
             update: true
             sources:
-                - ubuntu-toolchain-r-test
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
             packages:
                 - cmake
                 - gcc-arm-none-eabi
@@ -64,7 +64,7 @@ matrix:
         apt:
             update: true
             sources:
-                - ubuntu-toolchain-r-test
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
             packages:
                 - cmake
                 - gcc-arm-none-eabi
@@ -84,7 +84,7 @@ matrix:
         apt:
             update: true
             sources:
-                - ubuntu-toolchain-r-test
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
             packages:
                 - cmake
                 - gcc-arm-none-eabi
