@@ -1,5 +1,6 @@
 language: cpp
 compiler: gcc
+dist: xenial
 before_install:
   - sudo apt-get update
   - sudo apt-get install nasm
