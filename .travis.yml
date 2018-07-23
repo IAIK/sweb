@@ -1,0 +1,11 @@
+language: cpp
+compiler: gcc
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install nasm
+script:
+  - cd ..
+  - mkdir build
+  - cd build
+  - cmake ../sweb
+  - make 
