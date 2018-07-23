@@ -17,6 +17,8 @@ matrix:
                 - u-boot-tools
                 - gcc-5
                 - g++-5
+                - qemu-system-x86
+                - qemu-system-arm
       env:
         - CCOMPILER=gcc-5
         - CXXCOMPILER=g++-5
@@ -35,6 +37,8 @@ matrix:
                 - u-boot-tools
                 - gcc-6
                 - g++-6
+                - qemu-system-x86
+                - qemu-system-arm
       env:
         - CCOMPILER=gcc-6
         - CXXCOMPILER=g++-6
@@ -54,6 +58,8 @@ matrix:
                 - u-boot-tools
                 - gcc-7
                 - g++-7
+                - qemu-system-x86
+                - qemu-system-arm
       env:
         - CCOMPILER=gcc-7
         - CXXCOMPILER=g++-7
@@ -74,6 +80,8 @@ matrix:
                 - u-boot-tools
                 - gcc-8
                 - g++-8
+                - qemu-system-x86
+                - qemu-system-arm
       env:
         - CCOMPILER=gcc-8
         - CXXCOMPILER=g++-8
@@ -87,13 +95,13 @@ script:
   - mkdir build
   - cd build
   - cmake ../sweb
-  - cp ../utils/travis_test.sh .
+  - cp ../sweb/utils/travis_test.sh .
   - ./travis_test.sh x86_32
-  - cp ../utils/travis_test.sh .
+  - cp ../sweb/utils/travis_test.sh .
   - ./travis_test.sh x86_32_pae
-  - cp ../utils/travis_test.sh .
+  - cp ../sweb/utils/travis_test.sh .
   - ./travis_test.sh arm_rpi2
-  - cp ../utils/travis_test.sh .
+  - cp ../sweb/utils/travis_test.sh .
   - ./travis_test.sh arm_icp
-  - cp ../utils/travis_test.sh .
+  - cp ../sweb/utils/travis_test.sh .
   - ./travis_test.sh arm_verdex
