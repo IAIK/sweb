@@ -3,7 +3,7 @@ compiler: gcc
 dist: xenial
 before_install:
   - sudo apt-get update
-  - sudo apt-get install nasm gcc-arm-none-eabi g++-arm-none-eabi binutils-arm-none-eabi
+  - sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
 script:
   - cd ..
   - mkdir build
