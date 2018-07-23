@@ -87,14 +87,13 @@ script:
   - mkdir build
   - cd build
   - cmake ../sweb
-  - make 
-  - yes | make x86_32
-  - make
-  - yes | make x86_32_pae
-  - make
-  - yes | make arm_rpi2
-  - make
-  - yes | make arm_icp
-  - make
-  - yes | make arm_verdex
-  - make
+  - cp ../utils/travis_test.sh .
+  - ./travis_test.sh x86_32
+  - cp ../utils/travis_test.sh .
+  - ./travis_test.sh x86_32_pae
+  - cp ../utils/travis_test.sh .
+  - ./travis_test.sh arm_rpi2
+  - cp ../utils/travis_test.sh .
+  - ./travis_test.sh arm_icp
+  - cp ../utils/travis_test.sh .
+  - ./travis_test.sh arm_verdex
