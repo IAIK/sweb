@@ -51,11 +51,51 @@ matrix:
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - u-boot-tools
+                - gcc-6
+                - g++-6
+      env:
+        - CCOMPILER=gcc-6
+        - CXXCOMPILER=g++-6
+
+    - os: linux
+      dist: xenial
+      sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - u-boot-tools
+                - gcc-7
+                - g++-7
+      env:
+        - CCOMPILER=gcc-7
+        - CXXCOMPILER=g++-7
+                
+        
+    - os: linux
+      dist: xenial
+      sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - ubuntu-toolchain-r-test
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - u-boot-tools
                 - gcc-8
                 - g++-8
       env:
         - CCOMPILER=gcc-8
         - CXXCOMPILER=g++-8
+        
 install:
   - if [[ -n "$CCOMPILER" ]]; then export CC=$CCOMPILER; fi
   - if [[ -n "$CXXCOMPILER" ]]; then export CXX=$CXXCOMPILER; fi
