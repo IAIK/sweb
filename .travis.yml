@@ -3,10 +3,20 @@ compiler: gcc
 dist: xenial
 before_install:
   - sudo apt-get update
-  - sudo apt-get install nasm
+  - sudo apt-get install nasm gcc-arm-linux-gnueabi g++-arm-linux-gnueabi
 script:
   - cd ..
   - mkdir build
   - cd build
   - cmake ../sweb
   - make 
+  - yes | make x86_32
+  - make
+  - yes | make x86_32_pae
+  - make
+  - yes | make arm_rpi2
+  - make
+  - yes | make arm_icp
+  - make
+  - yes | make arm_verdex
+  - make
