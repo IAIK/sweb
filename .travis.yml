@@ -1,9 +1,15 @@
 language: cpp
 compiler: gcc
-dist: xenial
+#dist: xenial
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      sudo: required
+      
 before_install:
   - sudo apt-get update
-  - sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi
+  - sudo apt-get install make cmake gcc g++ gcc-arm-none-eabi binutils-arm-none-eabi u-boot-tools
 script:
   - cd ..
   - mkdir build
