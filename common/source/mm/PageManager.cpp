@@ -110,6 +110,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   }
 
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
+  assert(used_pages < number_of_pages_/2 && "No space for kernel heap!");
 
   HEAP_PAGES = number_of_pages_/2 - used_pages;
   if (HEAP_PAGES > 1024)
