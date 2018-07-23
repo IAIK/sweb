@@ -11,11 +11,11 @@ mkfifo -m a=rw /tmp/qemu.out
 
 if [[ "$1" == "x86_64" ]]; 
 then
-    qemu-system-x86_64 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
+    qemu-system-x86_64 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic > /dev/null 2> /dev/null &
 fi
 if [[ "$1" == "x86_32" ]] || [[ "$1" == "x86_32_pae" ]]; 
 then
-    qemu-system-i386 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
+    qemu-system-i386 -m 8M -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic > /dev/null 2> /dev/null &
 fi
 if [[ "$1" == "arm_rpi2" ]]; 
 then
