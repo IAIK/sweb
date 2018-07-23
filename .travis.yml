@@ -6,6 +6,10 @@ matrix:
     - os: linux
       dist: xenial
       sudo: required
+    - os: linux
+      dist: bionic
+      sudo: required
+      
       
 before_install:
   - sudo apt-get update
