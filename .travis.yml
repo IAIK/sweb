@@ -1,19 +1,65 @@
 language: cpp
 compiler: gcc
-#dist: xenial
 matrix:
   include:
     - os: linux
       dist: xenial
       sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - ubunt-toolchain-r-test
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - u-boot-tools
+                - gcc-4.9
+                - g++-4.9
+      env:
+        - CCOMPILER=gcc-4.9
+        - CXXCOMPILER=g++-4.9
     - os: linux
-      dist: bionic
+      dist: xenial
       sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - ubunt-toolchain-r-test
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - u-boot-tools
+                - gcc-5
+                - g++-5
+      env:
+        - CCOMPILER=gcc-5
+        - CXXCOMPILER=g++-5
+    - os: linux
+      dist: xenial
+      sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - ubunt-toolchain-r-test
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - u-boot-tools
+                - gcc-8
+                - g++-8
+      env:
+        - CCOMPILER=gcc-8
+        - CXXCOMPILER=g++-8
+install:
+  - if [[ -n "$CCOMPILER" ]]; then export CC=$CCOMPILER; fi
+  - if [[ -n "$CXXCOMPILER" ]]; then export CXX=$CXXCOMPILER; fi
       
-      
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install make cmake gcc g++ gcc-arm-none-eabi binutils-arm-none-eabi u-boot-tools
 script:
   - cd ..
   - mkdir build
