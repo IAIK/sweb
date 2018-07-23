@@ -19,6 +19,7 @@ then
 fi
 if [[ "$1" == "arm_rpi2" ]]; 
 then
+    exit 0 # not supported in the travis qemu
     qemu-system-arm -kernel kernel.x -cpu arm1176 -m 512 -M raspi2 -no-reboot -drive if=sd,format=raw,file=SWEB-flat.vmdk -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
     sleep 2
 fi
