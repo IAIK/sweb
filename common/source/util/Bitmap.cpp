@@ -19,9 +19,7 @@ Bitmap::Bitmap(size_t number_of_bits)
 {
   size_ = number_of_bits;
   num_bits_set_ = 0;
-  bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)];
-  for (size_t byte = 0; byte < BITMAP_BYTE_COUNT(number_of_bits); ++byte)
-    bitmap_[byte] = static_cast<uint8>(0);
+  bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)]{};
 }
 
 Bitmap::~Bitmap()
@@ -40,7 +38,7 @@ bool Bitmap::setBit(size_t bit_number)
 
 bool Bitmap::setBit(uint8* b, size_t& num_bits_set, size_t bit_number)
 {
-  //kprintfd("bitmap %p, %zu, %zu\n",b,num_bits_set, bit_number);
+  //kprintfd("bitmap %p, %zu, set bit %zu\n",b,num_bits_set, bit_number);
   if (!(BYTE & MASK))
   {
     BYTE |= MASK;
@@ -69,6 +67,7 @@ bool Bitmap::unsetBit(size_t bit_number)
 
 bool Bitmap::unsetBit(uint8* b, size_t& num_bits_set, size_t bit_number)
 {
+  //kprintfd("bitmap %p, %zu, unset bit %zu\n",b,num_bits_set, bit_number);
   if (BYTE & MASK)
   {
     BYTE &= ~MASK;

@@ -190,6 +190,11 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
   m.pdpti %= PAGE_DIR_POINTER_TABLE_ENTRIES;
   m.pml4i %= PAGE_MAP_LEVEL_4_ENTRIES;
 
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+          debug(A_MEMORY, "resolveMapping, vpn: %zx, pml4i: %zx(%zu), pdpti: %zx(%zu), pdi: %zx(%zu), pti: %zx(%zu)\n", vpage, m.pml4i, m.pml4i, m.pdpti, m.pdpti, m.pdi, m.pdi, m.pti, m.pti);
+  }
+
   assert(pml4 < PageManager::instance()->getTotalNumPages());
   m.pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(pml4);
   m.pdpt = 0;
@@ -224,7 +229,6 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
         {
           m.page = getIdentAddressOfPPN(m.pt[m.pti].page_ppn);
           m.page_ppn = m.pt[m.pti].page_ppn;
-          assert(m.page_ppn < PageManager::instance()->getTotalNumPages());
           m.page_size = PAGE_SIZE;
         }
       }
@@ -239,7 +243,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
     {
       m.page_size = PAGE_SIZE * PAGE_TABLE_ENTRIES * PAGE_DIR_ENTRIES;
       m.page_ppn = m.pdpt[m.pdpti].page.page_ppn;
-      assert(m.page_ppn < PageManager::instance()->getTotalNumPages());
+      //assert(m.page_ppn < PageManager::instance()->getTotalNumPages());
       m.page = getIdentAddressOfPPN(m.pdpt[m.pdpti].page.page_ppn);
     }
   }
@@ -260,6 +264,7 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(size_t virtual_page, size_t *
 
 void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
 {
+  //debug(A_MEMORY, "mapKernelPage, vpn: %zx, ppn: %zx\n", virtual_page, physical_page);
   ArchMemoryMapping mapping = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),
                                              virtual_page);
   PageMapLevel4Entry* pml4 = kernel_page_map_level_4;
@@ -273,6 +278,7 @@ void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
   pt[mapping.pti].writeable = 1;
   pt[mapping.pti].page_ppn = physical_page;
   pt[mapping.pti].present = 1;
+  //debug(A_MEMORY, "mapKernelPage, vpn: %zx, ppn: %zx end\n", virtual_page, physical_page);
   asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
 

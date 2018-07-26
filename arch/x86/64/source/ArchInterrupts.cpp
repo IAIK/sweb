@@ -40,7 +40,7 @@ void ArchInterrupts::initialise()
 
   if(LocalAPIC::initialized)
   {
-          //local_APIC.sendIPI(0);
+          local_APIC.startAPs();
   }
 }
 

@@ -203,46 +203,27 @@ bool LocalAPIC::checkISR(uint8 num) volatile
         return reg_vaddr_->ISR[byte_offset].isr & (1 << bit_offset);
 }
 
-extern char apstartup_begin;
-extern char apstartup_end;
+extern char apstartup_text_begin;
+extern char apstartup_text_end;
+extern "C" void apstartup();
 
-void LocalAPIC::sendIPI(uint32 id) volatile
+void LocalAPIC::startAPs() volatile
 {
-        debug(APIC, "Sending init IPI to APIC ID %x, ICR low: %p, ICR high: %p\n", 0, &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
+        debug(APIC, "Sending init IPI to AP local APICs, ICR low: %p, ICR high: %p\n", &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
 
-        size_t apstartup_size = (size_t)(&apstartup_end - &apstartup_begin);
-        debug(APIC, "&APstartup() = %p, apstartup_begin: %p, apstartup_end: %p, size: %zx\n", &apstartup_begin, &apstartup_begin, &apstartup_end, apstartup_size);
+        size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
+        debug(APIC, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
 
+        pointer apstartup_phys = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(AP_STARTUP_PADDR);
+        debug(APIC, "apstartup %p, phys: %zx\n", &apstartup, apstartup_phys);
         pointer paddr0 = ArchMemory::getIdentAddress(AP_STARTUP_PADDR);
 
         auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
         debug(APIC, "paddr0 ppn: %zx\n", m.page_ppn);
-        memcpy((void*)paddr0, (void*)&apstartup_begin, apstartup_size);
-        assert(memcmp((void*)paddr0, (void*)&apstartup_begin, apstartup_size) == 0);
-
-/*
-        LocalAPIC_InterruptCommandRegisterHigh v_high{};
-        v_high.destination = id;
-
-        LocalAPIC_InterruptCommandRegisterLow v_low{};
-        v_low.vector = 0;
-        v_low.delivery_mode = 5;
-        v_low.destination_mode = 0;
-        v_low.level = 1;
-        v_low.trigger_mode = 0;
-        v_low.destination_shorthand = 3;
-
-        // *(volatile uint32*)&reg_vaddr_->ICR_high = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
-
-        v_low.vector = 90;
-        v_low.delivery_mode = 6;
-
-        *(volatile uint32*)&reg_vaddr_->ICR_high = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
-
-        debug(APIC, "Finished sending IPI to APIC ID %x\n", id);
-        */
+        assert(m.page_ppn == AP_STARTUP_PADDR/PAGE_SIZE);
+        debug(APIC, "Copying apstartup from virt %p -> %p (phys: %zx)\n", (void*)&apstartup_text_begin, (void*)paddr0, (size_t)AP_STARTUP_PADDR);
+        memcpy((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size);
+        assert(memcmp((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size) == 0);
 
         LocalAPIC_InterruptCommandRegisterLow v_low{};
         v_low.vector = 0;
@@ -261,22 +242,27 @@ void LocalAPIC::sendIPI(uint32 id) volatile
         }
         debug(APIC, "End delay 1\n");
 
-        static_assert(AP_STARTUP_PADDR/PAGE_SIZE <= 0xFF);
+        assert((AP_STARTUP_PADDR % PAGE_SIZE) == 0);
+        assert((AP_STARTUP_PADDR/PAGE_SIZE) <= 0xFF);
         v_low.vector = AP_STARTUP_PADDR/PAGE_SIZE;
         v_low.delivery_mode = 6;
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
-        // TODO: 200ms delay here
+        // TODO: 200us delay here
         debug(APIC, "Start delay 2\n");
-        for(size_t i = 0; i < 0x2FFFFFF; ++i)
+        for(size_t i = 0; i < 0xFFFFF; ++i)
         {
         }
         debug(APIC, "End delay 2\n");
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
-        debug(APIC, "Finished sending IPI to APIC ID %x\n", id);
+        for(size_t i = 0; i < 0xFFFFF; ++i)
+        {
+        }
+
+        debug(APIC, "Finished sending IPI to AP local APICs\n");
 }
 
 

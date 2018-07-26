@@ -7,7 +7,7 @@
 #define APIC_VADDR   0xffffffff81200000
 #define IOAPIC_VADDR 0xffffffff81201000
 
-#define AP_STARTUP_PADDR 0x1000
+#define AP_STARTUP_PADDR 0x0
 
 struct LocalAPIC_InterruptCommandRegisterLow
 {
@@ -245,7 +245,7 @@ public:
         bool checkIRR(uint8 num) volatile;
         bool checkISR(uint8 num) volatile;
 
-        void sendIPI(uint32 id) volatile;
+        void startAPs() volatile;
 
         void addLocalAPICToList(const MADTProcLocalAPIC&);
 

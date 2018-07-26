@@ -9,12 +9,12 @@ LS_Phys = 0x100000;
 LS_Virt = 0xFFFFFFFF80000000;
 UpperToLower = 0xFFFFFFFF00000000;
 
-AP_STARTUP = 0xd000;
 SECTIONS
 {
   . = LS_Virt + LS_Phys;
+  LS_START = .;
 
-  .text : AT(ADDR(.text) - LS_Virt)
+  .text ALIGN(4096) : AT(LS_Phys + (LS_Code - LS_START))
   {
     PROVIDE(kernel_start_address = ABSOLUTE(.));
 
@@ -22,6 +22,10 @@ SECTIONS
 
     text_start_address = .;
     *(.mboot)
+    . = ALIGN(4096);
+    apstartup_text_begin = .;
+    *(.text.apstartup*)
+    apstartup_text_end = .;
     *(.text)
     *(.text.*)
     text_end_address = .;
@@ -31,16 +35,7 @@ SECTIONS
     ro_data_end_address = .;
   }
 
-  .apstartup ALIGN(4096) : AT(LS_Phys + (LS_APSTARTUP - LS_Code))
-  {
-    LS_APSTARTUP = .;
-
-    apstartup_begin = .;
-    *(.apstartup)
-    apstartup_end = .;
-  }
-
-  .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
+  .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_START))
   {
     LS_Data = .;
     data_start_address = .;
@@ -50,7 +45,7 @@ SECTIONS
     data_end_address = .;
   }
 
-  .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_Code))
+  .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_START))
   {
     LS_Bss = .;
     bss_start_address = .;
@@ -61,5 +56,4 @@ SECTIONS
 
     PROVIDE(kernel_end_address = .);
   }
-
 }

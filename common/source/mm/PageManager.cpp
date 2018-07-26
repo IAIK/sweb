@@ -121,7 +121,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
 
   size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
   size_t free_page = 0x01;
-  //size_t free_page = 0;
+  assert(Bitmap::setBit(page_usage_table, used_pages, 0)); // Page 0 is used for AP startup code
   size_t temp_page_size = 0;
   size_t num_reserved_heap_pages = 0;
   debug(PM, "Mapping reserved heap pages\n");
