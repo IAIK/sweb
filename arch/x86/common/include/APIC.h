@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "ACPI.h"
+#include "uvector.h"
 
 #define APIC_VADDR   0xffffffff81200000
 #define IOAPIC_VADDR 0xffffffff81201000
@@ -245,12 +246,19 @@ public:
         bool checkISR(uint8 num) volatile;
 
         void sendIPI(uint32 id) volatile;
+
+        void addLocalAPICToList(const MADTProcLocalAPIC&);
+
+        LocalAPICRegisters* reg_paddr_;
+        LocalAPICRegisters* reg_vaddr_;
+
 private:
         LocalAPIC(const LocalAPIC&) = delete;
         LocalAPIC& operator=(const LocalAPIC&) = delete;
 
-        LocalAPICRegisters* reg_paddr_;
-        LocalAPICRegisters* reg_vaddr_;
+
+
+        ustl::vector<MADTProcLocalAPIC> local_apic_list_;
 };
 
 class IOAPIC
@@ -318,9 +326,9 @@ public:
                                 volatile uint32 delivery_mode    : 3;
                                 volatile uint32 destination_mode : 1;
                                 volatile uint32 pending_busy     : 1;
-                                volatile uint32 polarity         : 1;
+                                volatile uint32 polarity         : 1; // 0: active high, 1: active low
                                 volatile uint32 lvl_trig_recvd   : 1;
-                                volatile uint32 trigger_mode     : 1;
+                                volatile uint32 trigger_mode     : 1; // 0: edge, 1: level
                                 volatile uint32 mask             : 1;
                                 volatile uint32 reserved1        : 15;
                         };
@@ -375,6 +383,7 @@ public:
 
         void setIRQMask(uint32 irq_num, bool value);
 
+        void addIRQSourceOverride(const MADTInterruptSourceOverride&);
 private:
         uint8 redirEntryOffset(uint32 entry_no);
 
@@ -386,6 +395,8 @@ private:
         uint32 id_;
         uint32 max_redir_;
         uint32 g_sys_int_base_;
+
+        ustl::vector<MADTInterruptSourceOverride> irq_source_override_list_;
 };
 
 

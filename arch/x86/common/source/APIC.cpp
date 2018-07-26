@@ -203,29 +203,22 @@ bool LocalAPIC::checkISR(uint8 num) volatile
         return reg_vaddr_->ISR[byte_offset].isr & (1 << bit_offset);
 }
 
-
 extern char apstartup_begin;
 extern char apstartup_end;
-
-__attribute((section(".apstartup"))) void APstartup()
-{
-        debug(APIC,"AP startup function\n");
-        while(1);
-}
 
 void LocalAPIC::sendIPI(uint32 id) volatile
 {
         debug(APIC, "Sending init IPI to APIC ID %x, ICR low: %p, ICR high: %p\n", 0, &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
 
         size_t apstartup_size = (size_t)(&apstartup_end - &apstartup_begin);
-        debug(APIC, "&APstartup() = %p, apstartup_begin: %p, apstartup_end: %p, size: %zx\n", &APstartup, &apstartup_begin, &apstartup_end, apstartup_size);
+        debug(APIC, "&APstartup() = %p, apstartup_begin: %p, apstartup_end: %p, size: %zx\n", &apstartup_begin, &apstartup_begin, &apstartup_end, apstartup_size);
 
         pointer paddr0 = ArchMemory::getIdentAddress(AP_STARTUP_PADDR);
 
         auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
         debug(APIC, "paddr0 ppn: %zx\n", m.page_ppn);
-        memcpy((void*)paddr0, (void*)&APstartup, apstartup_size);
-        assert(memcmp((void*)paddr0, (void*)&APstartup, apstartup_size) == 0);
+        memcpy((void*)paddr0, (void*)&apstartup_begin, apstartup_size);
+        assert(memcmp((void*)paddr0, (void*)&apstartup_begin, apstartup_size) == 0);
 
 /*
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
@@ -276,7 +269,7 @@ void LocalAPIC::sendIPI(uint32 id) volatile
 
         // TODO: 200ms delay here
         debug(APIC, "Start delay 2\n");
-        for(size_t i = 0; i < 0xFFFFFFFF; ++i)
+        for(size_t i = 0; i < 0x2FFFFFF; ++i)
         {
         }
         debug(APIC, "End delay 2\n");
@@ -329,23 +322,29 @@ void IOAPIC::initRedirections()
         for(uint32 i = 0; i <= max_redir_; ++i)
         {
                 IOAPIC_redir_entry r = readRedirEntry(i);
-                if(getGlobalInterruptBase() + i == 2)
+
+                for(auto& entry : irq_source_override_list_)
                 {
-                        // Hardcoded interrupt source override for timer (2 -> 0)
-                        // TODO: Dynamically read interrupt source override tables in ACPI->MADT
-                        r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + 0;
+                        if(getGlobalInterruptBase() + i == entry.g_sys_int)
+                        {
+                                debug(APIC, "Found override for IRQ %2u -> %u, trigger mode: %u, polarity: %u\n", entry.g_sys_int, entry.irq_source, entry.flags.trigger_mode, entry.flags.polarity);
+                                r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
+                                r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
+                                r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
+                                goto write_entry;
+                        }
                 }
-                else
-                {
-                        r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + i;
-                }
+
+                r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + i;
+
+        write_entry:
                 writeRedirEntry(i, r);
         }
 
         for(uint32 i = 0; i <= max_redir_; ++i)
         {
                 IOAPIC_redir_entry r = readRedirEntry(i);
-                debug(APIC, "IOAPIC redir entry %u -> vector %u, destination: %u, mask: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask);
+                debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask, r.polarity, r.trigger_mode);
         }
 }
 

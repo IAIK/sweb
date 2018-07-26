@@ -8,6 +8,7 @@
 #include "new.h"
 
 RSDPDescriptor* RSDP = nullptr;
+size_t ACPI_version = 0;
 
 RSDPDescriptor* checkForRSDP(char* start, char* end)
 {
@@ -54,54 +55,71 @@ void initACPI()
   RSDP = locateRSDP();
   assert(RSDP && "Could not find RSDP");
 
-  bool checksum_valid = RSDP->checksumValid();
-  if(!checksum_valid)
-  {
-    assert(false && "Invalid RSDP checksum");
-  }
+  assert(RSDP->checksumValid());
+  ACPI_version = (RSDP->Revision == 0 ? 1 : RSDP->Revision);
+  debug(ACPI, "ACPI version: %zu\n", ACPI_version);
+  debug(ACPI, "RSDP OEMID: %s\n", RSDP->OEMID);
 
-
-  debug(ACPI, "RSDP checksum valid\n");
   switch(RSDP->Revision)
   {
   case 0:
-    debug(ACPI, "RSDP version 1.0\n");
+  {
+    debug(ACPI, "RSDT address: %x\n", RSDP->RsdtAddress);
+
+    RSDT* RSDT_ptr = (RSDT*)(size_t)RSDP->RsdtAddress;
+    //ACPISDTHeader* RSDT_ptr = (ACPISDTHeader*)(size_t)RSDP->RsdtAddress;
+    assert(RSDT_ptr->h.checksumValid());
+
+    size_t RSDT_entries = RSDT_ptr->numEntries();
+    debug(ACPI, "RSDT entries: %zu\n", RSDT_entries);
+    for(size_t i = 0; i < RSDT_entries; ++i)
+    {
+            handleSDT(RSDT_ptr->getEntry(i));
+    }
+
     break;
+  }
   case 2:
-    debug(ACPI, "RSDP version >=2.0\n");
+  {
+    RSDPDescriptor20* RSDP2 = (RSDPDescriptor20*)RSDP;
+    assert(RSDP2->checksumValid());
+
+    debug(ACPI, "XSDT address: %lx\n", RSDP2->XsdtAddress);
+
+    XSDT* XSDT_ptr = (XSDT*)(size_t)RSDP2->XsdtAddress;
+    //ACPISDTHeader* XSDT_ptr = (ACPISDTHeader*)(size_t)RSDP2->XsdtAddress;
+    assert(XSDT_ptr->h.checksumValid());
+
+    size_t XSDT_entries = XSDT_ptr->numEntries();
+    debug(ACPI, "XSDT entrues: %zu\n", XSDT_entries);
+    for(size_t i = 0; i < XSDT_entries; ++i)
+    {
+            handleSDT(XSDT_ptr->getEntry(i));
+    }
+
     break;
+  }
   default:
     debug(ACPI, "Invalid RSDP version %x\n", RSDP->Revision);
     assert(false && "Invalid RDSP version");
     break;
   }
+}
 
-  debug(ACPI, "RSDP OEMID: %s\n", RSDP->OEMID);
-  debug(ACPI, "RSDT address: %x\n", RSDP->RsdtAddress);
+void handleSDT(ACPISDTHeader* entry_header)
+{
+        {
+                char sig[5];
+                memcpy(sig, entry_header->Signature, 4);
+                sig[4] = '\0';
+                debug(ACPI, "[%p] RSDR Header signature: %s\n", entry_header, sig);
+        }
 
-
-  ACPISDTHeader* RSDT_ptr = (ACPISDTHeader*)(size_t)RSDP->RsdtAddress;
-  assert(RSDT_ptr->checksumValid());
-
-  size_t RSDT_entries = RSDT_ptr->numEntries();
-  debug(ACPI, "RSDT entrues: %zu\n", RSDT_entries);
-  for(size_t i = 0; i < RSDT_entries; ++i)
-  {
-    ACPISDTHeader* entry_header = RSDT_ptr->getEntry(i);
-
-    {
-      char sig[5];
-      memcpy(sig, entry_header->Signature, 4);
-      sig[4] = '\0';
-      debug(ACPI, "[%p] RSDR Header signature: %s\n", entry_header, sig);
-    }
-
-    if(memcmp(entry_header->Signature, "APIC", 4) == 0)
-    {
-      ACPI_MADTHeader* madt = (ACPI_MADTHeader*)entry_header;
-      madt->parse();
-    }
-  }
+        if(memcmp(entry_header->Signature, "APIC", 4) == 0)
+        {
+                ACPI_MADTHeader* madt = (ACPI_MADTHeader*)entry_header;
+                madt->parse();
+        }
 }
 
 
@@ -116,6 +134,17 @@ bool RSDPDescriptor::checksumValid()
   return sum == 0;
 }
 
+bool RSDPDescriptor20::checksumValid()
+{
+        uint8 sum = 0;
+        for(char* i = (char*)this; i < ((char*)this) + sizeof(*this); ++i)
+        {
+                sum += *i;
+        }
+        debug(ACPI, "RSDP 2.0 checksum %x\n", sum);
+        return sum == 0;
+}
+
 bool ACPISDTHeader::checksumValid()
 {
   uint8 sum = 0;
@@ -127,16 +156,28 @@ bool ACPISDTHeader::checksumValid()
 }
 
 
-size_t ACPISDTHeader::numEntries()
+size_t RSDT::numEntries()
 {
-  size_t RSDT_entries = (Length - sizeof(*this)) / 4;
-  return RSDT_entries;
+        size_t RSDT_entries = (h.Length - sizeof(*this)) / 4;
+        return RSDT_entries;
 }
 
-ACPISDTHeader* ACPISDTHeader::getEntry(size_t i)
+size_t XSDT::numEntries()
 {
-  ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint32*)(this + 1))[i]);
-  return entry_ptr;
+        size_t XSDT_entries = (h.Length - sizeof(*this)) / 8;
+        return XSDT_entries;
+}
+
+ACPISDTHeader* RSDT::getEntry(size_t i)
+{
+        ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint32*)(this + 1))[i]);
+        return entry_ptr;
+}
+
+ACPISDTHeader* XSDT::getEntry(size_t i)
+{
+        ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint64*)(this + 1))[i]);
+        return entry_ptr;
 }
 
 void ACPI_MADTHeader::parse()
@@ -155,6 +196,7 @@ void ACPI_MADTHeader::parse()
     {
       MADTProcLocalAPIC* entry = (MADTProcLocalAPIC*)(madt_entry + 1);
       debug(ACPI, "[%p] Processor local APIC, ACPI Processor ID: %4x, APIC ID: %4x, enabled: %u\n", entry, entry->proc_id, entry->apic_id, entry->flags.enabled);
+      local_APIC.addLocalAPICToList(*entry);
       break;
     }
     case 1:
@@ -170,19 +212,34 @@ void ACPI_MADTHeader::parse()
     case 2:
     {
       MADTInterruptSourceOverride* entry = (MADTInterruptSourceOverride*)(madt_entry + 1);
-      debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags.polarity, entry->flags.trigger_mode);
+      debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->g_sys_int, entry->flags.polarity, entry->flags.trigger_mode);
+      IO_APIC.addIRQSourceOverride(*entry);
+      break;
+    }
+    case 3:
+    {
+      MADTNonMaskableInterruptsSource* entry = (MADTNonMaskableInterruptsSource*)(madt_entry + 1);
+      debug(ACPI, "[%p] NMI source, g_sys_int: %x, flags: %x\n", entry, entry->g_sys_int, entry->flags);
       break;
     }
     case 4:
     {
       MADTNonMaskableInterrupts* entry = (MADTNonMaskableInterrupts*)(madt_entry + 1);
-      debug(ACPI, "[%p] Non maskable interrupts, proc_id: %x, flags: %x, lint_num: %x\n", entry, entry->processor_id, entry->flags, entry->lint_num);
+      debug(ACPI, "[%p] Local APIC NMI, proc_id: %x, flags: %x, lint_num: %x\n", entry, entry->processor_id, entry->flags, entry->lint_num);
       break;
     }
     case 5:
     {
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Local APIC address override, addr: %zx\n", entry, entry->local_apic_addr);
+      assert(LocalAPIC::initialized);
+      local_APIC.reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
+      break;
+    }
+    case 9:
+    {
+      MADTProcLocalx2APIC* entry = (MADTProcLocalx2APIC*)(madt_entry + 1);
+      debug(ACPI, "[%p] Processor local x2APIC, x2APIC ID: %4x, enabled: %u, proc UID: %x\n", entry, entry->x2apic_id, entry->flags.enabled, entry->processor_uid);
       break;
     }
     default:
@@ -191,4 +248,18 @@ void ACPI_MADTHeader::parse()
     }
     madt_entry = (MADTEntryDescriptor*)((size_t)madt_entry + madt_entry->length);
   }
+}
+
+
+void LocalAPIC::addLocalAPICToList(const MADTProcLocalAPIC& entry)
+{
+        assert(LocalAPIC::initialized);
+        local_apic_list_.push_back(entry);
+}
+
+
+void IOAPIC::addIRQSourceOverride(const MADTInterruptSourceOverride& entry)
+{
+        assert(IOAPIC::initialized);
+        irq_source_override_list_.push_back(entry);
 }

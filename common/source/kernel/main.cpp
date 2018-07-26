@@ -53,14 +53,14 @@ extern "C" void startup()
   while(!cont);
 #endif
 
-  ArchCommon::postBootInit();
-
-  writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
-  removeBootTimeIdentMapping();
   system_state = BOOTING;
 
   PageManager::instance();
   writeLine2Bochs("PageManager and KernelMemoryManager created \n");
+
+  ArchCommon::postBootInit();
+  writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
+  removeBootTimeIdentMapping();
 
   main_console = ArchCommon::createConsole(1);
   writeLine2Bochs("Console created \n");

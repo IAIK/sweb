@@ -12,7 +12,6 @@
 
 void ArchInterrupts::initialise()
 {
-  uint16 i;
   disableInterrupts();
   InterruptUtils::initialise();
 
@@ -30,14 +29,19 @@ void ArchInterrupts::initialise()
           IO_APIC.init();
   }
 
-  if(LocalAPIC::initialized)
-  {
-          local_APIC.sendIPI(0);
-  }
 
   PIC8259::initialise8259s();
-  for (i=0;i<16;++i)
+  /*
+  for (size_t i=0;i<16;++i)
+  {
           PIC8259::disableIRQ(i);
+  }
+  */
+
+  if(LocalAPIC::initialized)
+  {
+          //local_APIC.sendIPI(0);
+  }
 }
 
 void ArchInterrupts::enableTimer()
@@ -45,7 +49,7 @@ void ArchInterrupts::enableTimer()
   if(IOAPIC::initialized)
   {
           //local_APIC->registers.lvt_timer.setMask(false);
-          IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2
+          IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
   }
   else
   {

@@ -80,6 +80,7 @@ void PageFaultHandler::enterPageFault(size_t address, bool user,
                                       bool present, bool writing,
                                       bool fetch)
 {
+  debug(PAGEFAULT, "Pagefault at %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", address, present, writing, user, fetch);
   assert(currentThread && "You have a pagefault, but no current thread");
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;

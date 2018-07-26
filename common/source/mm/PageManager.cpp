@@ -105,9 +105,12 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     {
       Bitmap::setBit(page_usage_table, used_pages, k);
       if (ArchMemory::get_PPN_Of_VPN_In_KernelMapping(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, 0, 0) == 0)
+      {
         ArchMemory::mapKernelPage(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k,k);
+      }
     }
   }
+  debug(PM, "Finished mapping modules\n");
 
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
   assert(used_pages < number_of_pages_/2 && "No space for kernel heap!");
@@ -121,15 +124,22 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   //size_t free_page = 0;
   size_t temp_page_size = 0;
   size_t num_reserved_heap_pages = 0;
+  debug(PM, "Mapping reserved heap pages\n");
   for (num_reserved_heap_pages = 0; num_reserved_heap_pages < num_pages_for_bitmap || temp_page_size != 0 ||
                                     num_reserved_heap_pages < ((DYNAMIC_KMM || (number_of_pages_ < 512)) ? 0 : HEAP_PAGES); ++num_reserved_heap_pages)
   {
     while (!Bitmap::setBit(page_usage_table, used_pages, free_page))
+    {
       free_page++;
-    if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn,0,0)) == 0)
+    }
+
+    if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn, 0, 0)) == 0)
+    {
       ArchMemory::mapKernelPage(start_vpn,free_page++);
+    }
     start_vpn++;
   }
+  debug(PM, "Finished mapping reserved heap pages\n");
 
   extern KernelMemoryManager kmm;
   new (&kmm) KernelMemoryManager(num_reserved_heap_pages,HEAP_PAGES);
