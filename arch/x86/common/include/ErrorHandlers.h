@@ -47,6 +47,9 @@ ERROR_HANDLER(17)
 ERROR_HANDLER(18)
 ERROR_HANDLER(19)
 
+extern "C" void irqHandler_90();
+extern "C" void irqHandler_90_naked();
+
 extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
@@ -79,6 +82,7 @@ InterruptHandlers InterruptUtils::handlers[] = {
   IRQHANDLER(14)
   IRQHANDLER(15)
   {65, &arch_irqHandler_65},
+  {90, &irqHandler_90_naked},
   {128, &arch_syscallHandler},
   {0,0}
 };

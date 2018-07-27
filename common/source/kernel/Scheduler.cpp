@@ -36,6 +36,7 @@ Scheduler::Scheduler()
 
 uint32 Scheduler::schedule()
 {
+  debug(SCHEDULER, "scheduling\n");
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
   if (block_scheduling_ != 0)
   {
