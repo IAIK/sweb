@@ -219,7 +219,8 @@ extern SegmentDescriptor ap_gdt32[7];
 extern uint32 ap_kernel_cr3;
 extern char ap_pml4[PAGE_SIZE];
 
-char ap_stack[0x1000]; // TODO: Each AP needs its own stack
+// TODO: Each AP needs its own stack
+uint8 ap_stack[0x4000];
 
 extern "C" void __apstartup64()
 {
@@ -241,8 +242,9 @@ extern "C" void __apstartup64()
                 );
 
         __asm__ __volatile__("movq %[stack], %%rsp\n"
+                             "movq %[stack], %%rbp\n"
                              :
-                             :[stack]"i"(&ap_stack));
+                             :[stack]"i"(ap_stack + sizeof(ap_stack)));
 
         debug(A_MULTICORE, "AP startup 64\n");
 
