@@ -23,6 +23,8 @@ public:
 
   static void countPageFault(uint64 address);
 
+  static IDTR idtr;
+
 private:
   static InterruptHandlers handlers[];
   static uint64 pf_address;

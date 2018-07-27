@@ -85,6 +85,8 @@ extern "C" void arch_dummyHandlerMiddle();
 uint64 InterruptUtils::pf_address;
 uint64 InterruptUtils::pf_address_counter;
 
+IDTR InterruptUtils::idtr;
+
 void InterruptUtils::initialise()
 {
   uint32 num_handlers = 0;
@@ -120,7 +122,6 @@ void InterruptUtils::initialise()
         interrupt_gates[i].present, interrupt_gates[i].segment_selector,
         interrupt_gates[i].type, interrupt_gates[i].dpl);
   }
-  IDTR idtr;
 
   idtr.base = (pointer) interrupt_gates;
   idtr.limit = sizeof(GateDesc) * num_handlers - 1;

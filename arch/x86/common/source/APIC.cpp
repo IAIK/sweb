@@ -5,6 +5,7 @@
 #include "PageManager.h"
 #include "new.h"
 #include "kstring.h"
+#include "InterruptUtils.h"
 
 LocalAPIC local_APIC;
 IOAPIC IO_APIC;
@@ -218,58 +219,86 @@ extern SegmentDescriptor ap_gdt32[7];
 extern uint32 ap_kernel_cr3;
 extern char ap_pml4[PAGE_SIZE];
 
-char dummy_stack[0x1000];
+char ap_stack[0x1000]; // TODO: Each AP needs its own stack
 
 extern "C" void __apstartup64()
 {
+        // Hack to avoid automatic function prologue (stack isn't set up yet)
+        // TODO: Use __attribute__((naked)) in GCC 8
         __asm__ __volatile__(".global apstartup64\n"
                              "apstartup64:\n");
-        __asm__ __volatile__("movq %[stack], %%rsp\n"::[stack]"i"(&dummy_stack));
-        debug(APIC, "AP startup 64\n");
+
+        // Load long mode data segments
+        __asm__ __volatile__(
+                "movw %[K_DS], %%ax\n"
+                "movw %%ax, %%ds\n"
+                "movw %%ax, %%ss\n"
+                "movw %%ax, %%es\n"
+                "movw %%ax, %%fs\n"
+                "movw %%ax, %%gs\n"
+                :
+                :[K_DS]"i"(KERNEL_DS)
+                );
+
+        __asm__ __volatile__("movq %[stack], %%rsp\n"
+                             :
+                             :[stack]"i"(&ap_stack));
+
+        debug(A_MULTICORE, "AP startup 64\n");
+
+        debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4\n");
+        __asm__ __volatile__("movq %[kernel_cr3], %%cr3\n"
+                             :
+                             :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
+
+        debug(A_MULTICORE, "AP switching from temp GDT to main GDT\n");
+        __asm__ __volatile__("lgdt %[gdt]\n"
+                             :
+                             :[gdt]"m"(gdt));
+
+        debug(A_MULTICORE, "AP loading IDT\n");
+        InterruptUtils::lidt(&InterruptUtils::idtr);
+
+
+        debug(A_MULTICORE, "AP halting\n");
         __asm__ __volatile__("hlt\n");
 }
 
 void LocalAPIC::startAPs() volatile
 {
-        debug(APIC, "Sending init IPI to AP local APICs, ICR low: %p, ICR high: %p\n", &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
+        debug(A_MULTICORE, "Sending init IPI to AP local APICs, ICR low: %p, ICR high: %p\n", &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
 
         size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
-        debug(APIC, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
+        debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
 
         pointer apstartup_phys = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(AP_STARTUP_PADDR);
-        debug(APIC, "apstartup %p, phys: %zx\n", &apstartup, apstartup_phys);
+        debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, apstartup_phys);
         pointer paddr0 = ArchMemory::getIdentAddress(AP_STARTUP_PADDR);
 
         auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
-        debug(APIC, "paddr0 ppn: %zx\n", m.page_ppn);
+        debug(A_MULTICORE, "paddr0 ppn: %zx\n", m.page_ppn);
         assert(m.page_ppn == AP_STARTUP_PADDR/PAGE_SIZE);
 
-        debug(APIC, "AP GDT32: %p\n", &ap_gdt32);
+        debug(A_MULTICORE, "AP GDT32: %p, size: %zx\n", &ap_gdt32, sizeof(ap_gdt32));
         memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
 
 
-        debug(APIC, "AP GDT32 PTR: %p\n", &ap_gdt32_ptr);
+        debug(A_MULTICORE, "AP GDT32 PTR: %p\n", &ap_gdt32_ptr);
         ap_gdt32_ptr.addr = AP_STARTUP_PADDR + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
         ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
-        debug(APIC, "AP GDT32 PTR addr: %x\n", ap_gdt32_ptr.addr);
-        debug(APIC, "AP GDT32 PTR limit: %x\n", ap_gdt32_ptr.limit);
+        debug(A_MULTICORE, "AP GDT32 PTR addr: %x\n", ap_gdt32_ptr.addr);
+        debug(A_MULTICORE, "AP GDT32 PTR limit: %x\n", ap_gdt32_ptr.limit);
 
-        debug(APIC, "AP kernel PML4: %zx\n", (size_t)&ap_pml4);
+        debug(A_MULTICORE, "AP kernel PML4: %zx\n", (size_t)&ap_pml4);
         memcpy(&ap_pml4, &kernel_page_map_level_4, sizeof(ap_pml4));
 
-        debug(APIC, "AP kernel &CR3: %p\n", &ap_kernel_cr3);
+        debug(A_MULTICORE, "AP kernel &CR3: %p\n", &ap_kernel_cr3);
         ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
-        debug(APIC, "AP kernel CR3 set to: %x (kernel pml4 = %p)\n", ap_kernel_cr3, kernel_page_map_level_4);
+        debug(A_MULTICORE, "AP kernel CR3 set to: %x (kernel pml4 = %p)\n", ap_kernel_cr3, kernel_page_map_level_4);
 
-
-        debug(APIC, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n", (void*)&apstartup_text_begin, (void*)&apstartup_text_end, (void*)paddr0, (size_t)AP_STARTUP_PADDR, (size_t)(&apstartup_text_end - &apstartup_text_begin));
+        debug(A_MULTICORE, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n", (void*)&apstartup_text_begin, (void*)&apstartup_text_end, (void*)paddr0, (size_t)AP_STARTUP_PADDR, (size_t)(&apstartup_text_end - &apstartup_text_begin));
         memcpy((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size);
         assert(memcmp((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size) == 0);
-
-        size_t ap_gdt32_offset = (size_t)&ap_gdt32 - (size_t)&apstartup_text_begin;
-        debug(APIC, "Copying AP GDT from virt %p -> %p (phys: %zx)\n", &ap_gdt32, (char*)paddr0 + ap_gdt32_offset, (size_t)AP_STARTUP_PADDR + ap_gdt32_offset);
-        memcpy((char*)paddr0 + ap_gdt32_offset, &ap_gdt32, sizeof(ap_gdt32));
-
 
         LocalAPIC_InterruptCommandRegisterLow v_low{};
         v_low.vector = 0;
@@ -282,11 +311,11 @@ void LocalAPIC::startAPs() volatile
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
         // TODO: 10ms delay here
-        debug(APIC, "Start delay 1\n");
+        debug(A_MULTICORE, "Start delay 1\n");
         for(size_t i = 0; i < 0xFFFFFF; ++i)
         {
         }
-        debug(APIC, "End delay 1\n");
+        debug(A_MULTICORE, "End delay 1\n");
 
         assert((AP_STARTUP_PADDR % PAGE_SIZE) == 0);
         assert((AP_STARTUP_PADDR/PAGE_SIZE) <= 0xFF);
@@ -296,11 +325,11 @@ void LocalAPIC::startAPs() volatile
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
         // TODO: 200us delay here
-        debug(APIC, "Start delay 2\n");
+        debug(A_MULTICORE, "Start delay 2\n");
         for(size_t i = 0; i < 0xFFFFF; ++i)
         {
         }
-        debug(APIC, "End delay 2\n");
+        debug(A_MULTICORE, "End delay 2\n");
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
@@ -308,7 +337,7 @@ void LocalAPIC::startAPs() volatile
         {
         }
 
-        debug(APIC, "Finished sending IPI to AP local APICs\n");
+        debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
         //while(1);
 }
 

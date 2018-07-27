@@ -103,19 +103,8 @@ apstartup:
     hlt
 
 .code64
-.align 8
 .global apstartup64_trampoline
 apstartup64_trampoline:
-    ap_print64 ap_s_trampoline
-
-    ap_print64 ap_s_segm
-    movw $KERNEL_DS, %ax
-	movw %ax, %ds
-	movw %ax, %ss
-	movw %ax, %es
-	movw %ax, %fs
-	movw %ax, %gs
-
     ap_print64 ap_s_apstartup64
 
 .extern apstartup 64
@@ -138,9 +127,7 @@ ap_s_lgdt:
 ap_s_segm:
 	.asciz "Loading segment registers\n"
 ap_s_ljmp:
-	.asciz "ljmp to trampoline\n"
-ap_s_trampoline:
-	.asciz "Entered long mode trampoline\n"
+	.asciz "Far jmp to trampoline to load long mode code segment\n"
 ap_s_apstartup64:
 	.asciz "Jumping to apstartup64\n"
 
@@ -156,6 +143,7 @@ ap_gdt32_ptr:
 
 .global ap_gdt32
 ap_gdt32:
+    .skip 0x70
 
 
 .align 0x1000
