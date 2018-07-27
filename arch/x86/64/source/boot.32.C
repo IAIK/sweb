@@ -109,8 +109,8 @@ extern "C" void entry()
   asm volatile("movl $0x83, kernel_page_directory - BASE\n"
       "movl $0, kernel_page_directory - BASE + 4\n");
 
-  PRINT("Enable PSE and PAE...\n");
-  asm volatile("mov %cr4,%eax\n"
+  PRINT("Enable PAE...\n");
+  asm("mov %cr4,%eax\n"
       "or $0x20, %eax\n"
       "mov %eax,%cr4\n");
 

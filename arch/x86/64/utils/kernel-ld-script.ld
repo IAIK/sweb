@@ -26,6 +26,7 @@ SECTIONS
     apstartup_text_begin = .;
     *(.text.apstartup*)
     apstartup_text_end = .;
+    . = ALIGN(4096);
     *(.text)
     *(.text.*)
     text_end_address = .;

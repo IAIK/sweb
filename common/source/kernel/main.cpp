@@ -59,8 +59,6 @@ extern "C" void startup()
   writeLine2Bochs("PageManager and KernelMemoryManager created \n");
 
   ArchCommon::postBootInit();
-  writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
-  removeBootTimeIdentMapping();
 
   main_console = ArchCommon::createConsole(1);
   writeLine2Bochs("Console created \n");
@@ -83,6 +81,9 @@ extern "C" void startup()
   ArchThreads::initialise();
   debug(MAIN, "Interupts init\n");
   ArchInterrupts::initialise();
+
+  writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
+  removeBootTimeIdentMapping();
 
   ArchInterrupts::setTimerFrequency(IRQ0_TIMER_FREQUENCY);
 
