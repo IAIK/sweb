@@ -41,7 +41,7 @@ set(KERNEL_IMAGE_OBJCOPY
 set(AVAILABLE_MEMORY 8M)
 
 set(QEMU_BIN qemu-system-x86_64)
-set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot -smp 2)
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot -smp 2 -d guest_errors -d int)
 string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 # kvm: Run kvm in non debugging mode

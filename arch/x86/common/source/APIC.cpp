@@ -215,6 +215,11 @@ struct GDT32Ptr
     uint16 limit;
     uint32 addr;
 }__attribute__((__packed__));
+struct GDT64Ptr
+{
+        uint16 limit;
+        uint64 addr;
+}__attribute__((__packed__));
 extern GDT32Ptr ap_gdt32_ptr;
 extern SegmentDescriptor gdt[7];
 extern SegmentDescriptor ap_gdt32[7];
@@ -241,17 +246,41 @@ typedef struct
 
 // TODO: Each core needs its own TSS
 TSS ap_tss;
+extern TSS g_tss;
 
-void setAPSegmentDescriptor(SegmentDescriptor* gdt, uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
+typedef struct
 {
-        gdt[index].baseLL = (uint16) (baseL & 0xFFFF);
-        gdt[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
-        gdt[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
-        gdt[index].baseH = baseH;
-        gdt[index].limitL = (uint16) (limit & 0xFFFF);
-        gdt[index].limitH = (uint8) (((limit >> 16U) & 0xF));
-        gdt[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
-        gdt[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
+        uint32 limitL          : 16;
+        uint32 baseLL          : 16;
+
+        uint32 baseLM          :  8;
+        uint32 type            :  4;
+        uint32 zero            :  1;
+        uint32 dpl             :  2;
+        uint32 present         :  1;
+        uint32 limitH          :  4;
+        uint32 avl_to_software :  1;
+        uint32 ignored         :  2;
+        uint32 granularity     :  1;
+        uint32 baseLH          :  8;
+        uint32 baseH;
+        uint32 reserved;
+}__attribute__((__packed__)) TSSSegmentDescriptor;
+
+void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl)
+{
+        debug(A_MULTICORE, "setTSSSegmentDescriptor at %p, baseH: %x, baseL: %x, limit: %x, dpl: %x\n", descriptor, baseH, baseL, limit, dpl);
+        memset(descriptor, 0, sizeof(TSSSegmentDescriptor));
+        descriptor->baseLL = (uint16) (baseL & 0xFFFF);
+        descriptor->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+        descriptor->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+        descriptor->baseH = baseH;
+        descriptor->limitL = (uint16) (limit & 0xFFFF);
+        descriptor->limitH = (uint8) (((limit >> 16U) & 0xF));
+        descriptor->type = 0b1001;
+        descriptor->dpl = dpl;
+        descriptor->granularity = 0;
+        descriptor->present = 1;
 }
 
 extern void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH);
@@ -282,26 +311,32 @@ extern "C" void __apstartup64()
 
         debug(A_MULTICORE, "AP startup 64\n");
 
-        debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4\n");
+        debug(A_MULTICORE, "AP switched to stack %p\n", ap_stack + sizeof(ap_stack));
+
+        debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
         __asm__ __volatile__("movq %[kernel_cr3], %%cr3\n"
                              :
                              :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-        debug(A_MULTICORE, "AP reloading GDT\n");
-        //debug(A_MULTICORE, "AP switching from temp AP GDT to main GDT\n");
-        //setAPSegmentDescriptor(ap_gdt32, 5, (size_t)&ap_tss >> 32, (size_t)&ap_tss, sizeof(TSS) - 1, 0, 0, 1);
+        debug(A_MULTICORE, "AP reloading GDT with 64bit address: %p\n", &ap_gdt32);
+
+        struct GDT64Ptr ap_gdt64_ptr;
+        ap_gdt64_ptr.limit = sizeof(ap_gdt32) - 1;
+        ap_gdt64_ptr.addr = (uint64)&ap_gdt32;
         __asm__ __volatile__("lgdt %[gdt]\n"
                              :
-                             :[gdt]"m"(ap_gdt32));
+                             :[gdt]"m"(ap_gdt64_ptr));
 
-        //setSegmentBase(ap_gdt32 + 5, (size_t)&ap_tss >> 32, (size_t)&ap_tss);
 
-        debug(A_MULTICORE, "AP init TSS\n");
+        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&ap_gdt32 + KERNEL_TSS), (size_t)&ap_tss >> 32, (size_t)&ap_tss, sizeof(TSS) - 1, 0);
+        debug(A_MULTICORE, "AP init TSS, selector: %x\n", KERNEL_TSS);
+        debug(A_MULTICORE, "AP TSS at %p, bsp tss at %p\n", &ap_tss, &g_tss);
+        debug(A_MULTICORE, "AP TSS GDT descriptor at %p dump: %zx %zx\n", (char*)ap_gdt32 + KERNEL_TSS, *(size_t*)((char*)ap_gdt32 + KERNEL_TSS + 8), *(size_t*)((char*)ap_gdt32 + KERNEL_TSS));
         ap_tss.ist0 = (size_t)ap_stack;
         ap_tss.rsp0 = (size_t)ap_stack;
-        //asm("ltr %%ax" : : "a"(KERNEL_TSS));
+        asm("ltr %%ax" : : "a"(KERNEL_TSS));
 
-        debug(A_MULTICORE, "AP loading IDT\n");
+        debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
         InterruptUtils::lidt(&InterruptUtils::idtr);
 
         debug(A_MULTICORE, "Init AP APIC\n");
@@ -310,7 +345,7 @@ extern "C" void __apstartup64()
         local_APIC.enable(true);
 
         debug(A_MULTICORE, "Enable AP timer\n");
-        //ArchInterrupts::enableTimer();
+        ArchInterrupts::enableTimer();
 
         debug(A_MULTICORE, "Enabling interrupts\n");
         ArchInterrupts::enableInterrupts();
