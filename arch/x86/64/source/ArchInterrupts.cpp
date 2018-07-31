@@ -48,8 +48,8 @@ void ArchInterrupts::enableTimer()
 {
   if(IOAPIC::initialized)
   {
-          //local_APIC->registers.lvt_timer.setMask(false);
-          IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
+          local_APIC.reg_vaddr_->lvt_timer.setMask(false);
+          //IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
   }
   else
   {

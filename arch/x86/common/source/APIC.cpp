@@ -6,6 +6,8 @@
 #include "new.h"
 #include "kstring.h"
 #include "InterruptUtils.h"
+#include "ArchInterrupts.h"
+#include "Scheduler.h"
 
 LocalAPIC local_APIC;
 IOAPIC IO_APIC;
@@ -87,7 +89,8 @@ void LocalAPIC::enable(bool enable)
 
 void LocalAPIC::initTimer() volatile
 {
-        reg_vaddr_->lvt_timer.setVector(0x20);
+        reg_vaddr_->lvt_timer.setVector(90);
+        //reg_vaddr_->lvt_timer.setVector(0x20);
         reg_vaddr_->lvt_timer.setMode(1);
         reg_vaddr_->lvt_timer.setMask(true);
         reg_vaddr_->timer_divide_config.setTimerDivisor(16);
@@ -222,6 +225,37 @@ extern char ap_pml4[PAGE_SIZE];
 // TODO: Each AP needs its own stack
 uint8 ap_stack[0x4000];
 
+typedef struct
+{
+        uint32 reserved_0;
+        uint64 rsp0;
+        uint32 rsp1_l;
+        uint32 rsp1_h;
+        uint32 rsp2_l;
+        uint32 rsp2_h;
+        uint32 reserved_1;
+        uint32 reserved_2;
+        uint64 ist0;
+        uint32 reserved_3[15];
+}__attribute__((__packed__)) TSS;
+
+// TODO: Each core needs its own TSS
+TSS ap_tss;
+
+void setAPSegmentDescriptor(SegmentDescriptor* gdt, uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
+{
+        gdt[index].baseLL = (uint16) (baseL & 0xFFFF);
+        gdt[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+        gdt[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+        gdt[index].baseH = baseH;
+        gdt[index].limitL = (uint16) (limit & 0xFFFF);
+        gdt[index].limitH = (uint8) (((limit >> 16U) & 0xF));
+        gdt[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
+        gdt[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
+}
+
+extern void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH);
+
 extern "C" void __apstartup64()
 {
         // Hack to avoid automatic function prologue (stack isn't set up yet)
@@ -253,17 +287,39 @@ extern "C" void __apstartup64()
                              :
                              :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-        debug(A_MULTICORE, "AP switching from temp GDT to main GDT\n");
+        debug(A_MULTICORE, "AP reloading GDT\n");
+        //debug(A_MULTICORE, "AP switching from temp AP GDT to main GDT\n");
+        //setAPSegmentDescriptor(ap_gdt32, 5, (size_t)&ap_tss >> 32, (size_t)&ap_tss, sizeof(TSS) - 1, 0, 0, 1);
         __asm__ __volatile__("lgdt %[gdt]\n"
                              :
-                             :[gdt]"m"(gdt));
+                             :[gdt]"m"(ap_gdt32));
+
+        //setSegmentBase(ap_gdt32 + 5, (size_t)&ap_tss >> 32, (size_t)&ap_tss);
+
+        debug(A_MULTICORE, "AP init TSS\n");
+        ap_tss.ist0 = (size_t)ap_stack;
+        ap_tss.rsp0 = (size_t)ap_stack;
+        //asm("ltr %%ax" : : "a"(KERNEL_TSS));
 
         debug(A_MULTICORE, "AP loading IDT\n");
         InterruptUtils::lidt(&InterruptUtils::idtr);
 
+        debug(A_MULTICORE, "Init AP APIC\n");
+        local_APIC.setSpuriousInterruptNumber(0xFF);
+        local_APIC.initTimer();
+        local_APIC.enable(true);
+
+        debug(A_MULTICORE, "Enable AP timer\n");
+        //ArchInterrupts::enableTimer();
+
+        debug(A_MULTICORE, "Enabling interrupts\n");
+        ArchInterrupts::enableInterrupts();
+
+        //__asm__ __volatile__("int $90\n");
 
         debug(A_MULTICORE, "AP halting\n");
         __asm__ __volatile__("hlt\n");
+        while(1);
 }
 
 void LocalAPIC::startAPs() volatile
@@ -340,6 +396,7 @@ void LocalAPIC::startAPs() volatile
         }
 
         debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
+        //__asm__ __volatile__("hlt\n");
         //while(1);
 }
 

@@ -76,19 +76,39 @@ static void memset(char* block, char c, size_t length)
     block[i] = c;
 }
 
-static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code,
-                                 uint8 tss)
+void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH)
+{
+        descr->baseLL = (uint16) (baseL & 0xFFFF);
+        descr->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+        descr->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+        descr->baseH = baseH;
+}
+
+void setSegmentLimit(SegmentDescriptor* descr, uint32 limit)
+{
+        descr->limitL = (uint16) (limit & 0xFFFF);
+        descr->limitH = (uint8) (((limit >> 16U) & 0xF));
+}
+
+static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
 {
   SegmentDescriptor* gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
+
+  setSegmentBase(gdt_p + index, baseL, baseH);
+  setSegmentLimit(gdt_p + index, limit);
+  /*
   gdt_p[index].baseLL = (uint16) (baseL & 0xFFFF);
   gdt_p[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
   gdt_p[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
   gdt_p[index].baseH = baseH;
   gdt_p[index].limitL = (uint16) (limit & 0xFFFF);
   gdt_p[index].limitH = (uint8) (((limit >> 16U) & 0xF));
+  */
   gdt_p[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
   gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
+
+
 
 extern "C" void entry()
 {

@@ -134,8 +134,11 @@ extern "C" void startup()
   Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
   Scheduler::instance()->printThreadList();
 
-  kprintf("Now enabling Interrupts...\n");
+  debug(MAIN, "Now enabling Interrupts...\n");
   system_state = RUNNING;
+
+  debug(MAIN, "BSP going into infinite loop for debug\n");
+  while(1);
 
   ArchInterrupts::enableInterrupts();
 
