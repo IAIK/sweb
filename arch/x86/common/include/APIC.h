@@ -245,6 +245,8 @@ public:
         bool checkIRR(uint8 num) volatile;
         bool checkISR(uint8 num) volatile;
 
+        uint32 getID() volatile;
+
         void startAPs() volatile;
 
         void addLocalAPICToList(const MADTProcLocalAPIC&);

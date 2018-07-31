@@ -15,6 +15,8 @@ IOAPIC IO_APIC;
 bool IOAPIC::initialized    = false;
 bool LocalAPIC::initialized = false;
 
+extern volatile size_t outstanding_EOIs;
+
 LocalAPIC::LocalAPIC() :
         reg_paddr_(nullptr),
         reg_vaddr_(nullptr)
@@ -32,6 +34,8 @@ LocalAPIC::LocalAPIC(ACPI_MADTHeader* madt) :
 
 void LocalAPIC::sendEOI(size_t num)
 {
+  --outstanding_EOIs;
+  debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs);
   debug(APIC, "Sending EOI for %zx\n", num);
   reg_vaddr_->eoi = 0;
 }
@@ -207,6 +211,13 @@ bool LocalAPIC::checkISR(uint8 num) volatile
         return reg_vaddr_->ISR[byte_offset].isr & (1 << bit_offset);
 }
 
+uint32 LocalAPIC::getID() volatile
+{
+        LocalAPIC_IDRegister id;
+        *(uint32*)&id = *(uint32*)&reg_vaddr_->local_apic_id;
+        return id.id;
+}
+
 extern char apstartup_text_begin;
 extern char apstartup_text_end;
 extern "C" void apstartup();
@@ -221,6 +232,7 @@ struct GDT64Ptr
         uint64 addr;
 }__attribute__((__packed__));
 extern GDT32Ptr ap_gdt32_ptr;
+
 extern SegmentDescriptor gdt[7];
 extern SegmentDescriptor ap_gdt32[7];
 
@@ -243,10 +255,6 @@ typedef struct
         uint64 ist0;
         uint32 reserved_3[15];
 }__attribute__((__packed__)) TSS;
-
-// TODO: Each core needs its own TSS
-TSS ap_tss;
-extern TSS g_tss;
 
 typedef struct
 {
@@ -285,12 +293,12 @@ void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uin
         descriptor->present = 1;
 }
 
-extern void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH);
-
 struct CoreLocalStorage
 {
         CoreLocalStorage* cls_ptr;
-        uint32 foo;
+        size_t core_id;
+        SegmentDescriptor gdt[7];
+        TSS tss;
 };
 
 void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
@@ -300,7 +308,7 @@ void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 
 void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 {
-        debug(A_MULTICORE, "Set MSR %x, high: %x, low: %x\n", msr, hi, lo);
+        debug(A_MULTICORE, "Set MSR %x, value: %zx\n", msr, ((size_t)hi << 32) | (size_t)lo);
         asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
@@ -310,6 +318,7 @@ void setCLS(CoreLocalStorage* cls)
 {
         debug(A_MULTICORE, "Set CLS to %p\n", cls);
         cls->cls_ptr = cls;
+        cls->core_id = local_APIC.getID();
         cpuSetMSR(MSR_GS_BASE, (size_t)cls, (size_t)cls >> 32);
 }
 
@@ -320,6 +329,18 @@ CoreLocalStorage* getCLS()
                              "movq %%rax, %[cls_ptr]\n"
                              : [cls_ptr]"=m"(cls_ptr));
         return cls_ptr;
+}
+
+CoreLocalStorage* initCLS()
+{
+        CoreLocalStorage* cls = new CoreLocalStorage{};
+        setCLS(cls);
+        return getCLS();
+}
+
+size_t getCoreID()
+{
+        return getCLS()->core_id;
 }
 
 
@@ -358,34 +379,37 @@ extern "C" void __apstartup64()
 
 void initAPCore()
 {
-        debug(A_MULTICORE, "initAPCore\n");
+        debug(A_MULTICORE, "initAPCore %x\n", local_APIC.getID());
 
         debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
         __asm__ __volatile__("movq %[kernel_cr3], %%cr3\n"
                              :
                              :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-        debug(A_MULTICORE, "AP reloading GDT with 64bit address: %p\n", &ap_gdt32);
+        debug(A_MULTICORE, "Init core local storage\n");
+        CoreLocalStorage* ap_cls = initCLS();
+        debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ap_cls, getCoreID());
 
-        struct GDT64Ptr ap_gdt64_ptr;
-        ap_gdt64_ptr.limit = sizeof(ap_gdt32) - 1;
-        ap_gdt64_ptr.addr = (uint64)&ap_gdt32;
+        debug(A_MULTICORE, "AP switching to own GDT at: %p\n", &ap_cls->gdt);
+        memcpy(&ap_cls->gdt, ap_gdt32, sizeof(ap_cls->gdt));
+
+        struct GDT64Ptr ap_gdt_ptr;
+        ap_gdt_ptr.limit = sizeof(ap_cls->gdt) - 1;
+        ap_gdt_ptr.addr = (uint64)&ap_cls->gdt;
         __asm__ __volatile__("lgdt %[gdt]\n"
+                             "mov %%ax, %%ds\n"
+                             "mov %%ax, %%es\n"
+                             "mov %%ax, %%ss\n"
+                             "mov %%ax, %%fs\n"
+                             "mov %%ax, %%gs\n"
                              :
-                             :[gdt]"m"(ap_gdt64_ptr));
-        __asm__ __volatile__("mov %%ax, %%ds\n"
-                     "mov %%ax, %%es\n"
-                     "mov %%ax, %%ss\n"
-                     "mov %%ax, %%fs\n"
-                     "mov %%ax, %%gs\n"
-                     : : "a"(KERNEL_DS));
+                             :[gdt]"m"(ap_gdt_ptr), "a"(KERNEL_DS));
 
-        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&ap_gdt32 + KERNEL_TSS), (size_t)&ap_tss >> 32, (size_t)&ap_tss, sizeof(TSS) - 1, 0);
-        debug(A_MULTICORE, "AP init TSS, selector: %x\n", KERNEL_TSS);
-        debug(A_MULTICORE, "AP TSS at %p, bsp tss at %p\n", &ap_tss, &g_tss);
-        debug(A_MULTICORE, "AP TSS GDT descriptor at %p dump: %zx %zx\n", (char*)ap_gdt32 + KERNEL_TSS, *(size_t*)((char*)ap_gdt32 + KERNEL_TSS + 8), *(size_t*)((char*)ap_gdt32 + KERNEL_TSS));
-        ap_tss.ist0 = (size_t)ap_stack;
-        ap_tss.rsp0 = (size_t)ap_stack;
+        debug(A_MULTICORE, "AP init own TSS at %p\n", &ap_cls->tss);
+        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&ap_cls->gdt + KERNEL_TSS), (size_t)&ap_cls->tss >> 32, (size_t)&ap_cls->tss, sizeof(TSS) - 1, 0);
+
+        ap_cls->tss.ist0 = (size_t)ap_stack;
+        ap_cls->tss.rsp0 = (size_t)ap_stack;
         __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 
         debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
@@ -397,29 +421,21 @@ void initAPCore()
         local_APIC.enable(true);
 
         debug(A_MULTICORE, "Enable AP timer\n");
-        //ArchInterrupts::enableTimer();
-
-        debug(A_MULTICORE, "Allocating core local storage\n");
-        CoreLocalStorage* ap_cls = new CoreLocalStorage{};
-        ap_cls->foo = 0xDEADBEEF;
-
-        setCLS(ap_cls);
-        CoreLocalStorage* t_cls = getCLS();
-        debug(A_MULTICORE, "CLS at: %p\n", t_cls);
-        debug(A_MULTICORE, "getCLS(): %p, foo: %x\n", t_cls, t_cls->foo);
+        ArchInterrupts::enableTimer();
 
         debug(A_MULTICORE, "Enabling interrupts\n");
         ArchInterrupts::enableInterrupts();
 
-        //__asm__ __volatile__("int $90\n");
-
-        debug(A_MULTICORE, "AP halting\n");
-        __asm__ __volatile__("hlt\n");
-        while(1);
+        while(1)
+        {
+                debug(A_MULTICORE, "AP halting\n");
+                __asm__ __volatile__("hlt\n");
+        }
 }
 
 void LocalAPIC::startAPs() volatile
 {
+        debug(A_MULTICORE, "BSP APIC id: %x\n", local_APIC.getID());
         debug(A_MULTICORE, "Sending init IPI to AP local APICs, ICR low: %p, ICR high: %p\n", &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
 
         size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
