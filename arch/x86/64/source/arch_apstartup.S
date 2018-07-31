@@ -65,9 +65,9 @@ apstartup:
 
     ap_print (ap_s_pae - apstartup)
 
-    # Enable PAE
+    # Enable PAE + PSE
 	movl %cr4, %eax
-    orl  $0x20,%eax
+    orl  $0x30,%eax
     movl %eax, %cr4
 
     ap_print (ap_s_cr3 - apstartup)

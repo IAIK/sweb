@@ -263,7 +263,9 @@ typedef struct
         uint32 ignored         :  2;
         uint32 granularity     :  1;
         uint32 baseLH          :  8;
+
         uint32 baseH;
+
         uint32 reserved;
 }__attribute__((__packed__)) TSSSegmentDescriptor;
 
@@ -284,6 +286,44 @@ void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uin
 }
 
 extern void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH);
+
+struct CoreLocalStorage
+{
+        CoreLocalStorage* cls_ptr;
+        uint32 foo;
+};
+
+void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
+{
+        asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
+}
+
+void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
+{
+        debug(A_MULTICORE, "Set MSR %x, high: %x, low: %x\n", msr, hi, lo);
+        asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
+}
+
+#define MSR_GS_BASE 0xC0000101
+
+void setCLS(CoreLocalStorage* cls)
+{
+        debug(A_MULTICORE, "Set CLS to %p\n", cls);
+        cls->cls_ptr = cls;
+        cpuSetMSR(MSR_GS_BASE, (size_t)cls, (size_t)cls >> 32);
+}
+
+CoreLocalStorage* getCLS()
+{
+        CoreLocalStorage* cls_ptr;
+        __asm__ __volatile__("movq %%gs:0, %%rax\n"
+                             "movq %%rax, %[cls_ptr]\n"
+                             : [cls_ptr]"=m"(cls_ptr));
+        return cls_ptr;
+}
+
+
+void initAPCore();
 
 extern "C" void __apstartup64()
 {
@@ -310,8 +350,15 @@ extern "C" void __apstartup64()
                              :[stack]"i"(ap_stack + sizeof(ap_stack)));
 
         debug(A_MULTICORE, "AP startup 64\n");
-
         debug(A_MULTICORE, "AP switched to stack %p\n", ap_stack + sizeof(ap_stack));
+
+        // Stack variables are messed up in this function because we skipped the function prologue. Should be fine once we've entered another function.
+        initAPCore();
+}
+
+void initAPCore()
+{
+        debug(A_MULTICORE, "initAPCore\n");
 
         debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
         __asm__ __volatile__("movq %[kernel_cr3], %%cr3\n"
@@ -326,7 +373,12 @@ extern "C" void __apstartup64()
         __asm__ __volatile__("lgdt %[gdt]\n"
                              :
                              :[gdt]"m"(ap_gdt64_ptr));
-
+        __asm__ __volatile__("mov %%ax, %%ds\n"
+                     "mov %%ax, %%es\n"
+                     "mov %%ax, %%ss\n"
+                     "mov %%ax, %%fs\n"
+                     "mov %%ax, %%gs\n"
+                     : : "a"(KERNEL_DS));
 
         setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&ap_gdt32 + KERNEL_TSS), (size_t)&ap_tss >> 32, (size_t)&ap_tss, sizeof(TSS) - 1, 0);
         debug(A_MULTICORE, "AP init TSS, selector: %x\n", KERNEL_TSS);
@@ -334,7 +386,7 @@ extern "C" void __apstartup64()
         debug(A_MULTICORE, "AP TSS GDT descriptor at %p dump: %zx %zx\n", (char*)ap_gdt32 + KERNEL_TSS, *(size_t*)((char*)ap_gdt32 + KERNEL_TSS + 8), *(size_t*)((char*)ap_gdt32 + KERNEL_TSS));
         ap_tss.ist0 = (size_t)ap_stack;
         ap_tss.rsp0 = (size_t)ap_stack;
-        asm("ltr %%ax" : : "a"(KERNEL_TSS));
+        __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 
         debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
         InterruptUtils::lidt(&InterruptUtils::idtr);
@@ -345,7 +397,16 @@ extern "C" void __apstartup64()
         local_APIC.enable(true);
 
         debug(A_MULTICORE, "Enable AP timer\n");
-        ArchInterrupts::enableTimer();
+        //ArchInterrupts::enableTimer();
+
+        debug(A_MULTICORE, "Allocating core local storage\n");
+        CoreLocalStorage* ap_cls = new CoreLocalStorage{};
+        ap_cls->foo = 0xDEADBEEF;
+
+        setCLS(ap_cls);
+        CoreLocalStorage* t_cls = getCLS();
+        debug(A_MULTICORE, "CLS at: %p\n", t_cls);
+        debug(A_MULTICORE, "getCLS(): %p, foo: %x\n", t_cls, t_cls->foo);
 
         debug(A_MULTICORE, "Enabling interrupts\n");
         ArchInterrupts::enableInterrupts();
