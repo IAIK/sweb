@@ -222,7 +222,7 @@ struct LocalAPICRegisters
         volatile char reserved6[0x10];
 } __attribute__((packed));
 
-static_assert(sizeof(LocalAPICRegisters) == 0x400);
+//static_assert(sizeof(LocalAPICRegisters) == 0x400, "Incorrect local APIC register struct size");
 
 
 class LocalAPIC
