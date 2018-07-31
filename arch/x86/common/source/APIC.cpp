@@ -312,7 +312,20 @@ void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
         asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
-#define MSR_GS_BASE 0xC0000101
+#define MSR_GS_BASE        0xC0000101
+#define MSR_KERNEL_GS_BASE 0xC0000102
+
+uint64 getGSBase()
+{
+        uint64 gs_base;
+        cpuGetMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
+        return gs_base;
+}
+
+void setSWAPGSKernelBase(uint64 swapgs_base)
+{
+        cpuSetMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
+}
 
 void setCLS(CoreLocalStorage* cls)
 {
@@ -320,11 +333,13 @@ void setCLS(CoreLocalStorage* cls)
         cls->cls_ptr = cls;
         cls->core_id = local_APIC.getID();
         cpuSetMSR(MSR_GS_BASE, (size_t)cls, (size_t)cls >> 32);
+        setSWAPGSKernelBase((uint64)cls);
 }
 
 CoreLocalStorage* getCLS()
 {
         CoreLocalStorage* cls_ptr;
+        assert(getGSBase() != 0); // debug only
         __asm__ __volatile__("movq %%gs:0, %%rax\n"
                              "movq %%rax, %[cls_ptr]\n"
                              : [cls_ptr]"=m"(cls_ptr));
@@ -388,7 +403,7 @@ void initAPCore()
 
         debug(A_MULTICORE, "Init core local storage\n");
         CoreLocalStorage* ap_cls = initCLS();
-        debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ap_cls, getCoreID());
+        debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", getCLS(), getCoreID());
 
         debug(A_MULTICORE, "AP switching to own GDT at: %p\n", &ap_cls->gdt);
         memcpy(&ap_cls->gdt, ap_gdt32, sizeof(ap_cls->gdt));
@@ -401,7 +416,6 @@ void initAPCore()
                              "mov %%ax, %%es\n"
                              "mov %%ax, %%ss\n"
                              "mov %%ax, %%fs\n"
-                             "mov %%ax, %%gs\n"
                              :
                              :[gdt]"m"(ap_gdt_ptr), "a"(KERNEL_DS));
 

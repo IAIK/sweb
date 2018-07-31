@@ -161,11 +161,13 @@ extern "C" void arch_contextSwitch();
 extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
 
+extern size_t getCoreID();
+
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
   ++outstanding_EOIs;
-  debug(A_INTERRUPTS, "IRQ 0 called\n");
+  debug(A_INTERRUPTS, "IRQ 0 called by core %zx\n", getCoreID());
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
@@ -180,7 +182,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  debug(A_INTERRUPTS, "IRQ 65 called\n");
+  debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", getCoreID());
   Scheduler::instance()->schedule();
   arch_contextSwitch();
 }
@@ -280,15 +282,18 @@ extern "C" void irqHandler_15()
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
+        ++outstanding_EOIs;
         debug(APIC, "IRQ 90 called\n");
         ArchInterrupts::EndOfInterrupt(90);
 }
 
 extern "C" void irqHandler_90_naked()
 {
-        debug(APIC, "naked IRQ 90 called\n");
+        ++outstanding_EOIs;
+        debug(APIC, "naked IRQ 90 called by core %zx\n", getCoreID());
         ArchInterrupts::EndOfInterrupt(90);
         asm("leave\n"
+            "swapgs\n"
             "iretq\n");
 }
 

@@ -5,6 +5,16 @@
 
 .equ KERNEL_DS, 0x20
 
+.macro loadKernelSegments
+  movw $KERNEL_DS, %ax
+  movw %ax,%ss
+  movw %ax,%ds
+  movw %ax,%es
+  movw %ax,%fs
+  movw %ax,%gs
+  swapgs
+.endm
+
 .macro pushAll
   pushq %rsp
   pushq %rax
@@ -26,12 +36,8 @@
   pushq %rax
   movw %ds,%ax
   pushq %rax
-  movw $KERNEL_DS, %ax
-  movw %ax,%ss
-  movw %ax,%ds
-  movw %ax,%es
-  movw %ax,%fs
-  movw %ax,%gs
+
+  loadKernelSegments
 .endm
 
 .macro popAll
@@ -69,6 +75,7 @@ arch_irqHandler_\num:
         call arch_saveThreadRegisters
         call irqHandler_\num
         popAll
+        swapgs
         iretq
 .endm
 
@@ -97,6 +104,7 @@ arch_dummyHandlerMiddle:
         movq $0,dummyhandlerscratchvariable
         call errorHandler
         popAll
+        swapgs
         iretq
         hlt
 
@@ -115,6 +123,7 @@ arch_errorHandler_\num:
         movq $\num,%rdi
         call errorHandler
         popAll
+        swapgs
         iretq
         hlt
 .endm
@@ -133,6 +142,7 @@ arch_errorHandler_\num:
         call errorHandler
         popAll
         addq $8,%rsp
+        swapgs
         iretq
         hlt
 .endm
@@ -151,6 +161,7 @@ arch_pageFaultHandler:
         call pageFaultHandler
         popAll
         addq $8,%rsp
+        swapgs
         iretq
         hlt
 

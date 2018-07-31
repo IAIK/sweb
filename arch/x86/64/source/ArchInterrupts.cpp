@@ -31,12 +31,6 @@ void ArchInterrupts::initialise()
 
 
   PIC8259::initialise8259s();
-  /*
-  for (size_t i=0;i<16;++i)
-  {
-          PIC8259::disableIRQ(i);
-  }
-  */
 
   if(LocalAPIC::initialized)
   {
@@ -234,6 +228,7 @@ extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
+  debug(A_INTERRUPTS, "Context switch\n");
   if(outstanding_EOIs)
   {
           debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
@@ -271,6 +266,7 @@ extern "C" void arch_contextSwitch()
   asm("mov %[rbx], %%rbx\n" : : [rbx]"m"(info.rbx));
   asm("mov %[rax], %%rax\n" : : [rax]"m"(info.rax));
   asm("mov %[rbp], %%rbp\n" : : [rbp]"m"(info.rbp));
+  asm("swapgs");
   asm("iretq");
   assert(false);
 }
