@@ -137,10 +137,13 @@ extern "C" void startup()
   debug(MAIN, "Now enabling Interrupts...\n");
   system_state = RUNNING;
 
-  debug(MAIN, "BSP going into infinite loop for debug\n");
-  while(1);
-
   ArchInterrupts::enableInterrupts();
+
+  while(1)
+  {
+          debug(MAIN, "BSP halting\n");
+          ArchCommon::idle();
+  }
 
   Scheduler::instance()->yield();
   //not reached

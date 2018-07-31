@@ -54,3 +54,32 @@ typedef struct
     uint32 reserved;
 }__attribute__((__packed__)) SegmentDescriptor;
 
+typedef struct
+{
+        uint32 reserved_0;
+        union
+        {
+                struct
+                {
+                        uint32 rsp0_l;
+                        uint32 rsp0_h;
+                };
+                uint64 rsp0;
+        };
+        uint32 rsp1_l;
+        uint32 rsp1_h;
+        uint32 rsp2_l;
+        uint32 rsp2_h;
+        uint32 reserved_1;
+        uint32 reserved_2;
+        union
+        {
+                struct
+                {
+                        uint32 ist0_l;
+                        uint32 ist0_h;
+                };
+                uint64 ist0;
+        };
+        uint32 reserved_3[15];
+}__attribute__((__packed__)) TSS;

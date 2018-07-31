@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "ArchMemory.h"
 #include "PageManager.h"
+#include "ArchMulticore.h"
 
 void ArchInterrupts::initialise()
 {
@@ -34,7 +35,9 @@ void ArchInterrupts::initialise()
 
   if(LocalAPIC::initialized)
   {
-          local_APIC.startAPs();
+          CoreLocalStorage* cls = initCLS();
+          debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", cls, getCoreID());
+          //local_APIC.startAPs();
   }
 }
 
@@ -219,16 +222,11 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   assert(!currentThread || currentThread->isStackCanaryOK());
 }
 
-typedef struct {
-    uint32 padding;
-    uint64 rsp0; // actually the TSS has more fields, but we don't need them
-} __attribute__((__packed__))TSS;
-
 extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-  debug(A_INTERRUPTS, "Context switch\n");
+        debug(A_INTERRUPTS, "Context switch to thread %p = %s\n", currentThread, currentThread->getName());
   if(outstanding_EOIs)
   {
           debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
@@ -238,6 +236,7 @@ extern "C" void arch_contextSwitch()
   {
     assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
     assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+    __asm__ __volatile("swapgs\n"); // Cannot use core local storage beyond this point
   }
   assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
   ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
@@ -266,7 +265,6 @@ extern "C" void arch_contextSwitch()
   asm("mov %[rbx], %%rbx\n" : : [rbx]"m"(info.rbx));
   asm("mov %[rax], %%rax\n" : : [rax]"m"(info.rax));
   asm("mov %[rbp], %%rbp\n" : : [rbp]"m"(info.rbp));
-  asm("swapgs");
-  asm("iretq");
+  asm("iretq\n");
   assert(false);
 }
