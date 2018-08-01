@@ -208,11 +208,25 @@ int32 IDEDriver::processMBR(BDDriver* drv, uint32 sector, uint32 SPT, const char
         case 0x05: // DOS extended partition
         case 0x0F: // Windows extended partition
         case 0x85: // linux extended partition
-          debug(IDE_DRIVER, "ext. part. at: %d \n", fp->relsect);
+          debug(IDE_DRIVER, "part. type %x (ext) at sectors [%d -> %d), num sectors: %d, bytesize: %u, bootable: %d\n", fp->systid, fp->relsect, fp->relsect + fp->numsect, fp->numsect, fp->numsect * drv->getSectorSize(), fp->bootid != 0);
           if (processMBR(drv, sector + fp->relsect, SPT, name) == -1)
             processMBR(drv, sector + fp->relsect - SPT, SPT, name);
           break;
+      case 0x80:
+          debug(IDE_DRIVER, "part. type %x (minixfs old) at sectors [%d -> %d), num sectors: %d, bytesize: %u, bootable: %d\n", fp->systid, fp->relsect, fp->relsect + fp->numsect, fp->numsect, fp->numsect * drv->getSectorSize(), fp->bootid != 0);
+          goto l_default;
+      case 0x81:
+          debug(IDE_DRIVER, "part. type %x (minixfs) at sectors [%d -> %d), num sectors: %d, bytesize: %u, bootable: %d\n", fp->systid, fp->relsect, fp->relsect + fp->numsect, fp->numsect, fp->numsect * drv->getSectorSize(), fp->bootid != 0);
+          goto l_default;
+      case 0x82:
+          debug(IDE_DRIVER, "part. type %x (swap) at sectors [%d -> %d), num sectors: %d, bytesize: %u, bootable: %d\n", fp->systid, fp->relsect, fp->relsect + fp->numsect, fp->numsect, fp->numsect * drv->getSectorSize(), fp->bootid != 0);
+          goto l_default;
+      case 0x83:
+          debug(IDE_DRIVER, "part. type %x (linux) at sectors [%d -> %d), num sectors: %d, bytesize: %u, bootable: %d\n", fp->systid, fp->relsect, fp->relsect + fp->numsect, fp->numsect, fp->numsect * drv->getSectorSize(), fp->bootid != 0);
+          goto l_default;
         default:
+          debug(IDE_DRIVER, "part. type %x at: [%d -> %d) num sectors: %d, bytesize: %u, bootable: %d\n", fp->systid, fp->relsect, fp->relsect + fp->numsect, fp->numsect, fp->numsect * drv->getSectorSize(), fp->bootid != 0);
+      l_default:
           // offset = fp->relsect - SPT;
           offset = fp->relsect;
           numsec = fp->numsect;

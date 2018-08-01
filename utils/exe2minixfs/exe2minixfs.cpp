@@ -17,6 +17,27 @@ Superblock* superblock_;
 FileSystemInfo* default_working_dir;
 VfsMount vfs_dummy_;
 
+typedef struct fdisk_partition
+{
+        uint8 bootid; // bootable?  0=no, 128=yes
+        uint8 beghead;
+        uint8 begcyl;
+        uint8 begsect;
+        uint8 systid; // Operating System type indicator code
+        uint8 endhead;
+        uint8 endcyl;
+        uint8 endsect;
+        uint32 relsect; // first sector relative to start of disk - We actually need only theese two params
+        uint32 numsect; // number of sectors in partition
+} FP;
+
+typedef struct master_boot_record
+{
+        uint8 bootinst[446]; // GRUB space
+        uint8 parts[4 * sizeof(FP)];
+        uint16 signature; // set to 0xAA55 for PC MBR
+} MBR;
+
 FileSystemInfo* getcwd() { return default_working_dir; }
 
 // obviously NOT atomic, we need this for compatability in single threaded host code
@@ -30,11 +51,12 @@ int main(int argc, char *argv[])
 {
   if (argc < 3 || argc % 2 == 0)
   {
-    printf("Syntax: %s <filename of minixfs-formatted image> <offset in bytes> [file1-src file1-dest [file2-src file2-dest [....]]]\n",
+    printf("Syntax: %s <filename of minixfs-formatted image> <partition number> [file1-src file1-dest [file2-src file2-dest [....]]]\n",
         argv[0]);
     return -1;
   }
 
+  //printf("Exe2minixfs opening disk image %s\n", argv[1]);
   FILE* image_fd = fopen(argv[1], "r+b");
 
   if (image_fd == 0)
@@ -44,13 +66,73 @@ int main(int argc, char *argv[])
   }
 
   char* end;
-  size_t offset = strtoul(argv[2],&end,10);
+  size_t partition = strtoul(argv[2],&end,10);
+  //printf("Partition number: %zu\n", partition);
   if (strlen(end) != 0)
   {
     fclose(image_fd);
-    printf("offset has to be a number!\n");
+    printf("partition has to be a number!\n");
     return -1;
   }
+  if((partition < 1) || (4 < partition))
+  {
+    fclose(image_fd);
+    printf("Partition number has to be in range [1-4]\n");
+    return -1;
+  }
+
+  MBR image_mbr;
+
+  fseek(image_fd, 0, SEEK_SET);
+  size_t mbr_read_count =  fread(&image_mbr, sizeof(image_mbr), 1, image_fd);
+  if(mbr_read_count != 1)
+  {
+          if(ferror(image_fd))
+          {
+                  printf("Error while reading MBR from %s\n", argv[1]);
+          }
+          if(feof(image_fd))
+          {
+                  printf("%s EOF reached while reading MBR\n", argv[1]);
+          }
+          printf("exe2minixfs was not able to read the disk image MBR\n");
+          fclose(image_fd);
+          return -1;
+  }
+
+  if(image_mbr.signature != 0xAA55)
+  {
+          printf("exe2minixfs: Warning, disk MBR not marked as valid boot sector\n");
+  }
+
+  FP* part_table = (FP*)&image_mbr.parts;
+  /*
+  for(size_t i = 0; i < 4; ++i)
+  {
+          printf("Partition %zu, sectors [%u -> %u), bytes [%zu -> %zu), type: %x, bootable: %u\n",
+                 i + 1,
+                 part_table[i].relsect,
+                 part_table[i].relsect + part_table[i].numsect,
+                 (size_t)part_table[i].relsect * 512,
+                 (size_t)(part_table[i].relsect + part_table[i].numsect) * 512,
+                 part_table[i].systid,
+                 part_table[i].bootid != 0);
+  }
+  */
+
+  if(part_table[partition - 1].systid == 0)
+  {
+          printf("No partition %zu on image\n", partition);
+          fclose(image_fd);
+          return -1;
+  }
+
+  if(part_table[partition - 1].systid != 0x81)
+  {
+          printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
+  }
+
+  size_t offset = (size_t)part_table[partition - 1].relsect * 512;
 
   superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, offset);
   Dentry *mount_point = superblock_->getMountPoint();
