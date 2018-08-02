@@ -27,7 +27,7 @@ typedef struct fdisk_partition
         uint8 endhead;
         uint8 endcyl;
         uint8 endsect;
-        uint32 relsect; // first sector relative to start of disk - We actually need only theese two params
+        uint32 relsect; // first sector relative to start of disk
         uint32 numsect; // number of sectors in partition
 } FP;
 
@@ -132,16 +132,21 @@ int main(int argc, char *argv[])
           printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
   }
 
-  size_t offset = (size_t)part_table[partition - 1].relsect * 512;
+  size_t part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
 
-  superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, offset);
+  superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, part_byte_offset);
+  //printf("exe2minxfs: Created superblock\n");
   Dentry *mount_point = superblock_->getMountPoint();
+  //printf("exe2minxfs: Got mount point\n");
   mount_point->setMountPoint(mount_point);
   Dentry *root = superblock_->getRoot();
+
 
   default_working_dir = new FileSystemInfo();
   default_working_dir->setFsRoot(root, &vfs_dummy_);
   default_working_dir->setFsPwd(root, &vfs_dummy_);
+
+  //printf("exe2minxfs: Created working dir\n");
 
   for (int32 i = 2; i <= argc / 2; i++)
   {
@@ -163,12 +168,33 @@ int main(int argc, char *argv[])
     fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
+    //printf("Open path: %s\n", argv[2 * i]);
+
+    ustl::string pathname(argv[2 * i]);
+    size_t next_slash = pathname.find('/');
+    while(next_slash != ustl::string::npos)
+    {
+            //printf("pathname: %s, next slash at: %zu\n", pathname.c_str(), next_slash);
+            if(next_slash != 0)
+            {
+                    ustl::string dir_path(pathname.substr(0, next_slash));
+                    //printf("Attempting to create path %s\n", dir_path.c_str());
+                    VfsSyscall::mkdir(dir_path.c_str(), 0);
+            }
+            next_slash = pathname.find('/', next_slash + 1); // TODO: Proper normalization required. This will fail for edge cases
+    }
+
     int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
     if (fd < 0)
     {
       printf("no success\n");
       delete[] buf;
-      continue;
+      //continue;
+      delete default_working_dir;
+      delete superblock_;
+      fclose(image_fd);
+      return -1;
+
     }
     VfsSyscall::write(fd, buf, size);
     VfsSyscall::close(fd);
