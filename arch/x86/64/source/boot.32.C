@@ -6,7 +6,7 @@ asm volatile(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "multiboot.h"
 
 #if A_BOOT == A_BOOT | OUTPUT_ENABLED
-#define PRINT(X) print(TRUNCATE(X))
+#define PRINT(X) print(TRUNCATE(X)); puts(TRUNCATE(X))
 #else
 #define PRINT(X)
 #endif
@@ -16,7 +16,7 @@ asm volatile(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #define MULTIBOOT_PAGE_ALIGN (1<<0)
 #define MULTIBOOT_MEMORY_INFO (1<<1)
 #define MULTIBOOT_WANT_VESA (1<<2)
-#define MULTIBOOT_HEADER_MAGIC (0x1BADB002)
+#define MULTIBOOT_HEADER_MAGIC (0x1BADB002U)
 #define MULTIBOOT_HEADER_FLAGS (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA)
 #define MULTIBOOT_CHECKSUM (-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS))
 
@@ -38,16 +38,25 @@ struct GDT32Ptr
 
 TSS g_tss;
 
-static const struct
+__attribute__((section (".mboot"))) static const multiboot_header mboot =
 {
-    uint32 magic = MULTIBOOT_HEADER_MAGIC;
-    uint32 flags = MULTIBOOT_HEADER_FLAGS;
-    uint32 checksum = MULTIBOOT_CHECKSUM;
-    uint32 mode = 0;
-    uint32 widht = 800;
-    uint32 height = 600;
-    uint32 depth = 32;
-} mboot __attribute__ ((section (".mboot")));
+        .magic = MULTIBOOT_HEADER_MAGIC,
+        .flags = MULTIBOOT_HEADER_FLAGS,
+        .checksum = MULTIBOOT_CHECKSUM,
+
+#if MULTIBOOT_AOUT
+        .header_addr   = 0,
+        .load_addr     = 0,
+        .load_end_addr = 0,
+        .bss_end_addr  = 0,
+        .entry_addr    = 0,
+#endif
+
+        .mode_type = 1,
+        .width = 80,
+        .height = 25,
+        .depth = 16,
+};
 
 void print(const char* p)
 {
@@ -81,17 +90,97 @@ static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint3
 
   setSegmentBase(gdt_p + index, baseL, baseH);
   setSegmentLimit(gdt_p + index, limit);
-  /*
-  gdt_p[index].baseLL = (uint16) (baseL & 0xFFFF);
-  gdt_p[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
-  gdt_p[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
-  gdt_p[index].baseH = baseH;
-  gdt_p[index].limitL = (uint16) (limit & 0xFFFF);
-  gdt_p[index].limitH = (uint8) (((limit >> 16U) & 0xF));
-  */
+
   gdt_p[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
   gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
+
+uint8 fb_row = 0;
+uint8 fb_col = 0;
+
+static void setFBrow(uint8 row)
+{
+        *(uint8*)TRUNCATE(&fb_row) = row;
+}
+static void setFBcol(uint8 col)
+{
+        *(uint8*)TRUNCATE(&fb_col) = col;
+}
+
+static uint8 getFBrow()
+{
+        return *(uint8*)TRUNCATE(&fb_row);
+}
+static uint8 getFBcol()
+{
+        return *(uint8*)TRUNCATE(&fb_col);
+}
+
+static uint8 getNextFBrow()
+{
+        return (getFBrow() == 24 ? 0 : getFBrow() + 1);
+}
+
+static void clearFB()
+{
+        print(TRUNCATE("Clearing Framebuffer...\n"));
+        memset((char*) 0xB8000, 0, 80 * 25 * 2);
+        setFBrow(0);
+        setFBcol(0);
+}
+
+static char* getFBAddr(uint8 row, uint8 col)
+{
+        return (char*)0xB8000 + ((row*80 + col) * 2);
+}
+
+static void clearFBrow(uint8 row)
+{
+        memset(getFBAddr(row, 0), 0, 80 * 2);
+}
+
+static void FBnewline()
+{
+        print(TRUNCATE("FB newline\n"));
+        uint8 next_row = getNextFBrow();
+        clearFBrow(next_row);
+        setFBrow(next_row);
+        setFBcol(0);
+}
+
+static void putc(const char c)
+{
+        if(c == '\n')
+        {
+                FBnewline();
+        }
+        else
+        {
+                if(getFBcol() == 80)
+                {
+                        FBnewline();
+                }
+
+                uint32 row = getFBrow();
+                uint32 col = getFBcol();
+
+                char* fb_pos = getFBAddr(row, col);
+                fb_pos[0] = c;
+                fb_pos[1] = 0x02;
+
+                setFBcol(getFBcol() + 1);
+        }
+}
+
+static void puts(const char* string)
+{
+        while(*string != '\0')
+        {
+                putc(*string);
+                ++string;
+        }
+}
+
 
 
 
@@ -99,8 +188,7 @@ extern "C" void entry()
 {
   asm volatile("mov %ebx,multi_boot_structure_pointer - BASE");
   PRINT("Booting...\n");
-  PRINT("Clearing Framebuffer...\n");
-  memset((char*) 0xB8000, 0, 80 * 25 * 2);
+  clearFB();
 
   PRINT("Clearing BSS...\n");
   char* bss_start = TRUNCATE(&bss_start_address);
