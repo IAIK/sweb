@@ -3,13 +3,11 @@
 #include <assert.h>
 #include "kprintf.h"
 
-MinixStorageManager::MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks,
-                                         uint16 num_inodes, uint16 num_zones) :
+MinixStorageManager::MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones) :
     StorageManager(num_inodes, num_zones)
 {
   debug(M_STORAGE_MANAGER,
-        "Constructor: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n", num_inodes,
-        num_inode_bm_blocks, num_zones, num_zone_bm_blocks);
+        "Constructor: num_inodes:%d\tnum_inode_bm_blocks:%d\tnum_zones:%d\tnum_zone_bm_blocks:%d\t\n", num_inodes, num_inode_bm_blocks, num_zones, num_zone_bm_blocks);
 
   num_inode_bm_blocks_ = num_inode_bm_blocks;
   num_zone_bm_blocks_ = num_zone_bm_blocks;
@@ -149,7 +147,7 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
   byte = 0;
   for (uint32 z_bit = 0; z_bit < 8; z_bit++)
   {
-    if (z_bit < num_inodes % 8)
+    if (z_bit < num_zones % 8)
     {
       if (zone_bitmap_.getBit(z_byte * 8 + z_bit))
       {
