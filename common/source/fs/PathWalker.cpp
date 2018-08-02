@@ -51,7 +51,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
 
   if ((dentry_ == 0) || (vfs_mount_ == 0))
   {
-    kprintfd("PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
+    debug(PATHWALKER, "PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
     return PW_ENOTFOUND;
   }
   debug(PATHWALKER, "PathWalk> return success - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);

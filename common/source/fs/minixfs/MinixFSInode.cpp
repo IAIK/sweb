@@ -16,8 +16,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
   i_dentry_ = 0;
 }
 
-MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones,
-                           uint32 i_num) :
+MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones, uint32 i_num) :
     Inode(super_block, 0), i_zones_(new MinixFSZone((MinixFSSuperblock*) super_block, i_zones)), i_num_(i_num),
     children_loaded_(false)
 {
@@ -369,6 +368,7 @@ Dentry* MinixFSInode::lookup(const char* name)
     if (dentry_update == 0)
     {
       // ERROR_NNE
+      debug(M_INODE, "lookup: '%s' not found\n", name);
       return (Dentry*) 0;
     }
     else
@@ -390,9 +390,10 @@ Dentry* MinixFSInode::lookup(const char* name)
 
 void MinixFSInode::loadChildren()
 {
+  debug(M_INODE, "loadChildren of inode with i_num: %x\n", i_num_);
   if (children_loaded_)
   {
-    debug(M_INODE, "loadChildren: Children allready loaded\n");
+    debug(M_INODE, "loadChildren: Children already loaded\n");
     return;
   }
   char dbuffer[ZONE_SIZE];
@@ -411,7 +412,7 @@ void MinixFSInode::loadChildren()
 
         if (!inode)
         {
-          kprintfd("MinixFSInode::loadChildren: inode nr. %d not set in bitmap, but occurs in directory-entry; "
+          debug(M_INODE, "MinixFSInode::loadChildren: inode nr. %d not set in bitmap, but occurs in directory-entry; "
                    "maybe filesystem was not properly unmounted last time\n",
                    inode_index);
           char ch = 0;
@@ -440,6 +441,7 @@ void MinixFSInode::loadChildren()
     }
   }
   children_loaded_ = true;
+  debug(M_INODE, "Finished loading children for inode with i_num: %x\n", i_num_);
 }
 
 int32 MinixFSInode::flush()

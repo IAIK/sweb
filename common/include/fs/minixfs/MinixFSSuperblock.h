@@ -85,6 +85,36 @@ class MinixFSSuperblock : public Superblock
      */
     virtual void freeZone(uint16 index);
 
+    typedef struct
+    {
+            uint16 s_num_inodes;
+            uint16 s_num_zones;
+            uint16 s_imap_blocks;
+            uint16 s_zmap_blocks;
+            uint16 s_firstdatazone;
+            uint16 s_log_zone_size;
+            uint32 s_max_file_size;
+            uint16 s_magic;
+            uint16 s_mount_state;
+    } __attribute__((packed)) MinixFSSuperblockOnDiskDataV1;
+
+    typedef struct
+    {
+            uint32 s_num_inodes;
+            uint16 padding0;
+            uint16 s_imap_blocks;
+            uint16 s_zmap_blocks;
+            uint16 s_firstdatazone;
+            uint16 s_log_zone_size;
+            uint16 padding1;
+            uint32 s_max_file_size;
+            uint32 s_num_zones;
+            uint16 s_magic;
+            uint16 padding2;
+            uint16 s_blocksize;
+            uint8  s_disk_version;
+    } __attribute__((packed)) MinixFSSuperblockOnDiskDataV3;
+
   protected:
 
     /**
@@ -128,7 +158,7 @@ class MinixFSSuperblock : public Superblock
     void writeZone(uint16 zone, char *buffer);
 
     /**
-     * writes the given number of blcoks to the file system from the given buffer
+     * writes the given number of blocks to the file system from the given buffer
      * @param block the index of the first block to write
      * @param num_blocks the number of blocks to write
      * @param buffer the buffer to write
@@ -214,4 +244,3 @@ class MinixFSSuperblock : public Superblock
      */
     Superblock* superblock_;
 };
-

@@ -132,6 +132,30 @@ class MinixFSInode : public Inode
      */
     virtual int32 flush();
 
+    typedef struct
+    {
+            uint16 i_mode;
+            uint16 i_uid;
+            uint32 i_size;
+            uint32 i_time;
+            uint8  i_gid;
+            uint8  i_nlinks;
+            uint16 i_zone[9];
+    } __attribute__((packed)) MinixFSInodeOnDiskDataV1;
+
+    typedef struct
+    {
+            uint16 i_mode;
+            uint16 i_nlinks;
+            uint16 i_uid;
+            uint16 i_gid;
+            uint32 i_size;
+            uint32 i_atime;
+            uint32 i_mtime;
+            uint32 i_ctime;
+            uint32 i_zone[10];
+    } __attribute__((packed)) MinixFSInodeOnDiskDataV3;
+
   private:
     /**
      * writes the inode dentry to disc

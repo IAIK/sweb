@@ -183,10 +183,11 @@ add_custom_target (hdd_image ALL
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs
+    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
+    #COMMAND ./mkminixfs SWEB-flat.vmdk 1
     COMMAND ./exe2minixfs SWEB-flat.vmdk 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
                                                ./kernel.x boot/kernel.x
                                                ./kernel.dbg boot/kernel.dbg
@@ -205,9 +206,10 @@ add_custom_target (kernel_image
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
-    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs
+    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
+    COMMAND ./mkminixfs SWEB-flat.vmdk 2
     COMMAND ./exe2minixfs SWEB-flat.vmdk 2 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."

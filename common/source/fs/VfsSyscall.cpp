@@ -343,7 +343,10 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     return fd;
   }
   else
+  {
+    debug(VFSSYSCALL, "Failed to open file %s\n", pathname);
     return -1;
+  }
 }
 
 int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
