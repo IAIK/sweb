@@ -460,12 +460,11 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
         size_t new_page = PageManager::instance()->allocPPN();
         if(unlikely(new_page == 0))
         {
-          kprintfd("KernelMemoryManager::freeSegment: FATAL ERROR\n");
-          kprintfd("KernelMemoryManager::freeSegment: no more physical memory\n");
+          debug(KMM, "KernelMemoryManager::freeSegment: FATAL ERROR\n");
+          debug(KMM, "KernelMemoryManager::freeSegment: no more physical memory\n");
           assert(new_page != 0 && "Kernel Heap is out of memory");
         }
         debug(KMM, "kbsrk: map %zx -> %zx\n", cur_top_vpn, new_page);
-        memset((void*)ArchMemory::getIdentAddressOfPPN(new_page), 0 , PAGE_SIZE);
         ArchMemory::mapKernelPage(cur_top_vpn, new_page);
       }
 
