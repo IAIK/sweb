@@ -56,12 +56,13 @@ extern "C" void startup()
   system_state = BOOTING;
 
   PageManager::instance();
-  writeLine2Bochs("PageManager and KernelMemoryManager created \n");
+  debug(MAIN, "PageManager and KernelMemoryManager created \n");
 
   ArchCommon::postBootInit();
 
+  debug(MAIN, "Creating console\n");
   main_console = ArchCommon::createConsole(1);
-  writeLine2Bochs("Console created \n");
+  debug(MAIN, "Console created\n");
 
   Terminal *term_0 = main_console->getTerminal(0); // add more if you need more...
   term_0->initTerminalColors(Console::GREEN, Console::BLACK);
@@ -82,7 +83,7 @@ extern "C" void startup()
   debug(MAIN, "Interupts init\n");
   ArchInterrupts::initialise();
 
-  writeLine2Bochs("Removing Boot Time Ident Mapping...\n");
+  debug(MAIN, "Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();
 
   ArchInterrupts::setTimerFrequency(IRQ0_TIMER_FREQUENCY);

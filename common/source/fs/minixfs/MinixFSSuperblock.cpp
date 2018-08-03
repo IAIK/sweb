@@ -250,7 +250,7 @@ Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
   for (uint32 i = 0; i < NUM_ZONES; i++)
     zones[i] = 0;
   uint32 i_num = storage_manager_->allocInode();
-  debug(M_SB, "createInode> acquired inode %d mode: %d\n", i_num, mode);
+  debug(M_SB, "createInode> allocated inode %d mode: %x\n", i_num, mode);
   Inode *inode = new MinixFSInode(this, mode, 0, 0, zones, i_num);
   debug(M_SB, "createInode> created Inode\n");
   all_inodes_add_inode(inode);

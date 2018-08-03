@@ -55,6 +55,7 @@ void ArchInterrupts::enableTimer()
 }
 
 void ArchInterrupts::setTimerFrequency(uint32 freq) {
+  debug(A_INTERRUPTS, "Set timer frequency %u\n", freq);
   uint16_t divisor;
   if(freq < (uint32)(1193180. / (1 << 16) + 1)) {
     divisor = 0;

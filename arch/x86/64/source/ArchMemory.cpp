@@ -253,8 +253,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(uint64 pml4, uint64 vpage)
 size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(size_t virtual_page, size_t *physical_page,
                                                    size_t *physical_pte_page)
 {
-  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),
-                                       virtual_page);
+  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), virtual_page);
   if (physical_page)
     *physical_page = m.page_ppn;
   if (physical_pte_page)
@@ -265,8 +264,7 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(size_t virtual_page, size_t *
 void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page)
 {
   //debug(A_MEMORY, "mapKernelPage, vpn: %zx, ppn: %zx\n", virtual_page, physical_page);
-  ArchMemoryMapping mapping = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),
-                                             virtual_page);
+  ArchMemoryMapping mapping = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), virtual_page);
   PageMapLevel4Entry* pml4 = kernel_page_map_level_4;
   assert(pml4[mapping.pml4i].present);
   PageDirPointerTableEntry *pdpt = (PageDirPointerTableEntry*) getIdentAddressOfPPN(pml4[mapping.pml4i].page_ppn);
