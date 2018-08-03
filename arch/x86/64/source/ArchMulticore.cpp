@@ -37,7 +37,7 @@ void setCLS(CoreLocalStorage* cls)
 {
         debug(A_MULTICORE, "Set CLS to %p\n", cls);
         cls->cls_ptr = cls;
-        cls->core_id = local_APIC.getID();
+        cls->core_id = (LocalAPIC::initialized ? local_APIC.getID() : 0);
         setGSBase((uint64)cls);
         setSWAPGSKernelBase((uint64)cls);
 }
