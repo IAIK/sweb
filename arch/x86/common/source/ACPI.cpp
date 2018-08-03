@@ -73,14 +73,15 @@ void initACPI()
     debug(ACPI, "RSDT address: %x\n", RSDP->RsdtAddress);
 
     RSDT* RSDT_ptr = (RSDT*)(size_t)RSDP->RsdtAddress;
-    //ACPISDTHeader* RSDT_ptr = (ACPISDTHeader*)(size_t)RSDP->RsdtAddress;
+    ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)RSDT_ptr / PAGE_SIZE);
+    assert(m.page_ppn != 0);
     assert(RSDT_ptr->h.checksumValid());
 
     size_t RSDT_entries = RSDT_ptr->numEntries();
     debug(ACPI, "RSDT entries: %zu\n", RSDT_entries);
     for(size_t i = 0; i < RSDT_entries; ++i)
     {
-            handleSDT(RSDT_ptr->getEntry(i));
+      handleSDT(RSDT_ptr->getEntry(i));
     }
 
     break;
@@ -93,14 +94,28 @@ void initACPI()
     debug(ACPI, "XSDT address: %lx\n", RSDP2->XsdtAddress);
 
     XSDT* XSDT_ptr = (XSDT*)(size_t)RSDP2->XsdtAddress;
-    //ACPISDTHeader* XSDT_ptr = (ACPISDTHeader*)(size_t)RSDP2->XsdtAddress;
+    ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
+    bool unmap_again = false;
+    if(!m.page)
+    {
+            debug(ACPI, "XSDT page %zx not present, mapping\n", (size_t)XSDT_ptr/PAGE_SIZE);
+            ArchMemory::mapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, (size_t)XSDT_ptr / PAGE_SIZE, true);
+            m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
+    }
+    assert(m.page != 0);
     assert(XSDT_ptr->h.checksumValid());
 
     size_t XSDT_entries = XSDT_ptr->numEntries();
-    debug(ACPI, "XSDT entrues: %zu\n", XSDT_entries);
+    debug(ACPI, "XSDT entries: %zu\n", XSDT_entries);
     for(size_t i = 0; i < XSDT_entries; ++i)
     {
-            handleSDT(XSDT_ptr->getEntry(i));
+      handleSDT(XSDT_ptr->getEntry(i));
+    }
+
+    if(unmap_again)
+    {
+            debug(ACPI, "Unmapping previously mapped XSDT page %zx again\n", (size_t)XSDT_ptr/PAGE_SIZE);
+            ArchMemory::unmapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, false);
     }
 
     break;
@@ -114,6 +129,18 @@ void initACPI()
 
 void handleSDT(ACPISDTHeader* entry_header)
 {
+        bool unmap_page_again = false;
+        ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+
+        if(!m.page)
+        {
+                debug(ACPI, "SDT page %zx not present, mapping\n", (size_t)entry_header/PAGE_SIZE);
+                ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true);
+                m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+                unmap_page_again = true;
+        }
+        assert(m.page && "Page for ACPI SDT not mapped");
+
         {
                 char sig[5];
                 memcpy(sig, entry_header->Signature, 4);
@@ -125,6 +152,12 @@ void handleSDT(ACPISDTHeader* entry_header)
         {
                 ACPI_MADTHeader* madt = (ACPI_MADTHeader*)entry_header;
                 madt->parse();
+        }
+
+        if(unmap_page_again)
+        {
+                debug(ACPI, "Unmapping previously mapped SDT page %zx again\n", (size_t)entry_header/PAGE_SIZE);
+                ArchMemory::unmapKernelPage((size_t)entry_header/PAGE_SIZE, false);
         }
 }
 
