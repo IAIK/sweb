@@ -5,6 +5,7 @@
 #include "Scheduler.h"
 #include "PageManager.h"
 #include "backtrace.h"
+#include "debug.h"
 
 Console* main_console;
 
@@ -42,6 +43,9 @@ void Console::handleKey(uint32 key)
 // else...
   switch (key)
   {
+    case KEY_F8:
+      debug_print_to_fb = !debug_print_to_fb;
+      break;
     case KEY_F9:
       PageManager::instance()->printBitmap();
       kprintfd("Used kernel memory: %zu\n", KernelMemoryManager::instance()->getUsedKernelMemory(true));
