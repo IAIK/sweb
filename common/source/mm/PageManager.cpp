@@ -23,6 +23,8 @@ PageManager* PageManager::instance()
   return instance_;
 }
 
+extern void* kernel_start_address;
+extern void* kernel_end_address;
 extern uint8 boot_stack[0x4000];
 
 PageManager::PageManager() : lock_("PageManager::lock_")
@@ -79,6 +81,21 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   }
 
   debug(PM, "Ctor: Marking pages used by the kernel as reserved\n");
+
+
+  size_t kernel_virt_start = (size_t)&kernel_start_address;
+  size_t kernel_virt_end = (size_t)&kernel_end_address;
+  size_t kernel_phys_start = kernel_virt_start - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET;
+  size_t kernel_phys_end = kernel_virt_end - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET;
+  debug(PM, "Ctor: kernel start addr: %zx, end addr: %zx\n", kernel_virt_start, kernel_virt_end);
+  debug(PM, "Ctor: kernel phys start addr: %zx, phys end addr: %zx\n", kernel_phys_start, kernel_phys_end);
+  for(size_t k_phys_page = kernel_phys_start / PAGE_SIZE; k_phys_page < kernel_phys_end/PAGE_SIZE; ++k_phys_page)
+  {
+          //debug(PM, "Mark page %zx as in use by kernel\n", k_phys_page);
+          Bitmap::setBit(page_usage_table, used_pages, k_phys_page);
+  }
+
+  /*
   for (size_t i = ArchMemory::RESERVED_START; i < ArchMemory::RESERVED_END; ++i)
   {
     size_t physical_page = 0;
@@ -100,6 +117,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
         Bitmap::setBit(page_usage_table, used_pages, pte_page);
     }
   }
+  */
 
   debug(PM, "Ctor: Marking GRUB loaded modules as reserved\n");
   //LastbutNotLeast: Mark Modules loaded by GRUB as reserved (i.e. pseudofs, etc)
