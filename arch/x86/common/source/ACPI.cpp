@@ -34,6 +34,7 @@ RSDPDescriptor* locateRSDP()
     ArchCommon::getUsableMemoryRegion(i, start_address, end_address, type);
     if(end_address == 0)
       end_address = 0xFFFFFFFF; // TODO: Fix this (use full 64 bit addresses for memory detection)
+    assert(start_address <= end_address);
     if((type == 2) && (end_address <= 0x100000))
     {
       RSDPDescriptor* found = checkForRSDP((char*)start_address, (char*)end_address);
@@ -58,7 +59,12 @@ void initACPI()
   assert(RSDP->checksumValid());
   ACPI_version = (RSDP->Revision == 0 ? 1 : RSDP->Revision);
   debug(ACPI, "ACPI version: %zu\n", ACPI_version);
-  debug(ACPI, "RSDP OEMID: %s\n", RSDP->OEMID);
+  {
+    char oemid[7];
+    memcpy(oemid, RSDP->OEMID, 6);
+    oemid[6] = '\0';
+    debug(ACPI, "RSDP OEMID: %s\n", oemid);
+  }
 
   switch(RSDP->Revision)
   {
