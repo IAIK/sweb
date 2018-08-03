@@ -61,7 +61,11 @@ bool Bitmap::getBit(uint8* b, size_t bit_number)
 
 bool Bitmap::unsetBit(size_t bit_number)
 {
-  assert(bit_number < size_);
+  if(bit_number >= size_)
+  {
+          kprintfd("bit number %zu < size %zu\n", bit_number, size_);
+          assert(bit_number < size_);
+  }
   return unsetBit(bitmap_, num_bits_set_, bit_number);
 }
 

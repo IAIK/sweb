@@ -64,8 +64,8 @@ class PageManager
     PageManager(PageManager const&);
 
     Bitmap* page_usage_table_;
-    uint32 number_of_pages_;
-    uint32 lowest_unreserved_page_;
+    size_t number_of_pages_;
+    size_t lowest_unreserved_page_;
 
     SpinLock lock_;
 

@@ -23,6 +23,8 @@ PageManager* PageManager::instance()
   return instance_;
 }
 
+extern uint8 boot_stack[0x4000];
+
 PageManager::PageManager() : lock_("PageManager::lock_")
 {
   assert(instance_ == 0);
@@ -40,7 +42,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   {
     pointer start_address = 0, end_address = 0, type = 0;
     ArchCommon::getUsableMemoryRegion(i, start_address, end_address, type);
-    debug(PM, "Ctor: memory region from physical 0x%zx to 0x%zx (%zu bytes) of type %zd\n",
+    debug(PM, "Ctor: memory region from physical %zx to %zx (%zu bytes) of type %zd\n",
           start_address, end_address, end_address - start_address, type);
 
     if (type == 1)
@@ -48,9 +50,13 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   }
 
   number_of_pages_ = highest_address / PAGE_SIZE;
+  debug(PM, "Num pages: %zx\n", (size_t)number_of_pages_);
 
   size_t boot_bitmap_size = Min(4096 * 8 * 2, number_of_pages_);
+  debug(PM, "Boot page usage bitmap size: %zu\n", boot_bitmap_size);
+  assert(boot_bitmap_size / 8 < sizeof(boot_stack));
   uint8 page_usage_table[BITMAP_BYTE_COUNT(boot_bitmap_size)];
+  assert((uint8*)&page_usage_table > (uint8*)&boot_stack);
   used_pages = boot_bitmap_size;
   memset(page_usage_table,0xFF,BITMAP_BYTE_COUNT(boot_bitmap_size));
 
@@ -65,8 +71,9 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     size_t end_page = end_address / PAGE_SIZE;
     debug(PM, "Ctor: usable memory region: start_page: %zx, end_page: %zx, type: %zd\n", start_page, end_page, type);
 
-    for (size_t k = Max(start_page, lowest_unreserved_page_); k < Min(end_page, number_of_pages_); ++k)
+    for (size_t k = Max(start_page, lowest_unreserved_page_); k < Min(end_page, boot_bitmap_size); ++k)
     {
+      assert(k < boot_bitmap_size);
       Bitmap::unsetBit(page_usage_table, used_pages, k);
     }
   }
@@ -98,8 +105,9 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   //LastbutNotLeast: Mark Modules loaded by GRUB as reserved (i.e. pseudofs, etc)
   for (size_t i = 0; i < ArchCommon::getNumModules(); ++i)
   {
-    size_t start_page = (ArchCommon::getModuleStartAddress(i) & 0x7FFFFFFF) / PAGE_SIZE;
-    size_t end_page = (ArchCommon::getModuleEndAddress(i) & 0x7FFFFFFF) / PAGE_SIZE;
+    debug(PM, "Ctor: module: start addr: %zx, end addr: %zx\n", ArchCommon::getModuleStartAddress(i), ArchCommon::getModuleEndAddress(i));
+    size_t start_page = (ArchCommon::getModuleStartAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET) / PAGE_SIZE;
+    size_t end_page = (ArchCommon::getModuleEndAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET) / PAGE_SIZE;
     debug(PM, "Ctor: module: start_page: %zx, end_page: %zx\n", start_page, end_page);
     for (size_t k = Min(start_page, number_of_pages_); k <= Min(end_page, number_of_pages_ - 1); ++k)
     {
@@ -111,6 +119,9 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     }
   }
   debug(PM, "Finished mapping modules\n");
+
+  debug(PM, "Before kernel heap allocation: used pages: %zx, num pages: %zx\n", used_pages, (size_t)number_of_pages_);
+  assert(used_pages < number_of_pages_);
 
   size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
   assert(used_pages < number_of_pages_/2 && "No space for kernel heap!");
@@ -135,9 +146,21 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       free_page++;
     }
 
-    if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn, 0, 0)) == 0)
+    size_t physical_page = 0;
+    size_t pte_page = 0;
+    if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(start_vpn, &physical_page, &pte_page)) == 0)
     {
-      ArchMemory::mapKernelPage(start_vpn,free_page++);
+      // TODO: Not architecture independent
+      ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), start_vpn);
+      if(m.pt_ppn != 0)
+      {
+              ArchMemory::mapKernelPage(start_vpn,free_page++);
+      }
+      else
+      {
+              debug(PM, "No PT present at %zx, abort heap mapping\n", start_vpn);
+              break;
+      }
     }
     start_vpn++;
   }
@@ -162,10 +185,10 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       break;
     }
   }
-  debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %u\n", page_usage_table_->getNumFreeBits(),
-        page_usage_table_->getNumBitsSet(), number_of_pages_);
+  debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %zu\n", page_usage_table_->getNumFreeBits(), page_usage_table_->getNumBitsSet(), number_of_pages_);
   assert(lowest_unreserved_page_ < number_of_pages_);
   KernelMemoryManager::pm_ready_ = 1;
+  debug(PM, "PM ctor finished\n");
 }
 
 uint32 PageManager::getTotalNumPages() const
