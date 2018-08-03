@@ -200,6 +200,7 @@ Console* ArchCommon::createConsole(size_t count)
     return new TextConsole(count);
 }
 
+void puts(const char* string);
 
 #if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
 #define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
@@ -226,10 +227,13 @@ extern "C" void entry64()
   initialisePaging();
   PRINT("Setting CR3 Register...\n");
   asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure())));
+  kprintf("Paging initialized\n");
   PRINT("Switch to our own stack...\n");
+  kprintf("Switch to our own stack...\n");
   asm("mov %[stack], %%rsp\n"
       "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
   PRINT("Loading Long Mode Segments...\n");
+  kprintf("Loading Long Mode Segments...\n");
 
   gdt_ptr.limit = sizeof(gdt) - 1;
   gdt_ptr.addr = (uint64)gdt;
@@ -242,6 +246,7 @@ extern "C" void entry64()
       : : "a"(KERNEL_DS));
   asm("ltr %%ax" : : "a"(KERNEL_TSS));
   PRINT("Calling startup()...\n");
+  kprintf("Calling startup()...\n");
   asm("jmp *%[startup]" : : [startup]"r"(startup));
   while (1);
 }

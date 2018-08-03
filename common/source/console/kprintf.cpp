@@ -4,6 +4,7 @@
 #include "Terminal.h"
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
+#include "ArchCommon.h"
 #include "RingBuffer.h"
 #include "Scheduler.h"
 #include "assert.h"
@@ -46,25 +47,100 @@ class KprintfFlushingThread : public Thread
     }
 };
 
+static uint8 fb_row = 0;
+static uint8 fb_col = 0;
+static bool kprintf_initialized = false;
+
+static void setFBrow(uint8 row)
+{
+        fb_row = row;
+}
+static void setFBcol(uint8 col)
+{
+        fb_col = col;
+}
+static uint8 getFBrow()
+{
+        return fb_row;
+}
+static uint8 getFBcol()
+{
+        return fb_col;
+}
+static uint8 getNextFBrow()
+{
+        return (getFBrow() == 24 ? 0 : getFBrow() + 1);
+}
+
+static char* getFBAddr(uint8 row, uint8 col)
+{
+        return (char*)ArchCommon::getFBPtr() + ((row*80 + col) * 2);
+}
+
+static void clearFBrow(uint8 row)
+{
+        memset(getFBAddr(row, 0), 0, 80 * 2);
+}
+
+static void FBnewline()
+{
+        uint8 next_row = getNextFBrow();
+        clearFBrow(next_row);
+        setFBrow(next_row);
+        setFBcol(0);
+}
+
+static void putc(const char c)
+{
+        if(c == '\n')
+        {
+                FBnewline();
+        }
+        else
+        {
+                if(getFBcol() == 80)
+                {
+                        FBnewline();
+                }
+
+                uint32 row = getFBrow();
+                uint32 col = getFBcol();
+
+                char* fb_pos = getFBAddr(row, col);
+                fb_pos[0] = c;
+                fb_pos[1] = 0x02;
+
+                setFBcol(getFBcol() + 1);
+        }
+}
+
 void kprintf_init()
 {
   nosleep_rb_ = new RingBuffer<char>(1024);
   debug(KPRINTF, "Adding Important kprintf Flush Thread\n");
   flush_thread_ = new KprintfFlushingThread();
   Scheduler::instance()->addNewThread(flush_thread_);
+  kprintf_initialized = true;
 }
 
 void kprintf_func(int ch, void *arg __attribute__((unused)))
 {
-  //check if atomar or not in current context
-  if ((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
-      || (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+  if(kprintf_initialized)
   {
-    main_console->getActiveTerminal()->write(ch);
+    //check if atomar or not in current context
+    if ((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
+        || (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+    {
+      main_console->getActiveTerminal()->write(ch);
+    }
+    else
+    {
+      nosleep_rb_->put(ch);
+    }
   }
   else
   {
-    nosleep_rb_->put(ch);
+    putc(ch); // Used while booting
   }
 }
 
