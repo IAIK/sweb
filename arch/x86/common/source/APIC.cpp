@@ -44,52 +44,23 @@ void LocalAPIC::sendEOI(size_t num)
 
 void LocalAPIC::mapAt(size_t addr)
 {
+  assert(addr);
   assert(initialized);
 
   debug(APIC, "Map local APIC at phys %p to %zx\n", reg_paddr_, addr);
-  auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), addr/PAGE_SIZE);
-  if(m.pml4[m.pml4i].present)
-  {
-    debug(APIC, "PML4i %zx present, ppn: %zx\n", m.pml4i, m.pml4[m.pml4i].page_ppn);
-    if(m.pdpt[m.pdpti].pd.present)
-    {
-      debug(APIC, "PDPTI %zx present, ppn: %zx\n", m.pdpti, m.pdpt[m.pdpti].pd.page_ppn);
-      if(m.pd[m.pdi].pt.present)
-      {
-        debug(APIC, "PDI %zx present, ppn: %zx\n", m.pdi, m.pd[m.pdi].pt.page_ppn);
-        if(m.pt[m.pti].present)
-        {
-          debug(APIC, "PTI %zx present, ppn: %zx\n", m.pti, m.pt[m.pti].page_ppn);
-        }
-      }
-      else
-      {
-        size_t pt_ppn = PageManager::instance()->allocPPN();
-        m.pd[m.pdi].pt.page_ppn = pt_ppn;
-        m.pd[m.pdi].pt.writeable = 1;
-        m.pd[m.pdi].pt.present = 1;
-        m.pt = (PageTableEntry*)ArchMemory::getIdentAddressOfPPN(pt_ppn);
-        debug(APIC, "Mapped PDI %zx to ppn: %zx\n", m.pdi, pt_ppn);
-      }
-    }
-  }
 
-  ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE);
-  auto m2 = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), addr/PAGE_SIZE);
-  assert(m2.pt);
-  m2.pt[m2.pti].write_through = 1;
-  m2.pt[m2.pti].cache_disabled = 1;
+  ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
   reg_vaddr_ = (LocalAPICRegisters*)addr;
 }
 
 
 void LocalAPIC::enable(bool enable)
 {
-        debug(APIC, "%s APIC\n", (enable ? "Enabling" : "Disabling"));
-        uint32* ptr = (uint32*)&reg_vaddr_->s_int_vect;
-        uint32 temp = *ptr;
-        ((LocalAPIC_SpuriousInterruptVector*)&temp)->enable = (enable ? 1 : 0);
-        *ptr = temp;
+  debug(APIC, "%s APIC\n", (enable ? "Enabling" : "Disabling"));
+  uint32* ptr = (uint32*)&reg_vaddr_->s_int_vect;
+  uint32 temp = *ptr;
+  ((LocalAPIC_SpuriousInterruptVector*)&temp)->enable = (enable ? 1 : 0);
+  *ptr = temp;
 }
 
 void LocalAPIC::initTimer() volatile
@@ -523,38 +494,8 @@ void IOAPIC::mapAt(void* addr)
 {
   debug(APIC, "Map IOAPIC at phys %p to %p\n", reg_paddr_, addr);
   assert(addr);
-  auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)addr/PAGE_SIZE);
-  if(m.pml4[m.pml4i].present)
-  {
-    debug(APIC, "PML4i %zx present, ppn: %zx\n", m.pml4i, m.pml4[m.pml4i].page_ppn);
-    if(m.pdpt[m.pdpti].pd.present)
-    {
-      debug(APIC, "PDPTI %zx present, ppn: %zx\n", m.pdpti, m.pdpt[m.pdpti].pd.page_ppn);
-      if(m.pd[m.pdi].pt.present)
-      {
-        debug(APIC, "PDI %zx present, ppn: %zx\n", m.pdi, m.pd[m.pdi].pt.page_ppn);
-        if(m.pt[m.pti].present)
-        {
-          debug(APIC, "PTI %zx present, ppn: %zx\n", m.pti, m.pt[m.pti].page_ppn);
-        }
-      }
-      else
-      {
-        size_t pt_ppn = PageManager::instance()->allocPPN();
-        m.pd[m.pdi].pt.page_ppn = pt_ppn;
-        m.pd[m.pdi].pt.writeable = 1;
-        m.pd[m.pdi].pt.present = 1;
-        m.pt = (PageTableEntry*)ArchMemory::getIdentAddressOfPPN(pt_ppn);
-        debug(APIC, "Mapped PDI %zx to ppn: %zx\n", m.pdi, pt_ppn);
-      }
-    }
-  }
 
-  ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE);
-  auto m2 = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)addr/PAGE_SIZE);
-  assert(m2.pt);
-  m2.pt[m2.pti].write_through = 1;
-  m2.pt[m2.pti].cache_disabled = 1;
+  ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
   reg_vaddr_ = (IOAPIC_MMIORegs*)addr;
 }
 
