@@ -256,14 +256,21 @@ Stabs2DebugInfo const *kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {
+  debug(A_COMMON, "initDebug\n");
   for (size_t i = 0; i < getNumModules(); ++i)
   {
-    if (memcmp("SWEBDBG1",(char const *)getModuleStartAddress(i),8) == 0)
+    debug(A_COMMON, "Checking module from [%zx -> %zx)\n", getModuleStartAddress(i), getModuleEndAddress(i));
+    if ((getModuleStartAddress(i) < getModuleEndAddress(i)) && (memcmp("SWEBDBG1",(char const *)getModuleStartAddress(i),8) == 0))
+    {
       kernel_debug_info = new SWEBDebugInfo((char const *)getModuleStartAddress(i),
                                               (char const *)getModuleEndAddress(i));
+    }
   }
   if (!kernel_debug_info)
+  {
     kernel_debug_info = new SWEBDebugInfo(0, 0);
+  }
+  debug(A_COMMON, "initDebug done\n");
 }
 
 void ArchCommon::idle()
