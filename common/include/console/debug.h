@@ -27,8 +27,21 @@ enum AnsiColor
 #define COLOR_PARAM(flag) #flag
 #endif
 
+#define DEBUG_TO_FB 1
+
 #ifndef EXE2MINIXFS
-#define debug(flag, ...) do { if (flag & OUTPUT_ENABLED) { kprintfd(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintfd(__VA_ARGS__); } } while (0)
+  #if DEBUG_TO_FB
+    #define debug(flag, ...) do {                                                        \
+              if (flag & OUTPUT_ENABLED) {                                               \
+                kprintfd(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintfd(__VA_ARGS__); \
+                kprintf(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintf(__VA_ARGS__);   \
+              } } while (0)
+  #else
+    #define debug(flag, ...) do {                                                        \
+              if (flag & OUTPUT_ENABLED) {                                               \
+                kprintfd(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintfd(__VA_ARGS__); \
+              } } while (0)
+  #endif
 #endif
 
 //group minix
