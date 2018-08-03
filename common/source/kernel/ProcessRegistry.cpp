@@ -39,8 +39,12 @@ void ProcessRegistry::Run()
 
   KernelMemoryManager::instance()->startTracing();
 
+  debug(PROCESS_REG, "Starting user processes\n");
+  kprintf("Starting user processes\n");
   for (uint32 i = 0; progs_[i]; i++)
   {
+    debug(PROCESS_REG, "Starting %s\n", progs_[i]);
+    kprintf("Starting %s\n", progs_[i]);
     createProcess(progs_[i]);
   }
 
@@ -51,6 +55,7 @@ void ProcessRegistry::Run()
 
   counter_lock_.release();
 
+  kprintf("All processes terminated\n");
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
   VfsSyscall::umount("/usr", 0);
