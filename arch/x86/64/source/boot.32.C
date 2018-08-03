@@ -4,14 +4,14 @@ asm volatile(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "types.h"
 #include "offsets.h"
 #include "multiboot.h"
+#include "print.32.h"
 
 #if A_BOOT == A_BOOT | OUTPUT_ENABLED
-#define PRINT(X) print(TRUNCATE(X)); puts(TRUNCATE(X))
+#define PRINT(X) print(TRUNCATE(X))
 #else
 #define PRINT(X)
 #endif
 
-#define TRUNCATE(X) ({ volatile unsigned int x = (unsigned int)(((char*)X)+0x7FFFFFFF); (char*)(x+1); })
 
 #define MULTIBOOT_PAGE_ALIGN (1<<0)
 #define MULTIBOOT_MEMORY_INFO (1<<1)
@@ -24,6 +24,8 @@ extern uint32 bss_start_address;
 extern uint32 bss_end_address;
 extern uint8 boot_stack[];
 extern PageMapLevel4Entry kernel_page_map_level_4[];
+extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
+extern PageDirEntry kernel_page_directory[];
 
 extern uint32 tss_selector;
 
@@ -58,17 +60,14 @@ __attribute__((section (".mboot"))) static const multiboot_header mboot =
         .depth = 16,
 };
 
-void print(const char* p)
+static void writeLine2Bochs(const char* p)
 {
-  while (*p)
-    asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
+        while (*p)
+        {
+                asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
+        }
 }
 
-static void memset(char* block, char c, size_t length)
-{
-  for (size_t i = 0; i < length; ++i)
-    block[i] = c;
-}
 
 void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH)
 {
@@ -95,106 +94,40 @@ static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint3
   gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
-uint8 fb_row = 0;
-uint8 fb_col = 0;
-
-static void setFBrow(uint8 row)
+static void print(const char* p)
 {
-        *(uint8*)TRUNCATE(&fb_row) = row;
-}
-static void setFBcol(uint8 col)
-{
-        *(uint8*)TRUNCATE(&fb_col) = col;
+        writeLine2Bochs(p);
+        puts(p);
 }
 
-static uint8 getFBrow()
-{
-        return *(uint8*)TRUNCATE(&fb_row);
-}
-static uint8 getFBcol()
-{
-        return *(uint8*)TRUNCATE(&fb_col);
-}
-
-static uint8 getNextFBrow()
-{
-        return (getFBrow() == 24 ? 0 : getFBrow() + 1);
-}
-
-static void clearFB()
-{
-        print(TRUNCATE("Clearing Framebuffer...\n"));
-        memset((char*) 0xB8000, 0, 80 * 25 * 2);
-        setFBrow(0);
-        setFBcol(0);
-}
-
-static char* getFBAddr(uint8 row, uint8 col)
-{
-        return (char*)0xB8000 + ((row*80 + col) * 2);
-}
-
-static void clearFBrow(uint8 row)
-{
-        memset(getFBAddr(row, 0), 0, 80 * 2);
-}
-
-static void FBnewline()
-{
-        print(TRUNCATE("FB newline\n"));
-        uint8 next_row = getNextFBrow();
-        clearFBrow(next_row);
-        setFBrow(next_row);
-        setFBcol(0);
-}
-
-static void putc(const char c)
-{
-        if(c == '\n')
-        {
-                FBnewline();
-        }
-        else
-        {
-                if(getFBcol() == 80)
-                {
-                        FBnewline();
-                }
-
-                uint32 row = getFBrow();
-                uint32 col = getFBcol();
-
-                char* fb_pos = getFBAddr(row, col);
-                fb_pos[0] = c;
-                fb_pos[1] = 0x02;
-
-                setFBcol(getFBcol() + 1);
-        }
-}
-
-static void puts(const char* string)
-{
-        while(*string != '\0')
-        {
-                putc(*string);
-                ++string;
-        }
-}
-
-
-
+extern multiboot_info_t* multi_boot_structure_pointer;
 
 extern "C" void entry()
 {
   asm volatile("mov %ebx,multi_boot_structure_pointer - BASE");
   PRINT("Booting...\n");
+  PRINT("Clearing Framebuffer...\n");
   clearFB();
 
   PRINT("Clearing BSS...\n");
   char* bss_start = TRUNCATE(&bss_start_address);
   memset(bss_start, 0, TRUNCATE(&bss_end_address) - bss_start);
 
+
+  puts(TRUNCATE("Multiboot structure pointer: "));
+  putHex32(*(uint32*)TRUNCATE(&multi_boot_structure_pointer));
+  putc('\n');
+
   PRINT("Initializing Kernel Paging Structures...\n");
+  puts(TRUNCATE("Kernel PML4: "));
+  putHex32((uint32)TRUNCATE(&kernel_page_map_level_4));
+  putc('\n');
+  puts(TRUNCATE("Kernel PDPT: "));
+  putHex32((uint32)TRUNCATE(&kernel_page_directory_pointer_table));
+  putc('\n');
+  puts(TRUNCATE("Kernel PD: "));
+  putHex32((uint32)TRUNCATE(&kernel_page_directory));
+  putc('\n');
   asm volatile("movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n"
       "movl $0, kernel_page_map_level_4 - BASE + 4\n");
   asm volatile("movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
@@ -216,6 +149,7 @@ extern "C" void entry()
       "or $0x900,%eax\n"
       "wrmsr\n");
 
+  PRINT("Clear flags...\n");
   asm volatile("push $2\n"
       "popf\n");
 
@@ -232,19 +166,38 @@ extern "C" void entry()
   g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
 
   PRINT("Setup Segments...\n");
-  setSegmentDescriptor(1, 0, 0, 0, 0, 1, 0);
-  setSegmentDescriptor(2, 0, 0, 0, 0, 0, 0);
-  setSegmentDescriptor(3, 0, 0, 0, 3, 1, 0);
-  setSegmentDescriptor(4, 0, 0, 0, 3, 0, 0);
+  setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0);
+  setSegmentDescriptor(2, 0, 0, 0xFFFFFFFF, 0, 0, 0);
+  setSegmentDescriptor(3, 0, 0, 0xFFFFFFFF, 3, 1, 0);
+  setSegmentDescriptor(4, 0, 0, 0xFFFFFFFF, 3, 0, 0);
   setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
 
   PRINT("Loading Long Mode GDT...\n");
-
   struct GDT32Ptr gdt32_ptr;
   gdt32_ptr.limit = sizeof(gdt) - 1;
   gdt32_ptr.addr = (uint32) TRUNCATE(gdt);
+  puts(TRUNCATE("GDT addr: "));
+  putHex32(gdt32_ptr.addr);
+  putc('\n');
+
+  puts(TRUNCATE("GDT[KERNEL_DS] addr: "));
+  putHex32(gdt32_ptr.addr + (KERNEL_DS >> 3)*(sizeof(SegmentDescriptor)/2));
+  putc('\n');
+
   asm volatile("lgdt %[gdt_ptr]" : : [gdt_ptr]"m"(gdt32_ptr));
-  asm volatile("mov %%ax, %%ds\n" : : "a"(KERNEL_DS));
+
+  puts(TRUNCATE("Kernel data segment selector: "));
+  putHex8(KERNEL_DS);
+  putc('\n');
+
+  puts(TRUNCATE("GDT["));
+  putHex8(KERNEL_DS);
+
+  for(uint8 i = 1; i <= sizeof(SegmentDescriptor); ++i)
+  {
+          putHex8(*((char*)((SegmentDescriptor*)TRUNCATE(gdt) + ((KERNEL_DS >> 3)/2) + 1) - i));
+  }
+  putc('\n');
 
   PRINT("Setting Long Mode Segment Selectors...\n");
   asm volatile("mov %%ax, %%ds\n"

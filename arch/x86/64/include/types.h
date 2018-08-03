@@ -45,11 +45,13 @@ typedef struct
 {
     uint16 limitL;
     uint16 baseLL;
+
     uint8 baseLM;
     uint8 typeL;
     uint8 limitH :4;
     uint8 typeH :4;
     uint8 baseLH;
+
     uint32 baseH;
     uint32 reserved;
 }__attribute__((__packed__)) SegmentDescriptor;
