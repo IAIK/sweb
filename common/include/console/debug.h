@@ -76,6 +76,7 @@ const size_t DRIVER             = Ansi_Yellow;
 const size_t ATA_DRIVER         = Ansi_Yellow;
 const size_t IDE_DRIVER         = Ansi_Yellow;
 const size_t MMC_DRIVER         = Ansi_Yellow;
+const size_t RAMDISK            = Ansi_Yellow;
 
 //group arch
 const size_t A_BOOT             = Ansi_Yellow | OUTPUT_ENABLED;

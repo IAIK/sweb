@@ -13,8 +13,7 @@ class BDRequest;
 class BDVirtualDevice
 {
   public:
-    BDVirtualDevice(BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name,
-                    bool writable);
+    BDVirtualDevice(BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name, bool writable);
 
     void addRequest(BDRequest *command);
 
