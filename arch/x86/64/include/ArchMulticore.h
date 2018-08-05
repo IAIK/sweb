@@ -4,17 +4,27 @@
 
 struct CoreLocalStorage
 {
-        CoreLocalStorage* cls_ptr;
-        size_t core_id;
-        SegmentDescriptor gdt[7];
-        TSS tss;
+  CoreLocalStorage* cls_ptr;
+  size_t core_id;
+  SegmentDescriptor gdt[7];
+  TSS tss;
 };
 
-void setCLS(CoreLocalStorage* cls);
+class ArchMulticore
+{
+  public:
 
-CoreLocalStorage* getCLS();
+    static void initialize();
 
-CoreLocalStorage* initCLS();
+    static void startOtherCPUs();
 
+    static CoreLocalStorage* initCLS();
+    static void setCLS(CoreLocalStorage* cls);
+    static CoreLocalStorage* getCLS();
 
-size_t getCoreID();
+    static size_t getCoreID();
+
+    static void initCore();
+
+  private:
+};

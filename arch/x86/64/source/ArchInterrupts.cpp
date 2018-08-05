@@ -32,13 +32,6 @@ void ArchInterrupts::initialise()
 
 
   PIC8259::initialise8259s();
-
-  CoreLocalStorage* cls = initCLS();
-  if(LocalAPIC::initialized)
-  {
-          debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", cls, getCoreID());
-          //local_APIC.startAPs();
-  }
 }
 
 void ArchInterrupts::enableTimer()

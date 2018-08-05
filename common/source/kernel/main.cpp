@@ -30,6 +30,7 @@
 #include "outerrstream.h"
 #include "user_progs.h"
 #include "RamDiskDriver.h"
+#include "ArchMulticore.h"
 
 
 #include "ACPI.h"
@@ -83,6 +84,9 @@ extern "C" void startup()
   ArchThreads::initialise();
   debug(MAIN, "Interupts init\n");
   ArchInterrupts::initialise();
+
+  debug(MAIN, "Multicore init\n");
+  ArchMulticore::initialize();
 
   debug(MAIN, "Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();
@@ -155,12 +159,6 @@ extern "C" void startup()
   system_state = RUNNING;
 
   ArchInterrupts::enableInterrupts();
-
-  while(1)
-  {
-          debug(MAIN, "BSP halting\n");
-          ArchCommon::idle();
-  }
 
   Scheduler::instance()->yield();
   //not reached
