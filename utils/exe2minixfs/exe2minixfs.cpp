@@ -19,23 +19,23 @@ VfsMount vfs_dummy_;
 
 typedef struct fdisk_partition
 {
-        uint8 bootid; // bootable?  0=no, 128=yes
-        uint8 beghead;
-        uint8 begcyl;
-        uint8 begsect;
-        uint8 systid; // Operating System type indicator code
-        uint8 endhead;
-        uint8 endcyl;
-        uint8 endsect;
-        uint32 relsect; // first sector relative to start of disk
-        uint32 numsect; // number of sectors in partition
+  uint8 bootid; // bootable?  0=no, 128=yes
+  uint8 beghead;
+  uint8 begcyl;
+  uint8 begsect;
+  uint8 systid; // Operating System type indicator code
+  uint8 endhead;
+  uint8 endcyl;
+  uint8 endsect;
+  uint32 relsect; // first sector relative to start of disk
+  uint32 numsect; // number of sectors in partition
 } FP;
 
 typedef struct master_boot_record
 {
-        uint8 bootinst[446]; // GRUB space
-        uint8 parts[4 * sizeof(FP)];
-        uint16 signature; // set to 0xAA55 for PC MBR
+  uint8 bootinst[446]; // GRUB space
+  uint8 parts[4 * sizeof(FP)];
+  uint16 signature; // set to 0xAA55 for PC MBR
 } MBR;
 
 FileSystemInfo* getcwd() { return default_working_dir; }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
   if (argc < 3 || argc % 2 == 0)
   {
     printf("Syntax: %s <filename of minixfs-formatted image> <partition number> [file1-src file1-dest [file2-src file2-dest [....]]]\n",
-        argv[0]);
+           argv[0]);
     return -1;
   }
 
@@ -74,65 +74,62 @@ int main(int argc, char *argv[])
     printf("partition has to be a number!\n");
     return -1;
   }
-  if((partition < 1) || (4 < partition))
+  if(partition > 4)
   {
     fclose(image_fd);
-    printf("Partition number has to be in range [1-4]\n");
+    printf("Partition number has to be either 0 (use whole device/file) or in range [1-4]\n");
     return -1;
   }
 
-  MBR image_mbr;
+  size_t part_byte_offset = 0;
 
-  fseek(image_fd, 0, SEEK_SET);
-  size_t mbr_read_count =  fread(&image_mbr, sizeof(image_mbr), 1, image_fd);
-  if(mbr_read_count != 1)
+  if(partition != 0)
   {
-          if(ferror(image_fd))
-          {
-                  printf("Error while reading MBR from %s\n", argv[1]);
-          }
-          if(feof(image_fd))
-          {
-                  printf("%s EOF reached while reading MBR\n", argv[1]);
-          }
-          printf("exe2minixfs was not able to read the disk image MBR\n");
-          fclose(image_fd);
-          return -1;
-  }
 
-  if(image_mbr.signature != 0xAA55)
+    MBR image_mbr;
+
+    fseek(image_fd, 0, SEEK_SET);
+    size_t mbr_read_count =  fread(&image_mbr, sizeof(image_mbr), 1, image_fd);
+    if(mbr_read_count != 1)
+    {
+      if(ferror(image_fd))
+      {
+        printf("Error while reading MBR from %s\n", argv[1]);
+      }
+      if(feof(image_fd))
+      {
+        printf("%s EOF reached while reading MBR\n", argv[1]);
+      }
+      printf("exe2minixfs was not able to read the disk image MBR\n");
+      fclose(image_fd);
+      return -1;
+    }
+
+    if(image_mbr.signature != 0xAA55)
+    {
+      printf("exe2minixfs: Warning, disk MBR not marked as valid boot sector\n");
+    }
+
+    FP* part_table = (FP*)&image_mbr.parts;
+
+    if(part_table[partition - 1].systid == 0)
+    {
+      printf("No partition %zu on image\n", partition);
+      fclose(image_fd);
+      return -1;
+    }
+
+    if(part_table[partition - 1].systid != 0x81)
+    {
+      printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
+    }
+
+    part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
+  }
+  else
   {
-          printf("exe2minixfs: Warning, disk MBR not marked as valid boot sector\n");
+    part_byte_offset = 0;
   }
-
-  FP* part_table = (FP*)&image_mbr.parts;
-  /*
-  for(size_t i = 0; i < 4; ++i)
-  {
-          printf("Partition %zu, sectors [%u -> %u), bytes [%zu -> %zu), type: %x, bootable: %u\n",
-                 i + 1,
-                 part_table[i].relsect,
-                 part_table[i].relsect + part_table[i].numsect,
-                 (size_t)part_table[i].relsect * 512,
-                 (size_t)(part_table[i].relsect + part_table[i].numsect) * 512,
-                 part_table[i].systid,
-                 part_table[i].bootid != 0);
-  }
-  */
-
-  if(part_table[partition - 1].systid == 0)
-  {
-          printf("No partition %zu on image\n", partition);
-          fclose(image_fd);
-          return -1;
-  }
-
-  if(part_table[partition - 1].systid != 0x81)
-  {
-          printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
-  }
-
-  size_t part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
 
   superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, part_byte_offset);
   //printf("exe2minxfs: Created superblock\n");
@@ -174,14 +171,14 @@ int main(int argc, char *argv[])
     size_t next_slash = pathname.find('/');
     while(next_slash != ustl::string::npos)
     {
-            //printf("pathname: %s, next slash at: %zu\n", pathname.c_str(), next_slash);
-            if(next_slash != 0)
-            {
-                    ustl::string dir_path(pathname.substr(0, next_slash));
-                    //printf("Attempting to create path %s\n", dir_path.c_str());
-                    VfsSyscall::mkdir(dir_path.c_str(), 0);
-            }
-            next_slash = pathname.find('/', next_slash + 1); // TODO: Proper normalization required. This will fail for edge cases
+      //printf("pathname: %s, next slash at: %zu\n", pathname.c_str(), next_slash);
+      if(next_slash != 0)
+      {
+        ustl::string dir_path(pathname.substr(0, next_slash));
+        //printf("Attempting to create path %s\n", dir_path.c_str());
+        VfsSyscall::mkdir(dir_path.c_str(), 0);
+      }
+      next_slash = pathname.find('/', next_slash + 1); // TODO: Proper normalization required. This will fail for edge cases
     }
 
     int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
