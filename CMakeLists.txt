@@ -183,14 +183,15 @@ add_custom_target (hdd_image ALL
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs
+    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs sweb_initrd
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
     #COMMAND ./mkminixfs SWEB-flat.vmdk 1
     COMMAND ./exe2minixfs SWEB-flat.vmdk 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
-                                               ./kernel.x boot/kernel.x
-                                               ./kernel.dbg boot/kernel.dbg
+                                           ./kernel.x boot/kernel.x
+                                           ./kernel.dbg boot/kernel.dbg
+                                           ./sweb_initrd boot/initrd
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying kernel files to image..."
 )
@@ -203,6 +204,14 @@ add_custom_target (kernel_image
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 )
 
+add_custom_target (sweb_initrd
+  DEPENDS mkminixfs exe2minixfs
+  COMMAND dd if=/dev/zero of=sweb_initrd bs=512 count=512
+  COMMAND ./mkminixfs -d sweb_initrd
+  COMMAND ./exe2minixfs sweb_initrd 0 ${CMAKE_SOURCE_DIR}/README.md README.md
+  )
+
+
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
@@ -211,6 +220,7 @@ add_custom_target (userspace_to_image
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
     COMMAND ./mkminixfs -d SWEB-flat.vmdk -p 2
     COMMAND ./exe2minixfs SWEB-flat.vmdk 2 ${MINIXFS_ARGUMENT}
+    COMMAND ./exe2minixfs sweb_initrd 0 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
 )

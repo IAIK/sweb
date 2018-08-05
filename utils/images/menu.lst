@@ -5,6 +5,7 @@ title = Sweb
 root (hd0,0)
 kernel = /boot/kernel.x
 modulenounzip = /boot/kernel.dbg
+modulenounzip = /boot/initrd
 
 title = Sweb - SVGA - 640x480x16
 root (hd0,0)
