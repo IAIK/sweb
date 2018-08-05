@@ -29,6 +29,7 @@
 #include "Terminal.h"
 #include "outerrstream.h"
 #include "user_progs.h"
+#include "RamDiskDriver.h"
 
 
 #include "ACPI.h"
@@ -99,6 +100,21 @@ extern "C" void startup()
   debug(MAIN, "Block Device creation\n");
   BDManager::getInstance()->doDeviceDetection();
   debug(MAIN, "Block Device done\n");
+
+  debug(MAIN, "Initialize initrd\n");
+  for(size_t i = 0; i < ArchCommon::getNumModules(); ++i)
+  {
+          debug(MAIN, "Module %s [%zx, %zx)\n", ArchCommon::getModuleName(i), ArchCommon::getModuleStartAddress(i), ArchCommon::getModuleEndAddress(i));
+          if(strcmp(ArchCommon::getModuleName(i), "/boot/initrd") == 0)
+          {
+                  size_t initrd_size = ArchCommon::getModuleEndAddress(i) - ArchCommon::getModuleStartAddress(i);
+                  debug(MAIN, "Found initrd module %s at [%zx, %zx), size: %zx\n", ArchCommon::getModuleName(i), ArchCommon::getModuleStartAddress(i), ArchCommon::getModuleEndAddress(i), initrd_size);
+                  BDVirtualDevice* initrd_dev = new BDVirtualDevice(new RamDiskDriver((void*)ArchCommon::getModuleStartAddress(i), initrd_size), 0, initrd_size, 1, "initrd", 1);
+                  initrd_dev->setPartitionType(0x81);
+                  BDManager::getInstance()->addVirtualDevice(initrd_dev);
+                  break;
+          }
+  }
 
   for (BDVirtualDevice* bdvd : BDManager::getInstance()->device_list_)
   {

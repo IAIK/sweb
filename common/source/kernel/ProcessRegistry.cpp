@@ -32,15 +32,22 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "mounting userprog-partition \n");
 
-  VfsSyscall::mkdir("/usr", 0);
   debug(PROCESS_REG, "mkdir /usr\n");
-  VfsSyscall::mount("idea1", "/usr", "minixfs", 0);
-  debug(PROCESS_REG, "mount idea1\n");
+  VfsSyscall::mkdir("/usr", 0);
+
+  //debug(PROCESS_REG, "mount idea1\n");
+  //VfsSyscall::mount("idea1", "/usr", "minixfs", 0);
+
+  //debug(PROCESS_REG, "mkdir /initrd\n");
+  //VfsSyscall::mkdir("/initrd", 0);
+
+  debug(PROCESS_REG, "mount initrd to /usr\n");
+  kprintf("Mount initrd\n");
+  VfsSyscall::mount("initrd", "/usr", "minixfs", 0);
 
   KernelMemoryManager::instance()->startTracing();
 
   debug(PROCESS_REG, "Starting user processes\n");
-  kprintf("Starting user processes\n");
   for (uint32 i = 0; progs_[i]; i++)
   {
     debug(PROCESS_REG, "Starting %s\n", progs_[i]);

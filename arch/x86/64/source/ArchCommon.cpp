@@ -110,6 +110,17 @@ size_t ArchCommon::getNumModules(size_t is_paging_set_up)
   }
 }
 
+char* ArchCommon::getModuleName(size_t num, size_t is_paging_set_up)
+{
+        if (is_paging_set_up)
+                return (char*)((size_t)mbr.module_maps[num].name | PHYSICAL_TO_VIRTUAL_OFFSET);
+        else
+        {
+                struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+                return (char*)orig_mbr.module_maps[num].name;
+        }
+}
+
 size_t ArchCommon::getModuleStartAddress(size_t num,size_t is_paging_set_up)
 {
   if (is_paging_set_up)
