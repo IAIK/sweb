@@ -209,7 +209,7 @@ add_custom_target (userspace_to_image
     DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./mkminixfs SWEB-flat.vmdk 2
+    COMMAND ./mkminixfs -d SWEB-flat.vmdk -p 2
     COMMAND ./exe2minixfs SWEB-flat.vmdk 2 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."

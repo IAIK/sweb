@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #include "Dentry.h"
 #include "FileSystemInfo.h"
@@ -19,23 +21,23 @@ VfsMount vfs_dummy_;
 
 typedef struct fdisk_partition
 {
-        uint8 bootid; // bootable?  0=no, 128=yes
-        uint8 beghead;
-        uint8 begcyl;
-        uint8 begsect;
-        uint8 systid; // Operating System type indicator code
-        uint8 endhead;
-        uint8 endcyl;
-        uint8 endsect;
-        uint32 relsect; // first sector relative to start of disk
-        uint32 numsect; // number of sectors in partition
+  uint8 bootid; // bootable?  0=no, 128=yes
+  uint8 beghead;
+  uint8 begcyl;
+  uint8 begsect;
+  uint8 systid; // Operating System type indicator code
+  uint8 endhead;
+  uint8 endcyl;
+  uint8 endsect;
+  uint32 relsect; // first sector relative to start of disk
+  uint32 numsect; // number of sectors in partition
 } FP;
 
 typedef struct master_boot_record
 {
-        uint8 bootinst[446]; // GRUB space
-        uint8 parts[4 * sizeof(FP)];
-        uint16 signature; // set to 0xAA55 for PC MBR
+  uint8 bootinst[446]; // GRUB space
+  uint8 parts[4 * sizeof(FP)];
+  uint16 signature; // set to 0xAA55 for PC MBR
 } MBR;
 
 FileSystemInfo* getcwd() { return default_working_dir; }
@@ -49,88 +51,142 @@ size_t atomic_add(size_t& x,size_t y)
 
 int main(int argc, char *argv[])
 {
-  if (argc != 3)
+  int c;
+  char* device = NULL;
+  unsigned long partition = 0;
+  __attribute__((unused)) int have_partition = 0;
+  while ((c = getopt(argc, argv, "d:p:")) != -1)
+    switch (c)
+    {
+    case 'd':
+      device = optarg;
+      break;
+    case 'p':
+      partition = strtol(optarg, NULL, 10);
+      have_partition = 1;
+      break;
+    case '?':
+      if (optopt == 'd')
+        fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (isprint (optopt))
+        fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+      else
+        fprintf (stderr,
+                 "Unknown option character `\\x%x'.\n",
+                 optopt);
+      return 1;
+    default:
+      exit(-1);
+    }
+
+  if(!device)
   {
-    printf("Syntax: %s <filename of minixfs-formatted image> <partition number>\n", argv[0]);
-    return -1;
+    printf("Usage: %s -d <device> [-p partition]\n", argv[0]);
+    exit(-1);
   }
 
-  //printf("mkminixfs opening disk image %s\n", argv[1]);
-  FILE* image_fd = fopen(argv[1], "r+b");
+  if(have_partition)
+  {
+    printf("mkminixfs: device = %s, partition = %lu\n", device, partition);
+  }
+  else
+  {
+    printf("mkminixfs: device = %s\n", device);
+  }
+
+
+  printf("mkminixfs opening device %s\n", device);
+  FILE* image_fd = fopen(device, "r+b");
 
   if (image_fd == 0)
   {
-    printf("Error opening %s\n", argv[1]);
+    printf("Error opening %s\n", device);
     return -1;
   }
 
-  char* end;
-  size_t partition = strtoul(argv[2], &end, 10);
-  //printf("Partition number: %zu\n", partition);
-  if (strlen(end) != 0)
-  {
+  /*
+    char* end;
+    //size_t partition = strtoul(argv[2], &end, 10);
+    //printf("Partition number: %zu\n", partition);
+    if (strlen(end) != 0)
+    {
     fclose(image_fd);
     printf("partition has to be a number!\n");
     return -1;
-  }
-  if((partition < 1) || (4 < partition))
+    }
+  */
+  if(have_partition && ((partition < 1) || (4 < partition)))
   {
     fclose(image_fd);
     printf("Partition number has to be in range [1-4]\n");
     return -1;
   }
 
-  MBR image_mbr;
 
-  fseek(image_fd, 0, SEEK_SET);
-  size_t mbr_read_count =  fread(&image_mbr, sizeof(image_mbr), 1, image_fd);
-  if(mbr_read_count != 1)
+  size_t part_byte_offset = 0;
+  size_t part_byte_size = 0;
+
+
+  if(have_partition)
   {
-          if(ferror(image_fd))
-          {
-                  printf("Error while reading MBR from %s\n", argv[1]);
-          }
-          if(feof(image_fd))
-          {
-                  printf("%s EOF reached while reading MBR\n", argv[1]);
-          }
-          printf("mkminixfs was not able to read the disk image MBR\n");
-          fclose(image_fd);
-          return -1;
-  }
+    MBR image_mbr;
 
-  if(image_mbr.signature != 0xAA55)
+    fseek(image_fd, 0, SEEK_SET);
+    size_t mbr_read_count =  fread(&image_mbr, sizeof(image_mbr), 1, image_fd);
+    if(mbr_read_count != 1)
+    {
+      if(ferror(image_fd))
+      {
+        printf("Error while reading MBR from %s\n", argv[1]);
+      }
+      if(feof(image_fd))
+      {
+        printf("%s EOF reached while reading MBR\n", argv[1]);
+      }
+      printf("mkminixfs was not able to read the disk image MBR\n");
+      fclose(image_fd);
+      return -1;
+    }
+
+    if(image_mbr.signature != 0xAA55)
+    {
+      printf("mkminixfs: Warning, disk MBR not marked as valid boot sector\n");
+    }
+
+    FP* part_table = (FP*)&image_mbr.parts;
+    for(size_t i = 0; i < 4; ++i)
+    {
+      printf("Partition %zu, sectors [%u -> %u), bytes [%zu -> %zu), type: %x, bootable: %u\n",
+             i + 1,
+             part_table[i].relsect,
+             part_table[i].relsect + part_table[i].numsect,
+             (size_t)part_table[i].relsect * 512,
+             (size_t)(part_table[i].relsect + part_table[i].numsect) * 512,
+             part_table[i].systid,
+             part_table[i].bootid != 0);
+    }
+
+    if(part_table[partition - 1].systid == 0)
+    {
+      printf("No partition %lu on image\n", partition);
+      fclose(image_fd);
+      return -1;
+    }
+
+    if(part_table[partition - 1].systid != 0x81)
+    {
+      printf("mkminixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
+    }
+
+    part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
+    part_byte_size = (size_t)part_table[partition - 1].numsect * 512;
+  }
+  else
   {
-          printf("mkminixfs: Warning, disk MBR not marked as valid boot sector\n");
+    fseek(image_fd, 0, SEEK_END);
+    part_byte_size = ftell(image_fd);
+    part_byte_offset = 0;
   }
-
-  FP* part_table = (FP*)&image_mbr.parts;
-  for(size_t i = 0; i < 4; ++i)
-  {
-          printf("Partition %zu, sectors [%u -> %u), bytes [%zu -> %zu), type: %x, bootable: %u\n",
-                 i + 1,
-                 part_table[i].relsect,
-                 part_table[i].relsect + part_table[i].numsect,
-                 (size_t)part_table[i].relsect * 512,
-                 (size_t)(part_table[i].relsect + part_table[i].numsect) * 512,
-                 part_table[i].systid,
-                 part_table[i].bootid != 0);
-  }
-
-  if(part_table[partition - 1].systid == 0)
-  {
-          printf("No partition %zu on image\n", partition);
-          fclose(image_fd);
-          return -1;
-  }
-
-  if(part_table[partition - 1].systid != 0x81)
-  {
-          printf("mkminixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
-  }
-
-  size_t part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
-  size_t part_byte_size = (size_t)part_table[partition - 1].numsect * 512;
 
   size_t num_blocks = part_byte_size / BLOCK_SIZE;
   printf("mkminixfs: num 1024 byte blocks in partition: %zu\n", num_blocks);
@@ -140,7 +196,7 @@ int main(int argc, char *argv[])
   memset(null_block, 0, sizeof(null_block));
   for(size_t i = 0; i < part_byte_size; i += sizeof(null_block))
   {
-          assert(fwrite(null_block, sizeof(null_block), 1, image_fd) == 1);
+    assert(fwrite(null_block, sizeof(null_block), 1, image_fd) == 1);
   }
 
   size_t num_remaining_blocks = num_blocks - 2;
@@ -187,7 +243,15 @@ int main(int argc, char *argv[])
   MinixFSInode::MinixFSInodeOnDiskDataV3 inode_tbl[2]{};
   inode_tbl[0].i_mode = 0x41ed; // directory, user: RWX, group: R-X, others: R-X
   assert(fwrite(&inode_tbl, sizeof(inode_tbl), 1, image_fd) == 1);
-  printf("Created minixfs v3 file system on partition %zu\n", partition);
+
+  if(have_partition)
+  {
+    printf("Created minixfs v3 file system on device: %s, partition: %lu\n", device, partition);
+  }
+  else
+  {
+    printf("Created minixfs v3 file system on device: %s\n", device);
+  }
 
   fclose(image_fd);
   return 0;
