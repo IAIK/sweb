@@ -102,57 +102,44 @@ extern SegmentDescriptor ap_gdt32[7];
 extern uint32 ap_kernel_cr3;
 extern char ap_pml4[PAGE_SIZE];
 
+void ArchMulticore::prepareAPStartup(size_t entry_addr)
+{
+  size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
+  debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
+
+  debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, (size_t)VIRTUAL_TO_PHYSICAL_BOOT(entry_addr));
+
+  pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
+  auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
+  assert(m.page); // TODO: Map if not present
+  assert(m.page_ppn == entry_addr/PAGE_SIZE);
+
+  memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
+  ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
+  ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
+
+  memcpy(&ap_pml4, &kernel_page_map_level_4, sizeof(ap_pml4));
+  ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
+
+  debug(A_MULTICORE, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n", (void*)&apstartup_text_begin, (void*)&apstartup_text_end, (void*)paddr0, (size_t)entry_addr, (size_t)(&apstartup_text_end - &apstartup_text_begin));
+  memcpy((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size);
+}
+
 void ArchMulticore::startOtherCPUs()
 {
   if(LocalAPIC::initialized)
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
-    size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
-    debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
+    prepareAPStartup(AP_STARTUP_PADDR);
 
-    pointer apstartup_phys = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(AP_STARTUP_PADDR);
-    debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, apstartup_phys);
-    pointer paddr0 = ArchMemory::getIdentAddress(AP_STARTUP_PADDR);
-
-    auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
-    debug(A_MULTICORE, "paddr0 ppn: %zx\n", m.page_ppn);
-    assert(m.page); // TODO: Map if not present
-    assert(m.page_ppn == AP_STARTUP_PADDR/PAGE_SIZE);
-
-    debug(A_MULTICORE, "AP GDT32: %p, size: %zx\n", &ap_gdt32, sizeof(ap_gdt32));
-    memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
-
-
-    debug(A_MULTICORE, "AP GDT32 PTR: %p\n", &ap_gdt32_ptr);
-    ap_gdt32_ptr.addr = AP_STARTUP_PADDR + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
-    ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
-    debug(A_MULTICORE, "AP GDT32 PTR addr: %x\n", ap_gdt32_ptr.addr);
-    debug(A_MULTICORE, "AP GDT32 PTR limit: %x\n", ap_gdt32_ptr.limit);
-
-    debug(A_MULTICORE, "AP kernel PML4: %zx\n", (size_t)&ap_pml4);
-    memcpy(&ap_pml4, &kernel_page_map_level_4, sizeof(ap_pml4));
-
-    debug(A_MULTICORE, "AP kernel &CR3: %p\n", &ap_kernel_cr3);
-    ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
-    debug(A_MULTICORE, "AP kernel CR3 set to: %x (kernel pml4 = %p)\n", ap_kernel_cr3, kernel_page_map_level_4);
-
-    debug(A_MULTICORE, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n", (void*)&apstartup_text_begin, (void*)&apstartup_text_end, (void*)paddr0, (size_t)AP_STARTUP_PADDR, (size_t)(&apstartup_text_end - &apstartup_text_begin));
-    memcpy((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size);
-    assert(memcmp((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size) == 0);
-
-    local_APIC.startAPs();
+    local_APIC.startAPs(AP_STARTUP_PADDR);
   }
   else
   {
     debug(A_MULTICORE, "No local APIC. Cannot start other CPUs\n");
   }
 }
-
-
-
-
-
 
 
 

@@ -190,9 +190,9 @@ uint32 LocalAPIC::getID() volatile
         return id.id;
 }
 
-void LocalAPIC::startAPs() volatile
+void LocalAPIC::startAPs(size_t entry_addr) volatile
 {
-        debug(A_MULTICORE, "Sending init IPI to AP local APICs, ICR low: %p, ICR high: %p\n", &reg_vaddr_->ICR_low, &reg_vaddr_->ICR_high);
+        debug(A_MULTICORE, "Sending init IPI to AP local APICs, AP entry function: %zx\n", entry_addr);
 
         LocalAPIC_InterruptCommandRegisterLow v_low{};
         v_low.vector = 0;
@@ -211,9 +211,9 @@ void LocalAPIC::startAPs() volatile
         }
         debug(A_MULTICORE, "End delay 1\n");
 
-        assert((AP_STARTUP_PADDR % PAGE_SIZE) == 0);
-        assert((AP_STARTUP_PADDR/PAGE_SIZE) <= 0xFF);
-        v_low.vector = AP_STARTUP_PADDR/PAGE_SIZE;
+        assert((entry_addr % PAGE_SIZE) == 0);
+        assert((entry_addr/PAGE_SIZE) <= 0xFF);
+        v_low.vector = entry_addr/PAGE_SIZE;
         v_low.delivery_mode = 6;
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
@@ -227,9 +227,12 @@ void LocalAPIC::startAPs() volatile
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
+        //TODO: Probably not required
+        debug(A_MULTICORE, "Start delay 3\n");
         for(size_t i = 0; i < 0xFFFFFFF; ++i)
         {
         }
+        debug(A_MULTICORE, "End delay 3\n");
 
         debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
 }

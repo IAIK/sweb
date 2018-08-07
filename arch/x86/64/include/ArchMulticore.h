@@ -10,6 +10,8 @@ struct CoreLocalStorage
   TSS tss;
 };
 
+#define AP_STARTUP_PADDR 0x0
+
 class ArchMulticore
 {
   public:
@@ -27,4 +29,5 @@ class ArchMulticore
     static void initCore();
 
   private:
+    static void prepareAPStartup(size_t entry_addr);
 };
