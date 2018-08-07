@@ -9,12 +9,12 @@
 
 extern SystemState system_state;
 
-void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
+void getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {
   asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
 }
 
-void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
+void setMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 {
   debug(A_MULTICORE, "Set MSR %x, value: %zx\n", msr, ((size_t)hi << 32) | (size_t)lo);
   asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
@@ -26,32 +26,32 @@ void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 uint64 getGSBase()
 {
   uint64 gs_base;
-  cpuGetMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
+  getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
   return gs_base;
 }
 
 void setGSBase(uint64 gs_base)
 {
-  cpuSetMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
+  setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
 }
 
 void setSWAPGSKernelBase(uint64 swapgs_base)
 {
-  cpuSetMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
+  setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
 }
 
-void ArchMulticore::setCLS(CoreLocalStorage* cls)
+void ArchMulticore::setCLS(CPULocalStorage* cls)
 {
   debug(A_MULTICORE, "Set CLS to %p\n", cls);
   cls->cls_ptr = cls;
-  cls->core_id = (LocalAPIC::initialized ? local_APIC.getID() : 0);
+  cls->cpu_id = (LocalAPIC::initialized ? local_APIC.getID() : 0);
   setGSBase((uint64)cls);
   setSWAPGSKernelBase((uint64)cls);
 }
 
-CoreLocalStorage* ArchMulticore::getCLS()
+CPULocalStorage* ArchMulticore::getCLS()
 {
-  CoreLocalStorage* cls_ptr;
+  CPULocalStorage* cls_ptr;
   assert(getGSBase() != 0); // debug only
   __asm__ __volatile__("movq %%gs:0, %%rax\n"
                        "movq %%rax, %[cls_ptr]\n"
@@ -59,23 +59,23 @@ CoreLocalStorage* ArchMulticore::getCLS()
   return cls_ptr;
 }
 
-CoreLocalStorage* ArchMulticore::initCLS()
+CPULocalStorage* ArchMulticore::initCLS()
 {
-  CoreLocalStorage* cls = new CoreLocalStorage{};
+  CPULocalStorage* cls = new CPULocalStorage{};
   setCLS(cls);
   return getCLS();
 }
 
 
-size_t ArchMulticore::getCoreID()
+size_t ArchMulticore::getCpuID()
 {
-  return getCLS()->core_id;
+  return getCLS()->cpu_id;
 }
 
 void ArchMulticore::initialize()
 {
-  CoreLocalStorage* cls = ArchMulticore::initCLS();
-  debug(A_MULTICORE, "CLS for core %zu at %p\n", ArchMulticore::getCoreID(), cls);
+  CPULocalStorage* cls = ArchMulticore::initCLS();
+  debug(A_MULTICORE, "CLS for cpu %zu at %p\n", ArchMulticore::getCpuID(), cls);
 
   startOtherCPUs();
 }
@@ -211,10 +211,10 @@ extern "C" void __apstartup64()
   debug(A_MULTICORE, "AP switched to stack %p\n", ap_stack + sizeof(ap_stack));
 
   // Stack variables are messed up in this function because we skipped the function prologue. Should be fine once we've entered another function.
-  ArchMulticore::initCore();
+  ArchMulticore::initCpu();
 }
 
-void ArchMulticore::initCore()
+void ArchMulticore::initCpu()
 {
   debug(A_MULTICORE, "initAPCore %u\n", local_APIC.getID());
 
@@ -223,9 +223,9 @@ void ArchMulticore::initCore()
                        :
                        :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-  debug(A_MULTICORE, "Init core local storage\n");
-  CoreLocalStorage* ap_cls = ArchMulticore::initCLS();
-  debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ArchMulticore::getCLS(), ArchMulticore::getCoreID());
+  debug(A_MULTICORE, "Init CPU local storage\n");
+  CPULocalStorage* ap_cls = ArchMulticore::initCLS();
+  debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ArchMulticore::getCLS(), ArchMulticore::getCpuID());
 
   debug(A_MULTICORE, "AP switching to own GDT at: %p\n", &ap_cls->gdt);
   memcpy(&ap_cls->gdt, ap_gdt32, sizeof(ap_cls->gdt));

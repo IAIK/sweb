@@ -2,10 +2,10 @@
 
 #include "types.h"
 
-struct CoreLocalStorage
+struct CPULocalStorage
 {
-  CoreLocalStorage* cls_ptr;
-  size_t core_id;
+  CPULocalStorage* cls_ptr;
+  size_t cpu_id;
   SegmentDescriptor gdt[7];
   TSS tss;
 };
@@ -20,13 +20,13 @@ class ArchMulticore
 
     static void startOtherCPUs();
 
-    static CoreLocalStorage* initCLS();
-    static void setCLS(CoreLocalStorage* cls);
-    static CoreLocalStorage* getCLS();
+    static CPULocalStorage* initCLS();
+    static void setCLS(CPULocalStorage* cls);
+    static CPULocalStorage* getCLS();
 
-    static size_t getCoreID();
+    static size_t getCpuID();
 
-    static void initCore();
+    static void initCpu();
 
   private:
     static void prepareAPStartup(size_t entry_addr);

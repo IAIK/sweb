@@ -166,7 +166,7 @@ extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
   ++outstanding_EOIs;
-  debug(A_INTERRUPTS, "IRQ 0 called by core %zx\n", ArchMulticore::getCoreID());
+  debug(A_INTERRUPTS, "IRQ 0 called by core %zx\n", ArchMulticore::getCpuID());
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
@@ -181,7 +181,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", ArchMulticore::getCoreID());
+  debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", ArchMulticore::getCpuID());
   Scheduler::instance()->schedule();
   arch_contextSwitch();
 }
@@ -189,7 +189,7 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
-  debug(A_INTERRUPTS, "Pagefault handler called by core %zx\n", ArchMulticore::getCoreID());
+  debug(A_INTERRUPTS, "Pagefault handler called by core %zx\n", ArchMulticore::getCpuID());
   PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
                                    error & FLAG_PF_PRESENT,
                                    error & FLAG_PF_RDWR,
@@ -252,7 +252,7 @@ extern "C" void irqHandler_9()
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called by core %zx\n", 11, 11 + 0x20, ArchMulticore::getCoreID());
+  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called by core %zx\n", 11, 11 + 0x20, ArchMulticore::getCpuID());
   kprintfd( "IRQ 11 called\n" );
   ++outstanding_EOIs;
   BDManager::getInstance()->serviceIRQ( 11 );
@@ -262,7 +262,7 @@ extern "C" void irqHandler_11()
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%u) called by core %zx\n", 14, 14 + 0x20, ArchMulticore::getCoreID());
+  debug(A_INTERRUPTS, "Interrupt vector %u (%u) called by core %zx\n", 14, 14 + 0x20, ArchMulticore::getCpuID());
   //kprintfd( "IRQ 14 called\n" );
   ++outstanding_EOIs;
   BDManager::getInstance()->serviceIRQ( 14 );
@@ -291,7 +291,7 @@ extern "C" void irqHandler_90_naked()
 {
         asm("swapgs\n");
         ++outstanding_EOIs;
-        debug(APIC, "naked IRQ 90 called by core %zx\n", ArchMulticore::getCoreID());
+        debug(APIC, "naked IRQ 90 called by core %zx\n", ArchMulticore::getCpuID());
         ArchInterrupts::EndOfInterrupt(90);
         asm("leave\n"
             "swapgs\n"

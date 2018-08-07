@@ -220,7 +220,7 @@ extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-        debug(A_INTERRUPTS, "Context switch to thread %p = %s\n", currentThread, currentThread->getName());
+  debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName());
   if(outstanding_EOIs)
   {
           debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
