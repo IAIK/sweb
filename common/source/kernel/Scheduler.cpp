@@ -15,8 +15,6 @@
 #include "Lock.h"
 #include "ArchMulticore.h"
 
-ArchThreadRegisters *currentThreadRegisters;
-
 Scheduler *Scheduler::instance_ = 0;
 
 Scheduler *Scheduler::instance()
@@ -64,11 +62,11 @@ uint32 Scheduler::schedule()
 
   if (currentThread()->switch_to_userspace_)
   {
-    currentThreadRegisters = currentThread()->user_registers_;
+    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->user_registers_);
   }
   else
   {
-    currentThreadRegisters = currentThread()->kernel_registers_;
+    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
     ret = 0;
   }
 
@@ -247,5 +245,5 @@ bool Scheduler::isInitialized()
 
 Thread* currentThread()
 {
-        return (Scheduler::isInitialized() ? ArchMulticore::getCLS()->scheduler.getCurrentThread() : 0);
+        return (ArchMulticore::CLSinitialized() ? ArchMulticore::getCLS()->scheduler.getCurrentThread() : 0);
 }

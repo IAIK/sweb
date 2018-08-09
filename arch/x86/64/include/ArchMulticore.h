@@ -25,6 +25,7 @@ class ArchMulticore
     static CPULocalStorage* initCLS();
     static void setCLS(CPULocalStorage* cls);
     static CPULocalStorage* getCLS();
+    static bool CLSinitialized();
 
     static size_t getCpuID();
 

@@ -6,13 +6,14 @@
 #include "assert.h"
 #include "Thread.h"
 #include "kstring.h"
+#include "ArchMulticore.h"
 #include "Scheduler.h"
 
 extern PageMapLevel4Entry kernel_page_map_level_4[];
 
 void ArchThreads::initialise()
 {
-  currentThreadRegisters = new ArchThreadRegisters{};
+  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(new ArchThreadRegisters{});
 
   /** Enable SSE for floating point instructions in long mode **/
   asm volatile ("movq %%cr0, %%rax\n"

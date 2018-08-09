@@ -7,6 +7,7 @@
 #include "Loader.h"
 #include "Syscall.h"
 #include "ArchThreads.h"
+#include "ArchMulticore.h"
 extern "C" void arch_contextSwitch();
 
 const size_t PageFaultHandler::null_reference_check_border_ = PAGE_SIZE;
@@ -86,7 +87,7 @@ void PageFaultHandler::enterPageFault(size_t address, bool user,
   uint32 saved_switch_to_userspace = currentThread()->switch_to_userspace_;
 
   currentThread()->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread()->kernel_registers_;
+  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
   ArchInterrupts::enableInterrupts();
 
   handlePageFault(address, user, present, writing, fetch, saved_switch_to_userspace);
@@ -95,6 +96,6 @@ void PageFaultHandler::enterPageFault(size_t address, bool user,
   currentThread()->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread()->switch_to_userspace_)
   {
-    currentThreadRegisters = currentThread()->user_registers_;
+    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->user_registers_);
   }
 }

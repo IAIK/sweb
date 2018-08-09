@@ -301,7 +301,7 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread()->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread()->kernel_registers_;
+  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
   ArchInterrupts::enableInterrupts();
 
   currentThread()->user_registers_->rax =
@@ -314,7 +314,7 @@ extern "C" void syscallHandler()
 
   ArchInterrupts::disableInterrupts();
   currentThread()->switch_to_userspace_ = 1;
-  currentThreadRegisters =  currentThread()->user_registers_;
+  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->user_registers_);
   arch_contextSwitch();
 }
 
@@ -368,7 +368,7 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   else
   {
     currentThread()->switch_to_userspace_ = false;
-    currentThreadRegisters = currentThread()->kernel_registers_;
+    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
     ArchInterrupts::enableInterrupts();
     debug(CPU_ERROR, "Terminating process...\n");
     currentThread()->kill();

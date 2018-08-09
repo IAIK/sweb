@@ -62,9 +62,15 @@ CPULocalStorage* ArchMulticore::getCLS()
 
 CPULocalStorage* ArchMulticore::initCLS()
 {
+  debug(A_MULTICORE, "Init CPU local storage\n");
   CPULocalStorage* cls = new CPULocalStorage{};
   setCLS(cls);
   return getCLS();
+}
+
+bool ArchMulticore::CLSinitialized()
+{
+        return getGSBase() != 0;
 }
 
 
@@ -222,7 +228,6 @@ void ArchMulticore::initCpu()
                        :
                        :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-  debug(A_MULTICORE, "Init CPU local storage\n");
   CPULocalStorage* ap_cls = ArchMulticore::initCLS();
   debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ArchMulticore::getCLS(), ArchMulticore::getCpuID());
 
@@ -256,8 +261,10 @@ void ArchMulticore::initCpu()
   local_APIC.initTimer();
   local_APIC.enable(true);
 
+  ArchThreads::initialise();
+
   debug(A_MULTICORE, "Enable AP timer\n");
-  //ArchInterrupts::enableTimer();
+  ArchInterrupts::enableTimer();
 
   while(system_state != RUNNING);
 

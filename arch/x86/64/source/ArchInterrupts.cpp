@@ -188,7 +188,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
-  register ArchThreadRegisters* info = currentThreadRegisters;
+  register ArchThreadRegisters* info = ArchMulticore::getCLS()->scheduler.getCurrentThreadRegisters();
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
       :
@@ -231,12 +231,11 @@ extern "C" void arch_contextSwitch()
   }
   if (currentThread()->switch_to_userspace_)
   {
-    __asm__ __volatile("swapgs\n"); // Cannot use core local storage beyond this point
     assert(currentThread()->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
     assert(currentThread()->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
   }
-  ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
   assert(currentThread()->isStackCanaryOK() && "Kernel stack corruption detected.");
+  ArchThreadRegisters info = *ArchMulticore::getCLS()->scheduler.getCurrentThreadRegisters();
   g_tss.rsp0 = info.rsp0;
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
@@ -262,6 +261,9 @@ extern "C" void arch_contextSwitch()
   asm("mov %[rbx], %%rbx\n" : : [rbx]"m"(info.rbx));
   asm("mov %[rax], %%rax\n" : : [rax]"m"(info.rax));
   asm("mov %[rbp], %%rbp\n" : : [rbp]"m"(info.rbp));
-  asm("iretq\n");
+  asm("testl $3, 8(%rsp)\n"
+      "jz 1f\n"
+      "swapgs\n"
+      "1: iretq\n");
   assert(false);
 }
