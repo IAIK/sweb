@@ -10,6 +10,7 @@
 #include "ArchMemory.h"
 #include "PageManager.h"
 #include "ArchMulticore.h"
+#include "Scheduler.h"
 
 void ArchInterrupts::initialise()
 {
@@ -138,7 +139,7 @@ bool ArchInterrupts::testIFSet()
 
 void ArchInterrupts::yieldIfIFSet()
 {
-  if (system_state == RUNNING && currentThread && testIFSet())
+  if (system_state == RUNNING && currentThread() && testIFSet())
   {
     ArchThreads::yield();
   }
@@ -213,27 +214,27 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   info->rcx = registers->rcx;
   info->rax = registers->rax;
   info->rbp = registers->rbp;
-  assert(!currentThread || currentThread->isStackCanaryOK());
+  assert(!currentThread() || currentThread()->isStackCanaryOK());
 }
 
 extern TSS g_tss;
 
 extern "C" void arch_contextSwitch()
 {
-  debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName());
+  debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
   if(outstanding_EOIs)
   {
-          debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
-          assert(!outstanding_EOIs);
+    debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
+    assert(!outstanding_EOIs);
   }
-  if (currentThread->switch_to_userspace_)
+  if (currentThread()->switch_to_userspace_)
   {
-    assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
-    assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
     __asm__ __volatile("swapgs\n"); // Cannot use core local storage beyond this point
+    assert(currentThread()->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
+    assert(currentThread()->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
   }
-  assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
   ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
+  assert(currentThread()->isStackCanaryOK() && "Kernel stack corruption detected.");
   g_tss.rsp0 = info.rsp0;
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));

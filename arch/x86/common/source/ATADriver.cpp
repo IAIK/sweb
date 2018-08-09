@@ -261,7 +261,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
     return 0;
   }
 
-  if (currentThread)
+  if (currentThread())
   {
     if(interrupt_context)
       ArchInterrupts::enableInterrupts();
@@ -274,7 +274,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
       ArchInterrupts::disableInterrupts();
       if (br->getStatus() == BDRequest::BD_QUEUED)
       {
-        currentThread->setState(Sleeping);
+        currentThread()->setState(Sleeping);
         ArchInterrupts::enableInterrupts();
         Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
       }

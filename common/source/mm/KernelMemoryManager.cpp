@@ -82,7 +82,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
   fillSegment(new_pointer, requested_size);
   new_pointer->freed_at_ = 0;
   new_pointer->alloc_at_ = tracing_ ? called_by : 0;
-  new_pointer->alloc_by_ = (pointer)currentThread;
+  new_pointer->alloc_by_ = (pointer)currentThread();
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 }
@@ -493,13 +493,13 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
-  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
+  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread()) && "You're abusing the PageManager lock");
   lock_.acquire(getCalledBefore(1));
 }
 
 void KernelMemoryManager::unlockKMM()
 {
-  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
+  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread()) && "You're abusing the PageManager lock");
   lock_.release(getCalledBefore(1));
 }
 

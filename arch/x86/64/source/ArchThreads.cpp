@@ -6,6 +6,7 @@
 #include "assert.h"
 #include "Thread.h"
 #include "kstring.h"
+#include "Scheduler.h"
 
 extern PageMapLevel4Entry kernel_page_map_level_4[];
 
@@ -157,13 +158,13 @@ extern "C" void threadStartHack();
 
 void ArchThreads::debugCheckNewThread(Thread* thread)
 {
-  assert(currentThread);
-  ArchThreads::printThreadRegisters(currentThread,false);
+  assert(currentThread());
+  ArchThreads::printThreadRegisters(currentThread(),false);
   ArchThreads::printThreadRegisters(thread,false);
-  assert(thread->kernel_registers_ != 0 && thread->kernel_registers_ != currentThread->kernel_registers_ && "all threads need to have their own register sets");
+  assert(thread->kernel_registers_ != 0 && thread->kernel_registers_ != currentThread()->kernel_registers_ && "all threads need to have their own register sets");
   assert(thread->kernel_registers_->rsp0 == 0 && "kernel register set needs no backup of kernel esp");
   assert(thread->kernel_registers_->rsp == thread->kernel_registers_->rbp && "new kernel stack must be empty");
-  assert(thread->kernel_registers_->rsp != currentThread->kernel_registers_->rsp && thread->kernel_registers_->rbp != currentThread->kernel_registers_->rbp && "all threads need their own stack");
+  assert(thread->kernel_registers_->rsp != currentThread()->kernel_registers_->rsp && thread->kernel_registers_->rbp != currentThread()->kernel_registers_->rbp && "all threads need their own stack");
   assert(thread->kernel_registers_->cr3 < 0x80000000 && "cr3 contains the physical page dir address");
   if (thread->user_registers_ == 0)
     return;
@@ -172,7 +173,7 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->kernel_registers_->rsp == thread->user_registers_->rsp0 && "esp0 should point to kernel stack");
   assert(thread->kernel_registers_->cr3 == thread->user_registers_->cr3 && "user and kernel part of a thread need to have the same page dir");
   assert(thread->user_registers_->rip != 0 && "user eip needs to be valid... execution will start there");
-  if (currentThread->user_registers_ == 0)
+  if (currentThread()->user_registers_ == 0)
     return;
-  assert(currentThread->user_registers_->rsp0 != thread->user_registers_->rsp0 && "no 2 threads may have the same esp0 value");
+  assert(currentThread()->user_registers_->rsp0 != thread->user_registers_->rsp0 && "no 2 threads may have the same esp0 value");
 }

@@ -22,9 +22,9 @@ const char* Thread::threadStatePrintable[3] =
 
 extern "C" void threadStartHack()
 {
-  currentThread->setTerminal(main_console->getActiveTerminal());
-  currentThread->Run();
-  currentThread->kill();
+  currentThread()->setTerminal(main_console->getActiveTerminal());
+  currentThread()->Run();
+  currentThread()->kill();
   debug(THREAD, "ThreadStartHack: Panic, thread couldn't be killed\n");
   while(1);
 }
@@ -57,16 +57,15 @@ Thread::~Thread()
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
 
-// If the Thread we want to kill is the currentThread, we better not return
+// If the Thread we want to kill is the currentThread(), we better not return
 // DO NOT use new / delete in this Method, as it is sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
-  debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
-        currentThread, getName(), this);
+  debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread()->getName(), currentThread(), getName(), this);
 
   setState(ToBeDestroyed); // vvv Code below this line may not be executed vvv
 
-  if (currentThread == this)
+  if (currentThread() == this)
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
@@ -100,7 +99,7 @@ void Thread::setTerminal(Terminal *my_term)
 
 void Thread::printBacktrace()
 {
-  printBacktrace(currentThread != this);
+  printBacktrace(currentThread() != this);
 }
 
 FileSystemInfo* Thread::getWorkingDirInfo(void)
@@ -110,7 +109,7 @@ FileSystemInfo* Thread::getWorkingDirInfo(void)
 
 FileSystemInfo* getcwd()
 {
-  if (FileSystemInfo* info = currentThread->getWorkingDirInfo())
+  if (FileSystemInfo* info = currentThread()->getWorkingDirInfo())
     return info;
   return default_working_dir;
 }
@@ -186,7 +185,7 @@ ThreadState Thread::getState() const
 void Thread::setState(ThreadState new_state)
 {
   assert(!((state_ == ToBeDestroyed) && (new_state != ToBeDestroyed)) && "Tried to change thread state when thread was already set to be destroyed");
-  assert(!((new_state == Sleeping) && (currentThread != this)) && "Setting other threads to sleep is not thread-safe");
+  assert(!((new_state == Sleeping) && (currentThread() != this)) && "Setting other threads to sleep is not thread-safe");
 
   state_ = new_state;
 }

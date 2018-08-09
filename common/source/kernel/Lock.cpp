@@ -28,8 +28,8 @@ Lock::~Lock()
   if(waiter)
   {
     debug(LOCK, "ERROR: Lock::~Lock %s (%p): At least thread %p is still waiting on this lock,\n"
-        "currentThread is: %p, the thread holding this lock is: %p\n",
-        name_, this, waiter, currentThread, held_by);
+        "currentThread() is: %p, the thread holding this lock is: %p\n",
+          name_, this, waiter, currentThread(), held_by);
     lockWaitersList();
     printWaitersList();
     // The waiters list does not has to be unlocked here, because the kernel is going to die.
@@ -37,8 +37,8 @@ Lock::~Lock()
   }
   if(held_by)
   {
-    debug(LOCK, "Warning: Lock::~Lock %s (%p): Thread %p is still holding this lock, currentThread is: %p\n",
-        name_, this, held_by, currentThread);
+    debug(LOCK, "Warning: Lock::~Lock %s (%p): Thread %p is still holding this lock, currentThread() is: %p\n",
+        name_, this, held_by, currentThread());
   }
 }
 
@@ -64,10 +64,10 @@ void Lock::printHoldingList(Thread* thread)
 
 void Lock::pushFrontToCurrentThreadHoldingList()
 {
-  if(!currentThread)
+  if(!currentThread())
     return;
-  next_lock_on_holding_list_ = currentThread->holding_lock_list_;
-  ArchThreads::atomic_set((pointer&)(currentThread->holding_lock_list_), (pointer)this);
+  next_lock_on_holding_list_ = currentThread()->holding_lock_list_;
+  ArchThreads::atomic_set((pointer&)(currentThread()->holding_lock_list_), (pointer)this);
 }
 
 
@@ -98,30 +98,30 @@ void Lock::printStatus()
 
 void Lock::checkForDeadLock()
 {
-  if(!currentThread)
+  if(!currentThread())
     return;
-  if(held_by_ == currentThread)
+  if(held_by_ == currentThread())
   {
-    debug(LOCK, "Deadlock: Lock: %s (%p), held already by currentThread: %s (%p).\n",
-          name_, this, currentThread->getName(), currentThread);
+    debug(LOCK, "Deadlock: Lock: %s (%p), held already by currentThread(): %s (%p).\n",
+          name_, this, currentThread()->getName(), currentThread());
     printStatus();
     assert(false);
   }
-  checkForCircularDeadLock(currentThread, this);
+  checkForCircularDeadLock(currentThread(), this);
 }
 
 void Lock::removeFromCurrentThreadHoldingList()
 {
-  if(!currentThread)
+  if(!currentThread())
     return;
-  if(currentThread->holding_lock_list_ == this)
+  if(currentThread()->holding_lock_list_ == this)
   {
-    ArchThreads::atomic_set((pointer&)(currentThread->holding_lock_list_), (pointer)(this->next_lock_on_holding_list_));
+    ArchThreads::atomic_set((pointer&)(currentThread()->holding_lock_list_), (pointer)(this->next_lock_on_holding_list_));
   }
   else
   {
     Lock* current;
-    for(current = currentThread->holding_lock_list_; current != 0; current = current->next_lock_on_holding_list_)
+    for(current = currentThread()->holding_lock_list_; current != 0; current = current->next_lock_on_holding_list_)
     {
       if(current->next_lock_on_holding_list_ == this)
       {
@@ -136,18 +136,18 @@ void Lock::removeFromCurrentThreadHoldingList()
 
 void Lock::checkCurrentThreadStillWaitingOnAnotherLock()
 {
-  if(!currentThread)
+  if(!currentThread())
     return;
-  if(currentThread->lock_waiting_on_ != 0)
+  if(currentThread()->lock_waiting_on_ != 0)
   {
     debug(LOCK, "ERROR: Lock: Thread %s (%p) is trying to lock %s (%p), eventhough is already waiting on lock %s (%p).\n"
           "You shouldn't use Scheduler::wake() with a thread sleeping on a lock!\n",
-          currentThread->getName(), currentThread, name_, this,
-          currentThread->lock_waiting_on_->getName(), currentThread->lock_waiting_on_);
+          currentThread()->getName(), currentThread(), name_, this,
+          currentThread()->lock_waiting_on_->getName(), currentThread()->lock_waiting_on_);
     if(kernel_debug_info)
     {
       debug(LOCK, "The other lock has been acquired by ");
-      kernel_debug_info->printCallInformation(currentThread->lock_waiting_on_->last_accessed_at_);
+      kernel_debug_info->printCallInformation(currentThread()->lock_waiting_on_->last_accessed_at_);
     }
     assert(false);
   }
@@ -192,9 +192,9 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start)
 void Lock::printOutCircularDeadLock(Thread* starting)
 {
   debug(LOCK, "CIRCULAR DEADLOCK when waiting for %s (%p) with thread %s (%p)!\n",
-        getName(), this, currentThread->getName(), currentThread);
+        getName(), this, currentThread()->getName(), currentThread());
   debug(LOCK, "Printing out the circular deadlock:\n");
-  currentThread->lock_waiting_on_ = this;
+  currentThread()->lock_waiting_on_ = this;
   // in this case we can access the other threads, because we KNOW that they are indirectly waiting on the current thread.
   for(Thread* thread = starting; thread != 0; thread = thread->lock_waiting_on_->held_by_)
   {
@@ -211,7 +211,7 @@ void Lock::printOutCircularDeadLock(Thread* starting)
     }
     // In the thread we are looking at is the current one, we have to stop.
     // It would result in an endless loop (circular print out ^^).
-    if(thread == currentThread) break;
+    if(thread == currentThread()) break;
   }
 }
 
@@ -248,12 +248,12 @@ void Lock::unlockWaitersList()
 
 void Lock::pushFrontCurrentThreadToWaitersList()
 {
-  assert(currentThread);
+  assert(currentThread());
   assert(waitersListIsLocked());
-  currentThread->next_thread_in_lock_waiters_list_ = waiters_list_;
+  currentThread()->next_thread_in_lock_waiters_list_ = waiters_list_;
   // the following set has to be atomic
-  // waiters_list_ = currentThread;
-  ArchThreads::atomic_set((pointer&)(waiters_list_), (pointer)(currentThread));
+  // waiters_list_ = currentThread();
+  ArchThreads::atomic_set((pointer&)(waiters_list_), (pointer)(currentThread()));
 }
 
 Thread* Lock::popBackThreadFromWaitersList()
@@ -288,14 +288,14 @@ Thread* Lock::popBackThreadFromWaitersList()
 
 void Lock::removeCurrentThreadFromWaitersList()
 {
-  if(!currentThread)
+  if(!currentThread())
     return;
   assert(waitersListIsLocked());
   assert(waiters_list_);
-  if(currentThread == waiters_list_)
+  if(currentThread() == waiters_list_)
   {
     // the current thread is the first element
-    ArchThreads::atomic_set((pointer&)(waiters_list_), (pointer)(currentThread->next_thread_in_lock_waiters_list_));
+    ArchThreads::atomic_set((pointer&)(waiters_list_), (pointer)(currentThread()->next_thread_in_lock_waiters_list_));
   }
   else
   {
@@ -303,30 +303,30 @@ void Lock::removeCurrentThreadFromWaitersList()
     for(Thread* thread = waiters_list_; thread->next_thread_in_lock_waiters_list_ != 0;
         thread = thread->next_thread_in_lock_waiters_list_)
     {
-      if(thread->next_thread_in_lock_waiters_list_ == currentThread)
+      if(thread->next_thread_in_lock_waiters_list_ == currentThread())
       {
 
         ArchThreads::atomic_set((pointer&)(thread->next_thread_in_lock_waiters_list_),
-                                (pointer)(currentThread->next_thread_in_lock_waiters_list_));
+                                (pointer)(currentThread()->next_thread_in_lock_waiters_list_));
         break;
       }
     }
   }
-  ArchThreads::atomic_set((pointer&)(currentThread->next_thread_in_lock_waiters_list_ ), (pointer)0);
+  ArchThreads::atomic_set((pointer&)(currentThread()->next_thread_in_lock_waiters_list_ ), (pointer)0);
   return;
 }
 
 void Lock::checkInvalidRelease(const char* method)
 {
-  if(unlikely(held_by_ != currentThread))
+  if(unlikely(held_by_ != currentThread()))
   {
     // push the information onto the stack, so the variable may not be modified meanwhile we are working with it
     Thread* holding = held_by_;
 
-    debug(LOCK, "%s: Lock %s (%p) currently not held by currentThread! "
-          "Held by %s (%p), currentThread is %s (%p)\n", method, name_, this,
-          (holding ? holding->getName() : "UNKNOWN THREAD"), holding, currentThread->getName(),
-          currentThread);
+    debug(LOCK, "%s: Lock %s (%p) currently not held by currentThread()! "
+          "Held by %s (%p), currentThread() is %s (%p)\n", method, name_, this,
+          (holding ? holding->getName() : "UNKNOWN THREAD"), holding, currentThread()->getName(),
+          currentThread());
     printStatus();
     assert(false);
   }
@@ -334,7 +334,7 @@ void Lock::checkInvalidRelease(const char* method)
 
 void Lock::sleepAndRelease ()
 {
-  currentThread->lock_waiting_on_ = this;
+  currentThread()->lock_waiting_on_ = this;
   pushFrontCurrentThreadToWaitersList();
   unlockWaitersList();
   // we can risk to go to sleep after the list has been unlocked,

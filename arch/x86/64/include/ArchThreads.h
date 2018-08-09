@@ -48,7 +48,6 @@ class ArchMemory;
  *
  */
 extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching

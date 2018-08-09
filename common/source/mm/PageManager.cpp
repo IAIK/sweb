@@ -221,7 +221,7 @@ size_t PageManager::getNumFreePages() const
 
 bool PageManager::reservePages(uint32 ppn, uint32 num)
 {
-  assert(lock_.heldBy() == currentThread);
+  assert(lock_.heldBy() == currentThread());
   if (ppn < number_of_pages_ && !page_usage_table_->getBit(ppn))
   {
     if (num == 1 || reservePages(ppn + 1, num - 1))

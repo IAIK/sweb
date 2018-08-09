@@ -21,8 +21,6 @@ class Mutex;
 class FsWorkingDirectory;
 class Lock;
 
-extern Thread* currentThread;
-
 class Thread
 {
     friend class Scheduler;

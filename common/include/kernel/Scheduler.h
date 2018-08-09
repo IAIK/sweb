@@ -10,10 +10,14 @@ class Mutex;
 class SpinLock;
 class Lock;
 
+Thread* currentThread();
+
+
 class Scheduler
 {
   public:
     static Scheduler *instance();
+    static bool isInitialized();
 
     void addNewThread(Thread *thread);
     void sleep();
@@ -26,6 +30,8 @@ class Scheduler
     bool isCurrentlyCleaningUp();
     void incTicks();
     uint32 getTicks();
+    void setCurrentThread(Thread*);
+    Thread* getCurrentThread();
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
@@ -69,4 +75,6 @@ class Scheduler
 
     IdleThread idle_thread_;
     CleanupThread cleanup_thread_;
+
+    Thread *currentThread_;
 };

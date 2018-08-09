@@ -84,7 +84,7 @@ void Loader::loadPage(pointer virtual_address)
 
 bool Loader::readFromBinary (char* buffer, l_off_t position, size_t length)
 {
-  assert(program_binary_lock_.isHeldBy(currentThread));
+  assert(program_binary_lock_.isHeldBy(currentThread()));
   VfsSyscall::lseek(fd_, position, SEEK_SET);
   return VfsSyscall::read(fd_, buffer, length) - (ssize_t)length;
 }

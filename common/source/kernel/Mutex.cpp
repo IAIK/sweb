@@ -21,8 +21,8 @@ bool Mutex::acquireNonBlocking(pointer called_by)
     return true;
   if(!called_by)
     called_by = getCalledBefore(1);
-//  debug(LOCK, "Mutex::acquireNonBlocking:  Mutex: %s (%p), currentThread: %s (%p).\n",
-//           getName(), this, currentThread->getName(), currentThread);
+//  debug(LOCK, "Mutex::acquireNonBlocking:  Mutex: %s (%p), Scheduler::instance()->currentThread(): %s (%p).\n",
+//           getName(), this, Scheduler::instance()->currentThread()->getName(), Scheduler::instance()->currentThread());
 //  if(kernel_debug_info)
 //  {
 //    debug(LOCK, "The acquire is called by: ");
@@ -42,7 +42,7 @@ bool Mutex::acquireNonBlocking(pointer called_by)
   }
   assert(held_by_ == 0);
   last_accessed_at_ = called_by;
-  held_by_ = currentThread;
+  held_by_ = currentThread();
   pushFrontToCurrentThreadHoldingList();
   return true;
 }
@@ -53,8 +53,8 @@ void Mutex::acquire(pointer called_by)
     return;
   if(!called_by)
     called_by = getCalledBefore(1);
-//  debug(LOCK, "Mutex::acquire:  Mutex: %s (%p), currentThread: %s (%p).\n",
-//           getName(), this, currentThread->getName(), currentThread);
+//  debug(LOCK, "Mutex::acquire:  Mutex: %s (%p), Scheduler::instance()->currentThread(): %s (%p).\n",
+//           getName(), this, Scheduler::instance()->currentThread()->getName(), Scheduler::instance()->currentThread());
 //  if(kernel_debug_info)
 //  {
 //    debug(LOCK, "The acquire is called by: ");
@@ -74,13 +74,13 @@ void Mutex::acquire(pointer called_by)
     doChecksBeforeWaiting();
     sleepAndRelease();
     // We have been waken up again.
-    currentThread->lock_waiting_on_ = 0;
+    currentThread()->lock_waiting_on_ = 0;
   }
 
   assert(held_by_ == 0);
   pushFrontToCurrentThreadHoldingList();
   last_accessed_at_ = called_by;
-  held_by_ = currentThread;
+  held_by_ = currentThread();
 }
 
 void Mutex::release(pointer called_by)
@@ -89,8 +89,8 @@ void Mutex::release(pointer called_by)
     return;
   if(!called_by)
     called_by = getCalledBefore(1);
-//  debug(LOCK, "Mutex::release:  Mutex: %s (%p), currentThread: %s (%p).\n",
-//           getName(), this, currentThread->getName(), currentThread);
+//  debug(LOCK, "Mutex::release:  Mutex: %s (%p), currentThread(): %s (%p).\n",
+//           getName(), this, currentThread()->getName(), currentThread());
 //  if(kernel_debug_info)
 //  {
 //    debug(LOCK, "The release is called by: ");

@@ -15,7 +15,6 @@
 #include "Lock.h"
 
 ArchThreadRegisters *currentThreadRegisters;
-Thread *currentThread;
 
 Scheduler *Scheduler::instance_ = 0;
 
@@ -49,7 +48,7 @@ uint32 Scheduler::schedule()
   {
     if((*it)->schedulable())
     {
-      currentThread = *it;
+      setCurrentThread(*it);
       break;
     }
   }
@@ -62,15 +61,17 @@ uint32 Scheduler::schedule()
 
   uint32 ret = 1;
 
-  if (currentThread->switch_to_userspace_)
+  if (currentThread()->switch_to_userspace_)
   {
-    currentThreadRegisters = currentThread->user_registers_;
+    currentThreadRegisters = currentThread()->user_registers_;
   }
   else
   {
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread()->kernel_registers_;
     ret = 0;
   }
+
+  debug(SCHEDULER, "Scheduling %s, user: %u\n", currentThread()->getName(), currentThread()->switch_to_userspace_);
 
   return ret;
 }
@@ -79,7 +80,7 @@ void Scheduler::addNewThread(Thread *thread)
 {
   assert(thread);
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
-  if (currentThread)
+  if (currentThread())
     ArchThreads::debugCheckNewThread(thread);
   KernelMemoryManager::instance()->getKMMLock().acquire();
   lockScheduling();
@@ -90,7 +91,7 @@ void Scheduler::addNewThread(Thread *thread)
 
 void Scheduler::sleep()
 {
-  currentThread->setState(Sleeping);
+  currentThread()->setState(Sleeping);
   assert(block_scheduling_ == 0);
   yield();
 }
@@ -108,10 +109,10 @@ void Scheduler::yield()
   assert(this);
   if (!ArchInterrupts::testIFSet())
   {
-    assert(currentThread);
+    assert(currentThread());
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %p %s)\n",
-             currentThread, currentThread->name_.c_str());
-    currentThread->printBacktrace();
+             currentThread(), currentThread()->name_.c_str());
+    currentThread()->printBacktrace();
   }
   ArchThreads::yield();
 }
@@ -182,7 +183,7 @@ bool Scheduler::isSchedulingEnabled()
 
 bool Scheduler::isCurrentlyCleaningUp()
 {
-  return currentThread == &cleanup_thread_;
+  return currentThread() == &cleanup_thread_;
 }
 
 uint32 Scheduler::getTicks()
@@ -236,4 +237,24 @@ void Scheduler::printLockingInformation()
   }
   debug(LOCK, "Scheduler::printLockingInformation finished\n");
   unlockScheduling();
+}
+
+bool Scheduler::isInitialized()
+{
+        return instance_ != 0;
+}
+
+void Scheduler::setCurrentThread(Thread* t)
+{
+        currentThread_ = t;
+}
+
+Thread* Scheduler::getCurrentThread()
+{
+        return currentThread_;
+}
+
+Thread* currentThread()
+{
+        return (Scheduler::isInitialized() ? Scheduler::instance()->getCurrentThread() : 0);
 }

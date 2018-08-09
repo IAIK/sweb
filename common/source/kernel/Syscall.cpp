@@ -59,7 +59,7 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
 void Syscall::exit(size_t exit_code)
 {
   debug(SYSCALL, "Syscall::EXIT: called, exit_code: %zd\n", exit_code);
-  currentThread->kill();
+  currentThread()->kill();
 }
 
 size_t Syscall::write(size_t fd, pointer buffer, size_t size)
@@ -97,7 +97,7 @@ size_t Syscall::read(size_t fd, pointer buffer, size_t count)
   if (fd == fd_stdin)
   {
     //this doesn't! terminate a string with \0, gotta do that yourself
-    num_read = currentThread->getTerminal()->readLine((char*) buffer, count);
+    num_read = currentThread()->getTerminal()->readLine((char*) buffer, count);
     debug(SYSCALL, "Syscall::read: %.*s\n", (int)num_read, (char*) buffer);
   }
   else
@@ -167,6 +167,6 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
 
 void Syscall::trace()
 {
-  currentThread->printBacktrace();
+  currentThread()->printBacktrace();
 }
 

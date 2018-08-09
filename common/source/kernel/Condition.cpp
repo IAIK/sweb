@@ -27,25 +27,25 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   if(!called_by)
     called_by = getCalledBefore(1);
 //  debug(LOCK, "Condition::wait: Thread %s (%p) is waiting on condition %s (%p).\n",
-//        currentThread->getName(), currentThread, getName(), this);
+//        Scheduler::instance()->currentThread()->getName(), Scheduler::instance()->currentThread(), getName(), this);
 //  if(kernel_debug_info)
 //  {
 //    debug(LOCK, "The wait is called by: ");
 //    kernel_debug_info->printCallInformation(called_by);
 //  }
 
-  assert(mutex_->isHeldBy(currentThread));
+  assert(mutex_->isHeldBy(currentThread()));
   // check if the interrupts are enabled and the thread is not waiting for some other locks
   checkInterrupts("Condition::wait");
   checkCurrentThreadStillWaitingOnAnotherLock();
 
-  assert(currentThread->holding_lock_list_);
-  if(currentThread->holding_lock_list_->hasNextOnHoldingList())
+  assert(currentThread()->holding_lock_list_);
+  if(currentThread()->holding_lock_list_->hasNextOnHoldingList())
   {
     debug(LOCK, "Condition::wait: Warning: The thread %s (%p) is holding some locks when going to sleep on condition %s (%p).\n"
           "This may lower the performance of the system, and cause undetectable deadlocks!\n",
-          currentThread->getName(), currentThread, getName(), this);
-    printHoldingList(currentThread);
+          currentThread()->getName(), currentThread(), getName(), this);
+    printHoldingList(currentThread());
   }
   lockWaitersList();
   last_accessed_at_ = called_by;
@@ -53,7 +53,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   mutex_->release(called_by);
   sleepAndRelease();
   // Thread has been woken up again
-  currentThread->lock_waiting_on_ = 0;
+  currentThread()->lock_waiting_on_ = 0;
 
   if(re_acquire_mutex)
   {
@@ -73,11 +73,11 @@ void Condition::signal(pointer called_by, bool broadcast)
     called_by = getCalledBefore(1);
   }
 //  debug(LOCK, "Condition::signal: Thread %s (%p) is signaling condition %s (%p).\n",
-//        currentThread->getName(), currentThread, getName(), this);
+//        currentThread()->getName(), currentThread(), getName(), this);
 //  debug(LOCK, "The signal is called by: ");
 //  kernel_debug_info->printCallInformation(called_by);
 
-  assert(mutex_->isHeldBy(currentThread));
+  assert(mutex_->isHeldBy(currentThread()));
   checkInterrupts("Condition::signal");
   do
   {
