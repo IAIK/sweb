@@ -44,7 +44,7 @@ void ArchMulticore::setCLS(CPULocalStorage* cls)
 {
   debug(A_MULTICORE, "Set CLS to %p\n", cls);
   cls->cls_ptr = cls;
-  cls->cpu_id = (LocalAPIC::initialized ? local_APIC.getID() : 0);
+  cls->cpu_id = (LocalAPIC::exists && LocalAPIC::initialized  ? local_APIC.getID() : 0);
   setGSBase((uint64)cls);
   setSWAPGSKernelBase((uint64)cls);
 }
@@ -56,6 +56,7 @@ CPULocalStorage* ArchMulticore::getCLS()
   __asm__ __volatile__("movq %%gs:0, %%rax\n"
                        "movq %%rax, %[cls_ptr]\n"
                        : [cls_ptr]"=m"(cls_ptr));
+  assert(cls_ptr != 0);
   return cls_ptr;
 }
 
@@ -76,8 +77,6 @@ void ArchMulticore::initialize()
 {
   CPULocalStorage* cls = ArchMulticore::initCLS();
   debug(A_MULTICORE, "CLS for cpu %zu at %p\n", ArchMulticore::getCpuID(), cls);
-
-  startOtherCPUs();
 }
 
 extern char apstartup_text_begin;

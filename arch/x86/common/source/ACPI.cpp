@@ -271,7 +271,7 @@ void ACPI_MADTHeader::parse()
     {
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Local APIC address override, addr: %zx\n", entry, entry->local_apic_addr);
-      assert(LocalAPIC::initialized);
+      assert(LocalAPIC::exists);
       local_APIC.reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
       break;
     }
@@ -292,13 +292,13 @@ void ACPI_MADTHeader::parse()
 
 void LocalAPIC::addLocalAPICToList(const MADTProcLocalAPIC& entry)
 {
-        assert(LocalAPIC::initialized);
+        assert(LocalAPIC::exists);
         local_apic_list_.push_back(entry);
 }
 
 
 void IOAPIC::addIRQSourceOverride(const MADTInterruptSourceOverride& entry)
 {
-        assert(IOAPIC::initialized);
+        assert(IOAPIC::exists);
         irq_source_override_list_.push_back(entry);
 }

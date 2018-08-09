@@ -17,15 +17,16 @@ void ArchInterrupts::initialise()
   disableInterrupts();
   InterruptUtils::initialise();
 
-  if(LocalAPIC::initialized)
+  if(LocalAPIC::exists)
   {
           local_APIC.mapAt(APIC_VADDR);
           local_APIC.setSpuriousInterruptNumber(0xFF);
           local_APIC.initTimer();
           local_APIC.enable(true);
+          LocalAPIC::initialized = true;
   }
 
-  if(IOAPIC::initialized)
+  if(IOAPIC::exists)
   {
           IO_APIC.mapAt((void*)IOAPIC_VADDR);
           IO_APIC.init();
@@ -222,6 +223,7 @@ extern TSS g_tss;
 extern "C" void arch_contextSwitch()
 {
   debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
+
   if(outstanding_EOIs)
   {
     debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);

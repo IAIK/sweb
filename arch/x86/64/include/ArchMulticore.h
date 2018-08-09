@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "CpuLocalScheduler.h"
 
 struct CPULocalStorage
 {
@@ -8,6 +9,7 @@ struct CPULocalStorage
   size_t cpu_id;
   SegmentDescriptor gdt[7];
   TSS tss;
+  CpuLocalScheduler scheduler;
 };
 
 #define AP_STARTUP_PADDR 0x0

@@ -62,6 +62,12 @@ extern "C" void startup()
 
   ArchCommon::postBootInit();
 
+  debug(MAIN, "Interrupts init\n");
+  ArchInterrupts::initialise();
+
+  debug(MAIN, "Multicore init\n");
+  ArchMulticore::initialize();
+
   debug(MAIN, "Creating console\n");
   main_console = ArchCommon::createConsole(1);
   debug(MAIN, "Console created\n");
@@ -82,11 +88,10 @@ extern "C" void startup()
 
   debug(MAIN, "Threads init\n");
   ArchThreads::initialise();
-  debug(MAIN, "Interupts init\n");
-  ArchInterrupts::initialise();
 
-  debug(MAIN, "Multicore init\n");
-  ArchMulticore::initialize();
+  debug(MAIN, "Multicore start CPUs\n");
+  ArchMulticore::startOtherCPUs();
+
 
   debug(MAIN, "Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();

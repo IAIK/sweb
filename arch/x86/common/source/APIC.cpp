@@ -13,8 +13,10 @@
 LocalAPIC local_APIC;
 IOAPIC IO_APIC;
 
-bool IOAPIC::initialized    = false;
+bool LocalAPIC::exists = false;
 bool LocalAPIC::initialized = false;
+bool IOAPIC::exists    = false;
+bool IOAPIC::initialized    = false;
 
 extern volatile size_t outstanding_EOIs;
 
@@ -30,7 +32,7 @@ LocalAPIC::LocalAPIC(ACPI_MADTHeader* madt) :
 {
   debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, madt->ext_header.flags);
   assert(reg_paddr_);
-  initialized = true;
+  exists = true;
 }
 
 void LocalAPIC::sendEOI(size_t num)
@@ -45,7 +47,7 @@ void LocalAPIC::sendEOI(size_t num)
 void LocalAPIC::mapAt(size_t addr)
 {
   assert(addr);
-  assert(initialized);
+  assert(exists);
 
   debug(APIC, "Map local APIC at phys %p to %zx\n", reg_paddr_, addr);
 
@@ -257,7 +259,7 @@ IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
 {
         debug(APIC, "IOAPIC %x at phys %p, g_sys_int_base: %x\n", id_, reg_paddr_, g_sys_int_base_);
         assert(reg_paddr_);
-        initialized = true;
+        exists = true;
 }
 
 void IOAPIC::init()
@@ -273,6 +275,7 @@ void IOAPIC::init()
         debug(APIC, "IOAPIC g_sys_int base: %x\n", getGlobalInterruptBase());
 
         IO_APIC.initRedirections();
+        IOAPIC::initialized = true;
 }
 
 void IOAPIC::initRedirections()

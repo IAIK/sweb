@@ -230,6 +230,7 @@ public:
         explicit LocalAPIC();
         LocalAPIC(ACPI_MADTHeader*);
 
+        static bool exists;
         static bool initialized;
 
         void sendEOI(size_t num);
@@ -362,6 +363,7 @@ public:
                 volatile uint32 io_win;
         } __attribute__((packed));
 
+        static bool exists;
         static bool initialized;
         static IOAPIC_MMIORegs* phys_addr;
 

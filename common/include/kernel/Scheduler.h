@@ -30,8 +30,6 @@ class Scheduler
     bool isCurrentlyCleaningUp();
     void incTicks();
     uint32 getTicks();
-    void setCurrentThread(Thread*);
-    Thread* getCurrentThread();
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
@@ -75,6 +73,4 @@ class Scheduler
 
     IdleThread idle_thread_;
     CleanupThread cleanup_thread_;
-
-    Thread *currentThread_;
 };

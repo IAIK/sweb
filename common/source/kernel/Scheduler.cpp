@@ -13,6 +13,7 @@
 #include "umap.h"
 #include "ustring.h"
 #include "Lock.h"
+#include "ArchMulticore.h"
 
 ArchThreadRegisters *currentThreadRegisters;
 
@@ -48,7 +49,7 @@ uint32 Scheduler::schedule()
   {
     if((*it)->schedulable())
     {
-      setCurrentThread(*it);
+      ArchMulticore::getCLS()->scheduler.setCurrentThread(*it);
       break;
     }
   }
@@ -244,17 +245,7 @@ bool Scheduler::isInitialized()
         return instance_ != 0;
 }
 
-void Scheduler::setCurrentThread(Thread* t)
-{
-        currentThread_ = t;
-}
-
-Thread* Scheduler::getCurrentThread()
-{
-        return currentThread_;
-}
-
 Thread* currentThread()
 {
-        return (Scheduler::isInitialized() ? Scheduler::instance()->getCurrentThread() : 0);
+        return (Scheduler::isInitialized() ? ArchMulticore::getCLS()->scheduler.getCurrentThread() : 0);
 }
