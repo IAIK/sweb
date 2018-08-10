@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "CpuLocalScheduler.h"
+#include "APIC.h"
 
 struct CPULocalStorage
 {
@@ -10,6 +11,7 @@ struct CPULocalStorage
   SegmentDescriptor gdt[7];
   TSS tss;
   CpuLocalScheduler scheduler;
+  LocalAPIC apic;
 };
 
 #define AP_STARTUP_PADDR 0x0
@@ -27,6 +29,7 @@ class ArchMulticore
     static CPULocalStorage* getCLS();
     static bool CLSinitialized();
 
+    static void setCpuID(size_t id);
     static size_t getCpuID();
 
     static void initCpu();

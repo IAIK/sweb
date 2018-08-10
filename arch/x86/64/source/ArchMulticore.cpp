@@ -44,7 +44,6 @@ void ArchMulticore::setCLS(CPULocalStorage* cls)
 {
   debug(A_MULTICORE, "Set CLS to %p\n", cls);
   cls->cls_ptr = cls;
-  cls->cpu_id = (LocalAPIC::exists && LocalAPIC::initialized  ? local_APIC.getID() : 0);
   setGSBase((uint64)cls);
   setSWAPGSKernelBase((uint64)cls);
 }
@@ -65,6 +64,7 @@ CPULocalStorage* ArchMulticore::initCLS()
   debug(A_MULTICORE, "Init CPU local storage\n");
   CPULocalStorage* cls = new CPULocalStorage{};
   setCLS(cls);
+  setCpuID(LocalAPIC::exists && cls->apic.isInitialized()  ? cls->apic.getID() : 0);
   return getCLS();
 }
 
@@ -73,6 +73,10 @@ bool ArchMulticore::CLSinitialized()
         return getGSBase() != 0;
 }
 
+void ArchMulticore::setCpuID(size_t id)
+{
+  getCLS()->cpu_id = id;
+}
 
 size_t ArchMulticore::getCpuID()
 {
@@ -132,13 +136,13 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::initialized)
+  if(LocalAPIC::exists && getCLS()->apic.isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    local_APIC.startAPs(AP_STARTUP_PADDR);
+    getCLS()->apic.startAPs(AP_STARTUP_PADDR);
   }
   else
   {
@@ -221,7 +225,7 @@ extern "C" void __apstartup64()
 
 void ArchMulticore::initCpu()
 {
-  debug(A_MULTICORE, "initAPCore %u\n", local_APIC.getID());
+  debug(A_MULTICORE, "initAPCore\n");
 
   debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
   __asm__ __volatile__("movq %[kernel_cr3], %%cr3\n"
@@ -257,9 +261,8 @@ void ArchMulticore::initCpu()
   InterruptUtils::lidt(&InterruptUtils::idtr);
 
   debug(A_MULTICORE, "Init AP APIC\n");
-  local_APIC.setSpuriousInterruptNumber(0xFF);
-  local_APIC.initTimer();
-  local_APIC.enable(true);
+  getCLS()->apic.init();
+  ArchMulticore::setCpuID(getCLS()->apic.getID());
 
   ArchThreads::initialise();
 
@@ -269,12 +272,12 @@ void ArchMulticore::initCpu()
   while(system_state != RUNNING);
 
   debug(A_MULTICORE, "Enabling interrupts\n");
-  kprintf("Core %u initialized, enabling interrupts\n", local_APIC.getID());
+  kprintf("Core %zu initialized, enabling interrupts\n", ArchMulticore::getCpuID());
   ArchInterrupts::enableInterrupts();
 
   while(1)
   {
-    debug(A_MULTICORE, "AP %u halting\n", local_APIC.getID());
+    debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
     __asm__ __volatile__("hlt\n");
   }
 }

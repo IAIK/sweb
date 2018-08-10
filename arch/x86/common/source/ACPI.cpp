@@ -221,9 +221,10 @@ ACPISDTHeader* XSDT::getEntry(size_t i)
 
 void ACPI_MADTHeader::parse()
 {
-  if(!LocalAPIC::initialized)
+  if(!LocalAPIC::exists)
   {
-          new (&local_APIC) LocalAPIC(this);
+          LocalAPIC::haveLocalAPIC((LocalAPICRegisters*)(size_t)ext_header.local_apic_addr, ext_header.flags);
+          new (&LocalAPIC::local_apic_list_) ustl::vector<MADTProcLocalAPIC>{};
   }
 
   MADTEntryDescriptor* madt_entry = (MADTEntryDescriptor*)(this + 1);
@@ -235,7 +236,7 @@ void ACPI_MADTHeader::parse()
     {
       MADTProcLocalAPIC* entry = (MADTProcLocalAPIC*)(madt_entry + 1);
       debug(ACPI, "[%p] Processor local APIC, ACPI Processor ID: %4x, APIC ID: %4x, enabled: %u\n", entry, entry->proc_id, entry->apic_id, entry->flags.enabled);
-      local_APIC.addLocalAPICToList(*entry);
+      LocalAPIC::addLocalAPICToList(*entry);
       break;
     }
     case 1:

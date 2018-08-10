@@ -3,8 +3,6 @@
 #include "types.h"
 #include "ports.h"
 
-extern volatile size_t outstanding_EOIs;
-
 class PIC8259
 {
 public:
@@ -35,6 +33,8 @@ public:
  *
  */
   static void sendEOI(uint16 number);
+
+  static size_t outstanding_EOIs_;
 
 private:
   enum

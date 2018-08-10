@@ -10,35 +10,35 @@
 #include "Scheduler.h"
 #include "ArchMulticore.h"
 
-LocalAPIC local_APIC;
 IOAPIC IO_APIC;
 
 bool LocalAPIC::exists = false;
-bool LocalAPIC::initialized = false;
-bool IOAPIC::exists    = false;
-bool IOAPIC::initialized    = false;
+LocalAPICRegisters* LocalAPIC::reg_paddr_ = nullptr;
+LocalAPICRegisters* LocalAPIC::reg_vaddr_ = nullptr;
+ustl::vector<MADTProcLocalAPIC> LocalAPIC::local_apic_list_{};
+
+bool IOAPIC::exists      = false;
+bool IOAPIC::initialized = false;
 
 extern volatile size_t outstanding_EOIs;
 
 LocalAPIC::LocalAPIC() :
-        reg_paddr_(nullptr),
-        reg_vaddr_(nullptr)
+        outstanding_EOIs_(0)
 {
 }
 
-LocalAPIC::LocalAPIC(ACPI_MADTHeader* madt) :
-        reg_paddr_((LocalAPICRegisters*)(size_t)madt->ext_header.local_apic_addr),
-        reg_vaddr_((LocalAPICRegisters*)(size_t)madt->ext_header.local_apic_addr)
+void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
 {
-  debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, madt->ext_header.flags);
-  assert(reg_paddr_);
+  reg_paddr_ = reg_phys_addr;
+  reg_vaddr_ = reg_phys_addr;
   exists = true;
+  debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, flags);
 }
 
 void LocalAPIC::sendEOI(size_t num)
 {
-  --outstanding_EOIs;
-  debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs);
+  --outstanding_EOIs_;
+  debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs_);
   debug(APIC, "Sending EOI for %zx\n", num);
   reg_vaddr_->eoi = 0;
 }
@@ -55,6 +55,19 @@ void LocalAPIC::mapAt(size_t addr)
   reg_vaddr_ = (LocalAPICRegisters*)addr;
 }
 
+
+void LocalAPIC::init()
+{
+  setSpuriousInterruptNumber(0xFF); // TODO: Handle spurious APIC interrupts
+  initTimer();
+  enable(true);
+  initialized_ = true;
+}
+
+bool LocalAPIC::isInitialized()
+{
+  return initialized_;
+}
 
 void LocalAPIC::enable(bool enable)
 {
@@ -310,12 +323,12 @@ void IOAPIC::initRedirections()
 }
 
 
-void IOAPIC::mapAt(void* addr)
+void IOAPIC::mapAt(size_t addr)
 {
-  debug(APIC, "Map IOAPIC at phys %p to %p\n", reg_paddr_, addr);
+  debug(APIC, "Map IOAPIC at phys %p to %zx\n", reg_paddr_, addr);
   assert(addr);
 
-  ArchMemory::mapKernelPage((size_t)addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
+  ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
   reg_vaddr_ = (IOAPIC_MMIORegs*)addr;
 }
 

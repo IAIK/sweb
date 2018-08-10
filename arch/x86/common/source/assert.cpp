@@ -5,6 +5,7 @@
 #include "Thread.h"
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
+#include "ArchMulticore.h"
 
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {
@@ -67,8 +68,8 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
-  kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, (ArchMulticore::CLSinitialized() ? ArchMulticore::getCpuID() : -1));
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, (ArchMulticore::CLSinitialized() ? ArchMulticore::getCpuID() : -1));
   if (currentThread() != 0)
     currentThread()->printBacktrace(false);
   while(1);

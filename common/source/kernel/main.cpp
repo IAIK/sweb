@@ -62,11 +62,11 @@ extern "C" void startup()
 
   ArchCommon::postBootInit();
 
-  debug(MAIN, "Interrupts init\n");
-  ArchInterrupts::initialise();
-
   debug(MAIN, "Multicore init\n");
   ArchMulticore::initialize();
+
+  debug(MAIN, "Interrupts init\n");
+  ArchInterrupts::initialise();
 
   debug(MAIN, "Creating console\n");
   main_console = ArchCommon::createConsole(1);

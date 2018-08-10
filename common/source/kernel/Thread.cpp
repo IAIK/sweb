@@ -49,10 +49,9 @@ Thread::~Thread()
   kernel_registers_ = 0;
   if(unlikely(holding_lock_list_ != 0))
   {
-    debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n",
-          getName(), this);
+    debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n", getName(), this);
     Lock::printHoldingList(this);
-    assert(false);
+    assert(false && "~Thread: ERROR: Thread is going to be destroyed, but still holds some locks!\n");
   }
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }

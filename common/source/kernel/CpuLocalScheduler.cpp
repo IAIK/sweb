@@ -14,7 +14,7 @@ ArchThreadRegisters* CpuLocalScheduler::getCurrentThreadRegisters()
 
 void CpuLocalScheduler::setCurrentThread(Thread* t)
 {
-        debug(CPU_SCHEDULER, "setCurrentThread: %p\n", t);
+        debug(CPU_SCHEDULER, "setCurrentThread: %p (%s)\n", t, t->getName());
         currentThread_ = t;
 }
 

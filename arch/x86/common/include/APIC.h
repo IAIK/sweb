@@ -231,11 +231,20 @@ public:
         LocalAPIC(ACPI_MADTHeader*);
 
         static bool exists;
-        static bool initialized;
+        bool initialized_;
+
+        size_t outstanding_EOIs_;
+
+        static void haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags);
 
         void sendEOI(size_t num);
+
         void mapAt(size_t addr);
+
+        void init();
         void enable(bool = true);
+
+        bool isInitialized();
 
         void initTimer() volatile;
         void setTimerPeriod(uint32 count) volatile;
@@ -249,18 +258,17 @@ public:
 
         void startAPs(size_t entry_addr) volatile;
 
-        void addLocalAPICToList(const MADTProcLocalAPIC&);
+        static void addLocalAPICToList(const MADTProcLocalAPIC&);
 
-        LocalAPICRegisters* reg_paddr_;
-        LocalAPICRegisters* reg_vaddr_;
+        static LocalAPICRegisters* reg_paddr_;
+        static LocalAPICRegisters* reg_vaddr_;
+
+        static ustl::vector<MADTProcLocalAPIC> local_apic_list_;
+
 
 private:
         LocalAPIC(const LocalAPIC&) = delete;
         LocalAPIC& operator=(const LocalAPIC&) = delete;
-
-
-
-        ustl::vector<MADTProcLocalAPIC> local_apic_list_;
 };
 
 class IOAPIC
@@ -373,7 +381,7 @@ public:
         void init();
         void initRedirections();
 
-        void mapAt(void* addr);
+        void mapAt(size_t addr);
 
         uint32 read(uint8 offset);
         void write(uint8 offset, uint32 value);

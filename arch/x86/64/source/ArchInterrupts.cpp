@@ -19,16 +19,13 @@ void ArchInterrupts::initialise()
 
   if(LocalAPIC::exists)
   {
-          local_APIC.mapAt(APIC_VADDR);
-          local_APIC.setSpuriousInterruptNumber(0xFF);
-          local_APIC.initTimer();
-          local_APIC.enable(true);
-          LocalAPIC::initialized = true;
+          ArchMulticore::getCLS()->apic.mapAt(APIC_VADDR);
+          ArchMulticore::getCLS()->apic.init();
   }
 
   if(IOAPIC::exists)
   {
-          IO_APIC.mapAt((void*)IOAPIC_VADDR);
+          IO_APIC.mapAt(IOAPIC_VADDR);
           IO_APIC.init();
   }
 
@@ -103,9 +100,9 @@ void ArchInterrupts::disableKBD()
 
 void ArchInterrupts::EndOfInterrupt(uint16 number) 
 {
-  if(LocalAPIC::initialized)
+  if(LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized())
   {
-          local_APIC.sendEOI(number + 0x20);
+          ArchMulticore::getCLS()->apic.sendEOI(number + 0x20);
   }
   else
   {
@@ -224,10 +221,10 @@ extern "C" void arch_contextSwitch()
 {
   debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
 
-  if(outstanding_EOIs)
+  if(PIC8259::outstanding_EOIs_) // TODO: Check local APIc for outstanding interrupts
   {
-    debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
-    assert(!outstanding_EOIs);
+    debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
+    assert(!PIC8259::outstanding_EOIs_);
   }
   if (currentThread()->switch_to_userspace_)
   {

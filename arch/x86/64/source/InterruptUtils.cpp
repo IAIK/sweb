@@ -161,10 +161,27 @@ extern "C" void arch_contextSwitch();
 
 extern ArchThreadRegisters *currentThreadRegisters;
 
+void beginIRQ(__attribute__((unused)) size_t irq_num)
+{
+        if(LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized())
+        {
+                ArchMulticore::getCLS()->apic.outstanding_EOIs_++;
+        }
+        else
+        {
+                PIC8259::outstanding_EOIs_++;
+        }
+}
+
+void endIRQ(size_t irq_num)
+{
+  ArchInterrupts::EndOfInterrupt(irq_num);
+}
+
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  ++outstanding_EOIs;
+  beginIRQ(0);
   debug(A_INTERRUPTS, "IRQ 0 called by core %zx\n", ArchMulticore::getCpuID());
   ArchCommon::drawHeartBeat();
 
@@ -173,7 +190,7 @@ extern "C" void irqHandler_0()
   Scheduler::instance()->schedule();
 
   //kprintfd("irq0: Going to leave irq Handler 0\n");
-  ArchInterrupts::EndOfInterrupt(0);
+  endIRQ(0);
   arch_contextSwitch();
 }
 
@@ -202,20 +219,21 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  ++outstanding_EOIs;
+  beginIRQ(1);
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 1, 1 + 0x20);
   KeyboardManager::instance()->serviceIRQ( );
   ArchInterrupts::EndOfInterrupt(1);
+  endIRQ(1);
 }
 
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
   kprintfd( "IRQ 3 called\n" );
-  ++outstanding_EOIs;
+  beginIRQ(3);
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 3, 3 + 0x20);
   SerialManager::getInstance()->service_irq( 3 );
-  ArchInterrupts::EndOfInterrupt(3);
+  endIRQ(3);
   kprintfd( "IRQ 3 ended\n" );
 }
 
@@ -224,9 +242,9 @@ extern "C" void irqHandler_4()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 4, 4 + 0x20);
   kprintfd( "IRQ 4 called\n" );
-  ++outstanding_EOIs;
+  beginIRQ(4);
   SerialManager::getInstance()->service_irq( 4 );
-  ArchInterrupts::EndOfInterrupt(4);
+  endIRQ(4);
   kprintfd( "IRQ 4 ended\n" );
 }
 
@@ -243,9 +261,9 @@ extern "C" void irqHandler_9()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 9, 9 + 0x20);
   kprintfd( "IRQ 9 called\n" );
-  ++outstanding_EOIs;
+  beginIRQ(9);
   BDManager::getInstance()->serviceIRQ( 9 );
-  ArchInterrupts::EndOfInterrupt(9);
+  endIRQ(9);
 }
 
 extern "C" void arch_irqHandler_11();
@@ -253,9 +271,9 @@ extern "C" void irqHandler_11()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called by core %zx\n", 11, 11 + 0x20, ArchMulticore::getCpuID());
   kprintfd( "IRQ 11 called\n" );
-  ++outstanding_EOIs;
+  beginIRQ(11);
   BDManager::getInstance()->serviceIRQ( 11 );
-  ArchInterrupts::EndOfInterrupt(11);
+  endIRQ(11);
 }
 
 extern "C" void arch_irqHandler_14();
@@ -263,9 +281,9 @@ extern "C" void irqHandler_14()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%u) called by core %zx\n", 14, 14 + 0x20, ArchMulticore::getCpuID());
   //kprintfd( "IRQ 14 called\n" );
-  ++outstanding_EOIs;
+  beginIRQ(14);
   BDManager::getInstance()->serviceIRQ( 14 );
-  ArchInterrupts::EndOfInterrupt(14);
+  endIRQ(14);
 }
 
 extern "C" void arch_irqHandler_15();
@@ -273,25 +291,25 @@ extern "C" void irqHandler_15()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 15, 15 + 0x20);
   //kprintfd( "IRQ 15 called\n" );
-  ++outstanding_EOIs;
+  beginIRQ(15);
   BDManager::getInstance()->serviceIRQ( 15 );
-  ArchInterrupts::EndOfInterrupt(15);
+  endIRQ(15);
 }
 
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
-        ++outstanding_EOIs;
+        beginIRQ(90);
         debug(APIC, "IRQ 90 called\n");
-        ArchInterrupts::EndOfInterrupt(90);
+        endIRQ(90);
 }
 
 extern "C" void irqHandler_90_naked()
 {
         asm("swapgs\n");
-        ++outstanding_EOIs;
+        beginIRQ(90);
         debug(APIC, "naked IRQ 90 called by core %zx\n", ArchMulticore::getCpuID());
-        ArchInterrupts::EndOfInterrupt(90);
+        endIRQ(90);
         asm("leave\n"
             "swapgs\n"
             "iretq\n");

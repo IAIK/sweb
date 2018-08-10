@@ -17,7 +17,7 @@ enum AnsiColor
 #define OUTPUT_ADVANCED 0x70000000
 #define OUTPUT_FLAGS (OUTPUT_ENABLED | OUTPUT_ADVANCED)
 
-#define DEBUG_COLOR 0
+#define DEBUG_COLOR 1
 
 #if DEBUG_COLOR
 #define DEBUG_FORMAT_STRING "\033[1;%zum[%-11s]\033[0;39m"
@@ -57,6 +57,7 @@ const size_t KPRINTF            = Ansi_Yellow;
 const size_t LOCK               = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t LOADER             = Ansi_White   | OUTPUT_ENABLED;
 const size_t SCHEDULER          = Ansi_Yellow  | OUTPUT_ENABLED;
+const size_t CPU_SCHEDULER      = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t SYSCALL            = Ansi_Blue    | OUTPUT_ENABLED;
 const size_t MAIN               = Ansi_Red     | OUTPUT_ENABLED;
 const size_t THREAD             = Ansi_Magenta | OUTPUT_ENABLED;
