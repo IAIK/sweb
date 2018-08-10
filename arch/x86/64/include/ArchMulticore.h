@@ -4,14 +4,20 @@
 #include "CpuLocalScheduler.h"
 #include "APIC.h"
 
-struct CPULocalStorage
+class CPULocalStorage
 {
+public:
+  CPULocalStorage();
+
+  CPULocalStorage* init();
+
   CPULocalStorage* cls_ptr;
   size_t cpu_id;
   SegmentDescriptor gdt[7];
   TSS tss;
   CpuLocalScheduler scheduler;
   LocalAPIC apic;
+private:
 };
 
 #define AP_STARTUP_PADDR 0x0
@@ -25,7 +31,6 @@ class ArchMulticore
     static void startOtherCPUs();
 
     static CPULocalStorage* initCLS();
-    static void setCLS(CPULocalStorage* cls);
     static CPULocalStorage* getCLS();
     static bool CLSinitialized();
 

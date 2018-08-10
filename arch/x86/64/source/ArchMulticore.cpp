@@ -40,12 +40,19 @@ void setSWAPGSKernelBase(uint64 swapgs_base)
   setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
 }
 
-void ArchMulticore::setCLS(CPULocalStorage* cls)
+CPULocalStorage::CPULocalStorage() :
+        cls_ptr(init())
 {
-  debug(A_MULTICORE, "Set CLS to %p\n", cls);
-  cls->cls_ptr = cls;
-  setGSBase((uint64)cls);
-  setSWAPGSKernelBase((uint64)cls);
+  debug(A_MULTICORE, "Created new CPU local storage at %p\n", this);
+}
+
+CPULocalStorage* CPULocalStorage::init()
+{
+  debug(A_MULTICORE, "Init CLS %p\n", this);
+  cls_ptr = this;
+  setGSBase((uint64)this);
+  setSWAPGSKernelBase((uint64)this);
+  return this;
 }
 
 CPULocalStorage* ArchMulticore::getCLS()
@@ -63,7 +70,6 @@ CPULocalStorage* ArchMulticore::initCLS()
 {
   debug(A_MULTICORE, "Init CPU local storage\n");
   CPULocalStorage* cls = new CPULocalStorage{};
-  setCLS(cls);
   setCpuID(LocalAPIC::exists && cls->apic.isInitialized()  ? cls->apic.getID() : 0);
   return getCLS();
 }
