@@ -35,6 +35,9 @@ Scheduler::Scheduler()
 uint32 Scheduler::schedule()
 {
   debug(SCHEDULER, "scheduling\n");
+  ArchMulticore::getCLS()->scheduler.schedule();
+  return 0;
+
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
   if (block_scheduling_ != 0)
   {

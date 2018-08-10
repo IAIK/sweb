@@ -15,7 +15,7 @@ Mutex::Mutex(const char* name) :
 {
 }
 
-bool Mutex::acquireNonBlocking(pointer called_by)
+bool Mutex::acquireNonBlocking(pointer called_by, bool do_checks)
 {
   if(unlikely(system_state != RUNNING))
     return true;
@@ -32,7 +32,10 @@ bool Mutex::acquireNonBlocking(pointer called_by)
   // There may be some cases where the pre-checks may not be wished here.
   // But these cases are usually dirty implemented, and it would not be necessary to call this method there.
   // So in case you see this comment, re-think your implementation and don't just comment out this line!
-  doChecksBeforeWaiting();
+  if(do_checks)
+  {
+          doChecksBeforeWaiting();
+  }
 
   if(ArchThreads::testSetLock(mutex_, 1))
   {
@@ -83,7 +86,7 @@ void Mutex::acquire(pointer called_by)
   held_by_ = currentThread();
 }
 
-void Mutex::release(pointer called_by)
+void Mutex::release(pointer called_by, bool do_checks)
 {
   if(unlikely(system_state != RUNNING))
     return;
@@ -96,7 +99,10 @@ void Mutex::release(pointer called_by)
 //    debug(LOCK, "The release is called by: ");
 //    kernel_debug_info->printCallInformation(called_by);
 //  }
-  checkInvalidRelease("Mutex::release");
+  if(do_checks)
+  {
+          checkInvalidRelease("Mutex::release");
+  }
   removeFromCurrentThreadHoldingList();
   last_accessed_at_ = called_by;
   held_by_ = 0;

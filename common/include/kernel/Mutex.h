@@ -21,10 +21,10 @@ public:
      * @param called_by A pointer to the call point of this function.
      *                  Can be set in case this method is called by a wrapper function.
    */
-  bool acquireNonBlocking(pointer called_by = 0);
+  bool acquireNonBlocking(pointer called_by = 0, bool do_checks = true);
 
   void acquire(pointer called_by = 0);
-  void release(pointer called_by = 0);
+  void release(pointer called_by = 0, bool do_checks = true);
 
   /**
    * allows us to check if the Lock is set or not.

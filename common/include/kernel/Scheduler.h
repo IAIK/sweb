@@ -43,8 +43,11 @@ class Scheduler
   protected:
     friend class IdleThread;
     friend class CleanupThread;
+    friend class CpuLocalScheduler;
 
     void cleanupDeadThreads();
+
+    typedef ustl::list<Thread*> ThreadList;
 
   private:
     Scheduler();
@@ -64,7 +67,6 @@ class Scheduler
 
     static Scheduler *instance_;
 
-    typedef ustl::list<Thread*> ThreadList;
     ThreadList threads_;
 
     size_t block_scheduling_;
