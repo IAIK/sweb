@@ -49,6 +49,13 @@ void ProcessRegistry::Run()
   KernelMemoryManager::instance()->startTracing();
 
   debug(PROCESS_REG, "Starting user processes\n");
+
+  for(auto cls : ArchMulticore::cpu_list_)
+  {
+          debug(MAIN, "Starting helloworld on CPU %zu\n", cls->getCpuID());
+          createProcess("/usr/helloworld.sweb", cls->getCpuID());
+  }
+
   for (uint32 i = 0; progs_[i]; i++)
   {
     debug(PROCESS_REG, "Starting %s\n", progs_[i]);
