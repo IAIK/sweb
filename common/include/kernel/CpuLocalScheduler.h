@@ -18,12 +18,24 @@ public:
         void setCurrentThread(Thread*);
         void setCurrentThreadRegisters(ArchThreadRegisters*);
 
+        void cleanupDeadThreads();
+        bool isCurrentlyCleaningUp();
+
+        void lockThreadList();
+        bool tryLockThreadList();
+        void unlockThreadList();
+
+        void incTicks();
+        size_t getTicks();
+
 private:
         ArchThreadRegisters* currentThreadRegisters_;
         Thread* currentThread_;
 
         Scheduler::ThreadList threads_;
-        Mutex thread_list_lock_;
+        size_t thread_list_lock_;
+
+        size_t ticks_;
 
         IdleThread idle_thread_;
         CleanupThread cleanup_thread_;

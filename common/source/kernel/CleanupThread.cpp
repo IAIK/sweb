@@ -1,5 +1,6 @@
 #include "CleanupThread.h"
 #include "Scheduler.h"
+#include "ArchMulticore.h"
 
 CleanupThread::CleanupThread() : Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
 {
@@ -19,7 +20,8 @@ void CleanupThread::Run()
 {
   while (1)
   {
-    Scheduler::instance()->cleanupDeadThreads();
+    //Scheduler::instance()->cleanupDeadThreads();
+    ArchMulticore::getCLS()->scheduler.cleanupDeadThreads();
     Scheduler::instance()->yield();
   }
 }

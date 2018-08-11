@@ -4,9 +4,10 @@
 #include "ArchInterrupts.h"
 #include "backtrace.h"
 #include "ustring.h"
+#include "KernelMemoryManager.h"
 
 CpuLocalScheduler::CpuLocalScheduler() :
-        thread_list_lock_(ustl::string("Cpu ") + ustl::to_string(ArchMulticore::getCpuID()) + ustl::string(" thread list lock"))
+        thread_list_lock_(0)
 {
         addNewThread(&idle_thread_);
         addNewThread(&cleanup_thread_);
@@ -14,9 +15,8 @@ CpuLocalScheduler::CpuLocalScheduler() :
 
 void CpuLocalScheduler::schedule()
 {
-        debug(CPU_SCHEDULER, "scheduling\n");
         assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
-        if(!thread_list_lock_.acquireNonBlocking(getCalledBefore(0), false))
+        if(!tryLockThreadList())
         {
                 debug(CPU_SCHEDULER, "Scheduler thread list is currently locked. Abort scheduling\n");
                 return;
@@ -36,6 +36,8 @@ void CpuLocalScheduler::schedule()
 
         ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
 
+        unlockThreadList();
+
         if (currentThread()->switch_to_userspace_)
         {
                 setCurrentThreadRegisters(currentThread()->user_registers_);
@@ -44,10 +46,6 @@ void CpuLocalScheduler::schedule()
         {
                 setCurrentThreadRegisters(currentThread()->kernel_registers_);
         }
-
-        debug(CPU_SCHEDULER, "Scheduling %s, user: %u\n", currentThread()->getName(), currentThread()->switch_to_userspace_);
-
-        thread_list_lock_.release(getCalledBefore(0), false);
 }
 
 void CpuLocalScheduler::addNewThread(Thread* thread)
@@ -56,9 +54,48 @@ void CpuLocalScheduler::addNewThread(Thread* thread)
         debug(SCHEDULER, "CPU %zu, addNewThread: %p  %zd:%s\n", ArchMulticore::getCpuID(), thread, thread->getTID(), thread->getName());
         if (getCurrentThread())
                 ArchThreads::debugCheckNewThread(thread);
-        thread_list_lock_.acquire();
+        KernelMemoryManager::instance()->getKMMLock().acquire();
+        lockThreadList();
+        KernelMemoryManager::instance()->getKMMLock().release(); // Could still be locked again by threads on other CPUs, but locking scheduling on this CPU is not a problem in this case
         threads_.push_back(thread);
-        thread_list_lock_.release();
+        unlockThreadList();
+}
+
+void CpuLocalScheduler::cleanupDeadThreads()
+{
+        debug(CPU_SCHEDULER, "CPU %zu, Cleaning up dead threads\n", ArchMulticore::getCpuID());
+        lockThreadList();
+        uint32 thread_count_max = threads_.size();
+        if (thread_count_max > 1024)
+                thread_count_max = 1024;
+        Thread* destroy_list[thread_count_max];
+        uint32 thread_count = 0;
+        for (uint32 i = 0; i < threads_.size(); ++i)
+        {
+                Thread* tmp = threads_[i];
+                if (tmp->getState() == ToBeDestroyed)
+                {
+                        destroy_list[thread_count++] = tmp;
+                        threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
+                        --i;
+                }
+                if (thread_count >= thread_count_max)
+                        break;
+        }
+        unlockThreadList();
+        if (thread_count > 0)
+        {
+                for (uint32 i = 0; i < thread_count; ++i)
+                {
+                        delete destroy_list[i];
+                }
+                debug(SCHEDULER, "cleanupDeadThreads: done\n");
+        }
+}
+
+bool CpuLocalScheduler::isCurrentlyCleaningUp()
+{
+        return currentThread() == &cleanup_thread_;
 }
 
 Thread* CpuLocalScheduler::getCurrentThread()
@@ -74,12 +111,37 @@ ArchThreadRegisters* CpuLocalScheduler::getCurrentThreadRegisters()
 
 void CpuLocalScheduler::setCurrentThread(Thread* t)
 {
-        debug(CPU_SCHEDULER, "setCurrentThread: %p (%s)\n", t, t->getName());
+        debug(CPU_SCHEDULER, "CPU %zu, setCurrentThread: %p (%s)\n", ArchMulticore::getCpuID(), t, t->getName());
         currentThread_ = t;
 }
 
 void CpuLocalScheduler::setCurrentThreadRegisters(ArchThreadRegisters* r)
 {
-        debug(CPU_SCHEDULER, "setCurrentThreadRegisters: %p\n", r);
+        //debug(CPU_SCHEDULER, "setCurrentThreadRegisters: %p\n", r);
         currentThreadRegisters_ = r;
+}
+
+void CpuLocalScheduler::lockThreadList()
+{
+        while(!tryLockThreadList());
+}
+
+bool CpuLocalScheduler::tryLockThreadList()
+{
+        return !ArchThreads::testSetLock(thread_list_lock_, 1);
+}
+
+void CpuLocalScheduler::unlockThreadList()
+{
+        thread_list_lock_ = 0;
+}
+
+size_t CpuLocalScheduler::getTicks()
+{
+        return ticks_;
+}
+
+void CpuLocalScheduler::incTicks()
+{
+        ++ticks_;
 }

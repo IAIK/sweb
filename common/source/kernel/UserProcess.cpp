@@ -8,6 +8,7 @@
 #include "ArchMemory.h"
 #include "PageManager.h"
 #include "ArchThreads.h"
+#include "ArchMulticore.h"
 #include "offsets.h"
 
 UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
@@ -45,7 +46,8 @@ UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 
 
 UserProcess::~UserProcess()
 {
-  assert(Scheduler::instance()->isCurrentlyCleaningUp());
+  assert(ArchMulticore::getCLS()->scheduler.isCurrentlyCleaningUp());
+  //assert(Scheduler::instance()->isCurrentlyCleaningUp());
   delete loader_;
   loader_ = 0;
 

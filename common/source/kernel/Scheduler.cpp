@@ -28,13 +28,12 @@ Scheduler::Scheduler()
 {
   block_scheduling_ = 0;
   ticks_ = 0;
-  addNewThread(&cleanup_thread_);
-  addNewThread(&idle_thread_);
+  //addNewThread(&cleanup_thread_);
+  //addNewThread(&idle_thread_);
 }
 
 uint32 Scheduler::schedule()
 {
-  debug(SCHEDULER, "scheduling\n");
   ArchMulticore::getCLS()->scheduler.schedule();
   return 0;
 
@@ -80,6 +79,8 @@ uint32 Scheduler::schedule()
 
 void Scheduler::addNewThread(Thread *thread)
 {
+  ArchMulticore::getCLS()->scheduler.addNewThread(thread);
+  /*
   assert(thread);
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
   if (currentThread())
@@ -89,6 +90,7 @@ void Scheduler::addNewThread(Thread *thread)
   KernelMemoryManager::instance()->getKMMLock().release();
   threads_.push_back(thread);
   unlockScheduling();
+  */
 }
 
 void Scheduler::sleep()

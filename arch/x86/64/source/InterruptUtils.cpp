@@ -186,6 +186,7 @@ extern "C" void irqHandler_0()
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
+  ArchMulticore::getCLS()->scheduler.incTicks();
 
   Scheduler::instance()->schedule();
 

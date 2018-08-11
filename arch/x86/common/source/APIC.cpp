@@ -38,7 +38,6 @@ void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
 void LocalAPIC::sendEOI(size_t num)
 {
   --outstanding_EOIs_;
-  debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs_);
   debug(APIC, "Sending EOI for %zx\n", num);
   reg_vaddr_->eoi = 0;
 }

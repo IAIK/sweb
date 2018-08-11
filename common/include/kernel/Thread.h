@@ -24,6 +24,7 @@ class Lock;
 class Thread
 {
     friend class Scheduler;
+    friend class CpuLocalScheduler;
   public:
 
     static const char* threadStatePrintable[3];

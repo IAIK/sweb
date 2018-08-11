@@ -42,7 +42,7 @@ Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type
 
 Thread::~Thread()
 {
-  debug(THREAD, "~Thread: freeing ThreadInfos\n");
+  debug(THREAD, "~Thread %s: freeing ThreadInfos\n", getName());
   delete user_registers_;
   user_registers_ = 0;
   delete kernel_registers_;
