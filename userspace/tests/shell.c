@@ -98,7 +98,7 @@ void handle_command(char* buffer, int buffer_size)
     }
     else
       memcpy(executable, command, strlen(command) + 1);
-    pid = createprocess(executable, 1);
+    pid = createprocess(executable, 1, -1);
     if (pid == -1)
     {
       printf("Command not understood\n");

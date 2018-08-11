@@ -19,7 +19,7 @@ class Syscall
   static size_t close(size_t fd);
   static size_t open(size_t path, size_t flags);
 
-  static size_t createprocess(size_t path, size_t sleep);
+  static size_t createprocess(size_t path, size_t sleep, size_t cpu);
   static void trace();
 };
 

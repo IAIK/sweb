@@ -36,7 +36,7 @@ class ProcessRegistry : public Thread
     size_t processCount();
 
     static ProcessRegistry* instance();
-    void createProcess(const char* path);
+    void createProcess(const char* path, size_t cpu = -1);
 
   private:
 

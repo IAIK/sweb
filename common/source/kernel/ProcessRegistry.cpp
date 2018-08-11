@@ -4,6 +4,7 @@
 #include "UserProcess.h"
 #include "kprintf.h"
 #include "VfsSyscall.h"
+#include "ArchMulticore.h"
 
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
@@ -97,11 +98,30 @@ size_t ProcessRegistry::processCount()
   return progs_running_;
 }
 
-void ProcessRegistry::createProcess(const char* path)
+void ProcessRegistry::createProcess(const char* path, size_t cpu)
 {
-  debug(PROCESS_REG, "create process %s\n", path);
+  debug(PROCESS_REG, "create process %s on cpu %zu\n", path, cpu);
   Thread* process = new UserProcess(path, new FileSystemInfo(*working_dir_));
   debug(PROCESS_REG, "created userprocess %s\n", path);
-  Scheduler::instance()->addNewThread(process);
+  if(cpu == (size_t)-1)
+  {
+          ArchMulticore::getCLS()->scheduler.addNewThread(process);
+  }
+  else
+  {
+          bool cpu_found = false;
+
+          for(auto cls : ArchMulticore::cpu_list_)
+          {
+                  if(cls->getCpuID() == cpu)
+                  {
+                          cpu_found = true;
+                          cls->scheduler.addNewThread(process);
+                          break;
+                  }
+          }
+          assert(cpu_found);
+  }
+  //Scheduler::instance()->addNewThread(process);
   debug(PROCESS_REG, "added thread %s\n", path);
 }
