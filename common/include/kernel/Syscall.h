@@ -21,5 +21,8 @@ class Syscall
 
   static size_t createprocess(size_t path, size_t sleep, size_t cpu);
   static void trace();
+
+  static int getcpu(size_t *cpu, size_t *node, void *tcache);
+
 };
 

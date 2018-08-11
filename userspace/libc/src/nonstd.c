@@ -8,6 +8,11 @@ int createprocess(const char* path, int sleep, size_t cpu)
   return __syscall(sc_createprocess, (long) path, sleep, cpu, 0x00, 0x00);
 }
 
+int getcpu(size_t *cpu, size_t *node, void *tcache)
+{
+  return __syscall(sc_getcpu, (size_t)cpu, (size_t)node, (size_t)tcache, 0x00, 0x00);
+}
+
 extern int main();
 
 void _start()

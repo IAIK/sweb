@@ -7,6 +7,7 @@
 #include "UserProcess.h"
 #include "ProcessRegistry.h"
 #include "File.h"
+#include "ArchMulticore.h"
 
 size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
 {
@@ -49,6 +50,9 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       break;
     case sc_pseudols:
       VfsSyscall::readdir((const char*) arg1);
+      break;
+  case sc_getcpu:
+      return_value = getcpu((size_t*)arg1, (size_t*)arg2, (void*)arg3);
       break;
     default:
       kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %zd\n", syscall_number);
@@ -170,3 +174,23 @@ void Syscall::trace()
   currentThread()->printBacktrace();
 }
 
+
+int Syscall::getcpu(size_t *cpu, size_t *node, __attribute__((unused)) void *tcache)
+{
+        if(((size_t)cpu >= USER_BREAK) || ((size_t)node >= USER_BREAK))
+        {
+                return -1;
+        }
+
+        if(cpu != NULL)
+        {
+                *cpu = ArchMulticore::getCpuID();
+        }
+
+        if(node != NULL)
+        {
+                *node = 0;
+        }
+
+        return 0;
+}

@@ -17,6 +17,8 @@ extern "C" {
  */
  int createprocess(const char* path, int sleep, size_t cpu);
 
+ int getcpu(size_t *cpu, size_t *node, void *tcache);
+
 #ifdef __cplusplus
 }
 #endif
