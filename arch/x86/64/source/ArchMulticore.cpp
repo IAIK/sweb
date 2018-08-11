@@ -6,8 +6,12 @@
 #include "InterruptUtils.h"
 #include "ArchInterrupts.h"
 #include "Thread.h"
+#include "MutexLock.h"
 
 extern SystemState system_state;
+
+ustl::vector<CpuLocalStorage*> ArchMulticore::cpu_list_;
+Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
 
 void getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {
@@ -40,13 +44,16 @@ void setSWAPGSKernelBase(uint64 swapgs_base)
   setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
 }
 
-CPULocalStorage::CPULocalStorage() :
-        cls_ptr(init())
+CpuLocalStorage::CpuLocalStorage() :
+        cls_ptr(init()),
+        scheduler(this)
 {
   debug(A_MULTICORE, "Created new CPU local storage at %p\n", this);
+  MutexLock l(ArchMulticore::cpu_list_lock_);
+  ArchMulticore::cpu_list_.push_back(this);
 }
 
-CPULocalStorage* CPULocalStorage::init()
+CpuLocalStorage* CpuLocalStorage::init()
 {
   debug(A_MULTICORE, "Init CLS %p\n", this);
   cls_ptr = this;
@@ -55,9 +62,14 @@ CPULocalStorage* CPULocalStorage::init()
   return this;
 }
 
-CPULocalStorage* ArchMulticore::getCLS()
+size_t CpuLocalStorage::getCpuID()
 {
-  CPULocalStorage* cls_ptr;
+        return cpu_id;
+}
+
+CpuLocalStorage* ArchMulticore::getCLS()
+{
+  CpuLocalStorage* cls_ptr;
   assert(getGSBase() != 0); // debug only
   __asm__ __volatile__("movq %%gs:0, %%rax\n"
                        "movq %%rax, %[cls_ptr]\n"
@@ -66,10 +78,10 @@ CPULocalStorage* ArchMulticore::getCLS()
   return cls_ptr;
 }
 
-CPULocalStorage* ArchMulticore::initCLS()
+CpuLocalStorage* ArchMulticore::initCLS()
 {
   debug(A_MULTICORE, "Init CPU local storage\n");
-  CPULocalStorage* cls = new CPULocalStorage{};
+  CpuLocalStorage* cls = new CpuLocalStorage{};
   setCpuID(LocalAPIC::exists && cls->apic.isInitialized()  ? cls->apic.getID() : 0);
   return getCLS();
 }
@@ -91,7 +103,9 @@ size_t ArchMulticore::getCpuID()
 
 void ArchMulticore::initialize()
 {
-  CPULocalStorage* cls = ArchMulticore::initCLS();
+  new (&cpu_list_) ustl::vector<CpuLocalStorage*>;
+  new (&cpu_list_lock_) Mutex("CPU list lock");
+  CpuLocalStorage* cls = ArchMulticore::initCLS();
   debug(A_MULTICORE, "CLS for cpu %zu at %p\n", ArchMulticore::getCpuID(), cls);
 }
 
@@ -238,7 +252,7 @@ void ArchMulticore::initCpu()
                        :
                        :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-  CPULocalStorage* ap_cls = ArchMulticore::initCLS();
+  CpuLocalStorage* ap_cls = ArchMulticore::initCLS();
   debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ArchMulticore::getCLS(), ArchMulticore::getCpuID());
 
   debug(A_MULTICORE, "AP switching to own GDT at: %p\n", &ap_cls->gdt);

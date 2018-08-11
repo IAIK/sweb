@@ -4,10 +4,12 @@
 #include "Scheduler.h"
 #include "Mutex.h"
 
+class CpuLocalStorage;
+
 class CpuLocalScheduler
 {
 public:
-        CpuLocalScheduler();
+        CpuLocalScheduler(CpuLocalStorage* cpu_info_);
 
         void addNewThread(Thread* thread);
 
@@ -29,11 +31,13 @@ public:
         size_t getTicks();
 
 private:
+        CpuLocalStorage* cpu_info_;
+
         ArchThreadRegisters* currentThreadRegisters_;
         Thread* currentThread_;
 
         Scheduler::ThreadList threads_;
-        size_t thread_list_lock_;
+        size_t thread_list_lock_ = 0;
 
         size_t ticks_;
 

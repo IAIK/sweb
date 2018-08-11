@@ -6,9 +6,10 @@
 #include "ustring.h"
 #include "KernelMemoryManager.h"
 
-CpuLocalScheduler::CpuLocalScheduler() :
-        thread_list_lock_(0)
+CpuLocalScheduler::CpuLocalScheduler(CpuLocalStorage* cpu_info) :
+        cpu_info_(cpu_info)
 {
+        assert(cpu_info_);
         addNewThread(&idle_thread_);
         addNewThread(&cleanup_thread_);
 }
@@ -51,7 +52,7 @@ void CpuLocalScheduler::schedule()
 void CpuLocalScheduler::addNewThread(Thread* thread)
 {
         assert(thread);
-        debug(SCHEDULER, "CPU %zu, addNewThread: %p  %zd:%s\n", ArchMulticore::getCpuID(), thread, thread->getTID(), thread->getName());
+        debug(SCHEDULER, "CPU %zu, addNewThread: %p  %zd:%s\n", cpu_info_->getCpuID(), thread, thread->getTID(), thread->getName());
         if (getCurrentThread())
                 ArchThreads::debugCheckNewThread(thread);
         KernelMemoryManager::instance()->getKMMLock().acquire();
