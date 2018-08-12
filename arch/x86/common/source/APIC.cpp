@@ -9,6 +9,7 @@
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
 #include "ArchMulticore.h"
+#include "ProgrammableIntervalTimer.h"
 
 IOAPIC IO_APIC;
 
@@ -204,6 +205,19 @@ uint32 LocalAPIC::getID() volatile
         return id.id;
 }
 
+static volatile uint8 delay = 0;
+
+extern "C" void PIT_delay_IRQ();
+void __PIT_delay_IRQ()
+{
+        __asm__ __volatile__(".global PIT_delay_IRQ\n"
+                             "PIT_delay_IRQ:\n");
+        __asm__ __volatile__("movb $1, %[delay]\n"
+                             :[delay]"=m"(delay));
+        __asm__ __volatile__("iretq\n");
+}
+extern "C" void arch_irqHandler_0();
+
 void LocalAPIC::startAPs(size_t entry_addr) volatile
 {
         debug(A_MULTICORE, "Sending init IPI to AP local APICs, AP entry function: %zx\n", entry_addr);
@@ -218,11 +232,29 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
-        // TODO: 10ms delay here
         debug(A_MULTICORE, "Start delay 1\n");
-        for(size_t i = 0; i < 0xFFFFFF; ++i)
-        {
-        }
+        // 10ms delay
+
+        PIT::PITCommandRegister pit_command{};
+        pit_command.bcd_mode = 0;
+        pit_command.operating_mode = 0; // oneshot
+        pit_command.access_mode = 3; // send low + high byte of reload value/divisor
+        pit_command.channel = 0;
+
+        __attribute__((unused)) InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
+
+        InterruptUtils::idt[0x20].setOffset((size_t)&PIT_delay_IRQ);
+
+        IO_APIC.setIRQMask(2, false);
+        ArchInterrupts::enableInterrupts();
+        PIT::init(pit_command.value, 1193182 / 100);
+        while(!delay);
+        ArchInterrupts::disableInterrupts();
+        IO_APIC.setIRQMask(2, true);
+        ArchMulticore::getCLS()->apic.sendEOI(0x20);
+
+        delay = 0;
+
         debug(A_MULTICORE, "End delay 1\n");
 
         assert((entry_addr % PAGE_SIZE) == 0);
@@ -232,28 +264,28 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
-        // TODO: 200us delay here
+        // 200us delay
         debug(A_MULTICORE, "Start delay 2\n");
-        for(size_t i = 0; i < 0xFFFFF; ++i)
-        {
-        }
+
+        IO_APIC.setIRQMask(2, false);
+        ArchInterrupts::enableInterrupts();
+        PIT::init(pit_command.value, 1193182 / 5000);
+        while(!delay);
+        ArchInterrupts::disableInterrupts();
+        IO_APIC.setIRQMask(2, true);
+        ArchMulticore::getCLS()->apic.sendEOI(0x20);
+
+        delay = 0;
+
         debug(A_MULTICORE, "End delay 2\n");
 
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
-        //TODO: Probably not required
-        debug(A_MULTICORE, "Start delay 3\n");
-        for(size_t i = 0; i < 0xFFFFFFF; ++i)
-        {
-        }
-        debug(A_MULTICORE, "End delay 3\n");
+
+        InterruptUtils::idt[0x20] = temp_irq0_descriptor;
 
         debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
 }
-
-
-
-
 
 
 

@@ -1,5 +1,6 @@
 #include "ArchInterrupts.h"
 #include "8259.h"
+#include "ProgrammableIntervalTimer.h"
 #include "ports.h"
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
@@ -37,7 +38,7 @@ void ArchInterrupts::enableTimer()
 {
   if(IOAPIC::initialized)
   {
-          local_APIC.reg_vaddr_->lvt_timer.setMask(false);
+          ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(false);
           //IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
   }
   else
@@ -54,17 +55,22 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
   } else {
     divisor = (uint16)(1193180 / freq);
   }
-  outportb(0x43, 0x36);
-  outportb(0x40, divisor & 0xFF);
-  outportb(0x40, divisor >> 8);
+
+  PIT::PITCommandRegister command{};
+  command.bcd_mode = 0;
+  command.operating_mode = 3; // square wave generator
+  command.access_mode = 3; // send low + high byte of reload value/divisor
+  command.channel = 0;
+
+  PIT::init(command.value, divisor);
 }
 
 void ArchInterrupts::disableTimer()
 {
   if(IOAPIC::initialized)
   {
-          //local_APIC.registers.lvt_timer.setMask(true);
-          IO_APIC.setIRQMask(2, true); // IRQ source override in APIC: 0 -> 2
+          ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(true);
+          //IO_APIC.setIRQMask(2, true); // IRQ source override in APIC: 0 -> 2
   }
   else
   {

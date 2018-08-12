@@ -64,21 +64,6 @@
 #define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
                                  // =1: an instruction fetch (need PAE for that)
 
-struct GateDesc
-{
-  uint16 offset_ld_lw : 16;     // low word / low dword of handler entry point's address
-  uint16 segment_selector : 16; // (code) segment the handler resides in
-  uint8 ist       : 3;     // interrupt stack table index
-  uint8 zeros     : 5;     // set to zero
-  uint8 type      : 4;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
-  uint8 zero_1    : 1;     // unsued - set to zero
-  uint8 dpl       : 2;     // descriptor protection level
-  uint8 present   : 1;     // present- flag - set to 1
-  uint16 offset_ld_hw : 16;     // high word / low dword of handler entry point's address
-  uint32 offset_hd : 32;        // high dword of handler entry point's address
-  uint32 reserved : 32;
-}__attribute__((__packed__));
-
 
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
@@ -88,6 +73,15 @@ uint64 InterruptUtils::pf_address_counter;
 
 IDTR InterruptUtils::idtr;
 
+InterruptGateDesc* InterruptUtils::idt;
+
+void InterruptGateDesc::setOffset(uint64 offset)
+{
+        offset_ld_lw = LO_WORD(LO_DWORD( offset ));
+        offset_ld_hw = HI_WORD(LO_DWORD( offset ));
+        offset_hd = HI_DWORD(            offset );
+}
+
 void InterruptUtils::initialise()
 {
   uint32 num_handlers = 0;
@@ -95,7 +89,7 @@ void InterruptUtils::initialise()
     num_handlers = handlers[i].number;
   ++num_handlers;
   // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[num_handlers];
+  idt = new InterruptGateDesc[num_handlers];
   size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
   assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
   dummy_handler_sled_size /= 128;
@@ -105,27 +99,27 @@ void InterruptUtils::initialise()
   {
     while (handlers[j].number < i && handlers[j].offset != 0)
       ++j;
-    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
-    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
-    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
-    interrupt_gates[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
-    interrupt_gates[i].present = 1;
-    interrupt_gates[i].segment_selector = KERNEL_CS;
-    interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
-    interrupt_gates[i].zero_1 = 0;
-    interrupt_gates[i].zeros = 0;
-    interrupt_gates[i].reserved = 0;
-    interrupt_gates[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
+    idt[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
+    idt[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
+    idt[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
+    idt[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
+    idt[i].present = 1;
+    idt[i].segment_selector = KERNEL_CS;
+    idt[i].type = TYPE_INTERRUPT_GATE;
+    idt[i].zero_1 = 0;
+    idt[i].zeros = 0;
+    idt[i].reserved = 0;
+    idt[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
     debug(A_INTERRUPTS,
         "%x -- offset = %p, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
-        interrupt_gates[i].offset_ld_lw, interrupt_gates[i].offset_ld_hw,
-        interrupt_gates[i].offset_hd, interrupt_gates[i].ist,
-        interrupt_gates[i].present, interrupt_gates[i].segment_selector,
-        interrupt_gates[i].type, interrupt_gates[i].dpl);
+        idt[i].offset_ld_lw, idt[i].offset_ld_hw,
+        idt[i].offset_hd, idt[i].ist,
+        idt[i].present, idt[i].segment_selector,
+        idt[i].type, idt[i].dpl);
   }
 
-  idtr.base = (pointer) interrupt_gates;
-  idtr.limit = sizeof(GateDesc) * num_handlers - 1;
+  idtr.base = (pointer) idt;
+  idtr.limit = sizeof(InterruptGateDesc) * num_handlers - 1;
   lidt(&idtr);
   pf_address = 0xdeadbeef;
   pf_address_counter = 0;

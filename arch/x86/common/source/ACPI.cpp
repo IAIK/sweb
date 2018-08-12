@@ -273,7 +273,7 @@ void ACPI_MADTHeader::parse()
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Local APIC address override, addr: %zx\n", entry, entry->local_apic_addr);
       assert(LocalAPIC::exists);
-      local_APIC.reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
+      LocalAPIC::reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
       break;
     }
     case 9:
