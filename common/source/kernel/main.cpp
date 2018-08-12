@@ -128,6 +128,7 @@ extern "C" void startup()
   for (BDVirtualDevice* bdvd : BDManager::getInstance()->device_list_)
   {
     debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
+    kprintf("Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
   }
 
   // initialise global and static objects
@@ -162,6 +163,15 @@ extern "C" void startup()
 
   debug(MAIN, "Now enabling Interrupts...\n");
   system_state = RUNNING;
+
+
+  debug(MAIN, "%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
+  kprintf("%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
+  for(auto cls : ArchMulticore::cpu_list_)
+  {
+          debug(MAIN, "CPU %zu\n", cls->cpu_id);
+          kprintf("CPU %zu\n", cls->cpu_id);
+  }
 
   ArchInterrupts::enableInterrupts();
 

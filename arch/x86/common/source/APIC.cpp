@@ -289,6 +289,15 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
+        // Wait another 10ms to give APs time for initialization
+        IO_APIC.setIRQMask(2, false);
+        ArchInterrupts::enableInterrupts();
+        PIT::init(pit_command.value, 1193182 / 100);
+        while(!delay);
+        ArchInterrupts::disableInterrupts();
+        IO_APIC.setIRQMask(2, true);
+        ArchMulticore::getCLS()->apic.sendEOI(0x20);
+
 
         InterruptUtils::idt[0x20] = temp_irq0_descriptor;
 
