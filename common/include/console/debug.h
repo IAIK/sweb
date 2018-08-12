@@ -19,24 +19,30 @@ enum AnsiColor
 
 #define DEBUG_COLOR 1
 
+#define DEBUG_FORMAT_STRING_COLOR   "\033[1;%zum[%-11s]\033[0;39m"
+#define DEBUG_FORMAT_STRING_NOCOLOR "[%-11s]"
+
+#define FLAG_PARAM_COLOR(flag) (flag & ~OUTPUT_FLAGS), #flag
+#define FLAG_PARAM_NOCOLOR(flag) #flag
+
 #if DEBUG_COLOR
-#define DEBUG_FORMAT_STRING "\033[1;%zum[%-11s]\033[0;39m"
-#define COLOR_PARAM(flag) (flag & ~OUTPUT_FLAGS), #flag
+#define DEBUG_FORMAT_STRING DEBUG_FORMAT_STRING_COLOR
+#define FLAG_PARAM FLAG_PARAM_COLOR
 #else
-#define DEBUG_FORMAT_STRING "[%-11s]"
-#define COLOR_PARAM(flag) #flag
+#define DEBUG_FORMAT_STRING DEBUG_FORMAT_STRING_NOCOLOR
+#define FLAG_PARAM FLAG_PARAM_NOCOLOR
 #endif
 
 #define DEBUG_TO_FB 0
 extern bool debug_print_to_fb;
 
 #ifndef EXE2MINIXFS
-#define debug(flag, ...) do {                                                        \
-          if (flag & OUTPUT_ENABLED) {                                               \
-            kprintfd(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintfd(__VA_ARGS__); \
-            if(debug_print_to_fb) {                                                  \
-              kprintf(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintf(__VA_ARGS__); \
-            }                                                                        \
+#define debug(flag, ...) do {                                                                       \
+          if (flag & OUTPUT_ENABLED) {                                                              \
+            kprintfd(DEBUG_FORMAT_STRING, FLAG_PARAM(flag)); kprintfd(__VA_ARGS__);                 \
+            if(debug_print_to_fb) {                                                                 \
+              kprintf(DEBUG_FORMAT_STRING_NOCOLOR, FLAG_PARAM_NOCOLOR(flag)); kprintf(__VA_ARGS__); \
+            }                                                                                       \
           } } while (0)
 #endif
 
