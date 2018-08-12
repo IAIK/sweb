@@ -112,22 +112,31 @@ apstartup64_trampoline:
     jmp *%rax
     hlt
 
+.global ap_s_start
 ap_s_start:
     .asciz "AP started\n"
+.global ap_s_pae
 ap_s_pae:
 	.asciz "Enabling PAE\n"
+.global ap_s_cr3
 ap_s_cr3:
 	.asciz "Loading CR3\n"
+.global ap_s_efer
 ap_s_efer:
 	.asciz "Enabling EFER.LME and EFER.NXE\n"
+.global ap_s_prot
 ap_s_prot:
 	.asciz "Enabling protected mode, write protection in kernel mode and paging\n"
+.global ap_s_lgdt
 ap_s_lgdt:
 	.asciz "Loading GDT\n"
+.global ap_s_segm
 ap_s_segm:
 	.asciz "Loading segment registers\n"
+.global ap_s_ljmp
 ap_s_ljmp:
 	.asciz "Far jmp to trampoline to load long mode code segment\n"
+.global ap_s_apstartup64
 ap_s_apstartup64:
 	.asciz "Jumping to apstartup64\n"
 

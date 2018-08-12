@@ -295,19 +295,15 @@ extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
         beginIRQ(90);
-        debug(APIC, "IRQ 90 called\n");
+        debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", ArchMulticore::getCpuID());
+        if (currentThread() != 0)
+        {
+                debug(BACKTRACE, "CPU %zu backtrace:\n", ArchMulticore::getCpuID());
+                currentThread()->printBacktrace(false);
+        }
+        while(1)
+                asm("hlt\n");
         endIRQ(90);
-}
-
-extern "C" void irqHandler_90_naked()
-{
-        asm("swapgs\n");
-        beginIRQ(90);
-        debug(APIC, "naked IRQ 90 called by core %zx\n", ArchMulticore::getCpuID());
-        endIRQ(90);
-        asm("leave\n"
-            "swapgs\n"
-            "iretq\n");
 }
 
 extern "C" void arch_syscallHandler();

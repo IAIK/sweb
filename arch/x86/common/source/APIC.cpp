@@ -288,6 +288,27 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 }
 
 
+void LocalAPIC::sendIPI(uint8 vector) volatile
+{
+        debug(APIC, "Sending IPI, vector: %x\n", vector);
+        LocalAPIC_InterruptCommandRegisterHigh v_high{};
+        v_high.destination = 1;
+
+        LocalAPIC_InterruptCommandRegisterLow v_low{};
+        v_low.vector = vector;
+        v_low.delivery_mode = 0; // normal IPI
+        v_low.destination_mode = 0; // physical
+        v_low.level = 1;
+        v_low.trigger_mode = 0;
+        //v_low.destination_shorthand = 3; // Send to all excluding self
+        v_low.destination_shorthand = 2; // Send to all
+        //v_low.destination_shorthand = 0; // Send to cpu specified in ICR high
+
+
+        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+}
+
 
 
 IOAPIC::IOAPIC() :

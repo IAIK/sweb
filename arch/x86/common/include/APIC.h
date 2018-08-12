@@ -257,6 +257,7 @@ public:
         uint32 getID() volatile;
 
         void startAPs(size_t entry_addr) volatile;
+        void sendIPI(uint8 vector) volatile;
 
         static void addLocalAPICToList(const MADTProcLocalAPIC&);
 

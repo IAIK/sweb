@@ -170,6 +170,10 @@ void ArchMulticore::startOtherCPUs()
   }
 }
 
+void ArchMulticore::stopAllCpus()
+{
+  getCLS()->apic.sendIPI(90);
+}
 
 
 // TODO: Each AP needs its own stack
@@ -246,6 +250,7 @@ extern "C" void __apstartup64()
 void ArchMulticore::initCpu()
 {
   debug(A_MULTICORE, "initAPCore\n");
+  kprintf("initAPCore\n");
 
   debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
   __asm__ __volatile__("movq %[kernel_cr3], %%cr3\n"
@@ -289,6 +294,7 @@ void ArchMulticore::initCpu()
   debug(A_MULTICORE, "Enable AP timer\n");
   ArchInterrupts::enableTimer();
 
+  debug(A_MULTICORE, "Wait for system start\n");
   while(system_state != RUNNING);
 
   debug(A_MULTICORE, "Enabling interrupts\n");

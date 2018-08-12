@@ -33,6 +33,7 @@ class ArchMulticore
     static void initialize();
 
     static void startOtherCPUs();
+    static void stopAllCpus();
 
     static CpuLocalStorage* initCLS();
     static CpuLocalStorage* getCLS();
