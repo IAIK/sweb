@@ -57,7 +57,9 @@ const size_t BD_MANAGER         = Ansi_Yellow;
 const size_t BD_VIRT_DEVICE     = Ansi_Yellow;
 
 //group Console
-const size_t KPRINTF            = Ansi_Yellow;
+const size_t KPRINTF            = Ansi_Yellow  | OUTPUT_ENABLED;
+const size_t CONSOLE            = Ansi_Yellow  | OUTPUT_ENABLED;
+const size_t TERMINAL           = Ansi_Yellow  | OUTPUT_ENABLED;
 
 //group kernel
 const size_t LOCK               = Ansi_Yellow  | OUTPUT_ENABLED;
@@ -88,7 +90,7 @@ const size_t RAMDISK            = Ansi_Yellow;
 //group arch
 const size_t A_BOOT             = Ansi_Yellow | OUTPUT_ENABLED;
 const size_t A_COMMON           = Ansi_Yellow;
-const size_t A_MEMORY           = Ansi_Yellow | OUTPUT_ENABLED;
+const size_t A_MEMORY           = Ansi_Yellow;
 const size_t A_SERIALPORT       = Ansi_Yellow;
 const size_t A_KB_MANAGER       = Ansi_Yellow;
 const size_t A_INTERRUPTS       = Ansi_Yellow | OUTPUT_ENABLED;

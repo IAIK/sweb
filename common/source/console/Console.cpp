@@ -6,12 +6,19 @@
 #include "PageManager.h"
 #include "backtrace.h"
 #include "debug.h"
+#include "ArchMulticore.h"
 
 Console* main_console;
 
 Console::Console(uint32, const char* name) : Thread(0, name, Thread::KERNEL_THREAD), console_lock_("Console::console_lock_"),
     set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
 {
+  debug(CONSOLE, "Created console at [%p, %p)\n", this, (char*)this + sizeof(*this));
+}
+
+bool Console::areLocksFree()
+{
+  return ((!(system_state == RUNNING) && !ArchMulticore::otherCPUsStarted()) || (console_lock_.isFree() && locked_for_drawing_ == 0));
 }
 
 void Console::lockConsoleForDrawing()

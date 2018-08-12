@@ -3,6 +3,7 @@
 
 #include "KeyboardManager.h"
 
+#include "debug.h"
 #include "kprintf.h"
 
 Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_rows) :
@@ -11,7 +12,9 @@ Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_
         EN)
 {
   characters_ = new uint8[len_];
+  debug(TERMINAL, "Created characters_ at [%p, %p)\n", characters_,  (uint8*)characters_ + len_);
   character_states_ = new uint8[len_];
+  debug(TERMINAL, "Created characters_states_ at [%p, %p)\n", character_states_,  (uint8*)character_states_ + len_);
 
   uint32 i;
   for (i = 0; i < len_; ++i)

@@ -4,6 +4,7 @@
 #include "Terminal.h"
 #include "debug_bochs.h"
 #include "ArchInterrupts.h"
+#include "ArchMulticore.h"
 #include "ArchCommon.h"
 #include "RingBuffer.h"
 #include "Scheduler.h"
@@ -128,7 +129,7 @@ void kprintf_func(int ch, void *arg __attribute__((unused)))
   if(kprintf_initialized)
   {
     //check if atomar or not in current context
-    if ((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
+    if (((system_state == RUNNING) && ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
         || (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
     {
       main_console->getActiveTerminal()->write(ch);

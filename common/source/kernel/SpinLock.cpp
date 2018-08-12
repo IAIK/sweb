@@ -2,6 +2,7 @@
 #include "kprintf.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
+#include "ArchMulticore.h"
 #include "panic.h"
 #include "Scheduler.h"
 #include "Thread.h"
@@ -91,10 +92,11 @@ void SpinLock::acquire(pointer called_by)
 
 bool SpinLock::isFree()
 {
-  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()))
+  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() && !ArchMulticore::otherCPUsStarted()))
   {
-    debug(LOCK, "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
-    assert(false);
+    return false;
+    //debug(LOCK, "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
+    //assert(false);
   }
   return (lock_ == 0);
 }

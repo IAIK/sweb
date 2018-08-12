@@ -196,6 +196,10 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   {
     debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n", current, current->getSize() + sizeof(MallocSegment),
           current->getUsed());
+    if(current->marker_ != 0xdeadbeef)
+    {
+            debug(KMM, "Memory corruption in segment %p, size: %zx, marker: %x at %p, alloc at: %zx, freed at: %zx\n", current, current->getSize(), current->marker_, &(current->marker_), current->alloc_at_, current->freed_at_);
+    }
     assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
       return current;

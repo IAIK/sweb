@@ -12,6 +12,7 @@ extern SystemState system_state;
 
 ustl::vector<CpuLocalStorage*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
+bool ArchMulticore::cpus_started_ = false;
 
 void getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {
@@ -162,12 +163,19 @@ void ArchMulticore::startOtherCPUs()
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
+    cpus_started_ = true;
+    assert(otherCPUsStarted());
     getCLS()->apic.startAPs(AP_STARTUP_PADDR);
   }
   else
   {
     debug(A_MULTICORE, "No local APIC. Cannot start other CPUs\n");
   }
+}
+
+bool ArchMulticore::otherCPUsStarted()
+{
+  return cpus_started_;
 }
 
 void ArchMulticore::stopAllCpus()

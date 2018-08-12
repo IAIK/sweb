@@ -2,6 +2,7 @@
 #include "kprintf.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
+#include "ArchMulticore.h"
 #include "Scheduler.h"
 #include "Thread.h"
 #include "panic.h"
@@ -122,10 +123,11 @@ void Mutex::release(pointer called_by, bool do_checks)
 
 bool Mutex::isFree()
 {
-  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()))
+  if(unlikely((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()) || ArchMulticore::otherCPUsStarted()))
   {
-    debug(LOCK, "Mutex::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
-    assert(false);
+    return false;
+    //debug(LOCK, "Mutex::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
+    //assert(false);
   }
   return (mutex_ == 0);
 }

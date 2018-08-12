@@ -34,10 +34,11 @@ Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), state_(Running), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name)
 {
-  debug(THREAD, "Thread ctor, this is %p, stack is %p, fs_info ptr: %p\n", this, kernel_stack_, working_dir_);
+  debug(THREAD, "Thread ctor, this is %p, name: %s, stack: [%p, %p), fs_info ptr: %p\n", this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_), working_dir_);
   ArchThreads::createKernelRegisters(kernel_registers_, (void*) (type == Thread::USER_THREAD ? 0 : threadStartHack), getKernelStackStartPointer());
   kernel_stack_[2047] = STACK_CANARY;
   kernel_stack_[0] = STACK_CANARY;
+  debug(THREAD, "Thread ctor, kernel registers at [%p, %p)\n", kernel_registers_, (char*)kernel_registers_ + sizeof(*kernel_registers_));
 }
 
 Thread::~Thread()

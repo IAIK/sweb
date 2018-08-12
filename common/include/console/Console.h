@@ -71,10 +71,7 @@ class Console : public Thread
      * Checks if all Console locks are free.
      * @return true if all locks are free
      */
-    bool areLocksFree()
-    {
-      return (!(system_state == RUNNING) || (console_lock_.isFree() && locked_for_drawing_ == 0));
-    }
+    bool areLocksFree();
 
   protected:
 

@@ -36,7 +36,9 @@ TextConsole::TextConsole(uint32 num_terminals) :
       cterm -= ((cterm / k) * k);
     }
 
+    debug(CONSOLE, "Creating Terminal\n");
     Terminal *term = new Terminal(term_name, this, consoleGetNumColumns(), consoleGetNumRows());
+    debug(CONSOLE, "Created Terminal at [%p, %p)\n", term, (char*)term + sizeof(*term));
     terminals_.push_back(term);
   }
 
