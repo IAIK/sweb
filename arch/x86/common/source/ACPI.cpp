@@ -243,7 +243,7 @@ void ACPI_MADTHeader::parse()
     {
       MADT_IO_APIC* entry = (MADT_IO_APIC*)(madt_entry + 1);
       debug(ACPI, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
-      if(!IOAPIC::initialized)
+      if(!IOAPIC::exists)
       {
               new (&IO_APIC) IOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, entry->global_system_interrupt_base);
       }
@@ -253,7 +253,10 @@ void ACPI_MADTHeader::parse()
     {
       MADTInterruptSourceOverride* entry = (MADTInterruptSourceOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->g_sys_int, entry->flags.polarity, entry->flags.trigger_mode);
-      IO_APIC.addIRQSourceOverride(*entry);
+      if(IOAPIC::exists)
+      {
+              IO_APIC.addIRQSourceOverride(*entry);
+      }
       break;
     }
     case 3:

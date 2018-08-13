@@ -10,6 +10,7 @@
 #include "Scheduler.h"
 #include "ArchMulticore.h"
 #include "ProgrammableIntervalTimer.h"
+#include "8259.h"
 
 IOAPIC IO_APIC;
 
@@ -251,13 +252,28 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 
         InterruptUtils::idt[0x20].setOffset((size_t)&PIT_delay_IRQ);
 
-        IO_APIC.setIRQMask(2, false);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(2, false);
+        }
+        else
+        {
+                PIC8259::outstanding_EOIs_++;
+                PIC8259::enableIRQ(0);
+        }
         ArchInterrupts::enableInterrupts();
         PIT::init(pit_command.value, 1193182 / 100);
         while(!delay);
         ArchInterrupts::disableInterrupts();
-        IO_APIC.setIRQMask(2, true);
-        ArchMulticore::getCLS()->apic.sendEOI(0x20);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(2, true);
+        }
+        else
+        {
+                PIC8259::disableIRQ(0);
+        }
+        ArchInterrupts::EndOfInterrupt(0);
 
         delay = 0;
 
@@ -276,13 +292,29 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         // 200us delay
         debug(A_MULTICORE, "Start delay 2\n");
 
-        IO_APIC.setIRQMask(2, false);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(2, false);
+        }
+        else
+        {
+                PIC8259::outstanding_EOIs_++;
+                PIC8259::enableIRQ(0);
+        }
+
         ArchInterrupts::enableInterrupts();
         PIT::init(pit_command.value, 1193182 / 5000);
         while(!delay);
         ArchInterrupts::disableInterrupts();
-        IO_APIC.setIRQMask(2, true);
-        ArchMulticore::getCLS()->apic.sendEOI(0x20);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(2, true);
+        }
+        else
+        {
+                PIC8259::disableIRQ(0);
+        }
+        ArchInterrupts::EndOfInterrupt(0);
 
         delay = 0;
 
@@ -292,13 +324,28 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
         // Wait another 10ms to give APs time for initialization
-        IO_APIC.setIRQMask(2, false);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(2, false);
+        }
+        else
+        {
+                PIC8259::outstanding_EOIs_++;
+                PIC8259::enableIRQ(0);
+        }
         ArchInterrupts::enableInterrupts();
         PIT::init(pit_command.value, 1193182 / 100);
         while(!delay);
         ArchInterrupts::disableInterrupts();
-        IO_APIC.setIRQMask(2, true);
-        ArchMulticore::getCLS()->apic.sendEOI(0x20);
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(2, true);
+        }
+        else
+        {
+                PIC8259::disableIRQ(0);
+        }
+        ArchInterrupts::EndOfInterrupt(0);
 
 
         InterruptUtils::idt[0x20] = temp_irq0_descriptor;
@@ -341,7 +388,7 @@ IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
         id_(id),
         g_sys_int_base_(g_sys_int_base)
 {
-        debug(APIC, "IOAPIC %x at phys %p, g_sys_int_base: %x\n", id_, reg_paddr_, g_sys_int_base_);
+        debug(APIC, "IOAPIC %x at phys %p, g_sys_int_base: %x, version: \n", id_, reg_paddr_, g_sys_int_base_);
         assert(reg_paddr_);
         exists = true;
 }
@@ -376,6 +423,7 @@ void IOAPIC::initRedirections()
                                 r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
+                                r.destination = ArchMulticore::getCLS()->apic.getID();
                                 goto write_entry;
                         }
                 }

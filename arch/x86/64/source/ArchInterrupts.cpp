@@ -36,7 +36,7 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  if(IOAPIC::initialized)
+  if(ArchMulticore::getCLS()->apic.isInitialized())
   {
           ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(false);
           //IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
@@ -115,7 +115,7 @@ void ArchInterrupts::disableIRQ(uint16 num)
 
 void ArchInterrupts::EndOfInterrupt(uint16 number) 
 {
-  if(LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized())
+  if(IOAPIC::initialized && LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized())
   {
           ArchMulticore::getCLS()->apic.sendEOI(number + 0x20);
   }
