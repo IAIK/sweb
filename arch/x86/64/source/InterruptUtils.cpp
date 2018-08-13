@@ -217,7 +217,6 @@ extern "C" void irqHandler_1()
   beginIRQ(1);
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 1, 1 + 0x20);
   KeyboardManager::instance()->serviceIRQ( );
-  ArchInterrupts::EndOfInterrupt(1);
   endIRQ(1);
 }
 
