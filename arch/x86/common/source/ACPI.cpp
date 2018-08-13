@@ -245,7 +245,7 @@ void ACPI_MADTHeader::parse()
       debug(ACPI, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
       if(!IOAPIC::exists)
       {
-              new (&IO_APIC) IOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, entry->global_system_interrupt_base);
+              //new (&IO_APIC) IOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, entry->global_system_interrupt_base);
       }
       break;
     }
