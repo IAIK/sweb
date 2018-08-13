@@ -64,7 +64,7 @@ void CpuLocalScheduler::addNewThread(Thread* thread)
 
 void CpuLocalScheduler::cleanupDeadThreads()
 {
-        debug(CPU_SCHEDULER, "CPU %zu, Cleaning up dead threads\n", ArchMulticore::getCpuID());
+        //debug(CPU_SCHEDULER, "CPU %zu, Cleaning up dead threads\n", ArchMulticore::getCpuID());
         lockThreadList();
         uint32 thread_count_max = threads_.size();
         if (thread_count_max > 1024)
@@ -90,7 +90,7 @@ void CpuLocalScheduler::cleanupDeadThreads()
                 {
                         delete destroy_list[i];
                 }
-                debug(SCHEDULER, "cleanupDeadThreads: done\n");
+                debug(SCHEDULER, "CPU %zu, cleanupDeadThreads: done\n", ArchMulticore::getCpuID());
         }
 }
 
@@ -112,7 +112,7 @@ ArchThreadRegisters* CpuLocalScheduler::getCurrentThreadRegisters()
 
 void CpuLocalScheduler::setCurrentThread(Thread* t)
 {
-        debug(CPU_SCHEDULER, "CPU %zu, setCurrentThread: %p (%s)\n", ArchMulticore::getCpuID(), t, t->getName());
+        //debug(CPU_SCHEDULER, "CPU %zu, setCurrentThread: %p (%s)\n", ArchMulticore::getCpuID(), t, t->getName());
         currentThread_ = t;
 }
 

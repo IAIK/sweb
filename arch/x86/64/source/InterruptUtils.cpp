@@ -176,7 +176,7 @@ extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
   beginIRQ(0);
-  debug(A_INTERRUPTS, "IRQ 0 called by core %zx\n", ArchMulticore::getCpuID());
+  //debug(A_INTERRUPTS, "IRQ 0 called by core %zx\n", ArchMulticore::getCpuID());
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
@@ -192,7 +192,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", ArchMulticore::getCpuID());
+  //debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", ArchMulticore::getCpuID());
   Scheduler::instance()->schedule();
   arch_contextSwitch();
 }
