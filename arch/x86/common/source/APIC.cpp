@@ -86,7 +86,7 @@ void LocalAPIC::initTimer() volatile
         reg_vaddr_->lvt_timer.setMode(1);
         reg_vaddr_->lvt_timer.setMask(true);
         reg_vaddr_->timer_divide_config.setTimerDivisor(16);
-        setTimerPeriod(0x1000000);
+        setTimerPeriod(0x500000);
 }
 
 
