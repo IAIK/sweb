@@ -14,6 +14,9 @@ public:
   static void setTimerFrequency(uint32 freq);
   static void disableTimer();
 
+  static void enableIRQ(uint16 num);
+  static void disableIRQ(uint16 num);
+
   static void enableKBD();
   static void disableKBD();
 

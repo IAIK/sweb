@@ -80,27 +80,36 @@ void ArchInterrupts::disableTimer()
 
 void ArchInterrupts::enableKBD()
 {
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(1, false);
-                IO_APIC.setIRQMask(9, false);
-        }
-        else
-        {
-                PIC8259::enableIRQ(1);
-                PIC8259::enableIRQ(9);
-        }
+        enableIRQ(1);
+        enableIRQ(9);
 }
 
 void ArchInterrupts::disableKBD()
 {
+        disableIRQ(1);
+}
+
+void ArchInterrupts::enableIRQ(uint16 num)
+{
         if(IOAPIC::initialized)
         {
-                IO_APIC.setIRQMask(1, true);
+                IO_APIC.setIRQMask(num, false); // TODO: handle irq source overrides
         }
         else
         {
-                PIC8259::disableIRQ(1);
+                PIC8259::enableIRQ(num);
+        }
+}
+
+void ArchInterrupts::disableIRQ(uint16 num)
+{
+        if(IOAPIC::initialized)
+        {
+                IO_APIC.setIRQMask(num, true); // TODO: handle irq source overrides
+        }
+        else
+        {
+                PIC8259::disableIRQ(num);
         }
 }
 
