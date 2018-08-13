@@ -163,9 +163,8 @@ void ArchMulticore::startOtherCPUs()
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    cpus_started_ = true;
-    assert(otherCPUsStarted());
     getCLS()->apic.startAPs(AP_STARTUP_PADDR);
+    assert(otherCPUsStarted());
   }
   else
   {

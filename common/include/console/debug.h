@@ -18,6 +18,7 @@ enum AnsiColor
 #define OUTPUT_FLAGS (OUTPUT_ENABLED | OUTPUT_ADVANCED)
 
 #define DEBUG_COLOR 1
+#define DEBUG_TO_FB 0
 
 #define DEBUG_FORMAT_STRING_COLOR   "\033[1;%zum[%-11s]\033[0;39m"
 #define DEBUG_FORMAT_STRING_NOCOLOR "[%-11s]"
@@ -33,7 +34,6 @@ enum AnsiColor
 #define FLAG_PARAM FLAG_PARAM_NOCOLOR
 #endif
 
-#define DEBUG_TO_FB 0
 extern bool debug_print_to_fb;
 
 #ifndef EXE2MINIXFS

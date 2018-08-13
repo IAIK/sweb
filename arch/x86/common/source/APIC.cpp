@@ -271,6 +271,8 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 
+        ArchMulticore::cpus_started_ = true;
+
         // 200us delay
         debug(A_MULTICORE, "Start delay 2\n");
 

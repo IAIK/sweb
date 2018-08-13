@@ -49,7 +49,8 @@ class ArchMulticore
     static Mutex cpu_list_lock_;
     static ustl::vector<CpuLocalStorage*> cpu_list_;
 
+    static bool cpus_started_;
+
   private:
     static void prepareAPStartup(size_t entry_addr);
-    static bool cpus_started_;
 };
