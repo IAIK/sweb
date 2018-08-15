@@ -36,14 +36,20 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  if(ArchMulticore::getCLS()->apic.isInitialized())
+  if(ArchMulticore::getCLS()->apic.isInitialized() && ArchMulticore::getCLS()->apic.usingAPICTimer())
   {
-          ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(false);
-          //IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
+    ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(false);
   }
   else
   {
-          PIC8259::enableIRQ(0);
+    if(IOAPIC::initialized)
+    {
+      IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
+    }
+    else
+    {
+      PIC8259::enableIRQ(0);
+    }
   }
 }
 
@@ -67,14 +73,20 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
 
 void ArchInterrupts::disableTimer()
 {
-  if(IOAPIC::initialized)
+  if(ArchMulticore::getCLS()->apic.isInitialized() && ArchMulticore::getCLS()->apic.usingAPICTimer())
   {
-          ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(true);
-          //IO_APIC.setIRQMask(2, true); // IRQ source override in APIC: 0 -> 2
+    ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(true);
   }
   else
   {
-          PIC8259::disableIRQ(0);
+    if(IOAPIC::initialized)
+    {
+      IO_APIC.setIRQMask(2, true); // IRQ source override in APIC: 0 -> 2
+    }
+    else
+    {
+      PIC8259::disableIRQ(0);
+    }
   }
 }
 
@@ -113,9 +125,11 @@ void ArchInterrupts::disableIRQ(uint16 num)
         }
 }
 
-void ArchInterrupts::EndOfInterrupt(uint16 number) 
+void ArchInterrupts::EndOfInterrupt(uint16 number)
 {
-  if(IOAPIC::initialized && LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized())
+  if((LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized()) &&
+     (IOAPIC::initialized ||
+      ((number == 0) && ArchMulticore::getCLS()->apic.usingAPICTimer())))
   {
           ArchMulticore::getCLS()->apic.sendEOI(number + 0x20);
   }
@@ -236,10 +250,10 @@ extern "C" void arch_contextSwitch()
 {
   debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
 
-  if(PIC8259::outstanding_EOIs_) // TODO: Check local APIc for outstanding interrupts
+  if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIc for outstanding interrupts
   {
     debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
-    assert(!PIC8259::outstanding_EOIs_);
+    assert(!((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_));
   }
   if (currentThread()->switch_to_userspace_)
   {

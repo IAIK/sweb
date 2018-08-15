@@ -179,7 +179,10 @@ bool ArchMulticore::otherCPUsStarted()
 
 void ArchMulticore::stopAllCpus()
 {
-  getCLS()->apic.sendIPI(90);
+  if(ArchMulticore::CLSinitialized() && ArchMulticore::getCLS()->apic.isInitialized())
+  {
+    getCLS()->apic.sendIPI(90);
+  }
 }
 
 

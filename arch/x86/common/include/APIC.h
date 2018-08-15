@@ -230,11 +230,6 @@ public:
         explicit LocalAPIC();
         LocalAPIC(ACPI_MADTHeader*);
 
-        static bool exists;
-        bool initialized_;
-
-        size_t outstanding_EOIs_;
-
         static void haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags);
 
         void sendEOI(size_t num);
@@ -259,12 +254,21 @@ public:
         void startAPs(size_t entry_addr) volatile;
         void sendIPI(uint8 vector) volatile;
 
+        bool usingAPICTimer();
+
         static void addLocalAPICToList(const MADTProcLocalAPIC&);
 
         static LocalAPICRegisters* reg_paddr_;
         static LocalAPICRegisters* reg_vaddr_;
 
         static ustl::vector<MADTProcLocalAPIC> local_apic_list_;
+
+        static bool exists;
+        bool initialized_;
+
+        size_t outstanding_EOIs_;
+
+        bool use_apic_timer_ = false;
 
 
 private:

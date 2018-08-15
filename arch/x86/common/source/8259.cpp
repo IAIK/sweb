@@ -1,6 +1,7 @@
 #include "8259.h"
 #include "ports.h"
 #include "debug.h"
+#include "ArchMulticore.h"
 
 size_t PIC8259::outstanding_EOIs_ = 0;
 
@@ -65,7 +66,8 @@ void PIC8259::disableIRQ(uint16 number)
 void PIC8259::sendEOI(uint16 number)
 {
   --outstanding_EOIs_;
-  debug(A_INTERRUPTS, "sendEOI, outstanding: %zu\n", outstanding_EOIs_);
+  debug(A_INTERRUPTS, "CPU %zu, PIC8258::sendEOI %u, outstanding: %zu\n", ArchMulticore::getCpuID(), number, outstanding_EOIs_);
+  assert(ArchMulticore::getCpuID() == 0);
   if (number > 7)
     outportb(PIC_2_CONTROL_PORT, PIC_EOI);
 

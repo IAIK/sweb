@@ -157,7 +157,9 @@ extern ArchThreadRegisters *currentThreadRegisters;
 
 void beginIRQ(__attribute__((unused)) size_t irq_num)
 {
-        if(IOAPIC::exists && LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized())
+        if((LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized()) &&
+           (IOAPIC::initialized ||
+            ((irq_num == 0) && ArchMulticore::getCLS()->apic.usingAPICTimer())))
         {
                 ArchMulticore::getCLS()->apic.outstanding_EOIs_++;
         }

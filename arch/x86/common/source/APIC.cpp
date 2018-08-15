@@ -87,6 +87,12 @@ void LocalAPIC::initTimer() volatile
         reg_vaddr_->lvt_timer.setMask(true);
         reg_vaddr_->timer_divide_config.setTimerDivisor(16);
         setTimerPeriod(0x500000);
+        use_apic_timer_ = true;
+}
+
+bool LocalAPIC::usingAPICTimer()
+{
+        return use_apic_timer_;
 }
 
 
@@ -268,12 +274,13 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
+                ArchMulticore::getCLS()->apic.sendEOI(0x20);
         }
         else
         {
                 PIC8259::disableIRQ(0);
+                PIC8259::sendEOI(0);
         }
-        ArchInterrupts::EndOfInterrupt(0);
 
         delay = 0;
 
@@ -309,12 +316,13 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
+                ArchMulticore::getCLS()->apic.sendEOI(0x20);
         }
         else
         {
                 PIC8259::disableIRQ(0);
+                PIC8259::sendEOI(0);
         }
-        ArchInterrupts::EndOfInterrupt(0);
 
         delay = 0;
 
@@ -340,12 +348,13 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
+                ArchMulticore::getCLS()->apic.sendEOI(0x20);
         }
         else
         {
                 PIC8259::disableIRQ(0);
+                PIC8259::sendEOI(0);
         }
-        ArchInterrupts::EndOfInterrupt(0);
 
 
         InterruptUtils::idt[0x20] = temp_irq0_descriptor;
