@@ -40,7 +40,7 @@ void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
 void LocalAPIC::sendEOI(__attribute__((unused)) size_t num)
 {
   --outstanding_EOIs_;
-  //debug(APIC, "Sending EOI for %zx\n", num);
+  //debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
   reg_vaddr_->eoi = 0;
 }
 
@@ -59,7 +59,7 @@ void LocalAPIC::mapAt(size_t addr)
 
 void LocalAPIC::init()
 {
-  setSpuriousInterruptNumber(0xFF); // TODO: Handle spurious APIC interrupts
+  setSpuriousInterruptNumber(100);
   initTimer();
   enable(true);
   initialized_ = true;

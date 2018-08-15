@@ -305,6 +305,14 @@ extern "C" void irqHandler_90()
         endIRQ(90);
 }
 
+extern "C" void arch_irqHandler_100();
+extern "C" void irqHandler_100()
+{
+        beginIRQ(100);
+        debug(A_INTERRUPTS, "IRQ 100 called by CPU %zu, spurious APIC interrupt\n", ArchMulticore::getCpuID());
+        endIRQ(100);
+}
+
 extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
