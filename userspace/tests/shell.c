@@ -47,7 +47,6 @@ void handle_command(char* buffer, int buffer_size)
       }
       argsCount++;
       lastIndex = c + 1;
-
     }
 
     if (buffer[c] == '\0')
@@ -55,12 +54,19 @@ void handle_command(char* buffer, int buffer_size)
       break;
     }
   }
+
+
   if (strcmp(command, "ls") == 0)
+  {
     __syscall(sc_pseudols, (size_t) (argsCount > 0 ? args[0] : ""), 0, 0, 0, 0);
-  else if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
+  }
+  else if (strcmp(command, "help") == 0)
   {
     printf(
-        "Command Help:\nhelp                  yes, here we are\nexit [exit_code]      is really the only command that does something right now\nls                    pseudo ls\n\n");
+        "Command Help:\n"
+        "help                  yes, here we are\n"
+        "exit [exit_code]      is really the only command that does something right now\n"
+        "ls                    pseudo ls\n\n");
   }
   else if (strcmp(command, "exit") == 0)
   {
@@ -97,8 +103,17 @@ void handle_command(char* buffer, int buffer_size)
       memcpy(executable + EXECUTABLE_PREFIX_LEN, command, strlen(command) + 1);
     }
     else
+    {
       memcpy(executable, command, strlen(command) + 1);
-    pid = createprocess(executable, 1, -1);
+    }
+
+    size_t cpu = -1;
+    if(argsCount > 0)
+    {
+      cpu = atoi(args[0]);
+    }
+
+    pid = createprocess(executable, 1, cpu);
     if (pid == -1)
     {
       printf("Command not understood\n");
@@ -109,6 +124,7 @@ void handle_command(char* buffer, int buffer_size)
 int main(int argc, char *argv[])
 {
   cwd[0] = '/';
+  cwd[1] = '\0';
 
   printf("\n\%s\n", "SWEB-Pseudo-Shell starting...\n");
   do
@@ -117,9 +133,7 @@ int main(int argc, char *argv[])
     gets(buffer, 255);
     buffer[255] = 0;
     handle_command(buffer, 256);
-    for (size_t a = 0; a < 256; a++)
-      buffer[a] = 0;
-
+    memset(buffer, 0, sizeof(buffer));
   } while (running);
 
   return exit_code;
