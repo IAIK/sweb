@@ -214,6 +214,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
+  assert(ArchMulticore::CLSinitialized());
   register ArchThreadRegisters* info = ArchMulticore::getCLS()->scheduler.getCurrentThreadRegisters();
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
@@ -244,8 +245,6 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   assert(!currentThread() || currentThread()->isStackCanaryOK());
 }
 
-extern TSS g_tss;
-
 extern "C" void arch_contextSwitch()
 {
   debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
@@ -262,7 +261,8 @@ extern "C" void arch_contextSwitch()
   }
   assert(currentThread()->isStackCanaryOK() && "Kernel stack corruption detected.");
   ArchThreadRegisters info = *ArchMulticore::getCLS()->scheduler.getCurrentThreadRegisters();
-  g_tss.rsp0 = info.rsp0;
+  assert(info.rsp0 >= USER_BREAK);
+  ArchMulticore::getCLS()->tss.rsp0 = info.rsp0;
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[ss]" : : [ss]"m"(info.ss));

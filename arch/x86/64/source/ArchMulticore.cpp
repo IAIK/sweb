@@ -71,7 +71,7 @@ size_t CpuLocalStorage::getCpuID()
 CpuLocalStorage* ArchMulticore::getCLS()
 {
   CpuLocalStorage* cls_ptr;
-  assert(getGSBase() != 0); // debug only
+  assert(ArchMulticore::CLSinitialized());
   __asm__ __volatile__("movq %%gs:0, %%rax\n"
                        "movq %%rax, %[cls_ptr]\n"
                        : [cls_ptr]"=m"(cls_ptr));
@@ -102,12 +102,89 @@ size_t ArchMulticore::getCpuID()
   return getCLS()->cpu_id;
 }
 
+extern uint8 boot_stack[0x4000];
+extern SegmentDescriptor gdt[7];
+struct GDT64Ptr
+{
+        uint16 limit;
+        uint64 addr;
+}__attribute__((__packed__));
+
+typedef struct
+{
+  uint32 limitL          : 16;
+  uint32 baseLL          : 16;
+
+  uint32 baseLM          :  8;
+  uint32 type            :  4;
+  uint32 zero            :  1;
+  uint32 dpl             :  2;
+  uint32 present         :  1;
+  uint32 limitH          :  4;
+  uint32 avl_to_software :  1;
+  uint32 ignored         :  2;
+  uint32 granularity     :  1;
+  uint32 baseLH          :  8;
+
+  uint32 baseH;
+
+  uint32 reserved;
+}__attribute__((__packed__)) TSSSegmentDescriptor;
+
+void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl)
+{
+  debug(A_MULTICORE, "setTSSSegmentDescriptor at %p, baseH: %x, baseL: %x, limit: %x, dpl: %x\n", descriptor, baseH, baseL, limit, dpl);
+  memset(descriptor, 0, sizeof(TSSSegmentDescriptor));
+  descriptor->baseLL = (uint16) (baseL & 0xFFFF);
+  descriptor->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+  descriptor->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+  descriptor->baseH = baseH;
+  descriptor->limitL = (uint16) (limit & 0xFFFF);
+  descriptor->limitH = (uint8) (((limit >> 16U) & 0xF));
+  descriptor->type = 0b1001;
+  descriptor->dpl = dpl;
+  descriptor->granularity = 0;
+  descriptor->present = 1;
+}
+
+void ArchMulticore::initCpuLocalGDT(SegmentDescriptor* template_gdt)
+{
+  CpuLocalStorage* cls = getCLS();
+  debug(A_MULTICORE, "CPU switching to own GDT at: %p\n", &cls->gdt);
+  memcpy(&cls->gdt, template_gdt, sizeof(cls->gdt));
+
+  struct GDT64Ptr gdt_ptr;
+  gdt_ptr.limit = sizeof(cls->gdt) - 1;
+  gdt_ptr.addr = (uint64)&cls->gdt;
+  __asm__ __volatile__("lgdt %[gdt]\n"
+                       "mov %%ax, %%ds\n"
+                       "mov %%ax, %%es\n"
+                       "mov %%ax, %%ss\n"
+                       "mov %%ax, %%fs\n"
+                       :
+                       :[gdt]"m"(gdt_ptr), "a"(KERNEL_DS));
+}
+
+void ArchMulticore::initCpuLocalTSS(size_t boot_stack_top)
+{
+        CpuLocalStorage* cls = getCLS();
+        debug(A_MULTICORE, "CPU init TSS at %p\n", &cls->tss);
+        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cls->gdt + KERNEL_TSS), (size_t)&cls->tss >> 32, (size_t)&cls->tss, sizeof(TSS) - 1, 0);
+
+        cls->tss.ist0 = boot_stack_top;
+        cls->tss.rsp0 = boot_stack_top;
+        __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
+}
+
 void ArchMulticore::initialize()
 {
   new (&cpu_list_) ustl::vector<CpuLocalStorage*>;
   new (&cpu_list_lock_) Mutex("CPU list lock");
   CpuLocalStorage* cls = ArchMulticore::initCLS();
   debug(A_MULTICORE, "CLS for cpu %zu at %p\n", ArchMulticore::getCpuID(), cls);
+
+  initCpuLocalGDT(gdt);
+  initCpuLocalTSS((size_t)&boot_stack + sizeof(boot_stack));
 }
 
 extern char apstartup_text_begin;
@@ -119,14 +196,8 @@ struct GDT32Ptr
   uint16 limit;
   uint32 addr;
 }__attribute__((__packed__));
-struct GDT64Ptr
-{
-  uint16 limit;
-  uint64 addr;
-}__attribute__((__packed__));
 extern GDT32Ptr ap_gdt32_ptr;
 
-extern SegmentDescriptor gdt[7];
 extern SegmentDescriptor ap_gdt32[7];
 
 extern uint32 ap_kernel_cr3;
@@ -189,42 +260,6 @@ void ArchMulticore::stopAllCpus()
 // TODO: Each AP needs its own stack
 uint8 ap_stack[0x4000];
 
-typedef struct
-{
-  uint32 limitL          : 16;
-  uint32 baseLL          : 16;
-
-  uint32 baseLM          :  8;
-  uint32 type            :  4;
-  uint32 zero            :  1;
-  uint32 dpl             :  2;
-  uint32 present         :  1;
-  uint32 limitH          :  4;
-  uint32 avl_to_software :  1;
-  uint32 ignored         :  2;
-  uint32 granularity     :  1;
-  uint32 baseLH          :  8;
-
-  uint32 baseH;
-
-  uint32 reserved;
-}__attribute__((__packed__)) TSSSegmentDescriptor;
-
-void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl)
-{
-  debug(A_MULTICORE, "setTSSSegmentDescriptor at %p, baseH: %x, baseL: %x, limit: %x, dpl: %x\n", descriptor, baseH, baseL, limit, dpl);
-  memset(descriptor, 0, sizeof(TSSSegmentDescriptor));
-  descriptor->baseLL = (uint16) (baseL & 0xFFFF);
-  descriptor->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
-  descriptor->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
-  descriptor->baseH = baseH;
-  descriptor->limitL = (uint16) (limit & 0xFFFF);
-  descriptor->limitH = (uint8) (((limit >> 16U) & 0xF));
-  descriptor->type = 0b1001;
-  descriptor->dpl = dpl;
-  descriptor->granularity = 0;
-  descriptor->present = 1;
-}
 
 extern "C" void __apstartup64()
 {
@@ -267,30 +302,11 @@ void ArchMulticore::initCpu()
                        :
                        :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
-  CpuLocalStorage* ap_cls = ArchMulticore::initCLS();
+  ArchMulticore::initCLS();
   debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ArchMulticore::getCLS(), ArchMulticore::getCpuID());
 
-  debug(A_MULTICORE, "AP switching to own GDT at: %p\n", &ap_cls->gdt);
-  memcpy(&ap_cls->gdt, ap_gdt32, sizeof(ap_cls->gdt));
-
-  struct GDT64Ptr ap_gdt_ptr;
-  ap_gdt_ptr.limit = sizeof(ap_cls->gdt) - 1;
-  ap_gdt_ptr.addr = (uint64)&ap_cls->gdt;
-  __asm__ __volatile__("lgdt %[gdt]\n"
-                       "mov %%ax, %%ds\n"
-                       "mov %%ax, %%es\n"
-                       "mov %%ax, %%ss\n"
-                       "mov %%ax, %%fs\n"
-                       :
-                       :[gdt]"m"(ap_gdt_ptr), "a"(KERNEL_DS));
-
-  debug(A_MULTICORE, "AP init own TSS at %p\n", &ap_cls->tss);
-  setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&ap_cls->gdt + KERNEL_TSS), (size_t)&ap_cls->tss >> 32, (size_t)&ap_cls->tss, sizeof(TSS) - 1, 0);
-
-  size_t ap_stack_top = (size_t)&ap_stack + sizeof(ap_stack);
-  ap_cls->tss.ist0 = ap_stack_top;
-  ap_cls->tss.rsp0 = ap_stack_top;
-  __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
+  initCpuLocalGDT(ap_gdt32);
+  initCpuLocalTSS((size_t)&ap_stack + sizeof(ap_stack));
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
   InterruptUtils::lidt(&InterruptUtils::idtr);

@@ -52,5 +52,7 @@ class ArchMulticore
     static bool cpus_started_;
 
   private:
+    static void initCpuLocalGDT(SegmentDescriptor* template_gdt);
+    static void initCpuLocalTSS(size_t boot_stack_top);
     static void prepareAPStartup(size_t entry_addr);
 };

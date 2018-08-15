@@ -61,6 +61,7 @@ void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_
   info->ds      = KERNEL_DS;
   info->es      = KERNEL_DS;
   info->ss      = KERNEL_SS;
+  info->rsp0    = (size_t)kernel_stack;
   assert(info->cr3);
 }
 
@@ -163,7 +164,6 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   ArchThreads::printThreadRegisters(currentThread(),false);
   ArchThreads::printThreadRegisters(thread,false);
   assert(thread->kernel_registers_ != 0 && thread->kernel_registers_ != currentThread()->kernel_registers_ && "all threads need to have their own register sets");
-  assert(thread->kernel_registers_->rsp0 == 0 && "kernel register set needs no backup of kernel esp");
   assert(thread->kernel_registers_->rsp == thread->kernel_registers_->rbp && "new kernel stack must be empty");
   assert(thread->kernel_registers_->rsp != currentThread()->kernel_registers_->rsp && thread->kernel_registers_->rbp != currentThread()->kernel_registers_->rbp && "all threads need their own stack");
   assert(thread->kernel_registers_->cr3 < 0x80000000 && "cr3 contains the physical page dir address");
