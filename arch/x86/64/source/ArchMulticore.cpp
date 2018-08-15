@@ -324,7 +324,7 @@ void ArchMulticore::initCpu()
   while(system_state != RUNNING);
 
   debug(A_MULTICORE, "Enabling interrupts\n");
-  kprintf("Core %zu initialized, enabling interrupts\n", ArchMulticore::getCpuID());
+  kprintf("CPU %zu initialized, enabling interrupts\n", ArchMulticore::getCpuID());
   ArchInterrupts::enableInterrupts();
 
   while(1)
