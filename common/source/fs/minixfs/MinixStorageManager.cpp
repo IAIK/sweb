@@ -78,7 +78,7 @@ size_t MinixStorageManager::allocZone()
     }
   }
   debug(M_STORAGE_MANAGER, "acquireZone: NO FREE ZONE FOUND!\n");
-  assert(false); // full memory should have been checked.
+  assert(false && "No free minixfs zone found"); // full memory should have been checked.
   return 0;
 }
 

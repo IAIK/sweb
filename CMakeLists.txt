@@ -202,13 +202,15 @@ add_custom_target (kernel_image
     DEPENDS ${FINAL_LIB_NAMES} add-dbg
     COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-)
+    )
+
 
 add_custom_target (sweb_initrd
   DEPENDS mkminixfs exe2minixfs
-  COMMAND dd if=/dev/zero of=sweb_initrd bs=512 count=512
+  COMMAND dd if=/dev/zero of=sweb_initrd bs=512 count=1024
   COMMAND ./mkminixfs -d sweb_initrd
   COMMAND ./exe2minixfs sweb_initrd 0 ${CMAKE_SOURCE_DIR}/README.md README.md
+  COMMENT "Creating initrd..."
   )
 
 

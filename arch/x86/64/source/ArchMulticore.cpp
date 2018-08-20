@@ -320,11 +320,11 @@ void ArchMulticore::initCpu()
   debug(A_MULTICORE, "Enable AP timer\n");
   ArchInterrupts::enableTimer();
 
-  debug(A_MULTICORE, "Wait for system start\n");
+  kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
   while(system_state != RUNNING);
 
-  debug(A_MULTICORE, "Enabling interrupts\n");
-  kprintf("CPU %zu initialized, enabling interrupts\n", ArchMulticore::getCpuID());
+  debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
   ArchInterrupts::enableInterrupts();
 
   while(1)
