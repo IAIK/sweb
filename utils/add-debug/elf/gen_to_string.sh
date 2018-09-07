@@ -12,7 +12,7 @@ generate () {
   echo
   echo 'ELFPP_BEGIN_NAMESPACE'
   echo
-  python2 "$SOURCE_DIR"/enum-print.py -u --hex --no-type --mask shf --mask pf \
+  python "$SOURCE_DIR"/enum-print.py -u --hex --no-type --mask shf --mask pf \
           -x loos -x hios -x loproc -x hiproc < "$SOURCE_DIR"/data.hh
   echo 'ELFPP_END_NAMESPACE'
 }
