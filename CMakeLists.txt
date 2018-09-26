@@ -196,12 +196,25 @@ add_custom_target (kernel_to_image
 
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
+if("${ARCH}" MATCHES "armv8")
+#For armv8 we need to execute the final linking step twice because after the first time
+#The debug info gets extracted and linked in at the second link step
+add_custom_target (kernel_image
+    DEPENDS ${FINAL_LIB_NAMES} add-dbg
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${ADD_LD_ARGUMENT}
+    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+)
+
+else()
+
 add_custom_target (kernel_image
     DEPENDS ${FINAL_LIB_NAMES} add-dbg
     COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 )
 
+endif()   
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
@@ -289,6 +302,8 @@ MAKE_ARCH_TARGET(x86_64 x86/64 "")
 MAKE_ARCH_TARGET(arm_icp arm/integratorcp "")
 MAKE_ARCH_TARGET(arm_verdex arm/verdex "")
 MAKE_ARCH_TARGET(arm_rpi2 arm/rpi2 "")
+MAKE_ARCH_TARGET(armv8_rpi3 armv8/rpi3 "-DVIRTUALIZED_QEMU=1")
+MAKE_ARCH_TARGET(armv8_rpi3_hardware armv8/rpi3 "")
 
 
 
