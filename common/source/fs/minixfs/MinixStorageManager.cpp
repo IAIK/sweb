@@ -149,7 +149,7 @@ void MinixStorageManager::flush(MinixFSSuperblock *superblock)
   byte = 0;
   for (uint32 z_bit = 0; z_bit < 8; z_bit++)
   {
-    if (z_bit < num_inodes % 8)
+    if (z_bit < num_zones % 8)
     {
       if (zone_bitmap_.getBit(z_byte * 8 + z_bit))
       {
