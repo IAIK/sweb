@@ -21,7 +21,7 @@ void CleanupThread::Run()
   while (1)
   {
     //Scheduler::instance()->cleanupDeadThreads();
-    ArchMulticore::getCLS()->scheduler.cleanupDeadThreads();
+    cpu_scheduler.cleanupDeadThreads();
     Scheduler::instance()->yield();
   }
 }

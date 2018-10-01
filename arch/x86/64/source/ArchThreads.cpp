@@ -13,7 +13,7 @@ extern PageMapLevel4Entry kernel_page_map_level_4[];
 
 void ArchThreads::initialise()
 {
-  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(new ArchThreadRegisters{});
+  cpu_scheduler.setCurrentThreadRegisters(new ArchThreadRegisters{});
 
   /** Enable SSE for floating point instructions in long mode **/
   asm volatile ("movq %%cr0, %%rax\n"

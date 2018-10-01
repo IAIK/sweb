@@ -14,7 +14,7 @@ void IdleThread::Run()
   while (1)
   {
     //new_ticks = Scheduler::instance()->getTicks();
-    new_ticks = ArchMulticore::getCLS()->scheduler.getTicks();
+    new_ticks = cpu_scheduler.getTicks();
     if (new_ticks == last_ticks)
     {
       last_ticks = new_ticks + 1;

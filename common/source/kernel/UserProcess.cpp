@@ -46,8 +46,7 @@ UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 
 
 UserProcess::~UserProcess()
 {
-  assert(ArchMulticore::getCLS()->scheduler.isCurrentlyCleaningUp());
-  //assert(Scheduler::instance()->isCurrentlyCleaningUp());
+  assert(cpu_scheduler.isCurrentlyCleaningUp());
   delete loader_;
   loader_ = 0;
 

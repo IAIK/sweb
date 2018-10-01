@@ -8,9 +8,16 @@
 #include "Thread.h"
 #include "MutexLock.h"
 
+//thread_local size_t cpu_id = 0;
+thread_local CpuInfo cpu_info;
+thread_local SegmentDescriptor cpu_gdt[7];
+thread_local TSS cpu_tss;
+thread_local CpuLocalScheduler cpu_scheduler;
+thread_local LocalAPIC lapic;
+
 extern SystemState system_state;
 
-ustl::vector<CpuLocalStorage*> ArchMulticore::cpu_list_;
+ustl::vector<CpuInfo*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
 bool ArchMulticore::cpus_started_ = false;
 
@@ -25,19 +32,32 @@ void setMSR(uint32_t msr, uint32_t lo, uint32_t hi)
   asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
+#define MSR_FS_BASE        0xC0000100
 #define MSR_GS_BASE        0xC0000101
 #define MSR_KERNEL_GS_BASE 0xC0000102
 
-uint64 getGSBase()
+uint64 ArchMulticore::getGSBase()
 {
   uint64 gs_base;
   getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
   return gs_base;
 }
 
-void setGSBase(uint64 gs_base)
+uint64 ArchMulticore::getFSBase()
+{
+  uint64 fs_base;
+  getMSR(MSR_FS_BASE, (uint32*)&fs_base, ((uint32*)&fs_base) + 1);
+  return fs_base;
+}
+
+void ArchMulticore::setGSBase(uint64 gs_base)
 {
   setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
+}
+
+void ArchMulticore::setFSBase(uint64 fs_base)
+{
+  setMSR(MSR_FS_BASE, fs_base, fs_base >> 32);
 }
 
 void setSWAPGSKernelBase(uint64 swapgs_base)
@@ -45,61 +65,88 @@ void setSWAPGSKernelBase(uint64 swapgs_base)
   setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
 }
 
-CpuLocalStorage::CpuLocalStorage() :
-        cls_ptr(init()),
-        scheduler(this)
+CpuInfo::CpuInfo() :
+        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.getID() : 0),
+        scheduler(&cpu_scheduler)
 {
-  debug(A_MULTICORE, "Created new CPU local storage at %p\n", this);
-  MutexLock l(ArchMulticore::cpu_list_lock_);
-  ArchMulticore::cpu_list_.push_back(this);
+        debug(A_MULTICORE, "Initializing CpuInfo\n");
+        MutexLock l(ArchMulticore::cpu_list_lock_);
+        ArchMulticore::cpu_list_.push_back(this);
+        debug(A_MULTICORE, "Added CpuInfo to cpu list\n");
 }
 
-CpuLocalStorage* CpuLocalStorage::init()
-{
-  debug(A_MULTICORE, "Init CLS %p\n", this);
-  cls_ptr = this;
-  setGSBase((uint64)this);
-  setSWAPGSKernelBase((uint64)this);
-  return this;
-}
-
-size_t CpuLocalStorage::getCpuID()
+size_t CpuInfo::getCpuID()
 {
         return cpu_id;
 }
 
-CpuLocalStorage* ArchMulticore::getCLS()
+CpuLocalScheduler* CpuInfo::getScheduler()
 {
-  CpuLocalStorage* cls_ptr;
-  assert(ArchMulticore::CLSinitialized());
-  __asm__ __volatile__("movq %%gs:0, %%rax\n"
-                       "movq %%rax, %[cls_ptr]\n"
-                       : [cls_ptr]"=m"(cls_ptr));
-  assert(cls_ptr != 0);
-  return cls_ptr;
+        return scheduler;
 }
 
-CpuLocalStorage* ArchMulticore::initCLS()
+void* ArchMulticore::getSavedFSBase()
+{
+  void* fs_base;
+  assert(ArchMulticore::CLSinitialized());
+  __asm__ __volatile__("movq %%gs:0, %%rax\n"
+                       "movq %%rax, %[fs_base]\n"
+                       : [fs_base]"=m"(fs_base));
+  assert(fs_base != 0);
+  return fs_base;
+}
+
+extern char cls_start;
+extern char cls_end;
+extern char tbss_start;
+extern char tbss_end;
+extern char tdata_start;
+extern char tdata_end;
+
+void ArchMulticore::initCLS()
 {
   debug(A_MULTICORE, "Init CPU local storage\n");
-  CpuLocalStorage* cls = new CpuLocalStorage{};
-  setCpuID(LocalAPIC::exists && cls->apic.isInitialized()  ? cls->apic.getID() : 0);
-  return getCLS();
+  size_t cls_size = &cls_end - &cls_start;
+  size_t tbss_size = &tbss_end - &tbss_start;
+  size_t tdata_size = &tdata_end - &tdata_start;
+  debug(A_MULTICORE, "cls: [%p, %p), size: %zx\n", &cls_start, &cls_end, cls_size);
+  debug(A_MULTICORE, "tbss: [%p, %p), size: %zx\n", &tbss_start, &tbss_end, tbss_size);
+  debug(A_MULTICORE, "tdata: [%p, %p), size: %zx\n", &tdata_start, &tdata_end, tdata_size);
+
+  char* cls = new char[cls_size + sizeof(void*)]{};
+  debug(A_MULTICORE, "Allocated new cls at [%p, %p)\n", cls, cls + cls_size + sizeof(void*));
+
+  void** fs_base = (void**)(cls + cls_size);
+  *fs_base = fs_base;
+  setFSBase((uint64)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
+  setGSBase((uint64)fs_base);
+  setSWAPGSKernelBase((uint64)fs_base);
+
+  debug(A_MULTICORE, "Initializing tdata at [%p, %p) and tbss at [%p, %p)\n", cls + (&tdata_start - &cls_start), cls + (&tdata_start - &cls_start) + tdata_size, cls + (&tbss_start - &cls_start), cls + (&tbss_start - &cls_start) + tbss_size);
+  memcpy(cls + (&tdata_start - &cls_start), &tdata_start, tdata_size);
+
+  // The constructor of ALL objects declared as thread_local will be called automatically the first time ANY thread_local object is used
+  debug(A_MULTICORE, "Calling constructors of CPU local objects\n");
+  cpu_info;
+
+  debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase());
+  debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase());
 }
 
 bool ArchMulticore::CLSinitialized()
 {
-        return getGSBase() != 0;
+  return getFSBase() != 0;
 }
 
 void ArchMulticore::setCpuID(size_t id)
 {
-  getCLS()->cpu_id = id;
+  debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
+  cpu_info.cpu_id = id;
 }
 
 size_t ArchMulticore::getCpuID()
 {
-  return getCLS()->cpu_id;
+  return cpu_info.getCpuID();
 }
 
 extern uint8 boot_stack[0x4000];
@@ -149,39 +196,35 @@ void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uin
 
 void ArchMulticore::initCpuLocalGDT(SegmentDescriptor* template_gdt)
 {
-  CpuLocalStorage* cls = getCLS();
-  debug(A_MULTICORE, "CPU switching to own GDT at: %p\n", &cls->gdt);
-  memcpy(&cls->gdt, template_gdt, sizeof(cls->gdt));
+  debug(A_MULTICORE, "CPU switching to own GDT at: %p\n", &cpu_gdt);
+  memcpy(&cpu_gdt, template_gdt, sizeof(cpu_gdt));
 
   struct GDT64Ptr gdt_ptr;
-  gdt_ptr.limit = sizeof(cls->gdt) - 1;
-  gdt_ptr.addr = (uint64)&cls->gdt;
+  gdt_ptr.limit = sizeof(cpu_gdt) - 1;
+  gdt_ptr.addr = (uint64)&cpu_gdt;
   __asm__ __volatile__("lgdt %[gdt]\n"
                        "mov %%ax, %%ds\n"
                        "mov %%ax, %%es\n"
                        "mov %%ax, %%ss\n"
-                       "mov %%ax, %%fs\n"
                        :
                        :[gdt]"m"(gdt_ptr), "a"(KERNEL_DS));
 }
 
 void ArchMulticore::initCpuLocalTSS(size_t boot_stack_top)
 {
-        CpuLocalStorage* cls = getCLS();
-        debug(A_MULTICORE, "CPU init TSS at %p\n", &cls->tss);
-        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cls->gdt + KERNEL_TSS), (size_t)&cls->tss >> 32, (size_t)&cls->tss, sizeof(TSS) - 1, 0);
+        debug(A_MULTICORE, "CPU init TSS at %p\n", &cpu_tss);
+        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cpu_gdt + KERNEL_TSS), (size_t)&cpu_tss >> 32, (size_t)&cpu_tss, sizeof(TSS) - 1, 0);
 
-        cls->tss.ist0 = boot_stack_top;
-        cls->tss.rsp0 = boot_stack_top;
+        cpu_tss.ist0 = boot_stack_top;
+        cpu_tss.rsp0 = boot_stack_top;
         __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 }
 
 void ArchMulticore::initialize()
 {
-  new (&cpu_list_) ustl::vector<CpuLocalStorage*>;
+  new (&cpu_list_) ustl::vector<CpuInfo*>;
   new (&cpu_list_lock_) Mutex("CPU list lock");
-  CpuLocalStorage* cls = ArchMulticore::initCLS();
-  debug(A_MULTICORE, "CLS for cpu %zu at %p\n", ArchMulticore::getCpuID(), cls);
+  ArchMulticore::initCLS();
 
   initCpuLocalGDT(gdt);
   initCpuLocalTSS((size_t)&boot_stack + sizeof(boot_stack));
@@ -228,13 +271,13 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::exists && getCLS()->apic.isInitialized())
+  if(LocalAPIC::exists && lapic.isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    getCLS()->apic.startAPs(AP_STARTUP_PADDR);
+    lapic.startAPs(AP_STARTUP_PADDR);
     assert(otherCPUsStarted());
   }
   else
@@ -250,9 +293,9 @@ bool ArchMulticore::otherCPUsStarted()
 
 void ArchMulticore::stopAllCpus()
 {
-  if(ArchMulticore::CLSinitialized() && ArchMulticore::getCLS()->apic.isInitialized())
+  if(ArchMulticore::CLSinitialized() && lapic.isInitialized())
   {
-    getCLS()->apic.sendIPI(90);
+    lapic.sendIPI(90);
   }
 }
 
@@ -303,7 +346,7 @@ void ArchMulticore::initCpu()
                        :[kernel_cr3]"a"(VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)));
 
   ArchMulticore::initCLS();
-  debug(A_MULTICORE, "getCLS(): %p, core id: %zx\n", ArchMulticore::getCLS(), ArchMulticore::getCpuID());
+  debug(A_MULTICORE, "CPU id: %zx\n", ArchMulticore::getCpuID());
 
   initCpuLocalGDT(ap_gdt32);
   initCpuLocalTSS((size_t)&ap_stack + sizeof(ap_stack));
@@ -312,8 +355,8 @@ void ArchMulticore::initCpu()
   InterruptUtils::lidt(&InterruptUtils::idtr);
 
   debug(A_MULTICORE, "Init AP APIC\n");
-  getCLS()->apic.init();
-  ArchMulticore::setCpuID(getCLS()->apic.getID());
+  lapic.init();
+  ArchMulticore::setCpuID(lapic.getID());
 
   ArchThreads::initialise();
 

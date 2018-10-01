@@ -34,8 +34,9 @@ Scheduler::Scheduler()
 
 uint32 Scheduler::schedule()
 {
-  ArchMulticore::getCLS()->scheduler.schedule();
+  cpu_scheduler.schedule();
   return 0;
+  /*
 
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
   if (block_scheduling_ != 0)
@@ -75,11 +76,12 @@ uint32 Scheduler::schedule()
   debug(SCHEDULER, "Scheduling %s, user: %u\n", currentThread()->getName(), currentThread()->switch_to_userspace_);
 
   return ret;
+  */
 }
 
 void Scheduler::addNewThread(Thread *thread)
 {
-  ArchMulticore::getCLS()->scheduler.addNewThread(thread);
+  cpu_scheduler.addNewThread(thread);
   /*
   assert(thread);
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
@@ -250,5 +252,5 @@ bool Scheduler::isInitialized()
 
 Thread* currentThread()
 {
-        return (ArchMulticore::CLSinitialized() ? ArchMulticore::getCLS()->scheduler.getCurrentThread() : 0);
+        return (ArchMulticore::CLSinitialized() ? cpu_scheduler.getCurrentThread() : 0);
 }

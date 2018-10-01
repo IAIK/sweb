@@ -27,6 +27,7 @@ extern volatile size_t outstanding_EOIs;
 LocalAPIC::LocalAPIC() :
         outstanding_EOIs_(0)
 {
+        debug(APIC, "LocalAPIC ctor\n");
 }
 
 void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
@@ -274,7 +275,7 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
-                ArchMulticore::getCLS()->apic.sendEOI(0x20);
+                lapic.sendEOI(0x20);
         }
         else
         {
@@ -316,7 +317,7 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
-                ArchMulticore::getCLS()->apic.sendEOI(0x20);
+                lapic.sendEOI(0x20);
         }
         else
         {
@@ -348,7 +349,7 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
-                ArchMulticore::getCLS()->apic.sendEOI(0x20);
+                lapic.sendEOI(0x20);
         }
         else
         {
@@ -432,7 +433,7 @@ void IOAPIC::initRedirections()
                                 r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
-                                r.destination = ArchMulticore::getCLS()->apic.getID();
+                                r.destination = lapic.getID();
                                 goto write_entry;
                         }
                 }

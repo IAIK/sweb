@@ -112,7 +112,7 @@ void ProcessRegistry::createProcess(const char* path, size_t cpu)
   debug(PROCESS_REG, "created userprocess %s\n", path);
   if(cpu == (size_t)-1)
   {
-          ArchMulticore::getCLS()->scheduler.addNewThread(process);
+          cpu_scheduler.addNewThread(process);
   }
   else
   {
@@ -123,7 +123,7 @@ void ProcessRegistry::createProcess(const char* path, size_t cpu)
                   if(cls->getCpuID() == cpu)
                   {
                           cpu_found = true;
-                          cls->scheduler.addNewThread(process);
+                          cls->getScheduler()->addNewThread(process);
                           break;
                   }
           }

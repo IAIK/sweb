@@ -157,11 +157,11 @@ extern ArchThreadRegisters *currentThreadRegisters;
 
 void beginIRQ(__attribute__((unused)) size_t irq_num)
 {
-        if((LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized()) &&
+        if((LocalAPIC::exists && lapic.isInitialized()) &&
            (IOAPIC::initialized ||
-            ((irq_num == 0) && ArchMulticore::getCLS()->apic.usingAPICTimer())))
+            ((irq_num == 0) && lapic.usingAPICTimer())))
         {
-                ArchMulticore::getCLS()->apic.outstanding_EOIs_++;
+                lapic.outstanding_EOIs_++;
         }
         else
         {
@@ -182,7 +182,7 @@ extern "C" void irqHandler_0()
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
-  ArchMulticore::getCLS()->scheduler.incTicks();
+  cpu_scheduler.incTicks();
 
   Scheduler::instance()->schedule();
 
@@ -319,7 +319,7 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread()->switch_to_userspace_ = 0;
-  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
+  cpu_scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
   ArchInterrupts::enableInterrupts();
 
   currentThread()->user_registers_->rax =
@@ -332,7 +332,7 @@ extern "C" void syscallHandler()
 
   ArchInterrupts::disableInterrupts();
   currentThread()->switch_to_userspace_ = 1;
-  ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->user_registers_);
+  cpu_scheduler.setCurrentThreadRegisters(currentThread()->user_registers_);
   arch_contextSwitch();
 }
 
@@ -386,7 +386,7 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   else
   {
     currentThread()->switch_to_userspace_ = false;
-    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
+    cpu_scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
     ArchInterrupts::enableInterrupts();
     debug(CPU_ERROR, "Terminating process...\n");
     currentThread()->kill();

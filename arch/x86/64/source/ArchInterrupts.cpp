@@ -20,8 +20,8 @@ void ArchInterrupts::initialise()
 
   if(LocalAPIC::exists)
   {
-          ArchMulticore::getCLS()->apic.mapAt(APIC_VADDR);
-          ArchMulticore::getCLS()->apic.init();
+          lapic.mapAt(APIC_VADDR);
+          lapic.init();
   }
 
   if(IOAPIC::exists)
@@ -36,9 +36,9 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  if(ArchMulticore::getCLS()->apic.isInitialized() && ArchMulticore::getCLS()->apic.usingAPICTimer())
+  if(lapic.isInitialized() && lapic.usingAPICTimer())
   {
-    ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(false);
+    lapic.reg_vaddr_->lvt_timer.setMask(false);
   }
   else
   {
@@ -73,9 +73,9 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
 
 void ArchInterrupts::disableTimer()
 {
-  if(ArchMulticore::getCLS()->apic.isInitialized() && ArchMulticore::getCLS()->apic.usingAPICTimer())
+  if(lapic.isInitialized() && lapic.usingAPICTimer())
   {
-    ArchMulticore::getCLS()->apic.reg_vaddr_->lvt_timer.setMask(true);
+    lapic.reg_vaddr_->lvt_timer.setMask(true);
   }
   else
   {
@@ -127,11 +127,11 @@ void ArchInterrupts::disableIRQ(uint16 num)
 
 void ArchInterrupts::EndOfInterrupt(uint16 number)
 {
-  if((LocalAPIC::exists && ArchMulticore::getCLS()->apic.isInitialized()) &&
+  if((LocalAPIC::exists && lapic.isInitialized()) &&
      (IOAPIC::initialized ||
-      ((number == 0) && ArchMulticore::getCLS()->apic.usingAPICTimer())))
+      ((number == 0) && lapic.usingAPICTimer())))
   {
-          ArchMulticore::getCLS()->apic.sendEOI(number + 0x20);
+          lapic.sendEOI(number + 0x20);
   }
   else
   {
@@ -215,7 +215,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
   assert(ArchMulticore::CLSinitialized());
-  register ArchThreadRegisters* info = ArchMulticore::getCLS()->scheduler.getCurrentThreadRegisters();
+  register ArchThreadRegisters* info = cpu_scheduler.getCurrentThreadRegisters();
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
       :
@@ -260,9 +260,10 @@ extern "C" void arch_contextSwitch()
     assert(currentThread()->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
   }
   assert(currentThread()->isStackCanaryOK() && "Kernel stack corruption detected.");
-  ArchThreadRegisters info = *ArchMulticore::getCLS()->scheduler.getCurrentThreadRegisters();
+  ArchThreadRegisters info = *cpu_scheduler.getCurrentThreadRegisters();
   assert(info.rsp0 >= USER_BREAK);
-  ArchMulticore::getCLS()->tss.rsp0 = info.rsp0;
+  cpu_tss.rsp0 = info.rsp0;
+  ArchMulticore::setFSBase(currentThread()->switch_to_userspace_ ? 0 : (uint64)ArchMulticore::getSavedFSBase());
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[ss]" : : [ss]"m"(info.ss));

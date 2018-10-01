@@ -6,23 +6,23 @@
 #include "uvector.h"
 #include "Mutex.h"
 
-class CpuLocalStorage
+class CpuInfo
 {
 public:
-  CpuLocalStorage();
+        CpuInfo();
 
-  CpuLocalStorage* init();
+        size_t getCpuID();
+        CpuLocalScheduler* getScheduler();
 
-  size_t getCpuID();
-
-  CpuLocalStorage* cls_ptr;
-  size_t cpu_id;
-  SegmentDescriptor gdt[7];
-  TSS tss;
-  CpuLocalScheduler scheduler;
-  LocalAPIC apic;
+        size_t cpu_id;
+        CpuLocalScheduler* scheduler;
 private:
 };
+
+extern thread_local CpuInfo cpu_info;
+extern thread_local CpuLocalScheduler cpu_scheduler;
+extern thread_local LocalAPIC lapic;
+extern thread_local TSS cpu_tss;
 
 #define AP_STARTUP_PADDR 0x0
 
@@ -36,8 +36,13 @@ class ArchMulticore
     static bool otherCPUsStarted();
     static void stopAllCpus();
 
-    static CpuLocalStorage* initCLS();
-    static CpuLocalStorage* getCLS();
+    static void setFSBase(uint64 fs_base);
+    static void setGSBase(uint64 fs_base);
+    static uint64 getFSBase();
+    static uint64 getGSBase();
+    static void* getSavedFSBase();
+
+    static void initCLS();
     static bool CLSinitialized();
 
     static void setCpuID(size_t id);
@@ -47,7 +52,7 @@ class ArchMulticore
 
 
     static Mutex cpu_list_lock_;
-    static ustl::vector<CpuLocalStorage*> cpu_list_;
+    static ustl::vector<CpuInfo*> cpu_list_;
 
     static bool cpus_started_;
 

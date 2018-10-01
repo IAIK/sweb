@@ -44,7 +44,7 @@
   movw %ax,%ss
   movw %ax,%ds
   movw %ax,%es
-  movw %ax,%fs
+  #movw %ax,%fs
   #movw %ax,%gs
 .endm
 
