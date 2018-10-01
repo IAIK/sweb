@@ -15,13 +15,11 @@ static const uint8 BIT_COUNT[] =
 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };
 
-Bitmap::Bitmap(size_t number_of_bits)
+Bitmap::Bitmap(size_t number_of_bits) :
+        size_(number_of_bits),
+        num_bits_set_(0)
 {
-  size_ = number_of_bits;
-  num_bits_set_ = 0;
-  bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)];
-  for (size_t byte = 0; byte < BITMAP_BYTE_COUNT(number_of_bits); ++byte)
-    bitmap_[byte] = static_cast<uint8>(0);
+  bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)]{};
 }
 
 Bitmap::~Bitmap()
