@@ -61,10 +61,16 @@ uint32 MinixStorageManager::getNumUsedInodes()
 size_t MinixStorageManager::allocZone()
 {
   size_t pos = curr_zone_pos_ + 1;
-  for (; pos != curr_zone_pos_; pos++)
+  for (; pos != curr_zone_pos_; ++pos)
   {
     if (pos >= zone_bitmap_.getSize())
+    {
       pos = 0;
+      if(pos == curr_zone_pos_) // Increment happens before check in for loop, which would lead to an infinite loop when curr_zone_pos_ = 0
+      {
+              break;
+      }
+    }
     if (!zone_bitmap_.getBit(pos))
     {
       zone_bitmap_.setBit(pos);
@@ -73,7 +79,7 @@ size_t MinixStorageManager::allocZone()
       return pos;
     }
   }
-  kprintfd("acquireZone: NO FREE ZONE FOUND!\n");
+  debug(M_STORAGE_MANAGER, "acquireZone: NO FREE ZONE FOUND!\n");
   assert(false); // full memory should have been checked.
   return 0;
 }
