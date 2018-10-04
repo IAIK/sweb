@@ -38,7 +38,7 @@ file(GLOB curProject_SOURCES ${curProject}/*.c)
   if(curProject_SOURCES)
     get_filename_component(exename ${curProject} NAME)
     add_executable(${exename}.sweb ${curProject_SOURCES})
-    target_link_libraries(${exename}.sweb "-Wl,-whole-archive" userspace_libc ${ARCH_APPEND_LD_ARGUMENTS})
+    target_link_libraries(${exename}.sweb ${FINAL_USERSPACE_TESTS_LINKER_OPTIONS} "-Wl,-whole-archive" userspace_libc ${ARCH_APPEND_LD_ARGUMENTS})
 
     ADD_DEBUG_INFO(${curName}.sweb)
 
