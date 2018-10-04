@@ -10,6 +10,7 @@ extern "C" {
 #define PROT_NONE     0x00000000  // 00..00
 #define PROT_READ     0x00000001  // ..0001
 #define PROT_WRITE    0x00000002  // ..0010
+#define PROT_EXEC     0x00000004  // ..0100
 
 #define MAP_PRIVATE   0x00000000  // 00..00
 #define MAP_SHARED    0x40000000  // 0100..
@@ -24,7 +25,6 @@ extern int shm_open(const char* name, int oflag, mode_t mode);
 extern int shm_unlink(const char* name);
 
 extern int mprotect(void *addr, size_t len, int prot);
-#define MPROTECT_DEFINED 1
 
 #ifdef __cplusplus
 }

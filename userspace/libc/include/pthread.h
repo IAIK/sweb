@@ -15,7 +15,6 @@ typedef unsigned int pthread_mutex_t;
 typedef unsigned int pthread_mutexattr_t;
 
 //pthread spinlock typedefs
-#define PTHREAD_SPINLOCK_T_DEFINED
 typedef unsigned int pthread_spinlock_t;
 
 //pthread cond typedefs
@@ -32,7 +31,6 @@ extern int pthread_cancel(pthread_t thread);
 
 extern int pthread_join(pthread_t thread, void **value_ptr);
 
-#define PTHREAD_DETACH_DEFINED
 extern int pthread_detach(pthread_t thread);
 
 extern int pthread_mutex_init(pthread_mutex_t *mutex,
