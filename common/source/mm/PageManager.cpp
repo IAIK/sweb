@@ -40,7 +40,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   {
     pointer start_address = 0, end_address = 0, type = 0;
     ArchCommon::getUsableMemoryRegion(i, start_address, end_address, type);
-    debug(PM, "Ctor: memory region from physical 0x%zx to 0x%zx (%zu bytes) of type %zd\n",
+    debug(PM, "Ctor: memory region from physical %zx to %zx (%zu bytes) of type %zd\n",
           start_address, end_address, end_address - start_address, type);
 
     if (type == 1)
