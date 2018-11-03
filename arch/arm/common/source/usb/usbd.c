@@ -411,6 +411,7 @@ const char* UsbGetDescription(struct UsbDevice *device) {
     if (device->Descriptor.VendorId == 0x424 &&
       device->Descriptor.ProductId == 0xec00)
       return "SMSC LAN9512\0";
+    // fall through
   case DeviceClassInInterface:
     if (device->Status == Configured) {
       switch (device->Interfaces[0].Class) {
