@@ -40,6 +40,8 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount)
 {
   FileSystemInfo *fs_info = getcwd();
+  assert(fs_info != NULL);
+  assert(fs_info->pathname_.c_str() != NULL);
   if (pathname == 0)
     return -1;
 
