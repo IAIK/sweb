@@ -214,6 +214,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
+  ArchMulticore::setFSBase((uint64)ArchMulticore::getSavedFSBase());
   assert(ArchMulticore::CLSinitialized());
   register ArchThreadRegisters* info = cpu_scheduler.getCurrentThreadRegisters();
   asm("fnsave %[fpu]\n"
@@ -263,7 +264,7 @@ extern "C" void arch_contextSwitch()
   ArchThreadRegisters info = *cpu_scheduler.getCurrentThreadRegisters();
   assert(info.rsp0 >= USER_BREAK);
   cpu_tss.rsp0 = info.rsp0;
-  ArchMulticore::setFSBase(currentThread()->switch_to_userspace_ ? 0 : (uint64)ArchMulticore::getSavedFSBase());
+  ArchMulticore::setFSBase(currentThread()->switch_to_userspace_ ? 0 : (uint64)ArchMulticore::getSavedFSBase()); // Don't use CLS after this line
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[ss]" : : [ss]"m"(info.ss));
