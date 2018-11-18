@@ -40,9 +40,12 @@ class ArchMulticore
     static void setGSBase(uint64 fs_base);
     static uint64 getFSBase();
     static uint64 getGSBase();
+    static uint64 getGSKernelBase();
     static void* getSavedFSBase();
 
-    static void initCLS();
+    static void allocCLS(char*& cls, size_t& cls_size);
+    static void setCLS(char* cls, size_t cls_size);
+    static void initCLS(bool boot_cpu = false);
     static bool CLSinitialized();
 
     static void setCpuID(size_t id);

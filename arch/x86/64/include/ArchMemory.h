@@ -119,6 +119,7 @@ public:
 
   uint64 getRootOfPagingStructure();
   static PageMapLevel4Entry* getRootOfKernelPagingStructure();
+  static void loadPagingStructureRoot(size_t cr3_value);
 
   static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
   static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;

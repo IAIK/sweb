@@ -127,6 +127,7 @@ void InterruptUtils::initialise()
 
 void InterruptUtils::lidt(IDTR *idtr)
 {
+  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", idtr->base, idtr->limit);
   asm volatile("lidt (%0) ": :"q" (idtr));
 }
 

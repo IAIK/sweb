@@ -15,6 +15,7 @@ uint32 PIC8259::cached_mask = 0xFFFF;
 
 void PIC8259::initialise8259s()
 {
+  debug(A_INTERRUPTS, "Init 8259 Programmable Interrupt Controller\n");
   outportb(PIC_1_CONTROL_PORT, PIC_ICW1_INIT); /* ICW1 */
   outportb(PIC_1_DATA_PORT, PIC_ICW2_OFFSET); /* ICW2: route IRQs 0...7 to INTs 20h...27h */
   outportb(PIC_1_DATA_PORT, 0x04); /* ICW3 */
@@ -37,6 +38,7 @@ void PIC8259::initialise8259s()
 
 void PIC8259::enableIRQ(uint16 number)
 {
+  debug(A_INTERRUPTS, "PIC8259, enable IRQ %x\n", number);
   uint32 mask = 1 << number;
   cached_mask &= ~mask;
   if (number & 8)
@@ -51,6 +53,7 @@ void PIC8259::enableIRQ(uint16 number)
 
 void PIC8259::disableIRQ(uint16 number)
 {
+  debug(A_INTERRUPTS, "PIC8259, disable IRQ %x\n", number);
   uint32 mask = 1 << number;
   cached_mask |= mask;
   if (number & 8)
@@ -66,8 +69,6 @@ void PIC8259::disableIRQ(uint16 number)
 void PIC8259::sendEOI(uint16 number)
 {
   --outstanding_EOIs_;
-  debug(A_INTERRUPTS, "CPU %zu, PIC8258::sendEOI %u, outstanding: %zu\n", ArchMulticore::getCpuID(), number, outstanding_EOIs_);
-  assert(ArchMulticore::getCpuID() == 0);
   if (number > 7)
     outportb(PIC_2_CONTROL_PORT, PIC_EOI);
 

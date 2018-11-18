@@ -27,7 +27,15 @@ extern volatile size_t outstanding_EOIs;
 LocalAPIC::LocalAPIC() :
         outstanding_EOIs_(0)
 {
-        debug(APIC, "LocalAPIC ctor\n");
+  debug(APIC, "LocalAPIC ctor\n");
+  if(LocalAPIC::exists)
+  {
+    if((size_t)lapic.reg_vaddr_ != APIC_VADDR)
+    {
+            lapic.mapAt(APIC_VADDR);
+    }
+    lapic.init();
+  }
 }
 
 void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
@@ -60,10 +68,18 @@ void LocalAPIC::mapAt(size_t addr)
 
 void LocalAPIC::init()
 {
-  setSpuriousInterruptNumber(100);
-  initTimer();
-  enable(true);
-  initialized_ = true;
+  if(!isInitialized())
+  {
+    debug(APIC, "Initializing Local APIC %x\n", getID());
+    setSpuriousInterruptNumber(100);
+    initTimer();
+    enable(true);
+    initialized_ = true;
+  }
+  else
+  {
+    debug(APIC, "Local APIC %x is already initialized. Skipping re-initialization\n", getID());
+  }
 }
 
 bool LocalAPIC::isInitialized()

@@ -337,3 +337,9 @@ PageMapLevel4Entry* ArchMemory::getRootOfKernelPagingStructure()
 {
   return kernel_page_map_level_4;
 }
+
+void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
+{
+  __asm__ __volatile__("movq %[cr3_value], %%cr3\n"
+                       ::[cr3_value]"r"(cr3_value));
+}

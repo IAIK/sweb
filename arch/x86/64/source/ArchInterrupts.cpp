@@ -18,12 +18,6 @@ void ArchInterrupts::initialise()
   disableInterrupts();
   InterruptUtils::initialise();
 
-  if(LocalAPIC::exists)
-  {
-          lapic.mapAt(APIC_VADDR);
-          lapic.init();
-  }
-
   if(IOAPIC::exists)
   {
           IO_APIC.mapAt(IOAPIC_VADDR);
@@ -289,6 +283,7 @@ extern "C" void arch_contextSwitch()
   asm("mov %[rbx], %%rbx\n" : : [rbx]"m"(info.rbx));
   asm("mov %[rax], %%rax\n" : : [rax]"m"(info.rax));
   asm("mov %[rbp], %%rbp\n" : : [rbp]"m"(info.rbp));
+  // Check %cs in iret frame on stack whether we're returning to userspace
   asm("testl $3, 8(%rsp)\n"
       "jz 1f\n"
       "swapgs\n"
