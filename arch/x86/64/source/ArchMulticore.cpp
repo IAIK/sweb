@@ -86,7 +86,10 @@ void getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 
 void setMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 {
-        debug(A_MULTICORE, "Set MSR %x, value: %zx\n", msr, ((size_t)hi << 32) | (size_t)lo);
+        if(A_MULTICORE & OUTPUT_ADVANCED)
+        {
+                debug(A_MULTICORE, "Set MSR %x, value: %zx\n", msr, ((size_t)hi << 32) | (size_t)lo);
+        }
         asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 

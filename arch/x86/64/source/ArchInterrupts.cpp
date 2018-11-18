@@ -242,7 +242,10 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
 
 extern "C" void arch_contextSwitch()
 {
-  debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
+  if(A_INTERRUPTS & OUTPUT_ADVANCED)
+  {
+    debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread(), currentThread()->getName());
+  }
 
   if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIc for outstanding interrupts
   {

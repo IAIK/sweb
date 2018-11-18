@@ -11,6 +11,7 @@
 #include "SWEBDebugInfo.h"
 #include "PageManager.h"
 #include "ACPI.h"
+#include "ArchMulticore.h"
 
 extern void* kernel_end_address;
 
@@ -319,8 +320,9 @@ void ArchCommon::drawHeartBeat()
   const char* clock = "/-\\|";
   static uint32 heart_beat_value = 0;
   char* fb = (char*)getFBPtr();
-  fb[0] = clock[heart_beat_value++ % 4];
-  fb[1] = (char)0x9f;
+  size_t cpu_id = ArchMulticore::getCpuID();
+  fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
+  fb[1 + cpu_id*2] = (char)0x9f;
 
   drawStat();
 }
