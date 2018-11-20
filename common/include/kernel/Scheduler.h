@@ -13,6 +13,7 @@ class Lock;
 extern __thread Thread* currentThread;
 extern __thread ArchThreadRegisters* currentThreadRegisters;
 
+extern __thread char scheduling_stack[PAGE_SIZE];
 
 class Scheduler
 {
@@ -53,6 +54,8 @@ class Scheduler
   private:
     Scheduler();
 
+    bool tryLockScheduling();
+
     /**
      * Scheduler internal lock abstraction method
      * locks the thread-list against concurrent access by prohibiting a thread switch
@@ -70,10 +73,9 @@ class Scheduler
 
     ThreadList threads_;
 
-    size_t block_scheduling_;
+    volatile size_t block_scheduling_;
 
     size_t ticks_;
 
-    IdleThread idle_thread_;
     CleanupThread cleanup_thread_;
 };

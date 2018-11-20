@@ -20,8 +20,7 @@ void CleanupThread::Run()
 {
   while (1)
   {
-    //Scheduler::instance()->cleanupDeadThreads();
-    cpu_scheduler.cleanupDeadThreads();
+    Scheduler::instance()->cleanupDeadThreads();
     Scheduler::instance()->yield();
   }
 }

@@ -13,7 +13,7 @@ extern PageMapLevel4Entry kernel_page_map_level_4[];
 
 void ArchThreads::initialise()
 {
-  cpu_scheduler.setCurrentThreadRegisters(new ArchThreadRegisters{});
+  currentThreadRegisters = new ArchThreadRegisters{};
 
   /** Enable SSE for floating point instructions in long mode **/
   asm volatile ("movq %%cr0, %%rax\n"
@@ -87,7 +87,7 @@ void ArchThreads::yield()
   __asm__ __volatile__("int $65");
 }
 
-size_t ArchThreads::testSetLock(size_t &lock, size_t new_value)
+size_t ArchThreads::testSetLock(volatile size_t &lock, size_t new_value)
 {
   return __sync_lock_test_and_set(&lock,new_value);
 }

@@ -18,6 +18,10 @@
 __thread Thread* currentThread = NULL;
 __thread ArchThreadRegisters* currentThreadRegisters = NULL;
 
+__thread char scheduling_stack[PAGE_SIZE];
+
+thread_local IdleThread idle_thread;
+
 Scheduler *Scheduler::instance_ = 0;
 
 Scheduler *Scheduler::instance()
@@ -29,79 +33,103 @@ Scheduler *Scheduler::instance()
 
 Scheduler::Scheduler()
 {
+  debug(SCHEDULER, "Initializing scheduler\n");
   block_scheduling_ = 0;
   ticks_ = 0;
-  //addNewThread(&cleanup_thread_);
+  addNewThread(&cleanup_thread_);
   //addNewThread(&idle_thread_);
+  debug(SCHEDULER, "Initializing scheduler END\n");
 }
 
 uint32 Scheduler::schedule()
 {
-  cpu_scheduler.schedule();
-  return 0;
-  /*
+  //debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread ? currentThread->getName() : "(nil)");
 
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
-  if (block_scheduling_ != 0)
+  if(currentThread && !(currentThread->getState() == ToBeDestroyed))
   {
-    debug(SCHEDULER, "schedule: currently blocked\n");
-    return 0;
+    if (!tryLockScheduling())
+    {
+      debug(SCHEDULER, "CPU %zu schedule: currently blocked\n", ArchMulticore::getCpuID());
+      return 0;
+    }
   }
+  else
+  {
+    lockScheduling();
+  }
+
+  assert(block_scheduling_ == 1);
+
+  if(currentThread)
+  {
+    assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
+    currentThread->currently_scheduled_on_cpu_ = (size_t)-1;
+  }
+
+  assert(threads_.size() != 0);
 
   auto it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
     if((*it)->schedulable())
     {
-      ArchMulticore::getCLS()->scheduler.setCurrentThread(*it);
+      currentThread = *it;
       break;
     }
   }
 
-  assert(it != threads_.end() && "No schedulable thread found");
+  if(it == threads_.end())
+  {
+          assert(idle_thread.schedulable());
+          currentThread = &idle_thread;
+  }
+
+  assert(currentThread);
+  assert(currentThread->currently_scheduled_on_cpu_ == (size_t)-1);
+
+  // TODO: We are still using the kernel stack of the thread we just de-scheduled -> other cpu can schedule thread and overwrite the stack we are currently still using
+
+  currentThread->currently_scheduled_on_cpu_ = ArchMulticore::getCpuID();
 
   ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
 
-  //debug(SCHEDULER, "Scheduler::schedule: new currentThread is %p %s, switch_to_userspace: %d\n", currentThread, currentThread->getName(), currentThread->switch_to_userspace_);
+  unlockScheduling();
+
+  //debug(SCHEDULER, "CPU %zu, new currentThread is %p %s, userspace: %d\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName(), currentThread->switch_to_userspace_);
 
   uint32 ret = 1;
 
-  if (currentThread()->switch_to_userspace_)
+  if (currentThread->switch_to_userspace_)
   {
-    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->user_registers_);
+    currentThreadRegisters = currentThread->user_registers_;
   }
   else
   {
-    ArchMulticore::getCLS()->scheduler.setCurrentThreadRegisters(currentThread()->kernel_registers_);
+    currentThreadRegisters = currentThread->kernel_registers_;
     ret = 0;
   }
 
-  debug(SCHEDULER, "Scheduling %s, user: %u\n", currentThread()->getName(), currentThread()->switch_to_userspace_);
-
   return ret;
-  */
 }
 
 void Scheduler::addNewThread(Thread *thread)
 {
-  cpu_scheduler.addNewThread(thread);
-  /*
+  //cpu_scheduler.addNewThread(thread);
   assert(thread);
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
-  if (currentThread())
+  if (currentThread)
     ArchThreads::debugCheckNewThread(thread);
   KernelMemoryManager::instance()->getKMMLock().acquire();
   lockScheduling();
   KernelMemoryManager::instance()->getKMMLock().release();
   threads_.push_back(thread);
   unlockScheduling();
-  */
 }
 
 void Scheduler::sleep()
 {
   currentThread->setState(Sleeping);
-  assert(block_scheduling_ == 0);
   yield();
 }
 
@@ -132,6 +160,7 @@ void Scheduler::cleanupDeadThreads()
      functionality could be implemented more cleanly in another place.
      (e.g. Thread/Process destructor) */
 
+  //debug(SCHEDULER, "cleanupDeadThreads lock scheduling\n");
   lockScheduling();
   uint32 thread_count_max = threads_.size();
   if (thread_count_max > 1024)
@@ -141,7 +170,7 @@ void Scheduler::cleanupDeadThreads()
   for (uint32 i = 0; i < threads_.size(); ++i)
   {
     Thread* tmp = threads_[i];
-    if (tmp->getState() == ToBeDestroyed)
+    if ((tmp->getState() == ToBeDestroyed) && (tmp->currently_scheduled_on_cpu_ == (size_t)-1))
     {
       destroy_list[thread_count++] = tmp;
       threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
@@ -150,6 +179,7 @@ void Scheduler::cleanupDeadThreads()
     if (thread_count >= thread_count_max)
       break;
   }
+  //debug(SCHEDULER, "cleanupDeadThreads unlock scheduling\n");
   unlockScheduling();
   if (thread_count > 0)
   {
@@ -171,10 +201,19 @@ void Scheduler::printThreadList()
   unlockScheduling();
 }
 
+
+bool Scheduler::tryLockScheduling()
+{
+  return ArchThreads::testSetLock(block_scheduling_, 1) == 0;
+}
+
 void Scheduler::lockScheduling() //not as severe as stopping Interrupts
 {
+  while(ArchThreads::testSetLock(block_scheduling_, 1));
+  /*
   if (unlikely(ArchThreads::testSetLock(block_scheduling_, 1)))
     kpanict("FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
+  */
 }
 
 void Scheduler::unlockScheduling()

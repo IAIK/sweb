@@ -6,10 +6,11 @@
 #include "ustring.h"
 #include "KernelMemoryManager.h"
 
+/*
 CpuLocalScheduler::CpuLocalScheduler()
 {
-        addNewThread(&idle_thread_);
-        addNewThread(&cleanup_thread_);
+        //addNewThread(&idle_thread_);
+        //addNewThread(&cleanup_thread_);
 }
 
 void CpuLocalScheduler::schedule()
@@ -148,3 +149,4 @@ void CpuLocalScheduler::incTicks()
 {
         ++ticks_;
 }
+*/

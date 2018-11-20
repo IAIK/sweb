@@ -12,15 +12,12 @@ public:
         CpuInfo();
 
         size_t getCpuID();
-        CpuLocalScheduler* getScheduler();
 
         size_t cpu_id;
-        CpuLocalScheduler* scheduler;
 private:
 };
 
 extern thread_local CpuInfo cpu_info;
-extern thread_local CpuLocalScheduler cpu_scheduler;
 extern thread_local LocalAPIC lapic;
 extern thread_local TSS cpu_tss;
 

@@ -52,6 +52,7 @@ void ProcessRegistry::Run()
 
   for(auto cls : ArchMulticore::cpu_list_)
   {
+          assert(cls->getCpuID() <= 4);
           debug(MAIN, "Starting helloworld on CPU %zu\n", cls->getCpuID());
           createProcess("/usr/helloworld.sweb", cls->getCpuID());
   }
@@ -110,6 +111,7 @@ void ProcessRegistry::createProcess(const char* path, size_t cpu)
   debug(PROCESS_REG, "create process %s on cpu %zu\n", path, cpu);
   Thread* process = new UserProcess(path, new FileSystemInfo(*working_dir_));
   debug(PROCESS_REG, "created userprocess %s\n", path);
+  /*
   if(cpu == (size_t)-1)
   {
           cpu_scheduler.addNewThread(process);
@@ -129,6 +131,7 @@ void ProcessRegistry::createProcess(const char* path, size_t cpu)
           }
           assert(cpu_found);
   }
-  //Scheduler::instance()->addNewThread(process);
+  */
+  Scheduler::instance()->addNewThread(process);
   debug(PROCESS_REG, "added thread %s\n", path);
 }

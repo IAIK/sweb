@@ -4,6 +4,7 @@
 #include "Scheduler.h"
 #include "Mutex.h"
 
+/*
 class CpuLocalScheduler
 {
 public:
@@ -40,3 +41,4 @@ private:
         IdleThread idle_thread_;
         CleanupThread cleanup_thread_;
 };
+*/

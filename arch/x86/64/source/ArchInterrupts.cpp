@@ -210,7 +210,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
   ArchMulticore::setFSBase((uint64)ArchMulticore::getSavedFSBase());
   assert(ArchMulticore::CLSinitialized());
-  register ArchThreadRegisters* info = cpu_scheduler.getCurrentThreadRegisters();
+  register ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
       :
@@ -242,10 +242,15 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
 
 extern "C" void arch_contextSwitch()
 {
+  assert(currentThread);
+
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-    debug(A_INTERRUPTS, "CPU %zx, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName());
+    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName());
   }
+
+  assert(currentThreadRegisters);
+  assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
 
   if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIc for outstanding interrupts
   {
@@ -258,7 +263,8 @@ extern "C" void arch_contextSwitch()
     assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
   }
   assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
-  ArchThreadRegisters info = *cpu_scheduler.getCurrentThreadRegisters();
+  ArchThreadRegisters info = *currentThreadRegisters;
+  assert(info.rip >= PAGE_SIZE); // debug
   assert(info.rsp0 >= USER_BREAK);
   cpu_tss.rsp0 = info.rsp0;
   ArchMulticore::setFSBase(currentThread->switch_to_userspace_ ? 0 : (uint64)ArchMulticore::getSavedFSBase()); // Don't use CLS after this line

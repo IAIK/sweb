@@ -93,7 +93,7 @@ const size_t A_COMMON           = Ansi_Yellow | OUTPUT_ENABLED;
 const size_t A_MEMORY           = Ansi_Yellow;
 const size_t A_SERIALPORT       = Ansi_Yellow;
 const size_t A_KB_MANAGER       = Ansi_Yellow;
-const size_t A_INTERRUPTS       = Ansi_Yellow | OUTPUT_ENABLED;
+const size_t A_INTERRUPTS       = Ansi_Yellow | OUTPUT_ENABLED | OUTPUT_ADVANCED;
 const size_t A_MULTICORE        = Ansi_Yellow | OUTPUT_ENABLED;
 
 const size_t ACPI               = Ansi_Red    | OUTPUT_ENABLED;

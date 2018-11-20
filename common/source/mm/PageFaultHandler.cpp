@@ -49,8 +49,8 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
 {
   if (PAGEFAULT & OUTPUT_ENABLED)
     kprintfd("\n");
-  debug(PAGEFAULT, "Address: %18zx - Thread %zu: %s (%p)\n",
-        address, currentThread->getTID(), currentThread->getName(), currentThread);
+  debug(PAGEFAULT, "CPU %zu, Address: %18zx - Thread %zu: %s (%p)\n",
+        ArchMulticore::getCpuID(), address, currentThread->getTID(), currentThread->getName(), currentThread);
   debug(PAGEFAULT, "Flags: %spresent, %s-mode, %s, %s-fetch, switch to userspace: %1d\n",
         present ? "    " : "not ",
         user ? "  user" : "kernel",
@@ -81,13 +81,13 @@ void PageFaultHandler::enterPageFault(size_t address, bool user,
                                       bool present, bool writing,
                                       bool fetch)
 {
-  debug(PAGEFAULT, "Pagefault at %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", address, present, writing, user, fetch);
+  debug(PAGEFAULT, "CPU %zu, Pagefault at %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", ArchMulticore::getCpuID(), address, present, writing, user, fetch);
   assert(currentThread && "You have a pagefault, but no current thread");
   //save previous state on stack of currentThread()
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
 
   currentThread->switch_to_userspace_ = 0;
-  cpu_scheduler.setCurrentThreadRegisters(currentThread->kernel_registers_);
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
   handlePageFault(address, user, present, writing, fetch, saved_switch_to_userspace);
@@ -96,6 +96,6 @@ void PageFaultHandler::enterPageFault(size_t address, bool user,
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {
-    cpu_scheduler.setCurrentThreadRegisters(currentThread->user_registers_);
+    currentThreadRegisters = currentThread->user_registers_;
   }
 }

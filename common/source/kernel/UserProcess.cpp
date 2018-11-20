@@ -46,7 +46,7 @@ UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 
 
 UserProcess::~UserProcess()
 {
-  assert(cpu_scheduler.isCurrentlyCleaningUp());
+  assert(Scheduler::instance()->isCurrentlyCleaningUp());
   delete loader_;
   loader_ = 0;
 

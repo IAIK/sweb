@@ -13,8 +13,7 @@ void IdleThread::Run()
   uint32 new_ticks = 0;
   while (1)
   {
-    //new_ticks = Scheduler::instance()->getTicks();
-    new_ticks = cpu_scheduler.getTicks();
+    new_ticks = Scheduler::instance()->getTicks();
     if (new_ticks == last_ticks)
     {
       last_ticks = new_ticks + 1;

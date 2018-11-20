@@ -123,6 +123,8 @@ class Thread
      */
     Lock* holding_lock_list_;
 
+    volatile size_t currently_scheduled_on_cpu_ = (size_t)-1;
+
   private:
     Thread(Thread const &src);
     Thread &operator=(Thread const &src);

@@ -164,7 +164,7 @@ void Thread::printBacktrace(bool use_stored_registers)
 
 bool Thread::schedulable()
 {
-  return (getState() == Running);
+  return (getState() == Running) && (currently_scheduled_on_cpu_ == (size_t)-1);
 }
 
 const char *Thread::getName()

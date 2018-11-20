@@ -181,27 +181,33 @@ extern "C" void irqHandler_0()
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
-  cpu_scheduler.incTicks();
 
+  //debug(A_INTERRUPTS, "Switching to stack [%p,%p)\n", scheduling_stack, scheduling_stack + PAGE_SIZE);
+  asm volatile("movq %[scheduling_stack], %%rsp\n"
+               ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
   Scheduler::instance()->schedule();
 
   //kprintfd("irq0: Going to leave irq Handler 0\n");
   endIRQ(0);
   arch_contextSwitch();
+  assert(false);
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
   //debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", ArchMulticore::getCpuID());
+  //debug(A_INTERRUPTS, "Switching to stack [%p, %p)\n", scheduling_stack, scheduling_stack + PAGE_SIZE);
+  asm volatile("movq %[scheduling_stack], %%rsp\n"
+               ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
   Scheduler::instance()->schedule();
   arch_contextSwitch();
+  assert(false);
 }
 
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
-  debug(A_INTERRUPTS, "Pagefault handler called by core %zx\n", ArchMulticore::getCpuID());
   PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
                                    error & FLAG_PF_PRESENT,
                                    error & FLAG_PF_RDWR,
@@ -318,7 +324,7 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
-  cpu_scheduler.setCurrentThreadRegisters(currentThread->kernel_registers_);
+  currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
   currentThread->user_registers_->rax =
@@ -331,7 +337,7 @@ extern "C" void syscallHandler()
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;
-  cpu_scheduler.setCurrentThreadRegisters(currentThread->user_registers_);
+  currentThreadRegisters = currentThread->user_registers_;
   arch_contextSwitch();
 }
 
@@ -385,10 +391,11 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   else
   {
     currentThread->switch_to_userspace_ = false;
-    cpu_scheduler.setCurrentThreadRegisters(currentThread->kernel_registers_);
+    currentThreadRegisters = currentThread->kernel_registers_;
     ArchInterrupts::enableInterrupts();
     debug(CPU_ERROR, "Terminating process...\n");
     currentThread->kill();
+    assert(false);
   }
 }
 

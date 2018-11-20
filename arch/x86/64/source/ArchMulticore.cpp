@@ -16,7 +16,6 @@ __thread TSS cpu_tss;
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
 thread_local LocalAPIC lapic;
 thread_local CpuInfo cpu_info;
-thread_local CpuLocalScheduler cpu_scheduler;
 
 extern SystemState system_state;
 
@@ -146,8 +145,7 @@ void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uin
 }
 
 CpuInfo::CpuInfo() :
-        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.getID() : 0),
-        scheduler(&cpu_scheduler)
+        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.getID() : 0)
 {
         debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
         MutexLock l(ArchMulticore::cpu_list_lock_);
@@ -158,11 +156,6 @@ CpuInfo::CpuInfo() :
 size_t CpuInfo::getCpuID()
 {
         return cpu_id;
-}
-
-CpuLocalScheduler* CpuInfo::getScheduler()
-{
-        return scheduler;
 }
 
 void* ArchMulticore::getSavedFSBase()
