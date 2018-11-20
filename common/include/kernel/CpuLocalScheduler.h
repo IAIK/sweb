@@ -29,8 +29,8 @@ public:
         size_t getTicks();
 
 private:
-        ArchThreadRegisters* currentThreadRegisters_;
-        Thread* currentThread_;
+        //ArchThreadRegisters* currentThreadRegisters_;
+        //Thread* currentThread_;
 
         Scheduler::ThreadList threads_;
         size_t thread_list_lock_ = 0;

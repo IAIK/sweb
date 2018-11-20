@@ -201,6 +201,7 @@ void ArchMulticore::allocCLS(char*& cls, size_t& cls_size)
 
 void ArchMulticore::setCLS(char* cls, size_t cls_size)
 {
+        debug(A_MULTICORE, "Set CLS: %p, size: %zx\n", cls, cls_size);
         void** fs_base = (void**)(cls + cls_size);
         *fs_base = fs_base;
         setFSBase((uint64)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base

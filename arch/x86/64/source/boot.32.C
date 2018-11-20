@@ -113,7 +113,6 @@ extern "C" void entry()
   char* bss_start = TRUNCATE(&bss_start_address);
   memset(bss_start, 0, TRUNCATE(&bss_end_address) - bss_start);
 
-
   puts(TRUNCATE("Multiboot structure pointer: "));
   putHex32(*(uint32*)TRUNCATE(&multi_boot_structure_pointer));
   putc('\n');

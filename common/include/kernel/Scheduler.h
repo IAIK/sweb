@@ -10,7 +10,8 @@ class Mutex;
 class SpinLock;
 class Lock;
 
-Thread* currentThread();
+extern __thread Thread* currentThread;
+extern __thread ArchThreadRegisters* currentThreadRegisters;
 
 
 class Scheduler

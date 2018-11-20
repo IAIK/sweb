@@ -61,7 +61,7 @@ class BDRequest
       status_ = BD_QUEUED;
       buffer_ = buffer;
 
-      requesting_thread_ = currentThread();
+      requesting_thread_ = currentThread;
       blocks_done_ = 0;
       next_request_ = 0;
     };

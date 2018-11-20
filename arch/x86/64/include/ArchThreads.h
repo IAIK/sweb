@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "Scheduler.h"
 
 /**
  * The flag for full barrier synchronization.
@@ -42,12 +43,6 @@ struct ArchThreadRegisters
 
 class Thread;
 class ArchMemory;
-
-/**
- * this is where the thread info for task switching is stored
- *
- */
-extern ArchThreadRegisters *currentThreadRegisters;
 
 /**
  * Collection of architecture dependant code concerning Task Switching

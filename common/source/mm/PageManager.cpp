@@ -185,7 +185,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   debug(PM, "Finished mapping reserved heap pages\n");
 
   extern KernelMemoryManager kmm;
-  new (&kmm) KernelMemoryManager(num_reserved_heap_pages,HEAP_PAGES);
+  new (&kmm) KernelMemoryManager(num_reserved_heap_pages, HEAP_PAGES);
   page_usage_table_ = new Bitmap(number_of_pages_);
 
   for (size_t i = 0; i < boot_bitmap_size; ++i)
@@ -221,7 +221,7 @@ size_t PageManager::getNumFreePages() const
 
 bool PageManager::reservePages(uint32 ppn, uint32 num)
 {
-  assert(lock_.heldBy() == currentThread());
+  assert(lock_.heldBy() == currentThread);
   if (ppn < number_of_pages_ && !page_usage_table_->getBit(ppn))
   {
     if (num == 1 || reservePages(ppn + 1, num - 1))

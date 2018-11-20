@@ -257,6 +257,14 @@ extern "C" void entry64()
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
   asm("ltr %%ax" : : "a"(KERNEL_TSS));
+
+
+  extern char cls_start;
+  extern char cls_end;
+  debug(A_MULTICORE, "Setting temporary CLS for boot processor [%p, %p)\n", &cls_start, &cls_end);
+  ArchMulticore::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
+  currentThread = NULL;
+
   PRINT("Calling startup()...\n");
   kprintf("Calling startup()...\n");
   asm("jmp *%[startup]" : : [startup]"r"(startup));

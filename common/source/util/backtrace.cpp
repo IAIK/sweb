@@ -8,7 +8,7 @@ pointer getCalledBefore(size_t offset)
   offset += 2;
   pointer call_stack[offset];
   call_stack[offset-1] = 0;
-  if((size_t)backtrace(call_stack, offset, currentThread(), false) == offset)
+  if((size_t)backtrace(call_stack, offset, currentThread, false) == offset)
   {
     return call_stack[offset-1];
   }

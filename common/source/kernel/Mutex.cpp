@@ -46,7 +46,7 @@ bool Mutex::acquireNonBlocking(pointer called_by, bool do_checks)
   }
   assert(held_by_ == 0);
   last_accessed_at_ = called_by;
-  held_by_ = currentThread();
+  held_by_ = currentThread;
   pushFrontToCurrentThreadHoldingList();
   return true;
 }
@@ -78,13 +78,13 @@ void Mutex::acquire(pointer called_by)
     doChecksBeforeWaiting();
     sleepAndRelease();
     // We have been waken up again.
-    currentThread()->lock_waiting_on_ = 0;
+    currentThread->lock_waiting_on_ = 0;
   }
 
   assert(held_by_ == 0);
   pushFrontToCurrentThreadHoldingList();
   last_accessed_at_ = called_by;
-  held_by_ = currentThread();
+  held_by_ = currentThread;
 }
 
 void Mutex::release(pointer called_by, bool do_checks)

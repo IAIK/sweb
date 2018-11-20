@@ -15,6 +15,9 @@
 #include "Lock.h"
 #include "ArchMulticore.h"
 
+__thread Thread* currentThread = NULL;
+__thread ArchThreadRegisters* currentThreadRegisters = NULL;
+
 Scheduler *Scheduler::instance_ = 0;
 
 Scheduler *Scheduler::instance()
@@ -97,7 +100,7 @@ void Scheduler::addNewThread(Thread *thread)
 
 void Scheduler::sleep()
 {
-  currentThread()->setState(Sleeping);
+  currentThread->setState(Sleeping);
   assert(block_scheduling_ == 0);
   yield();
 }
@@ -115,10 +118,10 @@ void Scheduler::yield()
   assert(this);
   if (!ArchInterrupts::testIFSet())
   {
-    assert(currentThread());
+    assert(currentThread);
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %p %s)\n",
-             currentThread(), currentThread()->name_.c_str());
-    currentThread()->printBacktrace();
+             currentThread, currentThread->name_.c_str());
+    currentThread->printBacktrace();
   }
   ArchThreads::yield();
 }
@@ -189,7 +192,7 @@ bool Scheduler::isSchedulingEnabled()
 
 bool Scheduler::isCurrentlyCleaningUp()
 {
-  return currentThread() == &cleanup_thread_;
+  return currentThread == &cleanup_thread_;
 }
 
 uint32 Scheduler::getTicks()
@@ -248,9 +251,4 @@ void Scheduler::printLockingInformation()
 bool Scheduler::isInitialized()
 {
         return instance_ != 0;
-}
-
-Thread* currentThread()
-{
-        return (ArchMulticore::CLSinitialized() ? cpu_scheduler.getCurrentThread() : 0);
 }

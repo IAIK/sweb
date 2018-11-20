@@ -110,7 +110,7 @@ FileSystemInfo *VirtualFileSystem::root_mount(const char *fs_name, uint32 /*flag
 
 int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const char* fs_name, uint32 /*flags*/)
 {
-  FileSystemInfo *fs_info = currentThread()->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
   if (!dev_name)
     return -1;
   if ((!dir_name) || (!fs_name))
@@ -171,7 +171,7 @@ int32 VirtualFileSystem::rootUmount()
 
 int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 {
-  FileSystemInfo *fs_info = currentThread()->getWorkingDirInfo();
+  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
   if (dir_name == 0)
     return -1;
 

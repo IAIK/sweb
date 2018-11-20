@@ -2,6 +2,7 @@
 #include "assert.h"
 #include "KernelMemoryManager.h"
 #include "backtrace.h"
+#include "debug.h"
 
 /**
  * Allocate new memory. This function is used by the wrappers.
@@ -10,6 +11,7 @@
  */
 static void* _new(size_t size)
 {
+  debug(KMM, "new, size: %zx\n", size);
   // maybe we could take some precautions not to be interrupted while doing this
   pointer called_by = getCalledBefore(2);
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size, called_by);

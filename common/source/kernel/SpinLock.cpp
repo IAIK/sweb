@@ -43,7 +43,7 @@ bool SpinLock::acquireNonBlocking(pointer called_by)
   // The spinlock is now held by the current thread.
   assert(held_by_ == 0);
   last_accessed_at_ = called_by;
-  held_by_ = currentThread();
+  held_by_ = currentThread;
   pushFrontToCurrentThreadHoldingList();
   return true;
 }
@@ -67,7 +67,7 @@ void SpinLock::acquire(pointer called_by)
     // to push the current thread to the waiters list.
     doChecksBeforeWaiting();
 
-    currentThread()->lock_waiting_on_ = this;
+    currentThread->lock_waiting_on_ = this;
     lockWaitersList();
     pushFrontCurrentThreadToWaitersList();
     unlockWaitersList();
@@ -82,11 +82,11 @@ void SpinLock::acquire(pointer called_by)
     lockWaitersList();
     removeCurrentThreadFromWaitersList();
     unlockWaitersList();
-    currentThread()->lock_waiting_on_ = 0;
+    currentThread->lock_waiting_on_ = 0;
   }
   // The current thread is now holding the spinlock
   last_accessed_at_ = called_by;
-  held_by_ = currentThread();
+  held_by_ = currentThread;
   pushFrontToCurrentThreadHoldingList();
 }
 

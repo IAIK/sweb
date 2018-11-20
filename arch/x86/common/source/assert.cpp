@@ -20,8 +20,8 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   writeChar2Bochs('\n');
   writeLine2Bochs(file);
   writeChar2Bochs('\n');
-  if (currentThread() != 0)
-    currentThread()->printBacktrace(false);
+  if (currentThread != 0)
+    currentThread->printBacktrace(false);
   uint8 * fb = (uint8*)0xC00B8000;
   uint32 s=0;
   uint32 i=0;
@@ -70,8 +70,8 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
   system_state = KPANIC;
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, (ArchMulticore::CLSinitialized() ? ArchMulticore::getCpuID() : -1));
   kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, (ArchMulticore::CLSinitialized() ? ArchMulticore::getCpuID() : -1));
-  if (currentThread() != 0)
-    currentThread()->printBacktrace(false);
+  if (currentThread != 0)
+    currentThread->printBacktrace(false);
   debug_print_to_fb = 0;
   ArchMulticore::stopAllCpus();
   while(1);

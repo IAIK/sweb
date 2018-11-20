@@ -26,7 +26,9 @@ void CpuLocalScheduler::schedule()
         {
                 if((*it)->schedulable())
                 {
-                        setCurrentThread(*it);
+                        debug(CPU_SCHEDULER, "scheduling thread: %s (%p)\n", (*it)->getName(), *it);
+                        currentThread = *it;
+                        //setCurrentThread(*it);
                         break;
                 }
         }
@@ -37,13 +39,15 @@ void CpuLocalScheduler::schedule()
 
         unlockThreadList();
 
-        if (currentThread()->switch_to_userspace_)
+        if (currentThread->switch_to_userspace_)
         {
-                setCurrentThreadRegisters(currentThread()->user_registers_);
+                currentThreadRegisters = currentThread->user_registers_;
+                //setCurrentThreadRegisters(currentThread->user_registers_);
         }
         else
         {
-                setCurrentThreadRegisters(currentThread()->kernel_registers_);
+                currentThreadRegisters = currentThread->kernel_registers_;
+                //setCurrentThreadRegisters(currentThread->kernel_registers_);
         }
 }
 
@@ -94,30 +98,30 @@ void CpuLocalScheduler::cleanupDeadThreads()
 
 bool CpuLocalScheduler::isCurrentlyCleaningUp()
 {
-        return currentThread() == &cleanup_thread_;
+        return currentThread == &cleanup_thread_;
 }
 
 Thread* CpuLocalScheduler::getCurrentThread()
 {
-        return currentThread_;
+        return currentThread;
 }
 
 ArchThreadRegisters* CpuLocalScheduler::getCurrentThreadRegisters()
 {
-        return currentThreadRegisters_;
+        return currentThreadRegisters;
 }
 
 
 void CpuLocalScheduler::setCurrentThread(Thread* t)
 {
         //debug(CPU_SCHEDULER, "CPU %zu, setCurrentThread: %p (%s)\n", ArchMulticore::getCpuID(), t, t->getName());
-        currentThread_ = t;
+        currentThread = t;
 }
 
 void CpuLocalScheduler::setCurrentThreadRegisters(ArchThreadRegisters* r)
 {
         //debug(CPU_SCHEDULER, "setCurrentThreadRegisters: %p\n", r);
-        currentThreadRegisters_ = r;
+        currentThreadRegisters = r;
 }
 
 void CpuLocalScheduler::lockThreadList()

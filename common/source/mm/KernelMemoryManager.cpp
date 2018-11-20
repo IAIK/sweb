@@ -30,6 +30,7 @@ KernelMemoryManager* KernelMemoryManager::instance()
 KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages) :
         tracing_(false), lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
 {
+  debug(KMM, "Initializing KernelMemoryManager\n");
   assert(instance_ == 0);
   instance_ = this;
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
@@ -48,6 +49,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer called_by)
 {
+  debug(KMM, "allocateMemory, size: %zx, called by: %zx\n", requested_size, called_by);
   assert((requested_size & 0x80000000) == 0 && "requested too much memory");
 
   // 16 byte alignment
@@ -82,7 +84,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
   fillSegment(new_pointer, requested_size);
   new_pointer->freed_at_ = 0;
   new_pointer->alloc_at_ = tracing_ ? called_by : 0;
-  new_pointer->alloc_by_ = (pointer)currentThread();
+  new_pointer->alloc_by_ = (pointer)currentThread;
 
   return ((pointer) new_pointer) + sizeof(MallocSegment);
 }
@@ -189,12 +191,14 @@ MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
 
 MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 {
-  debug(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n", requested_size + sizeof(MallocSegment));
+  if(KMM & OUTPUT_ADVANCED)
+          debug(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n", requested_size + sizeof(MallocSegment));
 
   MallocSegment *current = first_;
   while (current != 0)
   {
-    debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n", current, current->getSize() + sizeof(MallocSegment),
+    if(KMM & OUTPUT_ADVANCED)
+            debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n", current, current->getSize() + sizeof(MallocSegment),
           current->getUsed());
     if(current->marker_ != 0xdeadbeef)
     {
@@ -394,7 +398,8 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     MallocSegment *current = first_;
     while (current != 0)
     {
-      debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %zd used: %d\n", current, current->prev_,
+      if(KMM & OUTPUT_ADVANCED)
+              debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %zd used: %d\n", current, current->prev_,
             current->next_, current->getSize() + sizeof(MallocSegment), current->getUsed());
       assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
       current = current->next_;
@@ -497,13 +502,13 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
-  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread()) && "You're abusing the PageManager lock");
+  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
   lock_.acquire(getCalledBefore(1));
 }
 
 void KernelMemoryManager::unlockKMM()
 {
-  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread()) && "You're abusing the PageManager lock");
+  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
   lock_.release(getCalledBefore(1));
 }
 

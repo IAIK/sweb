@@ -16,7 +16,7 @@ struct StackFrame
 
 int backtrace(pointer *call_stack, int size, Thread *thread, bool use_stored_registers)
 {
-  if (!call_stack || (use_stored_registers && !thread) || (!use_stored_registers && thread != currentThread()) ||
+  if (!call_stack || (use_stored_registers && !thread) || (!use_stored_registers && thread != currentThread) ||
       size <= 1 || (thread && thread->switch_to_userspace_))
   {
     return 0;

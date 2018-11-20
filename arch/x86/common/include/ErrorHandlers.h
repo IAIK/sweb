@@ -50,7 +50,7 @@ ERROR_HANDLER(19)
 extern "C" void irqHandler_90();
 extern "C" void irqHandler_90_naked();
 
-extern ArchThreadRegisters *currentThreadRegisters;
+extern __thread ArchThreadRegisters *currentThreadRegisters;
 
 #define ERRORHANDLER(X) {X, &arch_errorHandler_##X},
 #define IRQHANDLER(X) {X + 32, &arch_irqHandler_##X},
