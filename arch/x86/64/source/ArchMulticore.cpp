@@ -374,6 +374,12 @@ void ArchMulticore::initCpu()
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
   InterruptUtils::lidt(&InterruptUtils::idtr);
 
+  extern char cls_start;
+  extern char cls_end;
+  debug(A_MULTICORE, "Setting temporary CLS for AP [%p, %p)\n", &cls_start, &cls_end);
+  ArchMulticore::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
+  currentThread = NULL;
+
   ArchMulticore::initCLS();
   ArchThreads::initialise();
 

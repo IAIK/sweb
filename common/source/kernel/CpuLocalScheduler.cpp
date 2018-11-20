@@ -26,7 +26,7 @@ void CpuLocalScheduler::schedule()
         {
                 if((*it)->schedulable())
                 {
-                        debug(CPU_SCHEDULER, "scheduling thread: %s (%p)\n", (*it)->getName(), *it);
+                        debug(CPU_SCHEDULER, "CPU %zu scheduling thread: %s (%p)\n", ArchMulticore::getCpuID(), (*it)->getName(), *it);
                         currentThread = *it;
                         //setCurrentThread(*it);
                         break;
