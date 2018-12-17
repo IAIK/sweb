@@ -74,27 +74,20 @@ struct vbe_mode
   uint8 reserved3[189];
 } __attribute__ ((packed));
 
-#define MULTIBOOT_VIDEO 1
-#define MULTIBOOT_AOUT 0
-
 typedef struct multiboot_header
 {
    uint32 magic         : 32;
    uint32 flags         : 32;
    uint32 checksum      : 32;
-#if MULTIBOOT_AOUT
    uint32 header_addr   : 32;
    uint32 load_addr     : 32;
    uint32 load_end_addr : 32;
    uint32 bss_end_addr  : 32;
    uint32 entry_addr    : 32;
-#endif
-#if MULTIBOOT_VIDEO
    uint32 mode_type     : 32;
    uint32 width         : 32;
    uint32 height        : 32;
    uint32 depth         : 32;
-#endif
 } __attribute__((__packed__)) multiboot_header_t;
 
 typedef struct elf_section_header_table

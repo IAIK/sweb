@@ -46,13 +46,11 @@ __attribute__((section (".mboot"))) static const multiboot_header mboot =
         .flags = MULTIBOOT_HEADER_FLAGS,
         .checksum = MULTIBOOT_CHECKSUM,
 
-#if MULTIBOOT_AOUT
         .header_addr   = 0,
         .load_addr     = 0,
         .load_end_addr = 0,
         .bss_end_addr  = 0,
         .entry_addr    = 0,
-#endif
 
         .mode_type = 1,
         .width = 80,

@@ -246,8 +246,10 @@ extern "C" void arch_contextSwitch()
 
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName());
+    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s at rip %p\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName(), (void*)currentThreadRegisters->rip);
+    //Scheduler::instance()->printThreadList();
   }
+
 
   assert(currentThreadRegisters);
   assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());

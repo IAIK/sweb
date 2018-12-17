@@ -227,6 +227,13 @@ struct LocalAPICRegisters
 class LocalAPIC
 {
 public:
+        typedef enum
+        {
+                IPI_DEST_TARGET = 0,
+                IPI_DEST_ALL = 2,
+                IPI_DEST_OTHERS = 3,
+        } IPIDestination;
+
         explicit LocalAPIC();
         LocalAPIC(ACPI_MADTHeader*);
 
@@ -252,7 +259,7 @@ public:
         uint32 getID() volatile;
 
         void startAPs(size_t entry_addr) volatile;
-        void sendIPI(uint8 vector) volatile;
+        void sendIPI(uint8 vector, IPIDestination dest_type = IPI_DEST_ALL, size_t target = -1) volatile;
 
         bool usingAPICTimer();
 
@@ -269,6 +276,8 @@ public:
         size_t outstanding_EOIs_;
 
         bool use_apic_timer_ = false;
+
+
 
 
 private:

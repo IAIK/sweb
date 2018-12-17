@@ -19,6 +19,8 @@ ProcessRegistry::ProcessRegistry(FileSystemInfo *root_fs_info, char const *progs
 
 ProcessRegistry::~ProcessRegistry()
 {
+        // debug
+        assert(false && "Process registry shouldn't die (while testing)");
 }
 
 ProcessRegistry* ProcessRegistry::instance()
@@ -50,11 +52,10 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "Starting user processes\n");
 
-  for(auto cls : ArchMulticore::cpu_list_)
+  while(1)
   {
-          assert(cls->getCpuID() <= 4);
-          debug(MAIN, "Starting helloworld on CPU %zu\n", cls->getCpuID());
-          createProcess("/usr/helloworld.sweb", cls->getCpuID());
+          createProcess("/usr/helloworld.sweb");
+          Scheduler::instance()->yield();
   }
 
   for (uint32 i = 0; progs_[i]; i++)
@@ -106,32 +107,10 @@ size_t ProcessRegistry::processCount()
   return progs_running_;
 }
 
-void ProcessRegistry::createProcess(const char* path, size_t cpu)
+void ProcessRegistry::createProcess(const char* path)
 {
-  debug(PROCESS_REG, "create process %s on cpu %zu\n", path, cpu);
   Thread* process = new UserProcess(path, new FileSystemInfo(*working_dir_));
   debug(PROCESS_REG, "created userprocess %s\n", path);
-  /*
-  if(cpu == (size_t)-1)
-  {
-          cpu_scheduler.addNewThread(process);
-  }
-  else
-  {
-          bool cpu_found = false;
-
-          for(auto cls : ArchMulticore::cpu_list_)
-          {
-                  if(cls->getCpuID() == cpu)
-                  {
-                          cpu_found = true;
-                          cls->getScheduler()->addNewThread(process);
-                          break;
-                  }
-          }
-          assert(cpu_found);
-  }
-  */
   Scheduler::instance()->addNewThread(process);
   debug(PROCESS_REG, "added thread %s\n", path);
 }

@@ -10,6 +10,7 @@
 #include "backtrace.h"
 #include "KernelMemoryManager.h"
 #include "Stabs2DebugInfo.h"
+#include "ProcessRegistry.h"
 
 #define BACKTRACE_MAX_FRAMES 20
 
@@ -69,6 +70,7 @@ void Thread::kill()
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
+    assert(false && "Thread scheduled again after yield with state == ToBeDestroyed");
   }
 }
 

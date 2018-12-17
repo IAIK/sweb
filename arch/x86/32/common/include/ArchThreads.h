@@ -97,6 +97,8 @@ public:
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
 
+  static void switchToAddressSpace(ArchMemory& arch_memory);
+
 /**
  * uninterruptable locked operation
  * exchanges value in variable lock with new_value and returns the old_value

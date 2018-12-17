@@ -300,6 +300,7 @@ void ArchCommon::idle()
 
 #define STATS_OFFSET 22
 #define FREE_PAGES_OFFSET STATS_OFFSET + 11*2
+#define SCHEDULABLE_THREADS_OFFSET 10
 
 void ArchCommon::drawStat() {
     const char* text  = "Free pages      F9 MemInfo   F10 Locks   F11 Stacktrace   F12 Threads";
@@ -321,6 +322,53 @@ void ArchCommon::drawStat() {
     {
       fb[i * 2 + FREE_PAGES_OFFSET] = itoa_buffer[i];
     }
+
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->schedulable_threads, itoa_buffer, 10);
+
+    memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET, 0, 3*2);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET] = itoa_buffer[i];
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 1] = Console::RED;
+    }
+
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->num_schedules[0], itoa_buffer, 10);
+
+    memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2, 0, 5*2);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2] = itoa_buffer[i];
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2 + 1] = Console::RED;
+    }
+
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->num_schedules[1], itoa_buffer, 10);
+    memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2, 0, 5*2);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2] = itoa_buffer[i];
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2 + 1] = Console::RED;
+    }
+
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->num_trylock_failed[0], itoa_buffer, 10);
+    //memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2, 0, 5*2);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2] = itoa_buffer[i];
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2 + 1] = Console::RED;
+    }
+
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->num_trylock_failed[1], itoa_buffer, 10);
+    //memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2, 0, 5*2);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2] = itoa_buffer[i];
+            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2 + 1] = Console::RED;
+    }
 }
 
 void ArchCommon::drawHeartBeat()
@@ -330,7 +378,10 @@ void ArchCommon::drawHeartBeat()
   char* fb = (char*)getFBPtr();
   size_t cpu_id = ArchMulticore::getCpuID();
   fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
-  fb[1 + cpu_id*2] = (char)0x9f;
+  fb[1 + cpu_id*2] = (char)(Scheduler::instance()->isSchedulingEnabled() ?
+                            ((Console::BRIGHT_BLUE << 4) | Console::BRIGHT_WHITE) :
+                            ((Console::RED << 4) | Console::BRIGHT_WHITE));
+
 
   drawStat();
 }

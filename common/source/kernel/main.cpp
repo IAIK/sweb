@@ -24,6 +24,7 @@
 #include "Dentry.h"
 #include "DeviceFSType.h"
 #include "VirtualFileSystem.h"
+#include "VfsSyscall.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
@@ -100,6 +101,7 @@ extern "C" void startup()
 
   ArchCommon::initDebug();
 
+  new (&VfsSyscall::vfs_lock) Mutex("vfs lock");
   vfs.initialize();
   debug(MAIN, "Mounting DeviceFS under /dev/\n");
   DeviceFSType *devfs = new DeviceFSType();

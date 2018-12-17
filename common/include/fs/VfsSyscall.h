@@ -1,6 +1,9 @@
 #pragma once
 
 #include "types.h"
+#ifndef EXE2MINIXFS
+#include "Mutex.h"
+#endif
 
 class Dirent;
 class Dentry;
@@ -147,6 +150,11 @@ class VfsSyscall
      * @return the file descriptor object
      */
     static FileDescriptor* getFileDescriptor(uint32 fd);
+
+public:
+#ifndef EXE2MINIXFS
+    static Mutex vfs_lock;
+#endif
 
   private:
     VfsSyscall();

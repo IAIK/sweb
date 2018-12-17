@@ -25,7 +25,7 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       Scheduler::instance()->yield();
       break;
     case sc_createprocess:
-      return_value = createprocess(arg1, arg2, arg3);
+      return_value = createprocess(arg1, arg2);
       break;
     case sc_exit:
       exit(arg1);
@@ -138,7 +138,7 @@ void Syscall::outline(size_t port, pointer text)
   }
 }
 
-size_t Syscall::createprocess(size_t path, size_t sleep, size_t cpu)
+size_t Syscall::createprocess(size_t path, size_t sleep)
 {
   // THIS METHOD IS FOR TESTING PURPOSES ONLY!
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
@@ -158,7 +158,7 @@ size_t Syscall::createprocess(size_t path, size_t sleep, size_t cpu)
   // parameter check end
 
   size_t process_count = ProcessRegistry::instance()->processCount();
-  ProcessRegistry::instance()->createProcess((const char*) path, cpu);
+  ProcessRegistry::instance()->createProcess((const char*) path);
   if (sleep)
   {
     while (ProcessRegistry::instance()->processCount() > process_count) // please note that this will fail ;)

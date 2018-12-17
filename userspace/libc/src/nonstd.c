@@ -3,9 +3,9 @@
 #include "../../../common/include/kernel/syscall-definitions.h"
 #include "stdlib.h"
 
-int createprocess(const char* path, int sleep, size_t cpu)
+int createprocess(const char* path, int sleep)
 {
-  return __syscall(sc_createprocess, (long) path, sleep, cpu, 0x00, 0x00);
+  return __syscall(sc_createprocess, (long) path, sleep, 0x00, 0x00, 0x00);
 }
 
 int getcpu(size_t *cpu, size_t *node, void *tcache)

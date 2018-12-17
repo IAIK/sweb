@@ -15,7 +15,7 @@ extern "C" {
  * @return -1 if the path did not lead to an executable, 0 if the process was executed successfully
  *
  */
- int createprocess(const char* path, int sleep, size_t cpu);
+ int createprocess(const char* path, int sleep);
 
  int getcpu(size_t *cpu, size_t *node, void *tcache);
 

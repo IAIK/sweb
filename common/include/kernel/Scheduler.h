@@ -4,6 +4,7 @@
 #include <ulist.h>
 #include "IdleThread.h"
 #include "CleanupThread.h"
+#include <uatomic.h>
 
 class Thread;
 class Mutex;
@@ -54,28 +55,38 @@ class Scheduler
   private:
     Scheduler();
 
-    bool tryLockScheduling();
+    bool tryLockScheduling(const char* called_at);
 
     /**
      * Scheduler internal lock abstraction method
      * locks the thread-list against concurrent access by prohibiting a thread switch
      * don't call this from an Interrupt-Handler, since Atomicity won't be guaranteed
      */
-    void lockScheduling();
+    void lockScheduling(const char* called_at);
 
     /**
      * Scheduler internal lock abstraction method
      * unlocks the thread-list
      */
-    void unlockScheduling();
+    void unlockScheduling(const char* called_at);
 
     static Scheduler *instance_;
 
-    ThreadList threads_;
 
-    volatile size_t block_scheduling_;
+    ustl::atomic<size_t> block_scheduling_;
+    volatile Thread* scheduling_blocked_by_ = nullptr;
+    volatile char* locked_at_ = nullptr;
+    volatile size_t locked_by_cpu_ = -1;
 
     size_t ticks_;
 
     CleanupThread cleanup_thread_;
+
+public:
+    ThreadList threads_;
+
+    size_t schedulable_threads;
+
+    size_t num_schedules[2];
+    size_t num_trylock_failed[2];
 };

@@ -68,8 +68,8 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, (ArchMulticore::CLSinitialized() ? ArchMulticore::getCpuID() : -1));
-  kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, (ArchMulticore::CLSinitialized() ? ArchMulticore::getCpuID() : -1));
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
   if (currentThread != 0)
     currentThread->printBacktrace(false);
   debug_print_to_fb = 0;

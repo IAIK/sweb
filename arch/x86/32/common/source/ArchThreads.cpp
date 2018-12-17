@@ -19,6 +19,17 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
   thread->kernel_registers_->cr3 = arch_memory.getValueForCR3();
   if (thread->user_registers_)
     thread->user_registers_->cr3 = arch_memory.getValueForCR3();
+
+  if(thread == currentThread)
+  {
+    switchToAddressSpace(arch_memory);
+  }
+}
+
+void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
+{
+  asm volatile("movq %[new_cr3], %%cr3\n"
+               ::[new_cr3]"r"(arch_memory.getValueForCR3()));
 }
 
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)

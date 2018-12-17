@@ -22,6 +22,10 @@
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
 
+#ifndef EXE2MINIXFS
+Mutex VfsSyscall::vfs_lock("vfs lock");
+#endif
+
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
   extern Mutex global_fd_lock;
@@ -61,6 +65,9 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   debug(VFSSYSCALL, "(mkdir) \n");
+  #ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+  #endif
   FileSystemInfo *fs_info = getcwd();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
@@ -109,6 +116,9 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
 Dirent* VfsSyscall::readdir(const char* pathname)
 {
+#ifndef EXE2MINIXFS
+   MutexLock l(vfs_lock);
+#endif
   FileSystemInfo *fs_info = getcwd();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
@@ -160,6 +170,9 @@ Dirent* VfsSyscall::readdir(const char* pathname)
 
 int32 VfsSyscall::chdir(const char* pathname)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileSystemInfo *fs_info = getcwd();
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
@@ -184,6 +197,9 @@ int32 VfsSyscall::chdir(const char* pathname)
 int32 VfsSyscall::rm(const char* pathname)
 {
   debug(VFSSYSCALL, "(rm) name: %s\n", pathname);
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
@@ -219,6 +235,9 @@ int32 VfsSyscall::rm(const char* pathname)
 
 int32 VfsSyscall::rmdir(const char* pathname)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
@@ -257,6 +276,9 @@ int32 VfsSyscall::rmdir(const char* pathname)
 
 int32 VfsSyscall::close(uint32 fd)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
@@ -271,6 +293,9 @@ int32 VfsSyscall::close(uint32 fd)
 
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileSystemInfo *fs_info = getcwd();
   if (flag > (O_CREAT | O_RDWR))
   {
@@ -351,6 +376,9 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
 int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
@@ -366,6 +394,9 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
 int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
@@ -381,6 +412,9 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 
 l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
@@ -394,6 +428,9 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 
 int32 VfsSyscall::flush(uint32 fd)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
@@ -408,6 +445,9 @@ int32 VfsSyscall::flush(uint32 fd)
 #ifndef EXE2MINIXFS
 int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileSystemType* type = vfs.getFsType(file_system_name);
   if (!type && strcmp(file_system_name, "minixfs") == 0)
   {
@@ -421,11 +461,17 @@ int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const cha
 
 int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   return vfs.umount(dir_name, flag);
 }
 #endif
 uint32 VfsSyscall::getFileSize(uint32 fd)
 {
+#ifndef EXE2MINIXFS
+  MutexLock l(vfs_lock);
+#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)

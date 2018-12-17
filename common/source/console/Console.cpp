@@ -50,6 +50,19 @@ void Console::handleKey(uint32 key)
 // else...
   switch (key)
   {
+    case KEY_F7:
+
+      lapic.sendIPI(90, LocalAPIC::IPI_DEST_OTHERS);
+      Scheduler::instance()->printThreadList();
+      Scheduler::instance()->printStackTraces();
+      Scheduler::instance()->printLockingInformation();
+      for(auto t : Scheduler::instance()->threads_)
+      {
+              kprintfd("Thread %p = %s\n", t, t->getName());
+              ArchThreads::printThreadRegisters(t, true);
+      }
+      assert(false);
+      break;
     case KEY_F8:
       debug_print_to_fb = !debug_print_to_fb;
       break;

@@ -107,13 +107,7 @@ void handle_command(char* buffer, int buffer_size)
       memcpy(executable, command, strlen(command) + 1);
     }
 
-    size_t cpu = -1;
-    if(argsCount > 0)
-    {
-      cpu = atoi(args[0]);
-    }
-
-    pid = createprocess(executable, 1, cpu);
+    pid = createprocess(executable, 1);
     if (pid == -1)
     {
       printf("Command not understood\n");
