@@ -317,7 +317,7 @@ void ArchCommon::drawStat() {
     char itoa_buffer[33];
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(PageManager::instance()->getNumFreePages(), itoa_buffer, 10);
-
+    //memset(fb + FREE_PAGES_OFFSET, 0, 4*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
       fb[i * 2 + FREE_PAGES_OFFSET] = itoa_buffer[i];
@@ -325,8 +325,7 @@ void ArchCommon::drawStat() {
 
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->schedulable_threads, itoa_buffer, 10);
-
-    memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET, 0, 3*2);
+    memset(fb + SCHEDULABLE_THREADS_OFFSET, 0, 6*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET] = itoa_buffer[i];
@@ -335,8 +334,7 @@ void ArchCommon::drawStat() {
 
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->num_schedules[0], itoa_buffer, 10);
-
-    memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2, 0, 5*2);
+    memset(fb + SCHEDULABLE_THREADS_OFFSET + 80*2, 0, 5*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2] = itoa_buffer[i];
@@ -345,7 +343,7 @@ void ArchCommon::drawStat() {
 
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->num_schedules[1], itoa_buffer, 10);
-    memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2, 0, 5*2);
+    memset(fb + SCHEDULABLE_THREADS_OFFSET + 2*80*2, 0, 5*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2] = itoa_buffer[i];
@@ -354,7 +352,7 @@ void ArchCommon::drawStat() {
 
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->num_trylock_failed[0], itoa_buffer, 10);
-    //memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2, 0, 5*2);
+    memset(fb + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2, 0, 5*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2] = itoa_buffer[i];
@@ -363,7 +361,7 @@ void ArchCommon::drawStat() {
 
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->num_trylock_failed[1], itoa_buffer, 10);
-    //memset(fb + i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2, 0, 5*2);
+    memset(fb + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2, 0, 5*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2] = itoa_buffer[i];

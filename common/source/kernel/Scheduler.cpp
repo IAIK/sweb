@@ -254,17 +254,14 @@ bool Scheduler::tryLockScheduling(const char* called_at)
 void Scheduler::lockScheduling(const char* called_at) //not as severe as stopping Interrupts
 {
   volatile char* prev_locked_at = locked_at_;
-  if(currentThread)
+  if(block_scheduling_.load() == ArchMulticore::getCpuID())
   {
-    debug(SCHEDULER_LOCK, "lockScheduling by %s (%p) on CPU %zu, called at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), called_at);
-    if(scheduling_blocked_by_ == currentThread)
-    {
-      debug(SCHEDULER_LOCK, "lockScheduling by %s (%p) on CPU %zu, already locked by own thread at %s\n" , currentThread->getName(), currentThread, ArchMulticore::getCpuID(), (prev_locked_at ? prev_locked_at : "(nil)"));
-    }
-    assert(scheduling_blocked_by_ != currentThread);
+    debug(SCHEDULER_LOCK, "lockScheduling by %s (%p) on CPU %zu, already locked by own thread at %s\n" , (currentThread ? currentThread->getName() : "(nil)"), currentThread, ArchMulticore::getCpuID(), (prev_locked_at ? prev_locked_at : "(nil)"));
+    assert(block_scheduling_.load() != ArchMulticore::getCpuID());
   }
+
   ((char*)ArchCommon::getFBPtr())[2*2 + ArchMulticore::getCpuID()*2] = '#';
-  //while(ArchThreads::testSetLock(block_scheduling_, 1));
+
   size_t expected = -1;
   do
   {
@@ -273,6 +270,7 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
   while(!block_scheduling_.compare_exchange_weak(expected, ArchMulticore::getCpuID()));
 
   ((char*)ArchCommon::getFBPtr())[2*2 + ArchMulticore::getCpuID()*2] = '-';
+
   scheduling_blocked_by_ = currentThread;
   locked_at_ = (volatile char*)called_at;
   locked_by_cpu_ = ArchMulticore::getCpuID();
@@ -280,10 +278,6 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
   {
     debug(SCHEDULER_LOCK, "locked by %s (%p) on CPU %zu at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), called_at);
   }
-  /*
-  if (unlikely(ArchThreads::testSetLock(block_scheduling_, 1)))
-    kpanict("FATAL ERROR: Scheduler::*: block_scheduling_ was set !! How the Hell did the program flow get here then ?\n");
-  */
 }
 
 void Scheduler::unlockScheduling(const char* called_at)

@@ -55,7 +55,7 @@ void ProcessRegistry::Run()
   while(1)
   {
           createProcess("/usr/helloworld.sweb");
-          Scheduler::instance()->yield();
+          //Scheduler::instance()->yield();
   }
 
   for (uint32 i = 0; progs_[i]; i++)
