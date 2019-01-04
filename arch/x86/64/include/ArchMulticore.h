@@ -31,6 +31,7 @@ class ArchMulticore
 
     static void startOtherCPUs();
     static bool otherCPUsStarted();
+    static size_t numRunningCPUs();
     static void stopAllCpus();
 
     static void setFSBase(uint64 fs_base);

@@ -4,12 +4,13 @@
 #include "KernelMemoryManager.h"
 #include "Thread.h"
 #include "types.h"
+#include "ArchMulticore.h"
 
 namespace ustl
 {
   void checkKMMDeadlock()
   {
-    if (unlikely (ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false))
+    if (ArchMulticore::numRunningCPUs() == 1 && unlikely (ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false))
     {
       if (unlikely (KernelMemoryManager::instance()->KMMLockHeldBy() != 0))
       {

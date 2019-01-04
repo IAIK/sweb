@@ -262,6 +262,8 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
 
   ((char*)ArchCommon::getFBPtr())[2*2 + ArchMulticore::getCpuID()*2] = '#';
 
+
+  // This function is used with interrupts enabled, so setting the lock + information about which CPU is holding the lock needs to be atomic
   size_t expected = -1;
   do
   {

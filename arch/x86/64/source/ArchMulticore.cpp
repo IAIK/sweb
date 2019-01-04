@@ -7,6 +7,7 @@
 #include "ArchInterrupts.h"
 #include "Thread.h"
 #include "MutexLock.h"
+#include "uatomic.h"
 
 __thread SegmentDescriptor cpu_gdt[7];
 __thread TSS cpu_tss;
@@ -19,6 +20,8 @@ thread_local CpuInfo cpu_info;
 
 extern SystemState system_state;
 
+
+ustl::atomic<size_t> running_cpus;
 ustl::vector<CpuInfo*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
 bool ArchMulticore::cpus_started_ = false;
@@ -209,6 +212,9 @@ void ArchMulticore::initCLS(bool boot_cpu)
 {
   char* cls = 0;
   size_t cls_size = 0;
+
+  ++running_cpus;
+
   allocCLS(cls, cls_size);
   setCLS(cls, cls_size);
 
@@ -314,6 +320,11 @@ void ArchMulticore::startOtherCPUs()
 bool ArchMulticore::otherCPUsStarted()
 {
   return cpus_started_;
+}
+
+size_t ArchMulticore::numRunningCPUs()
+{
+  return running_cpus;
 }
 
 void ArchMulticore::stopAllCpus()
