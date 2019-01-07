@@ -5,6 +5,7 @@
 #include "APIC.h"
 #include "uvector.h"
 #include "Mutex.h"
+#include "SegmentUtils.h"
 
 class CpuInfo
 {
@@ -18,7 +19,6 @@ private:
 };
 
 extern thread_local CpuInfo cpu_info;
-extern thread_local LocalAPIC lapic;
 extern thread_local TSS cpu_tss;
 
 #define AP_STARTUP_PADDR 0x0
@@ -58,7 +58,7 @@ class ArchMulticore
     static bool cpus_started_;
 
   private:
-    static void initCpuLocalGDT(SegmentDescriptor* template_gdt);
+    static void initCpuLocalGDT(GDT& template_gdt);
     static void initCpuLocalTSS(size_t boot_stack_top);
     static void prepareAPStartup(size_t entry_addr);
 };

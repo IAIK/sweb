@@ -9,7 +9,7 @@
 #include "MutexLock.h"
 #include "uatomic.h"
 
-__thread SegmentDescriptor cpu_gdt[7];
+__thread GDT cpu_gdt;
 __thread TSS cpu_tss;
 
 /* The order of initialization of thread_local objects depends on the order in which they are defined in the source code.
@@ -26,45 +26,11 @@ ustl::vector<CpuInfo*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
 bool ArchMulticore::cpus_started_ = false;
 
-
-struct GDT32Ptr
-{
-        uint16 limit;
-        uint32 addr;
-}__attribute__((__packed__));
 extern GDT32Ptr ap_gdt32_ptr;
-
-extern SegmentDescriptor ap_gdt32[7];
+extern GDT ap_gdt32;
 
 extern uint8 boot_stack[0x4000];
-extern SegmentDescriptor gdt[7];
-struct GDT64Ptr
-{
-        uint16 limit;
-        uint64 addr;
-}__attribute__((__packed__));
-
-
-typedef struct
-{
-        uint32 limitL          : 16;
-        uint32 baseLL          : 16;
-
-        uint32 baseLM          :  8;
-        uint32 type            :  4;
-        uint32 zero            :  1;
-        uint32 dpl             :  2;
-        uint32 present         :  1;
-        uint32 limitH          :  4;
-        uint32 avl_to_software :  1;
-        uint32 ignored         :  2;
-        uint32 granularity     :  1;
-        uint32 baseLH          :  8;
-
-        uint32 baseH;
-
-        uint32 reserved;
-}__attribute__((__packed__)) TSSSegmentDescriptor;
+extern GDT gdt;
 
 extern char apstartup_text_begin;
 extern char apstartup_text_end;
@@ -243,20 +209,16 @@ size_t ArchMulticore::getCpuID()
   return cpu_info.getCpuID();
 }
 
-void ArchMulticore::initCpuLocalGDT(SegmentDescriptor* template_gdt)
+void ArchMulticore::initCpuLocalGDT(GDT& template_gdt)
 {
-  memcpy(&cpu_gdt, template_gdt, sizeof(cpu_gdt));
+  cpu_gdt = template_gdt;
 
   debug(A_MULTICORE, "CPU switching to own GDT at: %p\n", &cpu_gdt);
-  struct GDT64Ptr gdt_ptr;
-  gdt_ptr.limit = sizeof(cpu_gdt) - 1;
-  gdt_ptr.addr = (uint64)&cpu_gdt;
-  __asm__ __volatile__("lgdt %[gdt]\n"
-                       "mov %%ax, %%ds\n"
+  GDT64Ptr(cpu_gdt).load();
+  __asm__ __volatile__("mov %%ax, %%ds\n"
                        "mov %%ax, %%es\n"
                        "mov %%ax, %%ss\n"
-                       :
-                       :[gdt]"m"(gdt_ptr), "a"(KERNEL_DS));
+                       ::"a"(KERNEL_DS));
 }
 
 void ArchMulticore::initCpuLocalTSS(size_t boot_stack_top)

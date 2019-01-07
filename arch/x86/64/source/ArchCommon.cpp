@@ -12,6 +12,7 @@
 #include "PageManager.h"
 #include "ACPI.h"
 #include "ArchMulticore.h"
+#include "SegmentUtils.h"
 
 extern void* kernel_end_address;
 
@@ -220,16 +221,12 @@ void puts(const char* string);
 #define PRINT(X)
 #endif
 
-extern SegmentDescriptor gdt[7];
+extern GDT gdt;
 extern "C" void startup();
 extern "C" void initialisePaging();
 extern uint8 boot_stack[0x4000];
 
-struct GDTPtr
-{
-    uint16 limit;
-    uint64 addr;
-}__attribute__((__packed__)) gdt_ptr;
+GDT64Ptr gdt_ptr;
 
 extern "C" void entry64()
 {
@@ -246,9 +243,8 @@ extern "C" void entry64()
       "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
   PRINT("Loading Long Mode Segments...\n");
   kprintf("Loading Long Mode Segments...\n");
-
   gdt_ptr.limit = sizeof(gdt) - 1;
-  gdt_ptr.addr = (uint64)gdt;
+  gdt_ptr.addr = (uint64)&gdt;
   asm("lgdt (%%rax)" : : "a"(&gdt_ptr));
   asm("mov %%ax, %%ds\n"
       "mov %%ax, %%es\n"
@@ -263,7 +259,7 @@ extern "C" void entry64()
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for boot processor [%p, %p)\n", &cls_start, &cls_end);
   ArchMulticore::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
-  currentThread = NULL;
+  currentThread = nullptr;
 
   PRINT("Calling startup()...\n");
   kprintf("Calling startup()...\n");

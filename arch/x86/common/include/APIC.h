@@ -427,5 +427,5 @@ private:
 
 LocalAPIC* initAPIC(ACPI_MADTHeader* madt);
 
-extern LocalAPIC local_APIC;
+extern thread_local LocalAPIC lapic;
 extern IOAPIC IO_APIC;

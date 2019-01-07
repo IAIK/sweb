@@ -5,6 +5,7 @@ asm volatile(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "offsets.h"
 #include "multiboot.h"
 #include "print.32.h"
+#include "SegmentUtils.h"
 
 #if A_BOOT == A_BOOT | OUTPUT_ENABLED
 #define PRINT(X) print(TRUNCATE(X))
@@ -29,14 +30,7 @@ extern PageDirEntry kernel_page_directory[];
 
 extern uint32 tss_selector;
 
-SegmentDescriptor gdt[7];
-
-struct GDT32Ptr
-{
-    uint16 limit;
-    uint32 addr;
-}__attribute__((__packed__));
-
+GDT gdt;
 
 TSS g_tss;
 
@@ -102,7 +96,8 @@ extern multiboot_info_t* multi_boot_structure_pointer;
 
 extern "C" void entry()
 {
-  asm volatile("mov %ebx,multi_boot_structure_pointer - BASE");
+  asm volatile("mov %ebx, multi_boot_structure_pointer - BASE");
+
   PRINT("Booting...\n");
   PRINT("Clearing Framebuffer...\n");
   clearFB();
@@ -112,19 +107,17 @@ extern "C" void entry()
   memset(bss_start, 0, TRUNCATE(&bss_end_address) - bss_start);
 
   puts(TRUNCATE("Multiboot structure pointer: "));
-  putHex32(*(uint32*)TRUNCATE(&multi_boot_structure_pointer));
-  putc('\n');
+  putHex32(*(uint32*)TRUNCATE(&multi_boot_structure_pointer)); putc('\n');
 
   PRINT("Initializing Kernel Paging Structures...\n");
   puts(TRUNCATE("Kernel PML4: "));
-  putHex32((uint32)TRUNCATE(&kernel_page_map_level_4));
-  putc('\n');
+  putHex32((uint32)TRUNCATE(&kernel_page_map_level_4)); putc('\n');
   puts(TRUNCATE("Kernel PDPT: "));
-  putHex32((uint32)TRUNCATE(&kernel_page_directory_pointer_table));
-  putc('\n');
+  putHex32((uint32)TRUNCATE(&kernel_page_directory_pointer_table)); putc('\n');
   puts(TRUNCATE("Kernel PD: "));
-  putHex32((uint32)TRUNCATE(&kernel_page_directory));
-  putc('\n');
+  putHex32((uint32)TRUNCATE(&kernel_page_directory)); putc('\n');
+
+
   asm volatile("movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n"
       "movl $0, kernel_page_map_level_4 - BASE + 4\n");
   asm volatile("movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
@@ -170,29 +163,27 @@ extern "C" void entry()
   setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
 
   PRINT("Loading Long Mode GDT...\n");
-  struct GDT32Ptr gdt32_ptr;
+  GDT32Ptr gdt32_ptr;
   gdt32_ptr.limit = sizeof(gdt) - 1;
-  gdt32_ptr.addr = (uint32) TRUNCATE(gdt);
+  gdt32_ptr.addr = (uint32) TRUNCATE(&gdt);
   puts(TRUNCATE("GDT addr: "));
-  putHex32(gdt32_ptr.addr);
-  putc('\n');
+  putHex32(gdt32_ptr.addr); putc('\n');
 
   puts(TRUNCATE("GDT[KERNEL_DS] addr: "));
-  putHex32(gdt32_ptr.addr + (KERNEL_DS >> 3)*(sizeof(SegmentDescriptor)/2));
-  putc('\n');
+  putHex32(gdt32_ptr.addr + (KERNEL_DS >> 3)*(sizeof(SegmentDescriptor)/2)); putc('\n');
 
   asm volatile("lgdt %[gdt_ptr]" : : [gdt_ptr]"m"(gdt32_ptr));
 
   puts(TRUNCATE("Kernel data segment selector: "));
-  putHex8(KERNEL_DS);
-  putc('\n');
+  putHex8(KERNEL_DS); putc('\n');
+
 
   puts(TRUNCATE("GDT["));
   putHex8(KERNEL_DS);
 
   for(uint8 i = 1; i <= sizeof(SegmentDescriptor); ++i)
   {
-          putHex8(*((char*)((SegmentDescriptor*)TRUNCATE(gdt) + ((KERNEL_DS >> 3)/2) + 1) - i));
+          putHex8(*((char*)((SegmentDescriptor*)TRUNCATE(&gdt) + ((KERNEL_DS >> 3)/2) + 1) - i));
   }
   putc('\n');
 
