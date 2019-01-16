@@ -1,6 +1,6 @@
-asm volatile(".code32");
-asm volatile(".equ BASE,0xFFFFFFFF80000000");
-asm volatile(".equ PHYS_BASE,0xFFFFFFFF00000000");
+asm(".code32");
+asm(".equ BASE,0xFFFFFFFF80000000");
+asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "types.h"
 #include "offsets.h"
 #include "multiboot.h"
@@ -201,4 +201,4 @@ extern "C" void entry()
   PRINT("Returned from entry64()? This should never happen.\n");
   asm volatile("hlt");
 }
-asm volatile(".code64");
+asm(".code64");

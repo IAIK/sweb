@@ -1,4 +1,4 @@
-asm volatile(".code32");
+asm(".code32");
 #include "types.h"
 #include "offsets.h"
 
@@ -116,4 +116,4 @@ void putHex32(uint32 v)
 }
 
 
-asm volatile(".code64");
+asm(".code64");
