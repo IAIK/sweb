@@ -234,6 +234,13 @@ public:
                 IPI_DEST_OTHERS = 3,
         } IPIDestination;
 
+        typedef enum
+        {
+                IPI_NORMAL = 0,
+                IPI_INIT = 5,
+                IPI_SIPI = 6,
+        } IPIType;
+
         explicit LocalAPIC();
         LocalAPIC(ACPI_MADTHeader*);
 
@@ -258,8 +265,8 @@ public:
 
         uint32 getID() volatile;
 
-        void startAPs(size_t entry_addr) volatile;
-        void sendIPI(uint8 vector, IPIDestination dest_type = IPI_DEST_ALL, size_t target = -1) volatile;
+        void startAP(uint8_t apic_id, size_t entry_addr) volatile;
+        void sendIPI(uint8 vector, IPIDestination dest_type = IPI_DEST_ALL, size_t target = -1, IPIType ipi_type = IPI_NORMAL) volatile;
 
         bool usingAPICTimer();
 

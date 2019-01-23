@@ -89,7 +89,7 @@ bool LocalAPIC::isInitialized()
 
 void LocalAPIC::enable(bool enable)
 {
-  debug(APIC, "%s APIC\n", (enable ? "Enabling" : "Disabling"));
+  debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), getID());
   uint32* ptr = (uint32*)&reg_vaddr_->s_int_vect;
   uint32 temp = *ptr;
   ((LocalAPIC_SpuriousInterruptVector*)&temp)->enable = (enable ? 1 : 0);
@@ -242,25 +242,11 @@ void __PIT_delay_IRQ()
 }
 extern "C" void arch_irqHandler_0();
 
-void LocalAPIC::startAPs(size_t entry_addr) volatile
+void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 {
-        debug(A_MULTICORE, "Sending init IPI to AP local APICs, AP entry function: %zx\n", entry_addr);
+        debug(A_MULTICORE, "Sending init IPI to AP local APIC %u, AP entry function: %zx\n",  apic_id, entry_addr);
 
-        LocalAPIC_InterruptCommandRegisterHigh v_high{};
-        v_high.destination = 1;
-
-
-        LocalAPIC_InterruptCommandRegisterLow v_low{};
-        v_low.vector = 0;
-        v_low.delivery_mode = 5; // INIT
-        v_low.destination_mode = 0;
-        v_low.level = 1;
-        v_low.trigger_mode = 0;
-        //v_low.destination_shorthand = 3; // Send to all excluding self
-        v_low.destination_shorthand = 0; // Send to cpu specified in ICR high
-
-        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+        sendIPI(0, IPI_DEST_TARGET, apic_id, IPI_INIT);
 
         debug(A_MULTICORE, "Start delay 1\n");
         // 10ms delay
@@ -305,11 +291,8 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 
         assert((entry_addr % PAGE_SIZE) == 0);
         assert((entry_addr/PAGE_SIZE) <= 0xFF);
-        v_low.vector = entry_addr/PAGE_SIZE;
-        v_low.delivery_mode = 6; // SIPI
 
-        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+        sendIPI(entry_addr/PAGE_SIZE, IPI_DEST_TARGET, apic_id, IPI_SIPI);
 
         ArchMulticore::cpus_started_ = true;
 
@@ -345,8 +328,7 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 
         debug(A_MULTICORE, "End delay 2\n");
 
-        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+        sendIPI(entry_addr/PAGE_SIZE, IPI_DEST_TARGET, apic_id, IPI_SIPI);
 
         // Wait another 10ms to give APs time for initialization
         if(IOAPIC::initialized)
@@ -380,7 +362,7 @@ void LocalAPIC::startAPs(size_t entry_addr) volatile
 }
 
 
-void LocalAPIC::sendIPI(uint8 vector, IPIDestination dest_type, size_t target) volatile
+void LocalAPIC::sendIPI(uint8 vector, IPIDestination dest_type, size_t target, IPIType ipi_type) volatile
 {
         debug(APIC, "Sending IPI, vector: %x\n", vector);
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
@@ -388,13 +370,10 @@ void LocalAPIC::sendIPI(uint8 vector, IPIDestination dest_type, size_t target) v
 
         LocalAPIC_InterruptCommandRegisterLow v_low{};
         v_low.vector = vector;
-        v_low.delivery_mode = 0; // normal IPI
+        v_low.delivery_mode = ipi_type;
         v_low.destination_mode = 0; // physical
         v_low.level = 1;
         v_low.trigger_mode = 0;
-        //v_low.destination_shorthand = 3; // Send to all excluding self
-        //v_low.destination_shorthand = 2; // Send to all
-        //v_low.destination_shorthand = 0; // Send to cpu specified in ICR high
         v_low.destination_shorthand = dest_type;
 
 

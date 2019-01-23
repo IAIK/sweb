@@ -270,7 +270,14 @@ void ArchMulticore::startOtherCPUs()
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    lapic.startAPs(AP_STARTUP_PADDR);
+    for(auto& cpu_lapic : LocalAPIC::local_apic_list_)
+    {
+            if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != lapic.getID()))
+            {
+                    lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
+            }
+    }
+
     assert(otherCPUsStarted());
   }
   else
