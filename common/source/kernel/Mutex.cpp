@@ -128,7 +128,7 @@ void Mutex::release(pointer called_by, bool do_checks)
 
 bool Mutex::isFree()
 {
-  if(unlikely((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()) || ArchMulticore::otherCPUsStarted()))
+  if(unlikely((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()) || (ArchMulticore::numRunningCPUs() > 1)))
   {
     return false;
     //debug(LOCK, "Mutex::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");

@@ -181,7 +181,6 @@ void ArchMulticore::initCLS(bool boot_cpu)
   char* cls = 0;
   size_t cls_size = 0;
 
-  ++running_cpus;
 
   allocCLS(cls, cls_size);
   setCLS(cls, cls_size);
@@ -237,6 +236,8 @@ void ArchMulticore::initialize()
   new (&cpu_list_) ustl::vector<CpuInfo*>;
   new (&cpu_list_lock_) Mutex("CPU list lock");
 
+  assert(running_cpus == 0);
+  running_cpus = 1;
   ArchMulticore::initCLS(true);
 }
 
@@ -297,11 +298,6 @@ void ArchMulticore::startOtherCPUs()
   }
 }
 
-bool ArchMulticore::otherCPUsStarted()
-{
-  return cpus_started_;
-}
-
 size_t ArchMulticore::numRunningCPUs()
 {
   return running_cpus;
@@ -340,6 +336,7 @@ extern "C" void __apstartup64()
                        :
                        :[stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
 
+  ++running_cpus;
   debug(A_MULTICORE, "AP startup 64\n");
   debug(A_MULTICORE, "AP switched to stack %p\n", ap_boot_stack + sizeof(ap_boot_stack));
 

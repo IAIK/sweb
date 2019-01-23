@@ -92,7 +92,7 @@ void SpinLock::acquire(pointer called_by)
 
 bool SpinLock::isFree()
 {
-  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() && !ArchMulticore::otherCPUsStarted()))
+  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() && !(ArchMulticore::numRunningCPUs() > 1)))
   {
     return false;
     //debug(LOCK, "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
