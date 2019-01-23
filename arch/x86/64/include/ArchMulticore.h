@@ -18,6 +18,8 @@ public:
 private:
 };
 
+extern thread_local char cpu_stack[2*PAGE_SIZE];
+
 extern thread_local CpuInfo cpu_info;
 extern thread_local TSS cpu_tss;
 
@@ -61,4 +63,6 @@ class ArchMulticore
     static void initCpuLocalGDT(GDT& template_gdt);
     static void initCpuLocalTSS(size_t boot_stack_top);
     static void prepareAPStartup(size_t entry_addr);
+
+    static void waitForSystemStart();
 };

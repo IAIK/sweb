@@ -18,7 +18,11 @@ __thread TSS cpu_tss;
 thread_local LocalAPIC lapic;
 thread_local CpuInfo cpu_info;
 
+thread_local char cpu_stack[2*PAGE_SIZE];
+
 extern SystemState system_state;
+
+volatile static bool ap_started = false;
 
 
 ustl::atomic<size_t> running_cpus;
@@ -29,7 +33,6 @@ bool ArchMulticore::cpus_started_ = false;
 extern GDT32Ptr ap_gdt32_ptr;
 extern GDT ap_gdt32;
 
-extern uint8 boot_stack[0x4000];
 extern GDT gdt;
 
 extern char apstartup_text_begin;
@@ -39,8 +42,7 @@ extern "C" void apstartup();
 extern uint32 ap_kernel_cr3;
 extern char ap_pml4[PAGE_SIZE];
 
-// TODO: Each AP needs its own stack
-uint8 ap_stack[0x4000];
+static uint8 ap_boot_stack[PAGE_SIZE];
 
 
 #define MSR_FS_BASE        0xC0000100
@@ -185,8 +187,7 @@ void ArchMulticore::initCLS(bool boot_cpu)
   setCLS(cls, cls_size);
 
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
-  initCpuLocalTSS(boot_cpu ? (size_t)&boot_stack + sizeof(boot_stack) :
-                             (size_t)&ap_stack   + sizeof(ap_stack));
+  initCpuLocalTSS((size_t)(cpu_stack + sizeof(cpu_stack)));
 
   // The constructor of ALL objects declared as thread_local will be called automatically the first time ANY thread_local object is used
   debug(A_MULTICORE, "Calling constructors of CPU local objects\n");
@@ -221,13 +222,13 @@ void ArchMulticore::initCpuLocalGDT(GDT& template_gdt)
                        ::"a"(KERNEL_DS));
 }
 
-void ArchMulticore::initCpuLocalTSS(size_t boot_stack_top)
+void ArchMulticore::initCpuLocalTSS(size_t cpu_stack_top)
 {
         debug(A_MULTICORE, "CPU init TSS at %p\n", &cpu_tss);
         setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cpu_gdt + KERNEL_TSS), (size_t)&cpu_tss >> 32, (size_t)&cpu_tss, sizeof(TSS) - 1, 0);
 
-        cpu_tss.ist0 = boot_stack_top;
-        cpu_tss.rsp0 = boot_stack_top;
+        cpu_tss.ist0 = cpu_stack_top;
+        cpu_tss.rsp0 = cpu_stack_top;
         __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 }
 
@@ -251,10 +252,12 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   assert(m.page); // TODO: Map if not present
   assert(m.page_ppn == entry_addr/PAGE_SIZE);
 
+  // Init AP gdt
   memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
   ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
   ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
 
+  // Init AP PML4
   memcpy(&ap_pml4, &kernel_page_map_level_4, sizeof(ap_pml4));
   ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 
@@ -275,10 +278,18 @@ void ArchMulticore::startOtherCPUs()
             if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != lapic.getID()))
             {
                     lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
+                    debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", cpu_lapic.apic_id);
+                    while(!ap_started);
+                    ap_started = false;
+                    debug(A_MULTICORE, "AP %x startup complete, BSP continuing\n", cpu_lapic.apic_id);
             }
     }
 
-    assert(otherCPUsStarted());
+    MutexLock l(ArchMulticore::cpu_list_lock_);
+    for(auto& cpu : ArchMulticore::cpu_list_)
+    {
+            debug(A_MULTICORE, "CPU %zx running\n", cpu->getCpuID());
+    }
   }
   else
   {
@@ -327,10 +338,10 @@ extern "C" void __apstartup64()
   __asm__ __volatile__("movq %[stack], %%rsp\n"
                        "movq %[stack], %%rbp\n"
                        :
-                       :[stack]"i"(ap_stack + sizeof(ap_stack)));
+                       :[stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
 
   debug(A_MULTICORE, "AP startup 64\n");
-  debug(A_MULTICORE, "AP switched to stack %p\n", ap_stack + sizeof(ap_stack));
+  debug(A_MULTICORE, "AP switched to stack %p\n", ap_boot_stack + sizeof(ap_boot_stack));
 
   // Stack variables are messed up in this function because we skipped the function prologue. Should be fine once we've entered another function.
   ArchMulticore::initCpu();
@@ -359,16 +370,27 @@ void ArchMulticore::initCpu()
   debug(A_MULTICORE, "Enable AP timer\n");
   ArchInterrupts::enableTimer();
 
-  kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
-  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
-  while(system_state != RUNNING);
+  debug(A_MULTICORE, "Switching to CPU local stack\n");
+  __asm__ __volatile__("movq %[cpu_stack], %%rsp\n"
+                       "movq %%rsp, %%rbp\n"
+                       ::[cpu_stack]"i"(cpu_stack + sizeof(cpu_stack)));
+  waitForSystemStart();
+}
 
-  debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
-  ArchInterrupts::enableInterrupts();
 
-  while(1)
-  {
-    debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
-    __asm__ __volatile__("hlt\n");
-  }
+void ArchMulticore::waitForSystemStart()
+{
+        kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+        debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+        ap_started = true;
+        while(system_state != RUNNING);
+
+        debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
+        ArchInterrupts::enableInterrupts();
+
+        while(1)
+        {
+                debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
+                __asm__ __volatile__("hlt\n");
+        }
 }
