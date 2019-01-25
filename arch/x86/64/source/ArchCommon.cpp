@@ -319,6 +319,8 @@ void ArchCommon::drawStat() {
       fb[i * 2 + FREE_PAGES_OFFSET] = itoa_buffer[i];
     }
 
+    /*
+
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->schedulable_threads, itoa_buffer, 10);
     memset(fb + SCHEDULABLE_THREADS_OFFSET, 0, 6*2);
@@ -363,10 +365,14 @@ void ArchCommon::drawStat() {
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2] = itoa_buffer[i];
             fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2 + 1] = Console::RED;
     }
+
+    */
 }
 
 void ArchCommon::drawHeartBeat()
 {
+  drawStat();
+
   const char* clock = "/-\\|";
   static uint32 heart_beat_value = 0;
   char* fb = (char*)getFBPtr();
@@ -377,7 +383,6 @@ void ArchCommon::drawHeartBeat()
                             ((Console::RED << 4) | Console::BRIGHT_WHITE));
 
 
-  drawStat();
 }
 
 

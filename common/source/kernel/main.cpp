@@ -77,6 +77,7 @@ extern "C" void startup()
   term_0->initTerminalColors(Console::GREEN, Console::BLACK);
   kprintfd("Init debug printf\n");
   term_0->writeString("This is on term 0, you should see me now\n");
+  debug(MAIN, "SetActiveTerminal 0\n");
 
   main_console->setActiveTerminal(0);
 

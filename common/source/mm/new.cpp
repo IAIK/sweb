@@ -11,9 +11,10 @@
  */
 static void* _new(size_t size)
 {
-  debug(KMM, "new, size: %zx\n", size);
-  // maybe we could take some precautions not to be interrupted while doing this
   pointer called_by = getCalledBefore(2);
+  pointer called_by1 = getCalledBefore(1);
+  debug(KMM, "new, size: %zx, calledbefore(2): %zx, calledbefore(1): %zx\n", size, called_by, called_by1);
+  // maybe we could take some precautions not to be interrupted while doing this
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size, called_by);
   assert(p > (void*)0x80000000 || p == (void*)0);
   return p;

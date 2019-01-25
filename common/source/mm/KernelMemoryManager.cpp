@@ -11,6 +11,7 @@
 #include "kstring.h"
 #include "Stabs2DebugInfo.h"
 #include "backtrace.h"
+#include "ArchMulticore.h"
 extern Stabs2DebugInfo const* kernel_debug_info;
 
 KernelMemoryManager kmm;
@@ -502,13 +503,21 @@ Thread* KernelMemoryManager::KMMLockHeldBy()
 
 void KernelMemoryManager::lockKMM()
 {
-  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
+  //assert((!(system_state == RUNNING) || (PageManager::instance()->heldBy() != currentThread)) && "You're abusing the PageManager lock");
+  if(system_state == RUNNING)
+  {
+    debug(KMM, "CPU %zx lock KMM\n", ArchMulticore::getCpuID());
+  }
   lock_.acquire(getCalledBefore(1));
 }
 
 void KernelMemoryManager::unlockKMM()
 {
-  assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
+  //assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
+  if(system_state == RUNNING)
+  {
+          debug(KMM, "CPU %zx unlock KMM\n", ArchMulticore::getCpuID());
+  }
   lock_.release(getCalledBefore(1));
 }
 
