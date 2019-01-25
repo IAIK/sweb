@@ -18,7 +18,7 @@ __thread TSS cpu_tss;
 thread_local LocalAPIC lapic;
 thread_local CpuInfo cpu_info;
 
-thread_local char cpu_stack[2*PAGE_SIZE];
+thread_local char cpu_stack[CPU_STACK_SIZE];
 
 extern SystemState system_state;
 
@@ -206,6 +206,7 @@ void ArchMulticore::setCpuID(size_t id)
 
 size_t ArchMulticore::getCpuID()
 {
+  assert(CLSinitialized());
   return cpu_info.getCpuID();
 }
 
@@ -367,10 +368,11 @@ void ArchMulticore::initCpu()
   debug(A_MULTICORE, "Enable AP timer\n");
   ArchInterrupts::enableTimer();
 
-  debug(A_MULTICORE, "Switching to CPU local stack\n");
+  char* cpu_stack_top = cpu_stack + sizeof(cpu_stack);
+  debug(A_MULTICORE, "Switching to CPU local stack at %p\n", cpu_stack_top);
   __asm__ __volatile__("movq %[cpu_stack], %%rsp\n"
                        "movq %%rsp, %%rbp\n"
-                       ::[cpu_stack]"i"(cpu_stack + sizeof(cpu_stack)));
+                       ::[cpu_stack]"m"(cpu_stack_top));
   waitForSystemStart();
 }
 
@@ -379,10 +381,12 @@ void ArchMulticore::waitForSystemStart()
 {
         kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
         debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+        assert(CLSinitialized());
         ap_started = true;
+
         while(system_state != RUNNING);
 
-        debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
+        //debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
         ArchInterrupts::enableInterrupts();
 
         while(1)
@@ -390,4 +394,5 @@ void ArchMulticore::waitForSystemStart()
                 debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
                 __asm__ __volatile__("hlt\n");
         }
+        assert(false);
 }

@@ -18,7 +18,8 @@ public:
 private:
 };
 
-extern thread_local char cpu_stack[2*PAGE_SIZE];
+#define CPU_STACK_SIZE 4*PAGE_SIZE
+extern thread_local char cpu_stack[CPU_STACK_SIZE];
 
 extern thread_local CpuInfo cpu_info;
 extern thread_local TSS cpu_tss;
