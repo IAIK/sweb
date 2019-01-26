@@ -254,14 +254,15 @@ bool Scheduler::tryLockScheduling(const char* called_at)
 
 void Scheduler::lockScheduling(const char* called_at) //not as severe as stopping Interrupts
 {
+  ((char*)ArchCommon::getFBPtr())[80*2 + ArchMulticore::getCpuID()*2] = '#';
+
   volatile char* prev_locked_at = locked_at_;
   if(block_scheduling_.load() == ArchMulticore::getCpuID())
   {
-    debug(SCHEDULER_LOCK, "lockScheduling by %s (%p) on CPU %zu, already locked by own thread at %s\n" , (currentThread ? currentThread->getName() : "(nil)"), currentThread, ArchMulticore::getCpuID(), (prev_locked_at ? prev_locked_at : "(nil)"));
+    kprintfd("lockScheduling by %s (%p) on CPU %zu, already locked by own thread at %s\n" , (currentThread ? currentThread->getName() : "(nil)"), currentThread, ArchMulticore::getCpuID(), (prev_locked_at ? prev_locked_at : "(nil)"));
     assert(block_scheduling_.load() != ArchMulticore::getCpuID());
   }
 
-  ((char*)ArchCommon::getFBPtr())[80*2 + ArchMulticore::getCpuID()*2] = '#';
 
 
   // This function is used with interrupts enabled, so setting the lock + information about which CPU is holding the lock needs to be atomic

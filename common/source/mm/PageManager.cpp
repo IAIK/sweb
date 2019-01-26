@@ -236,30 +236,29 @@ bool PageManager::reservePages(uint32 ppn, uint32 num)
 uint32 PageManager::allocPPN(uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
-  while (1)
+  lock_.acquire();
+  uint32 p;
+  uint32 found = 0;
+  for (p = lowest_unreserved_page_; !found && p < number_of_pages_; ++p)
   {
-    lock_.acquire();
-    uint32 p;
-    uint32 found = 0;
-    for (p = lowest_unreserved_page_; !found && p < number_of_pages_; ++p)
-    {
-      if ((p % (page_size / PAGE_SIZE)) != 0)
-        continue;
-      if (reservePages(p, page_size / PAGE_SIZE))
-        found = p;
-    }
-    while (lowest_unreserved_page_ < number_of_pages_ && page_usage_table_->getBit(lowest_unreserved_page_))
-      ++lowest_unreserved_page_;
-    lock_.release();
-
-    if (found == 0)
-    {
-      assert(false && "PageManager::allocPPN: Out of memory / No more free physical pages");
-    }
-    memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, page_size);
-    return found;
+    if ((p % (page_size / PAGE_SIZE)) != 0)
+      continue;
+    if (reservePages(p, page_size / PAGE_SIZE))
+      found = p;
   }
-  return 0;
+
+  while (lowest_unreserved_page_ < number_of_pages_ && page_usage_table_->getBit(lowest_unreserved_page_))
+  {
+    ++lowest_unreserved_page_;
+  }
+  lock_.release();
+
+  if (found == 0)
+  {
+    assert(false && "PageManager::allocPPN: Out of memory / No more free physical pages");
+  }
+  memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, page_size);
+  return found;
 }
 
 void PageManager::freePPN(uint32 page_number, uint32 page_size)
