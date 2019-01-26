@@ -188,9 +188,10 @@ void ArchMulticore::initCLS(bool boot_cpu)
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
   initCpuLocalTSS((size_t)(cpu_stack + sizeof(cpu_stack)));
 
-  // The constructor of ALL objects declared as thread_local will be called automatically the first time ANY thread_local object is used
-  debug(A_MULTICORE, "Calling constructors of CPU local objects\n");
-  cpu_info;
+  // The constructor of objects declared as thread_local will be called automatically the first time the thread_local object is used. Other thread_local objects _may or may not_ also be initialized at the same time.
+  debug(A_MULTICORE, "Initializing CPU local objects for CPU %zx\n", cpu_info.getCpuID());
+  // This is a dirty hack to make sure the idle thread is initialized. Otherwise idle thread initialization might happen the first time it gets scheduled, which won't work because it requires e.g. the KMM lock
+  debug(A_MULTICORE, "CPU %zx: %s initialized\n", getCpuID(), idle_thread.getName());
 }
 
 bool ArchMulticore::CLSinitialized()

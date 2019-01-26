@@ -16,6 +16,8 @@ extern __thread ArchThreadRegisters* currentThreadRegisters;
 
 extern __thread char scheduling_stack[PAGE_SIZE];
 
+extern thread_local IdleThread idle_thread;
+
 class Scheduler
 {
   public:
