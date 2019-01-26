@@ -86,7 +86,4 @@ public:
     ThreadList threads_;
 
     size_t schedulable_threads;
-
-    size_t num_schedules[2];
-    size_t num_trylock_failed[2];
 };

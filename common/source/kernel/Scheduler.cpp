@@ -79,7 +79,7 @@ uint32 Scheduler::schedule()
     }
   }
 
-  schedulable_threads = ustl::count_if(threads_.begin(), threads_.end(), [](Thread* t){ return t->schedulable();});
+  //schedulable_threads = ustl::count_if(threads_.begin(), threads_.end(), [](Thread* t){ return t->schedulable();});
 
   if(it == threads_.end())
   {
@@ -90,8 +90,6 @@ uint32 Scheduler::schedule()
   assert(currentThread);
   assert(currentThread->currently_scheduled_on_cpu_ == (size_t)-1);
 
-  num_schedules[ArchMulticore::getCpuID()]++;
-
   debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", ArchMulticore::getCpuID(),
         (previousThread ? previousThread->getName() : "(nil)"), previousThread,
         (currentThread ? currentThread->getName() : "(nil)"), currentThread);
@@ -100,7 +98,11 @@ uint32 Scheduler::schedule()
 
   currentThread->currently_scheduled_on_cpu_ = ArchMulticore::getCpuID();
 
-  ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
+  if((it != threads_.end()) && ((it + 1) != threads_.end()))
+  {
+    assert(it != threads_.end());
+    ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
+  }
 
   unlockScheduling(DEBUG_STR_HERE);
 
@@ -246,7 +248,6 @@ bool Scheduler::tryLockScheduling(const char* called_at)
     {
       debug(SCHEDULER_LOCK, "tryLock by %s (%p) on CPU %zu failed, locked by thread %p on CPU %zu at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), scheduling_blocked_by_, expected, called_at);
     }
-    num_trylock_failed[ArchMulticore::getCpuID()]++;
   }
   return locked;
 }
@@ -260,7 +261,7 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
     assert(block_scheduling_.load() != ArchMulticore::getCpuID());
   }
 
-  ((char*)ArchCommon::getFBPtr())[2*2 + ArchMulticore::getCpuID()*2] = '#';
+  ((char*)ArchCommon::getFBPtr())[80*2 + ArchMulticore::getCpuID()*2] = '#';
 
 
   // This function is used with interrupts enabled, so setting the lock + information about which CPU is holding the lock needs to be atomic
@@ -271,15 +272,12 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
   }
   while(!block_scheduling_.compare_exchange_weak(expected, ArchMulticore::getCpuID()));
 
-  ((char*)ArchCommon::getFBPtr())[2*2 + ArchMulticore::getCpuID()*2] = '-';
+  ((char*)ArchCommon::getFBPtr())[80*2 + ArchMulticore::getCpuID()*2] = '-';
 
   scheduling_blocked_by_ = currentThread;
   locked_at_ = (volatile char*)called_at;
   locked_by_cpu_ = ArchMulticore::getCpuID();
-  if(currentThread)
-  {
-    debug(SCHEDULER_LOCK, "locked by %s (%p) on CPU %zu at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), called_at);
-  }
+  debug(SCHEDULER_LOCK, "locked by %s (%p) on CPU %zu at %s\n", (currentThread ? currentThread->getName() : "(nil)"), currentThread, ArchMulticore::getCpuID(), called_at);
 }
 
 void Scheduler::unlockScheduling(const char* called_at)
@@ -290,7 +288,7 @@ void Scheduler::unlockScheduling(const char* called_at)
   }
   scheduling_blocked_by_ = nullptr;
   locked_at_ = nullptr;
-  ((char*)ArchCommon::getFBPtr())[2*2 + ArchMulticore::getCpuID()*2] = ' ';
+  ((char*)ArchCommon::getFBPtr())[80*2 + ArchMulticore::getCpuID()*2] = ' ';
   block_scheduling_ = -1;
 }
 
