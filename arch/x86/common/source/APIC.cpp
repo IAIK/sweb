@@ -386,6 +386,27 @@ void LocalAPIC::sendIPI(uint8 vector, IPIDestination dest_type, size_t target, I
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
 }
 
+void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target) volatile
+{
+        assert(isInitialized());
+        assert(target.isInitialized());
+        debug(APIC, "Sending IPI, vector: %x\n", vector);
+        LocalAPIC_InterruptCommandRegisterHigh v_high{};
+        v_high.destination = target.ID();
+
+        LocalAPIC_InterruptCommandRegisterLow v_low{};
+        v_low.vector = vector;
+        v_low.delivery_mode = IPI_NORMAL;
+        v_low.destination_mode = 0; // physical
+        v_low.level = 1;
+        v_low.trigger_mode = 0;
+        v_low.destination_shorthand = IPI_DEST_TARGET;
+
+
+        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
+        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+}
+
 
 
 IOAPIC::IOAPIC() :

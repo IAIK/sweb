@@ -268,6 +268,7 @@ public:
 
         void startAP(uint8_t apic_id, size_t entry_addr) volatile;
         void sendIPI(uint8 vector, IPIDestination dest_type = IPI_DEST_ALL, size_t target = -1, IPIType ipi_type = IPI_NORMAL) volatile;
+        void sendIPI(uint8 vector, const LocalAPIC& target) volatile;
 
         bool usingAPICTimer();
 

@@ -4,6 +4,7 @@
 #include "assert.h"
 #include "PageManager.h"
 #include "kstring.h"
+#include "ArchMulticore.h"
 
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -39,29 +40,38 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
 
   assert(m.page_ppn != 0 && m.page_size == PAGE_SIZE && m.pt[m.pti].present);
   m.pt[m.pti].present = 0;
+
+  ((uint64*)m.pt)[m.pti] = 0;
+
+  bool pt_empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
+  bool pd_empty = false;
+  bool pdpt_empty = false;
+
+  if (pt_empty)
+  {
+    pd_empty = checkAndRemove<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi);
+  }
+  if (pd_empty)
+  {
+    pdpt_empty = checkAndRemove<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti);
+  }
+  if (pdpt_empty)
+  {
+    checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
+  }
+
+  flushTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
+
   PageManager::instance()->freePPN(m.page_ppn);
-  ((uint64*)m.pt)[m.pti] = 0; // for easier debugging
-  bool empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
-  if (empty)
-  {
-    PageManager::instance()->freePPN(m.pt_ppn);
-    empty = checkAndRemove<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi);
-  }
-  if (empty)
-  {
-    PageManager::instance()->freePPN(m.pd_ppn);
-    empty = checkAndRemove<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti);
-  }
-  if (empty)
-  {
-    PageManager::instance()->freePPN(m.pdpt_ppn);
-    empty = checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
-  }
+  if(pt_empty)   { PageManager::instance()->freePPN(m.pt_ppn);   }
+  if(pd_empty)   { PageManager::instance()->freePPN(m.pd_ppn);   }
+  if(pdpt_empty) { PageManager::instance()->freePPN(m.pdpt_ppn); }
+
   return true;
 }
 
 template<typename T>
-bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable)
+void ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable)
 {
   assert(map_ptr & ~0xFFFFF00000000000ULL);
   T* map = (T*) map_ptr;
@@ -77,7 +87,6 @@ bool ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
   map[index].page_ppn = ppn;
   map[index].user_access = user_access;
   map[index].present = 1;
-  return true;
 }
 
 bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access)
@@ -109,7 +118,8 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
 
   if (m.page == 0)
   {
-    return insert<PageTableEntry>((pointer) m.pt, m.pti, physical_page, 0, 0, user_access, 1);
+    insert<PageTableEntry>((pointer) m.pt, m.pti, physical_page, 0, 0, user_access, 1);
+    return true;
   }
 
   return false;
@@ -342,4 +352,23 @@ void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
 {
   __asm__ __volatile__("movq %[cr3_value], %%cr3\n"
                        ::[cr3_value]"r"(cr3_value));
+}
+
+
+void ArchMemory::flushTranslationCaches(size_t addr)
+{
+        debug(A_MEMORY, "Flushing translation caches for address %zx\n", addr);
+        // TODO: TLB shootdown
+        __asm__ __volatile__("invlpg %[addr]\n"
+                             :
+                             :[addr]"m"(*(char*)addr));
+
+        for(auto& cpu : ArchMulticore::cpu_list_)
+        {
+                if(cpu->getCpuID() != cpu_info.getCpuID())
+                {
+                        debug(MAIN, "CPU %zx Sending TLB shootdown to CPU %zx\n", ArchMulticore::getCpuID(), cpu->getCpuID());
+                        cpu_info.lapic.sendIPI(99, cpu->lapic);
+                }
+        }
 }

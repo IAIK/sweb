@@ -337,6 +337,16 @@ extern "C" void irqHandler_90()
         endIRQ(90);
 }
 
+extern "C" void arch_irqHandler_99();
+extern "C" void irqHandler_99()
+{
+        beginIRQ(99);
+        debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", ArchMulticore::getCpuID());
+
+
+        endIRQ(99);
+}
+
 extern "C" void arch_irqHandler_100();
 extern "C" void irqHandler_100()
 {
