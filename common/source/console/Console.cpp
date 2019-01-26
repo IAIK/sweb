@@ -52,7 +52,7 @@ void Console::handleKey(uint32 key)
   {
     case KEY_F7:
 
-      lapic.sendIPI(90, LocalAPIC::IPI_DEST_OTHERS);
+      cpu_info.lapic.sendIPI(90, LocalAPIC::IPI_DEST_OTHERS);
       Scheduler::instance()->printThreadList();
       Scheduler::instance()->printStackTraces();
       Scheduler::instance()->printLockingInformation();

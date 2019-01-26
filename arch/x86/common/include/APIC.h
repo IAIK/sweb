@@ -248,12 +248,12 @@ public:
 
         void sendEOI(size_t num);
 
-        void mapAt(size_t addr);
+        static void mapAt(size_t addr);
 
         void init();
         void enable(bool = true);
 
-        bool isInitialized();
+        bool isInitialized() const volatile;
 
         void initTimer() volatile;
         void setTimerPeriod(uint32 count) volatile;
@@ -263,7 +263,8 @@ public:
         bool checkIRR(uint8 num) volatile;
         bool checkISR(uint8 num) volatile;
 
-        uint32 getID() volatile;
+        uint32 readID() volatile;
+        uint32 ID() const volatile;
 
         void startAP(uint8_t apic_id, size_t entry_addr) volatile;
         void sendIPI(uint8 vector, IPIDestination dest_type = IPI_DEST_ALL, size_t target = -1, IPIType ipi_type = IPI_NORMAL) volatile;
@@ -279,6 +280,8 @@ public:
 
         static bool exists;
         bool initialized_;
+
+        uint32 id_;
 
         size_t outstanding_EOIs_;
 
@@ -434,5 +437,4 @@ private:
 
 LocalAPIC* initAPIC(ACPI_MADTHeader* madt);
 
-extern thread_local LocalAPIC lapic;
 extern IOAPIC IO_APIC;

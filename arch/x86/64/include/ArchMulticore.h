@@ -14,6 +14,8 @@ public:
 
         size_t getCpuID();
 
+        LocalAPIC lapic;
+
         size_t cpu_id;
 private:
 };
@@ -56,8 +58,6 @@ class ArchMulticore
 
     static Mutex cpu_list_lock_;
     static ustl::vector<CpuInfo*> cpu_list_;
-
-    static bool cpus_started_;
 
   private:
     static void initCpuLocalGDT(GDT& template_gdt);

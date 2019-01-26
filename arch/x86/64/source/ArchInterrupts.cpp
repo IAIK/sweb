@@ -30,18 +30,21 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  if(lapic.isInitialized() && lapic.usingAPICTimer())
+  if(cpu_info.lapic.isInitialized() && cpu_info.lapic.usingAPICTimer())
   {
-    lapic.reg_vaddr_->lvt_timer.setMask(false);
+    debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_info.lapic.ID());
+    cpu_info.lapic.reg_vaddr_->lvt_timer.setMask(false);
   }
   else
   {
     if(IOAPIC::initialized)
     {
+      debug(A_INTERRUPTS, "Enabling PIT timer IRQ via IOAPIC\n");
       IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
     }
     else
     {
+      debug(A_INTERRUPTS, "Enabling PIT timer IRQ via PIC8259\n");
       PIC8259::enableIRQ(0);
     }
   }
@@ -67,9 +70,9 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
 
 void ArchInterrupts::disableTimer()
 {
-  if(lapic.isInitialized() && lapic.usingAPICTimer())
+  if(cpu_info.lapic.isInitialized() && cpu_info.lapic.usingAPICTimer())
   {
-    lapic.reg_vaddr_->lvt_timer.setMask(true);
+    cpu_info.lapic.reg_vaddr_->lvt_timer.setMask(true);
   }
   else
   {
@@ -121,11 +124,11 @@ void ArchInterrupts::disableIRQ(uint16 num)
 
 void ArchInterrupts::EndOfInterrupt(uint16 number)
 {
-  if((LocalAPIC::exists && lapic.isInitialized()) &&
-     (IOAPIC::initialized ||
-      ((number == 0) && lapic.usingAPICTimer())))
+  if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+     (IOAPIC::initialized || ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+      (number > 16)))
   {
-          lapic.sendEOI(number + 0x20);
+          cpu_info.lapic.sendEOI(number + 0x20);
   }
   else
   {

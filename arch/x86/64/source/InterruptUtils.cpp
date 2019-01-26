@@ -156,11 +156,12 @@ extern "C" void arch_contextSwitch();
 
 void beginIRQ(__attribute__((unused)) size_t irq_num)
 {
-        if((LocalAPIC::exists && lapic.isInitialized()) &&
+        if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
            (IOAPIC::initialized ||
-            ((irq_num == 0) && lapic.usingAPICTimer())))
+            ((irq_num == 0) && cpu_info.lapic.usingAPICTimer()) ||
+            (irq_num > 16)))
         {
-                lapic.outstanding_EOIs_++;
+                cpu_info.lapic.outstanding_EOIs_++;
         }
         else
         {

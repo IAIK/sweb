@@ -15,7 +15,6 @@ __thread TSS cpu_tss;
 /* The order of initialization of thread_local objects depends on the order in which they are defined in the source code.
    This is pretty fragile, but using __thread and placement new doesn't work (compiler complains that dynamic initialization is required).
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
-thread_local LocalAPIC lapic;
 thread_local CpuInfo cpu_info;
 
 thread_local char cpu_stack[CPU_STACK_SIZE];
@@ -28,7 +27,6 @@ volatile static bool ap_started = false;
 ustl::atomic<size_t> running_cpus;
 ustl::vector<CpuInfo*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
-bool ArchMulticore::cpus_started_ = false;
 
 extern GDT32Ptr ap_gdt32_ptr;
 extern GDT ap_gdt32;
@@ -116,7 +114,7 @@ void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uin
 }
 
 CpuInfo::CpuInfo() :
-        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.getID() : 0)
+        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : 0)
 {
         debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
         MutexLock l(ArchMulticore::cpu_list_lock_);
@@ -270,7 +268,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::exists && lapic.isInitialized())
+  if(LocalAPIC::exists && cpu_info.lapic.isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
@@ -278,9 +276,9 @@ void ArchMulticore::startOtherCPUs()
 
     for(auto& cpu_lapic : LocalAPIC::local_apic_list_)
     {
-            if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != lapic.getID()))
+            if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != cpu_info.lapic.ID()))
             {
-                    lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
+                    cpu_info.lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
                     debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", cpu_lapic.apic_id);
                     while(!ap_started);
                     ap_started = false;
@@ -307,9 +305,9 @@ size_t ArchMulticore::numRunningCPUs()
 
 void ArchMulticore::stopAllCpus()
 {
-  if(ArchMulticore::CLSinitialized() && lapic.isInitialized())
+  if(ArchMulticore::CLSinitialized() && cpu_info.lapic.isInitialized())
   {
-    lapic.sendIPI(90);
+    cpu_info.lapic.sendIPI(90);
   }
 }
 

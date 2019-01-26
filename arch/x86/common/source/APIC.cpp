@@ -30,11 +30,11 @@ LocalAPIC::LocalAPIC() :
   debug(APIC, "LocalAPIC ctor\n");
   if(LocalAPIC::exists)
   {
-    if((size_t)lapic.reg_vaddr_ != APIC_VADDR)
+    if((size_t)LocalAPIC::reg_vaddr_ != APIC_VADDR)
     {
-            lapic.mapAt(APIC_VADDR);
+            LocalAPIC::mapAt(APIC_VADDR);
     }
-    lapic.init();
+    init();
   }
 }
 
@@ -49,7 +49,7 @@ void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
 void LocalAPIC::sendEOI(__attribute__((unused)) size_t num)
 {
   --outstanding_EOIs_;
-  //debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
+  debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
   reg_vaddr_->eoi = 0;
 }
 
@@ -70,7 +70,8 @@ void LocalAPIC::init()
 {
   if(!isInitialized())
   {
-    debug(APIC, "Initializing Local APIC %x\n", getID());
+    id_ = readID();
+    debug(APIC, "Initializing Local APIC %x\n", ID());
     setSpuriousInterruptNumber(100);
     initTimer();
     enable(true);
@@ -78,18 +79,18 @@ void LocalAPIC::init()
   }
   else
   {
-    debug(APIC, "Local APIC %x is already initialized. Skipping re-initialization\n", getID());
+    debug(APIC, "Local APIC %x is already initialized. Skipping re-initialization\n", ID());
   }
 }
 
-bool LocalAPIC::isInitialized()
+bool LocalAPIC::isInitialized() const volatile
 {
   return initialized_;
 }
 
 void LocalAPIC::enable(bool enable)
 {
-  debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), getID());
+  debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), ID());
   uint32* ptr = (uint32*)&reg_vaddr_->s_int_vect;
   uint32 temp = *ptr;
   ((LocalAPIC_SpuriousInterruptVector*)&temp)->enable = (enable ? 1 : 0);
@@ -98,7 +99,7 @@ void LocalAPIC::enable(bool enable)
 
 void LocalAPIC::initTimer() volatile
 {
-        //reg_vaddr_->lvt_timer.setVector(90);
+        debug(APIC, "Init timer for APIC %x\n", ID());
         reg_vaddr_->lvt_timer.setVector(0x20);
         reg_vaddr_->lvt_timer.setMode(1);
         reg_vaddr_->lvt_timer.setMask(true);
@@ -222,11 +223,16 @@ bool LocalAPIC::checkISR(uint8 num) volatile
         return reg_vaddr_->ISR[byte_offset].isr & (1 << bit_offset);
 }
 
-uint32 LocalAPIC::getID() volatile
+uint32 LocalAPIC::readID() volatile
 {
         LocalAPIC_IDRegister id;
         *(uint32*)&id = *(uint32*)&reg_vaddr_->local_apic_id;
         return id.id;
+}
+
+uint32 LocalAPIC::ID() const volatile
+{
+        return id_;
 }
 
 static volatile uint8 delay = 0;
@@ -277,7 +283,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
-                lapic.sendEOI(0x20);
+                cpu_info.lapic.sendEOI(0x20);
         }
         else
         {
@@ -293,8 +299,6 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         assert((entry_addr/PAGE_SIZE) <= 0xFF);
 
         sendIPI(entry_addr/PAGE_SIZE, IPI_DEST_TARGET, apic_id, IPI_SIPI);
-
-        ArchMulticore::cpus_started_ = true;
 
         // 200us delay
         debug(A_MULTICORE, "Start delay 2\n");
@@ -316,7 +320,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
-                lapic.sendEOI(0x20);
+                cpu_info.lapic.sendEOI(0x20);
         }
         else
         {
@@ -347,7 +351,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         if(IOAPIC::initialized)
         {
                 IO_APIC.setIRQMask(2, true);
-                lapic.sendEOI(0x20);
+                cpu_info.lapic.sendEOI(0x20);
         }
         else
         {
@@ -364,6 +368,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 
 void LocalAPIC::sendIPI(uint8 vector, IPIDestination dest_type, size_t target, IPIType ipi_type) volatile
 {
+        assert(isInitialized());
         debug(APIC, "Sending IPI, vector: %x\n", vector);
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
         v_high.destination = (dest_type == IPI_DEST_TARGET ? target : 0);
@@ -429,7 +434,7 @@ void IOAPIC::initRedirections()
                                 r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
-                                r.destination = lapic.getID();
+                                r.destination = cpu_info.lapic.ID();
                                 goto write_entry;
                         }
                 }

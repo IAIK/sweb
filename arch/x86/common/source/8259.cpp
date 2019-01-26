@@ -68,6 +68,11 @@ void PIC8259::disableIRQ(uint16 number)
 
 void PIC8259::sendEOI(uint16 number)
 {
+  if(A_INTERRUPTS & OUTPUT_ADVANCED)
+  {
+    debug(A_INTERRUPTS, "PIC8259, send EOI for IRQ %x\n", number);
+  }
+  assert(number <= 16);
   --outstanding_EOIs_;
   if (number > 7)
     outportb(PIC_2_CONTROL_PORT, PIC_EOI);
