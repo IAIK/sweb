@@ -368,7 +368,7 @@ extern "C" void syscallHandler()
 
 extern const char* errors[];
 extern "C" void arch_errorHandler();
-extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
+extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 {
   kprintfd("%zx\n",cs);
   if (spurious)
@@ -383,26 +383,24 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   }
   const bool userspace = (cs & 0x3);
   debug(CPU_ERROR, "Instruction Pointer: %zx, Userspace: %d - currentThread(): %p %zd" ":%s, switch_to_userspace_: %d\n",
-        eip, userspace, currentThread,
+        rip, userspace, currentThread,
         currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
         currentThread ? currentThread->switch_to_userspace_ : -1);
 
   const Stabs2DebugInfo* deb = kernel_debug_info;
   assert(currentThread && "there should be no fault before there is a current thread");
   assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
-  ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
   if (userspace)
   {
     assert(currentThread->loader_ && "User Threads need to have a Loader");
     assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
            "User and Kernel CR3 register values differ, this most likely is a bug!"));
     deb = currentThread->loader_->getDebugInfos();
-    registers_ = currentThread->user_registers_;
   }
-  if(deb && registers_->rip)
+  if(deb && rip)
   {
     debug(CPU_ERROR, "This Fault was probably caused by:");
-    deb->printCallInformation(registers_->rip);
+    deb->printCallInformation(rip);
   }
   ArchThreads::printThreadRegisters(currentThread, false);
   currentThread->printBacktrace(true);
