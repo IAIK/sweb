@@ -230,9 +230,9 @@ extern "C" void irqHandler_65()
 }
 
 extern "C" void arch_pageFaultHandler();
-extern "C" void pageFaultHandler(uint64 address, uint64 error)
+extern "C" void pageFaultHandler(uint64 address, uint64 error, uint64 ip)
 {
-  PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
+  PageFaultHandler::enterPageFault(address, ip, error & FLAG_PF_USER,
                                    error & FLAG_PF_PRESENT,
                                    error & FLAG_PF_RDWR,
                                    error & FLAG_PF_INSTR_FETCH);

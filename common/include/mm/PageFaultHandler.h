@@ -45,7 +45,6 @@ public:
    * @param writing true if the fault happened by writing to an address, else reading
    * @param fetch true in case the fault happened by an instruction fetch, else by an operand fetch
    */
-  static void enterPageFault(size_t address, bool user,
-                             bool present, bool writing,
-                             bool fetch);
+  static void enterPageFault(size_t address, size_t ip, bool user,
+                             bool present, bool writing, bool fetch);
 };

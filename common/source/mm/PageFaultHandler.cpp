@@ -77,11 +77,11 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
   debug(PAGEFAULT, "Page fault handling finished for Address: %18zx.\n", address);
 }
 
-void PageFaultHandler::enterPageFault(size_t address, bool user,
+void PageFaultHandler::enterPageFault(size_t address, size_t ip, bool user,
                                       bool present, bool writing,
                                       bool fetch)
 {
-  debug(PAGEFAULT, "CPU %zu, Pagefault at %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", ArchMulticore::getCpuID(), address, present, writing, user, fetch);
+  debug(PAGEFAULT, "CPU %zu, Pagefault at %zx, ip %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", ArchMulticore::getCpuID(), address, ip, present, writing, user, fetch);
   assert(currentThread && "You have a pagefault, but no current thread");
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;

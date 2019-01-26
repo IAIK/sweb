@@ -154,8 +154,8 @@ arch_errorHandler_\num:
         movq $0,%rsi
         call arch_saveThreadRegisters
         movq $0,%rcx
-        movq 152(%rsp),%rdx
-        movq 144(%rsp), %rsi
+        movq 152(%rsp),%rdx  # rip
+        movq 144(%rsp), %rsi # error code
         movq $\num,%rdi
         call errorHandler
         popAll
@@ -191,14 +191,15 @@ arch_errorHandler_\num:
 arch_pageFaultHandler:
         swapgsIfPrivChangeErrorCode
         pushAll
-        movq %rsp,%rdi
-        movq $1,%rsi
+        movq %rsp, %rdi
+        movq $1, %rsi
         call arch_saveThreadRegisters
-        movq 144(%rsp),%rsi
+        movq 152(%rsp), %rdx # rip
+        movq 144(%rsp), %rsi # error code
         movq %cr2, %rdi
         call pageFaultHandler
         popAll
-        addq $8,%rsp
+        addq $8, %rsp
         swapgsIfPrivChangeErrorCode
         iretq
         hlt
