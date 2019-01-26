@@ -60,7 +60,7 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
     checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
   }
 
-  flushTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
+  flushAllTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
 
   PageManager::instance()->freePPN(m.page_ppn);
   if(pt_empty)   { PageManager::instance()->freePPN(m.pt_ppn);   }
@@ -355,20 +355,49 @@ void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
 }
 
 
-void ArchMemory::flushTranslationCaches(size_t addr)
+void ArchMemory::flushLocalTranslationCaches(size_t addr)
 {
-        debug(A_MEMORY, "Flushing translation caches for address %zx\n", addr);
-        // TODO: TLB shootdown
+        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
         __asm__ __volatile__("invlpg %[addr]\n"
                              :
                              :[addr]"m"(*(char*)addr));
+}
+
+void ArchMemory::flushAllTranslationCaches(size_t addr)
+{
+        flushLocalTranslationCaches(addr);
+
+        TLBShootdownRequest shootdown_request;
+        shootdown_request.addr = addr;
+        shootdown_request.ack = 0;
+        shootdown_request.next = nullptr;
+
+        size_t num_shootdowns = 0;
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Thread may be re-scheduled on a different CPU while sending TLB shootdowns  //
+        // This is fine, since a context switch also invalidates the TLB               //
+        // A CPU sending a TLB shootdown to itself is also fine                        //
+        /////////////////////////////////////////////////////////////////////////////////
 
         for(auto& cpu : ArchMulticore::cpu_list_)
         {
                 if(cpu->getCpuID() != cpu_info.getCpuID())
                 {
-                        debug(MAIN, "CPU %zx Sending TLB shootdown to CPU %zx\n", ArchMulticore::getCpuID(), cpu->getCpuID());
+                        debug(MAIN, "CPU %zx Sending TLB shootdown for addr %zx to CPU %zx\n", ArchMulticore::getCpuID(), addr, cpu->getCpuID());
+                        ++num_shootdowns;
+
+                        TLBShootdownRequest* expected_next = nullptr;
+                        do
+                        {
+                                expected_next = cpu->tlb_shootdown_list.load();
+                                shootdown_request.next = expected_next;
+                        } while(!cpu->tlb_shootdown_list.compare_exchange_weak(expected_next, &shootdown_request));
+
                         cpu_info.lapic.sendIPI(99, cpu->lapic);
                 }
         }
+
+        debug(MAIN, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", ArchMulticore::getCpuID(), num_shootdowns);
+        while(shootdown_request.ack.load() != num_shootdowns);
 }

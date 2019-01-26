@@ -325,7 +325,7 @@ extern "C" void irqHandler_15()
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
-        beginIRQ(90);
+        beginIRQ(90 - 0x20);
         debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", ArchMulticore::getCpuID());
         if (currentThread != 0)
         {
@@ -334,25 +334,37 @@ extern "C" void irqHandler_90()
         }
         while(1)
                 asm("hlt\n");
-        endIRQ(90);
+        endIRQ(90 - 0x20);
 }
 
 extern "C" void arch_irqHandler_99();
 extern "C" void irqHandler_99()
 {
-        beginIRQ(99);
+        beginIRQ(99 - 0x20); // TODO: Fix APIC interrupt numbering
         debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", ArchMulticore::getCpuID());
 
+        TLBShootdownRequest* shootdown_list = cpu_info.tlb_shootdown_list.exchange(nullptr);
+        //assert(shootdown_list != nullptr);
 
-        endIRQ(99);
+        while(shootdown_list != nullptr)
+        {
+                ArchMemory::flushLocalTranslationCaches(shootdown_list->addr);
+
+                TLBShootdownRequest* next = shootdown_list->next;
+                shootdown_list->ack++; // Object is invalid as soon as we acknowledge it
+                assert(shootdown_list != next);
+                shootdown_list = next;
+        }
+
+        endIRQ(99 - 0x20);
 }
 
 extern "C" void arch_irqHandler_100();
 extern "C" void irqHandler_100()
 {
-        beginIRQ(100);
+        beginIRQ(100 - 0x20);
         debug(A_INTERRUPTS, "IRQ 100 called by CPU %zu, spurious APIC interrupt\n", ArchMulticore::getCpuID());
-        endIRQ(100);
+        endIRQ(100 - 0x20);
 }
 
 extern "C" void arch_syscallHandler();

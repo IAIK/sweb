@@ -49,7 +49,10 @@ void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
 void LocalAPIC::sendEOI(__attribute__((unused)) size_t num)
 {
   --outstanding_EOIs_;
-  debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
+  if(APIC & OUTPUT_ADVANCED)
+  {
+    debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
+  }
   reg_vaddr_->eoi = 0;
 }
 

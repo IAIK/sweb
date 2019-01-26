@@ -3,6 +3,7 @@
 #include "types.h"
 #include "offsets.h"
 #include "paging-definitions.h"
+#include "uatomic.h"
 
 extern PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 
@@ -120,7 +121,8 @@ public:
   static PageMapLevel4Entry* getRootOfKernelPagingStructure();
   static void loadPagingStructureRoot(size_t cr3_value);
 
-  static void flushTranslationCaches(size_t addr);
+  static void flushLocalTranslationCaches(size_t addr);
+  static void flushAllTranslationCaches(size_t addr);
 
   static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
   static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
@@ -157,3 +159,10 @@ private:
 
 };
 
+
+struct TLBShootdownRequest
+{
+        size_t addr;
+        ustl::atomic<size_t> ack;
+        ustl::atomic<TLBShootdownRequest*> next;
+};

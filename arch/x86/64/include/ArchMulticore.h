@@ -6,6 +6,10 @@
 #include "uvector.h"
 #include "Mutex.h"
 #include "SegmentUtils.h"
+#include "uatomic.h"
+
+
+struct TLBShootdownRequest;
 
 class CpuInfo
 {
@@ -17,6 +21,8 @@ public:
         LocalAPIC lapic;
 
         size_t cpu_id;
+
+        ustl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
 private:
 };
 
