@@ -67,10 +67,14 @@ void SpinLock::acquire(pointer called_by)
     // to push the current thread to the waiters list.
     doChecksBeforeWaiting();
 
-    currentThread->lock_waiting_on_ = this;
-    lockWaitersList();
-    pushFrontCurrentThreadToWaitersList();
-    unlockWaitersList();
+    //assert(currentThread); // debug
+    if(currentThread)
+    {
+      currentThread->lock_waiting_on_ = this;
+      lockWaitersList();
+      pushFrontCurrentThreadToWaitersList();
+      unlockWaitersList();
+    }
 
     // here comes the basic spinlock
     while(ArchThreads::testSetLock(lock_, 1))
@@ -79,10 +83,13 @@ void SpinLock::acquire(pointer called_by)
       Scheduler::instance()->yield();
     }
     // Now we managed to acquire the spinlock. Remove the current thread from the waiters list.
-    lockWaitersList();
-    removeCurrentThreadFromWaitersList();
-    unlockWaitersList();
-    currentThread->lock_waiting_on_ = 0;
+    if(currentThread)
+    {
+      lockWaitersList();
+      removeCurrentThreadFromWaitersList();
+      unlockWaitersList();
+      currentThread->lock_waiting_on_ = 0;
+    }
   }
   // The current thread is now holding the spinlock
   last_accessed_at_ = called_by;

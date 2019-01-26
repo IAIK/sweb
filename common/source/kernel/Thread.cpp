@@ -171,6 +171,11 @@ bool Thread::schedulable()
 
 const char *Thread::getName()
 {
+  if(this == nullptr)
+  {
+    return "(nil)";
+  }
+
   return name_.c_str();
 }
 

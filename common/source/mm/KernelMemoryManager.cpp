@@ -508,6 +508,7 @@ void KernelMemoryManager::lockKMM()
   {
     debug(KMM, "CPU %zx lock KMM\n", ArchMulticore::getCpuID());
   }
+  assert(!((system_state == RUNNING) && (!ArchInterrupts::testIFSet())));
   lock_.acquire(getCalledBefore(1));
 }
 

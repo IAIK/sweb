@@ -347,9 +347,6 @@ extern "C" void __apstartup64()
 
 void ArchMulticore::initCpu()
 {
-  debug(A_MULTICORE, "initAPCore\n");
-  kprintf("initAPCore\n");
-
   debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
   ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
 
