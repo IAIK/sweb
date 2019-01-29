@@ -274,7 +274,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 {
         debug(A_MULTICORE, "Sending init IPI to AP local APIC %u, AP entry function: %zx\n",  apic_id, entry_addr);
 
-        sendIPI(0, IPI_DEST_TARGET, apic_id, IPI_INIT);
+        sendIPI(0, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::INIT);
 
         debug(A_MULTICORE, "Start delay 1\n");
         // 10ms delay
@@ -320,7 +320,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         assert((entry_addr % PAGE_SIZE) == 0);
         assert((entry_addr/PAGE_SIZE) <= 0xFF);
 
-        sendIPI(entry_addr/PAGE_SIZE, IPI_DEST_TARGET, apic_id, IPI_SIPI);
+        sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
 
         // 200us delay
         debug(A_MULTICORE, "Start delay 2\n");
@@ -354,7 +354,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 
         debug(A_MULTICORE, "End delay 2\n");
 
-        sendIPI(entry_addr/PAGE_SIZE, IPI_DEST_TARGET, apic_id, IPI_SIPI);
+        sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
 
         // Wait another 10ms to give APs time for initialization
         if(IOAPIC::initialized)
@@ -388,45 +388,75 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 }
 
 
-void LocalAPIC::sendIPI(uint8 vector, IPIDestination dest_type, size_t target, IPIType ipi_type) volatile
+void LocalAPIC::sendIPI(uint8 vector, LAPIC::IPIDestination dest_type, size_t target, LAPIC::IPIType ipi_type, bool wait_for_delivery) volatile
 {
         assert(isInitialized());
-        debug(APIC, "Sending IPI, vector: %x\n", vector);
+        assert(!((ipi_type == LAPIC::IPIType::FIXED) && (vector < 32)));
+
+        // Need to ensure this section of code runs on the same CPU and the APIC is not used for anything else in the meantime
+        WithDisabledInterrupts d;
+
+        debug(APIC, "CPU %x Sending IPI, vector: %x\n", ID(), vector);
+
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
-        v_high.destination = (dest_type == IPI_DEST_TARGET ? target : 0);
+        v_high.destination = (dest_type == LAPIC::IPIDestination::TARGET ? target : 0);
 
         LocalAPIC_InterruptCommandRegisterLow v_low{};
-        v_low.vector = vector;
-        v_low.delivery_mode = ipi_type;
-        v_low.destination_mode = 0; // physical
-        v_low.level = 1;
-        v_low.trigger_mode = 0;
-        v_low.destination_shorthand = dest_type;
+        v_low.vector                = vector;
+        v_low.delivery_mode         = (uint32)ipi_type;
+        v_low.destination_mode      = (uint32)LAPIC::IPIDestinationMode::PHYSICAL;
+        v_low.level                 = (uint32)LAPIC::IPILevel::ASSERT;
+        v_low.trigger_mode          = (uint32)LAPIC::IntTriggerMode::EDGE;
+        v_low.destination_shorthand = (uint32)dest_type;
 
 
         *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        if(wait_for_delivery && !((dest_type == LAPIC::IPIDestination::TARGET) && (target == ID())))
+        {
+                debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", ArchMulticore::getCpuID(), target);
+                while(v_low.delivery_status == (uint32)LAPIC::DeliveryStatus::PENDING)
+                {
+                        *(uint32*)&v_low = *(volatile uint32*)&reg_vaddr_->ICR_low;
+                }
+        }
 }
 
-void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target) volatile
+void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_delivery) volatile
 {
         assert(isInitialized());
         assert(target.isInitialized());
-        debug(APIC, "Sending IPI, vector: %x\n", vector);
+        assert(!(vector < 32));
+
+        // Ensure this section of code runs on the same CPU and the local APIC is not used for anything else in the meantime
+        WithDisabledInterrupts d;
+
+        debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", ID(), target.ID(), vector);
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
         v_high.destination = target.ID();
 
         LocalAPIC_InterruptCommandRegisterLow v_low{};
-        v_low.vector = vector;
-        v_low.delivery_mode = IPI_NORMAL;
-        v_low.destination_mode = 0; // physical
-        v_low.level = 1;
-        v_low.trigger_mode = 0;
-        v_low.destination_shorthand = IPI_DEST_TARGET;
+        v_low.vector                = vector;
+        v_low.delivery_mode         = (uint32)LAPIC::IPIType::FIXED;
+        v_low.destination_mode      = (uint32)LAPIC::IPIDestinationMode::PHYSICAL;
+        v_low.level                 = (uint32)LAPIC::IPILevel::ASSERT;
+        v_low.trigger_mode          = (uint32)LAPIC::IntTriggerMode::EDGE;
+        v_low.destination_shorthand = (uint32)LAPIC::IPIDestination::TARGET;
+        v_low.delivery_status       = (uint32)LAPIC::DeliveryStatus::IDLE;
 
 
         *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
         *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+
+        if(wait_for_delivery && (target.ID() != ID()))
+        {
+                while(v_low.delivery_status == (uint32)LAPIC::DeliveryStatus::PENDING)
+                {
+                        debug(APIC, "CPU %zx waiting until IPI to %x has been delivered\n", ArchMulticore::getCpuID(), target.ID());
+                        *(uint32*)&v_low = *(volatile uint32*)&reg_vaddr_->ICR_low;
+                }
+        }
 }
 
 

@@ -7,6 +7,70 @@
 #define APIC_VADDR   0xffffffff81200000
 #define IOAPIC_VADDR 0xffffffff81201000
 
+namespace LAPIC
+{
+        enum class IPIDestination : uint32
+        {
+                TARGET = 0,
+                SELF   = 1,
+                ALL    = 2,
+                OTHERS = 3,
+        };
+
+        enum class IPIType : uint32
+        {
+                FIXED        = 0,
+                LOW_PRIORITY = 1,
+                SMI          = 2,
+                NMI          = 4,
+                INIT         = 5,
+                SIPI         = 6,
+        };
+
+        enum class IPIDestinationMode : uint32
+        {
+                PHYSICAL = 0,
+                LOGICAL  = 1,
+        };
+
+        enum class IPILevel : uint32
+        {
+                DEASSERT = 0,
+                ASSERT   = 1,
+        };
+
+        enum class IntPinPolarity : uint32
+        {
+                ACTIVE_HIGH = 0,
+                ACTIVE_LOW  = 1,
+        };
+
+        enum class IntTriggerMode : uint32
+        {
+                EDGE  = 0,
+                LEVEL = 1,
+        };
+
+        enum class DeliveryStatus : uint32
+        {
+                IDLE    = 0,
+                PENDING = 1,
+        };
+
+        enum class Mask : uint32
+        {
+                UNMASKED = 0,
+                MASKED   = 1,
+        };
+
+        enum class TimerMode : uint32
+        {
+                ONESHOT      = 0,
+                PERIODIC     = 1,
+                TSC_DEADLINE = 2,
+        };
+}
+
 
 struct LocalAPIC_InterruptCommandRegisterLow
 {
@@ -21,12 +85,14 @@ struct LocalAPIC_InterruptCommandRegisterLow
         volatile uint32 destination_shorthand : 2;  // 18-19
         volatile uint32 reserved3             : 12; // 20-31
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_InterruptCommandRegisterLow) == 4);
 
 struct LocalAPIC_InterruptCommandRegisterHigh
 {
         volatile uint32 reserved    : 24; //  0-23
         volatile uint32 destination : 8;  // 24-31
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_InterruptCommandRegisterHigh) == 4);
 
 struct LocalAPIC_SpuriousInterruptVector
 {
@@ -37,12 +103,14 @@ struct LocalAPIC_SpuriousInterruptVector
 
         void setSpuriousInterruptNumber(uint8 num) volatile;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_SpuriousInterruptVector) == 4);
 
 struct LocalAPIC_IDRegister
 {
         volatile uint32 reserved : 24;
         volatile uint32 id       : 8;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_IDRegister) == 4);
 
 struct LocalAPIC_VersionRegister
 {
@@ -52,6 +120,7 @@ struct LocalAPIC_VersionRegister
         volatile uint32 eoi_broadcast_suppression_supported  : 1;
         volatile uint32 reserved2                            : 7;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_VersionRegister) == 4);
 
 struct LocalAPIC_LVT_TimerRegister
 {
@@ -67,6 +136,7 @@ struct LocalAPIC_LVT_TimerRegister
         void setMode(uint8) volatile;
         void setMask(bool mask) volatile;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_LVT_TimerRegister) == 4);
 
 struct LocalAPIC_LVT_LINTRegister
 {
@@ -80,6 +150,7 @@ struct LocalAPIC_LVT_LINTRegister
         volatile uint32 mask            :  1;
         volatile uint32 reserved3       : 15;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_LVT_LINTRegister) == 4);
 
 struct LocalAPIC_LVT_ErrorRegister
 {
@@ -90,6 +161,7 @@ struct LocalAPIC_LVT_ErrorRegister
         volatile uint32 mask            :  1;
         volatile uint32 reserved3       : 15;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_LVT_ErrorRegister) == 4);
 
 struct LocalAPIC_ErrorStatusRegister
 {
@@ -103,6 +175,7 @@ struct LocalAPIC_ErrorStatusRegister
         volatile uint32 send_checksum_error     : 1;
         volatile uint32 reserved                : 24;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_ErrorStatusRegister) == 4);
 
 struct LocalAPIC_TimerDivideConfigRegister
 {
@@ -113,6 +186,7 @@ struct LocalAPIC_TimerDivideConfigRegister
 
         void setTimerDivisor(uint8 divisor) volatile;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_TimerDivideConfigRegister) == 4);
 
 struct LocalAPIC_PriorityRegister
 {
@@ -120,6 +194,7 @@ struct LocalAPIC_PriorityRegister
         volatile uint32 priority_class     : 4;
         volatile uint32 reserved           : 24;
 } __attribute__ ((packed));
+static_assert(sizeof(LocalAPIC_PriorityRegister) == 4);
 
 
 struct LocalAPICRegisters
@@ -146,7 +221,8 @@ struct LocalAPICRegisters
         volatile uint32 eoi; // 11
         volatile char padding6[12];
 
-        volatile char reserved[0x10]; // 12
+        volatile uint32 remote_read; // 12
+        volatile char reserved[12];
 
         volatile uint32 logical_destination; // 13
         volatile char padding7[12];
@@ -220,26 +296,12 @@ struct LocalAPICRegisters
 
         volatile char reserved6[0x10];
 } __attribute__((packed));
-
-//static_assert(sizeof(LocalAPICRegisters) == 0x400, "Incorrect local APIC register struct size");
+static_assert(sizeof(LocalAPICRegisters) == 0x400, "Incorrect local APIC register struct size");
 
 
 class LocalAPIC
 {
 public:
-        typedef enum
-        {
-                IPI_DEST_TARGET = 0,
-                IPI_DEST_ALL = 2,
-                IPI_DEST_OTHERS = 3,
-        } IPIDestination;
-
-        typedef enum
-        {
-                IPI_NORMAL = 0,
-                IPI_INIT = 5,
-                IPI_SIPI = 6,
-        } IPIType;
 
         explicit LocalAPIC();
         LocalAPIC(ACPI_MADTHeader*);
@@ -267,8 +329,10 @@ public:
         uint32 ID() const volatile;
 
         void startAP(uint8_t apic_id, size_t entry_addr) volatile;
-        void sendIPI(uint8 vector, IPIDestination dest_type = IPI_DEST_ALL, size_t target = -1, IPIType ipi_type = IPI_NORMAL) volatile;
-        void sendIPI(uint8 vector, const LocalAPIC& target) volatile;
+        void sendIPI(uint8 vector, LAPIC::IPIDestination dest_type = LAPIC::IPIDestination::ALL,
+                     size_t target = -1, LAPIC::IPIType ipi_type = LAPIC::IPIType::FIXED,
+                     bool wait_for_delivery = false) volatile;
+        void sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_delivery = false) volatile;
 
         bool usingAPICTimer();
 
