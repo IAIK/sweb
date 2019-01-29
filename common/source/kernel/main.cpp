@@ -164,10 +164,6 @@ extern "C" void startup()
   Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
   Scheduler::instance()->printThreadList();
 
-  debug(MAIN, "Now enabling Interrupts...\n");
-  system_state = RUNNING;
-
-
   debug(MAIN, "%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
   kprintf("%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
   for(auto cls : ArchMulticore::cpu_list_)
@@ -175,6 +171,10 @@ extern "C" void startup()
           debug(MAIN, "CPU %zu\n", cls->cpu_id);
           kprintf("CPU %zu\n", cls->cpu_id);
   }
+
+  debug(MAIN, "Now enabling Interrupts...\n");
+  system_state = RUNNING;
+
 
   ArchInterrupts::enableInterrupts();
 

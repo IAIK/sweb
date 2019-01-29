@@ -79,7 +79,6 @@ uint32 Scheduler::schedule()
     }
   }
 
-  //schedulable_threads = ustl::count_if(threads_.begin(), threads_.end(), [](Thread* t){ return t->schedulable();});
 
   if(it == threads_.end())
   {

@@ -46,3 +46,11 @@ public:
   static void yieldIfIFSet();
 };
 
+class WithDisabledInterrupts
+{
+public:
+        WithDisabledInterrupts();
+        ~WithDisabledInterrupts();
+private:
+        bool previous_state_;
+};

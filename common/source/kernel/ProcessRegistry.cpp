@@ -52,12 +52,6 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "Starting user processes\n");
 
-  while(1)
-  {
-          createProcess("/usr/helloworld.sweb");
-          //Scheduler::instance()->yield();
-  }
-
   for (uint32 i = 0; progs_[i]; i++)
   {
     debug(PROCESS_REG, "Starting %s\n", progs_[i]);

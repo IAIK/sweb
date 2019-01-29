@@ -148,7 +148,8 @@ bool ArchInterrupts::disableInterrupts()
       "popq %0\n"
       "cli"
       : "=a"(ret_val));
-  return (ret_val & (1 << 9));  //testing IF Flag
+  bool previous_state = (ret_val & (1 << 9));
+  return previous_state;  //testing IF Flag
 }
 
 bool ArchInterrupts::testIFSet()
@@ -303,4 +304,18 @@ extern "C" void arch_contextSwitch()
       "swapgs\n"
       "1: iretq\n");
   assert(false);
+}
+
+
+WithDisabledInterrupts::WithDisabledInterrupts()
+{
+  previous_state_ = ArchInterrupts::disableInterrupts();
+}
+
+WithDisabledInterrupts::~WithDisabledInterrupts()
+{
+  if(previous_state_)
+  {
+    ArchInterrupts::enableInterrupts();
+  }
 }

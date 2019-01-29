@@ -52,7 +52,25 @@ void LocalAPIC::sendEOI(__attribute__((unused)) size_t num)
   if(APIC & OUTPUT_ADVANCED)
   {
     debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
+    for(size_t i = 0; i < 256; ++i)
+    {
+            if(checkISR(i))
+            {
+                    debug(APIC, "CPU %zx, interrupt %zx being serviced\n", ArchMulticore::getCpuID(), i);
+            }
+    }
+    for(size_t i = 0; i < 256; ++i)
+    {
+            if(checkIRR(i))
+            {
+                    debug(APIC, "CPU %zx, interrupt %zx pending\n", ArchMulticore::getCpuID(), i);
+            }
+    }
   }
+
+  assert(!ArchInterrupts::testIFSet());
+  assert(checkISR(num));
+
   reg_vaddr_->eoi = 0;
 }
 
@@ -103,6 +121,7 @@ void LocalAPIC::enable(bool enable)
 void LocalAPIC::initTimer() volatile
 {
         debug(APIC, "Init timer for APIC %x\n", ID());
+        assert(!ArchInterrupts::testIFSet());
         reg_vaddr_->lvt_timer.setVector(0x20);
         reg_vaddr_->lvt_timer.setMode(1);
         reg_vaddr_->lvt_timer.setMask(true);
