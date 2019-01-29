@@ -50,10 +50,18 @@ bool SpinLock::acquireNonBlocking(pointer called_by)
 
 void SpinLock::acquire(pointer called_by)
 {
-  if(unlikely(system_state != RUNNING))
-    return;
   if(!called_by)
     called_by = getCalledBefore(1);
+
+  if(system_state == RUNNING)
+  {
+    debug(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", ArchMulticore::getCpuID(), getName(), this, called_by);
+  }
+  else
+  {
+    debug(LOCK, "acquiring spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
+  }
+
 //  debug(LOCK, "Spinlock::acquire: Acquire spinlock %s (%p) with thread %s (%p)\n",
 //        getName(), this, currentThread()->getName(), currentThread());
 //  if(kernel_debug_info)
@@ -80,7 +88,10 @@ void SpinLock::acquire(pointer called_by)
     while(ArchThreads::testSetLock(lock_, 1))
     {
       //SpinLock: Simplest of Locks, do the next best thing to busy waiting
-      Scheduler::instance()->yield();
+      if(currentThread && ArchInterrupts::testIFSet())
+      {
+        Scheduler::instance()->yield();
+      }
     }
     // Now we managed to acquire the spinlock. Remove the current thread from the waiters list.
     if(currentThread)
@@ -110,10 +121,18 @@ bool SpinLock::isFree()
 
 void SpinLock::release(pointer called_by)
 {
-  if(unlikely(system_state != RUNNING))
-    return;
   if(!called_by)
     called_by = getCalledBefore(1);
+
+  if(system_state == RUNNING)
+  {
+          debug(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", ArchMulticore::getCpuID(), getName(), this, called_by);
+  }
+  else
+  {
+          debug(LOCK, "releasing spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
+  }
+
 //  debug(LOCK, "Spinlock::release: Release spinlock %s (%p) with thread %s (%p)\n",
 //        getName(), this, currentThread()->getName(), currentThread());
 //  if(kernel_debug_info)

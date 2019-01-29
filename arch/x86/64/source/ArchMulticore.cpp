@@ -194,7 +194,8 @@ void ArchMulticore::initCLS(bool boot_cpu)
 
 bool ArchMulticore::CLSinitialized()
 {
-  return getFSBase() != 0;
+  bool init = (getFSBase() != 0);
+  return init;
 }
 
 void ArchMulticore::setCpuID(size_t id)
