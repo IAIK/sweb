@@ -129,8 +129,7 @@ void kprintf_func(int ch, void *arg __attribute__((unused)))
   if(kprintf_initialized)
   {
     //check if atomar or not in current context
-    if (((system_state == RUNNING) && ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
-        || (main_console->areLocksFree() && main_console->getActiveTerminal()->isLockFree()))
+    if((system_state == RUNNING) && ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled())
     {
       main_console->getActiveTerminal()->write(ch);
     }

@@ -16,11 +16,6 @@ Console::Console(uint32, const char* name) : Thread(0, name, Thread::KERNEL_THRE
   debug(CONSOLE, "Created console at [%p, %p)\n", this, (char*)this + sizeof(*this));
 }
 
-bool Console::areLocksFree()
-{
-  return ((!(system_state == RUNNING) && !(ArchMulticore::numRunningCPUs() > 1)) || (console_lock_.isFree() && locked_for_drawing_ == 0));
-}
-
 void Console::lockConsoleForDrawing()
 {
   console_lock_.acquire(getCalledBefore(1));

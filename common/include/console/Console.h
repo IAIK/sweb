@@ -67,12 +67,6 @@ class Console : public Thread
     void lockConsoleForDrawing();
     void unLockConsoleForDrawing();
 
-    /**
-     * Checks if all Console locks are free.
-     * @return true if all locks are free
-     */
-    bool areLocksFree();
-
   protected:
 
     /**
