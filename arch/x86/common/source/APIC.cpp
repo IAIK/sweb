@@ -212,16 +212,16 @@ void LocalAPIC_TimerDivideConfigRegister::setTimerDivisor(uint8 divisor) volatil
 
 bool LocalAPIC::checkIRR(uint8 num) volatile
 {
-        uint8 byte_offset = num/8;
-        uint8 bit_offset = num % 8;
+        uint8 byte_offset = num/32;
+        uint8 bit_offset = num % 32;
 
         return reg_vaddr_->IRR[byte_offset].irr & (1 << bit_offset);
 }
 
 bool LocalAPIC::checkISR(uint8 num) volatile
 {
-        uint8 byte_offset = num/8;
-        uint8 bit_offset = num % 8;
+        uint8 byte_offset = num/32;
+        uint8 bit_offset = num % 32;
 
         return reg_vaddr_->ISR[byte_offset].isr & (1 << bit_offset);
 }
