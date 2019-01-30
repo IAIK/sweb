@@ -41,9 +41,8 @@ class Scheduler
      * this is the method that decides which threads will be scheduled next
      * it is called by either the timer interrupt handler or the yield interrupt handler
      * and changes the global variables currentThread and currentThreadRegisters
-     * @return 1 if the InterruptHandler should switch to Usercontext or 0 if we can stay in Kernelcontext
      */
-    uint32 schedule();
+    void schedule();
 
   protected:
     friend class IdleThread;

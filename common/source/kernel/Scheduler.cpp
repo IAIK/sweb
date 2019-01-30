@@ -42,7 +42,7 @@ Scheduler::Scheduler()
   debug(SCHEDULER, "Initializing scheduler END\n");
 }
 
-uint32 Scheduler::schedule()
+void Scheduler::schedule()
 {
   //debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread ? currentThread->getName() : "(nil)");
 
@@ -51,7 +51,7 @@ uint32 Scheduler::schedule()
   if(block_scheduling_.load() == ArchMulticore::getCpuID())
   {
     debug(SCHEDULER, "CPU %zu schedule: currently blocked by thread on own cpu\n", ArchMulticore::getCpuID());
-    return 0;
+    return;
   }
 
   lockScheduling(DEBUG_STR_HERE);
@@ -82,8 +82,8 @@ uint32 Scheduler::schedule()
 
   if(it == threads_.end())
   {
-          assert(idle_thread.schedulable());
-          currentThread = &idle_thread;
+    assert(idle_thread.schedulable());
+    currentThread = &idle_thread;
   }
 
   assert(currentThread);
@@ -107,19 +107,8 @@ uint32 Scheduler::schedule()
 
   //debug(SCHEDULER, "CPU %zu, new currentThread is %p %s, userspace: %d\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName(), currentThread->switch_to_userspace_);
 
-  uint32 ret = 1;
-
-  if (currentThread->switch_to_userspace_)
-  {
-    currentThreadRegisters = currentThread->user_registers_;
-  }
-  else
-  {
-    currentThreadRegisters = currentThread->kernel_registers_;
-    ret = 0;
-  }
-
-  return ret;
+  currentThreadRegisters = (currentThread->switch_to_userspace_ ? currentThread->user_registers_ :
+                                                                  currentThread->kernel_registers_);
 }
 
 void Scheduler::addNewThread(Thread *thread)

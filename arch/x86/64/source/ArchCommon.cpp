@@ -369,12 +369,13 @@ void ArchCommon::drawStat() {
     */
 }
 
+thread_local size_t heart_beat_value = 0;
+
 void ArchCommon::drawHeartBeat()
 {
   drawStat();
 
   const char* clock = "/-\\|";
-  static uint32 heart_beat_value = 0;
   char* fb = (char*)getFBPtr();
   size_t cpu_id = ArchMulticore::getCpuID();
   fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
