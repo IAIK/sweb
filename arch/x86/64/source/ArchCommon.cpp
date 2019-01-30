@@ -381,8 +381,6 @@ void ArchCommon::drawHeartBeat()
   fb[1 + cpu_id*2] = (char)(Scheduler::instance()->isSchedulingEnabled() ?
                             ((Console::BRIGHT_BLUE << 4) | Console::BRIGHT_WHITE) :
                             ((Console::RED << 4) | Console::BRIGHT_WHITE));
-
-
 }
 
 

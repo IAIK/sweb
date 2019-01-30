@@ -5,6 +5,7 @@
 #include "PageManager.h"
 #include "kstring.h"
 #include "ArchMulticore.h"
+#include "ArchCommon.h"
 
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -75,8 +76,8 @@ void ArchMemory::insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero,
 {
   assert(map_ptr & ~0xFFFFF00000000000ULL);
   T* map = (T*) map_ptr;
-  debug(A_MEMORY, "%s: page %p index %zx ppn %zx user_access %zx size %zx\n", __PRETTY_FUNCTION__, map, index, ppn,
-        user_access, size);
+  debug(A_MEMORY, "%s: page %p index %zx ppn %zx user_access %zx size %zx\n",
+        __PRETTY_FUNCTION__, map, index, ppn, user_access, size);
   if (bzero)
   {
     memset((void*) getIdentAddressOfPPN(ppn), 0, PAGE_SIZE);
@@ -357,47 +358,92 @@ void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
 
 void ArchMemory::flushLocalTranslationCaches(size_t addr)
 {
-        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
-        __asm__ __volatile__("invlpg %[addr]\n"
-                             :
-                             :[addr]"m"(*(char*)addr));
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+    debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
+  }
+  __asm__ __volatile__("invlpg %[addr]\n"
+                       :
+                       :[addr]"m"(*(char*)addr));
 }
+
+ustl::atomic<size_t> shootdown_request_counter;
 
 void ArchMemory::flushAllTranslationCaches(size_t addr)
 {
+
+        assert(ArchMulticore::cpu_list_.size() >= 1);
+        ustl::vector<TLBShootdownRequest> shootdown_requests{ArchMulticore::cpu_list_.size()};
+        //TLBShootdownRequest shootdown_requests[ArchMulticore::cpu_list_.size()]; // Assuming the kernel stack is large enough as long as we only have a few CPUs
+
+        bool interrupts_enabled = ArchInterrupts::disableInterrupts();
         flushLocalTranslationCaches(addr);
 
-        TLBShootdownRequest shootdown_request;
-        shootdown_request.addr = addr;
-        shootdown_request.ack = 0;
-        shootdown_request.next = nullptr;
+        auto orig_cpu = ArchMulticore::getCpuID();
 
-        size_t num_shootdowns = 0;
+        ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = 's';
 
         /////////////////////////////////////////////////////////////////////////////////
         // Thread may be re-scheduled on a different CPU while sending TLB shootdowns  //
         // This is fine, since a context switch also invalidates the TLB               //
         // A CPU sending a TLB shootdown to itself is also fine                        //
         /////////////////////////////////////////////////////////////////////////////////
+        size_t request_id = ++shootdown_request_counter;
+
+        for(auto& r : shootdown_requests)
+        {
+                r.addr = addr;
+                r.ack = 0;
+                r.target = (size_t)-1;
+                r.next = nullptr;
+                r.orig_cpu = orig_cpu;
+                r.request_id = request_id;
+        }
+
+
+        shootdown_requests[orig_cpu].ack |= (1 << orig_cpu);
+
+        size_t sent_shootdowns = 0;
 
         for(auto& cpu : ArchMulticore::cpu_list_)
         {
-                if(cpu->getCpuID() != cpu_info.getCpuID())
+                size_t cpu_id = cpu->getCpuID();
+                shootdown_requests[cpu_id].target = cpu_id;
+                if(cpu->getCpuID() != orig_cpu)
                 {
-                        debug(MAIN, "CPU %zx Sending TLB shootdown for addr %zx to CPU %zx\n", ArchMulticore::getCpuID(), addr, cpu->getCpuID());
-                        ++num_shootdowns;
+                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", ArchMulticore::getCpuID(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
+                        assert(ArchMulticore::getCpuID() == orig_cpu);
+                        assert(cpu_id != orig_cpu);
+                        sent_shootdowns |= (1 << cpu_id);
 
                         TLBShootdownRequest* expected_next = nullptr;
                         do
                         {
-                                expected_next = cpu->tlb_shootdown_list.load();
-                                shootdown_request.next = expected_next;
-                        } while(!cpu->tlb_shootdown_list.compare_exchange_weak(expected_next, &shootdown_request));
+                                shootdown_requests[cpu_id].next = expected_next;
+                        } while(!cpu->tlb_shootdown_list.compare_exchange_weak(expected_next, &shootdown_requests[cpu_id]));
 
-                        cpu_info.lapic.sendIPI(99, cpu->lapic);
+                        assert(cpu->lapic.ID() == cpu_id);
+                        asm("mfence\n");
+                        cpu_info.lapic.sendIPI(99, cpu->lapic, true);
+                }
+        }
+        assert(!(sent_shootdowns & (1 << orig_cpu)));
+
+        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", ArchMulticore::getCpuID(), sent_shootdowns);
+
+        if(interrupts_enabled) ArchInterrupts::enableInterrupts();
+
+        for(auto& r : shootdown_requests)
+        {
+                if(r.target != orig_cpu)
+                {
+                        do
+                        {
+                                assert((r.ack.load() &~ sent_shootdowns) == 0);
+                        }
+                        while(r.ack.load() == 0);
                 }
         }
 
-        debug(MAIN, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", ArchMulticore::getCpuID(), num_shootdowns);
-        while(shootdown_request.ack.load() != num_shootdowns);
+        ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = ' ';
 }

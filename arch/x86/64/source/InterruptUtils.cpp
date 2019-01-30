@@ -214,13 +214,9 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  //debug(A_INTERRUPTS, "IRQ 65 called by core %zx\n", ArchMulticore::getCpuID());
-  //debug(A_INTERRUPTS, "Switching to stack [%p, %p)\n", scheduling_stack, scheduling_stack + PAGE_SIZE);
-  //((char*)ArchCommon::getFBPtr())[2*2 + 1 + ArchMulticore::getCpuID()*2] = ((Console::BROWN << 4) | Console::BRIGHT_WHITE);
   asm volatile("movq %[scheduling_stack], %%rsp\n"
                ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
   Scheduler::instance()->schedule();
-  //((char*)ArchCommon::getFBPtr())[2*2 + 1 + ArchMulticore::getCpuID()*2] = ((Console::BLACK << 4) | Console::BRIGHT_WHITE);
   arch_contextSwitch();
   assert(false);
 }
@@ -339,14 +335,28 @@ extern "C" void irqHandler_99()
         debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", ArchMulticore::getCpuID());
 
         TLBShootdownRequest* shootdown_list = cpu_info.tlb_shootdown_list.exchange(nullptr);
-        //assert(shootdown_list != nullptr);
+
+        if(shootdown_list == nullptr)
+        {
+                debug(A_INTERRUPTS, "TLB shootdown for CPU %zx already handled previously\n", ArchMulticore::getCpuID());
+        }
 
         while(shootdown_list != nullptr)
         {
+                debug(A_INTERRUPTS, "CPU %zx performing TLB shootdown for request %zx, addr %zx from CPU %zx, target %zx\n", ArchMulticore::getCpuID(), shootdown_list->request_id, shootdown_list->addr, shootdown_list->orig_cpu, shootdown_list->target);
+                assert(shootdown_list->target == ArchMulticore::getCpuID());
+                assert(cpu_info.getCpuID() == ArchMulticore::getCpuID());
+                assert(cpu_info.lapic.ID() == ArchMulticore::getCpuID());
+                assert(cpu_info.lapic.readID() == ArchMulticore::getCpuID());
                 ArchMemory::flushLocalTranslationCaches(shootdown_list->addr);
 
                 TLBShootdownRequest* next = shootdown_list->next;
-                shootdown_list->ack++; // Object is invalid as soon as we acknowledge it
+                // Object is invalid as soon as we acknowledge it
+                //shootdown_list->ack++;
+                assert((shootdown_list->ack & (1 << ArchMulticore::getCpuID())) == 0);
+                assert(shootdown_list->orig_cpu != ArchMulticore::getCpuID());
+
+                shootdown_list->ack |= (1 << ArchMulticore::getCpuID());
                 assert(shootdown_list != next);
                 shootdown_list = next;
         }

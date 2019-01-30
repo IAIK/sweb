@@ -164,5 +164,8 @@ struct TLBShootdownRequest
 {
         size_t addr;
         ustl::atomic<size_t> ack;
+        size_t target;
         ustl::atomic<TLBShootdownRequest*> next;
+        size_t request_id;
+        size_t orig_cpu;
 };
