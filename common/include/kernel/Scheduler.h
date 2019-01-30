@@ -77,7 +77,6 @@ class Scheduler
     ustl::atomic<size_t> block_scheduling_;
     volatile Thread* scheduling_blocked_by_ = nullptr;
     volatile char* locked_at_ = nullptr;
-    volatile size_t locked_by_cpu_ = -1;
 
     size_t ticks_;
 

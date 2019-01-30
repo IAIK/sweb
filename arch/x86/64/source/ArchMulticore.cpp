@@ -204,7 +204,7 @@ void ArchMulticore::setCpuID(size_t id)
   cpu_info.cpu_id = id;
 }
 
-size_t ArchMulticore::getCpuID()
+size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
 {
   assert(CLSinitialized());
   return cpu_info.getCpuID();
