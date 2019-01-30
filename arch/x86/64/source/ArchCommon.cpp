@@ -379,9 +379,6 @@ void ArchCommon::drawHeartBeat()
   char* fb = (char*)getFBPtr();
   size_t cpu_id = ArchMulticore::getCpuID();
   fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
-  fb[1 + cpu_id*2] = (char)(Scheduler::instance()->isSchedulingEnabled() ?
-                            ((Console::BRIGHT_BLUE << 4) | Console::BRIGHT_WHITE) :
-                            ((Console::RED << 4) | Console::BRIGHT_WHITE));
 }
 
 

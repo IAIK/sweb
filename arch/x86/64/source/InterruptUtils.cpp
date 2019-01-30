@@ -206,6 +206,11 @@ extern "C" void irqHandler_0()
                ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
   Scheduler::instance()->schedule();
 
+  ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
+          ((currentThread == &idle_thread ? (Console::RED << 4) :
+                                            (Console::BRIGHT_BLUE << 4)) |
+           Console::BRIGHT_WHITE);
+
   endIRQ(0);
   arch_contextSwitch();
   assert(false);
@@ -217,6 +222,12 @@ extern "C" void irqHandler_65()
   asm volatile("movq %[scheduling_stack], %%rsp\n"
                ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
   Scheduler::instance()->schedule();
+
+  ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
+          ((currentThread == &idle_thread ? (Console::RED << 4) :
+                                            (Console::BRIGHT_BLUE << 4)) |
+           Console::BRIGHT_WHITE);
+
   arch_contextSwitch();
   assert(false);
 }
