@@ -22,10 +22,9 @@ class MallocSegment
       freed_at_(0),
       alloc_at_(0)
     {
-      size_flag_ = (size & 0x7FFFFFFF); //size to max 2^31-1
-      if (used)
-        size_flag_ |= 0x80000000; //this is the used flag
-
+      assert(size <= 0x7FFFFFFF);
+      setSize(size);
+      setUsed(used);
     }
 
     size_t getSize()
@@ -50,6 +49,8 @@ class MallocSegment
       if (used)
         size_flag_ |= 0x80000000; //this is the used flag
     }
+
+    void checkCanary();
 
     uint32 marker_; // = 0xdeadbeef;
     MallocSegment *next_; // = NULL;
@@ -162,6 +163,4 @@ class KernelMemoryManager
 
     uint32 segments_used_;
     uint32 segments_free_;
-    size_t approx_memory_free_;
 };
-

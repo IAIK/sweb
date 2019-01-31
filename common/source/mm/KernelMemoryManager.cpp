@@ -28,25 +28,31 @@ KernelMemoryManager* KernelMemoryManager::instance()
   return instance_;
 }
 
+
 KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages) :
-        tracing_(false), lock_("KMM::lock_"), segments_used_(0), segments_free_(0), approx_memory_free_(0)
+        tracing_(false), lock_("KMM::lock_"), segments_used_(0), segments_free_(0)
 {
   debug(KMM, "Initializing KernelMemoryManager\n");
+
   assert(instance_ == 0);
   instance_ = this;
+
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   assert(((start_address) % PAGE_SIZE) == 0);
   base_break_ = start_address;
   kernel_break_ = start_address + min_heap_pages * PAGE_SIZE;
   reserved_min_ = min_heap_pages * PAGE_SIZE;
   reserved_max_ = max_heap_pages * PAGE_SIZE;
+
   debug(KMM, "Clearing initial heap pages\n");
   memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);
+
   first_ = (MallocSegment*)start_address;
-  new ((void*)start_address) MallocSegment(0, 0, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
+  new (first_) MallocSegment(0, 0, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
 }
+
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer called_by)
 {
@@ -64,6 +70,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer calle
   debug(KMM, "allocateMemory returns address: %zx \n", ptr);
   return ptr;
 }
+
+
 pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
   assert((requested_size & 0xF) == 0 && "Attempt to allocate block with unaligned size");
@@ -110,6 +118,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
   unlockKMM();
   return true;
 }
+
 
 pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by)
 {
@@ -181,36 +190,37 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   }
 }
 
+
 MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_address)
 {
   MallocSegment *m_segment;
   m_segment = (MallocSegment*) (virtual_address - sizeof(MallocSegment));
   assert(virtual_address != 0 && m_segment != 0 && "trying to access a nullpointer");
-  assert(m_segment->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  m_segment->checkCanary();
   return m_segment;
 }
+
 
 MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 {
   if(KMM & OUTPUT_ADVANCED)
-          debug(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n", requested_size + sizeof(MallocSegment));
+    debug(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n",
+          requested_size + sizeof(MallocSegment));
 
   MallocSegment *current = first_;
   while (current != 0)
   {
     if(KMM & OUTPUT_ADVANCED)
-            debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n", current, current->getSize() + sizeof(MallocSegment),
-          current->getUsed());
-    if(current->marker_ != 0xdeadbeef)
-    {
-            debug(KMM, "Memory corruption in segment %p, size: %zx, marker: %x at %p, alloc at: %zx, freed at: %zx\n", current, current->getSize(), current->marker_, &(current->marker_), current->alloc_at_, current->freed_at_);
-    }
-    assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+      debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n",
+            current, current->getSize() + sizeof(MallocSegment), current->getUsed());
+
+    current->checkCanary();
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
       return current;
 
     current = current->next_;
   }
+
   // No free segment found, could we allocate more memory?
   if(last_->getUsed())
   {
@@ -230,22 +240,42 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   return last_;
 }
 
+
 void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_size, uint32 zero_check)
 {
   assert(this_one != 0 && "trying to access a nullpointer");
-  assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  this_one->checkCanary();
   assert(this_one->getSize() >= requested_size && "segment is too small for requested size");
   assert((requested_size & 0xF) == 0 && "Attempt to fill segment with unaligned size");
 
-  uint32* mem = (uint32*) (this_one + 1);
+  size_t* mem = (size_t*) (this_one + 1);
+  uint8* memb = (uint8*)mem;
+  // sizeof(size_t) steps
   if (zero_check)
   {
-    for (uint32 i = 0; i < requested_size / 4; ++i)
+    for (size_t i = 0; i < this_one->getSize() / sizeof(*mem); ++i)
     {
       if(unlikely(mem[i] != 0))
       {
-
-        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%x)\n", mem + i, mem[i]);
+        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%zx)\n", mem + i, mem[i]);
+        if(this_one->freed_at_)
+        {
+          if(kernel_debug_info)
+          {
+            kprintfd("KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
+            kernel_debug_info->printCallInformation(this_one->freed_at_);
+          }
+          assert(false);
+        }
+        mem[i] = 0;
+      }
+    }
+    // handle remaining bytes
+    for(size_t i = this_one->getSize() - (this_one->getSize() % sizeof(*mem)); i < this_one->getSize(); ++i)
+    {
+      if(unlikely(memb[i] != 0))
+      {
+        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%x)\n", memb + i, memb[i]);
         if(this_one->freed_at_)
         {
           if(kernel_debug_info)
@@ -260,13 +290,12 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     }
   }
 
-  size_t space_left = this_one->getSize() - requested_size;
-
   //size stays as it is, if there would be no more space to add a new segment
   this_one->setUsed(true);
   assert(this_one->getUsed() == true && "trying to fill an unused segment");
 
   //add a free segment after this one, if there's enough space
+  size_t space_left = this_one->getSize() - requested_size;
   if (space_left > sizeof(MallocSegment))
   {
     this_one->setSize(requested_size);
@@ -274,11 +303,11 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     assert(this_one->getUsed() == true && "trying to fill an unused segment");
 
     MallocSegment *new_segment =
-        new ((void*) (((pointer) this_one) + sizeof(MallocSegment) + requested_size)) MallocSegment(
-            this_one, this_one->next_, space_left - sizeof(MallocSegment), false);
+            new ((void*) (((pointer)(this_one + 1)) + requested_size)) MallocSegment(
+                    this_one, this_one->next_, space_left - sizeof(MallocSegment), false);
     if (this_one->next_ != 0)
     {
-      assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+      this_one->next_->checkCanary();
       this_one->next_->prev_ = new_segment;
     }
     this_one->next_ = new_segment;
@@ -289,11 +318,12 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
   debug(KMM, "fillSegment: filled memory block of bytes: %zd \n", this_one->getSize() + sizeof(MallocSegment));
 }
 
+
 void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 {
   debug(KMM, "KernelMemoryManager::freeSegment(%p)\n", this_one);
   assert(this_one != 0 && "trying to access a nullpointer");
-  assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  this_one->checkCanary();
 
   if (this_one->getUsed() == false)
   {
@@ -316,7 +346,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
   if (this_one->prev_ != 0)
   {
-    assert(this_one->prev_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+    this_one->prev_->checkCanary();
     if (this_one->prev_->getUsed() == false)
     {
       size_t my_true_size = (
@@ -325,11 +355,11 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
       MallocSegment *previous_one = this_one->prev_;
 
-      previous_one->setSize(my_true_size + previous_one->getSize());
+      previous_one->setSize(previous_one->getSize() + my_true_size);
       previous_one->next_ = this_one->next_;
       if (this_one->next_ != 0)
       {
-        assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+        this_one->next_->checkCanary();
         this_one->next_->prev_ = previous_one;
       }
       else
@@ -364,7 +394,8 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       if((size_t)this_one > base_break_ + reserved_min_)
       {
         // Case 1
-        assert(this_one && this_one->prev_ && this_one->prev_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+        assert(this_one && this_one->prev_);
+        this_one->prev_->checkCanary();
         this_one->prev_->next_ = 0;
         last_ = this_one->prev_;
         ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
@@ -402,21 +433,22 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       if(KMM & OUTPUT_ADVANCED)
               debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %zd used: %d\n", current, current->prev_,
             current->next_, current->getSize() + sizeof(MallocSegment), current->getUsed());
-      assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+      current->checkCanary();
       current = current->next_;
     }
 
   }
 }
 
+
 bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 {
   assert(this_one != 0 && "trying to access a nullpointer");
-  assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  this_one->checkCanary();
 
   if (this_one->next_ != 0)
   {
-    assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+    this_one->next_->checkCanary();
     if (this_one->next_->getUsed() == false)
     {
       MallocSegment *next_one = this_one->next_;
@@ -428,7 +460,7 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
       this_one->next_ = next_one->next_;
       if (next_one->next_ != 0)
       {
-        assert(next_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+        next_one->next_->checkCanary();
         next_one->next_->prev_ = this_one;
       }
 
@@ -444,10 +476,11 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
   return false;
 }
 
+
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
   assert(base_break_ <= (size_t)kernel_break_ + size && "kernel heap break value corrupted");
-  assert((reserved_max_ == 0 || ((kernel_break_ - base_break_) + size) <= reserved_max_) && "maximum kernel heap size reached");
+  assert((((kernel_break_ - base_break_) + size) <= reserved_max_) && "maximum kernel heap size reached");
   assert(DYNAMIC_KMM && "ksbrk should only be called if DYNAMIC_KMM is 1 - not in baseline SWEB");
   if(size != 0)
   {
@@ -496,14 +529,15 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
   }
 }
 
+
 Thread* KernelMemoryManager::KMMLockHeldBy()
 {
   return lock_.heldBy();
 }
 
+
 void KernelMemoryManager::lockKMM()
 {
-  //assert((!(system_state == RUNNING) || (PageManager::instance()->heldBy() != currentThread)) && "You're abusing the PageManager lock");
   if(system_state == RUNNING)
   {
     debug(KMM, "CPU %zx lock KMM\n", ArchMulticore::getCpuID());
@@ -512,9 +546,9 @@ void KernelMemoryManager::lockKMM()
   lock_.acquire(getCalledBefore(1));
 }
 
+
 void KernelMemoryManager::unlockKMM()
 {
-  //assert((!(system_state == RUNNING) || PageManager::instance()->heldBy() != currentThread) && "You're abusing the PageManager lock");
   if(system_state == RUNNING)
   {
           debug(KMM, "CPU %zx unlock KMM\n", ArchMulticore::getCpuID());
@@ -522,10 +556,12 @@ void KernelMemoryManager::unlockKMM()
   lock_.release(getCalledBefore(1));
 }
 
+
 SpinLock& KernelMemoryManager::getKMMLock()
 {
   return lock_;
 }
+
 
 size_t KernelMemoryManager::getUsedKernelMemory(bool show_allocs = false) {
     MallocSegment *current = first_;
@@ -554,10 +590,31 @@ size_t KernelMemoryManager::getUsedKernelMemory(bool show_allocs = false) {
     return size;
 }
 
+
 void KernelMemoryManager::startTracing() {
     tracing_ = true;
 }
 
+
 void KernelMemoryManager::stopTracing() {
     tracing_ = false;
+}
+
+
+void MallocSegment::checkCanary()
+{
+  if(marker_ != 0xdeadbeef)
+  {
+    kprintfd("Memory corruption in KMM segment %p, size: %zx, marker: %x at %p, alloc at: %zx, freed at: %zx\n",
+             this, getSize(), marker_, &marker_, alloc_at_, freed_at_);
+    if(freed_at_)
+    {
+      if(kernel_debug_info)
+      {
+        kprintfd("The segment may have previously been freed at: ");
+        kernel_debug_info->printCallInformation(freed_at_);
+      }
+    }
+    assert(false && "memory corruption - probably 'write after delete'");
+  }
 }
