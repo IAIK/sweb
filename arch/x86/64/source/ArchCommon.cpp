@@ -295,8 +295,6 @@ void ArchCommon::idle()
 }
 
 #define STATS_OFFSET 22
-#define FREE_PAGES_OFFSET STATS_OFFSET + 11*2
-#define SCHEDULABLE_THREADS_OFFSET 10
 
 void ArchCommon::drawStat() {
     const char* text  = "Free pages      F9 MemInfo   F10 Locks   F11 Stacktrace   F12 Threads";
@@ -306,21 +304,35 @@ void ArchCommon::drawStat() {
     size_t i = 0;
     while(text[i]) {
         fb[i * 2 + STATS_OFFSET] = text[i];
-        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? 0x80 : 0x08);
+        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? ((Console::BLACK) | (Console::DARK_GREY << 4)) :
+                                                                ((Console::DARK_GREY) | (Console::BLACK << 4)));
         i++;
     }
 
     char itoa_buffer[33];
+
+#define STATS_FREE_PAGES_START (STATS_OFFSET + 11*2)
+    memset(fb + STATS_FREE_PAGES_START, 0, 4*2);
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(PageManager::instance()->getNumFreePages(), itoa_buffer, 10);
-    //memset(fb + FREE_PAGES_OFFSET, 0, 4*2);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
-      fb[i * 2 + FREE_PAGES_OFFSET] = itoa_buffer[i];
+      fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];
+      fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
+    }
+
+#define STATS_NUM_THREADS_START (80*2 + 73*2)
+    memset(fb + STATS_NUM_THREADS_START, 0, 4*2);
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->num_threads, itoa_buffer, 10);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[STATS_NUM_THREADS_START + i * 2] = itoa_buffer[i];
+            fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
     }
 
     /*
-
+#define SCHEDULABLE_THREADS_OFFSET 10
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(Scheduler::instance()->schedulable_threads, itoa_buffer, 10);
     memset(fb + SCHEDULABLE_THREADS_OFFSET, 0, 6*2);

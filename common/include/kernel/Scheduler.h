@@ -85,5 +85,5 @@ class Scheduler
 public:
     ThreadList threads_;
 
-    size_t schedulable_threads;
+    ustl::atomic<size_t> num_threads;
 };

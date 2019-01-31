@@ -123,6 +123,7 @@ void Scheduler::addNewThread(Thread *thread)
   lockScheduling(DEBUG_STR_HERE);
   KernelMemoryManager::instance()->getKMMLock().release();
   threads_.push_back(thread);
+  ++num_threads;
   unlockScheduling(DEBUG_STR_HERE);
 }
 
@@ -159,26 +160,29 @@ void Scheduler::cleanupDeadThreads()
      functionality could be implemented more cleanly in another place.
      (e.g. Thread/Process destructor) */
 
-  //debug(SCHEDULER, "cleanupDeadThreads lock scheduling\n");
   lockScheduling(DEBUG_STR_HERE);
   uint32 thread_count_max = threads_.size();
   if (thread_count_max > 1024)
     thread_count_max = 1024;
   Thread* destroy_list[thread_count_max];
   uint32 thread_count = 0;
-  for (uint32 i = 0; i < threads_.size(); ++i)
+
+  auto it = threads_.begin();
+  while(it != threads_.end())
   {
-    Thread* tmp = threads_[i];
-    if ((tmp->getState() == ToBeDestroyed) && (tmp->currently_scheduled_on_cpu_ == (size_t)-1))
+    Thread* t = *it;
+    if ((t->getState() == ToBeDestroyed) && (t->currently_scheduled_on_cpu_ == (size_t)-1))
     {
-      destroy_list[thread_count++] = tmp;
-      threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
-      --i;
+      destroy_list[thread_count++] = t;
+      it = threads_.erase(it); // Note: erase will not realloc!
+      --num_threads;
+
+      if (thread_count >= thread_count_max)
+        break;
     }
-    if (thread_count >= thread_count_max)
-      break;
+    else
+      ++it;
   }
-  //debug(SCHEDULER, "cleanupDeadThreads unlock scheduling\n");
   unlockScheduling(DEBUG_STR_HERE);
   if (thread_count > 0)
   {
