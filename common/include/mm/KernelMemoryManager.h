@@ -50,7 +50,7 @@ class MallocSegment
         size_flag_ |= 0x80000000; //this is the used flag
     }
 
-    void checkCanary();
+    bool checkCanary();
 
     uint32 marker_; // = 0xdeadbeef;
     MallocSegment *next_; // = NULL;
@@ -135,7 +135,8 @@ class KernelMemoryManager
 
     void freeSegment(MallocSegment *this_one);
     MallocSegment *getSegmentFromAddress(pointer virtual_address);
-    bool mergeWithFollowingFreeSegment(MallocSegment *this_one);
+
+    MallocSegment* mergeSegments(MallocSegment* s1, MallocSegment* s2);
 
     /**
      * This really implements the allocateMemory behaviour, but 

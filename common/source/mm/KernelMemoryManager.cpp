@@ -50,6 +50,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   first_ = (MallocSegment*)start_address;
   new (first_) MallocSegment(0, 0, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
+
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
 }
 
@@ -135,10 +136,12 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
 
   // 16 byte alignment
   new_size = (new_size + 0xF) & ~0xF;
+  assert((new_size & 0xF) == 0 && "BUG: segment size must be aligned");
 
   lockKMM();
 
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
+  assert(m_segment->getUsed());
 
   if (new_size == m_segment->getSize())
   {
@@ -155,14 +158,14 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   else
   {
     //maybe we can solve this the easy way...
-    if (m_segment->next_ != 0)
-      if (m_segment->next_->getUsed() == false && m_segment->next_->getSize() + m_segment->getSize() >= new_size)
-      {
-        mergeWithFollowingFreeSegment(m_segment);
-        fillSegment(m_segment, new_size, 0);
-        unlockKMM();
-        return virtual_address;
-      }
+    if (m_segment->next_ && !m_segment->next_->getUsed() && (m_segment->getSize() + m_segment->next_->getSize() >= new_size))
+    {
+      auto s = mergeSegments(m_segment, m_segment->next_);
+      assert(s == m_segment);
+      assert(m_segment->getSize() >= new_size);
+      unlockKMM();
+      return virtual_address;
+    }
 
     //or not.. lets search for larger space
 
@@ -314,6 +317,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 
     if (new_segment->next_ == 0)
       last_ = new_segment;
+
   }
   debug(KMM, "fillSegment: filled memory block of bytes: %zd \n", this_one->getSize() + sizeof(MallocSegment));
 }
@@ -340,47 +344,15 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     assert(false);
   }
 
-  debug(KMM, "fillSegment: freeing block: %p of bytes: %zd \n", this_one, this_one->getSize() + sizeof(MallocSegment));
+  debug(KMM, "fillSegment: freeing block: %p of bytes: %zd \n",
+        this_one, this_one->getSize() + sizeof(MallocSegment));
 
   this_one->setUsed(false);
 
-  if (this_one->prev_ != 0)
-  {
-    this_one->prev_->checkCanary();
-    if (this_one->prev_->getUsed() == false)
-    {
-      size_t my_true_size = (
-          (this_one->next_ == 0) ? kernel_break_ - ((pointer) this_one) :
-                                   ((pointer) this_one->next_) - ((pointer) this_one));
+  this_one = mergeSegments(this_one, this_one->prev_);
+  this_one = mergeSegments(this_one, this_one->next_);
 
-      MallocSegment *previous_one = this_one->prev_;
-
-      previous_one->setSize(previous_one->getSize() + my_true_size);
-      previous_one->next_ = this_one->next_;
-      if (this_one->next_ != 0)
-      {
-        this_one->next_->checkCanary();
-        this_one->next_->prev_ = previous_one;
-      }
-      else
-      {
-    	  assert(this_one == last_ && "this should never happen, there must be a bug in KMM");
-    	  last_ = previous_one;
-      }
-
-      debug(KMM, "freeSegment: post premerge, pre postmerge\n");
-      debug(KMM, "freeSegment: previous_one: %p size: %zd used: %d\n", previous_one,
-            previous_one->getSize() + sizeof(MallocSegment), previous_one->getUsed());
-      debug(KMM, "freeSegment: this_one: %p size: %zd used: %d\n", this_one, this_one->getSize() + sizeof(MallocSegment),
-            this_one->getUsed());
-
-      this_one = previous_one;
-    }
-  }
-
-  mergeWithFollowingFreeSegment(this_one);
-
-  memset((void*) ((size_t) this_one + sizeof(MallocSegment)), 0, this_one->getSize()); // ease debugging
+  memset((void*)(this_one + 1), 0, this_one->getSize()); // ease debugging
 
   // Change break if this is the last segment
   if(this_one == last_)
@@ -439,43 +411,6 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
   }
 }
-
-
-bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
-{
-  assert(this_one != 0 && "trying to access a nullpointer");
-  this_one->checkCanary();
-
-  if (this_one->next_ != 0)
-  {
-    this_one->next_->checkCanary();
-    if (this_one->next_->getUsed() == false)
-    {
-      MallocSegment *next_one = this_one->next_;
-      size_t true_next_size = (
-          (next_one->next_ == 0) ? kernel_break_ - ((pointer) next_one) :
-                                   ((pointer) next_one->next_) - ((pointer) next_one));
-
-      this_one->setSize(this_one->getSize() + true_next_size);
-      this_one->next_ = next_one->next_;
-      if (next_one->next_ != 0)
-      {
-        next_one->next_->checkCanary();
-        next_one->next_->prev_ = this_one;
-      }
-
-      memset((void*) next_one, 0, sizeof(MallocSegment));
-
-      //have to check again, could have changed...
-      if (this_one->next_ == 0)
-        last_ = this_one;
-
-      return true;
-    }
-  }
-  return false;
-}
-
 
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
@@ -601,7 +536,7 @@ void KernelMemoryManager::stopTracing() {
 }
 
 
-void MallocSegment::checkCanary()
+bool MallocSegment::checkCanary()
 {
   if(marker_ != 0xdeadbeef)
   {
@@ -617,4 +552,57 @@ void MallocSegment::checkCanary()
     }
     assert(false && "memory corruption - probably 'write after delete'");
   }
+  return true;
+}
+
+
+
+MallocSegment* KernelMemoryManager::mergeSegments(MallocSegment* s1, MallocSegment* s2)
+{
+        assert(s1);
+        if(s1) s1->checkCanary();
+        if(s2) s2->checkCanary();
+
+        if(s1 == s2) return s1;
+        if(!s2) return s1;
+
+        // Only merge if the segment we want to merge with is not in use
+        if(s2->getUsed()) return s1;
+
+        if(s2 < s1)
+        {
+                MallocSegment* tmp = s1;
+                s1 = s2;
+                s2 = tmp;
+        }
+
+        // Can merge a used segment with an unused one following it but not the other way around
+        assert(!s2->getUsed());
+
+        size_t s2_true_size = (s2->next_ ? (pointer)s2->next_ : kernel_break_) - (pointer)s2;
+        debug(KMM, "mergeSegments %p [%zx] + %p [%zx] => %p [%zx]\n",
+              s1, s1->getSize() + sizeof(*s1), s2, s2->getSize() + sizeof(*s2),
+              s1, sizeof(*s1) + s1->getSize() + s2_true_size);
+
+
+        assert(s1->next_ == s2);
+        assert(((pointer)(s1+1) + s1->getSize()) == (pointer)s2);
+
+
+        s1->setSize(s1->getSize() + s2_true_size);
+        s1->next_ = s2->next_;
+        if(s2->next_)
+        {
+                s2->next_->checkCanary();
+                s2->next_->prev_ = s1;
+        }
+        else
+        {
+                assert(s2 == last_ && "this should never happen, there must be a bug in KMM");
+                last_ = s1;
+        }
+
+        memset(s2, 0, sizeof(*s2));
+
+        return s1;
 }
