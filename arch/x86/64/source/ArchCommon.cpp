@@ -13,6 +13,7 @@
 #include "ACPI.h"
 #include "ArchMulticore.h"
 #include "SegmentUtils.h"
+#include "Scheduler.h"
 
 extern void* kernel_end_address;
 

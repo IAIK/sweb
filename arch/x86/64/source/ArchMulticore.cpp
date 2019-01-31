@@ -8,6 +8,8 @@
 #include "Thread.h"
 #include "MutexLock.h"
 #include "uatomic.h"
+#include "Scheduler.h"
+#include "ArchThreads.h"
 
 __thread GDT cpu_gdt;
 __thread TSS cpu_tss;

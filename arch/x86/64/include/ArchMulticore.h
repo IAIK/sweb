@@ -1,12 +1,12 @@
 #pragma once
 
 #include "types.h"
-#include "CpuLocalScheduler.h"
 #include "APIC.h"
 #include "uvector.h"
 #include "Mutex.h"
 #include "SegmentUtils.h"
 #include "uatomic.h"
+#include "IdleThread.h"
 
 
 struct TLBShootdownRequest;
@@ -31,6 +31,8 @@ extern thread_local char cpu_stack[CPU_STACK_SIZE];
 
 extern thread_local CpuInfo cpu_info;
 extern thread_local TSS cpu_tss;
+
+extern thread_local IdleThread idle_thread;
 
 #define AP_STARTUP_PADDR 0x0
 

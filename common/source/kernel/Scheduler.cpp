@@ -207,46 +207,6 @@ void Scheduler::printThreadList()
 }
 
 
-bool Scheduler::tryLockScheduling(const char* called_at)
-{
-  volatile char* prev_locked_at = locked_at_;
-  if(currentThread)
-  {
-    debug(SCHEDULER_LOCK, "tryLock by %s (%p) on CPU %zu?, called at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), called_at);
-    //assert(scheduling_blocked_by_ != currentThread);
-    if(scheduling_blocked_by_ == currentThread)
-    {
-      debug(SCHEDULER_LOCK, "tryLock by %s (%p) on CPU %zu, already locked by own thread at %s\n" , currentThread->getName(), currentThread, ArchMulticore::getCpuID(), (prev_locked_at ? prev_locked_at : "(nil)"));
-    }
-  }
-
-  bool locked = false;
-  size_t expected = -1;
-  {
-    WithDisabledInterrupts d; // CPU must not change between reading CPU ID and setting the lock value
-    locked = block_scheduling_.compare_exchange_weak(expected, ArchMulticore::getCpuID());
-  }
-
-
-  if(locked)
-  {
-    scheduling_blocked_by_ = currentThread;
-    locked_at_ = (volatile char*)called_at;
-    if(currentThread)
-    {
-      debug(SCHEDULER_LOCK, "tryLock by %s (%p) on CPU %zu succeeded at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), called_at);
-    }
-  }
-  else
-  {
-    if(currentThread)
-    {
-      debug(SCHEDULER_LOCK, "tryLock by %s (%p) on CPU %zu failed, locked by thread %p on CPU %zu? at %s\n", currentThread->getName(), currentThread, ArchMulticore::getCpuID(), scheduling_blocked_by_, expected, called_at);
-    }
-  }
-  return locked;
-}
-
 void Scheduler::lockScheduling(const char* called_at) //not as severe as stopping Interrupts
 {
   // This function is used with interrupts enabled, so setting the lock + information about which CPU is holding the lock needs to be atomic

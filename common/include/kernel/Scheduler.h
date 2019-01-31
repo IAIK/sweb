@@ -56,8 +56,6 @@ class Scheduler
   private:
     Scheduler();
 
-    bool tryLockScheduling(const char* called_at);
-
     /**
      * Scheduler internal lock abstraction method
      * locks the thread-list against concurrent access by prohibiting a thread switch
