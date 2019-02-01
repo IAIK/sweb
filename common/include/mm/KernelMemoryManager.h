@@ -133,7 +133,7 @@ class KernelMemoryManager
      */
     void fillSegment(MallocSegment *this_one, size_t size, uint32 zero_check = 1);
 
-    void freeSegment(MallocSegment *this_one);
+    void freeSegment(MallocSegment *this_one, pointer called_by);
     MallocSegment *getSegmentFromAddress(pointer virtual_address);
 
     MallocSegment* mergeSegments(MallocSegment* s1, MallocSegment* s2);

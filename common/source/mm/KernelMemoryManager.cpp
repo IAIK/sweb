@@ -101,20 +101,17 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
 
 bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 {
-  if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= kernel_break_)
+  if (virtual_address == 0)
     return false;
+
+  assert(virtual_address >= ((pointer) first_) && (virtual_address < kernel_break_) && "Invalid free of address not in kernel heap");
 
   lockKMM();
 
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
-  if (m_segment->marker_ != 0xdeadbeef)
-  {
-    unlockKMM();
-    return false;
-  }
-  freeSegment(m_segment);
-  if (m_segment->marker_ == 0xdeadbeef)
-    m_segment->freed_at_ = called_by;
+  m_segment->checkCanary();
+
+  freeSegment(m_segment, called_by);
 
   unlockKMM();
   return true;
@@ -141,6 +138,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   lockKMM();
 
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
+  m_segment->checkCanary();
   assert(m_segment->getUsed());
 
   if (new_size == m_segment->getSize())
@@ -185,9 +183,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
       return 0;
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
-    freeSegment(m_segment);
-    if (m_segment->marker_ == 0xdeadbeef)
-      m_segment->freed_at_ = called_by;
+    freeSegment(m_segment, called_by);
     unlockKMM();
     return new_address;
   }
@@ -323,7 +319,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 }
 
 
-void KernelMemoryManager::freeSegment(MallocSegment *this_one)
+void KernelMemoryManager::freeSegment(MallocSegment *this_one, pointer called_by)
 {
   debug(KMM, "KernelMemoryManager::freeSegment(%p)\n", this_one);
   assert(this_one != 0 && "trying to access a nullpointer");
@@ -344,10 +340,11 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     assert(false);
   }
 
-  debug(KMM, "fillSegment: freeing block: %p of bytes: %zd \n",
+  debug(KMM, "freeSegment: freeing block: %p of bytes: %zd \n",
         this_one, this_one->getSize() + sizeof(MallocSegment));
 
   this_one->setUsed(false);
+  this_one->freed_at_ = called_by;
 
   this_one = mergeSegments(this_one, this_one->prev_);
   this_one = mergeSegments(this_one, this_one->next_);
@@ -408,7 +405,6 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       current->checkCanary();
       current = current->next_;
     }
-
   }
 }
 
