@@ -57,7 +57,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
 
 pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer called_by)
 {
-  debug(KMM, "allocateMemory, size: %zx, called by: %zx\n", requested_size, called_by);
+  debug(KMM, "allocateMemory, size: %zu, called by: %zx\n", requested_size, called_by);
   assert((requested_size & 0x80000000) == 0 && "requested too much memory");
 
   // 16 byte alignment
@@ -120,6 +120,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 
 pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by)
 {
+  debug(KMM, "realloc %p, new size: %zu, calledbefore(1): %zx\n", (void*)virtual_address, new_size, called_by);
   assert((new_size & 0x80000000) == 0 && "requested too much memory");
   if (new_size == 0)
   {
@@ -156,11 +157,12 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
   else
   {
     //maybe we can solve this the easy way...
-    if (m_segment->next_ && !m_segment->next_->getUsed() && (m_segment->getSize() + m_segment->next_->getSize() >= new_size))
+    if (m_segment->next_ && !m_segment->next_->getUsed() && (m_segment->getSize() + sizeof(*m_segment->next_) + m_segment->next_->getSize() >= new_size))
     {
       auto s = mergeSegments(m_segment, m_segment->next_);
+      fillSegment(s, new_size, 0);
       assert(s == m_segment);
-      assert(m_segment->getSize() >= new_size);
+      assert((m_segment->getSize() >= new_size));
       unlockKMM();
       return virtual_address;
     }
@@ -576,9 +578,9 @@ MallocSegment* KernelMemoryManager::mergeSegments(MallocSegment* s1, MallocSegme
         assert(!s2->getUsed());
 
         size_t s2_true_size = (s2->next_ ? (pointer)s2->next_ : kernel_break_) - (pointer)s2;
-        debug(KMM, "mergeSegments %p [%zx] + %p [%zx] => %p [%zx]\n",
-              s1, s1->getSize() + sizeof(*s1), s2, s2->getSize() + sizeof(*s2),
-              s1, sizeof(*s1) + s1->getSize() + s2_true_size);
+        debug(KMM, "mergeSegments %p [%zu] used: %u + %p [%zu] used: %u => %p [%zu] used %u\n",
+              s1, s1->getSize() + sizeof(*s1), s1->getUsed(), s2, s2->getSize() + sizeof(*s2), s2->getUsed(),
+              s1, sizeof(*s1) + s1->getSize() + s2_true_size, s1->getUsed());
 
 
         assert(s1->next_ == s2);

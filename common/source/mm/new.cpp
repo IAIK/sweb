@@ -12,8 +12,7 @@
 static void* _new(size_t size)
 {
   pointer called_by = getCalledBefore(2);
-  pointer called_by1 = getCalledBefore(1);
-  debug(KMM, "new, size: %zx, calledbefore(2): %zx, calledbefore(1): %zx\n", size, called_by, called_by1);
+  debug(KMM, "new, size: %zu\n", size);
   // maybe we could take some precautions not to be interrupted while doing this
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size, called_by);
   assert(p > (void*)0x80000000 || p == (void*)0);
@@ -26,6 +25,7 @@ static void* _new(size_t size)
 static void _delete(void* address)
 {
   pointer called_by = getCalledBefore(2);
+  debug(KMM, "delete %p\n", address);
   assert(address > (void*)0x80000000 || address == (void*)0);
   KernelMemoryManager::instance()->freeMemory ( ( pointer ) address, called_by);
   return;
