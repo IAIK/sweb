@@ -147,7 +147,7 @@ class KernelMemoryManager
 
 
 
-        pointer ksbrk(ssize_t size);
+    pointer ksbrk(ssize_t size);
 
     MallocSegment* first_; //first_ must _never_ be NULL
     MallocSegment* last_;

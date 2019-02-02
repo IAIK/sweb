@@ -65,8 +65,7 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer calle
 
   lockKMM();
   pointer ptr = private_AllocateMemory(requested_size, called_by);
-  if (ptr)
-    unlockKMM();
+  unlockKMM();
 
   debug(KMM, "allocateMemory returns address: %zx \n", ptr);
   return ptr;
@@ -82,7 +81,6 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
 
   if (new_pointer == 0)
   {
-    unlockKMM();
     kprintfd("KernelMemoryManager::allocateMemory: Not enough Memory left\n");
     kprintfd("Are we having a memory leak in the kernel??\n");
     kprintfd(
@@ -104,7 +102,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
   if (virtual_address == 0)
     return false;
 
-  assert(virtual_address >= ((pointer) first_) && (virtual_address < kernel_break_) && "Invalid free of address not in kernel heap");
+  assert((virtual_address >= ((pointer) first_)) && (virtual_address < kernel_break_) && "Invalid free of address not in kernel heap");
 
   lockKMM();
 
@@ -162,7 +160,8 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
       auto s = mergeSegments(m_segment, m_segment->next_);
       fillSegment(s, new_size, 0);
       assert(s == m_segment);
-      assert((m_segment->getSize() >= new_size));
+      assert(m_segment->getSize() >= new_size);
+      assert(s->getUsed());
       unlockKMM();
       return virtual_address;
     }
@@ -176,12 +175,12 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
       //we are not freeing the old semgent in here, so that the data is not
       //getting lost, although we could not allocate more memory
 
-      //just if you wonder: the KMM is already unlocked
       kprintfd("KernelMemoryManager::reallocateMemory: Not enough Memory left\n");
       kprintfd("Are we having a memory leak in the kernel??\n");
       kprintfd(
           "This might as well be caused by running too many threads/processes, which partially reside in the kernel.\n");
       assert(false && "Kernel Heap is out of memory");
+      unlockKMM();
       return 0;
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
@@ -216,7 +215,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
             current, current->getSize() + sizeof(MallocSegment), current->getUsed());
 
     current->checkCanary();
-    if ((current->getSize() >= requested_size) && (current->getUsed() == false))
+    if ((current->getSize() >= requested_size) && !current->getUsed())
       return current;
 
     current = current->next_;
@@ -229,6 +228,8 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
     MallocSegment* new_segment = new ((void*)ksbrk(sizeof(MallocSegment) + requested_size)) MallocSegment(last_, 0, requested_size, 0);
     last_->next_ = new_segment;
     last_ = new_segment;
+    assert(new_segment->getSize() == requested_size);
+    assert(!new_segment->getUsed());
   }
   else
   {
@@ -306,17 +307,23 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     MallocSegment *new_segment =
             new ((void*) (((pointer)(this_one + 1)) + requested_size)) MallocSegment(
                     this_one, this_one->next_, space_left - sizeof(MallocSegment), false);
+
+    assert((this_one->next_ != 0) || (this_one == last_));
+
     if (this_one->next_ != 0)
     {
       this_one->next_->checkCanary();
       this_one->next_->prev_ = new_segment;
     }
-    this_one->next_ = new_segment;
-
-    if (new_segment->next_ == 0)
+    else
+    {
       last_ = new_segment;
+    }
 
+    this_one->next_ = new_segment;
+    assert((new_segment->next_ != 0) || (new_segment == last_));
   }
+
   debug(KMM, "fillSegment: filled memory block of bytes: %zd \n", this_one->getSize() + sizeof(MallocSegment));
 }
 
