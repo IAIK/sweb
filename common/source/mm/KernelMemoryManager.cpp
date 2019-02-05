@@ -565,14 +565,12 @@ bool MallocSegment::checkCanary()
 MallocSegment* KernelMemoryManager::mergeSegments(MallocSegment* s1, MallocSegment* s2)
 {
         assert(s1);
-        if(s1) s1->checkCanary();
+        s1->checkCanary();
         if(s2) s2->checkCanary();
 
-        if(s1 == s2) return s1;
-        if(!s2) return s1;
-
         // Only merge if the segment we want to merge with is not in use
-        if(s2->getUsed()) return s1;
+        if(!s2 || (s1 == s2) || s2->getUsed())
+                return s1;
 
         if(s2 < s1)
         {
