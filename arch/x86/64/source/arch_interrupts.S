@@ -5,31 +5,18 @@
 
 .equ KERNEL_DS, 0x20
 
-.macro swapgsIfPrivChange
+.macro swapgsIfPrivChange errorcode=0
+.if \errorcode
+    testl $3, 16(%rsp)
+.else
     testl $3, 8(%rsp)
+.endif
     jz 1f
 
     # debug
     #movw $0xE9, %dx
     #xorq %rax, %rax
     #movb 8(%rsp), %al
-    #andl $3, %eax
-    #addl $0x41, %eax
-    #outb %al, %dx
-    #hlt
-
-    swapgs
-1:
-.endm
-
-.macro swapgsIfPrivChangeErrorCode
-    testl $3, 16(%rsp)
-    jz 1f
-
-    # debug
-    #movw $0xE9, %dx
-    #xorq %rax, %rax
-    #movb 16(%rsp), %al
     #andl $3, %eax
     #addl $0x41, %eax
     #outb %al, %dx
@@ -145,62 +132,51 @@ arch_dummyHandlerMiddle:
 
 
 .extern errorHandler
-.macro errorhandler num
+.macro errorhandler num, errorcode=0
 .global arch_errorHandler_\num
 arch_errorHandler_\num:
-        swapgsIfPrivChange
+        swapgsIfPrivChange \errorcode
         pushAll
-        movq %rsp,%rdi
-        movq $0,%rsi
+        movq %rsp, %rdi
+        movq $\errorcode, %rsi
         call arch_saveThreadRegisters
-        movq $0,%rcx
-        movq 152(%rsp),%rdx  # rip
-        movq 144(%rsp), %rsi # error code
-        movq $\num,%rdi
+        movq $0, %rcx
+    .if \errorcode
+        movq 160(%rsp), %rdx # arg3 = cs
+	    movq 152(%rsp), %rsi # arg2 = rip
+    .else
+        movq 152(%rsp), %rdx # arg3 = cs
+        movq 144(%rsp), %rsi # arg2 = rip
+    .endif
+        movq $\num, %rdi     # arg1 = num
         call errorHandler
         popAll
-        swapgsIfPrivChange
+    .if \errorcode
+        addq $8, %rsp
+    .endif
+        swapgsIfPrivChange \errorcode
         iretq
         hlt
 .endm
 
-.macro errorhandlerWithCode num
-.global arch_errorHandler_\num
-arch_errorHandler_\num:
-        swapgsIfPrivChangeErrorCode
-        pushAll
-        movq %rsp,%rdi
-        movq $1,%rsi
-        call arch_saveThreadRegisters
-        movq $0,%rcx
-        movq 160(%rsp),%rdx
-        movq 152(%rsp), %rsi
-        movq $\num,%rdi
-        call errorHandler
-        popAll
-        addq $8,%rsp
-        swapgsIfPrivChangeErrorCode
-        iretq
-        hlt
-.endm
 
 .text
 
 .extern pageFaultHandler
 .global arch_pageFaultHandler
 arch_pageFaultHandler:
-        swapgsIfPrivChangeErrorCode
+        swapgsIfPrivChange 1
         pushAll
         movq %rsp, %rdi
         movq $1, %rsi
         call arch_saveThreadRegisters
-        movq 152(%rsp), %rdx # rip
-        movq 144(%rsp), %rsi # error code
-        movq %cr2, %rdi
+        movq 152(%rsp), %rdx # arg3 = rip at pagefault
+        movq 144(%rsp), %rsi # arg2 = error code
+        movq %cr2, %rdi      # arg1 = pagefault address
         call pageFaultHandler
         popAll
         addq $8, %rsp
-        swapgsIfPrivChangeErrorCode
+        swapgsIfPrivChange 1
         iretq
         hlt
 
@@ -210,7 +186,7 @@ irqhandler \num
 .endr
 
 .irp num,8,10,11,12,13,14,17
-errorhandlerWithCode \num
+errorhandler \num, 1
 .endr
 
 .irp num,0,4,5,6,7,9,16,18,19
