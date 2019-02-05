@@ -85,19 +85,23 @@
 
 .extern arch_saveThreadRegisters
 
+.macro interrupthandler handlerfunction
+        swapgsIfPrivChange
+	    pushAll
+	    movq %rsp, %rdi
+	    movq $0, %rsi
+	    call arch_saveThreadRegisters
+	    call \handlerfunction
+	    popAll
+	    swapgsIfPrivChange
+	    iretq
+.endm
+
 .macro irqhandler num
 .global arch_irqHandler_\num
 .extern irqHandler_\num
 arch_irqHandler_\num:
-        swapgsIfPrivChange
-        pushAll
-        movq %rsp,%rdi
-        movq $0,%rsi
-        call arch_saveThreadRegisters
-        call irqHandler_\num
-        popAll
-        swapgsIfPrivChange
-        iretq
+        interrupthandler irqHandler_\num
 .endm
 
 dummyhandlerscratchvariable:
@@ -196,10 +200,4 @@ errorhandler \num
 .global arch_syscallHandler
 .extern syscallHandler
 arch_syscallHandler:
-    swapgsIfPrivChange
-    pushAll
-    movq %rsp,%rdi
-    movq $0,%rsi
-    call arch_saveThreadRegisters
-    call syscallHandler
-    hlt
+        interrupthandler syscallHandler

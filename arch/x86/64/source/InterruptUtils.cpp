@@ -401,6 +401,7 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = 1;
   currentThreadRegisters = currentThread->user_registers_;
   arch_contextSwitch();
+  assert(false);
 }
 
 
