@@ -179,13 +179,13 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start)
       printOutCircularDeadLock(thread_waiting);
       assert(false);
     }
-    for(Thread* thread_waiting = lock->waiters_list_; thread_waiting != 0;
-        thread_waiting = thread_waiting->next_thread_in_lock_waiters_list_)
+    for(Thread* t_waiting_on_lock = lock->waiters_list_; t_waiting_on_lock != 0;
+        t_waiting_on_lock = t_waiting_on_lock->next_thread_in_lock_waiters_list_)
     {
       // The method has to be called recursively, so it is possible to check indirect
       // deadlocks. The recursive approach may be slower than other checking methods,
       // but it is safe and more precise
-      checkForCircularDeadLock(thread_waiting, start);
+      checkForCircularDeadLock(t_waiting_on_lock, start);
     }
   }
 }

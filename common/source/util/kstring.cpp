@@ -17,7 +17,6 @@ extern "C" size_t strlen(const char *str)
 
 extern "C" void *memcpy(void *dest, const void *src, size_t length)
 {
-  size_t i;
   size_t* s = (size_t*) src;
   size_t* d = (size_t*) dest;
   size_t num_large_copies = length / sizeof(size_t);
@@ -28,7 +27,7 @@ extern "C" void *memcpy(void *dest, const void *src, size_t length)
   }
   uint8* s8 = (uint8*) s;
   uint8* d8 = (uint8*) d;
-  for (i = 0; i < num_rest_copies; ++i)
+  for (size_t i = 0; i < num_rest_copies; ++i)
   {
     *d8++ = *s8++;
   }

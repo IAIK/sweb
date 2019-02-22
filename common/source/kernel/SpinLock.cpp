@@ -88,9 +88,9 @@ void SpinLock::acquire(pointer called_by)
     while(ArchThreads::testSetLock(lock_, 1))
     {
       //SpinLock: Simplest of Locks, do the next best thing to busy waiting
-      if(currentThread && ArchInterrupts::testIFSet())
+      if(currentThread)
       {
-        Scheduler::instance()->yield();
+        ArchInterrupts::yieldIfIFSet();
       }
     }
     // Now we managed to acquire the spinlock. Remove the current thread from the waiters list.

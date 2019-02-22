@@ -154,11 +154,11 @@ void LocalAPIC_LVT_TimerRegister::setMode(uint8 mode) volatile
         *(uint32*)this = temp;
 }
 
-void LocalAPIC_LVT_TimerRegister::setMask(bool mask) volatile
+void LocalAPIC_LVT_TimerRegister::setMask(bool new_mask) volatile
 {
-        debug(APIC, "Set timer mask %u\n", mask);
+        debug(APIC, "Set timer mask %u\n", new_mask);
         uint32 temp = *(uint32*)this;
-        ((LocalAPIC_LVT_TimerRegister*)&temp)->mask = (mask ? 1 : 0);
+        ((LocalAPIC_LVT_TimerRegister*)&temp)->mask = (new_mask ? 1 : 0);
         *(uint32*)this = temp;
 }
 

@@ -21,14 +21,10 @@
                                          BODY;\
                                        }
 
-ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_("ATADriver::lock_")
+ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
+        port(baseport), drive((getdrive == 0) ? 0xA0 : 0xB0), jiffies(0), lock_("ATADriver::lock_")
 {
   debug(ATA_DRIVER, "ctor: Entered with irgnum %d and baseport %d!!\n", irqnum, baseport);
-
-  jiffies = 0;
-  port = baseport;
-  drive= (getdrive == 0 ? 0xA0 : 0xB0);
-
   debug(ATA_DRIVER, "ctor: Requesting disk geometry !!\n");
 
   outportbp (port + 6, drive);  // Get first drive

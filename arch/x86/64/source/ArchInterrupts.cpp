@@ -211,7 +211,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   register struct context_switch_registers* registers;
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
-  iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
+  iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint64));
   ArchMulticore::setFSBase((uint64)ArchMulticore::getSavedFSBase());
   assert(ArchMulticore::CLSinitialized());
   register ArchThreadRegisters* info = currentThreadRegisters;

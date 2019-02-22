@@ -125,10 +125,10 @@ void InterruptUtils::initialise()
   pf_address_counter = 0;
 }
 
-void InterruptUtils::lidt(IDTR *idtr)
+void InterruptUtils::lidt(IDTR *idtr_p)
 {
-  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", idtr->base, idtr->limit);
-  asm volatile("lidt (%0) ": :"q" (idtr));
+  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", idtr_p->base, idtr_p->limit);
+  asm volatile("lidt (%0) ": :"q" (idtr_p));
 }
 
 void InterruptUtils::countPageFault(uint64 address)
