@@ -42,6 +42,7 @@ bool ArchMemory::unmapPage(size_t virtual_page)
     if(empty)
     {
         PageManager::instance()->freePPN(m.level2_ppn);
+        empty = checkAndRemove<Level12TableEntry>((pointer)m.level1_entry, m.level1_index);
     }
 
     return true;
