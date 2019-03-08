@@ -4,6 +4,7 @@
 // This file is free software, distributed under the MIT License.
 
 #pragma once
+#include "config.h"
 
 /*
 #define __STDC_LIMIT_MACROS // For WCHAR_MIN and WCHAR_MAX in stdint.
