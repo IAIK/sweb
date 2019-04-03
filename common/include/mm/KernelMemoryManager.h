@@ -16,7 +16,7 @@ class MallocSegment
      * @param used describes if the segment is allocated or free
      */
     MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used) :
-      marker_(0xdeadbeef),
+      marker_(0xdeadbeef00000000ull | (uint32) (size_t) this),
       next_(next),
       prev_(prev),
       freed_at_(0),
@@ -51,7 +51,12 @@ class MallocSegment
         size_flag_ |= 0x80000000; //this is the used flag
     }
 
-    uint32 marker_; // = 0xdeadbeef;
+    bool markerOk()
+    {
+      return marker_ == (0xdeadbeef00000000ull | (uint32) (size_t) this);
+    }
+
+    uint64 marker_; // = (0xdeadbeef << 32) | (this & 0xffffffff);
     MallocSegment *next_; // = NULL;
     MallocSegment *prev_; // = NULL;
     // the address where this chunk has been allocated or released at last
@@ -164,4 +169,3 @@ class KernelMemoryManager
     uint32 segments_free_;
     size_t approx_memory_free_;
 };
-

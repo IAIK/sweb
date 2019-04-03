@@ -95,13 +95,13 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
   lockKMM();
 
   MallocSegment *m_segment = getSegmentFromAddress(virtual_address);
-  if (m_segment->marker_ != 0xdeadbeef)
+  if (not m_segment->markerOk())
   {
     unlockKMM();
     return false;
   }
   freeSegment(m_segment);
-  if (m_segment->marker_ == 0xdeadbeef)
+  if (m_segment->markerOk())
     m_segment->freed_at_ = called_by;
 
   unlockKMM();
@@ -171,7 +171,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
     freeSegment(m_segment);
-    if (m_segment->marker_ == 0xdeadbeef)
+    if (m_segment->markerOk())
       m_segment->freed_at_ = called_by;
     unlockKMM();
     return new_address;
@@ -183,7 +183,7 @@ MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
   MallocSegment *m_segment;
   m_segment = (MallocSegment*) (virtual_address - sizeof(MallocSegment));
   assert(virtual_address != 0 && m_segment != 0 && "trying to access a nullpointer");
-  assert(m_segment->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  assert(m_segment->markerOk() && "memory corruption - probably 'write after delete'");
   return m_segment;
 }
 
@@ -196,7 +196,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   {
     debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n", current, current->getSize() + sizeof(MallocSegment),
           current->getUsed());
-    assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+    assert(current->markerOk() && "memory corruption - probably 'write after delete'");
     if ((current->getSize() >= requested_size) && (current->getUsed() == false))
       return current;
 
@@ -224,7 +224,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_size, uint32 zero_check)
 {
   assert(this_one != 0 && "trying to access a nullpointer");
-  assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  assert(this_one->markerOk() && "memory corruption - probably 'write after delete'");
   assert(this_one->getSize() >= requested_size && "segment is too small for requested size");
   assert((requested_size & 0xF) == 0 && "Attempt to fill segment with unaligned size");
 
@@ -269,7 +269,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
             this_one, this_one->next_, space_left - sizeof(MallocSegment), false);
     if (this_one->next_ != 0)
     {
-      assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+      assert(this_one->next_->markerOk() && "memory corruption - probably 'write after delete'");
       this_one->next_->prev_ = new_segment;
     }
     this_one->next_ = new_segment;
@@ -284,7 +284,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 {
   debug(KMM, "KernelMemoryManager::freeSegment(%p)\n", this_one);
   assert(this_one != 0 && "trying to access a nullpointer");
-  assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  assert(this_one->markerOk() && "memory corruption - probably 'write after delete'");
 
   if (this_one->getUsed() == false)
   {
@@ -307,7 +307,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 
   if (this_one->prev_ != 0)
   {
-    assert(this_one->prev_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+    assert(this_one->prev_->markerOk() && "memory corruption - probably 'write after delete'");
     if (this_one->prev_->getUsed() == false)
     {
       size_t my_true_size = (
@@ -320,7 +320,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       previous_one->next_ = this_one->next_;
       if (this_one->next_ != 0)
       {
-        assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+        assert(this_one->next_->markerOk() && "memory corruption - probably 'write after delete'");
         this_one->next_->prev_ = previous_one;
       }
       else
@@ -355,7 +355,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
       if((size_t)this_one > base_break_ + reserved_min_)
       {
         // Case 1
-        assert(this_one && this_one->prev_ && this_one->prev_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+        assert(this_one && this_one->prev_ && this_one->prev_->markerOk() && "memory corruption - probably 'write after delete'");
         this_one->prev_->next_ = 0;
         last_ = this_one->prev_;
         ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
@@ -392,7 +392,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
     {
       debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %zd used: %d\n", current, current->prev_,
             current->next_, current->getSize() + sizeof(MallocSegment), current->getUsed());
-      assert(current->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+      assert(current->markerOk() && "memory corruption - probably 'write after delete'");
       current = current->next_;
     }
 
@@ -402,11 +402,11 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one)
 bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
 {
   assert(this_one != 0 && "trying to access a nullpointer");
-  assert(this_one->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+  assert(this_one->markerOk() && "memory corruption - probably 'write after delete'");
 
   if (this_one->next_ != 0)
   {
-    assert(this_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+    assert(this_one->next_->markerOk() && "memory corruption - probably 'write after delete'");
     if (this_one->next_->getUsed() == false)
     {
       MallocSegment *next_one = this_one->next_;
@@ -418,7 +418,7 @@ bool KernelMemoryManager::mergeWithFollowingFreeSegment(MallocSegment *this_one)
       this_one->next_ = next_one->next_;
       if (next_one->next_ != 0)
       {
-        assert(next_one->next_->marker_ == 0xdeadbeef && "memory corruption - probably 'write after delete'");
+        assert(next_one->next_->markerOk() && "memory corruption - probably 'write after delete'");
         next_one->next_->prev_ = this_one;
       }
 
