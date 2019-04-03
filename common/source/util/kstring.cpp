@@ -56,8 +56,8 @@ extern "C" void *memmove(void *dest, const void *src, size_t length)
   else
   {
     // if src is before dest we have to do a backward copy
-    src8 += length;
-    dest8 += length;
+    src8 += length - 1;
+    dest8 += length - 1;
 
     while (length--)
     {
