@@ -91,6 +91,7 @@ class Thread
      */
     bool schedulable();
 
+    bool isCurrentlyScheduled();
 
     ArchThreadRegisters* kernel_registers_;
     ArchThreadRegisters* user_registers_;

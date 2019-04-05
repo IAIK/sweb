@@ -171,7 +171,7 @@ void Scheduler::cleanupDeadThreads()
   while(it != threads_.end())
   {
     Thread* t = *it;
-    if ((t->getState() == ToBeDestroyed) && (t->currently_scheduled_on_cpu_ == (size_t)-1))
+    if ((t->getState() == ToBeDestroyed) && !t->isCurrentlyScheduled())
     {
       destroy_list[thread_count++] = t;
       it = threads_.erase(it); // Note: erase will not realloc!
