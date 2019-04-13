@@ -31,7 +31,7 @@ RSDPDescriptor* locateRSDP()
   for (size_t i = 0; i < num_mmaps; ++i)
   {
     pointer start_address = 0, end_address = 0, type = 0;
-    ArchCommon::getUsableMemoryRegion(i, start_address, end_address, type);
+    ArchCommon::getUseableMemoryRegion(i, start_address, end_address, type);
     if(end_address == 0)
       end_address = 0xFFFFFFFF; // TODO: Fix this (use full 64 bit addresses for memory detection)
     assert(start_address <= end_address);

@@ -73,3 +73,29 @@ class PageManager
 
     size_t HEAP_PAGES;
 };
+
+
+class BootstrapRangeAllocator
+{
+public:
+        void markUseable(size_t start, size_t end);
+        void markUnuseable(size_t start, size_t end);
+
+        void printUseableRanges();
+        size_t numUseablePages();
+
+        size_t allocRange(size_t size, size_t alignment = 1);
+
+        struct UseableRange
+        {
+                size_t start;
+                size_t end;
+        };
+
+
+private:
+        UseableRange useable_ranges_[20];
+
+        bool slotIsUsed(size_t i);
+        ssize_t findFirstFreeSlot();
+};

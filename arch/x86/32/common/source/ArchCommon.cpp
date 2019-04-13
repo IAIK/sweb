@@ -178,7 +178,7 @@ uint32 ArchCommon::getNumUseableMemoryRegions()
   return i;
 }
 
-uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
+uint32 ArchCommon::getUseableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
   if (region >= MAX_MEMORY_MAPS)
     return 1;

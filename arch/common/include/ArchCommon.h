@@ -46,7 +46,7 @@ class ArchCommon
      * @param &type of Useable Memory Region
      * @return 1 if region >= number_of_regions, 0 otherwise
      */
-    static size_t getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
+    static size_t getUseableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
 
     /**
      * @return size_t returns the number of modules loaded by grub

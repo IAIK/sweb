@@ -78,7 +78,7 @@ uint32 ArchCommon::getNumUseableMemoryRegions()
   return 1;
 }
 
-uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
+uint32 ArchCommon::getUseableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
   return ArchBoardSpecific::getUsableMemoryRegion(region, start_address, end_address, type);
 }

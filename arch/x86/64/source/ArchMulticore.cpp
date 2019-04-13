@@ -208,8 +208,8 @@ void ArchMulticore::setCpuID(size_t id)
 
 size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
 {
-  assert(CLSinitialized());
-  return cpu_info.getCpuID();
+  //assert(CLSinitialized());
+  return (!CLSinitialized() ? 0 : cpu_info.getCpuID());
 }
 
 void ArchMulticore::initCpuLocalGDT(GDT& template_gdt)

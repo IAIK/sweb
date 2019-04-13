@@ -15,6 +15,15 @@
 #include "SegmentUtils.h"
 #include "Scheduler.h"
 
+void puts(const char* string);
+
+#if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
+#define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
+#else
+#define PRINT(X)
+#endif
+
+
 extern void* kernel_end_address;
 
 multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
@@ -25,6 +34,10 @@ extern "C" void parseMultibootHeader()
   uint32 i;
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT( (pointer)&multi_boot_structure_pointer);
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+
+  PRINT("Bootloader: ");
+  writeLine2Bochs((char*)(pointer)(mb_infos->boot_loader_name));
+  PRINT("\n");
 
   if (mb_infos && mb_infos->f_vbe)
   {
@@ -191,7 +204,7 @@ size_t ArchCommon::getNumUseableMemoryRegions()
   return i;
 }
 
-size_t ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
+size_t ArchCommon::getUseableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
 {
   if (region >= MAX_MEMORY_MAPS)
     return 1;
@@ -214,13 +227,6 @@ Console* ArchCommon::createConsole(size_t count)
     return new TextConsole(count);
 }
 
-void puts(const char* string);
-
-#if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
-#define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
-#else
-#define PRINT(X)
-#endif
 
 extern GDT gdt;
 extern "C" void startup();

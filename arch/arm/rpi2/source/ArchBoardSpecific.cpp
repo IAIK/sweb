@@ -35,7 +35,7 @@ pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
   return framebuffer;
 }
 
-uint32 ArchBoardSpecific::getUsableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
+uint32 ArchBoardSpecific::getUseableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
 {
   start_address = 0;
   end_address = ((PHYSICAL_MEMORY_AVAILABLE - ArchCommon::getVESAConsoleWidth() * ArchCommon::getVESAConsoleHeight() * ArchCommon::getVESAConsoleBitsPerPixel() / 8) & ~0xFFF);
