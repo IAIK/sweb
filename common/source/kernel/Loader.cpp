@@ -248,6 +248,8 @@ bool Loader::loadDebugInfoIfAvailable()
           }
         } else {
           debug(USERTRACE, "SWEBDbg Infos are empty\n");
+          delete[] stab_data;
+          delete[] stabstr_data;
           return false;
         }
       }
