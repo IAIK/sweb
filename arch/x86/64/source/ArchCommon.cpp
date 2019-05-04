@@ -298,6 +298,11 @@ void ArchCommon::initDebug()
 
 void ArchCommon::idle()
 {
+  halt();
+}
+
+void ArchCommon::halt()
+{
   asm volatile("hlt");
 }
 

@@ -41,15 +41,10 @@ class InterruptUtils
 public:
   static void initialise();
 
-  static void countPageFault(uint64 address);
-
   static IDTR idtr;
 
   static InterruptGateDesc *idt;
 
 private:
   static InterruptHandlers handlers[];
-  static uint64 pf_address;
-  static uint64 pf_address_counter;
 };
-

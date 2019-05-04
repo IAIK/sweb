@@ -67,9 +67,6 @@
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
 
-uint64 InterruptUtils::pf_address;
-uint64 InterruptUtils::pf_address_counter;
-
 IDTR InterruptUtils::idtr;
 
 InterruptGateDesc* InterruptUtils::idt;
@@ -144,27 +141,6 @@ void InterruptUtils::initialise()
   idtr.base = (pointer) idt;
   idtr.limit = sizeof(InterruptGateDesc) * num_handlers - 1;
   idtr.load();
-
-  pf_address = 0xdeadbeef;
-  pf_address_counter = 0;
-}
-
-void InterruptUtils::countPageFault(uint64 address)
-{
-  if ((address ^ (uint64)currentThread) == pf_address)
-  {
-    pf_address_counter++;
-  }
-  else
-  {
-    pf_address = address ^ (uint64)currentThread;
-    pf_address_counter = 0;
-  }
-  if (pf_address_counter >= 10)
-  {
-    kprintfd("same pagefault from the same thread for 10 times in a row. most likely you have an error in your code\n");
-    asm("hlt");
-  }
 }
 
 extern SWEBDebugInfo const *kernel_debug_info;

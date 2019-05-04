@@ -8,9 +8,12 @@
 #include "Syscall.h"
 #include "ArchThreads.h"
 #include "ArchMulticore.h"
+#include "ArchCommon.h"
 extern "C" void arch_contextSwitch();
 
 const size_t PageFaultHandler::null_reference_check_border_ = PAGE_SIZE;
+size_t PageFaultHandler::pf_address = 0xDEADBEEF;
+size_t PageFaultHandler::pf_address_counter = 0;
 
 inline bool PageFaultHandler::checkPageFaultIsValid(size_t address, bool user,
                                                     bool present, bool switch_to_us)
@@ -70,9 +73,13 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
     ArchThreads::printThreadRegisters(currentThread, true);
     currentThread->printBacktrace(true);
     if (currentThread->loader_)
+    {
       Syscall::exit(9999);
+    }
     else
+    {
       currentThread->kill();
+    }
   }
   debug(PAGEFAULT, "Page fault handling finished for Address: %18zx.\n", address);
 }
@@ -97,5 +104,24 @@ void PageFaultHandler::enterPageFault(size_t address, size_t ip, bool user,
   if (currentThread->switch_to_userspace_)
   {
     currentThreadRegisters = currentThread->user_registers_;
+  }
+}
+
+
+void PageFaultHandler::countPageFault(size_t address)
+{
+  if ((address ^ (size_t)currentThread) == pf_address)
+  {
+    pf_address_counter++;
+  }
+  else
+  {
+    pf_address = address ^ (size_t)currentThread;
+    pf_address_counter = 0;
+  }
+  if (pf_address_counter >= 10)
+  {
+    kprintfd("same pagefault from the same thread for 10 times in a row. most likely you have an error in your code\n");
+    ArchCommon::halt();
   }
 }

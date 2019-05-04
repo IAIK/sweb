@@ -104,7 +104,7 @@ void ArchCommon::initDebug()
 
 }
 
-extern "C" void halt()
+void ArchCommon::halt()
 {
   asm("mcr p15, 0, %[v], c7, c0, 4" : : [v]"r" (0)); // Wait for interrupt
 }

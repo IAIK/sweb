@@ -7,8 +7,6 @@
 
 extern Thread* currentThread;
 
-extern "C" void halt();
-
 __attribute__((noreturn)) void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();

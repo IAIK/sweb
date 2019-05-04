@@ -85,8 +85,14 @@ class ArchCommon
 
     /**
      * let the CPU idle, f.e. with the halt statement
+     * calls pre-idle handler functions
      */
     static void idle();
+
+    /**
+     * let CPU idle until next interrupt
+     */
+    static void halt();
 
     /**
      * draw a heartbeat character
