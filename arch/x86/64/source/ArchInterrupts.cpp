@@ -13,19 +13,38 @@
 #include "ArchMulticore.h"
 #include "Scheduler.h"
 
-void ArchInterrupts::initialise()
+static void initInterruptHandlers()
 {
-  disableInterrupts();
+  debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
   InterruptUtils::initialise();
+}
+
+static void initInterruptController()
+{
+  debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
+  if(LocalAPIC::exists)
+  {
+    if((size_t)LocalAPIC::reg_vaddr_ != APIC_VADDR)
+    {
+      LocalAPIC::mapAt(APIC_VADDR);
+    }
+    assert(ArchMulticore::CLSinitialized());
+    cpu_info.lapic.init();
+  }
 
   if(IOAPIC::exists)
   {
-          IO_APIC.mapAt(IOAPIC_VADDR);
-          IO_APIC.init();
+    IO_APIC.mapAt(IOAPIC_VADDR);
+    IO_APIC.init();
   }
 
-
   PIC8259::initialise8259s();
+}
+
+void ArchInterrupts::initialise()
+{
+  initInterruptHandlers();
+  initInterruptController();
 }
 
 void ArchInterrupts::enableTimer()

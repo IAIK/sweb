@@ -17,6 +17,7 @@ public:
         CpuInfo();
 
         size_t getCpuID();
+        void setCpuID(size_t id);
 
         LocalAPIC lapic;
 

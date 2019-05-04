@@ -27,15 +27,6 @@ extern volatile size_t outstanding_EOIs;
 LocalAPIC::LocalAPIC() :
         outstanding_EOIs_(0)
 {
-  debug(APIC, "LocalAPIC ctor\n");
-  if(LocalAPIC::exists)
-  {
-    if((size_t)LocalAPIC::reg_vaddr_ != APIC_VADDR)
-    {
-            LocalAPIC::mapAt(APIC_VADDR);
-    }
-    init();
-  }
 }
 
 void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
@@ -97,6 +88,7 @@ void LocalAPIC::init()
     initTimer();
     enable(true);
     initialized_ = true;
+    ArchMulticore::setCpuID(id_);
   }
   else
   {
@@ -491,6 +483,7 @@ void IOAPIC::init()
 
         IO_APIC.initRedirections();
         IOAPIC::initialized = true;
+        debug(A_INTERRUPTS, "IO APIC initialized\n");
 }
 
 void IOAPIC::initRedirections()
@@ -523,6 +516,7 @@ void IOAPIC::initRedirections()
                 IOAPIC_redir_entry r = readRedirEntry(i);
                 debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask, r.polarity, r.trigger_mode);
         }
+        debug(APIC, "IO APIC redirections initialized\n");
 }
 
 

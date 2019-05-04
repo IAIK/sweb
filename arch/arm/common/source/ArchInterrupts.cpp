@@ -96,7 +96,7 @@ void __attribute__((naked)) arch_irqHandler_ARM4_XRQ_SWINT()
   asm("mov sp, %[v]" : : [v]"r" (((uint32*)boot_stack) + 0x1000));\
   SWITCH_CPU_MODE("0xdf");
 
-void ArchInterrupts::initialise()
+static void initInterruptHandlers()
 {
   INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_RESET, "0xD3");
   INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_UNDEF, "0xDB");
@@ -105,6 +105,11 @@ void ArchInterrupts::initialise()
   INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_ABRTD, "0xD7");
   INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_IRQ, "0xD2");
   INSTALL_INTERRUPT_HANDLER(ARM4_XRQ_FIQ, "0xD1");
+}
+
+void ArchInterrupts::initialise()
+{
+  initInterruptHandlers();
 }
 
 void ArchInterrupts::enableTimer()

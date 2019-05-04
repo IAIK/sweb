@@ -116,7 +116,8 @@ void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uin
 }
 
 CpuInfo::CpuInfo() :
-        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : 0)
+        lapic(),
+        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : -1)
 {
         debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
         MutexLock l(ArchMulticore::cpu_list_lock_);
@@ -127,6 +128,11 @@ CpuInfo::CpuInfo() :
 size_t CpuInfo::getCpuID()
 {
         return cpu_id;
+}
+
+void CpuInfo::setCpuID(size_t id)
+{
+        cpu_id = id;
 }
 
 void* ArchMulticore::getSavedFSBase()
@@ -203,7 +209,8 @@ bool ArchMulticore::CLSinitialized()
 void ArchMulticore::setCpuID(size_t id)
 {
   debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
-  cpu_info.cpu_id = id;
+  assert(CLSinitialized());
+  cpu_info.setCpuID(id);
 }
 
 size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
@@ -362,6 +369,8 @@ void ArchMulticore::initCpu()
   currentThread = NULL;
 
   ArchMulticore::initCLS();
+  cpu_info.lapic.init();
+
   ArchThreads::initialise();
 
   debug(A_MULTICORE, "Enable AP timer\n");

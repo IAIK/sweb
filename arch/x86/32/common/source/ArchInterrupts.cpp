@@ -7,15 +7,28 @@
 #include "assert.h"
 #include "Thread.h"
 
-void ArchInterrupts::initialise()
+
+static void initInterruptHandlers()
 {
-  uint16 i; // disableInterrupts();
+  InterruptUtils::initialise();
+}
+
+static void initInterruptController()
+{
+  uint16 i;
   initialise8259s();
   SegmentUtils::initialise();
-  InterruptUtils::initialise();
   for (i=0;i<16;++i)
-    disableIRQ(i);
+          disableIRQ(i);
 }
+
+void ArchInterrupts::initialise()
+{
+  initInterruptHandlers();
+  initInterruptController();
+}
+
+
 
 void ArchInterrupts::enableTimer()
 {
