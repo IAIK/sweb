@@ -11,6 +11,8 @@ typedef struct {
 typedef struct {
     uint16 limit;
     size_t base;
+
+    void load();
 } __attribute__((__packed__)) IDTR ;
 
 struct InterruptGateDesc
@@ -27,6 +29,9 @@ struct InterruptGateDesc
         uint32 offset_hd : 32;        // high dword of handler entry point's address
         uint32 reserved : 32;
 
+        InterruptGateDesc() = default;
+        InterruptGateDesc(uint64 offset, uint8 dpl);
+
         void setOffset(uint64 offset);
 }__attribute__((__packed__));
 
@@ -35,8 +40,6 @@ class InterruptUtils
 {
 public:
   static void initialise();
-
-  static void lidt(IDTR *idtr);
 
   static void countPageFault(uint64 address);
 

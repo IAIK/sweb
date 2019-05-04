@@ -353,7 +353,7 @@ void ArchMulticore::initCpu()
   ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
-  InterruptUtils::lidt(&InterruptUtils::idtr);
+  InterruptUtils::idtr.load();
 
   extern char cls_start;
   extern char cls_end;

@@ -64,7 +64,6 @@
 #define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
                                  // =1: an instruction fetch (need PAE for that)
 
-
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
 
@@ -75,60 +74,79 @@ IDTR InterruptUtils::idtr;
 
 InterruptGateDesc* InterruptUtils::idt;
 
+InterruptGateDesc::InterruptGateDesc(uint64 offset, uint8 dpl) :
+  segment_selector(KERNEL_CS),
+  ist(0),
+  zeros(0),
+  type(TYPE_INTERRUPT_GATE),
+  zero_1(0),
+  dpl(dpl),
+  present(1),
+  reserved(0)
+{
+  setOffset(offset);
+}
+
 void InterruptGateDesc::setOffset(uint64 offset)
 {
-        offset_ld_lw = LO_WORD(LO_DWORD( offset ));
-        offset_ld_hw = HI_WORD(LO_DWORD( offset ));
-        offset_hd = HI_DWORD(            offset );
+  offset_ld_lw = LO_WORD(LO_DWORD( offset ));
+  offset_ld_hw = HI_WORD(LO_DWORD( offset ));
+  offset_hd =    HI_DWORD(         offset );
+}
+
+void IDTR::load()
+{
+  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", base, limit);
+  asm volatile("lidt (%0) ": :"q" (this));
 }
 
 void InterruptUtils::initialise()
 {
   uint32 num_handlers = 0;
   for (uint32 i = 0; handlers[i].offset != 0; ++i)
-    num_handlers = handlers[i].number;
-  ++num_handlers;
-  // allocate some memory for our handlers
+  {
+    num_handlers = Max(handlers[i].number, num_handlers);
+  }
+  num_handlers += 1;
   idt = new InterruptGateDesc[num_handlers];
   size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
   assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
   dummy_handler_sled_size /= 128;
 
-  uint32 j = 0;
   for (uint32 i = 0; i < num_handlers; ++i)
   {
-    while (handlers[j].number < i && handlers[j].offset != 0)
-      ++j;
-    idt[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
-    idt[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
-    idt[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
-    idt[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
-    idt[i].present = 1;
-    idt[i].segment_selector = KERNEL_CS;
-    idt[i].type = TYPE_INTERRUPT_GATE;
-    idt[i].zero_1 = 0;
-    idt[i].zeros = 0;
-    idt[i].reserved = 0;
-    idt[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
-    debug(A_INTERRUPTS,
-        "%x -- offset = %p, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
-        idt[i].offset_ld_lw, idt[i].offset_ld_hw,
-        idt[i].offset_hd, idt[i].ist,
-        idt[i].present, idt[i].segment_selector,
-        idt[i].type, idt[i].dpl);
+    idt[i] = InterruptGateDesc(((size_t)arch_dummyHandler) + i*dummy_handler_sled_size, DPL_KERNEL_SPACE);
+  }
+
+  uint32 j = 0;
+  while(handlers[j].offset != 0)
+  {
+    assert(handlers[j].number < num_handlers);
+    uint8 dpl = (handlers[j].number == SYSCALL_INTERRUPT) ? DPL_USER_SPACE :
+                                                            DPL_KERNEL_SPACE;
+    idt[handlers[j].number] = InterruptGateDesc((size_t)handlers[j].offset, dpl);
+    ++j;
+  }
+
+  if(A_INTERRUPTS & OUTPUT_ENABLED)
+  {
+    for (uint32 i = 0; i < num_handlers; ++i)
+    {
+      debug(A_INTERRUPTS,
+            "%x -- offset = %p, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
+            idt[i].offset_ld_lw, idt[i].offset_ld_hw,
+            idt[i].offset_hd, idt[i].ist,
+            idt[i].present, idt[i].segment_selector,
+            idt[i].type, idt[i].dpl);
+    }
   }
 
   idtr.base = (pointer) idt;
   idtr.limit = sizeof(InterruptGateDesc) * num_handlers - 1;
-  lidt(&idtr);
+  idtr.load();
+
   pf_address = 0xdeadbeef;
   pf_address_counter = 0;
-}
-
-void InterruptUtils::lidt(IDTR *idtr_p)
-{
-  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", idtr_p->base, idtr_p->limit);
-  asm volatile("lidt (%0) ": :"q" (idtr_p));
 }
 
 void InterruptUtils::countPageFault(uint64 address)
