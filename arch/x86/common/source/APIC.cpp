@@ -12,15 +12,14 @@
 #include "ProgrammableIntervalTimer.h"
 #include "8259.h"
 
-IOAPIC IO_APIC;
 
 bool LocalAPIC::exists = false;
 LocalAPICRegisters* LocalAPIC::reg_paddr_ = nullptr;
 LocalAPICRegisters* LocalAPIC::reg_vaddr_ = nullptr;
 ustl::vector<MADTProcLocalAPIC> LocalAPIC::local_apic_list_{};
 
-bool IOAPIC::exists      = false;
-bool IOAPIC::initialized = false;
+ustl::vector<MADTInterruptSourceOverride> IOAPIC::irq_source_override_list_{};
+ustl::vector<IOAPIC> IOAPIC::io_apic_list_{};
 
 extern volatile size_t outstanding_EOIs;
 
@@ -122,7 +121,13 @@ void LocalAPIC::initTimer() volatile
         use_apic_timer_ = true;
 }
 
-bool LocalAPIC::usingAPICTimer()
+void LocalAPIC::setUsingAPICTimer(bool using_apic_timer)  volatile
+{
+        debug(APIC, "Using APIC timer: %d\n", using_apic_timer);
+        use_apic_timer_ = using_apic_timer;
+}
+
+bool LocalAPIC::usingAPICTimer() volatile
 {
         return use_apic_timer_;
 }
@@ -260,6 +265,7 @@ void __PIT_delay_IRQ()
                              :[delay]"=m"(delay));
         __asm__ __volatile__("iretq\n");
 }
+
 extern "C" void arch_irqHandler_0();
 
 void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
@@ -277,33 +283,22 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         pit_command.access_mode = 3; // send low + high byte of reload value/divisor
         pit_command.channel = 0;
 
-        __attribute__((unused)) InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
+        InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
+        bool temp_using_apic_timer = usingAPICTimer();
+        setUsingAPICTimer(false);
 
         InterruptUtils::idt[0x20].setOffset((size_t)&PIT_delay_IRQ);
 
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(2, false);
-        }
-        else
-        {
-                PIC8259::outstanding_EOIs_++;
-                PIC8259::enableIRQ(0);
-        }
+        ArchInterrupts::enableIRQ(0);
+        ArchInterrupts::startOfInterrupt(0);
         ArchInterrupts::enableInterrupts();
+
         PIT::init(pit_command.value, 1193182 / 100);
         while(!delay);
+
         ArchInterrupts::disableInterrupts();
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(2, true);
-                cpu_info.lapic.sendEOI(0x20);
-        }
-        else
-        {
-                PIC8259::disableIRQ(0);
-                PIC8259::sendEOI(0);
-        }
+        ArchInterrupts::disableIRQ(0);
+        ArchInterrupts::endOfInterrupt(0);
 
         delay = 0;
 
@@ -317,30 +312,16 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         // 200us delay
         debug(A_MULTICORE, "Start delay 2\n");
 
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(2, false);
-        }
-        else
-        {
-                PIC8259::outstanding_EOIs_++;
-                PIC8259::enableIRQ(0);
-        }
-
+        ArchInterrupts::enableIRQ(0);
+        ArchInterrupts::startOfInterrupt(0);
         ArchInterrupts::enableInterrupts();
+
         PIT::init(pit_command.value, 1193182 / 5000);
         while(!delay);
+
         ArchInterrupts::disableInterrupts();
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(2, true);
-                cpu_info.lapic.sendEOI(0x20);
-        }
-        else
-        {
-                PIC8259::disableIRQ(0);
-                PIC8259::sendEOI(0);
-        }
+        ArchInterrupts::disableIRQ(0);
+        ArchInterrupts::endOfInterrupt(0);
 
         delay = 0;
 
@@ -349,31 +330,19 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
 
         // Wait another 10ms to give APs time for initialization
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(2, false);
-        }
-        else
-        {
-                PIC8259::outstanding_EOIs_++;
-                PIC8259::enableIRQ(0);
-        }
+        ArchInterrupts::enableIRQ(0);
+        ArchInterrupts::startOfInterrupt(0);
         ArchInterrupts::enableInterrupts();
+
         PIT::init(pit_command.value, 1193182 / 100);
         while(!delay);
+
         ArchInterrupts::disableInterrupts();
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(2, true);
-                cpu_info.lapic.sendEOI(0x20);
-        }
-        else
-        {
-                PIC8259::disableIRQ(0);
-                PIC8259::sendEOI(0);
-        }
+        ArchInterrupts::disableIRQ(0);
+        ArchInterrupts::endOfInterrupt(0);
 
 
+        setUsingAPICTimer(temp_using_apic_timer);
         InterruptUtils::idt[0x20] = temp_irq0_descriptor;
 
         debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
@@ -452,38 +421,36 @@ void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_del
 }
 
 
-
-IOAPIC::IOAPIC() :
-        reg_paddr_(nullptr),
-        reg_vaddr_(nullptr)
-{}
-
 IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
         reg_paddr_(regs),
         reg_vaddr_(regs),
         id_(id),
         g_sys_int_base_(g_sys_int_base)
 {
-        debug(APIC, "IOAPIC %x at phys %p, g_sys_int_base: %x, version: \n", id_, reg_paddr_, g_sys_int_base_);
+        debug(APIC, "IOAPIC %x at phys %p, g_sys_int_base: %x\n", id_, reg_paddr_, g_sys_int_base_);
         assert(reg_paddr_);
-        exists = true;
+}
+
+void IOAPIC::initAll()
+{
+        for(auto& io_apic : io_apic_list_)
+        {
+                io_apic.mapAt(IOAPIC_VADDR + io_apic.id_*PAGE_SIZE);
+                io_apic.init();
+        }
 }
 
 void IOAPIC::init()
 {
+        debug(A_INTERRUPTS, "Initializing I/O APIC\n");
         IOAPIC_r_ID id;
         IOAPIC_r_VER version;
-        id.word = IO_APIC.read(IOAPICID);
-        version.word = IO_APIC.read(IOAPICVER);
+        id.word = read(IOAPICID);
+        version.word = read(IOAPICVER);
         max_redir_ = version.max_redir;
-        debug(APIC, "IOAPIC id: %x\n", id.io_apic_id);
-        debug(APIC, "IOAPIC version: %x\n", version.version);
-        debug(APIC, "IOAPIC max redir: %x\n", getMaxRedirEntry());
-        debug(APIC, "IOAPIC g_sys_int base: %x\n", getGlobalInterruptBase());
+        debug(APIC, "IOAPIC id: %u, version: %x, g_sys_ints: [%u, %u)\n", id.io_apic_id, version.version, getGlobalInterruptBase(), getGlobalInterruptBase() + getMaxRedirEntry());
 
-        IO_APIC.initRedirections();
-        IOAPIC::initialized = true;
-        debug(A_INTERRUPTS, "IO APIC initialized\n");
+        initRedirections();
 }
 
 void IOAPIC::initRedirections()
@@ -496,7 +463,7 @@ void IOAPIC::initRedirections()
                 {
                         if(getGlobalInterruptBase() + i == entry.g_sys_int)
                         {
-                                debug(APIC, "Found override for IRQ %2u -> %u, trigger mode: %u, polarity: %u\n", entry.g_sys_int, entry.irq_source, entry.flags.trigger_mode, entry.flags.polarity);
+                                debug(APIC, "Found override for global system interrupt %2u -> IRQ SRC %u, trigger mode: %u, polarity: %u\n", entry.g_sys_int, entry.irq_source, entry.flags.trigger_mode, entry.flags.polarity);
                                 r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
@@ -522,7 +489,7 @@ void IOAPIC::initRedirections()
 
 void IOAPIC::mapAt(size_t addr)
 {
-  debug(APIC, "Map IOAPIC at phys %p to %zx\n", reg_paddr_, addr);
+  debug(APIC, "Map IOAPIC %u at phys %p to %zx\n", id_, reg_paddr_, addr);
   assert(addr);
 
   ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
@@ -577,10 +544,57 @@ uint32 IOAPIC::getMaxRedirEntry()
 }
 
 
+void IOAPIC::setGSysIntMask(uint32 g_sys_int, bool value)
+{
+        debug(APIC, "Set G Sys Int %x mask: %u\n", g_sys_int, value);
+        IOAPIC* io_apic = findIOAPICforGlobalInterrupt(g_sys_int);
+        uint32 entry_offset = g_sys_int - io_apic->getGlobalInterruptBase();
+        IOAPIC_redir_entry r = io_apic->readRedirEntry(entry_offset);
+        r.mask = (value ? 1: 0);
+        io_apic->writeRedirEntry(entry_offset, r);
+}
+
 void IOAPIC::setIRQMask(uint32 irq_num, bool value)
 {
         debug(APIC, "Set IRQ %x mask: %u\n", irq_num, value);
-        IOAPIC_redir_entry r = readRedirEntry(irq_num);
-        r.mask = (value ? 1: 0);
-        writeRedirEntry(irq_num, r);
+        setGSysIntMask(findGSysIntForIRQ(irq_num), value);
+}
+
+IOAPIC* IOAPIC::findIOAPICforGlobalInterrupt(uint32 g_int)
+{
+        for(auto& io_apic : io_apic_list_)
+        {
+                uint32 base = io_apic.getGlobalInterruptBase();
+                if((base <= g_int) && (g_int < base + io_apic.getMaxRedirEntry()))
+                {
+                        return &io_apic;
+                }
+        }
+        return nullptr;
+}
+
+uint32 IOAPIC::findGSysIntForIRQ(uint8 irq)
+{
+        uint8 g_sys_int = irq;
+
+        for(auto& entry : irq_source_override_list_)
+        {
+                if(irq == entry.irq_source)
+                {
+                        g_sys_int = entry.g_sys_int;
+                        break;
+                }
+        }
+        return g_sys_int;
+}
+
+IOAPIC* IOAPIC::findIOAPICforIRQ(uint8 irq)
+{
+        return findIOAPICforGlobalInterrupt(findGSysIntForIRQ(irq));
+}
+
+
+void IOAPIC::addIOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base)
+{
+        io_apic_list_.emplace_back(id, regs, g_sys_int_base);
 }

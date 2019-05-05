@@ -64,7 +64,7 @@ void ArchInterrupts::disableKBD()
   disableIRQ(1);
 }
 
-void ArchInterrupts::EndOfInterrupt(uint16 number) 
+void ArchInterrupts::endOfInterrupt(uint16 number)
 {
   sendEOI(number);
 }

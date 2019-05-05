@@ -1,6 +1,7 @@
 #include "ArchSerialInfo.h"
 #include "SerialManager.h"
 #include "kstring.h"
+#include "ArchInterrupts.h"
 
 #include "debug_bochs.h"
 #include "kprintf.h"
@@ -43,14 +44,7 @@ uint32 SerialManager::do_detection( uint32 is_paging_set_up )
       // UART type detection still missing
       archInfo->irq_num = 4 - i%2;
       serial_ports[ num_ports ] = new SerialPort( (char*) sp_name, *archInfo );
-      if(IOAPIC::initialized)
-      {
-              IO_APIC.setIRQMask(archInfo->irq_num, false);
-      }
-      else
-      {
-              PIC8259::enableIRQ(archInfo->irq_num);
-      }
+      ArchInterrupts::enableIRQ(archInfo->irq_num);
       num_ports++;
     }
   }

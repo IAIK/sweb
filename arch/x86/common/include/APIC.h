@@ -334,7 +334,8 @@ public:
                      bool wait_for_delivery = false) volatile;
         void sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_delivery = false) volatile;
 
-        bool usingAPICTimer();
+        bool usingAPICTimer() volatile;
+        void setUsingAPICTimer(bool using_apic_timer) volatile;
 
         static void addLocalAPICToList(const MADTProcLocalAPIC&);
 
@@ -460,13 +461,29 @@ public:
                 volatile uint32 io_win;
         } __attribute__((packed));
 
-        static bool exists;
-        static bool initialized;
-        static IOAPIC_MMIORegs* phys_addr;
 
-        explicit IOAPIC();
+
+        static void addIOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base);
+        static void addIRQSourceOverride(const MADTInterruptSourceOverride&);
+        static void initAll();
+
+        static uint32 findGSysIntForIRQ(uint8 irq);
+
+        static void setIRQMask(uint32 irq_num, bool value);
+        static void setGSysIntMask(uint32 g_sys_int, bool value);
+
+        static IOAPIC* findIOAPICforIRQ(uint8 irq);
+        static IOAPIC* findIOAPICforGlobalInterrupt(uint32 g_int);
+
+
+        static ustl::vector<IOAPIC> io_apic_list_;
+        static ustl::vector<MADTInterruptSourceOverride> irq_source_override_list_;
+
+
+
         IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base);
 
+private:
         void init();
         void initRedirections();
 
@@ -475,17 +492,15 @@ public:
         uint32 read(uint8 offset);
         void write(uint8 offset, uint32 value);
 
+        uint8 redirEntryOffset(uint32 entry_no);
+
         IOAPIC_redir_entry readRedirEntry(uint32 entry_no);
         void writeRedirEntry(uint32 entry_no, const IOAPIC_redir_entry& value);
 
         uint32 getGlobalInterruptBase();
         uint32 getMaxRedirEntry();
 
-        void setIRQMask(uint32 irq_num, bool value);
 
-        void addIRQSourceOverride(const MADTInterruptSourceOverride&);
-private:
-        uint8 redirEntryOffset(uint32 entry_no);
 
         static const uint32 IRQ_OFFSET = 0x20;
 
@@ -495,11 +510,4 @@ private:
         uint32 id_;
         uint32 max_redir_;
         uint32 g_sys_int_base_;
-
-        ustl::vector<MADTInterruptSourceOverride> irq_source_override_list_;
 };
-
-
-LocalAPIC* initAPIC(ACPI_MADTHeader* madt);
-
-extern IOAPIC IO_APIC;

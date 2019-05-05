@@ -148,24 +148,14 @@ extern SWEBDebugInfo const *kernel_debug_info;
 
 extern "C" void arch_contextSwitch();
 
-void beginIRQ(__attribute__((unused)) size_t irq_num)
+void beginIRQ(size_t irq_num)
 {
-        if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
-           (IOAPIC::initialized ||
-            ((irq_num == 0) && cpu_info.lapic.usingAPICTimer()) ||
-            (irq_num > 16)))
-        {
-                cpu_info.lapic.outstanding_EOIs_++;
-        }
-        else
-        {
-                PIC8259::outstanding_EOIs_++;
-        }
+  ArchInterrupts::startOfInterrupt(irq_num);
 }
 
 void endIRQ(size_t irq_num)
 {
-  ArchInterrupts::EndOfInterrupt(irq_num);
+  ArchInterrupts::endOfInterrupt(irq_num);
 }
 
 // Standard ISA IRQs

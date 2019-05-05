@@ -20,6 +20,8 @@ public:
   static void enableKBD();
   static void disableKBD();
 
+  static void startOfInterrupt(uint16 number);
+
   /**
    * Signals EOI to the Interrupt-Controller, so the Controller
    * can resume sending us Interrupts
@@ -28,7 +30,7 @@ public:
    * to signal
    *
    */
-  static void EndOfInterrupt(uint16 number);
+  static void endOfInterrupt(uint16 number);
 
   static void enableInterrupts();
   static bool disableInterrupts();

@@ -48,14 +48,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
   bool interrupt_context = ArchInterrupts::disableInterrupts();
   ArchInterrupts::enableInterrupts();
 
-  if(IOAPIC::initialized)
-  {
-          IO_APIC.setIRQMask(irqnum, false);
-  }
-  else
-  {
-          PIC8259::enableIRQ(irqnum);
-  }
+  ArchInterrupts::enableIRQ(irqnum);
 
   testIRQ( );
   if( !interrupt_context )

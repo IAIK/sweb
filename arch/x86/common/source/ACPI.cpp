@@ -114,8 +114,8 @@ void initACPI()
 
     if(unmap_again)
     {
-            debug(ACPI, "Unmapping previously mapped XSDT page %zx again\n", (size_t)XSDT_ptr/PAGE_SIZE);
-            ArchMemory::unmapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, false);
+      debug(ACPI, "Unmapping previously mapped XSDT page %zx again\n", (size_t)XSDT_ptr/PAGE_SIZE);
+      ArchMemory::unmapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, false);
     }
 
     break;
@@ -129,36 +129,36 @@ void initACPI()
 
 void handleSDT(ACPISDTHeader* entry_header)
 {
-        bool unmap_page_again = false;
-        ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+  bool unmap_page_again = false;
+  ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
 
-        if(!m.page)
-        {
-                debug(ACPI, "SDT page %zx not present, mapping\n", (size_t)entry_header/PAGE_SIZE);
-                ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true);
-                m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
-                unmap_page_again = true;
-        }
-        assert(m.page && "Page for ACPI SDT not mapped");
+  if(!m.page)
+  {
+    debug(ACPI, "SDT page %zx not present, mapping\n", (size_t)entry_header/PAGE_SIZE);
+    ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true);
+    m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+    unmap_page_again = true;
+  }
+  assert(m.page && "Page for ACPI SDT not mapped");
 
-        {
-                char sig[5];
-                memcpy(sig, entry_header->Signature, 4);
-                sig[4] = '\0';
-                debug(ACPI, "[%p] RSDR Header signature: %s\n", entry_header, sig);
-        }
+  {
+    char sig[5];
+    memcpy(sig, entry_header->Signature, 4);
+    sig[4] = '\0';
+    debug(ACPI, "[%p] RSDR Header signature: %s\n", entry_header, sig);
+  }
 
-        if(memcmp(entry_header->Signature, "APIC", 4) == 0)
-        {
-                ACPI_MADTHeader* madt = (ACPI_MADTHeader*)entry_header;
-                madt->parse();
-        }
+  if(memcmp(entry_header->Signature, "APIC", 4) == 0)
+  {
+    ACPI_MADTHeader* madt = (ACPI_MADTHeader*)entry_header;
+    madt->parse();
+  }
 
-        if(unmap_page_again)
-        {
-                debug(ACPI, "Unmapping previously mapped SDT page %zx again\n", (size_t)entry_header/PAGE_SIZE);
-                ArchMemory::unmapKernelPage((size_t)entry_header/PAGE_SIZE, false);
-        }
+  if(unmap_page_again)
+  {
+    debug(ACPI, "Unmapping previously mapped SDT page %zx again\n", (size_t)entry_header/PAGE_SIZE);
+    ArchMemory::unmapKernelPage((size_t)entry_header/PAGE_SIZE, false);
+  }
 }
 
 
@@ -175,13 +175,13 @@ bool RSDPDescriptor::checksumValid()
 
 bool RSDPDescriptor20::checksumValid()
 {
-        uint8 sum = 0;
-        for(char* i = (char*)this; i < ((char*)this) + sizeof(*this); ++i)
-        {
-                sum += *i;
-        }
-        debug(ACPI, "RSDP 2.0 checksum %x\n", sum);
-        return sum == 0;
+  uint8 sum = 0;
+  for(char* i = (char*)this; i < ((char*)this) + sizeof(*this); ++i)
+  {
+    sum += *i;
+  }
+  debug(ACPI, "RSDP 2.0 checksum %x\n", sum);
+  return sum == 0;
 }
 
 bool ACPISDTHeader::checksumValid()
@@ -197,34 +197,38 @@ bool ACPISDTHeader::checksumValid()
 
 size_t RSDT::numEntries()
 {
-        size_t RSDT_entries = (h.Length - sizeof(*this)) / 4;
-        return RSDT_entries;
+  size_t RSDT_entries = (h.Length - sizeof(*this)) / 4;
+  return RSDT_entries;
 }
 
 size_t XSDT::numEntries()
 {
-        size_t XSDT_entries = (h.Length - sizeof(*this)) / 8;
-        return XSDT_entries;
+  size_t XSDT_entries = (h.Length - sizeof(*this)) / 8;
+  return XSDT_entries;
 }
 
 ACPISDTHeader* RSDT::getEntry(size_t i)
 {
-        ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint32*)(this + 1))[i]);
-        return entry_ptr;
+  ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint32*)(this + 1))[i]);
+  return entry_ptr;
 }
 
 ACPISDTHeader* XSDT::getEntry(size_t i)
 {
-        ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint64*)(this + 1))[i]);
-        return entry_ptr;
+  ACPISDTHeader* entry_ptr = (ACPISDTHeader*)(size_t)(((uint64*)(this + 1))[i]);
+  return entry_ptr;
 }
+
 
 void ACPI_MADTHeader::parse()
 {
+  new (&LocalAPIC::local_apic_list_) ustl::vector<MADTProcLocalAPIC>{};
+  new (&IOAPIC::io_apic_list_) ustl::vector<IOAPIC>{};
+  new (&IOAPIC::irq_source_override_list_) ustl::vector<MADTInterruptSourceOverride>{};
+
   if(!LocalAPIC::exists)
   {
-          LocalAPIC::haveLocalAPIC((LocalAPICRegisters*)(size_t)ext_header.local_apic_addr, ext_header.flags);
-          new (&LocalAPIC::local_apic_list_) ustl::vector<MADTProcLocalAPIC>{};
+    LocalAPIC::haveLocalAPIC((LocalAPICRegisters*)(size_t)ext_header.local_apic_addr, ext_header.flags);
   }
 
   MADTEntryDescriptor* madt_entry = (MADTEntryDescriptor*)(this + 1);
@@ -243,20 +247,14 @@ void ACPI_MADTHeader::parse()
     {
       MADT_IO_APIC* entry = (MADT_IO_APIC*)(madt_entry + 1);
       debug(ACPI, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
-      if(!IOAPIC::exists)
-      {
-        new (&IO_APIC) IOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, entry->global_system_interrupt_base);
-      }
+      IOAPIC::addIOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, (uint32)entry->global_system_interrupt_base);
       break;
     }
     case 2:
     {
       MADTInterruptSourceOverride* entry = (MADTInterruptSourceOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->g_sys_int, entry->flags.polarity, entry->flags.trigger_mode);
-      if(IOAPIC::exists)
-      {
-              IO_APIC.addIRQSourceOverride(*entry);
-      }
+      IOAPIC::addIRQSourceOverride(*entry);
       break;
     }
     case 3:
@@ -296,13 +294,12 @@ void ACPI_MADTHeader::parse()
 
 void LocalAPIC::addLocalAPICToList(const MADTProcLocalAPIC& entry)
 {
-        assert(LocalAPIC::exists);
-        local_apic_list_.push_back(entry);
+  assert(LocalAPIC::exists);
+  local_apic_list_.push_back(entry);
 }
 
 
 void IOAPIC::addIRQSourceOverride(const MADTInterruptSourceOverride& entry)
 {
-        assert(IOAPIC::exists);
-        irq_source_override_list_.push_back(entry);
+  irq_source_override_list_.push_back(entry);
 }

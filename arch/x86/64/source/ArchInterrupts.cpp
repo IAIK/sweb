@@ -32,11 +32,7 @@ static void initInterruptController()
     cpu_info.lapic.init();
   }
 
-  if(IOAPIC::exists)
-  {
-    IO_APIC.mapAt(IOAPIC_VADDR);
-    IO_APIC.init();
-  }
+  IOAPIC::initAll();
 
   PIC8259::initialise8259s();
 }
@@ -56,16 +52,22 @@ void ArchInterrupts::enableTimer()
   }
   else
   {
-    if(IOAPIC::initialized)
-    {
-      debug(A_INTERRUPTS, "Enabling PIT timer IRQ via IOAPIC\n");
-      IO_APIC.setIRQMask(2, false); // IRQ source override in APIC: 0 -> 2 // TODO: Shouldn't be hardcoded
-    }
-    else
-    {
-      debug(A_INTERRUPTS, "Enabling PIT timer IRQ via PIC8259\n");
-      PIC8259::enableIRQ(0);
-    }
+    debug(A_INTERRUPTS, "Enabling PIT timer IRQ\n");
+    ArchInterrupts::enableIRQ(0);
+  }
+}
+
+void ArchInterrupts::disableTimer()
+{
+  if(cpu_info.lapic.isInitialized() && cpu_info.lapic.usingAPICTimer())
+  {
+    debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_info.lapic.ID());
+    cpu_info.lapic.reg_vaddr_->lvt_timer.setMask(true);
+  }
+  else
+  {
+    debug(A_INTERRUPTS, "Disabling PIT timer IRQ\n");
+    disableIRQ(0);
   }
 }
 
@@ -87,24 +89,7 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
   PIT::init(command.value, divisor);
 }
 
-void ArchInterrupts::disableTimer()
-{
-  if(cpu_info.lapic.isInitialized() && cpu_info.lapic.usingAPICTimer())
-  {
-    cpu_info.lapic.reg_vaddr_->lvt_timer.setMask(true);
-  }
-  else
-  {
-    if(IOAPIC::initialized)
-    {
-      IO_APIC.setIRQMask(2, true); // IRQ source override in APIC: 0 -> 2
-    }
-    else
-    {
-      PIC8259::disableIRQ(0);
-    }
-  }
-}
+
 
 void ArchInterrupts::enableKBD()
 {
@@ -119,39 +104,56 @@ void ArchInterrupts::disableKBD()
 
 void ArchInterrupts::enableIRQ(uint16 num)
 {
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(num, false); // TODO: handle irq source overrides
-        }
-        else
-        {
-                PIC8259::enableIRQ(num);
-        }
+  if(IOAPIC::findIOAPICforIRQ(num))
+  {
+    IOAPIC::setIRQMask(num, false);
+  }
+  else
+  {
+    PIC8259::enableIRQ(num);
+  }
 }
 
 void ArchInterrupts::disableIRQ(uint16 num)
 {
-        if(IOAPIC::initialized)
-        {
-                IO_APIC.setIRQMask(num, true); // TODO: handle irq source overrides
-        }
-        else
-        {
-                PIC8259::disableIRQ(num);
-        }
-}
-
-void ArchInterrupts::EndOfInterrupt(uint16 number)
-{
-  if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
-     (IOAPIC::initialized || ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
-      (number > 16)))
+  if(IOAPIC::findIOAPICforIRQ(num))
   {
-          cpu_info.lapic.sendEOI(number + 0x20);
+    IOAPIC::setIRQMask(num, true);
   }
   else
   {
-          PIC8259::sendEOI(number);
+    PIC8259::disableIRQ(num);
+  }
+}
+
+void ArchInterrupts::startOfInterrupt(uint16 number)
+{
+  if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+     (IOAPIC::findIOAPICforIRQ(number) ||
+      ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+      (number > 16)))
+  {
+    cpu_info.lapic.outstanding_EOIs_++;
+  }
+  else
+  {
+    PIC8259::outstanding_EOIs_++;
+  }
+}
+
+void ArchInterrupts::endOfInterrupt(uint16 number)
+{
+  debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+  if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+     (IOAPIC::findIOAPICforIRQ(number) ||
+      ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+      (number > 16)))
+  {
+    cpu_info.lapic.sendEOI(number + 0x20);
+  }
+  else
+  {
+    PIC8259::sendEOI(number);
   }
 }
 
