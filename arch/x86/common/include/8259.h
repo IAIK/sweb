@@ -12,7 +12,7 @@ public:
  */
   static void initialise8259s();
 
-  static uint32 cached_mask;
+  static uint16 cached_mask;
 
 /**
  * enables the interrupt Request with the given number 0 to 15
@@ -25,6 +25,8 @@ public:
  *
  */
   static void disableIRQ(uint16 number);
+
+  static bool isIRQEnabled(uint16 number);
 
 /**
  * sends the EOI signal to a Programmable Interrupt Controller (PIC)

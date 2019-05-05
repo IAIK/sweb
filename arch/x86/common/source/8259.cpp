@@ -5,7 +5,7 @@
 
 size_t PIC8259::outstanding_EOIs_ = 0;
 
-uint32 PIC8259::cached_mask = 0xFFFF;
+uint16 PIC8259::cached_mask = 0xFFFF;
 
 #define PIC_ICW1_INIT   0x11
 #define PIC_ICW2_OFFSET 0x20
@@ -36,33 +36,49 @@ void PIC8259::initialise8259s()
   outstanding_EOIs_ = 0;
 }
 
+bool PIC8259::isIRQEnabled(uint16 number)
+{
+  assert(number < 16);
+  return !(cached_mask & (1 << number));
+}
+
 void PIC8259::enableIRQ(uint16 number)
 {
   debug(A_INTERRUPTS, "PIC8259, enable IRQ %x\n", number);
-  uint32 mask = 1 << number;
-  cached_mask &= ~mask;
-  if (number & 8)
+  assert(number < 16);
+  cached_mask &= ~(1 << number);
+  if (number >= 8)
   {
-    outportb(PIC_2_DATA_PORT,((cached_mask>>8)));
+    outportb(PIC_2_DATA_PORT, cached_mask >> 8);
   }
   else
   {
-    outportb(PIC_1_DATA_PORT,(cached_mask%8));
+    outportb(PIC_1_DATA_PORT, cached_mask % 8);
+  }
+
+  if(!isIRQEnabled(2) && (number >= 8))
+  {
+    enableIRQ(2); // Enable slave cascade
   }
 }
 
 void PIC8259::disableIRQ(uint16 number)
 {
   debug(A_INTERRUPTS, "PIC8259, disable IRQ %x\n", number);
-  uint32 mask = 1 << number;
-  cached_mask |= mask;
-  if (number & 8)
+  assert(number < 16);
+  cached_mask |= (1 << number);
+  if (number >= 8)
   {
-    outportb(PIC_2_DATA_PORT,((cached_mask>>8)));
+    outportb(PIC_2_DATA_PORT, cached_mask >> 8);
   }
   else
   {
-    outportb(PIC_1_DATA_PORT,(cached_mask%8));
+    outportb(PIC_1_DATA_PORT, cached_mask % 8);
+  }
+
+  if(((cached_mask & 0xFF00) == 0xFF00) && isIRQEnabled(2) && (number >= 8))
+  {
+    disableIRQ(2); // Disable slave cascade
   }
 }
 
@@ -74,8 +90,11 @@ void PIC8259::sendEOI(uint16 number)
   }
   assert(number <= 16);
   --outstanding_EOIs_;
-  if (number > 7)
+
+  if (number >= 8)
+  {
     outportb(PIC_2_CONTROL_PORT, PIC_EOI);
+  }
 
   outportb(PIC_1_CONTROL_PORT, PIC_EOI);
 }

@@ -55,10 +55,6 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
   else
   {
           PIC8259::enableIRQ(irqnum);
-          if( irqnum > 8 )
-          {
-                  PIC8259::enableIRQ( 2 );   // cascade
-          }
   }
 
   testIRQ( );
