@@ -410,3 +410,13 @@ void ArchCommon::postBootInit()
 {
   initACPI();
 }
+
+
+void ArchCommon::callWithStack(char* stack, void (*func)())
+{
+  asm volatile("movq %[stack], %%rsp\n"
+               "callq *%[func]\n"
+               ::[stack]"r"(stack),
+                 [func]"r"(func)
+               :"rsp");
+}

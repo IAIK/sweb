@@ -176,7 +176,6 @@ void endIRQ(size_t irq_num)
 // 14 	Primary ATA Hard Disk
 // 15 	Secondary ATA Hard Disk
 
-
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
@@ -186,34 +185,37 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  asm volatile("movq %[scheduling_stack], %%rsp\n"
-               ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
-  Scheduler::instance()->schedule();
-
-  ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
-          ((currentThread == &idle_thread ? (Console::RED << 4) :
-                                            (Console::BRIGHT_BLUE << 4)) |
-           Console::BRIGHT_WHITE);
-
-  endIRQ(0);
-  arch_contextSwitch();
-  assert(false);
+  ArchCommon::callWithStack(scheduling_stack + PAGE_SIZE,
+    []()
+    {
+      debug(SYSCALL, "IRQ0 Scheduler trampoline\n");
+      Scheduler::instance()->schedule();
+      ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
+              ((currentThread == &idle_thread ? (Console::RED << 4) :
+                (Console::BRIGHT_BLUE << 4)) |
+               Console::BRIGHT_WHITE);
+      endIRQ(0);
+      arch_contextSwitch();
+      assert(false);
+    });
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  asm volatile("movq %[scheduling_stack], %%rsp\n"
-               ::[scheduling_stack]"r"(scheduling_stack + PAGE_SIZE));
-  Scheduler::instance()->schedule();
+  ArchCommon::callWithStack(scheduling_stack + PAGE_SIZE,
+    []()
+    {
+      debug(SYSCALL, "IRQ65 Scheduler trampoline\n");
+      Scheduler::instance()->schedule();
+      ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
+              ((currentThread == &idle_thread ? (Console::RED << 4) :
+                (Console::BRIGHT_BLUE << 4)) |
+               Console::BRIGHT_WHITE);
 
-  ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
-          ((currentThread == &idle_thread ? (Console::RED << 4) :
-                                            (Console::BRIGHT_BLUE << 4)) |
-           Console::BRIGHT_WHITE);
-
-  arch_contextSwitch();
-  assert(false);
+      arch_contextSwitch();
+      assert(false);
+    });
 }
 
 extern "C" void arch_pageFaultHandler();

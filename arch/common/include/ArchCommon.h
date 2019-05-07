@@ -105,5 +105,6 @@ class ArchCommon
     static void drawStat();
 
     static void postBootInit();
-};
 
+    static void callWithStack(char* stack, void (*func)());
+};
