@@ -188,7 +188,6 @@ extern "C" void irqHandler_0()
   ArchCommon::callWithStack(scheduling_stack + PAGE_SIZE,
     []()
     {
-      debug(SYSCALL, "IRQ0 Scheduler trampoline\n");
       Scheduler::instance()->schedule();
       ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
               ((currentThread == &idle_thread ? (Console::RED << 4) :
@@ -206,7 +205,6 @@ extern "C" void irqHandler_65()
   ArchCommon::callWithStack(scheduling_stack + PAGE_SIZE,
     []()
     {
-      debug(SYSCALL, "IRQ65 Scheduler trampoline\n");
       Scheduler::instance()->schedule();
       ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
               ((currentThread == &idle_thread ? (Console::RED << 4) :
