@@ -185,7 +185,7 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  ArchCommon::callWithStack(scheduling_stack + PAGE_SIZE,
+  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
     []()
     {
       Scheduler::instance()->schedule();
@@ -202,7 +202,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  ArchCommon::callWithStack(scheduling_stack + PAGE_SIZE,
+  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
     []()
     {
       Scheduler::instance()->schedule();

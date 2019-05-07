@@ -28,7 +28,6 @@ private:
 };
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
-extern thread_local char cpu_stack[CPU_STACK_SIZE];
 
 extern thread_local CpuInfo cpu_info;
 extern thread_local TSS cpu_tss;
@@ -47,11 +46,11 @@ class ArchMulticore
     static size_t numRunningCPUs();
     static void stopAllCpus();
 
-    static void setFSBase(uint64 fs_base);
-    static void setGSBase(uint64 fs_base);
-    static uint64 getFSBase();
-    static uint64 getGSBase();
-    static uint64 getGSKernelBase();
+    static void setFSBase(size_t fs_base);
+    static void setGSBase(size_t fs_base);
+    static size_t getFSBase();
+    static size_t getGSBase();
+    static size_t getGSKernelBase();
     static void* getSavedFSBase();
 
     static void allocCLS(char*& cls, size_t& cls_size);
@@ -64,6 +63,7 @@ class ArchMulticore
 
     static void initCpu();
 
+    static char* cpuStackTop();
 
     static Mutex cpu_list_lock_;
     static ustl::vector<CpuInfo*> cpu_list_;

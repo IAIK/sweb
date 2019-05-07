@@ -20,8 +20,6 @@
 __thread Thread* currentThread = NULL;
 __thread ArchThreadRegisters* currentThreadRegisters = NULL;
 
-__thread char scheduling_stack[PAGE_SIZE];
-
 thread_local IdleThread idle_thread;
 
 Scheduler *Scheduler::instance_ = 0;

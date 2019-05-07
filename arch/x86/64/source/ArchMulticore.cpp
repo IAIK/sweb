@@ -63,38 +63,38 @@ void setMSR(uint32_t msr, uint32_t lo, uint32_t hi)
         asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
-uint64 ArchMulticore::getGSBase()
+size_t ArchMulticore::getGSBase()
 {
-        uint64 gs_base;
+        size_t gs_base;
         getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
         return gs_base;
 }
 
-uint64 ArchMulticore::getGSKernelBase()
+size_t ArchMulticore::getGSKernelBase()
 {
-        uint64 gs_base;
+        size_t gs_base;
         getMSR(MSR_KERNEL_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
         return gs_base;
 }
 
-uint64 ArchMulticore::getFSBase()
+size_t ArchMulticore::getFSBase()
 {
-        uint64 fs_base;
+        size_t fs_base;
         getMSR(MSR_FS_BASE, (uint32*)&fs_base, ((uint32*)&fs_base) + 1);
         return fs_base;
 }
 
-void ArchMulticore::setGSBase(uint64 gs_base)
+void ArchMulticore::setGSBase(size_t gs_base)
 {
         setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
 }
 
-void ArchMulticore::setFSBase(uint64 fs_base)
+void ArchMulticore::setFSBase(size_t fs_base)
 {
         setMSR(MSR_FS_BASE, fs_base, fs_base >> 32);
 }
 
-void setSWAPGSKernelBase(uint64 swapgs_base)
+static void setSWAPGSKernelBase(size_t swapgs_base)
 {
         setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
 }
@@ -174,9 +174,9 @@ void ArchMulticore::setCLS(char* cls, size_t cls_size)
         debug(A_MULTICORE, "Set CLS: %p, size: %zx\n", cls, cls_size);
         void** fs_base = (void**)(cls + cls_size);
         *fs_base = fs_base;
-        setFSBase((uint64)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
-        setGSBase((uint64)fs_base);
-        setSWAPGSKernelBase((uint64)fs_base);
+        setFSBase((size_t)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
+        setGSBase((size_t)fs_base);
+        setSWAPGSKernelBase((size_t)fs_base);
 
         debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase());
         debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase());
@@ -192,7 +192,7 @@ void ArchMulticore::initCLS(bool boot_cpu)
   setCLS(cls, cls_size);
 
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
-  initCpuLocalTSS((size_t)(cpu_stack + sizeof(cpu_stack)));
+  initCpuLocalTSS((size_t)ArchMulticore::cpuStackTop());
 
   // The constructor of objects declared as thread_local will be called automatically the first time the thread_local object is used. Other thread_local objects _may or may not_ also be initialized at the same time.
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zx\n", cpu_info.getCpuID());
@@ -259,7 +259,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, (size_t)VIRTUAL_TO_PHYSICAL_BOOT(entry_addr));
 
   pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
-  auto m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
+  auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
   assert(m.page); // TODO: Map if not present
   assert(m.page_ppn == entry_addr/PAGE_SIZE);
 
@@ -376,11 +376,10 @@ void ArchMulticore::initCpu()
   debug(A_MULTICORE, "Enable AP timer\n");
   ArchInterrupts::enableTimer();
 
-  char* cpu_stack_top = cpu_stack + sizeof(cpu_stack);
-  debug(A_MULTICORE, "Switching to CPU local stack at %p\n", cpu_stack_top);
+  debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());
   __asm__ __volatile__("movq %[cpu_stack], %%rsp\n"
                        "movq %%rsp, %%rbp\n"
-                       ::[cpu_stack]"m"(cpu_stack_top));
+                       ::[cpu_stack]"r"(ArchMulticore::cpuStackTop()));
   waitForSystemStart();
 }
 
@@ -403,4 +402,10 @@ void ArchMulticore::waitForSystemStart()
                 __asm__ __volatile__("hlt\n");
         }
         assert(false);
+}
+
+
+char* ArchMulticore::cpuStackTop()
+{
+  return cpu_stack + sizeof(cpu_stack);
 }
