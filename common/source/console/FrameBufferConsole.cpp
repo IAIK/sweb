@@ -118,8 +118,8 @@ void FrameBufferConsole::consoleScrollUp(uint8 const &state)
   uint16 bg_color = convertConsoleColor(bg);
   pointer fb = ArchCommon::getVESAConsoleLFBPtr();
   uint16* fb16 = (uint16*)fb;
-  memcpy((void*) fb, (void*) (fb + (consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)),
-         (consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16);
+  memmove((void*) fb, (void*) (fb + (consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16)),
+          (consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16);
 
   for(uint32 index = ((consoleGetNumRows() - 1) * consoleGetNumColumns() * bytes_per_pixel_ * 8 * 16) / 2;
       index < x_res_ * y_res_; index++)
