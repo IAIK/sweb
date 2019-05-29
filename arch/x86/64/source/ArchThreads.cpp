@@ -37,10 +37,14 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
   }
 }
 
+void ArchThreads::switchToAddressSpace(Thread* thread)
+{
+  ArchMemory::loadPagingStructureRoot(thread->kernel_registers_->cr3);
+}
+
 void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
 {
-  asm volatile("movq %[new_cr3], %%cr3\n"
-               ::[new_cr3]"r"(arch_memory.page_map_level_4_ * PAGE_SIZE));
+  ArchMemory::loadPagingStructureRoot(arch_memory.getValueForCR3());
 }
 
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
@@ -93,6 +97,11 @@ void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* func
   info->rip = (size_t)function;
 }
 
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
+{
+        return (void*)info->rip;
+}
+
 void ArchThreads::yield()
 {
   __asm__ __volatile__("int $65");
@@ -105,9 +114,9 @@ size_t ArchThreads::testSetLock(volatile size_t &lock, size_t new_value)
 
 uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
 {
-  int32 ret=increment;
+  int64 ret=increment;
   __asm__ __volatile__(
-  "lock; xadd %0, %1;"
+  "lock; xaddq %0, %1;"
   :"=a" (ret), "=m" (value)
   :"a" (ret)
   :);

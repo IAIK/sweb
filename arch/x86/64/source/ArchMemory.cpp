@@ -320,21 +320,15 @@ void ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page, bool c
 
 void ArchMemory::unmapKernelPage(size_t virtual_page, bool free_page)
 {
-  ArchMemoryMapping mapping = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),
+  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE),
                                              virtual_page);
-  PageMapLevel4Entry* pml4 = kernel_page_map_level_4;
-  assert(pml4[mapping.pml4i].present);
-  PageDirPointerTableEntry *pdpt = (PageDirPointerTableEntry*) getIdentAddressOfPPN(pml4[mapping.pml4i].page_ppn);
-  assert(pdpt[mapping.pdpti].pd.present);
-  PageDirEntry *pd = (PageDirEntry*) getIdentAddressOfPPN(pdpt[mapping.pdpti].pd.page_ppn);
-  assert(pd[mapping.pdi].pt.present);
-  PageTableEntry *pt = (PageTableEntry*) getIdentAddressOfPPN(pd[mapping.pdi].pt.page_ppn);
-  assert(pt[mapping.pti].present);
-  pt[mapping.pti].present = 0;
-  pt[mapping.pti].writeable = 0;
+
+  assert(m.page && (m.page_size == PAGE_SIZE));
+
+  memset(&m.pt[m.pti], 0, sizeof(m.pt[m.pti]));
   if(free_page)
   {
-    PageManager::instance()->freePPN(pt[mapping.pti].page_ppn);
+    PageManager::instance()->freePPN(m.pt[m.pti].page_ppn);
   }
   asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
@@ -353,6 +347,11 @@ void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
 {
   __asm__ __volatile__("movq %[cr3_value], %%cr3\n"
                        ::[cr3_value]"r"(cr3_value));
+}
+
+uint64 ArchMemory::getValueForCR3()
+{
+  return getRootOfPagingStructure() * PAGE_SIZE;
 }
 
 

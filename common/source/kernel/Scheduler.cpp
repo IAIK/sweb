@@ -92,7 +92,7 @@ void Scheduler::schedule()
         (previousThread ? previousThread->getName() : "(nil)"), previousThread,
         (currentThread ? currentThread->getName() : "(nil)"), currentThread);
 
-  ArchMemory::loadPagingStructureRoot(currentThread->kernel_registers_->cr3);
+  ArchThreads::switchToAddressSpace(currentThread);
 
   currentThread->currently_scheduled_on_cpu_ = ArchMulticore::getCpuID();
 
@@ -200,7 +200,7 @@ void Scheduler::printThreadList()
     debug(SCHEDULER, "Scheduler::printThreadList: threads_[%zd]: %p  %zd:%s     [%s] at saved %s rip %p\n", c, threads_[c],
           threads_[c]->getTID(), threads_[c]->getName(), Thread::threadStatePrintable[threads_[c]->state_],
           (threads_[c]->switch_to_userspace_ ? "user" : "kernel"),
-          (void*)(threads_[c]->switch_to_userspace_ ? threads_[c]->user_registers_->rip : threads_[c]->kernel_registers_->rip));
+          (void*)(threads_[c]->switch_to_userspace_ ? ArchThreads::getInstructionPointer(threads_[c]->user_registers_) : ArchThreads::getInstructionPointer(threads_[c]->kernel_registers_)));
   unlockScheduling(DEBUG_STR_HERE);
 }
 

@@ -290,6 +290,7 @@ extern "C" void arch_contextSwitch()
     assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
   }
   assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
+
   ArchThreadRegisters info = *currentThreadRegisters;
   assert(info.rip >= PAGE_SIZE); // debug
   assert(info.rsp0 >= USER_BREAK);

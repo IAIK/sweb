@@ -148,16 +148,6 @@ extern SWEBDebugInfo const *kernel_debug_info;
 
 extern "C" void arch_contextSwitch();
 
-void beginIRQ(size_t irq_num)
-{
-  ArchInterrupts::startOfInterrupt(irq_num);
-}
-
-void endIRQ(size_t irq_num)
-{
-  ArchInterrupts::endOfInterrupt(irq_num);
-}
-
 // Standard ISA IRQs
 // 0 	Programmable Interrupt Timer Interrupt
 // 1 	Keyboard Interrupt
@@ -180,7 +170,7 @@ extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
   debug(A_INTERRUPTS, "IRQ 0 called by CPU %zx\n", ArchMulticore::getCpuID());
-  beginIRQ(0);
+  ArchInterrupts::startOfInterrupt(0);
   ArchCommon::drawHeartBeat();
 
   Scheduler::instance()->incTicks();
@@ -193,7 +183,7 @@ extern "C" void irqHandler_0()
               ((currentThread == &idle_thread ? (Console::RED << 4) :
                 (Console::BRIGHT_BLUE << 4)) |
                Console::BRIGHT_WHITE);
-      endIRQ(0);
+      ArchInterrupts::endOfInterrupt(0);
       arch_contextSwitch();
       assert(false);
     });
@@ -232,20 +222,20 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error, uint64 ip)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  beginIRQ(1);
+  ArchInterrupts::startOfInterrupt(1);
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 1, 1 + 0x20);
   KeyboardManager::instance()->serviceIRQ( );
-  endIRQ(1);
+  ArchInterrupts::endOfInterrupt(1);
 }
 
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
   kprintfd( "IRQ 3 called\n" );
-  beginIRQ(3);
+  ArchInterrupts::startOfInterrupt(3);
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 3, 3 + 0x20);
   SerialManager::getInstance()->service_irq( 3 );
-  endIRQ(3);
+  ArchInterrupts::endOfInterrupt(3);
   kprintfd( "IRQ 3 ended\n" );
 }
 
@@ -254,9 +244,9 @@ extern "C" void irqHandler_4()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 4, 4 + 0x20);
   kprintfd( "IRQ 4 called\n" );
-  beginIRQ(4);
+  ArchInterrupts::startOfInterrupt(3);
   SerialManager::getInstance()->service_irq( 4 );
-  endIRQ(4);
+  ArchInterrupts::endOfInterrupt(3);
   kprintfd( "IRQ 4 ended\n" );
 }
 
@@ -273,9 +263,9 @@ extern "C" void irqHandler_9()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 9, 9 + 0x20);
   kprintfd( "IRQ 9 called\n" );
-  beginIRQ(9);
+  ArchInterrupts::startOfInterrupt(9);
   BDManager::getInstance()->serviceIRQ( 9 );
-  endIRQ(9);
+  ArchInterrupts::endOfInterrupt(9);
 }
 
 extern "C" void arch_irqHandler_11();
@@ -283,9 +273,9 @@ extern "C" void irqHandler_11()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called by core %zx\n", 11, 11 + 0x20, ArchMulticore::getCpuID());
   kprintfd( "IRQ 11 called\n" );
-  beginIRQ(11);
+  ArchInterrupts::startOfInterrupt(11);
   BDManager::getInstance()->serviceIRQ( 11 );
-  endIRQ(11);
+  ArchInterrupts::endOfInterrupt(11);
 }
 
 extern "C" void arch_irqHandler_14();
@@ -293,9 +283,9 @@ extern "C" void irqHandler_14()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%u) called by core %zx\n", 14, 14 + 0x20, ArchMulticore::getCpuID());
   //kprintfd( "IRQ 14 called\n" );
-  beginIRQ(14);
+  ArchInterrupts::startOfInterrupt(14);
   BDManager::getInstance()->serviceIRQ( 14 );
-  endIRQ(14);
+  ArchInterrupts::endOfInterrupt(14);
 }
 
 extern "C" void arch_irqHandler_15();
@@ -303,15 +293,15 @@ extern "C" void irqHandler_15()
 {
   debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 15, 15 + 0x20);
   //kprintfd( "IRQ 15 called\n" );
-  beginIRQ(15);
+  ArchInterrupts::startOfInterrupt(15);
   BDManager::getInstance()->serviceIRQ( 15 );
-  endIRQ(15);
+  ArchInterrupts::endOfInterrupt(15);
 }
 
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
-        beginIRQ(90 - 0x20);
+        ArchInterrupts::startOfInterrupt(90 - 0x20);
         debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", ArchMulticore::getCpuID());
         if (currentThread != 0)
         {
@@ -320,13 +310,13 @@ extern "C" void irqHandler_90()
         }
         while(1)
                 asm("hlt\n");
-        endIRQ(90 - 0x20);
+        ArchInterrupts::endOfInterrupt(90 - 0x20);
 }
 
 extern "C" void arch_irqHandler_99();
 extern "C" void irqHandler_99()
 {
-        beginIRQ(99 - 0x20); // TODO: Fix APIC interrupt numbering
+        ArchInterrupts::startOfInterrupt(99 - 0x20);  // TODO: Fix APIC interrupt numbering
         debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", ArchMulticore::getCpuID());
 
         TLBShootdownRequest* shootdown_list = cpu_info.tlb_shootdown_list.exchange(nullptr);
@@ -356,7 +346,7 @@ extern "C" void irqHandler_99()
                 shootdown_list = next;
         }
 
-        endIRQ(99 - 0x20);
+        ArchInterrupts::endOfInterrupt(99 - 0x20);
 }
 
 extern "C" void arch_irqHandler_100();

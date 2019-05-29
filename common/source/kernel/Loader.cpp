@@ -132,12 +132,12 @@ void* Loader::getEntryFunction() const
 
 bool Loader::loadExecutableAndInitProcess()
 {
-  debug ( LOADER,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
+  debug (LOADER ,"Loader::loadExecutableAndInitProcess: going to load an executable\n" );
 
   if(!readHeaders())
     return false;
 
-  debug ( LOADER,"loadExecutableAndInitProcess: Entry: %zx, num Sections %zx\n",hdr_->e_entry, (size_t)hdr_->e_phnum );
+  debug (LOADER ,"loadExecutableAndInitProcess: Entry: %zx, num Sections %zx\n", (size_t)hdr_->e_entry, (size_t)hdr_->e_phnum );
   if (LOADER & OUTPUT_ADVANCED)
     Elf::printElfHeader ( *hdr_ );
 

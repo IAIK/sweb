@@ -45,8 +45,6 @@ struct GDT64Ptr
 }__attribute__((__packed__));
 
 
-
-
 typedef struct
 {
         uint32 limitL          : 16;
