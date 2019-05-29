@@ -81,7 +81,7 @@ size_t CPULocalStorage::getCLSSize()
   return &cls_end - &cls_start;
 }
 
-CPULocalStorage::CLSHandle CPULocalStorage::allocCLS()
+char* CPULocalStorage::allocCLS()
 {
   debug(A_MULTICORE, "Allocating CPU local storage\n");
 
@@ -100,18 +100,13 @@ CPULocalStorage::CLSHandle CPULocalStorage::allocCLS()
         cls_base + (&tbss_start - &cls_start), cls_base + (&tbss_start - &cls_start) + tbss_size);
   memcpy(cls_base + (&tdata_start - &cls_start), &tdata_start, tdata_size);
 
-  return CLSHandle{cls_base, cls_size};
+  return cls_base;
 }
 
-void CPULocalStorage::setCLS(CLSHandle cls_handle)
+void CPULocalStorage::setCLS(char* cls)
 {
-  setCLS(cls_handle.cls_base, cls_handle.cls_size);
-}
-
-void CPULocalStorage::setCLS(char* cls, size_t cls_size)
-{
-  debug(A_MULTICORE, "Set CLS: %p, size: %zx\n", cls, cls_size);
-  void** fs_base = (void**)(cls + cls_size);
+  debug(A_MULTICORE, "Set CLS: %p\n", cls);
+  void** fs_base = (void**)(cls + getCLSSize());
   *fs_base = fs_base;
   setFSBase((size_t)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
   setGSBase((size_t)fs_base);
@@ -304,7 +299,7 @@ void ArchMulticore::initCpu()
   extern char cls_start;
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for AP [%p, %p)\n", &cls_start, &cls_end);
-  CPULocalStorage::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
+  CPULocalStorage::setCLS(&cls_start);
   currentThread = NULL;
 
   CPULocalStorage::setCLS(CPULocalStorage::allocCLS());

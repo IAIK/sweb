@@ -71,16 +71,9 @@ class ArchMulticore
 
 namespace CPULocalStorage
 {
-    struct CLSHandle
-    {
-            char* cls_base;
-            size_t cls_size;
-    };
-
     size_t getCLSSize();
 
-    CLSHandle allocCLS();
-    void setCLS(CLSHandle cls_handle);
-    void setCLS(char* cls, size_t cls_size);
+    char* allocCLS();
+    void setCLS(char* cls);
     bool CLSinitialized();
 };
