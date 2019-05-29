@@ -10,6 +10,10 @@
 #include "uatomic.h"
 #include "Scheduler.h"
 #include "ArchThreads.h"
+#include "ArchCommon.h"
+
+extern SystemState system_state;
+
 
 __thread GDT cpu_gdt;
 __thread TSS cpu_tss;
@@ -21,7 +25,6 @@ thread_local CpuInfo cpu_info;
 
 thread_local char cpu_stack[CPU_STACK_SIZE];
 
-extern SystemState system_state;
 
 volatile static bool ap_started = false;
 
@@ -45,23 +48,23 @@ extern char ap_pml4[PAGE_SIZE];
 static uint8 ap_boot_stack[PAGE_SIZE];
 
 CpuInfo::CpuInfo() :
-        lapic(),
-        cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : -1)
+  lapic(),
+  cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : -1)
 {
-        debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
-        MutexLock l(ArchMulticore::cpu_list_lock_);
-        ArchMulticore::cpu_list_.push_back(this);
-        debug(A_MULTICORE, "Added CpuInfo %zx to cpu list\n", cpu_id);
+  debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
+  MutexLock l(ArchMulticore::cpu_list_lock_);
+  ArchMulticore::cpu_list_.push_back(this);
+  debug(A_MULTICORE, "Added CpuInfo %zx to cpu list\n", cpu_id);
 }
 
 size_t CpuInfo::getCpuID()
 {
-        return cpu_id;
+  return cpu_id;
 }
 
 void CpuInfo::setCpuID(size_t id)
 {
-        cpu_id = id;
+  cpu_id = id;
 }
 
 
@@ -73,45 +76,62 @@ extern char tbss_end;
 extern char tdata_start;
 extern char tdata_end;
 
-void ArchMulticore::allocCLS(char*& cls, size_t& cls_size)
+size_t CPULocalStorage::getCLSSize()
+{
+  return &cls_end - &cls_start;
+}
+
+CPULocalStorage::CLSHandle CPULocalStorage::allocCLS()
 {
   debug(A_MULTICORE, "Allocating CPU local storage\n");
-  cls_size = &cls_end - &cls_start;
+
+  size_t cls_size = getCLSSize();
   size_t tbss_size = &tbss_end - &tbss_start;
   size_t tdata_size = &tdata_end - &tdata_start;
-  debug(A_MULTICORE, "cls: [%p, %p), size: %zx\n", &cls_start, &cls_end, cls_size);
+  debug(A_MULTICORE, "cls_base: [%p, %p), size: %zx\n", &cls_start, &cls_end, cls_size);
   debug(A_MULTICORE, "tbss: [%p, %p), size: %zx\n", &tbss_start, &tbss_end, tbss_size);
   debug(A_MULTICORE, "tdata: [%p, %p), size: %zx\n", &tdata_start, &tdata_end, tdata_size);
 
-  cls = new char[cls_size + sizeof(void*)]{};
-  debug(A_MULTICORE, "Allocated new cls at [%p, %p)\n", cls, cls + cls_size + sizeof(void*));
+  char* cls_base = new char[cls_size + sizeof(void*)]{};
+  debug(A_MULTICORE, "Allocated new cls_base at [%p, %p)\n", cls_base, cls_base + cls_size + sizeof(void*));
 
-  debug(A_MULTICORE, "Initializing tdata at [%p, %p) and tbss at [%p, %p)\n", cls + (&tdata_start - &cls_start), cls + (&tdata_start - &cls_start) + tdata_size, cls + (&tbss_start - &cls_start), cls + (&tbss_start - &cls_start) + tbss_size);
-  memcpy(cls + (&tdata_start - &cls_start), &tdata_start, tdata_size);
+  debug(A_MULTICORE, "Initializing tdata at [%p, %p) and tbss at [%p, %p)\n",
+        cls_base + (&tdata_start - &cls_start), cls_base + (&tdata_start - &cls_start) + tdata_size,
+        cls_base + (&tbss_start - &cls_start), cls_base + (&tbss_start - &cls_start) + tbss_size);
+  memcpy(cls_base + (&tdata_start - &cls_start), &tdata_start, tdata_size);
+
+  return CLSHandle{cls_base, cls_size};
 }
 
-void ArchMulticore::setCLS(char* cls, size_t cls_size)
+void CPULocalStorage::setCLS(CLSHandle cls_handle)
 {
-        debug(A_MULTICORE, "Set CLS: %p, size: %zx\n", cls, cls_size);
-        void** fs_base = (void**)(cls + cls_size);
-        *fs_base = fs_base;
-        setFSBase((size_t)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
-        setGSBase((size_t)fs_base);
-        setSWAPGSKernelBase((size_t)fs_base);
-
-        debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase());
-        debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase());
+  setCLS(cls_handle.cls_base, cls_handle.cls_size);
 }
 
-void ArchMulticore::initCLS(bool boot_cpu)
+void CPULocalStorage::setCLS(char* cls, size_t cls_size)
 {
-  char* cls = 0;
-  size_t cls_size = 0;
+  debug(A_MULTICORE, "Set CLS: %p, size: %zx\n", cls, cls_size);
+  void** fs_base = (void**)(cls + cls_size);
+  *fs_base = fs_base;
+  setFSBase((size_t)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
+  setGSBase((size_t)fs_base);
+  setSWAPGSKernelBase((size_t)fs_base);
+
+  debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase());
+  debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase());
+}
+
+bool CPULocalStorage::CLSinitialized()
+{
+  bool init = (getFSBase() != 0);
+  return init;
+}
 
 
-  allocCLS(cls, cls_size);
-  setCLS(cls, cls_size);
 
+
+void ArchMulticore::initCPULocalData(bool boot_cpu)
+{
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
   initCpuLocalTSS((size_t)ArchMulticore::cpuStackTop());
 
@@ -121,24 +141,7 @@ void ArchMulticore::initCLS(bool boot_cpu)
   debug(A_MULTICORE, "CPU %zx: %s initialized\n", getCpuID(), idle_thread.getName());
 }
 
-bool ArchMulticore::CLSinitialized()
-{
-  bool init = (getFSBase() != 0);
-  return init;
-}
 
-void ArchMulticore::setCpuID(size_t id)
-{
-  debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
-  assert(CLSinitialized());
-  cpu_info.setCpuID(id);
-}
-
-size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
-{
-  //assert(CLSinitialized());
-  return (!CLSinitialized() ? 0 : cpu_info.getCpuID());
-}
 
 void ArchMulticore::initCpuLocalGDT(GDT& template_gdt)
 {
@@ -154,13 +157,27 @@ void ArchMulticore::initCpuLocalGDT(GDT& template_gdt)
 
 void ArchMulticore::initCpuLocalTSS(size_t cpu_stack_top)
 {
-        debug(A_MULTICORE, "CPU init TSS at %p\n", &cpu_tss);
-        setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cpu_gdt + KERNEL_TSS), (size_t)&cpu_tss >> 32, (size_t)&cpu_tss, sizeof(TSS) - 1, 0);
+  debug(A_MULTICORE, "CPU init TSS at %p\n", &cpu_tss);
+  setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cpu_gdt + KERNEL_TSS), (size_t)&cpu_tss >> 32, (size_t)&cpu_tss, sizeof(TSS) - 1, 0);
 
-        cpu_tss.ist0 = cpu_stack_top;
-        cpu_tss.rsp0 = cpu_stack_top;
-        __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
+  cpu_tss.ist0 = cpu_stack_top;
+  cpu_tss.rsp0 = cpu_stack_top;
+  __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 }
+
+void ArchMulticore::setCpuID(size_t id)
+{
+  debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
+  assert(CPULocalStorage::CLSinitialized());
+  cpu_info.setCpuID(id);
+}
+
+size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
+{
+  //assert(CLSinitialized());
+  return (!CPULocalStorage::CLSinitialized() ? 0 : cpu_info.getCpuID());
+}
+
 
 void ArchMulticore::initialize()
 {
@@ -169,7 +186,8 @@ void ArchMulticore::initialize()
 
   assert(running_cpus == 0);
   running_cpus = 1;
-  ArchMulticore::initCLS(true);
+  CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+  ArchMulticore::initCPULocalData(true);
 }
 
 void ArchMulticore::prepareAPStartup(size_t entry_addr)
@@ -207,20 +225,20 @@ void ArchMulticore::startOtherCPUs()
 
     for(auto& cpu_lapic : LocalAPIC::local_apic_list_)
     {
-            if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != cpu_info.lapic.ID()))
-            {
-                    cpu_info.lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
-                    debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", cpu_lapic.apic_id);
-                    while(!ap_started);
-                    ap_started = false;
-                    debug(A_MULTICORE, "AP %x startup complete, BSP continuing\n", cpu_lapic.apic_id);
-            }
+      if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != cpu_info.lapic.ID()))
+      {
+        cpu_info.lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", cpu_lapic.apic_id);
+        while(!ap_started);
+        ap_started = false;
+        debug(A_MULTICORE, "AP %u startup complete, BSP continuing\n", cpu_lapic.apic_id);
+      }
     }
 
     MutexLock l(ArchMulticore::cpu_list_lock_);
     for(auto& cpu : ArchMulticore::cpu_list_)
     {
-            debug(A_MULTICORE, "CPU %zx running\n", cpu->getCpuID());
+      debug(A_MULTICORE, "CPU %zu running\n", cpu->getCpuID());
     }
   }
   else
@@ -236,7 +254,7 @@ size_t ArchMulticore::numRunningCPUs()
 
 void ArchMulticore::stopAllCpus()
 {
-  if(ArchMulticore::CLSinitialized() && cpu_info.lapic.isInitialized())
+  if(CPULocalStorage::CLSinitialized() && cpu_info.lapic.isInitialized())
   {
     cpu_info.lapic.sendIPI(90);
   }
@@ -286,10 +304,11 @@ void ArchMulticore::initCpu()
   extern char cls_start;
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for AP [%p, %p)\n", &cls_start, &cls_end);
-  ArchMulticore::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
+  CPULocalStorage::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
   currentThread = NULL;
 
-  ArchMulticore::initCLS();
+  CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+  ArchMulticore::initCPULocalData();
   cpu_info.lapic.init();
 
   ArchThreads::initialise();
@@ -307,22 +326,22 @@ void ArchMulticore::initCpu()
 
 void ArchMulticore::waitForSystemStart()
 {
-        kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
-        debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
-        assert(CLSinitialized());
-        ap_started = true;
+  kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+  assert(CPULocalStorage::CLSinitialized());
+  ap_started = true;
 
-        while(system_state != RUNNING);
+  while(system_state != RUNNING);
 
-        //debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
-        ArchInterrupts::enableInterrupts();
+  //debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
+  ArchInterrupts::enableInterrupts();
 
-        while(1)
-        {
-                debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
-                __asm__ __volatile__("hlt\n");
-        }
-        assert(false);
+  while(1)
+  {
+    debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
+    ArchCommon::halt();
+  }
+  assert(false);
 }
 
 

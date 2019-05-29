@@ -28,7 +28,7 @@ static void initInterruptController()
     {
       LocalAPIC::mapAt(APIC_VADDR);
     }
-    assert(ArchMulticore::CLSinitialized());
+    assert(CPULocalStorage::CLSinitialized());
     cpu_info.lapic.init();
   }
 
@@ -234,7 +234,7 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint64));
   setFSBase((uint64)getSavedFSBase());
-  assert(ArchMulticore::CLSinitialized());
+  assert(CPULocalStorage::CLSinitialized());
   register ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"

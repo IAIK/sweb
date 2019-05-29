@@ -8,6 +8,8 @@
 #include "uatomic.h"
 #include "IdleThread.h"
 
+#define CPU_STACK_SIZE 4*PAGE_SIZE
+
 
 struct TLBShootdownRequest;
 
@@ -27,11 +29,10 @@ public:
 private:
 };
 
-#define CPU_STACK_SIZE 4*PAGE_SIZE
 
 extern thread_local CpuInfo cpu_info;
+extern thread_local char cpu_stack[CPU_STACK_SIZE];
 extern thread_local TSS cpu_tss;
-
 extern thread_local IdleThread idle_thread;
 
 #define AP_STARTUP_PADDR 0x0
@@ -47,16 +48,12 @@ class ArchMulticore
     static void stopAllCpus();
 
 
-
-    static void allocCLS(char*& cls, size_t& cls_size);
-    static void setCLS(char* cls, size_t cls_size);
-    static void initCLS(bool boot_cpu = false);
-    static bool CLSinitialized();
-
     static void setCpuID(size_t id);
     static size_t getCpuID();
 
     static void initCpu();
+    static void initCPULocalData(bool boot_cpu = false);
+
 
     static char* cpuStackTop();
 
@@ -69,4 +66,21 @@ class ArchMulticore
     static void prepareAPStartup(size_t entry_addr);
 
     static void waitForSystemStart();
+};
+
+
+namespace CPULocalStorage
+{
+    struct CLSHandle
+    {
+            char* cls_base;
+            size_t cls_size;
+    };
+
+    size_t getCLSSize();
+
+    CLSHandle allocCLS();
+    void setCLS(CLSHandle cls_handle);
+    void setCLS(char* cls, size_t cls_size);
+    bool CLSinitialized();
 };

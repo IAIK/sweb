@@ -265,7 +265,7 @@ extern "C" void entry64()
   extern char cls_start;
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for boot processor [%p, %p)\n", &cls_start, &cls_end);
-  ArchMulticore::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
+  CPULocalStorage::setCLS(&cls_start, (size_t)&cls_end - (size_t)&cls_start);
   currentThread = nullptr;
 
   PRINT("Calling startup()...\n");
