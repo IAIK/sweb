@@ -46,12 +46,7 @@ class ArchMulticore
     static size_t numRunningCPUs();
     static void stopAllCpus();
 
-    static void setFSBase(size_t fs_base);
-    static void setGSBase(size_t fs_base);
-    static size_t getFSBase();
-    static size_t getGSBase();
-    static size_t getGSKernelBase();
-    static void* getSavedFSBase();
+
 
     static void allocCLS(char*& cls, size_t& cls_size);
     static void setCLS(char* cls, size_t cls_size);

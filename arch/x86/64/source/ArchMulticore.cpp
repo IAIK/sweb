@@ -44,77 +44,6 @@ extern char ap_pml4[PAGE_SIZE];
 
 static uint8 ap_boot_stack[PAGE_SIZE];
 
-
-#define MSR_FS_BASE        0xC0000100
-#define MSR_GS_BASE        0xC0000101
-#define MSR_KERNEL_GS_BASE 0xC0000102
-
-void getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
-{
-        asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
-}
-
-void setMSR(uint32_t msr, uint32_t lo, uint32_t hi)
-{
-        if(A_MULTICORE & OUTPUT_ADVANCED)
-        {
-                debug(A_MULTICORE, "Set MSR %x, value: %zx\n", msr, ((size_t)hi << 32) | (size_t)lo);
-        }
-        asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
-}
-
-size_t ArchMulticore::getGSBase()
-{
-        size_t gs_base;
-        getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
-        return gs_base;
-}
-
-size_t ArchMulticore::getGSKernelBase()
-{
-        size_t gs_base;
-        getMSR(MSR_KERNEL_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
-        return gs_base;
-}
-
-size_t ArchMulticore::getFSBase()
-{
-        size_t fs_base;
-        getMSR(MSR_FS_BASE, (uint32*)&fs_base, ((uint32*)&fs_base) + 1);
-        return fs_base;
-}
-
-void ArchMulticore::setGSBase(size_t gs_base)
-{
-        setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
-}
-
-void ArchMulticore::setFSBase(size_t fs_base)
-{
-        setMSR(MSR_FS_BASE, fs_base, fs_base >> 32);
-}
-
-static void setSWAPGSKernelBase(size_t swapgs_base)
-{
-        setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
-}
-
-void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl)
-{
-        debug(A_MULTICORE, "setTSSSegmentDescriptor at %p, baseH: %x, baseL: %x, limit: %x, dpl: %x\n", descriptor, baseH, baseL, limit, dpl);
-        memset(descriptor, 0, sizeof(TSSSegmentDescriptor));
-        descriptor->baseLL = (uint16) (baseL & 0xFFFF);
-        descriptor->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
-        descriptor->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
-        descriptor->baseH = baseH;
-        descriptor->limitL = (uint16) (limit & 0xFFFF);
-        descriptor->limitH = (uint8) (((limit >> 16U) & 0xF));
-        descriptor->type = 0b1001;
-        descriptor->dpl = dpl;
-        descriptor->granularity = 0;
-        descriptor->present = 1;
-}
-
 CpuInfo::CpuInfo() :
         lapic(),
         cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : -1)
@@ -135,15 +64,7 @@ void CpuInfo::setCpuID(size_t id)
         cpu_id = id;
 }
 
-void* ArchMulticore::getSavedFSBase()
-{
-  void* fs_base;
-  __asm__ __volatile__("movq %%gs:0, %%rax\n"
-                       "movq %%rax, %[fs_base]\n"
-                       : [fs_base]"=m"(fs_base));
-  assert(fs_base != 0);
-  return fs_base;
-}
+
 
 extern char cls_start;
 extern char cls_end;

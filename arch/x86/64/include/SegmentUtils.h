@@ -68,6 +68,8 @@ typedef struct
         uint32 reserved;
 }__attribute__((__packed__)) TSSSegmentDescriptor;
 
+void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl);
+
 typedef struct
 {
         uint32 reserved_0;
@@ -97,3 +99,12 @@ typedef struct
         };
         uint32 reserved_3[15];
 }__attribute__((__packed__)) TSS;
+
+
+void setFSBase(size_t fs_base);
+void setGSBase(size_t fs_base);
+size_t getFSBase();
+size_t getGSBase();
+size_t getGSKernelBase();
+void* getSavedFSBase();
+void setSWAPGSKernelBase(size_t swapgs_base);

@@ -1,4 +1,8 @@
 #include "SegmentUtils.h"
+#include "MSR.h"
+#include "assert.h"
+#include "debug.h"
+#include "kstring.h"
 
 
 GDT32Ptr::GDT32Ptr(uint16 gdt_limit, uint32 gdt_addr) :
@@ -29,4 +33,69 @@ GDT64Ptr::GDT64Ptr(GDT& gdt) :
 void GDT64Ptr::load()
 {
   asm volatile("lgdt %[gdt_ptr]" :: [gdt_ptr]"m"(*this));
+}
+
+
+void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl)
+{
+        debug(A_MULTICORE, "setTSSSegmentDescriptor at %p, baseH: %x, baseL: %x, limit: %x, dpl: %x\n", descriptor, baseH, baseL, limit, dpl);
+        memset(descriptor, 0, sizeof(TSSSegmentDescriptor));
+        descriptor->baseLL = (uint16) (baseL & 0xFFFF);
+        descriptor->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+        descriptor->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+        descriptor->baseH = baseH;
+        descriptor->limitL = (uint16) (limit & 0xFFFF);
+        descriptor->limitH = (uint8) (((limit >> 16U) & 0xF));
+        descriptor->type = 0b1001;
+        descriptor->dpl = dpl;
+        descriptor->granularity = 0;
+        descriptor->present = 1;
+}
+
+
+size_t getGSBase()
+{
+        size_t gs_base;
+        getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
+        return gs_base;
+}
+
+size_t getGSKernelBase()
+{
+        size_t gs_base;
+        getMSR(MSR_KERNEL_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
+        return gs_base;
+}
+
+size_t getFSBase()
+{
+        size_t fs_base;
+        getMSR(MSR_FS_BASE, (uint32*)&fs_base, ((uint32*)&fs_base) + 1);
+        return fs_base;
+}
+
+
+void setGSBase(size_t gs_base)
+{
+        setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
+}
+
+void setFSBase(size_t fs_base)
+{
+        setMSR(MSR_FS_BASE, fs_base, fs_base >> 32);
+}
+
+void setSWAPGSKernelBase(size_t swapgs_base)
+{
+        setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
+}
+
+void* getSavedFSBase()
+{
+        void* fs_base;
+        __asm__ __volatile__("movq %%gs:0, %%rax\n"
+                             "movq %%rax, %[fs_base]\n"
+                             : [fs_base]"=m"(fs_base));
+        assert(fs_base != 0);
+        return fs_base;
 }
