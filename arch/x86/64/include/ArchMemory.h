@@ -16,13 +16,13 @@ class ArchMemoryMapping
     PageTableEntry* pt;
     pointer page;
 
-    uint64 pml4_ppn;
-    uint64 pdpt_ppn;
-    uint64 pd_ppn;
-    uint64 pt_ppn;
-    uint64 page_ppn;
+    ppn_t pml4_ppn;
+    ppn_t pdpt_ppn;
+    ppn_t pd_ppn;
+    ppn_t pt_ppn;
+    ppn_t page_ppn;
 
-    uint64 page_size;
+    size_t page_size;
 
     uint64 pml4i;
     uint64 pdpti;
@@ -45,7 +45,7 @@ public:
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
-  __attribute__((warn_unused_result)) bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access);
+  __attribute__((warn_unused_result)) bool mapPage(vpn_t virtual_page, ppn_t physical_page, size_t user_access);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -53,7 +53,7 @@ public:
  * @param physical_page_directory_page Real Page where the PDE to work on resides
  * @param virtual_page which will be invalidated
  */
-  bool unmapPage(uint64 virtual_page);
+  bool unmapPage(vpn_t virtual_page);
 
   ~ArchMemory();
 
@@ -66,12 +66,12 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-    static pointer getIdentAddressOfPPN(uint64 ppn, uint32 page_size=PAGE_SIZE)
+    static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size=PAGE_SIZE)
     {
       return 0xFFFFF00000000000ULL | (ppn * page_size);
     }
 
-    static pointer getIdentAddress(uint64 address)
+    static pointer getIdentAddress(size_t address)
     {
       return 0xFFFFF00000000000ULL | (address);
     }
@@ -82,7 +82,7 @@ public:
  * @return true: if mapping exists\nfalse: if the given virtual address is unmapped
  * and accessing it would result in a pageFault
  */
-  pointer checkAddressValid(uint64 vaddress_to_check);
+  pointer checkAddressValid(size_t vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
@@ -95,9 +95,9 @@ public:
  * @return 0: if the virtual page doesn't map to any physical page\notherwise
  * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
  */
-  static uint64 get_PPN_Of_VPN_In_KernelMapping(uint64 virtual_page, uint64 *physical_page, uint64 *physical_pte_page=0);
-  const ArchMemoryMapping resolveMapping(uint64 vpage);
-  static const ArchMemoryMapping resolveMapping(uint64 pml4,uint64 vpage);
+  static size_t get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, ppn_t *physical_page, ppn_t *physical_pte_page=0);
+  const ArchMemoryMapping resolveMapping(vpn_t vpage);
+  static const ArchMemoryMapping resolveMapping(ppn_t pml4, vpn_t vpage);
 
 /**
  *
@@ -106,7 +106,7 @@ public:
  * @param virtual_page
  * @param physical_page
  */
-  static void mapKernelPage(uint64 virtual_page, uint64 physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
+  static void mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -114,10 +114,11 @@ public:
  *
  * @param virtual_page which will be invalidated
  */
-  static void unmapKernelPage(uint64 virtual_page, bool free_page = true);
+  static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
 
 
   uint64 getRootOfPagingStructure();
+  uint64 getValueForCR3();
   static PageMapLevel4Entry* getRootOfKernelPagingStructure();
   static void loadPagingStructureRoot(size_t cr3_value);
 
@@ -127,7 +128,7 @@ public:
   static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
   static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
 
-  uint64 page_map_level_4_;
+  ppn_t page_map_level_4_;
 
 private:
 
@@ -157,15 +158,4 @@ private:
   ArchMemory(ArchMemory const &src);
   ArchMemory &operator=(ArchMemory const &src);
 
-};
-
-
-struct TLBShootdownRequest
-{
-        size_t addr;
-        ustl::atomic<size_t> ack;
-        size_t target;
-        ustl::atomic<TLBShootdownRequest*> next;
-        size_t request_id;
-        size_t orig_cpu;
 };

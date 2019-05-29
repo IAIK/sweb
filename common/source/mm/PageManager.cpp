@@ -169,17 +169,17 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   for (num_reserved_heap_pages = 0; num_reserved_heap_pages < num_pages_for_bitmap || temp_page_size != 0 ||
                                     num_reserved_heap_pages < ((DYNAMIC_KMM || (number_of_pages_ < 512)) ? 0 : HEAP_PAGES); ++num_reserved_heap_pages)
   {
-    size_t ppn_to_map = bootstrap_pm.allocRange(PAGE_SIZE, PAGE_SIZE);
+    ppn_t ppn_to_map = bootstrap_pm.allocRange(PAGE_SIZE, PAGE_SIZE);
     if(ppn_to_map == (size_t)-1) break;
     ppn_to_map /= PAGE_SIZE;
-    size_t vpn_to_map = start_vpn;
+    vpn_t vpn_to_map = start_vpn;
 
-    size_t physical_page = 0;
-    size_t pte_page = 0;
+    ppn_t physical_page = 0;
+    ppn_t pte_page = 0;
     if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(vpn_to_map, &physical_page, &pte_page)) == 0)
     {
       // TODO: Not architecture independent
-      ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), vpn_to_map);
+      ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), vpn_to_map);
       if(m.pt_ppn != 0)
       {
               ArchMemory::mapKernelPage(vpn_to_map, ppn_to_map);

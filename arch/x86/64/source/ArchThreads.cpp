@@ -128,6 +128,11 @@ int64 ArchThreads::atomic_add(int64 &value, int64 increment)
   return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
 }
 
+size_t ArchThreads::atomic_add(size_t &value, ssize_t increment)
+{
+  return (size_t) ArchThreads::atomic_add(*(uint64_t*)&value, (int64_t)increment);
+}
+
 void ArchThreads::atomic_set(uint32& target, uint32 value)
 {
   __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
@@ -139,6 +144,11 @@ void ArchThreads::atomic_set(int32& target, int32 value)
 }
 
 void ArchThreads::atomic_set(uint64& target, uint64 value)
+{
+  __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
+}
+
+void ArchThreads::atomic_set(size_t& target, size_t value)
 {
   __atomic_store_n(&(target), value, __ATOMIC_SEQ_CST);
 }
@@ -164,14 +174,14 @@ void ArchThreads::printThreadRegisters(Thread *thread, size_t userspace_register
   else if (verbose)
   {
     kprintfd("\t\t%sThread: %18p, info: %18p\n"\
-             "\t\t\t rax: %18zx  rbx: %18zx  rcx: %18zx  rdx: %18zx\n"\
-             "\t\t\t rsp: %18zx  rbp: %18zx  rsp0 %18zx  rip: %18zx\n"\
-             "\t\t\trflg: %18zx  cr3: %18zx\n",
+             "\t\t\t rax: %18llx  rbx: %18llx  rcx: %18llx  rdx: %18llx\n"\
+             "\t\t\t rsp: %18llx  rbp: %18llx  rsp0 %18llx  rip: %18llx\n"\
+             "\t\t\trflg: %18llx  cr3: %18llx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
   else
   {
-    kprintfd("%sThread: %18p, info: %18p -- rax: %18zx  rbx: %18zx  rcx: %18zx  rdx: %18zx -- rsp: %18zx  rbp: %18zx  rsp0 %18zx -- rip: %18zx  rflg: %18zx  cr3: %zx\n",
+    kprintfd("%sThread: %18p, info: %18p -- rax: %18llx  rbx: %18llx  rcx: %18llx  rdx: %18llx -- rsp: %18llx  rbp: %18llx  rsp0 %18llx -- rip: %18llx  rflg: %18llx  cr3: %llx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
 }

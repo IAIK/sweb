@@ -9,18 +9,25 @@ typedef unsigned short uint16;
 typedef int int32;
 typedef unsigned int uint32;
 
-typedef long unsigned int uint64;
-typedef long int int64;
-
-typedef uint64 pointer;
+typedef long long unsigned int uint64;
+typedef long long int int64;
 
 typedef uint64 l_off_t;
 
 typedef uint64 mode_t;
 typedef uint64 uid_t;
 typedef uint64 gid_t;
-typedef uint64 size_t;
+
+typedef __SIZE_TYPE__ size_t;
+
+//typedef uint64 size_t;
 typedef int64 ssize_t;
+
+typedef uint64 ppn_t;
+typedef size_t vpn_t;
+
+typedef size_t pointer;
+
 
 #pragma GCC poison double float
 

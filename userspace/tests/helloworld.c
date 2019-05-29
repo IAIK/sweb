@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "nonstd.h"
 #include "assert.h"
+#include "types.h"
 
 int main(int argc, char *argv[])
 {

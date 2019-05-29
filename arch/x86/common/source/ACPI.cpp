@@ -6,6 +6,8 @@
 #include "kstring.h"
 #include "assert.h"
 #include "new.h"
+#include "offsets.h"
+#include "types.h"
 
 RSDPDescriptor* RSDP = nullptr;
 size_t ACPI_version = 0;
@@ -73,7 +75,7 @@ void initACPI()
     debug(ACPI, "RSDT address: %x\n", RSDP->RsdtAddress);
 
     RSDT* RSDT_ptr = (RSDT*)(size_t)RSDP->RsdtAddress;
-    ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)RSDT_ptr / PAGE_SIZE);
+    ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)RSDT_ptr / PAGE_SIZE);
     assert(m.page_ppn != 0);
     assert(RSDT_ptr->h.checksumValid());
 
@@ -91,16 +93,16 @@ void initACPI()
     RSDPDescriptor20* RSDP2 = (RSDPDescriptor20*)RSDP;
     assert(RSDP2->checksumValid());
 
-    debug(ACPI, "XSDT address: %lx\n", RSDP2->XsdtAddress);
+    debug(ACPI, "XSDT address: %llx\n", RSDP2->XsdtAddress);
 
     XSDT* XSDT_ptr = (XSDT*)(size_t)RSDP2->XsdtAddress;
-    ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
+    ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
     bool unmap_again = false;
     if(!m.page)
     {
             debug(ACPI, "XSDT page %zx not present, mapping\n", (size_t)XSDT_ptr/PAGE_SIZE);
             ArchMemory::mapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, (size_t)XSDT_ptr / PAGE_SIZE, true);
-            m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
+            m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
     }
     assert(m.page != 0);
     assert(XSDT_ptr->h.checksumValid());
@@ -130,13 +132,13 @@ void initACPI()
 void handleSDT(ACPISDTHeader* entry_header)
 {
   bool unmap_page_again = false;
-  ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+  ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
 
   if(!m.page)
   {
     debug(ACPI, "SDT page %zx not present, mapping\n", (size_t)entry_header/PAGE_SIZE);
     ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true);
-    m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+    m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
     unmap_page_again = true;
   }
   assert(m.page && "Page for ACPI SDT not mapped");
@@ -272,7 +274,7 @@ void ACPI_MADTHeader::parse()
     case 5:
     {
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
-      debug(ACPI, "[%p] Local APIC address override, addr: %zx\n", entry, entry->local_apic_addr);
+      debug(ACPI, "[%p] Local APIC address override, addr: %llx\n", entry, entry->local_apic_addr);
       assert(LocalAPIC::exists);
       LocalAPIC::reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
       break;

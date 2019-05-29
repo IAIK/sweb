@@ -11,7 +11,16 @@
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
 
-struct TLBShootdownRequest;
+// TODO: Move to common code
+struct TLBShootdownRequest
+{
+        size_t addr;
+        ustl::atomic<size_t> ack;
+        size_t target;
+        ustl::atomic<TLBShootdownRequest*> next;
+        size_t request_id;
+        size_t orig_cpu;
+};
 
 class CpuInfo
 {
