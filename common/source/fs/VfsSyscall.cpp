@@ -299,7 +299,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    int32 fd = current_sb->createFd(current_inode, flag & 0xFFFFFFFB);
+    int32 fd = current_sb->createFd(current_inode, flag);
     debug(VFSSYSCALL, "the fd-num: %d, flag: %d\n", fd, flag);
 
     return fd;
@@ -344,7 +344,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     }
     debug(VFSSYSCALL, "(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName());
 
-    int32 fd = current_sb->createFd(sub_inode, flag & 0xFFFFFFFB);
+    int32 fd = current_sb->createFd(sub_inode, flag);
     debug(VFSSYSCALL, "the fd-num: %d\n", fd);
 
     return fd;
