@@ -18,10 +18,6 @@ class Dentry;
 #define O_DSYNC     0x0200
 #define O_RSYNC     O_SYNC
 
-#define A_READABLE  0x0001
-#define A_WRITABLE  0x0002
-#define A_EXECABLE  0x0004
-
 #ifndef SEEK_SET
 #define SEEK_SET 0
 #endif
@@ -36,7 +32,7 @@ class File
 {
   public:
 
-    typedef uint32 mode_t;
+    //typedef uint32 mode_t;
 
     class Owner
     {
@@ -72,11 +68,6 @@ class File
      */
     uint32 flag_;
 
-    /**
-     * The process access mode of the file;
-     * default value: READABLE ^ WRITABLE ^ EXECABLE
-     */
-    mode_t mode_;
 
     /**
      * Current offset in the file
