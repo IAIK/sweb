@@ -281,7 +281,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   }
   if(flag & (O_APPEND | O_TRUNC))
   {
-    debug(VFSSYSCALL, "(open) not yet implemented\n");
+    kprintfd("(open) flags not yet implemented\n");
     return -1;
   }
   Dentry* pw_dentry = 0;
