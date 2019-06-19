@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
   if (image_fd == 0)
   {
-    printf("Error opening %s\n", argv[1]);
+    printf("exe2minixfs: Error opening %s\n", argv[1]);
     return -1;
   }
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   if (strlen(end) != 0)
   {
     fclose(image_fd);
-    printf("offset has to be a number!\n");
+    printf("exe2minixfs: disk offset has to be a number!\n");
     return -1;
   }
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
     if (src_file == 0)
     {
-      printf("Wasn't able to open file %s\n", argv[2 * i - 1]);
+      printf("exe2minixfs: Failed to open host file %s\n", argv[2 * i - 1]);
       break;
     }
 
@@ -77,18 +77,22 @@ int main(int argc, char *argv[])
     char *buf = new char[size];
 
     fseek(src_file, 0, SEEK_SET);
-    assert(fread(buf, 1, size, src_file) == size && "fread was not able to read all bytes of the file");
+    assert(fread(buf, 1, size, src_file) == size && "exe2minixfs: fread was not able to read all bytes of the file");
     fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
     int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
     if (fd < 0)
     {
-      printf("no success\n");
+      printf("exe2minixfs: Failed to open SWEB file %s\n", argv[2 * i]);
       delete[] buf;
       continue;
     }
-    VfsSyscall::write(fd, buf, size);
+    int32 write_status = VfsSyscall::write(fd, buf, size);
+    if((size_t)write_status != size)
+    {
+      printf("exe2minixfs: Writing %s failed with retval %d (expected %zu)\n", argv[2 * i], write_status, size);
+    }
     VfsSyscall::close(fd);
 
     delete[] buf;
