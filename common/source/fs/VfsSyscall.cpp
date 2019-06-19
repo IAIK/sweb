@@ -274,7 +274,7 @@ int32 VfsSyscall::close(uint32 fd)
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
   FileSystemInfo *fs_info = getcwd();
-  if (flag > (O_CREAT | O_RDWR))
+  if (flag & ~(O_RDONLY | O_WRONLY | O_CREAT | O_RDWR | O_TRUNC | O_APPEND))
   {
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
     return -1;
