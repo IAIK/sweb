@@ -32,8 +32,6 @@ class File
 {
   public:
 
-    //typedef uint32 mode_t;
-
     class Owner
     {
     };

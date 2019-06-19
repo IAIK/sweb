@@ -6,9 +6,6 @@ MinixFSFile::MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
     File(inode, dentry, flag)
 {
   f_superblock_ = inode->getSuperblock();
-  // to get the real mode implement it in the inode constructor and get it from there
-  // if you do so implement chmod and createInode with mode
-  //mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
   offset_ = 0;
 }
 
