@@ -139,10 +139,10 @@ extern "C" void entry()
   g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
 
   PRINT("Setup Segments...\n");
-  setSegmentDescriptor(1, 0, 0, 0, 0, 1, 0);
-  setSegmentDescriptor(2, 0, 0, 0, 0, 0, 0);
-  setSegmentDescriptor(3, 0, 0, 0, 3, 1, 0);
-  setSegmentDescriptor(4, 0, 0, 0, 3, 0, 0);
+  setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0);
+  setSegmentDescriptor(2, 0, 0, 0xFFFFFFFF, 0, 0, 0);
+  setSegmentDescriptor(3, 0, 0, 0xFFFFFFFF, 3, 1, 0);
+  setSegmentDescriptor(4, 0, 0, 0xFFFFFFFF, 3, 0, 0);
   setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
 
   PRINT("Loading Long Mode GDT...\n");
