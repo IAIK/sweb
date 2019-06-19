@@ -487,7 +487,7 @@ extern "C" char numToASCIIChar(uint8 number)
     return 0x30 + number;
 
   if (number >= 0xa && number <= 0xf)
-    return 0x61 + number;
+    return 0x61 + number - 0xa;
 
   // default value
   return '?';
