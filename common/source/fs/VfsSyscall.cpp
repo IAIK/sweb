@@ -279,6 +279,11 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
     return -1;
   }
+  if(flag & (O_APPEND | O_TRUNC))
+  {
+    debug(VFSSYSCALL, "(open) not yet implemented\n");
+    return -1;
+  }
   Dentry* pw_dentry = 0;
   VfsMount* pw_vfs_mount = 0;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
