@@ -274,9 +274,14 @@ int32 VfsSyscall::close(uint32 fd)
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
   FileSystemInfo *fs_info = getcwd();
-  if (flag > (O_CREAT | O_RDWR))
+  if (flag & ~(O_RDONLY | O_WRONLY | O_CREAT | O_RDWR | O_TRUNC | O_APPEND))
   {
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
+    return -1;
+  }
+  if(flag & (O_APPEND | O_TRUNC))
+  {
+    kprintfd("(open) flags not yet implemented\n");
     return -1;
   }
   Dentry* pw_dentry = 0;
@@ -294,7 +299,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    int32 fd = current_sb->createFd(current_inode, flag & 0xFFFFFFFB);
+    int32 fd = current_sb->createFd(current_inode, flag);
     debug(VFSSYSCALL, "the fd-num: %d, flag: %d\n", fd, flag);
 
     return fd;
@@ -339,7 +344,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     }
     debug(VFSSYSCALL, "(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName());
 
-    int32 fd = current_sb->createFd(sub_inode, flag & 0xFFFFFFFB);
+    int32 fd = current_sb->createFd(sub_inode, flag);
     debug(VFSSYSCALL, "the fd-num: %d\n", fd);
 
     return fd;

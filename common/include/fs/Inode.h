@@ -16,6 +16,10 @@ class Superblock;
 // will be written next time a sync is requested.
 #define I_LOCK 2  //state not implemented
 
+#define A_READABLE  0x0001
+#define A_WRITABLE  0x0002
+#define A_EXECABLE  0x0004
+
 /**
  * five possible inode type bits:
  */
@@ -64,7 +68,11 @@ class Inode
      * There are three possible inode state bits: I_DIRTY, I_LOCK, I_UNUSED.
      */
     uint32 i_state_;
-
+     
+    /**
+     * The inodes permission flag
+     */
+    uint32 i_mode_;
   public:
 
     /**
@@ -76,6 +84,7 @@ class Inode
         i_dentry_(0), i_nlink_(0), i_size_(0), i_state_(I_UNUSED)
     {
       superblock_ = super_block, i_type_ = inode_type;
+      i_mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
     }
 
     virtual ~Inode()
@@ -307,6 +316,11 @@ class Inode
     uint32 getSize()
     {
       return i_size_;
+    }
+
+    uint32 getMode()
+    {
+      return i_mode_;
     }
 
     int32 flush()

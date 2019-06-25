@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
-    int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
+    int32 fd = VfsSyscall::open(argv[2 * i], 4 | 8); // i.e. O_RDWR | O_CREAT
     if (fd < 0)
     {
       printf("exe2minixfs: Failed to open SWEB file %s\n", argv[2 * i]);

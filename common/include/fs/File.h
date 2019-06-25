@@ -6,14 +6,17 @@ class Superblock;
 class Inode;
 class Dentry;
 
-#define O_RDONLY    0x0000
-#define O_WRONLY    0x0001
-#define O_RDWR      0x0002
-#define O_CREAT     0x0004
-
-#define A_READABLE  0x0001
-#define A_WRITABLE  0x0002
-#define A_EXECABLE  0x0004
+#define O_RDONLY    0x0001
+#define O_WRONLY    0x0002
+#define O_RDWR      0x0004
+#define O_CREAT     0x0008
+#define O_APPEND    0x0010
+#define O_EXCL      0x0020
+#define O_NONBLOCK  0x0040
+#define O_TRUNC     0x0080
+#define O_SYNC      0x0100
+#define O_DSYNC     0x0200
+#define O_RSYNC     O_SYNC
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -28,8 +31,6 @@ class Dentry;
 class File
 {
   public:
-
-    typedef uint32 mode_t;
 
     class Owner
     {
@@ -65,11 +66,6 @@ class File
      */
     uint32 flag_;
 
-    /**
-     * The process access mode of the file;
-     * default value: READABLE ^ WRITABLE ^ EXECABLE
-     */
-    mode_t mode_;
 
     /**
      * Current offset in the file

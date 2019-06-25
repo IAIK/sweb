@@ -11,7 +11,6 @@ RamFSFile::RamFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
     File(inode, dentry, flag)
 {
   f_superblock_ = inode->getSuperblock();
-  mode_ = ( A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
   offset_ = 0;
 }
 
@@ -21,7 +20,7 @@ RamFSFile::~RamFSFile()
 
 int32 RamFSFile::read(char *buffer, size_t count, l_off_t offset)
 {
-  if (((flag_ == O_RDONLY) || (flag_ == O_RDWR)) && (mode_ & A_READABLE))
+  if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
   {
     int32 read_bytes = f_inode_->readData(offset_ + offset, count, buffer);
     offset_ += read_bytes;
@@ -36,7 +35,7 @@ int32 RamFSFile::read(char *buffer, size_t count, l_off_t offset)
 
 int32 RamFSFile::write(const char *buffer, size_t count, l_off_t offset)
 {
-  if (((flag_ == O_WRONLY) || (flag_ == O_RDWR)) && (mode_ & A_WRITABLE))
+  if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
   {
     int32 written_bytes = f_inode_->writeData(offset_ + offset, count, buffer);
     offset_ += written_bytes;

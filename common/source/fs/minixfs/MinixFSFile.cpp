@@ -6,9 +6,6 @@ MinixFSFile::MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
     File(inode, dentry, flag)
 {
   f_superblock_ = inode->getSuperblock();
-  // to get the real mode implement it in the inode constructor and get it from there
-  // if you do so implement chmod and createInode with mode
-  mode_ = (A_READABLE ^ A_WRITABLE) ^ A_EXECABLE;
   offset_ = 0;
 }
 
@@ -18,7 +15,7 @@ MinixFSFile::~MinixFSFile()
 
 int32 MinixFSFile::read(char *buffer, size_t count, l_off_t offset)
 {
-  if (((flag_ == O_RDONLY) || (flag_ == O_RDWR)) && (mode_ & A_READABLE))
+  if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
   {
     int32 read_bytes = f_inode_->readData(offset_ + offset, count, buffer);
     offset_ += read_bytes;
@@ -33,7 +30,7 @@ int32 MinixFSFile::read(char *buffer, size_t count, l_off_t offset)
 
 int32 MinixFSFile::write(const char *buffer, size_t count, l_off_t offset)
 {
-  if (((flag_ == O_WRONLY) || (flag_ == O_RDWR)) && (mode_ & A_WRITABLE))
+  if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
   {
     int32 written = f_inode_->writeData(offset_ + offset, count, buffer);
     offset_ += written;
