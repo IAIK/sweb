@@ -8,8 +8,19 @@
   uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
   uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
 
-extern PageDirEntry kernel_page_directory[];
-extern PageTableEntry kernel_page_tables[];
+extern PageDirEntry kernel_page_directory[PAGE_DIRECTORY_ENTRIES];
+extern PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES];
+
+union VAddr
+{
+        size_t addr;
+        struct
+        {
+                size_t offset :12;
+                size_t pti    :10;
+                size_t pdi    :10;
+        };
+};
 
 class ArchMemory
 {

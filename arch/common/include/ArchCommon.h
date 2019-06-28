@@ -8,6 +8,7 @@ class Console;
 class ArchCommon
 {
   public:
+    static pointer getKernelStartAddress();
     static pointer getKernelEndAddress();
     static pointer getFreeKernelMemoryStart();
     static pointer getFreeKernelMemoryEnd();

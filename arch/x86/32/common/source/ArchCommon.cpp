@@ -70,6 +70,11 @@ extern "C" void parseMultibootHeader()
   }
 }
 
+pointer ArchCommon::getKernelStartAddress()
+{
+   return (pointer)&kernel_start_address;
+}
+
 pointer ArchCommon::getKernelEndAddress()
 {
    return (pointer)&kernel_end_address;

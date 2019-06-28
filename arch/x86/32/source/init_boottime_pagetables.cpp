@@ -5,59 +5,52 @@
 #include "ArchCommon.h"
 #include "debug_bochs.h"
 #include "ArchMemory.h"
-
-extern void* kernel_end_address;
+#include "assert.h"
 
 extern "C" void initialiseBootTimePaging()
 {
   uint32 i;
 
   PageDirEntry *pde_start = (PageDirEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer )kernel_page_directory);
-
   PageTableEntry *pte_start = (PageTableEntry*) VIRTUAL_TO_PHYSICAL_BOOT((pointer )kernel_page_tables);
 
-  uint32 kernel_last_page = VIRTUAL_TO_PHYSICAL_BOOT((pointer)&kernel_end_address) / PAGE_SIZE;
 
-  // we do not have to clear the pde since its in the bss
+  VAddr k_start{ArchCommon::getKernelStartAddress()};
+  VAddr k_end{ArchCommon::getKernelEndAddress()};
+
+  // Boot time ident mapping
   for (i = 0; i < 5; ++i)
   {
-    pde_start[i].page.present = 1;
+    pde_start[i].page.page_ppn = i;
     pde_start[i].page.writeable = 1;
     pde_start[i].page.size = 1;
-    pde_start[i].page.page_ppn = i;
+    pde_start[i].page.present = 1;
   }
 
-  for (i = 0; i < 4; ++i)
+
+
+  // Map kernel page directories
+  for(size_t pdi = k_start.pdi; pdi <= k_end.pdi; ++pdi)
   {
-    pde_start[i + 512].pt.present = 1;
-    pde_start[i + 512].pt.writeable = 1;
-    pde_start[i + 512].pt.page_table_ppn = ((pointer) &pte_start[1024 * i]) / PAGE_SIZE;
+    size_t pdi_offset = pdi - k_start.pdi;
+    pde_start[pdi].pt.page_table_ppn = ((pointer) &pte_start[1024 * pdi_offset]) / PAGE_SIZE;
+    pde_start[pdi].pt.writeable = 1;
+    pde_start[pdi].pt.present = 1;
   }
-
-  // ok, we currently only fill in mappings for the first 4 megs (aka one page table)
-  // we do not have to zero out the other page tables since they're already empty
-  // thanks to the bss clearance.
-
-  // update, from now on, all pages up to the last page containing only rodata
-  // will be write protected.
 
   extern uint32 ro_data_end_address;
 
-  uint32 last_ro_data_page = VIRTUAL_TO_PHYSICAL_BOOT((pointer)&ro_data_end_address) / PAGE_SIZE;
 
-  // ppns are 1mb = 256 pages after vpns...
-  for (i = 0; i < last_ro_data_page - 256; ++i)
+  // Map kernel page tables
+  for(VAddr a{ArchCommon::getKernelStartAddress()}; a.addr < ArchCommon::getKernelEndAddress(); a.addr += PAGE_SIZE)
   {
-    pte_start[i].present = 1;
-    pte_start[i].writeable = 0;
-    pte_start[i].page_ppn = i + 256;
+    size_t pti = (a.pdi - k_start.pdi)*PAGE_DIRECTORY_ENTRIES + a.pti;
+    assert(pti < sizeof(kernel_page_tables)/sizeof(kernel_page_tables[0]));
+    pte_start[pti].page_ppn = VIRTUAL_TO_PHYSICAL_BOOT(a.addr)/PAGE_SIZE;
+    pte_start[pti].writeable = (a.addr < (pointer)&ro_data_end_address ? 0 : 1);
+    pte_start[pti].present = 1;
   }
-  for (; i < kernel_last_page - 256; ++i)
-  {
-    pte_start[i].present = 1;
-    pte_start[i].writeable = 1;
-    pte_start[i].page_ppn = i + 256;
-  }
+
 
   if (ArchCommon::haveVESAConsole(0))
   {
