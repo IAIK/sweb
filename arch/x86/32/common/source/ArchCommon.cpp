@@ -82,7 +82,10 @@ pointer ArchCommon::getKernelEndAddress()
 
 pointer ArchCommon::getFreeKernelMemoryStart()
 {
-   return (pointer)&kernel_end_address;
+   pointer free_kernel_memory_start = (pointer)&kernel_end_address;
+   for (size_t i = 0; i < getNumModules(); ++i)
+           free_kernel_memory_start = Max(getModuleEndAddress(i),free_kernel_memory_start);
+   return ((free_kernel_memory_start - 1) | 0xFFF) + 1;
 }
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
