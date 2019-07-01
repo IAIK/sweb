@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
       return -1;
     }
 
-    if(part_table[partition - 1].systid != 0x81)
+    if((part_table[partition - 1].systid != 0x80) && (part_table[partition - 1].systid != 0x81))
     {
-      printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x81)\n", part_table[partition - 1].systid);
+      printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x80/0x81)\n", part_table[partition - 1].systid);
     }
 
     part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
