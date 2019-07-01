@@ -67,12 +67,12 @@ int main(int argc, char *argv[])
       break;
     case '?':
       if (optopt == 'd')
-        fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        fprintf (stderr, "mkminixfs: Option -%c requires an argument.\n", optopt);
       else if (isprint (optopt))
-        fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+        fprintf (stderr, "mkminixfs: Unknown option `-%c'.\n", optopt);
       else
         fprintf (stderr,
-                 "Unknown option character `\\x%x'.\n",
+                 "mkminixfs: Unknown option character `\\x%x'.\n",
                  optopt);
       return 1;
     default:
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 
   if(!device)
   {
-    printf("Usage: %s -d <device> [-p partition]\n", argv[0]);
+    printf("mkminixfs: Usage: %s -d <device> [-p partition]\n", argv[0]);
     exit(-1);
   }
 
@@ -95,12 +95,12 @@ int main(int argc, char *argv[])
   }
 
 
-  printf("mkminixfs opening device %s\n", device);
+  printf("mkminixfs: opening device %s\n", device);
   FILE* image_fd = fopen(device, "r+b");
 
   if (image_fd == 0)
   {
-    printf("Error opening %s\n", device);
+    fprintf(stderr, "mkminixfs: Error opening %s\n", device);
     return -1;
   }
 
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
   if(have_partition && ((partition < 1) || (4 < partition)))
   {
     fclose(image_fd);
-    printf("Partition number has to be in range [1-4]\n");
+    fprintf(stderr, "mkminixfs: Error, partition number has to be in range [1-4]\n");
     return -1;
   }
 
@@ -137,13 +137,13 @@ int main(int argc, char *argv[])
     {
       if(ferror(image_fd))
       {
-        printf("Error while reading MBR from %s\n", argv[1]);
+        fprintf(stderr, "mkminixfs: Error while reading MBR from %s\n", argv[1]);
       }
       if(feof(image_fd))
       {
-        printf("%s EOF reached while reading MBR\n", argv[1]);
+        fprintf(stderr, "mkminixfs: %s EOF reached while reading MBR\n", argv[1]);
       }
-      printf("mkminixfs was not able to read the disk image MBR\n");
+      fprintf(stderr, "mkminixfs: was not able to read the disk image MBR\n");
       fclose(image_fd);
       return -1;
     }
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
     FP* part_table = (FP*)&image_mbr.parts;
     for(size_t i = 0; i < 4; ++i)
     {
-      printf("Partition %zu, sectors [%u -> %u), bytes [%zu -> %zu), type: %x, bootable: %u\n",
+      printf("mkminixfs: Partition %zu, sectors [%u -> %u), bytes [%zu -> %zu), type: %x, bootable: %u\n",
              i + 1,
              part_table[i].relsect,
              part_table[i].relsect + part_table[i].numsect,
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 
     if(part_table[partition - 1].systid == 0)
     {
-      printf("No partition %lu on image\n", partition);
+      fprintf(stderr, "mkminixfs: No partition %lu on image\n", partition);
       fclose(image_fd);
       return -1;
     }
@@ -204,17 +204,17 @@ int main(int argc, char *argv[])
   size_t num_inodes = (remaining_bytes / 100) / sizeof(MinixFSInode::MinixFSInodeOnDiskDataV3);
   size_t num_inode_bm_blocks = ((num_inodes / 8) / BLOCK_SIZE) + (((num_inodes / 8) % BLOCK_SIZE) != 0);
   size_t num_inode_table_blocks = ((num_inodes * sizeof(MinixFSInode::MinixFSInodeOnDiskDataV3)) / BLOCK_SIZE) + (((num_inodes * sizeof(MinixFSInode::MinixFSInodeOnDiskDataV3)) % BLOCK_SIZE) != 0);
-  printf("Num inodes: %zu, num inode bm blocks: %zu, inode table blocks: %zu\n", num_inodes, num_inode_bm_blocks, num_inode_table_blocks);
+  printf("mkminixfs: Num inodes: %zu, num inode bm blocks: %zu, inode table blocks: %zu\n", num_inodes, num_inode_bm_blocks, num_inode_table_blocks);
 
   size_t blocks_for_zones = num_blocks - 2 - num_inode_bm_blocks - num_inode_table_blocks;
   size_t max_num_zones = ((blocks_for_zones * BLOCK_SIZE) / ZONE_SIZE);
   size_t num_zone_bm_blocks = ((max_num_zones / 8) / BLOCK_SIZE) + (((max_num_zones / 8) % BLOCK_SIZE) != 0);
-  printf("Remaining blocks for zones + zone bm: %zu\n", blocks_for_zones);
-  printf("Num zone bm blocks: %zu\n", num_zone_bm_blocks);
+  printf("mkminixfs: Remaining blocks for zones + zone bm: %zu\n", blocks_for_zones);
+  printf("mkminixfs: Num zone bm blocks: %zu\n", num_zone_bm_blocks);
 
   size_t remaining_blocks_for_zones = num_blocks - 2 - num_inode_bm_blocks - num_zone_bm_blocks - num_inode_table_blocks;
   size_t num_data_zones = (remaining_blocks_for_zones * BLOCK_SIZE) / ZONE_SIZE;
-  printf("Remaining blocks for zones: %zu, num data zones: %zu\n", remaining_blocks_for_zones, num_data_zones);
+  printf("mkminixfs: Remaining blocks for zones: %zu, num data zones: %zu\n", remaining_blocks_for_zones, num_data_zones);
 
   MinixFSSuperblock::MinixFSSuperblockOnDiskDataV3 sb_data{};
   sb_data.s_magic = MINIX_V3;
@@ -244,13 +244,19 @@ int main(int argc, char *argv[])
   inode_tbl[0].i_mode = 0x41ed; // directory, user: RWX, group: R-X, others: R-X
   assert(fwrite(&inode_tbl, sizeof(inode_tbl), 1, image_fd) == 1);
 
+
+  {
+    printf("mkminixfs: Loading MinixFSSuperblock\n");
+    MinixFSSuperblock superblock(0, (size_t)image_fd, part_byte_offset);
+  }
+
   if(have_partition)
   {
-    printf("Created minixfs v3 file system on device: %s, partition: %lu\n", device, partition);
+    printf("mkminixfs: Created minixfs v3 file system on device: %s, partition: %lu\n", device, partition);
   }
   else
   {
-    printf("Created minixfs v3 file system on device: %s\n", device);
+    printf("mkminixfs: Created minixfs v3 file system on device: %s\n", device);
   }
 
   fclose(image_fd);
