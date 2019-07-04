@@ -1,3 +1,4 @@
+#include "types.h"
 #include "PageManager.h"
 #include "new.h"
 #include "offsets.h"
@@ -123,9 +124,9 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   debug(PM, "Ctor: Marking GRUB loaded modules as reserved\n");
   for (size_t i = 0; i < ArchCommon::getNumModules(); ++i)
   {
-    debug(PM, "Ctor: module [%s]: start addr: %zx, end addr: %zx\n", ArchCommon::getModuleName(i), ArchCommon::getModuleStartAddress(i), ArchCommon::getModuleEndAddress(i));
     size_t module_phys_start = (ArchCommon::getModuleStartAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
     size_t module_phys_end = (ArchCommon::getModuleEndAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
+    debug(PM, "Ctor: module [%s]: start addr: %p, end addr: %p, phys start addr: %p, phys end addr: %p\n", ArchCommon::getModuleName(i), (void*)ArchCommon::getModuleStartAddress(i), (void*)ArchCommon::getModuleEndAddress(i), (void*)module_phys_start, (void*)module_phys_end);
     if(module_phys_end < module_phys_start)
     {
             continue;
@@ -136,10 +137,13 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     {
       if (ArchMemory::get_PPN_Of_VPN_In_KernelMapping(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, 0, 0) == 0)
       {
-        ArchMemory::mapKernelPage(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k,k);
+        if(PM & OUTPUT_ADVANCED)
+                debug(PM, "Mapping kernel module at %#zx -> %#zx\n", (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k);
 
+        ArchMemory::mapKernelPage(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k,k);
       }
     }
+
     bootstrap_pm.markUnuseable(module_phys_start, (end_page+1)*PAGE_SIZE);
   }
   debug(PM, "Finished mapping modules\n");
@@ -182,20 +186,25 @@ PageManager::PageManager() : lock_("PageManager::lock_")
       ArchMemoryMapping m = ArchMemory::resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), vpn_to_map);
       if(m.pt_ppn != 0)
       {
+              if(PM & OUTPUT_ADVANCED)
+                      debug(PM, "Mapping heap vpn %p -> ppn %p\n", (void*)vpn_to_map, (void*)ppn_to_map);
+
               ArchMemory::mapKernelPage(vpn_to_map, ppn_to_map);
       }
       else
       {
-              debug(PM, "No PT present at %zx, abort heap mapping\n", vpn_to_map);
+              debug(PM, "No PT present at %#zx, abort heap mapping\n", vpn_to_map);
               break;
       }
     }
+
     ++start_vpn;
   }
   debug(PM, "Finished mapping %zx reserved heap pages\n", num_reserved_heap_pages);
 
   extern KernelMemoryManager kmm;
   new (&kmm) KernelMemoryManager(num_reserved_heap_pages, HEAP_PAGES);
+
   debug(PM, "Allocating PM bitmap with %zx bits\n", number_of_pages_);
   page_usage_table_ = new Bitmap(number_of_pages_);
 

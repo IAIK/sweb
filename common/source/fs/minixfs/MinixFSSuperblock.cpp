@@ -18,6 +18,7 @@
 MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 byte_offset) :
     Superblock(s_root, s_dev), superblock_(this)
 {
+  debug(M_SB, "Creating MinixFSSuperblock on device: %zu, offset: %llx\n", s_dev, byte_offset);
   offset_ = byte_offset;
   //read Superblock data from disc
   readHeader();
@@ -70,7 +71,7 @@ void MinixFSSuperblock::readHeader()
   }
   else
   {
-          debug(M_SB, "Unknown magic value for minixfs superblock, V1: %x, V3: %x\n", v1_sb->s_magic, v3_sb->s_magic);
+          kprintfd("ERROR: Unknown magic value for minixfs superblock, V1: %x, V3: %x\n", v1_sb->s_magic, v3_sb->s_magic);
           assert(false && "Unknown minixfs version (or not minixfs at all?)");
   }
 

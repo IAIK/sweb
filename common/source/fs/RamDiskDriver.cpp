@@ -57,9 +57,9 @@ uint32 RamDiskDriver::getSectorSize()
 
 int32 RamDiskDriver::readSector( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
-  debug(RAMDISK, "ramdisk: readSector, start: %x, num: %x, buf: %p\n", start_sector, num_sectors, buffer);
+  debug(RAMDISK, "ramdisk: readSector, start: %x, num: %x, buf: %p => reading[%p, %p)\n", start_sector, num_sectors, buffer, (char*)start_vaddr_ + start_sector, (char*)start_vaddr_ + start_sector + num_sectors);
   assert(num_sectors <= getNumSectors());
-  memcpy(buffer, (void*)((size_t)start_vaddr_ + (size_t)start_sector), num_sectors);
+  memcpy(buffer, (char*)start_vaddr_ + start_sector, num_sectors);
   return 0;
 }
 
@@ -67,7 +67,7 @@ int32 RamDiskDriver::writeSector( uint32 start_sector, uint32 num_sectors, void 
 {
   debug(RAMDISK, "ramdisk: writeSector, start: %x, num: %x, buf: %p\n", start_sector, num_sectors, buffer);
   assert(num_sectors <= getNumSectors());
-  memcpy((void*)((size_t)start_vaddr_ + (size_t)start_sector), buffer, num_sectors);
+  memcpy((char*)start_vaddr_ + start_sector, buffer, num_sectors);
   return 0;
 }
 

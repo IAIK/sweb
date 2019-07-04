@@ -112,7 +112,6 @@ void Scheduler::schedule()
 
 void Scheduler::addNewThread(Thread *thread)
 {
-  //cpu_scheduler.addNewThread(thread);
   assert(thread);
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
   if (currentThread)

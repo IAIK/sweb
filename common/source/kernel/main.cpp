@@ -83,6 +83,7 @@ extern "C" void startup()
 
   kprintf("Kernel end address is %p\n", &kernel_end_address);
 
+  debug(MAIN, "Scheduler init\n");
   Scheduler::instance();
 
   //needs to be done after scheduler and terminal, but prior to enableInterrupts

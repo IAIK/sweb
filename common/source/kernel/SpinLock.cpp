@@ -71,6 +71,7 @@ void SpinLock::acquire(pointer called_by)
 //  }
   if(ArchThreads::testSetLock(lock_, 1))
   {
+    debug(LOCK, "didn't get spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
     // We did not directly managed to acquire the spinlock, need to check for deadlocks and
     // to push the current thread to the waiters list.
     doChecksBeforeWaiting();
@@ -102,6 +103,7 @@ void SpinLock::acquire(pointer called_by)
       currentThread->lock_waiting_on_ = 0;
     }
   }
+  debug(LOCK, "got spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
   // The current thread is now holding the spinlock
   last_accessed_at_ = called_by;
   held_by_ = currentThread;

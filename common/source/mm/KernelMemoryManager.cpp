@@ -245,6 +245,9 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 
 void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_size, uint32 zero_check)
 {
+  if(KMM & OUTPUT_ADVANCED)
+          debug(KMM, "fillSegment, %p, size: %zu, zero_check: %u\n", this_one, requested_size, zero_check);
+
   assert(this_one != 0 && "trying to access a nullpointer");
   this_one->checkCanary();
   assert(this_one->getSize() >= requested_size && "segment is too small for requested size");
