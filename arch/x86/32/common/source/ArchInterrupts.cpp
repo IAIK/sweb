@@ -17,7 +17,6 @@ static void initInterruptController()
 {
   uint16 i;
   initialise8259s();
-  SegmentUtils::initialise();
   for (i=0;i<16;++i)
           disableIRQ(i);
 }

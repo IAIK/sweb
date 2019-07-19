@@ -7,6 +7,7 @@
 #include "ArchMemory.h"
 #include "paging-definitions.h"
 #include "kstring.h"
+#include "SegmentUtils.h"
 #include "bootprint.h"
 
 #define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs((char*)VIRTUAL_TO_PHYSICAL_BOOT(X)); kputs((char*)VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
@@ -91,6 +92,9 @@ extern "C" void entry()
   PRINT("Switch to our own stack...\n");
   asm("mov %[v],%%esp\n"
       "mov %%esp,%%ebp\n" : : [v]"i"(boot_stack + 0x4000));
+
+  SegmentUtils::initialise();
+
 
   PRINT("Calling startup()...\n");
   asm("jmp *%%eax" : : "a"(startup));

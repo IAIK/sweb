@@ -29,16 +29,6 @@ typedef size_t pointer;
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 
-#define KERNEL_CS  (8*3)
-#define KERNEL_DS  (8*2)
-#define KERNEL_SS  (8*2)
-#define KERNEL_TSS (8*6)
-#define DPL_KERNEL  0
-#define DPL_USER    3
-#define USER_CS ((8*5)|DPL_USER)
-#define USER_DS ((8*4)|DPL_USER)
-#define USER_SS ((8*4)|DPL_USER)
-
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 #define unreachable()    __builtin_unreachable()
