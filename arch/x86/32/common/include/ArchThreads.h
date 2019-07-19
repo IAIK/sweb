@@ -82,6 +82,8 @@ public:
  */
   static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
+  static void* getInstructionPointer(ArchThreadRegisters *info);
+
 /**
  *
  * on x86: invokes int65, whose handler facilitates a task switch
@@ -97,6 +99,7 @@ public:
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
 
+  static void switchToAddressSpace(Thread* thread);
   static void switchToAddressSpace(ArchMemory& arch_memory);
 
 /**

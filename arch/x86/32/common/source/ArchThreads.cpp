@@ -6,6 +6,7 @@
 #include "offsets.h"
 #include "Thread.h"
 #include "kstring.h"
+#include "SegmentUtils.h"
 
 
 
@@ -26,10 +27,14 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
   }
 }
 
+void ArchThreads::switchToAddressSpace(Thread* thread)
+{
+  ArchMemory::loadPagingStructureRoot(thread->kernel_registers_->cr3);
+}
+
 void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
 {
-  asm volatile("movq %[new_cr3], %%cr3\n"
-               ::[new_cr3]"r"(arch_memory.getValueForCR3()));
+  ArchMemory::loadPagingStructureRoot(arch_memory.getValueForCR3());
 }
 
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
@@ -81,6 +86,11 @@ void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_fu
 void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
 {
   info->eip = (size_t)function;
+}
+
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
+{
+  return (void*)info->eip;
 }
 
 void ArchThreads::yield()
@@ -137,13 +147,13 @@ void ArchThreads::atomic_set(int64& target, int64 value)
 
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
-  printThreadRegisters(thread,0,verbose);
-  printThreadRegisters(thread,1,verbose);
+  printThreadRegisters(thread, 0, verbose);
+  printThreadRegisters(thread, 1, verbose);
 }
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
+  ArchThreadRegisters *info = (userspace_registers ? thread->user_registers_ : thread->kernel_registers_);
   if (!info)
   {
     kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
@@ -151,14 +161,16 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   else if (verbose)
   {
     kprintfd("\t\t%sThread: %10p, info: %10p\n"\
-             "\t\t\t eax: %10x  ebx: %10x  ecx: %10x  edx: %10x\n"\
-             "\t\t\t esp: %10x  ebp: %10x  esp0 %10x  eip: %10x\n"\
-             "\t\t\teflg: %10x  cr3: %10x\n",
-             userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3);
+             "\t\t\t eax: %#10x  ebx: %#10x  ecx: %#10x  edx: %#10x\n"\
+             "\t\t\t esi: %#10x  edi: %#10x  esp: %#10x  ebp: %#10x\n"\
+             "\t\t\tesp0: %#10x  eip: %#10x eflg: %#10x  cr3: %#10x\n"\
+             "\t\t\t  ds: %#10x   ss: %#10x   es: %#10x   fs: %#10x\n"\
+             "\t\t\t  gs: %#10x\n",
+             userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebx,info->ecx,info->edx,info->esi,info->edi,info->esp,info->ebp,info->esp0,info->eip,info->eflags,info->cr3,info->ds,info->ss,info->es,info->fs,info->gs);
   }
   else
   {
-    kprintfd("\t%sThread %10p: info %10p eax %10x ebp %10x esp %10x esp0 %10x eip %10x cr3 %10x\n",
+    kprintfd("\t%sThread %10p: info %10p eax %#10x ebp %#10x esp %#10x esp0 %#10x eip %#10x cr3 %#10x\n",
              userspace_registers?"  User":"Kernel",thread,info,info->eax,info->ebp,info->esp,info->esp0,info->eip,info->cr3);
   }
 }
