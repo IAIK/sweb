@@ -7,8 +7,9 @@
 #include "ArchMemory.h"
 #include "paging-definitions.h"
 #include "kstring.h"
+#include "bootprint.h"
 
-#define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs(VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
+#define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs((char*)VIRTUAL_TO_PHYSICAL_BOOT(X)); kputs((char*)VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
 
 #define MULTIBOOT_PAGE_ALIGN (1<<0)
 #define MULTIBOOT_MEMORY_INFO (1<<1)
@@ -32,14 +33,19 @@ extern uint8 bss_start_address;
 extern uint8 bss_end_address;
 extern uint8 boot_stack[];
 
+
+
 extern "C" void parseMultibootHeader();
 extern "C" void initialiseBootTimePaging();
 extern "C" void startup();
 
 extern "C" void entry()
 {
+
   asm("mov %%ebx,%0": "=m"(*((multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&multi_boot_structure_pointer))));
+
   PRINT("Booting...\n");
+
 
   PRINT("Clearing Framebuffer...\n");
   memset((void*)(ArchCommon::getFBPtr(0)), 0, 80 * 25 * 2);
@@ -80,6 +86,7 @@ extern "C" void entry()
   asm("mov %cr0,%eax\n"
       "or $0x80010001,%eax\n"
       "mov %eax,%cr0\n");
+
 
   PRINT("Switch to our own stack...\n");
   asm("mov %[v],%%esp\n"
