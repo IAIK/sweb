@@ -100,6 +100,10 @@ public:
 
   const ArchMemoryMapping resolveMapping(size_t vpage);
   static const ArchMemoryMapping resolveMapping(size_t pd, size_t vpage);
+
+  static void flushLocalTranslationCaches(size_t addr);
+  static void flushAllTranslationCaches(size_t addr);
+
 /**
  *
  * maps a virtual page to a physical page in kernel mapping

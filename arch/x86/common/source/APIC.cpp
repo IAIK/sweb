@@ -256,6 +256,13 @@ uint32 LocalAPIC::ID() const volatile
 
 static volatile uint8 delay = 0;
 
+// TODO: Make this really architecture independent
+#ifdef CMAKE_X86_64
+#define IRET __asm__ __volatile__("iretq\n");
+#else
+#define IRET __asm__ __volatile__("iretl\n");
+#endif
+
 extern "C" void PIT_delay_IRQ();
 void __PIT_delay_IRQ()
 {
@@ -263,7 +270,7 @@ void __PIT_delay_IRQ()
                              "PIT_delay_IRQ:\n");
         __asm__ __volatile__("movb $1, %[delay]\n"
                              :[delay]"=m"(delay));
-        __asm__ __volatile__("iretq\n");
+        IRET
 }
 
 extern "C" void arch_irqHandler_0();

@@ -1,5 +1,6 @@
 #include "ArchInterrupts.h"
 #include "8259.h"
+#include "APIC.h"
 #include "ports.h"
 #include "InterruptUtils.h"
 #include "SegmentUtils.h"
@@ -7,6 +8,9 @@
 #include "assert.h"
 #include "Thread.h"
 #include "debug.h"
+#include "ArchMulticore.h"
+#include "Scheduler.h"
+
 
 
 static void initInterruptHandlers()
@@ -16,10 +20,7 @@ static void initInterruptHandlers()
 
 static void initInterruptController()
 {
-  uint16 i;
-  initialise8259s();
-  for (i=0;i<16;++i)
-          disableIRQ(i);
+  PIC8259::initialise8259s();
 }
 
 void ArchInterrupts::initialise()
@@ -37,6 +38,7 @@ void ArchInterrupts::enableTimer()
 
 void ArchInterrupts::setTimerFrequency(uint32 freq)
 {
+  debug(A_INTERRUPTS, "Set timer frequency %u\n", freq);
   uint16_t divisor;
   if(freq < (uint32)(1193180. / (1 << 16) + 1)) {
     divisor = 0;
@@ -64,9 +66,59 @@ void ArchInterrupts::disableKBD()
   disableIRQ(1);
 }
 
+void ArchInterrupts::enableIRQ(uint16 num)
+{
+        if(IOAPIC::findIOAPICforIRQ(num))
+        {
+                IOAPIC::setIRQMask(num, false);
+        }
+        else
+        {
+                PIC8259::enableIRQ(num);
+        }
+}
+
+void ArchInterrupts::disableIRQ(uint16 num)
+{
+        if(IOAPIC::findIOAPICforIRQ(num))
+        {
+                IOAPIC::setIRQMask(num, true);
+        }
+        else
+        {
+                PIC8259::disableIRQ(num);
+        }
+}
+
+void ArchInterrupts::startOfInterrupt(uint16 number)
+{
+        if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+           (IOAPIC::findIOAPICforIRQ(number) ||
+            ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+            (number > 16)))
+        {
+                cpu_info.lapic.outstanding_EOIs_++;
+        }
+        else
+        {
+                PIC8259::outstanding_EOIs_++;
+        }
+}
+
 void ArchInterrupts::endOfInterrupt(uint16 number)
 {
-  sendEOI(number);
+  debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+  if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+     (IOAPIC::findIOAPICforIRQ(number) ||
+      ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+      (number > 16)))
+  {
+          cpu_info.lapic.sendEOI(number + 0x20);
+  }
+  else
+  {
+          PIC8259::sendEOI(number);
+  }
 }
 
 void ArchInterrupts::enableInterrupts()
@@ -189,22 +241,32 @@ extern "C" void arch_saveThreadRegisters(uint32 error, uint32* base)
   assert(!currentThread || currentThread->isStackCanaryOK());
 }
 
-extern TSS *g_tss;
-
 extern "C" void arch_contextSwitch()
 {
-  assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
-  if(outstanding_EOIs)
   assert(currentThread);
+
+  if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-          debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler/IRQ0)\n", outstanding_EOIs);
-          assert(!outstanding_EOIs);
+    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s, user: %u, regs: %p at eip %p, esp %p, ebp %p\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName(), currentThread->switch_to_userspace_, currentThreadRegisters, (void*)currentThreadRegisters->eip, (void*)currentThreadRegisters->esp, (void*)currentThreadRegisters->ebp);
   }
-  ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
+
+  if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
+  {
+    debug(A_INTERRUPTS, "%zu pending End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
+    assert(!((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_));
+  }
+
   if (currentThread->switch_to_userspace_)
   {
     assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
     assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+  }
+
+  assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
+
+  ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
+  if (currentThread->switch_to_userspace_)
+  {
     asm("push %[ss]" : : [ss]"m"(info.ss));
     asm("push %[esp]" : : [esp]"m"(info.esp));
   }
@@ -212,7 +274,8 @@ extern "C" void arch_contextSwitch()
   {
     asm("mov %[esp], %%esp\n" : : [esp]"m"(info.esp));
   }
-  g_tss->esp0 = info.esp0;
+  //cpu_tss.esp0 = info.esp0;
+  cpu_tss.setTaskStack(info.esp0);
   asm("frstor (%[fpu])\n" : : [fpu]"r"(&info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[eflags]\n" : : [eflags]"m"(info.eflags));

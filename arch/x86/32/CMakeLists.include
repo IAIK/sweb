@@ -19,9 +19,10 @@ if ("${DEBUG}" STREQUAL "1")
 endif()
 
 set(AVAILABLE_MEMORY 8M)
+set(NUM_CPUS 1)
 
 set(QEMU_BIN qemu-system-i386)
-set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot)
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot -smp ${NUM_CPUS} -d guest_errors -d int) #  -d int
 string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 add_custom_target(kvm

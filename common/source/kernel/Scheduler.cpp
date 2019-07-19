@@ -43,7 +43,10 @@ Scheduler::Scheduler()
 
 void Scheduler::schedule()
 {
-  //debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread ? currentThread->getName() : "(nil)");
+  if(SCHEDULER & OUTPUT_ADVANCED)
+  {
+    debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread ? currentThread->getName() : "(nil)");
+  }
 
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
 

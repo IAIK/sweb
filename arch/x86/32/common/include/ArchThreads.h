@@ -34,12 +34,6 @@ struct ArchThreadRegisters
 
 class Thread;
 class ArchMemory;
-/**
- * this is where the thread info for task switching is stored
- *
- */
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching

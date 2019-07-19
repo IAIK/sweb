@@ -91,7 +91,7 @@ static void FBnewline()
         setFBcol(0);
 }
 
-static void putc(const char c)
+static void kputc(const char c)
 {
         if(c == '\n')
         {
@@ -140,7 +140,7 @@ void kprintf_func(int ch, void *arg __attribute__((unused)))
   }
   else
   {
-    putc(ch); // Used while booting
+    kputc(ch); // Used while booting
   }
 }
 

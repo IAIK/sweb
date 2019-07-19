@@ -10,8 +10,6 @@
 #include "Loader.h"
 #include "arch_backtrace.h"
 
-extern Thread* currentThread;
-
 struct StackFrame
 {
    StackFrame *previous_frame;
