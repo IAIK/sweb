@@ -175,6 +175,10 @@ foreach(file ${userspace_data})
   list(APPEND MINIXFS_ARGUMENT ${file} ${datafile})
 endforeach(file)
 
+set(INITRD_FILE ${PROJECT_BINARY_DIR}/sweb_initrd)
+set(HDD_IMAGE_FILE ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk)
+
+
 #Custom Target: hdd_image
 #Creates the hd image and copies all files to it
 add_custom_target (hdd_image ALL
@@ -183,15 +187,15 @@ add_custom_target (hdd_image ALL
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs sweb_initrd
+    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs userspace_to_image "${INITRD_FILE}" "${HDD_IMAGE_FILE}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst"
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
-    #COMMAND ./mkminixfs SWEB-flat.vmdk 1
-    COMMAND ./exe2minixfs SWEB-flat.vmdk 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
+    #COMMAND ./mkminixfs "${HDD_IMAGE_FILE}" 1
+    COMMAND ./exe2minixfs "${HDD_IMAGE_FILE}" 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
                                            ./kernel.x boot/kernel.x
                                            ./kernel.dbg boot/kernel.dbg
-                                           ./sweb_initrd boot/initrd
+                                           "${INITRD_FILE}" boot/initrd
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying kernel files to image..."
 )
@@ -205,24 +209,22 @@ add_custom_target (kernel_image
     )
 
 
-add_custom_target (sweb_initrd
+add_custom_command (OUTPUT ${INITRD_FILE}
   DEPENDS mkminixfs exe2minixfs
-  COMMAND dd if=/dev/zero of=sweb_initrd bs=512 count=1024
-  COMMAND ./mkminixfs -d sweb_initrd
-  COMMAND ./exe2minixfs sweb_initrd 0 ${CMAKE_SOURCE_DIR}/README.md README.md
-  COMMENT "Creating initrd..."
+  COMMAND dd if=/dev/zero of="${INITRD_FILE}" bs=512 count=1024
+  COMMAND ./mkminixfs -d "${INITRD_FILE}"
+  COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${CMAKE_SOURCE_DIR}/README.md README.md
+  COMMENT "Creating empty initrd..."
   )
-
-
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
-    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs
+    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${INITRD_FILE}" "${HDD_IMAGE_FILE}"
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./mkminixfs -d SWEB-flat.vmdk -p 2
-    COMMAND ./exe2minixfs SWEB-flat.vmdk 2 ${MINIXFS_ARGUMENT}
-    COMMAND ./exe2minixfs sweb_initrd 0 ${MINIXFS_ARGUMENT}
+    COMMAND ./mkminixfs -d "${HDD_IMAGE_FILE}" -p 2
+    COMMAND ./exe2minixfs "${HDD_IMAGE_FILE}" 2 ${MINIXFS_ARGUMENT}
+    COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
 )
