@@ -26,17 +26,14 @@
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
 #define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
 
-#define GATE_SIZE_16_BIT     0 // use 16- bit push
-#define GATE_SIZE_32_BIT     1 // use 32- bit push
-
-#define TYPE_TRAP_GATE       7 // trap gate, i.e. IF flag is *not* cleared
-#define TYPE_INTERRUPT_GATE  6 // interrupt gate, i.e. IF flag *is* cleared
-
-#define DPL_KERNEL_SPACE     0 // kernelspace's protection level
-#define DPL_USER_SPACE       3 // userspaces's protection level
-
-#define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
-
+enum
+{
+        TYPE_TASK_GATE = 0x5,
+        TYPE_INTERRUPT_GATE_16 = 0x6, // interrupt gate, i.e. IF flag *is* cleared
+        TYPE_TRAP_GATE_16 = 0x7, // trap gate, i.e. IF flag is *not* cleared
+        TYPE_INTERRUPT_GATE_32 = 0xE,// interrupt gate, i.e. IF flag *is* cleared
+        TYPE_TRAP_GATE_32 = 0xF, // trap gate, i.e. IF flag is *not* cleared
+};
 
 // --- Pagefault error flags.
 //     PF because/in/caused by/...
@@ -73,40 +70,77 @@ struct GateDesc
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
 
+IDTR InterruptUtils::idtr;
+InterruptGateDesc* InterruptUtils::idt;
+
+InterruptGateDesc::InterruptGateDesc(size_t offset, uint8 dpl) :
+  segment_selector(KERNEL_CS),
+  unused(0),
+  type(TYPE_INTERRUPT_GATE_32),
+  zero_1(0),
+  dpl(dpl),
+  present(1)
+{
+  setOffset(offset);
+}
+
+void InterruptGateDesc::setOffset(size_t offset)
+{
+  offset_low = LO_WORD(offset);
+  offset_high = HI_WORD(offset);
+}
+
+void IDTR::load()
+{
+  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", base, limit);
+  asm volatile("lidt (%0) ": :"q" (this));
+}
+
 void InterruptUtils::initialise()
 {
   uint32 num_handlers = 0;
   for (uint32 i = 0; handlers[i].offset != 0; ++i)
-    num_handlers = handlers[i].number;
-  ++num_handlers;
+  {
+          num_handlers = Max(handlers[i].number, num_handlers);
+  }
+  num_handlers += 1;
   // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[num_handlers];
+  idt = new InterruptGateDesc[num_handlers];
   size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
   assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
   dummy_handler_sled_size /= 128;
 
-  uint32 j = 0;
   for (uint32 i = 0; i < num_handlers; ++i)
   {
-    while (handlers[j].number < i && handlers[j].offset != 0)
-      ++j;
-    interrupt_gates[i].offset_low = LO_WORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
-    interrupt_gates[i].offset_high = HI_WORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
-    interrupt_gates[i].gate_size = GATE_SIZE_32_BIT;
-    interrupt_gates[i].present = 1;
-    interrupt_gates[i].reserved = 0;
-    interrupt_gates[i].segment_selector = KERNEL_CS;
-    interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
-    interrupt_gates[i].unused = 0;
-    interrupt_gates[i].zeros = 0;
-    interrupt_gates[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
+          idt[i] = InterruptGateDesc(((size_t)arch_dummyHandler) + i*dummy_handler_sled_size, DPL_KERNEL_SPACE);
   }
 
-  IDTR idtr;
+  uint32 j = 0;
+  while(handlers[j].offset != 0)
+  {
+          assert(handlers[j].number < num_handlers);
+          uint8 dpl = (handlers[j].number == SYSCALL_INTERRUPT) ? DPL_USER_SPACE :
+                                                                  DPL_KERNEL_SPACE;
+          idt[handlers[j].number] = InterruptGateDesc((size_t)handlers[j].offset, dpl);
+          ++j;
+  }
 
-  idtr.base = (uint32) interrupt_gates;
-  idtr.limit = sizeof(GateDesc) * num_handlers - 1;
-  lidt(&idtr);
+  if(A_INTERRUPTS & OUTPUT_ENABLED)
+  {
+          for (uint32 i = 0; i < num_handlers; ++i)
+          {
+                  debug(A_INTERRUPTS,
+                        "%x -- offset = %p, offset_low = %x, offset_high = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
+                        idt[i].offset_low, idt[i].offset_high,
+                        idt[i].present, idt[i].segment_selector,
+                        idt[i].type, idt[i].dpl);
+          }
+  }
+
+  idtr.base = (pointer) idt;
+  idtr.limit = sizeof(InterruptGateDesc) * num_handlers - 1;
+  idtr.load();
+
 }
 
 void InterruptUtils::lidt(IDTR *idtr)
@@ -245,7 +279,7 @@ extern "C" void syscallHandler()
 extern Stabs2DebugInfo const *kernel_debug_info;
 extern const char* errors[];
 extern "C" void arch_errorHandler();
-extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
+extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 {
   if (spurious)
   {
@@ -259,7 +293,7 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
   }
   const bool userspace = (cs & 0x3);
   debug(CPU_ERROR, "Instruction Pointer: %zx, Userspace: %d - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
-        rip, userspace, currentThread,
+        eip, userspace, currentThread,
         currentThread ? currentThread->getTID() : -1, currentThread ? currentThread->getName() : 0,
         currentThread ? currentThread->switch_to_userspace_ : -1);
 
