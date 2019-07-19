@@ -3,6 +3,7 @@
 #include "assert.h"
 #include "PageManager.h"
 #include "kstring.h"
+#include "offsets.h"
 
 PageDirEntry kernel_page_directory[PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -128,6 +129,57 @@ pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   return 0;
 }
 
+const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage)
+{
+  return resolveMapping(page_dir_page_, vpage);
+}
+
+const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
+{
+  ArchMemoryMapping m;
+
+  VAddr a{vpage*PAGE_SIZE};
+
+  m.pti = a.pti;
+  m.pdi = a.pdi;
+
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+    debug(A_MEMORY, "resolveMapping, pd: %zx, vpn: %zx, pdi: %zx(%zu), pti: %zx(%zu)\n", pd, vpage, m.pdi, m.pdi, m.pti, m.pti);
+  }
+
+  assert(pd < PageManager::instance()->getTotalNumPages());
+  m.pd = (PageDirEntry*) getIdentAddressOfPPN(pd);
+  m.pt = 0;
+  m.page = 0;
+  m.pd_ppn = pd;
+  m.pt_ppn = 0;
+  m.page_ppn = 0;
+  m.page_size = 0;
+
+  if(m.pd[m.pdi].pt.present && !m.pd[m.pdi].pt.size)
+  {
+          m.pt_ppn = m.pd[m.pdi].pt.page_table_ppn;
+          assert(m.pt_ppn < PageManager::instance()->getTotalNumPages());
+          m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
+          if(m.pt[m.pti].present)
+          {
+                  m.page_ppn = m.pt[m.pti].page_ppn;
+                  m.page = getIdentAddressOfPPN(m.page_ppn);
+          }
+  }
+  else if(m.pd[m.pdi].pt.present && m.pd[m.pdi].pt.size)
+  {
+          m.page_size = PAGE_SIZE * PAGE_TABLE_ENTRIES;
+          m.page_ppn = m.pd[m.pdi].page.page_ppn;
+          m.page = getIdentAddressOfPPN(m.page_ppn);
+  }
+
+  debug(A_MEMORY, "VPN %#zx: %#zx -> %#zx -> %#zx\n", vpage, m.pd_ppn, m.pt_ppn, m.page_ppn);
+
+  return m;
+}
+
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page,
                                                    uint32 *physical_pte_page)
 {
@@ -199,12 +251,26 @@ PageDirEntry* ArchMemory::getRootOfKernelPagingStructure()
   return kernel_page_directory;
 }
 
+void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
+{
+        __asm__ __volatile__("movl %[cr3_value], %%cr3\n"
+                             ::[cr3_value]"r"(cr3_value));
+}
+
 uint32 ArchMemory::getValueForCR3()
 {
-  return page_dir_page_ * PAGE_SIZE;
+  return getRootOfPagingStructure() * PAGE_SIZE;
 }
 
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)
 {
   return (3U * 1024U * 1024U * 1024U) + (ppn * page_size);
 }
+
+pointer ArchMemory::getIdentAddress(size_t address)
+{
+  return (3U * 1024U * 1024U * 1024U) | (address);
+}
+
+
+

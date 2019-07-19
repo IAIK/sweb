@@ -22,6 +22,23 @@ union VAddr
         };
 };
 
+class ArchMemoryMapping
+{
+public:
+        PageDirEntry* pd;
+        PageTableEntry* pt;
+        pointer page;
+
+        ppn_t pd_ppn;
+        ppn_t pt_ppn;
+        ppn_t page_ppn;
+
+        size_t page_size;
+
+        size_t pdi;
+        size_t pti;
+};
+
 class ArchMemory
 {
 public:
@@ -58,6 +75,8 @@ public:
  */
   static pointer getIdentAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE);
 
+  static pointer getIdentAddress(size_t address);
+
 /**
  * Checks if a given Virtual Address is valid and is mapped to real memory
  * @param vaddress_to_check Virtual Address we want to check
@@ -79,6 +98,8 @@ public:
  */
   static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page=0);
 
+  const ArchMemoryMapping resolveMapping(size_t vpage);
+  static const ArchMemoryMapping resolveMapping(size_t pd, size_t vpage);
 /**
  *
  * maps a virtual page to a physical page in kernel mapping
@@ -104,6 +125,7 @@ public:
   uint32 getRootOfPagingStructure();
   uint32 getValueForCR3();
   static PageDirEntry* getRootOfKernelPagingStructure();
+  static void loadPagingStructureRoot(size_t cr3_value);
 
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0xC0000ULL;
