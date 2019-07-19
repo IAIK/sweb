@@ -44,7 +44,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   reserved_min_ = min_heap_pages * PAGE_SIZE;
   reserved_max_ = max_heap_pages * PAGE_SIZE;
 
-  debug(KMM, "Clearing initial heap pages\n");
+  debug(KMM, "Clearing initial heap pages [%p, %p)\n", (void*)start_address, (char*)start_address + min_heap_pages * PAGE_SIZE);
   memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);
 
   first_ = (MallocSegment*)start_address;
@@ -74,6 +74,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer calle
 
 pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
+  if(KMM & OUTPUT_ADVANCED)
+          debug(KMM, "private_allocateMemory, size: %zu, called by: %zx\n", requested_size, called_by);
   assert((requested_size & 0xF) == 0 && "Attempt to allocate block with unaligned size");
 
   // find next free pointer of neccessary size + sizeof(MallocSegment);

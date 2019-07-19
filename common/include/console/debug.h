@@ -20,7 +20,7 @@ enum AnsiColor
 
 #define __STRINGIFY2(x) #x
 #define __STRINGIFY(x) __STRINGIFY2(x)
-#define DEBUG_STR_HERE2(file, line) file ":" __STRINGIFY(line)
+#define DEBUG_STR_HERE2(file, line)  " at " file ":" __STRINGIFY(line)
 #define DEBUG_STR_HERE DEBUG_STR_HERE2(__FILE__, __LINE__)
 
 #define OUTPUT_ENABLED  0x80000000
@@ -53,15 +53,9 @@ extern bool debug_print_to_fb;
           } } while (0)
 #endif
 
-//group minix
-const size_t M_STORAGE_MANAGER  = Ansi_Yellow;
-const size_t M_INODE            = Ansi_Yellow;
-const size_t M_SB               = Ansi_Yellow;
-const size_t M_ZONE             = Ansi_Yellow;
 
-//group Block Device
-const size_t BD_MANAGER         = Ansi_Yellow;
-const size_t BD_VIRT_DEVICE     = Ansi_Yellow;
+
+
 
 //group Console
 const size_t KPRINTF            = Ansi_Yellow  | OUTPUT_ENABLED;
@@ -94,6 +88,10 @@ const size_t IDE_DRIVER         = Ansi_Yellow;
 const size_t MMC_DRIVER         = Ansi_Yellow;
 const size_t RAMDISK            = Ansi_Yellow;
 
+//group Block Device
+const size_t BD_MANAGER         = Ansi_Yellow;
+const size_t BD_VIRT_DEVICE     = Ansi_Yellow;
+
 //group arch
 const size_t A_BOOT             = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t A_COMMON           = Ansi_Yellow  | OUTPUT_ENABLED;
@@ -114,3 +112,9 @@ const size_t PATHWALKER         = Ansi_Yellow;
 const size_t PSEUDOFS           = Ansi_Yellow;
 const size_t VFSSYSCALL         = Ansi_Yellow;
 const size_t VFS                = Ansi_Yellow;
+
+//group minix
+const size_t M_STORAGE_MANAGER  = Ansi_Yellow;
+const size_t M_INODE            = Ansi_Yellow;
+const size_t M_SB               = Ansi_Yellow;
+const size_t M_ZONE             = Ansi_Yellow;;
