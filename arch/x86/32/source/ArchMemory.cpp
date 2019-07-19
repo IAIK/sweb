@@ -213,31 +213,45 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
     return 0;
 }
 
-void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
+void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
-  PageDirEntry *page_directory = kernel_page_directory;
-  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-  assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(!pte_base[pte_vpn].present);
-  pte_base[pte_vpn].writeable = 1;
-  pte_base[pte_vpn].page_ppn = physical_page;
-  pte_base[pte_vpn].present = 1;
+  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
+
+  assert(m.pt || can_alloc_pages);
+  if((!m.pt) && can_alloc_pages)
+  {
+          m.pt_ppn = PageManager::instance()->allocPPN();
+          m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
+
+          m.pd[m.pdi].pt.page_table_ppn = m.pt_ppn;
+          m.pd[m.pdi].pt.writeable = 1;
+          m.pd[m.pdi].pt.present = 1;
+  }
+
+  assert(!m.pt[m.pti].present);
+
+  if(memory_mapped_io)
+  {
+          m.pt[m.pti].write_through = 1;
+          m.pt[m.pti].cache_disabled = 1;
+  }
+
+  m.pt[m.pti].page_ppn = physical_page;
+  m.pt[m.pti].writeable = 1;
+  m.pt[m.pti].present = 1;
+
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 
-void ArchMemory::unmapKernelPage(uint32 virtual_page)
+void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
 {
-  PageDirEntry *page_directory = kernel_page_directory;
-  uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
-  uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
-  assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(pte_base[pte_vpn].present);
-  pte_base[pte_vpn].present = 0;
-  pte_base[pte_vpn].writeable = 0;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
+  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
+  assert(m.page && (m.page_size == PAGE_SIZE));
+
+  if(free_page)
+  {
+    PageManager::instance()->freePPN(m.page_ppn);
+  }
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 

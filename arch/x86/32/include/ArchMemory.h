@@ -107,7 +107,7 @@ public:
  * @param virtual_page
  * @param physical_page
  */
-  static void mapKernelPage(uint32 virtual_page, uint32 physical_page);
+  static void mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -115,7 +115,7 @@ public:
  *
  * @param virtual_page which will be invalidated
  */
-  static void unmapKernelPage(uint32 virtual_page);
+  static void unmapKernelPage(uint32 virtual_page, bool free_page = true);
 
 /**
  * ppn of the page dir page
