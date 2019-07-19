@@ -68,7 +68,6 @@ extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
 
 IDTR InterruptUtils::idtr;
-
 InterruptGateDesc* InterruptUtils::idt;
 
 InterruptGateDesc::InterruptGateDesc(uint64 offset, uint8 dpl) :

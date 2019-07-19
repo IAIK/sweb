@@ -68,7 +68,7 @@ typedef struct
 
 void setTSSSegmentDescriptor(TSSSegmentDescriptor* descriptor, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl);
 
-typedef struct
+struct TSS
 {
         uint32 reserved_0;
         union
@@ -96,7 +96,9 @@ typedef struct
                 uint64 ist0;
         };
         uint32 reserved_3[15];
-}__attribute__((__packed__)) TSS;
+
+        void setTaskStack(size_t stack_top);
+}__attribute__((__packed__));
 
 
 void setFSBase(size_t fs_base);

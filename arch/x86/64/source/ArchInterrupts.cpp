@@ -279,9 +279,9 @@ extern "C" void arch_contextSwitch()
   assert(currentThreadRegisters);
   assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
 
-  if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIc for outstanding interrupts
+  if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
   {
-    debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
+    debug(A_INTERRUPTS, "%zu pending End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
     assert(!((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_));
   }
   if (currentThread->switch_to_userspace_)
@@ -294,7 +294,7 @@ extern "C" void arch_contextSwitch()
   ArchThreadRegisters info = *currentThreadRegisters;
   assert(info.rip >= PAGE_SIZE); // debug
   assert(info.rsp0 >= USER_BREAK);
-  cpu_tss.rsp0 = info.rsp0;
+  cpu_tss.setTaskStack(info.rsp0);
   setFSBase(currentThread->switch_to_userspace_ ? 0 : (uint64)getSavedFSBase()); // Don't use CLS after this line
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
@@ -326,18 +326,4 @@ extern "C" void arch_contextSwitch()
       "swapgs\n"
       "1: iretq\n");
   assert(false);
-}
-
-
-WithDisabledInterrupts::WithDisabledInterrupts()
-{
-  previous_state_ = ArchInterrupts::disableInterrupts();
-}
-
-WithDisabledInterrupts::~WithDisabledInterrupts()
-{
-  if(previous_state_)
-  {
-    ArchInterrupts::enableInterrupts();
-  }
 }

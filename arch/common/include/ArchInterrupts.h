@@ -51,8 +51,18 @@ public:
 class WithDisabledInterrupts
 {
 public:
-        WithDisabledInterrupts();
-        ~WithDisabledInterrupts();
+        WithDisabledInterrupts()
+        {
+                previous_state_ = ArchInterrupts::disableInterrupts();
+        }
+
+        ~WithDisabledInterrupts()
+        {
+                if(previous_state_)
+                {
+                        ArchInterrupts::enableInterrupts();
+                }
+        }
 
         bool previous_state_;
 };

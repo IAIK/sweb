@@ -104,6 +104,7 @@ arch_irqHandler_\num:
         interrupthandler irqHandler_\num
 .endm
 
+# TODO: not thread safe with multiple CPUs
 dummyhandlerscratchvariable:
   .long 0
   .long 0

@@ -49,7 +49,7 @@ static uint8 ap_boot_stack[PAGE_SIZE];
 
 CpuInfo::CpuInfo() :
   lapic(),
-  cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : -1)
+  cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : 0)
 {
   debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
   MutexLock l(ArchMulticore::cpu_list_lock_);
@@ -157,6 +157,7 @@ void ArchMulticore::initCpuLocalTSS(size_t cpu_stack_top)
 
   cpu_tss.ist0 = cpu_stack_top;
   cpu_tss.rsp0 = cpu_stack_top;
+  debug(A_MULTICORE, "Loading TSS\n");
   __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 }
 
@@ -290,8 +291,8 @@ extern "C" void __apstartup64()
 
 void ArchMulticore::initCpu()
 {
-  debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
-  ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
+  debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
+  ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
   InterruptUtils::idtr.load();
