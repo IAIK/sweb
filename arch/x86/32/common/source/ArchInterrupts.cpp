@@ -6,6 +6,7 @@
 #include "ArchThreads.h"
 #include "assert.h"
 #include "Thread.h"
+#include "debug.h"
 
 
 static void initInterruptHandlers()
@@ -97,8 +98,7 @@ bool ArchInterrupts::testIFSet()
   __asm__ __volatile__(
   "pushfl\n"
   "popl %0\n"
-  : "=a"(ret_val)
-  :);
+  : "=a"(ret_val));
 
   return (ret_val & (1 << 9));  //testing IF Flag
 }
@@ -116,26 +116,28 @@ void ArchInterrupts::yieldIfIFSet()
 }
 
 struct context_switch_registers {
-  uint32 es;
-  uint32 ds;
-  uint32 edi;
-  uint32 esi;
-  uint32 ebp;
-  uint32 esp;
-  uint32 ebx;
-  uint32 edx;
-  uint32 ecx;
-  uint32 eax;
-};
+  uint32 gs;  //  0-3
+  uint32 fs;  //  4-7
+  uint32 es;  //  8-11
+  uint32 ds;  // 12-15
+  uint32 edi; // 16-19
+  uint32 esi; // 20-23
+  uint32 ebp; // 24-27
+  uint32 esp; // 28-31
+  uint32 ebx; // 32-35
+  uint32 edx; // 36-39
+  uint32 ecx; // 40-43
+  uint32 eax; // 44-47
+} __attribute__((packed));
 
 struct interrupt_registers {
-  uint32 eip;
-  uint32 cs;
-  uint32 eflags;
-  uint32 esp3;
-  uint32 ss3;
-};
-#include "kprintf.h"
+                 // w/o   | w/ error code
+  uint32 eip;    // 48-51 | 52-55
+  uint32 cs;     // 52-55 | 56-59
+  uint32 eflags; // 56-59 | 60-63
+  uint32 esp3;   // 60-63 | 64-67
+  uint32 ss3;    // 64-67 | 68-71
+} __attribute__((packed));
 
 
 extern "C" void arch_dummyHandler();
@@ -151,13 +153,11 @@ extern "C" size_t arch_computeDummyHandler(uint32 eip)
   return calling_dummy_handler;
 }
 
-extern "C" void arch_saveThreadRegisters(uint32 error)
+extern "C" void arch_saveThreadRegisters(uint32 error, uint32* base)
 {
-  register struct context_switch_registers* registers;
-  registers = (struct context_switch_registers*) (&error + 2);
-  register struct interrupt_registers* iregisters;
-  iregisters = (struct interrupt_registers*) (&error + 2 + sizeof(struct context_switch_registers)/sizeof(uint32) + (error));
-  register ArchThreadRegisters* info = currentThreadRegisters;
+  struct context_switch_registers* registers = (struct context_switch_registers*) base;
+  struct interrupt_registers* iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint32));
+  ArchThreadRegisters* info = currentThreadRegisters;
 
   asm("fnsave (%[fpu])\n"
       "frstor (%[fpu])\n"
@@ -184,6 +184,8 @@ extern "C" void arch_saveThreadRegisters(uint32 error)
   info->edi = registers->edi;
   info->ds = registers->ds;
   info->es = registers->es;
+  info->fs = registers->fs;
+  info->gs = registers->gs;
   assert(!currentThread || currentThread->isStackCanaryOK());
 }
 
@@ -193,6 +195,7 @@ extern "C" void arch_contextSwitch()
 {
   assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
   if(outstanding_EOIs)
+  assert(currentThread);
   {
           debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler/IRQ0)\n", outstanding_EOIs);
           assert(!outstanding_EOIs);
@@ -219,6 +222,8 @@ extern "C" void arch_contextSwitch()
   asm("mov %[edi], %%edi\n" : : [edi]"m"(info.edi));
   asm("mov %[es], %%es\n" : : [es]"m"(info.es));
   asm("mov %[ds], %%ds\n" : : [ds]"m"(info.ds));
+  asm("mov %[fs], %%fs\n" : : [fs]"m"(info.fs));
+  asm("mov %[gs], %%gs\n" : : [gs]"m"(info.gs)); // Don't use CPU local storage after loading %gs
   asm("push %[ebp]\n" : : [ebp]"m"(info.ebp));
   asm("pop %%ebp\n"
       "iret" : : "a"(info.eax), "b"(info.ebx), "c"(info.ecx), "d"(info.edx));

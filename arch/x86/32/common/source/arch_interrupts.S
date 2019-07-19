@@ -4,40 +4,55 @@
 .text
 
 .equ KERNEL_DS, 0x10
+.equ KERNEL_FS, 0x38
+.equ KERNEL_GS, 0x38
+
+.macro loadKernelSegments
+  movw $KERNEL_DS, %ax
+  movw %ax,%es
+  movw %ax,%ds
+  movw $KERNEL_FS, %ax
+  movw %ax,%fs
+  movw $KERNEL_GS, %ax
+  movw %ax,%gs
+.endm
 
 .macro pushAll
   pushal
   push %ds
   push %es
-  movw $KERNEL_DS, %ax
-  movw %ax,%es
-  movw $KERNEL_DS, %ax
-  movw %ax,%ds
+  push %fs
+  push %gs
+  loadKernelSegments
 .endm
 
 .macro popAll
+  pop %gs
+  pop %fs
   pop %es
   pop %ds
   popal
 .endm
 
 .extern arch_saveThreadRegisters
-.extern arch_saveThreadRegistersForPageFault
+
+.macro interrupthandler handlerfunction
+  pushall
+  pushl %esp
+  pushl $0
+  call arch_saveThreadRegisters
+  addl $8, %esp
+  call \handlerfunction
+  popall
+  iretl
+.endm
 
 .macro irqhandler num
 .global arch_irqHandler_\num
 .extern irqHandler_\num
 .stabs "arch_irqHandler_\num()",36,0,0,arch_irqHandler_\num
 arch_irqHandler_\num:
-  pushall
-  pushl %ebp
-  movl %esp,%ebp
-  pushl $0
-  call arch_saveThreadRegisters
-  leave
-  call irqHandler_\num
-  popall
-  iretl
+  interrupthandler irqHandler_\num
 .endm
 
 dummyhandlerscratchvariable:
@@ -54,106 +69,84 @@ arch_dummyHandler:
 .global arch_dummyHandlerMiddle
 arch_dummyHandlerMiddle:
         pushall
-        pushl %ebp
-        movl %esp,%ebp
+
+	    pushl %esp
         pushl $0
         call arch_saveThreadRegisters
-        leave
-        pushl %ebp
-        movl %esp,%ebp
-        pushl 44(%esp)
-        call arch_computeDummyHandler
-        mov %eax,%ebx
-        leave
-        pushl %ebp
-        movl %esp,%ebp
-        subl $16,%esp
-        movl $1, 12(%esp)
-        movl 64(%esp),%eax
-        movl %eax, 8(%esp)
-        movl 60(%esp),%eax
-        movl %eax, 4(%esp)
-        movl %ebx, 0(%esp)
+        addl $8, %esp
+
+        pushl 48(%esp) # eip
+        call arch_computeDummyHandler # retval in eax
+        addl $4, %esp
+
+        movl 48(%esp), %ebx # eip
+        movl 52(%esp), %ecx # cs
+        pushl $1
+        pushl %ecx
+        pushl %ebx
+        pushl %eax
         call errorHandler
-        leave
+        addl $12, %esp
+
         popall
         addl $4,%esp
         iretl
         hlt
 
 .extern errorHandler
-.macro errorhandler num
+.macro errorhandler num, errorcode=0
 .global arch_errorHandler_\num
 arch_errorHandler_\num:
         pushall
-        pushl %ebp
-        movl %esp,%ebp
+
+        pushl %esp
+        pushl $\errorcode
+        call arch_saveThreadRegisters
+        addl $8, %esp
+
+    .if \errorcode
+    	movl 52(%esp), %eax # eip
+	    movl 56(%esp), %ebx # cs
+    .else
+    	movl 48(%esp), %eax # eip
+	    movl 52(%esp), %ebx # cs
+    .endif
         pushl $0
-        call arch_saveThreadRegisters
-        leave
-        pushl %ebp
-        movl %esp,%ebp
-        subl $16,%esp
-        movl $0, 12(%esp)
-        movl 64(%esp),%eax
-        movl %eax, 8(%esp)
-        movl 60(%esp),%eax
-        movl %eax, 4(%esp)
-        movl $\num,0(%esp)
+        pushl %ebx
+        pushl %eax
+        pushl $\num
         call errorHandler
-        leave
+        addl $16, %esp
+
         popall
+    .if \errorcode
+    	addl $4,%esp
+    .endif
         iretl
         hlt
 .endm
-
-.macro errorhandlerWithCode num
-.global arch_errorHandler_\num
-arch_errorHandler_\num:
-        pushall
-        pushl %ebp
-        movl %esp,%ebp
-        pushl $1
-        call arch_saveThreadRegisters
-        leave
-        pushl %ebp
-        movl %esp,%ebp
-        subl $16,%esp
-        movl $0, 12(%esp)
-        movl 68(%esp),%eax
-        movl %eax, 8(%esp)
-        movl 64(%esp),%eax
-        movl %eax, 4(%esp)
-        movl $\num,0(%esp)
-        call errorHandler
-        leave
-        popall
-        addl $4,%esp
-        iretl
-        hlt
-.endm
-
 
 .extern pageFaultHandler
 .global arch_pageFaultHandler
 .stabs "arch_pageFaultHandler()",36,0,0,arch_pageFaultHandler
 arch_pageFaultHandler:
-  #we are already on a new stack because a privliedge switch happened
+  #we are already on a new stack because a priviledge switch happened
   pushall
-  pushl %ebp
-  movl %esp,%ebp
+
+  pushl %esp
   pushl $1
   call arch_saveThreadRegisters
-  leave
-  pushl %ebp
-  movl %esp,%ebp
-  subl $8,%esp
-  movl 52(%esp),%eax        # error cd
-  movl %eax, 4(%esp)
-  movl %cr2, %eax           # page fault address
-  movl %eax, 0(%esp)
+  addl $8, %esp
+
+  movl 52(%esp), %eax # eip
+  movl 48(%esp), %ebx # error code
+  movl %cr2, %ecx     # pagefault address
+  pushl %eax
+  pushl %ebx
+  pushl %ecx
   call pageFaultHandler
-  leave
+  addl $12, %esp
+
   popall
   addl $4,%esp
   iretl
@@ -165,7 +158,7 @@ irqhandler \num
 .endr
 
 .irp num,8,10,11,12,13,14,17
-errorhandlerWithCode \num
+errorhandler \num, 1
 .endr
 
 .irp num,0,4,5,6,7,9,16,18,19
@@ -176,11 +169,4 @@ errorhandler \num
 .extern syscallHandler
 .stabs "arch_syscallHandler",36,0,0,arch_syscallHandler
 arch_syscallHandler:
-  pushall
-  pushl %ebp
-  movl %esp,%ebp
-  pushl $0
-  call arch_saveThreadRegisters
-  leave
-  call syscallHandler
-  hlt
+  interrupthandler syscallHandler
