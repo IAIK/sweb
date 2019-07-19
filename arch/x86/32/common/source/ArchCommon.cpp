@@ -10,7 +10,16 @@
 #include "Stabs2DebugInfo.h"
 #include "ports.h"
 #include "PageManager.h"
+#include "debug_bochs.h"
 
+#if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
+#define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
+#else
+#define PRINT(X)
+#endif
+
+
+extern void* kernel_start_address;
 extern void* kernel_end_address;
 
 multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
@@ -23,6 +32,10 @@ extern "C" void parseMultibootHeader()
   multiboot_info_t *mb_infos = *(multiboot_info_t**)VIRTUAL_TO_PHYSICAL_BOOT( (pointer)&multi_boot_structure_pointer);
 
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+
+  PRINT("Bootloader: ");
+  writeLine2Bochs((char*)(pointer)(mb_infos->boot_loader_name));
+  PRINT("\n");
 
   if (mb_infos && mb_infos->f_vbe)
   {
@@ -43,6 +56,9 @@ extern "C" void parseMultibootHeader()
       orig_mbr.module_maps[i].start_address = mods[i].mod_start;
       orig_mbr.module_maps[i].end_address = mods[i].mod_end;
       strncpy((char*)(uint32)orig_mbr.module_maps[i].name, (const char*)(uint32)mods[i].string, 256);
+      PRINT("Module: ");
+      writeLine2Bochs((char*)mods[i].string);
+      PRINT("\n");
     }
     orig_mbr.num_module_maps = mb_infos->mods_count;
   }
@@ -117,14 +133,25 @@ uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
 
 }
 
-uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+char* ArchCommon::getModuleName(size_t num, size_t is_paging_set_up)
 {
   if (is_paging_set_up)
-    return mbr.module_maps[num].start_address + 3*1024*1024*1024U;
+    return (char*)((size_t)mbr.module_maps[num].name);
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].start_address ;
+    return (char*)orig_mbr.module_maps[num].name;
+  }
+}
+
+uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+{
+  if (is_paging_set_up)
+    return mbr.module_maps[num].start_address + PHYSICAL_TO_VIRTUAL_OFFSET;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.module_maps[num].start_address;
   }
 
 }
@@ -132,7 +159,7 @@ uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
   if (is_paging_set_up)
-    return mbr.module_maps[num].end_address + 3*1024*1024*1024U;
+    return mbr.module_maps[num].end_address + PHYSICAL_TO_VIRTUAL_OFFSET;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
@@ -225,6 +252,11 @@ void ArchCommon::initDebug()
 
 void ArchCommon::idle()
 {
+  halt();
+}
+
+void ArchCommon::halt()
+{
   asm volatile("hlt");
 }
 
@@ -262,4 +294,22 @@ void ArchCommon::drawHeartBeat()
   fb[1] = 0x9f;
 
   drawStat();
+}
+
+
+
+
+void ArchCommon::postBootInit()
+{
+        //initACPI();
+}
+
+
+void ArchCommon::callWithStack(char* stack, void (*func)())
+{
+        asm volatile("movl %[stack], %%esp\n"
+                     "calll *%[func]\n"
+                     ::[stack]"r"(stack),
+                      [func]"r"(func)
+                     :"esp");
 }
