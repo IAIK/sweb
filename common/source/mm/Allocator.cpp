@@ -9,7 +9,7 @@
  */
 void BootstrapRangeAllocator::setUseable(__attribute__((unused)) size_t start, __attribute__((unused)) size_t end)
 {
-        debug(PM, "setUseable [%zx - %zx)\n", start, end);
+        //debug(PM, "setUseable [%zx - %zx)\n", start, end);
         assert(start <= end);
         for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
         {
@@ -52,7 +52,7 @@ void BootstrapRangeAllocator::setUseable(__attribute__((unused)) size_t start, _
 
 void BootstrapRangeAllocator::setUnuseable(__attribute__((unused)) size_t start, __attribute__((unused)) size_t end)
 {
-        debug(PM, "setUnuseable [%zx - %zx)\n", start, end);
+        //debug(PM, "setUnuseable [%zx - %zx)\n", start, end);
         assert(start <= end);
         for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
         {

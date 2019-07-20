@@ -171,15 +171,20 @@ ArchMemory::~ArchMemory()
 
 pointer ArchMemory::checkAddressValid(size_t vaddress_to_check)
 {
-  ArchMemoryMapping m = resolveMapping(page_map_level_4_, vaddress_to_check / PAGE_SIZE);
+  return checkAddressValid(page_map_level_4_, vaddress_to_check);
+}
+
+pointer ArchMemory::checkAddressValid(size_t pml4, size_t vaddress_to_check)
+{
+  ArchMemoryMapping m = resolveMapping(pml4, vaddress_to_check / PAGE_SIZE);
   if (m.page != 0)
   {
-    debug(A_MEMORY, "checkAddressValid %llx and %zx -> true\n", page_map_level_4_, vaddress_to_check);
+    debug(A_MEMORY, "checkAddressValid, pml4: %#zx, vaddr: %#zx -> true\n", pml4, vaddress_to_check);
     return m.page | (vaddress_to_check % m.page_size);
   }
   else
   {
-    debug(A_MEMORY, "checkAddressValid %llx and %zx -> false\n", page_map_level_4_, vaddress_to_check);
+    debug(A_MEMORY, "checkAddressValid, pml4: %#zx, vaddr: %#zx -> false\n", pml4, vaddress_to_check);
     return 0;
   }
 }

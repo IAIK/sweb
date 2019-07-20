@@ -118,18 +118,22 @@ bool ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_
 
 pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
 {
-  uint32 virtual_page = vaddress_to_check / PAGE_SIZE;
-  RESOLVEMAPPING(page_dir_page_, virtual_page);
-  if (page_directory[pde_vpn].pt.present)
-  {
-    if (page_directory[pde_vpn].page.size)
-      return getIdentAddressOfPPN(page_directory[pde_vpn].page.page_ppn,PAGE_SIZE * PAGE_TABLE_ENTRIES) | (vaddress_to_check % (PAGE_SIZE * PAGE_TABLE_ENTRIES));
+  return checkAddressValid(page_dir_page_, vaddress_to_check);
+}
 
-    PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-    if (pte_base[pte_vpn].present)
-      return getIdentAddressOfPPN(pte_base[pte_vpn].page_ppn) | (vaddress_to_check % PAGE_SIZE);
+pointer ArchMemory::checkAddressValid(size_t pd, uint32 vaddress_to_check)
+{
+  ArchMemoryMapping m = resolveMapping(pd, vaddress_to_check / PAGE_SIZE);
+  if (m.page != 0)
+  {
+    debug(A_MEMORY, "checkAddressValid, pd: %#zx, vaddr: %#zx -> true\n", pd, vaddress_to_check);
+    return m.page | (vaddress_to_check % m.page_size);
   }
-  return 0;
+  else
+  {
+    debug(A_MEMORY, "checkAddressValid, pd: %#zx, vaddr: %#zx -> false\n", pd, vaddress_to_check);
+    return 0;
+  }
 }
 
 const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage)
@@ -179,7 +183,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
           m.page = getIdentAddressOfPPN(m.page_ppn);
   }
 
-  debug(A_MEMORY, "VPN %#zx: %#zx -> %#zx -> %#zx\n", vpage, m.pd_ppn, m.pt_ppn, m.page_ppn);
+  debug(A_MEMORY, "resolve VPN %#zx: %#zx -> %#zx -> %#zx\n", vpage, m.pd_ppn, m.pt_ppn, m.page_ppn);
 
   return m;
 }

@@ -84,6 +84,7 @@ public:
  * and accessing it would result in a pageFault
  */
   pointer checkAddressValid(uint32 vaddress_to_check);
+  static pointer checkAddressValid(size_t pd, uint32 vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the

@@ -98,8 +98,7 @@ PageManager::PageManager() :
   size_t kernel_virt_end   = (size_t)&kernel_end_address;
   size_t kernel_phys_start = kernel_virt_start - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET;
   size_t kernel_phys_end   = kernel_virt_end - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET;
-  debug(PM, "Ctor: kernel start addr: %#zx, end addr: %#zx\n", kernel_virt_start, kernel_virt_end);
-  debug(PM, "Ctor: kernel phys start addr: %#zx, phys end addr: %#zx\n", kernel_phys_start, kernel_phys_end);
+  debug(PM, "Ctor: kernel phys [%#zx, %#zx) -> virt [%#zx, %#zx)\n", kernel_phys_start, kernel_phys_end, kernel_virt_start, kernel_virt_end);
   bootstrap_pm.setUnuseable(kernel_phys_start, kernel_phys_end);
 
   /*
@@ -131,14 +130,11 @@ PageManager::PageManager() :
   {
     size_t module_phys_start = (ArchCommon::getModuleStartAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
     size_t module_phys_end = (ArchCommon::getModuleEndAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
-    debug(PM, "Ctor: module [%s]: start addr: %p, end addr: %p, phys start addr: %p, phys end addr: %p\n", ArchCommon::getModuleName(i), (void*)ArchCommon::getModuleStartAddress(i), (void*)ArchCommon::getModuleEndAddress(i), (void*)module_phys_start, (void*)module_phys_end);
+    debug(PM, "Ctor: module [%s]: phys [%p, %p)\n", ArchCommon::getModuleName(i), (void*)module_phys_start, (void*)module_phys_end);
     if(module_phys_end < module_phys_start)
-    {
       continue;
-    }
-    size_t end_page = module_phys_end / PAGE_SIZE;
 
-    bootstrap_pm.setUnuseable(module_phys_start, (end_page+1)*PAGE_SIZE);
+    bootstrap_pm.setUnuseable(module_phys_start, module_phys_end);
   }
 
   debug(PM, "Ctor: Mapping GRUB loaded modules\n");
@@ -146,70 +142,61 @@ PageManager::PageManager() :
   {
     size_t module_phys_start = (ArchCommon::getModuleStartAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
     size_t module_phys_end = (ArchCommon::getModuleEndAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
-    debug(PM, "Ctor: module [%s]: start addr: %p, end addr: %p, phys start addr: %p, phys end addr: %p\n", ArchCommon::getModuleName(i), (void*)ArchCommon::getModuleStartAddress(i), (void*)ArchCommon::getModuleEndAddress(i), (void*)module_phys_start, (void*)module_phys_end);
+    debug(PM, "Ctor: module [%s]: virt [%p, %p), phys [%p, %p)\n", ArchCommon::getModuleName(i), (void*)ArchCommon::getModuleStartAddress(i), (void*)ArchCommon::getModuleEndAddress(i), (void*)module_phys_start, (void*)module_phys_end);
     if(module_phys_end < module_phys_start)
-    {
       continue;
-    }
+
     size_t start_page = module_phys_start / PAGE_SIZE;
-    size_t end_page = module_phys_end / PAGE_SIZE;
-    for (size_t k = Min(start_page, number_of_pages_); k <= Min(end_page, number_of_pages_ - 1); ++k)
+    size_t end_page = (module_phys_end + PAGE_SIZE-1) / PAGE_SIZE;
+    for (size_t k = start_page; k < Min(end_page, number_of_pages_); ++k)
     {
-      if (ArchMemory::get_PPN_Of_VPN_In_KernelMapping(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, 0, 0) == 0)
+      if(ArchMemory::checkAddressValid(((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), PHYSICAL_TO_VIRTUAL_OFFSET + k*PAGE_SIZE))
       {
+        debug(PM, "Cannot map kernel module at %#zx, already mapped\n", k*PAGE_SIZE);
+        continue;
+      }
+
         if(PM & OUTPUT_ADVANCED)
-                debug(PM, "Mapping kernel module at %#zx -> %#zx\n", (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k);
+          debug(PM, "Mapping kernel module at %#zx -> %#zx\n", (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k);
 
         ArchMemory::mapKernelPage(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k, true);
-      }
     }
   }
   debug(PM, "Finished mapping modules\n");
+
+  // HACKY: Pages 0 + 1 are used for AP startup code
+  size_t ap_boot_code_range = bootstrap_pm.alloc(PAGE_SIZE*2, PAGE_SIZE);
+  assert(ap_boot_code_range == 0);
 
   debug(PM, "Before kernel heap allocation:\n");
   bootstrap_pm.printUsageInfo();
   debug(PM, "Num free pages: %zu\n", bootstrap_pm.numUseablePages());
 
-  size_t num_pages_for_bitmap = (number_of_pages_ / 8) / PAGE_SIZE + 1;
-
   HEAP_PAGES = bootstrap_pm.numUseablePages()/3;
   if (HEAP_PAGES > 1024)
     HEAP_PAGES = 1024 + (HEAP_PAGES - Min(HEAP_PAGES, 1024))/8;
 
-
-  debug(PM, "Num heap pages: %zu\n", HEAP_PAGES);
-
-
-  size_t start_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE;
-  // HACKY: Pages 0 + 1 are used for AP startup code
-  size_t ap_boot_code_range = bootstrap_pm.alloc(PAGE_SIZE*2, PAGE_SIZE);
-  assert(ap_boot_code_range == 0);
-
-  size_t temp_page_size = 0;
+  debug(PM, "Mapping %zu reserved kernel heap pages\n", HEAP_PAGES);
   size_t num_reserved_heap_pages = 0;
-  debug(PM, "Mapping reserved kernel heap pages\n");
-  for (num_reserved_heap_pages = 0; num_reserved_heap_pages < num_pages_for_bitmap || temp_page_size != 0 ||
-                                    num_reserved_heap_pages < ((DYNAMIC_KMM || (number_of_pages_ < 512)) ? 0 : HEAP_PAGES); ++num_reserved_heap_pages)
+  for (size_t kheap_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE; num_reserved_heap_pages < HEAP_PAGES; ++num_reserved_heap_pages, ++kheap_vpn)
   {
-    vpn_t vpn_to_map = start_vpn;
-
-    ppn_t physical_page = 0;
-    ppn_t pte_page = 0;
-    if ((temp_page_size = ArchMemory::get_PPN_Of_VPN_In_KernelMapping(vpn_to_map, &physical_page, &pte_page)) == 0)
+    if(ArchMemory::checkAddressValid(((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), kheap_vpn*PAGE_SIZE))
     {
-      ppn_t ppn_to_map = allocPPN();
-      if(PM & OUTPUT_ADVANCED)
-              debug(PM, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)vpn_to_map, (void*)ppn_to_map);
-      ArchMemory::mapKernelPage(vpn_to_map, ppn_to_map, true);
+      debug(PM, "Cannot map vpn %#zx for kernel heap, already mapped\n", kheap_vpn);
+      break;
     }
 
-    ++start_vpn;
+    ppn_t ppn_to_map = allocPPN();
+    if(PM & OUTPUT_ADVANCED)
+      debug(PM, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)kheap_vpn, (void*)ppn_to_map);
+    ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true);
   }
+  debug(PM, "Finished mapping kernel heap, initializing KernelMemoryManager\n");
 
   extern KernelMemoryManager kmm;
   new (&kmm) KernelMemoryManager(num_reserved_heap_pages, HEAP_PAGES);
 
-  debug(PM, "Allocating PM bitmap with %zx bits\n", number_of_pages_);
+  debug(PM, "Allocating PM bitmap with %#zx bits\n", number_of_pages_);
   allocator_ = new BitmapAllocator<PAGE_SIZE>(number_of_pages_*PAGE_SIZE);
 
   allocator_->setUnuseable(0, number_of_pages_*PAGE_SIZE);
