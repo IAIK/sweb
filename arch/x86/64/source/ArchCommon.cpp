@@ -342,55 +342,6 @@ void ArchCommon::drawStat() {
             fb[STATS_NUM_THREADS_START + i * 2] = itoa_buffer[i];
             fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
     }
-
-    /*
-#define SCHEDULABLE_THREADS_OFFSET 10
-    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(Scheduler::instance()->schedulable_threads, itoa_buffer, 10);
-    memset(fb + SCHEDULABLE_THREADS_OFFSET, 0, 6*2);
-    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
-    {
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET] = itoa_buffer[i];
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 1] = Console::RED;
-    }
-
-    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(Scheduler::instance()->num_schedules[0], itoa_buffer, 10);
-    memset(fb + SCHEDULABLE_THREADS_OFFSET + 80*2, 0, 5*2);
-    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
-    {
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2] = itoa_buffer[i];
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 80*2 + 1] = Console::RED;
-    }
-
-    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(Scheduler::instance()->num_schedules[1], itoa_buffer, 10);
-    memset(fb + SCHEDULABLE_THREADS_OFFSET + 2*80*2, 0, 5*2);
-    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
-    {
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2] = itoa_buffer[i];
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 2*80*2 + 1] = Console::RED;
-    }
-
-    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(Scheduler::instance()->num_trylock_failed[0], itoa_buffer, 10);
-    memset(fb + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2, 0, 5*2);
-    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
-    {
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2] = itoa_buffer[i];
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 80*2 + 1] = Console::RED;
-    }
-
-    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(Scheduler::instance()->num_trylock_failed[1], itoa_buffer, 10);
-    memset(fb + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2, 0, 5*2);
-    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
-    {
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2] = itoa_buffer[i];
-            fb[i * 2 + SCHEDULABLE_THREADS_OFFSET + 10*2 + 2*80*2 + 1] = Console::RED;
-    }
-
-    */
 }
 
 thread_local size_t heart_beat_value = 0;
