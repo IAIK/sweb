@@ -4,6 +4,7 @@
 #include "paging-definitions.h"
 #include "SpinLock.h"
 #include "Bitmap.h"
+#include "Allocator.h"
 
 #define DYNAMIC_KMM (0) // Please note that this means that the KMM depends on the page manager
 // and you will have a harder time implementing swapping. Pros only!
@@ -49,23 +50,16 @@ class PageManager
 
     void printBitmap()
     {
-      page_usage_table_->bmprint();
+      allocator_->printUsageInfo();
     }
 
   private:
-    /**
-     * used internally to mark pages as reserved
-     * @param ppn
-     * @param num
-     * @return
-     */
-    bool reservePages(uint32 ppn, uint32 num = 1);
 
     PageManager(PageManager const&);
 
-    Bitmap* page_usage_table_;
+    Allocator* allocator_;
+
     size_t number_of_pages_;
-    size_t lowest_unreserved_page_;
 
     SpinLock lock_;
 
@@ -75,27 +69,3 @@ class PageManager
 };
 
 
-class BootstrapRangeAllocator
-{
-public:
-        void markUseable(size_t start, size_t end);
-        void markUnuseable(size_t start, size_t end);
-
-        void printUseableRanges();
-        size_t numUseablePages();
-
-        size_t allocRange(size_t size, size_t alignment = 1);
-
-        struct UseableRange
-        {
-                size_t start;
-                size_t end;
-        };
-
-
-private:
-        UseableRange useable_ranges_[20];
-
-        bool slotIsUsed(size_t i);
-        ssize_t findFirstFreeSlot();
-};

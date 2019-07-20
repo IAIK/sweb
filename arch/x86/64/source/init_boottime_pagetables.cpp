@@ -65,7 +65,7 @@ extern "C" void initialisePaging()
     pd1[i].page.writeable = 1;
     pd1[i].page.present = 1;
   }
-  // Map 8 page directories (8*512*4kb = max 16mb)
+  // Map 8 page directory entries (8*512*4kb = max 16mb)
   for (i = 0; i < 8; ++i)
   {
     pd2[i].pt.writeable = 1;

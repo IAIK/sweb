@@ -1,4 +1,5 @@
 #include "KernelMemoryManager.h"
+#include "types.h"
 #include "ArchCommon.h"
 #include "assert.h"
 #include "debug_bochs.h"
@@ -43,6 +44,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   kernel_break_ = start_address + min_heap_pages * PAGE_SIZE;
   reserved_min_ = min_heap_pages * PAGE_SIZE;
   reserved_max_ = max_heap_pages * PAGE_SIZE;
+  debug(KMM, "Reserved min: %#zx pages (%zu bytes), reserved max: %#zx pages (%zu bytes)\n", min_heap_pages, reserved_min_, max_heap_pages, reserved_max_);
 
   debug(KMM, "Clearing initial heap pages [%p, %p)\n", (void*)start_address, (char*)start_address + min_heap_pages * PAGE_SIZE);
   memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);

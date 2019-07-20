@@ -29,7 +29,7 @@ extern "C" void initialiseBootTimePaging()
 
 
 
-  // Map kernel page directories
+  // Map kernel page tables
   for(size_t pdi = k_start.pdi; pdi <= k_end.pdi; ++pdi)
   {
     size_t pdi_offset = pdi - k_start.pdi;
