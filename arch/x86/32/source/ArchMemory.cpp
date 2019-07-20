@@ -167,6 +167,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
           m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
           if(m.pt[m.pti].present)
           {
+                  m.page_size = PAGE_SIZE;
                   m.page_ppn = m.pt[m.pti].page_ppn;
                   m.page = getIdentAddressOfPPN(m.page_ppn);
           }
