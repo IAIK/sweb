@@ -505,14 +505,24 @@ void IOAPIC::mapAt(size_t addr)
 
 uint32 IOAPIC::read(uint8 offset)
 {
-        reg_vaddr_->io_reg_sel = offset;
-        return reg_vaddr_->io_win;
+        uint32 retval = 0;
+        asm volatile("movl %[offset], %[io_reg_sel]\n"
+                     "movl %[io_win], %[retval]\n"
+                     :[io_reg_sel]"=m"(reg_vaddr_->io_reg_sel),
+                      [retval]"=r"(retval)
+                     :[offset]"r"((uint32)offset),
+                      [io_win]"m"(reg_vaddr_->io_win));
+        return retval;
 }
 
 void IOAPIC::write(uint8 offset, uint32 value)
 {
-        reg_vaddr_->io_reg_sel = offset;
-        reg_vaddr_->io_win = value;
+        asm volatile("movl %[offset], %[io_reg_sel]\n"
+                     "movl %[value], %[io_win]\n"
+                     :[io_reg_sel]"=m"(reg_vaddr_->io_reg_sel),
+                      [io_win]"=m"(reg_vaddr_->io_win)
+                     :[offset]"r"((uint32)offset),
+                      [value]"r"(value));
 }
 
 uint8 IOAPIC::redirEntryOffset(uint32 entry_no)
