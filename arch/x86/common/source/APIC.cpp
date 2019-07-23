@@ -70,7 +70,7 @@ void LocalAPIC::mapAt(size_t addr)
   assert(addr);
   assert(exists);
 
-  debug(APIC, "Map local APIC at phys %p to %zx\n", reg_paddr_, addr);
+  debug(APIC, "Map local APIC at phys %p to %p\n", reg_paddr_, (void*)addr);
 
   ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
   reg_vaddr_ = (LocalAPICRegisters*)addr;
@@ -455,7 +455,7 @@ void IOAPIC::init()
         id.word = read(IOAPICID);
         version.word = read(IOAPICVER);
         max_redir_ = version.max_redir;
-        debug(APIC, "IOAPIC id: %u, version: %x, g_sys_ints: [%u, %u)\n", id.io_apic_id, version.version, getGlobalInterruptBase(), getGlobalInterruptBase() + getMaxRedirEntry());
+        debug(APIC, "IOAPIC id: %u, version: %#x, g_sys_ints: [%u, %u)\n", id.io_apic_id, version.version, getGlobalInterruptBase(), getGlobalInterruptBase() + getMaxRedirEntry());
 
         initRedirections();
 }
@@ -496,7 +496,7 @@ void IOAPIC::initRedirections()
 
 void IOAPIC::mapAt(size_t addr)
 {
-  debug(APIC, "Map IOAPIC %u at phys %p to %zx\n", id_, reg_paddr_, addr);
+  debug(APIC, "Map IOAPIC %u at phys %p to %p\n", id_, reg_paddr_, (void*)addr);
   assert(addr);
 
   ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
@@ -505,6 +505,7 @@ void IOAPIC::mapAt(size_t addr)
 
 uint32 IOAPIC::read(uint8 offset)
 {
+        WithDisabledInterrupts i;
         uint32 retval = 0;
         asm volatile("movl %[offset], %[io_reg_sel]\n"
                      "movl %[io_win], %[retval]\n"
@@ -517,6 +518,7 @@ uint32 IOAPIC::read(uint8 offset)
 
 void IOAPIC::write(uint8 offset, uint32 value)
 {
+        WithDisabledInterrupts i;
         asm volatile("movl %[offset], %[io_reg_sel]\n"
                      "movl %[value], %[io_win]\n"
                      :[io_reg_sel]"=m"(reg_vaddr_->io_reg_sel),
@@ -546,8 +548,8 @@ void IOAPIC::writeRedirEntry(uint32 entry_no, const IOAPIC::IOAPIC_redir_entry& 
         assert(entry_no <= max_redir_);
         uint8 offset = redirEntryOffset(entry_no);
 
-        write(offset, value.word_l);
         write(offset + 1, value.word_h);
+        write(offset, value.word_l);
 }
 
 uint32 IOAPIC::getGlobalInterruptBase()
