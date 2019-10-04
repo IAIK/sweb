@@ -24,6 +24,7 @@ matrix:
                 - qemu-system-x86
                 - qemu-system-arm
                 - qemu-system-aarch64
+                - qemu-utils
       env:
         - CCOMPILER=gcc-8
         - CXXCOMPILER=g++-8
@@ -49,6 +50,7 @@ matrix:
                 - qemu-system-x86
                 - qemu-system-arm
                 - qemu-system-aarch64
+                - qemu-utils
       env:
         - CCOMPILER=gcc-9
         - CXXCOMPILER=g++-9
@@ -74,6 +76,7 @@ matrix:
                 - qemu-system-x86
                 - qemu-system-arm
                 - qemu-system-aarch64
+                - qemu-utils
       env:
         - CCOMPILER=gcc-10
         - CXXCOMPILER=g++-10
@@ -97,6 +100,7 @@ matrix:
                 - qemu-system-x86
                 - qemu-system-arm
                 - qemu-system-aarch64
+                - qemu-utils
       env:
         - CCOMPILER=gcc
         - CXXCOMPILER=g++
