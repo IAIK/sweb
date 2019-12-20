@@ -101,7 +101,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
     return false;
   }
   freeSegment(m_segment);
-  if (m_segment->markerOk())
+  if ((pointer)m_segment < kernel_break_ && m_segment->markerOk())
     m_segment->freed_at_ = called_by;
 
   unlockKMM();
@@ -171,7 +171,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
     freeSegment(m_segment);
-    if (m_segment->markerOk())
+    if ((pointer)m_segment < kernel_break_ && m_segment->markerOk())
       m_segment->freed_at_ = called_by;
     unlockKMM();
     return new_address;
