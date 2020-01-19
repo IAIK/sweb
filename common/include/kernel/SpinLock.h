@@ -10,6 +10,9 @@ public:
 
   SpinLock(const char* name);
 
+  SpinLock(SpinLock const &) = delete;
+  SpinLock &operator=(SpinLock const&) = delete;
+
   void acquire(pointer called_by = 0);
 
   /**
@@ -36,8 +39,5 @@ private:
    * The basic spinlock is just a variable which is
    */
   size_t lock_;
-
-  SpinLock(SpinLock const &);
-  SpinLock &operator=(SpinLock const&);
 };
 

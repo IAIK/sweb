@@ -18,6 +18,9 @@ class Condition : public Lock
    */
   Condition ( Mutex *mutex, const char* name);
 
+  Condition(Condition const &) = delete;
+  Condition &operator=(Condition const &) = delete;
+
     /**
      * Only possible if the current Thread has acquired the Mutex.
      * The Thread is put on the list of sleepers, releases the Mutex and goes to sleep
