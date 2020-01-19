@@ -266,7 +266,6 @@ extern "C" void irqHandler_15()
   ArchInterrupts::EndOfInterrupt(15);
 }
 
-extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
@@ -347,15 +346,10 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 
 
 extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error);
-extern "C" void arch_syscallHandlerWrapper() {
-  asm("popq %rbp\n"
-      "jmp arch_syscallHandlerAfterProlog\n");
-}
 
-extern "C" void archSyscallHandler() {
+extern "C" __attribute__((interrupt)) void arch_syscallHandler(__attribute__((unused)) struct interrupt_frame* frame) {
   uint64_t* rsp = 0;
-  asm("arch_syscallHandlerAfterProlog:\n"
-      "pushq %rsp\n"
+  asm("pushq %rsp\n"
       "pushq %rax\n"
       "pushq %rcx\n"
       "pushq %rdx\n"

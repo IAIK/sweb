@@ -49,6 +49,7 @@ ERROR_HANDLER(19)
 
 extern ArchThreadRegisters *currentThreadRegisters;
 extern Thread *currentThread;
+extern "C" __attribute__((interrupt)) void archSyscallHandler(__attribute__((unused)) struct interrupt_frame* frame);
 
 #define ERRORHANDLER(X) {X, &arch_errorHandler_##X},
 #define IRQHANDLER(X) {X + 32, &arch_irqHandler_##X},
@@ -79,7 +80,7 @@ InterruptHandlers InterruptUtils::handlers[] = {
   IRQHANDLER(14)
   IRQHANDLER(15)
   {65, &arch_irqHandler_65},
-  {128, &arch_syscallHandlerWrapper},
+  {128, (void(*)())&arch_syscallHandler},
   {0,0}
 };
 

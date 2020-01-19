@@ -40,6 +40,15 @@ struct ArchThreadRegisters
   uint32  fpu[28];   // 208
 };
 
+struct interrupt_frame
+{
+  uint64 rip;
+  uint64 cs;
+  uint64 rflags;
+  uint64 rsp;
+  uint64 ss;
+};
+
 class Thread;
 class ArchMemory;
 
