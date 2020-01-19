@@ -21,7 +21,7 @@ function(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
     target_compile_options(${ARCHOBJS_TARGET} PRIVATE
       $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
       $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
-      -m32 -g0 -mcmodel=32 -momit-leaf-frame-pointer -Wa,--64 -fno-toplevel-reorder
+      -m32 -g0 -mcmodel=32 -momit-leaf-frame-pointer -Wa,--64 -fno-toplevel-reorder -fcf-protection=none
       )
 
     set(${ARCHOBJ_LIBNAME} ${ARCHOBJS_TARGET} PARENT_SCOPE)
