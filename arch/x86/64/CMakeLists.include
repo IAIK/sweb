@@ -75,4 +75,10 @@ add_custom_target(qemutacos
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 
-
+# net-init: Initializes br0 for target "net"
+add_custom_target(net-init
+  COMMAND sudo ${PROJECT_SOURCE_DIR}/utils/netinit.sh
+  COMMENT "Executing `sudo utils/netinit.sh`"
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  COMMAND reset -I
+  )
