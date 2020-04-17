@@ -144,7 +144,7 @@ void Thread::printBacktrace(bool use_stored_registers)
         kernel_debug_info->printCallInformation(call_stack[i]);
     }
   }
-  if(user_registers_ && loader_)
+  if(user_registers_)
   {
     Stabs2DebugInfo const *deb = loader_->getDebugInfos();
     count = backtrace_user(call_stack, BACKTRACE_MAX_FRAMES, this, 0);

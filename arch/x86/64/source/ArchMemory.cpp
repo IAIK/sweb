@@ -117,9 +117,7 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
 
 ArchMemory::~ArchMemory()
 {
-                                                                                    /*setting loader_ NULL to avoid use after free during backtrace print*/
-  assert((currentThread->kernel_registers_->cr3 != page_map_level_4_ * PAGE_SIZE || (currentThread->loader_ = nullptr))
-         && "thread deletes its own arch memory");
+  assert(currentThread->kernel_registers_->cr3 != page_map_level_4_ * PAGE_SIZE && "thread deletes its own arch memory");
 
   PageMapLevel4Entry* pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   for (uint64 pml4i = 0; pml4i < PAGE_MAP_LEVEL_4_ENTRIES / 2; pml4i++) // free only lower half
