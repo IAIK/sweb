@@ -1,6 +1,12 @@
 set(KERNEL_BINARY kernel64.x)
 
-set(ARCH_X86_64_KERNEL_CFLAGS -m64 -O0 -gdwarf-2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow -fcf-protection=none ${NOPICFLAG})
+if (CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 8 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8))
+  set(FCF_PROTECTION_FLAG -fcf-protection=none)
+else()
+  set(FCF_PROTECTION_FLAG )
+endif()
+
+set(ARCH_X86_64_KERNEL_CFLAGS -m64 -O0 -gdwarf-2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${FCF_PROTECTION_FLAG} ${NOPICFLAG})
 
 set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++11 -nostdinc++ -fno-rtti ${ARCH_X86_64_KERNEL_CFLAGS})
 set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_64_KERNEL_CFLAGS})
@@ -21,7 +27,7 @@ function(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
     target_compile_options(${ARCHOBJS_TARGET} PRIVATE
       $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
       $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
-      -m32 -g0 -mcmodel=32 -mgeneral-regs-only -momit-leaf-frame-pointer -Wa,--64 -fno-toplevel-reorder -fcf-protection=none
+      -m32 -g0 -mcmodel=32 -mgeneral-regs-only -momit-leaf-frame-pointer -Wa,--64 -fno-toplevel-reorder ${FCF_PROTECTION_FLAG}
       )
 
     set(${ARCHOBJ_LIBNAME} ${ARCHOBJS_TARGET} PARENT_SCOPE)
