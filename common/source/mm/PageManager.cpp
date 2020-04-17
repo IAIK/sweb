@@ -152,6 +152,17 @@ PageManager::PageManager() : lock_("PageManager::lock_")
   debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %u\n", page_usage_table_->getNumFreeBits(),
         page_usage_table_->getNumBitsSet(), number_of_pages_);
   assert(lowest_unreserved_page_ < number_of_pages_);
+
+
+  debug(PM, "Clearing free pages\n");
+  for(size_t p = lowest_unreserved_page_; p < number_of_pages_; ++p)
+  {
+    if(!page_usage_table_->getBit(p))
+    {
+      memset((void*)ArchMemory::getIdentAddressOfPPN(p), 0xFF, PAGE_SIZE);
+    }
+  }
+
   KernelMemoryManager::pm_ready_ = 1;
 }
 
@@ -181,36 +192,48 @@ bool PageManager::reservePages(uint32 ppn, uint32 num)
 
 uint32 PageManager::allocPPN(uint32 page_size)
 {
-  assert((page_size % PAGE_SIZE) == 0);
-  while (1)
-  {
-    lock_.acquire();
-    uint32 p;
-    uint32 found = 0;
-    for (p = lowest_unreserved_page_; !found && p < number_of_pages_; ++p)
-    {
-      if ((p % (page_size / PAGE_SIZE)) != 0)
-        continue;
-      if (reservePages(p, page_size / PAGE_SIZE))
-        found = p;
-    }
-    while (lowest_unreserved_page_ < number_of_pages_ && page_usage_table_->getBit(lowest_unreserved_page_))
-      ++lowest_unreserved_page_;
-    lock_.release();
+  uint32 p;
+  uint32 found = 0;
 
-    if (found == 0)
-    {
-      assert(false && "PageManager::allocPPN: Out of memory / No more free physical pages");
-    }
-    memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, page_size);
-    return found;
+  assert((page_size % PAGE_SIZE) == 0);
+
+  lock_.acquire();
+
+  for (p = lowest_unreserved_page_; !found && (p < number_of_pages_); ++p)
+  {
+    if ((p % (page_size / PAGE_SIZE)) != 0)
+      continue;
+    if (reservePages(p, page_size / PAGE_SIZE))
+      found = p;
   }
-  return 0;
+  while ((lowest_unreserved_page_ < number_of_pages_) && page_usage_table_->getBit(lowest_unreserved_page_))
+    ++lowest_unreserved_page_;
+
+  lock_.release();
+
+  if (found == 0)
+  {
+    assert(false && "PageManager::allocPPN: Out of memory / No more free physical pages");
+  }
+
+  const char* page_ident_addr = (const char*)ArchMemory::getIdentAddressOfPPN(found);
+  const char* page_modified = (const char*)memnotchr(page_ident_addr, 0xFF, page_size);
+  if(page_modified)
+  {
+    debug(PM, "Detected use-after-free for PPN %x at offset %zx\n", found, page_modified - page_ident_addr);
+    assert(!page_modified && "Page modified after free");
+  }
+
+  memset((void*)ArchMemory::getIdentAddressOfPPN(found), 0, page_size);
+  return found;
 }
 
 void PageManager::freePPN(uint32 page_number, uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
+
+  memset((void*)ArchMemory::getIdentAddressOfPPN(page_number), 0xFF, page_size);
+
   lock_.acquire();
   if (page_number < lowest_unreserved_page_)
     lowest_unreserved_page_ = page_number;
@@ -221,4 +244,3 @@ void PageManager::freePPN(uint32 page_number, uint32 page_size)
   }
   lock_.release();
 }
-
