@@ -140,6 +140,7 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error)
 {
+  assert(!(error & FLAG_PF_RSVD) && "Reserved bit set in page table entry");
   PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
                                    error & FLAG_PF_PRESENT,
                                    error & FLAG_PF_RDWR,
