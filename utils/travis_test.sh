@@ -32,6 +32,11 @@ then
     qemu-system-arm -M verdex -m 2M -kernel kernel.x -sd SWEB-flat.vmdk -pflash flash.img -no-reboot -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null  &
     sleep 10
 fi
+if [[ "$1" == "armv8_rpi3" ]];
+then
+    qemu-system-aarch64 -M raspi3 -cpu cortex-a53 -m 1024 -drive file=SWEB-flat.vmdk,if=sd,format=raw -no-reboot -kernel kernel.x -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null  &
+    sleep 10
+fi
 
 
 sleep 2
