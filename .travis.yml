@@ -16,6 +16,7 @@ matrix:
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
                 - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-8
@@ -40,6 +41,7 @@ matrix:
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
                 - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-9
@@ -62,6 +64,7 @@ matrix:
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
                 - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc
@@ -72,7 +75,7 @@ matrix:
       env:
         - CCOMPILER=gcc
         - CXXCOMPILER=g++
-        
+
         
 install:
   - if [[ -n "$CCOMPILER" ]]; then export CC=$CCOMPILER; fi
