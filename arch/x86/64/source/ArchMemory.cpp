@@ -4,6 +4,8 @@
 #include "assert.h"
 #include "PageManager.h"
 #include "kstring.h"
+#include "ArchThreads.h"
+#include "Thread.h"
 
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -115,6 +117,8 @@ bool ArchMemory::mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_
 
 ArchMemory::~ArchMemory()
 {
+  assert(currentThread->kernel_registers_->cr3 != page_map_level_4_ * PAGE_SIZE && "thread deletes its own arch memory");
+
   PageMapLevel4Entry* pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   for (uint64 pml4i = 0; pml4i < PAGE_MAP_LEVEL_4_ENTRIES / 2; pml4i++) // free only lower half
   {
