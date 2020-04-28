@@ -15,11 +15,14 @@ matrix:
                 - cmake
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-8
                 - g++-8
                 - qemu-system-x86
                 - qemu-system-arm
+                - qemu-system-aarch64
       env:
         - CCOMPILER=gcc-8
         - CXXCOMPILER=g++-8
@@ -36,11 +39,14 @@ matrix:
                 - cmake
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-9
                 - g++-9
                 - qemu-system-x86
                 - qemu-system-arm
+                - qemu-system-aarch64
       env:
         - CCOMPILER=gcc-9
         - CXXCOMPILER=g++-9
@@ -55,11 +61,14 @@ matrix:
                 - cmake
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc
                 - g++
                 - qemu-system-x86
                 - qemu-system-arm
+                - qemu-system-aarch64
       env:
         - CCOMPILER=gcc
         - CXXCOMPILER=g++
@@ -86,3 +95,5 @@ script:
   - timeout 120 ./travis_test.sh arm_icp
   - cp ../sweb/utils/travis_test.sh .
   - timeout 120 ./travis_test.sh arm_verdex
+  - cp ../sweb/utils/travis_test.sh .
+  - timeout 120 ./travis_test.sh armv8_rpi3
