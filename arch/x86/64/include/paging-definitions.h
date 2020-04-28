@@ -149,4 +149,4 @@ typedef struct
   uint64 execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
 
-static_assert(sizeof(PageTableEntry) == 8, "PageDirPageEntry is not 64 bit");
+static_assert(sizeof(PageTableEntry) == 8, "PageTableEntry is not 64 bit");
