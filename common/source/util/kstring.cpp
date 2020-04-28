@@ -342,6 +342,22 @@ extern "C" int32 bcmp(const void *region1, const void *region2, size_t size)
   return 0;
 }
 
+extern "C" void *memnotchr(const void *block, uint8 c, size_t size)
+{
+  const uint8 *b = (const uint8*) block;
+
+  while (size--)
+  {
+    if (*b != c)
+    {
+      return (void *) b;
+    }
+    ++b;
+  }
+
+  return (void *) 0;
+}
+
 extern "C" void *memchr(const void *block, uint8 c, size_t size)
 {
   const uint8 *b = (const uint8*) block;
