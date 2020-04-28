@@ -35,6 +35,8 @@ typedef struct
   uint64 execution_disabled        :1;
 } __attribute__((__packed__)) PageMapLevel4Entry;
 
+static_assert(sizeof(PageMapLevel4Entry) == 8, "PageMapLevel4Entry is not 64 bit");
+
 struct PageDirPointerTablePageDirEntry
 {
   uint64 present                   :1;
@@ -51,6 +53,8 @@ struct PageDirPointerTablePageDirEntry
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPointerTablePageDirEntry) == 8, "PageDirPointerTablePageDirEntry is not 64 bit");
 
 struct PageDirPointerTablePageEntry
 {
@@ -71,6 +75,8 @@ struct PageDirPointerTablePageEntry
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPointerTablePageEntry) == 8, "PageDirPointerTablePageEntry is not 64 bit");
 
 typedef union
 {
@@ -95,6 +101,8 @@ struct PageDirPageTableEntry
   uint64 execution_disabled        :1;
 } __attribute__((__packed__));
 
+static_assert(sizeof(PageDirPageTableEntry) == 8, "PageDirPageTableEntry is not 64 bit");
+
 struct PageDirPageEntry
 {
   uint64 present                   :1;
@@ -114,6 +122,8 @@ struct PageDirPageEntry
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPageEntry) == 8, "PageDirPageEntry is not 64 bit");
 
 typedef union
 {
@@ -138,3 +148,5 @@ typedef struct
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
+
+static_assert(sizeof(PageTableEntry) == 8, "PageTableEntry is not 64 bit");
