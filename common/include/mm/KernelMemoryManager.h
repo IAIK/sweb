@@ -112,7 +112,7 @@ class KernelMemoryManager
       assert(false && "dummy constructor - do not use!");
     };
 
-
+    pointer getKernelBreak() const;
     size_t getUsedKernelMemory(bool show_allocs);
     void startTracing();
     void stopTracing();

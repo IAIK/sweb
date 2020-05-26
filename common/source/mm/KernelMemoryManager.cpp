@@ -543,3 +543,7 @@ void KernelMemoryManager::startTracing() {
 void KernelMemoryManager::stopTracing() {
     tracing_ = false;
 }
+
+pointer KernelMemoryManager::getKernelBreak() const {
+  return kernel_break_;
+}
