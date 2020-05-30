@@ -68,11 +68,6 @@ public:
       return 0xFFFFF00000000000ULL | (ppn * page_size);
     }
 
-    static pointer getIdentAddress(uint64 address)
-    {
-      return 0xFFFFF00000000000ULL | (address);
-    }
-
 /**
  * Checks if a given Virtual Address is valid and is mapped to real memory
  * @param vaddress_to_check Virtual Address we want to check
