@@ -16,6 +16,7 @@ matrix:
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
                 - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-8
@@ -40,6 +41,7 @@ matrix:
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
                 - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-9
@@ -57,11 +59,37 @@ matrix:
       addons:
         apt:
             update: true
+            sources:
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
             packages:
                 - cmake
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
                 - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
+                - u-boot-tools
+                - gcc-10
+                - g++-10
+                - qemu-system-x86
+                - qemu-system-arm
+                - qemu-system-aarch64
+      env:
+        - CCOMPILER=gcc-10
+        - CXXCOMPILER=g++-10
+
+    - os: linux
+      dist: bionic
+      sudo: required
+      addons:
+        apt:
+            update: true
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
                 - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc
@@ -72,7 +100,7 @@ matrix:
       env:
         - CCOMPILER=gcc
         - CXXCOMPILER=g++
-        
+
         
 install:
   - if [[ -n "$CCOMPILER" ]]; then export CC=$CCOMPILER; fi
