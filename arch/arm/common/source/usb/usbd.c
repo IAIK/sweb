@@ -595,7 +595,7 @@ Result UsbAllocateDevice(struct UsbDevice **device) {
   LOG_DEBUGF("USBD: Allocating new device, address %#x.\n", (*device)->Number);
 
   (*device)->Status = Attached;
-  (*device)->Error = None;
+  (*device)->Error = NoError;
   (*device)->PortNumber = 0;
   (*device)->Parent = NULL;
   (*device)->DriverData = NULL;
