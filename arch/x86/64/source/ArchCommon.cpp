@@ -10,6 +10,7 @@
 #include "ports.h"
 #include "SWEBDebugInfo.h"
 #include "PageManager.h"
+#include "KernelMemoryManager.h"
 
 extern void* kernel_end_address;
 
@@ -83,7 +84,7 @@ pointer ArchCommon::getFreeKernelMemoryStart()
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
 {
-   return 0xFFFFFFFF80400000ULL;
+   return KernelMemoryManager::instance()->getKernelBreak();
 }
 
 
