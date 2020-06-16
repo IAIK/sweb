@@ -46,18 +46,18 @@ bool ArchMemory::unmapPage(uint64 virtual_page)
   bool empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
   if (empty)
   {
-    PageManager::instance()->freePPN(m.pt_ppn);
     empty = checkAndRemove<PageDirPageTableEntry>(getIdentAddressOfPPN(m.pd_ppn), m.pdi);
+    PageManager::instance()->freePPN(m.pt_ppn);
   }
   if (empty)
   {
-    PageManager::instance()->freePPN(m.pd_ppn);
     empty = checkAndRemove<PageDirPointerTablePageDirEntry>(getIdentAddressOfPPN(m.pdpt_ppn), m.pdpti);
+    PageManager::instance()->freePPN(m.pd_ppn);
   }
   if (empty)
   {
-    PageManager::instance()->freePPN(m.pdpt_ppn);
     empty = checkAndRemove<PageMapLevel4Entry>(getIdentAddressOfPPN(m.pml4_ppn), m.pml4i);
+    PageManager::instance()->freePPN(m.pdpt_ppn);
   }
   return true;
 }
