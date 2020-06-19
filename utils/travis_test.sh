@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Building architecture $1"
-yes | make $1
-make
+yes | make $1 || { echo "Failed to swich to architecture $1" ; exit 1 ; }
+make || { echo "Build failed" ; exit 1 ; }
 
 echo "Running architecture $1"
 
