@@ -363,11 +363,11 @@ void ArchCommon::postBootInit()
 }
 
 
-void ArchCommon::callWithStack(char* stack, void (*func)())
+[[noreturn]] void ArchCommon::callWithStack(char* stack, void (*func)())
 {
   asm volatile("movq %[stack], %%rsp\n"
                "callq *%[func]\n"
                ::[stack]"r"(stack),
-                 [func]"r"(func)
-               :"rsp");
+                 [func]"r"(func));
+  assert(false);
 }

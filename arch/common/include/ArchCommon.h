@@ -107,5 +107,5 @@ class ArchCommon
 
     static void postBootInit();
 
-    static void callWithStack(char* stack, void (*func)());
+    [[noreturn]] static void callWithStack(char* stack, void (*func)());
 };
