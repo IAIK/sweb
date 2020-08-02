@@ -103,10 +103,16 @@ bool LocalAPIC::isInitialized() const volatile
 void LocalAPIC::enable(bool enable)
 {
   debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), ID());
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
   uint32* ptr = (uint32*)&reg_vaddr_->s_int_vect;
   uint32 temp = *ptr;
+
   ((LocalAPIC_SpuriousInterruptVector*)&temp)->enable = (enable ? 1 : 0);
   *ptr = temp;
+#pragma GCC diagnostic pop
+
 }
 
 void LocalAPIC::initTimer() volatile
