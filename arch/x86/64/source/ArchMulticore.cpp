@@ -193,17 +193,24 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
   debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, (size_t)VIRTUAL_TO_PHYSICAL_BOOT(entry_addr));
 
+
   pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
   auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
-  assert(m.page); // TODO: Map if not present
-  assert(m.page_ppn == entry_addr/PAGE_SIZE);
+  assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
+  assert((m.page_ppn == entry_addr/PAGE_SIZE) && "PPN in ident mapping doesn't match expected ppn for AP entry");
 
   // Init AP gdt
+  debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
+  auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32)/PAGE_SIZE);
+  assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
+  debug(A_MULTICORE, "AP GDT mapped on ppn %#llx\n", m_ap_gdt.page_ppn);
+
   memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
   ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
   ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
 
   // Init AP PML4
+  debug(A_MULTICORE, "Init AP PML4\n");
   memcpy(&ap_pml4, &kernel_page_map_level_4, sizeof(ap_pml4));
   ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
 

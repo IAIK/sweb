@@ -504,10 +504,13 @@ void IOAPIC::initRedirections()
                 writeRedirEntry(i, r);
         }
 
-        for(uint32 i = 0; i <= max_redir_; ++i)
+        if(APIC & OUTPUT_ENABLED)
         {
-                IOAPIC_redir_entry r = readRedirEntry(i);
-                debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask, r.polarity, r.trigger_mode);
+                for(uint32 i = 0; i <= max_redir_; ++i)
+                {
+                        IOAPIC_redir_entry r = readRedirEntry(i);
+                        debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask, r.polarity, r.trigger_mode);
+                }
         }
         debug(APIC, "IO APIC redirections initialized\n");
 }

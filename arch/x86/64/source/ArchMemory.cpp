@@ -265,6 +265,17 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
       m.page = getIdentAddressOfPPN(m.pdpt[m.pdpti].page.page_ppn);
     }
   }
+
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+      debug(A_MEMORY, "resolveMapping, vpn: %zx, pml4: %llx, pdpt[%s]: %llx, pd[%s]: %llx, pt[%s]: %llx, page[%s]: %llx\n",
+            vpage,
+            m.pml4_ppn,
+            (m.pdpt ? "P" : "-"), m.pdpt_ppn,
+            (m.pd ? "P" : "-"), m.pd_ppn,
+            (m.pt ? "P" : "-"), m.pt_ppn,
+            (m.page ? "P" : "-"), m.page_ppn);
+  }
   return m;
 }
 

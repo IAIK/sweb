@@ -152,7 +152,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
 
   if(A_MEMORY & OUTPUT_ADVANCED)
   {
-    debug(A_MEMORY, "resolveMapping, pd: %zx, vpn: %zx, pdi: %zx(%zu), pti: %zx(%zu)\n", pd, vpage, m.pdi, m.pdi, m.pti, m.pti);
+    debug(A_MEMORY, "resolveMapping, vpn: %#zx, pdi: %zu(%zu), pti: %zu(%zu)\n", vpage, m.pdi, m.pdi, m.pti, m.pti);
   }
 
   assert(pd < PageManager::instance()->getTotalNumPages());
@@ -183,7 +183,14 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
           m.page = getIdentAddressOfPPN(m.page_ppn);
   }
 
-  debug(A_MEMORY, "resolve VPN %#zx: %#zx -> %#zx -> %#zx\n", vpage, m.pd_ppn, m.pt_ppn, m.page_ppn);
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+      debug(A_MEMORY, "resolveMapping, vpn: %#zx, pd[%s]: %#zx, pt[%s]: %#zx, page[%s]: %#zxx\n",
+            vpage,
+            (m.pd ? "P" : "-"), m.pd_ppn,
+            (m.pt ? "P" : "-"), m.pt_ppn,
+            (m.page ? "P" : "-"), m.page_ppn);
+  }
 
   return m;
 }

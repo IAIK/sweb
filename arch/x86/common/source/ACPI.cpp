@@ -72,7 +72,7 @@ void initACPI()
   {
   case 0:
   {
-    debug(ACPI, "RSDT address: %x\n", RSDP->RsdtAddress);
+    debug(ACPI, "RSDT address: %#x\n", RSDP->RsdtAddress);
 
     RSDT* RSDT_ptr = (RSDT*)(size_t)RSDP->RsdtAddress;
     ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)RSDT_ptr / PAGE_SIZE);
@@ -171,7 +171,8 @@ bool RSDPDescriptor::checksumValid()
   {
     sum += *i;
   }
-  debug(ACPI, "RSDP checksum %x\n", sum);
+  if(ACPI & OUTPUT_ADVANCED)
+    debug(ACPI, "RSDP checksum %x\n", sum);
   return sum == 0;
 }
 
@@ -182,7 +183,8 @@ bool RSDPDescriptor20::checksumValid()
   {
     sum += *i;
   }
-  debug(ACPI, "RSDP 2.0 checksum %x\n", sum);
+  if(ACPI & OUTPUT_ADVANCED)
+    debug(ACPI, "RSDP 2.0 checksum %x\n", sum);
   return sum == 0;
 }
 
