@@ -24,9 +24,9 @@ static void initInterruptController()
   debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
   if(LocalAPIC::exists)
   {
-    if((size_t)LocalAPIC::reg_vaddr_ != APIC_VADDR)
+    if(LocalAPIC::reg_vaddr_ == LocalAPIC::reg_paddr_)
     {
-      LocalAPIC::mapAt(APIC_VADDR);
+      LocalAPIC::mapAt((size_t)LocalAPIC::reg_paddr_ | PHYSICAL_TO_VIRTUAL_OFFSET);
     }
     assert(CPULocalStorage::CLSinitialized());
     cpu_info.lapic.init();

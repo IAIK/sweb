@@ -10,16 +10,29 @@
 #include "debug.h"
 #include "ArchMulticore.h"
 #include "Scheduler.h"
+#include "offsets.h"
 
 
 
 static void initInterruptHandlers()
 {
+  debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
   InterruptUtils::initialise();
 }
 
 static void initInterruptController()
 {
+  debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
+  if(LocalAPIC::exists)
+  {
+    assert((size_t)LocalAPIC::reg_paddr_ >= USER_BREAK);
+    LocalAPIC::mapAt((size_t)LocalAPIC::reg_paddr_);
+    assert(CPULocalStorage::CLSinitialized());
+    cpu_info.lapic.init();
+  }
+
+  IOAPIC::initAll();
+
   PIC8259::initialise8259s();
 }
 
@@ -33,7 +46,16 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  enableIRQ(0);
+  if(cpu_info.lapic.isInitialized() && cpu_info.lapic.usingAPICTimer())
+  {
+      debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_info.lapic.ID());
+      cpu_info.lapic.reg_vaddr_->lvt_timer.setMask(false);
+  }
+  else
+  {
+      debug(A_INTERRUPTS, "Enabling PIT timer IRQ\n");
+      ArchInterrupts::enableIRQ(0);
+  }
 }
 
 void ArchInterrupts::setTimerFrequency(uint32 freq)
@@ -113,11 +135,13 @@ void ArchInterrupts::endOfInterrupt(uint16 number)
       ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
       (number > 16)))
   {
-          cpu_info.lapic.sendEOI(number + 0x20);
+      debug(A_INTERRUPTS, "Sending EOI %x to APIC\n", number + 0x20);
+      cpu_info.lapic.sendEOI(number + 0x20);
   }
   else
   {
-          PIC8259::sendEOI(number);
+      debug(A_INTERRUPTS, "Sending EOI %x to PIC\n", number);
+      PIC8259::sendEOI(number);
   }
 }
 

@@ -26,7 +26,7 @@ thread_local CpuInfo cpu_info;
 thread_local char cpu_stack[CPU_STACK_SIZE];
 
 
-volatile static bool ap_started = false;
+volatile static bool ap_started = false; // TODO: Convert to spinlock
 
 
 ustl::atomic<size_t> running_cpus;
@@ -216,20 +216,26 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 {
   size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
   debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
-
-  debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, (size_t)VIRTUAL_TO_PHYSICAL_BOOT(entry_addr));
+  debug(A_MULTICORE, "apstartup %p, phys: %p\n", &apstartup, (void*)entry_addr);
 
   pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
   auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), paddr0/PAGE_SIZE);
-  assert(m.page); // TODO: Map if not present
-  assert(m.page_ppn == entry_addr/PAGE_SIZE);
+
+  assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
+  assert((m.page_ppn == entry_addr/PAGE_SIZE) && "PPN in ident mapping doesn't match expected ppn for AP entry");
 
   // Init AP gdt
+  debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
+  auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32)/PAGE_SIZE);
+  assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
+  assert(m_ap_gdt.pt[m_ap_gdt.pti].writeable && "AP GDT virtual address not writeable");
+
   memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
   ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
   ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
 
   // Init AP PML4
+  debug(A_MULTICORE, "Init AP PML4\n");
   memcpy(&ap_pml4, ArchMemory::getRootOfKernelPagingStructure(), sizeof(ap_pml4));
   ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure());
 

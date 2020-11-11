@@ -11,6 +11,7 @@
 #include "ArchMulticore.h"
 #include "ProgrammableIntervalTimer.h"
 #include "8259.h"
+#include "offsets.h"
 
 
 bool LocalAPIC::exists = false;
@@ -446,15 +447,27 @@ IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
 
 void IOAPIC::initAll()
 {
+        int i = 0;
         for(auto& io_apic : io_apic_list_)
         {
-                io_apic.mapAt(IOAPIC_VADDR + io_apic.id_*PAGE_SIZE);
+                if((size_t)io_apic.reg_paddr_ >= USER_BREAK)
+                {
+                  io_apic.mapAt((size_t)io_apic.reg_paddr_);
+                }
+                else
+                {
+                  // TODO: Proper address assignment for ioapic on x86_64
+                  io_apic.mapAt(IOAPIC_VADDR + io_apic.id_*PAGE_SIZE);
+                }
+                assert((size_t)io_apic.reg_vaddr_ >= USER_BREAK);
                 io_apic.init();
+                ++i;
         }
 }
 
 void IOAPIC::init()
 {
+        //TODO: Reading from IO APIC id/version registers on x86_32 returns 0
         debug(A_INTERRUPTS, "Initializing I/O APIC\n");
         IOAPIC_r_ID id;
         IOAPIC_r_VER version;

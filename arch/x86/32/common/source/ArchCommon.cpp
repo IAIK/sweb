@@ -318,7 +318,7 @@ void ArchCommon::drawHeartBeat()
 
 void ArchCommon::postBootInit()
 {
-        //initACPI();
+        initACPI();
 }
 
 

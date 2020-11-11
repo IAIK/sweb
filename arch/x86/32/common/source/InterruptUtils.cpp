@@ -8,6 +8,7 @@
 #include "ArchMulticore.h"
 #include "kprintf.h"
 #include "Scheduler.h"
+#include "Console.h"
 
 #include "SerialManager.h"
 #include "KeyboardManager.h"
@@ -143,9 +144,27 @@ void InterruptUtils::initialise()
   idtr.load();
 }
 
+extern "C" void arch_contextSwitch();
+
+// Standard ISA IRQs
+// 0 	Programmable Interrupt Timer Interrupt
+// 1 	Keyboard Interrupt
+// 2 	Cascade (used internally by the two PICs. never raised)
+// 3 	COM2 (if enabled)
+// 4 	COM1 (if enabled)
+// 5 	LPT2 (if enabled)
+// 6 	Floppy Disk
+// 7 	LPT1 / Unreliable "spurious" interrupt (usually)
+// 8 	CMOS real-time clock (if enabled)
+// 9 	Free for peripherals / legacy SCSI / NIC
+// 10 	Free for peripherals / SCSI / NIC
+// 11 	Free for peripherals / SCSI / NIC
+// 12 	PS2 Mouse
+// 13 	FPU / Coprocessor / Inter-processor
+// 14 	Primary ATA Hard Disk
+// 15 	Secondary ATA Hard Disk
 
 extern "C" void arch_irqHandler_0();
-extern "C" void arch_contextSwitch();
 extern "C" void irqHandler_0()
 {
   debug(A_INTERRUPTS, "IRQ 0 called by CPU %zx\n", ArchMulticore::getCpuID());
@@ -154,19 +173,38 @@ extern "C" void irqHandler_0()
 
   Scheduler::instance()->incTicks();
 
-  Scheduler::instance()->schedule();
+  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
+      []()
+      {
+          Scheduler::instance()->schedule();
 
-  ArchInterrupts::endOfInterrupt(0);
-  arch_contextSwitch();
-  assert(false);
+          ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
+              ((currentThread == &idle_thread ? (Console::RED << 4) :
+                (Console::BRIGHT_BLUE << 4)) |
+               Console::BRIGHT_WHITE);
+
+          ArchInterrupts::endOfInterrupt(0);
+          arch_contextSwitch();
+          assert(false);
+      });
 }
 
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  Scheduler::instance()->schedule();
-  // kprintfd("irq65: Going to leave int Handler 65 to user\n");
-  arch_contextSwitch();
+    debug(A_INTERRUPTS, "Interrupt 65 called by CPU %zx\n", ArchMulticore::getCpuID());
+    ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
+        []()
+        {
+            Scheduler::instance()->schedule();
+            ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
+                ((currentThread == &idle_thread ? (Console::RED << 4) :
+                  (Console::BRIGHT_BLUE << 4)) |
+                 Console::BRIGHT_WHITE);
+
+            arch_contextSwitch();
+            assert(false);
+        });
 }
 
 extern "C" void arch_pageFaultHandler();

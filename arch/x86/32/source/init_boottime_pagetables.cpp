@@ -39,6 +39,8 @@ extern "C" void initialiseBootTimePaging()
   }
 
   extern uint32 ro_data_end_address;
+  extern uint32 apstartup_text_begin;
+  extern uint32 apstartup_text_end;
 
 
   // Map kernel page tables
@@ -47,7 +49,11 @@ extern "C" void initialiseBootTimePaging()
     size_t pti = (a.pdi - k_start.pdi)*PAGE_DIRECTORY_ENTRIES + a.pti;
     assert(pti < sizeof(kernel_page_tables)/sizeof(kernel_page_tables[0]));
     pte_start[pti].page_ppn = VIRTUAL_TO_PHYSICAL_BOOT(a.addr)/PAGE_SIZE;
-    pte_start[pti].writeable = (a.addr < (pointer)&ro_data_end_address ? 0 : 1);
+    // AP startup pages need to be writeable to fill in the GDT, ...
+    pte_start[pti].writeable = ((a.addr < (pointer)&ro_data_end_address) &&
+                                !((a.addr >= (pointer)&apstartup_text_begin) &&
+                                  (a.addr < (pointer)&apstartup_text_end))
+                                ? 0 : 1);
     pte_start[pti].present = 1;
   }
 
