@@ -4,7 +4,6 @@
 #include "ACPI.h"
 #include "uvector.h"
 
-#define IOAPIC_VADDR 0xffffffff81201000
 
 namespace LAPIC
 {

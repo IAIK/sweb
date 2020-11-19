@@ -225,6 +225,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
   m.pt_ppn = 0;
   m.page_ppn = 0;
   m.page_size = 0;
+
   if (m.pml4[m.pml4i].present)
   {
     m.pdpt_ppn = m.pml4[m.pml4i].page_ppn;

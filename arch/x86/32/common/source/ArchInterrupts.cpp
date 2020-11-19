@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "debug.h"
 #include "ArchMulticore.h"
+#include "ArchMemory.h"
 #include "Scheduler.h"
 #include "offsets.h"
 
@@ -25,8 +26,9 @@ static void initInterruptController()
   debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
   if(LocalAPIC::exists)
   {
-    assert((size_t)LocalAPIC::reg_paddr_ >= USER_BREAK);
-    LocalAPIC::mapAt((size_t)LocalAPIC::reg_paddr_);
+    // TODO: Proper address assignment for lapic on x86
+    size_t vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*2;
+    LocalAPIC::mapAt(vaddr);
     assert(CPULocalStorage::CLSinitialized());
     cpu_info.lapic.init();
   }
