@@ -44,6 +44,54 @@ ArchMemory::~ArchMemory()
   PageManager::instance()->freePPN(page_dir_page_);
 }
 
+
+void ArchMemory::printMappedPages()
+{
+    printMappedPages(page_dir_page_);
+}
+
+void ArchMemory::printMappedPages(uint32 page_dir_page)
+{
+    debug(A_MEMORY, "ArchMemory::print mapped pages for PD %x\n", page_dir_page);
+
+
+    PageDirEntry *pd = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page);
+    for (uint32 pdi = 0; pdi < PAGE_TABLE_ENTRIES; ++pdi)
+    {
+        if (pd[pdi].pt.present)
+        {
+            if(!pd[pdi].pt.size)
+            {
+                PageTableEntry *pt = (PageTableEntry *) getIdentAddressOfPPN(pd[pdi].pt.page_table_ppn);
+                for (uint32 pti = 0; pti < PAGE_TABLE_ENTRIES; ++pti)
+                {
+                    if (pt[pti].present)
+                    {
+                        VAddr a{};
+                        a.pdi = pdi;
+                        a.pti = pti;
+                        debug(A_MEMORY, "[%zx - %zx] -> {%zx - %zx} (%u, %u) U: %u, W: %u, T: %u, C: %u\n",
+                              a.addr, a.addr + PAGE_SIZE,
+                              pt[pti].page_ppn*PAGE_SIZE, pt[pti].page_ppn*PAGE_SIZE + PAGE_SIZE,
+                              pdi, pti,
+                              pt[pti].user_access, pt[pti].writeable, pt[pti].write_through, pt[pti].cache_disabled);
+                    }
+                }
+            }
+            else
+            {
+                VAddr a{};
+                a.pdi = pdi;
+                debug(A_MEMORY, "[%zx - %zx] -> {%zx - %zx} (%u) LARGE PAGE U: %u, W: %u, T: %u, C: %u\n",
+                      a.addr, a.addr + PAGE_SIZE*PAGE_TABLE_ENTRIES,
+                      pd[pdi].page.page_ppn*PAGE_SIZE, pd[pdi].page.page_ppn*PAGE_SIZE + PAGE_SIZE*PAGE_TABLE_ENTRIES,
+                      pdi,
+                      pd[pdi].page.user_access, pd[pdi].page.writeable, pd[pdi].page.write_through, pd[pdi].page.cache_disabled);
+            }
+        }
+    }
+}
+
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
@@ -141,7 +189,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage)
   return resolveMapping(page_dir_page_, vpage);
 }
 
-const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
+const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, vpn_t vpage)
 {
   ArchMemoryMapping m;
 
@@ -152,7 +200,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
 
   if(A_MEMORY & OUTPUT_ADVANCED)
   {
-    debug(A_MEMORY, "resolveMapping, vpn: %#zx, pdi: %zu(%zu), pti: %zu(%zu)\n", vpage, m.pdi, m.pdi, m.pti, m.pti);
+    debug(A_MEMORY, "resolveMapping, vpn: %#zx, pdi: %zx(%zu), pti: %zx(%zu)\n", vpage, m.pdi, m.pdi, m.pti, m.pti);
   }
 
   assert(pd < PageManager::instance()->getTotalNumPages());
@@ -185,11 +233,12 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, size_t vpage)
 
   if(A_MEMORY & OUTPUT_ADVANCED)
   {
-      debug(A_MEMORY, "resolveMapping, vpn: %#zx, pd[%s]: %#zx, pt[%s]: %#zx, page[%s]: %#zxx\n",
+      debug(A_MEMORY, "resolveMapping, vpn: %#zx, pd[%s]: %#zx, pt[%s]: %#zx, page[%s]: %#zx, size: %#zx\n",
             vpage,
             (m.pd ? "P" : "-"), m.pd_ppn,
             (m.pt ? "P" : "-"), m.pt_ppn,
-            (m.page ? "P" : "-"), m.page_ppn);
+            (m.page ? "P" : "-"), m.page_ppn,
+            m.page_size);
   }
 
   return m;
@@ -230,7 +279,10 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
 
 void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
+  debug(A_MEMORY, "Map kernel page %#zx -> PPN %#zx, alloc new pages: %u, mmio: %u\n", virtual_page, physical_page, can_alloc_pages, memory_mapped_io);
   ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
+
+  assert(!m.page_size && "Page already mapped");
 
   assert(m.pt || can_alloc_pages);
   if((!m.pt) && can_alloc_pages)

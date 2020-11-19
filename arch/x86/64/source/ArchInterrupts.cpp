@@ -143,7 +143,10 @@ void ArchInterrupts::startOfInterrupt(uint16 number)
 
 void ArchInterrupts::endOfInterrupt(uint16 number)
 {
-  debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+    if(A_INTERRUPTS & OUTPUT_ADVANCED) {
+        debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+    }
+
   if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
      (IOAPIC::findIOAPICforIRQ(number) ||
       ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||

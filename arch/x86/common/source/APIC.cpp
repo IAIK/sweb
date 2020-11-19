@@ -82,8 +82,9 @@ void LocalAPIC::init()
 {
   if(!isInitialized())
   {
+    debug(APIC, "Initializing Local APIC\n");
     id_ = readID();
-    debug(APIC, "Initializing Local APIC %x\n", ID());
+    debug(APIC, "Local APIC %x\n", ID());
     setSpuriousInterruptNumber(100);
     initTimer();
     enable(true);
@@ -527,6 +528,10 @@ void IOAPIC::mapAt(size_t addr)
 
 uint32 IOAPIC::read(uint8 offset)
 {
+    if(APIC & OUTPUT_ADVANCED){
+        debug(APIC, "IO APIC read from registers %p with offset %#x\n", reg_vaddr_, offset);
+    }
+
         WithDisabledInterrupts i;
         uint32 retval = 0;
         asm volatile("movl %[offset], %[io_reg_sel]\n"
@@ -608,9 +613,13 @@ IOAPIC* IOAPIC::findIOAPICforGlobalInterrupt(uint32 g_int)
                 uint32 base = io_apic.getGlobalInterruptBase();
                 if((base <= g_int) && (g_int < base + io_apic.getMaxRedirEntry()))
                 {
+                    if(APIC & OUTPUT_ADVANCED){
+                        debug(APIC, "Found IOAPIC for global interrupt %u: %p\n", g_int, &io_apic);
+                    }
                         return &io_apic;
                 }
         }
+        debug(APIC, "Couldn't find IOAPIC for global interrupt %u\n", g_int);
         return nullptr;
 }
 
@@ -626,11 +635,17 @@ uint32 IOAPIC::findGSysIntForIRQ(uint8 irq)
                         break;
                 }
         }
+        if(APIC & OUTPUT_ADVANCED){
+            debug(APIC, "IRQ %u -> g sys int %u\n", irq, g_sys_int);
+        }
         return g_sys_int;
 }
 
 IOAPIC* IOAPIC::findIOAPICforIRQ(uint8 irq)
 {
+    if(APIC & OUTPUT_ADVANCED){
+        debug(APIC, "Find IOAPIC for IRQ %u\n", irq);
+    }
         return findIOAPICforGlobalInterrupt(findGSysIntForIRQ(irq));
 }
 

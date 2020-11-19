@@ -64,6 +64,9 @@ public:
 
   ~ArchMemory();
 
+  void printMappedPages();
+  static void printMappedPages(uint32 page_dir_page);
+
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
  * can be used to access given page

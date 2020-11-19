@@ -72,7 +72,7 @@ extern "C" void initialiseBootTimePaging()
   }
 
   // identity mapping
-  for (i = 0; i < 256; ++i)
+  for (i = 0; i < 1024-768; ++i)
   {
     pde_start[i + 768].page.present = 1;
     pde_start[i + 768].page.writeable = 1;

@@ -271,6 +271,7 @@ extern "C" void entry64()
   PRINT("Calling startup()...\n");
   kprintf("Calling startup()...\n");
   asm("jmp *%[startup]" : : [startup]"r"(startup));
+  assert(false && "Returned from startup");
   while (1);
 }
 

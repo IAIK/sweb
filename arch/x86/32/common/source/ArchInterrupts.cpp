@@ -129,18 +129,24 @@ void ArchInterrupts::startOfInterrupt(uint16 number)
 
 void ArchInterrupts::endOfInterrupt(uint16 number)
 {
-  debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+    if(A_INTERRUPTS & OUTPUT_ADVANCED) {
+        debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+    }
   if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
      (IOAPIC::findIOAPICforIRQ(number) ||
       ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
       (number > 16)))
   {
-      debug(A_INTERRUPTS, "Sending EOI %x to APIC\n", number + 0x20);
+      if(A_INTERRUPTS & OUTPUT_ADVANCED) {
+          debug(A_INTERRUPTS, "Sending EOI %x to APIC\n", number + 0x20);
+      }
       cpu_info.lapic.sendEOI(number + 0x20);
   }
   else
   {
-      debug(A_INTERRUPTS, "Sending EOI %x to PIC\n", number);
+      if(A_INTERRUPTS & OUTPUT_ADVANCED) {
+          debug(A_INTERRUPTS, "Sending EOI %x to PIC\n", number);
+      }
       PIC8259::sendEOI(number);
   }
 }

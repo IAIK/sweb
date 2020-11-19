@@ -191,7 +191,8 @@ PageManager::PageManager() :
       debug(PM, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)kheap_vpn, (void*)ppn_to_map);
     ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true);
   }
-  debug(PM, "Finished mapping kernel heap, initializing KernelMemoryManager\n");
+  debug(PM, "Finished mapping kernel heap [%zx - %zx), initializing KernelMemoryManager\n",
+        ArchCommon::getFreeKernelMemoryStart(), ArchCommon::getFreeKernelMemoryStart() + num_reserved_heap_pages*PAGE_SIZE);
 
   extern KernelMemoryManager kmm;
   new (&kmm) KernelMemoryManager(num_reserved_heap_pages, HEAP_PAGES);
