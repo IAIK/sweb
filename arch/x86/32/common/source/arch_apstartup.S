@@ -8,30 +8,24 @@
 .section .text.apstartup, "x"
 
 .macro ap_print string
-    movl $\string, %ebx
+    movl $\string, %esi
+    movw $0xE9, %dx
 1:
-    movb (%ebx), %al
+    lodsb
     testb %al, %al
     jz 2f
-	movw $0xE9, %dx
     outb %al, %dx
-    addl $1, %ebx
     jmp 1b
 2:
+    .endm
+
+.macro ap_printn string len
+    movl $\string, %esi
+    movl $\len, %ecx
+    movw $0xE9, %dx
+    rep outsb
 .endm
 
-.macro ap_print64 string
-    movl $\string, %ebx
-1:
-    movb (%ebx), %al
-    testb %al, %al
-    jz 2f
-    movw $0xE9, %dx
-    outb %al, %dx
-    addl $1, %ebx
-    jmp 1b
-2:
-.endm
 
 .macro ap_dump addr num
     movl $\addr, %ebx
@@ -49,7 +43,7 @@
 2:
 .endm
 
-# APs start in real mode and directly enter long mode without going to protected mode first
+# APs start in real mode
 .global apstartup
 apstartup:
     cli
@@ -61,84 +55,90 @@ apstartup:
     movw %ax, %fs
     movw %ax, %gs
 
-    ap_print (ap_s_start - apstartup)
+#    ap_print (ap_s_start - apstartup)
+    ap_printn (ap_s_start - apstartup), len_ap_s_start
 
-    ap_print (ap_s_pae - apstartup)
+#    ap_print (ap_s_pse - apstartup)
+    ap_printn (ap_s_pse - apstartup), len_ap_s_pse
 
-    # Enable PAE + PSE
+    # Enable PSE
 	movl %cr4, %eax
-    orl  $0x30,%eax
+    orl  $0x10,%eax
     movl %eax, %cr4
 
-    ap_print (ap_s_cr3 - apstartup)
+#    ap_print (ap_s_cr3 - apstartup)
+    ap_printn (ap_s_cr3 - apstartup), len_ap_s_cr3
 
     # Load CR3
     movl $(ap_kernel_cr3 - apstartup), %eax
     movl (%eax), %eax
 	movl %eax, %cr3
 
-    ap_print (ap_s_efer - apstartup)
-
-    # Enable EFER.LME and EFER.NXE
-    mov $0xC0000080, %ecx
-    rdmsr
-    orl $0x900, %eax
-    wrmsr
-
-    ap_print (ap_s_prot - apstartup)
+#    ap_print (ap_s_prot - apstartup)
+    ap_printn (ap_s_prot - apstartup), len_ap_s_prot
 
     # Enable protected mode, write protection in kernel mode and paging
     movl %cr0, %eax
     orl  $0x80010001,%eax
     movl %eax, %cr0
 
-    ap_print (ap_s_lgdt - apstartup)
+#    ap_print (ap_s_lgdt - apstartup)
+    ap_printn (ap_s_lgdt - apstartup), len_ap_s_lgdt
 
     movl $(ap_gdt32_ptr - apstartup), %eax
     lgdt (%eax)
 
-    ap_print (ap_s_ljmp - apstartup)
+#    ap_print (ap_s_apstartup32 - apstartup)
+    ap_printn (ap_s_apstartup32 - apstartup), len_ap_s_apstartup32
+    movl $apstartup32, %eax
+	jmp *%eax
 
-    ljmp $KERNEL_CS, $(apstartup64_trampoline - apstartup)
+#    ljmp $KERNEL_CS, $(apstartup32_trampoline - apstartup)
     hlt
 
 .code32
-.global apstartup64_trampoline
-apstartup64_trampoline:
-    ap_print64 ap_s_apstartup64
+.global apstartup32_trampoline
+apstartup32_trampoline:
+#    ap_print (ap_s_apstartup32 - apstartup)
+    ap_printn (ap_s_apstartup32 - apstartup), len_ap_s_apstartup32
 
-.extern apstartup 64
-    movl $apstartup64, %eax
+.extern apstartup32
+    movl $apstartup32, %eax
     jmp *%eax
     hlt
 
 .global ap_s_start
 ap_s_start:
-    .asciz "AP started\n"
-.global ap_s_pae
-ap_s_pae:
-	.asciz "Enabling PAE\n"
+    .ascii "AP started\n"
+    .equ len_ap_s_start, . - ap_s_start
+.global ap_s_pse
+ap_s_pse:
+	.ascii "Enabling PSE\n"
+    len_ap_s_pse = . - ap_s_pse
 .global ap_s_cr3
 ap_s_cr3:
-	.asciz "Loading CR3\n"
-.global ap_s_efer
-ap_s_efer:
-	.asciz "Enabling EFER.LME and EFER.NXE\n"
+	.ascii "Loading CR3\n"
+    .equ len_ap_s_cr3, . - ap_s_cr3
 .global ap_s_prot
 ap_s_prot:
-	.asciz "Enabling protected mode, write protection in kernel mode and paging\n"
+	.ascii "Enabling protected mode, write protection in kernel mode and paging\n"
+    len_ap_s_prot = . - ap_s_prot
 .global ap_s_lgdt
 ap_s_lgdt:
-	.asciz "Loading GDT\n"
+	.ascii "Loading GDT\n"
+    .equ len_ap_s_lgdt, . - ap_s_lgdt
 .global ap_s_segm
 ap_s_segm:
-	.asciz "Loading segment registers\n"
+	.ascii "Loading segment registers\n"
+    .equ len_ap_s_segm, . - ap_s_segm
 .global ap_s_ljmp
 ap_s_ljmp:
-	.asciz "Far jmp to trampoline to load long mode code segment\n"
-.global ap_s_apstartup64
-ap_s_apstartup64:
-	.asciz "Jumping to apstartup64\n"
+	.ascii "Far jmp to trampoline to load long mode code segment\n"
+    .equ len_ap_s_ljmp, . - ap_s_ljmp
+.global ap_s_apstartup32
+ap_s_apstartup32:
+	.ascii "Jumping to apstartup32\n"
+    .equ len_ap_s_apstartup32, . - ap_s_apstartup32
 
 # To be filled in by the BSP
 .global ap_kernel_cr3

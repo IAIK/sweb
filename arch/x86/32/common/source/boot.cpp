@@ -79,7 +79,7 @@ extern "C" void entry()
   uint32 cr4;
   asm("mov %%cr4,%[v]\n" : [v]"=r"(cr4));
   cr4 |= 0x10;
-  if (PAGE_DIRECTORY_ENTRIES == 512)
+  if (PAGE_DIRECTORY_ENTRIES == 512) // PAE
     cr4 |= 0x20;
   asm("mov %[v],%%cr4\n" : : [v]"r"(cr4));
 

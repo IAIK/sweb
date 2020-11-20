@@ -228,7 +228,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
   auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
-  assert(m_ap_gdt.pt[m_ap_gdt.pti].writeable && "AP GDT virtual address not writeable");
+  assert(m_ap_gdt.pt && m_ap_gdt.pt[m_ap_gdt.pti].writeable && "AP GDT virtual address not writeable");
 
   memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
   ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
@@ -289,12 +289,19 @@ void ArchMulticore::stopAllCpus()
 }
 
 
-extern "C" void __apstartup64()
+extern "C" void __apstartup32()
 {
   // Hack to avoid automatic function prologue (stack isn't set up yet)
   // TODO: Use __attribute__((naked)) in GCC 8
-  __asm__ __volatile__(".global apstartup64\n"
-                       "apstartup64:\n");
+  __asm__ __volatile__(".global apstartup32\n"
+                       "apstartup32:\n"
+                       // "movw $0xE9, %dx\n"
+                       "movb $0x40, %al\n"
+                       "outb %al, %dx\n"
+                       "movb $0x41, %al\n"
+                       "outb %al, %dx\n"
+                       // "hlt\n"
+      );
 
   // Load long mode data segments
   __asm__ __volatile__(
@@ -304,24 +311,32 @@ extern "C" void __apstartup64()
     "movw %%ax, %%es\n"
     "movw %%ax, %%fs\n"
     "movw %%ax, %%gs\n"
+    // "movw $0xE9, %%dx\n"
+    "movb $0x42, %%al\n"
+    "outb %%al, %%dx\n"
     :
     :[K_DS]"i"(KERNEL_DS)
   );
 
-  ArchCommon::callWithStack((char*)ap_boot_stack + sizeof(ap_boot_stack), []{
+  __asm__ __volatile__("movl %[stack], %%esp\n"
+                       "movl %[stack], %%ebp\n"
+                       "movw $0xE9, %%dx\n"
+                       "movb $0x43, %%al\n"
+                       "outb %%al, %%dx\n"
+                       :
+                       :[stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
 
-  // __asm__ __volatile__("movq %[stack], %%rsp\n"
-  //                      "movq %[stack], %%rbp\n"
-  //                      :
-  //                      :[stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
+  // ArchCommon::callWithStack((char*)ap_boot_stack + sizeof(ap_boot_stack), []{
+
+
 
   ++running_cpus;
-  debug(A_MULTICORE, "AP startup 64\n");
+  debug(A_MULTICORE, "AP startup 32\n");
   debug(A_MULTICORE, "AP switched to stack %p\n", ap_boot_stack + sizeof(ap_boot_stack));
 
   // Stack variables are messed up in this function because we skipped the function prologue. Should be fine once we've entered another function.
   ArchMulticore::initCpu();
-                                                                   });
+                                                                   // });
 }
 
 void ArchMulticore::initCpu()
