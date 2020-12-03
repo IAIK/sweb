@@ -60,6 +60,9 @@ void Mutex::acquire(pointer called_by)
 //    debug(LOCK, "The acquire is called by: ");
 //    kernel_debug_info->printCallInformation(called_by);
 //  }
+  // check for deadlocks, interrupts...
+  doChecksBeforeWaiting();
+
   while(ArchThreads::testSetLock(mutex_, 1))
   {
     checkCurrentThreadStillWaitingOnAnotherLock();
