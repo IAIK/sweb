@@ -18,16 +18,16 @@ set(KERNEL_IMAGE_OBJCOPY )
 
 # qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot
-	COMMENT "Executing `qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot`"
+	COMMAND qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd ${HDD_IMAGE} -no-reboot
+	COMMENT "Executing `qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -serial stdio -sd ${HDD_IMAGE} -no-reboot`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot
-	COMMENT "Executing `qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd SWEB-flat.vmdk -no-reboot`"
+    COMMAND qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd ${HDD_IMAGE} -no-reboot
+    COMMENT "Executing `qemu-system-arm -M integratorcp -s -S -m 8M -kernel kernel.x -serial stdio -sd ${HDD_IMAGE} -no-reboot`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)

@@ -5,6 +5,9 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 # Include custom CMake modules from the cmake/ subdirectory
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
+set(HDD_IMAGE "SWEB.qcow2")
+
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/64")
 endif("${ARCH}" STREQUAL "")
@@ -178,7 +181,8 @@ endforeach(file)
 #Custom Target: hdd_image
 #Creates the hd image and copies all files to it
 add_custom_target (hdd_image ALL
-    DEPENDS kernel_to_image userspace_to_image
+  DEPENDS kernel_to_image userspace_to_image
+  COMMAND qemu-img convert -f raw -O qcow2 ${HDD_IMAGE_RAW} ${HDD_IMAGE}
 )
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
@@ -187,9 +191,9 @@ add_custom_target (kernel_to_image
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
-    COMMAND ./exe2minixfs SWEB-flat.vmdk 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
-                                               ./kernel.x boot/kernel.x
-                                               ./kernel.dbg boot/kernel.dbg
+    COMMAND ./exe2minixfs ${HDD_IMAGE_RAW} 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
+                                                 ./kernel.x boot/kernel.x
+                                                 ./kernel.dbg boot/kernel.dbg
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying kernel files to image..."
 )
@@ -214,14 +218,14 @@ add_custom_target (kernel_image
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
 )
 
-endif()   
+endif()
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
     DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./exe2minixfs SWEB-flat.vmdk 10321920 ${MINIXFS_ARGUMENT}
+    COMMAND ./exe2minixfs ${HDD_IMAGE_RAW} 10321920 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
 )
