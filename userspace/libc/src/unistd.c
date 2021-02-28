@@ -30,4 +30,11 @@ unsigned int sleep(unsigned int seconds)
 }
 
 
-
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int ftruncate(int fildes, off_t length)
+{
+    return -1;
+}
