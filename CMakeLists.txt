@@ -180,10 +180,18 @@ endforeach(file)
 
 #Custom Target: hdd_image
 #Creates the hd image and copies all files to it
-add_custom_target (hdd_image ALL
+add_custom_target (hdd_image_pre_resize ALL
   DEPENDS kernel_to_image userspace_to_image
   COMMAND qemu-img convert -f raw -O qcow2 ${HDD_IMAGE_RAW} ${HDD_IMAGE}
-)
+  # COMMAND bash -c "qemu-img resize ${HDD_IMAGE} $(echo "x=l($(qemu-img info SWEB.qcow2 | sed -n -e 's|virtual size: .* (\(.*\) bytes)|\1|p'))/l(2); scale=0; 2^((x+0.5)/1)" | bc -l)"
+  # VERBATIM
+  )
+
+# Resize hdd image to next power of two (required when used as an sd card)
+add_custom_target (hdd_image ALL
+  DEPENDS hdd_image_pre_resize
+  COMMAND ${CMAKE_SOURCE_DIR}/utils/images/resize_power2.sh "${PROJECT_BINARY_DIR}/${HDD_IMAGE}"
+  )
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
