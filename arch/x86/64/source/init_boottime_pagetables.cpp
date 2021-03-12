@@ -42,8 +42,7 @@ extern "C" void initialisePaging()
   pml4[511].present = 1;
 
   // ident mapping 0x0                <-> 0x0 --> pml4i = 0, pdpti = 0
-  // ident mapping 0x* 0000 C000 0000 <-> 0x0 --> pml4i = 0, pdpti = 3
-  // ident mapping 0x* F000 0000 0000 <-> 0x0 --> pml4i = 480, pdpti = 0
+    // ident mapping 0x* F000 0000 0000 <-> 0x0 --> pml4i = 480, pdpti = 0
   // ident mapping 0x* FFFF 8000 0000 <-> 0x0 --> pml4i = 511, pdpti = 510
 
   pdpt1[0].pd.page_ppn = (uint64) pd1 / PAGE_SIZE;
