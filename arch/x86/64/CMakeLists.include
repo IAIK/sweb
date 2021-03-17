@@ -52,8 +52,8 @@ string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 # kvm: Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu kvm64
-        COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu kvm64`"
+        COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -enable-kvm -cpu host
+        COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -enable-kvm -cpu host`"
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMAND reset -I
         )
