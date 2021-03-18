@@ -104,7 +104,7 @@ extern "C" void initialisePaging()
 
 extern "C" void removeBootTimeIdentMapping()
 {
-  uint64* pml4 = (uint64*)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
+  uint64* pml4 = (uint64*)&kernel_page_map_level_4[0];
   pml4[0] = 0;
   pml4[1] = 0;
 }
