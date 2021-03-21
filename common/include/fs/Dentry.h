@@ -157,8 +157,8 @@ class Dentry
     virtual void childInsert(Dentry *child_dentry);
 
   public:
-    Dentry(const char* name);
-    Dentry(Dentry *parent);
+    Dentry(Inode* inode); // root dentry
+    Dentry(Inode* inode, Dentry* parent, const ustl::string& name); // named dentry
     virtual ~Dentry();
     ustl::string d_name_;
 };

@@ -12,7 +12,8 @@
 RamFSSuperblock::RamFSSuperblock(Dentry* s_root, uint32 s_dev) :
     Superblock(s_root, s_dev)
 {
-  Dentry *root_dentry = new Dentry(ROOT_NAME);
+  Inode *root_inode = (Inode*) (new RamFSInode(this, I_DIR));
+  Dentry *root_dentry = new Dentry(root_inode);
 
   if (s_root)
   {
@@ -27,7 +28,6 @@ RamFSSuperblock::RamFSSuperblock(Dentry* s_root, uint32 s_dev) :
   s_root_ = root_dentry;
 
   // create the inode for the root_dentry
-  Inode *root_inode = (Inode*) (new RamFSInode(this, I_DIR));
   int32 root_init = root_inode->mknod(root_dentry);
   assert(root_init == 0);
 
@@ -54,25 +54,13 @@ RamFSSuperblock::~RamFSSuperblock()
   all_inodes_.clear();
 }
 
-Inode* RamFSSuperblock::createInode(Dentry* dentry, uint32 type)
+Inode* RamFSSuperblock::createInode(uint32 type)
 {
-  Inode *inode = (Inode*) (new RamFSInode(this, type));
-  assert(inode);
-  if (type == I_DIR)
-  {
-    debug(RAMFS, "createInode: I_DIR\n");
-    int32 inode_init = inode->mknod(dentry);
-    assert(inode_init == 0);
-  }
-  else if (type == I_FILE)
-  {
-    debug(RAMFS, "createInode: I_FILE\n");
-    int32 inode_init = inode->mkfile(dentry);
-    assert(inode_init == 0);
-  }
+    debug(RAMFS, "createInode, type: %x\n", type);
+    auto inode = new RamFSInode(this, type);
 
-  all_inodes_.push_back(inode);
-  return inode;
+    all_inodes_.push_back(inode);
+    return inode;
 }
 
 int32 RamFSSuperblock::readInode(Inode* inode)

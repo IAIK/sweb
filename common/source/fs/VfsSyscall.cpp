@@ -96,15 +96,15 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
     return -1;
   }
 
-  // create a new dentry
-  Dentry *sub_dentry = new Dentry(pw_dentry);
-  sub_dentry->d_name_ = sub_dentry_name;
+  Inode* sub_inode = current_sb->createInode(I_DIR);
+  Dentry *sub_dentry = new Dentry(sub_inode, pw_dentry, sub_dentry_name);
+  sub_inode->mkdir(sub_dentry);
+
   debug(VFSSYSCALL, "(mkdir) creating Inode: current_dentry->getName(): %s\n", pw_dentry->getName());
   debug(VFSSYSCALL, "(mkdir) creating Inode: sub_dentry->getName(): %s\n", sub_dentry->getName());
   debug(VFSSYSCALL, "(mkdir) current_sb: %p\n", current_sb);
   debug(VFSSYSCALL, "(mkdir) current_sb->getFSType(): %p\n", current_sb->getFSType());
 
-  current_sb->createInode(sub_dentry, I_DIR);
   debug(VFSSYSCALL, "(mkdir) sub_dentry->getInode(): %p\n", sub_dentry->getInode());
   return 0;
 }
@@ -331,17 +331,16 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    // create a new dentry
-    Dentry *sub_dentry = new Dentry(pw_dentry);
-    sub_dentry->d_name_ = sub_dentry_name;
-    sub_dentry->setParent(pw_dentry);
     debug(VFSSYSCALL, "(open) calling create Inode\n");
-    Inode* sub_inode = current_sb->createInode(sub_dentry, I_FILE);
+    Inode* sub_inode = current_sb->createInode(I_FILE);
     if (!sub_inode)
     {
-      delete sub_dentry;
       return -1;
     }
+
+    Dentry *sub_dentry = new Dentry(sub_inode, pw_dentry, sub_dentry_name);
+    sub_inode->mkfile(sub_dentry);
+
     debug(VFSSYSCALL, "(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName());
 
     int32 fd = current_sb->createFd(sub_inode, flag);

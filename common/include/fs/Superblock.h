@@ -91,12 +91,12 @@ class Superblock
     virtual ~Superblock();
 
     /**
-     * create a new Inode of the superblock, mknod with dentry, add in the list.
+     * create a new Inode of the superblock
      * @param dentry the dentry to create the inode with
      * @param type the inode type
      * @return the created inode
      */
-    virtual Inode* createInode(Dentry* /*dentry*/, uint32 /*type*/) = 0;
+    virtual Inode* createInode(uint32 type) = 0;
 
     /**
      * This method is called to read a specific inode from a mounted

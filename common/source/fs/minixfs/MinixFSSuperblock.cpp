@@ -71,7 +71,7 @@ void MinixFSSuperblock::readHeader()
 void MinixFSSuperblock::initInodes()
 {
   MinixFSInode *root_inode = getInode(1);
-  Dentry *root_dentry = new Dentry(ROOT_NAME);
+  Dentry *root_dentry = new Dentry(root_inode);
   if (s_root_)
   {
     //root_dentry->setMountPoint(s_root_);
@@ -85,9 +85,7 @@ void MinixFSSuperblock::initInodes()
     s_root_ = root_dentry;
 
   }
-  root_dentry->setParent(root_dentry);
   root_inode->i_dentry_ = root_dentry;
-  root_dentry->setInode(root_inode);
 
   all_inodes_add_inode(root_inode);
   //read children from disc
@@ -185,7 +183,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
   debug(M_SB, "~MinixSuperblock finished\n");
 }
 
-Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
+Inode* MinixFSSuperblock::createInode(uint32 type)
 {
   uint16 mode = 0x01ff;
   if (type == I_FILE)
@@ -203,19 +201,6 @@ Inode* MinixFSSuperblock::createInode(Dentry* dentry, uint32 type)
   all_inodes_add_inode(inode);
   debug(M_SB, "createInode> calling write Inode to Disc\n");
   writeInode(inode);
-  debug(M_SB, "createInode> returned from write Inode to Disc\n");
-  if (type == I_DIR)
-  {
-    debug(M_SB, "createInode> mkdir\n");
-    int32 inode_init = inode->mkdir(dentry);
-    assert(inode_init == 0);
-  }
-  else if (type == I_FILE)
-  {
-    debug(M_SB, "createInode> mkfile\n");
-    int32 inode_init = inode->mkfile(dentry);
-    assert(inode_init == 0);
-  }
   debug(M_SB, "createInode> finished\n");
   return inode;
 }

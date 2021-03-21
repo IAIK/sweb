@@ -22,7 +22,7 @@ class RamFSSuperblock : public Superblock
      * @param type the inode type
      * @return the inode
      */
-    virtual Inode* createInode ( Dentry* dentry, uint32 type );
+    virtual Inode* createInode (uint32 type );
 
     /**
      * remove the corresponding file descriptor.

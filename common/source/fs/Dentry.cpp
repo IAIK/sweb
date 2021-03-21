@@ -4,16 +4,19 @@
 
 #include "kprintf.h"
 
-Dentry::Dentry(const char* name) :
-    d_inode_(0), d_parent_(this), d_mounts_(0), d_name_(name)
+Dentry::Dentry(Inode* inode) :
+    d_inode_(inode), d_parent_(this), d_mounts_(0), d_name_("/")
 {
-  debug(DENTRY, "created Dentry with Name %s\n", name);
+    debug(DENTRY, "Created root Dentry\n");
+    inode->incLinkCount();
 }
 
-Dentry::Dentry(Dentry *parent) :
-    d_inode_(0), d_parent_(parent), d_mounts_(0), d_name_("NamELLEss")
+Dentry::Dentry(Inode* inode, Dentry* parent, const ustl::string& name) :
+    d_inode_(inode), d_parent_(parent), d_mounts_(0), d_name_(name)
 {
-  parent->setChild(this);
+    debug(DENTRY, "created Dentry with Name %s\n", name.c_str());
+    parent->setChild(this);
+    inode->incLinkCount();
 }
 
 Dentry::~Dentry()

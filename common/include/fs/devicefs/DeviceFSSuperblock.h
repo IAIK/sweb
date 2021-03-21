@@ -20,7 +20,7 @@ class DeviceFSSuperBlock : public Superblock
      * @param type the type of the new inode
      * @return the inode
      */
-    virtual Inode* createInode(Dentry* dentry, uint32 type);
+    virtual Inode* createInode(uint32 type);
 
     /**
      * creates a file descriptor for the given inode

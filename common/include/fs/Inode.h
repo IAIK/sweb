@@ -91,6 +91,8 @@ class Inode
     {
     }
 
+    void incLinkCount() { i_nlink_++; }
+
     /**
      * Create a directory with the given dentry.
      * @param dentry the dentry
@@ -327,7 +329,6 @@ class Inode
     {
       return 0;
     }
-    ;
 
 };
 

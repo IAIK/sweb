@@ -19,12 +19,11 @@ class MinixFSSuperblock : public Superblock
     virtual ~MinixFSSuperblock();
 
     /**
-     * creates one new inode of the superblock adds the dentry sets it in the bitmap
-     * @param dentry the dentry to set in the new inode
+     * creates one new inode of the superblock
      * @param type the file type of the new inode (I_DIR, I_FILE)
      * @return the new inode
      */
-    virtual Inode* createInode(Dentry* dentry, uint32 type);
+    virtual Inode* createInode(uint32 type);
 
     /**
      *  remove the corresponding file descriptor and unlinks it from the inode.

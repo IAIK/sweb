@@ -425,17 +425,16 @@ void MinixFSInode::loadChildren()
         name[MAX_NAME_LENGTH] = 0;
 
         debug(M_INODE, "loadChildren: dentry name: %s\n", name);
-        Dentry *new_dentry = new Dentry(name);
-        i_dentry_->setChild(new_dentry);
-        new_dentry->setParent(i_dentry_);
+        Dentry *new_dentry = new Dentry(inode, i_dentry_, name);
         if (!is_already_loaded)
         {
           ((MinixFSInode *) inode)->i_dentry_ = new_dentry;
           ((MinixFSSuperblock *) superblock_)->all_inodes_add_inode(inode);
         }
         else
-          ((MinixFSInode *) inode)->other_dentries_.push_back(new_dentry);
-        new_dentry->setInode(inode);
+        {
+            ((MinixFSInode *) inode)->other_dentries_.push_back(new_dentry);
+        }
       }
     }
   }
