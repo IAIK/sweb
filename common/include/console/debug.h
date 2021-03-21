@@ -29,11 +29,6 @@ enum AnsiColor
 #define debug(flag, ...) do { if (flag & OUTPUT_ENABLED) { kprintfd(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintfd(__VA_ARGS__); } } while (0)
 #endif
 
-//group minix
-const size_t M_STORAGE_MANAGER  = Ansi_Yellow;
-const size_t M_INODE            = Ansi_Yellow;
-const size_t M_SB               = Ansi_Yellow;
-const size_t M_ZONE             = Ansi_Yellow;
 
 //group Block Device
 const size_t BD_MANAGER         = Ansi_Yellow;
@@ -83,4 +78,8 @@ const size_t PSEUDOFS           = Ansi_Yellow;
 const size_t VFSSYSCALL         = Ansi_Yellow;
 const size_t VFS                = Ansi_Yellow | OUTPUT_ENABLED;
 
-
+//group minix
+const size_t M_STORAGE_MANAGER  = Ansi_Yellow;
+const size_t M_INODE            = Ansi_Yellow;
+const size_t M_SB               = Ansi_Yellow;
+const size_t M_ZONE             = Ansi_Yellow;

@@ -80,7 +80,7 @@ int32 RamFSInode::mknod(Dentry *dentry)
 
 int32 RamFSInode::mkdir(Dentry *dentry)
 {
-  return (mkdir(dentry));
+  return mknod(dentry);
 }
 
 int32 RamFSInode::mkfile(Dentry *dentry)
