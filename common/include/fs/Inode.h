@@ -117,16 +117,32 @@ class Inode
     }
 
     /**
+     * Called when a file is opened
+     */
+    virtual File* open(uint32 /*flag*/)
+    {
+      return 0;
+    }
+
+    /**
+     * Called when the last reference to a file is closed
+     */
+    virtual int32 release(File* /*file*/)
+    {
+      return 0;
+    }
+
+    /**
      * The link method should make a hard link to the name referred to by the
      * denty, which is in the directory refered to by the Inode.
      * (only used for File)
      * @param flag the flag
      * @return the link file
      */
-    virtual File* link(uint32 /*flag*/)
-    {
-      return 0;
-    }
+    // virtual File* link(uint32 /*flag*/)
+    // {
+    //   return 0;
+    // }
 
     /**
      * This should remove the name refered to by the Dentry from the directory
@@ -134,10 +150,10 @@ class Inode
      * @param file the file to unlink
      * @retunr 0 on success
      */
-    virtual int32 unlink(File* /*file*/)
-    {
-      return 0;
-    }
+    // virtual int32 unlink(File* /*file*/)
+    // {
+    //   return -1;
+    // }
 
     /**
      * This should create a symbolic link in the given directory with the given
@@ -174,6 +190,16 @@ class Inode
     }
 
     /**
+     * Create a special file with the given dentry.
+     * @param the dentry
+     * @return 0 on success
+     */
+    virtual int32 mknod(Dentry *)
+    {
+      return 0;
+    }
+
+    /**
      * Remove the named directory (if empty).
      * @return 0 on success
      */
@@ -187,16 +213,6 @@ class Inode
      * @return 0 on success
      */
     virtual int32 rm()
-    {
-      return 0;
-    }
-
-    /**
-     * Create a directory with the given dentry.
-     * @param the dentry
-     * @return 0 on success
-     */
-    virtual int32 mknod(Dentry *)
     {
       return 0;
     }

@@ -107,14 +107,14 @@ int32 RamFSInode::create(Dentry *dentry)
   return (mkdir(dentry));
 }
 
-File* RamFSInode::link(uint32 flag)
+File* RamFSInode::open(uint32 flag)
 {
   File* file = (File*) (new RamFSFile(this, i_dentry_, flag));
   i_files_.push_back(file);
   return file;
 }
 
-int32 RamFSInode::unlink(File* file)
+int32 RamFSInode::release(File* file)
 {
   i_files_.remove(file);
   delete file;

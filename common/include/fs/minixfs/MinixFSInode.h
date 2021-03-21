@@ -59,13 +59,22 @@ class MinixFSInode : public Inode
     virtual Dentry* lookup(const char *name);
 
     /**
+     * Called when a file is opened
+     */
+    virtual File* open(uint32 /*flag*/);
+    /**
+     * Called when the last reference to a file is closed
+     */
+    virtual int32 release(File* /*file*/);
+
+    /**
      * The link method makes a hard link to the name referred to by the
      * denty, which is in the directory refered to by the Inode.
      * (only used for File)
      * @param flag the flag
      * @return the created file
      */
-    virtual File* link(uint32 flag);
+    // virtual File* link(uint32 flag);
 
     /**
      * This removes the name refered to by the Dentry from the directory
@@ -73,7 +82,7 @@ class MinixFSInode : public Inode
      * @param file the file to unlink
      * @return 0 on success
      */
-    virtual int32 unlink(File* file);
+    // virtual int32 unlink(File* file);
 
     /**
      * creates a directory with the given dentry. It is only used to with directory.

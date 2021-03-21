@@ -262,7 +262,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
 
 }
 
-File* MinixFSInode::link(uint32 flag)
+File* MinixFSInode::open(uint32 flag)
 {
   debug(M_INODE, "link: flag: %d\n", flag);
   File* file = (File*) (new MinixFSFile(this, i_dentry_, flag));
@@ -271,7 +271,7 @@ File* MinixFSInode::link(uint32 flag)
   return file;
 }
 
-int32 MinixFSInode::unlink(File* file)
+int32 MinixFSInode::release(File* file)
 {
   debug(M_INODE, "unlink\n");
   i_files_.remove(file);
