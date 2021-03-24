@@ -55,7 +55,7 @@ class Superblock
     /**
      * The old Dentry of the mount point of a mounted file system
      */
-    Dentry *mounted_over_;
+    Dentry *s_mountpoint_;
 
     /**
      * A list of dirty inodes.
@@ -83,10 +83,9 @@ class Superblock
 
     /**
      * constructor
-     * @param s_root the root dentry of the new filesystme
      * @param s_dev the device number of the new filesystem
      */
-    Superblock(Dentry* s_root, size_t s_dev);
+    Superblock(size_t s_dev);
 
     virtual ~Superblock();
 
@@ -162,6 +161,11 @@ class Superblock
      * @return the superblocks mount point dentry
      */
     Dentry *getMountPoint();
+
+    /**
+     * Set the mount point Dentry of the Superblock
+     */
+    void setMountPoint(Dentry* mountpoint);
 
     /**
      * Get the File System Type of the Superblock

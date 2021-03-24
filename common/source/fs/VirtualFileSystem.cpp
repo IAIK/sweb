@@ -84,7 +84,7 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
   return 0;
 }
 
-FileSystemInfo *VirtualFileSystem::root_mount(const char *fs_name, uint32 /*flags*/)
+FileSystemInfo *VirtualFileSystem::rootMount(const char *fs_name, uint32 /*flags*/)
 {
   FileSystemType *fst = getFsType(fs_name);
   if(!fst)
@@ -93,11 +93,20 @@ FileSystemInfo *VirtualFileSystem::root_mount(const char *fs_name, uint32 /*flag
       return nullptr;
   }
 
-  Superblock *super = fst->createSuper(0, -1);
+  if(fst->getFSFlags() & FS_REQUIRES_DEV)
+  {
+      debug(VFS, "Only file systems that do not require a device are currently supported as root file system\n");
+      return nullptr;
+  }
+
+  debug(VFS, "Create root %s superblock\n", fst->getFSName());
+  Superblock *super = fst->createSuper(-1);
   super = fst->readSuper(super, 0);
+
+  Dentry *root = super->getRoot();
+  super->setMountPoint(root);
   Dentry *mount_point = super->getMountPoint();
   mount_point->setMountPoint(mount_point);
-  Dentry *root = super->getRoot();
 
   VfsMount *root_mount = new VfsMount(0, mount_point, root, super, 0);
 
@@ -156,7 +165,8 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   }
 
   // create a new superblock
-  Superblock *super = fst->createSuper(mountpoint_dentry, dev);
+  debug(VFS, "Create %s superblock\n", fst->getFSName());
+  Superblock *super = fst->createSuper(dev);
   if (!super)
   {
       debug(VFS, "mount: Superblock creation failed\n");
@@ -165,7 +175,11 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
 
   debug(VFS, "mount: Fill superblock\n");
   super = fst->readSuper(super, 0); //?
+
   Dentry *root = super->getRoot();
+
+  super->setMountPoint(mountpoint_dentry);
+  mountpoint_dentry->setMountPoint(root);
 
   // create a new vfs_mount
   VfsMount *std_mount = new VfsMount(mountpoint_vfs_mount, mountpoint_dentry, root, super, 0);

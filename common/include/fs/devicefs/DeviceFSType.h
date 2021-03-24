@@ -23,6 +23,6 @@ class DeviceFSType : public FileSystemType
      * @param s_dev the device number of the new superblock
      * @return a pointer to the Superblock object
      */
-    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
+    virtual Superblock *createSuper(uint32 s_dev) const;
 };
 

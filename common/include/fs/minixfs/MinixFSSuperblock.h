@@ -15,7 +15,7 @@ class MinixFSSuperblock : public Superblock
     friend class MinixFSZone;
     friend class MinixStorageManager;
 
-    MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset);
+    MinixFSSuperblock(size_t s_dev, uint64 offset);
     virtual ~MinixFSSuperblock();
 
     /**

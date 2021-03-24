@@ -51,7 +51,7 @@ class DeviceFSSuperBlock : public Superblock
     static DeviceFSSuperBlock* getInstance()
     {
       if (!instance_)
-        instance_ = new DeviceFSSuperBlock(0, 0);
+        instance_ = new DeviceFSSuperBlock(0);
       return instance_;
     }
 
@@ -62,7 +62,7 @@ class DeviceFSSuperBlock : public Superblock
      * @param s_root the root Dentry of the new Filesystem
      * @param s_dev the device number of the new Filesystem
      */
-    DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev);
+    DeviceFSSuperBlock(uint32 s_dev);
 
   protected:
     static DeviceFSSuperBlock* instance_;

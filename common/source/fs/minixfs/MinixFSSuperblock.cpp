@@ -15,8 +15,8 @@
 
 #define ROOT_NAME "/"
 
-MinixFSSuperblock::MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset) :
-    Superblock(s_root, s_dev), superblock_(this)
+MinixFSSuperblock::MinixFSSuperblock(size_t s_dev, uint64 offset) :
+    Superblock(s_dev), superblock_(this)
 {
   offset_ = offset;
   //read Superblock data from disc
@@ -71,26 +71,12 @@ void MinixFSSuperblock::readHeader()
 void MinixFSSuperblock::initInodes()
 {
   MinixFSInode *root_inode = getInode(1);
-  Dentry *root_dentry = new Dentry(root_inode);
-  if (s_root_)
-  {
-    //root_dentry->setMountPoint(s_root_);
-    s_root_->setMountPoint(root_dentry);
-    mounted_over_ = s_root_; // MOUNT
-    s_root_ = root_dentry;
-  }
-  else
-  {
-    mounted_over_ = root_dentry; // ROOT
-    s_root_ = root_dentry;
-
-  }
-  root_inode->i_dentry_ = root_dentry;
+  s_root_ = new Dentry(root_inode);
+  root_inode->i_dentry_ = s_root_;
 
   all_inodes_add_inode(root_inode);
   //read children from disc
   root_inode->loadChildren();
-
 }
 
 MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num, bool &is_already_loaded)

@@ -13,7 +13,7 @@ class RamFSSuperblock : public Superblock
      * @param s_root the root dentry of the new filesystem
      * @param s_dev the device number of the new filesystem
      */
-    RamFSSuperblock ( Dentry* s_root, uint32 s_dev );
+    RamFSSuperblock (uint32 s_dev );
     virtual ~RamFSSuperblock();
 
     /**

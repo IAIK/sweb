@@ -87,7 +87,7 @@ extern "C" void startup()
   debug(MAIN, "Mounting root file system\n");
   vfs.registerFileSystem(new DeviceFSType());
   vfs.registerFileSystem(new RamFSType());
-  default_working_dir = vfs.root_mount("ramfs", 0);
+  default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
   debug(MAIN, "Block Device creation\n");

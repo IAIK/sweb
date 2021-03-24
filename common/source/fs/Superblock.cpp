@@ -4,8 +4,8 @@
 #include "Inode.h"
 #include "File.h"
 
-Superblock::Superblock(Dentry* s_root, size_t s_dev) :
-    s_magic_(0), s_type_(0), s_dev_(s_dev), s_flags_(0), s_root_(s_root), mounted_over_(0)
+Superblock::Superblock(size_t s_dev) :
+    s_magic_(0), s_type_(0), s_dev_(s_dev), s_flags_(0), s_root_(0), s_mountpoint_(0)
 {
 }
 
@@ -29,7 +29,12 @@ Dentry* Superblock::getRoot()
 
 Dentry* Superblock::getMountPoint()
 {
-  return mounted_over_;
+  return s_mountpoint_;
+}
+
+void Superblock::setMountPoint(Dentry* mountpoint)
+{
+    s_mountpoint_ = mountpoint;
 }
 
 FileSystemType* Superblock::getFSType()

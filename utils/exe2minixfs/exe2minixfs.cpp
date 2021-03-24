@@ -52,10 +52,12 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, offset);
+  superblock_ = (Superblock*) new MinixFSSuperblock((size_t)image_fd, offset);
+  Dentry *root = superblock_->getRoot();
+  superblock_->setMountPoint(root);
   Dentry *mount_point = superblock_->getMountPoint();
   mount_point->setMountPoint(mount_point);
-  Dentry *root = superblock_->getRoot();
+
 
   default_working_dir = new FileSystemInfo();
   default_working_dir->setFsRoot(root, &vfs_dummy_);
