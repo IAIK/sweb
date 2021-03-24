@@ -23,6 +23,7 @@
 #include "FileSystemInfo.h"
 #include "Dentry.h"
 #include "DeviceFSType.h"
+#include "RamFSType.h"
 #include "VirtualFileSystem.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
@@ -83,10 +84,11 @@ extern "C" void startup()
   ArchCommon::initDebug();
 
   vfs.initialize();
-  debug(MAIN, "Mounting DeviceFS under /dev/\n");
-  DeviceFSType *devfs = new DeviceFSType();
-  vfs.registerFileSystem(devfs);
-  default_working_dir = vfs.root_mount("devicefs", 0);
+  debug(MAIN, "Mounting root file system\n");
+  vfs.registerFileSystem(new DeviceFSType());
+  vfs.registerFileSystem(new RamFSType());
+  default_working_dir = vfs.root_mount("ramfs", 0);
+  assert(default_working_dir);
 
   debug(MAIN, "Block Device creation\n");
   BDManager::getInstance()->doDeviceDetection();
