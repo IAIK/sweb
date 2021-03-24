@@ -417,7 +417,10 @@ int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const cha
     assert(vfs.registerFileSystem(new MinixFSType()) == 0);
   }
   else if (!type)
-    return -1; // file system type not known
+  {
+      debug(VFSSYSCALL, "(mount) Unknown file system %s\n", file_system_name);
+      return -1; // file system type not known
+  }
 
   return vfs.mount(device_name, dir_name, file_system_name, flag);
 }

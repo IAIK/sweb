@@ -5,6 +5,7 @@
 
 MinixFSType::MinixFSType() : FileSystemType("minixfs")
 {
+    fs_flags_ |= FS_REQUIRES_DEV;
 }
 
 

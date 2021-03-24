@@ -87,6 +87,11 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
 FileSystemInfo *VirtualFileSystem::root_mount(const char *fs_name, uint32 /*flags*/)
 {
   FileSystemType *fst = getFsType(fs_name);
+  if(!fst)
+  {
+      debug(VFS, "Unknown file system %s\n", fs_name);
+      return nullptr;
+  }
 
   Superblock *super = fst->createSuper(0, -1);
   super = fst->readSuper(super, 0);
@@ -109,46 +114,61 @@ FileSystemInfo *VirtualFileSystem::root_mount(const char *fs_name, uint32 /*flag
 
 int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const char* fs_name, uint32 /*flags*/)
 {
-  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
-  if (!dev_name)
-    return -1;
+  debug(VFS, "Mount fs %s at %s with device %s\n", fs_name, dir_name, dev_name ? dev_name : "(null)");
+
   if ((!dir_name) || (!fs_name))
-    return -1;
+      return -1;
 
-  BDVirtualDevice* bddev = BDManager::getInstance()->getDeviceByName(dev_name);
-  uint32 dev = bddev ? bddev->getDeviceNumber() : (uint32) -1;
-  if (!bddev && strcmp(dev_name, "") != 0)
-  {
-    debug(VFS, "mount: device with name %s doesn't exist\n", dev_name);
-    return -1;
-  }
-
-  debug(VFS, "dev_nr:%d\n", dev);
   FileSystemType *fst = getFsType(fs_name);
   if (!fst)
-    return -1;
+      return -1;
 
+  if ((fst->getFSFlags() & FS_REQUIRES_DEV) && !dev_name)
+      return -1;
+
+  FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
+  assert(fs_info);
+
+  uint32_t dev = -1;
+  if(fst->getFSFlags() & FS_REQUIRES_DEV)
+  {
+      BDVirtualDevice* bddev = BDManager::getInstance()->getDeviceByName(dev_name);
+      if (!bddev)
+      {
+          debug(VFS, "mount: device with name %s doesn't exist\n", dev_name);
+          return -1;
+      }
+
+      dev = bddev->getDeviceNumber();
+      debug(VFS, "mount: dev_nr: %d\n", dev);
+  }
+
+  // Find mount point
   fs_info->pathname_ = dir_name;
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
+  Dentry* mountpoint_dentry = 0;
+  VfsMount* mountpoint_vfs_mount = 0;
+  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, mountpoint_dentry, mountpoint_vfs_mount);
 
   if (success != 0)
-    return -1;
-
-  // found the mount point
-  Dentry *found_dentry = pw_dentry;
-  VfsMount *found_vfs_mount = pw_vfs_mount;
+  {
+      debug(VFS, "mount: Could not find mountpoint\n");
+      return -1;
+  }
 
   // create a new superblock
-  Superblock *super = fst->createSuper(found_dentry, dev);
+  Superblock *super = fst->createSuper(mountpoint_dentry, dev);
   if (!super)
-    return -1;
+  {
+      debug(VFS, "mount: Superblock creation failed\n");
+      return -1;
+  }
+
+  debug(VFS, "mount: Fill superblock\n");
   super = fst->readSuper(super, 0); //?
   Dentry *root = super->getRoot();
 
   // create a new vfs_mount
-  VfsMount *std_mount = new VfsMount(found_vfs_mount, found_dentry, root, super, 0);
+  VfsMount *std_mount = new VfsMount(mountpoint_vfs_mount, mountpoint_dentry, root, super, 0);
   mounts_.push_back(std_mount);
   superblocks_.push_back(super);
   return 0;
@@ -175,18 +195,14 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
     return -1;
 
   fs_info->pathname_ = dir_name;
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
+  Dentry* mountpoint_dentry = 0;
+  VfsMount* mountpoint_vfs_mount = 0;
+  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, mountpoint_dentry, mountpoint_vfs_mount);
 
   if (success != 0)
     return -1;
 
-  // test the umount point\n
-  Dentry *found_dentry = pw_dentry;
-  VfsMount * found_vfs_mount = pw_vfs_mount;
-
-  if (found_vfs_mount == 0)
+  if (mountpoint_vfs_mount == 0)
   {
     debug(VFS, "umount point error\n");
     return -1;
@@ -196,12 +212,12 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 
   // in the case, the current-directory is in the local-root of the umounted
   // filesystem
-  if (fs_info->getPwdMnt() == found_vfs_mount)
+  if (fs_info->getPwdMnt() == mountpoint_vfs_mount)
   {
-    if (fs_info->getPwd() == found_dentry)
+    if (fs_info->getPwd() == mountpoint_dentry)
     {
       debug(VFS, "the mount point exchange\n");
-      fs_info->setFsPwd(found_vfs_mount->getMountPoint(), found_vfs_mount->getParent());
+      fs_info->setFsPwd(mountpoint_vfs_mount->getMountPoint(), mountpoint_vfs_mount->getParent());
     }
     else
     {
@@ -210,10 +226,10 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
     }
   }
 
-  Superblock *sb = found_vfs_mount->getSuperblock();
+  Superblock *sb = mountpoint_vfs_mount->getSuperblock();
 
-  mounts_.remove(found_vfs_mount);
-  delete found_vfs_mount;
+  mounts_.remove(mountpoint_vfs_mount);
+  delete mountpoint_vfs_mount;
   delete sb;
 
   return 0;
