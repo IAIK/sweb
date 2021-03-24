@@ -19,33 +19,16 @@ DeviceFSSuperBlock* DeviceFSSuperBlock::instance_ = 0;
 DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev) :
     Superblock(s_root, s_dev)
 {
+  // create the root folder
   Inode *root_inode = createInode(I_DIR);
   Dentry *root_dentry = new Dentry(root_inode);
-
-  // mount the superblock over s_root or over default mount point
-
-  if (s_root)
-    mounted_over_ = s_root;
-  else
-    mounted_over_ = root_dentry;
-
-  // create the inode for the root_dentry
-  int32 root_init = root_inode->mknod(root_dentry);
-  assert(root_init == 0);
-
-  auto device_root_inode = createInode(I_DIR);
-  Dentry *device_root_dentry = new Dentry(device_root_inode, root_dentry, DEVICE_ROOT_NAME);
-
-  // create the inode for the device_root_dentry
-  root_init = device_root_inode->mknod(device_root_dentry);
-  assert(root_init == 0);
-
-  // set the root to /
+  assert(root_inode->mknod(root_dentry) == 0);
   s_root_ = root_dentry;
-  // set the dev directory to /dev/
-  s_dev_dentry_ = device_root_dentry;
 
-  cDevice = 0;
+  // mount the superblock over s_root (when used as root file system) or over given mount point
+  mounted_over_ = s_root ?
+      s_root :     // MOUNT
+      root_dentry; // ROOT
 }
 
 DeviceFSSuperBlock::~DeviceFSSuperBlock()
@@ -67,15 +50,14 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
   all_inodes_.clear();
 }
 
-void DeviceFSSuperBlock::addDevice(Inode* device, const char* device_name)
+void DeviceFSSuperBlock::addDevice(Inode* device_inode, const char* node_name)
 {
-  Dentry* fdntr = new Dentry(device, s_dev_dentry_, device_name);
+  // Devices are mounted at the devicefs root (s_root_)
+  Dentry* fdntr = new Dentry(device_inode, s_root_, node_name);
 
-  cDevice = (Inode *) device;
-  cDevice->mknod(fdntr);
-  cDevice->setSuperBlock(this);
-
-  all_inodes_.push_back(cDevice);
+  device_inode->mknod(fdntr);
+  device_inode->setSuperBlock(this);
+  all_inodes_.push_back(device_inode);
 }
 
 Inode* DeviceFSSuperBlock::createInode(uint32 type)

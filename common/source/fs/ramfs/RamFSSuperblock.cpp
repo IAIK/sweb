@@ -12,27 +12,15 @@
 RamFSSuperblock::RamFSSuperblock(Dentry* s_root, uint32 s_dev) :
     Superblock(s_root, s_dev)
 {
-  Inode *root_inode = (Inode*) (new RamFSInode(this, I_DIR));
+  Inode *root_inode = createInode(I_DIR);
   Dentry *root_dentry = new Dentry(root_inode);
-
-  if (s_root)
-  {
-    // MOUNT
-    mounted_over_ = s_root;
-  }
-  else
-  {
-    // ROOT
-    mounted_over_ = root_dentry;
-  }
+  assert(root_inode->mknod(root_dentry) == 0);
   s_root_ = root_dentry;
 
-  // create the inode for the root_dentry
-  int32 root_init = root_inode->mknod(root_dentry);
-  assert(root_init == 0);
-
-  // add the root_inode in the list
-  all_inodes_.push_back(root_inode);
+  // mount the superblock over s_root (when used as root file system) or over given mount point
+  mounted_over_ = s_root ?
+      s_root :     // MOUNT
+      root_dentry; // ROOT
 }
 
 RamFSSuperblock::~RamFSSuperblock()

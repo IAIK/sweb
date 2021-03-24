@@ -41,9 +41,9 @@ class DeviceFSSuperBlock : public Superblock
     /**
      * addsa new device to the superblock
      * @param inode the inode of the device to add
-     * @param device_name the device name
+     * @param node_name the device name
      */
-    void addDevice(Inode* inode, const char* device_name);
+    void addDevice(Inode* inode, const char* node_name);
 
     /**
      * Access method to the singleton instance
@@ -63,9 +63,6 @@ class DeviceFSSuperBlock : public Superblock
      * @param s_dev the device number of the new Filesystem
      */
     DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev);
-
-    Inode* cDevice;
-    Dentry* s_dev_dentry_;
 
   protected:
     static DeviceFSSuperBlock* instance_;
