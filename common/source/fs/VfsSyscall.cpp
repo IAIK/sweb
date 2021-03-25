@@ -273,83 +273,96 @@ int32 VfsSyscall::close(uint32 fd)
 
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
+  if(!pathname)
+  {
+    debug(VFSSYSCALL, "(open) Invalid pathname\n");
+    return -1;
+  }
+
+  debug(VFSSYSCALL, "(open) Opening file %s\n", pathname);
   FileSystemInfo *fs_info = getcwd();
   if (flag & ~(O_RDONLY | O_WRONLY | O_CREAT | O_RDWR | O_TRUNC | O_APPEND))
   {
-    debug(VFSSYSCALL, "(open) invalid parameter flag\n");
+    debug(VFSSYSCALL, "(open) Invalid flag parameter\n");
     return -1;
   }
   if(flag & (O_APPEND | O_TRUNC))
   {
-    kprintfd("(open) flags not yet implemented\n");
+    kprintfd("(open) ERROR: Flags not yet implemented\n"); // kprintfd instead of debug so it will be printed even if the debug flag is disabled
     return -1;
   }
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
+  Dentry* target_dentry = 0;
+  VfsMount* target_vfs_mount = 0;
+  if (dupChecking(pathname, target_dentry, target_vfs_mount) == 0)
   {
-    debug(VFSSYSCALL, "(open)current_dentry->getInode() \n");
-    Inode* current_inode = pw_dentry->getInode();
-    debug(VFSSYSCALL, "(open) current_inode->getSuperblock()\n");
-    Superblock* current_sb = current_inode->getSuperblock();
+    debug(VFSSYSCALL, "(open) Found target file\n");
+    Inode* target_inode = target_dentry->getInode();
+    Superblock* target_sb = target_inode->getSuperblock();
 
-    if (current_inode->getType() != I_FILE)
+    if (target_inode->getType() != I_FILE)
     {
       debug(VFSSYSCALL, "(open) Error: This path is not a file\n");
       return -1;
     }
 
-    int32 fd = current_sb->createFd(current_inode, flag);
-    debug(VFSSYSCALL, "the fd-num: %d, flag: %d\n", fd, flag);
+    int32 fd = target_sb->createFd(target_inode, flag);
+    debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd, flag);
 
     return fd;
   }
   else if (flag & O_CREAT)
   {
-    debug(VFSSYSCALL, "(open) create a new file\n");
-    uint32 len = fs_info->pathname_.find_last_of("/");
-    ustl::string sub_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len);
-    // set directory
-    fs_info->pathname_ = fs_info->pathname_.substr(0, len);
+    debug(VFSSYSCALL, "(open) target does not exist, creating new file\n");
 
-    Dentry* pw_dentry = 0;
-    VfsMount* pw_vfs_mount = 0;
-    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
+    uint32 len = fs_info->pathname_.find_last_of("/"); // Find last separator
+    ustl::string new_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len); // Part after last separator = new file name
+    // set directory
+    fs_info->pathname_ = fs_info->pathname_.substr(0, len); // Part before last separator = parent directory name
+
+    Dentry* parent_dir_dentry = 0;
+    VfsMount* parent_dir_vfs_mount = 0;
+    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, parent_dir_dentry, parent_dir_vfs_mount);
 
     if (success != 0)
     {
-      debug(VFSSYSCALL, "(open) path_walker failed\n\n");
+      debug(VFSSYSCALL, "(open) ERROR: parent directory does not exist\n");
       return -1;
     }
 
-    Inode* current_inode = pw_dentry->getInode();
-    Superblock* current_sb = current_inode->getSuperblock();
+    debug(VFSSYSCALL, "(open) Found parent directory\n");
+    Inode* parent_dir_inode = parent_dir_dentry->getInode();
+    Superblock* parent_dir_sb = parent_dir_inode->getSuperblock();
 
-    if (current_inode->getType() != I_DIR)
+    if (parent_dir_inode->getType() != I_DIR)
     {
-      debug(VFSSYSCALL, "(open) Error: This path is not a directory\n\n");
+      debug(VFSSYSCALL, "(open) ERROR: This path is not a directory\n");
       return -1;
     }
 
-    debug(VFSSYSCALL, "(open) calling create Inode\n");
-    Inode* sub_inode = current_sb->createInode(I_FILE);
-    if (!sub_inode)
+    debug(VFSSYSCALL, "(open) Creating inode for new file\n");
+    Inode* new_file_inode = parent_dir_sb->createInode(I_FILE);
+    if (!new_file_inode)
     {
+      debug(VFSSYSCALL, "(open) ERROR: Unable to create inode for new file\n");
       return -1;
     }
 
-    Dentry *sub_dentry = new Dentry(sub_inode, pw_dentry, sub_dentry_name);
-    sub_inode->mkfile(sub_dentry);
+    debug(VFSSYSCALL, "(open) Creating dentry for new file\n");
+    Dentry* new_file_dentry = new Dentry(new_file_inode, parent_dir_dentry, new_dentry_name);
+    new_file_inode->mkfile(new_file_dentry);
 
-    debug(VFSSYSCALL, "(open) created Inode with dentry name %s\n", sub_inode->getDentry()->getName());
+    debug(VFSSYSCALL, "(open) Created inode with dentry name %s\n", new_file_inode->getDentry()->getName());
 
-    int32 fd = current_sb->createFd(sub_inode, flag);
-    debug(VFSSYSCALL, "the fd-num: %d\n", fd);
+    int32 fd = parent_dir_sb->createFd(new_file_inode, flag);
+    debug(VFSSYSCALL, "(open) Fd for new open file: %d\n", fd);
 
     return fd;
   }
   else
+  {
+    debug(VFSSYSCALL, "(open) File not found\n");
     return -1;
+  }
 }
 
 int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
