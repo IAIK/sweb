@@ -7,6 +7,7 @@ class Dentry;
 class VfsMount;
 class FileDescriptor;
 class VfsSyscall;
+class Path;
 
 class VfsSyscall
 {
@@ -17,7 +18,7 @@ class VfsSyscall
      * @param pathname the input pathname
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount);
+    static int32 dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path);
 
   public:
 

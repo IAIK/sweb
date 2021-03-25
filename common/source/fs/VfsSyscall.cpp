@@ -37,7 +37,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
   return 0;
 }
 
-int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount)
+int32 VfsSyscall::dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path)
 {
   FileSystemInfo *fs_info = getcwd();
   assert(fs_info != NULL);
@@ -57,83 +57,77 @@ int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount
   }
   fs_info->pathname_ += pathname;
 
-  return PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
+  return PathWalker::pathWalk(fs_info->pathname_.c_str(), pwd, root, 0, out_path);
 }
 
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
-  debug(VFSSYSCALL, "(mkdir) \n");
+  debug(VFSSYSCALL, "(mkdir) Path: %s\n", pathname);
   FileSystemInfo *fs_info = getcwd();
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
+
+  Path target_path;
+  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_path) == 0)
   {
-    debug(VFSSYSCALL, "(mkdir) the pathname exists\n");
+    debug(VFSSYSCALL, "(mkdir) The pathname already exists\n");
     return -1;
   }
+
+  // Find parent directory
   uint32 len = fs_info->pathname_.find_last_of("/");
   ustl::string sub_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len);
-  // set directory
+  // set parent directory path
   fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
-  debug(VFSSYSCALL, "(mkdir) path_prev_name: %s\n", fs_info->pathname_.c_str());
-  pw_dentry = 0;
-  pw_vfs_mount = 0;
-  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
+  Path parent_dir_path;
+  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, parent_dir_path);
 
   if (success != 0)
   {
-    debug(VFSSYSCALL, "path_walker failed\n\n");
+    debug(VFSSYSCALL, "(mkdir) Parent directory not found\n\n");
     return -1;
   }
 
-  Inode* current_inode = pw_dentry->getInode();
-  Superblock* current_sb = current_inode->getSuperblock();
+  Inode* parent_dir_inode = parent_dir_path.dentry_->getInode();
+  Superblock* parent_dir_sb = parent_dir_inode->getSuperblock();
 
-  if (current_inode->getType() != I_DIR)
+  if (parent_dir_inode->getType() != I_DIR)
   {
-    debug(VFSSYSCALL, "This path is not a directory\n\n");
+    debug(VFSSYSCALL, "(mkdir) This path is not a directory\n");
     return -1;
   }
 
-  Inode* sub_inode = current_sb->createInode(I_DIR);
-  Dentry *sub_dentry = new Dentry(sub_inode, pw_dentry, sub_dentry_name);
-  sub_inode->mkdir(sub_dentry);
+  debug(VFSSYSCALL, "(mkdir) Creating new directory Inode in superblock %p of type %s\n", parent_dir_sb, parent_dir_sb->getFSType()->getFSName());
+  Inode* new_dir_inode = parent_dir_sb->createInode(I_DIR);
 
-  debug(VFSSYSCALL, "(mkdir) creating Inode: current_dentry->getName(): %s\n", pw_dentry->getName());
-  debug(VFSSYSCALL, "(mkdir) creating Inode: sub_dentry->getName(): %s\n", sub_dentry->getName());
-  debug(VFSSYSCALL, "(mkdir) current_sb: %p\n", current_sb);
-  debug(VFSSYSCALL, "(mkdir) current_sb->getFSType(): %p\n", current_sb->getFSType());
-
-  debug(VFSSYSCALL, "(mkdir) sub_dentry->getInode(): %p\n", sub_dentry->getInode());
+  debug(VFSSYSCALL, "(mkdir) Creating new direntry: %s in parent dir %s\n", sub_dentry_name.c_str(), parent_dir_path.dentry_->getName());
+  Dentry* new_dir_dentry = new Dentry(new_dir_inode, parent_dir_path.dentry_, sub_dentry_name);
+  new_dir_inode->mkdir(new_dir_dentry);
   return 0;
 }
 
 Dirent* VfsSyscall::readdir(const char* pathname)
 {
   FileSystemInfo *fs_info = getcwd();
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
+  Path target_dir;
+  // TODO: dup checking is unnecessary here, just check if pathWalk succeeds or not
+  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_dir) == 0)
   {
-    Dentry* pw_dentry = 0;
-    VfsMount* pw_vfs_mount = 0;
-    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
+    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, target_dir);
 
     if (success != 0)
     {
-      debug(VFSSYSCALL, "(list) path_walker failed\n\n");
-      return ((Dirent*) 0);
+      debug(VFSSYSCALL, "(readdir) ERROR: Target directory not found\n");
+      return nullptr;
     }
 
-    if (pw_dentry->getInode()->getType() != I_DIR)
+    if (target_dir.dentry_->getInode()->getType() != I_DIR)
     {
-      debug(VFSSYSCALL, "This path is not a directory\n\n");
-      return (Dirent*) 0;
+      debug(VFSSYSCALL, "(readdir) ERROR: This path is not a directory\n\n");
+      return nullptr;
     }
 
-    debug(VFSSYSCALL, "listing dir %s:\n", pw_dentry->getName());
-    for (Dentry* sub_dentry : pw_dentry->d_child_)
+    debug(VFSSYSCALL, "(readdir) listing dir %s:\n", target_dir.dentry_->getName());
+    for (Dentry* sub_dentry : target_dir.dentry_->d_child_)
     {
       uint32 inode_type = sub_dentry->getInode()->getType();
       switch (inode_type)
@@ -163,22 +157,21 @@ Dirent* VfsSyscall::readdir(const char* pathname)
 int32 VfsSyscall::chdir(const char* pathname)
 {
   FileSystemInfo *fs_info = getcwd();
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
+  Path target_dir;
+  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_dir) != 0)
   {
     debug(VFSSYSCALL, "Error: (chdir) the directory does not exist.\n");
     return -1;
   }
 
-  Inode* current_inode = pw_dentry->getInode();
+  Inode* current_inode = target_dir.dentry_->getInode();
   if (current_inode->getType() != I_DIR)
   {
     debug(VFSSYSCALL, "This path is not a directory\n\n");
     return -1;
   }
 
-  fs_info->setFsPwd(pw_dentry, pw_vfs_mount);
+  fs_info->setFsPwd(target_dir);
 
   return 0;
 }
@@ -186,15 +179,16 @@ int32 VfsSyscall::chdir(const char* pathname)
 int32 VfsSyscall::rm(const char* pathname)
 {
   debug(VFSSYSCALL, "(rm) name: %s\n", pathname);
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
+
+  FileSystemInfo *fs_info = getcwd();
+  Path target_path;
+  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_path) != 0)
   {
-    debug(VFSSYSCALL, "Error: (rm) the directory does not exist.\n");
+    debug(VFSSYSCALL, "(rm) target file does not exist.\n");
     return -1;
   }
-  debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", pw_dentry->getName());
-  Inode* current_inode = pw_dentry->getInode();
+  debug(VFSSYSCALL, "(rm) current_dentry->getName(): %s \n", target_path.dentry_->getName());
+  Inode* current_inode = target_path.dentry_->getInode();
   debug(VFSSYSCALL, "(rm) current_inode: %p\n", current_inode);
 
   if (current_inode->getType() != I_FILE)
@@ -221,16 +215,15 @@ int32 VfsSyscall::rm(const char* pathname)
 
 int32 VfsSyscall::rmdir(const char* pathname)
 {
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
-  if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
+  FileSystemInfo *fs_info = getcwd();
+  Path target_dir;
+  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_dir) != 0)
   {
     debug(VFSSYSCALL, "Error: (rmdir) the directory does not exist.\n");
     return -1;
   }
 
-  Dentry* current_dentry = pw_dentry;
-  Inode* current_inode = current_dentry->getInode();
+  Inode* current_inode = target_dir.dentry_->getInode();
 
   //if directory is read from a real file system,
   //it can't ever be empty, "." and ".." are still
@@ -291,12 +284,12 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     kprintfd("(open) ERROR: Flags not yet implemented\n"); // kprintfd instead of debug so it will be printed even if the debug flag is disabled
     return -1;
   }
-  Dentry* target_dentry = 0;
-  VfsMount* target_vfs_mount = 0;
-  if (dupChecking(pathname, target_dentry, target_vfs_mount) == 0)
+
+  Path target_path;
+  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_path) == 0)
   {
     debug(VFSSYSCALL, "(open) Found target file\n");
-    Inode* target_inode = target_dentry->getInode();
+    Inode* target_inode = target_path.dentry_->getInode();
     Superblock* target_sb = target_inode->getSuperblock();
 
     if (target_inode->getType() != I_FILE)
@@ -319,9 +312,8 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     // set directory
     fs_info->pathname_ = fs_info->pathname_.substr(0, len); // Part before last separator = parent directory name
 
-    Dentry* parent_dir_dentry = 0;
-    VfsMount* parent_dir_vfs_mount = 0;
-    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, parent_dir_dentry, parent_dir_vfs_mount);
+    Path parent_dir_path;
+    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, parent_dir_path);
 
     if (success != 0)
     {
@@ -330,7 +322,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     }
 
     debug(VFSSYSCALL, "(open) Found parent directory\n");
-    Inode* parent_dir_inode = parent_dir_dentry->getInode();
+    Inode* parent_dir_inode = parent_dir_path.dentry_->getInode();
     Superblock* parent_dir_sb = parent_dir_inode->getSuperblock();
 
     if (parent_dir_inode->getType() != I_DIR)
@@ -348,7 +340,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     }
 
     debug(VFSSYSCALL, "(open) Creating dentry for new file\n");
-    Dentry* new_file_dentry = new Dentry(new_file_inode, parent_dir_dentry, new_dentry_name);
+    Dentry* new_file_dentry = new Dentry(new_file_inode, parent_dir_path.dentry_, new_dentry_name);
     new_file_inode->mkfile(new_file_dentry);
 
     debug(VFSSYSCALL, "(open) Created inode with dentry name %s\n", new_file_inode->getDentry()->getName());
@@ -425,11 +417,7 @@ int32 VfsSyscall::flush(uint32 fd)
 int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
 {
   FileSystemType* type = vfs.getFsType(file_system_name);
-  if (!type && strcmp(file_system_name, "minixfs") == 0)
-  {
-    assert(vfs.registerFileSystem(new MinixFSType()) == 0);
-  }
-  else if (!type)
+  if (!type)
   {
       debug(VFSSYSCALL, "(mount) Unknown file system %s\n", file_system_name);
       return -1; // file system type not known

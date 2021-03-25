@@ -7,6 +7,7 @@
 #include "kstring.h"
 #include "kprintf.h"
 #include "FileSystemInfo.h"
+#include "Path.h"
 #ifndef EXE2MINIXFS
 #include "Mutex.h"
 #include "Thread.h"
@@ -17,8 +18,7 @@
 #define CHAR_ROOT '/'
 #define SEPARATOR '/'
 
-int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_,
-                           VfsMount*& vfs_mount_)
+int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& root, uint32 flags_ __attribute__ ((unused)), Path& out)
 {
   // Flag indicating the type of the last path component.
   int32 last_type_ = 0;
@@ -26,44 +26,34 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
   // The last path component
   char* last_ = 0;
 
-  FileSystemInfo *fs_info = getcwd();
   if (pathname == 0)
   {
+    debug(PATHWALKER, "pathWalk> ERROR: pathname is null\n");
     return PW_ENOTFOUND;
   }
 
   // check the first character of the path
   if (*pathname == CHAR_ROOT)
   {
+    // Start at ROOT
     last_type_ = LAST_ROOT;
-    // altroot check
-
-    // start with ROOT
-    dentry_ = fs_info->getRoot();
-    vfs_mount_ = fs_info->getRootMnt();
+    out = root;
   }
   else
   {
-    // start with PWD
-    dentry_ = fs_info->getPwd();
-    vfs_mount_ = fs_info->getPwdMnt();
+    // Start at PWD
+    out = pwd;
   }
 
-  if ((dentry_ == 0) || (vfs_mount_ == 0))
+  if ((out.dentry_ == 0) || (out.mnt_ == 0))
   {
-    kprintfd("PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
+    debug(PATHWALKER, "PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", out.dentry_, out.mnt_);
     return PW_ENOTFOUND;
   }
-  debug(PATHWALKER, "PathWalk> return success - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
+  debug(PATHWALKER, "PathWalk> Start dentry: %p, vfs_mount: %p\n", out.dentry_, out.mnt_);
 
-  debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
-  fs_info = getcwd();
-  debug(PATHWALKER, "pathWalk> fs_info->pathname_.c_str() : %s\n", fs_info->pathname_.c_str());
-  if (pathname == 0)
-  {
-    debug(PATHWALKER, "pathWalk> return pathname not found\n");
-    return PW_ENOTFOUND;
-  }
+  debug(PATHWALKER, "pathWalk> pathname: %s\n", pathname);
+
 
   while (*pathname == SEPARATOR)
     pathname++;
@@ -126,56 +116,49 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
       debug(PATHWALKER, "pathWalk> follow last dotdot\n");
       last_ = 0;
 
-      if ((dentry_ == fs_info->getRoot()) && (vfs_mount_ == fs_info->getRootMnt()))
+      if(out == root)
       {
-        // the dentry_ is the root of file-system
-        // because the ROOT has not parent from VfsMount.
+        debug(PATHWALKER, "pathWalk> Reached global file system root\n");
         continue;
       }
+
 #ifndef EXE2MINIXFS
-      VfsMount* vfs_mount = vfs.getVfsMount(dentry_, true);
-      if (vfs_mount != 0)
+      if(out.dentry_->getParent() == out.dentry_)
       {
-        // the dentry_ is a mount-point
-        vfs_mount_ = vfs_mount->getParent();
-        dentry_ = vfs_mount->getMountPoint();
+        debug(PATHWALKER, "pathWalk> file system mount root reached, going up a mount to vfsmount %p, mountpoint %p %s\n", out.mnt_->getParent(), out.mnt_->getMountPoint(), out.mnt_->getMountPoint()->getName());
+
+        out.dentry_ = out.mnt_->getMountPoint();
+        out.mnt_ = out.mnt_->getParent();
       }
 #endif
-      Dentry* parent_dentry = dentry_->getParent();
-      dentry_ = parent_dentry;
+      out.dentry_ = out.dentry_->getParent();
       continue;
     }
     else if (last_type_ == LAST_NORM) // follow LAST_NORM
     {
       debug(PATHWALKER, "pathWalk> follow last norm last_: %s\n", last_);
-      Inode* current_inode = dentry_->getInode();
+      Inode* current_inode = out.dentry_->getInode();
       Dentry *found = current_inode->lookup(last_);
-      if (found)
-        debug(PATHWALKER, "pathWalk> found->getName() : %s\n", found->getName());
-      else
-        debug(PATHWALKER, "pathWalk> no dentry found !!!\n");
-      last_ = 0;
-      if (found != 0)
+      if(!found)
       {
-        dentry_ = found;
-      }
-      else
-      {
-        debug(PATHWALKER, "pathWalk> return dentry not found\n");
+        debug(PATHWALKER, "pathWalk> dentry %s not found\n", last_);
         return PW_ENOTFOUND;
       }
+
+      debug(PATHWALKER, "pathWalk> found dentry %s\n", found->getName());
+
+      last_ = 0;
+      out.dentry_ = found;
+
 #ifndef EXE2MINIXFS
-      VfsMount* vfs_mount = vfs.getVfsMount(dentry_);
+      VfsMount* vfs_mount = vfs.getVfsMount(out.dentry_);
       if (vfs_mount != 0)
       {
-        debug(PATHWALKER, "MOUNT_DOWN\n");
-        // the dentry_ is a mount-point
-        // update the vfs_mount_
-        vfs_mount_ = vfs_mount;
+        debug(PATHWALKER, "Reached mountpoint at %s, going down to mounted file system\n", out.dentry_->getName());
+        assert(out.dentry_->getMountedRoot() == vfs_mount->getRoot());
 
-        // change the dentry of the mount-point
-        dentry_ = vfs_mount_->getRoot();
-
+        out.mnt_ = vfs_mount;
+        out.dentry_ = vfs_mount->getRoot();
       }
 #endif
     }

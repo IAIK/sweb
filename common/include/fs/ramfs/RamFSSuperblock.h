@@ -4,6 +4,7 @@
 
 class Inode;
 class Superblock;
+class RamFSType;
 
 class RamFSSuperblock : public Superblock
 {
@@ -13,7 +14,7 @@ class RamFSSuperblock : public Superblock
      * @param s_root the root dentry of the new filesystem
      * @param s_dev the device number of the new filesystem
      */
-    RamFSSuperblock (uint32 s_dev );
+    RamFSSuperblock (RamFSType* type, uint32 s_dev );
     virtual ~RamFSSuperblock();
 
     /**

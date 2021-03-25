@@ -9,13 +9,14 @@
 #include "Dentry.h"
 #include "FileSystemInfo.h"
 #include "Superblock.h"
+#include "MinixFSType.h"
 #include "MinixFSSuperblock.h"
 #include "VfsSyscall.h"
 #include "VfsMount.h"
 
 Superblock* superblock_;
 FileSystemInfo* default_working_dir;
-VfsMount vfs_dummy_;
+
 
 FileSystemInfo* getcwd() { return default_working_dir; }
 
@@ -52,16 +53,21 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  superblock_ = (Superblock*) new MinixFSSuperblock((size_t)image_fd, offset);
+  MinixFSType* minixfs_type = new MinixFSType();
+
+  superblock_ = (Superblock*) new MinixFSSuperblock(minixfs_type, (size_t)image_fd, offset);
   Dentry *root = superblock_->getRoot();
   superblock_->setMountPoint(root);
   Dentry *mount_point = superblock_->getMountPoint();
-  mount_point->setMountPoint(mount_point);
+  mount_point->setMountedRoot(mount_point);
+
+  VfsMount vfs_dummy_(nullptr, mount_point, root, superblock_, 0);
 
 
   default_working_dir = new FileSystemInfo();
-  default_working_dir->setFsRoot(root, &vfs_dummy_);
-  default_working_dir->setFsPwd(root, &vfs_dummy_);
+  Path root_path(root, &vfs_dummy_);
+  default_working_dir->setFsRoot(root_path);
+  default_working_dir->setFsPwd(root_path);
 
   for (int32 i = 2; i <= argc / 2; i++)
   {
@@ -99,9 +105,12 @@ int main(int argc, char *argv[])
 
     delete[] buf;
   }
+
+  delete minixfs_type;
   delete default_working_dir;
   delete superblock_;
   fclose(image_fd);
+
   return 0;
 }
 

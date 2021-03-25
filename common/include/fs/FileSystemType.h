@@ -48,7 +48,7 @@ class FileSystemType
      * @return a pointer to the Superblock object, 0 if wasn't possible to
      * create a Superblock with the given device number
      */
-    virtual Superblock *createSuper(uint32 s_dev) const = 0;
+    virtual Superblock *createSuper(uint32 s_dev) = 0;
 
 };
 

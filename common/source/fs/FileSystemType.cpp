@@ -1,4 +1,4 @@
-#include "fs/FileSystemType.h"
+#include "FileSystemType.h"
 #include "assert.h"
 
 FileSystemType::FileSystemType(const char *fs_name) :

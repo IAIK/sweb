@@ -24,6 +24,7 @@
 #include "Dentry.h"
 #include "DeviceFSType.h"
 #include "RamFSType.h"
+#include "MinixFSType.h"
 #include "VirtualFileSystem.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
@@ -85,8 +86,9 @@ extern "C" void startup()
 
   vfs.initialize();
   debug(MAIN, "Mounting root file system\n");
-  vfs.registerFileSystem(new DeviceFSType());
+  vfs.registerFileSystem(DeviceFSType::getInstance());
   vfs.registerFileSystem(new RamFSType());
+  vfs.registerFileSystem(new MinixFSType());
   default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
@@ -110,8 +112,8 @@ extern "C" void startup()
   debug(MAIN, "main_console->setWorkingDirInfo done\n");
 
   ustl::coutclass::init();
-  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot()->getName(),
-        default_working_dir->getPwd()->getName());
+  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot().dentry_->getName(),
+        default_working_dir->getPwd().dentry_->getName());
   if (main_console->getWorkingDirInfo())
   {
     delete main_console->getWorkingDirInfo();

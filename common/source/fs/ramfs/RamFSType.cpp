@@ -17,8 +17,8 @@ Superblock *RamFSType::readSuper(Superblock *superblock, void*) const
 }
 
 
-Superblock *RamFSType::createSuper (uint32 s_dev) const
+Superblock *RamFSType::createSuper (uint32 s_dev)
 {
-  Superblock *super = new RamFSSuperblock(s_dev);
+  Superblock *super = new RamFSSuperblock(this, s_dev);
   return super;
 }

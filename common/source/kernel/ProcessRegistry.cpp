@@ -33,14 +33,14 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "mounting userprog-partition \n");
 
   debug(PROCESS_REG, "mkdir /usr\n");
-  VfsSyscall::mkdir("/usr", 0);
+  assert( !VfsSyscall::mkdir("/usr", 0) );
   debug(PROCESS_REG, "mount idea1\n");
-  VfsSyscall::mount("idea1", "/usr", "minixfs", 0);
+  assert( !VfsSyscall::mount("idea1", "/usr", "minixfs", 0) );
 
   debug(PROCESS_REG, "mkdir /dev\n");
-  VfsSyscall::mkdir("/dev", 0);
+  assert( !VfsSyscall::mkdir("/dev", 0) );
   debug(PROCESS_REG, "mount devicefs\n");
-  VfsSyscall::mount(NULL, "/dev", "devicefs", 0);
+  assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
 
 
   KernelMemoryManager::instance()->startTracing();

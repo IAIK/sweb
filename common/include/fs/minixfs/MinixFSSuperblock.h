@@ -7,6 +7,7 @@
 class Inode;
 class MinixFSInode;
 class Superblock;
+class MinixFSType;
 
 class MinixFSSuperblock : public Superblock
 {
@@ -15,7 +16,7 @@ class MinixFSSuperblock : public Superblock
     friend class MinixFSZone;
     friend class MinixStorageManager;
 
-    MinixFSSuperblock(size_t s_dev, uint64 offset);
+    MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset);
     virtual ~MinixFSSuperblock();
 
     /**
@@ -200,11 +201,6 @@ class MinixFSSuperblock : public Superblock
 
     MinixStorageManager* storage_manager_;
 
-    /**
-     * offset in the image file (in image util)
-     */
-    uint64 offset_;
-
 
     ustl::map<uint32, Inode*> all_inodes_set_;
 
@@ -212,5 +208,10 @@ class MinixFSSuperblock : public Superblock
      * pointer to self for compatability
      */
     Superblock* superblock_;
+
+    /**
+     * offset in the image file (in image util)
+     */
+    uint64 offset_;
 };
 

@@ -4,6 +4,7 @@
 
 class Dentry;
 class VfsMount;
+class Path;
 
 #define MAX_NAME_LEN 100
 
@@ -85,12 +86,14 @@ class PathWalker
      * to the dentry_ object and mounted filesystem object relative to the last
      * component of the pathname.
      * @param pathname A pointer to the file pathname to be resolved
-     * @param flags The vlaue of flags that represent how to look-up file is going
+     * @param start Start directory of the file system walk
+     * @param root Root directory for the file system walk
+     * @param flags The value of flags that represent how to look-up file is going
      *         to be accessed
-     * @return On success, it is returned 0. On error, it return a non-Null value.
+     * @param out Output parameter: Found file path
+     * @return Returns 0 on success, != 0 on error
      */
-    static int32 pathWalk(const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_,
-                          VfsMount*& vfs_mount_);
+    static int32 pathWalk(const char* pathname, const Path& pwd, const Path& root, uint32 flags_ __attribute__ ((unused)), Path& out);
 
   protected:
 

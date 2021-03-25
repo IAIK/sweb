@@ -85,7 +85,7 @@ class Superblock
      * constructor
      * @param s_dev the device number of the new filesystem
      */
-    Superblock(size_t s_dev);
+    Superblock(FileSystemType* fs_type, size_t s_dev);
 
     virtual ~Superblock();
 

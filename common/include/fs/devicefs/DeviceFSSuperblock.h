@@ -5,6 +5,7 @@
 class Inode;
 class Superblock;
 class CharacterDevice;
+class DeviceFSType;
 
 class DeviceFSSuperBlock : public Superblock
 {
@@ -48,12 +49,7 @@ class DeviceFSSuperBlock : public Superblock
     /**
      * Access method to the singleton instance
      */
-    static DeviceFSSuperBlock* getInstance()
-    {
-      if (!instance_)
-        instance_ = new DeviceFSSuperBlock(0);
-      return instance_;
-    }
+    static DeviceFSSuperBlock* getInstance();
 
   private:
 
@@ -62,7 +58,7 @@ class DeviceFSSuperBlock : public Superblock
      * @param s_root the root Dentry of the new Filesystem
      * @param s_dev the device number of the new Filesystem
      */
-    DeviceFSSuperBlock(uint32 s_dev);
+    DeviceFSSuperBlock(DeviceFSType* fs_type, uint32 s_dev);
 
   protected:
     static DeviceFSSuperBlock* instance_;

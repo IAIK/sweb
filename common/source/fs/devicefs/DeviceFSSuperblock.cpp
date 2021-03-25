@@ -1,5 +1,6 @@
 #include "fs/devicefs/DeviceFSSuperblock.h"
 #include "fs/ramfs/RamFSInode.h"
+#include "DeviceFSType.h"
 #include "fs/Dentry.h"
 #include "fs/Inode.h"
 #include "fs/File.h"
@@ -9,6 +10,8 @@
 
 #include "Console.h"
 
+class DeviceFSType;
+
 extern Console* main_console;
 
 const char DeviceFSSuperBlock::ROOT_NAME[] = "/";
@@ -16,8 +19,8 @@ const char DeviceFSSuperBlock::DEVICE_ROOT_NAME[] = "dev";
 
 DeviceFSSuperBlock* DeviceFSSuperBlock::instance_ = 0;
 
-DeviceFSSuperBlock::DeviceFSSuperBlock(uint32 s_dev) :
-    Superblock(s_dev)
+DeviceFSSuperBlock::DeviceFSSuperBlock(DeviceFSType* fs_type, uint32 s_dev) :
+    Superblock(fs_type, s_dev)
 {
   // create the root folder
   Inode *root_inode = createInode(I_DIR);
@@ -100,4 +103,11 @@ int32 DeviceFSSuperBlock::removeFd(Inode* inode, FileDescriptor* fd)
   delete fd;
 
   return tmp;
+}
+
+DeviceFSSuperBlock* DeviceFSSuperBlock::getInstance()
+{
+    if (!instance_)
+        instance_ = new DeviceFSSuperBlock(DeviceFSType::getInstance(), 0);
+    return instance_;
 }

@@ -1,4 +1,5 @@
 #include "FileDescriptor.h"
+#include "MinixFSType.h"
 #include "MinixFSSuperblock.h"
 #include "MinixFSInode.h"
 #include "MinixFSFile.h"
@@ -15,10 +16,9 @@
 
 #define ROOT_NAME "/"
 
-MinixFSSuperblock::MinixFSSuperblock(size_t s_dev, uint64 offset) :
-    Superblock(s_dev), superblock_(this)
+MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset) :
+    Superblock(fs_type, s_dev), superblock_(this), offset_(offset)
 {
-  offset_ = offset;
   //read Superblock data from disc
   readHeader();
   debug(M_SB, "s_num_inodes_ : %d\ns_zones_ : %d\ns_num_inode_bm_blocks_ : %d\ns_num_zone_bm_blocks_ : %d\n"

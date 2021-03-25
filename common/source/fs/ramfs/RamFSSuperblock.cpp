@@ -2,6 +2,7 @@
 #include "fs/ramfs/RamFSSuperblock.h"
 #include "fs/ramfs/RamFSInode.h"
 #include "fs/ramfs/RamFSFile.h"
+#include "fs/ramfs/RamFSType.h"
 #include "fs/Dentry.h"
 #include "assert.h"
 
@@ -9,8 +10,8 @@
 #include "console/debug.h"
 #define ROOT_NAME "/"
 
-RamFSSuperblock::RamFSSuperblock(uint32 s_dev) :
-    Superblock(s_dev)
+RamFSSuperblock::RamFSSuperblock(RamFSType* fs_type, uint32 s_dev) :
+    Superblock(fs_type, s_dev)
 {
   Inode *root_inode = createInode(I_DIR);
   s_root_ = new Dentry(root_inode);
