@@ -28,6 +28,7 @@ target_include_directories(exe2minixfs
     ../../common/include/util
     ../../common/include/fs
     ../../common/include/fs/minixfs
+    ../../common/include/console
 )
 
 target_compile_definitions(exe2minixfs PRIVATE EXE2MINIXFS=1)

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef EXE2MINIXFS
+
 #include "stdarg.h"
 #include "types.h"
 #include "debug.h"
@@ -27,3 +29,4 @@ void kprintfd(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
  */
 void kprintf_init();
 
+#endif

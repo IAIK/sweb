@@ -70,3 +70,8 @@ void VfsMount::clear()
   mnt_flags_ = 0;
 }
 
+
+bool VfsMount::isRootMount() const
+{
+    return getParent() == this;
+}
