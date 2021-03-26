@@ -18,7 +18,7 @@
 #define CHAR_ROOT '/'
 #define SEPARATOR '/'
 
-int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& root, uint32 flags_ __attribute__ ((unused)), Path& out)
+int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& root, uint32 flags_ __attribute__ ((unused)), Path& out, Path* parent_dir)
 {
   // Flag indicating the type of the last path component.
   int32 last_type_ = 0;
@@ -28,8 +28,28 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
 
   if (pathname == 0)
   {
-    debug(PATHWALKER, "pathWalk> ERROR: pathname is null\n");
-    return PW_ENOTFOUND;
+    debug(PATHWALKER, "pathWalk> ERROR: Invalid path name\n");
+    return PW_EINVALID;
+  }
+
+  debug(PATHWALKER, "pathWalk> path: %s\n", pathname);
+
+  if ((pwd.dentry_ == 0) || (pwd.mnt_ == 0))
+  {
+      debug(PATHWALKER, "pathWalk> Error: Invalid pwd\n");
+      return PW_EINVALID;
+  }
+
+  if ((root.dentry_ == 0) || (root.mnt_ == 0))
+  {
+      debug(PATHWALKER, "pathWalk> Error: Invalid root\n");
+      return PW_EINVALID;
+  }
+
+  // Clear parent dir tracker
+  if(parent_dir)
+  {
+    *parent_dir = Path();
   }
 
   // check the first character of the path
@@ -45,21 +65,18 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
     out = pwd;
   }
 
-  if ((out.dentry_ == 0) || (out.mnt_ == 0))
-  {
-    debug(PATHWALKER, "PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", out.dentry_, out.mnt_);
-    return PW_ENOTFOUND;
-  }
+
   debug(PATHWALKER, "PathWalk> Start dentry: %p, vfs_mount: %p\n", out.dentry_, out.mnt_);
-
-  debug(PATHWALKER, "pathWalk> pathname: %s\n", pathname);
-
 
   while (*pathname == SEPARATOR)
     pathname++;
   if (!*pathname) // i.e. path = /
   {
-    debug(PATHWALKER, "pathWalk> return 0 pathname == \\n\n");
+    debug(PATHWALKER, "pathWalk> return 0 pathname == /\n");
+    if(parent_dir)
+    {
+      *parent_dir = out;
+    }
     return PW_SUCCESS;
   }
 
@@ -71,8 +88,9 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
     char npart[npart_len];
     strncpy(npart, pathname, npart_len);
     npart[npart_len - 1] = 0;
-    debug(PATHWALKER, "pathWalk> npart : %s\n", npart);
-    debug(PATHWALKER, "pathWalk> npart_pos : %d\n", npart_pos);
+    debug(PATHWALKER, "pathWalk> remaining: %s\n", pathname);
+    debug(PATHWALKER, "pathWalk> npart: %s\n", npart);
+    debug(PATHWALKER, "pathWalk> npart_len: %d, npart_pos: %d\n", npart_len, npart_pos);
     if (npart_pos < 0)
     {
       debug(PATHWALKER, "pathWalk> return path invalid npart_pos < 0 \n");
@@ -81,8 +99,8 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
 
     if ((*npart == NULL_CHAR) || (npart_pos == 0))
     {
-      debug(PATHWALKER, "pathWalk> return success\n");
-      return PW_SUCCESS;
+      debug(PATHWALKER, "pathWalk> path == \\0\n");
+      break;
     }
     pathname += npart_pos;
 
@@ -116,14 +134,14 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
       debug(PATHWALKER, "pathWalk> follow last dotdot\n");
       last_ = 0;
 
-      if(out == root)
+      if(out.isGlobalRoot(&root))
       {
         debug(PATHWALKER, "pathWalk> Reached global file system root\n");
         continue;
       }
 
 #ifndef EXE2MINIXFS
-      if(out.dentry_->getParent() == out.dentry_)
+      if(out.isMountRoot())
       {
         debug(PATHWALKER, "pathWalk> file system mount root reached, going up a mount to vfsmount %p, mountpoint %p %s\n", out.mnt_->getParent(), out.mnt_->getMountPoint(), out.mnt_->getMountPoint()->getName());
 
@@ -142,6 +160,10 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
       if(!found)
       {
         debug(PATHWALKER, "pathWalk> dentry %s not found\n", last_);
+        if(!*pathname && parent_dir) // No further remaining segments -> parent directory exists
+        {
+          *parent_dir = out;
+        }
         return PW_ENOTFOUND;
       }
 
@@ -173,6 +195,10 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
   }
   debug(PATHWALKER, "pathWalk> return 0 end of function\n");
 
+  if(parent_dir)
+  {
+    *parent_dir = out.parentDir();
+  }
   return PW_SUCCESS;
 }
 
@@ -181,15 +207,19 @@ int32 PathWalker::getNextPartLen(const char* path, int32 &npart_len)
   char* tmp = 0;
   tmp = strchr((char*) path, SEPARATOR);
 
-  npart_len = (size_t) (tmp - path + 1);
+  if (tmp != 0)
+  {
+    int32 len = (size_t) (tmp - path + 1);
+    npart_len = len;
+    while(path[npart_len] && path[npart_len] == SEPARATOR)
+        ++npart_len;
 
-  uint32 length = npart_len;
-
-  if (tmp == 0)
+    return len;
+  }
+  else
   {
     npart_len = strlen(path);
-    length = npart_len + 1;
+    return npart_len + 1;
   }
 
-  return length;
 }

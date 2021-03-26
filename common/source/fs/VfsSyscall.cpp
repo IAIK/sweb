@@ -37,7 +37,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
   return 0;
 }
 
-int32 VfsSyscall::dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path)
+int32 VfsSyscall::dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path, Path* parent_dir)
 {
   FileSystemInfo *fs_info = getcwd();
   assert(fs_info != NULL);
@@ -57,7 +57,7 @@ int32 VfsSyscall::dupChecking(const char* pathname, const Path& pwd, const Path&
   }
   fs_info->pathname_ += pathname;
 
-  return PathWalker::pathWalk(fs_info->pathname_.c_str(), pwd, root, 0, out_path);
+  return PathWalker::pathWalk(fs_info->pathname_.c_str(), pwd, root, 0, out_path, parent_dir);
 }
 
 int32 VfsSyscall::mkdir(const char* pathname, int32)

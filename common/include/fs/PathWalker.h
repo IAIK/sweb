@@ -93,7 +93,7 @@ class PathWalker
      * @param out Output parameter: Found file path
      * @return Returns 0 on success, != 0 on error
      */
-    static int32 pathWalk(const char* pathname, const Path& pwd, const Path& root, uint32 flags_ __attribute__ ((unused)), Path& out);
+    static int32 pathWalk(const char* pathname, const Path& pwd, const Path& root, uint32 flags_ __attribute__ ((unused)), Path& out, Path* parent = nullptr);
 
   protected:
 

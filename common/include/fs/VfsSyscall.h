@@ -18,7 +18,7 @@ class VfsSyscall
      * @param pathname the input pathname
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    static int32 dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path);
+    static int32 dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path, Path* parent_dir = nullptr);
 
   public:
 
