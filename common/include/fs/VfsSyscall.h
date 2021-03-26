@@ -8,6 +8,7 @@ class VfsMount;
 class FileDescriptor;
 class VfsSyscall;
 class Path;
+class FileSystemInfo;
 
 class VfsSyscall
 {
@@ -19,6 +20,8 @@ class VfsSyscall
      * @return On success, zero is returned. On error, -1 is returned.
      */
     static int32 dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path, Path* parent_dir = nullptr);
+
+    static int32 dupChecking(const char* pathname, FileSystemInfo* fs_info, Path& out_path, Path* parent_dir = nullptr);
 
   public:
 

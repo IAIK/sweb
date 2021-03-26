@@ -37,6 +37,11 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
   return 0;
 }
 
+int32 VfsSyscall::dupChecking(const char* pathname, FileSystemInfo* fs_info, Path& out_path, Path* parent_dir)
+{
+    return dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), out_path, parent_dir);
+}
+
 int32 VfsSyscall::dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path, Path* parent_dir)
 {
   FileSystemInfo *fs_info = getcwd();
@@ -66,7 +71,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
-  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_path) == 0)
+  if (dupChecking(pathname, fs_info, target_path) == 0)
   {
     debug(VFSSYSCALL, "(mkdir) The pathname already exists\n");
     return -1;
@@ -79,7 +84,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
   Path parent_dir_path;
-  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, parent_dir_path);
+  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info, 0, parent_dir_path);
 
   if (success != 0)
   {
@@ -110,9 +115,9 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   FileSystemInfo *fs_info = getcwd();
   Path target_dir;
   // TODO: dup checking is unnecessary here, just check if pathWalk succeeds or not
-  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_dir) == 0)
+  if (dupChecking(pathname, fs_info, target_dir) == 0)
   {
-    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, target_dir);
+    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info, 0, target_dir);
 
     if (success != 0)
     {
@@ -158,7 +163,7 @@ int32 VfsSyscall::chdir(const char* pathname)
 {
   FileSystemInfo *fs_info = getcwd();
   Path target_dir;
-  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_dir) != 0)
+  if (dupChecking(pathname, fs_info, target_dir) != 0)
   {
     debug(VFSSYSCALL, "Error: (chdir) the directory does not exist.\n");
     return -1;
@@ -182,7 +187,7 @@ int32 VfsSyscall::rm(const char* pathname)
 
   FileSystemInfo *fs_info = getcwd();
   Path target_path;
-  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_path) != 0)
+  if (dupChecking(pathname, fs_info, target_path) != 0)
   {
     debug(VFSSYSCALL, "(rm) target file does not exist.\n");
     return -1;
@@ -217,7 +222,7 @@ int32 VfsSyscall::rmdir(const char* pathname)
 {
   FileSystemInfo *fs_info = getcwd();
   Path target_dir;
-  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_dir) != 0)
+  if (dupChecking(pathname, fs_info, target_dir) != 0)
   {
     debug(VFSSYSCALL, "Error: (rmdir) the directory does not exist.\n");
     return -1;
@@ -266,14 +271,13 @@ int32 VfsSyscall::close(uint32 fd)
 
 int32 VfsSyscall::open(const char* pathname, uint32 flag)
 {
-  if(!pathname)
+  if(!pathname || strlen(pathname) == 0)
   {
     debug(VFSSYSCALL, "(open) Invalid pathname\n");
     return -1;
   }
 
   debug(VFSSYSCALL, "(open) Opening file %s\n", pathname);
-  FileSystemInfo *fs_info = getcwd();
   if (flag & ~(O_RDONLY | O_WRONLY | O_CREAT | O_RDWR | O_TRUNC | O_APPEND))
   {
     debug(VFSSYSCALL, "(open) Invalid flag parameter\n");
@@ -285,8 +289,13 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     return -1;
   }
 
+  FileSystemInfo *fs_info = getcwd();
+
   Path target_path;
-  if (dupChecking(pathname, fs_info->getPwd(), fs_info->getRoot(), target_path) == 0)
+  Path parent_dir_path;
+
+  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, 0, target_path, &parent_dir_path);
+  if (path_walk_status == PW_SUCCESS)
   {
     debug(VFSSYSCALL, "(open) Found target file\n");
     Inode* target_inode = target_path.dentry_->getInode();
@@ -303,25 +312,25 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     return fd;
   }
-  else if (flag & O_CREAT)
+  else if ((path_walk_status == PW_ENOTFOUND) && (flag & O_CREAT))
   {
-    debug(VFSSYSCALL, "(open) target does not exist, creating new file\n");
-
-    uint32 len = fs_info->pathname_.find_last_of("/"); // Find last separator
-    ustl::string new_dentry_name = fs_info->pathname_.substr(len+1, fs_info->pathname_.length() - len); // Part after last separator = new file name
-    // set directory
-    fs_info->pathname_ = fs_info->pathname_.substr(0, len); // Part before last separator = parent directory name
-
-    Path parent_dir_path;
-    int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, parent_dir_path);
-
-    if (success != 0)
+    if (!parent_dir_path.dentry_)
     {
-      debug(VFSSYSCALL, "(open) ERROR: parent directory does not exist\n");
+      debug(VFSSYSCALL, "(open) ERROR: unable to create file, directory does not exist\n");
       return -1;
     }
 
-    debug(VFSSYSCALL, "(open) Found parent directory\n");
+    debug(VFSSYSCALL, "(open) target does not exist, creating new file\n");
+
+    ustl::string new_dentry_name = PathWalker::lastPathSegment(pathname);
+    if(new_dentry_name == "") // Path has trailing slashes
+    {
+      debug(VFSSYSCALL, "(open) Error: last path segment is empty (trailing '/')\n");
+      return -1;
+    }
+
+    debug(VFSSYSCALL, "(open) new file name: %s\n", new_dentry_name.c_str());
+
     Inode* parent_dir_inode = parent_dir_path.dentry_->getInode();
     Superblock* parent_dir_sb = parent_dir_inode->getSuperblock();
 
@@ -342,8 +351,6 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     debug(VFSSYSCALL, "(open) Creating dentry for new file\n");
     Dentry* new_file_dentry = new Dentry(new_file_inode, parent_dir_path.dentry_, new_dentry_name);
     new_file_inode->mkfile(new_file_dentry);
-
-    debug(VFSSYSCALL, "(open) Created inode with dentry name %s\n", new_file_inode->getDentry()->getName());
 
     int32 fd = parent_dir_sb->createFd(new_file_inode, flag);
     debug(VFSSYSCALL, "(open) Fd for new open file: %d\n", fd);
