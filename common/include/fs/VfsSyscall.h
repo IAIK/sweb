@@ -12,17 +12,6 @@ class FileSystemInfo;
 
 class VfsSyscall
 {
-  protected:
-
-    /**
-     * checks the duplication from the pathname in the file-system
-     * @param pathname the input pathname
-     * @return On success, zero is returned. On error, -1 is returned.
-     */
-    static int32 dupChecking(const char* pathname, const Path& pwd, const Path& root, Path& out_path, Path* parent_dir = nullptr);
-
-    static int32 dupChecking(const char* pathname, FileSystemInfo* fs_info, Path& out_path, Path* parent_dir = nullptr);
-
   public:
 
     /**

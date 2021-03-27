@@ -66,8 +66,8 @@ int main(int argc, char *argv[])
 
   default_working_dir = new FileSystemInfo();
   Path root_path(root, &vfs_dummy_);
-  default_working_dir->setFsRoot(root_path);
-  default_working_dir->setFsPwd(root_path);
+  default_working_dir->setRoot(root_path);
+  default_working_dir->setPwd(root_path);
 
   for (int32 i = 2; i <= argc / 2; i++)
   {

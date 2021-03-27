@@ -30,7 +30,7 @@ class FileSystemInfo
      * set the ROOT-info to the class
      * @param root the root path to set
      */
-    void setFsRoot(const Path& path)
+    void setRoot(const Path& path)
     {
       root_ = path;
     }
@@ -39,7 +39,7 @@ class FileSystemInfo
      * set the PWD-info to the class (PWD: print working directory)
      * @param path the current path to set
      */
-    void setFsPwd(const Path& path)
+    void setPwd(const Path& path)
     {
       pwd_ = path;
     }
@@ -61,8 +61,6 @@ class FileSystemInfo
     {
       return root_;
     }
-
-    ustl::string pathname_;
 };
 
 extern FileSystemInfo* default_working_dir;

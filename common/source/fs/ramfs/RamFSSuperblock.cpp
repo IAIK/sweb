@@ -67,7 +67,7 @@ void RamFSSuperblock::writeInode(Inode* inode)
   }
 }
 
-void RamFSSuperblock::delete_inode(Inode* inode)
+void RamFSSuperblock::deleteInode(Inode* inode)
 {
   all_inodes_.remove(inode);
 }

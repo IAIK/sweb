@@ -51,7 +51,7 @@ class MinixFSSuperblock : public Superblock
      * removes one inode from the file system and frees all its resources
      * @param inode the inode to delete
      */
-    virtual void delete_inode(Inode* inode);
+    virtual void deleteInode(Inode* inode);
 
     /**
      * add an inode to the all_inodes_ data structures

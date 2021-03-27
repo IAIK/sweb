@@ -40,6 +40,12 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
 
   debug(PATHWALKER, "pathWalk> path: %s\n", pathname);
 
+  if (strlen(pathname) == 0)
+  {
+      debug(PATHWALKER, "pathWalk> ERROR: Empty path name\n");
+      return PW_EINVALID;
+  }
+
   if ((pwd.dentry_ == 0) || (pwd.mnt_ == 0))
   {
       debug(PATHWALKER, "pathWalk> Error: Invalid pwd\n");
@@ -246,6 +252,9 @@ ustl::string PathWalker::pathPrefix(const ustl::string& path)
 
 ustl::string PathWalker::lastPathSegment(const ustl::string& path, bool ignore_separator_at_end)
 {
+    if(path.length() == 0)
+        return path;
+
     if(!ignore_separator_at_end || path.back() != '/')
     {
         ssize_t prefix_len = path.find_last_of("/");
@@ -255,7 +264,7 @@ ustl::string PathWalker::lastPathSegment(const ustl::string& path, bool ignore_s
     }
     else
     {
-        ustl::string tmp_path = path.substr(0, tmp_path.find_last_not_of("/"));
+        ustl::string tmp_path = path.substr(0, path.find_last_not_of("/") + 1);
         ssize_t prefix_len = tmp_path.find_last_of("/");
         ustl::string retval = tmp_path.substr(prefix_len+1, tmp_path.length() - prefix_len);
         debug(PATHWALKER, "lastPathSegment: %s -> %s\n", path.c_str(), retval.c_str());

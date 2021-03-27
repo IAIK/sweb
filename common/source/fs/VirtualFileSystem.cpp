@@ -116,8 +116,8 @@ FileSystemInfo *VirtualFileSystem::rootMount(const char *fs_name, uint32 /*flags
   // fs_info initialize
   FileSystemInfo *fs_info = new FileSystemInfo();
   Path root_path(root, root_mount);
-  fs_info->setFsRoot(root_path);
-  fs_info->setFsPwd(root_path);
+  fs_info->setRoot(root_path);
+  fs_info->setPwd(root_path);
 
   assert(root_mount->getParent() == root_mount);
   assert(root_mount->getMountPoint() == root);
@@ -160,9 +160,8 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   }
 
   // Find mount point
-  fs_info->pathname_ = dir_name;
   Path mountpoint_path;
-  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, mountpoint_path);
+  int32 success = PathWalker::pathWalk(dir_name, fs_info->getPwd(), fs_info->getRoot(), 0, mountpoint_path);
 
   if (success != 0)
   {
@@ -221,9 +220,8 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
   if (dir_name == 0)
     return -1;
 
-  fs_info->pathname_ = dir_name;
   Path mountpount_path;
-  int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), fs_info->getPwd(), fs_info->getRoot(), 0, mountpount_path);
+  int32 success = PathWalker::pathWalk(dir_name, fs_info->getPwd(), fs_info->getRoot(), 0, mountpount_path);
 
   if (success != 0)
   {
@@ -241,12 +239,12 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
     if (fs_info->getPwd().dentry_ == mountpount_path.dentry_)
     {
       debug(VFS, "(umount) the mount point exchange\n");
-      fs_info->setFsPwd(Path(mountpount_path.mnt_->getMountPoint(), mountpount_path.mnt_->getParent()));
+      fs_info->setPwd(Path(mountpount_path.mnt_->getMountPoint(), mountpount_path.mnt_->getParent()));
     }
     else
     {
       debug(VFS, "(umount) set PWD NULL\n");
-      fs_info->setFsPwd(Path());
+      fs_info->setPwd(Path());
     }
   }
 

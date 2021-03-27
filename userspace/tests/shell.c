@@ -56,7 +56,10 @@ void handle_command(char* buffer, int buffer_size)
     }
   }
   if (strcmp(command, "ls") == 0)
-    __syscall(sc_pseudols, (size_t) (argsCount > 0 ? args[0] : ""), 0, 0, 0, 0);
+  {
+    __syscall(sc_pseudols, (size_t) (argsCount > 0 ? args[0] : "."), 0, 0, 0, 0);
+  }
+
   else if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'l' && buffer[3] == 'p')
   {
     printf(

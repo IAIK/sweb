@@ -15,6 +15,7 @@ Dentry::Dentry(Inode* inode, Dentry* parent, const ustl::string& name) :
     d_inode_(inode), d_parent_(parent), d_mounts_(0), d_name_(name)
 {
     debug(DENTRY, "created Dentry with Name %s\n", name.c_str());
+    assert(name != "");
     parent->setChild(this);
     inode->incLinkCount();
 }

@@ -271,7 +271,7 @@ void MinixFSSuperblock::all_inodes_remove_inode(Inode* inode)
   all_inodes_set_.erase(((MinixFSInode*) inode)->i_num_);
 }
 
-void MinixFSSuperblock::delete_inode(Inode* inode)
+void MinixFSSuperblock::deleteInode(Inode* inode)
 {
   Dentry* dentry = inode->getDentry();
   assert(dentry == 0);

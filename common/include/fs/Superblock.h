@@ -127,7 +127,7 @@ class Superblock
      * used.
      * @param inode the inode to delete
      */
-    virtual void delete_inode(Inode* /*inode*/);
+    virtual void deleteInode(Inode* /*inode*/);
 
     /**
      * create a file with the given flag and  a file descriptor with the given

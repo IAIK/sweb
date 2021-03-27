@@ -13,7 +13,7 @@ Superblock::~Superblock()
 {
 }
 
-void Superblock::delete_inode(Inode* inode)
+void Superblock::deleteInode(Inode* inode)
 {
   assert(inode != 0);
   dirty_inodes_.remove(inode);
