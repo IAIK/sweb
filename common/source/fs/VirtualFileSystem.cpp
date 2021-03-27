@@ -161,7 +161,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
 
   // Find mount point
   Path mountpoint_path;
-  int32 success = PathWalker::pathWalk(dir_name, fs_info->getPwd(), fs_info->getRoot(), 0, mountpoint_path);
+  int32 success = PathWalker::pathWalk(dir_name, fs_info->getPwd(), fs_info->getRoot(), mountpoint_path);
 
   if (success != 0)
   {
@@ -221,7 +221,7 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
     return -1;
 
   Path mountpount_path;
-  int32 success = PathWalker::pathWalk(dir_name, fs_info->getPwd(), fs_info->getRoot(), 0, mountpount_path);
+  int32 success = PathWalker::pathWalk(dir_name, fs_info->getPwd(), fs_info->getRoot(), mountpount_path);
 
   if (success != 0)
   {

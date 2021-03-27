@@ -45,7 +45,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
   Path target_path;
   Path parent_dir_path;
-  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, 0, target_path, &parent_dir_path);
+  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, target_path, &parent_dir_path);
 
   if((path_walk_status == PW_ENOTFOUND) && parent_dir_path.dentry_)
   {
@@ -105,7 +105,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
-  if (PathWalker::pathWalk(pathname, fs_info, 0, target_path) != PW_SUCCESS)
+  if (PathWalker::pathWalk(pathname, fs_info, target_path) != PW_SUCCESS)
   {
     debug(VFSSYSCALL, "(readdir) ERROR: Path doesn't exist\n");
     kprintf("Error: %s not found\n", pathname);
@@ -136,7 +136,7 @@ int32 VfsSyscall::chdir(const char* pathname)
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
-  if (PathWalker::pathWalk(pathname, fs_info, 0, target_path) != PW_SUCCESS)
+  if (PathWalker::pathWalk(pathname, fs_info, target_path) != PW_SUCCESS)
   {
     debug(VFSSYSCALL, "(chdir) Error: The directory does not exist.\n");
     return -1;
@@ -161,7 +161,7 @@ int32 VfsSyscall::rm(const char* pathname)
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
-  if (PathWalker::pathWalk(pathname, fs_info, 0, target_path) != PW_SUCCESS)
+  if (PathWalker::pathWalk(pathname, fs_info, target_path) != PW_SUCCESS)
   {
     debug(VFSSYSCALL, "(rm) target file does not exist.\n");
     return -1;
@@ -179,13 +179,12 @@ int32 VfsSyscall::rm(const char* pathname)
   Superblock* sb = current_inode->getSuperblock();
   if (current_inode->rm() == INODE_DEAD)
   {
-    debug(VFSSYSCALL, "(rm() )remove the inode %p from the list of sb: %p\n", current_inode, sb);
+    debug(VFSSYSCALL, "(rm) Remove the inode %p from the list of sb: %p\n", current_inode, sb);
     sb->deleteInode(current_inode);
-    debug(VFSSYSCALL, "(rm) removed\n");
   }
   else
   {
-    debug(VFSSYSCALL, "(rm) remove the inode failed (already marked as dead)\n");
+    debug(VFSSYSCALL, "(rm) Error: Removing the inode failed (already marked as dead)\n");
     return -1;
   }
 
@@ -198,11 +197,11 @@ int32 VfsSyscall::rmdir(const char* pathname)
 
   Path target_dir;
   Path parent_dir_path;
-  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, 0, target_dir, &parent_dir_path);
+  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, target_dir, &parent_dir_path);
 
   if(path_walk_status != PW_SUCCESS)
   {
-    debug(VFSSYSCALL, "Error: (rmdir) the directory does not exist.\n");
+    debug(VFSSYSCALL, "(rmdir) Error: The directory does not exist.\n");
     return -1;
   }
 
@@ -214,19 +213,19 @@ int32 VfsSyscall::rmdir(const char* pathname)
 
   if (current_inode->getType() != I_DIR)
   {
-    debug(VFSSYSCALL, "This is not a directory\n");
+    debug(VFSSYSCALL, "(rmdir) Error: This is not a directory\n");
     return -1;
   }
 
   Superblock* sb = current_inode->getSuperblock();
   if (current_inode->rmdir() == INODE_DEAD)
   {
-    debug(VFSSYSCALL, "remove the inode from the list\n");
+    debug(VFSSYSCALL, "(rmdir) Removing inode from superblock list\n");
     sb->deleteInode(current_inode);
   }
   else
   {
-    debug(VFSSYSCALL, "remove the inode failed\n");
+    debug(VFSSYSCALL, "(rmdir) Error: Remove the inode failed\n");
     return -1;
   }
 
@@ -271,11 +270,11 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
   Path target_path;
   Path parent_dir_path;
-  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, 0, target_path, &parent_dir_path);
+  int32 path_walk_status = PathWalker::pathWalk(pathname, fs_info, target_path, &parent_dir_path);
 
   if (path_walk_status == PW_SUCCESS)
   {
-    debug(VFSSYSCALL, "(open) Found target file\n");
+    debug(VFSSYSCALL, "(open) Found target file: %s\n", target_path.dentry_->getName());
     Inode* target_inode = target_path.dentry_->getInode();
     Superblock* target_sb = target_inode->getSuperblock();
 
