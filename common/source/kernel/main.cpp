@@ -26,6 +26,7 @@
 #include "RamFSType.h"
 #include "MinixFSType.h"
 #include "VirtualFileSystem.h"
+#include "FileDescriptor.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
@@ -92,6 +93,9 @@ extern "C" void startup()
   default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
+  // initialise global and static objects
+  new (&global_fd_list) FileDescriptorList();
+
   debug(MAIN, "Block Device creation\n");
   BDManager::getInstance()->doDeviceDetection();
   debug(MAIN, "Block Device done\n");
@@ -101,18 +105,14 @@ extern "C" void startup()
     debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
   }
 
-  // initialise global and static objects
-  extern ustl::list<FileDescriptor*> global_fd;
-  new (&global_fd) ustl::list<FileDescriptor*>();
-  extern Mutex global_fd_lock;
-  new (&global_fd_lock) Mutex("global_fd_lock");
 
   debug(MAIN, "make a deep copy of FsWorkingDir\n");
   main_console->setWorkingDirInfo(new FileSystemInfo(*default_working_dir));
   debug(MAIN, "main_console->setWorkingDirInfo done\n");
 
   ustl::coutclass::init();
-  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot().dentry_->getName(),
+  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n",
+        default_working_dir->getRoot().dentry_->getName(),
         default_working_dir->getPwd().dentry_->getName());
   if (main_console->getWorkingDirInfo())
   {

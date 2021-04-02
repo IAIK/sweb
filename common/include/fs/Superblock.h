@@ -77,7 +77,8 @@ class Superblock
      * file-system. It is used, for example, to check if there are any files
      * open for write before remounting the file-system as read-only.
      */
-    ustl::list<FileDescriptor*> s_files_;
+    ustl::list<File*> s_files_;
+
 
   public:
 
@@ -107,7 +108,6 @@ class Superblock
     {
       return 0;
     }
-    ;
 
     /**
      * This method is called to write a specific inode to a mounted file-system,
@@ -117,7 +117,6 @@ class Superblock
     virtual void writeInode(Inode* /*inode*/)
     {
     }
-    ;
 
     /**
      * This method is called whenever the reference count on an inode reaches 0,
@@ -129,26 +128,12 @@ class Superblock
      */
     virtual void deleteInode(Inode* /*inode*/);
 
-    /**
-     * create a file with the given flag and  a file descriptor with the given
-     * inode.
-     * @param inode the inode to create the fd for
-     * @param flag the flag
-     * @return the fd
-     */
-    virtual int32 createFd(Inode* /*inode*/, uint32 /*flag*/) = 0;
 
-    /**
-     * remove the corresponding file descriptor.
-     * @param inode the indo from which to remove the fd
-     * @param file the fd to remove
-     * @return 0 on success
-     */
-    virtual int32 removeFd(Inode* /*inode*/, FileDescriptor* /*file*/)
-    {
-      return 0;
-    }
-    ;
+    virtual int fileOpened(File* file);
+    virtual int fileReleased(File* file);
+
+    virtual void releaseAllOpenFiles();
+    virtual void deleteAllInodes();
 
     /**
      * Get the root Dentry of the Superblock

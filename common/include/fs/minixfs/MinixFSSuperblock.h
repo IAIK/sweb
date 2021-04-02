@@ -27,14 +27,6 @@ class MinixFSSuperblock : public Superblock
     virtual Inode* createInode(uint32 type);
 
     /**
-     *  remove the corresponding file descriptor and unlinks it from the inode.
-     * @param inode the inode the file descriptor is linked to
-     * @param fd the file descriptor
-     * @return 0 on success
-     */
-    virtual int32 removeFd(Inode* inode, FileDescriptor* fd);
-
-    /**
      * reads one inode from the mounted file system
      * @param inode the inode to read
      * @return 0 on success
@@ -64,14 +56,6 @@ class MinixFSSuperblock : public Superblock
      * @param inode to remove
      */
     void all_inodes_remove_inode(Inode* inode);
-
-    /**
-     * create a file with the given flag and a file descriptor with the given inode.
-     * @param inode the inode to link the file with
-     * @param flag the flag to create the file with
-     * @return the file descriptor
-     */
-    virtual int32 createFd(Inode* inode, uint32 flag);
 
     /**
      * allocates one zone on the file system

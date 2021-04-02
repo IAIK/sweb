@@ -106,9 +106,9 @@ int main(int argc, char *argv[])
     delete[] buf;
   }
 
-  delete minixfs_type;
   delete default_working_dir;
   delete superblock_;
+  delete minixfs_type;
   fclose(image_fd);
 
   return 0;

@@ -4,6 +4,7 @@
 #include "fs/ramfs/RamFSSuperblock.h"
 #include "fs/ramfs/RamFSFile.h"
 #include "fs/Dentry.h"
+#include "FileSystemType.h"
 
 #include "console/kprintf.h"
 
@@ -109,14 +110,18 @@ int32 RamFSInode::create(Dentry *dentry)
 
 File* RamFSInode::open(uint32 flag)
 {
+  debug(INODE, "%s Inode: Open file\n", getSuperblock()->getFSType()->getFSName());
   File* file = (File*) (new RamFSFile(this, i_dentry_, flag));
   i_files_.push_back(file);
+  getSuperblock()->fileOpened(file);
   return file;
 }
 
 int32 RamFSInode::release(File* file)
 {
+  debug(INODE, "%s Inode: Release file\n", getSuperblock()->getFSType()->getFSName());
   i_files_.remove(file);
+  getSuperblock()->fileReleased(file);
   delete file;
   return 0;
 }
@@ -146,6 +151,7 @@ int32 RamFSInode::rmdir()
 
 int32 RamFSInode::rm()
 {
+  debug(RAMFS, "Removing RamFs Inode %p\n", this);
   if (i_files_.size() != 0)
   {
     kprintfd("RamFSInode::ERROR: the file is opened.\n");

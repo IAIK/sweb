@@ -24,22 +24,6 @@ class DeviceFSSuperBlock : public Superblock
     virtual Inode* createInode(uint32 type);
 
     /**
-     * creates a file descriptor for the given inode
-     * @param inode the inode to create the fd for
-     * @param flag the flag of the fd
-     * @return the file descriptor
-     */
-    virtual int32 createFd(Inode* inode, uint32 flag);
-
-    /**
-     * remove the corresponding file descriptor.
-     * @param inode the inode from which to remove the fd from
-     * @param fd the fd to remove
-     * @return 0 on success
-     */
-    virtual int32 removeFd(Inode* inode, FileDescriptor* fd);
-
-    /**
      * addsa new device to the superblock
      * @param inode the inode of the device to add
      * @param node_name the device name

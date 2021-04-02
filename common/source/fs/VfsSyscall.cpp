@@ -15,7 +15,6 @@
 #include "VfsMount.h"
 #include "kprintf.h"
 #ifndef EXE2MINIXFS
-#include "Mutex.h"
 #include "Thread.h"
 #endif
 
@@ -24,17 +23,7 @@
 
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
-  extern Mutex global_fd_lock;
-  MutexLock mlock(global_fd_lock);
-  for (auto it : global_fd)
-  {
-    if (it->getFd() == fd)
-    {
-      debug(VFSSYSCALL, "found the fd\n");
-      return it;
-    }
-  }
-  return 0;
+  return global_fd_list.getFileDescriptor(fd);
 }
 
 
@@ -234,6 +223,7 @@ int32 VfsSyscall::rmdir(const char* pathname)
 
 int32 VfsSyscall::close(uint32 fd)
 {
+  debug(VFSSYSCALL, "(close) Close fd num %u\n", fd);
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == 0)
@@ -241,8 +231,11 @@ int32 VfsSyscall::close(uint32 fd)
     debug(VFSSYSCALL, "(close) Error: the fd does not exist.\n");
     return -1;
   }
-  Inode* current_inode = file_descriptor->getFile()->getInode();
-  assert(current_inode->getSuperblock()->removeFd(current_inode, file_descriptor) == 0);
+
+  assert(!global_fd_list.remove(file_descriptor));
+  file_descriptor->getFile()->closeFd(file_descriptor);
+
+  debug(VFSSYSCALL, "(close) File closed\n");
   return 0;
 }
 
@@ -276,7 +269,6 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   {
     debug(VFSSYSCALL, "(open) Found target file: %s\n", target_path.dentry_->getName());
     Inode* target_inode = target_path.dentry_->getInode();
-    Superblock* target_sb = target_inode->getSuperblock();
 
     if (target_inode->getType() != I_FILE)
     {
@@ -284,10 +276,12 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    int32 fd = target_sb->createFd(target_inode, flag);
-    debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd, flag);
+    File* file = target_inode->open(flag);
+    FileDescriptor* fd = file->openFd();
+    assert(!global_fd_list.add(fd));
 
-    return fd;
+    debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd->getFd(), flag);
+    return fd->getFd();
   }
   else if ((path_walk_status == PW_ENOTFOUND) && (flag & O_CREAT))
   {
@@ -329,10 +323,12 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     Dentry* new_file_dentry = new Dentry(new_file_inode, parent_dir_path.dentry_, new_dentry_name);
     new_file_inode->mkfile(new_file_dentry);
 
-    int32 fd = parent_dir_sb->createFd(new_file_inode, flag);
-    debug(VFSSYSCALL, "(open) Fd for new open file: %d\n", fd);
+    File* file = new_file_inode->open(flag);
+    FileDescriptor* fd = file->openFd();
+    assert(!global_fd_list.add(fd));
 
-    return fd;
+    debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd->getFd(), flag);
+    return fd->getFd();
   }
   else if (path_walk_status == PW_EINVALID)
   {
@@ -357,6 +353,7 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
   if (count == 0)
     return 0;
+
   return file_descriptor->getFile()->read(buffer, count, 0);
 }
 
@@ -372,6 +369,7 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 
   if (count == 0)
     return 0;
+
   return file_descriptor->getFile()->write(buffer, count, 0);
 }
 
@@ -408,7 +406,7 @@ int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const cha
   if (!type)
   {
       debug(VFSSYSCALL, "(mount) Unknown file system %s\n", file_system_name);
-      return -1; // file system type not known
+      return -1;
   }
 
   return vfs.mount(device_name, dir_name, file_system_name, flag);

@@ -2,11 +2,12 @@
 
 #include "types.h"
 #include "ulist.h"
+#include "umap.h"
+#include "Mutex.h"
 
 class File;
 class FileDescriptor;
-
-extern ustl::list<FileDescriptor*> global_fd;
+class FileDescriptorList;
 
 class FileDescriptor
 {
@@ -16,11 +17,26 @@ class FileDescriptor
 
   public:
     FileDescriptor ( File* file );
-    virtual ~FileDescriptor() {}
+    virtual ~FileDescriptor();
     uint32 getFd() { return fd_; }
     File* getFile() { return file_; }
 
-    static void add(FileDescriptor* fd);
-    static void remove(FileDescriptor* fd);
+    friend File;
 };
 
+class FileDescriptorList
+{
+public:
+    FileDescriptorList();
+    ~FileDescriptorList();
+
+    int add(FileDescriptor* fd);
+    int remove(FileDescriptor* fd);
+    FileDescriptor* getFileDescriptor(uint32 fd);
+
+private:
+    ustl::list<FileDescriptor*> fds_;
+    Mutex fd_lock_;
+};
+
+extern FileDescriptorList global_fd_list;

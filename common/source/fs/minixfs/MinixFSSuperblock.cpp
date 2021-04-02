@@ -136,13 +136,8 @@ MinixFSSuperblock::~MinixFSSuperblock()
   debug(M_SB, "~MinixSuperblock\n");
   assert(dirty_inodes_.empty() == true);
   storage_manager_->flush(this);
-  for (FileDescriptor* fd : s_files_)
-  {
-    delete fd->getFile();
-    delete fd;
-  }
-  s_files_.clear();
-  assert(s_files_.empty() == true);
+
+  releaseAllOpenFiles();
 
   if (M_SB & OUTPUT_ENABLED)
   {
@@ -150,21 +145,11 @@ MinixFSSuperblock::~MinixFSSuperblock()
       debug(M_SB, "Inode: %p\n", it);
   }
 
-  for (Inode* inode : all_inodes_)
-  {
-    debug(M_SB, "~MinixSuperblock writing inode to disc\n");
-    writeInode(inode);
-
-    debug(M_SB, "~MinixSuperblock inode written to disc\n");
-    delete inode->getDentry();
-
-    debug(M_SB, "~MinixSuperblock deleting inode\n");
-    delete inode;
-  }
-  delete storage_manager_;
-
-  all_inodes_.clear();
+  // Also writes back inodes to disk
+  deleteAllInodes();
   all_inodes_set_.clear();
+
+  delete storage_manager_;
 
   debug(M_SB, "~MinixSuperblock finished\n");
 }
@@ -289,44 +274,6 @@ void MinixFSSuperblock::deleteInode(Inode* inode)
   memset((void*) buffer, 0, sizeof(buffer));
   writeBytes(block, offset, INODE_SIZE, buffer);
   delete inode;
-}
-
-int32 MinixFSSuperblock::createFd(Inode* inode, uint32 flag)
-{
-  assert(inode);
-
-  File* file = inode->open(flag);
-  FileDescriptor* fd = new FileDescriptor(file);
-  s_files_.push_back(fd);
-  FileDescriptor::add(fd);
-
-  if (ustl::find(used_inodes_.begin(), used_inodes_.end(), inode) == used_inodes_.end())
-  {
-    used_inodes_.push_back(inode);
-  }
-
-  return (fd->getFd());
-}
-
-int32 MinixFSSuperblock::removeFd(Inode* inode, FileDescriptor* fd)
-{
-  assert(inode);
-  assert(fd);
-
-  s_files_.remove(fd);
-  FileDescriptor::remove(fd);
-
-  File* file = fd->getFile();
-  int32 tmp = inode->release(file);
-
-  debug(M_SB, "remove the fd num: %d\n", fd->getFd());
-  if (inode->getNumOpenedFile() == 0)
-  {
-    used_inodes_.remove(inode);
-  }
-  delete fd;
-
-  return tmp;
 }
 
 uint16 MinixFSSuperblock::allocateZone()

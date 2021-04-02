@@ -22,15 +22,13 @@ Dentry::Dentry(Inode* inode, Dentry* parent, const ustl::string& name) :
 
 Dentry::~Dentry()
 {
-  debug(DENTRY, "deleting Dentry with Name %s, d_parent_: %p, this: %p\n", d_name_.c_str(), d_parent_, this);
+  debug(DENTRY, "Deleting Dentry %s, d_parent_: %p, this: %p\n", d_name_.c_str(), d_parent_, this);
   if (d_parent_ && (d_parent_ != this))
   {
-    debug(DENTRY, "deleting Dentry child remove d_parent_: %p\n", d_parent_);
     d_parent_->childRemove(this);
   }
   for (Dentry* dentry : d_child_)
     dentry->d_parent_ = 0;
-  debug(DENTRY, "deleting Dentry finished\n");
 }
 
 void Dentry::setInode(Inode *inode)
@@ -49,9 +47,9 @@ int32 Dentry::childRemove(Dentry *child_dentry)
   debug(DENTRY, "Dentry childRemove d_child_ included: %d\n",
         ustl::find(d_child_.begin(), d_child_.end(), child_dentry) != d_child_.end());
   assert(child_dentry != 0);
+  assert(child_dentry->d_parent_ == this);
   d_child_.remove(child_dentry);
   child_dentry->d_parent_ = 0;
-  debug(DENTRY, "Dentry childRemove remove == 0\n");
   return 0;
 }
 

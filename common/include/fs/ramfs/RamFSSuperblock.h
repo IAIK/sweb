@@ -26,14 +26,6 @@ class RamFSSuperblock : public Superblock
     virtual Inode* createInode (uint32 type );
 
     /**
-     * remove the corresponding file descriptor.
-     * @param inode the inode from which to remove the fd from
-     * @param fd the fd to remove
-     * @return 0 on success
-     */
-    virtual int32 removeFd ( Inode* inode, FileDescriptor* fd );
-
-    /**
      * This method is called to read a specific inode from a mounted file-system.
      * @param inode the inode to read
      * @return 0 on success
@@ -56,15 +48,6 @@ class RamFSSuperblock : public Superblock
      * @param inode the inode to delete
      */
     virtual void deleteInode ( Inode* inode );
-
-    /**
-     * create a file with the given flag and a file descriptor with the given
-     * inode.
-     * @param inode the inode to create the fd for
-     * @param flag the flag
-     * @return the file descriptor
-     */
-    virtual int32 createFd ( Inode* inode, uint32 flag );
 };
 //-----------------------------------------------------------------------------
 
