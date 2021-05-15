@@ -50,7 +50,7 @@ class File
     Superblock* f_superblock_;
 
     /**
-     * The indoe associated to the file.
+     * The inode associated to the file.
      */
     Inode* f_inode_;
 

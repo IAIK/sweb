@@ -15,7 +15,7 @@ RamFSSuperblock::RamFSSuperblock(RamFSType* fs_type, uint32 s_dev) :
 {
   Inode *root_inode = createInode(I_DIR);
   s_root_ = new Dentry(root_inode);
-  assert(root_inode->mknod(s_root_) == 0);
+  assert(root_inode->mkdir(s_root_) == 0);
 }
 
 RamFSSuperblock::~RamFSSuperblock()
@@ -60,4 +60,5 @@ void RamFSSuperblock::writeInode(Inode* inode)
 void RamFSSuperblock::deleteInode(Inode* inode)
 {
   all_inodes_.remove(inode);
+  delete inode;
 }

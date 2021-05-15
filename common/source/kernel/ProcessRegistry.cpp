@@ -4,6 +4,7 @@
 #include "UserProcess.h"
 #include "kprintf.h"
 #include "VfsSyscall.h"
+#include "VirtualFileSystem.h"
 
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
@@ -60,6 +61,8 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
   VfsSyscall::umount("/usr", 0);
+  VfsSyscall::umount("/dev", 0);
+  vfs.rootUmount();
 
   Scheduler::instance()->printStackTraces();
 

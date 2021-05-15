@@ -34,7 +34,7 @@ MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 
   debug(M_SB, "---creating Storage Manager\n");
   storage_manager_ = new MinixStorageManager(bm_buffer, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_num_inodes_,
                                              s_zones_);
-  if (M_SB & OUTPUT_ENABLED)
+  if (M_STORAGE_MANAGER & OUTPUT_ENABLED)
   {
     storage_manager_->printBitmap();
   }
@@ -70,12 +70,13 @@ void MinixFSSuperblock::readHeader()
 
 void MinixFSSuperblock::initInodes()
 {
+  debug(M_SB, "init Inodes\n");
   MinixFSInode *root_inode = getInode(1);
   s_root_ = new Dentry(root_inode);
-  root_inode->i_dentry_ = s_root_;
 
   all_inodes_add_inode(root_inode);
   //read children from disc
+  debug(M_SB, "Load children of root inode\n");
   root_inode->loadChildren();
 }
 
@@ -139,6 +140,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
 
   releaseAllOpenFiles();
 
+  debug(M_SB, "Open files released\n");
   if (M_SB & OUTPUT_ENABLED)
   {
     for (auto it : all_inodes_)
@@ -218,7 +220,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   readBytes(block, offset, INODE_SIZE, buffer);
   debug(M_SB, "writeInode> read data from disc\n");
   debug(M_SB, "writeInode> the inode: i_type_: %d, i_nlink_: %d, i_size_: %d\n", minix_inode->i_type_,
-        minix_inode->i_nlink_, minix_inode->i_size_);
+        minix_inode->i_nlink_.load(), minix_inode->i_size_);
   if (minix_inode->i_type_ == I_FILE)
   {
     debug(M_SB, "writeInode> setting mode to file : %x\n", *(uint16*) buffer | 0x81FF);
@@ -234,6 +236,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
     // link etc. unhandled
   }
   ((uint32*)buffer)[1+V3_OFFSET] = minix_inode->i_size_;
+  debug(M_SB, "writeInode> write inode %p link count %u\n", inode, minix_inode->i_nlink_.load());
   if (s_magic_ == MINIX_V3)
     ((uint16*)buffer)[1] = minix_inode->i_nlink_;
   else
@@ -258,8 +261,7 @@ void MinixFSSuperblock::all_inodes_remove_inode(Inode* inode)
 
 void MinixFSSuperblock::deleteInode(Inode* inode)
 {
-  Dentry* dentry = inode->getDentry();
-  assert(dentry == 0);
+  assert(inode->getDentrys().size() == 0);
   assert(ustl::find(used_inodes_.begin(), used_inodes_.end(), inode) == used_inodes_.end());
   dirty_inodes_.remove(inode);
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
@@ -278,9 +280,9 @@ void MinixFSSuperblock::deleteInode(Inode* inode)
 
 uint16 MinixFSSuperblock::allocateZone()
 {
-  debug(M_SB, "MinixFSSuperblock allocateZone>\n");
+  debug(M_ZONE, "MinixFSSuperblock allocateZone>\n");
   uint16 ret = (storage_manager_->allocZone() + s_1st_datazone_ - 1); // -1 because the zone nr 0 is set in the bitmap and should never be used!
-  debug(M_SB, "MinixFSSuperblock allocateZone> returning %d\n", ret);
+  debug(M_ZONE, "MinixFSSuperblock allocateZone> returning %d\n", ret);
   return ret;
 }
 

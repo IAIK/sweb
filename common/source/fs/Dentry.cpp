@@ -8,7 +8,7 @@ Dentry::Dentry(Inode* inode) :
     d_inode_(inode), d_parent_(this), d_mounts_(0), d_name_("/")
 {
     debug(DENTRY, "Created root Dentry\n");
-    inode->incLinkCount();
+    inode->addDentry(this);
 }
 
 Dentry::Dentry(Inode* inode, Dentry* parent, const ustl::string& name) :
@@ -17,7 +17,7 @@ Dentry::Dentry(Inode* inode, Dentry* parent, const ustl::string& name) :
     debug(DENTRY, "created Dentry with Name %s\n", name.c_str());
     assert(name != "");
     parent->setChild(this);
-    inode->incLinkCount();
+    inode->addDentry(this);
 }
 
 Dentry::~Dentry()
@@ -29,6 +29,8 @@ Dentry::~Dentry()
   }
   for (Dentry* dentry : d_child_)
     dentry->d_parent_ = 0;
+
+  d_inode_->removeDentry(this);
 }
 
 void Dentry::setInode(Inode *inode)

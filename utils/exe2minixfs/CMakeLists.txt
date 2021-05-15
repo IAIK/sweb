@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.1.0)
 
 file(GLOB util_exe2minixfs_SOURCES *.cpp
                                    ../../common/source/util/Bitmap.cpp
+                                   ../../common/source/fs/Inode.cpp
                                    ../../common/source/fs/Dentry.cpp
                                    ../../common/source/fs/FileDescriptor.cpp
                                    ../../common/source/fs/FileSystemInfo.cpp

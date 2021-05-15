@@ -4,8 +4,9 @@
 DeviceFSType* DeviceFSType::instance_ = nullptr;
 
 DeviceFSType::DeviceFSType() :
-    FileSystemType("devicefs")
+    RamFSType()
 {
+    fs_name_ = "devicefs";
 }
 
 DeviceFSType::~DeviceFSType()

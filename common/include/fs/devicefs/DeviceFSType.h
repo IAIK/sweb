@@ -1,8 +1,9 @@
 #pragma once
 
 #include "fs/FileSystemType.h"
+#include "fs/ramfs/RamFSType.h"
 
-class DeviceFSType : public FileSystemType
+class DeviceFSType : public RamFSType
 {
   public:
     DeviceFSType();

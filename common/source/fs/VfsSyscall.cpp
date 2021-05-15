@@ -165,16 +165,18 @@ int32 VfsSyscall::rm(const char* pathname)
     return -1;
   }
 
-  Superblock* sb = current_inode->getSuperblock();
-  if (current_inode->rm() == INODE_DEAD)
+  if (current_inode->unlink(target_path.dentry_))
   {
-    debug(VFSSYSCALL, "(rm) Remove the inode %p from the list of sb: %p\n", current_inode, sb);
-    sb->deleteInode(current_inode);
-  }
-  else
-  {
-    debug(VFSSYSCALL, "(rm) Error: Removing the inode failed (already marked as dead)\n");
+    debug(VFSSYSCALL, "(rm) Error: File unlink failed\n");
     return -1;
+  }
+
+  delete target_path.dentry_;
+  if (!current_inode->numRefs())
+  {
+    Superblock* sb = current_inode->getSuperblock();
+    debug(VFSSYSCALL, "(rm) No more references to inode left, remove inode %p from the list of sb: %p\n", current_inode, sb);
+    sb->deleteInode(current_inode);
   }
 
   return 0;
@@ -206,16 +208,18 @@ int32 VfsSyscall::rmdir(const char* pathname)
     return -1;
   }
 
-  Superblock* sb = current_inode->getSuperblock();
-  if (current_inode->rmdir() == INODE_DEAD)
+  if (current_inode->rmdir(target_dir.dentry_))
   {
-    debug(VFSSYSCALL, "(rmdir) Removing inode from superblock list\n");
-    sb->deleteInode(current_inode);
-  }
-  else
-  {
-    debug(VFSSYSCALL, "(rmdir) Error: Remove the inode failed\n");
+    debug(VFSSYSCALL, "(rmdir) Error: File system rmdir failed\n");
     return -1;
+  }
+
+  delete target_dir.dentry_;
+  if (!current_inode->numRefs())
+  {
+    Superblock* sb = current_inode->getSuperblock();
+    debug(VFSSYSCALL, "(rmdir) No more references to inode left, remove inode %p from the list of sb: %p\n", current_inode, sb);
+    sb->deleteInode(current_inode);
   }
 
   return 0;
@@ -276,7 +280,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
       return -1;
     }
 
-    File* file = target_inode->open(flag);
+    File* file = target_inode->open(target_path.dentry_, flag);
     FileDescriptor* fd = file->openFd();
     assert(!global_fd_list.add(fd));
 
@@ -323,7 +327,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     Dentry* new_file_dentry = new Dentry(new_file_inode, parent_dir_path.dentry_, new_dentry_name);
     new_file_inode->mkfile(new_file_dentry);
 
-    File* file = new_file_inode->open(flag);
+    File* file = new_file_inode->open(new_file_dentry, flag);
     FileDescriptor* fd = file->openFd();
     assert(!global_fd_list.add(fd));
 

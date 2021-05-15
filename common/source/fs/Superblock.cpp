@@ -80,26 +80,28 @@ int Superblock::fileReleased(File* file)
 void Superblock::releaseAllOpenFiles()
 {
     debug(SUPERBLOCK, "Releasing all open files\n");
-    for(File* file : s_files_)
+    while(!s_files_.empty())
     {
+        File* file = s_files_.front();
         file->getInode()->release(file);
     }
 
     assert(s_files_.empty());
 }
 
-
 void Superblock::deleteAllInodes()
 {
     for (Inode* inode : all_inodes_)
     {
+        while(!inode->getDentrys().empty())
+        {
+            delete inode->getDentrys().front();
+        }
+
         debug(SUPERBLOCK, "~Superblock write inode to disc\n");
         writeInode(inode);
 
-        debug(SUPERBLOCK, "~Superblock delete dentry\n");
-        delete inode->getDentry();
-
-        debug(SUPERBLOCK, "~Superblock delete inode\n");
+        debug(SUPERBLOCK, "~Superblock delete inode %p\n", inode);
         delete inode;
     }
 

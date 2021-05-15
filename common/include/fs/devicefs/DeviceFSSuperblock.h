@@ -1,27 +1,20 @@
 #pragma once
 
 #include "fs/Superblock.h"
+#include "fs/ramfs/RamFSSuperblock.h"
 
 class Inode;
 class Superblock;
 class CharacterDevice;
 class DeviceFSType;
 
-class DeviceFSSuperBlock : public Superblock
+class DeviceFSSuperBlock : public RamFSSuperblock
 {
   public:
     static const char ROOT_NAME[];
     static const char DEVICE_ROOT_NAME[];
 
     virtual ~DeviceFSSuperBlock();
-
-    /**
-     * creates a new Inode of the superblock
-     * @param dentry the dentry for the new indoe
-     * @param type the type of the new inode
-     * @return the inode
-     */
-    virtual Inode* createInode(uint32 type);
 
     /**
      * addsa new device to the superblock

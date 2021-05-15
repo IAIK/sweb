@@ -61,28 +61,7 @@ class MinixFSInode : public Inode
     /**
      * Called when a file is opened
      */
-    virtual File* open(uint32 /*flag*/);
-    /**
-     * Called when the last reference to a file is closed
-     */
-    virtual int32 release(File* /*file*/);
-
-    /**
-     * The link method makes a hard link to the name referred to by the
-     * denty, which is in the directory refered to by the Inode.
-     * (only used for File)
-     * @param flag the flag
-     * @return the created file
-     */
-    // virtual File* link(uint32 flag);
-
-    /**
-     * This removes the name refered to by the Dentry from the directory
-     * referred to by the inode. (only used for File)
-     * @param file the file to unlink
-     * @return 0 on success
-     */
-    // virtual int32 unlink(File* file);
+    virtual File* open(Dentry* dentry, uint32 /*flag*/);
 
     /**
      * creates a directory with the given dentry. It is only used to with directory.
@@ -91,17 +70,15 @@ class MinixFSInode : public Inode
      */
     virtual int32 mkdir(Dentry *dentry);
 
+    virtual int32 link(Dentry* dentry);
+    virtual int32 unlink(Dentry* dentry);
+
     /**
      * removes the directory (if it is empty)
      * @return 0 on success
      */
-    virtual int32 rmdir();
+    virtual int32 rmdir(Dentry* dentry);
 
-    /**
-     * removes the named directory (if empty) or file (if not opened)
-     * @return 0 on success
-     */
-    virtual int32 rm();
 
     /**
      * creates a directory with the given dentry.
@@ -161,8 +138,4 @@ class MinixFSInode : public Inode
      * true if the inodes children are allready loaded
      */
     bool children_loaded_;
-
-    ustl::list<Dentry*> other_dentries_;
-
 };
-

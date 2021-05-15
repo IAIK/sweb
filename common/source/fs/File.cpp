@@ -2,26 +2,28 @@
 #include "Inode.h"
 #include "FileDescriptor.h"
 #include "assert.h"
+#include "Superblock.h"
+#include "FileSystemType.h"
 
 
 File::File(Inode* inode, Dentry* dentry, uint32 flag) :
     uid(0), gid(0), version(0), f_superblock_(0), f_inode_(inode), f_dentry_(dentry), flag_(flag)
 {
+    f_inode_->incRefCount();
 }
 
 File::~File()
 {
   debug(VFS_FILE, "Destroying file\n");
 
-  if(!f_fds_.empty())
-  {
-    debug(VFS_FILE, "WARNING: File still has open file descriptors\n");
-  }
+  assert(f_fds_.empty() && "File to be destroyed still has open file descriptors");
+  assert(f_inode_);
 
-  for(FileDescriptor* fd : f_fds_)
+  if(!f_inode_->decRefCount())
   {
-    fd->file_ = nullptr;
-    delete fd;
+      debug(VFS_FILE, "No more references to %s inode %p left after closing file, deleting\n",
+            f_inode_->getSuperblock()->getFSType()->getFSName(), f_inode_);
+    f_inode_->getSuperblock()->deleteInode(f_inode_);
   }
 }
 

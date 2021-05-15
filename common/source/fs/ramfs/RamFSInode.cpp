@@ -11,18 +11,20 @@
 #define BASIC_ALLOC 256
 
 RamFSInode::RamFSInode(Superblock *super_block, uint32 inode_type) :
-    Inode(super_block, inode_type), data_(0)
+    Inode(super_block, inode_type),
+    data_(0)
 {
+  debug(RAMFS, "New RamFSInode %p\n", this);
   if (inode_type == I_FILE)
+  {
     data_ = new char[BASIC_ALLOC]();
-
-  i_size_ = BASIC_ALLOC;
-  i_nlink_ = 0;
-  i_dentry_ = 0;
+    i_size_ = BASIC_ALLOC;
+  }
 }
 
 RamFSInode::~RamFSInode()
 {
+  debug(RAMFS, "Destroying RamFSInode %p\n", this);
   delete[] data_;
 }
 
@@ -60,148 +62,13 @@ int32 RamFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   return write_size;
 }
 
-int32 RamFSInode::mknod(Dentry *dentry)
-{
-  if (dentry == 0)
-  {
-    // ERROR_DNE
-    return -1;
-  }
-
-  if (i_type_ != I_DIR)
-  {
-    // ERROR_IC
-    return -1;
-  }
-
-  i_dentry_ = dentry;
-  dentry->setInode(this);
-  return 0;
-}
-
-int32 RamFSInode::mkdir(Dentry *dentry)
-{
-  return mknod(dentry);
-}
-
-int32 RamFSInode::mkfile(Dentry *dentry)
-{
-  if (dentry == 0)
-  {
-    // ERROR_DNE
-    return -1;
-  }
-
-  if (i_type_ != I_FILE)
-  {
-    // ERROR_IC
-    return -1;
-  }
-
-  i_dentry_ = dentry;
-  dentry->setInode(this);
-  return 0;
-}
-
-int32 RamFSInode::create(Dentry *dentry)
-{
-  return (mkdir(dentry));
-}
-
-File* RamFSInode::open(uint32 flag)
+File* RamFSInode::open(Dentry* dentry, uint32 flag)
 {
   debug(INODE, "%s Inode: Open file\n", getSuperblock()->getFSType()->getFSName());
-  File* file = (File*) (new RamFSFile(this, i_dentry_, flag));
+  assert(ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
+
+  File* file = (File*) (new RamFSFile(this, dentry, flag));
   i_files_.push_back(file);
   getSuperblock()->fileOpened(file);
   return file;
 }
-
-int32 RamFSInode::release(File* file)
-{
-  debug(INODE, "%s Inode: Release file\n", getSuperblock()->getFSType()->getFSName());
-  i_files_.remove(file);
-  getSuperblock()->fileReleased(file);
-  delete file;
-  return 0;
-}
-
-int32 RamFSInode::rmdir()
-{
-  if (i_type_ != I_DIR)
-    return -1;
-
-  Dentry* dentry = i_dentry_;
-
-  if (dentry->emptyChild() == true)
-  {
-    dentry->releaseInode();
-    Dentry* parent_dentry = dentry->getParent();
-    parent_dentry->childRemove(dentry);
-    delete dentry;
-    i_dentry_ = 0;
-    return INODE_DEAD;
-  }
-  else
-  {
-    // ERROR_DEC
-    return -1;
-  }
-}
-
-int32 RamFSInode::rm()
-{
-  debug(RAMFS, "Removing RamFs Inode %p\n", this);
-  if (i_files_.size() != 0)
-  {
-    kprintfd("RamFSInode::ERROR: the file is opened.\n");
-    return -1;
-  }
-
-  Dentry* dentry = i_dentry_;
-
-  if (dentry->emptyChild() == true)
-  {
-    dentry->releaseInode();
-    Dentry* parent_dentry = dentry->getParent();
-    parent_dentry->childRemove(dentry);
-    delete dentry;
-    i_dentry_ = 0;
-    return INODE_DEAD;
-  }
-  else
-  {
-    // ERROR_DEC
-    return -1;
-  }
-}
-
-Dentry* RamFSInode::lookup(const char* name)
-{
-  if (name == 0)
-  {
-    // ERROR_DNE
-    return 0;
-  }
-
-  Dentry* dentry_update = 0;
-  if (i_type_ == I_DIR)
-  {
-    dentry_update = i_dentry_->checkName(name);
-    if (dentry_update == 0)
-    {
-      // ERROR_NNE
-      return (Dentry*) 0;
-    }
-    else
-    {
-      return dentry_update;
-    }
-  }
-  else
-  {
-    // ERROR_IC
-    return (Dentry*) 0;
-  }
-}
-
