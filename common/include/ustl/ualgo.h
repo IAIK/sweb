@@ -7,6 +7,7 @@
 #include "upair.h"
 #include "ufunction.h"
 #include "umemory.h"
+#include "util/qsort.h"
 
 namespace ustl {
 
