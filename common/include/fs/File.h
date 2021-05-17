@@ -1,10 +1,12 @@
 #pragma once
 
 #include "types.h"
+#include "ulist.h"
 
 class Superblock;
 class Inode;
 class Dentry;
+class FileDescriptor;
 
 #define O_RDONLY    0x0001
 #define O_WRONLY    0x0002
@@ -28,14 +30,10 @@ class Dentry;
 #define SEEK_END 2
 #endif
 
+
 class File
 {
   public:
-
-    class Owner
-    {
-    };
-
     uint32 uid;
     uint32 gid;
 
@@ -52,7 +50,7 @@ class File
     Superblock* f_superblock_;
 
     /**
-     * The indoe associated to the file.
+     * The inode associated to the file.
      */
     Inode* f_inode_;
 
@@ -73,9 +71,9 @@ class File
     l_off_t offset_;
 
     /**
-     * indicates the owner of the file;
+     * List of open file descriptors
      */
-    Owner owner;
+    ustl::list<FileDescriptor*> f_fds_;
 
   public:
     /**
@@ -97,11 +95,14 @@ class File
      */
     File(Inode* inode, Dentry* dentry, uint32 flag);
 
-    virtual ~File()
-    {
-    }
+    virtual ~File();
 
-    Dentry *getDentry()
+    virtual FileDescriptor* openFd();
+    virtual int closeFd(FileDescriptor* fd);
+
+
+
+    Dentry* getDentry()
     {
       return f_dentry_;
     }
@@ -175,5 +176,3 @@ class File
 
     virtual uint32 getSize();
 };
-
-

@@ -4,6 +4,7 @@
 #include "UserProcess.h"
 #include "kprintf.h"
 #include "VfsSyscall.h"
+#include "VirtualFileSystem.h"
 
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
@@ -32,10 +33,16 @@ void ProcessRegistry::Run()
 
   debug(PROCESS_REG, "mounting userprog-partition \n");
 
-  VfsSyscall::mkdir("/usr", 0);
   debug(PROCESS_REG, "mkdir /usr\n");
-  VfsSyscall::mount("idea1", "/usr", "minixfs", 0);
+  assert( !VfsSyscall::mkdir("/usr", 0) );
   debug(PROCESS_REG, "mount idea1\n");
+  assert( !VfsSyscall::mount("idea1", "/usr", "minixfs", 0) );
+
+  debug(PROCESS_REG, "mkdir /dev\n");
+  assert( !VfsSyscall::mkdir("/dev", 0) );
+  debug(PROCESS_REG, "mount devicefs\n");
+  assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
+
 
   KernelMemoryManager::instance()->startTracing();
 
@@ -54,6 +61,8 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
   VfsSyscall::umount("/usr", 0);
+  VfsSyscall::umount("/dev", 0);
+  vfs.rootUmount();
 
   Scheduler::instance()->printStackTraces();
 

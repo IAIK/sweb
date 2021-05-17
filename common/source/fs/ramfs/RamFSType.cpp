@@ -11,14 +11,14 @@ RamFSType::~RamFSType()
 {}
 
 
-Superblock *RamFSType::readSuper ( Superblock *superblock, void* ) const
+Superblock *RamFSType::readSuper(Superblock *superblock, void*) const
 {
   return superblock;
 }
 
 
-Superblock *RamFSType::createSuper ( Dentry *root, uint32 s_dev ) const
+Superblock *RamFSType::createSuper (uint32 s_dev)
 {
-  Superblock *super = new RamFSSuperblock ( root, s_dev );
+  Superblock *super = new RamFSSuperblock(this, s_dev);
   return super;
 }

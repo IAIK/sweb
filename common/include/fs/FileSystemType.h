@@ -39,7 +39,7 @@ class FileSystemType
      * @param data is the data given to the mount system call.
      * @return is a pointer to the resulting superblock.
      */
-    virtual Superblock *readSuper(Superblock *superblock, void *data) const;
+    virtual Superblock *readSuper(Superblock *superblock, void *data) const = 0;
 
     /**
      * Creates an Superblock object for the actual file system type.
@@ -48,7 +48,7 @@ class FileSystemType
      * @return a pointer to the Superblock object, 0 if wasn't possible to
      * create a Superblock with the given device number
      */
-    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
+    virtual Superblock *createSuper(uint32 s_dev) = 0;
 
 };
 

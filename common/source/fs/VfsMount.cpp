@@ -12,7 +12,7 @@ VfsMount::VfsMount() :
 
 VfsMount::VfsMount ( VfsMount* parent, Dentry * mountpoint, Dentry* root,
                      Superblock* superblock, int32 flags ) :
-    mnt_parent_ ( parent ),
+    mnt_parent_ ( parent ? parent : this),
     mnt_mountpoint_ ( mountpoint ),
     mnt_root_ ( root ),
     mnt_sb_ ( superblock ),
@@ -70,3 +70,8 @@ void VfsMount::clear()
   mnt_flags_ = 0;
 }
 
+
+bool VfsMount::isRootMount() const
+{
+    return getParent() == this;
+}

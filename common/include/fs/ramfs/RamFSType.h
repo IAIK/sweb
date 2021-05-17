@@ -20,6 +20,6 @@ class RamFSType : public FileSystemType
      * Creates an Superblock object for the actual file system type.
      * @return a pointer to the Superblock object
      */
-    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
+    virtual Superblock *createSuper(uint32 s_dev);
 };
 

@@ -7,6 +7,7 @@
 #include "kstring.h"
 #include "kprintf.h"
 #include "FileSystemInfo.h"
+#include "Path.h"
 #ifndef EXE2MINIXFS
 #include "Mutex.h"
 #include "Thread.h"
@@ -17,196 +18,152 @@
 #define CHAR_ROOT '/'
 #define SEPARATOR '/'
 
-int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((unused)), Dentry*& dentry_,
-                           VfsMount*& vfs_mount_)
+
+
+int32 PathWalker::pathWalk(const char* pathname, FileSystemInfo* fs_info, Path& out, Path* parent_dir)
 {
-  // Flag indicating the type of the last path component.
-  int32 last_type_ = 0;
+  assert(fs_info);
+  return pathWalk(pathname, fs_info->getPwd(), fs_info->getRoot(), out, parent_dir);
+}
 
-  // The last path component
-  char* last_ = 0;
-
-  FileSystemInfo *fs_info = getcwd();
-  if (pathname == 0)
+int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& root, Path& out, Path* parent_dir)
+{
+  if ((pathname == 0) || (strlen(pathname) == 0))
   {
-    return PW_ENOTFOUND;
+    debug(PATHWALKER, "pathWalk> ERROR: Invalid path name\n");
+    return PW_EINVALID;
   }
 
-  // check the first character of the path
-  if (*pathname == CHAR_ROOT)
-  {
-    last_type_ = LAST_ROOT;
-    // altroot check
+  debug(PATHWALKER, "pathWalk> path: %s\n", pathname);
 
-    // start with ROOT
-    dentry_ = fs_info->getRoot();
-    vfs_mount_ = fs_info->getRootMnt();
-  }
-  else
+  if ((pwd.dentry_ == 0) || (pwd.mnt_ == 0) ||
+      (root.dentry_ == 0) || (root.mnt_ == 0))
   {
-    // start with PWD
-    dentry_ = fs_info->getPwd();
-    vfs_mount_ = fs_info->getPwdMnt();
-  }
-
-  if ((dentry_ == 0) || (vfs_mount_ == 0))
-  {
-    kprintfd("PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
-    return PW_ENOTFOUND;
-  }
-  debug(PATHWALKER, "PathWalk> return success - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
-
-  debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
-  fs_info = getcwd();
-  debug(PATHWALKER, "pathWalk> fs_info->pathname_.c_str() : %s\n", fs_info->pathname_.c_str());
-  if (pathname == 0)
-  {
-    debug(PATHWALKER, "pathWalk> return pathname not found\n");
-    return PW_ENOTFOUND;
-  }
-
-  while (*pathname == SEPARATOR)
-    pathname++;
-  if (!*pathname) // i.e. path = /
-  {
-    debug(PATHWALKER, "pathWalk> return 0 pathname == \\n\n");
-    return PW_SUCCESS;
-  }
-
-  bool parts_left = true;
-  while (parts_left)
-  {
-    int32 npart_pos = 0;
-    int32 npart_len = getNextPartLen(pathname, npart_pos);
-    char npart[npart_len];
-    strncpy(npart, pathname, npart_len);
-    npart[npart_len - 1] = 0;
-    debug(PATHWALKER, "pathWalk> npart : %s\n", npart);
-    debug(PATHWALKER, "pathWalk> npart_pos : %d\n", npart_pos);
-    if (npart_pos < 0)
-    {
-      debug(PATHWALKER, "pathWalk> return path invalid npart_pos < 0 \n");
+      debug(PATHWALKER, "pathWalk> Error: Invalid pwd/root\n");
       return PW_EINVALID;
-    }
+  }
 
-    if ((*npart == NULL_CHAR) || (npart_pos == 0))
-    {
-      debug(PATHWALKER, "pathWalk> return success\n");
-      return PW_SUCCESS;
-    }
-    pathname += npart_pos;
+  // Clear parent dir tracker
+  if(parent_dir)
+  {
+    *parent_dir = Path();
+  }
 
-    last_ = npart;
-    if (*npart == CHAR_DOT)
-    {
-      if (*(npart + 1) == NULL_CHAR)
-      {
-        last_type_ = LAST_DOT;
-      }
-      else if ((*(npart + 1) == CHAR_DOT) && (*(npart + 2) == NULL_CHAR))
-      {
-        last_type_ = LAST_DOTDOT;
-      }
-    }
-    else
-    {
-      last_type_ = LAST_NORM;
-    }
+  // Start at ROOT if path starts with '/', else start with PWD
+  out = (*pathname == CHAR_ROOT) ? root : pwd;
+  debug(PATHWALKER, "PathWalk> Start dentry: %p, vfs_mount: %p\n", out.dentry_, out.mnt_);
 
-    // follow the inode
-    // check the VfsMount
-    if (last_type_ == LAST_DOT) // follow LAST_DOT
-    {
-      debug(PATHWALKER, "pathWalk> follow last dot\n");
-      last_ = 0;
-      continue;
-    }
-    else if (last_type_ == LAST_DOTDOT) // follow LAST_DOTDOT
-    {
-      debug(PATHWALKER, "pathWalk> follow last dotdot\n");
-      last_ = 0;
 
-      if ((dentry_ == fs_info->getRoot()) && (vfs_mount_ == fs_info->getRootMnt()))
-      {
-        // the dentry_ is the root of file-system
-        // because the ROOT has not parent from VfsMount.
-        continue;
-      }
-#ifndef EXE2MINIXFS
-      VfsMount* vfs_mount = vfs.getVfsMount(dentry_, true);
-      if (vfs_mount != 0)
-      {
-        // the dentry_ is a mount-point
-        vfs_mount_ = vfs_mount->getParent();
-        dentry_ = vfs_mount->getMountPoint();
-      }
-#endif
-      Dentry* parent_dentry = dentry_->getParent();
-      dentry_ = parent_dentry;
-      continue;
-    }
-    else if (last_type_ == LAST_NORM) // follow LAST_NORM
-    {
-      debug(PATHWALKER, "pathWalk> follow last norm last_: %s\n", last_);
-      Inode* current_inode = dentry_->getInode();
-      Dentry *found = current_inode->lookup(last_);
-      if (found)
-        debug(PATHWALKER, "pathWalk> found->getName() : %s\n", found->getName());
-      else
-        debug(PATHWALKER, "pathWalk> no dentry found !!!\n");
-      last_ = 0;
-      if (found != 0)
-      {
-        dentry_ = found;
-      }
-      else
-      {
-        debug(PATHWALKER, "pathWalk> return dentry not found\n");
-        return PW_ENOTFOUND;
-      }
-#ifndef EXE2MINIXFS
-      VfsMount* vfs_mount = vfs.getVfsMount(dentry_);
-      if (vfs_mount != 0)
-      {
-        debug(PATHWALKER, "MOUNT_DOWN\n");
-        // the dentry_ is a mount-point
-        // update the vfs_mount_
-        vfs_mount_ = vfs_mount;
-
-        // change the dentry of the mount-point
-        dentry_ = vfs_mount_->getRoot();
-
-      }
-#endif
-    }
-
+  while (true)
+  {
     while (*pathname == SEPARATOR)
       pathname++;
 
-    if (strlen(pathname) == 0)
+    if (!*pathname)
     {
+      debug(PATHWALKER, "pathWalk> Reached end of path\n");
       break;
     }
-  }
-  debug(PATHWALKER, "pathWalk> return 0 end of function\n");
 
+    size_t segment_len = getNextPartLen(pathname);
+
+    char segment[segment_len + 1];
+    strncpy(segment, pathname, segment_len + 1);
+    segment[segment_len] = 0;
+
+    pathname += segment_len;
+
+    while (*pathname == SEPARATOR)
+        pathname++;
+
+
+    debug(PATHWALKER, "pathWalk> segment: %s\n", segment);
+    debug(PATHWALKER, "pathWalk> remaining: %s\n", pathname);
+
+    switch(pathSegmentType(segment))
+    {
+    case LAST_DOT:
+        debug(PATHWALKER, "pathWalk> follow last dot\n");
+        break;
+    case LAST_DOTDOT:
+        debug(PATHWALKER, "pathWalk> follow last dotdot\n");
+        out = out.parent(&root);
+        break;
+    case LAST_NORM:
+        debug(PATHWALKER, "pathWalk> follow last norm segment: %s\n", segment);
+
+        Path child;
+        if(out.child(segment, child) != PW_SUCCESS)
+        {
+            debug(PATHWALKER, "pathWalk> dentry %s not found\n", segment);
+            if(!*pathname && parent_dir) // No further remaining segments -> parent directory exists
+            {
+                *parent_dir = out;
+            }
+            return PW_ENOTFOUND;
+        }
+
+        out = child;
+        break;
+    default:
+        assert(false);
+    }
+  }
+
+  if(parent_dir)
+  {
+    *parent_dir = out.parent(&root);
+  }
   return PW_SUCCESS;
 }
 
-int32 PathWalker::getNextPartLen(const char* path, int32 &npart_len)
+
+int PathWalker::pathSegmentType(const char* segment)
 {
-  char* tmp = 0;
-  tmp = strchr((char*) path, SEPARATOR);
+    return (strcmp(segment, ".")  == 0) ? LAST_DOT    :
+        (strcmp(segment, "..") == 0) ? LAST_DOTDOT :
+        LAST_NORM;
+}
 
-  npart_len = (size_t) (tmp - path + 1);
+size_t PathWalker::getNextPartLen(const char* path)
+{
+    const char* sep = strchr(path, SEPARATOR);
+    return sep ? sep - path : strlen(path);
+}
 
-  uint32 length = npart_len;
 
-  if (tmp == 0)
-  {
-    npart_len = strlen(path);
-    length = npart_len + 1;
-  }
+ustl::string PathWalker::pathPrefix(const ustl::string& path)
+{
+    ssize_t prefix_len = path.find_last_of("/");
+    if(prefix_len == -1)
+    {
+        debug(PATHWALKER, "pathPrefix: %s -> %s\n", path.c_str(), "");
+        return "";
+    }
 
-  return length;
+    ustl::string retval = path.substr(0, prefix_len);
+    debug(PATHWALKER, "pathPrefix: %s -> %s\n", path.c_str(), retval.c_str());
+    return retval;
+}
+
+ustl::string PathWalker::lastPathSegment(const ustl::string& path, bool ignore_separator_at_end)
+{
+    if(path.length() == 0)
+        return path;
+
+    if(!ignore_separator_at_end || path.back() != '/')
+    {
+        ssize_t prefix_len = path.find_last_of("/");
+        ustl::string retval = path.substr(prefix_len+1, path.length() - prefix_len);
+        debug(PATHWALKER, "lastPathSegment: %s -> %s\n", path.c_str(), retval.c_str());
+        return retval;
+    }
+    else
+    {
+        ustl::string tmp_path = path.substr(0, path.find_last_not_of("/") + 1);
+        ssize_t prefix_len = tmp_path.find_last_of("/");
+        ustl::string retval = tmp_path.substr(prefix_len+1, tmp_path.length() - prefix_len);
+        debug(PATHWALKER, "lastPathSegment: %s -> %s\n", path.c_str(), retval.c_str());
+        return retval;
+    }
 }

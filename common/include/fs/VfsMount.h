@@ -99,6 +99,9 @@ class VfsMount
    */
   void clear();
 
+
+  bool isRootMount() const;
+
 };
 
 

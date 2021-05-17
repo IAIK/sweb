@@ -4,6 +4,7 @@
 
 class Inode;
 class Superblock;
+class RamFSType;
 
 class RamFSSuperblock : public Superblock
 {
@@ -13,7 +14,7 @@ class RamFSSuperblock : public Superblock
      * @param s_root the root dentry of the new filesystem
      * @param s_dev the device number of the new filesystem
      */
-    RamFSSuperblock ( Dentry* s_root, uint32 s_dev );
+    RamFSSuperblock (RamFSType* type, uint32 s_dev );
     virtual ~RamFSSuperblock();
 
     /**
@@ -22,15 +23,7 @@ class RamFSSuperblock : public Superblock
      * @param type the inode type
      * @return the inode
      */
-    virtual Inode* createInode ( Dentry* dentry, uint32 type );
-
-    /**
-     * remove the corresponding file descriptor.
-     * @param inode the inode from which to remove the fd from
-     * @param fd the fd to remove
-     * @return 0 on success
-     */
-    virtual int32 removeFd ( Inode* inode, FileDescriptor* fd );
+    virtual Inode* createInode (uint32 type );
 
     /**
      * This method is called to read a specific inode from a mounted file-system.
@@ -54,16 +47,7 @@ class RamFSSuperblock : public Superblock
      * used.
      * @param inode the inode to delete
      */
-    virtual void delete_inode ( Inode* inode );
-
-    /**
-     * create a file with the given flag and a file descriptor with the given
-     * inode.
-     * @param inode the inode to create the fd for
-     * @param flag the flag
-     * @return the file descriptor
-     */
-    virtual int32 createFd ( Inode* inode, uint32 flag );
+    virtual void deleteInode ( Inode* inode );
 };
 //-----------------------------------------------------------------------------
 

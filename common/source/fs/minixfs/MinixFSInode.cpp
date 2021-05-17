@@ -8,12 +8,12 @@
 #include "Dentry.h"
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
-    Inode(super_block, inode_type), i_zones_(0), i_num_(0), children_loaded_(false)
+    Inode(super_block, inode_type),
+    i_zones_(0),
+    i_num_(0),
+    children_loaded_(false)
 {
   debug(M_INODE, "Simple Constructor\n");
-  i_size_ = 0;
-  i_nlink_ = 0;
-  i_dentry_ = 0;
 }
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones,
@@ -23,7 +23,6 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size
 {
   i_size_ = i_size;
   i_nlink_ = i_nlinks;
-  i_dentry_ = 0;
   i_state_ = I_UNUSED;
   if (i_mode & 0x8000)
   {
@@ -35,12 +34,12 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size
   }
   else
   {
-    kprintfd("i_mode = %x\n", i_mode);
+    debug(M_INODE, "i_mode = %x\n", i_mode);
     assert(false);
   }
   // (hard/sym link/...) not handled!
 
-  debug(M_INODE, "Constructor: size: %d\tnlink: %d\tnum zones: %d\tmode: %x\n", i_size_, i_nlink_,
+  debug(M_INODE, "Constructor: size: %d\tnlink: %d\tnum zones: %d\tmode: %x\n", i_size_, i_nlink_.load(),
         i_zones_->getNumZones(), i_mode);
 }
 
@@ -48,12 +47,6 @@ MinixFSInode::~MinixFSInode()
 {
   debug(M_INODE, "Destructor\n");
   delete i_zones_;
-
-  while (!other_dentries_.empty())
-  {
-    delete other_dentries_.front();
-    other_dentries_.pop_front();
-  }
 }
 
 int32 MinixFSInode::readData(uint32 offset, uint32 size, char *buffer)
@@ -154,69 +147,39 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 
 int32 MinixFSInode::mknod(Dentry *dentry)
 {
-  //debug(M_INODE, "mknod: dentry: %d, i_type_: %d\n",dentry,i_type_);
-  if (dentry == 0)
-  {
-    // ERROR_DNE
-    return -1;
-  }
+  Inode::mknod(dentry);
+  debug(M_INODE, "mknod: dentry: %p, i_type_: %x\n", dentry, i_type_);
 
-  if (i_type_ == I_DIR || i_type_ == I_FILE)
-  {
-    // ERROR_IC
-    return -1;
-  }
-
-  ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(0, i_num_, i_dentry_->getName());
-  i_dentry_ = dentry;
-  dentry->setInode(this);
-  return 0;
-}
-
-int32 MinixFSInode::mkdir(Dentry *dentry)
-{
-  debug(M_INODE, "mkdir: dentry: %p, i_type_: %d\n", dentry, i_type_);
-  if (dentry == 0)
-  {
-    // ERROR_DNE
-    return -1;
-  }
-
-  if (i_type_ != I_DIR)
-  {
-    // ERROR_IC
-    return -1;
-  }
-  i_dentry_ = dentry;
-  dentry->setInode(this);
-
-  ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(0, i_num_, i_dentry_->getName());
-  i_nlink_++;
-  writeDentry(0, i_num_, ".");
-  i_nlink_++;
-  writeDentry(0, ((MinixFSInode *) dentry->getParent()->getInode())->i_num_, "..");
-  ((MinixFSInode *) dentry->getParent()->getInode())->i_nlink_++;
+  ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(0, i_num_, dentry->getName());
   return 0;
 }
 
 int32 MinixFSInode::mkfile(Dentry *dentry)
 {
-  debug(M_INODE, "mkfile: dentry: %p, i_type_: %d\n", dentry, i_type_);
-  if (dentry == 0)
-  {
-    // ERROR_DNE
-    return -1;
-  }
+  Inode::mkfile(dentry);
+  debug(M_INODE, "mkfile: dentry: %p (%s)\n", dentry, dentry->getName());
 
-  if (i_type_ != I_FILE)
-  {
-    // ERROR_IC
-    return -1;
-  }
-  i_dentry_ = dentry;
-  ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(0, i_num_, i_dentry_->getName());
-  i_dentry_->setInode(this);
-  i_nlink_++;
+  ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(0, i_num_, dentry->getName());
+  return 0;
+}
+
+int32 MinixFSInode::mkdir(Dentry *dentry)
+{
+  Inode::mkdir(dentry);
+  debug(M_INODE, "mkdir: dentry: %p (%s)\n", dentry, dentry->getName());
+
+  MinixFSInode* parent_inode = ((MinixFSInode *) dentry->getParent()->getInode());
+  assert(parent_inode->getType() == I_DIR);
+
+  parent_inode->writeDentry(0, i_num_, dentry->getName());
+  // link count already increased once in Inode::mkdir(dentry);
+
+  writeDentry(0, i_num_, ".");
+  incLinkCount();
+
+  writeDentry(0, parent_inode->i_num_, "..");
+  parent_inode->incLinkCount();
+
   return 0;
 }
 
@@ -237,6 +200,7 @@ int32 MinixFSInode::findDentry(uint32 i_num)
       }
     }
   }
+  debug(M_INODE, "findDentry: i_num: %d not found\n", i_num);
   return -1;
 }
 
@@ -262,32 +226,52 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
 
 }
 
-File* MinixFSInode::link(uint32 flag)
+File* MinixFSInode::open(Dentry* dentry, uint32 flag)
 {
-  debug(M_INODE, "link: flag: %d\n", flag);
-  File* file = (File*) (new MinixFSFile(this, i_dentry_, flag));
+  debug(M_INODE, "Open file, flag: %x\n", flag);
+  assert(ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
+  File* file = (File*) (new MinixFSFile(this, dentry, flag));
   i_files_.push_back(file);
-  //++i_nlink_;
+  getSuperblock()->fileOpened(file);
   return file;
 }
 
-int32 MinixFSInode::unlink(File* file)
+
+int32 MinixFSInode::link(Dentry* dentry)
 {
-  debug(M_INODE, "unlink\n");
-  i_files_.remove(file);
-  delete file;
-  //--i_nlink_;
-  return 0;
+    int32 link_status = Inode::link(dentry);
+    if(link_status)
+    {
+        return link_status;
+    }
+
+    ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(0, i_num_, dentry->getName());
+
+    return 0;
 }
 
-int32 MinixFSInode::rmdir()
+int32 MinixFSInode::unlink(Dentry* dentry)
 {
-  debug(M_INODE, "rmdir\n");
-  if (i_type_ != I_DIR)
-    return -1;
+    int32 unlink_status = Inode::unlink(dentry);
+    if(unlink_status)
+    {
+        return unlink_status;
+    }
 
-  Dentry* dentry = i_dentry_;
-  Dentry* parent_dentry = dentry->getParent();
+    ((MinixFSInode *) dentry->getParent()->getInode())->writeDentry(i_num_, 0, "");
+
+    return 0;
+}
+
+int32 MinixFSInode::rmdir(Dentry* dentry)
+{
+  assert(dentry && (dentry->getInode() == this));
+  assert(dentry->getParent() && (dentry->getParent()->getInode()));
+  assert(getType() == I_DIR);
+
+  debug(M_INODE, "rmdir %s for inode %p\n", dentry->getName(), this);
+
+  MinixFSInode* parent_inode = static_cast<MinixFSInode*>(dentry->getParent()->getInode());
 
   //the "." and ".." dentries will be deleted in some inode-dtor
   //("." in this inodes-dtor, ".." in the parent-dentry-inodes-dtor)
@@ -297,64 +281,35 @@ int32 MinixFSInode::rmdir()
     {
       //if directory contains other entries than "." or ".."
       //-> directory not empty
+      debug(M_INODE, "Error: Cannot remove non-empty directory\n");
       return -1;
     }
   }
 
-  parent_dentry->childRemove(dentry);
-  char ch = '\0';
+  writeDentry(i_num_, 0, ""); //this was the "."-entry
+  decLinkCount();
 
-  writeDentry(i_num_, 0, &ch); //this was the "."-entry
-  i_nlink_--;
+  writeDentry(parent_inode->i_num_, 0, ""); //this was ".."
+  parent_inode->decLinkCount();
 
-  writeDentry(((MinixFSInode *) parent_dentry->getInode())->i_num_, 0, &ch); //this was ".."
-  ((MinixFSInode *) parent_dentry->getInode())->i_nlink_--;
+  parent_inode->writeDentry(i_num_, 0, "");
+  decLinkCount();
 
-  ((MinixFSInode *) parent_dentry->getInode())->writeDentry(i_num_, 0, &ch);
-  i_nlink_--;
+  assert(i_nlink_ == 0);
 
-  dentry->releaseInode();
-  delete dentry;
-  i_dentry_ = 0;
-  i_nlink_ = 0;
-  return INODE_DEAD;
-}
-
-int32 MinixFSInode::rm()
-{
-  if (i_files_.size() != 0)
-  {
-    debug(M_INODE, "the file is opened.\n");
-    return -1;
-  }
-
-  Dentry* dentry = i_dentry_;
-  if (dentry->emptyChild())
-  {
-    i_type_ = INODE_DEAD;
-    Dentry* parent_dentry = dentry->getParent();
-    parent_dentry->childRemove(dentry);
-    char ch = '\0';
-    ((MinixFSInode *) parent_dentry->getInode())->writeDentry(((MinixFSInode *) dentry->getInode())->i_num_, 0, &ch);
-    i_nlink_--;
-
-    dentry->releaseInode();
-    delete dentry;
-    i_dentry_ = 0;
-    debug(M_INODE, "rm: deleted\n");
-    return INODE_DEAD;
-  }
-  else
-  {
-    // ERROR_DEC
-    return -1;
-  }
+  return 0;
 }
 
 Dentry* MinixFSInode::lookup(const char* name)
 {
+  if(i_type_ != I_DIR)
+  {
+    return nullptr;
+  }
 
-  debug(M_INODE, "lookup: name: %s this->i_dentry_->getName(): %s \n", name, this->i_dentry_->getName());
+  assert(i_dentrys_.size() >= 1);
+
+  debug(M_INODE, "lookup: name: %s this->i_dentry_->getName(): %s \n", name, i_dentrys_.front()->getName());
   if (name == 0)
   {
     // ERROR_DNE
@@ -363,28 +318,20 @@ Dentry* MinixFSInode::lookup(const char* name)
 
   Dentry* dentry_update = 0;
 
-  if (i_type_ == I_DIR)
+  dentry_update = i_dentrys_.front()->checkName(name);
+  if (dentry_update == 0)
   {
-    dentry_update = i_dentry_->checkName(name);
-    if (dentry_update == 0)
-    {
-      // ERROR_NNE
-      return (Dentry*) 0;
-    }
-    else
-    {
-      debug(M_INODE, "lookup: dentry_update->getName(): %s\n", dentry_update->getName());
-      if (((MinixFSInode *) dentry_update->getInode())->i_type_ == I_DIR)
-      {
-        ((MinixFSInode *) dentry_update->getInode())->loadChildren();
-      }
-      return dentry_update;
-    }
+    // ERROR_NNE
+    return (Dentry*) 0;
   }
   else
   {
-    // ERROR_IC
-    return (Dentry*) 0;
+    debug(M_INODE, "lookup: dentry_update->getName(): %s\n", dentry_update->getName());
+    if (((MinixFSInode *) dentry_update->getInode())->i_type_ == I_DIR)
+    {
+      ((MinixFSInode *) dentry_update->getInode())->loadChildren();
+    }
+    return dentry_update;
   }
 }
 
@@ -407,7 +354,7 @@ void MinixFSInode::loadChildren()
         debug(M_INODE, "loadChildren: loading child %d\n", inode_index);
         bool is_already_loaded = false;
 
-        Inode* inode = ((MinixFSSuperblock *) superblock_)->getInode(inode_index, is_already_loaded);
+        MinixFSInode* inode = ((MinixFSSuperblock *) superblock_)->getInode(inode_index, is_already_loaded);
 
         if (!inode)
         {
@@ -425,17 +372,14 @@ void MinixFSInode::loadChildren()
         name[MAX_NAME_LENGTH] = 0;
 
         debug(M_INODE, "loadChildren: dentry name: %s\n", name);
-        Dentry *new_dentry = new Dentry(name);
-        i_dentry_->setChild(new_dentry);
-        new_dentry->setParent(i_dentry_);
+        assert(i_dentrys_.size() >= 1);
+        Dentry *new_dentry = new Dentry(inode, i_dentrys_.front(), name);
+        inode->i_dentrys_.push_back(new_dentry);
+
         if (!is_already_loaded)
         {
-          ((MinixFSInode *) inode)->i_dentry_ = new_dentry;
           ((MinixFSSuperblock *) superblock_)->all_inodes_add_inode(inode);
         }
-        else
-          ((MinixFSInode *) inode)->other_dentries_.push_back(new_dentry);
-        new_dentry->setInode(inode);
       }
     }
   }

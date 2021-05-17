@@ -7,6 +7,7 @@
 class Inode;
 class MinixFSInode;
 class Superblock;
+class MinixFSType;
 
 class MinixFSSuperblock : public Superblock
 {
@@ -15,24 +16,15 @@ class MinixFSSuperblock : public Superblock
     friend class MinixFSZone;
     friend class MinixStorageManager;
 
-    MinixFSSuperblock(Dentry* s_root, size_t s_dev, uint64 offset);
+    MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset);
     virtual ~MinixFSSuperblock();
 
     /**
-     * creates one new inode of the superblock adds the dentry sets it in the bitmap
-     * @param dentry the dentry to set in the new inode
+     * creates one new inode of the superblock
      * @param type the file type of the new inode (I_DIR, I_FILE)
      * @return the new inode
      */
-    virtual Inode* createInode(Dentry* dentry, uint32 type);
-
-    /**
-     *  remove the corresponding file descriptor and unlinks it from the inode.
-     * @param inode the inode the file descriptor is linked to
-     * @param fd the file descriptor
-     * @return 0 on success
-     */
-    virtual int32 removeFd(Inode* inode, FileDescriptor* fd);
+    virtual Inode* createInode(uint32 type);
 
     /**
      * reads one inode from the mounted file system
@@ -51,7 +43,7 @@ class MinixFSSuperblock : public Superblock
      * removes one inode from the file system and frees all its resources
      * @param inode the inode to delete
      */
-    virtual void delete_inode(Inode* inode);
+    virtual void deleteInode(Inode* inode);
 
     /**
      * add an inode to the all_inodes_ data structures
@@ -64,14 +56,6 @@ class MinixFSSuperblock : public Superblock
      * @param inode to remove
      */
     void all_inodes_remove_inode(Inode* inode);
-
-    /**
-     * create a file with the given flag and a file descriptor with the given inode.
-     * @param inode the inode to link the file with
-     * @param flag the flag to create the file with
-     * @return the file descriptor
-     */
-    virtual int32 createFd(Inode* inode, uint32 flag);
 
     /**
      * allocates one zone on the file system
@@ -201,11 +185,6 @@ class MinixFSSuperblock : public Superblock
 
     MinixStorageManager* storage_manager_;
 
-    /**
-     * offset in the image file (in image util)
-     */
-    uint64 offset_;
-
 
     ustl::map<uint32, Inode*> all_inodes_set_;
 
@@ -213,5 +192,10 @@ class MinixFSSuperblock : public Superblock
      * pointer to self for compatability
      */
     Superblock* superblock_;
+
+    /**
+     * offset in the image file (in image util)
+     */
+    uint64 offset_;
 };
 

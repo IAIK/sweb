@@ -1,9 +1,7 @@
-// WARNING: You are looking for the a different types.h - this one is just for the exe2minixfs tool!
+// WARNING: You are looking for a different types.h - this one is just for the exe2minixfs tool!
 #ifdef EXE2MINIXFS
 #pragma once
 
-#define Mutex const char*
-#define MutexLock __attribute__((unused)) const char*
 #define ArchThreads
 
 #include <stdint.h>

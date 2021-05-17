@@ -1,4 +1,4 @@
-#include "fs/FileSystemType.h"
+#include "FileSystemType.h"
 #include "assert.h"
 
 FileSystemType::FileSystemType(const char *fs_name) :
@@ -21,18 +21,3 @@ int32 FileSystemType::getFSFlags() const
 {
   return fs_flags_;
 }
-
-
-Superblock *FileSystemType::readSuper ( Superblock* /*superblock*/, void* /*data*/ ) const
-{
-  assert ( 0 );
-  return ( 0 );
-}
-
-
-Superblock *FileSystemType::createSuper ( Dentry* /*dentry*/, uint32 /*s_dev*/ ) const
-{
-  assert ( 0 );
-  return ( Superblock* ) 0;
-}
-

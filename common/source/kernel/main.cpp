@@ -23,7 +23,10 @@
 #include "FileSystemInfo.h"
 #include "Dentry.h"
 #include "DeviceFSType.h"
+#include "RamFSType.h"
+#include "MinixFSType.h"
 #include "VirtualFileSystem.h"
+#include "FileDescriptor.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
@@ -83,10 +86,15 @@ extern "C" void startup()
   ArchCommon::initDebug();
 
   vfs.initialize();
-  debug(MAIN, "Mounting DeviceFS under /dev/\n");
-  DeviceFSType *devfs = new DeviceFSType();
-  vfs.registerFileSystem(devfs);
-  default_working_dir = vfs.root_mount("devicefs", 0);
+  debug(MAIN, "Mounting root file system\n");
+  vfs.registerFileSystem(DeviceFSType::getInstance());
+  vfs.registerFileSystem(new RamFSType());
+  vfs.registerFileSystem(new MinixFSType());
+  default_working_dir = vfs.rootMount("ramfs", 0);
+  assert(default_working_dir);
+
+  // initialise global and static objects
+  new (&global_fd_list) FileDescriptorList();
 
   debug(MAIN, "Block Device creation\n");
   BDManager::getInstance()->doDeviceDetection();
@@ -97,19 +105,15 @@ extern "C" void startup()
     debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
   }
 
-  // initialise global and static objects
-  extern ustl::list<FileDescriptor*> global_fd;
-  new (&global_fd) ustl::list<FileDescriptor*>();
-  extern Mutex global_fd_lock;
-  new (&global_fd_lock) Mutex("global_fd_lock");
 
   debug(MAIN, "make a deep copy of FsWorkingDir\n");
   main_console->setWorkingDirInfo(new FileSystemInfo(*default_working_dir));
   debug(MAIN, "main_console->setWorkingDirInfo done\n");
 
   ustl::coutclass::init();
-  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n", default_working_dir->getRoot()->getName(),
-        default_working_dir->getPwd()->getName());
+  debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n",
+        default_working_dir->getRoot().dentry_->getName(),
+        default_working_dir->getPwd().dentry_->getName());
   if (main_console->getWorkingDirInfo())
   {
     delete main_console->getWorkingDirInfo();
