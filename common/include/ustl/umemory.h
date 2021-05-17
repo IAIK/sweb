@@ -176,7 +176,7 @@ public:
     inline			shared_ptr (shared_ptr&& p)	: _p (p._p) { p._p = nullptr; }
     inline			shared_ptr (const shared_ptr& p): _p (p._p) { if (_p) ++_p->refs; }
     inline			~shared_ptr (void)		{ reset(); }
-    inline constexpr size_t	use_count (void) const		{ return _p ? _p->refs : 0; }
+    inline constexpr size_t	use_count (void) const		{ return _p ? _p->refs.load() : 0; }
     inline constexpr bool	unique (void) const		{ return use_count() == 1; }
     inline constexpr pointer	get (void) const		{ return _p ? _p->p : nullptr; }
     void			reset (pointer p = nullptr) {
