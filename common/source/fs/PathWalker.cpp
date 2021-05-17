@@ -83,13 +83,18 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
     switch(pathSegmentType(segment))
     {
     case LAST_DOT:
+    {
         debug(PATHWALKER, "pathWalk> follow last dot\n");
         break;
+    }
     case LAST_DOTDOT:
+    {
         debug(PATHWALKER, "pathWalk> follow last dotdot\n");
         out = out.parent(&root);
         break;
+    }
     case LAST_NORM:
+    {
         debug(PATHWALKER, "pathWalk> follow last norm segment: %s\n", segment);
 
         Path child;
@@ -105,6 +110,7 @@ int32 PathWalker::pathWalk(const char* pathname, const Path& pwd, const Path& ro
 
         out = child;
         break;
+    }
     default:
         assert(false);
     }
