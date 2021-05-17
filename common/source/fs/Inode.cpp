@@ -18,11 +18,11 @@ Inode::Inode(Superblock *superblock, uint32 inode_type) :
 
 Inode::~Inode()
 {
-    if(i_refcount_ != 0)
+    if(numRefs() != 0)
     {
-        debug(INODE, "~Inode %s %p refcount: %u\n", getSuperblock()->getFSType()->getFSName(), this, i_refcount_.load());
+        debug(INODE, "~Inode %s %p refcount: %u\n", getSuperblock()->getFSType()->getFSName(), this, numRefs());
     }
-    assert(i_refcount_ == 0);
+    assert(numRefs() == 0);
 }
 
 uint32 Inode::incRefCount()
@@ -55,7 +55,12 @@ uint32 Inode::decLinkCount()
 
 uint32 Inode::numRefs()
 {
-    return i_refcount_.load();
+    return i_refcount_;
+}
+
+uint32 Inode::numLinks()
+{
+    return i_nlink_;
 }
 
 

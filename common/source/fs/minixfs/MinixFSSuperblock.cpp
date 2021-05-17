@@ -220,7 +220,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   readBytes(block, offset, INODE_SIZE, buffer);
   debug(M_SB, "writeInode> read data from disc\n");
   debug(M_SB, "writeInode> the inode: i_type_: %d, i_nlink_: %d, i_size_: %d\n", minix_inode->i_type_,
-        minix_inode->i_nlink_.load(), minix_inode->i_size_);
+        minix_inode->numLinks(), minix_inode->i_size_);
   if (minix_inode->i_type_ == I_FILE)
   {
     debug(M_SB, "writeInode> setting mode to file : %x\n", *(uint16*) buffer | 0x81FF);
@@ -236,11 +236,11 @@ void MinixFSSuperblock::writeInode(Inode* inode)
     // link etc. unhandled
   }
   ((uint32*)buffer)[1+V3_OFFSET] = minix_inode->i_size_;
-  debug(M_SB, "writeInode> write inode %p link count %u\n", inode, minix_inode->i_nlink_.load());
+  debug(M_SB, "writeInode> write inode %p link count %u\n", inode, minix_inode->numLinks());
   if (s_magic_ == MINIX_V3)
-    ((uint16*)buffer)[1] = minix_inode->i_nlink_;
+    ((uint16*)buffer)[1] = minix_inode->numLinks();
   else
-    buffer[13] = minix_inode->i_nlink_;
+    buffer[13] = minix_inode->numLinks();
   debug(M_SB, "writeInode> writing bytes to disc on block %d with offset %d\n", block, offset);
   writeBytes(block, offset, INODE_SIZE, buffer);
   debug(M_SB, "writeInode> flushing zones of inode %p\n", inode);

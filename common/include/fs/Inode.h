@@ -51,12 +51,12 @@ class Inode
     /**
      * the number of Dentry links to this inode.
      */
-    ustl::atomic<uint32> i_nlink_;
+    uint32 i_nlink_;
 
     /**
      * the number of runtime references to this inode (loaded Dentrys, open files, ...)
      */
-    ustl::atomic<uint32> i_refcount_;
+    uint32 i_refcount_;
 
     Superblock *superblock_;
 
@@ -96,6 +96,7 @@ class Inode
 
     uint32 incLinkCount();
     uint32 decLinkCount();
+    uint32 numLinks();
 
     void addDentry(Dentry* dentry);
     void removeDentry(Dentry* dentry);
