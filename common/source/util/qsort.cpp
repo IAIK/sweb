@@ -1,14 +1,30 @@
 #include "types.h"
 #include "assert.h"
+#include "qsort.h"
 
-/**
- * A very simple binary (memory-only) swap operation for elements of arbitrary size (in bytes)
- * Chosen this way to be a) simple, b) understandable, not to be the fastest or smartest possible.
- * @param a pointer to first element
- * @param a pointer to the second element
- * @param the size fo the elements in bytes
- */
-static inline void swap_elements(char* a, char* b, size_t size)
+// Conversion from pointers to indices , to allow parent/child calculations
+#define PTR_TO_INDEX(ptr) ((size_t) ((ptr) - (s_info->lo_)) / (s_info->size_))
+#define INDEX_TO_PTR(i)   ((char*)  ((i) * (s_info->size_) + (s_info->lo_)))
+
+// Macros for getting around in our tree
+#define PARENT(ptr)  INDEX_TO_PTR((size_t) ((PTR_TO_INDEX(ptr) - 1) / 2))
+#define L_CHILD(ptr) INDEX_TO_PTR(((PTR_TO_INDEX(ptr) * 2) + 1))
+#define R_CHILD(ptr) INDEX_TO_PTR(((PTR_TO_INDEX(ptr) * 2) + 2))
+
+// Data about the area to sort
+typedef struct {
+  char* lo_;
+  char* hi_;
+  size_t size_;
+  int (*compar_)(const void*, const void*);
+} SortInfo;
+
+typedef struct {
+  char* lo_;
+  char* hi_;
+} Range;
+
+static inline void swap_elements(char* a, char* b, const size_t size)
 {
   if(a == b) return;
 
@@ -23,57 +39,63 @@ static inline void swap_elements(char* a, char* b, size_t size)
   }
 }
 
-/**
- * A simple quicksort partitioning function.
- * @param low A pointer to the beginning of the first element
- * @param high A pointer to the beginning of the last element
- * @param size size of each element
- * @param compar function pointer to a comparison function
- * @return pointer to the final position of the partitioning element
- */
-static char* partition(char* low, char* high, size_t size, int (*compar)(const void *, const void*))
+// Re-Heaps a part of the heap
+void siftDown(const SortInfo* const s_info, Range range)
 {
-  char* swapto_ptr = low - size;
-  char* pivot_ptr   = high;
+  char* root = range.lo_;
 
-  for(char* curr_element = low; curr_element < high; curr_element += size)
+  while (L_CHILD(root) <= range.hi_)
   {
-    if(compar(curr_element, pivot_ptr) <= 0)
-    {
-      swapto_ptr += size;
-      swap_elements(curr_element, swapto_ptr, size);
-    }
+    char* l_child = L_CHILD(root);
+    char* r_child = R_CHILD(root);
+    char* swap = root;
+
+    if(s_info->compar_(swap, l_child) < 0)
+      swap = l_child;
+
+    if(r_child <= range.hi_ && s_info->compar_(swap, r_child) < 0)
+      swap = r_child;
+
+    if(root == swap) return;
+
+    swap_elements(root, swap, s_info->size_);
+    root = swap;
   }
-
-  swapto_ptr += size;
-  swap_elements(swapto_ptr, high, size);
-  return swapto_ptr;
 }
 
-/**
- * A simple quicksort main function
- * It partitions the array, then calls itself on the partitions
- * @param low A pointer to the beginning of the first element
- * @param high A pointer to the beginning of the last element
- * @param size size of each element
- * @param compar function pointer to a comparison function
- */
-static void quick_sort(char* low, char* high, size_t size, int (*compar)(const void *, const void*))
+// Heapify the entire range
+void heapify(const SortInfo* const s_info)
 {
-  if(low >= high) return;
+  char* start = PARENT(s_info->hi_);
 
-  char* part_ptr = partition(low, high, size, compar);
-
-  quick_sort(low, part_ptr - size, size, compar);
-  quick_sort(part_ptr + size, high, size, compar);
+  while(start >= s_info->lo_)
+  {
+    Range range = {start, s_info->hi_};
+    siftDown(s_info, range);
+    start -= s_info->size_;
+  }
 }
 
-void qsort(void* base, size_t nitems, size_t size, int (*compar)(const void *, const void*))
+// Simple heapsort
+void heapsort(const SortInfo* const s_info)
 {
-  assert(base);
-  assert(size);
-  assert(compar);
+  heapify(s_info);
 
-  quick_sort((char*) base, ((char*)base) + (nitems - 1) * size, size, compar);
-  return;
+  Range range = {s_info->lo_, s_info->hi_};
+  while(range.hi_ > range.lo_)
+  {
+    swap_elements(range.hi_, range.lo_, s_info->size_);
+    range.hi_ -= s_info->size_;
+    siftDown(s_info, range);
+  }
+}
+
+// Wrapper around heapsort
+void qsort(void* ptr, size_t count, size_t size, int (*compar)(const void*, const void*))
+{
+  if(count == 0) return;
+  if(size == 0) return;
+
+  const SortInfo s_info = {(char*) ptr, ((char*) ptr) + (count - 1) * size, size, compar};
+  heapsort(&s_info);
 }
