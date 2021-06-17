@@ -129,7 +129,7 @@ void Thread::printBacktrace(bool use_stored_registers)
     debug(BACKTRACE, "Kernel debug info not set up, backtrace won't look nice!\n");
   }
 
-  assert(BACKTRACE_MAX_FRAMES < 128);
+  static_assert(BACKTRACE_MAX_FRAMES < 128);
   pointer call_stack[BACKTRACE_MAX_FRAMES];
   size_t count = 0;
 
