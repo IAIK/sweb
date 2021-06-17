@@ -91,11 +91,11 @@ class Thread
      * @return true if ready for scheduling
      */
     bool schedulable();
-
-
+  
+  
+    uint32 kernel_stack_[2048];
     ArchThreadRegisters* kernel_registers_;
     ArchThreadRegisters* user_registers_;
-    uint32 kernel_stack_[2048];
 
     uint32 switch_to_userspace_;
 
