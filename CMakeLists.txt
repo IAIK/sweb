@@ -17,11 +17,7 @@ if ("${ARCH}" MATCHES "arm.*")
   add_definitions(-DARM)
 endif("${ARCH}" MATCHES "arm.*")
 
-unset(CMAKE_CROSSCOMPILING)
-if(APPLE OR WIN32)
-  set(CMAKE_CROSSCOMPILING 1)
-  MESSAGE("-- Cross-Compiling on Apple/Windows")
-endif(APPLE OR WIN32)
+set(CMAKE_CROSSCOMPILING 1)
 
 # add-dbg for userspace binaries
 include(AddDebugInfo)
