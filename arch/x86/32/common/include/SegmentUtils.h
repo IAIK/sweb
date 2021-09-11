@@ -119,11 +119,10 @@ public:
 };
 
 
-void setFSBase(size_t fs_base);
-void setGSBase(size_t fs_base);
-size_t getFSBase();
-size_t getGSBase();
-
+void setFSBase(GDT& gdt, size_t fs_base);
+void setGSBase(GDT& gdt, size_t fs_base);
+size_t getFSBase(GDT &gdt);
+size_t getGSBase(GDT &gdt);
 
 extern GDT gdt;
 extern TSS g_tss;

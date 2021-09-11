@@ -38,10 +38,10 @@ extern "C" void initialiseBootTimePaging()
     pde_start[pdi].pt.present = 1;
   }
 
+  extern uint32 text_start_address;
   extern uint32 ro_data_end_address;
-  extern uint32 apstartup_text_begin;
-  extern uint32 apstartup_text_end;
-
+  extern uint32 apstartup_text_load_begin;
+  extern uint32 apstartup_text_load_end;
 
   // Map kernel page tables
   for(VAddr a{ArchCommon::getKernelStartAddress()}; a.addr < ArchCommon::getKernelEndAddress(); a.addr += PAGE_SIZE)
@@ -50,10 +50,16 @@ extern "C" void initialiseBootTimePaging()
     assert(pti < sizeof(kernel_page_tables)/sizeof(kernel_page_tables[0]));
     pte_start[pti].page_ppn = VIRTUAL_TO_PHYSICAL_BOOT(a.addr)/PAGE_SIZE;
     // AP startup pages need to be writeable to fill in the GDT, ...
-    pte_start[pti].writeable = ((a.addr < (pointer)&ro_data_end_address) &&
-                                !((a.addr >= (pointer)&apstartup_text_begin) &&
-                                  (a.addr < (pointer)&apstartup_text_end))
-                                ? 0 : 1);
+    size_t ap_text_start = ((size_t)&apstartup_text_load_begin/PAGE_SIZE)*PAGE_SIZE;
+    size_t ap_text_end = (size_t)&apstartup_text_load_end;
+
+    pte_start[pti].writeable =
+        (((a.addr >= (pointer)&text_start_address) &&
+          (a.addr < (pointer)&ro_data_end_address)) &&
+         !((a.addr >= ap_text_start) &&
+          (a.addr < ap_text_end))
+             ? 0
+             : 1);
     pte_start[pti].present = 1;
   }
 

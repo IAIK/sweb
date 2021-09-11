@@ -96,18 +96,18 @@ void SegmentUtils::initialise()
 }
 
 
-size_t getGSBase()
+size_t getGSBase(GDT& gdt)
 {
         return gdt.entries[KERNEL_FS/8].getBase();
 }
 
-size_t getFSBase()
+size_t getFSBase(GDT& gdt)
 {
         return gdt.entries[KERNEL_FS/8].getBase();
 }
 
 
-void setGSBase(size_t gs_base)
+void setGSBase(GDT& gdt, size_t gs_base)
 {
         debug(A_MULTICORE, "Set GS base: %zx\n", gs_base);
         gdt.entries[KERNEL_GS/8].setBase(gs_base);
@@ -116,7 +116,7 @@ void setGSBase(size_t gs_base)
             :[gs]"a"(KERNEL_GS));
 }
 
-void setFSBase(size_t fs_base)
+void setFSBase(GDT& gdt, size_t fs_base)
 {
         debug(A_MULTICORE, "Set FS base: %zx\n", fs_base);
         gdt.entries[KERNEL_FS/8].setBase(fs_base);

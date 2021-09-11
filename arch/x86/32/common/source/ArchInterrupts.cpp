@@ -30,7 +30,7 @@ static void initInterruptController()
     size_t vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*2;
     LocalAPIC::mapAt(vaddr);
     assert(CPULocalStorage::CLSinitialized());
-    cpu_info.lapic.init();
+    cpu_lapic.init();
   }
 
   IOAPIC::initAll();
@@ -48,10 +48,10 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  if(cpu_info.lapic.isInitialized() && cpu_info.lapic.usingAPICTimer())
+  if(cpu_lapic.isInitialized() && cpu_lapic.usingAPICTimer())
   {
-      debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_info.lapic.ID());
-      cpu_info.lapic.reg_vaddr_->lvt_timer.setMask(false);
+      debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_lapic.ID());
+      cpu_lapic.reg_vaddr_->lvt_timer.setMask(false);
   }
   else
   {
@@ -116,12 +116,16 @@ void ArchInterrupts::disableIRQ(uint16 num)
 
 void ArchInterrupts::startOfInterrupt(uint16 number)
 {
-        if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+  if (A_INTERRUPTS & OUTPUT_ADVANCED) {
+    debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+  }
+
+        if((LocalAPIC::exists && cpu_lapic.isInitialized()) &&
            (IOAPIC::findIOAPICforIRQ(number) ||
-            ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+            ((number == 0) && cpu_lapic.usingAPICTimer()) ||
             (number > 16)))
         {
-                cpu_info.lapic.outstanding_EOIs_++;
+                cpu_lapic.outstanding_EOIs_++;
         }
         else
         {
@@ -134,15 +138,15 @@ void ArchInterrupts::endOfInterrupt(uint16 number)
     if(A_INTERRUPTS & OUTPUT_ADVANCED) {
         debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
     }
-  if((LocalAPIC::exists && cpu_info.lapic.isInitialized()) &&
+  if((LocalAPIC::exists && cpu_lapic.isInitialized()) &&
      (IOAPIC::findIOAPICforIRQ(number) ||
-      ((number == 0) && cpu_info.lapic.usingAPICTimer()) ||
+      ((number == 0) && cpu_lapic.usingAPICTimer()) ||
       (number > 16)))
   {
       if(A_INTERRUPTS & OUTPUT_ADVANCED) {
           debug(A_INTERRUPTS, "Sending EOI %x to APIC\n", number + 0x20);
       }
-      cpu_info.lapic.sendEOI(number + 0x20);
+      cpu_lapic.sendEOI(number + 0x20);
   }
   else
   {

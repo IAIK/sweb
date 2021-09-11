@@ -47,7 +47,7 @@ void Console::handleKey(uint32 key)
   {
     case KEY_F7:
 
-      cpu_info.lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
+      cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
       Scheduler::instance()->printThreadList();
       Scheduler::instance()->printStackTraces();
       Scheduler::instance()->printLockingInformation();
@@ -56,7 +56,7 @@ void Console::handleKey(uint32 key)
               kprintfd("Thread %p = %s\n", t, t->getName());
               ArchThreads::printThreadRegisters(t, true);
       }
-      assert(false);
+      assert(false && "F7 pressed");
       break;
     case KEY_F8:
       debug_print_to_fb = !debug_print_to_fb;

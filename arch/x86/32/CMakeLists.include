@@ -19,14 +19,14 @@ if ("${DEBUG}" STREQUAL "1")
 endif()
 
 set(AVAILABLE_MEMORY 8M)
-set(NUM_CPUS 1)
+set(NUM_CPUS 2)
 
 set(QEMU_BIN qemu-system-i386)
-set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot -smp ${NUM_CPUS} -d guest_errors -d int) #  -d int
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=SWEB-flat.vmdk,index=0,media=disk,format=raw -debugcon stdio -no-reboot -no-shutdown -smp ${NUM_CPUS} -d int -d cpu_reset -d guest_errors  ) # -d pcall -d mmu -d int  -d in_asm
 string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 add_custom_target(kvm
-  COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu kvm32
+  COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -enable-kvm -cpu kvm32
   COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu kvm32`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
@@ -42,8 +42,8 @@ add_custom_target(qemu
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -no-kvm -s -S
-	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -no-kvm -s -S on localhost:1234`"
+	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s -S
+	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s -S on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)

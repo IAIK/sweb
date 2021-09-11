@@ -3,6 +3,7 @@
 #include "APIC.h"
 #include "offsets.h"
 #include "ArchMemory.h"
+#include "ArchCommon.h"
 #include "InterruptUtils.h"
 #include "ArchInterrupts.h"
 #include "Thread.h"
@@ -21,6 +22,8 @@ __thread TSS cpu_tss;
 /* The order of initialization of thread_local objects depends on the order in which they are defined in the source code.
    This is pretty fragile, but using __thread and placement new doesn't work (compiler complains that dynamic initialization is required).
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
+
+thread_local LocalAPIC cpu_lapic;
 thread_local CpuInfo cpu_info;
 
 thread_local char cpu_stack[CPU_STACK_SIZE];
@@ -40,7 +43,9 @@ extern GDT gdt;
 
 extern char apstartup_text_begin;
 extern char apstartup_text_end;
-extern "C" void apstartup();
+extern char apstartup_text_load_begin;
+extern char apstartup_text_load_end;
+// extern "C" void apstartup();
 
 extern uint32 ap_kernel_cr3;
 extern char ap_pml4[PAGE_SIZE];
@@ -48,8 +53,8 @@ extern char ap_pml4[PAGE_SIZE];
 static uint8 ap_boot_stack[PAGE_SIZE];
 
 CpuInfo::CpuInfo() :
-  lapic(),
-  cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : 0)
+  lapic(&cpu_lapic),
+  cpu_id(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0)
 {
   debug(A_MULTICORE, "Initializing CpuInfo for CPU %zx at %p\n", cpu_id, this);
   ArchMulticore::addCPUtoList(this);
@@ -102,32 +107,37 @@ char* CPULocalStorage::allocCLS()
   return cls_base;
 }
 
-void CPULocalStorage::setCLS(char* cls)
+void CPULocalStorage::setCLS(GDT& gdt, char* cls)
 {
   debug(A_MULTICORE, "Set CLS: %p\n", cls);
   void** gs_base = (void**)(cls + getCLSSize());
   debug(A_MULTICORE, "Init CLS pointer at %%gs:0 = %p\n", gs_base);
   *gs_base = gs_base;
 
-  setGSBase((size_t)gs_base); // %gs base needs to point to end of CLS, not the start. %gs:0 = pointer to %gs base
-  setFSBase((size_t)gs_base);
+  // %gs base needs to point to end of CLS, not the start. %gs:0 = pointer to %gs base
+  setGSBase(gdt, (size_t)gs_base);
+  setFSBase(gdt, (size_t)gs_base);
 
-
-  debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase());
-  debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase());
+  debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase(gdt));
+  debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase(gdt));
 }
 
 bool CPULocalStorage::CLSinitialized()
 {
-  bool init = (getFSBase() != 0);
+  bool init = ((size_t)getClsBase() >= ArchCommon::getKernelStartAddress());
   return init;
 }
 
-
-
+void* CPULocalStorage::getClsBase()
+{
+  void *gs_base = 0;
+  asm("movl %%gs:0, %[gs_base]\n" : [gs_base] "=r"(gs_base));
+  return gs_base;
+}
 
 void ArchMulticore::initCPULocalData(bool boot_cpu)
 {
+  debug(A_MULTICORE, "Initializing CPU local data, boot cpu: %u\n", boot_cpu);
   currentThread = nullptr;
   currentThreadRegisters = nullptr;
 
@@ -135,12 +145,11 @@ void ArchMulticore::initCPULocalData(bool boot_cpu)
   initCpuLocalTSS((size_t)ArchMulticore::cpuStackTop());
 
   // The constructor of objects declared as thread_local will be called automatically the first time the thread_local object is used. Other thread_local objects _may or may not_ also be initialized at the same time.
-  void* gs_base = 0;
-  asm("movl %%gs:0, %[gs_base]\n"
-      :[gs_base]"=r"(gs_base));
+  void* gs_base = CPULocalStorage::getClsBase();
   debug(A_MULTICORE, "Initializing CPU local objects, %p\n", gs_base);
 
-  debug(A_MULTICORE, "Initializing cpu_info at %p\n", &cpu_info);
+  void* cpu_info_addr = &cpu_info;
+  debug(A_MULTICORE, "Initializing cpu_info at %p\n", &cpu_info_addr);
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zx\n", cpu_info.getCpuID());
   // This is a dirty hack to make sure the idle thread is initialized. Otherwise idle thread initialization might happen the first time it gets scheduled, which won't work because it requires e.g. the KMM lock
 
@@ -199,7 +208,9 @@ void ArchMulticore::initialize()
 
   assert(running_cpus == 0);
   running_cpus = 1;
-  CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+
+  char *cls = CPULocalStorage::allocCLS();
+  CPULocalStorage::setCLS(gdt, cls);
   ArchMulticore::initCPULocalData(true);
 }
 
@@ -214,52 +225,95 @@ void ArchMulticore::addCPUtoList(CpuInfo* cpu)
 
 void ArchMulticore::prepareAPStartup(size_t entry_addr)
 {
-  size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
-  debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
-  debug(A_MULTICORE, "apstartup %p, phys: %p\n", &apstartup, (void*)entry_addr);
+  size_t apstartup_size = (size_t)(&apstartup_text_load_end - &apstartup_text_load_begin);
+  debug(A_MULTICORE, "text.apstartup begin: %p, text.apstartup end: %p\n", &apstartup_text_begin, &apstartup_text_end);
+  debug(A_MULTICORE, "text.apstartup load begin: %p, text.apstartup load end: %p, size: %zx\n", &apstartup_text_load_begin, &apstartup_text_load_end, apstartup_size);
+  debug(A_MULTICORE, "apstartup %p, phys: %p\n", &apstartup_text_load_begin, (void*)entry_addr);
+
+  auto m_load = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)&apstartup_text_load_begin/PAGE_SIZE);
+  debug(A_MULTICORE, "apstartup load mapping %p: page: %p, ppn: %x, pt: %p, writeable: %u\n", &apstartup_text_load_begin, (void*)m_load.page, m_load.page_ppn, m_load.pt, m_load.pt[m_load.pti].writeable);
 
   pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
+  debug(A_MULTICORE, "Ident mapping for entry addr %x: %x\n", entry_addr, paddr0);
   auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), paddr0/PAGE_SIZE);
 
   assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
+  debug(A_MULTICORE, "PPN: %x\n", m.page_ppn);
   assert((m.page_ppn == entry_addr/PAGE_SIZE) && "PPN in ident mapping doesn't match expected ppn for AP entry");
 
+  size_t ap_gdt32_offset = (size_t)&ap_gdt32 - (size_t)&apstartup_text_begin;
+  size_t ap_gdt32_load_addr = (size_t)&apstartup_text_load_begin + ap_gdt32_offset;
+  debug(A_MULTICORE, "AP GDT load offset: %zx\n", ap_gdt32_offset);
+
   // Init AP gdt
-  debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
-  auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32)/PAGE_SIZE);
+  debug(A_MULTICORE, "Init AP GDT at %p, (loaded at %zx)\n", &ap_gdt32, ap_gdt32_load_addr);
+  auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32_load_addr)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
   assert(m_ap_gdt.pt && m_ap_gdt.pt[m_ap_gdt.pti].writeable && "AP GDT virtual address not writeable");
 
-  memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
-  ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);
-  ap_gdt32_ptr.limit = sizeof(ap_gdt32) - 1;
+  memcpy((void*)ap_gdt32_load_addr, &gdt, sizeof(ap_gdt32));
 
-  // Init AP PML4
-  debug(A_MULTICORE, "Init AP PML4\n");
-  memcpy(&ap_pml4, ArchMemory::getRootOfKernelPagingStructure(), sizeof(ap_pml4));
-  ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure());
+  size_t ap_gdt32_ptr_offset = (size_t)&ap_gdt32_ptr - (size_t)&apstartup_text_begin;
+  size_t ap_gdt32_ptr_load_addr = (size_t)&apstartup_text_load_begin + ap_gdt32_ptr_offset;
+  GDT32Ptr *ap_gdt32_ptr_load = (GDT32Ptr*)ap_gdt32_ptr_load_addr;
 
-  debug(A_MULTICORE, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n", (void*)&apstartup_text_begin, (void*)&apstartup_text_end, (void*)paddr0, (size_t)entry_addr, (size_t)(&apstartup_text_end - &apstartup_text_begin));
-  memcpy((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size);
+  ap_gdt32_ptr_load->addr = (size_t)&ap_gdt32;
+  ap_gdt32_ptr_load->limit = sizeof(ap_gdt32) - 1;
+
+  debug(A_MULTICORE, "paddr0: %x\n", paddr0);
+
+  // Init AP PD
+  size_t ap_pml4_offset = (size_t)&ap_pml4 - (size_t)&apstartup_text_begin;
+  size_t ap_pml4_load_addr = (size_t)&apstartup_text_load_begin + ap_pml4_offset;
+  debug(A_MULTICORE, "Init AP PD at %p (loaded at %zx)\n", &ap_pml4, ap_pml4_load_addr);
+  memcpy((void*)ap_pml4_load_addr, ArchMemory::getRootOfKernelPagingStructure(), sizeof(ap_pml4));
+
+  debug(A_MULTICORE, "paddr0: %x\n", paddr0);
+
+  for(size_t i = 0; i < 10; ++i)
+  {
+      debug(A_MULTICORE, "AP PD entry %u: %x\n", i, ((uint32_t*)&ap_pml4_load_addr)[i]);
+  }
+
+  for(size_t i = 0; i < 10; ++i)
+  {
+      debug(A_MULTICORE, "Kernel PD entry %u: %x\n", i, ((uint32_t*)ArchMemory::getRootOfKernelPagingStructure())[i]);
+  }
+
+  debug(A_MULTICORE, "AP PD phys: %x\n", (size_t)&ap_pml4);
+  debug(A_MULTICORE, "paddr0: %x\n", paddr0);
+
+  size_t ap_kernel_cr3_offset = (size_t)&ap_kernel_cr3 - (size_t)&apstartup_text_begin;
+  size_t ap_kernel_cr3_load_addr = (size_t)&apstartup_text_load_begin + ap_kernel_cr3_offset;
+
+  // TODO: should be ap_pd?
+  *(size_t*)ap_kernel_cr3_load_addr = (size_t)&ap_pml4;
+
+  debug(
+      A_MULTICORE,
+      "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n",
+      (void *)&apstartup_text_load_begin, (void *)&apstartup_text_load_end,
+      (void *)paddr0, (size_t)entry_addr, apstartup_size);
+  memcpy((void*)paddr0, (void*)&apstartup_text_load_begin, apstartup_size);
 }
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::exists && cpu_info.lapic.isInitialized())
+  if(LocalAPIC::exists && cpu_lapic.isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    for(auto& cpu_lapic : LocalAPIC::local_apic_list_)
+    for(auto& other_cpu_lapic : LocalAPIC::local_apic_list_)
     {
-      if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != cpu_info.lapic.ID()))
+      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic.ID()))
       {
-        cpu_info.lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
-        debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", cpu_lapic.apic_id);
+        cpu_lapic.startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
         while(!ap_started);
         ap_started = false;
-        debug(A_MULTICORE, "AP %u startup complete, BSP continuing\n", cpu_lapic.apic_id);
+        debug(A_MULTICORE, "AP %u startup complete, BSP continuing\n", other_cpu_lapic.apic_id);
       }
     }
 
@@ -282,66 +336,45 @@ size_t ArchMulticore::numRunningCPUs()
 
 void ArchMulticore::stopAllCpus()
 {
-  if(CPULocalStorage::CLSinitialized() && cpu_info.lapic.isInitialized())
+  if(CPULocalStorage::CLSinitialized() && cpu_lapic.isInitialized())
   {
-    cpu_info.lapic.sendIPI(90);
+    cpu_lapic.sendIPI(90);
   }
 }
 
-
-extern "C" void __apstartup32()
-{
+extern "C" void __apstartup32() {
   // Hack to avoid automatic function prologue (stack isn't set up yet)
-  // TODO: Use __attribute__((naked)) in GCC 8
-  __asm__ __volatile__(".global apstartup32\n"
-                       "apstartup32:\n"
-                       // "movw $0xE9, %dx\n"
-                       "movb $0x40, %al\n"
-                       "outb %al, %dx\n"
-                       "movb $0x41, %al\n"
-                       "outb %al, %dx\n"
-                       // "hlt\n"
-      );
-
-  // Load long mode data segments
+  // Load protected mode segments
   __asm__ __volatile__(
-    "movw %[K_DS], %%ax\n"
-    "movw %%ax, %%ds\n"
-    "movw %%ax, %%ss\n"
-    "movw %%ax, %%es\n"
-    "movw %%ax, %%fs\n"
-    "movw %%ax, %%gs\n"
-    // "movw $0xE9, %%dx\n"
-    "movb $0x42, %%al\n"
-    "outb %%al, %%dx\n"
-    :
-    :[K_DS]"i"(KERNEL_DS)
-  );
+      ".global apstartup32\n"
+      "apstartup32:\n"
+      "movw %[K_DS], %%ax\n"
+      "movw %%ax, %%ds\n"
+      "movw %%ax, %%ss\n"
+      "movw %%ax, %%es\n"
+      "movw %%ax, %%fs\n"
+      "movw %%ax, %%gs\n"
+      "movl %[stack], %%esp\n"
+      "movl %[stack], %%ebp\n"
+      :
+      : [K_DS] "i"(KERNEL_DS), [stack] "i"(ap_boot_stack +
+                                           sizeof(ap_boot_stack)));
 
-  __asm__ __volatile__("movl %[stack], %%esp\n"
-                       "movl %[stack], %%ebp\n"
-                       "movw $0xE9, %%dx\n"
-                       "movb $0x43, %%al\n"
-                       "outb %%al, %%dx\n"
-                       :
-                       :[stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
+  ArchCommon::callWithStack((char *)ap_boot_stack + sizeof(ap_boot_stack), [] {
+    ++running_cpus;
+    debug(A_MULTICORE, "AP startup 32\n");
+    debug(A_MULTICORE, "AP switched to stack %p\n",
+          ap_boot_stack + sizeof(ap_boot_stack));
 
-  // ArchCommon::callWithStack((char*)ap_boot_stack + sizeof(ap_boot_stack), []{
-
-
-
-  ++running_cpus;
-  debug(A_MULTICORE, "AP startup 32\n");
-  debug(A_MULTICORE, "AP switched to stack %p\n", ap_boot_stack + sizeof(ap_boot_stack));
-
-  // Stack variables are messed up in this function because we skipped the function prologue. Should be fine once we've entered another function.
-  ArchMulticore::initCpu();
-                                                                   // });
+    // Stack variables are messed up in this function because we skipped the
+    // function prologue. Should be fine once we've entered another function.
+    ArchMulticore::initApplicationProcessorCpu();
+  });
 }
 
-void ArchMulticore::initCpu()
+void ArchMulticore::initApplicationProcessorCpu()
 {
-  debug(A_MULTICORE, "AP switching from temp kernel pml4 to main kernel pml4: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
+  debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
   ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
@@ -350,13 +383,16 @@ void ArchMulticore::initCpu()
   extern char cls_start;
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for AP [%p, %p)\n", &cls_start, &cls_end);
-  CPULocalStorage::setCLS(&cls_start);
+  CPULocalStorage::setCLS(ap_gdt32, &cls_start);
   currentThread = nullptr;
   currentThreadRegisters = nullptr;
 
-  CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+  char* cls = CPULocalStorage::allocCLS();
+  CPULocalStorage::setCLS(ap_gdt32, cls);
+
+  cpu_lapic.init();
+  cpu_info.setCpuID(cpu_lapic.readID());
   ArchMulticore::initCPULocalData();
-  cpu_info.lapic.init();
 
   ArchThreads::initialise();
 
@@ -364,9 +400,6 @@ void ArchMulticore::initCpu()
   ArchInterrupts::enableTimer();
 
   debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());
-  // __asm__ __volatile__("movq %[cpu_stack], %%rsp\n"
-  //                      "movq %%rsp, %%rbp\n"
-  //                      ::[cpu_stack]"r"(ArchMulticore::cpuStackTop()));
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), waitForSystemStart);
   waitForSystemStart();
 }
@@ -381,7 +414,7 @@ void ArchMulticore::waitForSystemStart()
 
   while(system_state != RUNNING);
 
-  //debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
+  debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::getCpuID());
   ArchInterrupts::enableInterrupts();
 
   while(1)

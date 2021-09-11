@@ -24,7 +24,7 @@
 ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
         port(baseport), drive((getdrive == 0) ? 0xA0 : 0xB0), jiffies(0), lock_("ATADriver::lock_")
 {
-  debug(ATA_DRIVER, "ctor: Entered with irgnum %d and baseport %d!!\n", irqnum, baseport);
+  debug(ATA_DRIVER, "ctor: Entered with irqnum %d and baseport %x!!\n", irqnum, baseport);
   debug(ATA_DRIVER, "ctor: Requesting disk geometry !!\n");
 
   outportbp (port + 6, drive);  // Get first drive
@@ -45,6 +45,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
   uint32 CYLS = dd[1];
   numsec = CYLS * HPC * SPT;
 
+  debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
   bool interrupt_context = ArchInterrupts::disableInterrupts();
   ArchInterrupts::enableInterrupts();
 
@@ -70,6 +71,7 @@ void ATADriver::testIRQ( )
   BDManager::getInstance()->probeIRQ = true;
   readSector( 0, 1, 0 );
 
+  debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
   TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_PIO_NO_IRQ;);
 }
 
@@ -121,6 +123,11 @@ int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
 
 int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
+  if ((ATA_DRIVER & OUTPUT_ENABLED) && (ATA_DRIVER & OUTPUT_ADVANCED))
+  {
+      debug(ATA_DRIVER, "readSector %x, num: %x into buffer %p\n", start_sector, num_sectors, buffer);
+  }
+
   assert(buffer || (start_sector == 0 && num_sectors == 1));
   if (selectSector(start_sector, num_sectors) != 0)
     return -1;

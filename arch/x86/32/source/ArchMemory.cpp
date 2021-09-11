@@ -421,9 +421,9 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
                                 shootdown_requests[cpu_id].next = expected_next;
                         } while(!cpu->tlb_shootdown_list.compare_exchange_weak(expected_next, &shootdown_requests[cpu_id]));
 
-                        assert(cpu->lapic.ID() == cpu_id);
+                        assert(cpu->lapic->ID() == cpu_id);
                         asm("mfence\n");
-                        cpu_info.lapic.sendIPI(99, cpu->lapic, true);
+                        cpu_info.lapic->sendIPI(99, *cpu->lapic, true);
                 }
         }
         assert(!(sent_shootdowns & (1 << orig_cpu)));

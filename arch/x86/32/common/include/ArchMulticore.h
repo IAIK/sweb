@@ -29,7 +29,7 @@ public:
         size_t getCpuID();
         void setCpuID(size_t id);
 
-        LocalAPIC lapic;
+        LocalAPIC* lapic;
 
         size_t cpu_id;
 
@@ -38,6 +38,7 @@ private:
 };
 
 
+extern thread_local LocalAPIC cpu_lapic;
 extern thread_local CpuInfo cpu_info;
 extern thread_local char cpu_stack[CPU_STACK_SIZE];
 extern thread_local TSS cpu_tss;
@@ -59,7 +60,7 @@ class ArchMulticore
     static void setCpuID(size_t id);
     static size_t getCpuID();
 
-    static void initCpu();
+    static void initApplicationProcessorCpu();
     static void initCPULocalData(bool boot_cpu = false);
 
 
@@ -84,6 +85,7 @@ namespace CPULocalStorage
     size_t getCLSSize();
 
     char* allocCLS();
-    void setCLS(char* cls);
+    void setCLS(GDT& gdt, char* cls);
     bool CLSinitialized();
+    void* getClsBase();
 };

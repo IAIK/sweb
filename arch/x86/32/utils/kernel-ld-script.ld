@@ -8,24 +8,55 @@ OUTPUT_FORMAT("elf32-i386")
 ENTRY(entry)
 LS_Phys = 0x100000; /* 1 meg */
 LS_Virt = 0x80000000; /* 2 gig + 1 meg due to 4m pages for kernel area*/
+
+/* AP_STARTUP = 0x0000; */
+
 SECTIONS
 {
-  . = LS_Virt;
-  LS_START = .;
-
-  .text ALIGN(4096) : AT(LS_Phys + (LS_Code - LS_START))
+  .mboot ALIGN(4096): AT(LS_Phys)
   {
-    PROVIDE(kernel_start_address = ABSOLUTE(.));
+    KEEP(*(.mboot))
+  }
 
-    LS_Code = .;
+  . = 0;
 
-    text_start_address = .;
-    *(.mboot)
-    . = ALIGN(4096);
+  /* . = AP_STARTUP; */
+  .text.apstartup ALIGN(4096) : AT(LS_Phys + SIZEOF(.mboot))
+  {
     apstartup_text_begin = .;
     *(.text.apstartup*)
     apstartup_text_end = .;
-    . = ALIGN(4096);
+  }
+
+  . = LS_Virt;
+  LS_START = .;
+
+  PROVIDE(kernel_start_address = ABSOLUTE(.));
+
+  mboot_load_begin = .;
+  . += SIZEOF(.mboot);
+  mboot_load_end = .;
+
+  /* .mboot.load ALIGN(4096) (INFO) : AT(0x0) */
+  /* { */
+  /*   . += SIZEOF(.mboot); */
+  /* } */
+
+  apstartup_text_load_begin = .;
+  . += SIZEOF(.text.apstartup);
+  apstartup_text_load_end = .;
+
+  .text ALIGN(4096) : AT(LS_Phys + (LS_Code - LS_START))
+  {
+    LS_Code = .;
+
+    text_start_address = .;
+    /*   KEEP(*(.mboot)) */
+    /* . = ALIGN(4096); */
+    /* apstartup_text_begin = .; */
+    /* *(.text.apstartup*) */
+    /* apstartup_text_end = .; */
+    /* . = ALIGN(4096); */
     *(.text)
     *(.text.*)
     text_end_address = .;
@@ -33,8 +64,26 @@ SECTIONS
     ro_data_start_address = .;
     *(.rodata*)
     ro_data_end_address = .;
+    *(.eh_frame)
+    *(.eh_frame_hdr)
     . = ALIGN(4096);
   }
+
+  /* .text.apstartup.load ALIGN(4096) : AT(LS_Phys + (LS_apstartup_load - LS_START)) */
+  /* { */
+  /*   LS_apstartup_load = .; */
+  /*   apstartup_text_load_begin = .; */
+  /*   . += SIZEOF(.text.apstartup); */
+  /*   apstartup_text_load_end = .; */
+  /*   . = ALIGN(4096); */
+  /* } */
+
+  /* .eh_frame ALIGN(4096) : AT(LS_Phys + (LS_eh_frame - LS_START)) */
+  /* { */
+  /*   LS_eh_frame = .; */
+  /*   *(.eh_frame) */
+  /*   *(.eh_frame_hdr) */
+  /* } */
 
   .tdata ALIGN(4096) : AT(LS_Phys + (LS_tdata - LS_START))
   {

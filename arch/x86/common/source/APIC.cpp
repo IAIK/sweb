@@ -80,9 +80,9 @@ void LocalAPIC::mapAt(size_t addr)
 
 void LocalAPIC::init()
 {
+  debug(APIC, "Initializing Local APIC\n");
   if(!isInitialized())
   {
-    debug(APIC, "Initializing Local APIC\n");
     id_ = readID();
     debug(APIC, "Local APIC %x\n", ID());
     setSpuriousInterruptNumber(100);
@@ -488,7 +488,7 @@ void IOAPIC::initRedirections()
                                 r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
-                                r.destination = cpu_info.lapic.ID();
+                                r.destination = cpu_lapic.ID();
                                 goto write_entry;
                         }
                 }
