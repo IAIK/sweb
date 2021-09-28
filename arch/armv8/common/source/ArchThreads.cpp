@@ -70,12 +70,13 @@ void ArchThreads::yield()
 
 size_t ArchThreads::testSetLock(size_t &lock, size_t new_value)
 {
-    volatile size_t ret = 0;
 
 	#ifdef VIRTUALIZED_QEMU
+    size_t ret = 0;
     //on qemu the exclusive instructions do work
     __atomic_exchange(&lock, &new_value, &ret, __ATOMIC_RELAXED);
 	#else
+    volatile size_t ret = 0;
 
     //    this is very terrible but in aarch64 there is no swp and the exclusive instructions
     //    do not work without cache on the cortex-a53 of the raspi3
