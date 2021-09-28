@@ -198,13 +198,6 @@ add_custom_target (kernel_to_image
     COMMENT "Copying kernel files to image..."
 )
 
-if("${ARCH}" MATCHES "arm")
-add_custom_target (hdd_image_resize ALL
-  DEPENDS hdd_image
-  COMMAND qemu-img resize ${HDD_IMAGE} $$\(\( 2**\($$\(printf \"%.0f\" \"$$\(echo \"0.5+\(l\($$\(\($$\(stat -c%s ${HDD_IMAGE_RAW}\)-1\)\)\)/l\(2\)\)\"| bc -l\)\"\)\) \)\)
-)
-endif()
-
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
 if("${ARCH}" MATCHES "armv8")
