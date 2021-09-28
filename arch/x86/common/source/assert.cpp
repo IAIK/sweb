@@ -67,8 +67,15 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
+  static bool in_assert = false;
   system_state = KPANIC;
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
+  if (in_assert) {
+    kprintfd("PANIC LOOP: How did we get here?\n");
+    while(1);
+    unreachable();
+  }
+  in_assert = true;
   if (currentThread != 0)
     currentThread->printBacktrace(false);
   while(1);
