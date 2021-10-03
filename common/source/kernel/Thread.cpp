@@ -33,7 +33,7 @@ extern "C" void threadStartHack()
 Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type) :
     kernel_registers_(0), user_registers_(0), switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0), loader_(0),
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), state_(Running), tid_(0),
-    my_terminal_(0), working_dir_(working_dir), name_(name)
+    my_terminal_(0), working_dir_(working_dir), name_(name), vruntime(0)
 {
   debug(THREAD, "Thread ctor, this is %p, name: %s, stack: [%p, %p), fs_info ptr: %p\n", this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_), working_dir_);
   ArchThreads::createKernelRegisters(kernel_registers_, (void*) (type == Thread::USER_THREAD ? 0 : threadStartHack), getKernelStackStartPointer());
@@ -166,7 +166,7 @@ void Thread::printBacktrace(bool use_stored_registers)
 
 bool Thread::schedulable()
 {
-  return (getState() == Running) && !isCurrentlyScheduled();
+  return (getState() == Running);
 }
 
 bool Thread::isCurrentlyScheduled()
@@ -174,7 +174,7 @@ bool Thread::isCurrentlyScheduled()
   return currently_scheduled_on_cpu_ != (size_t)-1;
 }
 
-const char *Thread::getName()
+const char *Thread::getName() const
 {
   if(this == nullptr)
   {

@@ -372,3 +372,12 @@ void ArchCommon::postBootInit()
                  [func]"r"(func));
   assert(false);
 }
+
+
+uint64 ArchCommon::cpuTimestamp()
+{
+    uint64 low, high;
+    asm volatile("rdtsc\n"
+                 :"=a"(low), "=d"(high));
+    return (high << 32) | low;
+}

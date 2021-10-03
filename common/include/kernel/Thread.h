@@ -56,7 +56,7 @@ class Thread
 
     bool isStackCanaryOK();
 
-    const char* getName();
+    const char* getName() const;
 
     size_t getTID();
 
@@ -143,5 +143,10 @@ class Thread
 
     ustl::string name_;
 
+    uint64 vruntime;
+    uint64 sched_start;
+
+    bool prev_schedulable = false;
+    bool yielded = false;
 };
 

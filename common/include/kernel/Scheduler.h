@@ -2,9 +2,12 @@
 
 #include "types.h"
 #include <ulist.h>
+#include <umultiset.h>
 #include "IdleThread.h"
 #include "CleanupThread.h"
 #include <uatomic.h>
+#include "Thread.h"
+#include "debug.h"
 
 class Thread;
 class Mutex;
@@ -49,7 +52,15 @@ class Scheduler
 
     void cleanupDeadThreads();
 
-    typedef ustl::list<Thread*> ThreadList;
+    struct ThreadVruntimeLess
+    {
+        constexpr bool operator()(const Thread* lhs, const Thread* rhs) const
+        {
+            return lhs->vruntime < rhs->vruntime;
+        }
+    };
+
+    typedef ustl::multiset<Thread*, ThreadVruntimeLess> ThreadList;
 
   private:
     Scheduler();
@@ -82,4 +93,10 @@ public:
     ThreadList threads_;
 
     ustl::atomic<size_t> num_threads;
+
+    Thread* minVruntimeThread();
+    Thread* maxVruntimeThread();
+    void updateVruntime(Thread* t, uint64 now);
+    void setThreadVruntime(Thread* t, uint64 new_vruntime);
+    void setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime);
 };

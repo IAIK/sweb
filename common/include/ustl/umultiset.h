@@ -48,7 +48,20 @@ public:
     inline Comp			value_comp (void) const			{ return Comp(); }
     inline Comp			key_comp (void) const			{ return value_comp(); }
     inline void			assign (const_iterator i1, const_iterator i2)	{ clear(); insert (i1, i2); }
-    inline const_iterator	find (const_reference v) const		{ const_iterator i = ::ustl::lower_bound (begin(), end(), v, Comp()); return (i != end() && *i == v) ? i : end(); }
+    // inline const_iterator	find (const_reference v) const		{ const_iterator i = ::ustl::lower_bound (begin(), end(), v, Comp()); return (i != end() && *i == v) ? i : end(); }
+    inline const_iterator	find (const_reference v) const
+        {
+            const_iterator i = ::ustl::lower_bound (begin(), end(), v, Comp());
+            for (; i != end() && !Comp()(v, *i); ++i)
+            {
+                if(*i == v)
+                {
+                    return i;
+                }
+            }
+            return end();
+            // return (i != end() && *i == v) ? i : end();
+        }
     inline iterator		find (const_reference v)		{ return const_cast<iterator>(const_cast<rcself_t>(*this).find (v)); }
     inline const_iterator	lower_bound (const_reference v) const	{ return ::ustl::lower_bound (begin(), end(), v, Comp()); }
     inline iterator		lower_bound (const_reference v)		{ return const_cast<iterator>(const_cast<rcself_t>(*this).lower_bound (v)); }
