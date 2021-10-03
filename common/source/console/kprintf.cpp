@@ -129,11 +129,34 @@ void kprintfd_func(int ch, void *arg __attribute__((unused)))
   writeChar2Bochs((uint8) ch);
 }
 
+volatile size_t kprintfd_locked = false;
+
 void kprintfd(const char *fmt, ...)
 {
   va_list args;
 
+  // Prevent preemption
+  bool intEnabled = ArchInterrupts::testIFSet();
+
+  ArchInterrupts::disableInterrupts();
+
+  while(ArchThreads::testSetLock(kprintfd_locked, 1))
+  {
+      // Still allow handling interrupts if we don't get the lock
+      if(intEnabled)
+      {
+          ArchInterrupts::enableInterrupts();
+          ArchInterrupts::disableInterrupts();
+      }
+  }
+
   va_start(args, fmt);
   kvprintf(fmt, kprintfd_func, 0, 10, args);
   va_end(args);
+
+  kprintfd_locked = 0;
+  if(intEnabled)
+  {
+      ArchInterrupts::enableInterrupts();
+  }
 }
