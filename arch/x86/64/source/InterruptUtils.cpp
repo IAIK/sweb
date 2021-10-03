@@ -172,7 +172,7 @@ extern "C" void irqHandler_0()
   ArchInterrupts::startOfInterrupt(0);
   ArchCommon::drawHeartBeat();
 
-  Scheduler::instance()->incTicks();
+  Scheduler::instance()->incCpuTicks();
 
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
     []()

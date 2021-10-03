@@ -22,6 +22,8 @@ __thread ArchThreadRegisters* currentThreadRegisters = NULL;
 
 thread_local IdleThread idle_thread;
 
+__thread size_t cpu_ticks = 0;
+
 Scheduler *Scheduler::instance_ = 0;
 
 Scheduler *Scheduler::instance()
@@ -354,9 +356,19 @@ uint32 Scheduler::getTicks()
   return ticks_;
 }
 
+uint32 Scheduler::getCpuTicks()
+{
+  return cpu_ticks;
+}
+
 void Scheduler::incTicks()
 {
   ++ticks_;
+}
+
+void Scheduler::incCpuTicks()
+{
+  ++cpu_ticks;
 }
 
 void Scheduler::printStackTraces()

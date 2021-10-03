@@ -19,6 +19,8 @@ extern __thread ArchThreadRegisters* currentThreadRegisters;
 
 extern thread_local IdleThread idle_thread;
 
+extern __thread size_t cpu_ticks;
+
 class Scheduler
 {
   public:
@@ -35,7 +37,9 @@ class Scheduler
     bool isSchedulingEnabled();
     bool isCurrentlyCleaningUp();
     void incTicks();
+    void incCpuTicks();
     uint32 getTicks();
+    uint32 getCpuTicks();
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
