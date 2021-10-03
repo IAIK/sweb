@@ -38,15 +38,20 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "mkdir /usr\n");
   VfsSyscall::mkdir("/usr", 0);
 
-  //debug(PROCESS_REG, "mount idea1\n");
-  //VfsSyscall::mount("idea1", "/usr", "minixfs", 0);
+  // Mount user partition (initrd if it exists, else partition 1 of IDE drive A)
+  bool usr_mounted = false;
+  if (VfsSyscall::mount("initrd", "/usr", "minixfs", 0) == 0)
+  {
+      debug(PROCESS_REG, "initrd mounted at /usr\n");
+      usr_mounted = true;
+  }
+  else if (VfsSyscall::mount("idea1", "/usr", "minixfs", 0) == 0)
+  {
+      debug(PROCESS_REG, "idea1 mounted at /usr\n");
+      usr_mounted = true;
+  }
 
-  //debug(PROCESS_REG, "mkdir /initrd\n");
-  //VfsSyscall::mkdir("/initrd", 0);
-
-  debug(PROCESS_REG, "mount initrd to /usr\n");
-  kprintf("Mount initrd\n");
-  VfsSyscall::mount("initrd", "/usr", "minixfs", 0);
+  assert(usr_mounted && "Unable to mount userspace partition");
 
   KernelMemoryManager::instance()->startTracing();
 
