@@ -236,7 +236,6 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   registers = (struct context_switch_registers*) base;
   register struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint64));
-  assert(CPULocalStorage::CLSinitialized());
   setFSBase((uint64)getSavedFSBase());
   register ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
