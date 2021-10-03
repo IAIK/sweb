@@ -231,14 +231,17 @@ void Lock::checkInterrupts(const char* method)
   }
 }
 
-void Lock::lockWaitersList()
+void Lock::lockWaitersList(bool yield)
 {
   // The waiters list lock is a simple spinlock.
   // Just wait until the holding thread is releasing the lock,
   // and acquire it. These steps have to be atomic.
   while(ArchThreads::testSetLock(waiters_list_lock_, 1))
   {
-    Scheduler::instance()->yield();
+    if(yield)
+    {
+        Scheduler::instance()->yield();
+    }
   }
 }
 

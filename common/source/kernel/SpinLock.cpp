@@ -48,7 +48,7 @@ bool SpinLock::acquireNonBlocking(pointer called_by)
   return true;
 }
 
-void SpinLock::acquire(pointer called_by)
+void SpinLock::acquire(pointer called_by, bool yield)
 {
   if(!called_by)
     called_by = getCalledBefore(1);
@@ -80,7 +80,7 @@ void SpinLock::acquire(pointer called_by)
     if(currentThread)
     {
       currentThread->lock_waiting_on_ = this;
-      lockWaitersList();
+      lockWaitersList(yield);
       pushFrontCurrentThreadToWaitersList();
       unlockWaitersList();
     }
@@ -89,7 +89,7 @@ void SpinLock::acquire(pointer called_by)
     while(ArchThreads::testSetLock(lock_, 1))
     {
       //SpinLock: Simplest of Locks, do the next best thing to busy waiting
-      if(currentThread)
+      if(currentThread && yield)
       {
         ArchInterrupts::yieldIfIFSet();
       }
@@ -97,7 +97,7 @@ void SpinLock::acquire(pointer called_by)
     // Now we managed to acquire the spinlock. Remove the current thread from the waiters list.
     if(currentThread)
     {
-      lockWaitersList();
+      lockWaitersList(yield);
       removeCurrentThreadFromWaitersList();
       unlockWaitersList();
       currentThread->lock_waiting_on_ = 0;

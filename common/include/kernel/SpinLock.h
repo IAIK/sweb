@@ -10,7 +10,7 @@ public:
 
   SpinLock(const char* name);
 
-  void acquire(pointer called_by = 0);
+  void acquire(pointer called_by = 0, bool yield = true);
 
   /**
    * Try to acquire the spinlock. If the spinlock is held by another thread at the moment,

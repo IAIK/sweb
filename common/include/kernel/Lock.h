@@ -130,7 +130,7 @@ protected:
    * Lock the waiters list, so it may be modified.
    * The lock may not be held in case the list is read out in some special cases.
    */
-  void lockWaitersList();
+  void lockWaitersList(bool yield = true);
 
   /**
    * unlock the waiters list.
