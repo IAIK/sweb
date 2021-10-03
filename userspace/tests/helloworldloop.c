@@ -8,6 +8,6 @@ int main(int argc, char *argv[])
         printf("Starting test loop\n");
         while(1)
         {
-                createprocess("/usr/helloworld.sweb", 0);
+            printf("Loop de loop\n");
         }
 }
