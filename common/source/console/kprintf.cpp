@@ -11,42 +11,13 @@
 #include "assert.h"
 #include "debug.h"
 #include "ustringformat.h"
+#include "KprintfFlushingThread.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full
 
 RingBuffer<char> *nosleep_rb_;
 Thread *flush_thread_;
-
-void flushActiveConsole()
-{
-  assert(main_console);
-  assert(nosleep_rb_);
-  assert(ArchInterrupts::testIFSet());
-  char c = 0;
-  while (nosleep_rb_->get(c))
-  {
-    main_console->getActiveTerminal()->write(c);
-  }
-  Scheduler::instance()->yield();
-}
-
-class KprintfFlushingThread : public Thread
-{
-  public:
-
-    KprintfFlushingThread() : Thread(0, "KprintfFlushingThread", Thread::KERNEL_THREAD)
-    {
-    }
-
-    virtual void Run()
-    {
-      while (true)
-      {
-        flushActiveConsole();
-      }
-    }
-};
 
 static uint8 fb_row = 0;
 static uint8 fb_col = 0;
@@ -119,7 +90,7 @@ void kprintf_init()
 {
   nosleep_rb_ = new RingBuffer<char>(1024);
   debug(KPRINTF, "Adding Important kprintf Flush Thread\n");
-  flush_thread_ = new KprintfFlushingThread();
+  flush_thread_ = new KprintfFlushingThread(nosleep_rb_);
   Scheduler::instance()->addNewThread(flush_thread_);
   kprintf_initialized = true;
 }
