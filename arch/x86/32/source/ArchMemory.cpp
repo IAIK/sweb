@@ -307,7 +307,7 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool c
   m.pt[m.pti].writeable = 1;
   m.pt[m.pti].present = 1;
 
-  asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
+  asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax"); // TODO: flushing caches after mapping a fresh page is pointless
 }
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)

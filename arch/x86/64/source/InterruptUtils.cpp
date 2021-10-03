@@ -336,8 +336,8 @@ extern "C" void irqHandler_99()
                 debug(A_INTERRUPTS, "CPU %zx performing TLB shootdown for request %zx, addr %zx from CPU %zx, target %zx\n", ArchMulticore::getCpuID(), shootdown_list->request_id, shootdown_list->addr, shootdown_list->orig_cpu, shootdown_list->target);
                 assert(shootdown_list->target == ArchMulticore::getCpuID());
                 assert(cpu_info.getCpuID() == ArchMulticore::getCpuID());
-                assert(cpu_info.lapic.ID() == ArchMulticore::getCpuID());
-                assert(cpu_info.lapic.readID() == ArchMulticore::getCpuID());
+                assert(cpu_lapic.ID() == ArchMulticore::getCpuID());
+                assert(cpu_lapic.readID() == ArchMulticore::getCpuID());
                 ArchMemory::flushLocalTranslationCaches(shootdown_list->addr);
 
                 TLBShootdownRequest* next = shootdown_list->next;

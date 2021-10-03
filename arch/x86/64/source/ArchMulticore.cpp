@@ -21,6 +21,7 @@ __thread TSS cpu_tss;
 /* The order of initialization of thread_local objects depends on the order in which they are defined in the source code.
    This is pretty fragile, but using __thread and placement new doesn't work (compiler complains that dynamic initialization is required).
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
+thread_local LocalAPIC cpu_lapic;
 thread_local CpuInfo cpu_info;
 
 thread_local char cpu_stack[CPU_STACK_SIZE];
@@ -48,8 +49,8 @@ extern char ap_pml4[PAGE_SIZE];
 static uint8 ap_boot_stack[PAGE_SIZE];
 
 CpuInfo::CpuInfo() :
-  lapic(),
-  cpu_id(LocalAPIC::exists && lapic.isInitialized() ? lapic.ID() : 0)
+  lapic(&cpu_lapic),
+  cpu_id(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0)
 {
   debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
   MutexLock l(ArchMulticore::cpu_list_lock_);
@@ -212,7 +213,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   // Init AP PML4
   debug(A_MULTICORE, "Init AP PML4\n");
   memcpy(&ap_pml4, &kernel_page_map_level_4, sizeof(ap_pml4));
-  ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
+  ap_kernel_cr3 = (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4); // TODO: shouldn't this be ap_pml4?
 
   debug(A_MULTICORE, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n", (void*)&apstartup_text_begin, (void*)&apstartup_text_end, (void*)paddr0, (size_t)entry_addr, (size_t)(&apstartup_text_end - &apstartup_text_begin));
   memcpy((void*)paddr0, (void*)&apstartup_text_begin, apstartup_size);
@@ -220,21 +221,21 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::exists && cpu_info.lapic.isInitialized())
+  if(LocalAPIC::exists && cpu_lapic.isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    for(auto& cpu_lapic : LocalAPIC::local_apic_list_)
+    for(auto& other_cpu_lapic : LocalAPIC::local_apic_list_)
     {
-      if(cpu_lapic.flags.enabled && (cpu_lapic.apic_id != cpu_info.lapic.ID()))
+      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic.ID()))
       {
-        cpu_info.lapic.startAP(cpu_lapic.apic_id, AP_STARTUP_PADDR);
-        debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", cpu_lapic.apic_id);
+        cpu_lapic.startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
         while(!ap_started);
         ap_started = false;
-        debug(A_MULTICORE, "AP %u startup complete, BSP continuing\n", cpu_lapic.apic_id);
+        debug(A_MULTICORE, "AP %u startup complete, BSP continuing\n", other_cpu_lapic.apic_id);
       }
     }
 
@@ -257,9 +258,9 @@ size_t ArchMulticore::numRunningCPUs()
 
 void ArchMulticore::stopAllCpus()
 {
-  if(CPULocalStorage::CLSinitialized() && cpu_info.lapic.isInitialized())
+  if(CPULocalStorage::CLSinitialized() && cpu_lapic.isInitialized())
   {
-    cpu_info.lapic.sendIPI(90);
+    cpu_lapic.sendIPI(90);
   }
 }
 
@@ -311,8 +312,9 @@ void ArchMulticore::initCpu()
   currentThread = NULL;
 
   CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+  cpu_lapic.init();
   ArchMulticore::initCPULocalData();
-  cpu_info.lapic.init();
+
 
   ArchThreads::initialise();
 

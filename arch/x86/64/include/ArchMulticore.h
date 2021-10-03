@@ -30,7 +30,7 @@ public:
         size_t getCpuID();
         void setCpuID(size_t id);
 
-        LocalAPIC lapic;
+        LocalAPIC* lapic;
 
         size_t cpu_id;
 
@@ -39,6 +39,7 @@ private:
 };
 
 
+extern thread_local LocalAPIC cpu_lapic;
 extern thread_local CpuInfo cpu_info;
 extern thread_local char cpu_stack[CPU_STACK_SIZE];
 extern thread_local TSS cpu_tss;
