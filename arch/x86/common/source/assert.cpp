@@ -69,9 +69,13 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
   ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
   debug_print_to_fb = 0;
-  ArchMulticore::stopAllCpus();
-  volatile size_t wait = 0x10000000;
-  while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
+  if (ArchMulticore::numRunningCPUs() > 1)
+  {
+      ArchMulticore::stopAllCpus();
+      volatile size_t wait = 0x10000000;
+      while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
+  }
+
   if (currentThread != 0)
           currentThread->printBacktrace(false);
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
