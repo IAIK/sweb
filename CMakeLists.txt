@@ -187,7 +187,7 @@ add_custom_target (hdd_image ALL
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs userspace_to_image "${INITRD_FILE}" "${HDD_IMAGE_FILE}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst"
+    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_FILE}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
@@ -195,7 +195,7 @@ add_custom_target (kernel_to_image
     COMMAND ./exe2minixfs "${HDD_IMAGE_FILE}" 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
                                            ./kernel.x boot/kernel.x
                                            ./kernel.dbg boot/kernel.dbg
-                                           "${INITRD_FILE}" boot/initrd
+                                           #"${INITRD_FILE}" boot/initrd
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying kernel files to image..."
 )
@@ -219,12 +219,12 @@ add_custom_command (OUTPUT ${INITRD_FILE}
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
-    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${INITRD_FILE}" "${HDD_IMAGE_FILE}"
+    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${HDD_IMAGE_FILE}" # "${INITRD_FILE}"
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
     COMMAND ./mkminixfs -d "${HDD_IMAGE_FILE}" -p 2
     COMMAND ./exe2minixfs "${HDD_IMAGE_FILE}" 2 ${MINIXFS_ARGUMENT}
-    COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${MINIXFS_ARGUMENT}
+    # COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
 )
