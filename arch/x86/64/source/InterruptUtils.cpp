@@ -168,7 +168,7 @@ extern "C" void arch_contextSwitch();
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  debug(A_INTERRUPTS, "IRQ 0 called by CPU %zx\n", ArchMulticore::getCpuID());
+  debug(A_INTERRUPTS, "IRQ 0 called by CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(0);
   ArchCommon::drawHeartBeat();
 
@@ -193,6 +193,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
+  debug(A_INTERRUPTS, "IRQ 65 called by CPU %zu\n", ArchMulticore::getCpuID());
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
     []()
     {
@@ -310,7 +311,10 @@ extern "C" void irqHandler_90()
                 currentThread->printBacktrace(false);
         }
         while(1)
-                asm("hlt\n");
+        {
+            ArchCommon::halt();
+        }
+
         ArchInterrupts::endOfInterrupt(90 - 0x20);
 }
 

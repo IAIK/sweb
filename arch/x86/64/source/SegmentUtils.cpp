@@ -106,6 +106,7 @@ void* getSavedFSBase()
         __asm__ __volatile__("movq %%gs:0, %%rax\n"
                              "movq %%rax, %[fs_base]\n"
                              : [fs_base]"=m"(fs_base)
+                             :
                              : "rax");
         assert(fs_base != 0);
         return fs_base;

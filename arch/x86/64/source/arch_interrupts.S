@@ -13,14 +13,14 @@
 .endif
     jz 1f
 
-    # debug
-    #movw $0xE9, %dx
-    #xorq %rax, %rax
-    #movb 8(%rsp), %al
-    #andl $3, %eax
-    #addl $0x41, %eax
-    #outb %al, %dx
-    #hlt
+    # # debug
+    # movw $0xE9, %dx
+    # xorq %rax, %rax
+    # movb 8(%rsp), %al
+    # andl $3, %eax
+    # addl $0x41, %eax
+    # outb %al, %dx
+    # hlt
 
     swapgs
 1:
