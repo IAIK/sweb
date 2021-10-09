@@ -29,8 +29,8 @@ extern "C" void  entry_()
 	uartWritePreboot("booting...\n");
 
 	//clear bss
-    register size_t start = (size_t) &bss_start_address;
-    register size_t end =(size_t) &bss_end_address;
+    size_t start = (size_t) &bss_start_address;
+    size_t end = (size_t) &bss_end_address;
 
     start &= ~LINK_BASE;
     end &= ~LINK_BASE;
