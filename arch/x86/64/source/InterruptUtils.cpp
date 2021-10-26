@@ -186,13 +186,12 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
-  assert(!(error & FLAG_PF_RSVD) && "Reserved bit set in page table entry");
   if (address >= USER_BREAK && address < KERNEL_START) { // dirty hack due to qemu invoking the pf handler when accessing non canonical addresses
     auto &regs = *(currentThread->switch_to_userspace_ ? currentThread->user_registers_ : currentThread->kernel_registers_);
     errorHandler(0xd, regs.rip, regs.cs, 0);
     assert(0 && "thread should not survive a GP fault");
   }
-
+  assert(!(error & FLAG_PF_RSVD) && "Reserved bit set in page table entry");
 
   PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
                                    error & FLAG_PF_PRESENT,
