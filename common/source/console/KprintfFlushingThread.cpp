@@ -5,6 +5,7 @@
 #include "Terminal.h"
 #include "kprintf.h"
 #include "RingBuffer.h"
+#include "Scheduler.h"
 
 void flushActiveConsole(RingBuffer<char>* rb)
 {

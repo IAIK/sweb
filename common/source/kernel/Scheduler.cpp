@@ -40,7 +40,6 @@ Scheduler::Scheduler() :
   block_scheduling_ = -1;
   ticks_ = 0;
   addNewThread(&cleanup_thread_);
-  //addNewThread(&idle_thread_);
   debug(SCHEDULER, "Initializing scheduler END\n");
 }
 

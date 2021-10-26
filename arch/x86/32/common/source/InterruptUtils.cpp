@@ -167,11 +167,11 @@ extern "C" void arch_contextSwitch();
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  debug(A_INTERRUPTS, "IRQ 0 called by CPU %zx\n", ArchMulticore::getCpuID());
+  debug(A_INTERRUPTS, "IRQ 0 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(0);
   ArchCommon::drawHeartBeat();
 
-  Scheduler::instance()->incTicks();
+  Scheduler::instance()->incCpuTicks();
 
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
       []()
@@ -192,7 +192,7 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-    debug(A_INTERRUPTS, "Interrupt 65 called by CPU %zx\n", ArchMulticore::getCpuID());
+    debug(A_INTERRUPTS, "Interrupt 65 called on CPU %zu\n", ArchMulticore::getCpuID());
     ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
         []()
         {
@@ -223,6 +223,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error, uint32 ip)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
+  debug(A_INTERRUPTS, "IRQ 1 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(1);
   KeyboardManager::instance()->serviceIRQ();
   ArchInterrupts::endOfInterrupt(1);
@@ -231,34 +232,31 @@ extern "C" void irqHandler_1()
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
-  kprintfd("IRQ 3 called\n");
+  debug(A_INTERRUPTS, "IRQ 3 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(3);
   SerialManager::getInstance()->service_irq(3);
-  kprintfd("IRQ 3 ended\n");
   ArchInterrupts::endOfInterrupt(3);
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
-  kprintfd("IRQ 4 called\n");
+  debug(A_INTERRUPTS, "IRQ 4 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(4);
   SerialManager::getInstance()->service_irq(4);
-  kprintfd("IRQ 4 ended\n");
   ArchInterrupts::endOfInterrupt(4);
 }
 
 extern "C" void arch_irqHandler_6();
 extern "C" void irqHandler_6()
 {
-  kprintfd("IRQ 6 called\n");
-  kprintfd("IRQ 6 ended\n");
+  debug(A_INTERRUPTS, "IRQ 6 called on CPU %zu\n", ArchMulticore::getCpuID());
 }
 
 extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
-  kprintfd("IRQ 9 called\n");
+  debug(A_INTERRUPTS, "IRQ 9 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(9);
   BDManager::getInstance()->serviceIRQ(9);
   ArchInterrupts::endOfInterrupt(9);
@@ -267,7 +265,7 @@ extern "C" void irqHandler_9()
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
-  kprintfd("IRQ 11 called\n");
+  debug(A_INTERRUPTS, "IRQ 11 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(11);
   BDManager::getInstance()->serviceIRQ(11);
   ArchInterrupts::endOfInterrupt(11);
@@ -276,7 +274,7 @@ extern "C" void irqHandler_11()
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
-  //kprintfd( "IRQ 14 called\n" );
+  debug(A_INTERRUPTS, "IRQ 14 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(14);
   BDManager::getInstance()->serviceIRQ(14);
   ArchInterrupts::endOfInterrupt(14);
@@ -285,7 +283,7 @@ extern "C" void irqHandler_14()
 extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
-  //kprintfd( "IRQ 15 called\n" );
+  debug(A_INTERRUPTS, "IRQ 15 called on CPU %zu\n", ArchMulticore::getCpuID());
   ArchInterrupts::startOfInterrupt(15);
   BDManager::getInstance()->serviceIRQ(15);
   ArchInterrupts::endOfInterrupt(15);
@@ -347,7 +345,7 @@ extern "C" void arch_irqHandler_100();
 extern "C" void irqHandler_100()
 {
         // No EOI here!
-        debug(A_INTERRUPTS, "IRQ 100 called by CPU %zu, spurious APIC interrupt\n", ArchMulticore::getCpuID());
+        debug(A_INTERRUPTS, "IRQ 100 called on CPU %zu, spurious APIC interrupt\n", ArchMulticore::getCpuID());
 }
 
 

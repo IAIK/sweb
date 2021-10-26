@@ -262,6 +262,14 @@ void ArchCommon::halt()
   asm volatile("hlt");
 }
 
+uint64 ArchCommon::cpuTimestamp()
+{
+    uint64 timestamp;
+    asm volatile("rdtsc\n"
+                 :"=A"(timestamp));
+    return timestamp;
+}
+
 #define STATS_OFFSET 22
 
 void ArchCommon::drawStat() {

@@ -104,7 +104,7 @@ public:
  * @param new_value to set variable lock to
  * @returns old_value of variable lock
  */
-  static uint32 testSetLock(uint32 &lock, uint32 new_value);
+  static uint32 testSetLock(volatile uint32 &lock, uint32 new_value);
 
 /**
  * atomically increments or decrements value by increment

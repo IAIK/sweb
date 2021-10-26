@@ -98,7 +98,7 @@ void ArchThreads::yield()
   __asm__ __volatile__("int $65");
 }
 
-uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
+uint32 ArchThreads::testSetLock(volatile uint32 &lock, uint32 new_value)
 {
   return __sync_lock_test_and_set(&lock,new_value);
 }
