@@ -135,6 +135,8 @@ void ArchMulticore::initCPULocalData(bool boot_cpu)
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", cpu_info.getCpuID());
   // This is a dirty hack to make sure the idle thread is initialized. Otherwise idle thread initialization might happen the first time it gets scheduled, which won't work because it requires e.g. the KMM lock
   debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCpuID(), idle_thread.getName());
+  debug(A_MULTICORE, "Adding idle thread for CPU %zu\n", getCpuID());
+  Scheduler::instance()->addNewThread(&idle_thread);
 }
 
 
