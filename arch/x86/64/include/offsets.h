@@ -21,3 +21,8 @@
  * Use only the lower canonical half for userspace
  */
 #define USER_BREAK 0x0000800000000000ULL
+
+/**
+ * End of the non-canonical space, start of kernel space
+ */
+#define KERNEL_START 0xffff800000000000ULL
