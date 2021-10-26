@@ -141,11 +141,11 @@ extern "C" size_t arch_computeDummyHandler(uint32 eip)
 
 extern "C" void arch_saveThreadRegisters(uint32 error)
 {
-  register struct context_switch_registers* registers;
+  struct context_switch_registers* registers;
   registers = (struct context_switch_registers*) (&error + 2);
-  register struct interrupt_registers* iregisters;
+  struct interrupt_registers* iregisters;
   iregisters = (struct interrupt_registers*) (&error + 2 + sizeof(struct context_switch_registers)/sizeof(uint32) + (error));
-  register ArchThreadRegisters* info = currentThreadRegisters;
+  ArchThreadRegisters* info = currentThreadRegisters;
 
   asm("fnsave (%[fpu])\n"
       "frstor (%[fpu])\n"

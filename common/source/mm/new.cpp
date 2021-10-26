@@ -12,8 +12,12 @@ static void* _new(size_t size)
 {
   // maybe we could take some precautions not to be interrupted while doing this
   pointer called_by = getCalledBefore(2);
-  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size, called_by);
+  void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size + 0x10, called_by);
   assert(p > (void*)0x80000000 || p == (void*)0);
+  if (p) {
+    *static_cast<size_t *>(p) = size;
+    p = ((uint8 *)p) + 0x10;
+  }
   return p;
 }
 /**
@@ -22,6 +26,10 @@ static void* _new(size_t size)
  */
 static void _delete(void* address)
 {
+  if (address) {
+    address = ((uint8*)address) - 0x10;
+  }
+
   pointer called_by = getCalledBefore(2);
   assert(address > (void*)0x80000000 || address == (void*)0);
   KernelMemoryManager::instance()->freeMemory ( ( pointer ) address, called_by);
@@ -47,6 +55,15 @@ void operator delete ( void* address )
   _delete(address);
 }
 
+void operator delete(void* address, size_t size)
+{
+  if (address) {
+    auto new_size = *(size_t *)(((uint8 *)address) - 0x10);
+    assert(new_size == size && "Invalid delete call. delete and new size do not match.");
+  }
+  _delete(address);
+}
+
 /**
  * overloaded array new operator
  * @param size the size of the array to allocate
@@ -63,6 +80,15 @@ void* operator new[] ( size_t size )
  */
 void operator delete[] ( void* address )
 {
+  _delete(address);
+}
+
+void operator delete[](void* address, size_t size)
+{
+  if (address) {
+    auto new_size = *(size_t *)(((uint8 *)address) - 0x10);
+    assert(new_size == size && "Invalid delete call. delete and new size do not match.");
+  }
   _delete(address);
 }
 
