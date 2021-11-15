@@ -2,17 +2,12 @@
 
 #include "types.h"
 
+void* operator new ( size_t size ) noexcept;
+
 /**
  * wrapper for placement new operator
  */
-inline void* operator new(size_t, void* p)
+inline void* operator new(size_t, void* p) noexcept
 {
   return p;
 }
-
-void __builtin_delete(void* address);
-void* __builtin_new(size_t size);
-void* __builtin_vec_new(size_t size);
-void __builtin_vec_delete(void* address);
-
-

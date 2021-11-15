@@ -41,7 +41,7 @@ static void _delete(void* address)
  * @param size the size of the memory to allocate
  * @return the pointer to the new memory
  */
-void* operator new ( size_t size )
+void* operator new ( size_t size ) noexcept
 {
   return _new(size);
 }
@@ -64,12 +64,13 @@ void operator delete(void* address, size_t size)
   _delete(address);
 }
 
+
 /**
  * overloaded array new operator
  * @param size the size of the array to allocate
  * @return the pointer to the new memory
  */
-void* operator new[] ( size_t size )
+void* operator new[] ( size_t size ) noexcept
 {
   return _new(size);
 }
