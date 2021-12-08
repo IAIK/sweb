@@ -59,7 +59,7 @@ class FileSystemInfo
      */
     Path& getPwd()
     {
-      return root_;
+      return pwd_;
     }
 };
 
