@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.11)
+
 set(KERNEL_BINARY kernel64.x)
 
 set(ARCH_X86_64_KERNEL_CFLAGS -m64 -O0 -gdwarf-2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${NOPICFLAG})
@@ -11,7 +13,7 @@ set(ARCH_APPEND_LD_ARGUMENTS )
 
 
 function(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
-  file(GLOB arch_files "*.32.C")
+  file(GLOB arch_files CONFIGURE_DEPENDS "*.32.C")
 
   if(arch_files)
     set(ARCHOBJS_TARGET ${LIBRARY_NAME}_archobjs)
