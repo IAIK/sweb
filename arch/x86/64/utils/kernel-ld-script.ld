@@ -50,7 +50,7 @@ SECTIONS
     LS_tbss = .;
     tbss_start = .;
     *(.tbss)
-    . = ALIGN(8) + 8; /* For C++11 tread_local init-on-first-use flag */
+    . = ALIGN(8) + 8; /* For C++11 thread_local init-on-first-use flag */
     tbss_end = .;
     cls_end = .;
     . = ALIGN(8) + 8;
@@ -66,6 +66,28 @@ SECTIONS
     data_end_address = .;
   }
 
+  .init_array : AT(LS_Phys + (__init_array_start - LS_START))
+  {
+    __init_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+    KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
+    __init_array_end = .;
+  }
+
+  .preinit_array : AT(LS_Phys + (__preinit_array_start - LS_START))
+  {
+    __preinit_array_start = .;
+    KEEP (*(.preinit_array))
+    __preinit_array_end = .;
+  }
+
+  .fini_array : AT(LS_Phys + (__fini_array_start - LS_START))
+  {
+    __fini_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
+    KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+    __fini_array_end = .;
+  }
   .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_START))
   {
     LS_Bss = .;
