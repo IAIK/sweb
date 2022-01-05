@@ -70,7 +70,21 @@ void _exit(int status)
 {
   __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
 }
+
+typedef void (*func_ptr)();
+extern func_ptr __fini_array_start;
+extern func_ptr __fini_array_end;
+
+// Call destructors
+void _fini()
+{
+    func_ptr* it = &__fini_array_start;
+	while(it != &__fini_array_end)
+        (*it++)();
+}
+
 void exit(int status)
 {
+    _fini();
   __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
 }

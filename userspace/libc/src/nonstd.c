@@ -15,7 +15,34 @@ int getcpu(size_t *cpu, size_t *node, void *tcache)
 
 extern int main();
 
+typedef void (*func_ptr)();
+
+// Symbols automatically created by linker
+// https://maskray.me/blog/2021-11-07-init-ctors-init-array
+extern func_ptr __preinit_array_start;
+extern func_ptr __preinit_array_end;
+
+extern func_ptr __init_array_start;
+extern func_ptr __init_array_end;
+
+void _preinit()
+{
+    func_ptr* it = &__preinit_array_start;
+	while(it != &__preinit_array_end)
+        (*it++)();
+}
+
+// Call constructors
+void _init()
+{
+    func_ptr* it = &__init_array_start;
+	while(it != &__init_array_end)
+        (*it++)();
+}
+
 void _start()
 {
+  _preinit();
+  _init();
   exit(main());
 }
