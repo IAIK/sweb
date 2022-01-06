@@ -33,10 +33,6 @@
 #include "RamDiskDriver.h"
 #include "ArchMulticore.h"
 
-
-#include "ACPI.h"
-#include "APIC.h"
-
 extern void* kernel_end_address;
 extern Console* main_console;
 

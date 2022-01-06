@@ -78,6 +78,7 @@ extern "C" void* __dso_handle;
 
 void __cxa_pure_virtual()
 {
+    assert(false);
 }
 
 void _pure_virtual()

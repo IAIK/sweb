@@ -75,3 +75,36 @@ extern "C" void __cxa_guard_release(_guard_t* gv) {
 extern "C" void __cxa_guard_abort(_guard_t* gv) {
   gv->state.store(CONSTRUCTION_NOT_YET_STARTED, ustl::memory_order_release);
 }
+
+
+typedef void (*func_ptr)();
+func_ptr __preinit_array_start;
+func_ptr __preinit_array_end;
+func_ptr __init_array_start;
+func_ptr __init_array_end;
+func_ptr __fini_array_start;
+func_ptr __fini_array_end;
+
+void _preinit()
+{
+    for (func_ptr* it = &__preinit_array_start; it < &__preinit_array_end; ++it)
+    {
+        (*it)();
+    }
+}
+
+void globalConstructors()
+{
+    for (func_ptr* it = &__init_array_start; it < &__init_array_end; ++it)
+    {
+        (*it)();
+    }
+}
+
+void globalDestructors()
+{
+    for (func_ptr* it = &__fini_array_start; it < &__fini_array_end; ++it)
+    {
+        (*it)();
+    }
+}
