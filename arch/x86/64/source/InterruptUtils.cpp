@@ -180,9 +180,8 @@ extern "C" void irqHandler_0()
       Scheduler::instance()->schedule();
 
       ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
-              ((currentThread == &idle_thread ? (Console::RED << 4) :
-                (Console::BRIGHT_BLUE << 4)) |
-               Console::BRIGHT_WHITE);
+          ((currentThread->console_color << 4) |
+           CONSOLECOLOR::BRIGHT_WHITE);
 
       ArchInterrupts::endOfInterrupt(0);
       arch_contextSwitch();
@@ -198,10 +197,10 @@ extern "C" void irqHandler_65()
     []()
     {
       Scheduler::instance()->schedule();
+
       ((char*)ArchCommon::getFBPtr())[1 + ArchMulticore::getCpuID()*2] =
-              ((currentThread == &idle_thread ? (Console::RED << 4) :
-                (Console::BRIGHT_BLUE << 4)) |
-               Console::BRIGHT_WHITE);
+          ((currentThread->console_color << 4) |
+           CONSOLECOLOR::BRIGHT_WHITE);
 
       arch_contextSwitch();
       assert(false);

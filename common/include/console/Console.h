@@ -14,27 +14,6 @@ class Console : public Thread
     friend class ConsoleManager;
 
   public:
-
-    enum CONSOLECOLOR
-    {
-      BLACK = 0,
-      BLUE,
-      GREEN,
-      CYAN,
-      RED,
-      MAGENTA,
-      BROWN,
-      WHITE,
-      DARK_GREY,
-      BRIGHT_BLUE,
-      BRIGHT_GREEN,
-      BRIGHT_CYAN,
-      PINK,
-      BRIGHT_MAGENTA,
-      YELLOW,
-      BRIGHT_WHITE
-    };
-
     Console(uint32 num_terminals, const char *name);
 
     /**

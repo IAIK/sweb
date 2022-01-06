@@ -3,6 +3,7 @@
 #include "types.h"
 #include "Console.h"
 #include "chardev.h"
+#include "VgaColors.h"
 
 class Terminal : public CharacterDevice
 {
@@ -56,8 +57,8 @@ class Terminal : public CharacterDevice
      */
     virtual int32 writeData(uint32 offset, uint32 size, const char*buffer);
 
-    void setForegroundColor(Console::CONSOLECOLOR const &color);
-    void setBackgroundColor(Console::CONSOLECOLOR const &color);
+    void setForegroundColor(CONSOLECOLOR const &color);
+    void setBackgroundColor(CONSOLECOLOR const &color);
 
     /**
      * Reads one character.from the input
@@ -94,7 +95,7 @@ class Terminal : public CharacterDevice
     void clearBuffer();
     void putInBuffer(uint32 key);
 
-    void initTerminalColors(Console::CONSOLECOLOR fg, Console::CONSOLECOLOR bg);
+    void initTerminalColors(CONSOLECOLOR fg, CONSOLECOLOR bg);
 
     void backspace();
 

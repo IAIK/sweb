@@ -317,8 +317,8 @@ void ArchCommon::drawStat() {
     size_t i = 0;
     while(text[i]) {
         fb[i * 2 + STATS_OFFSET] = text[i];
-        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? ((Console::BLACK) | (Console::DARK_GREY << 4)) :
-                                                                ((Console::DARK_GREY) | (Console::BLACK << 4)));
+        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? ((CONSOLECOLOR::BLACK) | (CONSOLECOLOR::DARK_GREY << 4)) :
+                                                                ((CONSOLECOLOR::DARK_GREY) | (CONSOLECOLOR::BLACK << 4)));
         i++;
     }
 
@@ -331,7 +331,7 @@ void ArchCommon::drawStat() {
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
       fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];
-      fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
+      fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
     }
 
 #define STATS_NUM_THREADS_START (80*2 + 73*2)
@@ -341,8 +341,17 @@ void ArchCommon::drawStat() {
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[STATS_NUM_THREADS_START + i * 2] = itoa_buffer[i];
-            fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
+            fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
     }
+}
+
+void updateStatsThreadColor()
+{
+    char* fb = (char*)ArchCommon::getFBPtr();
+    fb[1 + ArchMulticore::getCpuID()*2] =
+        (((currentThread ? currentThread->console_color :
+           CONSOLECOLOR::BLACK) << 4) |
+         CONSOLECOLOR::BRIGHT_WHITE);
 }
 
 thread_local size_t heart_beat_value = 0;
@@ -355,6 +364,7 @@ void ArchCommon::drawHeartBeat()
   char* fb = (char*)getFBPtr();
   size_t cpu_id = ArchMulticore::getCpuID();
   fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
+  updateStatsThreadColor();
 }
 
 

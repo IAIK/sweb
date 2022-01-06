@@ -169,7 +169,7 @@ uint32 Terminal::setCharacter(uint32 row, uint32 column, uint8 character)
   return 0;
 }
 
-void Terminal::setForegroundColor(Console::CONSOLECOLOR const &color)
+void Terminal::setForegroundColor(CONSOLECOLOR const &color)
 {
   MutexLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 0 bits
@@ -178,7 +178,7 @@ void Terminal::setForegroundColor(Console::CONSOLECOLOR const &color)
   current_state_ |= color;
 }
 
-void Terminal::setBackgroundColor(Console::CONSOLECOLOR const &color)
+void Terminal::setBackgroundColor(CONSOLECOLOR const &color)
 {
   MutexLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 4 bits
@@ -188,7 +188,7 @@ void Terminal::setBackgroundColor(Console::CONSOLECOLOR const &color)
   current_state_ |= col << 4;
 }
 
-void Terminal::initTerminalColors(Console::CONSOLECOLOR fg, Console::CONSOLECOLOR bg)
+void Terminal::initTerminalColors(CONSOLECOLOR fg, CONSOLECOLOR bg)
 {
   setForegroundColor(fg);
   setBackgroundColor(bg);

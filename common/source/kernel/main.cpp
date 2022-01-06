@@ -74,7 +74,7 @@ extern "C" void startup()
   debug(MAIN, "Console created\n");
 
   Terminal *term_0 = main_console->getTerminal(0); // add more if you need more...
-  term_0->initTerminalColors(Console::GREEN, Console::BLACK);
+  term_0->initTerminalColors(CONSOLECOLOR::GREEN, CONSOLECOLOR::BLACK);
   kprintfd("Init debug printf\n");
   term_0->writeString("This is on term 0, you should see me now\n");
   debug(MAIN, "SetActiveTerminal 0\n");

@@ -32,7 +32,7 @@ extern "C" void threadStartHack()
 
 Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type) :
     kernel_registers_(0), user_registers_(0), switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0), loader_(0),
-    next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), state_(Running), tid_(0),
+    next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), console_color(CONSOLECOLOR::BRIGHT_BLUE), state_(Running), tid_(0),
     my_terminal_(0), working_dir_(working_dir), name_(name), vruntime(0)
 {
   debug(THREAD, "Thread ctor, this is %p, name: %s, stack: [%p, %p), fs_info ptr: %p\n", this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_), working_dir_);

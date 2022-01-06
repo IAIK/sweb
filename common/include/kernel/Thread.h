@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "fs/FileSystemInfo.h"
+#include "VgaColors.h"
 
 #define STACK_CANARY ((uint32)0xDEADDEAD ^ (uint32)(size_t)this)
 
@@ -125,6 +126,8 @@ class Thread
     Lock* holding_lock_list_;
 
     volatile size_t currently_scheduled_on_cpu_ = (size_t)-1;
+
+    CONSOLECOLOR console_color;
 
   private:
     Thread(Thread const &src);
