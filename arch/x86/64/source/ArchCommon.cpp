@@ -26,8 +26,8 @@ void puts(const char* string);
 
 extern void* kernel_end_address;
 
-multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
-static struct multiboot_remainder mbr __attribute__ ((section (".data"))); // must not be in bss segment
+__attribute__ ((section (".data"))) multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
+__attribute__ ((section (".data"))) static struct multiboot_remainder mbr; // must not be in bss segment
 
 extern "C" void parseMultibootHeader()
 {
@@ -322,7 +322,7 @@ void ArchCommon::drawStat() {
         i++;
     }
 
-    char itoa_buffer[33];
+    char itoa_buffer[80];
 
 #define STATS_FREE_PAGES_START (STATS_OFFSET + 11*2)
     memset(fb + STATS_FREE_PAGES_START, 0, 4*2);
@@ -332,6 +332,19 @@ void ArchCommon::drawStat() {
     {
       fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];
       fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
+    }
+
+#define STATS_FREE_PAGES_PERCENT_START (STATS_OFFSET + 80*2 + 11*2)
+    size_t free_pages_percent = (PageManager::instance()->getNumFreePages()*100)/PageManager::instance()->getTotalNumPages();
+    memset(fb + STATS_FREE_PAGES_PERCENT_START, 0, 4*2);
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(free_pages_percent, itoa_buffer, 10);
+    size_t free_pp_len = strlen(itoa_buffer);
+    itoa_buffer[free_pp_len] = '%';
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+        fb[STATS_FREE_PAGES_PERCENT_START + i * 2] = itoa_buffer[i];
+        fb[STATS_FREE_PAGES_PERCENT_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
     }
 
 #define STATS_NUM_THREADS_START (80*2 + 73*2)
