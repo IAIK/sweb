@@ -37,7 +37,7 @@ void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
   debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, flags);
 }
 
-void LocalAPIC::sendEOI(__attribute__((unused)) size_t num)
+void LocalAPIC::sendEOI(size_t num)
 {
   --outstanding_EOIs_;
   if(APIC & OUTPUT_ADVANCED)
@@ -59,8 +59,8 @@ void LocalAPIC::sendEOI(__attribute__((unused)) size_t num)
     }
   }
 
-  assert(!ArchInterrupts::testIFSet());
-  assert(checkISR(num));
+  assert(!ArchInterrupts::testIFSet() && "Attempted to send end of interrupt command while interrupts are enabled");
+  assert(checkISR(num) && "Attempted to send end of interrupt command but interrupt is not actually being serviced");
 
   reg_vaddr_->eoi = 0;
 }
@@ -272,9 +272,10 @@ static volatile uint8 delay = 0;
 #endif
 
 extern "C" void PIT_delay_IRQ();
-void __PIT_delay_IRQ()
+__attribute__((naked)) void __PIT_delay_IRQ()
 {
         __asm__ __volatile__(".global PIT_delay_IRQ\n"
+                             ".type PIT_delay_IRQ,@function\n"
                              "PIT_delay_IRQ:\n");
         __asm__ __volatile__("movb $1, %[delay]\n"
                              :[delay]"=m"(delay));
@@ -356,6 +357,7 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
         ArchInterrupts::disableIRQ(0);
         ArchInterrupts::endOfInterrupt(0);
 
+        delay = 0;
 
         setUsingAPICTimer(temp_using_apic_timer);
         InterruptUtils::idt[0x20] = temp_irq0_descriptor;
@@ -504,7 +506,7 @@ void IOAPIC::initRedirections()
                 for(uint32 i = 0; i <= max_redir_; ++i)
                 {
                         IOAPIC_redir_entry r = readRedirEntry(i);
-                        debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination, r.mask, r.polarity, r.trigger_mode);
+                        debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest mode: %u, dest APIC: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination_mode, r.destination, r.mask, r.polarity, r.trigger_mode);
                 }
         }
         debug(APIC, "IO APIC redirections initialized\n");
