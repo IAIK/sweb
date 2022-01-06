@@ -58,8 +58,11 @@ extern "C" void startup()
 
   system_state = BOOTING;
 
-  PageManager::instance();
+  PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");
+
+  // TODO: move this function out of the page manager
+  PageManager::instance()->mapModules();
 
   ArchCommon::postBootInit();
 

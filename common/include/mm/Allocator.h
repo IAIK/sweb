@@ -15,11 +15,15 @@ public:
         virtual void setUnuseable(size_t start, size_t end) = 0;
 
         virtual size_t numFree() = 0;
+        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1) = 0;
 
         virtual void printUsageInfo() = 0;
 private:
 };
 
+/* This BootstrapRangeAllocator is 'good enough' for temporary use during initialization
+ * of the page manager, but should not really be used elsewhere
+ */
 class BootstrapRangeAllocator : public Allocator
 {
 public:
@@ -33,12 +37,9 @@ public:
         virtual void setUnuseable(size_t start, size_t end);
 
         virtual size_t numFree();
+        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1);
 
         virtual void printUsageInfo();
-
-        size_t numUseablePages();
-
-
 
         struct UseableRange
         {
@@ -62,6 +63,21 @@ public:
                 bitmap_(size/BLOCK_SIZE)
         {
                 assert(size % BLOCK_SIZE == 0);
+        }
+
+        BitmapAllocator(size_t size, Allocator&& alloc_template) :
+            bitmap_(size/BLOCK_SIZE)
+        {
+            assert(size % BLOCK_SIZE == 0);
+
+            setUnuseable(0, size);
+            alloc_template.printUsageInfo();
+            debug(PM, "Num free pages: %zu\n", alloc_template.numFreeContiguousBlocks(PAGE_SIZE, PAGE_SIZE));
+            size_t free_phys_page;
+            while((free_phys_page = alloc_template.alloc(PAGE_SIZE, PAGE_SIZE)) != (size_t)-1)
+            {
+                setUseable(free_phys_page, free_phys_page + PAGE_SIZE);
+            }
         }
 
         virtual ~BitmapAllocator() = default;
@@ -140,6 +156,14 @@ public:
         virtual size_t numFree()
         {
                 return bitmap_.getNumFreeBits() * BLOCK_SIZE;
+        }
+
+        virtual size_t numFreeContiguousBlocks(size_t size = BLOCK_SIZE, size_t alignment = BLOCK_SIZE)
+        {
+            assert(size % BLOCK_SIZE == 0);
+            assert(alignment && (alignment % BLOCK_SIZE == 0));
+
+            return bitmap_.getNumFreeBits();
         }
 
         virtual void printUsageInfo()

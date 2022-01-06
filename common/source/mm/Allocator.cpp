@@ -7,7 +7,7 @@
 /*
   Does not merge overlapping ranges when ranges are expanded!
  */
-void BootstrapRangeAllocator::setUseable(__attribute__((unused)) size_t start, __attribute__((unused)) size_t end)
+void BootstrapRangeAllocator::setUseable(size_t start, size_t end)
 {
         //debug(PM, "setUseable [%zx - %zx)\n", start, end);
         assert(start <= end);
@@ -50,7 +50,7 @@ void BootstrapRangeAllocator::setUseable(__attribute__((unused)) size_t start, _
         useable_ranges_[slot].end = end;
 }
 
-void BootstrapRangeAllocator::setUnuseable(__attribute__((unused)) size_t start, __attribute__((unused)) size_t end)
+void BootstrapRangeAllocator::setUnuseable(size_t start, size_t end)
 {
         //debug(PM, "setUnuseable [%zx - %zx)\n", start, end);
         assert(start <= end);
@@ -126,17 +126,21 @@ size_t BootstrapRangeAllocator::numFree()
         return num_free;
 }
 
-size_t BootstrapRangeAllocator::numUseablePages()
+size_t BootstrapRangeAllocator::numFreeContiguousBlocks(size_t size, size_t alignment)
 {
-        size_t num_useable_pages = 0;
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+    assert(size > 0);
+    assert(alignment == size);
+    size_t num_contiguous_blocks = 0;
+    for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+    {
+        if(slotIsUsed(i))
         {
-                if(slotIsUsed(i))
-                {
-                        num_useable_pages += (useable_ranges_[i].end - useable_ranges_[i].start)/PAGE_SIZE;
-                }
+            size_t aligned_start = useable_ranges_[i].start;
+            aligned_start += (aligned_start % alignment ? alignment - aligned_start % alignment : 0);
+            num_contiguous_blocks += (useable_ranges_[i].end - aligned_start)/size;
         }
-        return num_useable_pages;
+    }
+    return num_contiguous_blocks;
 }
 
 size_t BootstrapRangeAllocator::alloc(size_t size, size_t alignment)
@@ -144,10 +148,9 @@ size_t BootstrapRangeAllocator::alloc(size_t size, size_t alignment)
         for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
         {
                 size_t start = useable_ranges_[i].start;
-                if(start % alignment != 0)
-                {
-                        start = start - (start % alignment) + alignment;
-                }
+                size_t align_offset = start % alignment;
+                start += (align_offset ? alignment - align_offset : 0);
+
                 if(start + size <= useable_ranges_[i].end)
                 {
                         //debug(PM, "Bootstrap PM allocating range [%zx-%zx)\n", start, start+size);

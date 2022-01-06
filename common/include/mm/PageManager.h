@@ -12,7 +12,14 @@
 class PageManager
 {
   public:
+    PageManager() = delete;
+    PageManager(PageManager const&) = delete;
+    PageManager& operator=(const PageManager&) = delete;
+
+    PageManager(Allocator* allocator);
+
     static PageManager *instance();
+    static void init();
 
     /**
      * returns the number of 4k Pages avaible to sweb.
@@ -32,6 +39,7 @@ class PageManager
      * and marks that Page as used.
      * returns always 4kb ppns!
      */
+    [[nodiscard("Discarding return value of allocPPN() leaks pages")]]
     uint32 allocPPN(uint32 page_size = PAGE_SIZE);
 
     /**
@@ -46,16 +54,21 @@ class PageManager
       return lock_.heldBy();
     }
 
-    PageManager();
-
     void printBitmap()
     {
       allocator_->printUsageInfo();
     }
 
-  private:
+    void mapModules();
 
-    PageManager(PageManager const&);
+  private:
+    static size_t initUsableMemoryRegions(Allocator& allocator);
+    static void reserveKernelPages(Allocator& allocator);
+    static void reserveModulePages(Allocator& allocator);
+    static size_t calcNumHeapPages(Allocator& allocator);
+    size_t mapKernelHeap(Allocator& allocator, size_t max_heap_pages);
+    static void initKernelMemoryManager();
+    void switchToHeapBitmapAllocator();
 
     Allocator* allocator_;
 
@@ -64,8 +77,4 @@ class PageManager
     SpinLock lock_;
 
     static PageManager* instance_;
-
-    size_t HEAP_PAGES;
 };
-
-

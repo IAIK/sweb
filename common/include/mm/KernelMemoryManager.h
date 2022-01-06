@@ -69,6 +69,10 @@ extern void* kernel_end_address;
 class KernelMemoryManager
 {
   public:
+    KernelMemoryManager() = delete;
+    KernelMemoryManager(const KernelMemoryManager&) = delete;
+    KernelMemoryManager& operator=(const KernelMemoryManager&) = delete;
+
     static KernelMemoryManager *instance();
 
     /**
@@ -102,12 +106,6 @@ class KernelMemoryManager
     SpinLock& getKMMLock();
 
     Thread* KMMLockHeldBy();
-
-    KernelMemoryManager() : lock_("")
-    {
-      assert(false && "dummy constructor - do not use!");
-    };
-
 
     size_t getUsedKernelMemory(bool show_allocs);
     void startTracing();

@@ -15,17 +15,14 @@
 #include "ArchMulticore.h"
 extern Stabs2DebugInfo const* kernel_debug_info;
 
-KernelMemoryManager kmm;
+alignas(KernelMemoryManager) unsigned char kmm[sizeof(KernelMemoryManager)];
 
-KernelMemoryManager * KernelMemoryManager::instance_;
+KernelMemoryManager* KernelMemoryManager::instance_;
 size_t KernelMemoryManager::pm_ready_;
 
 KernelMemoryManager* KernelMemoryManager::instance()
 {
-  if (unlikely(!instance_))
-  {
-    assert(false && "you can not use KernelMemoryManager::instance before the PageManager is ready!");
-  }
+  assert(instance_ && "you can not use KernelMemoryManager::instance before the PageManager is ready!");
   return instance_;
 }
 
@@ -34,9 +31,6 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
         tracing_(false), lock_("KMM::lock_"), segments_used_(0), segments_free_(0)
 {
   debug(KMM, "Initializing KernelMemoryManager\n");
-
-  assert(instance_ == 0);
-  instance_ = this;
 
   pointer start_address = ArchCommon::getFreeKernelMemoryStart();
   assert(((start_address) % PAGE_SIZE) == 0);
