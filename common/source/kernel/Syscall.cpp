@@ -60,10 +60,12 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
   return return_value;
 }
 
-void Syscall::exit(size_t exit_code)
+[[noreturn]] void Syscall::exit(size_t exit_code)
 {
   debug(SYSCALL, "Syscall::EXIT: called, exit_code: %zd\n", exit_code);
   currentThread->kill();
+
+  assert(false && "Returned from currentThread->kill()");
 }
 
 size_t Syscall::write(size_t fd, pointer buffer, size_t size)

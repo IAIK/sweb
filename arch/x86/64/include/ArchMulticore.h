@@ -75,7 +75,7 @@ class ArchMulticore
     static void initCpuLocalTSS(size_t boot_stack_top);
     static void prepareAPStartup(size_t entry_addr);
 
-    static void waitForSystemStart();
+    [[noreturn]] static void waitForSystemStart();
 };
 
 

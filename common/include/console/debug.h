@@ -4,6 +4,7 @@
 
 enum AnsiColor
 {
+  Ansi_Black = 30,
   Ansi_Red = 31,
   Ansi_Green = 32,
   Ansi_Yellow = 33,
@@ -11,6 +12,14 @@ enum AnsiColor
   Ansi_Magenta = 35,
   Ansi_Cyan = 36,
   Ansi_White = 37,
+  Ansi_BrightBlack = 90,
+  Ansi_BrightRed = 91,
+  Ansi_BrightGreen = 92,
+  Ansi_BrightYellow = 93,
+  Ansi_BrightBlue = 94,
+  Ansi_BrightMagenta = 95,
+  Ansi_BrightCyan = 96,
+  Ansi_BrightWhite = 97,
 };
 
 
@@ -117,4 +126,4 @@ const size_t VFS                = Ansi_Yellow;
 const size_t M_STORAGE_MANAGER  = Ansi_Yellow;
 const size_t M_INODE            = Ansi_Yellow;
 const size_t M_SB               = Ansi_Yellow;
-const size_t M_ZONE             = Ansi_Yellow;;
+const size_t M_ZONE             = Ansi_Yellow;

@@ -43,7 +43,7 @@ FileSystemInfo* default_working_dir;
 extern "C" void initialiseBootTimePaging();
 extern "C" void removeBootTimeIdentMapping();
 
-extern "C" void startup()
+extern "C" [[noreturn]] void startup()
 {
 #ifdef DEBUG
   //software breakpoint for debugging
@@ -180,5 +180,5 @@ extern "C" void startup()
 
   Scheduler::instance()->yield();
   //not reached
-  assert(false);
+  assert(false && "Reached end of startup()");
 }

@@ -331,7 +331,7 @@ void ArchMulticore::initCpu()
 }
 
 
-void ArchMulticore::waitForSystemStart()
+[[noreturn]] void ArchMulticore::waitForSystemStart()
 {
   kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
   debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
