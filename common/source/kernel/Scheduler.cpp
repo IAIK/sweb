@@ -287,6 +287,9 @@ void Scheduler::printThreadList()
   unlockScheduling(DEBUG_STR_HERE);
 }
 
+#define INDICATOR_SCHED_LOCK_FREE ' '
+#define INDICATOR_SCHED_LOCK_BLOCKED '#'
+#define INDICATOR_SCHED_LOCK_HOLDING '-'
 
 void Scheduler::lockScheduling(const char* called_at) //not as severe as stopping Interrupts
 {
@@ -301,7 +304,7 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
 
     do
     {
-      ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = '#';
+      ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = INDICATOR_SCHED_LOCK_BLOCKED;
 
       ++attempt;
       if(attempt == 2)
@@ -321,7 +324,7 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
     if(attempt == 1)
         ++scheduler_lock_count_free;
 
-    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = '-';
+    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = INDICATOR_SCHED_LOCK_HOLDING;
   }
 
 
@@ -339,7 +342,7 @@ void Scheduler::unlockScheduling(const char* called_at)
   }
   scheduling_blocked_by_ = nullptr;
   locked_at_ = nullptr;
-  ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = ' ';
+  ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = INDICATOR_SCHED_LOCK_FREE;
   size_t was_locked_by = block_scheduling_.exchange(-1);
   if(was_locked_by != cpu_id)
   {
