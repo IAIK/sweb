@@ -7,6 +7,7 @@
 #include "backtrace.h"
 #include "debug.h"
 #include "ArchMulticore.h"
+#include "MutexLock.h"
 
 Console* main_console;
 
@@ -101,7 +102,7 @@ Terminal *Console::getTerminal(uint32 term)
 
 void Console::setActiveTerminal(uint32 term)
 {
-  set_active_lock_.acquire();
+  MutexLock l(set_active_lock_);
 
   Terminal *t = terminals_[active_terminal_];
   t->unSetAsActiveTerminal();
@@ -109,8 +110,6 @@ void Console::setActiveTerminal(uint32 term)
   t = terminals_[term];
   t->setAsActiveTerminal();
   active_terminal_ = term;
-
-  set_active_lock_.release();
 }
 
 void Console::Run(void)

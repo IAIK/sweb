@@ -106,7 +106,7 @@ void Lock::checkForDeadLock()
     debug(LOCK, "Deadlock: Lock: %s (%p), held already by currentThread(): %s (%p).\n",
           name_, this, currentThread->getName(), currentThread);
     printStatus();
-    assert(false);
+    assert(false && "Deadlock, lock already held by currentThread");
   }
   checkForCircularDeadLock(currentThread, this);
 }
@@ -227,7 +227,7 @@ void Lock::checkInterrupts(const char* method)
     debug(LOCK, "(ERROR) %s: Lock %s (%p) with IF=0 and SchedulingEnabled=%d ! Now we're dead !!!\n"
           "Maybe you used new/delete in irq/int-Handler context or while Scheduling disabled?\n\n",
           method, name_, this, Scheduler::instance()->isSchedulingEnabled());
-    assert(false);
+    assert(false && "Blocking on lock with disabled interrupts/scheduling");
   }
 }
 
@@ -336,7 +336,7 @@ void Lock::checkInvalidRelease(const char* method)
   }
 }
 
-void Lock::sleepAndRelease ()
+void Lock::sleepAndRelease()
 {
   currentThread->lock_waiting_on_ = this;
   pushFrontCurrentThreadToWaitersList();

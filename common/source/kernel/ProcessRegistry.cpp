@@ -64,12 +64,11 @@ void ProcessRegistry::Run()
     createProcess(progs_[i]);
   }
 
-  counter_lock_.acquire();
-
-  while (progs_running_)
-    all_processes_killed_.wait();
-
-  counter_lock_.release();
+  {
+    MutexLock l(counter_lock_);
+    while (progs_running_)
+      all_processes_killed_.wait();
+  }
 
   kprintf("All processes terminated\n");
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
@@ -85,23 +84,22 @@ void ProcessRegistry::Run()
 
 void ProcessRegistry::processExit()
 {
-  counter_lock_.acquire();
+  MutexLock l(counter_lock_);
 
   if (--progs_running_ == 0)
-    all_processes_killed_.signal();
-
-  counter_lock_.release();
+    all_processes_killed_.broadcast();
 }
 
 void ProcessRegistry::processStart()
 {
-  counter_lock_.acquire();
+  MutexLock l(counter_lock_);
   ++progs_running_;
-  counter_lock_.release();
 }
 
 size_t ProcessRegistry::processCount()
 {
+  // Note that the returned count value is out of date as soon
+  // as the lock is released
   MutexLock lock(counter_lock_);
   return progs_running_;
 }
