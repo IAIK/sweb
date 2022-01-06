@@ -335,7 +335,8 @@ void ArchCommon::drawStat() {
     }
 
 #define STATS_FREE_PAGES_PERCENT_START (STATS_OFFSET + 80*2 + 11*2)
-    size_t free_pages_percent = (PageManager::instance()->getNumFreePages()*100)/PageManager::instance()->getTotalNumPages();
+    size_t total_pages = PageManager::instance()->getTotalNumPages();
+    size_t free_pages_percent = total_pages ? (PageManager::instance()->getNumFreePages()*100)/total_pages : 0;
     memset(fb + STATS_FREE_PAGES_PERCENT_START, 0, 4*2);
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(free_pages_percent, itoa_buffer, 10);
@@ -355,6 +356,34 @@ void ArchCommon::drawStat() {
     {
             fb[STATS_NUM_THREADS_START + i * 2] = itoa_buffer[i];
             fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
+    }
+
+
+    size_t STATS_SCHED_LOCK_CONTENTION_START = (80*2 + ArchMulticore::numRunningCPUs()*2);
+    // calc fixnum xxx.xxx%
+    size_t sched_lock_free = Scheduler::instance()->scheduler_lock_count_free;
+    size_t sched_lock_blocked = Scheduler::instance()->scheduler_lock_count_blocked;
+    size_t sched_lock_total = sched_lock_free + sched_lock_blocked;
+    size_t sched_lock_contention_percent = sched_lock_total ? (sched_lock_blocked*100)/sched_lock_total : 0;
+    size_t sched_lock_contention_2 = sched_lock_total ? ((sched_lock_blocked*100000)/sched_lock_total) % 1000 : 0;
+
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(sched_lock_contention_percent, itoa_buffer, 10);
+    size_t slc_len = strlen(itoa_buffer);
+    itoa_buffer[slc_len++] = '.';
+    if (sched_lock_contention_2 < 100)
+        itoa_buffer[slc_len++] = '0';
+    if (sched_lock_contention_2 < 10)
+        itoa_buffer[slc_len++] = '0';
+    itoa(sched_lock_contention_2, itoa_buffer + slc_len, 10);
+    slc_len = strlen(itoa_buffer);
+    itoa_buffer[slc_len] = '%';
+
+    memset(fb + STATS_SCHED_LOCK_CONTENTION_START, 0, 7*2);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+        fb[STATS_SCHED_LOCK_CONTENTION_START + i * 2] = itoa_buffer[i];
+        fb[STATS_SCHED_LOCK_CONTENTION_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
     }
 }
 

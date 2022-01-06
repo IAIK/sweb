@@ -179,6 +179,8 @@ void Scheduler::addNewThread(Thread *thread)
   debug(SCHEDULER, "addNewThread: %p  %zd:%s\n", thread, thread->getTID(), thread->getName());
   if (currentThread)
     ArchThreads::debugCheckNewThread(thread);
+  // Inserting a new thread into the thread list requires allocations
+  // -> ensure we won't block on the KMM lock with scheduling disabled
   KernelMemoryManager::instance()->getKMMLock().acquire();
   lockScheduling(DEBUG_STR_HERE);
   KernelMemoryManager::instance()->getKMMLock().release();
@@ -288,16 +290,22 @@ void Scheduler::printThreadList()
 
 void Scheduler::lockScheduling(const char* called_at) //not as severe as stopping Interrupts
 {
-  // This function is used with interrupts enabled, so setting the lock + information about which CPU is holding the lock needs to be atomic
+  // This function is also used with interrupts enabled, so setting the lock + information about which CPU is holding the lock needs to be atomic
 
   {
     WithDisabledInterrupts d; // CPU must not change between reading CPU ID and setting the lock value
     size_t expected = -1;
     size_t cpu_id = ArchMulticore::getCpuID();
 
+    size_t attempt = 0;
+
     do
     {
       ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = '#';
+
+      ++attempt;
+      if(attempt == 2)
+          ++scheduler_lock_count_blocked;
 
       if(expected == cpu_id)
       {
@@ -309,6 +317,9 @@ void Scheduler::lockScheduling(const char* called_at) //not as severe as stoppin
       assert(!ArchInterrupts::testIFSet());
     }
     while(!block_scheduling_.compare_exchange_weak(expected, cpu_id));
+
+    if(attempt == 1)
+        ++scheduler_lock_count_free;
 
     ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = '-';
   }

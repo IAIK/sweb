@@ -97,6 +97,8 @@ public:
     ThreadList threads_;
 
     ustl::atomic<size_t> num_threads;
+    ustl::atomic<size_t> scheduler_lock_count_free;
+    ustl::atomic<size_t> scheduler_lock_count_blocked;
 
     Thread* minVruntimeThread();
     Thread* maxVruntimeThread();
