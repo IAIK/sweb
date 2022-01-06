@@ -50,20 +50,20 @@ RingBuffer<T>::~RingBuffer()
 template <class T>
 void RingBuffer<T>::put ( T c )
 {
-  size_t old_write_pos=write_pos_;
+  size_t old_write_pos = write_pos_;
   if ( old_write_pos == read_pos_ )
     return;
   buffer_[old_write_pos]=c;
-  ArchThreads::testSetLock ( write_pos_, ( old_write_pos + 1 ) % buffer_size_ );
+  ArchThreads::testSetLock(write_pos_, (old_write_pos + 1) % buffer_size_);
 }
 
 template <class T>
 void RingBuffer<T>::clear()
 {
-  ArchThreads::testSetLock ( write_pos_,1 );
+  ArchThreads::testSetLock(write_pos_, (size_t)1);
   // assumed that there is only one reader who can't have called clear and get at the same time.
   // here get would return garbage.
-  ArchThreads::testSetLock ( read_pos_,0 );
+  ArchThreads::testSetLock(read_pos_, (size_t)0);
 }
 
 template <class T>
@@ -73,7 +73,7 @@ bool RingBuffer<T>::get ( T &c )
   if ( write_pos_ == new_read_pos ) //nothing new to read
     return false;
   c = buffer_[new_read_pos];
-  ArchThreads::testSetLock ( read_pos_,new_read_pos );
+  ArchThreads::testSetLock(read_pos_, (size_t)new_read_pos);
   return true;
 }
 

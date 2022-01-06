@@ -112,7 +112,22 @@ public:
  * @param new_value to set variable lock to
  * @returns old_value of variable lock
  */
-  static size_t testSetLock(volatile size_t &lock, size_t new_value);
+  template<typename T>
+  static T testSetLock(volatile T &lock, T new_value)
+  {
+      return __sync_lock_test_and_set(&lock, new_value);
+  }
+
+ /**
+  * Counterpart to testSetLock()
+  * Writes 0 to the lock variable and provides a memory release barrier
+  * (ensures all previous memory stores are visible)
+  */
+  template<typename T>
+  static void syncLockRelease(volatile T &lock)
+  {
+      __sync_lock_release(&lock);
+  }
 
 /**
  * atomically increments or decrements value by increment
@@ -121,6 +136,8 @@ public:
  * @param increment can be positive or negative
  * @returns old value of value
  */
+  static uint32 atomic_add(uint32 &value, int32 increment);
+  static int32 atomic_add(int32 &value, int32 increment);
   static uint64 atomic_add(uint64 &value, int64 increment);
   static int64 atomic_add(int64 &value, int64 increment);
   static size_t atomic_add(size_t& value, ssize_t increment);

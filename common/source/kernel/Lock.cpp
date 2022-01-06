@@ -236,7 +236,7 @@ void Lock::lockWaitersList(bool yield)
   // The waiters list lock is a simple spinlock.
   // Just wait until the holding thread is releasing the lock,
   // and acquire it. These steps have to be atomic.
-  while(ArchThreads::testSetLock(waiters_list_lock_, 1))
+  while(ArchThreads::testSetLock(waiters_list_lock_, (size_t)1))
   {
     if(yield)
     {
@@ -247,7 +247,7 @@ void Lock::lockWaitersList(bool yield)
 
 void Lock::unlockWaitersList()
 {
-  waiters_list_lock_ = 0;
+  ArchThreads::syncLockRelease(waiters_list_lock_);
 }
 
 void Lock::pushFrontCurrentThreadToWaitersList()

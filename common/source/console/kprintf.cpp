@@ -135,12 +135,17 @@ void kprintfd(const char *fmt, ...)
 {
   va_list args;
 
-  // Prevent preemption
+  // Locked so that messages are not interleaved and are actually readable.
+  // Since this is also called in interrupt contexts with interrupts disabled,
+  // we need to prevent preemption while holding the lock to prevent deadlocks.
+  // Only preventing preemption without a lock would work for a single cpu
+  // but not for multicore systems.
+
   bool intEnabled = ArchInterrupts::testIFSet();
 
   ArchInterrupts::disableInterrupts();
 
-  while(ArchThreads::testSetLock(kprintfd_locked, 1))
+  while(ArchThreads::testSetLock(kprintfd_locked, (size_t)1))
   {
       // Still allow handling interrupts if we don't get the lock
       if(intEnabled)
@@ -154,7 +159,7 @@ void kprintfd(const char *fmt, ...)
   kvprintf(fmt, kprintfd_func, 0, 10, args);
   va_end(args);
 
-  kprintfd_locked = 0;
+  ArchThreads::syncLockRelease(kprintfd_locked);
   if(intEnabled)
   {
       ArchInterrupts::enableInterrupts();

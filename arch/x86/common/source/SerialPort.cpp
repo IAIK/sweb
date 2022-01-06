@@ -111,7 +111,7 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
     
   size_t jiffies = 0, bytes_written = 0;
   
-  while( ArchThreads::testSetLock( SerialLock ,1 ) && jiffies++ < IO_TIMEOUT )
+  while( ArchThreads::testSetLock(SerialLock , (size_t)1) && jiffies++ < IO_TIMEOUT )
     ArchInterrupts::yieldIfIFSet();
     
   if( jiffies == IO_TIMEOUT )

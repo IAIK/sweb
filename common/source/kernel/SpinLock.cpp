@@ -35,7 +35,7 @@ bool SpinLock::acquireNonBlocking(pointer called_by)
   // So in case you see this comment, re-think your implementation and don't just comment out this line!
   doChecksBeforeWaiting();
 
-  if(ArchThreads::testSetLock(lock_, 1))
+  if(ArchThreads::testSetLock(lock_, (size_t)1))
   {
     // The spinlock is held by another thread at the moment
     return false;
@@ -69,7 +69,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
 //    debug(LOCK, "The acquire is called by: ");
 //    kernel_debug_info->printCallInformation(called_by);
 //  }
-  if(ArchThreads::testSetLock(lock_, 1))
+  if(ArchThreads::testSetLock(lock_, (size_t)1))
   {
     debug(LOCK, "didn't get spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
     // We did not directly managed to acquire the spinlock, need to check for deadlocks and
@@ -86,7 +86,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
     }
 
     // here comes the basic spinlock
-    while(ArchThreads::testSetLock(lock_, 1))
+    while(ArchThreads::testSetLock(lock_, (size_t)1))
     {
       //SpinLock: Simplest of Locks, do the next best thing to busy waiting
       if(currentThread && yield)

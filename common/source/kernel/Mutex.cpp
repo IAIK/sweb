@@ -36,10 +36,10 @@ bool Mutex::acquireNonBlocking(pointer called_by, bool do_checks)
   // So in case you see this comment, re-think your implementation and don't just comment out this line!
   if(do_checks)
   {
-          doChecksBeforeWaiting();
+    doChecksBeforeWaiting();
   }
 
-  if(ArchThreads::testSetLock(mutex_, 1))
+  if(ArchThreads::testSetLock(mutex_, (size_t)1))
   {
     // The mutex is already held by another thread,
     // so we are not allowed to lock it.
@@ -67,12 +67,12 @@ void Mutex::acquire(pointer called_by)
   //   kernel_debug_info->printCallInformation(called_by);
   // }
 
-  while(ArchThreads::testSetLock(mutex_, 1))
+  while(ArchThreads::testSetLock(mutex_, (size_t)1))
   {
     checkCurrentThreadStillWaitingOnAnotherLock();
     lockWaitersList();
     // Here we have to check for the lock again, in case some one released it in between, we might sleep forever.
-    if(!ArchThreads::testSetLock(mutex_, 1))
+    if(!ArchThreads::testSetLock(mutex_, (size_t)1))
     {
       unlockWaitersList();
       break;
@@ -112,7 +112,7 @@ void Mutex::release(pointer called_by, bool do_checks)
   removeFromCurrentThreadHoldingList();
   last_accessed_at_ = called_by;
   held_by_ = 0;
-  mutex_ = 0;
+  ArchThreads::syncLockRelease(mutex_);
   // Wake up a sleeping thread. It is okay that the mutex is not held by the current thread any longer.
   // In worst case a new thread is woken up. Otherwise (first wake up, then release),
   // it could happen that a thread is going to sleep after the this one is trying to wake up one.

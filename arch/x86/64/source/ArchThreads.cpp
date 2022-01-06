@@ -107,11 +107,6 @@ void ArchThreads::yield()
   __asm__ __volatile__("int $65");
 }
 
-size_t ArchThreads::testSetLock(volatile size_t &lock, size_t new_value)
-{
-  return __sync_lock_test_and_set(&lock,new_value);
-}
-
 uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
 {
   int64 ret=increment;
@@ -121,6 +116,16 @@ uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
   :"a" (ret)
   :);
   return ret;
+}
+
+uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
+{
+    return __sync_fetch_and_add(&value,increment);
+}
+
+int32 ArchThreads::atomic_add(int32 &value, int32 increment)
+{
+    return __sync_fetch_and_add(&value,increment);
 }
 
 int64 ArchThreads::atomic_add(int64 &value, int64 increment)
