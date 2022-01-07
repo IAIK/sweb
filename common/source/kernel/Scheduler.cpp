@@ -17,14 +17,14 @@
 #include "Loader.h"
 #include "ArchCommon.h"
 
-__thread Thread* currentThread = NULL;
-__thread ArchThreadRegisters* currentThreadRegisters = NULL;
+__thread Thread* currentThread = nullptr;
+__thread ArchThreadRegisters* currentThreadRegisters = nullptr;
 
 thread_local IdleThread idle_thread;
 
 __thread size_t cpu_ticks = 0;
 
-Scheduler *Scheduler::instance_ = 0;
+Scheduler *Scheduler::instance_ = nullptr;
 
 Scheduler *Scheduler::instance()
 {
@@ -33,8 +33,7 @@ Scheduler *Scheduler::instance()
   return instance_;
 }
 
-Scheduler::Scheduler() :
-    threads_()
+Scheduler::Scheduler()
 {
   debug(SCHEDULER, "Initializing scheduler\n");
   block_scheduling_ = -1;
@@ -92,11 +91,11 @@ void Scheduler::schedule()
     currentThread->currently_scheduled_on_cpu_ = (size_t)-1;
   }
 
-  assert(threads_.size() != 0);
+  assert(!threads_.empty());
 
   // Pick the thread with the lowest virtual running time (that is schedulable and not already running)
   Thread* min_thread = nullptr;
-  auto it = threads_.begin();
+  auto* it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
     bool schedulable = (*it)->schedulable();
@@ -364,12 +363,12 @@ bool Scheduler::isCurrentlyCleaningUp()
   return currentThread == &cleanup_thread_;
 }
 
-uint32 Scheduler::getTicks()
+uint32 Scheduler::getTicks() const
 {
   return ticks_;
 }
 
-uint32 Scheduler::getCpuTicks()
+uint32 Scheduler::getCpuTicks() const
 {
   return cpu_ticks;
 }
@@ -389,9 +388,9 @@ void Scheduler::printStackTraces()
   lockScheduling(DEBUG_STR_HERE);
   debug(BACKTRACE, "printing the backtraces of <%zd> threads:\n", threads_.size());
 
-  for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
+  for (auto & thread : threads_)
   {
-    (*it)->printBacktrace();
+    thread->printBacktrace();
     debug(BACKTRACE, "\n");
     debug(BACKTRACE, "\n");
   }
@@ -409,7 +408,7 @@ void Scheduler::printLockingInformation()
   for (thread_count = 0; thread_count < threads_.size(); ++thread_count)
   {
     thread = threads_[thread_count];
-    if(thread->holding_lock_list_ != 0)
+    if(thread->holding_lock_list_ != nullptr)
     {
       Lock::printHoldingList(threads_[thread_count]);
     }
@@ -417,7 +416,7 @@ void Scheduler::printLockingInformation()
   for (thread_count = 0; thread_count < threads_.size(); ++thread_count)
   {
     thread = threads_[thread_count];
-    if(thread->lock_waiting_on_ != 0)
+    if(thread->lock_waiting_on_ != nullptr)
     {
       debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p), held by: %p, last accessed at %zx\n", thread->getName(), thread, thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_, thread->lock_waiting_on_->heldBy(), thread->lock_waiting_on_->last_accessed_at_);
             thread->lock_waiting_on_->printStatus();
@@ -429,17 +428,17 @@ void Scheduler::printLockingInformation()
 
 bool Scheduler::isInitialized()
 {
-        return instance_ != 0;
+    return instance_ != nullptr;
 }
 
 Thread* Scheduler::minVruntimeThread()
 {
     assert(block_scheduling_.load() == ArchMulticore::getCpuID());
-    for(auto it = threads_.begin(); it != threads_.end(); ++it)
+    for(auto & thread : threads_)
     {
-        if((*it)->schedulable())
+        if(thread->schedulable())
         {
-            return *it;
+            return thread;
         }
     }
 

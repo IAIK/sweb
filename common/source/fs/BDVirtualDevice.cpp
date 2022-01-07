@@ -41,7 +41,6 @@ void BDVirtualDevice::addRequest(BDRequest * command)
       command->setResult(driver_->addRequest(command));
       break;
   }
-  return;
 }
 
 
@@ -119,7 +118,7 @@ void BDVirtualDevice::setPartitionType(uint8 part_type)
   partition_type_ = part_type;
 }
 
-uint8 BDVirtualDevice::getPartitionType(void) const
+uint8 BDVirtualDevice::getPartitionType() const
 {
   return partition_type_;
 }

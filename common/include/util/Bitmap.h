@@ -16,25 +16,25 @@ class Bitmap
     bool setBit(size_t bit_number);
     static bool setBit(uint8* b, size_t& num_bits_set, size_t bit_number);
 
-    bool getBit(size_t bit_number);
-    static bool getBit(uint8* b, size_t bit_number);
+    bool getBit(size_t bit_number) const;
+    static bool getBit(const uint8* b, size_t bit_number);
 
     bool unsetBit(size_t bit_number);
     static bool unsetBit(uint8* b, size_t& num_bits_set, size_t bit_number);
 
-    size_t getSize();
+    size_t getSize() const;
 
     /**
      * returns the number of bits set
      * @return the number of bits set
      */
-    size_t getNumBitsSet();
+    size_t getNumBitsSet() const;
 
     /**
      * returns the number of unset bits
      * @return the number of unset bits
      */
-    size_t getNumFreeBits();
+    size_t getNumFreeBits() const;
 
     /**
      * prints the bitmap using kprintfd
@@ -56,7 +56,7 @@ class Bitmap
      * @param byte_number the number of the byte to return
      * @return the byte
      */
-    uint8 getByte(size_t byte_number);
+    uint8 getByte(size_t byte_number) const;
 
   private:
     size_t size_;

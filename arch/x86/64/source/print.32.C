@@ -2,13 +2,19 @@ asm(".code32");
 #include "types.h"
 #include "offsets.h"
 
+#define FB_ADDR ((char*)0xB8000)
+#define FB_COLS 80
+#define FB_ROWS 25
+
 uint8 fb_row = 0;
 uint8 fb_col = 0;
 
 void memset(char* block, char c, size_t length)
 {
         for (size_t i = 0; i < length; ++i)
+        {
                 block[i] = c;
+        }
 }
 
 void setFBrow(uint8 row)
@@ -31,24 +37,24 @@ uint8 getFBcol()
 
 uint8 getNextFBrow()
 {
-        return (getFBrow() == 24 ? 0 : getFBrow() + 1);
+        return (getFBrow() == FB_ROWS-1 ? 0 : getFBrow() + 1);
 }
 
 void clearFB()
 {
-        memset((char*) 0xB8000, 0, 80 * 25 * 2);
+        memset(FB_ADDR, 0, FB_COLS * FB_ROWS * 2);
         setFBrow(0);
         setFBcol(0);
 }
 
 char* getFBAddr(uint8 row, uint8 col)
 {
-        return (char*)0xB8000 + ((row*80 + col) * 2);
+        return FB_ADDR + ((row*FB_COLS + col) * 2);
 }
 
 void clearFBrow(uint8 row)
 {
-        memset(getFBAddr(row, 0), 0, 80 * 2);
+        memset(getFBAddr(row, 0), 0, FB_COLS * 2);
 }
 
 void FBnewline()
@@ -67,7 +73,7 @@ void putc(const char c)
         }
         else
         {
-                if(getFBcol() == 80)
+                if(getFBcol() == FB_COLS)
                 {
                         FBnewline();
                 }

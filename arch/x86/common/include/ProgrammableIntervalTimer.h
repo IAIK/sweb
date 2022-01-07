@@ -27,6 +27,6 @@ public:
 
         static void sendCommand(uint8 command);
 
-        static void setFrequencyDivisor(uint16 divisor);
+        static void setFrequencyDivisor(uint16 reload_value);
 private:
 };

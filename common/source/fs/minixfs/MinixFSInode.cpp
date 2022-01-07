@@ -8,12 +8,12 @@
 #include "Dentry.h"
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
-    Inode(super_block, inode_type), i_zones_(0), i_num_(0), children_loaded_(false)
+    Inode(super_block, inode_type), i_zones_(nullptr), i_num_(0), children_loaded_(false)
 {
   debug(M_INODE, "Simple Constructor\n");
   i_size_ = 0;
   i_nlink_ = 0;
-  i_dentry_ = 0;
+  i_dentry_ = nullptr;
 }
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size, uint16 i_nlinks, uint32* i_zones, uint32 i_num) :
@@ -22,7 +22,7 @@ MinixFSInode::MinixFSInode(Superblock *super_block, uint16 i_mode, uint32 i_size
 {
   i_size_ = i_size;
   i_nlink_ = i_nlinks;
-  i_dentry_ = 0;
+  i_dentry_ = nullptr;
   i_state_ = I_UNUSED;
   if (i_mode & 0x8000)
   {
@@ -154,7 +154,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 int32 MinixFSInode::mknod(Dentry *dentry)
 {
   //debug(M_INODE, "mknod: dentry: %d, i_type_: %d\n",dentry,i_type_);
-  if (dentry == 0)
+  if (dentry == nullptr)
   {
     // ERROR_DNE
     return -1;
@@ -175,7 +175,7 @@ int32 MinixFSInode::mknod(Dentry *dentry)
 int32 MinixFSInode::mkdir(Dentry *dentry)
 {
   debug(M_INODE, "mkdir: dentry: %p, i_type_: %d\n", dentry, i_type_);
-  if (dentry == 0)
+  if (dentry == nullptr)
   {
     // ERROR_DNE
     return -1;
@@ -201,7 +201,7 @@ int32 MinixFSInode::mkdir(Dentry *dentry)
 int32 MinixFSInode::mkfile(Dentry *dentry)
 {
   debug(M_INODE, "mkfile: dentry: %p, i_type_: %d\n", dentry, i_type_);
-  if (dentry == 0)
+  if (dentry == nullptr)
   {
     // ERROR_DNE
     return -1;
@@ -314,14 +314,14 @@ int32 MinixFSInode::rmdir()
 
   dentry->releaseInode();
   delete dentry;
-  i_dentry_ = 0;
+  i_dentry_ = nullptr;
   i_nlink_ = 0;
   return INODE_DEAD;
 }
 
 int32 MinixFSInode::rm()
 {
-  if (i_files_.size() != 0)
+  if (!i_files_.empty())
   {
     debug(M_INODE, "the file is opened.\n");
     return -1;
@@ -339,7 +339,7 @@ int32 MinixFSInode::rm()
 
     dentry->releaseInode();
     delete dentry;
-    i_dentry_ = 0;
+    i_dentry_ = nullptr;
     debug(M_INODE, "rm: deleted\n");
     return INODE_DEAD;
   }
@@ -354,22 +354,22 @@ Dentry* MinixFSInode::lookup(const char* name)
 {
 
   debug(M_INODE, "lookup: name: %s this->i_dentry_->getName(): %s \n", name, this->i_dentry_->getName());
-  if (name == 0)
+  if (name == nullptr)
   {
     // ERROR_DNE
-    return 0;
+    return nullptr;
   }
 
-  Dentry* dentry_update = 0;
+  Dentry* dentry_update = nullptr;
 
   if (i_type_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
-    if (dentry_update == 0)
+    if (dentry_update == nullptr)
     {
       // ERROR_NNE
       debug(M_INODE, "lookup: '%s' not found\n", name);
-      return (Dentry*) 0;
+      return (Dentry*) nullptr;
     }
     else
     {
@@ -384,7 +384,7 @@ Dentry* MinixFSInode::lookup(const char* name)
   else
   {
     // ERROR_IC
-    return (Dentry*) 0;
+    return (Dentry*) nullptr;
   }
 }
 

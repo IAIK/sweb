@@ -7,7 +7,7 @@ class DeviceFSType : public FileSystemType
   public:
     DeviceFSType();
 
-    virtual ~DeviceFSType();
+    virtual ~DeviceFSType() = default;
 
     /**
      * Reads the superblock from the device.

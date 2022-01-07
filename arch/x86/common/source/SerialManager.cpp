@@ -8,17 +8,13 @@
 #include "8259.h"
 #include "APIC.h"
 
-SerialManager * SerialManager::instance_ = 0;
+SerialManager * SerialManager::instance_ = nullptr;
 
 SerialManager::SerialManager() : num_ports( 0 )
 {
 }
 
-SerialManager::~SerialManager()
-{
-}
-
-uint32 SerialManager::get_num_ports()
+uint32 SerialManager::get_num_ports() const
 {
   return num_ports;
 }

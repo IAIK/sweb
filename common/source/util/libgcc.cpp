@@ -18,9 +18,11 @@ int64 __divdi3(int64 num, int64 den)
     minus ^= 1;
   }
 
-  v = __udivmoddi4(num, den, 0);
+  v = __udivmoddi4(num, den, nullptr);
   if ( minus )
+  {
     v = -v;
+  }
 
   return v;
 }
@@ -28,7 +30,7 @@ int64 __divdi3(int64 num, int64 den)
 
 uint64 __udivdi3(uint64 num, uint64 den)
 {
-  return __udivmoddi4(num, den, 0);
+  return __udivmoddi4(num, den, nullptr);
 }
 
 uint64 __umoddi3(uint64 a, uint64 b)
@@ -61,7 +63,9 @@ uint64 __udivmoddi4(uint64 num, uint64 den, uint64 *rem_p)
   }
 
   if ( rem_p )
+  {
     *rem_p = num;
+  }
 
   return quot;
 }

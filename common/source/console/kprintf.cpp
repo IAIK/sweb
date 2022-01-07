@@ -120,7 +120,7 @@ void kprintf(const char *fmt, ...)
   va_list args;
 
   va_start(args, fmt);
-  kvprintf(fmt, kprintf_func, 0, 10, args);
+  kvprintf(fmt, kprintf_func, nullptr, 10, args);
   va_end(args);
 }
 
@@ -156,7 +156,7 @@ void kprintfd(const char *fmt, ...)
   }
 
   va_start(args, fmt);
-  kvprintf(fmt, kprintfd_func, 0, 10, args);
+  kvprintf(fmt, kprintfd_func, nullptr, 10, args);
   va_end(args);
 
   ArchThreads::syncLockRelease(kprintfd_locked);

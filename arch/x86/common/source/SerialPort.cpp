@@ -18,10 +18,6 @@ SerialPort::SerialPort ( char *name, ArchSerialInfo port_info ) : CharacterDevic
   setup_port( BR_9600, DATA_8, STOP_ONE, NO_PARITY );
 }
 
-SerialPort::~SerialPort ()
-{
-}
-
 SerialPort::SRESULT SerialPort::setup_port( BAUD_RATE_E baud_rate, DATA_BITS_E data_bits, STOP_BITS_E stop_bits, PARITY_E parity )
 {
   write_UART( SC::IER , 0x00); // turn off interupts 
@@ -172,7 +168,6 @@ void SerialPort::irq_handler()
     break;
   }
   
-  return;
 }
 
 void SerialPort::write_UART( uint32 reg, uint8 what )

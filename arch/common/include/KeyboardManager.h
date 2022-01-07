@@ -117,7 +117,7 @@ class KeyboardManager
 {
   public:
     KeyboardManager();
-    ~KeyboardManager();
+    ~KeyboardManager() = default;
     static KeyboardManager *instance()
     {
       if (!instance_)

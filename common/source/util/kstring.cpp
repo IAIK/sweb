@@ -74,7 +74,7 @@ void *memccpy(void *dest, const void *src, uint8 c, size_t length)
 
   if (length == 0)
   {
-    return (void*) 0;
+    return (void*) nullptr;
   }
 
   while (length--)
@@ -85,7 +85,7 @@ void *memccpy(void *dest, const void *src, uint8 c, size_t length)
     }
   }
 
-  return (void *) 0;
+  return (void *) nullptr;
 }
 
 extern "C" void *memset(void *block, uint8 c, size_t size)
@@ -116,7 +116,7 @@ extern "C" void *memset(void *block, uint8 c, size_t size)
 
 extern "C" char *strcpy(char *dest, const char* src)
 {
-  assert("don't use strcpy" == 0);
+  assert(!"don't use strcpy");
 
   char *start = dest;
 
@@ -152,11 +152,11 @@ extern "C" char *strncpy(char *dest, const char* src, size_t size)
 extern "C" char *strdup(const char *src)
 {
   size_t size = strlen(src) + 1;
-  char *dest = 0;
+  char *dest = nullptr;
 
-  if ((dest = (char*) kmalloc((size) * sizeof(char))) == (char*) 0)
+  if ((dest = (char*) kmalloc((size) * sizeof(char))) == (char*) nullptr)
   {
-    return (char*) 0;
+    return (char*) nullptr;
   }
 
   return (char*) memcpy(dest, src, size);
@@ -354,7 +354,7 @@ extern "C" void *memchr(const void *block, uint8 c, size_t size)
     ++b;
   }
 
-  return (void *) 0;
+  return (void *) nullptr;
 }
 
 extern "C" void *memrchr(const void *block, uint8 c, size_t size)
@@ -370,7 +370,7 @@ extern "C" void *memrchr(const void *block, uint8 c, size_t size)
     --b;
   }
 
-  return (void *) 0;
+  return (void *) nullptr;
 }
 
 extern "C" char *strchr(const char* str, char c)
@@ -383,7 +383,7 @@ extern "C" char *strchr(const char* str, char c)
     }
   } while (*++str);
 
-  return (char *) 0;
+  return (char *) nullptr;
 }
 
 extern "C" char *strrchr(const char* str, char c)
@@ -399,21 +399,21 @@ extern "C" char *strrchr(const char* str, char c)
     }
   } while (--len);
 
-  return (char *) 0;
+  return (char *) nullptr;
 }
 
 extern "C" char* strtok(char* str, const char* delimiters)
 {
-  static char* str_to_tok = 0;
-  if (str != 0)
+  static char* str_to_tok = nullptr;
+  if (str != nullptr)
     str_to_tok = str;
 
   // no delimiters, so just return the rest-string
-  if (delimiters == 0)
+  if (delimiters == nullptr)
     return str_to_tok;
 
-  if (str_to_tok == 0)
-    return 0;
+  if (str_to_tok == nullptr)
+    return nullptr;
 
   // determine token start and end
   uint32 tok_start = 0;
@@ -468,7 +468,7 @@ extern "C" char* strtok(char* str, const char* delimiters)
   if (tok_end == -1U)
   {
     // finished, no next token
-    str_to_tok = 0;
+    str_to_tok = nullptr;
   }
   else
   {
@@ -495,7 +495,7 @@ extern "C" char numToASCIIChar(uint8 number)
 extern "C" char* itoa(int value, char* str, int base)
 {
   if (!str)
-    return 0;
+    return nullptr;
 
   int div = value;
   int mod;
@@ -528,7 +528,7 @@ extern "C" char* itoa(int value, char* str, int base)
   return str;
 }
 
-extern "C" uint32 checksum(uint32* src, uint32 nbytes)
+extern "C" uint32 checksum(const uint32* src, uint32 nbytes)
 {
   nbytes /= sizeof(uint32);
   uint32 poly = 0xEDB88320;

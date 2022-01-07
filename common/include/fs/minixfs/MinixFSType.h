@@ -6,7 +6,7 @@ class MinixFSType : public FileSystemType
 {
   public:
     MinixFSType();
-    virtual ~MinixFSType();
+    virtual ~MinixFSType() = default;
 
     /**
      *  reads the superblock from the device

@@ -77,7 +77,7 @@ void setSegmentLimit(SegmentDescriptor* descr, uint32 limit)
 
 static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
 {
-  SegmentDescriptor* gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
+  auto gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
 
   setSegmentBase(gdt_p + index, baseL, baseH);
   setSegmentLimit(gdt_p + index, limit);

@@ -14,7 +14,7 @@ class MinixFSFile : public File
      */
     MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag);
 
-    virtual ~MinixFSFile();
+    virtual ~MinixFSFile() = default;
 
     /**
      * reads from the file

@@ -49,13 +49,13 @@ UserProcess::~UserProcess()
 {
   assert(Scheduler::instance()->isCurrentlyCleaningUp());
   delete loader_;
-  loader_ = 0;
+  loader_ = nullptr;
 
   if (fd_ > 0)
     VfsSyscall::close(fd_);
 
   delete working_dir_;
-  working_dir_ = 0;
+  working_dir_ = nullptr;
 
   ProcessRegistry::instance()->processExit();
 }

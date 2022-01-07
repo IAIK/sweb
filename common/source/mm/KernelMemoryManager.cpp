@@ -44,7 +44,7 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   memset((void*)start_address, 0, min_heap_pages * PAGE_SIZE);
 
   first_ = (MallocSegment*)start_address;
-  new (first_) MallocSegment(0, 0, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
+  new (first_) MallocSegment(nullptr, nullptr, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
 
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
@@ -77,7 +77,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
   // find next free pointer of neccessary size + sizeof(MallocSegment);
   MallocSegment *new_pointer = findFreeSegment(requested_size);
 
-  if (new_pointer == 0)
+  if (new_pointer == nullptr)
   {
     kprintfd("KernelMemoryManager::allocateMemory: Not enough Memory left\n");
     kprintfd("Are we having a memory leak in the kernel??\n");
@@ -193,7 +193,7 @@ MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
 {
   MallocSegment *m_segment;
   m_segment = (MallocSegment*) (virtual_address - sizeof(MallocSegment));
-  assert(virtual_address != 0 && m_segment != 0 && "trying to access a nullpointer");
+  assert(virtual_address != 0 && m_segment != nullptr && "trying to access a nullpointer");
   m_segment->checkCanary();
   return m_segment;
 }
@@ -206,7 +206,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
           requested_size + sizeof(MallocSegment));
 
   MallocSegment *current = first_;
-  while (current != 0)
+  while (current)
   {
     if(KMM & OUTPUT_ADVANCED)
       debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n",
@@ -223,7 +223,7 @@ MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
   if(last_->getUsed())
   {
     // In this case we have to create a new segment...
-    MallocSegment* new_segment = new ((void*)ksbrk(sizeof(MallocSegment) + requested_size)) MallocSegment(last_, 0, requested_size, 0);
+    MallocSegment* new_segment = new ((void*)ksbrk(sizeof(MallocSegment) + requested_size)) MallocSegment(last_, nullptr, requested_size, false);
     last_->next_ = new_segment;
     last_ = new_segment;
     assert(new_segment->getSize() == requested_size);
@@ -246,7 +246,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
   if(KMM & OUTPUT_ADVANCED)
           debug(KMM, "fillSegment, %p, size: %zu, zero_check: %u\n", this_one, requested_size, zero_check);
 
-  assert(this_one != 0 && "trying to access a nullpointer");
+  assert(this_one && "trying to access a nullpointer");
   this_one->checkCanary();
   assert(this_one->getSize() >= requested_size && "segment is too small for requested size");
   assert((requested_size & 0xF) == 0 && "Attempt to fill segment with unaligned size");
@@ -309,9 +309,9 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
             new ((void*) (((pointer)(this_one + 1)) + requested_size)) MallocSegment(
                     this_one, this_one->next_, space_left - sizeof(MallocSegment), false);
 
-    assert((this_one->next_ != 0) || (this_one == last_));
+    assert(this_one->next_ || (this_one == last_));
 
-    if (this_one->next_ != 0)
+    if (this_one->next_)
     {
       this_one->next_->checkCanary();
       this_one->next_->prev_ = new_segment;
@@ -322,7 +322,7 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
     }
 
     this_one->next_ = new_segment;
-    assert((new_segment->next_ != 0) || (new_segment == last_));
+    assert(new_segment->next_ || (new_segment == last_));
   }
 
   debug(KMM, "fillSegment: filled memory block of bytes: %zd \n", this_one->getSize() + sizeof(MallocSegment));
@@ -332,10 +332,10 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 void KernelMemoryManager::freeSegment(MallocSegment *this_one, pointer called_by)
 {
   debug(KMM, "KernelMemoryManager::freeSegment(%p)\n", this_one);
-  assert(this_one != 0 && "trying to access a nullpointer");
+  assert(this_one && "trying to access a nullpointer");
   this_one->checkCanary();
 
-  if (this_one->getUsed() == false)
+  if (!this_one->getUsed())
   {
     kprintfd("KernelMemoryManager::freeSegment: FATAL ERROR\n");
     kprintfd("KernelMemoryManager::freeSegment: tried freeing not used memory block\n");
@@ -375,7 +375,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one, pointer called_by
         // Case 1
         assert(this_one && this_one->prev_);
         this_one->prev_->checkCanary();
-        this_one->prev_->next_ = 0;
+        this_one->prev_->next_ = nullptr;
         last_ = this_one->prev_;
         ksbrk(-(this_one->getSize() + sizeof(MallocSegment)));
       }
@@ -407,7 +407,7 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one, pointer called_by
 
   {
     MallocSegment *current = first_;
-    while (current != 0)
+    while (current)
     {
       if(KMM & OUTPUT_ADVANCED)
               debug(KMM, "freeSegment: current: %p prev: %p next: %p size: %zd used: %d\n", current, current->prev_,
@@ -508,7 +508,7 @@ size_t KernelMemoryManager::getUsedKernelMemory(bool show_allocs = false) {
     MallocSegment *current = first_;
     size_t size = 0, blocks = 0, unused = 0;
     if(show_allocs) kprintfd("Kernel Memory Usage\n\n");
-    while (current != 0)
+    while (current)
     {
       if (current->getUsed()) {
         size += current->getSize();

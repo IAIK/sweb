@@ -11,7 +11,7 @@ void IdleThread::Run()
 {
   uint32 last_ticks = 0;
   uint32 new_ticks = 0;
-  while (1)
+  while (true)
   {
     new_ticks = Scheduler::instance()->getCpuTicks();
     if (new_ticks == last_ticks)

@@ -11,12 +11,16 @@ MutexLock::MutexLock(Mutex &m) :
 MutexLock::MutexLock(Mutex &m, bool b) :
   mutex_(m), use_mutex_(b)
 {
-  if (likely (use_mutex_))
+  if (likely(use_mutex_))
+  {
     mutex_.acquire(getCalledBefore(1));
+  }
 }
 
 MutexLock::~MutexLock()
 {
-  if (likely (use_mutex_))
+  if (likely(use_mutex_))
+  {
     mutex_.release(getCalledBefore(1));
+  }
 }

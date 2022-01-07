@@ -17,7 +17,7 @@ union _guard_t {
     ustl::atomic<int> state;
     int32_t aligner;
 };
-static_assert(sizeof(_guard_t) == sizeof(int32));
+static_assert(sizeof(_guard_t) == sizeof(int32), , "Size of static initializer guard struct must be 4 bytes");
 #else
 // The Itanium/x86 C++ ABI (used by all other architectures) mandates that
 // guard variables are 64-bit aligned, 64-bit values. The LSB is tested by
@@ -26,7 +26,7 @@ union _guard_t {
     ustl::atomic<int> state;
     int64_t aligner;
 };
-static_assert(sizeof(_guard_t) == sizeof(int64));
+static_assert(sizeof(_guard_t) == sizeof(int64), "Size of static initializer guard struct must be 8 bytes");
 #endif
 
 
@@ -77,7 +77,7 @@ extern "C" void __cxa_guard_abort(_guard_t* gv) {
 }
 
 
-typedef void (*func_ptr)();
+using func_ptr = void (*)();
 func_ptr __preinit_array_start;
 func_ptr __preinit_array_end;
 func_ptr __init_array_start;

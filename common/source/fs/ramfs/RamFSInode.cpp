@@ -10,14 +10,14 @@
 #define BASIC_ALLOC 256
 
 RamFSInode::RamFSInode(Superblock *super_block, uint32 inode_type) :
-    Inode(super_block, inode_type), data_(0)
+    Inode(super_block, inode_type), data_(nullptr)
 {
   if (inode_type == I_FILE)
     data_ = new char[BASIC_ALLOC]();
 
   i_size_ = BASIC_ALLOC;
   i_nlink_ = 0;
-  i_dentry_ = 0;
+  i_dentry_ = nullptr;
 }
 
 RamFSInode::~RamFSInode()
@@ -61,7 +61,7 @@ int32 RamFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 
 int32 RamFSInode::mknod(Dentry *dentry)
 {
-  if (dentry == 0)
+  if (dentry == nullptr)
   {
     // ERROR_DNE
     return -1;
@@ -85,7 +85,7 @@ int32 RamFSInode::mkdir(Dentry *dentry)
 
 int32 RamFSInode::mkfile(Dentry *dentry)
 {
-  if (dentry == 0)
+  if (dentry == nullptr)
   {
     // ERROR_DNE
     return -1;
@@ -128,13 +128,13 @@ int32 RamFSInode::rmdir()
 
   Dentry* dentry = i_dentry_;
 
-  if (dentry->emptyChild() == true)
+  if (dentry->emptyChild())
   {
     dentry->releaseInode();
     Dentry* parent_dentry = dentry->getParent();
     parent_dentry->childRemove(dentry);
     delete dentry;
-    i_dentry_ = 0;
+    i_dentry_ = nullptr;
     return INODE_DEAD;
   }
   else
@@ -146,7 +146,7 @@ int32 RamFSInode::rmdir()
 
 int32 RamFSInode::rm()
 {
-  if (i_files_.size() != 0)
+  if (!i_files_.empty())
   {
     kprintfd("RamFSInode::ERROR: the file is opened.\n");
     return -1;
@@ -154,13 +154,13 @@ int32 RamFSInode::rm()
 
   Dentry* dentry = i_dentry_;
 
-  if (dentry->emptyChild() == true)
+  if (dentry->emptyChild())
   {
     dentry->releaseInode();
     Dentry* parent_dentry = dentry->getParent();
     parent_dentry->childRemove(dentry);
     delete dentry;
-    i_dentry_ = 0;
+    i_dentry_ = nullptr;
     return INODE_DEAD;
   }
   else
@@ -172,20 +172,20 @@ int32 RamFSInode::rm()
 
 Dentry* RamFSInode::lookup(const char* name)
 {
-  if (name == 0)
+  if (name == nullptr)
   {
     // ERROR_DNE
-    return 0;
+    return nullptr;
   }
 
-  Dentry* dentry_update = 0;
+  Dentry* dentry_update = nullptr;
   if (i_type_ == I_DIR)
   {
     dentry_update = i_dentry_->checkName(name);
-    if (dentry_update == 0)
+    if (dentry_update == nullptr)
     {
       // ERROR_NNE
-      return (Dentry*) 0;
+      return (Dentry*) nullptr;
     }
     else
     {
@@ -195,7 +195,7 @@ Dentry* RamFSInode::lookup(const char* name)
   else
   {
     // ERROR_IC
-    return (Dentry*) 0;
+    return (Dentry*) nullptr;
   }
 }
 

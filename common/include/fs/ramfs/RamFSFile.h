@@ -9,7 +9,7 @@ class RamFSFile: public File
 
     RamFSFile ( Inode* inode, Dentry* dentry, uint32 flag );
 
-    virtual ~RamFSFile();
+    virtual ~RamFSFile() = default;
 
     /**
      * Sets the file position relative to the start of the file, the  end of

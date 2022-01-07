@@ -7,7 +7,7 @@
 #define CALL_FUNC_NAME_LIMIT 256
 #define CALL_FUNC_NAME_LIMIT_STR macroToString(CALL_FUNC_NAME_LIMIT)
 
-class StabEntry;
+struct StabEntry;
 class Stabs2DebugInfo
 {
 public:
@@ -31,9 +31,9 @@ private:
   virtual pointer getFunctionName(pointer address, char function_name[], size_t size)  const;
   ssize_t getFunctionLine(pointer start, pointer offset) const;
   bool tryPasteOoperator(const char *& input, char *& buffer, size_t& size) const;
-  int readNumber(const char *& input) const;
+  static int readNumber(const char *& input);
   void pasteTypename(const char *& input, char *& buffer, size_t& size) const;
   void pasteArguments(const char *& input, char *& buffer, char delimiter, size_t& size) const;
   void demangleName(const char* name, char *buffer, size_t size) const;
-  size_t putChar2Buffer(char*& buffer, char c, size_t& size) const;
+  static size_t putChar2Buffer(char*& buffer, char c, size_t& size);
 };

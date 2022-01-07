@@ -12,10 +12,6 @@ MinixFSFile::MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
   offset_ = 0;
 }
 
-MinixFSFile::~MinixFSFile()
-{
-}
-
 int32 MinixFSFile::read(char *buffer, size_t count, l_off_t offset)
 {
   if (((flag_ == O_RDONLY) || (flag_ == O_RDWR)) && (mode_ & A_READABLE))

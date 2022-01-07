@@ -41,7 +41,7 @@ class FileSystemInfo
 
   public:
     FileSystemInfo();
-    ~FileSystemInfo();
+    ~FileSystemInfo() = default;
     FileSystemInfo(const FileSystemInfo& fsi);
 
     /**

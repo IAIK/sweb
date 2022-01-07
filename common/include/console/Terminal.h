@@ -128,8 +128,8 @@ class Terminal : public CharacterDevice
     uint32 setCharacter(uint32 row, uint32 column, uint8 character);
     void scrollUp();
 
-    bool isLetter(uint32 key);
-    bool isNumber(uint32 key);
+    static bool isLetter(uint32 key);
+    static bool isNumber(uint32 key);
 
     void clearScreen();
     void fullRedraw();

@@ -8,12 +8,12 @@ typedef struct {
 }  __attribute__((__packed__)) InterruptHandlers;
 
 
-typedef struct {
+typedef struct IDTR {
     uint16 limit;
     size_t base;
 
     void load();
-} __attribute__((__packed__)) IDTR ;
+} __attribute__((__packed__)) IDTR;
 
 struct InterruptGateDesc
 {

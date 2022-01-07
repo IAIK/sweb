@@ -35,7 +35,7 @@ public:
    *
    * @return true if lock is set, false otherwise
    */
-  bool isFree();
+  bool isFree() const;
 
 private:
 

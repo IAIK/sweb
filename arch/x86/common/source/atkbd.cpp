@@ -24,9 +24,9 @@ void updateKbdLights(uint8 status)
   inportb(ATKBD_DATA); // should be ACK
 }
 
-bool kbd_light_numlock = 0;
-bool kbd_light_capslock = 0;
-bool kbd_light_scrolllock = 0;
+bool kbd_light_numlock = false;
+bool kbd_light_capslock = false;
+bool kbd_light_scrolllock = false;
 
 void kbdSetNumlock(bool on)
 {

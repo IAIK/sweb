@@ -14,7 +14,7 @@ public:
 
     SWEBDebugInfo(char const *sweb_begin, char const *sweb_end);
 
-    virtual ~SWEBDebugInfo();
+    virtual ~SWEBDebugInfo() = default;
 
     virtual void getCallNameAndLine(pointer address, const char *&mangled_name, ssize_t &line) const;
 

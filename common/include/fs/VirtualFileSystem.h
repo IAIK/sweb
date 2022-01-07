@@ -29,8 +29,8 @@ class VirtualFileSystem
 
   public:
     void initialize();
-    VirtualFileSystem();
-    ~VirtualFileSystem();
+    VirtualFileSystem() = default;
+    ~VirtualFileSystem() = default;
 
     /**
      * register the file-system-type to the vfs

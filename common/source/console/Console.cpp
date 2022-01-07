@@ -11,7 +11,7 @@
 
 Console* main_console;
 
-Console::Console(uint32, const char* name) : Thread(0, name, Thread::KERNEL_THREAD), console_lock_("Console::console_lock_"),
+Console::Console([[maybe_unused]] uint32 num_terminals, const char* name) : Thread(nullptr, name, Thread::KERNEL_THREAD), console_lock_("Console::console_lock_"),
     set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
 {
   debug(CONSOLE, "Created console at [%p, %p)\n", this, (char*)this + sizeof(*this));
@@ -52,7 +52,7 @@ void Console::handleKey(uint32 key)
       Scheduler::instance()->printThreadList();
       Scheduler::instance()->printStackTraces();
       Scheduler::instance()->printLockingInformation();
-      for(auto t : Scheduler::instance()->threads_)
+      for(auto* t : Scheduler::instance()->threads_)
       {
               kprintfd("Thread %p = %s\n", t, t->getName());
               ArchThreads::printThreadRegisters(t, true);
@@ -112,7 +112,7 @@ void Console::setActiveTerminal(uint32 term)
   active_terminal_ = term;
 }
 
-void Console::Run(void)
+void Console::Run()
 {
   KeyboardManager * km = KeyboardManager::instance();
   uint32 key;

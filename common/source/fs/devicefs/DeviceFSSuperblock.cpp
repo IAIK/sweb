@@ -9,12 +9,10 @@
 
 #include "Console.h"
 
-extern Console* main_console;
-
 const char DeviceFSSuperBlock::ROOT_NAME[] = "/";
 const char DeviceFSSuperBlock::DEVICE_ROOT_NAME[] = "dev";
 
-DeviceFSSuperBlock* DeviceFSSuperBlock::instance_ = 0;
+DeviceFSSuperBlock* DeviceFSSuperBlock::instance_ = nullptr;
 
 DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev) :
     Superblock(s_root, s_dev)
@@ -47,7 +45,7 @@ DeviceFSSuperBlock::DeviceFSSuperBlock(Dentry* s_root, uint32 s_dev) :
   // set the dev directory to /dev/
   s_dev_dentry_ = device_root_dentry;
 
-  cDevice = 0;
+  cDevice = nullptr;
 }
 
 DeviceFSSuperBlock::~DeviceFSSuperBlock()
@@ -69,12 +67,12 @@ DeviceFSSuperBlock::~DeviceFSSuperBlock()
   all_inodes_.clear();
 }
 
-void DeviceFSSuperBlock::addDevice(Inode* device, const char* device_name)
+void DeviceFSSuperBlock::addDevice(Inode* device_inode, const char* device_name)
 {
   Dentry* fdntr = new Dentry(s_dev_dentry_);
   fdntr->d_name_ = device_name;
 
-  cDevice = (Inode *) device;
+  cDevice = (Inode *) device_inode;
   cDevice->mknod(fdntr);
   cDevice->setSuperBlock(this);
 

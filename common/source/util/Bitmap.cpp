@@ -48,13 +48,13 @@ bool Bitmap::setBit(uint8* b, size_t& num_bits_set, size_t bit_number)
   return false;
 }
 
-bool Bitmap::getBit(size_t bit_number)
+bool Bitmap::getBit(size_t bit_number) const
 {
   assert(bit_number < size_);
   return getBit(bitmap_, bit_number);
 }
 
-bool Bitmap::getBit(uint8* b, size_t bit_number)
+bool Bitmap::getBit(const uint8* b, size_t bit_number)
 {
   return BYTE & MASK;
 }
@@ -91,7 +91,7 @@ void Bitmap::setByte(size_t byte_number, uint8 byte)
   b = byte;
 }
 
-uint8 Bitmap::getByte(size_t byte_number)
+uint8 Bitmap::getByte(size_t byte_number) const
 {
   assert(byte_number * bits_per_bitmap_atom_ < size_);
   return bitmap_[byte_number];
@@ -109,27 +109,33 @@ void Bitmap::bmprint(uint8* b, size_t n, size_t num_bits_set)
   for (size_t i = 0; i < n; i++)
   {
     if (i % 64 == 0)
+    {
       kprintfd("%05zx| ",i);
+    }
     kprintfd("%d", getBit(b, i));
     if (i % 8 == 7)
+    {
       kprintfd(" ");
+    }
     if (i % 64 == 63)
+    {
       kprintfd("\n");
+    }
   }
   kprintfd("\n----------------------------------Bitmap:end----------------------------------\n");
 }
 
-size_t Bitmap::getSize()
+size_t Bitmap::getSize() const
 {
   return size_;
 }
 
-size_t Bitmap::getNumBitsSet()
+size_t Bitmap::getNumBitsSet() const
 {
   return num_bits_set_;
 }
 
-size_t Bitmap::getNumFreeBits()
+size_t Bitmap::getNumFreeBits() const
 {
   return size_ - num_bits_set_;
 }

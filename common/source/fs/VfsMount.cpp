@@ -2,10 +2,10 @@
 
 
 VfsMount::VfsMount() :
-    mnt_parent_ ( 0 ),
-    mnt_mountpoint_ ( 0 ),
-    mnt_root_ ( 0 ),
-    mnt_sb_ ( 0 ),
+    mnt_parent_ ( nullptr ),
+    mnt_mountpoint_ ( nullptr ),
+    mnt_root_ ( nullptr ),
+    mnt_sb_ ( nullptr ),
     mnt_flags_ ( 0 )
 {}
 
@@ -22,10 +22,10 @@ VfsMount::VfsMount ( VfsMount* parent, Dentry * mountpoint, Dentry* root,
 
 VfsMount::~VfsMount()
 {
-  mnt_parent_ = 0;
-  mnt_mountpoint_ = 0;
-  mnt_root_ = 0;
-  mnt_sb_ = 0;
+  mnt_parent_ = nullptr;
+  mnt_mountpoint_ = nullptr;
+  mnt_root_ = nullptr;
+  mnt_sb_ = nullptr;
   mnt_flags_ = 0;
 }
 
@@ -63,10 +63,10 @@ int32 VfsMount::getFlags() const
 //NOTE: only used as workaround
 void VfsMount::clear()
 {
-  mnt_parent_ = 0;
-  mnt_mountpoint_ = 0;
-  mnt_root_ = 0;
-  mnt_sb_ = 0;
+  mnt_parent_ = nullptr;
+  mnt_mountpoint_ = nullptr;
+  mnt_root_ = nullptr;
+  mnt_sb_ = nullptr;
   mnt_flags_ = 0;
 }
 

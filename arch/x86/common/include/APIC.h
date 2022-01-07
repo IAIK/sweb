@@ -83,14 +83,14 @@ struct LocalAPIC_InterruptCommandRegisterLow
         volatile uint32 destination_shorthand : 2;  // 18-19
         volatile uint32 reserved3             : 12; // 20-31
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_InterruptCommandRegisterLow) == 4);
+static_assert(sizeof(LocalAPIC_InterruptCommandRegisterLow) == 4, "Invalid size for LocalAPIC_InterruptCommandRegisterLow");
 
 struct LocalAPIC_InterruptCommandRegisterHigh
 {
         volatile uint32 reserved    : 24; //  0-23
         volatile uint32 destination : 8;  // 24-31
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_InterruptCommandRegisterHigh) == 4);
+static_assert(sizeof(LocalAPIC_InterruptCommandRegisterHigh) == 4, "Invalid size for LocalAPIC_InterruptCommandRegisterHigh");
 
 struct LocalAPIC_SpuriousInterruptVector
 {
@@ -101,14 +101,14 @@ struct LocalAPIC_SpuriousInterruptVector
 
         void setSpuriousInterruptNumber(uint8 num) volatile;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_SpuriousInterruptVector) == 4);
+static_assert(sizeof(LocalAPIC_SpuriousInterruptVector) == 4, "Invalid size for LocalAPIC_SpuriousInterruptVector");
 
 struct LocalAPIC_IDRegister
 {
         volatile uint32 reserved : 24;
         volatile uint32 id       : 8;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_IDRegister) == 4);
+static_assert(sizeof(LocalAPIC_IDRegister) == 4, "Invalid size for LocalAPIC_IDRegister");
 
 struct LocalAPIC_VersionRegister
 {
@@ -118,7 +118,7 @@ struct LocalAPIC_VersionRegister
         volatile uint32 eoi_broadcast_suppression_supported  : 1;
         volatile uint32 reserved2                            : 7;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_VersionRegister) == 4);
+static_assert(sizeof(LocalAPIC_VersionRegister) == 4, "Invalid size for LocalAPIC_VersionRegister");
 
 struct LocalAPIC_LVT_TimerRegister
 {
@@ -134,7 +134,7 @@ struct LocalAPIC_LVT_TimerRegister
         void setMode(uint8) volatile;
         void setMask(bool mask) volatile;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_LVT_TimerRegister) == 4);
+static_assert(sizeof(LocalAPIC_LVT_TimerRegister) == 4, "Invalid size for LocalAPIC_LVT_TimerRegister");
 
 struct LocalAPIC_LVT_LINTRegister
 {
@@ -148,7 +148,7 @@ struct LocalAPIC_LVT_LINTRegister
         volatile uint32 mask            :  1;
         volatile uint32 reserved3       : 15;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_LVT_LINTRegister) == 4);
+static_assert(sizeof(LocalAPIC_LVT_LINTRegister) == 4, "Invalid size for LocalAPIC_LVT_LINTRegister");
 
 struct LocalAPIC_LVT_ErrorRegister
 {
@@ -159,7 +159,7 @@ struct LocalAPIC_LVT_ErrorRegister
         volatile uint32 mask            :  1;
         volatile uint32 reserved3       : 15;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_LVT_ErrorRegister) == 4);
+static_assert(sizeof(LocalAPIC_LVT_ErrorRegister) == 4, "Invalid size for LocalAPIC_LVT_ErrorRegister");
 
 struct LocalAPIC_ErrorStatusRegister
 {
@@ -173,7 +173,7 @@ struct LocalAPIC_ErrorStatusRegister
         volatile uint32 send_checksum_error     : 1;
         volatile uint32 reserved                : 24;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_ErrorStatusRegister) == 4);
+static_assert(sizeof(LocalAPIC_ErrorStatusRegister) == 4, "Invalid size for LocalAPIC_ErrorStatusRegister");
 
 struct LocalAPIC_TimerDivideConfigRegister
 {
@@ -184,7 +184,7 @@ struct LocalAPIC_TimerDivideConfigRegister
 
         void setTimerDivisor(uint8 divisor) volatile;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_TimerDivideConfigRegister) == 4);
+static_assert(sizeof(LocalAPIC_TimerDivideConfigRegister) == 4, "Invalid size for LocalAPIC_TimerDivideConfigRegister");
 
 struct LocalAPIC_PriorityRegister
 {
@@ -192,7 +192,7 @@ struct LocalAPIC_PriorityRegister
         volatile uint32 priority_class     : 4;
         volatile uint32 reserved           : 24;
 } __attribute__ ((packed));
-static_assert(sizeof(LocalAPIC_PriorityRegister) == 4);
+static_assert(sizeof(LocalAPIC_PriorityRegister) == 4, "Invalid size for LocalAPIC_PriorityRegister");
 
 
 struct LocalAPICRegisters
@@ -332,7 +332,7 @@ public:
                      bool wait_for_delivery = false) volatile;
         void sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_delivery = false) volatile;
 
-        bool usingAPICTimer() volatile;
+        bool usingAPICTimer() const volatile;
         void setUsingAPICTimer(bool using_apic_timer) volatile;
 
         static void addLocalAPICToList(const MADTProcLocalAPIC&);

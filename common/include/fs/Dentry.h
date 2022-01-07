@@ -134,7 +134,7 @@ class Dentry
      * return the name of the dentry
      * @return the dentry's name
      */
-    const char* getName();
+    const char* getName() const;
 
     /**
      * This should compare the name with the all names of the d_child_ list.

@@ -56,7 +56,7 @@ extern "C"
   /**
    * Computes a CRC- like checksum
    */
-  uint32 checksum(uint32* src, uint32 nbytes);
+  uint32 checksum(const uint32* src, uint32 nbytes);
 
 #ifdef __cplusplus
 }

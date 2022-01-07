@@ -41,7 +41,7 @@ bool SpinLock::acquireNonBlocking(pointer called_by)
     return false;
   }
   // The spinlock is now held by the current thread.
-  assert(held_by_ == 0);
+  assert(held_by_ == nullptr);
   last_accessed_at_ = called_by;
   held_by_ = currentThread;
   pushFrontToCurrentThreadHoldingList();
@@ -100,7 +100,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
       lockWaitersList(yield);
       removeCurrentThreadFromWaitersList();
       unlockWaitersList();
-      currentThread->lock_waiting_on_ = 0;
+      currentThread->lock_waiting_on_ = nullptr;
     }
   }
   debug(LOCK, "got spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
@@ -110,7 +110,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
   pushFrontToCurrentThreadHoldingList();
 }
 
-bool SpinLock::isFree()
+bool SpinLock::isFree() const
 {
   if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() && !(ArchMulticore::numRunningCPUs() > 1)))
   {
@@ -145,7 +145,7 @@ void SpinLock::release(pointer called_by)
   checkInvalidRelease("SpinLock::release");
   removeFromCurrentThreadHoldingList();
   last_accessed_at_ = called_by;
-  held_by_ = 0;
+  held_by_ = nullptr;
   lock_ = 0;
 }
 

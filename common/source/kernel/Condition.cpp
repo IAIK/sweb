@@ -53,7 +53,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   mutex_->release(called_by);
   sleepAndRelease();
   // Thread has been woken up again
-  currentThread->lock_waiting_on_ = 0;
+  currentThread->lock_waiting_on_ = nullptr;
 
   if(re_acquire_mutex)
   {

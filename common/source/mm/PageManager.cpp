@@ -16,7 +16,7 @@
 
 alignas(PageManager) unsigned char pm[sizeof(PageManager)];
 
-PageManager* PageManager::instance_ = 0;
+PageManager* PageManager::instance_ = nullptr;
 
 PageManager* PageManager::instance()
 {
@@ -251,7 +251,7 @@ size_t PageManager::mapKernelHeap(Allocator& allocator, size_t max_heap_pages)
 
 void PageManager::initKernelMemoryManager()
 {
-    assert(KernelMemoryManager::instance_ == 0);
+    assert(KernelMemoryManager::instance_ == nullptr);
     size_t max_heap_pages = calcNumHeapPages(*instance_->allocator_);
     size_t num_reserved_heap_pages = instance_->mapKernelHeap(*instance_->allocator_, max_heap_pages);
     extern KernelMemoryManager kmm;

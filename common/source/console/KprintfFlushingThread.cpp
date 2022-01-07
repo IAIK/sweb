@@ -21,7 +21,7 @@ void flushActiveConsole(RingBuffer<char>* rb)
 }
 
 KprintfFlushingThread::KprintfFlushingThread(RingBuffer<char>* rb) :
-    Thread(0, "KprintfFlushingThread", Thread::KERNEL_THREAD),
+    Thread(nullptr, "KprintfFlushingThread", Thread::KERNEL_THREAD),
     rb(rb)
 {
 }

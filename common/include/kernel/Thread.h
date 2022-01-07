@@ -15,7 +15,7 @@ enum SystemState { BOOTING, RUNNING, KPANIC };
 extern SystemState system_state;
 
 class Thread;
-class ArchThreadRegisters;
+struct ArchThreadRegisters;
 class Loader;
 class Terminal;
 class Mutex;
@@ -59,7 +59,7 @@ class Thread
 
     const char* getName() const;
 
-    size_t getTID();
+    size_t getTID() const;
 
     Terminal* getTerminal();
 
@@ -92,7 +92,7 @@ class Thread
      */
     bool schedulable();
 
-    bool isCurrentlyScheduled();
+    bool isCurrentlyScheduled() const;
 
     ArchThreadRegisters* kernel_registers_;
     ArchThreadRegisters* user_registers_;

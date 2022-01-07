@@ -64,8 +64,6 @@ class MallocSegment
     size_t size_flag_; // = 0; //max size is 2^31-1
 };
 
-extern void* kernel_end_address;
-
 class KernelMemoryManager
 {
   public:

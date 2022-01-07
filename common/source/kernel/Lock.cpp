@@ -10,11 +10,11 @@
 extern Stabs2DebugInfo const* kernel_debug_info;
 
 Lock::Lock(const char *name) :
-  held_by_(0),
-  next_lock_on_holding_list_(0),
+  held_by_(nullptr),
+  next_lock_on_holding_list_(nullptr),
   last_accessed_at_(0),
   name_(name ? name : ""),
-  waiters_list_(0),
+  waiters_list_(nullptr),
   waiters_list_lock_(0)
 {
 }
@@ -47,7 +47,7 @@ void Lock::printWaitersList()
 {
   debug(LOCK, "Threads waiting for lock %s (%p), newest thread waiting first:\n", name_, this);
   size_t count = 0;
-  for(Thread* thread = waiters_list_; thread != 0; thread = thread->next_thread_in_lock_waiters_list_)
+  for(Thread* thread = waiters_list_; thread != nullptr; thread = thread->next_thread_in_lock_waiters_list_)
   {
     kprintfd("%zu: %s (%p)\n", ++count, thread->getName(), thread);
   }
@@ -57,7 +57,7 @@ void Lock::printHoldingList(Thread* thread)
 {
   debug(LOCK, "Locks held by thread %s (%p):",
         thread->getName(), thread);
-  for(Lock* lock = thread->holding_lock_list_; lock != 0; lock = lock->next_lock_on_holding_list_)
+  for(Lock* lock = thread->holding_lock_list_; lock != nullptr; lock = lock->next_lock_on_holding_list_)
   {
     kprintfd(" %s (%p)%s", lock->name_, lock, lock->next_lock_on_holding_list_ ? "," : ".\n");
   }
@@ -122,7 +122,7 @@ void Lock::removeFromCurrentThreadHoldingList()
   else
   {
     Lock* current;
-    for(current = currentThread->holding_lock_list_; current != 0; current = current->next_lock_on_holding_list_)
+    for(current = currentThread->holding_lock_list_; current != nullptr; current = current->next_lock_on_holding_list_)
     {
       if(current->next_lock_on_holding_list_ == this)
       {
@@ -131,15 +131,14 @@ void Lock::removeFromCurrentThreadHoldingList()
       }
     }
   }
-  next_lock_on_holding_list_ = 0;
-  return;
+  next_lock_on_holding_list_ = nullptr;
 }
 
 void Lock::checkCurrentThreadStillWaitingOnAnotherLock()
 {
   if(!currentThread)
     return;
-  if(currentThread->lock_waiting_on_ != 0)
+  if(currentThread->lock_waiting_on_ != nullptr)
   {
     debug(LOCK, "ERROR: Lock: Thread %s (%p) is trying to lock %s (%p), eventhough is already waiting on lock %s (%p).\n"
           "You shouldn't use Scheduler::wake() with a thread sleeping on a lock!\n",
@@ -170,7 +169,7 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start)
   // Check all locks which are held by the target thread.
   // This can be done, because we know that the list may not be modified
   // (accept of an atomic push front, which does not matter at all)
-  for(Lock* lock = thread_waiting->holding_lock_list_; lock != 0; lock = lock->next_lock_on_holding_list_)
+  for(Lock* lock = thread_waiting->holding_lock_list_; lock != nullptr; lock = lock->next_lock_on_holding_list_)
   {
     // In case a thread which is indirectly waiting for the current thread
     // holds the lock, a deadlock happened.
@@ -179,7 +178,7 @@ void Lock::checkForCircularDeadLock(Thread* thread_waiting, Lock* start)
       printOutCircularDeadLock(thread_waiting);
       assert(false);
     }
-    for(Thread* t_waiting_on_lock = lock->waiters_list_; t_waiting_on_lock != 0;
+    for(Thread* t_waiting_on_lock = lock->waiters_list_; t_waiting_on_lock != nullptr;
         t_waiting_on_lock = t_waiting_on_lock->next_thread_in_lock_waiters_list_)
     {
       // The method has to be called recursively, so it is possible to check indirect
@@ -197,7 +196,7 @@ void Lock::printOutCircularDeadLock(Thread* starting)
   debug(LOCK, "Printing out the circular deadlock:\n");
   currentThread->lock_waiting_on_ = this;
   // in this case we can access the other threads, because we KNOW that they are indirectly waiting on the current thread.
-  for(Thread* thread = starting; thread != 0; thread = thread->lock_waiting_on_->held_by_)
+  for(Thread* thread = starting; thread != nullptr; thread = thread->lock_waiting_on_->held_by_)
   {
     Thread * holding = thread->lock_waiting_on_->held_by_;
     Lock* lock = thread->lock_waiting_on_;
@@ -263,24 +262,24 @@ void Lock::pushFrontCurrentThreadToWaitersList()
 Thread* Lock::popBackThreadFromWaitersList()
 {
   assert(waitersListIsLocked());
-  Thread* thread = 0;
-  if(waiters_list_ == 0)
+  Thread* thread = nullptr;
+  if(waiters_list_ == nullptr)
   {
     // the waiters list is empty
   }
-  else if(waiters_list_->next_thread_in_lock_waiters_list_ == 0)
+  else if(waiters_list_->next_thread_in_lock_waiters_list_ == nullptr)
   {
     // this thread is the only one in the waiters list
     thread = waiters_list_;
     ArchThreads::atomic_set((pointer&)(waiters_list_), (pointer)(0));
-    waiters_list_ = 0;
+    waiters_list_ = nullptr;
   }
   else
   {
     // there is more than one thread in the waiters list
     // search for the thread before the last thread in the list
     Thread* previos;
-    for(previos = waiters_list_; previos->next_thread_in_lock_waiters_list_->next_thread_in_lock_waiters_list_ != 0;
+    for(previos = waiters_list_; previos->next_thread_in_lock_waiters_list_->next_thread_in_lock_waiters_list_ != nullptr;
         previos = previos->next_thread_in_lock_waiters_list_);
 
     thread = previos->next_thread_in_lock_waiters_list_;
@@ -304,7 +303,7 @@ void Lock::removeCurrentThreadFromWaitersList()
   else
   {
 
-    for(Thread* thread = waiters_list_; thread->next_thread_in_lock_waiters_list_ != 0;
+    for(Thread* thread = waiters_list_; thread->next_thread_in_lock_waiters_list_ != nullptr;
         thread = thread->next_thread_in_lock_waiters_list_)
     {
       if(thread->next_thread_in_lock_waiters_list_ == currentThread)
@@ -317,7 +316,6 @@ void Lock::removeCurrentThreadFromWaitersList()
     }
   }
   ArchThreads::atomic_set((pointer&)(currentThread->next_thread_in_lock_waiters_list_ ), (pointer)0);
-  return;
 }
 
 void Lock::checkInvalidRelease(const char* method)

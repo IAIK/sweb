@@ -11,34 +11,34 @@ void BootstrapRangeAllocator::setUseable(size_t start, size_t end)
 {
         //debug(PM, "setUseable [%zx - %zx)\n", start, end);
         assert(start <= end);
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+        for(auto & range : useable_ranges_)
         {
-                if((start >= useable_ranges_[i].start) &&
-                   (end <= useable_ranges_[i].end))
+                if((start >= range.start) &&
+                   (end <= range.end))
                 {
                         //debug(PM, "setUseable [%zx - %zx): already covered by [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
                         return;
                 }
-                else if((start <= useable_ranges_[i].start) &&
-                        (end >= useable_ranges_[i].end))
+                else if((start <= range.start) &&
+                        (end >= range.end))
                 {
                         //debug(PM, "setUseable [%zx - %zx) completely covers [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        useable_ranges_[i].start = start;
-                        useable_ranges_[i].end = end;
+                        range.start = start;
+                        range.end = end;
                         return;
                 }
-                else if((start >= useable_ranges_[i].start) &&
-                        (start <= useable_ranges_[i].end))
+                else if((start >= range.start) &&
+                        (start <= range.end))
                 {
                         //debug(PM, "setUseable [%zx - %zx) expands end [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        useable_ranges_[i].end = Max(useable_ranges_[i].end, end);
+                        range.end = Max(range.end, end);
                         return;
                 }
-                else if((end >= useable_ranges_[i].start) &&
-                        (end <= useable_ranges_[i].end))
+                else if((end >= range.start) &&
+                        (end <= range.end))
                 {
                         //debug(PM, "setUseable [%zx - %zx) expands start [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        useable_ranges_[i].start = Min(useable_ranges_[i].start, start);
+                        range.start = Min(range.start, start);
                         return;
                 }
         }
@@ -54,29 +54,28 @@ void BootstrapRangeAllocator::setUnuseable(size_t start, size_t end)
 {
         //debug(PM, "setUnuseable [%zx - %zx)\n", start, end);
         assert(start <= end);
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+        for(auto & range : useable_ranges_)
         {
-                if((start > useable_ranges_[i].start) &&
-                        (end < useable_ranges_[i].end))
+                if((start > range.start) &&
+                        (end < range.end))
                 {
                         //debug(PM, "setUnuseable [%zx - %zx) splits [%zx - %zx) into [%zx - %zx)+[%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end, useable_ranges_[i].start, start, end, useable_ranges_[i].end);
-                        size_t prev_end = useable_ranges_[i].end;
-                        useable_ranges_[i].end = start;
+                        size_t prev_end = range.end;
+                        range.end = start;
                         setUseable(end, prev_end);
                 }
-                else if((end > useable_ranges_[i].start) &&
-                        (end <= useable_ranges_[i].end))
+                else if((end > range.start) &&
+                        (end <= range.end))
                 {
                         //debug(PM, "setUnuseable [%zx - %zx) moves start of [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        useable_ranges_[i].start = Min(end, useable_ranges_[i].end);
+                        range.start = Min(end, range.end);
                 }
-                else if((start >= useable_ranges_[i].start) &&
-                        (start < useable_ranges_[i].end))
+                else if((start >= range.start) &&
+                        (start < range.end))
                 {
                         //debug(PM, "setUnuseable [%zx - %zx) moves end of [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        useable_ranges_[i].end = Min(start, useable_ranges_[i].end);
+                        range.end = Min(start, range.end);
                 }
-
         }
 }
 
@@ -145,16 +144,16 @@ size_t BootstrapRangeAllocator::numFreeContiguousBlocks(size_t size, size_t alig
 
 size_t BootstrapRangeAllocator::alloc(size_t size, size_t alignment)
 {
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+        for(auto & range : useable_ranges_)
         {
-                size_t start = useable_ranges_[i].start;
+                size_t start = range.start;
                 size_t align_offset = start % alignment;
                 start += (align_offset ? alignment - align_offset : 0);
 
-                if(start + size <= useable_ranges_[i].end)
+                if(start + size <= range.end)
                 {
                         //debug(PM, "Bootstrap PM allocating range [%zx-%zx)\n", start, start+size);
-                        useable_ranges_[i].start = start + size;
+                        range.start = start + size;
                         return start;
                 }
         }

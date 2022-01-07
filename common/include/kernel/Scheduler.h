@@ -38,8 +38,8 @@ class Scheduler
     bool isCurrentlyCleaningUp();
     void incTicks();
     void incCpuTicks();
-    uint32 getTicks();
-    uint32 getCpuTicks();
+    uint32 getTicks() const;
+    uint32 getCpuTicks() const;
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT

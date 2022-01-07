@@ -18,7 +18,7 @@ void CleanupThread::kill()
 
 void CleanupThread::Run()
 {
-  while (1)
+  while (true)
   {
     Scheduler::instance()->cleanupDeadThreads();
     Scheduler::instance()->yield();

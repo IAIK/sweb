@@ -46,7 +46,7 @@ class BDManager
      * returns the number of devices in the bd manager
      * @return the number of devices
      */
-    uint32 getNumberOfDevices();
+    uint32 getNumberOfDevices() const;
 
     /**
      * adds the given request to the device given in the request

@@ -34,7 +34,6 @@
 #include "ArchMulticore.h"
 
 extern void* kernel_end_address;
-extern Console* main_console;
 
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
 SystemState system_state;
@@ -121,7 +120,7 @@ extern "C" [[noreturn]] void startup()
               debug(MAIN, "Initialize initrd\n");
                   size_t initrd_size = ArchCommon::getModuleEndAddress(i) - ArchCommon::getModuleStartAddress(i);
                   debug(MAIN, "Found initrd module %s at [%zx, %zx), size: %zx\n", ArchCommon::getModuleName(i), ArchCommon::getModuleStartAddress(i), ArchCommon::getModuleEndAddress(i), initrd_size);
-                  BDVirtualDevice* initrd_dev = new BDVirtualDevice(new RamDiskDriver((void*)ArchCommon::getModuleStartAddress(i), initrd_size), 0, initrd_size, 1, "initrd", 1);
+                  BDVirtualDevice* initrd_dev = new BDVirtualDevice(new RamDiskDriver((void*)ArchCommon::getModuleStartAddress(i), initrd_size), 0, initrd_size, 1, "initrd", true);
                   initrd_dev->setPartitionType(0x81);
                   BDManager::getInstance()->addVirtualDevice(initrd_dev);
                   break;

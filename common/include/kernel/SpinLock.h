@@ -29,7 +29,7 @@ public:
    * trust the return value only if the SpinLock can't be acquired or releases
    * when you're not locking. (= only use in atomic state)
    */
-  bool isFree();
+  bool isFree() const;
 
 private:
   /**

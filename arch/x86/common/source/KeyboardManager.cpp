@@ -7,16 +7,12 @@ uint32 const KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] = STANDARD_KEYMA
 
 uint32 const KeyboardManager::E0_KEYS[KEY_MAPPING_SIZE] = E0_KEYS_DEF;
 
-KeyboardManager *KeyboardManager::instance_ = 0;
+KeyboardManager *KeyboardManager::instance_ = nullptr;
 
 KeyboardManager::KeyboardManager() :
     keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0)
 {
   emptyKbdBuffer();
-}
-
-KeyboardManager::~KeyboardManager()
-{
 }
 
 void KeyboardManager::kb_wait()
@@ -40,7 +36,7 @@ void KeyboardManager::send_cmd(uint8 cmd, uint8 port)
   outportbp(port, cmd);
 }
 
-void KeyboardManager::serviceIRQ(void)
+void KeyboardManager::serviceIRQ()
 {
   send_cmd(0xAD); // disable the keyboard
   kb_wait();
@@ -140,7 +136,6 @@ void KeyboardManager::modifyKeyboardStatus(uint8 sc)
     else
       keyboard_status_ |= control_key;
   }
-  return;
 }
 
 void KeyboardManager::emptyKbdBuffer()
@@ -149,7 +144,7 @@ void KeyboardManager::emptyKbdBuffer()
     kbdGetScancode();
 }
 
-void KeyboardManager::setLEDs(void)
+void KeyboardManager::setLEDs()
 {
   static uint32 last_leds = 0;
   uint32 leds = 0;

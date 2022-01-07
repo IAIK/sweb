@@ -2,7 +2,7 @@
 #include "Inode.h"
 
 File::File(Inode* inode, Dentry* dentry, uint32 flag) :
-    uid(0), gid(0), version(0), f_superblock_(0), f_inode_(inode), f_dentry_(dentry), flag_(flag)
+    uid(0), gid(0), version(0), f_superblock_(nullptr), f_inode_(inode), f_dentry_(dentry), flag_(flag)
 {
 }
 

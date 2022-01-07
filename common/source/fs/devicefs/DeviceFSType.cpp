@@ -6,11 +6,7 @@ DeviceFSType::DeviceFSType() :
 {
 }
 
-DeviceFSType::~DeviceFSType()
-{
-}
-
-Superblock *DeviceFSType::readSuper(Superblock *superblock, void*) const
+Superblock *DeviceFSType::readSuper(Superblock *superblock, [[maybe_unused]] void* data) const
 {
   return superblock;
 }

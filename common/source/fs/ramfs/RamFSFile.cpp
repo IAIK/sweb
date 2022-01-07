@@ -15,10 +15,6 @@ RamFSFile::RamFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
   offset_ = 0;
 }
 
-RamFSFile::~RamFSFile()
-{
-}
-
 int32 RamFSFile::read(char *buffer, size_t count, l_off_t offset)
 {
   if (((flag_ == O_RDONLY) || (flag_ == O_RDWR)) && (mode_ & A_READABLE))

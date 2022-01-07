@@ -8,12 +8,7 @@ MinixFSType::MinixFSType() : FileSystemType("minixfs")
 }
 
 
-MinixFSType::~MinixFSType()
-{
-}
-
-
-Superblock *MinixFSType::readSuper(Superblock *superblock, void*) const
+Superblock *MinixFSType::readSuper(Superblock *superblock, [[maybe_unused]]void* data) const
 {
   return superblock;
 }
@@ -22,7 +17,7 @@ Superblock *MinixFSType::readSuper(Superblock *superblock, void*) const
 Superblock *MinixFSType::createSuper(Dentry *root, uint32 s_dev) const
 {
   if (s_dev == (uint32) -1)
-    return 0;
+    return nullptr;
 
   BDManager::getInstance()->getDeviceByNumber(s_dev)->setBlockSize(BLOCK_SIZE);
   Superblock *super = new MinixFSSuperblock(root, s_dev, 0);

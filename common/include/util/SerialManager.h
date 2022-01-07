@@ -37,7 +37,7 @@ class SerialPort : public CharacterDevice
 
     SerialPort(char*, ArchSerialInfo port_info);
 
-    ~SerialPort();
+    ~SerialPort() = default;
 
     /**
      * Opens a serial port for reading or writing
@@ -101,12 +101,12 @@ class SerialManager
     ;
 
     SerialManager();
-    ~SerialManager();
+    ~SerialManager() = default;
 
     SerialPort * serial_ports[ MAX_PORTS];
 
     uint32 do_detection(uint32 is_paging_set_up);
-    uint32 get_num_ports();
+    uint32 get_num_ports() const;
     uint32 get_port_number(const uint8* friendly_name);
     void service_irq(uint32 irq_num);
 

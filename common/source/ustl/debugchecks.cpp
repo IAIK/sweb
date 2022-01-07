@@ -12,7 +12,7 @@ namespace ustl
   {
     if (ArchMulticore::numRunningCPUs() == 1 && unlikely (ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false))
     {
-      if (unlikely (KernelMemoryManager::instance()->KMMLockHeldBy() != 0))
+      if (unlikely (KernelMemoryManager::instance()->KMMLockHeldBy() != nullptr))
       {
         system_state = KPANIC;
         kprintfd("(ERROR) checkKMMDeadlock: Using a not resize-safe ustl container method with IF=%d and SchedulingEnabled=%d ! This will fail!!!\n",

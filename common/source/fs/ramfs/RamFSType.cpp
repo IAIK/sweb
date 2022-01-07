@@ -7,11 +7,7 @@ RamFSType::RamFSType() : FileSystemType("ramfs")
 }
 
 
-RamFSType::~RamFSType()
-{}
-
-
-Superblock *RamFSType::readSuper ( Superblock *superblock, void* ) const
+Superblock *RamFSType::readSuper ( Superblock *superblock, [[maybe_unused]]void* data) const
 {
   return superblock;
 }

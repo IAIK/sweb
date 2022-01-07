@@ -15,7 +15,7 @@ static void* _new(size_t size)
   debug(KMM, "new, size: %zu\n", size);
   // maybe we could take some precautions not to be interrupted while doing this
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size, called_by);
-  assert(p > (void*)0x80000000 || p == (void*)0);
+  assert(p > (void*)0x80000000 || p == (void*)nullptr);
   return p;
 }
 /**
@@ -26,9 +26,8 @@ static void _delete(void* address)
 {
   pointer called_by = getCalledBefore(2);
   debug(KMM, "delete %p\n", address);
-  assert(address > (void*)0x80000000 || address == (void*)0);
+  assert(address > (void*)0x80000000 || address == (void*)nullptr);
   KernelMemoryManager::instance()->freeMemory ( ( pointer ) address, called_by);
-  return;
 }
 
 /**
@@ -70,9 +69,9 @@ void operator delete[] ( void* address )
 }
 
 extern "C" void __cxa_pure_virtual();
-extern "C" void _pure_virtual ( void );
-extern "C" void __pure_virtual ( void );
-extern "C" uint32 atexit ( void ( *func ) ( void ) );
+extern "C" void _pure_virtual();
+extern "C" void __pure_virtual();
+extern "C" uint32 atexit ( void ( *func )() );
 extern "C" uint32 __cxa_atexit();
 extern "C" void* __dso_handle;
 
@@ -89,7 +88,7 @@ void __pure_virtual()
 {
 }
 
-uint32 atexit ( void ( * ) ( void ) ) {return ( uint32 )-1;}
+uint32 atexit ( void ( * )() ) {return ( uint32 )-1;}
 
 uint32 __cxa_atexit() {return ( uint32 )-1;}
 

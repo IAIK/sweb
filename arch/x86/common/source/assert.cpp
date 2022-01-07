@@ -20,7 +20,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   writeChar2Bochs('\n');
   writeLine2Bochs(file);
   writeChar2Bochs('\n');
-  if (currentThread != 0)
+  if (currentThread)
     currentThread->printBacktrace(false);
   uint8 * fb = (uint8*)0xC00B8000;
   uint32 s=0;
@@ -59,7 +59,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   }
   writeLine2Bochs(line_string);
   writeChar2Bochs('\n');
-  while(1);
+  while(true);
   unreachable();
 }
 
@@ -68,7 +68,7 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
-  debug_print_to_fb = 0;
+  debug_print_to_fb = false;
   if (ArchMulticore::numRunningCPUs() > 1)
   {
       ArchMulticore::stopAllCpus();
@@ -76,10 +76,10 @@ void sweb_assert(const char *condition, uint32 line, const char* file)
       while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
   }
 
-  if (currentThread != 0)
+  if (currentThread)
           currentThread->printBacktrace(false);
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
   kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
-  while(1);
+  while(true);
   unreachable();
 }

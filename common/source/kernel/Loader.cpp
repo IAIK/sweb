@@ -15,7 +15,7 @@
 #include "File.h"
 #include "FileDescriptor.h"
 
-Loader::Loader(ssize_t fd) : fd_(fd), hdr_(0), phdrs_(), program_binary_lock_("Loader::program_binary_lock_"), userspace_debug_info_(0)
+Loader::Loader(ssize_t fd) : fd_(fd), hdr_(nullptr), program_binary_lock_("Loader::program_binary_lock_"), userspace_debug_info_(nullptr)
 {
 }
 
@@ -37,16 +37,16 @@ void Loader::loadPage(pointer virtual_address)
   program_binary_lock_.acquire();
 
   // Iterate through all sections and load the ones intersecting into the page.
-  for(ustl::list<Elf::Phdr>::iterator it = phdrs_.begin(); it != phdrs_.end(); it++)
+  for(auto & phdr : phdrs_)
   {
-    if((*it).p_vaddr < virt_page_end_addr)
+    if(phdr.p_vaddr < virt_page_end_addr)
     {
-      if((*it).p_vaddr + (*it).p_filesz > virt_page_start_addr)
+      if(phdr.p_vaddr + phdr.p_filesz > virt_page_start_addr)
       {
-        const pointer  virt_start_addr = ustl::max(virt_page_start_addr, (*it).p_vaddr);
+        const pointer  virt_start_addr = ustl::max(virt_page_start_addr, phdr.p_vaddr);
         const size_t   virt_offs_on_page = virt_start_addr - virt_page_start_addr;
-        const l_off_t  bin_start_addr = (*it).p_offset + (virt_start_addr - (*it).p_vaddr);
-        const size_t   bytes_to_load = ustl::min(virt_page_end_addr, (*it).p_vaddr + (*it).p_filesz) - virt_start_addr;
+        const l_off_t  bin_start_addr = phdr.p_offset + (virt_start_addr - phdr.p_vaddr);
+        const size_t   bytes_to_load = ustl::min(virt_page_end_addr, phdr.p_vaddr + phdr.p_filesz) - virt_start_addr;
         //debug(LOADER, "Loader::loadPage: Loading %d bytes from binary address %p to virtual address %p\n",
         //      bytes_to_load, bin_start_addr, virt_start_addr);
         if(readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs_on_page, bin_start_addr, bytes_to_load))
@@ -58,7 +58,7 @@ void Loader::loadPage(pointer virtual_address)
         }
         found_page_content = true;
       }
-      else if((*it).p_vaddr + (*it).p_memsz > virt_page_start_addr)
+      else if(phdr.p_vaddr + phdr.p_memsz > virt_page_start_addr)
       {
         found_page_content = true;
       }
@@ -186,9 +186,9 @@ bool Loader::loadDebugInfoIfAvailable()
   // now that we have names we read through all the sections
   // and load the two we're interested in
 
-  char *stab_data=0;
-  char *stabstr_data=0;
-  char* sweb_data=0;
+  char* stab_data = nullptr;
+  char* stabstr_data = nullptr;
+  char* sweb_data = nullptr;
   size_t stab_data_size=0;
   size_t sweb_data_size=0;
 
@@ -212,7 +212,7 @@ bool Loader::loadDebugInfoIfAvailable()
           {
             debug(USERTRACE, "Failed to load stab section!\n");
             delete[] stab_data;
-            stab_data=0;
+            stab_data = nullptr;
           }
         }
       }
@@ -231,7 +231,7 @@ bool Loader::loadDebugInfoIfAvailable()
           {
             debug(USERTRACE, "Failed to load stabstr section!\n");
             delete[] stabstr_data;
-            stabstr_data=0;
+            stabstr_data = nullptr;
           }
         }
       }
@@ -244,7 +244,7 @@ bool Loader::loadDebugInfoIfAvailable()
           if (readFromBinary(sweb_data, section.sh_offset, size)) {
             debug(USERTRACE, "Could not read swebdbg section!\n");
             delete[] sweb_data;
-            sweb_data = 0;
+            sweb_data = nullptr;
           }
         } else {
           debug(USERTRACE, "SWEBDbg Infos are empty\n");
@@ -297,5 +297,5 @@ bool Loader::prepareHeaders()
       }
     }
   }
-  return phdrs_.size() > 0;
+  return !phdrs_.empty();
 }

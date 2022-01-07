@@ -56,8 +56,8 @@ void MinixFSSuperblock::readHeader()
   char buffer[BLOCK_SIZE];
   readBlocks(1, 1, buffer);
 
-  MinixFSSuperblockOnDiskDataV3* v3_sb = (MinixFSSuperblockOnDiskDataV3*)&buffer;
-  MinixFSSuperblockOnDiskDataV1* v1_sb = (MinixFSSuperblockOnDiskDataV1*)&buffer;
+  auto* v3_sb = (MinixFSSuperblockOnDiskDataV3*)&buffer;
+  auto* v1_sb = (MinixFSSuperblockOnDiskDataV1*)&buffer;
 
   if(v1_sb->s_magic == MINIX_V1)
   {
@@ -158,7 +158,7 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   if (i_num >= storage_manager_->getNumUsedInodes())
   {
     debug(M_SB, "getInode::bad inode number %d\n", i_num);
-    return 0;
+    return nullptr;
   }
 
   if (!storage_manager_->isInodeSet(i_num))
@@ -166,11 +166,11 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
     if (i_num == 1)
       assert(storage_manager_->isInodeSet(1));
 
-    return 0;
+    return nullptr;
   }
   uint32 first_inode_block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
   uint32 inode_block_num = first_inode_block + (i_num - 1) / INODES_PER_BLOCK;
-  MinixFSInode *inode = 0;
+  MinixFSInode *inode = nullptr;
   char ibuffer_array[BLOCK_SIZE];
   char* ibuffer = ibuffer_array;
   debug(M_SB, "getInode::reading block num: %d\n", inode_block_num);
@@ -179,8 +179,8 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   uint32 byte_offset = ((i_num - 1) % INODES_PER_BLOCK) * INODE_SIZE;
   debug(M_SB, "getInode:: setting offset: %d\n", byte_offset);
   ibuffer += byte_offset;
-  MinixFSInode::MinixFSInodeOnDiskDataV1* idata_v1 = (MinixFSInode::MinixFSInodeOnDiskDataV1*)ibuffer;
-  MinixFSInode::MinixFSInodeOnDiskDataV3* idata_v3 = (MinixFSInode::MinixFSInodeOnDiskDataV3*)ibuffer;
+  auto* idata_v1 = (MinixFSInode::MinixFSInodeOnDiskDataV1*)ibuffer;
+  auto* idata_v3 = (MinixFSInode::MinixFSInodeOnDiskDataV3*)ibuffer;
 
   uint32 i_zones[NUM_ZONES];
   for (uint32 num_zone = 0; num_zone < NUM_ZONES; ++num_zone)
@@ -216,7 +216,7 @@ MinixFSSuperblock::~MinixFSSuperblock()
 
   if (M_SB & OUTPUT_ENABLED)
   {
-    for (auto it : all_inodes_)
+    for (auto* it : all_inodes_)
       debug(M_SB, "Inode: %p\n", it);
   }
 
@@ -357,7 +357,7 @@ void MinixFSSuperblock::all_inodes_remove_inode(Inode* inode)
 void MinixFSSuperblock::delete_inode(Inode* inode)
 {
   Dentry* dentry = inode->getDentry();
-  assert(dentry == 0);
+  assert(dentry == nullptr);
   assert(ustl::find(used_inodes_.begin(), used_inodes_.end(), inode) == used_inodes_.end());
   dirty_inodes_.remove(inode);
   MinixFSInode *minix_inode = (MinixFSInode *) inode;

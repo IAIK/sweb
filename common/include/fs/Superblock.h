@@ -88,7 +88,7 @@ class Superblock
      */
     Superblock(Dentry* s_root, size_t s_dev);
 
-    virtual ~Superblock();
+    virtual ~Superblock() = default;
 
     /**
      * create a new Inode of the superblock, mknod with dentry, add in the list.

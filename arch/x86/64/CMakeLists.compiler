@@ -12,3 +12,9 @@ find_program(LD_EXECUTABLE x86_64-linux-gnu-gcc)
 find_program(OBJCOPY_EXECUTABLE x86_64-linux-gnu-objcopy)
 
 endif(CMAKE_CROSSCOMPILING)
+
+
+# set(CMAKE_CXX_CLANG_TIDY
+#   clang-tidy;
+#   -checks=-*,clang-analyzer-*,clang-analyzer-cplusplus*;
+#   )

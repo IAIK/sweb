@@ -24,10 +24,10 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
   int32 last_type_ = 0;
 
   // The last path component
-  char* last_ = 0;
+  char* last_ = nullptr;
 
   FileSystemInfo *fs_info = getcwd();
-  if (pathname == 0)
+  if (pathname == nullptr)
   {
     return PW_ENOTFOUND;
   }
@@ -49,7 +49,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
     vfs_mount_ = fs_info->getPwdMnt();
   }
 
-  if ((dentry_ == 0) || (vfs_mount_ == 0))
+  if ((dentry_ == nullptr) || (vfs_mount_ == nullptr))
   {
     debug(PATHWALKER, "PathWalker: PathWalk> ERROR return not found - dentry: %p, vfs_mount: %p\n", dentry_, vfs_mount_);
     return PW_ENOTFOUND;
@@ -59,7 +59,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
   debug(PATHWALKER, "pathWalk> pathname : %s\n", pathname);
   fs_info = getcwd();
   debug(PATHWALKER, "pathWalk> fs_info->pathname_.c_str() : %s\n", fs_info->pathname_.c_str());
-  if (pathname == 0)
+  if (pathname == nullptr)
   {
     debug(PATHWALKER, "pathWalk> return pathname not found\n");
     return PW_ENOTFOUND;
@@ -118,13 +118,13 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
     if (last_type_ == LAST_DOT) // follow LAST_DOT
     {
       debug(PATHWALKER, "pathWalk> follow last dot\n");
-      last_ = 0;
+      last_ = nullptr;
       continue;
     }
     else if (last_type_ == LAST_DOTDOT) // follow LAST_DOTDOT
     {
       debug(PATHWALKER, "pathWalk> follow last dotdot\n");
-      last_ = 0;
+      last_ = nullptr;
 
       if ((dentry_ == fs_info->getRoot()) && (vfs_mount_ == fs_info->getRootMnt()))
       {
@@ -134,7 +134,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
       }
 #ifndef EXE2MINIXFS
       VfsMount* vfs_mount = vfs.getVfsMount(dentry_, true);
-      if (vfs_mount != 0)
+      if (vfs_mount != nullptr)
       {
         // the dentry_ is a mount-point
         vfs_mount_ = vfs_mount->getParent();
@@ -154,8 +154,8 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
         debug(PATHWALKER, "pathWalk> found->getName() : %s\n", found->getName());
       else
         debug(PATHWALKER, "pathWalk> no dentry found !!!\n");
-      last_ = 0;
-      if (found != 0)
+      last_ = nullptr;
+      if (found != nullptr)
       {
         dentry_ = found;
       }
@@ -166,7 +166,7 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
       }
 #ifndef EXE2MINIXFS
       VfsMount* vfs_mount = vfs.getVfsMount(dentry_);
-      if (vfs_mount != 0)
+      if (vfs_mount != nullptr)
       {
         debug(PATHWALKER, "MOUNT_DOWN\n");
         // the dentry_ is a mount-point
@@ -195,14 +195,14 @@ int32 PathWalker::pathWalk(const char* pathname, uint32 flags_ __attribute__ ((u
 
 int32 PathWalker::getNextPartLen(const char* path, int32 &npart_len)
 {
-  char* tmp = 0;
+  char* tmp = nullptr;
   tmp = strchr((char*) path, SEPARATOR);
 
   npart_len = (size_t) (tmp - path + 1);
 
   uint32 length = npart_len;
 
-  if (tmp == 0)
+  if (tmp == nullptr)
   {
     npart_len = strlen(path);
     length = npart_len + 1;

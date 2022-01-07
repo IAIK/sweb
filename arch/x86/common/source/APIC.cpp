@@ -135,7 +135,7 @@ void LocalAPIC::setUsingAPICTimer(bool using_apic_timer)  volatile
         use_apic_timer_ = using_apic_timer;
 }
 
-bool LocalAPIC::usingAPICTimer() volatile
+bool LocalAPIC::usingAPICTimer() const volatile
 {
         return use_apic_timer_;
 }

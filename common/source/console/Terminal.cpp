@@ -30,9 +30,9 @@ void Terminal::clearBuffer()
   in_buffer_.clear();
 }
 
-void Terminal::putInBuffer(uint32 what)
+void Terminal::putInBuffer(uint32 key)
 {
-  in_buffer_.put(what);
+  in_buffer_.put(key);
 }
 
 char Terminal::read()
@@ -40,7 +40,7 @@ char Terminal::read()
   return (char) in_buffer_.get();
 }
 
-void Terminal::backspace(void)
+void Terminal::backspace()
 {
   if (in_buffer_.countElementsAhead())
     in_buffer_.get();

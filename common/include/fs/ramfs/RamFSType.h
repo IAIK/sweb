@@ -6,7 +6,7 @@ class RamFSType : public FileSystemType
 {
   public:
     RamFSType();
-    virtual ~RamFSType();
+    virtual ~RamFSType() = default;
 
     /**
      * Reads the superblock from the device.

@@ -179,20 +179,20 @@ void Syscall::trace()
 
 int Syscall::getcpu(size_t *cpu, size_t *node, __attribute__((unused)) void *tcache)
 {
-        if(((size_t)cpu >= USER_BREAK) || ((size_t)node >= USER_BREAK))
-        {
-                return -1;
-        }
+    if(((size_t)cpu >= USER_BREAK) || ((size_t)node >= USER_BREAK))
+    {
+        return -1;
+    }
 
-        if(cpu != NULL)
-        {
-                *cpu = ArchMulticore::getCpuID();
-        }
+    if(cpu != nullptr)
+    {
+        *cpu = ArchMulticore::getCpuID();
+    }
 
-        if(node != NULL)
-        {
-                *node = 0;
-        }
+    if(node != nullptr)
+    {
+        *node = 0;
+    }
 
-        return 0;
+    return 0;
 }

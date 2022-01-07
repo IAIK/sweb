@@ -30,7 +30,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
   extern Mutex global_fd_lock;
   MutexLock mlock(global_fd_lock);
-  for (auto it : global_fd)
+  for (auto* it : global_fd)
   {
     if (it->getFd() == fd)
     {
@@ -38,13 +38,13 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
       return it;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 int32 VfsSyscall::dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount)
 {
   FileSystemInfo *fs_info = getcwd();
-  if (pathname == 0)
+  if (pathname == nullptr)
     return -1;
 
   uint32 len = strlen(pathname);
@@ -69,8 +69,8 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   MutexLock l(vfs_lock);
   #endif
   FileSystemInfo *fs_info = getcwd();
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
     debug(VFSSYSCALL, "(mkdir) the pathname exists\n");
@@ -82,8 +82,8 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
   debug(VFSSYSCALL, "(mkdir) path_prev_name: %s\n", fs_info->pathname_.c_str());
-  pw_dentry = 0;
-  pw_vfs_mount = 0;
+  pw_dentry = nullptr;
+  pw_vfs_mount = nullptr;
   int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
   if (success != 0)
@@ -120,24 +120,24 @@ Dirent* VfsSyscall::readdir(const char* pathname)
    MutexLock l(vfs_lock);
 #endif
   FileSystemInfo *fs_info = getcwd();
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
-    Dentry* pw_dentry = 0;
-    VfsMount* pw_vfs_mount = 0;
+    Dentry* pw_dentry = nullptr;
+    VfsMount* pw_vfs_mount = nullptr;
     int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
     if (success != 0)
     {
       debug(VFSSYSCALL, "(list) path_walker failed\n\n");
-      return ((Dirent*) 0);
+      return (Dirent*) nullptr;
     }
 
     if (pw_dentry->getInode()->getType() != I_DIR)
     {
       debug(VFSSYSCALL, "This path is not a directory\n\n");
-      return (Dirent*) 0;
+      return (Dirent*) nullptr;
     }
 
     debug(VFSSYSCALL, "listing dir %s:\n", pw_dentry->getName());
@@ -165,7 +165,7 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   {
     debug(VFSSYSCALL, "(list) Path doesn't exist\n");
   }
-  return 0;
+  return nullptr;
 }
 
 int32 VfsSyscall::chdir(const char* pathname)
@@ -174,8 +174,8 @@ int32 VfsSyscall::chdir(const char* pathname)
   MutexLock l(vfs_lock);
 #endif
   FileSystemInfo *fs_info = getcwd();
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
     debug(VFSSYSCALL, "Error: (chdir) the directory does not exist.\n");
@@ -200,8 +200,8 @@ int32 VfsSyscall::rm(const char* pathname)
 #ifndef EXE2MINIXFS
   MutexLock l(vfs_lock);
 #endif
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
     debug(VFSSYSCALL, "Error: (rm) the directory does not exist.\n");
@@ -238,8 +238,8 @@ int32 VfsSyscall::rmdir(const char* pathname)
 #ifndef EXE2MINIXFS
   MutexLock l(vfs_lock);
 #endif
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) != 0)
   {
     debug(VFSSYSCALL, "Error: (rmdir) the directory does not exist.\n");
@@ -281,7 +281,7 @@ int32 VfsSyscall::close(uint32 fd)
 #endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(close) Error: the fd does not exist.\n");
     return -1;
@@ -302,8 +302,8 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     debug(VFSSYSCALL, "(open) invalid parameter flag\n");
     return -1;
   }
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   if (dupChecking(pathname, pw_dentry, pw_vfs_mount) == 0)
   {
     debug(VFSSYSCALL, "(open)current_dentry->getInode() \n");
@@ -330,8 +330,8 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     // set directory
     fs_info->pathname_ = fs_info->pathname_.substr(0, len);
 
-    Dentry* pw_dentry = 0;
-    VfsMount* pw_vfs_mount = 0;
+    Dentry* pw_dentry = nullptr;
+    VfsMount* pw_vfs_mount = nullptr;
     int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
     if (success != 0)
@@ -381,7 +381,7 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 #endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
@@ -399,7 +399,7 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 #endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(write) Error: the fd does not exist.\n");
     return -1;
@@ -417,7 +417,7 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 #endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(lseek) Error: the fd does not exist.\n");
     return -1;
@@ -433,7 +433,7 @@ int32 VfsSyscall::flush(uint32 fd)
 #endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
@@ -474,7 +474,7 @@ uint32 VfsSyscall::getFileSize(uint32 fd)
 #endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;

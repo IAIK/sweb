@@ -33,8 +33,10 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
 
   uint16 dd[256];
 
-  for (uint32 dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
-    dd [dd_off] = inportw ( port );
+  for (uint16 & dd_16 : dd) // Read "sector" 512 b
+  {
+    dd_16 = inportw ( port );
+  }
 
   debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
 
@@ -57,11 +59,10 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
   irq = irqnum;
   debug(ATA_DRIVER, "ctor: mode: %d !!\n", mode );
 
-  request_list_ = 0;
-  request_list_tail_ = 0;
+  request_list_ = nullptr;
+  request_list_tail_ = nullptr;
 
   debug(ATA_DRIVER, "ctor: Driver created !!\n");
-  return;
 }
 
 void ATADriver::testIRQ( )
@@ -69,7 +70,7 @@ void ATADriver::testIRQ( )
   mode = BD_PIO;
 
   BDManager::getInstance()->probeIRQ = true;
-  readSector( 0, 1, 0 );
+  readSector( 0, 1, nullptr );
 
   debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
   TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_PIO_NO_IRQ;);
@@ -213,7 +214,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
     interrupt_context = ArchInterrupts::disableInterrupts();
 
     //Add request to the list protected by the cli
-    if( request_list_ == 0 )
+    if( request_list_ == nullptr )
       request_list_ = request_list_tail_ = br;
     else
     {
@@ -309,7 +310,7 @@ void ATADriver::serviceIRQ()
   if( mode == BD_PIO_NO_IRQ )
     return;
 
-  if( request_list_ == 0 )
+  if( request_list_ == nullptr )
   {
     debug(ATA_DRIVER, "serviceIRQ: IRQ without request!!\n");
     outportbp( port + 0x206, 0x04 );

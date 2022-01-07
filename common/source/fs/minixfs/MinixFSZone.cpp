@@ -32,7 +32,7 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, uint32 *zones)
   }
   else
   {
-    indirect_zones_ = 0;
+    indirect_zones_ = nullptr;
   }
   if (zones[8])
   {
@@ -57,14 +57,14 @@ MinixFSZone::MinixFSZone(MinixFSSuperblock *superblock, uint32 *zones)
       }
       else
       {
-        double_indirect_zones_[ind_zone] = 0;
+        double_indirect_zones_[ind_zone] = nullptr;
       }
     }
   }
   else
   {
-    double_indirect_zones_ = 0;
-    double_indirect_linking_zone_ = 0;
+    double_indirect_zones_ = nullptr;
+    double_indirect_linking_zone_ = nullptr;
   }
 
   if (M_ZONE & OUTPUT_ENABLED)
@@ -154,7 +154,7 @@ void MinixFSZone::setZone(uint32 index, uint32 zone)
 
     double_indirect_zones_ = new uint32*[NUM_ZONE_ADDRESSES];
     for (uint32 i = 0; i < NUM_ZONE_ADDRESSES; i++)
-      double_indirect_zones_[i] = 0;
+      double_indirect_zones_[i] = nullptr;
   }
   if (!double_indirect_zones_[index / NUM_ZONE_ADDRESSES])
   {
@@ -173,15 +173,15 @@ void MinixFSZone::addZone(uint32 zone)
   setZone(num_zones_, zone);
 }
 
-void MinixFSZone::flush(uint32 i_num)
+void MinixFSZone::flush(uint32 inode_num)
 {
-  debug(M_ZONE, "MinixFSZone::flush i_num : %d; %p\n", i_num, this);
+  debug(M_ZONE, "MinixFSZone::flush i_num : %d; %p\n", inode_num, this);
   char buffer[NUM_ZONES * INODE_BYTES];
   for (uint32 index = 0; index < NUM_ZONES; index++)
     SET_V3_ARRAY(buffer,index,direct_zones_[index]);
   uint32 block = 2 + superblock_->s_num_inode_bm_blocks_ + superblock_->s_num_zone_bm_blocks_
-      + ((i_num - 1) * INODE_SIZE) / BLOCK_SIZE;
-  superblock_->writeBytes(block, ((i_num - 1) * INODE_SIZE) % BLOCK_SIZE + INODE_BYTES * (7 - V3_OFFSET),
+      + ((inode_num - 1) * INODE_SIZE) / BLOCK_SIZE;
+  superblock_->writeBytes(block, ((inode_num - 1) * INODE_SIZE) % BLOCK_SIZE + INODE_BYTES * (7 - V3_OFFSET),
                           NUM_ZONES * INODE_BYTES, buffer);
   debug(M_ZONE, "MinixFSZone::flush direct written\n");
   if (direct_zones_[7])

@@ -7,7 +7,7 @@
 #include "ArchMulticore.h"
 
 
-ProcessRegistry* ProcessRegistry::instance_ = 0;
+ProcessRegistry* ProcessRegistry::instance_ = nullptr;
 
 ProcessRegistry::ProcessRegistry(FileSystemInfo *root_fs_info, char const *progs[]) :
     Thread(root_fs_info, "ProcessRegistry", Thread::KERNEL_THREAD), progs_(progs), progs_running_(0),

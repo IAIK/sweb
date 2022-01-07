@@ -2,10 +2,10 @@
 
 /* Blatantly stolen from FREEBSD. */
 
-typedef uint64 uintmax_t;
-typedef int64 intmax_t;
-typedef uint64 u_quad_t;
-typedef int64 quad_t;
+using uintmax_t = uint64;
+using intmax_t = int64;
+using u_quad_t = uint64;
+using quad_t = int64;
 
 char* ksprintn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
 {
@@ -39,9 +39,9 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
   if (!func)
     d = (char *) arg;
   else
-    d = NULL;
+    d = nullptr;
 
-  if (fmt == NULL)
+  if (fmt == nullptr)
     fmt = "(fmt null)\n";
 
   if (radix < 2 || radix > 36)
@@ -136,7 +136,7 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
       case 'b':
         num = (u_int) va_arg(ap, int);
         p = va_arg(ap, char *);
-        for (q = ksprintn(nbuf, num, *p++, NULL, 0); *q;)
+        for (q = ksprintn(nbuf, num, *p++, nullptr, 0); *q;)
           PCHAR(*q--)
         ;
 
@@ -241,7 +241,7 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
         goto handle_nosign;
       case 's':
         p = va_arg(ap, char *);
-        if (p == NULL)
+        if (p == nullptr)
           p = "(null)";
         if (!dot)
           n = strlen(p);
@@ -283,7 +283,8 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
       case 'z':
         zflag = 1;
         goto reswitch;
-        handle_nosign: sign = 0;
+        handle_nosign:
+        sign = 0;
         if (jflag)
           num = va_arg(ap, uintmax_t);
         else if (qflag)
@@ -301,7 +302,8 @@ int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_
         else
           num = va_arg(ap, u_int);
         goto number;
-        handle_sign: if (jflag)
+        handle_sign:
+        if (jflag)
           num = va_arg(ap, intmax_t);
         else if (qflag)
           num = va_arg(ap, quad_t);

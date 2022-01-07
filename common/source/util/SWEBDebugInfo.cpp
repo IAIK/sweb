@@ -23,14 +23,10 @@ struct LineHeader {
 } __attribute__((packed));
 
 
-SWEBDebugInfo::SWEBDebugInfo(char const *sweb_start, char const *sweb_end) : Stabs2DebugInfo(sweb_start, sweb_end, 0) {
-  if (sweb_start != 0 && sweb_end != 0)
+SWEBDebugInfo::SWEBDebugInfo(char const *sweb_begin, char const *sweb_end) : Stabs2DebugInfo(sweb_begin, sweb_end, nullptr) {
+  if (sweb_begin != nullptr && sweb_end != nullptr)
     initialiseSymbolTable();
 }
-
-SWEBDebugInfo::~SWEBDebugInfo() {
-}
-
 
 void SWEBDebugInfo::initialiseSymbolTable() {
     function_defs_.reserve(256);
@@ -68,15 +64,15 @@ void SWEBDebugInfo::getCallNameAndLine(pointer address, const char *&name, ssize
     name = "UNKNOWN FUNCTION";
     line = 0;
 
-    if (!this || function_defs_.size() == 0)
+    if (!this || function_defs_.empty())
         return;
 
-    FunctionHeader* fh = 0;
+    FunctionHeader* fh = nullptr;
     for(auto f : function_defs_) {
       if (address >= f.first)
         fh = (FunctionHeader*)f.second;
     }
-    if (fh == 0)
+    if (fh == nullptr)
       return;
 
     name = ((char*)fh) + sizeof(FunctionHeader);

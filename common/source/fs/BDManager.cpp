@@ -20,7 +20,7 @@ BDManager::BDManager() :
 {
 }
 
-void BDManager::doDeviceDetection(void)
+void BDManager::doDeviceDetection()
 {
   debug(BD_MANAGER, "doDeviceDetection: Detecting BD devices\n");
   IDEDriver id;
@@ -75,12 +75,12 @@ BDVirtualDevice* BDManager::getDeviceByName(const char * dev_name)
       return dev;
     }
   }
-  return 0;
+  return nullptr;
 }
 
-uint32 BDManager::getNumberOfDevices(void)
+uint32 BDManager::getNumberOfDevices() const
 {
   return device_list_.size();
 }
 
-BDManager* BDManager::instance_ = 0;
+BDManager* BDManager::instance_ = nullptr;

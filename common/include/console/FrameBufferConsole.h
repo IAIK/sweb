@@ -18,8 +18,8 @@ class FrameBufferConsole : public Console
 
     void setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b);
 
-    uint16 convertConsoleColor(CONSOLECOLOR color);
-    void colorsFromState(uint8 const &state, CONSOLECOLOR &fg, CONSOLECOLOR &bg);
+    static uint16 convertConsoleColor(CONSOLECOLOR color);
+    static void colorsFromState(uint8 const &state, CONSOLECOLOR &fg, CONSOLECOLOR &bg);
 
     uint32 x_res_;
     uint32 y_res_;

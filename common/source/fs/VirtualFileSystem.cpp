@@ -21,14 +21,6 @@ void VirtualFileSystem::initialize()
   new (this) VirtualFileSystem();
 }
 
-VirtualFileSystem::VirtualFileSystem()
-{
-}
-
-VirtualFileSystem::~VirtualFileSystem()
-{
-}
-
 int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)
 {
   assert(file_system_type);
@@ -44,7 +36,7 @@ int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)
 
 int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 {
-  assert(file_system_type != 0);
+  assert(file_system_type != nullptr);
 
   const char *fs_name = file_system_type->getFSName();
   for (FileSystemType* fst : file_system_types_)
@@ -64,14 +56,14 @@ FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
     if (strcmp(fst->getFSName(), fs_name) == 0)
       return fst;
   }
-  return 0;
+  return nullptr;
 }
 
 VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
 {
   assert(dentry);
 
-  if (is_root == false)
+  if (!is_root)
   {
     for (VfsMount* mnt : mounts_)
     {
@@ -82,20 +74,20 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
         return mnt;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 FileSystemInfo *VirtualFileSystem::root_mount(const char *fs_name, uint32 /*flags*/)
 {
   FileSystemType *fst = getFsType(fs_name);
 
-  Superblock *super = fst->createSuper(0, -1);
-  super = fst->readSuper(super, 0);
+  Superblock *super = fst->createSuper(nullptr, -1);
+  super = fst->readSuper(super, nullptr);
   Dentry *mount_point = super->getMountPoint();
   mount_point->setMountPoint(mount_point);
   Dentry *root = super->getRoot();
 
-  VfsMount *root_mount = new VfsMount(0, mount_point, root, super, 0);
+  VfsMount *root_mount = new VfsMount(nullptr, mount_point, root, super, 0);
 
   mounts_.push_back(root_mount);
   superblocks_.push_back(super);
@@ -130,8 +122,8 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
     return -1;
 
   fs_info->pathname_ = dir_name;
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
   if (success != 0)
@@ -145,7 +137,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   Superblock *super = fst->createSuper(found_dentry, dev);
   if (!super)
     return -1;
-  super = fst->readSuper(super, 0); //?
+  super = fst->readSuper(super, nullptr); //?
   Dentry *root = super->getRoot();
 
   // create a new vfs_mount
@@ -157,7 +149,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
 
 int32 VirtualFileSystem::rootUmount()
 {
-  if (superblocks_.size() == 0)
+  if (superblocks_.empty())
   {
     return -1;
   }
@@ -172,12 +164,12 @@ int32 VirtualFileSystem::rootUmount()
 int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 {
   FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
-  if (dir_name == 0)
+  if (dir_name == nullptr)
     return -1;
 
   fs_info->pathname_ = dir_name;
-  Dentry* pw_dentry = 0;
-  VfsMount* pw_vfs_mount = 0;
+  Dentry* pw_dentry = nullptr;
+  VfsMount* pw_vfs_mount = nullptr;
   int32 success = PathWalker::pathWalk(fs_info->pathname_.c_str(), 0, pw_dentry, pw_vfs_mount);
 
   if (success != 0)
@@ -187,7 +179,7 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
   Dentry *found_dentry = pw_dentry;
   VfsMount * found_vfs_mount = pw_vfs_mount;
 
-  if (found_vfs_mount == 0)
+  if (found_vfs_mount == nullptr)
   {
     debug(VFS, "umount point error\n");
     return -1;
@@ -207,7 +199,7 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
     else
     {
       debug(VFS, "set PWD NULL\n");
-      fs_info->setFsPwd(0, 0);
+      fs_info->setFsPwd(nullptr, nullptr);
     }
   }
 
