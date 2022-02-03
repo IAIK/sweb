@@ -68,7 +68,7 @@ void Scheduler::schedule()
 
   if(currentThread)
   {
-    assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
+    assert(currentThread->isCurrentlyScheduledOnCpu(ArchMulticore::getCpuID()));
 
     // Increase virtual running time of the thread by the difference between last schedule and now
     updateVruntime(currentThread, now);
@@ -94,12 +94,13 @@ void Scheduler::schedule()
   assert(!threads_.empty());
 
   // Pick the thread with the lowest virtual running time (that is schedulable and not already running)
-  Thread* min_thread = nullptr;
+  Thread* min_vruntime_thread = nullptr;
   auto* it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
+    bool already_running = (*it)->isCurrentlyScheduled(); // Prevent scheduling threads on multiple CPUs simultaneously
     bool schedulable = (*it)->schedulable();
-    bool already_running = (*it)->isCurrentlyScheduled();
+    bool can_run_on_cpu = (*it)->canRunOnCpu(ArchMulticore::getCpuID());
     bool just_woken = schedulable && !(*it)->prev_schedulable;
 
     (*it)->prev_schedulable = schedulable;
@@ -109,9 +110,9 @@ void Scheduler::schedule()
         debug(SCHEDULER, "Check thread (%p) %s, schedulable: %u, just woken: %u, already running: %u, vruntime: %llu\n", *it, (*it)->getName(), schedulable, just_woken, already_running, (*it)->vruntime);
     }
 
-    if(schedulable && !already_running)
+    if(!already_running && schedulable && can_run_on_cpu)
     {
-        min_thread = *it;
+        min_vruntime_thread = *it;
 
         // Relative virtual running time for threads that have just woken up is set to same as thread with least running time
         // (i.e., schedule them asap, but don't let them run for a really long time to 'catch up' the difference)
@@ -130,8 +131,10 @@ void Scheduler::schedule()
     }
   }
 
-  assert(min_thread);
-  currentThread = min_thread;
+  assert(it != threads_.end());
+  assert(min_vruntime_thread);
+
+  currentThread = min_vruntime_thread;
 
   // auto it = threads_.begin();
   // for(; it != threads_.end(); ++it)
@@ -144,13 +147,15 @@ void Scheduler::schedule()
   // }
 
 
+
   debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", ArchMulticore::getCpuID(),
         (previousThread ? previousThread->getName() : "(nil)"), previousThread,
         (currentThread ? currentThread->getName() : "(nil)"), currentThread);
 
   assert(currentThread);
-  assert(currentThread->currently_scheduled_on_cpu_ == (size_t)-1);
   assert(currentThread->schedulable());
+  assert(!currentThread->isCurrentlyScheduled());
+
 
   ArchThreads::switchToAddressSpace(currentThread);
 
@@ -169,7 +174,7 @@ void Scheduler::schedule()
   currentThreadRegisters = (currentThread->switch_to_userspace_ ? currentThread->user_registers_ :
                                                                   currentThread->kernel_registers_);
 
-  currentThread->sched_start = ArchCommon::cpuTimestamp();
+  currentThread->setSchedulingStartTimestamp(ArchCommon::cpuTimestamp());
 }
 
 void Scheduler::addNewThread(Thread *thread)
@@ -463,22 +468,22 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
 {
     assert(t->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
 
-    if(now <= t->sched_start)
+    if(now <= t->schedulingStartTimestamp())
     {
         return;
     }
 
-    uint64 time_delta = now - t->sched_start;
+    uint64 time_delta = now - t->schedulingStartTimestamp();
 
     setThreadVruntime(t, t->vruntime + time_delta);
 
 
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, %s vruntime: %llu (+ %llu) [%llu -> %llu]\n", ArchMulticore::getCpuID(), t->getName(), t->vruntime, time_delta, t->sched_start, now);
+        debug(SCHEDULER, "CPU %zu, %s vruntime: %llu (+ %llu) [%llu -> %llu]\n", ArchMulticore::getCpuID(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
     }
 
-    t->sched_start = now;
+    t->setSchedulingStartTimestamp(now);
 }
 
 void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)

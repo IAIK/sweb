@@ -180,9 +180,29 @@ bool Thread::schedulable()
   return (getState() == Running);
 }
 
+bool Thread::canRunOnCpu(size_t cpu_id)
+{
+    return (pinned_to_cpu == (size_t)-1) || (pinned_to_cpu == cpu_id);
+}
+
 bool Thread::isCurrentlyScheduled() const
 {
   return currently_scheduled_on_cpu_ != (size_t)-1;
+}
+
+bool Thread::isCurrentlyScheduledOnCpu(size_t cpu_id) const
+{
+    return currently_scheduled_on_cpu_ == cpu_id;
+}
+
+void Thread::setSchedulingStartTimestamp(uint64 timestamp)
+{
+    sched_start = timestamp;
+}
+
+uint64 Thread::schedulingStartTimestamp()
+{
+    return sched_start;
 }
 
 const char *Thread::getName() const

@@ -92,7 +92,13 @@ class Thread
      */
     bool schedulable();
 
+    bool canRunOnCpu(size_t cpu_id);
+
     bool isCurrentlyScheduled() const;
+    bool isCurrentlyScheduledOnCpu(size_t cpu_id) const;
+
+    void setSchedulingStartTimestamp(uint64 timestamp);
+    uint64 schedulingStartTimestamp();
 
     ArchThreadRegisters* kernel_registers_;
     ArchThreadRegisters* user_registers_;
@@ -125,7 +131,8 @@ class Thread
      */
     Lock* holding_lock_list_;
 
-    volatile size_t currently_scheduled_on_cpu_ = (size_t)-1;
+    volatile size_t currently_scheduled_on_cpu_ = -1;
+    volatile size_t pinned_to_cpu = -1;
 
     CONSOLECOLOR console_color;
 
@@ -152,4 +159,3 @@ class Thread
     bool prev_schedulable = false;
     bool yielded = false;
 };
-
