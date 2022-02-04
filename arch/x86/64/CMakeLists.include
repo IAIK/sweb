@@ -6,7 +6,7 @@ else()
   set(FCF_PROTECTION_FLAG )
 endif()
 
-set(ARCH_X86_64_KERNEL_CFLAGS -m64 -O0 -gdwarf-2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${FCF_PROTECTION_FLAG} ${NOPICFLAG})
+set(ARCH_X86_64_KERNEL_CFLAGS -m64 -O0 -gdwarf-2 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mcmodel=kernel -mno-red-zone -mgeneral-regs-only -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${FCF_PROTECTION_FLAG} ${NOPICFLAG})
 
 set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++17 -nostdinc++ -fno-rtti ${ARCH_X86_64_KERNEL_CFLAGS})
 set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_64_KERNEL_CFLAGS})
