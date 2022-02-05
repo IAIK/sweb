@@ -27,6 +27,9 @@ enum AnsiColor
 
 #ifndef EXE2MINIXFS
 #define debug(flag, ...) do { if (flag & OUTPUT_ENABLED) { kprintfd(DEBUG_FORMAT_STRING, COLOR_PARAM(flag)); kprintfd(__VA_ARGS__); } } while (0)
+#define debugPos() debug(DEBUG_RED,"flag at %s:%d \n",__FILE__,__LINE__);
+#define debugPosNum(pos) debug(DEBUG_RED,"flag with num %d  at %s:%d \n",pos,__FILE__,__LINE__);
+#define debugPosTID() debug(DEBUG_RED,"TID %d at %s:%d \n",(int)currentThread->getTID(),__FILE__,__LINE__);
 #endif
 
 
@@ -86,3 +89,6 @@ const size_t M_STORAGE_MANAGER  = Ansi_Yellow;
 const size_t M_INODE            = Ansi_Yellow;
 const size_t M_SB               = Ansi_Yellow;
 const size_t M_ZONE             = Ansi_Yellow;
+
+//debug
+const size_t DEBUG_COLOR        = Ansi_Red | OUTPUT_ENABLED;
