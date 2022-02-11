@@ -50,16 +50,19 @@ enum AnsiColor
 #define FLAG_PARAM FLAG_PARAM_NOCOLOR
 #endif
 
+#define DEBUG_PRINT_FSTRING_CONCAT(printfunc, flag_fstring, flag_params, fstring, ...) \
+    printfunc(flag_fstring fstring, flag_params, ##__VA_ARGS__)
+
 extern bool debug_print_to_fb;
 
 #ifndef EXE2MINIXFS
-#define debug(flag, ...) do {                                                                       \
-          if (flag & OUTPUT_ENABLED) {                                                              \
-            kprintfd(DEBUG_FORMAT_STRING, FLAG_PARAM(flag)); kprintfd(__VA_ARGS__);                 \
-            if(debug_print_to_fb) {                                                                 \
-              kprintf(DEBUG_FORMAT_STRING_NOCOLOR, FLAG_PARAM_NOCOLOR(flag)); kprintf(__VA_ARGS__); \
-            }                                                                                       \
-          } } while (0)
+#define debug(flag, ...) do {                                           \
+        if (flag & OUTPUT_ENABLED) {                                    \
+            DEBUG_PRINT_FSTRING_CONCAT(kprintfd, DEBUG_FORMAT_STRING, FLAG_PARAM(flag), ##__VA_ARGS__); \
+            if(debug_print_to_fb) {                                     \
+                DEBUG_PRINT_FSTRING_CONCAT(kprintf, DEBUG_FORMAT_STRING_NOCOLOR, FLAG_PARAM_NOCOLOR(flag), ##__VA_ARGS__); \
+            }                                                           \
+        } } while (0)
 #endif
 
 
