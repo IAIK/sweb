@@ -49,7 +49,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
 
     // This might not be a problem, but it is slow and in a lot of cases WILL lead to hard to find deadlocks.
     // If you want to remove this assert talk to your tutor FIRST!
-    assert(currentThread->holding_lock_list_->hasNextOnHoldingList() && "thread is holding locks while waiting on a condition variable");
+    assert(!currentThread->holding_lock_list_->hasNextOnHoldingList() && "thread is holding locks while waiting on a condition variable");
   }
   lockWaitersList();
   last_accessed_at_ = called_by;
