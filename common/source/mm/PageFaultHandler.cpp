@@ -56,8 +56,8 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
         writing ? "writing" : "reading",
         fetch ? "instruction" : "    operand",
         switch_to_us);
-  //Uncomment the line below if you want to have detailed information about the thread registers.
-  //ArchThreads::printThreadRegisters(currentThread, false);
+
+  ArchThreads::printThreadRegisters(currentThread, false);
 
   if (checkPageFaultIsValid(address, user, present, switch_to_us))
   {
