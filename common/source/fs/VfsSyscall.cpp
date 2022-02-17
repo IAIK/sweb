@@ -89,7 +89,7 @@ static const char* readdirPrefix(uint32 inode_type)
     }
 }
 
-Dirent* VfsSyscall::readdir(const char* pathname)
+Dirent* VfsSyscall::readdir(const char* pathname, char* buffer, size_t size)
 {
   FileSystemInfo *fs_info = getcwd();
 
@@ -109,10 +109,36 @@ Dirent* VfsSyscall::readdir(const char* pathname)
   }
 
   debug(VFSSYSCALL, "(readdir) listing dir %s:\n", target_path.dentry_->getName());
+  size_t it = 0;
   for (Dentry* sub_dentry : target_path.dentry_->d_child_)
   {
     uint32 inode_type = sub_dentry->getInode()->getType();
-    kprintf("%s%s\n", readdirPrefix(inode_type), sub_dentry->getName());
+    const char* prefix = readdirPrefix(inode_type);
+    const char* name = sub_dentry->getName();
+
+    if(buffer)
+    {
+      auto len_name = strlen(name);
+      if(it + len_name + 1 >= size)
+      {
+        debug(VFSSYSCALL, "Buffer is too small for all elements -> return it as it is\n");
+        buffer[it] = 0;
+        return 0;
+      }
+
+      memcpy(buffer + it, name, len_name);
+      it += len_name;
+      buffer[it++] = '\n';
+    }
+    else
+    {
+      kprintf("%s%s\n", prefix, name);
+    }
+  }
+
+  if(buffer)
+  {
+    buffer[it] = 0;
   }
 
   return 0;

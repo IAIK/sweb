@@ -113,6 +113,10 @@ void Console::Run(void)
         terminals_[active_terminal_]->write(key);
         terminals_[active_terminal_]->putInBuffer(key);
       }
+      else if (key == '\t' || key == 151 || key == 152) // 151 -> up; 152 -> down
+      {
+        terminals_[active_terminal_]->putInBuffer(key);
+      }
       else
       {
         handleKey(key);

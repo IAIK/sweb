@@ -130,3 +130,21 @@ int strcmp (const char * l, const char * r)
             return 0;
     return *(unsigned char *)l < *(unsigned char *)r ? -1 : 1;
 }
+
+
+char *strstr(const char *haystack, const char *needle)
+{
+  if(*needle == '\0')
+    return (char*)haystack;
+
+  for(int i = 0; haystack[i] != '\0'; i++)
+  {
+    int j;
+    for(j = 0; needle[j] != '\0' && haystack[i + j] == needle[j]; j++)
+      ;
+    if(needle[j] == '\0')
+      return (char*)(haystack + i);
+  }
+
+  return NULL;
+}

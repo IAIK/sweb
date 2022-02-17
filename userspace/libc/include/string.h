@@ -86,6 +86,11 @@ extern size_t strlen(const char* str);
  */
 extern int strcmp (const char * l, const char * r);
 
+/**
+ * searches for needle in haystack
+ */
+extern char *strstr(const char *haystack, const char *needle);
+
 #ifdef __cplusplus
 }
 #endif

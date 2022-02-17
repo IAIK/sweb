@@ -8,6 +8,7 @@
 #define FORK_ENABLED 0
 #define EXECUTABLE_PREFIX       "/usr/"
 #define EXECUTABLE_PREFIX_LEN   5
+#define BUFFER_SIZE 256
 
 int running = 1;
 int exit_code = 0;
@@ -16,7 +17,9 @@ char cwd[256];
 char command[256];
 char executable[256 + EXECUTABLE_PREFIX_LEN];
 char args[10][256];
-char buffer[256] __attribute__((aligned(4096)));
+char buffer[BUFFER_SIZE] __attribute__((aligned(4096)));
+char last_input[BUFFER_SIZE];
+char dir_content[4096];
 
 void handle_command(char* buffer, int buffer_size)
 {
@@ -109,18 +112,114 @@ void handle_command(char* buffer, int buffer_size)
   }
 }
 
+char* findOccurrence(char* file_list, char* user_input)
+{
+  char* occurrence = strstr(file_list, user_input);
+  while(occurrence != NULL && occurrence != file_list && *(occurrence - 1) != '\n')
+    occurrence = strstr(occurrence + 1, user_input);
+  return occurrence;
+}
+
+int readCommand(char* buffer, int buffer_size)
+{
+  unsigned int counter = 0;
+  char cchar;
+  char up_pressed = 0;
+
+  memset(buffer, 0, buffer_size);
+
+  while((cchar = getchar()) != EOF)
+  {
+    if(cchar == '\r' || cchar == '\n' || (counter + 1) >= buffer_size)
+    {
+      buffer[counter] = '\0';
+      break;
+    }
+    else if(cchar == '\t') // autocomplete
+    {
+      if(counter == 0)
+        continue;
+
+      char* first_occurrence = findOccurrence(dir_content, buffer);
+      if(first_occurrence == NULL)
+        continue; // no such file
+
+      first_occurrence += counter;
+
+      char *second_occurrence = findOccurrence(first_occurrence, buffer);
+      if (second_occurrence != NULL)
+        continue; // filename ambiguous
+
+      int i;
+      for(i = 0; first_occurrence[i] != '\n' && counter < BUFFER_SIZE - 1; i++, counter++)
+        buffer[counter] = first_occurrence[i];
+
+      write(STDOUT_FILENO, first_occurrence, i);
+      continue;
+    }
+    else if((unsigned char)cchar == 151) // up: take last input
+    {
+      if(counter != 0)
+        continue;
+
+      up_pressed = 1;
+
+      counter = strlen(last_input);
+      memcpy(buffer, last_input, buffer_size);
+      write(STDOUT_FILENO, buffer, counter);
+      continue;
+    }
+    else if((unsigned char)cchar == 152) // down: drop input
+    {
+      if(counter == 0 || !up_pressed)
+        continue;
+
+      memset(buffer, '\b', counter);
+      buffer[counter] = 0;
+      printf("%s",buffer);
+      memset(buffer, 0, buffer_size);
+      counter = 0;
+      up_pressed = 0;
+      continue;
+    }
+    else
+    {
+      buffer[counter] = (char)cchar;
+    }
+
+    if (cchar == '\b')
+    {
+      if (counter > 0)
+      {
+        buffer[counter] = 0;
+        counter--;
+      }
+    }
+    else
+    {
+      counter++;
+    }
+  }
+
+  buffer[BUFFER_SIZE - 1] = 0;
+  memcpy(last_input, buffer, buffer_size);
+  return 0;
+}
+
 int main(int argc, char *argv[])
 {
   cwd[0] = '/';
 
   printf("\n\%s\n", "SWEB-Pseudo-Shell starting...\n");
+
+  __syscall(sc_pseudols, (size_t)"/usr/", (size_t)dir_content, sizeof(dir_content), 0, 0);
+
   do
   {
     printf("\n%s %s%s", "SWEB:", cwd, "> ");
-    gets(buffer, 255);
-    buffer[255] = 0;
-    handle_command(buffer, 256);
-    for (size_t a = 0; a < 256; a++)
+    readCommand(buffer, BUFFER_SIZE);
+    handle_command(buffer, BUFFER_SIZE);
+    for (size_t a = 0; a < BUFFER_SIZE; a++)
       buffer[a] = 0;
 
   } while (running);

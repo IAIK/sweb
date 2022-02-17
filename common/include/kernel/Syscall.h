@@ -18,6 +18,7 @@ class Syscall
   static size_t read(size_t fd, pointer buffer, size_t count);
   static size_t close(size_t fd);
   static size_t open(size_t path, size_t flags);
+  static void pseudols(const char *pathname, char *buffer, size_t size);
 
   static size_t createprocess(size_t path, size_t sleep);
   static void trace();
