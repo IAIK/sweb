@@ -8,6 +8,7 @@
 #include <uatomic.h>
 #include "Thread.h"
 #include "debug.h"
+#include "SchedulerLock.h"
 
 class Thread;
 class Mutex;
@@ -84,9 +85,10 @@ class Scheduler
 
     static Scheduler *instance_;
 
+    SchedulerLock scheduler_lock_;
 
-    ustl::atomic<size_t> block_scheduling_;
-    volatile Thread* scheduling_blocked_by_ = nullptr;
+    // ustl::atomic<size_t> block_scheduling_;
+    // volatile Thread* scheduling_blocked_by_ = nullptr;
     volatile char* locked_at_ = nullptr;
 
     size_t ticks_;
