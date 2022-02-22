@@ -147,7 +147,7 @@ void handleSDT(ACPISDTHeader* entry_header)
     char sig[5];
     memcpy(sig, entry_header->Signature, 4);
     sig[4] = '\0';
-    debug(ACPI, "[%p] RSDR Header signature: %s\n", entry_header, sig);
+    debug(ACPI, "[%p] SDT Header signature: %s\n", entry_header, sig);
   }
 
   if(memcmp(entry_header->Signature, "APIC", 4) == 0)
