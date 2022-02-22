@@ -207,10 +207,13 @@ void Scheduler::addNewThread(Thread *thread)
   scheduler_lock_.release();
 }
 
-void Scheduler::sleep()
+void Scheduler::sleep(bool should_yield)
 {
   currentThread->setState(Sleeping);
-  yield();
+  if (should_yield)
+  {
+      yield();
+  }
 }
 
 void Scheduler::wake(Thread* thread_to_wake)

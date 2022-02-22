@@ -29,7 +29,7 @@ class Scheduler
     static bool isInitialized();
 
     void addNewThread(Thread *thread);
-    void sleep();
+    void sleep(bool yield = true);
     void wake(Thread *thread_to_wake);
     void yield();
     void printThreadList();
