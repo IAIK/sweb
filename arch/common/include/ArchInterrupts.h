@@ -64,5 +64,11 @@ public:
                 }
         }
 
+        bool previousInterruptState()
+        {
+            return previous_state_;
+        }
+
+private:
         bool previous_state_;
 };
