@@ -269,6 +269,14 @@ add_custom_target(runcgdb
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
+#Custom target: make rungdbgui
+#Run gdbgui with some presets
+add_custom_target(rungdbgui
+    COMMAND gdbgui -g 'gdb --ex "file ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}" --command=${PROJECT_SOURCE_DIR}/utils/gdbinit' --project /tmp/sweb_upstream/ ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
+    COMMENT "Going to gdbgui"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+)
+
 
 #Custom target: make rungdb
 #Run gdb with some presets
