@@ -8,18 +8,11 @@ end
 
 define continue_on_pagefault
 	handle SIGSEGV nostop noprint nopass
-	echo Now continueing on every pagefault\n
+	echo Now continuing on every pagefault\n
 end
 document continue_on_pagefault
 	Tells GDB to ignore pagefaults
 end 
-
-# Special Macro definition that GDB calls on every break
-define hook-stop
-	echo \n
-	echo 'c' to continue execution\n
-	echo 's' to step\n
-end
 
 set architecture i386:x86-64
 
@@ -31,5 +24,5 @@ echo \n\n
 echo You can now set trace and breakpoints.\n
 echo Enter 'continue' (or 'c') when you're done.\n
 
-set var cont=true
 break sweb_assert
+break startup
