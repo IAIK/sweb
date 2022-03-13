@@ -58,7 +58,7 @@ void Lock::printHoldingList(Thread* thread)
         thread->getName(), thread);
   for(Lock* lock = thread->holding_lock_list_; lock != 0; lock = lock->next_lock_on_holding_list_)
   {
-    kprintfd(" %s (%p)%s", lock->name_, lock, lock->next_lock_on_holding_list_ ? "," : ".\n");
+    kprintfd(" %s (%p) [%zu locked schedules]%s", lock->name_, lock, lock->locked_schedules_, lock->next_lock_on_holding_list_ ? "," : ".\n");
   }
 }
 

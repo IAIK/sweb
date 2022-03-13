@@ -58,6 +58,8 @@ public:
     return next_lock_on_holding_list_;
   }
 
+  size_t locked_schedules_ = 0;
+
 protected:
 
   /**

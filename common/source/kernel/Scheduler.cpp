@@ -43,6 +43,14 @@ uint32 Scheduler::schedule()
     return 0;
   }
 
+  if (currentThread)
+  {
+    for(Lock* lock = currentThread->holding_lock_list_; lock != 0; lock = lock->next_lock_on_holding_list_)
+    {
+      lock->locked_schedules_++;
+    }
+  }
+
   auto it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
@@ -229,8 +237,8 @@ void Scheduler::printLockingInformation()
     thread = threads_[thread_count];
     if(thread->lock_waiting_on_ != 0)
     {
-      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p).\n", thread->getName(), thread,
-            thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_ );
+      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p) [locked during %zu schedules].\n", thread->getName(), thread,
+            thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_, thread->lock_waiting_on_->locked_schedules_);
     }
   }
   debug(LOCK, "Scheduler::printLockingInformation finished\n");
