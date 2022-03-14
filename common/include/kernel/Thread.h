@@ -124,6 +124,8 @@ class Thread
      */
     Lock* holding_lock_list_;
 
+    void countLocksHeldAtSchedule() const;
+
   private:
     Thread(Thread const &src);
     Thread &operator=(Thread const &src);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "Thread.h"
 
 class Thread;
 
@@ -11,6 +12,7 @@ class Lock
 {
 public:
   friend class Scheduler;
+  friend void Thread::countLocksHeldAtSchedule() const;
 
   Lock(const char* name);
 

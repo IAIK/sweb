@@ -190,3 +190,15 @@ void Thread::setState(ThreadState new_state)
 
   state_ = new_state;
 }
+
+void Thread::countLocksHeldAtSchedule() const
+{
+  if (lock_waiting_on_ != 0)
+      lock_waiting_on_->locked_schedules_++;
+
+  for(Lock* lock = holding_lock_list_; lock != 0; lock = lock->next_lock_on_holding_list_)
+  {
+    lock->locked_schedules_++;
+  }
+
+}

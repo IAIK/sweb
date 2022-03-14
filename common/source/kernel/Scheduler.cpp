@@ -44,16 +44,12 @@ uint32 Scheduler::schedule()
   }
 
   if (currentThread)
-  {
-    for(Lock* lock = currentThread->holding_lock_list_; lock != 0; lock = lock->next_lock_on_holding_list_)
-    {
-      lock->locked_schedules_++;
-    }
-  }
+    currentThread->countLocksHeldAtSchedule();
 
   auto it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
+    (*it)->countLocksHeldAtSchedule();
     if((*it)->schedulable())
     {
       currentThread = *it;
