@@ -9,10 +9,13 @@ class ATADriver : public BDDriver
 {
   public:
 
-    typedef enum BD_ATA_MODE_
+    enum class BD_ATA_MODE
     {
-      BD_PIO_NO_IRQ, BD_PIO, BD_DMA, BD_UDMA
-    } BD_ATA_MODES;
+      BD_PIO_NO_IRQ,
+      BD_PIO,
+      BD_DMA,
+      BD_UDMA
+    };
 
     /**
      * adds the given request to a list and checkes the type of the
@@ -89,11 +92,10 @@ class ATADriver : public BDDriver
 
     uint32 jiffies;
 
-    BD_ATA_MODES mode; // mode see enum BD_ATA_MODES
+    BD_ATA_MODE mode;
 
     BDRequest *request_list_;
     BDRequest *request_list_tail_;
 
     Mutex lock_;
 };
-

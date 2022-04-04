@@ -25,7 +25,7 @@ void BDManager::doDeviceDetection()
   debug(BD_MANAGER, "doDeviceDetection: Detecting BD devices\n");
   IDEDriver id;
   // insert other device detectors here
-  debug(BD_MANAGER, "doDeviceDetection:Detection done\n");
+  debug(BD_MANAGER, "doDeviceDetection: Detection done\n");
 }
 
 void BDManager::addRequest(BDRequest* bdr)
@@ -33,20 +33,20 @@ void BDManager::addRequest(BDRequest* bdr)
   if (bdr->getDevID() < getNumberOfDevices())
     getDeviceByNumber(bdr->getDevID())->addRequest(bdr);
   else
-    bdr->setStatus(BDRequest::BD_ERROR);
+    bdr->setStatus(BDRequest::BD_RESULT::BD_ERROR);
 }
 
 void BDManager::addVirtualDevice(BDVirtualDevice* dev)
 {
-  debug(BD_MANAGER, "addVirtualDevice:Adding device\n");
+  debug(BD_MANAGER, "addVirtualDevice: Adding device\n");
   dev->setDeviceNumber(device_list_.size());
   device_list_.push_back(dev);
-  debug(BD_MANAGER, "addVirtualDevice:Device added\n");
+  debug(BD_MANAGER, "addVirtualDevice: Device added\n");
 }
 
 void BDManager::serviceIRQ(uint32 irq_num)
 {
-  debug(BD_MANAGER, "serviceIRQ:Servicing IRQ\n");
+  debug(BD_MANAGER, "serviceIRQ: Servicing IRQ\n");
   probeIRQ = false;
 
   for (BDVirtualDevice* dev : device_list_)
@@ -56,7 +56,7 @@ void BDManager::serviceIRQ(uint32 irq_num)
       return;
     }
 
-  debug(BD_MANAGER, "serviceIRQ:End servicing IRQ\n");
+  debug(BD_MANAGER, "serviceIRQ: End servicing IRQ\n");
 }
 
 BDVirtualDevice* BDManager::getDeviceByNumber(uint32 dev_num)

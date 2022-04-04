@@ -21,22 +21,22 @@ uint32 RamDiskDriver::addRequest(BDRequest * request)
 {
   switch (request->getCmd())
   {
-  case BDRequest::BD_GET_BLK_SIZE:
+  case BDRequest::BD_CMD::BD_GET_BLK_SIZE:
     request->setResult(getSectorSize());
-    request->setStatus(BDRequest::BD_DONE);
+    request->setStatus(BDRequest::BD_RESULT::BD_DONE);
     break;
-  case BDRequest::BD_GET_NUM_BLOCKS:
+  case BDRequest::BD_CMD::BD_GET_NUM_BLOCKS:
     request->setResult(getNumSectors());
-    request->setStatus(BDRequest::BD_DONE);
+    request->setStatus(BDRequest::BD_RESULT::BD_DONE);
     break;
-  case BDRequest::BD_READ:
+  case BDRequest::BD_CMD::BD_READ:
     readSector(request->getStartBlock(), request->getNumBlocks(), request->getBuffer());
     break;
-  case BDRequest::BD_WRITE:
+  case BDRequest::BD_CMD::BD_WRITE:
     writeSector(request->getStartBlock(), request->getNumBlocks(), request->getBuffer());
     // fall-through
   default:
-    request->setStatus(BDRequest::BD_DONE);
+    request->setStatus(BDRequest::BD_RESULT::BD_DONE);
     request->setResult(0);
     break;
   }

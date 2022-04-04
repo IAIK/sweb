@@ -21,8 +21,11 @@
                                          BODY;\
                                        }
 
-ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
-        port(baseport), drive((getdrive == 0) ? 0xA0 : 0xB0), jiffies(0), lock_("ATADriver::lock_")
+ATADriver::ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum) :
+    port(baseport),
+    drive((getdrive == 0) ? 0xA0 : 0xB0),
+    jiffies(0),
+    lock_("ATADriver::lock_")
 {
   debug(ATA_DRIVER, "ctor: Entered with irqnum %d and baseport %x!!\n", irqnum, baseport);
   debug(ATA_DRIVER, "ctor: Requesting disk geometry !!\n");
@@ -35,7 +38,7 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
 
   for (uint16 & dd_16 : dd) // Read "sector" 512 b
   {
-    dd_16 = inportw ( port );
+    dd_16 = inportw(port);
   }
 
   debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
@@ -48,16 +51,14 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
   numsec = CYLS * HPC * SPT;
 
   debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
-  bool interrupt_context = ArchInterrupts::disableInterrupts();
-  ArchInterrupts::enableInterrupts();
+  {
+      WithInterrupts intr(true);
+      ArchInterrupts::enableIRQ(irqnum);
+      testIRQ();
+  }
 
-  ArchInterrupts::enableIRQ(irqnum);
-
-  testIRQ( );
-  if( !interrupt_context )
-    ArchInterrupts::disableInterrupts();
   irq = irqnum;
-  debug(ATA_DRIVER, "ctor: mode: %d !!\n", mode );
+  debug(ATA_DRIVER, "ctor: Using ATA mode: %d !!\n", (int)mode);
 
   request_list_ = nullptr;
   request_list_tail_ = nullptr;
@@ -67,19 +68,19 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) :
 
 void ATADriver::testIRQ( )
 {
-  mode = BD_PIO;
+  mode = BD_ATA_MODE::BD_PIO;
 
   BDManager::getInstance()->probeIRQ = true;
   readSector( 0, 1, nullptr );
 
   debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
-  TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_PIO_NO_IRQ;);
+  TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
 }
 
 int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
 {
-  BD_ATA_MODES old_mode = mode;
-  mode = BD_PIO_NO_IRQ;
+  BD_ATA_MODE old_mode = mode;
+  mode = BD_ATA_MODE::BD_PIO_NO_IRQ;
   uint32 result = readSector ( start_sector, num_sectors, buffer );
   mode = old_mode;
 
@@ -138,7 +139,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
     /* Write the command code to the command register */
     outportbp(port + 7, 0x20); // command
 
-    if (mode != BD_PIO_NO_IRQ)
+    if (mode != BD_ATA_MODE::BD_PIO_NO_IRQ)
       return 0;
 
     jiffies = 0;
@@ -167,7 +168,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
   //debug(ATA_DRIVER, "readSector:Read successfull !!\n");
-  return 0;  
+  return 0;
 }
 
 int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer )
@@ -185,19 +186,19 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
 
   uint32 count2 = (256*num_sectors);
-  if( mode != BD_PIO_NO_IRQ )
+  if( mode != BD_ATA_MODE::BD_PIO_NO_IRQ )
     count2 = 256;
 
   uint32 counter;
-  for (counter = 0; counter != count2; counter++) 
+  for (counter = 0; counter != count2; counter++)
       outportw ( port, word_buff [counter] );
- 
+
   /* Wait for drive to clear BUSY */
   TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
   /* Write flush code to the command register */
   outportbp (port + 7, 0xE7);
-    
+
   /* Wait for drive to clear BUSY */
   TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
@@ -208,49 +209,51 @@ uint32 ATADriver::addRequest( BDRequest *br )
 {
   MutexLock lock(lock_); // this lock might serialize stuff too much...
   bool interrupt_context = false;
-  debug(ATA_DRIVER, "addRequest %d!\n", br->getCmd() );
-  if( mode != BD_PIO_NO_IRQ )
+  debug(ATA_DRIVER, "addRequest %d!\n", (int)br->getCmd());
+  if (mode != BD_ATA_MODE::BD_PIO_NO_IRQ)
   {
     interrupt_context = ArchInterrupts::disableInterrupts();
 
     //Add request to the list protected by the cli
-    if( request_list_ == nullptr )
+    if (request_list_ == nullptr)
+    {
       request_list_ = request_list_tail_ = br;
+    }
     else
     {
-      request_list_tail_->setNextRequest(br) ;
+      request_list_tail_->setNextRequest(br);
       request_list_tail_ = br;
     }
   }
 
   int32 res = -1;
-  
-  switch( br->getCmd() )
+
+  switch(br->getCmd())
   {
-    case BDRequest::BD_READ:
+  case BDRequest::BD_CMD::BD_READ:
       res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
       break;
-    case BDRequest::BD_WRITE:
+  case BDRequest::BD_CMD::BD_WRITE:
       res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
       break;
-    default:
+  default:
       res = -1;
       break;
   }
-  
-  if( res != 0 )
+
+  if (res != 0)
   {
-    br->setStatus( BDRequest::BD_ERROR );
+    br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
     debug(ATA_DRIVER, "Got out on error !!\n");
-      if( interrupt_context )
-        ArchInterrupts::enableInterrupts();
+    if (interrupt_context)
+      ArchInterrupts::enableInterrupts();
     return 0;
   }
 
-  if( mode == BD_PIO_NO_IRQ )
+  if (mode == BD_ATA_MODE::BD_PIO_NO_IRQ)
   {
-    debug(ATA_DRIVER, "addRequest:No IRQ operation !!\n");
-    br->setStatus( BDRequest::BD_DONE );
+    debug(ATA_DRIVER, "addRequest: No IRQ operation !!\n");
+    br->setStatus(BDRequest::BD_RESULT::BD_DONE);
     return 0;
   }
 
@@ -259,13 +262,13 @@ uint32 ATADriver::addRequest( BDRequest *br )
     if(interrupt_context)
       ArchInterrupts::enableInterrupts();
     jiffies = 0;
-    while (br->getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
+    while (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
     if (jiffies >= IO_TIMEOUT*10)
       TIMEOUT_WARNING();
-    if (br->getStatus() == BDRequest::BD_QUEUED)
+    if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
     {
       ArchInterrupts::disableInterrupts();
-      if (br->getStatus() == BDRequest::BD_QUEUED)
+      if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
       {
         currentThread->setState(Sleeping);
         ArchInterrupts::enableInterrupts();
@@ -307,67 +310,68 @@ void ATADriver::nextRequest(BDRequest* br)
 
 void ATADriver::serviceIRQ()
 {
-  if( mode == BD_PIO_NO_IRQ )
+  if (mode == BD_ATA_MODE::BD_PIO_NO_IRQ)
     return;
 
-  if( request_list_ == nullptr )
+  if (request_list_ == nullptr)
   {
     debug(ATA_DRIVER, "serviceIRQ: IRQ without request!!\n");
-    outportbp( port + 0x206, 0x04 );
-    outportbp( port + 0x206, 0x00 ); // RESET COTROLLER
+    outportbp(port + 0x206, 0x04);
+    outportbp(port + 0x206, 0x00); // RESET COTROLLER
     debug(ATA_DRIVER, "serviceIRQ: Reset controller!!\n");
     return; // not my interrupt
   }
 
   BDRequest* br = request_list_;
   debug(ATA_DRIVER, "serviceIRQ: Found active request!!\n");
+  assert(br);
 
   uint16* word_buff = (uint16*) br->getBuffer();
   uint32 counter;
   uint32 blocks_done = br->getBlocksDone();
 
-  if( br->getCmd() == BDRequest::BD_READ )
+  if (br->getCmd() == BDRequest::BD_CMD::BD_READ)
   {
-    if( !waitForController() )
+    if (!waitForController())
     {
-      br->setStatus( BDRequest::BD_ERROR );
+      br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
       nextRequest(br);
       return;
     }
 
-    for(counter = blocks_done * 256; counter!=(blocks_done + 1) * 256; counter++ )
-      word_buff [counter] = inportw ( port );
+    for (counter = blocks_done * 256; counter != (blocks_done + 1) * 256; counter++)
+      word_buff[counter] = inportw(port);
 
     blocks_done++;
-    br->setBlocksDone( blocks_done );
+    br->setBlocksDone(blocks_done);
 
-    if( blocks_done == br->getNumBlocks() )
+    if (blocks_done == br->getNumBlocks())
     {
-      br->setStatus( BDRequest::BD_DONE );
+      br->setStatus(BDRequest::BD_RESULT::BD_DONE);
       nextRequest(br);
     }
   }
-  else if( br->getCmd() == BDRequest::BD_WRITE )
+  else if (br->getCmd() == BDRequest::BD_CMD::BD_WRITE)
   {
     blocks_done++;
-    if( blocks_done == br->getNumBlocks() )
+    if (blocks_done == br->getNumBlocks())
     {
-      debug(ATA_DRIVER, "serviceIRQ:All done!!\n");
-      br->setStatus( BDRequest::BD_DONE );
-      debug(ATA_DRIVER, "serviceIRQ:Waking up thread!!\n");
+      debug(ATA_DRIVER, "serviceIRQ: All done!!\n");
+      br->setStatus( BDRequest::BD_RESULT::BD_DONE );
+      debug(ATA_DRIVER, "serviceIRQ: Waking up thread!!\n");
       nextRequest(br);
     }
     else
     {
-      if( !waitForController() )
+      if (!waitForController())
       {
-        br->setStatus( BDRequest::BD_ERROR );
+        br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
         nextRequest(br);
         return;
       }
-  
-      for(counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
-        outportw ( port, word_buff [counter] );
+
+      for (counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
+        outportw(port, word_buff[counter]);
 
       br->setBlocksDone( blocks_done );
     }
@@ -375,9 +379,9 @@ void ATADriver::serviceIRQ()
   else
   {
     blocks_done = br->getNumBlocks();
-    br->setStatus( BDRequest::BD_ERROR );
+    br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
     nextRequest(br);
   }
 
-  debug(ATA_DRIVER, "serviceIRQ:Request handled!!\n");
+  debug(ATA_DRIVER, "serviceIRQ: Request handled!!\n");
 }

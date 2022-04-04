@@ -14,7 +14,7 @@ class BDRequest
     friend class MMCDriver;
     friend class BDManager;
 
-    typedef enum BD_CMD_ 
+    enum class BD_CMD
     {
       BD_READ            = 0x00,
       BD_WRITE           = 0x10,
@@ -24,7 +24,7 @@ class BDRequest
       BD_REINIT          = 0x31,
       BD_DEINIT          = 0x32,
       BD_SEND_RAW_CMD    = 0x40
-    } BD_CMD;
+    };
 
     /**
      * Enumeration containing the possible status values. I admit this is very bad
@@ -32,12 +32,12 @@ class BDRequest
      * with these values.
      *
      */
-    typedef enum BD_RESULT_ 
+    enum class BD_RESULT
     {
       BD_QUEUED          = 0x00,
       BD_DONE            = 0x20,
       BD_ERROR           = 0x40,
-    } BD_RESULT;      
+    };
 
     /**
      *
@@ -51,14 +51,14 @@ class BDRequest
      * checks performed, possible pagefault here
      *
      */
-    BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 ) 
+    BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 )
     {
       num_block_=num_block;
       start_block_=start_block;
       dev_id_=dev_id;
       cmd_=cmd;
       result_= 0;
-      status_ = BD_QUEUED;
+      status_ = BD_RESULT::BD_QUEUED;
       buffer_ = buffer;
 
       requesting_thread_ = currentThread;
@@ -77,12 +77,12 @@ class BDRequest
     Thread *getThread(){ return requesting_thread_; };
     BDRequest *getNextRequest(){ return next_request_; };
 
-    void setStartBlock( uint32 start_blk ){ start_block_=start_blk; };
-    void setResult( uint32 result ){ result_=result; };
-    void setStatus( BD_RESULT status ){ status_=status; };
-    void setBlocksDone( uint32 bdone ){ blocks_done_=bdone; };
-    void setNextRequest( BDRequest *next ){ next_request_=next; };
-    void setNumBlocks(uint32 num_block){ num_block_ = num_block; };
+    void setStartBlock( uint32 start_blk ) { start_block_  = start_blk; };
+    void setResult( uint32 result )        { result_       = result;    };
+    void setStatus( BD_RESULT status )     { status_       = status;    };
+    void setBlocksDone( uint32 bdone )     { blocks_done_  = bdone;     };
+    void setNextRequest( BDRequest *next ) { next_request_ = next;      };
+    void setNumBlocks(uint32 num_block)    { num_block_    = num_block; };
 
   private:
     BDRequest();
@@ -98,4 +98,3 @@ class BDRequest
     Thread *requesting_thread_;
     BDRequest *next_request_;
 };
-
