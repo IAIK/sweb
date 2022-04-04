@@ -1,9 +1,11 @@
 #include "CleanupThread.h"
 #include "Scheduler.h"
 #include "ArchMulticore.h"
+#include "VgaColors.h"
 
 CleanupThread::CleanupThread() : Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
 {
+    console_color = CONSOLECOLOR::BROWN;
 }
 
 CleanupThread::~CleanupThread()

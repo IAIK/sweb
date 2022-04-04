@@ -2,9 +2,13 @@
 #include "Scheduler.h"
 #include "ArchCommon.h"
 #include "ArchMulticore.h"
+#include "debug.h"
+#include "VgaColors.h"
 
-IdleThread::IdleThread() : Thread(0, "IdleThread", Thread::KERNEL_THREAD)
+IdleThread::IdleThread() :
+    Thread(nullptr, "IdleThread", Thread::KERNEL_THREAD)
 {
+    console_color = CONSOLECOLOR::WHITE;
 }
 
 void IdleThread::Run()
