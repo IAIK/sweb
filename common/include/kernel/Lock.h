@@ -168,7 +168,7 @@ protected:
   /**
    * Release the lock, and set the thread to sleeping.
    */
-  void sleepAndRelease();
+  void sleepAndRelease(bool should_yield = true);
 
 private:
 
@@ -206,4 +206,3 @@ private:
   void printOutCircularDeadLock(Thread* starting);
 
 };
-

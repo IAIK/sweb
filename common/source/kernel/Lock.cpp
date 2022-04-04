@@ -334,7 +334,7 @@ void Lock::checkInvalidRelease(const char* method)
   }
 }
 
-void Lock::sleepAndRelease()
+void Lock::sleepAndRelease(bool should_yield)
 {
   currentThread->lock_waiting_on_ = this;
   pushFrontCurrentThreadToWaitersList();
@@ -346,5 +346,8 @@ void Lock::sleepAndRelease()
       Scheduler::instance()->sleep(false);
       unlockWaitersList();
   }
-  Scheduler::instance()->yield();
+  if (should_yield)
+  {
+      Scheduler::instance()->yield();
+  }
 }
