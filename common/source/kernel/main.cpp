@@ -44,13 +44,6 @@ extern "C" void removeBootTimeIdentMapping();
 
 extern "C" [[noreturn]] void startup()
 {
-#ifdef DEBUG
-  //software breakpoint for debugging
-  writeLine2Bochs("Wait for GDB!\n");
-  bool cont = false;
-  while(!cont);
-#endif
-
   system_state = BOOTING;
 
   PageManager::init();
