@@ -372,7 +372,7 @@ void LocalAPIC::sendIPI(uint8 vector, LAPIC::IPIDestination dest_type, size_t ta
         assert(!((ipi_type == LAPIC::IPIType::FIXED) && (vector < 32)));
 
         // Need to ensure this section of code runs on the same CPU and the APIC is not used for anything else in the meantime
-        WithDisabledInterrupts d;
+        WithInterrupts d(false);
 
         debug(APIC, "CPU %x Sending IPI, vector: %x\n", ID(), vector);
 
@@ -408,7 +408,7 @@ void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_del
         assert(!(vector < 32));
 
         // Ensure this section of code runs on the same CPU and the local APIC is not used for anything else in the meantime
-        WithDisabledInterrupts d;
+        WithInterrupts d(false);
 
         debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", ID(), target.ID(), vector);
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
@@ -528,7 +528,7 @@ uint32 IOAPIC::read(uint8 offset)
         debug(APIC, "IO APIC read from registers %p with offset %#x\n", reg_vaddr_, offset);
     }
 
-        WithDisabledInterrupts i;
+        WithInterrupts i(false);
         uint32 retval = 0;
         asm volatile("movl %[offset], %[io_reg_sel]\n"
                      "movl %[io_win], %[retval]\n"
@@ -541,7 +541,7 @@ uint32 IOAPIC::read(uint8 offset)
 
 void IOAPIC::write(uint8 offset, uint32 value)
 {
-        WithDisabledInterrupts i;
+        WithInterrupts i(false);
         asm volatile("movl %[offset], %[io_reg_sel]\n"
                      "movl %[value], %[io_win]\n"
                      :[io_reg_sel]"=m"(reg_vaddr_->io_reg_sel),

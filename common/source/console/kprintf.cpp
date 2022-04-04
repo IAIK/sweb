@@ -142,7 +142,7 @@ void kprintfd(const char *fmt, ...)
   // Only preventing preemption without a lock would work for a single cpu
   // but not for multicore systems.
 
-  WithDisabledInterrupts intr;
+  WithInterrupts intr(false);
 
   while(ArchThreads::testSetLock(kprintfd_locked, (size_t)1))
   {

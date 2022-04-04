@@ -9,11 +9,15 @@
 #include "Thread.h"
 #include "debug.h"
 #include "SchedulerLock.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "ArchCommon.h"
 
 class Thread;
 class Mutex;
 class SpinLock;
 class Lock;
+class PreemptProtect;
 
 extern __thread Thread* currentThread;
 extern __thread ArchThreadRegisters* currentThreadRegisters;
@@ -21,6 +25,8 @@ extern __thread ArchThreadRegisters* currentThreadRegisters;
 extern thread_local IdleThread idle_thread;
 
 extern __thread size_t cpu_ticks;
+
+extern __thread ustl::atomic<size_t> preempt_protect_count_;
 
 class Scheduler
 {
@@ -54,6 +60,7 @@ class Scheduler
     friend class IdleThread;
     friend class CleanupThread;
     friend class CpuLocalScheduler;
+    friend class PreemptProtect;
 
     void cleanupDeadThreads();
 
@@ -107,4 +114,29 @@ public:
     void updateVruntime(Thread* t, uint64 now);
     void setThreadVruntime(Thread* t, uint64 new_vruntime);
     void setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime);
+};
+
+class PreemptProtect
+{
+public:
+    PreemptProtect() :
+        intr(false)
+    {
+        ++preempt_protect_count_;
+        size_t cpu_id = ArchMulticore::getCpuID();
+        ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2 + 1] = CONSOLECOLOR::WHITE | (CONSOLECOLOR::RED << 4);
+        kprintfd("Preempt protect ++\n");
+
+    }
+
+    ~PreemptProtect()
+    {
+        kprintfd("Preempt protect --\n");
+        size_t cpu_id = ArchMulticore::getCpuID();
+        ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2 + 1] = CONSOLECOLOR::WHITE | (CONSOLECOLOR::BLACK << 4);
+        --preempt_protect_count_;
+    }
+
+private:
+    WithInterrupts intr;
 };

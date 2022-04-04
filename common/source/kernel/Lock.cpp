@@ -339,7 +339,7 @@ void Lock::sleepAndRelease()
   currentThread->lock_waiting_on_ = this;
   pushFrontCurrentThreadToWaitersList();
   {
-      WithDisabledInterrupts i;
+      PreemptProtect p;
       // Ensure that other threads only see this thread in the waiters list
       // after it has already been set to sleep
       // Must not be interrupted between sleep and unlock

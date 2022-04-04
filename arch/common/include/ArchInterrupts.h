@@ -48,27 +48,39 @@ public:
   static void yieldIfIFSet();
 };
 
-class WithDisabledInterrupts
+class WithInterrupts
 {
 public:
-        WithDisabledInterrupts()
+    WithInterrupts(bool new_state)
+    {
+        previous_state_ = ArchInterrupts::testIFSet();
+        if (new_state)
         {
-                previous_state_ = ArchInterrupts::disableInterrupts();
+            ArchInterrupts::enableInterrupts();
         }
+        else
+        {
+            ArchInterrupts::disableInterrupts();
+        }
+    }
 
-        ~WithDisabledInterrupts()
+    ~WithInterrupts()
+    {
+        if(previous_state_)
         {
-                if(previous_state_)
-                {
-                        ArchInterrupts::enableInterrupts();
-                }
+            ArchInterrupts::enableInterrupts();
         }
+        else
+        {
+            ArchInterrupts::disableInterrupts();
+        }
+    }
 
-        bool previousInterruptState()
-        {
-            return previous_state_;
-        }
+    bool previousInterruptState()
+    {
+        return previous_state_;
+    }
 
 private:
-        bool previous_state_;
+    bool previous_state_;
 };

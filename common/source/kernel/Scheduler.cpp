@@ -24,6 +24,8 @@ thread_local IdleThread idle_thread;
 
 __thread size_t cpu_ticks = 0;
 
+__thread ustl::atomic<size_t> preempt_protect_count_ = {};
+
 Scheduler *Scheduler::instance_ = nullptr;
 
 Scheduler *Scheduler::instance()
@@ -47,6 +49,13 @@ void Scheduler::schedule()
   if(SCHEDULER & OUTPUT_ADVANCED)
   {
     debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread ? currentThread->getName() : "(nil)");
+  }
+
+  if (preempt_protect_count_.load() > 0)
+  {
+      // debug(SCHEDULER, "Preemption disabled, not re-scheduling\n");
+      kprintfd("Re-Schedule blocked (preemption disabled)\n");
+      return;
   }
 
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
@@ -225,6 +234,14 @@ void Scheduler::wake(Thread* thread_to_wake)
 void Scheduler::yield()
 {
   assert(this);
+
+  if (preempt_protect_count_.load() > 0)
+  {
+      // debug(SCHEDULER, "Preemption disabled, not yielding\n");
+      kprintfd("Yield blocked (preemption disabled)\n");
+      return;
+  }
+
   if (!ArchInterrupts::testIFSet())
   {
     assert(currentThread);

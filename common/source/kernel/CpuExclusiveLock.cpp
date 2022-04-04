@@ -15,7 +15,7 @@ void CpuExclusiveLock::acquire([[maybe_unused]]pointer called_by)
 {
     {
         // CPU must not change between reading CPU ID and setting the lock value
-        WithDisabledInterrupts intr;
+        WithInterrupts intr(false);
 
         size_t expected = -1;
         size_t cpu_id = ArchMulticore::getCpuID();
