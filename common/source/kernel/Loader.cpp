@@ -162,7 +162,7 @@ bool Loader::loadDebugInfoIfAvailable()
 
   ustl::vector<Elf::Shdr> section_headers;
   section_headers.resize(hdr_->e_shnum);
-  if (readFromBinary(reinterpret_cast<char*>(&section_headers[0]), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
+  if (readFromBinary(reinterpret_cast<char*>(section_headers.data()), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
   {
     debug(USERTRACE, "Failed to load section headers!\n");
     return false;
