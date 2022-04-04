@@ -16,7 +16,7 @@ class MallocSegment
      * @param used describes if the segment is allocated or free
      */
     MallocSegment(MallocSegment *prev, MallocSegment *next, size_t size, bool used) :
-      marker_(0xdeadbeef),
+      marker_(0xdeadbeef00000000ull | (uint32) (size_t) this),
       next_(next),
       prev_(prev),
       freed_at_(0),
@@ -51,8 +51,12 @@ class MallocSegment
     }
 
     bool checkCanary();
+    bool markerOk()
+    {
+      return marker_ == (0xdeadbeef00000000ull | (uint32) (size_t) this);
+    }
 
-    uint32 marker_; // = 0xdeadbeef;
+    uint64 marker_; // = (0xdeadbeef << 32) | (this & 0xffffffff);
     MallocSegment *next_; // = NULL;
     MallocSegment *prev_; // = NULL;
     // the address where this chunk has been allocated or released at last
@@ -105,6 +109,7 @@ class KernelMemoryManager
 
     Thread* KMMLockHeldBy();
 
+    pointer getKernelBreak() const;
     size_t getUsedKernelMemory(bool show_allocs);
     void startTracing();
     void stopTracing();
@@ -135,7 +140,7 @@ class KernelMemoryManager
     MallocSegment* mergeSegments(MallocSegment* s1, MallocSegment* s2);
 
     /**
-     * This really implements the allocateMemory behaviour, but 
+     * This really implements the allocateMemory behaviour, but
      * does not lock the KMM, so we can also use it within the
      * reallocate method
      */

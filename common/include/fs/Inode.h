@@ -3,8 +3,10 @@
 #include "types.h"
 #include "kprintf.h"
 #include <ulist.h>
+#include <uatomic.h>
+#include "Dentry.h"
+#include "assert.h"
 
-class Dentry;
 class File;
 class Superblock;
 
@@ -15,6 +17,10 @@ class Superblock;
 #define I_DIRTY 1 // Dirty inodes are on the per-super-block s_dirty_ list, and
 // will be written next time a sync is requested.
 #define I_LOCK 2  //state not implemented
+
+#define A_READABLE  0x0001
+#define A_WRITABLE  0x0002
+#define A_EXECABLE  0x0004
 
 /**
  * five possible inode type bits:
@@ -35,8 +41,7 @@ class Superblock;
 class Inode
 {
   protected:
-    Dentry *i_dentry_;
-    ustl::list<Dentry*> i_dentry_link_;
+    ustl::list<Dentry*> i_dentrys_;
 
     /**
      * The (open) file of this inode.
@@ -44,9 +49,14 @@ class Inode
     ustl::list<File*> i_files_;
 
     /**
-     * the number of the link of this inode.
+     * the number of Dentry links to this inode.
      */
     uint32 i_nlink_;
+
+    /**
+     * the number of runtime references to this inode (loaded Dentrys, open files, ...)
+     */
+    uint32 i_refcount_;
 
     Superblock *superblock_;
 
@@ -56,7 +66,7 @@ class Inode
     uint32 i_size_;
 
     /**
-     * There are three possible inode type bits: I_FILE, I_DIR, I_LNK
+     * Inode type: I_FILE, I_DIR, I_LNK, ...
      */
     uint32 i_type_;
 
@@ -64,7 +74,11 @@ class Inode
      * There are three possible inode state bits: I_DIRTY, I_LOCK, I_UNUSED.
      */
     uint32 i_state_;
-
+     
+    /**
+     * The inodes permission flag
+     */
+    uint32 i_mode_;
   public:
 
     /**
@@ -72,25 +86,22 @@ class Inode
      * @param super_block the superblock to create the inode on
      * @param inode_type the inode type
      */
-    Inode(Superblock *super_block, uint32 inode_type) :
-        i_dentry_(0), i_nlink_(0), i_size_(0), i_state_(I_UNUSED)
-    {
-      superblock_ = super_block, i_type_ = inode_type;
-    }
+    Inode(Superblock *super_block, uint32 inode_type);
 
-    virtual ~Inode()
-    {
-    }
+    virtual ~Inode();
 
-    /**
-     * Create a directory with the given dentry.
-     * @param dentry the dentry
-     * @return 0 on success
-     */
-    virtual int32 create(Dentry *)
-    {
-      return 0;
-    }
+    uint32 incRefCount();
+    uint32 decRefCount();
+    uint32 numRefs();
+
+    uint32 incLinkCount();
+    uint32 decLinkCount();
+    uint32 numLinks();
+
+    void addDentry(Dentry* dentry);
+    void removeDentry(Dentry* dentry);
+    bool hasDentry(Dentry* dentry);
+
 
     /**
      * lookup should check if that name (given by the char-array) exists in the
@@ -100,33 +111,20 @@ class Inode
      * @param name the name to look for
      * @return the dentry found
      */
-    virtual Dentry* lookup(const char* /*name*/)
+    virtual Dentry* lookup(const char* /*name*/);
+
+    /**
+     * Called when a file is opened
+     */
+    virtual File* open(Dentry* /*dentry*/, uint32 /*flag*/)
     {
       return 0;
     }
 
     /**
-     * The link method should make a hard link to the name referred to by the
-     * denty, which is in the directory refered to by the Inode.
-     * (only used for File)
-     * @param flag the flag
-     * @return the link file
+     * Called when the last reference to a file is closed
      */
-    virtual File* link(uint32 /*flag*/)
-    {
-      return 0;
-    }
-
-    /**
-     * This should remove the name refered to by the Dentry from the directory
-     * referred to by the inode. (only used for File)
-     * @param file the file to unlink
-     * @retunr 0 on success
-     */
-    virtual int32 unlink(File* /*file*/)
-    {
-      return 0;
-    }
+    virtual int32 release(File* /*file*/);
 
     /**
      * This should create a symbolic link in the given directory with the given
@@ -147,48 +145,41 @@ class Inode
      * @param the dentry
      * @return 0 on success
      */
-    virtual int32 mkdir(Dentry *)
-    {
-      return 0;
-    }
+    virtual int32 mkdir(Dentry *);
 
     /**
      * Create a file with the given dentry.
      * @param dentry the dentry
      * @return 0 on success
      */
-    virtual int32 mkfile(Dentry */*dentry*/)
-    {
-      return 0;
-    }
+    virtual int32 mkfile(Dentry */*dentry*/);
+
+    /**
+     * Create a special file with the given dentry.
+     * @param the dentry
+     * @return 0 on success
+     */
+    virtual int32 mknod(Dentry*);
+
+    /**
+     * Create a hard link with the given dentry.
+     * @param the dentry
+     * @return 0 on success
+     */
+    virtual int32 link(Dentry*);
+
+    /**
+     * Unlink the given dentry from the inode.
+     * @param the dentry
+     * @return 0 on success
+     */
+    virtual int32 unlink(Dentry*);
 
     /**
      * Remove the named directory (if empty).
      * @return 0 on success
      */
-    virtual int32 rmdir()
-    {
-      return 0;
-    }
-
-    /**
-     * Remove the named directory (if empty) or file
-     * @return 0 on success
-     */
-    virtual int32 rm()
-    {
-      return 0;
-    }
-
-    /**
-     * Create a directory with the given dentry.
-     * @param the dentry
-     * @return 0 on success
-     */
-    virtual int32 mknod(Dentry *)
-    {
-      return 0;
-    }
+    virtual int32 rmdir(Dentry*);
 
     /**
      * change the name to new_name
@@ -250,35 +241,11 @@ class Inode
       return 0;
     }
 
-    /**
-     * insert the opened file point to the file_list of this inode.
-     * @param file the file to insert
-     * @return 0 on success
-     */
-    int32 insertOpenedFiles(File*);
-
-    /**
-     * remove the opened file point from the file_list of this inode.
-     * @param file the file to remove
-     * @return 0 on success
-     */
-    int32 removeOpenedFiles(File*);
-
-    bool openedFilesEmpty()
-    {
-      return (i_files_.empty());
-    }
-
     Superblock* getSuperblock()
     {
       return superblock_;
     }
 
-    /**
-     * setting the superblock is neccessary because the devices
-     * are created before the DeviceFS is created
-     * @param sb the superblock to set
-     */
     void setSuperBlock(Superblock * sb)
     {
       superblock_ = sb;
@@ -289,14 +256,9 @@ class Inode
       return i_type_;
     }
 
-    Dentry* getDentry()
+    ustl::list<Dentry*>& getDentrys()
     {
-      return i_dentry_;
-    }
-
-    File* getFirstFile()
-    {
-      return i_files_.front();
+      return i_dentrys_;
     }
 
     uint32 getNumOpenedFile()
@@ -309,11 +271,13 @@ class Inode
       return i_size_;
     }
 
+    uint32 getMode()
+    {
+      return i_mode_;
+    }
+
     int32 flush()
     {
       return 0;
     }
-    ;
-
 };
-

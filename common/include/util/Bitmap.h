@@ -11,6 +11,7 @@ class Bitmap
     static uint8 const bits_per_bitmap_atom_;
 
     Bitmap(size_t number_of_bits);
+    Bitmap(const Bitmap &bm);
     ~Bitmap();
 
     bool setBit(size_t bit_number);

@@ -75,12 +75,15 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
   return 0;
 }
 
+
+#define STAT_ROWS (1)
+
 void TextConsole::consoleScrollUp(uint8 const &state)
 {
   char* fb = (char*) ArchCommon::getFBPtr();
-  memcpy((void*) (fb + 3*consoleGetNumColumns()*2), // Preserve status info in top row
-         (void*) (fb + 4*consoleGetNumColumns()*2),
-         (consoleGetNumRows() - 4) * consoleGetNumColumns() * 2);
+  memmove((void*) (fb + (consoleGetNumColumns() * 2 * STAT_ROWS)),
+          (void*) (fb + (consoleGetNumColumns() * 2 * (STAT_ROWS + 1))),
+          (consoleGetNumRows() - 1 + STAT_ROWS) * consoleGetNumColumns() * 2);
   for(size_t i = 0; i < consoleGetNumColumns(); i++)
   {
     fb[(i + (consoleGetNumRows() - 1) * consoleGetNumColumns()) * 2] = ' ';

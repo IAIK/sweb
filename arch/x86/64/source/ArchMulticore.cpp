@@ -198,7 +198,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, (size_t)VIRTUAL_TO_PHYSICAL_BOOT(entry_addr));
 
 
-  pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
+  pointer paddr0 = ArchMemory::getIdentAddressOfPPN(entry_addr/PAGE_SIZE) + (entry_addr % PAGE_SIZE);
   auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
   assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
   assert((m.page_ppn == entry_addr/PAGE_SIZE) && "PPN in ident mapping doesn't match expected ppn for AP entry");

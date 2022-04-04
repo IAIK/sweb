@@ -210,7 +210,10 @@ extern "C" void irqHandler_65()
 extern "C" void arch_pageFaultHandler();
 extern "C" void pageFaultHandler(uint32 address, uint32 error, uint32 ip)
 {
-  PageFaultHandler::enterPageFault(address, ip, error & FLAG_PF_USER,
+  assert(!(error & FLAG_PF_RSVD) && "Reserved bit set in page table entry");
+  PageFaultHandler::enterPageFault(address,
+                                   ip,
+                                   error & FLAG_PF_USER,
                                    error & FLAG_PF_PRESENT,
                                    error & FLAG_PF_RDWR,
                                    error & FLAG_PF_INSTR_FETCH);
@@ -428,4 +431,3 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 }
 
 #include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
-

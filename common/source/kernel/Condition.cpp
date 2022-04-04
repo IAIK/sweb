@@ -46,6 +46,12 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
           "This may lower the performance of the system, and cause undetectable deadlocks!\n",
           currentThread->getName(), currentThread, getName(), this);
     printHoldingList(currentThread);
+
+
+    // Holding locks that are not released by the CV when waiting on it is strongly discouraged.
+    // It might not be a problem, but it is slow and WILL lead to hard-to-find deadlocks in most cases.
+    // If you want to remove this assert, talk to your tutor FIRST!
+    assert(!currentThread->holding_lock_list_->hasNextOnHoldingList() && "thread is holding unrelated locks while waiting on a condition variable");
   }
   lockWaitersList();
   last_accessed_at_ = called_by;

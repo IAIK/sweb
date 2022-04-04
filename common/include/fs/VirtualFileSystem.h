@@ -92,7 +92,7 @@ class VirtualFileSystem
      * @param flags the mount flags
      * @return On success, zero is returned. On error, -1 is returned.
      */
-    FileSystemInfo *root_mount(const char* fs_name, uint32 flags);
+    FileSystemInfo *rootMount(const char* fs_name, uint32 flags);
 
     /**
      * umount the ROOT from the VFS (special of the umount)

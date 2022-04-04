@@ -108,6 +108,8 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
   m_segment->checkCanary();
 
   freeSegment(m_segment, called_by);
+  if ((pointer)m_segment < kernel_break_ && m_segment->markerOk())
+    m_segment->freed_at_ = called_by;
 
   unlockKMM();
   return true;
@@ -183,6 +185,8 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
     }
     memcpy((void*) new_address, (void*) virtual_address, m_segment->getSize());
     freeSegment(m_segment, called_by);
+    if ((pointer)m_segment < kernel_break_ && m_segment->markerOk())
+      m_segment->freed_at_ = called_by;
     unlockKMM();
     return new_address;
   }
@@ -544,9 +548,9 @@ void KernelMemoryManager::stopTracing() {
 
 bool MallocSegment::checkCanary()
 {
-  if(marker_ != 0xdeadbeef)
+  if (!markerOk())
   {
-    kprintfd("Memory corruption in KMM segment %p, size: %zx, marker: %x at %p, alloc at: %zx, freed at: %zx\n",
+    kprintfd("Memory corruption in KMM segment %p, size: %zx, marker: %llx at %p, alloc at: %zx, freed at: %zx\n",
              this, getSize(), marker_, &marker_, alloc_at_, freed_at_);
     if(freed_at_)
     {
@@ -609,4 +613,8 @@ MallocSegment* KernelMemoryManager::mergeSegments(MallocSegment* s1, MallocSegme
         memset(s2, 0, sizeof(*s2));
 
         return s1;
+}
+
+pointer KernelMemoryManager::getKernelBreak() const {
+  return kernel_break_;
 }

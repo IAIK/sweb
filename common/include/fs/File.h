@@ -1,19 +1,24 @@
 #pragma once
 
 #include "types.h"
+#include "ulist.h"
 
 class Superblock;
 class Inode;
 class Dentry;
+class FileDescriptor;
 
-#define O_RDONLY    0x0000
-#define O_WRONLY    0x0001
-#define O_RDWR      0x0002
-#define O_CREAT     0x0004
-
-#define A_READABLE  0x0001
-#define A_WRITABLE  0x0002
-#define A_EXECABLE  0x0004
+#define O_RDONLY    0x0001
+#define O_WRONLY    0x0002
+#define O_RDWR      0x0004
+#define O_CREAT     0x0008
+#define O_APPEND    0x0010
+#define O_EXCL      0x0020
+#define O_NONBLOCK  0x0040
+#define O_TRUNC     0x0080
+#define O_SYNC      0x0100
+#define O_DSYNC     0x0200
+#define O_RSYNC     O_SYNC
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -25,16 +30,10 @@ class Dentry;
 #define SEEK_END 2
 #endif
 
+
 class File
 {
   public:
-
-    typedef uint32 mode_t;
-
-    class Owner
-    {
-    };
-
     uint32 uid;
     uint32 gid;
 
@@ -51,7 +50,7 @@ class File
     Superblock* f_superblock_;
 
     /**
-     * The indoe associated to the file.
+     * The inode associated to the file.
      */
     Inode* f_inode_;
 
@@ -65,11 +64,6 @@ class File
      */
     uint32 flag_;
 
-    /**
-     * The process access mode of the file;
-     * default value: READABLE ^ WRITABLE ^ EXECABLE
-     */
-    mode_t mode_;
 
     /**
      * Current offset in the file
@@ -77,9 +71,9 @@ class File
     l_off_t offset_;
 
     /**
-     * indicates the owner of the file;
+     * List of open file descriptors
      */
-    Owner owner;
+    ustl::list<FileDescriptor*> f_fds_;
 
   public:
     /**
@@ -101,11 +95,14 @@ class File
      */
     File(Inode* inode, Dentry* dentry, uint32 flag);
 
-    virtual ~File()
-    {
-    }
+    virtual ~File();
 
-    Dentry *getDentry()
+    virtual FileDescriptor* openFd();
+    virtual int closeFd(FileDescriptor* fd);
+
+
+
+    Dentry* getDentry()
     {
       return f_dentry_;
     }
@@ -179,5 +176,3 @@ class File
 
     virtual uint32 getSize();
 };
-
-

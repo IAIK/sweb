@@ -1,6 +1,7 @@
 #include "Bitmap.h"
 #include "kprintf.h"
 #include "assert.h"
+#include "kstring.h"
 
 uint8 const Bitmap::bits_per_bitmap_atom_ = 8;
 
@@ -20,6 +21,15 @@ Bitmap::Bitmap(size_t number_of_bits) :
         num_bits_set_(0)
 {
   bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)]{};
+}
+
+Bitmap::Bitmap(const Bitmap &bm)
+  : size_(bm.size_)
+  , num_bits_set_(bm.num_bits_set_)
+{
+  const size_t bytes = BITMAP_BYTE_COUNT(size_);
+  bitmap_ = new uint8[bytes]{};
+  memcpy(bitmap_, bm.bitmap_, bytes);
 }
 
 Bitmap::~Bitmap()

@@ -33,7 +33,12 @@ void Console::handleKey(uint32 key)
 {
   KeyboardManager * km = KeyboardManager::instance();
 
-  uint32 terminal_selected = key - KEY_F1;
+  // the keycode for F1 is 0x80, while F2..F12 have keycodes 0x82..0x8e
+  uint32 terminal_selected = 0;
+  if (key == KEY_F1)
+    terminal_selected = 0;
+  else
+    terminal_selected = key - (KEY_F2 - 1);
 
   if (km->isShift())
   {
@@ -124,6 +129,10 @@ void Console::Run()
       {
         key = terminals_[active_terminal_]->remap(key);
         terminals_[active_terminal_]->write(key);
+        terminals_[active_terminal_]->putInBuffer(key);
+      }
+      else if (key == '\t' || key == 151 || key == 152) // 151 -> up; 152 -> down
+      {
         terminals_[active_terminal_]->putInBuffer(key);
       }
       else

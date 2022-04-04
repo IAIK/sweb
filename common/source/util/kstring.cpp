@@ -44,9 +44,9 @@ extern "C" void *memmove(void *dest, const void *src, size_t length)
     return dest;
   }
 
-  if (src < dest)
+  if (src > dest)
   {
-    // if src is before dest we can do a forward copy
+    // if src is _not_ before dest we can do a forward copy
     while (length--)
     {
       *dest8++ = *src8++;
@@ -54,9 +54,9 @@ extern "C" void *memmove(void *dest, const void *src, size_t length)
   }
   else
   {
-    // if src is _not_ before dest we have to do a backward copy
-    src8 += length;
-    dest8 += length;
+    // if src is before dest we have to do a backward copy
+    src8 += length - 1;
+    dest8 += length - 1;
 
     while (length--)
     {
@@ -341,6 +341,22 @@ extern "C" int32 bcmp(const void *region1, const void *region2, size_t size)
   return 0;
 }
 
+extern "C" void *memnotchr(const void *block, uint8 c, size_t size)
+{
+  const uint8 *b = (const uint8*) block;
+
+  while (size--)
+  {
+    if (*b != c)
+    {
+      return (void *) b;
+    }
+    ++b;
+  }
+
+  return (void *) 0;
+}
+
 extern "C" void *memchr(const void *block, uint8 c, size_t size)
 {
   const uint8 *b = (const uint8*) block;
@@ -486,7 +502,7 @@ extern "C" char numToASCIIChar(uint8 number)
     return 0x30 + number;
 
   if (number >= 0xa && number <= 0xf)
-    return 0x61 + number;
+    return 0x61 + number - 0xa;
 
   // default value
   return '?';

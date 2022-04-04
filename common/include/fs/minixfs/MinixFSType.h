@@ -21,6 +21,6 @@ class MinixFSType : public FileSystemType
      * @param root the root dentry
      * @param s_dev the device number
      */
-    virtual Superblock *createSuper(Dentry *root, uint32 s_dev) const;
+    virtual Superblock *createSuper(uint32 s_dev);
 };
 

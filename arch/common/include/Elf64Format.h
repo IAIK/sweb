@@ -32,6 +32,7 @@ class Elf
     static const uint32 EM_860 = 7;
     static const uint32 EM_MIPS = 8;
     static const uint32 EM_AMD64 = 62;
+    static const uint32 EM_AARCH64 = 183;
 
 // Elf version
 
@@ -143,7 +144,8 @@ class Elf
           &&  hdr->e_ident[Elf::EI_CLASS] == Elf::ELFCLASS64
           &&  hdr->e_ident[Elf::EI_DATA]  == Elf::ELFDATA2LSB
           &&  hdr->e_type            == Elf::ET_EXEC
-          &&  hdr->e_machine         == Elf::EM_AMD64
+          &&  ((hdr->e_machine         == Elf::EM_AMD64)
+          ||   (hdr->e_machine         == Elf::EM_AARCH64))
           &&  hdr->e_version         == Elf::EV_CURRENT)
       {
         return true;

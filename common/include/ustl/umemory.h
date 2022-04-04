@@ -173,10 +173,10 @@ private:
 public:
     inline constexpr		shared_ptr (void)		: _p (nullptr) {}
     inline explicit		shared_ptr (pointer p)		: _p (new container (p)) {}
-    inline			shared_ptr (shared_ptr&& p)	: _p (exchange (p._p, nullptr)) {}
+    inline			shared_ptr (shared_ptr&& p)	: _p (p._p) { p._p = nullptr; }
     inline			shared_ptr (const shared_ptr& p): _p (p._p) { if (_p) ++_p->refs; }
     inline			~shared_ptr (void)		{ reset(); }
-    inline constexpr size_t	use_count (void) const		{ return _p ? _p->refs : 0; }
+    inline constexpr size_t	use_count (void) const		{ return _p ? _p->refs.load() : 0; }
     inline constexpr bool	unique (void) const		{ return use_count() == 1; }
     inline constexpr pointer	get (void) const		{ return _p ? _p->p : nullptr; }
     void			reset (pointer p = nullptr) {
@@ -190,7 +190,7 @@ public:
     inline constexpr explicit	operator bool (void) const	{ return get(); }
     inline shared_ptr&		operator= (pointer p)		{ reset (p); return *this; }
     inline shared_ptr&		operator= (shared_ptr&& p)	{ swap (p); return *this; }
-    inline shared_ptr&		operator= (const shared_ptr& p)	{ reset(); _p = p; if (_p) ++_p->refs; return *this; }
+    inline shared_ptr&		operator= (const shared_ptr& p)	{ reset(); _p = p._p; if (_p) ++_p->refs; return *this; }
     inline constexpr reference	operator* (void) const		{ return *get(); }
     inline constexpr pointer	operator-> (void) const		{ return get(); }
     inline constexpr reference	operator[] (size_t i) const	{ return get()[i]; }
@@ -478,7 +478,7 @@ ForwardIterator uninitialized_fill_n (ForwardIterator first, size_t n, const T& 
 }
 
 #if HAVE_CPP11
-    
+
 /// Moves [first, last) into result by calling move constructors in result.
 /// \ingroup RawStorageAlgorithms
 ///

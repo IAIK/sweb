@@ -67,8 +67,17 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
+  static bool in_assert = false;
   system_state = KPANIC;
   debug_print_to_fb = false;
+
+  if (in_assert) {
+      kprintfd("PANIC LOOP: How did we get here?\n");
+      while(1);
+      unreachable();
+  }
+  in_assert = true;
+
   if (ArchMulticore::numRunningCPUs() > 1)
   {
       ArchMulticore::stopAllCpus();

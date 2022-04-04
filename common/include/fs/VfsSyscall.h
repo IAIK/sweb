@@ -10,18 +10,11 @@ class Dentry;
 class VfsMount;
 class FileDescriptor;
 class VfsSyscall;
+class Path;
+class FileSystemInfo;
 
 class VfsSyscall
 {
-  protected:
-
-    /**
-     * checks the duplication from the pathname in the file-system
-     * @param pathname the input pathname
-     * @return On success, zero is returned. On error, -1 is returned.
-     */
-    static int32 dupChecking(const char* pathname, Dentry*& pw_dentry, VfsMount*& pw_vfs_mount);
-
   public:
 
     /**
@@ -35,12 +28,14 @@ class VfsSyscall
     static int32 mkdir(const char* pathname, int32 /*type*/);
 
     /**
-     * The readdir() display the names from all childs and returns a pointer
+     * The readdir() displays or saves the names from all childs into buffer and returns a pointer
      * to a Dirent.
      * @param pathname the destination-directory.
+     * @param buffer the buffer the output is saved to
+     * @param size the size of buffer in bytes
      * @return the dirent
      */
-    static Dirent* readdir(const char* pathname);
+    static Dirent* readdir(const char* pathname, char* buffer = 0, size_t size = 0);
 
     /**
      * chdir() changes the current directory to the specified directory.

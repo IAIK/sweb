@@ -411,6 +411,7 @@ const char* UsbGetDescription(struct UsbDevice *device) {
     if (device->Descriptor.VendorId == 0x424 &&
       device->Descriptor.ProductId == 0xec00)
       return "SMSC LAN9512\0";
+    // fall through
   case DeviceClassInInterface:
     if (device->Status == Configured) {
       switch (device->Interfaces[0].Class) {
@@ -594,7 +595,7 @@ Result UsbAllocateDevice(struct UsbDevice **device) {
   LOG_DEBUGF("USBD: Allocating new device, address %#x.\n", (*device)->Number);
 
   (*device)->Status = Attached;
-  (*device)->Error = None;
+  (*device)->Error = NoError;
   (*device)->PortNumber = 0;
   (*device)->Parent = NULL;
   (*device)->DriverData = NULL;

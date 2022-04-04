@@ -6,6 +6,8 @@
 #include "kstring.h"
 #include "ArchMulticore.h"
 #include "ArchCommon.h"
+#include "ArchThreads.h"
+#include "Thread.h"
 
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
@@ -44,9 +46,10 @@ bool ArchMemory::unmapPage(vpn_t virtual_page)
 
   ((uint64*)m.pt)[m.pti] = 0;
 
-  bool pt_empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
-  bool pd_empty = false;
+
   bool pdpt_empty = false;
+  bool pd_empty = false;
+  bool pt_empty = checkAndRemove<PageTableEntry>(getIdentAddressOfPPN(m.pt_ppn), m.pti);
 
   if (pt_empty)
   {
@@ -128,6 +131,8 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, size_t user_ac
 
 ArchMemory::~ArchMemory()
 {
+  assert(currentThread->kernel_registers_->cr3 != page_map_level_4_ * PAGE_SIZE && "thread deletes its own arch memory");
+
   PageMapLevel4Entry* pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   for (uint64 pml4i = 0; pml4i < PAGE_MAP_LEVEL_4_ENTRIES / 2; pml4i++) // free only lower half
   {

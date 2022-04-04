@@ -34,6 +34,15 @@ void PageManager::init()
     size_t ap_boot_code_range = instance_->allocator_->alloc(PAGE_SIZE*2, PAGE_SIZE);
     assert(ap_boot_code_range == 0);
 
+    // debug(PM, "Clearing free pages\n");
+    // for(size_t p = lowest_unreserved_page_; p < number_of_pages_; ++p)
+    // {
+    //     if(!page_usage_table_->getBit(p))
+    //     {
+    //         memset((void*)ArchMemory::getIdentAddressOfPPN(p), 0xFF, PAGE_SIZE);
+    //     }
+    // }
+
     initKernelMemoryManager();
     instance_->switchToHeapBitmapAllocator();
 }
@@ -116,7 +125,17 @@ uint32 PageManager::allocPPN(uint32 page_size)
   }
 
   ppn_t ppn = phys_addr/PAGE_SIZE;
-  memset((void*)ArchMemory::getIdentAddressOfPPN(ppn), 0, page_size);
+
+  char* page_ident_addr = (char*)ArchMemory::getIdentAddressOfPPN(ppn);
+  const char* page_modified = (const char*)memnotchr(page_ident_addr, 0xFF, page_size);
+  if(page_modified)
+  {
+      // temporarily disabled until intitial page clearing is re-implemented for new allocator architecture
+      // debug(PM, "Detected use-after-free for PPN %x at offset %zx\n", found, page_modified - page_ident_addr);
+      // assert(!page_modified && "Page modified after free");
+  }
+
+  memset(page_ident_addr, 0, page_size);
   return ppn;
 }
 
@@ -125,6 +144,8 @@ void PageManager::freePPN(uint32 page_number, uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
   assert(allocator_);
+
+  memset((void*)ArchMemory::getIdentAddressOfPPN(page_number), 0xFF, page_size);
 
   lock_.acquire();
   bool free_status = allocator_->dealloc(page_number*PAGE_SIZE, page_size);

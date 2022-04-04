@@ -9,13 +9,13 @@
 #include "Dentry.h"
 #include "FileSystemInfo.h"
 #include "Superblock.h"
+#include "MinixFSType.h"
 #include "MinixFSSuperblock.h"
 #include "VfsSyscall.h"
 #include "VfsMount.h"
 
 Superblock* superblock_;
 FileSystemInfo* default_working_dir;
-VfsMount vfs_dummy_;
 
 typedef struct fdisk_partition
 {
@@ -40,7 +40,7 @@ typedef struct master_boot_record
 
 FileSystemInfo* getcwd() { return default_working_dir; }
 
-// obviously NOT atomic, we need this for compatability in single threaded host code
+// obviously NOT atomic, we need this for compatibility in single threaded host code
 size_t atomic_add(size_t& x,size_t y)
 {
   x += y;
@@ -61,23 +61,23 @@ int main(int argc, char *argv[])
 
   if (image_fd == 0)
   {
-    printf("Error opening %s\n", argv[1]);
+    printf("exe2minixfs: Error opening %s\n", argv[1]);
     return -1;
   }
 
   char* end;
-  size_t partition = strtoul(argv[2],&end,10);
+  size_t partition = strtoul(argv[2], &end, 10);
   //printf("Partition number: %zu\n", partition);
   if (strlen(end) != 0)
   {
     fclose(image_fd);
-    printf("partition has to be a number!\n");
+    printf("exe2minixfs: partition has to be a number!\n");
     return -1;
   }
   if(partition > 4)
   {
     fclose(image_fd);
-    printf("Partition number has to be either 0 (use whole device/file) or in range [1-4]\n");
+    printf("exe2minixfs: Partition number has to be either 0 (use whole device/file) or in range [1-4]\n");
     return -1;
   }
 
@@ -85,7 +85,6 @@ int main(int argc, char *argv[])
 
   if(partition != 0)
   {
-
     MBR image_mbr;
 
     fseek(image_fd, 0, SEEK_SET);
@@ -94,13 +93,13 @@ int main(int argc, char *argv[])
     {
       if(ferror(image_fd))
       {
-        printf("Error while reading MBR from %s\n", argv[1]);
+        printf("exe2minixfs: Error while reading MBR from %s\n", argv[1]);
       }
       if(feof(image_fd))
       {
-        printf("%s EOF reached while reading MBR\n", argv[1]);
+        printf("exe2minixfs: %s EOF reached while reading MBR\n", argv[1]);
       }
-      printf("exe2minixfs was not able to read the disk image MBR\n");
+      printf("exe2minixfs: unable to read the disk image MBR\n");
       fclose(image_fd);
       return -1;
     }
@@ -114,7 +113,7 @@ int main(int argc, char *argv[])
 
     if(part_table[partition - 1].systid == 0)
     {
-      printf("No partition %zu on image\n", partition);
+      printf("exe2minixfs: No partition %zu on image\n", partition);
       fclose(image_fd);
       return -1;
     }
@@ -126,24 +125,22 @@ int main(int argc, char *argv[])
 
     part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
   }
-  else
-  {
-    part_byte_offset = 0;
-  }
 
-  superblock_ = (Superblock*) new MinixFSSuperblock(0, (size_t)image_fd, part_byte_offset);
-  //printf("exe2minxfs: Created superblock\n");
-  Dentry *mount_point = superblock_->getMountPoint();
-  //printf("exe2minxfs: Got mount point\n");
-  mount_point->setMountPoint(mount_point);
+  MinixFSType* minixfs_type = new MinixFSType();
+
+  superblock_ = (Superblock*) new MinixFSSuperblock(minixfs_type, (size_t)image_fd, part_byte_offset);
   Dentry *root = superblock_->getRoot();
+  superblock_->setMountPoint(root);
+  Dentry *mount_point = superblock_->getMountPoint();
+  mount_point->setMountedRoot(mount_point);
+
+  VfsMount vfs_dummy_(nullptr, mount_point, root, superblock_, 0);
 
 
   default_working_dir = new FileSystemInfo();
-  default_working_dir->setFsRoot(root, &vfs_dummy_);
-  default_working_dir->setFsPwd(root, &vfs_dummy_);
-
-  //printf("exe2minxfs: Created working dir\n");
+  Path root_path(root, &vfs_dummy_);
+  default_working_dir->setRoot(root_path);
+  default_working_dir->setPwd(root_path);
 
   for (int32 i = 2; i <= argc / 2; i++)
   {
@@ -151,7 +148,7 @@ int main(int argc, char *argv[])
 
     if (src_file == 0)
     {
-      printf("Wasn't able to open file %s\n", argv[2 * i - 1]);
+      printf("exe2minixfs: Failed to open host file %s\n", argv[2 * i - 1]);
       break;
     }
 
@@ -161,30 +158,27 @@ int main(int argc, char *argv[])
     char *buf = new char[size];
 
     fseek(src_file, 0, SEEK_SET);
-    assert(fread(buf, 1, size, src_file) == size && "fread was not able to read all bytes of the file");
+    assert(fread(buf, 1, size, src_file) == size && "exe2minixfs: fread was not able to read all bytes of the file");
     fclose(src_file);
 
     VfsSyscall::rm(argv[2 * i]);
-    //printf("Open path: %s\n", argv[2 * i]);
 
     ustl::string pathname(argv[2 * i]);
     size_t next_slash = pathname.find('/');
     while(next_slash != ustl::string::npos)
     {
-      //printf("pathname: %s, next slash at: %zu\n", pathname.c_str(), next_slash);
       if(next_slash != 0)
       {
         ustl::string dir_path(pathname.substr(0, next_slash));
-        //printf("Attempting to create path %s\n", dir_path.c_str());
         VfsSyscall::mkdir(dir_path.c_str(), 0);
       }
       next_slash = pathname.find('/', next_slash + 1); // TODO: Proper normalization required. This will fail for edge cases
     }
 
-    int32 fd = VfsSyscall::open(argv[2 * i], 2 | 4);
+    int32 fd = VfsSyscall::open(argv[2 * i], 4 | 8); // i.e. O_RDWR | O_CREAT
     if (fd < 0)
     {
-      printf("no success\n");
+      printf("exe2minixfs: Failed to open SWEB file %s\n", argv[2 * i]);
       delete[] buf;
       //continue;
       delete default_working_dir;
@@ -193,14 +187,21 @@ int main(int argc, char *argv[])
       return -1;
 
     }
-    VfsSyscall::write(fd, buf, size);
+    int32 write_status = VfsSyscall::write(fd, buf, size);
+    if((size_t)write_status != size)
+    {
+      printf("exe2minixfs: Writing %s failed with retval %d (expected %zu)\n", argv[2 * i], write_status, size);
+    }
     VfsSyscall::close(fd);
 
     delete[] buf;
   }
+
   delete default_working_dir;
   delete superblock_;
+  delete minixfs_type;
   fclose(image_fd);
+
   return 0;
 }
 

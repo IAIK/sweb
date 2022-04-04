@@ -6,6 +6,11 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 # Include custom CMake modules from the cmake/ subdirectory
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
+set(HDD_IMAGE "SWEB.qcow2")
+set(INITRD_FILE ${PROJECT_BINARY_DIR}/sweb_initrd)
+# set(HDD_IMAGE_FILE ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk)
+
 if ("${ARCH}" STREQUAL "")
   set (ARCH "x86/64")
 endif("${ARCH}" STREQUAL "")
@@ -121,7 +126,7 @@ function(ADD_PROJECT_LIBRARY LIBRARY_NAME)
       $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
       )
 
-    set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}" PARENT_SCOPE)
+    set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
   endif(library_files)
 endfunction(ADD_PROJECT_LIBRARY)
 
@@ -176,24 +181,23 @@ foreach(file ${userspace_data})
   list(APPEND MINIXFS_ARGUMENT ${file} ${datafile})
 endforeach(file)
 
-set(INITRD_FILE ${PROJECT_BINARY_DIR}/sweb_initrd)
-set(HDD_IMAGE_FILE ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk)
 
 
 #Custom Target: hdd_image
 #Creates the hd image and copies all files to it
 add_custom_target (hdd_image ALL
     DEPENDS kernel_to_image userspace_to_image
+    COMMAND qemu-img convert -f raw -O qcow2 ${HDD_IMAGE_RAW} ${HDD_IMAGE}
 )
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_FILE}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
+    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_RAW}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
-    #COMMAND ./mkminixfs "${HDD_IMAGE_FILE}" 1
-    COMMAND ./exe2minixfs "${HDD_IMAGE_FILE}" 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
+    #COMMAND ./mkminixfs "${HDD_IMAGE_RAW}" 1
+    COMMAND ./exe2minixfs "${HDD_IMAGE_RAW}" 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
                                            ./kernel.x boot/kernel.x
                                            ./kernel.dbg boot/kernel.dbg
                                            #"${INITRD_FILE}" boot/initrd
@@ -203,12 +207,25 @@ add_custom_target (kernel_to_image
 
 #Custom Command: Outputs kernel_image
 #Executes the linker command after all libraries where build successfully
+if("${ARCH}" MATCHES "armv8")
+#For armv8 we need to execute the final linking step twice because after the first time
+#The debug info gets extracted and linked in at the second link step
+add_custom_target (kernel_image
+    DEPENDS ${FINAL_LIB_NAMES} add-dbg
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${ADD_LD_ARGUMENT}
+    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+)
+
+else()
+
 add_custom_target (kernel_image
     DEPENDS ${FINAL_LIB_NAMES} add-dbg
     COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
     WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
     )
 
+endif()
 
 add_custom_command (OUTPUT ${INITRD_FILE}
   DEPENDS mkminixfs exe2minixfs
@@ -220,11 +237,11 @@ add_custom_command (OUTPUT ${INITRD_FILE}
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
-    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${HDD_IMAGE_FILE}" # "${INITRD_FILE}"
+    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${HDD_IMAGE_RAW}" # "${INITRD_FILE}"
     COMMAND mkdir -p userspace/data
     COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./mkminixfs -d "${HDD_IMAGE_FILE}" -p 2
-    COMMAND ./exe2minixfs "${HDD_IMAGE_FILE}" 2 ${MINIXFS_ARGUMENT}
+    # COMMAND ./mkminixfs -d "${HDD_IMAGE_RAW}" -p 2
+    COMMAND ./exe2minixfs "${HDD_IMAGE_RAW}" 2 ${MINIXFS_ARGUMENT}
     # COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
@@ -269,6 +286,14 @@ add_custom_target(runcgdb
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
+#Custom target: make rungdbgui
+#Run gdbgui with some presets
+add_custom_target(rungdbgui
+    COMMAND gdbgui -g 'gdb --ex "file ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}" --command=${PROJECT_SOURCE_DIR}/utils/gdbinit' --project /tmp/sweb_upstream/ ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
+    COMMENT "Going to gdbgui"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+)
+
 
 #Custom target: make rungdb
 #Run gdb with some presets
@@ -304,8 +329,9 @@ MAKE_ARCH_TARGET(x86_32_pae x86/32/pae "")
 MAKE_ARCH_TARGET(x86_64 x86/64 "")
 
 MAKE_ARCH_TARGET(arm_icp arm/integratorcp "")
-MAKE_ARCH_TARGET(arm_verdex arm/verdex "")
 MAKE_ARCH_TARGET(arm_rpi2 arm/rpi2 "")
+MAKE_ARCH_TARGET(armv8_rpi3 armv8/rpi3 "-DVIRTUALIZED_QEMU=1")
+MAKE_ARCH_TARGET(armv8_rpi3_hardware armv8/rpi3 "")
 
 
 

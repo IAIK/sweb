@@ -14,6 +14,7 @@
 #include "ArchMulticore.h"
 #include "SegmentUtils.h"
 #include "Scheduler.h"
+#include "KernelMemoryManager.h"
 
 void puts(const char* string);
 
@@ -100,7 +101,7 @@ pointer ArchCommon::getFreeKernelMemoryStart()
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
 {
-   return 0xFFFFFFFF80400000ULL;
+   return KernelMemoryManager::instance()->getKernelBreak();
 }
 
 

@@ -407,7 +407,9 @@ void HidEnumerateActionCountField(void* data, u16 tag, u32 value) {
   type = 0;
   switch (tag) {
   case TagMainFeature: type++;
+    // fall through
   case TagMainOutput: type++;
+    // fall through
   case TagMainInput: type++;
     inner = NULL;
     for (u32 i = 0; i < reportFields->current; i++) {
@@ -459,7 +461,9 @@ void HidEnumerateActionAddField(void* data, u16 tag, u32 value) {
   type = 0;
   switch (tag) {
   case TagMainFeature: type++;
+    // fall through
   case TagMainOutput: type++;
+    // fall through
   case TagMainInput: type++;
     report = NULL;
     for (i = 0; i < fields->result->ReportCount; i++)

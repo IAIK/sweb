@@ -232,12 +232,10 @@ struct interrupt_registers {
 
 extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
 {
-  register struct context_switch_registers* registers;
-  registers = (struct context_switch_registers*) base;
-  register struct interrupt_registers* iregisters;
-  iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint64));
+  struct context_switch_registers* registers = (struct context_switch_registers*) base;
+  struct interrupt_registers* iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint64));
   setFSBase((uint64)getSavedFSBase());
-  register ArchThreadRegisters* info = currentThreadRegisters;
+  ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
       :

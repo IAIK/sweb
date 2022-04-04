@@ -11,8 +11,13 @@ generate () {
   echo
   echo 'DWARFPP_BEGIN_NAMESPACE'
   echo
-  python2 "$SOURCE_DIR"/../elf/enum-print.py < "$SOURCE_DIR"/dwarf++.hh
-  python2 "$SOURCE_DIR"/../elf/enum-print.py -s _ -u --hex -x hi_user -x lo_user < "$SOURCE_DIR"/data.hh
+  PYTHON=python
+  command -v $PYTHON > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    PYTHON=python3
+  fi
+  $PYTHON "$SOURCE_DIR"/../elf/enum-print.py < "$SOURCE_DIR"/dwarf++.hh
+  $PYTHON "$SOURCE_DIR"/../elf/enum-print.py -s _ -u --hex -x hi_user -x lo_user < "$SOURCE_DIR"/data.hh
   echo 'DWARFPP_END_NAMESPACE'
 }
 

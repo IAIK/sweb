@@ -11,9 +11,10 @@ class MutexLock
     MutexLock(Mutex &m, bool b);
     ~MutexLock();
 
+    MutexLock(MutexLock const&) = delete;
+    MutexLock &operator=(MutexLock const&) = delete;
+
   private:
-    MutexLock(MutexLock const&);
-    MutexLock &operator=(MutexLock const&);
 
     Mutex &mutex_;
     bool use_mutex_;

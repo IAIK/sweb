@@ -44,7 +44,6 @@ extern "C" void initialisePaging()
   pml4[511].present = 1;
 
   // ident mapping 0x0                <-> 0x0 --> pml4i = 0, pdpti = 0
-  // ident mapping 0x* 0000 C000 0000 <-> 0x0 --> pml4i = 0, pdpti = 3
   // ident mapping 0x* F000 0000 0000 <-> 0x0 --> pml4i = 480, pdpti = 0
   // ident mapping 0x* FFFF 8000 0000 <-> 0x0 --> pml4i = 511, pdpti = 510
 
@@ -108,7 +107,7 @@ extern "C" void initialisePaging()
 
 extern "C" void removeBootTimeIdentMapping()
 {
-  uint64* pml4 = (uint64*)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
+  uint64* pml4 = (uint64*)&kernel_page_map_level_4[0];
   pml4[0] = 0;
   pml4[1] = 0;
 }

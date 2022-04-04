@@ -90,7 +90,7 @@ class Dentry
      * return the mount_point of the current file-system
      * @return the dentry of the mount point
      */
-    Dentry* getMountPoint()
+    Dentry* getMountedRoot()
     {
       return d_mounts_;
     }
@@ -99,7 +99,7 @@ class Dentry
      * set the mount point
      * @param mount_point the dentry to set the mount point to
      */
-    void setMountPoint(Dentry *mount_point)
+    void setMountedRoot(Dentry *mount_point)
     {
       d_mounts_ = mount_point;
     }
@@ -157,8 +157,8 @@ class Dentry
     virtual void childInsert(Dentry *child_dentry);
 
   public:
-    Dentry(const char* name);
-    Dentry(Dentry *parent);
+    Dentry(Inode* inode); // root dentry
+    Dentry(Inode* inode, Dentry* parent, const ustl::string& name); // named dentry
     virtual ~Dentry();
     ustl::string d_name_;
 };

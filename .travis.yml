@@ -2,68 +2,6 @@ language: cpp
 compiler: gcc
 matrix:
   include:
-    - os: linux
-      dist: xenial
-      sudo: required
-      addons:
-        apt:
-            update: true
-            sources:
-                - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            packages:
-                - cmake
-                - gcc-arm-none-eabi
-                - binutils-arm-none-eabi
-                - u-boot-tools
-                - gcc-5
-                - g++-5
-                - qemu-system-x86
-                - qemu-system-arm
-      env:
-        - CCOMPILER=gcc-5
-        - CXXCOMPILER=g++-5
-    - os: linux
-      dist: xenial
-      sudo: required
-      addons:
-        apt:
-            update: true
-            sources:
-                - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            packages:
-                - cmake
-                - gcc-arm-none-eabi
-                - binutils-arm-none-eabi
-                - u-boot-tools
-                - gcc-6
-                - g++-6
-                - qemu-system-x86
-                - qemu-system-arm
-      env:
-        - CCOMPILER=gcc-6
-        - CXXCOMPILER=g++-6
-
-    - os: linux
-      dist: xenial
-      sudo: required
-      addons:
-        apt:
-            update: true
-            sources:
-                - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            packages:
-                - cmake
-                - gcc-arm-none-eabi
-                - binutils-arm-none-eabi
-                - u-boot-tools
-                - gcc-7
-                - g++-7
-                - qemu-system-x86
-                - qemu-system-arm
-      env:
-        - CCOMPILER=gcc-7
-        - CXXCOMPILER=g++-7
-                
         
     - os: linux
       dist: xenial
@@ -77,14 +15,96 @@ matrix:
                 - cmake
                 - gcc-arm-none-eabi
                 - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
                 - u-boot-tools
                 - gcc-8
                 - g++-8
                 - qemu-system-x86
                 - qemu-system-arm
+                - qemu-system-aarch64
+                - qemu-utils
       env:
         - CCOMPILER=gcc-8
         - CXXCOMPILER=g++-8
+
+    - os: linux
+      dist: xenial
+      sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
+                - u-boot-tools
+                - gcc-9
+                - g++-9
+                - qemu-system-x86
+                - qemu-system-arm
+                - qemu-system-aarch64
+                - qemu-utils
+      env:
+        - CCOMPILER=gcc-9
+        - CXXCOMPILER=g++-9
+
+    - os: linux
+      dist: bionic
+      sudo: required
+      addons:
+        apt:
+            update: true
+            sources:
+                - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
+                - u-boot-tools
+                - gcc-10
+                - g++-10
+                - qemu-system-x86
+                - qemu-system-arm
+                - qemu-system-aarch64
+                - qemu-utils
+      env:
+        - CCOMPILER=gcc-10
+        - CXXCOMPILER=g++-10
+
+    - os: linux
+      dist: bionic
+      sudo: required
+      addons:
+        apt:
+            update: true
+            packages:
+                - cmake
+                - gcc-arm-none-eabi
+                - binutils-arm-none-eabi
+                - gcc-aarch64-linux-gnu
+                - g++-aarch64-linux-gnu
+                - binutils-aarch64-linux-gnu
+                - u-boot-tools
+                - gcc
+                - g++
+                - qemu-system-x86
+                - qemu-system-arm
+                - qemu-system-aarch64
+                - qemu-utils
+      env:
+        - CCOMPILER=gcc
+        - CXXCOMPILER=g++
+
         
 install:
   - if [[ -n "$CCOMPILER" ]]; then export CC=$CCOMPILER; fi
@@ -106,4 +126,4 @@ script:
   - cp ../sweb/utils/travis_test.sh .
   - timeout 120 ./travis_test.sh arm_icp
   - cp ../sweb/utils/travis_test.sh .
-  - timeout 120 ./travis_test.sh arm_verdex
+  - timeout 120 ./travis_test.sh armv8_rpi3

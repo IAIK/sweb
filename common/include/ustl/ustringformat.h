@@ -32,5 +32,5 @@ extern int
 kvprintf(char const *fmt, void (*func)(int, void*), void *arg, int radix, va_list ap);
 
 extern char *
-ksprintn(char* nbuf, register u_long ul, register int base, register int* lenp, register int upper);
+ksprintn(char* nbuf, u_long ul, int base, int* lenp, int upper);
 

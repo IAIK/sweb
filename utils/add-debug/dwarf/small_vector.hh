@@ -138,11 +138,13 @@ public:
 
         reference front()
         {
+                assert(base.size() >= 1);
                 return base[0];
         }
 
         const_reference front() const
         {
+                assert(base.size() >= 1);
                 return base[0];
         }
 

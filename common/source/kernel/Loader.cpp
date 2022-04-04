@@ -23,6 +23,8 @@ Loader::~Loader()
 {
   delete userspace_debug_info_;
   delete hdr_;
+  userspace_debug_info_ = nullptr;
+  hdr_ = nullptr;
 }
 
 void Loader::loadPage(pointer virtual_address)
@@ -248,6 +250,8 @@ bool Loader::loadDebugInfoIfAvailable()
           }
         } else {
           debug(USERTRACE, "SWEBDbg Infos are empty\n");
+          delete[] stab_data;
+          delete[] stabstr_data;
           return false;
         }
       }

@@ -3,10 +3,13 @@ cmake_minimum_required(VERSION 3.11)
 file(GLOB util_mkminixfs_SOURCES CONFIGURE_DEPENDS *.cpp
                                    ../../common/source/util/Bitmap.cpp
                                    ../../common/source/fs/Dentry.cpp
+                                   ../../common/source/fs/Inode.cpp
                                    ../../common/source/fs/FileDescriptor.cpp
                                    ../../common/source/fs/FileSystemInfo.cpp
+                                   ../../common/source/fs/FileSystemType.cpp
                                    ../../common/source/fs/Superblock.cpp
                                    ../../common/source/fs/File.cpp
+                                   ../../common/source/fs/Path.cpp
                                    ../../common/source/fs/PathWalker.cpp
                                    ../../common/source/fs/VfsMount.cpp
                                    ../../common/source/fs/VfsSyscall.cpp
@@ -27,6 +30,7 @@ target_include_directories(mkminixfs
     ../../common/include/util
     ../../common/include/fs
     ../../common/include/fs/minixfs
+    ../../common/include/console
 )
 
 target_compile_definitions(mkminixfs PRIVATE EXE2MINIXFS=1)

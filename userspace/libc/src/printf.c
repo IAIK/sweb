@@ -522,7 +522,7 @@ extern int printf(const char *format, ...)
           int len = strlen(string_arg);
 
           // we should align right -> fill with spaces
-          if( !((flag & LEFT) && (len < width)) )
+          if( !(flag & LEFT) && (len < width) )
           {
             character_count -= width - len;
             if( character_count < 0 )

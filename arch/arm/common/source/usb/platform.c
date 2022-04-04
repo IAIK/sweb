@@ -156,6 +156,7 @@ void LogPrintF(const char* format, u32 formatLength, ...) {
         switch (format[index]) {
         case 'c':
           character = va_arg(args, int) & 0x7f;
+          // fall through
         case '%':
           messageBuffer[messageIndex++] = character;
           break;
@@ -214,8 +215,10 @@ void LogPrintF(const char* format, u32 formatLength, ...) {
           break;
         case 'o':
           base = 8;
+          // fall through
         case 'u':
           if (format[index] == 'u') base = 10;
+          // fall through
         case 'x':
         case 'X':
         case 'p':

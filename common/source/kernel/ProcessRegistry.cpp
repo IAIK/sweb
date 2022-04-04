@@ -5,6 +5,7 @@
 #include "kprintf.h"
 #include "VfsSyscall.h"
 #include "ArchMulticore.h"
+#include "VirtualFileSystem.h"
 
 
 ProcessRegistry* ProcessRegistry::instance_ = nullptr;
@@ -36,7 +37,7 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "mounting userprog-partition \n");
 
   debug(PROCESS_REG, "mkdir /usr\n");
-  VfsSyscall::mkdir("/usr", 0);
+  assert( !VfsSyscall::mkdir("/usr", 0) );
 
   // Mount user partition (initrd if it exists, else partition 1 of IDE drive A)
   bool usr_mounted = false;
@@ -52,6 +53,11 @@ void ProcessRegistry::Run()
   }
 
   assert(usr_mounted && "Unable to mount userspace partition");
+
+  debug(PROCESS_REG, "mkdir /dev\n");
+  assert( !VfsSyscall::mkdir("/dev", 0) );
+  debug(PROCESS_REG, "mount devicefs\n");
+  assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
 
   KernelMemoryManager::instance()->startTracing();
 
@@ -74,6 +80,8 @@ void ProcessRegistry::Run()
   debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
 
   VfsSyscall::umount("/usr", 0);
+  VfsSyscall::umount("/dev", 0);
+  vfs.rootUmount();
 
   Scheduler::instance()->printStackTraces();
 

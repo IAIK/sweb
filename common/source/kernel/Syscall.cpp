@@ -49,7 +49,7 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       trace();
       break;
     case sc_pseudols:
-      VfsSyscall::readdir((const char*) arg1);
+      pseudols((const char*) arg1, (char*) arg2, arg3);
       break;
   case sc_getcpu:
       return_value = getcpu((size_t*)arg1, (size_t*)arg2, (void*)arg3);
@@ -58,6 +58,13 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %zd\n", syscall_number);
   }
   return return_value;
+}
+
+void Syscall::pseudols(const char *pathname, char *buffer, size_t size)
+{
+  if(buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
+    return;
+  VfsSyscall::readdir(pathname, buffer, size);
 }
 
 [[noreturn]] void Syscall::exit(size_t exit_code)

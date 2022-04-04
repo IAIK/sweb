@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "ustring.h"
+#include "Path.h"
 
 class Dentry;
 class VfsMount;
@@ -10,34 +11,15 @@ class FileSystemInfo
 {
   protected:
     /**
-     * the root-directory
+     * File system root
      */
-    Dentry* root_;
+    Path root_;
 
     /**
-     * the root vfsmount-struct
+     * Current working directory
      */
-    VfsMount* root_mnt_;
+    Path pwd_;
 
-    /**
-     * the current-position-directory
-     */
-    Dentry* pwd_;
-
-    /**
-     * the current-position vfsmount-struct
-     */
-    VfsMount* pwd_mnt_;
-
-    /**
-     * the alternative-root-directory
-     */
-    Dentry* alt_root_;
-
-    /**
-     * the alternative-root vfsmount-struct
-     */
-    VfsMount* alt_root_mnt_;
 
   public:
     FileSystemInfo();
@@ -46,63 +28,39 @@ class FileSystemInfo
 
     /**
      * set the ROOT-info to the class
-     * @param root the root dentry to set
-     * @param root_mnt the root_mnt to set
+     * @param root the root path to set
      */
-    void setFsRoot(Dentry* root, VfsMount* root_mnt)
+    void setRoot(const Path& path)
     {
-      root_ = root;
-      root_mnt_ = root_mnt;
+      root_ = path;
     }
 
     /**
      * set the PWD-info to the class (PWD: print working directory)
-     * @param pwd the current path to set
-     * @param pwd_mnt the mount point of the current path to set
+     * @param path the current path to set
      */
-    void setFsPwd(Dentry* pwd, VfsMount* pwd_mnt)
+    void setPwd(const Path& path)
     {
-      pwd_ = pwd;
-      pwd_mnt_ = pwd_mnt;
+      pwd_ = path;
     }
 
     /**
      * get the ROOT-info (ROOT-directory) from the class
-     * @return the root dentry
+     * @return the root path
      */
-    Dentry* getRoot()
+    Path& getRoot()
     {
       return root_;
     }
 
     /**
-     * get the ROOT-info (ROOT-VfsMount-info) from the class
-     * @return the VfsMount
-     */
-    VfsMount* getRootMnt()
-    {
-      return root_mnt_;
-    }
-
-    /**
      * get the PWD-info (PWD-directory) from the class
-     * @return the dentry of the current directory
+     * @return the path of the current directory
      */
-    Dentry* getPwd()
+    Path& getPwd()
     {
       return pwd_;
     }
-
-    /**
-     * get the PWD-info (PWD-VfsMount-info) from the class
-     * @return the VfsMount of the current directory
-     */
-    VfsMount* getPwdMnt()
-    {
-      return pwd_mnt_;
-    }
-
-    ustl::string pathname_;
 };
 
 extern FileSystemInfo* default_working_dir;

@@ -35,6 +35,7 @@ extern "C"
   int32 memcmp(const void *region1, const void *region2, size_t size);
   int32 strcmp(const char *str1, const char *str2);
   int32 strncmp(const char *str1, const char *str2, size_t n);
+  void *memnotchr(const void *block, uint8 c, size_t size);
   void *memchr(const void *block, uint8 c, size_t size);
   void *memrchr(const void *block, uint8 c, size_t size);
   char *strchr(const char* str, char c);

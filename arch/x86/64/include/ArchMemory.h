@@ -35,12 +35,12 @@ class ArchMemory
 public:
     ArchMemory();
 
-/** 
+/**
  *
  * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
  * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page 
+ * @param virtual_page
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
@@ -69,11 +69,6 @@ public:
     static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size=PAGE_SIZE)
     {
       return 0xFFFFF00000000000ULL | (ppn * page_size);
-    }
-
-    static pointer getIdentAddress(size_t address)
-    {
-      return 0xFFFFF00000000000ULL | (address);
     }
 
 /**
@@ -133,7 +128,7 @@ public:
 
 private:
 
-/** 
+/**
  * Adds a page directory entry to the given page directory.
  * (In other words, adds the reference to a new page table to a given
  * page directory.)
