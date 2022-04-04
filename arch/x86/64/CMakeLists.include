@@ -65,7 +65,7 @@ add_custom_target(qemu
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s
+	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s -S
 	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
