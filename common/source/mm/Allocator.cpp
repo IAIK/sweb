@@ -169,3 +169,19 @@ bool BootstrapRangeAllocator::dealloc(size_t start, size_t size)
         setUseable(start, start + size);
         return true;
 }
+
+size_t BootstrapRangeAllocator::nextFreeBlock(size_t size, size_t alignment, size_t start)
+{
+    for(auto & range : useable_ranges_)
+    {
+        size_t check_start = start < range.start ? range.start : start;
+        size_t align_offset = check_start % alignment;
+        check_start += (align_offset ? alignment - align_offset : 0);
+        if(check_start + size <= range.end)
+        {
+            return check_start;
+        }
+    }
+
+    return -1;
+}

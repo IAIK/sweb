@@ -4,6 +4,7 @@
 #include "Bitmap.h"
 #include "assert.h"
 #include "debug.h"
+#include "uiterator.h"
 
 class Allocator
 {
@@ -41,11 +42,47 @@ public:
 
         virtual void printUsageInfo();
 
+        size_t nextFreeBlock(size_t size, size_t alignment, size_t start);
+
         struct UseableRange
         {
                 size_t start;
                 size_t end;
         };
+
+    class AllocBlockIterator
+    {
+    public:
+        using iterator_category = ustl::input_iterator_tag;
+        using value_type        = size_t;
+        using pointer           = value_type*;
+        using const_pointer     = const value_type*;
+        using reference         = value_type&;
+        using const_reference   = const value_type&;
+
+        AllocBlockIterator(BootstrapRangeAllocator* allocator, size_t size, size_t alignment, size_t start) :
+            allocator_(allocator), size_(size), alignment_(alignment), curr_(start)
+            {}
+
+        const_reference operator*() const { return curr_; }
+        const_pointer operator->() { return &curr_; }
+
+        AllocBlockIterator& operator++() { curr_ = allocator_->nextFreeBlock(size_, alignment_, curr_ + size_); return *this; }
+
+        friend bool operator== (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ == b.curr_; };
+        friend bool operator!= (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ != b.curr_; };
+
+    private:
+        BootstrapRangeAllocator* allocator_;
+
+        size_t size_;
+        size_t alignment_;
+
+        size_t curr_;
+    };
+
+    AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
+    AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)  { return AllocBlockIterator(this, size, alignment, -1); }
 
 
 private:
