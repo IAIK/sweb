@@ -17,16 +17,17 @@
 alignas(PageManager) unsigned char pm[sizeof(PageManager)];
 
 PageManager* PageManager::instance_ = nullptr;
+bool PageManager::pm_ready_ = false;
 
 PageManager* PageManager::instance()
 {
-  assert(instance_);
+  assert(instance_ && "PageManager not yet initialized");
   return instance_;
 }
 
 void PageManager::init()
 {
-    assert(!instance_);
+    assert(!instance_ && "PageManager already initialized");
     BootstrapRangeAllocator bootstrap_pm_allocator{};
     instance_ = new (&pm) PageManager(&bootstrap_pm_allocator);
 
@@ -45,6 +46,11 @@ void PageManager::init()
 
     initKernelMemoryManager();
     instance_->switchToHeapBitmapAllocator();
+}
+
+bool PageManager::isReady()
+{
+    return pm_ready_;
 }
 
 extern void* kernel_start_address;
@@ -92,7 +98,7 @@ PageManager::PageManager(Allocator* allocator) :
 
   debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %zu\n", getNumFreePages(), total_num_useable_pages - getNumFreePages(), total_num_useable_pages);
 
-  KernelMemoryManager::pm_ready_ = 1;
+  pm_ready_ = 1;
   debug(PM, "PM ctor finished\n");
 }
 

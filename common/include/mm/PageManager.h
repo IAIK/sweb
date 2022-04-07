@@ -20,6 +20,7 @@ class PageManager
 
     static PageManager *instance();
     static void init();
+    static bool isReady();
 
     /**
      * returns the number of 4k Pages avaible to sweb.
@@ -77,4 +78,6 @@ class PageManager
     SpinLock lock_;
 
     static PageManager* instance_;
+
+    static bool pm_ready_;
 };

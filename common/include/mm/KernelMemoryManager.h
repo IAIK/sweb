@@ -77,6 +77,8 @@ class KernelMemoryManager
 
     static KernelMemoryManager *instance();
 
+    static bool isReady();
+
     /**
      * allocateMemory is called by new
      * searches the MallocSegment-List for a free segment with size >= requested_size
@@ -119,7 +121,7 @@ class KernelMemoryManager
 
     KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages);
 
-    static size_t pm_ready_;
+    static bool kmm_ready_;
 
     static KernelMemoryManager *instance_;
 

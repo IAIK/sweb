@@ -18,7 +18,8 @@ extern Stabs2DebugInfo const* kernel_debug_info;
 alignas(KernelMemoryManager) unsigned char kmm[sizeof(KernelMemoryManager)];
 
 KernelMemoryManager* KernelMemoryManager::instance_;
-size_t KernelMemoryManager::pm_ready_;
+
+bool KernelMemoryManager::kmm_ready_ = false;
 
 KernelMemoryManager* KernelMemoryManager::instance()
 {
@@ -47,7 +48,14 @@ KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_
   new (first_) MallocSegment(nullptr, nullptr, min_heap_pages * PAGE_SIZE - sizeof(MallocSegment), false);
   last_ = first_;
 
+  kmm_ready_ = true;
+
   debug(KMM, "KernelMemoryManager::ctor, Heap starts at %zx and initially ends at %zx\n", start_address, start_address + min_heap_pages * PAGE_SIZE);
+}
+
+bool KernelMemoryManager::isReady()
+{
+    return kmm_ready_;
 }
 
 
@@ -444,7 +452,6 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
       {
         debug(KMM, "%zx != %zx\n", cur_top_vpn, new_top_vpn);
         cur_top_vpn++;
-        assert(pm_ready_ && "Kernel Heap should not be used before PageManager is ready");
         size_t new_page = PageManager::instance()->allocPPN();
         if(unlikely(new_page == 0))
         {
@@ -461,7 +468,6 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
     {
       while(cur_top_vpn != new_top_vpn)
       {
-        assert(pm_ready_ && "Kernel Heap should not be used before PageManager is ready");
         ArchMemory::unmapKernelPage(cur_top_vpn);
         cur_top_vpn--;
       }

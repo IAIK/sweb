@@ -101,7 +101,14 @@ pointer ArchCommon::getFreeKernelMemoryStart()
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
 {
-   return KernelMemoryManager::instance()->getKernelBreak();
+    if (KernelMemoryManager::isReady())
+    {
+        return KernelMemoryManager::instance()->getKernelBreak();
+    }
+    else
+    {
+        return 0xFFFFFFFF80400000ULL; // TODO: not really accurate
+    }
 }
 
 
