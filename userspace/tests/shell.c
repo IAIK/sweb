@@ -21,6 +21,11 @@ char buffer[BUFFER_SIZE] __attribute__((aligned(4096)));
 char last_input[BUFFER_SIZE];
 char dir_content[4096];
 
+void pseudols(const char* path, char* buffer, size_t buffer_size)
+{
+    __syscall(sc_pseudols, (size_t)path, (size_t)buffer, buffer_size, 0, 0);
+}
+
 void handle_command(char* buffer, int buffer_size)
 {
   int c = 0;
@@ -61,7 +66,7 @@ void handle_command(char* buffer, int buffer_size)
 
   if (strcmp(command, "ls") == 0)
   {
-    __syscall(sc_pseudols, (size_t) (argsCount > 0 ? args[0] : "."), 0, 0, 0, 0);
+    pseudols((argsCount > 0 ? args[0] : "."), 0, 0);
   }
   else if (strcmp(command, "help") == 0)
   {
@@ -219,7 +224,7 @@ int main(int argc, char *argv[])
 
   printf("\n\%s\n", "SWEB-Pseudo-Shell starting...\n");
 
-  __syscall(sc_pseudols, (size_t)"/usr/", (size_t)dir_content, sizeof(dir_content), 0, 0);
+  pseudols("/usr/", dir_content, sizeof(dir_content));
 
   do
   {
