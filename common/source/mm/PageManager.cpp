@@ -35,10 +35,9 @@ void PageManager::init()
     size_t ap_boot_code_range = instance_->allocator_->alloc(PAGE_SIZE*2, PAGE_SIZE);
     assert(ap_boot_code_range == 0);
 
-    auto endIt = bootstrap_pm_allocator.freeBlocksEnd(PAGE_SIZE, PAGE_SIZE);
-    for (auto it = bootstrap_pm_allocator.freeBlocksBegin(PAGE_SIZE, PAGE_SIZE); it != endIt; ++it)
+    for (auto paddr : bootstrap_pm_allocator.freeBlocks(PAGE_SIZE, PAGE_SIZE))
     {
-        ppn_t ppn = *it/PAGE_SIZE;
+        ppn_t ppn = paddr/PAGE_SIZE;
         memset((void*)ArchMemory::getIdentAddressOfPPN(ppn), 0xFF, PAGE_SIZE);
     }
 

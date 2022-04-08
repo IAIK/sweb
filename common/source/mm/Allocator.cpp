@@ -92,13 +92,13 @@ ssize_t BootstrapRangeAllocator::findFirstFreeSlot()
         return -1;
 }
 
-bool BootstrapRangeAllocator::slotIsUsed(size_t i)
+bool BootstrapRangeAllocator::slotIsUsed(size_t i) const
 {
         assert(i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]));
         return useable_ranges_[i].start != useable_ranges_[i].end;
 }
 
-void BootstrapRangeAllocator::printUsageInfo()
+void BootstrapRangeAllocator::printUsageInfo() const
 {
         debug(PM, "Bootstrap PM useable ranges:\n");
 
@@ -111,7 +111,7 @@ void BootstrapRangeAllocator::printUsageInfo()
         }
 }
 
-size_t BootstrapRangeAllocator::numFree()
+size_t BootstrapRangeAllocator::numFree() const
 {
         size_t num_free = 0;
         for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
@@ -125,7 +125,7 @@ size_t BootstrapRangeAllocator::numFree()
         return num_free;
 }
 
-size_t BootstrapRangeAllocator::numFreeContiguousBlocks(size_t size, size_t alignment)
+size_t BootstrapRangeAllocator::numFreeContiguousBlocks(size_t size, size_t alignment) const
 {
     assert(size > 0);
     assert(alignment == size);
@@ -144,21 +144,20 @@ size_t BootstrapRangeAllocator::numFreeContiguousBlocks(size_t size, size_t alig
 
 size_t BootstrapRangeAllocator::alloc(size_t size, size_t alignment)
 {
-        for(auto & range : useable_ranges_)
+    for(auto & range : useable_ranges_)
+    {
+        size_t start = range.start;
+        size_t align_offset = start % alignment;
+        start += (align_offset ? alignment - align_offset : 0);
+
+        if(start + size <= range.end)
         {
-                size_t start = range.start;
-                size_t align_offset = start % alignment;
-                start += (align_offset ? alignment - align_offset : 0);
-
-                if(start + size <= range.end)
-                {
-                        //debug(PM, "Bootstrap PM allocating range [%zx-%zx)\n", start, start+size);
-                        range.start = start + size;
-                        return start;
-                }
+            range.start = start + size;
+            return start;
         }
+    }
 
-        return -1;
+    return -1;
 }
 
 
@@ -170,7 +169,7 @@ bool BootstrapRangeAllocator::dealloc(size_t start, size_t size)
         return true;
 }
 
-size_t BootstrapRangeAllocator::nextFreeBlock(size_t size, size_t alignment, size_t start)
+size_t BootstrapRangeAllocator::nextFreeBlock(size_t size, size_t alignment, size_t start) const
 {
     for(auto & range : useable_ranges_)
     {

@@ -40,7 +40,7 @@ class Bitmap
     /**
      * prints the bitmap using kprintfd
      */
-    void bmprint();
+    void bmprint() const;
     static void bmprint(uint8* b, size_t n, size_t num_bits_set);
 
     /**
@@ -64,4 +64,3 @@ class Bitmap
     size_t num_bits_set_;
     uint8 *bitmap_;
 };
-

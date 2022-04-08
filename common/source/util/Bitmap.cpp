@@ -107,7 +107,7 @@ uint8 Bitmap::getByte(size_t byte_number) const
   return bitmap_[byte_number];
 }
 
-void Bitmap::bmprint()
+void Bitmap::bmprint() const
 {
   bmprint(bitmap_, size_, num_bits_set_);
 }

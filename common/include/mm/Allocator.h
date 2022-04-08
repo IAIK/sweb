@@ -15,10 +15,10 @@ public:
         virtual void setUseable(size_t start, size_t end) = 0;
         virtual void setUnuseable(size_t start, size_t end) = 0;
 
-        virtual size_t numFree() = 0;
-        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1) = 0;
+        virtual size_t numFree() const = 0;
+        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1) const = 0;
 
-        virtual void printUsageInfo() = 0;
+        virtual void printUsageInfo() const = 0;
 private:
 };
 
@@ -37,12 +37,12 @@ public:
         virtual void setUseable(size_t start, size_t end);
         virtual void setUnuseable(size_t start, size_t end);
 
-        virtual size_t numFree();
-        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1);
+        virtual size_t numFree() const;
+        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1) const;
 
-        virtual void printUsageInfo();
+        virtual void printUsageInfo() const;
 
-        size_t nextFreeBlock(size_t size, size_t alignment, size_t start);
+        size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
 
         struct UseableRange
         {
@@ -60,12 +60,11 @@ public:
         using reference         = value_type&;
         using const_reference   = const value_type&;
 
-        AllocBlockIterator(BootstrapRangeAllocator* allocator, size_t size, size_t alignment, size_t start) :
-            allocator_(allocator), size_(size), alignment_(alignment), curr_(start)
-            {}
+        AllocBlockIterator(const BootstrapRangeAllocator* allocator, size_t size, size_t alignment, size_t start) :
+            allocator_(allocator), size_(size), alignment_(alignment), curr_(start) {}
 
-        const_reference operator*() const { return curr_; }
-        const_pointer operator->() { return &curr_; }
+        const_reference operator*() const { return curr_;  }
+        const_pointer operator->()  const { return &curr_; }
 
         AllocBlockIterator& operator++() { curr_ = allocator_->nextFreeBlock(size_, alignment_, curr_ + size_); return *this; }
 
@@ -73,22 +72,38 @@ public:
         friend bool operator!= (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ != b.curr_; };
 
     private:
-        BootstrapRangeAllocator* allocator_;
+        const BootstrapRangeAllocator* allocator_;
 
         size_t size_;
         size_t alignment_;
-
         size_t curr_;
     };
 
-    AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
-    AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)  { return AllocBlockIterator(this, size, alignment, -1); }
+    AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) const { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
+    AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)   const { return AllocBlockIterator(this, size, alignment, -1); }
 
+
+    class FreeBlocks
+    {
+    public:
+        FreeBlocks(const BootstrapRangeAllocator* allocator, size_t size, size_t alignment) :
+            allocator_(allocator), size_(size), alignment_(alignment) {}
+
+        AllocBlockIterator begin() const { return allocator_->freeBlocksBegin(size_, alignment_); }
+        AllocBlockIterator end()   const { return allocator_->freeBlocksEnd(size_, alignment_);   }
+
+    private:
+        const BootstrapRangeAllocator* allocator_;
+        size_t size_;
+        size_t alignment_;
+    };
+
+    FreeBlocks freeBlocks(size_t size, size_t alignment) const { return FreeBlocks(this, size, alignment); }
 
 private:
         UseableRange useable_ranges_[20];
 
-        bool slotIsUsed(size_t i);
+        bool slotIsUsed(size_t i) const;
         ssize_t findFirstFreeSlot();
 };
 
@@ -190,12 +205,12 @@ public:
                 }
         }
 
-        virtual size_t numFree()
+        virtual size_t numFree() const
         {
                 return bitmap_.getNumFreeBits() * BLOCK_SIZE;
         }
 
-        virtual size_t numFreeContiguousBlocks(size_t size = BLOCK_SIZE, size_t alignment = BLOCK_SIZE)
+        virtual size_t numFreeContiguousBlocks(size_t size = BLOCK_SIZE, size_t alignment = BLOCK_SIZE) const
         {
             assert(size % BLOCK_SIZE == 0);
             assert(alignment && (alignment % BLOCK_SIZE == 0));
@@ -203,13 +218,13 @@ public:
             return bitmap_.getNumFreeBits();
         }
 
-        virtual void printUsageInfo()
+        virtual void printUsageInfo() const
         {
                 bitmap_.bmprint();
         }
 
 private:
-        bool isRangeFree(size_t start, size_t size)
+        bool isRangeFree(size_t start, size_t size) const
         {
                 assert(start % BLOCK_SIZE == 0);
                 assert(size % BLOCK_SIZE == 0);
