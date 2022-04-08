@@ -125,21 +125,21 @@ size_t BootstrapRangeAllocator::numFree() const
         return num_free;
 }
 
-size_t BootstrapRangeAllocator::numFreeContiguousBlocks(size_t size, size_t alignment) const
+size_t BootstrapRangeAllocator::numFreeBlocks(size_t size, size_t alignment) const
 {
     assert(size > 0);
     assert(alignment == size);
-    size_t num_contiguous_blocks = 0;
+    size_t num_blocks = 0;
     for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
     {
         if(slotIsUsed(i))
         {
             size_t aligned_start = useable_ranges_[i].start;
             aligned_start += (aligned_start % alignment ? alignment - aligned_start % alignment : 0);
-            num_contiguous_blocks += (useable_ranges_[i].end - aligned_start)/size;
+            num_blocks += (useable_ranges_[i].end - aligned_start)/size;
         }
     }
-    return num_contiguous_blocks;
+    return num_blocks;
 }
 
 size_t BootstrapRangeAllocator::alloc(size_t size, size_t alignment)

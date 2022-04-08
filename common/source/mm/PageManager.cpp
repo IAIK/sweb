@@ -84,7 +84,7 @@ PageManager::PageManager(Allocator* allocator) :
 {
   size_t highest_address = initUsableMemoryRegions(*allocator_);
 
-  size_t total_num_useable_pages = allocator_->numFreeContiguousBlocks(PAGE_SIZE, PAGE_SIZE);
+  size_t total_num_useable_pages = allocator_->numFreeBlocks(PAGE_SIZE, PAGE_SIZE);
   number_of_pages_ = highest_address / PAGE_SIZE;
 
   allocator_->printUsageInfo();
@@ -108,8 +108,7 @@ uint32 PageManager::getTotalNumPages() const
 
 size_t PageManager::getNumFreePages() const
 {
-  return allocator_->numFreeContiguousBlocks(PAGE_SIZE, PAGE_SIZE);
-  // return allocator_->numFree()/PAGE_SIZE;
+  return allocator_->numFreeBlocks(PAGE_SIZE, PAGE_SIZE);
 }
 
 
@@ -240,7 +239,7 @@ void PageManager::mapModules()
 
 size_t PageManager::calcNumHeapPages(Allocator& allocator)
 {
-    size_t HEAP_PAGES = allocator.numFreeContiguousBlocks(PAGE_SIZE, PAGE_SIZE)/3;
+    size_t HEAP_PAGES = allocator.numFreeBlocks(PAGE_SIZE, PAGE_SIZE)/3;
     if (HEAP_PAGES > 1024)
         HEAP_PAGES = 1024 + (HEAP_PAGES - Min(HEAP_PAGES, 1024))/8;
     return HEAP_PAGES;
@@ -250,7 +249,7 @@ size_t PageManager::mapKernelHeap(Allocator& allocator, size_t max_heap_pages)
 {
   debug(PM, "Before kernel heap allocation:\n");
   allocator.printUsageInfo();
-  debug(PM, "Num free pages: %zu\n", allocator.numFreeContiguousBlocks(PAGE_SIZE, PAGE_SIZE));
+  debug(PM, "Num free pages: %zu\n", allocator.numFreeBlocks(PAGE_SIZE, PAGE_SIZE));
 
   debug(PM, "Mapping %zu reserved kernel heap pages\n", max_heap_pages);
   size_t num_reserved_heap_pages = 0;

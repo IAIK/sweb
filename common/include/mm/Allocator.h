@@ -16,7 +16,7 @@ public:
         virtual void setUnuseable(size_t start, size_t end) = 0;
 
         virtual size_t numFree() const = 0;
-        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1) const = 0;
+        virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const = 0;
 
         virtual void printUsageInfo() const = 0;
 private:
@@ -38,7 +38,7 @@ public:
         virtual void setUnuseable(size_t start, size_t end);
 
         virtual size_t numFree() const;
-        virtual size_t numFreeContiguousBlocks(size_t size, size_t alignment = 1) const;
+        virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const;
 
         virtual void printUsageInfo() const;
 
@@ -124,7 +124,7 @@ public:
 
             setUnuseable(0, size);
             alloc_template.printUsageInfo();
-            debug(PM, "Num free pages: %zu\n", alloc_template.numFreeContiguousBlocks(PAGE_SIZE, PAGE_SIZE));
+            debug(PM, "Num free pages: %zu\n", alloc_template.numFreeBlocks(PAGE_SIZE, PAGE_SIZE));
             size_t free_phys_page;
             while((free_phys_page = alloc_template.alloc(PAGE_SIZE, PAGE_SIZE)) != (size_t)-1)
             {
@@ -210,7 +210,7 @@ public:
                 return bitmap_.getNumFreeBits() * BLOCK_SIZE;
         }
 
-        virtual size_t numFreeContiguousBlocks(size_t size = BLOCK_SIZE, size_t alignment = BLOCK_SIZE) const
+        virtual size_t numFreeBlocks(size_t size = BLOCK_SIZE, size_t alignment = BLOCK_SIZE) const
         {
             assert(size % BLOCK_SIZE == 0);
             assert(alignment && (alignment % BLOCK_SIZE == 0));
