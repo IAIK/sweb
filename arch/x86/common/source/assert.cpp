@@ -64,7 +64,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 }
 
 
-void sweb_assert(const char *condition, uint32 line, const char* file)
+[[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file)
 {
   ArchInterrupts::disableInterrupts();
   static bool in_assert = false;
