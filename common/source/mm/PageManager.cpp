@@ -14,6 +14,9 @@
 #include "Bitmap.h"
 #include "Allocator.h"
 
+extern void* kernel_start_address;
+extern void* kernel_end_address;
+
 alignas(PageManager) unsigned char pm[sizeof(PageManager)];
 
 PageManager* PageManager::instance_ = nullptr;
@@ -50,9 +53,6 @@ bool PageManager::isReady()
     return pm_ready_;
 }
 
-extern void* kernel_start_address;
-extern void* kernel_end_address;
-extern uint8 boot_stack[0x4000];
 
 enum MemType
 {
