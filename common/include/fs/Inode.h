@@ -74,7 +74,7 @@ class Inode
      * There are three possible inode state bits: I_DIRTY, I_LOCK, I_UNUSED.
      */
     uint32 i_state_;
-     
+
     /**
      * The inodes permission flag
      */
@@ -137,7 +137,7 @@ class Inode
      */
     virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, const char */*link_name*/)
     {
-      return 0;
+      return -1;
     }
 
     /**

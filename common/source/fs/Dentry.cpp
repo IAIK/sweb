@@ -90,5 +90,23 @@ uint32 Dentry::getNumChild()
 
 bool Dentry::emptyChild()
 {
-  return d_child_.empty();
+    return d_child_.empty();
+}
+
+bool Dentry::emptyChild(std::initializer_list<const char*> exceptDentries)
+{
+    for (auto child : d_child_)
+    {
+        for (auto excludedName : exceptDentries)
+        {
+            if (strcmp(child->getName(), excludedName) == 0)
+            {
+                continue;
+            }
+        }
+
+        return false;
+    }
+
+    return true;
 }

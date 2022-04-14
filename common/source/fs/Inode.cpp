@@ -212,14 +212,14 @@ Dentry* Inode::lookup(const char* name)
     if (name == 0)
     {
         // ERROR_DNE
-        return 0;
+        return nullptr;
     }
 
     debug(INODE, "%s inode %p lookup %s\n", getSuperblock()->getFSType()->getFSName(), this, name);
 
     if (i_type_ != I_DIR)
     {
-        return 0;
+        return nullptr;
     }
 
     assert(i_dentrys_.size() >= 1);

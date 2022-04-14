@@ -26,6 +26,7 @@ int32 MinixFSFile::read(char *buffer, size_t count, l_off_t offset)
 
 int32 MinixFSFile::write(const char *buffer, size_t count, l_off_t offset)
 {
+  debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu\n", buffer, count, offset);
   if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
   {
     int32 written = f_inode_->writeData(offset_ + offset, count, buffer);
@@ -44,4 +45,3 @@ int32 MinixFSFile::flush()
   ((MinixFSInode *) f_inode_)->flush();
   return 0;
 }
-

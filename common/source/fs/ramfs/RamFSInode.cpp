@@ -28,6 +28,38 @@ RamFSInode::~RamFSInode()
   delete[] data_;
 }
 
+int32 RamFSInode::mkdir(Dentry *dentry)
+{
+    Inode::mkdir(dentry);
+
+    if (!new Dentry(this, dentry, "."))
+        return -1;
+    if (!new Dentry(dentry->getParent()->getInode(), dentry, ".."))
+        return -1;
+
+    return 0;
+}
+
+int32 RamFSInode::rmdir(Dentry* dentry)
+{
+    assert(dentry);
+    assert(dentry->getInode() == this);
+    assert(hasDentry(dentry));
+    assert(getType() == I_DIR);
+
+    if (!dentry->emptyChild({".", ".."}))
+    {
+        debug(RAMFS, "Error: %s inode %p has children, cannot unlink %s\n",
+              getSuperblock()->getFSType()->getFSName(), this, dentry->getName());
+        return -1;
+    }
+
+    delete lookup(".");
+    delete lookup("..");
+
+    return Inode::rmdir(dentry);
+}
+
 int32 RamFSInode::readData(uint32 offset, uint32 size, char *buffer)
 {
   if(offset >= getSize())

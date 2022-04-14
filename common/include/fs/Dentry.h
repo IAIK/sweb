@@ -117,6 +117,8 @@ class Dentry
      */
     bool emptyChild();
 
+    bool emptyChild(std::initializer_list<const char*> exceptDentries);
+
     /**
      * get the number of the child
      * @return the number of childs
@@ -162,4 +164,3 @@ class Dentry
     virtual ~Dentry();
     ustl::string d_name_;
 };
-

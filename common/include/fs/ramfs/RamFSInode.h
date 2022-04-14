@@ -18,6 +18,15 @@ class RamFSInode : public Inode
     virtual ~RamFSInode();
 
     /**
+     * creates a directory with the given dentry
+     * @param dentry the dentry to create the directory with
+     * @return 0 on success
+     */
+    virtual int32 mkdir(Dentry *dentry);
+
+    virtual int32 rmdir(Dentry* dentry);
+
+    /**
      * Called when a file is opened
      */
     virtual File* open(Dentry* dentry, uint32 /*flag*/);
@@ -37,4 +46,3 @@ class RamFSInode : public Inode
     virtual int32 writeData ( uint32 offset, uint32 size, const char *buffer );
 
 };
-
