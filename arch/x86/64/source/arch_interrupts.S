@@ -91,7 +91,19 @@
 	    movq %rsp, %rdi
 	    movq $0, %rsi
 	    call arch_saveThreadRegisters
+
+        movq 144(%rsp), %rsi # rip at interrupt
+
+        # set up fake call stack for debugger backtrace
+        pushq %rsi # fake return address = rip at interrupt
+        pushq %rbp
+        movq %rsp, %rbp
+
 	    call \handlerfunction
+
+        leave
+        popq %rdx
+
 	    popAll
 	    swapgsIfPrivChange
 	    iretq
@@ -154,7 +166,17 @@ arch_errorHandler_\num:
         movq 144(%rsp), %rsi # arg2 = rip
     .endif
         movq $\num, %rdi     # arg1 = num
+
+        # set up fake call stack for debugger backtrace
+        pushq %rsi # fake return address = rip at fault
+        pushq %rbp
+        movq %rsp, %rbp
+
         call errorHandler
+
+        leave
+        popq %rdx
+
         popAll
     .if \errorcode
         addq $8, %rsp
@@ -178,7 +200,17 @@ arch_pageFaultHandler:
         movq 152(%rsp), %rdx # arg3 = rip at pagefault
         movq 144(%rsp), %rsi # arg2 = error code
         movq %cr2, %rdi      # arg1 = pagefault address
+
+        # set up fake call stack for debugger backtrace
+        pushq %rdx # fake return address = rip at pagefault
+        pushq %rbp
+        movq %rsp, %rbp
+
         call pageFaultHandler
+
+        leave
+        popq %rdx
+
         popAll
         addq $8, %rsp
         swapgsIfPrivChange 1
