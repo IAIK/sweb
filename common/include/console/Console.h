@@ -36,6 +36,9 @@ class Console : public Thread
     Terminal* getActiveTerminal();
     Terminal* getTerminal(uint32 term);
 
+    ustl::list<Terminal*>::iterator terminalsBegin();
+    ustl::list<Terminal*>::iterator terminalsEnd();
+
     /**
      * Sets the terminal with the given number active.
      * Dangerous: will most likely produce a deadlock.
@@ -74,4 +77,3 @@ class Console : public Thread
 };
 
 extern Console* main_console;
-

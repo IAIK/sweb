@@ -105,6 +105,16 @@ Terminal *Console::getTerminal(uint32 term)
   return terminals_[term];
 }
 
+ustl::list<Terminal*>::iterator Console::terminalsBegin()
+{
+    return terminals_.begin();
+}
+
+ustl::list<Terminal*>::iterator Console::terminalsEnd()
+{
+    return terminals_.end();
+}
+
 void Console::setActiveTerminal(uint32 term)
 {
   MutexLock l(set_active_lock_);
