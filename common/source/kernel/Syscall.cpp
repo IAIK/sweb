@@ -48,10 +48,10 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
     case sc_trace:
       trace();
       break;
-    case sc_pseudols:
-      pseudols((const char*) arg1, (char*) arg2, arg3);
+    case sc_getdents:
+      return_value = getdents((int) arg1, (char*) arg2, arg3);
       break;
-  case sc_getcpu:
+    case sc_getcpu:
       return_value = getcpu((size_t*)arg1, (size_t*)arg2, (void*)arg3);
       break;
     default:
@@ -60,11 +60,11 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
   return return_value;
 }
 
-void Syscall::pseudols(const char *pathname, char *buffer, size_t size)
+ssize_t Syscall::getdents(int fd, char *buffer, size_t size)
 {
-  if(buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
-    return;
-  VfsSyscall::readdir(pathname, buffer, size);
+    if(buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
+        return -1;
+    return VfsSyscall::getdents(fd, buffer, size);
 }
 
 [[noreturn]] void Syscall::exit(size_t exit_code)

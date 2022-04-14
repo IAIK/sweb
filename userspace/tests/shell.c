@@ -3,6 +3,9 @@
 #include "string.h"
 #include "stdlib.h"
 #include "nonstd.h"
+#include "dirent.h"
+#include "fcntl.h"
+#include "assert.h"
 #include "sys/syscall.h"
 
 #define FORK_ENABLED 0
@@ -19,11 +22,61 @@ char executable[256 + EXECUTABLE_PREFIX_LEN];
 char args[10][256];
 char buffer[BUFFER_SIZE] __attribute__((aligned(4096)));
 char last_input[BUFFER_SIZE];
-char dir_content[4096];
 
-void pseudols(const char* path, char* buffer, size_t buffer_size)
+char dirent_buffer[4096];
+ssize_t ndents = 0;
+
+const char* builtin_commands[] = {"ls", "exit", "help"};
+
+const char* d_type_str[] = { // see constants in dirent.h
+    "F", // File
+    "D", // Directory
+    "L", // Link
+    "C", // Chardev
+    "B"  // Blockdev
+};
+
+ssize_t getdentsBuffer(const char* path, char* buffer, size_t buffer_size)
 {
-    __syscall(sc_pseudols, (size_t)path, (size_t)buffer, buffer_size, 0, 0);
+    if (!path)
+        return -1;
+
+    int usr_fd = open(path, O_RDONLY);
+    if (usr_fd == -1)
+    {
+        return -1;
+    }
+
+    ssize_t ndents = getdents(usr_fd, dirent_buffer, sizeof(dirent_buffer));
+
+    close(usr_fd);
+
+    return ndents;
+}
+
+int ls(const char* path)
+{
+    ssize_t ndents = getdentsBuffer(path, dirent_buffer, sizeof(dirent_buffer));
+
+    if (ndents < 0)
+    {
+        printf("Unable to get directory content for %s", path);
+        return -1;
+    }
+
+    for (size_t dpos = 0; dpos < ndents;)
+    {
+        dirent* dent = (dirent*)(dirent_buffer + dpos);
+        printf("[%s] %s\n", dent->d_type <= 4 ? d_type_str[dent->d_type] :
+                                                "?",
+                            dent->d_name);
+
+        dpos += dent->d_offs_next;
+        if (dent->d_offs_next == 0)
+            break;
+    }
+
+    return 0;
 }
 
 void handle_command(char* buffer, int buffer_size)
@@ -66,7 +119,7 @@ void handle_command(char* buffer, int buffer_size)
 
   if (strcmp(command, "ls") == 0)
   {
-    pseudols((argsCount > 0 ? args[0] : "."), 0, 0);
+    ls((argsCount > 0 ? args[0] : "."));
   }
   else if (strcmp(command, "help") == 0)
   {
@@ -123,12 +176,40 @@ void handle_command(char* buffer, int buffer_size)
   }
 }
 
-char* findOccurrence(char* file_list, char* user_input)
+
+const char* autocomplete(char* user_input)
 {
-  char* occurrence = strstr(file_list, user_input);
-  while(occurrence != NULL && occurrence != file_list && *(occurrence - 1) != '\n')
-    occurrence = strstr(occurrence + 1, user_input);
-  return occurrence;
+  const char* autocompletion = NULL;
+
+  ssize_t ndents = getdentsBuffer(EXECUTABLE_PREFIX, dirent_buffer, sizeof(dirent_buffer));
+
+  for (size_t dpos = 0; dpos < ndents;)
+  {
+      dirent* dent = (dirent*)(dirent_buffer + dpos);
+
+      if (strstr(dent->d_name, user_input) == dent->d_name)
+      {
+          if (autocompletion)
+              return NULL; // ambiguous
+          autocompletion = dent->d_name;
+      }
+
+      dpos += dent->d_offs_next;
+      if (dent->d_offs_next == 0)
+          break;
+  }
+
+  for (size_t i = 0; i < sizeof(builtin_commands)/sizeof(builtin_commands[0]); ++i)
+  {
+      if (strstr(builtin_commands[i], user_input) == builtin_commands[i])
+      {
+          if (autocompletion)
+              return NULL; // ambiguous
+          autocompletion = builtin_commands[i];
+      }
+  }
+
+  return autocompletion;
 }
 
 int readCommand(char* buffer, int buffer_size)
@@ -151,15 +232,11 @@ int readCommand(char* buffer, int buffer_size)
       if(counter == 0)
         continue;
 
-      char* first_occurrence = findOccurrence(dir_content, buffer);
+      const char* first_occurrence = autocomplete(buffer);
       if(first_occurrence == NULL)
         continue; // no such file
 
       first_occurrence += counter;
-
-      char *second_occurrence = findOccurrence(first_occurrence, buffer);
-      if (second_occurrence != NULL)
-        continue; // filename ambiguous
 
       int i;
       for(i = 0; first_occurrence[i] != '\n' && counter < BUFFER_SIZE - 1; i++, counter++)
@@ -223,8 +300,6 @@ int main(int argc, char *argv[])
   cwd[1] = '\0';
 
   printf("\n\%s\n", "SWEB-Pseudo-Shell starting...\n");
-
-  pseudols("/usr/", dir_content, sizeof(dir_content));
 
   do
   {

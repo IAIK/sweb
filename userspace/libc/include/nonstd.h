@@ -19,9 +19,8 @@ extern "C" {
 
  int getcpu(size_t *cpu, size_t *node, void *tcache);
 
+ ssize_t getdents(int fd, char* buffer, size_t buffer_size);
+
 #ifdef __cplusplus
 }
 #endif
-
-
-
