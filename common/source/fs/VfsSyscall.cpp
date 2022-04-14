@@ -325,6 +325,11 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     Inode* target_inode = target_path.dentry_->getInode();
 
     File* file = target_inode->open(target_path.dentry_, flag);
+    if (!file)
+    {
+        debug(VFSSYSCALL, "(open) Unable to open file\n");
+        return -1;
+    }
     FileDescriptor* fd = file->openFd();
     assert(!global_fd_list.add(fd));
 
