@@ -58,8 +58,10 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
 
 void Syscall::pseudols(const char *pathname, char *buffer, size_t size)
 {
-  if(buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
+  if (buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
     return;
+  if (pathname >= USER_BREAK)
+	  return;
   VfsSyscall::readdir(pathname, buffer, size);
 }
 
