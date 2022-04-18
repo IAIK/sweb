@@ -60,6 +60,8 @@ void Syscall::pseudols(const char *pathname, char *buffer, size_t size)
 {
   if(buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
     return;
+  if((size_t)pathname >= USER_BREAK)
+    return;
   VfsSyscall::readdir(pathname, buffer, size);
 }
 
