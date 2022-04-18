@@ -179,3 +179,12 @@ private:
   static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
 };
 
+class WithAddressSpace
+{
+public:
+    WithAddressSpace(Thread* thread);
+    WithAddressSpace(ArchMemory& arch_memory);
+    ~WithAddressSpace();
+private:
+    size_t prev_addr_space_;
+};

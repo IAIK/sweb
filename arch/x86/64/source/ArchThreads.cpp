@@ -47,6 +47,31 @@ void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
   ArchMemory::loadPagingStructureRoot(arch_memory.getValueForCR3());
 }
 
+
+WithAddressSpace::WithAddressSpace(Thread* thread) :
+    prev_addr_space_(0)
+{
+    if (thread)
+    {
+        prev_addr_space_ = thread->kernel_registers_->cr3;
+        ArchThreads::switchToAddressSpace(thread);
+    }
+}
+
+WithAddressSpace::WithAddressSpace(ArchMemory& arch_memory)
+{
+    prev_addr_space_ = arch_memory.getValueForCR3();
+    ArchThreads::switchToAddressSpace(arch_memory);
+}
+
+WithAddressSpace::~WithAddressSpace()
+{
+    if (prev_addr_space_)
+    {
+        ArchMemory::loadPagingStructureRoot(prev_addr_space_);
+    }
+}
+
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = new ArchThreadRegisters{};
