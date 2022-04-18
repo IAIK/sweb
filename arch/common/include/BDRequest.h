@@ -51,31 +51,30 @@ class BDRequest
      * checks performed, possible pagefault here
      *
      */
-    BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 )
+    BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 ) :
+        dev_id_(dev_id),
+        cmd_(cmd),
+        num_block_(num_block),
+        start_block_(start_block),
+        result_(0),
+        status_(BD_RESULT::BD_QUEUED),
+        blocks_done_(0),
+        buffer_(buffer),
+        requesting_thread_(currentThread),
+        next_request_(0)
     {
-      num_block_=num_block;
-      start_block_=start_block;
-      dev_id_=dev_id;
-      cmd_=cmd;
-      result_= 0;
-      status_ = BD_RESULT::BD_QUEUED;
-      buffer_ = buffer;
-
-      requesting_thread_ = currentThread;
-      blocks_done_ = 0;
-      next_request_ = 0;
     };
 
-    uint32 getDevID(){ return dev_id_; };
-    BD_CMD getCmd(){ return cmd_; };
-    uint32 getStartBlock(){ return start_block_; };
-    uint32 getNumBlocks(){ return num_block_; };
-    uint32 getResult(){ return result_; };
-    BD_RESULT getStatus(){ return status_; };
-    uint32 getBlocksDone(){ return blocks_done_; };
-    void *getBuffer(){ return buffer_; };
-    Thread *getThread(){ return requesting_thread_; };
-    BDRequest *getNextRequest(){ return next_request_; };
+    uint32 getDevID()           { return dev_id_; };
+    BD_CMD getCmd()             { return cmd_; };
+    uint32 getStartBlock()      { return start_block_; };
+    uint32 getNumBlocks()       { return num_block_; };
+    uint32 getResult()          { return result_; };
+    BD_RESULT getStatus()       { return status_; };
+    uint32 getBlocksDone()      { return blocks_done_; };
+    void *getBuffer()           { return buffer_; };
+    Thread *getThread()         { return requesting_thread_; };
+    BDRequest *getNextRequest() { return next_request_; };
 
     void setStartBlock( uint32 start_blk ) { start_block_  = start_blk; };
     void setResult( uint32 result )        { result_       = result;    };
