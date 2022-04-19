@@ -59,43 +59,43 @@ char istringstream::skip_delimiters (void)
     }
     return c;
 }
-/*
-//{{{ str_to_num
-namespace {
 
-typedef istringstream::iterator issiter_t;
-template <typename T>
-inline void str_to_num (issiter_t i, issiter_t* iend, unsigned base, T& v)
-    { v = strtol (i, const_cast<char**>(iend), base); }
-template <> inline void str_to_num (issiter_t i, issiter_t* iend, unsigned, double& v)
-  { v = strtod (i, const_cast<char**>(iend)); }
-#if HAVE_LONG_LONG && SIZE_OF_LONG_LONG > SIZE_OF_LONG
-template <> inline void str_to_num (issiter_t i, issiter_t* iend, unsigned base, long long& v)
-    { v = strtoll (i, const_cast<char**>(iend), base); }
-#endif
+// //{{{ str_to_num
+// namespace {
 
-} //}}} namespace
+// typedef istringstream::iterator issiter_t;
+// template <typename T>
+// inline void str_to_num (issiter_t i, issiter_t* iend, unsigned base, T& v)
+//     { v = strtol (i, const_cast<char**>(iend), base); }
+// // template <> inline void str_to_num (issiter_t i, issiter_t* iend, unsigned, double& v)
+// //   { v = strtod (i, const_cast<char**>(iend)); }
+// #if HAVE_LONG_LONG && SIZE_OF_LONG_LONG > SIZE_OF_LONG
+// template <> inline void str_to_num (issiter_t i, issiter_t* iend, unsigned base, long long& v)
+//     { v = strtoll (i, const_cast<char**>(iend), base); }
+// #endif
 
-template <typename T>
-inline void istringstream::read_number (T& v)
-{
-    v = 0;
-    if (!skip_delimiters())
-	return;
-    ungetc();
-    iterator ilast;
-    do {
-	str_to_num<T> (ipos(), &ilast, (_flags & hex) ? 16 : (_flags & oct) ? 8 : 0, v);
-	skip (distance (ipos(), ilast));
-    } while (ilast == end() && underflow());
-}*/
+// } //}}} namespace
 
-void istringstream::iread (int& v)		{ read_number (v); }
-//void istringstream::iread (double& v)		{ read_number (v); }
-void istringstream::iread (long& v)		{ read_number (v); }
-#if HAVE_LONG_LONG
-void istringstream::iread (long long& v)	{ read_number (v); }
-#endif
+// template <typename T>
+// inline void istringstream::read_number (T& v)
+// {
+//     v = 0;
+//     if (!skip_delimiters())
+// 	return;
+//     ungetc();
+//     iterator ilast;
+//     do {
+// 	str_to_num<T> (ipos(), &ilast, (_flags & hex) ? 16 : (_flags & oct) ? 8 : 0, v);
+// 	skip (distance (ipos(), ilast));
+//     } while (ilast == end() && underflow());
+// }
+
+// void istringstream::iread (int& v)		{ read_number (v); }
+// //void istringstream::iread (double& v)		{ read_number (v); }
+// void istringstream::iread (long& v)		{ read_number (v); }
+// #if HAVE_LONG_LONG
+// void istringstream::iread (long long& v)	{ read_number (v); }
+// #endif
 
 void istringstream::iread (wchar_t& v)
 {
