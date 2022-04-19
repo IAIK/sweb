@@ -7,14 +7,24 @@ set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_ARM_ICP_KERNEL_C
 
 set(ARCH_LD_ARGUMENTS -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
 set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} ${NOPIEFLAG})
-set(ARCH_APPEND_LD_ARGUMENTS -lgcc)
+
+
+target_link_options(kernel PUBLIC
+    ${KERNEL_LD_ARGUMENT} ${NOPIEFLAG})
+
+target_link_libraries(kernel PRIVATE
+    -lgcc)
+
+target_compile_options(kernel PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>
+    )
 
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
 
-
-set(KERNEL_IMAGE_OBJCOPY )
 
 # qemu: Run qemu in non debugging mode
 add_custom_target(qemu
@@ -31,4 +41,3 @@ add_custom_target(qemugdb
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
-

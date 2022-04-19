@@ -1,10 +1,18 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.13)
+
+cmake_policy(SET CMP0079 NEW)
 
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Include custom CMake modules from the cmake/ subdirectory
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+project(sweb
+    LANGUAGES C CXX ASM)
+
+add_executable(kernel)
+set_target_properties(kernel PROPERTIES OUTPUT_NAME kernel.x)
 
 set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
 set(HDD_IMAGE "SWEB.qcow2")
@@ -31,8 +39,7 @@ include(AddDebugInfo)
 
 include(arch/${ARCH}/CMakeLists.compiler)
 
-project(sweb
-  LANGUAGES C CXX ASM)
+
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
 string(REPLACE "/" "_" ARCH_ESC ${ARCH})
@@ -84,8 +91,6 @@ set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
 include(arch/${ARCH}/CMakeLists.userspace)
-string (REPLACE ";" " " KERNEL_CMAKE_C_FLAGS_STR "${KERNEL_CMAKE_C_FLAGS}")
-set(CMAKE_ASM_FLAGS ${KERNEL_CMAKE_C_FLAGS_STR})
 
 if(CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
@@ -104,30 +109,11 @@ function(ADD_PROJECT_LIBRARY LIBRARY_NAME)
 
   file(GLOB source_files CONFIGURE_DEPENDS ${SOURCE_WILDCARDS})
 
-  set(library_files)
+  target_sources(kernel PUBLIC
+    ${source_files})
 
-  if(source_files)
-    set(library_files ${source_files})
-  endif(source_files)
-
-  if(archobj_libname)
-    set(library_files ${library_files} $<TARGET_OBJECTS:${archobj_libname}>)
-  endif(archobj_libname)
-
-  if(library_files)
-    add_library(${LIBRARY_NAME} ${library_files})
-
-    if(archobj_libname)
-      add_dependencies(${LIBRARY_NAME} ${archobj_libname})
-    endif(archobj_libname)
-
-    target_compile_options(${LIBRARY_NAME} PRIVATE
-      $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
-      $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
-      )
-
-    set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
-  endif(library_files)
+  target_link_libraries(kernel PUBLIC
+      ${archobj_libname})
 endfunction(ADD_PROJECT_LIBRARY)
 
 set (SOURCE_WILDCARDS *.cpp *.c *.S)
@@ -136,6 +122,8 @@ set(LIBRARY_FILENAMES)
 
 #Initialize global (environment) variables
 set(ENV{LIBRARY_NAMES})
+
+
 
 #Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
 add_library(userspace_libc "")
@@ -158,16 +146,9 @@ set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 
 
 #Build the Linker command
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld)
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
-#set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
+target_link_options(kernel PUBLIC
+    -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld ${ARCH_APPEND_LD_ARGUMENTS})
 
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,--start-group)
-foreach(libfile ${FINAL_LIB_NAMES})
-  set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
-endforeach(libfile)
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,--end-group)
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} ${ARCH_APPEND_LD_ARGUMENTS})
 
 #Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")
@@ -192,40 +173,18 @@ add_custom_target (hdd_image ALL
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_RAW}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
+    DEPENDS blank_hdd_image kernel exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_RAW}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
     #COMMAND ./mkminixfs "${HDD_IMAGE_RAW}" 1
     COMMAND ./exe2minixfs "${HDD_IMAGE_RAW}" 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
-                                           ./kernel.x boot/kernel.x
+                                           $<TARGET_FILE:kernel> boot/kernel.x
                                            ./kernel.dbg boot/kernel.dbg
                                            #"${INITRD_FILE}" boot/initrd
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying kernel files to image..."
 )
-
-#Custom Command: Outputs kernel_image
-#Executes the linker command after all libraries where build successfully
-if("${ARCH}" MATCHES "armv8")
-#For armv8 we need to execute the final linking step twice because after the first time
-#The debug info gets extracted and linked in at the second link step
-add_custom_target (kernel_image
-    DEPENDS ${FINAL_LIB_NAMES} add-dbg
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${ADD_LD_ARGUMENT}
-    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-)
-
-else()
-
-add_custom_target (kernel_image
-    DEPENDS ${FINAL_LIB_NAMES} add-dbg
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
-    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-    )
-
-endif()
 
 add_custom_command (OUTPUT ${INITRD_FILE}
   DEPENDS mkminixfs exe2minixfs

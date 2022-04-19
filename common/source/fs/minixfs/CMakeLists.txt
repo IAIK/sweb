@@ -1,3 +1,4 @@
-include_directories(../../../include/fs/minixfs)
+target_include_directories(kernel PUBLIC
+    ../../../include/fs/minixfs)
 
 add_project_library(common_fs_minixfs)

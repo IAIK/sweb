@@ -12,9 +12,6 @@ if (HAS_MNO_OUTLINE_ATOMICS)
 endif()
 
 
-MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
-ENDMACRO(ARCH2OBJ)
-
 set(ARCH_LD_ARGUMENTS -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
 set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} -Wl,-Map=../kernel.map ${NOPIEFLAG})
 set(ARCH_APPEND_LD_ARGUMENTS -Wl,-lgcc)
@@ -22,18 +19,44 @@ set(ARCH_APPEND_LD_ARGUMENTS -Wl,-lgcc)
 
 set(ADD_LD_ARGUMENT -Wl,"${PROJECT_BINARY_DIR}/lib/debug_info.o")
 
-set(KERNEL_IMAGE_OBJCOPY
-COMMAND ${PROJECT_BINARY_DIR}/add-dbg ${PROJECT_BINARY_DIR}/kernel.x ${PROJECT_BINARY_DIR}/kernel.dbg
-COMMAND touch ${PROJECT_BINARY_DIR}/debug_info.c
-COMMAND ${CMAKE_C_COMPILER} -c ${PROJECT_BINARY_DIR}/debug_info.c -o ${PROJECT_BINARY_DIR}/lib/debug_info.o
-COMMAND "${OBJCOPY_EXECUTABLE}" --add-section .swebdbg="${PROJECT_BINARY_DIR}/kernel.dbg" --set-section-flags .swebdbg=load,data ${PROJECT_BINARY_DIR}/lib/debug_info.o
-COMMAND rm ${PROJECT_BINARY_DIR}/debug_info.c
-)
-
 
 if ("${VIRTUALIZED_QEMU}" STREQUAL "1")
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVIRTUALIZED_QEMU")
 endif ("${VIRTUALIZED_QEMU}" STREQUAL "1")
+
+
+target_link_options(kernel PUBLIC
+    ${KERNEL_LD_ARGUMENT})
+
+target_link_libraries(kernel PRIVATE
+    -lgcc)
+
+target_compile_options(kernel PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>
+    )
+
+MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
+ENDMACRO(ARCH2OBJ)
+
+add_custom_command(TARGET kernel
+    POST_BUILD
+    COMMAND add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
+    COMMAND touch ${PROJECT_BINARY_DIR}/debug_info.c
+    COMMAND ${CMAKE_C_COMPILER} -c ${PROJECT_BINARY_DIR}/debug_info.c -o ${PROJECT_BINARY_DIR}/lib/debug_info.o
+    COMMAND "${OBJCOPY_EXECUTABLE}" --add-section .swebdbg="${PROJECT_BINARY_DIR}/kernel.dbg" --set-section-flags .swebdbg=load,data ${PROJECT_BINARY_DIR}/lib/debug_info.o
+    COMMAND rm ${PROJECT_BINARY_DIR}/debug_info.c
+    )
+
+add_custom_command (TARGET kernel
+    POST_BUILD
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
+    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${ADD_LD_ARGUMENT}
+    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+    )
+
+add_dependencies(kernel add-dbg)
 
 
 # sdcard: Create an sdcard for the raspberry pi
@@ -70,7 +93,7 @@ add_custom_target(lst
   COMMAND aarch64-linux-gnu-objdump -d kernel.x > kernel.lst
   COMMAND reset -I
   )
-  
+
   add_custom_target(image
   COMMAND rm -rf kernel8.img
   COMMAND aarch64-linux-gnu-objcopy -O binary kernel.x kernel8.img
@@ -83,4 +106,3 @@ add_custom_target(lst
 #  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 #  COMMAND reset -I
 #  )
-

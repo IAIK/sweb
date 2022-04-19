@@ -1,4 +1,4 @@
-include_directories(
+target_include_directories(kernel PUBLIC
     x86/common/include
     ../common/include
     include
@@ -7,4 +7,3 @@ include_directories(
 
 add_subdirectory(source)
 add_subdirectory(common)
-

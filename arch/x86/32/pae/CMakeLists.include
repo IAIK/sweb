@@ -5,16 +5,23 @@ set(ARCH_X86_32_PAE_KERNEL_CFLAGS -m32 -O0 -gstabs2 -Wall -Wextra -Werror -Wno-e
 set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++11 -Wno-nonnull-compare -nostdinc++ -fno-rtti ${ARCH_X86_32_PAE_KERNEL_CFLAGS})
 set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_32_PAE_KERNEL_CFLAGS})
 
-
 set(ARCH_LD_ARGUMENTS -m32 -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -Wl,-melf_i386 -nostdinc -nostdlib -nodefaultlibs)
 set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} -mcmodel=kernel ${NOPIEFLAG})
-set(ARCH_APPEND_LD_ARGUMENTS )
+
+
+target_link_options(kernel PUBLIC
+    ${KERNEL_LD_ARGUMENT} -mcmodel=kernel ${NOPIEFLAG})
+
+target_compile_options(kernel PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>
+    )
 
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
 
-set(KERNEL_IMAGE_OBJCOPY )
 
 # kvm: Run kvm in non debugging mode
 add_custom_target(kvm
@@ -46,5 +53,3 @@ add_custom_target(qemutacos
   COMMENT "Executing `qemu-system-i386 -hda ${HDD_IMAGE} -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio -no-reboot`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
-
-
