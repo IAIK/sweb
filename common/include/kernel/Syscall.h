@@ -17,6 +17,7 @@ namespace Syscall
   size_t read(size_t fd, pointer buffer, size_t count);
   size_t close(size_t fd);
   size_t open(size_t path, size_t flags);
+  size_t lseek(int fd, off_t offset, int whence);
   void pseudols(const char *pathname, char *buffer, size_t size);
   ssize_t getdents(int fd, char *buffer, size_t size);
 

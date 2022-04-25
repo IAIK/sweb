@@ -42,6 +42,9 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
     case sc_close:
       return_value = close(arg1);
       break;
+    case sc_lseek:
+        return_value = lseek(arg1, arg2, arg3);
+      break;
     case sc_outline:
       outline(arg1, arg2);
       break;
@@ -132,6 +135,11 @@ size_t Syscall::open(size_t path, size_t flags)
     return -1U;
   }
   return VfsSyscall::open((char*) path, flags);
+}
+
+size_t Syscall::lseek(int fd, off_t offset, int whence)
+{
+    return VfsSyscall::lseek(fd, offset, whence);
 }
 
 void Syscall::outline(size_t port, pointer text)

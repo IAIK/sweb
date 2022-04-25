@@ -41,6 +41,7 @@ uint32 File::getSize()
 
 l_off_t File::lseek(l_off_t offset, uint8 origin)
 {
+  debug(VFS_FILE, "(lseek) offset: %llu, origin: %u\n", offset, origin);
   if (origin == SEEK_SET)
     offset_ = offset;
   else if (origin == SEEK_CUR)
@@ -89,12 +90,11 @@ int File::closeFd(FileDescriptor* fd)
 SimpleFile::SimpleFile(Inode* inode, Dentry* dentry, uint32 flag) :
     File(inode, dentry, flag)
 {
-
 }
 
 int32 SimpleFile::read(char *buffer, size_t count, l_off_t offset)
 {
-    debug(VFS_FILE, "(read) buffer: %p, count: %zu, offset: %llu\n", buffer, count, offset);
+    debug(VFS_FILE, "(read) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count, offset, (size_t)(offset_ + offset));
     if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
     {
         int32 read_bytes = f_inode_->readData(offset_ + offset, count, buffer);
@@ -110,7 +110,7 @@ int32 SimpleFile::read(char *buffer, size_t count, l_off_t offset)
 
 int32 SimpleFile::write(const char *buffer, size_t count, l_off_t offset)
 {
-    debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu\n", buffer, count, offset);
+    debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count, offset, (size_t)(offset_ + offset));
     if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
     {
         int32 written_bytes = f_inode_->writeData(offset_ + offset, count, buffer);
