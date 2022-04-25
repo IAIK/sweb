@@ -10,6 +10,7 @@
 #include "kprintf.h"
 
 #include "Thread.h"
+#include "offsets.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
@@ -332,6 +333,8 @@ void ATADriver::serviceIRQ()
 
   if (br->getCmd() == BDRequest::BD_CMD::BD_READ)
   {
+    // This IRQ handler may be run in the context of any arbitrary thread, so we must not attempt to access userspace
+    assert((size_t)word_buff >= USER_BREAK);
     if (!waitForController())
     {
       br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
@@ -363,6 +366,8 @@ void ATADriver::serviceIRQ()
     }
     else
     {
+      // This IRQ handler may be run in the context of any arbitrary thread, so we must not attempt to access userspace
+      assert((size_t)word_buff >= USER_BREAK);
       if (!waitForController())
       {
         br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
