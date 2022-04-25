@@ -10,7 +10,6 @@ InitThread::InitThread(FileSystemInfo *root_fs_info, char const *progs[]) :
     Thread(root_fs_info, "InitThread", Thread::KERNEL_THREAD),
     progs_(progs)
 {
-
 }
 
 InitThread::~InitThread()

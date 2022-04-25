@@ -58,7 +58,7 @@ class BDVirtualDevice
      * @param buffer data, that should be written
      *
      */
-    virtual int32 writeData(uint32 offset, uint32 size, char *buffer);
+    virtual int32 writeData(uint32 offset, uint32 size, const char *buffer);
 
     /**
      * the PartitionType is a 8bit field in the PartitionTable of a MBR
@@ -97,4 +97,3 @@ class BDVirtualDevice
     uint8 partition_type_;
     ustl::string name_;
 };
-
