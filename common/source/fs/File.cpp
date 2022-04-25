@@ -7,7 +7,14 @@
 
 
 File::File(Inode* inode, Dentry* dentry, uint32 flag) :
-    uid(0), gid(0), version(0), f_superblock_(nullptr), f_inode_(inode), f_dentry_(dentry), flag_(flag)
+    uid(0),
+    gid(0),
+    version(0),
+    f_superblock_(inode->getSuperblock()),
+    f_inode_(inode),
+    f_dentry_(dentry),
+    flag_(flag),
+    offset_(0)
 {
     f_inode_->incRefCount();
 }
@@ -76,4 +83,43 @@ int File::closeFd(FileDescriptor* fd)
     }
 
     return 0;
+}
+
+
+SimpleFile::SimpleFile(Inode* inode, Dentry* dentry, uint32 flag) :
+    File(inode, dentry, flag)
+{
+
+}
+
+int32 SimpleFile::read(char *buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(read) buffer: %p, count: %zu, offset: %llu\n", buffer, count, offset);
+    if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
+    {
+        int32 read_bytes = f_inode_->readData(offset_ + offset, count, buffer);
+        offset_ += read_bytes;
+        return read_bytes;
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
+}
+
+int32 SimpleFile::write(const char *buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu\n", buffer, count, offset);
+    if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
+    {
+        int32 written_bytes = f_inode_->writeData(offset_ + offset, count, buffer);
+        offset_ += written_bytes;
+        return written_bytes;
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
 }

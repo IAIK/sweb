@@ -222,6 +222,7 @@ size_t Thread::getTID() const
 
 ThreadState Thread::getState() const
 {
+  assert(this);
   return state_;
 }
 

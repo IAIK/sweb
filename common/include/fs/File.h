@@ -118,10 +118,10 @@ class File
      * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
      * @returns the offset from the start off the file or -1 on failure.
      */
-    l_off_t lseek(l_off_t offset, uint8 origin);
+    virtual l_off_t lseek(l_off_t offset, uint8 origin);
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * reads from the file
      * @param buffer is the buffer where the data is written to
      * @param count is the number of bytes to read.
@@ -133,7 +133,7 @@ class File
     }
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * write to the file
      * @param buffer is the buffer where the data is read from
      * @param count is the number of bytes to write.
@@ -145,7 +145,7 @@ class File
     }
 
     /**
-     * Opens the file
+     * Opens the file (do nothing by default)
      * @param inode is the inode the read the file from.
      */
     virtual int32 open(uint32)
@@ -154,7 +154,7 @@ class File
     }
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * Close the file
      * @param inode is close, the superblock has the information, that this
      * inode is not use anymore.
@@ -165,7 +165,7 @@ class File
     }
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * Flush all off the file's write operations. The File will be written to disk.
      * @return is the error code of the flush operation.
      */
@@ -175,4 +175,19 @@ class File
     }
 
     virtual uint32 getSize();
+};
+
+
+/**
+ * Base class for simple files with standard read/write behaviour
+ */
+class SimpleFile : public File
+{
+public:
+    SimpleFile(Inode* inode, Dentry* dentry, uint32 flag);
+    virtual ~SimpleFile() = default;
+
+    virtual int32 read(char* buffer, size_t count, l_off_t offset);
+    virtual int32 write(const char* buffer, size_t count, l_off_t offset);
+private:
 };
