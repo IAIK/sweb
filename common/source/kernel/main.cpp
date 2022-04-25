@@ -1,4 +1,5 @@
 #include <ProcessRegistry.h>
+#include "InitThread.h"
 #include <types.h>
 #include "ArchSerialInfo.h"
 #include "BDManager.h"
@@ -149,6 +150,8 @@ extern "C" [[noreturn]] void startup()
   }
   main_console->setWorkingDirInfo(default_working_dir);
 
+  ProcessRegistry::init(default_working_dir);
+
   debug(MAIN, "Timer enable\n");
   ArchInterrupts::enableTimer();
 
@@ -157,7 +160,7 @@ extern "C" [[noreturn]] void startup()
 
   debug(MAIN, "Adding Kernel threads\n");
   Scheduler::instance()->addNewThread(main_console);
-  Scheduler::instance()->addNewThread(new ProcessRegistry(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
+  Scheduler::instance()->addNewThread(new InitThread(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
   Scheduler::instance()->printThreadList();
 
   debug(MAIN, "%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());

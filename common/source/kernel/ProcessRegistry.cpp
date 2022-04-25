@@ -7,87 +7,33 @@
 #include "ArchMulticore.h"
 #include "VirtualFileSystem.h"
 
+alignas(ProcessRegistry) unsigned char process_registry[sizeof(ProcessRegistry)];
 
 ProcessRegistry* ProcessRegistry::instance_ = nullptr;
 
-ProcessRegistry::ProcessRegistry(FileSystemInfo *root_fs_info, char const *progs[]) :
-    Thread(root_fs_info, "ProcessRegistry", Thread::KERNEL_THREAD), progs_(progs), progs_running_(0),
+ProcessRegistry::ProcessRegistry(FileSystemInfo* root_fs_info) :
+    default_working_dir_(root_fs_info),
+    progs_running_(0),
     counter_lock_("ProcessRegistry::counter_lock_"),
     all_processes_killed_(&counter_lock_, "ProcessRegistry::all_processes_killed_")
 {
-  instance_ = this; // instance_ is static! -> Singleton-like behaviour
+  assert(default_working_dir_);
 }
 
 ProcessRegistry::~ProcessRegistry()
 {
-        // debug
-        assert(false && "Process registry shouldn't die (while testing)");
 }
 
 ProcessRegistry* ProcessRegistry::instance()
 {
+  assert(instance_ && "ProcessRegistry not yet initialized");
   return instance_;
 }
 
-void ProcessRegistry::Run()
+void ProcessRegistry::init(FileSystemInfo *root_fs_info)
 {
-  if (!progs_ || !progs_[0])
-    return;
-
-  debug(PROCESS_REG, "mounting userprog-partition \n");
-
-  debug(PROCESS_REG, "mkdir /usr\n");
-  assert( !VfsSyscall::mkdir("/usr", 0) );
-
-  // Mount user partition (initrd if it exists, else partition 1 of IDE drive A)
-  bool usr_mounted = false;
-  if (VfsSyscall::mount("initrd", "/usr", "minixfs", 0) == 0)
-  {
-      debug(PROCESS_REG, "initrd mounted at /usr\n");
-      usr_mounted = true;
-  }
-  else if (VfsSyscall::mount("idea1", "/usr", "minixfs", 0) == 0)
-  {
-      debug(PROCESS_REG, "idea1 mounted at /usr\n");
-      usr_mounted = true;
-  }
-
-  assert(usr_mounted && "Unable to mount userspace partition");
-
-  debug(PROCESS_REG, "mkdir /dev\n");
-  assert( !VfsSyscall::mkdir("/dev", 0) );
-  debug(PROCESS_REG, "mount devicefs\n");
-  assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
-
-  KernelMemoryManager::instance()->startTracing();
-
-  debug(PROCESS_REG, "Starting user processes\n");
-
-  for (uint32 i = 0; progs_[i]; i++)
-  {
-    debug(PROCESS_REG, "Starting %s\n", progs_[i]);
-    kprintf("Starting %s\n", progs_[i]);
-    createProcess(progs_[i]);
-  }
-
-  {
-    MutexLock l(counter_lock_);
-    while (progs_running_)
-      all_processes_killed_.wait();
-  }
-
-  kprintf("All processes terminated\n");
-  debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
-
-  VfsSyscall::umount("/usr", 0);
-  VfsSyscall::umount("/dev", 0);
-  vfs.rootUmount();
-
-  Scheduler::instance()->printStackTraces();
-
-  Scheduler::instance()->printThreadList();
-
-  kill();
+    assert(!instance_ && "ProcessRegistry already initialized");
+    instance_ = new (&process_registry) ProcessRegistry(root_fs_info);
 }
 
 void ProcessRegistry::processExit()
@@ -112,9 +58,16 @@ size_t ProcessRegistry::processCount()
   return progs_running_;
 }
 
+void ProcessRegistry::waitAllKilled()
+{
+    MutexLock l(counter_lock_);
+    while (progs_running_)
+        all_processes_killed_.wait();
+}
+
 void ProcessRegistry::createProcess(const char* path)
 {
-  Thread* process = new UserProcess(path, new FileSystemInfo(*working_dir_));
+  Thread* process = new UserProcess(path, new FileSystemInfo(*default_working_dir_));
   debug(PROCESS_REG, "created userprocess %s\n", path);
   Scheduler::instance()->addNewThread(process);
   debug(PROCESS_REG, "added thread %s\n", path);
