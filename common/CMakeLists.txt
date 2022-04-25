@@ -10,6 +10,7 @@ include_directories(
     include/drivers
     include/fs
     include/fs/devicefs
+    include/fs/devicefs/devices
     include/fs/minixfs
     include/fs/pseudofs
     include/fs/ramfs

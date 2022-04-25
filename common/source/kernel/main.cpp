@@ -24,6 +24,7 @@
 #include "FileSystemInfo.h"
 #include "Dentry.h"
 #include "DeviceFSType.h"
+#include "DeviceFSSuperblock.h"
 #include "RamFSType.h"
 #include "MinixFSType.h"
 #include "VirtualFileSystem.h"
@@ -36,6 +37,7 @@
 #include "user_progs.h"
 #include "RamDiskDriver.h"
 #include "ArchMulticore.h"
+#include "BlockDeviceInode.h"
 
 extern void* kernel_end_address;
 
@@ -129,10 +131,14 @@ extern "C" [[noreturn]] void startup()
           }
   }
 
+  auto devicefs_sb = DeviceFSSuperBlock::getInstance();
+
   for (BDVirtualDevice* bdvd : BDManager::getInstance()->device_list_)
   {
     debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
     kprintf("Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
+    auto bdInode = new BlockDeviceInode(bdvd);
+    devicefs_sb->addDevice(bdInode, bdvd->getName());
   }
 
 
