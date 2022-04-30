@@ -76,7 +76,7 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
 }
 
 
-#define STAT_ROWS (1)
+#define STAT_ROWS (2)
 
 void TextConsole::consoleScrollUp(uint8 const &state)
 {
