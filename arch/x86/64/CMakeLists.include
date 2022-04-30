@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 
+include(CheckCCompilerFlag)
+
 set(KERNEL_BINARY kernel64.x)
 
-if (CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 8 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8))
+check_c_compiler_flag(-fcf-protection=none HAS_FCF_PROTECTION_NONE)
+if (HAS_FCF_PROTECTION_NONE)
   set(FCF_PROTECTION_FLAG -fcf-protection=none)
 else()
   set(FCF_PROTECTION_FLAG )
