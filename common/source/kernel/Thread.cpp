@@ -23,6 +23,7 @@ const char* Thread::threadStatePrintable[3] =
 
 extern "C" [[noreturn]] void threadStartHack()
 {
+  assert(currentThread);
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
   currentThread->kill();
@@ -228,6 +229,7 @@ ThreadState Thread::getState() const
 
 void Thread::setState(ThreadState new_state)
 {
+  assert(this);
   assert(!((state_ == ToBeDestroyed) && (new_state != ToBeDestroyed)) && "Tried to change thread state when thread was already set to be destroyed");
   assert(!((new_state == Sleeping) && (currentThread != this)) && "Setting other threads to sleep is not thread-safe");
 

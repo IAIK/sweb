@@ -43,6 +43,8 @@ public:
 			    { return __atomic_compare_exchange_n (&_v, &expected, desired, true, order, order); }
     inline bool		compare_exchange_weak (T& expected, T desired, memory_order success, memory_order failure)
 			    { return __atomic_compare_exchange_n (&_v, &expected, desired, true, success, failure); }
+    inline bool		compare_exchange_strong (T& expected, T desired, memory_order order = memory_order_seq_cst)
+                { return __atomic_compare_exchange_n (&_v, &expected, desired, false, order, order); }
     inline bool		compare_exchange_strong (T& expected, T desired, memory_order success, memory_order failure)
 			    { return __atomic_compare_exchange_n (&_v, &expected, desired, false, success, failure); }
     inline T		fetch_add (T v, memory_order order = memory_order_seq_cst )
