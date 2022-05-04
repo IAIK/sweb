@@ -2,6 +2,7 @@
 
 #include "BDDriver.h"
 #include "Mutex.h"
+#include "NonBlockingQueue.h"
 
 class BDRequest;
 
@@ -24,12 +25,8 @@ class ATADriver : public BDDriver
      *
      */
     uint32 addRequest(BDRequest* br);
-    void nextRequest(BDRequest* br);
     ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum);
-    virtual ~ATADriver()
-    {
-    }
-    ;
+    virtual ~ATADriver() = default;
 
     /**
      * sets the current mode to BD_PIO_NO_IRQ while the readSector
@@ -58,12 +55,12 @@ class ATADriver : public BDDriver
     {
       return numsec;
     }
-    ;
+
     uint32 getSectorSize()
     {
       return 512;
     }
-    ;
+
     void serviceIRQ();
 
     /**
@@ -81,7 +78,10 @@ class ATADriver : public BDDriver
 
     uint32 HPC, SPT; // HEADS PER CYLINDER and SECTORS PER TRACK
 
+
   private:
+
+    static void resetController(uint16 port);
 
     int32 selectSector(uint32 start_sector, uint32 num_sectors);
 
@@ -94,8 +94,7 @@ class ATADriver : public BDDriver
 
     BD_ATA_MODE mode;
 
-    BDRequest *request_list_;
-    BDRequest *request_list_tail_;
+    NonBlockingQueue<BDRequest> request_list_;
 
     Mutex lock_;
 };

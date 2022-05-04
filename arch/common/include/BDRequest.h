@@ -2,6 +2,8 @@
 
 #include "types.h"
 #include "Scheduler.h"
+#include "uatomic.h"
+#include "NonBlockingQueue.h"
 
 class Thread;
 
@@ -52,6 +54,7 @@ class BDRequest
      *
      */
     BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 ) :
+        next_node_(0),
         dev_id_(dev_id),
         cmd_(cmd),
         num_block_(num_block),
@@ -60,8 +63,7 @@ class BDRequest
         status_(BD_RESULT::BD_QUEUED),
         blocks_done_(0),
         buffer_(buffer),
-        requesting_thread_(currentThread),
-        next_request_(0)
+        requesting_thread_(currentThread)
     {
     };
 
@@ -74,14 +76,16 @@ class BDRequest
     uint32 getBlocksDone()      { return blocks_done_; };
     void *getBuffer()           { return buffer_; };
     Thread *getThread()         { return requesting_thread_; };
-    BDRequest *getNextRequest() { return next_request_; };
 
     void setStartBlock( uint32 start_blk ) { start_block_  = start_blk; };
     void setResult( uint32 result )        { result_       = result;    };
     void setStatus( BD_RESULT status )     { status_       = status;    };
     void setBlocksDone( uint32 bdone )     { blocks_done_  = bdone;     };
-    void setNextRequest( BDRequest *next ) { next_request_ = next;      };
     void setNumBlocks(uint32 num_block)    { num_block_    = num_block; };
+
+
+    friend class NonBlockingQueue<BDRequest>;
+    ustl::atomic<BDRequest*> next_node_;
 
   private:
     BDRequest();
@@ -95,5 +99,4 @@ class BDRequest
     uint32 blocks_done_;
     void *buffer_;
     Thread *requesting_thread_;
-    BDRequest *next_request_;
 };
