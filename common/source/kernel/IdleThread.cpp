@@ -11,6 +11,11 @@ IdleThread::IdleThread() :
     console_color = CONSOLECOLOR::WHITE;
 }
 
+IdleThread::~IdleThread()
+{
+    assert(false && "Idle thread should not be destroyed");
+}
+
 void IdleThread::Run()
 {
   uint32 last_ticks = 0;

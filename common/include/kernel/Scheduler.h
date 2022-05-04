@@ -22,7 +22,7 @@ class PreemptProtect;
 extern __thread Thread* currentThread;
 extern __thread ArchThreadRegisters* currentThreadRegisters;
 
-extern thread_local IdleThread idle_thread;
+extern thread_local IdleThread* idle_thread;
 
 extern __thread size_t cpu_ticks;
 

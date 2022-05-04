@@ -43,7 +43,7 @@ extern thread_local LocalAPIC cpu_lapic;
 extern thread_local CpuInfo cpu_info;
 extern thread_local char cpu_stack[CPU_STACK_SIZE];
 extern thread_local TSS cpu_tss;
-extern thread_local IdleThread idle_thread;
+extern thread_local IdleThread* idle_thread;
 
 #define AP_STARTUP_PADDR 0x0
 

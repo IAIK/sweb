@@ -20,7 +20,7 @@
 __thread Thread* currentThread = nullptr;
 __thread ArchThreadRegisters* currentThreadRegisters = nullptr;
 
-thread_local IdleThread idle_thread;
+thread_local IdleThread* idle_thread;
 
 __thread size_t cpu_ticks = 0;
 

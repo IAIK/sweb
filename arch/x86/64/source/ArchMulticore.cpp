@@ -134,10 +134,11 @@ void ArchMulticore::initCPULocalData(bool boot_cpu)
   // The constructor of objects declared as thread_local will be called automatically the first time the thread_local object is used. Other thread_local objects _may or may not_ also be initialized at the same time.
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", cpu_info.getCpuID());
   // This is a dirty hack to make sure the idle thread is initialized. Otherwise idle thread initialization might happen the first time it gets scheduled, which won't work because it requires e.g. the KMM lock
-  debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCpuID(), idle_thread.getName());
+  idle_thread = new IdleThread();
+  debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCpuID(), idle_thread->getName());
   debug(A_MULTICORE, "Adding idle thread for CPU %zu\n", getCpuID());
-  idle_thread.pinned_to_cpu = getCpuID();
-  Scheduler::instance()->addNewThread(&idle_thread);
+  idle_thread->pinned_to_cpu = getCpuID();
+  Scheduler::instance()->addNewThread(idle_thread);
 }
 
 
