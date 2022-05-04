@@ -230,10 +230,27 @@ struct interrupt_registers {
 
 #include "kprintf.h"
 
-extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
+struct SavedContextSwitchRegisters
 {
-  struct context_switch_registers* registers = (struct context_switch_registers*) base;
-  struct interrupt_registers* iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint64));
+    context_switch_registers registers;
+    interrupt_registers iregisters;
+} __attribute__((packed));
+
+struct SavedContextSwitchRegistersWithError
+{
+    context_switch_registers registers;
+    uint64 error;
+    interrupt_registers iregisters;
+} __attribute__((packed));
+
+
+extern "C" void arch_saveThreadRegisters(void* base, uint64 error)
+{
+  context_switch_registers* registers = error ? &((SavedContextSwitchRegistersWithError*)base)->registers :
+                                                &((SavedContextSwitchRegisters*)base)->registers;
+  interrupt_registers* iregisters = error ? &((SavedContextSwitchRegistersWithError*)base)->iregisters :
+                                            &((SavedContextSwitchRegisters*)base)->iregisters;
+
   setFSBase((uint64)getSavedFSBase());
   ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
