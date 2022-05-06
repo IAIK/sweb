@@ -32,7 +32,7 @@ public:
 
         LocalAPIC* lapic;
 
-        size_t cpu_id;
+        size_t* cpu_id_;
 
         ustl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
 private:
@@ -40,6 +40,7 @@ private:
 
 
 extern thread_local LocalAPIC cpu_lapic;
+extern thread_local size_t cpu_id;
 extern thread_local CpuInfo cpu_info;
 extern thread_local char cpu_stack[CPU_STACK_SIZE];
 extern thread_local TSS cpu_tss;

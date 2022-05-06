@@ -87,6 +87,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 
   if (currentThread)
           currentThread->printBacktrace(false);
+
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
   kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
   while(true);

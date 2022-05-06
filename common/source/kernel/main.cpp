@@ -173,8 +173,8 @@ extern "C" [[noreturn]] void startup()
   kprintf("%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
   for(auto cls : ArchMulticore::cpu_list_)
   {
-          debug(MAIN, "CPU %zu\n", cls->cpu_id);
-          kprintf("CPU %zu\n", cls->cpu_id);
+      debug(MAIN, "CPU %zu\n", cls->getCpuID());
+      kprintf("CPU %zu\n", cls->getCpuID());
   }
 
   debug(MAIN, "Now enabling Interrupts...\n");

@@ -22,6 +22,7 @@ __thread TSS cpu_tss;
    This is pretty fragile, but using __thread and placement new doesn't work (compiler complains that dynamic initialization is required).
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
 thread_local LocalAPIC cpu_lapic;
+thread_local size_t cpu_id;
 thread_local CpuInfo cpu_info;
 
 thread_local char cpu_stack[CPU_STACK_SIZE];
@@ -50,22 +51,23 @@ static uint8 ap_boot_stack[PAGE_SIZE];
 
 CpuInfo::CpuInfo() :
   lapic(&cpu_lapic),
-  cpu_id(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0)
+  cpu_id_(&cpu_id)
 {
-  debug(A_MULTICORE, "Initializing CpuInfo %zx\n", cpu_id);
+  setCpuID(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0);
+  debug(A_MULTICORE, "Initializing CpuInfo %zx\n", getCpuID());
   MutexLock l(ArchMulticore::cpu_list_lock_);
   ArchMulticore::cpu_list_.push_back(this);
-  debug(A_MULTICORE, "Added CpuInfo %zx to cpu list\n", cpu_id);
+  debug(A_MULTICORE, "Added CpuInfo %zx to cpu list\n", getCpuID());
 }
 
 size_t CpuInfo::getCpuID()
 {
-  return cpu_id;
+  return *cpu_id_;
 }
 
 void CpuInfo::setCpuID(size_t id)
 {
-  cpu_id = id;
+  *cpu_id_ = id;
 }
 
 
@@ -170,13 +172,13 @@ void ArchMulticore::setCpuID(size_t id)
 {
   debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
   assert(CPULocalStorage::CLSinitialized());
-  cpu_info.setCpuID(id);
+  cpu_id = id;
 }
 
-size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
+size_t ArchMulticore::getCpuID() // Only remains accurate when interrupts are disabled since the calling thread could be rescheduled to a different cpu at any time
 {
   //assert(CLSinitialized());
-  return (!CPULocalStorage::CLSinitialized() ? 0 : cpu_info.getCpuID());
+  return (!CPULocalStorage::CLSinitialized() ? 0 : cpu_id);
 }
 
 

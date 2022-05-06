@@ -276,8 +276,7 @@ uint32 ATADriver::addRequest(BDRequest* br)
 
 void ATADriver::resetController(uint16 controller_port)
 {
-    if (ATA_DRIVER & OUTPUT_ADVANCED)
-      debug(ATA_DRIVER, "Reset controller\n");
+    debug(ATA_DRIVER, "Reset controller\n");
 
     outportbp( controller_port + 0x206, 0x04 );
     outportbp( controller_port + 0x206, 0x00 ); // RESET
