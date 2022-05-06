@@ -12,6 +12,7 @@
 #include "debug.h"
 #include "ustringformat.h"
 #include "KprintfFlushingThread.h"
+#include "BasicSpinLock.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full
@@ -129,22 +130,60 @@ void kprintfd_func(int ch, void *arg __attribute__((unused)))
   writeChar2Bochs((uint8) ch);
 }
 
-volatile size_t kprintfd_locked = false;
-
+/*
+   * Locked so that messages are not interleaved and are actually readable.
+   * Since this is called in interrupt contexts with interrupts disabled
+   * as well as outside with interrupts enabled, we need to prevent preemption
+   * while holding the lock to prevent deadlocks.
+   * Only preventing preemption without a lock would work for a single cpu
+   * but not for multicore systems.
+   *
+   * disable interrupts -> prevent preemption while holding lock as well as maskable interrupts
+   * lock -> prevent concurrent access from multiple cpu cores
+   *
+   * kprintfd being interrupted while holding the lock (e.g. due to a pagefault) would block all other threads attempting to print anything
+   * (and cause deadlocks if the holding thread then waits for one of the blocked threads)
+   * This is a tradeoff between readability of debug output and performance/safety in rare edge cases
+   *
+   * Example scenario that would produce a deadlock:
+   * kprintfd -> disable interrupts -> acquire lock (thread A) -> pagefault -> enable interrupts -> debug() -> kprintfd -> deadlock
+   *
+   * Even a reentrant lock does not solve this problem:
+   * kprintfd -> disable interrupts -> acquire lock (thread A) -> pagefault -> enable interrupts -> read from disk -> thread A sleep until read finished (wait for ATA irq handler) -> ata irq handler (in arbitrary thread context) blocks on kprintfd lock -> deadlock
+   *
+   * PREVENT PAGEFAULTS FROM OCCURRING IN KPRINTFD/DEBUG WHENEVER POSSIBLE!
+   */
 void kprintfd(const char *fmt, ...)
 {
   va_list args;
 
-  // Locked so that messages are not interleaved and are actually readable.
-  // Since this is called in interrupt contexts with interrupts disabled
-  // as well as outside with interrupts enabled, we need to prevent preemption
-  // while holding the lock to prevent deadlocks.
-  // Only preventing preemption without a lock would work for a single cpu
-  // but not for multicore systems.
+  static BasicSpinLock kprintfd_lock;
+
+  bool kprintfd_recursion_detected = false;
 
   WithInterrupts intr(false);
 
-  while(ArchThreads::testSetLock(kprintfd_locked, (size_t)1))
+  Thread* calling_thread = CPULocalStorage::CLSinitialized() ? currentThread : nullptr;
+
+  if (calling_thread && kprintfd_lock.heldBy() == calling_thread)
+  {
+      // WARNING: recursive call to kprintf while holding kprintfd lock! (e.g. due to pagefault in kprintfd)
+
+      for (char c : "\n\n\033[1;31mWARNING: recursive call to kprintfd while holding kprintfd lock. No longer properly serializing debug output to prevent deadlock!\033[0;39m\n\n")
+          writeChar2Bochs(c);
+
+      // Prevent extra unlock in previous kprintfd call since this is already done here
+      if (calling_thread->kprintfd_recursion_detected)
+          *calling_thread->kprintfd_recursion_detected = true;
+
+      // We can only do this since this won't break anything (aside from producing garbled output on the debug console)
+      kprintfd_lock.release();
+  }
+
+  if (calling_thread)
+      calling_thread->kprintfd_recursion_detected = &kprintfd_recursion_detected;
+
+  while(!kprintfd_lock.acquireNonBlocking())
   {
       // Still allow handling interrupts if we don't get the lock
       if(intr.previousInterruptState())
@@ -158,5 +197,9 @@ void kprintfd(const char *fmt, ...)
   kvprintf(fmt, kprintfd_func, nullptr, 10, args);
   va_end(args);
 
-  ArchThreads::syncLockRelease(kprintfd_locked);
+  if (!kprintfd_recursion_detected)
+      kprintfd_lock.release();
+
+  if (calling_thread)
+      calling_thread->kprintfd_recursion_detected = nullptr;
 }

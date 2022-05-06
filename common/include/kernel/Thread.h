@@ -137,6 +137,8 @@ class Thread
 
     CONSOLECOLOR console_color;
 
+    bool* kprintfd_recursion_detected = nullptr;
+
   private:
     Thread(Thread const &src);
     Thread &operator=(Thread const &src);

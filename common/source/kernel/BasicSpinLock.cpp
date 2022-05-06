@@ -10,7 +10,9 @@ BasicSpinLock::BasicSpinLock() :
 
 void BasicSpinLock::acquire(bool yield)
 {
-    while(ArchThreads::testSetLock(lock_, (unsigned int)1))
+    Thread* calling_thread = CPULocalStorage::CLSinitialized() ? currentThread : nullptr;
+
+    while(lock_.test_and_set())
     {
         //SpinLock: Simplest of Locks, do the next best thing to busy waiting
         if(currentThread && yield)
@@ -18,14 +20,31 @@ void BasicSpinLock::acquire(bool yield)
             ArchInterrupts::yieldIfIFSet();
         }
     }
+
+    held_by_ = calling_thread;
 }
 
 bool BasicSpinLock::acquireNonBlocking()
 {
-    return ArchThreads::testSetLock(lock_, (unsigned int)1) == 0;
+    Thread* calling_thread = CPULocalStorage::CLSinitialized() ? currentThread : nullptr;
+
+    bool got_lock = !lock_.test_and_set();
+
+    if (got_lock)
+    {
+        held_by_ = calling_thread;
+    }
+
+    return got_lock;
 }
 
 void BasicSpinLock::release()
 {
-    ArchThreads::atomic_set(lock_, 0);
+    held_by_ = nullptr;
+    lock_.clear();
+}
+
+Thread* BasicSpinLock::heldBy()
+{
+    return held_by_;
 }

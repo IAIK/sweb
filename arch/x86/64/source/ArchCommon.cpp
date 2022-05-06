@@ -243,7 +243,7 @@ extern uint8 boot_stack[0x4000];
 
 GDT64Ptr gdt_ptr;
 
-extern "C" void entry64()
+extern "C" [[noreturn]] void entry64()
 {
   PRINT("Parsing Multiboot Header...\n");
   parseMultibootHeader();
