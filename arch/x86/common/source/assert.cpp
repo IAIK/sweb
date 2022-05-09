@@ -85,7 +85,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
       while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
   }
 
-  if (currentThread)
+  if (CPULocalStorage::CLSinitialized() && currentThread)
           currentThread->printBacktrace(false);
 
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
