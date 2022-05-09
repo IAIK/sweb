@@ -1,6 +1,7 @@
 #include "CpuExclusiveLock.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
+#include "ArchCommon.h"
 #include "kprintf.h"
 
 CpuExclusiveLock::CpuExclusiveLock(const char* name) :
@@ -20,18 +21,17 @@ void CpuExclusiveLock::acquire([[maybe_unused]]pointer called_by)
         size_t expected = -1;
         size_t cpu_id = ArchMulticore::getCpuID();
 
-        do
+        if(held_by_cpu_.load() == cpu_id)
         {
-            if(expected == cpu_id)
-            {
-                kprintfd("ERROR: cpu exclusive lock %s already locked by cpu %zd\n", getName(), cpu_id);
-            }
-            assert(expected != cpu_id);
-
-            expected = -1;
-            assert(!ArchInterrupts::testIFSet());
+            kprintfd("ERROR: cpu exclusive lock %s already locked by cpu %zd\n", getName(), cpu_id);
+            assert(false && "CPU exclusive lock already held by current cpu");
         }
-        while(!held_by_cpu_.compare_exchange_weak(expected, cpu_id));
+
+        while(!held_by_cpu_.compare_exchange_weak(expected, cpu_id))
+        {
+            expected = -1;
+            ArchCommon::spinlockPause();
+        }
     }
 }
 

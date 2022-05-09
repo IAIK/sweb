@@ -110,4 +110,6 @@ class ArchCommon
     [[noreturn]] static void callWithStack(char* stack, void (*func)());
 
     static uint64 cpuTimestamp();
+
+    static void spinlockPause();
 };

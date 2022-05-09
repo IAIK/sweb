@@ -441,3 +441,8 @@ uint64 ArchCommon::cpuTimestamp()
                  :"=a"(low), "=d"(high));
     return (high << 32) | low;
 }
+
+void ArchCommon::spinlockPause()
+{
+    asm volatile("pause\n");
+}

@@ -88,6 +88,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
     // here comes the basic spinlock
     while(ArchThreads::testSetLock(lock_, (size_t)1))
     {
+        ArchCommon::spinlockPause();
       //SpinLock: Simplest of Locks, do the next best thing to busy waiting
       if(currentThread && yield)
       {
@@ -148,4 +149,3 @@ void SpinLock::release(pointer called_by)
   held_by_ = nullptr;
   lock_ = 0;
 }
-
