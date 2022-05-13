@@ -107,7 +107,7 @@ pointer ArchCommon::getFreeKernelMemoryEnd()
     }
     else
     {
-        return 0xFFFFFFFF80400000ULL; // TODO: not really accurate
+        return ArchCommon::getKernelEndAddress();
     }
 }
 
