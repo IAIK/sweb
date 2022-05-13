@@ -68,7 +68,7 @@ void Console::handleKey(uint32 key)
       debug_print_to_fb = !debug_print_to_fb;
       break;
     case KEY_F9:
-      PageManager::instance()->printBitmap();
+      PageManager::instance()->printUsageInfo();
       kprintfd("Used kernel memory: %zu\n", KernelMemoryManager::instance()->getUsedKernelMemory(true));
       break;
 

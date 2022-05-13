@@ -27,6 +27,48 @@ KernelMemoryManager* KernelMemoryManager::instance()
   return instance_;
 }
 
+void KernelMemoryManager::init()
+{
+    assert(KernelMemoryManager::instance_ == nullptr);
+    size_t max_heap_pages = calcNumHeapPages();
+    size_t num_reserved_heap_pages = mapKernelHeap(max_heap_pages);
+    KernelMemoryManager::instance_ = new (&kmm) KernelMemoryManager(num_reserved_heap_pages, max_heap_pages);
+}
+
+size_t KernelMemoryManager::calcNumHeapPages()
+{
+    size_t HEAP_PAGES = PageManager::instance()->getNumFreePages()/3;
+    if (HEAP_PAGES > 1024)
+        HEAP_PAGES = 1024 + (HEAP_PAGES - Min(HEAP_PAGES, 1024))/8;
+    return HEAP_PAGES;
+}
+
+size_t KernelMemoryManager::mapKernelHeap(size_t max_heap_pages)
+{
+  debug(MAIN, "Before kernel heap allocation:\n");
+  PageManager::instance()->printUsageInfo();
+  debug(MAIN, "Num free pages: %zu\n", PageManager::instance()->getNumFreePages());
+
+  debug(MAIN, "Mapping %zu reserved kernel heap pages\n", max_heap_pages);
+  size_t num_reserved_heap_pages = 0;
+  for (size_t kheap_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE; num_reserved_heap_pages < max_heap_pages; ++num_reserved_heap_pages, ++kheap_vpn)
+  {
+    if(ArchMemory::checkAddressValid(((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), kheap_vpn*PAGE_SIZE))
+    {
+      debug(MAIN, "Cannot map vpn %#zx for kernel heap, already mapped\n", kheap_vpn);
+      break;
+    }
+
+    ppn_t ppn_to_map = PageManager::instance()->allocPPN();
+    if(MAIN & OUTPUT_ADVANCED)
+      debug(MAIN, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)kheap_vpn, (void*)ppn_to_map);
+    ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true);
+  }
+  debug(MAIN, "Finished mapping kernel heap [%zx - %zx), initializing KernelMemoryManager\n",
+        ArchCommon::getFreeKernelMemoryStart(), ArchCommon::getFreeKernelMemoryStart() + num_reserved_heap_pages*PAGE_SIZE);
+  return num_reserved_heap_pages;
+}
+
 
 KernelMemoryManager::KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages) :
         tracing_(false), lock_("KMM::lock_"), segments_used_(0), segments_free_(0)

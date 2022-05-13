@@ -46,7 +46,7 @@ void PageManager::init()
     }
 
     // Need to do this while bootstrap allocator is still valid/alive
-    initKernelMemoryManager();
+    KernelMemoryManager::init();
     instance_->switchToHeapBitmapAllocator();
 }
 
@@ -192,49 +192,6 @@ void PageManager::reserveKernelPages(Allocator& allocator)
     debug(PM, "Ctor: kernel phys [%#zx, %#zx) -> virt [%#zx, %#zx)\n", kernel_phys_start, kernel_phys_end, kernel_virt_start, kernel_virt_end);
 
     allocator.setUnuseable(kernel_phys_start, kernel_phys_end);
-}
-
-size_t PageManager::calcNumHeapPages(Allocator& allocator)
-{
-    size_t HEAP_PAGES = allocator.numFreeBlocks(PAGE_SIZE, PAGE_SIZE)/3;
-    if (HEAP_PAGES > 1024)
-        HEAP_PAGES = 1024 + (HEAP_PAGES - Min(HEAP_PAGES, 1024))/8;
-    return HEAP_PAGES;
-}
-
-size_t PageManager::mapKernelHeap(Allocator& allocator, size_t max_heap_pages)
-{
-  debug(PM, "Before kernel heap allocation:\n");
-  allocator.printUsageInfo();
-  debug(PM, "Num free pages: %zu\n", allocator.numFreeBlocks(PAGE_SIZE, PAGE_SIZE));
-
-  debug(PM, "Mapping %zu reserved kernel heap pages\n", max_heap_pages);
-  size_t num_reserved_heap_pages = 0;
-  for (size_t kheap_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE; num_reserved_heap_pages < max_heap_pages; ++num_reserved_heap_pages, ++kheap_vpn)
-  {
-    if(ArchMemory::checkAddressValid(((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), kheap_vpn*PAGE_SIZE))
-    {
-      debug(PM, "Cannot map vpn %#zx for kernel heap, already mapped\n", kheap_vpn);
-      break;
-    }
-
-    ppn_t ppn_to_map = allocPPN();
-    if(PM & OUTPUT_ADVANCED)
-      debug(PM, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)kheap_vpn, (void*)ppn_to_map);
-    ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true);
-  }
-  debug(PM, "Finished mapping kernel heap [%zx - %zx), initializing KernelMemoryManager\n",
-        ArchCommon::getFreeKernelMemoryStart(), ArchCommon::getFreeKernelMemoryStart() + num_reserved_heap_pages*PAGE_SIZE);
-  return num_reserved_heap_pages;
-}
-
-void PageManager::initKernelMemoryManager()
-{
-    assert(KernelMemoryManager::instance_ == nullptr);
-    size_t max_heap_pages = calcNumHeapPages(*instance_->allocator_);
-    size_t num_reserved_heap_pages = instance_->mapKernelHeap(*instance_->allocator_, max_heap_pages);
-    extern KernelMemoryManager kmm;
-    KernelMemoryManager::instance_ = new (&kmm) KernelMemoryManager(num_reserved_heap_pages, max_heap_pages);
 }
 
 void PageManager::switchToHeapBitmapAllocator()

@@ -55,7 +55,7 @@ class PageManager
       return lock_.heldBy();
     }
 
-    void printBitmap()
+    void printUsageInfo() const
     {
       allocator_->printUsageInfo();
     }
@@ -63,9 +63,6 @@ class PageManager
   private:
     static size_t initUsableMemoryRegions(Allocator& allocator);
     static void reserveKernelPages(Allocator& allocator);
-    static size_t calcNumHeapPages(Allocator& allocator);
-    size_t mapKernelHeap(Allocator& allocator, size_t max_heap_pages);
-    static void initKernelMemoryManager();
     void switchToHeapBitmapAllocator();
 
     Allocator* allocator_;

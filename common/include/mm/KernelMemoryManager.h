@@ -125,6 +125,8 @@ class KernelMemoryManager
 
     static KernelMemoryManager *instance_;
 
+    static void init();
+
   private:
     MallocSegment *findFreeSegment(size_t requested_size);
 
@@ -147,6 +149,9 @@ class KernelMemoryManager
      * reallocate method
      */
     inline pointer private_AllocateMemory(size_t requested_size, pointer called_by);
+
+    static size_t calcNumHeapPages();
+    static size_t mapKernelHeap(size_t max_heap_pages);
 
 
 
