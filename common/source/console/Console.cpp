@@ -33,22 +33,21 @@ void Console::handleKey(uint32 key)
 {
   KeyboardManager * km = KeyboardManager::instance();
 
-  // the keycode for F1 is 0x80, while F2..F12 have keycodes 0x82..0x8e
-  uint32 terminal_selected = 0;
-  if (key == KEY_F1)
-    terminal_selected = 0;
-  else
-    terminal_selected = key - (KEY_F2 - 1);
-
   if (km->isShift())
   {
-    if (terminal_selected < getNumTerminals())
-      setActiveTerminal(terminal_selected);
+      // the keycode for F1 is 0x80, while F2..F12 have keycodes 0x82..0x8e
+      uint32 terminal_selected = 0;
+      if (key == KEY_F1)
+          terminal_selected = 0;
+      else
+          terminal_selected = key - (KEY_F2 - 1);
 
-    return;
+      if (terminal_selected < getNumTerminals())
+          setActiveTerminal(terminal_selected);
+
+      return;
   }
 
-// else...
   switch (key)
   {
     case KEY_F7:

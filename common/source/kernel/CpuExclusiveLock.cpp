@@ -10,7 +10,7 @@ CpuExclusiveLock::CpuExclusiveLock(const char* name) :
 {
 }
 
-// Thread must not be re-scheduled to other cpus while holding locks!
+// Thread must not be re-scheduled to other cpus while holding CPU exclusive locks!
 // i.e. disable scheduling or pin thread to cpu
 void CpuExclusiveLock::acquire([[maybe_unused]]pointer called_by)
 {

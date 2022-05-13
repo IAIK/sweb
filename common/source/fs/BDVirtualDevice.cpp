@@ -72,6 +72,8 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
   {
     return -1;
   }
+
+  debug(BD_VIRT_DEVICE, "readData finished for request %p\n", &bd);
   return size;
 }
 
