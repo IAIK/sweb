@@ -13,6 +13,7 @@
 #include "assert.h"
 #include "Bitmap.h"
 #include "Allocator.h"
+#include "BootloaderModules.h"
 
 extern void* kernel_start_address;
 extern void* kernel_end_address;
@@ -44,6 +45,7 @@ void PageManager::init()
         memset((void*)ArchMemory::getIdentAddressOfPPN(ppn), 0xFF, PAGE_SIZE);
     }
 
+    // Need to do this while bootstrap allocator is still valid/alive
     initKernelMemoryManager();
     instance_->switchToHeapBitmapAllocator();
 }
@@ -91,7 +93,7 @@ PageManager::PageManager(Allocator* allocator) :
   debug(PM, "Total useable pages: %zu (%zu bytes)\n", total_num_useable_pages, total_num_useable_pages*PAGE_SIZE);
 
   reserveKernelPages(*allocator_);
-  reserveModulePages(*allocator_);
+  BootloaderModules::reserveModulePages(*allocator_);
 
   debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %zu\n", getNumFreePages(), total_num_useable_pages - getNumFreePages(), total_num_useable_pages);
 
@@ -190,51 +192,6 @@ void PageManager::reserveKernelPages(Allocator& allocator)
     debug(PM, "Ctor: kernel phys [%#zx, %#zx) -> virt [%#zx, %#zx)\n", kernel_phys_start, kernel_phys_end, kernel_virt_start, kernel_virt_end);
 
     allocator.setUnuseable(kernel_phys_start, kernel_phys_end);
-}
-
-void PageManager::reserveModulePages(Allocator& allocator)
-{
-    debug(PM, "Ctor: Marking GRUB loaded modules as reserved\n");
-    for (size_t i = 0; i < ArchCommon::getNumModules(); ++i)
-    {
-        size_t module_phys_start = (ArchCommon::getModuleStartAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
-        size_t module_phys_end = (ArchCommon::getModuleEndAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
-        debug(PM, "Ctor: module [%s]: phys [%p, %p)\n", ArchCommon::getModuleName(i), (void*)module_phys_start, (void*)module_phys_end);
-        if(module_phys_end < module_phys_start)
-            continue;
-
-        allocator.setUnuseable(module_phys_start, module_phys_end);
-    }
-}
-
-void PageManager::mapModules()
-{
-  debug(PM, "Ctor: Mapping GRUB loaded modules\n");
-  for (size_t i = 0; i < ArchCommon::getNumModules(); ++i)
-  {
-    size_t module_phys_start = (ArchCommon::getModuleStartAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
-    size_t module_phys_end = (ArchCommon::getModuleEndAddress(i) - (size_t)PHYSICAL_TO_VIRTUAL_OFFSET);
-    debug(PM, "Ctor: module [%s]: virt [%p, %p), phys [%p, %p)\n", ArchCommon::getModuleName(i), (void*)ArchCommon::getModuleStartAddress(i), (void*)ArchCommon::getModuleEndAddress(i), (void*)module_phys_start, (void*)module_phys_end);
-    if(module_phys_end < module_phys_start)
-      continue;
-
-    size_t start_page = module_phys_start / PAGE_SIZE;
-    size_t end_page = (module_phys_end + PAGE_SIZE-1) / PAGE_SIZE;
-    for (size_t k = start_page; k < Min(end_page, number_of_pages_); ++k)
-    {
-      if(ArchMemory::checkAddressValid(((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), PHYSICAL_TO_VIRTUAL_OFFSET + k*PAGE_SIZE))
-      {
-        debug(PM, "Cannot map kernel module at %#zx, already mapped\n", k*PAGE_SIZE);
-        continue;
-      }
-
-        if(PM & OUTPUT_ADVANCED)
-          debug(PM, "Mapping kernel module at %#zx -> %#zx\n", (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k);
-
-        ArchMemory::mapKernelPage(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k, true);
-    }
-  }
-  debug(PM, "Finished mapping modules\n");
 }
 
 size_t PageManager::calcNumHeapPages(Allocator& allocator)

@@ -60,12 +60,9 @@ class PageManager
       allocator_->printUsageInfo();
     }
 
-    void mapModules();
-
   private:
     static size_t initUsableMemoryRegions(Allocator& allocator);
     static void reserveKernelPages(Allocator& allocator);
-    static void reserveModulePages(Allocator& allocator);
     static size_t calcNumHeapPages(Allocator& allocator);
     size_t mapKernelHeap(Allocator& allocator, size_t max_heap_pages);
     static void initKernelMemoryManager();

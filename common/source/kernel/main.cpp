@@ -38,6 +38,7 @@
 #include "RamDiskDriver.h"
 #include "ArchMulticore.h"
 #include "BlockDeviceInode.h"
+#include "BootloaderModules.h"
 
 extern void* kernel_end_address;
 
@@ -55,8 +56,7 @@ extern "C" [[noreturn]] void startup()
   PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");
 
-  // TODO: move this function out of the page manager
-  PageManager::instance()->mapModules();
+  BootloaderModules::mapModules();
 
   ArchCommon::postBootInit();
 
