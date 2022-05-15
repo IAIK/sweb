@@ -1,4 +1,5 @@
 #include "kprintf.h"
+#include "kstring.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
@@ -377,4 +378,3 @@ void Stabs2DebugInfo::demangleName(const char* name, char *buffer, size_t size) 
     putChar2Buffer(buffer,')',size);
   }
 }
-

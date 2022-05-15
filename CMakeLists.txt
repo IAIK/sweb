@@ -135,6 +135,7 @@ add_subdirectory(common)
 add_subdirectory(utils)
 add_subdirectory(userspace)
 
+target_link_libraries(kernel PUBLIC kernel_libc)
 
 #FINAL_LIB_NAMES should contain the names of all libraries
 #these names can be used to link the kernel, no unpacking of *.a files is needed anymore

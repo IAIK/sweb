@@ -3,6 +3,7 @@
 #include "new.h"
 #include "SpinLock.h"
 #include "assert.h"
+#include "stddef.h"
 
 class MallocSegment
 {

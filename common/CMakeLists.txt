@@ -1,4 +1,4 @@
-include_directories(
+target_include_directories(kernel PUBLIC
     include
     ../arch/common/include
     ../arch/${ARCH}/include

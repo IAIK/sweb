@@ -20,9 +20,6 @@ typedef uint64 gid_t;
 
 typedef __SIZE_TYPE__ size_t;
 
-//typedef uint64 size_t;
-typedef int64 ssize_t;
-
 typedef uint64 ppn_t;
 typedef size_t vpn_t;
 

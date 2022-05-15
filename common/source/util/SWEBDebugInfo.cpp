@@ -1,5 +1,6 @@
 #include <ustl/ustring.h>
 #include "kprintf.h"
+#include "kstring.h"
 #include "SWEBDebugInfo.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"

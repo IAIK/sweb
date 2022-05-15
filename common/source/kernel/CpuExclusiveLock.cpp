@@ -3,6 +3,7 @@
 #include "ArchMulticore.h"
 #include "ArchCommon.h"
 #include "kprintf.h"
+#include "assert.h"
 
 CpuExclusiveLock::CpuExclusiveLock(const char* name) :
     held_by_cpu_(-1),

@@ -1,0 +1,18 @@
+#pragma once
+
+#include "Mutex.h"
+
+namespace std
+{
+    class mutex : public Mutex
+    {
+    public:
+        mutex() : Mutex("c++ std mutex") {}
+
+        void lock() { acquire(); }
+        void unlock() { release(); }
+        bool try_lock() { return acquireNonBlocking(); }
+
+    private:
+    };
+}

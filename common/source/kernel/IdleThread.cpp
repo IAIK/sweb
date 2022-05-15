@@ -4,6 +4,7 @@
 #include "ArchMulticore.h"
 #include "debug.h"
 #include "VgaColors.h"
+#include "assert.h"
 
 IdleThread::IdleThread() :
     Thread(nullptr, "IdleThread", Thread::KERNEL_THREAD)

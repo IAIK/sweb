@@ -3,6 +3,7 @@
 #include "KernelMemoryManager.h"
 #include "backtrace.h"
 #include "debug.h"
+#include "stdint.h"
 
 /**
  * Allocate new memory. This function is used by the wrappers.

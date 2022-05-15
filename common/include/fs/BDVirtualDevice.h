@@ -3,6 +3,7 @@
 #include "types.h"
 #include "ulist.h"
 #include "ustring.h"
+#include "assert.h"
 
 class BDDriver;
 class BDRequest;

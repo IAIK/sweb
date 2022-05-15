@@ -9,7 +9,7 @@
 #include "ArchThreads.h"
 #include "ArchMulticore.h"
 #include "ArchCommon.h"
-extern "C" void arch_contextSwitch();
+#include "assert.h"
 
 const size_t PageFaultHandler::null_reference_check_border_ = PAGE_SIZE;
 size_t PageFaultHandler::pf_address = 0xDEADBEEF;

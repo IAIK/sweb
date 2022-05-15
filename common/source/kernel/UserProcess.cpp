@@ -65,4 +65,3 @@ void UserProcess::Run()
   debug(USERPROCESS, "Run: Fail-safe kernel panic - you probably have forgotten to set switch_to_userspace_ = 1\n");
   assert(false);
 }
-

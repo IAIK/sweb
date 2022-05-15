@@ -10,7 +10,7 @@
 #include "Scheduler.h"
 #include "assert.h"
 #include "debug.h"
-#include "ustringformat.h"
+#include "vnsprintf.h"
 #include "KprintfFlushingThread.h"
 #include "BasicSpinLock.h"
 

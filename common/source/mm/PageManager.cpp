@@ -7,6 +7,7 @@
 #include "ArchMemory.h"
 #include "debug_bochs.h"
 #include "kprintf.h"
+#include "kstring.h"
 #include "Scheduler.h"
 #include "ArchInterrupts.h"
 #include "KernelMemoryManager.h"

@@ -7,6 +7,7 @@
 #include "SegmentUtils.h"
 #include "uatomic.h"
 #include "IdleThread.h"
+#include "paging-definitions.h"
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 

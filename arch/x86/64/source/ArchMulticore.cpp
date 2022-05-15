@@ -11,6 +11,7 @@
 #include "Scheduler.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
+#include "assert.h"
 
 extern SystemState system_state;
 

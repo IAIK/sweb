@@ -2,6 +2,7 @@
 #include "ports.h"
 #include "debug.h"
 #include "ArchMulticore.h"
+#include "assert.h"
 
 size_t PIC8259::outstanding_EOIs_ = 0;
 
