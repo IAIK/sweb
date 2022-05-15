@@ -64,7 +64,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 }
 
 
-[[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file)
+[[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file, const char* function)
 {
   ArchInterrupts::disableInterrupts();
   static bool in_assert = false;
@@ -88,8 +88,8 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   if (CPULocalStorage::CLSinitialized() && currentThread)
           currentThread->printBacktrace(false);
 
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
-  kprintf("KERNEL PANIC: Assertion %s failed in File %s on Line %d, cpu %zd\n", condition, file, line, ArchMulticore::getCpuID());
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, ArchMulticore::getCpuID());
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, ArchMulticore::getCpuID());
   while(true);
   unreachable();
 }
