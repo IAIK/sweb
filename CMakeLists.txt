@@ -14,6 +14,9 @@ project(sweb
 add_executable(kernel)
 set_target_properties(kernel PROPERTIES OUTPUT_NAME kernel.x)
 
+add_library(kernel_options INTERFACE) # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#interface-libraries
+target_link_libraries(kernel PUBLIC kernel_options)
+
 set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
 set(HDD_IMAGE "SWEB.qcow2")
 set(INITRD_FILE ${PROJECT_BINARY_DIR}/sweb_initrd)
@@ -120,38 +123,39 @@ set (SOURCE_WILDCARDS *.cpp *.c *.S)
 
 set(LIBRARY_FILENAMES)
 
-#Initialize global (environment) variables
+# Initialize global (environment) variables
 set(ENV{LIBRARY_NAMES})
 
+# Build the Linker command
+target_link_options(kernel_options INTERFACE
+    -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld ${ARCH_APPEND_LD_ARGUMENTS})
 
 
-#Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
+# Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
 add_library(userspace_libc "")
 target_compile_options(userspace_libc PUBLIC ${ARCH_USERSPACE_COMPILE_OPTIONS})
 
-#Add the source directories
+# Add the source directories
 add_subdirectory(arch)
 add_subdirectory(common)
 add_subdirectory(utils)
 add_subdirectory(userspace)
 
+target_link_libraries(kernel_libc PUBLIC kernel_options)
 target_link_libraries(kernel PUBLIC kernel_libc)
 
 #FINAL_LIB_NAMES should contain the names of all libraries
 #these names can be used to link the kernel, no unpacking of *.a files is needed anymore
 set(FINAL_LIB_NAMES $ENV{LIBRARY_NAMES})
 
-#Name of the executables of the userspace, needed for dependency checking
+# Name of the executables of the userspace, needed for dependency checking
 set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 
 
 
-#Build the Linker command
-target_link_options(kernel PUBLIC
-    -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld ${ARCH_APPEND_LD_ARGUMENTS})
 
 
-#Build userspace exe2minixfs command
+# Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")
 foreach(file $ENV{USERSPACE_NAMES_EXE2MINIX})
   list(APPEND MINIXFS_ARGUMENT ${file})
