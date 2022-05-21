@@ -51,6 +51,7 @@
 
 # APs start in real mode and directly enter long mode without going to protected mode first
 .global apstartup
+.type   apstartup, @function
 apstartup:
     cli
 
@@ -104,6 +105,7 @@ apstartup:
 
 .code64
 .global apstartup64_trampoline
+.type   apstartup64_trampoline, @function
 apstartup64_trampoline:
     ap_print64 ap_s_apstartup64
 
@@ -142,21 +144,25 @@ ap_s_apstartup64:
 
 # To be filled in by the BSP
 .global ap_kernel_cr3
+.type   ap_kernel_cr3, @object
 ap_kernel_cr3:
     .skip 4
 
 .global ap_gdt32_ptr
+.type   ap_gdt32_ptr, @object
 ap_gdt32_ptr:
     .skip 2	# uint16 limit
     .skip 4	# uint32 addr
 
 .global ap_gdt32
+.type   ap_gdt32, @object
 ap_gdt32:
     .skip 0x70
 
 
 .align 0x1000
 .global ap_pml4
+.type   ap_pml4, @object
 ap_pml4:
 .skip 0x1000
 

@@ -111,6 +111,7 @@
 
 .macro irqhandler num
 .global arch_irqHandler_\num
+.type   arch_irqHandler_\num, @function
 .extern irqHandler_\num
 arch_irqHandler_\num:
         interrupthandler irqHandler_\num
@@ -123,12 +124,14 @@ dummyhandlerscratchvariable:
 
 .extern dummyHandler
 .global arch_dummyHandler
+.type 	arch_dummyHandler, @function
 arch_dummyHandler:
 .rept 128
         decq dummyhandlerscratchvariable
 .endr
 .extern dummyHandlerMiddle
 .global arch_dummyHandlerMiddle
+.type 	arch_dummyHandlerMiddle, @function
 arch_dummyHandlerMiddle:
         swapgsIfPrivChange
         pushAll
@@ -151,6 +154,7 @@ arch_dummyHandlerMiddle:
 .extern errorHandler
 .macro errorhandler num, errorcode=0
 .global arch_errorHandler_\num
+.type 	arch_errorHandler_\num, @function
 arch_errorHandler_\num:
         swapgsIfPrivChange \errorcode
         pushAll
@@ -191,6 +195,7 @@ arch_errorHandler_\num:
 
 .extern pageFaultHandler
 .global arch_pageFaultHandler
+.type   arch_pageFaultHandler, @function
 arch_pageFaultHandler:
         swapgsIfPrivChange 1
         pushAll
@@ -231,6 +236,7 @@ errorhandler \num
 .endr
 
 .global arch_syscallHandler
+.type   arch_syscallHandler, @function
 .extern syscallHandler
 arch_syscallHandler:
         interrupthandler syscallHandler
