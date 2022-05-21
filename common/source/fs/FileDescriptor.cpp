@@ -9,13 +9,14 @@
 #include "Mutex.h"
 #include "MutexLock.h"
 #include "File.h"
+#include "uatomic.h"
 
 FileDescriptorList global_fd_list;
 
-static size_t fd_num_ = 3;
+static ustl::atomic<size_t> fd_num_ = {3};
 
 FileDescriptor::FileDescriptor(File* file) :
-    fd_(ArchThreads::atomic_add(fd_num_, 1)),
+    fd_(fd_num_++),
     file_(file)
 {
     debug(VFS_FILE, "Create file descriptor %u\n", getFd());
