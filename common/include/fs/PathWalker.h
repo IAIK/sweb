@@ -72,5 +72,3 @@ class PathWalker
     PathWalker();
     ~PathWalker();
 };
-
-

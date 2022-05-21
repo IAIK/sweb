@@ -78,16 +78,16 @@ void Scheduler::schedule()
   // assert(block_scheduling_.load() == ArchMulticore::getCpuID());
   assert(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()));
 
-  if(currentThread)
+  if(previousThread)
   {
-    assert(currentThread->isCurrentlyScheduledOnCpu(ArchMulticore::getCpuID()));
+    assert(previousThread->isCurrentlyScheduledOnCpu(ArchMulticore::getCpuID()));
 
     // Increase virtual running time of the thread by the difference between last schedule and now
-    updateVruntime(currentThread, now);
+    updateVruntime(previousThread, now);
 
     // Threads that yielded their time (without waiting on a lock) are moved to the back of the list by increasing their virtual running time to that of the longest (virtually) running thread
     // Better: increase vruntime by the time slice that would have been allocated for the thread (requires an actual time base and not just cpu timestamps)
-    if(currentThread->yielded)
+    if(previousThread->yielded)
     {
         Thread* max_vruntime_thread = maxVruntimeThread();
         uint64 new_vruntime = max_vruntime_thread->vruntime + 1;
@@ -95,19 +95,19 @@ void Scheduler::schedule()
         {
             debug(SCHEDULER, "%s yielded while running, increasing vruntime %llu -> %llu (after %s)\n", currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
         }
-        setThreadVruntime(currentThread, ustl::max(currentThread->vruntime, new_vruntime));
+        setThreadVruntime(previousThread, ustl::max(previousThread->vruntime, new_vruntime));
 
-        currentThread->yielded = false;
+        previousThread->yielded = false;
     }
 
-    currentThread->currently_scheduled_on_cpu_ = (size_t)-1;
+    previousThread->currently_scheduled_on_cpu_ = (size_t)-1;
   }
 
   assert(!threads_.empty());
 
   // Pick the thread with the lowest virtual running time (that is schedulable and not already running)
   Thread* min_vruntime_thread = nullptr;
-  auto* it = threads_.begin();
+  auto it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
     bool already_running = (*it)->isCurrentlyScheduled(); // Prevent scheduling threads on multiple CPUs simultaneously
@@ -310,11 +310,13 @@ void Scheduler::printThreadList()
   // lockScheduling(DEBUG_STR_HERE);
   scheduler_lock_.acquire();
   debug(SCHEDULER, "Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
-  for (size_t c = 0; c < threads_.size(); ++c)
-    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%zd]: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %llu\n", c, threads_[c],
-          threads_[c]->getTID(), threads_[c]->getName(), Thread::threadStatePrintable[threads_[c]->state_],
-          (threads_[c]->switch_to_userspace_ ? "user" : "kernel"),
-          (void*)(threads_[c]->switch_to_userspace_ ? ArchThreads::getInstructionPointer(threads_[c]->user_registers_) : ArchThreads::getInstructionPointer(threads_[c]->kernel_registers_)), threads_[c]->vruntime);
+  for (auto t : threads_)
+  {
+      debug(SCHEDULER, "Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %llu\n", t,
+            t->getTID(), t->getName(), Thread::threadStatePrintable[t->state_],
+            (t->switch_to_userspace_ ? "user" : "kernel"),
+            (void*)(t->switch_to_userspace_ ? ArchThreads::getInstructionPointer(t->user_registers_) : ArchThreads::getInstructionPointer(t->kernel_registers_)), t->vruntime);
+  }
   // unlockScheduling(DEBUG_STR_HERE);
   scheduler_lock_.release();
 }
@@ -436,23 +438,19 @@ void Scheduler::printStackTraces()
 
 void Scheduler::printLockingInformation()
 {
-  size_t thread_count;
-  Thread* thread;
   // lockScheduling(DEBUG_STR_HERE);
   scheduler_lock_.acquire();
   kprintfd("\n");
   debug(LOCK, "Scheduler::printLockingInformation:\n");
-  for (thread_count = 0; thread_count < threads_.size(); ++thread_count)
+  for (auto thread : threads_)
   {
-    thread = threads_[thread_count];
     if(thread->holding_lock_list_ != nullptr)
     {
-      Lock::printHoldingList(threads_[thread_count]);
+      Lock::printHoldingList(thread);
     }
   }
-  for (thread_count = 0; thread_count < threads_.size(); ++thread_count)
+  for (auto thread : threads_)
   {
-    thread = threads_[thread_count];
     if(thread->lock_waiting_on_ != nullptr)
     {
       debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p), held by: %p, last accessed at %zx\n", thread->getName(), thread, thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_, thread->lock_waiting_on_->heldBy(), thread->lock_waiting_on_->last_accessed_at_);
@@ -539,9 +537,8 @@ void Scheduler::setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new
     Thread* t = *it;
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, set %s vruntime = %llu\n", ArchMulticore::getCpuID(),t->getName(), new_vruntime);
+        debug(SCHEDULER, "CPU %zu, set %s vruntime = %llu\n", ArchMulticore::getCpuID(), t->getName(), new_vruntime);
     }
-
 
     threads_.erase(it);
 

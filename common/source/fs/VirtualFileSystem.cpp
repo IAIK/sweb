@@ -199,10 +199,13 @@ int32 VirtualFileSystem::rootUmount()
   {
     return -1;
   }
-  VfsMount *root_vfs_mount = mounts_.at(0);
+
+  assert(mounts_.size() > 0);
+  VfsMount *root_vfs_mount = mounts_.front();
   delete root_vfs_mount;
 
-  Superblock *root_sb = superblocks_.at(0);
+  assert(superblocks_.size() > 0);
+  Superblock *root_sb = superblocks_.front();
   delete root_sb;
   return 0;
 }

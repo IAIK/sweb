@@ -60,10 +60,9 @@ class Loader
 
     size_t fd_;
     Elf::Ehdr *hdr_;
-    ustl::list<Elf::Phdr> phdrs_;
+    ustl::vector<Elf::Phdr> phdrs_;
     Mutex program_binary_lock_;
 
     Stabs2DebugInfo *userspace_debug_info_;
 
 };
-

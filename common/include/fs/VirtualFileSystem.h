@@ -103,4 +103,3 @@ class VirtualFileSystem
 };
 
 extern VirtualFileSystem vfs;
-

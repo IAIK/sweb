@@ -281,13 +281,13 @@ Stabs2DebugInfo const *Loader::getDebugInfos()const
 
 bool Loader::prepareHeaders()
 {
-  ustl::list<Elf::Phdr>::iterator it, it2;
+  ustl::vector<Elf::Phdr>::iterator it, it2;
   for(it = phdrs_.begin(); it != phdrs_.end(); it++)
   {
     // remove sections which shall not be load from anywhere
     if((*it).p_type != Elf::PT_LOAD || ((*it).p_memsz == 0 && (*it).p_filesz == 0))
     {
-      it = phdrs_.erase(it, 1) - 1;
+      it = phdrs_.erase(it) - 1;
       continue;
     }
     // check if some sections shall load data from the binary to the same location

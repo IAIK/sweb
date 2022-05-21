@@ -40,7 +40,7 @@ int32 RamFSSuperblock::readInode(Inode* inode)
 {
   assert(inode);
 
-  if (ustl::find(all_inodes_, inode) == all_inodes_.end())
+  if (ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) == all_inodes_.end())
   {
     all_inodes_.push_back(inode);
   }
@@ -51,7 +51,7 @@ void RamFSSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
 
-  if (ustl::find(all_inodes_, inode) == all_inodes_.end())
+  if (ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) == all_inodes_.end())
   {
     all_inodes_.push_back(inode);
   }

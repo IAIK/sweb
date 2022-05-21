@@ -96,20 +96,22 @@ uint32 Console::getNumTerminals() const
 
 Terminal *Console::getActiveTerminal()
 {
+  assert(active_terminal_ < terminals_.size());
   return terminals_[active_terminal_]; // why not locked? integer read is consistent anyway
 }
 
 Terminal *Console::getTerminal(uint32 term)
 {
+  assert(term < terminals_.size());
   return terminals_[term];
 }
 
-ustl::list<Terminal*>::iterator Console::terminalsBegin()
+ustl::vector<Terminal*>::iterator Console::terminalsBegin()
 {
     return terminals_.begin();
 }
 
-ustl::list<Terminal*>::iterator Console::terminalsEnd()
+ustl::vector<Terminal*>::iterator Console::terminalsEnd()
 {
     return terminals_.end();
 }
@@ -118,6 +120,7 @@ void Console::setActiveTerminal(uint32 term)
 {
   MutexLock l(set_active_lock_);
 
+  assert(term < terminals_.size());
   Terminal *t = terminals_[active_terminal_];
   t->unSetAsActiveTerminal();
 

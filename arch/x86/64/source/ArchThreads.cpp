@@ -77,7 +77,7 @@ void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* st
   info = new ArchThreadRegisters{};
   pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
-  info->rflags  = 0x200;
+  info->rflags  = 0x200; // interrupt enable flag set
   info->cr3     = pml4;
   info->rsp     = (size_t)stack;
   info->rbp     = (size_t)stack;

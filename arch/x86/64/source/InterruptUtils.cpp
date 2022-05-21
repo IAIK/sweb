@@ -189,6 +189,7 @@ extern "C" void irqHandler_0()
     });
 }
 
+// yield
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {

@@ -67,4 +67,3 @@ extern FileSystemInfo* default_working_dir;
 // you use a different getcwd() method depending on where your cpp is being compiled
 //   (it can come either from Thread.cpp or from exe2minixfs.cpp)
 FileSystemInfo* getcwd();
-

@@ -71,5 +71,3 @@ class BDManager
   protected:
     static BDManager *instance_;
 };
-
-
