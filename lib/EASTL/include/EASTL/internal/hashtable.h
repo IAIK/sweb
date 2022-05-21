@@ -414,13 +414,13 @@ namespace eastl
 	struct EASTL_API prime_rehash_policy
 	{
 	public:
-		float            mfMaxLoadFactor;
-		float            mfGrowthFactor;
+		uint32_t            mfMaxLoadFactor;
+		uint32_t            mfGrowthFactor;
 		mutable uint32_t mnNextResize;
 
 	public:
-		prime_rehash_policy(float fMaxLoadFactor = 1.f)
-			: mfMaxLoadFactor(fMaxLoadFactor), mfGrowthFactor(2.f), mnNextResize(0) { }
+		prime_rehash_policy(uint32_t fMaxLoadFactor = 1)
+			: mfMaxLoadFactor(fMaxLoadFactor), mfGrowthFactor(2), mnNextResize(0) { }
 
 		float GetMaxLoadFactor() const
 			{ return mfMaxLoadFactor; }
