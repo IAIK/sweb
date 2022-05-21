@@ -9,7 +9,7 @@ set(CMAKE_RANLIB ranlib)
 set(CMAKE_C_FLAGS   "")
 set(CMAKE_CXX_FLAGS "")
 
-add_compile_options(-O0 -g -Wall -Wextra -Werror -std=gnu++11)
+add_compile_options(-O0 -g -Wall -Wextra -Werror -std=gnu++14)
 
 
 
