@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 
 class Thread;
 
@@ -20,6 +20,6 @@ public:
     Thread* heldBy();
 
 protected:
-    ustl::atomic_flag lock_ = ATOMIC_FLAG_INIT;
+    eastl::atomic_flag lock_;
     Thread* held_by_ = nullptr;
 };

@@ -38,7 +38,7 @@ class Thread
      * @param name Thread's name
      * @return Thread instance
      */
-    Thread(FileSystemInfo* working_dir, ustl::string name, Thread::TYPE type);
+    Thread(FileSystemInfo* working_dir, eastl::string name, Thread::TYPE type);
 
     virtual ~Thread();
 
@@ -154,7 +154,7 @@ class Thread
 
     FileSystemInfo* working_dir_;
 
-    ustl::string name_;
+    eastl::string name_;
 
     uint64 vruntime;
     uint64 sched_start;

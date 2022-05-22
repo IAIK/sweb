@@ -6,12 +6,13 @@
 #include "kprintf.h"
 #include "ArchInterrupts.h"
 #include "KernelMemoryManager.h"
-#include <ulist.h>
+#include "EASTL/list.h"
 #include "backtrace.h"
 #include "ArchThreads.h"
 #include "Mutex.h"
-#include "umap.h"
-#include "ustring.h"
+#include "EASTL/map.h"
+#include "EASTL/string.h"
+#include "EASTL/iterator.h"
 #include "Lock.h"
 #include "ArchMulticore.h"
 #include "Loader.h"
@@ -24,7 +25,7 @@ thread_local IdleThread* idle_thread;
 
 __thread size_t cpu_ticks = 0;
 
-__thread ustl::atomic<size_t> preempt_protect_count_ = {};
+__thread eastl::atomic<size_t> preempt_protect_count_ = {};
 
 Scheduler *Scheduler::instance_ = nullptr;
 
@@ -95,7 +96,7 @@ void Scheduler::schedule()
         {
             debug(SCHEDULER, "%s yielded while running, increasing vruntime %llu -> %llu (after %s)\n", currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
         }
-        setThreadVruntime(previousThread, ustl::max(previousThread->vruntime, new_vruntime));
+        setThreadVruntime(previousThread, eastl::max(previousThread->vruntime, new_vruntime));
 
         previousThread->yielded = false;
     }
@@ -130,11 +131,11 @@ void Scheduler::schedule()
         // (i.e., schedule them asap, but don't let them run for a really long time to 'catch up' the difference)
         if(just_woken)
         {
-            auto min_non_woken = ustl::find_if(it + 1, threads_.end(), [](Thread* t){ return t->schedulable() && t->prev_schedulable; });
+            auto min_non_woken = eastl::find_if(eastl::next(it), threads_.end(), [](Thread* t){ return t->schedulable() && t->prev_schedulable; });
 
             if(min_non_woken != threads_.end())
             {
-                auto adjusted_vruntime = ustl::max((*it)->vruntime, (*min_non_woken)->vruntime);
+                auto adjusted_vruntime = eastl::max((*it)->vruntime, (*min_non_woken)->vruntime);
                 setThreadVruntime(it, adjusted_vruntime); // Invalidates iterator
             }
         }
@@ -176,7 +177,7 @@ void Scheduler::schedule()
   // if((it != threads_.end()) && ((it + 1) != threads_.end()))
   // {
   //   assert(it != threads_.end());
-  //   ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
+  //   eastl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
   // }
 
   // unlockScheduling(DEBUG_STR_HERE);

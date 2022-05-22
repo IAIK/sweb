@@ -17,10 +17,10 @@
 bool LocalAPIC::exists = false;
 LocalAPICRegisters* LocalAPIC::reg_paddr_ = nullptr;
 LocalAPICRegisters* LocalAPIC::reg_vaddr_ = nullptr;
-ustl::vector<MADTProcLocalAPIC> LocalAPIC::local_apic_list_{};
+eastl::vector<MADTProcLocalAPIC> LocalAPIC::local_apic_list_{};
 
-ustl::vector<MADTInterruptSourceOverride> IOAPIC::irq_source_override_list_{};
-ustl::vector<IOAPIC> IOAPIC::io_apic_list_{};
+eastl::vector<MADTInterruptSourceOverride> IOAPIC::irq_source_override_list_{};
+eastl::vector<IOAPIC> IOAPIC::io_apic_list_{};
 
 extern volatile size_t outstanding_EOIs;
 

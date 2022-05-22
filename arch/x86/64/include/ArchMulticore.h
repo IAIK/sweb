@@ -2,10 +2,10 @@
 
 #include "types.h"
 #include "APIC.h"
-#include "uvector.h"
+#include "EASTL/vector.h"
 #include "Mutex.h"
 #include "SegmentUtils.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 #include "IdleThread.h"
 #include "paging-definitions.h"
 
@@ -16,9 +16,9 @@
 struct TLBShootdownRequest
 {
         size_t addr;
-        ustl::atomic<size_t> ack;
+        eastl::atomic<size_t> ack;
         size_t target;
-        ustl::atomic<TLBShootdownRequest*> next;
+        eastl::atomic<TLBShootdownRequest*> next;
         size_t request_id;
         size_t orig_cpu;
 };
@@ -35,7 +35,7 @@ public:
 
         size_t* cpu_id_;
 
-        ustl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
+        eastl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
 private:
 };
 
@@ -70,7 +70,7 @@ class ArchMulticore
     static char* cpuStackTop();
 
     static Mutex cpu_list_lock_;
-    static ustl::vector<CpuInfo*> cpu_list_;
+    static eastl::vector<CpuInfo*> cpu_list_;
 
   private:
     static void initCpuLocalGDT(GDT& template_gdt);

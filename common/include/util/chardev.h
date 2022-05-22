@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ustring.h"
+#include "EASTL/string.h"
 #include "FiFo.h"
 
 class CharacterDevice
@@ -77,7 +77,7 @@ class CharacterDevice
     FiFo<uint8> in_buffer_;
     FiFo<uint8> out_buffer_;
 
-    ustl::string name_;
+    eastl::string name_;
 
     void processInBuffer()
     {

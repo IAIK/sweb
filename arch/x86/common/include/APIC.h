@@ -2,7 +2,7 @@
 
 #include "types.h"
 #include "ACPI.h"
-#include "uvector.h"
+#include "EASTL/vector.h"
 
 
 namespace LAPIC
@@ -340,7 +340,7 @@ public:
         static LocalAPICRegisters* reg_paddr_;
         static LocalAPICRegisters* reg_vaddr_;
 
-        static ustl::vector<MADTProcLocalAPIC> local_apic_list_;
+        static eastl::vector<MADTProcLocalAPIC> local_apic_list_;
 
         static bool exists;
         bool initialized_;
@@ -474,8 +474,8 @@ public:
         static IOAPIC* findIOAPICforGlobalInterrupt(uint32 g_int);
 
 
-        static ustl::vector<IOAPIC> io_apic_list_;
-        static ustl::vector<MADTInterruptSourceOverride> irq_source_override_list_;
+        static eastl::vector<IOAPIC> io_apic_list_;
+        static eastl::vector<MADTInterruptSourceOverride> irq_source_override_list_;
 
 
 

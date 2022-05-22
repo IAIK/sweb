@@ -17,7 +17,6 @@ target_include_directories(kernel PUBLIC
     include/ipc
     include/mm
     include/util
-    include/ustl
 )
 
 add_subdirectory(source)

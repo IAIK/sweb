@@ -5,7 +5,7 @@
 #include "ArchThreads.h"
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "Loader.h"
-#include "umap.h"
+#include "EASTL/map.h"
 #include "ArchCommon.h"
 
 struct StackFrame

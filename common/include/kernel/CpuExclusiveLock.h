@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include <uatomic.h>
+#include "EASTL/atomic.h"
 
 class CpuExclusiveLock
 {
@@ -19,7 +19,7 @@ public:
     const char* getName() const;
 
 protected:
-    ustl::atomic<size_t> held_by_cpu_;
+    eastl::atomic<size_t> held_by_cpu_;
 
     const char* name_;
 };

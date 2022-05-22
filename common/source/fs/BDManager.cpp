@@ -61,7 +61,7 @@ void BDManager::serviceIRQ(uint32 irq_num)
 
 BDVirtualDevice* BDManager::getDeviceByNumber(uint32 dev_num)
 {
-    auto found = ustl::find_if(device_list_.begin(), device_list_.end(), [dev_num](auto dev){ return dev->getDeviceNumber() == dev_num; });
+    auto found = eastl::find_if(device_list_.begin(), device_list_.end(), [dev_num](auto dev){ return dev->getDeviceNumber() == dev_num; });
 
     if (found != device_list_.end())
     {

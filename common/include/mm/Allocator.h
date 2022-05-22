@@ -4,7 +4,7 @@
 #include "Bitmap.h"
 #include "assert.h"
 #include "debug.h"
-#include "uiterator.h"
+#include "EASTL/iterator.h"
 
 class Allocator
 {
@@ -53,7 +53,7 @@ public:
     class AllocBlockIterator
     {
     public:
-        using iterator_category = ustl::input_iterator_tag;
+        using iterator_category = eastl::input_iterator_tag;
         using value_type        = size_t;
         using pointer           = value_type*;
         using const_pointer     = const value_type*;

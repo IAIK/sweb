@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "ustring.h"
+#include "EASTL/string.h"
 #include "Path.h"
 
 class Dentry;

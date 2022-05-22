@@ -51,7 +51,7 @@ int Superblock::fileOpened(File* file)
     Inode* inode = file->getInode();
     assert(inode->getSuperblock() == this);
 
-    if(ustl::find(s_files_.begin(), s_files_.end(), file) != s_files_.end())
+    if(eastl::find(s_files_.begin(), s_files_.end(), file) != s_files_.end())
     {
         return -1;
     }

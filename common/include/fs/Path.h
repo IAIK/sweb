@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "ustring.h"
+#include "EASTL/string.h"
 
 class Dentry;
 class VfsMount;
@@ -16,9 +16,9 @@ public:
     bool operator==(const Path&) const;
 
     Path parent(const Path* global_root = nullptr) const;
-    int child(const ustl::string& name, Path& out) const;
+    int child(const eastl::string& name, Path& out) const;
 
-    ustl::string getAbsolutePath(const Path* global_root = nullptr) const;
+    eastl::string getAbsolutePath(const Path* global_root = nullptr) const;
 
     bool isGlobalRoot(const Path* global_root = nullptr) const;
     bool isMountRoot() const;

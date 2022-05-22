@@ -236,7 +236,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
 {
   assert(inode);
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
-  assert(ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
+  assert(eastl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 byte_offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
@@ -262,7 +262,7 @@ int32 MinixFSSuperblock::readInode(Inode* inode)
 void MinixFSSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
-  assert(ustl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
+  assert(eastl::find(all_inodes_.begin(), all_inodes_.end(), inode) != all_inodes_.end());
   //flush zones
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
@@ -316,7 +316,7 @@ void MinixFSSuperblock::all_inodes_remove_inode(Inode* inode)
 void MinixFSSuperblock::deleteInode(Inode* inode)
 {
   assert(inode->getDentrys().size() == 0);
-  assert(ustl::find(used_inodes_.begin(), used_inodes_.end(), inode) == used_inodes_.end());
+  assert(eastl::find(used_inodes_.begin(), used_inodes_.end(), inode) == used_inodes_.end());
   dirty_inodes_.remove(inode);
   MinixFSInode *minix_inode = (MinixFSInode *) inode;
   all_inodes_remove_inode(minix_inode);

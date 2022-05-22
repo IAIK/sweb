@@ -198,5 +198,5 @@ void PageManager::reserveKernelPages(Allocator& allocator)
 void PageManager::switchToHeapBitmapAllocator()
 {
     debug(PM, "Allocating PM bitmap with %#zx bits\n", number_of_pages_);
-    allocator_ = new BitmapAllocator<PAGE_SIZE>(number_of_pages_*PAGE_SIZE, ustl::move(*allocator_));
+    allocator_ = new BitmapAllocator<PAGE_SIZE>(number_of_pages_*PAGE_SIZE, eastl::move(*allocator_));
 }

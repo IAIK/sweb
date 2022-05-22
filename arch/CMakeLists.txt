@@ -11,7 +11,6 @@ target_include_directories(kernel PUBLIC
     ../common/include/fs/unixfs
     ../common/include/kernel
     ../common/include/mm
-    ../common/include/ustl
     ../common/include/util
 )
 

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "ustring.h"
-#include "umap.h"
+#include "EASTL/string.h"
+#include "EASTL/map.h"
+#include "EASTL/vector_map.h"
 #include "Stabs2DebugInfo.h"
 
 
@@ -21,8 +22,8 @@ public:
     virtual void printCallInformation(pointer address) const;
 
 private:
-    ustl::map<size_t, ustl::string> file_addrs_;
-    ustl::map<size_t, const char*> function_defs_;
+    eastl::vector_map<size_t, eastl::string> file_addrs_;
+    eastl::vector_map<size_t, const char*> function_defs_;
 
     virtual void initialiseSymbolTable();
 

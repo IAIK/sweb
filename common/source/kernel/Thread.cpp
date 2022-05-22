@@ -31,7 +31,7 @@ extern "C" [[noreturn]] void threadStartHack()
   assert(false);
 }
 
-Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type) :
+Thread::Thread(FileSystemInfo *working_dir, eastl::string name, Thread::TYPE type) :
     kernel_registers_(nullptr),
     user_registers_(nullptr),
     switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0),

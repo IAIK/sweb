@@ -1,10 +1,10 @@
 #pragma once
 
 #include "types.h"
-#include <ulist.h>
+#include "EASTL/list.h"
 #include "kstring.h"
-#include <ualgo.h>
-#include "ustring.h"
+#include "EASTL/algorithm.h"
+#include "EASTL/string.h"
 
 class Inode;
 
@@ -34,7 +34,7 @@ class Dentry
     /**
      * This list_head is used to link together all the children of the dentry.
      */
-    ustl::list<Dentry*> d_child_;
+    eastl::list<Dentry*> d_child_;
 
     /**
      * For a directory that has had a file-system mounted on it, this points to
@@ -160,7 +160,7 @@ class Dentry
 
   public:
     Dentry(Inode* inode); // root dentry
-    Dentry(Inode* inode, Dentry* parent, const ustl::string& name); // named dentry
+    Dentry(Inode* inode, Dentry* parent, const eastl::string& name); // named dentry
     virtual ~Dentry();
-    ustl::string d_name_;
+    eastl::string d_name_;
 };

@@ -163,13 +163,13 @@ int main(int argc, char *argv[])
 
     VfsSyscall::rm(argv[2 * i]);
 
-    ustl::string pathname(argv[2 * i]);
+    eastl::string pathname(argv[2 * i]);
     size_t next_slash = pathname.find('/');
-    while(next_slash != ustl::string::npos)
+    while(next_slash != eastl::string::npos)
     {
       if(next_slash != 0)
       {
-        ustl::string dir_path(pathname.substr(0, next_slash));
+        eastl::string dir_path(pathname.substr(0, next_slash));
         VfsSyscall::mkdir(dir_path.c_str(), 0);
       }
       next_slash = pathname.find('/', next_slash + 1); // TODO: Proper normalization required. This will fail for edge cases

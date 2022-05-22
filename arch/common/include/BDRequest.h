@@ -2,7 +2,7 @@
 
 #include "types.h"
 #include "Scheduler.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 #include "NonBlockingQueue.h"
 
 class Thread;
@@ -85,7 +85,7 @@ class BDRequest
 
 
     friend class NonBlockingQueue<BDRequest>;
-    ustl::atomic<BDRequest*> next_node_;
+    eastl::atomic<BDRequest*> next_node_;
 
   private:
     BDRequest();

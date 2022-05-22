@@ -4,7 +4,7 @@
 #include "kstring.h"
 #include "Inode.h"
 #include "MinixFSZone.h"
-#include <ulist.h>
+#include "EASTL/list.h"
 
 class MinixFSInode : public Inode
 {

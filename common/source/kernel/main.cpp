@@ -33,7 +33,6 @@
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
-#include "outerrstream.h"
 #include "user_progs.h"
 #include "RamDiskDriver.h"
 #include "ArchMulticore.h"
@@ -146,7 +145,6 @@ extern "C" [[noreturn]] void startup()
   main_console->setWorkingDirInfo(new FileSystemInfo(*default_working_dir));
   debug(MAIN, "main_console->setWorkingDirInfo done\n");
 
-  ustl::coutclass::init();
   debug(MAIN, "default_working_dir root name: %s\t pwd name: %s\n",
         default_working_dir->getRoot().dentry_->getName(),
         default_working_dir->getPwd().dentry_->getName());

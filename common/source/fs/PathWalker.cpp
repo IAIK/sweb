@@ -138,7 +138,7 @@ size_t PathWalker::getNextPartLen(const char* path)
 }
 
 
-ustl::string PathWalker::pathPrefix(const ustl::string& path)
+eastl::string PathWalker::pathPrefix(const eastl::string& path)
 {
     ssize_t prefix_len = path.find_last_of("/");
     if(prefix_len == -1)
@@ -147,12 +147,12 @@ ustl::string PathWalker::pathPrefix(const ustl::string& path)
         return "";
     }
 
-    ustl::string retval = path.substr(0, prefix_len);
+    eastl::string retval = path.substr(0, prefix_len);
     debug(PATHWALKER, "pathPrefix: %s -> %s\n", path.c_str(), retval.c_str());
     return retval;
 }
 
-ustl::string PathWalker::lastPathSegment(const ustl::string& path, bool ignore_separator_at_end)
+eastl::string PathWalker::lastPathSegment(const eastl::string& path, bool ignore_separator_at_end)
 {
     if(path.length() == 0)
         return path;
@@ -160,15 +160,15 @@ ustl::string PathWalker::lastPathSegment(const ustl::string& path, bool ignore_s
     if(!ignore_separator_at_end || path.back() != '/')
     {
         ssize_t prefix_len = path.find_last_of("/");
-        ustl::string retval = path.substr(prefix_len+1, path.length() - prefix_len);
+        eastl::string retval = path.substr(prefix_len+1, path.length() - prefix_len);
         debug(PATHWALKER, "lastPathSegment: %s -> %s\n", path.c_str(), retval.c_str());
         return retval;
     }
     else
     {
-        ustl::string tmp_path = path.substr(0, path.find_last_not_of("/") + 1);
+        eastl::string tmp_path = path.substr(0, path.find_last_not_of("/") + 1);
         ssize_t prefix_len = tmp_path.find_last_of("/");
-        ustl::string retval = tmp_path.substr(prefix_len+1, tmp_path.length() - prefix_len);
+        eastl::string retval = tmp_path.substr(prefix_len+1, tmp_path.length() - prefix_len);
         debug(PATHWALKER, "lastPathSegment: %s -> %s\n", path.c_str(), retval.c_str());
         return retval;
     }

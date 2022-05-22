@@ -1,11 +1,10 @@
-#include <ustl/ustring.h>
+#include "EASTL/string.h"
 #include "kprintf.h"
 #include "kstring.h"
 #include "SWEBDebugInfo.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
-
 
 struct FileHeader {
     uint16_t functions;
@@ -30,9 +29,6 @@ SWEBDebugInfo::SWEBDebugInfo(char const *sweb_begin, char const *sweb_end) : Sta
 }
 
 void SWEBDebugInfo::initialiseSymbolTable() {
-    function_defs_.reserve(256);
-    file_addrs_.reserve(256);
-
     char *data = (char *) stab_start_ + 8;
 
     char buffer[256];
@@ -42,7 +38,7 @@ void SWEBDebugInfo::initialiseSymbolTable() {
         strncpy(buffer, data, fh->filename_len);
         buffer[fh->filename_len] = 0;
         data += fh->filename_len;
-        ustl::string filename(buffer);
+        eastl::string filename(buffer);
 
         for(int fn = 0; fn < fh->functions; fn++) {
             FunctionHeader* fnh = (FunctionHeader*)data;

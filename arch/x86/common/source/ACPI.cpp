@@ -226,9 +226,9 @@ ACPISDTHeader* XSDT::getEntry(size_t i)
 
 void ACPI_MADTHeader::parse()
 {
-  new (&LocalAPIC::local_apic_list_) ustl::vector<MADTProcLocalAPIC>{};
-  new (&IOAPIC::io_apic_list_) ustl::vector<IOAPIC>{};
-  new (&IOAPIC::irq_source_override_list_) ustl::vector<MADTInterruptSourceOverride>{};
+  new (&LocalAPIC::local_apic_list_) eastl::vector<MADTProcLocalAPIC>{};
+  new (&IOAPIC::io_apic_list_) eastl::vector<IOAPIC>{};
+  new (&IOAPIC::irq_source_override_list_) eastl::vector<MADTInterruptSourceOverride>{};
 
   if(!LocalAPIC::exists)
   {

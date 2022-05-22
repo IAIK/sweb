@@ -1,11 +1,12 @@
 #pragma once
 
 #include "types.h"
-#include <ulist.h>
-#include <umultiset.h>
+#include "EASTL/list.h"
+#include "EASTL/set.h"
+#include "EASTL/vector_multiset.h"
 #include "IdleThread.h"
 #include "CleanupThread.h"
-#include <uatomic.h>
+#include "EASTL/atomic.h"
 #include "Thread.h"
 #include "debug.h"
 #include "SchedulerLock.h"
@@ -26,7 +27,7 @@ extern thread_local IdleThread* idle_thread;
 
 extern __thread size_t cpu_ticks;
 
-extern __thread ustl::atomic<size_t> preempt_protect_count_;
+extern __thread eastl::atomic<size_t> preempt_protect_count_;
 
 class Scheduler
 {
@@ -72,7 +73,7 @@ class Scheduler
         }
     };
 
-    typedef ustl::multiset<Thread*, ThreadVruntimeLess> ThreadList;
+    typedef eastl::vector_multiset<Thread*, ThreadVruntimeLess> ThreadList; // vector_multiset does not alloc on erase/insert !
 
   private:
     Scheduler();
@@ -94,7 +95,7 @@ class Scheduler
 
     SchedulerLock scheduler_lock_;
 
-    // ustl::atomic<size_t> block_scheduling_;
+    // eastl::atomic<size_t> block_scheduling_;
     // volatile Thread* scheduling_blocked_by_ = nullptr;
     volatile char* locked_at_ = nullptr;
 
@@ -105,9 +106,9 @@ class Scheduler
 public:
     ThreadList threads_;
 
-    ustl::atomic<size_t> num_threads;
-    ustl::atomic<size_t> scheduler_lock_count_free;
-    ustl::atomic<size_t> scheduler_lock_count_blocked;
+    eastl::atomic<size_t> num_threads;
+    eastl::atomic<size_t> scheduler_lock_count_free;
+    eastl::atomic<size_t> scheduler_lock_count_blocked;
 
     Thread* minVruntimeThread();
     Thread* maxVruntimeThread();

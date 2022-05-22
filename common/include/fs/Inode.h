@@ -2,8 +2,8 @@
 
 #include "types.h"
 #include "kprintf.h"
-#include <ulist.h>
-#include <uatomic.h>
+#include "EASTL/list.h"
+#include "EASTL/atomic.h"
 #include "Dentry.h"
 #include "assert.h"
 
@@ -41,12 +41,12 @@ class Superblock;
 class Inode
 {
   protected:
-    ustl::list<Dentry*> i_dentrys_;
+    eastl::list<Dentry*> i_dentrys_;
 
     /**
      * The (open) file of this inode.
      */
-    ustl::list<File*> i_files_;
+    eastl::list<File*> i_files_;
 
     /**
      * the number of Dentry links to this inode.
@@ -256,7 +256,7 @@ class Inode
       return i_type_;
     }
 
-    ustl::list<Dentry*>& getDentrys()
+    eastl::list<Dentry*>& getDentrys()
     {
       return i_dentrys_;
     }

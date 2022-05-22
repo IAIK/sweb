@@ -1,9 +1,9 @@
 #pragma once
 
 #include "types.h"
-#include "ulist.h"
-#include "ustring.h"
 #include "assert.h"
+#include "EASTL/list.h"
+#include "EASTL/string.h"
 
 class BDDriver;
 class BDRequest;
@@ -96,5 +96,5 @@ class BDVirtualDevice
     bool writable_;
     BDDriver* driver_;
     uint8 partition_type_;
-    ustl::string name_;
+    eastl::string name_;
 };

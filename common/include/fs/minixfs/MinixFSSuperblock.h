@@ -2,7 +2,7 @@
 
 #include "Superblock.h"
 #include "MinixStorageManager.h"
-#include "umap.h"
+#include "EASTL/map.h"
 
 class Inode;
 class MinixFSInode;
@@ -216,7 +216,7 @@ class MinixFSSuperblock : public Superblock
     MinixStorageManager* storage_manager_;
 
 
-    ustl::map<uint32, Inode*> all_inodes_set_;
+    eastl::map<uint32, Inode*> all_inodes_set_;
 
     /**
      * pointer to self for compatability

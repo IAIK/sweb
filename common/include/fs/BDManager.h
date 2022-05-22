@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ulist.h>
+#include "EASTL/list.h"
 
 class BDRequest;
 class BDVirtualDevice;
@@ -66,7 +66,7 @@ class BDManager
      */
     bool probeIRQ;
 
-    ustl::list<BDVirtualDevice *> device_list_;
+    eastl::list<BDVirtualDevice *> device_list_;
 
   protected:
     static BDManager *instance_;

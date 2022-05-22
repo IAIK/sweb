@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "ustring.h"
+#include "EASTL/string.h"
 
 class Dentry;
 class VfsMount;
@@ -62,8 +62,8 @@ class PathWalker
 
     static int32 pathWalk(const char* pathname, FileSystemInfo* fs_info, Path& out, Path* parent_dir = nullptr);
 
-    static ustl::string pathPrefix(const ustl::string& path);
-    static ustl::string lastPathSegment(const ustl::string& path, bool ignore_separator_at_end = false);
+    static eastl::string pathPrefix(const eastl::string& path);
+    static eastl::string lastPathSegment(const eastl::string& path, bool ignore_separator_at_end = false);
 
   private:
     static size_t getNextPartLen(const char* path);

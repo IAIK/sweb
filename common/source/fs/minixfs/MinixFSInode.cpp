@@ -228,7 +228,7 @@ void MinixFSInode::writeDentry(uint32 dest_i_num, uint32 src_i_num, const char* 
 File* MinixFSInode::open(Dentry* dentry, uint32 flag)
 {
   debug(M_INODE, "Open file, flag: %x\n", flag);
-  assert(ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
+  assert(eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
   File* file = (File*) (new MinixFSFile(this, dentry, flag));
   i_files_.push_back(file);
   getSuperblock()->fileOpened(file);

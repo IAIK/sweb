@@ -36,8 +36,6 @@ Stabs2DebugInfo::~Stabs2DebugInfo()
 
 void Stabs2DebugInfo::initialiseSymbolTable()
 {
-  function_symbols_.reserve(256);
-
   // debug output for userspace symols
   for (StabEntry const *current_stab = stab_start_; current_stab < stab_end_; ++current_stab)
   {
@@ -96,7 +94,7 @@ bool Stabs2DebugInfo::tryPasteOoperator(const char *& input, char *& buffer, siz
 ssize_t Stabs2DebugInfo::getFunctionLine(pointer start, pointer offset) const
 {
   ssize_t line = -1;
-  ustl::map<size_t, StabEntry const *>::const_iterator it = function_symbols_.find(start);
+  eastl::map<size_t, StabEntry const *>::const_iterator it = function_symbols_.find(start);
   if (it != function_symbols_.end())
   {
     StabEntry const *se = it->second + 1;
@@ -124,7 +122,7 @@ void Stabs2DebugInfo::getCallNameAndLine(pointer address, const char*& mangled_n
       !(ADDRESS_BETWEEN(address, function_symbols_.begin()->first, ArchCommon::getKernelEndAddress())))
     return;
 
-  ustl::map<size_t, StabEntry const *>::const_iterator it;
+  eastl::map<size_t, StabEntry const *>::const_iterator it;
   for(it = function_symbols_.begin(); it != function_symbols_.end() && it->first <= address; ++it);
 
   if (it == function_symbols_.end())
@@ -173,7 +171,7 @@ pointer Stabs2DebugInfo::getFunctionName(pointer address, char function_name[], 
   if (function_symbols_.empty() || !(ADDRESS_BETWEEN(address, function_symbols_.begin()->first, ArchCommon::getKernelEndAddress())))
     return 0;
 
-  ustl::map<size_t, StabEntry const *>::const_iterator it;
+  eastl::map<size_t, StabEntry const *>::const_iterator it;
   for(it = function_symbols_.begin(); it != function_symbols_.end() && it->first <= address; ++it)
   {
   }

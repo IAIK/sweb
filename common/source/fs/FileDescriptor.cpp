@@ -1,5 +1,5 @@
 #include "FileDescriptor.h"
-#include <ulist.h>
+#include "EASTL/list.h"
 #ifndef EXE2MINIXFS
 #include "ArchThreads.h"
 #endif
@@ -9,11 +9,11 @@
 #include "Mutex.h"
 #include "MutexLock.h"
 #include "File.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 
 FileDescriptorList global_fd_list;
 
-static ustl::atomic<size_t> fd_num_ = {3};
+static eastl::atomic<size_t> fd_num_ = {3};
 
 FileDescriptor::FileDescriptor(File* file) :
     fd_(fd_num_++),

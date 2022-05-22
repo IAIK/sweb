@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include <uvector.h>
+#include "EASTL/vector.h"
 #include "Mutex.h"
 
 #include "Thread.h"
@@ -36,8 +36,8 @@ class Console : public Thread
     Terminal* getActiveTerminal();
     Terminal* getTerminal(uint32 term);
 
-    ustl::vector<Terminal*>::iterator terminalsBegin();
-    ustl::vector<Terminal*>::iterator terminalsEnd();
+    eastl::vector<Terminal*>::iterator terminalsBegin();
+    eastl::vector<Terminal*>::iterator terminalsEnd();
 
     /**
      * Sets the terminal with the given number active.
@@ -67,7 +67,7 @@ class Console : public Thread
     virtual uint32 consoleGetNumColumns() const=0;
     virtual void consoleScrollUp(uint8 const &state) =0;
 
-    ustl::vector<Terminal* > terminals_;
+    eastl::vector<Terminal* > terminals_;
     Mutex console_lock_;
     Mutex set_active_lock_;
     uint8 locked_for_drawing_;

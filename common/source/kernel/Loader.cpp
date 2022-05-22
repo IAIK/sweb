@@ -7,11 +7,11 @@
 #include "ArchInterrupts.h"
 #include "Syscall.h"
 #include "VfsSyscall.h"
-#include <uvector.h>
+#include "EASTL/vector.h"
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
 #include "SWEBDebugInfo.h"
-#include <umemory.h>
+#include "EASTL/memory.h"
 #include "File.h"
 #include "FileDescriptor.h"
 
@@ -45,10 +45,10 @@ void Loader::loadPage(pointer virtual_address)
     {
       if(phdr.p_vaddr + phdr.p_filesz > virt_page_start_addr)
       {
-        const pointer  virt_start_addr = ustl::max(virt_page_start_addr, phdr.p_vaddr);
+        const pointer  virt_start_addr = eastl::max<pointer>(virt_page_start_addr, phdr.p_vaddr);
         const size_t   virt_offs_on_page = virt_start_addr - virt_page_start_addr;
         const l_off_t  bin_start_addr = phdr.p_offset + (virt_start_addr - phdr.p_vaddr);
-        const size_t   bytes_to_load = ustl::min(virt_page_end_addr, phdr.p_vaddr + phdr.p_filesz) - virt_start_addr;
+        const size_t   bytes_to_load = eastl::min<pointer>(virt_page_end_addr, phdr.p_vaddr + phdr.p_filesz) - virt_start_addr;
         //debug(LOADER, "Loader::loadPage: Loading %d bytes from binary address %p to virtual address %p\n",
         //      bytes_to_load, bin_start_addr, virt_start_addr);
         if(readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs_on_page, bin_start_addr, bytes_to_load))
@@ -162,7 +162,7 @@ bool Loader::loadDebugInfoIfAvailable()
 
   MutexLock lock(program_binary_lock_);
 
-  ustl::vector<Elf::Shdr> section_headers;
+  eastl::vector<Elf::Shdr> section_headers;
   section_headers.resize(hdr_->e_shnum);
   if (readFromBinary(reinterpret_cast<char*>(section_headers.data()), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
   {
@@ -177,7 +177,7 @@ bool Loader::loadDebugInfoIfAvailable()
 
   size_t section_name_section = hdr_->e_shstrndx;
   size_t section_name_size = section_headers[section_name_section].sh_size;
-  ustl::vector<char> section_names(section_name_size);
+  eastl::vector<char> section_names(section_name_size);
 
   if (readFromBinary(&section_names[0], section_headers[section_name_section].sh_offset, section_name_size ))
   {
@@ -281,7 +281,7 @@ Stabs2DebugInfo const *Loader::getDebugInfos()const
 
 bool Loader::prepareHeaders()
 {
-  ustl::vector<Elf::Phdr>::iterator it, it2;
+  eastl::vector<Elf::Phdr>::iterator it, it2;
   for(it = phdrs_.begin(); it != phdrs_.end(); it++)
   {
     // remove sections which shall not be load from anywhere
@@ -293,8 +293,8 @@ bool Loader::prepareHeaders()
     // check if some sections shall load data from the binary to the same location
     for(it2 = phdrs_.begin(); it2 != it; it2++)
     {
-      if(ustl::max((*it).p_vaddr, (*it2).p_vaddr) <
-         ustl::min((*it).p_vaddr + (*it).p_filesz, (*it2).p_vaddr + (*it2).p_filesz))
+      if(eastl::max((*it).p_vaddr, (*it2).p_vaddr) <
+         eastl::min((*it).p_vaddr + (*it).p_filesz, (*it2).p_vaddr + (*it2).p_filesz))
       {
         debug(LOADER, "Loader::prepareHeaders: Failed to load the segments, some of them overlap!\n");
         return false;

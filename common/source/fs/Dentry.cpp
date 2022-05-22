@@ -11,7 +11,7 @@ Dentry::Dentry(Inode* inode) :
     inode->addDentry(this);
 }
 
-Dentry::Dentry(Inode* inode, Dentry* parent, const ustl::string& name) :
+Dentry::Dentry(Inode* inode, Dentry* parent, const eastl::string& name) :
     d_inode_(inode), d_parent_(parent), d_mounts_(0), d_name_(name)
 {
     debug(DENTRY, "created Dentry with Name %s\n", name.c_str());
@@ -47,7 +47,7 @@ void Dentry::childInsert(Dentry *child_dentry)
 int32 Dentry::childRemove(Dentry *child_dentry)
 {
   debug(DENTRY, "Dentry childRemove d_child_ included: %d\n",
-        ustl::find(d_child_.begin(), d_child_.end(), child_dentry) != d_child_.end());
+        eastl::find(d_child_.begin(), d_child_.end(), child_dentry) != d_child_.end());
   assert(child_dentry != nullptr);
   assert(child_dentry->d_parent_ == this);
   d_child_.remove(child_dentry);
@@ -62,7 +62,7 @@ const char* Dentry::getName() const
 
 int32 Dentry::setChild(Dentry *dentry)
 {
-  if (dentry == nullptr || ustl::find(d_child_.begin(), d_child_.end(), dentry) != d_child_.end())
+  if (dentry == nullptr || eastl::find(d_child_.begin(), d_child_.end(), dentry) != d_child_.end())
     return -1;
 
   d_child_.push_back(dentry);

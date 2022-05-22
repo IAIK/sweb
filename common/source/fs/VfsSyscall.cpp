@@ -45,7 +45,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
   if((path_walk_status == PW_ENOTFOUND) && parent_dir_path.dentry_)
   {
-    ustl::string new_dir_name = PathWalker::lastPathSegment(pathname, true);
+    eastl::string new_dir_name = PathWalker::lastPathSegment(pathname, true);
 
     Inode* parent_dir_inode = parent_dir_path.dentry_->getInode();
     Superblock* parent_dir_sb = parent_dir_inode->getSuperblock();
@@ -346,7 +346,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     debug(VFSSYSCALL, "(open) target does not exist, creating new file\n");
 
-    ustl::string new_dentry_name = PathWalker::lastPathSegment(pathname);
+    eastl::string new_dentry_name = PathWalker::lastPathSegment(pathname);
     if(new_dentry_name == "") // Path has trailing slashes
     {
       debug(VFSSYSCALL, "(open) Error: last path segment is empty (trailing '/')\n");

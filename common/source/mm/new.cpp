@@ -4,6 +4,9 @@
 #include "backtrace.h"
 #include "debug.h"
 #include "stdint.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "Scheduler.h"
 
 /**
  * Allocate new memory. This function is used by the wrappers.
@@ -122,3 +125,33 @@ uint32 __cxa_atexit() {return ( uint32 )-1;}
 #ifndef GCC29
 void*   __dso_handle = ( void* ) &__dso_handle;
 #endif
+
+void checkKMMDeadlock(const char* pName = nullptr, const char* file = nullptr, int line = 0)
+{
+    if (ArchMulticore::numRunningCPUs() == 1 && unlikely (ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false))
+    {
+        if (unlikely (KernelMemoryManager::instance()->KMMLockHeldBy() != nullptr))
+        {
+            system_state = KPANIC;
+            kprintfd("(ERROR) checkKMMDeadlock: Using a non resize-safe container method with IF=%d and SchedulingEnabled=%d ! This will fail!!!\n"
+                     "        container: %s, called at: %s, line: %d\n",
+                     ArchInterrupts::testIFSet(), Scheduler::instance()->isSchedulingEnabled(), pName ? pName : "(nil)", file ? file : "(nil)", line);
+            currentThread->printBacktrace(true);
+            assert(false);
+        }
+    }
+}
+
+// Required for EASTL
+void* operator new[](size_t size, [[maybe_unused]] const char* pName, [[maybe_unused]] int flags, [[maybe_unused]] unsigned debugFlags, [[maybe_unused]] const char* file, [[maybe_unused]] int line)
+{
+    checkKMMDeadlock(pName, file, line);
+    return new uint8_t[size];
+}
+
+void* operator new[](size_t size, [[maybe_unused]] size_t alignment, [[maybe_unused]] size_t alignmentOffset, [[maybe_unused]] const char* pName, [[maybe_unused]] int flags, [[maybe_unused]] unsigned debugFlags, [[maybe_unused]] const char* file, [[maybe_unused]] int line)
+{
+    // TODO: respect alignment
+    checkKMMDeadlock(pName, file, line);
+    return new uint8_t[size];
+}

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "umap.h"
+#include "EASTL/map.h"
 #include "arch_backtrace.h"
 
 // The limit for function names, after that, they will get capped
@@ -23,7 +23,7 @@ protected:
   StabEntry const *stab_end_;
   char const *stabstr_buffer_;
 
-  ustl::map<size_t, StabEntry const*> function_symbols_;
+  eastl::map<size_t, StabEntry const*> function_symbols_;
 
 private:
   virtual void initialiseSymbolTable();

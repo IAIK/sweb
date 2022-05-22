@@ -1,4 +1,4 @@
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 
 extern "C" int __cxa_thread_atexit(__attribute__((unused)) void (*func)(), __attribute__((unused)) void *obj, __attribute__((unused)) void *dso_symbol)
 {
@@ -14,7 +14,7 @@ extern "C" int __cxa_thread_atexit(__attribute__((unused)) void (*func)(), __att
 // values. The LSB is tested by the compiler-generated code before calling
 // __cxa_guard_acquire.
 union _guard_t {
-    ustl::atomic<int> state;
+    eastl::atomic<int> state;
     int32_t aligner;
 };
 static_assert(sizeof(_guard_t) == sizeof(int32_t), "Size of static initializer guard struct must be 4 bytes");
@@ -23,7 +23,7 @@ static_assert(sizeof(_guard_t) == sizeof(int32_t), "Size of static initializer g
 // guard variables are 64-bit aligned, 64-bit values. The LSB is tested by
 // the compiler-generated code before calling __cxa_guard_acquire.
 union _guard_t {
-    ustl::atomic<int> state;
+    eastl::atomic<int> state;
     int64_t aligner;
 };
 static_assert(sizeof(_guard_t) == sizeof(int64_t), "Size of static initializer guard struct must be 8 bytes");
@@ -40,40 +40,41 @@ static_assert(sizeof(_guard_t) == sizeof(int64_t), "Size of static initializer g
 #define CONSTRUCTION_UNDERWAY                   0x100
 
 extern "C" int __cxa_guard_acquire(_guard_t* gv) {
-  int old_value = gv->state.load(ustl::memory_order_relaxed);
+  int old_value = gv->state.load(eastl::memory_order_relaxed);
   while (true) {
     if (old_value == CONSTRUCTION_COMPLETE)
     {
       // A load_acquire operation is need before exiting with COMPLETE state, as we have to ensure
       // that all the stores performed by the construction function are observable on this CPU
       // after we exit.
-      ustl::atomic_thread_fence(ustl::memory_order_acquire);
+      eastl::atomic_thread_fence(eastl::memory_order_acquire);
       return 0;
     }
     else if (old_value == CONSTRUCTION_NOT_YET_STARTED)
     {
       // Spinlock via compare exchange
       if (!gv->state.compare_exchange_weak(old_value,
-                                           CONSTRUCTION_UNDERWAY,
-                                           ustl::memory_order_release,
-                                           ustl::memory_order_acquire)) {
+                                           CONSTRUCTION_UNDERWAY)) //,
+                                           //eastl::memory_order_release,
+                                           //eastl::memory_order_acquire))
+      {
         continue;
       }
       // The acquire fence may not be needed. But as described in section 3.3.2 of
       // the Itanium C++ ABI specification, it probably has to behave like the
       // acquisition of a mutex, which needs an acquire fence.
-      ustl::atomic_thread_fence(ustl::memory_order_acquire);
+      eastl::atomic_thread_fence(eastl::memory_order_acquire);
       return 1;
     }
   }
 }
 
 extern "C" void __cxa_guard_release(_guard_t* gv) {
-  gv->state.store(CONSTRUCTION_COMPLETE, ustl::memory_order_release);
+  gv->state.store(CONSTRUCTION_COMPLETE, eastl::memory_order_release);
 }
 
 extern "C" void __cxa_guard_abort(_guard_t* gv) {
-  gv->state.store(CONSTRUCTION_NOT_YET_STARTED, ustl::memory_order_release);
+  gv->state.store(CONSTRUCTION_NOT_YET_STARTED, eastl::memory_order_release);
 }
 
 

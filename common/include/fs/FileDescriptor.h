@@ -1,8 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "ulist.h"
-#include "umap.h"
+#include "EASTL/list.h"
+#include "EASTL/map.h"
 #include "Mutex.h"
 
 class File;
@@ -35,7 +35,7 @@ public:
     FileDescriptor* getFileDescriptor(uint32 fd);
 
 private:
-    ustl::list<FileDescriptor*> fds_;
+    eastl::list<FileDescriptor*> fds_;
     Mutex fd_lock_;
 };
 

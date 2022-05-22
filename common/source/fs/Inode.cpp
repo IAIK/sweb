@@ -66,7 +66,7 @@ uint32 Inode::numLinks()
 
 bool Inode::hasDentry(Dentry* dentry)
 {
-    return ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end();
+    return eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end();
 }
 
 void Inode::addDentry(Dentry* dentry)

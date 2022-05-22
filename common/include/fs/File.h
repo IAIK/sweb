@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "ulist.h"
+#include "EASTL/list.h"
 
 class Superblock;
 class Inode;
@@ -73,7 +73,7 @@ class File
     /**
      * List of open file descriptors
      */
-    ustl::list<FileDescriptor*> f_fds_;
+    eastl::list<FileDescriptor*> f_fds_;
 
   public:
     /**

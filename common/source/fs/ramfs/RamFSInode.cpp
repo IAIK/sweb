@@ -97,7 +97,7 @@ int32 RamFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 File* RamFSInode::open(Dentry* dentry, uint32 flag)
 {
   debug(INODE, "%s Inode: Open file\n", getSuperblock()->getFSType()->getFSName());
-  assert(ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
+  assert(eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
 
   File* file = (File*) (new RamFSFile(this, dentry, flag));
   i_files_.push_back(file);

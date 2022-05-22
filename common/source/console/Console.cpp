@@ -106,12 +106,12 @@ Terminal *Console::getTerminal(uint32 term)
   return terminals_[term];
 }
 
-ustl::vector<Terminal*>::iterator Console::terminalsBegin()
+eastl::vector<Terminal*>::iterator Console::terminalsBegin()
 {
     return terminals_.begin();
 }
 
-ustl::vector<Terminal*>::iterator Console::terminalsEnd()
+eastl::vector<Terminal*>::iterator Console::terminalsEnd()
 {
     return terminals_.end();
 }

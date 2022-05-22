@@ -1,11 +1,11 @@
 #pragma once
 
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 #include "debug.h"
 #include "assert.h"
 
 // Multiple producer, single consumer lock free FIFO queue
-// Node class T needs to have a ustl::atomic<T*> next_node_ member
+// Node class T needs to have a eastl::atomic<T*> next_node_ member
 template<class T>
 class NonBlockingQueue
 {
@@ -22,7 +22,7 @@ public:
 
     T* peekBack()
     {
-        ustl::atomic<T*>* curr_ptr = &list_head_;
+        eastl::atomic<T*>* curr_ptr = &list_head_;
 
         T* curr = curr_ptr->load();
         if (!curr)
@@ -41,7 +41,7 @@ public:
 
     T* popBack()
     {
-        ustl::atomic<T*>* curr_ptr = &list_head_;
+        eastl::atomic<T*>* curr_ptr = &list_head_;
 
         T* curr = curr_ptr->load();
         if (!curr)
@@ -74,5 +74,5 @@ public:
     }
 
 private:
-    ustl::atomic<T*> list_head_ = nullptr;
+    eastl::atomic<T*> list_head_ = nullptr;
 };

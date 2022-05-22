@@ -7,7 +7,7 @@
 #include "ArchInterrupts.h"
 #include "Thread.h"
 #include "MutexLock.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 #include "Scheduler.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
@@ -32,8 +32,8 @@ thread_local char cpu_stack[CPU_STACK_SIZE];
 volatile static bool ap_started = false;
 
 
-ustl::atomic<size_t> running_cpus;
-ustl::vector<CpuInfo*> ArchMulticore::cpu_list_;
+eastl::atomic<size_t> running_cpus;
+eastl::vector<CpuInfo*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
 
 extern GDT32Ptr ap_gdt32_ptr;
@@ -185,7 +185,7 @@ size_t ArchMulticore::getCpuID() // Only remains accurate when interrupts are di
 
 void ArchMulticore::initialize()
 {
-  new (&cpu_list_) ustl::vector<CpuInfo*>;
+  new (&cpu_list_) eastl::vector<CpuInfo*>;
   new (&cpu_list_lock_) Mutex("CPU list lock");
 
   assert(running_cpus == 0);

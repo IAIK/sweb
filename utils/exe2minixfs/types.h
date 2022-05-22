@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#define ustl std
+namespace eastl = std;
 
 #include "../../common/include/console/debug.h"
 

@@ -11,7 +11,7 @@
 #include "ArchMulticore.h"
 #include "offsets.h"
 
-UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
+UserProcess::UserProcess(eastl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
     Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename.c_str(), O_RDONLY))
 {
   debug(USERPROCESS, "Creating new user process %s\n", filename.c_str());
