@@ -5,6 +5,8 @@ cmake_policy(SET CMP0079 NEW)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
+set(BUILD_SHARED_LIBS OFF)
+
 # Include custom CMake modules from the cmake/ subdirectory
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -140,12 +142,13 @@ add_subdirectory(arch)
 add_subdirectory(common)
 add_subdirectory(utils)
 add_subdirectory(userspace)
+add_subdirectory(lib)
 
 target_link_libraries(kernel_libc PUBLIC kernel_options)
 target_link_libraries(kernel PUBLIC kernel_libc)
 
-#FINAL_LIB_NAMES should contain the names of all libraries
-#these names can be used to link the kernel, no unpacking of *.a files is needed anymore
+# FINAL_LIB_NAMES should contain the names of all libraries
+# these names can be used to link the kernel, no unpacking of *.a files is needed anymore
 set(FINAL_LIB_NAMES $ENV{LIBRARY_NAMES})
 
 # Name of the executables of the userspace, needed for dependency checking
