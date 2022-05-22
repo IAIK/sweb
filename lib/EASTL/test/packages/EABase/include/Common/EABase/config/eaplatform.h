@@ -96,7 +96,53 @@
 	#define EA_PLATFORM_DESKTOP 1
 #endif
 
-#if defined(EA_PLATFORM_PS4) || defined(__ORBIS__) || defined(EA_PLATFORM_KETTLE)
+// SWEB
+// __i386__ and __intel__ are defined by the GCC compiler.
+// __i386__ is defined by the Metrowerks compiler.
+// _M_IX86 is defined by the Borland compiler.
+// __sparc__ is defined by the GCC compiler.
+// __powerpc__ is defined by the GCC compiler.
+// __ARM_EABI__ is defined by GCC on an ARM v6l (Raspberry Pi 1)
+// __ARM_ARCH_7A__ is defined by GCC on an ARM v7l (Raspberry Pi 2)
+#if defined(EA_PLATFORM_SWEB)
+	#undef  EA_PLATFORM_SWEB
+	#define EA_PLATFORM_SWEB 1
+	#define EA_PLATFORM_NAME "SWEB"
+	#if defined(__i386__) || defined(__intel__) || defined(_M_IX86)
+		#define EA_PROCESSOR_X86 1
+		#define EA_SYSTEM_LITTLE_ENDIAN 1
+		#define EA_PLATFORM_DESCRIPTION "SWEB on x86"
+	#elif defined(__ARM_ARCH_7A__) || defined(__ARM_EABI__)
+		#define EA_ABI_ARM_LINUX 1
+		#define EA_PROCESSOR_ARM32 1
+		#define EA_PLATFORM_DESCRIPTION "SWEB on ARM 6/7 32-bits"
+	#elif defined(__aarch64__) || defined(__AARCH64)
+		#define EA_PROCESSOR_ARM64 1
+		#define EA_PLATFORM_DESCRIPTION "SWEB on ARM64"
+	#elif defined(__x86_64__)
+		#define EA_PROCESSOR_X86_64 1
+		#define EA_SYSTEM_LITTLE_ENDIAN 1
+		#define EA_PLATFORM_DESCRIPTION "SWEB on x64"
+	#elif defined(__powerpc64__)
+		#define EA_PROCESSOR_POWERPC 1
+		#define EA_PROCESSOR_POWERPC_64 1
+		#define EA_SYSTEM_BIG_ENDIAN 1
+		#define EA_PLATFORM_DESCRIPTION "SWEB on PowerPC 64"
+	#elif defined(__powerpc__)
+		#define EA_PROCESSOR_POWERPC 1
+		#define EA_PROCESSOR_POWERPC_32 1
+		#define EA_SYSTEM_BIG_ENDIAN 1
+		#define EA_PLATFORM_DESCRIPTION "SWEB on PowerPC"
+	#else
+		#error Unknown processor
+		#error Unknown endianness
+	#endif
+	#if defined(__GNUC__)
+		#define EA_ASM_STYLE_ATT 1
+	#endif
+	#define EA_PLATFORM_DESKTOP 1
+
+#elif defined(EA_PLATFORM_PS4) || defined(__ORBIS__) || defined(EA_PLATFORM_KETTLE)
 	// PlayStation 4
 	// Orbis was Sony's code-name for the platform, which is now obsolete.
 	// Kettle was an EA-specific code-name for the platform, which is now obsolete.
@@ -390,6 +436,7 @@
 // __ARM_EABI__ is defined by GCC on an ARM v6l (Raspberry Pi 1)
 // __ARM_ARCH_7A__ is defined by GCC on an ARM v7l (Raspberry Pi 2)
 #elif defined(EA_PLATFORM_LINUX) || (defined(__linux) || defined(__linux__))
+#error "SWEB should not use Linux platform definitions"
 	#undef  EA_PLATFORM_LINUX
 	#define EA_PLATFORM_LINUX 1
 	#define EA_PLATFORM_UNIX 1
