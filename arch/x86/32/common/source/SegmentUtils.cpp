@@ -43,7 +43,7 @@ static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 
     gdt[index].baseH  = (uint8)((base >> 24U) & 0xFF);
     gdt[index].limitL = (uint16)(limit & 0xFFFF);
     gdt[index].limitH = (uint8) (((limit >> 16U) & 0xF));
-    gdt[index].typeH  = 0xC; // 4kb + 32bit
+    gdt[index].typeH  = tss ? 0 : 0xC; // 4kb + 32bit
     gdt[index].typeL  = (tss ? 0x89 : 0x92) | (dpl << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
@@ -57,6 +57,7 @@ void SegmentUtils::initialise()
   g_tss = (TSS*)new uint8[sizeof(TSS)]; // new uint8[sizeof(TSS)];
   memset((void*)g_tss, 0, sizeof(TSS));
   g_tss->ss0 = KERNEL_SS;
+  g_tss->iobase = -1;
   setSegmentDescriptor(6, (uint32)g_tss, sizeof(TSS)-1, 0, 0, 1);
   // we have to reload our segment stuff
   gdt_ptr.limit = sizeof(gdt) - 1;
