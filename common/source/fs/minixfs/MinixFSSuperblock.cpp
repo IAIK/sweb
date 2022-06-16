@@ -13,6 +13,7 @@
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #endif
+#include "EASTL/unique_ptr.h"
 
 #define ROOT_NAME "/"
 
@@ -36,16 +37,15 @@ MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 
   assert(s_block_size_ == 1024);
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
-  char* bm_buffer = new char[BLOCK_SIZE * bm_size];
-  readBlocks(2, bm_size, bm_buffer);
+  auto bm_buffer = eastl::make_unique<char[]>(BLOCK_SIZE * bm_size);
+  readBlocks(2, bm_size, bm_buffer.get());
   debug(M_SB, "---creating Storage Manager\n");
-  storage_manager_ = new MinixStorageManager(bm_buffer, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_num_inodes_,
+  storage_manager_ = new MinixStorageManager(bm_buffer.get(), s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_num_inodes_,
                                              s_zones_);
   if (M_STORAGE_MANAGER & OUTPUT_ENABLED)
   {
     storage_manager_->printBitmap();
   }
-  delete[] bm_buffer;
 
   initInodes();
   debug(M_SB, "MinixFSSuperblock ctor finished\n");
