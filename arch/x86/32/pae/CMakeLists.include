@@ -9,10 +9,10 @@ set(ARCH_LD_ARGUMENTS -m32 -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -Wl,-
 set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} -mcmodel=kernel ${NOPIEFLAG})
 
 
-target_link_options(kernel PUBLIC
+target_link_options(kernel_options INTERFACE
     ${KERNEL_LD_ARGUMENT} -mcmodel=kernel ${NOPIEFLAG})
 
-target_compile_options(kernel PUBLIC
+target_compile_options(kernel_options INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>

@@ -104,7 +104,22 @@ public:
  * @param new_value to set variable lock to
  * @returns old_value of variable lock
  */
-  static uint32 testSetLock(volatile uint32 &lock, uint32 new_value);
+  template<typename T>
+  static T testSetLock(volatile T &lock, T new_value)
+  {
+      return __sync_lock_test_and_set(&lock, new_value);
+  }
+
+/**
+ * Counterpart to testSetLock()
+ * Writes 0 to the lock variable and provides a memory release barrier
+ * (ensures all previous memory stores are visible)
+ */
+  template<typename T>
+  static void syncLockRelease(volatile T &lock)
+  {
+      __sync_lock_release(&lock);
+  }
 
 /**
  * atomically increments or decrements value by increment
@@ -155,3 +170,13 @@ private:
   static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
 };
 
+
+class WithAddressSpace
+{
+public:
+    WithAddressSpace(Thread* thread);
+    WithAddressSpace(ArchMemory& arch_memory);
+    ~WithAddressSpace();
+private:
+    size_t prev_addr_space_;
+};

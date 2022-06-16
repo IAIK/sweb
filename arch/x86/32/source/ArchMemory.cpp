@@ -366,13 +366,13 @@ void ArchMemory::flushLocalTranslationCaches(size_t addr)
                        :[addr]"m"(*(char*)addr));
 }
 
-ustl::atomic<size_t> shootdown_request_counter;
+eastl::atomic<size_t> shootdown_request_counter;
 
 void ArchMemory::flushAllTranslationCaches(size_t addr)
 {
 
         assert(ArchMulticore::cpu_list_.size() >= 1);
-        ustl::vector<TLBShootdownRequest> shootdown_requests{ArchMulticore::cpu_list_.size()};
+        eastl::vector<TLBShootdownRequest> shootdown_requests{ArchMulticore::cpu_list_.size()};
         //TLBShootdownRequest shootdown_requests[ArchMulticore::cpu_list_.size()]; // Assuming the kernel stack is large enough as long as we only have a few CPUs
 
         bool interrupts_enabled = ArchInterrupts::disableInterrupts();

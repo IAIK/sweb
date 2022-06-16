@@ -2,11 +2,12 @@
 
 #include "types.h"
 #include "APIC.h"
-#include "uvector.h"
+#include "EASTL/vector.h"
 #include "Mutex.h"
 #include "SegmentUtils.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 #include "IdleThread.h"
+#include "paging-definitions.h"
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
@@ -14,9 +15,9 @@
 struct TLBShootdownRequest
 {
         size_t addr;
-        ustl::atomic<size_t> ack;
+        eastl::atomic<size_t> ack;
         size_t target;
-        ustl::atomic<TLBShootdownRequest*> next;
+        eastl::atomic<TLBShootdownRequest*> next;
         size_t request_id;
         size_t orig_cpu;
 };
@@ -31,18 +32,19 @@ public:
 
         LocalAPIC* lapic;
 
-        size_t cpu_id;
+        size_t* cpu_id_;
 
-        ustl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
+        eastl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
 private:
 };
 
 
 extern thread_local LocalAPIC cpu_lapic;
+extern thread_local size_t cpu_id;
 extern thread_local CpuInfo cpu_info;
 extern thread_local char cpu_stack[CPU_STACK_SIZE];
 extern thread_local TSS cpu_tss;
-extern thread_local IdleThread idle_thread;
+extern thread_local IdleThread* idle_thread;
 
 #define AP_STARTUP_PADDR 0x0
 
@@ -69,7 +71,7 @@ class ArchMulticore
     static void addCPUtoList(CpuInfo* cpu);
 
     static Mutex cpu_list_lock_;
-    static ustl::vector<CpuInfo*> cpu_list_;
+    static eastl::vector<CpuInfo*> cpu_list_;
 
   private:
     static void initCpuLocalGDT(GDT& template_gdt);

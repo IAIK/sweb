@@ -3,6 +3,7 @@
 #include "multiboot.h"
 #include "offsets.h"
 #include "kprintf.h"
+#include "kstring.h"
 #include "ArchMemory.h"
 #include "TextConsole.h"
 #include "FrameBufferConsole.h"
@@ -280,8 +281,8 @@ void ArchCommon::drawStat() {
     size_t i = 0;
     while(text[i]) {
         fb[i * 2 + STATS_OFFSET] = text[i];
-        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? ((Console::BLACK) | (Console::DARK_GREY << 4)) :
-                                                                ((Console::DARK_GREY) | (Console::BLACK << 4)));
+        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? ((CONSOLECOLOR::BLACK) | (CONSOLECOLOR::DARK_GREY << 4)) :
+                                                                ((CONSOLECOLOR::DARK_GREY) | (CONSOLECOLOR::BLACK << 4)));
         i++;
     }
 
@@ -294,7 +295,7 @@ void ArchCommon::drawStat() {
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
       fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];
-      fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
+      fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
     }
 
 #define STATS_NUM_THREADS_START (80*2 + 73*2)
@@ -304,7 +305,7 @@ void ArchCommon::drawStat() {
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
             fb[STATS_NUM_THREADS_START + i * 2] = itoa_buffer[i];
-            fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((Console::WHITE) | (Console::BLACK << 4));
+            fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
     }
 }
 
@@ -337,4 +338,10 @@ void ArchCommon::postBootInit()
                      ::[stack]"r"(stack),
                       [func]"r"(func));
         assert(false);
+}
+
+
+void ArchCommon::spinlockPause()
+{
+    asm volatile("pause\n");
 }

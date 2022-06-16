@@ -4,7 +4,7 @@
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
-#include "umap.h"
+#include "EASTL/map.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "Loader.h"

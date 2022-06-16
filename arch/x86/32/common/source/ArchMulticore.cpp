@@ -8,7 +8,7 @@
 #include "ArchInterrupts.h"
 #include "Thread.h"
 #include "MutexLock.h"
-#include "uatomic.h"
+#include "EASTL/atomic.h"
 #include "Scheduler.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
@@ -24,6 +24,7 @@ __thread TSS cpu_tss;
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
 
 thread_local LocalAPIC cpu_lapic;
+thread_local size_t cpu_id;
 thread_local CpuInfo cpu_info;
 
 thread_local char cpu_stack[CPU_STACK_SIZE];
@@ -32,8 +33,8 @@ thread_local char cpu_stack[CPU_STACK_SIZE];
 volatile static bool ap_started = false; // TODO: Convert to spinlock
 
 
-ustl::atomic<size_t> running_cpus;
-ustl::vector<CpuInfo*> ArchMulticore::cpu_list_;
+eastl::atomic<size_t> running_cpus;
+eastl::vector<CpuInfo*> ArchMulticore::cpu_list_;
 Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
 
 extern GDT32Ptr ap_gdt32_ptr;
@@ -54,8 +55,9 @@ static uint8 ap_boot_stack[PAGE_SIZE];
 
 CpuInfo::CpuInfo() :
   lapic(&cpu_lapic),
-  cpu_id(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0)
+  cpu_id_(&cpu_id)
 {
+  setCpuID(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0);
   debug(A_MULTICORE, "Initializing CpuInfo for CPU %zx at %p\n", cpu_id, this);
   ArchMulticore::addCPUtoList(this);
 }
@@ -63,12 +65,12 @@ CpuInfo::CpuInfo() :
 
 size_t CpuInfo::getCpuID()
 {
-  return cpu_id;
+  return *cpu_id_;
 }
 
 void CpuInfo::setCpuID(size_t id)
 {
-  cpu_id = id;
+  *cpu_id_ = id;
 }
 
 
@@ -137,25 +139,21 @@ void* CPULocalStorage::getClsBase()
 
 void ArchMulticore::initCPULocalData(bool boot_cpu)
 {
-  debug(A_MULTICORE, "Initializing CPU local data, boot cpu: %u\n", boot_cpu);
-  currentThread = nullptr;
-  currentThreadRegisters = nullptr;
-
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
   initCpuLocalTSS((size_t)ArchMulticore::cpuStackTop());
 
+
   // The constructor of objects declared as thread_local will be called automatically the first time the thread_local object is used. Other thread_local objects _may or may not_ also be initialized at the same time.
-  void* gs_base = CPULocalStorage::getClsBase();
-  debug(A_MULTICORE, "Initializing CPU local objects, %p\n", gs_base);
+  debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", cpu_info.getCpuID());
 
-  void* cpu_info_addr = &cpu_info;
-  debug(A_MULTICORE, "Initializing cpu_info at %p\n", &cpu_info_addr);
-  debug(A_MULTICORE, "Initializing CPU local objects for CPU %zx\n", cpu_info.getCpuID());
-  // This is a dirty hack to make sure the idle thread is initialized. Otherwise idle thread initialization might happen the first time it gets scheduled, which won't work because it requires e.g. the KMM lock
+  // void* cpu_info_addr = &cpu_info;
+  // debug(A_MULTICORE, "Initializing cpu_info at %p\n", &cpu_info_addr);
+  // debug(A_MULTICORE, "Initializing CPU local objects for CPU %zx\n", cpu_info.getCpuID());
 
-
-  idle_thread;
-  debug(A_MULTICORE, "CPU %zx: %s initialized\n", getCpuID(), idle_thread.getName());
+  idle_thread = new IdleThread();
+  debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCpuID(), idle_thread->getName());
+  idle_thread->pinned_to_cpu = getCpuID();
+  Scheduler::instance()->addNewThread(idle_thread);
 }
 
 
@@ -203,7 +201,7 @@ size_t ArchMulticore::getCpuID() // Only accurate when interrupts are disabled
 void ArchMulticore::initialize()
 {
   debug(A_MULTICORE, "Init cpu list at %p\n", &cpu_list_);
-  new (&cpu_list_) ustl::vector<CpuInfo*>{};
+  new (&cpu_list_) eastl::vector<CpuInfo*>{};
   new (&cpu_list_lock_) Mutex("CPU list lock");
 
   assert(running_cpus == 0);

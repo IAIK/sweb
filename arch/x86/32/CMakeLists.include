@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.13)
+
 set(KERNEL_BINARY kernel.x)
 
 set(ARCH_X86_32_KERNEL_CFLAGS -m32 -O0 -gstabs2 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${NOPICFLAG})
@@ -9,10 +11,10 @@ set(ARCH_LD_ARGUMENTS -m32 -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -Wl,-
 set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} -mcmodel=kernel ${NOPIEFLAG})
 
 
-target_link_options(kernel PUBLIC
+target_link_options(kernel_options INTERFACE
     ${KERNEL_LD_ARGUMENT})
 
-target_compile_options(kernel PUBLIC
+target_compile_options(kernel_options INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>

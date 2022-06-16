@@ -16,7 +16,6 @@ typedef uint32 l_off_t;
 
 typedef uint32 mode_t;
 typedef __SIZE_TYPE__ size_t;
-typedef int32 ssize_t;
 
 typedef uint32 uid_t;
 typedef uint32 gid_t;
@@ -32,4 +31,3 @@ typedef size_t pointer;
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 #define unreachable()    __builtin_unreachable()
-
