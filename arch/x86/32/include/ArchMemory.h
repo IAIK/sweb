@@ -44,11 +44,11 @@ class ArchMemory
 public:
   ArchMemory();
 
-/** 
+/**
  *
  * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
- * @param virtual_page 
+ * @param virtual_page
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
@@ -115,7 +115,7 @@ public:
  * @param virtual_page
  * @param physical_page
  */
-  static void mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
+  static __attribute__((warn_unused_result)) bool mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -140,7 +140,7 @@ public:
 
 private:
 
-/** 
+/**
  * Adds a page directory entry to the given page directory.
  * (In other words, adds the reference to a new page table to a given
  * page directory.)
@@ -163,5 +163,3 @@ private:
   ArchMemory &operator=(ArchMemory const &src); // should never be implemented
 
 };
-
-

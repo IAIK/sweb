@@ -64,7 +64,7 @@ size_t KernelMemoryManager::mapKernelHeap(size_t max_heap_pages)
     ppn_t ppn_to_map = PageManager::instance()->allocPPN();
     if(MAIN & OUTPUT_ADVANCED)
       debug(MAIN, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)kheap_vpn, (void*)ppn_to_map);
-    ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true);
+    assert(ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true));
   }
   debug(MAIN, "Finished mapping kernel heap [%zx - %zx), initializing KernelMemoryManager\n",
         ArchCommon::getFreeKernelMemoryStart(), ArchCommon::getFreeKernelMemoryStart() + num_reserved_heap_pages*PAGE_SIZE);
@@ -504,7 +504,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
           assert(new_page != 0 && "Kernel Heap is out of memory");
         }
         debug(KMM, "kbsrk: map %zx -> %zx\n", cur_top_vpn, new_page);
-        ArchMemory::mapKernelPage(cur_top_vpn, new_page);
+        assert(ArchMemory::mapKernelPage(cur_top_vpn, new_page));
       }
 
     }

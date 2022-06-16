@@ -102,7 +102,7 @@ public:
  * @param virtual_page
  * @param physical_page
  */
-  static void mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
+  static __attribute__((warn_unused_result)) bool mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid

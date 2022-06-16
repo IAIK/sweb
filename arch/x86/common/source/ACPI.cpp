@@ -101,7 +101,7 @@ void initACPI()
     if(!m.page)
     {
             debug(ACPI, "XSDT page %zx not present, mapping\n", (size_t)XSDT_ptr/PAGE_SIZE);
-            ArchMemory::mapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, (size_t)XSDT_ptr / PAGE_SIZE, true);
+            assert(ArchMemory::mapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, (size_t)XSDT_ptr / PAGE_SIZE, true));
             m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
     }
     assert(m.page != 0);
@@ -137,7 +137,7 @@ void handleSDT(ACPISDTHeader* entry_header)
   if(!m.page)
   {
     debug(ACPI, "SDT page %zx not present, mapping\n", (size_t)entry_header/PAGE_SIZE);
-    ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true);
+    assert(ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true));
     m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
     unmap_page_again = true;
   }

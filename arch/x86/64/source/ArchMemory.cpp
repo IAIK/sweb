@@ -296,10 +296,15 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, ppn_t *ph
   return m.page_size;
 }
 
-void ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages, bool memory_mapped_io)
+bool ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
   //debug(A_MEMORY, "mapKernelPage, vpn: %zx, ppn: %zx\n", virtual_page, physical_page);
   ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
+
+  if (m.page_size)
+  {
+      return false; // Page already mapped
+  }
 
   m.pml4 = kernel_page_map_level_4;
 
@@ -338,6 +343,8 @@ void ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can
 
   //debug(A_MEMORY, "mapKernelPage, vpn: %zx, ppn: %zx end\n", virtual_page, physical_page);
   asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax"); // TODO: flushing caches after mapping a new page is pointless, remove
+
+  return true;
 }
 
 void ArchMemory::unmapKernelPage(size_t virtual_page, bool free_page)

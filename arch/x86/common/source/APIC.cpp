@@ -73,7 +73,7 @@ void LocalAPIC::mapAt(size_t addr)
 
   debug(APIC, "Map local APIC at phys %p to %p\n", reg_paddr_, (void*)addr);
 
-  ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
+  assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
   reg_vaddr_ = (LocalAPICRegisters*)addr;
 }
 
@@ -518,7 +518,7 @@ void IOAPIC::mapAt(size_t addr)
   debug(APIC, "Map IOAPIC %u at phys %p to %p\n", id_, reg_paddr_, (void*)addr);
   assert(addr);
 
-  ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true);
+  assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
   reg_vaddr_ = (IOAPIC_MMIORegs*)addr;
 }
 

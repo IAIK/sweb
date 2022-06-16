@@ -277,12 +277,17 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
     return 0;
 }
 
-void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages, bool memory_mapped_io)
+bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
   debug(A_MEMORY, "Map kernel page %#zx -> PPN %#zx, alloc new pages: %u, mmio: %u\n", virtual_page, physical_page, can_alloc_pages, memory_mapped_io);
   ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
 
-  assert(!m.page_size && "Page already mapped");
+  if (m.page_size)
+  {
+      return false; // Page already mapped
+  }
+
+  m.pd = getRootOfKernelPagingStructure();
 
   assert(m.pt || can_alloc_pages);
   if((!m.pt) && can_alloc_pages)
@@ -308,12 +313,16 @@ void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool c
   m.pt[m.pti].present = 1;
 
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax"); // TODO: flushing caches after mapping a fresh page is pointless
+
+  return true;
 }
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
 {
   ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
   assert(m.page && (m.page_size == PAGE_SIZE));
+
+  memset(&m.pt[m.pti], 0, sizeof(m.pt[m.pti]));
 
   if(free_page)
   {
