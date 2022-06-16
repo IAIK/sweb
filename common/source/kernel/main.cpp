@@ -95,10 +95,13 @@ extern "C" [[noreturn]] void startup()
   debug(MAIN, "Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();
 
+  debug(MAIN, "Setting scheduler tick frequency...\n");
   ArchInterrupts::setTimerFrequency(IRQ0_TIMER_FREQUENCY);
 
+  debug(MAIN, "Init debug...\n");
   ArchCommon::initDebug();
 
+  debug(MAIN, "Init VFS...\n");
   new (&VfsSyscall::vfs_lock) Mutex("vfs lock");
   vfs.initialize();
   debug(MAIN, "Mounting root file system\n");
