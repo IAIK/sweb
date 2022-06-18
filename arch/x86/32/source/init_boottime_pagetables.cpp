@@ -30,10 +30,10 @@ extern "C" void initialiseBootTimePaging()
 
 
   // Map kernel page tables
-  for(size_t pdi = k_start.pdi; pdi <= k_end.pdi; ++pdi)
+  for (size_t pdi = k_start.pdi; pdi <= k_end.pdi; ++pdi)
   {
     size_t pdi_offset = pdi - k_start.pdi;
-    pde_start[pdi].pt.page_table_ppn = ((pointer) &pte_start[1024 * pdi_offset]) / PAGE_SIZE;
+    pde_start[pdi].pt.page_table_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * pdi_offset]) / PAGE_SIZE;
     pde_start[pdi].pt.writeable = 1;
     pde_start[pdi].pt.present = 1;
   }
@@ -46,7 +46,7 @@ extern "C" void initialiseBootTimePaging()
   // Map kernel page tables
   for(VAddr a{ArchCommon::getKernelStartAddress()}; a.addr < ArchCommon::getKernelEndAddress(); a.addr += PAGE_SIZE)
   {
-    size_t pti = (a.pdi - k_start.pdi)*PAGE_DIRECTORY_ENTRIES + a.pti;
+    size_t pti = (a.pdi - k_start.pdi)*PAGE_TABLE_ENTRIES + a.pti;
     assert(pti < sizeof(kernel_page_tables)/sizeof(kernel_page_tables[0]));
     pte_start[pti].page_ppn = VIRTUAL_TO_PHYSICAL_BOOT(a.addr)/PAGE_SIZE;
     // AP startup pages need to be writeable to fill in the GDT, ...

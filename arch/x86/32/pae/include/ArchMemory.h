@@ -13,6 +13,37 @@ extern PageDirPointerTableEntry kernel_page_directory_pointer_table[PAGE_DIRECTO
 extern PageDirEntry kernel_page_directory[4 * PAGE_DIRECTORY_ENTRIES];
 extern PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES];
 
+union VAddr
+{
+    size_t addr;
+    struct
+    {
+        size_t offset :12;
+        size_t pti    :9;
+        size_t pdi    :9;
+        size_t pdpti  :2;
+    };
+};
+
+class ArchMemoryMapping
+{
+public:
+    PageDirPointerTableEntry* pdpt;
+    PageDirEntry* pd;
+    PageTableEntry* pt;
+    pointer page;
+
+    ppn_t pd_ppn;
+    ppn_t pt_ppn;
+    ppn_t page_ppn;
+
+    size_t page_size;
+
+    size_t pdpti;
+    size_t pdi;
+    size_t pti;
+};
+
 class ArchMemory
 {
 public:
@@ -59,6 +90,8 @@ public:
  */
   static pointer getIdentAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE);
 
+  static pointer getIdentAddress(size_t address);
+
 /**
  * Checks if a given Virtual Address is valid and is mapped to real memory
  * @param pdpt page dir pointer table
@@ -67,6 +100,7 @@ public:
  * and accessing it would result in a pageFault
  */
   pointer checkAddressValid(uint32 vaddress_to_check);
+  static pointer checkAddressValid(PageDirPointerTableEntry* pdpt, uint32 vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
@@ -81,6 +115,9 @@ public:
  */
   static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page=0);
 
+  const ArchMemoryMapping resolveMapping(vpn_t vpage);
+  static const ArchMemoryMapping resolveMapping(PageDirPointerTableEntry* pdpt, vpn_t vpage);
+
 /**
  *
  * maps a virtual page to a physical page in kernel mapping
@@ -88,7 +125,7 @@ public:
  * @param virtual_page
  * @param physical_page
  */
-  static void mapKernelPage(uint32 virtual_page, uint32 physical_page);
+  static __attribute__((warn_unused_result)) bool mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -96,7 +133,7 @@ public:
  *
  * @param virtual_page which will be invalidated
  */
-  static void unmapKernelPage(uint32 virtual_page);
+  static void unmapKernelPage(uint32 virtual_page, bool free_page = true);
 
   static void initKernelArchMem();
 
@@ -104,6 +141,10 @@ public:
   PageDirPointerTableEntry* getRootOfPagingStructure();
   uint32 getValueForCR3();
   static PageDirPointerTableEntry* getRootOfKernelPagingStructure();
+  static void loadPagingStructureRoot(size_t cr3_value);
+
+  static void flushLocalTranslationCaches(size_t addr);
+  static void flushAllTranslationCaches(size_t addr);
 
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0xC0000ULL;

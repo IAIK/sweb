@@ -119,11 +119,11 @@ extern "C" void entry()
 
 
   asm volatile("movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n"
-      "movl $0, kernel_page_map_level_4 - BASE + 4\n");
-  asm volatile("movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
-      "movl $0, kernel_page_directory_pointer_table - BASE + 4\n");
-  asm volatile("movl $0x83, kernel_page_directory - BASE\n"
-      "movl $0, kernel_page_directory - BASE + 4\n");
+               "movl $0, kernel_page_map_level_4 - BASE + 4\n"
+               "movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
+               "movl $0, kernel_page_directory_pointer_table - BASE + 4\n"
+               "movl $0x83, kernel_page_directory - BASE\n"
+               "movl $0, kernel_page_directory - BASE + 4\n");
 
   PRINT("Enable PAE and PSE...\n");
   asm("mov %cr4,%eax\n"

@@ -78,12 +78,12 @@ extern "C" void entry()
   PRINT("Enable Page Size Extensions...\n");
   uint32 cr4;
   asm("mov %%cr4,%[v]\n" : [v]"=r"(cr4));
-  cr4 |= 0x10;
-  if (PAGE_DIRECTORY_ENTRIES == 512) // PAE
-    cr4 |= 0x20;
+  cr4 |= 0x10; // PSE
+  if (PAGE_DIRECTORY_ENTRIES == 512)
+    cr4 |= 0x20; // PAE
   asm("mov %[v],%%cr4\n" : : [v]"r"(cr4));
 
-  PRINT("Enable Paging...\n");
+  PRINT("Enable Paging...\n"); // Enable paging, write protect in ring 0 and protected mode
   asm("mov %cr0,%eax\n"
       "or $0x80010001,%eax\n"
       "mov %eax,%cr0\n");

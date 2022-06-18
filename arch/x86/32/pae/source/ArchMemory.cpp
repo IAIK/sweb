@@ -169,6 +169,90 @@ pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   return 0;
 }
 
+pointer ArchMemory::checkAddressValid(PageDirPointerTableEntry* pdpt, uint32 vaddress_to_check)
+{
+    ArchMemoryMapping m = resolveMapping(pdpt, vaddress_to_check / PAGE_SIZE);
+    if (m.page != 0)
+    {
+        debug(A_MEMORY, "checkAddressValid, pdpt: %p, vaddr: %#zx -> true\n", pdpt, vaddress_to_check);
+        return m.page | (vaddress_to_check % m.page_size);
+    }
+    else
+    {
+        debug(A_MEMORY, "checkAddressValid, pdpt: %p, vaddr: %#zx -> false\n", pdpt, vaddress_to_check);
+        return 0;
+    }
+}
+
+const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage)
+{
+    return resolveMapping(page_dir_pointer_table_, vpage);
+}
+
+const ArchMemoryMapping ArchMemory::resolveMapping(PageDirPointerTableEntry* pdpt, vpn_t vpage)
+{
+  ArchMemoryMapping m;
+
+  VAddr a{vpage*PAGE_SIZE};
+
+  m.pti = a.pti;
+  m.pdi = a.pdi;
+  m.pdpti = a.pdpti;
+
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+    debug(A_MEMORY, "resolveMapping, vpn: %#zx, pdpti: %zx(%zu), pdi: %zx(%zu), pti: %zx(%zu)\n", vpage, m.pdpti, m.pdpti, m.pdi, m.pdi, m.pti, m.pti);
+  }
+
+  m.pdpt = pdpt;
+  m.pd = 0;
+  m.pt = 0;
+  m.page = 0;
+  m.pd_ppn = 0;
+  m.pt_ppn = 0;
+  m.page_ppn = 0;
+  m.page_size = 0;
+
+  if(m.pdpt[m.pdpti].present)
+  {
+      m.pd_ppn = m.pdpt[m.pdpti].page_directory_ppn;
+      assert(m.pd_ppn < PageManager::instance()->getTotalNumPages());
+      m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pd_ppn);
+
+      if(m.pd[m.pdi].pt.present && !m.pd[m.pdi].pt.size)
+      {
+          m.pt_ppn = m.pd[m.pdi].pt.page_table_ppn;
+          assert(m.pt_ppn < PageManager::instance()->getTotalNumPages());
+          m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
+          if(m.pt[m.pti].present)
+          {
+              m.page_size = PAGE_SIZE;
+              m.page_ppn = m.pt[m.pti].page_ppn;
+              m.page = getIdentAddressOfPPN(m.page_ppn);
+          }
+      }
+      else if(m.pd[m.pdi].pt.present && m.pd[m.pdi].pt.size)
+      {
+          m.page_size = PAGE_SIZE * PAGE_TABLE_ENTRIES;
+          m.page_ppn = m.pd[m.pdi].page.page_ppn;
+          m.page = getIdentAddressOfPPN(m.page_ppn);
+      }
+  }
+
+  if(A_MEMORY & OUTPUT_ADVANCED)
+  {
+      debug(A_MEMORY, "resolveMapping, vpn: %#zx, pdpt[%s]: %p, pd[%s]: %#zx, pt[%s]: %#zx, page[%s]: %#zx, size: %#zx\n",
+            vpage,
+            (m.pdpt ? "P" : "-"), m.pdpt,
+            (m.pd ? "P" : "-"), m.pd_ppn,
+            (m.pt ? "P" : "-"), m.pt_ppn,
+            (m.page ? "P" : "-"), m.page_ppn,
+            m.page_size);
+  }
+
+  return m;
+}
+
 uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page)
 {
   PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
@@ -200,31 +284,67 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *
   return 0;
 }
 
-void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
+bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
-  PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
-  RESOLVEMAPPING(pdpt, virtual_page);
-  assert(pdpt[pdpte_vpn].present);
-  assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(!pte_base[pte_vpn].present);
-  pte_base[pte_vpn].writeable = 1;
-  pte_base[pte_vpn].page_ppn = physical_page;
-  pte_base[pte_vpn].present = 1;
+  debug(A_MEMORY, "Map kernel page %#zx -> PPN %#zx, alloc new pages: %u, mmio: %u\n", virtual_page, physical_page, can_alloc_pages, memory_mapped_io);
+
+  ArchMemoryMapping m = resolveMapping(getRootOfKernelPagingStructure(), virtual_page);
+
+  if (m.page_size)
+  {
+      return false; // Page already mapped
+  }
+
+  assert(m.pd || can_alloc_pages);
+  if((!m.pd) && can_alloc_pages)
+  {
+      m.pd_ppn = PageManager::instance()->allocPPN();
+      m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pd_ppn);
+
+      m.pdpt[m.pdpti].page_directory_ppn = m.pd_ppn;
+      m.pdpt[m.pdpti].present = 1;
+  }
+
+  assert(m.pt || can_alloc_pages);
+  if((!m.pt) && can_alloc_pages)
+  {
+      m.pt_ppn = PageManager::instance()->allocPPN();
+      m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
+
+      m.pd[m.pdi].pt.page_table_ppn = m.pt_ppn;
+      m.pd[m.pdi].pt.writeable = 1;
+      m.pd[m.pdi].pt.present = 1;
+  }
+
+  assert(!m.pt[m.pti].present);
+
+  if(memory_mapped_io)
+  {
+      m.pt[m.pti].write_through = 1;
+      m.pt[m.pti].cache_disabled = 1;
+  }
+
+  m.pt[m.pti].page_ppn = physical_page;
+  m.pt[m.pti].writeable = 1;
+  m.pt[m.pti].present = 1;
+
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
+
+  return true;
 }
 
-void ArchMemory::unmapKernelPage(uint32 virtual_page)
+void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
 {
-  PageDirPointerTableEntry *pdpt = kernel_page_directory_pointer_table;
-  RESOLVEMAPPING(pdpt, virtual_page);
-  assert(pdpt[pdpte_vpn].present);
-  assert(page_directory[pde_vpn].pt.present && page_directory[pde_vpn].pt.size == 0);
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(pte_base[pte_vpn].present);
-  pte_base[pte_vpn].present = 0;
-  pte_base[pte_vpn].writeable = 0;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
+  ArchMemoryMapping m = resolveMapping(getRootOfKernelPagingStructure(), virtual_page);
+  assert(m.page && (m.page_size == PAGE_SIZE));
+
+  memset(&m.pt[m.pti], 0, sizeof(m.pt[m.pti]));
+
+  if(free_page)
+  {
+      PageManager::instance()->freePPN(m.page_ppn);
+  }
+
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 
@@ -236,6 +356,12 @@ PageDirPointerTableEntry* ArchMemory::getRootOfPagingStructure()
 PageDirPointerTableEntry* ArchMemory::getRootOfKernelPagingStructure()
 {
   return kernel_page_directory_pointer_table;
+}
+
+void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
+{
+    __asm__ __volatile__("movl %[cr3_value], %%cr3\n"
+                         ::[cr3_value]"r"(cr3_value));
 }
 
 uint32 ArchMemory::getValueForCR3()
@@ -253,6 +379,23 @@ pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optiona
 {
   return (3U*1024U*1024U*1024U) + (ppn * page_size);
 }
+
+pointer ArchMemory::getIdentAddress(size_t address)
+{
+  return (3U * 1024U * 1024U * 1024U) | (address);
+}
+
+void ArchMemory::flushLocalTranslationCaches(size_t addr)
+{
+    if(A_MEMORY & OUTPUT_ADVANCED)
+    {
+        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
+    }
+    __asm__ __volatile__("invlpg %[addr]\n"
+                         :
+                         :[addr]"m"(*(char*)addr));
+}
+
 
 void ArchMemory::initKernelArchMem()
 {

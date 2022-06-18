@@ -49,7 +49,9 @@ extern char apstartup_text_load_end;
 // extern "C" void apstartup();
 
 extern uint32 ap_kernel_cr3;
-extern char ap_pml4[PAGE_SIZE];
+
+extern char ap_paging_root;
+extern char ap_paging_root_end;
 
 static uint8 ap_boot_stack[PAGE_SIZE];
 
@@ -224,16 +226,20 @@ void ArchMulticore::addCPUtoList(CpuInfo* cpu)
 void ArchMulticore::prepareAPStartup(size_t entry_addr)
 {
   size_t apstartup_size = (size_t)(&apstartup_text_load_end - &apstartup_text_load_begin);
-  debug(A_MULTICORE, "text.apstartup begin: %p, text.apstartup end: %p\n", &apstartup_text_begin, &apstartup_text_end);
-  debug(A_MULTICORE, "text.apstartup load begin: %p, text.apstartup load end: %p, size: %zx\n", &apstartup_text_load_begin, &apstartup_text_load_end, apstartup_size);
+  debug(A_MULTICORE, "text.apstartup begin: %p, text.apstartup end: %p\n",
+        &apstartup_text_begin, &apstartup_text_end);
+  debug(A_MULTICORE, "text.apstartup load begin: %p, text.apstartup load end: %p, size: %zx\n",
+        &apstartup_text_load_begin, &apstartup_text_load_end, apstartup_size);
   debug(A_MULTICORE, "apstartup %p, phys: %p\n", &apstartup_text_load_begin, (void*)entry_addr);
 
-  auto m_load = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)&apstartup_text_load_begin/PAGE_SIZE);
-  debug(A_MULTICORE, "apstartup load mapping %p: page: %p, ppn: %x, pt: %p, writeable: %u\n", &apstartup_text_load_begin, (void*)m_load.page, m_load.page_ppn, m_load.pt, m_load.pt[m_load.pti].writeable);
+  auto m_load = kernel_arch_mem.resolveMapping((size_t)&apstartup_text_load_begin/PAGE_SIZE);
+  debug(A_MULTICORE, "apstartup load mapping %p: page: %p, ppn: %x, pt: %p, writeable: %u\n",
+        &apstartup_text_load_begin, (void*)m_load.page, m_load.page_ppn, m_load.pt, m_load.pt[m_load.pti].writeable);
+  assert(m_load.pt[m_load.pti].writeable);
 
   pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
   debug(A_MULTICORE, "Ident mapping for entry addr %x: %x\n", entry_addr, paddr0);
-  auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), paddr0/PAGE_SIZE);
+  auto m = kernel_arch_mem.resolveMapping(paddr0/PAGE_SIZE);
 
   assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
   debug(A_MULTICORE, "PPN: %x\n", m.page_ppn);
@@ -245,7 +251,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
   // Init AP gdt
   debug(A_MULTICORE, "Init AP GDT at %p, (loaded at %zx)\n", &ap_gdt32, ap_gdt32_load_addr);
-  auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32_load_addr)/PAGE_SIZE);
+  auto m_ap_gdt = kernel_arch_mem.resolveMapping(((size_t)&ap_gdt32_load_addr)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
   assert(m_ap_gdt.pt && m_ap_gdt.pt[m_ap_gdt.pti].writeable && "AP GDT virtual address not writeable");
 
@@ -261,31 +267,18 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   debug(A_MULTICORE, "paddr0: %x\n", paddr0);
 
   // Init AP PD
-  size_t ap_pml4_offset = (size_t)&ap_pml4 - (size_t)&apstartup_text_begin;
+  size_t ap_pml4_offset = (size_t)&ap_paging_root - (size_t)&apstartup_text_begin;
   size_t ap_pml4_load_addr = (size_t)&apstartup_text_load_begin + ap_pml4_offset;
-  debug(A_MULTICORE, "Init AP PD at %p (loaded at %zx)\n", &ap_pml4, ap_pml4_load_addr);
-  memcpy((void*)ap_pml4_load_addr, ArchMemory::getRootOfKernelPagingStructure(), sizeof(ap_pml4));
+  debug(A_MULTICORE, "Init AP PD at %p (loaded at %zx)\n", &ap_paging_root, ap_pml4_load_addr);
+  memcpy((void*)ap_pml4_load_addr, ArchMemory::getRootOfKernelPagingStructure(), (size_t)(&ap_paging_root_end - &ap_paging_root));
 
   debug(A_MULTICORE, "paddr0: %x\n", paddr0);
-
-  for(size_t i = 0; i < 10; ++i)
-  {
-      debug(A_MULTICORE, "AP PD entry %u: %x\n", i, ((uint32_t*)&ap_pml4_load_addr)[i]);
-  }
-
-  for(size_t i = 0; i < 10; ++i)
-  {
-      debug(A_MULTICORE, "Kernel PD entry %u: %x\n", i, ((uint32_t*)ArchMemory::getRootOfKernelPagingStructure())[i]);
-  }
-
-  debug(A_MULTICORE, "AP PD phys: %x\n", (size_t)&ap_pml4);
-  debug(A_MULTICORE, "paddr0: %x\n", paddr0);
+  debug(A_MULTICORE, "AP PD phys: %x\n", (size_t)&ap_paging_root);
 
   size_t ap_kernel_cr3_offset = (size_t)&ap_kernel_cr3 - (size_t)&apstartup_text_begin;
   size_t ap_kernel_cr3_load_addr = (size_t)&apstartup_text_load_begin + ap_kernel_cr3_offset;
 
-  // TODO: should be ap_pd?
-  *(size_t*)ap_kernel_cr3_load_addr = (size_t)&ap_pml4;
+  *(size_t*)ap_kernel_cr3_load_addr = (size_t)&ap_paging_root;
 
   debug(
       A_MULTICORE,
@@ -363,6 +356,15 @@ extern "C" void __apstartup32() {
     debug(A_MULTICORE, "AP startup 32\n");
     debug(A_MULTICORE, "AP switched to stack %p\n",
           ap_boot_stack + sizeof(ap_boot_stack));
+
+    // Enable NX bit
+    if (PAGE_DIRECTORY_ENTRIES == 512)
+    {
+        asm("mov $0xC0000080,%ecx\n"
+            "rdmsr\n"
+            "or $0x800,%eax\n"
+            "wrmsr\n");
+    }
 
     // Stack variables are messed up in this function because we skipped the
     // function prologue. Should be fine once we've entered another function.

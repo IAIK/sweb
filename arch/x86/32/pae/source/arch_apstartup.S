@@ -69,9 +69,9 @@ ap_load_idt:
 
     ap_printn (ap_s_pse - apstartup), len_ap_s_pse
 
-    # Enable PSE
+    # Enable PSE + PAE
 	movl %cr4, %eax
-    orl  $0x10,%eax
+    orl  $0x30,%eax
     movl %eax, %cr4
 
     ap_printn (ap_s_cr3 - apstartup), len_ap_s_cr3
@@ -99,7 +99,7 @@ ap_s_start:
     .set len_ap_s_start, . - ap_s_start
 .global ap_s_pse
 ap_s_pse:
-	.ascii "Enabling PSE\n"
+	.ascii "Enabling PSE + PAE\n"
     len_ap_s_pse = . - ap_s_pse
 .global ap_s_cr3
 ap_s_cr3:
@@ -132,17 +132,20 @@ ap_s_apstartup32:
 
 # To be filled in by the BSP
 .global ap_kernel_cr3
+.type   ap_kernel_cr3, @object
 ap_kernel_cr3:
     .skip 4
 
 
 .global ap_gdt32_ptr
+.type   ap_gdt32_ptr, @object
 ap_gdt32_ptr:
     .skip 2	# uint16 limit
     .skip 4	# uint32 addr
 
 
 .global ap_gdt32
+.type   ap_gdt32, @object
 ap_gdt32:
     .skip 0x70
 
@@ -152,17 +155,25 @@ ap_idt_ptr:
 	.word 2048	# uint16 limit
 	.int ap_idt	# uint32 addr
 .global ap_idt
+.type   ap_idt, @object
 ap_idt:
     .skip 2048
 
+    .align 0x20
+ap_pdpt:
+	.skip 0x20
 
 .align 0x1000
-.global ap_startup_stack # Use space between gdt and pml4 for stack
+.global ap_startup_stack # Use space between gdt and paging root for stack
+.type   ap_startup_stack, @object
 ap_startup_stack:
-.global ap_pml4 # TODO: rename to ap_pd
 
-ap_pml4:
-.skip 0x1000
+.global ap_paging_root # PDPT
+.type   ap_paging_root, @object
+ap_paging_root:
+.skip 0x20
+ap_paging_root_end:
+.global ap_paging_root_end
 
 
 

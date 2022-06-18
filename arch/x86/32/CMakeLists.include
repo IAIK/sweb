@@ -41,7 +41,7 @@ string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 add_custom_target(kvm
   COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -enable-kvm -cpu kvm32
-  COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu kvm32`"
+  COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -enable-kvm -cpu kvm32`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
   )
@@ -65,7 +65,7 @@ add_custom_target(qemugdb
 # qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
   COMMAND ${QEMU_BIN} -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
-  COMMENT "Executing `qemu-system-i386 -hda ${HDD_IMAGE} -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout`"
+  COMMENT "Executing `qemu-system-i386 -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 
