@@ -34,6 +34,7 @@ class ArchMemory
 {
 public:
     ArchMemory();
+    ArchMemory(ppn_t pml4_ppn);
 
 /**
  *
@@ -112,6 +113,7 @@ public:
  */
   static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
 
+  static void initKernelArchMem();
 
   uint64 getRootOfPagingStructure();
   uint64 getValueForCR3();
@@ -155,3 +157,5 @@ private:
   ArchMemory &operator=(ArchMemory const &src);
 
 };
+
+extern ArchMemory kernel_arch_mem;

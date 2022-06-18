@@ -80,23 +80,21 @@ public:
  * it does not change anything else, and if the thread info / thread was currently
  * executing something else this will lead to a lot of problems
  * USE WITH CARE, or better, don't use at all if you're a student
- * @param the ArchThreadRegisters that we are going to mangle
+ * @param info the ArchThreadRegisters that we are going to mangle
  * @param start_function instruction pointer for the next instruction that gets executed
  */
   static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
   static void* getInstructionPointer(ArchThreadRegisters *info);
 /**
- *
  * on x86: invokes int65, whose handler facilitates a task switch
- *
  */
   static void yield();
 
 /**
  * sets a threads page map level 4
  *
- * @param *thread Pointer to Thread Object
+ * @param thread Pointer to Thread Object
  * @param arch_memory the arch memory object for the address space
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);

@@ -9,21 +9,22 @@
   uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
   uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
 
-extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
-extern PageDirEntry kernel_page_directory[];
-extern PageTableEntry kernel_page_tables[];
+extern PageDirPointerTableEntry kernel_page_directory_pointer_table[PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
+extern PageDirEntry kernel_page_directory[4 * PAGE_DIRECTORY_ENTRIES];
+extern PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES];
 
 class ArchMemory
 {
 public:
   ArchMemory();
+  ArchMemory(PageDirPointerTableEntry* pdpt_addr);
 
-/** 
+/**
  *
  * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
  * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page 
+ * @param virtual_page
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
@@ -97,6 +98,7 @@ public:
  */
   static void unmapKernelPage(uint32 virtual_page);
 
+  static void initKernelArchMem();
 
   PageDirPointerTableEntry* page_dir_pointer_table_;
   PageDirPointerTableEntry* getRootOfPagingStructure();
@@ -109,7 +111,7 @@ public:
 private:
 
   void insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page);
-/** 
+/**
  * Adds a page directory entry to the given page directory.
  * (In other words, adds the reference to a new page table to a given
  * page directory.)
@@ -139,9 +141,7 @@ private:
   // gets not-aligned in memory -- DG
 
 
-  ArchMemory(ArchMemory const &src); // not yet implemented
-  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
-
+  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
 };
 
-
+extern ArchMemory kernel_arch_mem;

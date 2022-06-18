@@ -75,7 +75,7 @@ void initACPI()
     debug(ACPI, "RSDT address: %#x\n", RSDP->RsdtAddress);
 
     RSDT* RSDT_ptr = (RSDT*)(size_t)RSDP->RsdtAddress;
-    ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)RSDT_ptr / PAGE_SIZE);
+    ArchMemoryMapping m = kernel_arch_mem.resolveMapping((size_t)RSDT_ptr / PAGE_SIZE);
     assert(m.page_ppn != 0);
     assert(RSDT_ptr->h.checksumValid());
 
@@ -96,13 +96,13 @@ void initACPI()
     debug(ACPI, "XSDT address: %llx\n", RSDP2->XsdtAddress);
 
     XSDT* XSDT_ptr = (XSDT*)(size_t)RSDP2->XsdtAddress;
-    ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
+    ArchMemoryMapping m = kernel_arch_mem.resolveMapping((size_t)XSDT_ptr / PAGE_SIZE);
     bool unmap_again = false;
     if(!m.page)
     {
             debug(ACPI, "XSDT page %zx not present, mapping\n", (size_t)XSDT_ptr/PAGE_SIZE);
             assert(ArchMemory::mapKernelPage((size_t)XSDT_ptr / PAGE_SIZE, (size_t)XSDT_ptr / PAGE_SIZE, true));
-            m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)XSDT_ptr / PAGE_SIZE);
+            m = kernel_arch_mem.resolveMapping((size_t)XSDT_ptr / PAGE_SIZE);
     }
     assert(m.page != 0);
     assert(XSDT_ptr->h.checksumValid());
@@ -132,13 +132,13 @@ void initACPI()
 void handleSDT(ACPISDTHeader* entry_header)
 {
   bool unmap_page_again = false;
-  ArchMemoryMapping m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+  ArchMemoryMapping m = kernel_arch_mem.resolveMapping((size_t)entry_header / PAGE_SIZE);
 
   if(!m.page)
   {
     debug(ACPI, "SDT page %zx not present, mapping\n", (size_t)entry_header/PAGE_SIZE);
     assert(ArchMemory::mapKernelPage((size_t)entry_header/PAGE_SIZE, (size_t)entry_header/PAGE_SIZE, true));
-    m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), (size_t)entry_header / PAGE_SIZE);
+    m = kernel_arch_mem.resolveMapping((size_t)entry_header / PAGE_SIZE);
     unmap_page_again = true;
   }
   assert(m.page && "Page for ACPI SDT not mapped");

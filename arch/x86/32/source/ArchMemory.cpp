@@ -11,12 +11,19 @@
 PageDirEntry kernel_page_directory[PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
+ArchMemory kernel_arch_mem((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_directory)/PAGE_SIZE);
+
 ArchMemory::ArchMemory()
 {
   page_dir_page_ = PageManager::instance()->allocPPN();
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
   memcpy(new_page_directory, kernel_page_directory, PAGE_SIZE);
   memset(new_page_directory, 0, PAGE_SIZE / 2); // should be zero, this is just for safety
+}
+
+ArchMemory::ArchMemory(size_t page_dir_ppn) :
+    page_dir_page_(page_dir_ppn)
+{
 }
 
 // only free pte's < PAGE_TABLE_ENTRIES/2 because we do NOT want to free Kernel Pages
@@ -191,6 +198,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage)
 
 const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, vpn_t vpage)
 {
+  assert(pd);
   ArchMemoryMapping m;
 
   VAddr a{vpage*PAGE_SIZE};
@@ -454,4 +462,9 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
         }
 
         ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = ' ';
+}
+
+void ArchMemory::initKernelArchMem()
+{
+    new (&kernel_arch_mem) ArchMemory((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_directory)/PAGE_SIZE);
 }

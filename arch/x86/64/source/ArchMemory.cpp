@@ -14,6 +14,7 @@ PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTE
 PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
+ArchMemory kernel_arch_mem((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)/PAGE_SIZE);
 
 ArchMemory::ArchMemory()
 {
@@ -21,6 +22,11 @@ ArchMemory::ArchMemory()
   PageMapLevel4Entry* new_pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
   memcpy((void*) new_pml4, (void*) kernel_page_map_level_4, PAGE_SIZE);
   memset(new_pml4, 0, PAGE_SIZE / 2); // should be zero, this is just for safety
+}
+
+ArchMemory::ArchMemory(ppn_t pml4_ppn) :
+    page_map_level_4_(pml4_ppn)
+{
 }
 
 template<typename T>
@@ -474,4 +480,9 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
         }
 
         ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = ' ';
+}
+
+void ArchMemory::initKernelArchMem()
+{
+    new (&kernel_arch_mem) ArchMemory((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)/PAGE_SIZE);
 }

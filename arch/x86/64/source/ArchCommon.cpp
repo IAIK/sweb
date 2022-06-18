@@ -145,7 +145,7 @@ char* ArchCommon::getModuleName(size_t num, size_t is_paging_set_up)
         }
 }
 
-size_t ArchCommon::getModuleStartAddress(size_t num,size_t is_paging_set_up)
+size_t ArchCommon::getModuleStartAddress(size_t num, size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return mbr.module_maps[num].start_address | PHYSICAL_TO_VIRTUAL_OFFSET;
@@ -156,7 +156,7 @@ size_t ArchCommon::getModuleStartAddress(size_t num,size_t is_paging_set_up)
   }
 }
 
-size_t ArchCommon::getModuleEndAddress(size_t num,size_t is_paging_set_up)
+size_t ArchCommon::getModuleEndAddress(size_t num, size_t is_paging_set_up)
 {
   if (is_paging_set_up)
     return mbr.module_maps[num].end_address | PHYSICAL_TO_VIRTUAL_OFFSET;

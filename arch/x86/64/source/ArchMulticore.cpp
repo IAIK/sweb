@@ -196,19 +196,20 @@ void ArchMulticore::initialize()
 void ArchMulticore::prepareAPStartup(size_t entry_addr)
 {
   size_t apstartup_size = (size_t)(&apstartup_text_end - &apstartup_text_begin);
-  debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n", &apstartup_text_begin, &apstartup_text_end, apstartup_size);
+  debug(A_MULTICORE, "apstartup_text_begin: %p, apstartup_text_end: %p, size: %zx\n",
+        &apstartup_text_begin, &apstartup_text_end, apstartup_size);
 
   debug(A_MULTICORE, "apstartup %p, phys: %zx\n", &apstartup, (size_t)VIRTUAL_TO_PHYSICAL_BOOT(entry_addr));
 
 
   pointer paddr0 = ArchMemory::getIdentAddressOfPPN(entry_addr/PAGE_SIZE) + (entry_addr % PAGE_SIZE);
-  auto m = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), paddr0/PAGE_SIZE);
+  auto m = kernel_arch_mem.resolveMapping(paddr0/PAGE_SIZE);
   assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
   assert((m.page_ppn == entry_addr/PAGE_SIZE) && "PPN in ident mapping doesn't match expected ppn for AP entry");
 
   // Init AP gdt
   debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
-  auto m_ap_gdt = ArchMemory::resolveMapping(((size_t) VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), ((size_t)&ap_gdt32)/PAGE_SIZE);
+  auto m_ap_gdt = kernel_arch_mem.resolveMapping(((size_t)&ap_gdt32)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
   debug(A_MULTICORE, "AP GDT mapped on ppn %#llx\n", m_ap_gdt.page_ppn);
 
@@ -305,8 +306,8 @@ extern "C" void __apstartup64()
 
 void ArchMulticore::initCpu()
 {
-  debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4));
-  ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
+    debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)kernel_arch_mem.getRootOfPagingStructure());
+  ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
   InterruptUtils::idtr.load();

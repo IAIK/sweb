@@ -55,7 +55,7 @@ size_t KernelMemoryManager::mapKernelHeap(size_t max_heap_pages)
   size_t num_reserved_heap_pages = 0;
   for (size_t kheap_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE; num_reserved_heap_pages < max_heap_pages; ++num_reserved_heap_pages, ++kheap_vpn)
   {
-    if(ArchMemory::checkAddressValid(((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()) / PAGE_SIZE), kheap_vpn*PAGE_SIZE))
+    if (kernel_arch_mem.checkAddressValid(kheap_vpn*PAGE_SIZE))
     {
       debug(MAIN, "Cannot map vpn %#zx for kernel heap, already mapped\n", kheap_vpn);
       break;

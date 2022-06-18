@@ -2,7 +2,7 @@
  * this linker script tells ld how to link and which symbols to add to the
  * kernel.x binary
  */
- 
+
 OUTPUT_FORMAT(elf64-x86-64)
 ENTRY(entry)
 LS_Phys = 0x100000;
@@ -88,6 +88,7 @@ SECTIONS
     KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
     __fini_array_end = .;
   }
+
   .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_START))
   {
     LS_Bss = .;

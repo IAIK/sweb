@@ -9,8 +9,6 @@
 #include "ArchMulticore.h"
 #include "Scheduler.h"
 
-extern PageMapLevel4Entry kernel_page_map_level_4[];
-
 void ArchThreads::initialise()
 {
   currentThreadRegisters = new ArchThreadRegisters{};
@@ -75,10 +73,9 @@ WithAddressSpace::~WithAddressSpace()
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = new ArchThreadRegisters{};
-  pointer pml4 = (pointer)VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
 
   info->rflags  = 0x200; // interrupt enable flag set
-  info->cr3     = pml4;
+  info->cr3     = kernel_arch_mem.getValueForCR3();
   info->rsp     = (size_t)stack;
   info->rbp     = (size_t)stack;
   info->rip     = (size_t)start_function;

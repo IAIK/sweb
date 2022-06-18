@@ -45,12 +45,13 @@ uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
 SystemState system_state;
 FileSystemInfo* default_working_dir;
 
-extern "C" void initialiseBootTimePaging();
 extern "C" void removeBootTimeIdentMapping();
 
 extern "C" [[noreturn]] void startup()
 {
   system_state = BOOTING;
+
+  ArchMemory::initKernelArchMem();
 
   PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");

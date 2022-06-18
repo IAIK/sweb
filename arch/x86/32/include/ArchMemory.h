@@ -43,6 +43,7 @@ class ArchMemory
 {
 public:
   ArchMemory();
+  ArchMemory(size_t page_dir_ppn);
 
 /**
  *
@@ -130,6 +131,8 @@ public:
  */
   uint32 page_dir_page_;
 
+  static void initKernelArchMem();
+
   uint32 getRootOfPagingStructure();
   uint32 getValueForCR3();
   static PageDirEntry* getRootOfKernelPagingStructure();
@@ -163,3 +166,5 @@ private:
   ArchMemory &operator=(ArchMemory const &src); // should never be implemented
 
 };
+
+extern ArchMemory kernel_arch_mem;
