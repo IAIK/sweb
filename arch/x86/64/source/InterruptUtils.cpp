@@ -282,11 +282,11 @@ extern "C" void syscallHandler()
   ArchInterrupts::enableInterrupts();
 
   auto ret = Syscall::syscallException(currentThread->user_registers_->rax,
-                  currentThread->user_registers_->rbx,
-                  currentThread->user_registers_->rcx,
-                  currentThread->user_registers_->rdx,
-                  currentThread->user_registers_->rsi,
-                  currentThread->user_registers_->rdi);
+                                       currentThread->user_registers_->rbx,
+                                       currentThread->user_registers_->rcx,
+                                       currentThread->user_registers_->rdx,
+                                       currentThread->user_registers_->rsi,
+                                       currentThread->user_registers_->rdi);
 
   currentThread->user_registers_->rax = ret;
 
