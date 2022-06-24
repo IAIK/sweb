@@ -21,12 +21,7 @@ GDT32Ptr::GDT32Ptr(GDT& gdt) :
 void GDT32Ptr::load()
 {
         asm("lgdt %[gdt_ptr]\n"
-            :
-            :[gdt_ptr]"m"(*this),
-             [ds]"a"(KERNEL_DS),
-             [fs]"b"(KERNEL_FS),
-             [gs]"c"(KERNEL_GS),
-             [cs]"i"(KERNEL_CS));
+            ::[gdt_ptr]"m"(*this));
 }
 
 size_t SegmentDescriptor::getBase()
