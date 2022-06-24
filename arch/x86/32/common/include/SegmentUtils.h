@@ -30,17 +30,18 @@
 
 struct SegmentDescriptor
 {
-        uint16 limitL;
-        uint16 baseL;
+    uint16 limitL;
+    uint16 baseL;
 
-        uint8 baseM;
-        uint8 typeL;
-        uint8 limitH :4;
-        uint8 typeH :4;
-        uint8 baseH;
+    uint8 baseM;
+    uint8 typeL;
+    uint8 limitH :4;
+    uint8 typeH :4;
+    uint8 baseH;
 
-        size_t getBase();
-        void setBase(size_t base);
+    size_t getBase();
+    void setBase(size_t base);
+    void setLimit(size_t limit);
 }__attribute__((__packed__));
 
 struct GDT

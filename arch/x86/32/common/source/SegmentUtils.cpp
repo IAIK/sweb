@@ -36,18 +36,21 @@ size_t SegmentDescriptor::getBase()
 
 void SegmentDescriptor::setBase(size_t base)
 {
-        baseL = base & 0xFFFF;
-        baseM = (base >> 16) & 0xFF;
-        baseH = (base >> 24) & 0xFF;
+    baseL = base & 0xFFFF;
+    baseM = (base >> 16) & 0xFF;
+    baseH = (base >> 24) & 0xFF;
+}
+
+void SegmentDescriptor::setLimit(size_t limit)
+{
+    limitL = (uint16)(limit & 0xFFFF);
+    limitH = (uint8) (((limit >> 16U) & 0xF));
 }
 
 static void setSegmentDescriptor(uint32 index, uint32 base, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
 {
-  gdt.entries[index].baseL  = (uint16)(base & 0xFFFF);
-  gdt.entries[index].baseM  = (uint8)((base >> 16U) & 0xFF);
-  gdt.entries[index].baseH  = (uint8)((base >> 24U) & 0xFF);
-  gdt.entries[index].limitL = (uint16)(limit & 0xFFFF);
-  gdt.entries[index].limitH = (uint8) (((limit >> 16U) & 0xF));
+  gdt.entries[index].setBase(base);
+  gdt.entries[index].setLimit(limit);
   gdt.entries[index].typeH  = 0xC; // 4kb + 32bit
   gdt.entries[index].typeL  = (tss ? 0x89 : 0x92) | (dpl << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
