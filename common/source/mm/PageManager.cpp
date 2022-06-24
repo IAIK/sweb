@@ -135,7 +135,7 @@ uint32 PageManager::allocPPN(uint32 page_size)
   const char* page_modified = (const char*)memnotchr(page_ident_addr, 0xFF, page_size);
   if(page_modified)
   {
-      debug(PM, "Detected use-after-free for PPN %llx at offset %zx\n", ppn, page_modified - page_ident_addr);
+      debug(PM, "Detected use-after-free for PPN %llx at offset %zx\n", (long long unsigned)ppn, page_modified - page_ident_addr);
       assert(!page_modified && "Page modified after free");
   }
 
