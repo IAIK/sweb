@@ -51,8 +51,10 @@ extern "C" [[noreturn]] void startup()
 {
   system_state = BOOTING;
 
+  debug(MAIN, "Initializing kernel arch mem\n");
   ArchMemory::initKernelArchMem();
 
+  debug(MAIN, "Initializing kernel memory management\n");
   PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");
 

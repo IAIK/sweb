@@ -2,17 +2,31 @@
 
 #include "types.h"
 
-#define KERNEL_CS  (8*3)
-#define KERNEL_DS  (8*2)
-#define KERNEL_SS  (8*2)
-#define KERNEL_TSS (8*6)
-#define KERNEL_FS  (8*7)
-#define KERNEL_GS  (8*7)
+#define KERNEL_DS_ENTRY  2
+#define KERNEL_SS_ENTRY  2
+#define KERNEL_CS_ENTRY  3
+#define USER_DS_ENTRY    4
+#define USER_SS_ENTRY    4
+#define USER_CS_ENTRY    5
+#define KERNEL_TSS_ENTRY 6
+#define KERNEL_FS_ENTRY  7
+#define KERNEL_GS_ENTRY  7
+
+#define GDT_ENTRY_SIZE 8
+
+#define KERNEL_CS  (GDT_ENTRY_SIZE * KERNEL_CS_ENTRY)
+#define KERNEL_DS  (GDT_ENTRY_SIZE * KERNEL_DS_ENTRY)
+#define KERNEL_SS  (GDT_ENTRY_SIZE * KERNEL_SS_ENTRY)
+#define KERNEL_TSS (GDT_ENTRY_SIZE * KERNEL_TSS_ENTRY)
+#define KERNEL_FS  (GDT_ENTRY_SIZE * KERNEL_FS_ENTRY)
+#define KERNEL_GS  (GDT_ENTRY_SIZE * KERNEL_GS_ENTRY)
+
 #define DPL_KERNEL  0
 #define DPL_USER    3
-#define USER_CS ((8*5)|DPL_USER)
-#define USER_DS ((8*4)|DPL_USER)
-#define USER_SS ((8*4)|DPL_USER)
+
+#define USER_CS ((GDT_ENTRY_SIZE * USER_CS_ENTRY) | DPL_USER)
+#define USER_DS ((GDT_ENTRY_SIZE * USER_DS_ENTRY) | DPL_USER)
+#define USER_SS ((GDT_ENTRY_SIZE * USER_SS_ENTRY) | DPL_USER)
 
 struct SegmentDescriptor
 {
@@ -115,7 +129,7 @@ class SegmentUtils
 public:
 
   static void initialise();
-
+  static void loadKernelSegmentDescriptors();
 };
 
 

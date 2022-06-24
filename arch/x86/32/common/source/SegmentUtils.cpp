@@ -2,6 +2,8 @@
 #include "kstring.h"
 #include "assert.h"
 #include "debug.h"
+#include "ArchMulticore.h"
+#include "Scheduler.h"
 
 GDT gdt;
 TSS g_tss;
@@ -19,13 +21,6 @@ GDT32Ptr::GDT32Ptr(GDT& gdt) :
 void GDT32Ptr::load()
 {
         asm("lgdt %[gdt_ptr]\n"
-            "mov %[ds], %%ds\n"
-            "mov %[ds], %%es\n"
-            "mov %[ds], %%ss\n"
-            "mov %[fs], %%fs\n"
-            "mov %[fs], %%gs\n"
-            "ljmp %[cs], $1f\n"
-            "1:\n"
             :
             :[gdt_ptr]"m"(*this),
              [ds]"a"(KERNEL_DS),
@@ -78,49 +73,71 @@ void TSS::setTaskStack(size_t stack_top)
         esp0 = stack_top;
 }
 
+
 void SegmentUtils::initialise()
 {
-  setSegmentDescriptor(2, 0, -1U, 0, 0, 0);
-  setSegmentDescriptor(3, 0, -1U, 0, 1, 0);
-  setSegmentDescriptor(4, 0, -1U, 3, 0, 0);
-  setSegmentDescriptor(5, 0, -1U, 3, 1, 0);
-  setSegmentDescriptor(KERNEL_FS/8, 0, -1U, 0, 0, 0);
+  setSegmentDescriptor(KERNEL_DS_ENTRY, 0, -1U, 0, 0, 0);
+  setSegmentDescriptor(KERNEL_CS_ENTRY, 0, -1U, 0, 1, 0);
+  setSegmentDescriptor(USER_DS_ENTRY,   0, -1U, 3, 0, 0);
+  setSegmentDescriptor(USER_CS_ENTRY,   0, -1U, 3, 1, 0);
+  setSegmentDescriptor(KERNEL_FS_ENTRY, 0, -1U, 0, 0, 0);
 
   memset(&g_tss, 0, sizeof(TSS));
   g_tss.ss0 = KERNEL_SS;
-  setSegmentDescriptor(6, (uint32)&g_tss, sizeof(TSS)-1, 0, 0, 1);
+  setSegmentDescriptor(KERNEL_TSS_ENTRY, (uint32)&g_tss, sizeof(TSS)-1, 0, 0, 1);
+
   // we have to reload our segment stuff
   GDT32Ptr(gdt).load();
+
+  loadKernelSegmentDescriptors();
+
   int val = KERNEL_TSS;
   asm volatile("ltr %0\n" : : "m" (val));
+
+  debug(A_MULTICORE, "Setting temporary CLS for boot processor\n");
+  extern char cls_start;
+
+  CPULocalStorage::setCLS(gdt, &cls_start);
+  currentThread = nullptr;
 }
 
+void SegmentUtils::loadKernelSegmentDescriptors()
+{
+    // gs+fs set to normal data segment for now, set to cpu local storage when cls is initialized
+    asm("mov %[ds], %%ds\n"
+        "mov %[ds], %%es\n"
+        "mov %[ds], %%ss\n"
+        "mov %[ds], %%fs\n"
+        "mov %[ds], %%gs\n"
+        "ljmp %[cs], $1f\n"
+        "1:\n"
+        ::[ds]"a"(KERNEL_DS),
+          [cs]"i"(KERNEL_CS));
+}
 
 size_t getGSBase(GDT& gdt)
 {
-        return gdt.entries[KERNEL_FS/8].getBase();
+    return gdt.entries[KERNEL_GS_ENTRY].getBase();
 }
 
 size_t getFSBase(GDT& gdt)
 {
-        return gdt.entries[KERNEL_FS/8].getBase();
+    return gdt.entries[KERNEL_FS_ENTRY].getBase();
 }
 
 
 void setGSBase(GDT& gdt, size_t gs_base)
 {
-        debug(A_MULTICORE, "Set GS base: %zx\n", gs_base);
-        gdt.entries[KERNEL_GS/8].setBase(gs_base);
-        asm("mov %[gs], %%gs\n"
-            :
-            :[gs]"a"(KERNEL_GS));
+    gdt.entries[KERNEL_FS_ENTRY].setBase(gs_base);
+    asm("mov %[gs], %%gs\n"
+        :
+        :[gs]"a"(KERNEL_GS));
 }
 
 void setFSBase(GDT& gdt, size_t fs_base)
 {
-        debug(A_MULTICORE, "Set FS base: %zx\n", fs_base);
-        gdt.entries[KERNEL_FS/8].setBase(fs_base);
-        asm("mov %[fs], %%fs\n"
-            :
-            :[fs]"a"(KERNEL_FS));
+    gdt.entries[KERNEL_FS_ENTRY].setBase(fs_base);
+    asm("mov %[fs], %%fs\n"
+        :
+        :[fs]"a"(KERNEL_FS));
 }

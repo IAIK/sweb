@@ -128,8 +128,11 @@ void CPULocalStorage::setCLS(GDT& gdt, char* cls)
 
 bool CPULocalStorage::CLSinitialized()
 {
-  bool init = ((size_t)getClsBase() >= ArchCommon::getKernelStartAddress());
-  return init;
+  uint32_t gs_val = 0;
+  asm("mov %%gs, %[gs]\n"
+      :[gs]"=g"(gs_val));
+
+  return gs_val == KERNEL_GS;
 }
 
 void* CPULocalStorage::getClsBase()
@@ -348,8 +351,9 @@ extern "C" void __apstartup32() {
       "movl %[stack], %%esp\n"
       "movl %[stack], %%ebp\n"
       :
-      : [K_DS] "i"(KERNEL_DS), [stack] "i"(ap_boot_stack +
-                                           sizeof(ap_boot_stack)));
+      : [K_DS] "i"(KERNEL_DS),
+        [stack] "i"(ap_boot_stack +
+                    sizeof(ap_boot_stack)));
 
   ArchCommon::callWithStack((char *)ap_boot_stack + sizeof(ap_boot_stack), [] {
     ++running_cpus;
@@ -375,7 +379,7 @@ extern "C" void __apstartup32() {
 void ArchMulticore::initApplicationProcessorCpu()
 {
   debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
-  ArchMemory::loadPagingStructureRoot((size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
+  ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
   InterruptUtils::idtr.load();
