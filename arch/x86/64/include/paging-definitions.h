@@ -37,6 +37,8 @@ typedef struct
 
 static_assert(sizeof(PageMapLevel4Entry) == 8, "PageMapLevel4Entry is not 64 bit");
 
+using PageMapLevel4 = PageMapLevel4Entry[PAGE_MAP_LEVEL_4_ENTRIES];
+
 struct PageDirPointerTablePageDirEntry
 {
   uint64 present                   :1;
@@ -83,6 +85,8 @@ typedef union
   struct PageDirPointerTablePageDirEntry pd;
   struct PageDirPointerTablePageEntry page;
 } __attribute__((__packed__)) PageDirPointerTableEntry;
+
+using PageDirPointerTable = PageDirPointerTableEntry[PAGE_DIR_POINTER_TABLE_ENTRIES];
 
 struct PageDirPageTableEntry
 {
@@ -131,6 +135,8 @@ typedef union
   struct PageDirPageEntry page;
 } __attribute__((__packed__)) PageDirEntry;
 
+using PageDir = PageDirEntry[PAGE_DIR_ENTRIES];
+
 typedef struct
 {
   uint64 present                   :1;
@@ -150,6 +156,8 @@ typedef struct
 } __attribute__((__packed__)) PageTableEntry;
 
 static_assert(sizeof(PageTableEntry) == 8, "PageTableEntry is not 64 bit");
+
+using PageTable = PageTableEntry[PAGE_TABLE_ENTRIES];
 
 struct VAddr
 {

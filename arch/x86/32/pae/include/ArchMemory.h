@@ -138,9 +138,12 @@ public:
   static void initKernelArchMem();
 
   PageDirPointerTableEntry* page_dir_pointer_table_;
-  PageDirPointerTableEntry* getRootOfPagingStructure();
+
+  size_t getPagingStructureRootPhys();
   uint32 getValueForCR3();
-  static PageDirPointerTableEntry* getRootOfKernelPagingStructure();
+
+  static PageDirPointerTableEntry* getKernelPagingStructureRootVirt();
+  static size_t getKernelPagingStructureRootPhys();
   static void loadPagingStructureRoot(size_t cr3_value);
 
   static void flushLocalTranslationCaches(size_t addr);
@@ -163,15 +166,11 @@ private:
  */
   void insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page);
 
-/**
- * Removes a page directory entry from a given page directory if it is present
- * in the first place. Futhermore, the target page table is assured to be
- * empty.
- *
- * @param physical_page_directory_page physical page containing the target PD.
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- */
-  void checkAndRemovePT(uint32 physical_page_directory_page, uint32 pde_vpn);
+  template<typename T, size_t NUM_ENTRIES>
+  static bool tableEmpty(T* table);
+
+  template<typename T>
+  void removeEntry(T* map, size_t index);
 
   PageDirPointerTableEntry page_dir_pointer_table_space_[2 * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
   // why 2* ? this is a hack because this table has to be aligned to its own

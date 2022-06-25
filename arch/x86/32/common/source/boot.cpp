@@ -73,7 +73,7 @@ extern "C" void entry()
   }
 
   PRINT("Setting CR3 Register...\n");
-  asm("mov %[pd],%%cr3" : : [pd]"r"(VIRTUAL_TO_PHYSICAL_BOOT((pointer)ArchMemory::getRootOfKernelPagingStructure())));
+  asm("mov %[pd],%%cr3" : : [pd]"r"(VIRTUAL_TO_PHYSICAL_BOOT((pointer)ArchMemory::getKernelPagingStructureRootVirt())));
 
   PRINT("Enable Page Size Extensions...\n");
   uint32 cr4;

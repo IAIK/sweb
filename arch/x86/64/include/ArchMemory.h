@@ -115,9 +115,11 @@ public:
 
   static void initKernelArchMem();
 
-  uint64 getRootOfPagingStructure();
-  uint64 getValueForCR3();
-  static PageMapLevel4Entry* getRootOfKernelPagingStructure();
+  size_t getPagingStructureRootPhys();
+  size_t getValueForCR3();
+
+  static PageMapLevel4Entry* getKernelPagingStructureRootVirt();
+  static size_t getKernelPagingStructureRootPhys();
   static void loadPagingStructureRoot(size_t cr3_value);
 
   static void flushLocalTranslationCaches(size_t addr);
@@ -142,16 +144,11 @@ private:
   template <typename T>
   static void insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable);
 
-/**
- * Removes a page directory entry from a given page directory if it is present
- * in the first place. Futhermore, the target page table is assured to be
- * empty.
- *
- * @param physical_page_directory_page physical page containing the target PD.
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- */
+  template<typename T, size_t NUM_ENTRIES>
+  static bool tableEmpty(T* table);
+
   template<typename T>
-  static bool checkAndRemove(pointer map_ptr, uint64 index);
+  static void removeEntry(T* map, size_t index);
 
   ArchMemory(ArchMemory const &src);
   ArchMemory &operator=(ArchMemory const &src);

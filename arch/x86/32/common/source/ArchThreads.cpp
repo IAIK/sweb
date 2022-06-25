@@ -64,7 +64,7 @@ WithAddressSpace::~WithAddressSpace()
 void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = new ArchThreadRegisters{};
-  pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getRootOfKernelPagingStructure()));
+  pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getKernelPagingStructureRootVirt()));
 
   info->eflags  = 0x200;
   info->cr3     = root_of_kernel_paging_structure;

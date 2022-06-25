@@ -1,5 +1,7 @@
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
+#include "ArchInterrupts.h"
+#include "ArchCommon.h"
 #include "kprintf.h"
 #include "assert.h"
 #include "offsets.h"
@@ -24,44 +26,57 @@ ArchMemory::ArchMemory(PageDirPointerTableEntry* pdpt) :
 {
 }
 
-void ArchMemory::checkAndRemovePT(uint32 physical_page_directory_page, uint32 pde_vpn)
+template<typename T, size_t NUM_ENTRIES>
+bool ArchMemory::tableEmpty(T* table)
 {
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(physical_page_directory_page);
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(page_directory[pde_vpn].page.size == 0);
+    for (size_t i = 0; i < NUM_ENTRIES; i++)
+    {
+        if (table[i].present)
+            return false;
+    }
+    return true;
+}
 
-  if (!page_directory[pde_vpn].pt.present) return; // PT not present -> do nothing.
+template<typename T>
+void ArchMemory::removeEntry(T* table, size_t index)
+{
+    assert(table[index].present);
 
-  for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
-    if (pte_base[pte_vpn].present > 0)
-      return; //not empty -> do nothing
-
-  //else:
-  page_directory[pde_vpn].pt.present = 0;
-  PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_table_ppn);
-  ((uint64*)page_directory)[pde_vpn] = 0; // for easier debugging
+    table[index].present = 0;
+    memset(&table[index], 0, sizeof(table[index]));
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
 {
-  RESOLVEMAPPING(page_dir_pointer_table_,virtual_page);
+  ArchMemoryMapping m = resolveMapping(virtual_page);
+  assert(m.page != 0 && m.page_size == PAGE_SIZE);
 
-  assert(page_dir_pointer_table_[pdpte_vpn].present);
-  assert(!page_directory[pde_vpn].page.size);
+  removeEntry(m.pt, m.pti);
 
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(pte_base[pte_vpn].present);
+  bool pd_empty = false;
+  bool pt_empty = tableEmpty<PageTableEntry, PAGE_TABLE_ENTRIES>(m.pt);
 
-  pte_base[pte_vpn].present = 0;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
-  ((uint64*)pte_base)[pte_vpn] = 0; // for easier debugging
+  if (pt_empty)
+  {
+      removeEntry(&m.pd->pt, m.pdi);
+      pd_empty = tableEmpty<PageDirPageTableEntry, PAGE_DIRECTORY_ENTRIES>(&m.pd->pt);
+  }
+  if (pd_empty)
+  {
+      removeEntry(m.pdpt, m.pdpti);
+  }
 
-  checkAndRemovePT(page_dir_pointer_table_[pdpte_vpn].page_directory_ppn, pde_vpn);
+  flushAllTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
+
+  PageManager::instance()->freePPN(m.page_ppn);
+  if(pt_empty) { PageManager::instance()->freePPN(m.pt_ppn); }
+  if(pd_empty) { PageManager::instance()->freePPN(m.pd_ppn); }
 }
 
 void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)
 {
-  kprintfd("insertPD: pdpt %p pdpt_vpn %x physical_page_table_page %x\n",page_dir_pointer_table_,pdpt_vpn,physical_page_directory_page);
+  debug(A_MEMORY, "insertPD: pdpt %p pdpt_vpn %x physical_page_table_page %x\n",
+        page_dir_pointer_table_,pdpt_vpn,physical_page_directory_page);
   memset((void*)getIdentAddressOfPPN(physical_page_directory_page), 0,PAGE_SIZE);
   memset((void*)(page_dir_pointer_table_ + pdpt_vpn), 0, sizeof(PageDirPointerTableEntry));
   page_dir_pointer_table_[pdpt_vpn].page_directory_ppn = physical_page_directory_page;
@@ -70,7 +85,8 @@ void ArchMemory::insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page)
 
 void ArchMemory::insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page)
 {
-  kprintfd("insertPT: page_directory %p pde_vpn %x physical_page_table_page %x\n",page_directory,pde_vpn,physical_page_table_page);
+  debug(A_MEMORY, "insertPT: page_directory %p pde_vpn %x physical_page_table_page %x\n",
+        page_directory,pde_vpn,physical_page_table_page);
   memset((void*)getIdentAddressOfPPN(physical_page_table_page), 0, PAGE_SIZE);
   memset((void*)(page_directory + pde_vpn), 0, sizeof(PageDirPointerTableEntry));
   page_directory[pde_vpn].pt.writeable = 1;
@@ -288,7 +304,7 @@ bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool c
 {
   debug(A_MEMORY, "Map kernel page %#zx -> PPN %#zx, alloc new pages: %u, mmio: %u\n", virtual_page, physical_page, can_alloc_pages, memory_mapped_io);
 
-  ArchMemoryMapping m = resolveMapping(getRootOfKernelPagingStructure(), virtual_page);
+  ArchMemoryMapping m = resolveMapping(getKernelPagingStructureRootVirt(), virtual_page);
 
   if (m.page_size)
   {
@@ -335,7 +351,7 @@ bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool c
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
 {
-  ArchMemoryMapping m = resolveMapping(getRootOfKernelPagingStructure(), virtual_page);
+  ArchMemoryMapping m = resolveMapping(getKernelPagingStructureRootVirt(), virtual_page);
   assert(m.page && (m.page_size == PAGE_SIZE));
 
   memset(&m.pt[m.pti], 0, sizeof(m.pt[m.pti]));
@@ -348,14 +364,25 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 
-PageDirPointerTableEntry* ArchMemory::getRootOfPagingStructure()
+size_t ArchMemory::getPagingStructureRootPhys()
 {
-  return page_dir_pointer_table_;
+    // last 5 bits must be zero!
+    assert(((uint32)page_dir_pointer_table_ & 0x1F) == 0);
+    size_t ppn = 0;
+    if (get_PPN_Of_VPN_In_KernelMapping(((size_t)page_dir_pointer_table_) / PAGE_SIZE, &ppn) > 0)
+        return ppn * PAGE_SIZE + ((size_t)page_dir_pointer_table_ % PAGE_SIZE);
+    assert(false);
+    return 0;
 }
 
-PageDirPointerTableEntry* ArchMemory::getRootOfKernelPagingStructure()
+PageDirPointerTableEntry* ArchMemory::getKernelPagingStructureRootVirt()
 {
   return kernel_page_directory_pointer_table;
+}
+
+size_t ArchMemory::getKernelPagingStructureRootPhys()
+{
+    return VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_directory_pointer_table);
 }
 
 void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
@@ -366,13 +393,7 @@ void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
 
 uint32 ArchMemory::getValueForCR3()
 {
-  // last 5 bits must be zero!
-  assert(((uint32)page_dir_pointer_table_ & 0x1F) == 0);
-  size_t ppn = 0;
-  if (get_PPN_Of_VPN_In_KernelMapping(((size_t)page_dir_pointer_table_) / PAGE_SIZE,&ppn) > 0)
-    return ppn * PAGE_SIZE + ((size_t)page_dir_pointer_table_ % PAGE_SIZE);
-  assert(false);
-  return 0;
+    return getPagingStructureRootPhys();
 }
 
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)
@@ -394,6 +415,87 @@ void ArchMemory::flushLocalTranslationCaches(size_t addr)
     __asm__ __volatile__("invlpg %[addr]\n"
                          :
                          :[addr]"m"(*(char*)addr));
+}
+
+eastl::atomic<size_t> shootdown_request_counter;
+
+void ArchMemory::flushAllTranslationCaches(size_t addr)
+{
+
+        assert(ArchMulticore::cpu_list_.size() >= 1);
+        eastl::vector<TLBShootdownRequest> shootdown_requests{ArchMulticore::cpu_list_.size()};
+        //TLBShootdownRequest shootdown_requests[ArchMulticore::cpu_list_.size()]; // Assuming the kernel stack is large enough as long as we only have a few CPUs
+
+        bool interrupts_enabled = ArchInterrupts::disableInterrupts();
+        flushLocalTranslationCaches(addr);
+
+        auto orig_cpu = ArchMulticore::getCpuID();
+
+        ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = 's';
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Thread may be re-scheduled on a different CPU while sending TLB shootdowns  //
+        // This is fine, since a context switch also invalidates the TLB               //
+        // A CPU sending a TLB shootdown to itself is also fine                        //
+        /////////////////////////////////////////////////////////////////////////////////
+        size_t request_id = ++shootdown_request_counter;
+
+        for(auto& r : shootdown_requests)
+        {
+                r.addr = addr;
+                r.ack = 0;
+                r.target = (size_t)-1;
+                r.next = nullptr;
+                r.orig_cpu = orig_cpu;
+                r.request_id = request_id;
+        }
+
+
+        shootdown_requests[orig_cpu].ack |= (1 << orig_cpu);
+
+        size_t sent_shootdowns = 0;
+
+        for(auto& cpu : ArchMulticore::cpu_list_)
+        {
+                size_t cpu_id = cpu->getCpuID();
+                shootdown_requests[cpu_id].target = cpu_id;
+                if(cpu->getCpuID() != orig_cpu)
+                {
+                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", ArchMulticore::getCpuID(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
+                        assert(ArchMulticore::getCpuID() == orig_cpu);
+                        assert(cpu_id != orig_cpu);
+                        sent_shootdowns |= (1 << cpu_id);
+
+                        TLBShootdownRequest* expected_next = nullptr;
+                        do
+                        {
+                                shootdown_requests[cpu_id].next = expected_next;
+                        } while(!cpu->tlb_shootdown_list.compare_exchange_weak(expected_next, &shootdown_requests[cpu_id]));
+
+                        assert(cpu->lapic->ID() == cpu_id);
+                        asm("mfence\n");
+                        cpu_info.lapic->sendIPI(99, *cpu->lapic, true);
+                }
+        }
+        assert(!(sent_shootdowns & (1 << orig_cpu)));
+
+        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", ArchMulticore::getCpuID(), sent_shootdowns);
+
+        if(interrupts_enabled) ArchInterrupts::enableInterrupts();
+
+        for(auto& r : shootdown_requests)
+        {
+                if(r.target != orig_cpu)
+                {
+                        do
+                        {
+                                assert((r.ack.load() &~ sent_shootdowns) == 0);
+                        }
+                        while(r.ack.load() == 0);
+                }
+        }
+
+        ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = ' ';
 }
 
 

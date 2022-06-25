@@ -250,7 +250,7 @@ extern "C" [[noreturn]] void entry64()
   PRINT("Initializing Kernel Paging Structures...\n");
   initialisePaging();
   PRINT("Setting CR3 Register...\n");
-  asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure())));
+  asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getKernelPagingStructureRootVirt())));
   kprintf("Paging initialized\n");
   PRINT("Switch to our own stack...\n");
   kprintf("Switch to our own stack...\n");

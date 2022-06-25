@@ -99,40 +99,43 @@ void ArchMemory::printMappedPages(uint32 page_dir_page)
     }
 }
 
-void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
+template<typename T, size_t NUM_ENTRIES>
+bool ArchMemory::tableEmpty(T* table)
 {
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(page_directory[pde_vpn].page.size == 0);
+    for (size_t i = 0; i < NUM_ENTRIES; i++)
+    {
+        if (table[i].present)
+            return false;
+    }
+    return true;
+}
 
-  assert(page_directory[pde_vpn].pt.present);
-  assert(!page_directory[pde_vpn].page.size);
+template<typename T>
+void ArchMemory::removeEntry(T* table, size_t index)
+{
+    assert(table[index].present);
 
-  for (uint32 pte_vpn = 0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
-    if (pte_base[pte_vpn].present > 0)
-      return; //not empty -> do nothing
-
-  //else:
-  page_directory[pde_vpn].pt.present = 0;
-  PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_table_ppn);
-  ((uint32*)page_directory)[pde_vpn] = 0; // for easier debugging
+    table[index].present = 0;
+    memset(&table[index], 0, sizeof(table[index]));
 }
 
 void ArchMemory::unmapPage(uint32 virtual_page)
 {
-  RESOLVEMAPPING(page_dir_page_, virtual_page);
+  ArchMemoryMapping m = resolveMapping(virtual_page);
+  assert(m.page && m.page_size == PAGE_SIZE);
 
-  assert(page_directory[pde_vpn].pt.present);
-  assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
+  removeEntry(m.pt, m.pti);
 
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  assert(pte_base[pte_vpn].present);
+  bool pt_empty = tableEmpty<PageTableEntry, PAGE_TABLE_ENTRIES>(m.pt);
+  if (pt_empty)
+  {
+      removeEntry((PageDirPageTableEntry*)m.pd, m.pdi);
+  }
 
-  pte_base[pte_vpn].present = 0;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
-  ((uint32*)pte_base)[pte_vpn] = 0; // for easier debugging
+  flushAllTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
 
-  checkAndRemovePT(pde_vpn);
+  PageManager::instance()->freePPN(m.page_ppn);
+  if(pt_empty) { PageManager::instance()->freePPN(m.pt_ppn); }
 }
 
 void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
@@ -288,14 +291,14 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
 bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
   debug(A_MEMORY, "Map kernel page %#zx -> PPN %#zx, alloc new pages: %u, mmio: %u\n", virtual_page, physical_page, can_alloc_pages, memory_mapped_io);
-  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
+  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getKernelPagingStructureRootVirt()) / PAGE_SIZE), virtual_page);
 
   if (m.page_size)
   {
       return false; // Page already mapped
   }
 
-  m.pd = getRootOfKernelPagingStructure();
+  m.pd = getKernelPagingStructureRootVirt();
 
   assert(m.pt || can_alloc_pages);
   if((!m.pt) && can_alloc_pages)
@@ -327,7 +330,7 @@ bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool c
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
 {
-  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getRootOfKernelPagingStructure()) / PAGE_SIZE), virtual_page);
+  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(getKernelPagingStructureRootVirt()) / PAGE_SIZE), virtual_page);
   assert(m.page && (m.page_size == PAGE_SIZE));
 
   memset(&m.pt[m.pti], 0, sizeof(m.pt[m.pti]));
@@ -339,14 +342,19 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 
-uint32 ArchMemory::getRootOfPagingStructure()
+size_t ArchMemory::getPagingStructureRootPhys()
 {
-  return page_dir_page_;
+    return page_dir_page_ * PAGE_SIZE;
 }
 
-PageDirEntry* ArchMemory::getRootOfKernelPagingStructure()
+PageDirEntry* ArchMemory::getKernelPagingStructureRootVirt()
 {
   return kernel_page_directory;
+}
+
+size_t ArchMemory::getKernelPagingStructureRootPhys()
+{
+    return VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_directory);
 }
 
 void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
@@ -357,7 +365,7 @@ void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
 
 uint32 ArchMemory::getValueForCR3()
 {
-  return getRootOfPagingStructure() * PAGE_SIZE;
+    return getPagingStructureRootPhys();
 }
 
 pointer ArchMemory::getIdentAddressOfPPN(uint32 ppn, uint32 page_size /* optional */)

@@ -33,6 +33,8 @@ typedef struct
   size_t reserved_3                 :28; // must be 0
 } __attribute__((__packed__)) PageDirPointerTableEntry;
 
+using PageDirPointerTable = PageDirPointerTableEntry[PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
+
 struct PageDirPageTableEntry
 {
   size_t present                   :1;
@@ -80,6 +82,8 @@ typedef union
   struct PageDirPageEntry page;
 } __attribute__((__packed__)) PageDirEntry;
 
+using PageDir = PageDirEntry[PAGE_DIRECTORY_ENTRIES];
+
 typedef struct
 {
   size_t present                   :1;
@@ -99,6 +103,4 @@ typedef struct
   size_t execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
 
-
-
-
+using PageTable = PageTableEntry[PAGE_TABLE_ENTRIES];

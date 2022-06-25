@@ -273,7 +273,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   size_t ap_pml4_offset = (size_t)&ap_paging_root - (size_t)&apstartup_text_begin;
   size_t ap_pml4_load_addr = (size_t)&apstartup_text_load_begin + ap_pml4_offset;
   debug(A_MULTICORE, "Init AP PD at %p (loaded at %zx)\n", &ap_paging_root, ap_pml4_load_addr);
-  memcpy((void*)ap_pml4_load_addr, ArchMemory::getRootOfKernelPagingStructure(), (size_t)(&ap_paging_root_end - &ap_paging_root));
+  memcpy((void*)ap_pml4_load_addr, ArchMemory::getKernelPagingStructureRootVirt(), (size_t)(&ap_paging_root_end - &ap_paging_root));
 
   debug(A_MULTICORE, "paddr0: %x\n", paddr0);
   debug(A_MULTICORE, "AP PD phys: %x\n", (size_t)&ap_paging_root);
@@ -378,7 +378,7 @@ extern "C" void __apstartup32() {
 
 void ArchMulticore::initApplicationProcessorCpu()
 {
-  debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure()));
+  debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getKernelPagingStructureRootVirt()));
   ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
 
   debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
