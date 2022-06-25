@@ -22,7 +22,13 @@ sweb.kdev*
 .cdtbuild
 .idea
 cmake-build-*/*
+.dir-locals.el
 
 # OS-specific files
 *.DS_Store
 *Thumbs.db
+.directory
+
+GPATH
+GRTAGS
+GTAGS
