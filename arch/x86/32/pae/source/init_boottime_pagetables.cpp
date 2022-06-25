@@ -21,7 +21,7 @@ extern "C" void initialiseBootTimePaging()
 
   for (i = 0; i < 4; ++i)
   {
-    pdpt_start[i].page_directory_ppn = ((uint32) pde_start) / PAGE_SIZE + i;
+    pdpt_start[i].page_ppn = ((uint32) pde_start) / PAGE_SIZE + i;
     pdpt_start[i].present = 1;
   }
 
@@ -41,7 +41,7 @@ extern "C" void initialiseBootTimePaging()
   {
     pde_start[i + 1024].pt.present = 1;
     pde_start[i + 1024].pt.writeable = 1;
-    pde_start[i + 1024].pt.page_table_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE;
+    pde_start[i + 1024].pt.page_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * i]) / PAGE_SIZE;
   }
 
   // ok, we currently only fill in mappings for the first 4 megs (aka one page table)

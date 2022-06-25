@@ -33,7 +33,7 @@ extern "C" void initialiseBootTimePaging()
   for (size_t pdi = k_start.pdi; pdi <= k_end.pdi; ++pdi)
   {
     size_t pdi_offset = pdi - k_start.pdi;
-    pde_start[pdi].pt.page_table_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * pdi_offset]) / PAGE_SIZE;
+    pde_start[pdi].pt.page_ppn = ((pointer) &pte_start[PAGE_TABLE_ENTRIES * pdi_offset]) / PAGE_SIZE;
     pde_start[pdi].pt.writeable = 1;
     pde_start[pdi].pt.present = 1;
   }

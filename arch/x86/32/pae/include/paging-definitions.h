@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "EASTL/type_traits.h"
 
 
 #define PAGE_DIRECTORY_POINTER_TABLE_ENTRIES 4
@@ -29,11 +30,18 @@ typedef struct
   size_t ignored_3                  :1;
   size_t ignored_2                  :1;
   size_t ignored_1                  :1;
-  size_t page_directory_ppn         :24; // MAXPHYADDR (36) - 12
+  size_t page_ppn                   :24; // MAXPHYADDR (36) - 12
   size_t reserved_3                 :28; // must be 0
+
+  using supports_writeable = eastl::false_type;
+  using supports_user_access = eastl::false_type;
 } __attribute__((__packed__)) PageDirPointerTableEntry;
 
+static_assert(sizeof(PageDirPointerTableEntry) == 8, "PageDirPointerTablePageEntry is not 64 bit");
+
 using PageDirPointerTable = PageDirPointerTableEntry[PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
+
+static_assert(sizeof(PageDirPointerTable) == 32, "PageDirPointerTable is not 32 byte");
 
 struct PageDirPageTableEntry
 {
@@ -49,10 +57,15 @@ struct PageDirPageTableEntry
   size_t ignored_3                 :1;
   size_t ignored_2                 :1;
   size_t ignored_1                 :1;
-  size_t page_table_ppn            :24; // MAXPHYADDR (36) - 12
+  size_t page_ppn                  :24; // MAXPHYADDR (36) - 12
   size_t reserved_2                :27; // must be 0
   size_t execution_disabled        :1;
+
+  using supports_writeable = eastl::true_type;
+  using supports_user_access = eastl::true_type;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPageTableEntry) == 8, "PageDirPageTableEntry is not 64 bit");
 
 struct PageDirPageEntry
 {
@@ -74,7 +87,12 @@ struct PageDirPageEntry
   size_t page_ppn                  :15; // MAXPHYADDR (36) - 21
   size_t reserved_2                :27; // must be 0
   size_t execution_disabled        :1;
+
+  using supports_writeable = eastl::true_type;
+  using supports_user_access = eastl::true_type;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPageEntry) == 8, "PageDirPageEntry is not 64 bit");
 
 typedef union
 {
@@ -82,7 +100,11 @@ typedef union
   struct PageDirPageEntry page;
 } __attribute__((__packed__)) PageDirEntry;
 
+static_assert(sizeof(PageDirEntry) == 8, "PageDirEntry is not 64 bit");
+
 using PageDir = PageDirEntry[PAGE_DIRECTORY_ENTRIES];
+
+static_assert(sizeof(PageDir) == PAGE_SIZE, "PageDir is not 4096 byte");
 
 typedef struct
 {
@@ -101,6 +123,28 @@ typedef struct
   size_t page_ppn                  :24; // MAXPHYADDR (36) - 12
   size_t reserved_2                :27; // must be 0
   size_t execution_disabled        :1;
+
+  using supports_writeable = eastl::true_type;
+  using supports_user_access = eastl::true_type;
 } __attribute__((__packed__)) PageTableEntry;
 
+static_assert(sizeof(PageTableEntry) == 8, "PageTableEntry is not 64 bit");
+
 using PageTable = PageTableEntry[PAGE_TABLE_ENTRIES];
+
+static_assert(sizeof(PageTable) == PAGE_SIZE, "PageTable is not 4096 byte");
+
+
+union VAddr
+{
+    size_t addr;
+    struct
+    {
+        size_t offset :12;
+        size_t pti    :9;
+        size_t pdi    :9;
+        size_t pdpti  :2;
+    };
+};
+
+static_assert(sizeof(VAddr) == 4, "VAddr is not 32 bit");

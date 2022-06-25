@@ -5,25 +5,13 @@
 
 #define RESOLVEMAPPING(pdpt,vpage) ;\
   uint32 pdpte_vpn = vpage / (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES);\
-  PageDirEntry* page_directory = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(pdpt[pdpte_vpn].page_directory_ppn);\
+  PageDirEntry* page_directory = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(pdpt[pdpte_vpn].page_ppn);\
   uint32 pde_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) / PAGE_TABLE_ENTRIES;\
   uint32 pte_vpn = (vpage % (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES)) % PAGE_TABLE_ENTRIES;
 
 extern PageDirPointerTableEntry kernel_page_directory_pointer_table[PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
 extern PageDirEntry kernel_page_directory[4 * PAGE_DIRECTORY_ENTRIES];
 extern PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES];
-
-union VAddr
-{
-    size_t addr;
-    struct
-    {
-        size_t offset :12;
-        size_t pti    :9;
-        size_t pdi    :9;
-        size_t pdpti  :2;
-    };
-};
 
 class ArchMemoryMapping
 {
@@ -60,7 +48,7 @@ public:
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
-  __attribute__((warn_unused_result)) bool mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access);
+  __attribute__((warn_unused_result)) bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -68,7 +56,7 @@ public:
  * @param physical_page_directory_page Real Page where the PDE to work on resides
  * @param virtual_page which will be invalidated
  */
-  void unmapPage(uint32 virtual_page);
+  void unmapPage(vpn_t virtual_page);
 
   ~ArchMemory();
 
@@ -77,7 +65,7 @@ public:
  *
  * @param physical_page_directory_page of PDE to remove
  */
-  void freePageDirectory(uint32 physical_page_directory_page);
+  void freePageDirectory(ppn_t physical_page_directory_page);
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
@@ -88,7 +76,7 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-  static pointer getIdentAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE);
+  static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size = PAGE_SIZE);
 
   static pointer getIdentAddress(size_t address);
 
@@ -113,7 +101,7 @@ public:
  * @return 0: if the virtual page doesn't map to any physical page\notherwise
  * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
  */
-  static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, size_t *physical_page, uint32 *physical_pte_page=0);
+  static uint32 get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, size_t* physical_page, uint32* physical_pte_page=0);
 
   const ArchMemoryMapping resolveMapping(vpn_t vpage);
   static const ArchMemoryMapping resolveMapping(PageDirPointerTableEntry* pdpt, vpn_t vpage);
@@ -125,7 +113,7 @@ public:
  * @param virtual_page
  * @param physical_page
  */
-  static __attribute__((warn_unused_result)) bool mapKernelPage(uint32 virtual_page, uint32 physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
+  static __attribute__((warn_unused_result)) bool mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -133,11 +121,9 @@ public:
  *
  * @param virtual_page which will be invalidated
  */
-  static void unmapKernelPage(uint32 virtual_page, bool free_page = true);
+  static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
 
   static void initKernelArchMem();
-
-  PageDirPointerTableEntry* page_dir_pointer_table_;
 
   size_t getPagingStructureRootPhys();
   uint32 getValueForCR3();
@@ -153,24 +139,17 @@ public:
   static const size_t RESERVED_END = 0xC0000ULL;
 
 private:
-
-  void insertPD(uint32 pdpt_vpn, uint32 physical_page_directory_page);
-/**
- * Adds a page directory entry to the given page directory.
- * (In other words, adds the reference to a new page table to a given
- * page directory.)
- *
- * @param physical_page_directory_page physical page containing the target PD.
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- * @param physical_page_table_page physical page of the new page table.
- */
-  void insertPT(PageDirEntry* page_directory, uint32 pde_vpn, uint32 physical_page_table_page);
+  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
 
   template<typename T, size_t NUM_ENTRIES>
   static bool tableEmpty(T* table);
 
   template<typename T>
-  void removeEntry(T* map, size_t index);
+  void removeEntry(T* table, size_t index);
+
+  template<typename T>
+  void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
+
 
   PageDirPointerTableEntry page_dir_pointer_table_space_[2 * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
   // why 2* ? this is a hack because this table has to be aligned to its own
@@ -180,8 +159,7 @@ private:
   // KMM which will just return some not-aligned block, thus this aligned block
   // gets not-aligned in memory -- DG
 
-
-  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+  PageDirPointerTableEntry* page_dir_pointer_table_;
 };
 
 extern ArchMemory kernel_arch_mem;

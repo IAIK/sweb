@@ -43,7 +43,7 @@ class ArchMemory
 {
 public:
   ArchMemory();
-  ArchMemory(size_t page_dir_ppn);
+  ArchMemory(ppn_t page_dir_ppn);
 
 /**
  *
@@ -54,14 +54,14 @@ public:
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
-  __attribute__((warn_unused_result)) bool mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access);
+  __attribute__((warn_unused_result)) bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
  *
  * @param virtual_page which will be invalidated
  */
-  void unmapPage(uint32 virtual_page);
+  void unmapPage(vpn_t virtual_page);
 
   ~ArchMemory();
 
@@ -77,7 +77,7 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-  static pointer getIdentAddressOfPPN(uint32 ppn, uint32 page_size=PAGE_SIZE);
+  static pointer getIdentAddressOfPPN(ppn_t ppn, uint32 page_size=PAGE_SIZE);
 
   static pointer getIdentAddress(size_t address);
 
@@ -88,7 +88,7 @@ public:
  * and accessing it would result in a pageFault
  */
   pointer checkAddressValid(uint32 vaddress_to_check);
-  static pointer checkAddressValid(size_t pd, uint32 vaddress_to_check);
+  static pointer checkAddressValid(ppn_t pd, uint32 vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
@@ -126,11 +126,6 @@ public:
  */
   static void unmapKernelPage(uint32 virtual_page, bool free_page = true);
 
-/**
- * ppn of the page dir page
- */
-  uint32 page_dir_page_;
-
   static void initKernelArchMem();
 
   size_t getPagingStructureRootPhys();
@@ -144,16 +139,7 @@ public:
   static const size_t RESERVED_END = 0xC0000ULL;
 
 private:
-
-/**
- * Adds a page directory entry to the given page directory.
- * (In other words, adds the reference to a new page table to a given
- * page directory.)
- *
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- * @param physical_page_table_page physical page of the new page table.
- */
-  void insertPT(uint32 pde_vpn, uint32 physical_page_table_page);
+  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
 
   template<typename T, size_t NUM_ENTRIES>
   static bool tableEmpty(T* table);
@@ -161,9 +147,14 @@ private:
   template<typename T>
   static void removeEntry(T* map, size_t index);
 
-  ArchMemory(ArchMemory const &src); // not yet implemented
-  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+  template<typename T>
+  void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
 
+
+  /**
+   * ppn of the page dir page
+   */
+  ppn_t page_dir_page_;
 };
 
 extern ArchMemory kernel_arch_mem;

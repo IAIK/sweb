@@ -38,7 +38,7 @@ ArchMemory::~ArchMemory()
     if (page_directory[pde_vpn].pt.present)
     {
       assert(!page_directory[pde_vpn].page.size); // only 4 KiB pages allowed
-      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_ppn);
       for (uint32 pte_vpn = 0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
       {
         if (pte_base[pte_vpn].present)
@@ -71,7 +71,7 @@ void ArchMemory::printMappedPages(uint32 page_dir_page)
         {
             if(!pd[pdi].pt.size)
             {
-                PageTableEntry *pt = (PageTableEntry *) getIdentAddressOfPPN(pd[pdi].pt.page_table_ppn);
+                PageTableEntry *pt = (PageTableEntry *) getIdentAddressOfPPN(pd[pdi].pt.page_ppn);
                 for (uint32 pti = 0; pti < PAGE_TABLE_ENTRIES; ++pti)
                 {
                     if (pt[pti].present)
@@ -140,40 +140,39 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   if(pt_empty) { PageManager::instance()->freePPN(m.pt_ppn); }
 }
 
-void ArchMemory::insertPT(uint32 pde_vpn, uint32 physical_page_table_page)
+template<typename T>
+void ArchMemory::insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable)
 {
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
-  assert(!page_directory[pde_vpn].pt.present);
-  memset((void*) getIdentAddressOfPPN(physical_page_table_page), 0, PAGE_SIZE);
-  page_directory[pde_vpn].pt.writeable = 1;
-  page_directory[pde_vpn].pt.size = 0;
-  page_directory[pde_vpn].pt.page_table_ppn = physical_page_table_page;
-  page_directory[pde_vpn].pt.user_access = 1;
-  page_directory[pde_vpn].pt.present = 1;
+    debug(A_MEMORY, "%s: page %p index %zx ppn %x user_access %u, writeable %u\n",
+          __PRETTY_FUNCTION__, table, index, ppn, user_access, writeable);
+
+    assert(((uint32* )table)[index] == 0);
+
+    table[index].writeable = writeable;
+    table[index].user_access = user_access;
+    table[index].page_ppn = ppn;
+    table[index].present = 1;
 }
 
-bool ArchMemory::mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access)
+bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access)
 {
-  RESOLVEMAPPING(page_dir_page_, virtual_page);
+    ArchMemoryMapping m = resolveMapping(virtual_page);
+    assert((m.page_size == 0) || (m.page_size == PAGE_SIZE));
 
-  if(page_directory[pde_vpn].pt.present == 0)
-  {
-    insertPT(pde_vpn, PageManager::instance()->allocPPN());
-  }
-  assert(!page_directory[pde_vpn].page.size);
+    if (m.pt == 0)
+    {
+        m.pt_ppn = PageManager::instance()->allocPPN();
+        m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
+        insert((PageDirPageTableEntry*)m.pd, m.pdi, m.pt_ppn, user_access, true);
+    }
 
+    if (m.page == 0)
+    {
+        insert(m.pt, m.pti, physical_page, user_access, true);
+        return true;
+    }
 
-  PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
-  if(pte_base[pte_vpn].present == 0)
-  {
-    pte_base[pte_vpn].writeable = 1;
-    pte_base[pte_vpn].user_access = user_access;
-    pte_base[pte_vpn].page_ppn = physical_page;
-    pte_base[pte_vpn].present = 1;
-    return true;
-  }
-
-  return false;
+    return false;
 }
 
 pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
@@ -181,7 +180,7 @@ pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
   return checkAddressValid(page_dir_page_, vaddress_to_check);
 }
 
-pointer ArchMemory::checkAddressValid(size_t pd, uint32 vaddress_to_check)
+pointer ArchMemory::checkAddressValid(ppn_t pd, uint32 vaddress_to_check)
 {
   ArchMemoryMapping m = resolveMapping(pd, vaddress_to_check / PAGE_SIZE);
   if (m.page != 0)
@@ -227,7 +226,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pd, vpn_t vpage)
 
   if(m.pd[m.pdi].pt.present && !m.pd[m.pdi].pt.size)
   {
-          m.pt_ppn = m.pd[m.pdi].pt.page_table_ppn;
+          m.pt_ppn = m.pd[m.pdi].pt.page_ppn;
           assert(m.pt_ppn < PageManager::instance()->getTotalNumPages());
           m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
           if(m.pt[m.pti].present)
@@ -274,8 +273,8 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
     else
     {
       if (physical_pte_page)
-        *physical_pte_page = page_directory[pde_vpn].pt.page_table_ppn;
-      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_table_ppn);
+        *physical_pte_page = page_directory[pde_vpn].pt.page_ppn;
+      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_ppn);
       if (pte_base[pte_vpn].present)
       {
         if (physical_page)
@@ -308,7 +307,7 @@ bool ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page, bool c
           m.pt_ppn = PageManager::instance()->allocPPN();
           m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
 
-          m.pd[m.pdi].pt.page_table_ppn = m.pt_ppn;
+          m.pd[m.pdi].pt.page_ppn = m.pt_ppn;
           m.pd[m.pdi].pt.writeable = 1;
           m.pd[m.pdi].pt.present = 1;
   }

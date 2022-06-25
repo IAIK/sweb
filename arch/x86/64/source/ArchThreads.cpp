@@ -24,10 +24,10 @@ void ArchThreads::initialise()
 }
 void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 {
-  assert(arch_memory.page_map_level_4_);
-  thread->kernel_registers_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
+  assert(arch_memory.getPagingStructureRootPhys());
+  thread->kernel_registers_->cr3 = arch_memory.getValueForCR3();
   if (thread->user_registers_)
-    thread->user_registers_->cr3 = arch_memory.page_map_level_4_ * PAGE_SIZE;
+    thread->user_registers_->cr3 = arch_memory.getValueForCR3();
 
   if(thread == currentThread)
   {

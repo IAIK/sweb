@@ -128,21 +128,8 @@ public:
   static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
   static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
 
-  ppn_t page_map_level_4_;
-
 private:
-
-/**
- * Adds a page directory entry to the given page directory.
- * (In other words, adds the reference to a new page table to a given
- * page directory.)
- *
- * @param physical_page_directory_page physical page containing the target PD.
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- * @param physical_page_table_page physical page of the new page table.
- */
-  template <typename T>
-  static void insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable);
+  ArchMemory &operator=(ArchMemory const &src) = delete;
 
   template<typename T, size_t NUM_ENTRIES>
   static bool tableEmpty(T* table);
@@ -150,9 +137,11 @@ private:
   template<typename T>
   static void removeEntry(T* map, size_t index);
 
-  ArchMemory(ArchMemory const &src);
-  ArchMemory &operator=(ArchMemory const &src);
+  template <typename T>
+  static void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
 
+
+  ppn_t page_map_level_4_;
 };
 
 extern ArchMemory kernel_arch_mem;

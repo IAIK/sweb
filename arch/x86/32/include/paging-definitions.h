@@ -32,7 +32,7 @@ struct PageDirPageTableEntry
   size_t ignored_3                 :1;
   size_t ignored_2                 :1;
   size_t ignored_1                 :1;
-  size_t page_table_ppn            :20;
+  size_t page_ppn                  :20;
 } __attribute__((__packed__));
 
 struct PageDirPageEntry
