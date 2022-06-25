@@ -35,28 +35,16 @@ class ArchMemory
 public:
     ArchMemory();
     ArchMemory(ppn_t pml4_ppn);
+    ~ArchMemory();
 
-/**
- *
- * maps a virtual page to a physical page (pde and pte need to be set up first)
- *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page
- * @param physical_page
- * @param user_access PTE User/Supervisor Flag, governing the binary Paging
- * Privilege Mechanism
- */
-  __attribute__((warn_unused_result)) bool mapPage(vpn_t virtual_page, ppn_t physical_page, size_t user_access);
 
-/**
- * removes the mapping to a virtual_page by marking its PTE Entry as non valid
- *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page which will be invalidated
- */
+  [[nodiscard]]
+  bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
   bool unmapPage(vpn_t virtual_page);
 
-  ~ArchMemory();
+  [[nodiscard]]
+  static bool mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
+  static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
@@ -67,19 +55,25 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-    static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size = PAGE_SIZE);
-
-    // TODO: rename to distinguish it from getIdentAddressOfPPN
-    static pointer getIdentAddress(size_t address);
+  static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size = PAGE_SIZE);
+  static pointer getIdentAddress(size_t address); // TODO: rename to distinguish it from getIdentAddressOfPPN
 
 /**
- * Checks if a given Virtual Address is valid and is mapped to real memory
+ * Checks if a given Virtual Address is valid and is mapped to physical memory
+ * @param pml4 pml4 ppn
  * @param vaddress_to_check Virtual Address we want to check
- * @return true: if mapping exists\nfalse: if the given virtual address is unmapped
- * and accessing it would result in a pageFault
+ * @return physical address if the virtual address is mapped, zero otherwise
  */
-  pointer checkAddressValid(size_t vaddress_to_check);
+  pointer checkAddressValid(size_t vaddress_to_check) const;
   static pointer checkAddressValid(ppn_t pml4, size_t vaddress_to_check);
+
+  const ArchMemoryMapping resolveMapping(vpn_t vpage) const;
+  static const ArchMemoryMapping resolveMapping(ppn_t pml4, vpn_t vpage);
+
+  size_t getPagingStructureRootPhys() const;
+  size_t getValueForCR3() const;
+
+
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
@@ -92,31 +86,7 @@ public:
  * @return 0: if the virtual page doesn't map to any physical page\notherwise
  * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
  */
-  static size_t get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, ppn_t *physical_page, ppn_t *physical_pte_page=0);
-  const ArchMemoryMapping resolveMapping(vpn_t vpage);
-  static const ArchMemoryMapping resolveMapping(ppn_t pml4, vpn_t vpage);
-
-/**
- *
- * maps a virtual page to a physical page in kernel mapping
- *
- * @param virtual_page
- * @param physical_page
- */
-  static __attribute__((warn_unused_result)) bool mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
-
-/**
- * removes the mapping to a virtual_page by marking its PTE Entry as non valid
- * in kernel mapping
- *
- * @param virtual_page which will be invalidated
- */
-  static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
-
-  static void initKernelArchMem();
-
-  size_t getPagingStructureRootPhys();
-  size_t getValueForCR3();
+  static size_t get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, ppn_t* physical_page, ppn_t* physical_pte_page=0);
 
   static PageMapLevel4Entry* getKernelPagingStructureRootVirt();
   static size_t getKernelPagingStructureRootPhys();
@@ -125,8 +95,7 @@ public:
   static void flushLocalTranslationCaches(size_t addr);
   static void flushAllTranslationCaches(size_t addr);
 
-  static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
-  static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
+  static void initKernelArchMem();
 
 private:
   ArchMemory &operator=(ArchMemory const &src) = delete;
@@ -138,7 +107,7 @@ private:
   static void removeEntry(T* map, size_t index);
 
   template <typename T>
-  static void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
+  static void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable, bool memory_mapped_io);
 
 
   ppn_t page_map_level_4_;

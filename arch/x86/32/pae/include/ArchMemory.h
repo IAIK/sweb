@@ -37,35 +37,16 @@ class ArchMemory
 public:
   ArchMemory();
   ArchMemory(PageDirPointerTableEntry* pdpt_addr);
-
-/**
- *
- * maps a virtual page to a physical page (pde and pte need to be set up first)
- *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page
- * @param physical_page
- * @param user_access PTE User/Supervisor Flag, governing the binary Paging
- * Privilege Mechanism
- */
-  __attribute__((warn_unused_result)) bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
-
-/**
- * removes the mapping to a virtual_page by marking its PTE Entry as non valid
- *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page which will be invalidated
- */
-  void unmapPage(vpn_t virtual_page);
-
   ~ArchMemory();
 
-/**
- * recursively remove a PageDirectoryEntry and all its Pages and PageTables
- *
- * @param physical_page_directory_page of PDE to remove
- */
-  void freePageDirectory(ppn_t physical_page_directory_page);
+
+  [[nodiscard]]
+  bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
+  void unmapPage(vpn_t virtual_page);
+
+  [[nodiscard]]
+  static bool mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
+  static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
@@ -77,18 +58,24 @@ public:
  * is mapped to the physical page given
  */
   static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size = PAGE_SIZE);
-
   static pointer getIdentAddress(size_t address);
 
 /**
- * Checks if a given Virtual Address is valid and is mapped to real memory
+ * Checks if a given Virtual Address is valid and is mapped to physical memory
  * @param pdpt page dir pointer table
  * @param vaddress_to_check Virtual Address we want to check
- * @return true: if mapping exists\nfalse: if the given virtual address is unmapped
- * and accessing it would result in a pageFault
+ * @return physical address if the virtual address is mapped, zero otherwise
  */
-  pointer checkAddressValid(uint32 vaddress_to_check);
-  static pointer checkAddressValid(PageDirPointerTableEntry* pdpt, uint32 vaddress_to_check);
+  pointer checkAddressValid(size_t vaddress_to_check) const;
+  static pointer checkAddressValid(PageDirPointerTableEntry* pdpt, size_t vaddress_to_check);
+
+  const ArchMemoryMapping resolveMapping(vpn_t vpage) const;
+  static const ArchMemoryMapping resolveMapping(PageDirPointerTableEntry* pdpt, vpn_t vpage);
+
+  size_t getPagingStructureRootPhys() const;
+  size_t getValueForCR3() const;
+
+
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the
@@ -103,31 +90,6 @@ public:
  */
   static uint32 get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, size_t* physical_page, uint32* physical_pte_page=0);
 
-  const ArchMemoryMapping resolveMapping(vpn_t vpage);
-  static const ArchMemoryMapping resolveMapping(PageDirPointerTableEntry* pdpt, vpn_t vpage);
-
-/**
- *
- * maps a virtual page to a physical page in kernel mapping
- *
- * @param virtual_page
- * @param physical_page
- */
-  static __attribute__((warn_unused_result)) bool mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
-
-/**
- * removes the mapping to a virtual_page by marking its PTE Entry as non valid
- * in kernel mapping
- *
- * @param virtual_page which will be invalidated
- */
-  static void unmapKernelPage(vpn_t virtual_page, bool free_page = true);
-
-  static void initKernelArchMem();
-
-  size_t getPagingStructureRootPhys();
-  uint32 getValueForCR3();
-
   static PageDirPointerTableEntry* getKernelPagingStructureRootVirt();
   static size_t getKernelPagingStructureRootPhys();
   static void loadPagingStructureRoot(size_t cr3_value);
@@ -135,8 +97,7 @@ public:
   static void flushLocalTranslationCaches(size_t addr);
   static void flushAllTranslationCaches(size_t addr);
 
-  static const size_t RESERVED_START = 0x80000ULL;
-  static const size_t RESERVED_END = 0xC0000ULL;
+  static void initKernelArchMem();
 
 private:
   ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented

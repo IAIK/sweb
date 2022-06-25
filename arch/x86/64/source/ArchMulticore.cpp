@@ -115,9 +115,6 @@ void CPULocalStorage::setCLS(char* cls)
   setFSBase((size_t)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
   setGSBase((size_t)fs_base);
   setSWAPGSKernelBase((size_t)fs_base);
-
-  debug(A_MULTICORE, "FS base: %p\n", (void*)getFSBase());
-  debug(A_MULTICORE, "GS base: %p\n", (void*)getGSBase());
 }
 
 bool CPULocalStorage::CLSinitialized()

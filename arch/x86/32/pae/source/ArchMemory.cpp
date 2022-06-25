@@ -52,6 +52,8 @@ void ArchMemory::removeEntry(T* table, size_t index)
 void ArchMemory::unmapPage(uint32 virtual_page)
 {
   ArchMemoryMapping m = resolveMapping(virtual_page);
+  debug(A_MEMORY, "Unmap %zx => pdpt: %x, pd: %x, pt: %x, page: %x\n",
+        virtual_page, getPagingStructureRootPhys(), m.pd_ppn, m.pt_ppn, m.page_ppn);
   assert(m.page != 0 && m.page_size == PAGE_SIZE);
 
   removeEntry(m.pt, m.pti);
@@ -79,10 +81,11 @@ void ArchMemory::unmapPage(uint32 virtual_page)
 template<typename T>
 void ArchMemory::insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable)
 {
-    debug(A_MEMORY, "%s: page %p index %zx ppn %x user_access %u, writeable %u\n",
-          __PRETTY_FUNCTION__, table, index, ppn, user_access, writeable);
+    if (A_MEMORY & OUTPUT_ADVANCED)
+        debug(A_MEMORY, "%s: page %p index %zx ppn %x user_access %u, writeable %u\n",
+              __PRETTY_FUNCTION__, table, index, ppn, user_access, writeable);
 
-    assert(((uint64* )table)[index] == 0);
+    assert(((uint64*)table)[index] == 0);
 
     // conditional compilation at compile time!
     if constexpr (T::supports_writeable::value)
@@ -101,6 +104,8 @@ void ArchMemory::insert(T* table, size_t index, ppn_t ppn, bool user_access, boo
 bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access)
 {
     ArchMemoryMapping m = resolveMapping(virtual_page);
+    debug(A_MEMORY, "Map %zx => pdpt: %x pd: %x, pt: %x, page: %x, user: %u\n",
+          virtual_page, getPagingStructureRootPhys(), m.pd_ppn, m.pt_ppn, physical_page, user_access);
     assert((m.page_size == 0) || (m.page_size == PAGE_SIZE));
 
     if (m.pd == 0)
@@ -128,61 +133,45 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_acce
 
 ArchMemory::~ArchMemory()
 {
-  debug ( A_MEMORY,"ArchMemory::~ArchMemory(): Freeing page dir pointer table %p\n",page_dir_pointer_table_ );
-  if(page_dir_pointer_table_[0].present)
-    freePageDirectory(page_dir_pointer_table_[0].page_ppn); // 0-1 GiB
-  if(page_dir_pointer_table_[1].present)
-    freePageDirectory(page_dir_pointer_table_[1].page_ppn); // 1-2 GiB
-}
+    debug(A_MEMORY, "~ArchMemory(): Free PDPT %x\n", getPagingStructureRootPhys());
 
-void ArchMemory::freePageDirectory(uint32 physical_page_directory_page)
-{
-  PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(physical_page_directory_page);
-  for (uint32 pde_vpn=0; pde_vpn < PAGE_DIRECTORY_ENTRIES; ++pde_vpn)
-  {
-    if (page_directory[pde_vpn].pt.present)
+    size_t cr3 = 0;
+    asm("mov %%cr3, %[cr3]\n" : [cr3]"=g"(cr3));
+    assert(cr3 != getValueForCR3() && "thread deletes its own arch memory");
+
+    PageDirPointerTableEntry* pdpt = page_dir_pointer_table_;
+    for (size_t pdpti = 0; pdpti < PAGE_DIRECTORY_POINTER_TABLE_ENTRIES/2; pdpti++)
     {
-      if (page_directory[pde_vpn].page.size)
-      {
-        page_directory[pde_vpn].page.present=0;
-          for (uint32 p=0;p<1024;++p)
-            PageManager::instance()->freePPN(page_directory[pde_vpn].page.page_ppn*1024 + p);
-      }
-      else
-      {
-        PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_ppn);
-        for (uint32 pte_vpn=0; pte_vpn < PAGE_TABLE_ENTRIES; ++pte_vpn)
+        if (pdpt[pdpti].present)
         {
-          if (pte_base[pte_vpn].present)
-          {
-            pte_base[pte_vpn].present = 0;
-            PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn);
-          }
+            PageDirEntry* pd = (PageDirEntry*) getIdentAddressOfPPN(pdpt[pdpti].page_ppn);
+            for (size_t pdi = 0; pdi < PAGE_DIRECTORY_ENTRIES; pdi++)
+            {
+                if (pd[pdi].pt.present)
+                {
+                    assert(pd[pdi].pt.size == 0);
+                    PageTableEntry* pt = (PageTableEntry*) getIdentAddressOfPPN(pd[pdi].pt.page_ppn);
+                    for (size_t pti = 0; pti < PAGE_TABLE_ENTRIES; pti++)
+                    {
+                        if (pt[pti].present)
+                        {
+                            pt[pti].present = 0;
+                            PageManager::instance()->freePPN(pt[pti].page_ppn);
+                        }
+                    }
+                    pd[pdi].pt.present = 0;
+                    PageManager::instance()->freePPN(pd[pdi].pt.page_ppn);
+                }
+            }
+            pdpt[pdpti].present = 0;
+            PageManager::instance()->freePPN(pdpt[pdpti].page_ppn);
         }
-        page_directory[pde_vpn].pt.present=0;
-        PageManager::instance()->freePPN(page_directory[pde_vpn].pt.page_ppn);
-      }
     }
-  }
-  PageManager::instance()->freePPN(physical_page_directory_page);
 }
 
-pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
+pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check) const
 {
-  RESOLVEMAPPING(page_dir_pointer_table_, vaddress_to_check / PAGE_SIZE);
-  if (page_dir_pointer_table_[pdpte_vpn].present)
-  {
-    if (page_directory[pde_vpn].pt.present)
-    {
-      if (page_directory[pde_vpn].page.size)
-        return getIdentAddressOfPPN(page_directory[pde_vpn].page.page_ppn,PAGE_SIZE * PAGE_TABLE_ENTRIES) | (vaddress_to_check % (PAGE_SIZE * PAGE_TABLE_ENTRIES));
-
-      PageTableEntry *pte_base = (PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.page_ppn);
-      if (pte_base[pte_vpn].present)
-        return getIdentAddressOfPPN(pte_base[pte_vpn].page_ppn) | (vaddress_to_check % PAGE_SIZE);
-    }
-  }
-  return 0;
+    return checkAddressValid(page_dir_pointer_table_, vaddress_to_check);
 }
 
 pointer ArchMemory::checkAddressValid(PageDirPointerTableEntry* pdpt, uint32 vaddress_to_check)
@@ -200,7 +189,7 @@ pointer ArchMemory::checkAddressValid(PageDirPointerTableEntry* pdpt, uint32 vad
     }
 }
 
-const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage)
+const ArchMemoryMapping ArchMemory::resolveMapping(size_t vpage) const
 {
     return resolveMapping(page_dir_pointer_table_, vpage);
 }
@@ -364,7 +353,7 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page, bool free_page)
   asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
 
-size_t ArchMemory::getPagingStructureRootPhys()
+size_t ArchMemory::getPagingStructureRootPhys() const
 {
     // last 5 bits must be zero!
     assert(((uint32)page_dir_pointer_table_ & 0x1F) == 0);

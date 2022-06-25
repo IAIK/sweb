@@ -22,7 +22,7 @@ size_t ArchMemory::getKernelPagingStructureRootPhys()
     return (size_t)VIRTUAL_TO_PHYSICAL_BOOT(getKernelPagingStructureRootVirt());
 }
 
-size_t ArchMemory::getValueForCR3()
+size_t ArchMemory::getValueForCR3() const
 {
     return getPagingStructureRootPhys();
 }
