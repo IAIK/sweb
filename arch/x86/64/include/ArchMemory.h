@@ -67,10 +67,10 @@ public:
  * @return Virtual Address above 3GB pointing to the start of a memory segment that
  * is mapped to the physical page given
  */
-    static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size=PAGE_SIZE)
-    {
-      return 0xFFFFF00000000000ULL | (ppn * page_size);
-    }
+    static pointer getIdentAddressOfPPN(ppn_t ppn, size_t page_size = PAGE_SIZE);
+
+    // TODO: rename to distinguish it from getIdentAddressOfPPN
+    static pointer getIdentAddress(size_t address);
 
 /**
  * Checks if a given Virtual Address is valid and is mapped to real memory
@@ -79,7 +79,7 @@ public:
  * and accessing it would result in a pageFault
  */
   pointer checkAddressValid(size_t vaddress_to_check);
-  static pointer checkAddressValid(size_t pml4, size_t vaddress_to_check);
+  static pointer checkAddressValid(ppn_t pml4, size_t vaddress_to_check);
 
 /**
  * Takes a virtual_page and search through the pageTable and pageDirectory for the

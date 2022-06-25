@@ -9,12 +9,14 @@
 #include "ArchThreads.h"
 #include "Thread.h"
 
+// Also see x86/common/source/ArchMemory.cpp for common functionality
+
 PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
-ArchMemory kernel_arch_mem((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)/PAGE_SIZE);
+ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
 
 ArchMemory::ArchMemory()
 {
@@ -190,17 +192,17 @@ pointer ArchMemory::checkAddressValid(size_t vaddress_to_check)
   return checkAddressValid(page_map_level_4_, vaddress_to_check);
 }
 
-pointer ArchMemory::checkAddressValid(size_t pml4, size_t vaddress_to_check)
+pointer ArchMemory::checkAddressValid(ppn_t pml4, size_t vaddress_to_check)
 {
   ArchMemoryMapping m = resolveMapping(pml4, vaddress_to_check / PAGE_SIZE);
   if (m.page != 0)
   {
-    debug(A_MEMORY, "checkAddressValid, pml4: %#zx, vaddr: %#zx -> true\n", pml4, vaddress_to_check);
+    debug(A_MEMORY, "checkAddressValid, pml4: %#zx, vaddr: %#zx -> true\n", (size_t)pml4, vaddress_to_check);
     return m.page | (vaddress_to_check % m.page_size);
   }
   else
   {
-    debug(A_MEMORY, "checkAddressValid, pml4: %#zx, vaddr: %#zx -> false\n", pml4, vaddress_to_check);
+    debug(A_MEMORY, "checkAddressValid, pml4: %#zx, vaddr: %#zx -> false\n", (size_t)pml4, vaddress_to_check);
     return 0;
   }
 }
@@ -382,116 +384,7 @@ PageMapLevel4Entry* ArchMemory::getKernelPagingStructureRootVirt()
     return kernel_page_map_level_4;
 }
 
-size_t ArchMemory::getKernelPagingStructureRootPhys()
-{
-    return (size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4);
-}
-
-void ArchMemory::loadPagingStructureRoot(size_t cr3_value)
-{
-  __asm__ __volatile__("movq %[cr3_value], %%cr3\n"
-                       ::[cr3_value]"r"(cr3_value));
-}
-
-size_t ArchMemory::getValueForCR3()
-{
-    return getPagingStructureRootPhys();
-}
-
-
-void ArchMemory::flushLocalTranslationCaches(size_t addr)
-{
-  if(A_MEMORY & OUTPUT_ADVANCED)
-  {
-    debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
-  }
-  __asm__ __volatile__("invlpg %[addr]\n"
-                       :
-                       :[addr]"m"(*(char*)addr));
-}
-
-eastl::atomic<size_t> shootdown_request_counter;
-
-void ArchMemory::flushAllTranslationCaches(size_t addr)
-{
-
-        assert(ArchMulticore::cpu_list_.size() >= 1);
-        eastl::vector<TLBShootdownRequest> shootdown_requests{ArchMulticore::cpu_list_.size()};
-        //TLBShootdownRequest shootdown_requests[ArchMulticore::cpu_list_.size()]; // Assuming the kernel stack is large enough as long as we only have a few CPUs
-
-        bool interrupts_enabled = ArchInterrupts::disableInterrupts();
-        flushLocalTranslationCaches(addr);
-
-        auto orig_cpu = ArchMulticore::getCpuID();
-
-        ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = 's';
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Thread may be re-scheduled on a different CPU while sending TLB shootdowns  //
-        // This is fine, since a context switch also invalidates the TLB               //
-        // A CPU sending a TLB shootdown to itself is also fine                        //
-        /////////////////////////////////////////////////////////////////////////////////
-        size_t request_id = ++shootdown_request_counter;
-
-        for(auto& r : shootdown_requests)
-        {
-                r.addr = addr;
-                r.ack = 0;
-                r.target = (size_t)-1;
-                r.next = nullptr;
-                r.orig_cpu = orig_cpu;
-                r.request_id = request_id;
-        }
-
-
-        shootdown_requests[orig_cpu].ack |= (1 << orig_cpu);
-
-        size_t sent_shootdowns = 0;
-
-        for(auto& cpu : ArchMulticore::cpu_list_)
-        {
-                size_t cpu_id = cpu->getCpuID();
-                shootdown_requests[cpu_id].target = cpu_id;
-                if(cpu->getCpuID() != orig_cpu)
-                {
-                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", ArchMulticore::getCpuID(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
-                        assert(ArchMulticore::getCpuID() == orig_cpu);
-                        assert(cpu_id != orig_cpu);
-                        sent_shootdowns |= (1 << cpu_id);
-
-                        TLBShootdownRequest* expected_next = nullptr;
-                        do
-                        {
-                                shootdown_requests[cpu_id].next = expected_next;
-                        } while(!cpu->tlb_shootdown_list.compare_exchange_weak(expected_next, &shootdown_requests[cpu_id]));
-
-                        assert(cpu->lapic->ID() == cpu_id);
-                        asm("mfence\n");
-                        cpu_lapic.sendIPI(99, *cpu->lapic, true);
-                }
-        }
-        assert(!(sent_shootdowns & (1 << orig_cpu)));
-
-        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", ArchMulticore::getCpuID(), sent_shootdowns);
-
-        if(interrupts_enabled) ArchInterrupts::enableInterrupts();
-
-        for(auto& r : shootdown_requests)
-        {
-                if(r.target != orig_cpu)
-                {
-                        do
-                        {
-                                assert((r.ack.load() &~ sent_shootdowns) == 0);
-                        }
-                        while(r.ack.load() == 0);
-                }
-        }
-
-        ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = ' ';
-}
-
 void ArchMemory::initKernelArchMem()
 {
-    new (&kernel_arch_mem) ArchMemory((size_t)VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4)/PAGE_SIZE);
+    new (&kernel_arch_mem) ArchMemory((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
 }

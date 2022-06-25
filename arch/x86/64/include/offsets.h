@@ -28,3 +28,5 @@
  * End of the non-canonical space, start of kernel space
  */
 #define KERNEL_START 0xffff800000000000ULL
+
+#define IDENT_MAPPING_START 0xFFFFF00000000000ULL

@@ -37,3 +37,5 @@
  */
 #define USER_BREAK 0x80000000
 
+
+#define IDENT_MAPPING_START (3U * 1024U * 1024U * 1024U)
