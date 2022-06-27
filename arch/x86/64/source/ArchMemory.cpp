@@ -130,14 +130,14 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_acce
   {
     m.pd_ppn = PageManager::instance()->allocPPN();
     m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pd_ppn);
-    insert((PageDirPointerTablePageDirEntry*)m.pdpt, m.pdpti, m.pd_ppn, true, true, false);
+    insert(&m.pdpt->pd, m.pdpti, m.pd_ppn, true, true, false);
   }
 
   if (!m.pt)
   {
     m.pt_ppn = PageManager::instance()->allocPPN();
     m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
-    insert((PageDirPageTableEntry*)m.pd, m.pdi, m.pt_ppn, true, true, false);
+    insert(&m.pd->pt, m.pdi, m.pt_ppn, true, true, false);
   }
 
   if (!m.page)
@@ -151,51 +151,55 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_acce
 
 ArchMemory::~ArchMemory()
 {
-  debug(A_MEMORY, "~ArchMemory(): Free PML4 %llx\n", page_map_level_4_);
+    debug(A_MEMORY, "~ArchMemory(): Free PML4 %llx\n", page_map_level_4_);
 
-  size_t cr3 = 0;
-  asm("mov %%cr3, %[cr3]\n" : [cr3]"=g"(cr3));
-  assert(cr3 != getValueForCR3() && "thread deletes its own arch memory");
+    size_t cr3 = 0;
+    asm("mov %%cr3, %[cr3]\n" : [cr3]"=g"(cr3));
+    assert(cr3 != getValueForCR3() && "thread deletes its own arch memory");
 
-  PageMapLevel4Entry* pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
-  for (uint64 pml4i = 0; pml4i < PAGE_MAP_LEVEL_4_ENTRIES / 2; pml4i++) // free only lower half
-  {
-    if (pml4[pml4i].present)
+    PageMapLevel4Entry* pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(page_map_level_4_);
+    for (size_t pml4i = 0; pml4i < PAGE_MAP_LEVEL_4_ENTRIES / 2; pml4i++) // free only lower half
     {
-      PageDirPointerTableEntry* pdpt = (PageDirPointerTableEntry*) getIdentAddressOfPPN(pml4[pml4i].page_ppn);
-      for (uint64 pdpti = 0; pdpti < PAGE_DIR_POINTER_TABLE_ENTRIES; pdpti++)
-      {
-        if (pdpt[pdpti].pd.present)
+        if (pml4[pml4i].present)
         {
-          assert(pdpt[pdpti].pd.size == 0);
-          PageDirEntry* pd = (PageDirEntry*) getIdentAddressOfPPN(pdpt[pdpti].pd.page_ppn);
-          for (uint64 pdi = 0; pdi < PAGE_DIR_ENTRIES; pdi++)
-          {
-            if (pd[pdi].pt.present)
+            auto pdpt_ppn = pml4[pml4i].page_ppn;
+            PageDirPointerTableEntry* pdpt = (PageDirPointerTableEntry*) getIdentAddressOfPPN(pdpt_ppn);
+            for (size_t pdpti = 0; pdpti < PAGE_DIR_POINTER_TABLE_ENTRIES; pdpti++)
             {
-              assert(pd[pdi].pt.size == 0);
-              PageTableEntry* pt = (PageTableEntry*) getIdentAddressOfPPN(pd[pdi].pt.page_ppn);
-              for (uint64 pti = 0; pti < PAGE_TABLE_ENTRIES; pti++)
-              {
-                if (pt[pti].present)
+                if (pdpt[pdpti].pd.present)
                 {
-                  pt[pti].present = 0;
-                  PageManager::instance()->freePPN(pt[pti].page_ppn);
+                    assert(pdpt[pdpti].pd.size == 0);
+                    auto pd_ppn = pdpt[pdpti].pd.page_ppn;
+                    PageDirEntry* pd = (PageDirEntry*) getIdentAddressOfPPN(pd_ppn);
+                    for (size_t pdi = 0; pdi < PAGE_DIR_ENTRIES; pdi++)
+                    {
+                        if (pd[pdi].pt.present)
+                        {
+                            assert(pd[pdi].pt.size == 0);
+                            auto pt_ppn = pd[pdi].pt.page_ppn;
+                            PageTableEntry* pt = (PageTableEntry*) getIdentAddressOfPPN(pt_ppn);
+                            for (size_t pti = 0; pti < PAGE_TABLE_ENTRIES; pti++)
+                            {
+                                if (pt[pti].present)
+                                {
+                                    auto page_ppn = pt[pti].page_ppn;
+                                    removeEntry(pt, pti);
+                                    PageManager::instance()->freePPN(page_ppn);
+                                }
+                            }
+                            removeEntry(&pd->pt, pdi);
+                            PageManager::instance()->freePPN(pt_ppn);
+                        }
+                    }
+                    removeEntry(&pdpt->pd, pdpti);
+                    PageManager::instance()->freePPN(pd_ppn);
                 }
-              }
-              pd[pdi].pt.present = 0;
-              PageManager::instance()->freePPN(pd[pdi].pt.page_ppn);
             }
-          }
-          pdpt[pdpti].pd.present = 0;
-          PageManager::instance()->freePPN(pdpt[pdpti].pd.page_ppn);
+            removeEntry(pml4, pml4i);
+            PageManager::instance()->freePPN(pdpt_ppn);
         }
-      }
-      pml4[pml4i].present = 0;
-      PageManager::instance()->freePPN(pml4[pml4i].page_ppn);
     }
-  }
-  PageManager::instance()->freePPN(page_map_level_4_);
+    PageManager::instance()->freePPN(page_map_level_4_);
 }
 
 pointer ArchMemory::checkAddressValid(size_t vaddress_to_check) const
@@ -227,13 +231,13 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
 {
   ArchMemoryMapping m;
 
-  m.pti = vpage;
-  m.pdi = m.pti / PAGE_TABLE_ENTRIES;
+  m.pti   = vpage;
+  m.pdi   = m.pti / PAGE_TABLE_ENTRIES;
   m.pdpti = m.pdi / PAGE_DIR_ENTRIES;
   m.pml4i = m.pdpti / PAGE_DIR_POINTER_TABLE_ENTRIES;
 
-  m.pti %= PAGE_TABLE_ENTRIES;
-  m.pdi %= PAGE_DIR_ENTRIES;
+  m.pti   %= PAGE_TABLE_ENTRIES;
+  m.pdi   %= PAGE_DIR_ENTRIES;
   m.pdpti %= PAGE_DIR_POINTER_TABLE_ENTRIES;
   m.pml4i %= PAGE_MAP_LEVEL_4_ENTRIES;
 
@@ -243,16 +247,16 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
   }
 
   assert(pml4 < PageManager::instance()->getTotalNumPages());
-  m.pml4 = (PageMapLevel4Entry*) getIdentAddressOfPPN(pml4);
-  m.pdpt = 0;
-  m.pd = 0;
-  m.pt = 0;
-  m.page = 0;
-  m.pml4_ppn = pml4;
-  m.pdpt_ppn = 0;
-  m.pd_ppn = 0;
-  m.pt_ppn = 0;
-  m.page_ppn = 0;
+  m.pml4      = (PageMapLevel4Entry*) getIdentAddressOfPPN(pml4);
+  m.pdpt      = 0;
+  m.pd        = 0;
+  m.pt        = 0;
+  m.page      = 0;
+  m.pml4_ppn  = pml4;
+  m.pdpt_ppn  = 0;
+  m.pd_ppn    = 0;
+  m.pt_ppn    = 0;
+  m.page_ppn  = 0;
   m.page_size = 0;
 
   if (m.pml4[m.pml4i].present)
@@ -302,8 +306,8 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
             vpage,
             m.pml4_ppn,
             (m.pdpt ? "P" : "-"), m.pdpt_ppn,
-            (m.pd ? "P" : "-"), m.pd_ppn,
-            (m.pt ? "P" : "-"), m.pt_ppn,
+            (m.pd   ? "P" : "-"), m.pd_ppn,
+            (m.pt   ? "P" : "-"), m.pt_ppn,
             (m.page ? "P" : "-"), m.page_ppn);
   }
   return m;
@@ -312,7 +316,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
 size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, ppn_t *physical_page,
                                                    ppn_t *physical_pte_page)
 {
-  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), virtual_page);
+  ArchMemoryMapping m = resolveMapping(getKernelPagingStructureRootPhys() / PAGE_SIZE, virtual_page);
   if (physical_page)
     *physical_page = m.page_ppn;
   if (physical_pte_page)
@@ -339,7 +343,7 @@ bool ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can
   {
           m.pd_ppn = PageManager::instance()->allocPPN();
           m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pd_ppn);
-          insert((PageDirPointerTablePageDirEntry*)m.pdpt, m.pdpti, m.pd_ppn, false, true, false);
+          insert(&m.pdpt->pd, m.pdpti, m.pd_ppn, false, true, false);
   }
 
   assert(m.pt || can_alloc_pages);
@@ -347,7 +351,7 @@ bool ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can
   {
           m.pt_ppn = PageManager::instance()->allocPPN();
           m.pt = (PageTableEntry*) getIdentAddressOfPPN(m.pt_ppn);
-          insert((PageDirPageTableEntry*)m.pd, m.pdi, m.pt_ppn, false, true, false);
+          insert(&m.pd->pt, m.pdi, m.pt_ppn, false, true, false);
   }
 
   if (!m.page)
@@ -361,11 +365,14 @@ bool ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can
 
 void ArchMemory::unmapKernelPage(size_t virtual_page, bool free_page)
 {
-  ArchMemoryMapping m = resolveMapping(((uint64) VIRTUAL_TO_PHYSICAL_BOOT(kernel_page_map_level_4) / PAGE_SIZE), virtual_page);
+  ArchMemoryMapping m = resolveMapping(getKernelPagingStructureRootPhys() / PAGE_SIZE, virtual_page);
 
   assert(m.page && (m.page_size == PAGE_SIZE));
 
   memset(&m.pt[m.pti], 0, sizeof(m.pt[m.pti]));
+
+  flushAllTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
+
   if(free_page)
   {
     PageManager::instance()->freePPN(m.pt[m.pti].page_ppn);

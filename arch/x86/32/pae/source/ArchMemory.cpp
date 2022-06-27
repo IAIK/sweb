@@ -144,27 +144,30 @@ ArchMemory::~ArchMemory()
     {
         if (pdpt[pdpti].present)
         {
-            PageDirEntry* pd = (PageDirEntry*) getIdentAddressOfPPN(pdpt[pdpti].page_ppn);
+            auto pd_ppn = pdpt[pdpti].page_ppn;
+            PageDirEntry* pd = (PageDirEntry*) getIdentAddressOfPPN(pd_ppn);
             for (size_t pdi = 0; pdi < PAGE_DIRECTORY_ENTRIES; pdi++)
             {
                 if (pd[pdi].pt.present)
                 {
                     assert(pd[pdi].pt.size == 0);
-                    PageTableEntry* pt = (PageTableEntry*) getIdentAddressOfPPN(pd[pdi].pt.page_ppn);
+                    auto pt_ppn = pd[pdi].pt.page_ppn;
+                    PageTableEntry* pt = (PageTableEntry*) getIdentAddressOfPPN(pt_ppn);
                     for (size_t pti = 0; pti < PAGE_TABLE_ENTRIES; pti++)
                     {
                         if (pt[pti].present)
                         {
-                            pt[pti].present = 0;
-                            PageManager::instance()->freePPN(pt[pti].page_ppn);
+                            auto page_ppn = pt[pti].page_ppn;
+                            removeEntry(pt, pti);
+                            PageManager::instance()->freePPN(page_ppn);
                         }
                     }
-                    pd[pdi].pt.present = 0;
-                    PageManager::instance()->freePPN(pd[pdi].pt.page_ppn);
+                    removeEntry(&pd->pt, pdi);
+                    PageManager::instance()->freePPN(pt_ppn);
                 }
             }
-            pdpt[pdpti].present = 0;
-            PageManager::instance()->freePPN(pdpt[pdpti].page_ppn);
+            removeEntry(pdpt, pdpti);
+            PageManager::instance()->freePPN(pd_ppn);
         }
     }
 }

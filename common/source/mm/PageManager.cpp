@@ -153,7 +153,11 @@ void PageManager::freePPN(uint32 page_number, uint32 page_size)
 
   lock_.acquire();
   bool free_status = allocator_->dealloc(page_number*PAGE_SIZE, page_size);
-  assert(free_status && "Double free PPN");
+  if (!free_status)
+  {
+      kprintfd("Double free PPN %x\n", page_number);
+      assert(false && "Double free PPN");
+  }
   lock_.release();
 }
 
