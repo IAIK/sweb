@@ -1,12 +1,7 @@
 #pragma once
 
 #include "types.h"
-
-/**
- * wrapper for placement new operator
- */
-[[nodiscard]] inline void* operator new(size_t, void* __p) noexcept;
-[[nodiscard]] inline void* operator new[](size_t, void* __p) noexcept;
+#include <new>
 
 void __builtin_delete(void* address);
 void* __builtin_new(size_t size);
