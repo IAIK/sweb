@@ -2,6 +2,18 @@ cmake_minimum_required(VERSION 3.13)
 
 cmake_policy(SET CMP0079 NEW)
 
+if ("${ARCH}" STREQUAL "")
+    set (ARCH "x86/64")
+endif("${ARCH}" STREQUAL "")
+MESSAGE("-- Target architecture: ${ARCH}")
+
+if ("${ARCH}" MATCHES "arm.*")
+    add_definitions(-DARM)
+endif("${ARCH}" MATCHES "arm.*")
+
+# Needs to be set before everything else
+set(CMAKE_TOOLCHAIN_FILE arch/${ARCH}/CMakeLists.compiler)
+
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
@@ -24,14 +36,6 @@ set(HDD_IMAGE "SWEB.qcow2")
 set(INITRD_FILE ${PROJECT_BINARY_DIR}/sweb_initrd)
 # set(HDD_IMAGE_FILE ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk)
 
-if ("${ARCH}" STREQUAL "")
-  set (ARCH "x86/64")
-endif("${ARCH}" STREQUAL "")
-MESSAGE("-- Target architecture: ${ARCH}")
-
-if ("${ARCH}" MATCHES "arm.*")
-  add_definitions(-DARM)
-endif("${ARCH}" MATCHES "arm.*")
 
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
@@ -41,9 +45,6 @@ endif(APPLE OR WIN32)
 
 # add-dbg for userspace binaries
 include(AddDebugInfo)
-
-include(arch/${ARCH}/CMakeLists.compiler)
-
 
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
