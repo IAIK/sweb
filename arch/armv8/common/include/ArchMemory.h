@@ -3,7 +3,7 @@
 #include "offsets.h"
 #include "types.h"
 #include "paging-definitions.h"
-#include "uvector.h"
+#include "EASTL/vector.h"
 
 class ArchMemoryMapping
 {
@@ -42,24 +42,27 @@ class ArchMemory
 {
 public:
 
-/** 
+/**
  * Constructor
  * creates a new Page-Directory for a UserProccess by copying the
  * Kernel-Page-Directory
  *
  */
   ArchMemory();
+  ArchMemory(ppn_t paging_root_page);
 
-/** 
+  void printMappings();
+
+/**
  *
  * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
- * @param virtual_page 
+ * @param virtual_page
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
-  bool mapPage(size_t virtual_page, size_t physical_page, size_t user_access);
+  bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
 
 /**
  * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -117,8 +120,9 @@ public:
    *
    * @param virtual_page
    * @param physical_page
+   * @return whether the page has been mapped
    */
-    static void mapKernelPage(size_t virtual_page, size_t physical_page);
+    static bool mapKernelPage(size_t virtual_page, size_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
   /**
    * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -139,11 +143,22 @@ public:
   uint16_t address_space_id = 0;
 
   size_t getRootOfPagingStructure();
+  static void loadPagingStructureRoot(size_t ttbr0_value);
+
+  static Level1Entry* getKernelPagingStructureRootVirt();
+  static size_t getKernelPagingStructureRootPhys();
 
   static const size_t RESERVED_START = 0xFFFFFFC000000ULL;
   static const size_t RESERVED_END =   0xFFFFFFC000400ULL;
 
+  static void flushLocalTranslationCaches(size_t addr);
+  static void flushAllTranslationCaches(size_t addr);
+
+  static void initKernelArchMem();
+
 private:
+  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+
 
   /**
   * Removes a paging entry from a given page_table if it is present
@@ -153,7 +168,14 @@ private:
   * @param table_ptr physical page containing the target paging_table.
   * @param index Index of the paging entry to be removed
   */
-  template<typename T> static bool checkAndRemove(pointer table_ptr, size_t index);
+  template<typename T>
+  static bool checkAndRemove(pointer table_ptr, size_t index);
+
+  template<typename T, size_t NUM_ENTRIES>
+  static bool tableEmpty(T* table);
+
+  template<typename T>
+  static void removeEntry(T* table, size_t index);
 
   /**
   * Removes a page directory entry from a given page directory if it is present
@@ -164,9 +186,6 @@ private:
   */
   void checkAndRemovePT(size_t pde_vpn);
 
-
-  ArchMemory(ArchMemory const &src); // not yet implemented
-  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
-
 };
 
+extern ArchMemory kernel_arch_mem;

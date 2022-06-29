@@ -18,6 +18,10 @@ InitThread::~InitThread()
 
 void InitThread::Run()
 {
+  debug(INITTHREAD, "InitThread starting\n");
+
+  assert(ArchInterrupts::testIFSet());
+
   if (!progs_ || !progs_[0])
     return;
 

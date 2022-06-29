@@ -70,7 +70,7 @@ class ArchCommon
      */
     static size_t getModuleEndAddress(size_t num, size_t is_paging_set_up = 1);
 
-    static char* getModuleName(size_t num, size_t is_paging_set_up = 1);
+    static const char* getModuleName(size_t num, size_t is_paging_set_up = 1);
 
     /**
      * Generates the according console depending on the architecture

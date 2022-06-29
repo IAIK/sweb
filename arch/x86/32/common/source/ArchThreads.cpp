@@ -218,3 +218,9 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
     return;
   assert(currentThread->user_registers_->esp0 != thread->user_registers_->esp0 && "no 2 threads may have the same esp0 value");
 }
+
+
+[[noreturn]] void ArchThreads::startThreads(Thread* init_thread)
+{
+    contextSwitch(init_thread, init_thread->kernel_registers_);
+}

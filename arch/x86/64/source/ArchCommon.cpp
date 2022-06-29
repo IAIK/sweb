@@ -134,7 +134,7 @@ size_t ArchCommon::getNumModules(size_t is_paging_set_up)
   }
 }
 
-char* ArchCommon::getModuleName(size_t num, size_t is_paging_set_up)
+const char* ArchCommon::getModuleName(size_t num, size_t is_paging_set_up)
 {
         if (is_paging_set_up)
                 return (char*)((size_t)mbr.module_maps[num].name | PHYSICAL_TO_VIRTUAL_OFFSET);

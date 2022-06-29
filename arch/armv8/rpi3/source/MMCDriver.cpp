@@ -562,16 +562,16 @@ MMCDriver::~MMCDriver()
 uint32 MMCDriver::addRequest( BDRequest * br)
 {
   MutexLock lock(lock_);
-  debug(MMC_DRIVER, "addRequest %d!\n", br->getCmd() );
+  debug(MMC_DRIVER, "addRequest %d!\n", (int)br->getCmd() );
 
   int32 res = -1;
 
   switch( br->getCmd() )
   {
-    case BDRequest::BD_READ:
+    case BDRequest::BD_CMD::BD_READ:
       res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
       break;
-    case BDRequest::BD_WRITE:
+    case BDRequest::BD_CMD::BD_WRITE:
       res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
       break;
     default:
@@ -580,7 +580,7 @@ uint32 MMCDriver::addRequest( BDRequest * br)
   }
 
   debug(MMC_DRIVER, "addRequest:No IRQ operation !!\n");
-  br->setStatus( BDRequest::BD_DONE );
+  br->setStatus( BDRequest::BD_RESULT::BD_DONE );
   return res;
 }
 int sd_readblock(unsigned int block_address, unsigned char *buffer, unsigned int num);
@@ -636,4 +636,3 @@ uint32 MMCDriver::getSectorSize()
 void MMCDriver::serviceIRQ()
 {
 }
-

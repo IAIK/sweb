@@ -282,37 +282,46 @@ extern "C" void arch_saveThreadRegisters(void* base, uint64 error)
   assert(!currentThread || currentThread->isStackCanaryOK());
 }
 
-extern "C" void arch_contextSwitch()
+extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegisters* target_registers)
 {
-  assert(currentThread);
+  target_thread = target_thread ? : currentThread;
+  target_registers = target_registers ? : currentThreadRegisters;
+  assert(target_thread);
 
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s at rip %p\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName(), (void*)currentThreadRegisters->rip);
+    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s at rip %p\n", ArchMulticore::getCpuID(), target_thread, target_thread->getName(), (void*)target_registers->rip);
     //Scheduler::instance()->printThreadList();
   }
 
 
-  assert(currentThreadRegisters);
-  assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
+  assert(target_registers);
+  if (currentThread)
+  {
+      assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
+  }
 
   if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
   {
     debug(A_INTERRUPTS, "%zu pending End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
     assert(!((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_));
   }
-  if (currentThread->switch_to_userspace_)
+  if (target_thread->switch_to_userspace_)
   {
-    assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
-    assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+      assert(target_thread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
+      assert(target_thread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
   }
-  assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
+  assert(target_thread->isStackCanaryOK() && "Kernel stack corruption detected.");
 
-  ArchThreadRegisters info = *currentThreadRegisters;
+  currentThread = target_thread;
+  currentThreadRegisters = target_registers;
+  currentThread->currently_scheduled_on_cpu_ = ArchMulticore::getCpuID();
+
+  ArchThreadRegisters info = *target_registers;
   assert(info.rip >= PAGE_SIZE); // debug
   assert(info.rsp0 >= USER_BREAK);
   cpu_tss.setTaskStack(info.rsp0);
-  setFSBase(currentThread->switch_to_userspace_ ? 0 : (uint64)getSavedFSBase()); // Don't use CLS after this line
+  setFSBase(target_thread->switch_to_userspace_ ? 0 : (uint64)getSavedFSBase()); // Don't use CLS after this line
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[ss]" : : [ss]"m"(info.ss));

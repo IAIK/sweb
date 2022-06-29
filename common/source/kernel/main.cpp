@@ -170,7 +170,8 @@ extern "C" [[noreturn]] void startup()
 
   debug(MAIN, "Adding Kernel threads\n");
   Scheduler::instance()->addNewThread(main_console);
-  Scheduler::instance()->addNewThread(new InitThread(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/));
+  auto init_thread = new InitThread(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/);
+  Scheduler::instance()->addNewThread(init_thread);
   Scheduler::instance()->printThreadList();
 
   debug(MAIN, "%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
@@ -181,13 +182,12 @@ extern "C" [[noreturn]] void startup()
       kprintf("CPU %zu\n", cls->getCpuID());
   }
 
-  debug(MAIN, "Now enabling Interrupts...\n");
+  // Ensure we already have a currentThread when interrupts are enabled
+  debug(MAIN, "Starting threads and enabling interrupts...\n");
   system_state = RUNNING;
 
+  ArchThreads::startThreads(init_thread);
 
-  ArchInterrupts::enableInterrupts();
-
-  Scheduler::instance()->yield();
   //not reached
   assert(false && "Reached end of startup()");
 }

@@ -36,10 +36,15 @@ void PageManager::init()
     BootstrapRangeAllocator bootstrap_pm_allocator{};
     instance_ = new (&pm) PageManager(&bootstrap_pm_allocator);
 
+    // TODO: multiarch compatibility + make this less hacky
+#ifndef CMAKE_ARMV8_RPI3
     // HACKY: Pages 0 + 1 are used for AP startup code
     size_t ap_boot_code_range = instance_->allocator_->alloc(PAGE_SIZE*2, PAGE_SIZE);
+    debug(PM, "Allocated mem for ap boot code: %zx\n", ap_boot_code_range);
     assert(ap_boot_code_range == 0);
+#endif
 
+    debug(PM, "Filling free pages with canary value\n");
     for (auto paddr : bootstrap_pm_allocator.freeBlocks(PAGE_SIZE, PAGE_SIZE))
     {
         ppn_t ppn = paddr/PAGE_SIZE;

@@ -28,6 +28,22 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 
   if (thread->user_registers_)
     thread->user_registers_->TTBR0 = ttbr0_value;
+
+  if(thread == currentThread)
+  {
+      switchToAddressSpace(arch_memory);
+  }
+}
+
+void ArchThreads::switchToAddressSpace(Thread* thread)
+{
+    ArchMemory::loadPagingStructureRoot(thread->kernel_registers_->TTBR0);
+}
+
+void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
+{
+    size_t ttbr0_value = (LOAD_BASE + arch_memory.paging_root_page_ * PAGE_SIZE) | (((size_t)arch_memory.address_space_id) << 48);
+    ArchMemory::loadPagingStructureRoot(ttbr0_value);
 }
 
 void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
@@ -46,6 +62,11 @@ void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_
 void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
 {
   info->ELR = (pointer)function;
+}
+
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
+{
+    return (void*)info->ELR;
 }
 
 void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
@@ -185,4 +206,12 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   if (currentThread->user_registers_ == 0)
     return;
   assert(currentThread->user_registers_->SP_SM != thread->user_registers_->SP_SM && "no 2 threads may have the same esp0 value");
+}
+
+
+[[noreturn]] void ArchThreads::startThreads([[maybe_unused]]Thread* init_thread)
+{
+    ArchInterrupts::enableInterrupts();
+    ArchCommon::halt();
+    assert(false);
 }

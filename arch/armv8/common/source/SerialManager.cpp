@@ -12,12 +12,7 @@ SerialManager::SerialManager() : num_ports( 0 )
   assert(false);
 };
 
-SerialManager::~SerialManager()
-{
-  assert(false);
-};
-
-uint32 SerialManager::get_num_ports()
+uint32 SerialManager::get_num_ports() const
 {
   assert(false);
   return num_ports;

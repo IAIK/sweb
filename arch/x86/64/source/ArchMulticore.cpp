@@ -268,6 +268,14 @@ void ArchMulticore::stopAllCpus()
   }
 }
 
+void ArchMulticore::stopOtherCpus()
+{
+    if(CPULocalStorage::CLSinitialized() && cpu_lapic.isInitialized())
+    {
+        cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
+    }
+}
+
 
 extern "C" void __apstartup64()
 {

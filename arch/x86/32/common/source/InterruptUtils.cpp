@@ -144,8 +144,6 @@ void InterruptUtils::initialise()
   idtr.load();
 }
 
-extern "C" void arch_contextSwitch();
-
 // Standard ISA IRQs
 // 0 	Programmable Interrupt Timer Interrupt
 // 1 	Keyboard Interrupt
@@ -183,7 +181,7 @@ extern "C" void irqHandler_0()
                CONSOLECOLOR::BRIGHT_WHITE);
 
           ArchInterrupts::endOfInterrupt(0);
-          arch_contextSwitch();
+          contextSwitch();
           assert(false);
       });
 }
@@ -200,7 +198,7 @@ extern "C" void irqHandler_65()
                 ((currentThread->console_color << 4) |
                  CONSOLECOLOR::BRIGHT_WHITE);
 
-            arch_contextSwitch();
+            contextSwitch();
             assert(false);
         });
 }
@@ -216,7 +214,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error, uint32 ip)
                                    error & FLAG_PF_RDWR,
                                    error & FLAG_PF_INSTR_FETCH);
   if (currentThread->switch_to_userspace_)
-    arch_contextSwitch();
+    contextSwitch();
   else
     asm volatile ("movl %%cr3, %%eax; movl %%eax, %%cr3;" ::: "%eax");
 }
@@ -369,7 +367,7 @@ extern "C" void syscallHandler()
   currentThread->switch_to_userspace_ = 1;
   currentThreadRegisters = currentThread->user_registers_;
   //ArchThreads::printThreadRegisters(currentThread,false);
-  arch_contextSwitch();
+  contextSwitch();
 }
 
 extern Stabs2DebugInfo const *kernel_debug_info;
@@ -416,7 +414,7 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   if (spurious)
   {
     if (currentThread->switch_to_userspace_)
-      arch_contextSwitch();
+      contextSwitch();
   }
   else
   {

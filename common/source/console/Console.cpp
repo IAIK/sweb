@@ -52,7 +52,7 @@ void Console::handleKey(uint32 key)
   {
     case KEY_F7:
 
-      cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
+      ArchMulticore::stopOtherCpus();
       Scheduler::instance()->printThreadList();
       Scheduler::instance()->printStackTraces();
       Scheduler::instance()->printLockingInformation();

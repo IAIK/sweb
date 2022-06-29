@@ -9,11 +9,11 @@ extern Thread* currentThread;
 
 extern "C" void halt();
 
-__attribute__((noreturn)) void sweb_assert(const char *condition, uint32 line, const char* file)
+[[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file, const char* function)
 {
   ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s on Line %d\n",condition, file, line);
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d\n", condition, file, function, line);
   if (currentThread != 0)
     currentThread->printBacktrace(false);
   while(1);

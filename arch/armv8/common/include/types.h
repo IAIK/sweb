@@ -9,8 +9,8 @@ typedef unsigned short int uint16;
 typedef signed int int32;
 typedef unsigned int uint32;
 
-typedef unsigned long int uint64;
-typedef signed long int int64;
+typedef long long unsigned int uint64;
+typedef long long int int64;
 
 
 typedef uint32 l_off_t;
@@ -18,8 +18,10 @@ typedef uint32 l_off_t;
 typedef uint32 mode_t;
 typedef uint32 uid_t;
 typedef uint32 gid_t;
-typedef uint64 size_t;
-typedef int64 ssize_t;
+typedef __SIZE_TYPE__ size_t;
+
+typedef uint64 ppn_t;
+typedef size_t vpn_t;
 
 typedef size_t pointer;
 

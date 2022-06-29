@@ -336,6 +336,14 @@ void ArchMulticore::stopAllCpus()
   }
 }
 
+void ArchMulticore::stopOtherCpus()
+{
+    if(CPULocalStorage::CLSinitialized() && cpu_lapic.isInitialized())
+    {
+        cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
+    }
+}
+
 extern "C" void __apstartup32() {
   // Hack to avoid automatic function prologue (stack isn't set up yet)
   // Load protected mode segments

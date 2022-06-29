@@ -2,6 +2,7 @@
 #include "paging-definitions.h"
 #include "offsets.h"
 #include "init_boottime_pagetables.h"
+#include "ArchCommon.h"
 
 extern "C" void uartWritePreboot(const char *str);
 
@@ -55,9 +56,16 @@ extern "C" void initialiseBootTimePaging()
         kernel_paging_level2_kernel_start[index].table.table_address = ((size_t) (kernel_paging_level3_start) / PAGE_SIZE) + index;
     }
 
+    extern void* kernel_start_address;
+    extern void* kernel_end_address;
+    VAddr k_start{(pointer)&kernel_start_address};
+
     //map the first 2MB for kernel memory
-    for(size_t index = 0; index < PAGE_ENTRIES; index++)
-        mapBootTimePage(kernel_paging_level3_start,index, index);
+    for(VAddr a{(pointer)&kernel_start_address}; a.addr < (pointer)&kernel_end_address; a.addr += PAGE_SIZE)
+    {
+        size_t l3i = (a.l2i - k_start.l2i)*PAGE_TABLE_ENTRIES + a.l3i;
+        mapBootTimePage(kernel_paging_level3_start,l3i, l3i);
+    }
 
 
     //set the mmu l0 selection registers, after boot ttbr0_el1 will be cleared and used for the user space

@@ -297,7 +297,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   }
 
 #ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
+  // MutexLock l(vfs_lock); // TODO: When userspace pagefault occurs while holding vfs lock -> pagefault handler attempts to load page data -> calls vfs read -> lock vfs lock -> deadlock
 #endif
 
 

@@ -61,6 +61,7 @@ class ArchMulticore
     static void startOtherCPUs();
     static size_t numRunningCPUs();
     static void stopAllCpus();
+    static void stopOtherCpus();
 
 
     static void setCpuID(size_t id);

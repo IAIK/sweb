@@ -43,6 +43,9 @@ class ArchThreads
 {
 public:
 
+  [[noreturn]] static void startThreads(Thread* init_thread);
+
+
 /**
  * allocates space for the currentThreadRegisters
  */

@@ -28,23 +28,20 @@
 
 extern Console* main_console;
 
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
-
-void pageFaultHandler(size_t address, uint32 type NU, size_t exc_syndrome NU)
+void pageFaultHandler(size_t address, size_t ip, uint32 type NU, size_t exc_syndrome NU)
 {
   bool writing = exc_syndrome & (1 << 6);
   bool fetch = type;
   bool present = (exc_syndrome & 0b111111) == 0b0011;  //this is a permission fault
 
-  PageFaultHandler::enterPageFault(address, currentThread->switch_to_userspace_, present , writing, fetch);
+  PageFaultHandler::enterPageFault(address, ip, currentThread->switch_to_userspace_, present , writing, fetch);
 }
 
 void timer_irq_handler()
 {
   static uint32 heart_beat_value = 0;
   const char* clock = "/-\\|";
-  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],Console::GREEN);
+  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value], CONSOLECOLOR::GREEN);
   heart_beat_value = (heart_beat_value + 1) % 4;
 
   Scheduler::instance()->incTicks();
@@ -93,7 +90,7 @@ void arch_swi_irq_handler(size_t swi)
   }
 }
 
-extern "C" void exceptionHandler(size_t int_id , size_t curr_el NU, size_t exc_syndrome  , size_t fault_address , size_t return_addr NU )
+extern "C" void exceptionHandler(size_t int_id, size_t curr_el NU, size_t exc_syndrome, size_t fault_address, size_t return_addr)
 {
   size_t type = int_id & 0x0F;
   size_t instruction_specific_syndrome = exc_syndrome & 0x1FFFFFF;
@@ -115,11 +112,11 @@ extern "C" void exceptionHandler(size_t int_id , size_t curr_el NU, size_t exc_s
       }
       else if(exception_class == ARM_EXC_DATA_ABORT_CURR_EL || exception_class == ARM_EXC_DATA_ABORT_LOWER_EL)
       {
-    	  pageFaultHandler(fault_address , 0, exc_syndrome);
+    	  pageFaultHandler(fault_address, return_addr, 0, exc_syndrome);
       }
       else if(exception_class == ARM_EXC_INSTR_ABORT_CURR_EL || exception_class == ARM_EXC_INSTR_ABORT_LOWER_EL)
       {
-    	  pageFaultHandler(fault_address , 1, exc_syndrome);
+    	  pageFaultHandler(fault_address, return_addr, 1, exc_syndrome);
       }
   }
   else

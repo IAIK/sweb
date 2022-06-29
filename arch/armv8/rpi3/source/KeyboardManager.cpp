@@ -48,9 +48,6 @@ KeyboardManager::KeyboardManager() :
 
 }
 
-KeyboardManager::~KeyboardManager()
-{
-}
 
 void KeyboardManager::kb_wait()
 {

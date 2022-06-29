@@ -10,7 +10,13 @@
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
+extern void* kernel_start_address;
 extern void* kernel_end_address;
+
+pointer ArchCommon::getKernelStartAddress()
+{
+    return (pointer)&kernel_start_address;
+}
 
 pointer ArchCommon::getKernelEndAddress()
 {
@@ -48,6 +54,11 @@ size_t ArchCommon::getModuleEndAddress(size_t num __attribute__((unused)), size_
   return getKernelEndAddress();
 }
 
+const char* ArchCommon::getModuleName([[maybe_unused]]size_t num, [[maybe_unused]]size_t is_paging_set_up)
+{
+    return "kernel";
+}
+
 size_t ArchCommon::getVESAConsoleHeight()
 {
   return 480;
@@ -78,7 +89,7 @@ size_t ArchCommon::getNumUseableMemoryRegions()
   return 1;
 }
 
-size_t ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
+size_t ArchCommon::getUseableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
 {
   return ArchBoardSpecific::getUsableMemoryRegion(region, start_address, end_address, type);
 }
@@ -95,6 +106,13 @@ void ArchCommon::initDebug()
 {
   extern unsigned char swebdbg_start_address_nr;
   extern unsigned char swebdbg_end_address_nr;
+
+  if (&swebdbg_start_address_nr == &swebdbg_end_address_nr)
+  {
+      debug(MAIN, "Empty debug info!\n");
+      kernel_debug_info = new SWEBDebugInfo(nullptr, nullptr);
+      return;
+  }
 
   kernel_debug_info = new SWEBDebugInfo((const char *)&swebdbg_start_address_nr, (const char*)&swebdbg_end_address_nr);
 }
@@ -123,7 +141,7 @@ extern "C" void dumpBss()
     }
 }
 
-extern "C" void halt()
+extern "C" void ArchCommon::halt()
 {
   asm volatile("wfi");
 }
@@ -135,3 +153,18 @@ void ArchCommon::idle()
   halt();
 }
 
+void ArchCommon::spinlockPause()
+{
+}
+
+uint64 ArchCommon::cpuTimestamp()
+{
+    uint64 timestamp;
+    asm volatile("isb;mrs %0, pmccntr_el0\n"
+                 : "=r"(timestamp));
+    return timestamp;
+}
+
+void ArchCommon::postBootInit()
+{
+}
