@@ -20,14 +20,14 @@ class SpinLock;
 class Lock;
 class PreemptProtect;
 
-extern __thread Thread* currentThread;
-extern __thread ArchThreadRegisters* currentThreadRegisters;
+extern __cpu Thread* currentThread;
+extern __cpu ArchThreadRegisters* currentThreadRegisters;
 
-extern thread_local IdleThread* idle_thread;
+extern cpu_local IdleThread* idle_thread;
 
-extern __thread size_t cpu_ticks;
+extern __cpu size_t cpu_ticks;
 
-extern __thread eastl::atomic<size_t> preempt_protect_count_;
+extern __cpu eastl::atomic<size_t> preempt_protect_count_;
 
 class Scheduler
 {

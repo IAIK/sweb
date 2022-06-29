@@ -309,7 +309,7 @@ void ArchCommon::drawStat() {
     }
 }
 
-thread_local size_t heart_beat_value = 0;
+cpu_local size_t heart_beat_value = 0;
 
 void ArchCommon::drawHeartBeat()
 {

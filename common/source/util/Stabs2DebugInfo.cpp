@@ -20,7 +20,8 @@ struct StabEntry
 
 Stabs2DebugInfo::Stabs2DebugInfo(char const *stab_begin, char const *stab_end, char const *stab_str) :
     stab_start_(reinterpret_cast<StabEntry const *>(stab_begin)),
-    stab_end_(reinterpret_cast<StabEntry const *>(stab_end)), stabstr_buffer_(stab_str)
+    stab_end_(reinterpret_cast<StabEntry const *>(stab_end)),
+    stabstr_buffer_(stab_str)
 {
   if (stabstr_buffer_)
     initialiseSymbolTable();

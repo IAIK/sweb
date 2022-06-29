@@ -18,14 +18,14 @@
 #include "Loader.h"
 #include "ArchCommon.h"
 
-__thread Thread* currentThread = nullptr;
-__thread ArchThreadRegisters* currentThreadRegisters = nullptr;
+__cpu Thread* currentThread = nullptr;
+__cpu ArchThreadRegisters* currentThreadRegisters = nullptr;
 
-thread_local IdleThread* idle_thread;
+cpu_local IdleThread* idle_thread;
 
-__thread size_t cpu_ticks = 0;
+__cpu size_t cpu_ticks = 0;
 
-__thread eastl::atomic<size_t> preempt_protect_count_ = {};
+__cpu eastl::atomic<size_t> preempt_protect_count_ = {};
 
 Scheduler *Scheduler::instance_ = nullptr;
 

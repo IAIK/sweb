@@ -16,18 +16,18 @@
 extern SystemState system_state;
 
 
-__thread GDT cpu_gdt;
-__thread TSS cpu_tss;
+__cpu GDT cpu_gdt;
+__cpu TSS cpu_tss;
 
-/* The order of initialization of thread_local objects depends on the order in which they are defined in the source code.
-   This is pretty fragile, but using __thread and placement new doesn't work (compiler complains that dynamic initialization is required).
+/* The order of initialization of cpu_local objects depends on the order in which they are defined in the source code.
+   This is pretty fragile, but using __cpu and placement new doesn't work (compiler complains that dynamic initialization is required).
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
 
-thread_local LocalAPIC cpu_lapic;
-thread_local size_t cpu_id;
-thread_local CpuInfo cpu_info;
+cpu_local LocalAPIC cpu_lapic;
+cpu_local size_t cpu_id;
+cpu_local CpuInfo cpu_info;
 
-thread_local char cpu_stack[CPU_STACK_SIZE];
+cpu_local char cpu_stack[CPU_STACK_SIZE];
 
 
 volatile static bool ap_started = false; // TODO: Convert to spinlock
@@ -148,7 +148,7 @@ void ArchMulticore::initCPULocalData(bool boot_cpu)
   initCpuLocalTSS((size_t)ArchMulticore::cpuStackTop());
 
 
-  // The constructor of objects declared as thread_local will be called automatically the first time the thread_local object is used. Other thread_local objects _may or may not_ also be initialized at the same time.
+  // The constructor of objects declared as cpu_local will be called automatically the first time the cpu_local object is used. Other cpu_local objects _may or may not_ also be initialized at the same time.
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", cpu_info.getCpuID());
 
   // void* cpu_info_addr = &cpu_info;

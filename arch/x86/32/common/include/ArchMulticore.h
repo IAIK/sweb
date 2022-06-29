@@ -9,6 +9,9 @@
 #include "IdleThread.h"
 #include "paging-definitions.h"
 
+#define cpu_local thread_local
+#define __cpu __thread
+
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
 
@@ -39,12 +42,12 @@ private:
 };
 
 
-extern thread_local LocalAPIC cpu_lapic;
-extern thread_local size_t cpu_id;
-extern thread_local CpuInfo cpu_info;
-extern thread_local char cpu_stack[CPU_STACK_SIZE];
-extern thread_local TSS cpu_tss;
-extern thread_local IdleThread* idle_thread;
+extern cpu_local LocalAPIC cpu_lapic;
+extern cpu_local size_t cpu_id;
+extern cpu_local CpuInfo cpu_info;
+extern cpu_local char cpu_stack[CPU_STACK_SIZE];
+extern cpu_local TSS cpu_tss;
+extern cpu_local IdleThread* idle_thread;
 
 #define AP_STARTUP_PADDR 0x0
 
