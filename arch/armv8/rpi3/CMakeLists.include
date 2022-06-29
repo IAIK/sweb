@@ -25,38 +25,35 @@ if ("${VIRTUALIZED_QEMU}" STREQUAL "1")
 endif ("${VIRTUALIZED_QEMU}" STREQUAL "1")
 
 
-target_link_options(kernel PUBLIC
+target_link_options(kernel_options INTERFACE
     ${KERNEL_LD_ARGUMENT})
 
 target_link_libraries(kernel PRIVATE
     -lgcc)
 
-target_compile_options(kernel PUBLIC
+target_compile_options(kernel_options INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
     $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>
-    )
+)
+
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
 
 add_custom_command(TARGET kernel
     POST_BUILD
+    BYPRODUCTS lib/debug_info.o kernel.dbg
     COMMAND add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
     COMMAND touch ${PROJECT_BINARY_DIR}/debug_info.c
     COMMAND ${CMAKE_C_COMPILER} -c ${PROJECT_BINARY_DIR}/debug_info.c -o ${PROJECT_BINARY_DIR}/lib/debug_info.o
     COMMAND "${OBJCOPY_EXECUTABLE}" --add-section .swebdbg="${PROJECT_BINARY_DIR}/kernel.dbg" --set-section-flags .swebdbg=load,data ${PROJECT_BINARY_DIR}/lib/debug_info.o
     COMMAND rm ${PROJECT_BINARY_DIR}/debug_info.c
-    )
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMENT "Creating debug info"
+)
 
-add_custom_command (TARGET kernel
-    POST_BUILD
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${ADD_LD_ARGUMENT}
-    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-    )
-
-add_dependencies(kernel add-dbg)
+# TODO: link debug info into kernel
 
 
 # sdcard: Create an sdcard for the raspberry pi
@@ -74,7 +71,7 @@ add_custom_target(sdcardq
   )
 
 add_custom_target(qemu
-  COMMAND qemu-system-aarch64 -M raspi3 -cpu cortex-a53 -m 1024 -drive file=${HDD_IMAGE},if=sd -no-reboot -kernel kernel.x -serial stdio -d guest_errors,unimp
+  COMMAND qemu-system-aarch64 -M raspi3b -cpu cortex-a53 -m 1024 -drive file=${HDD_IMAGE},if=sd -no-reboot -kernel kernel.x -serial stdio -d guest_errors,unimp
   COMMENT "Executing `qemu-system-aarch64 -M raspi3 -cpu cortex-a53 -m 1024 -no-reboot -kernel kernel.x -serial stdio -d guest_errors,unimp`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I
@@ -82,7 +79,7 @@ add_custom_target(qemu
 
 # qemugdb: Run qemu in non debugging mode
 add_custom_target(qemugdb
-  COMMAND qemu-system-aarch64 -M raspi3 -cpu cortex-a53 -m 1024 -drive file=${HDD_IMAGE},if=sd -no-reboot -kernel kernel.x -serial stdio -d guest_errors,unimp -s -S
+  COMMAND qemu-system-aarch64 -M raspi3b -cpu cortex-a53 -m 1024 -drive file=${HDD_IMAGE},if=sd -no-reboot -kernel kernel.x -serial stdio -d guest_errors,unimp -s -S
   COMMENT "Executing `qemu-system-aarch64 -M raspi3 -cpu cortex-a53 -m 1024 -no-reboot -kernel kernel.x -serial stdio -d guest_errors,unimp -s -S`"
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMAND reset -I

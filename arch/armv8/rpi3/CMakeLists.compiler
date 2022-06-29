@@ -15,7 +15,15 @@ find_program(LD_EXECUTABLE aarch64-linux-gnu-gcc)
 find_program(LD_EXECUTABLE_PURE aarch64-linux-gnu-ld)
 find_program(OBJCOPY_EXECUTABLE aarch64-linux-gnu-objcopy)
 
-if(${CMAKE_VERSION} VERSION_LESS "3.6.0") 
-    CMAKE_FORCE_CXX_COMPILER(${CMAKE_CXX_COMPILER} STATIC_LIBRARY)	
+if(${CMAKE_VERSION} VERSION_LESS "3.6.0")
+    CMAKE_FORCE_CXX_COMPILER(${CMAKE_CXX_COMPILER} STATIC_LIBRARY)
     CMAKE_FORCE_C_COMPILER(${CMAKE_C_COMPILER} STATIC_LIBRARY)
+endif()
+
+if(${CMAKE_C_COMPILER} STREQUAL "CMAKE_C_COMPILER-NOTFOUND")
+    message(SEND_ERROR "No suitable C compiler found!")
+endif()
+
+if(${CMAKE_CXX_COMPILER} STREQUAL "CMAKE_CXX_COMPILER-NOTFOUND")
+    message(SEND_ERROR "No suitable C++ compiler found!")
 endif()
