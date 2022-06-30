@@ -4,30 +4,43 @@ HDD_IMAGE="SWEB.qcow2"
 
 
 echo "Building architecture $1"
-yes | make $1
-make
+yes | cmake --build . -t $1 > /dev/null
+cmake --build . -j > /dev/null
+
+if [[ "$?" -eq 0 ]]; then
+    echo "Building $1 succeeded"
+else
+    echo "Building $1 failed"
+    exit 1
+fi
 
 echo "Running architecture $1"
+
+function cleanup {
+    rm -rf /tmp/qemu.in /tmp/qemu.out /tmp/qemu /tmp/out.log
+}
+
+trap cleanup EXIT
 
 rm -rf /tmp/qemu.in /tmp/qemu.out /tmp/qemu /tmp/out.log
 mkfifo -m a=rw /tmp/qemu.in
 mkfifo -m a=rw /tmp/qemu.out
 
-if [[ "$1" == "x86_64" ]]; 
+if [[ "$1" == "x86_64" ]];
 then
     qemu-system-x86_64 -m 8M -drive file=${HDD_IMAGE},index=0,media=disk -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
 fi
-if [[ "$1" == "x86_32" ]] || [[ "$1" == "x86_32_pae" ]]; 
+if [[ "$1" == "x86_32" ]] || [[ "$1" == "x86_32_pae" ]];
 then
     qemu-system-i386 -m 8M -drive file=${HDD_IMAGE},index=0,media=disk -cpu qemu64 -debugcon file:/tmp/out.log -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
 fi
-if [[ "$1" == "arm_rpi2" ]]; 
+if [[ "$1" == "arm_rpi2" ]];
 then
     exit 0 # not supported in the travis qemu
     qemu-system-arm -kernel kernel.x -cpu arm1176 -m 512 -M raspi2 -no-reboot -drive if=sd,file=${HDD_IMAGE} -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
     sleep 2
 fi
-if [[ "$1" == "arm_icp" ]]; 
+if [[ "$1" == "arm_icp" ]];
 then
     qemu-system-arm -M integratorcp -m 8M -kernel kernel.x -sd ${HDD_IMAGE} -no-reboot -serial file:/tmp/out.log -d guest_errors,unimp -monitor pipe:/tmp/qemu -nographic -display none > /dev/null 2> /dev/null &
 fi
@@ -57,7 +70,7 @@ echo "quit" > /tmp/qemu.in
 HAS_SHELL=$(grep -c "SWEB: />" /tmp/out.log)
 HAS_HELP=$(grep -c "Command Help" /tmp/out.log)
 
-if [[ $HAS_SHELL > 0 ]] && [[ $HAS_HELP > 0 ]]; 
+if [[ $HAS_SHELL > 0 ]] && [[ $HAS_HELP > 0 ]];
 then
     echo "SWEB boots and has a (working) shell"
     exit 0
