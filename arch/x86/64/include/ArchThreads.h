@@ -88,6 +88,9 @@ public:
   static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
   static void* getInstructionPointer(ArchThreadRegisters *info);
+
+  static void setInterruptEnableFlag(ArchThreadRegisters *info, bool interrupts_enabled);
+
 /**
  * on x86: invokes int65, whose handler facilitates a task switch
  */

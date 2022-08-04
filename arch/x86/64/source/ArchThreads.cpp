@@ -74,7 +74,7 @@ void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* st
 {
   info = new ArchThreadRegisters{};
 
-  info->rflags  = 0x200; // interrupt enable flag set
+  setInterruptEnableFlag(info, true);
   info->cr3     = kernel_arch_mem.getValueForCR3();
   info->rsp     = (size_t)stack;
   info->rbp     = (size_t)stack;
@@ -122,6 +122,14 @@ void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* func
 void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
 {
         return (void*)info->rip;
+}
+
+void ArchThreads::setInterruptEnableFlag(ArchThreadRegisters *info, bool interrupts_enabled)
+{
+    if (interrupts_enabled)
+        info->rflags |= 0x200;
+    else
+        info->rflags &= ~0x200;
 }
 
 void ArchThreads::yield()
