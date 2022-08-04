@@ -54,7 +54,7 @@ namespace CPULocalStorage
     size_t getCLSSize();
 
     char* allocCLS();
-    // void setCLS(GDT& gdt, char* cls);
+    void setCLS(char* cls);
     bool CLSinitialized();
     void* getClsBase();
 };

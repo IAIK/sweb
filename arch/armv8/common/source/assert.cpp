@@ -4,8 +4,7 @@
 #include "debug_bochs.h"
 #include "Thread.h"
 #include "ArchInterrupts.h"
-
-extern Thread* currentThread;
+#include "Scheduler.h"
 
 extern "C" void halt();
 
