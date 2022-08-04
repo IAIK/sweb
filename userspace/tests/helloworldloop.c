@@ -8,6 +8,8 @@ int main(int argc, char *argv[])
         printf("Starting test loop\n");
         while(1)
         {
-            printf("Loop de loop\n");
+            size_t cpu = 0;
+            assert(getcpu(&cpu, NULL, NULL) == 0);
+            printf("Hello from CPU %zu\n", cpu);
         }
 }
