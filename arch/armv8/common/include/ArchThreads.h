@@ -21,9 +21,9 @@ struct ArchThreadRegisters
 	NeonQ  Q[32];
 	size_t SPSR;
 	size_t ELR;
-	size_t SP;
+	size_t SP; // Saved previous stack pointer (SP_EL0 when coming from user mode, else SP)
 	size_t TTBR0;
-	size_t SP_SM;
+	size_t SP_SM; // Kernel stack pointer
 };
 
 class Thread;

@@ -13,7 +13,7 @@ extern "C" const size_t kernel_sp_struct_offset = (size_t)&((ArchThreadRegisters
 extern uint8 boot_stack[];
 
 //in interrupt_entry.S is the code for the actual context switching
-extern "C" size_t interruptEntry(size_t int_id, size_t curr_el, size_t exc_syndrome, size_t fault_address, size_t return_addr )
+extern "C" size_t interruptEntry(size_t int_id, size_t curr_el, size_t exc_syndrome, size_t fault_address, size_t return_addr)
 {
 	exceptionHandler(int_id, curr_el, exc_syndrome, fault_address, return_addr);
 
