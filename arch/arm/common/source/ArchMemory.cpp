@@ -27,6 +27,8 @@
 PageDirEntry kernel_page_directory[PAGE_DIR_ENTRIES] __attribute__((aligned(0x4000))); // space for page directory
 PageTableEntry kernel_page_tables[16 * PAGE_TABLE_ENTRIES] __attribute__((aligned(1024))); // space for 8 page tables
 
+ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
+
 PageTableEntry* ArchMemory::getIdentAddressOfPT(PageDirEntry* page_directory, uint32 pde_vpn)
 {
   return ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
@@ -55,6 +57,12 @@ ArchMemory::ArchMemory()
     new_page_directory[p].pt.size = PDE_SIZE_NONE;
 }
 
+ArchMemory::ArchMemory(uint32_t page_dir_page)
+{
+    page_dir_page_ = page_dir_page;
+    debug(A_MEMORY, "ArchMemory::ArchMemory(%zx)\n", page_dir_page_);
+}
+
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
 {
   PageDirEntry *page_directory = (PageDirEntry *) getIdentAddressOfPPN(page_dir_page_);
@@ -76,7 +84,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
   for (size_t i = 0; i < 4; ++i)
   {
     uint32 pt_slot = (pt_ppn - PHYS_OFFSET_4K) * 4 + i;
-    if (ustl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot) == pt_ppns_.end())
+    if (eastl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot) == pt_ppns_.end())
       return;
   }
 
@@ -85,7 +93,7 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
   for (size_t i = 0; i < 4; ++i)
   {
     uint32 pt_slot = (pt_ppn - PHYS_OFFSET_4K) * 4 + i;
-    pt_ppns_.erase(ustl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot));
+    pt_ppns_.erase(eastl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot));
   }
 }
 
@@ -182,7 +190,7 @@ ArchMemory::~ArchMemory()
       bool free_pt_page = true;
       for (size_t i = 0; i < 4; ++i)
       {
-        auto it = ustl::find(pt_ppns_.begin(), pt_ppns_.end(), page_directory[pde_vpn].pt.pt_ppn * 4 + i);
+        auto it = eastl::find(pt_ppns_.begin(), pt_ppns_.end(), page_directory[pde_vpn].pt.pt_ppn * 4 + i);
         if (it == pt_ppns_.end())
           free_pt_page = false;
         else
@@ -245,17 +253,22 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   return 0;
 }
 
-void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
+bool ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page, [[maybe_unused]]bool can_alloc_pages, [[maybe_unused]]bool memory_mapped_io)
 {
   PageDirEntry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT && "kernel page table has to be mapped already");
   PageTableEntry *pte_base = getIdentAddressOfPT(page_directory, pde_vpn);
-  assert(pte_base[pte_vpn].size == PTE_SIZE_NONE && "tried to map page but there was already a page mapped");
+  if (pte_base[pte_vpn].size != PTE_SIZE_NONE) {
+      return false;
+  }
+  // assert(pte_base[pte_vpn].size == PTE_SIZE_NONE && "tried to map page but there was already a page mapped");
   pte_base[pte_vpn].permissions = PAGE_PERMISSION_KERNEL;
   pte_base[pte_vpn].page_ppn = physical_page + PHYS_OFFSET_4K;
   pte_base[pte_vpn].size = PTE_SIZE_SMALL;
+
+  return true;
 }
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page)
@@ -274,4 +287,25 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
 uint32 ArchMemory::getRootOfPagingStructure()
 {
   return page_dir_page_;
+}
+
+PageDirEntry* ArchMemory::getKernelPagingStructureRootVirt()
+{
+    return kernel_page_directory;
+}
+
+size_t ArchMemory::getKernelPagingStructureRootPhys()
+{
+    return (size_t)VIRTUAL_TO_PHYSICAL_BOOT((size_t)getKernelPagingStructureRootVirt());
+}
+
+void ArchMemory::loadPagingStructureRoot(size_t ttbr0_value)
+{
+    __asm__ __volatile__("MCR p15, 0, %[ttbr0], c2, c0, 0\n"
+                         ::[ttbr0]"r"(ttbr0_value));
+}
+
+void ArchMemory::initKernelArchMem()
+{
+    new (&kernel_arch_mem) ArchMemory((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
 }

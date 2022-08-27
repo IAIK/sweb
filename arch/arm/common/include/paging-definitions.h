@@ -58,3 +58,17 @@ typedef struct
     uint32 page_ppn                  :20; // 31:12
 } __attribute__((__packed__)) PageTableEntry;
 
+
+struct VAddr
+{
+    union
+    {
+        uint32 addr;
+        struct
+        {
+            uint32 offset   : 12;
+            uint32 pti      : 8;
+            uint32 pdi      : 12;
+        } __attribute__((__packed__));;
+    } __attribute__((__packed__));;
+} __attribute__((__packed__));

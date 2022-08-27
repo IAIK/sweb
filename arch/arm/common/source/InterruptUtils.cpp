@@ -78,14 +78,15 @@ void pageFaultHandler(uint32 address, uint32 type)
   }
   present = !((status == FLAG_TRANSLATION_PAGE) || (status == FLAG_TRANSLATION_SECTION));
 
-  PageFaultHandler::enterPageFault(address, currentThread->switch_to_userspace_,  present, writing, fetch);
+  // TODO: use real ip
+  PageFaultHandler::enterPageFault(address, 0, currentThread->switch_to_userspace_,  present, writing, fetch);
 }
 
 void timer_irq_handler()
 {
   static uint32 heart_beat_value = 0;
   const char* clock = "/-\\|";
-  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],Console::GREEN);
+  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],CONSOLECOLOR::GREEN);
   heart_beat_value = (heart_beat_value + 1) % 4;
 
   Scheduler::instance()->incTicks();

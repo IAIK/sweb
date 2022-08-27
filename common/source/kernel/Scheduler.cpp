@@ -235,6 +235,7 @@ void Scheduler::wake(Thread* thread_to_wake)
 void Scheduler::yield()
 {
   assert(this);
+  assert(currentThread);
 
   if (preempt_protect_count_.load() > 0)
   {
@@ -245,7 +246,6 @@ void Scheduler::yield()
 
   if (!ArchInterrupts::testIFSet())
   {
-    assert(currentThread);
     kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %p %s)\n",
              currentThread, currentThread->name_.c_str());
     currentThread->printBacktrace();

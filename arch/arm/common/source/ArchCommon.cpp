@@ -48,6 +48,11 @@ uint32 ArchCommon::getModuleEndAddress(uint32 num __attribute__((unused)), uint3
   return getKernelEndAddress();
 }
 
+const char* ArchCommon::getModuleName([[maybe_unused]]size_t num, [[maybe_unused]]size_t is_paging_set_up)
+{
+    return "kernel";
+}
+
 uint32 ArchCommon::getVESAConsoleHeight()
 {
   return 480;
@@ -115,6 +120,35 @@ void ArchCommon::idle()
   halt();
 }
 
+void ArchCommon::spinlockPause()
+{
+}
+
+uint64 ArchCommon::cpuTimestamp()
+{
+    uint64 timestamp;
+
+    // // Read PMCCNTR/CCNT Register
+    // // https://developer.arm.com/documentation/ddi0406/c/System-Level-Architecture/System-Control-Registers-in-a-PMSA-implementation/PMSA-System-control-registers-descriptions--in-register-order/PMCCNTR--Performance-Monitors-Cycle-Count-Register--PMSA?lang=en
+    // asm volatile ("mrc p15, 0, %0, c9, c13, 0\n"
+    //               : "=r"(timestamp));
+
+    // // Read physical count register
+    // // https://developer.arm.com/documentation/ddi0406/c/System-Level-Architecture/System-Control-Registers-in-a-PMSA-implementation/PMSA-System-control-registers-descriptions--in-register-order/CNTPCT--Physical-Count-register--PMSA?lang=en
+    // asm("mrrc p15, 0, %Q0, %R0, c14\n"
+    //     : "=r" (timestamp));
+
+    // Read virtual count register
+    // https://developer.arm.com/documentation/ddi0406/c/System-Level-Architecture/System-Control-Registers-in-a-PMSA-implementation/PMSA-System-control-registers-descriptions--in-register-order/CNTVCT--Virtual-Count-register--PMSA?lang=en
+    asm("mrrc p15, 1, %Q0, %R0, c14\n"
+        : "=r" (timestamp));
+
+    return timestamp;
+}
+
+void ArchCommon::postBootInit()
+{
+}
 
 extern "C" void __aeabi_atexit()
 {

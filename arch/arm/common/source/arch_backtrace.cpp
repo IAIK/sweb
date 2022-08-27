@@ -4,7 +4,7 @@
 #include "InterruptUtils.h"
 #include "ArchThreads.h"
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
-#include "umap.h"
+#include "EASTL/map.h"
 #include "ArchCommon.h"
 
 struct StackFrame
@@ -76,5 +76,3 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
 
   return i;
 }
-
-

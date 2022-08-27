@@ -37,7 +37,7 @@ void PageManager::init()
     instance_ = new (&pm) PageManager(&bootstrap_pm_allocator);
 
     // TODO: multiarch compatibility + make this less hacky
-#ifndef CMAKE_ARMV8_RPI3
+#if defined(CMAKE_X86_64) || defined(CMAKE_X86_32) || defined(CMAKE_X86_32_PAE)
     // HACKY: Pages 0 + 1 are used for AP startup code
     size_t ap_boot_code_range = instance_->allocator_->alloc(PAGE_SIZE*2, PAGE_SIZE);
     debug(PM, "Allocated mem for ap boot code: %zx\n", ap_boot_code_range);

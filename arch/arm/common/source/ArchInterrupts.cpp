@@ -6,6 +6,7 @@
 #include "ArchThreads.h"
 #include "ArchBoardSpecific.h"
 #include "Thread.h"
+#include "Scheduler.h"
 
 extern uint8 boot_stack[];
 

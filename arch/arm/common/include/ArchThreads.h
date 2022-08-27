@@ -23,12 +23,6 @@ struct ArchThreadRegisters
 
 class Thread;
 class ArchMemory;
-/**
- * this is where the thread info for task switching is stored
- *
- */
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching
@@ -37,6 +31,8 @@ extern Thread *currentThread;
 class ArchThreads
 {
 public:
+
+  [[noreturn]] static void startThreads(Thread* init_thread);
 
 /**
  * allocates space for the currentThreadRegisters
@@ -63,6 +59,8 @@ public:
    */
   static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
 
+  static void* getInstructionPointer(ArchThreadRegisters *info);
+
 /**
  * creates the ArchThreadRegisters for a user thread
  * @param info where the ArchThreadRegisters is saved
@@ -87,6 +85,9 @@ public:
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
 
+  static void switchToAddressSpace(Thread* thread);
+  static void switchToAddressSpace(ArchMemory& arch_memory);
+
 /**
  * uninterruptable locked operation
  * exchanges value in variable lock with new_value and returns the old_value
@@ -96,6 +97,17 @@ public:
  * @returns old_value of variable lock
  */
   static uint32 testSetLock(uint32 &lock, uint32 new_value);
+
+  /**
+   * Counterpart to testSetLock()
+   * Writes 0 to the lock variable and provides a memory release barrier
+   * (ensures all previous memory stores are visible)
+   */
+  template<typename T>
+  static void syncLockRelease(volatile T &lock)
+  {
+      __sync_lock_release(&lock);
+  }
 
 /**
  * atomically increments or decrements value by increment
@@ -133,4 +145,3 @@ public:
    */
   static void debugCheckNewThread(Thread* thread);
 };
-

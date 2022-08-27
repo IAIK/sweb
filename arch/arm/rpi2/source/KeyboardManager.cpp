@@ -55,10 +55,6 @@ KeyboardManager::KeyboardManager() :
   usb_kbd_addr_ = KeyboardGetAddress(0);
 }
 
-KeyboardManager::~KeyboardManager()
-{
-}
-
 void KeyboardManager::kb_wait()
 {
 }

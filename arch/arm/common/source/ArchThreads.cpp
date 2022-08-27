@@ -28,6 +28,17 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_registers_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
+void ArchThreads::switchToAddressSpace(Thread* thread)
+{
+    ArchMemory::loadPagingStructureRoot(thread->kernel_registers_->ttbr0);
+}
+
+void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
+{
+    size_t ttbr0_value = (LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE);
+    ArchMemory::loadPagingStructureRoot(ttbr0_value);
+}
+
 void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
@@ -168,7 +179,7 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->kernel_registers_->sp0 == 0 && "kernel register set needs no backup of kernel esp");
   assert(thread->kernel_registers_->sp == thread->kernel_registers_->r[11] && "new kernel stack must be empty");
   assert(thread->kernel_registers_->sp != currentThread->kernel_registers_->sp && thread->kernel_registers_->r[11] != currentThread->kernel_registers_->r[11] && "all threads need their own stack");
-  assert(thread->kernel_registers_->ttbr0 < 0x80000000 - BOARD_LOAD_BASE && "ttbr0 contains the physical page dir address");
+  assert(thread->kernel_registers_->ttbr0 < 0x80000000 - BOARD_LOAD_BASE && "ttbr0 needs to contain the physical page dir address");
   if (thread->user_registers_ == 0)
     return;
   assert(thread->kernel_registers_->pc == 0 && "user threads should not start execution in kernel mode");
@@ -179,4 +190,11 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   if (currentThread->user_registers_ == 0)
     return;
   assert(currentThread->user_registers_->sp0 != thread->user_registers_->sp0 && "no 2 threads may have the same esp0 value");
+}
+
+[[noreturn]] void ArchThreads::startThreads([[maybe_unused]]Thread* init_thread)
+{
+    ArchInterrupts::enableInterrupts();
+    yield();
+    assert(false);
 }
