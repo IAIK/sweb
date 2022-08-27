@@ -101,7 +101,7 @@ class SerialManager
     ;
 
     SerialManager();
-    ~SerialManager() = default;
+    ~SerialManager() = delete;
 
     SerialPort * serial_ports[ MAX_PORTS];
 
@@ -113,4 +113,3 @@ class SerialManager
   private:
     uint32 num_ports;
 };
-
