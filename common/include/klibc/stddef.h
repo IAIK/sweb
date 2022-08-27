@@ -25,7 +25,13 @@ extern "C"
 #ifndef __cplusplus
     typedef __WCHAR_TYPE__ wchar_t;
 #endif
+
+#ifdef __cplusplus
     typedef decltype(nullptr) nullptr_t;
+#endif
+#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202300L)
+    typedef typeof(nullptr) nullptr_t;
+#endif
 
     typedef struct {
         long long __max_align_ll __attribute__((__aligned__(__alignof__(long long))));
