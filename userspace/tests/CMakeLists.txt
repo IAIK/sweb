@@ -10,11 +10,8 @@ set(EXECUTABLE_OUTPUT_PATH "${EXECUTABLE_OUTPUT_PATH}/userspace")
 # Reset userspace program names
 set($ENV{USERSPACE_NAMES} "")
 
-set(USERSPACE_TESTS_COMPILE_OPTIONS)
-set(USERSPACE_TESTS_LINKER_OPTIONS -Wl,-Ttext=0x8000000 -Wl,--build-id=none -Wl,-whole-archive)
-
-set(FINAL_USERSPACE_TESTS_COMPILE_OPTIONS ${ARCH_USERSPACE_COMPILE_OPTIONS} ${USERSPACE_TESTS_COMPILE_OPTIONS})
-set(FINAL_USERSPACE_TESTS_LINKER_OPTIONS ${ARCH_LD_ARGUMENTS} ${ARCH_USERSPACE_LINKER_OPTIONS} ${USERSPACE_TESTS_LINKER_OPTIONS})
+target_link_options(userspace_options INTERFACE
+    -Wl,-Ttext=0x8000000 -Wl,--build-id=none -Wl,--whole-archive)
 
 
 # Create own executable for every .c file and link with libc
@@ -23,9 +20,9 @@ foreach(curFile ${userspace_tests_SOURCES})
   get_filename_component(curName ${curFile} NAME_WE)
 
   add_executable(${curName}.sweb ${curFile})
-  target_compile_options(${curName}.sweb PUBLIC ${FINAL_USERSPACE_TESTS_COMPILE_OPTIONS})
-  target_link_options(${curName}.sweb PUBLIC ${FINAL_USERSPACE_TESTS_LINKER_OPTIONS} ${ARCH_APPEND_LD_ARGUMENTS})
-  target_link_libraries(${curName}.sweb userspace_libc)
+
+  target_link_libraries(${curName}.sweb PUBLIC userspace_libc)
+  target_link_libraries(${curName}.sweb PUBLIC userspace_options)
 
   ADD_DEBUG_INFO(${curName}.sweb)
 
@@ -44,9 +41,9 @@ foreach(curProject ${userspace_tests_PROJECTS})
     get_filename_component(exename ${curProject} NAME)
 
     add_executable(${exename}.sweb ${curProject_SOURCES})
-    target_compile_options(${exename}.sweb PUBLIC ${FINAL_USERSPACE_TESTS_COMPILE_OPTIONS})
-    target_link_options(${exename}.sweb PUBLIC ${FINAL_USERSPACE_TESTS_LINKER_OPTIONS} ${ARCH_APPEND_LD_ARGUMENTS})
-    target_link_libraries(${exename}.sweb userspace_libc)
+
+    target_link_libraries(${exename}.sweb PUBLIC userspace_libc)
+    target_link_libraries(${curName}.sweb PUBLIC userspace_options)
 
     ADD_DEBUG_INFO(${curName}.sweb)
 

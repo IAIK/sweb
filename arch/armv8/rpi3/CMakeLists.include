@@ -2,19 +2,15 @@ include(CheckCCompilerFlag)
 
 set(KERNEL_BINARY kernel.x)
 
-set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++17 -O2 -gdwarf-2 -Wall -Wextra -Werror -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -nostdinc++ -fno-builtin -fno-rtti -fno-exceptions -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
-set(KERNEL_CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -std=gnu11 -O2 -gdwarf-2 -Wall -Wextra -Werror -nostdinc -nostartfiles -nodefaultlibs -nostdlib -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
+set(KERNEL_COMMON_FLAGS -O2 -gdwarf-2 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
 
 check_c_compiler_flag(-mno-outline-atomics HAS_MNO_OUTLINE_ATOMICS)
 if (HAS_MNO_OUTLINE_ATOMICS)
-    set(KERNEL_CMAKE_C_FLAGS ${KERNEL_CMAKE_C_FLAGS} -mno-outline-atomics)
-    set(KERNEL_CMAKE_CXX_FLAGS ${KERNEL_CMAKE_CXX_FLAGS} -mno-outline-atomics)
+    set(KERNEL_COMMON_FLAGS ${KERNEL_COMMON_FLAGS} -mno-outline-atomics)
 endif()
 
-
-set(ARCH_LD_ARGUMENTS -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
-set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} -Wl,-Map=../kernel.map ${NOPIEFLAG})
-set(ARCH_APPEND_LD_ARGUMENTS -Wl,-lgcc)
+set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${KERNEL_COMMON_FLAGS} -std=gnu++17 -nostdinc++ -fno-rtti -fno-exceptions)
+set(KERNEL_CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${KERNEL_COMMON_FLAGS} -std=gnu11 -nostdlib -fno-exceptions)
 
 
 set(ADD_LD_ARGUMENT -Wl,"${PROJECT_BINARY_DIR}/lib/debug_info.o")
@@ -22,14 +18,21 @@ set(ADD_LD_ARGUMENT -Wl,"${PROJECT_BINARY_DIR}/lib/debug_info.o")
 
 if ("${VIRTUALIZED_QEMU}" STREQUAL "1")
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVIRTUALIZED_QEMU")
-endif ("${VIRTUALIZED_QEMU}" STREQUAL "1")
+ endif ("${VIRTUALIZED_QEMU}" STREQUAL "1")
+
+
+target_compile_options(arch_options INTERFACE
+)
+
+target_link_options(arch_options INTERFACE
+    -Wl,--build-id=none -Wl,-z -Wl,max-page-size=0x1000 -nostdinc -nostdlib -nodefaultlibs)
 
 
 target_link_options(kernel_options INTERFACE
-    ${KERNEL_LD_ARGUMENT})
+    -Wl,-Map=../kernel.map ${NOPIEFLAG})
 
-target_link_libraries(kernel PRIVATE
-    -lgcc)
+target_link_libraries(kernel_options INTERFACE
+    -Wl,--no-whole-archive -Wl,-lgcc -Wl,--whole-archive)
 
 target_compile_options(kernel_options INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
@@ -37,6 +40,7 @@ target_compile_options(kernel_options INTERFACE
     $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>
 )
 
+set_property(TARGET kernel PROPERTY ENABLE_EXPORTS 1)
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)

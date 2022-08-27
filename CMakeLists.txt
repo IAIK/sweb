@@ -28,8 +28,15 @@ project(sweb
 add_executable(kernel)
 set_target_properties(kernel PROPERTIES OUTPUT_NAME kernel.x)
 
-add_library(kernel_options INTERFACE) # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#interface-libraries
+# https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#interface-libraries
+add_library(arch_options INTERFACE)
+add_library(kernel_options INTERFACE)
+add_library(userspace_options INTERFACE)
+
+target_link_libraries(kernel_options INTERFACE arch_options)
+target_link_libraries(userspace_options INTERFACE arch_options)
 target_link_libraries(kernel PUBLIC kernel_options)
+
 
 set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
 set(HDD_IMAGE "SWEB.qcow2")
@@ -136,7 +143,7 @@ target_link_options(kernel_options INTERFACE
 
 # Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
 add_library(userspace_libc "")
-target_compile_options(userspace_libc PUBLIC ${ARCH_USERSPACE_COMPILE_OPTIONS})
+target_link_libraries(userspace_libc PUBLIC userspace_options)
 
 # Add the source directories
 add_subdirectory(arch)
