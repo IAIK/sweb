@@ -930,7 +930,7 @@ namespace Internal
 	};
 }// namespace Internal
 
-static const Internal::ignore_t ignore;
+[[maybe_unused]] static const Internal::ignore_t ignore;
 
 
 // tie 
