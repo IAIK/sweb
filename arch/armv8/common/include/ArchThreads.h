@@ -83,7 +83,7 @@ public:
   static void yield();
 
 /**
- * sets a threads CR3 register to the given page dir / etc. defining its address space
+ * sets a threads address space register to given address space
  *
  * @param *thread Pointer to Thread Object
  * @param arch_memory a reference to the arch memory object to use

@@ -51,6 +51,13 @@ public:
   ArchMemory();
   ArchMemory(ppn_t paging_root_page);
 
+
+/**
+ * Destructor. Recursively deletes the page directory and all page tables
+ *
+ */
+  ~ArchMemory();
+
   void printMappings();
 
 /**
@@ -62,6 +69,7 @@ public:
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
+  [[nodiscard]]
   bool mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access);
 
 /**
@@ -71,11 +79,6 @@ public:
  */
   bool unmapPage(size_t virtual_page);
 
-/**
- * Destructor. Recursively deletes the page directory and all page tables
- *
- */
-  ~ArchMemory();
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
@@ -120,8 +123,9 @@ public:
    *
    * @param virtual_page
    * @param physical_page
-   * @return whether the page has been mapped
+   * @return true if the page has been mapped
    */
+    [[nodiscard]]
     static bool mapKernelPage(size_t virtual_page, size_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
   /**
