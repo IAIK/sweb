@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "assert.h"
 #include "BDRequest.h"
+#include "BDVirtualDevice.h"
 #include "kstring.h"
 
 RamDiskDriver::RamDiskDriver(void* start_vaddr, size_t size) :
@@ -74,4 +75,9 @@ int32 RamDiskDriver::writeSector( uint32 start_sector, uint32 num_sectors, void 
 void RamDiskDriver::serviceIRQ()
 {
   assert(false && "RamDiskDriver doesn't need a service irq");
+}
+
+BDVirtualDevice* RamDiskDriver::createRamDisk(void* start_vaddr, size_t size, const char* name)
+{
+    return new BDVirtualDevice(new RamDiskDriver(start_vaddr, size), 0, size, 1, name, true);
 }

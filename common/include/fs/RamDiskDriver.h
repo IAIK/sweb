@@ -1,8 +1,10 @@
 #pragma once
 
 #include "BDDriver.h"
+#include <cstddef>
 
 class BDRequest;
+class BDVirtualDevice;
 
 class RamDiskDriver : public BDDriver
 {
@@ -21,6 +23,9 @@ class RamDiskDriver : public BDDriver
     virtual uint32 getSectorSize();
 
     virtual void serviceIRQ();
+
+    static BDVirtualDevice* createRamDisk(void* start_vaddr, size_t size, const char* name);
+
   private:
     void* start_vaddr_;
     size_t size_;
