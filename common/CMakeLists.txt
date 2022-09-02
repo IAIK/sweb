@@ -16,6 +16,7 @@ target_include_directories(kernel PUBLIC
     include/fs/ramfs
     include/ipc
     include/mm
+    include/mm/allocators
     include/util
 )
 

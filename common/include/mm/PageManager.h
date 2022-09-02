@@ -5,6 +5,7 @@
 #include "SpinLock.h"
 #include "Bitmap.h"
 #include "Allocator.h"
+#include "BootstrapRangeAllocator.h"
 
 #define DYNAMIC_KMM (0) // Please note that this means that the KMM depends on the page manager
 // and you will have a harder time implementing swapping. Pros only!
@@ -63,6 +64,8 @@ class PageManager
   private:
     static size_t initUsableMemoryRegions(Allocator& allocator);
     static void reserveKernelPages(Allocator& allocator);
+    static void initFreePageCanaries(BootstrapRangeAllocator& allocator);
+
     void switchToHeapBitmapAllocator();
 
     Allocator* allocator_;

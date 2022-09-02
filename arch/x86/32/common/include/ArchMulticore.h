@@ -14,6 +14,8 @@
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
+class Allocator;
+
 
 struct TLBShootdownRequest
 {
@@ -56,6 +58,8 @@ class ArchMulticore
   public:
 
     static void initialize();
+
+    static void reservePages(Allocator& alloc);
 
     static void startOtherCPUs();
     static size_t numRunningCPUs();

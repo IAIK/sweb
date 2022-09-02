@@ -52,11 +52,15 @@ extern cpu_local IdleThread* idle_thread;
 
 #define AP_STARTUP_PADDR 0x0
 
+class Allocator;
+
 class ArchMulticore
 {
   public:
 
     static void initialize();
+
+    static void reservePages(Allocator& alloc);
 
     static void startOtherCPUs();
     static size_t numRunningCPUs();

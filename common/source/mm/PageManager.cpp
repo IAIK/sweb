@@ -14,6 +14,7 @@
 #include "assert.h"
 #include "Bitmap.h"
 #include "Allocator.h"
+#include "BitmapAllocator.h"
 #include "BootloaderModules.h"
 
 extern void* kernel_start_address;
@@ -36,24 +37,23 @@ void PageManager::init()
     BootstrapRangeAllocator bootstrap_pm_allocator{};
     instance_ = new (&pm) PageManager(&bootstrap_pm_allocator);
 
-    // TODO: multiarch compatibility + make this less hacky
-#if defined(CMAKE_X86_64) || defined(CMAKE_X86_32) || defined(CMAKE_X86_32_PAE)
-    // HACKY: Pages 0 + 1 are used for AP startup code
-    size_t ap_boot_code_range = instance_->allocator_->alloc(PAGE_SIZE*2, PAGE_SIZE);
-    debug(PM, "Allocated mem for ap boot code: %zx\n", ap_boot_code_range);
-    assert(ap_boot_code_range == 0);
-#endif
+    ArchCommon::reservePagesPreKernelInit(bootstrap_pm_allocator);
 
-    debug(PM, "Filling free pages with canary value\n");
-    for (auto paddr : bootstrap_pm_allocator.freeBlocks(PAGE_SIZE, PAGE_SIZE))
-    {
-        ppn_t ppn = paddr/PAGE_SIZE;
-        memset((void*)ArchMemory::getIdentAddressOfPPN(ppn), 0xFF, PAGE_SIZE);
-    }
+    initFreePageCanaries(bootstrap_pm_allocator);
 
     // Need to do this while bootstrap allocator is still valid/alive
     KernelMemoryManager::init();
     instance_->switchToHeapBitmapAllocator();
+}
+
+void PageManager::initFreePageCanaries(BootstrapRangeAllocator& allocator)
+{
+    debug(PM, "Filling free pages with canary value\n");
+    for (auto paddr : allocator.freeBlocks(PAGE_SIZE, PAGE_SIZE))
+    {
+        ppn_t ppn = paddr/PAGE_SIZE;
+        memset((void*)ArchMemory::getIdentAddressOfPPN(ppn), 0xFF, PAGE_SIZE);
+    }
 }
 
 bool PageManager::isReady()
@@ -136,6 +136,9 @@ uint32 PageManager::allocPPN(uint32 page_size)
 
   ppn_t ppn = phys_addr/PAGE_SIZE;
 
+  if (PM & OUTPUT_ADVANCED)
+      debug(PM, "Allocated PPN %llx\n", (long long unsigned)ppn);
+
   char* page_ident_addr = (char*)ArchMemory::getIdentAddressOfPPN(ppn);
   const char* page_modified = (const char*)memnotchr(page_ident_addr, 0xFF, page_size);
   if(page_modified)
@@ -153,6 +156,9 @@ void PageManager::freePPN(uint32 page_number, uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
   assert(allocator_);
+
+  if (PM & OUTPUT_ADVANCED)
+      debug(PM, "Free PPN %x\n", page_number);
 
   memset((void*)ArchMemory::getIdentAddressOfPPN(page_number), 0xFF, page_size);
 

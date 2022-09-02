@@ -168,3 +168,7 @@ uint64 ArchCommon::cpuTimestamp()
 void ArchCommon::postBootInit()
 {
 }
+
+void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
+{
+}

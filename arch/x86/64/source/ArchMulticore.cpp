@@ -11,6 +11,7 @@
 #include "Scheduler.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
+#include "Allocator.h"
 #include "assert.h"
 
 extern SystemState system_state;
@@ -365,4 +366,13 @@ void ArchMulticore::initCpu()
 char* ArchMulticore::cpuStackTop()
 {
   return cpu_stack + sizeof(cpu_stack);
+}
+
+
+void ArchMulticore::reservePages(Allocator& allocator)
+{
+    // HACKY: Pages 0 + 1 are used for AP startup code
+    size_t ap_boot_code_range = allocator.alloc(PAGE_SIZE*2, PAGE_SIZE);
+    debug(A_MULTICORE, "Allocated mem for ap boot code: [%zx, %zx)\n", ap_boot_code_range, ap_boot_code_range + PAGE_SIZE*2);
+    assert(ap_boot_code_range == 0);
 }

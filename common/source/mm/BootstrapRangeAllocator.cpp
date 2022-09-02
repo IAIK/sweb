@@ -1,4 +1,4 @@
-#include "Allocator.h"
+#include "BootstrapRangeAllocator.h"
 #include "debug.h"
 #include "assert.h"
 #include "paging-definitions.h"

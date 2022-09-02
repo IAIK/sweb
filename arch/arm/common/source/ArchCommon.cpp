@@ -164,3 +164,7 @@ extern "C" void raise()
 {
   assert(false && "no exception handling implemented");
 }
+
+void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
+{
+}

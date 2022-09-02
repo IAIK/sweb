@@ -446,3 +446,8 @@ void ArchCommon::spinlockPause()
 {
     asm volatile("pause\n");
 }
+
+void ArchCommon::reservePagesPreKernelInit(Allocator &alloc)
+{
+    ArchMulticore::reservePages(alloc);
+}

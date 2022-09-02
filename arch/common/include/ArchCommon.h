@@ -4,6 +4,7 @@
 #include "paging-definitions.h"
 
 class Console;
+class Allocator;
 
 class ArchCommon
 {
@@ -112,4 +113,6 @@ class ArchCommon
     static uint64 cpuTimestamp();
 
     static void spinlockPause();
+
+    static void reservePagesPreKernelInit(Allocator& pm);
 };

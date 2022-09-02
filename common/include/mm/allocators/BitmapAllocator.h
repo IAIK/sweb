@@ -1,111 +1,5 @@
 #pragma once
-#include "types.h"
-#include "paging-definitions.h"
-#include "Bitmap.h"
-#include "assert.h"
-#include "debug.h"
-#include "EASTL/iterator.h"
-
-class Allocator
-{
-public:
-        virtual size_t alloc(size_t size, size_t alignment = 1) = 0;
-        virtual bool dealloc(size_t start, size_t size) = 0;
-
-        virtual void setUseable(size_t start, size_t end) = 0;
-        virtual void setUnuseable(size_t start, size_t end) = 0;
-
-        virtual size_t numFree() const = 0;
-        virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const = 0;
-
-        virtual void printUsageInfo() const = 0;
-private:
-};
-
-/* This BootstrapRangeAllocator is 'good enough' for temporary use during initialization
- * of the page manager, but should not really be used elsewhere
- */
-class BootstrapRangeAllocator : public Allocator
-{
-public:
-        BootstrapRangeAllocator() = default;
-        virtual ~BootstrapRangeAllocator() = default;
-
-        virtual size_t alloc(size_t size, size_t alignment = 1);
-        virtual bool dealloc(size_t start, size_t size);
-
-        virtual void setUseable(size_t start, size_t end);
-        virtual void setUnuseable(size_t start, size_t end);
-
-        virtual size_t numFree() const;
-        virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const;
-
-        virtual void printUsageInfo() const;
-
-        size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
-
-        struct UseableRange
-        {
-                size_t start;
-                size_t end;
-        };
-
-    class AllocBlockIterator
-    {
-    public:
-        using iterator_category = eastl::input_iterator_tag;
-        using value_type        = size_t;
-        using pointer           = value_type*;
-        using const_pointer     = const value_type*;
-        using reference         = value_type&;
-        using const_reference   = const value_type&;
-
-        AllocBlockIterator(const BootstrapRangeAllocator* allocator, size_t size, size_t alignment, size_t start) :
-            allocator_(allocator), size_(size), alignment_(alignment), curr_(start) {}
-
-        const_reference operator*() const { return curr_;  }
-        const_pointer operator->()  const { return &curr_; }
-
-        AllocBlockIterator& operator++() { curr_ = allocator_->nextFreeBlock(size_, alignment_, curr_ + size_); return *this; }
-
-        friend bool operator== (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ == b.curr_; };
-        friend bool operator!= (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ != b.curr_; };
-
-    private:
-        const BootstrapRangeAllocator* allocator_;
-
-        size_t size_;
-        size_t alignment_;
-        size_t curr_;
-    };
-
-    AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) const { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
-    AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)   const { return AllocBlockIterator(this, size, alignment, -1); }
-
-
-    class FreeBlocks
-    {
-    public:
-        FreeBlocks(const BootstrapRangeAllocator* allocator, size_t size, size_t alignment) :
-            allocator_(allocator), size_(size), alignment_(alignment) {}
-
-        AllocBlockIterator begin() const { return allocator_->freeBlocksBegin(size_, alignment_); }
-        AllocBlockIterator end()   const { return allocator_->freeBlocksEnd(size_, alignment_);   }
-
-    private:
-        const BootstrapRangeAllocator* allocator_;
-        size_t size_;
-        size_t alignment_;
-    };
-
-    FreeBlocks freeBlocks(size_t size, size_t alignment) const { return FreeBlocks(this, size, alignment); }
-
-private:
-        UseableRange useable_ranges_[20];
-
-        bool slotIsUsed(size_t i) const;
-        ssize_t findFirstFreeSlot();
-};
+#include "Allocator.h"
 
 template<size_t BLOCK_SIZE=PAGE_SIZE>
 class BitmapAllocator : public Allocator
@@ -151,6 +45,12 @@ public:
                 }
 
                 return -1;
+        }
+
+        virtual bool allocTarget([[maybe_unused]]size_t start, [[maybe_unused]]size_t size)
+        {
+            // TODO
+            return false;
         }
 
 
