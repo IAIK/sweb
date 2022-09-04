@@ -4,122 +4,36 @@
 #include "paging-definitions.h"
 
 
-/*
-  Does not merge overlapping ranges when ranges are expanded!
- */
 void BootstrapRangeAllocator::setUseable(size_t start, size_t end)
 {
-        //debug(PM, "setUseable [%zx - %zx)\n", start, end);
         assert(start <= end);
-        for(auto & range : useable_ranges_)
-        {
-                if((start >= range.start) &&
-                   (end <= range.end))
-                {
-                        //debug(PM, "setUseable [%zx - %zx): already covered by [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        return;
-                }
-                else if((start <= range.start) &&
-                        (end >= range.end))
-                {
-                        //debug(PM, "setUseable [%zx - %zx) completely covers [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        range.start = start;
-                        range.end = end;
-                        return;
-                }
-                else if((start >= range.start) &&
-                        (start <= range.end))
-                {
-                        //debug(PM, "setUseable [%zx - %zx) expands end [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        range.end = Max(range.end, end);
-                        return;
-                }
-                else if((end >= range.start) &&
-                        (end <= range.end))
-                {
-                        //debug(PM, "setUseable [%zx - %zx) expands start [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        range.start = Min(range.start, start);
-                        return;
-                }
-        }
 
-        ssize_t slot = findFirstFreeSlot();
-        assert(slot != -1);
-
-        useable_ranges_[slot].start = start;
-        useable_ranges_[slot].end = end;
+        iset_.insert({start, end});
 }
 
 void BootstrapRangeAllocator::setUnuseable(size_t start, size_t end)
 {
-        //debug(PM, "setUnuseable [%zx - %zx)\n", start, end);
         assert(start <= end);
-        for(auto & range : useable_ranges_)
-        {
-                if((start > range.start) &&
-                        (end < range.end))
-                {
-                        //debug(PM, "setUnuseable [%zx - %zx) splits [%zx - %zx) into [%zx - %zx)+[%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end, useable_ranges_[i].start, start, end, useable_ranges_[i].end);
-                        size_t prev_end = range.end;
-                        range.end = start;
-                        setUseable(end, prev_end);
-                }
-                else if((end > range.start) &&
-                        (end <= range.end))
-                {
-                        //debug(PM, "setUnuseable [%zx - %zx) moves start of [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        range.start = Min(end, range.end);
-                }
-                else if((start >= range.start) &&
-                        (start < range.end))
-                {
-                        //debug(PM, "setUnuseable [%zx - %zx) moves end of [%zx - %zx)\n", start, end, useable_ranges_[i].start, useable_ranges_[i].end);
-                        range.end = Min(start, range.end);
-                }
-        }
-}
 
-ssize_t BootstrapRangeAllocator::findFirstFreeSlot()
-{
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
-        {
-                if(!slotIsUsed(i))
-                {
-                        return i;
-                }
-        }
-
-        return -1;
-}
-
-bool BootstrapRangeAllocator::slotIsUsed(size_t i) const
-{
-        assert(i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]));
-        return useable_ranges_[i].start != useable_ranges_[i].end;
+        iset_.erase({start, end});
 }
 
 void BootstrapRangeAllocator::printUsageInfo() const
 {
         debug(PM, "Bootstrap PM useable ranges:\n");
 
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+        for (const auto& interval : iset_)
         {
-                if(slotIsUsed(i))
-                {
-                        debug(PM, "[%zx - %zx)\n", useable_ranges_[i].start, useable_ranges_[i].end);
-                }
+            debug(PM, "[%zx - %zx)\n", interval.first, interval.second);
         }
 }
 
 size_t BootstrapRangeAllocator::numFree() const
 {
         size_t num_free = 0;
-        for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+        for (const auto& iv : iset_)
         {
-                if(slotIsUsed(i))
-                {
-                        num_free += useable_ranges_[i].end - useable_ranges_[i].start;
-                }
+            num_free += iv.second - iv.first;
         }
 
         return num_free;
@@ -129,30 +43,30 @@ size_t BootstrapRangeAllocator::numFreeBlocks(size_t size, size_t alignment) con
 {
     assert(size > 0);
     assert(alignment == size);
+
     size_t num_blocks = 0;
-    for(size_t i = 0; i < sizeof(useable_ranges_)/sizeof(useable_ranges_[0]); ++i)
+    for (auto& iv : iset_)
     {
-        if(slotIsUsed(i))
-        {
-            size_t aligned_start = useable_ranges_[i].start;
-            aligned_start += (aligned_start % alignment ? alignment - aligned_start % alignment : 0);
-            num_blocks += (useable_ranges_[i].end - aligned_start)/size;
-        }
+        size_t aligned_start = iv.first;
+        aligned_start += (aligned_start % alignment ? alignment - aligned_start % alignment : 0);
+        num_blocks += (iv.second - aligned_start)/size;
     }
+
     return num_blocks;
 }
 
+
 size_t BootstrapRangeAllocator::alloc(size_t size, size_t alignment)
 {
-    for(auto & range : useable_ranges_)
+    for (const auto& iv : iset_)
     {
-        size_t start = range.start;
+        size_t start = iv.first;
         size_t align_offset = start % alignment;
         start += (align_offset ? alignment - align_offset : 0);
 
-        if(start + size <= range.end)
+        if(start + size <= iv.second)
         {
-            range.start = start + size;
+            iset_.erase({start, start + size});
             return start;
         }
     }
@@ -169,14 +83,15 @@ bool BootstrapRangeAllocator::dealloc(size_t start, size_t size)
         return true;
 }
 
+
 size_t BootstrapRangeAllocator::nextFreeBlock(size_t size, size_t alignment, size_t start) const
 {
-    for(auto & range : useable_ranges_)
+    for (auto& iv : iset_)
     {
-        size_t check_start = start < range.start ? range.start : start;
+        size_t check_start = start < iv.first ? iv.first : start;
         size_t align_offset = check_start % alignment;
         check_start += (align_offset ? alignment - align_offset : 0);
-        if(check_start + size <= range.end)
+        if(check_start + size <= iv.second)
         {
             return check_start;
         }

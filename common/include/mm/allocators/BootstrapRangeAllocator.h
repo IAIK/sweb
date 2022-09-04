@@ -1,9 +1,7 @@
 #pragma once
 #include "Allocator.h"
 #include "IntervalSet.h"
-// #include <EASTL/internal/fixed_pool.h>
 #include <EASTL/fixed_allocator.h>
-#include <EASTL/list.h>
 
 
 /* This BootstrapRangeAllocator is 'good enough' for temporary use during initialization
@@ -12,35 +10,28 @@
 class BootstrapRangeAllocator : public Allocator
 {
 public:
-        BootstrapRangeAllocator()
-        {
-            iset_.get_allocator().init(iset_buffer_, sizeof(iset_buffer_), sizeof(decltype(iset_)::node_type), alignof(decltype(iset_)::node_type));
-        }
-        virtual ~BootstrapRangeAllocator() = default;
+    BootstrapRangeAllocator()
+    {
+        iset_.get_allocator().init(iset_buffer_,
+                                   sizeof(iset_buffer_),
+                                   sizeof(decltype(iset_)::node_type),
+                                   alignof(decltype(iset_)::node_type));
+    }
+    virtual ~BootstrapRangeAllocator() = default;
 
-        virtual size_t alloc(size_t size, size_t alignment = 1);
-        virtual bool dealloc(size_t start, size_t size);
+    virtual size_t alloc(size_t size, size_t alignment = 1);
+    virtual bool dealloc(size_t start, size_t size);
 
-        virtual void setUseable(size_t start, size_t end);
-        virtual void setUnuseable(size_t start, size_t end);
+    virtual void setUseable(size_t start, size_t end);
+    virtual void setUnuseable(size_t start, size_t end);
 
-        virtual size_t numFree() const;
-        virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const;
+    virtual size_t numFree() const;
+    virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const;
 
-        virtual void printUsageInfo() const;
+    virtual void printUsageInfo() const;
 
-        size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
+    size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
 
-        struct UseableRange
-        {
-                size_t start;
-                size_t end;
-
-                bool contains(size_t addr)
-                {
-                    return start <= addr && addr < end;
-                }
-        };
 
     class AllocBlockIterator
     {
@@ -92,12 +83,8 @@ public:
 
     FreeBlocks freeBlocks(size_t size, size_t alignment) const { return FreeBlocks(this, size, alignment); }
 
-private:
-        UseableRange useable_ranges_[20];
+protected:
 
-        IntervalSet<eastl::fixed_allocator> iset_;
-        decltype(iset_)::node_type iset_buffer_[20];
-
-        bool slotIsUsed(size_t i) const;
-        ssize_t findFirstFreeSlot();
+    IntervalSet<size_t, eastl::fixed_allocator> iset_;
+    decltype(iset_)::node_type iset_buffer_[10];
 };
