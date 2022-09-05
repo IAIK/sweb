@@ -81,7 +81,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   if (ArchMulticore::numRunningCPUs() > 1)
   {
       ArchMulticore::stopAllCpus();
-      volatile size_t wait = 0x10000000;
+      eastl::atomic<size_t> wait = 0x10000000;
       while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
   }
 
