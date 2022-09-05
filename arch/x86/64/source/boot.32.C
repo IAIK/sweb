@@ -48,7 +48,9 @@ typedef struct
     uint32 reserved_2;
     uint32 ist0_l;
     uint32 ist0_h;
-    uint32 reserved_3[15];
+    uint32 reserved_3[14];
+    uint16 reserved_4;
+    uint16 iobp;
 }__attribute__((__packed__)) TSS;
 
 TSS g_tss;
@@ -86,7 +88,7 @@ static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint3
   gdt_p[index].baseH = baseH;
   gdt_p[index].limitL = (uint16) (limit & 0xFFFF);
   gdt_p[index].limitH = (uint8) (((limit >> 16U) & 0xF));
-  gdt_p[index].typeH = code ? 0xA : 0xC; // 4kb + 64bit
+  gdt_p[index].typeH = tss ? 0 : (code ? 0xA : 0xC); // 4kb + 64bit
   gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
@@ -137,6 +139,7 @@ extern "C" void entry()
   g_tss_p->ist0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
   g_tss_p->rsp0_h = -1U;
   g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
+  g_tss_p->iobp = -1;
 
   PRINT("Setup Segments...\n");
   setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0);
