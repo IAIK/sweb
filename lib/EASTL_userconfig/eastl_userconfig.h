@@ -24,7 +24,7 @@
 
 #define EASTL_ASSERT assert
 
-#define EASTL_ASSERT_MSG(expression, message) assert(expression && message)
+#define EASTL_ASSERT_MSG(expression, message) assert((expression) && message)
 
 #define EASTL_FAIL_MSG(message) assert(false && message)
 
