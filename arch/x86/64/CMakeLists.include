@@ -45,7 +45,12 @@ function(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
     target_include_directories(${ARCHOBJS_TARGET}
         PRIVATE
         "$<TARGET_PROPERTY:kernel,INTERFACE_INCLUDE_DIRECTORIES>"
-        )
+    )
+
+    target_include_directories(${ARCHOBJS_TARGET}
+        PRIVATE
+        "$<TARGET_PROPERTY:kernel_libc,INTERFACE_INCLUDE_DIRECTORIES>"
+    )
 
     target_compile_options(${ARCHOBJS_TARGET} PRIVATE
       $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
