@@ -86,6 +86,9 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   debug(M_INODE, "MinixFSInode writeData> offset: %d, size: %d, i_size_: %d\n", offset, size, i_size_);
   uint32 zone = offset / ZONE_SIZE;
   uint32 num_zones = (offset % ZONE_SIZE + size) / ZONE_SIZE + 1;
+  
+  if (num_zones*ZONE_SIZE < size) return -1;
+
   uint32 last_used_zone = i_size_ / ZONE_SIZE;
   uint32 last_zone = last_used_zone;
   if ((size + offset) > i_size_)
