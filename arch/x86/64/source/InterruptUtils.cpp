@@ -281,13 +281,14 @@ extern "C" void syscallHandler()
   currentThreadRegisters = currentThread->kernel_registers_;
   ArchInterrupts::enableInterrupts();
 
-  currentThread->user_registers_->rax =
-    Syscall::syscallException(currentThread->user_registers_->rax,
-                  currentThread->user_registers_->rbx,
-                  currentThread->user_registers_->rcx,
-                  currentThread->user_registers_->rdx,
-                  currentThread->user_registers_->rsi,
-                  currentThread->user_registers_->rdi);
+  auto ret = Syscall::syscallException(currentThread->user_registers_->rax,
+                                       currentThread->user_registers_->rbx,
+                                       currentThread->user_registers_->rcx,
+                                       currentThread->user_registers_->rdx,
+                                       currentThread->user_registers_->rsi,
+                                       currentThread->user_registers_->rdi);
+
+  currentThread->user_registers_->rax = ret;
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;

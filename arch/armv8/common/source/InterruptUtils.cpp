@@ -76,12 +76,15 @@ void arch_swi_irq_handler(size_t swi)
     currentThread->switch_to_userspace_ = 0;
     currentThreadRegisters = currentThread->kernel_registers_;
     ArchInterrupts::enableInterrupts();
-    currentThread->user_registers_->X[0] = Syscall::syscallException(currentThread->user_registers_->X[0],
-                                                                          currentThread->user_registers_->X[1],
-                                                                          currentThread->user_registers_->X[2],
-                                                                          currentThread->user_registers_->X[3],
-                                                                          currentThread->user_registers_->X[4],
-                                                                          currentThread->user_registers_->X[5]);
+    auto ret = Syscall::syscallException(currentThread->user_registers_->X[0],
+                                         currentThread->user_registers_->X[1],
+                                         currentThread->user_registers_->X[2],
+                                         currentThread->user_registers_->X[3],
+                                         currentThread->user_registers_->X[4],
+                                         currentThread->user_registers_->X[5]);
+
+    currentThread->user_registers_->X[0] = ret;
+
     ArchInterrupts::disableInterrupts();
     currentThread->switch_to_userspace_ = 1;
     currentThreadRegisters =  currentThread->user_registers_;
