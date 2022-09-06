@@ -40,6 +40,16 @@
 #include <cstddef>
 #include <exception>
 
+#if defined(__has_attribute)
+  #if __has_attribute(__externally_visible__)
+    #define __EXTERNALLY_VISIBLE_ATTR__ __externally_visible__
+  #else
+    #define __EXTERNALLY_VISIBLE_ATTR__
+  #endif
+#else
+  #define __EXTERNALLY_VISIBLE_ATTR__
+#endif
+
 extern "C++" {
 
 namespace std
@@ -122,53 +132,53 @@ namespace std
  *  does nothing) may not be replaced by a user's program.
 */
 [[nodiscard]] void* operator new(std::size_t)
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 [[nodiscard]] void* operator new[](std::size_t)
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete(void*) noexcept
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete[](void*) noexcept
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 
 #if __cpp_sized_deallocation
 void operator delete(void*, std::size_t) noexcept
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete[](void*, std::size_t) noexcept
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 #endif
 
 [[nodiscard]] void* operator new(std::size_t, const std::nothrow_t&) noexcept
-  __attribute__((__externally_visible__, __alloc_size__ (1), __malloc__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 [[nodiscard]] void* operator new[](std::size_t, const std::nothrow_t&) noexcept
-  __attribute__((__externally_visible__, __alloc_size__ (1), __malloc__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 void operator delete(void*, const std::nothrow_t&) noexcept
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete[](void*, const std::nothrow_t&) noexcept
-  __attribute__((__externally_visible__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 
 #if __cpp_aligned_new
 [[nodiscard]] void* operator new(std::size_t, std::align_val_t)
-  __attribute__((__externally_visible__, __alloc_size__ (1), __malloc__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 [[nodiscard]] void* operator new(std::size_t, std::align_val_t, const std::nothrow_t&)
-  noexcept __attribute__((__externally_visible__, __alloc_size__ (1), __malloc__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 void operator delete(void*, std::align_val_t)
-  noexcept __attribute__((__externally_visible__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete(void*, std::align_val_t, const std::nothrow_t&)
-  noexcept __attribute__((__externally_visible__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 [[nodiscard]] void* operator new[](std::size_t, std::align_val_t)
-  __attribute__((__externally_visible__, __alloc_size__ (1), __malloc__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 [[nodiscard]] void* operator new[](std::size_t, std::align_val_t, const std::nothrow_t&)
-  noexcept __attribute__((__externally_visible__, __alloc_size__ (1), __malloc__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 void operator delete[](void*, std::align_val_t)
-  noexcept __attribute__((__externally_visible__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete[](void*, std::align_val_t, const std::nothrow_t&)
-  noexcept __attribute__((__externally_visible__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 
 #if __cpp_sized_deallocation
 void operator delete(void*, std::size_t, std::align_val_t)
-  noexcept __attribute__((__externally_visible__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete[](void*, std::size_t, std::align_val_t)
-  noexcept __attribute__((__externally_visible__));
+  noexcept __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 #endif // __cpp_sized_deallocation
 #endif // __cpp_aligned_new
 
