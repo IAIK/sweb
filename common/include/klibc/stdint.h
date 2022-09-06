@@ -27,29 +27,43 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* 7.8.1.1 Exact-width integer types */
 
+/*
+  Special casing for u/int32_t because on arm 32 bit __UINT32_TYPE__ is
+  defined as (unsigned) long int which is just plain silly. Make sure it's always defined
+  as (unsigned) int if possible
+*/
+
 #ifdef __INT8_TYPE__
-typedef __INT8_TYPE__ int8_t;
+  typedef __INT8_TYPE__ int8_t;
 #endif
 #ifdef __INT16_TYPE__
-typedef __INT16_TYPE__ int16_t;
+  typedef __INT16_TYPE__ int16_t;
 #endif
-#ifdef __INT32_TYPE__
-typedef __INT32_TYPE__ int32_t;
+#if __INT_WIDTH__ == 32
+  typedef int int32_t;
+#else
+  #ifdef __INT32_TYPE__
+  typedef __INT32_TYPE__ int32_t;
+  #endif
 #endif
 #ifdef __INT64_TYPE__
-typedef __INT64_TYPE__ int64_t;
+  typedef __INT64_TYPE__ int64_t;
 #endif
 #ifdef __UINT8_TYPE__
-typedef __UINT8_TYPE__ uint8_t;
+  typedef __UINT8_TYPE__ uint8_t;
 #endif
 #ifdef __UINT16_TYPE__
-typedef __UINT16_TYPE__ uint16_t;
+  typedef __UINT16_TYPE__ uint16_t;
 #endif
-#ifdef __UINT32_TYPE__
-typedef __UINT32_TYPE__ uint32_t;
+#if __INT_WIDTH__ == 32
+  typedef unsigned int uint32_t;
+#else
+  #ifdef __UINT32_TYPE__
+    typedef __UINT32_TYPE__ uint32_t;
+  #endif
 #endif
 #ifdef __UINT64_TYPE__
-typedef __UINT64_TYPE__ uint64_t;
+  typedef __UINT64_TYPE__ uint64_t;
 #endif
 
 /* 7.8.1.2 Minimum-width integer types */

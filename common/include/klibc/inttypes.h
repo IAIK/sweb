@@ -1,13 +1,33 @@
 #pragma once
 
+# if __INT_WIDTH__ == 32
+  #ifndef __PRI_32_PREFIX
+    #define __PRI_32_PREFIX ""
+  #endif
+#endif
+
 #if __LONG_WIDTH__ == 32
-  #define __PRI_32_PREFIX "l"
-  #define __PRI_64_PREFIX "ll"
+  #ifndef __PRI_32_PREFIX
+    #define __PRI_32_PREFIX "l"
+  #endif
 #elif __LONG_WIDTH__ == 64
-  #define __PRI_32_PREFIX ""
-  #define __PRI_64_PREFIX "l"
+  #ifndef __PRI_64_PREFIX
+    #define __PRI_64_PREFIX "l"
+  #endif
 #else
-  #error "invalid sizeof long"
+  #error "unexpected sizeof long"
+#endif
+
+#if __LONG_LONG_WIDTH__ == 64
+  #ifndef __PRI_64_PREFIX
+    #define __PRI_64_PREFIX "ll"
+  #endif
+#else
+  #error "unexpected sizeof long long"
+#endif
+
+#if !defined(__PRI_32_PREFIX) || !defined(__PRI_64_PREFIX)
+  #error undefined integer format prefix
 #endif
 
 #define PRIx32 __PRI_32_PREFIX "x"
