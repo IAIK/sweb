@@ -48,7 +48,7 @@ public:
   static void yieldIfIFSet();
 };
 
-class ArchThreadRegisters;
+struct ArchThreadRegisters;
 class Thread;
 extern "C" [[noreturn]] void contextSwitch(Thread* target_thread = nullptr, ArchThreadRegisters* target_registers = nullptr);
 
