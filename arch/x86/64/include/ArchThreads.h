@@ -133,17 +133,17 @@ public:
   }
 
 /**
- * atomically increments or decrements value by increment
+ * atomically increments or decrements target by increment
  *
- * @param &value Reference to value
+ * @param &target Reference to target
  * @param increment can be positive or negative
- * @returns old value of value
+ * @returns old value of target
  */
-  static uint32 atomic_add(uint32 &value, int32 increment);
-  static int32 atomic_add(int32 &value, int32 increment);
-  static uint64 atomic_add(uint64 &value, int64 increment);
-  static int64 atomic_add(int64 &value, int64 increment);
-  static size_t atomic_add(size_t& value, ssize_t increment);
+  template <typename T>
+  static T atomic_add(T& target, T increment)
+  {
+      return __atomic_fetch_add(&target, increment, __ATOMIC_SEQ_CST);
+  }
 
   /**
    * Atomically set a target to another value.
@@ -151,11 +151,11 @@ public:
    * @param target The target which shall be set
    * @param value The value which shall be set
    */
-  static void atomic_set(uint32 &target, uint32 value);
-  static void atomic_set(int32 &target, int32 value);
-  static void atomic_set(uint64 &target, uint64 value);
-  static void atomic_set(int64 &target, int64 value);
-  static void atomic_set(size_t& target, size_t value);
+  template <typename T>
+  static void atomic_set(T& target, T value)
+  {
+      __atomic_store_n(&target, value, __ATOMIC_SEQ_CST);
+  }
 
 /**
  *
