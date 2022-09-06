@@ -1,3 +1,6 @@
+# https://www.airs.com/blog/archives/518
+.section .note.GNU-stack,"",@progbits
+
 # ok, this is our main interrupt handling stuff
 
 .code32

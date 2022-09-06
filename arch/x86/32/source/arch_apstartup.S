@@ -1,3 +1,6 @@
+# https://www.airs.com/blog/archives/518
+.section .note.GNU-stack,"",@progbits
+
 # Startup code for APs
 
 # TODO: Pass these as arguments from the BSP instead of hardcoding
@@ -5,7 +8,7 @@
 .set KERNEL_DS, 8*2
 
 .code16gcc
-.section .text.apstartup, "axw", @progbits
+.section .text.apstartup, "ax", @progbits
 
 .macro ap_print string
     leal \string, %esi
