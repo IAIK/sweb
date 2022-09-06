@@ -15,6 +15,7 @@
 #include "SegmentUtils.h"
 #include "Scheduler.h"
 #include "KernelMemoryManager.h"
+#include "SMP.h"
 
 void puts(const char* string);
 
@@ -367,7 +368,7 @@ void ArchCommon::drawStat() {
     }
 
 
-    size_t STATS_SCHED_LOCK_CONTENTION_START = (80*2 + ArchMulticore::numRunningCPUs()*2);
+    size_t STATS_SCHED_LOCK_CONTENTION_START = (80*2 + SMP::numRunningCpus()*2);
     // calc fixnum xxx.xxx%
     size_t sched_lock_free = Scheduler::instance()->scheduler_lock_count_free;
     size_t sched_lock_blocked = Scheduler::instance()->scheduler_lock_count_blocked;
@@ -398,7 +399,7 @@ void ArchCommon::drawStat() {
 void updateStatsThreadColor()
 {
     char* fb = (char*)ArchCommon::getFBPtr();
-    fb[1 + ArchMulticore::getCpuID()*2] =
+    fb[1 + SMP::getCurrentCpuId()*2] =
         (((currentThread ? currentThread->console_color :
            CONSOLECOLOR::BLACK) << 4) |
          CONSOLECOLOR::BRIGHT_WHITE);
@@ -412,7 +413,7 @@ void ArchCommon::drawHeartBeat()
 
   const char* clock = "/-\\|";
   char* fb = (char*)getFBPtr();
-  size_t cpu_id = ArchMulticore::getCpuID();
+  size_t cpu_id = SMP::getCurrentCpuId();
   fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
   updateStatsThreadColor();
 }

@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "stdint.h"
 #include "ArchInterrupts.h"
+#include "SMP.h"
 #include "ArchMulticore.h"
 #include "Scheduler.h"
 
@@ -128,7 +129,7 @@ void*   __dso_handle = ( void* ) &__dso_handle;
 
 void checkKMMDeadlock(const char* pName = nullptr, const char* file = nullptr, int line = 0)
 {
-    if (ArchMulticore::numRunningCPUs() == 1 && unlikely (ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false))
+    if (SMP::numRunningCpus() == 1 && unlikely (ArchInterrupts::testIFSet() == false || Scheduler::instance()->isSchedulingEnabled() == false))
     {
         if (unlikely (KernelMemoryManager::instance()->KMMLockHeldBy() != nullptr))
         {

@@ -67,19 +67,14 @@ class ArchMulticore
     static void stopOtherCpus();
 
 
-    static void setCpuID(size_t id);
-    static size_t getCpuID();
+    static void setCurrentCpuId(size_t id);
+    static size_t getCurrentCpuId();
 
     static void initApplicationProcessorCpu();
-    static void initCPULocalData(bool boot_cpu = false);
+    static void initCpuLocalData(bool boot_cpu = false);
 
 
     static char* cpuStackTop();
-
-    static void addCPUtoList(CpuInfo* cpu);
-
-    static Mutex cpu_list_lock_;
-    static eastl::vector<CpuInfo*> cpu_list_;
 
   private:
     static void initCpuLocalGDT(GDT& template_gdt);

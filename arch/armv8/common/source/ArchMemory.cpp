@@ -5,6 +5,7 @@
 #include "PageManager.h"
 #include "offsets.h"
 #include "kstring.h"
+#include "SMP.h"
 
 Level1Entry kernel_paging_level1[KERNEL_LEVEL1_TABLES * LEVEL1_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
 //one page for ident and one for the kernel pages
@@ -457,7 +458,7 @@ void ArchMemory::flushLocalTranslationCaches(size_t addr)
 {
     if(A_MEMORY & OUTPUT_ADVANCED)
     {
-        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
+        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", SMP::getCurrentCpuId(), addr);
     }
 
     asm volatile("DSB ISHST\n" // Data synchronization barrier

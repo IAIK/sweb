@@ -89,8 +89,8 @@ extern "C" [[noreturn]] void startup()
 
   ArchCommon::postBootInit();
 
-  debug(MAIN, "Multicore init\n");
-  ArchMulticore::initialize();
+  debug(MAIN, "SMP init\n");
+  SMP::initialize();
 
   debug(MAIN, "Interrupts init\n");
   ArchInterrupts::initialise();
@@ -190,9 +190,9 @@ extern "C" [[noreturn]] void startup()
   Scheduler::instance()->addNewThread(init_thread);
   Scheduler::instance()->printThreadList();
 
-  debug(MAIN, "%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
-  kprintf("%zu CPU(s) running\n", ArchMulticore::cpu_list_.size());
-  for(auto cls : ArchMulticore::cpu_list_)
+  debug(MAIN, "%zu CPU(s) running\n", SMP::cpu_list_.size());
+  kprintf("%zu CPU(s) running\n", SMP::cpu_list_.size());
+  for(auto cls : SMP::cpu_list_)
   {
       debug(MAIN, "CPU %zu\n", cls->getCpuID());
       kprintf("CPU %zu\n", cls->getCpuID());

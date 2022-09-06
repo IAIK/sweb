@@ -285,19 +285,19 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
 
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s, user: %u, regs: %p at eip %p, esp %p, ebp %p\n", ArchMulticore::getCpuID(), target_thread, target_thread->getName(), target_thread->switch_to_userspace_, target_registers, (void*)target_registers->eip, (void*)target_registers->esp, (void*)target_registers->ebp);
+    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s, user: %u, regs: %p at eip %p, esp %p, ebp %p\n", SMP::getCurrentCpuId(), target_thread, target_thread->getName(), target_thread->switch_to_userspace_, target_registers, (void*)target_registers->eip, (void*)target_registers->esp, (void*)target_registers->ebp);
   }
 
   assert(target_registers);
   if (currentThread)
   {
-      assert(currentThread->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
+      assert(currentThread->currently_scheduled_on_cpu_ == SMP::getCurrentCpuId());
   }
 
-  if((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
+  if((SMP::getCurrentCpuId() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
   {
     debug(A_INTERRUPTS, "%zu pending End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
-    assert(!((ArchMulticore::getCpuID() == 0) && PIC8259::outstanding_EOIs_));
+    assert(!((SMP::getCurrentCpuId() == 0) && PIC8259::outstanding_EOIs_));
   }
 
   if (target_thread->switch_to_userspace_)
@@ -310,7 +310,7 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
 
   currentThread = target_thread;
   currentThreadRegisters = target_registers;
-  currentThread->currently_scheduled_on_cpu_ = ArchMulticore::getCpuID();
+  currentThread->currently_scheduled_on_cpu_ = SMP::getCurrentCpuId();
 
   ArchThreadRegisters info = *target_registers; // optimization: local copy produces more efficient code in this case
   if (target_thread->switch_to_userspace_)

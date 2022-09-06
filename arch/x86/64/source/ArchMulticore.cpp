@@ -33,9 +33,7 @@ cpu_local char cpu_stack[CPU_STACK_SIZE];
 volatile static bool ap_started = false;
 
 
-eastl::atomic<size_t> running_cpus;
-eastl::vector<CpuInfo*> ArchMulticore::cpu_list_;
-Mutex ArchMulticore::cpu_list_lock_("CPU list lock");
+extern eastl::atomic<size_t> running_cpus;
 
 extern GDT32Ptr ap_gdt32_ptr;
 extern GDT ap_gdt32;
@@ -57,9 +55,7 @@ CpuInfo::CpuInfo() :
 {
   setCpuID(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0);
   debug(A_MULTICORE, "Initializing CpuInfo %zx\n", getCpuID());
-  MutexLock l(ArchMulticore::cpu_list_lock_);
-  ArchMulticore::cpu_list_.push_back(this);
-  debug(A_MULTICORE, "Added CpuInfo %zx to cpu list\n", getCpuID());
+  SMP::addCpuToList(this);
 }
 
 size_t CpuInfo::getCpuID()
@@ -127,7 +123,7 @@ bool CPULocalStorage::CLSinitialized()
 
 
 
-void ArchMulticore::initCPULocalData(bool boot_cpu)
+void ArchMulticore::initCpuLocalData(bool boot_cpu)
 {
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
   initCpuLocalTSS((size_t)ArchMulticore::cpuStackTop());
@@ -136,8 +132,8 @@ void ArchMulticore::initCPULocalData(bool boot_cpu)
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", cpu_info.getCpuID());
 
   idle_thread = new IdleThread();
-  debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCpuID(), idle_thread->getName());
-  idle_thread->pinned_to_cpu = getCpuID();
+  debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCurrentCpuId(), idle_thread->getName());
+  idle_thread->pinned_to_cpu = getCurrentCpuId();
   Scheduler::instance()->addNewThread(idle_thread);
 }
 
@@ -166,14 +162,14 @@ void ArchMulticore::initCpuLocalTSS(size_t cpu_stack_top)
   __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 }
 
-void ArchMulticore::setCpuID(size_t id)
+void ArchMulticore::setCurrentCpuId(size_t id)
 {
   debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
   assert(CPULocalStorage::CLSinitialized());
   cpu_id = id;
 }
 
-size_t ArchMulticore::getCpuID() // Only remains accurate when interrupts are disabled since the calling thread could be rescheduled to a different cpu at any time
+size_t ArchMulticore::getCurrentCpuId() // Only remains accurate when interrupts are disabled since the calling thread could be rescheduled to a different cpu at any time
 {
   //assert(CLSinitialized());
   return (!CPULocalStorage::CLSinitialized() ? 0 : cpu_id);
@@ -182,13 +178,10 @@ size_t ArchMulticore::getCpuID() // Only remains accurate when interrupts are di
 
 void ArchMulticore::initialize()
 {
-  new (&cpu_list_) eastl::vector<CpuInfo*>;
-  new (&cpu_list_lock_) Mutex("CPU list lock");
-
   assert(running_cpus == 0);
   running_cpus = 1;
   CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
-  ArchMulticore::initCPULocalData(true);
+  ArchMulticore::initCpuLocalData(true);
 }
 
 void ArchMulticore::prepareAPStartup(size_t entry_addr)
@@ -244,8 +237,8 @@ void ArchMulticore::startOtherCPUs()
       }
     }
 
-    MutexLock l(ArchMulticore::cpu_list_lock_);
-    for(auto& cpu : ArchMulticore::cpu_list_)
+    MutexLock l(SMP::cpu_list_lock_);
+    for(auto& cpu : SMP::cpu_list_)
     {
       debug(A_MULTICORE, "CPU %zu running\n", cpu->getCpuID());
     }
@@ -254,11 +247,6 @@ void ArchMulticore::startOtherCPUs()
   {
     debug(A_MULTICORE, "No local APIC. Cannot start other CPUs\n");
   }
-}
-
-size_t ArchMulticore::numRunningCPUs()
-{
-  return running_cpus;
 }
 
 void ArchMulticore::stopAllCpus()
@@ -326,7 +314,7 @@ void ArchMulticore::initCpu()
 
   CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
   cpu_lapic.init();
-  ArchMulticore::initCPULocalData();
+  ArchMulticore::initCpuLocalData();
 
 
   ArchThreads::initialise();
@@ -344,8 +332,8 @@ void ArchMulticore::initCpu()
 
 [[noreturn]] void ArchMulticore::waitForSystemStart()
 {
-  kprintf("CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
-  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", ArchMulticore::getCpuID());
+  kprintf("CPU %zu initialized, waiting for system start\n", SMP::getCurrentCpuId());
+  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", SMP::getCurrentCpuId());
   assert(CPULocalStorage::CLSinitialized());
   ap_started = true;
 
@@ -356,7 +344,7 @@ void ArchMulticore::initCpu()
 
   while(1)
   {
-    debug(A_MULTICORE, "AP %zu halting\n", ArchMulticore::getCpuID());
+    debug(A_MULTICORE, "AP %zu halting\n", SMP::getCurrentCpuId());
     ArchCommon::halt();
   }
   assert(false);

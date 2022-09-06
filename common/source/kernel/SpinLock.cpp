@@ -1,5 +1,6 @@
 #include "SpinLock.h"
 #include "kprintf.h"
+#include "SMP.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
@@ -55,7 +56,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
 
   if(system_state == RUNNING)
   {
-    debug(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", ArchMulticore::getCpuID(), getName(), this, called_by);
+    debug(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", SMP::getCurrentCpuId(), getName(), this, called_by);
   }
   else
   {
@@ -113,7 +114,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
 
 bool SpinLock::isFree() const
 {
-  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() && !(ArchMulticore::numRunningCPUs() > 1)))
+  if(unlikely(ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled() && !(SMP::numRunningCpus() > 1)))
   {
     return false;
     //debug(LOCK, "SpinLock::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");
@@ -129,7 +130,7 @@ void SpinLock::release(pointer called_by)
 
   if(system_state == RUNNING)
   {
-          debug(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", ArchMulticore::getCpuID(), getName(), this, called_by);
+          debug(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", SMP::getCurrentCpuId(), getName(), this, called_by);
   }
   else
   {

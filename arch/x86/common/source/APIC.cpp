@@ -42,19 +42,19 @@ void LocalAPIC::sendEOI(size_t num)
   --outstanding_EOIs_;
   if(APIC & OUTPUT_ADVANCED)
   {
-    debug(APIC, "CPU %zu, Sending EOI for %zx\n", ArchMulticore::getCpuID(), num);
+    debug(APIC, "CPU %zu, Sending EOI for %zx\n", SMP::getCurrentCpuId(), num);
     for(size_t i = 0; i < 256; ++i)
     {
             if(checkISR(i))
             {
-                    debug(APIC, "CPU %zx, interrupt %zx being serviced\n", ArchMulticore::getCpuID(), i);
+                    debug(APIC, "CPU %zx, interrupt %zx being serviced\n", SMP::getCurrentCpuId(), i);
             }
     }
     for(size_t i = 0; i < 256; ++i)
     {
             if(checkIRR(i))
             {
-                    debug(APIC, "CPU %zx, interrupt %zx pending\n", ArchMulticore::getCpuID(), i);
+                    debug(APIC, "CPU %zx, interrupt %zx pending\n", SMP::getCurrentCpuId(), i);
             }
     }
   }
@@ -89,7 +89,7 @@ void LocalAPIC::init()
     initTimer();
     enable(true);
     initialized_ = true;
-    ArchMulticore::setCpuID(id_);
+    ArchMulticore::setCurrentCpuId(id_);
   }
   else
   {
@@ -393,7 +393,7 @@ void LocalAPIC::sendIPI(uint8 vector, LAPIC::IPIDestination dest_type, size_t ta
 
         if(wait_for_delivery && !((dest_type == LAPIC::IPIDestination::TARGET) && (target == ID())))
         {
-                debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", ArchMulticore::getCpuID(), target);
+                debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", ArchMulticore::getCurrentCpuId(), target);
                 while(v_low.delivery_status == (uint32)LAPIC::DeliveryStatus::PENDING)
                 {
                         *(uint32*)&v_low = *(volatile uint32*)&reg_vaddr_->ICR_low;
@@ -431,7 +431,7 @@ void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_del
         {
                 while(v_low.delivery_status == (uint32)LAPIC::DeliveryStatus::PENDING)
                 {
-                        debug(APIC, "CPU %zx waiting until IPI to %x has been delivered\n", ArchMulticore::getCpuID(), target.ID());
+                        debug(APIC, "CPU %zx waiting until IPI to %x has been delivered\n", ArchMulticore::getCurrentCpuId(), target.ID());
                         *(uint32*)&v_low = *(volatile uint32*)&reg_vaddr_->ICR_low;
                 }
         }

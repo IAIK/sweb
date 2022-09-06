@@ -49,7 +49,7 @@ void Scheduler::schedule()
 {
   if(SCHEDULER & OUTPUT_ADVANCED)
   {
-    debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", ArchMulticore::getCpuID(), currentThread, currentThread ? currentThread->getName() : "(nil)");
+    debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", SMP::getCurrentCpuId(), currentThread, currentThread ? currentThread->getName() : "(nil)");
   }
 
   if (preempt_protect_count_.load() > 0)
@@ -61,10 +61,10 @@ void Scheduler::schedule()
 
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
 
-  if(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()))
+  if(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()))
   // if(block_scheduling_.load() == ArchMulticore::getCpuID())
   {
-    debug(SCHEDULER_LOCK, "CPU %zu schedule: currently blocked by thread on own cpu\n", ArchMulticore::getCpuID());
+    debug(SCHEDULER_LOCK, "CPU %zu schedule: currently blocked by thread on own cpu\n", SMP::getCurrentCpuId());
     return;
   }
 
@@ -77,11 +77,11 @@ void Scheduler::schedule()
   Thread* previousThread = currentThread;
 
   // assert(block_scheduling_.load() == ArchMulticore::getCpuID());
-  assert(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()));
+  assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
 
   if(previousThread)
   {
-    assert(previousThread->isCurrentlyScheduledOnCpu(ArchMulticore::getCpuID()));
+    assert(previousThread->isCurrentlyScheduledOnCpu(SMP::getCurrentCpuId()));
 
     // Increase virtual running time of the thread by the difference between last schedule and now
     updateVruntime(previousThread, now);
@@ -113,7 +113,7 @@ void Scheduler::schedule()
   {
     bool already_running = (*it)->isCurrentlyScheduled(); // Prevent scheduling threads on multiple CPUs simultaneously
     bool schedulable = (*it)->schedulable();
-    bool can_run_on_cpu = (*it)->canRunOnCpu(ArchMulticore::getCpuID());
+    bool can_run_on_cpu = (*it)->canRunOnCpu(SMP::getCurrentCpuId());
     bool just_woken = schedulable && !(*it)->prev_schedulable;
 
     (*it)->prev_schedulable = schedulable;
@@ -161,7 +161,7 @@ void Scheduler::schedule()
 
 
 
-  debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", ArchMulticore::getCpuID(),
+  debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", SMP::getCurrentCpuId(),
         (previousThread ? previousThread->getName() : "(nil)"), previousThread,
         (currentThread ? currentThread->getName() : "(nil)"), currentThread);
 
@@ -172,7 +172,7 @@ void Scheduler::schedule()
 
   ArchThreads::switchToAddressSpace(currentThread);
 
-  currentThread->currently_scheduled_on_cpu_ = ArchMulticore::getCpuID();
+  currentThread->currently_scheduled_on_cpu_ = SMP::getCurrentCpuId();
 
   // if((it != threads_.end()) && ((it + 1) != threads_.end()))
   // {
@@ -471,7 +471,7 @@ bool Scheduler::isInitialized()
 Thread* Scheduler::minVruntimeThread()
 {
     // assert(block_scheduling_.load() == ArchMulticore::getCpuID());
-    assert(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()));
+    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
     for(auto & thread : threads_)
     {
         if(thread->schedulable())
@@ -486,7 +486,7 @@ Thread* Scheduler::minVruntimeThread()
 Thread* Scheduler::maxVruntimeThread()
 {
     // assert(block_scheduling_.load() == ArchMulticore::getCpuID());
-    assert(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()));
+    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
     for(auto it = threads_.rbegin(); it != threads_.rend(); ++it)
     {
         if((*it)->schedulable())
@@ -500,7 +500,7 @@ Thread* Scheduler::maxVruntimeThread()
 
 void Scheduler::updateVruntime(Thread* t, uint64 now)
 {
-    assert(t->currently_scheduled_on_cpu_ == ArchMulticore::getCpuID());
+    assert(t->currently_scheduled_on_cpu_ == SMP::getCurrentCpuId());
 
     if(now <= t->schedulingStartTimestamp())
     {
@@ -514,7 +514,7 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
 
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n", ArchMulticore::getCpuID(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
+        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n", SMP::getCurrentCpuId(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
     }
 
     t->setSchedulingStartTimestamp(now);
@@ -523,7 +523,7 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
 void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
 {
     // assert(block_scheduling_.load() == ArchMulticore::getCpuID());
-    assert(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()));
+    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
 
     auto it = threads_.find(t);
 
@@ -533,12 +533,12 @@ void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
 void Scheduler::setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime)
 {
     // assert(block_scheduling_.load() == ArchMulticore::getCpuID());
-    assert(scheduler_lock_.isHeldBy(ArchMulticore::getCpuID()));
+    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
     assert(it != threads_.end());
     Thread* t = *it;
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n", ArchMulticore::getCpuID(), t->getName(), new_vruntime);
+        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n", SMP::getCurrentCpuId(), t->getName(), new_vruntime);
     }
 
     threads_.erase(it);

@@ -6,6 +6,7 @@
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
 #include "Stabs2DebugInfo.h"
+#include "SMP.h"
 #include "ArchMulticore.h"
 extern Stabs2DebugInfo const* kernel_debug_info;
 
@@ -220,7 +221,7 @@ void Lock::checkInterrupts(const char* method)
   // it would be nice to assert Scheduler::instance()->isSchedulingEnabled() as well.
   // unfortunately this is difficult because we might want to acquire/release locks
   // while scheduling is disabled
-  if(unlikely((ArchInterrupts::testIFSet() == false) && (ArchMulticore::numRunningCPUs() == 1)))
+  if(unlikely((ArchInterrupts::testIFSet() == false) && (SMP::numRunningCpus() == 1)))
   {
     ArchInterrupts::disableInterrupts();
     debug(LOCK, "(ERROR) %s: Lock %s (%p) with IF=0 and SchedulingEnabled=%d ! Now we're dead !!!\n"

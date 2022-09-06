@@ -2,6 +2,7 @@
 #include "ArchMulticore.h"
 #include "ArchInterrupts.h"
 #include "ArchCommon.h"
+#include "SMP.h"
 #include "offsets.h"
 #include "debug.h"
 
@@ -37,7 +38,7 @@ void ArchMemory::flushLocalTranslationCaches(size_t addr)
 {
     if(A_MEMORY & OUTPUT_ADVANCED)
     {
-        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", ArchMulticore::getCpuID(), addr);
+        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", SMP::getCurrentCpuId(), addr);
     }
     __asm__ __volatile__("invlpg %[addr]\n"
                          ::[addr]"m"(*(char*)addr));
@@ -48,14 +49,14 @@ eastl::atomic<size_t> shootdown_request_counter;
 void ArchMemory::flushAllTranslationCaches(size_t addr)
 {
 
-        assert(ArchMulticore::cpu_list_.size() >= 1);
-        eastl::vector<TLBShootdownRequest> shootdown_requests{ArchMulticore::cpu_list_.size()};
+        assert(SMP::cpu_list_.size() >= 1);
+        eastl::vector<TLBShootdownRequest> shootdown_requests{SMP::cpu_list_.size()};
         //TLBShootdownRequest shootdown_requests[ArchMulticore::cpu_list_.size()]; // Assuming the kernel stack is large enough as long as we only have a few CPUs
 
         bool interrupts_enabled = ArchInterrupts::disableInterrupts();
         flushLocalTranslationCaches(addr);
 
-        auto orig_cpu = ArchMulticore::getCpuID();
+        auto orig_cpu = SMP::getCurrentCpuId();
 
         ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = 's';
 
@@ -81,14 +82,14 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
 
         size_t sent_shootdowns = 0;
 
-        for(auto& cpu : ArchMulticore::cpu_list_)
+        for(auto& cpu : SMP::cpu_list_)
         {
                 size_t cpu_id = cpu->getCpuID();
                 shootdown_requests[cpu_id].target = cpu_id;
                 if(cpu->getCpuID() != orig_cpu)
                 {
-                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", ArchMulticore::getCpuID(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
-                        assert(ArchMulticore::getCpuID() == orig_cpu);
+                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", SMP::getCurrentCpuId(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
+                        assert(SMP::getCurrentCpuId() == orig_cpu);
                         assert(cpu_id != orig_cpu);
                         sent_shootdowns |= (1 << cpu_id);
 
@@ -105,7 +106,7 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
         }
         assert(!(sent_shootdowns & (1 << orig_cpu)));
 
-        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", ArchMulticore::getCpuID(), sent_shootdowns);
+        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", SMP::getCurrentCpuId(), sent_shootdowns);
 
         if(interrupts_enabled) ArchInterrupts::enableInterrupts();
 

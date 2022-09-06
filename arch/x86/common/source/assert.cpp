@@ -5,6 +5,7 @@
 #include "Thread.h"
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
+#include "SMP.h"
 #include "ArchMulticore.h"
 
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
@@ -78,7 +79,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   }
   in_assert = true;
 
-  if (ArchMulticore::numRunningCPUs() > 1)
+  if (SMP::numRunningCpus() > 1)
   {
       ArchMulticore::stopAllCpus();
       eastl::atomic<size_t> wait = 0x10000000;
@@ -88,8 +89,8 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   if (CPULocalStorage::CLSinitialized() && currentThread)
           currentThread->printBacktrace(false);
 
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, ArchMulticore::getCpuID());
-  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, ArchMulticore::getCpuID());
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::getCurrentCpuId());
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::getCurrentCpuId());
   while(true);
   unreachable();
 }

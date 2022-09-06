@@ -1,5 +1,6 @@
 #include "Mutex.h"
 #include "kprintf.h"
+#include "SMP.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
@@ -131,7 +132,7 @@ void Mutex::release(pointer called_by, bool do_checks)
 
 bool Mutex::isFree() const
 {
-  if(unlikely((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()) || (ArchMulticore::numRunningCPUs() > 1)))
+  if(unlikely((ArchInterrupts::testIFSet() && Scheduler::instance()->isSchedulingEnabled()) || (SMP::numRunningCpus() > 1)))
   {
     return false;
     //debug(LOCK, "Mutex::isFree: ERROR: Should not be used with IF=1 AND enabled Scheduler, use acquire instead\n");

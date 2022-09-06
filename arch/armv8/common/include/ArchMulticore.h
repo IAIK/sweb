@@ -30,17 +30,14 @@ public:
     static void stopOtherCpus();
 
 
-    static void setCpuID(size_t id);
-    static size_t getCpuID();
+    static void setCurrentCpuId(size_t id);
+    static size_t getCurrentCpuId();
 
     static void initCpu();
-    static void initCPULocalData(bool boot_cpu = false);
+    static void initCpuLocalData(bool boot_cpu = false);
 
 
     static char* cpuStackTop();
-
-    static Mutex cpu_list_lock_;
-    static eastl::vector<CpuInfo*> cpu_list_;
 
 private:
     static void prepareAPStartup(size_t entry_addr);
