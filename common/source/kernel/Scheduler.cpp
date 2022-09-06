@@ -94,7 +94,7 @@ void Scheduler::schedule()
         uint64 new_vruntime = max_vruntime_thread->vruntime + 1;
         if (SCHEDULER & OUTPUT_ADVANCED)
         {
-            debug(SCHEDULER, "%s yielded while running, increasing vruntime %llu -> %llu (after %s)\n", currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
+            debug(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n", currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
         }
         setThreadVruntime(previousThread, eastl::max(previousThread->vruntime, new_vruntime));
 
@@ -120,7 +120,7 @@ void Scheduler::schedule()
 
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "Check thread (%p) %s, schedulable: %u, just woken: %u, already running: %u, vruntime: %llu\n", *it, (*it)->getName(), schedulable, just_woken, already_running, (*it)->vruntime);
+        debug(SCHEDULER, "Check thread (%p) %s, schedulable: %u, just woken: %u, already running: %u, vruntime: %" PRIu64 "\n", *it, (*it)->getName(), schedulable, just_woken, already_running, (*it)->vruntime);
     }
 
     if(!already_running && schedulable && can_run_on_cpu)
@@ -208,7 +208,7 @@ void Scheduler::addNewThread(Thread *thread)
   if(min_thread)
   {
       thread->vruntime = min_thread->vruntime;
-      debug(SCHEDULER, "vruntime for %s = %llu\n", thread->getName(), thread->vruntime);
+      debug(SCHEDULER, "vruntime for %s = %" PRIu64 "\n", thread->getName(), thread->vruntime);
   }
 
   threads_.insert(thread);
@@ -313,7 +313,7 @@ void Scheduler::printThreadList()
   debug(SCHEDULER, "Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
   for (auto t : threads_)
   {
-      debug(SCHEDULER, "Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %llu\n", t,
+      debug(SCHEDULER, "Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %" PRIu64 "\n", t,
             t->getTID(), t->getName(), Thread::threadStatePrintable[t->state_],
             (t->switch_to_userspace_ ? "user" : "kernel"),
             (void*)(t->switch_to_userspace_ ? ArchThreads::getInstructionPointer(t->user_registers_) : ArchThreads::getInstructionPointer(t->kernel_registers_)), t->vruntime);
@@ -514,7 +514,7 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
 
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, %s vruntime: %llu (+ %llu) [%llu -> %llu]\n", ArchMulticore::getCpuID(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
+        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n", ArchMulticore::getCpuID(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
     }
 
     t->setSchedulingStartTimestamp(now);
@@ -538,7 +538,7 @@ void Scheduler::setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new
     Thread* t = *it;
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, set %s vruntime = %llu\n", ArchMulticore::getCpuID(), t->getName(), new_vruntime);
+        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n", ArchMulticore::getCpuID(), t->getName(), new_vruntime);
     }
 
     threads_.erase(it);

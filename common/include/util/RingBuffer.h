@@ -69,11 +69,10 @@ void RingBuffer<T>::clear()
 template <class T>
 bool RingBuffer<T>::get ( T &c )
 {
-  uint32 new_read_pos = ( read_pos_ + 1 ) % buffer_size_;
+  size_t new_read_pos = ( read_pos_ + 1 ) % buffer_size_;
   if ( write_pos_ == new_read_pos ) //nothing new to read
     return false;
   c = buffer_[new_read_pos];
   ArchThreads::testSetLock(read_pos_, (size_t)new_read_pos);
   return true;
 }
-

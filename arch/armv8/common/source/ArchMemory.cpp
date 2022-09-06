@@ -91,7 +91,7 @@ bool ArchMemory::unmapPage(size_t virtual_page)
 bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access)
 {
     ArchMemoryMapping m = resolveMapping(paging_root_page_, virtual_page);
-    debug(A_MEMORY, "Map vpn %zx => %zx[%zx]->%zx[%zx]->%zx[%zx]->%zx to ppn: %llx, user: %u\n",
+    debug(A_MEMORY, "Map vpn %zx => %zx[%zx]->%zx[%zx]->%zx[%zx]->%zx to ppn: %lx, user: %u\n",
           virtual_page,
           m.level1_ppn, m.level1_index,
           m.level2_ppn, m.level2_index,
@@ -382,13 +382,13 @@ void ArchMemory::printMappings()
 
         if (level1_entry[level1_index].entry_descriptor_type == ENTRY_DESCRIPTOR_TABLE)
         {
-            debug(A_MEMORY, "L1 -- [%12llx, %12llx)] %5zx[%5x]->%5zx\n",
+            debug(A_MEMORY, "L1 -- [%12lx, %12lx)] %5zx[%5x]->%5zx\n",
                   start.addr, end.addr, paging_root_page_,
                   level1_index, level1_entry[level1_index].table_address);
         }
         else if (level1_entry[level1_index].entry_descriptor_type == ENTRY_DESCRIPTOR_BLOCK)
         {
-            debug(A_MEMORY, "L1 -- [%12llx, %12llx)] %5zx[%5x]->%5zx BLOCK\n",
+            debug(A_MEMORY, "L1 -- [%12lx, %12lx)] %5zx[%5x]->%5zx BLOCK\n",
                   start.addr, end.addr, paging_root_page_,
                   level1_index, level1_entry[level1_index].table_address);
             continue;
@@ -408,12 +408,12 @@ void ArchMemory::printMappings()
 
                 if (level2_entry[level2_index].table.entry_descriptor_type == ENTRY_DESCRIPTOR_TABLE)
                 {
-                    debug(A_MEMORY, "L2 -- [%12llx, %12llx)] %5zx[%5x]->%5zx[%5x]->%5zx\n",
+                    debug(A_MEMORY, "L2 -- [%12lx, %12lx)] %5zx[%5x]->%5zx[%5x]->%5zx\n",
                           start.addr, end.addr, paging_root_page_, level1_index, level1_entry[level1_index].table_address, level2_index, level2_entry[level2_index].table.table_address);
                 }
                 else if (level2_entry[level2_index].table.entry_descriptor_type == ENTRY_DESCRIPTOR_BLOCK)
                 {
-                    debug(A_MEMORY, "L2 -- [%12llx, %12llx)] %5zx[%5x]->%5zx[%5x]->%5x BLOCK\n",
+                    debug(A_MEMORY, "L2 -- [%12lx, %12lx)] %5zx[%5x]->%5zx[%5x]->%5x BLOCK\n",
                           start.addr, end.addr, paging_root_page_, level1_index, level1_entry[level1_index].table_address, level2_index, level2_entry[level2_index].block.block_address);
                     continue;
                 }
@@ -436,7 +436,7 @@ void ArchMemory::printMappings()
 
                         if(level3_entry[level3_index].entry_descriptor_type == ENTRY_DESCRIPTOR_PAGE)
                         {
-                            debug(A_MEMORY, "L3 -- [%12llx, %12llx)] %5zx[%5x]->%5zx[%5x]->%5zx[%5x]->%5zx PAGE\n",
+                            debug(A_MEMORY, "L3 -- [%12lx, %12lx)] %5zx[%5x]->%5zx[%5x]->%5zx[%5x]->%5zx PAGE\n",
                                   start.addr, end.addr, paging_root_page_,
                                   level1_index,
                                   level1_entry[level1_index].table_address,

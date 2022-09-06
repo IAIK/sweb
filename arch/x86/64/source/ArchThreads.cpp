@@ -209,14 +209,14 @@ void ArchThreads::printThreadRegisters(Thread *thread, size_t userspace_register
   else if (verbose)
   {
     kprintfd("\t\t%sThread: %18p, info: %18p\n"\
-             "\t\t\t rax: %18llx  rbx: %18llx  rcx: %18llx  rdx: %18llx\n"\
-             "\t\t\t rsp: %18llx  rbp: %18llx  rsp0 %18llx  rip: %18llx\n"\
-             "\t\t\trflg: %18llx  cr3: %18llx\n",
+             "\t\t\t rax: %18lx  rbx: %18lx  rcx: %18lx  rdx: %18lx\n"\
+             "\t\t\t rsp: %18lx  rbp: %18lx  rsp0 %18lx  rip: %18lx\n"\
+             "\t\t\trflg: %18lx  cr3: %18lx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
   else
   {
-    kprintfd("%sThread: %18p, info: %18p -- rax: %18llx  rbx: %18llx  rcx: %18llx  rdx: %18llx -- rsp: %18llx  rbp: %18llx  rsp0 %18llx -- rip: %18llx  rflg: %18llx  cr3: %llx\n",
+    kprintfd("%sThread: %18p, info: %18p -- rax: %18lx  rbx: %18lx  rcx: %18lx  rdx: %18lx -- rsp: %18lx  rbp: %18lx  rsp0 %18lx -- rip: %18lx  rflg: %18lx  cr3: %lx\n",
              userspace_registers?"  User":"Kernel",thread,info,info->rax,info->rbx,info->rcx,info->rdx,info->rsp,info->rbp,info->rsp0,info->rip,info->rflags,info->cr3);
   }
 }

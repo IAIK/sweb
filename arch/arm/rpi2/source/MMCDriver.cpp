@@ -8,22 +8,22 @@
 
 
 struct MMCI {
-    uint32 arg2;
-    uint32 blksizecnt;
-    uint32 arg1;
-    uint32 cmdtm;
-    uint32 resp0;
-    uint32 resp1;
-    uint32 resp2;
-    uint32 resp3;
-    uint32 data;
-    uint32 status;
-    uint32 control0;
-    uint32 control1;
-    uint32 interrupt;
-    uint32 irpt_mask;
-    uint32 irpt_en;
-    uint32 control2;
+    uint32_t arg2;
+    uint32_t blksizecnt;
+    uint32_t arg1;
+    uint32_t cmdtm;
+    uint32_t resp0;
+    uint32_t resp1;
+    uint32_t resp2;
+    uint32_t resp3;
+    uint32_t data;
+    uint32_t status;
+    uint32_t control0;
+    uint32_t control1;
+    uint32_t interrupt;
+    uint32_t irpt_mask;
+    uint32_t irpt_en;
+    uint32_t control2;
     uint32_t cap0;
     uint32_t cap1;
     uint32_t rsvd1;
@@ -47,7 +47,7 @@ struct MMCI {
 
 struct MMCI* mmci = (struct MMCI*) 0x8C000000;
 
-uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 data = 0)
+uint32_t mmc_send_cmd(uint32_t command, uint32_t arg, uint32_t* response, uint32_t data = 0)
 {
   while(mmci->status & 0x1);
 
@@ -74,7 +74,7 @@ uint32 mmc_send_cmd(uint32 command, uint32 arg, uint32* response, uint32 data = 
   return mmci->status;
 }
 
-uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
+uint32_t mmc_send_acmd(uint32_t command, uint32_t arg, uint32_t* response)
 {
   do
   {
@@ -91,7 +91,7 @@ MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_siz
 {
 //  unsigned int check;
   debug(MMC_DRIVER,"MMCDriver()\n");
-  uint32 response;
+  uint32_t response;
 
   uint32_t ver = mmci->slotisr_ver;
   uint32_t vendor = ver >> 24;
@@ -144,12 +144,12 @@ MMCDriver::~MMCDriver()
 
 }
 
-uint32 MMCDriver::addRequest( BDRequest * br)
+uint32_t MMCDriver::addRequest( BDRequest * br)
 {
   MutexLock lock(lock_);
   debug(MMC_DRIVER, "addRequest %d!\n", (int)br->getCmd());
 
-  int32 res = -1;
+  int32_t res = -1;
 
   switch( br->getCmd() )
   {
@@ -169,15 +169,15 @@ uint32 MMCDriver::addRequest( BDRequest * br)
   return res;
 }
 
-int32 MMCDriver::readBlock ( uint32 address, void *buffer )
+int32_t MMCDriver::readBlock ( uint32_t address, void *buffer )
 {
-  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n",address, buffer);
+  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n", address, buffer);
 
-  uint32 response;
+  uint32_t response;
   mmc_send_cmd(17,address,&response,1);
-  uint32* buffer32 = (uint32*) buffer;
-//  uint8* buffer8 = (uint8*) buffer;
-  uint32 i = 0;
+  uint32_t* buffer32 = (uint32_t*) buffer;
+//  uint8_t* buffer8 = (uint8_t*) buffer;
+  uint32_t i = 0;
   while (i < sector_size_ / sizeof(uint32))
   {
     while (!(mmci->interrupt & (1 << 5)));
@@ -186,24 +186,24 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
   return 0;
 }
 
-int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+int32_t MMCDriver::readSector ( uint32_t start_sector, uint32_t num_sectors, void *buffer )
 {
-  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %p\n",start_sector, num_sectors, buffer);
-  for (uint32 i = 0; i < num_sectors; ++i)
+  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
+  for (uint32_t i = 0; i < num_sectors; ++i)
   {
     readBlock((start_sector + i) * sector_size_, (char*)buffer + i * sector_size_);
   }
   return 0;
 }
 
-int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
+int32_t MMCDriver::writeBlock ( uint32_t address, void *buffer)
 {
-  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n",address, buffer);
-  uint32 response;
+  debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n", address, buffer);
+  uint32_t response;
   mmc_send_cmd(24, address, &response,1);
-  uint32* buffer32 = (uint32*) buffer;
-  //  uint8* buffer8 = (uint8*) buffer;
-  uint32 i = 0;
+  uint32_t* buffer32 = (uint32_t*) buffer;
+  //  uint8_t* buffer8 = (uint8_t*) buffer;
+  uint32_t i = 0;
   while (i < sector_size_ / sizeof(uint32))
   {
     while (!(mmci->interrupt & (1 << 5)));
@@ -212,22 +212,22 @@ int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
   return 0;
 }
 
-int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer)
+int32_t MMCDriver::writeSector ( uint32_t start_sector, uint32_t num_sectors, void * buffer)
 {
-  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %p\n",start_sector, num_sectors, buffer);
-  for (uint32 i = 0; i < num_sectors; ++i)
+  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
+  for (uint32_t i = 0; i < num_sectors; ++i)
   {
     writeBlock((start_sector + i) * sector_size_, (char*)buffer + i * sector_size_);
   }
   return 0;
 }
 
-uint32 MMCDriver::getNumSectors()
+uint32_t MMCDriver::getNumSectors()
 {
   return num_sectors_;
 }
 
-uint32 MMCDriver::getSectorSize()
+uint32_t MMCDriver::getSectorSize()
 {
   return sector_size_;
 }

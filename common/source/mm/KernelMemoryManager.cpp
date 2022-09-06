@@ -593,7 +593,7 @@ bool MallocSegment::checkCanary()
 {
   if (!markerOk())
   {
-    kprintfd("Memory corruption in KMM segment %p, size: %zx, marker: %llx at %p, alloc at: %zx, freed at: %zx\n",
+    kprintfd("Memory corruption in KMM segment %p, size: %zx, marker: %" PRIx64 " at %p, alloc at: %zx, freed at: %zx\n",
              this, getSize(), marker_, &marker_, alloc_at_, freed_at_);
     if(freed_at_)
     {

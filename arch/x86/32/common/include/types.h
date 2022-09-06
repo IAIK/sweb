@@ -1,26 +1,28 @@
 #pragma once
 
-typedef char int8;
-typedef unsigned char uint8;
+#include "stdint.h"
 
-typedef short int16;
-typedef unsigned short uint16;
+typedef int8_t int8;
+typedef uint8_t uint8;
 
-typedef int int32;
-typedef unsigned int uint32;
+typedef int16_t int16;
+typedef uint16_t uint16;
 
-typedef unsigned long long uint64;
-typedef long long int64;
+typedef int32_t int32;
+typedef uint32_t uint32;
 
-typedef uint32 l_off_t;
+typedef uint64_t uint64;
+typedef int64_t int64;
 
-typedef uint32 mode_t;
+typedef uint32_t l_off_t;
+
+typedef uint32_t mode_t;
+typedef uint32_t uid_t;
+typedef uint32_t gid_t;
+
 typedef __SIZE_TYPE__ size_t;
 
-typedef uint32 uid_t;
-typedef uint32 gid_t;
-
-typedef uint32 ppn_t;
+typedef uint32_t ppn_t;
 typedef size_t vpn_t;
 
 typedef size_t pointer;

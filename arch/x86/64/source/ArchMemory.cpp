@@ -54,7 +54,7 @@ void ArchMemory::removeEntry(T* table, size_t index)
 bool ArchMemory::unmapPage(vpn_t virtual_page)
 {
   ArchMemoryMapping m = resolveMapping(virtual_page);
-  debug(A_MEMORY, "Unmap %zx => pml4: %llx, pdpt: %llx, pd: %llx, pt: %llx, page: %llx\n",
+  debug(A_MEMORY, "Unmap %zx => pml4: %lx, pdpt: %lx, pd: %lx, pt: %lx, page: %lx\n",
         virtual_page, m.pml4_ppn, m.pdpt_ppn, m.pd_ppn, m.pt_ppn, m.page_ppn);
   assert(m.page && m.page_size == PAGE_SIZE);
 
@@ -93,7 +93,7 @@ template<typename T>
 void ArchMemory::insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable, bool memory_mapped_io)
 {
   if (A_MEMORY & OUTPUT_ADVANCED)
-      debug(A_MEMORY, "%s: page %p index %zx ppn %llx user_access %u\n",
+      debug(A_MEMORY, "%s: page %p index %zx ppn %lx user_access %u\n",
             __PRETTY_FUNCTION__, table, index, ppn, user_access);
 
   assert((size_t)table & ~0xFFFFF00000000000ULL);
@@ -115,7 +115,7 @@ void ArchMemory::insert(T* table, size_t index, ppn_t ppn, bool user_access, boo
 bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_access)
 {
   ArchMemoryMapping m = resolveMapping(virtual_page);
-  debug(A_MEMORY, "Map %zx => pml4: %llx, pdpt: %llx, pd: %llx, pt: %llx, page: %llx, user: %u\n",
+  debug(A_MEMORY, "Map %zx => pml4: %lx, pdpt: %lx, pd: %lx, pt: %lx, page: %lx, user: %u\n",
         virtual_page, m.pml4_ppn, m.pdpt_ppn, m.pd_ppn, m.pt_ppn, physical_page, user_access);
   assert((m.page_size == 0) || (m.page_size == PAGE_SIZE));
 
@@ -151,7 +151,7 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_acce
 
 ArchMemory::~ArchMemory()
 {
-    debug(A_MEMORY, "~ArchMemory(): Free PML4 %llx\n", page_map_level_4_);
+    debug(A_MEMORY, "~ArchMemory(): Free PML4 %lx\n", page_map_level_4_);
 
     size_t cr3 = 0;
     asm("mov %%cr3, %[cr3]\n" : [cr3]"=g"(cr3));
@@ -243,7 +243,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
 
   if(A_MEMORY & OUTPUT_ADVANCED)
   {
-    debug(A_MEMORY, "resolveMapping, vpn: %zx, pml4i: %llx(%llu), pdpti: %llx(%llu), pdi: %llx(%llu), pti: %llx(%llu)\n", vpage, m.pml4i, m.pml4i, m.pdpti, m.pdpti, m.pdi, m.pdi, m.pti, m.pti);
+    debug(A_MEMORY, "resolveMapping, vpn: %zx, pml4i: %lx(%lu), pdpti: %lx(%lu), pdi: %lx(%lu), pti: %lx(%lu)\n", vpage, m.pml4i, m.pml4i, m.pdpti, m.pdpti, m.pdi, m.pdi, m.pti, m.pti);
   }
 
   assert(pml4 < PageManager::instance()->getTotalNumPages());
@@ -268,7 +268,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
       m.pd_ppn = m.pdpt[m.pdpti].pd.page_ppn;
       if (m.pd_ppn > PageManager::instance()->getTotalNumPages())
       {
-        debug(A_MEMORY, "%llx\n", m.pd_ppn);
+        debug(A_MEMORY, "%lx\n", m.pd_ppn);
       }
       assert(m.pd_ppn < PageManager::instance()->getTotalNumPages());
       m.pd = (PageDirEntry*) getIdentAddressOfPPN(m.pdpt[m.pdpti].pd.page_ppn);
@@ -302,7 +302,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
 
   if(A_MEMORY & OUTPUT_ADVANCED)
   {
-      debug(A_MEMORY, "resolveMapping, vpn: %zx, pml4: %llx, pdpt[%s]: %llx, pd[%s]: %llx, pt[%s]: %llx, page[%s]: %llx\n",
+      debug(A_MEMORY, "resolveMapping, vpn: %zx, pml4: %lx, pdpt[%s]: %lx, pd[%s]: %lx, pt[%s]: %lx, page[%s]: %lx\n",
             vpage,
             m.pml4_ppn,
             (m.pdpt ? "P" : "-"), m.pdpt_ppn,
@@ -327,7 +327,7 @@ size_t ArchMemory::get_PPN_Of_VPN_In_KernelMapping(vpn_t virtual_page, ppn_t *ph
 bool ArchMemory::mapKernelPage(vpn_t virtual_page, ppn_t physical_page, bool can_alloc_pages, bool memory_mapped_io)
 {
   ArchMemoryMapping m = resolveMapping(getKernelPagingStructureRootPhys()/PAGE_SIZE, virtual_page);
-  debug(A_MEMORY, "Map (kernel) %zx => pml4: %llx, pdpt: %llx, pd: %llx, pt: %llx, page: %llx\n",
+  debug(A_MEMORY, "Map (kernel) %zx => pml4: %lx, pdpt: %lx, pd: %lx, pt: %lx, page: %lx\n",
         virtual_page, m.pml4_ppn, m.pdpt_ppn, m.pd_ppn, m.pt_ppn, physical_page);
 
   assert(m.pdpt || can_alloc_pages);

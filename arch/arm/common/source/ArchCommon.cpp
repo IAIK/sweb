@@ -28,22 +28,22 @@ pointer ArchCommon::getFreeKernelMemoryEnd()
 }
 
 
-uint32 ArchCommon::haveVESAConsole(uint32 is_paging_set_up __attribute__((unused)))
+size_t ArchCommon::haveVESAConsole(size_t is_paging_set_up __attribute__((unused)))
 {
   return true;
 }
 
-uint32 ArchCommon::getNumModules(uint32 is_paging_set_up __attribute__((unused)))
+size_t ArchCommon::getNumModules(size_t is_paging_set_up __attribute__((unused)))
 {
   return 1;
 }
 
-uint32 ArchCommon::getModuleStartAddress(uint32 num __attribute__((unused)), uint32 is_paging_set_up __attribute__((unused)))
+size_t ArchCommon::getModuleStartAddress(size_t num __attribute__((unused)), size_t is_paging_set_up __attribute__((unused)))
 {
   return 0x80000000U;
 }
 
-uint32 ArchCommon::getModuleEndAddress(uint32 num __attribute__((unused)), uint32 is_paging_set_up __attribute__((unused)))
+size_t ArchCommon::getModuleEndAddress(size_t num __attribute__((unused)), size_t is_paging_set_up __attribute__((unused)))
 {
   return getKernelEndAddress();
 }
@@ -53,42 +53,42 @@ const char* ArchCommon::getModuleName([[maybe_unused]]size_t num, [[maybe_unused
     return "kernel";
 }
 
-uint32 ArchCommon::getVESAConsoleHeight()
+size_t ArchCommon::getVESAConsoleHeight()
 {
   return 480;
 }
 
-uint32 ArchCommon::getVESAConsoleWidth()
+size_t ArchCommon::getVESAConsoleWidth()
 {
   return 640;
 }
 
-pointer ArchCommon::getVESAConsoleLFBPtr(uint32 is_paging_set_up __attribute__((unused)))
+pointer ArchCommon::getVESAConsoleLFBPtr(size_t is_paging_set_up __attribute__((unused)))
 {
   return ArchBoardSpecific::getVESAConsoleLFBPtr();
 }
 
-pointer ArchCommon::getFBPtr(uint32 is_paging_set_up __attribute__((unused)))
+pointer ArchCommon::getFBPtr(size_t is_paging_set_up __attribute__((unused)))
 {
   return getVESAConsoleLFBPtr();
 }
 
-uint32 ArchCommon::getVESAConsoleBitsPerPixel()
+size_t ArchCommon::getVESAConsoleBitsPerPixel()
 {
   return 16;
 }
 
-uint32 ArchCommon::getNumUseableMemoryRegions()
+size_t ArchCommon::getNumUseableMemoryRegions()
 {
   return 1;
 }
 
-uint32 ArchCommon::getUseableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
+size_t ArchCommon::getUseableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
 {
   return ArchBoardSpecific::getUsableMemoryRegion(region, start_address, end_address, type);
 }
 
-Console* ArchCommon::createConsole(uint32 count)
+Console* ArchCommon::createConsole(size_t count)
 {
   ArchBoardSpecific::frameBufferInit();
   return new FrameBufferConsole(count);

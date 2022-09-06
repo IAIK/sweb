@@ -12,15 +12,15 @@ class RamDiskDriver : public BDDriver
     RamDiskDriver(void* start_vaddr, size_t size);
     virtual ~RamDiskDriver();
 
-    virtual uint32 addRequest(BDRequest *);
+    virtual uint32_t addRequest(BDRequest *);
 
-    virtual int32 readSector( uint32 start_sector, uint32 num_sectors, void *buffer );
+    virtual int32_t readSector( uint32_t start_sector, uint32_t num_sectors, void *buffer );
 
-    virtual int32 writeSector( uint32 start_sector, uint32 num_sectors, void * buffer );
+    virtual int32_t writeSector( uint32_t start_sector, uint32_t num_sectors, void * buffer );
 
-    virtual uint32 getNumSectors();
+    virtual uint32_t getNumSectors();
 
-    virtual uint32 getSectorSize();
+    virtual uint32_t getSectorSize();
 
     virtual void serviceIRQ();
 

@@ -18,7 +18,7 @@ RamDiskDriver::~RamDiskDriver()
   debug(RAMDISK, "Destruct ramdisk, start: %p, size: %zx\n", start_vaddr_, size_);
 }
 
-uint32 RamDiskDriver::addRequest(BDRequest * request)
+uint32_t RamDiskDriver::addRequest(BDRequest * request)
 {
   switch (request->getCmd())
   {
@@ -44,19 +44,19 @@ uint32 RamDiskDriver::addRequest(BDRequest * request)
   return 0;
 }
 
-uint32 RamDiskDriver::getNumSectors()
+uint32_t RamDiskDriver::getNumSectors()
 {
   debug(RAMDISK, "ramdisk: getNumSectors\n");
   return size_;
 }
 
-uint32 RamDiskDriver::getSectorSize()
+uint32_t RamDiskDriver::getSectorSize()
 {
   debug(RAMDISK, "ramdisk: getSectorSize\n");
   return 1;
 }
 
-int32 RamDiskDriver::readSector( uint32 start_sector, uint32 num_sectors, void *buffer )
+int32_t RamDiskDriver::readSector( uint32_t start_sector, uint32_t num_sectors, void *buffer )
 {
   debug(RAMDISK, "ramdisk: readSector, start: %x, num: %x, buf: %p => reading[%p, %p)\n", start_sector, num_sectors, buffer, (char*)start_vaddr_ + start_sector, (char*)start_vaddr_ + start_sector + num_sectors);
   assert(num_sectors <= getNumSectors());
@@ -64,7 +64,7 @@ int32 RamDiskDriver::readSector( uint32 start_sector, uint32 num_sectors, void *
   return 0;
 }
 
-int32 RamDiskDriver::writeSector( uint32 start_sector, uint32 num_sectors, void *buffer )
+int32_t RamDiskDriver::writeSector( uint32_t start_sector, uint32_t num_sectors, void *buffer )
 {
   debug(RAMDISK, "ramdisk: writeSector, start: %x, num: %x, buf: %p\n", start_sector, num_sectors, buffer);
   assert(num_sectors <= getNumSectors());

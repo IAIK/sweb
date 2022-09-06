@@ -93,7 +93,7 @@ void initACPI()
     RSDPDescriptor20* RSDP2 = (RSDPDescriptor20*)RSDP;
     assert(RSDP2->checksumValid());
 
-    debug(ACPI, "XSDT address: %llx\n", RSDP2->XsdtAddress);
+    debug(ACPI, "XSDT address: %" PRIx64 "\n", RSDP2->XsdtAddress);
 
     XSDT* XSDT_ptr = (XSDT*)(size_t)RSDP2->XsdtAddress;
     ArchMemoryMapping m = kernel_arch_mem.resolveMapping((size_t)XSDT_ptr / PAGE_SIZE);
@@ -276,7 +276,7 @@ void ACPI_MADTHeader::parse()
     case 5:
     {
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
-      debug(ACPI, "[%p] Local APIC address override, addr: %llx\n", entry, entry->local_apic_addr);
+      debug(ACPI, "[%p] Local APIC address override, addr: %" PRIx64 "\n", entry, entry->local_apic_addr);
       assert(LocalAPIC::exists);
       LocalAPIC::reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
       break;

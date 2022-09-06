@@ -209,7 +209,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
   debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
   auto m_ap_gdt = kernel_arch_mem.resolveMapping(((size_t)&ap_gdt32)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
-  debug(A_MULTICORE, "AP GDT mapped on ppn %#llx\n", m_ap_gdt.page_ppn);
+  debug(A_MULTICORE, "AP GDT mapped on ppn %#lx\n", m_ap_gdt.page_ppn);
 
   memcpy(&ap_gdt32, &gdt, sizeof(ap_gdt32));
   ap_gdt32_ptr.addr = entry_addr + ((size_t)&ap_gdt32 - (size_t)&apstartup_text_begin);

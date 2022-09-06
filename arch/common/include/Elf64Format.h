@@ -161,9 +161,9 @@ class Elf
       foobar("%x", e_type);
       foobar("%x", e_machine);
       foobar("%x", e_version);
-      foobar("%llx", e_entry);
-      foobar("%llx", e_phoff);
-      foobar("%llx", e_shoff);
+      foobar("%lx", e_entry);
+      foobar("%lx", e_phoff);
+      foobar("%lx", e_shoff);
       foobar("%x", e_flags);
       foobar("%x", e_ehsize);
       foobar("%x", e_phentsize);
