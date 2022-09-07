@@ -10,13 +10,8 @@
 class BootstrapRangeAllocator : public Allocator
 {
 public:
-    BootstrapRangeAllocator()
-    {
-        iset_.get_allocator().init(iset_buffer_,
-                                   sizeof(iset_buffer_),
-                                   sizeof(decltype(iset_)::node_type),
-                                   alignof(decltype(iset_)::node_type));
-    }
+    BootstrapRangeAllocator();
+    BootstrapRangeAllocator(const BootstrapRangeAllocator&) = delete;
     virtual ~BootstrapRangeAllocator() = default;
 
     virtual size_t alloc(size_t size, size_t alignment = 1);
