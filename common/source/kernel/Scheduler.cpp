@@ -310,10 +310,10 @@ void Scheduler::printThreadList()
 {
   // lockScheduling(DEBUG_STR_HERE);
   scheduler_lock_.acquire();
-  debug(SCHEDULER, "Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
+  kprintfd("Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
   for (auto t : threads_)
   {
-      debug(SCHEDULER, "Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %" PRIu64 "\n", t,
+      kprintfd("Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %" PRIu64 "\n", t,
             t->getTID(), t->getName(), Thread::threadStatePrintable[t->state_],
             (t->switch_to_userspace_ ? "user" : "kernel"),
             (void*)(t->switch_to_userspace_ ? ArchThreads::getInstructionPointer(t->user_registers_) : ArchThreads::getInstructionPointer(t->kernel_registers_)), t->vruntime);
