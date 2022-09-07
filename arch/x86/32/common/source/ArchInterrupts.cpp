@@ -12,7 +12,7 @@
 #include "ArchMemory.h"
 #include "Scheduler.h"
 #include "offsets.h"
-
+#include "SystemState.h"
 
 
 static void initInterruptHandlers()

@@ -15,12 +15,6 @@
 #define BACKTRACE_MAX_FRAMES 20
 
 
-
-const char* Thread::threadStatePrintable[3] =
-{
-"Running", "Sleeping", "ToBeDestroyed"
-};
-
 extern "C" [[noreturn]] void threadStartHack()
 {
   assert(currentThread);
@@ -221,7 +215,7 @@ size_t Thread::getTID() const
   return tid_;
 }
 
-ThreadState Thread::getState() const
+Thread::ThreadState Thread::getState() const
 {
   assert(this);
   return state_;

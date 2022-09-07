@@ -37,11 +37,10 @@
 #include "ArchMulticore.h"
 #include "BlockDeviceInode.h"
 #include "BootloaderModules.h"
+#include "SystemState.h"
 
 extern void* kernel_end_address;
-
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
-SystemState system_state;
 FileSystemInfo* default_working_dir;
 
 extern "C" void removeBootTimeIdentMapping();

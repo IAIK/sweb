@@ -5,6 +5,7 @@
 #include "Thread.h"
 #include "ArchInterrupts.h"
 #include "Scheduler.h"
+#include "SystemState.h"
 
 extern "C" void halt();
 

@@ -14,6 +14,7 @@
 #include "backtrace.h"
 #include "ArchMulticore.h"
 #include "offsets.h"
+#include "SystemState.h"
 
 extern Stabs2DebugInfo const* kernel_debug_info;
 

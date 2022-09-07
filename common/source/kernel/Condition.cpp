@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "Stabs2DebugInfo.h"
 #include "backtrace.h"
+#include "SystemState.h"
 
 Condition::Condition(Mutex* mutex, const char* name) :
   Lock(name), mutex_(mutex)

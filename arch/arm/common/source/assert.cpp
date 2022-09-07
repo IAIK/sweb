@@ -4,6 +4,7 @@
 #include "debug_bochs.h"
 #include "Thread.h"
 #include "ArchInterrupts.h"
+#include "SystemState.h"
 
 extern Thread* currentThread;
 

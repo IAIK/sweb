@@ -13,6 +13,7 @@
 #include "vnsprintf.h"
 #include "KprintfFlushingThread.h"
 #include "BasicSpinLock.h"
+#include "SystemState.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full

@@ -7,6 +7,7 @@
 #include "ArchBoardSpecific.h"
 #include "Thread.h"
 #include "Scheduler.h"
+#include "SystemState.h"
 
 extern uint8 boot_stack[];
 

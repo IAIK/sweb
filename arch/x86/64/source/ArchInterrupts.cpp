@@ -12,6 +12,7 @@
 #include "PageManager.h"
 #include "ArchMulticore.h"
 #include "Scheduler.h"
+#include "SystemState.h"
 
 static void initInterruptHandlers()
 {

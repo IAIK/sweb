@@ -8,6 +8,7 @@
 #include "SMP.h"
 #include "ArchMulticore.h"
 #include "Scheduler.h"
+#include "SystemState.h"
 
 /**
  * Allocate new memory. This function is used by the wrappers.

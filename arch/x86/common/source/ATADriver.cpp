@@ -260,7 +260,7 @@ uint32 ATADriver::addRequest(BDRequest* br)
       ArchInterrupts::disableInterrupts();
       if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
       {
-        currentThread->setState(Sleeping);
+        currentThread->setState(Thread::Sleeping);
         ArchInterrupts::enableInterrupts();
         Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
         debug(ATA_DRIVER, "addRequest: Woke up after sleeping on request, state = %d\n", (int)br->getStatus());
@@ -337,7 +337,7 @@ void ATADriver::serviceIRQ()
       br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
       debug(ATA_DRIVER, "serviceIRQ: Error while waiting for controller\n");
       if (requesting_thread)
-          requesting_thread->setState(Running);
+          requesting_thread->setState(Thread::Running);
       return;
     }
 
@@ -353,7 +353,7 @@ void ATADriver::serviceIRQ()
       br->setStatus(BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
       debug(ATA_DRIVER, "serviceIRQ: Read finished\n");
       if (requesting_thread)
-          requesting_thread->setState(Running);
+          requesting_thread->setState(Thread::Running);
     }
   }
   else if (br->getCmd() == BDRequest::BD_CMD::BD_WRITE)
@@ -366,7 +366,7 @@ void ATADriver::serviceIRQ()
       br->setStatus( BDRequest::BD_RESULT::BD_DONE ); // br may be deallocated as soon as status is set to done
       debug(ATA_DRIVER, "serviceIRQ: Waking up thread!!\n");
       if (requesting_thread)
-          requesting_thread->setState(Running);
+          requesting_thread->setState(Thread::Running);
     }
     else
     {
@@ -377,7 +377,7 @@ void ATADriver::serviceIRQ()
         assert(request_list_.popBack() == br);
         br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
         if (requesting_thread)
-            requesting_thread->setState(Running);
+            requesting_thread->setState(Thread::Running);
         return;
       }
 
@@ -393,7 +393,7 @@ void ATADriver::serviceIRQ()
     assert(request_list_.popBack() == br);
     br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
     if (requesting_thread)
-        requesting_thread->setState(Running);
+        requesting_thread->setState(Thread::Running);
   }
 
   debug(ATA_DRIVER, "serviceIRQ: Request handled!!\n");

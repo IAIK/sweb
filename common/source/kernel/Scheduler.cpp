@@ -219,7 +219,7 @@ void Scheduler::addNewThread(Thread *thread)
 
 void Scheduler::sleep(bool should_yield)
 {
-  currentThread->setState(Sleeping);
+  currentThread->setState(Thread::Sleeping);
   if (should_yield)
   {
       yield();
@@ -228,8 +228,8 @@ void Scheduler::sleep(bool should_yield)
 
 void Scheduler::wake(Thread* thread_to_wake)
 {
-  assert(thread_to_wake->getState() == Sleeping);
-  thread_to_wake->setState(Running);
+  assert(thread_to_wake->getState() == Thread::Sleeping);
+  thread_to_wake->setState(Thread::Running);
 }
 
 void Scheduler::yield()
@@ -256,7 +256,7 @@ void Scheduler::yield()
       debug(SCHEDULER, "%s yielded\n", currentThread->getName());
   }
 
-  if (currentThread->getState() == Running)
+  if (currentThread->getState() == Thread::Running)
   {
       currentThread->yielded = true;
   }
@@ -282,7 +282,7 @@ void Scheduler::cleanupDeadThreads()
   while(it != threads_.end())
   {
     Thread* t = *it;
-    if ((t->getState() == ToBeDestroyed) && !t->isCurrentlyScheduled())
+    if ((t->getState() == Thread::ToBeDestroyed) && !t->isCurrentlyScheduled())
     {
       destroy_list[thread_count++] = t;
       it = threads_.erase(it); // Note: erase will not realloc!

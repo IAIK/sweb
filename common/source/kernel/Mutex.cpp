@@ -10,6 +10,7 @@
 #include "backtrace.h"
 #include "assert.h"
 #include "Stabs2DebugInfo.h"
+#include "SystemState.h"
 extern Stabs2DebugInfo const* kernel_debug_info;
 
 Mutex::Mutex(const char* name) :

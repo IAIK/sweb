@@ -5,6 +5,7 @@
 #include "kprintf.h"
 #include "panic.h"
 #include "debug_bochs.h"
+#include "SystemState.h"
 
 void kpanict ( const char * message )
 {

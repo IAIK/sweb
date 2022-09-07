@@ -8,6 +8,7 @@
 #include "Stabs2DebugInfo.h"
 #include "SMP.h"
 #include "ArchMulticore.h"
+#include "SystemState.h"
 extern Stabs2DebugInfo const* kernel_debug_info;
 
 Lock::Lock(const char *name) :

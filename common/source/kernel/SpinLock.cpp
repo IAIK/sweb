@@ -10,6 +10,7 @@
 #include "assert.h"
 #include "Stabs2DebugInfo.h"
 #include "backtrace.h"
+#include "SystemState.h"
 extern Stabs2DebugInfo const *kernel_debug_info;
 
 SpinLock::SpinLock(const char* name) :

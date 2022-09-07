@@ -7,6 +7,7 @@
 #include "Scheduler.h"
 #include "SMP.h"
 #include "ArchMulticore.h"
+#include "SystemState.h"
 
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {

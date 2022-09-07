@@ -6,13 +6,7 @@
 
 #define STACK_CANARY ((uint32)0xDEADDEAD ^ (uint32)(size_t)this)
 
-enum ThreadState
-{
-  Running, Sleeping, ToBeDestroyed
-};
 
-enum SystemState { BOOTING, RUNNING, KPANIC };
-extern SystemState system_state;
 
 class Thread;
 struct ArchThreadRegisters;
@@ -28,7 +22,10 @@ class Thread
     friend class CpuLocalScheduler;
   public:
 
-    static const char* threadStatePrintable[3];
+    enum ThreadState { Running, Sleeping, ToBeDestroyed };
+    static constexpr const char* threadStatePrintable[3] = {
+        "Running", "Sleeping", "ToBeDestroyed"
+    };
 
     enum TYPE { KERNEL_THREAD, USER_THREAD };
 

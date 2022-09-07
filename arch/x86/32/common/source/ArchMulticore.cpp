@@ -13,8 +13,7 @@
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "Allocator.h"
-
-extern SystemState system_state;
+#include "SystemState.h"
 
 
 __cpu GDT cpu_gdt;
