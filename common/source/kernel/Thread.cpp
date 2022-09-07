@@ -41,11 +41,11 @@ Thread::Thread(FileSystemInfo *working_dir, eastl::string name, Thread::TYPE typ
     name_(name),
     vruntime(0)
 {
-  debug(THREAD, "Thread ctor, this is %p, name: %s, stack: [%p, %p), fs_info ptr: %p\n", this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_), working_dir_);
+  debug(THREAD, "Thread ctor, this is %p, name: %s, kernel stack: [%p, %p), working_dir ptr: %p\n",
+        this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_), working_dir_);
+
   ArchThreads::createKernelRegisters(kernel_registers_, (void*) (type == Thread::USER_THREAD ? nullptr : threadStartHack), getKernelStackStartPointer());
-  kernel_stack_[2047] = STACK_CANARY;
-  kernel_stack_[0] = STACK_CANARY;
-  debug(THREAD, "Thread ctor, kernel registers at [%p, %p)\n", kernel_registers_, (char*)kernel_registers_ + sizeof(*kernel_registers_));
+  initKernelStackCanary();
 }
 
 Thread::~Thread()
@@ -57,7 +57,7 @@ Thread::~Thread()
   kernel_registers_ = nullptr;
   if(unlikely(holding_lock_list_ != nullptr))
   {
-    debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n", getName(), this);
+    kprintfd("~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n", getName(), this);
     Lock::printHoldingList(this);
     assert(false && "~Thread: ERROR: Thread is going to be destroyed, but still holds some locks!\n");
   }
@@ -85,6 +85,12 @@ void* Thread::getKernelStackStartPointer()
   pointer stack = (pointer) kernel_stack_;
   stack += sizeof(kernel_stack_) - sizeof(uint32);
   return (void*)stack;
+}
+
+void Thread::initKernelStackCanary()
+{
+    kernel_stack_[2047] = STACK_CANARY;
+    kernel_stack_[0] = STACK_CANARY;
 }
 
 bool Thread::isStackCanaryOK()

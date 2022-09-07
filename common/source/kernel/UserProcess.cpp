@@ -11,10 +11,11 @@
 #include "ArchMulticore.h"
 #include "offsets.h"
 
-UserProcess::UserProcess(eastl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
-    Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename.c_str(), O_RDONLY))
+UserProcess::UserProcess(eastl::string executable_path, FileSystemInfo *working_dir, uint32 terminal_number) :
+    Thread(working_dir, executable_path, Thread::USER_THREAD),
+    fd_(VfsSyscall::open(executable_path.c_str(), O_RDONLY))
 {
-  debug(USERPROCESS, "Creating new user process %s\n", filename.c_str());
+  debug(USERPROCESS, "Creating new user process %s\n", executable_path.c_str());
   ProcessRegistry::instance()->processStart(); //should also be called if you fork a process
 
   if (fd_ >= 0)
@@ -22,14 +23,19 @@ UserProcess::UserProcess(eastl::string filename, FileSystemInfo *fs_info, uint32
 
   if (!loader_ || !loader_->loadExecutableAndInitProcess())
   {
-    debug(USERPROCESS, "Error: loading %s failed!\n", filename.c_str());
+    debug(USERPROCESS, "Error: loading %s failed!\n", executable_path.c_str());
     kill();
     return;
   }
 
-  size_t page_for_stack = PageManager::instance()->allocPPN();
-  bool vpn_mapped = loader_->arch_memory_.mapPage(USER_BREAK / PAGE_SIZE - 1, page_for_stack, 1);
+  // Allocate a page for the stack and map it into the virtual address space
+  size_t stack_ppn = PageManager::instance()->allocPPN();
+  size_t stack_vpn = USER_BREAK / PAGE_SIZE - 1;
+  bool vpn_mapped = loader_->arch_memory_.mapPage(stack_vpn, stack_ppn, true);
   assert(vpn_mapped && "Virtual page for stack was already mapped - this should never happen");
+
+  debug(THREAD, "Mapped stack at virt [%zx, %zx) -> phys [%zx, %zx)\n",
+        stack_vpn*PAGE_SIZE, (stack_vpn+1)*PAGE_SIZE, stack_ppn*PAGE_SIZE, (stack_ppn+1)*PAGE_SIZE);
 
   ArchThreads::createUserRegisters(user_registers_, loader_->getEntryFunction(),
                                    (void*) (USER_BREAK - sizeof(pointer)),
@@ -37,7 +43,7 @@ UserProcess::UserProcess(eastl::string filename, FileSystemInfo *fs_info, uint32
 
   ArchThreads::setAddressSpace(this, loader_->arch_memory_);
 
-  debug(USERPROCESS, "ctor: Done loading %s\n", filename.c_str());
+  debug(USERPROCESS, "ctor: Done loading %s\n", executable_path.c_str());
 
   if (main_console->getTerminal(terminal_number))
     setTerminal(main_console->getTerminal(terminal_number));
