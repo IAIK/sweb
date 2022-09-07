@@ -34,7 +34,6 @@
 #include "FrameBufferConsole.h"
 #include "Terminal.h"
 #include "user_progs.h"
-#include "RamDiskDriver.h"
 #include "ArchMulticore.h"
 #include "BlockDeviceInode.h"
 #include "BootloaderModules.h"
@@ -46,33 +45,6 @@ SystemState system_state;
 FileSystemInfo* default_working_dir;
 
 extern "C" void removeBootTimeIdentMapping();
-
-BDVirtualDevice* createRamDiskFromModule(int module_num, const char* name)
-{
-    size_t ramdisk_size = ArchCommon::getModuleEndAddress(module_num) - ArchCommon::getModuleStartAddress(module_num);
-    debug(MAIN, "Creating ram disk from module %s at [%zx, %zx), size: %zx\n", ArchCommon::getModuleName(module_num), ArchCommon::getModuleStartAddress(module_num), ArchCommon::getModuleEndAddress(module_num), ramdisk_size);
-    return RamDiskDriver::createRamDisk((void*)ArchCommon::getModuleStartAddress(module_num), ramdisk_size, name);
-}
-
-void loadInitrd()
-{
-    // TODO: ArchCommon::getModuleEndAddress(i) -> getKernelEndAddress() crashes on arm rpi2
-
-    for(size_t i = 0; i < ArchCommon::getNumModules(); ++i)
-    {
-        debug(MAIN, "Checking module %zu: %s\n", i, ArchCommon::getModuleName(i));
-
-        if(strcmp(ArchCommon::getModuleName(i), "/boot/initrd") == 0)
-        {
-            debug(MAIN, "Initialize initrd\n");
-            BDVirtualDevice* initrd_dev = createRamDiskFromModule(i, "initrd");
-            initrd_dev->setPartitionType(0x81);
-            BDManager::getInstance()->addVirtualDevice(initrd_dev);
-            break;
-        }
-    }
-}
-
 
 extern "C" [[noreturn]] void startup()
 {
@@ -149,7 +121,7 @@ extern "C" [[noreturn]] void startup()
   debug(MAIN, "Block Device done\n");
   debug(MAIN, "Checking for initrd\n");
 
-  loadInitrd();
+  BootloaderModules::loadInitrdIfExists();
 
   debug(MAIN, "Add block devices to devicefs\n");
   auto devicefs_sb = DeviceFSSuperBlock::getInstance();
