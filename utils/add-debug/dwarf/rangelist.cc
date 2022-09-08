@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "internal.hh"
 
 using namespace std;
@@ -23,8 +27,8 @@ rangelist::rangelist(const initializer_list<pair<taddr, taddr> > &ranges)
 
         sec = make_shared<section>(
                 section_type::ranges, (const char*)synthetic.data(),
-                synthetic.size() * sizeof(taddr), format::unknown,
-                sizeof(taddr));
+                synthetic.size() * sizeof(taddr),
+                native_order(), format::unknown, sizeof(taddr));
 
         base_addr = 0;
 }

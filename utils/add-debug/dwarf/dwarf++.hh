@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #ifndef _DWARFPP_HH_
 #define _DWARFPP_HH_
 
@@ -48,8 +52,6 @@ struct cursor;
 // compilation unit?
 
 // XXX operator==/!= and hash functions
-
-// XXX Support non-native byte order
 
 // XXX Indicate DWARF4 in all spec references
 
@@ -792,7 +794,7 @@ public:
          * Return the value stored in register regnum.  This is used
          * to implement DW_OP_breg* operations.
          */
-        virtual taddr reg([[gnu::unused]] unsigned regnum)
+        virtual taddr reg([[maybe_unused]] unsigned regnum)
         {
                 throw expr_error("DW_OP_breg* operations not supported");
         }
@@ -800,7 +802,7 @@ public:
         /**
          * Implement DW_OP_deref_size.
          */
-        virtual taddr deref_size([[gnu::unused]] taddr address, [[gnu::unused]] unsigned size)
+        virtual taddr deref_size([[maybe_unused]] taddr address, [[maybe_unused]] unsigned size)
         {
                 throw expr_error("DW_OP_deref_size operations not supported");
         }
@@ -808,7 +810,7 @@ public:
         /**
          * Implement DW_OP_xderef_size.
          */
-        virtual taddr xderef_size([[gnu::unused]] taddr address, [[gnu::unused]] taddr asid, [[gnu::unused]] unsigned size)
+        virtual taddr xderef_size([[maybe_unused]] taddr address, [[maybe_unused]] taddr asid, [[maybe_unused]] unsigned size)
         {
                 throw expr_error("DW_OP_xderef_size operations not supported");
         }
@@ -816,7 +818,7 @@ public:
         /**
          * Implement DW_OP_form_tls_address.
          */
-        virtual taddr form_tls_address([[gnu::unused]] taddr address)
+        virtual taddr form_tls_address([[maybe_unused]] taddr address)
         {
                 throw expr_error("DW_OP_form_tls_address operations not supported");
         }

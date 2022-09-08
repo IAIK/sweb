@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "internal.hh"
 
 using namespace std;
@@ -36,12 +40,26 @@ dwarf::dwarf(const std::shared_ptr<loader> &l)
         data = l->load(section_type::info, &size);
         if (!data)
                 throw format_error("required .debug_info section missing");
-        m->sec_info = make_shared<section>(section_type::info, data, size);
+        m->sec_info = make_shared<section>(section_type::info, data, size, byte_order::lsb);
+
+        // Sniff the endianness from the version field of the first
+        // CU. This is always a small but non-zero integer.
+        cursor endcur(m->sec_info);
+        // Skip length.
+        section_length length = endcur.fixed<uword>();
+        if (length == 0xffffffff)
+                endcur.fixed<uint64_t>();
+        // Get version in both little and big endian.
+        uhalf version = endcur.fixed<uhalf>();
+        uhalf versionbe = (version >> 8) | ((version & 0xFF) << 8);
+        if (versionbe < version) {
+                m->sec_info = make_shared<section>(section_type::info, data, size, byte_order::msb);
+        }
 
         data = l->load(section_type::abbrev, &size);
         if (!data)
                 throw format_error("required .debug_abbrev section missing");
-        m->sec_abbrev = make_shared<section>(section_type::abbrev, data, size);
+        m->sec_abbrev = make_shared<section>(section_type::abbrev, data, size, m->sec_info->ord);
 
         // Get compilation units.  Everything derives from these, so
         // there's no point in doing it lazily.
@@ -104,7 +122,7 @@ dwarf::get_section(section_type type) const
         if (!data)
                 throw format_error(std::string(elf::section_type_to_name(type))
                                    + " section missing");
-        m->sections[type] = std::make_shared<section>(section_type::str, data, size);
+        m->sections[type] = std::make_shared<section>(section_type::str, data, size, m->sec_info->ord);
         return m->sections[type];
 }
 
@@ -271,8 +289,7 @@ compilation_unit::get_line_table() const
 {
         if (!m->lt.valid()) {
                 const die &d = root();
-                if (!d.has(DW_AT::stmt_list) || !d.has(DW_AT::name) ||
-                    !d.has(DW_AT::comp_dir))
+                if (!d.has(DW_AT::stmt_list) || !d.has(DW_AT::name))
                         goto done;
 
                 shared_ptr<section> sec;
@@ -282,8 +299,10 @@ compilation_unit::get_line_table() const
                         goto done;
                 }
 
+                auto comp_dir = d.has(DW_AT::comp_dir) ? at_comp_dir(d) : "";
+                
                 m->lt = line_table(sec, d[DW_AT::stmt_list].as_sec_offset(),
-                                   m->subsec->addr_size, at_comp_dir(d),
+                                   m->subsec->addr_size, comp_dir,
                                    at_name(d));
         }
 done:

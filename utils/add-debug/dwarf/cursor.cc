@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "internal.hh"
 
 #include <stdexcept>
@@ -45,7 +49,7 @@ cursor::subsection()
                 throw format_error("initial length has reserved value");
         }
         pos = begin + length;
-        return make_shared<section>(sec->type, begin, length, fmt);
+        return make_shared<section>(sec->type, begin, length, sec->ord, fmt);
 }
 
 void
@@ -82,8 +86,7 @@ cursor::string(std::string &out)
         size_t size;
         const char *p = this->cstr(&size);
         out.resize(size);
-        if (out.size() != 0)
-          memmove(&out.front(), p, size);
+        memmove(&out.front(), p, size);
 }
 
 const char *
