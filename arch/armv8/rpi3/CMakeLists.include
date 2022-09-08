@@ -2,7 +2,7 @@ include(CheckCCompilerFlag)
 
 set(KERNEL_BINARY kernel.x)
 
-set(KERNEL_COMMON_FLAGS -O2 -gdwarf-2 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
+set(KERNEL_COMMON_FLAGS -O2 -gdwarf-4 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
 
 check_c_compiler_flag(-mno-outline-atomics HAS_MNO_OUTLINE_ATOMICS)
 if (HAS_MNO_OUTLINE_ATOMICS)
