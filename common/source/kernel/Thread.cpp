@@ -83,7 +83,7 @@ void Thread::kill()
 void* Thread::getKernelStackStartPointer()
 {
   pointer stack = (pointer) kernel_stack_;
-  stack += sizeof(kernel_stack_) - sizeof(uint32);
+  stack += sizeof(kernel_stack_) - 2*sizeof(size_t);
   return (void*)stack;
 }
 
