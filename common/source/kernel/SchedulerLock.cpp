@@ -5,9 +5,12 @@
 #include "Scheduler.h"
 #include "ArchCommon.h"
 
-#define INDICATOR_SCHED_LOCK_FREE ' '
-#define INDICATOR_SCHED_LOCK_BLOCKED '#'
-#define INDICATOR_SCHED_LOCK_HOLDING '-'
+enum SCHED_LOCK_INDICATOR : char
+{
+    FREE = ' ',
+    BLOCKED = '#',
+    HOLDING = '-',
+};
 
 SchedulerLock::SchedulerLock() :
     CpuExclusiveLock("Scheduler lock")
@@ -17,7 +20,7 @@ SchedulerLock::SchedulerLock() :
 void SchedulerLock::acquire([[maybe_unused]]pointer called_by)
 {
     size_t cpu_id = SMP::getCurrentCpuId();
-    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = INDICATOR_SCHED_LOCK_BLOCKED;
+    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = SCHED_LOCK_INDICATOR::BLOCKED;
 
     CpuExclusiveLock::acquire(called_by);
 
@@ -25,7 +28,7 @@ void SchedulerLock::acquire([[maybe_unused]]pointer called_by)
 
     debug(SCHEDULER_LOCK, "locked by %s (%p) on CPU %zu\n", (currentThread ? currentThread->getName() : "(nil)"), currentThread, SMP::getCurrentCpuId());
 
-    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = INDICATOR_SCHED_LOCK_HOLDING;
+    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = SCHED_LOCK_INDICATOR::HOLDING;
 }
 
 void SchedulerLock::release([[maybe_unused]]pointer called_by)
@@ -37,7 +40,7 @@ void SchedulerLock::release([[maybe_unused]]pointer called_by)
     }
     scheduling_locked_by_ = nullptr;
 
-    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = INDICATOR_SCHED_LOCK_FREE;
+    ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2] = SCHED_LOCK_INDICATOR::FREE;
 
     CpuExclusiveLock::release(called_by);
 }
