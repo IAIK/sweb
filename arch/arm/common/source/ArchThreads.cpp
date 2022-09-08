@@ -7,7 +7,7 @@
 #include "Scheduler.h"
 #include "SpinLock.h"
 
-SpinLock global_atomic_add_lock("");
+SpinLock global_atomic_add_lock("global_atomic_add_lock");
 
 extern PageDirEntry kernel_page_directory[];
 
@@ -92,45 +92,7 @@ void ArchThreads::yield()
   asm("swi #0xffff");
 }
 
-extern "C" void memory_barrier();
 extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock);
-uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
-{
-  uint32 result;
-  memory_barrier();
-  asm("swp %[r], %[n], [%[l]]" : [r]"=&r"(result) : [n]"r"(new_value), [l]"r"(&lock));
-  memory_barrier();
-  return result;
-}
-
-extern "C" uint32 arch_atomic_add(uint32, uint32, uint32 increment, uint32 *value);
-uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
-{
-  global_atomic_add_lock.acquire();
-  uint32 result = value;
-  value += increment;
-  global_atomic_add_lock.release();
-  return result;
-}
-
-int32 ArchThreads::atomic_add(int32 &value, int32 increment)
-{
-  return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
-}
-
-uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
-{
-  global_atomic_add_lock.acquire();
-  uint64 result = value;
-  value += increment;
-  global_atomic_add_lock.release();
-  return result;
-}
-
-int64 ArchThreads::atomic_add(int64 &value, int64 increment)
-{
-  return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
-}
 
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
@@ -160,18 +122,6 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
   }
 }
 
-
-
-void ArchThreads::atomic_set(uint32& target, uint32 value)
-{
-  // just re-use the method for exchange. Under ARM the build-ins do not work...
-  testSetLock(target, value);
-}
-
-void ArchThreads::atomic_set(int32& target, int32 value)
-{
-  atomic_set((uint32&)target, (uint32)value);
-}
 
 extern "C" void threadStartHack();
 

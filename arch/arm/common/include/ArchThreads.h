@@ -1,6 +1,9 @@
 #pragma once
 
 #include "types.h"
+#include "SpinLock.h"
+
+extern SpinLock global_atomic_add_lock;
 
 /**
  * The flag for full barrier synchronization.
@@ -23,6 +26,9 @@ struct ArchThreadRegisters
 
 class Thread;
 class ArchMemory;
+
+extern "C" void memory_barrier();
+
 
 /**
  * Collection of architecture dependant code concerning Task Switching
@@ -88,6 +94,7 @@ public:
   static void switchToAddressSpace(Thread* thread);
   static void switchToAddressSpace(ArchMemory& arch_memory);
 
+
 /**
  * uninterruptable locked operation
  * exchanges value in variable lock with new_value and returns the old_value
@@ -96,7 +103,22 @@ public:
  * @param new_value to set variable lock to
  * @returns old_value of variable lock
  */
-  static uint32 testSetLock(uint32 &lock, uint32 new_value);
+  template <typename T>
+  static T testSetLock(T& lock, T new_value)
+  {
+      if constexpr (__atomic_always_lock_free(sizeof(T), 0))
+      {
+          return  __atomic_exchange_n(&lock, new_value, __ATOMIC_SEQ_CST);
+      }
+      else
+      {
+          T result;
+          memory_barrier();
+          asm("swp %[r], %[n], [%[l]]" : [r]"=&r"(result) : [n]"r"(new_value), [l]"r"(&lock));
+          memory_barrier();
+          return result;
+      }
+  }
 
   /**
    * Counterpart to testSetLock()
@@ -106,7 +128,15 @@ public:
   template<typename T>
   static void syncLockRelease(volatile T &lock)
   {
-      __sync_lock_release(&lock);
+      if constexpr (__atomic_always_lock_free(sizeof(T), 0))
+      {
+          __sync_lock_release(&lock);
+      }
+      else
+      {
+          lock = 0;
+          memory_barrier();
+      }
   }
 
 /**
@@ -116,10 +146,22 @@ public:
  * @param increment can be positive or negative
  * @returns old value of value
  */
-  static uint32 atomic_add(uint32 &value, int32 increment);
-  static int32 atomic_add(int32 &value, int32 increment);
-  static uint64 atomic_add(uint64 &value, int64 increment);
-  static int64 atomic_add(int64 &value, int64 increment);
+  template<typename T>
+  static T atomic_add(T &value, T increment)
+  {
+      if constexpr (__atomic_always_lock_free(sizeof(T), 0))
+      {
+          return __sync_fetch_and_add(&value, increment);
+      }
+      else
+      {
+          global_atomic_add_lock.acquire();
+          T result = value;
+          value += increment;
+          global_atomic_add_lock.release();
+          return result;
+      }
+  }
 
   /**
    * Atomically set a target to another value.
@@ -127,8 +169,19 @@ public:
    * @param target The target which shall be set
    * @param value The value which shall be set
    */
-  static void atomic_set(uint32 &target, uint32 value);
-  static void atomic_set(int32 &target, int32 value);
+  template<typename T>
+  static void atomic_set(T& target, T value)
+  {
+      if constexpr (__atomic_always_lock_free(sizeof(T), 0))
+      {
+          __atomic_store_n (&target, value, __ATOMIC_SEQ_CST);
+      }
+      else
+      {
+          // just re-use the method for exchange. Under ARM the build-ins do not work...
+          testSetLock(target, value);
+      }
+  }
 
 /**
  *
