@@ -63,6 +63,11 @@ void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* func
   info->lr = (pointer)function;
 }
 
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
+{
+    return (void*)info->pc;
+}
+
 void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
 {
   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
