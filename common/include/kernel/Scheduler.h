@@ -114,7 +114,7 @@ public:
 
     Thread* minVruntimeThread();
     Thread* maxVruntimeThread();
-    void updateVruntime(Thread* t, uint64 now);
+    uint64 updateVruntime(Thread* t, uint64 now);
     void setThreadVruntime(Thread* t, uint64 new_vruntime);
     void setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime);
 };

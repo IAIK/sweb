@@ -74,12 +74,14 @@ void Scheduler::schedule()
 
   assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
 
+  uint64 thread_ran_for = 0;
+
   if(previousThread)
   {
     assert(previousThread->isCurrentlyScheduledOnCpu(SMP::currentCpuId()));
 
     // Increase virtual running time of the thread by the difference between last schedule and now
-    updateVruntime(previousThread, now);
+    thread_ran_for = updateVruntime(previousThread, now);
 
     // Threads that yielded their time (without waiting on a lock) are moved to the back of the list by increasing their virtual running time to that of the longest (virtually) running thread
     // Better: increase vruntime by the time slice that would have been allocated for the thread (requires an actual time base and not just cpu timestamps)
@@ -154,11 +156,13 @@ void Scheduler::schedule()
   //   }
   // }
 
-
-
-  debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", SMP::currentCpuId(),
-        (previousThread ? previousThread->getName() : "(nil)"), previousThread,
-        (currentThread ? currentThread->getName() : "(nil)"), currentThread);
+  if (SCHEDULER & OUTPUT_ADVANCED)
+  {
+      debug(SCHEDULER, "schedule CPU %zu, currentThread %-21s (%p) -> %-21s (%p) ran for {%" PRId64 "}\n", SMP::currentCpuId(),
+            (previousThread ? previousThread->getName() : "(nil)"), previousThread,
+            (currentThread ? currentThread->getName() : "(nil)"), currentThread,
+            thread_ran_for);
+  }
 
   assert(currentThread);
   assert(currentThread->schedulable());
@@ -413,13 +417,13 @@ Thread* Scheduler::maxVruntimeThread()
     return nullptr;
 }
 
-void Scheduler::updateVruntime(Thread* t, uint64 now)
+uint64 Scheduler::updateVruntime(Thread* t, uint64 now)
 {
     assert(t->currently_scheduled_on_cpu_ == SMP::currentCpuId());
 
     if(now <= t->schedulingStartTimestamp())
     {
-        return;
+        return 0;
     }
 
     uint64 time_delta = now - t->schedulingStartTimestamp();
@@ -433,6 +437,8 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
     }
 
     t->setSchedulingStartTimestamp(now);
+
+    return time_delta;
 }
 
 void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
