@@ -165,7 +165,7 @@ void InterruptUtils::initialise()
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  debug(A_INTERRUPTS, "IRQ 0 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 0 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(0);
   ArchCommon::drawHeartBeat();
 
@@ -176,7 +176,7 @@ extern "C" void irqHandler_0()
       {
           Scheduler::instance()->schedule();
 
-          ((char*)ArchCommon::getFBPtr())[1 + SMP::getCurrentCpuId()*2] =
+          ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
               ((currentThread->console_color << 4) |
                CONSOLECOLOR::BRIGHT_WHITE);
 
@@ -189,12 +189,12 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-    debug(A_INTERRUPTS, "Interrupt 65 called on CPU %zu\n", SMP::getCurrentCpuId());
+    debug(A_INTERRUPTS, "Interrupt 65 called on CPU %zu\n", SMP::currentCpuId());
     ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
         []()
         {
             Scheduler::instance()->schedule();
-            ((char*)ArchCommon::getFBPtr())[1 + SMP::getCurrentCpuId()*2] =
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
                 ((currentThread->console_color << 4) |
                  CONSOLECOLOR::BRIGHT_WHITE);
 
@@ -222,7 +222,7 @@ extern "C" void pageFaultHandler(uint32 address, uint32 error, uint32 ip)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  debug(A_INTERRUPTS, "IRQ 1 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 1 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(1);
   KeyboardManager::instance()->serviceIRQ();
   ArchInterrupts::endOfInterrupt(1);
@@ -231,7 +231,7 @@ extern "C" void irqHandler_1()
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
-  debug(A_INTERRUPTS, "IRQ 3 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 3 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(3);
   SerialManager::getInstance()->service_irq(3);
   ArchInterrupts::endOfInterrupt(3);
@@ -240,7 +240,7 @@ extern "C" void irqHandler_3()
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
-  debug(A_INTERRUPTS, "IRQ 4 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 4 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(4);
   SerialManager::getInstance()->service_irq(4);
   ArchInterrupts::endOfInterrupt(4);
@@ -249,13 +249,13 @@ extern "C" void irqHandler_4()
 extern "C" void arch_irqHandler_6();
 extern "C" void irqHandler_6()
 {
-  debug(A_INTERRUPTS, "IRQ 6 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 6 called on CPU %zu\n", SMP::currentCpuId());
 }
 
 extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
-  debug(A_INTERRUPTS, "IRQ 9 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 9 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(9);
   BDManager::getInstance()->serviceIRQ(9);
   ArchInterrupts::endOfInterrupt(9);
@@ -264,7 +264,7 @@ extern "C" void irqHandler_9()
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
-  debug(A_INTERRUPTS, "IRQ 11 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 11 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(11);
   BDManager::getInstance()->serviceIRQ(11);
   ArchInterrupts::endOfInterrupt(11);
@@ -273,7 +273,7 @@ extern "C" void irqHandler_11()
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
-  debug(A_INTERRUPTS, "IRQ 14 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 14 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(14);
   BDManager::getInstance()->serviceIRQ(14);
   ArchInterrupts::endOfInterrupt(14);
@@ -282,7 +282,7 @@ extern "C" void irqHandler_14()
 extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
-  debug(A_INTERRUPTS, "IRQ 15 called on CPU %zu\n", SMP::getCurrentCpuId());
+  debug(A_INTERRUPTS, "IRQ 15 called on CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(15);
   BDManager::getInstance()->serviceIRQ(15);
   ArchInterrupts::endOfInterrupt(15);
@@ -293,10 +293,10 @@ extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
         ArchInterrupts::startOfInterrupt(90 - 0x20);
-        debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", SMP::getCurrentCpuId());
+        debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", SMP::currentCpuId());
         if (currentThread != 0)
         {
-                debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::getCurrentCpuId());
+                debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
                 currentThread->printBacktrace(false);
         }
         while(1)
@@ -308,31 +308,31 @@ extern "C" void arch_irqHandler_99();
 extern "C" void irqHandler_99()
 {
         ArchInterrupts::startOfInterrupt(99 - 0x20);  // TODO: Fix APIC interrupt numbering
-        debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", SMP::getCurrentCpuId());
+        debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", SMP::currentCpuId());
 
-        TLBShootdownRequest* shootdown_list = cpu_info.tlb_shootdown_list.exchange(nullptr);
+        TLBShootdownRequest* shootdown_list = current_cpu.tlb_shootdown_list.exchange(nullptr);
 
         if(shootdown_list == nullptr)
         {
-                debug(A_INTERRUPTS, "TLB shootdown for CPU %zx already handled previously\n", SMP::getCurrentCpuId());
+                debug(A_INTERRUPTS, "TLB shootdown for CPU %zx already handled previously\n", SMP::currentCpuId());
         }
 
         while(shootdown_list != nullptr)
         {
-                debug(A_INTERRUPTS, "CPU %zx performing TLB shootdown for request %zx, addr %zx from CPU %zx, target %zx\n", SMP::getCurrentCpuId(), shootdown_list->request_id, shootdown_list->addr, shootdown_list->orig_cpu, shootdown_list->target);
-                assert(shootdown_list->target == SMP::getCurrentCpuId());
-                assert(cpu_info.getCpuID() == SMP::getCurrentCpuId());
-                assert(cpu_info.lapic->ID() == SMP::getCurrentCpuId());
-                assert(cpu_info.lapic->readID() == SMP::getCurrentCpuId());
+                debug(A_INTERRUPTS, "CPU %zx performing TLB shootdown for request %zx, addr %zx from CPU %zx, target %zx\n", SMP::currentCpuId(), shootdown_list->request_id, shootdown_list->addr, shootdown_list->orig_cpu, shootdown_list->target);
+                assert(shootdown_list->target == SMP::currentCpuId());
+                assert(current_cpu.id() == SMP::currentCpuId());
+                assert(current_cpu.lapic->ID() == SMP::currentCpuId());
+                assert(current_cpu.lapic->readID() == SMP::currentCpuId());
                 ArchMemory::flushLocalTranslationCaches(shootdown_list->addr);
 
                 TLBShootdownRequest* next = shootdown_list->next;
                 // Object is invalid as soon as we acknowledge it
                 //shootdown_list->ack++;
-                assert((shootdown_list->ack & (1 << SMP::getCurrentCpuId())) == 0);
-                assert(shootdown_list->orig_cpu != SMP::getCurrentCpuId());
+                assert((shootdown_list->ack & (1 << SMP::currentCpuId())) == 0);
+                assert(shootdown_list->orig_cpu != SMP::currentCpuId());
 
-                shootdown_list->ack |= (1 << SMP::getCurrentCpuId());
+                shootdown_list->ack |= (1 << SMP::currentCpuId());
                 assert(shootdown_list != next);
                 shootdown_list = next;
         }
@@ -344,7 +344,7 @@ extern "C" void arch_irqHandler_100();
 extern "C" void irqHandler_100()
 {
         // No EOI here!
-        debug(A_INTERRUPTS, "IRQ 100 called on CPU %zu, spurious APIC interrupt\n", SMP::getCurrentCpuId());
+        debug(A_INTERRUPTS, "IRQ 100 called on CPU %zu, spurious APIC interrupt\n", SMP::currentCpuId());
 }
 
 

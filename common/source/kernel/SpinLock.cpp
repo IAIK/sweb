@@ -57,7 +57,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
 
   if(system_state == RUNNING)
   {
-    debug(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", SMP::getCurrentCpuId(), getName(), this, called_by);
+    debug(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", SMP::currentCpuId(), getName(), this, called_by);
   }
   else
   {
@@ -131,7 +131,7 @@ void SpinLock::release(pointer called_by)
 
   if(system_state == RUNNING)
   {
-          debug(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", SMP::getCurrentCpuId(), getName(), this, called_by);
+          debug(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", SMP::currentCpuId(), getName(), this, called_by);
   }
   else
   {

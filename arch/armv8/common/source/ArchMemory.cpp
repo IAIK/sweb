@@ -458,7 +458,7 @@ void ArchMemory::flushLocalTranslationCaches(size_t addr)
 {
     if(A_MEMORY & OUTPUT_ADVANCED)
     {
-        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", SMP::getCurrentCpuId(), addr);
+        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", SMP::currentCpuId(), addr);
     }
 
     asm volatile("DSB ISHST\n" // Data synchronization barrier

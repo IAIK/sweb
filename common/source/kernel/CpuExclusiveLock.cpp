@@ -21,7 +21,7 @@ void CpuExclusiveLock::acquire([[maybe_unused]]pointer called_by)
         WithInterrupts intr(false);
 
         size_t expected = -1;
-        size_t cpu_id = SMP::getCurrentCpuId();
+        size_t cpu_id = SMP::currentCpuId();
 
         if(held_by_cpu_.load() == cpu_id)
         {
@@ -39,7 +39,7 @@ void CpuExclusiveLock::acquire([[maybe_unused]]pointer called_by)
 
 void CpuExclusiveLock::release([[maybe_unused]]pointer called_by)
 {
-    size_t cpu_id = SMP::getCurrentCpuId();
+    size_t cpu_id = SMP::currentCpuId();
 
     size_t was_locked_by = held_by_cpu_.exchange(-1);
     if(was_locked_by != cpu_id)

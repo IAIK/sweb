@@ -202,7 +202,7 @@ int Syscall::getcpu(size_t *cpu, size_t *node, __attribute__((unused)) void *tca
 
     if(cpu != nullptr)
     {
-        *cpu = SMP::getCurrentCpuId();
+        *cpu = SMP::currentCpuId();
     }
 
     if(node != nullptr)

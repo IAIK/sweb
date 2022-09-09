@@ -48,7 +48,7 @@ void Scheduler::schedule()
 {
   if(SCHEDULER & OUTPUT_ADVANCED)
   {
-    debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", SMP::getCurrentCpuId(), currentThread, currentThread ? currentThread->getName() : "(nil)");
+    debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", SMP::currentCpuId(), currentThread, currentThread ? currentThread->getName() : "(nil)");
   }
 
   if (preempt_protect_count_.load() > 0)
@@ -59,9 +59,9 @@ void Scheduler::schedule()
 
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
 
-  if(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()))
+  if(scheduler_lock_.isHeldBy(SMP::currentCpuId()))
   {
-    debug(SCHEDULER_LOCK, "CPU %zu schedule: currently blocked by thread on own cpu\n", SMP::getCurrentCpuId());
+    debug(SCHEDULER_LOCK, "CPU %zu schedule: currently blocked by thread on own cpu\n", SMP::currentCpuId());
     return;
   }
 
@@ -72,11 +72,11 @@ void Scheduler::schedule()
 
   Thread* previousThread = currentThread;
 
-  assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
+  assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
 
   if(previousThread)
   {
-    assert(previousThread->isCurrentlyScheduledOnCpu(SMP::getCurrentCpuId()));
+    assert(previousThread->isCurrentlyScheduledOnCpu(SMP::currentCpuId()));
 
     // Increase virtual running time of the thread by the difference between last schedule and now
     updateVruntime(previousThread, now);
@@ -108,7 +108,7 @@ void Scheduler::schedule()
   {
     bool already_running = (*it)->isCurrentlyScheduled(); // Prevent scheduling threads on multiple CPUs simultaneously
     bool schedulable = (*it)->schedulable();
-    bool can_run_on_cpu = (*it)->canRunOnCpu(SMP::getCurrentCpuId());
+    bool can_run_on_cpu = (*it)->canRunOnCpu(SMP::currentCpuId());
     bool just_woken = schedulable && !(*it)->prev_schedulable;
 
     (*it)->prev_schedulable = schedulable;
@@ -156,7 +156,7 @@ void Scheduler::schedule()
 
 
 
-  debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", SMP::getCurrentCpuId(),
+  debug(SCHEDULER, "schedule CPU %zu, currentThread %s (%p) -> %s (%p)\n", SMP::currentCpuId(),
         (previousThread ? previousThread->getName() : "(nil)"), previousThread,
         (currentThread ? currentThread->getName() : "(nil)"), currentThread);
 
@@ -167,7 +167,7 @@ void Scheduler::schedule()
 
   ArchThreads::switchToAddressSpace(currentThread);
 
-  currentThread->currently_scheduled_on_cpu_ = SMP::getCurrentCpuId();
+  currentThread->currently_scheduled_on_cpu_ = SMP::currentCpuId();
 
   // if((it != threads_.end()) && ((it + 1) != threads_.end()))
   // {
@@ -387,7 +387,7 @@ bool Scheduler::isInitialized()
 
 Thread* Scheduler::minVruntimeThread()
 {
-    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
+    assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
     for(auto & thread : threads_)
     {
         if(thread->schedulable())
@@ -401,7 +401,7 @@ Thread* Scheduler::minVruntimeThread()
 
 Thread* Scheduler::maxVruntimeThread()
 {
-    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
+    assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
     for(auto it = threads_.rbegin(); it != threads_.rend(); ++it)
     {
         if((*it)->schedulable())
@@ -415,7 +415,7 @@ Thread* Scheduler::maxVruntimeThread()
 
 void Scheduler::updateVruntime(Thread* t, uint64 now)
 {
-    assert(t->currently_scheduled_on_cpu_ == SMP::getCurrentCpuId());
+    assert(t->currently_scheduled_on_cpu_ == SMP::currentCpuId());
 
     if(now <= t->schedulingStartTimestamp())
     {
@@ -429,7 +429,7 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
 
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n", SMP::getCurrentCpuId(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
+        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n", SMP::currentCpuId(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
     }
 
     t->setSchedulingStartTimestamp(now);
@@ -437,7 +437,7 @@ void Scheduler::updateVruntime(Thread* t, uint64 now)
 
 void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
 {
-    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
+    assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
 
     auto it = threads_.find(t);
 
@@ -446,12 +446,12 @@ void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
 
 void Scheduler::setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime)
 {
-    assert(scheduler_lock_.isHeldBy(SMP::getCurrentCpuId()));
+    assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
     assert(it != threads_.end());
     Thread* t = *it;
     if(SCHEDULER & OUTPUT_ADVANCED)
     {
-        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n", SMP::getCurrentCpuId(), t->getName(), new_vruntime);
+        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n", SMP::currentCpuId(), t->getName(), new_vruntime);
     }
 
     threads_.erase(it);

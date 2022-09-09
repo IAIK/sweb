@@ -317,7 +317,7 @@ void ArchCommon::drawHeartBeat()
 
   const char* clock = "/-\\|";
   char* fb = (char*)getFBPtr();
-  size_t cpu_id = SMP::getCurrentCpuId();
+  size_t cpu_id = SMP::currentCpuId();
   fb[cpu_id*2] = clock[heart_beat_value++ % 4];
   fb[cpu_id*2 + 1] = 0x9f;
 }

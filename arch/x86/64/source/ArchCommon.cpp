@@ -399,7 +399,7 @@ void ArchCommon::drawStat() {
 void updateStatsThreadColor()
 {
     char* fb = (char*)ArchCommon::getFBPtr();
-    fb[1 + SMP::getCurrentCpuId()*2] =
+    fb[1 + SMP::currentCpuId()*2] =
         (((currentThread ? currentThread->console_color :
            CONSOLECOLOR::BLACK) << 4) |
          CONSOLECOLOR::BRIGHT_WHITE);
@@ -413,7 +413,7 @@ void ArchCommon::drawHeartBeat()
 
   const char* clock = "/-\\|";
   char* fb = (char*)getFBPtr();
-  size_t cpu_id = SMP::getCurrentCpuId();
+  size_t cpu_id = SMP::currentCpuId();
   fb[0 + cpu_id*2] = clock[heart_beat_value++ % 4];
   updateStatsThreadColor();
 }

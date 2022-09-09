@@ -163,10 +163,10 @@ extern "C" [[noreturn]] void startup()
 
   debug(MAIN, "%zu CPU(s) running\n", SMP::cpu_list_.size());
   kprintf("%zu CPU(s) running\n", SMP::cpu_list_.size());
-  for(auto cls : SMP::cpu_list_)
+  for(auto cpu : SMP::cpu_list_)
   {
-      debug(MAIN, "CPU %zu\n", cls->getCpuID());
-      kprintf("CPU %zu\n", cls->getCpuID());
+      debug(MAIN, "CPU %zu\n", cpu->id());
+      kprintf("CPU %zu\n", cpu->id());
   }
 
   // Ensure we already have a currentThread when interrupts are enabled

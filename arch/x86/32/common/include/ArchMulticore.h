@@ -9,6 +9,7 @@
 #include "IdleThread.h"
 #include "paging-definitions.h"
 #include "ArchCpuLocalStorage.h"
+#include "Cpu.h"
 
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
@@ -26,17 +27,12 @@ struct TLBShootdownRequest
         size_t orig_cpu;
 };
 
-class CpuInfo
+class ArchCpu : public Cpu
 {
 public:
-        CpuInfo();
-
-        size_t getCpuID();
-        void setCpuID(size_t id);
+        ArchCpu();
 
         LocalAPIC* lapic;
-
-        size_t* cpu_id_;
 
         eastl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
 private:
@@ -44,8 +40,6 @@ private:
 
 
 extern cpu_local LocalAPIC cpu_lapic;
-extern cpu_local size_t cpu_id;
-extern cpu_local CpuInfo cpu_info;
 extern cpu_local char cpu_stack[CPU_STACK_SIZE];
 extern cpu_local TSS cpu_tss;
 extern cpu_local IdleThread* idle_thread;
@@ -55,19 +49,13 @@ extern cpu_local IdleThread* idle_thread;
 class ArchMulticore
 {
   public:
-
     static void initialize();
 
     static void reservePages(Allocator& alloc);
 
     static void startOtherCPUs();
-    static size_t numRunningCPUs();
     static void stopAllCpus();
     static void stopOtherCpus();
-
-
-    static void setCurrentCpuId(size_t id);
-    static size_t getCurrentCpuId();
 
     static void initApplicationProcessorCpu();
     static void initCpuLocalData(bool boot_cpu = false);

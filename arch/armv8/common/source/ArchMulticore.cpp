@@ -5,10 +5,8 @@
 #include "debug.h"
 
 extern eastl::atomic<size_t> running_cpus;
-cpu_local size_t cpu_id;
-cpu_local CpuInfo cpu_info;
 
-size_t ArchMulticore::getCurrentCpuId()
+size_t readCpuIdRegister()
 {
     uint64_t mpidr_el1 = 0;
     asm("MRS %[mpidr_el1], MPIDR_EL1\n"
@@ -16,15 +14,12 @@ size_t ArchMulticore::getCurrentCpuId()
     return mpidr_el1 & 0xFF;
 }
 
-size_t ArchMulticore::numRunningCPUs()
+ArchCpu::ArchCpu()
 {
-    return running_cpus;
+    setId(readCpuIdRegister());
+    debug(A_MULTICORE, "Initializing ArchCpu %zx\n", id());
+    SMP::addCpuToList(this);
 }
-
-void ArchMulticore::stopOtherCpus()
-{
-}
-
 
 void ArchMulticore::initialize()
 {
@@ -38,8 +33,8 @@ void ArchMulticore::initCpuLocalData([[maybe_unused]]bool boot_cpu)
 {
 
     // The constructor of objects declared as cpu_local will be called automatically the first time the cpu_local object is used. Other cpu_local objects _may or may not_ also be initialized at the same time.
-    new (&cpu_info) CpuInfo();
-    debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", cpu_info.getCpuID());
+    new (&current_cpu) ArchCpu(); // Explicit construction required here since cpu_local isn't actually cpu_local on armv8 (no cls implemented)
+    debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", SMP::currentCpuId());
 
     // idle_thread = new IdleThread();
     // debug(A_MULTICORE, "CPU %zu: %s initialized\n", getCpuID(), idle_thread->getName());
@@ -49,23 +44,8 @@ void ArchMulticore::initCpuLocalData([[maybe_unused]]bool boot_cpu)
 
 void ArchMulticore::startOtherCPUs()
 {
-
 }
 
-CpuInfo::CpuInfo() :
-    cpu_id_(&cpu_id)
+void ArchMulticore::stopOtherCpus()
 {
-    setCpuID(ArchMulticore::getCurrentCpuId());
-    debug(A_MULTICORE, "Initializing CpuInfo %zx\n", getCpuID());
-    SMP::addCpuToList(this);
-}
-
-size_t CpuInfo::getCpuID()
-{
-    return *cpu_id_;
-}
-
-void CpuInfo::setCpuID(size_t id)
-{
-    *cpu_id_ = id;
 }

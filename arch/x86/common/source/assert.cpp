@@ -91,8 +91,8 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   if (CpuLocalStorage::ClsInitialized() && currentThread)
           currentThread->printBacktrace(false);
 
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::getCurrentCpuId());
-  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::getCurrentCpuId());
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::currentCpuId());
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::currentCpuId());
   while(true);
   unreachable();
 }

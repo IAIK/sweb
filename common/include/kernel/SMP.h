@@ -4,20 +4,26 @@
 #include "Mutex.h"
 #include "EASTL/vector.h"
 #include "EASTL/atomic.h"
+#include "ArchCpuLocalStorage.h"
+#include "ArchMulticore.h"
 
-class CpuInfo;
+class ArchCpu;
 
+extern cpu_local ArchCpu current_cpu;
+
+// Information and functions concerning multiple cpus
 class SMP
 {
 public:
-    static size_t getCurrentCpuId();
+    static ArchCpu& currentCpu();
+    static size_t currentCpuId();
 
     static size_t numRunningCpus();
 
     static void initialize();
 
-    static void addCpuToList(CpuInfo* cpu);
+    static void addCpuToList(ArchCpu* cpu);
 
     static Mutex cpu_list_lock_;
-    static eastl::vector<CpuInfo*> cpu_list_;
+    static eastl::vector<ArchCpu*> cpu_list_;
 };

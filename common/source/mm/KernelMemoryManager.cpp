@@ -529,7 +529,7 @@ void KernelMemoryManager::lockKMM()
 {
   if(system_state == RUNNING)
   {
-    debug(KMM, "CPU %zx lock KMM\n", SMP::getCurrentCpuId());
+    debug(KMM, "CPU %zx lock KMM\n", SMP::currentCpuId());
   }
   assert(((system_state != RUNNING) || ArchInterrupts::testIFSet()));
   lock_.acquire(getCalledBefore(1));
@@ -540,7 +540,7 @@ void KernelMemoryManager::unlockKMM()
 {
   if(system_state == RUNNING)
   {
-          debug(KMM, "CPU %zx unlock KMM\n", SMP::getCurrentCpuId());
+          debug(KMM, "CPU %zx unlock KMM\n", SMP::currentCpuId());
   }
   lock_.release(getCalledBefore(1));
 }

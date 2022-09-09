@@ -53,7 +53,7 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
   if (PAGEFAULT & OUTPUT_ENABLED)
     kprintfd("\n");
   debug(PAGEFAULT, "CPU %zu, Address: %18zx - Thread %zu: %s (%p)\n",
-        SMP::getCurrentCpuId(), address, currentThread->getTID(), currentThread->getName(), currentThread);
+        SMP::currentCpuId(), address, currentThread->getTID(), currentThread->getName(), currentThread);
   debug(PAGEFAULT, "Flags: %spresent, %s-mode, %s, %s-fetch, switch to userspace: %1d\n",
         present ? "    " : "not ",
         user ? "  user" : "kernel",
@@ -88,7 +88,7 @@ void PageFaultHandler::enterPageFault(size_t address, size_t ip, bool user,
                                       bool present, bool writing,
                                       bool fetch)
 {
-  debug(PAGEFAULT, "CPU %zu, Pagefault at %zx, ip %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", SMP::getCurrentCpuId(), address, ip, present, writing, user, fetch);
+  debug(PAGEFAULT, "CPU %zu, Pagefault at %zx, ip %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", SMP::currentCpuId(), address, ip, present, writing, user, fetch);
   assert(currentThread && "You have a pagefault, but no current thread");
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;

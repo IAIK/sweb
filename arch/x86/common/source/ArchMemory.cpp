@@ -38,7 +38,7 @@ void ArchMemory::flushLocalTranslationCaches(size_t addr)
 {
     if(A_MEMORY & OUTPUT_ADVANCED)
     {
-        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", SMP::getCurrentCpuId(), addr);
+        debug(A_MEMORY, "CPU %zx flushing translation caches for address %zx\n", SMP::currentCpuId(), addr);
     }
     __asm__ __volatile__("invlpg %[addr]\n"
                          ::[addr]"m"(*(char*)addr));
@@ -56,7 +56,7 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
         bool interrupts_enabled = ArchInterrupts::disableInterrupts();
         flushLocalTranslationCaches(addr);
 
-        auto orig_cpu = SMP::getCurrentCpuId();
+        auto orig_cpu = SMP::currentCpuId();
 
         ((char*)ArchCommon::getFBPtr())[2*80*2 + orig_cpu*2] = 's';
 
@@ -84,12 +84,12 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
 
         for(auto& cpu : SMP::cpu_list_)
         {
-                size_t cpu_id = cpu->getCpuID();
+                size_t cpu_id = cpu->id();
                 shootdown_requests[cpu_id].target = cpu_id;
-                if(cpu->getCpuID() != orig_cpu)
+                if(cpu->id() != orig_cpu)
                 {
-                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", SMP::getCurrentCpuId(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
-                        assert(SMP::getCurrentCpuId() == orig_cpu);
+                        debug(A_MEMORY, "CPU %zx Sending TLB shootdown request %zx for addr %zx to CPU %zx\n", SMP::currentCpuId(), shootdown_requests[cpu_id].request_id, addr, cpu_id);
+                        assert(SMP::currentCpuId() == orig_cpu);
                         assert(cpu_id != orig_cpu);
                         sent_shootdowns |= (1 << cpu_id);
 
@@ -106,7 +106,7 @@ void ArchMemory::flushAllTranslationCaches(size_t addr)
         }
         assert(!(sent_shootdowns & (1 << orig_cpu)));
 
-        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", SMP::getCurrentCpuId(), sent_shootdowns);
+        debug(A_MEMORY, "CPU %zx sent %zx TLB shootdown requests, waiting for ACKs\n", SMP::currentCpuId(), sent_shootdowns);
 
         if(interrupts_enabled) ArchInterrupts::enableInterrupts();
 
