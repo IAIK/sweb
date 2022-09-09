@@ -160,8 +160,9 @@ void ArchCommon::spinlockPause()
 uint64 ArchCommon::cpuTimestamp()
 {
     uint64 timestamp;
-    asm volatile("isb;mrs %0, pmccntr_el0\n"
-                 : "=r"(timestamp));
+    asm volatile ("isb; mrs %0, cntvct_el0"
+                  : "=r" (timestamp));
+
     return timestamp;
 }
 
