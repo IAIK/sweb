@@ -37,8 +37,10 @@ UserProcess::UserProcess(eastl::string executable_path, FileSystemInfo *working_
   debug(THREAD, "Mapped stack at virt [%zx, %zx) -> phys [%zx, %zx)\n",
         stack_vpn*PAGE_SIZE, (stack_vpn+1)*PAGE_SIZE, stack_ppn*PAGE_SIZE, (stack_ppn+1)*PAGE_SIZE);
 
-  ArchThreads::createUserRegisters(user_registers_, loader_->getEntryFunction(),
-                                   (void*) (USER_BREAK - sizeof(pointer)),
+  void* stack_top = (void*) (stack_vpn*PAGE_SIZE + PAGE_SIZE - 2*sizeof(pointer));
+  ArchThreads::createUserRegisters(user_registers_,
+                                   loader_->getEntryFunction(),
+                                   stack_top,
                                    getKernelStackStartPointer());
 
   ArchThreads::setAddressSpace(this, loader_->arch_memory_);
