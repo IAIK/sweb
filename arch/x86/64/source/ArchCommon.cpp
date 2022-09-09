@@ -274,7 +274,7 @@ extern "C" [[noreturn]] void entry64()
   extern char cls_start;
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for boot processor [%p, %p)\n", &cls_start, &cls_end);
-  CPULocalStorage::setCLS(&cls_start);
+  CpuLocalStorage::setCls(&cls_start);
   currentThread = nullptr;
 
   PRINT("Calling startup()...\n");

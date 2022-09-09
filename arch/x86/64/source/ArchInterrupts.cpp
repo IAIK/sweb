@@ -29,7 +29,7 @@ static void initInterruptController()
     {
       LocalAPIC::mapAt((size_t)LocalAPIC::reg_paddr_ | PHYSICAL_TO_VIRTUAL_OFFSET);
     }
-    assert(CPULocalStorage::CLSinitialized());
+    assert(CpuLocalStorage::ClsInitialized());
     cpu_lapic.init();
   }
 

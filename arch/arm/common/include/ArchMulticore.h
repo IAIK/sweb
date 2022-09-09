@@ -2,9 +2,7 @@
 
 #include "Mutex.h"
 #include "EASTL/vector.h"
-
-#define cpu_local
-#define __cpu
+#include "ArchCpuLocalStorage.h"
 
 class CpuInfo
 {
@@ -40,14 +38,4 @@ public:
     /* static char* cpuStackTop(); */
 
 private:
-};
-
-namespace CPULocalStorage
-{
-    // size_t getCLSSize();
-
-    // char* allocCLS();
-    // void setCLS(char* cls);
-    bool CLSinitialized();
-    // void* getClsBase();
 };

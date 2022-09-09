@@ -13,6 +13,7 @@
 #include "Scheduler.h"
 #include "offsets.h"
 #include "SystemState.h"
+#include "ArchCpuLocalStorage.h"
 
 
 static void initInterruptHandlers()
@@ -29,7 +30,7 @@ static void initInterruptController()
     // TODO: Proper address assignment for lapic on x86
     size_t vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*2;
     LocalAPIC::mapAt(vaddr);
-    assert(CPULocalStorage::CLSinitialized());
+    assert(CpuLocalStorage::ClsInitialized());
     cpu_lapic.init();
   }
 

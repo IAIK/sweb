@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "ArchMulticore.h"
 #include "Scheduler.h"
+#include "ArchCpuLocalStorage.h"
 
 GDT gdt;
 TSS g_tss;
@@ -95,7 +96,7 @@ void SegmentUtils::initialise()
   debug(A_MULTICORE, "Setting temporary CLS for boot processor\n");
   extern char cls_start;
 
-  CPULocalStorage::setCLS(gdt, &cls_start);
+  CpuLocalStorage::setCls(gdt, &cls_start);
   currentThread = nullptr;
 }
 

@@ -42,11 +42,6 @@ void ArchMulticore::stopOtherCpus()
 {
 }
 
-bool CPULocalStorage::CLSinitialized()
-{
-    return true;
-}
-
 
 
 CpuInfo::CpuInfo() :

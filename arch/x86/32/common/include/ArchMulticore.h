@@ -8,9 +8,8 @@
 #include "EASTL/atomic.h"
 #include "IdleThread.h"
 #include "paging-definitions.h"
+#include "ArchCpuLocalStorage.h"
 
-#define cpu_local thread_local
-#define __cpu __thread
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
@@ -82,15 +81,4 @@ class ArchMulticore
     static void prepareAPStartup(size_t entry_addr);
 
     [[noreturn]] static void waitForSystemStart();
-};
-
-
-namespace CPULocalStorage
-{
-    size_t getCLSSize();
-
-    char* allocCLS();
-    void setCLS(GDT& gdt, char* cls);
-    bool CLSinitialized();
-    void* getClsBase();
 };

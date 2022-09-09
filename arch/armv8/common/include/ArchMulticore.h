@@ -3,9 +3,6 @@
 #include "Mutex.h"
 #include "EASTL/vector.h"
 
-#define cpu_local
-#define __cpu
-
 class CpuInfo
 {
 public:
@@ -43,15 +40,4 @@ private:
     static void prepareAPStartup(size_t entry_addr);
 
     [[noreturn]] static void waitForSystemStart();
-};
-
-
-namespace CPULocalStorage
-{
-    size_t getCLSSize();
-
-    char* allocCLS();
-    void setCLS(char* cls);
-    bool CLSinitialized();
-    void* getClsBase();
 };

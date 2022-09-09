@@ -2,6 +2,7 @@
 #include "Scheduler.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
+#include "ArchCpuLocalStorage.h"
 
 BasicSpinLock::BasicSpinLock() :
     lock_(0)
@@ -10,7 +11,7 @@ BasicSpinLock::BasicSpinLock() :
 
 void BasicSpinLock::acquire(bool yield)
 {
-    Thread* calling_thread = CPULocalStorage::CLSinitialized() ? currentThread : nullptr;
+    Thread* calling_thread = CpuLocalStorage::ClsInitialized() ? currentThread : nullptr;
 
     while(lock_.test_and_set())
     {
@@ -27,7 +28,7 @@ void BasicSpinLock::acquire(bool yield)
 
 bool BasicSpinLock::acquireNonBlocking()
 {
-    Thread* calling_thread = CPULocalStorage::CLSinitialized() ? currentThread : nullptr;
+    Thread* calling_thread = CpuLocalStorage::ClsInitialized() ? currentThread : nullptr;
 
     bool got_lock = !lock_.test_and_set();
 

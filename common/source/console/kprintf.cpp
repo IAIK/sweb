@@ -14,6 +14,7 @@
 #include "KprintfFlushingThread.h"
 #include "BasicSpinLock.h"
 #include "SystemState.h"
+#include "ArchCpuLocalStorage.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full
@@ -164,7 +165,7 @@ void kprintfd(const char *fmt, ...)
 
   WithInterrupts intr(false);
 
-  Thread* calling_thread = CPULocalStorage::CLSinitialized() ? currentThread : nullptr;
+  Thread* calling_thread = CpuLocalStorage::ClsInitialized() ? currentThread : nullptr;
 
   if (calling_thread && kprintfd_lock.heldBy() == calling_thread)
   {

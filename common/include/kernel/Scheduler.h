@@ -12,6 +12,7 @@
 #include "SchedulerLock.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
+#include "ArchCpuLocalStorage.h"
 #include "ArchCommon.h"
 #include "SMP.h"
 

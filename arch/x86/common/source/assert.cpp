@@ -8,6 +8,7 @@
 #include "SMP.h"
 #include "ArchMulticore.h"
 #include "SystemState.h"
+#include "ArchCpuLocalStorage.h"
 
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {
@@ -87,7 +88,7 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
       while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
   }
 
-  if (CPULocalStorage::CLSinitialized() && currentThread)
+  if (CpuLocalStorage::ClsInitialized() && currentThread)
           currentThread->printBacktrace(false);
 
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::getCurrentCpuId());

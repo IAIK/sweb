@@ -68,60 +68,6 @@ void CpuInfo::setCpuID(size_t id)
 }
 
 
-
-extern char cls_start;
-extern char cls_end;
-extern char tbss_start;
-extern char tbss_end;
-extern char tdata_start;
-extern char tdata_end;
-
-size_t CPULocalStorage::getCLSSize()
-{
-  return &cls_end - &cls_start;
-}
-
-char* CPULocalStorage::allocCLS()
-{
-  debug(A_MULTICORE, "Allocating CPU local storage\n");
-
-  size_t cls_size = getCLSSize();
-  size_t tbss_size = &tbss_end - &tbss_start;
-  size_t tdata_size = &tdata_end - &tdata_start;
-  debug(A_MULTICORE, "cls_base: [%p, %p), size: %zx\n", &cls_start, &cls_end, cls_size);
-  debug(A_MULTICORE, "tbss: [%p, %p), size: %zx\n", &tbss_start, &tbss_end, tbss_size);
-  debug(A_MULTICORE, "tdata: [%p, %p), size: %zx\n", &tdata_start, &tdata_end, tdata_size);
-
-  char* cls_base = new char[cls_size + sizeof(void*)]{};
-  debug(A_MULTICORE, "Allocated new cls_base at [%p, %p)\n", cls_base, cls_base + cls_size + sizeof(void*));
-
-  debug(A_MULTICORE, "Initializing tdata at [%p, %p) and tbss at [%p, %p)\n",
-        cls_base + (&tdata_start - &cls_start), cls_base + (&tdata_start - &cls_start) + tdata_size,
-        cls_base + (&tbss_start - &cls_start), cls_base + (&tbss_start - &cls_start) + tbss_size);
-  memcpy(cls_base + (&tdata_start - &cls_start), &tdata_start, tdata_size);
-
-  return cls_base;
-}
-
-void CPULocalStorage::setCLS(char* cls)
-{
-  debug(A_MULTICORE, "Set CLS: %p\n", cls);
-  void** fs_base = (void**)(cls + getCLSSize());
-  *fs_base = fs_base;
-  setFSBase((size_t)fs_base); // %fs base needs to point to end of CLS, not the start. %fs:0 = pointer to %fs base
-  setGSBase((size_t)fs_base);
-  setSWAPGSKernelBase((size_t)fs_base);
-}
-
-bool CPULocalStorage::CLSinitialized()
-{
-  bool init = (getFSBase() != 0);
-  return init;
-}
-
-
-
-
 void ArchMulticore::initCpuLocalData(bool boot_cpu)
 {
   initCpuLocalGDT(boot_cpu ? gdt : ap_gdt32);
@@ -164,14 +110,13 @@ void ArchMulticore::initCpuLocalTSS(size_t cpu_stack_top)
 void ArchMulticore::setCurrentCpuId(size_t id)
 {
   debug(A_MULTICORE, "Setting CPU ID %zu\n", id);
-  assert(CPULocalStorage::CLSinitialized());
+  assert(CpuLocalStorage::ClsInitialized());
   cpu_id = id;
 }
 
 size_t ArchMulticore::getCurrentCpuId() // Only remains accurate when interrupts are disabled since the calling thread could be rescheduled to a different cpu at any time
 {
-  //assert(CLSinitialized());
-  return (!CPULocalStorage::CLSinitialized() ? 0 : cpu_id);
+  return (!CpuLocalStorage::ClsInitialized() ? 0 : cpu_id);
 }
 
 
@@ -179,7 +124,7 @@ void ArchMulticore::initialize()
 {
   assert(running_cpus == 0);
   running_cpus = 1;
-  CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+  CpuLocalStorage::initCpuLocalStorage();
   ArchMulticore::initCpuLocalData(true);
 }
 
@@ -250,7 +195,7 @@ void ArchMulticore::startOtherCPUs()
 
 void ArchMulticore::stopAllCpus()
 {
-  if(CPULocalStorage::CLSinitialized() && cpu_lapic.isInitialized())
+  if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
   {
     cpu_lapic.sendIPI(90);
   }
@@ -258,7 +203,7 @@ void ArchMulticore::stopAllCpus()
 
 void ArchMulticore::stopOtherCpus()
 {
-    if(CPULocalStorage::CLSinitialized() && cpu_lapic.isInitialized())
+    if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
     {
         cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
     }
@@ -308,10 +253,10 @@ void ArchMulticore::initCpu()
   extern char cls_start;
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for AP [%p, %p)\n", &cls_start, &cls_end);
-  CPULocalStorage::setCLS(&cls_start);
+  CpuLocalStorage::setCls(&cls_start);
   currentThread = NULL;
 
-  CPULocalStorage::setCLS(CPULocalStorage::allocCLS());
+  CpuLocalStorage::initCpuLocalStorage();
   cpu_lapic.init();
   ArchMulticore::initCpuLocalData();
 
@@ -333,7 +278,7 @@ void ArchMulticore::initCpu()
 {
   kprintf("CPU %zu initialized, waiting for system start\n", SMP::getCurrentCpuId());
   debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", SMP::getCurrentCpuId());
-  assert(CPULocalStorage::CLSinitialized());
+  assert(CpuLocalStorage::ClsInitialized());
   ap_started = true;
 
   while(system_state != RUNNING);
