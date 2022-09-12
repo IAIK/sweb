@@ -166,7 +166,8 @@ extern SWEBDebugInfo const *kernel_debug_info;
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  debug(A_INTERRUPTS, "IRQ 0 called by CPU %zu\n", SMP::currentCpuId());
+  if (A_INTERRUPTS & OUTPUT_ADVANCED)
+      debug(A_INTERRUPTS, "IRQ 0 called by CPU %zu\n", SMP::currentCpuId());
   ArchInterrupts::startOfInterrupt(0);
   ArchCommon::drawHeartBeat();
 
@@ -191,7 +192,8 @@ extern "C" void irqHandler_0()
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  debug(A_INTERRUPTS, "IRQ 65 called by CPU %zu\n", SMP::currentCpuId());
+  if (A_INTERRUPTS & OUTPUT_ADVANCED)
+      debug(A_INTERRUPTS, "IRQ 65 called by CPU %zu\n", SMP::currentCpuId());
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
     []()
     {

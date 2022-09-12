@@ -531,7 +531,7 @@ void KernelMemoryManager::lockKMM()
   {
     debug(KMM, "CPU %zx lock KMM\n", SMP::currentCpuId());
   }
-  assert(((system_state != RUNNING) || ArchInterrupts::testIFSet()));
+  assert(((system_state != RUNNING) || ArchInterrupts::testIFSet()) && "Cannot allocate heap memory/lock KMM while interrupts are disabled");
   lock_.acquire(getCalledBefore(1));
 }
 
