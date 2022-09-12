@@ -14,6 +14,8 @@
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
+#define MESSAGE_INT_VECTOR 101
+
 class Allocator;
 
 
@@ -32,9 +34,9 @@ class ArchCpu : public Cpu
 public:
         ArchCpu();
 
-        LocalAPIC* lapic;
+        void notifyMessageAvailable();
 
-        eastl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
+        LocalAPIC* lapic;
 private:
 };
 

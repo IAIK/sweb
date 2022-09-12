@@ -7,6 +7,7 @@ target_include_directories(kernel PUBLIC
     ../arch/${ARCH}/../../common/include
     include/console
     include/kernel
+    include/kernel/smp
     include/drivers
     include/fs
     include/fs/devicefs

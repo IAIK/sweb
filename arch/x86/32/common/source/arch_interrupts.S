@@ -156,7 +156,7 @@ arch_pageFaultHandler:
   hlt
 
 
-.irp num,0,1,3,4,6,9,11,14,15,65,90,99,100
+.irp num,0,1,3,4,6,9,11,14,15,65,90,100,101
 irqhandler \num
 .endr
 

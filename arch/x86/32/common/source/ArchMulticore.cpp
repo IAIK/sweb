@@ -60,6 +60,10 @@ ArchCpu::ArchCpu() :
   SMP::addCpuToList(this);
 }
 
+void ArchCpu::notifyMessageAvailable()
+{
+    cpu_lapic.sendIPI(MESSAGE_INT_VECTOR, *lapic, true);
+}
 
 void ArchMulticore::initCpuLocalData(bool boot_cpu)
 {

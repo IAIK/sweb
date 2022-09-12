@@ -609,13 +609,15 @@ IOAPIC* IOAPIC::findIOAPICforGlobalInterrupt(uint32 g_int)
                 uint32 base = io_apic.getGlobalInterruptBase();
                 if((base <= g_int) && (g_int < base + io_apic.getMaxRedirEntry()))
                 {
-                    if(APIC & OUTPUT_ADVANCED){
+                    if (APIC & OUTPUT_ADVANCED)
                         debug(APIC, "Found IOAPIC for global interrupt %u: %p\n", g_int, &io_apic);
-                    }
-                        return &io_apic;
+
+                    return &io_apic;
                 }
         }
-        debug(APIC, "Couldn't find IOAPIC for global interrupt %u\n", g_int);
+        if (APIC & OUTPUT_ADVANCED)
+            debug(APIC, "Couldn't find IOAPIC for global interrupt %u\n", g_int);
+
         return nullptr;
 }
 

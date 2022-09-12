@@ -326,47 +326,35 @@ extern "C" void irqHandler_90()
         ArchInterrupts::endOfInterrupt(90 - 0x20);
 }
 
-extern "C" void arch_irqHandler_99();
-extern "C" void irqHandler_99()
-{
-        ArchInterrupts::startOfInterrupt(99 - 0x20);  // TODO: Fix APIC interrupt numbering
-        debug(A_INTERRUPTS, "IRQ 99 called, performing TLB shootdown on CPU %zx\n", SMP::currentCpuId());
-
-        TLBShootdownRequest* shootdown_list = current_cpu.tlb_shootdown_list.exchange(nullptr);
-
-        if(shootdown_list == nullptr)
-        {
-            debug(A_INTERRUPTS, "TLB shootdown for CPU %zx already handled previously\n", SMP::currentCpuId());
-        }
-
-        while(shootdown_list != nullptr)
-        {
-            debug(A_INTERRUPTS, "CPU %zx performing TLB shootdown for request %zx, addr %zx from CPU %zx, target %zx\n", SMP::currentCpuId(), shootdown_list->request_id, shootdown_list->addr, shootdown_list->orig_cpu, shootdown_list->target);
-                assert(shootdown_list->target == SMP::currentCpuId());
-                assert(current_cpu.id() == SMP::currentCpuId());
-                assert(cpu_lapic.ID() == SMP::currentCpuId());
-                assert(cpu_lapic.readID() == SMP::currentCpuId());
-                ArchMemory::flushLocalTranslationCaches(shootdown_list->addr);
-
-                TLBShootdownRequest* next = shootdown_list->next;
-                // Object is invalid as soon as we acknowledge it
-                //shootdown_list->ack++;
-                assert((shootdown_list->ack & (1 << SMP::currentCpuId())) == 0);
-                assert(shootdown_list->orig_cpu != SMP::currentCpuId());
-
-                shootdown_list->ack |= (1 << SMP::currentCpuId());
-                assert(shootdown_list != next);
-                shootdown_list = next;
-        }
-
-        ArchInterrupts::endOfInterrupt(99 - 0x20);
-}
-
 extern "C" void arch_irqHandler_100();
 extern "C" void irqHandler_100()
 {
         // No EOI here!
         debug(A_INTERRUPTS, "IRQ 100 called by CPU %zu, spurious APIC interrupt\n", SMP::currentCpuId());
+}
+
+extern "C" void arch_irqHandler_101();
+extern "C" void irqHandler_101()
+{
+    debug(A_INTERRUPTS, "IRQ 101 called by CPU %zu\n", SMP::currentCpuId());
+    ArchInterrupts::endOfInterrupt(101 - 0x20); // We can acknowledge int receipt early here
+
+    auto funcdata = current_cpu.fcall_queue.takeAll();
+    while (funcdata != nullptr)
+    {
+        debug(A_INTERRUPTS, "CPU %zu: Function call request from CPU %zu\n", SMP::currentCpuId(), funcdata->orig_cpu);
+
+        funcdata->received.store(true);
+
+        assert(funcdata->target_cpu == SMP::currentCpuId());
+        assert(funcdata->func);
+
+        funcdata->func();
+
+        auto next = funcdata->next.load();
+        funcdata->done.store(true); // funcdata object is invalid as soon as it is acknowledged
+        funcdata = next;
+    }
 }
 
 extern "C" void arch_syscallHandler();

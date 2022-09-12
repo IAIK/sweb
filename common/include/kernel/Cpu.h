@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include "ArchCpuLocalStorage.h"
+#include "AtomicMpScQueue.h"
+#include "RemoteFunctionCall.h"
 
 // Information concerning one cpu in the system
 // Base functionality for all architectures
@@ -13,8 +15,9 @@ public:
     Cpu& operator=(const Cpu&) = delete;
 
     size_t id();
-
     void setId(size_t id);
+
+    AtomicMpScQueue<RemoteFunctionCallMessage> fcall_queue;
 
 private:
     // pointer to thread local cpu_id variable so we can read the id from other cpus

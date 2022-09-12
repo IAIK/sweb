@@ -11,28 +11,23 @@
 #include "ArchCpuLocalStorage.h"
 #include "SMP.h"
 #include "Cpu.h"
+#include "AtomicMpScQueue.h"
+#include "RemoteFunctionCall.h"
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
-// TODO: Move to common code
-struct TLBShootdownRequest
-{
-        size_t addr;
-        eastl::atomic<size_t> ack;
-        size_t target;
-        eastl::atomic<TLBShootdownRequest*> next;
-        size_t request_id;
-        size_t orig_cpu;
-};
+#define MESSAGE_INT_VECTOR 101
+
 
 class ArchCpu : public Cpu
 {
 public:
         ArchCpu();
 
+        void notifyMessageAvailable();
+
         LocalAPIC* lapic;
 
-        eastl::atomic<TLBShootdownRequest*> tlb_shootdown_list;
 private:
 };
 
