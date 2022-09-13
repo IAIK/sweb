@@ -29,7 +29,7 @@ cpu_local LocalAPIC cpu_lapic;
 cpu_local char cpu_stack[CPU_STACK_SIZE];
 
 
-volatile static bool ap_started = false; // TODO: Convert to spinlock
+eastl::atomic<bool> ap_started = false;
 
 
 extern eastl::atomic<size_t> running_cpus;
@@ -52,18 +52,6 @@ extern char ap_paging_root_end;
 
 static uint8 ap_boot_stack[PAGE_SIZE];
 
-ArchCpu::ArchCpu() :
-  lapic(&cpu_lapic)
-{
-  setId(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0);
-  debug(A_MULTICORE, "Initializing ArchCpu for CPU %zx at %p\n", id(), this);
-  SMP::addCpuToList(this);
-}
-
-void ArchCpu::notifyMessageAvailable()
-{
-    cpu_lapic.sendIPI(MESSAGE_INT_VECTOR, *lapic, true);
-}
 
 void ArchMulticore::initCpuLocalData(bool boot_cpu)
 {
@@ -220,22 +208,6 @@ void ArchMulticore::startOtherCPUs()
   }
 }
 
-void ArchMulticore::stopAllCpus()
-{
-  if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
-  {
-    cpu_lapic.sendIPI(90);
-  }
-}
-
-void ArchMulticore::stopOtherCpus()
-{
-    if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
-    {
-        cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
-    }
-}
-
 extern "C" void __apstartup32() {
   // Hack to avoid automatic function prologue (stack isn't set up yet)
   // Load protected mode segments
@@ -251,9 +223,8 @@ extern "C" void __apstartup32() {
       "movl %[stack], %%esp\n"
       "movl %[stack], %%ebp\n"
       :
-      : [K_DS] "i"(KERNEL_DS),
-        [stack] "i"(ap_boot_stack +
-                    sizeof(ap_boot_stack)));
+      : [K_DS]"i"(KERNEL_DS),
+        [stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
 
   ArchCommon::callWithStack((char *)ap_boot_stack + sizeof(ap_boot_stack), [] {
     ++running_cpus;
@@ -306,40 +277,4 @@ void ArchMulticore::initApplicationProcessorCpu()
   debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), waitForSystemStart);
   waitForSystemStart();
-}
-
-
-[[noreturn]] void ArchMulticore::waitForSystemStart()
-{
-  kprintf("CPU %zu initialized, waiting for system start\n", SMP::currentCpuId());
-  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", SMP::currentCpuId());
-  assert(CpuLocalStorage::ClsInitialized());
-  ap_started = true;
-
-  while(system_state != RUNNING);
-
-  debug(A_MULTICORE, "CPU %zu enabling interrupts\n", SMP::currentCpuId());
-  ArchInterrupts::enableInterrupts();
-
-  while(1)
-  {
-    debug(A_MULTICORE, "AP %zu halting\n", SMP::currentCpuId());
-    ArchCommon::halt();
-  }
-  assert(false);
-}
-
-
-char* ArchMulticore::cpuStackTop()
-{
-  return cpu_stack + sizeof(cpu_stack);
-}
-
-
-void ArchMulticore::reservePages(Allocator& allocator)
-{
-    // HACKY: Pages 0 + 1 are used for AP startup code
-    size_t ap_boot_code_range = allocator.alloc(PAGE_SIZE*2, PAGE_SIZE);
-    debug(PM, "Allocated mem for ap boot code: %zx\n", ap_boot_code_range);
-    assert(ap_boot_code_range == 0);
 }

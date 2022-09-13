@@ -14,6 +14,7 @@
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 
+#define STOP_INT_VECTOR 90
 #define MESSAGE_INT_VECTOR 101
 
 class Allocator;

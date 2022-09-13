@@ -27,7 +27,7 @@ cpu_local LocalAPIC cpu_lapic;
 cpu_local char cpu_stack[CPU_STACK_SIZE];
 
 
-volatile static bool ap_started = false;
+eastl::atomic<bool> ap_started = false;
 
 
 extern eastl::atomic<size_t> running_cpus;
@@ -46,18 +46,6 @@ extern char ap_pml4[PAGE_SIZE];
 
 static uint8 ap_boot_stack[PAGE_SIZE];
 
-ArchCpu::ArchCpu() :
-    lapic(&cpu_lapic)
-{
-  setId(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0);
-  debug(A_MULTICORE, "Initializing ArchCpu %zx\n", id());
-  SMP::addCpuToList(this);
-}
-
-void ArchCpu::notifyMessageAvailable()
-{
-    cpu_lapic.sendIPI(MESSAGE_INT_VECTOR, *lapic, true);
-}
 
 void ArchMulticore::initCpuLocalData(bool boot_cpu)
 {
@@ -92,9 +80,8 @@ void ArchMulticore::initCpuLocalTSS(size_t cpu_stack_top)
   debug(A_MULTICORE, "CPU init TSS at %p\n", &cpu_tss);
   setTSSSegmentDescriptor((TSSSegmentDescriptor*)((char*)&cpu_gdt + KERNEL_TSS), (size_t)&cpu_tss >> 32, (size_t)&cpu_tss, sizeof(TSS) - 1, 0);
 
-  cpu_tss.ist0 = cpu_stack_top;
-  cpu_tss.rsp0 = cpu_stack_top;
-  debug(A_MULTICORE, "Loading TSS\n");
+  cpu_tss.setTaskStack(cpu_stack_top);
+
   __asm__ __volatile__("ltr %%ax" : : "a"(KERNEL_TSS));
 }
 
@@ -102,6 +89,7 @@ void ArchMulticore::initialize()
 {
   assert(running_cpus == 0);
   running_cpus = 1;
+
   CpuLocalStorage::initCpuLocalStorage();
   ArchMulticore::initCpuLocalData(true);
 }
@@ -171,30 +159,9 @@ void ArchMulticore::startOtherCPUs()
   }
 }
 
-void ArchMulticore::stopAllCpus()
+extern "C" __attribute__((naked)) void apstartup64()
 {
-  if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
-  {
-    cpu_lapic.sendIPI(90);
-  }
-}
-
-void ArchMulticore::stopOtherCpus()
-{
-    if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
-    {
-        cpu_lapic.sendIPI(90, LAPIC::IPIDestination::OTHERS);
-    }
-}
-
-
-extern "C" void __apstartup64()
-{
-  // Hack to avoid automatic function prologue (stack isn't set up yet)
-  // TODO: Use __attribute__((naked)) in GCC 8
-  __asm__ __volatile__(".global apstartup64\n"
-                       "apstartup64:\n");
-
+  // Stack is not set up yet, no function prologue!
   // Load long mode data segments
   __asm__ __volatile__(
     "movw %[K_DS], %%ax\n"
@@ -203,14 +170,11 @@ extern "C" void __apstartup64()
     "movw %%ax, %%es\n"
     "movw %%ax, %%fs\n"
     "movw %%ax, %%gs\n"
+    "movq %[stack], %%rsp\n"
+    "movq %[stack], %%rbp\n"
     :
-    :[K_DS]"i"(KERNEL_DS)
-  );
-
-  __asm__ __volatile__("movq %[stack], %%rsp\n"
-                       "movq %[stack], %%rbp\n"
-                       :
-                       :[stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
+    : [K_DS]"i"(KERNEL_DS),
+      [stack]"i"(ap_boot_stack + sizeof(ap_boot_stack)));
 
   ++running_cpus;
   debug(A_MULTICORE, "AP startup 64\n");
@@ -249,40 +213,4 @@ void ArchMulticore::initCpu()
                        "movq %%rsp, %%rbp\n"
                        ::[cpu_stack]"r"(ArchMulticore::cpuStackTop()));
   waitForSystemStart();
-}
-
-
-[[noreturn]] void ArchMulticore::waitForSystemStart()
-{
-  kprintf("CPU %zu initialized, waiting for system start\n", SMP::currentCpuId());
-  debug(A_MULTICORE, "CPU %zu initialized, waiting for system start\n", SMP::currentCpuId());
-  assert(CpuLocalStorage::ClsInitialized());
-  ap_started = true;
-
-  while(system_state != RUNNING);
-
-  //debug(A_MULTICORE, "CPU %zu enabling interrupts\n", ArchMulticore::id());
-  ArchInterrupts::enableInterrupts();
-
-  while(1)
-  {
-    debug(A_MULTICORE, "AP %zu halting\n", SMP::currentCpuId());
-    ArchCommon::halt();
-  }
-  assert(false);
-}
-
-
-char* ArchMulticore::cpuStackTop()
-{
-  return cpu_stack + sizeof(cpu_stack);
-}
-
-
-void ArchMulticore::reservePages(Allocator& allocator)
-{
-    // HACKY: Pages 0 + 1 are used for AP startup code
-    size_t ap_boot_code_range = allocator.alloc(PAGE_SIZE*2, PAGE_SIZE);
-    debug(A_MULTICORE, "Allocated mem for ap boot code: [%zx, %zx)\n", ap_boot_code_range, ap_boot_code_range + PAGE_SIZE*2);
-    assert(ap_boot_code_range == 0);
 }
