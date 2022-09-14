@@ -24,6 +24,8 @@
 #include "Syscall.h"
 #include "paging-definitions.h"
 #include "PageFaultHandler.h"
+#include "TimerTickHandler.h"
+
 
 extern uint32* currentStack;
 extern Console* main_console;
@@ -84,13 +86,7 @@ void pageFaultHandler(uint32 address, uint32 type)
 
 void timer_irq_handler()
 {
-  static uint32 heart_beat_value = 0;
-  const char* clock = "/-\\|";
-  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],CONSOLECOLOR::GREEN);
-  heart_beat_value = (heart_beat_value + 1) % 4;
-
-  Scheduler::instance()->incCpuTimerTicks();
-  Scheduler::instance()->schedule();
+  TimerTickHandler::handleTimerTick();
 }
 
 void arch_uart1_irq_handler()

@@ -29,6 +29,7 @@
 #include "Syscall.h"
 #include "paging-definitions.h"
 #include "PageFaultHandler.h"
+#include "TimerTickHandler.h"
 
 #include "8259.h"
 
@@ -168,15 +169,13 @@ extern "C" void irqHandler_0()
 {
   if (A_INTERRUPTS & OUTPUT_ADVANCED)
       debug(A_INTERRUPTS, "IRQ 0 called by CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(0);
-  ArchCommon::drawHeartBeat();
 
-  Scheduler::instance()->incCpuTimerTicks();
+  ArchInterrupts::startOfInterrupt(0);
 
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
     []()
     {
-      Scheduler::instance()->schedule();
+      TimerTickHandler::handleTimerTick();
 
       ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
           ((currentThread->console_color << 4) |

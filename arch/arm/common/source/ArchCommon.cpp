@@ -7,6 +7,8 @@
 #include "FrameBufferConsole.h"
 #include "backtrace.h"
 #include "Stabs2DebugInfo.h"
+#include "ArchCpuLocalStorage.h"
+#include "SMP.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -167,4 +169,13 @@ extern "C" void raise()
 
 void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
 {
+}
+
+cpu_local size_t heart_beat_value = 0;
+const char* clock = "/-\\|";
+
+void ArchCommon::drawHeartBeat()
+{
+    ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,SMP::currentCpuId(),clock[heart_beat_value], CONSOLECOLOR::GREEN);
+    heart_beat_value = (heart_beat_value + 1) % 4;
 }
