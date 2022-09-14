@@ -308,16 +308,22 @@ extern "C" void irqHandler_15()
   ArchInterrupts::endOfInterrupt(15);
 }
 
+extern eastl::atomic_flag assert_print_lock;
+
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
         ArchInterrupts::startOfInterrupt(90 - 0x20);
-        debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", SMP::currentCpuId());
+
+        while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
+        debug(A_INTERRUPTS, "IRQ 90 called, CPU %zu halting\n", SMP::currentCpuId());
         if (currentThread != 0)
         {
             debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
-                currentThread->printBacktrace(false);
+            currentThread->printBacktrace(false);
         }
+        assert_print_lock.clear(eastl::memory_order_release);
+
         while(1)
         {
             ArchCommon::halt();
@@ -344,7 +350,7 @@ extern "C" void irqHandler_101()
     {
         debug(A_INTERRUPTS, "CPU %zu: Function call request from CPU %zu\n", SMP::currentCpuId(), funcdata->orig_cpu);
 
-        funcdata->received.store(true);
+        funcdata->received.store(true, eastl::memory_order_release);
 
         assert(funcdata->target_cpu == SMP::currentCpuId());
         assert(funcdata->func);
@@ -352,7 +358,7 @@ extern "C" void irqHandler_101()
         funcdata->func();
 
         auto next = funcdata->next.load();
-        funcdata->done.store(true); // funcdata object is invalid as soon as it is acknowledged
+        funcdata->done.store(true, eastl::memory_order_release); // funcdata object is invalid as soon as it is acknowledged
         funcdata = next;
     }
 }

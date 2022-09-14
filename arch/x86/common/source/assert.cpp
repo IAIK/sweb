@@ -62,10 +62,12 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   }
   writeLine2Bochs(line_string);
   writeChar2Bochs('\n');
-  while(true);
+  while(true)
+      ArchCommon::halt();
   unreachable();
 }
 
+eastl::atomic_flag assert_print_lock;
 
 [[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file, const char* function)
 {
@@ -76,7 +78,8 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 
   if (in_assert) {
       kprintfd("PANIC LOOP: How did we get here?\n");
-      while(1);
+      while(true)
+          ArchCommon::halt();
       unreachable();
   }
   in_assert = true;
@@ -84,15 +87,20 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
   if (SMP::numRunningCpus() > 1)
   {
       ArchMulticore::stopAllCpus();
-      eastl::atomic<size_t> wait = 0x100000;
-      while(--wait); // Dumb wait to allow other CPUs to finish printing debug output
   }
 
   if (CpuLocalStorage::ClsInitialized() && currentThread)
-          currentThread->printBacktrace(false);
+  {
+      while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
+      currentThread->printBacktrace(false);
+      assert_print_lock.clear(eastl::memory_order_release);
+  }
 
-  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::currentCpuId());
-  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, cpu %zd\n", condition, file, function, line, SMP::currentCpuId());
-  while(true);
+  while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
+  kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, CPU %zd\n", condition, file, function, line, SMP::currentCpuId());
+  kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, CPU %zd\n", condition, file, function, line, SMP::currentCpuId());
+  assert_print_lock.clear(eastl::memory_order_release);
+  while(true)
+      ArchCommon::halt();
   unreachable();
 }
