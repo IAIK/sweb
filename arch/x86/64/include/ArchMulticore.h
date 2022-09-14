@@ -25,10 +25,7 @@ class ArchCpu : public Cpu
 public:
         ArchCpu();
 
-        void notifyMessageAvailable();
-
         LocalAPIC* lapic;
-
 private:
 };
 
@@ -52,6 +49,9 @@ class ArchMulticore
     static void startOtherCPUs();
     static void stopAllCpus();
     static void stopOtherCpus();
+
+    static void sendFunctionCallMessage(ArchCpu& cpu, RemoteFunctionCallMessage* fcall_message);
+    static void notifyMessageAvailable(ArchCpu& cpu);
 
     static void initCpu();
     static void initCpuLocalData(bool boot_cpu = false);

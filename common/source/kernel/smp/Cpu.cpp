@@ -20,3 +20,8 @@ void Cpu::setId(size_t id)
 {
     *cpu_id_ = id;
 }
+
+void Cpu::enqueueFunctionCallMessage(RemoteFunctionCallMessage* fcall_message)
+{
+    fcall_queue.pushBack(fcall_message);
+}

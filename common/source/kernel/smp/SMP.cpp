@@ -67,8 +67,7 @@ void SMP::callOnOtherCpus(const RemoteFunctionCallMessage::function_t& func)
 
         if (id != orig_cpu)
         {
-            cpu->fcall_queue.pushBack(&funcdata[id]);
-            cpu->notifyMessageAvailable();
+            ArchMulticore::sendFunctionCallMessage(*cpu, &funcdata[id]);
         }
     }
 
@@ -79,12 +78,13 @@ void SMP::callOnOtherCpus(const RemoteFunctionCallMessage::function_t& func)
         if (fd.target_cpu == orig_cpu)
             continue;
 
-        if (!fd.done.load())
+        if (!fd.done.load(eastl::memory_order_acquire))
         {
             if (A_MULTICORE & OUTPUT_ADVANCED)
-                debug(A_MULTICORE, "Waiting for ack from CPU %zu for request from CPU %zu, received: %u\n", fd.target_cpu, orig_cpu, fd.received.load());
+                debug(A_MULTICORE, "Waiting for ack from CPU %zu for request from CPU %zu, received: %u\n",
+                      fd.target_cpu, orig_cpu, fd.received.load(eastl::memory_order_acquire));
         }
 
-        while(!fd.done.load());
+        while(!fd.done.load(eastl::memory_order_acquire));
     }
 }

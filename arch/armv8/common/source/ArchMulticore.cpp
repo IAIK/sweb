@@ -49,3 +49,8 @@ void ArchMulticore::startOtherCPUs()
 void ArchMulticore::stopOtherCpus()
 {
 }
+
+void ArchMulticore::sendFunctionCallMessage([[maybe_unused]]ArchCpu& cpu, [[maybe_unused]]RemoteFunctionCallMessage* fcall_message)
+{
+    assert(false && "Not implemented");
+}

@@ -22,6 +22,8 @@ public:
     /* static void stopAllCpus(); */
     static void stopOtherCpus();
 
+    static void sendFunctionCallMessage(ArchCpu& cpu, RemoteFunctionCallMessage* fcall_message);
+
     static void initCpuLocalData(bool boot_cpu = false);
 
 private:

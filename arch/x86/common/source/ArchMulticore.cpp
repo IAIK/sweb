@@ -16,9 +16,15 @@ ArchCpu::ArchCpu() :
     SMP::addCpuToList(this);
 }
 
-void ArchCpu::notifyMessageAvailable()
+void ArchMulticore::notifyMessageAvailable(ArchCpu& cpu)
 {
-    cpu_lapic.sendIPI(MESSAGE_INT_VECTOR, *lapic, true);
+    cpu_lapic.sendIPI(MESSAGE_INT_VECTOR, *cpu.lapic, true);
+}
+
+void ArchMulticore::sendFunctionCallMessage(ArchCpu& cpu, RemoteFunctionCallMessage* fcall_message)
+{
+    cpu.enqueueFunctionCallMessage(fcall_message);
+    notifyMessageAvailable(cpu);
 }
 
 void ArchMulticore::stopAllCpus()

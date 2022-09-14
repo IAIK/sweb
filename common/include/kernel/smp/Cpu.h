@@ -17,6 +17,8 @@ public:
     size_t id();
     void setId(size_t id);
 
+    void enqueueFunctionCallMessage(RemoteFunctionCallMessage* fcall_message);
+
     AtomicMpScQueue<RemoteFunctionCallMessage> fcall_queue;
 
 private:
