@@ -7,7 +7,7 @@ template <typename T>
 class AtomicMpScQueue
 {
 public:
-    void pushBack(T* item)
+    void pushFront(T* item)
     {
         T* expected_next = nullptr;
         do

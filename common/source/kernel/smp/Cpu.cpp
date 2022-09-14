@@ -23,5 +23,5 @@ void Cpu::setId(size_t id)
 
 void Cpu::enqueueFunctionCallMessage(RemoteFunctionCallMessage* fcall_message)
 {
-    fcall_queue.pushBack(fcall_message);
+    fcall_queue.pushFront(fcall_message);
 }
