@@ -138,7 +138,10 @@ extern "C" void exceptionHandler(uint32 type)
 {
   assert(!currentThread || currentThread->isStackCanaryOK());
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
-  assert((currentThreadRegisters->cpsr & (0xE0)) == 0);
+
+  // TODO: should probably only check bits 6 and 7 ? (not 5)
+  // https://developer.arm.com/documentation/ddi0406/b/System-Level-Architecture/The-System-Level-Programmers--Model/ARM-processor-modes-and-core-registers/Program-Status-Registers--PSRs-
+  assert((currentThreadRegisters->spsr & (0xE0)) == 0 && "interrupt occurred while IRQ/FIQ masked");
   if (!currentThread)
   {
     Scheduler::instance()->schedule();
