@@ -35,6 +35,14 @@ if (NOT "${DEBUG}" STREQUAL "1")
         COMMAND ${OBJCOPY_EXECUTABLE} $<TARGET_FILE:kernel> --strip-unneeded $<TARGET_FILE:kernel>)
 endif()
 
+add_custom_command(TARGET kernel
+    POST_BUILD
+    BYPRODUCTS kernel.dbg
+    COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
+)
+
+add_dependencies(kernel add-dbg)
+
 
 set(AVAILABLE_MEMORY 8M)
 set(NUM_CPUS 2)

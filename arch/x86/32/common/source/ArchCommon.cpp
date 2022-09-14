@@ -243,14 +243,22 @@ Stabs2DebugInfo const *kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {
-  extern unsigned char stab_start_address_nr;
-  extern unsigned char stab_end_address_nr;
-
-  extern unsigned char stabstr_start_address_nr;
-
-  kernel_debug_info = new Stabs2DebugInfo((char const *)&stab_start_address_nr,
-                                          (char const *)&stab_end_address_nr,
-                                          (char const *)&stabstr_start_address_nr);
+    debug(A_COMMON, "initDebug\n");
+    for (size_t i = 0; i < getNumModules(); ++i)
+    {
+        debug(A_COMMON, "Checking module from [%zx -> %zx)\n", getModuleStartAddress(i), getModuleEndAddress(i));
+        if ((getModuleStartAddress(i) < getModuleEndAddress(i)) && (memcmp("SWEBDBG1",(char const *)getModuleStartAddress(i),8) == 0))
+        {
+            debug(A_COMMON, "Found SWEBDBG\n");
+            kernel_debug_info = new SWEBDebugInfo((char const *)getModuleStartAddress(i),
+                                                  (char const *)getModuleEndAddress(i));
+        }
+    }
+    if (!kernel_debug_info)
+    {
+        kernel_debug_info = new SWEBDebugInfo(0, 0);
+    }
+    debug(A_COMMON, "initDebug done\n");
 }
 
 void ArchCommon::idle()
