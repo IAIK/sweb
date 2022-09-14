@@ -89,7 +89,7 @@ void timer_irq_handler()
   ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],CONSOLECOLOR::GREEN);
   heart_beat_value = (heart_beat_value + 1) % 4;
 
-  Scheduler::instance()->incTicks();
+  Scheduler::instance()->incCpuTimerTicks();
   Scheduler::instance()->schedule();
 }
 

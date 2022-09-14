@@ -23,7 +23,7 @@ void IdleThread::Run()
   uint32 new_ticks = 0;
   while (true)
   {
-    new_ticks = Scheduler::instance()->getCpuTicks();
+    new_ticks = Scheduler::instance()->getCpuTimerTicks();
     if (new_ticks == last_ticks)
     {
       last_ticks = new_ticks + 1;

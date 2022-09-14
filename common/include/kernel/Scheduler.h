@@ -27,8 +27,6 @@ extern __cpu ArchThreadRegisters* currentThreadRegisters;
 
 extern cpu_local IdleThread* idle_thread;
 
-extern __cpu size_t cpu_ticks;
-
 extern __cpu eastl::atomic<size_t> preempt_protect_count_;
 
 class Scheduler
@@ -46,10 +44,8 @@ class Scheduler
     void printLockingInformation();
     bool isSchedulingEnabled();
     bool isCurrentlyCleaningUp();
-    void incTicks();
-    void incCpuTicks();
-    uint32 getTicks() const;
-    uint32 getCpuTicks() const;
+    void incCpuTimerTicks();
+    uint32 getCpuTimerTicks() const;
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
@@ -75,7 +71,8 @@ class Scheduler
         }
     };
 
-    typedef eastl::vector_multiset<Thread*, ThreadVruntimeLess> ThreadList; // vector_multiset does not alloc on erase/insert !
+    // vector_multiset does not alloc on erase/insert !
+    using ThreadList = eastl::vector_multiset<Thread*, ThreadVruntimeLess>;
 
   private:
     Scheduler();
@@ -97,8 +94,6 @@ class Scheduler
 
     SchedulerLock scheduler_lock_;
 
-    // eastl::atomic<size_t> block_scheduling_;
-    // volatile Thread* scheduling_blocked_by_ = nullptr;
     volatile char* locked_at_ = nullptr;
 
     size_t ticks_;
@@ -115,8 +110,8 @@ public:
     Thread* minVruntimeThread();
     Thread* maxVruntimeThread();
     uint64 updateVruntime(Thread* t, uint64 now);
-    void setThreadVruntime(Thread* t, uint64 new_vruntime);
-    void setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime);
+    ThreadList::iterator setThreadVruntime(Thread* t, uint64 new_vruntime);
+    ThreadList::iterator setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime);
 };
 
 class PreemptProtect

@@ -23,7 +23,7 @@ __cpu ArchThreadRegisters* currentThreadRegisters = nullptr;
 
 cpu_local IdleThread* idle_thread;
 
-__cpu size_t cpu_ticks = 0;
+__cpu size_t cpu_timer_ticks = 0;
 
 __cpu eastl::atomic<size_t> preempt_protect_count_ = {};
 
@@ -70,41 +70,44 @@ void Scheduler::schedule()
   scheduler_lock_.acquire();
 
 
-  Thread* previousThread = currentThread;
+  Thread* previous_thread = currentThread;
+  Thread* next_thread = nullptr;
 
   assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
 
   uint64 thread_ran_for = 0;
 
-  if(previousThread)
+  if(previous_thread)
   {
-    assert(previousThread->isCurrentlyScheduledOnCpu(SMP::currentCpuId()));
+    assert(previous_thread->isCurrentlyScheduledOnCpu(SMP::currentCpuId()));
 
     // Increase virtual running time of the thread by the difference between last schedule and now
-    thread_ran_for = updateVruntime(previousThread, now);
+    thread_ran_for = updateVruntime(previous_thread, now);
 
-    // Threads that yielded their time (without waiting on a lock) are moved to the back of the list by increasing their virtual running time to that of the longest (virtually) running thread
-    // Better: increase vruntime by the time slice that would have been allocated for the thread (requires an actual time base and not just cpu timestamps)
-    if(previousThread->yielded)
+    // Threads that yielded their time (without waiting on a lock) are moved to the back of the list
+    // by increasing their virtual running time to that of the longest (virtually) running thread
+    // Better: increase vruntime by the time slice that would have been allocated for the thread
+    // (requires an actual time base and not just cpu timestamps)
+    if(previous_thread->yielded)
     {
         Thread* max_vruntime_thread = maxVruntimeThread();
         uint64 new_vruntime = max_vruntime_thread->vruntime + 1;
         if (SCHEDULER & OUTPUT_ADVANCED)
-        {
-            debug(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n", currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
-        }
-        setThreadVruntime(previousThread, eastl::max(previousThread->vruntime, new_vruntime));
+            debug(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n",
+                  currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
 
-        previousThread->yielded = false;
+        setThreadVruntime(previous_thread, eastl::max(previous_thread->vruntime, new_vruntime));
+
+        previous_thread->yielded = false;
     }
 
-    previousThread->currently_scheduled_on_cpu_ = (size_t)-1;
+    previous_thread->currently_scheduled_on_cpu_ = (size_t)-1;
   }
 
   assert(!threads_.empty());
 
   // Pick the thread with the lowest virtual running time (that is schedulable and not already running)
-  Thread* min_vruntime_thread = nullptr;
+  // Thread list is ordered by increasing vruntime, i.e. we pick the first suitable thread
   auto it = threads_.begin();
   for(; it != threads_.end(); ++it)
   {
@@ -116,13 +119,13 @@ void Scheduler::schedule()
     (*it)->prev_schedulable = schedulable;
 
     if(SCHEDULER & OUTPUT_ADVANCED)
-    {
-        debug(SCHEDULER, "Check thread (%p) %s, schedulable: %u, just woken: %u, already running: %u, vruntime: %" PRIu64 "\n", *it, (*it)->getName(), schedulable, just_woken, already_running, (*it)->vruntime);
-    }
+        debug(SCHEDULER, "Check thread (%p) %s, schedulable: %u, just woken: %u, already running: %u, vruntime: %" PRIu64 "\n",
+              *it, (*it)->getName(), schedulable, just_woken, already_running, (*it)->vruntime);
 
     if(!already_running && schedulable && can_run_on_cpu)
     {
-        min_vruntime_thread = *it;
+        // Found next thread
+        next_thread = *it;
 
         // Relative virtual running time for threads that have just woken up is set to same as thread with least running time
         // (i.e., schedule them asap, but don't let them run for a really long time to 'catch up' the difference)
@@ -142,27 +145,16 @@ void Scheduler::schedule()
   }
 
   assert(it != threads_.end());
-  assert(min_vruntime_thread);
+  assert(next_thread);
 
-  currentThread = min_vruntime_thread;
-
-  // auto it = threads_.begin();
-  // for(; it != threads_.end(); ++it)
-  // {
-  //   if((*it)->schedulable())
-  //   {
-  //     currentThread = *it;
-  //     break;
-  //   }
-  // }
+  currentThread = next_thread;
 
   if (SCHEDULER & OUTPUT_ADVANCED)
-  {
-      debug(SCHEDULER, "schedule CPU %zu, currentThread %-21s (%p) -> %-21s (%p) ran for {%" PRId64 "}\n", SMP::currentCpuId(),
-            (previousThread ? previousThread->getName() : "(nil)"), previousThread,
+      debug(SCHEDULER, "schedule CPU %zu, currentThread %-21s (%p) -> %-21s (%p) ran for {%" PRId64 "}\n",
+            SMP::currentCpuId(),
+            (previous_thread ? previous_thread->getName() : "(nil)"), previous_thread,
             (currentThread ? currentThread->getName() : "(nil)"), currentThread,
             thread_ran_for);
-  }
 
   assert(currentThread);
   assert(currentThread->schedulable());
@@ -173,15 +165,7 @@ void Scheduler::schedule()
 
   currentThread->currently_scheduled_on_cpu_ = SMP::currentCpuId();
 
-  // if((it != threads_.end()) && ((it + 1) != threads_.end()))
-  // {
-  //   assert(it != threads_.end());
-  //   eastl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
-  // }
-
   scheduler_lock_.release();
-
-  //debug(SCHEDULER, "CPU %zu, new currentThread is %p %s, userspace: %d\n", ArchMulticore::getCpuID(), currentThread, currentThread->getName(), currentThread->switch_to_userspace_);
 
   currentThreadRegisters = (currentThread->switch_to_userspace_ ? currentThread->user_registers_ :
                                                                   currentThread->kernel_registers_);
@@ -264,9 +248,7 @@ void Scheduler::cleanupDeadThreads()
      (e.g. Thread/Process destructor) */
 
   scheduler_lock_.acquire();
-  uint32 thread_count_max = threads_.size();
-  if (thread_count_max > 1024)
-    thread_count_max = 1024;
+  uint32 thread_count_max = eastl::min(threads_.size(), (size_t)1024);
   Thread* destroy_list[thread_count_max];
   uint32 thread_count = 0;
 
@@ -325,30 +307,20 @@ bool Scheduler::isCurrentlyCleaningUp()
   return currentThread == &cleanup_thread_;
 }
 
-uint32 Scheduler::getTicks() const
+uint32 Scheduler::getCpuTimerTicks() const
 {
-  return ticks_;
+  return cpu_timer_ticks;
 }
 
-uint32 Scheduler::getCpuTicks() const
+void Scheduler::incCpuTimerTicks()
 {
-  return cpu_ticks;
-}
-
-void Scheduler::incTicks()
-{
-  ++ticks_;
-}
-
-void Scheduler::incCpuTicks()
-{
-  ++cpu_ticks;
+  ++cpu_timer_ticks;
 }
 
 void Scheduler::printStackTraces()
 {
   scheduler_lock_.acquire();
-  debug(BACKTRACE, "printing the backtraces of <%zd> threads:\n", threads_.size());
+  debug(BACKTRACE, "printing the backtraces of <%zu> threads:\n", threads_.size());
 
   for (auto & thread : threads_)
   {
@@ -432,37 +404,38 @@ uint64 Scheduler::updateVruntime(Thread* t, uint64 now)
 
 
     if(SCHEDULER & OUTPUT_ADVANCED)
-    {
-        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n", SMP::currentCpuId(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
-    }
+        debug(SCHEDULER, "CPU %zu, %s vruntime: %" PRIu64 " (+ %" PRIu64 ") [%" PRIu64 " -> %" PRIu64 "]\n",
+              SMP::currentCpuId(), t->getName(), t->vruntime, time_delta, t->schedulingStartTimestamp(), now);
 
     t->setSchedulingStartTimestamp(now);
 
     return time_delta;
 }
 
-void Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
+Scheduler::ThreadList::iterator Scheduler::setThreadVruntime(Thread* t, uint64 new_vruntime)
 {
     assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
 
     auto it = threads_.find(t);
 
-    setThreadVruntime(it, new_vruntime);
+    return setThreadVruntime(it, new_vruntime);
 }
 
-void Scheduler::setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime)
+Scheduler::ThreadList::iterator Scheduler::setThreadVruntime(Scheduler::ThreadList::iterator it, uint64 new_vruntime)
 {
     assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
     assert(it != threads_.end());
     Thread* t = *it;
     if(SCHEDULER & OUTPUT_ADVANCED)
-    {
-        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n", SMP::currentCpuId(), t->getName(), new_vruntime);
-    }
+        debug(SCHEDULER, "CPU %zu, set %s vruntime = %" PRIu64 "\n",
+              SMP::currentCpuId(), t->getName(), new_vruntime);
 
+    // vruntime is used as the sorting key for the set and cannot be modified in place without temporarily removing the element from the set
+    // Using C++17 extract() would be much better here, but is unfortunately not (yet) available in EASTL
+    // https://en.cppreference.com/w/cpp/container/multiset/extract
     threads_.erase(it);
 
     t->vruntime = new_vruntime;
 
-    threads_.insert(t);
+    return threads_.insert(t);
 }
