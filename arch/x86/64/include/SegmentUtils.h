@@ -107,4 +107,5 @@ size_t getFSBase();
 size_t getGSBase();
 size_t getGSKernelBase();
 void* getSavedFSBase();
+void restoreSavedFSBase();
 void setSWAPGSKernelBase(size_t swapgs_base);

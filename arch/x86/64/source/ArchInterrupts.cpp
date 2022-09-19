@@ -201,6 +201,8 @@ void ArchInterrupts::yieldIfIFSet()
 
 
 struct context_switch_registers {
+  uint64 fsbase_low;
+  uint64 fsbase_high;
   uint64 ds;
   uint64 es;
   uint64 r15;
@@ -252,7 +254,7 @@ extern "C" void arch_saveThreadRegisters(void* base, uint64 error)
   interrupt_registers* iregisters = error ? &((SavedContextSwitchRegistersWithError*)base)->iregisters :
                                             &((SavedContextSwitchRegisters*)base)->iregisters;
 
-  setFSBase((uint64)getSavedFSBase());
+  restoreSavedFSBase();
   ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
@@ -280,6 +282,7 @@ extern "C" void arch_saveThreadRegisters(void* base, uint64 error)
   info->rcx = registers->rcx;
   info->rax = registers->rax;
   info->rbp = registers->rbp;
+  info->fsbase = (registers->fsbase_high << 32) | registers->fsbase_low;
   assert(!currentThread || currentThread->isStackCanaryOK());
 }
 
@@ -311,6 +314,7 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
   {
       assert(target_thread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
       assert(target_thread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+      assert((target_registers->cs & 3) == 3 && "Incorrect ring level for switch to userspace");
   }
   assert(target_thread->isStackCanaryOK() && "Kernel stack corruption detected.");
 
@@ -322,7 +326,8 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
   assert(info.rip >= PAGE_SIZE); // debug
   assert(info.rsp0 >= USER_BREAK);
   cpu_tss.setTaskStack(info.rsp0);
-  setFSBase(target_thread->switch_to_userspace_ ? 0 : (uint64)getSavedFSBase()); // Don't use CLS after this line
+  size_t new_fsbase = target_thread->switch_to_userspace_ ? target_registers->fsbase : (uint64)getSavedFSBase();
+  setFSBase(new_fsbase); // Don't use CLS after this line
   asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
   asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
   asm("push %[ss]" : : [ss]"m"(info.ss));

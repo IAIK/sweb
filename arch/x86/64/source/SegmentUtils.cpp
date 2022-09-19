@@ -111,3 +111,8 @@ void* getSavedFSBase()
         assert(fs_base != 0);
         return fs_base;
 }
+
+void restoreSavedFSBase()
+{
+    setFSBase((uint64)getSavedFSBase());
+}

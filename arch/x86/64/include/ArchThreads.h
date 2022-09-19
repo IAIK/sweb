@@ -12,33 +12,45 @@
 
 struct ArchThreadRegisters
 {
-  uint64  rip;       //   0
-  uint64  cs;        //   8
-  uint64  rflags;    //  16
-  uint64  rax;       //  24
-  uint64  rcx;       //  32
-  uint64  rdx;       //  40
-  uint64  rbx;       //  48
-  uint64  rsp;       //  56
-  uint64  rbp;       //  64
-  uint64  rsi;       //  72
-  uint64  rdi;       //  80
-  uint64  r8;        //  88
-  uint64  r9;        //  96
-  uint64  r10;       // 104
-  uint64  r11;       // 112
-  uint64  r12;       // 120
-  uint64  r13;       // 128
-  uint64  r14;       // 136
-  uint64  r15;       // 144
-  uint64  ds;        // 152
-  uint64  es;        // 160
-  uint64  fs;        // 168
-  uint64  gs;        // 176
-  uint64  ss;        // 184
-  uint64  rsp0;      // 192
-  uint64  cr3;       // 200
-  uint32  fpu[28];   // 208
+  uint64  rip;
+  uint64  cs;
+  uint64  rflags;
+  uint64  rax;
+  uint64  rcx;
+  uint64  rdx;
+  uint64  rbx;
+  uint64  rsp;
+  uint64  rbp;
+  uint64  rsi;
+  uint64  rdi;
+  uint64  r8;
+  uint64  r9;
+  uint64  r10;
+  uint64  r11;
+  uint64  r12;
+  uint64  r13;
+  uint64  r14;
+  uint64  r15;
+  uint64  ds;
+  uint64  es;
+  uint64  fs;
+  uint64  gs;
+  uint64  ss;
+  uint64  rsp0;
+  uint64  cr3;
+  uint64  fsbase;
+  uint32  fpu[28];
+
+    void setKernelStack(size_t k_stack)
+    {
+        rsp0 = k_stack;
+    }
+
+    void setStack(size_t stack)
+    {
+        rsp = stack;
+        rbp = stack;
+    }
 };
 
 class Thread;

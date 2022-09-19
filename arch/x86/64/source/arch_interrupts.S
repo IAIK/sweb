@@ -60,10 +60,23 @@
   movw %ds,%ax
   pushq %rax
 
+  # push fs base
+  movq $0xC0000100, %rcx
+  rdmsr
+  pushq %rdx
+  pushq %rax
+
   loadKernelSegments
 .endm
 
 .macro popAll
+
+  # pop fs base (only relevant when there's no contextSwitch)
+  movq $0xC0000100, %rcx
+  popq %rax
+  popq %rdx
+  wrmsr
+
   popq %rax
   movw %ax,%ds
   popq %rax
@@ -95,7 +108,7 @@
 	    movq $0, %rsi
 	    call arch_saveThreadRegisters
 
-        movq 144(%rsp), %rsi # rip at interrupt
+        movq 160(%rsp), %rsi # rip at interrupt, depends on size of saved registers!
 
         # set up fake call stack for debugger backtrace
         pushq %rsi # fake return address = rip at interrupt
@@ -142,8 +155,8 @@ arch_dummyHandlerMiddle:
         movq $0,%rsi
         call arch_saveThreadRegisters
         movq $1,%rcx
-        movq 152(%rsp),%rdx
-        movq 144(%rsp), %rsi
+        movq 168(%rsp),%rdx
+        movq 160(%rsp), %rsi
         movq dummyhandlerscratchvariable,%rdi
         addq $128, %rdi
         movq $0,dummyhandlerscratchvariable
@@ -166,11 +179,11 @@ arch_errorHandler_\num:
         call arch_saveThreadRegisters
         movq $0, %rcx
     .if \errorcode
-        movq 160(%rsp), %rdx # arg3 = cs
-	    movq 152(%rsp), %rsi # arg2 = rip
+        movq 178(%rsp), %rdx # arg3 = cs
+	    movq 168(%rsp), %rsi # arg2 = rip
     .else
-        movq 152(%rsp), %rdx # arg3 = cs
-        movq 144(%rsp), %rsi # arg2 = rip
+        movq 168(%rsp), %rdx # arg3 = cs
+        movq 160(%rsp), %rsi # arg2 = rip
     .endif
         movq $\num, %rdi     # arg1 = num
 
@@ -205,8 +218,8 @@ arch_pageFaultHandler:
         movq %rsp, %rdi
         movq $1, %rsi
         call arch_saveThreadRegisters
-        movq 152(%rsp), %rdx # arg3 = rip at pagefault
-        movq 144(%rsp), %rsi # arg2 = error code
+        movq 168(%rsp), %rdx # arg3 = rip at pagefault
+        movq 160(%rsp), %rsi # arg2 = error code
         movq %cr2, %rdi      # arg1 = pagefault address
 
         # set up fake call stack for debugger backtrace
