@@ -7,7 +7,7 @@
 #include "debug.h"
 #include "assert.h"
 #include "Mutex.h"
-#include "MutexLock.h"
+#include "ScopeLock.h"
 #include "File.h"
 
 FileDescriptorList global_fd_list;
@@ -43,7 +43,7 @@ FileDescriptorList::~FileDescriptorList()
 int FileDescriptorList::add(FileDescriptor* fd)
 {
   debug(VFS_FILE, "FD list, add %p num %u\n", fd, fd->getFd());
-  MutexLock l(fd_lock_);
+  ScopeLock l(fd_lock_);
 
   for(auto x : fds_)
   {
@@ -61,7 +61,7 @@ int FileDescriptorList::add(FileDescriptor* fd)
 int FileDescriptorList::remove(FileDescriptor* fd)
 {
   debug(VFS_FILE, "FD list, remove %p num %u\n", fd, fd->getFd());
-  MutexLock l(fd_lock_);
+  ScopeLock l(fd_lock_);
   for(auto it = fds_.begin(); it != fds_.end(); ++it)
   {
     if((*it)->getFd() == fd->getFd())
@@ -76,7 +76,7 @@ int FileDescriptorList::remove(FileDescriptor* fd)
 
 FileDescriptor* FileDescriptorList::getFileDescriptor(uint32 fd_num)
 {
-  MutexLock l(fd_lock_);
+  ScopeLock l(fd_lock_);
   for(auto fd : fds_)
   {
     if(fd->getFd() == fd_num)

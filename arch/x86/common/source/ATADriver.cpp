@@ -205,7 +205,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
 
 uint32 ATADriver::addRequest( BDRequest *br )
 {
-  MutexLock lock(lock_); // this lock might serialize stuff too much...
+  ScopeLock lock(lock_); // this lock might serialize stuff too much...
   bool interrupt_context = false;
   debug(ATA_DRIVER, "addRequest %d!\n", br->getCmd() );
   if( mode != BD_PIO_NO_IRQ )

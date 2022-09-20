@@ -90,7 +90,7 @@ void ProcessRegistry::processStart()
 
 size_t ProcessRegistry::processCount()
 {
-  MutexLock lock(counter_lock_);
+  ScopeLock lock(counter_lock_);
   return progs_running_;
 }
 

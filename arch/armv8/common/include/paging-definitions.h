@@ -36,6 +36,7 @@ struct Level12TableEntry
     size_t ns_table                :1;
 }__attribute__((__packed__));
 
+static_assert(sizeof(Level12TableEntry) == 8, "Level12TableEntry is not 64 bit");
 
 struct Level1BlockEntry
 {
@@ -56,6 +57,8 @@ struct Level1BlockEntry
     size_t ignored_2               :5;
 }__attribute__((__packed__));
 
+static_assert(sizeof(Level1BlockEntry) == 8, "Level1BlockEntry is not 64 bit");
+
 struct Level2BlockEntry
 {
     size_t entry_descriptor_type   :2;     //1:0 | 1
@@ -75,6 +78,7 @@ struct Level2BlockEntry
     size_t ignored_2               :5;
 }__attribute__((__packed__));
 
+static_assert(sizeof(Level2BlockEntry) == 8, "Level2BlockEntry is not 64 bit");
 
 typedef struct
 {
@@ -93,6 +97,8 @@ typedef struct
     size_t ingored_1               :4;      //Reserved for software use
     size_t ignored_2               :5;
 }__attribute__((__packed__)) Level3Entry;
+
+static_assert(sizeof(Level3Entry) == 8, "Level3Entry is not 64 bit");
 
 typedef struct Level12TableEntry Level1Entry;
 
