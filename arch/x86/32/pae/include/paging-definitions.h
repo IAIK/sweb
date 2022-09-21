@@ -33,6 +33,8 @@ typedef struct
   size_t reserved_3                 :28; // must be 0
 } __attribute__((__packed__)) PageDirPointerTableEntry;
 
+static_assert(sizeof(PageDirPointerTableEntry) == 8, "PageDirPointerTableEntry is not 64 bit");
+
 struct PageDirPageTableEntry
 {
   size_t present                   :1;
@@ -51,6 +53,8 @@ struct PageDirPageTableEntry
   size_t reserved_2                :27; // must be 0
   size_t execution_disabled        :1;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPageTableEntry) == 8, "PageDirPageTableEntry is not 64 bit");
 
 struct PageDirPageEntry
 {
@@ -73,6 +77,8 @@ struct PageDirPageEntry
   size_t reserved_2                :27; // must be 0
   size_t execution_disabled        :1;
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPageEntry) == 8, "PageDirPageEntry is not 64 bit");
 
 typedef union
 {
@@ -99,6 +105,4 @@ typedef struct
   size_t execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
 
-
-
-
+static_assert(sizeof(PageTableEntry) == 8, "PageTableEntry is not 64 bit");

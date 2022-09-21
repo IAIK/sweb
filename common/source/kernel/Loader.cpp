@@ -93,7 +93,7 @@ bool Loader::readFromBinary (char* buffer, l_off_t position, size_t length)
 
 bool Loader::readHeaders()
 {
-  MutexLock lock(program_binary_lock_);
+  ScopeLock lock(program_binary_lock_);
   hdr_ = new Elf::Ehdr;
 
   if(readFromBinary((char*)hdr_, 0, sizeof(Elf::Ehdr)))
@@ -160,7 +160,7 @@ bool Loader::loadDebugInfoIfAvailable()
     return false;
   }
 
-  MutexLock lock(program_binary_lock_);
+  ScopeLock lock(program_binary_lock_);
 
   ustl::vector<Elf::Shdr> section_headers;
   section_headers.resize(hdr_->e_shnum);

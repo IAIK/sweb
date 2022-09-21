@@ -111,7 +111,7 @@ MMCDriver::~MMCDriver()
 
 uint32 MMCDriver::addRequest(BDRequest * br)
 {
-  MutexLock lock(lock_);
+  ScopeLock lock(lock_);
   debug(MMC_DRIVER, "addRequest %d!\n", br->getCmd());
 
   int32 res = -1;

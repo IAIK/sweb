@@ -30,6 +30,8 @@ struct PageDirPageEntry
   uint32 page_ppn                  :12; // 31:20
 } __attribute__((__packed__));
 
+static_assert(sizeof(PageDirPageEntry) == 4, "PageDirPageEntry is not 32 bit");
+
 struct PageDirPageTableEntry
 {
   uint32 size                      :2;  // 1:0    | 1
@@ -41,6 +43,8 @@ struct PageDirPageTableEntry
   uint32 offset                    :2;  // 11:10  | 0 // 4 page tables would fit on 1 page
   uint32 pt_ppn                    :20; // 31:10
 } __attribute__((__packed__));
+
+static_assert(sizeof(PageDirPageTableEntry) == 4, "PageDirPageTableEntry is not 32 bit");
 
 typedef union
 {
@@ -57,4 +61,6 @@ typedef struct
     uint32 reserved                  :6;  // 11:6   | 0
     uint32 page_ppn                  :20; // 31:12
 } __attribute__((__packed__)) PageTableEntry;
+
+static_assert(sizeof(PageTableEntry) == 4, "PageTableEntry is not 32 bit");
 
