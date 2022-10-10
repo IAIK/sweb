@@ -80,6 +80,16 @@ public:
                 eastl::less{}(interval.first, prev_it->second))
             {
                 // interval starts in prev
+
+                if (eastl::less{}(interval.second, prev_it->second))
+                {
+                    // parts of prev remaining after interval end
+                    // split into two intervals
+                    Interval remainder = *prev_it;
+                    remainder.first = interval.second;
+                    next_it = base_type::emplace_hint(next_it, eastl::move(remainder));
+                }
+
                 prev_it->second = interval.first;
             }
         }
