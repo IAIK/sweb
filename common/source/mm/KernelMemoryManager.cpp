@@ -546,7 +546,7 @@ void KernelMemoryManager::unlockKMM()
 }
 
 
-SpinLock& KernelMemoryManager::getKMMLock()
+Mutex& KernelMemoryManager::getKMMLock()
 {
   return lock_;
 }
