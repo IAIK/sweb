@@ -90,6 +90,8 @@ class Scheduler
      */
     void unlockScheduling(const char* called_at);
 
+    uint64 descheduleThread(Thread* t, uint64 deschedule_time);
+
     static Scheduler *instance_;
 
     SchedulerLock scheduler_lock_;

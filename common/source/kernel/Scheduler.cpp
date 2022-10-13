@@ -75,34 +75,7 @@ void Scheduler::schedule()
 
   assert(scheduler_lock_.isHeldBy(SMP::currentCpuId()));
 
-  uint64 thread_ran_for = 0;
-
-  if(previous_thread)
-  {
-    assert(previous_thread->isCurrentlyScheduledOnCpu(SMP::currentCpuId()));
-
-    // Increase virtual running time of the thread by the difference between last schedule and now
-    thread_ran_for = updateVruntime(previous_thread, now);
-
-    // Threads that yielded their time (without waiting on a lock) are moved to the back of the list
-    // by increasing their virtual running time to that of the longest (virtually) running thread
-    // Better: increase vruntime by the time slice that would have been allocated for the thread
-    // (requires an actual time base and not just cpu timestamps)
-    if(previous_thread->yielded)
-    {
-        Thread* max_vruntime_thread = maxVruntimeThread();
-        uint64 new_vruntime = max_vruntime_thread->vruntime + 1;
-        if (SCHEDULER & OUTPUT_ADVANCED)
-            debug(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n",
-                  currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
-
-        setThreadVruntime(previous_thread, eastl::max(previous_thread->vruntime, new_vruntime));
-
-        previous_thread->yielded = false;
-    }
-
-    previous_thread->currently_scheduled_on_cpu_ = (size_t)-1;
-  }
+  uint64 thread_ran_for = descheduleThread(previous_thread, now);
 
   assert(!threads_.empty());
 
@@ -171,6 +144,38 @@ void Scheduler::schedule()
                                                                   currentThread->kernel_registers_);
 
   currentThread->setSchedulingStartTimestamp(ArchCommon::cpuTimestamp());
+}
+
+uint64 Scheduler::descheduleThread(Thread* t, uint64 deschedule_time)
+{
+    if (!t)
+        return 0;
+
+    assert(t->isCurrentlyScheduledOnCpu(SMP::currentCpuId()));
+
+    // Increase virtual running time of the thread by the difference between last schedule and deschedule_time
+    uint64 thread_ran_for = updateVruntime(t, deschedule_time);
+
+    // Threads that yielded their time (without waiting on a lock) are moved to the back of the list
+    // by increasing their virtual running time to that of the longest (virtually) running thread
+    // Better: increase vruntime by the time slice that would have been allocated for the thread
+    // (requires an actual time base and not just cpu timestamps)
+    if(t->yielded)
+    {
+        Thread* max_vruntime_thread = maxVruntimeThread();
+        uint64 new_vruntime = max_vruntime_thread->vruntime + 1;
+        if (SCHEDULER & OUTPUT_ADVANCED)
+            debug(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n",
+                  currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
+
+        setThreadVruntime(t, eastl::max(t->vruntime, new_vruntime));
+
+        t->yielded = false;
+    }
+
+    t->currently_scheduled_on_cpu_ = (size_t)-1;
+
+    return thread_ran_for;
 }
 
 void Scheduler::addNewThread(Thread *thread)
