@@ -89,16 +89,17 @@ eastl::atomic_flag assert_print_lock;
       ArchMulticore::stopAllCpus();
   }
 
+  while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
+
   if (CpuLocalStorage::ClsInitialized() && currentThread)
   {
-      while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
+      debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
       currentThread->printBacktrace(false);
-      assert_print_lock.clear(eastl::memory_order_release);
   }
 
-  while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, CPU %zd\n", condition, file, function, line, SMP::currentCpuId());
   kprintf("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, CPU %zd\n", condition, file, function, line, SMP::currentCpuId());
+
   assert_print_lock.clear(eastl::memory_order_release);
   while(true)
       ArchCommon::halt();
