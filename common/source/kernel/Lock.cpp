@@ -36,7 +36,7 @@ Lock::~Lock()
     lockWaitersList();
     printWaitersList();
     // The waiters list does not has to be unlocked here, because the kernel is going to die.
-    assert(false);
+    assert(false && "A thread is still waiting on a lock that is about to be destroyed");
   }
   if(held_by)
   {
@@ -332,7 +332,7 @@ void Lock::checkInvalidRelease(const char* method)
           (holding ? holding->getName() : "UNKNOWN THREAD"), holding, currentThread->getName(),
           currentThread);
     printStatus();
-    assert(false);
+    assert(false && "Thread tried to release lock that it is not currently holding");
   }
 }
 
