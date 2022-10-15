@@ -148,6 +148,7 @@ void handle_command(char* buffer, int buffer_size)
       //child process, replace with new image
       execv(command, 0);
       printf("Command not understood\n");
+      exit(1);
     }
     else
     {
