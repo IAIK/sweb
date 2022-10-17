@@ -357,7 +357,7 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
   size_t block_size = bdvd->getBlockSize();
   size_t read_size = num_blocks * block_size;
-  assert(bdvd->readData(block * block_size, read_size, buffer) == (ssize_t)read_size);
+  assert(bdvd->readData(block * block_size, read_size, buffer) == (ssize_t)read_size && "Failed to read all requested blocks from device. (Potentially corrupted disk image)");
 #endif
 }
 
