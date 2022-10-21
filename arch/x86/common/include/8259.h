@@ -26,6 +26,8 @@ public:
  */
   static void disableIRQ(uint16 number);
 
+  static void setIrqMask(uint16 mask);
+
   static bool isIRQEnabled(uint16 number);
 
 /**
