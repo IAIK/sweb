@@ -26,6 +26,12 @@ char last_input[BUFFER_SIZE];
 char dirent_buffer[4096];
 ssize_t ndents = 0;
 
+typedef struct {
+    const char* command;
+    size_t str_len;
+    size_t num_matches;
+} autocomplete_result_t;
+
 const char* builtin_commands[] = {"ls", "exit", "help"};
 
 const char* d_type_str[] = { // see constants in dirent.h
@@ -127,7 +133,7 @@ void handle_command(char* buffer, int buffer_size)
         "Command Help:\n"
         "help                  yes, here we are\n"
         "exit [exit_code]      is really the only command that does something right now\n"
-        "ls                    pseudo ls\n\n");
+        "ls [path]             pseudo ls\n\n");
   }
   else if (strcmp(command, "exit") == 0)
   {
@@ -177,12 +183,12 @@ void handle_command(char* buffer, int buffer_size)
   }
 }
 
-
-const char* autocomplete(char* user_input)
+autocomplete_result_t autocomplete(const char* user_input, const char* path)
 {
-  const char* autocompletion = NULL;
+  autocomplete_result_t res;
+  memset(&res, 0, sizeof(res));
 
-  ssize_t ndents = getdentsBuffer(EXECUTABLE_PREFIX, dirent_buffer, sizeof(dirent_buffer));
+  ssize_t ndents = getdentsBuffer(path, dirent_buffer, sizeof(dirent_buffer));
 
   for (size_t dpos = 0; dpos < ndents;)
   {
@@ -190,9 +196,21 @@ const char* autocomplete(char* user_input)
 
       if (strstr(dent->d_name, user_input) == dent->d_name)
       {
-          if (autocompletion)
-              return NULL; // ambiguous
-          autocompletion = dent->d_name;
+          ++res.num_matches;
+          if (res.num_matches > 1)
+              printf("\n%s", dent->d_name);
+          if (!res.command)
+          {
+              res.command = dent->d_name;
+              res.str_len = strlen(res.command);
+          }
+          else
+          {
+              size_t i = 0;
+              while (i < res.str_len && res.command[i] && dent->d_name[i] && res.command[i] == dent->d_name[i])
+                  ++i;
+              res.str_len = i;
+          }
       }
 
       dpos += dent->d_offs_next;
@@ -204,18 +222,33 @@ const char* autocomplete(char* user_input)
   {
       if (strstr(builtin_commands[i], user_input) == builtin_commands[i])
       {
-          if (autocompletion)
-              return NULL; // ambiguous
-          autocompletion = builtin_commands[i];
+          ++res.num_matches;
+          if (res.num_matches > 1)
+              printf("\n%s", builtin_commands[i]);
+          if (!res.command)
+          {
+              res.command = builtin_commands[i];
+              res.str_len = strlen(res.command);
+          }
+          else
+          {
+              size_t j = 0;
+              while (j < res.str_len && res.command[j] && builtin_commands[i][j] && res.command[j] == builtin_commands[i][j])
+                  ++j;
+              res.str_len = j;
+          }
       }
   }
 
-  return autocompletion;
+  if (res.num_matches > 1)
+      printf("\n%s", res.command);
+
+  return res;
 }
 
 int readCommand(char* buffer, int buffer_size)
 {
-  unsigned int counter = 0;
+  unsigned int chars_in_buffer = 0;
   char cchar;
   char up_pressed = 0;
 
@@ -223,70 +256,76 @@ int readCommand(char* buffer, int buffer_size)
 
   while((cchar = getchar()) != EOF)
   {
-    if(cchar == '\r' || cchar == '\n' || (counter + 1) >= buffer_size)
+    if(cchar == '\r' || cchar == '\n' || (chars_in_buffer + 1) >= buffer_size)
     {
-      buffer[counter] = '\0';
+      buffer[chars_in_buffer] = '\0';
       break;
     }
     else if(cchar == '\t') // autocomplete
     {
-      if(counter == 0)
+      if(chars_in_buffer == 0)
         continue;
 
-      const char* first_occurrence = autocomplete(buffer);
-      if(first_occurrence == NULL)
+      autocomplete_result_t res = autocomplete(buffer, EXECUTABLE_PREFIX);
+      if(!res.command || !res.str_len)
         continue; // no such file
 
-      first_occurrence += counter;
+      if (res.num_matches > 1)
+          printf("\nSWEB: %s> %s", cwd, buffer);
+
+      const char* completion = res.command;
+      completion += chars_in_buffer;
 
       int i;
-      for(i = 0; first_occurrence[i] != '\n' && counter < BUFFER_SIZE - 1; i++, counter++)
-        buffer[counter] = first_occurrence[i];
+      for(i = 0; completion[i] && completion[i] != '\n' && chars_in_buffer < res.str_len && chars_in_buffer < BUFFER_SIZE - 1; i++, chars_in_buffer++)
+      {
+          buffer[chars_in_buffer] = completion[i];
+      }
 
-      write(STDOUT_FILENO, first_occurrence, i);
+      write(STDOUT_FILENO, completion, i);
       continue;
     }
     else if((unsigned char)cchar == 151) // up: take last input
     {
-      if(counter != 0)
+      if(chars_in_buffer != 0)
         continue;
 
       up_pressed = 1;
 
-      counter = strlen(last_input);
+      chars_in_buffer = strlen(last_input);
       memcpy(buffer, last_input, buffer_size);
-      write(STDOUT_FILENO, buffer, counter);
+      write(STDOUT_FILENO, buffer, chars_in_buffer);
       continue;
     }
     else if((unsigned char)cchar == 152) // down: drop input
     {
-      if(counter == 0 || !up_pressed)
+      if(chars_in_buffer == 0 || !up_pressed)
         continue;
 
-      memset(buffer, '\b', counter);
-      buffer[counter] = 0;
+      memset(buffer, '\b', chars_in_buffer);
+      buffer[chars_in_buffer] = 0;
       printf("%s",buffer);
       memset(buffer, 0, buffer_size);
-      counter = 0;
+      chars_in_buffer = 0;
       up_pressed = 0;
       continue;
     }
     else
     {
-      buffer[counter] = (char)cchar;
+      buffer[chars_in_buffer] = (char)cchar;
     }
 
     if (cchar == '\b')
     {
-      if (counter > 0)
+      if (chars_in_buffer > 0)
       {
-        buffer[counter] = 0;
-        counter--;
+        buffer[chars_in_buffer] = 0;
+        chars_in_buffer--;
       }
     }
     else
     {
-      counter++;
+      chars_in_buffer++;
     }
   }
 
@@ -304,7 +343,7 @@ int main(int argc, char *argv[])
 
   do
   {
-    printf("\n%s %s%s", "SWEB:", cwd, "> ");
+    printf("\nSWEB: %s> ", cwd);
     readCommand(buffer, BUFFER_SIZE);
     handle_command(buffer, BUFFER_SIZE);
     for (size_t a = 0; a < BUFFER_SIZE; a++)
