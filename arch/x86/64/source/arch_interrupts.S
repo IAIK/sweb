@@ -207,7 +207,7 @@ arch_errorHandler_\num:
     .if \errorcode
         addq $8, %rsp
     .endif
-        swapgsIfPrivChange \errorcode
+        swapgsIfPrivChange 0
         iretq
         hlt
 .endm
@@ -240,7 +240,7 @@ arch_pageFaultHandler:
 
         popAll
         addq $8, %rsp
-        swapgsIfPrivChange 1
+        swapgsIfPrivChange 0
         iretq
         hlt
 
