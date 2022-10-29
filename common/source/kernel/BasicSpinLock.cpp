@@ -50,3 +50,8 @@ Thread* BasicSpinLock::heldBy()
 {
     return held_by_;
 }
+
+bool BasicSpinLock::isHeldBy(Thread* t)
+{
+    return heldBy() == t;
+}

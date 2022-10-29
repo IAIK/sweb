@@ -9,8 +9,9 @@ class BasicSpinLock
 public:
     BasicSpinLock();
     BasicSpinLock(const BasicSpinLock&) = delete;
+    BasicSpinLock& operator=(const BasicSpinLock&) = delete;
 
-    ~BasicSpinLock() = default;
+    virtual ~BasicSpinLock() = default;
 
     void acquire(bool yield = true);
     bool acquireNonBlocking();
@@ -18,6 +19,7 @@ public:
     void release();
 
     Thread* heldBy();
+    bool isHeldBy(Thread* t);
 
 protected:
     eastl::atomic_flag lock_;
