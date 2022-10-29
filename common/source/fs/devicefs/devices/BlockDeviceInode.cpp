@@ -29,6 +29,11 @@ int32 BlockDeviceInode::readData(uint32 offset, uint32 size, char* buffer)
     size_t bd_size = device_->getNumBlocks() * block_size;
     size_t read_size = eastl::min<size_t>(size, bd_size - offset);
 
+    if ((offset % block_size == 0) && (read_size % block_size == 0))
+    {
+        return device_->readData(offset, read_size, buffer);
+    }
+
     int32 bd_status = 0;
 
     auto tmp_buf = eastl::make_unique<char[]>(block_size);
@@ -61,6 +66,11 @@ int32 BlockDeviceInode::writeData(uint32 offset, uint32 size, const char* buffer
     size_t block_size = device_->getBlockSize();
     size_t bd_size = device_->getNumBlocks() * block_size;
     size_t write_size = eastl::min<size_t>(size, bd_size - offset);
+
+    if ((offset % block_size == 0) && (write_size % block_size == 0))
+    {
+        return device_->writeData(offset, write_size, buffer);
+    }
 
     int32 bd_status = 0;
 
