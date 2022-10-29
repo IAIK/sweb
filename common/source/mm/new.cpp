@@ -11,10 +11,27 @@
 #include "SystemState.h"
 
 /**
+ * delete (free) memory. This function is used by the wrappers.
+ * @param address the address of the memory to delete
+ */
+static void _delete(void* address)
+{
+    if (address) {
+        address = ((uint8*)address) - 0x10;
+    }
+
+    pointer called_by = getCalledBefore(2);
+    debug(KMM, "delete %p\n", address);
+    assert(address > (void*)0x80000000 || address == (void*)nullptr);
+    KernelMemoryManager::instance()->freeMemory ( ( pointer ) address, called_by);
+}
+
+/**
  * Allocate new memory. This function is used by the wrappers.
  * @param size the size of the memory to allocate
  * @return the pointer to the new memory
  */
+__attribute__((__alloc_size__ (1), __malloc__, __malloc__(_delete, 1)))
 static void* _new(size_t size)
 {
   pointer called_by = getCalledBefore(2);
@@ -28,27 +45,13 @@ static void* _new(size_t size)
   }
   return p;
 }
-/**
- * delete (free) memory. This function is used by the wrappers.
- * @param address the address of the memory to delete
- */
-static void _delete(void* address)
-{
-  if (address) {
-    address = ((uint8*)address) - 0x10;
-  }
-
-  pointer called_by = getCalledBefore(2);
-  debug(KMM, "delete %p\n", address);
-  assert(address > (void*)0x80000000 || address == (void*)nullptr);
-  KernelMemoryManager::instance()->freeMemory ( ( pointer ) address, called_by);
-}
 
 /**
  * overloaded normal new operator
  * @param size the size of the memory to allocate
  * @return the pointer to the new memory
  */
+__attribute__((__alloc_size__ (1), __malloc__, __malloc__(_delete, 1)))
 void* operator new ( size_t size )
 {
   return _new(size);
@@ -77,6 +80,7 @@ void operator delete(void* address, size_t size)
  * @param size the size of the array to allocate
  * @return the pointer to the new memory
  */
+__attribute__((__alloc_size__ (1), __malloc__, __malloc__(_delete, 1)))
 void* operator new[] ( size_t size )
 {
   return _new(size);
