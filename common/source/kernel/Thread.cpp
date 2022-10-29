@@ -150,7 +150,8 @@ void Thread::printBacktrace(bool use_stored_registers)
   {
     count = backtrace(call_stack, BACKTRACE_MAX_FRAMES, this, use_stored_registers);
 
-    debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
+    debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s>[%zu] (%p) ===\n", user_registers_ ? "user" : "kernel", getName(), getTID(), this);
+    debug(BACKTRACE, " ----- Kernel -----------------------\n");
     for(size_t i = 0; i < count; ++i)
     {
         debug(BACKTRACE, " ");
@@ -173,7 +174,7 @@ void Thread::printBacktrace(bool use_stored_registers)
       }
     }
   }
-  debug(BACKTRACE, "=== End of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
+  debug(BACKTRACE, "=== End of backtrace for %sthread <%s>[%zu] (%p) ===\n", user_registers_ ? "user" : "kernel", getName(), getTID(), this);
 }
 
 bool Thread::schedulable()
