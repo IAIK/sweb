@@ -75,7 +75,13 @@
   movq $0xC0000100, %rcx
   popq %rax
   popq %rdx
+
+  # Only restore fs base when returning to user mode (user fs is thread specific, kernel fs is _CPU_ specific and changes depending on which cpu the thread is scheduled on, so the saved fs base is incorrect when the thread is re-scheduled on another cpu)
+  # Test for user mode by looking at the privilege level of the data segment selector that's next on the stack
+  testl $3, (%rsp)
+  jz 1f
   wrmsr
+1:
 
   popq %rax
   movw %ax,%ds
