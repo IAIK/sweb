@@ -471,7 +471,12 @@ void KernelMemoryManager::freeSegment(MallocSegment *this_one, pointer called_by
 pointer KernelMemoryManager::ksbrk(ssize_t size)
 {
   assert(base_break_ <= (size_t)kernel_break_ + size && "kernel heap break value corrupted");
-  assert((((kernel_break_ - base_break_) + size) <= reserved_max_) && "maximum kernel heap size reached");
+
+  if (!(((kernel_break_ - base_break_) + size) <= reserved_max_))
+  {
+      kprintfd("Used kernel memory: %zu\n", getUsedKernelMemory(true));
+      assert(false && "maximum kernel heap size reached");
+  }
   assert(DYNAMIC_KMM && "ksbrk should only be called if DYNAMIC_KMM is 1 - not in baseline SWEB");
   if(size != 0)
   {
