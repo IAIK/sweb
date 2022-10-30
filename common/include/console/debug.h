@@ -56,12 +56,16 @@ enum AnsiColor
 extern bool debug_print_to_fb;
 
 #ifndef EXE2MINIXFS
-#define debug(flag, ...) do {                                           \
-        if (flag & OUTPUT_ENABLED) {                                    \
+#define debugAlways(flag, ...) do {                                         \
             DEBUG_PRINT_FSTRING_CONCAT(kprintfd, DEBUG_FORMAT_STRING, FLAG_PARAM(flag), ##__VA_ARGS__); \
             if(debug_print_to_fb) {                                     \
                 DEBUG_PRINT_FSTRING_CONCAT(kprintf, DEBUG_FORMAT_STRING_NOCOLOR, FLAG_PARAM_NOCOLOR(flag), ##__VA_ARGS__); \
             }                                                           \
+        } while (0)
+
+#define debug(flag, ...) do {                 \
+        if (flag & OUTPUT_ENABLED) {          \
+            debugAlways(flag, ##__VA_ARGS__); \
         } } while (0)
 #endif
 
