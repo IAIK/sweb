@@ -325,13 +325,13 @@ void Scheduler::incCpuTimerTicks()
 void Scheduler::printStackTraces()
 {
   scheduler_lock_.acquire();
-  debug(BACKTRACE, "printing the backtraces of <%zu> threads:\n", threads_.size());
+  debugAlways(BACKTRACE, "printing the backtraces of <%zu> threads:\n", threads_.size());
 
   for (auto & thread : threads_)
   {
     thread->printBacktrace();
-    debug(BACKTRACE, "\n");
-    debug(BACKTRACE, "\n");
+    debugAlways(BACKTRACE, "\n");
+    debugAlways(BACKTRACE, "\n");
   }
 
   scheduler_lock_.release();
@@ -340,8 +340,7 @@ void Scheduler::printStackTraces()
 void Scheduler::printLockingInformation()
 {
   scheduler_lock_.acquire();
-  kprintfd("\n");
-  debug(LOCK, "Scheduler::printLockingInformation:\n");
+  debugAlways(LOCK, "\nScheduler::printLockingInformation:\n");
   for (auto thread : threads_)
   {
     if(thread->holding_lock_list_ != nullptr)
@@ -353,11 +352,11 @@ void Scheduler::printLockingInformation()
   {
     if(thread->lock_waiting_on_ != nullptr)
     {
-      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p), held by: %p, last accessed at %zx\n", thread->getName(), thread, thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_, thread->lock_waiting_on_->heldBy(), thread->lock_waiting_on_->last_accessed_at_);
+      debugAlways(LOCK, "Thread %s (%p) is waiting on lock: %s (%p), held by: %p, last accessed at %zx\n", thread->getName(), thread, thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_, thread->lock_waiting_on_->heldBy(), thread->lock_waiting_on_->last_accessed_at_);
             thread->lock_waiting_on_->printStatus();
     }
   }
-  debug(LOCK, "Scheduler::printLockingInformation finished\n");
+  debugAlways(LOCK, "Scheduler::printLockingInformation finished\n");
   scheduler_lock_.release();
 }
 

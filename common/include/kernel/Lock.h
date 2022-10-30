@@ -58,6 +58,11 @@ public:
     return next_lock_on_holding_list_;
   }
 
+  /**
+   * Print the lock status.
+   */
+  void printStatus();
+
 protected:
 
   /**
@@ -161,11 +166,6 @@ protected:
   void pushFrontCurrentThreadToWaitersList();
 
   /**
-   * Print the lock status.
-   */
-  void printStatus();
-
-  /**
    * Release the lock, and set the thread to sleeping.
    */
   void sleepAndRelease(bool should_yield = true);
@@ -204,5 +204,4 @@ private:
    * @param starting The thread which shall be started at
    */
   void printOutCircularDeadLock(Thread* starting);
-
 };

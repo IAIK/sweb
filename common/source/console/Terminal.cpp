@@ -102,8 +102,8 @@ void Terminal::write(char character)
   console_->lockConsoleForDrawing();
   writeInternal(character);
   console_->unLockConsoleForDrawing();
-
 }
+
 void Terminal::writeString(char const *string)
 {
   MutexLock lock(mutex_);

@@ -57,7 +57,7 @@ Thread::~Thread()
   kernel_registers_ = nullptr;
   if(unlikely(holding_lock_list_ != nullptr))
   {
-    kprintfd("~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n", getName(), this);
+    debugAlways(THREAD, "~Thread: ERROR: Thread <%s [%zu] (%p)> is going to be destroyed, but still holds some locks!\n", getName(), getTID(), this);
     Lock::printHoldingList(this);
     assert(false && "~Thread: ERROR: Thread is going to be destroyed, but still holds some locks!\n");
   }
