@@ -32,9 +32,8 @@ static void _delete(void* address)
  * @return the pointer to the new memory
  */
 __attribute__((__alloc_size__ (1), __malloc__, __malloc__(_delete, 1)))
-static void* _new(size_t size)
+static void* _new(size_t size, pointer called_by = getCalledBefore(1))
 {
-  pointer called_by = getCalledBefore(2);
   debug(KMM, "new, size: %zu\n", size);
   // maybe we could take some precautions not to be interrupted while doing this
   void* p = ( void* ) KernelMemoryManager::instance()->allocateMemory (size + 0x10, called_by);
@@ -152,12 +151,13 @@ void checkKMMDeadlock(const char* pName = nullptr, const char* file = nullptr, i
 void* operator new[](size_t size, [[maybe_unused]] const char* pName, [[maybe_unused]] int flags, [[maybe_unused]] unsigned debugFlags, [[maybe_unused]] const char* file, [[maybe_unused]] int line)
 {
     checkKMMDeadlock(pName, file, line);
-    return new uint8_t[size];
+    // Number of call frames to go up the stack to get to the actually location where allocation happened in user code varies depending on container, etc... 6 is enough to get the actual call site for vector::emplace_back() and is close enough for other containers to get useful function information instead of just allocator::allocate
+    return _new(size, getCalledBefore(6));
 }
 
 void* operator new[](size_t size, [[maybe_unused]] size_t alignment, [[maybe_unused]] size_t alignmentOffset, [[maybe_unused]] const char* pName, [[maybe_unused]] int flags, [[maybe_unused]] unsigned debugFlags, [[maybe_unused]] const char* file, [[maybe_unused]] int line)
 {
     // TODO: respect alignment
     checkKMMDeadlock(pName, file, line);
-    return new uint8_t[size];
+    return _new(size, getCalledBefore(6));
 }

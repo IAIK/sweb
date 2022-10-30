@@ -132,9 +132,9 @@ namespace std
  *  does nothing) may not be replaced by a user's program.
 */
 [[nodiscard]] void* operator new(std::size_t)
-  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 [[nodiscard]] void* operator new[](std::size_t)
-  __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
+  __attribute__((__EXTERNALLY_VISIBLE_ATTR__, __alloc_size__ (1), __malloc__));
 void operator delete(void*) noexcept
   __attribute__((__EXTERNALLY_VISIBLE_ATTR__));
 void operator delete[](void*) noexcept
