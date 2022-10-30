@@ -107,24 +107,29 @@
 
 .extern arch_saveThreadRegisters
 
-.macro interrupthandler handlerfunction
+.macro interrupthandler handlerfunction id
         swapgsIfPrivChange
 	    pushAll
+
 	    movq %rsp, %rdi
 	    movq $0, %rsi
+
+	    movq 160(%rsp), %rax # rip at interrupt, depends on size of saved registers!
+
+	    # set up fake call stack for debugger backtrace
+	    pushq %rax # fake return address = rip at interrupt
+.global arch_irqHandler_backtrace_fix_\id
+.type   arch_irqHandler_backtrace_fix_\id, @function
+arch_irqHandler_backtrace_fix_\id:
+	    pushq %rbp
+	    movq %rsp, %rbp
+
 	    call arch_saveThreadRegisters
-
-        movq 160(%rsp), %rsi # rip at interrupt, depends on size of saved registers!
-
-        # set up fake call stack for debugger backtrace
-        pushq %rsi # fake return address = rip at interrupt
-        pushq %rbp
-        movq %rsp, %rbp
 
 	    call \handlerfunction
 
         leave
-        popq %rdx
+        popq %rdx # pop simulated return value
 
 	    popAll
 	    swapgsIfPrivChange
@@ -136,7 +141,7 @@
 .type   arch_irqHandler_\num, @function
 .extern irqHandler_\num
 arch_irqHandler_\num:
-        interrupthandler irqHandler_\num
+        interrupthandler irqHandler_\num \num
 .endm
 
 # TODO: not thread safe with multiple CPUs
@@ -182,7 +187,9 @@ arch_errorHandler_\num:
         pushAll
         movq %rsp, %rdi
         movq $\errorcode, %rsi
+
         call arch_saveThreadRegisters
+
         movq $0, %rcx
     .if \errorcode
         movq 178(%rsp), %rdx # arg3 = cs
@@ -195,13 +202,16 @@ arch_errorHandler_\num:
 
         # set up fake call stack for debugger backtrace
         pushq %rsi # fake return address = rip at fault
+.global arch_errorHandler_backtrace_fix_\num
+.type   arch_errorHandler_backtrace_fix_\num, @function
+arch_errorHandler_backtrace_fix_\num:
         pushq %rbp
         movq %rsp, %rbp
 
         call errorHandler
 
         leave
-        popq %rdx
+        popq %rdx # pop simulated return value
 
         popAll
     .if \errorcode
@@ -230,6 +240,9 @@ arch_pageFaultHandler:
 
         # set up fake call stack for debugger backtrace
         pushq %rdx # fake return address = rip at pagefault
+.global arch_pageFaultHandler_backtrace_fix
+.type   arch_pageFaultHandler_backtrace_fix, @function
+arch_pageFaultHandler_backtrace_fix:
         pushq %rbp
         movq %rsp, %rbp
 
@@ -261,4 +274,4 @@ errorhandler \num
 .type   arch_syscallHandler, @function
 .extern syscallHandler
 arch_syscallHandler:
-        interrupthandler syscallHandler
+        interrupthandler syscallHandler syscall
