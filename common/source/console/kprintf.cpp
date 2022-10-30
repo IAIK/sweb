@@ -167,12 +167,11 @@ void kprintfd(const char *fmt, ...)
 
   Thread* calling_thread = CpuLocalStorage::ClsInitialized() ? currentThread : nullptr;
 
-  if (calling_thread && kprintfd_lock.heldBy() == calling_thread)
+  if (calling_thread && kprintfd_lock.isHeldBy(calling_thread))
   {
       // WARNING: recursive call to kprintf while holding kprintfd lock! (e.g. due to pagefault in kprintfd)
 
-      for (char c : "\n\n\033[1;31mWARNING: recursive call to kprintfd while holding kprintfd lock. No longer properly serializing debug output to prevent deadlock!\033[0;39m\n\n")
-          writeChar2Bochs(c);
+      writeLine2Bochs("\n\n\033[1;31mWARNING: recursive call to kprintfd while holding kprintfd lock. No longer properly serializing debug output to prevent deadlock!\033[0;39m\n\n");
 
       // Prevent extra unlock in previous kprintfd call since this is already done here
       if (calling_thread->kprintfd_recursion_detected)
@@ -181,9 +180,6 @@ void kprintfd(const char *fmt, ...)
       // We can only do this since this won't break anything (aside from producing garbled output on the debug console)
       kprintfd_lock.release();
   }
-
-  if (calling_thread)
-      calling_thread->kprintfd_recursion_detected = &kprintfd_recursion_detected;
 
   while(!kprintfd_lock.acquireNonBlocking())
   {
@@ -195,13 +191,16 @@ void kprintfd(const char *fmt, ...)
       }
   }
 
+  if (calling_thread)
+      calling_thread->kprintfd_recursion_detected = &kprintfd_recursion_detected;
+
   va_start(args, fmt);
   kvprintf(fmt, kprintfd_func, nullptr, 10, args);
   va_end(args);
 
-  if (!kprintfd_recursion_detected)
-      kprintfd_lock.release();
-
   if (calling_thread)
       calling_thread->kprintfd_recursion_detected = nullptr;
+
+  if (!kprintfd_recursion_detected)
+      kprintfd_lock.release();
 }
