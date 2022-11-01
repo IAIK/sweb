@@ -81,6 +81,7 @@ bool in_assert_pre_cls = false;
   bool* in_assert_p = CpuLocalStorage::ClsInitialized() ? &in_assert : &in_assert_pre_cls;
 
   if (*in_assert_p) {
+      assert_print_lock.clear(eastl::memory_order_release);
       kprintfd("PANIC LOOP: How did we get here?\n");
       while(true)
           ArchCommon::halt();
