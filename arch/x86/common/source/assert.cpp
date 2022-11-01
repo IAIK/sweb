@@ -68,21 +68,24 @@ __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32
 }
 
 eastl::atomic_flag assert_print_lock;
+__cpu bool in_assert = false;
+bool in_assert_pre_cls = false;
 
 [[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file, const char* function)
 {
   ArchInterrupts::disableInterrupts();
-  static bool in_assert = false;
   system_state = KPANIC;
   debug_print_to_fb = false;
 
-  if (in_assert) {
+  bool* in_assert_p = CpuLocalStorage::ClsInitialized() ? &in_assert : &in_assert_pre_cls;
+
+  if (*in_assert_p) {
       kprintfd("PANIC LOOP: How did we get here?\n");
       while(true)
           ArchCommon::halt();
       unreachable();
   }
-  in_assert = true;
+  *in_assert_p = true;
 
   if (SMP::numRunningCpus() > 1)
   {
