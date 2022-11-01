@@ -67,7 +67,7 @@ static uint16 inportwp(uint16 port)
 static inline void outportb(uint16 port, uint8 val)
 {
    __asm__ __volatile__ (
-   "outb %b0, %w1"
+   "outb %b0, %w1\n"
    :
    : "a"(val), "d"(port));
 }
@@ -104,4 +104,3 @@ static inline void outportwp(uint16 port, uint16 value)
   asm volatile ("outw %w0, %1" : : "a" (value), "id" (port));
   asm volatile ("outb %al,$0x80");
 }
-

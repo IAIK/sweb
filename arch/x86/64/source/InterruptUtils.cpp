@@ -316,7 +316,7 @@ extern "C" void irqHandler_90()
 
         while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
         debug(A_INTERRUPTS, "IRQ 90 called, CPU %zu halting\n", SMP::currentCpuId());
-        if (currentThread != 0)
+        if (currentThread)
         {
             debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
             currentThread->printBacktrace(false);
