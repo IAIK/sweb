@@ -61,13 +61,16 @@ void Mutex::acquire(pointer called_by)
   if(!called_by)
     called_by = getCalledBefore(1);
 
-  //  debug(LOCK, "Mutex::acquire:  Mutex: %s (%p), currentThread: %s (%p).\n",
-  //           getName(), this, currentThread->getName(), currentThread);
-  //  if(kernel_debug_info)
-  //  {
-  //    debug(LOCK, "The acquire is called by: ");
-  //    kernel_debug_info->printCallInformation(called_by);
-  //  }
+  if (debug_lock || LOCK & OUTPUT_ADVANCED)
+  {
+      debugAlways(LOCK, "Mutex::acquire:  Mutex: %s (%p), currentThread: %s (%p).\n",
+            getName(), this, currentThread->getName(), currentThread);
+      if(kernel_debug_info)
+      {
+          debugAlways(LOCK, "The acquire is called by: ");
+          kernel_debug_info->printCallInformation(called_by);
+      }
+  }
 
   // check for deadlocks, interrupts...
   doChecksBeforeWaiting();
@@ -102,13 +105,16 @@ void Mutex::release(pointer called_by, bool do_checks)
   if(!called_by)
     called_by = getCalledBefore(1);
 
-  // debug(LOCK, "Mutex::release:  Mutex: %s (%p), currentThread(): %s (%p).\n",
-  //          getName(), this, currentThread->getName(), currentThread);
-  // if(kernel_debug_info)
-  // {
-  //   debug(LOCK, "The release is called by: ");
-  //   kernel_debug_info->printCallInformation(called_by);
-  // }
+  if (debug_lock || LOCK & OUTPUT_ADVANCED)
+  {
+      debugAlways(LOCK, "Mutex::release:  Mutex: %s (%p), currentThread(): %s (%p).\n",
+               getName(), this, currentThread->getName(), currentThread);
+      if(kernel_debug_info)
+      {
+        debugAlways(LOCK, "The release is called by: ");
+        kernel_debug_info->printCallInformation(called_by);
+      }
+  }
 
   if(do_checks)
   {

@@ -63,6 +63,9 @@ public:
    */
   void printStatus();
 
+  bool debug_lock = false;
+
+
 protected:
 
   /**
