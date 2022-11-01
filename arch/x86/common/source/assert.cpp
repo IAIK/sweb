@@ -91,7 +91,7 @@ bool in_assert_pre_cls = false;
 
   if (SMP::numRunningCpus() > 1)
   {
-      ArchMulticore::stopAllCpus();
+      ArchMulticore::stopOtherCpus();
   }
 
   while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
