@@ -17,7 +17,7 @@ void BasicSpinLock::acquire(bool yield)
     {
         ArchCommon::spinlockPause();
         //SpinLock: Simplest of Locks, do the next best thing to busy waiting
-        if(currentThread && yield)
+        if(calling_thread && yield)
         {
             ArchInterrupts::yieldIfIFSet();
         }
