@@ -163,7 +163,8 @@ void ArchInterrupts::endOfInterrupt(uint16 number)
 
 void ArchInterrupts::enableInterrupts()
 {
-   asm("sti");
+   asm("sti\n"
+       "nop\n");
 }
 
 bool ArchInterrupts::disableInterrupts()
