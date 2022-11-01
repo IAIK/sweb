@@ -290,7 +290,6 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 
         sendIPI(0, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::INIT);
 
-        debug(A_MULTICORE, "Start delay 1\n");
         // 10ms delay
 
         PIT::PITCommandRegister pit_command{};
@@ -318,15 +317,12 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 
         delay = 0;
 
-        debug(A_MULTICORE, "End delay 1\n");
-
         assert((entry_addr % PAGE_SIZE) == 0);
         assert((entry_addr/PAGE_SIZE) <= 0xFF);
 
         sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
 
         // 200us delay
-        debug(A_MULTICORE, "Start delay 2\n");
 
         ArchInterrupts::enableIRQ(0);
         ArchInterrupts::startOfInterrupt(0);
@@ -341,28 +337,14 @@ void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
 
         delay = 0;
 
-        debug(A_MULTICORE, "End delay 2\n");
-
+        // Second SIPI just in case the first one didn't work
         sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
-
-        // Wait another 10ms to give APs time for initialization
-        ArchInterrupts::enableIRQ(0);
-        ArchInterrupts::startOfInterrupt(0);
-        ArchInterrupts::enableInterrupts();
-
-        PIT::init(pit_command.value, 1193182 / 100);
-        while(!delay);
-
-        ArchInterrupts::disableInterrupts();
-        ArchInterrupts::disableIRQ(0);
-        ArchInterrupts::endOfInterrupt(0);
-
-        delay = 0;
 
         setUsingAPICTimer(temp_using_apic_timer);
         InterruptUtils::idt[0x20] = temp_irq0_descriptor;
 
-        debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
+        if (A_MULTICORE & OUTPUT_ADVANCED)
+            debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
 }
 
 
@@ -374,7 +356,8 @@ void LocalAPIC::sendIPI(uint8 vector, LAPIC::IPIDestination dest_type, size_t ta
         // Need to ensure this section of code runs on the same CPU and the APIC is not used for anything else in the meantime
         WithInterrupts d(false);
 
-        debug(APIC, "CPU %x Sending IPI, vector: %x\n", ID(), vector);
+        if (A_MULTICORE & OUTPUT_ADVANCED)
+            debug(APIC, "CPU %x Sending IPI, vector: %x\n", ID(), vector);
 
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
         v_high.destination = (dest_type == LAPIC::IPIDestination::TARGET ? target : 0);
@@ -410,7 +393,9 @@ void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_del
         // Ensure this section of code runs on the same CPU and the local APIC is not used for anything else in the meantime
         WithInterrupts d(false);
 
-        debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", ID(), target.ID(), vector);
+        if (A_MULTICORE & OUTPUT_ADVANCED)
+            debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", ID(), target.ID(), vector);
+
         LocalAPIC_InterruptCommandRegisterHigh v_high{};
         v_high.destination = target.ID();
 
