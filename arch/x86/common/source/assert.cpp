@@ -73,10 +73,11 @@ bool in_assert_pre_cls = false;
 
 [[noreturn]] void sweb_assert(const char *condition, uint32 line, const char* file, const char* function)
 {
-  ArchInterrupts::disableInterrupts();
+  bool prev_intr = ArchInterrupts::disableInterrupts();
   system_state = KPANIC;
   debug_print_to_fb = false;
 
+  Thread* calling_thread = CpuLocalStorage::ClsInitialized() ? currentThread : nullptr;
   bool* in_assert_p = CpuLocalStorage::ClsInitialized() ? &in_assert : &in_assert_pre_cls;
 
   if (*in_assert_p) {
@@ -94,10 +95,12 @@ bool in_assert_pre_cls = false;
 
   while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
 
-  if (CpuLocalStorage::ClsInitialized() && currentThread)
+  if (calling_thread)
   {
       debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
-      currentThread->printBacktrace(false);
+      if (!prev_intr)
+          debug(BACKTRACE, "CAUTION: Assertion occurred in interrupt handler that is potentially unrelated to normal thread execution\n");
+      calling_thread->printBacktrace(false);
   }
 
   kprintfd("KERNEL PANIC: Assertion %s failed in File %s, Function %s on Line %d, CPU %zd\n", condition, file, function, line, SMP::currentCpuId());
