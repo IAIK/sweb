@@ -1,5 +1,6 @@
 #include "ACPI.h"
 #include "APIC.h"
+#include "IoApic.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
 #include "debug.h"
