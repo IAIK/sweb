@@ -1,6 +1,9 @@
 #ifdef EXE2MINIXFS
 #include "types.h"
 #include <sys/stat.h>
+#if _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+  #include <sys/file.h>
+#endif
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -80,6 +83,16 @@ int main(int argc, char *argv[])
     printf("exe2minixfs: Partition number has to be either 0 (use whole device/file) or in range [1-4]\n");
     return -1;
   }
+
+#if _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+  int posix_fd = fileno(image_fd);
+  int result = flock(posix_fd, LOCK_EX);
+  if (result)
+  {
+      printf("Unable to get file lock for %s\n", argv[1]);
+      return -1;
+  }
+#endif
 
   size_t part_byte_offset = 0;
 
