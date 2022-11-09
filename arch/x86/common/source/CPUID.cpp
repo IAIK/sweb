@@ -1,6 +1,8 @@
 #include "CPUID.h"
 #include "debug.h"
 
+cpu_local CpuFeatures cpu_features;
+
 void CPUID::cpuid(uint32_t selector, uint32_t subselector, uint32_t& eax, uint32_t& ebx, uint32_t& ecx, uint32_t& edx)
 {
     asm("cpuid\n"
@@ -8,12 +10,41 @@ void CPUID::cpuid(uint32_t selector, uint32_t subselector, uint32_t& eax, uint32
         :"a"(selector), "c"(subselector));
 }
 
+uint32_t CPUID::highestSupportedLeaf()
+{
+    uint32_t unused;
+    uint32_t eax = 0;
+    cpuid(0x00, 0, eax, unused, unused, unused);
+    return eax;
+}
+
+uint32_t CPUID::highestSupportedExtendedLeaf()
+{
+    uint32_t unused;
+    uint32_t eax = 0;
+    cpuid(0x80000000, 0, eax, unused, unused, unused);
+    return eax;
+}
+
 uint32_t CPUID::localApicId()
 {
     uint32_t unused;
     uint32_t ebx = 0;
-    cpuid(1, 0, unused, ebx, unused, unused);
+    cpuid(0x01, 0, unused, ebx, unused, unused);
     return ebx >> 24;
+}
+
+uint32_t CPUID::localX2ApicId()
+{
+    uint32_t unused;
+    uint32_t edx = 0;
+    cpuid(0x0B, 0, unused, unused, unused, edx);
+    return edx;
+}
+
+CpuFeatures::CpuFeatures()
+{
+    initCpuFeatures();
 }
 
 bool CpuFeatures::cpuHasFeature(X86Feature feature)
@@ -30,7 +61,7 @@ void CpuFeatures::initCpuFeatures()
     char manufacturer_id[13];
     memset(manufacturer_id, 0, sizeof(manufacturer_id));
     CPUID::cpuid(0, 0, highest_base_cpuid_param, *(uint32_t*)manufacturer_id, *((uint32_t*)manufacturer_id + 2), *((uint32_t*)manufacturer_id + 1));
-    CPUID::cpuid(0x80000000, 0, highest_ext_cpuid_param, ebx, ecx, edx);
+    highest_ext_cpuid_param = CPUID::highestSupportedExtendedLeaf();
     debug(A_MULTICORE, "CPU manufaturer id: %s, highest cpuid param: %x / %x\n", manufacturer_id, highest_base_cpuid_param, highest_ext_cpuid_param);
 
     CPUID::cpuid(1, 0, eax, ebx, ecx, edx);

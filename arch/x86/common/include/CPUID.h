@@ -2,12 +2,16 @@
 
 #include <cstdint>
 #include "EASTL/bitset.h"
+#include "ArchMulticore.h"
 
 namespace CPUID
 {
     void cpuid(uint32_t selector, uint32_t subselector, uint32_t& eax, uint32_t& ebx, uint32_t& ecx, uint32_t& edx);
 
+    uint32_t highestSupportedLeaf();
+    uint32_t highestSupportedExtendedLeaf();
     uint32_t localApicId();
+    uint32_t localX2ApicId();
 };
 
 class CpuFeatures
@@ -209,8 +213,12 @@ public:
         FEATURE_COUNT // dummy value to get enum size for bitset
     };
 
+    CpuFeatures();
+
     void initCpuFeatures();
     bool cpuHasFeature(X86Feature feature);
 private:
     eastl::bitset<X86Feature::FEATURE_COUNT> features_;
 };
+
+extern cpu_local CpuFeatures cpu_features;

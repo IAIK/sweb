@@ -331,6 +331,21 @@ extern "C" void irqHandler_90()
         ArchInterrupts::endOfInterrupt(90 - 0x20);
 }
 
+extern "C" void arch_irqHandler_91();
+extern "C" void irqHandler_91()
+{
+    ArchInterrupts::startOfInterrupt(91 - 0x20);
+
+    auto error = cpu_lapic->readRegister<Apic::Register::ERROR_STATUS>();
+    debugAlways(APIC, "Internal APIC error: %x\n", *(uint32_t*)&error);
+
+    assert(!"Internal APIC error");
+
+    cpu_lapic->writeRegister<Apic::Register::ERROR_STATUS>({});
+
+    ArchInterrupts::endOfInterrupt(91 - 0x20);
+}
+
 extern "C" void arch_irqHandler_100();
 extern "C" void irqHandler_100()
 {

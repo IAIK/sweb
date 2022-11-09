@@ -59,7 +59,7 @@ void IOAPIC::initRedirections()
                                 r.interrupt_vector = IRQ_OFFSET + entry.irq_source;
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
-                                r.destination = cpu_lapic.ID();
+                                r.destination = cpu_lapic->Id();
                                 goto write_entry;
                         }
                 }
@@ -213,11 +213,16 @@ IOAPIC* IOAPIC::findIOAPICforIRQ(uint8 irq)
     if(APIC & OUTPUT_ADVANCED){
         debug(APIC, "Find IOAPIC for IRQ %u\n", irq);
     }
-        return findIOAPICforGlobalInterrupt(findGSysIntForIRQ(irq));
-}
 
+    return findIOAPICforGlobalInterrupt(findGSysIntForIRQ(irq));
+}
 
 void IOAPIC::addIOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base)
 {
-        io_apic_list_.emplace_back(id, regs, g_sys_int_base);
+    io_apic_list_.emplace_back(id, regs, g_sys_int_base);
+}
+
+void IOAPIC::addIRQSourceOverride(const MADTInterruptSourceOverride& entry)
+{
+    irq_source_override_list_.push_back(entry);
 }

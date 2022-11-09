@@ -66,38 +66,38 @@ void TSS::setTaskStack(size_t stack_top)
 size_t getGSBase()
 {
         size_t gs_base;
-        getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
+        MSR::getMSR(MSR_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
         return gs_base;
 }
 
 size_t getGSKernelBase()
 {
         size_t gs_base;
-        getMSR(MSR_KERNEL_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
+        MSR::getMSR(MSR_KERNEL_GS_BASE, (uint32*)&gs_base, ((uint32*)&gs_base) + 1);
         return gs_base;
 }
 
 size_t getFSBase()
 {
         size_t fs_base;
-        getMSR(MSR_FS_BASE, (uint32*)&fs_base, ((uint32*)&fs_base) + 1);
+        MSR::getMSR(MSR_FS_BASE, (uint32*)&fs_base, ((uint32*)&fs_base) + 1);
         return fs_base;
 }
 
 
 void setGSBase(size_t gs_base)
 {
-        setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
+    MSR::setMSR(MSR_GS_BASE, gs_base, gs_base >> 32);
 }
 
 void setFSBase(size_t fs_base)
 {
-        setMSR(MSR_FS_BASE, fs_base, fs_base >> 32);
+    MSR::setMSR(MSR_FS_BASE, fs_base, fs_base >> 32);
 }
 
 void setSWAPGSKernelBase(size_t swapgs_base)
 {
-        setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
+    MSR::setMSR(MSR_KERNEL_GS_BASE, swapgs_base, swapgs_base >> 32);
 }
 
 void* getSavedFSBase()

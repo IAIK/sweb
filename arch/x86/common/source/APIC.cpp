@@ -11,253 +11,319 @@
 #include "ArchMulticore.h"
 #include "ProgrammableIntervalTimer.h"
 #include "8259.h"
+#include "CPUID.h"
 #include "offsets.h"
 
 
-bool LocalAPIC::exists = false;
-LocalAPICRegisters* LocalAPIC::reg_paddr_ = nullptr;
-LocalAPICRegisters* LocalAPIC::reg_vaddr_ = nullptr;
-eastl::vector<MADTProcLocalAPIC> LocalAPIC::local_apic_list_{};
+void* XApic::reg_paddr_ = (void*)0xfee00000;
+void* XApic::reg_vaddr_ = (void*)0xfee00000;
+
+eastl::vector<MADTProcLocalAPIC> Apic::local_apic_list_{};
 
 extern volatile size_t outstanding_EOIs;
 
-LocalAPIC::LocalAPIC() :
-        outstanding_EOIs_(0)
+uint32 Apic::Id() const
 {
+    return id_;
 }
 
-void LocalAPIC::haveLocalAPIC(LocalAPICRegisters* reg_phys_addr, uint32 flags)
+bool Apic::isInitialized() const
 {
-  reg_paddr_ = reg_phys_addr;
-  reg_vaddr_ = reg_phys_addr;
-  exists = true;
-  debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, flags);
+    return initialized_;
 }
 
-void LocalAPIC::sendEOI(size_t num)
+void Apic::globalEnable(bool enable)
 {
-  --outstanding_EOIs_;
-  if(APIC & OUTPUT_ADVANCED)
-  {
-    debug(APIC, "CPU %zu, Sending EOI for %zx\n", SMP::currentCpuId(), num);
-    for(size_t i = 0; i < 256; ++i)
+    auto apic_base = MSR::IA32_APIC_BASE::read();
+    apic_base.enable = enable;
+    MSR::IA32_APIC_BASE::write(apic_base);
+}
+
+void Apic::enable(bool enable)
+{
+    debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), Id());
+
+    WithInterrupts i(false);
+    auto siv = readRegister<Register::SPURIOUS_INTERRUPT_VECTOR>();
+    siv.enable = enable;
+    writeRegister<Register::SPURIOUS_INTERRUPT_VECTOR>(siv);
+}
+
+void Apic::initTimer()
+{
+    debug(APIC, "Init timer for APIC %x\n", Id());
+    assert(!ArchInterrupts::testIFSet());
+
+    setUsingAPICTimer(true);
+
+    auto div = readRegister<Register::TIMER_DIVIDE_CONFIG>();
+    div.setTimerDivisor(TIMER_DIVISOR);
+    writeRegister<Register::TIMER_DIVIDE_CONFIG>(div);
+
+    auto timer_reg = readRegister<Register::LVT_TIMER>();
+    timer_reg.setVector(0x20);
+    timer_reg.setMode(TimerMode::PERIODIC);
+    timer_reg.setMask(true);
+    writeRegister<Register::LVT_TIMER>(timer_reg);
+
+    // Write to initial count register starts timer
+    setTimerPeriod(0x500000);
+}
+
+void Apic::setTimerPeriod(uint32 count)
+{
+    debug(APIC, "Set timer period %x\n", count);
+    writeRegister<Apic::Register::TIMER_INITIAL_COUNT>(count);
+}
+
+void Apic::setSpuriousInterruptNumber(uint8 num)
+{
+    auto siv = readRegister<Apic::Register::SPURIOUS_INTERRUPT_VECTOR>();
+    siv.vector = num;
+    writeRegister<Apic::Register::SPURIOUS_INTERRUPT_VECTOR>(siv);
+}
+
+void Apic::setErrorInterruptVector(uint8_t vector)
+{
+    LVT_ErrorRegister errorreg{};
+    errorreg.vector = vector;
+    errorreg.mask = false;
+    writeRegister<Register::LVT_ERROR>(errorreg);
+}
+
+void Apic::setUsingAPICTimer(bool using_apic_timer)
+{
+    debug(APIC, "Using APIC timer: %d\n", using_apic_timer);
+    use_apic_timer_ = using_apic_timer;
+}
+
+bool Apic::usingAPICTimer() const
+{
+    return use_apic_timer_;
+}
+
+bool Apic::checkISR(uint8_t irqnum)
+{
+    uint8 word_offset = irqnum/32;
+    uint8 bit_offset = irqnum % 32;
+    assert(word_offset < 8);
+
+    uint32_t isr = 0;
+
+    switch (word_offset)
     {
+    case 0:
+        isr = readRegister<Register::ISR_31_0>();
+        break;
+    case 1:
+        isr = readRegister<Register::ISR_63_32>();
+        break;
+    case 2:
+        isr = readRegister<Register::ISR_95_64>();
+        break;
+    case 3:
+        isr = readRegister<Register::ISR_127_96>();
+        break;
+    case 4:
+        isr = readRegister<Register::ISR_159_128>();
+        break;
+    case 5:
+        isr = readRegister<Register::ISR_191_160>();
+        break;
+    case 6:
+        isr = readRegister<Register::ISR_223_192>();
+        break;
+    case 7:
+        isr = readRegister<Register::ISR_255_224>();
+        break;
+    default:
+        assert(!"Invalid ISR word offset");
+    }
+    return isr & (1 << bit_offset);
+}
+
+bool Apic::checkIRR(uint8_t irqnum)
+{
+    uint8 word_offset = irqnum/32;
+    uint8 bit_offset = irqnum % 32;
+    assert(word_offset < 8);
+
+    uint32_t irr = 0;
+
+    switch (word_offset)
+    {
+    case 0:
+        irr = readRegister<Register::IRR_31_0>();
+        break;
+    case 1:
+        irr = readRegister<Register::IRR_63_32>();
+        break;
+    case 2:
+        irr = readRegister<Register::IRR_95_64>();
+        break;
+    case 3:
+        irr = readRegister<Register::IRR_127_96>();
+        break;
+    case 4:
+        irr = readRegister<Register::IRR_159_128>();
+        break;
+    case 5:
+        irr = readRegister<Register::IRR_191_160>();
+        break;
+    case 6:
+        irr = readRegister<Register::IRR_223_192>();
+        break;
+    case 7:
+        irr = readRegister<Register::IRR_255_224>();
+        break;
+    default:
+        assert(!"Invalid IRR word offset");
+    }
+    return irr & (1 << bit_offset);
+}
+
+void Apic::sendEOI(size_t num)
+{
+    --outstanding_EOIs_;
+    if(APIC & OUTPUT_ADVANCED)
+    {
+        debug(APIC, "CPU %zu, Sending EOI for %zx\n", SMP::currentCpuId(), num);
+        for(size_t i = 0; i < 256; ++i)
+        {
             if(checkISR(i))
             {
-                    debug(APIC, "CPU %zx, interrupt %zx being serviced\n", SMP::currentCpuId(), i);
+                debug(APIC, "CPU %zx, interrupt %zx being serviced\n", SMP::currentCpuId(), i);
             }
-    }
-    for(size_t i = 0; i < 256; ++i)
-    {
+        }
+        for(size_t i = 0; i < 256; ++i)
+        {
             if(checkIRR(i))
             {
-                    debug(APIC, "CPU %zx, interrupt %zx pending\n", SMP::currentCpuId(), i);
+                debug(APIC, "CPU %zx, interrupt %zx pending\n", SMP::currentCpuId(), i);
             }
+        }
     }
-  }
 
-  assert(!ArchInterrupts::testIFSet() && "Attempted to send end of interrupt command while interrupts are enabled");
-  assert(checkISR(num) && "Attempted to send end of interrupt command but interrupt is not actually being serviced");
+    assert(!ArchInterrupts::testIFSet() && "Attempted to send end of interrupt command while interrupts are enabled");
+    assert(checkISR(num) && "Attempted to send end of interrupt command but interrupt is not actually being serviced");
 
-  reg_vaddr_->eoi = 0;
+    writeRegister<Register::EOI>(0);
 }
 
 
-void LocalAPIC::mapAt(size_t addr)
+void XApic::foundLocalAPIC(void* reg_phys_addr, uint32 flags)
 {
-  assert(addr);
-  assert(exists);
-
-  debug(APIC, "Map local APIC at phys %p to %p\n", reg_paddr_, (void*)addr);
-
-  assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
-  reg_vaddr_ = (LocalAPICRegisters*)addr;
+    debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, flags);
+    assert(reg_phys_addr == readMsrPhysAddr());
 }
 
-
-void LocalAPIC::init()
+void XApic::mapAt(size_t addr)
 {
-  debug(APIC, "Initializing Local APIC\n");
-  if(!isInitialized())
-  {
-    id_ = readID();
-    debug(APIC, "Local APIC %x\n", ID());
+    assert(addr);
+    assert(cpu_features.cpuHasFeature(CpuFeatures::APIC));
+
+    debug(APIC, "Map local APIC at phys %p to %p\n", reg_paddr_, (void*)addr);
+
+    assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
+    reg_vaddr_ = (void*)addr;
+}
+
+void XApic::init()
+{
+    debug(APIC, "Initializing local xAPIC\n");
+    assert(!isInitialized());
+
+    id_ = readId();
+    auto logical_dest_id = readRegister<Register::LOGICAL_DESTINATION>();
+    debug(APIC, "Local xAPIC, id: %x, logical dest: %x\n", Id(), logical_dest_id);
+
+    setErrorInterruptVector(ERROR_INTERRUPT_VECTOR);
     setSpuriousInterruptNumber(100);
     initTimer();
     enable(true);
+
     initialized_ = true;
     current_cpu.setId(id_);
-  }
-  else
-  {
-    debug(APIC, "Local APIC %x is already initialized. Skipping re-initialization\n", ID());
-  }
 }
 
-bool LocalAPIC::isInitialized() const volatile
+void Apic::LVT_TimerRegister::setVector(uint8 num)
 {
-  return initialized_;
+    debug(APIC, "Set timer interrupt number %x\n", num);
+    assert(num >= 32);
+    vector = num;
 }
 
-void LocalAPIC::enable(bool enable)
+void Apic::LVT_TimerRegister::setMode(TimerMode mode)
 {
-  debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), ID());
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-  uint32* ptr = (uint32*)&reg_vaddr_->s_int_vect;
-  uint32 temp = *ptr;
-
-  ((LocalAPIC_SpuriousInterruptVector*)&temp)->enable = (enable ? 1 : 0);
-  *ptr = temp;
-#pragma GCC diagnostic pop
-
+    debug(APIC, "Set timer mode %x\n", (uint32_t)mode);
+    timer_mode = (uint32_t)mode;
 }
 
-void LocalAPIC::initTimer() volatile
+void Apic::LVT_TimerRegister::setMask(bool new_mask)
 {
-        debug(APIC, "Init timer for APIC %x\n", ID());
-        assert(!ArchInterrupts::testIFSet());
-        reg_vaddr_->lvt_timer.setVector(0x20);
-        reg_vaddr_->lvt_timer.setMode(1);
-        reg_vaddr_->lvt_timer.setMask(true);
-        reg_vaddr_->timer_divide_config.setTimerDivisor(16);
-        setTimerPeriod(0x500000);
-        use_apic_timer_ = true;
+    debug(APIC, "Set timer mask %u\n", new_mask);
+    mask = new_mask;
 }
 
-void LocalAPIC::setUsingAPICTimer(bool using_apic_timer)  volatile
+void Apic::SpuriousInterruptVectorRegister::setSpuriousInterruptNumber(uint8 num)
 {
-        debug(APIC, "Using APIC timer: %d\n", using_apic_timer);
-        use_apic_timer_ = using_apic_timer;
+    debug(APIC, "Set spurious interrupt number %x\n", num);
+    vector = num;
 }
 
-bool LocalAPIC::usingAPICTimer() const volatile
+void Apic::TimerDivideConfigRegister::setTimerDivisor(uint8 divisor)
 {
-        return use_apic_timer_;
+    debug(APIC, "Set timer divisor %x\n", divisor);
+
+    switch(divisor)
+    {
+    case 1:
+        divisor_l = 0b11;
+        divisor_h = 1;
+        break;
+    case 2:
+        divisor_l = 0b00;
+        divisor_h = 0;
+        break;
+    case 4:
+        divisor_l = 0b01;
+        divisor_h = 0;
+        break;
+    case 8:
+        divisor_l = 0b10;
+        divisor_h = 0;
+        break;
+    case 16:
+        divisor_l = 0b11;
+        divisor_h = 0;
+        break;
+    case 32:
+        divisor_l = 0b00;
+        divisor_h = 1;
+        break;
+    case 64:
+        divisor_l = 0b01;
+        divisor_h = 1;
+        break;
+    case 128:
+        divisor_l = 0b10;
+        divisor_h = 1;
+        break;
+    default:
+        assert(false);
+        break;
+    }
 }
 
 
-void LocalAPIC_LVT_TimerRegister::setVector(uint8 num) volatile
+
+uint32 XApic::readId()
 {
-        debug(APIC, "Set timer interrupt number %x\n", num);
-        assert(num > 16);
-        uint32 temp = *(uint32*)this;
-        ((LocalAPIC_LVT_TimerRegister*)&temp)->vector = num;
-        *(uint32*)this = temp;
+    auto id = readRegister<Register::ID>();
+    assert(id.xapic_id == CPUID::localApicId());
+    return id.xapic_id;
 }
 
-void LocalAPIC_LVT_TimerRegister::setMode(uint8 mode) volatile
-{
-        debug(APIC, "Set timer mode %x\n", mode);
-        assert((mode == 0) || (mode == 1) || (mode == 3));
-        uint32 temp = *(uint32*)this;
-        ((LocalAPIC_LVT_TimerRegister*)&temp)->timer_mode = mode;
-        *(uint32*)this = temp;
-}
-
-void LocalAPIC_LVT_TimerRegister::setMask(bool new_mask) volatile
-{
-        debug(APIC, "Set timer mask %u\n", new_mask);
-        uint32 temp = *(uint32*)this;
-        ((LocalAPIC_LVT_TimerRegister*)&temp)->mask = (new_mask ? 1 : 0);
-        *(uint32*)this = temp;
-}
-
-void LocalAPIC::setTimerPeriod(uint32 count) volatile
-{
-        debug(APIC, "Set timer period %x\n", count);
-        reg_vaddr_->init_timer_count = count;
-}
-
-void LocalAPIC::setSpuriousInterruptNumber(uint8 num) volatile
-{
-        reg_vaddr_->s_int_vect.setSpuriousInterruptNumber(num);
-}
-
-void LocalAPIC_SpuriousInterruptVector::setSpuriousInterruptNumber(uint8 num) volatile
-{
-        debug(APIC, "Set spurious interrupt number %x\n", num);
-        uint32 temp = *(uint32*)this;
-        ((LocalAPIC_SpuriousInterruptVector*)&temp)->vector = num;
-        *(uint32*)this = temp;
-}
-
-
-void LocalAPIC_TimerDivideConfigRegister::setTimerDivisor(uint8 divisor) volatile
-{
-        debug(APIC, "Set timer divisor %x\n", divisor);
-        uint32 temp = *(uint32*)this;
-
-        switch(divisor)
-        {
-        case 1:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b11;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 1;
-                break;
-        case 2:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b00;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 0;
-                break;
-        case 4:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b01;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 0;
-                break;
-        case 8:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b10;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 0;
-                break;
-        case 16:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b11;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 0;
-                break;
-        case 32:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b00;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 1;
-                break;
-        case 64:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b01;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 1;
-                break;
-        case 128:
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_l = 0b10;
-                ((LocalAPIC_TimerDivideConfigRegister*)&temp)->divisor_h = 1;
-                break;
-        default:
-                assert(false);
-                break;
-        }
-        *(uint32*)this = temp;
-}
-
-
-bool LocalAPIC::checkIRR(uint8 num) volatile
-{
-        uint8 byte_offset = num/32;
-        uint8 bit_offset = num % 32;
-
-        return reg_vaddr_->IRR[byte_offset].irr & (1 << bit_offset);
-}
-
-bool LocalAPIC::checkISR(uint8 num) volatile
-{
-        uint8 byte_offset = num/32;
-        uint8 bit_offset = num % 32;
-
-        return reg_vaddr_->ISR[byte_offset].isr & (1 << bit_offset);
-}
-
-uint32 LocalAPIC::readID() volatile
-{
-        LocalAPIC_IDRegister id;
-        *(uint32*)&id = *(uint32*)&reg_vaddr_->local_apic_id;
-        return id.id;
-}
-
-uint32 LocalAPIC::ID() const volatile
-{
-        return id_;
-}
 
 static volatile uint8 delay = 0;
 
@@ -271,150 +337,205 @@ static volatile uint8 delay = 0;
 extern "C" void PIT_delay_IRQ();
 __attribute__((naked)) void __PIT_delay_IRQ()
 {
-        __asm__ __volatile__(".global PIT_delay_IRQ\n"
-                             ".type PIT_delay_IRQ,@function\n"
-                             "PIT_delay_IRQ:\n");
-        __asm__ __volatile__("movb $1, %[delay]\n"
-                             :[delay]"=m"(delay));
-        IRET
-}
+    __asm__ __volatile__(".global PIT_delay_IRQ\n"
+                         ".type PIT_delay_IRQ,@function\n"
+                         "PIT_delay_IRQ:\n");
+    __asm__ __volatile__("movb $1, %[delay]\n"
+                         :[delay]"=m"(delay));
+    IRET
+        }
 
 extern "C" void arch_irqHandler_0();
 
-void LocalAPIC::startAP(uint8 apic_id, size_t entry_addr) volatile
+void Apic::startAP(uint8 apic_id, size_t entry_addr)
 {
-        debug(A_MULTICORE, "Sending init IPI to AP local APIC %u, AP entry function: %zx\n",  apic_id, entry_addr);
+    debug(A_MULTICORE, "Sending init IPI to AP local APIC %u, AP entry function: %zx\n",  apic_id, entry_addr);
 
-        sendIPI(0, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::INIT);
+    assert((entry_addr % PAGE_SIZE) == 0);
+    assert((entry_addr/PAGE_SIZE) <= 0xFF);
 
-        // 10ms delay
+    Apic::sendIPI(0, IPIDestination::TARGET, apic_id, IPIType::INIT);
 
-        PIT::PITCommandRegister pit_command{};
-        pit_command.bcd_mode = 0;
-        pit_command.operating_mode = 0; // oneshot
-        pit_command.access_mode = 3; // send low + high byte of reload value/divisor
-        pit_command.channel = 0;
+    // 10ms delay
 
-        InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
-        bool temp_using_apic_timer = usingAPICTimer();
-        setUsingAPICTimer(false);
+    PIT::PITCommandRegister pit_command{};
+    pit_command.bcd_mode = 0;
+    pit_command.operating_mode = 0; // oneshot
+    pit_command.access_mode = 3; // send low + high byte of reload value/divisor
+    pit_command.channel = 0;
 
-        InterruptUtils::idt[0x20].setOffset((size_t)&PIT_delay_IRQ);
+    InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
+    bool temp_using_apic_timer = usingAPICTimer();
+    setUsingAPICTimer(false);
 
-        ArchInterrupts::enableIRQ(0);
-        ArchInterrupts::startOfInterrupt(0);
-        ArchInterrupts::enableInterrupts();
+    InterruptUtils::idt[0x20].setOffset((size_t)&PIT_delay_IRQ);
 
-        PIT::init(pit_command.value, 1193182 / 100);
-        while(!delay);
+    ArchInterrupts::enableIRQ(0);
+    ArchInterrupts::startOfInterrupt(0);
+    ArchInterrupts::enableInterrupts();
 
-        ArchInterrupts::disableInterrupts();
-        ArchInterrupts::disableIRQ(0);
-        ArchInterrupts::endOfInterrupt(0);
+    PIT::init(pit_command.value, 1193182 / 100);
+    while(!delay);
 
-        delay = 0;
+    ArchInterrupts::disableInterrupts();
+    ArchInterrupts::disableIRQ(0);
+    ArchInterrupts::endOfInterrupt(0);
 
-        assert((entry_addr % PAGE_SIZE) == 0);
-        assert((entry_addr/PAGE_SIZE) <= 0xFF);
+    delay = 0;
 
-        sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
+    sendIPI(entry_addr/PAGE_SIZE, IPIDestination::TARGET, apic_id, IPIType::SIPI);
 
-        // 200us delay
+    // 200us delay
 
-        ArchInterrupts::enableIRQ(0);
-        ArchInterrupts::startOfInterrupt(0);
-        ArchInterrupts::enableInterrupts();
+    ArchInterrupts::enableIRQ(0);
+    ArchInterrupts::startOfInterrupt(0);
+    ArchInterrupts::enableInterrupts();
 
-        PIT::init(pit_command.value, 1193182 / 5000);
-        while(!delay);
+    PIT::init(pit_command.value, 1193182 / 5000);
+    while(!delay);
 
-        ArchInterrupts::disableInterrupts();
-        ArchInterrupts::disableIRQ(0);
-        ArchInterrupts::endOfInterrupt(0);
+    ArchInterrupts::disableInterrupts();
+    ArchInterrupts::disableIRQ(0);
+    ArchInterrupts::endOfInterrupt(0);
 
-        delay = 0;
+    delay = 0;
 
-        // Second SIPI just in case the first one didn't work
-        sendIPI(entry_addr/PAGE_SIZE, LAPIC::IPIDestination::TARGET, apic_id, LAPIC::IPIType::SIPI);
+    // Second SIPI just in case the first one didn't work
+    sendIPI(entry_addr/PAGE_SIZE, IPIDestination::TARGET, apic_id, IPIType::SIPI);
 
-        setUsingAPICTimer(temp_using_apic_timer);
-        InterruptUtils::idt[0x20] = temp_irq0_descriptor;
+    setUsingAPICTimer(temp_using_apic_timer);
+    InterruptUtils::idt[0x20] = temp_irq0_descriptor;
 
-        if (A_MULTICORE & OUTPUT_ADVANCED)
-            debug(A_MULTICORE, "Finished sending IPI to AP local APICs\n");
+    if (A_MULTICORE & OUTPUT_ADVANCED)
+        debug(A_MULTICORE, "Finished sending IPI to AP local APIC\n");
+}
+
+void XApic::waitIpiDelivered()
+{
+    InterruptCommandRegister icr{};
+    while(icr.l.delivery_status == (uint32_t)DeliveryStatus::PENDING)
+    {
+        icr = readRegister<Register::INTERRUPT_COMMAND>();
+    }
+}
+
+void Apic::sendIPI(uint8_t vector, IPIDestination dest_type, size_t target, IPIType ipi_type, bool wait_for_delivery)
+{
+    assert(isInitialized());
+    assert(!((ipi_type == IPIType::FIXED) && (vector < 32)));
+
+    // Need to ensure this section of code runs on the same CPU and the APIC is not used for anything else in the meantime
+    WithInterrupts d(false);
+
+    if (A_MULTICORE & OUTPUT_ADVANCED)
+        debug(APIC, "CPU %x Sending IPI, vector: %x\n", Id(), vector);
+
+    InterruptCommandRegisterLow icrl{};
+    icrl.vector                = vector;
+    icrl.delivery_mode         = (uint32_t)ipi_type;
+    icrl.destination_mode      = (uint32_t)IPIDestinationMode::PHYSICAL;
+    icrl.level                 = (uint32_t)IPILevel::ASSERT;
+    icrl.trigger_mode          = (uint32_t)IntTriggerMode::EDGE;
+    icrl.destination_shorthand = (uint32_t)dest_type;
+
+    writeIcr(icrl, dest_type == IPIDestination::TARGET ? target : 0);
+
+    if(wait_for_delivery && !((dest_type == IPIDestination::TARGET) && (target == Id())))
+    {
+        debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", SMP::currentCpuId(), target);
+        waitIpiDelivered();
+    }
+}
+
+void Apic::sendIPI(uint8_t vector, const Apic& target, bool wait_for_delivery)
+{
+    assert(isInitialized());
+    assert(target.isInitialized());
+    sendIPI(vector, IPIDestination::TARGET, target.Id(), IPIType::FIXED, wait_for_delivery);
+
+    // // Ensure this section of code runs on the same CPU and the local APIC is not used for anything else in the meantime
+    // WithInterrupts d(false);
+
+    // if (A_MULTICORE & OUTPUT_ADVANCED)
+    //     debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", Id(), target.Id(), vector);
+
+    // InterruptCommandRegisterLow icrl{};
+    // icrl.vector                = vector;
+    // icrl.delivery_mode         = (uint32)IPIType::FIXED;
+    // icrl.destination_mode      = (uint32)IPIDestinationMode::PHYSICAL;
+    // icrl.level                 = (uint32)IPILevel::ASSERT;
+    // icrl.trigger_mode          = (uint32)IntTriggerMode::EDGE;
+    // icrl.destination_shorthand = (uint32)IPIDestination::TARGET;
+    // icrl.delivery_status       = (uint32)DeliveryStatus::IDLE;
+
+
+    // writeIcr(icrl, target.Id());
+
+    // if(wait_for_delivery && (target.Id() != Id()))
+    // {
+    //     waitIpiDelivered();
+    // }
 }
 
 
-void LocalAPIC::sendIPI(uint8 vector, LAPIC::IPIDestination dest_type, size_t target, LAPIC::IPIType ipi_type, bool wait_for_delivery) volatile
+void XApic::writeRegisterImpl(ApicRegisterOffset offset, uint64_t v)
 {
-        assert(isInitialized());
-        assert(!((ipi_type == LAPIC::IPIType::FIXED) && (vector < 32)));
+    assert(offset != ApicRegisterOffset::SELF_IPI);
 
-        // Need to ensure this section of code runs on the same CPU and the APIC is not used for anything else in the meantime
-        WithInterrupts d(false);
+    if (offset != ApicRegisterOffset::EOI)
+        debug(APIC, "Write register %x, %lx\n", (unsigned int)offset, v);
 
-        if (A_MULTICORE & OUTPUT_ADVANCED)
-            debug(APIC, "CPU %x Sending IPI, vector: %x\n", ID(), vector);
+    WithInterrupts i{false};
+    if (offset == ApicRegisterOffset::INTERRUPT_COMMAND)
+    {
+        volatile uint32_t* icr_h = (uint32_t*)((char*)reg_vaddr_ + static_cast<unsigned int>(ApicRegisterOffset::INTERRUPT_COMMAND_H));
+        *icr_h = (v >> 32);
+    }
 
-        LocalAPIC_InterruptCommandRegisterHigh v_high{};
-        v_high.destination = (dest_type == LAPIC::IPIDestination::TARGET ? target : 0);
-
-        LocalAPIC_InterruptCommandRegisterLow v_low{};
-        v_low.vector                = vector;
-        v_low.delivery_mode         = (uint32)ipi_type;
-        v_low.destination_mode      = (uint32)LAPIC::IPIDestinationMode::PHYSICAL;
-        v_low.level                 = (uint32)LAPIC::IPILevel::ASSERT;
-        v_low.trigger_mode          = (uint32)LAPIC::IntTriggerMode::EDGE;
-        v_low.destination_shorthand = (uint32)dest_type;
-
-
-        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
-
-        if(wait_for_delivery && !((dest_type == LAPIC::IPIDestination::TARGET) && (target == ID())))
-        {
-                debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", SMP::currentCpuId(), target);
-                while(v_low.delivery_status == (uint32)LAPIC::DeliveryStatus::PENDING)
-                {
-                        *(uint32*)&v_low = *(volatile uint32*)&reg_vaddr_->ICR_low;
-                }
-        }
+    volatile uint32_t* reg_addr = (uint32_t*)((char*)reg_vaddr_ + static_cast<unsigned int>(offset));
+    uint32_t v32 = v;
+    *reg_addr = v32;
+    if (offset != ApicRegisterOffset::EOI)
+        debug(APIC, "Register write complete\n");
 }
 
-void LocalAPIC::sendIPI(uint8 vector, const LocalAPIC& target, bool wait_for_delivery) volatile
+uint64_t XApic::readRegisterImpl(ApicRegisterOffset offset)
 {
-        assert(isInitialized());
-        assert(target.isInitialized());
-        assert(!(vector < 32));
+    assert(offset != ApicRegisterOffset::SELF_IPI);
 
-        // Ensure this section of code runs on the same CPU and the local APIC is not used for anything else in the meantime
-        WithInterrupts d(false);
+    uint64_t v = 0;
 
-        if (A_MULTICORE & OUTPUT_ADVANCED)
-            debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", ID(), target.ID(), vector);
+    WithInterrupts i{false};
 
-        LocalAPIC_InterruptCommandRegisterHigh v_high{};
-        v_high.destination = target.ID();
+    if (offset == ApicRegisterOffset::INTERRUPT_COMMAND)
+    {
+        uint32_t* icr_h = (uint32_t*)((char*)reg_vaddr_ + static_cast<unsigned int>(ApicRegisterOffset::INTERRUPT_COMMAND_H));
 
-        LocalAPIC_InterruptCommandRegisterLow v_low{};
-        v_low.vector                = vector;
-        v_low.delivery_mode         = (uint32)LAPIC::IPIType::FIXED;
-        v_low.destination_mode      = (uint32)LAPIC::IPIDestinationMode::PHYSICAL;
-        v_low.level                 = (uint32)LAPIC::IPILevel::ASSERT;
-        v_low.trigger_mode          = (uint32)LAPIC::IntTriggerMode::EDGE;
-        v_low.destination_shorthand = (uint32)LAPIC::IPIDestination::TARGET;
-        v_low.delivery_status       = (uint32)LAPIC::DeliveryStatus::IDLE;
+        v = (uint64_t)*icr_h << 32;
+    }
 
+    volatile uint32_t* reg_addr = (uint32_t*)((char*)reg_vaddr_ + static_cast<unsigned int>(offset));
+    v |= *reg_addr;
+    return v;
+}
 
-        *(volatile uint32*)&reg_vaddr_->ICR_high  = *(uint32*)&v_high;
-        *(volatile uint32*)&reg_vaddr_->ICR_low  = *(uint32*)&v_low;
+void XApic::writeIcr(InterruptCommandRegisterLow icr_l, uint32_t dest)
+{
+    InterruptCommandRegister icr{};
+    icr.h.xapic_destination = dest;
+    icr.l = icr_l;
 
-        if(wait_for_delivery && (target.ID() != ID()))
-        {
-                while(v_low.delivery_status == (uint32)LAPIC::DeliveryStatus::PENDING)
-                {
-                        debug(APIC, "CPU %zx waiting until IPI to %x has been delivered\n", SMP::currentCpuId(), target.ID());
-                        *(uint32*)&v_low = *(volatile uint32*)&reg_vaddr_->ICR_low;
-                }
-        }
+    WithInterrupts d(false);
+    writeRegister<Register::INTERRUPT_COMMAND>(icr);
+}
+
+void* XApic::readMsrPhysAddr()
+{
+    auto apic_base = MSR::IA32_APIC_BASE::read();
+    return (void*)((uintptr_t)apic_base.apic_base*PAGE_SIZE);
+}
+
+bool XApic::apicSupported()
+{
+    return cpu_features.cpuHasFeature(CpuFeatures::X86Feature::APIC);
 }

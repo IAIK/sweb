@@ -31,6 +31,7 @@ static void initInterruptController()
     size_t vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*2;
     LocalAPIC::mapAt(vaddr);
     assert(CpuLocalStorage::ClsInitialized());
+    cpu_lapic = &cpu_lapic_impl;
     cpu_lapic.init();
   }
 

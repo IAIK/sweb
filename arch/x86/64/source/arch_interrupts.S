@@ -258,7 +258,7 @@ arch_pageFaultHandler_backtrace_fix:
         hlt
 
 
-.irp num,0,1,3,4,6,9,11,14,15,65,90,100,101
+.irp num,0,1,3,4,6,9,11,14,15,65,90,91,100,101
 irqhandler \num
 .endr
 

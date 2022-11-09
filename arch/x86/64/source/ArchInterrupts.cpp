@@ -7,12 +7,15 @@
 #include "assert.h"
 #include "Thread.h"
 #include "APIC.h"
+#include "IoApic.h"
 #include "debug.h"
 #include "ArchMemory.h"
 #include "PageManager.h"
 #include "ArchMulticore.h"
 #include "Scheduler.h"
 #include "SystemState.h"
+#include "X2Apic.h"
+#include "CPUID.h"
 
 static void initInterruptHandlers()
 {
@@ -23,14 +26,21 @@ static void initInterruptHandlers()
 static void initInterruptController()
 {
   debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
-  if(LocalAPIC::exists)
+  assert(CpuLocalStorage::ClsInitialized());
+  if (cpu_features.cpuHasFeature(CpuFeatures::APIC))
   {
-    if(LocalAPIC::reg_vaddr_ == LocalAPIC::reg_paddr_)
-    {
-      LocalAPIC::mapAt((size_t)LocalAPIC::reg_paddr_ | PHYSICAL_TO_VIRTUAL_OFFSET);
-    }
-    assert(CpuLocalStorage::ClsInitialized());
-    cpu_lapic.init();
+      Apic::globalEnable();
+      if (X2Apic::x2ApicSupported())
+      {
+          X2Apic::enableX2ApicMode();
+      }
+      else
+      {
+          XApic::setPhysicalAddress(XApic::readMsrPhysAddr());
+          XApic::mapAt((size_t)XApic::physicalAddress() | PHYSICAL_TO_VIRTUAL_OFFSET);
+      }
+
+      cpu_lapic->init();
   }
 
   IOAPIC::initAll();
@@ -46,10 +56,13 @@ void ArchInterrupts::initialise()
 
 void ArchInterrupts::enableTimer()
 {
-  if(cpu_lapic.isInitialized() && cpu_lapic.usingAPICTimer())
+  if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
   {
-    debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_lapic.ID());
-    cpu_lapic.reg_vaddr_->lvt_timer.setMask(false);
+    debug(A_INTERRUPTS, "Enabling XApic %x timer \n", cpu_lapic->Id());
+    WithInterrupts i{false};
+    auto timer_reg = cpu_lapic->readRegister<Apic::Register::LVT_TIMER>();
+    timer_reg.setMask(false);
+    cpu_lapic->writeRegister<Apic::Register::LVT_TIMER>(timer_reg);
   }
   else
   {
@@ -60,10 +73,13 @@ void ArchInterrupts::enableTimer()
 
 void ArchInterrupts::disableTimer()
 {
-  if(cpu_lapic.isInitialized() && cpu_lapic.usingAPICTimer())
+  if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
   {
-    debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_lapic.ID());
-    cpu_lapic.reg_vaddr_->lvt_timer.setMask(true);
+    debug(A_INTERRUPTS, "Enabling XApic %x timer \n", cpu_lapic->Id());
+    WithInterrupts i{false};
+    auto timer_reg = cpu_lapic->readRegister<Apic::Register::LVT_TIMER>();
+    timer_reg.setMask(true);
+    cpu_lapic->writeRegister<Apic::Register::LVT_TIMER>(timer_reg);
   }
   else
   {
@@ -129,12 +145,12 @@ void ArchInterrupts::disableIRQ(uint16 num)
 
 void ArchInterrupts::startOfInterrupt(uint16 number)
 {
-  if((LocalAPIC::exists && cpu_lapic.isInitialized()) &&
+  if(cpu_lapic->isInitialized() &&
      (IOAPIC::findIOAPICforIRQ(number) ||
-      ((number == 0) && cpu_lapic.usingAPICTimer()) ||
+      ((number == 0) && cpu_lapic->usingAPICTimer()) ||
       (number > 16)))
   {
-    cpu_lapic.outstanding_EOIs_++;
+    cpu_lapic->outstanding_EOIs_++;
   }
   else
   {
@@ -148,12 +164,12 @@ void ArchInterrupts::endOfInterrupt(uint16 number)
         debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
     }
 
-  if((LocalAPIC::exists && cpu_lapic.isInitialized()) &&
+  if(cpu_lapic->isInitialized() &&
      (IOAPIC::findIOAPICforIRQ(number) ||
-      ((number == 0) && cpu_lapic.usingAPICTimer()) ||
+      ((number == 0) && cpu_lapic->usingAPICTimer()) ||
       (number > 16)))
   {
-    cpu_lapic.sendEOI(number + 0x20);
+    cpu_lapic->sendEOI(number + 0x20);
   }
   else
   {

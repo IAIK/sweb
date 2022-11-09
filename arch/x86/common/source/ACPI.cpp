@@ -227,14 +227,11 @@ ACPISDTHeader* XSDT::getEntry(size_t i)
 
 void ACPI_MADTHeader::parse()
 {
-  new (&LocalAPIC::local_apic_list_) eastl::vector<MADTProcLocalAPIC>{};
+  new (&XApic::local_apic_list_) eastl::vector<MADTProcLocalAPIC>{};
   new (&IOAPIC::io_apic_list_) eastl::vector<IOAPIC>{};
   new (&IOAPIC::irq_source_override_list_) eastl::vector<MADTInterruptSourceOverride>{};
 
-  if(!LocalAPIC::exists)
-  {
-    LocalAPIC::haveLocalAPIC((LocalAPICRegisters*)(size_t)ext_header.local_apic_addr, ext_header.flags);
-  }
+  XApic::foundLocalAPIC((void*)(size_t)ext_header.local_apic_addr, ext_header.flags);
 
   MADTEntryDescriptor* madt_entry = (MADTEntryDescriptor*)(this + 1);
   while((size_t)madt_entry < (size_t)this + std_header.Length)
@@ -245,7 +242,7 @@ void ACPI_MADTHeader::parse()
     {
       MADTProcLocalAPIC* entry = (MADTProcLocalAPIC*)(madt_entry + 1);
       debug(ACPI, "[%p] Processor local APIC, ACPI Processor ID: %4x, APIC ID: %4x, enabled: %u\n", entry, entry->proc_id, entry->apic_id, entry->flags.enabled);
-      LocalAPIC::addLocalAPICToList(*entry);
+      Apic::addLocalAPICToList(*entry);
       break;
     }
     case 1:
@@ -278,8 +275,7 @@ void ACPI_MADTHeader::parse()
     {
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Local APIC address override, addr: %" PRIx64 "\n", entry, entry->local_apic_addr);
-      assert(LocalAPIC::exists);
-      LocalAPIC::reg_paddr_ = (LocalAPICRegisters*)entry->local_apic_addr;
+      XApic::setPhysicalAddress((void*)entry->local_apic_addr);
       break;
     }
     case 9:
@@ -297,14 +293,7 @@ void ACPI_MADTHeader::parse()
 }
 
 
-void LocalAPIC::addLocalAPICToList(const MADTProcLocalAPIC& entry)
+void Apic::addLocalAPICToList(const MADTProcLocalAPIC& entry)
 {
-  assert(LocalAPIC::exists);
   local_apic_list_.push_back(entry);
-}
-
-
-void IOAPIC::addIRQSourceOverride(const MADTInterruptSourceOverride& entry)
-{
-  irq_source_override_list_.push_back(entry);
 }

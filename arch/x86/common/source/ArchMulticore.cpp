@@ -9,16 +9,16 @@
 extern eastl::atomic<bool> ap_started;
 
 ArchCpu::ArchCpu() :
-    lapic(&cpu_lapic)
+    lapic(cpu_lapic)
 {
-    setId(LocalAPIC::exists && lapic->isInitialized() ? lapic->ID() : 0);
+    setId(lapic->isInitialized() ? lapic->Id() : 0);
     debug(A_MULTICORE, "Initializing ArchCpu %zu\n", id());
     SMP::addCpuToList(this);
 }
 
 void ArchMulticore::notifyMessageAvailable(ArchCpu& cpu)
 {
-    cpu_lapic.sendIPI(MESSAGE_INT_VECTOR, *cpu.lapic, true);
+    cpu_lapic->sendIPI(MESSAGE_INT_VECTOR, *cpu.lapic, true);
 }
 
 void ArchMulticore::sendFunctionCallMessage(ArchCpu& cpu, RemoteFunctionCallMessage* fcall_message)
@@ -29,17 +29,17 @@ void ArchMulticore::sendFunctionCallMessage(ArchCpu& cpu, RemoteFunctionCallMess
 
 void ArchMulticore::stopAllCpus()
 {
-    if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
+    if(CpuLocalStorage::ClsInitialized() && cpu_lapic->isInitialized())
     {
-        cpu_lapic.sendIPI(STOP_INT_VECTOR);
+        cpu_lapic->sendIPI(STOP_INT_VECTOR);
     }
 }
 
 void ArchMulticore::stopOtherCpus()
 {
-    if(CpuLocalStorage::ClsInitialized() && cpu_lapic.isInitialized())
+    if(CpuLocalStorage::ClsInitialized() && cpu_lapic->isInitialized())
     {
-        cpu_lapic.sendIPI(STOP_INT_VECTOR, LAPIC::IPIDestination::OTHERS);
+        cpu_lapic->sendIPI(STOP_INT_VECTOR, Apic::IPIDestination::OTHERS);
     }
 }
 

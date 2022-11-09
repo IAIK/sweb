@@ -3,16 +3,12 @@
 #include <cinttypes>
 
 
-void getMSR(uint32 msr, uint32 *lo, uint32 *hi)
+void MSR::getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {
-        asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
+    asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
 }
 
-void setMSR(uint32 msr, uint32 lo, uint32 hi)
+void MSR::setMSR(uint32_t msr, uint32_t lo, uint32_t hi)
 {
-        // if(A_MULTICORE & OUTPUT_ADVANCED)
-        // {
-        //         debug(A_MULTICORE, "Set MSR %x, value: %" PRIx64 "\n", msr, ((uint64)hi << 32)| (uint64)lo);
-        // }
-        asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
+    asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }

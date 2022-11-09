@@ -14,6 +14,7 @@
 #include "Allocator.h"
 #include "assert.h"
 #include "SystemState.h"
+#include "CPUID.h"
 
 
 __cpu GDT cpu_gdt;
@@ -22,7 +23,8 @@ __cpu TSS cpu_tss;
 /* The order of initialization of cpu_local objects depends on the order in which they are defined in the source code.
    This is pretty fragile, but using __cpu and placement new doesn't work (compiler complains that dynamic initialization is required).
    Alternative: default constructor that does nothing + later explicit initialization using init() function */
-cpu_local LocalAPIC cpu_lapic;
+cpu_local XApic cpu_lapic_impl;
+cpu_local Apic* cpu_lapic = &cpu_lapic_impl;
 
 cpu_local char cpu_stack[CPU_STACK_SIZE];
 
@@ -129,17 +131,17 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::exists && cpu_lapic.isInitialized())
+  if(cpu_lapic->isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    for(auto& other_cpu_lapic : LocalAPIC::local_apic_list_)
+    for(auto& other_cpu_lapic : Apic::local_apic_list_)
     {
-      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic.ID()))
+      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic->Id()))
       {
-        cpu_lapic.startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        cpu_lapic->startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
         debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
         while(!ap_started);
         ap_started = false;
@@ -199,7 +201,14 @@ void ArchMulticore::initCpu()
   currentThread = NULL;
 
   CpuLocalStorage::initCpuLocalStorage();
-  cpu_lapic.init();
+
+  if (X2Apic::x2ApicSupported())
+  {
+      X2Apic::enableX2ApicMode();
+  }
+
+  cpu_lapic->init();
+  assert(cpu_lapic->Id() == CPUID::localApicId());
   ArchMulticore::initCpuLocalData();
 
 
