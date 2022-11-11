@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "EASTL/vector.h"
+#include "EASTL/bit.h"
 #include "ACPI.h"
 
 class IOAPIC
@@ -104,6 +105,23 @@ public:
         volatile uint32_t io_win;
     } __attribute__((packed));
 
+    struct Register
+    {
+        template<IOAPICRegisterOffsets reg, typename T, bool readable_ = true, bool writeable_ = true>
+        struct IoApicRegister
+        {
+            using value_type = T;
+            static constexpr IOAPICRegisterOffsets reg_offset = reg;
+            static constexpr bool readable = readable_;
+            static constexpr bool writeable = writeable_;
+        };
+
+        using ID = IoApicRegister<IOAPICRegisterOffsets::IOAPICID, IOAPIC_r_ID, true, false>;
+        using VERSION = IoApicRegister<IOAPICRegisterOffsets::IOAPICVER, IOAPIC_r_VER, true, false>;
+        using ARB = IoApicRegister<IOAPICRegisterOffsets::IOAPICARB, IOAPIC_r_ARB, true, false>;
+    };
+
+
 
 
     static void addIOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);
@@ -134,6 +152,18 @@ private:
 
     uint32_t read(uint8_t offset);
     void write(uint8_t offset, uint32_t value);
+
+    template <typename R = uint32_t>
+    R::value_type read()
+    {
+        return eastl::bit_cast<typename R::value_type>(read(R::reg_offset));
+    }
+
+    template <typename R = uint32_t>
+    R::value_type write(const R::value_type& v)
+    {
+        return write(R::reg_offset, eastl::bit_cast<uint32_t>(v));
+    }
 
     uint8_t redirEntryOffset(uint32_t entry_no);
 

@@ -7,7 +7,7 @@
 eastl::vector<MADTInterruptSourceOverride> IOAPIC::irq_source_override_list_{};
 eastl::vector<IOAPIC> IOAPIC::io_apic_list_{};
 
-IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
+IOAPIC::IOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base) :
         reg_paddr_(regs),
         reg_vaddr_(regs),
         id_(id),
@@ -19,7 +19,6 @@ IOAPIC::IOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base) :
 
 void IOAPIC::initAll()
 {
-
         // TODO: Proper address assignment for ioapic on x86
         pointer ioapic_vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*3;
 
@@ -35,10 +34,8 @@ void IOAPIC::init()
 {
         //TODO: Reading from IO APIC id/version registers on x86_32 returns 0
         debug(A_INTERRUPTS, "Initializing I/O APIC\n");
-        IOAPIC_r_ID id;
-        IOAPIC_r_VER version;
-        id.word = read(IOAPICID);
-        version.word = read(IOAPICVER);
+        IOAPIC_r_ID id = read<Register::ID>();
+        IOAPIC_r_VER version = read<Register::VERSION>();
         max_redir_ = version.max_redir;
         debug(APIC, "IOAPIC id: %u, version: %#x, g_sys_ints: [%u, %u)\n", id.io_apic_id, version.version, getGlobalInterruptBase(), getGlobalInterruptBase() + getMaxRedirEntry());
 
@@ -47,7 +44,7 @@ void IOAPIC::init()
 
 void IOAPIC::initRedirections()
 {
-        for(uint32 i = 0; i <= max_redir_; ++i)
+        for(uint32_t i = 0; i <= max_redir_; ++i)
         {
                 IOAPIC_redir_entry r = readRedirEntry(i);
 
@@ -72,7 +69,7 @@ void IOAPIC::initRedirections()
 
         if(APIC & OUTPUT_ENABLED)
         {
-                for(uint32 i = 0; i <= max_redir_; ++i)
+                for(uint32_t i = 0; i <= max_redir_; ++i)
                 {
                         IOAPIC_redir_entry r = readRedirEntry(i);
                         debug(APIC, "IOAPIC redir entry: IRQ %2u -> vector %u, dest mode: %u, dest APIC: %u, mask: %u, pol: %u, trig: %u\n", getGlobalInterruptBase() + i, r.interrupt_vector, r.destination_mode, r.destination, r.mask, r.polarity, r.trigger_mode);
@@ -91,14 +88,14 @@ void IOAPIC::mapAt(size_t addr)
   reg_vaddr_ = (IOAPIC_MMIORegs*)addr;
 }
 
-uint32 IOAPIC::read(uint8 offset)
+uint32_t IOAPIC::read(uint8_t offset)
 {
     if(APIC & OUTPUT_ADVANCED){
         debug(APIC, "IO APIC read from registers %p with offset %#x\n", reg_vaddr_, offset);
     }
 
         WithInterrupts i(false);
-        uint32 retval = 0;
+        uint32_t retval = 0;
         asm volatile("movl %[offset], %[io_reg_sel]\n"
                      "movl %[io_win], %[retval]\n"
                      :[io_reg_sel]"=m"(reg_vaddr_->io_reg_sel),
@@ -108,7 +105,7 @@ uint32 IOAPIC::read(uint8 offset)
         return retval;
 }
 
-void IOAPIC::write(uint8 offset, uint32 value)
+void IOAPIC::write(uint8_t offset, uint32_t value)
 {
         WithInterrupts i(false);
         asm volatile("movl %[offset], %[io_reg_sel]\n"
@@ -119,15 +116,15 @@ void IOAPIC::write(uint8 offset, uint32 value)
                       [value]"r"(value));
 }
 
-uint8 IOAPIC::redirEntryOffset(uint32 entry_no)
+uint8_t IOAPIC::redirEntryOffset(uint32_t entry_no)
 {
         return (0x10 + 2 * entry_no);
 }
 
-IOAPIC::IOAPIC_redir_entry IOAPIC::readRedirEntry(uint32 entry_no)
+IOAPIC::IOAPIC_redir_entry IOAPIC::readRedirEntry(uint32_t entry_no)
 {
         assert(entry_no <= max_redir_);
-        uint8 offset = redirEntryOffset(entry_no);
+        uint8_t offset = redirEntryOffset(entry_no);
 
         IOAPIC_redir_entry temp;
         temp.word_l = read(offset);
@@ -135,47 +132,47 @@ IOAPIC::IOAPIC_redir_entry IOAPIC::readRedirEntry(uint32 entry_no)
         return temp;
 }
 
-void IOAPIC::writeRedirEntry(uint32 entry_no, const IOAPIC::IOAPIC_redir_entry& value)
+void IOAPIC::writeRedirEntry(uint32_t entry_no, const IOAPIC::IOAPIC_redir_entry& value)
 {
         assert(entry_no <= max_redir_);
-        uint8 offset = redirEntryOffset(entry_no);
+        uint8_t offset = redirEntryOffset(entry_no);
 
         write(offset + 1, value.word_h);
         write(offset, value.word_l);
 }
 
-uint32 IOAPIC::getGlobalInterruptBase()
+uint32_t IOAPIC::getGlobalInterruptBase()
 {
         return g_sys_int_base_;
 }
 
-uint32 IOAPIC::getMaxRedirEntry()
+uint32_t IOAPIC::getMaxRedirEntry()
 {
         return max_redir_;
 }
 
 
-void IOAPIC::setGSysIntMask(uint32 g_sys_int, bool value)
+void IOAPIC::setGSysIntMask(uint32_t g_sys_int, bool value)
 {
         debug(APIC, "Set G Sys Int %x mask: %u\n", g_sys_int, value);
         IOAPIC* io_apic = findIOAPICforGlobalInterrupt(g_sys_int);
-        uint32 entry_offset = g_sys_int - io_apic->getGlobalInterruptBase();
+        uint32_t entry_offset = g_sys_int - io_apic->getGlobalInterruptBase();
         IOAPIC_redir_entry r = io_apic->readRedirEntry(entry_offset);
         r.mask = (value ? 1: 0);
         io_apic->writeRedirEntry(entry_offset, r);
 }
 
-void IOAPIC::setIRQMask(uint32 irq_num, bool value)
+void IOAPIC::setIRQMask(uint32_t irq_num, bool value)
 {
         debug(APIC, "Set IRQ %x mask: %u\n", irq_num, value);
         setGSysIntMask(findGSysIntForIRQ(irq_num), value);
 }
 
-IOAPIC* IOAPIC::findIOAPICforGlobalInterrupt(uint32 g_int)
+IOAPIC* IOAPIC::findIOAPICforGlobalInterrupt(uint32_t g_int)
 {
         for(auto& io_apic : io_apic_list_)
         {
-                uint32 base = io_apic.getGlobalInterruptBase();
+                uint32_t base = io_apic.getGlobalInterruptBase();
                 if((base <= g_int) && (g_int < base + io_apic.getMaxRedirEntry()))
                 {
                     if (APIC & OUTPUT_ADVANCED)
@@ -190,9 +187,9 @@ IOAPIC* IOAPIC::findIOAPICforGlobalInterrupt(uint32 g_int)
         return nullptr;
 }
 
-uint32 IOAPIC::findGSysIntForIRQ(uint8 irq)
+uint32_t IOAPIC::findGSysIntForIRQ(uint8_t irq)
 {
-        uint8 g_sys_int = irq;
+        uint8_t g_sys_int = irq;
 
         for(auto& entry : irq_source_override_list_)
         {
@@ -208,7 +205,7 @@ uint32 IOAPIC::findGSysIntForIRQ(uint8 irq)
         return g_sys_int;
 }
 
-IOAPIC* IOAPIC::findIOAPICforIRQ(uint8 irq)
+IOAPIC* IOAPIC::findIOAPICforIRQ(uint8_t irq)
 {
     if(APIC & OUTPUT_ADVANCED){
         debug(APIC, "Find IOAPIC for IRQ %u\n", irq);
@@ -217,7 +214,7 @@ IOAPIC* IOAPIC::findIOAPICforIRQ(uint8 irq)
     return findIOAPICforGlobalInterrupt(findGSysIntForIRQ(irq));
 }
 
-void IOAPIC::addIOAPIC(uint32 id, IOAPIC_MMIORegs* regs, uint32 g_sys_int_base)
+void IOAPIC::addIOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base)
 {
     io_apic_list_.emplace_back(id, regs, g_sys_int_base);
 }
