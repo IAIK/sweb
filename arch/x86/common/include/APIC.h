@@ -3,6 +3,7 @@
 #include "types.h"
 #include "ACPI.h"
 #include "EASTL/vector.h"
+#include "EASTL/bit.h"
 #include "ArchInterrupts.h"
 
 class Apic
@@ -343,19 +344,33 @@ public:
         static_assert(sizeof(v) == 4 || sizeof(v) == 8);
         if constexpr (sizeof(v) == 8)
         {
-            this->writeRegisterImpl(R::reg_offset, *(uint64_t*)&v);
+            writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint64_t>(v));
         }
         else
         {
-            this->writeRegisterImpl(R::reg_offset, *(uint32_t*)&v);
+            writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint32_t>(v));
         }
     }
 
     template <typename R>
     R::value_type readRegister()
     {
-        uint64_t v = this->readRegisterImpl(R::reg_offset);
-        return *(typename R::value_type*)&v;
+        static_assert(sizeof(typename R::value_type) == 4 || sizeof(typename R::value_type) == 8);
+        union
+        {
+            uint32_t u32;
+            uint64_t u64;
+        } v;
+
+        v.u64 = readRegisterImpl(R::reg_offset);
+        if constexpr (sizeof(typename R::value_type) == 8)
+        {
+            return eastl::bit_cast<typename R::value_type>(v.u64);
+        }
+        else
+        {
+            return eastl::bit_cast<typename R::value_type>(v.u32);
+        }
     }
 
     uint32_t Id() const;
