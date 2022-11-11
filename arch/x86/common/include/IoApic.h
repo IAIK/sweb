@@ -89,14 +89,6 @@ public:
         };
     } __attribute__((packed));
 
-    /* These are not actually memory mapped
-       struct IOAPICRegisters
-       {
-       volatile IOAPIC_r_ID r_id;
-       volatile IOAPIC_r_VER r_ver;
-       volatile IOAPIC_r_ARB r_arb;
-       volatile IOAPIC_redir_entry r_redir[0x18];
-       } __attribute__((packed));*/
 
     struct IOAPIC_MMIORegs
     {

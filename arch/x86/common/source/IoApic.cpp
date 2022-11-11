@@ -48,6 +48,8 @@ void IOAPIC::initRedirections()
         {
                 IOAPIC_redir_entry r = readRedirEntry(i);
 
+                r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + i;
+
                 for(auto& entry : irq_source_override_list_)
                 {
                         if(getGlobalInterruptBase() + i == entry.g_sys_int)
@@ -57,13 +59,10 @@ void IOAPIC::initRedirections()
                                 r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                                 r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
                                 r.destination = cpu_lapic->Id();
-                                goto write_entry;
+                                break;
                         }
                 }
 
-                r.interrupt_vector = getGlobalInterruptBase() + IRQ_OFFSET + i;
-
-        write_entry:
                 writeRedirEntry(i, r);
         }
 
