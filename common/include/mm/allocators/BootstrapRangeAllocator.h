@@ -28,7 +28,7 @@ public:
     size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
 
 
-    class AllocBlockIterator
+    class AllocBlockIterator : public eastl::iterator<eastl::input_iterator_tag, size_t>
     {
     public:
         using iterator_category = eastl::input_iterator_tag;
