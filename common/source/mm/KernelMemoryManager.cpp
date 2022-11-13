@@ -40,10 +40,10 @@ void KernelMemoryManager::init()
 
 size_t KernelMemoryManager::calcNumHeapPages()
 {
-    size_t HEAP_PAGES = PageManager::instance()->getNumFreePages()/3;
-    if (HEAP_PAGES > 1024)
-        HEAP_PAGES = 1024 + (HEAP_PAGES - Min(HEAP_PAGES, 1024))/8;
-    return HEAP_PAGES;
+    size_t heap_pages = PageManager::instance()->getNumFreePages()/2;
+    if (heap_pages > 1024)
+        heap_pages = 1024 + (heap_pages - 1024)/8;
+    return heap_pages;
 }
 
 size_t KernelMemoryManager::mapKernelHeap(size_t max_heap_pages)
