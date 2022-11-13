@@ -34,6 +34,17 @@ public:
 
   static void enableInterrupts();
   static bool disableInterrupts();
+  static void setInterrupts(bool state)
+  {
+      if (state)
+      {
+          enableInterrupts();
+      }
+      else
+      {
+          disableInterrupts();
+      }
+  }
 
   /**
    * on x86: tests if the IF Flag in EFLAGS is set, aka if the Interrupts are enabled
@@ -58,26 +69,12 @@ public:
     WithInterrupts(bool new_state)
     {
         previous_state_ = ArchInterrupts::testIFSet();
-        if (new_state)
-        {
-            ArchInterrupts::enableInterrupts();
-        }
-        else
-        {
-            ArchInterrupts::disableInterrupts();
-        }
+        ArchInterrupts::setInterrupts(new_state);
     }
 
     ~WithInterrupts()
     {
-        if(previous_state_)
-        {
-            ArchInterrupts::enableInterrupts();
-        }
-        else
-        {
-            ArchInterrupts::disableInterrupts();
-        }
+        ArchInterrupts::setInterrupts(previous_state_);
     }
 
     bool previousInterruptState()
