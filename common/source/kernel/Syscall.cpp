@@ -16,8 +16,8 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
 
   if ((syscall_number != sc_sched_yield) && (syscall_number != sc_outline)) // no debug print because these might occur very often
   {
-    debug(SYSCALL, "Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx)\n",
-          syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5);
+    debug(SYSCALL, "CPU %zu: Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) by %s[%zu] (%p)\n",
+          SMP::currentCpuId(), syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5, currentThread->getName(), currentThread->getTID(), currentThread);
   }
 
   switch (syscall_number)
