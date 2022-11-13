@@ -214,8 +214,7 @@ add_custom_command (OUTPUT ${INITRD_FILE}
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
     DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${HDD_IMAGE_RAW}" # "${INITRD_FILE}"
-    COMMAND mkdir -p userspace/data
-    COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/userspace/data ${PROJECT_BINARY_DIR}/userspace/data
     # COMMAND ./mkminixfs -d "${HDD_IMAGE_RAW}" -p 2
     COMMAND ./exe2minixfs "${HDD_IMAGE_RAW}" 2 ${MINIXFS_ARGUMENT}
     # COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${MINIXFS_ARGUMENT}
@@ -282,10 +281,10 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
-    COMMAND make clean
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR} -t clean
     COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
+    COMMAND ${CMAKE_COMMAND} -E rm -fR -- ${PROJECT_BINARY_DIR}/*
+    COMMAND ${CMAKE_COMMAND} -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 )
 
 #Custom target: make cleandisk
@@ -298,9 +297,9 @@ add_custom_target(cleandisk
 
 #Custom target: make debug
 add_custom_target(debug
-    COMMAND make clean
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR} -t clean
     COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+    COMMAND ${CMAKE_COMMAND} -E rm -fR -- ${PROJECT_BINARY_DIR}/*
     COMMAND cmake -DDEBUG=1 -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 )
 
