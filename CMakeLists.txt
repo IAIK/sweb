@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.17)
 
 cmake_policy(SET CMP0079 NEW)
 
@@ -286,6 +286,14 @@ add_custom_target(mrproper
     COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
     COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
     COMMAND cmake -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
+)
+
+#Custom target: make cleandisk
+#Deletes the disk image so it is freshly recreated on next build
+add_custom_target(cleandisk
+    COMMENT "Removing disk image"
+    COMMAND ${CMAKE_COMMAND} -E rm -f -- ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk
+    COMMAND ${CMAKE_COMMAND} -E rm -f -- ${PROJECT_BINARY_DIR}/SWEB.qcow2
 )
 
 #Custom target: make debug
