@@ -23,12 +23,24 @@ static void initInterruptHandlers()
   InterruptUtils::initialise();
 }
 
+void setIMCRMode(IMCRData mode)
+{
+    // Intel MultiProcessor Specification chapter 3.6.2
+    // https://pdos.csail.mit.edu/6.828/2008/readings/ia32/MPspec.pdf
+    debug(A_INTERRUPTS, "Ensure IMCR is set to APIC passthrough/symmetric mode\n");
+    // IMCR register might not actually exist, but attempting to write to it should be fine?
+    IMCR_SELECT::write(IMCRSelect::SELECT_IMCR);
+    IMCR_DATA::write(mode);
+}
+
 static void initInterruptController()
 {
   debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
   assert(CpuLocalStorage::ClsInitialized());
   if (cpu_features.cpuHasFeature(CpuFeatures::APIC))
   {
+      setIMCRMode(IMCRData::APIC_PASSTHROUGH);
+
       Apic::globalEnable();
       if (X2Apic::x2ApicSupported())
       {
