@@ -211,9 +211,10 @@ void Apic::sendEOI(size_t num)
 }
 
 
-void XApic::foundLocalAPIC(void* reg_phys_addr, uint32 flags)
+void XApic::foundLocalAPIC(void* reg_phys_addr, MADTExtendedHeader::Flags flags)
 {
-    debug(APIC, "Local APIC at phys %p, flags: %x\n", reg_paddr_, flags);
+    debug(APIC, "Local APIC at phys %p, PIC 8259: %u\n", reg_paddr_, flags.PCAT_COMPAT);
+    PIC8259::exists = flags.PCAT_COMPAT;
     assert(reg_phys_addr == readMsrPhysAddr());
 }
 

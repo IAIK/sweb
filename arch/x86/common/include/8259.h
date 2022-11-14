@@ -6,6 +6,8 @@
 class PIC8259
 {
 public:
+  static bool exists;
+
 /**
  * sends the initialisation and operational command words to CPU
  *

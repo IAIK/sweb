@@ -238,47 +238,47 @@ void ACPI_MADTHeader::parse()
   {
     switch(madt_entry->type)
     {
-    case 0:
+    case MADTEntryDescriptor::PROCESSOR_LOCAL_APIC:
     {
       MADTProcLocalAPIC* entry = (MADTProcLocalAPIC*)(madt_entry + 1);
-      debug(ACPI, "[%p] Processor local APIC, ACPI Processor ID: %4x, APIC ID: %4x, enabled: %u\n", entry, entry->proc_id, entry->apic_id, entry->flags.enabled);
+      debug(ACPI, "[%p] Processor local APIC, ACPI Processor ID: %4x, APIC ID: %4x, enabled: %u, online capable: %u\n", entry, entry->proc_id, entry->apic_id, entry->flags.enabled, entry->flags.online_capable);
       Apic::addLocalAPICToList(*entry);
       break;
     }
-    case 1:
+    case MADTEntryDescriptor::IO_APIC:
     {
       MADT_IO_APIC* entry = (MADT_IO_APIC*)(madt_entry + 1);
       debug(ACPI, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
       IOAPIC::addIOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, (uint32)entry->global_system_interrupt_base);
       break;
     }
-    case 2:
+    case MADTEntryDescriptor::INTERRUPT_SOURCE_OVERRIDE:
     {
       MADTInterruptSourceOverride* entry = (MADTInterruptSourceOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->g_sys_int, entry->flags.polarity, entry->flags.trigger_mode);
       IOAPIC::addIRQSourceOverride(*entry);
       break;
     }
-    case 3:
+    case MADTEntryDescriptor::NMI_SOURCE:
     {
       MADTNonMaskableInterruptsSource* entry = (MADTNonMaskableInterruptsSource*)(madt_entry + 1);
       debug(ACPI, "[%p] NMI source, g_sys_int: %x, flags: %x\n", entry, entry->g_sys_int, entry->flags);
       break;
     }
-    case 4:
+    case MADTEntryDescriptor::LOCAL_APIC_NMI:
     {
       MADTNonMaskableInterrupts* entry = (MADTNonMaskableInterrupts*)(madt_entry + 1);
       debug(ACPI, "[%p] Local APIC NMI, proc_id: %x, flags: %x, lint_num: %x\n", entry, entry->processor_id, entry->flags, entry->lint_num);
       break;
     }
-    case 5:
+    case MADTEntryDescriptor::LOCAL_APIC_ADDR_OVERRIDE:
     {
       MADTLocalAPICAddressOverride* entry = (MADTLocalAPICAddressOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Local APIC address override, addr: %" PRIx64 "\n", entry, entry->local_apic_addr);
       XApic::setPhysicalAddress((void*)entry->local_apic_addr);
       break;
     }
-    case 9:
+    case MADTEntryDescriptor::PROCESSOR_LOCAL_X2APIC:
     {
       MADTProcLocalx2APIC* entry = (MADTProcLocalx2APIC*)(madt_entry + 1);
       debug(ACPI, "[%p] Processor local x2APIC, x2APIC ID: %4x, enabled: %u, proc UID: %x\n", entry, entry->x2apic_id, entry->flags.enabled, entry->processor_uid);

@@ -430,7 +430,7 @@ public:
     explicit XApic(){}
     virtual ~XApic() = default;
 
-    static void foundLocalAPIC(void* reg_phys_addr, uint32 flags);
+    static void foundLocalAPIC(void* reg_phys_addr, MADTExtendedHeader::Flags flags);
 
     static void mapAt(size_t addr);
 

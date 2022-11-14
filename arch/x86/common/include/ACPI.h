@@ -57,7 +57,11 @@ struct XSDT
 struct MADTExtendedHeader
 {
         uint32 local_apic_addr;
-        uint32 flags;
+        struct Flags
+        {
+            uint32_t PCAT_COMPAT :  1;
+            uint32_t reserved    : 31;
+        } __attribute__((packed)) flags;
 } __attribute__ ((packed));
 
 struct ACPI_MADTHeader
@@ -72,6 +76,27 @@ struct MADTEntryDescriptor
 {
         uint8 type;
         uint8 length;
+
+        enum TYPE
+        {
+            PROCESSOR_LOCAL_APIC = 0x0,
+            IO_APIC = 0x1,
+            INTERRUPT_SOURCE_OVERRIDE = 0x2,
+            NMI_SOURCE = 0x3,
+            LOCAL_APIC_NMI = 0x4,
+            LOCAL_APIC_ADDR_OVERRIDE = 0x5,
+            IO_SAPIC = 0x6,
+            LOCAL_SAPIC = 0x7,
+            PLATFORM_INTERRUPT_SOURCS = 0x8,
+            PROCESSOR_LOCAL_X2APIC = 0x9,
+            LOCAL_X2APIC_NMI = 0xA,
+            GIC_CPU_INTERFACE = 0xB,
+            GIC_DISTRIBUTOR = 0xC,
+            GIC_MSI_FRAME = 0xD,
+            GIC_REDISTRIBUTOR = 0xE,
+            GIC_INTERRUPT_TRANSLATION = 0xF,
+            MULTIPROCESSOR_WAKEUP = 0x10,
+        };
 } __attribute__ ((packed));
 
 struct MADTProcLocalAPIC
@@ -80,8 +105,9 @@ struct MADTProcLocalAPIC
         uint8 apic_id;
         struct
         {
-                uint32 enabled  :  1;
-                uint32 reserved : 31;
+                uint32 enabled        :  1;
+                uint32 online_capable :  1;
+                uint32 reserved       : 30;
         } __attribute__ ((packed)) flags;
 } __attribute__ ((packed));
 

@@ -4,6 +4,8 @@
 #include "ArchMulticore.h"
 #include "assert.h"
 
+
+bool PIC8259::exists = true;
 size_t PIC8259::outstanding_EOIs_ = 0;
 
 uint16 PIC8259::cached_mask = 0xFFFF;
