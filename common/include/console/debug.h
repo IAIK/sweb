@@ -67,6 +67,11 @@ extern bool debug_print_to_fb;
         if (flag & OUTPUT_ENABLED) {          \
             debugAlways(flag, ##__VA_ARGS__); \
         } } while (0)
+
+#define debugAdvanced(flag, ...) do {                   \
+        if (flag & OUTPUT_ENABLED && flag & OUTPUT_ADVANCED) {   \
+            debugAlways(flag, ##__VA_ARGS__);   \
+        } } while (0)
 #endif
 
 
