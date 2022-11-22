@@ -42,6 +42,7 @@ SECTIONS
     cls_start = .;
     tdata_start = .;
     *(.tdata)
+    *(.tdata.*)
     tdata_end = .;
   }
 
@@ -50,6 +51,7 @@ SECTIONS
     LS_tbss = .;
     tbss_start = .;
     *(.tbss)
+    *(.tbss.*)
     . = ALIGN(8) + 8; /* For C++11 thread_local init-on-first-use flag */
     tbss_end = .;
     cls_end = .;
@@ -61,6 +63,7 @@ SECTIONS
     LS_Data = .;
     data_start_address = .;
     *(.data)
+    *(.data.*)
     . = ALIGN(4096);
     *(.gdt_stuff)
     data_end_address = .;
@@ -94,6 +97,7 @@ SECTIONS
     LS_Bss = .;
     bss_start_address = .;
     *(.bss)
+    *(.bss.*)
     *(COMMON) /* common symbols, usually placed in .bss */
     . = ALIGN(4096);
     bss_end_address = .;
