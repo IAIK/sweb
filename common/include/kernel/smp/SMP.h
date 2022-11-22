@@ -33,6 +33,7 @@ public:
     static void initialize();
 
     static void addCpuToList(ArchCpu* cpu);
+    static ArchCpu* cpu(size_t cpu_id);
 
     static Mutex cpu_list_lock_;
     static eastl::vector<ArchCpu*> cpu_list_;

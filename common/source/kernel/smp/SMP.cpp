@@ -40,6 +40,17 @@ void SMP::addCpuToList(ArchCpu* cpu)
     // debug(A_MULTICORE, "Added ArchCpu %zx to cpu list\n", cpu->getCpuID());
 }
 
+ArchCpu* SMP::cpu(size_t cpu_id)
+{
+    MutexLock l(SMP::cpu_list_lock_);
+    for (auto c : SMP::cpu_list_)
+    {
+        if (c->id() == cpu_id)
+            return c;
+    }
+    return nullptr;
+}
+
 void SMP::callOnOtherCpus(const RemoteFunctionCallMessage::function_t& func)
 {
     assert(func);
