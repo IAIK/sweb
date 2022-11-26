@@ -185,12 +185,14 @@ endforeach(file)
 #Creates the hd image and copies all files to it
 add_custom_target (hdd_image ALL
     DEPENDS kernel_to_image userspace_to_image
+    BYPRODUCTS ${HDD_IMAGE}
     COMMAND qemu-img convert -f raw -O qcow2 ${HDD_IMAGE_RAW} ${HDD_IMAGE}
 )
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
     DEPENDS blank_hdd_image kernel exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_RAW}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
+    BYPRODUCTS kernel.dbg
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
