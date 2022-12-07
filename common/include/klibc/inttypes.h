@@ -18,7 +18,8 @@
   #error "unexpected sizeof long"
 #endif
 
-#if __LONG_LONG_WIDTH__ == 64
+// g++ defines __LONG_LONG_WIDTH__, clang defines __LLONG_WIDTH__
+#if __LONG_LONG_WIDTH__ == 64 || __LLONG_WIDTH__ == 64
   #ifndef __PRI_64_PREFIX
     #define __PRI_64_PREFIX "ll"
   #endif
