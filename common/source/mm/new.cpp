@@ -42,6 +42,9 @@ static void* _new(size_t size, pointer called_by = getCalledBefore(1))
     *static_cast<size_t *>(p) = size;
     p = ((uint8 *)p) + 0x10;
   }
+#if !DYNAMIC_KMM
+  assert(p);
+#endif
   return p;
 }
 
@@ -108,7 +111,7 @@ extern "C" void _pure_virtual();
 extern "C" void __pure_virtual();
 extern "C" uint32 atexit ( void ( *func )() );
 extern "C" uint32 __cxa_atexit();
-extern "C" void* __dso_handle;
+extern void* __dso_handle;
 
 void __cxa_pure_virtual()
 {

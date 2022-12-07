@@ -39,6 +39,7 @@
 
 #include <cstddef>
 #include <exception>
+#include "assert.h"
 
 #if defined(__has_attribute)
   #if __has_attribute(__externally_visible__)
@@ -183,10 +184,10 @@ void operator delete[](void*, std::size_t, std::align_val_t)
 #endif // __cpp_aligned_new
 
 // Default placement versions of operator new.
-[[nodiscard]] inline void* operator new(std::size_t, void* __p) noexcept
-{ return __p; }
-[[nodiscard]] inline void* operator new[](std::size_t, void* __p) noexcept
-{ return __p; }
+[[nodiscard]] [[gnu::nonnull]] inline void* operator new(std::size_t, void* __p) noexcept
+{ assert(__p); return __p; }
+[[nodiscard]] [[gnu::nonnull]] inline void* operator new[](std::size_t, void* __p) noexcept
+{ assert(__p); return __p; }
 
 // Default placement versions of operator delete.
 inline void operator delete  (void*, void*) noexcept { }
