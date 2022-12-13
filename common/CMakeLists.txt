@@ -1,3 +1,5 @@
+add_subdirectory(source)
+
 target_include_directories(kernel PUBLIC
     include
     ../arch/common/include
@@ -7,8 +9,6 @@ target_include_directories(kernel PUBLIC
     ../arch/${ARCH}/../../common/include
     include/console
     include/kernel
-    include/kernel/smp
-    include/drivers
     include/fs
     include/fs/devicefs
     include/fs/devicefs/devices
@@ -20,5 +20,3 @@ target_include_directories(kernel PUBLIC
     include/mm/allocators
     include/util
 )
-
-add_subdirectory(source)

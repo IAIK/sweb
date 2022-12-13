@@ -1,7 +1,6 @@
 add_library(kernel_libc)
 
-target_include_directories(kernel_libc
-    PUBLIC
+target_include_directories(kernel_libc PUBLIC
     ../../include/klibc
 )
 
