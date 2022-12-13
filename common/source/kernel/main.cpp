@@ -161,9 +161,9 @@ extern "C" [[noreturn]] void startup()
   Scheduler::instance()->addNewThread(init_thread);
   Scheduler::instance()->printThreadList();
 
-  debug(MAIN, "%zu CPU(s) running\n", SMP::cpu_list_.size());
-  kprintf("%zu CPU(s) running\n", SMP::cpu_list_.size());
-  for(auto cpu : SMP::cpu_list_)
+  debug(MAIN, "%zu CPU(s) running\n", SMP::cpuList().size());
+  kprintf("%zu CPU(s) running\n", SMP::cpuList().size());
+  for(auto* cpu : SMP::cpuList())
   {
       debug(MAIN, "CPU %zu\n", cpu->id());
       kprintf("CPU %zu\n", cpu->id());

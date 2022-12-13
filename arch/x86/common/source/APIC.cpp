@@ -244,7 +244,7 @@ void XApic::init()
     enable(true);
 
     initialized_ = true;
-    current_cpu.setId(id_);
+    SMP::currentCpu().setId(id_);
 }
 
 void Apic::LVT_TimerRegister::setVector(uint8 num)

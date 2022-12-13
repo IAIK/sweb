@@ -5,8 +5,9 @@
 
 cpu_local ArchCpu current_cpu;
 eastl::atomic<size_t> running_cpus;
-eastl::vector<ArchCpu*> SMP::cpu_list_;
 Mutex SMP::cpu_list_lock_("CPU list lock");
+
+extern cpu_local Thread* currentThread;
 
 ArchCpu& SMP::currentCpu()
 {
@@ -15,7 +16,7 @@ ArchCpu& SMP::currentCpu()
 
 size_t SMP::currentCpuId()
 {
-    return (!CpuLocalStorage::ClsInitialized() ? 0 : current_cpu.id());
+    return (!CpuLocalStorage::ClsInitialized() ? 0 : currentCpu().id());
 }
 
 size_t SMP::numRunningCpus()
@@ -25,7 +26,6 @@ size_t SMP::numRunningCpus()
 
 void SMP::initialize()
 {
-    new (&SMP::cpu_list_) eastl::vector<ArchCpu*>;
     new (&SMP::cpu_list_lock_) Mutex("CPU list lock");
 
     ArchMulticore::initialize();
@@ -33,17 +33,20 @@ void SMP::initialize()
 
 void SMP::addCpuToList(ArchCpu* cpu)
 {
-    // debug(A_MULTICORE, "Adding ArchCpu %zx to cpu list\n", cpu->getCpuID());
     MutexLock l(SMP::cpu_list_lock_);
-    debug(A_MULTICORE, "Locked cpu list, list at %p\n", &SMP::cpu_list_);
-    SMP::cpu_list_.push_back(cpu);
-    // debug(A_MULTICORE, "Added ArchCpu %zx to cpu list\n", cpu->getCpuID());
+    SMP::cpuList().push_back(cpu);
+}
+
+eastl::vector<ArchCpu*>&  SMP::cpuList()
+{
+    static eastl::vector<ArchCpu*> cpu_list_;
+    return cpu_list_;
 }
 
 ArchCpu* SMP::cpu(size_t cpu_id)
 {
     MutexLock l(SMP::cpu_list_lock_);
-    for (auto c : SMP::cpu_list_)
+    for (auto c : SMP::cpuList())
     {
         if (c->id() == cpu_id)
             return c;
@@ -57,7 +60,7 @@ void SMP::callOnOtherCpus(const RemoteFunctionCallMessage::function_t& func)
     debug(A_MULTICORE, "Calling function on other cpus\n");
 
     // Prepare
-    RemoteFunctionCallMessage funcdata[SMP::cpu_list_.size()]{};
+    RemoteFunctionCallMessage funcdata[SMP::cpuList().size()]{};
 
     auto orig_cpu = SMP::currentCpuId();
 
@@ -71,7 +74,7 @@ void SMP::callOnOtherCpus(const RemoteFunctionCallMessage::function_t& func)
     }
 
     // Send
-    for(auto* cpu : SMP::cpu_list_)
+    for (auto* cpu : SMP::cpuList())
     {
         auto id = cpu->id();
         funcdata[id].target_cpu = id;

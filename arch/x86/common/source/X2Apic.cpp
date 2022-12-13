@@ -73,7 +73,7 @@ void X2Apic::init()
     enable(true);
 
     initialized_ = true;
-    current_cpu.setId(id_);
+    SMP::currentCpu().setId(id_);
 }
 
 uint32_t X2Apic::readId()

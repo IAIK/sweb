@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include "EASTL/bitset.h"
-#include "ArchMulticore.h"
+#include "ArchCpuLocalStorage.h"
 
 namespace CPUID
 {

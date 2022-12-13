@@ -150,7 +150,7 @@ void ArchMulticore::startOtherCPUs()
     }
 
     MutexLock l(SMP::cpu_list_lock_);
-    for(auto& cpu : SMP::cpu_list_)
+    for(auto& cpu : SMP::cpuList())
     {
       debug(A_MULTICORE, "CPU %zu running\n", cpu->id());
     }
