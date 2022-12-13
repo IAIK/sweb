@@ -28,6 +28,7 @@
 
 #define EASTL_FAIL_MSG(message) assert(false && message)
 
+#define EASTL_VARIABLE_TEMPLATES_ENABLED 1
 
 extern void kprintfd(const char *fmt, ...);
 [[maybe_unused]] const auto printf = kprintfd;
