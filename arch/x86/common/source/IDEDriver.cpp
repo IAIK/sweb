@@ -20,7 +20,7 @@ uint32 IDEDriver::doDeviceDetection()
 
   uint8 ata_irqs[4] =
   {
-  14, 15, 11, 9
+  14, 14, 15, 15
   };
 
   // setup register values
