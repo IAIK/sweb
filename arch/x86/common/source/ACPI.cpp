@@ -228,8 +228,6 @@ ACPISDTHeader* XSDT::getEntry(size_t i)
 void ACPI_MADTHeader::parse()
 {
   new (&XApic::local_apic_list_) eastl::vector<MADTProcLocalAPIC>{};
-  new (&IOAPIC::io_apic_list_) eastl::vector<IOAPIC>{};
-  new (&IOAPIC::irq_source_override_list_) eastl::vector<MADTInterruptSourceOverride>{};
 
   XApic::foundLocalAPIC((void*)(size_t)ext_header.local_apic_addr, ext_header.flags);
 

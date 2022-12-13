@@ -15,14 +15,12 @@
 #include "assert.h"
 #include "SystemState.h"
 #include "CPUID.h"
+#include "PlatformBus.h"
 
 
-__cpu GDT cpu_gdt;
-__cpu TSS cpu_tss;
+cpu_local GDT cpu_gdt;
+cpu_local TSS cpu_tss;
 
-/* The order of initialization of cpu_local objects depends on the order in which they are defined in the source code.
-   This is pretty fragile, but using __cpu and placement new doesn't work (compiler complains that dynamic initialization is required).
-   Alternative: default constructor that does nothing + later explicit initialization using init() function */
 cpu_local XApic cpu_lapic_impl;
 cpu_local Apic* cpu_lapic = &cpu_lapic_impl;
 
@@ -139,7 +137,7 @@ void ArchMulticore::startOtherCPUs()
 
     for(auto& other_cpu_lapic : Apic::local_apic_list_)
     {
-      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic->Id()))
+      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic->apicId()))
       {
         cpu_lapic->startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
         debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
@@ -198,23 +196,21 @@ void ArchMulticore::initCpu()
   extern char cls_end;
   debug(A_MULTICORE, "Setting temporary CLS for AP [%p, %p)\n", &cls_start, &cls_end);
   CpuLocalStorage::setCls(&cls_start);
-  currentThread = NULL;
+  currentThread = nullptr;
 
   CpuLocalStorage::initCpuLocalStorage();
 
-  if (X2Apic::x2ApicSupported())
-  {
-      X2Apic::enableX2ApicMode();
-  }
+  ApicDriver::instance().cpuLocalInit();
+  ApicTimerDriver::instance().cpuLocalInit();
 
-  cpu_lapic->init();
-  assert(cpu_lapic->Id() == CPUID::localApicId());
+  assert(cpu_lapic->apicId() == CPUID::localApicId());
   ArchMulticore::initCpuLocalData();
 
 
   ArchThreads::initialise();
 
   debug(A_MULTICORE, "Enable AP timer\n");
+  assert(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer() && "Use of local APIC timer is required for SMP");
   ArchInterrupts::enableTimer();
 
   debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());

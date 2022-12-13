@@ -23,16 +23,27 @@
                                        }
 
 ATADriver::ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum) :
+    BDDriver(irqnum),
     port(baseport),
     drive((getdrive == 0) ? 0xA0 : 0xB0),
     jiffies(0),
+    irq_domain(eastl::string("ATA disk") + ('0'+getdrive) + eastl::string(" controller")),
     lock_("ATADriver::lock_")
 {
   debug(ATA_DRIVER, "ctor: Entered with irqnum %d and baseport %x!!\n", irqnum, baseport);
   debug(ATA_DRIVER, "ctor: Requesting disk geometry !!\n");
 
-  outportbp (port + 6, drive);  // Get first drive
-  outportbp (port + 7, 0xEC);   // Get drive info data
+  irq_domain.irq()
+      .mapTo(ArchInterrupts::isaIrqDomain(), irqnum)
+      .useHandler(
+          [this]()
+          {
+              BDManager::getInstance()->probeIRQ = false;
+              serviceIRQ();
+          });
+
+  outportbp(port + 6, drive);  // Get first drive
+  outportbp(port + 7, 0xEC);   // Get drive info data
   TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return;);
 
   uint16 dd[256];
@@ -54,17 +65,16 @@ ATADriver::ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum) :
   debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
   {
       WithInterrupts intr(true);
-      ArchInterrupts::enableIRQ(irqnum);
+      ArchInterrupts::enableIRQ(irq_domain.irq());
       testIRQ();
   }
 
-  irq = irqnum;
   debug(ATA_DRIVER, "ctor: Using ATA mode: %d !!\n", (int)mode);
 
   debug(ATA_DRIVER, "ctor: Driver created !!\n");
 }
 
-void ATADriver::testIRQ( )
+void ATADriver::testIRQ()
 {
   mode = BD_ATA_MODE::BD_PIO;
 

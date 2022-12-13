@@ -4,10 +4,11 @@
 #include "ArchCpuLocalStorage.h"
 #include "AtomicMpScQueue.h"
 #include "RemoteFunctionCall.h"
+#include "Device.h"
 
 // Information concerning one cpu in the system
 // Base functionality for all architectures
-class Cpu
+class Cpu : public Device
 {
 public:
     Cpu();

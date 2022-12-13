@@ -2,8 +2,9 @@
 
 #include "EASTL/string.h"
 #include "FiFo.h"
+#include "Device.h"
 
-class CharacterDevice
+class CharacterDevice : public Device
 {
   public:
 
@@ -11,18 +12,17 @@ class CharacterDevice
      * Constructor
      * @param name the device name
      * @param super_block the superblock (0)
-     * @param inode_type the inode type (cahracter device)
+     * @param inode_type the inode type (character device)
      */
     CharacterDevice(const char* name) :
+        Device(name),
         in_buffer_(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
         out_buffer_(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
         name_(name)
     {
     }
 
-    ~CharacterDevice()
-    {
-    }
+    ~CharacterDevice() override = default;
 
     /**
      * reads the data from the character device

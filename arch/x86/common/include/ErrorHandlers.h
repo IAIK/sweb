@@ -83,6 +83,7 @@ InterruptHandlers InterruptUtils::handlers[] = {
   {91, &arch_irqHandler_91},
   {100, &arch_irqHandler_100},
   {101, &arch_irqHandler_101},
+  {127, &arch_irqHandler_127},
   {128, &arch_syscallHandler},
   {0,0}
 };

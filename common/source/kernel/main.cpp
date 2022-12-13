@@ -38,6 +38,10 @@
 #include "BlockDeviceInode.h"
 #include "BootloaderModules.h"
 #include "SystemState.h"
+#include "DeviceBus.h"
+#include "PlatformBus.h"
+#include "ProgrammableIntervalTimer.h"
+#include "8259.h"
 
 extern void* kernel_end_address;
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
@@ -56,6 +60,8 @@ extern "C" [[noreturn]] void startup()
   PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");
 
+  PlatformBus::initPlatformBus();
+
   BootloaderModules::mapModules();
 
   ArchCommon::postBootInit();
@@ -65,6 +71,9 @@ extern "C" [[noreturn]] void startup()
 
   debug(MAIN, "Interrupts init\n");
   ArchInterrupts::initialise();
+
+  PlatformBus::instance().registerDriver(PITDriver::instance());
+  PlatformBus::instance().registerDriver(SerialManager::instance());
 
   debug(MAIN, "Creating console\n");
   main_console = ArchCommon::createConsole(1);
@@ -168,6 +177,18 @@ extern "C" [[noreturn]] void startup()
       debug(MAIN, "CPU %zu\n", cpu->id());
       kprintf("CPU %zu\n", cpu->id());
   }
+
+  if (A_INTERRUPTS & OUTPUT_ENABLED)
+  {
+      for(ArchCpu* cpu : SMP::cpuList())
+      {
+          debug(MAIN, "CPU %zu IRQ mappings:\n", cpu->id());
+          cpu->rootIrqDomain().printAllReverseMappings();
+      }
+  }
+
+  debug(MAIN, "Registered devices:\n");
+  DeviceBus::root().printSubDevices();
 
   // Ensure we already have a currentThread when interrupts are enabled
   debug(MAIN, "Starting threads and enabling interrupts...\n");

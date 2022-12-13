@@ -1,12 +1,19 @@
 #pragma once
 
+#include "CPUID.h"
 #include "types.h"
 #include "ACPI.h"
 #include "EASTL/vector.h"
 #include "EASTL/bit.h"
-#include "ArchInterrupts.h"
+#include "IrqDomain.h"
+#include "DeviceDriver.h"
+#include "Device.h"
+#include "ports.h"
 
-class Apic
+extern "C" void arch_irqHandler_127();
+
+
+class Apic : public InterruptController, public IrqDomain, public Device
 {
 public:
 
@@ -335,25 +342,26 @@ public:
 
     static constexpr uint8_t ERROR_INTERRUPT_VECTOR = 91;
     static constexpr uint8_t TIMER_DIVISOR = 16;
+    static constexpr uint8_t NUM_ISA_INTERRUPTS = 16;
+    static constexpr uint8_t IRQ_VECTOR_OFFSET = 0x20; // Offset for IRQ remapping so that they don't overlap with cpu exceptions
+    static constexpr uint8_t APIC_TIMER_VECTOR = 127;
 
-    virtual ~Apic() = default;
+    Apic(const eastl::string& name = "APIC");
+    ~Apic() override = default;
+    Apic(const Apic &) = delete;
+    Apic &operator=(const Apic &) = delete;
 
-    template <typename R>
-    void writeRegister(const typename R::value_type& v)
-    {
-        static_assert(sizeof(v) == 4 || sizeof(v) == 8);
-        if constexpr (sizeof(v) == 8)
-        {
-            writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint64_t>(v));
-        }
-        else
-        {
-            writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint32_t>(v));
-        }
+     template <typename R> void writeRegister(const typename R::value_type &v) {
+       static_assert(sizeof(v) == 4 || sizeof(v) == 8);
+       if constexpr (sizeof(v) == 8) {
+         writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint64_t>(v));
+       } else {
+         writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint32_t>(v));
+       }
     }
 
     template <typename R>
-    R::value_type readRegister()
+    typename R::value_type readRegister()
     {
         static_assert(sizeof(typename R::value_type) == 4 || sizeof(typename R::value_type) == 8);
         union
@@ -373,26 +381,46 @@ public:
         }
     }
 
-    uint32_t Id() const;
-    bool isInitialized() const;
+    [[nodiscard]] uint32_t apicId() const;
+    [[nodiscard]] bool isInitialized() const;
+    [[nodiscard]] virtual bool isX2Apic();
 
     virtual void init() = 0;
-    virtual bool isX2Apic()
-    {
-        return false;
-    }
+
+    static void setIMCRMode(IMCRData mode);
 
     static void globalEnable(bool = true);
     void enable(bool = true);
+
+    bool mask(irqnum_t irq, bool mask) override;
+    bool ack(irqnum_t irq) override;
+    bool irqStart(irqnum_t irq) override;
+
 
     void sendEOI(size_t num);
 
     bool checkIRR(uint8 num);
     bool checkISR(uint8 num);
 
+    struct ApicTimer : public InterruptController, public IrqDomain, public Device
+    {
+        explicit ApicTimer(Apic& apic);
+
+        bool mask(irqnum_t irq, bool mask) override;
+        bool ack(irqnum_t irq) override;
+
+        bool isMasked();
+
+    private:
+        Apic* apic_;
+        bool masked_ = true;
+    };
+
     void initTimer();
     void setTimerPeriod(uint32_t count);
     virtual uint32_t readId() = 0;
+
+    void registerIPI(irqnum_t irqnum);
 
     void sendIPI(uint8 vector, IPIDestination dest_type = IPIDestination::ALL,
                  size_t target = -1, IPIType ipi_type = IPIType::FIXED,
@@ -400,7 +428,7 @@ public:
     void sendIPI(uint8 vector, const Apic& target, bool wait_for_delivery = false);
     void startAP(uint8_t apic_id, size_t entry_addr);
 
-    bool usingAPICTimer() const;
+    [[nodiscard]] bool usingAPICTimer() const;
     void setUsingAPICTimer(bool using_apic_timer);
 
     void setSpuriousInterruptNumber(uint8_t num);
@@ -410,6 +438,9 @@ public:
     static void addLocalAPICToList(const MADTProcLocalAPIC&);
 
     size_t outstanding_EOIs_ = 0;
+
+    ApicTimer timer_interrupt_controller;
+    IrqDomain inter_processor_interrupt_domain;
 
 protected:
     virtual void writeRegisterImpl(ApicRegisterOffset offset, uint64_t v) = 0;
@@ -427,16 +458,23 @@ protected:
 class XApic : public Apic
 {
 public:
-    explicit XApic(){}
-    virtual ~XApic() = default;
+    XApic() :
+        Apic(eastl::string("xAPIC ") + ('0' + CPUID::localApicId()))
+    {
+    }
 
-    static void foundLocalAPIC(void* reg_phys_addr, MADTExtendedHeader::Flags flags);
+    ~XApic() override = default;
+    XApic(const XApic &) = delete;
+    XApic &operator=(const XApic &) = delete;
+
+    static void foundLocalAPIC(void *reg_phys_addr,
+                               MADTExtendedHeader::Flags flags);
 
     static void mapAt(size_t addr);
 
-    virtual void init();
+    void init() override;
 
-    virtual uint32_t readId();
+    uint32_t readId() override;
 
     static void setPhysicalAddress(void* paddr)
     {
@@ -458,17 +496,48 @@ public:
     static bool apicSupported();
 
 protected:
-    virtual void writeRegisterImpl(ApicRegisterOffset offset, uint64_t v);
-    virtual uint64_t readRegisterImpl(ApicRegisterOffset offset);
+     void writeRegisterImpl(ApicRegisterOffset offset, uint64_t v) override;
+     uint64_t readRegisterImpl(ApicRegisterOffset offset) override;
 
-    virtual void writeIcr(InterruptCommandRegisterLow icr, uint32_t dest);
+     void writeIcr(InterruptCommandRegisterLow icr, uint32_t dest) override;
 
-    virtual void waitIpiDelivered();
+     void waitIpiDelivered() override;
 
 private:
-    XApic(const XApic&) = delete;
-    XApic& operator=(const XApic&) = delete;
 
     static void* reg_paddr_;
     static void* reg_vaddr_;
+};
+
+class ApicDriver : public Driver<Apic>
+{
+public:
+    using base_type = Driver<Apic>;
+
+    ApicDriver();
+    virtual ~ApicDriver() = default;
+
+    static ApicDriver& instance();
+
+    virtual void doDeviceDetection();
+    virtual void cpuLocalInit();
+
+private:
+};
+
+class ApicTimerDriver : public Driver<Apic::ApicTimer>
+{
+public:
+    using base_type = Driver<Apic::ApicTimer>;
+
+    ApicTimerDriver();
+
+    virtual ~ApicTimerDriver() = default;
+
+    static ApicTimerDriver& instance();
+
+    virtual void doDeviceDetection();
+    virtual void cpuLocalInit();
+
+private:
 };

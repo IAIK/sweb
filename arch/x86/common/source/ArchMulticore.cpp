@@ -11,9 +11,16 @@ extern eastl::atomic<bool> ap_started;
 ArchCpu::ArchCpu() :
     lapic(cpu_lapic)
 {
-    setId(lapic->isInitialized() ? lapic->Id() : 0);
+    setId(lapic->isInitialized() ? lapic->apicId() : 0);
     debug(A_MULTICORE, "Initializing ArchCpu %zu\n", id());
     SMP::addCpuToList(this);
+    root_domain_ptr = &cpu_root_irq_domain_;
+}
+
+IrqDomain& ArchCpu::rootIrqDomain()
+{
+    assert(*root_domain_ptr);
+    return **root_domain_ptr;
 }
 
 void ArchMulticore::notifyMessageAvailable(ArchCpu& cpu)

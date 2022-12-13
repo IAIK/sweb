@@ -13,6 +13,9 @@
 #include "8259.h"
 #include "CPUID.h"
 #include "offsets.h"
+#include "Device.h"
+#include "IrqDomain.h"
+#include "ports.h"
 
 
 void* XApic::reg_paddr_ = (void*)0xfee00000;
@@ -22,14 +25,31 @@ eastl::vector<MADTProcLocalAPIC> Apic::local_apic_list_{};
 
 extern volatile size_t outstanding_EOIs;
 
-uint32 Apic::Id() const
+Apic::Apic(const eastl::string& name) :
+    IrqDomain(name, this),
+    Device(name),
+    timer_interrupt_controller(*this),
+    inter_processor_interrupt_domain("Inter Processor Interrupt")
+{
+}
+
+uint32 Apic::apicId() const
 {
     return id_;
 }
 
-bool Apic::isInitialized() const
+bool Apic::isInitialized() const { return initialized_; }
+
+bool Apic::isX2Apic() { return false; }
+
+void Apic::setIMCRMode(IMCRData mode)
 {
-    return initialized_;
+    // Intel MultiProcessor Specification chapter 3.6.2
+    // https://pdos.csail.mit.edu/6.828/2008/readings/ia32/MPspec.pdf
+    debug(APIC, "Ensure IMCR is set to APIC passthrough/symmetric mode\n");
+    // IMCR register might not actually exist, but attempting to write to it should be fine?
+    IMCR_SELECT::write(IMCRSelect::SELECT_IMCR);
+    IMCR_DATA::write(mode);
 }
 
 void Apic::globalEnable(bool enable)
@@ -41,7 +61,7 @@ void Apic::globalEnable(bool enable)
 
 void Apic::enable(bool enable)
 {
-    debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), Id());
+    debug(APIC, "%s APIC %x\n", (enable ? "Enabling" : "Disabling"), apicId());
 
     WithInterrupts i(false);
     auto siv = readRegister<Register::SPURIOUS_INTERRUPT_VECTOR>();
@@ -51,7 +71,7 @@ void Apic::enable(bool enable)
 
 void Apic::initTimer()
 {
-    debug(APIC, "Init timer for APIC %x\n", Id());
+    debug(APIC, "Init timer for APIC %x\n", apicId());
     assert(!ArchInterrupts::testIFSet());
 
     setUsingAPICTimer(true);
@@ -61,13 +81,14 @@ void Apic::initTimer()
     writeRegister<Register::TIMER_DIVIDE_CONFIG>(div);
 
     auto timer_reg = readRegister<Register::LVT_TIMER>();
-    timer_reg.setVector(0x20);
+    timer_reg.setVector(APIC_TIMER_VECTOR);
     timer_reg.setMode(TimerMode::PERIODIC);
     timer_reg.setMask(true);
     writeRegister<Register::LVT_TIMER>(timer_reg);
 
     // Write to initial count register starts timer
     setTimerPeriod(0x500000);
+
 }
 
 void Apic::setTimerPeriod(uint32 count)
@@ -91,10 +112,11 @@ void Apic::setErrorInterruptVector(uint8_t vector)
     writeRegister<Register::LVT_ERROR>(errorreg);
 }
 
-void Apic::setUsingAPICTimer(bool using_apic_timer)
+void Apic::setUsingAPICTimer(bool use_apic_timer)
 {
-    debug(APIC, "Using APIC timer: %d\n", using_apic_timer);
-    use_apic_timer_ = using_apic_timer;
+    debug(APIC, "Set using APIC timer: %d\n", use_apic_timer);
+
+    use_apic_timer_ = use_apic_timer;
 }
 
 bool Apic::usingAPICTimer() const
@@ -184,6 +206,7 @@ bool Apic::checkIRR(uint8_t irqnum)
 
 void Apic::sendEOI(size_t num)
 {
+    assert(SMP::currentCpuId() == apicId());
     --outstanding_EOIs_;
     if(APIC & OUTPUT_ADVANCED)
     {
@@ -210,6 +233,38 @@ void Apic::sendEOI(size_t num)
     writeRegister<Register::EOI>(0);
 }
 
+bool Apic::mask(irqnum_t irq, bool mask)
+{
+    debug(APIC, "%s, mask Irq %zx = %u\n", name().c_str(), irq, mask);
+    auto info = irqInfo(irq);
+    assert(info && "No irq info found");
+    assert(!info->mapped_by.empty());
+
+    return false;
+}
+
+bool Apic::ack(irqnum_t irq)
+{
+    debugAdvanced(APIC, "%s, ack Irq %zx\n", name().c_str(), irq);
+    auto info = irqInfo(irq);
+    assert(info && "No irq info found");
+    assert(!info->mapped_by.empty());
+
+    return false;
+}
+
+bool Apic::irqStart(irqnum_t irq)
+{
+    debugAdvanced(APIC, "%s, start of Irq %zx\n", name().c_str(), irq);
+    auto info = irqInfo(irq);
+    if (!info)
+        debugAlways(APIC, "No irq info found for irqnum %zu in irq domain %s\n", irq, name().c_str());
+    assert(info && "No irq info found");
+    assert(!info->mapped_by.empty());
+    return false;
+}
+
+
 
 void XApic::foundLocalAPIC(void* reg_phys_addr, MADTExtendedHeader::Flags flags)
 {
@@ -225,7 +280,17 @@ void XApic::mapAt(size_t addr)
 
     debug(APIC, "Map local APIC at phys %p to %p\n", reg_paddr_, (void*)addr);
 
-    assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
+    ArchMemoryMapping m = ArchMemory::resolveMapping(ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE, addr/PAGE_SIZE);
+    if (!m.page)
+    {
+        assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
+    }
+    else
+    {
+        assert(m.page_ppn == ((size_t)reg_paddr_)/PAGE_SIZE);
+        assert(m.pt[m.pti].write_through);
+        assert(m.pt[m.pti].cache_disabled);
+    }
     reg_vaddr_ = (void*)addr;
 }
 
@@ -236,15 +301,20 @@ void XApic::init()
 
     id_ = readId();
     auto logical_dest_id = readRegister<Register::LOGICAL_DESTINATION>();
-    debug(APIC, "Local xAPIC, id: %x, logical dest: %x\n", Id(), logical_dest_id);
+    debug(APIC, "Local xAPIC, id: %x, logical dest: %x\n", apicId(), logical_dest_id);
 
     setErrorInterruptVector(ERROR_INTERRUPT_VECTOR);
     setSpuriousInterruptNumber(100);
-    initTimer();
+
     enable(true);
 
     initialized_ = true;
     SMP::currentCpu().setId(id_);
+
+    registerIPI(90);
+    registerIPI(91);
+    registerIPI(100);
+    registerIPI(101);
 }
 
 void Apic::LVT_TimerRegister::setVector(uint8 num)
@@ -359,28 +429,39 @@ void Apic::startAP(uint8 apic_id, size_t entry_addr)
 
     // 10ms delay
 
-    PIT::PITCommandRegister pit_command{};
-    pit_command.bcd_mode = 0;
-    pit_command.operating_mode = 0; // oneshot
-    pit_command.access_mode = 3; // send low + high byte of reload value/divisor
-    pit_command.channel = 0;
-
     InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
     bool temp_using_apic_timer = usingAPICTimer();
-    setUsingAPICTimer(false);
+    bool apic_timer_mask = timer_interrupt_controller.isMasked();
+    ArchInterrupts::disableIRQ(PIT::instance().irq());
 
-    InterruptUtils::idt[0x20].setOffset((size_t)&PIT_delay_IRQ);
+    if (temp_using_apic_timer)
+    {
+        if (!apic_timer_mask)
+        {
+            SMP::currentCpu().rootIrqDomain().activateIrq(APIC_TIMER_VECTOR, false);
+            assert(timer_interrupt_controller.isMasked());
+        }
+        setUsingAPICTimer(false);
+    }
 
-    ArchInterrupts::enableIRQ(0);
-    ArchInterrupts::startOfInterrupt(0);
+    auto old_pit_mode = PIT::setOperatingMode(PIT::OperatingMode::ONESHOT);
+    auto old_pit_freq = PIT::frequencyDivisor();
+
+    InterruptUtils::idt[IRQ_VECTOR_OFFSET + 0].setOffset(&PIT_delay_IRQ);
+
+    ArchInterrupts::enableIRQ(PIT::instance().irq());
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
     ArchInterrupts::enableInterrupts();
 
-    PIT::init(pit_command.value, 1193182 / 100);
+    PIT::setOperatingMode(PIT::OperatingMode::ONESHOT);
+    PIT::setFrequencyDivisor(1193182 / 100);
+    debugAdvanced(A_MULTICORE, "Waiting for delay 1\n");
+    assert(ArchInterrupts::testIFSet());
     while(!delay);
 
     ArchInterrupts::disableInterrupts();
-    ArchInterrupts::disableIRQ(0);
-    ArchInterrupts::endOfInterrupt(0);
+    ArchInterrupts::disableIRQ(PIT::instance().irq());
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
 
     delay = 0;
 
@@ -388,27 +469,35 @@ void Apic::startAP(uint8 apic_id, size_t entry_addr)
 
     // 200us delay
 
-    ArchInterrupts::enableIRQ(0);
-    ArchInterrupts::startOfInterrupt(0);
+    ArchInterrupts::enableIRQ(PIT::instance().irq());
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
     ArchInterrupts::enableInterrupts();
 
-    PIT::init(pit_command.value, 1193182 / 5000);
+    PIT::setFrequencyDivisor(1193182 / 100);
+    debugAdvanced(A_MULTICORE, "Waiting for delay 2\n");
     while(!delay);
 
     ArchInterrupts::disableInterrupts();
-    ArchInterrupts::disableIRQ(0);
-    ArchInterrupts::endOfInterrupt(0);
+    ArchInterrupts::disableIRQ(PIT::instance().irq());
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
 
     delay = 0;
 
     // Second SIPI just in case the first one didn't work
     sendIPI(entry_addr/PAGE_SIZE, IPIDestination::TARGET, apic_id, IPIType::SIPI);
 
-    setUsingAPICTimer(temp_using_apic_timer);
-    InterruptUtils::idt[0x20] = temp_irq0_descriptor;
+    if (temp_using_apic_timer)
+    {
+        setUsingAPICTimer(temp_using_apic_timer);
+        SMP::currentCpu().rootIrqDomain().activateIrq(APIC_TIMER_VECTOR, !apic_timer_mask);
+    }
 
-    if (A_MULTICORE & OUTPUT_ADVANCED)
-        debug(A_MULTICORE, "Finished sending IPI to AP local APIC\n");
+    PIT::setOperatingMode(old_pit_mode);
+    PIT::setFrequencyDivisor(old_pit_freq);
+
+    InterruptUtils::idt[IRQ_VECTOR_OFFSET + 0] = temp_irq0_descriptor;
+
+    debugAdvanced(A_MULTICORE, "Finished sending IPI to AP local APIC\n");
 }
 
 void XApic::waitIpiDelivered()
@@ -420,6 +509,11 @@ void XApic::waitIpiDelivered()
     }
 }
 
+void Apic::registerIPI(irqnum_t irqnum)
+{
+    inter_processor_interrupt_domain.irq(irqnum).mapTo(*this, irqnum);
+}
+
 void Apic::sendIPI(uint8_t vector, IPIDestination dest_type, size_t target, IPIType ipi_type, bool wait_for_delivery)
 {
     assert(isInitialized());
@@ -429,7 +523,7 @@ void Apic::sendIPI(uint8_t vector, IPIDestination dest_type, size_t target, IPIT
     WithInterrupts d(false);
 
     if (A_MULTICORE & OUTPUT_ADVANCED)
-        debug(APIC, "CPU %x Sending IPI, vector: %x\n", Id(), vector);
+        debug(APIC, "CPU %x Sending IPI, vector: %x\n", apicId(), vector);
 
     InterruptCommandRegisterLow icrl{};
     icrl.vector                = vector;
@@ -441,7 +535,7 @@ void Apic::sendIPI(uint8_t vector, IPIDestination dest_type, size_t target, IPIT
 
     writeIcr(icrl, dest_type == IPIDestination::TARGET ? target : 0);
 
-    if(wait_for_delivery && !((dest_type == IPIDestination::TARGET) && (target == Id())))
+    if(wait_for_delivery && !((dest_type == IPIDestination::TARGET) && (target == apicId())))
     {
         debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", SMP::currentCpuId(), target);
         waitIpiDelivered();
@@ -452,39 +546,13 @@ void Apic::sendIPI(uint8_t vector, const Apic& target, bool wait_for_delivery)
 {
     assert(isInitialized());
     assert(target.isInitialized());
-    sendIPI(vector, IPIDestination::TARGET, target.Id(), IPIType::FIXED, wait_for_delivery);
-
-    // // Ensure this section of code runs on the same CPU and the local APIC is not used for anything else in the meantime
-    // WithInterrupts d(false);
-
-    // if (A_MULTICORE & OUTPUT_ADVANCED)
-    //     debug(APIC, "CPU %x sending IPI to CPU %x, vector: %x\n", Id(), target.Id(), vector);
-
-    // InterruptCommandRegisterLow icrl{};
-    // icrl.vector                = vector;
-    // icrl.delivery_mode         = (uint32)IPIType::FIXED;
-    // icrl.destination_mode      = (uint32)IPIDestinationMode::PHYSICAL;
-    // icrl.level                 = (uint32)IPILevel::ASSERT;
-    // icrl.trigger_mode          = (uint32)IntTriggerMode::EDGE;
-    // icrl.destination_shorthand = (uint32)IPIDestination::TARGET;
-    // icrl.delivery_status       = (uint32)DeliveryStatus::IDLE;
-
-
-    // writeIcr(icrl, target.Id());
-
-    // if(wait_for_delivery && (target.Id() != Id()))
-    // {
-    //     waitIpiDelivered();
-    // }
+    sendIPI(vector, IPIDestination::TARGET, target.apicId(), IPIType::FIXED, wait_for_delivery);
 }
 
 
 void XApic::writeRegisterImpl(ApicRegisterOffset offset, uint64_t v)
 {
     assert(offset != ApicRegisterOffset::SELF_IPI);
-
-    if (offset != ApicRegisterOffset::EOI)
-        debug(APIC, "Write register %x, %lx\n", (unsigned int)offset, v);
 
     WithInterrupts i{false};
     if (offset == ApicRegisterOffset::INTERRUPT_COMMAND)
@@ -496,8 +564,6 @@ void XApic::writeRegisterImpl(ApicRegisterOffset offset, uint64_t v)
     volatile uint32_t* reg_addr = (uint32_t*)((char*)reg_vaddr_ + static_cast<unsigned int>(offset));
     uint32_t v32 = v;
     *reg_addr = v32;
-    if (offset != ApicRegisterOffset::EOI)
-        debug(APIC, "Register write complete\n");
 }
 
 uint64_t XApic::readRegisterImpl(ApicRegisterOffset offset)
@@ -539,4 +605,118 @@ void* XApic::readMsrPhysAddr()
 bool XApic::apicSupported()
 {
     return cpu_features.cpuHasFeature(CpuFeatures::X86Feature::APIC);
+}
+
+void ApicDriver::doDeviceDetection()
+{
+    debug(APIC, "Device detection\n");
+    cpuLocalInit();
+}
+
+void ApicDriver::cpuLocalInit()
+{
+    if (cpu_features.cpuHasFeature(CpuFeatures::APIC))
+    {
+        debug(APIC, "Init cpu local apic\n");
+        Apic::setIMCRMode(IMCRData::APIC_PASSTHROUGH);
+
+        Apic::globalEnable();
+        if (X2Apic::x2ApicSupported())
+        {
+            X2Apic::enableX2ApicMode();
+        }
+        else
+        {
+            XApic::setPhysicalAddress(XApic::readMsrPhysAddr());
+            XApic::mapAt((size_t)XApic::physicalAddress() | PHYSICAL_TO_VIRTUAL_OFFSET);
+        }
+
+        cpu_root_irq_domain_ = cpu_lapic;
+        cpu_lapic->init();
+
+        SMP::currentCpu().addSubDevice(*cpu_lapic);
+        bindDevice(*cpu_lapic);
+    }
+    else
+    {
+        debug(APIC, "Local APIC not available\n");
+    }
+}
+
+Apic::ApicTimer::ApicTimer(Apic& apic) :
+    IrqDomain("APIC Timer", this),
+    Device("APIC timer", &apic),
+    apic_(&apic)
+{
+}
+
+bool Apic::ApicTimer::mask(irqnum_t irq, bool mask)
+{
+    assert(irq == 0);
+    WithInterrupts i{false};
+    auto timer_reg = apic_->readRegister<Register::LVT_TIMER>();
+
+    debug(APIC, "[Cpu %u] %s mask IRQ %zx = %u -> %u\n", apic_->apicId(), name().c_str(), irq, timer_reg.mask, mask);
+
+    timer_reg.mask = mask;
+    masked_ = mask;
+    apic_->writeRegister<Register::LVT_TIMER>(timer_reg);
+    return true;
+}
+
+bool Apic::ApicTimer::ack(irqnum_t irq)
+{
+    debugAdvanced(APIC, "[Cpu %u] %s ack IRQ %zx\n", apic_->apicId(), name().c_str(), irq);
+    assert(irq == 0);
+    --pending_EOIs;
+    apic_->sendEOI(Apic::APIC_TIMER_VECTOR);
+    return true;
+}
+
+bool Apic::ApicTimer::isMasked() { return masked_; }
+
+ApicDriver::ApicDriver()
+    : base_type("Local APIC driver")
+{
+}
+
+ApicDriver &ApicDriver::instance()
+{
+  static ApicDriver i;
+  return i;
+}
+
+ApicTimerDriver::ApicTimerDriver() :
+    base_type("APIC timer driver")
+{
+}
+
+ApicTimerDriver& ApicTimerDriver::instance()
+{
+    static ApicTimerDriver i;
+    return i;
+}
+
+void ApicTimerDriver::doDeviceDetection()
+{
+	cpuLocalInit();
+}
+
+void ApicTimerDriver::cpuLocalInit()
+{
+    if (cpu_features.cpuHasFeature(CpuFeatures::APIC) && cpu_lapic)
+    {
+        auto& timer = cpu_lapic->timer_interrupt_controller;
+        // TODO: this breaks when there are >9 CPUs
+        timer.setDeviceName(eastl::string("APIC ") + ('0'+cpu_lapic->apicId()) + " timer");
+        cpu_lapic->initTimer();
+
+        timer.irq().mapTo(*cpu_lapic, Apic::APIC_TIMER_VECTOR);
+
+        bindDevice(timer);
+    }
+    else
+    {
+        debug(APIC, "Local APIC timer not available\n");
+    }
 }

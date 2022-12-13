@@ -24,10 +24,14 @@
 class ArchCpu : public Cpu
 {
 public:
-        ArchCpu();
+    ArchCpu();
 
-        Apic* lapic;
+    Apic* lapic;
+
+    IrqDomain& rootIrqDomain();
+
 private:
+    IrqDomain** root_domain_ptr;
 };
 
 

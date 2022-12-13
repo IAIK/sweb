@@ -2,17 +2,33 @@
 
 #include "types.h"
 #include "ports.h"
+#include "IrqDomain.h"
+#include "DeviceDriver.h"
+#include "Device.h"
 
-class PIC8259
+class PIC8259 : public InterruptController, public IrqDomain, public Device
 {
 public:
   static bool exists;
+  static bool enabled;
+
+  PIC8259();
+
+  static PIC8259& instance();
+
+  void init();
+
+
+  virtual bool mask(irqnum_t irq, bool mask);
+  virtual bool ack(irqnum_t irq);
+  virtual bool irqStart(irqnum_t irq);
 
 /**
  * sends the initialisation and operational command words to CPU
  *
  */
   static void initialise8259s();
+
 
   static uint16 cached_mask;
 
@@ -43,11 +59,32 @@ public:
   static size_t outstanding_EOIs_;
 
 private:
-  enum
-  {
-          PIC_1_CONTROL_PORT = 0x20,
-          PIC_2_CONTROL_PORT = 0xA0,
-          PIC_1_DATA_PORT    = 0x21,
-          PIC_2_DATA_PORT    = 0xA1,
-  };
+    void setupIrqMappings();
+
+    enum class IoPorts : uint16_t
+    {
+        PIC_1_CONTROL_PORT = 0x20,
+        PIC_1_DATA_PORT    = 0x21,
+        PIC_2_CONTROL_PORT = 0xA0,
+        PIC_2_DATA_PORT    = 0xA1,
+    };
+
+    using PIC_1_CONTROL_PORT = IoRegister<(uint16_t)IoPorts::PIC_1_CONTROL_PORT, uint8_t, false, true>;
+    using PIC_2_CONTROL_PORT = IoRegister<(uint16_t)IoPorts::PIC_2_CONTROL_PORT, uint8_t, false, true>;
+    using PIC_1_DATA_PORT = IoRegister<(uint16_t)IoPorts::PIC_1_DATA_PORT, uint8_t, false, true>;
+    using PIC_2_DATA_PORT = IoRegister<(uint16_t)IoPorts::PIC_2_DATA_PORT, uint8_t, false, true>;
+};
+
+class PIC8259Driver : public Driver<PIC8259>
+{
+public:
+    using base_type = Driver<PIC8259>;
+
+    PIC8259Driver();
+    virtual ~PIC8259Driver() = default;
+
+    static PIC8259Driver& instance();
+
+    virtual void doDeviceDetection();
+private:
 };

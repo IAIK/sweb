@@ -1,16 +1,18 @@
 #pragma once
 
-#include <cstdint>
-#include "MSR.h"
 #include "APIC.h"
+#include "CPUID.h"
+#include "MSR.h"
+#include <cstdint>
 #include "debug.h"
-
-
 
 class X2Apic : public Apic
 {
 public:
-    X2Apic(){}
+    X2Apic() :
+        Apic(eastl::string("x2APIC ") + ('0' + CPUID::localX2ApicId()))
+    {
+    }
     virtual ~X2Apic() = default;
 
     static bool x2ApicSupported();

@@ -255,7 +255,7 @@ uint32 Terminal::remap(uint32 key)
   ')', '!', '@', '#', '$', '%', '^', '&', '*', '('
   };
 
-  KeyboardManager * km = KeyboardManager::instance();
+  KeyboardManager * km = &KeyboardManager::instance();
 
   if (isLetter(key))
   {

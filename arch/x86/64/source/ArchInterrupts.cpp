@@ -16,6 +16,24 @@
 #include "SystemState.h"
 #include "X2Apic.h"
 #include "CPUID.h"
+#include "IrqDomain.h"
+#include "PlatformBus.h"
+#include "KeyboardManager.h"
+
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector");
+cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
+
+IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
+{
+    assert(cpu_root_irq_domain_);
+    return *cpu_root_irq_domain_;
+}
+
+IrqDomain& ArchInterrupts::isaIrqDomain()
+{
+    static IrqDomain isa_irq_domain("ISA IRQ");
+    return isa_irq_domain;
+}
 
 static void initInterruptHandlers()
 {
@@ -23,41 +41,18 @@ static void initInterruptHandlers()
   InterruptUtils::initialise();
 }
 
-void setIMCRMode(IMCRData mode)
-{
-    // Intel MultiProcessor Specification chapter 3.6.2
-    // https://pdos.csail.mit.edu/6.828/2008/readings/ia32/MPspec.pdf
-    debug(A_INTERRUPTS, "Ensure IMCR is set to APIC passthrough/symmetric mode\n");
-    // IMCR register might not actually exist, but attempting to write to it should be fine?
-    IMCR_SELECT::write(IMCRSelect::SELECT_IMCR);
-    IMCR_DATA::write(mode);
-}
-
 static void initInterruptController()
 {
   debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
   assert(CpuLocalStorage::ClsInitialized());
-  if (cpu_features.cpuHasFeature(CpuFeatures::APIC))
-  {
-      setIMCRMode(IMCRData::APIC_PASSTHROUGH);
 
-      Apic::globalEnable();
-      if (X2Apic::x2ApicSupported())
-      {
-          X2Apic::enableX2ApicMode();
-      }
-      else
-      {
-          XApic::setPhysicalAddress(XApic::readMsrPhysAddr());
-          XApic::mapAt((size_t)XApic::physicalAddress() | PHYSICAL_TO_VIRTUAL_OFFSET);
-      }
+  PlatformBus::instance().registerDriver(ApicDriver::instance());
+  PlatformBus::instance().registerDriver(ApicTimerDriver::instance());
+  PlatformBus::instance().registerDriver(IoApicDriver::instance());
+  PlatformBus::instance().registerDriver(PIC8259Driver::instance());
 
-      cpu_lapic->init();
-  }
-
-  IOAPIC::initAll();
-
-  PIC8259::initialise8259s();
+  assert(cpu_root_irq_domain_);
+  debug(A_INTERRUPTS, "Interrupt controllers initialized\n");
 }
 
 void ArchInterrupts::initialise()
@@ -70,16 +65,13 @@ void ArchInterrupts::enableTimer()
 {
   if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
   {
-    debug(A_INTERRUPTS, "Enabling XApic %x timer \n", cpu_lapic->Id());
-    WithInterrupts i{false};
-    auto timer_reg = cpu_lapic->readRegister<Apic::Register::LVT_TIMER>();
-    timer_reg.setMask(false);
-    cpu_lapic->writeRegister<Apic::Register::LVT_TIMER>(timer_reg);
+    debug(A_INTERRUPTS, "Enabling xApic %x timer \n", cpu_lapic->apicId());
+    enableIRQ(cpu_lapic->timer_interrupt_controller.irq());
   }
   else
   {
     debug(A_INTERRUPTS, "Enabling PIT timer IRQ\n");
-    ArchInterrupts::enableIRQ(0);
+    enableIRQ(PIT::instance().irq());
   }
 }
 
@@ -87,21 +79,21 @@ void ArchInterrupts::disableTimer()
 {
   if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
   {
-    debug(A_INTERRUPTS, "Enabling XApic %x timer \n", cpu_lapic->Id());
-    WithInterrupts i{false};
-    auto timer_reg = cpu_lapic->readRegister<Apic::Register::LVT_TIMER>();
-    timer_reg.setMask(true);
-    cpu_lapic->writeRegister<Apic::Register::LVT_TIMER>(timer_reg);
+    debug(A_INTERRUPTS, "Disabling xApic %x timer \n", cpu_lapic->apicId());
+    disableIRQ(cpu_lapic->timer_interrupt_controller.irq());
   }
   else
   {
     debug(A_INTERRUPTS, "Disabling PIT timer IRQ\n");
-    disableIRQ(0);
+    disableIRQ(PIT::instance().irq());
   }
 }
 
 void ArchInterrupts::setTimerFrequency(uint32 freq) {
   debug(A_INTERRUPTS, "Set timer frequency %u\n", freq);
+
+  PIT::setOperatingMode(PIT::OperatingMode::SQUARE_WAVE);
+
   uint16_t divisor;
   if(freq < (uint32)(1193180. / (1 << 16) + 1)) {
     divisor = 0;
@@ -109,84 +101,100 @@ void ArchInterrupts::setTimerFrequency(uint32 freq) {
     divisor = (uint16)(1193180 / freq);
   }
 
-  PIT::PITCommandRegister command{};
-  command.bcd_mode = 0;
-  command.operating_mode = 3; // square wave generator
-  command.access_mode = 3; // send low + high byte of reload value/divisor
-  command.channel = 0;
-
-  PIT::init(command.value, divisor);
+  PIT::setFrequencyDivisor(divisor);
 }
-
 
 
 void ArchInterrupts::enableKBD()
 {
-        enableIRQ(1);
-        enableIRQ(9);
+    debug(A_INTERRUPTS, "Enable keyboard irq\n");
+
+    enableIRQ(KeyboardManager::instance().irq());
 }
 
 void ArchInterrupts::disableKBD()
 {
-        disableIRQ(1);
+    enableIRQ(KeyboardManager::instance().irq(), false);
 }
 
-void ArchInterrupts::enableIRQ(uint16 num)
+void ArchInterrupts::enableIRQ(const IrqDomain::DomainIrqHandle& irq_handle, bool enable)
 {
-  if(IOAPIC::findIOAPICforIRQ(num))
-  {
-    IOAPIC::setIRQMask(num, false);
-  }
-  else
-  {
-    PIC8259::enableIRQ(num);
-  }
-}
+    debug(A_INTERRUPTS, "[Cpu %zu] %s %s IRQ %zx\n", SMP::currentCpuId(),
+          enable ? "Enable" : "Disable", irq_handle.domain().name().c_str(),
+          irq_handle.irq());
 
-void ArchInterrupts::disableIRQ(uint16 num)
-{
-  if(IOAPIC::findIOAPICforIRQ(num))
-  {
-    IOAPIC::setIRQMask(num, true);
-  }
-  else
-  {
-    PIC8259::disableIRQ(num);
-  }
-}
-
-void ArchInterrupts::startOfInterrupt(uint16 number)
-{
-  if(cpu_lapic->isInitialized() &&
-     (IOAPIC::findIOAPICforIRQ(number) ||
-      ((number == 0) && cpu_lapic->usingAPICTimer()) ||
-      (number > 16)))
-  {
-    cpu_lapic->outstanding_EOIs_++;
-  }
-  else
-  {
-    PIC8259::outstanding_EOIs_++;
-  }
-}
-
-void ArchInterrupts::endOfInterrupt(uint16 number)
-{
-    if(A_INTERRUPTS & OUTPUT_ADVANCED) {
-        debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+    for (auto&& domain_irq : irq_handle.forwardMappingChain())
+    {
+        domain_irq.activateInDomain(enable);
     }
+}
 
-  if(cpu_lapic->isInitialized() &&
-     (IOAPIC::findIOAPICforIRQ(number) ||
-      ((number == 0) && cpu_lapic->usingAPICTimer()) ||
-      (number > 16)))
-  {
-    cpu_lapic->sendEOI(number + 0x20);
-  }
-  else
-  {
-    PIC8259::sendEOI(number);
-  }
+void ArchInterrupts::disableIRQ(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    enableIRQ(irq_handle, false);
+}
+
+// void ArchInterrupts::enableIRQ(uint16 irqnum, bool enable)
+// {
+//     debug(A_INTERRUPTS, "[Cpu %zu] %s IRQ %x\n", SMP::currentCpuId(),
+//           enable ? "Enable" : "Disable", irqnum);
+
+//     enableIRQ(currentCpuRootIrqDomain().irq(irqnum), enable);
+// }
+
+// void ArchInterrupts::disableIRQ(uint16 irqnum)
+// {
+//     enableIRQ(irqnum, false);
+// }
+
+void ArchInterrupts::startOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())
+    {
+        if (domain->controller())
+        {
+            domain->controller()->irqStart(local_irqnum);
+        }
+    }
+}
+
+void ArchInterrupts::startOfInterrupt(uint16 irqnum)
+{
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %x\n", SMP::currentCpuId(), irqnum);
+
+    startOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
+}
+
+void ArchInterrupts::endOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())
+    {
+        if (domain->controller())
+        {
+            domain->controller()->ack(local_irqnum);
+        }
+    }
+}
+
+void ArchInterrupts::endOfInterrupt(uint16 irqnum)
+{
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %x\n", SMP::currentCpuId(),
+                  irqnum);
+
+    endOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
+}
+
+void ArchInterrupts::handleInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& domain_irq : irq_handle.reverseMappingTree())
+    {
+        domain_irq.handleInDomain();
+    }
+}
+
+void ArchInterrupts::handleInterrupt(uint16_t irqnum)
+{
+    handleInterrupt(currentCpuRootIrqDomain().irq(irqnum));
 }
 
 void ArchInterrupts::enableInterrupts()
@@ -323,16 +331,12 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
 
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s at rip %p\n", SMP::currentCpuId(), target_thread, target_thread->getName(), (void*)target_registers->rip);
-    //Scheduler::instance()->printThreadList();
+      debug(A_INTERRUPTS, "CPU %zu, context switch to thread %s (%p) at rip %p\n", SMP::currentCpuId(), target_thread->getName(), target_thread, (void*)target_registers->rip);
   }
 
 
   assert(target_registers);
-  if (currentThread)
-  {
-      assert(currentThread->currently_scheduled_on_cpu_ == SMP::currentCpuId());
-  }
+  assert(!currentThread || currentThread->currently_scheduled_on_cpu_ == SMP::currentCpuId());
 
   if((SMP::currentCpuId() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
   {

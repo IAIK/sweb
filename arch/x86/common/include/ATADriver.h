@@ -3,6 +3,7 @@
 #include "BDDriver.h"
 #include "Mutex.h"
 #include "NonBlockingQueue.h"
+#include "IrqDomain.h"
 
 class BDRequest;
 
@@ -24,9 +25,9 @@ class ATADriver : public BDDriver
      * or the function returns otherwise.
      *
      */
-    uint32 addRequest(BDRequest* br);
+    uint32 addRequest(BDRequest* br) override;
     ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum);
-    virtual ~ATADriver() = default;
+     ~ATADriver() override = default;
 
     /**
      * sets the current mode to BD_PIO_NO_IRQ while the readSector
@@ -41,7 +42,7 @@ class ATADriver : public BDDriver
      * @param 3 buffer where to save all that was read
      *
      */
-    int32 readSector(uint32, uint32, void *);
+    int32 readSector(uint32, uint32, void *) override;
 
     /**
      * @param 1 sector where it should be started to write
@@ -49,19 +50,19 @@ class ATADriver : public BDDriver
      * @param 3 buffer, which content should be written to the sectors
      *
      */
-    int32 writeSector(uint32, uint32, void *);
+    int32 writeSector(uint32, uint32, void *) override;
 
-    uint32 getNumSectors()
+    uint32 getNumSectors() override
     {
       return numsec;
     }
 
-    uint32 getSectorSize()
+    uint32 getSectorSize() override
     {
       return 512;
     }
 
-    void serviceIRQ();
+    void serviceIRQ() override;
 
     /**
      * tests if there is an Interrupt Request waiting
@@ -93,6 +94,8 @@ class ATADriver : public BDDriver
     uint32 jiffies;
 
     BD_ATA_MODE mode;
+
+    IrqDomain irq_domain;
 
     NonBlockingQueue<BDRequest> request_list_;
 

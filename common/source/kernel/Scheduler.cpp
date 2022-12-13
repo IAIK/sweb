@@ -1,6 +1,5 @@
 #include "Scheduler.h"
 #include "Thread.h"
-#include "panic.h"
 #include "ArchThreads.h"
 #include "ArchCommon.h"
 #include "kprintf.h"
@@ -17,6 +16,8 @@
 #include "ArchMulticore.h"
 #include "Loader.h"
 #include "ArchCommon.h"
+#include "SystemState.h"
+#include "assert.h"
 
 __cpu Thread* currentThread = nullptr;
 __cpu ArchThreadRegisters* currentThreadRegisters = nullptr;
@@ -50,6 +51,8 @@ void Scheduler::schedule()
   {
     debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", SMP::currentCpuId(), currentThread, currentThread ? currentThread->getName() : "(nil)");
   }
+
+  assert(system_state == RUNNING);
 
   if (preempt_protect_count_.load() > 0)
   {

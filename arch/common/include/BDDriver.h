@@ -7,10 +7,14 @@ class BDRequest;
 class BDDriver
 {
   public:
+    BDDriver() = default;
 
-    virtual ~BDDriver()
+    BDDriver(uint16_t irq) :
+        irq(irq)
     {
     }
+
+    virtual ~BDDriver() = default;
 
     virtual uint32_t addRequest(BDRequest *) = 0;
 

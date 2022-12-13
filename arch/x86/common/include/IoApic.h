@@ -4,8 +4,11 @@
 #include "EASTL/vector.h"
 #include "EASTL/bit.h"
 #include "ACPI.h"
+#include "IrqDomain.h"
+#include "ArchMulticore.h"
+#include "debug.h"
 
-class IOAPIC
+class IOAPIC : public InterruptController, public IrqDomain, public Device
 {
 public:
 
@@ -115,9 +118,16 @@ public:
 
 
 
+    virtual bool mask(irqnum_t irq, bool mask);
+    virtual bool irqStart(irqnum_t irq);
+    virtual bool ack(irqnum_t irq);
+
 
     static void addIOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);
     static void addIRQSourceOverride(const MADTInterruptSourceOverride&);
+    static eastl::tuple<bool, MADTInterruptSourceOverride> findSourceOverrideForGSysInt(uint8_t g_sys_int);
+    static eastl::tuple<bool, MADTInterruptSourceOverride> findSourceOverrideForIrq(uint8_t irq);
+    uint8_t gSysIntToVector(uint8_t g_sys_int);
     static void initAll();
 
     static uint32_t findGSysIntForIRQ(uint8_t irq);
@@ -129,9 +139,8 @@ public:
     static IOAPIC* findIOAPICforGlobalInterrupt(uint32_t g_int);
 
 
-    static eastl::vector<IOAPIC> io_apic_list_;
-    static eastl::vector<MADTInterruptSourceOverride> irq_source_override_list_;
-
+    static eastl::vector<IOAPIC>& IoApicList();
+    static eastl::vector<MADTInterruptSourceOverride>& IrqSourceOverrideList();
 
 
     IOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);
@@ -139,6 +148,7 @@ public:
 private:
     void init();
     void initRedirections();
+    void setupIsaIrqMappings();
 
     void mapAt(size_t addr);
 
@@ -146,13 +156,13 @@ private:
     void write(uint8_t offset, uint32_t value);
 
     template <typename R = uint32_t>
-    R::value_type read()
+    typename R::value_type read()
     {
         return eastl::bit_cast<typename R::value_type>(read(R::reg_offset));
     }
 
     template <typename R = uint32_t>
-    R::value_type write(const R::value_type& v)
+    typename R::value_type write(const typename R::value_type& v)
     {
         return write(R::reg_offset, eastl::bit_cast<uint32_t>(v));
     }
@@ -166,13 +176,36 @@ private:
     uint32_t getMaxRedirEntry();
 
 
-
-    static const uint32_t IRQ_OFFSET = 0x20;
-
     IOAPIC_MMIORegs* reg_paddr_;
     IOAPIC_MMIORegs* reg_vaddr_;
 
     uint32_t id_;
     uint32_t max_redir_;
     uint32_t g_sys_int_base_;
+
+    eastl::vector<IOAPIC_redir_entry> redir_entry_cache_;
+};
+
+
+class IoApicDriver : public Driver<IOAPIC>
+{
+public:
+    using base_type = Driver<IOAPIC>;
+
+    IoApicDriver() :
+        base_type("I/O Apic driver")
+    {
+    }
+
+    virtual ~IoApicDriver() = default;
+
+    static IoApicDriver& instance()
+    {
+        static IoApicDriver i;
+        return i;
+    }
+
+    virtual void doDeviceDetection();
+
+private:
 };

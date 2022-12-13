@@ -10,6 +10,7 @@
 #include "ArchThreads.h"
 #include "ArchMulticore.h"
 #include "offsets.h"
+#include "EASTL/string.h"
 
 UserProcess::UserProcess(eastl::string executable_path, FileSystemInfo *working_dir, uint32 terminal_number) :
     Thread(working_dir, executable_path, Thread::USER_THREAD),

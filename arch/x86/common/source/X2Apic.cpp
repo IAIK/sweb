@@ -2,6 +2,8 @@
 #include "CPUID.h"
 #include "MSR.h"
 #include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "ArchCpuLocalStorage.h"
 #include "debug.h"
 
 cpu_local X2Apic cpu_x2apic_impl;
@@ -31,13 +33,9 @@ bool X2Apic::isEnabled()
 
 void X2Apic::writeRegisterImpl(ApicRegisterOffset offset, uint64_t v)
 {
-    if (offset != ApicRegisterOffset::EOI)
-        debug(APIC, "Write register %x, %lx\n", (unsigned int)offset, v);
     uint32 vl = v;
     uint32 vh = v >> 32;
     MSR::setMSR(x2ApicOffset2Msr(offset), vl, vh);
-    if (offset != ApicRegisterOffset::EOI)
-        debug(APIC, "Register write complete\n");
 }
 
 uint64_t X2Apic::readRegisterImpl(ApicRegisterOffset offset)
@@ -65,15 +63,20 @@ void X2Apic::init()
 
     id_ = readId();
     auto logical_dest_id = readRegister<Register::LOGICAL_DESTINATION>();
-    debug(APIC, "Local x2APIC, id: %x, logical dest: %x\n", Id(), logical_dest_id);
+    debug(APIC, "Local x2APIC, id: %x, logical dest: %x\n", apicId(), logical_dest_id);
 
     setErrorInterruptVector(ERROR_INTERRUPT_VECTOR);
     setSpuriousInterruptNumber(100);
-    initTimer();
+
     enable(true);
 
     initialized_ = true;
     SMP::currentCpu().setId(id_);
+
+    registerIPI(90);
+    registerIPI(91);
+    registerIPI(100);
+    registerIPI(101);
 }
 
 uint32_t X2Apic::readId()

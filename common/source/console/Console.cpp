@@ -31,7 +31,7 @@ void Console::unLockConsoleForDrawing()
 
 void Console::handleKey(uint32 key)
 {
-  KeyboardManager * km = KeyboardManager::instance();
+  KeyboardManager * km = &KeyboardManager::instance();
 
   if (km->isShift())
   {
@@ -131,7 +131,7 @@ void Console::setActiveTerminal(uint32 term)
 
 void Console::Run()
 {
-  KeyboardManager * km = KeyboardManager::instance();
+  KeyboardManager * km = &KeyboardManager::instance();
   uint32 key;
   do
   {

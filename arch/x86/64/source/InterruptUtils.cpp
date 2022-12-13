@@ -38,9 +38,6 @@
 #define LO_DWORD(x) (((uint64)(x)) & 0x00000000FFFFFFFFULL)
 #define HI_DWORD(x) ((((uint64)(x)) >> 32) & 0x00000000FFFFFFFFULL)
 
-#define TYPE_TRAP_GATE      15 // trap gate, i.e. IF flag is *not* cleared
-#define TYPE_INTERRUPT_GATE 14 // interrupt gate, i.e. IF flag *is* cleared
-
 #define DPL_KERNEL_SPACE     0 // kernelspace's protection level
 #define DPL_USER_SPACE       3 // userspaces's protection level
 
@@ -71,11 +68,11 @@ extern "C" void arch_dummyHandlerMiddle();
 IDTR InterruptUtils::idtr;
 InterruptGateDesc* InterruptUtils::idt;
 
-InterruptGateDesc::InterruptGateDesc(uint64 offset, uint8 dpl) :
+InterruptGateDesc::InterruptGateDesc(handler_func_t offset, uint8 dpl) :
   segment_selector(KERNEL_CS),
   ist(0),
   zeros(0),
-  type(TYPE_INTERRUPT_GATE),
+  type(INTERRUPT),
   zero_1(0),
   dpl(dpl),
   present(1),
@@ -84,11 +81,16 @@ InterruptGateDesc::InterruptGateDesc(uint64 offset, uint8 dpl) :
   setOffset(offset);
 }
 
-void InterruptGateDesc::setOffset(uint64 offset)
+void InterruptGateDesc::setOffset(handler_func_t offset)
 {
-  offset_ld_lw = LO_WORD(LO_DWORD( offset ));
-  offset_ld_hw = HI_WORD(LO_DWORD( offset ));
-  offset_hd =    HI_DWORD(         offset );
+    offset_ld_lw = LO_WORD(LO_DWORD( (uintptr_t)offset ));
+    offset_ld_hw = HI_WORD(LO_DWORD( (uintptr_t)offset ));
+    offset_hd    = HI_DWORD(         (uintptr_t)offset );
+}
+
+handler_func_t InterruptGateDesc::offset()
+{
+    return (handler_func_t)(((uintptr_t)offset_hd << 32) | ((uintptr_t)offset_ld_hw << 16) | ((uintptr_t)offset_ld_lw));
 }
 
 void IDTR::load()
@@ -100,7 +102,7 @@ void IDTR::load()
 void InterruptUtils::initialise()
 {
   uint32 num_handlers = 0;
-  for (uint32 i = 0; handlers[i].offset != 0; ++i)
+  for (uint32 i = 0; handlers[i].handler_func != 0; ++i)
   {
     num_handlers = Max(handlers[i].number, num_handlers);
   }
@@ -112,16 +114,16 @@ void InterruptUtils::initialise()
 
   for (uint32 i = 0; i < num_handlers; ++i)
   {
-    idt[i] = InterruptGateDesc(((size_t)arch_dummyHandler) + i*dummy_handler_sled_size, DPL_KERNEL_SPACE);
+      idt[i] = InterruptGateDesc((handler_func_t)(((uintptr_t)arch_dummyHandler) + i*dummy_handler_sled_size), DPL_KERNEL_SPACE);
   }
 
   uint32 j = 0;
-  while(handlers[j].offset != 0)
+  while(handlers[j].handler_func)
   {
     assert(handlers[j].number < num_handlers);
     uint8 dpl = (handlers[j].number == SYSCALL_INTERRUPT) ? DPL_USER_SPACE :
                                                             DPL_KERNEL_SPACE;
-    idt[handlers[j].number] = InterruptGateDesc((size_t)handlers[j].offset, dpl);
+    idt[handlers[j].number] = InterruptGateDesc(handlers[j].handler_func, dpl);
     ++j;
   }
 
@@ -130,9 +132,10 @@ void InterruptUtils::initialise()
     for (uint32 i = 0; i < num_handlers; ++i)
     {
       debug(A_INTERRUPTS,
-            "%x -- offset = %p, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
-            idt[i].offset_ld_lw, idt[i].offset_ld_hw,
-            idt[i].offset_hd, idt[i].ist,
+            "%x -- offset = %p, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n",
+            i,
+            idt[i].offset(),
+            idt[i].ist,
             idt[i].present, idt[i].segment_selector,
             idt[i].type, idt[i].dpl);
     }
@@ -143,68 +146,99 @@ void InterruptUtils::initialise()
   idtr.load();
 }
 
-extern SWEBDebugInfo const *kernel_debug_info;
-
+extern const SWEBDebugInfo* kernel_debug_info;
 
 // Standard ISA IRQs
-// 0 	Programmable Interrupt Timer Interrupt
-// 1 	Keyboard Interrupt
-// 2 	Cascade (used internally by the two PICs. never raised)
-// 3 	COM2 (if enabled)
-// 4 	COM1 (if enabled)
-// 5 	LPT2 (if enabled)
-// 6 	Floppy Disk
-// 7 	LPT1 / Unreliable "spurious" interrupt (usually)
-// 8 	CMOS real-time clock (if enabled)
-// 9 	Free for peripherals / legacy SCSI / NIC
-// 10 	Free for peripherals / SCSI / NIC
-// 11 	Free for peripherals / SCSI / NIC
-// 12 	PS2 Mouse
-// 13 	FPU / Coprocessor / Inter-processor
-// 14 	Primary ATA Hard Disk
-// 15 	Secondary ATA Hard Disk
+enum ISA_IRQ
+{
+    PIT              = 0, // 0 	Programmable Interrupt Timer Interrupt
+    KEYBOARD         = 1, // 1 	Keyboard Interrupt
+    PIC_8259_CASCADE = 2, // 2 	Cascade (used internally by the two PICs. never raised)
+    COM2             = 3, // 3 	COM2 (if enabled)
+    COM1             = 4, // 4 	COM1 (if enabled)
+    LPT2             = 5, // 5 	LPT2 (if enabled)
+    FLOPPY_DISK      = 6, // 6 	Floppy Disk
+    LPT1             = 7, // 7 	LPT1 / Unreliable "spurious" interrupt (usually)
+    RTC              = 8, // 8 	CMOS real-time clock (if enabled)
+    // 9 	Free for peripherals / legacy SCSI / NIC
+    // 10 	Free for peripherals / SCSI / NIC
+    // 11 	Free for peripherals / SCSI / NIC
+    PS2_MOUSE        = 12, // 12 	PS2 Mouse
+    FPU              = 13, // 13 	FPU / Coprocessor / Inter-processor
+    ATA_PRIMARY      = 14, // 14 	Primary ATA Hard Disk
+    ATA_SECONDARY    = 15, // 15 	Secondary ATA Hard Disk
+
+};
 
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  if (A_INTERRUPTS & OUTPUT_ADVANCED)
-      debug(A_INTERRUPTS, "IRQ 0 called by CPU %zu\n", SMP::currentCpuId());
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 0, 0);
 
-  ArchInterrupts::startOfInterrupt(0);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
 
-  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
-    []()
-    {
-      TimerTickHandler::handleTimerTick();
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
 
-      ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
-          ((currentThread->console_color << 4) |
-           CONSOLECOLOR::BRIGHT_WHITE);
+    ArchCommon::callWithStack(
+        ArchMulticore::cpuStackTop(),
+        []()
+        {
+            TimerTickHandler::handleTimerTick();
 
-      ArchInterrupts::endOfInterrupt(0);
-      contextSwitch();
-      assert(false);
-    });
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId() * 2] =
+                ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
+
+            ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
+            contextSwitch();
+            assert(false);
+        });
 }
+
+extern "C" void arch_irqHandler_127();
+extern "C" void irqHandler_127()
+{
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
+                  SMP::currentCpuId(), 127);
+
+    ArchInterrupts::startOfInterrupt(127);
+
+    ArchInterrupts::handleInterrupt(127);
+
+    ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), []()
+        {
+            TimerTickHandler::handleTimerTick();
+
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
+                ((currentThread->console_color << 4) |
+                 CONSOLECOLOR::BRIGHT_WHITE);
+
+            ArchInterrupts::endOfInterrupt(127);
+            contextSwitch();
+            assert(false);
+        });
+}
+
 
 // yield
 extern "C" void arch_irqHandler_65();
 extern "C" void irqHandler_65()
 {
-  if (A_INTERRUPTS & OUTPUT_ADVANCED)
-      debug(A_INTERRUPTS, "IRQ 65 called by CPU %zu\n", SMP::currentCpuId());
-  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
-    []()
-    {
-      Scheduler::instance()->schedule();
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
+                  SMP::currentCpuId(), 65);
 
-      ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
-          ((currentThread->console_color << 4) |
-           CONSOLECOLOR::BRIGHT_WHITE);
+    ArchCommon::callWithStack(
+        ArchMulticore::cpuStackTop(),
+        []()
+        {
+            Scheduler::instance()->schedule();
 
-      contextSwitch();
-      assert(false);
-    });
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId() * 2] =
+                ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
+
+            contextSwitch();
+            assert(false);
+        });
 }
 
 extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious);
@@ -231,80 +265,82 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error, uint64 ip)
 extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
-  ArchInterrupts::startOfInterrupt(1);
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 1, 1 + 0x20);
-  KeyboardManager::instance()->serviceIRQ( );
-  ArchInterrupts::endOfInterrupt(1);
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 1, 1);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 1);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 1);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 1);
 }
 
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
-  kprintfd( "IRQ 3 called\n" );
-  ArchInterrupts::startOfInterrupt(3);
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 3, 3 + 0x20);
-  SerialManager::getInstance()->service_irq( 3 );
-  ArchInterrupts::endOfInterrupt(3);
-  kprintfd( "IRQ 3 ended\n" );
+    debug(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 3, 3);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 3);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 3);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 3);
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 4, 4 + 0x20);
-  kprintfd( "IRQ 4 called\n" );
-  ArchInterrupts::startOfInterrupt(3);
-  SerialManager::getInstance()->service_irq( 4 );
-  ArchInterrupts::endOfInterrupt(3);
-  kprintfd( "IRQ 4 ended\n" );
+    debug(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 4, 4);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 4);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 4);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 4);
 }
 
 extern "C" void arch_irqHandler_6();
 extern "C" void irqHandler_6()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 6, 6 + 0x20);
-  kprintfd( "IRQ 6 called\n" );
-  kprintfd( "IRQ 6 ended\n" );
+    debug(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 6, 6);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 6);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 6);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 6);
 }
 
 extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 9, 9 + 0x20);
-  kprintfd( "IRQ 9 called\n" );
-  ArchInterrupts::startOfInterrupt(9);
-  BDManager::getInstance()->serviceIRQ( 9 );
-  ArchInterrupts::endOfInterrupt(9);
+    debug(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 9, 9);
+    kprintfd("IRQ 9 called\n");
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 9);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 9);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 9);
 }
 
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called by core %zx\n", 11, 11 + 0x20, SMP::currentCpuId());
-  kprintfd( "IRQ 11 called\n" );
-  ArchInterrupts::startOfInterrupt(11);
-  BDManager::getInstance()->serviceIRQ( 11 );
-  ArchInterrupts::endOfInterrupt(11);
+    debug(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 11, 11);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 11);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 11);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 11);
 }
 
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%u) called by core %zx\n", 14, 14 + 0x20, SMP::currentCpuId());
-  //kprintfd( "IRQ 14 called\n" );
-  ArchInterrupts::startOfInterrupt(14);
-  BDManager::getInstance()->serviceIRQ( 14 );
-  ArchInterrupts::endOfInterrupt(14);
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+                  SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 14, 14);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 14);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 14);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 14);
 }
 
 extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
-  debug(A_INTERRUPTS, "Interrupt vector %u (%x) called\n", 15, 15 + 0x20);
-  //kprintfd( "IRQ 15 called\n" );
-  ArchInterrupts::startOfInterrupt(15);
-  BDManager::getInstance()->serviceIRQ( 15 );
-  ArchInterrupts::endOfInterrupt(15);
+    debug(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 15, 15);
+    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 15);
+    ArchInterrupts::handleInterrupt(Apic::IRQ_VECTOR_OFFSET + 15);
+    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 15);
 }
 
 extern eastl::atomic_flag assert_print_lock;
@@ -312,7 +348,7 @@ extern eastl::atomic_flag assert_print_lock;
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
-        ArchInterrupts::startOfInterrupt(90 - 0x20);
+        ArchInterrupts::startOfInterrupt(90);
 
         while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
         debug(A_INTERRUPTS, "IRQ 90 called, CPU %zu halting\n", SMP::currentCpuId());
@@ -323,18 +359,18 @@ extern "C" void irqHandler_90()
         }
         assert_print_lock.clear(eastl::memory_order_release);
 
-        while(1)
+        while(true)
         {
             ArchCommon::halt();
         }
 
-        ArchInterrupts::endOfInterrupt(90 - 0x20);
+        ArchInterrupts::endOfInterrupt(90);
 }
 
 extern "C" void arch_irqHandler_91();
 extern "C" void irqHandler_91()
 {
-    ArchInterrupts::startOfInterrupt(91 - 0x20);
+    ArchInterrupts::startOfInterrupt(91);
 
     auto error = cpu_lapic->readRegister<Apic::Register::ERROR_STATUS>();
     debugAlways(APIC, "Internal APIC error: %x\n", *(uint32_t*)&error);
@@ -343,7 +379,7 @@ extern "C" void irqHandler_91()
 
     cpu_lapic->writeRegister<Apic::Register::ERROR_STATUS>({});
 
-    ArchInterrupts::endOfInterrupt(91 - 0x20);
+    ArchInterrupts::endOfInterrupt(91);
 }
 
 extern "C" void arch_irqHandler_100();
@@ -357,9 +393,9 @@ extern "C" void arch_irqHandler_101();
 extern "C" void irqHandler_101()
 {
     debug(A_INTERRUPTS, "IRQ 101 called by CPU %zu\n", SMP::currentCpuId());
-    ArchInterrupts::endOfInterrupt(101 - 0x20); // We can acknowledge int receipt early here
+    ArchInterrupts::endOfInterrupt(101); // We can acknowledge int receipt early here
 
-    auto funcdata = current_cpu.fcall_queue.takeAll();
+    auto funcdata = SMP::currentCpu().fcall_queue.takeAll();
     while (funcdata != nullptr)
     {
         debug(A_INTERRUPTS, "CPU %zu: Function call request from CPU %zu\n", SMP::currentCpuId(), funcdata->orig_cpu);

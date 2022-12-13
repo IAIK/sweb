@@ -113,16 +113,16 @@ extern "C"
 #define KEY_RWIN   (KEY_INS + 13)
 #define KEY_MENU   (KEY_INS + 14)
 
-class KeyboardManager
+class KeyboardManager : public IrqDomain
 {
   public:
     KeyboardManager();
     ~KeyboardManager() = default;
-    static KeyboardManager *instance()
+
+    static KeyboardManager& instance()
     {
-      if (!instance_)
-        instance_ = new KeyboardManager();
-      return instance_;
+      static KeyboardManager kb_manager;
+      return kb_manager;
     }
 
     bool getKeyFromKbd(uint32 &key)
@@ -215,9 +215,4 @@ class KeyboardManager
     uint32 usb_kbd_addr_;
     uint32 current_key_;
     uint32 next_is_up_;
-
-  protected:
-
-    static KeyboardManager *instance_;
 };
-
