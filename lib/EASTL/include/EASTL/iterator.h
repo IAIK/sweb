@@ -256,7 +256,7 @@ namespace eastl
 		EA_CPP14_CONSTEXPR iterator_type base() const
 			{ return mIterator; }
 
-		EA_CPP14_CONSTEXPR reference operator*() const
+		EA_CPP14_CONSTEXPR auto operator*() const
 		{
 			iterator_type i(mIterator);
 			return *--i;
