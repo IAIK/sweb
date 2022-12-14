@@ -8,8 +8,7 @@
 #include "8259.h"
 #include "debug.h"
 
-
-SerialPort::SerialPort(const char *name, const ArchSerialInfo& port_info) :
+SerialPort::SerialPort(const char* name, const ArchSerialInfo& port_info) :
     CharacterDevice(name),
     IrqDomain(eastl::string("Serial Port ") + name)
 {
@@ -121,7 +120,7 @@ SerialPort::SRESULT SerialPort::setup_port(BAUD_RATE_E baud_rate, DATA_BITS_E da
 
   SerialPort_InterruptEnableRegister ier{};
   ier.received_data_available_int_enable = 1;
-  ier.transmitter_holding_reg_empty_int_enable = 1;
+  // ier.transmitter_holding_reg_empty_int_enable = 1; // Polling used instead
   ier.receiver_line_status_int_enable = 1;
   ier.modem_status_int_enable = 1;
 
@@ -130,8 +129,25 @@ SerialPort::SRESULT SerialPort::setup_port(BAUD_RATE_E baud_rate, DATA_BITS_E da
   return SR_OK;
 }
 
-int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
+size_t SerialPort::writeTransmitBuffer(const char* buffer, size_t size)
 {
+    size_t nwritten = 0;
+    while (nwritten < size && eastl::bit_cast<SerialPort_LineStatusRegister>(
+                                  read_UART(SerialPortRegister::LSR))
+                                  .empty_transmitter_holding_reg)
+    {
+        char b = *(buffer + nwritten);
+        debugAdvanced(A_SERIALPORT, "Write char to serial port: %c (%x)\n", b, b);
+        write_UART(SerialPortRegister::THR, b);
+        ++nwritten;
+    }
+
+    return nwritten;
+}
+
+int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char* buffer)
+{
+  debug(A_SERIALPORT, "Write serial port, buffer: %p, size: %u\n", buffer, num_bytes);
   if(offset != 0)
     return -1;
 
@@ -149,22 +165,28 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
   WriteLock = 0;
   bytes_written = 0;
 
-  while(num_bytes--)
+  while(bytes_written < num_bytes)
   {
     jiffies = 0;
 
-    while(!(read_UART(SerialPortRegister::LSR) & 0x40) && jiffies++ < IO_TIMEOUT)
-      ArchInterrupts::yieldIfIFSet();
+    size_t nwritten_chunk = writeTransmitBuffer(buffer + bytes_written, num_bytes - bytes_written);
+    bytes_written += nwritten_chunk;
 
-    if(jiffies == IO_TIMEOUT)
+    if (bytes_written < num_bytes)
     {
-      SerialLock = 0;
-      WriteLock = 0;
-      return -1;
-    }
+        while (!eastl::bit_cast<SerialPort_LineStatusRegister>(
+                    read_UART(SerialPortRegister::LSR))
+                    .empty_transmitter_holding_reg &&
+               jiffies++ < IO_TIMEOUT)
+            ArchInterrupts::yieldIfIFSet();
 
-    write_UART(SerialPortRegister::THR, *(buffer++));
-    bytes_written++;
+        if (jiffies == IO_TIMEOUT)
+        {
+            SerialLock = 0;
+            WriteLock = 0;
+            return -1;
+        }
+    }
   }
 
   SerialLock = 0;
