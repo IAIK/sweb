@@ -125,6 +125,100 @@ struct SerialPort_LineControlRegister
 
 static_assert(sizeof(SerialPort_LineControlRegister) == 1);
 
+struct SerialPort_LineStatusRegister
+{
+    union
+    {
+        struct
+        {
+            uint8 data_ready                    : 1;
+            uint8 overrun_error                 : 1;
+            uint8 parity_error                  : 1;
+            uint8 framing_error                 : 1;
+            uint8 break_interrupt               : 1;
+            uint8 empty_transmitter_holding_reg : 1;
+            uint8 empty_data_holding_reg        : 1;
+            uint8 fifo_receive_error            : 1;
+        };
+
+        uint8 u8;
+    };
+};
+
+static_assert(sizeof(SerialPort_LineStatusRegister) == 1);
+
+enum class FIFO_TRIGGER_LEVEL : uint8
+{
+    TRIGGER_1_BYTE = 0b00,
+    TRIGGER_4_OR_16_BYTES = 0b01,
+    TRIGGER_8_OR_32_BYTES = 0b10,
+    TRIGGER_16_OR_56_BYTES = 0b11,
+};
+
+struct SerialPort_FifoControlRegister
+{
+    union
+    {
+        struct
+        {
+            uint8 enable_fifos               : 1;
+            uint8 clear_receive_fifo         : 1;
+            uint8 clear_transmit_fifo        : 1;
+            uint8 dma_mode_select            : 1;
+            uint8 reserved                   : 1;
+            uint8 enable_64_byte_fifo        : 1;
+            FIFO_TRIGGER_LEVEL trigger_level : 2;
+        };
+
+        uint8 u8;
+    };
+};
+
+static_assert(sizeof(SerialPort_FifoControlRegister) == 1);
+
+struct SerialPort_ModemControlRegister
+{
+    union
+    {
+        struct
+        {
+            uint8 data_terminal_ready : 1;
+            uint8 request_to_send     : 1;
+            uint8 aux1                : 1;
+            uint8 aux2                : 1;
+            uint8 loopback            : 1;
+            uint8 auto_flow_control   : 1;
+            uint8 reserved            : 2;
+        };
+
+        uint8 u8;
+    };
+};
+
+static_assert(sizeof(SerialPort_ModemControlRegister) == 1);
+
+struct SerialPort_ModemStatusRegister
+{
+    union
+    {
+        struct
+        {
+            uint8 delta_clear_to_send          : 1;
+            uint8 delta_data_set_ready         : 1;
+            uint8 trailing_edge_ring_indicator : 1;
+            uint8 delta_data_carrier_detect    : 1;
+            uint8 clear_to_send                : 1;
+            uint8 data_set_ready               : 1;
+            uint8 ring_indicator               : 1;
+            uint8 carrier_detect               : 1;
+        };
+
+        uint8 u8;
+    };
+};
+
+static_assert(sizeof(SerialPort_ModemStatusRegister) == 1);
+
 enum class UART_TYPE
 {
     /// Old type UART without FIFO buffers

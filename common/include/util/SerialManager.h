@@ -94,6 +94,8 @@ private:
     void write_UART(SerialPortRegister reg, uint8 what);
     uint8 read_UART(SerialPortRegister reg);
 
+    void readReceiveBuffers();
+
     size_t WriteLock;
     size_t SerialLock;
 

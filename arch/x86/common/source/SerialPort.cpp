@@ -103,10 +103,29 @@ SerialPort::SRESULT SerialPort::setup_port(BAUD_RATE_E baud_rate, DATA_BITS_E da
 
   write_UART(SerialPortRegister::LCR, lcr.u8); // deact DL and set params
 
-  write_UART(SerialPortRegister::FCR, 0xC7);
-  write_UART(SerialPortRegister::MCR, 0x0B);
+  SerialPort_FifoControlRegister fcr{};
+  fcr.enable_fifos = 1;
+  fcr.clear_receive_fifo = 1;
+  fcr.clear_transmit_fifo = 1;
+  fcr.enable_64_byte_fifo = 1;
+  fcr.trigger_level = FIFO_TRIGGER_LEVEL::TRIGGER_16_OR_56_BYTES;
 
-  write_UART(SerialPortRegister::IER, 0x0F);
+  write_UART(SerialPortRegister::FCR, fcr.u8);
+
+  SerialPort_ModemControlRegister mcr{};
+  mcr.data_terminal_ready = 1;
+  mcr.request_to_send = 1;
+  mcr.aux2 = 1;
+
+  write_UART(SerialPortRegister::MCR, mcr.u8);
+
+  SerialPort_InterruptEnableRegister ier{};
+  ier.received_data_available_int_enable = 1;
+  ier.transmitter_holding_reg_empty_int_enable = 1;
+  ier.receiver_line_status_int_enable = 1;
+  ier.modem_status_int_enable = 1;
+
+  write_UART(SerialPortRegister::IER, ier.u8);
 
   return SR_OK;
 }
@@ -152,38 +171,112 @@ int32 SerialPort::writeData(uint32 offset, uint32 num_bytes, const char*buffer)
   return bytes_written;
 }
 
+void SerialPort::readReceiveBuffers()
+{
+    SerialPort_LineStatusRegister lsr{};
+    lsr.u8 = read_UART(SerialPortRegister::LSR);
+    while (lsr.data_ready)
+    {
+        auto b = read_UART(SerialPortRegister::RBR);
+        debug(A_SERIALPORT, "Read char from serial port: %c (%x)\n", b, b);
+        in_buffer_.put(b);
+        lsr.u8 = read_UART(SerialPortRegister::LSR);
+    }
+}
+
+
 void SerialPort::irq_handler()
 {
-  debug(A_SERIALPORT, "irq_handler: Entered SerialPort IRQ handler");
+  debug(A_SERIALPORT, "irq_handler: Entered SerialPort IRQ handler\n");
 
-  SerialPort_InterruptIdentificationRegister int_id_reg;
+  SerialPort_InterruptIdentificationRegister int_id_reg{};
   int_id_reg.u8 = read_UART(SerialPortRegister::IIR);
+  debug(A_SERIALPORT, "irq_handler: IIR: %x\n", int_id_reg.u8);
 
   if (int_id_reg.int_pending)
-      return;                    // it is not my IRQ or IRQ is handled
+  {
+      debug(A_SERIALPORT, "Nothing (more) to do here\n");
+      return; // it is not my IRQ or IRQ is handled
+  }
 
 
   switch (int_id_reg.int_status)
   {
   case IIR_int::MODEM_STATUS: // Modem status changed
+  {
+      debug(A_SERIALPORT, "Modem status IRQ\n");
+      SerialPort_ModemStatusRegister msr{};
+      msr.u8 = read_UART(SerialPortRegister::MSR);
+      debug(A_SERIALPORT, "Modem status: %x\n", msr.u8);
       break;
+  }
   case IIR_int::TRANSMITTER_HOLDING_REG_EMPTY: // Output buffer is empty
   {
+      debug(A_SERIALPORT, "Transmitter holding reg empty IRQ\n");
       WriteLock = 0;
       break;
   }
   case IIR_int::RECEIVED_DATA_AVAILABLE: // Data is available
   {
-      auto b = read_UART(SerialPortRegister::RBR);
-      in_buffer_.put(b);
+      debug(A_SERIALPORT, "Received data available IRQ\n");
+      readReceiveBuffers();
       break;
   }
   case IIR_int::RECEIVER_LINE_STATUS: // Line status changed
+  {
+      debug(A_SERIALPORT, "Receiver line status IRQ\n");
+      SerialPort_LineStatusRegister lsr{};
+      lsr.u8 = read_UART(SerialPortRegister::LSR);
+      debug(A_SERIALPORT, "Line status: %x\n", lsr.u8);
+
+      if (lsr.overrun_error)
+      {
+          debugAlways(A_SERIALPORT, "Overrun error! Receive buffer is full, dropping incoming data\n");
+      }
+      if (lsr.parity_error)
+      {
+          debugAlways(A_SERIALPORT, "Parity error!\n");
+      }
+      if (lsr.framing_error)
+      {
+          debugAlways(A_SERIALPORT, "Framing error!\n");
+      }
+      if (lsr.break_interrupt)
+      {
+          debug(A_SERIALPORT, "Break interrupt\n");
+      }
+      if (lsr.empty_transmitter_holding_reg)
+      {
+          debug(A_SERIALPORT, "Empty transmitter holding register\n");
+      }
+      if (lsr.empty_data_holding_reg)
+      {
+          debug(A_SERIALPORT, "Empty data holding register\n");
+      }
+      if (lsr.fifo_receive_error)
+      {
+          debugAlways(A_SERIALPORT, "FIFO receive error! Clearing FIFO\n");
+          SerialPort_FifoControlRegister fcr{};
+          fcr.enable_fifos = 1;
+          fcr.clear_receive_fifo = 1;
+          fcr.enable_64_byte_fifo = 1;
+          fcr.trigger_level = FIFO_TRIGGER_LEVEL::TRIGGER_16_OR_56_BYTES;
+
+          write_UART(SerialPortRegister::FCR, fcr.u8);
+      }
       break;
+  }
   case IIR_int::TIMEOUT:
+  {
+      debug(A_SERIALPORT, "Timeout IRQ\n");
+      readReceiveBuffers();
       break;
+  }
   default: // This will never be executed
+  {
+      debug(A_SERIALPORT, "Unknown serial port IRQ\n");
       break;
+  }
   }
 }
 
