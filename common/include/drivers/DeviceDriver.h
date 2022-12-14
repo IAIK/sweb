@@ -4,6 +4,8 @@
 #include "EASTL/string.h"
 #include "Device.h"
 #include "IrqDomain.h"
+#include "ranges.h"
+#include "transform.h"
 #include "debug.h"
 
 class IrqDomain;
@@ -45,31 +47,6 @@ public:
         // Do nothing by default
     }
 
-    // virtual bool probe(Device& device)
-    // {
-    //     debug(DRIVER, "Probe device driver %s for device %s\n", driverName().c_str(), device.id().c_str());
-    //     return false;
-    // }
-
-    // virtual void init(Device& device)
-    // {
-    //     debug(DRIVER, "Device driver '%s' init device '%s'\n", driverName().c_str(), device.id().c_str());
-    // }
-
-    // virtual void bindDevice(Device& device)
-    // {
-    //     debug(DRIVER, "Bind device '%s' to driver '%s'\n", device.id().c_str(), driverName().c_str());
-    //     device.setDriver(this);
-    //     devices_.push_back(&device);
-    // }
-
-    // void bindAndInitDevice(Device& device)
-    // {
-    //     bindDevice(device);
-    //     assert(device.driver() == this);
-    //     init(device);
-    // }
-
     bool isBoundDevice(const Device& device)
     {
         auto bound_devices = devices();
@@ -86,27 +63,6 @@ public:
         parent_device_ = &device;
     }
 
-    // virtual IrqDomain* getDeviceIrqDomain(Device& device)
-    // {
-    //     assert(isBoundDevice(device));
-    //     assert(device.interrupt_controller);
-    //     return nullptr;
-    // }
-
-    // virtual void registerIrq(Device& source_device, Device& irq_target, size_t irqnum, [[maybe_unused]]void (*handler) (void))
-    // {
-    //     debug(DRIVER, "Register IRQ %zu from device %s -> %s, handler: %p\n", irqnum, source_device.id().c_str(), irq_target.id().c_str(), handler);
-    //     // TODO: need to create mapping from source irq domain to target irq domain
-    //     // this driver is responsible for creating and selecting the target irq domain, but the source irq domain needs to be provided by the driver of the irq source (passed as argument?)
-    // }
-
-    // virtual bool registerIrq(IrqDomain& source_domain, irqnum_t source_irq, Device& irq_target, irqnum_t target_irq, [[maybe_unused]]void (*handler) (void))
-    // {
-    //     debug(DRIVER, "Register IRQ %s:%zu -> %s:%zu, handler: %p\n", source_domain.name().c_str(), source_irq, irq_target.id().c_str(), target_irq, handler);
-    //     return false;
-    // }
-
-    // eastl::vector<Device*> devices_;
 private:
     eastl::string driver_name_;
     Device* parent_device_;
@@ -123,7 +79,14 @@ public:
     {
     }
 
-    virtual ~Driver() = default;
+    ~Driver() override = default;
+
+    eastl::vector<Device*> devices() override
+    {
+        auto r = ranges::transform_view(devices_,
+                                        [](auto&& x) { return static_cast<Device*>(x); });
+        return {r.begin(), r.end()};
+    }
 
 protected:
     void bindDevice(T& device)
