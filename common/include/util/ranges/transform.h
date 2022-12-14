@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ranges.h"
-#include "subrange.h"
 #include "EASTL/functional.h"
 #include "EASTL/utility.h"
+#include "EASTL/type_traits.h"
+#include "EASTL/iterator.h"
 #include "debug.h"
 
 namespace ranges
@@ -15,12 +16,27 @@ namespace ranges
         using base_iterator_t = iterator_t<V>;
         using base_sentinel_t = sentinel_t<V>;
 
-        // template<typename I>
         template<bool Const> struct iterator
         {
             using parent_type = eastl::
                 conditional_t<Const, const transform_view<V, F>, transform_view<V, F>>;
             using base_type = eastl::conditional_t<Const, const V, V>;
+
+            using value_type = eastl::remove_cvref_t<
+                eastl::invoke_result_t<F&, ranges::range_reference_t<base_type>>>;
+
+            using difference_type = ranges::range_difference_t<base_type>;
+
+            using iterator_category = eastl::conditional_t<
+                eastl::is_lvalue_reference_v<
+                    eastl::invoke_result_t<F&, ranges::range_reference_t<base_type>>>,
+                typename eastl::iterator_traits<ranges::iterator_t<base_type>>::iterator_category,
+                eastl::input_iterator_tag>;
+
+            using pointer = void;
+            // using reference = iter_reference_t<iterator>;
+            using reference = value_type&;
+
             constexpr iterator() = default;
 
             constexpr iterator(parent_type& parent,
@@ -29,12 +45,6 @@ namespace ranges
                 current_(eastl::move(current))
             {
             }
-
-            // iterator(I base_it, F func) :
-            //     base_it_(eastl::forward<I>(base_it)),
-            //     func_(eastl::forward<F>(func))
-            // {
-            // }
 
             constexpr iterator(iterator<!Const> i) requires Const
                 && convertible_to<ranges::iterator_t<V>, ranges::iterator_t<base_type>>
@@ -49,54 +59,43 @@ namespace ranges
 
             constexpr auto operator*() const
             {
-                // debug(MAIN, "%s\n", __PRETTY_FUNCTION__);
-                // auto x = *base_it_;
-                // auto tx = eastl::invoke(func_, *base_it_);
-                // debug(MAIN, "base val: %d, transformed: %d\n", x, tx);
-                // return tx;
-                // return eastl::invoke(func_, *base_it_);
                 return eastl::invoke(parent_->func_, *current_);
             }
 
-            iterator& operator++()
+            constexpr iterator& operator++()
             {
-                // debug(MAIN, "++transform it\n");
                 ++current_;
                 return *this;
             }
 
-            iterator operator++(int)
+            constexpr iterator operator++(int)
             {
                 auto tmp = *this;
                 ++(*this);
                 return tmp;
             }
 
-            iterator& operator--()
+            constexpr iterator& operator--()
             {
                 --current_;
                 return *this;
             }
 
-            iterator operator--(int)
+            constexpr iterator operator--(int)
             {
                 auto tmp = *this;
                 --(*this);
                 return tmp;
             }
 
-            // template<typename IT, typename ST>
             friend constexpr bool operator==(iterator lhs, iterator rhs)
             {
-                // debug(MAIN, "%s\n", __PRETTY_FUNCTION__);
                 return lhs.current_ == rhs.current_;
             }
 
         private:
             parent_type* parent_;
             ranges::iterator_t<base_type> current_;
-            // I base_it_;
-            // F func_;
         };
 
         template<bool Const> struct sentinel

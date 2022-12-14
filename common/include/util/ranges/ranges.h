@@ -62,10 +62,15 @@ concept range = requires(T& t)
 template<range R> using iterator_t = decltype(ranges::begin(eastl::declval<R&>()));
 template<range R> using sentinel_t = decltype(ranges::end(eastl::declval<R&>()));
 
+template<typename T> using iter_reference_t = decltype(*eastl::declval<T&>());
+template<class T>
+using iter_difference_t = typename eastl::iterator_traits<eastl::remove_cvref_t<T>>::difference_type;
 
+template<ranges::range R>
+using range_reference_t = iter_reference_t<ranges::iterator_t<R>>;
 
-
-
+template<ranges::range R>
+using range_difference_t = iter_difference_t<ranges::iterator_t<R>>;
 
 template<typename I, typename S = I> class subrange
 {
