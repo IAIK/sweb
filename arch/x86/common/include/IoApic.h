@@ -8,7 +8,7 @@
 #include "ArchMulticore.h"
 #include "debug.h"
 
-class IOAPIC : public InterruptController, public IrqDomain, public Device
+class IoApic : public InterruptController, public IrqDomain, public Device
 {
 public:
 
@@ -135,15 +135,15 @@ public:
     static void setIRQMask(uint32_t irq_num, bool value);
     static void setGSysIntMask(uint32_t g_sys_int, bool value);
 
-    static IOAPIC* findIOAPICforIRQ(uint8_t irq);
-    static IOAPIC* findIOAPICforGlobalInterrupt(uint32_t g_int);
+    static IoApic* findIOAPICforIRQ(uint8_t irq);
+    static IoApic* findIOAPICforGlobalInterrupt(uint32_t g_int);
 
 
-    static eastl::vector<IOAPIC>& IoApicList();
+    static eastl::vector<IoApic>& IoApicList();
     static eastl::vector<MADTInterruptSourceOverride>& IrqSourceOverrideList();
 
 
-    IOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);
+    IoApic(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);
 
 private:
     void init();
@@ -187,10 +187,10 @@ private:
 };
 
 
-class IoApicDriver : public Driver<IOAPIC>
+class IoApicDriver : public Driver<IoApic>
 {
 public:
-    using base_type = Driver<IOAPIC>;
+    using base_type = Driver<IoApic>;
 
     IoApicDriver() :
         base_type("I/O Apic driver")

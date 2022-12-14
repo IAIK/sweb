@@ -247,14 +247,14 @@ void ACPI_MADTHeader::parse()
     {
       MADT_IO_APIC* entry = (MADT_IO_APIC*)(madt_entry + 1);
       debug(ACPI, "[%p] I/O APIC, id: %x, address: %x, g_sys_int base: %x\n", entry, entry->id, entry->address, entry->global_system_interrupt_base);
-      IOAPIC::addIOAPIC(entry->id, (IOAPIC::IOAPIC_MMIORegs*)(size_t)entry->address, (uint32)entry->global_system_interrupt_base);
+      IoApic::addIOAPIC(entry->id, (IoApic::IOAPIC_MMIORegs*)(size_t)entry->address, (uint32)entry->global_system_interrupt_base);
       break;
     }
     case MADTEntryDescriptor::INTERRUPT_SOURCE_OVERRIDE:
     {
       MADTInterruptSourceOverride* entry = (MADTInterruptSourceOverride*)(madt_entry + 1);
       debug(ACPI, "[%p] Interrupt Source Override, bus_source: %x, irq_source: %3x, g_sys_int: %3x, polarity: %x, trigger mode: %x\n", entry, entry->bus_source, entry->irq_source, entry->g_sys_int, entry->flags.polarity, entry->flags.trigger_mode);
-      IOAPIC::addIRQSourceOverride(*entry);
+      IoApic::addIRQSourceOverride(*entry);
       break;
     }
     case MADTEntryDescriptor::NMI_SOURCE:
