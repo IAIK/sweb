@@ -6,6 +6,7 @@
 #include "ranges.h"
 
 class DeviceDriver;
+class Inode;
 
 struct Device
 {
@@ -39,26 +40,19 @@ struct Device
         return driver_;
     }
 
+    virtual Inode* deviceInode() { return nullptr; }
+
     Device& setDriver(DeviceDriver& driver)
     {
         driver_ = &driver;
         return *this;
     }
 
-    virtual const eastl::string& deviceName()
-    {
-        return device_name_;
-    }
+    virtual const eastl::string& deviceName() { return device_name_; }
 
-    void setDeviceName(const eastl::string& name)
-    {
-        device_name_ = name;
-    }
+    void setDeviceName(const eastl::string& name) { device_name_ = name; }
 
-    auto subdevices()
-    {
-        return ranges::subrange(subdevices_);
-    }
+    auto subdevices() { return ranges::subrange(subdevices_); }
 
     virtual void addSubDevice(Device& subdevice)
     {

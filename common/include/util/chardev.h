@@ -28,6 +28,8 @@ class CharacterDevice : public Device, public Inode
 
     ~CharacterDevice() override = default;
 
+    Inode* deviceInode() override { return this; }
+
     File* open(Dentry* dentry, uint32 flag)
     {
         debug(INODE, "CharacterDevice: Open file\n");
