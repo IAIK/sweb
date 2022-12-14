@@ -191,3 +191,18 @@ public:
     virtual int32 write(const char* buffer, size_t count, l_off_t offset);
 private:
 };
+
+/**
+ * Base class for simple files with no automatic offset advance
+ */
+class NoOffsetFile : public File
+{
+public:
+    NoOffsetFile(Inode* inode, Dentry* dentry, uint32 flag);
+    ~NoOffsetFile() override = default;
+
+    int32 read(char* buffer, size_t count, l_off_t offset) override;
+    int32 write(const char* buffer, size_t count, l_off_t offset) override;
+
+private:
+};

@@ -1,10 +1,13 @@
 #pragma once
 
-#include "EASTL/string.h"
-#include "FiFo.h"
 #include "Device.h"
+#include "FiFo.h"
+#include "File.h"
+#include "Inode.h"
+#include "Superblock.h"
+#include "EASTL/string.h"
 
-class CharacterDevice : public Device
+class CharacterDevice : public Device, public Inode
 {
   public:
 
@@ -16,6 +19,7 @@ class CharacterDevice : public Device
      */
     CharacterDevice(const char* name) :
         Device(name),
+        Inode(nullptr, I_CHARDEVICE),
         in_buffer_(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
         out_buffer_(CD_BUFFER_SIZE, FIFO_NOBLOCK_PUT | FIFO_NOBLOCK_PUT_OVERWRITE_OLD),
         name_(name)
@@ -23,6 +27,18 @@ class CharacterDevice : public Device
     }
 
     ~CharacterDevice() override = default;
+
+    File* open(Dentry* dentry, uint32 flag)
+    {
+        debug(INODE, "CharacterDevice: Open file\n");
+        assert(eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) !=
+               i_dentrys_.end());
+
+        File* file = (File*)(new NoOffsetFile(this, dentry, flag));
+        i_files_.push_back(file);
+        getSuperblock()->fileOpened(file);
+        return file;
+    }
 
     /**
      * reads the data from the character device

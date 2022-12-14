@@ -125,3 +125,39 @@ int32 SimpleFile::write(const char *buffer, size_t count, l_off_t offset)
         return -1;
     }
 }
+
+NoOffsetFile::NoOffsetFile(Inode* inode, Dentry* dentry, uint32 flag) :
+    File(inode, dentry, flag)
+{
+}
+
+int32 NoOffsetFile::read(char* buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(read) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count,
+          (long long unsigned int)offset, (size_t)(offset_ + offset));
+    if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
+    {
+        return f_inode_->readData(offset_ + offset, count, buffer);
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
+}
+
+
+int32 NoOffsetFile::write(const char* buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count,
+          (long long unsigned int)offset, (size_t)(offset_ + offset));
+    if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
+    {
+        return f_inode_->writeData(offset_ + offset, count, buffer);
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
+}
