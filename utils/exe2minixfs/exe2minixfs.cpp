@@ -20,6 +20,8 @@
 Superblock* superblock_;
 FileSystemInfo* default_working_dir;
 
+constexpr size_t SECTOR_SIZE = 512;
+
 typedef struct fdisk_partition
 {
   uint8 bootid; // bootable?  0=no, 128=yes
@@ -136,7 +138,7 @@ int main(int argc, char *argv[])
       printf("exe2minixfs: Warning, partition type 0x%x != minixfs (0x80/0x81)\n", part_table[partition - 1].systid);
     }
 
-    part_byte_offset = (size_t)part_table[partition - 1].relsect * 512;
+    part_byte_offset = (size_t)part_table[partition - 1].relsect * SECTOR_SIZE;
   }
 
   MinixFSType* minixfs_type = new MinixFSType();
