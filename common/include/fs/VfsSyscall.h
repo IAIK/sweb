@@ -154,11 +154,8 @@ class VfsSyscall
     static FileDescriptor* getFileDescriptor(uint32 fd);
 
 public:
-#ifndef EXE2MINIXFS
-    static Mutex vfs_lock;
-#endif
 
-  private:
+private:
     VfsSyscall();
     ~VfsSyscall();
 };

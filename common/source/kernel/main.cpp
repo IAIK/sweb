@@ -112,7 +112,6 @@ extern "C" [[noreturn]] void startup()
   ArchCommon::initDebug();
 
   debug(MAIN, "Init VFS...\n");
-  new (&VfsSyscall::vfs_lock) Mutex("vfs lock");
   vfs.initialize();
   debug(MAIN, "Mounting root file system\n");
   vfs.registerFileSystem(DeviceFSType::getInstance());

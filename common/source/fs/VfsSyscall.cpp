@@ -21,10 +21,6 @@
 #define SEPARATOR '/'
 #define CHAR_DOT '.'
 
-#ifndef EXE2MINIXFS
-Mutex VfsSyscall::vfs_lock("vfs lock");
-#endif
-
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
   return global_fd_list.getFileDescriptor(fd);
@@ -34,9 +30,7 @@ FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   debug(VFSSYSCALL, "(mkdir) Path: %s\n", pathname);
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
+
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
@@ -85,9 +79,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 ssize_t VfsSyscall::getdents(int fd, char* buffer, size_t buffer_size)
 {
     debug(VFSSYSCALL, "(getdents) Getting dentries for fd: %d\n", fd);
-#ifndef EXE2MINIXFS
-    MutexLock l(vfs_lock);
-#endif
+
     if (!buffer)
     {
         debug(VFSSYSCALL, "(getdents) Error: buffer = NULL\n");
@@ -150,10 +142,6 @@ int32 VfsSyscall::chdir(const char* pathname)
 {
   debug(VFSSYSCALL, "(chdir) Changing working directory to: %s\n", pathname);
 
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
-
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
@@ -178,10 +166,6 @@ int32 VfsSyscall::chdir(const char* pathname)
 int32 VfsSyscall::rm(const char* pathname)
 {
   debug(VFSSYSCALL, "(rm) Removing: %s\n", pathname);
-
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
 
   FileSystemInfo *fs_info = getcwd();
 
@@ -220,10 +204,6 @@ int32 VfsSyscall::rm(const char* pathname)
 
 int32 VfsSyscall::rmdir(const char* pathname)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
-
   FileSystemInfo *fs_info = getcwd();
 
   Path target_dir;
@@ -268,10 +248,6 @@ int32 VfsSyscall::rmdir(const char* pathname)
 int32 VfsSyscall::close(uint32 fd)
 {
   debug(VFSSYSCALL, "(close) Close fd num %u\n", fd);
-
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
 
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
@@ -396,9 +372,6 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
 int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == nullptr)
@@ -415,10 +388,8 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
 int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 {
-    debug(VFSSYSCALL, "(write) Write %u bytes from %p to fd %u\n", count, buffer, fd);
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
+  debug(VFSSYSCALL, "(write) Write %u bytes from %p to fd %u\n", count, buffer, fd);
+
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == nullptr)
@@ -435,9 +406,6 @@ int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 
 l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == nullptr)
@@ -451,9 +419,6 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 
 int32 VfsSyscall::flush(uint32 fd)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == nullptr)
@@ -468,9 +433,6 @@ int32 VfsSyscall::flush(uint32 fd)
 #ifndef EXE2MINIXFS
 int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const char *file_system_name, int32 flag)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
   FileSystemType* type = vfs.getFsType(file_system_name);
   if (!type)
   {
@@ -483,18 +445,12 @@ int32 VfsSyscall::mount(const char *device_name, const char *dir_name, const cha
 
 int32 VfsSyscall::umount(const char *dir_name, int32 flag)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
   return vfs.umount(dir_name, flag);
 }
 #endif
 
 uint32 VfsSyscall::getFileSize(uint32 fd)
 {
-#ifndef EXE2MINIXFS
-  MutexLock l(vfs_lock);
-#endif
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
   if (file_descriptor == nullptr)
