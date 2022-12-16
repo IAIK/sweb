@@ -4,6 +4,7 @@
 #include "new.h"
 #include "Mutex.h"
 #include "Condition.h"
+#include "EASTL/vector.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -30,7 +31,7 @@ class FiFo
      */
     FiFo(uint32 inputb_size = 512, uint8 flags = 0);
 
-    ~FiFo();
+    ~FiFo() = default;
 
     /**
      * Puts the given parameter in the fifo buffer.
@@ -65,7 +66,7 @@ class FiFo
     Condition space_to_write_;
 
     uint32 input_buffer_size_;
-    T *input_buffer_;
+    eastl::vector<T> input_buffer_;
     uint32 ib_write_pos_;
     uint32 ib_read_pos_;
 
@@ -82,16 +83,10 @@ FiFo<T>::FiFo(uint32 inputb_size, uint8 flags) :
   else
     input_buffer_size_ = inputb_size;
 
-  input_buffer_ = new T[input_buffer_size_];
+  input_buffer_.resize(input_buffer_size_);
   ib_write_pos_ = 1;
   ib_read_pos_ = 0;
   flags_ = flags;
-}
-
-template<class T>
-FiFo<T>::~FiFo()
-{
-  delete[] input_buffer_;
 }
 
 //only put uses the fallback buffer -> so it doesn't need a lock
@@ -123,7 +118,7 @@ void FiFo<T>::put(T c)
 }
 
 template<class T>
-void FiFo<T>::clear(void)
+void FiFo<T>::clear()
 {
   input_buffer_lock_.acquire();
   ib_write_pos_ = 1;
@@ -180,4 +175,3 @@ uint32 FiFo<T>::countElementsAhead()
     // count < 0
     return (input_buffer_size_ + count);
 }
-
