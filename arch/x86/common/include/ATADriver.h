@@ -27,7 +27,7 @@ class ATADriver : public BDDriver
      */
     uint32 addRequest(BDRequest* br) override;
     ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum);
-     ~ATADriver() override = default;
+    ~ATADriver() override = default;
 
     /**
      * sets the current mode to BD_PIO_NO_IRQ while the readSector

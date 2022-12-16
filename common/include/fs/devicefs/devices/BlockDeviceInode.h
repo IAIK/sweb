@@ -8,12 +8,12 @@ class BlockDeviceInode : public Inode
 {
 public:
     BlockDeviceInode(BDVirtualDevice* device);
-    virtual ~BlockDeviceInode() = default;
+    ~BlockDeviceInode() override = default;
 
-    virtual File* open(Dentry* dentry, uint32 /*flag*/);
+    File* open(Dentry* dentry, uint32 /*flag*/) override;
 
-    virtual int32 readData(uint32 /*offset*/, uint32 /*size*/, char */*buffer*/);
-    virtual int32 writeData(uint32 /*offset*/, uint32 /*size*/, const char*/*buffer*/);
+    int32 readData(uint32 /*offset*/, uint32 /*size*/, char */*buffer*/) override;
+    int32 writeData(uint32 /*offset*/, uint32 /*size*/, const char*/*buffer*/) override;
 private:
 
     BDVirtualDevice* device_;
