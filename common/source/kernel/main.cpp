@@ -124,7 +124,7 @@ extern "C" [[noreturn]] void startup()
   new (&global_fd_list) FileDescriptorList();
 
   debug(MAIN, "Block Device creation\n");
-  BDManager::getInstance()->doDeviceDetection();
+  BDManager::instance().doDeviceDetection();
   debug(MAIN, "Block Device done\n");
   debug(MAIN, "Checking for initrd\n");
 
@@ -133,7 +133,7 @@ extern "C" [[noreturn]] void startup()
   debug(MAIN, "Add block devices to devicefs\n");
   auto devicefs_sb = DeviceFSSuperBlock::getInstance();
 
-  for (BDVirtualDevice* bdvd : BDManager::getInstance()->device_list_)
+  for (BDVirtualDevice* bdvd : BDManager::instance().device_list_)
   {
     debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
     kprintf("Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());

@@ -20,7 +20,7 @@ Superblock *MinixFSType::createSuper(uint32 s_dev)
   if (s_dev == (uint32) -1)
     return nullptr;
 
-  BDManager::getInstance()->getDeviceByNumber(s_dev)->setBlockSize(BLOCK_SIZE);
+  BDManager::instance().getDeviceByNumber(s_dev)->setBlockSize(BLOCK_SIZE);
   Superblock *super = new MinixFSSuperblock(this, s_dev, 0);
   return super;
 }

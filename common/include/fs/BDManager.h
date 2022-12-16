@@ -10,13 +10,13 @@ class BDManager
 {
   public:
     BDManager();
-    ~BDManager();
+    ~BDManager() = default;
 
     /**
      * returns singleton instance
      * @return the block device manager instance
      */
-    static BDManager* getInstance();
+    static BDManager& instance();
 
     /**
      * detects all devices present

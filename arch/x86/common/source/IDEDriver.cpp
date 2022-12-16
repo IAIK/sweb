@@ -9,12 +9,19 @@
 #include "ports.h"
 #include "ArchInterrupts.h"
 
-IDEDriver::IDEDriver()
+IDEDriver::IDEDriver() :
+    DeviceDriver("IDE Driver")
 {
     doDeviceDetection();
 }
 
-uint32 IDEDriver::doDeviceDetection()
+IDEDriver& IDEDriver::instance()
+{
+    static IDEDriver instance_;
+    return instance_;
+}
+
+void IDEDriver::doDeviceDetection()
 {
     uint32 jiffies = 0;
     uint16 base_port = 0x1F0;
@@ -133,7 +140,7 @@ uint32 IDEDriver::doDeviceDetection()
                                     new BDVirtualDevice(drv, 0, drv->getNumSectors(),
                                                         drv->getSectorSize(), name.c_str(), true);
 
-                                BDManager::getInstance()->addVirtualDevice(bdv);
+                                BDManager::instance().addVirtualDevice(bdv);
                                 processMBR(drv, 0, drv->SPT, name.c_str());
                             }
                             else if ((c4 == 0x3C) && (c5 == 0xC3))
@@ -155,7 +162,7 @@ uint32 IDEDriver::doDeviceDetection()
                                     new BDVirtualDevice(drv, 0, drv->getNumSectors(),
                                                         drv->getSectorSize(), name.c_str(), true);
 
-                                BDManager::getInstance()->addVirtualDevice(bdv);
+                                BDManager::instance().addVirtualDevice(bdv);
 
                                 processMBR(drv, 0, drv->SPT, name.c_str());
                             }
@@ -173,8 +180,6 @@ uint32 IDEDriver::doDeviceDetection()
             debug(IDE_DRIVER, "doDetection: Not found!\n ");
         }
     }
-
-    return 0;
 }
 
 int32 IDEDriver::processMBR(BDDriver* drv, uint32 sector, uint32 SPT, const char* name)
@@ -242,7 +247,7 @@ int32 IDEDriver::processMBR(BDDriver* drv, uint32 sector, uint32 SPT, const char
                 // set Partition Type (FileSystem identifier)
                 bdv->setPartitionType(fp.type);
 
-                BDManager::getInstance()->addVirtualDevice(bdv);
+                BDManager::instance().addVirtualDevice(bdv);
                 break;
             }
             }

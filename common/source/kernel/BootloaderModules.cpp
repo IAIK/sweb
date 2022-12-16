@@ -72,7 +72,7 @@ void BootloaderModules::loadInitrdIfExists()
             debug(MAIN, "Initialize initrd\n");
             BDVirtualDevice* initrd_dev = createRamDiskFromModule(i, "initrd");
             initrd_dev->setPartitionType(0x81);
-            BDManager::getInstance()->addVirtualDevice(initrd_dev);
+            BDManager::instance().addVirtualDevice(initrd_dev);
             break;
         }
     }

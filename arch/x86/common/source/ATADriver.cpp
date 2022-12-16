@@ -38,7 +38,7 @@ ATADriver::ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum) :
       .useHandler(
           [this]()
           {
-              BDManager::getInstance()->probeIRQ = false;
+              BDManager::instance().probeIRQ = false;
               serviceIRQ();
           });
 
@@ -78,11 +78,11 @@ void ATADriver::testIRQ()
 {
   mode = BD_ATA_MODE::BD_PIO;
 
-  BDManager::getInstance()->probeIRQ = true;
+  BDManager::instance().probeIRQ = true;
   readSector( 0, 1, nullptr );
 
   debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
-  TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
+  TIMEOUT_CHECK(BDManager::instance().probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
 }
 
 int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *buffer )

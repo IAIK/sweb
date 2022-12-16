@@ -1,17 +1,17 @@
-#include "BDDriver.h"
 #include "BDManager.h"
+#include "BDDriver.h"
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
 #include "IDEDriver.h"
+#include "PlatformBus.h"
 #include "kprintf.h"
-#include "debug.h"
 #include "kstring.h"
+#include "debug.h"
 
-BDManager *BDManager::getInstance()
+BDManager& BDManager::instance()
 {
-  if (!instance_)
-    instance_ = new BDManager();
-  return instance_;
+    static BDManager instance_;
+    return instance_;
 }
 
 
@@ -23,7 +23,7 @@ BDManager::BDManager() :
 void BDManager::doDeviceDetection()
 {
   debug(BD_MANAGER, "doDeviceDetection: Detecting BD devices\n");
-  IDEDriver id;
+  PlatformBus::instance().registerDriver(IDEDriver::instance());
   // insert other device detectors here
   debug(BD_MANAGER, "doDeviceDetection: Detection done\n");
 }

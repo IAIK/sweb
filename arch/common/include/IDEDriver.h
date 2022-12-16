@@ -1,17 +1,20 @@
 #pragma once
 
 #include <cinttypes>
+#include "DeviceDriver.h"
 
 class BDDriver;
 
-class IDEDriver
+class IDEDriver : public DeviceDriver
 {
 public:
     IDEDriver();
 
-    ~IDEDriver() = default;
+    ~IDEDriver() override = default;
+
+    static IDEDriver& instance();
 
     int32_t processMBR(BDDriver*, uint32_t, uint32_t, const char*);
 
-    uint32_t doDeviceDetection();
+    void doDeviceDetection() override;
 };

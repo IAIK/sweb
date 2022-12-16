@@ -141,7 +141,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   uint32_t dev = -1;
   if(fst->getFSFlags() & FS_REQUIRES_DEV)
   {
-      BDVirtualDevice* bddev = BDManager::getInstance()->getDeviceByName(dev_name);
+      BDVirtualDevice* bddev = BDManager::instance().getDeviceByName(dev_name);
       if (!bddev)
       {
           debug(VFS, "mount: device with name %s doesn't exist\n", dev_name);

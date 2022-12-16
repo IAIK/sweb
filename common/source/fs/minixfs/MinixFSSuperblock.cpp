@@ -354,7 +354,7 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
   fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
   assert(fread(buffer, 1, read_size, (FILE*)s_dev_) == read_size);
 #else
-  BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
+  BDVirtualDevice* bdvd = BDManager::instance().getDeviceByNumber(s_dev_);
   size_t block_size = bdvd->getBlockSize();
   size_t read_size = num_blocks * block_size;
   assert(bdvd->readData(block * block_size, read_size, buffer) == (ssize_t)read_size && "Failed to read all requested blocks from device. (Potentially corrupted disk image)");
@@ -373,7 +373,7 @@ void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffe
   fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
   assert(fwrite(buffer, 1, write_size, (FILE*)s_dev_) == write_size);
 #else
-  BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
+  BDVirtualDevice* bdvd = BDManager::instance().getDeviceByNumber(s_dev_);
   size_t block_size = bdvd->getBlockSize();
   size_t write_size = num_blocks * block_size;
   assert(bdvd->writeData(block * block_size, write_size, buffer) == (ssize_t)write_size);
