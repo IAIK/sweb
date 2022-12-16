@@ -22,7 +22,7 @@ void Cpu::setId(size_t id)
 {
     *cpu_id_ = id;
     // TODO: this breaks when there are >9 CPUs
-    setDeviceName(eastl::string("CPU ") + ('0'+id));
+    setDeviceName(eastl::string("CPU ") + eastl::to_string(id));
 }
 
 void Cpu::enqueueFunctionCallMessage(RemoteFunctionCallMessage* fcall_message)

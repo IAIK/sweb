@@ -459,7 +459,7 @@ class XApic : public Apic
 {
 public:
     XApic() :
-        Apic(eastl::string("xAPIC ") + ('0' + CPUID::localApicId()))
+        Apic(eastl::string("xAPIC ") + eastl::to_string(CPUID::localApicId()))
     {
     }
 

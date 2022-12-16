@@ -707,8 +707,7 @@ void ApicTimerDriver::cpuLocalInit()
     if (cpu_features.cpuHasFeature(CpuFeatures::APIC) && cpu_lapic)
     {
         auto& timer = cpu_lapic->timer_interrupt_controller;
-        // TODO: this breaks when there are >9 CPUs
-        timer.setDeviceName(eastl::string("APIC ") + ('0'+cpu_lapic->apicId()) + " timer");
+        timer.setDeviceName(eastl::string("APIC ") + eastl::to_string(cpu_lapic->apicId()) + " timer");
         cpu_lapic->initTimer();
 
         timer.irq().mapTo(*cpu_lapic, Apic::APIC_TIMER_VECTOR);

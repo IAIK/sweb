@@ -10,7 +10,7 @@ class X2Apic : public Apic
 {
 public:
     X2Apic() :
-        Apic(eastl::string("x2APIC ") + ('0' + CPUID::localX2ApicId()))
+        Apic(eastl::string("x2APIC ") + eastl::to_string(CPUID::localX2ApicId()))
     {
     }
     virtual ~X2Apic() = default;
