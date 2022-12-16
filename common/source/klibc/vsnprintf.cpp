@@ -1,4 +1,4 @@
-#include "vnsprintf.h"
+#include "vsnprintf.h"
 
 #include "stdint.h"
 #include "string.h"
@@ -28,7 +28,7 @@ char* ksprintn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
   return (p);
 }
 
-int kvprintf(char const *fmt, void (*func)(int,void*), void *arg, int radix, va_list ap)
+int kvprintf(const char* fmt, void (*func)(int, void*), void* arg, int radix, va_list ap)
 {
 #define PCHAR(c) {int cc=(c); if (func) (*func)(cc,arg); else *d++ = cc; retval++; }
   char nbuf[MAXNBUF];
@@ -412,7 +412,7 @@ void snprintf_func(int ch, void *arg)
 /*
  * Scaled down version of vsnprintf(3).
  */
-int vsnprintf(char *str, size_t size, const char *format, va_list ap)
+extern "C" int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 {
   snprintf_arg info;
   int retval;
@@ -423,4 +423,17 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
   if (info.remain >= 1)
     *info.str++ = '\0';
   return retval;
+}
+
+extern int
+Vsnprintf8(char* pDestination, size_t n, const char* pFormat, va_list arguments)
+    __attribute__((alias("vsnprintf")));
+
+int snprintf(char* buf, size_t bufsz, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int ret = vsnprintf(buf, bufsz, format, args);
+    va_end(args);
+    return ret;
 }

@@ -3,7 +3,6 @@
 
 #include "assert.h"
 
-
 #define EASTL_DEBUG 1
 
 #define EA_COMPILER_NO_STANDARD_CPP_LIBRARY 1
@@ -29,6 +28,8 @@
 #define EASTL_FAIL_MSG(message) assert(false && message)
 
 #define EASTL_VARIABLE_TEMPLATES_ENABLED 1
+
+#define EASTL_EASTDC_VSNPRINTF 0
 
 extern void kprintfd(const char *fmt, ...);
 [[maybe_unused]] const auto printf = kprintfd;
