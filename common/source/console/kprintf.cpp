@@ -178,6 +178,7 @@ void kprintfd(const char *fmt, ...)
           *calling_thread->kprintfd_recursion_detected = true;
 
       // We can only do this since this won't break anything (aside from producing garbled output on the debug console)
+      // Don't release any other locks this way!
       kprintfd_lock.release();
   }
 

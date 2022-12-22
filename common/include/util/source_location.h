@@ -17,22 +17,22 @@ public:
         return source_location(file_name, function_name, line_number, column_offset);
     }
 
-    constexpr const char* file_name() const noexcept
+    [[nodiscard]] constexpr const char* file_name() const noexcept
     {
         return file_name_;
     }
 
-    constexpr const char* function_name() const noexcept
+    [[nodiscard]] constexpr const char* function_name() const noexcept
     {
         return function_name_;
     }
 
-    constexpr uint_least32_t line() const noexcept
+    [[nodiscard]] constexpr uint_least32_t line() const noexcept
     {
         return line_number_;
     }
 
-    constexpr uint_least32_t column() const noexcept
+    [[nodiscard]] constexpr uint_least32_t column() const noexcept
     {
         return column_offset_;
     }

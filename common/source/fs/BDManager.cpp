@@ -23,7 +23,8 @@ BDManager::BDManager() :
 void BDManager::doDeviceDetection()
 {
   debug(BD_MANAGER, "doDeviceDetection: Detecting BD devices\n");
-  PlatformBus::instance().registerDriver(IDEDriver::instance());
+
+  PlatformBus::instance().registerDriver(IDEControllerDriver::instance());
   // insert other device detectors here
   debug(BD_MANAGER, "doDeviceDetection: Detection done\n");
 }

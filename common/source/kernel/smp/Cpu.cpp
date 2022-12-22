@@ -10,7 +10,7 @@ Cpu::Cpu() :
     Device("CPU"),
     cpu_id_(&cpu_id)
 {
-    DeviceBus::root().addSubDevice(*this);
+    deviceTreeRoot().addSubDevice(*this);
 }
 
 size_t Cpu::id()

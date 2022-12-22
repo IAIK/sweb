@@ -263,7 +263,7 @@ public:
             return irq_;
         }
 
-        DomainIrqHandle& mapTo(IrqDomain& target_domain, irqnum_t target_irq)
+        DomainIrqHandle& mapTo(IrqDomain& target_domain, irqnum_t target_irq = 0)
         {
             domain_->mapIrqTo(irq_, target_domain, target_irq);
             return *this;

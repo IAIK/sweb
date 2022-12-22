@@ -69,10 +69,10 @@ private:
         PIC_2_DATA_PORT    = 0xA1,
     };
 
-    using PIC_1_CONTROL_PORT = IoRegister<(uint16_t)IoPorts::PIC_1_CONTROL_PORT, uint8_t, false, true>;
-    using PIC_2_CONTROL_PORT = IoRegister<(uint16_t)IoPorts::PIC_2_CONTROL_PORT, uint8_t, false, true>;
-    using PIC_1_DATA_PORT = IoRegister<(uint16_t)IoPorts::PIC_1_DATA_PORT, uint8_t, false, true>;
-    using PIC_2_DATA_PORT = IoRegister<(uint16_t)IoPorts::PIC_2_DATA_PORT, uint8_t, false, true>;
+    using PIC_1_CONTROL_PORT = IoPort::StaticIoRegister<(uint16_t)IoPorts::PIC_1_CONTROL_PORT, uint8_t, false, true>;
+    using PIC_2_CONTROL_PORT = IoPort::StaticIoRegister<(uint16_t)IoPorts::PIC_2_CONTROL_PORT, uint8_t, false, true>;
+    using PIC_1_DATA_PORT = IoPort::StaticIoRegister<(uint16_t)IoPorts::PIC_1_DATA_PORT, uint8_t, false, true>;
+    using PIC_2_DATA_PORT = IoPort::StaticIoRegister<(uint16_t)IoPorts::PIC_2_DATA_PORT, uint8_t, false, true>;
 };
 
 class PIC8259Driver : public Driver<PIC8259>

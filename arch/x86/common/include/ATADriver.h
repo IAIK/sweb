@@ -1,13 +1,20 @@
 #pragma once
 
 #include "BDDriver.h"
+#include "BDManager.h"
+#include "BDVirtualDevice.h"
+#include "Device.h"
+#include "DeviceBus.h"
+#include "IrqDomain.h"
 #include "Mutex.h"
 #include "NonBlockingQueue.h"
-#include "IrqDomain.h"
+#include "ports.h"
+#include "EASTL/span.h"
 
 class BDRequest;
+class IDEControllerChannel;
 
-class ATADriver : public BDDriver
+class ATADriver : public BDDriver, public Device
 {
   public:
 
@@ -19,6 +26,79 @@ class ATADriver : public BDDriver
       BD_UDMA
     };
 
+    struct COMMAND
+    {
+        struct OTHER
+        {
+            enum
+            {
+                NOP = 0x00,
+                SET_MULTIPLE_MODE = 0xC6,
+                FLUSH_CACHE = 0xE7,
+                SET_FEATURES = 0xEF,
+            };
+        };
+
+        struct PIO
+        {
+            enum
+            {
+                READ_SECTORS = 0x20,
+                WRITE_SECTORS = 0x30,
+                READ_MULTIPLE = 0xC4,
+                IDENTIFY_DEVICE = 0xEC,
+            };
+        };
+
+        struct DMA
+        {
+            enum
+            {
+                READ = 0xC8,
+                WRITE = 0xCA,
+            };
+        };
+
+        // 48-bit commands
+        struct EXT
+        {
+            struct OTHER
+            {
+                enum
+                {
+                    DATA_SET_MANAGEMENT = 0x06,
+                    CONFIGURE_STREAM = 0x51,
+                    SET_DATE_TIME = 0x77,
+                };
+            };
+
+            struct PIO
+            {
+                enum
+                {
+                    READ_SECTORS = 0x24,
+                    READ_MULTIPLE = 0x29,
+                    READ_STREAM = 0x2B,
+                    READ_LOG = 0x2F,
+                };
+            };
+
+            struct DMA
+            {
+                enum
+                {
+                    READ = 0x25,
+                    WRITE = 0x35,
+                    READ_LOG = 0x47,
+                    READ_STREAM = 0x2A,
+                };
+            };
+        };
+    };
+
+    ATADriver(IDEControllerChannel& controller, uint16 drive_num, eastl::span<uint16_t, 256> identify_data);
+    ~ATADriver() override = default;
+
     /**
      * adds the given request to a list and checkes the type of the
      * request. If it is a read or write request, it is beeing executed,
@@ -26,8 +106,6 @@ class ATADriver : public BDDriver
      *
      */
     uint32 addRequest(BDRequest* br) override;
-    ATADriver(uint16 baseport, uint16 getdrive, uint16 irqnum);
-    ~ATADriver() override = default;
 
     /**
      * sets the current mode to BD_PIO_NO_IRQ while the readSector
@@ -59,7 +137,7 @@ class ATADriver : public BDDriver
 
     uint32 getSectorSize() override
     {
-      return 512;
+      return sector_word_size * 2;
     }
 
     void serviceIRQ() override;
@@ -70,26 +148,26 @@ class ATADriver : public BDDriver
      */
     void testIRQ();
 
-    /**
-     * tests if the Controller is available
-     * false if it is not or the time is elapsed
-     *
-     */
-    bool waitForController(bool resetIfFailed);
+    void printIdentifyInfo(eastl::span<uint16_t, 256> id);
 
     uint32 HPC, SPT; // HEADS PER CYLINDER and SECTORS PER TRACK
 
-
-  private:
-
-    static void resetController(uint16 port);
-
+protected:
     int32 selectSector(uint32 start_sector, uint32 num_sectors);
 
-    uint32 numsec;
+    void pioReadData(eastl::span<uint16_t> buffer);
+    void pioWriteData(eastl::span<uint16_t> buffer);
 
-    uint16 port;
-    uint16 drive;
+private:
+
+    IDEControllerChannel& controller;
+    uint8_t drive_num;
+
+    uint32 numsec;
+    uint32 sector_word_size = 256; // 256 * uint16_t = 512 bytes
+
+    bool lba;
+    bool lba_48bit;
 
     uint32 jiffies;
 

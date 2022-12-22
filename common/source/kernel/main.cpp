@@ -187,7 +187,7 @@ extern "C" [[noreturn]] void startup()
   }
 
   debug(MAIN, "Registered devices:\n");
-  DeviceBus::root().printSubDevices();
+  deviceTreeRoot().printSubDevices();
 
   // Ensure we already have a currentThread when interrupts are enabled
   debug(MAIN, "Starting threads and enabling interrupts...\n");

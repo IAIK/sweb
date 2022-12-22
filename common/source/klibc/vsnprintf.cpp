@@ -10,8 +10,6 @@
 
 /* Blatantly stolen from FREEBSD. */
 
-// using uintmax_t = uint64;
-// using intmax_t = int64;
 using u_quad_t = uint64_t;
 using quad_t = int64_t;
 

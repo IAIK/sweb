@@ -41,11 +41,9 @@ public:
         debug(DRIVER, "Driver '%s' device detection\n", driverName().c_str());
     }
 
-    virtual void cpuLocalInit()
-    {
-        // Allow drivers to initialize cpu local data/devices
-        // Do nothing by default
-    }
+    // Allow drivers to initialize cpu local data/devices
+    // Do nothing by default
+    virtual void cpuLocalInit() { }
 
     bool isBoundDevice(const Device& device)
     {

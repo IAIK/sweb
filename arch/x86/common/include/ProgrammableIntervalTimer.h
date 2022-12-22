@@ -11,7 +11,7 @@ class PIT : public Device, public IrqDomain
 public:
     PIT();
 
-    enum IoPort
+    enum PITIoPort
     {
         PIT_PORT_CH_0_DATA = 0x40,
         PIT_PORT_CH_1_DATA = 0x41,
@@ -71,8 +71,8 @@ private:
     static OperatingMode operating_mode;
     static uint16_t frequency_divisor;
 
-    using COMMAND_PORT = IoRegister<PIT_PORT_COMMAND, PITCommandRegister, false, true>;
-    using CH0_DATA_PORT = IoRegister<PIT_PORT_CH_0_DATA, uint8_t, false, true>;
+    using COMMAND_PORT = IoPort::StaticIoRegister<PIT_PORT_COMMAND, PITCommandRegister, false, true>;
+    using CH0_DATA_PORT = IoPort::StaticIoRegister<PIT_PORT_CH_0_DATA, uint8_t, false, true>;
 };
 
 class PITDriver : public Driver<PIT>

@@ -39,8 +39,8 @@ struct DeviceBus : public Device
         driver.doDeviceDetection();
     }
 
-    static DeviceBus& root();
-
 private:
     eastl::vector<DeviceDriver*> drivers_;
 };
+
+DeviceBus& deviceTreeRoot();

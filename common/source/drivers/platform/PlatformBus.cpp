@@ -8,5 +8,5 @@ PlatformBus& PlatformBus::instance()
 
 void PlatformBus::initPlatformBus()
 {
-    DeviceBus::root().addSubDevice(instance());
+    deviceTreeRoot().addSubDevice(instance());
 }

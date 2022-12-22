@@ -51,7 +51,7 @@ static inline uint16 inportw(uint16 port)
  *
  */
 __attribute__((unused))
-static uint16 inportwp(uint16 port)
+static inline uint16 inportwp(uint16 port)
 {
   uint16 _res;
   asm volatile ("inw %1, %0" : "=a" (_res) : "id" (port));
@@ -106,44 +106,128 @@ static inline void outportwp(uint16 port, uint16 value)
   asm volatile ("outb %al,$0x80");
 }
 
-template<uint16_t port_, typename T, bool readable_ = true, bool writeable_ = true>
-struct IoRegister
+namespace IoPort
 {
-    using value_type = T;
+    template<class... T> constexpr bool always_false = false;
 
-    static constexpr uint16_t port = port_;
-    static constexpr bool readable = readable_;
-    static constexpr bool writeable = writeable_;
-
-    static_assert(sizeof(value_type) == sizeof(uint8_t) || sizeof(value_type) == sizeof(uint16_t));
-
-    template <uint32_t _port = port, bool _writeable = writeable>
-    static eastl::enable_if_t<_writeable, void> write(value_type v)
+    template<uint16_t port_, typename T, bool readable_ = true, bool writeable_ = true>
+    struct IoPortDescription
     {
-        if constexpr (sizeof(value_type) == 1)
+        using value_type = T;
+        using port = eastl::integral_constant<uint16_t, port_>;
+        using readable = eastl::bool_constant<readable_>;
+        using writeable = eastl::bool_constant<writeable_>;
+    };
+
+    template<typename T>
+    concept io_port_description = requires(T x)
+    {
+        typename T::value_type;
+        typename T::port;
+        typename T::readable;
+        typename T::writeable;
+    };
+
+    template<typename T>
+    inline void write(uint16_t port, const T& v)
+    {
+        if constexpr (sizeof(T) == 1)
         {
             outportb(port, eastl::bit_cast<uint8_t>(v));
         }
-        else if constexpr (sizeof(value_type) == 2)
+        else if constexpr (sizeof(T) == 2)
         {
             outportw(port, eastl::bit_cast<uint16_t>(v));
         }
+        else
+        {
+            static_assert(always_false<T>, "Invalid size for I/O port write");
+        }
     }
 
-    template <uint32_t _port = port, bool _readable = readable>
-    static eastl::enable_if_t<_readable, value_type> read()
+    template<typename T>
+    inline T read(uint16_t port)
     {
-        if constexpr (sizeof(value_type) == 1)
+        if constexpr (sizeof(T) == 1)
         {
-            return eastl::bit_cast<value_type>(inportb(port));
+            return eastl::bit_cast<T>(inportb(port));
         }
-        else if constexpr (sizeof(value_type) == 2)
+        else if constexpr (sizeof(T) == 2)
         {
-            return eastl::bit_cast<value_type>(inportw(port));
+            return eastl::bit_cast<T>(inportw(port));
+        }
+        else
+        {
+            static_assert(always_false<T>, "Invalid size for I/O port read");
         }
     }
+
+    template<typename PD>
+    requires (PD::writeable::value)
+    inline void write(const typename PD::value_type& v)
+    {
+        write<PD::value_type>(PD::port, v);
+    }
+
+    template<typename PD>
+    requires(PD::readable::value)
+    inline typename PD::value_type read()
+    {
+        return read<PD::value_type>(PD::port);
+    }
+
+    template<uint16_t port, typename T, bool readable, bool writeable>
+    struct StaticIoRegister
+    {
+        static inline void write(const T& v) requires(writeable) { IoPort::write<T>(port, v); }
+
+        static inline T read() requires(writeable) { return IoPort::read<T>(port); }
+    };
+
+    template<io_port_description PD>
+    using StaticIoRegister_ = StaticIoRegister<PD::port::value, typename PD::value_type, PD::readable::value, PD::writeable::value>;
+
+    template<typename T, bool readable, bool writeable>
+    struct IoRegister
+    {
+        const uint16_t port;
+
+        inline void write(const T& v) requires(writeable) { IoPort::write<T>(port, v); }
+
+        inline T read() requires(readable) { return IoPort::read<T>(port); }
+    };
+
+    struct IoRegisterSet
+    {
+        const uint16_t base_port;
+
+        template<typename PD>
+        requires(PD::writeable::value)
+        inline void write(const typename PD::value_type& v)
+        {
+            IoPort::write<PD::value_type>(base_port + PD::port::value, v);
+        }
+
+        template<typename PD>
+        requires(PD::readable::value)
+        inline typename PD::value_type read()
+        {
+            return IoPort::read<PD::value_type>(base_port + PD::port::value);
+        }
+
+        template<typename PD>
+        inline IoRegister<typename PD::value_type, PD::readable::value, PD::writeable::value>
+        operator[](PD)
+        {
+            return {static_cast<uint16_t>(base_port + PD::port::value)};
+        }
+    };
 };
 
+
+
+using EMULATOR_DEBUGCONSOLE =
+    IoPort::StaticIoRegister<0xE9, uint8_t, false, true>;
 
 enum class ICMRIoPorts : uint16_t
 {
@@ -162,5 +246,5 @@ enum class IMCRData : uint8_t
     APIC_PASSTHROUGH = 0x1,
 };
 
-using IMCR_SELECT = IoRegister<(uint16_t)ICMRIoPorts::IMCR_SELECT, IMCRSelect, false, true>;
-using IMCR_DATA = IoRegister<(uint16_t)ICMRIoPorts::IMCR_DATA, IMCRData, false, true>;
+using IMCR_SELECT = IoPort::StaticIoRegister<(uint16_t)ICMRIoPorts::IMCR_SELECT, IMCRSelect, false, true>;
+using IMCR_DATA = IoPort::StaticIoRegister<(uint16_t)ICMRIoPorts::IMCR_DATA, IMCRData, false, true>;

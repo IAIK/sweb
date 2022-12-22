@@ -1,6 +1,6 @@
 #include "DeviceBus.h"
 
-DeviceBus& DeviceBus::root()
+DeviceBus& deviceTreeRoot()
 {
     static DeviceBus device_bus_root("Device Root");
     return device_bus_root;
