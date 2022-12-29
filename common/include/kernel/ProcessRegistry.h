@@ -12,7 +12,7 @@ class ProcessRegistry
      * @param root_fs_info the default working directory to be used for new processes
      */
     ProcessRegistry(FileSystemInfo* root_fs_info);
-    virtual ~ProcessRegistry();
+    virtual ~ProcessRegistry() = default;
 
     static ProcessRegistry* instance();
     static void init(FileSystemInfo* root_fs_info);

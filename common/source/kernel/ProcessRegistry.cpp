@@ -7,8 +7,6 @@
 #include "ArchMulticore.h"
 #include "VirtualFileSystem.h"
 
-alignas(ProcessRegistry) unsigned char process_registry[sizeof(ProcessRegistry)];
-
 ProcessRegistry* ProcessRegistry::instance_ = nullptr;
 
 ProcessRegistry::ProcessRegistry(FileSystemInfo* root_fs_info) :
@@ -20,10 +18,6 @@ ProcessRegistry::ProcessRegistry(FileSystemInfo* root_fs_info) :
   assert(default_working_dir_);
 }
 
-ProcessRegistry::~ProcessRegistry()
-{
-}
-
 ProcessRegistry* ProcessRegistry::instance()
 {
   assert(instance_ && "ProcessRegistry not yet initialized");
@@ -33,7 +27,8 @@ ProcessRegistry* ProcessRegistry::instance()
 void ProcessRegistry::init(FileSystemInfo *root_fs_info)
 {
     assert(!instance_ && "ProcessRegistry already initialized");
-    instance_ = new (&process_registry) ProcessRegistry(root_fs_info);
+    static ProcessRegistry inst(root_fs_info);
+    instance_ = &inst;
 }
 
 void ProcessRegistry::processExit()
