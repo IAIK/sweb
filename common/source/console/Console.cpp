@@ -94,26 +94,16 @@ uint32 Console::getNumTerminals() const
   return terminals_.size();
 }
 
-Terminal *Console::getActiveTerminal()
+Terminal *Console::getActiveTerminal() const
 {
   assert(active_terminal_ < terminals_.size());
   return terminals_[active_terminal_]; // why not locked? integer read is consistent anyway
 }
 
-Terminal *Console::getTerminal(uint32 term)
+Terminal *Console::getTerminal(uint32 term) const
 {
   assert(term < terminals_.size());
   return terminals_[term];
-}
-
-eastl::vector<Terminal*>::iterator Console::terminalsBegin()
-{
-    return terminals_.begin();
-}
-
-eastl::vector<Terminal*>::iterator Console::terminalsEnd()
-{
-    return terminals_.end();
 }
 
 void Console::setActiveTerminal(uint32 term)
@@ -155,7 +145,7 @@ void Console::Run()
     Scheduler::instance()->yield();
   } while (1);
 }
-bool Console::isDisplayable(uint32 key)
+bool Console::isDisplayable(uint32 key) const
 {
   return (((key & 127) >= ' ') || (key == '\n') || (key == '\b'));
 }
