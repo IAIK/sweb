@@ -675,8 +675,8 @@ bool Apic::ApicTimer::ack(irqnum_t irq)
 
 bool Apic::ApicTimer::isMasked() { return masked_; }
 
-ApicDriver::ApicDriver()
-    : base_type("Local APIC driver")
+ApicDriver::ApicDriver() :
+    BasicDeviceDriver("Local APIC driver")
 {
 }
 
@@ -687,7 +687,7 @@ ApicDriver &ApicDriver::instance()
 }
 
 ApicTimerDriver::ApicTimerDriver() :
-    base_type("APIC timer driver")
+    BasicDeviceDriver("APIC timer driver")
 {
 }
 

@@ -10,11 +10,13 @@
 #include "NonBlockingQueue.h"
 #include "ports.h"
 #include "EASTL/span.h"
+#include "DeviceDriver.h"
+#include "IDEDriver.h"
 
 class BDRequest;
 class IDEControllerChannel;
 
-class ATADriver : public BDDriver, public Device
+class ATADrive : public BDDriver, public Device
 {
   public:
 
@@ -96,8 +98,8 @@ class ATADriver : public BDDriver, public Device
         };
     };
 
-    ATADriver(IDEControllerChannel& controller, uint16 drive_num, eastl::span<uint16_t, 256> identify_data);
-    ~ATADriver() override = default;
+    ATADrive(IDEControllerChannel& controller, uint16 drive_num);
+    ~ATADrive() override = default;
 
     /**
      * adds the given request to a list and checkes the type of the
@@ -164,7 +166,8 @@ private:
     uint8_t drive_num;
 
     uint32 numsec;
-    uint32 sector_word_size = 256; // 256 * uint16_t = 512 bytes
+    // 256 * uint16_t = 512 bytes
+    uint32 sector_word_size = 256;
 
     bool lba;
     bool lba_48bit;
@@ -178,4 +181,25 @@ private:
     NonBlockingQueue<BDRequest> request_list_;
 
     Mutex lock_;
+};
+
+struct IDEDeviceDescription;
+
+class PATADeviceDriver : public BasicDeviceDriver,
+                         public Driver<ATADrive>,
+                         public IDEControllerChannel::bus_device_driver_type
+{
+public:
+    PATADeviceDriver();
+    ~PATADeviceDriver() override = default;
+
+    static PATADeviceDriver& instance();
+
+    // Check if driver is compatible with device discovered during IDE bus enumeration
+    // If yes, create an actual device based on the description
+    bool probe(const IDEDeviceDescription&) override;
+
+    static constexpr IDEDeviceDescription::Signature PATA_DRIVE_SIGNATURE{0x01, 0x01, 0x00, 0x00};
+
+private:
 };

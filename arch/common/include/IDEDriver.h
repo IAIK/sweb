@@ -1,8 +1,9 @@
 #pragma once
 
-#include "ATADriver.h"
+#include "DeviceBus.h"
 #include "DeviceDriver.h"
 #include "IrqDomain.h"
+#include "ports.h"
 #include "source_location.h"
 #include <cinttypes>
 #include "ArchInterrupts.h"
@@ -11,11 +12,31 @@
 #include "EASTL/vector.h"
 
 class BDDriver;
+class IDEControllerChannel;
 
-class IDEControllerChannel : public DeviceBus, public IrqDomain
+// Description of an IDE device discovered during IDE bus device enumeration
+// Used to find compatible IDE bus device drivers (e.g. PATADeviceDriver for PATA devices)
+// Compatible drivers then create appropriate devices based on this description
+struct IDEDeviceDescription
+{
+    IDEControllerChannel* controller;
+    uint8_t device_num;
+
+    struct Signature
+    {
+        uint8_t r_count;
+        uint8_t r_lba_low;
+        uint8_t r_lba_mid;
+        uint8_t r_lba_high;
+
+        friend bool operator==(const Signature& lhs, const Signature& rhs) = default;
+    } signature;
+};
+
+class IDEControllerChannel : public DeviceBus<IDEDeviceDescription>,
+                             public IrqDomain
 {
 public:
-
 
     struct IoRegister
     {
@@ -242,7 +263,7 @@ private:
     eastl::vector<IDEControllerChannel*> channels;
 };
 
-class IDEControllerDriver : public Driver<IDEController>
+class IDEControllerDriver : public BasicDeviceDriver, public Driver<IDEController>
 {
 public:
     IDEControllerDriver();

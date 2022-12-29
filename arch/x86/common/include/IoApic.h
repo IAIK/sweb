@@ -187,17 +187,15 @@ private:
 };
 
 
-class IoApicDriver : public Driver<IoApic>
+class IoApicDriver : public BasicDeviceDriver, public Driver<IoApic>
 {
 public:
-    using base_type = Driver<IoApic>;
-
     IoApicDriver() :
-        base_type("I/O Apic driver")
+        BasicDeviceDriver("I/O Apic driver")
     {
     }
 
-    virtual ~IoApicDriver() = default;
+    ~IoApicDriver() override = default;
 
     static IoApicDriver& instance()
     {
@@ -205,7 +203,7 @@ public:
         return i;
     }
 
-    virtual void doDeviceDetection();
+    void doDeviceDetection() override;
 
 private:
 };

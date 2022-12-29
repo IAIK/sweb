@@ -3,8 +3,6 @@
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "ArchInterrupts.h"
-#include "8259.h"
-#include "APIC.h"
 #include "IDEDriver.h"
 
 #include "Scheduler.h"
@@ -24,7 +22,7 @@
         BODY;                                     \
     }
 
-ATADriver::ATADriver(IDEControllerChannel& ide_controller, uint16 drive_num, eastl::span<uint16_t, 256> identify) :
+ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
     BDDriver(ide_controller.isaIrqNumber()),
     Device(eastl::string("ATA disk ") + eastl::to_string(drive_num)),
     controller(ide_controller),
@@ -36,6 +34,17 @@ ATADriver::ATADriver(IDEControllerChannel& ide_controller, uint16 drive_num, eas
   irq_domain.irq()
       .mapTo(controller)
       .useHandler([]() { BDManager::instance().probeIRQ = false; });
+
+  controller.selectDrive(drive_num);
+
+  IDEControllerChannel::ControlRegister::DeviceControl dc{};
+  dc.interrupt_disable = 0;
+  controller.control_regs[IDEControllerChannel::ControlRegister::DEVICE_CONTROL].write(dc);
+
+  controller.io_regs[IDEControllerChannel::IoRegister::COMMAND].write(ATADrive::COMMAND::PIO::IDENTIFY_DEVICE);
+  controller.waitDataReady();
+  eastl::array<uint16_t, 256> identify{};
+  pioReadData(identify);
 
   printIdentifyInfo(identify);
 
@@ -70,7 +79,7 @@ ATADriver::ATADriver(IDEControllerChannel& ide_controller, uint16 drive_num, eas
   debug(ATA_DRIVER, "ctor: Drive created !!\n");
 }
 
-void ATADriver::testIRQ()
+void ATADrive::testIRQ()
 {
   mode = BD_ATA_MODE::BD_PIO;
 
@@ -82,7 +91,7 @@ void ATADriver::testIRQ()
   TIMEOUT_CHECK(BDManager::instance().probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
 }
 
-int32 ATADriver::rawReadSector(uint32 start_sector, uint32 num_sectors, void *buffer)
+int32 ATADrive::rawReadSector(uint32 start_sector, uint32 num_sectors, void *buffer)
 {
   BD_ATA_MODE old_mode = mode;
   mode = BD_ATA_MODE::BD_PIO_NO_IRQ;
@@ -92,7 +101,7 @@ int32 ATADriver::rawReadSector(uint32 start_sector, uint32 num_sectors, void *bu
   return result;
 }
 
-int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
+int32 ATADrive::selectSector(uint32 start_sector, uint32 num_sectors)
 {
     if (!controller.waitNotBusy())
         return -1;
@@ -163,7 +172,7 @@ int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
   return 0;
 }
 
-void ATADriver::pioReadData(eastl::span<uint16_t> buffer)
+void ATADrive::pioReadData(eastl::span<uint16_t> buffer)
 {
     asm volatile("cld\n" // Ensure correct direction (low to high)
                  "rep insw\n" ::
@@ -172,7 +181,7 @@ void ATADriver::pioReadData(eastl::span<uint16_t> buffer)
         "d"(controller.io_regs[IDEControllerChannel::IoRegister::DATA].port)); // RDX
 }
 
-void ATADriver::pioWriteData(eastl::span<uint16_t> buffer)
+void ATADrive::pioWriteData(eastl::span<uint16_t> buffer)
 {
     // Don't use rep outsw here because of required delay after port write
     for (uint16_t& word : buffer)
@@ -181,7 +190,7 @@ void ATADriver::pioWriteData(eastl::span<uint16_t> buffer)
     }
 }
 
-int32 ATADriver::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
+int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
 {
   debugAdvanced(ATA_DRIVER, "readSector %x, num: %x into buffer %p\n", start_sector, num_sectors, buffer);
 
@@ -215,7 +224,7 @@ int32 ATADriver::readSector(uint32 start_sector, uint32 num_sectors, void *buffe
   return 0;
 }
 
-int32 ATADriver::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
+int32 ATADrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
 {
   assert(buffer);
   if (selectSector(start_sector, num_sectors) != 0)
@@ -243,7 +252,7 @@ int32 ATADriver::writeSector(uint32 start_sector, uint32 num_sectors, void * buf
   return 0;
 }
 
-uint32 ATADriver::addRequest(BDRequest* br)
+uint32 ATADrive::addRequest(BDRequest* br)
 {
   MutexLock lock(lock_); // this lock might serialize stuff too much...
   bool interrupt_context = false;
@@ -331,7 +340,7 @@ uint32 ATADriver::addRequest(BDRequest* br)
   return 0;
 }
 
-void ATADriver::serviceIRQ()
+void ATADrive::serviceIRQ()
 {
     // Need to read status register to acknowledge and unblock interrupts
     auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
@@ -444,7 +453,7 @@ void ATADriver::serviceIRQ()
 }
 
 
-void ATADriver::printIdentifyInfo(eastl::span<uint16_t, 256> id)
+void ATADrive::printIdentifyInfo(eastl::span<uint16_t, 256> id)
 {
     uint16_t serialnum[11]{};
     uint16_t firmware_rev[5]{};
@@ -551,4 +560,46 @@ void ATADriver::printIdentifyInfo(eastl::span<uint16_t, 256> id)
     }
     debug(ATA_DRIVER, "Integrity word: %x, validity indicator: %x\n",
           (id[255] & (0xFF << 8)), (id[255] & 0xFF));
+}
+
+PATADeviceDriver::PATADeviceDriver() :
+    BasicDeviceDriver("PATA device driver")
+{
+}
+
+PATADeviceDriver& PATADeviceDriver::instance()
+{
+    static PATADeviceDriver instance_;
+    return instance_;
+}
+
+bool PATADeviceDriver::probe(const IDEDeviceDescription& descr)
+{
+    auto [controller, drive_num, signature] = descr;
+    if (signature == PATA_DRIVE_SIGNATURE)
+    {
+        debug(ATA_DRIVER, "Device description matches PATA device\n");
+
+        eastl::string disk_name{"ide"};
+        // idea = first disk of primary controller
+        // ideb = second disk of primary controller
+        // idec = first disk of secondary controller
+        // ...
+        disk_name += 'a' + controller->controller_id * 2 + drive_num;
+
+        debug(ATA_DRIVER, "Create block device %s\n", disk_name.c_str());
+        auto drv = new ATADrive(*controller, drive_num);
+        bindDevice(*drv);
+        // controller->addSubDevice(*drv);
+        auto* bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(),
+                                        drv->getSectorSize(), disk_name.c_str(), true);
+
+        BDManager::instance().addVirtualDevice(bdv);
+        IDEControllerDriver::detectPartitions(drv, 0, drv->SPT, disk_name.c_str());
+
+        return true;
+    }
+
+    debug(ATA_DRIVER, "IDE device not compatible with PATA device driver\n");
+    return false;
 }

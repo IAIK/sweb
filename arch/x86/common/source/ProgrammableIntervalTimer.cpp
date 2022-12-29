@@ -70,7 +70,7 @@ uint16_t PIT::frequencyDivisor()
 }
 
 PITDriver::PITDriver() :
-    base_type("PIT driver")
+    BasicDeviceDriver("PIT driver")
 {
 }
 

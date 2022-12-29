@@ -509,35 +509,30 @@ private:
     static void* reg_vaddr_;
 };
 
-class ApicDriver : public Driver<Apic>
+class ApicDriver : public BasicDeviceDriver, public Driver<Apic>
 {
 public:
-    using base_type = Driver<Apic>;
-
     ApicDriver();
-    virtual ~ApicDriver() = default;
+    ~ApicDriver() override = default;
 
     static ApicDriver& instance();
 
-    virtual void doDeviceDetection();
-    virtual void cpuLocalInit();
+    void doDeviceDetection() override;
+    void cpuLocalInit() override;
 
 private:
 };
 
-class ApicTimerDriver : public Driver<Apic::ApicTimer>
+class ApicTimerDriver : public BasicDeviceDriver, public Driver<Apic::ApicTimer>
 {
 public:
-    using base_type = Driver<Apic::ApicTimer>;
-
     ApicTimerDriver();
-
-    virtual ~ApicTimerDriver() = default;
+    ~ApicTimerDriver() override = default;
 
     static ApicTimerDriver& instance();
 
-    virtual void doDeviceDetection();
-    virtual void cpuLocalInit();
+    void doDeviceDetection() override;
+    void cpuLocalInit() override;
 
 private:
 };

@@ -75,16 +75,14 @@ private:
     using PIC_2_DATA_PORT = IoPort::StaticIoRegister<(uint16_t)IoPorts::PIC_2_DATA_PORT, uint8_t, false, true>;
 };
 
-class PIC8259Driver : public Driver<PIC8259>
+class PIC8259Driver : public BasicDeviceDriver, public Driver<PIC8259>
 {
 public:
-    using base_type = Driver<PIC8259>;
-
     PIC8259Driver();
-    virtual ~PIC8259Driver() = default;
+    ~PIC8259Driver() override = default;
 
     static PIC8259Driver& instance();
 
-    virtual void doDeviceDetection();
+    void doDeviceDetection() override;
 private:
 };

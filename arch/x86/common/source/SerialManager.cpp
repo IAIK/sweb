@@ -8,10 +8,9 @@
 #include "8259.h"
 #include "APIC.h"
 
-
 SerialManager::SerialManager() :
-    base_type("Serial Port Driver"),
-    num_ports( 0 )
+    BasicDeviceDriver("Serial Port Driver"),
+    num_ports(0)
 {
     debug(A_SERIALPORT, "Init serial port driver\n");
 }

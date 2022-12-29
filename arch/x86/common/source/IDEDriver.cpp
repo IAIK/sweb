@@ -13,7 +13,7 @@
 size_t IDEControllerChannel::num_ide_controllers = 0;
 
 IDEControllerDriver::IDEControllerDriver() :
-    Driver("IDE Driver")
+    BasicDeviceDriver("IDE Driver")
 {
 }
 
@@ -34,12 +34,12 @@ void IDEControllerDriver::doDeviceDetection()
 int32 IDEControllerDriver::detectPartitions(BDDriver* drv, uint32 sector, uint32 SPT, const char* name)
 {
     uint32 offset = 0, numsec = 0;
-    uint16 buff[256]; // read buffer
+    eastl::array<uint16_t, 256> buff; // read buffer
     debug(IDE_DRIVER, "processMBR:reading MBR\n");
 
     static uint32 part_num = 0;
 
-    uint32 read_res = ((ATADriver*)drv)->rawReadSector(sector, 1, (void*)buff);
+    uint32 read_res = ((ATADrive*)drv)->rawReadSector(sector, 1, buff.data());
 
     if (read_res != 0)
     {
@@ -47,7 +47,7 @@ int32 IDEControllerDriver::detectPartitions(BDDriver* drv, uint32 sector, uint32
         return -1;
     }
 
-    MasterBootRecord* mbr = (MasterBootRecord*)buff;
+    MasterBootRecord* mbr = (MasterBootRecord*)buff.data();
 
     if (mbr->signature == MasterBootRecord::PC_MBR_SIGNATURE)
     {
@@ -126,6 +126,9 @@ IDEControllerChannel::IDEControllerChannel(const eastl::string& name,
     controller_id(num_ide_controllers++)
 {
     debug(IDE_DRIVER, "Init IDE Controller Channel %s\n", deviceName().c_str());
+
+    registerDriver(PATADeviceDriver::instance());
+
     IrqDomain::irq()
         .mapTo(ArchInterrupts::isaIrqDomain(), isa_irqnum);
 
@@ -354,7 +357,7 @@ void IDEControllerChannel::detectDrive(uint8_t drive_num)
 
     // Send IDENTIFY command
     debug(ATA_DRIVER, "Send IDENTIFY command\n");
-    io_regs[IoRegister::COMMAND].write(ATADriver::COMMAND::PIO::IDENTIFY_DEVICE);
+    io_regs[IoRegister::COMMAND].write(ATADrive::COMMAND::PIO::IDENTIFY_DEVICE);
 
     auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
     if (status.u8 == 0)
@@ -389,6 +392,16 @@ void IDEControllerChannel::detectDrive(uint8_t drive_num)
 
         debug(ATA_DRIVER, "IDENTIFY command signature: status: %x, count: %x, lba h: %x, lba m: %x, lba l: %x\n", status.u8, count, lba_high, lba_mid, lba_low);
 
+        bool found_driver = probeDrivers(IDEDeviceDescription{this, drive_num, {count, lba_low, lba_mid, lba_high}});
+        if (found_driver)
+        {
+            debug(ATA_DRIVER, "Found driver for device: %u\n", found_driver);
+        }
+        else
+        {
+            debug(ATA_DRIVER, "Could not find driver for device\n");
+        }
+
         if (status.error)
         {
             debug(ATA_DRIVER, "IDENTIFY command aborted: Not an ATA device\n");
@@ -402,11 +415,6 @@ void IDEControllerChannel::detectDrive(uint8_t drive_num)
                       (lba_mid == 0x69 && lba_high == 0x96)))
             {
                 debug(ATA_DRIVER, "IDENTIFY command aborted: SATA device found\n");
-            }
-            else if (count == 0x01 && lba_low == 0x01 &&
-                     (lba_mid == 0x69 && lba_high == 0x96))
-            {
-                debug(ATA_DRIVER, "IDENTIFY command aborted: SATAPI device found\n");
             }
             else if (count == 0x01 && lba_low == 0x01 && lba_mid == 0xCE &&
                      lba_high == 0xAA)
@@ -424,40 +432,6 @@ void IDEControllerChannel::detectDrive(uint8_t drive_num)
             if (count == 0x01 && lba_low == 0x01 && lba_mid == 0x00 && lba_high == 0x00)
             {
                 debug(ATA_DRIVER, "IDENTIFY: PATA device found\n");
-
-                uint16_t identify[256]{};
-                for (auto& x : identify)
-                {
-                    x = io_regs[IoRegister::DATA].read();
-                }
-
-                if (identify[0] & (1 << 15))
-                {
-                    debug(ATA_DRIVER,
-                          "Not an ATA device according to IDENTIFY command response\n");
-                    return;
-                }
-
-                ControlRegister::DeviceControl dc{};
-                dc.interrupt_disable = 0;
-                control_regs[ControlRegister::DEVICE_CONTROL].write(dc);
-
-                eastl::string disk_name{"ide"};
-                // idea = first disk of primary controller
-                // ideb = second disk of primary controller
-                // idec = first disk of secondary controller
-                // ...
-                disk_name += 'a' + controller_id*2 + drive_num;
-
-                debug(ATA_DRIVER, "Create block device %s\n", disk_name.c_str());
-                auto drv = new ATADriver(*this, drive_num, identify);
-                addSubDevice(*drv);
-                auto* bdv =
-                    new BDVirtualDevice(drv, 0, drv->getNumSectors(),
-                                        drv->getSectorSize(), disk_name.c_str(), true);
-
-                BDManager::instance().addVirtualDevice(bdv);
-                IDEControllerDriver::detectPartitions(drv, 0, drv->SPT, disk_name.c_str());
             }
             else
             {
@@ -477,7 +451,7 @@ IDEController::IDEController(const eastl::string& name) :
 void IDEController::doDeviceDetection()
 {
     // Assume default io registers
-    // Can be detected via PCI bus enumeration
+    // Normally detected via PCI bus enumeration
     eastl::array<eastl::tuple<const char*, uint16_t, uint16_t, uint8_t>, 2>
         default_channels = {
             {{"Primary IDE Channel", DefaultPorts::PRIMARY_IO,

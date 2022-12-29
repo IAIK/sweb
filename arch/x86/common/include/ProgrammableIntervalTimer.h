@@ -75,16 +75,14 @@ private:
     using CH0_DATA_PORT = IoPort::StaticIoRegister<PIT_PORT_CH_0_DATA, uint8_t, false, true>;
 };
 
-class PITDriver : public Driver<PIT>
+class PITDriver : public BasicDeviceDriver, public Driver<PIT>
 {
 public:
-    using base_type = Driver<PIT>;
-
     PITDriver();
-    virtual ~PITDriver() = default;
+    ~PITDriver() override = default;
 
     static PITDriver& instance();
 
-    virtual void doDeviceDetection();
+    void doDeviceDetection() override;
 private:
 };

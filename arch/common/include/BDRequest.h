@@ -12,7 +12,7 @@ class BDRequest
   protected:
     friend class BDVirtualDevice;
     friend class RamDiskDriver;
-    friend class ATADriver;
+    friend class ATADrive;
     friend class MMCDriver;
     friend class BDManager;
 

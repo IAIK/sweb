@@ -6,7 +6,6 @@
 #include "types.h"
 #include "ArchSerialInfo.h"
 
-#define MAX_PORTS  16
 
 class ArchSerialInfo;
 
@@ -51,7 +50,7 @@ class SerialPort : public CharacterDevice, public IrqDomain
 
       SerialPort(const char* name, const ArchSerialInfo& port_info);
 
-       ~SerialPort() override = default;
+      ~SerialPort() override = default;
 
       /**
        * Opens a serial port for reading or writing
@@ -102,29 +101,27 @@ private:
 
   private:
     ArchSerialInfo port_info_;
-
 };
 
-class SerialManager : public Driver<SerialPort>
+class SerialManager : public BasicDeviceDriver, public Driver<SerialPort>
 {
-  public:
-    using base_type = Driver<SerialPort>;
+public:
+    SerialManager();
+    ~SerialManager() override = default;
 
     static SerialManager& instance()
     {
         static SerialManager i;
-
         return i;
     }
 
-    SerialManager();
-    ~SerialManager() = default;
+    static constexpr size_t MAX_PORTS = 16;
 
     SerialPort* serial_ports[MAX_PORTS];
 
     uint32 do_detection(uint32 is_paging_set_up);
-    uint32 get_num_ports() const;
-    uint32 get_port_number(const uint8* friendly_name);
+    [[nodiscard]] uint32 get_num_ports() const;
+    [[nodiscard]] uint32 get_port_number(const uint8* friendly_name);
     void service_irq(uint32 irq_num);
 
     void doDeviceDetection() override;

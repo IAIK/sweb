@@ -182,9 +182,8 @@ void PIC8259::sendEOI(uint16 number)
   PIC_1_CONTROL_PORT::write(PIC_EOI);
 }
 
-
 PIC8259Driver::PIC8259Driver() :
-    base_type("PIC8259 driver")
+    BasicDeviceDriver("PIC8259 driver")
 {
 }
 

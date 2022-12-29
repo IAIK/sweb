@@ -6,8 +6,27 @@
 #include "EASTL/vector.h"
 #include "debug.h"
 
-struct DeviceBus : public Device
+template<typename DeviceDescriptionType_ = void>
+class DeviceBus : public Device
 {
+    using device_description_type = DeviceDescriptionType_;
+private:
+
+    class BusDeviceDriver : public virtual DeviceDriver
+    {
+    public:
+        ~BusDeviceDriver() override = default;
+        virtual bool probe(const device_description_type&) = 0;
+    };
+
+public:
+
+    // Directly use DeviceDriver instead of BusDeviceDriver<void> (which does not work)
+    using bus_device_driver_type = eastl::
+        conditional_t<!eastl::is_same_v<device_description_type, void>,
+                    BusDeviceDriver,
+                    DeviceDriver>;
+
     DeviceBus(const eastl::string bus_name) :
         Device(bus_name)
     {
@@ -24,12 +43,12 @@ struct DeviceBus : public Device
 
         if (!device.driver())
         {
-            debug(DRIVER, "No driver for '%s' device found\n",
+            debug(DRIVER, "Added device '%s' without driver\n",
                   device.deviceName().c_str());
         }
     }
 
-    virtual void registerDriver(DeviceDriver& driver)
+    void registerDriver(bus_device_driver_type& driver)
     {
         debug(DRIVER, "Add driver '%s' to '%s' bus\n", driver.driverName().c_str(),
               deviceName().c_str());
@@ -39,8 +58,26 @@ struct DeviceBus : public Device
         driver.doDeviceDetection();
     }
 
+    const eastl::vector<bus_device_driver_type*>& drivers() { return drivers_; }
+
+    bool probeDrivers(auto&& device_description)
+    {
+        debug(DRIVER, "Probe '%s' drivers for device compatibility\n", deviceName().c_str());
+        for (auto& d : drivers_)
+        {
+            if (d->probe(device_description))
+            {
+                debug(DRIVER, "Found compatible driver '%s' for device description\n", d->driverName().c_str());
+                return true;
+            }
+        }
+
+        debug(DRIVER, "Could not find compatible driver for device description\n");
+        return false;
+    }
+
 private:
-    eastl::vector<DeviceDriver*> drivers_;
+    eastl::vector<bus_device_driver_type*> drivers_;
 };
 
-DeviceBus& deviceTreeRoot();
+DeviceBus<>& deviceTreeRoot();

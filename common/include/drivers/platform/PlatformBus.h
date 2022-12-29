@@ -3,7 +3,7 @@
 #include "Device.h"
 #include "DeviceBus.h"
 
-struct PlatformBus : public DeviceBus
+struct PlatformBus : public DeviceBus<>
 {
     PlatformBus() :
         DeviceBus("Platform")
