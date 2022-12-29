@@ -23,7 +23,7 @@
 
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
-  return global_fd_list.getFileDescriptor(fd);
+  return FileDescriptorList::globalFdList().getFileDescriptor(fd);
 }
 
 
@@ -257,7 +257,7 @@ int32 VfsSyscall::close(uint32 fd)
     return -1;
   }
 
-  assert(!global_fd_list.remove(file_descriptor));
+  assert(!FileDescriptorList::globalFdList().remove(file_descriptor));
   file_descriptor->getFile()->closeFd(file_descriptor);
 
   debug(VFSSYSCALL, "(close) File closed\n");
@@ -307,7 +307,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
         return -1;
     }
     FileDescriptor* fd = file->openFd();
-    assert(!global_fd_list.add(fd));
+    assert(!FileDescriptorList::globalFdList().add(fd));
 
     debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd->getFd(), flag);
     return fd->getFd();
@@ -354,7 +354,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     File* file = new_file_inode->open(new_file_dentry, flag);
     FileDescriptor* fd = file->openFd();
-    assert(!global_fd_list.add(fd));
+    assert(!FileDescriptorList::globalFdList().add(fd));
 
     debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd->getFd(), flag);
     return fd->getFd();

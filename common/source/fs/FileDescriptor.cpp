@@ -11,12 +11,10 @@
 #include "File.h"
 #include "EASTL/atomic.h"
 
-FileDescriptorList global_fd_list;
-
-static eastl::atomic<size_t> fd_num_ = {3};
+static eastl::atomic<size_t> fd_counter_ = {3};
 
 FileDescriptor::FileDescriptor(File* file) :
-    fd_(fd_num_++),
+    fd_(++fd_counter_),
     file_(file)
 {
     debug(VFS_FILE, "Create file descriptor %u\n", getFd());
@@ -88,4 +86,10 @@ FileDescriptor* FileDescriptorList::getFileDescriptor(uint32 fd_num)
   }
 
   return nullptr;
+}
+
+FileDescriptorList& FileDescriptorList::globalFdList()
+{
+    static FileDescriptorList global_fd_list;
+    return global_fd_list;
 }

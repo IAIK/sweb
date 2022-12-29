@@ -120,8 +120,6 @@ extern "C" [[noreturn]] void startup()
   default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
-  // initialise global and static objects
-  new (&global_fd_list) FileDescriptorList();
 
   debug(MAIN, "Block Device creation\n");
   BDManager::instance().doDeviceDetection();

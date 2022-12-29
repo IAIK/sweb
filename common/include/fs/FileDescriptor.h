@@ -16,10 +16,10 @@ class FileDescriptor
     File* file_;
 
   public:
-    FileDescriptor ( File* file );
+    FileDescriptor(File* file);
     virtual ~FileDescriptor();
-    uint32 getFd() { return fd_; }
-    File* getFile() { return file_; }
+    [[nodiscard]] uint32 getFd() const { return fd_; }
+    [[nodiscard]] File* getFile() const { return file_; }
 
     friend File;
 };
@@ -32,11 +32,11 @@ public:
 
     int add(FileDescriptor* fd);
     int remove(FileDescriptor* fd);
-    FileDescriptor* getFileDescriptor(uint32 fd);
+    [[nodiscard]] FileDescriptor* getFileDescriptor(uint32 fd);
+
+    static FileDescriptorList& globalFdList();
 
 private:
     eastl::list<FileDescriptor*> fds_;
     Mutex fd_lock_;
 };
-
-extern FileDescriptorList global_fd_list;
