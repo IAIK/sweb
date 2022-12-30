@@ -185,10 +185,10 @@ class SimpleFile : public File
 {
 public:
     SimpleFile(Inode* inode, Dentry* dentry, uint32 flag);
-    virtual ~SimpleFile() = default;
+    ~SimpleFile() override = default;
 
-    virtual int32 read(char* buffer, size_t count, l_off_t offset);
-    virtual int32 write(const char* buffer, size_t count, l_off_t offset);
+    int32 read(char* buffer, size_t count, l_off_t offset) override;
+    int32 write(const char* buffer, size_t count, l_off_t offset) override;
 private:
 };
 

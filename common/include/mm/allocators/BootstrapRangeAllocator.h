@@ -12,20 +12,20 @@ class BootstrapRangeAllocator : public Allocator
 public:
     BootstrapRangeAllocator();
     BootstrapRangeAllocator(const BootstrapRangeAllocator&) = delete;
-    virtual ~BootstrapRangeAllocator() = default;
+    ~BootstrapRangeAllocator() override = default;
 
-    virtual size_t alloc(size_t size, size_t alignment = 1);
-    virtual bool dealloc(size_t start, size_t size);
+    size_t alloc(size_t size, size_t alignment = 1) override;
+    bool dealloc(size_t start, size_t size) override;
 
-    virtual void setUseable(size_t start, size_t end);
-    virtual void setUnuseable(size_t start, size_t end);
+    void setUseable(size_t start, size_t end) override;
+    void setUnuseable(size_t start, size_t end) override;
 
-    virtual size_t numFree() const;
-    virtual size_t numFreeBlocks(size_t size, size_t alignment = 1) const;
+    [[nodiscard]] size_t numFree() const override;
+    [[nodiscard]] size_t numFreeBlocks(size_t size, size_t alignment = 1) const override;
 
-    virtual void printUsageInfo() const;
+    void printUsageInfo() const override;
 
-    size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
+    [[nodiscard]] size_t nextFreeBlock(size_t size, size_t alignment, size_t start) const;
 
 
     class AllocBlockIterator : public eastl::iterator<eastl::input_iterator_tag, size_t>
@@ -46,8 +46,8 @@ public:
 
         AllocBlockIterator& operator++() { curr_ = allocator_->nextFreeBlock(size_, alignment_, curr_ + size_); return *this; }
 
-        friend bool operator== (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ == b.curr_; };
-        friend bool operator!= (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ != b.curr_; };
+        friend bool operator== (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ == b.curr_; }
+        friend bool operator!= (const AllocBlockIterator& a, const AllocBlockIterator& b) { return a.curr_ != b.curr_; }
 
     private:
         const BootstrapRangeAllocator* allocator_;
@@ -57,8 +57,8 @@ public:
         size_t curr_;
     };
 
-    AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) const { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
-    AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)   const { return AllocBlockIterator(this, size, alignment, -1); }
+    [[nodiscard]] AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) const { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
+    [[nodiscard]] AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)   const { return AllocBlockIterator(this, size, alignment, -1); }
 
 
     class FreeBlocks
@@ -67,8 +67,8 @@ public:
         FreeBlocks(const BootstrapRangeAllocator* allocator, size_t size, size_t alignment) :
             allocator_(allocator), size_(size), alignment_(alignment) {}
 
-        AllocBlockIterator begin() const { return allocator_->freeBlocksBegin(size_, alignment_); }
-        AllocBlockIterator end()   const { return allocator_->freeBlocksEnd(size_, alignment_);   }
+        [[nodiscard]] AllocBlockIterator begin() const { return allocator_->freeBlocksBegin(size_, alignment_); }
+        [[nodiscard]] AllocBlockIterator end()   const { return allocator_->freeBlocksEnd(size_, alignment_);   }
 
     private:
         const BootstrapRangeAllocator* allocator_;
@@ -76,7 +76,7 @@ public:
         size_t alignment_;
     };
 
-    FreeBlocks freeBlocks(size_t size, size_t alignment) const { return FreeBlocks(this, size, alignment); }
+    [[nodiscard]] FreeBlocks freeBlocks(size_t size, size_t alignment) const { return FreeBlocks(this, size, alignment); }
 
 protected:
 

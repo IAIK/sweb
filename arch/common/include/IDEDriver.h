@@ -40,39 +40,39 @@ public:
 
     struct IoRegister
     {
-        struct DriveHead
+        struct [[gnu::packed]] DriveHead
         {
-            union
+            union [[gnu::packed]]
             {
-                struct
+                struct [[gnu::packed]]
                 {
                     uint8_t chs_head_0_3 : 4;
                     uint8_t drive_num    : 1;
                     uint8_t always_set_0 : 1;
                     uint8_t use_lba      : 1;
                     uint8_t always_set_1 : 1;
-                } __attribute__((packed));
+                };
 
-                struct
+                struct [[gnu::packed]]
                 {
                     // alternative for chs_head_0_3 (union inside bitfield struct always
                     // uses at least one byte, so we have to do it the other way around
                     // instead)
                     uint8_t lba_24_27 : 4;
                     uint8_t _         : 4; // see above struct
-                } __attribute__((packed));
+                };
 
                 uint8_t u8;
-            } __attribute__((packed));
-        } __attribute__((packed));
+            };
+        };
 
         static_assert(sizeof(DriveHead) == 1);
 
-        struct Status
+        struct [[gnu::packed]] Status
         {
-            union
+            union [[gnu::packed]]
             {
-                struct
+                struct [[gnu::packed]]
                 {
                     uint8_t error             : 1;
                     // Always zero
@@ -86,19 +86,19 @@ public:
                     // 0 = error or drive spun down
                     uint8_t ready             : 1;
                     uint8_t busy              : 1;
-                } __attribute__((packed));
+                };
 
                 uint8_t u8;
-            } __attribute__((packed));
+            };
         };
 
         static_assert(sizeof(Status) == 1);
 
-        struct Error
+        struct [[gnu::packed]] Error
         {
-            union
+            union [[gnu::packed]]
             {
-                struct
+                struct [[gnu::packed]]
                 {
                     // Illegal length indicator, command completion time out, cfa error bit
                     uint8_t illegal_length           : 1;
@@ -111,10 +111,10 @@ public:
                     uint8_t uncorrectable_data_error : 1;
                     // CRC error
                     uint8_t bad_block_detected       : 1;
-                } __attribute__((packed));
+                };
 
                 uint8_t u8;
-            } __attribute__((packed));
+            };
         };
 
         static_assert(sizeof(Error) == 1);
@@ -150,11 +150,11 @@ public:
 
     struct ControlRegister
     {
-        struct DeviceControl
+        struct [[gnu::packed]] DeviceControl
         {
-            union
+            union [[gnu::packed]]
             {
-                struct
+                struct [[gnu::packed]]
                 {
                     uint8_t always_zero : 1;
                     // 0 = interrupts enabled, 1 = interrupts disabled
@@ -164,19 +164,19 @@ public:
                     uint8_t reset                          : 1;
                     uint8_t reserved                       : 4;
                     uint8_t lba48_high_order_byte_readback : 1;
-                } __attribute__((packed));
+                };
 
                 uint8_t u8;
-            } __attribute__((packed));
+            };
         };
 
         static_assert(sizeof(DeviceControl) == 1);
 
-        struct DriveAddress
+        struct [[gnu::packed]] DriveAddress
         {
-            union
+            union [[gnu::packed]]
             {
-                struct
+                struct [[gnu::packed]]
                 {
                     // 0 when drive 0 is selected
                     uint8_t drive0_select : 1;
@@ -187,10 +187,10 @@ public:
                     // 0 when write is in progress
                     uint8_t write_gate    : 1;
                     uint8_t reserved      : 1;
-                } __attribute__((packed));
+                };
 
                 uint8_t u8;
-            } __attribute__((packed));
+            };
         };
 
         static_assert(sizeof(DriveAddress) == 1);

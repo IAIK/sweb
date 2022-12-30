@@ -53,7 +53,7 @@ class BDRequest
      * checks performed, possible pagefault here
      *
      */
-    BDRequest( uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = 0 ) :
+    BDRequest(uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = nullptr) :
         next_node_(0),
         dev_id_(dev_id),
         cmd_(cmd),
@@ -65,23 +65,23 @@ class BDRequest
         buffer_(buffer),
         requesting_thread_(currentThread)
     {
-    };
+    }
 
-    uint32 getDevID()           { return dev_id_; };
-    BD_CMD getCmd()             { return cmd_; };
-    uint32 getStartBlock()      { return start_block_; };
-    uint32 getNumBlocks()       { return num_block_; };
-    uint32 getResult()          { return result_; };
-    BD_RESULT getStatus()       { return status_; };
-    uint32 getBlocksDone()      { return blocks_done_; };
-    void *getBuffer()           { return buffer_; };
-    Thread *getThread()         { return requesting_thread_; };
+    uint32 getDevID()           { return dev_id_; }
+    BD_CMD getCmd()             { return cmd_; }
+    uint32 getStartBlock()      { return start_block_; }
+    uint32 getNumBlocks()       { return num_block_; }
+    uint32 getResult()          { return result_; }
+    BD_RESULT getStatus()       { return status_; }
+    uint32 getBlocksDone()      { return blocks_done_; }
+    void *getBuffer()           { return buffer_; }
+    Thread *getThread()         { return requesting_thread_; }
 
-    void setStartBlock( uint32 start_blk ) { start_block_  = start_blk; };
-    void setResult( uint32 result )        { result_       = result;    };
-    void setStatus( BD_RESULT status )     { status_       = status;    };
-    void setBlocksDone( uint32 bdone )     { blocks_done_  = bdone;     };
-    void setNumBlocks(uint32 num_block)    { num_block_    = num_block; };
+    void setStartBlock( uint32 start_blk ) { start_block_  = start_blk; }
+    void setResult( uint32 result )        { result_       = result;    }
+    void setStatus( BD_RESULT status )     { status_       = status;    }
+    void setBlocksDone( uint32 bdone )     { blocks_done_  = bdone;     }
+    void setNumBlocks(uint32 num_block)    { num_block_    = num_block; }
 
 
     friend class NonBlockingQueue<BDRequest>;

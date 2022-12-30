@@ -118,9 +118,9 @@ public:
 
 
 
-    virtual bool mask(irqnum_t irq, bool mask);
-    virtual bool irqStart(irqnum_t irq);
-    virtual bool ack(irqnum_t irq);
+    bool mask(irqnum_t irq, bool mask) override;
+    bool irqStart(irqnum_t irq) override;
+    bool ack(irqnum_t irq) override;
 
 
     static void addIOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);

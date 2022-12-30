@@ -8,25 +8,25 @@ class BDVirtualDevice;
 
 class RamDiskDriver : public BDDriver
 {
-  public:
+public:
     RamDiskDriver(void* start_vaddr, size_t size);
-    virtual ~RamDiskDriver();
+    ~RamDiskDriver() override;
 
-    virtual uint32_t addRequest(BDRequest *);
+    uint32_t addRequest(BDRequest*) override;
 
-    virtual int32_t readSector( uint32_t start_sector, uint32_t num_sectors, void *buffer );
+    int32_t readSector(uint32_t start_sector, uint32_t num_sectors, void* buffer) override;
 
-    virtual int32_t writeSector( uint32_t start_sector, uint32_t num_sectors, void * buffer );
+    int32_t writeSector(uint32_t start_sector, uint32_t num_sectors, void* buffer) override;
 
-    virtual uint32_t getNumSectors();
+    uint32_t getNumSectors() override;
 
-    virtual uint32_t getSectorSize();
+    uint32_t getSectorSize() override;
 
-    virtual void serviceIRQ();
+    void serviceIRQ() override;
 
     static BDVirtualDevice* createRamDisk(void* start_vaddr, size_t size, const char* name);
 
-  private:
+private:
     void* start_vaddr_;
     size_t size_;
 };

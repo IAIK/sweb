@@ -31,12 +31,12 @@ namespace MSR
             value_type val;
             if constexpr (sizeof(value_type) == 8)
             {
-                getMSR(static_cast<uint32_t>(msr), (uint32_t*)&val, ((uint32_t*)&val) + 1);
+                getMSR(msr, (uint32_t*)&val, ((uint32_t*)&val) + 1);
             }
             else
             {
                 uint32_t ignored;
-                getMSR(static_cast<uint32_t>(msr), (uint32_t*)&val, &ignored);
+                getMSR(msr, (uint32_t*)&val, &ignored);
             }
             return val;
         }
@@ -46,11 +46,11 @@ namespace MSR
         {
             if constexpr (sizeof(value_type) == 8)
             {
-                setMSR(static_cast<uint32_t>(msr), *(uint32_t*)&val, *(((uint32_t*)&val) + 1));
+                setMSR(msr, *(uint32_t*)&val, *(((uint32_t*)&val) + 1));
             }
             else
             {
-                setMSR(static_cast<uint32_t>(msr), *(uint32_t*)&val, 0);
+                setMSR(msr, *(uint32_t*)&val, 0);
             }
         }
     private:

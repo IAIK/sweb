@@ -13,16 +13,16 @@ public:
         Apic(eastl::string("x2APIC ") + eastl::to_string(CPUID::localX2ApicId()))
     {
     }
-    virtual ~X2Apic() = default;
+    ~X2Apic() override = default;
 
     static bool x2ApicSupported();
     static void enableX2ApicMode();
     static bool isEnabled();
 
-    virtual void init();
-    virtual uint32_t readId();
+    void init() override;
+    uint32_t readId() override;
 
-    virtual bool isX2Apic()
+    bool isX2Apic() override
     {
         return true;
     }
@@ -85,12 +85,12 @@ private:
     };
 
 protected:
-    virtual void writeRegisterImpl(ApicRegisterOffset offset, uint64_t v);
-    virtual uint64_t readRegisterImpl(ApicRegisterOffset offset);
+    void writeRegisterImpl(ApicRegisterOffset offset, uint64_t v) override;
+    uint64_t readRegisterImpl(ApicRegisterOffset offset) override;
 
-    virtual void writeIcr(InterruptCommandRegisterLow icr_l, uint32_t dest);
+    void writeIcr(InterruptCommandRegisterLow icr_l, uint32_t dest) override;
 
-    virtual void waitIpiDelivered(){} // Do nothing since delivered bit was removed for x2apic
+    void waitIpiDelivered() override {} // Do nothing since delivered bit was removed for x2apic
 
 private:
 };

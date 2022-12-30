@@ -4,8 +4,7 @@
 
 class MinixFSFile : public SimpleFile
 {
-  public:
-
+public:
     /**
      * constructor
      * @param inode the inode of the file
@@ -14,11 +13,11 @@ class MinixFSFile : public SimpleFile
      */
     MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag);
 
-    virtual ~MinixFSFile() = default;
+    ~MinixFSFile() override = default;
 
     /**
      * writes all data to disc
      * @return 0 on success
      */
-    virtual int32 flush();
+    int32 flush() override;
 };

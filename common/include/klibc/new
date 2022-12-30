@@ -64,7 +64,7 @@ namespace std
   class bad_alloc : public exception
   {
   public:
-    bad_alloc() throw() { }
+    bad_alloc() throw() = default;
 
 #if __cplusplus >= 201103L
     bad_alloc(const bad_alloc&) = default;
@@ -73,10 +73,10 @@ namespace std
 
     // This declaration is not useless:
     // http://gcc.gnu.org/onlinedocs/gcc-3.0.2/gcc_6.html#SEC118
-    virtual ~bad_alloc() throw();
+    ~bad_alloc() throw() override;
 
     // See comment in eh_exception.cc.
-    virtual const char* what() const throw();
+    const char* what() const throw() override;
   };
 
 #if __cplusplus >= 201103L
@@ -87,10 +87,10 @@ namespace std
 
     // This declaration is not useless:
     // http://gcc.gnu.org/onlinedocs/gcc-3.0.2/gcc_6.html#SEC118
-    virtual ~bad_array_new_length() throw();
+    ~bad_array_new_length() throw() override;
 
     // See comment in eh_exception.cc.
-    virtual const char* what() const throw();
+    const char* what() const throw() override;
   };
 #endif
 

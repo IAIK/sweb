@@ -37,20 +37,21 @@ public:
         LOW_BYTE_HIGH_BYTE = 3,
     };
 
-    struct PITCommandRegister
+    struct [[gnu::packed]] PITCommandRegister
     {
         union
         {
             uint8 value;
-            struct
+
+            struct [[gnu::packed]]
             {
                 uint8 bcd_mode       : 1;
                 OperatingMode operating_mode : 3;
                 AccessMode access_mode    : 2;
                 uint8 channel : 2;
-            }__attribute__((packed));
+            };
         };
-    }__attribute__((packed));
+    };
     static_assert(sizeof(PITCommandRegister) == 1);
 
 

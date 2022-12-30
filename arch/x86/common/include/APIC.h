@@ -81,7 +81,7 @@ public:
         TSC_DEADLINE = 2,
     };
 
-    struct InterruptCommandRegisterLow
+    struct [[gnu::packed]] InterruptCommandRegisterLow
     {
         uint32_t vector                : 8;  // 0-7
         uint32_t delivery_mode         : 3;  // 8-10
@@ -93,10 +93,10 @@ public:
         uint32_t reserved2             : 2;  // 16-17
         uint32_t destination_shorthand : 2;  // 18-19
         uint32_t reserved3             : 12; // 20-31
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(InterruptCommandRegisterLow) == 4, "Invalid size for InterruptCommandRegisterLow");
 
-    struct InterruptCommandRegisterHigh
+    struct [[gnu::packed]] InterruptCommandRegisterHigh
     {
         union
         {
@@ -107,17 +107,17 @@ public:
             };
             uint32_t x2apic_destination;
         };
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(InterruptCommandRegisterHigh) == 4, "Invalid size for InterruptCommandRegisterHigh");
 
-    struct InterruptCommandRegister
+    struct [[gnu::packed]] InterruptCommandRegister
     {
         InterruptCommandRegisterLow l;
         InterruptCommandRegisterHigh h;
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(InterruptCommandRegister) == 8, "Invalid size for InterruptCommandRegister");
 
-    struct SpuriousInterruptVectorRegister
+    struct [[gnu::packed]] SpuriousInterruptVectorRegister
     {
         uint32_t vector         : 8;
         uint32_t enable         : 1;
@@ -125,10 +125,10 @@ public:
         uint32_t reserved       : 22;
 
         void setSpuriousInterruptNumber(uint8 num);
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(SpuriousInterruptVectorRegister) == 4, "Invalid size for SpuriousInterruptVectorRegister");
 
-    struct IdRegister
+    struct [[gnu::packed]] IdRegister
     {
         union
         {
@@ -140,20 +140,20 @@ public:
             uint32_t x2apic_id;
         };
 
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(IdRegister) == 4, "Invalid size for IdRegister");
 
-    struct VersionRegister
+    struct [[gnu::packed]] VersionRegister
     {
         uint32_t version                              : 8;
         uint32_t reserved1                            : 8;
         uint32_t max_lvt_entry                        : 8;
         uint32_t eoi_broadcast_suppression_supported  : 1;
         uint32_t reserved2                            : 7;
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(VersionRegister) == 4, "Invalid size for VersionRegister");
 
-    struct LVT_TimerRegister
+    struct [[gnu::packed]] LVT_TimerRegister
     {
         uint32_t vector          :  8;
         uint32_t reserved1       :  4;
@@ -166,10 +166,10 @@ public:
         void setVector(uint8_t vector);
         void setMode(TimerMode mode);
         void setMask(bool mask);
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(LVT_TimerRegister) == 4, "Invalid size for LVT_TimerRegister");
 
-    struct LVT_LINTRegister
+    struct [[gnu::packed]] LVT_LINTRegister
     {
         uint32_t vector          :  8;
         uint32_t delivery_mode   :  3;
@@ -180,10 +180,10 @@ public:
         uint32_t trigger_mode    :  1;
         uint32_t mask            :  1;
         uint32_t reserved3       : 15;
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(LVT_LINTRegister) == 4, "Invalid size for LVT_LINTRegister");
 
-    struct LVT_ErrorRegister
+    struct [[gnu::packed]] LVT_ErrorRegister
     {
         uint32_t vector          :  8;
         uint32_t reserved1       :  4;
@@ -191,10 +191,10 @@ public:
         uint32_t reserved2       :  3;
         uint32_t mask            :  1;
         uint32_t reserved3       : 15;
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(LVT_ErrorRegister) == 4, "Invalid size for LVT_ErrorRegister");
 
-    struct ErrorStatusRegister
+    struct [[gnu::packed]] ErrorStatusRegister
     {
         uint32_t illegal_register_access : 1;
         uint32_t recv_illegal_vector     : 1;
@@ -205,10 +205,10 @@ public:
         uint32_t recv_checksum_error     : 1;
         uint32_t send_checksum_error     : 1;
         uint32_t reserved                : 24;
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(ErrorStatusRegister) == 4, "Invalid size for ErrorStatusRegister");
 
-    struct TimerDivideConfigRegister
+    struct [[gnu::packed]] TimerDivideConfigRegister
     {
         uint32_t divisor_l : 2;
         uint32_t reserved1 : 1;
@@ -216,15 +216,15 @@ public:
         uint32_t reserved2 : 28;
 
         void setTimerDivisor(uint8 divisor);
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(TimerDivideConfigRegister) == 4, "Invalid size for TimerDivideConfigRegister");
 
-    struct PriorityRegister
+    struct [[gnu::packed]] PriorityRegister
     {
         uint32_t priority_sub_class : 4;
         uint32_t priority_class     : 4;
         uint32_t reserved           : 24;
-    } __attribute__ ((packed));
+    };
     static_assert(sizeof(PriorityRegister) == 4, "Invalid size for PriorityRegister");
 
     // ##########################################

@@ -55,7 +55,7 @@ class Terminal : public CharacterDevice
      * @param buffer the buffer to write
      * @return the size
      */
-    virtual int32 writeData(uint32 offset, uint32 size, const char*buffer);
+    int32 writeData(uint32 offset, uint32 size, const char*buffer) override;
 
     void setForegroundColor(CONSOLECOLOR const &color);
     void setBackgroundColor(CONSOLECOLOR const &color);
@@ -122,8 +122,8 @@ class Terminal : public CharacterDevice
      */
     void writeInternal(char character);
 
-    uint32 getNumRows() const;
-    uint32 getNumColumns() const;
+    [[nodiscard]] uint32 getNumRows() const;
+    [[nodiscard]] uint32 getNumColumns() const;
 
     uint32 setCharacter(uint32 row, uint32 column, uint8 character);
     void scrollUp();
@@ -151,4 +151,3 @@ class Terminal : public CharacterDevice
     LAYOUTS layout_;
 
 };
-

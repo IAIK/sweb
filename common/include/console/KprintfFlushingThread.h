@@ -1,16 +1,15 @@
 #pragma once
 
-#include "Thread.h"
 #include "RingBuffer.h"
-
+#include "Thread.h"
 
 class KprintfFlushingThread : public Thread
 {
 public:
-
     KprintfFlushingThread(RingBuffer<char>* rb);
 
-    virtual void Run();
+    void Run() override;
+
 private:
     RingBuffer<char>* rb;
 };

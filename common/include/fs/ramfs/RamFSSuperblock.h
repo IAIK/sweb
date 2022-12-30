@@ -8,14 +8,14 @@ class RamFSType;
 
 class RamFSSuperblock : public Superblock
 {
-  public:
+public:
     /**
      * constructor
      * @param s_root the root dentry of the new filesystem
      * @param s_dev the device number of the new filesystem
      */
-    RamFSSuperblock (RamFSType* type, uint32 s_dev );
-    virtual ~RamFSSuperblock();
+    RamFSSuperblock(RamFSType* type, uint32 s_dev);
+    ~RamFSSuperblock() override;
 
     /**
      * create a new Inode of the superblock, mknod with dentry, add in the list.
@@ -23,21 +23,21 @@ class RamFSSuperblock : public Superblock
      * @param type the inode type
      * @return the inode
      */
-    virtual Inode* createInode (uint32 type );
+    Inode* createInode(uint32 type) override;
 
     /**
      * This method is called to read a specific inode from a mounted file-system.
      * @param inode the inode to read
      * @return 0 on success
      */
-    virtual int32 readInode ( Inode* inode );
+    int32 readInode(Inode* inode) override;
 
     /**
      * This method is called to write a specific inode to a mounted file-system,
      * and gets called on inodes which have been marked dirty.
      * @param inode the inode to write
      */
-    virtual void writeInode ( Inode* inode );
+    void writeInode(Inode* inode) override;
 
     /**
      * This method is called whenever the reference count on an inode reaches 0,
@@ -47,7 +47,7 @@ class RamFSSuperblock : public Superblock
      * used.
      * @param inode the inode to delete
      */
-    virtual void deleteInode ( Inode* inode );
+    void deleteInode(Inode* inode) override;
 };
-//-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------

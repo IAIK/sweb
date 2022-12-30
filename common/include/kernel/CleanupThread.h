@@ -6,8 +6,8 @@ class CleanupThread : public Thread
 {
   public:
     CleanupThread();
-    virtual ~CleanupThread();
-    virtual void kill();
-    virtual void Run();
-};
+    ~CleanupThread() override;
 
+    void kill() override;
+    void Run() override;
+};

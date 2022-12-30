@@ -95,7 +95,7 @@ public:
 
     constexpr auto end() const { return sentinel_; }
 
-    constexpr bool empty() { return iterator_ == sentinel_; };
+    constexpr bool empty() { return iterator_ == sentinel_; }
 
     // Enable structured decomposition
     template<size_t N>

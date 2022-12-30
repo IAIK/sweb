@@ -30,7 +30,7 @@ class CharacterDevice : public Device, public Inode
 
     Inode* deviceInode() override { return this; }
 
-    File* open(Dentry* dentry, uint32 flag)
+    File* open(Dentry* dentry, uint32 flag) override
     {
         debug(INODE, "CharacterDevice: Open file\n");
         assert(eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) !=
@@ -49,7 +49,7 @@ class CharacterDevice : public Device, public Inode
      * @param offset is never to be used, because there is no offset
      *        in character devices, but it is defined in the Inode interface
      */
-    virtual int32 readData(uint32 offset, uint32 size, char *buffer)
+    int32 readData(uint32 offset, uint32 size, char *buffer) override
     {
       if (offset)
         return -1; // offset reading not supprted with char devices
@@ -70,7 +70,7 @@ class CharacterDevice : public Device, public Inode
      * @param offset is never to be used, because there is no offset
      *        in character devices, but it is defined in the Inode interface
      */
-    virtual int32 writeData(uint32 offset, uint32 size, const char*buffer)
+    int32 writeData(uint32 offset, uint32 size, const char*buffer) override
     {
       if (offset)
         return -1; // offset writing also not supp0rted
@@ -84,7 +84,7 @@ class CharacterDevice : public Device, public Inode
       return (bptr - buffer);
     }
 
-    const char *getDeviceName() const
+    [[nodiscard]] const char *getDeviceName() const
     {
       return name_.c_str();
     }

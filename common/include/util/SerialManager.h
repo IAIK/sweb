@@ -72,7 +72,7 @@ class SerialPort : public CharacterDevice, public IrqDomain
        * @param buffer The data to be written
        * @return Number of bytes actualy written or -1 in case of an error
        */
-      virtual int32 writeData(uint32 offset, uint32 size, const char* buffer);
+      int32 writeData(uint32 offset, uint32 size, const char* buffer) override;
 
       void irq_handler();
 
@@ -84,7 +84,7 @@ class SerialPort : public CharacterDevice, public IrqDomain
        * SerialManager declared as a friend class.
        * @return @see ArchSerialInfo
        */
-      ArchSerialInfo get_info() { return port_info_; };
+      [[nodiscard]] ArchSerialInfo get_info() const { return port_info_; }
 
     static void write_UART(uint16_t base_port, SerialPortRegister reg, uint8 what);
     static uint8 read_UART(uint16_t base_port, SerialPortRegister reg);

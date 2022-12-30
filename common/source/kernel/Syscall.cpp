@@ -10,14 +10,24 @@
 #include "ArchMulticore.h"
 #include "assert.h"
 
-size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
+size_t Syscall::syscallException(size_t syscall_number,
+                                 size_t arg1,
+                                 size_t arg2,
+                                 size_t arg3,
+                                 size_t arg4,
+                                 size_t arg5)
 {
   size_t return_value = 0;
 
-  if ((syscall_number != sc_sched_yield) && (syscall_number != sc_outline)) // no debug print because these might occur very often
+  // no debug print because these might occur very often
+  if ((syscall_number != sc_sched_yield) && (syscall_number != sc_outline))
   {
-    debug(SYSCALL, "CPU %zu: Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) by %s[%zu] (%p)\n",
-          SMP::currentCpuId(), syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4, arg4, arg5, arg5, currentThread->getName(), currentThread->getTID(), currentThread);
+      debug(SYSCALL,
+            "CPU %zu: Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) "
+            "%zd(=%zx) %zd(=%zx) by %s[%zu] (%p)\n",
+            SMP::currentCpuId(), syscall_number, arg1, arg1, arg2, arg2, arg3, arg3, arg4,
+            arg4, arg5, arg5, currentThread->getName(), currentThread->getTID(),
+            currentThread);
   }
 
   switch (syscall_number)

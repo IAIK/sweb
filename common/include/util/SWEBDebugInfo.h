@@ -15,16 +15,16 @@ public:
 
     SWEBDebugInfo(char const *sweb_begin, char const *sweb_end);
 
-    virtual ~SWEBDebugInfo() = default;
+    ~SWEBDebugInfo() override = default;
 
-    virtual void getCallNameAndLine(pointer address, const char *&mangled_name, ssize_t &line) const;
+    void getCallNameAndLine(pointer address, const char *&mangled_name, ssize_t &line) const override;
 
-    virtual void printCallInformation(pointer address) const;
+    void printCallInformation(pointer address) const override;
 
 private:
     eastl::vector_map<size_t, eastl::string> file_addrs_;
     eastl::vector_map<size_t, const char*> function_defs_;
 
-    virtual void initialiseSymbolTable();
+    void initialiseSymbolTable() override;
 
 };

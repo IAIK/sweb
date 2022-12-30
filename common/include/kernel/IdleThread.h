@@ -6,7 +6,7 @@ class IdleThread : public Thread
 {
   public:
     IdleThread();
-    virtual ~IdleThread();
+    ~IdleThread() override;
 
-    virtual void Run();
+    void Run() override;
 };

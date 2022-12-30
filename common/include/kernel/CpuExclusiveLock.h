@@ -9,6 +9,7 @@ public:
     CpuExclusiveLock(const char* name);
 
     CpuExclusiveLock(const CpuExclusiveLock&) = delete;
+    virtual ~CpuExclusiveLock() = default;
 
     virtual void acquire(pointer called_by = 0);
     virtual void release(pointer called_by = 0);

@@ -11,8 +11,8 @@ public:
 
     SchedulerLock(const SchedulerLock&) = delete;
 
-    virtual void acquire(pointer called_by = 0);
-    virtual void release(pointer called_by = 0);
+    void acquire(pointer called_by = 0) override;
+    void release(pointer called_by = 0) override;
 private:
 
     volatile Thread* scheduling_locked_by_ = nullptr;
