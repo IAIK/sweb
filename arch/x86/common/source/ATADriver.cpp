@@ -46,7 +46,8 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
   eastl::array<uint16_t, 256> identify{};
   pioReadData(identify);
 
-  printIdentifyInfo(identify);
+  if (ATA_DRIVER & OUTPUT_ADVANCED)
+      printIdentifyInfo(identify);
 
   lba = identify[49] & (1 << 9);
   numsec = *(uint32_t*)&identify[60];

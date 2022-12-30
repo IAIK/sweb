@@ -452,12 +452,16 @@ void IDEController::doDeviceDetection()
 {
     // Assume default io registers
     // Normally detected via PCI bus enumeration
-    eastl::array<eastl::tuple<const char*, uint16_t, uint16_t, uint8_t>, 2>
+    eastl::array<eastl::tuple<const char*, uint16_t, uint16_t, uint8_t>, 4>
         default_channels = {
             {{"Primary IDE Channel", DefaultPorts::PRIMARY_IO,
               DefaultPorts::PRIMARY_CONTROL, DefaultPorts::PRIMARY_ISA_IRQ},
              {"Secondary IDE Channel", DefaultPorts::SECONDARY_IO,
-              DefaultPorts::SECONDARY_CONTROL, DefaultPorts::SECONDARY_ISA_IRQ}}};
+              DefaultPorts::SECONDARY_CONTROL, DefaultPorts::SECONDARY_ISA_IRQ},
+             {"Ternary IDE Channel", DefaultPorts::TERNARY_IO,
+              DefaultPorts::TERNARY_CONTROL, DefaultPorts::TERNARY_ISA_IRQ},
+             {"Quaternary IDE Channel", DefaultPorts::QUATERNARY_IO,
+              DefaultPorts::QUATERNARY_CONTROL, DefaultPorts::QUATERNARY_ISA_IRQ}}};
 
     for (auto& [name, io_reg_base, control_reg_base, isa_irqnum] : default_channels)
     {

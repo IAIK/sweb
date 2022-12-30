@@ -257,6 +257,14 @@ public:
         static constexpr uint16_t SECONDARY_IO = 0x170;
         static constexpr uint16_t SECONDARY_CONTROL = 0x376;
         static constexpr uint8_t SECONDARY_ISA_IRQ = 15;
+
+        static constexpr uint16_t TERNARY_IO = 0x1E8;
+        static constexpr uint16_t TERNARY_CONTROL = 0x3EE;
+        static constexpr uint8_t TERNARY_ISA_IRQ = 11;
+
+        static constexpr uint16_t QUATERNARY_IO = 0x168;
+        static constexpr uint16_t QUATERNARY_CONTROL = 0x36E;
+        static constexpr uint8_t QUATERNARY_ISA_IRQ = 10;
     };
 
 private:
