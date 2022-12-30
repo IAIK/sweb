@@ -9,7 +9,7 @@
  * @param port the I/O port number which is read
  *
  */
-static inline uint8 inportb(uint16 port)
+[[gnu::always_inline]] static inline uint8 inportb(uint16 port)
 {
    uint8 return_val;
    __asm__ __volatile__ (
@@ -25,7 +25,7 @@ static inline uint8 inportb(uint16 port)
  * @param port the I/O port number which is read
  *
  */
-static inline uint8 inportbp(uint16 port)
+[[gnu::always_inline]] static inline uint8 inportbp(uint16 port)
 {
   uint8 _v;
   asm volatile ("inb %1, %0" : "=a" (_v) : "id" (port));
@@ -38,7 +38,7 @@ static inline uint8 inportbp(uint16 port)
  * @param port the I/O port number which is read
  *
  */
-static inline uint16 inportw(uint16 port)
+[[gnu::always_inline]] static inline uint16 inportw(uint16 port)
 {
   uint16 _res;
   asm volatile ("inw %1, %0" : "=a" (_res) : "id" (port));
@@ -65,7 +65,7 @@ static inline uint16 inportwp(uint16 port)
  * @param val data value sent to I/O port
  *
  */
-static inline void outportb(uint16 port, uint8 val)
+[[gnu::always_inline]] static inline void outportb(uint16 port, uint8 val)
 {
    __asm__ __volatile__ (
    "outb %b0, %w1\n"
@@ -78,7 +78,7 @@ static inline void outportb(uint16 port, uint8 val)
  * @param port the I/O port number to send data to
  * @param val data value sent to I/O port
  */
-static inline void outportbp(uint16 port, uint8 value)
+[[gnu::always_inline]] static inline void outportbp(uint16 port, uint8 value)
 {
   asm volatile ("outb %b0, %1" : : "a" (value), "id" (port));
   asm volatile ("outb %al,$0x80");
@@ -90,7 +90,7 @@ static inline void outportbp(uint16 port, uint8 value)
  * @param val data value sent to I/O port
  *
  */
-static inline void outportw(uint16 port, uint16 value)
+[[gnu::always_inline]] static inline void outportw(uint16 port, uint16 value)
 {
     asm volatile ("outw %w0, %1" : : "a" (value), "id" (port));
 }
@@ -100,7 +100,7 @@ static inline void outportw(uint16 port, uint16 value)
  * @param port the I/O port number to send data to
  * @param val data value sent to I/O port
  */
-static inline void outportwp(uint16 port, uint16 value)
+[[gnu::always_inline]] static inline void outportwp(uint16 port, uint16 value)
 {
   asm volatile ("outw %w0, %1" : : "a" (value), "id" (port));
   asm volatile ("outb %al,$0x80");
@@ -129,7 +129,7 @@ namespace IoPort
     };
 
     template<typename T>
-    inline void write(uint16_t port, const T& v)
+    [[gnu::always_inline]] static inline void write(uint16_t port, const T& v)
     {
         if constexpr (sizeof(T) == 1)
         {
@@ -146,7 +146,7 @@ namespace IoPort
     }
 
     template<typename T>
-    inline T read(uint16_t port)
+    [[gnu::always_inline]] static inline T read(uint16_t port)
     {
         if constexpr (sizeof(T) == 1)
         {
@@ -163,15 +163,15 @@ namespace IoPort
     }
 
     template<typename PD>
-    requires (PD::writeable::value)
-    inline void write(const typename PD::value_type& v)
+    requires(PD::writeable::value)
+    [[gnu::always_inline]] static inline void write(const typename PD::value_type& v)
     {
         write<PD::value_type>(PD::port, v);
     }
 
     template<typename PD>
     requires(PD::readable::value)
-    inline typename PD::value_type read()
+    [[gnu::always_inline]] static inline typename PD::value_type read()
     {
         return read<PD::value_type>(PD::port);
     }
@@ -179,9 +179,15 @@ namespace IoPort
     template<uint16_t port, typename T, bool readable, bool writeable>
     struct StaticIoRegister
     {
-        static inline void write(const T& v) requires(writeable) { IoPort::write<T>(port, v); }
+        [[gnu::always_inline]] static inline void write(const T& v) requires(writeable)
+        {
+            IoPort::write<T>(port, v);
+        }
 
-        static inline T read() requires(writeable) { return IoPort::read<T>(port); }
+        [[gnu::always_inline]] static inline T read() requires(writeable)
+        {
+            return IoPort::read<T>(port);
+        }
     };
 
     template<io_port_description PD>
@@ -224,10 +230,10 @@ namespace IoPort
     };
 };
 
-
+static constexpr uint16_t EMULATOR_DEBUGCONSOLE_PORTNUM = 0xE9;
 
 using EMULATOR_DEBUGCONSOLE =
-    IoPort::StaticIoRegister<0xE9, uint8_t, false, true>;
+    IoPort::StaticIoRegister<EMULATOR_DEBUGCONSOLE_PORTNUM, uint8_t, false, true>;
 
 enum class ICMRIoPorts : uint16_t
 {
@@ -246,5 +252,7 @@ enum class IMCRData : uint8_t
     APIC_PASSTHROUGH = 0x1,
 };
 
-using IMCR_SELECT = IoPort::StaticIoRegister<(uint16_t)ICMRIoPorts::IMCR_SELECT, IMCRSelect, false, true>;
-using IMCR_DATA = IoPort::StaticIoRegister<(uint16_t)ICMRIoPorts::IMCR_DATA, IMCRData, false, true>;
+using IMCR_SELECT =
+    IoPort::StaticIoRegister<(uint16_t)ICMRIoPorts::IMCR_SELECT, IMCRSelect, false, true>;
+using IMCR_DATA =
+    IoPort::StaticIoRegister<(uint16_t)ICMRIoPorts::IMCR_DATA, IMCRData, false, true>;
