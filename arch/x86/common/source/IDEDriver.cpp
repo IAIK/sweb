@@ -1,5 +1,6 @@
 #include "IDEDriver.h"
 
+#include "ATACommands.h"
 #include "ATADriver.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
@@ -7,8 +8,8 @@
 #include "kprintf.h"
 #include "kstring.h"
 #include "ports.h"
-#include "ArchInterrupts.h"
 #include "source_location.h"
+#include "ArchInterrupts.h"
 
 size_t IDEControllerChannel::num_ide_controllers = 0;
 
@@ -357,7 +358,7 @@ void IDEControllerChannel::detectDrive(uint8_t drive_num)
 
     // Send IDENTIFY command
     debug(ATA_DRIVER, "Send IDENTIFY command\n");
-    io_regs[IoRegister::COMMAND].write(ATADrive::COMMAND::PIO::IDENTIFY_DEVICE);
+    io_regs[IoRegister::COMMAND].write(ATACommand::PIO::IDENTIFY_DEVICE);
 
     auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
     if (status.u8 == 0)

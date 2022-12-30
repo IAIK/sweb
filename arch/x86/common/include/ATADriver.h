@@ -5,97 +5,26 @@
 #include "BDVirtualDevice.h"
 #include "Device.h"
 #include "DeviceBus.h"
+#include "DeviceDriver.h"
+#include "IDEDriver.h"
 #include "IrqDomain.h"
 #include "Mutex.h"
 #include "NonBlockingQueue.h"
 #include "ports.h"
 #include "EASTL/span.h"
-#include "DeviceDriver.h"
-#include "IDEDriver.h"
 
 class BDRequest;
 class IDEControllerChannel;
 
 class ATADrive : public BDDriver, public Device
 {
-  public:
-
+public:
     enum class BD_ATA_MODE
     {
-      BD_PIO_NO_IRQ,
-      BD_PIO,
-      BD_DMA,
-      BD_UDMA
-    };
-
-    struct COMMAND
-    {
-        struct OTHER
-        {
-            enum
-            {
-                NOP = 0x00,
-                SET_MULTIPLE_MODE = 0xC6,
-                FLUSH_CACHE = 0xE7,
-                SET_FEATURES = 0xEF,
-            };
-        };
-
-        struct PIO
-        {
-            enum
-            {
-                READ_SECTORS = 0x20,
-                WRITE_SECTORS = 0x30,
-                READ_MULTIPLE = 0xC4,
-                IDENTIFY_DEVICE = 0xEC,
-            };
-        };
-
-        struct DMA
-        {
-            enum
-            {
-                READ = 0xC8,
-                WRITE = 0xCA,
-            };
-        };
-
-        // 48-bit commands
-        struct EXT
-        {
-            struct OTHER
-            {
-                enum
-                {
-                    DATA_SET_MANAGEMENT = 0x06,
-                    CONFIGURE_STREAM = 0x51,
-                    SET_DATE_TIME = 0x77,
-                };
-            };
-
-            struct PIO
-            {
-                enum
-                {
-                    READ_SECTORS = 0x24,
-                    READ_MULTIPLE = 0x29,
-                    READ_STREAM = 0x2B,
-                    READ_LOG = 0x2F,
-                };
-            };
-
-            struct DMA
-            {
-                enum
-                {
-                    READ = 0x25,
-                    WRITE = 0x35,
-                    READ_LOG = 0x47,
-                    READ_STREAM = 0x2A,
-                };
-            };
-        };
+        BD_PIO_NO_IRQ,
+        BD_PIO,
+        BD_DMA,
+        BD_UDMA
     };
 
     ATADrive(IDEControllerChannel& controller, uint16 drive_num);
@@ -114,7 +43,7 @@ class ATADrive : public BDDriver, public Device
      * function is being executed
      *
      */
-    int32 rawReadSector(uint32, uint32, void *);
+    int32 rawReadSector(uint32, uint32, void*);
 
     /**
      * @param 1 sector where it should be started to read
@@ -122,7 +51,7 @@ class ATADrive : public BDDriver, public Device
      * @param 3 buffer where to save all that was read
      *
      */
-    int32 readSector(uint32, uint32, void *) override;
+    int32 readSector(uint32, uint32, void*) override;
 
     /**
      * @param 1 sector where it should be started to write
@@ -130,17 +59,11 @@ class ATADrive : public BDDriver, public Device
      * @param 3 buffer, which content should be written to the sectors
      *
      */
-    int32 writeSector(uint32, uint32, void *) override;
+    int32 writeSector(uint32, uint32, void*) override;
 
-    uint32 getNumSectors() override
-    {
-      return numsec;
-    }
+    uint32 getNumSectors() override { return numsec; }
 
-    uint32 getSectorSize() override
-    {
-      return sector_word_size * 2;
-    }
+    uint32 getSectorSize() override { return sector_word_size * WORD_SIZE; }
 
     void serviceIRQ() override;
 
@@ -161,13 +84,13 @@ protected:
     void pioWriteData(eastl::span<uint16_t> buffer);
 
 private:
-
     IDEControllerChannel& controller;
     uint8_t drive_num;
 
     uint32 numsec;
     // 256 * uint16_t = 512 bytes
     uint32 sector_word_size = 256;
+    static constexpr size_t WORD_SIZE = sizeof(uint16_t);
 
     bool lba;
     bool lba_48bit;
@@ -199,7 +122,8 @@ public:
     // If yes, create an actual device based on the description
     bool probe(const IDEDeviceDescription&) override;
 
-    static constexpr IDEDeviceDescription::Signature PATA_DRIVE_SIGNATURE{0x01, 0x01, 0x00, 0x00};
+    static constexpr IDEDeviceDescription::Signature PATA_DRIVE_SIGNATURE{0x01, 0x01,
+                                                                          0x00, 0x00};
 
 private:
 };

@@ -1,15 +1,14 @@
 #include "ATADriver.h"
 
+#include "ATACommands.h"
 #include "BDManager.h"
 #include "BDRequest.h"
-#include "ArchInterrupts.h"
 #include "IDEDriver.h"
-
 #include "Scheduler.h"
-#include "kprintf.h"
-
 #include "Thread.h"
+#include "kprintf.h"
 #include "offsets.h"
+#include "ArchInterrupts.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
@@ -41,7 +40,7 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
   dc.interrupt_disable = 0;
   controller.control_regs[IDEControllerChannel::ControlRegister::DEVICE_CONTROL].write(dc);
 
-  controller.io_regs[IDEControllerChannel::IoRegister::COMMAND].write(ATADrive::COMMAND::PIO::IDENTIFY_DEVICE);
+  controller.io_regs[IDEControllerChannel::IoRegister::COMMAND].write(ATACommand::PIO::IDENTIFY_DEVICE);
   controller.waitDataReady();
   eastl::array<uint16_t, 256> identify{};
   pioReadData(identify);
@@ -204,7 +203,7 @@ int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer
       return -1;
   }
 
-  controller.sendCommand(COMMAND::PIO::READ_SECTORS);
+  controller.sendCommand(ATACommand::PIO::READ_SECTORS);
 
   if (mode != BD_ATA_MODE::BD_PIO_NO_IRQ)
       return 0;
@@ -231,7 +230,7 @@ int32 ATADrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buff
   if (selectSector(start_sector, num_sectors) != 0)
     return -1;
 
-  controller.sendCommand(COMMAND::PIO::WRITE_SECTORS);
+  controller.sendCommand(ATACommand::PIO::WRITE_SECTORS);
 
   if (!controller.waitDataReady())
       return -1;
@@ -245,7 +244,7 @@ int32 ATADrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buff
   if (!controller.waitNotBusy())
       return -1;
 
-  controller.sendCommand(COMMAND::OTHER::FLUSH_CACHE);
+  controller.sendCommand(ATACommand::Other::FLUSH_CACHE);
 
   if (!controller.waitNotBusy())
       return -1;
