@@ -70,7 +70,7 @@ int ls(const char* path)
         return -1;
     }
 
-    for (size_t dpos = 0; dpos < ndents;)
+    for (size_t dpos = 0; dpos < static_cast<size_t>(ndents);)
     {
         dirent* dent = (dirent*)(dirent_buffer + dpos);
         printf("[%s] %s\n", dent->d_type <= 4 ? d_type_str[dent->d_type] :
@@ -190,7 +190,7 @@ autocomplete_result_t autocomplete(const char* user_input, const char* path)
 
   ssize_t ndents = getdentsBuffer(path, dirent_buffer, sizeof(dirent_buffer));
 
-  for (size_t dpos = 0; dpos < ndents;)
+  for (size_t dpos = 0; dpos < static_cast<size_t>(ndents);)
   {
       dirent* dent = (dirent*)(dirent_buffer + dpos);
 
@@ -246,7 +246,7 @@ autocomplete_result_t autocomplete(const char* user_input, const char* path)
   return res;
 }
 
-int readCommand(char* buffer, int buffer_size)
+int readCommand(char* buffer, size_t buffer_size)
 {
   unsigned int chars_in_buffer = 0;
   char cchar;
