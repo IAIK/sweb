@@ -125,13 +125,10 @@ public:
         ++preempt_protect_count_;
         size_t cpu_id = SMP::currentCpuId();
         ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2 + 1] = CONSOLECOLOR::WHITE | (CONSOLECOLOR::RED << 4);
-        kprintfd("Preempt protect ++\n");
-
     }
 
     ~PreemptProtect()
     {
-        kprintfd("Preempt protect --\n");
         size_t cpu_id = SMP::currentCpuId();
         ((char*)ArchCommon::getFBPtr())[80*2 + cpu_id*2 + 1] = CONSOLECOLOR::WHITE | (CONSOLECOLOR::BLACK << 4);
         --preempt_protect_count_;
