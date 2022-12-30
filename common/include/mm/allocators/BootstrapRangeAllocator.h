@@ -2,6 +2,7 @@
 #include "Allocator.h"
 #include "IntervalSet.h"
 #include <EASTL/fixed_allocator.h>
+#include "ranges.h"
 
 
 /* This BootstrapRangeAllocator is 'good enough' for temporary use during initialization
@@ -57,28 +58,23 @@ public:
         size_t curr_;
     };
 
-    [[nodiscard]] AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) const { return AllocBlockIterator(this, size, alignment, nextFreeBlock(size, alignment, 0)); }
-    [[nodiscard]] AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment)   const { return AllocBlockIterator(this, size, alignment, -1); }
-
-
-    class FreeBlocks
+    [[nodiscard]] auto freeBlocks(size_t size, size_t alignment) const
     {
-    public:
-        FreeBlocks(const BootstrapRangeAllocator* allocator, size_t size, size_t alignment) :
-            allocator_(allocator), size_(size), alignment_(alignment) {}
-
-        [[nodiscard]] AllocBlockIterator begin() const { return allocator_->freeBlocksBegin(size_, alignment_); }
-        [[nodiscard]] AllocBlockIterator end()   const { return allocator_->freeBlocksEnd(size_, alignment_);   }
-
-    private:
-        const BootstrapRangeAllocator* allocator_;
-        size_t size_;
-        size_t alignment_;
-    };
-
-    [[nodiscard]] FreeBlocks freeBlocks(size_t size, size_t alignment) const { return FreeBlocks(this, size, alignment); }
+        return ranges::subrange{freeBlocksBegin(size, alignment),
+                                freeBlocksEnd(size, alignment)};
+    }
 
 protected:
+    [[nodiscard]] AllocBlockIterator freeBlocksBegin(size_t size, size_t alignment) const
+    {
+        return AllocBlockIterator(this, size, alignment,
+                                  nextFreeBlock(size, alignment, 0));
+    }
+
+    [[nodiscard]] AllocBlockIterator freeBlocksEnd(size_t size, size_t alignment) const
+    {
+        return AllocBlockIterator(this, size, alignment, -1);
+    }
 
     IntervalSet<size_t, eastl::fixed_allocator> iset_;
     decltype(iset_)::node_type iset_buffer_[10];
