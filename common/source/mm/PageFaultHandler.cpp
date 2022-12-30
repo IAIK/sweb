@@ -94,7 +94,7 @@ void PageFaultHandler::enterPageFault(size_t address, size_t ip, bool user,
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
 
   currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
+  currentThreadRegisters = currentThread->kernel_registers_.get();
   ArchInterrupts::enableInterrupts();
 
   handlePageFault(address, user, present, writing, fetch, saved_switch_to_userspace);
@@ -103,7 +103,7 @@ void PageFaultHandler::enterPageFault(size_t address, size_t ip, bool user,
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
   {
-    currentThreadRegisters = currentThread->user_registers_;
+    currentThreadRegisters = currentThread->user_registers_.get();
   }
 }
 

@@ -143,8 +143,9 @@ void Scheduler::schedule()
 
   scheduler_lock_.release();
 
-  currentThreadRegisters = (currentThread->switch_to_userspace_ ? currentThread->user_registers_ :
-                                                                  currentThread->kernel_registers_);
+  currentThreadRegisters =
+      (currentThread->switch_to_userspace_ ? currentThread->user_registers_.get()
+                                           : currentThread->kernel_registers_.get());
 
   currentThread->setSchedulingStartTimestamp(ArchCommon::cpuTimestamp());
 }
@@ -294,10 +295,14 @@ void Scheduler::printThreadList()
   kprintfd("Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
   for (auto t : threads_)
   {
-      kprintfd("Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, vruntime: %" PRIu64 "\n", t,
-            t->getTID(), t->getName(), Thread::threadStatePrintable[t->state_],
-            (t->switch_to_userspace_ ? "user" : "kernel"),
-            (void*)(t->switch_to_userspace_ ? ArchThreads::getInstructionPointer(t->user_registers_) : ArchThreads::getInstructionPointer(t->kernel_registers_)), t->vruntime);
+      kprintfd("Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, "
+               "vruntime: %" PRIu64 "\n",
+               t, t->getTID(), t->getName(), Thread::threadStatePrintable[t->state_],
+               (t->switch_to_userspace_ ? "user" : "kernel"),
+               (void*)(t->switch_to_userspace_
+                           ? ArchThreads::getInstructionPointer(*t->user_registers_)
+                           : ArchThreads::getInstructionPointer(*t->kernel_registers_)),
+               t->vruntime);
   }
   scheduler_lock_.release();
 }

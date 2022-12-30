@@ -12,8 +12,7 @@
 #include "Stabs2DebugInfo.h"
 #include "ProcessRegistry.h"
 
-#define BACKTRACE_MAX_FRAMES 20
-
+static constexpr size_t BACKTRACE_MAX_FRAMES = 20;
 
 extern "C" [[noreturn]] void threadStartHack()
 {
@@ -25,36 +24,31 @@ extern "C" [[noreturn]] void threadStartHack()
   assert(false);
 }
 
-Thread::Thread(FileSystemInfo *working_dir, eastl::string name, Thread::TYPE type) :
-    kernel_registers_(nullptr),
-    user_registers_(nullptr),
+Thread::Thread(FileSystemInfo* working_dir, eastl::string name, Thread::TYPE type) :
+    kernel_registers_(ArchThreads::createKernelRegisters(
+        (type == Thread::USER_THREAD ? nullptr : (void*)threadStartHack),
+        getKernelStackStartPointer())),
     switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0),
-    loader_(nullptr),
-    next_thread_in_lock_waiters_list_(nullptr),
-    lock_waiting_on_(nullptr),
-    holding_lock_list_(nullptr),
     console_color(CONSOLECOLOR::BRIGHT_BLUE),
     state_(Running),
     tid_(0),
-    my_terminal_(nullptr),
     working_dir_(working_dir),
-    name_(name),
-    vruntime(0)
+    name_(name)
 {
-  debug(THREAD, "Thread ctor, this is %p, name: %s, kernel stack: [%p, %p), working_dir ptr: %p\n",
-        this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_), working_dir_);
+    debug(THREAD,
+          "Thread ctor, this is %p, name: %s, kernel stack: [%p, %p), working_dir ptr: "
+          "%p\n",
+          this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_),
+          working_dir_);
 
-  ArchThreads::createKernelRegisters(kernel_registers_, (void*) (type == Thread::USER_THREAD ? nullptr : threadStartHack), getKernelStackStartPointer());
-  initKernelStackCanary();
+    initKernelStackCanary();
 }
 
 Thread::~Thread()
 {
   debug(THREAD, "~Thread %s: freeing ThreadInfos\n", getName());
-  delete user_registers_;
-  user_registers_ = nullptr;
-  delete kernel_registers_;
-  kernel_registers_ = nullptr;
+  // registers automatically destroyed via unique_ptr
+
   if(unlikely(holding_lock_list_ != nullptr))
   {
     debugAlways(THREAD, "~Thread: ERROR: Thread <%s [%zu] (%p)> is going to be destroyed, but still holds some locks!\n", getName(), getTID(), this);
@@ -80,7 +74,7 @@ void Thread::kill()
   }
 }
 
-void* Thread::getKernelStackStartPointer()
+void* Thread::getKernelStackStartPointer() const
 {
   pointer stack = (pointer) kernel_stack_;
   stack += sizeof(kernel_stack_) - 2*sizeof(size_t);
@@ -93,12 +87,12 @@ void Thread::initKernelStackCanary()
     kernel_stack_[0] = STACK_CANARY;
 }
 
-bool Thread::isStackCanaryOK()
+bool Thread::isStackCanaryOK() const
 {
   return ((kernel_stack_[0] == STACK_CANARY) && (kernel_stack_[2047] == STACK_CANARY));
 }
 
-Terminal *Thread::getTerminal()
+Terminal* Thread::getTerminal() const
 {
   if (my_terminal_)
     return my_terminal_;
@@ -116,7 +110,7 @@ void Thread::printBacktrace()
   printBacktrace(currentThread != this);
 }
 
-FileSystemInfo* Thread::getWorkingDirInfo()
+FileSystemInfo* Thread::getWorkingDirInfo() const
 {
   return working_dir_;
 }
@@ -133,7 +127,7 @@ void Thread::setWorkingDirInfo(FileSystemInfo* working_dir)
   working_dir_ = working_dir;
 }
 
-extern Stabs2DebugInfo const *kernel_debug_info;
+extern const Stabs2DebugInfo* kernel_debug_info;
 
 void Thread::printBacktrace(bool use_stored_registers)
 {
@@ -160,18 +154,19 @@ void Thread::printBacktrace(bool use_stored_registers)
   }
   if(user_registers_)
   {
-    Stabs2DebugInfo const *deb = loader_->getDebugInfos();
-    count = backtrace_user(call_stack, BACKTRACE_MAX_FRAMES, this, false);
-    debug(BACKTRACE, " ----- Userspace --------------------\n");
-    if(!deb)
-      debug(BACKTRACE, "Userspace debug info not set up, backtrace won't look nice!\n");
-    else
-    {
-      for(size_t i = 0; i < count; ++i)
+      const Stabs2DebugInfo* deb = loader_->getDebugInfos();
+      count = backtrace_user(call_stack, BACKTRACE_MAX_FRAMES, this, false);
+      debug(BACKTRACE, " ----- Userspace --------------------\n");
+      if (!deb)
+          debug(BACKTRACE,
+                "Userspace debug info not set up, backtrace won't look nice!\n");
+      else
       {
-        debug(BACKTRACE, " ");
-        deb->printCallInformation(call_stack[i]);
-      }
+          for (size_t i = 0; i < count; ++i)
+          {
+              debug(BACKTRACE, " ");
+              deb->printCallInformation(call_stack[i]);
+          }
     }
   }
   debug(BACKTRACE, "=== End of backtrace for %sthread <%s>[%zu] (%p) ===\n", user_registers_ ? "user" : "kernel", getName(), getTID(), this);
@@ -182,7 +177,7 @@ bool Thread::schedulable()
   return (getState() == Running);
 }
 
-bool Thread::canRunOnCpu(size_t cpu_id)
+bool Thread::canRunOnCpu(size_t cpu_id) const
 {
     return (pinned_to_cpu == (size_t)-1) || (pinned_to_cpu == cpu_id);
 }
@@ -202,7 +197,7 @@ void Thread::setSchedulingStartTimestamp(uint64 timestamp)
     sched_start = timestamp;
 }
 
-uint64 Thread::schedulingStartTimestamp()
+uint64 Thread::schedulingStartTimestamp() const
 {
     return sched_start;
 }

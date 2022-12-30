@@ -417,7 +417,7 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
+  currentThreadRegisters = currentThread->kernel_registers_.get();
   ArchInterrupts::enableInterrupts();
 
   currentThread->user_registers_->rax =
@@ -430,7 +430,7 @@ extern "C" void syscallHandler()
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;
-  currentThreadRegisters = currentThread->user_registers_;
+  currentThreadRegisters = currentThread->user_registers_.get();
   contextSwitch();
   assert(false);
 }
@@ -483,7 +483,7 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
   else
   {
     currentThread->switch_to_userspace_ = false;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     debug(CPU_ERROR, "Terminating process...\n");
     if (currentThread->user_registers_)
