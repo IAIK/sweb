@@ -98,7 +98,7 @@ void Terminal::writeInternal(char character)
 
 void Terminal::write(char character)
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();
   writeInternal(character);
   console_->unLockConsoleForDrawing();
@@ -106,7 +106,7 @@ void Terminal::write(char character)
 
 void Terminal::writeString(char const *string)
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();
   while (string && *string)
   {
@@ -127,7 +127,7 @@ int32 Terminal::writeData(uint32 offset, uint32 size, const char*buffer)
 
 void Terminal::writeBuffer(char const *buffer, size_t len)
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();
   while (len)
   {
@@ -171,7 +171,7 @@ uint32 Terminal::setCharacter(uint32 row, uint32 column, uint8 character)
 
 void Terminal::setForegroundColor(CONSOLECOLOR const &color)
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 0 bits
   uint8 mask = 15;
   current_state_ = current_state_ & ~mask;
@@ -180,7 +180,7 @@ void Terminal::setForegroundColor(CONSOLECOLOR const &color)
 
 void Terminal::setBackgroundColor(CONSOLECOLOR const &color)
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 4 bits
   uint8 mask = 15 << 4;
   uint8 col = color;
@@ -227,14 +227,14 @@ void Terminal::fullRedraw()
 
 void Terminal::setAsActiveTerminal()
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   active_ = 1;
   fullRedraw();
 }
 
 void Terminal::unSetAsActiveTerminal()
 {
-  MutexLock lock(mutex_);
+  ScopeLock lock(mutex_);
   active_ = 0;
 }
 

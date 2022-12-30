@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "MutexLock.h"
+#include "ScopeLock.h"
 #include "Lock.h"
 class Thread;
 

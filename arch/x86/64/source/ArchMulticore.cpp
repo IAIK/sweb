@@ -6,7 +6,7 @@
 #include "InterruptUtils.h"
 #include "ArchInterrupts.h"
 #include "Thread.h"
-#include "MutexLock.h"
+#include "ScopeLock.h"
 #include "EASTL/atomic.h"
 #include "Scheduler.h"
 #include "ArchThreads.h"
@@ -147,7 +147,7 @@ void ArchMulticore::startOtherCPUs()
       }
     }
 
-    MutexLock l(SMP::cpu_list_lock_);
+    ScopeLock l(SMP::cpu_list_lock_);
     for(auto& cpu : SMP::cpuList())
     {
       debug(A_MULTICORE, "CPU %zu running\n", cpu->id());

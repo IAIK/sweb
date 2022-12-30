@@ -33,7 +33,7 @@ void SMP::initialize()
 
 void SMP::addCpuToList(ArchCpu* cpu)
 {
-    MutexLock l(SMP::cpu_list_lock_);
+    ScopeLock l(SMP::cpu_list_lock_);
     SMP::cpuList().push_back(cpu);
 }
 
@@ -45,7 +45,7 @@ eastl::vector<ArchCpu*>&  SMP::cpuList()
 
 ArchCpu* SMP::cpu(size_t cpu_id)
 {
-    MutexLock l(SMP::cpu_list_lock_);
+    ScopeLock l(SMP::cpu_list_lock_);
     for (auto c : SMP::cpuList())
     {
         if (c->id() == cpu_id)

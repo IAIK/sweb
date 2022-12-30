@@ -95,7 +95,9 @@ struct TSS
                 };
                 uint64 ist0;
         };
-        uint32 reserved_3[15];
+        uint32 reserved_3[14];
+        uint16 reserved_4;
+        uint16 iobp;
 
         void setTaskStack(size_t stack_top);
 }__attribute__((__packed__));

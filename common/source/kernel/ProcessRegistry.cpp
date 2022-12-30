@@ -33,7 +33,7 @@ void ProcessRegistry::init(FileSystemInfo *root_fs_info)
 
 void ProcessRegistry::processExit()
 {
-  MutexLock l(counter_lock_);
+  ScopeLock l(counter_lock_);
 
   if (--progs_running_ == 0)
     all_processes_killed_.broadcast();
@@ -41,7 +41,7 @@ void ProcessRegistry::processExit()
 
 void ProcessRegistry::processStart()
 {
-  MutexLock l(counter_lock_);
+  ScopeLock l(counter_lock_);
   ++progs_running_;
 }
 
@@ -49,13 +49,13 @@ size_t ProcessRegistry::processCount()
 {
   // Note that the returned count value is out of date as soon
   // as the lock is released
-  MutexLock lock(counter_lock_);
+  ScopeLock lock(counter_lock_);
   return progs_running_;
 }
 
 void ProcessRegistry::waitAllKilled()
 {
-    MutexLock l(counter_lock_);
+    ScopeLock l(counter_lock_);
     while (progs_running_)
         all_processes_killed_.wait();
 }

@@ -1,9 +1,10 @@
+#include "ScopeLock.h"
 #include "Mutex.h"
-#include "MutexLock.h"
 #include "backtrace.h"
 
-MutexLock::MutexLock(Mutex &m, bool b, pointer called_by) :
-    mutex_(m), use_mutex_(b)
+ScopeLock::ScopeLock(Mutex& m, bool b, pointer called_by) :
+    mutex_(m),
+    use_mutex_(b)
 {
     if (likely(use_mutex_))
     {
@@ -11,7 +12,7 @@ MutexLock::MutexLock(Mutex &m, bool b, pointer called_by) :
     }
 }
 
-MutexLock::~MutexLock()
+ScopeLock::~ScopeLock()
 {
     if (likely(use_mutex_))
     {

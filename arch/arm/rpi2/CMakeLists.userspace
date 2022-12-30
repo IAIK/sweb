@@ -6,7 +6,7 @@ SET(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 find_program(CMAKE_C_COMPILER arm-none-eabi-gcc)
 
 
-set(ARCH_USERSPACE_COMPILE_OPTIONS -Wall -Werror -std=gnu11 -g -gdwarf-4 -O0 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common -Werror=implicit-function-declaration -fno-stack-clash-protection)
+set(ARCH_USERSPACE_COMPILE_OPTIONS -Wall -Werror -std=gnu11 -g -gdwarf-4 -O0 -static -nostdinc -fno-builtin -nostdlib -fno-stack-protector -fno-common -Werror=implicit-function-declaration -Wno-error=unused-variable -fno-stack-clash-protection)
 
 target_compile_options(userspace_options INTERFACE
     $<$<COMPILE_LANGUAGE:CXX>:${ARCH_USERSPACE_COMPILE_OPTIONS}>
