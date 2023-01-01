@@ -36,7 +36,7 @@ void BootloaderModules::mapModules()
 
         size_t start_page = module_phys_start / PAGE_SIZE;
         size_t end_page = (module_phys_end + PAGE_SIZE-1) / PAGE_SIZE;
-        for (size_t k = start_page; k < Min(end_page, PageManager::instance()->getTotalNumPages()); ++k)
+        for (size_t k = start_page; k < Min(end_page, PageManager::instance().getTotalNumPages()); ++k)
         {
             if(MAIN & OUTPUT_ADVANCED)
                 debug(MAIN, "Mapping kernel module at %#zx -> %#zx\n", (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k);

@@ -20,22 +20,22 @@
 extern void* kernel_start_address;
 extern void* kernel_end_address;
 
-alignas(PageManager) unsigned char pm[sizeof(PageManager)];
-
 PageManager* PageManager::instance_ = nullptr;
 bool PageManager::pm_ready_ = false;
 
-PageManager* PageManager::instance()
+PageManager& PageManager::instance()
 {
   assert(instance_ && "PageManager not yet initialized");
-  return instance_;
+  return *instance_;
 }
 
 void PageManager::init()
 {
     assert(!instance_ && "PageManager already initialized");
     BootstrapRangeAllocator bootstrap_pm_allocator{};
-    instance_ = new (&pm) PageManager(&bootstrap_pm_allocator);
+
+    static PageManager instance(&bootstrap_pm_allocator);
+    instance_ = &instance;
 
     ArchCommon::reservePagesPreKernelInit(bootstrap_pm_allocator);
 
@@ -103,7 +103,7 @@ PageManager::PageManager(Allocator* allocator) :
 
   debug(PM, "Ctor: Physical pages - free: %zu used: %zu total: %zu\n", getNumFreePages(), total_num_useable_pages - getNumFreePages(), total_num_useable_pages);
 
-  pm_ready_ = 1;
+  pm_ready_ = true;
   debug(PM, "PM ctor finished\n");
 }
 

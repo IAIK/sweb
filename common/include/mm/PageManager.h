@@ -7,19 +7,23 @@
 #include "Allocator.h"
 #include "BootstrapRangeAllocator.h"
 
-#define DYNAMIC_KMM (0) // Please note that this means that the KMM depends on the page manager
+// Please note that this means that the KMM depends on the page manager
 // and you will have a harder time implementing swapping. Pros only!
+static constexpr bool DYNAMIC_KMM = false;
 
+/**
+ * Responsible for allocation of physical memory pages
+ */
 class PageManager
 {
   public:
     PageManager() = delete;
-    PageManager(PageManager const&) = delete;
+    PageManager(const PageManager&) = delete;
     PageManager& operator=(const PageManager&) = delete;
 
     PageManager(Allocator* allocator);
 
-    static PageManager *instance();
+    static PageManager& instance();
     static void init();
     static bool isReady();
 

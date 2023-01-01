@@ -336,7 +336,7 @@ void ArchCommon::drawStat() {
 #define STATS_FREE_PAGES_START (STATS_OFFSET + 11*2)
     memset(fb + STATS_FREE_PAGES_START, 0, 4*2);
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(PageManager::instance()->getNumFreePages(), itoa_buffer, 10);
+    itoa(PageManager::instance().getNumFreePages(), itoa_buffer, 10);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
       fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];
@@ -344,8 +344,8 @@ void ArchCommon::drawStat() {
     }
 
 #define STATS_FREE_PAGES_PERCENT_START (STATS_OFFSET + 80*2 + 11*2)
-    size_t total_pages = PageManager::instance()->getTotalNumPages();
-    size_t free_pages_percent = total_pages ? (PageManager::instance()->getNumFreePages()*100)/total_pages : 0;
+    size_t total_pages = PageManager::instance().getTotalNumPages();
+    size_t free_pages_percent = total_pages ? (PageManager::instance().getNumFreePages()*100)/total_pages : 0;
     memset(fb + STATS_FREE_PAGES_PERCENT_START, 0, 4*2);
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
     itoa(free_pages_percent, itoa_buffer, 10);

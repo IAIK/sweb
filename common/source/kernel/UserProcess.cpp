@@ -33,7 +33,7 @@ UserProcess::UserProcess(const eastl::string& executable_path,
     }
 
     // Allocate a physical page for the stack and map it into the virtual address space
-    size_t stack_ppn = PageManager::instance()->allocPPN();
+    size_t stack_ppn = PageManager::instance().allocPPN();
     size_t stack_vpn = (USER_BREAK / PAGE_SIZE) - 1;
 
     bool vpn_mapped = loader_->arch_memory_.mapPage(stack_vpn, stack_ppn, true);

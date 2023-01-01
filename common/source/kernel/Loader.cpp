@@ -34,7 +34,7 @@ void Loader::loadPage(pointer virtual_address)
   const pointer virt_page_end_addr = virt_page_start_addr + PAGE_SIZE;
   bool found_page_content = false;
   // get a new page for the mapping
-  size_t ppn = PageManager::instance()->allocPPN();
+  size_t ppn = PageManager::instance().allocPPN();
 
   program_binary_lock_.acquire();
 
@@ -54,7 +54,7 @@ void Loader::loadPage(pointer virtual_address)
         if(readFromBinary((char *)ArchMemory::getIdentAddressOfPPN(ppn) + virt_offs_on_page, bin_start_addr, bytes_to_load))
         {
           program_binary_lock_.release();
-          PageManager::instance()->freePPN(ppn);
+          PageManager::instance().freePPN(ppn);
           debug(LOADER, "ERROR! Some parts of the content could not be loaded from the binary.\n");
           Syscall::exit(999);
         }
@@ -70,7 +70,7 @@ void Loader::loadPage(pointer virtual_address)
 
   if(!found_page_content)
   {
-    PageManager::instance()->freePPN(ppn);
+    PageManager::instance().freePPN(ppn);
     debug(LOADER, "Loader::loadPage: ERROR! No section refers to the given address.\n");
     Syscall::exit(666);
   }
@@ -79,7 +79,7 @@ void Loader::loadPage(pointer virtual_address)
   if (!page_mapped)
   {
     debug(LOADER, "Loader::loadPage: The page has been mapped by someone else.\n");
-    PageManager::instance()->freePPN(ppn);
+    PageManager::instance().freePPN(ppn);
   }
   debug(LOADER, "Loader::loadPage: Load request for address %p has been successfully finished.\n", (void*)virtual_address);
 }

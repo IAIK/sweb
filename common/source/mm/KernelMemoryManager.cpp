@@ -40,7 +40,7 @@ void KernelMemoryManager::init()
 
 size_t KernelMemoryManager::calcNumHeapPages()
 {
-    size_t heap_pages = PageManager::instance()->getNumFreePages()/2;
+    size_t heap_pages = PageManager::instance().getNumFreePages()/2;
     if (heap_pages > 1024)
         heap_pages = 1024 + (heap_pages - 1024)/8;
     return heap_pages;
@@ -49,14 +49,14 @@ size_t KernelMemoryManager::calcNumHeapPages()
 size_t KernelMemoryManager::mapKernelHeap(size_t max_heap_pages)
 {
   debug(MAIN, "Before kernel heap allocation:\n");
-  PageManager::instance()->printUsageInfo();
-  debug(MAIN, "Num free pages: %zu\n", PageManager::instance()->getNumFreePages());
+  PageManager::instance().printUsageInfo();
+  debug(MAIN, "Num free pages: %zu\n", PageManager::instance().getNumFreePages());
 
   debug(MAIN, "Mapping %zu kernel heap pages at [%p, %p)\n", max_heap_pages, (char*)ArchCommon::getFreeKernelMemoryStart(), (char*)ArchCommon::getFreeKernelMemoryStart() + max_heap_pages*PAGE_SIZE);
   size_t num_reserved_heap_pages = 0;
   for (size_t kheap_vpn = ArchCommon::getFreeKernelMemoryStart() / PAGE_SIZE; num_reserved_heap_pages < max_heap_pages; ++num_reserved_heap_pages, ++kheap_vpn)
   {
-    ppn_t ppn_to_map = PageManager::instance()->allocPPN();
+    ppn_t ppn_to_map = PageManager::instance().allocPPN();
     if(MAIN & OUTPUT_ADVANCED)
       debug(MAIN, "Mapping kernel heap vpn %p -> ppn %p\n", (void*)kheap_vpn, (void*)ppn_to_map);
     assert(ArchMemory::mapKernelPage(kheap_vpn, ppn_to_map, true));
@@ -495,7 +495,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
       {
         debug(KMM, "%zx != %zx\n", cur_top_vpn, new_top_vpn);
         cur_top_vpn++;
-        size_t new_page = PageManager::instance()->allocPPN();
+        size_t new_page = PageManager::instance().allocPPN();
         if(unlikely(new_page == 0))
         {
           debug(KMM, "KernelMemoryManager::freeSegment: FATAL ERROR\n");
