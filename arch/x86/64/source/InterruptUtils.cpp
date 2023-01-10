@@ -33,34 +33,8 @@
 
 #include "8259.h"
 
-#define LO_WORD(x) (((uint32)(x)) & 0x0000FFFFULL)
-#define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFFULL)
-#define LO_DWORD(x) (((uint64)(x)) & 0x00000000FFFFFFFFULL)
-#define HI_DWORD(x) ((((uint64)(x)) >> 32) & 0x00000000FFFFFFFFULL)
-
 #define DPL_KERNEL_SPACE     0 // kernelspace's protection level
 #define DPL_USER_SPACE       3 // userspaces's protection level
-
-#define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
-
-
-// --- Pagefault error flags.
-//     PF because/in/caused by/...
-
-#define FLAG_PF_PRESENT     0x01 // =0: pt/page not present
-                                 // =1: of protection violation
-
-#define FLAG_PF_RDWR        0x02 // =0: read access
-                                 // =1: write access
-
-#define FLAG_PF_USER        0x04 // =0: supervisormode (CPL < 3)
-                                 // =1: usermode (CPL == 3)
-
-#define FLAG_PF_RSVD        0x08 // =0: not a reserved bit
-                                 // =1: a reserved bit
-
-#define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
-                                 // =1: an instruction fetch (need PAE for that)
 
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
@@ -68,36 +42,7 @@ extern "C" void arch_dummyHandlerMiddle();
 IDTR InterruptUtils::idtr;
 InterruptGateDesc* InterruptUtils::idt;
 
-InterruptGateDesc::InterruptGateDesc(handler_func_t offset, uint8 dpl) :
-  segment_selector(KERNEL_CS),
-  ist(0),
-  zeros(0),
-  type(INTERRUPT),
-  zero_1(0),
-  dpl(dpl),
-  present(1),
-  reserved(0)
-{
-  setOffset(offset);
-}
-
-void InterruptGateDesc::setOffset(handler_func_t offset)
-{
-    offset_ld_lw = LO_WORD(LO_DWORD( (uintptr_t)offset ));
-    offset_ld_hw = HI_WORD(LO_DWORD( (uintptr_t)offset ));
-    offset_hd    = HI_DWORD(         (uintptr_t)offset );
-}
-
-handler_func_t InterruptGateDesc::offset()
-{
-    return (handler_func_t)(((uintptr_t)offset_hd << 32) | ((uintptr_t)offset_ld_hw << 16) | ((uintptr_t)offset_ld_lw));
-}
-
-void IDTR::load()
-{
-  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", base, limit);
-  asm volatile("lidt (%0) ": :"q" (this));
-}
+extern "C" uint64_t generated_idt_vector_table[256];
 
 void InterruptUtils::initialise()
 {
@@ -120,11 +65,16 @@ void InterruptUtils::initialise()
   uint32 j = 0;
   while(handlers[j].handler_func)
   {
-    assert(handlers[j].number < num_handlers);
-    uint8 dpl = (handlers[j].number == SYSCALL_INTERRUPT) ? DPL_USER_SPACE :
-                                                            DPL_KERNEL_SPACE;
-    idt[handlers[j].number] = InterruptGateDesc(handlers[j].handler_func, dpl);
-    ++j;
+      auto num = handlers[j].number;
+      assert(num < num_handlers);
+      auto handler_func = handlers[j].handler_func;
+      uint8 dpl =
+          (num == SYSCALL_INTERRUPT) ? DPL_USER_SPACE : DPL_KERNEL_SPACE;
+
+      handler_func = (handler_func_t)generated_idt_vector_table[num];
+
+      idt[num] = InterruptGateDesc(handler_func, dpl);
+      ++j;
   }
 
   if(A_INTERRUPTS & OUTPUT_ENABLED)
@@ -250,12 +200,11 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error, uint64 ip)
       errorHandler(0xd, regs.rip, regs.cs, 0);
       assert(0 && "thread should not survive a GP fault");
   }
-  assert(!(error & FLAG_PF_RSVD) && "Reserved bit set in page table entry");
+  PagefaultExceptionErrorCode error_code{static_cast<uint32_t>(error)};
+  assert(!error_code.reserved_write && "Reserved bit set in page table entry");
 
-  PageFaultHandler::enterPageFault(address, ip, error & FLAG_PF_USER,
-                                   error & FLAG_PF_PRESENT,
-                                   error & FLAG_PF_RDWR,
-                                   error & FLAG_PF_INSTR_FETCH);
+  PageFaultHandler::enterPageFault(address, ip, error_code.user, error_code.present,
+                                   error_code.write, error_code.instruction_fetch);
   if (currentThread->switch_to_userspace_)
     contextSwitch();
   else
@@ -493,6 +442,63 @@ extern "C" void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
       currentThread->kill();
     assert(false);
   }
+}
+
+extern "C" void genericInterruptHandler(size_t interrupt_num,
+                                        [[maybe_unused]] uint64_t error_code,
+                                        ArchThreadRegisters* saved_registers)
+{
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu]Generic interrupt handler %zu, error: %lx\n", SMP::currentCpuId(), interrupt_num,
+          error_code);
+    assert(interrupt_num < 256);
+
+    switch (interrupt_num)
+    {
+    case Apic::IRQ_VECTOR_OFFSET:
+        irqHandler_0();
+        return;
+    case 127:
+        irqHandler_127();
+        return;
+    case 65:
+        irqHandler_65();
+        return;
+    case SYSCALL_INTERRUPT:
+        syscallHandler();
+        return;
+    case 101:
+        irqHandler_101();
+        return;
+    case 91:
+        irqHandler_91();
+        return;
+    case 90:
+        irqHandler_90();
+        return;
+    case 0xE:
+    {
+        uint64_t cr2 = 0;
+        asm volatile ("movq %%cr2, %%rax\n"
+                      "movq %%rax, %[cr2];"
+                      :[cr2]"=g"(cr2)
+                      :: "%rax");
+        pageFaultHandler(cr2, error_code, saved_registers->rip);
+        return;
+    }
+    }
+
+    if (interrupt_num < 32)
+    {
+        errorHandler(interrupt_num, saved_registers->rip, saved_registers->cs, 0);
+    }
+    else
+    {
+        ArchInterrupts::startOfInterrupt(interrupt_num);
+        ArchInterrupts::handleInterrupt(interrupt_num);
+        ArchInterrupts::endOfInterrupt(interrupt_num);
+    }
+
+    debugAdvanced(A_INTERRUPTS, "Generic interrupt handler %zu end\n", interrupt_num);
 }
 
 #include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions

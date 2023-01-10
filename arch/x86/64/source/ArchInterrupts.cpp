@@ -236,8 +236,8 @@ void ArchInterrupts::yieldIfIFSet()
   }
 }
 
-
-struct context_switch_registers {
+struct [[gnu::packed]] context_switch_registers
+{
   uint64 fsbase_low;
   uint64 fsbase_high;
   uint64 ds;
@@ -258,9 +258,12 @@ struct context_switch_registers {
   uint64 rcx;
   uint64 rax;
   uint64 rsp;
+  uint64_t interrupt_num;
+  uint64_t error_code;
 };
 
-struct interrupt_registers {
+struct [[gnu::packed]] interrupt_registers
+{
   uint64 rip;
   uint64 cs;
   uint64 rflags;
@@ -270,21 +273,20 @@ struct interrupt_registers {
 
 #include "kprintf.h"
 
-struct SavedContextSwitchRegisters
+struct [[gnu::packed]] SavedContextSwitchRegisters
 {
     context_switch_registers registers;
     interrupt_registers iregisters;
-} __attribute__((packed));
+};
 
-struct SavedContextSwitchRegistersWithError
+struct [[gnu::packed]] SavedContextSwitchRegistersWithError
 {
     context_switch_registers registers;
     uint64 error;
     interrupt_registers iregisters;
 } __attribute__((packed));
 
-
-extern "C" void arch_saveThreadRegisters(void* base, uint64 error)
+extern "C" ArchThreadRegisters* arch_saveThreadRegisters(void* base, uint64 error)
 {
   context_switch_registers* registers = error ? &((SavedContextSwitchRegistersWithError*)base)->registers :
                                                 &((SavedContextSwitchRegisters*)base)->registers;
@@ -321,6 +323,27 @@ extern "C" void arch_saveThreadRegisters(void* base, uint64 error)
   info->rbp = registers->rbp;
   info->fsbase = (registers->fsbase_high << 32) | registers->fsbase_low;
   assert(!currentThread || currentThread->isStackCanaryOK());
+
+  return info;
+}
+
+struct [[gnu::packed]] GenericInterruptEntryRegisters
+{
+    context_switch_registers registers;
+    uint64_t interrupt_num;
+    uint64_t error_code;
+    interrupt_registers iregisters;
+};
+
+extern "C" void genericInterruptHandler(size_t interrupt_num,
+                                        uint64_t error,
+                                        ArchThreadRegisters* saved_registers);
+
+extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
+{
+    auto saved_regs = arch_saveThreadRegisters(&(regs->registers), 0);
+    debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zx\n", regs->registers.interrupt_num);
+    genericInterruptHandler(regs->registers.interrupt_num, regs->registers.error_code, saved_regs);
 }
 
 extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegisters* target_registers)
@@ -347,6 +370,13 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
   {
       assert(target_thread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
       assert(target_thread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+      if ((target_registers->cs & 3) != 3)
+      {
+          debugAlways(
+              A_INTERRUPTS,
+              "Incorrect ring level for switch to userspace, expected 3, cs to restore is: %lx\n",
+              target_registers->cs);
+      }
       assert((target_registers->cs & 3) == 3 && "Incorrect ring level for switch to userspace");
   }
   assert(target_thread->isStackCanaryOK() && "Kernel stack corruption detected.");
