@@ -189,8 +189,7 @@ void ArchMulticore::initCpu()
     debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)kernel_arch_mem.getPagingStructureRootPhys());
   ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
 
-  debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
-  InterruptUtils::idtr.load();
+  InterruptUtils::idt.idtr().load();
 
   extern char cls_start;
   extern char cls_end;

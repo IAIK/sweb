@@ -4,6 +4,8 @@
 
 #include "InterruptDescriptorTable.h"
 
+using handler_func_t = void (*)();
+
 static constexpr uint8_t SYSCALL_INTERRUPT = 0x80;
 
 struct [[gnu::packed]] InterruptHandlers
@@ -19,7 +21,7 @@ public:
 
     static IDTR idtr;
 
-    static InterruptGateDesc *idt;
+    static InterruptDescriptorTable idt;
 
 private:
     static InterruptHandlers handlers[];

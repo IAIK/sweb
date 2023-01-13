@@ -429,7 +429,7 @@ void Apic::startAP(uint8 apic_id, size_t entry_addr)
 
     // 10ms delay
 
-    InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt[0x20];
+    InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt.entries[0x20];
     bool temp_using_apic_timer = usingAPICTimer();
     bool apic_timer_mask = timer_interrupt_controller.isMasked();
     ArchInterrupts::disableIRQ(PIT::instance().irq());
@@ -447,7 +447,7 @@ void Apic::startAP(uint8 apic_id, size_t entry_addr)
     auto old_pit_mode = PIT::setOperatingMode(PIT::OperatingMode::ONESHOT);
     auto old_pit_freq = PIT::frequencyDivisor();
 
-    InterruptUtils::idt[IRQ_VECTOR_OFFSET + 0].setOffset(&PIT_delay_IRQ);
+    InterruptUtils::idt.entries[IRQ_VECTOR_OFFSET + 0].setOffset(&PIT_delay_IRQ);
 
     ArchInterrupts::enableIRQ(PIT::instance().irq());
     ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
@@ -495,7 +495,7 @@ void Apic::startAP(uint8 apic_id, size_t entry_addr)
     PIT::setOperatingMode(old_pit_mode);
     PIT::setFrequencyDivisor(old_pit_freq);
 
-    InterruptUtils::idt[IRQ_VECTOR_OFFSET + 0] = temp_irq0_descriptor;
+    InterruptUtils::idt.entries[IRQ_VECTOR_OFFSET + 0] = temp_irq0_descriptor;
 
     debugAdvanced(A_MULTICORE, "Finished sending IPI to AP local APIC\n");
 }

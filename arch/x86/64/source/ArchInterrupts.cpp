@@ -327,24 +327,22 @@ extern "C" ArchThreadRegisters* arch_saveThreadRegisters(void* base, uint64 erro
   return info;
 }
 
-struct [[gnu::packed]] GenericInterruptEntryRegisters
-{
-    context_switch_registers registers;
-    uint64_t interrupt_num;
-    uint64_t error_code;
-    interrupt_registers iregisters;
-};
-
-extern "C" void genericInterruptHandler(size_t interrupt_num,
-                                        uint64_t error,
-                                        ArchThreadRegisters* saved_registers);
+extern "C" void interruptHandler(size_t interrupt_num,
+                                 uint64_t error,
+                                 ArchThreadRegisters* saved_registers);
 
 extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
 {
+    // Take registers previously saved on the stack via assembly and store them in the
+    // saved registers of the thread
     auto saved_regs = arch_saveThreadRegisters(&(regs->registers), 0);
+
     debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zx\n", regs->registers.interrupt_num);
-    genericInterruptHandler(regs->registers.interrupt_num, regs->registers.error_code, saved_regs);
+
+    interruptHandler(regs->registers.interrupt_num, regs->registers.error_code, saved_regs);
 }
+
+
 
 extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegisters* target_registers)
 {
