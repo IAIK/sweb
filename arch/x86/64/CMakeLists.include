@@ -64,18 +64,19 @@ function(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 endfunction(ARCH2OBJ)
 
 
-if (NOT "${DEBUG}" STREQUAL "1")
-    add_custom_command(TARGET kernel
-        POST_BUILD
-        COMMAND ${OBJCOPY_EXECUTABLE} $<TARGET_FILE:kernel> --strip-unneeded $<TARGET_FILE:kernel>)
+if ("${DEBUG}" STREQUAL "1")
+    set(STRIP_DEBUG_INFO "")
+else()
+    set(STRIP_DEBUG_INFO ${OBJCOPY_EXECUTABLE} $<TARGET_FILE:kernel> --strip-unneeded $<TARGET_FILE:kernel>)
 endif()
 
 add_custom_command(TARGET kernel
     POST_BUILD
     BYPRODUCTS ${KERNEL_BINARY} kernel.dbg
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
+    COMMAND ${STRIP_DEBUG_INFO}
     COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
-    COMMAND mv $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
-    COMMAND ${OBJCOPY_EXECUTABLE} -O elf32-i386 ${PROJECT_BINARY_DIR}/${KERNEL_BINARY} $<TARGET_FILE:kernel>)
+    COMMAND ${OBJCOPY_EXECUTABLE} -O elf32-i386 $<TARGET_FILE:kernel> $<TARGET_FILE:kernel>)
 
 add_dependencies(kernel add-dbg)
 
