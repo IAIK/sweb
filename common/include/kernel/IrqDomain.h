@@ -126,8 +126,16 @@ public:
             const iterator& operator++()
             {
                 auto info = domain_->irqInfo(irq_);
-                domain_ = info->map_to.domain;
-                irq_ = info->map_to.irqnum;
+                if (info)
+                {
+                    domain_ = info->map_to.domain;
+                    irq_ = info->map_to.irqnum;
+                }
+                else
+                {
+                    domain_ = nullptr;
+                    irq_ = 0;
+                }
 
                 return *this;
             }
@@ -188,7 +196,12 @@ public:
             const tree_iterator& operator++()
             {
                 auto info = domain_->irqInfo(irq_);
-                if (info->mapped_by.empty())
+                if (!info)
+                {
+                    domain_ = nullptr;
+                    irq_ = 0;
+                }
+                else if (info->mapped_by.empty())
                 {
                     // Need to backtrack
                     while (true)
