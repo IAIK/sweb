@@ -88,76 +88,82 @@ uint32 IDEDriver::doDeviceDetection()
       else
       {
         outportbp(base_port + 6, (cs % 2 == 0 ? 0xA0 : 0xB0));
+        outportbp(base_port + 7, 0xEC); // IDENTIFY
 
-        uint8 c1 = inportbp(base_port + 2);
-        uint8 c2 = inportbp(base_port + 3);
+        uint8 sr = inportbp(base_port + 7);
 
-        if (c1 != 0x01 && c2 != 0x01)
-          debug(IDE_DRIVER, "doDetection: Not found after reset ! \n");
+        if (sr == 0x00)
+        {
+          debug(IDE_DRIVER, "doDetection: Device not found! \n");
+          continue;
+        }
+
+        while(!(sr & 0x01) && (sr & 0x80)) // 0x01 = ERR, 0x80 = BUSY
+        {
+          sr = inportbp(base_port + 7);
+        }
+
+        uint8 c3 = inportbp(base_port + 7);
+        uint8 c4 = inportbp(base_port + 4);
+        uint8 c5 = inportbp(base_port + 5);
+
+        if (((c4 == 0x14) && (c5 == 0xEB)) || ((c4 == 0x69) && (c5 == 0x96)))
+        {
+          debug(IDE_DRIVER, "doDetection: Found ATAPI ! \n");
+          debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
+
+          debug(IDE_DRIVER, "doDetection: CDROM not supported \n");
+
+          // CDROM hook goes here
+          //
+          // char *name = "ATAX0";
+          // name[3] = cs + '0';
+          // drv = new CROMDriver ( base_port, cs % 2 );
+          // BDVirtualDevice *bdv = new
+          // BDVirtualDevice( drv, 0, drv->getNumSectors(),
+          // drv->getSectorSize(), name, true);
+          // BDManager::getInstance()->addDevice( bdv );
+
+        }
         else
         {
-          uint8 c3 = inportbp(base_port + 7);
-          uint8 c4 = inportbp(base_port + 4);
-          uint8 c5 = inportbp(base_port + 5);
-
-          if (((c4 == 0x14) && (c5 == 0xEB)) || ((c4 == 0x69) && (c5 == 0x96)))
+          if (c3 != 0)
           {
-            debug(IDE_DRIVER, "doDetection: Found ATAPI ! \n");
-            debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
+            if ((c4 == 0x00) && (c5 == 0x00))
+            {
+              debug(IDE_DRIVER, "doDetection: Found PATA ! \n");
+              debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
 
-            debug(IDE_DRIVER, "doDetection: CDROM not supported \n");
+              ATADriver *drv = new ATADriver(base_port, cs % 2, ata_irqs[cs]);
+              BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name,
+                                                         true);
 
-            // CDROM hook goes here
-            //
-            // char *name = "ATAX0";
-            // name[3] = cs + '0';
-            // drv = new CROMDriver ( base_port, cs % 2 );
-            // BDVirtualDevice *bdv = new
-            // BDVirtualDevice( drv, 0, drv->getNumSectors(),
-            // drv->getSectorSize(), name, true);
-            // BDManager::getInstance()->addDevice( bdv );
+              BDManager::getInstance()->addVirtualDevice(bdv);
+              processMBR(drv, 0, drv->SPT, name);
+            }
+            else if ((c4 == 0x3C) && (c5 == 0xC3))
+            {
+              debug(IDE_DRIVER, "doDetection: Found SATA device! \n");
+              debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
 
+              // SATA hook
+              // drv = new SATADriver ( base_port, cs % 2 );
+
+              debug(IDE_DRIVER, "doDetection: Running SATA device as PATA in compatibility mode! \n");
+
+              ATADriver *drv = new ATADriver(base_port, cs % 2, ata_irqs[cs]);
+
+              BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name,
+                                                         true);
+
+              BDManager::getInstance()->addVirtualDevice(bdv);
+
+              processMBR(drv, 0, drv->SPT, name);
+            }
           }
           else
           {
-            if (c3 != 0)
-            {
-              if ((c4 == 0x00) && (c5 == 0x00))
-              {
-                debug(IDE_DRIVER, "doDetection: Found PATA ! \n");
-                debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
-
-                ATADriver *drv = new ATADriver(base_port, cs % 2, ata_irqs[cs]);
-                BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name,
-                                                           true);
-
-                BDManager::getInstance()->addVirtualDevice(bdv);
-                processMBR(drv, 0, drv->SPT, name);
-              }
-              else if ((c4 == 0x3C) && (c5 == 0xC3))
-              {
-                debug(IDE_DRIVER, "doDetection: Found SATA device! \n");
-                debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
-
-                // SATA hook
-                // drv = new SATADriver ( base_port, cs % 2 );
-
-                debug(IDE_DRIVER, "doDetection: Running SATA device as PATA in compatibility mode! \n");
-
-                ATADriver *drv = new ATADriver(base_port, cs % 2, ata_irqs[cs]);
-
-                BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name,
-                                                           true);
-
-                BDManager::getInstance()->addVirtualDevice(bdv);
-
-                processMBR(drv, 0, drv->SPT, name);
-              }
-            }
-            else
-            {
-              debug(IDE_DRIVER, "doDetection: Unknown harddisk!\n");
-            }
+            debug(IDE_DRIVER, "doDetection: Unknown harddisk!\n");
           }
         }
       }
