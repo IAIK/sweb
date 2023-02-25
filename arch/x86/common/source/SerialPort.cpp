@@ -201,6 +201,8 @@ void SerialPort::readReceiveBuffers()
     {
         auto b = read_UART(SerialPortRegister::RBR);
         debug(A_SERIALPORT, "Read char from serial port: %c (%x)\n", b, b);
+        // TODO: FIFO uses a mutex internally -> deadlock when used in interrupt handler
+        // (this has been broken since the beginning)
         in_buffer_.put(b);
         lsr.u8 = read_UART(SerialPortRegister::LSR);
     }

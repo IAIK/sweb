@@ -21,7 +21,6 @@ size_t Cpu::id()
 void Cpu::setId(size_t id)
 {
     *cpu_id_ = id;
-    // TODO: this breaks when there are >9 CPUs
     setDeviceName(eastl::string("CPU ") + eastl::to_string(id));
 }
 
