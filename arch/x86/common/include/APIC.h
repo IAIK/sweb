@@ -130,9 +130,9 @@ public:
 
     struct [[gnu::packed]] IdRegister
     {
-        union
+        union [[gnu::packed]]
         {
-            struct
+            struct [[gnu::packed]]
             {
                 uint32_t reserved : 24;
                 uint32_t xapic_id : 8;

@@ -9,6 +9,7 @@
 class X2Apic : public Apic
 {
 public:
+    // TODO: x2apic flag set in cpuid page 1, but x2apic id page 0xB not supported on x86-32 bit in QEMU
     X2Apic() :
         Apic(eastl::string("x2APIC ") + eastl::to_string(CPUID::localX2ApicId()))
     {

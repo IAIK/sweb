@@ -15,28 +15,18 @@
 #include "ArchInterrupts.h"
 #include "backtrace.h"
 
-#include "Thread.h"
+#include "ErrorHandlers.h"
 #include "Loader.h"
-#include "Syscall.h"
-#include "paging-definitions.h"
-#include "offsets.h"
 #include "PageFaultHandler.h"
-#include "TimerTickHandler.h"
 #include "Stabs2DebugInfo.h"
+#include "Syscall.h"
+#include "Thread.h"
+#include "TimerTickHandler.h"
+#include "offsets.h"
+#include "paging-definitions.h"
 
 #include "8259.h"
 
-#define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)
-#define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFF)
-
-enum
-{
-        TYPE_TASK_GATE = 0x5,
-        TYPE_INTERRUPT_GATE_16 = 0x6, // interrupt gate, i.e. IF flag *is* cleared
-        TYPE_TRAP_GATE_16 = 0x7, // trap gate, i.e. IF flag is *not* cleared
-        TYPE_INTERRUPT_GATE_32 = 0xE,// interrupt gate, i.e. IF flag *is* cleared
-        TYPE_TRAP_GATE_32 = 0xF, // trap gate, i.e. IF flag is *not* cleared
-};
 
 // --- Pagefault error flags.
 //     PF because/in/caused by/...
@@ -56,93 +46,30 @@ enum
 #define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
                                  // =1: an instruction fetch (need PAE for that)
 
-struct GateDesc
-{
-  uint16 offset_low;       // low word of handler entry point's address
-  uint16 segment_selector; // (code) segment the handler resides in
-  uint8 reserved  : 5;     // reserved. set to zero
-  uint8 zeros     : 3;     // set to zero
-  uint8 type      : 3;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
-  uint8 gate_size : 1;     // set to GATE_SIZE_16_BIT or GATE_SIZE_32_BIT
-  uint8 unused    : 1;     // unsued - set to zero
-  uint8 dpl       : 2;     // descriptor protection level
-  uint8 present   : 1;     // present- flag - set to 1
-  uint16 offset_high;      // high word of handler entry point's address
-}__attribute__((__packed__));
 
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
 
 IDTR InterruptUtils::idtr;
-InterruptGateDesc* InterruptUtils::idt;
-
-InterruptGateDesc::InterruptGateDesc(size_t offset, uint8 dpl) :
-  segment_selector(KERNEL_CS),
-  unused(0),
-  type(TYPE_INTERRUPT_GATE_32),
-  zero_1(0),
-  dpl(dpl),
-  present(1)
-{
-  setOffset(offset);
-}
-
-void InterruptGateDesc::setOffset(size_t offset)
-{
-  offset_low = LO_WORD(offset);
-  offset_high = HI_WORD(offset);
-}
-
-void IDTR::load()
-{
-  debug(A_INTERRUPTS, "Loading IDT, base: %zx, limit: %x\n", base, limit);
-  asm volatile("lidt (%0) ": :"q" (this));
-}
+InterruptDescriptorTable InterruptUtils::idt;
 
 void InterruptUtils::initialise()
 {
-  uint32 num_handlers = 0;
-  for (uint32 i = 0; handlers[i].offset != 0; ++i)
-  {
-          num_handlers = Max(handlers[i].number, num_handlers);
-  }
-  num_handlers += 1;
-  // allocate some memory for our handlers
-  idt = new InterruptGateDesc[num_handlers];
-  size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
-  assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
-  dummy_handler_sled_size /= 128;
+  new (&idt) InterruptDescriptorTable{};
+  idt.idtr().load();
 
-  for (uint32 i = 0; i < num_handlers; ++i)
+  if (A_INTERRUPTS & OUTPUT_ENABLED & OUTPUT_ADVANCED)
   {
-          idt[i] = InterruptGateDesc(((size_t)arch_dummyHandler) + i*dummy_handler_sled_size, DPL_KERNEL_SPACE);
+      for (uint32 i = 0; i < idt.entries.size(); ++i)
+      {
+          debug(A_INTERRUPTS,
+                "%x -- offset = %p, offset_low = %x, offset_high = %x, present = %x, "
+                "segment_selector = %x, type = %x, dpl = %x\n",
+                i, handlers[i].handler_func, idt.entries[i].offset_low,
+                idt.entries[i].offset_high, idt.entries[i].present,
+                idt.entries[i].segment_selector, idt.entries[i].type, idt.entries[i].dpl);
+      }
   }
-
-  uint32 j = 0;
-  while(handlers[j].offset != 0)
-  {
-          assert(handlers[j].number < num_handlers);
-          uint8 dpl = (handlers[j].number == SYSCALL_INTERRUPT) ? DPL_USER_SPACE :
-                                                                  DPL_KERNEL_SPACE;
-          idt[handlers[j].number] = InterruptGateDesc((size_t)handlers[j].offset, dpl);
-          ++j;
-  }
-
-  if(A_INTERRUPTS & OUTPUT_ENABLED)
-  {
-          for (uint32 i = 0; i < num_handlers; ++i)
-          {
-                  debug(A_INTERRUPTS,
-                        "%x -- offset = %p, offset_low = %x, offset_high = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
-                        idt[i].offset_low, idt[i].offset_high,
-                        idt[i].present, idt[i].segment_selector,
-                        idt[i].type, idt[i].dpl);
-          }
-  }
-
-  idtr.base = (pointer) idt;
-  idtr.limit = sizeof(InterruptGateDesc) * num_handlers - 1;
-  idtr.load();
 }
 
 // Standard ISA IRQs
@@ -166,24 +93,44 @@ void InterruptUtils::initialise()
 extern "C" void arch_irqHandler_0();
 extern "C" void irqHandler_0()
 {
-  if (A_INTERRUPTS & OUTPUT_ADVANCED)
-      debug(A_INTERRUPTS, "IRQ 0 called on CPU %zu\n", SMP::currentCpuId());
+  debugAdvanced(A_INTERRUPTS, "[CPU %zu] IRQ 0 called\n", SMP::currentCpuId());
 
-  ArchInterrupts::startOfInterrupt(0);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0); // wrong irq number (+32)
 
-  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
+  ArchCommon::callWithStack(
+      ArchMulticore::cpuStackTop(),
       []()
       {
           TimerTickHandler::handleTimerTick();
 
           ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
-              ((currentThread->console_color << 4) |
-               CONSOLECOLOR::BRIGHT_WHITE);
+              ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
 
-          ArchInterrupts::endOfInterrupt(0);
+          ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
           contextSwitch();
           assert(false);
       });
+}
+
+extern "C" void irqHandler_127()
+{
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] IRQ 127 called\n", SMP::currentCpuId());
+
+    ArchInterrupts::startOfInterrupt(127);
+
+    ArchCommon::callWithStack(
+        ArchMulticore::cpuStackTop(),
+        []()
+        {
+            TimerTickHandler::handleTimerTick();
+
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId() * 2] =
+                ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
+
+            ArchInterrupts::endOfInterrupt(127);
+            contextSwitch();
+            assert(false);
+        });
 }
 
 extern "C" void arch_irqHandler_65();
@@ -225,27 +172,27 @@ extern "C" void arch_irqHandler_1();
 extern "C" void irqHandler_1()
 {
   debug(A_INTERRUPTS, "IRQ 1 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(1);
-  KeyboardManager::instance()->serviceIRQ();
-  ArchInterrupts::endOfInterrupt(1);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 1);
+  KeyboardManager::instance().serviceIRQ();
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 1);
 }
 
 extern "C" void arch_irqHandler_3();
 extern "C" void irqHandler_3()
 {
   debug(A_INTERRUPTS, "IRQ 3 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(3);
-  SerialManager::getInstance()->service_irq(3);
-  ArchInterrupts::endOfInterrupt(3);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 3);
+  SerialManager::instance().service_irq(3);
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 3);
 }
 
 extern "C" void arch_irqHandler_4();
 extern "C" void irqHandler_4()
 {
   debug(A_INTERRUPTS, "IRQ 4 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(4);
-  SerialManager::getInstance()->service_irq(4);
-  ArchInterrupts::endOfInterrupt(4);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 4);
+  SerialManager::instance().service_irq(4);
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 4);
 }
 
 extern "C" void arch_irqHandler_6();
@@ -258,36 +205,36 @@ extern "C" void arch_irqHandler_9();
 extern "C" void irqHandler_9()
 {
   debug(A_INTERRUPTS, "IRQ 9 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(9);
-  BDManager::getInstance()->serviceIRQ(9);
-  ArchInterrupts::endOfInterrupt(9);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 9);
+  BDManager::instance().serviceIRQ(9);
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 9);
 }
 
 extern "C" void arch_irqHandler_11();
 extern "C" void irqHandler_11()
 {
   debug(A_INTERRUPTS, "IRQ 11 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(11);
-  BDManager::getInstance()->serviceIRQ(11);
-  ArchInterrupts::endOfInterrupt(11);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 11);
+  BDManager::instance().serviceIRQ(11);
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 11);
 }
 
 extern "C" void arch_irqHandler_14();
 extern "C" void irqHandler_14()
 {
   debug(A_INTERRUPTS, "IRQ 14 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(14);
-  BDManager::getInstance()->serviceIRQ(14);
-  ArchInterrupts::endOfInterrupt(14);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 14);
+  BDManager::instance().serviceIRQ(14);
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 14);
 }
 
 extern "C" void arch_irqHandler_15();
 extern "C" void irqHandler_15()
 {
   debug(A_INTERRUPTS, "IRQ 15 called on CPU %zu\n", SMP::currentCpuId());
-  ArchInterrupts::startOfInterrupt(15);
-  BDManager::getInstance()->serviceIRQ(15);
-  ArchInterrupts::endOfInterrupt(15);
+  ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 15);
+  BDManager::instance().serviceIRQ(15);
+  ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 15);
 }
 
 extern eastl::atomic_flag assert_print_lock;
@@ -295,7 +242,7 @@ extern eastl::atomic_flag assert_print_lock;
 extern "C" void arch_irqHandler_90();
 extern "C" void irqHandler_90()
 {
-        ArchInterrupts::startOfInterrupt(90 - 0x20);
+        ArchInterrupts::startOfInterrupt(90);
 
         while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
         debug(A_INTERRUPTS, "IRQ 90 called, cpu %zu halting\n", SMP::currentCpuId());
@@ -311,7 +258,21 @@ extern "C" void irqHandler_90()
             ArchCommon::halt();
         }
 
-        ArchInterrupts::endOfInterrupt(90 - 0x20);
+        ArchInterrupts::endOfInterrupt(90);
+}
+
+extern "C" void irqHandler_91()
+{
+    ArchInterrupts::startOfInterrupt(91);
+
+    auto error = cpu_lapic->readRegister<Apic::Register::ERROR_STATUS>();
+    debugAlways(APIC, "Internal APIC error: %x\n", *(uint32_t*)&error);
+
+    assert(!"Internal APIC error");
+
+    cpu_lapic->writeRegister<Apic::Register::ERROR_STATUS>({});
+
+    ArchInterrupts::endOfInterrupt(91);
 }
 
 extern "C" void arch_irqHandler_100();
@@ -325,7 +286,7 @@ extern "C" void arch_irqHandler_101();
 extern "C" void irqHandler_101()
 {
     debug(A_INTERRUPTS, "IRQ 101 called by CPU %zu\n", SMP::currentCpuId());
-    ArchInterrupts::endOfInterrupt(101 - 0x20); // We can acknowledge int receipt early here
+    ArchInterrupts::endOfInterrupt(101); // We can acknowledge int receipt early here
 
     auto funcdata = current_cpu.fcall_queue.takeAll();
     while (funcdata != nullptr)
@@ -349,7 +310,7 @@ extern "C" void arch_syscallHandler();
 extern "C" void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
+  currentThreadRegisters = currentThread->kernel_registers_.get();
   ArchInterrupts::enableInterrupts();
 
   auto ret = Syscall::syscallException(currentThread->user_registers_->eax,
@@ -363,13 +324,13 @@ extern "C" void syscallHandler()
 
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = 1;
-  currentThreadRegisters = currentThread->user_registers_;
+  currentThreadRegisters = currentThread->user_registers_.get();
   //ArchThreads::printThreadRegisters(currentThread,false);
   contextSwitch();
 }
 
-extern Stabs2DebugInfo const *kernel_debug_info;
-extern const char* errors[];
+extern const Stabs2DebugInfo* kernel_debug_info;
+// extern constexpr const char* errors[];
 extern "C" void arch_errorHandler();
 extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
 {
@@ -392,14 +353,14 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   const Stabs2DebugInfo* deb = kernel_debug_info;
   assert(currentThread && "there should be no fault before there is a current thread");
   assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
-  ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
+  ArchThreadRegisters* registers_ = currentThread->kernel_registers_.get();
   if (userspace)
   {
     assert(currentThread->loader_ && "User Threads need to have a Loader");
     assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
            "User and Kernel CR3 register values differ, this most likely is a bug!"));
     deb = currentThread->loader_->getDebugInfos();
-    registers_ = currentThread->user_registers_;
+    registers_ = currentThread->user_registers_.get();
   }
   if(deb && registers_->eip)
   {
@@ -417,11 +378,69 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   else
   {
     currentThread->switch_to_userspace_ = false;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     debug(CPU_ERROR, "Terminating process...\n");
     currentThread->kill();
   }
 }
 
-#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
+// #include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
+
+extern "C" void interruptHandler(size_t interrupt_num,
+                                 uint32_t error_code,
+                                 ArchThreadRegisters* saved_registers)
+{
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Generic interrupt handler %zu, error: %x\n", SMP::currentCpuId(), interrupt_num, error_code);
+    assert(interrupt_num < 256);
+
+    // Interrupts that currently need special handling (e.g. stack switch, ...)
+    switch (interrupt_num)
+    {
+    case Apic::IRQ_VECTOR_OFFSET:
+        irqHandler_0();
+        return;
+    case 65:
+        irqHandler_65();
+        return;
+    case 90:
+        irqHandler_90();
+        return;
+    case 91:
+        irqHandler_91();
+        return;
+    case 100:
+        irqHandler_100();
+        return;
+    case 101:
+        irqHandler_101();
+        return;
+    case 127:
+        irqHandler_127();
+        return;
+    case SYSCALL_INTERRUPT:
+        syscallHandler();
+        return;
+    case 0xE: // pagefault
+    {
+        uintptr_t pagefault_addr = 0;
+        asm volatile("movl %%cr2, %[cr2]\n"
+                     : [cr2] "=r"(pagefault_addr));
+        pageFaultHandler(pagefault_addr, error_code, saved_registers->eip);
+        return;
+    }
+    }
+
+    if (interrupt_num < 32)
+    {
+        errorHandler(interrupt_num, saved_registers->eip, saved_registers->cs, 0);
+    }
+    else
+    {
+        ArchInterrupts::startOfInterrupt(interrupt_num);
+        ArchInterrupts::handleInterrupt(interrupt_num);
+        ArchInterrupts::endOfInterrupt(interrupt_num);
+    }
+
+    debugAdvanced(A_INTERRUPTS, "Generic interrupt handler %zu end\n", interrupt_num);
+}

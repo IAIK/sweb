@@ -61,60 +61,79 @@ WithAddressSpace::~WithAddressSpace()
     }
 }
 
-void ArchThreads::createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createBaseThreadRegisters(
+    void* start_function, void* stack)
 {
-  info = new ArchThreadRegisters{};
-  pointer root_of_kernel_paging_structure = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)ArchMemory::getKernelPagingStructureRootVirt()));
+    auto regs = eastl::make_unique<ArchThreadRegisters>();
 
-  info->eflags  = 0x200;
-  info->cr3     = root_of_kernel_paging_structure;
-  info->esp     = (size_t)stack;
-  info->ebp     = (size_t)stack;
-  info->eip     = (size_t)start_function;
+    setInterruptEnableFlag(*regs, true);
+    regs->cr3 = kernel_arch_mem.getValueForCR3();
+    regs->esp = (size_t)stack;
+    regs->ebp = (size_t)stack;
+    regs->eip = (size_t)start_function;
 
-  /* fpu (=fninit) */
-  info->fpu[0] = 0xFFFF037F;
-  info->fpu[1] = 0xFFFF0000;
-  info->fpu[2] = 0xFFFFFFFF;
-  info->fpu[3] = 0x00000000;
-  info->fpu[4] = 0x00000000;
-  info->fpu[5] = 0x00000000;
-  info->fpu[6] = 0xFFFF0000;
+    /* fpu (=fninit) */
+    regs->fpu[0] = 0xFFFF037F;
+    regs->fpu[1] = 0xFFFF0000;
+    regs->fpu[2] = 0xFFFFFFFF;
+    regs->fpu[3] = 0x00000000;
+    regs->fpu[4] = 0x00000000;
+    regs->fpu[5] = 0x00000000;
+    regs->fpu[6] = 0xFFFF0000;
+
+    return regs;
 }
 
-void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* kernel_stack)
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createKernelRegisters(
+    void* start_function, void* kernel_stack)
 {
-  createBaseThreadRegisters(info, start_function, kernel_stack);
+    auto kregs = createBaseThreadRegisters(start_function, kernel_stack);
 
-  info->cs      = KERNEL_CS;
-  info->ds      = KERNEL_DS;
-  info->es      = KERNEL_DS;
-  info->ss      = KERNEL_SS;
-  info->fs      = KERNEL_FS;
-  info->gs      = KERNEL_GS;
+    kregs->cs = KERNEL_CS;
+    kregs->ds = KERNEL_DS;
+    kregs->es = KERNEL_DS;
+    kregs->ss = KERNEL_SS;
+    kregs->fs = KERNEL_FS;
+    kregs->gs = KERNEL_GS;
+    assert(kregs->cr3);
+
+    return kregs;
 }
 
-void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createUserRegisters(
+    void* start_function, void* user_stack, void* kernel_stack)
 {
-  createBaseThreadRegisters(info, start_function, user_stack);
+    auto uregs = createBaseThreadRegisters(start_function, user_stack);
 
-  info->cs      = USER_CS;
-  info->ds      = USER_DS;
-  info->es      = USER_DS;
-  info->ss      = USER_SS;
-  info->fs      = USER_DS;
-  info->gs      = USER_DS;
-  info->esp0    = (size_t)kernel_stack;
+    uregs->cs = USER_CS;
+    uregs->ds = USER_DS;
+    uregs->es = USER_DS;
+    uregs->ss = USER_SS;
+    uregs->fs = USER_DS;
+    uregs->gs = USER_DS;
+    uregs->esp0 = (size_t)kernel_stack;
+    assert(uregs->cr3);
+
+    return uregs;
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters& info, void* function)
 {
-  info->eip = (size_t)function;
+  info.eip = (size_t)function;
 }
 
-void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters& info)
 {
-  return (void*)info->eip;
+  return (void*)info.eip;
+}
+
+void ArchThreads::setInterruptEnableFlag(ArchThreadRegisters& info,
+                                         bool interrupts_enabled)
+{
+    if (interrupts_enabled)
+        info.eflags |= 0x200;
+    else
+        info.eflags &= ~0x200;
 }
 
 void ArchThreads::yield()
@@ -172,7 +191,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadRegisters *info = (userspace_registers ? thread->user_registers_ : thread->kernel_registers_);
+  ArchThreadRegisters *info = (userspace_registers ? thread->user_registers_.get() : thread->kernel_registers_.get());
   if (!info)
   {
     kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
@@ -222,5 +241,5 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
 
 [[noreturn]] void ArchThreads::startThreads(Thread* init_thread)
 {
-    contextSwitch(init_thread, init_thread->kernel_registers_);
+    contextSwitch(init_thread, init_thread->kernel_registers_.get());
 }

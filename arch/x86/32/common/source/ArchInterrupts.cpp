@@ -1,20 +1,38 @@
 #include "ArchInterrupts.h"
 #include "8259.h"
 #include "APIC.h"
-#include "ports.h"
 #include "InterruptUtils.h"
+#include "IoApic.h"
+#include "KeyboardManager.h"
+#include "PlatformBus.h"
+#include "ProgrammableIntervalTimer.h"
+#include "Scheduler.h"
 #include "SegmentUtils.h"
+#include "SystemState.h"
+#include "Thread.h"
+#include "offsets.h"
+#include "ports.h"
+#include "ArchCpuLocalStorage.h"
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
 #include "ArchThreads.h"
 #include "assert.h"
-#include "Thread.h"
 #include "debug.h"
-#include "ArchMulticore.h"
-#include "ArchMemory.h"
-#include "Scheduler.h"
-#include "offsets.h"
-#include "SystemState.h"
-#include "ArchCpuLocalStorage.h"
 
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector");
+cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
+
+IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
+{
+    assert(cpu_root_irq_domain_);
+    return *cpu_root_irq_domain_;
+}
+
+IrqDomain& ArchInterrupts::isaIrqDomain()
+{
+    static IrqDomain isa_irq_domain("ISA IRQ");
+    return isa_irq_domain;
+}
 
 static void initInterruptHandlers()
 {
@@ -24,20 +42,16 @@ static void initInterruptHandlers()
 
 static void initInterruptController()
 {
-  debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
-  if(LocalAPIC::exists)
-  {
-    // TODO: Proper address assignment for lapic on x86
-    size_t vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*2;
-    LocalAPIC::mapAt(vaddr);
+    debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
     assert(CpuLocalStorage::ClsInitialized());
-    cpu_lapic = &cpu_lapic_impl;
-    cpu_lapic.init();
-  }
 
-  IOAPIC::initAll();
+    PlatformBus::instance().registerDriver(ApicDriver::instance());
+    PlatformBus::instance().registerDriver(ApicTimerDriver::instance());
+    PlatformBus::instance().registerDriver(IoApicDriver::instance());
+    PlatformBus::instance().registerDriver(PIC8259Driver::instance());
 
-  PIC8259::initialise8259s();
+    assert(cpu_root_irq_domain_);
+    debug(A_INTERRUPTS, "Interrupt controllers initialized\n");
 }
 
 void ArchInterrupts::initialise()
@@ -46,20 +60,32 @@ void ArchInterrupts::initialise()
   initInterruptController();
 }
 
-
-
 void ArchInterrupts::enableTimer()
 {
-  if(cpu_lapic.isInitialized() && cpu_lapic.usingAPICTimer())
+  if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
   {
-      debug(A_INTERRUPTS, "Enabling LocalAPIC %x timer \n", cpu_lapic.ID());
-      cpu_lapic.reg_vaddr_->lvt_timer.setMask(false);
+      debug(A_INTERRUPTS, "Enabling xApic %x timer \n", cpu_lapic->apicId());
+      enableIRQ(cpu_lapic->timer_interrupt_controller.irq());
   }
   else
   {
       debug(A_INTERRUPTS, "Enabling PIT timer IRQ\n");
-      ArchInterrupts::enableIRQ(0);
+      enableIRQ(PIT::instance().irq());
   }
+}
+
+void ArchInterrupts::disableTimer()
+{
+    if (cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
+    {
+        debug(A_INTERRUPTS, "Disabling xApic %x timer \n", cpu_lapic->apicId());
+        disableIRQ(cpu_lapic->timer_interrupt_controller.irq());
+    }
+    else
+    {
+        debug(A_INTERRUPTS, "Disabling PIT timer IRQ\n");
+        disableIRQ(PIT::instance().irq());
+    }
 }
 
 void ArchInterrupts::setTimerFrequency(uint32 freq)
@@ -76,95 +102,89 @@ void ArchInterrupts::setTimerFrequency(uint32 freq)
   outportb(0x40, divisor >> 8);
 }
 
-void ArchInterrupts::disableTimer()
-{
-  disableIRQ(0);
-}
-
 void ArchInterrupts::enableKBD()
 {
-  enableIRQ(1);
-  enableIRQ(9);
+    debug(A_INTERRUPTS, "Enable keyboard irq\n");
+
+    enableIRQ(KeyboardManager::instance().irq());
 }
 
 void ArchInterrupts::disableKBD()
 {
-  disableIRQ(1);
+    enableIRQ(KeyboardManager::instance().irq(), false);
 }
 
-void ArchInterrupts::enableIRQ(uint16 num)
+void ArchInterrupts::enableIRQ(const IrqDomain::DomainIrqHandle& irq_handle, bool enable)
 {
-        if(IOAPIC::findIOAPICforIRQ(num))
-        {
-                IOAPIC::setIRQMask(num, false);
-        }
-        else
-        {
-                PIC8259::enableIRQ(num);
-        }
-}
+    debug(A_INTERRUPTS, "[Cpu %zu] %s %s IRQ %zx\n", SMP::currentCpuId(),
+          enable ? "Enable" : "Disable", irq_handle.domain().name().c_str(),
+          irq_handle.irq());
 
-void ArchInterrupts::disableIRQ(uint16 num)
-{
-        if(IOAPIC::findIOAPICforIRQ(num))
-        {
-                IOAPIC::setIRQMask(num, true);
-        }
-        else
-        {
-                PIC8259::disableIRQ(num);
-        }
-}
-
-void ArchInterrupts::startOfInterrupt(uint16 number)
-{
-  if (A_INTERRUPTS & OUTPUT_ADVANCED) {
-    debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
-  }
-
-        if((LocalAPIC::exists && cpu_lapic.isInitialized()) &&
-           (IOAPIC::findIOAPICforIRQ(number) ||
-            ((number == 0) && cpu_lapic.usingAPICTimer()) ||
-            (number > 16)))
-        {
-                cpu_lapic.outstanding_EOIs_++;
-        }
-        else
-        {
-                PIC8259::outstanding_EOIs_++;
-        }
-}
-
-void ArchInterrupts::endOfInterrupt(uint16 number)
-{
-    if(A_INTERRUPTS & OUTPUT_ADVANCED) {
-        debug(A_INTERRUPTS, "Sending EOI for IRQ %x\n", number);
+    for (auto&& domain_irq : irq_handle.forwardMappingChain())
+    {
+        domain_irq.activateInDomain(enable);
     }
-  if((LocalAPIC::exists && cpu_lapic.isInitialized()) &&
-     (IOAPIC::findIOAPICforIRQ(number) ||
-      ((number == 0) && cpu_lapic.usingAPICTimer()) ||
-      (number > 16)))
-  {
-      if(A_INTERRUPTS & OUTPUT_ADVANCED) {
-          debug(A_INTERRUPTS, "Sending EOI %x to APIC\n", number + 0x20);
-      }
-      cpu_lapic.sendEOI(number + 0x20);
-  }
-  else
-  {
-      if(A_INTERRUPTS & OUTPUT_ADVANCED) {
-          debug(A_INTERRUPTS, "Sending EOI %x to PIC\n", number);
-      }
-      PIC8259::sendEOI(number);
-  }
+}
+
+void ArchInterrupts::disableIRQ(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    enableIRQ(irq_handle, false);
+}
+
+void ArchInterrupts::startOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())
+    {
+        if (domain->controller())
+        {
+            domain->controller()->irqStart(local_irqnum);
+        }
+    }
+}
+
+void ArchInterrupts::startOfInterrupt(uint16 irqnum)
+{
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %x\n", SMP::currentCpuId(), irqnum);
+
+    startOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
+}
+
+void ArchInterrupts::endOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())
+    {
+        if (domain->controller())
+        {
+            domain->controller()->ack(local_irqnum);
+        }
+    }
+}
+
+void ArchInterrupts::endOfInterrupt(uint16 irqnum)
+{
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %x\n", SMP::currentCpuId(),
+                  irqnum);
+
+    endOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
+}
+
+void ArchInterrupts::handleInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& domain_irq : irq_handle.reverseMappingTree())
+    {
+        domain_irq.handleInDomain();
+    }
+}
+
+void ArchInterrupts::handleInterrupt(uint16_t irqnum)
+{
+    handleInterrupt(currentCpuRootIrqDomain().irq(irqnum));
 }
 
 void ArchInterrupts::enableInterrupts()
 {
-     __asm__ __volatile__("sti"
-   :
-   :
-   );
+     __asm__ __volatile__("sti\n"
+                          "nop\n");
 }
 
 bool ArchInterrupts::disableInterrupts()
@@ -174,8 +194,7 @@ bool ArchInterrupts::disableInterrupts()
  __asm__ __volatile__("pushfl\n"
                       "popl %0\n"
                       "cli"
- : "=a"(ret_val)
- :);
+ : "=a"(ret_val));
 
 return (ret_val & (1 << 9));  //testing IF Flag
 
@@ -205,30 +224,40 @@ void ArchInterrupts::yieldIfIFSet()
   }
 }
 
-struct context_switch_registers {
-  uint32 gs;  //  0-3
-  uint32 fs;  //  4-7
-  uint32 es;  //  8-11
-  uint32 ds;  // 12-15
-  uint32 edi; // 16-19
-  uint32 esi; // 20-23
-  uint32 ebp; // 24-27
-  uint32 esp; // 28-31
-  uint32 ebx; // 32-35
-  uint32 edx; // 36-39
-  uint32 ecx; // 40-43
-  uint32 eax; // 44-47
-} __attribute__((packed));
+struct [[gnu::packed]] context_switch_registers
+{
+    uint32 gs;  //  0-3
+    uint32 fs;  //  4-7
+    uint32 es;  //  8-11
+    uint32 ds;  // 12-15
+    uint32 edi; // 16-19
+    uint32 esi; // 20-23
+    uint32 ebp; // 24-27
+    uint32 esp; // 28-31
+    uint32 ebx; // 32-35
+    uint32 edx; // 36-39
+    uint32 ecx; // 40-43
+    uint32 eax; // 44-47
+};
 
-struct interrupt_registers {
-                 // w/o   | w/ error code
-  uint32 eip;    // 48-51 | 52-55
-  uint32 cs;     // 52-55 | 56-59
-  uint32 eflags; // 56-59 | 60-63
-  uint32 esp3;   // 60-63 | 64-67
-  uint32 ss3;    // 64-67 | 68-71
-} __attribute__((packed));
+struct [[gnu::packed]] interrupt_registers
+{
+    // TODO: update offsets to include interrupt num
+    // w/o   | w/ error code
+    uint32 eip;    // 48-51 | 52-55
+    uint32 cs;     // 52-55 | 56-59
+    uint32 eflags; // 56-59 | 60-63
+    uint32 esp3;   // 60-63 | 64-67
+    uint32 ss3;    // 64-67 | 68-71
+};
 
+struct [[gnu::packed]] SavedContextSwitchRegisters
+{
+    context_switch_registers registers;
+    uint32_t interrupt_num;
+    uint32_t error_code;
+    interrupt_registers iregisters;
+};
 
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
@@ -243,24 +272,26 @@ extern "C" size_t arch_computeDummyHandler(uint32 eip)
   return calling_dummy_handler;
 }
 
-extern "C" void arch_saveThreadRegisters(uint32 error, uint32* base)
+extern "C" ArchThreadRegisters*
+arch_saveThreadRegisters([[maybe_unused]]uint32 error, SavedContextSwitchRegisters* saved_r)
 {
-  struct context_switch_registers* registers = (struct context_switch_registers*) base;
-  struct interrupt_registers* iregisters = (struct interrupt_registers*) ((size_t)(registers + 1) + error*sizeof(uint32));
-  ArchThreadRegisters* info = currentThreadRegisters;
+    auto registers = &saved_r->registers;
+    auto iregisters = &saved_r->iregisters;
+    ArchThreadRegisters* info = currentThreadRegisters;
 
-  asm("fnsave (%[fpu])\n"
-      "frstor (%[fpu])\n"
-      :
-      : [fpu]"r"(&info->fpu));
-  if ((iregisters->cs & 0x3) == 0x3)
-  {
-    info->ss = iregisters->ss3;
-    info->esp = iregisters->esp3;
+    asm("fnsave (%[fpu])\n"
+        "frstor (%[fpu])\n"
+        :
+        : [fpu] "r"(&info->fpu));
+    if ((iregisters->cs & 0x3) == 0x3)
+    {
+        info->ss = iregisters->ss3;
+        info->esp = iregisters->esp3;
   }
   else
   {
-    info->esp = registers->esp + 0xc;
+    // Compensate for interrupt frame + error code + int num pushed onto stack before esp is saved via pusha
+    info->esp = registers->esp + 0x14;
   }
   info->eip = iregisters->eip;
   info->cs = iregisters->cs;
@@ -277,6 +308,24 @@ extern "C" void arch_saveThreadRegisters(uint32 error, uint32* base)
   info->fs = registers->fs;
   info->gs = registers->gs;
   assert(!currentThread || currentThread->isStackCanaryOK());
+
+  return info;
+}
+
+extern "C" void interruptHandler(size_t interrupt_num,
+                                 uint32_t error_code,
+                                 ArchThreadRegisters* saved_registers);
+
+extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
+{
+    // Take registers previously saved on the stack via assembly and store them in the
+    // saved registers of the thread
+    auto saved_regs = arch_saveThreadRegisters(0, regs);
+
+    debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zu\n",
+                  regs->interrupt_num);
+
+    interruptHandler(regs->interrupt_num, regs->error_code, saved_regs);
 }
 
 extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegisters* target_registers)

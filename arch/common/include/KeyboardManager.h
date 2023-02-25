@@ -11,6 +11,7 @@ extern "C"
 #endif
 
 #include "RingBuffer.h"
+#include "IrqDomain.h"
 #include "atkbd.h"
 
 #define STANDARD_KEYMAP_DEF { 0, 0x1B, '1', '2', '3', '4', '5' , '6', \

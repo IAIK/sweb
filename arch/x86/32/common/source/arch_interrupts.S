@@ -173,3 +173,36 @@ errorhandler \num
 .stabs "arch_syscallHandler",36,0,0,arch_syscallHandler
 arch_syscallHandler:
   interrupthandler syscallHandler
+
+
+.global arch_interruptHandler
+.type   arch_interruptHandler, @function
+arch_interruptHandler:
+    pushall
+    movl %esp, %edx
+    ## pushl %esp
+
+    ## pushl $0
+    ## call arch_saveThreadRegisters
+    ## addl $8, %esp
+
+
+    movl 56(%esp), %eax
+    pushl %eax /* fake return address = rip at interrupt */
+    /* set up fake call stack for debugger backtrace */
+.global arch_interruptHandler_backtrace_fix
+.type   arch_interruptHandler_backtrace_fix, @function
+arch_interruptHandler_backtrace_fix:
+	pushl %ebp
+	movl %esp, %ebp
+
+    pushl %edx /* address of saved registers */
+    call genericInterruptEntry
+
+    leave
+    addl $4, %esp /* pop simulated return address */
+
+    popall
+    addl $8, %esp /* pop interrupt number and error code */
+    iretl
+    hlt

@@ -15,6 +15,8 @@
 #include "offsets.h"
 #include "Device.h"
 #include "IrqDomain.h"
+#include "MSR.h"
+#include "X2Apic.h"
 #include "ports.h"
 
 
@@ -287,6 +289,7 @@ void XApic::mapAt(size_t addr)
     }
     else
     {
+        debug(APIC, "Vaddr %p is already mapped to ppn %zx\n", (void*)addr, m.page_ppn);
         assert(m.page_ppn == ((size_t)reg_paddr_)/PAGE_SIZE);
         assert(m.pt[m.pti].write_through);
         assert(m.pt[m.pti].cache_disabled);
@@ -607,42 +610,6 @@ bool XApic::apicSupported()
     return cpu_features.cpuHasFeature(CpuFeatures::X86Feature::APIC);
 }
 
-void ApicDriver::doDeviceDetection()
-{
-    debug(APIC, "Device detection\n");
-    cpuLocalInit();
-}
-
-void ApicDriver::cpuLocalInit()
-{
-    if (cpu_features.cpuHasFeature(CpuFeatures::APIC))
-    {
-        debug(APIC, "Init cpu local apic\n");
-        Apic::setIMCRMode(IMCRData::APIC_PASSTHROUGH);
-
-        Apic::globalEnable();
-        if (X2Apic::x2ApicSupported())
-        {
-            X2Apic::enableX2ApicMode();
-        }
-        else
-        {
-            XApic::setPhysicalAddress(XApic::readMsrPhysAddr());
-            XApic::mapAt((size_t)XApic::physicalAddress() | PHYSICAL_TO_VIRTUAL_OFFSET);
-        }
-
-        cpu_root_irq_domain_ = cpu_lapic;
-        cpu_lapic->init();
-
-        SMP::currentCpu().addSubDevice(*cpu_lapic);
-        bindDevice(*cpu_lapic);
-    }
-    else
-    {
-        debug(APIC, "Local APIC not available\n");
-    }
-}
-
 Apic::ApicTimer::ApicTimer(Apic& apic) :
     IrqDomain("APIC Timer", this),
     Device("APIC timer", &apic),
@@ -684,6 +651,51 @@ ApicDriver &ApicDriver::instance()
 {
   static ApicDriver i;
   return i;
+}
+
+void ApicDriver::doDeviceDetection()
+{
+    debug(APIC, "Device detection\n");
+    cpuLocalInit();
+}
+
+void ApicDriver::cpuLocalInit()
+{
+    if (cpu_features.cpuHasFeature(CpuFeatures::APIC))
+    {
+        debug(APIC, "Init cpu local apic\n");
+        Apic::setIMCRMode(IMCRData::APIC_PASSTHROUGH);
+
+        Apic::globalEnable();
+        if (X2Apic::x2ApicSupported())
+        {
+            X2Apic::enableX2ApicMode();
+        }
+        else
+        {
+            XApic::setPhysicalAddress(XApic::readMsrPhysAddr());
+            // TODO: Properly allocate MMIO virtual memory page for APIC
+            if ((uintptr_t)XApic::physicalAddress() > USER_BREAK)
+            {
+                XApic::mapAt((size_t)XApic::physicalAddress());
+            }
+            else
+            {
+                XApic::mapAt((size_t)XApic::physicalAddress() |
+                             PHYSICAL_TO_VIRTUAL_OFFSET);
+            }
+        }
+
+        cpu_root_irq_domain_ = cpu_lapic;
+        cpu_lapic->init();
+
+        SMP::currentCpu().addSubDevice(*cpu_lapic);
+        bindDevice(*cpu_lapic);
+    }
+    else
+    {
+        debug(APIC, "Local APIC not available\n");
+    }
 }
 
 ApicTimerDriver::ApicTimerDriver() :

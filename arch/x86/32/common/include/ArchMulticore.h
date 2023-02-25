@@ -33,14 +33,17 @@ struct TLBShootdownRequest
 class ArchCpu : public Cpu
 {
 public:
-        ArchCpu();
+    ArchCpu();
 
-        LocalAPIC* lapic;
+    Apic* lapic;
+
+    IrqDomain& rootIrqDomain();
+
 private:
+    IrqDomain** root_domain_ptr;
 };
 
-
-extern cpu_local LocalAPIC cpu_lapic;
+extern cpu_local Apic* cpu_lapic;
 extern cpu_local char cpu_stack[CPU_STACK_SIZE];
 extern cpu_local TSS cpu_tss;
 extern cpu_local IdleThread* idle_thread;

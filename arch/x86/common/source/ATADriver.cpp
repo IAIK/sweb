@@ -527,7 +527,7 @@ void ATADrive::printIdentifyInfo(eastl::span<uint16_t, 256> id)
           !!(id[88] & (1 << 10)), !!(id[88] & (1 << 11)),
           !!(id[88] & (1 << 12)), !!(id[88] & (1 << 13)),
           !!(id[88] & (1 << 14)));
-    debug(ATA_DRIVER, "#Sectors: %lu\n", *(uint64_t*)&num_logical_sectors);
+    debug(ATA_DRIVER, "#Sectors: %" PRIu64 "\n", *(uint64_t*)&num_logical_sectors);
     if (!(id[106] & (1 << 15)) && (id[106] & (1 << 14)))
     {
         debug(ATA_DRIVER, "Physical sector size: 2^%u*logical sectors\n",

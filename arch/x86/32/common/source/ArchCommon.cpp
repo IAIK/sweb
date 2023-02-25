@@ -299,7 +299,7 @@ void ArchCommon::drawStat() {
 #define STATS_FREE_PAGES_START (STATS_OFFSET + 11*2)
     memset(fb + STATS_FREE_PAGES_START, 0, 4*2);
     memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-    itoa(PageManager::instance()->getNumFreePages(), itoa_buffer, 10);
+    itoa(PageManager::instance().getNumFreePages(), itoa_buffer, 10);
     for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
     {
       fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];

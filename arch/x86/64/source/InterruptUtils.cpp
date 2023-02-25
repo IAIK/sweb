@@ -40,7 +40,6 @@ extern "C" void arch_dummyHandlerMiddle();
 IDTR InterruptUtils::idtr;
 InterruptDescriptorTable InterruptUtils::idt;
 
-extern "C" uint64_t generated_idt_vector_table[256];
 
 void InterruptUtils::initialise()
 {
@@ -59,8 +58,6 @@ void InterruptUtils::initialise()
                   idt.entries[i].dpl);
         }
     }
-
-    return;
 }
 
 extern const SWEBDebugInfo* kernel_debug_info;
@@ -355,11 +352,9 @@ extern "C" void interruptHandler(size_t interrupt_num,
         return;
     case 0xE: // pagefault
     {
-        uint64_t pagefault_addr = 0;
-        asm volatile ("movq %%cr2, %%rax\n"
-                      "movq %%rax, %[cr2];"
-                      :[cr2]"=g"(pagefault_addr)
-                      :: "%rax");
+        uintptr_t pagefault_addr = 0;
+        asm volatile("movq %%cr2, %[cr2]\n"
+                     : [cr2] "=r"(pagefault_addr));
         pageFaultHandler(pagefault_addr, error_code, saved_registers->rip);
         return;
     }

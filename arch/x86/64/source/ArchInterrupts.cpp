@@ -134,19 +134,6 @@ void ArchInterrupts::disableIRQ(const IrqDomain::DomainIrqHandle& irq_handle)
     enableIRQ(irq_handle, false);
 }
 
-// void ArchInterrupts::enableIRQ(uint16 irqnum, bool enable)
-// {
-//     debug(A_INTERRUPTS, "[Cpu %zu] %s IRQ %x\n", SMP::currentCpuId(),
-//           enable ? "Enable" : "Disable", irqnum);
-
-//     enableIRQ(currentCpuRootIrqDomain().irq(irqnum), enable);
-// }
-
-// void ArchInterrupts::disableIRQ(uint16 irqnum)
-// {
-//     enableIRQ(irqnum, false);
-// }
-
 void ArchInterrupts::startOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
 {
     for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())

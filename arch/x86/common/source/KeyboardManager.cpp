@@ -1,4 +1,5 @@
 #include "KeyboardManager.h"
+#include "ArchInterrupts.h"
 #include "kprintf.h"
 #include "Console.h"
 #include "ports.h"

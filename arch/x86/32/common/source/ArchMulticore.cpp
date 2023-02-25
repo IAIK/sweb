@@ -7,7 +7,7 @@
 #include "InterruptUtils.h"
 #include "ArchInterrupts.h"
 #include "Thread.h"
-#include "MutexLock.h"
+#include "ScopeLock.h"
 #include "EASTL/atomic.h"
 #include "Scheduler.h"
 #include "ArchThreads.h"
@@ -17,14 +17,11 @@
 #include "ArchCpuLocalStorage.h"
 
 
-__cpu GDT cpu_gdt;
-__cpu TSS cpu_tss;
+cpu_local GDT cpu_gdt;
+cpu_local TSS cpu_tss;
 
-/* The order of initialization of cpu_local objects depends on the order in which they are defined in the source code.
-   This is pretty fragile, but using __cpu and placement new doesn't work (compiler complains that dynamic initialization is required).
-   Alternative: default constructor that does nothing + later explicit initialization using init() function */
-
-cpu_local LocalAPIC cpu_lapic;
+cpu_local XApic cpu_lapic_impl;
+cpu_local Apic* cpu_lapic = &cpu_lapic_impl;
 
 cpu_local char cpu_stack[CPU_STACK_SIZE];
 
@@ -178,17 +175,17 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 void ArchMulticore::startOtherCPUs()
 {
-  if(LocalAPIC::exists && cpu_lapic.isInitialized())
+  if(cpu_lapic->isInitialized())
   {
     debug(A_MULTICORE, "Starting other CPUs\n");
 
     prepareAPStartup(AP_STARTUP_PADDR);
 
-    for(auto& other_cpu_lapic : LocalAPIC::local_apic_list_)
+    for(auto& other_cpu_lapic : Apic::local_apic_list_)
     {
-      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic.ID()))
+      if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic->apicId()))
       {
-        cpu_lapic.startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        cpu_lapic->startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
         debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
         while(!ap_started);
         ap_started = false;
@@ -196,8 +193,8 @@ void ArchMulticore::startOtherCPUs()
       }
     }
 
-    MutexLock l(SMP::cpu_list_lock_);
-    for(auto& cpu : SMP::cpu_list_)
+    ScopeLock l(SMP::cpu_list_lock_);
+    for(auto& cpu : SMP::cpuList())
     {
       debug(A_MULTICORE, "CPU %zu running\n", cpu->id());
     }
@@ -265,13 +262,19 @@ void ArchMulticore::initApplicationProcessorCpu()
   char* cls = CpuLocalStorage::allocCls();
   CpuLocalStorage::setCls(ap_gdt32, cls);
 
-  cpu_lapic.init();
-  current_cpu.setId(cpu_lapic.readID());
+  ApicDriver::instance().cpuLocalInit();
+  ApicTimerDriver::instance().cpuLocalInit();
+
+  // cpu_lapic->init();
+  // current_cpu.setId(cpu_lapic.readID());
+  assert(cpu_lapic->apicId() == CPUID::localApicId());
   ArchMulticore::initCpuLocalData();
 
   ArchThreads::initialise();
 
   debug(A_MULTICORE, "Enable AP timer\n");
+  assert(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer() &&
+         "Use of local APIC timer is required for SMP");
   ArchInterrupts::enableTimer();
 
   debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());

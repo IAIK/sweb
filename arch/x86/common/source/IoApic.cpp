@@ -4,6 +4,8 @@
 #include "ArchInterrupts.h"
 #include "8259.h"
 #include "CPUID.h"
+#include "SMP.h"
+#include "offsets.h"
 #include "debug.h"
 
 IoApic::IoApic(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base) :
