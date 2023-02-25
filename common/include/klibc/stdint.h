@@ -247,6 +247,10 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #if (!defined __cplusplus || __cplusplus >= 201103L \
      || defined __STDC_CONSTANT_MACROS)
 
+#ifndef __UINT64_C
+     #define __UINT64_C(c) c ## UL
+#endif
+
 #undef INT8_C
 #define INT8_C(c) __INT8_C(c)
 #undef INT16_C
