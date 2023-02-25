@@ -320,7 +320,7 @@ bool Scheduler::isCurrentlyCleaningUp()
   return currentThread == &cleanup_thread_;
 }
 
-uint32 Scheduler::getCpuTimerTicks() const
+size_t Scheduler::getCpuTimerTicks() const
 {
   return cpu_timer_ticks;
 }

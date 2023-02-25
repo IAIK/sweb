@@ -45,7 +45,7 @@ class Scheduler
     bool isSchedulingEnabled();
     bool isCurrentlyCleaningUp();
     void incCpuTimerTicks();
-    uint32 getCpuTimerTicks() const;
+    size_t getCpuTimerTicks() const;
 
     /**
      * NEVER EVER EVER CALL THIS METHOD OUTSIDE OF AN INTERRUPT CONTEXT
