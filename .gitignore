@@ -32,3 +32,6 @@ cmake-build-*/*
 GPATH
 GRTAGS
 GTAGS
+
+compile_commands.json
+.gdb_history
