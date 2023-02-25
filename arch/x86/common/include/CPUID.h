@@ -216,7 +216,7 @@ public:
     CpuFeatures();
 
     void initCpuFeatures();
-    bool cpuHasFeature(X86Feature feature);
+    [[nodiscard]] bool cpuHasFeature(X86Feature feature) const;
 private:
     eastl::bitset<X86Feature::FEATURE_COUNT> features_;
 };

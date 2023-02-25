@@ -47,7 +47,7 @@ CpuFeatures::CpuFeatures()
     initCpuFeatures();
 }
 
-bool CpuFeatures::cpuHasFeature(X86Feature feature)
+bool CpuFeatures::cpuHasFeature(X86Feature feature) const
 {
     return features_.test(feature);
 }
