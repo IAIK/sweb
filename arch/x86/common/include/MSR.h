@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include "types.h"
+#include <cstdint>
+#include "EASTL/bit.h"
 #include "EASTL/type_traits.h"
 
 namespace MSR
@@ -26,23 +27,31 @@ namespace MSR
         static_assert(sizeof(value_type) == sizeof(uint32_t) || sizeof(value_type) == sizeof(uint64_t));
 
         template <uint32_t _msr = msr, bool _readable = readable>
-        static eastl::enable_if_t<_readable, value_type> read()
+        static value_type read() requires(readable)
         {
-            value_type val;
+            static_assert(sizeof(value_type) == 4 || sizeof(value_type) == 8);
+
+            union
+            {
+                uint32_t u32;
+                uint64_t u64;
+            } v;
+
             if constexpr (sizeof(value_type) == 8)
             {
-                getMSR(msr, (uint32_t*)&val, ((uint32_t*)&val) + 1);
+                getMSR(msr, (uint32_t*)&v.u32, ((uint32_t*)&v.u32) + 1);
+                return eastl::bit_cast<value_type>(v.u64);
             }
             else
             {
                 uint32_t ignored;
-                getMSR(msr, (uint32_t*)&val, &ignored);
+                getMSR(msr, (uint32_t*)&v.u32, &ignored);
+                return eastl::bit_cast<value_type>(v.u32);
             }
-            return val;
         }
 
         template <uint32_t _msr = msr, bool _writeable = writeable>
-        static eastl::enable_if_t<_writeable, void> write(value_type val)
+        static void write(value_type val) requires(writeable)
         {
             if constexpr (sizeof(value_type) == 8)
             {
