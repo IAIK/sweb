@@ -69,8 +69,12 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
                                         uint8 const &state)
 {
   char *fb = (char*) ArchCommon::getFBPtr();
-  fb[(column + row * consoleGetNumColumns()) * 2] = character;
-  fb[(column + row * consoleGetNumColumns()) * 2 + 1] = state;
+  uint32_t console_columns = consoleGetNumColumns();
+  uint32_t console_rows = consoleGetNumRows();
+  assert(column < console_columns);
+  assert(row < console_rows);
+  fb[(column + row * console_columns) * 2] = character;
+  fb[(column + row * console_columns) * 2 + 1] = state;
 
   return 0;
 }
