@@ -26,50 +26,59 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
     Device(eastl::string("ATA disk ") + eastl::to_string(drive_num)),
     controller(ide_controller),
     drive_num(drive_num),
-    jiffies(0),
     irq_domain(eastl::string("ATA disk ") + eastl::to_string(drive_num)),
     lock_("ATADriver::lock_")
 {
-  irq_domain.irq()
-      .mapTo(controller)
-      .useHandler([]() { BDManager::instance().probeIRQ = false; });
+    irq_domain.irq()
+        .mapTo(controller)
+        .useHandler(
+            []()
+            {
+                debug(ATA_DRIVER, "probeIRQ\n");
+                BDManager::instance().probeIRQ = false;
+            });
 
-  controller.selectDrive(drive_num);
+    controller.selectDrive(drive_num);
 
-  IDEControllerChannel::ControlRegister::DeviceControl dc{};
-  dc.interrupt_disable = 0;
-  controller.control_regs[IDEControllerChannel::ControlRegister::DEVICE_CONTROL].write(dc);
+    IDEControllerChannel::ControlRegister::DeviceControl dc{};
+    dc.interrupt_disable = 0;
+    controller.control_regs[IDEControllerChannel::ControlRegister::DEVICE_CONTROL].write(dc);
 
-  controller.io_regs[IDEControllerChannel::IoRegister::COMMAND].write(ATACommand::PIO::IDENTIFY_DEVICE);
-  controller.waitDataReady();
-  eastl::array<uint16_t, 256> identify{};
-  pioReadData(identify);
+    controller.io_regs[IDEControllerChannel::IoRegister::COMMAND].write(
+        ATACommand::PIO::IDENTIFY_DEVICE);
+    controller.waitDataReady();
+    eastl::array<uint16_t, 256> identify{};
+    pioReadData(identify);
 
-  if (ATA_DRIVER & OUTPUT_ADVANCED)
-      printIdentifyInfo(identify);
+    if (ATA_DRIVER & OUTPUT_ADVANCED)
+        printIdentifyInfo(identify);
 
-  lba = identify[49] & (1 << 9);
-  numsec = *(uint32_t*)&identify[60];
+    lba = identify[49] & (1 << 9);
+    numsec = *(uint32_t*)&identify[60];
 
-  HPC = identify[3];
-  SPT = identify[6];
-  uint32 CYLS = identify[1];
+    HPC = identify[3];
+    SPT = identify[6];
+    uint32 CYLS = identify[1];
 
-  if (!numsec)
-      numsec = CYLS * HPC * SPT;
+    if (!numsec)
+        numsec = CYLS * HPC * SPT;
 
-  uint32_t logical_sector_size = *(uint32_t*)&identify[117];
-  sector_word_size = logical_sector_size ? logical_sector_size : 256;
+    uint32_t logical_sector_size = *(uint32_t*)&identify[117];
+    sector_word_size = logical_sector_size ? logical_sector_size : 256;
 
-  debug(ATA_DRIVER, "Using LBA: %u, # sectors: %u, sector size: %zu\n", lba, numsec, sector_word_size*sizeof(uint16_t));
+    debug(ATA_DRIVER, "Using LBA: %u, # sectors: %u, sector size: %zu\n", lba, numsec,
+          sector_word_size * sizeof(uint16_t));
 
-  debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
+    // Clear pending interrupts by reading status register
+    [[maybe_unused]] auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
 
-  {
-      WithInterrupts intr(true);
-      ArchInterrupts::enableIRQ(irq_domain.irq());
-      testIRQ();
-  }
+    debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
+
+    {
+        ArchInterrupts::enableIRQ(irq_domain.irq());
+        WithInterrupts intr(true);
+        testIRQ();
+    }
 
   debug(ATA_DRIVER, "ctor: Using ATA mode: %d !!\n", (int)mode);
 
@@ -163,12 +172,6 @@ int32 ATADrive::selectSector(uint32 start_sector, uint32 num_sectors)
   if (!controller.waitDriveReady())
       return -1;
 
-  // /* Wait for drive to set DRDY */
-  // TIMEOUT_CHECK(
-  //     !controller.control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read().ready,
-  //     TIMEOUT_WARNING();
-  //     return -1;);
-
   return 0;
 }
 
@@ -184,7 +187,7 @@ void ATADrive::pioReadData(eastl::span<uint16_t> buffer)
 void ATADrive::pioWriteData(eastl::span<uint16_t> buffer)
 {
     // Don't use rep outsw here because of required delay after port write
-    for (uint16_t& word : buffer)
+    for (uint16_t const& word : buffer)
     {
         controller.io_regs[IDEControllerChannel::IoRegister::DATA].write(word);
     }
@@ -453,7 +456,7 @@ void ATADrive::serviceIRQ()
 }
 
 
-void ATADrive::printIdentifyInfo(eastl::span<uint16_t, 256> id)
+void ATADrive::printIdentifyInfo(eastl::span<uint16_t, 256> id) const
 {
     uint16_t serialnum[11]{};
     uint16_t firmware_rev[5]{};
@@ -590,7 +593,6 @@ bool PATADeviceDriver::probe(const IDEDeviceDescription& descr)
         debug(ATA_DRIVER, "Create block device %s\n", disk_name.c_str());
         auto drv = new ATADrive(*controller, drive_num);
         bindDevice(*drv);
-        // controller->addSubDevice(*drv);
         auto* bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(),
                                         drv->getSectorSize(), disk_name.c_str(), true);
 

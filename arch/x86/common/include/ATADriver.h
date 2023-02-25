@@ -73,7 +73,7 @@ public:
      */
     void testIRQ();
 
-    void printIdentifyInfo(eastl::span<uint16_t, 256> id);
+    void printIdentifyInfo(eastl::span<uint16_t, 256> id) const;
 
     uint32 HPC, SPT; // HEADS PER CYLINDER and SECTORS PER TRACK
 
@@ -95,7 +95,7 @@ private:
     bool lba;
     bool lba_48bit;
 
-    uint32 jiffies;
+    size_t jiffies = 0;
 
     BD_ATA_MODE mode;
 
