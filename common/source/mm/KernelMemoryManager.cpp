@@ -239,7 +239,7 @@ pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t ne
 }
 
 
-MallocSegment *KernelMemoryManager::getSegmentFromAddress(pointer virtual_address)
+MallocSegment* KernelMemoryManager::getSegmentFromAddress(pointer virtual_address) const
 {
   MallocSegment *m_segment;
   m_segment = (MallocSegment*) (virtual_address - sizeof(MallocSegment));
@@ -298,24 +298,27 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
 
   assert(this_one && "trying to access a nullpointer");
   this_one->checkCanary();
-  assert(this_one->getSize() >= requested_size && "segment is too small for requested size");
+  const size_t size = this_one->getSize();
+  assert(size >= requested_size && "segment is too small for requested size");
   assert((requested_size & 0xF) == 0 && "Attempt to fill segment with unaligned size");
 
+  // TODO: Rest of free memory is in one big (> multiple megabytes) unused chunk at the end that will be completely checked
+  // and set to zero _every time_ a fresh chunk is allocated/split off from the big chunk. This is slow as hell.
   size_t* mem = (size_t*) (this_one + 1);
   uint8* memb = (uint8*)mem;
   // sizeof(size_t) steps
   if (zero_check)
   {
-    for (size_t i = 0; i < this_one->getSize() / sizeof(*mem); ++i)
+    for (size_t i = 0, steps = size / sizeof(*mem); i < steps; ++i)
     {
       if(unlikely(mem[i] != 0))
       {
-        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%zx)\n", mem + i, mem[i]);
+        debugAlways(KMM, "KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%zx)\n", mem + i, mem[i]);
         if(this_one->freed_at_)
         {
           if(kernel_debug_info)
           {
-            kprintfd("KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
+            debugAlways(KMM, "KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
             kernel_debug_info->printCallInformation(this_one->freed_at_);
           }
           assert(false);
@@ -324,16 +327,16 @@ void KernelMemoryManager::fillSegment(MallocSegment *this_one, size_t requested_
       }
     }
     // handle remaining bytes
-    for(size_t i = this_one->getSize() - (this_one->getSize() % sizeof(*mem)); i < this_one->getSize(); ++i)
+    for(size_t i = size - (size % sizeof(*mem)); i < size; ++i)
     {
       if(unlikely(memb[i] != 0))
       {
-        kprintfd("KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%x)\n", memb + i, memb[i]);
+        debugAlways(KMM, "KernelMemoryManager::fillSegment: WARNING: Memory not zero at %p (value=%x)\n", memb + i, memb[i]);
         if(this_one->freed_at_)
         {
           if(kernel_debug_info)
           {
-            kprintfd("KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
+            debugAlways(KMM, "KernelMemoryManager::freeSegment: The chunk may previously be freed at: ");
             kernel_debug_info->printCallInformation(this_one->freed_at_);
           }
           assert(false);
@@ -524,7 +527,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
 }
 
 
-Thread* KernelMemoryManager::KMMLockHeldBy()
+Thread* KernelMemoryManager::KMMLockHeldBy() const
 {
   return lock_.heldBy();
 }

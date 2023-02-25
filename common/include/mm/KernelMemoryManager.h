@@ -29,7 +29,7 @@ class MallocSegment
       setUsed(used);
     }
 
-    size_t getSize()
+    [[nodiscard]] size_t getSize() const
     {
       return (size_flag_ & 0x7FFFFFFF);
     }
@@ -40,7 +40,7 @@ class MallocSegment
       size_flag_ |= (size & 0x7FFFFFFF);
     }
 
-    bool getUsed()
+    [[nodiscard]] bool getUsed() const
     {
       return (size_flag_ & 0x80000000);
     }
@@ -53,7 +53,7 @@ class MallocSegment
     }
 
     bool checkCanary();
-    bool markerOk()
+    [[nodiscard]] bool markerOk() const
     {
       return marker_ == (0xdeadbeef00000000ull | (uint32) (size_t) this);
     }
@@ -111,9 +111,9 @@ class KernelMemoryManager
 
     Mutex& getKMMLock();
 
-    Thread* KMMLockHeldBy();
+    [[nodiscard]] Thread* KMMLockHeldBy() const;
 
-    pointer getKernelBreak() const;
+    [[nodiscard]] pointer getKernelBreak() const;
     size_t getUsedKernelMemory(bool show_allocs);
     void startTracing();
     void stopTracing();
@@ -141,7 +141,7 @@ class KernelMemoryManager
     void fillSegment(MallocSegment *this_one, size_t size, uint32 zero_check = 1);
 
     void freeSegment(MallocSegment *this_one, pointer called_by);
-    MallocSegment *getSegmentFromAddress(pointer virtual_address);
+    [[nodiscard]] MallocSegment *getSegmentFromAddress(pointer virtual_address) const;
 
     MallocSegment* mergeSegments(MallocSegment* s1, MallocSegment* s2);
 
