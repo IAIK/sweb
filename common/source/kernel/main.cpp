@@ -1,18 +1,13 @@
 #include <ProcessRegistry.h>
 #include <types.h>
-#include "ArchSerialInfo.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #include "PageManager.h"
-#include "KernelMemoryManager.h"
 #include "ArchInterrupts.h"
 #include "ArchThreads.h"
 #include "kprintf.h"
-#include "Thread.h"
 #include "Scheduler.h"
 #include "ArchCommon.h"
-#include "ArchThreads.h"
-#include "Mutex.h"
 #include "debug_bochs.h"
 #include "ArchMemory.h"
 #include "Loader.h"
@@ -20,7 +15,6 @@
 #include "SerialManager.h"
 #include "KeyboardManager.h"
 #include "VfsSyscall.h"
-#include "FileSystemInfo.h"
 #include "Dentry.h"
 #include "DeviceFSType.h"
 #include "RamFSType.h"
@@ -28,13 +22,11 @@
 #include "VirtualFileSystem.h"
 #include "FileDescriptor.h"
 #include "TextConsole.h"
-#include "FrameBufferConsole.h"
 #include "Terminal.h"
 #include "outerrstream.h"
 #include "user_progs.h"
 
 extern void* kernel_end_address;
-extern Console* main_console;
 
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
 SystemState system_state;
@@ -71,7 +63,7 @@ extern "C" void startup()
 
   debug(MAIN, "Threads init\n");
   ArchThreads::initialise();
-  debug(MAIN, "Interupts init\n");
+  debug(MAIN, "Interrupts init\n");
   ArchInterrupts::initialise();
 
   ArchInterrupts::setTimerFrequency(IRQ0_TIMER_FREQUENCY);
@@ -86,7 +78,7 @@ extern "C" void startup()
   default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
-  // initialise global and static objects
+  // Important: Initialise global and static objects
   new (&global_fd_list) FileDescriptorList();
 
   debug(MAIN, "Block Device creation\n");

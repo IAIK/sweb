@@ -10,13 +10,13 @@ class Condition : public Lock
   public:
     /**
    * Constructor
-   * A Conditon needs a Mutex for creation. Only one thread can acquire this Mutex
+   * A Condition needs a Mutex for creation. Only one thread can acquire this Mutex
    * and enter the critical section
    * @param mutex the Mutex
    * @param name the name of the condition
-   * @return Condtition instance
    */
   Condition ( Mutex *mutex, const char* name);
+  ~Condition();
 
   Condition(Condition const &) = delete;
   Condition &operator=(Condition const &) = delete;

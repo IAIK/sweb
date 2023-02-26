@@ -5,10 +5,10 @@
 #include "Loader.h"
 #include "VfsSyscall.h"
 #include "File.h"
-#include "ArchMemory.h"
 #include "PageManager.h"
 #include "ArchThreads.h"
 #include "offsets.h"
+#include "Scheduler.h"
 
 UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
     Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename, O_RDONLY))

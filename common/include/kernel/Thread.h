@@ -5,12 +5,8 @@
 
 #define STACK_CANARY ((uint32)0xDEADDEAD ^ (uint32)(size_t)this)
 
-enum ThreadState
-{
-  Running, Sleeping, ToBeDestroyed
-};
-
-enum SystemState { BOOTING, RUNNING, KPANIC };
+enum ThreadState{Running, Sleeping, ToBeDestroyed};
+enum SystemState {BOOTING, RUNNING, KPANIC};
 extern SystemState system_state;
 
 class Thread;
@@ -18,7 +14,6 @@ class ArchThreadRegisters;
 class Loader;
 class Terminal;
 class Mutex;
-class FsWorkingDirectory;
 class Lock;
 
 extern Thread* currentThread;
@@ -33,10 +28,10 @@ class Thread
     enum TYPE { KERNEL_THREAD, USER_THREAD };
 
     /**
-     * Constructor with FsWorkingDirectory given
-     * @param working_dir working directory informations for the new Thread
-     * @param name Thread's name
-     * @return Thread instance
+     * Constructor for a new thread with a given working directory, name and type
+     * @param working_dir working directory information for the new Thread
+     * @param name The name of the thread
+     * @param type The type of the thread (user or kernel thread)
      */
     Thread(FileSystemInfo* working_dir, ustl::string name, Thread::TYPE type);
 
@@ -65,22 +60,12 @@ class Thread
 
     void setTerminal(Terminal *my_term);
 
-    /**
-     * getting the informations about the working Directory of this
-     * Thread
-     * @return the thread's FsWorkingDirectory
-     */
-    FileSystemInfo* getWorkingDirInfo(void);
+    FileSystemInfo* getWorkingDirInfo();
 
-    /**
-     * sets the working directory informations of the this Thread
-     * @param working_dir the new working directory informations
-     */
     void setWorkingDirInfo(FileSystemInfo* working_dir);
 
     /**
-     * prints a backtrace (i.e. the call stack) to the
-     * debug output.
+     * Prints a backtrace (i.e. the call stack) to the debug output.
      * @param use_stored_thread_info determines whether to use the stored or the current thread registers
      */
     void printBacktrace();

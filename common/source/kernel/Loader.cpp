@@ -1,19 +1,14 @@
 #include "Loader.h"
-#include "kprintf.h"
 #include "ArchThreads.h"
 #include "PageManager.h"
 #include "ArchMemory.h"
-#include "kstring.h"
-#include "ArchInterrupts.h"
 #include "Syscall.h"
 #include "VfsSyscall.h"
-#include <uvector.h>
-#include "backtrace.h"
 #include "Stabs2DebugInfo.h"
 #include "SWEBDebugInfo.h"
-#include <umemory.h>
 #include "File.h"
 #include "FileDescriptor.h"
+#include "Scheduler.h"
 
 Loader::Loader(ssize_t fd) : fd_(fd), hdr_(0), phdrs_(), program_binary_lock_("Loader::program_binary_lock_"), userspace_debug_info_(0)
 {

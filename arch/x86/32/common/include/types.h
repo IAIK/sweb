@@ -23,6 +23,8 @@ typedef int32 ssize_t;
 typedef uint32 uid_t;
 typedef uint32 gid_t;
 
+#pragma GCC poison double float
+
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 

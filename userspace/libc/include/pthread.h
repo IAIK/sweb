@@ -52,6 +52,10 @@ extern int pthread_cond_broadcast(pthread_cond_t *cond);
 
 extern int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 
+extern int pthread_setcancelstate(int state, int *oldstate);
+
+extern int pthread_setcanceltype(int type, int *oldtype);
+
 #ifdef __cplusplus
 }
 #endif
