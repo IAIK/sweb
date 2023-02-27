@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "chardev.h"
+#include "ArchSerialInfo.h"
 
 #define MAX_PORTS  16
 

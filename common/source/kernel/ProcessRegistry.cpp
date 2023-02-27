@@ -5,7 +5,7 @@
 #include "kprintf.h"
 #include "VfsSyscall.h"
 #include "VirtualFileSystem.h"
-
+#include "PageManager.h"
 
 ProcessRegistry* ProcessRegistry::instance_ = 0;
 
@@ -65,8 +65,17 @@ void ProcessRegistry::Run()
   vfs.rootUmount();
 
   Scheduler::instance()->printStackTraces();
-
   Scheduler::instance()->printThreadList();
+
+  PageManager* pm = PageManager::instance();
+  if(!DYNAMIC_KMM && pm->getNumFreePages() != pm->getNumPagesForUser())
+  {
+    PageManager::instance()->printBitmap();
+    debug(PM, "WARNING: You might be leaking physical memory pages somewhere\n");
+    debug(PM, "%u/%u free physical pages after unmounting detected\n",
+          pm->getNumFreePages(),
+          pm->getNumPagesForUser());
+  }
 
   kill();
 }

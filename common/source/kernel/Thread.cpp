@@ -1,5 +1,5 @@
 #include "Thread.h"
-#include "ArchCommon.h"
+
 #include "kprintf.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
@@ -32,7 +32,7 @@ extern "C" void threadStartHack()
 Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type) :
     kernel_registers_(0), user_registers_(0), switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0), loader_(0),
     next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), state_(Running), tid_(0),
-    my_terminal_(0), working_dir_(working_dir), name_(name)
+    my_terminal_(0), working_dir_(working_dir), name_(ustl::move(name))
 {
   debug(THREAD, "Thread ctor, this is %p, stack is %p, fs_info ptr: %p\n", this, kernel_stack_, working_dir_);
   ArchThreads::createKernelRegisters(kernel_registers_, (void*) (type == Thread::USER_THREAD ? 0 : threadStartHack), getKernelStackStartPointer());
@@ -57,7 +57,6 @@ Thread::~Thread()
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
 
-// If the Thread we want to kill is the currentThread, we better not return
 // DO NOT use new / delete in this Method, as it is sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
@@ -70,6 +69,7 @@ void Thread::kill()
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
+    assert(false && "This should never happen, how are we still alive?");
   }
 }
 
@@ -82,15 +82,12 @@ void* Thread::getKernelStackStartPointer()
 
 bool Thread::isStackCanaryOK()
 {
-  return ((kernel_stack_[0] == STACK_CANARY) && (kernel_stack_[2047] == STACK_CANARY));
+  return kernel_stack_[0] == STACK_CANARY && kernel_stack_[2047] == STACK_CANARY;
 }
 
 Terminal *Thread::getTerminal()
 {
-  if (my_terminal_)
-    return my_terminal_;
-  else
-    return (main_console->getActiveTerminal());
+  return my_terminal_ ? my_terminal_ : main_console->getActiveTerminal();
 }
 
 void Thread::setTerminal(Terminal *my_term)
@@ -103,7 +100,7 @@ void Thread::printBacktrace()
   printBacktrace(currentThread != this);
 }
 
-FileSystemInfo* Thread::getWorkingDirInfo(void)
+FileSystemInfo* Thread::getWorkingDirInfo()
 {
   return working_dir_;
 }

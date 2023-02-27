@@ -1,12 +1,11 @@
 #pragma once
 
 #include "types.h"
-#include "Thread.h"
-#include "Scheduler.h"
 #include "Mutex.h"
 #include "ArchMemory.h"
 #include "ElfFormat.h"
 #include <uvector.h>
+#include <ulist.h>
 
 class Stabs2DebugInfo;
 
@@ -17,15 +16,14 @@ class Loader
     ~Loader();
 
     /**
-     *Initialises the Addressspace of the User, creates the Thread's
-     *InfosUserspaceThread and sets the PageDirectory,
-     *loads the ehdr and phdrs from executable
+     * Loads the ehdr and phdrs from the executable and (optionally) loads debug info.
      * @return true if this was successful, false otherwise
      */
     bool loadExecutableAndInitProcess();
 
     /**
-     * loads one page by its virtual address: gets a free page, copies the page, maps it
+     * Loads one binary page by its virtual address:
+     * Gets a free physical page, copies the contents of the binary to it, and then maps it.
      * @param virtual_address virtual address where to find the page to load
      */
     void loadPage(pointer virtual_address);

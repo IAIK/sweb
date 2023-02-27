@@ -50,7 +50,7 @@ class BDVirtualDevice
      * @param buffer to save the data that has been read
      *
      */
-    virtual int32 readData(uint32 offset, uint32 size, char *buffer);
+    [[nodiscard]] virtual int32 readData(uint32 offset, uint32 size, char *buffer);
 
     /**
      * reads the data from the inode on the current device
@@ -59,7 +59,7 @@ class BDVirtualDevice
      * @param buffer data, that should be written
      *
      */
-    virtual int32 writeData(uint32 offset, uint32 size, char *buffer);
+    [[nodiscard]] virtual int32 writeData(uint32 offset, uint32 size, char *buffer);
 
     /**
      * the PartitionType is a 8bit field in the PartitionTable of a MBR

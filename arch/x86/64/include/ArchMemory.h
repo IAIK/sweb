@@ -4,143 +4,122 @@
 #include "offsets.h"
 #include "paging-definitions.h"
 
-class ArchMemoryMapping
+struct ArchMemoryMapping
 {
-  public:
-    PageMapLevel4Entry* pml4;
-    PageDirPointerTableEntry* pdpt;
-    PageDirEntry* pd;
-    PageTableEntry* pt;
-    pointer page;
+  PageMapLevel4Entry* pml4;
+  PageDirPointerTableEntry* pdpt;
+  PageDirEntry* pd;
+  PageTableEntry* pt;
+  pointer page;
 
-    uint64 pml4_ppn;
-    uint64 pdpt_ppn;
-    uint64 pd_ppn;
-    uint64 pt_ppn;
-    uint64 page_ppn;
+  uint64 pml4_ppn;
+  uint64 pdpt_ppn;
+  uint64 pd_ppn;
+  uint64 pt_ppn;
+  uint64 page_ppn;
 
-    uint64 page_size;
+  uint64 page_size;
 
-    uint64 pml4i;
-    uint64 pdpti;
-    uint64 pdi;
-    uint64 pti;
+  uint64 pml4i;
+  uint64 pdpti;
+  uint64 pdi;
+  uint64 pti;
 };
 
 class ArchMemory
 {
-public:
+  public:
     ArchMemory();
+    ~ArchMemory();
 
-/** 
- *
- * maps a virtual page to a physical page (pde and pte need to be set up first)
- *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page 
- * @param physical_page
- * @param user_access PTE User/Supervisor Flag, governing the binary Paging
- * Privilege Mechanism
- */
-  __attribute__((warn_unused_result)) bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access);
+    uint64 page_map_level_4_;
+    static constexpr size_t RESERVED_START = 0xFFFFFFFF80000ULL;
+    static constexpr size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
 
-/**
- * removes the mapping to a virtual_page by marking its PTE Entry as non valid
- *
- * @param physical_page_directory_page Real Page where the PDE to work on resides
- * @param virtual_page which will be invalidated
- */
-  bool unmapPage(uint64 virtual_page);
+    /**
+     * Maps a virtual page to a physical page and creates the upper paging-hierarchy tables on demand.
+     * @param virtual_page The virtual page to map
+     * @param physical_page The physical page to which the virtual page shall be mapped
+     * @param user_access PTE flag indicating whether the virtual page shall be accessible by threads in user-mode
+     * @return True if successful, false otherwise (the PT entry already exists)
+     */
+    [[nodiscard]] bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access);
 
-  ~ArchMemory();
+    /**
+     * Removes the mapping to a virtual_page by marking its PTE entry as non-valid and frees the underlying physical page.
+     * Potentially de-allocates the upper paging-hierarchy tables, depending on their occupancy.
+     * @param virtual_page The virtual page which shall be unmapped
+     * @return Currently always returns true
+     */
+    bool unmapPage(uint64 virtual_page);
 
-/**
- * Takes a Physical Page Number in Real Memory and returns a virtual address than
- * can be used to access given page
- * @param ppn Physical Page Number
- * @param page_size Optional, defaults to 4k pages, but you ned to set it to
- * 1024*4096 if you have a 4m page number
- * @return Virtual Address above 3GB pointing to the start of a memory segment that
- * is mapped to the physical page given
- */
+    /**
+     * Takes a physical page number (PPN) and returns a virtual address that can be used to access given physical page.
+     * https://wiki.osdev.org/Identity_Paging
+     * @param ppn The physical page number
+     * @param page_size Optional, defaults to 4k pages, but you need to set it to
+     * 512 * 4096 or 512 * 512 * 4096 if you have a 2M or 1G page number. Not used in baseline SWEB.
+     * @return Virtual Address above KERNEL_START pointing to the start of a memory segment that
+     * acts as a 1:1 mapping to the given physical page
+     */
     static pointer getIdentAddressOfPPN(uint64 ppn, uint32 page_size=PAGE_SIZE)
     {
       return 0xFFFFF00000000000ULL | (ppn * page_size);
     }
 
-/**
- * Checks if a given Virtual Address is valid and is mapped to real memory
- * @param vaddress_to_check Virtual Address we want to check
- * @return true: if mapping exists\nfalse: if the given virtual address is unmapped
- * and accessing it would result in a pageFault
- */
-  pointer checkAddressValid(uint64 vaddress_to_check);
+    /**
+     * Checks whether the given virtual address is valid and mapped to physical memory.
+     * @param vaddress_to_check The virtual address to check
+     * @return True if mapping exists, false otherwise (accessing it would result in a pagefault)
+     */
+    pointer checkAddressValid(uint64 vaddress_to_check);
 
-/**
- * Takes a virtual_page and search through the pageTable and pageDirectory for the
- * physical_page it refers to
- * to get a physical address (which you can only use by adding 3gb to it) multiply
- * the &physical_page with the return value
- * @param virtual_page virtual Page to look up
- * @param *physical_page Pointer to the result
- * @param *physical_pte_page optional: Pointer to physical page number of used PTE, or unchanged if 4MiB Page
- * @return 0: if the virtual page doesn't map to any physical page\notherwise
- * returns the page size in byte (4096 for 4KiB pages or 4096*1024 for 4MiB pages)
- */
-  static uint64 get_PPN_Of_VPN_In_KernelMapping(uint64 virtual_page, uint64 *physical_page, uint64 *physical_pte_page=0);
-  const ArchMemoryMapping resolveMapping(uint64 vpage);
-  static const ArchMemoryMapping resolveMapping(uint64 pml4,uint64 vpage);
+    /**
+     * Fills out an ArchMemoryMapping object by translating the given
+     * virtual page and collecting infos from the page tables along the way.
+     * @param pml4 The pml4 of the ArchMemory object for which to translate the vpage
+     * @param vpage The virtual page to resolve
+     * @return Returns a completely or partially filled out ArchMemoryMapping object
+     */
+    static const ArchMemoryMapping resolveMapping(uint64 pml4, uint64 vpage);
 
-/**
- *
- * maps a virtual page to a physical page in kernel mapping
- *
- * @param virtual_page
- * @param physical_page
- */
-  static void mapKernelPage(uint64 virtual_page, uint64 physical_page);
+    const ArchMemoryMapping resolveMapping(uint64 vpage);
 
-/**
- * removes the mapping to a virtual_page by marking its PTE Entry as non valid
- * in kernel mapping
- *
- * @param virtual_page which will be invalidated
- */
-  static void unmapKernelPage(uint64 virtual_page);
+    static uint64 get_PPN_Of_VPN_In_KernelMapping(uint64 virtual_page,
+                                                  uint64 *physical_page, uint64 *physical_pte_page=nullptr);
 
-  uint64 page_map_level_4_;
+    static void mapKernelPage(uint64 virtual_page, uint64 physical_page);
 
-  uint64 getRootOfPagingStructure();
-  static PageMapLevel4Entry* getRootOfKernelPagingStructure();
+    static void unmapKernelPage(uint64 virtual_page);
 
-  static const size_t RESERVED_START = 0xFFFFFFFF80000ULL;
-  static const size_t RESERVED_END = 0xFFFFFFFFC0000ULL;
+    static PageMapLevel4Entry* getRootOfKernelPagingStructure();
 
-private:
+    /// Prevents accidental copying/assignment, can be implemented if needed
+    ArchMemory(ArchMemory const &src) = delete;
+    ArchMemory &operator=(ArchMemory const &src) = delete;
 
-/** 
- * Adds a page directory entry to the given page directory.
- * (In other words, adds the reference to a new page table to a given
- * page directory.)
- *
- * @param physical_page_directory_page physical page containing the target PD.
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- * @param physical_page_table_page physical page of the new page table.
- */
-  template <typename T> static bool insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable);
+  private:
+    /**
+     * Adds a PML4Entry, PDPTEntry, PDEntry or PTEntry to the given PML4, PDPT, PD or PT respectively.
+     * (In other words, adds the reference to a new page table to a given page directory, for example.)
+     *
+     * @param map_ptr identity address of the physical page containing the target page table.
+     * @param index Index of the PML4Entry, PDPTEntry, PDEntry or PTEntry to be added.
+     * @param ppn physical page number of the new PDPT, PD, PT or page.
+     * @param bzero if true, the content of the newly inserted physical page is set to 0
+     * @param size if true, a 1G or 2M page is inserted, otherwise a PD or PT respectively.
+     * @param user_access if true, threads in user mode may access the inserted page. Otherwise, a kernel page is mapped
+     * @param writable if true, the inserted pages are writable
+     */
+    template <typename T> static void insert(pointer map_ptr, uint64 index, uint64 ppn, uint64 bzero, uint64 size, uint64 user_access, uint64 writeable);
 
-/**
- * Removes a page directory entry from a given page directory if it is present
- * in the first place. Futhermore, the target page table is assured to be
- * empty.
- *
- * @param physical_page_directory_page physical page containing the target PD.
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- */
-  template<typename T> static bool checkAndRemove(pointer map_ptr, uint64 index);
-
-  ArchMemory(ArchMemory const &src);
-  ArchMemory &operator=(ArchMemory const &src);
-
+    /**
+     * Removes a PML4Entry, PDPTEntry, PDEntry or PTEntry from a given PML4, PDPT, PD or PT if it is present
+     * in the first place. This is done by setting the entry to present = 0 and clearing all other bits.
+     *
+     * @param map_ptr identity address of the physical page containing the target page table.
+     * @param index Index of the PML4Entry, PDPTEntry, PDEntry or PTEntry to be removed.
+     * @return True if the table map_ptr is full of zeroes and thus able to be freed.
+     */
+    template<typename T> static bool checkAndRemove(pointer map_ptr, uint64 index);
 };
-

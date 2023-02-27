@@ -4,14 +4,13 @@
 #include "Terminal.h"
 #include "debug_bochs.h"
 #include "VfsSyscall.h"
-#include "UserProcess.h"
 #include "ProcessRegistry.h"
 #include "File.h"
+#include "Scheduler.h"
 
 size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
 {
   size_t return_value = 0;
-
   if ((syscall_number != sc_sched_yield) && (syscall_number != sc_outline)) // no debug print because these might occur very often
   {
     debug(SYSCALL, "Syscall %zd called with arguments %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx) %zd(=%zx)\n",
@@ -51,7 +50,8 @@ size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2
       pseudols((const char*) arg1, (char*) arg2, arg3);
       break;
     default:
-      kprintf("Syscall::syscall_exception: Unimplemented Syscall Number %zd\n", syscall_number);
+      return_value = -1;
+      kprintf("Syscall::syscallException: Unimplemented Syscall Number %zd\n", syscall_number);
   }
   return return_value;
 }
@@ -69,6 +69,7 @@ void Syscall::exit(size_t exit_code)
 {
   debug(SYSCALL, "Syscall::EXIT: called, exit_code: %zd\n", exit_code);
   currentThread->kill();
+  assert(false && "This should never happen");
 }
 
 size_t Syscall::write(size_t fd, pointer buffer, size_t size)
@@ -145,7 +146,7 @@ void Syscall::outline(size_t port, pointer text)
 
 size_t Syscall::createprocess(size_t path, size_t sleep)
 {
-  // THIS METHOD IS FOR TESTING PURPOSES ONLY!
+  // THIS METHOD IS FOR TESTING PURPOSES ONLY AND NOT MULTITHREADING SAFE!
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
 
   // parameter check begin
@@ -153,6 +154,7 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   {
     return -1U;
   }
+
   debug(SYSCALL, "Syscall::createprocess: path:%s sleep:%zd\n", (char*) path, sleep);
   ssize_t fd = VfsSyscall::open((const char*) path, O_RDONLY);
   if (fd == -1)

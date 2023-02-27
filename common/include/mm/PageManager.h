@@ -3,10 +3,11 @@
 #include "types.h"
 #include "paging-definitions.h"
 #include "SpinLock.h"
-#include "Bitmap.h"
 
 #define DYNAMIC_KMM (0) // Please note that this means that the KMM depends on the page manager
 // and you will have a harder time implementing swapping. Pros only!
+
+class Bitmap;
 
 class PageManager
 {
@@ -14,29 +15,29 @@ class PageManager
     static PageManager *instance();
 
     /**
-     * returns the number of 4k Pages avaible to sweb.
-     * ((size of the first usable memory region or max 1Gb) / PAGESIZE)
-     * @return number of available pages
+     * Returns the total number of physical pages available to SWEB.
+     * @return Number of available physical pages
      */
     uint32 getTotalNumPages() const;
 
     /**
-     * returns the number of currently free pages
-     * @return number of free pages
+     * Returns the number of currently free physical pages.
+     * @return Number of free physical pages
      */
-    size_t getNumFreePages() const;
+    uint32 getNumFreePages() const;
 
     /**
-     * returns the number of the lowest free Page
-     * and marks that Page as used.
-     * returns always 4kb ppns!
+     * Marks the lowest free physical page as used and returns it.
+     * Always returns 4KB PPNs.
+     * @param page_size The requested page size, must be a multiple of PAGE_SIZE
+     * @return The allocated physical page PPN.
      */
     uint32 allocPPN(uint32 page_size = PAGE_SIZE);
 
     /**
-     * marks physical page <page_number> as free, if it was used in
-     * user or kernel space.
-     * @param page_number Physcial Page to mark as unused
+     * Marks the given physical page as free
+     * @param page_number The physical page PPN to free
+     * @param page_size The page size to free, must be a multiple of PAGE_SIZE
      */
     void freePPN(uint32 page_number, uint32 page_size = PAGE_SIZE);
 
@@ -47,18 +48,11 @@ class PageManager
 
     PageManager();
 
-    void printBitmap()
-    {
-      page_usage_table_->bmprint();
-    }
+    void printBitmap();
+
+    uint32 getNumPagesForUser() const;
 
   private:
-    /**
-     * used internally to mark pages as reserved
-     * @param ppn
-     * @param num
-     * @return
-     */
     bool reservePages(uint32 ppn, uint32 num = 1);
 
     PageManager(PageManager const&);
@@ -66,6 +60,7 @@ class PageManager
     Bitmap* page_usage_table_;
     uint32 number_of_pages_;
     uint32 lowest_unreserved_page_;
+    uint32 num_pages_for_user_;
 
     SpinLock lock_;
 

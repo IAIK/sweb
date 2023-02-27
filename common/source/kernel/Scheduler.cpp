@@ -17,7 +17,7 @@
 ArchThreadRegisters *currentThreadRegisters;
 Thread *currentThread;
 
-Scheduler *Scheduler::instance_ = 0;
+Scheduler *Scheduler::instance_ = nullptr;
 
 Scheduler *Scheduler::instance()
 {
@@ -34,13 +34,13 @@ Scheduler::Scheduler()
   addNewThread(&idle_thread_);
 }
 
-uint32 Scheduler::schedule()
+void Scheduler::schedule()
 {
   assert(!ArchInterrupts::testIFSet() && "Tried to schedule with Interrupts enabled");
-  if (block_scheduling_ != 0)
+  if (block_scheduling_)
   {
     debug(SCHEDULER, "schedule: currently blocked\n");
-    return 0;
+    return;
   }
 
   auto it = threads_.begin();
@@ -54,24 +54,9 @@ uint32 Scheduler::schedule()
   }
 
   assert(it != threads_.end() && "No schedulable thread found");
-
   ustl::rotate(threads_.begin(), it + 1, threads_.end()); // no new/delete here - important because interrupts are disabled
-
   //debug(SCHEDULER, "Scheduler::schedule: new currentThread is %p %s, switch_to_userspace: %d\n", currentThread, currentThread->getName(), currentThread->switch_to_userspace_);
-
-  uint32 ret = 1;
-
-  if (currentThread->switch_to_userspace_)
-  {
-    currentThreadRegisters = currentThread->user_registers_;
-  }
-  else
-  {
-    currentThreadRegisters = currentThread->kernel_registers_;
-    ret = 0;
-  }
-
-  return ret;
+  currentThreadRegisters = currentThread->switch_to_userspace_ ? currentThread->user_registers_ : currentThread->kernel_registers_;
 }
 
 void Scheduler::addNewThread(Thread *thread)
@@ -121,13 +106,14 @@ void Scheduler::cleanupDeadThreads()
      functionality could be implemented more cleanly in another place.
      (e.g. Thread/Process destructor) */
 
+  assert(currentThread == &cleanup_thread_);
+
   lockScheduling();
-  uint32 thread_count_max = threads_.size();
-  if (thread_count_max > 1024)
-    thread_count_max = 1024;
+  uint32 thread_count_max = sizeof(cleanup_thread_.kernel_stack_) / (2 * sizeof(Thread*));
+  thread_count_max = ustl::min(thread_count_max, threads_.size());
   Thread* destroy_list[thread_count_max];
   uint32 thread_count = 0;
-  for (uint32 i = 0; i < threads_.size(); ++i)
+  for (uint32 i = 0; i < threads_.size() && thread_count < thread_count_max; ++i)
   {
     Thread* tmp = threads_[i];
     if (tmp->getState() == ToBeDestroyed)
@@ -136,8 +122,6 @@ void Scheduler::cleanupDeadThreads()
       threads_.erase(threads_.begin() + i); // Note: erase will not realloc!
       --i;
     }
-    if (thread_count >= thread_count_max)
-      break;
   }
   unlockScheduling();
   if (thread_count > 0)
@@ -155,7 +139,7 @@ void Scheduler::printThreadList()
   lockScheduling();
   debug(SCHEDULER, "Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
   for (size_t c = 0; c < threads_.size(); ++c)
-    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%zd]: %p  %zd:%s     [%s]\n", c, threads_[c],
+    debug(SCHEDULER, "Scheduler::printThreadList: threads_[%zd]: %p  %zd:%25s     [%s]\n", c, threads_[c],
           threads_[c]->getTID(), threads_[c]->getName(), Thread::threadStatePrintable[threads_[c]->state_]);
   unlockScheduling();
 }
@@ -173,10 +157,7 @@ void Scheduler::unlockScheduling()
 
 bool Scheduler::isSchedulingEnabled()
 {
-  if (this)
-    return (block_scheduling_ == 0);
-  else
-    return false;
+  return this && block_scheduling_ == 0;
 }
 
 bool Scheduler::isCurrentlyCleaningUp()
@@ -184,7 +165,7 @@ bool Scheduler::isCurrentlyCleaningUp()
   return currentThread == &cleanup_thread_;
 }
 
-uint32 Scheduler::getTicks()
+size_t Scheduler::getTicks()
 {
   return ticks_;
 }
@@ -199,9 +180,9 @@ void Scheduler::printStackTraces()
   lockScheduling();
   debug(BACKTRACE, "printing the backtraces of <%zd> threads:\n", threads_.size());
 
-  for (ustl::list<Thread*>::iterator it = threads_.begin(); it != threads_.end(); ++it)
+  for (const auto& thread : threads_)
   {
-    (*it)->printBacktrace();
+    thread->printBacktrace();
     debug(BACKTRACE, "\n");
     debug(BACKTRACE, "\n");
   }
@@ -211,27 +192,20 @@ void Scheduler::printStackTraces()
 
 void Scheduler::printLockingInformation()
 {
-  size_t thread_count;
-  Thread* thread;
   lockScheduling();
   kprintfd("\n");
   debug(LOCK, "Scheduler::printLockingInformation:\n");
-  for (thread_count = 0; thread_count < threads_.size(); ++thread_count)
+
+  for(Thread* t : threads_)
   {
-    thread = threads_[thread_count];
-    if(thread->holding_lock_list_ != 0)
-    {
-      Lock::printHoldingList(threads_[thread_count]);
-    }
+    if(t->holding_lock_list_)
+      Lock::printHoldingList(t);
   }
-  for (thread_count = 0; thread_count < threads_.size(); ++thread_count)
+  for(Thread* t : threads_)
   {
-    thread = threads_[thread_count];
-    if(thread->lock_waiting_on_ != 0)
-    {
-      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p).\n", thread->getName(), thread,
-            thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_ );
-    }
+    if(t->lock_waiting_on_)
+      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p).\n",
+            t->getName(), t, t->lock_waiting_on_ ->getName(), t->lock_waiting_on_ );
   }
   debug(LOCK, "Scheduler::printLockingInformation finished\n");
   unlockScheduling();

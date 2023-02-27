@@ -4,17 +4,15 @@
 #include "paging-definitions.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
-#include "debug_bochs.h"
 #include "kprintf.h"
 #include "Scheduler.h"
-#include "ArchInterrupts.h"
 #include "KernelMemoryManager.h"
 #include "assert.h"
 #include "Bitmap.h"
 
 PageManager pm;
 
-PageManager* PageManager::instance_ = 0;
+PageManager* PageManager::instance_ = nullptr;
 
 PageManager* PageManager::instance()
 {
@@ -25,9 +23,9 @@ PageManager* PageManager::instance()
 
 PageManager::PageManager() : lock_("PageManager::lock_")
 {
-  assert(instance_ == 0);
+  assert(!instance_);
   instance_ = this;
-  assert(KernelMemoryManager::instance_ == 0);
+  assert(!KernelMemoryManager::instance_);
   number_of_pages_ = 0;
   lowest_unreserved_page_ = 0;
 
@@ -163,6 +161,7 @@ PageManager::PageManager() : lock_("PageManager::lock_")
     }
   }
 
+  num_pages_for_user_ = DYNAMIC_KMM ? -1 : getNumFreePages();
   KernelMemoryManager::pm_ready_ = 1;
 }
 
@@ -171,7 +170,7 @@ uint32 PageManager::getTotalNumPages() const
   return number_of_pages_;
 }
 
-size_t PageManager::getNumFreePages() const
+uint32 PageManager::getNumFreePages() const
 {
   return page_usage_table_->getNumFreeBits();
 }
@@ -231,7 +230,11 @@ uint32 PageManager::allocPPN(uint32 page_size)
 void PageManager::freePPN(uint32 page_number, uint32 page_size)
 {
   assert((page_size % PAGE_SIZE) == 0);
-
+  if(page_number > getTotalNumPages())
+  {
+    debug(PM, "Tried to free PPN %u (=%x)\n", page_number, page_number);
+    assert(false && "PPN to be freed is out of range");
+  }
   memset((void*)ArchMemory::getIdentAddressOfPPN(page_number), 0xFF, page_size);
 
   lock_.acquire();
@@ -243,4 +246,14 @@ void PageManager::freePPN(uint32 page_number, uint32 page_size)
     page_usage_table_->unsetBit(p);
   }
   lock_.release();
+}
+
+void PageManager::printBitmap()
+{
+  page_usage_table_->bmprint();
+}
+
+uint32 PageManager::getNumPagesForUser() const
+{
+  return num_pages_for_user_;
 }
