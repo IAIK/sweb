@@ -294,12 +294,15 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
 {
   assert(buffer);
 #ifdef EXE2MINIXFS
+  size_t read_size = BLOCK_SIZE * num_blocks;
   fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
-  assert(fread(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
+  assert(fread(buffer, 1, read_size, (FILE*)s_dev_) == read_size);
 #else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
-  int32 read_retval = bdvd->readData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
-  assert(read_retval != -1 && "Disk read failed in MinixFSSuperblock::readBlocks()");
+  size_t block_size = bdvd->getBlockSize();
+  size_t read_size = num_blocks * block_size;
+  assert(bdvd->readData(block * block_size, read_size, buffer) == (ssize_t)read_size &&
+      "Disk read failed in MinixFSSuperblock::readBlocks()");
 #endif
 }
 
@@ -311,12 +314,15 @@ void MinixFSSuperblock::writeZone(uint16 zone, char* buffer)
 void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffer)
 {
 #ifdef EXE2MINIXFS
+  size_t write_size = BLOCK_SIZE * num_blocks;
   fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
-  assert(fwrite(buffer, 1, BLOCK_SIZE * num_blocks, (FILE*)s_dev_) == BLOCK_SIZE * num_blocks);
+  assert(fwrite(buffer, 1, write_size, (FILE*)s_dev_) == write_size);
 #else
   BDVirtualDevice* bdvd = BDManager::getInstance()->getDeviceByNumber(s_dev_);
-  int32 write_retval = bdvd->writeData(block * bdvd->getBlockSize(), num_blocks * bdvd->getBlockSize(), buffer);
-  assert(write_retval != -1 && "Disk write failed in MinixFSSuperblock::writeBlocks()");
+  size_t block_size = bdvd->getBlockSize();
+  size_t write_size = num_blocks * block_size;
+  assert(bdvd->writeData(block * block_size, write_size, buffer) == (ssize_t)write_size &&
+      "Disk write failed in MinixFSSuperblock::writeBlocks()");
 #endif
 }
 

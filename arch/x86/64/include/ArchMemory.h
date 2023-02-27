@@ -4,7 +4,7 @@
 #include "offsets.h"
 #include "paging-definitions.h"
 
-typedef struct
+struct ArchMemoryMapping
 {
   PageMapLevel4Entry* pml4;
   PageDirPointerTableEntry* pdpt;
@@ -24,7 +24,7 @@ typedef struct
   uint64 pdpti;
   uint64 pdi;
   uint64 pti;
-} ArchMemoryMapping;
+};
 
 class ArchMemory
 {
@@ -43,14 +43,15 @@ class ArchMemory
      * @param user_access PTE flag indicating whether the virtual page shall be accessible by threads in user-mode
      * @return True if successful, false otherwise (the PT entry already exists)
      */
-    __attribute__((warn_unused_result)) bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access);
+    [[nodiscard]] bool mapPage(uint64 virtual_page, uint64 physical_page, uint64 user_access);
 
     /**
      * Removes the mapping to a virtual_page by marking its PTE entry as non-valid and frees the underlying physical page.
      * Potentially de-allocates the upper paging-hierarchy tables, depending on their occupancy.
      * @param virtual_page The virtual page which shall be unmapped
+     * @return Currently always returns true
      */
-    void unmapPage(uint64 virtual_page);
+    bool unmapPage(uint64 virtual_page);
 
     /**
      * Takes a physical page number (PPN) and returns a virtual address that can be used to access given physical page.
@@ -93,6 +94,10 @@ class ArchMemory
 
     static PageMapLevel4Entry* getRootOfKernelPagingStructure();
 
+    /// Prevents accidental copying/assignment, can be implemented if needed
+    ArchMemory(ArchMemory const &src) = delete;
+    ArchMemory &operator=(ArchMemory const &src) = delete;
+
   private:
     /**
      * Adds a PML4Entry, PDPTEntry, PDEntry or PTEntry to the given PML4, PDPT, PD or PT respectively.
@@ -117,7 +122,4 @@ class ArchMemory
      * @return True if the table map_ptr is full of zeroes and thus able to be freed.
      */
     template<typename T> static bool checkAndRemove(pointer map_ptr, uint64 index);
-
-    ArchMemory(ArchMemory const &src); /// Prevents accidental copying, may be moved to public
-    ArchMemory &operator=(ArchMemory const &src);
 };

@@ -195,12 +195,18 @@ void Scheduler::printLockingInformation()
   lockScheduling();
   kprintfd("\n");
   debug(LOCK, "Scheduler::printLockingInformation:\n");
-  ustl::for_each(threads_.begin(), threads_.end(),
-                 [&](Thread* t) {if(t->holding_lock_list_) Lock::printHoldingList(t);});
-  ustl::for_each(threads_.begin(), threads_.end(),
-                 [&](Thread* t) {if(t->lock_waiting_on_)
-                   debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p).\n", t->getName(), t,
-                         t->lock_waiting_on_ ->getName(), t->lock_waiting_on_ );});
+
+  for(Thread* t : threads_)
+  {
+    if(t->holding_lock_list_)
+      Lock::printHoldingList(t);
+  }
+  for(Thread* t : threads_)
+  {
+    if(t->lock_waiting_on_)
+      debug(LOCK, "Thread %s (%p) is waiting on lock: %s (%p).\n",
+            t->getName(), t, t->lock_waiting_on_ ->getName(), t->lock_waiting_on_ );
+  }
   debug(LOCK, "Scheduler::printLockingInformation finished\n");
   unlockScheduling();
 }

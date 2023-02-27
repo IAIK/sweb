@@ -71,10 +71,10 @@ void ProcessRegistry::Run()
   if(!DYNAMIC_KMM && pm->getNumFreePages() != pm->getNumPagesForUser())
   {
     PageManager::instance()->printBitmap();
+    debug(PM, "WARNING: You might be leaking physical memory pages somewhere\n");
     debug(PM, "%u/%u free physical pages after unmounting detected\n",
           pm->getNumFreePages(),
           pm->getNumPagesForUser());
-    assert(false && "You are probably leaking physical memory pages somewhere");
   }
 
   kill();

@@ -8,8 +8,6 @@
 #include "File.h"
 #include "Scheduler.h"
 
-constexpr size_t MAX_PATH_LENGTH = 256;
-
 size_t Syscall::syscallException(size_t syscall_number, size_t arg1, size_t arg2, size_t arg3, size_t arg4, size_t arg5)
 {
   size_t return_value = 0;
@@ -62,7 +60,7 @@ void Syscall::pseudols(const char *pathname, char *buffer, size_t size)
 {
   if(buffer && ((size_t)buffer >= USER_BREAK || (size_t)buffer + size > USER_BREAK))
     return;
-  if((size_t)pathname >= USER_BREAK || strlen(pathname) > MAX_PATH_LENGTH)
+  if((size_t)pathname >= USER_BREAK)
     return;
   VfsSyscall::readdir(pathname, buffer, size);
 }
@@ -126,7 +124,7 @@ size_t Syscall::close(size_t fd)
 
 size_t Syscall::open(size_t path, size_t flags)
 {
-  if (path >= USER_BREAK || strlen((const char*) path) > MAX_PATH_LENGTH)
+  if (path >= USER_BREAK)
   {
     return -1U;
   }
@@ -152,7 +150,7 @@ size_t Syscall::createprocess(size_t path, size_t sleep)
   // AVOID USING IT AS SOON AS YOU HAVE AN ALTERNATIVE!
 
   // parameter check begin
-  if (path >= USER_BREAK || strlen((const char*) path) > MAX_PATH_LENGTH)
+  if (path >= USER_BREAK)
   {
     return -1U;
   }
