@@ -62,6 +62,7 @@ class PageManager
 
     void printUsageInfo() const
     {
+      debug(PM, "Useable pages:\n");
       allocator_->printUsageInfo();
     }
 

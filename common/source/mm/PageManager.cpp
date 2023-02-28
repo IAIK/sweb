@@ -95,6 +95,7 @@ PageManager::PageManager(Allocator* allocator) :
   size_t total_num_useable_pages = allocator_->numFreeBlocks(PAGE_SIZE, PAGE_SIZE);
   number_of_pages_ = highest_address / PAGE_SIZE;
 
+  debug(PM, "Bootstrap PM useable ranges:\n");
   allocator_->printUsageInfo();
   debug(PM, "Total useable pages: %zu (%zu bytes)\n", total_num_useable_pages, total_num_useable_pages*PAGE_SIZE);
 
