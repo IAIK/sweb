@@ -151,6 +151,12 @@ void IDEControllerChannel::reset()
     selectDrive(0, true);
 }
 
+[[nodiscard]] bool IDEControllerChannel::isDataReady()
+{
+    auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+    return status.data_ready && !status.error && !status.drive_fault_error;
+}
+
 bool IDEControllerChannel::waitDriveReady(source_location loc)
 {
     int jiffies = 0;

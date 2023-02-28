@@ -202,9 +202,7 @@ int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer
     return -1;
 
   if (!controller.waitNotBusy())
-  {
       return -1;
-  }
 
   controller.sendCommand(ATACommand::PIO::READ_SECTORS);
 
@@ -212,9 +210,7 @@ int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer
       return 0;
 
   if (!controller.waitDataReady())
-  {
       return -1;
-  }
 
   if (buffer)
   {
@@ -314,9 +310,7 @@ uint32 ATADrive::addRequest(BDRequest* br)
         [[maybe_unused]] auto data_ready = controller.waitDataReady();
 
         TIMEOUT_WARNING();
-        auto status =
-            controller.control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS]
-                .read();
+        auto status = controller.control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
         auto error = controller.io_regs[IDEControllerChannel::IoRegister::ERROR].read();
 
         debug(ATA_DRIVER, "addRequest: Device status: %x, error: %x\n", status.u8,
@@ -339,7 +333,7 @@ uint32 ATADrive::addRequest(BDRequest* br)
     }
   }
 
-  debug(ATA_DRIVER, "addRequest: done\n");
+  debugAdvanced(ATA_DRIVER, "addRequest: done\n");
   return 0;
 }
 
@@ -375,18 +369,21 @@ void ATADrive::serviceIRQ()
 
   Thread* requesting_thread = br->getThread();
 
-  debug(ATA_DRIVER, "serviceIRQ: Found active request!!\n");
+  debugAdvanced(ATA_DRIVER, "serviceIRQ: Found active request!!\n");
   assert(br);
 
   uint16* word_buff = (uint16*) br->getBuffer();
-  uint32 blocks_done = br->getBlocksDone();
+  size_t blocks_done = br->getBlocksDone();
   uint16_t* buf_ptr = word_buff + blocks_done*sector_word_size;
+
+  size_t bytes_done = blocks_done*sector_word_size*WORD_SIZE;
+  size_t bytes_requested = br->getNumBlocks()*sector_word_size*WORD_SIZE;
 
   // TODO: target thread may not yet be sleeping (this irq handler and section with disabled interrupts in addRequest may run simultaneously if running on other cpu core)
 
   if (br->getCmd() == BDRequest::BD_CMD::BD_READ)
   {
-      debug(ATA_DRIVER, "serviceIRQ: Handling read request\n");
+    debug(ATA_DRIVER, "serviceIRQ: Handling read request, [%zu/%zu], buffer: %p\n", bytes_done, bytes_requested, word_buff);
     // This IRQ handler may be run in the context of any arbitrary thread, so we must not attempt to access userspace
     assert((size_t)word_buff >= USER_BREAK);
     if (!controller.waitDataReady())
@@ -408,20 +405,20 @@ void ATADrive::serviceIRQ()
     {
       assert(request_list_.popBack() == br);
       br->setStatus(BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
-      debug(ATA_DRIVER, "serviceIRQ: Read finished\n");
+      debug(ATA_DRIVER, "serviceIRQ: Read finished [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
       if (requesting_thread)
           requesting_thread->setState(Thread::Running);
     }
   }
   else if (br->getCmd() == BDRequest::BD_CMD::BD_WRITE)
   {
+    debug(ATA_DRIVER, "serviceIRQ: Handling write request, [%zu/%zu], buffer: %p\n", bytes_done, bytes_requested, word_buff);
     blocks_done++;
     if (blocks_done == br->getNumBlocks())
     {
       assert(request_list_.popBack() == br);
-      debug(ATA_DRIVER, "serviceIRQ: All done!!\n");
-      br->setStatus( BDRequest::BD_RESULT::BD_DONE ); // br may be deallocated as soon as status is set to done
-      debug(ATA_DRIVER, "serviceIRQ: Waking up thread!!\n");
+      debug(ATA_DRIVER, "serviceIRQ: Write finished  [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
+      br->setStatus( BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
       if (requesting_thread)
           requesting_thread->setState(Thread::Running);
     }
@@ -452,7 +449,7 @@ void ATADrive::serviceIRQ()
         requesting_thread->setState(Thread::Running);
   }
 
-  debug(ATA_DRIVER, "serviceIRQ: Request handled!!\n");
+  debugAdvanced(ATA_DRIVER, "serviceIRQ: Request handled!!\n");
 }
 
 

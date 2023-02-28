@@ -224,6 +224,8 @@ public:
     // Resets BOTH drives on the channel
     void reset();
 
+    [[nodiscard]] bool isDataReady();
+
     bool waitNotBusy(source_location loc = source_location::current());
     bool waitDataReady(source_location loc = source_location::current());
     bool waitDriveReady(source_location loc = source_location::current());
