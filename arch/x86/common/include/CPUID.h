@@ -217,8 +217,12 @@ public:
 
     void initCpuFeatures();
     [[nodiscard]] bool cpuHasFeature(X86Feature feature) const;
+    [[nodiscard]] bool cpuFeatureIsForceDisabled(X86Feature feature) const;
+
+    void setFeatureForceDisabled(X86Feature feature);
 private:
     eastl::bitset<X86Feature::FEATURE_COUNT> features_;
+    eastl::bitset<X86Feature::FEATURE_COUNT> force_disabled_features_;
 };
 
 extern cpu_local CpuFeatures cpu_features;

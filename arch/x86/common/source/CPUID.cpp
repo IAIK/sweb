@@ -49,7 +49,17 @@ CpuFeatures::CpuFeatures()
 
 bool CpuFeatures::cpuHasFeature(X86Feature feature) const
 {
-    return features_.test(feature);
+    return features_.test(feature) && !cpuFeatureIsForceDisabled(feature);
+}
+
+bool CpuFeatures::cpuFeatureIsForceDisabled(X86Feature feature) const
+{
+    return force_disabled_features_.test(feature);
+}
+
+void CpuFeatures::setFeatureForceDisabled(X86Feature feature)
+{
+    force_disabled_features_.set(feature);
 }
 
 void CpuFeatures::initCpuFeatures()
