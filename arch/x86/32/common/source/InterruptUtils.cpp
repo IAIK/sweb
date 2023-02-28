@@ -50,7 +50,6 @@
 extern "C" void arch_dummyHandler();
 extern "C" void arch_dummyHandlerMiddle();
 
-IDTR InterruptUtils::idtr;
 InterruptDescriptorTable InterruptUtils::idt;
 
 void InterruptUtils::initialise()

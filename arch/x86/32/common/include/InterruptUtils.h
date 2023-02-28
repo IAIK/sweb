@@ -21,8 +21,6 @@ class InterruptUtils
 public:
     static void initialise();
 
-    static IDTR idtr;
-
     static InterruptDescriptorTable idt;
 
 private:

@@ -249,8 +249,7 @@ void ArchMulticore::initApplicationProcessorCpu()
   debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getKernelPagingStructureRootVirt()));
   ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
 
-  debug(A_MULTICORE, "AP loading IDT, ptr at %p, base: %zx, limit: %zx\n", &InterruptUtils::idtr, (size_t)InterruptUtils::idtr.base, (size_t)InterruptUtils::idtr.limit);
-  InterruptUtils::idtr.load();
+  InterruptUtils::idt.idtr().load();
 
   extern char cls_start;
   extern char cls_end;
@@ -265,8 +264,6 @@ void ArchMulticore::initApplicationProcessorCpu()
   ApicDriver::instance().cpuLocalInit();
   ApicTimerDriver::instance().cpuLocalInit();
 
-  // cpu_lapic->init();
-  // current_cpu.setId(cpu_lapic.readID());
   assert(cpu_lapic->apicId() == CPUID::localApicId());
   ArchMulticore::initCpuLocalData();
 
@@ -279,5 +276,4 @@ void ArchMulticore::initApplicationProcessorCpu()
 
   debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());
   ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), waitForSystemStart);
-  waitForSystemStart();
 }

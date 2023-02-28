@@ -212,8 +212,5 @@ void ArchMulticore::initCpu()
   ArchInterrupts::enableTimer();
 
   debug(A_MULTICORE, "Switching to CPU local stack at %p\n", ArchMulticore::cpuStackTop());
-  __asm__ __volatile__("movq %[cpu_stack], %%rsp\n"
-                       "movq %%rsp, %%rbp\n"
-                       ::[cpu_stack]"r"(ArchMulticore::cpuStackTop()));
-  waitForSystemStart();
+  ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), waitForSystemStart);
 }
