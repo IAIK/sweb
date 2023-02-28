@@ -85,45 +85,47 @@ add_dependencies(kernel add-dbg)
 set(AVAILABLE_MEMORY 8M)
 set(NUM_CPUS 4)
 
+set(DISK_MOUNT_ARG -drive file=${HDD_IMAGE},index=0,media=disk,id=sweb-hdd,if=ide)
+
 set(QEMU_BIN qemu-system-x86_64)
-set(QEMU_FLAGS_COMMON -name SWEB -m ${AVAILABLE_MEMORY} -drive file=${HDD_IMAGE},index=0,media=disk,id=sweb-hdd,if=ide -debugcon stdio -no-reboot -no-shutdown -smp ${NUM_CPUS} -d guest_errors)
+set(QEMU_FLAGS_COMMON -name SWEB -m ${AVAILABLE_MEMORY} ${DISK_MOUNT_ARG} -smp ${NUM_CPUS} -debugcon stdio -no-reboot -no-shutdown  -s -d guest_errors)
 string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 # kvm: Run kvm in non debugging mode
 add_custom_target(kvm
-        COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s -enable-kvm -cpu host
-        COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s -enable-kvm -cpu host`"
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        COMMAND reset -I
-        )
+    COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -enable-kvm -cpu host
+    COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -enable-kvm -cpu host`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND reset -I
+    )
 
 # qemu: Run qemu in non debugging mode
 add_custom_target(qemu
-	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s -cpu qemu64 2>&1 | tee output.log
-	COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s -cpu qemu64`"
+	COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu qemu64 2>&1 | tee output.log
+	COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu qemu64`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s -S 2>&1 | tee output.log
-	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s -S on localhost:1234`"
+	COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -S 2>&1 | tee output.log
+	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -S on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND ${QEMU_BIN} -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon stdio
-  COMMENT "Executing `${QEMU_BIN} -hda ${HDD_IMAGE} -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio`"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  )
+    COMMAND ${QEMU_BIN} -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon stdio
+    COMMENT "Executing `${QEMU_BIN} -hda ${HDD_IMAGE} -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon stdio`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    )
 
 # net-init: Initializes br0 for target "net"
 add_custom_target(net-init
-  COMMAND sudo ${PROJECT_SOURCE_DIR}/utils/netinit.sh
-  COMMENT "Executing `sudo utils/netinit.sh`"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  COMMAND reset -I
-  )
+    COMMAND sudo ${PROJECT_SOURCE_DIR}/utils/netinit.sh
+    COMMENT "Executing `sudo utils/netinit.sh`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND reset -I
+    )
