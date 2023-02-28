@@ -670,3 +670,11 @@ MallocSegment* KernelMemoryManager::mergeSegments(MallocSegment* s1, MallocSegme
 pointer KernelMemoryManager::getKernelBreak() const {
   return kernel_break_;
 }
+
+pointer KernelMemoryManager::getKernelHeapStart() const {
+  return base_break_;
+}
+
+pointer KernelMemoryManager::getKernelHeapMaxEnd() const {
+  return base_break_ + reserved_max_;
+}

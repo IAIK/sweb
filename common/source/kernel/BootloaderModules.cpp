@@ -38,10 +38,12 @@ void BootloaderModules::mapModules()
         size_t end_page = (module_phys_end + PAGE_SIZE-1) / PAGE_SIZE;
         for (size_t k = start_page; k < Min(end_page, PageManager::instance().getTotalNumPages()); ++k)
         {
-            if(MAIN & OUTPUT_ADVANCED)
-                debug(MAIN, "Mapping kernel module at %#zx -> %#zx\n", (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k);
+            size_t vpage = (size_t)PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k;
+            debugAdvanced(MAIN, "Mapping kernel module at %#zx -> %#zx\n", vpage, k);
 
-            bool mapped = ArchMemory::mapKernelPage(PHYSICAL_TO_VIRTUAL_OFFSET / PAGE_SIZE + k, k, true);
+            mmio_addr_allocator.setUnuseable(vpage*PAGE_SIZE, (vpage+1)*PAGE_SIZE);
+
+            bool mapped = ArchMemory::mapKernelPage(vpage, k, true);
             if (!mapped)
             {
                 debug(MAIN, "Cannot map kernel module at %#zx, already mapped\n", k*PAGE_SIZE);

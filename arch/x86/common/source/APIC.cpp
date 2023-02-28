@@ -18,10 +18,11 @@
 #include "MSR.h"
 #include "X2Apic.h"
 #include "ports.h"
+#include "ArchCommon.h"
 
 
 void* XApic::reg_paddr_ = (void*)0xfee00000;
-void* XApic::reg_vaddr_ = (void*)0xfee00000;
+void* XApic::reg_vaddr_ = (void*)0;
 
 eastl::vector<MADTProcLocalAPIC> Apic::local_apic_list_{};
 
@@ -417,7 +418,7 @@ __attribute__((naked)) void __PIT_delay_IRQ()
     __asm__ __volatile__("movb $1, %[delay]\n"
                          :[delay]"=m"(delay));
     IRET
-        }
+}
 
 extern "C" void arch_irqHandler_0();
 
@@ -674,15 +675,12 @@ void ApicDriver::cpuLocalInit()
         else
         {
             XApic::setPhysicalAddress(XApic::readMsrPhysAddr());
-            // TODO: Properly allocate MMIO virtual memory page for APIC
-            if ((uintptr_t)XApic::physicalAddress() > USER_BREAK)
+            if (!XApic::virtualAddress())
             {
-                XApic::mapAt((size_t)XApic::physicalAddress());
-            }
-            else
-            {
-                XApic::mapAt((size_t)XApic::physicalAddress() |
-                             PHYSICAL_TO_VIRTUAL_OFFSET);
+                auto apic_vaddr = mmio_addr_allocator.alloc(PAGE_SIZE, PAGE_SIZE);
+                debug(APIC, "Allocated MMIO addr for APIC: %zx\n", apic_vaddr);
+                assert(apic_vaddr != (size_t)-1 && "Unable to allocate virtual page for APIC MMIO");
+                XApic::mapAt(apic_vaddr);
             }
         }
 

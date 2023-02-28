@@ -114,6 +114,8 @@ class KernelMemoryManager
     [[nodiscard]] Thread* KMMLockHeldBy() const;
 
     [[nodiscard]] pointer getKernelBreak() const;
+    [[nodiscard]] pointer getKernelHeapStart() const;
+    [[nodiscard]] pointer getKernelHeapMaxEnd() const;
     size_t getUsedKernelMemory(bool show_allocs);
     void startTracing();
     void stopTracing();

@@ -25,7 +25,9 @@ void puts(const char* string);
 #define PRINT(X)
 #endif
 
+RangeAllocator<> mmio_addr_allocator;
 
+extern void* kernel_start_address;
 extern void* kernel_end_address;
 
 __attribute__ ((section (".data"))) multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
@@ -85,6 +87,11 @@ extern "C" void parseMultibootHeader()
       ++i;
     }
   }
+}
+
+pointer ArchCommon::getKernelStartAddress()
+{
+   return (pointer)&kernel_start_address;
 }
 
 pointer ArchCommon::getKernelEndAddress()
@@ -451,4 +458,15 @@ void ArchCommon::spinlockPause()
 void ArchCommon::reservePagesPreKernelInit(Allocator &alloc)
 {
     ArchMulticore::reservePages(alloc);
+}
+
+void ArchCommon::initKernelVirtualAddressAllocator()
+{
+    new (&mmio_addr_allocator) RangeAllocator{};
+    mmio_addr_allocator.setUseable(KERNEL_START, (size_t)-1);
+    mmio_addr_allocator.setUnuseable(getKernelStartAddress(), getKernelEndAddress());
+    mmio_addr_allocator.setUnuseable(KernelMemoryManager::instance()->getKernelHeapStart(), KernelMemoryManager::instance()->getKernelHeapMaxEnd());
+    mmio_addr_allocator.setUnuseable(IDENT_MAPPING_START, IDENT_MAPPING_END);
+    debug(MAIN, "Usable MMIO ranges:\n");
+    mmio_addr_allocator.printUsageInfo();
 }

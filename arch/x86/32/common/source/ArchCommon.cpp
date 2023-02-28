@@ -13,6 +13,7 @@
 #include "PageManager.h"
 #include "debug_bochs.h"
 #include "ArchMulticore.h"
+#include "KernelMemoryManager.h"
 #include "Scheduler.h"
 
 #if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
@@ -21,6 +22,7 @@
 #define PRINT(X)
 #endif
 
+RangeAllocator<> mmio_addr_allocator;
 
 extern void* kernel_start_address;
 extern void* kernel_end_address;
@@ -357,4 +359,15 @@ void ArchCommon::spinlockPause()
 void ArchCommon::reservePagesPreKernelInit(Allocator &alloc)
 {
     ArchMulticore::reservePages(alloc);
+}
+
+void ArchCommon::initKernelVirtualAddressAllocator()
+{
+    new (&mmio_addr_allocator) RangeAllocator{};
+    mmio_addr_allocator.setUseable(KERNEL_START, (size_t)-1);
+    mmio_addr_allocator.setUnuseable(getKernelStartAddress(), getKernelEndAddress());
+    mmio_addr_allocator.setUnuseable(KernelMemoryManager::instance()->getKernelHeapStart(), KernelMemoryManager::instance()->getKernelHeapMaxEnd());
+    mmio_addr_allocator.setUnuseable(IDENT_MAPPING_START, IDENT_MAPPING_END);
+    debug(MAIN, "Usable MMIO ranges:\n");
+    mmio_addr_allocator.printUsageInfo();
 }

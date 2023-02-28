@@ -60,6 +60,8 @@ extern "C" [[noreturn]] void startup()
   PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");
 
+  ArchCommon::initKernelVirtualAddressAllocator();
+
   PlatformBus::initPlatformBus();
 
   BootloaderModules::mapModules();
@@ -100,7 +102,6 @@ extern "C" [[noreturn]] void startup()
 
   debug(MAIN, "Multicore start CPUs\n");
   ArchMulticore::startOtherCPUs();
-
 
   debug(MAIN, "Removing Boot Time Ident Mapping...\n");
   removeBootTimeIdentMapping();

@@ -2,9 +2,12 @@
 
 #include "types.h"
 #include "paging-definitions.h"
+#include "RangeAllocator.h"
 
 class Console;
 class Allocator;
+
+extern RangeAllocator mmio_addr_allocator;
 
 class ArchCommon
 {
@@ -115,4 +118,6 @@ class ArchCommon
     static void spinlockPause();
 
     static void reservePagesPreKernelInit(Allocator& pm);
+
+    static void initKernelVirtualAddressAllocator();
 };

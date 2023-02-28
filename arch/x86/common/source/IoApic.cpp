@@ -2,6 +2,7 @@
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
 #include "ArchInterrupts.h"
+#include "ArchCommon.h"
 #include "8259.h"
 #include "CPUID.h"
 #include "SMP.h"
@@ -22,12 +23,11 @@ IoApic::IoApic(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base) :
 
 void IoApic::initAll()
 {
-        // TODO: Proper address assignment for ioapic on x86
-        pointer ioapic_vaddr = ArchMemory::getIdentAddressOfPPN(0) - PAGE_SIZE*3;
-
         for(auto& io_apic : IoApicList())
         {
-            io_apic.mapAt(ioapic_vaddr - io_apic.id_*PAGE_SIZE);
+            auto ioapic_vaddr = mmio_addr_allocator.alloc(PAGE_SIZE, PAGE_SIZE);
+            debug(APIC, "Allocated MMIO addr for IoAPIC: %zx\n", ioapic_vaddr);
+            io_apic.mapAt(ioapic_vaddr);
             assert((size_t)io_apic.reg_vaddr_ >= USER_BREAK);
             io_apic.init();
         }

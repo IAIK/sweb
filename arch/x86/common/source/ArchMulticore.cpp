@@ -61,7 +61,7 @@ void ArchMulticore::stopOtherCpus()
 
     ArchInterrupts::enableInterrupts();
 
-    while(1)
+    while(true)
     {
         debug(A_MULTICORE, "CPU %zu halting\n", SMP::currentCpuId());
         ArchCommon::halt();

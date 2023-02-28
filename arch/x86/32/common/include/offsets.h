@@ -37,5 +37,11 @@
  */
 #define USER_BREAK 0x80000000
 
+/**
+ * End of the non-canonical space, start of kernel space
+ */
+#define KERNEL_START 0x80000000
 
+// 0xc0000000
 #define IDENT_MAPPING_START (3U * 1024U * 1024U * 1024U)
+#define IDENT_MAPPING_END (0xffffffff)
