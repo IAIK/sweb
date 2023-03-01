@@ -4,7 +4,7 @@ set(KERNEL_BINARY kernel.x)
 
 set(ARCH_X86_32_PAE_KERNEL_CFLAGS -O0 -gdwarf-4 -Wall -Wextra -Werror -Wno-error=format -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -mno-mmx -mno-sse2 -mno-sse3 ${NOPICFLAG})
 
-set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++17 -Wno-nonnull-compare -nostdinc++ -fno-rtti ${ARCH_X86_32_PAE_KERNEL_CFLAGS})
+set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++20 -Wno-nonnull-compare -nostdinc++ -fno-rtti ${ARCH_X86_32_PAE_KERNEL_CFLAGS})
 set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_32_PAE_KERNEL_CFLAGS})
 
 
@@ -28,12 +28,29 @@ target_compile_options(kernel_options INTERFACE
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
 
+if ("${DEBUG}" STREQUAL "1")
+    set(STRIP_DEBUG_INFO "")
+else()
+    set(STRIP_DEBUG_INFO ${OBJCOPY_EXECUTABLE} $<TARGET_FILE:kernel> --strip-unneeded $<TARGET_FILE:kernel>)
+endif()
+
+add_custom_command(TARGET kernel
+    POST_BUILD
+    BYPRODUCTS kernel.dbg kernel.unstripped
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.unstripped
+    COMMAND ${STRIP_DEBUG_INFO}
+    COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg)
+
+add_dependencies(kernel add-dbg)
+
 
 set(AVAILABLE_MEMORY 8M)
-set(NUM_CPUS 2)
+set(NUM_CPUS 4)
+
+set(DISK_MOUNT_ARG -drive file=${HDD_IMAGE},index=0,media=disk,id=sweb-hdd,if=ide)
 
 set(QEMU_BIN qemu-system-i386)
-set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=${HDD_IMAGE},index=0,media=disk -debugcon stdio -no-reboot -no-shutdown -smp ${NUM_CPUS} -d int -d cpu_reset -d guest_errors  ) # -d pcall -d mmu -d int  -d in_asm
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} ${DISK_MOUNT_ARG} -smp ${NUM_CPUS} -debugcon stdio -no-reboot -no-shutdown -s -d guest_errors)
 string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 # kvm: Run kvm in non debugging mode
@@ -52,10 +69,10 @@ add_custom_target(qemu
 	COMMAND reset -I
 	)
 
-# qemugdb: Run qemu in non debugging mode
+# qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -s -S
-	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -s -S on localhost:1234`"
+	COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -S
+	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -S on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)

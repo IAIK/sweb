@@ -283,7 +283,7 @@ void XApic::mapAt(size_t addr)
 
     debug(APIC, "Map local APIC at phys %p to %p\n", reg_paddr_, (void*)addr);
 
-    ArchMemoryMapping m = ArchMemory::resolveMapping(ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE, addr/PAGE_SIZE);
+    ArchMemoryMapping m = kernel_arch_mem.resolveMapping(addr/PAGE_SIZE);
     if (!m.page)
     {
         assert(ArchMemory::mapKernelPage(addr/PAGE_SIZE, ((size_t)reg_paddr_)/PAGE_SIZE, true, true));
