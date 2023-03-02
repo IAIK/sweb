@@ -12,7 +12,7 @@ uint32 IDEDriver::doDeviceDetection()
   MMCDriver* drv = new MMCDriver();
   BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name, true);
   BDManager::getInstance()->addVirtualDevice(bdv);
-  debug(IDE_DRIVER, "doDetection: initialized with MMCDriver!\n ");
+  debug(IDE_DRIVER, "doDetection: initialized with MMCDriver!\n");
   processMBR(drv, 0, drv->SPT, name);
   return 1;
 }
