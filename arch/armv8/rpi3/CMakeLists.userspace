@@ -1,12 +1,20 @@
 cmake_policy(SET CMP0079 NEW)
 
-INCLUDE(CMakeForceCompiler)
-SET(CMAKE_SYSTEM_NAME Generic)
-SET(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+include(CMakeForceCompiler)
+include(CheckCCompilerFlag)
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 find_program(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
 
+check_c_compiler_flag(-mno-outline-atomics HAS_MNO_OUTLINE_ATOMICS)
+if (HAS_MNO_OUTLINE_ATOMICS)
+    set(MNO_OUTLINE_ATOMIC -mno-outline-atomics)
+    else()
+    set(MNO_OUTLINE_ATOMIC "")
+endif()
 
-set(ARCH_USERSPACE_COMPILE_OPTIONS -Wall -Werror -g -O0 -gdwarf-4 -static -nostdinc -fno-builtin -nostdlib -nolibc -fno-stack-protector -fno-common -Wno-error=unused-variable -fno-stack-clash-protection)
+
+set(ARCH_USERSPACE_COMPILE_OPTIONS -Wall -Werror -g -O0 -gdwarf-4 -static -nostdinc -fno-builtin -nostdlib -nolibc -fno-stack-protector -fno-common -Wno-error=unused-variable -fno-stack-clash-protection -fno-sync-libcalls ${MNO_OUTLINE_ATOMIC})
 
 target_link_libraries(userspace_options INTERFACE
     -Wl,--no-whole-archive -Wl,-lgcc -Wl,--whole-archive)
