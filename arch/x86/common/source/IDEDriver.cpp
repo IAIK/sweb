@@ -84,7 +84,7 @@ uint32 IDEDriver::doDeviceDetection()
         ArchInterrupts::yieldIfIFSet();
 
       if (jiffies >= IO_TIMEOUT)
-        debug(IDE_DRIVER, "doDetection: Still busy after reset!\n ");
+        debug(IDE_DRIVER, "doDetection: Still busy after reset!\n");
       else
       {
         outportbp(base_port + 6, (cs % 2 == 0 ? 0xA0 : 0xB0));
@@ -164,7 +164,7 @@ uint32 IDEDriver::doDeviceDetection()
     }
     else
     {
-      debug(IDE_DRIVER, "doDetection: Not found!\n ");
+      debug(IDE_DRIVER, "doDetection: Not found!\n");
     }
 
   }
