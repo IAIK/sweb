@@ -65,7 +65,7 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer calle
 }
 pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   assert((requested_size & 0xF) == 0 && "Attempt to allocate block with unaligned size");
 
@@ -93,7 +93,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
 
 bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 {
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   if (virtual_address == 0 || virtual_address < ((pointer) first_) || virtual_address >= kernel_break_)
     return false;
@@ -116,7 +116,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 
 pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by)
 {
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   assert((new_size & 0x80000000) == 0 && "requested too much memory");
   if (new_size == 0)

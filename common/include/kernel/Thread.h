@@ -52,6 +52,8 @@ class Thread
 
     bool isStackCanaryOK();
 
+    static bool currentThreadIsStackCanaryOK();
+
     const char* getName();
 
     size_t getTID();

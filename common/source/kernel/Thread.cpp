@@ -80,6 +80,10 @@ void* Thread::getKernelStackStartPointer()
   return (void*)stack;
 }
 
+bool Thread::currentThreadIsStackCanaryOK()
+{
+  return !currentThread || currentThread->isStackCanaryOK();
+}
 bool Thread::isStackCanaryOK()
 {
   return kernel_stack_[0] == STACK_CANARY && kernel_stack_[2047] == STACK_CANARY;

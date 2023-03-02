@@ -74,7 +74,7 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
       ArchInterrupts::disableInterrupts();
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   if (bd.getStatus() != BDRequest::BD_DONE)
   {
@@ -110,7 +110,7 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
       ArchInterrupts::disableInterrupts();
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   if (bd.getStatus() != BDRequest::BD_DONE)
     return -1;

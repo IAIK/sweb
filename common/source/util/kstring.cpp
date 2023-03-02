@@ -34,7 +34,7 @@ extern "C" void *memcpy(void *dest, const void *src, size_t length)
     *d8++ = *s8++;
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return dest;
 }
@@ -69,7 +69,7 @@ extern "C" void *memmove(void *dest, const void *src, size_t length)
     }
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return dest;
 }
@@ -92,7 +92,7 @@ void *memccpy(void *dest, const void *src, uint8 c, size_t length)
     }
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return (void *) 0;
 }
@@ -121,7 +121,7 @@ extern "C" void *memset(void *block, uint8 c, size_t size)
     }
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return block;
 }
@@ -158,7 +158,7 @@ extern "C" char *strncpy(char *dest, const char* src, size_t size)
     dest++;
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return start;
 }
@@ -555,7 +555,7 @@ extern "C" char* itoa(int value, char* str, int base)
     }
   }
 
-  assert((!currentThread || currentThread->isStackCanaryOK()) && "Kernel stack corruption detected.");
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return str;
 }
