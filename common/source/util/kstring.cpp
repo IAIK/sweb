@@ -2,6 +2,7 @@
 #include "kmalloc.h"
 #include "assert.h"
 #include "ArchMemory.h"
+#include "Thread.h"
 
 extern "C" size_t strlen(const char *str)
 {
@@ -32,6 +33,9 @@ extern "C" void *memcpy(void *dest, const void *src, size_t length)
   {
     *d8++ = *s8++;
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+
   return dest;
 }
 
@@ -65,6 +69,8 @@ extern "C" void *memmove(void *dest, const void *src, size_t length)
     }
   }
 
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+
   return dest;
 }
 
@@ -85,6 +91,8 @@ void *memccpy(void *dest, const void *src, uint8 c, size_t length)
       return (void*) dest8;
     }
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return (void *) 0;
 }
@@ -112,6 +120,9 @@ extern "C" void *memset(void *block, uint8 c, size_t size)
       *d8++ = c;
     }
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+
   return block;
 }
 
@@ -146,6 +157,8 @@ extern "C" char *strncpy(char *dest, const char* src, size_t size)
     src++;
     dest++;
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return start;
 }
@@ -541,6 +554,8 @@ extern "C" char* itoa(int value, char* str, int base)
       str[i] = temp;
     }
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return str;
 }
