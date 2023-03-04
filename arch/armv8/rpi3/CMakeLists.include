@@ -2,14 +2,16 @@ include(CheckCCompilerFlag)
 
 set(KERNEL_BINARY kernel.x)
 
-set(KERNEL_COMMON_FLAGS -O2 -gdwarf-4 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar ${NOPICFLAG})
-
 check_c_compiler_flag(-mno-outline-atomics HAS_MNO_OUTLINE_ATOMICS)
 if (HAS_MNO_OUTLINE_ATOMICS)
-    set(KERNEL_COMMON_FLAGS ${KERNEL_COMMON_FLAGS} -mno-outline-atomics)
+    set(MNO_OUTLINE_ATOMIC -mno-outline-atomics)
+    else()
+    set(MNO_OUTLINE_ATOMIC "")
 endif()
 
-set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${KERNEL_COMMON_FLAGS} -std=gnu++17 -nostdinc++ -fno-rtti -fno-exceptions)
+set(KERNEL_COMMON_FLAGS -O2 -gdwarf-4 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -ffreestanding -Wno-strict-aliasing -fshort-wchar -fno-sync-libcalls ${MNO_OUTLINE_ATOMIC} ${NOPICFLAG})
+
+set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${KERNEL_COMMON_FLAGS} -std=gnu++20 -nostdinc++ -fno-rtti -fno-exceptions)
 set(KERNEL_CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${KERNEL_COMMON_FLAGS} -std=gnu11 -nostdlib -fno-exceptions)
 
 
