@@ -18,7 +18,7 @@ uint16 PIC8259::cached_mask = 0xFFFF;
 #define PIC_EOI 0x20
 
 PIC8259::PIC8259() :
-    IrqDomain("PIC 8259", this),
+    IrqDomain("PIC 8259", 16, this),
     Device("PIC 8259")
 {
 }
@@ -73,6 +73,11 @@ bool PIC8259::mask(irqnum_t irq, bool mask)
     else
         enableIRQ(irq);
     return true;
+}
+
+bool PIC8259::isMasked(irqnum_t irqnum)
+{
+    return !isIRQEnabled(irqnum);
 }
 
 bool PIC8259::irqStart([[maybe_unused]]irqnum_t irq)

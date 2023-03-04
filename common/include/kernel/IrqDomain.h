@@ -9,6 +9,7 @@
 #include "EASTL/string.h"
 #include "EASTL/type_traits.h"
 #include "EASTL/vector.h"
+#include "EASTL/atomic.h"
 
 using irqnum_t = size_t;
 
@@ -16,6 +17,7 @@ struct InterruptController
 {
     virtual bool mask(irqnum_t irq, bool mask) = 0;
     virtual bool ack(irqnum_t irq) = 0;
+    virtual bool isMasked(irqnum_t) = 0;
 
     virtual bool irqStart([[maybe_unused]] irqnum_t irq)
     {
@@ -67,7 +69,7 @@ public:
         handler_func_t handler = nullptr;
     };
 
-    IrqDomain(const eastl::string& name, InterruptController* controller = nullptr);
+    IrqDomain(const eastl::string& name, size_t num_irqs = 1, InterruptController* controller = nullptr);
 
     [[nodiscard]] constexpr const eastl::string& name() const { return name_; }
 
@@ -107,11 +109,6 @@ public:
             {
             }
 
-            friend constexpr bool operator==(const iterator& lhs, const iterator& rhs)
-            {
-                return lhs.domain_ == rhs.domain_ && lhs.irq_ == rhs.irq_;
-            }
-
             class sentinel_t
             {
             };
@@ -120,6 +117,8 @@ public:
             {
                 return lhs.domain_ == nullptr;
             }
+
+            constexpr bool operator==(const iterator& lhs) const = default;
 
             constexpr DomainIrqHandle operator*() const { return {*domain_, irq_}; }
 
@@ -284,7 +283,7 @@ public:
 
         DomainIrqHandle& removeMapping()
         {
-            domain_->removeIrqMapping(irq_);
+            domain_->removeIrq(irq_);
             return *this;
         }
 
@@ -338,7 +337,7 @@ public:
     [[nodiscard]] constexpr DomainIrqHandle irq(irqnum_t irq = 0) { return {*this, irq}; }
 
     void mapIrqTo(irqnum_t irq, IrqDomain& target_domain, irqnum_t target_irq);
-    void removeIrqMapping(irqnum_t irq);
+    void removeIrq(irqnum_t irq);
 
     void irqMappedBy(irqnum_t irq,
                      IrqDomain& source_domain,
@@ -357,9 +356,14 @@ public:
     void printReverseMappingTree(irqnum_t irq);
     void printAllReverseMappings();
 
+protected:
+    void setNumIrqs(size_t num_irqs);
+
 private:
+    using container_type = eastl::vector<IrqInfo>;
+
     InterruptController* controller_ = nullptr;
-    eastl::map<irqnum_t, IrqInfo> irqs_;
+    container_type irqs_;
     eastl::string name_;
 };
 

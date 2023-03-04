@@ -22,6 +22,7 @@ public:
   bool mask(irqnum_t irq, bool mask) override;
   bool ack(irqnum_t irq) override;
   bool irqStart(irqnum_t irq) override;
+  bool isMasked(irqnum_t irq) override;
 
 /**
  * sends the initialisation and operational command words to CPU

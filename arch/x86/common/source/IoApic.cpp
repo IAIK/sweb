@@ -10,7 +10,7 @@
 #include "debug.h"
 
 IoApic::IoApic(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base) :
-    IrqDomain("I/O APIC", this),
+    IrqDomain("I/O APIC", 24, this),
     Device("I/O APIC"),
     reg_paddr_(regs),
     reg_vaddr_(regs),
@@ -43,6 +43,7 @@ void IoApic::init()
         IOAPIC_r_ID id = read<Register::ID>();
         IOAPIC_r_VER version = read<Register::VERSION>();
         max_redir_ = version.max_redir;
+        IrqDomain::setNumIrqs(max_redir_ + 1);
         debug(APIC, "IOAPIC id: %u, version: %#x, g_sys_ints: [%u, %u)\n", id.io_apic_id, version.version, getGlobalInterruptBase(), getGlobalInterruptBase() + getMaxRedirEntry());
         redir_entry_cache_.resize(max_redir_+1);
 
@@ -196,10 +197,22 @@ void IoApic::setGSysIntMask(uint32_t g_sys_int, bool value)
         io_apic->writeRedirEntry(entry_offset, r);
 }
 
+bool IoApic::getGSysIntMask(uint32_t g_sys_int)
+{
+    IoApic* io_apic = findIOAPICforGlobalInterrupt(g_sys_int);
+    uint32_t entry_offset = g_sys_int - io_apic->getGlobalInterruptBase();
+    return io_apic->redir_entry_cache_.at(entry_offset).mask;
+}
+
 void IoApic::setIRQMask(uint32_t irq_num, bool value)
 {
         debug(APIC, "Set IRQ %x mask: %u\n", irq_num, value);
         setGSysIntMask(findGSysIntForIRQ(irq_num), value);
+}
+
+bool IoApic::getIRQMask(uint32_t irq_num)
+{
+    return getGSysIntMask(findGSysIntForIRQ(irq_num));
 }
 
 IoApic* IoApic::findIOAPICforGlobalInterrupt(uint32_t g_int)
@@ -312,6 +325,11 @@ bool IoApic::ack(irqnum_t irq)
     --pending_EOIs;
     cpu_lapic->sendEOI(gSysIntToVector(irq));
     return true;
+}
+
+bool IoApic::isMasked(irqnum_t irq)
+{
+    return getIRQMask(irq);
 }
 
 void IoApicDriver::doDeviceDetection()

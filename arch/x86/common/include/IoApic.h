@@ -121,6 +121,7 @@ public:
     bool mask(irqnum_t irq, bool mask) override;
     bool irqStart(irqnum_t irq) override;
     bool ack(irqnum_t irq) override;
+    bool isMasked(irqnum_t irq) override;
 
 
     static void addIOAPIC(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base);
@@ -134,6 +135,9 @@ public:
 
     static void setIRQMask(uint32_t irq_num, bool value);
     static void setGSysIntMask(uint32_t g_sys_int, bool value);
+
+    static bool getIRQMask(uint32_t irq_num);
+    static bool getGSysIntMask(uint32_t g_sys_int);
 
     static IoApic* findIOAPICforIRQ(uint8_t irq);
     static IoApic* findIOAPICforGlobalInterrupt(uint32_t g_int);

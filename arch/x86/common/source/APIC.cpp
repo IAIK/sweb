@@ -29,10 +29,10 @@ eastl::vector<MADTProcLocalAPIC> Apic::local_apic_list_{};
 extern volatile size_t outstanding_EOIs;
 
 Apic::Apic(const eastl::string& name) :
-    IrqDomain(name, this),
+    IrqDomain(name, 256, this),
     Device(name),
     timer_interrupt_controller(*this),
-    inter_processor_interrupt_domain("Inter Processor Interrupt")
+    inter_processor_interrupt_domain("Inter Processor Interrupt", 256)
 {
 }
 
@@ -238,11 +238,18 @@ void Apic::sendEOI(size_t num)
 
 bool Apic::mask(irqnum_t irq, bool mask)
 {
+    // Cannot mask interrupts in APIC
     debug(APIC, "%s, mask Irq %zx = %u\n", name().c_str(), irq, mask);
     auto info = irqInfo(irq);
     assert(info && "No irq info found");
     assert(!info->mapped_by.empty());
 
+    return false;
+}
+
+bool Apic::isMasked([[maybe_unused]]irqnum_t irq)
+{
+    // Cannot mask interrupts in APIC
     return false;
 }
 
@@ -612,7 +619,7 @@ bool XApic::apicSupported()
 }
 
 Apic::ApicTimer::ApicTimer(Apic& apic) :
-    IrqDomain("APIC Timer", this),
+    IrqDomain("APIC Timer", 1, this),
     Device("APIC timer", &apic),
     apic_(&apic)
 {
@@ -639,6 +646,12 @@ bool Apic::ApicTimer::ack(irqnum_t irq)
     --pending_EOIs;
     apic_->sendEOI(Apic::APIC_TIMER_VECTOR);
     return true;
+}
+
+bool Apic::ApicTimer::isMasked(irqnum_t irq)
+{
+    assert(irq == 0);
+    return isMasked();
 }
 
 bool Apic::ApicTimer::isMasked() { return masked_; }

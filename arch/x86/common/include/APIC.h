@@ -395,6 +395,7 @@ public:
     bool mask(irqnum_t irq, bool mask) override;
     bool ack(irqnum_t irq) override;
     bool irqStart(irqnum_t irq) override;
+    bool isMasked(irqnum_t irq) override;
 
 
     void sendEOI(size_t num);
@@ -409,6 +410,7 @@ public:
         bool mask(irqnum_t irq, bool mask) override;
         bool ack(irqnum_t irq) override;
 
+        bool isMasked(irqnum_t irq) override;
         bool isMasked();
 
     private:
