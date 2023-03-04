@@ -5,6 +5,7 @@
 #include "VirtualFileSystem.h"
 #include "Scheduler.h"
 #include "debug.h"
+#include "kprintf.h"
 
 InitThread::InitThread(FileSystemInfo *root_fs_info, char const *progs[]) :
     Thread(root_fs_info, "InitThread", Thread::KERNEL_THREAD),
@@ -43,6 +44,8 @@ void InitThread::Run()
       usr_mounted = true;
   }
 
+  if (!usr_mounted)
+      kprintf("ERROR: Unable to mount userspace partition\n");
   assert(usr_mounted && "Unable to mount userspace partition");
 
   debug(INITTHREAD, "mkdir /dev\n");
