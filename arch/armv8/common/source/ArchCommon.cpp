@@ -9,6 +9,9 @@
 #include "SWEBDebugInfo.h"
 #include "ArchCpuLocalStorage.h"
 #include "SMP.h"
+#include "PlatformBus.h"
+#include "SerialManager.h"
+#include "MMCDriver.h"
 #include "KernelMemoryManager.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
@@ -179,6 +182,12 @@ void ArchCommon::initPlatformDrivers()
 {
     PlatformBus::instance().registerDriver(SerialManager::instance());
 }
+
+void ArchCommon::initBlockDeviceDrivers()
+{
+    PlatformBus::instance().registerDriver(MMCDeviceDriver::instance());
+}
+
 void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
 {
 }

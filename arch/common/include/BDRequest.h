@@ -13,7 +13,7 @@ class BDRequest
     friend class BDVirtualDevice;
     friend class RamDiskDriver;
     friend class ATADrive;
-    friend class MMCDriver;
+    friend class MMCDrive;
     friend class BDManager;
 
     enum class BD_CMD

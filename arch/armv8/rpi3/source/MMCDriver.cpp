@@ -1,10 +1,12 @@
 #include "BDManager.h"
 #include "BDRequest.h"
+#include "BDVirtualDevice.h"
 #include "MMCDriver.h"
 #include "ArchInterrupts.h"
 #include "offsets.h"
 #include "Scheduler.h"
 #include "kprintf.h"
+#include "MasterBootRecord.h"
 
 struct MMCI {
     uint32 arg2;
@@ -44,7 +46,7 @@ struct MMCI {
     uint32_t slotisr_ver;
 }__attribute__((packed, aligned(4)));
 
-struct MMCI* mmci = (struct MMCI*) (IDENT_MAPPING_START | PYHSICAL_MMIO_OFFSET |0x00300000);
+volatile struct MMCI* mmci = (struct MMCI*) (IDENT_MAPPING_START | PYHSICAL_MMIO_OFFSET |0x00300000);
 volatile GpioRegisters *gpio = (GpioRegisters*)(IDENT_MAPPING_START | GPIO_REGS_BASE);
 
 //the MMC code is from:
@@ -220,40 +222,40 @@ int NO_OPTIMIZE mmcSendCommand(uint32 code, uint32 arg)
     if(mmcGetStatus(SR_CMD_INHIBIT))
         assert(false && "MMC ERROR: EMMC busy");
 
-    debug(MMC_DRIVER, "MMC: Send Command: %x  %x\n", code , arg);
+    debug(MMC_DRIVER, "MMC: Send Command: %x %x\n", code, arg);
     //mmcWaitMicroSeconds(2600000);
     mmcWaitCycles(10000);
 
-    mmci->interrupt=(uint32)mmci->interrupt;
-    mmci->arg1=arg;
+    mmci->interrupt = (uint32)mmci->interrupt;
+    mmci->arg1 = arg;
     mmci->cmdtm = code;
 
-    if(code==CMD_SEND_OP_COND)
+    if (code == CMD_SEND_OP_COND)
         mmcWaitMicroSeconds(1000);
-    else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
+    else if (code == CMD_SEND_IF_COND || code == CMD_APP_CMD)
         mmcWaitMicroSeconds(100);
 
-    if((tmp_value=mmcWaifForInterrupt(INT_CMD_DONE)))
+    if ((tmp_value = mmcWaifForInterrupt(INT_CMD_DONE)))
         assert(false && "MMC ERROR: failed to send EMMC command");
 
     tmp_value = mmci->resp0;
 
-    if(code == CMD_GO_IDLE || code == CMD_APP_CMD)
+    if (code == CMD_GO_IDLE || code == CMD_APP_CMD)
         return 0;
-    else if(code == (CMD_APP_CMD | CMD_RSPNS_48))
+    else if (code == (CMD_APP_CMD | CMD_RSPNS_48))
         return tmp_value & SR_APP_CMD;
-    else if(code == CMD_SEND_OP_COND)
+    else if (code == CMD_SEND_OP_COND)
         return tmp_value;
-    else if(code == CMD_SEND_IF_COND)
+    else if (code == CMD_SEND_IF_COND)
         return tmp_value == arg ? SD_OK : SD_ERROR;
-    else if(code == CMD_ALL_SEND_CID)
+    else if (code == CMD_ALL_SEND_CID)
     {
         tmp_value |= mmci->resp3;
         tmp_value |= mmci->resp2;
         tmp_value |= mmci->resp1;
         return tmp_value;
     }
-    else if(code == CMD_SEND_REL_ADDR)
+    else if (code == CMD_SEND_REL_ADDR)
     {
         mmc_error = CMD_ERRORS_MASK &
                (((tmp_value & 0x1fff) << 0)
@@ -270,7 +272,7 @@ int NO_OPTIMIZE mmcSendCommand(uint32 code, uint32 arg)
 //read block from sdcard
 int NO_OPTIMIZE mmcReadBlock(uint32 block_address, uint8 *buffer)
 {
-    debug(MMC_DRIVER,"MMC: Reading Block: %x with buffer: %p  from mmc card\n", block_address, buffer);
+    debug(MMC_DRIVER,"MMC: Reading Block: %x with buffer: %p from mmc card\n", block_address, buffer);
 
     assert(mmcGetStatus(SR_DAT_INHIBIT) == 0 && "MMC ERROR: Timeout");
 
@@ -278,21 +280,21 @@ int NO_OPTIMIZE mmcReadBlock(uint32 block_address, uint8 *buffer)
 
     mmci->blksizecnt = (1 << 16) | 512;
 
-    if(sd_scr[0] & SCR_SUPP_CCS)
+    if (sd_scr[0] & SCR_SUPP_CCS)
     {
-        mmcSendCommand(CMD_READ_SINGLE,block_address);
+        mmcSendCommand(CMD_READ_SINGLE, block_address);
         assert(mmc_error == 0 && "");
     }
 
-    if(!(sd_scr[0] & SCR_SUPP_CCS))
+    if (!(sd_scr[0] & SCR_SUPP_CCS))
     {
-        mmcSendCommand(CMD_READ_SINGLE,block_address * 512);
+        mmcSendCommand(CMD_READ_SINGLE, block_address * 512);
         assert(mmc_error == 0 && "");
     }
 
     assert(mmcWaifForInterrupt(INT_READ_RDY) == 0 && "MMC ERROR: Timeout while waiting for ready to read");
 
-    for(int index = 0; index < 128; index++)
+    for (int index = 0; index < 128; index++)
         buf[index] = mmci->data;
 
     return 0;
@@ -309,13 +311,13 @@ int NO_OPTIMIZE mmcWriteBlock(uint32 block_address, uint8 *buffer)
 
     mmci->blksizecnt = (1 << 16) | 512;
 
-    if(sd_scr[0] & SCR_SUPP_CCS)
+    if (sd_scr[0] & SCR_SUPP_CCS)
     {
         mmcSendCommand(CMD_WRITE_SINGLE, block_address);
         assert(mmc_error == 0 && "");
     }
 
-    if(!(sd_scr[0] & SCR_SUPP_CCS))
+    if (!(sd_scr[0] & SCR_SUPP_CCS))
     {
         mmcSendCommand(CMD_WRITE_SINGLE, block_address * 512);
         assert(mmc_error == 0 && "");
@@ -323,7 +325,7 @@ int NO_OPTIMIZE mmcWriteBlock(uint32 block_address, uint8 *buffer)
 
     assert(mmcWaifForInterrupt(INT_WRITE_RDY) == 0 && "MMC ERROR: Timeout while waiting for ready to read");
 
-    for(int index = 0; index < 128; index++)
+    for (int index = 0; index < 128; index++)
         mmci->data = buf[index];
 
     return 0;
@@ -336,36 +338,36 @@ int NO_OPTIMIZE mmcSetClock(uint32 f)
 
     int cnt = 100000;
 
-    while((mmci->status & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--)
+    while ((mmci->status & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--)
         mmcWaitMicroSeconds(10);
 
     assert(cnt > 0 && "MMC ERROR: timeout waiting for inhibit flag");
 
-    mmci->control1 &= ~C1_CLK_EN;
+    mmci->control1 = mmci->control1 & ~C1_CLK_EN;
 
     mmcWaitMicroSeconds(10);
 
     x = c - 1;
 
-    if(!x)
+    if (!x)
         shift = 0;
     else
     {
-        if(!(x & 0xffff0000u)) { x <<= 16; shift -= 16; }
-        if(!(x & 0xff000000u)) { x <<= 8;  shift -= 8; }
-        if(!(x & 0xf0000000u)) { x <<= 4;  shift -= 4; }
-        if(!(x & 0xc0000000u)) { x <<= 2;  shift -= 2; }
-        if(!(x & 0x80000000u)) { x <<= 1;  shift -= 1; }
-        if(shift > 0) shift--;
-        if(shift > 7) shift = 7;
+        if (!(x & 0xffff0000u)) { x <<= 16; shift -= 16; }
+        if (!(x & 0xff000000u)) { x <<= 8;  shift -= 8; }
+        if (!(x & 0xf0000000u)) { x <<= 4;  shift -= 4; }
+        if (!(x & 0xc0000000u)) { x <<= 2;  shift -= 2; }
+        if (!(x & 0x80000000u)) { x <<= 1;  shift -= 1; }
+        if (shift > 0) shift--;
+        if (shift > 7) shift = 7;
     }
 
-    if(sd_hv > HOST_SPEC_V2)
+    if (sd_hv > HOST_SPEC_V2)
         divisor = c;
     else
         divisor = (1 << shift);
 
-    if(divisor <= 2)
+    if (divisor <= 2)
     {
         divisor = 2;
         shift = 0;
@@ -373,19 +375,19 @@ int NO_OPTIMIZE mmcSetClock(uint32 f)
 
     debug(MMC_DRIVER, "MMC Clock divisor: %x  shift: %x\n", divisor, shift);
 
-    if(sd_hv > HOST_SPEC_V2)
+    if (sd_hv > HOST_SPEC_V2)
         h = (divisor & 0x300) >> 2;
 
     divisor = (((divisor & 0x0ff) << 8) | h);
 
     mmci->control1 = (mmci->control1 & 0xffff003f) | divisor;
     mmcWaitMicroSeconds(10);
-    mmci->control1 |= C1_CLK_EN;
+    mmci->control1 = mmci->control1 | C1_CLK_EN;
     mmcWaitMicroSeconds(10);
 
     cnt = 10000;
 
-    while(!(mmci->control1 & C1_CLK_STABLE) && cnt--)
+    while (!(mmci->control1 & C1_CLK_STABLE) && cnt--)
         mmcWaitMicroSeconds(10);
 
     assert(cnt > 0 && "MMC ERROR: failed to get stable clock");
@@ -442,19 +444,19 @@ int NO_OPTIMIZE mmcInit()
 
     // Reset the card.
     mmci->control0 = 0;
-    mmci->control1 |= C1_SRST_HC;
+    mmci->control1 = mmci->control1 | C1_SRST_HC;
 
-    cnt=10000;
+    cnt = 10000;
     do
     {
         mmcWaitMicroSeconds(10);
-    } while((mmci->control1 & C1_SRST_HC) && cnt--);
+    } while ((mmci->control1 & C1_SRST_HC) && cnt--);
 
     assert(cnt > 0 && "MMC ERROR: failed to reset");
 
-    debug(MMC_DRIVER,"MMC: reset ok\n");
+    debug(MMC_DRIVER, "MMC: reset ok\n");
 
-    mmci->control1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
+    mmci->control1 = mmci->control1 | C1_CLK_INTLEN | C1_TOUNIT_MAX;
     mmcWaitMicroSeconds(10);
 
     // Set clock to setup frequency.
@@ -474,43 +476,43 @@ int NO_OPTIMIZE mmcInit()
     mmcSendCommand(CMD_SEND_IF_COND, 0x000001AA);
     assert(mmc_error == 0);
 
-    cnt=6;
-    tmp_var=0;
-    while(!(tmp_var & ACMD41_CMD_COMPLETE) && cnt--)
+    cnt = 6;
+    tmp_var = 0;
+    while (!(tmp_var & ACMD41_CMD_COMPLETE) && cnt--)
     {
         mmcWaitCycles(400);
 
         tmp_var = mmcSendCommand(CMD_SEND_OP_COND,ACMD41_ARG_HC);
 
-        debug(MMC_DRIVER,"EMMC: CMD_SEND_OP_COND returned \n");
+        debug(MMC_DRIVER,"EMMC: CMD_SEND_OP_COND returned\n");
 
         if(tmp_var & ACMD41_CMD_COMPLETE)
-            debug(MMC_DRIVER,"COMPLETE \n");
+            debug(MMC_DRIVER,"COMPLETE\n");
 
         if(tmp_var & ACMD41_VOLTAGE)
-            debug(MMC_DRIVER,"VOLTAGE \n");
+            debug(MMC_DRIVER,"VOLTAGE\n");
 
         if(tmp_var & ACMD41_CMD_CCS)
-            debug(MMC_DRIVER,"CCS \n");
+            debug(MMC_DRIVER,"CCS\n");
 
         debug(MMC_DRIVER,"%zd \n",tmp_var >> 32);
         debug(MMC_DRIVER,"%zd\n",tmp_var);
 
-        if((int)mmc_error != (int)SD_TIMEOUT && mmc_error != SD_OK )
+        if ((int)mmc_error != (int)SD_TIMEOUT && mmc_error != SD_OK )
             assert(false && "MMC ERROR: EMMC ACMD41 returned error");
     }
 
     assert((tmp_var & ACMD41_CMD_COMPLETE) && cnt);
     assert(tmp_var & ACMD41_VOLTAGE);
 
-    if(tmp_var & ACMD41_CMD_CCS)
+    if (tmp_var & ACMD41_CMD_CCS)
         ccs = SCR_SUPP_CCS;
 
     mmcSendCommand(CMD_ALL_SEND_CID, 0);
 
     sd_rca = mmcSendCommand(CMD_SEND_REL_ADDR, 0);
 
-    debug(MMC_DRIVER, "EMMC: CMD_SEND_REL_ADDR returned %zx \n", sd_rca);
+    debug(MMC_DRIVER, "EMMC: CMD_SEND_REL_ADDR returned %zx\n", sd_rca);
     assert(mmc_error == 0);
     assert(mmcSetClock(25000000) == 0 && "MMC ERROR: while setting clock");
 
@@ -526,9 +528,9 @@ int NO_OPTIMIZE mmcInit()
 
     tmp_var = 0;
     cnt = 100000;
-    while(tmp_var < 2 && cnt)
+    while (tmp_var < 2 && cnt)
     {
-        if( mmci->status & SR_READ_AVAILABLE )
+        if (mmci->status & SR_READ_AVAILABLE)
             sd_scr[tmp_var++] = mmci->data;
         else
             mmcWaitMicroSeconds(1);
@@ -536,11 +538,11 @@ int NO_OPTIMIZE mmcInit()
 
     assert(tmp_var == 2);
 
-    if(sd_scr[0] & SCR_SD_BUS_WIDTH_4)
+    if (sd_scr[0] & SCR_SD_BUS_WIDTH_4)
     {
-        mmcSendCommand(CMD_SET_BUS_WIDTH, sd_rca|2);
+        mmcSendCommand(CMD_SET_BUS_WIDTH, sd_rca | 2);
         assert(mmc_error == 0);
-        mmci->control0 |= C0_HCTL_DWITDH;
+        mmci->control0 = mmci->control0 | C0_HCTL_DWITDH;
     }
 
     sd_scr[0] &= ~SCR_SUPP_CCS;
@@ -549,30 +551,35 @@ int NO_OPTIMIZE mmcInit()
     return SD_OK;
 }
 
-MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512), num_sectors_(210672)
+MMCDrive::MMCDrive() :
+    Device(eastl::string("MMC disk")),
+    SPT(63),
+    lock_("MMCDrive::lock_"),
+    rca_(0),
+    sector_size_(512),
+    num_sectors_(210672)
 {
     mmcInit();
 }
 
-MMCDriver::~MMCDriver()
+MMCDrive::~MMCDrive()
 {
-
 }
 
-uint32 MMCDriver::addRequest( BDRequest * br)
+uint32 MMCDrive::addRequest( BDRequest * br)
 {
   ScopeLock lock(lock_);
-  debug(MMC_DRIVER, "addRequest %d!\n", (int)br->getCmd() );
+  debug(MMC_DRIVER, "addRequest %d!\n", (int)br->getCmd());
 
   int32 res = -1;
 
-  switch( br->getCmd() )
+  switch (br->getCmd())
   {
     case BDRequest::BD_CMD::BD_READ:
-      res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+      res = readSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
     case BDRequest::BD_CMD::BD_WRITE:
-      res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+      res = writeSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
     default:
       res = -1;
@@ -580,12 +587,13 @@ uint32 MMCDriver::addRequest( BDRequest * br)
   }
 
   debug(MMC_DRIVER, "addRequest:No IRQ operation !!\n");
-  br->setStatus( BDRequest::BD_RESULT::BD_DONE );
+  br->setStatus(BDRequest::BD_RESULT::BD_DONE);
   return res;
 }
+
 int sd_readblock(unsigned int block_address, unsigned char *buffer, unsigned int num);
 
-int32 MMCDriver::readBlock ( uint32 address, void *buffer )
+int32 MMCDrive::readBlock(uint32 address, void *buffer)
 {
   debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n",address, buffer);
 
@@ -594,9 +602,9 @@ int32 MMCDriver::readBlock ( uint32 address, void *buffer )
   return 0;
 }
 
-int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+int32 MMCDrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
 {
-  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %p\n",start_sector, num_sectors, buffer);
+  debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
   {
     readBlock((start_sector + i) * sector_size_, (char*)buffer + i * sector_size_);
@@ -604,7 +612,7 @@ int32 MMCDriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
   return 0;
 }
 
-int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
+int32 MMCDrive::writeBlock(uint32 address, void *buffer)
 {
     debug(MMC_DRIVER, "writeBlock: address: %x, buffer: %p\n", address, buffer);
 
@@ -613,9 +621,9 @@ int32 MMCDriver::writeBlock ( uint32 address, void *buffer)
     return 0;
 }
 
-int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer)
+int32 MMCDrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
 {
-  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %p\n",start_sector, num_sectors, buffer);
+  debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
   {
     writeBlock((start_sector + i) * sector_size_, (char*)buffer + i * sector_size_);
@@ -623,16 +631,43 @@ int32 MMCDriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   return 0;
 }
 
-uint32 MMCDriver::getNumSectors()
+uint32 MMCDrive::getNumSectors()
 {
   return num_sectors_;
 }
 
-uint32 MMCDriver::getSectorSize()
+uint32 MMCDrive::getSectorSize()
 {
   return sector_size_;
 }
 
-void MMCDriver::serviceIRQ()
+void MMCDrive::serviceIRQ()
 {
+}
+
+
+MMCDeviceDriver::MMCDeviceDriver() :
+    BasicDeviceDriver("MMC device driver")
+{
+}
+
+MMCDeviceDriver& MMCDeviceDriver::instance()
+{
+    static MMCDeviceDriver instance_;
+    return instance_;
+}
+
+void MMCDeviceDriver::doDeviceDetection()
+{
+    // Assume we have a MMC drive
+    // Need to name this "idea" for compatibility with userspace disk detection
+    // even though it has nothing to do with IDE
+    constexpr const char* disk_name = "idea";
+    MMCDrive* drv = new MMCDrive();
+    bindDevice(*drv);
+
+    auto *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), disk_name, true);
+    BDManager::instance().addVirtualDevice(bdv);
+
+    detectMBRPartitions(bdv, drv, 0, drv->SPT, disk_name);
 }
