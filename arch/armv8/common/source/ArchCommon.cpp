@@ -172,6 +172,10 @@ void ArchCommon::postBootInit()
 {
 }
 
+void ArchCommon::initPlatformDrivers()
+{
+    PlatformBus::instance().registerDriver(SerialManager::instance());
+}
 void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
 {
 }

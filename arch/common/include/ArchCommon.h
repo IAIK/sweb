@@ -111,6 +111,8 @@ class ArchCommon
 
     static void postBootInit();
 
+    static void initPlatformDrivers();
+
     [[noreturn]] static void callWithStack(char* stack, void (*func)());
 
     static uint64 cpuTimestamp();

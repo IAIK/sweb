@@ -103,7 +103,8 @@ private:
     ArchSerialInfo port_info_;
 };
 
-class SerialManager : public BasicDeviceDriver, public Driver<SerialPort>
+class SerialManager : public BasicDeviceDriver,
+                      public Driver<SerialPort>
 {
 public:
     SerialManager();

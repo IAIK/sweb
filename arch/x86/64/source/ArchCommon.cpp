@@ -16,6 +16,9 @@
 #include "Scheduler.h"
 #include "KernelMemoryManager.h"
 #include "SMP.h"
+#include "PlatformBus.h"
+#include "ProgrammableIntervalTimer.h"
+#include "SerialManager.h"
 
 void puts(const char* string);
 
@@ -429,6 +432,12 @@ void ArchCommon::drawHeartBeat()
 void ArchCommon::postBootInit()
 {
   initACPI();
+}
+
+void ArchCommon::initPlatformDrivers()
+{
+    PlatformBus::instance().registerDriver(PITDriver::instance());
+    PlatformBus::instance().registerDriver(SerialManager::instance());
 }
 
 

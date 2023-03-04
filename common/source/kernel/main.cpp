@@ -40,8 +40,6 @@
 #include "SystemState.h"
 #include "DeviceBus.h"
 #include "PlatformBus.h"
-#include "ProgrammableIntervalTimer.h"
-#include "8259.h"
 
 extern void* kernel_end_address;
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
@@ -74,8 +72,7 @@ extern "C" [[noreturn]] void startup()
   debug(MAIN, "Interrupts init\n");
   ArchInterrupts::initialise();
 
-  PlatformBus::instance().registerDriver(PITDriver::instance());
-  PlatformBus::instance().registerDriver(SerialManager::instance());
+  ArchCommon::initPlatformDrivers();
 
   debug(MAIN, "Creating console\n");
   main_console = ArchCommon::createConsole(1);
