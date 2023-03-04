@@ -19,7 +19,7 @@ ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys(
 
 ArchMemory::ArchMemory()
 {
-  paging_root_page_ = PageManager::instance()->allocPPN(PAGE_SIZE);
+  paging_root_page_ = PageManager::instance().allocPPN(PAGE_SIZE);
   address_space_id = ASID_COUNTER++;
 
   debug(A_MEMORY, "ArchMemory::ArchMemory(): Got new Page no. %zx\n", paging_root_page_);
@@ -82,9 +82,9 @@ bool ArchMemory::unmapPage(size_t virtual_page)
 
     flushAllTranslationCaches(virtual_page * PAGE_SIZE); // Needs to happen after page table entries have been modified but before PPNs are freed
 
-    PageManager::instance()->freePPN(m.page_ppn);
-    if(l3_empty)   { PageManager::instance()->freePPN(m.level3_ppn);   }
-    if(l2_empty)   { PageManager::instance()->freePPN(m.level2_ppn);   }
+    PageManager::instance().freePPN(m.page_ppn);
+    if(l3_empty)   { PageManager::instance().freePPN(m.level3_ppn);   }
+    if(l2_empty)   { PageManager::instance().freePPN(m.level2_ppn);   }
 
     return true;
 }
@@ -105,7 +105,7 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_acce
 
     if(m.level2_ppn == 0)
     {
-        m.level2_ppn = PageManager::instance()->allocPPN(PAGE_SIZE);
+        m.level2_ppn = PageManager::instance().allocPPN(PAGE_SIZE);
         m.level2_entry = (Level2Entry*)getIdentAddressOfPPN(m.level2_ppn);
         m.level1_entry[m.level1_index].table_address = m.level2_ppn;
         m.level1_entry[m.level1_index].entry_descriptor_type = ENTRY_DESCRIPTOR_PAGE;
@@ -113,7 +113,7 @@ bool ArchMemory::mapPage(vpn_t virtual_page, ppn_t physical_page, bool user_acce
 
     if(m.level3_ppn == 0)
     {
-        m.level3_ppn = PageManager::instance()->allocPPN(PAGE_SIZE);
+        m.level3_ppn = PageManager::instance().allocPPN(PAGE_SIZE);
         m.level3_entry = (Level3Entry*)getIdentAddressOfPPN(m.level3_ppn);
         m.level2_entry[m.level2_index].table.table_address = m.level3_ppn;
         m.level2_entry[m.level2_index].table.entry_descriptor_type = ENTRY_DESCRIPTOR_PAGE;
@@ -160,19 +160,19 @@ ArchMemory::~ArchMemory()
                         {
                             auto page_ppn = level3_entry[level3_index].page_address;
                             removeEntry(level3_entry, level3_index);
-                            PageManager::instance()->freePPN(page_ppn);
+                            PageManager::instance().freePPN(page_ppn);
                         }
                     }
                     removeEntry(&level2_entry->table, level2_index);
-                    PageManager::instance()->freePPN(l3_ppn);
+                    PageManager::instance().freePPN(l3_ppn);
                 }
             }
             removeEntry(level1_entry, level1_index);
-            PageManager::instance()->freePPN(l2_ppn);
+            PageManager::instance().freePPN(l2_ppn);
         }
     }
 
-    PageManager::instance()->freePPN(paging_root_page_);
+    PageManager::instance().freePPN(paging_root_page_);
 }
 
 template<typename T>
@@ -231,7 +231,7 @@ const ArchMemoryMapping ArchMemory::resolveMapping(size_t level1_ppn, size_t vpa
 {
     ArchMemoryMapping m;
 
-    size_t total_num_pages = PageManager::instance()->getTotalNumPages();
+    size_t total_num_pages = PageManager::instance().getTotalNumPages();
 
     m.level3_index = vpage;
     m.level2_index = m.level3_index / LEVEL3_ENTRIES;
@@ -335,7 +335,7 @@ void ArchMemory::unmapKernelPage(size_t virtual_page)
 
     *((size_t*)&(level3_entry[m.level3_index])) = 0;
 
-    PageManager::instance()->freePPN(m.page_ppn);
+    PageManager::instance().freePPN(m.page_ppn);
 }
 
 size_t ArchMemory::getRootOfPagingStructure()
