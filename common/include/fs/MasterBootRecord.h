@@ -2,6 +2,9 @@
 
 #include <cinttypes>
 
+class BDDriver;
+class BDVirtualDevice;
+
 struct MasterBootRecord
 {
     struct PartitionEntry
@@ -116,3 +119,6 @@ constexpr const char* partitionTypeName(uint8_t type)
         return "unknown";
     }
 }
+
+
+int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, uint32_t SPT, const char* name);
