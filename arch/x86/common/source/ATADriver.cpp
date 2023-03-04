@@ -29,12 +29,27 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
     irq_domain(eastl::string("ATA disk ") + eastl::to_string(drive_num)),
     lock_("ATADriver::lock_")
 {
+    // Disable irq to ensure this part of the interrupt tree won't be used while we map a new interrupt
+    ArchInterrupts::disableIRQ(controller.irq());
     irq_domain.irq()
         .mapTo(controller)
         .useHandler(
-            []()
+            [&]()
             {
-                debug(ATA_DRIVER, "probeIRQ\n");
+                // Need to read status register to acknowledge and unblock interrupts
+                auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
+                auto error = controller.io_regs[IDEControllerChannel::IoRegister::ERROR].read();
+                auto lba_l = controller.io_regs[IDEControllerChannel::IoRegister::LBA_LOW].read();
+                auto lba_m = controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].read();
+                auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
+
+                debugAdvanced(ATA_DRIVER, "probeIRQ: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
+
+                controller.reset();
+                controller.selectDrive(drive_num);
+
+                irq_domain.irq().useHandler(nullptr);
+
                 BDManager::instance().probeIRQ = false;
             });
 
@@ -73,9 +88,9 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
     [[maybe_unused]] auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
 
     debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
+    ArchInterrupts::enableIRQ(irq_domain.irq());
 
     {
-        ArchInterrupts::enableIRQ(irq_domain.irq());
         WithInterrupts intr(true);
         testIRQ();
     }
@@ -94,13 +109,14 @@ void ATADrive::testIRQ()
 
   BDManager::instance().probeIRQ = true;
   controller.selectDrive(drive_num);
-  readSector(0, 1, nullptr);
+  char buf[getSectorSize()];
+  readSector(0, 1, buf);
 
   debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
   TIMEOUT_CHECK(BDManager::instance().probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
 }
 
-int32 ATADrive::rawReadSector(uint32 start_sector, uint32 num_sectors, void *buffer)
+int32 ATADrive::rawReadSector(uint32 start_sector, uint32 num_sectors, void* buffer)
 {
   BD_ATA_MODE old_mode = mode;
   mode = BD_ATA_MODE::BD_PIO_NO_IRQ;
@@ -197,6 +213,8 @@ int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer
 {
   debugAdvanced(ATA_DRIVER, "readSector %x, num: %x into buffer %p\n", start_sector, num_sectors, buffer);
 
+  controller.selectDrive(drive_num);
+
   assert(buffer || (start_sector == 0 && num_sectors == 1));
   if (selectSector(start_sector, num_sectors) != 0)
     return -1;
@@ -226,6 +244,9 @@ int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer
 int32 ATADrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
 {
   assert(buffer);
+
+  controller.selectDrive(drive_num);
+
   if (selectSector(start_sector, num_sectors) != 0)
     return -1;
 
@@ -303,6 +324,7 @@ uint32 ATADrive::addRequest(BDRequest* br)
 
     jiffies = 0;
 
+    debugAdvanced(ATA_DRIVER, "addRequest: Waiting for request to be finished\n");
     while (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
 
     if (jiffies >= IO_TIMEOUT*10)
@@ -312,9 +334,11 @@ uint32 ATADrive::addRequest(BDRequest* br)
         TIMEOUT_WARNING();
         auto status = controller.control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
         auto error = controller.io_regs[IDEControllerChannel::IoRegister::ERROR].read();
+        auto lba_l = controller.io_regs[IDEControllerChannel::IoRegister::LBA_LOW].read();
+        auto lba_m = controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].read();
+        auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
 
-        debug(ATA_DRIVER, "addRequest: Device status: %x, error: %x\n", status.u8,
-              error.u8);
+        debug(ATA_DRIVER, "addRequest: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
     }
 
     if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
