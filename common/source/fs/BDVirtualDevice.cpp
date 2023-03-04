@@ -12,8 +12,7 @@ BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_se
     writable_(writable), driver_(driver), partition_type_(0), name_(name)
 {
 
-  debug(BD_VIRT_DEVICE, "ctor: offset = %d, num_sectors = %d,\n  sector_size = %d, "
-        "name = %s \n",
+  debug(BD_VIRT_DEVICE, "ctor: offset = %d, num_sectors = %d, sector_size = %d, name = %s\n",
         offset, num_sectors, sector_size, name);
   dev_number_ = 0;
 }
