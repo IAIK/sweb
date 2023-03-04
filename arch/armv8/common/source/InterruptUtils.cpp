@@ -66,7 +66,7 @@ void arch_swi_irq_handler(size_t swi)
   else if (swi == 0x0) // syscall
   {
     currentThread->switch_to_userspace_ = 0;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     auto ret = Syscall::syscallException(currentThread->user_registers_->X[0],
                                          currentThread->user_registers_->X[1],
@@ -79,7 +79,7 @@ void arch_swi_irq_handler(size_t swi)
 
     ArchInterrupts::disableInterrupts();
     currentThread->switch_to_userspace_ = 1;
-    currentThreadRegisters =  currentThread->user_registers_;
+    currentThreadRegisters =  currentThread->user_registers_.get();
   }
   else
   {
@@ -122,7 +122,7 @@ extern "C" void exceptionHandler(size_t int_id, size_t curr_el NU, size_t exc_sy
     kprintfd("\nCPU Fault type = %zx\n",type);
     ArchThreads::printThreadRegisters(currentThread,false);
     currentThread->switch_to_userspace_ = 0;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     currentThread->kill();
     for(;;);
