@@ -2,7 +2,6 @@
 #include "BDDriver.h"
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
-#include "IDEDriver.h"
 #include "PlatformBus.h"
 #include "kprintf.h"
 #include "kstring.h"
@@ -18,15 +17,6 @@ BDManager& BDManager::instance()
 BDManager::BDManager() :
     probeIRQ(false)
 {
-}
-
-void BDManager::doDeviceDetection()
-{
-  debug(BD_MANAGER, "doDeviceDetection: Detecting BD devices\n");
-
-  PlatformBus::instance().registerDriver(IDEControllerDriver::instance());
-  // insert other device detectors here
-  debug(BD_MANAGER, "doDeviceDetection: Detection done\n");
 }
 
 void BDManager::addRequest(BDRequest* bdr)

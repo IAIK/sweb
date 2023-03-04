@@ -273,7 +273,8 @@ private:
     eastl::vector<IDEControllerChannel*> channels;
 };
 
-class IDEControllerDriver : public BasicDeviceDriver, public Driver<IDEController>
+class IDEControllerDriver : public BasicDeviceDriver,
+                            public Driver<IDEController>
 {
 public:
     IDEControllerDriver();
@@ -281,8 +282,6 @@ public:
     ~IDEControllerDriver() override = default;
 
     static IDEControllerDriver& instance();
-
-    static int32_t detectPartitions(BDDriver*, uint32_t, uint32_t, const char*);
 
     void doDeviceDetection() override;
 };

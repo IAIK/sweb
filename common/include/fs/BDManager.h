@@ -19,11 +19,6 @@ class BDManager
     static BDManager& instance();
 
     /**
-     * detects all devices present
-     */
-    void doDeviceDetection();
-
-    /**
      * adds the given device to the manager
      * @param dev the device to add
      */

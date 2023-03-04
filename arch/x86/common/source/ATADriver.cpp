@@ -9,6 +9,7 @@
 #include "kprintf.h"
 #include "offsets.h"
 #include "ArchInterrupts.h"
+#include "MasterBootRecord.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
@@ -618,7 +619,8 @@ bool PATADeviceDriver::probe(const IDEDeviceDescription& descr)
                                         drv->getSectorSize(), disk_name.c_str(), true);
 
         BDManager::instance().addVirtualDevice(bdv);
-        IDEControllerDriver::detectPartitions(drv, 0, drv->SPT, disk_name.c_str());
+
+        detectMBRPartitions(bdv, drv, 0, drv->SPT, disk_name.c_str());
 
         return true;
     }

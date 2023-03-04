@@ -23,6 +23,9 @@ void InitThread::Run()
 
   assert(ArchInterrupts::testIFSet());
 
+  debug(MAIN, "Block Device creation\n");
+  ArchCommon::initBlockDeviceDrivers();
+
   if (!progs_ || !progs_[0])
     return;
 

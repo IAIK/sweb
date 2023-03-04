@@ -118,12 +118,7 @@ extern "C" [[noreturn]] void startup()
   default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
-
-  debug(MAIN, "Block Device creation\n");
-  BDManager::instance().doDeviceDetection();
-  debug(MAIN, "Block Device done\n");
   debug(MAIN, "Checking for initrd\n");
-
   BootloaderModules::loadInitrdIfExists();
 
   debug(MAIN, "Add block devices to devicefs\n");

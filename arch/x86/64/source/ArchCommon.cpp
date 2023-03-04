@@ -19,6 +19,7 @@
 #include "PlatformBus.h"
 #include "ProgrammableIntervalTimer.h"
 #include "SerialManager.h"
+#include "IDEDriver.h"
 
 void puts(const char* string);
 
@@ -440,6 +441,10 @@ void ArchCommon::initPlatformDrivers()
     PlatformBus::instance().registerDriver(SerialManager::instance());
 }
 
+void ArchCommon::initBlockDeviceDrivers()
+{
+    PlatformBus::instance().registerDriver(IDEControllerDriver::instance());
+}
 
 [[noreturn]] void ArchCommon::callWithStack(char* stack, void (*func)())
 {
