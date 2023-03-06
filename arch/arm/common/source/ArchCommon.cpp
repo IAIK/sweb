@@ -160,9 +160,10 @@ uint64 ArchCommon::cpuTimestamp()
     return timestamp;
 }
 
+// Called to register destructors of static variables at "program exit".
+// The kernel never exits, so simply do nothing here
 extern "C" void __aeabi_atexit()
 {
-  assert(false && "would not make sense in a kernel");
 }
 
 extern "C" void __aeabi_unwind_cpp_pr0()
