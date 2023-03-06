@@ -1,10 +1,12 @@
+#include "MMCDriver.h"
 #include "BDManager.h"
 #include "BDRequest.h"
-#include "MMCDriver.h"
+#include "BDVirtualDevice.h"
 #include "ArchInterrupts.h"
 
 #include "Scheduler.h"
 #include "kprintf.h"
+#include "MasterBootRecord.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
@@ -88,8 +90,13 @@ uint32 mmc_send_acmd(uint32 command, uint32 arg, uint32* response)
   return mmc_send_cmd(command, arg, response);
 }
 
-MMCDriver::MMCDriver() :
-    SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512), num_sectors_(0)
+MMCDrive::MMCDrive() :
+    Device(eastl::string("MMC disk")),
+    SPT(63),
+    lock_("MMCDriver::lock_"),
+    rca_(0),
+    sector_size_(512),
+    num_sectors_(210672)
 {
   debug(MMC_DRIVER, "MMCDriver()\n");
   uint32 response;
@@ -104,12 +111,12 @@ MMCDriver::MMCDriver() :
   mmc_send_cmd(7, rca_ << 16, 0);
 }
 
-MMCDriver::~MMCDriver()
+MMCDrive::~MMCDrive()
 {
 
 }
 
-uint32 MMCDriver::addRequest(BDRequest * br)
+uint32 MMCDrive::addRequest(BDRequest * br)
 {
   ScopeLock lock(lock_);
   debug(MMC_DRIVER, "addRequest %d!\n", br->getCmd());
@@ -118,10 +125,10 @@ uint32 MMCDriver::addRequest(BDRequest * br)
 
   switch (br->getCmd())
   {
-    case BDRequest::BD_READ:
+    case BDRequest::BD_CMD::BD_READ:
       res = readSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
-    case BDRequest::BD_WRITE:
+    case BDRequest::BD_CMD::BD_WRITE:
       res = writeSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
     default:
@@ -130,11 +137,11 @@ uint32 MMCDriver::addRequest(BDRequest * br)
   }
 
   debug(MMC_DRIVER, "addRequest:No IRQ operation !!\n");
-  br->setStatus(BDRequest::BD_DONE);
+  br->setStatus(BDRequest::BD_RESULT::BD_DONE);
   return res;
 }
 
-int32 MMCDriver::readBlock(uint32 address, void *buffer)
+int32 MMCDrive::readBlock(uint32 address, void *buffer)
 {
   debug(MMC_DRIVER, "readBlock: address: %x, buffer: %p\n", address, buffer);
   uint32 response;
@@ -155,7 +162,7 @@ int32 MMCDriver::readBlock(uint32 address, void *buffer)
   return 0;
 }
 
-int32 MMCDriver::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
+int32 MMCDrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
 {
   debug(MMC_DRIVER, "readSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
@@ -165,7 +172,7 @@ int32 MMCDriver::readSector(uint32 start_sector, uint32 num_sectors, void *buffe
   return 0;
 }
 
-int32 MMCDriver::writeBlock(uint32 address, void *buffer)
+int32 MMCDrive::writeBlock(uint32 address, void *buffer)
 {
   debug(MMC_DRIVER, "writeBlock: address: %x, buffer: %p\n", address, buffer);
   uint32 response;
@@ -184,7 +191,7 @@ int32 MMCDriver::writeBlock(uint32 address, void *buffer)
   return 0;
 }
 
-int32 MMCDriver::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
+int32 MMCDrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
 {
   debug(MMC_DRIVER, "writeSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
   for (uint32 i = 0; i < num_sectors; ++i)
@@ -194,16 +201,42 @@ int32 MMCDriver::writeSector(uint32 start_sector, uint32 num_sectors, void * buf
   return 0;
 }
 
-uint32 MMCDriver::getNumSectors()
+uint32 MMCDrive::getNumSectors()
 {
-  return 210672; // fixed number of sectors for now
+  return num_sectors_;
 }
 
-uint32 MMCDriver::getSectorSize()
+uint32 MMCDrive::getSectorSize()
 {
   return sector_size_;
 }
 
-void MMCDriver::serviceIRQ()
+void MMCDrive::serviceIRQ()
 {
+}
+
+MMCDeviceDriver::MMCDeviceDriver() :
+    BasicDeviceDriver("MMC device driver")
+{
+}
+
+MMCDeviceDriver& MMCDeviceDriver::instance()
+{
+    static MMCDeviceDriver instance_;
+    return instance_;
+}
+
+void MMCDeviceDriver::doDeviceDetection()
+{
+    // Assume we have a MMC drive
+    // Need to name this "idea" for compatibility with userspace disk detection
+    // even though it has nothing to do with IDE
+    constexpr const char* disk_name = "idea";
+    MMCDrive* drv = new MMCDrive();
+    bindDevice(*drv);
+
+    auto *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), disk_name, true);
+    BDManager::instance().addVirtualDevice(bdv);
+
+    detectMBRPartitions(bdv, drv, 0, drv->SPT, disk_name);
 }
