@@ -9,10 +9,22 @@
 #include "Stabs2DebugInfo.h"
 #include "ArchCpuLocalStorage.h"
 #include "SMP.h"
+#include "PlatformBus.h"
+#include "SerialManager.h"
+#include "MMCDriver.h"
+#include "KernelMemoryManager.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
+RangeAllocator<> mmio_addr_allocator;
+
+extern void* kernel_start_address;
 extern void* kernel_end_address;
+
+pointer ArchCommon::getKernelStartAddress()
+{
+    return (pointer)&kernel_start_address;
+}
 
 pointer ArchCommon::getKernelEndAddress()
 {
@@ -148,10 +160,6 @@ uint64 ArchCommon::cpuTimestamp()
     return timestamp;
 }
 
-void ArchCommon::postBootInit()
-{
-}
-
 extern "C" void __aeabi_atexit()
 {
   assert(false && "would not make sense in a kernel");
@@ -167,8 +175,34 @@ extern "C" void raise()
   assert(false && "no exception handling implemented");
 }
 
+void ArchCommon::postBootInit()
+{
+}
+
+void ArchCommon::initPlatformDrivers()
+{
+    PlatformBus::instance().registerDriver(SerialManager::instance());
+}
+
+void ArchCommon::initBlockDeviceDrivers()
+{
+    PlatformBus::instance().registerDriver(MMCDeviceDriver::instance());
+}
+
 void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
 {
+}
+
+void ArchCommon::initKernelVirtualAddressAllocator()
+{
+    new (&mmio_addr_allocator) RangeAllocator{};
+    mmio_addr_allocator.setUseable(KERNEL_START, (size_t)-1);
+    mmio_addr_allocator.setUnuseable(getKernelStartAddress(), getKernelEndAddress());
+    mmio_addr_allocator.setUnuseable(KernelMemoryManager::instance()->getKernelHeapStart(), KernelMemoryManager::instance()->getKernelHeapMaxEnd());
+    // TODO: ident mapping end
+    // mmio_addr_allocator.setUnuseable(IDENT_MAPPING_START, IDENT_MAPPING_END);
+    debug(MAIN, "Usable MMIO ranges:\n");
+    mmio_addr_allocator.printUsageInfo();
 }
 
 cpu_local size_t heart_beat_value = 0;

@@ -36,3 +36,4 @@
  */
 #define USER_BREAK 0x80000000
 
+#define KERNEL_START 0x80000000

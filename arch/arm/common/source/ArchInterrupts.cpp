@@ -9,6 +9,8 @@
 #include "Scheduler.h"
 #include "SystemState.h"
 
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector");
+
 extern uint8 boot_stack[];
 
 #define SWITCH_CPU_MODE(MODE) \

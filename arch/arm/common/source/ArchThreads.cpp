@@ -39,52 +39,56 @@ void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
     ArchMemory::loadPagingStructureRoot(ttbr0_value);
 }
 
-void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createKernelRegisters(void* start_function, void* stack)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
+  assert(!((pointer)start_function & 0x3));
+
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
+
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
+
+  regs->pc = (pointer)start_function;
+  regs->lr = (pointer)start_function;
+  regs->cpsr = 0x6000001F;
+  regs->sp = (pointer)stack & ~0xF;
+  regs->r[11] = (pointer)stack & ~0xF; // r11 is the fp
+  regs->ttbr0 = pageDirectory;
+
+  return regs;
+}
+
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters& info, void* function)
+{
+  info.pc = (pointer)function;
+  info.lr = (pointer)function;
+}
+
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters& info)
+{
+    return (void*)info.pc;
+}
+
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createUserRegisters(void* start_function, void* user_stack, void* kernel_stack)
+{
   assert(!((pointer)start_function & 0x3));
-  info->pc = (pointer)start_function;
-  info->lr = (pointer)start_function;
-  info->cpsr = 0x6000001F;
-  info->sp = (pointer)stack & ~0xF;
-  info->r[11] = (pointer)stack & ~0xF; // r11 is the fp
-  info->ttbr0 = pageDirectory;
-  assert((pageDirectory) != 0);
-  assert(((pageDirectory) & 0x3FFF) == 0);
-}
 
-void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
-{
-  info->pc = (pointer)function;
-  info->lr = (pointer)function;
-}
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
 
-void* ArchThreads::getInstructionPointer(ArchThreadRegisters *info)
-{
-    return (void*)info->pc;
-}
-
-void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
-{
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
-  assert(!((pointer)start_function & 0x3));
-  info->pc = (pointer)start_function;
-  info->lr = (pointer)start_function;
-  info->cpsr = 0x60000010;
-  info->sp = (pointer)user_stack & ~0xF;
-  info->r[11] = (pointer)user_stack & ~0xF; // r11 is the fp
-  info->sp0 = (pointer)kernel_stack & ~0xF;
-  info->ttbr0 = pageDirectory;
-  assert((pageDirectory) != 0);
-  assert(((pageDirectory) & 0x3FFF) == 0);
+
+  regs->pc = (pointer)start_function;
+  regs->lr = (pointer)start_function;
+  regs->cpsr = 0x60000010;
+  regs->sp = (pointer)user_stack & ~0xF;
+  regs->r[11] = (pointer)user_stack & ~0xF; // r11 is the fp
+  regs->sp0 = (pointer)kernel_stack & ~0xF;
+  regs->ttbr0 = pageDirectory;
+
+  return regs;
 }
 
 void ArchThreads::yield()
@@ -102,7 +106,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
+  ArchThreadRegisters *info = userspace_registers ? thread->user_registers_.get() : thread->kernel_registers_.get();
   if (!info)
   {
     kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");

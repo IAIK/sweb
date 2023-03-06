@@ -1,4 +1,5 @@
 #include "ArchMulticore.h"
+#include "ArchInterrupts.h"
 #include "SMP.h"
 #include "debug.h"
 
@@ -9,6 +10,17 @@ ArchCpu::ArchCpu()
     setId(0);
     debug(A_MULTICORE, "Initializing ArchCpu %zx\n", id());
     SMP::addCpuToList(this);
+}
+
+IrqDomain& ArchCpu::rootIrqDomain()
+{
+    if (static bool initialized = false; !initialized)
+    {
+        initialized = true;
+        new (&cpu_irq_vector_domain_) IrqDomain("CPU interrupt vector");
+    }
+
+    return cpu_irq_vector_domain_;
 }
 
 void ArchMulticore::initialize()

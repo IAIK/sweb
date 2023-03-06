@@ -1,10 +1,11 @@
+#include "MMCDriver.h"
 #include "BDManager.h"
 #include "BDRequest.h"
-#include "MMCDriver.h"
+#include "BDVirtualDevice.h"
 #include "ArchInterrupts.h"
-
 #include "Scheduler.h"
 #include "kprintf.h"
+#include "MasterBootRecord.h"
 
 
 struct MMCI {
@@ -87,7 +88,13 @@ uint32_t mmc_send_acmd(uint32_t command, uint32_t arg, uint32_t* response)
 }
 
 
-MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_size_(512), num_sectors_(210672)
+MMCDrive::MMCDrive() :
+    Device(eastl::string("MMC disk")),
+    SPT(63),
+    lock_("MMCDriver::lock_"),
+    rca_(0),
+    sector_size_(512),
+    num_sectors_(210672)
 {
 //  unsigned int check;
   debug(MMC_DRIVER,"MMCDriver()\n");
@@ -139,12 +146,12 @@ MMCDriver::MMCDriver() : SPT(63), lock_("MMCDriver::lock_"), rca_(0), sector_siz
   mmci->irpt_mask = 0xFFFFFFFF;
 }
 
-MMCDriver::~MMCDriver()
+MMCDrive::~MMCDrive()
 {
 
 }
 
-uint32_t MMCDriver::addRequest( BDRequest * br)
+uint32_t MMCDrive::addRequest( BDRequest * br)
 {
   ScopeLock lock(lock_);
   debug(MMC_DRIVER, "addRequest %d!\n", (int)br->getCmd());
@@ -169,7 +176,7 @@ uint32_t MMCDriver::addRequest( BDRequest * br)
   return res;
 }
 
-int32_t MMCDriver::readBlock ( uint32_t address, void *buffer )
+int32_t MMCDrive::readBlock ( uint32_t address, void *buffer )
 {
   debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n", address, buffer);
 
@@ -186,7 +193,7 @@ int32_t MMCDriver::readBlock ( uint32_t address, void *buffer )
   return 0;
 }
 
-int32_t MMCDriver::readSector ( uint32_t start_sector, uint32_t num_sectors, void *buffer )
+int32_t MMCDrive::readSector ( uint32_t start_sector, uint32_t num_sectors, void *buffer )
 {
   debug(MMC_DRIVER,"readSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
   for (uint32_t i = 0; i < num_sectors; ++i)
@@ -196,7 +203,7 @@ int32_t MMCDriver::readSector ( uint32_t start_sector, uint32_t num_sectors, voi
   return 0;
 }
 
-int32_t MMCDriver::writeBlock ( uint32_t address, void *buffer)
+int32_t MMCDrive::writeBlock ( uint32_t address, void *buffer)
 {
   debug(MMC_DRIVER,"readBlock: address: %x, buffer: %p\n", address, buffer);
   uint32_t response;
@@ -212,7 +219,7 @@ int32_t MMCDriver::writeBlock ( uint32_t address, void *buffer)
   return 0;
 }
 
-int32_t MMCDriver::writeSector ( uint32_t start_sector, uint32_t num_sectors, void * buffer)
+int32_t MMCDrive::writeSector ( uint32_t start_sector, uint32_t num_sectors, void * buffer)
 {
   debug(MMC_DRIVER,"writeSector: start: %x, num: %x, buffer: %p\n", start_sector, num_sectors, buffer);
   for (uint32_t i = 0; i < num_sectors; ++i)
@@ -222,16 +229,43 @@ int32_t MMCDriver::writeSector ( uint32_t start_sector, uint32_t num_sectors, vo
   return 0;
 }
 
-uint32_t MMCDriver::getNumSectors()
+uint32_t MMCDrive::getNumSectors()
 {
   return num_sectors_;
 }
 
-uint32_t MMCDriver::getSectorSize()
+uint32_t MMCDrive::getSectorSize()
 {
   return sector_size_;
 }
 
-void MMCDriver::serviceIRQ()
+void MMCDrive::serviceIRQ()
 {
+}
+
+
+MMCDeviceDriver::MMCDeviceDriver() :
+    BasicDeviceDriver("MMC device driver")
+{
+}
+
+MMCDeviceDriver& MMCDeviceDriver::instance()
+{
+    static MMCDeviceDriver instance_;
+    return instance_;
+}
+
+void MMCDeviceDriver::doDeviceDetection()
+{
+    // Assume we have a MMC drive
+    // Need to name this "idea" for compatibility with userspace disk detection
+    // even though it has nothing to do with IDE
+    constexpr const char* disk_name = "idea";
+    MMCDrive* drv = new MMCDrive();
+    bindDevice(*drv);
+
+    auto *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), disk_name, true);
+    BDManager::instance().addVirtualDevice(bdv);
+
+    detectMBRPartitions(bdv, drv, 0, drv->SPT, disk_name);
 }

@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "SpinLock.h"
+#include "EASTL/unique_ptr.h"
 
 extern SpinLock global_atomic_add_lock;
 
@@ -52,7 +53,19 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createKernelRegisters(void* start_function,
+                                                                      void* stack);
+
+  /**
+   * creates the ArchThreadRegisters for a user thread
+   * @param info where the ArchThreadRegisters is saved
+   * @param start_function instruction pointer is set so start function
+   * @param user_stack pointer to the userstack
+   * @param kernel_stack pointer to the kernel stack
+   */
+  static eastl::unique_ptr<ArchThreadRegisters> createUserRegisters(void* start_function,
+                                                                    void* user_stack,
+                                                                    void* kernel_stack);
 
   /**
    * changes an existing ArchThreadRegisters so that execution will start / continue
@@ -63,24 +76,17 @@ public:
    * @param the ArchThreadRegisters that we are going to mangle
    * @param start_function instruction pointer for the next instruction that gets executed
    */
-  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
+  static void changeInstructionPointer(ArchThreadRegisters& info, void* function);
 
-  static void* getInstructionPointer(ArchThreadRegisters *info);
+  static void* getInstructionPointer(ArchThreadRegisters& info);
 
-/**
- * creates the ArchThreadRegisters for a user thread
- * @param info where the ArchThreadRegisters is saved
- * @param start_function instruction pointer is set so start function
- * @param user_stack pointer to the userstack
- * @param kernel_stack pointer to the kernel stack
- */
-  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
 
-/**
- *
- * on x86: invokes int65, whose handler facilitates a task switch
- *
- */
+
+  /**
+   *
+   * on x86: invokes int65, whose handler facilitates a task switch
+   *
+   */
   static void yield();
 
 /**

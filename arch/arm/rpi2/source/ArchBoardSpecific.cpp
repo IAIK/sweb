@@ -170,7 +170,7 @@ void ArchBoardSpecific::disableKBD()
 
 void ArchBoardSpecific::keyboard_irq_handler()
 {
-  KeyboardManager::instance()->serviceIRQ();
+  KeyboardManager::instance().serviceIRQ();
 }
 
 void resetTimer()

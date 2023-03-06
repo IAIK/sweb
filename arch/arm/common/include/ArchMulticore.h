@@ -5,11 +5,14 @@
 #include "ArchCpuLocalStorage.h"
 #include "Cpu.h"
 
+class IrqDomain;
+
 class ArchCpu : public Cpu
 {
 public:
     ArchCpu();
 
+    IrqDomain& rootIrqDomain();
 private:
 };
 

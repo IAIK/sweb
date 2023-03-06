@@ -37,12 +37,16 @@
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 // 128
   };
 
-KeyboardManager *KeyboardManager::instance_ = 0;
 
 extern struct UsbDevice *Devices[];
 
 KeyboardManager::KeyboardManager() :
-    keyboard_buffer_(256), extended_scancode(0), keyboard_status_(0), usb_kbd_addr_(0), current_key_(0)
+    IrqDomain("Keyboard"),
+    keyboard_buffer_(256),
+    extended_scancode(0),
+    keyboard_status_(0),
+    usb_kbd_addr_(0),
+    current_key_(0)
 {
   UsbInitialise();
   for (uint32 i = 0; i < 32; ++i)
