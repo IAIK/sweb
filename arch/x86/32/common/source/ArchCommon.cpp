@@ -15,6 +15,11 @@
 #include "ArchMulticore.h"
 #include "KernelMemoryManager.h"
 #include "Scheduler.h"
+#include "SMP.h"
+#include "PlatformBus.h"
+#include "ProgrammableIntervalTimer.h"
+#include "SerialManager.h"
+#include "IDEDriver.h"
 
 #if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
 #define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
@@ -370,4 +375,15 @@ void ArchCommon::initKernelVirtualAddressAllocator()
     mmio_addr_allocator.setUnuseable(IDENT_MAPPING_START, IDENT_MAPPING_END);
     debug(MAIN, "Usable MMIO ranges:\n");
     mmio_addr_allocator.printUsageInfo();
+}
+
+void ArchCommon::initBlockDeviceDrivers()
+{
+    PlatformBus::instance().registerDriver(IDEControllerDriver::instance());
+}
+
+void ArchCommon::initPlatformDrivers()
+{
+    PlatformBus::instance().registerDriver(PITDriver::instance());
+    PlatformBus::instance().registerDriver(SerialManager::instance());
 }

@@ -19,7 +19,7 @@
 #include "assert.h"
 #include "debug.h"
 
-cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector");
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", 256);
 cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
 
 IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
@@ -30,7 +30,7 @@ IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
 
 IrqDomain& ArchInterrupts::isaIrqDomain()
 {
-    static IrqDomain isa_irq_domain("ISA IRQ");
+    static IrqDomain isa_irq_domain("ISA IRQ", 16);
     return isa_irq_domain;
 }
 
