@@ -13,9 +13,6 @@ int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, ui
     eastl::array<char, 512> buff; // read buffer
     debug(IDE_DRIVER, "processMBR:reading MBR\n");
 
-    assert(ArchInterrupts::testIFSet());
-    debug(ATA_DRIVER, "Interrupt mode: %d\n", ArchInterrupts::testIFSet());
-
     static uint32 part_num = 0;
 
     int32 read_res = bdv->readData(sector*drv->getSectorSize(), 512, buff.data());
