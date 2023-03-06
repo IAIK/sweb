@@ -3,11 +3,16 @@
 #include <mm/KernelMemoryManager.h>
 #include "ProcessRegistry.h"
 #include "VirtualFileSystem.h"
+#include "DeviceFSSuperblock.h"
+#include "DeviceBus.h"
+#include "BootloaderModules.h"
 #include "Scheduler.h"
 #include "debug.h"
 #include "kprintf.h"
 
-InitThread::InitThread(FileSystemInfo *root_fs_info, char const *progs[]) :
+InitThread* InitThread::instance_ = nullptr;
+
+InitThread::InitThread(FileSystemInfo* root_fs_info, const char* progs[]) :
     Thread(root_fs_info, "InitThread", Thread::KERNEL_THREAD),
     progs_(progs)
 {
@@ -17,68 +22,92 @@ InitThread::~InitThread()
 {
 }
 
+void InitThread::init(FileSystemInfo* root_fs_info, const char* progs[])
+{
+    assert(!instance_ && "InitThread already initialized");
+    static InitThread instance(root_fs_info, progs);
+    instance_ = &instance;
+}
+
+InitThread* InitThread::instance()
+{
+    assert(instance_ && "InitThread not yet initialized");
+    return instance_;
+}
+
+
 void InitThread::Run()
 {
-  debug(INITTHREAD, "InitThread starting\n");
+    debug(INITTHREAD, "InitThread starting\n");
 
-  assert(ArchInterrupts::testIFSet());
+    assert(ArchInterrupts::testIFSet());
 
-  debug(MAIN, "Block Device creation\n");
-  ArchCommon::initBlockDeviceDrivers();
+    debug(INITTHREAD, "Checking for initrd\n");
+    BootloaderModules::loadInitrdIfExists();
 
-  if (!progs_ || !progs_[0])
-    return;
+    debug(INITTHREAD, "Block Device creation\n");
+    ArchCommon::initBlockDeviceDrivers();
 
-  debug(INITTHREAD, "mounting userprog-partition \n");
+    debug(INITTHREAD, "Registered devices:\n");
+    deviceTreeRoot().printSubDevices();
 
-  debug(INITTHREAD, "mkdir /usr\n");
-  assert( !VfsSyscall::mkdir("/usr", 0) );
+    debug(INITTHREAD, "Add devices to devicefs\n");
+    DeviceFSSuperBlock::getInstance()->addBlockDeviceInodes();
+    DeviceFSSuperBlock::getInstance()->addDeviceInodes(deviceTreeRoot());
 
-  // Mount user partition (initrd if it exists, else partition 1 of IDE drive A)
-  bool usr_mounted = false;
-  if (VfsSyscall::mount("initrd", "/usr", "minixfs", 0) == 0)
-  {
-      debug(INITTHREAD, "initrd mounted at /usr\n");
-      usr_mounted = true;
-  }
-  else if (VfsSyscall::mount("idea1", "/usr", "minixfs", 0) == 0)
-  {
-      debug(INITTHREAD, "idea1 mounted at /usr\n");
-      usr_mounted = true;
-  }
+    if (!progs_ || !progs_[0])
+        return;
 
-  if (!usr_mounted)
-      kprintf("ERROR: Unable to mount userspace partition\n");
-  assert(usr_mounted && "Unable to mount userspace partition");
+    debug(INITTHREAD, "mounting userprog-partition \n");
 
-  debug(INITTHREAD, "mkdir /dev\n");
-  assert( !VfsSyscall::mkdir("/dev", 0) );
-  debug(INITTHREAD, "mount devicefs\n");
-  assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
+    debug(INITTHREAD, "mkdir /usr\n");
+    assert( !VfsSyscall::mkdir("/usr", 0) );
 
-  KernelMemoryManager::instance()->startTracing();
+    // Mount user partition (initrd if it exists, else partition 1 of IDE drive A)
+    bool usr_mounted = false;
+    if (VfsSyscall::mount("initrd", "/usr", "minixfs", 0) == 0)
+    {
+        debug(INITTHREAD, "initrd mounted at /usr\n");
+        usr_mounted = true;
+    }
+    else if (VfsSyscall::mount("idea1", "/usr", "minixfs", 0) == 0)
+    {
+        debug(INITTHREAD, "idea1 mounted at /usr\n");
+        usr_mounted = true;
+    }
 
-  debug(INITTHREAD, "Starting user processes\n");
+    if (!usr_mounted)
+        kprintf("ERROR: Unable to mount userspace partition\n");
+    assert(usr_mounted && "Unable to mount userspace partition");
 
-  for (uint32 i = 0; progs_[i]; i++)
-  {
-    debug(INITTHREAD, "Starting %s\n", progs_[i]);
-    kprintf("Starting %s\n", progs_[i]);
-    ProcessRegistry::instance()->createProcess(progs_[i]);
-  }
+    debug(INITTHREAD, "mkdir /dev\n");
+    assert( !VfsSyscall::mkdir("/dev", 0) );
+    debug(INITTHREAD, "mount devicefs\n");
+    assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
 
-  ProcessRegistry::instance()->waitAllKilled();
+    KernelMemoryManager::instance()->startTracing();
 
-  kprintf("All processes terminated\n");
-  debug(INITTHREAD, "unmounting userprog-partition because all processes terminated \n");
+    debug(INITTHREAD, "Starting user processes\n");
 
-  VfsSyscall::umount("/usr", 0);
-  VfsSyscall::umount("/dev", 0);
-  vfs.rootUmount();
+    for (uint32 i = 0; progs_[i]; i++)
+    {
+        debug(INITTHREAD, "Starting %s\n", progs_[i]);
+        kprintf("Starting %s\n", progs_[i]);
+        ProcessRegistry::instance()->createProcess(progs_[i]);
+    }
 
-  Scheduler::instance()->printStackTraces();
+    ProcessRegistry::instance()->waitAllKilled();
 
-  Scheduler::instance()->printThreadList();
+    kprintf("All processes terminated\n");
+    debug(INITTHREAD, "unmounting userprog-partition because all processes terminated \n");
 
-  kill();
+    VfsSyscall::umount("/usr", 0);
+    VfsSyscall::umount("/dev", 0);
+    vfs.rootUmount();
+
+    Scheduler::instance()->printStackTraces();
+
+    Scheduler::instance()->printThreadList();
+
+    kill();
 }

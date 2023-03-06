@@ -7,6 +7,7 @@ class Inode;
 class Superblock;
 class CharacterDevice;
 class DeviceFSType;
+class Device;
 
 class DeviceFSSuperBlock : public RamFSSuperblock
 {
@@ -14,7 +15,7 @@ class DeviceFSSuperBlock : public RamFSSuperblock
     static const char ROOT_NAME[];
     static const char DEVICE_ROOT_NAME[];
 
-    virtual ~DeviceFSSuperBlock();
+    ~DeviceFSSuperBlock() override;
 
     /**
      * addsa new device to the superblock
@@ -27,6 +28,10 @@ class DeviceFSSuperBlock : public RamFSSuperblock
      * Access method to the singleton instance
      */
     static DeviceFSSuperBlock* getInstance();
+
+    void addBlockDeviceInodes();
+
+    void addDeviceInodes(Device& device_root);
 
   private:
 

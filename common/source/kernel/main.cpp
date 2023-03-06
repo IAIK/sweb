@@ -47,6 +47,9 @@ FileSystemInfo* default_working_dir;
 
 extern "C" void removeBootTimeIdentMapping();
 
+void printRunningCpus();
+void printInterruptMappings();
+
 extern "C" [[noreturn]] void startup()
 {
   system_state = BOOTING;
@@ -118,21 +121,6 @@ extern "C" [[noreturn]] void startup()
   default_working_dir = vfs.rootMount("ramfs", 0);
   assert(default_working_dir);
 
-  debug(MAIN, "Checking for initrd\n");
-  BootloaderModules::loadInitrdIfExists();
-
-  debug(MAIN, "Add block devices to devicefs\n");
-  auto devicefs_sb = DeviceFSSuperBlock::getInstance();
-
-  for (BDVirtualDevice* bdvd : BDManager::instance().device_list_)
-  {
-    debug(MAIN, "Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
-    kprintf("Detected Device: %s :: %d\n", bdvd->getName(), bdvd->getDeviceNumber());
-    auto bdInode = new BlockDeviceInode(bdvd);
-    devicefs_sb->addDevice(bdInode, bdvd->getName());
-  }
-
-
   debug(MAIN, "make a deep copy of FsWorkingDir\n");
   main_console->setWorkingDirInfo(new FileSystemInfo(*default_working_dir));
   debug(MAIN, "main_console->setWorkingDirInfo done\n");
@@ -156,36 +144,44 @@ extern "C" [[noreturn]] void startup()
 
   debug(MAIN, "Adding Kernel threads\n");
   Scheduler::instance()->addNewThread(main_console);
-  auto init_thread = new InitThread(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/);
-  Scheduler::instance()->addNewThread(init_thread);
+  InitThread::init(new FileSystemInfo(*default_working_dir), user_progs /*see user_progs.h*/);
+  Scheduler::instance()->addNewThread(InitThread::instance());
+
   Scheduler::instance()->printThreadList();
-
-  debug(MAIN, "%zu CPU(s) running\n", SMP::cpuList().size());
-  kprintf("%zu CPU(s) running\n", SMP::cpuList().size());
-  for(auto* cpu : SMP::cpuList())
-  {
-      debug(MAIN, "CPU %zu\n", cpu->id());
-      kprintf("CPU %zu\n", cpu->id());
-  }
-
-  if (A_INTERRUPTS & OUTPUT_ENABLED)
-  {
-      for(ArchCpu* cpu : SMP::cpuList())
-      {
-          debug(MAIN, "CPU %zu IRQ mappings:\n", cpu->id());
-          cpu->rootIrqDomain().printAllReverseMappings();
-      }
-  }
-
-  debug(MAIN, "Registered devices:\n");
-  deviceTreeRoot().printSubDevices();
+  printRunningCpus();
+  printInterruptMappings();
 
   // Ensure we already have a currentThread when interrupts are enabled
   debug(MAIN, "Starting threads and enabling interrupts...\n");
   system_state = RUNNING;
 
-  ArchThreads::startThreads(init_thread);
+  ArchThreads::startThreads(InitThread::instance());
+
+  // See InitThread::Run() for further startup code
 
   //not reached
   assert(false && "Reached end of startup()");
+}
+
+void printRunningCpus()
+{
+  debug(MAIN, "%zu CPU(s) running\n", SMP::cpuList().size());
+  kprintf("%zu CPU(s) running\n", SMP::cpuList().size());
+  for (auto* cpu : SMP::cpuList())
+  {
+    debug(MAIN, "CPU %zu\n", cpu->id());
+    kprintf("CPU %zu\n", cpu->id());
+  }
+}
+
+void printInterruptMappings()
+{
+  if (A_INTERRUPTS & OUTPUT_ENABLED)
+  {
+    for (ArchCpu* cpu : SMP::cpuList())
+    {
+      debug(MAIN, "CPU %zu IRQ mappings:\n", cpu->id());
+      cpu->rootIrqDomain().printAllReverseMappings();
+    }
+  }
 }
