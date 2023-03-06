@@ -11,7 +11,7 @@ int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, ui
 {
     uint32 offset = 0, numsec = 0;
     eastl::array<char, 512> buff; // read buffer
-    debug(IDE_DRIVER, "processMBR:reading MBR\n");
+    debug(BD_VIRT_DEVICE, "processMBR:reading MBR\n");
 
     static uint32 part_num = 0;
 
@@ -19,7 +19,7 @@ int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, ui
 
     if (read_res != 512)
     {
-        debug(IDE_DRIVER, "processMBR: drv returned BD_ERROR\n");
+        debug(BD_VIRT_DEVICE, "processMBR: drv returned BD_ERROR\n");
         return -1;
     }
 
@@ -27,10 +27,10 @@ int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, ui
 
     if (mbr->signature == MasterBootRecord::PC_MBR_SIGNATURE)
     {
-        debug(IDE_DRIVER, "processMBR: | Valid PC MBR | \n");
+        debug(BD_VIRT_DEVICE, "processMBR: | Valid PC MBR | \n");
         for (int i = 0; MasterBootRecord::PartitionEntry& fp : mbr->parts)
         {
-            debug(IDE_DRIVER,
+            debug(BD_VIRT_DEVICE,
                   "partition %u: type %x [%s] at sectors [%d -> %d), num sectors: %d, "
                   "bytesize: %u, bootable: %d\n",
                   i, fp.type, partitionTypeName(fp.type), fp.first_sector_lba,
@@ -82,10 +82,10 @@ int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, ui
     }
     else
     {
-        debug(IDE_DRIVER, "processMBR: | Invalid PC MBR %d | \n", mbr->signature);
+        debug(BD_VIRT_DEVICE, "processMBR: | Invalid PC MBR %d | \n", mbr->signature);
         return -1;
     }
 
-    debug(IDE_DRIVER, "processMBR:, done with partitions \n");
+    debug(BD_VIRT_DEVICE, "processMBR:, done with partitions \n");
     return 0;
 }
