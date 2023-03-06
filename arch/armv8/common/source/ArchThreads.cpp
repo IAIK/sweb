@@ -49,8 +49,10 @@ void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
 
 eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createKernelRegisters(void* start_function, void* stack)
 {
-  auto regs = eastl::make_unique<ArchThreadRegisters>();
   assert(!((pointer)start_function & 0x3));
+
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
+
   regs->ELR = (pointer)start_function;
   regs->SPSR = 0x60000005;
   regs->SP = (pointer)stack & ~0xF;
@@ -73,10 +75,9 @@ void* ArchThreads::getInstructionPointer(ArchThreadRegisters& info)
 
 eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createUserRegisters(void* start_function, void* user_stack, void* kernel_stack)
 {
-  auto regs = eastl::make_unique<ArchThreadRegisters>();
-//   info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-//   memset((void*)regs, 0, sizeof(ArchThreadRegisters));
   assert(!((pointer)start_function & 0x3));
+
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
 
   regs->ELR = (pointer) start_function;
   regs->SPSR = 0x60000000;
