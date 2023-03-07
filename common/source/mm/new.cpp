@@ -72,6 +72,10 @@ void operator delete(void* address, size_t size)
 {
   if (address) {
     auto new_size = *(size_t *)(((uint8 *)address) - 0x10);
+    if (new_size != size)
+    {
+        debugAlways(KMM, "Invalid delete call. delete and new size do not match. Expected size: %zu, delete size: %zu\n", new_size, size);
+    }
     assert(new_size == size && "Invalid delete call. delete and new size do not match.");
   }
   _delete(address);
@@ -101,6 +105,10 @@ void operator delete[](void* address, size_t size)
 {
   if (address) {
     auto new_size = *(size_t *)(((uint8 *)address) - 0x10);
+    if (new_size != size)
+    {
+        debugAlways(KMM, "Invalid delete call. delete and new size do not match. Expected size: %zu, delete size: %zu\n", new_size, size);
+    }
     assert(new_size == size && "Invalid delete call. delete and new size do not match.");
   }
   _delete(address);

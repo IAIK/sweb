@@ -25,8 +25,8 @@ InitThread::~InitThread()
 void InitThread::init(FileSystemInfo* root_fs_info, const char* progs[])
 {
     assert(!instance_ && "InitThread already initialized");
-    static InitThread instance(root_fs_info, progs);
-    instance_ = &instance;
+    // Need to allocate this on the heap -> gets deleted by cleanup thread
+    instance_ = new InitThread(root_fs_info, progs);
 }
 
 InitThread* InitThread::instance()
