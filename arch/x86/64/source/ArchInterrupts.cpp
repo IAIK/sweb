@@ -19,8 +19,9 @@
 #include "IrqDomain.h"
 #include "PlatformBus.h"
 #include "KeyboardManager.h"
+#include "InterruptDescriptorTable.h"
 
-cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", 256);
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", NUM_X86_INT_VECTORS);
 cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
 
 IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
@@ -31,17 +32,41 @@ IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
 
 IrqDomain& ArchInterrupts::isaIrqDomain()
 {
-    static IrqDomain isa_irq_domain("ISA IRQ", 16);
+    static IrqDomain isa_irq_domain("ISA IRQ", NUM_ISA_INTERRUPTS);
     return isa_irq_domain;
 }
 
-static void initInterruptHandlers()
+static void initInterruptDescriptorTable()
 {
-  debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
-  InterruptUtils::initialise();
+    auto& idt = InterruptUtils::idt;
+    idt.idtr().load();
+
+    if (A_INTERRUPTS & OUTPUT_ENABLED & OUTPUT_ADVANCED)
+    {
+        for (size_t i = 0; i < idt.entries.size(); ++i)
+        {
+            debug(A_INTERRUPTS,
+                  "%3zu -- offset: %p, ist: %x, present: %x, segment_selector: %x, "
+                  "type: %x, dpl: %x\n",
+                  i, idt.entries[i].offset(), idt.entries[i].ist, idt.entries[i].present,
+                  idt.entries[i].segment_selector, idt.entries[i].type,
+                  idt.entries[i].dpl);
+        }
+    }
 }
 
-static void initInterruptController()
+void initCpuLocalInterruptHandlers()
+{
+  debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
+  ArchInterrupts::currentCpuRootIrqDomain().irq(YIELD_INTERRUPT).useHandler(irqHandler_65);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(90).useHandler(irqHandler_90);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(91).useHandler(irqHandler_91);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(100).useHandler(irqHandler_100);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(101).useHandler(irqHandler_101);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(SYSCALL_INTERRUPT).useHandler(syscallHandler);
+}
+
+void initInterruptControllers()
 {
   debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
   assert(CpuLocalStorage::ClsInitialized());
@@ -57,15 +82,16 @@ static void initInterruptController()
 
 void ArchInterrupts::initialise()
 {
-  initInterruptHandlers();
-  initInterruptController();
+  initInterruptDescriptorTable();
+  initInterruptControllers();
+  initCpuLocalInterruptHandlers();
 }
 
 void ArchInterrupts::enableTimer()
 {
   if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
   {
-    debug(A_INTERRUPTS, "Enabling xApic %x timer \n", cpu_lapic->apicId());
+    debug(A_INTERRUPTS, "Enabling xApic %x timer\n", cpu_lapic->apicId());
     enableIRQ(cpu_lapic->timer_interrupt_controller.irq());
   }
   else
@@ -119,7 +145,7 @@ void ArchInterrupts::disableKBD()
 
 void ArchInterrupts::enableIRQ(const IrqDomain::DomainIrqHandle& irq_handle, bool enable)
 {
-    debug(A_INTERRUPTS, "[Cpu %zu] %s %s IRQ %zx\n", SMP::currentCpuId(),
+    debug(A_INTERRUPTS, "[Cpu %zu] %s %s IRQ %zu\n", SMP::currentCpuId(),
           enable ? "Enable" : "Disable", irq_handle.domain().name().c_str(),
           irq_handle.irq());
 
@@ -147,7 +173,7 @@ void ArchInterrupts::startOfInterrupt(const IrqDomain::DomainIrqHandle& irq_hand
 
 void ArchInterrupts::startOfInterrupt(uint16 irqnum)
 {
-    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %x\n", SMP::currentCpuId(), irqnum);
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %u\n", SMP::currentCpuId(), irqnum);
 
     startOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
 }
@@ -165,7 +191,7 @@ void ArchInterrupts::endOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle
 
 void ArchInterrupts::endOfInterrupt(uint16 irqnum)
 {
-    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %x\n", SMP::currentCpuId(),
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %u\n", SMP::currentCpuId(),
                   irqnum);
 
     endOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
@@ -314,17 +340,13 @@ extern "C" ArchThreadRegisters* arch_saveThreadRegisters(void* base, uint64 erro
   return info;
 }
 
-extern "C" void interruptHandler(size_t interrupt_num,
-                                 uint64_t error,
-                                 ArchThreadRegisters* saved_registers);
-
 extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
 {
     // Take registers previously saved on the stack via assembly and store them in the
     // saved registers of the thread
     auto saved_regs = arch_saveThreadRegisters(&(regs->registers), 0);
 
-    debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zx\n", regs->registers.interrupt_num);
+    debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zu\n", regs->registers.interrupt_num);
 
     interruptHandler(regs->registers.interrupt_num, regs->registers.error_code, saved_regs);
 }

@@ -2,6 +2,7 @@
 #include "ports.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
+#include "InterruptUtils.h"
 #include "assert.h"
 
 PIT::OperatingMode PIT::operating_mode = PIT::OperatingMode::SQUARE_WAVE;
@@ -80,8 +81,6 @@ PITDriver& PITDriver::instance()
     return i;
 }
 
-extern "C" void arch_irqHandler_0();
-
 void PITDriver::doDeviceDetection()
 {
     bindDevice(PIT::instance());
@@ -89,5 +88,8 @@ void PITDriver::doDeviceDetection()
     PIT::setOperatingMode(PIT::OperatingMode::SQUARE_WAVE);
     PIT::setFrequencyDivisor(0);
 
-    PIT::instance().irq().mapTo(ArchInterrupts::isaIrqDomain(), 0);
+    PIT::instance()
+        .irq()
+        .mapTo(ArchInterrupts::isaIrqDomain(), 0)
+        .useHandler(irqHandler_0);
 }

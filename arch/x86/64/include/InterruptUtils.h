@@ -1,28 +1,21 @@
 #pragma once
 
-#include "types.h"
-
 #include "InterruptDescriptorTable.h"
+#include <cinttypes>
 
-using handler_func_t = void (*)();
+constexpr size_t NUM_X86_INT_VECTORS = 256;
+constexpr size_t NUM_ISA_INTERRUPTS = 16;
 
 static constexpr uint8_t SYSCALL_INTERRUPT = 0x80;
+static constexpr uint8_t YIELD_INTERRUPT = 65;
 
-struct [[gnu::packed]] InterruptHandlers
-{
-    uint32_t       number;       // handler number
-    handler_func_t handler_func; // pointer to handler function
-};
 
 class InterruptUtils
 {
 public:
-    static void initialise();
-
     static InterruptDescriptorTable idt;
 
 private:
-    static InterruptHandlers handlers[];
 };
 
 union [[gnu::packed]] PagefaultExceptionErrorCode
@@ -44,3 +37,18 @@ union [[gnu::packed]] PagefaultExceptionErrorCode
 };
 
 static_assert(sizeof(PagefaultExceptionErrorCode) == sizeof(uint32_t));
+
+struct ArchThreadRegisters;
+
+void interruptHandler(size_t interrupt_num, uint64_t error, ArchThreadRegisters* saved_registers);
+
+void irqHandler_0();
+void irqHandler_65();
+void irqHandler_90();
+void irqHandler_91();
+void irqHandler_100();
+void irqHandler_101();
+void irqHandler_127();
+void syscallHandler();
+void pageFaultHandler(uint64_t address, uint64_t error, uint64_t ip);
+void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious);

@@ -184,6 +184,8 @@ extern "C" __attribute__((naked)) void apstartup64()
   ArchMulticore::initCpu();
 }
 
+extern void initCpuLocalInterruptHandlers();
+
 void ArchMulticore::initCpu()
 {
   debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)ArchMemory::kernelArchMemory().getPagingStructureRootPhys());
@@ -201,6 +203,8 @@ void ArchMulticore::initCpu()
 
   ApicDriver::instance().cpuLocalInit();
   ApicTimerDriver::instance().cpuLocalInit();
+
+  initCpuLocalInterruptHandlers();
 
   assert(cpu_lapic->apicId() == CPUID::localApicId());
   ArchMulticore::initCpuLocalData();

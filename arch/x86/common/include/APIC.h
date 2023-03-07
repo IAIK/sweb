@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CPUID.h"
+#include <cstdint>
 #include "types.h"
 #include "ACPI.h"
 #include "EASTL/vector.h"
 #include "EASTL/bit.h"
+#include "EASTL/string.h"
 #include "IrqDomain.h"
 #include "DeviceDriver.h"
 #include "Device.h"
@@ -124,7 +126,7 @@ public:
         uint32_t focus_checking : 1;
         uint32_t reserved       : 22;
 
-        void setSpuriousInterruptNumber(uint8 num);
+        void setSpuriousInterruptNumber(uint8_t num);
     };
     static_assert(sizeof(SpuriousInterruptVectorRegister) == 4, "Invalid size for SpuriousInterruptVectorRegister");
 
@@ -215,7 +217,7 @@ public:
         uint32_t divisor_h : 1;
         uint32_t reserved2 : 28;
 
-        void setTimerDivisor(uint8 divisor);
+        void setTimerDivisor(uint8_t divisor);
     };
     static_assert(sizeof(TimerDivideConfigRegister) == 4, "Invalid size for TimerDivideConfigRegister");
 
@@ -353,9 +355,12 @@ public:
 
      template <typename R> void writeRegister(const typename R::value_type &v) {
        static_assert(sizeof(v) == 4 || sizeof(v) == 8);
-       if constexpr (sizeof(v) == 8) {
+       if constexpr (sizeof(v) == 8)
+       {
          writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint64_t>(v));
-       } else {
+       }
+       else
+       {
          writeRegisterImpl(R::reg_offset, eastl::bit_cast<uint32_t>(v));
        }
     }
@@ -400,8 +405,8 @@ public:
 
     void sendEOI(size_t num);
 
-    bool checkIRR(uint8 num);
-    bool checkISR(uint8 num);
+    bool checkIRR(uint8_t num);
+    bool checkISR(uint8_t num);
 
     struct ApicTimer : public InterruptController, public IrqDomain, public Device
     {
@@ -422,12 +427,10 @@ public:
     void setTimerPeriod(uint32_t count);
     virtual uint32_t readId() = 0;
 
-    void registerIPI(irqnum_t irqnum);
-
-    void sendIPI(uint8 vector, IPIDestination dest_type = IPIDestination::ALL,
+    void sendIPI(uint8_t vector, IPIDestination dest_type = IPIDestination::ALL,
                  size_t target = -1, IPIType ipi_type = IPIType::FIXED,
                  bool wait_for_delivery = false);
-    void sendIPI(uint8 vector, const Apic& target, bool wait_for_delivery = false);
+    void sendIPI(uint8_t vector, const Apic& target, bool wait_for_delivery = false);
     void startAP(uint8_t apic_id, size_t entry_addr);
 
     [[nodiscard]] bool usingAPICTimer() const;
@@ -442,7 +445,6 @@ public:
     size_t outstanding_EOIs_ = 0;
 
     ApicTimer timer_interrupt_controller;
-    IrqDomain inter_processor_interrupt_domain;
 
 protected:
     virtual void writeRegisterImpl(ApicRegisterOffset offset, uint64_t v) = 0;

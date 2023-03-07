@@ -1,16 +1,10 @@
-#ifdef _ERROR_HANDLERS_H_
-#error This file may not be included more than once
-#else
-#define _ERROR_HANDLERS_H_
-
-
-
+#pragma once
 
 constexpr const char* errors[32] = {
   "#DE: Divide by Zero",
-  "",
-  "",
-  "",
+  "#DB: Debug",
+  "NMI: Non-maskable Interrupt",
+  "#BP: Breakpoint",
   "#OF: Overflow (INTO Instruction)",
   "#BR: Bound Range Exceeded",
   "#OP: Invalid OP Code",
@@ -21,12 +15,22 @@ constexpr const char* errors[32] = {
   "#NP: Segment Not Present (WTF ?)",
   "#SS: Stack Segment Fault",
   "#GF: General Protection Fault",
-  "",
-  "",
+  "#PF: Page Fault",
+  "reserved",
   "#MF: Floting Point Error",
   "#AC: Alignment Error (Unaligned Memory Reference)",
   "#MC: Machine Check Error",
-  "#XF: SIMD Floting Point Error"
+  "#XF: SIMD Floting Point Error",
+  "#VE: Virtualization Exception",
+  "#CP: Control Protection Exception",
+  "reserved",
+  "reserved",
+  "reserved",
+  "reserved",
+  "reserved",
+  "reserved",
+  "#HV: Hypervisor Injection Exception",
+  "#VC: VMM Communication Exception",
+  "#SX: Security Exception",
+  "reserved"
 };
-
-#endif

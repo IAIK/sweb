@@ -22,7 +22,7 @@
 
 
 void* XApic::reg_paddr_ = (void*)0xfee00000;
-void* XApic::reg_vaddr_ = (void*)0;
+void* XApic::reg_vaddr_ = nullptr;
 
 eastl::vector<MADTProcLocalAPIC> Apic::local_apic_list_{};
 
@@ -31,8 +31,7 @@ extern volatile size_t outstanding_EOIs;
 Apic::Apic(const eastl::string& name) :
     IrqDomain(name, 256, this),
     Device(name),
-    timer_interrupt_controller(*this),
-    inter_processor_interrupt_domain("Inter Processor Interrupt", 256)
+    timer_interrupt_controller(*this)
 {
 }
 
@@ -50,7 +49,7 @@ void Apic::setIMCRMode(IMCRData mode)
     // Intel MultiProcessor Specification chapter 3.6.2
     // https://pdos.csail.mit.edu/6.828/2008/readings/ia32/MPspec.pdf
     debug(APIC, "Ensure IMCR is set to APIC passthrough/symmetric mode\n");
-    // IMCR register might not actually exist, but attempting to write to it should be fine?
+    // IMCR register might not actually exist, but attempting to write to it should be fine
     IMCR_SELECT::write(IMCRSelect::SELECT_IMCR);
     IMCR_DATA::write(mode);
 }
@@ -91,16 +90,15 @@ void Apic::initTimer()
 
     // Write to initial count register starts timer
     setTimerPeriod(0x500000);
-
 }
 
-void Apic::setTimerPeriod(uint32 count)
+void Apic::setTimerPeriod(uint32_t count)
 {
     debug(APIC, "Set timer period %x\n", count);
     writeRegister<Apic::Register::TIMER_INITIAL_COUNT>(count);
 }
 
-void Apic::setSpuriousInterruptNumber(uint8 num)
+void Apic::setSpuriousInterruptNumber(uint8_t num)
 {
     auto siv = readRegister<Apic::Register::SPURIOUS_INTERRUPT_VECTOR>();
     siv.vector = num;
@@ -129,8 +127,8 @@ bool Apic::usingAPICTimer() const
 
 bool Apic::checkISR(uint8_t irqnum)
 {
-    uint8 word_offset = irqnum/32;
-    uint8 bit_offset = irqnum % 32;
+    uint8_t word_offset = irqnum/32;
+    uint8_t bit_offset = irqnum % 32;
     assert(word_offset < 8);
 
     uint32_t isr = 0;
@@ -169,8 +167,8 @@ bool Apic::checkISR(uint8_t irqnum)
 
 bool Apic::checkIRR(uint8_t irqnum)
 {
-    uint8 word_offset = irqnum/32;
-    uint8 bit_offset = irqnum % 32;
+    uint8_t word_offset = irqnum/32;
+    uint8_t bit_offset = irqnum % 32;
     assert(word_offset < 8);
 
     uint32_t irr = 0;
@@ -213,19 +211,19 @@ void Apic::sendEOI(size_t num)
     --outstanding_EOIs_;
     if(APIC & OUTPUT_ADVANCED)
     {
-        debug(APIC, "CPU %zu, Sending EOI for %zx\n", SMP::currentCpuId(), num);
+        debug(APIC, "CPU %zu, Sending EOI for %zu\n", SMP::currentCpuId(), num);
         for(size_t i = 0; i < 256; ++i)
         {
             if(checkISR(i))
             {
-                debug(APIC, "CPU %zx, interrupt %zx being serviced\n", SMP::currentCpuId(), i);
+                debug(APIC, "CPU %zx, interrupt %zu being serviced\n", SMP::currentCpuId(), i);
             }
         }
         for(size_t i = 0; i < 256; ++i)
         {
             if(checkIRR(i))
             {
-                debug(APIC, "CPU %zx, interrupt %zx pending\n", SMP::currentCpuId(), i);
+                debug(APIC, "CPU %zx, interrupt %zu pending\n", SMP::currentCpuId(), i);
             }
         }
     }
@@ -239,10 +237,10 @@ void Apic::sendEOI(size_t num)
 bool Apic::mask(irqnum_t irq, bool mask)
 {
     // Cannot mask interrupts in APIC
-    debug(APIC, "%s, mask Irq %zx = %u\n", name().c_str(), irq, mask);
+    debug(APIC, "%s, mask Irq %zu = %u\n", name().c_str(), irq, mask);
     auto info = irqInfo(irq);
     assert(info && "No irq info found");
-    assert(!info->mapped_by.empty());
+    assert(!info->mapped_by.empty() || info->handler);
 
     return false;
 }
@@ -255,22 +253,22 @@ bool Apic::isMasked([[maybe_unused]]irqnum_t irq)
 
 bool Apic::ack(irqnum_t irq)
 {
-    debugAdvanced(APIC, "%s, ack Irq %zx\n", name().c_str(), irq);
+    debugAdvanced(APIC, "%s, ack Irq %zu\n", name().c_str(), irq);
     auto info = irqInfo(irq);
     assert(info && "No irq info found");
-    assert(!info->mapped_by.empty());
+    assert(!info->mapped_by.empty() || info->handler);
 
     return false;
 }
 
 bool Apic::irqStart(irqnum_t irq)
 {
-    debugAdvanced(APIC, "%s, start of Irq %zx\n", name().c_str(), irq);
+    debugAdvanced(APIC, "%s, start of Irq %zu\n", name().c_str(), irq);
     auto info = irqInfo(irq);
     if (!info)
         debugAlways(APIC, "No irq info found for irqnum %zu in irq domain %s\n", irq, name().c_str());
     assert(info && "No irq info found");
-    assert(!info->mapped_by.empty());
+    assert(!info->mapped_by.empty() || info->handler);
     return false;
 }
 
@@ -321,16 +319,11 @@ void XApic::init()
 
     initialized_ = true;
     SMP::currentCpu().setId(id_);
-
-    registerIPI(90);
-    registerIPI(91);
-    registerIPI(100);
-    registerIPI(101);
 }
 
-void Apic::LVT_TimerRegister::setVector(uint8 num)
+void Apic::LVT_TimerRegister::setVector(uint8_t num)
 {
-    debug(APIC, "Set timer interrupt number %x\n", num);
+    debug(APIC, "Set timer interrupt number %u\n", num);
     assert(num >= 32);
     vector = num;
 }
@@ -347,13 +340,13 @@ void Apic::LVT_TimerRegister::setMask(bool new_mask)
     mask = new_mask;
 }
 
-void Apic::SpuriousInterruptVectorRegister::setSpuriousInterruptNumber(uint8 num)
+void Apic::SpuriousInterruptVectorRegister::setSpuriousInterruptNumber(uint8_t num)
 {
-    debug(APIC, "Set spurious interrupt number %x\n", num);
+    debug(APIC, "Set spurious interrupt number %u\n", num);
     vector = num;
 }
 
-void Apic::TimerDivideConfigRegister::setTimerDivisor(uint8 divisor)
+void Apic::TimerDivideConfigRegister::setTimerDivisor(uint8_t divisor)
 {
     debug(APIC, "Set timer divisor %x\n", divisor);
 
@@ -399,7 +392,7 @@ void Apic::TimerDivideConfigRegister::setTimerDivisor(uint8 divisor)
 
 
 
-uint32 XApic::readId()
+uint32_t XApic::readId()
 {
     auto id = readRegister<Register::ID>();
     assert(id.xapic_id == CPUID::localApicId());
@@ -407,9 +400,8 @@ uint32 XApic::readId()
 }
 
 
-static volatile uint8 delay = 0;
+static volatile uint8_t delay = 0;
 
-// TODO: Make this really architecture independent
 #ifdef CMAKE_X86_64
 #define IRET __asm__ __volatile__("iretq\n");
 #else
@@ -421,15 +413,13 @@ __attribute__((naked)) void __PIT_delay_IRQ()
 {
     __asm__ __volatile__(".global PIT_delay_IRQ\n"
                          ".type PIT_delay_IRQ,@function\n"
-                         "PIT_delay_IRQ:\n");
-    __asm__ __volatile__("movb $1, %[delay]\n"
+                         "PIT_delay_IRQ:\n"
+                         "movb $1, %[delay]\n"
                          :[delay]"=m"(delay));
     IRET
 }
 
-extern "C" void arch_irqHandler_0();
-
-void Apic::startAP(uint8 apic_id, size_t entry_addr)
+void Apic::startAP(uint8_t apic_id, size_t entry_addr)
 {
     debug(A_MULTICORE, "Sending init IPI to AP local APIC %u, AP entry function: %zx\n",  apic_id, entry_addr);
 
@@ -514,15 +504,10 @@ void Apic::startAP(uint8 apic_id, size_t entry_addr)
 void XApic::waitIpiDelivered()
 {
     InterruptCommandRegister icr{};
-    while(icr.l.delivery_status == (uint32_t)DeliveryStatus::PENDING)
+    while (icr.l.delivery_status == (uint32_t)DeliveryStatus::PENDING)
     {
         icr = readRegister<Register::INTERRUPT_COMMAND>();
     }
-}
-
-void Apic::registerIPI(irqnum_t irqnum)
-{
-    inter_processor_interrupt_domain.irq(irqnum).mapTo(*this, irqnum);
 }
 
 void Apic::sendIPI(uint8_t vector, IPIDestination dest_type, size_t target, IPIType ipi_type, bool wait_for_delivery)
@@ -546,7 +531,7 @@ void Apic::sendIPI(uint8_t vector, IPIDestination dest_type, size_t target, IPIT
 
     writeIcr(icrl, dest_type == IPIDestination::TARGET ? target : 0);
 
-    if(wait_for_delivery && !((dest_type == IPIDestination::TARGET) && (target == apicId())))
+    if (wait_for_delivery && !((dest_type == IPIDestination::TARGET) && (target == apicId())))
     {
         debug(APIC, "CPU %zx waiting until IPI to %zx has been delivered\n", SMP::currentCpuId(), target);
         waitIpiDelivered();
@@ -631,7 +616,7 @@ bool Apic::ApicTimer::mask(irqnum_t irq, bool mask)
     WithInterrupts i{false};
     auto timer_reg = apic_->readRegister<Register::LVT_TIMER>();
 
-    debug(APIC, "[Cpu %u] %s mask IRQ %zx = %u -> %u\n", apic_->apicId(), name().c_str(), irq, timer_reg.mask, mask);
+    debug(APIC, "[Cpu %u] %s mask IRQ %zu = %u -> %u\n", apic_->apicId(), name().c_str(), irq, timer_reg.mask, mask);
 
     timer_reg.mask = mask;
     masked_ = mask;
@@ -641,7 +626,7 @@ bool Apic::ApicTimer::mask(irqnum_t irq, bool mask)
 
 bool Apic::ApicTimer::ack(irqnum_t irq)
 {
-    debugAdvanced(APIC, "[Cpu %u] %s ack IRQ %zx\n", apic_->apicId(), name().c_str(), irq);
+    debugAdvanced(APIC, "[Cpu %u] %s ack IRQ %zu\n", apic_->apicId(), name().c_str(), irq);
     assert(irq == 0);
     --pending_EOIs;
     apic_->sendEOI(Apic::APIC_TIMER_VECTOR);
@@ -733,7 +718,9 @@ void ApicTimerDriver::cpuLocalInit()
         timer.setDeviceName(eastl::string("APIC ") + eastl::to_string(cpu_lapic->apicId()) + " timer");
         cpu_lapic->initTimer();
 
-        timer.irq().mapTo(*cpu_lapic, Apic::APIC_TIMER_VECTOR);
+        timer.irq()
+             .mapTo(*cpu_lapic, Apic::APIC_TIMER_VECTOR)
+             .useHandler(irqHandler_127);
 
         bindDevice(timer);
     }

@@ -91,7 +91,10 @@ protected:
 
     void writeIcr(InterruptCommandRegisterLow icr_l, uint32_t dest) override;
 
-    void waitIpiDelivered() override {} // Do nothing since delivered bit was removed for x2apic
+    void waitIpiDelivered() override
+    {
+        // Do nothing since delivered bit was removed for x2apic
+    }
 
 private:
 };

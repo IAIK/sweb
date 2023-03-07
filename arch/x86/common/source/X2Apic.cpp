@@ -5,6 +5,7 @@
 #include "ArchCpuLocalStorage.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
+#include <cstdint>
 #include "debug.h"
 
 cpu_local X2Apic cpu_x2apic_impl;
@@ -34,8 +35,8 @@ bool X2Apic::isEnabled()
 
 void X2Apic::writeRegisterImpl(ApicRegisterOffset offset, uint64_t v)
 {
-    uint32 vl = v;
-    uint32 vh = v >> 32;
+    uint32_t vl = v;
+    uint32_t vh = v >> 32;
     MSR::setMSR(x2ApicOffset2Msr(offset), vl, vh);
 }
 
@@ -73,11 +74,6 @@ void X2Apic::init()
 
     initialized_ = true;
     SMP::currentCpu().setId(id_);
-
-    registerIPI(90);
-    registerIPI(91);
-    registerIPI(100);
-    registerIPI(101);
 }
 
 uint32_t X2Apic::readId()

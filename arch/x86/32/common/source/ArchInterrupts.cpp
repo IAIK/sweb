@@ -19,7 +19,7 @@
 #include "assert.h"
 #include "debug.h"
 
-cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", 256);
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", NUM_X86_INT_VECTORS);
 cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
 
 IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
@@ -30,17 +30,41 @@ IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
 
 IrqDomain& ArchInterrupts::isaIrqDomain()
 {
-    static IrqDomain isa_irq_domain("ISA IRQ", 16);
+    static IrqDomain isa_irq_domain("ISA IRQ", NUM_ISA_INTERRUPTS);
     return isa_irq_domain;
 }
 
-static void initInterruptHandlers()
+static void initInterruptDescriptorTable()
 {
-  debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
-  InterruptUtils::initialise();
+    auto& idt = InterruptUtils::idt;
+    idt.idtr().load();
+
+    if (A_INTERRUPTS & OUTPUT_ENABLED & OUTPUT_ADVANCED)
+    {
+        for (size_t i = 0; i < idt.entries.size(); ++i)
+        {
+            debug(A_INTERRUPTS,
+                  "%3zu -- offset: %p, present: %x, segment_selector: %x, "
+                  "type: %x, dpl: %x\n",
+                  i, idt.entries[i].offset(), idt.entries[i].present,
+                  idt.entries[i].segment_selector, idt.entries[i].type,
+                  idt.entries[i].dpl);
+        }
+    }
 }
 
-static void initInterruptController()
+void initCpuLocalInterruptHandlers()
+{
+    debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
+    ArchInterrupts::currentCpuRootIrqDomain().irq(YIELD_INTERRUPT).useHandler(irqHandler_65);
+    ArchInterrupts::currentCpuRootIrqDomain().irq(90).useHandler(irqHandler_90);
+    ArchInterrupts::currentCpuRootIrqDomain().irq(91).useHandler(irqHandler_91);
+    ArchInterrupts::currentCpuRootIrqDomain().irq(100).useHandler(irqHandler_100);
+    ArchInterrupts::currentCpuRootIrqDomain().irq(101).useHandler(irqHandler_101);
+    ArchInterrupts::currentCpuRootIrqDomain().irq(SYSCALL_INTERRUPT).useHandler(syscallHandler);
+}
+
+void initInterruptControllers()
 {
     debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
     assert(CpuLocalStorage::ClsInitialized());
@@ -56,8 +80,9 @@ static void initInterruptController()
 
 void ArchInterrupts::initialise()
 {
-  initInterruptHandlers();
-  initInterruptController();
+  initInterruptDescriptorTable();
+  initInterruptControllers();
+  initCpuLocalInterruptHandlers();
 }
 
 void ArchInterrupts::enableTimer()
@@ -144,7 +169,7 @@ void ArchInterrupts::startOfInterrupt(const IrqDomain::DomainIrqHandle& irq_hand
 
 void ArchInterrupts::startOfInterrupt(uint16 irqnum)
 {
-    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %x\n", SMP::currentCpuId(), irqnum);
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %u\n", SMP::currentCpuId(), irqnum);
 
     startOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
 }
@@ -162,7 +187,7 @@ void ArchInterrupts::endOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle
 
 void ArchInterrupts::endOfInterrupt(uint16 irqnum)
 {
-    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %x\n", SMP::currentCpuId(),
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %u\n", SMP::currentCpuId(),
                   irqnum);
 
     endOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
@@ -259,19 +284,6 @@ struct [[gnu::packed]] SavedContextSwitchRegisters
     interrupt_registers iregisters;
 };
 
-extern "C" void arch_dummyHandler();
-extern "C" void arch_dummyHandlerMiddle();
-extern "C" size_t arch_computeDummyHandler(uint32 eip)
-{
-  size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
-  assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
-  dummy_handler_sled_size /= 128;
-  assert((eip <= (size_t) arch_dummyHandlerMiddle) && "calling dummy handler cannot be outside of dummy handler sled");
-  assert((eip >= (size_t) arch_dummyHandler) && "calling dummy handler cannot be outside of dummy handler sled");
-  size_t calling_dummy_handler = (eip - (size_t) arch_dummyHandler) / dummy_handler_sled_size - 1;
-  return calling_dummy_handler;
-}
-
 extern "C" ArchThreadRegisters*
 arch_saveThreadRegisters([[maybe_unused]]uint32 error, SavedContextSwitchRegisters* saved_r)
 {
@@ -312,18 +324,14 @@ arch_saveThreadRegisters([[maybe_unused]]uint32 error, SavedContextSwitchRegiste
   return info;
 }
 
-extern "C" void interruptHandler(size_t interrupt_num,
-                                 uint32_t error_code,
-                                 ArchThreadRegisters* saved_registers);
-
 extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
 {
     // Take registers previously saved on the stack via assembly and store them in the
     // saved registers of the thread
     auto saved_regs = arch_saveThreadRegisters(0, regs);
 
-    debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zu\n",
-                  regs->interrupt_num);
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Generic interrupt entry %zu\n",
+                  SMP::currentCpuId(), regs->interrupt_num);
 
     interruptHandler(regs->interrupt_num, regs->error_code, saved_regs);
 }
@@ -336,7 +344,9 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
 
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s, user: %u, regs: %p at eip %p, esp %p, ebp %p\n", SMP::currentCpuId(), target_thread, target_thread->getName(), target_thread->switch_to_userspace_, target_registers, (void*)target_registers->eip, (void*)target_registers->esp, (void*)target_registers->ebp);
+    debug(A_INTERRUPTS, "CPU %zu, context switch to thread %p = %s, user: %u, regs: %p at eip %p, esp %p, ebp %p\n",
+        SMP::currentCpuId(), target_thread, target_thread->getName(), target_thread->switch_to_userspace_, target_registers,
+        (void*)target_registers->eip, (void*)target_registers->esp, (void*)target_registers->ebp);
   }
 
   assert(target_registers);

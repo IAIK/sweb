@@ -242,6 +242,8 @@ extern "C" void __apstartup32() {
   });
 }
 
+extern void initCpuLocalInterruptHandlers();
+
 void ArchMulticore::initApplicationProcessorCpu()
 {
   debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getKernelPagingStructureRootVirt()));
@@ -261,6 +263,8 @@ void ArchMulticore::initApplicationProcessorCpu()
 
   ApicDriver::instance().cpuLocalInit();
   ApicTimerDriver::instance().cpuLocalInit();
+
+  initCpuLocalInterruptHandlers();
 
   assert(cpu_lapic->apicId() == CPUID::localApicId());
   ArchMulticore::initCpuLocalData();

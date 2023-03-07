@@ -1,13 +1,15 @@
 #pragma once
 
-#include "SegmentUtils.h"
 #include <cstddef>
+#include <cstdint>
+#include "SegmentUtils.h"
 #include "EASTL/array.h"
 
 using handler_func_t = void (*)();
 
 static constexpr size_t NUM_INTERRUPTS = 256;
 
+// https://wiki.osdev.org/Exceptions
 constexpr bool interruptHasErrorcode(size_t N)
 {
     if ((N == 8) || (10 <= N && N <= 14) || (N == 17) || (N == 21) || (N == 29) ||
@@ -27,17 +29,17 @@ constexpr int interruptPrivilegeLevel(size_t interrupt_number)
 
 struct [[gnu::packed]] InterruptGateDesc
 {
-    uint16 offset_low       : 16; // low word of handler entry point's address
-    uint16 segment_selector : 16; // (code) segment the handler resides in
-    uint8 unused            : 8;  // set to zero
-    uint8 type              : 4;  // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
-    uint8 zero_1            : 1;  // unused - set to zero
-    uint8 dpl               : 2;  // descriptor protection level
-    uint8 present           : 1;  // present- flag - set to 1
-    uint16 offset_high      : 16; // high word of handler entry point's address
+    uint16_t offset_low       : 16; // low word of handler entry point's address
+    uint16_t segment_selector : 16; // (code) segment the handler resides in
+    uint8_t unused            : 8;  // set to zero
+    uint8_t type              : 4;  // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
+    uint8_t zero_1            : 1;  // unused - set to zero
+    uint8_t dpl               : 2;  // descriptor protection level
+    uint8_t present           : 1;  // present- flag - set to 1
+    uint16_t offset_high      : 16; // high word of handler entry point's address
 
     InterruptGateDesc() = default;
-    InterruptGateDesc(handler_func_t offset, uint8 dpl);
+    InterruptGateDesc(handler_func_t offset, uint8_t dpl);
 
     void setOffset(handler_func_t offset);
     handler_func_t offset();
@@ -56,7 +58,7 @@ struct [[gnu::packed]] InterruptGateDesc
 
 struct [[gnu::packed]] IDTR
 {
-    uint16 limit;
+    uint16_t limit;
     uintptr_t base;
 
     void load();
@@ -71,7 +73,7 @@ struct [[gnu::packed]] IDTR
  */
 template<size_t N> [[gnu::naked, noreturn]] void interruptEntry()
 {
-    // TODO: interrupt 14 pushes two times 0x0 onto the stack
+    // compile time constexpr if -> push instruction is only generated if required. No check at runtime
     if constexpr (!interruptHasErrorcode(N))
         asm volatile("pushl $0\n");
 
@@ -85,14 +87,14 @@ template<size_t I> auto make_element()
     return InterruptGateDesc{&interruptEntry<I>, interruptPrivilegeLevel(I)};
 }
 
-template<typename T, std::size_t... NN>
+template<typename T, size_t... NN>
 constexpr auto generate_impl(eastl::index_sequence<NN...>)
     -> eastl::array<T, sizeof...(NN)>
 {
     return {make_element<NN>()...};
 }
 
-template<typename T, std::size_t N> constexpr eastl::array<T, N> generate()
+template<typename T, size_t N> constexpr eastl::array<T, N> generate()
 {
     return generate_impl<T>(eastl::make_index_sequence<N>());
 }

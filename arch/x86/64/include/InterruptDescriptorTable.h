@@ -9,6 +9,7 @@ using handler_func_t = void (*)();
 
 static constexpr size_t NUM_INTERRUPTS = 256;
 
+// https://wiki.osdev.org/Exceptions
 constexpr bool interruptHasErrorcode(size_t N)
 {
     if ((N == 8) || (10 <= N && N <= 14) || (N == 17) || (N == 21) || (N == 29) ||
@@ -82,6 +83,7 @@ extern void arch_interruptHandler();
 template<size_t N>
 [[gnu::naked, noreturn]] void interruptEntry()
 {
+    // compile time constexpr if -> push instruction is only generated if required. No check at runtime
     if constexpr (!interruptHasErrorcode(N))
         asm volatile("pushq $0\n");
 
@@ -97,13 +99,13 @@ auto make_element()
     return InterruptGateDesc{&interruptEntry<I>, interruptPrivilegeLevel(I)};
 }
 
-template<typename T, std::size_t... NN>
+template<typename T, size_t... NN>
 constexpr auto generate_impl(eastl::index_sequence<NN...>) -> eastl::array<T, sizeof...(NN)>
 {
     return {make_element<NN>()...};
 }
 
-template<typename T, std::size_t N>
+template<typename T, size_t N>
 constexpr eastl::array<T, N> generate()
 {
     return generate_impl<T>(eastl::make_index_sequence<N>());
