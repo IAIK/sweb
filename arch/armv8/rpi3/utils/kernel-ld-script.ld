@@ -57,6 +57,29 @@ SECTIONS
     data_end_address = .;
   }
 
+  .init_array : AT(LS_Phys + (__init_array_start - LS_Code))
+  {
+    __init_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+    KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
+    __init_array_end = .;
+  }
+
+  .preinit_array : AT(LS_Phys + (__preinit_array_start - LS_Code))
+  {
+    __preinit_array_start = .;
+    KEEP (*(.preinit_array))
+    __preinit_array_end = .;
+  }
+
+  .fini_array : AT(LS_Phys + (__fini_array_start - LS_Code))
+  {
+    __fini_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
+    KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+    __fini_array_end = .;
+  }
+
   .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;

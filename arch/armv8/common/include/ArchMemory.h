@@ -158,7 +158,7 @@ public:
   static void flushLocalTranslationCaches(size_t addr);
   static void flushAllTranslationCaches(size_t addr);
 
-  static void initKernelArchMem();
+  static ArchMemory& kernelArchMemory();
 
 private:
   ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
@@ -191,5 +191,3 @@ private:
   void checkAndRemovePT(size_t pde_vpn);
 
 };
-
-extern ArchMemory kernel_arch_mem;

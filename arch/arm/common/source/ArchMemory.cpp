@@ -27,8 +27,6 @@
 PageDirEntry kernel_page_directory[PAGE_DIR_ENTRIES] __attribute__((aligned(0x4000))); // space for page directory
 PageTableEntry kernel_page_tables[16 * PAGE_TABLE_ENTRIES] __attribute__((aligned(1024))); // space for 8 page tables
 
-ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
-
 PageTableEntry* ArchMemory::getIdentAddressOfPT(PageDirEntry* page_directory, uint32 pde_vpn)
 {
   return ((PageTableEntry *) getIdentAddressOfPPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K)) + page_directory[pde_vpn].pt.offset * PAGE_TABLE_ENTRIES;
@@ -305,7 +303,8 @@ void ArchMemory::loadPagingStructureRoot(size_t ttbr0_value)
                          ::[ttbr0]"r"(ttbr0_value));
 }
 
-void ArchMemory::initKernelArchMem()
+ArchMemory& ArchMemory::kernelArchMemory()
 {
-    new (&kernel_arch_mem) ArchMemory((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
+    static ArchMemory kernel_arch_mem((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
+    return kernel_arch_mem;
 }

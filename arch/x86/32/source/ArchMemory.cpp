@@ -13,8 +13,6 @@
 PageDirEntry kernel_page_directory[PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_tables[4 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
-ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
-
 ArchMemory::ArchMemory()
 {
   page_dir_page_ = PageManager::instance().allocPPN();
@@ -366,7 +364,8 @@ PageDirEntry* ArchMemory::getKernelPagingStructureRootVirt()
   return kernel_page_directory;
 }
 
-void ArchMemory::initKernelArchMem()
+ArchMemory& ArchMemory::kernelArchMemory()
 {
-    new (&kernel_arch_mem) ArchMemory((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
+    static ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
+    return kernel_arch_mem;
 }

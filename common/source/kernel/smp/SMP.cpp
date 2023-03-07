@@ -26,8 +26,6 @@ size_t SMP::numRunningCpus()
 
 void SMP::initialize()
 {
-    new (&SMP::cpu_list_lock_) Mutex("CPU list lock");
-
     ArchMulticore::initialize();
 }
 

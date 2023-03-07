@@ -15,8 +15,6 @@ Level3Entry kernel_paging_level3[KERNEL_LEVEL3_TABLES * LEVEL3_ENTRIES] __attrib
 
 uint16 ASID_COUNTER = 0;
 
-ArchMemory kernel_arch_mem((size_t)ArchMemory::getKernelPagingStructureRootPhys()/PAGE_SIZE);
-
 ArchMemory::ArchMemory()
 {
   paging_root_page_ = PageManager::instance().allocPPN(PAGE_SIZE);
@@ -353,10 +351,10 @@ size_t ArchMemory::getKernelPagingStructureRootPhys()
     return (size_t)VIRTUAL_TO_PHYSICAL_BOOT((size_t)getKernelPagingStructureRootVirt());
 }
 
-void ArchMemory::initKernelArchMem()
+ArchMemory& ArchMemory::kernelArchMemory()
 {
-    new (&kernel_arch_mem) ArchMemory((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
-    kernel_arch_mem.printMappings();
+    static ArchMemory kernel_arch_mem((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
+    return kernel_arch_mem;
 }
 
 

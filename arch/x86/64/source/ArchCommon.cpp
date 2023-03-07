@@ -476,7 +476,6 @@ void ArchCommon::reservePagesPreKernelInit(Allocator &alloc)
 
 void ArchCommon::initKernelVirtualAddressAllocator()
 {
-    new (&mmio_addr_allocator) RangeAllocator{};
     mmio_addr_allocator.setUseable(KERNEL_START, (size_t)-1);
     mmio_addr_allocator.setUnuseable(getKernelStartAddress(), getKernelEndAddress());
     mmio_addr_allocator.setUnuseable(KernelMemoryManager::instance()->getKernelHeapStart(), KernelMemoryManager::instance()->getKernelHeapMaxEnd());

@@ -40,6 +40,7 @@
 #include "SystemState.h"
 #include "DeviceBus.h"
 #include "PlatformBus.h"
+#include "libc++.h"
 
 extern void* kernel_end_address;
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
@@ -55,11 +56,16 @@ extern "C" [[noreturn]] void startup()
   system_state = BOOTING;
 
   debug(MAIN, "Initializing kernel arch mem\n");
-  ArchMemory::initKernelArchMem();
+  ArchMemory::kernelArchMemory();
 
   debug(MAIN, "Initializing kernel memory management\n");
   PageManager::init();
   debug(MAIN, "PageManager and KernelMemoryManager created \n");
+
+  debug(MAIN, "Calling global constructors\n");
+  _preinit();
+  globalConstructors();
+  debug(MAIN, "Global constructors finished\n");
 
   ArchCommon::initKernelVirtualAddressAllocator();
 
@@ -162,6 +168,7 @@ extern "C" [[noreturn]] void startup()
   //not reached
   assert(false && "Reached end of startup()");
 }
+
 
 void printRunningCpus()
 {

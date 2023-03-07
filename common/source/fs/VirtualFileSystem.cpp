@@ -18,7 +18,6 @@ VirtualFileSystem vfs;
 
 void VirtualFileSystem::initialize()
 {
-  new (this) VirtualFileSystem();
 }
 
 int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)

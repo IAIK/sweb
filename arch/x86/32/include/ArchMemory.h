@@ -107,7 +107,7 @@ public:
   static void flushLocalTranslationCaches(size_t addr);
   static void flushAllTranslationCaches(size_t addr);
 
-  static void initKernelArchMem();
+  static ArchMemory& kernelArchMemory();
 
 private:
   ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
@@ -127,5 +127,3 @@ private:
    */
   ppn_t page_dir_page_;
 };
-
-extern ArchMemory kernel_arch_mem;

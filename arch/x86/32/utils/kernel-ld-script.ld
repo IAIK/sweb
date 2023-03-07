@@ -2,7 +2,7 @@
  * this linker script tells ld how to link and which symbols to add to the
  * kernel.x binary
  */
- 
+
 /* let the linker use its 'native' format  (ELF/COFF/PE) */
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(entry)
@@ -118,6 +118,29 @@ SECTIONS
     . = ALIGN(4096);
   }
 
+  .init_array : AT(LS_Phys + (__init_array_start - LS_START))
+  {
+    __init_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+    KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
+    __init_array_end = .;
+  }
+
+  .preinit_array : AT(LS_Phys + (__preinit_array_start - LS_START))
+  {
+    __preinit_array_start = .;
+    KEEP (*(.preinit_array))
+    __preinit_array_end = .;
+  }
+
+  .fini_array : AT(LS_Phys + (__fini_array_start - LS_START))
+  {
+    __fini_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
+    KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+    __fini_array_end = .;
+  }
+
   .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_START))
   {
     LS_Bss = .;
@@ -135,7 +158,7 @@ SECTIONS
     stab_end_address_nr = .;
     . = ALIGN(4096);
   }
-  
+
 
   .stabstr : AT(LS_Phys + (LS_Stabstr - LS_START))
   {

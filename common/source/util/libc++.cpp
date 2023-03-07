@@ -1,4 +1,5 @@
 #include "EASTL/atomic.h"
+#include "assert.h"
 
 extern "C" int __cxa_thread_atexit(__attribute__((unused)) void (*func)(), __attribute__((unused)) void *obj, __attribute__((unused)) void *dso_symbol)
 {
@@ -79,25 +80,29 @@ extern "C" void __cxa_guard_abort(_guard_t* gv) {
 
 
 using func_ptr = void (*)();
-func_ptr __preinit_array_start;
-func_ptr __preinit_array_end;
-func_ptr __init_array_start;
-func_ptr __init_array_end;
-func_ptr __fini_array_start;
-func_ptr __fini_array_end;
+extern "C" func_ptr __preinit_array_start;
+extern "C" func_ptr __preinit_array_end;
+extern "C" func_ptr __init_array_start;
+extern "C" func_ptr __init_array_end;
+extern "C" func_ptr __fini_array_start;
+extern "C" func_ptr __fini_array_end;
 
 void _preinit()
 {
+    assert(&__preinit_array_start <= &__preinit_array_end);
     for (func_ptr* it = &__preinit_array_start; it < &__preinit_array_end; ++it)
     {
+        assert(*it);
         (*it)();
     }
 }
 
 void globalConstructors()
 {
+    assert(&__init_array_start <= &__init_array_end);
     for (func_ptr* it = &__init_array_start; it < &__init_array_end; ++it)
     {
+        assert(*it);
         (*it)();
     }
 }
@@ -106,6 +111,7 @@ void globalDestructors()
 {
     for (func_ptr* it = &__fini_array_start; it < &__fini_array_end; ++it)
     {
+        assert(*it);
         (*it)();
     }
 }

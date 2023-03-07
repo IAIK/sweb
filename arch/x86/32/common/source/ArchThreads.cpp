@@ -67,7 +67,7 @@ eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createBaseThreadRegisters(
     auto regs = eastl::make_unique<ArchThreadRegisters>();
 
     setInterruptEnableFlag(*regs, true);
-    regs->cr3 = kernel_arch_mem.getValueForCR3();
+    regs->cr3 = ArchMemory::kernelArchMemory().getValueForCR3();
     regs->esp = (size_t)stack;
     regs->ebp = (size_t)stack;
     regs->eip = (size_t)start_function;

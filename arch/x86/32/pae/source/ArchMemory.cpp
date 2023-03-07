@@ -17,8 +17,6 @@ PageDirPointerTableEntry kernel_page_directory_pointer_table[PAGE_DIRECTORY_POIN
 PageDirEntry kernel_page_directory[4 * PAGE_DIRECTORY_ENTRIES] __attribute__((aligned(0x1000)));
 PageTableEntry kernel_page_tables[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
 
-ArchMemory kernel_arch_mem(ArchMemory::getKernelPagingStructureRootVirt());
-
 ArchMemory::ArchMemory() : page_dir_pointer_table_((PageDirPointerTableEntry*) (((uint32) page_dir_pointer_table_space_ + 0x20) & (~0x1F)))
 {
   memcpy(page_dir_pointer_table_, kernel_page_directory_pointer_table, sizeof(PageDirPointerTableEntry) * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES);
@@ -373,7 +371,8 @@ PageDirPointerTableEntry* ArchMemory::getKernelPagingStructureRootVirt()
   return kernel_page_directory_pointer_table;
 }
 
-void ArchMemory::initKernelArchMem()
+ArchMemory& ArchMemory::kernelArchMemory()
 {
-    new (&kernel_arch_mem) ArchMemory(getKernelPagingStructureRootVirt());
+    static ArchMemory kernel_arch_mem(getKernelPagingStructureRootVirt());
+    return kernel_arch_mem;
 }

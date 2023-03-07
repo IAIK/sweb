@@ -137,7 +137,7 @@ public:
   static const size_t RESERVED_END = 0x80400ULL;
 
 
-  static void initKernelArchMem();
+  static ArchMemory& kernelArchMemory();
 
 private:
   ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented

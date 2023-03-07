@@ -54,7 +54,6 @@ InterruptDescriptorTable InterruptUtils::idt;
 
 void InterruptUtils::initialise()
 {
-  new (&idt) InterruptDescriptorTable{};
   idt.idtr().load();
 
   if (A_INTERRUPTS & OUTPUT_ENABLED & OUTPUT_ADVANCED)

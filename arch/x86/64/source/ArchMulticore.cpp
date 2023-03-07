@@ -104,13 +104,13 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
 
   pointer paddr0 = ArchMemory::getIdentAddressOfPPN(entry_addr/PAGE_SIZE) + (entry_addr % PAGE_SIZE);
-  auto m = kernel_arch_mem.resolveMapping(paddr0/PAGE_SIZE);
+  auto m = ArchMemory::kernelArchMemory().resolveMapping(paddr0/PAGE_SIZE);
   assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
   assert((m.page_ppn == entry_addr/PAGE_SIZE) && "PPN in ident mapping doesn't match expected ppn for AP entry");
 
   // Init AP gdt
   debug(A_MULTICORE, "Init AP GDT at %p\n", &ap_gdt32);
-  auto m_ap_gdt = kernel_arch_mem.resolveMapping(((size_t)&ap_gdt32)/PAGE_SIZE);
+  auto m_ap_gdt = ArchMemory::kernelArchMemory().resolveMapping(((size_t)&ap_gdt32)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
   debug(A_MULTICORE, "AP GDT mapped on ppn %#lx\n", m_ap_gdt.page_ppn);
 
@@ -186,8 +186,8 @@ extern "C" __attribute__((naked)) void apstartup64()
 
 void ArchMulticore::initCpu()
 {
-  debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)kernel_arch_mem.getPagingStructureRootPhys());
-  ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
+  debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)ArchMemory::kernelArchMemory().getPagingStructureRootPhys());
+  ArchMemory::loadPagingStructureRoot(ArchMemory::kernelArchMemory().getValueForCR3());
 
   InterruptUtils::idt.idtr().load();
 

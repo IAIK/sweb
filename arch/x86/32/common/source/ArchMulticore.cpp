@@ -117,14 +117,14 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
         &apstartup_text_load_begin, &apstartup_text_load_end, apstartup_size);
   debug(A_MULTICORE, "apstartup %p, phys: %p\n", &apstartup_text_load_begin, (void*)entry_addr);
 
-  auto m_load = kernel_arch_mem.resolveMapping((size_t)&apstartup_text_load_begin/PAGE_SIZE);
+  auto m_load = ArchMemory::kernelArchMemory().resolveMapping((size_t)&apstartup_text_load_begin/PAGE_SIZE);
   debug(A_MULTICORE, "apstartup load mapping %p: page: %p, ppn: %x, pt: %p, writeable: %u\n",
         &apstartup_text_load_begin, (void*)m_load.page, m_load.page_ppn, m_load.pt, m_load.pt[m_load.pti].writeable);
   assert(m_load.pt[m_load.pti].writeable);
 
   pointer paddr0 = ArchMemory::getIdentAddress(entry_addr);
   debug(A_MULTICORE, "Ident mapping for entry addr %x: %x\n", entry_addr, paddr0);
-  auto m = kernel_arch_mem.resolveMapping(paddr0/PAGE_SIZE);
+  auto m = ArchMemory::kernelArchMemory().resolveMapping(paddr0/PAGE_SIZE);
 
   assert(m.page && "Page for application processor entry not mapped in kernel"); // TODO: Map if not present
   debug(A_MULTICORE, "PPN: %x\n", m.page_ppn);
@@ -136,7 +136,7 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
   // Init AP gdt
   debug(A_MULTICORE, "Init AP GDT at %p, (loaded at %zx)\n", &ap_gdt32, ap_gdt32_load_addr);
-  auto m_ap_gdt = kernel_arch_mem.resolveMapping(((size_t)&ap_gdt32_load_addr)/PAGE_SIZE);
+  auto m_ap_gdt = ArchMemory::kernelArchMemory().resolveMapping(((size_t)&ap_gdt32_load_addr)/PAGE_SIZE);
   assert(m_ap_gdt.page && "AP GDT virtual address not mapped in kernel");
   assert(m_ap_gdt.pt && m_ap_gdt.pt[m_ap_gdt.pti].writeable && "AP GDT virtual address not writeable");
 
@@ -165,11 +165,9 @@ void ArchMulticore::prepareAPStartup(size_t entry_addr)
 
   *(size_t*)ap_kernel_cr3_load_addr = (size_t)&ap_paging_root;
 
-  debug(
-      A_MULTICORE,
-      "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n",
-      (void *)&apstartup_text_load_begin, (void *)&apstartup_text_load_end,
-      (void *)paddr0, (size_t)entry_addr, apstartup_size);
+  debug(A_MULTICORE, "Copying apstartup from virt [%p,%p] -> %p (phys: %zx), size: %zx\n",
+        (void *)&apstartup_text_load_begin, (void *)&apstartup_text_load_end,
+        (void *)paddr0, (size_t)entry_addr, apstartup_size);
   memcpy((void*)paddr0, (void*)&apstartup_text_load_begin, apstartup_size);
 }
 
@@ -247,7 +245,7 @@ extern "C" void __apstartup32() {
 void ArchMulticore::initApplicationProcessorCpu()
 {
   debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getKernelPagingStructureRootVirt()));
-  ArchMemory::loadPagingStructureRoot(kernel_arch_mem.getValueForCR3());
+  ArchMemory::loadPagingStructureRoot(ArchMemory::kernelArchMemory().getValueForCR3());
 
   InterruptUtils::idt.idtr().load();
 
