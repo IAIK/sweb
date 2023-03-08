@@ -10,6 +10,10 @@ class PIT : public Device, public IrqDomain
 {
 public:
     PIT();
+    ~PIT() override = default;
+
+    PIT(const PIT&) = delete;
+    PIT& operator=(const PIT&) = delete;
 
     enum PITIoPort
     {

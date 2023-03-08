@@ -70,6 +70,7 @@ public:
     };
 
     IrqDomain(const eastl::string& name, size_t num_irqs = 1, InterruptController* controller = nullptr);
+    virtual ~IrqDomain() = default;
 
     [[nodiscard]] constexpr const eastl::string& name() const { return name_; }
 
