@@ -40,7 +40,6 @@ extern char apstartup_text_begin;
 extern char apstartup_text_end;
 extern char apstartup_text_load_begin;
 extern char apstartup_text_load_end;
-// extern "C" void apstartup();
 
 extern uint32 ap_kernel_cr3;
 
@@ -58,10 +57,6 @@ void ArchMulticore::initCpuLocalData(bool boot_cpu)
 
   // The constructor of objects declared as cpu_local will be called automatically the first time the cpu_local object is used. Other cpu_local objects _may or may not_ also be initialized at the same time.
   debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", SMP::currentCpuId());
-
-  // void* cpu_info_addr = &cpu_info;
-  // debug(A_MULTICORE, "Initializing cpu_info at %p\n", &cpu_info_addr);
-  // debug(A_MULTICORE, "Initializing CPU local objects for CPU %zx\n", cpu_info.getCpuID());
 
   idle_thread = new IdleThread();
   debug(A_MULTICORE, "CPU %zu: %s initialized\n", SMP::currentCpuId(), idle_thread->getName());
@@ -183,7 +178,7 @@ void ArchMulticore::startOtherCPUs()
     {
       if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic->apicId()))
       {
-        cpu_lapic->startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
         debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
         while(!ap_started);
         ap_started = false;

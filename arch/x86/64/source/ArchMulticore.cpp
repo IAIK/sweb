@@ -139,7 +139,7 @@ void ArchMulticore::startOtherCPUs()
     {
       if(other_cpu_lapic.flags.enabled && (other_cpu_lapic.apic_id != cpu_lapic->apicId()))
       {
-        cpu_lapic->startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
+        startAP(other_cpu_lapic.apic_id, AP_STARTUP_PADDR);
         debug(A_MULTICORE, "BSP waiting for AP %x startup to be complete\n", other_cpu_lapic.apic_id);
         while(!ap_started);
         ap_started = false;
@@ -181,12 +181,12 @@ extern "C" __attribute__((naked)) void apstartup64()
   debug(A_MULTICORE, "AP switched to stack %p\n", ap_boot_stack + sizeof(ap_boot_stack));
 
   // Stack variables are messed up in this function because we skipped the function prologue. Should be fine once we've entered another function.
-  ArchMulticore::initCpu();
+  ArchMulticore::initApplicationProcessorCpu();
 }
 
 extern void initCpuLocalInterruptHandlers();
 
-void ArchMulticore::initCpu()
+void ArchMulticore::initApplicationProcessorCpu()
 {
   debug(A_MULTICORE, "AP switching from temp kernel page tables to main kernel page tables: %zx\n", (size_t)ArchMemory::kernelArchMemory().getPagingStructureRootPhys());
   ArchMemory::loadPagingStructureRoot(ArchMemory::kernelArchMemory().getValueForCR3());

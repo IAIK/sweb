@@ -427,7 +427,6 @@ public:
                  size_t target = -1, IPIType ipi_type = IPIType::FIXED,
                  bool wait_for_delivery = false);
     void sendIPI(uint8_t vector, const Apic& target, bool wait_for_delivery = false);
-    void startAP(uint8_t apic_id, size_t entry_addr);
 
     [[nodiscard]] bool usingAPICTimer() const;
     void setUsingAPICTimer(bool using_apic_timer);

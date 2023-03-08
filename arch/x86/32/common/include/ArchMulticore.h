@@ -48,7 +48,7 @@ extern cpu_local char cpu_stack[CPU_STACK_SIZE];
 extern cpu_local TSS cpu_tss;
 extern cpu_local IdleThread* idle_thread;
 
-#define AP_STARTUP_PADDR 0x0
+constexpr size_t AP_STARTUP_PADDR = 0x00;
 
 class ArchMulticore
 {
@@ -60,6 +60,8 @@ class ArchMulticore
     static void startOtherCPUs();
     static void stopAllCpus();
     static void stopOtherCpus();
+
+    static void startAP(uint8_t apic_id, size_t entry_addr);
 
     static void sendFunctionCallMessage(ArchCpu& cpu, RemoteFunctionCallMessage* fcall_message);
     static void notifyMessageAvailable(ArchCpu& cpu);
