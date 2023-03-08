@@ -34,25 +34,7 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
     ArchInterrupts::disableIRQ(controller.irq());
     irq_domain.irq()
         .mapTo(controller)
-        .useHandler(
-            [&]()
-            {
-                // Need to read status register to acknowledge and unblock interrupts
-                auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
-                auto error = controller.io_regs[IDEControllerChannel::IoRegister::ERROR].read();
-                auto lba_l = controller.io_regs[IDEControllerChannel::IoRegister::LBA_LOW].read();
-                auto lba_m = controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].read();
-                auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
-
-                debugAdvanced(ATA_DRIVER, "probeIRQ: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
-
-                controller.reset();
-                controller.selectDrive(drive_num);
-
-                irq_domain.irq().useHandler(nullptr);
-
-                BDManager::instance().probeIRQ = false;
-            });
+        .useHandler([this]() { serviceIRQ(); });
 
     controller.selectDrive(drive_num);
 
@@ -91,17 +73,10 @@ ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
     debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
     ArchInterrupts::enableIRQ(irq_domain.irq());
 
-    {
-        WithInterrupts intr(true);
-        testIRQ();
-    }
+    testIRQ();
 
-  debug(ATA_DRIVER, "ctor: Using ATA mode: %d !!\n", (int)mode);
-
-  // Use real handler from now on
-  irq_domain.irq().useHandler([this]() { serviceIRQ(); });
-
-  debug(ATA_DRIVER, "ctor: Drive created !!\n");
+    debug(ATA_DRIVER, "ctor: Using ATA mode: %d !!\n", (int)mode);
+    debug(ATA_DRIVER, "ctor: Drive created !!\n");
 }
 
 void ATADrive::testIRQ()
@@ -109,12 +84,17 @@ void ATADrive::testIRQ()
   mode = BD_ATA_MODE::BD_PIO;
 
   BDManager::instance().probeIRQ = true;
-  controller.selectDrive(drive_num);
-  char buf[getSectorSize()];
-  readSector(0, 1, buf);
+  {
+    WithInterrupts intr(true);
 
-  debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
-  TIMEOUT_CHECK(BDManager::instance().probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
+    controller.selectDrive(drive_num);
+    char buf[getSectorSize()];
+    readSector(0, 1, buf);
+
+    debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
+    TIMEOUT_CHECK(BDManager::instance().probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
+    controller.reset();
+  }
 }
 
 int32 ATADrive::rawReadSector(uint32 start_sector, uint32 num_sectors, void* buffer)
@@ -372,6 +352,8 @@ void ATADrive::serviceIRQ()
     auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
 
     debugAdvanced(ATA_DRIVER, "serviceIRQ: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
+
+    BDManager::instance().probeIRQ = false;
 
     if (mode == BD_ATA_MODE::BD_PIO_NO_IRQ)
         return;
