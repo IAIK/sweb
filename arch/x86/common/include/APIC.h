@@ -342,11 +342,7 @@ public:
 
     // ##########################################
 
-    static constexpr uint8_t ERROR_INTERRUPT_VECTOR = 91;
     static constexpr uint8_t TIMER_DIVISOR = 16;
-    static constexpr uint8_t NUM_ISA_INTERRUPTS = 16;
-    static constexpr uint8_t IRQ_VECTOR_OFFSET = 0x20; // Offset for IRQ remapping so that they don't overlap with cpu exceptions
-    static constexpr uint8_t APIC_TIMER_VECTOR = 127;
 
     Apic(const eastl::string& name = "APIC");
     ~Apic() override = default;

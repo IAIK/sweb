@@ -90,6 +90,6 @@ void PITDriver::doDeviceDetection()
 
     PIT::instance()
         .irq()
-        .mapTo(ArchInterrupts::isaIrqDomain(), 0)
-        .useHandler(irqHandler_0);
+        .mapTo(ArchInterrupts::isaIrqDomain(), (uint8_t)ISA_IRQ::PIT)
+        .useHandler(int32_handler_PIT_irq0);
 }

@@ -42,31 +42,44 @@ InterruptDescriptorTable InterruptUtils::idt;
 extern const SWEBDebugInfo* kernel_debug_info;
 extern eastl::atomic_flag assert_print_lock;
 
-// Standard ISA IRQs
-enum ISA_IRQ
-{
-    PIT              = 0, // 0 	Programmable Interrupt Timer Interrupt
-    KEYBOARD         = 1, // 1 	Keyboard Interrupt
-    PIC_8259_CASCADE = 2, // 2 	Cascade (used internally by the two PICs. never raised)
-    COM2             = 3, // 3 	COM2 (if enabled)
-    COM1             = 4, // 4 	COM1 (if enabled)
-    LPT2             = 5, // 5 	LPT2 (if enabled)
-    FLOPPY_DISK      = 6, // 6 	Floppy Disk
-    LPT1             = 7, // 7 	LPT1 / Unreliable "spurious" interrupt (usually)
-    RTC              = 8, // 8 	CMOS real-time clock (if enabled)
-    // 9 	Free for peripherals / legacy SCSI / NIC
-    // 10 	Free for peripherals / SCSI / NIC
-    // 11 	Free for peripherals / SCSI / NIC
-    PS2_MOUSE        = 12, // 12 	PS2 Mouse
-    FPU              = 13, // 13 	FPU / Coprocessor / Inter-processor
-    ATA_PRIMARY      = 14, // 14 	Primary ATA Hard Disk
-    ATA_SECONDARY    = 15, // 15 	Secondary ATA Hard Disk
-};
 
-void irqHandler_0()
+// generic interrupt handler -> dispatches to registered handlers for invoked interrupt number
+void interruptHandler(size_t interrupt_num,
+                      uint64_t error_code,
+                      ArchThreadRegisters* saved_registers)
+{
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt handler %zu, error: %lx\n",
+        SMP::currentCpuId(), interrupt_num, error_code);
+    assert(interrupt_num < 256);
+
+    if (interrupt_num == 0xE)
+    {
+        uintptr_t pagefault_addr = 0;
+        asm volatile("movq %%cr2, %[cr2]\n" : [cr2] "=r"(pagefault_addr));
+        pageFaultHandler(pagefault_addr, error_code, saved_registers->rip);
+    }
+    else if (interrupt_num < 32)
+    {
+        errorHandler(interrupt_num, saved_registers->rip, saved_registers->cs, 0);
+    }
+    else
+    {
+        ArchInterrupts::startOfInterrupt(interrupt_num);
+        ArchInterrupts::handleInterrupt(interrupt_num);
+        ArchInterrupts::endOfInterrupt(interrupt_num);
+    }
+
+    debugAdvanced(A_INTERRUPTS, "Interrupt handler %zu end\n", interrupt_num);
+}
+
+/**
+ * Interrupt handler for Programmable Interval Timer (PIT)
+ * ISA IRQ 0 -> remapped to interrupt vector 32 via PIC 8259/IoApic
+ */
+void int32_handler_PIT_irq0()
 {
     debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
-          SMP::currentCpuId(), Apic::IRQ_VECTOR_OFFSET + 0, 0);
+          SMP::currentCpuId(), InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT, 0);
 
     ArchCommon::callWithStack(
         ArchMulticore::cpuStackTop(),
@@ -78,16 +91,19 @@ void irqHandler_0()
                 ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
 
             // Signal end of interrupt here since we don't return normally
-            ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
+            ArchInterrupts::endOfInterrupt(InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT);
             contextSwitch();
             assert(false);
         });
 }
 
-void irqHandler_127()
+/**
+ * Interrupt handler for APIC timer
+ */
+void int127_handler_APIC_timer()
 {
     debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
-                  SMP::currentCpuId(), 127);
+                  SMP::currentCpuId(), InterruptVector::APIC_TIMER);
 
     ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), []()
         {
@@ -98,18 +114,20 @@ void irqHandler_127()
                  CONSOLECOLOR::BRIGHT_WHITE);
 
             // Signal end of interrupt here since we don't return normally
-            ArchInterrupts::endOfInterrupt(127);
+            ArchInterrupts::endOfInterrupt(InterruptVector::APIC_TIMER);
             contextSwitch();
             assert(false);
         });
 }
 
 
-// yield
-void irqHandler_65()
+/**
+ * Interrupt handler for software interrupt 65 used by yield()
+ */
+void int65_handler_swi_yield()
 {
     debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
-                  SMP::currentCpuId(), 65);
+                  SMP::currentCpuId(), InterruptVector::YIELD);
 
     ArchCommon::callWithStack(
         ArchMulticore::cpuStackTop(),
@@ -121,12 +139,19 @@ void irqHandler_65()
                 ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
 
             // Signal end of interrupt here since we don't return normally
-            ArchInterrupts::endOfInterrupt(65);
+            ArchInterrupts::endOfInterrupt(InterruptVector::YIELD);
             contextSwitch();
             assert(false);
         });
 }
 
+/**
+ * Handler for pagefault exception
+ *
+ * @param address accessed address that caused the pagefault
+ * @param error information about the pagefault provided by the CPU
+ * @param ip CPU instruction pointer at the pagefault
+ */
 void pageFaultHandler(uint64_t address, uint64_t error, uint64_t ip)
 {
   if (address >= USER_BREAK && address < KERNEL_START) { // dirty hack due to qemu invoking the pf handler when accessing non canonical addresses
@@ -145,11 +170,15 @@ void pageFaultHandler(uint64_t address, uint64_t error, uint64_t ip)
     asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
 
-void irqHandler_90()
+/**
+ * Handler for Inter-Processor-Interrupt vector 90.
+ * Used to stop other CPUs when a kernel panic occurs.
+ */
+void int90_handler_halt_cpu()
 {
     while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
 
-    debug(A_INTERRUPTS, "IRQ 90 called, CPU %zu halting\n", SMP::currentCpuId());
+    debug(A_INTERRUPTS, "IRQ %u called, CPU %zu halting\n", InterruptVector::IPI_HALT_CPU, SMP::currentCpuId());
     if (currentThread)
     {
         debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
@@ -164,7 +193,11 @@ void irqHandler_90()
     }
 }
 
-void irqHandler_91()
+/**
+ * APIC error interrupt handler.
+ * Invoked by the APIC when it encounters an error condition.
+ */
+void int91_handler_APIC_error()
 {
     auto error = cpu_lapic->readRegister<Apic::Register::ERROR_STATUS>();
     debugAlways(APIC, "Internal APIC error: %x\n", *(uint32_t*)&error);
@@ -174,14 +207,23 @@ void irqHandler_91()
     cpu_lapic->writeRegister<Apic::Register::ERROR_STATUS>({});
 }
 
-void irqHandler_100()
+/**
+ * Handler for spurious APIC interrupts.
+ * Spurious interrupts can be triggered under special conditions when an interrupt signal
+ * becomes masked at the same time it is raised. Can safely be ignored.
+ */
+void int100_handler_APIC_spurious()
 {
-    debug(A_INTERRUPTS, "IRQ 100 called by CPU %zu, spurious APIC interrupt\n", SMP::currentCpuId());
+    debug(A_INTERRUPTS, "IRQ %u called by CPU %zu, spurious APIC interrupt\n", InterruptVector::APIC_SPURIOUS, SMP::currentCpuId());
 }
 
-void irqHandler_101()
+/**
+ * Handler for Inter-Processor-Interrupt vector 100.
+ * Used to send remote function call requests to other CPUs (e.g. TLB flush requests)
+ */
+void int101_handler_cpu_fcall()
 {
-    debug(A_INTERRUPTS, "IRQ 101 called by CPU %zu\n", SMP::currentCpuId());
+    debug(A_INTERRUPTS, "IRQ %u called by CPU %zu\n", InterruptVector::IPI_REMOTE_FCALL, SMP::currentCpuId());
 
     auto funcdata = SMP::currentCpu().fcall_queue.takeAll();
     while (funcdata != nullptr)
@@ -201,6 +243,11 @@ void irqHandler_101()
     }
 }
 
+/**
+ * Handler for syscall software interrupts from userspace.
+ * Marks thread as being in kernel mode, reenables interrupts, and passes syscall
+ * parameters stored in user registers to the generic syscall handler.
+ */
 void syscallHandler()
 {
   currentThread->switch_to_userspace_ = 0;
@@ -223,7 +270,14 @@ void syscallHandler()
   assert(false);
 }
 
-
+/**
+ * Handler for exception interrupts raised by the CPU (e.g. invalid opcode, divide by zero, general protection fault, ...)
+ *
+ * @param num raised exception number
+ * @param rip instruction pointer when the exception was raised
+ * @param cs selected code segment when the exception was raised
+ * @param spurious whether the exception was a spurious interrupt rather than a CPU exception
+ */
 void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 {
   kprintfd("%zx\n",cs);
@@ -286,32 +340,4 @@ void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 
     assert(false);
   }
-}
-
-void interruptHandler(size_t interrupt_num,
-                      uint64_t error_code,
-                      ArchThreadRegisters* saved_registers)
-{
-    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt handler %zu, error: %lx\n",
-        SMP::currentCpuId(), interrupt_num, error_code);
-    assert(interrupt_num < 256);
-
-    if (interrupt_num == 0xE)
-    {
-        uintptr_t pagefault_addr = 0;
-        asm volatile("movq %%cr2, %[cr2]\n" : [cr2] "=r"(pagefault_addr));
-        pageFaultHandler(pagefault_addr, error_code, saved_registers->rip);
-    }
-    else if (interrupt_num < 32)
-    {
-        errorHandler(interrupt_num, saved_registers->rip, saved_registers->cs, 0);
-    }
-    else
-    {
-        ArchInterrupts::startOfInterrupt(interrupt_num);
-        ArchInterrupts::handleInterrupt(interrupt_num);
-        ArchInterrupts::endOfInterrupt(interrupt_num);
-    }
-
-    debugAdvanced(A_INTERRUPTS, "Interrupt handler %zu end\n", interrupt_num);
 }

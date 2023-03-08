@@ -2,6 +2,7 @@
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
 #include "ArchInterrupts.h"
+#include "InterruptUtils.h"
 #include "ArchCommon.h"
 #include "8259.h"
 #include "CPUID.h"
@@ -75,14 +76,14 @@ void IoApic::initRedirections()
                 auto g_sys_int = getGlobalInterruptBase() + i;
                 IOAPIC_redir_entry r = readRedirEntry(i);
 
-                r.interrupt_vector = Apic::IRQ_VECTOR_OFFSET + g_sys_int;
+                r.interrupt_vector = InterruptVector::REMAP_OFFSET + g_sys_int;
 
                 auto [have_override, entry] = findSourceOverrideForGSysInt(g_sys_int);
 
                 if(have_override)
                 {
                     debug(APIC, "Found override for global system interrupt %2u -> IRQ SRC %u, trigger mode: %u, polarity: %u\n", entry.g_sys_int, entry.irq_source, entry.flags.trigger_mode, entry.flags.polarity);
-                    r.interrupt_vector = Apic::IRQ_VECTOR_OFFSET + entry.irq_source;
+                    r.interrupt_vector = InterruptVector::REMAP_OFFSET + entry.irq_source;
                     r.polarity = (entry.flags.polarity == ACPI_MADT_POLARITY_ACTIVE_HIGH);
                     r.trigger_mode = (entry.flags.trigger_mode == ACPI_MADT_TRIGGER_LEVEL);
                     r.destination = cpu_lapic->apicId();

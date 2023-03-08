@@ -2,6 +2,7 @@
 #include "ports.h"
 #include "debug.h"
 #include "ArchInterrupts.h"
+#include "InterruptUtils.h"
 #include "APIC.h"
 #include "assert.h"
 
@@ -61,7 +62,7 @@ void PIC8259::setupIrqMappings()
         if (i == 2)
             continue;
 
-        irq(i).mapTo(*cpu_root_irq_domain_, Apic::IRQ_VECTOR_OFFSET + i);
+        irq(i).mapTo(*cpu_root_irq_domain_, InterruptVector::REMAP_OFFSET + i);
     }
 }
 

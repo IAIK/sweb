@@ -21,7 +21,7 @@
 #include "KeyboardManager.h"
 #include "InterruptDescriptorTable.h"
 
-cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", NUM_X86_INT_VECTORS);
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", InterruptVector::NUM_VECTORS);
 cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
 
 IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
@@ -32,7 +32,7 @@ IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
 
 IrqDomain& ArchInterrupts::isaIrqDomain()
 {
-    static IrqDomain isa_irq_domain("ISA IRQ", NUM_ISA_INTERRUPTS);
+    static IrqDomain isa_irq_domain("ISA IRQ", InterruptVector::NUM_ISA_INTERRUPTS);
     return isa_irq_domain;
 }
 
@@ -58,12 +58,12 @@ static void initInterruptDescriptorTable()
 void initCpuLocalInterruptHandlers()
 {
   debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
-  ArchInterrupts::currentCpuRootIrqDomain().irq(YIELD_INTERRUPT).useHandler(irqHandler_65);
-  ArchInterrupts::currentCpuRootIrqDomain().irq(90).useHandler(irqHandler_90);
-  ArchInterrupts::currentCpuRootIrqDomain().irq(91).useHandler(irqHandler_91);
-  ArchInterrupts::currentCpuRootIrqDomain().irq(100).useHandler(irqHandler_100);
-  ArchInterrupts::currentCpuRootIrqDomain().irq(101).useHandler(irqHandler_101);
-  ArchInterrupts::currentCpuRootIrqDomain().irq(SYSCALL_INTERRUPT).useHandler(syscallHandler);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::YIELD).useHandler(int65_handler_swi_yield);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::IPI_HALT_CPU).useHandler(int90_handler_halt_cpu);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::APIC_ERROR).useHandler(int91_handler_APIC_error);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::APIC_SPURIOUS).useHandler(int100_handler_APIC_spurious);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::IPI_REMOTE_FCALL).useHandler(int101_handler_cpu_fcall);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::SYSCALL).useHandler(syscallHandler);
 }
 
 void initInterruptControllers()
@@ -191,8 +191,8 @@ void ArchInterrupts::endOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle
 
 void ArchInterrupts::endOfInterrupt(uint16 irqnum)
 {
-    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %u\n", SMP::currentCpuId(),
-                  irqnum);
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %u\n",
+        SMP::currentCpuId(), irqnum);
 
     endOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
 }
@@ -346,7 +346,8 @@ extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
     // saved registers of the thread
     auto saved_regs = arch_saveThreadRegisters(&(regs->registers), 0);
 
-    debugAdvanced(A_INTERRUPTS, "Generic interrupt entry %zu\n", regs->registers.interrupt_num);
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Interrupt entry %zu\n",
+                  SMP::currentCpuId(), regs->registers.interrupt_num);
 
     interruptHandler(regs->registers.interrupt_num, regs->registers.error_code, saved_regs);
 }
@@ -361,7 +362,7 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
 
   if(A_INTERRUPTS & OUTPUT_ADVANCED)
   {
-      debug(A_INTERRUPTS, "CPU %zu, context switch to thread %s (%p) at rip %p\n", SMP::currentCpuId(), target_thread->getName(), target_thread, (void*)target_registers->rip);
+      debug(A_INTERRUPTS, "[Cpu %zu] Context switch to thread %s (%p) at rip %p\n", SMP::currentCpuId(), target_thread->getName(), target_thread, (void*)target_registers->rip);
   }
 
 

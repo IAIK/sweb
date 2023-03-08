@@ -4,6 +4,7 @@
 #include "SMP.h"
 #include "ArchCpuLocalStorage.h"
 #include "ArchInterrupts.h"
+#include "InterruptUtils.h"
 #include "ArchMulticore.h"
 #include <cstdint>
 #include "debug.h"
@@ -67,7 +68,7 @@ void X2Apic::init()
     auto logical_dest_id = readRegister<Register::LOGICAL_DESTINATION>();
     debug(APIC, "Local x2APIC, id: %x, logical dest: %x\n", apicId(), logical_dest_id);
 
-    setErrorInterruptVector(ERROR_INTERRUPT_VECTOR);
+    setErrorInterruptVector(InterruptVector::APIC_ERROR);
     setSpuriousInterruptNumber(100);
 
     enable(true);

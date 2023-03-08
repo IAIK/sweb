@@ -29,7 +29,7 @@ eastl::vector<MADTProcLocalAPIC> Apic::local_apic_list_{};
 extern volatile size_t outstanding_EOIs;
 
 Apic::Apic(const eastl::string& name) :
-    IrqDomain(name, 256, this),
+    IrqDomain(name, InterruptVector::NUM_VECTORS, this),
     Device(name),
     timer_interrupt_controller(*this)
 {
@@ -83,7 +83,7 @@ void Apic::initTimer()
     writeRegister<Register::TIMER_DIVIDE_CONFIG>(div);
 
     auto timer_reg = readRegister<Register::LVT_TIMER>();
-    timer_reg.setVector(APIC_TIMER_VECTOR);
+    timer_reg.setVector(InterruptVector::APIC_TIMER);
     timer_reg.setMode(TimerMode::PERIODIC);
     timer_reg.setMask(true);
     writeRegister<Register::LVT_TIMER>(timer_reg);
@@ -312,8 +312,8 @@ void XApic::init()
     auto logical_dest_id = readRegister<Register::LOGICAL_DESTINATION>();
     debug(APIC, "Local xAPIC, id: %x, logical dest: %x\n", apicId(), logical_dest_id);
 
-    setErrorInterruptVector(ERROR_INTERRUPT_VECTOR);
-    setSpuriousInterruptNumber(100);
+    setErrorInterruptVector(InterruptVector::APIC_ERROR);
+    setSpuriousInterruptNumber(InterruptVector::APIC_SPURIOUS);
 
     enable(true);
 
@@ -430,7 +430,7 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
 
     // 10ms delay
 
-    InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt.entries[0x20];
+    InterruptGateDesc temp_irq0_descriptor = InterruptUtils::idt.entries[InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT];
     bool temp_using_apic_timer = usingAPICTimer();
     bool apic_timer_mask = timer_interrupt_controller.isMasked();
     ArchInterrupts::disableIRQ(PIT::instance().irq());
@@ -439,7 +439,7 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
     {
         if (!apic_timer_mask)
         {
-            SMP::currentCpu().rootIrqDomain().activateIrq(APIC_TIMER_VECTOR, false);
+            SMP::currentCpu().rootIrqDomain().activateIrq(InterruptVector::APIC_TIMER, false);
             assert(timer_interrupt_controller.isMasked());
         }
         setUsingAPICTimer(false);
@@ -448,10 +448,10 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
     auto old_pit_mode = PIT::setOperatingMode(PIT::OperatingMode::ONESHOT);
     auto old_pit_freq = PIT::frequencyDivisor();
 
-    InterruptUtils::idt.entries[IRQ_VECTOR_OFFSET + 0].setOffset(&PIT_delay_IRQ);
+    InterruptUtils::idt.entries[InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT].setOffset(&PIT_delay_IRQ);
 
     ArchInterrupts::enableIRQ(PIT::instance().irq());
-    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
+    ArchInterrupts::startOfInterrupt(InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT);
     ArchInterrupts::enableInterrupts();
 
     PIT::setOperatingMode(PIT::OperatingMode::ONESHOT);
@@ -462,7 +462,7 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
 
     ArchInterrupts::disableInterrupts();
     ArchInterrupts::disableIRQ(PIT::instance().irq());
-    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
+    ArchInterrupts::endOfInterrupt(InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT);
 
     delay = 0;
 
@@ -471,7 +471,7 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
     // 200us delay
 
     ArchInterrupts::enableIRQ(PIT::instance().irq());
-    ArchInterrupts::startOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
+    ArchInterrupts::startOfInterrupt(InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT);
     ArchInterrupts::enableInterrupts();
 
     PIT::setFrequencyDivisor(1193182 / 100);
@@ -480,7 +480,7 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
 
     ArchInterrupts::disableInterrupts();
     ArchInterrupts::disableIRQ(PIT::instance().irq());
-    ArchInterrupts::endOfInterrupt(Apic::IRQ_VECTOR_OFFSET + 0);
+    ArchInterrupts::endOfInterrupt(InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT);
 
     delay = 0;
 
@@ -490,13 +490,13 @@ void Apic::startAP(uint8_t apic_id, size_t entry_addr)
     if (temp_using_apic_timer)
     {
         setUsingAPICTimer(temp_using_apic_timer);
-        SMP::currentCpu().rootIrqDomain().activateIrq(APIC_TIMER_VECTOR, !apic_timer_mask);
+        SMP::currentCpu().rootIrqDomain().activateIrq(InterruptVector::APIC_TIMER, !apic_timer_mask);
     }
 
     PIT::setOperatingMode(old_pit_mode);
     PIT::setFrequencyDivisor(old_pit_freq);
 
-    InterruptUtils::idt.entries[IRQ_VECTOR_OFFSET + 0] = temp_irq0_descriptor;
+    InterruptUtils::idt.entries[InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT] = temp_irq0_descriptor;
 
     debugAdvanced(A_MULTICORE, "Finished sending IPI to AP local APIC\n");
 }
@@ -629,7 +629,7 @@ bool Apic::ApicTimer::ack(irqnum_t irq)
     debugAdvanced(APIC, "[Cpu %u] %s ack IRQ %zu\n", apic_->apicId(), name().c_str(), irq);
     assert(irq == 0);
     --pending_EOIs;
-    apic_->sendEOI(Apic::APIC_TIMER_VECTOR);
+    apic_->sendEOI(InterruptVector::APIC_TIMER);
     return true;
 }
 
@@ -719,8 +719,8 @@ void ApicTimerDriver::cpuLocalInit()
         cpu_lapic->initTimer();
 
         timer.irq()
-             .mapTo(*cpu_lapic, Apic::APIC_TIMER_VECTOR)
-             .useHandler(irqHandler_127);
+             .mapTo(*cpu_lapic, InterruptVector::APIC_TIMER)
+             .useHandler(int127_handler_APIC_timer);
 
         bindDevice(timer);
     }
