@@ -13,6 +13,8 @@
 
 InitThread* InitThread::instance_ = nullptr;
 
+void printInterruptMappings();
+
 InitThread::InitThread(FileSystemInfo* root_fs_info, const char* progs[]) :
     Thread(root_fs_info, "InitThread", Thread::KERNEL_THREAD),
     progs_(progs)
@@ -48,6 +50,9 @@ void InitThread::Run()
 
     debug(INITTHREAD, "Block Device creation\n");
     ArchCommon::initBlockDeviceDrivers();
+
+    debug(INITTHREAD, "Interrupt mappings:\n");
+    printInterruptMappings();
 
     debug(INITTHREAD, "Registered devices:\n");
     deviceTreeRoot().printSubDevices();
@@ -127,4 +132,13 @@ void InitThread::Run()
     Scheduler::instance()->printThreadList();
 
     kill();
+}
+
+void printInterruptMappings()
+{
+    for (ArchCpu* cpu : SMP::cpuList())
+    {
+      debug(MAIN, "CPU %zu IRQ mappings:\n", cpu->id());
+      cpu->rootIrqDomain().printAllReverseMappings();
+    }
 }

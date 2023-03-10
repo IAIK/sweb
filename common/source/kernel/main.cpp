@@ -46,7 +46,6 @@ FileSystemInfo* default_working_dir;
 extern "C" void removeBootTimeIdentMapping();
 
 void printRunningCpus();
-void printInterruptMappings();
 
 extern "C" [[noreturn]] void startup()
 {
@@ -152,7 +151,6 @@ extern "C" [[noreturn]] void startup()
 
   Scheduler::instance()->printThreadList();
   printRunningCpus();
-  printInterruptMappings();
 
   // Ensure we already have a currentThread when interrupts are enabled
   debug(MAIN, "Starting threads and enabling interrupts...\n");
@@ -178,14 +176,4 @@ void printRunningCpus()
   }
 }
 
-void printInterruptMappings()
-{
-  if (A_INTERRUPTS & OUTPUT_ENABLED)
-  {
-    for (ArchCpu* cpu : SMP::cpuList())
-    {
-      debug(MAIN, "CPU %zu IRQ mappings:\n", cpu->id());
-      cpu->rootIrqDomain().printAllReverseMappings();
-    }
-  }
-}
+
