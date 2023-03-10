@@ -81,12 +81,12 @@ extern bool debug_print_to_fb;
 //group Console
 const size_t KPRINTF            = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t CONSOLE            = Ansi_Yellow  | OUTPUT_ENABLED;
-const size_t TERMINAL           = Ansi_Yellow  | OUTPUT_ENABLED;
+const size_t TERMINAL           = Ansi_Yellow;
 
 //group kernel
-const size_t LOCK               = Ansi_Yellow;
+const size_t LOCK               = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t LOADER             = Ansi_White   | OUTPUT_ENABLED;
-const size_t SCHEDULER          = Ansi_Yellow;
+const size_t SCHEDULER          = Ansi_Yellow  | OUTPUT_ENABLED;
 const size_t SCHEDULER_LOCK     = Ansi_Red;
 const size_t SYSCALL            = Ansi_Blue    | OUTPUT_ENABLED;
 const size_t MAIN               = Ansi_Red     | OUTPUT_ENABLED;

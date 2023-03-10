@@ -113,12 +113,12 @@ void InitThread::Run()
     size_t free_pages_post = PageManager::instance().getNumFreePages();
     if ((free_pages_pre != free_pages_post) && !DYNAMIC_KMM)
     {
-            PageManager::instance().printUsageInfo();
-            debugAlways(PM, "WARNING: You might be leaking physical memory pages somewhere\n");
-            debugAlways(PM, "%zu/%zu free physical pages after unmounting detected, difference: %zd\n",
-                        free_pages_post,
-                        free_pages_pre,
-                        free_pages_pre - free_pages_post);
+        PageManager::instance().printUsageInfo();
+        debugAlways(PM, "WARNING: You might be leaking physical memory pages somewhere\n");
+        debugAlways(PM, "%zu/%zu free physical pages after unmounting detected, difference: %zd\n",
+                    free_pages_post,
+                    free_pages_pre,
+                    free_pages_pre - free_pages_post);
     }
 
     vfs.rootUmount();

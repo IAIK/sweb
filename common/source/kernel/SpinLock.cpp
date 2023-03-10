@@ -57,11 +57,11 @@ void SpinLock::acquire(pointer called_by, bool yield)
 
   if(system_state == RUNNING)
   {
-    debug(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", SMP::currentCpuId(), getName(), this, called_by);
+    debugAdvanced(LOCK, "CPU %zx acquiring spinlock %s (%p), called by: %zx\n", SMP::currentCpuId(), getName(), this, called_by);
   }
   else
   {
-    debug(LOCK, "acquiring spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
+    debugAdvanced(LOCK, "acquiring spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
   }
 
 //  debug(LOCK, "Spinlock::acquire: Acquire spinlock %s (%p) with thread %s (%p)\n",
@@ -73,7 +73,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
 //  }
   if(ArchThreads::testSetLock(lock_, (size_t)1))
   {
-    debug(LOCK, "didn't get spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
+    debugAdvanced(LOCK, "didn't get spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
     // We did not directly managed to acquire the spinlock, need to check for deadlocks and
     // to push the current thread to the waiters list.
     doChecksBeforeWaiting();
@@ -106,7 +106,7 @@ void SpinLock::acquire(pointer called_by, bool yield)
       currentThread->lock_waiting_on_ = nullptr;
     }
   }
-  debug(LOCK, "got spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
+  debugAdvanced(LOCK, "got spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
   // The current thread is now holding the spinlock
   last_accessed_at_ = called_by;
   held_by_ = currentThread;
@@ -131,11 +131,11 @@ void SpinLock::release(pointer called_by)
 
   if(system_state == RUNNING)
   {
-          debug(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", SMP::currentCpuId(), getName(), this, called_by);
+    debugAdvanced(LOCK, "CPU %zx releasing spinlock %s (%p), called by: %zx\n", SMP::currentCpuId(), getName(), this, called_by);
   }
   else
   {
-          debug(LOCK, "releasing spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
+    debugAdvanced(LOCK, "releasing spinlock %s (%p), called by: %zx\n", getName(), this, called_by);
   }
 
 //  debug(LOCK, "Spinlock::release: Release spinlock %s (%p) with thread %s (%p)\n",
