@@ -33,6 +33,9 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
   outportbp (port + 6, drive);  // Get first drive
   outportbp (port + 7, 0xEC);   // Get drive info data
   TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return;);
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return;);
+
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x1) != 0,TIMEOUT_WARNING(); return;);
 
   uint16 dd[256];
 
@@ -49,14 +52,14 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
   numsec = CYLS * HPC * SPT;
 
   bool interrupt_context = ArchInterrupts::disableInterrupts();
-  ArchInterrupts::enableInterrupts();
 
   enableIRQ( irqnum );
   if( irqnum > 8 )
   {
     enableIRQ( 2 );   // cascade
   }
-
+  ArchInterrupts::enableInterrupts();
+  
   testIRQ( );
   if( !interrupt_context )
     ArchInterrupts::disableInterrupts();
@@ -73,11 +76,15 @@ ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_(
 void ATADriver::testIRQ( )
 {
   mode = BD_PIO;
-
+  ArchInterrupts::enableInterrupts();
   BDManager::getInstance()->probeIRQ = true;
+  readSector( 0, 1, 0 );
+  readSector( 0, 1, 0 );
+  readSector( 0, 1, 0 );
   readSector( 0, 1, 0 );
 
   TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_PIO_NO_IRQ;);
+  ArchInterrupts::disableInterrupts();
 }
 
 int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
@@ -93,7 +100,7 @@ int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *
 int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
 {
   /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
 
   //LBA: linear base address of the block
   //CYL: value of the cylinder CHS coordinate
@@ -122,7 +129,7 @@ int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
 
   /* Wait for drive to set DRDY */
   TIMEOUT_CHECK((!inportbp(port + 7)) & 0x40,TIMEOUT_WARNING(); return -1;);
-
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
   return 0;
 }
 
@@ -143,6 +150,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
     jiffies = 0;
     while (inportbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT)
       ArchInterrupts::yieldIfIFSet();
+    TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
     if (jiffies >= IO_TIMEOUT)
     {
       if (i == 3)
@@ -163,7 +171,7 @@ int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buf
         word_buff [counter] = inportw ( port );
   }
   /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
 
   //debug(ATA_DRIVER, "readSector:Read successfull !!\n");
   return 0;  
@@ -181,7 +189,7 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
   outportbp( port + 7, 0x30 );           // command
 
   TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return -1;);
-
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
 
   uint32 count2 = (256*num_sectors);
   if( mode != BD_PIO_NO_IRQ )
@@ -192,13 +200,13 @@ int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * b
       outportw ( port, word_buff [counter] );
  
   /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
 
   /* Write flush code to the command register */
   outportbp (port + 7, 0xE7);
     
   /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
 
   return 0;
 }
@@ -261,6 +269,7 @@ uint32 ATADriver::addRequest( BDRequest *br )
     while (br->getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
     if (jiffies >= IO_TIMEOUT*10)
       TIMEOUT_WARNING();
+    TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
     if (br->getStatus() == BDRequest::BD_QUEUED)
     {
       ArchInterrupts::disableInterrupts();
@@ -282,7 +291,7 @@ bool ATADriver::waitForController( bool resetIfFailed = true )
   uint32 jiffies = 0;
   while( inportbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
     ArchInterrupts::yieldIfIFSet();
-
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
   if(jiffies >= IO_TIMEOUT )
   {
     debug(ATA_DRIVER, "waitForController: controler still not ready\n");
@@ -292,8 +301,10 @@ bool ATADriver::waitForController( bool resetIfFailed = true )
       outportbp( port + 0x206, 0x04 );
       outportbp( port + 0x206, 0x00 ); // RESET
     }
+    TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
     return false;
   }
+  TIMEOUT_CHECK((inportbp(port + 7) & 0x80) != 0,TIMEOUT_WARNING(); return -1;);
   return true;
 }
 

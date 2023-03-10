@@ -64,7 +64,7 @@ class BDManager
     /**
      * gets false when the irq is serviced
      */
-    bool probeIRQ;
+    volatile bool probeIRQ;
 
     ustl::list<BDVirtualDevice *> device_list_;
 
