@@ -2,6 +2,8 @@
 #include "stdint.h"
 #include "assert.h"
 
+extern "C" bool currentThreadIsStackCanaryOK();
+
 extern "C" char *strcpy(char *dest, const char* src)
 {
     assert(!"don't use strcpy");
@@ -33,6 +35,8 @@ extern "C" char *strncpy(char *dest, const char* src, size_t size)
         src++;
         dest++;
     }
+
+    assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
     return start;
 }
@@ -290,6 +294,9 @@ extern "C" void *memset(void *block, char c, size_t size)
             *d8++ = c;
         }
     }
+
+    assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+
     return block;
 }
 
@@ -309,6 +316,9 @@ extern "C" void *memcpy(void *dest, const void *src, size_t length)
     {
         *d8++ = *s8++;
     }
+
+    assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+
     return dest;
 }
 
@@ -341,6 +351,8 @@ extern "C" void *memmove(void *dest, const void *src, size_t length)
             *dest8-- = *src8--;
         }
     }
+
+    assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
     return dest;
 }

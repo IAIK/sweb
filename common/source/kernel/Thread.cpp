@@ -1,5 +1,5 @@
 #include "Thread.h"
-#include "ArchCommon.h"
+
 #include "kprintf.h"
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
@@ -20,20 +20,20 @@ extern "C" [[noreturn]] void threadStartHack()
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
   currentThread->kill();
-  debug(THREAD, "ThreadStartHack: Panic, thread couldn't be killed\n");
+  debugAlways(THREAD, "ThreadStartHack: Panic, thread couldn't be killed\n");
   assert(false);
 }
 
 Thread::Thread(FileSystemInfo* working_dir, eastl::string name, Thread::TYPE type) :
     kernel_registers_(ArchThreads::createKernelRegisters(
-        (type == Thread::USER_THREAD ? nullptr : (void*)threadStartHack),
+        (type == Thread::USER_THREAD ? nullptr : (void*)&threadStartHack),
         getKernelStackStartPointer())),
     switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0),
     console_color(CONSOLECOLOR::BRIGHT_BLUE),
     state_(Running),
     tid_(0),
     working_dir_(working_dir),
-    name_(name)
+    name_(eastl::move(name))
 {
     debug(THREAD,
           "Thread ctor, this is %p, name: %s, kernel stack: [%p, %p), working_dir ptr: "
@@ -58,7 +58,6 @@ Thread::~Thread()
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
 
-// If the Thread we want to kill is the currentThread(), we better not return
 // DO NOT use new / delete in this Method, as it is sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
@@ -87,17 +86,31 @@ void Thread::initKernelStackCanary()
     kernel_stack_[0] = STACK_CANARY;
 }
 
+bool Thread::currentThreadIsStackCanaryOK()
+{
+    if (!CpuLocalStorage::ClsInitialized())
+        return true;
+
+    return !currentThread || currentThread->isStackCanaryOK();
+}
+
+// Hack to allow the function to be called from the klibc
+// klibc is standalone and cannot include other SWEB code,
+// but function can be declared with external linkage.
+// We cannot use a class member function for that purpose
+extern "C" bool currentThreadIsStackCanaryOK()
+{
+    return Thread::currentThreadIsStackCanaryOK();
+}
+
 bool Thread::isStackCanaryOK() const
 {
-  return ((kernel_stack_[0] == STACK_CANARY) && (kernel_stack_[2047] == STACK_CANARY));
+  return kernel_stack_[0] == STACK_CANARY && kernel_stack_[2047] == STACK_CANARY;
 }
 
 Terminal* Thread::getTerminal() const
 {
-  if (my_terminal_)
-    return my_terminal_;
-  else
-    return (main_console->getActiveTerminal());
+  return my_terminal_ ? my_terminal_ : main_console->getActiveTerminal();
 }
 
 void Thread::setTerminal(Terminal *my_term)

@@ -146,6 +146,11 @@ void ArchThreads::setInterruptEnableFlag(ArchThreadRegisters& info, bool interru
         info.rflags &= ~0x200;
 }
 
+bool ArchThreads::getInterruptEnableFlag(ArchThreadRegisters& info)
+{
+    return info.rflags & 0x200;
+}
+
 void ArchThreads::yield()
 {
   __asm__ __volatile__("int $65");

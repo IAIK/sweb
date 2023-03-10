@@ -4,7 +4,7 @@
 #include "ArchThreads.h"
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
-#include "panic.h"
+#include "assert.h"
 #include "Scheduler.h"
 #include "Thread.h"
 #include "assert.h"

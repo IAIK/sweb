@@ -4,16 +4,18 @@
 #include "MinixFSInode.h"
 #include "MinixFSFile.h"
 #include "Dentry.h"
+#include "EASTL/unique_ptr.h"
+#include "kstring.h"
 #include "assert.h"
-#include "kprintf.h"
+#include "debug.h"
+
 #ifdef EXE2MINIXFS
 #include <unistd.h>
 #else
-#include "kstring.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #endif
-#include "EASTL/unique_ptr.h"
+
 
 #define ROOT_NAME "/"
 
@@ -71,7 +73,7 @@ void MinixFSSuperblock::readHeader()
   }
   else
   {
-          kprintfd("ERROR: Unknown magic value for minixfs superblock, V1: %x, V3: %x\n", v1_sb->s_magic, v3_sb->s_magic);
+          debugAlways(M_SB, "ERROR: Unknown magic value for minixfs superblock, V1: %x, V3: %x\n", v1_sb->s_magic, v3_sb->s_magic);
           assert(false && "Unknown minixfs version (or not minixfs at all?)");
   }
 
@@ -357,7 +359,8 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
   BDVirtualDevice* bdvd = BDManager::instance().getDeviceByNumber(s_dev_);
   size_t block_size = bdvd->getBlockSize();
   size_t read_size = num_blocks * block_size;
-  assert(bdvd->readData(block * block_size, read_size, buffer) == (ssize_t)read_size && "Failed to read all requested blocks from device. (Potentially corrupted disk image)");
+  assert((bdvd->readData(block * block_size, read_size, buffer) == (ssize_t)read_size) &&
+    "Failed to read all requested blocks from device. (Potentially corrupted disk image)");
 #endif
 }
 
@@ -376,7 +379,8 @@ void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffe
   BDVirtualDevice* bdvd = BDManager::instance().getDeviceByNumber(s_dev_);
   size_t block_size = bdvd->getBlockSize();
   size_t write_size = num_blocks * block_size;
-  assert(bdvd->writeData(block * block_size, write_size, buffer) == (ssize_t)write_size);
+  assert((bdvd->writeData(block * block_size, write_size, buffer) == (ssize_t)write_size) &&
+    "Failed to write all requested blocks to device");
 #endif
 }
 

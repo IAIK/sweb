@@ -1,15 +1,12 @@
 #include <ProcessRegistry.h>
 #include "InitThread.h"
 #include <types.h>
-#include "ArchSerialInfo.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
 #include "PageManager.h"
-#include "KernelMemoryManager.h"
 #include "ArchInterrupts.h"
 #include "ArchThreads.h"
 #include "kprintf.h"
-#include "Thread.h"
 #include "Scheduler.h"
 #include "ArchCommon.h"
 #include "ArchThreads.h"
@@ -31,7 +28,6 @@
 #include "VfsSyscall.h"
 #include "FileDescriptor.h"
 #include "TextConsole.h"
-#include "FrameBufferConsole.h"
 #include "Terminal.h"
 #include "user_progs.h"
 #include "ArchMulticore.h"
@@ -43,6 +39,7 @@
 #include "libc++.h"
 
 extern void* kernel_end_address;
+
 uint8 boot_stack[0x4000] __attribute__((aligned(0x4000)));
 FileSystemInfo* default_working_dir;
 

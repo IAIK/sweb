@@ -1,9 +1,7 @@
 #pragma once
 
-#include "Scheduler.h"
-#include "Thread.h"
-#include "kprintf.h"
 #include <types.h>
+#include <cstddef>
 
 namespace Syscall
 {

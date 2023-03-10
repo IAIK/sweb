@@ -106,6 +106,7 @@ public:
   static void* getInstructionPointer(ArchThreadRegisters& info);
 
   static void setInterruptEnableFlag(ArchThreadRegisters& info, bool interrupts_enabled);
+  static bool getInterruptEnableFlag(ArchThreadRegisters& info);
 
 /**
  * on x86: invokes int65, whose handler facilitates a task switch

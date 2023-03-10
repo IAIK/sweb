@@ -5,6 +5,7 @@
 #include "kstring.h"
 #include "debug.h"
 #include "kprintf.h"
+#include "Thread.h"
 
 BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size,
                                  const char *name, bool writable) :
@@ -67,6 +68,8 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
       ArchInterrupts::yieldIfIFSet();
   }
 
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+
   if (bd.getStatus() != BDRequest::BD_RESULT::BD_DONE)
   {
     return -1;
@@ -102,6 +105,8 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, const char *buffer)
     if (!interrupt_context)
       ArchInterrupts::disableInterrupts();
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   if (bd.getStatus() != BDRequest::BD_RESULT::BD_DONE)
     return -1;

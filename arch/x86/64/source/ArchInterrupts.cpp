@@ -399,34 +399,42 @@ extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegi
   cpu_tss.setTaskStack(info.rsp0);
   size_t new_fsbase = target_thread->switch_to_userspace_ ? target_registers->fsbase : (uint64)getSavedFSBase();
   setFSBase(new_fsbase); // Don't use CLS after this line
-  asm("frstor %[fpu]\n" : : [fpu]"m"(info.fpu));
-  asm("mov %[cr3], %%cr3\n" : : [cr3]"r"(info.cr3));
-  asm("push %[ss]" : : [ss]"m"(info.ss));
-  asm("push %[rsp]" : : [rsp]"m"(info.rsp));
-  asm("push %[rflags]\n" : : [rflags]"m"(info.rflags));
-  asm("push %[cs]\n" : : [cs]"m"(info.cs));
-  asm("push %[rip]\n" : : [rip]"m"(info.rip));
-  asm("mov %[rsi], %%rsi\n" : : [rsi]"m"(info.rsi));
-  asm("mov %[rdi], %%rdi\n" : : [rdi]"m"(info.rdi));
-  asm("mov %[es], %%es\n" : : [es]"m"(info.es));
-  asm("mov %[ds], %%ds\n" : : [ds]"m"(info.ds));
-  asm("mov %[r8], %%r8\n" : : [r8]"m"(info.r8));
-  asm("mov %[r9], %%r9\n" : : [r9]"m"(info.r9));
-  asm("mov %[r10], %%r10\n" : : [r10]"m"(info.r10));
-  asm("mov %[r11], %%r11\n" : : [r11]"m"(info.r11));
-  asm("mov %[r12], %%r12\n" : : [r12]"m"(info.r12));
-  asm("mov %[r13], %%r13\n" : : [r13]"m"(info.r13));
-  asm("mov %[r14], %%r14\n" : : [r14]"m"(info.r14));
-  asm("mov %[r15], %%r15\n" : : [r15]"m"(info.r15));
-  asm("mov %[rdx], %%rdx\n" : : [rdx]"m"(info.rdx));
-  asm("mov %[rcx], %%rcx\n" : : [rcx]"m"(info.rcx));
-  asm("mov %[rbx], %%rbx\n" : : [rbx]"m"(info.rbx));
-  asm("mov %[rax], %%rax\n" : : [rax]"m"(info.rax));
-  asm("mov %[rbp], %%rbp\n" : : [rbp]"m"(info.rbp));
-  // Check %cs in iret frame on stack whether we're returning to userspace
-  asm("testl $3, 8(%rsp)\n"
+  asm volatile(
+      "frstor %[fpu]\n"
+      "mov %[cr3], %%cr3\n"
+      "push %[ss]\n"
+      "push %[rsp]\n"
+      "push %[rflags]\n"
+      "push %[cs]\n"
+      "push %[rip]\n"
+      "mov %[rsi], %%rsi\n"
+      "mov %[rdi], %%rdi\n"
+      "mov %[es], %%es\n"
+      "mov %[ds], %%ds\n"
+      "mov %[r8], %%r8\n"
+      "mov %[r9], %%r9\n"
+      "mov %[r10], %%r10\n"
+      "mov %[r11], %%r11\n"
+      "mov %[r12], %%r12\n"
+      "mov %[r13], %%r13\n"
+      "mov %[r14], %%r14\n"
+      "mov %[r15], %%r15\n"
+      "mov %[rdx], %%rdx\n"
+      "mov %[rcx], %%rcx\n"
+      "mov %[rbx], %%rbx\n"
+      "mov %[rax], %%rax\n"
+      "mov %[rbp], %%rbp\n"
+      // Check %cs in iret frame on stack whether we're returning to userspace
+      "testl $3, 8(%%rsp)\n"
       "jz 1f\n"
       "swapgs\n"
-      "1: iretq\n");
-  assert(false);
+      "1: iretq\n"
+      :
+      : [fpu]"m"(info.fpu), [cr3]"r"(info.cr3), [ss]"m"(info.ss), [rsp]"m"(info.rsp), [rflags]"m"(info.rflags),
+        [cs]"m"(info.cs), [rip]"m"(info.rip), [rsi]"m"(info.rsi), [rdi]"m"(info.rdi), [es]"m"(info.es), [ds]"m"(info.ds),
+        [r8]"m"(info.r8), [r9]"m"(info.r9), [r10]"m"(info.r10), [r11]"m"(info.r11), [r12]"m"(info.r12), [r13]"m"(info.r13),
+        [r14]"m"(info.r14), [r15]"m"(info.r15), [rdx]"m"(info.rdx), [rcx]"m"(info.rcx), [rbx]"m"(info.rbx),
+        [rax]"m"(info.rax), [rbp]"m"(info.rbp)
+      : "memory");
+  assert(false && "This line should be unreachable");
 }

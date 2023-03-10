@@ -47,16 +47,13 @@ Scheduler::Scheduler()
 
 void Scheduler::schedule()
 {
-  if(SCHEDULER & OUTPUT_ADVANCED)
-  {
-    debug(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", SMP::currentCpuId(), currentThread, currentThread ? currentThread->getName() : "(nil)");
-  }
+  debugAdvanced(SCHEDULER, "CPU %zu, scheduling, currentThread: %p = %s\n", SMP::currentCpuId(), currentThread, currentThread ? currentThread->getName() : "(nil)");
 
   assert(system_state == RUNNING);
 
   if (preempt_protect_count_.load() > 0)
   {
-      kprintfd("Re-Schedule blocked (preemption disabled)\n");
+      debugAlways(SCHEDULER, "Re-Schedule blocked (preemption disabled)\n");
       return;
   }
 
@@ -125,12 +122,11 @@ void Scheduler::schedule()
 
   currentThread = next_thread;
 
-  if (SCHEDULER & OUTPUT_ADVANCED)
-      debug(SCHEDULER, "schedule CPU %zu, currentThread %-21s (%p) -> %-21s (%p) ran for {%" PRId64 "}\n",
-            SMP::currentCpuId(),
-            (previous_thread ? previous_thread->getName() : "(nil)"), previous_thread,
-            (currentThread ? currentThread->getName() : "(nil)"), currentThread,
-            thread_ran_for);
+  debugAdvanced(SCHEDULER, "schedule CPU %zu, currentThread %-21s (%p) -> %-21s (%p) ran for {%" PRId64 "}\n",
+                SMP::currentCpuId(),
+                (previous_thread ? previous_thread->getName() : "(nil)"), previous_thread,
+                (currentThread ? currentThread->getName() : "(nil)"), currentThread,
+                thread_ran_for);
 
   assert(currentThread);
   assert(currentThread->schedulable());
@@ -166,11 +162,11 @@ uint64 Scheduler::descheduleThread(Thread* t, uint64 deschedule_time)
     // (requires an actual time base and not just cpu timestamps)
     if(t->yielded)
     {
-        Thread* max_vruntime_thread = maxVruntimeThread();
+        const Thread* max_vruntime_thread = maxVruntimeThread();
         uint64 new_vruntime = max_vruntime_thread->vruntime + 1;
-        if (SCHEDULER & OUTPUT_ADVANCED)
-            debug(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n",
-                  currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
+
+        debugAdvanced(SCHEDULER, "%s yielded while running, increasing vruntime %" PRIu64 " -> %" PRIu64 " (after %s)\n",
+            currentThread->getName(), currentThread->vruntime, new_vruntime, max_vruntime_thread->getName());
 
         setThreadVruntime(t, eastl::max(t->vruntime, new_vruntime));
 
@@ -194,7 +190,11 @@ void Scheduler::addNewThread(Thread *thread)
   scheduler_lock_.acquire();
   KernelMemoryManager::instance()->getKMMLock().release();
 
-  auto min_thread = minVruntimeThread();
+  // Set virtual runtime of new thread to that of the currently lowest runtime thread.
+  // Absolute values don't matter, only relative differences to other threads.
+  // (Don't use 0 as initial virtual runtime. That would mean the new thread would be continuously
+  // scheduled and block other threads until it reaches the same running time as the currently lowest runtime thread (~ system uptime))
+  const Thread* min_thread = minVruntimeThread();
   if(min_thread)
   {
       thread->vruntime = min_thread->vruntime;
@@ -228,19 +228,18 @@ void Scheduler::yield()
 
   if (preempt_protect_count_.load() > 0)
   {
-      kprintfd("Yield blocked (preemption disabled)\n");
+      debugAlways(SCHEDULER, "Yield blocked (preemption disabled)\n");
       return;
   }
 
   if (!ArchInterrupts::testIFSet())
   {
-    kprintfd("Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %p %s)\n",
+    debugAlways(SCHEDULER, "Scheduler::yield: WARNING Interrupts disabled, do you really want to yield ? (currentThread %p %s)\n",
              currentThread, currentThread->name_.c_str());
     currentThread->printBacktrace();
   }
 
-  if(SCHEDULER & OUTPUT_ADVANCED)
-      debug(SCHEDULER, "%s yielded\n", currentThread->getName());
+  debugAdvanced(SCHEDULER, "%s yielded\n", currentThread->getName());
 
   if (currentThread->getState() == Thread::Running)
   {
@@ -253,11 +252,11 @@ void Scheduler::yield()
 void Scheduler::cleanupDeadThreads()
 {
   /* Before adding new functionality to this function, consider if that
-     functionality could be implemented more cleanly in another place.
-     (e.g. Thread/Process destructor) */
+     functionality could be implemented somewhere else in a cleaner way.
+     (e.g. Thread/Process destructor which are called by this function) */
 
   scheduler_lock_.acquire();
-  uint32 thread_count_max = eastl::min(threads_.size(), (size_t)1024);
+  uint32 thread_count_max = eastl::min(threads_.size(), sizeof(cleanup_thread_.kernel_stack_) / (2 * sizeof(Thread*)));
   Thread* destroy_list[thread_count_max];
   uint32 thread_count = 0;
 
@@ -295,7 +294,7 @@ void Scheduler::printThreadList()
   kprintfd("Scheduler::printThreadList: %zd Threads in List\n", threads_.size());
   for (auto t : threads_)
   {
-      kprintfd("Scheduler::printThreadList: %p  %zd:%s     [%s] at saved %s rip %p, "
+      kprintfd("Scheduler::printThreadList: %p  %zd:%25s     [%s] at saved %s ip %p, "
                "vruntime: %" PRIu64 "\n",
                t, t->getTID(), t->getName(), Thread::threadStatePrintable[t->state_],
                (t->switch_to_userspace_ ? "user" : "kernel"),
@@ -335,7 +334,7 @@ void Scheduler::printStackTraces()
   scheduler_lock_.acquire();
   debugAlways(BACKTRACE, "printing the backtraces of <%zu> threads:\n", threads_.size());
 
-  for (auto & thread : threads_)
+  for (const auto thread : threads_)
   {
     thread->printBacktrace();
     debugAlways(BACKTRACE, "\n");
@@ -349,19 +348,22 @@ void Scheduler::printLockingInformation()
 {
   scheduler_lock_.acquire();
   debugAlways(LOCK, "\nScheduler::printLockingInformation:\n");
-  for (auto thread : threads_)
+  for (const auto thread : threads_)
   {
-    if(thread->holding_lock_list_ != nullptr)
+    if(thread->holding_lock_list_)
     {
       Lock::printHoldingList(thread);
     }
   }
-  for (auto thread : threads_)
+  for (const auto thread : threads_)
   {
-    if(thread->lock_waiting_on_ != nullptr)
+    if(thread->lock_waiting_on_)
     {
-      debugAlways(LOCK, "Thread %s (%p) is waiting on lock: %s (%p), held by: %p, last accessed at %zx\n", thread->getName(), thread, thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_, thread->lock_waiting_on_->heldBy(), thread->lock_waiting_on_->last_accessed_at_);
-            thread->lock_waiting_on_->printStatus();
+      debugAlways(LOCK, "Thread %s (%p) is waiting on lock: %s (%p), held by: %p, last accessed at %zx\n",
+        thread->getName(), thread, thread->lock_waiting_on_ ->getName(), thread->lock_waiting_on_,
+        thread->lock_waiting_on_->heldBy(), thread->lock_waiting_on_->last_accessed_at_);
+
+      thread->lock_waiting_on_->printStatus();
     }
   }
   debugAlways(LOCK, "Scheduler::printLockingInformation finished\n");

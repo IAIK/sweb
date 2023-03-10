@@ -160,6 +160,7 @@ void Lock::checkCurrentThreadStillWaitingOnAnotherLock()
 
 void Lock::doChecksBeforeWaiting()
 {
+  assert(name_ && "name_ is null, maybe lock was not initialised?");
   // Check if the interrupts are set. Else, we maybe wait forever
   checkInterrupts("Lock::doChecksBeforeWaiting");
   // Check if the thread has been waken up even if he is already waiting on another lock.
@@ -325,6 +326,7 @@ void Lock::removeCurrentThreadFromWaitersList()
 
 void Lock::checkInvalidRelease(const char* method)
 {
+  assert(name_ && "name_ is null, maybe lock was not initialised?");
   if(unlikely(held_by_ != currentThread))
   {
     // push the information onto the stack, so the variable may not be modified meanwhile we are working with it

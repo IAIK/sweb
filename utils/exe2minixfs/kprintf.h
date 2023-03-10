@@ -6,5 +6,7 @@
 #define kprintfd(fmt,args...) do { printf(fmt, ## args); } while (0)
 #define kprintf(fmt,args...) do { printf(fmt, ## args); } while (0)
 #define debug(flag,fmt,args...) do { if (flag & 0x80000000) { printf("[%-11s] ", #flag); printf(fmt,## args); } } while(0)
+#define debugAlways(flag,fmt,args...) do { if (flag & 0x80000000) { printf("[%-11s] ", #flag); printf(fmt,## args); } } while(0)
+#define debugAdvanced(flag,fmt,args...) do { if (flag & 0x80000000) { printf("[%-11s] ", #flag); printf(fmt,## args); } } while(0)
 #define isDebugEnabled(flag) (flag & 0x80000000)
 #endif

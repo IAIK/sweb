@@ -5,11 +5,9 @@
 #include "paging-definitions.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
-#include "debug_bochs.h"
 #include "kprintf.h"
 #include "kstring.h"
 #include "Scheduler.h"
-#include "ArchInterrupts.h"
 #include "KernelMemoryManager.h"
 #include "assert.h"
 #include "Bitmap.h"
@@ -137,14 +135,13 @@ uint32 PageManager::allocPPN(uint32 page_size)
 
   ppn_t ppn = phys_addr/PAGE_SIZE;
 
-  if (PM & OUTPUT_ADVANCED)
-      debug(PM, "Allocated PPN %llx\n", (long long unsigned)ppn);
+  debugAdvanced(PM, "Allocated PPN %llx\n", (long long unsigned)ppn);
 
   char* page_ident_addr = (char*)ArchMemory::getIdentAddressOfPPN(ppn);
   const char* page_modified = (const char*)memnotchr(page_ident_addr, 0xFF, page_size);
   if(page_modified)
   {
-      debug(PM, "Detected use-after-free for PPN %llx at offset %zx\n", (long long unsigned)ppn, page_modified - page_ident_addr);
+      debugAlways(PM, "Detected use-after-free for PPN %llx at offset %zx\n", (long long unsigned)ppn, page_modified - page_ident_addr);
       assert(!page_modified && "Page modified after free");
   }
 
@@ -155,19 +152,24 @@ uint32 PageManager::allocPPN(uint32 page_size)
 
 void PageManager::freePPN(uint32 page_number, uint32 page_size)
 {
+  debugAdvanced(PM, "Free PPN %x\n", page_number);
+
   assert((page_size % PAGE_SIZE) == 0);
   assert(allocator_);
+  if(page_number > getTotalNumPages())
+  {
+    debugAlways(PM, "Tried to free nonexistent PPN %x\n", page_number);
+    assert(false && "PPN to be freed is out of range");
+  }
 
-  if (PM & OUTPUT_ADVANCED)
-      debug(PM, "Free PPN %x\n", page_number);
-
+  // Fill page with 0xFF for use-after-free detection
   memset((void*)ArchMemory::getIdentAddressOfPPN(page_number), 0xFF, page_size);
 
   lock_.acquire();
   bool free_status = allocator_->dealloc(page_number*PAGE_SIZE, page_size);
   if (!free_status)
   {
-      kprintfd("Double free PPN %x\n", page_number);
+      debugAlways(PM, "Double free PPN %x\n", page_number);
       assert(false && "Double free PPN");
   }
   lock_.release();

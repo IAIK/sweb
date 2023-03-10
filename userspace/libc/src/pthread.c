@@ -171,3 +171,21 @@ int pthread_spin_unlock(pthread_spinlock_t *lock)
   return -1;
 }
 
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_setcancelstate(int state, int *oldstate)
+{
+  return -1;
+}
+
+/**
+ * function stub
+ * posix compatible signature - do not change the signature!
+ */
+int pthread_setcanceltype(int type, int *oldtype)
+{
+  return -1;
+}
+

@@ -2,6 +2,7 @@
 #include "kmalloc.h"
 #include "assert.h"
 #include "ArchMemory.h"
+#include "Thread.h"
 
 void *memccpy(void *dest, const void *src, uint8 c, size_t length)
 {
@@ -20,6 +21,8 @@ void *memccpy(void *dest, const void *src, uint8 c, size_t length)
       return (void*) dest8;
     }
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return (void *) nullptr;
 }
@@ -165,6 +168,8 @@ extern "C" char* itoa(int value, char* str, int base)
       str[i] = temp;
     }
   }
+
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
   return str;
 }

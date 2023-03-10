@@ -14,6 +14,11 @@ Condition::Condition(Mutex* mutex, const char* name) :
 {
 }
 
+Condition::~Condition()
+{
+  mutex_ = nullptr; // Explicitly set to zero to catch some incorrect wait() usages
+}
+
 void Condition::waitAndRelease(pointer called_by)
 {
   if(!called_by)
@@ -64,7 +69,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
 
   if(re_acquire_mutex)
   {
-    assert(mutex_);
+    assert(mutex_ && "Mutex pointer is null, maybe lock went out-of-scope or was deleted");
     mutex_->acquire(called_by);
   }
 }

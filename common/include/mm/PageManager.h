@@ -7,6 +7,7 @@
 #include "Allocator.h"
 #include "BootstrapRangeAllocator.h"
 
+// Allow KernelMemoryManager to allocate new pages from PageManager when kernel heap is full
 // Please note that this means that the KMM depends on the page manager
 // and you will have a harder time implementing swapping. Pros only!
 static constexpr bool DYNAMIC_KMM = false;
@@ -16,7 +17,7 @@ static constexpr bool DYNAMIC_KMM = false;
  */
 class PageManager
 {
-  public:
+public:
     PageManager() = delete;
     PageManager(const PageManager&) = delete;
     PageManager& operator=(const PageManager&) = delete;
@@ -28,30 +29,29 @@ class PageManager
     static bool isReady();
 
     /**
-     * returns the number of 4k Pages avaible to sweb.
-     * ((size of the first usable memory region or max 1Gb) / PAGESIZE)
-     * @return number of available pages
+     * Returns the total number of physical pages available to SWEB.
+     * @return Number of available physical pages (4k page size)
      */
     uint32 getTotalNumPages() const;
 
     /**
-     * returns the number of currently free pages
-     * @return number of free pages
+     * Returns the number of currently free physical pages.
+     * @return Number of free physical pages (4k page size)
      */
     size_t getNumFreePages() const;
 
     /**
-     * returns the number of the lowest free Page
-     * and marks that Page as used.
-     * returns always 4kb ppns!
+     * Allocate a physical memory page
+     * @param page_size The requested page size, must be a multiple of PAGE_SIZE (default = 4k)
+     * @return The allocated physical page PPN
      */
     [[nodiscard("Discarding return value of allocPPN() leaks pages")]]
     uint32 allocPPN(uint32 page_size = PAGE_SIZE);
 
     /**
-     * marks physical page <page_number> as free, if it was used in
-     * user or kernel space.
-     * @param page_number Physcial Page to mark as unused
+     * Releases the given physical page number (PPN) and marks it as free
+     * @param page_number The physical page PPN to free
+     * @param page_size The page size to free, must be a multiple of PAGE_SIZE
      */
     void freePPN(uint32 page_number, uint32 page_size = PAGE_SIZE);
 
@@ -66,7 +66,7 @@ class PageManager
       allocator_->printUsageInfo();
     }
 
-  private:
+private:
     static size_t initUsableMemoryRegions(Allocator& allocator);
     static void reserveKernelPages(Allocator& allocator);
     static void initFreePageCanaries(BootstrapRangeAllocator& allocator);

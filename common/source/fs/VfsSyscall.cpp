@@ -118,7 +118,7 @@ ssize_t VfsSyscall::getdents(int fd, char* buffer, size_t buffer_size)
 
         if (buf_offs + u_dirent_size > buffer_size)
         {
-            debug(VFSSYSCALL, "(getdents) Error: Buffer is too small for all dirents.\n");
+            debug(VFSSYSCALL, "(getdents) Error: Buffer is too small for all dirents. Size: %zu\n", buffer_size);
             return -1;
         }
 

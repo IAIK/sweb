@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "Lock.h"
+
 class Thread;
 
 class SpinLock: public Lock

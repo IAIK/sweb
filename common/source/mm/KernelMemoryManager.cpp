@@ -15,6 +15,7 @@
 #include "ArchMulticore.h"
 #include "offsets.h"
 #include "SystemState.h"
+#include "Thread.h"
 
 extern Stabs2DebugInfo const* kernel_debug_info;
 
@@ -116,8 +117,8 @@ pointer KernelMemoryManager::allocateMemory(size_t requested_size, pointer calle
 
 pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, pointer called_by)
 {
-  if(KMM & OUTPUT_ADVANCED)
-          debug(KMM, "private_allocateMemory, size: %zu, called by: %zx\n", requested_size, called_by);
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+  debugAdvanced(KMM, "private_allocateMemory, size: %zu, called by: %zx\n", requested_size, called_by);
   assert((requested_size & 0xF) == 0 && "Attempt to allocate block with unaligned size");
 
   // find next free pointer of neccessary size + sizeof(MallocSegment);
@@ -143,6 +144,7 @@ pointer KernelMemoryManager::private_AllocateMemory(size_t requested_size, point
 
 bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 {
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
   if (virtual_address == 0)
     return false;
 
@@ -164,6 +166,7 @@ bool KernelMemoryManager::freeMemory(pointer virtual_address, pointer called_by)
 
 pointer KernelMemoryManager::reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by)
 {
+  assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
   debug(KMM, "realloc %p, new size: %zu, calledbefore(1): %zx\n", (void*)virtual_address, new_size, called_by);
   assert((new_size & 0x80000000) == 0 && "requested too much memory");
   if (new_size == 0)
@@ -251,16 +254,14 @@ MallocSegment* KernelMemoryManager::getSegmentFromAddress(pointer virtual_addres
 
 MallocSegment *KernelMemoryManager::findFreeSegment(size_t requested_size)
 {
-  if(KMM & OUTPUT_ADVANCED)
-    debug(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n",
-          requested_size + sizeof(MallocSegment));
+  debugAdvanced(KMM, "findFreeSegment: seeking memory block of bytes: %zd \n",
+                requested_size + sizeof(MallocSegment));
 
   MallocSegment *current = first_;
   while (current)
   {
-    if(KMM & OUTPUT_ADVANCED)
-      debug(KMM, "findFreeSegment: current: %p size: %zd used: %d \n",
-            current, current->getSize() + sizeof(MallocSegment), current->getUsed());
+    debugAdvanced(KMM, "findFreeSegment: current: %p size: %zd used: %d \n",
+                  current, current->getSize() + sizeof(MallocSegment), current->getUsed());
 
     current->checkCanary();
     if ((current->getSize() >= requested_size) && !current->getUsed())
@@ -477,7 +478,7 @@ pointer KernelMemoryManager::ksbrk(ssize_t size)
 
   if (!(((kernel_break_ - base_break_) + size) <= reserved_max_))
   {
-      kprintfd("Used kernel memory: %zu\n", getUsedKernelMemory(true));
+      debugAlways(KMM, "Used kernel memory: %zu\n", getUsedKernelMemory(true));
       assert(false && "maximum kernel heap size reached");
   }
   assert(DYNAMIC_KMM && "ksbrk should only be called if DYNAMIC_KMM is 1 - not in baseline SWEB");

@@ -27,6 +27,8 @@ typedef size_t vpn_t;
 
 typedef size_t pointer;
 
+/* #pragma GCC poison double float */
+
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 

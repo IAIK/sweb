@@ -10,6 +10,7 @@
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
 #include "ArchThreads.h"
+#include "Scheduler.h"
 #include "EASTL/string.h"
 
 UserProcess::UserProcess(const eastl::string& executable_path,

@@ -79,7 +79,7 @@ void interruptHandler(size_t interrupt_num,
 void int32_handler_PIT_irq0()
 {
     debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
-          SMP::currentCpuId(), InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT, 0);
+        SMP::currentCpuId(), InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT, 0);
 
     ArchCommon::callWithStack(
         ArchMulticore::cpuStackTop(),
@@ -103,9 +103,10 @@ void int32_handler_PIT_irq0()
 void int127_handler_APIC_timer()
 {
     debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
-                  SMP::currentCpuId(), InterruptVector::APIC_TIMER);
+        SMP::currentCpuId(), InterruptVector::APIC_TIMER);
 
-    ArchCommon::callWithStack(ArchMulticore::cpuStackTop(), []()
+    ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
+        []()
         {
             TimerTickHandler::handleTimerTick();
 
@@ -127,7 +128,7 @@ void int127_handler_APIC_timer()
 void int65_handler_swi_yield()
 {
     debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
-                  SMP::currentCpuId(), InterruptVector::YIELD);
+        SMP::currentCpuId(), InterruptVector::YIELD);
 
     ArchCommon::callWithStack(
         ArchMulticore::cpuStackTop(),
@@ -154,20 +155,26 @@ void int65_handler_swi_yield()
  */
 void pageFaultHandler(uint64_t address, uint64_t error, uint64_t ip)
 {
-  if (address >= USER_BREAK && address < KERNEL_START) { // dirty hack due to qemu invoking the pf handler when accessing non canonical addresses
-      auto &regs = *(currentThread->switch_to_userspace_ ? currentThread->user_registers_ : currentThread->kernel_registers_);
-      errorHandler(0xd, regs.rip, regs.cs, 0);
-      assert(0 && "thread should not survive a GP fault");
-  }
-  PagefaultExceptionErrorCode error_code{static_cast<uint32_t>(error)};
-  assert(!error_code.reserved_write && "Reserved bit set in page table entry");
+    auto &regs = *(currentThread->switch_to_userspace_ ? currentThread->user_registers_ :
+                                                         currentThread->kernel_registers_);
 
-  PageFaultHandler::enterPageFault(address, ip, error_code.user, error_code.present,
-                                   error_code.write, error_code.instruction_fetch);
-  if (currentThread->switch_to_userspace_)
-    contextSwitch();
-  else
-    asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
+    // dirty hack due to qemu invoking the pf handler when accessing non canonical addresses
+    if (address >= USER_BREAK && address < KERNEL_START)
+    {
+        errorHandler(0xd, regs.rip, regs.cs, 0);
+        assert(false && "thread should not survive a GP fault");
+    }
+    PagefaultExceptionErrorCode error_code{static_cast<uint32_t>(error)};
+    assert(!error_code.reserved_write && "Reserved bit set in page table entry");
+
+    assert(ArchThreads::getInterruptEnableFlag(regs) && "PF with interrupts disabled. PF handler will enable interrupts soon. Better panic now");
+
+    PageFaultHandler::enterPageFault(address, ip, error_code.user, error_code.present,
+                                     error_code.write, error_code.instruction_fetch);
+    if (currentThread->switch_to_userspace_)
+        contextSwitch();
+    else
+        asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
 }
 
 /**
@@ -178,7 +185,7 @@ void int90_handler_halt_cpu()
 {
     while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
 
-    debug(A_INTERRUPTS, "IRQ %u called, CPU %zu halting\n", InterruptVector::IPI_HALT_CPU, SMP::currentCpuId());
+    debugAlways(A_INTERRUPTS, "Interrupt %u called, CPU %zu halting\n", InterruptVector::IPI_HALT_CPU, SMP::currentCpuId());
     if (currentThread)
     {
         debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
@@ -250,24 +257,24 @@ void int101_handler_cpu_fcall()
  */
 void syscallHandler()
 {
-  currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_.get();
-  ArchInterrupts::enableInterrupts();
+    currentThread->switch_to_userspace_ = 0;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
+    ArchInterrupts::enableInterrupts();
 
-  auto ret = Syscall::syscallException(currentThread->user_registers_->rax,
-                                       currentThread->user_registers_->rbx,
-                                       currentThread->user_registers_->rcx,
-                                       currentThread->user_registers_->rdx,
-                                       currentThread->user_registers_->rsi,
-                                       currentThread->user_registers_->rdi);
+    auto ret = Syscall::syscallException(currentThread->user_registers_->rax,
+                                        currentThread->user_registers_->rbx,
+                                        currentThread->user_registers_->rcx,
+                                        currentThread->user_registers_->rdx,
+                                        currentThread->user_registers_->rsi,
+                                        currentThread->user_registers_->rdi);
 
-  currentThread->user_registers_->rax = ret;
+    currentThread->user_registers_->rax = ret;
 
-  ArchInterrupts::disableInterrupts();
-  currentThread->switch_to_userspace_ = 1;
-  currentThreadRegisters = currentThread->user_registers_.get();
-  contextSwitch();
-  assert(false);
+    ArchInterrupts::disableInterrupts();
+    currentThread->switch_to_userspace_ = 1;
+    currentThreadRegisters = currentThread->user_registers_.get();
+    contextSwitch();
+    assert(false);
 }
 
 /**

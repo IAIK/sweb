@@ -11,10 +11,10 @@
 
 // Also see x86/common/source/ArchMemory.cpp for common functionality
 
-PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
-PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
-PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(0x1000)));
-PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(0x1000)));
+PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
 
 ArchMemory::ArchMemory()
 {
@@ -90,9 +90,8 @@ bool ArchMemory::unmapPage(vpn_t virtual_page)
 template<typename T>
 void ArchMemory::insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable, bool memory_mapped_io)
 {
-  if (A_MEMORY & OUTPUT_ADVANCED)
-      debug(A_MEMORY, "%s: page %p index %zx ppn %lx user_access %u\n",
-            __PRETTY_FUNCTION__, table, index, ppn, user_access);
+  debugAdvanced(A_MEMORY, "%s: page %p index %zx ppn %lx user_access %u\n",
+    __PRETTY_FUNCTION__, table, index, ppn, user_access);
 
   assert((size_t)table & ~0xFFFFF00000000000ULL);
   assert(((uint64*)table)[index] == 0);
@@ -227,6 +226,8 @@ const ArchMemoryMapping ArchMemory::resolveMapping(vpn_t vpage) const
 
 const ArchMemoryMapping ArchMemory::resolveMapping(ppn_t pml4, vpn_t vpage)
 {
+  assert((vpage * PAGE_SIZE < USER_BREAK || vpage * PAGE_SIZE >= KERNEL_START) &&
+         "This is not a valid vpn! Did you pass an address to resolveMapping?");
   ArchMemoryMapping m;
 
   m.pti   = vpage;
