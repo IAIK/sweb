@@ -41,14 +41,6 @@ enum class ISA_IRQ : uint8_t
     ATA_SECONDARY    = 15  // 15 	Secondary ATA Hard Disk
 };
 
-class InterruptUtils
-{
-public:
-    static InterruptDescriptorTable idt;
-
-private:
-};
-
 union [[gnu::packed]] PagefaultExceptionErrorCode
 {
     uint32_t u32;

@@ -34,8 +34,6 @@
 #include "assert.h"
 #include "debug.h"
 
-InterruptDescriptorTable InterruptUtils::idt;
-
 extern const SWEBDebugInfo* kernel_debug_info;
 extern eastl::atomic_flag assert_print_lock;
 

@@ -1,5 +1,6 @@
 #include "EASTL/atomic.h"
 #include "assert.h"
+#include "debug.h"
 
 extern "C" int __cxa_thread_atexit(__attribute__((unused)) void (*func)(), __attribute__((unused)) void *obj, __attribute__((unused)) void *dso_symbol)
 {
@@ -102,8 +103,10 @@ void globalConstructors()
     assert(&__init_array_start <= &__init_array_end);
     for (func_ptr* it = &__init_array_start; it < &__init_array_end; ++it)
     {
+        debugAdvanced(MAIN, "Calling global constructor %p\n", *it);
         assert(*it);
         (*it)();
+        debugAdvanced(MAIN, "Global constructor %p finished\n", *it);
     }
 }
 

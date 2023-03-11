@@ -246,7 +246,7 @@ void ArchMulticore::initApplicationProcessorCpu()
   debug(A_MULTICORE, "AP switching from temp kernel paging root to main kernel paging root: %zx\n", (size_t)VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getKernelPagingStructureRootVirt()));
   ArchMemory::loadPagingStructureRoot(ArchMemory::kernelArchMemory().getValueForCR3());
 
-  InterruptUtils::idt.idtr().load();
+  InterruptDescriptorTable::instance().idtr().load();
 
   extern char cls_start;
   extern char cls_end;

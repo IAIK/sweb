@@ -119,6 +119,12 @@ struct InterruptDescriptorTable
     {
     }
 
+    static InterruptDescriptorTable& instance()
+    {
+        static InterruptDescriptorTable idt;
+        return idt;
+    }
+
     constexpr IDTR idtr() { return {sizeof(entries) - 1, (uintptr_t)&entries}; }
 
     eastl::array<InterruptGateDesc, NUM_INTERRUPTS> entries;

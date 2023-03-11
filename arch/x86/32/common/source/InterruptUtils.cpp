@@ -47,8 +47,6 @@
                                  // =1: an instruction fetch (need PAE for that)
 
 
-InterruptDescriptorTable InterruptUtils::idt;
-
 extern const Stabs2DebugInfo* kernel_debug_info;
 extern eastl::atomic_flag assert_print_lock;
 

@@ -39,7 +39,7 @@ IrqDomain& ArchInterrupts::isaIrqDomain()
 
 static void initInterruptDescriptorTable()
 {
-    auto& idt = InterruptUtils::idt;
+    auto& idt = InterruptDescriptorTable::instance();
     idt.idtr().load();
 
     if (A_INTERRUPTS & OUTPUT_ENABLED & OUTPUT_ADVANCED)
