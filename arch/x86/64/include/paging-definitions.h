@@ -146,12 +146,13 @@ struct [[gnu::packed]] PageTableEntry
   uint64 cache_disabled            :1;
   uint64 accessed                  :1;
   uint64 dirty                     :1;
-  uint64 size                      :1;
+  uint64 size                      :1; // PAT bit
   uint64 global                    :1;
   uint64 ignored_2                 :3;
   uint64 page_ppn                  :28;
   uint64 reserved_1                :12; // must be 0
-  uint64 ignored_1                 :11;
+  uint64 ignored_1                 :7;
+  uint64 protection_key            :4; // https://www.kernel.org/doc/html/next/core-api/protection-keys.html
   uint64 execution_disabled        :1;
 };
 
