@@ -208,9 +208,12 @@ void Syscall::trace()
 }
 
 
-int Syscall::getcpu(size_t *cpu, size_t *node, __attribute__((unused)) void *tcache)
+int Syscall::getcpu(size_t *cpu, size_t *node, [[maybe_unused]] void *tcache)
 {
-    if(((size_t)cpu >= USER_BREAK) || ((size_t)node >= USER_BREAK))
+    if(((size_t)cpu >= USER_BREAK) ||
+        ((size_t)cpu + sizeof(*cpu) >= USER_BREAK) ||
+        ((size_t)node >= USER_BREAK) ||
+        ((size_t)node + sizeof(*node) >= USER_BREAK))
     {
         return -1;
     }
