@@ -89,9 +89,11 @@ uint32 TextConsole::consoleSetCharacter(const uint32& row,
 void TextConsole::consoleScrollUp(const uint8& state)
 {
   char* fb = (char*) ArchCommon::getFBPtr();
-  memmove((void*) (fb + (consoleGetNumColumns() * 2 * STAT_ROWS)),
-          (void*) (fb + (consoleGetNumColumns() * 2 * (STAT_ROWS + 1))),
-          (consoleGetNumRows() - 1 + STAT_ROWS) * consoleGetNumColumns() * 2);
+  char* dst = (char*) (fb + (consoleGetNumColumns() * 2 * STAT_ROWS));
+  char* src = (char*) (fb + (consoleGetNumColumns() * 2 * (STAT_ROWS + 1)));
+  size_t size = (consoleGetNumRows() - STAT_ROWS - 1) * consoleGetNumColumns() * 2;
+  memmove(dst, src, size);
+
   for(size_t i = 0; i < consoleGetNumColumns(); i++)
   {
     fb[(i + (consoleGetNumRows() - 1) * consoleGetNumColumns()) * 2] = ' ';
