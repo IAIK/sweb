@@ -209,6 +209,26 @@ pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
     return 0x000B8000;
 }
 
+size_t ArchCommon::getFBWidth()
+{
+    return 80;
+}
+
+size_t ArchCommon::getFBHeight()
+{
+    return 25;
+}
+
+size_t ArchCommon::getFBBitsPerCharacter()
+{
+    return 16;
+}
+
+size_t ArchCommon::getFBSize()
+{
+    return getFBWidth() * getFBHeight() * getFBBitsPerCharacter()/8;
+}
+
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()
 {
   return mbr.vesa_bits_per_pixel;

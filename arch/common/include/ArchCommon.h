@@ -36,6 +36,10 @@ class ArchCommon
      * @return a Pointer to the location of the FrameBuffer
      */
     static pointer getFBPtr(size_t is_paging_set_up = 1);
+    static size_t getFBWidth();
+    static size_t getFBHeight();
+    static size_t getFBBitsPerCharacter();
+    static size_t getFBSize();
 
     /**
      * @return number of Useable Memory Regions
