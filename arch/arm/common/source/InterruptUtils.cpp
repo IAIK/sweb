@@ -24,6 +24,9 @@
 #include "ArchMemory.h"
 #include "ArchThreads.h"
 
+#include "assert.h"
+#include "debug.h"
+
 extern uint32* currentStack;
 extern Console* main_console;
 

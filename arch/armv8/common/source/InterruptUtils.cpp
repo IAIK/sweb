@@ -24,6 +24,9 @@
 #include "ArchMemory.h"
 #include "ArchThreads.h"
 
+#include "assert.h"
+#include "debug.h"
+
 extern Console* main_console;
 
 void pageFaultHandler(size_t address, size_t ip, uint32 type NU, size_t exc_syndrome NU)

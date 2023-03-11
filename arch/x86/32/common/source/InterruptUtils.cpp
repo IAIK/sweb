@@ -25,6 +25,9 @@
 #include "ArchSerialInfo.h"
 #include "ArchThreads.h"
 
+#include "assert.h"
+#include "debug.h"
+
 // --- Pagefault error flags.
 //     PF because/in/caused by/...
 

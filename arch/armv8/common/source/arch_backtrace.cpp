@@ -3,6 +3,7 @@
 #include "InterruptUtils.h"
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
 #include "Loader.h"
+#include "Scheduler.h"
 #include "Thread.h"
 #include "kprintf.h"
 #include "offsets.h"

@@ -31,8 +31,8 @@
 #include "ArchSerialInfo.h"
 #include "ArchThreads.h"
 
-extern "C" void arch_dummyHandler();
-extern "C" void arch_dummyHandlerMiddle();
+#include "assert.h"
+#include "debug.h"
 
 InterruptDescriptorTable InterruptUtils::idt;
 
