@@ -36,43 +36,43 @@ TSS g_tss;
 
 __attribute__((section (".mboot"))) static const multiboot_header mboot =
 {
-        .magic = MULTIBOOT_HEADER_MAGIC,
-        .flags = MULTIBOOT_HEADER_FLAGS,
-        .checksum = MULTIBOOT_CHECKSUM,
+    .magic = MULTIBOOT_HEADER_MAGIC,
+    .flags = MULTIBOOT_HEADER_FLAGS,
+    .checksum = MULTIBOOT_CHECKSUM,
 
-        .header_addr   = 0,
-        .load_addr     = 0,
-        .load_end_addr = 0,
-        .bss_end_addr  = 0,
-        .entry_addr    = 0,
+    .header_addr   = 0,
+    .load_addr     = 0,
+    .load_end_addr = 0,
+    .bss_end_addr  = 0,
+    .entry_addr    = 0,
 
-        .mode_type = 1,
-        .width = 80,
-        .height = 25,
-        .depth = 16,
+    .mode_type = 1,
+    .width = 80,
+    .height = 25,
+    .depth = 16,
 };
 
 static void writeLine2Bochs(const char* p)
 {
-        while (*p)
-        {
-                asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
-        }
+    while (*p)
+    {
+        asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
+    }
 }
 
 
 void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH)
 {
-        descr->baseLL = (uint16) (baseL & 0xFFFF);
-        descr->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
-        descr->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
-        descr->baseH = baseH;
+    descr->baseLL = (uint16) (baseL & 0xFFFF);
+    descr->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+    descr->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+    descr->baseH = baseH;
 }
 
 void setSegmentLimit(SegmentDescriptor* descr, uint32 limit)
 {
-        descr->limitL = (uint16) (limit & 0xFFFF);
-        descr->limitH = (uint8) (((limit >> 16U) & 0xF));
+    descr->limitL = (uint16) (limit & 0xFFFF);
+    descr->limitH = (uint8) (((limit >> 16U) & 0xF));
 }
 
 static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
@@ -88,8 +88,8 @@ static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint3
 
 static void print(const char* p)
 {
-        writeLine2Bochs(p);
-        puts(p);
+    writeLine2Bochs(p);
+    puts(p);
 }
 
 extern multiboot_info_t* multi_boot_structure_pointer;
@@ -184,7 +184,7 @@ extern "C" void entry()
 
   for(uint8 i = 1; i <= sizeof(SegmentDescriptor); ++i)
   {
-          putHex8(*((char*)((SegmentDescriptor*)TRUNCATE(&gdt) + ((KERNEL_DS >> 3)/2) + 1) - i));
+    putHex8(*((char*)((SegmentDescriptor*)TRUNCATE(&gdt) + ((KERNEL_DS >> 3)/2) + 1) - i));
   }
   putc('\n');
 

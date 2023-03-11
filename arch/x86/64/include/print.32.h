@@ -14,11 +14,11 @@ uint8 getNextFBrow();
 
 void clearFB();
 
-char* getFBAddr(uint8 row, uint8 col);
+char* getFBAddr(uint8 row, uint8 col, bool is_paging_set_up);
 
-void clearFBrow(uint8 row);
+void clearFBrow(uint8 row, bool is_paging_set_up);
 
-void FBnewline();
+void FBnewline(bool is_paging_set_up);
 
 void putc(const char c);
 
