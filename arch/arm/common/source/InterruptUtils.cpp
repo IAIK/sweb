@@ -16,7 +16,6 @@
 #include "kprintf.h"
 #include "new.h"
 #include "paging-definitions.h"
-#include "panic.h"
 
 #include "ArchBoardSpecific.h"
 #include "ArchCommon.h"

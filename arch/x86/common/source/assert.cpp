@@ -6,7 +6,6 @@
 #include "Thread.h"
 #include "debug_bochs.h"
 #include "kprintf.h"
-#include "panic.h"
 
 #include "ArchCpuLocalStorage.h"
 #include "ArchInterrupts.h"

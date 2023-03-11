@@ -21,7 +21,6 @@
 #include "new.h"
 #include "offsets.h"
 #include "paging-definitions.h"
-#include "panic.h"
 #include "ports.h"
 
 #include "ArchCommon.h"
