@@ -1,8 +1,11 @@
 #include "ProgrammableIntervalTimer.h"
+
+#include "InterruptUtils.h"
 #include "ports.h"
+
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
-#include "InterruptUtils.h"
+
 #include "assert.h"
 
 PIT::OperatingMode PIT::operating_mode = PIT::OperatingMode::SQUARE_WAVE;

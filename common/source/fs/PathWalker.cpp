@@ -1,13 +1,16 @@
 #include "PathWalker.h"
-#include "Inode.h"
+
 #include "Dentry.h"
-#include "VfsMount.h"
-#include "Superblock.h"
-#include "assert.h"
-#include "kstring.h"
-#include "kprintf.h"
 #include "FileSystemInfo.h"
+#include "Inode.h"
 #include "Path.h"
+#include "Superblock.h"
+#include "VfsMount.h"
+#include "kprintf.h"
+#include "kstring.h"
+
+#include "assert.h"
+
 #ifndef EXE2MINIXFS
 #include "Mutex.h"
 #include "Thread.h"

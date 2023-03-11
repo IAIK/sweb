@@ -1,9 +1,11 @@
 #include "RamDiskDriver.h"
-#include "debug.h"
-#include "assert.h"
+
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
 #include "kstring.h"
+
+#include "assert.h"
+#include "debug.h"
 
 RamDiskDriver::RamDiskDriver(void* start_vaddr, size_t size) :
   start_vaddr_(start_vaddr),

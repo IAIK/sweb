@@ -1,8 +1,10 @@
 #pragma once
 
 #include "offsets.h"
-#include "types.h"
 #include "paging-definitions.h"
+
+#include "types.h"
+
 #include "EASTL/vector.h"
 
 class ArchMemoryMapping
@@ -161,33 +163,29 @@ public:
   static ArchMemory& kernelArchMemory();
 
 private:
-  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+    ArchMemory& operator=(const ArchMemory& src) = delete; // should never be implemented
 
+    /**
+     * Removes a paging entry from a given page_table if it is present
+     * in the first place. Futhermore, the target page table is assured to be
+     * empty.
+     *
+     * @param table_ptr physical page containing the target paging_table.
+     * @param index Index of the paging entry to be removed
+     */
+    template<typename T> static bool checkAndRemove(pointer table_ptr, size_t index);
 
-  /**
-  * Removes a paging entry from a given page_table if it is present
-  * in the first place. Futhermore, the target page table is assured to be
-  * empty.
-  *
-  * @param table_ptr physical page containing the target paging_table.
-  * @param index Index of the paging entry to be removed
-  */
-  template<typename T>
-  static bool checkAndRemove(pointer table_ptr, size_t index);
+    template<typename T, size_t NUM_ENTRIES> static bool tableEmpty(T* table);
 
-  template<typename T, size_t NUM_ENTRIES>
-  static bool tableEmpty(T* table);
+    template<typename T> static void removeEntry(T* table, size_t index);
 
-  template<typename T>
-  static void removeEntry(T* table, size_t index);
-
-  /**
-  * Removes a page directory entry from a given page directory if it is present
-  * in the first place. Futhermore, the target page table is assured to be
-  * empty.
-  *
-  * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
-  */
-  void checkAndRemovePT(size_t pde_vpn);
+    /**
+     * Removes a page directory entry from a given page directory if it is present
+     * in the first place. Futhermore, the target page table is assured to be
+     * empty.
+     *
+     * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
+     */
+    void checkAndRemovePT(size_t pde_vpn);
 
 };

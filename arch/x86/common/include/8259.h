@@ -1,10 +1,11 @@
 #pragma once
 
-#include "types.h"
-#include "ports.h"
-#include "IrqDomain.h"
-#include "DeviceDriver.h"
 #include "Device.h"
+#include "DeviceDriver.h"
+#include "IrqDomain.h"
+#include "ports.h"
+
+#include "types.h"
 
 class PIC8259 : public InterruptController, public IrqDomain, public Device
 {

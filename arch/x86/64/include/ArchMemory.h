@@ -1,10 +1,12 @@
 #pragma once
 
-#include "types.h"
-#include <cstdint>
-#include <cstddef>
 #include "offsets.h"
 #include "paging-definitions.h"
+
+#include "types.h"
+#include <cstddef>
+#include <cstdint>
+
 #include "EASTL/atomic.h"
 
 extern PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(0x1000)));
@@ -39,8 +41,8 @@ public:
     ~ArchMemory();
 
     /// Prevent accidental copying/assignment, can be implemented if needed
-    ArchMemory(ArchMemory const &src) = delete;
-    ArchMemory &operator=(ArchMemory const &src) = delete;
+    ArchMemory(const ArchMemory& src) = delete;
+    ArchMemory& operator=(const ArchMemory& src) = delete;
 
     /**
      * Maps a virtual page to a physical page and creates the upper paging-hierarchy tables on demand.

@@ -1,11 +1,13 @@
-#include <mm/KernelMemoryManager.h>
 #include "ProcessRegistry.h"
+
+#include "KernelMemoryManager.h"
 #include "Scheduler.h"
 #include "UserProcess.h"
-#include "kprintf.h"
 #include "VfsSyscall.h"
-#include "ArchMulticore.h"
 #include "VirtualFileSystem.h"
+#include "kprintf.h"
+
+#include "ArchMulticore.h"
 
 ProcessRegistry* ProcessRegistry::instance_ = nullptr;
 

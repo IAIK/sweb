@@ -1,15 +1,17 @@
 #include "ArchBoardSpecific.h"
 
-#include "KeyboardManager.h"
-#include "board_constants.h"
-#include "InterruptUtils.h"
-#include "ArchCommon.h"
-#include "assert.h"
-#include "offsets.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
 #include "FrameBufferConsole.h"
+#include "InterruptUtils.h"
+#include "KeyboardManager.h"
+#include "Scheduler.h"
+#include "board_constants.h"
 #include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+
+#include "assert.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 

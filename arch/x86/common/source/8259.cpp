@@ -1,10 +1,13 @@
 #include "8259.h"
-#include "ports.h"
-#include "debug.h"
-#include "ArchInterrupts.h"
-#include "InterruptUtils.h"
+
 #include "APIC.h"
+#include "InterruptUtils.h"
+#include "ports.h"
+
+#include "ArchInterrupts.h"
+
 #include "assert.h"
+#include "debug.h"
 
 bool PIC8259::exists = true;
 bool PIC8259::enabled = true;

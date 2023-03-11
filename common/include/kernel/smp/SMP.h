@@ -1,12 +1,15 @@
 #pragma once
 
-#include <cstddef>
 #include "Mutex.h"
-#include "EASTL/vector.h"
-#include "EASTL/atomic.h"
+#include "RemoteFunctionCall.h"
+
 #include "ArchCpuLocalStorage.h"
 #include "ArchMulticore.h"
-#include "RemoteFunctionCall.h"
+
+#include <cstddef>
+
+#include "EASTL/atomic.h"
+#include "EASTL/vector.h"
 
 class ArchCpu;
 

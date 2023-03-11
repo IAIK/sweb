@@ -1,6 +1,9 @@
 #include "SMP.h"
+
 #include "ArchMulticore.h"
+
 #include "EASTL/atomic.h"
+
 #include "debug.h"
 
 cpu_local ArchCpu current_cpu;

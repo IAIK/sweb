@@ -1,9 +1,11 @@
 #pragma once
 
+#include "ranges.h"
+
 #include "EASTL/string.h"
 #include "EASTL/vector.h"
+
 #include "debug.h"
-#include "ranges.h"
 
 class DeviceDriver;
 class Inode;

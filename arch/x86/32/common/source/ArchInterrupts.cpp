@@ -1,4 +1,5 @@
 #include "ArchInterrupts.h"
+
 #include "8259.h"
 #include "APIC.h"
 #include "InterruptUtils.h"
@@ -12,10 +13,12 @@
 #include "Thread.h"
 #include "offsets.h"
 #include "ports.h"
+
 #include "ArchCpuLocalStorage.h"
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
 #include "ArchThreads.h"
+
 #include "assert.h"
 #include "debug.h"
 

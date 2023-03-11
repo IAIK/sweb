@@ -1,12 +1,13 @@
 #include "MMCDriver.h"
+
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
-#include "ArchInterrupts.h"
-
+#include "MasterBootRecord.h"
 #include "Scheduler.h"
 #include "kprintf.h"
-#include "MasterBootRecord.h"
+
+#include "ArchInterrupts.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 

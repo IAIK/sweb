@@ -1,9 +1,12 @@
 #include "CpuExclusiveLock.h"
-#include "ArchInterrupts.h"
-#include "ArchMulticore.h"
-#include "ArchCommon.h"
+
 #include "SMP.h"
 #include "kprintf.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+
 #include "assert.h"
 
 CpuExclusiveLock::CpuExclusiveLock(const char* name) :

@@ -1,22 +1,24 @@
 #include "Scheduler.h"
-#include "Thread.h"
-#include "ArchThreads.h"
-#include "ArchCommon.h"
-#include "kprintf.h"
-#include "ArchInterrupts.h"
+
 #include "KernelMemoryManager.h"
-#include "EASTL/list.h"
-#include "backtrace.h"
-#include "ArchThreads.h"
+#include "Loader.h"
+#include "Lock.h"
 #include "Mutex.h"
+#include "SystemState.h"
+#include "Thread.h"
+#include "backtrace.h"
+#include "kprintf.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "ArchThreads.h"
+
+#include "EASTL/iterator.h"
+#include "EASTL/list.h"
 #include "EASTL/map.h"
 #include "EASTL/string.h"
-#include "EASTL/iterator.h"
-#include "Lock.h"
-#include "ArchMulticore.h"
-#include "Loader.h"
-#include "ArchCommon.h"
-#include "SystemState.h"
+
 #include "assert.h"
 
 __cpu Thread* currentThread = nullptr;

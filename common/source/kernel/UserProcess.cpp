@@ -1,16 +1,19 @@
 #include "UserProcess.h"
+
 #include "Console.h"
 #include "File.h"
 #include "Loader.h"
 #include "PageManager.h"
 #include "ProcessRegistry.h"
+#include "Scheduler.h"
 #include "VfsSyscall.h"
 #include "kprintf.h"
 #include "offsets.h"
+
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
 #include "ArchThreads.h"
-#include "Scheduler.h"
+
 #include "EASTL/string.h"
 
 UserProcess::UserProcess(const eastl::string& executable_path,

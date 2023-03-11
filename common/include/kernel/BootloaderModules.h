@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Allocator.h"
-
 class BDVirtualDevice;
+class Allocator;
 
 namespace BootloaderModules
 {

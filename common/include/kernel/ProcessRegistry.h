@@ -1,8 +1,11 @@
 #pragma once
 
+#include "Condition.h"
 #include "FileSystemInfo.h"
 #include "Mutex.h"
-#include "Condition.h"
+
+#include <cstddef>
+#include <cstdint>
 
 class ProcessRegistry
 {
@@ -39,7 +42,7 @@ class ProcessRegistry
   private:
 
     FileSystemInfo* default_working_dir_;
-    uint32 progs_running_;
+    uint32_t progs_running_;
     Mutex counter_lock_;
     Condition all_processes_killed_;
     static ProcessRegistry* instance_;

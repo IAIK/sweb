@@ -1,9 +1,11 @@
 #include "ArchMemory.h"
-#include "kprintf.h"
-#include "assert.h"
+
 #include "PageManager.h"
-#include "offsets.h"
+#include "kprintf.h"
 #include "kstring.h"
+#include "offsets.h"
+
+#include "assert.h"
 
 #define PT_SIZE 1024
 #define PD_SIZE 16384

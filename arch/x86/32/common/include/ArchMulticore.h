@@ -1,16 +1,18 @@
 #pragma once
 
-#include "types.h"
 #include "APIC.h"
-#include "EASTL/vector.h"
+#include "Cpu.h"
+#include "IdleThread.h"
 #include "Mutex.h"
 #include "SegmentUtils.h"
-#include "EASTL/atomic.h"
-#include "IdleThread.h"
 #include "paging-definitions.h"
-#include "ArchCpuLocalStorage.h"
-#include "Cpu.h"
 
+#include "ArchCpuLocalStorage.h"
+
+#include "types.h"
+
+#include "EASTL/atomic.h"
+#include "EASTL/vector.h"
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 

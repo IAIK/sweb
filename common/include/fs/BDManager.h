@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include "EASTL/list.h"
+
 #include "EASTL/atomic.h"
+#include "EASTL/list.h"
 
 class BDRequest;
 class BDVirtualDevice;

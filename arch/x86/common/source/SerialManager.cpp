@@ -1,12 +1,13 @@
-#include "ArchSerialInfo.h"
 #include "SerialManager.h"
-#include "kstring.h"
-#include "ArchInterrupts.h"
 
-#include "debug_bochs.h"
-#include "kprintf.h"
 #include "8259.h"
 #include "APIC.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include "kstring.h"
+
+#include "ArchInterrupts.h"
+#include "ArchSerialInfo.h"
 
 SerialManager::SerialManager() :
     BasicDeviceDriver("Serial Port Driver"),

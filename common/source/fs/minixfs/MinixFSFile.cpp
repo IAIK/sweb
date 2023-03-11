@@ -1,6 +1,8 @@
 #include "MinixFSFile.h"
-#include "MinixFSInode.h"
+
+#include "File.h"
 #include "Inode.h"
+#include "MinixFSInode.h"
 
 MinixFSFile::MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag) :
     SimpleFile(inode, dentry, flag)

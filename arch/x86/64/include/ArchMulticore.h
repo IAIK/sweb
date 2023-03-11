@@ -1,19 +1,22 @@
 #pragma once
 
-#include "types.h"
 #include "APIC.h"
-#include "X2Apic.h"
-#include "EASTL/vector.h"
-#include "Mutex.h"
-#include "SegmentUtils.h"
-#include "EASTL/atomic.h"
-#include "IdleThread.h"
-#include "paging-definitions.h"
-#include "ArchCpuLocalStorage.h"
-#include "SMP.h"
-#include "Cpu.h"
 #include "AtomicMpScQueue.h"
+#include "Cpu.h"
+#include "IdleThread.h"
+#include "Mutex.h"
 #include "RemoteFunctionCall.h"
+#include "SMP.h"
+#include "SegmentUtils.h"
+#include "X2Apic.h"
+#include "paging-definitions.h"
+
+#include "ArchCpuLocalStorage.h"
+
+#include "types.h"
+
+#include "EASTL/atomic.h"
+#include "EASTL/vector.h"
 
 #define CPU_STACK_SIZE 4*PAGE_SIZE
 

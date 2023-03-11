@@ -1,5 +1,4 @@
 #include "FileSystemType.h"
-#include "assert.h"
 
 FileSystemType::FileSystemType(const char *fs_name) :
     fs_name_ ( fs_name ),

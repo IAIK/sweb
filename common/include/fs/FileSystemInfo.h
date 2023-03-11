@@ -1,8 +1,10 @@
 #pragma once
 
-#include "types.h"
-#include "EASTL/string.h"
 #include "Path.h"
+
+#include "types.h"
+
+#include "EASTL/string.h"
 
 class Dentry;
 class VfsMount;

@@ -1,20 +1,23 @@
-#include "stdarg.h"
 #include "kprintf.h"
+
+#include "BasicSpinLock.h"
 #include "Console.h"
-#include "Terminal.h"
-#include "debug_bochs.h"
-#include "ArchInterrupts.h"
-#include "ArchMulticore.h"
-#include "ArchCommon.h"
+#include "KprintfFlushingThread.h"
 #include "RingBuffer.h"
 #include "Scheduler.h"
+#include "SystemState.h"
+#include "Terminal.h"
+#include "debug_bochs.h"
+#include "stdarg.h"
+#include "vsnprintf.h"
+
+#include "ArchCommon.h"
+#include "ArchCpuLocalStorage.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+
 #include "assert.h"
 #include "debug.h"
-#include "vsnprintf.h"
-#include "KprintfFlushingThread.h"
-#include "BasicSpinLock.h"
-#include "SystemState.h"
-#include "ArchCpuLocalStorage.h"
 
 //it's more important to keep the messages that led to an error, instead of
 //the ones following it, when the nosleep buffer gets full

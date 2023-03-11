@@ -1,7 +1,8 @@
 #pragma once
 
-#include "types.h"
 #include "paging-definitions.h"
+
+#include "types.h"
 
 #define RESOLVEMAPPING(pdpt,vpage) ;\
   uint32 pdpte_vpn = vpage / (PAGE_TABLE_ENTRIES * PAGE_DIRECTORY_ENTRIES);\
@@ -100,25 +101,23 @@ public:
   static ArchMemory& kernelArchMemory();
 
 private:
-  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+    ArchMemory& operator=(const ArchMemory& src) = delete; // should never be implemented
 
-  template<typename T, size_t NUM_ENTRIES>
-  static bool tableEmpty(T* table);
+    template<typename T, size_t NUM_ENTRIES> static bool tableEmpty(T* table);
 
-  template<typename T>
-  void removeEntry(T* table, size_t index);
+    template<typename T> void removeEntry(T* table, size_t index);
 
-  template<typename T>
-  void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
+    template<typename T>
+    void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
 
+    PageDirPointerTableEntry
+        page_dir_pointer_table_space_[2 * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
+    // why 2* ? this is a hack because this table has to be aligned to its own
+    // size 0x20... this way we allow to set an aligned pointer in the constructor.
+    // but why cant we just use __attribute__((aligned(0x20))) ? i'm not sure...
+    // i think because were in a class and the object will be allocated by the
+    // KMM which will just return some not-aligned block, thus this aligned block
+    // gets not-aligned in memory -- DG
 
-  PageDirPointerTableEntry page_dir_pointer_table_space_[2 * PAGE_DIRECTORY_POINTER_TABLE_ENTRIES];
-  // why 2* ? this is a hack because this table has to be aligned to its own
-  // size 0x20... this way we allow to set an aligned pointer in the constructor.
-  // but why cant we just use __attribute__((aligned(0x20))) ? i'm not sure...
-  // i think because were in a class and the object will be allocated by the
-  // KMM which will just return some not-aligned block, thus this aligned block
-  // gets not-aligned in memory -- DG
-
-  PageDirPointerTableEntry* page_dir_pointer_table_;
+    PageDirPointerTableEntry* page_dir_pointer_table_;
 };

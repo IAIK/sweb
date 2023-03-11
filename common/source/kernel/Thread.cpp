@@ -1,16 +1,17 @@
 #include "Thread.h"
 
-#include "kprintf.h"
-#include "ArchThreads.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
-#include "Loader.h"
 #include "Console.h"
+#include "KernelMemoryManager.h"
+#include "Loader.h"
+#include "ProcessRegistry.h"
+#include "Scheduler.h"
+#include "Stabs2DebugInfo.h"
 #include "Terminal.h"
 #include "backtrace.h"
-#include "KernelMemoryManager.h"
-#include "Stabs2DebugInfo.h"
-#include "ProcessRegistry.h"
+#include "kprintf.h"
+
+#include "ArchInterrupts.h"
+#include "ArchThreads.h"
 
 static constexpr size_t BACKTRACE_MAX_FRAMES = 20;
 

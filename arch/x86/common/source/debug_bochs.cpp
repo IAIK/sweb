@@ -1,6 +1,6 @@
 #include "debug_bochs.h"
-#include "ports.h"
 
+#include "ports.h"
 
 void writeChar2Bochs(char char2Write)
 {

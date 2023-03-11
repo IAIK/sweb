@@ -3,9 +3,10 @@
 #include "DeviceDriver.h"
 #include "IrqDomain.h"
 #include "chardev.h"
-#include "types.h"
+
 #include "ArchSerialInfo.h"
 
+#include "types.h"
 
 class ArchSerialInfo;
 

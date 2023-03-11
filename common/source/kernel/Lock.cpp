@@ -1,15 +1,19 @@
 #include "Lock.h"
-#include "kprintf.h"
-#include "assert.h"
-#include "Thread.h"
-#include "ArchThreads.h"
-#include "ArchInterrupts.h"
+
+#include "SMP.h"
 #include "Scheduler.h"
 #include "Stabs2DebugInfo.h"
-#include "SMP.h"
-#include "ArchMulticore.h"
 #include "SystemState.h"
-extern Stabs2DebugInfo const* kernel_debug_info;
+#include "Thread.h"
+#include "kprintf.h"
+
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "ArchThreads.h"
+
+#include "assert.h"
+
+extern const Stabs2DebugInfo* kernel_debug_info;
 
 Lock::Lock(const char *name) :
   held_by_(nullptr),

@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include <cstdint>
+
 #include "EASTL/bit.h"
 #include "EASTL/type_traits.h"
 

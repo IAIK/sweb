@@ -1,9 +1,11 @@
 #pragma once
 
-#include "types.h"
-#include "Scheduler.h"
-#include "EASTL/atomic.h"
 #include "NonBlockingQueue.h"
+#include "Scheduler.h"
+
+#include "types.h"
+
+#include "EASTL/atomic.h"
 
 class Thread;
 

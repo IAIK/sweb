@@ -1,8 +1,12 @@
 #pragma once
+
 #include "Bitmap.h"
 #include "paging-definitions.h"
+
 #include "types.h"
+
 #include "EASTL/iterator.h"
+
 #include "assert.h"
 #include "debug.h"
 

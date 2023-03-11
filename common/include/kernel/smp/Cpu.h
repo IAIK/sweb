@@ -1,10 +1,12 @@
 #pragma once
 
-#include <cstddef>
-#include "ArchCpuLocalStorage.h"
 #include "AtomicMpScQueue.h"
-#include "RemoteFunctionCall.h"
 #include "Device.h"
+#include "RemoteFunctionCall.h"
+
+#include "ArchCpuLocalStorage.h"
+
+#include <cstddef>
 
 // Information concerning one cpu in the system
 // Base functionality for all architectures

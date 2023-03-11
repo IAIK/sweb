@@ -1,6 +1,6 @@
 #include "fs/ramfs/RamFSType.h"
-#include "fs/ramfs/RamFSSuperblock.h"
 
+#include "fs/ramfs/RamFSSuperblock.h"
 
 RamFSType::RamFSType() : FileSystemType("ramfs")
 {

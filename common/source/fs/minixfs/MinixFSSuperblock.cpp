@@ -1,11 +1,14 @@
-#include "FileDescriptor.h"
-#include "MinixFSType.h"
 #include "MinixFSSuperblock.h"
-#include "MinixFSInode.h"
-#include "MinixFSFile.h"
+
 #include "Dentry.h"
-#include "EASTL/unique_ptr.h"
+#include "FileDescriptor.h"
+#include "MinixFSFile.h"
+#include "MinixFSInode.h"
+#include "MinixFSType.h"
 #include "kstring.h"
+
+#include "EASTL/unique_ptr.h"
+
 #include "assert.h"
 #include "debug.h"
 

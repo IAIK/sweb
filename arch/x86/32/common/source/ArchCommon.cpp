@@ -1,25 +1,27 @@
-#include <util/SWEBDebugInfo.h>
 #include "ArchCommon.h"
-#include "multiboot.h"
-#include "offsets.h"
-#include "kprintf.h"
-#include "kstring.h"
-#include "ArchMemory.h"
-#include "TextConsole.h"
+
 #include "FrameBufferConsole.h"
-#include "backtrace.h"
-#include "Stabs2DebugInfo.h"
-#include "ports.h"
-#include "PageManager.h"
-#include "debug_bochs.h"
-#include "ArchMulticore.h"
+#include "IDEDriver.h"
 #include "KernelMemoryManager.h"
-#include "Scheduler.h"
-#include "SMP.h"
+#include "PageManager.h"
 #include "PlatformBus.h"
 #include "ProgrammableIntervalTimer.h"
+#include "SMP.h"
+#include "Scheduler.h"
 #include "SerialManager.h"
-#include "IDEDriver.h"
+#include "Stabs2DebugInfo.h"
+#include "TextConsole.h"
+#include "backtrace.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include "kstring.h"
+#include "multiboot.h"
+#include "offsets.h"
+#include "ports.h"
+#include <util/SWEBDebugInfo.h>
+
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
 
 #if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
 #define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
@@ -246,7 +248,7 @@ Console* ArchCommon::createConsole(uint32 count)
     return new TextConsole(count);
 }
 
-Stabs2DebugInfo const *kernel_debug_info = 0;
+const Stabs2DebugInfo* kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {
@@ -254,11 +256,12 @@ void ArchCommon::initDebug()
     for (size_t i = 0; i < getNumModules(); ++i)
     {
         debug(A_COMMON, "Checking module from [%zx -> %zx)\n", getModuleStartAddress(i), getModuleEndAddress(i));
-        if ((getModuleStartAddress(i) < getModuleEndAddress(i)) && (memcmp("SWEBDBG1",(char const *)getModuleStartAddress(i),8) == 0))
+        if ((getModuleStartAddress(i) < getModuleEndAddress(i)) &&
+            (memcmp("SWEBDBG1", (const char*)getModuleStartAddress(i), 8) == 0))
         {
             debug(A_COMMON, "Found SWEBDBG\n");
-            kernel_debug_info = new SWEBDebugInfo((char const *)getModuleStartAddress(i),
-                                                  (char const *)getModuleEndAddress(i));
+            kernel_debug_info = new SWEBDebugInfo((const char*)getModuleStartAddress(i),
+                                                  (const char*)getModuleEndAddress(i));
         }
     }
     if (!kernel_debug_info)

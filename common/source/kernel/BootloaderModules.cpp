@@ -1,12 +1,15 @@
 #include "BootloaderModules.h"
-#include "debug.h"
-#include "PageManager.h"
-#include "ArchCommon.h"
-#include "ArchMemory.h"
-#include "offsets.h"
-#include "RamDiskDriver.h"
+
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
+#include "PageManager.h"
+#include "RamDiskDriver.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchMemory.h"
+
+#include "debug.h"
 
 void BootloaderModules::reserveModulePages(Allocator& allocator)
 {

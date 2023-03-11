@@ -1,13 +1,16 @@
-#include <mm/KernelMemoryManager.h>
 #include "Console.h"
-#include "Terminal.h"
+
 #include "KeyboardManager.h"
-#include "Scheduler.h"
 #include "PageManager.h"
-#include "backtrace.h"
-#include "debug.h"
-#include "ArchMulticore.h"
+#include "Scheduler.h"
 #include "ScopeLock.h"
+#include "Terminal.h"
+#include "backtrace.h"
+#include <mm/KernelMemoryManager.h>
+
+#include "ArchMulticore.h"
+
+#include "debug.h"
 
 Console* main_console;
 

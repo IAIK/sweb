@@ -1,9 +1,11 @@
 #pragma once
 
-#include "types.h"
-#include "EASTL/list.h"
 #include "kstring.h"
+
+#include "types.h"
+
 #include "EASTL/algorithm.h"
+#include "EASTL/list.h"
 #include "EASTL/string.h"
 
 class Inode;

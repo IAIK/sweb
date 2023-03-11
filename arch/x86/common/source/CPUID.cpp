@@ -1,4 +1,5 @@
 #include "CPUID.h"
+
 #include "debug.h"
 
 cpu_local CpuFeatures cpu_features;

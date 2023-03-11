@@ -1,4 +1,5 @@
 #include "TimerTickHandler.h"
+
 #include "Scheduler.h"
 
 // Architecture independent timer tick handler

@@ -1,10 +1,12 @@
 #include "FrameBufferConsole.h"
-#include "ArchCommon.h"
-#include "Terminal.h"
+
 #include "KeyboardManager.h"
-#include "kprintf.h"
 #include "Scheduler.h"
+#include "Terminal.h"
+#include "kprintf.h"
 #include "kstring.h"
+
+#include "ArchCommon.h"
 
 FrameBufferConsole::FrameBufferConsole(uint32 num_terminals) :
     Console(num_terminals, "VESAConsoleThread")
@@ -74,8 +76,10 @@ void FrameBufferConsole::setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b)
   lfb[offset] = color;
 }
 
-uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
-                                               uint8 const &state)
+uint32 FrameBufferConsole::consoleSetCharacter(const uint32& row,
+                                               const uint32& column,
+                                               const uint8& character,
+                                               const uint8& state)
 {
   CONSOLECOLOR fg, bg;
   colorsFromState(state, fg, bg);
@@ -111,7 +115,7 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
   return 0;
 }
 
-void FrameBufferConsole::consoleScrollUp(uint8 const &state)
+void FrameBufferConsole::consoleScrollUp(const uint8& state)
 {
   CONSOLECOLOR fg, bg;
   colorsFromState(state, fg, bg);
@@ -188,7 +192,7 @@ uint16 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
   return scaled_b | (scaled_g << 5) | (scaled_r << 11);
 }
 
-void FrameBufferConsole::colorsFromState(uint8 const &state, CONSOLECOLOR &fg, CONSOLECOLOR &bg)
+void FrameBufferConsole::colorsFromState(const uint8& state, CONSOLECOLOR& fg, CONSOLECOLOR& bg)
 {
   fg = (CONSOLECOLOR) (state & 15);
   bg = (CONSOLECOLOR) ((state & 240) >> 4);

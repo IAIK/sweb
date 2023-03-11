@@ -1,7 +1,9 @@
 #pragma once
 
-#include "types.h"
 #include "Lock.h"
+
+#include "types.h"
+#include <cstddef>
 
 class Thread;
 
@@ -11,8 +13,8 @@ public:
 
   SpinLock(const char* name);
 
-  SpinLock(SpinLock const &) = delete;
-  SpinLock &operator=(SpinLock const&) = delete;
+  SpinLock(const SpinLock&) = delete;
+  SpinLock& operator=(const SpinLock&) = delete;
 
   void acquire(pointer called_by = 0, bool yield = true);
 

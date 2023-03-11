@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Mutex.h"
-#include "EASTL/vector.h"
 #include "Cpu.h"
+#include "Mutex.h"
+
+#include "EASTL/vector.h"
 
 class IrqDomain;
 

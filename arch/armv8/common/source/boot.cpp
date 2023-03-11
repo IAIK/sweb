@@ -1,10 +1,12 @@
-#include "types.h"
 #include "board_constants.h"
-#include "init_boottime_pagetables.h"
-#include "assert.h"
-#include "kstring.h"
 #include "debug_bochs.h"
+#include "init_boottime_pagetables.h"
+#include "kstring.h"
 #include "offsets.h"
+
+#include "types.h"
+
+#include "assert.h"
 
 extern "C" void uartWritePostboot(const char *str);
 extern "C" void uartWritePreboot(const char *str);

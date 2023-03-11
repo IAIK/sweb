@@ -1,10 +1,12 @@
 #include "assert.h"
+
+#include "SystemState.h"
+#include "Thread.h"
+#include "debug_bochs.h"
 #include "kprintf.h"
 #include "panic.h"
-#include "debug_bochs.h"
-#include "Thread.h"
+
 #include "ArchInterrupts.h"
-#include "SystemState.h"
 
 extern Thread* currentThread;
 

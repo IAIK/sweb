@@ -1,11 +1,14 @@
 #pragma once
 
-#include "EASTL/vector.h"
-#include "EASTL/string.h"
 #include "Device.h"
 #include "IrqDomain.h"
+
 #include "ranges.h"
 #include "transform.h"
+
+#include "EASTL/string.h"
+#include "EASTL/vector.h"
+
 #include "debug.h"
 
 class IrqDomain;
@@ -17,11 +20,9 @@ public:
     virtual ~DeviceDriver() = default;
 
     virtual const eastl::string& driverName() = 0;
-    // virtual eastl::vector<Device*> devices() = 0;
     virtual void initDriver() = 0;
     virtual void doDeviceDetection() = 0;
     virtual void cpuLocalInit() = 0;
-    // virtual bool isBoundDevice(const Device& device) = 0;
     virtual Device* parentDevice() = 0;
     virtual void setParentDevice(Device& device) = 0;
 };
@@ -43,11 +44,6 @@ public:
         return driver_name_;
     }
 
-    // eastl::vector<Device*> devices() override
-    // {
-    //     return {};
-    // }
-
     void initDriver() override
     {
         debug(DRIVER, "Init device driver '%s'\n", driverName().c_str());
@@ -61,12 +57,6 @@ public:
     // Allow drivers to initialize cpu local data/devices
     // Do nothing by default
     void cpuLocalInit() override { }
-
-    // bool isBoundDevice(const Device& device) override
-    // {
-    //     auto bound_devices = devices();
-    //     return eastl::find(bound_devices.begin(), bound_devices.end(), &device) != bound_devices.end();
-    // }
 
     Device* parentDevice() override
     {
@@ -92,13 +82,6 @@ public:
 
     Driver() = default;
     ~Driver() override = default;
-
-    // eastl::vector<Device*> devices() override
-    // {
-    //     auto r = ranges::transform_view(devices_,
-    //                                     [](auto&& x) { return static_cast<Device*>(x); });
-    //     return {r.begin(), r.end()};
-    // }
 
 protected:
     void bindDevice(T& device)

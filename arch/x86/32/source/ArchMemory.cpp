@@ -1,12 +1,15 @@
 #include "ArchMemory.h"
-#include "kprintf.h"
-#include "assert.h"
+
 #include "PageManager.h"
+#include "kprintf.h"
 #include "kstring.h"
 #include "offsets.h"
-#include "ArchMulticore.h"
-#include "ArchInterrupts.h"
+
 #include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+
+#include "assert.h"
 
 // Also see x86/common/source/ArchMemory.cpp for common functionality
 

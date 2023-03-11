@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Scheduler.h"
+
 #include "types.h"
+
 #include "EASTL/unique_ptr.h"
 
 /**

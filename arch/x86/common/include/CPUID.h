@@ -1,8 +1,10 @@
 #pragma once
 
-#include <cstdint>
-#include "EASTL/bitset.h"
 #include "ArchCpuLocalStorage.h"
+
+#include <cstdint>
+
+#include "EASTL/bitset.h"
 
 namespace CPUID
 {

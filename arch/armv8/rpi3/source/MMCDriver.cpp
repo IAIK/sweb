@@ -1,12 +1,14 @@
 #include "MMCDriver.h"
+
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
-#include "ArchInterrupts.h"
-#include "offsets.h"
+#include "MasterBootRecord.h"
 #include "Scheduler.h"
 #include "kprintf.h"
-#include "MasterBootRecord.h"
+#include "offsets.h"
+
+#include "ArchInterrupts.h"
 
 struct MMCI {
     uint32 arg2;

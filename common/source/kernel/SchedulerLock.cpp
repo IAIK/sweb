@@ -1,9 +1,12 @@
 #include "SchedulerLock.h"
-#include "debug.h"
-#include "Thread.h"
-#include "ArchMulticore.h"
+
 #include "Scheduler.h"
+#include "Thread.h"
+
 #include "ArchCommon.h"
+#include "ArchMulticore.h"
+
+#include "debug.h"
 
 enum SCHED_LOCK_INDICATOR : char
 {

@@ -1,8 +1,11 @@
 #include "Cpu.h"
-#include "ArchCpuLocalStorage.h"
-#include "debug.h"
-#include "assert.h"
+
 #include "DeviceBus.h"
+
+#include "ArchCpuLocalStorage.h"
+
+#include "assert.h"
+#include "debug.h"
 
 cpu_local size_t Cpu::cpu_id;
 

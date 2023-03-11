@@ -1,13 +1,15 @@
 #include "Condition.h"
-#include "Thread.h"
+
 #include "Mutex.h"
 #include "Scheduler.h"
-#include "assert.h"
-#include "kprintf.h"
-#include "debug.h"
 #include "Stabs2DebugInfo.h"
-#include "backtrace.h"
 #include "SystemState.h"
+#include "Thread.h"
+#include "backtrace.h"
+#include "kprintf.h"
+
+#include "assert.h"
+#include "debug.h"
 
 Condition::Condition(Mutex* mutex, const char* name) :
   Lock(name), mutex_(mutex)

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "EASTL/string.h"
-#include "EASTL/map.h"
-#include "EASTL/vector_map.h"
 #include "Stabs2DebugInfo.h"
 
+#include "EASTL/map.h"
+#include "EASTL/string.h"
+#include "EASTL/vector_map.h"
 
 // The limit for function names, after that, they will get capped
 #define CALL_FUNC_NAME_LIMIT 256
@@ -12,8 +12,7 @@
 
 class SWEBDebugInfo : public Stabs2DebugInfo {
 public:
-
-    SWEBDebugInfo(char const *sweb_begin, char const *sweb_end);
+    SWEBDebugInfo(const char* sweb_begin, const char* sweb_end);
 
     ~SWEBDebugInfo() override = default;
 

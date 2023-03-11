@@ -1,9 +1,10 @@
 #pragma once
 
-#include "types.h"
 #include "Console.h"
-#include "chardev.h"
 #include "VgaColors.h"
+#include "chardev.h"
+
+#include "types.h"
 
 class Terminal : public CharacterDevice
 {
@@ -17,7 +18,7 @@ class Terminal : public CharacterDevice
       EN = 0, DE = 1
     };
 
-    static uint32 const TERMINAL_BUFFER_SIZE = 256;
+    static const uint32 TERMINAL_BUFFER_SIZE = 256;
 
     /**
      * Constructor creates the Terminal Character Device.
@@ -39,14 +40,14 @@ class Terminal : public CharacterDevice
      * Writes a string to the terminal.
      * @param string the string to write
      */
-    void writeString(char const *string);
+    void writeString(const char* string);
 
     /**
      * Writes a buffer with the given length to the terminal.
      * @param buffer the buffer to write
      * @param len the buffer's length
      */
-    void writeBuffer(char const *buffer, size_t len);
+    void writeBuffer(const char* buffer, size_t len);
 
     /**
      * Writes Data starting at the offset from the buffer with the given length to the terminal.

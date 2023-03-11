@@ -1,18 +1,20 @@
 #include "ArchCommon.h"
-#include "ArchBoardSpecific.h"
-#include "offsets.h"
-#include "kprintf.h"
-#include "ArchMemory.h"
-#include "TextConsole.h"
+
 #include "FrameBufferConsole.h"
-#include "backtrace.h"
-#include "SWEBDebugInfo.h"
-#include "ArchCpuLocalStorage.h"
-#include "SMP.h"
-#include "PlatformBus.h"
-#include "SerialManager.h"
-#include "MMCDriver.h"
 #include "KernelMemoryManager.h"
+#include "MMCDriver.h"
+#include "PlatformBus.h"
+#include "SMP.h"
+#include "SWEBDebugInfo.h"
+#include "SerialManager.h"
+#include "TextConsole.h"
+#include "backtrace.h"
+#include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchBoardSpecific.h"
+#include "ArchCpuLocalStorage.h"
+#include "ArchMemory.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -108,7 +110,7 @@ Console* ArchCommon::createConsole(size_t count)
   return new FrameBufferConsole(count);
 }
 
-Stabs2DebugInfo const *kernel_debug_info = 0;
+const Stabs2DebugInfo* kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {

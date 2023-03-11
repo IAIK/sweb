@@ -1,10 +1,10 @@
 #include "Terminal.h"
-#include "Console.h"
 
+#include "Console.h"
 #include "KeyboardManager.h"
+#include "kprintf.h"
 
 #include "debug.h"
-#include "kprintf.h"
 
 Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_rows) :
     CharacterDevice(name), console_(console), num_columns_(num_columns), num_rows_(num_rows), len_(
@@ -104,7 +104,7 @@ void Terminal::write(char character)
   console_->unLockConsoleForDrawing();
 }
 
-void Terminal::writeString(char const *string)
+void Terminal::writeString(const char* string)
 {
   ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();
@@ -125,7 +125,7 @@ int32 Terminal::writeData(uint32 offset, uint32 size, const char*buffer)
   return size;
 }
 
-void Terminal::writeBuffer(char const *buffer, size_t len)
+void Terminal::writeBuffer(const char* buffer, size_t len)
 {
   ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();

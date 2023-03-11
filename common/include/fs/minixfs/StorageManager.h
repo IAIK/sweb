@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Bitmap.h"
+
 #include "types.h"
 
 class StorageManager

@@ -1,10 +1,13 @@
 #pragma once
 
-#include "types.h"
-#include "kprintf.h"
-#include "EASTL/list.h"
-#include "EASTL/atomic.h"
 #include "Dentry.h"
+#include "kprintf.h"
+
+#include "types.h"
+
+#include "EASTL/atomic.h"
+#include "EASTL/list.h"
+
 #include "assert.h"
 
 class File;

@@ -2,6 +2,10 @@
 
 #include "Thread.h"
 
+#include <cstdint>
+
+#include "EASTL/string.h"
+
 class UserProcess : public Thread
 {
 public:
@@ -14,12 +18,12 @@ public:
      */
     UserProcess(const eastl::string& executable_path,
                 FileSystemInfo* working_dir,
-                uint32 terminal_number = 0);
+                uint32_t terminal_number = 0);
 
     virtual ~UserProcess();
 
     virtual void Run(); // not used
 
 private:
-    int32 fd_;
+    int32_t fd_;
 };

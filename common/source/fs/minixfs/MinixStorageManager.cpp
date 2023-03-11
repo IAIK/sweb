@@ -1,7 +1,9 @@
 #include "MinixStorageManager.h"
+
 #include "MinixFSSuperblock.h"
-#include <assert.h>
-#include "kprintf.h"
+
+#include "assert.h"
+#include "debug.h"
 
 MinixStorageManager::MinixStorageManager(char *bm_buffer, uint16 num_inode_bm_blocks, uint16 num_zone_bm_blocks, uint16 num_inodes, uint16 num_zones) :
     StorageManager(num_inodes, num_zones)

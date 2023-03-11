@@ -1,9 +1,11 @@
 #pragma once
 
 #include "types.h"
-#include "assert.h"
+
 #include "EASTL/list.h"
 #include "EASTL/string.h"
+
+#include "assert.h"
 
 class BDDriver;
 class BDRequest;

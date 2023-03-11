@@ -1,10 +1,12 @@
 #pragma once
 
 #include "ranges.h"
+
 #include "EASTL/functional.h"
-#include "EASTL/utility.h"
-#include "EASTL/type_traits.h"
 #include "EASTL/iterator.h"
+#include "EASTL/type_traits.h"
+#include "EASTL/utility.h"
+
 #include "debug.h"
 
 namespace ranges

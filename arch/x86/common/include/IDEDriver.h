@@ -5,8 +5,11 @@
 #include "IrqDomain.h"
 #include "ports.h"
 #include "source_location.h"
-#include <cinttypes>
+
 #include "ArchInterrupts.h"
+
+#include <cinttypes>
+
 #include "EASTL/array.h"
 #include "EASTL/tuple.h"
 #include "EASTL/vector.h"

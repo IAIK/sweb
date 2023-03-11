@@ -1,8 +1,8 @@
 #pragma once
 
-#include "EASTL/type_traits.h"
 #include "EASTL/iterator.h"
 #include "EASTL/memory.h"
+#include "EASTL/type_traits.h"
 
 namespace ranges
 {

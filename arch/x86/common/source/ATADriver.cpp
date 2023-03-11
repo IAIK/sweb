@@ -4,12 +4,15 @@
 #include "BDManager.h"
 #include "BDRequest.h"
 #include "IDEDriver.h"
+#include "MasterBootRecord.h"
 #include "Scheduler.h"
 #include "Thread.h"
 #include "kprintf.h"
 #include "offsets.h"
+
 #include "ArchInterrupts.h"
-#include "MasterBootRecord.h"
+
+#include "debug.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
@@ -184,7 +187,7 @@ void ATADrive::pioReadData(eastl::span<uint16_t> buffer)
 void ATADrive::pioWriteData(eastl::span<uint16_t> buffer)
 {
     // Don't use rep outsw here because of required delay after port write
-    for (uint16_t const& word : buffer)
+    for (const uint16_t& word : buffer)
     {
         controller.io_regs[IDEControllerChannel::IoRegister::DATA].write(word);
     }

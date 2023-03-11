@@ -1,11 +1,14 @@
-#include <types.h>
-#include <Thread.h>
-#include <Scheduler.h>
-#include <ArchInterrupts.h>
-#include "kprintf.h"
 #include "panic.h"
-#include "debug_bochs.h"
+
 #include "SystemState.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include <Scheduler.h>
+#include <Thread.h>
+
+#include <ArchInterrupts.h>
+
+#include <types.h>
 
 void kpanict ( const char * message )
 {

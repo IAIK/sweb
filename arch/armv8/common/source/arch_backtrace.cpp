@@ -1,13 +1,16 @@
-#include "kprintf.h"
-#include "Thread.h"
 #include "arch_backtrace.h"
+
 #include "InterruptUtils.h"
-#include "ArchThreads.h"
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
-#include "EASTL/map.h"
-#include "ArchCommon.h"
-#include "offsets.h"
 #include "Loader.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchThreads.h"
+
+#include "EASTL/map.h"
 
 struct StackFrame
 {

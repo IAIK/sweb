@@ -1,6 +1,9 @@
 #include "ArchCpuLocalStorage.h"
-#include <cstring>
+
 #include "SegmentUtils.h"
+
+#include <cstring>
+
 #include "debug.h"
 
 extern char cls_start;

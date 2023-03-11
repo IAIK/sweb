@@ -3,9 +3,11 @@
 #define IO_TIMEOUT (600000)
 #define IRQ0_TIMER_FREQUENCY 0
 
-#include "types.h"
 #include "IrqDomain.h"
+
 #include "ArchCpuLocalStorage.h"
+
+#include "types.h"
 
 extern cpu_local IrqDomain* cpu_root_irq_domain_;
 extern cpu_local IrqDomain cpu_irq_vector_domain_;

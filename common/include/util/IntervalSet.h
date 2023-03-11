@@ -1,7 +1,7 @@
 #pragma once
-#include "EASTL/utility.h"
-#include "EASTL/map.h"
 
+#include "EASTL/map.h"
+#include "EASTL/utility.h"
 
 template <typename T, typename TAllocator = EASTLAllocatorType>
 class IntervalSet : public eastl::map<T, T, eastl::less<T>, TAllocator>

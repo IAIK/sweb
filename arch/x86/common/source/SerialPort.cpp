@@ -1,11 +1,12 @@
-#include "ArchSerialInfo.h"
-#include "ports.h"
+#include "8259.h"
 #include "SerialManager.h"
+#include "kprintf.h"
+#include "ports.h"
 
 #include "ArchInterrupts.h"
+#include "ArchSerialInfo.h"
 #include "ArchThreads.h"
-#include "kprintf.h"
-#include "8259.h"
+
 #include "debug.h"
 
 SerialPort::SerialPort(const char* name, const ArchSerialInfo& port_info) :

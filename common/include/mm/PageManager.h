@@ -1,11 +1,12 @@
 #pragma once
 
-#include "types.h"
-#include "paging-definitions.h"
-#include "SpinLock.h"
-#include "Bitmap.h"
 #include "Allocator.h"
+#include "Bitmap.h"
 #include "BootstrapRangeAllocator.h"
+#include "SpinLock.h"
+#include "paging-definitions.h"
+
+#include "types.h"
 
 // Allow KernelMemoryManager to allocate new pages from PageManager when kernel heap is full
 // Please note that this means that the KMM depends on the page manager

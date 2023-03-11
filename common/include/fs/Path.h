@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+
 #include "EASTL/string.h"
 
 class Dentry;

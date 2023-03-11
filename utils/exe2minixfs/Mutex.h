@@ -2,6 +2,8 @@
 #ifdef EXE2MINIXFS
 #pragma once
 
+#include "types.h"
+
 class Mutex
 {
 public:

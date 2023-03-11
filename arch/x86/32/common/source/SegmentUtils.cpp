@@ -1,10 +1,13 @@
 #include "SegmentUtils.h"
+
+#include "Scheduler.h"
 #include "kstring.h"
+
+#include "ArchCpuLocalStorage.h"
+#include "ArchMulticore.h"
+
 #include "assert.h"
 #include "debug.h"
-#include "ArchMulticore.h"
-#include "Scheduler.h"
-#include "ArchCpuLocalStorage.h"
 
 GDT gdt;
 TSS g_tss;

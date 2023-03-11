@@ -1,7 +1,8 @@
 #include "MSR.h"
-#include "debug.h"
+
 #include <cinttypes>
 
+#include "debug.h"
 
 void MSR::getMSR(uint32_t msr, uint32_t *lo, uint32_t *hi)
 {

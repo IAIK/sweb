@@ -1,14 +1,18 @@
 #include "ACPI.h"
+
 #include "APIC.h"
 #include "IoApic.h"
-#include "ArchCommon.h"
-#include "ArchMemory.h"
-#include "debug.h"
 #include "kstring.h"
-#include "assert.h"
 #include "new.h"
 #include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchMemory.h"
+
 #include "types.h"
+
+#include "assert.h"
+#include "debug.h"
 
 RSDPDescriptor* RSDP = nullptr;
 size_t ACPI_version = 0;

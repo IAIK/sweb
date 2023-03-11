@@ -1,6 +1,7 @@
 #pragma once
 
 #include "InterruptDescriptorTable.h"
+
 #include <cinttypes>
 
 #define DPL_KERNEL_SPACE     0 // kernelspace's protection level

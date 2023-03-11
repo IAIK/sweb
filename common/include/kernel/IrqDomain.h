@@ -2,6 +2,8 @@
 
 #include "ranges.h"
 #include <cstddef>
+
+#include "EASTL/atomic.h"
 #include "EASTL/fixed_function.h"
 #include "EASTL/intrusive_list.h"
 #include "EASTL/iterator.h"
@@ -9,7 +11,6 @@
 #include "EASTL/string.h"
 #include "EASTL/type_traits.h"
 #include "EASTL/vector.h"
-#include "EASTL/atomic.h"
 
 using irqnum_t = size_t;
 

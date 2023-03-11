@@ -1,10 +1,12 @@
 #pragma once
 
-#include "new.h"
-#include "SpinLock.h"
 #include "Mutex.h"
+#include "SpinLock.h"
+#include "new.h"
+
+#include <cstddef>
+
 #include "assert.h"
-#include "stddef.h"
 
 class MallocSegment
 {

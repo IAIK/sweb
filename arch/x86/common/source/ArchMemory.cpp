@@ -1,9 +1,12 @@
 #include "ArchMemory.h"
-#include "ArchMulticore.h"
-#include "ArchInterrupts.h"
-#include "ArchCommon.h"
+
 #include "SMP.h"
 #include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+
 #include "debug.h"
 
 // Common functionality for x86 memory management (x86_64 / x86_32 / x86_32_pae)

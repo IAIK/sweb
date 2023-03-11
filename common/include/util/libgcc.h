@@ -1,9 +1,9 @@
 #pragma once
 
-#include "types.h"
+#include <cstdint>
 
-extern "C" int64 __divdi3(int64 num, int64 den);
-extern "C" uint64 __udivdi3(uint64 num, uint64 den);
-extern "C" uint64 __umoddi3(uint64 a, uint64 b);
-extern "C" uint64 __udivmoddi4(uint64 num, uint64 den, uint64 *rem_p);
+extern "C" int64_t __divdi3(int64_t num, int64_t den);
+extern "C" uint64_t __udivdi3(uint64_t num, uint64_t den);
+extern "C" uint64_t __umoddi3(uint64_t a, uint64_t b);
+extern "C" uint64_t __udivmoddi4(uint64_t num, uint64_t den, uint64_t *rem_p);
 

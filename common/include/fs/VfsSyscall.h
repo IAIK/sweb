@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include "types.h"
-#include "stddef.h"
+
 #ifndef EXE2MINIXFS
 #include "Mutex.h"
 #endif

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "types.h"
 #include "paging-definitions.h"
+
+#include "types.h"
+
 #include "EASTL/vector.h"
 
 class ArchMemoryMapping
@@ -140,30 +142,29 @@ public:
   static ArchMemory& kernelArchMemory();
 
 private:
-  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+    ArchMemory& operator=(const ArchMemory& src) = delete; // should never be implemented
 
+    PageTableEntry* getPTE(size_t vpn);
+    static PageTableEntry* getIdentAddressOfPT(PageDirEntry* page_directory, uint32 pde_vpn);
 
-  PageTableEntry* getPTE(size_t vpn);
-  static PageTableEntry* getIdentAddressOfPT(PageDirEntry *page_directory, uint32 pde_vpn);
+    /**
+     * Adds a page directory entry to the given page directory.
+     * (In other words, adds the reference to a new page table to a given
+     * page directory.)
+     *
+     * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
+     * @param physical_page_table_page physical page of the new page table.
+     */
+    void insertPT(uint32 pde_vpn);
 
-/**
- * Adds a page directory entry to the given page directory.
- * (In other words, adds the reference to a new page table to a given
- * page directory.)
- *
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- * @param physical_page_table_page physical page of the new page table.
- */
-  void insertPT(uint32 pde_vpn);
+    /**
+     * Removes a page directory entry from a given page directory if it is present
+     * in the first place. Futhermore, the target page table is assured to be
+     * empty.
+     *
+     * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
+     */
+    void checkAndRemovePT(uint32 pde_vpn);
 
-/**
- * Removes a page directory entry from a given page directory if it is present
- * in the first place. Futhermore, the target page table is assured to be
- * empty.
- *
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- */
-  void checkAndRemovePT(uint32 pde_vpn);
-
-  eastl::vector<uint32> pt_ppns_;
+    eastl::vector<uint32> pt_ppns_;
 };

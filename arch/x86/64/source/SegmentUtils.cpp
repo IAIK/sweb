@@ -1,9 +1,10 @@
 #include "SegmentUtils.h"
+
 #include "MSR.h"
-#include "assert.h"
-#include "debug.h"
 #include "kstring.h"
 
+#include "assert.h"
+#include "debug.h"
 
 GDT32Ptr::GDT32Ptr(uint16 gdt_limit, uint32 gdt_addr) :
         limit(gdt_limit),

@@ -1,11 +1,15 @@
 #pragma once
 
-#include <cstdint>
-#include "EASTL/vector.h"
-#include "EASTL/bit.h"
 #include "ACPI.h"
 #include "IrqDomain.h"
+
 #include "ArchMulticore.h"
+
+#include <cstdint>
+
+#include "EASTL/bit.h"
+#include "EASTL/vector.h"
+
 #include "debug.h"
 
 class IoApic : public InterruptController, public IrqDomain, public Device

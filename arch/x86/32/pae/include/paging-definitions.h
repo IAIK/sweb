@@ -1,8 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "EASTL/type_traits.h"
 
+#include "EASTL/type_traits.h"
 
 #define PAGE_DIRECTORY_POINTER_TABLE_ENTRIES 4
 #define PAGE_DIRECTORY_ENTRIES 512

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Mutex.h"
-#include "types.h"
-#include "EASTL/vector.h"
-
 #include "Thread.h"
+
+#include "types.h"
+
+#include "EASTL/vector.h"
 
 class Terminal;
 

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "SegmentUtils.h"
+
 #include <cstddef>
 #include <cstdint>
-#include "SegmentUtils.h"
+
 #include "EASTL/array.h"
 
 using handler_func_t = void (*)();

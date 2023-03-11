@@ -1,20 +1,24 @@
 #pragma once
 
+#include "CleanupThread.h"
+#include "IdleThread.h"
+#include "SMP.h"
+#include "SchedulerLock.h"
+#include "Thread.h"
+
+#include "ArchCommon.h"
+#include "ArchCpuLocalStorage.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+
 #include "types.h"
+
+#include "EASTL/atomic.h"
 #include "EASTL/list.h"
 #include "EASTL/set.h"
 #include "EASTL/vector_multiset.h"
-#include "IdleThread.h"
-#include "CleanupThread.h"
-#include "EASTL/atomic.h"
-#include "Thread.h"
+
 #include "debug.h"
-#include "SchedulerLock.h"
-#include "ArchInterrupts.h"
-#include "ArchMulticore.h"
-#include "ArchCpuLocalStorage.h"
-#include "ArchCommon.h"
-#include "SMP.h"
 
 class Thread;
 class Mutex;

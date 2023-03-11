@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Mutex.h"
+
 #include "types.h"
+
 #include "EASTL/list.h"
 #include "EASTL/map.h"
-#include "Mutex.h"
 
 class File;
 class FileDescriptor;

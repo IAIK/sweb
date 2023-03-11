@@ -1,15 +1,17 @@
 #include "InitThread.h"
-#include "VfsSyscall.h"
-#include <mm/KernelMemoryManager.h>
-#include "ProcessRegistry.h"
-#include "VirtualFileSystem.h"
-#include "DeviceFSSuperblock.h"
-#include "DeviceBus.h"
+
 #include "BootloaderModules.h"
+#include "DeviceBus.h"
+#include "DeviceFSSuperblock.h"
+#include "KernelMemoryManager.h"
 #include "PageManager.h"
+#include "ProcessRegistry.h"
 #include "Scheduler.h"
-#include "debug.h"
+#include "VfsSyscall.h"
+#include "VirtualFileSystem.h"
 #include "kprintf.h"
+
+#include "debug.h"
 
 InitThread* InitThread::instance_ = nullptr;
 

@@ -1,15 +1,19 @@
 #include "FileDescriptor.h"
+
+#include "File.h"
+#include "Mutex.h"
+#include "ScopeLock.h"
+#include "kprintf.h"
+
+#include "EASTL/atomic.h"
 #include "EASTL/list.h"
+
+#include "assert.h"
+#include "debug.h"
+
 #ifndef EXE2MINIXFS
 #include "ArchThreads.h"
 #endif
-#include "kprintf.h"
-#include "debug.h"
-#include "assert.h"
-#include "Mutex.h"
-#include "ScopeLock.h"
-#include "File.h"
-#include "EASTL/atomic.h"
 
 static eastl::atomic<size_t> fd_counter_ = {3};
 

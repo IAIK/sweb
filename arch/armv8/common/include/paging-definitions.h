@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+
 #define PAGE_ENTRIES   512
 #define LEVEL0_ENTRIES PAGE_ENTRIES
 #define LEVEL1_ENTRIES PAGE_ENTRIES

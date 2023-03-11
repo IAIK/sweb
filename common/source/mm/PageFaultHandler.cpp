@@ -1,14 +1,17 @@
 #include "PageFaultHandler.h"
-#include "kprintf.h"
-#include "Thread.h"
-#include "ArchInterrupts.h"
-#include "offsets.h"
-#include "Scheduler.h"
+
 #include "Loader.h"
+#include "Scheduler.h"
 #include "Syscall.h"
-#include "ArchThreads.h"
-#include "ArchMulticore.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+
 #include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "ArchThreads.h"
+
 #include "assert.h"
 
 const size_t PageFaultHandler::null_reference_check_border_ = PAGE_SIZE;

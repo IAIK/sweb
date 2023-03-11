@@ -2,6 +2,8 @@
 
 #include "CpuExclusiveLock.h"
 
+#include "types.h"
+
 class Thread;
 
 class SchedulerLock : public CpuExclusiveLock

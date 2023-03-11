@@ -1,7 +1,8 @@
 #pragma once
 
-#include "types.h"
 #include "paging-definitions.h"
+
+#include "types.h"
 
 #define RESOLVEMAPPING(pd,vpage) ;\
   PageDirEntry* page_directory = (PageDirEntry*) ArchMemory::getIdentAddressOfPPN(pd);\
@@ -110,20 +111,17 @@ public:
   static ArchMemory& kernelArchMemory();
 
 private:
-  ArchMemory &operator=(ArchMemory const &src) = delete; // should never be implemented
+    ArchMemory& operator=(const ArchMemory& src) = delete; // should never be implemented
 
-  template<typename T, size_t NUM_ENTRIES>
-  static bool tableEmpty(T* table);
+    template<typename T, size_t NUM_ENTRIES> static bool tableEmpty(T* table);
 
-  template<typename T>
-  static void removeEntry(T* map, size_t index);
+    template<typename T> static void removeEntry(T* map, size_t index);
 
-  template<typename T>
-  void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
+    template<typename T>
+    void insert(T* table, size_t index, ppn_t ppn, bool user_access, bool writeable);
 
-
-  /**
-   * ppn of the page dir page
-   */
-  ppn_t page_dir_page_;
+    /**
+     * ppn of the page dir page
+     */
+    ppn_t page_dir_page_;
 };

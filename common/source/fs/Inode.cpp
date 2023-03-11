@@ -1,7 +1,8 @@
 #include "Inode.h"
-#include "Superblock.h"
-#include "FileSystemType.h"
+
 #include "File.h"
+#include "FileSystemType.h"
+#include "Superblock.h"
 
 Inode::Inode(Superblock *superblock, uint32 inode_type) :
     i_dentrys_(),

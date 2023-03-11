@@ -1,22 +1,25 @@
 #include "ArchMulticore.h"
-#include "debug.h"
-#include "APIC.h"
-#include "offsets.h"
-#include "ArchMemory.h"
-#include "InterruptUtils.h"
-#include "ArchInterrupts.h"
-#include "Thread.h"
-#include "ScopeLock.h"
-#include "EASTL/atomic.h"
-#include "Scheduler.h"
-#include "ArchThreads.h"
-#include "ArchCommon.h"
-#include "Allocator.h"
-#include "assert.h"
-#include "SystemState.h"
-#include "CPUID.h"
-#include "PlatformBus.h"
 
+#include "APIC.h"
+#include "Allocator.h"
+#include "CPUID.h"
+#include "InterruptUtils.h"
+#include "PlatformBus.h"
+#include "Scheduler.h"
+#include "ScopeLock.h"
+#include "SystemState.h"
+#include "Thread.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMemory.h"
+#include "ArchThreads.h"
+
+#include "EASTL/atomic.h"
+
+#include "assert.h"
+#include "debug.h"
 
 cpu_local GDT cpu_gdt;
 cpu_local TSS cpu_tss;

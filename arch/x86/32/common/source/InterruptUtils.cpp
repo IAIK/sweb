@@ -1,32 +1,29 @@
 #include "InterruptUtils.h"
 
-#include "ArchSerialInfo.h"
+#include "8259.h"
 #include "BDManager.h"
-#include "ArchMemory.h"
-#include "ArchThreads.h"
-#include "ArchCommon.h"
-#include "ArchMulticore.h"
-#include "kprintf.h"
-#include "Scheduler.h"
 #include "Console.h"
-
-#include "SerialManager.h"
-#include "KeyboardManager.h"
-#include "ArchInterrupts.h"
-#include "backtrace.h"
-
 #include "ErrorHandlers.h"
+#include "KeyboardManager.h"
 #include "Loader.h"
 #include "PageFaultHandler.h"
+#include "Scheduler.h"
+#include "SerialManager.h"
 #include "Stabs2DebugInfo.h"
 #include "Syscall.h"
 #include "Thread.h"
 #include "TimerTickHandler.h"
+#include "backtrace.h"
+#include "kprintf.h"
 #include "offsets.h"
 #include "paging-definitions.h"
 
-#include "8259.h"
-
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
+#include "ArchSerialInfo.h"
+#include "ArchThreads.h"
 
 // --- Pagefault error flags.
 //     PF because/in/caused by/...

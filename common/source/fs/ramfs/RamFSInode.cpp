@@ -1,12 +1,13 @@
 #include "fs/ramfs/RamFSInode.h"
-#include "kstring.h"
-#include "assert.h"
-#include "fs/ramfs/RamFSSuperblock.h"
-#include "fs/ramfs/RamFSFile.h"
-#include "fs/Dentry.h"
-#include "FileSystemType.h"
 
-#include "console/kprintf.h"
+#include "FileSystemType.h"
+#include "fs/Dentry.h"
+#include "fs/ramfs/RamFSFile.h"
+#include "fs/ramfs/RamFSSuperblock.h"
+#include "kstring.h"
+
+#include "assert.h"
+#include "debug.h"
 
 #define BASIC_ALLOC 256
 

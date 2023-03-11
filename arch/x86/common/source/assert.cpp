@@ -1,19 +1,21 @@
 #include "assert.h"
+
+#include "SMP.h"
+#include "Scheduler.h"
+#include "SystemState.h"
+#include "Thread.h"
+#include "debug_bochs.h"
 #include "kprintf.h"
 #include "panic.h"
-#include "debug_bochs.h"
-#include "Thread.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
-#include "SMP.h"
-#include "ArchMulticore.h"
-#include "SystemState.h"
+
 #include "ArchCpuLocalStorage.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
 
 __attribute__((noreturn)) void pre_new_sweb_assert(const char* condition, uint32 line, const char* file)
 {
   system_state = KPANIC;
-  char const *error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
+  const char* error_string = "KERNEL PANIC: Assertion Failed in File:  on Line:      ";
   char line_string[5];
   ArchInterrupts::disableInterrupts();
   writeChar2Bochs('\n');

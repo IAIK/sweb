@@ -1,9 +1,10 @@
 #pragma once
 
+#include "Condition.h"
+#include "Mutex.h"
 #include "kprintf.h"
 #include "new.h"
-#include "Mutex.h"
-#include "Condition.h"
+
 #include "EASTL/vector.h"
 
 #ifdef __cplusplus

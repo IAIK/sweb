@@ -1,19 +1,22 @@
 #include "VfsSyscall.h"
-#include "kstring.h"
-#include "assert.h"
-#include "Dirent.h"
-#include "Inode.h"
+
 #include "Dentry.h"
-#include "Superblock.h"
+#include "Dirent.h"
 #include "File.h"
 #include "FileDescriptor.h"
-#include "FileSystemType.h"
 #include "FileSystemInfo.h"
-#include "VirtualFileSystem.h"
+#include "FileSystemType.h"
+#include "Inode.h"
 #include "MinixFSType.h"
 #include "PathWalker.h"
+#include "Superblock.h"
 #include "VfsMount.h"
+#include "VirtualFileSystem.h"
 #include "kprintf.h"
+#include "kstring.h"
+
+#include "assert.h"
+
 #ifndef EXE2MINIXFS
 #include "Thread.h"
 #endif

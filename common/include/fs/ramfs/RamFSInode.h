@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fs/Inode.h"
+
 #include "types.h"
 
 class RamFSInode : public Inode

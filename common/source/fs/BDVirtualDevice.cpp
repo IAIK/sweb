@@ -1,11 +1,13 @@
-#include "ArchInterrupts.h"
+#include "BDVirtualDevice.h"
+
 #include "BDDriver.h"
 #include "BDRequest.h"
-#include "BDVirtualDevice.h"
-#include "kstring.h"
-#include "debug.h"
-#include "kprintf.h"
 #include "Thread.h"
+#include "kstring.h"
+
+#include "ArchInterrupts.h"
+
+#include "debug.h"
 
 BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size,
                                  const char *name, bool writable) :

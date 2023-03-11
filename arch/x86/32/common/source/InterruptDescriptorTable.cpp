@@ -1,4 +1,5 @@
 #include "InterruptDescriptorTable.h"
+
 #include "debug.h"
 
 #define LO_WORD(x) (((uint32)(x)) & 0x0000FFFF)

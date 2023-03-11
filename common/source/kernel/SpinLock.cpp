@@ -1,17 +1,20 @@
 #include "SpinLock.h"
-#include "kprintf.h"
+
 #include "SMP.h"
-#include "ArchThreads.h"
+#include "Scheduler.h"
+#include "Stabs2DebugInfo.h"
+#include "SystemState.h"
+#include "Thread.h"
+#include "backtrace.h"
+#include "kprintf.h"
+
 #include "ArchInterrupts.h"
 #include "ArchMulticore.h"
+#include "ArchThreads.h"
+
 #include "assert.h"
-#include "Scheduler.h"
-#include "Thread.h"
-#include "assert.h"
-#include "Stabs2DebugInfo.h"
-#include "backtrace.h"
-#include "SystemState.h"
-extern Stabs2DebugInfo const *kernel_debug_info;
+
+extern const Stabs2DebugInfo* kernel_debug_info;
 
 SpinLock::SpinLock(const char* name) :
   Lock::Lock(name), lock_(0)

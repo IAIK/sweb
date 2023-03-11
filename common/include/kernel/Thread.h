@@ -1,8 +1,11 @@
 #pragma once
 
-#include "types.h"
-#include "fs/FileSystemInfo.h"
 #include "VgaColors.h"
+#include "fs/FileSystemInfo.h"
+
+#include "types.h"
+
+#include "EASTL/string.h"
 #include "EASTL/unique_ptr.h"
 
 #define STACK_CANARY ((uint32)0xDEADDEAD ^ (uint32)(size_t)this)

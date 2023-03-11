@@ -1,8 +1,12 @@
 #include "ArchMulticore.h"
+
+#include "SMP.h"
+
 #include "ArchCpuLocalStorage.h"
 #include "ArchInterrupts.h"
+
 #include "EASTL/atomic.h"
-#include "SMP.h"
+
 #include "debug.h"
 
 extern eastl::atomic<size_t> running_cpus;

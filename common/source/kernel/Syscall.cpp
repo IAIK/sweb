@@ -1,13 +1,16 @@
-#include "offsets.h"
 #include "Syscall.h"
-#include "syscall-definitions.h"
-#include "Terminal.h"
-#include "debug_bochs.h"
-#include "VfsSyscall.h"
-#include "ProcessRegistry.h"
+
 #include "File.h"
-#include "ArchMulticore.h"
+#include "ProcessRegistry.h"
 #include "Scheduler.h"
+#include "Terminal.h"
+#include "VfsSyscall.h"
+#include "debug_bochs.h"
+#include "offsets.h"
+#include "syscall-definitions.h"
+
+#include "ArchMulticore.h"
+
 #include "assert.h"
 
 size_t Syscall::syscallException(size_t syscall_number,

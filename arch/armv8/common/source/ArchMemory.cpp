@@ -1,11 +1,14 @@
 #include "ArchMemory.h"
-#include "ArchMulticore.h"
-#include "kprintf.h"
-#include "assert.h"
+
 #include "PageManager.h"
-#include "offsets.h"
-#include "kstring.h"
 #include "SMP.h"
+#include "kprintf.h"
+#include "kstring.h"
+#include "offsets.h"
+
+#include "ArchMulticore.h"
+
+#include "assert.h"
 
 Level1Entry kernel_paging_level1[KERNEL_LEVEL1_TABLES * LEVEL1_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
 //one page for ident and one for the kernel pages

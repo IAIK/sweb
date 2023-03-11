@@ -1,14 +1,18 @@
 #include "ArchMulticore.h"
-#include "ArchInterrupts.h"
+
+#include "Allocator.h"
 #include "InterruptUtils.h"
 #include "ProgrammableIntervalTimer.h"
-#include "ArchCommon.h"
-#include "Allocator.h"
 #include "SMP.h"
 #include "SystemState.h"
-#include "debug.h"
-#include "EASTL/finally.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+
 #include "EASTL/atomic.h"
+#include "EASTL/finally.h"
+
+#include "debug.h"
 
 extern eastl::atomic<bool> ap_started;
 

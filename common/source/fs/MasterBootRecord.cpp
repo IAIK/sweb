@@ -1,11 +1,15 @@
 #include "MasterBootRecord.h"
+
 #include "BDDriver.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
+
 #include "ArchInterrupts.h"
-#include "debug.h"
+
 #include "EASTL/array.h"
 #include "EASTL/string.h"
+
+#include "debug.h"
 
 int detectMBRPartitions(BDVirtualDevice* bdv, BDDriver* drv, uint32_t sector, uint32_t SPT, const char* name)
 {

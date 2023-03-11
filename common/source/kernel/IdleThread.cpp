@@ -1,10 +1,13 @@
 #include "IdleThread.h"
+
 #include "Scheduler.h"
+#include "VgaColors.h"
+
 #include "ArchCommon.h"
 #include "ArchMulticore.h"
-#include "debug.h"
-#include "VgaColors.h"
+
 #include "assert.h"
+#include "debug.h"
 
 IdleThread::IdleThread() :
     Thread(nullptr, "IdleThread", Thread::KERNEL_THREAD)

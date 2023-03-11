@@ -1,10 +1,13 @@
-#include "types.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "multiboot.h"
-#include "ArchCommon.h"
 #include "debug_bochs.h"
+#include "multiboot.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "ArchCommon.h"
 #include "ArchMemory.h"
+
+#include "types.h"
+
 #include "assert.h"
 
 extern "C" void initialiseBootTimePaging()

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "EASTL/bit.h"
 
+#include "EASTL/bit.h"
 
 /**
  * reads 1 byte from the selected I/O port

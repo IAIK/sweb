@@ -1,7 +1,8 @@
 #pragma once
 
-#include "EASTL/vector_map.h"
 #include "arch_backtrace.h"
+
+#include "EASTL/vector_map.h"
 
 // The limit for function names, after that, they will get capped
 #define CALL_FUNC_NAME_LIMIT 256
@@ -11,19 +12,19 @@ struct StabEntry;
 class Stabs2DebugInfo
 {
 public:
+    Stabs2DebugInfo(const char* stab_begin, const char* stab_end, const char* stab_str);
+    virtual ~Stabs2DebugInfo();
 
-  Stabs2DebugInfo(char const *stab_begin, char const *stab_end, char const *stab_str);
-  virtual ~Stabs2DebugInfo();
-
-  virtual void getCallNameAndLine(pointer address, const char*& mangled_name, ssize_t &line) const;
-  virtual void printCallInformation(pointer address) const;
+    virtual void
+    getCallNameAndLine(pointer address, const char*& mangled_name, ssize_t& line) const;
+    virtual void printCallInformation(pointer address) const;
 
 protected:
-  StabEntry const *stab_start_;
-  StabEntry const *stab_end_;
-  char const *stabstr_buffer_;
+    const StabEntry* stab_start_;
+    const StabEntry* stab_end_;
+    const char* stabstr_buffer_;
 
-  eastl::vector_map<size_t, StabEntry const*> function_symbols_;
+    eastl::vector_map<size_t, const StabEntry*> function_symbols_;
 
 private:
   virtual void initialiseSymbolTable();

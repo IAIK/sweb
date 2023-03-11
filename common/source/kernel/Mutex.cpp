@@ -1,17 +1,20 @@
 #include "Mutex.h"
-#include "kprintf.h"
+
 #include "SMP.h"
-#include "ArchThreads.h"
-#include "ArchInterrupts.h"
-#include "ArchMulticore.h"
 #include "Scheduler.h"
-#include "Thread.h"
-#include "panic.h"
-#include "backtrace.h"
-#include "assert.h"
 #include "Stabs2DebugInfo.h"
 #include "SystemState.h"
-extern Stabs2DebugInfo const* kernel_debug_info;
+#include "Thread.h"
+#include "backtrace.h"
+#include "kprintf.h"
+
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
+#include "ArchThreads.h"
+
+#include "assert.h"
+
+extern const Stabs2DebugInfo* kernel_debug_info;
 
 Mutex::Mutex(const char* name) :
   Lock::Lock(name), mutex_(0)

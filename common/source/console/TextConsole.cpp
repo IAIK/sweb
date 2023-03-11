@@ -1,13 +1,15 @@
 #include "TextConsole.h"
-#include "Terminal.h"
-#include "ArchCommon.h"
-#include "panic.h"
-
-#include "Scheduler.h"
 
 #include "KeyboardManager.h"
+#include "Scheduler.h"
+#include "Terminal.h"
 #include "kprintf.h"
 #include "kstring.h"
+
+#include "ArchCommon.h"
+
+#include "assert.h"
+#include "debug.h"
 
 TextConsole::TextConsole(uint32 num_terminals) :
     Console(num_terminals, "TxTConsoleThread")
@@ -65,8 +67,10 @@ void TextConsole::consoleClearScreen()
   }
 }
 
-uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
-                                        uint8 const &state)
+uint32 TextConsole::consoleSetCharacter(const uint32& row,
+                                        const uint32& column,
+                                        const uint8& character,
+                                        const uint8& state)
 {
   char *fb = (char*) ArchCommon::getFBPtr();
   uint32_t console_columns = consoleGetNumColumns();
@@ -82,7 +86,7 @@ uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, 
 
 #define STAT_ROWS (2)
 
-void TextConsole::consoleScrollUp(uint8 const &state)
+void TextConsole::consoleScrollUp(const uint8& state)
 {
   char* fb = (char*) ArchCommon::getFBPtr();
   memmove((void*) (fb + (consoleGetNumColumns() * 2 * STAT_ROWS)),

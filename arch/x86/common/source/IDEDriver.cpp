@@ -9,6 +9,7 @@
 #include "kstring.h"
 #include "ports.h"
 #include "source_location.h"
+
 #include "ArchInterrupts.h"
 
 size_t IDEControllerChannel::num_ide_controllers = 0;

@@ -1,7 +1,4 @@
 #include "FileSystemInfo.h"
-#include "Dentry.h"
-#include "kstring.h"
-#include "assert.h"
 
 FileSystemInfo::FileSystemInfo() :
     root_(), pwd_()

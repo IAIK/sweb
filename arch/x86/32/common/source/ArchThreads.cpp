@@ -1,14 +1,15 @@
 #include "ArchThreads.h"
-#include "ArchMemory.h"
+
 #include "Loader.h"
-#include "kprintf.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "Thread.h"
-#include "kstring.h"
+#include "Scheduler.h"
 #include "SegmentUtils.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "kstring.h"
+#include "offsets.h"
+#include "paging-definitions.h"
 
-
+#include "ArchMemory.h"
 
 void ArchThreads::initialise()
 {
@@ -242,4 +243,5 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
 [[noreturn]] void ArchThreads::startThreads(Thread* init_thread)
 {
     contextSwitch(init_thread, init_thread->kernel_registers_.get());
+    assert(false);
 }

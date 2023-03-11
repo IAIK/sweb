@@ -1,18 +1,18 @@
 #pragma once
 
-#include "CPUID.h"
-#include <cstdint>
-#include "types.h"
 #include "ACPI.h"
-#include "EASTL/vector.h"
-#include "EASTL/bit.h"
-#include "EASTL/string.h"
-#include "IrqDomain.h"
-#include "DeviceDriver.h"
+#include "CPUID.h"
 #include "Device.h"
+#include "DeviceDriver.h"
+#include "IrqDomain.h"
 #include "ports.h"
 
-extern "C" void arch_irqHandler_127();
+#include "types.h"
+#include <cstdint>
+
+#include "EASTL/bit.h"
+#include "EASTL/string.h"
+#include "EASTL/vector.h"
 
 
 class Apic : public InterruptController, public IrqDomain, public Device

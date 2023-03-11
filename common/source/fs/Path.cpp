@@ -1,12 +1,14 @@
 #include "Path.h"
-#include "kprintf.h"
-#include "debug.h"
+
 #include "Dentry.h"
-#include "VfsMount.h"
 #include "Inode.h"
-#include "assert.h"
-#include "VirtualFileSystem.h"
 #include "PathWalker.h"
+#include "VfsMount.h"
+#include "VirtualFileSystem.h"
+#include "kprintf.h"
+
+#include "assert.h"
+#include "debug.h"
 
 Path::Path(Dentry* dentry, VfsMount* mnt) :
     dentry_(dentry), mnt_(mnt)

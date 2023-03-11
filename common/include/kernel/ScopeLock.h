@@ -1,6 +1,7 @@
 #pragma once
 
 #include "backtrace.h"
+
 #include "types.h"
 
 class Mutex;

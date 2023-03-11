@@ -1,7 +1,8 @@
-#include "fs/ramfs/RamFSInode.h"
 #include "fs/ramfs/RamFSFile.h"
-#include "fs/ramfs/RamFSSuperblock.h"
+
 #include "fs/Dentry.h"
+#include "fs/ramfs/RamFSInode.h"
+#include "fs/ramfs/RamFSSuperblock.h"
 
 #define ERROR_FRO "ERROR: The flag muss be READONLY for several opened files"
 #define ERROR_FF  "ERROR: The flag does not allow this operation"

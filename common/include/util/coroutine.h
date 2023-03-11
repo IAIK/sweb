@@ -1,10 +1,11 @@
 #pragma once
 
 #include <cstddef>
+
 #include <EASTL/functional.h>
+
 #include "assert.h"
 #include "debug.h"
-
 
 namespace std
 {

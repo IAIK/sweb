@@ -1,7 +1,10 @@
 #include "CleanupThread.h"
+
 #include "Scheduler.h"
-#include "ArchMulticore.h"
 #include "VgaColors.h"
+
+#include "ArchMulticore.h"
+
 #include "assert.h"
 
 CleanupThread::CleanupThread() : Thread(0, "CleanupThread", Thread::KERNEL_THREAD)

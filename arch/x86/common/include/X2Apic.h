@@ -3,7 +3,9 @@
 #include "APIC.h"
 #include "CPUID.h"
 #include "MSR.h"
+
 #include <cstdint>
+
 #include "debug.h"
 
 class X2Apic : public Apic

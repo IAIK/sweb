@@ -1,4 +1,5 @@
 #include "IrqDomain.h"
+
 #include "debug.h"
 
 IrqDomain::IrqDomain(const eastl::string& name,

@@ -1,9 +1,12 @@
 #pragma once
 
-#include "types.h"
-#include "Mutex.h"
-#include "ArchMemory.h"
 #include "ElfFormat.h"
+#include "Mutex.h"
+
+#include "ArchMemory.h"
+
+#include "types.h"
+
 #include "EASTL/vector.h"
 
 class Stabs2DebugInfo;
@@ -35,7 +38,7 @@ class Loader
      */
     void loadPage(pointer virtual_address);
 
-    Stabs2DebugInfo const* getDebugInfos() const;
+    const Stabs2DebugInfo* getDebugInfos() const;
 
     /**
      * Get the address of the entry function of the ELF executable

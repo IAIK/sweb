@@ -1,5 +1,7 @@
 #pragma once
+
 #include "RangeAllocator.h"
+
 #include <EASTL/fixed_allocator.h>
 
 /* This BootstrapRangeAllocator is 'good enough' for temporary use during initialization

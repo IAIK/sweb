@@ -1,12 +1,16 @@
 #include "X2Apic.h"
+
 #include "CPUID.h"
+#include "InterruptUtils.h"
 #include "MSR.h"
 #include "SMP.h"
+
 #include "ArchCpuLocalStorage.h"
 #include "ArchInterrupts.h"
-#include "InterruptUtils.h"
 #include "ArchMulticore.h"
+
 #include <cstdint>
+
 #include "debug.h"
 
 cpu_local X2Apic cpu_x2apic_impl;

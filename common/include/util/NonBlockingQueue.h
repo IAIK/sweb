@@ -1,8 +1,9 @@
 #pragma once
 
 #include "EASTL/atomic.h"
-#include "debug.h"
+
 #include "assert.h"
+#include "debug.h"
 
 // Multiple producer, single consumer lock free FIFO queue
 // Node class T needs to have a eastl::atomic<T*> next_node_ member

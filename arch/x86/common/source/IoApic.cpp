@@ -1,13 +1,16 @@
 #include "IoApic.h"
+
 #include "8259.h"
 #include "CPUID.h"
 #include "InterruptUtils.h"
 #include "SMP.h"
 #include "offsets.h"
+
 #include "ArchCommon.h"
 #include "ArchInterrupts.h"
 #include "ArchMemory.h"
 #include "ArchMulticore.h"
+
 #include "debug.h"
 
 IoApic::IoApic(uint32_t id, IOAPIC_MMIORegs* regs, uint32_t g_sys_int_base) :

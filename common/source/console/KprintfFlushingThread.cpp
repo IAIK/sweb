@@ -1,11 +1,13 @@
 #include "KprintfFlushingThread.h"
-#include "Thread.h"
-#include "ArchInterrupts.h"
+
 #include "Console.h"
-#include "Terminal.h"
-#include "kprintf.h"
 #include "RingBuffer.h"
 #include "Scheduler.h"
+#include "Terminal.h"
+#include "Thread.h"
+#include "kprintf.h"
+
+#include "ArchInterrupts.h"
 
 void flushActiveConsole(RingBuffer<char>* rb)
 {

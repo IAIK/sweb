@@ -1,8 +1,10 @@
 #pragma once
+
 #include "Allocator.h"
 #include "IntervalSet.h"
-#include <EASTL/fixed_allocator.h>
 #include "ranges.h"
+
+#include <EASTL/fixed_allocator.h>
 
 template<typename TAllocator = EASTLAllocatorType>
 class RangeAllocator : public Allocator

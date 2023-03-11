@@ -1,14 +1,18 @@
 #include "ArchThreads.h"
-#include "ArchMemory.h"
-#include "kprintf.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "assert.h"
-#include "Thread.h"
-#include "kstring.h"
-#include "ArchMulticore.h"
+
 #include "Scheduler.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "kstring.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
+
 #include "EASTL/unique_ptr.h"
+
+#include "assert.h"
 
 void ArchThreads::initialise()
 {

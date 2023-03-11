@@ -1,10 +1,11 @@
 #include "BDManager.h"
+
 #include "BDDriver.h"
 #include "BDRequest.h"
 #include "BDVirtualDevice.h"
 #include "PlatformBus.h"
-#include "kprintf.h"
 #include "kstring.h"
+
 #include "debug.h"
 
 BDManager& BDManager::instance()

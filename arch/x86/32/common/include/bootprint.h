@@ -1,4 +1,5 @@
 #pragma once
+
 #include "types.h"
 
 void memset(char* block, char c, size_t length);

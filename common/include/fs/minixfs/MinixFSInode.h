@@ -3,7 +3,9 @@
 #include "Inode.h"
 #include "MinixFSZone.h"
 #include "kstring.h"
+
 #include "types.h"
+
 #include "EASTL/list.h"
 
 class MinixFSInode : public Inode

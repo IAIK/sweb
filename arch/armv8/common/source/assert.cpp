@@ -1,11 +1,13 @@
 #include "assert.h"
-#include "kprintf.h"
-#include "panic.h"
-#include "debug_bochs.h"
-#include "Thread.h"
-#include "ArchInterrupts.h"
+
 #include "Scheduler.h"
 #include "SystemState.h"
+#include "Thread.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include "panic.h"
+
+#include "ArchInterrupts.h"
 
 extern "C" void halt();
 

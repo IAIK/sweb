@@ -1,8 +1,10 @@
 #include "KeyboardManager.h"
-#include "ArchInterrupts.h"
-#include "kprintf.h"
+
 #include "Console.h"
+#include "kprintf.h"
 #include "ports.h"
+
+#include "ArchInterrupts.h"
 
 const uint32 KeyboardManager::STANDARD_KEYMAP[KEY_MAPPING_SIZE] = STANDARD_KEYMAP_DEF;
 

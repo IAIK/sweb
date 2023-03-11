@@ -1,14 +1,17 @@
-#include "types.h"
-#include "debug.h"
-#include "debug_bochs.h"
-#include "multiboot.h"
-#include "offsets.h"
-#include "ArchCommon.h"
-#include "ArchMemory.h"
-#include "paging-definitions.h"
-#include "kstring.h"
 #include "SegmentUtils.h"
 #include "bootprint.h"
+#include "debug_bochs.h"
+#include "kstring.h"
+#include "multiboot.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "ArchCommon.h"
+#include "ArchMemory.h"
+
+#include "types.h"
+
+#include "debug.h"
 
 #define PRINT(X) do { if (A_BOOT & OUTPUT_ENABLED) { writeLine2Bochs((char*)VIRTUAL_TO_PHYSICAL_BOOT(X)); kputs((char*)VIRTUAL_TO_PHYSICAL_BOOT(X)); } } while (0)
 

@@ -1,11 +1,14 @@
-#include "types.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "multiboot.h"
-#include "ArchCommon.h"
-#include "assert.h"
 #include "kprintf.h"
+#include "multiboot.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "ArchCommon.h"
 #include "ArchMemory.h"
+
+#include "types.h"
+
+#include "assert.h"
 
 extern void* kernel_end_address;
 

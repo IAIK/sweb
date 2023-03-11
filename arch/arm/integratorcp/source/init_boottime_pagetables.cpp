@@ -1,7 +1,9 @@
-#include "types.h"
-#include "paging-definitions.h"
-#include "offsets.h"
 #include "init_boottime_pagetables.h"
+
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "types.h"
 
 extern "C" void initialiseBootTimePaging()
 {

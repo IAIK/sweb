@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstddef>
+
 #include "EASTL/atomic.h"
 #include "EASTL/fixed_function.h"
-#include <cstddef>
 
 struct RemoteFunctionCallMessage
 {

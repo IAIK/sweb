@@ -1,8 +1,10 @@
-#include "types.h"
-#include "offsets.h"
-#include "ArchCommon.h"
 #include "debug_bochs.h"
 #include "kstring.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+
+#include "types.h"
 
 uint8 fb_row = 0;
 uint8 fb_col = 0;

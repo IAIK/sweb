@@ -10,8 +10,8 @@ extern "C"
 }
 #endif
 
-#include "RingBuffer.h"
 #include "IrqDomain.h"
+#include "RingBuffer.h"
 #include "atkbd.h"
 
 #define STANDARD_KEYMAP_DEF { 0, 0x1B, '1', '2', '3', '4', '5' , '6', \
@@ -194,9 +194,9 @@ class KeyboardManager : public IrqDomain
 
     RingBuffer<uint8> keyboard_buffer_;
 
-    static uint32 const STANDARD_KEYMAP[];
-    static uint32 const E0_KEYS[];
-    static uint8 const SET1_SCANCODES[];
+    static const uint32 STANDARD_KEYMAP[];
+    static const uint32 E0_KEYS[];
+    static const uint8 SET1_SCANCODES[];
     /**
      * converts the scancode into a key by looking in the Standard KeyMap
      *

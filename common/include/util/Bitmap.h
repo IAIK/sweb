@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include <cstddef>
 
 #define BITMAP_BYTE_COUNT(number_of_bits) (number_of_bits / Bitmap::bits_per_bitmap_atom_ + ((number_of_bits % Bitmap::bits_per_bitmap_atom_ > 0) ? 1 : 0))
 

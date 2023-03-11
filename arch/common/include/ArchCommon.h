@@ -1,8 +1,9 @@
 #pragma once
 
-#include "types.h"
-#include "paging-definitions.h"
 #include "RangeAllocator.h"
+#include "paging-definitions.h"
+
+#include "types.h"
 
 class Console;
 class Allocator;

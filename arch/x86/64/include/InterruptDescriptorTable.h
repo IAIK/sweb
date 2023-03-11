@@ -3,6 +3,7 @@
 #include "types.h"
 #include <cstddef>
 #include <cstdint>
+
 #include "EASTL/array.h"
 
 using handler_func_t = void (*)();

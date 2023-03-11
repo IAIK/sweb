@@ -1,12 +1,14 @@
 #include "ArchThreads.h"
-#include "ArchInterrupts.h"
-#include "ArchMemory.h"
-#include "kprintf.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "Thread.h"
+
 #include "Scheduler.h"
 #include "SpinLock.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "ArchInterrupts.h"
+#include "ArchMemory.h"
 
 SpinLock global_atomic_add_lock("");
 

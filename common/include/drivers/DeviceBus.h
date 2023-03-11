@@ -2,8 +2,10 @@
 
 #include "Device.h"
 #include "DeviceDriver.h"
+
 #include "EASTL/string.h"
 #include "EASTL/vector.h"
+
 #include "debug.h"
 
 template<typename DeviceDescriptionType_ = void>

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "types.h"
+#include <cstddef>
+
 #include "EASTL/atomic.h"
 
 class CpuExclusiveLock

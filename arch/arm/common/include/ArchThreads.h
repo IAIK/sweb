@@ -1,7 +1,9 @@
 #pragma once
 
-#include "types.h"
 #include "SpinLock.h"
+
+#include "types.h"
+
 #include "EASTL/unique_ptr.h"
 
 extern SpinLock global_atomic_add_lock;

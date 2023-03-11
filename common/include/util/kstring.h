@@ -2,9 +2,10 @@
 
 #define STRING_SAVE
 
-#include "types.h"
 #include "paging-definitions.h"
 #include <cstring>
+
+#include "types.h"
 
 /**
  * Convert a define to a string.

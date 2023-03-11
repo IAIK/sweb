@@ -1,7 +1,8 @@
 #pragma once
 
-#include "types.h"
 #include "VirtualFileSystem.h"
+
+#include "types.h"
 
 class Superblock;
 class Dentry;

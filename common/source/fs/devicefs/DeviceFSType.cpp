@@ -1,4 +1,5 @@
 #include "fs/devicefs/DeviceFSType.h"
+
 #include "fs/devicefs/DeviceFSSuperblock.h"
 
 DeviceFSType* DeviceFSType::instance_ = nullptr;

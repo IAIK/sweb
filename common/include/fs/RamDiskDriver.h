@@ -1,7 +1,9 @@
 #pragma once
 
 #include "BDDriver.h"
+
 #include <cstddef>
+#include <cstdint>
 
 class BDRequest;
 class BDVirtualDevice;

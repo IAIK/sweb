@@ -1,11 +1,14 @@
 #include "MinixFSInode.h"
+
+#include "Dentry.h"
+#include "MinixFSFile.h"
+#include "MinixFSSuperblock.h"
+
+#include "assert.h"
+
 #ifndef EXE2MINIXFS
 #include "kstring.h"
 #endif
-#include <assert.h>
-#include "MinixFSSuperblock.h"
-#include "MinixFSFile.h"
-#include "Dentry.h"
 
 MinixFSInode::MinixFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type),
@@ -85,7 +88,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   debug(M_INODE, "MinixFSInode writeData> offset: %d, size: %d, i_size_: %d\n", offset, size, i_size_);
   uint32 zone = offset / ZONE_SIZE;
   uint32 num_zones = (offset % ZONE_SIZE + size) / ZONE_SIZE + 1;
-  
+
   if (num_zones*ZONE_SIZE < size) return -1;
 
   uint32 last_used_zone = i_size_ / ZONE_SIZE;

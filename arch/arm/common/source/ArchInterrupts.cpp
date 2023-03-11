@@ -1,13 +1,16 @@
-#include "types.h"
 #include "ArchInterrupts.h"
-#include "kprintf.h"
-#include "kstring.h"
+
 #include "InterruptUtils.h"
-#include "ArchThreads.h"
-#include "ArchBoardSpecific.h"
-#include "Thread.h"
 #include "Scheduler.h"
 #include "SystemState.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "kstring.h"
+
+#include "ArchBoardSpecific.h"
+#include "ArchThreads.h"
+
+#include "types.h"
 
 cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector");
 

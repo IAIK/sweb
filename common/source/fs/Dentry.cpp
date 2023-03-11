@@ -1,8 +1,9 @@
 #include "Dentry.h"
-#include "assert.h"
-#include "Inode.h"
 
+#include "Inode.h"
 #include "kprintf.h"
+
+#include "assert.h"
 
 Dentry::Dentry(Inode* inode) :
     d_inode_(inode), d_parent_(this), d_mounts_(0), d_name_("/")

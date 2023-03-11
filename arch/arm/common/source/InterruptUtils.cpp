@@ -1,31 +1,28 @@
 #include "InterruptUtils.h"
 
-#include "ArchBoardSpecific.h"
 #include "BDManager.h"
-#include "KeyboardManager.h"
-#include "new.h"
-#include "ArchMemory.h"
-#include "ArchThreads.h"
-#include "ArchCommon.h"
 #include "Console.h"
 #include "FrameBufferConsole.h"
-#include "Terminal.h"
-#include "kprintf.h"
+#include "KeyboardManager.h"
+#include "Loader.h"
+#include "PageFaultHandler.h"
 #include "Scheduler.h"
+#include "Syscall.h"
+#include "Terminal.h"
+#include "Thread.h"
+#include "TimerTickHandler.h"
+#include "backtrace.h"
 #include "debug_bochs.h"
-
+#include "kprintf.h"
+#include "new.h"
+#include "paging-definitions.h"
 #include "panic.h"
 
-#include "Thread.h"
+#include "ArchBoardSpecific.h"
+#include "ArchCommon.h"
 #include "ArchInterrupts.h"
-#include "backtrace.h"
-
-#include "Loader.h"
-#include "Syscall.h"
-#include "paging-definitions.h"
-#include "PageFaultHandler.h"
-#include "TimerTickHandler.h"
-
+#include "ArchMemory.h"
+#include "ArchThreads.h"
 
 extern uint32* currentStack;
 extern Console* main_console;

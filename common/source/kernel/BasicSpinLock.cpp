@@ -1,8 +1,10 @@
 #include "BasicSpinLock.h"
+
 #include "Scheduler.h"
-#include "ArchThreads.h"
-#include "ArchInterrupts.h"
+
 #include "ArchCpuLocalStorage.h"
+#include "ArchInterrupts.h"
+#include "ArchThreads.h"
 
 BasicSpinLock::BasicSpinLock() :
     lock_(0)

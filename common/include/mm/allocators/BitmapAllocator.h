@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Allocator.h"
 
 template<size_t BLOCK_SIZE=PAGE_SIZE>
