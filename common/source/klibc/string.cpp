@@ -295,7 +295,10 @@ extern "C" void *memset(void *block, char c, size_t size)
         }
     }
 
+    // memset called in early boot -> crashes
+    #if !CMAKE_ARM_RPI2
     assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+    #endif
 
     return block;
 }
