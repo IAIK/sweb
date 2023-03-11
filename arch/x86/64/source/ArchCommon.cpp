@@ -49,6 +49,12 @@ extern "C" void parseMultibootHeader()
   writeLine2Bochs((char*)(pointer)(mb_infos->boot_loader_name));
   PRINT("\n");
 
+  if (mb_infos && mb_infos->f_fb)
+  {
+    orig_mbr.have_framebuffer = true;
+    orig_mbr.framebuffer = mb_infos->framebuffer;
+  }
+
   if (mb_infos && mb_infos->f_vbe)
   {
     struct vbe_mode* mode_info = (struct vbe_mode*)(uint64)mb_infos->vbe_mode_info;

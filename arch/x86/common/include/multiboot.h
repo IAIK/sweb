@@ -74,6 +74,51 @@ struct vbe_mode
   uint8 reserved3[189];
 } __attribute__ ((packed));
 
+enum class MultibootFramebufferType : uint8
+{
+    INDEXED_COLOR = 0,
+    RGB = 1,
+    EGA_TEXT_MODE = 2, // wdith+height in characters, not in pixels, pitch = bytes per text line, bpp = 16
+};
+
+struct [[gnu::packed]] multiboot_framebuffer_t
+{
+    uint64 framebuffer_addr;
+    uint32 framebuffer_pitch;
+    uint32 framebuffer_width;
+    uint32 framebuffer_height;
+    uint8  framebuffer_bpp; // bits per pixel
+    MultibootFramebufferType  framebuffer_type;
+    union [[gnu::packed]]
+    {
+        // type == 0
+        struct [[gnu::packed]]
+        {
+            uint32 framebuffer_palette_addr;
+            uint16 framebuffer_palette_num_colors;
+        } indexed_color;
+        // type == 1
+        struct [[gnu::packed]]
+        {
+            uint8 framebuffer_red_field_position;
+            uint8 framebuffer_red_mask_size;
+            uint8 framebuffer_green_field_position;
+            uint8 framebuffer_green_mask_size;
+            uint8 framebuffer_blue_field_position;
+            uint8 framebuffer_blue_mask_size;
+        } rgb;
+    } color_info;
+};
+
+
+
+struct [[gnu::packed]] color_descriptor
+{
+    uint8 red_value;
+    uint8 green_value;
+    uint8 blue_value;
+};
+
 typedef struct multiboot_header
 {
    uint32 magic         : 32;
@@ -135,12 +180,15 @@ typedef struct multiboot_info
   uint32 config_table       : 32;
   uint32 boot_loader_name   : 32;
   uint32 apm_table          : 32;
+  // present if flags[11] f_vbe set
   uint32 vbe_control_info   : 32;
   uint32 vbe_mode_info      : 32;
   uint32 vbe_mode           : 32;
   uint32 vbe_interface_seg  : 32;
   uint32 vbe_interface_off  : 32;
   uint32 vbe_interface_len  : 32;
+  // present if flags[12] f_fb set
+  multiboot_framebuffer_t framebuffer;
 } __attribute__((__packed__)) multiboot_info_t;
 
 typedef struct module
@@ -191,10 +239,12 @@ struct multiboot_remainder
     uint8 name[256];
   } __attribute__((__packed__)) module_maps[MAX_MODULE_MAPS];
 
+  bool have_framebuffer = false;
+  multiboot_framebuffer_t framebuffer;
+
 }__attribute__((__packed__));
 
 struct mb_offsets {
     uint64 phys;
     uint64 entry;
 } __attribute__((__packed__));
-
