@@ -36,9 +36,10 @@ void ArchMulticore::initialize()
 
 void ArchMulticore::initCpuLocalData([[maybe_unused]]bool boot_cpu)
 {
-
-    // The constructor of objects declared as cpu_local will be called automatically the first time the cpu_local object is used. Other cpu_local objects _may or may not_ also be initialized at the same time.
-    new (&current_cpu) ArchCpu(); // Explicit construction required here since cpu_local isn't actually cpu_local on arm (no cls implemented)
+    // The constructor of objects declared as cpu_local will be called automatically
+    // the first time the cpu_local object is used.
+    // cpu_local isn't actually cpu_local on armv8 (no cls implemented) -> initialized via global
+    // constructors
     debug(A_MULTICORE, "Initializing CPU local objects for CPU %zu\n", SMP::currentCpuId());
 
     // idle_thread = new IdleThread();

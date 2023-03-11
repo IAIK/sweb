@@ -188,7 +188,7 @@ void ArchMulticore::startOtherCPUs()
       }
     }
 
-    ScopeLock l(SMP::cpu_list_lock_);
+    ScopeLock l(SMP::cpuListLock());
     for(auto& cpu : SMP::cpuList())
     {
       debug(A_MULTICORE, "CPU %zu running\n", cpu->id());

@@ -39,5 +39,5 @@ public:
     static ArchCpu* cpu(size_t cpu_id);
 
     static eastl::vector<ArchCpu*>& cpuList();
-    static Mutex cpu_list_lock_;
+    static Mutex& cpuListLock();
 };

@@ -8,7 +8,6 @@
 
 cpu_local ArchCpu current_cpu;
 eastl::atomic<size_t> running_cpus;
-Mutex SMP::cpu_list_lock_("CPU list lock");
 
 extern cpu_local Thread* currentThread;
 
@@ -34,7 +33,7 @@ void SMP::initialize()
 
 void SMP::addCpuToList(ArchCpu* cpu)
 {
-    ScopeLock l(SMP::cpu_list_lock_);
+    ScopeLock l(cpuListLock());
     SMP::cpuList().push_back(cpu);
 }
 
@@ -44,9 +43,15 @@ eastl::vector<ArchCpu*>&  SMP::cpuList()
     return cpu_list_;
 }
 
+Mutex& SMP::cpuListLock()
+{
+    static Mutex cpu_list_lock_("CPU list lock");
+    return cpu_list_lock_;
+}
+
 ArchCpu* SMP::cpu(size_t cpu_id)
 {
-    ScopeLock l(SMP::cpu_list_lock_);
+    ScopeLock l(cpuListLock());
     for (auto c : SMP::cpuList())
     {
         if (c->id() == cpu_id)
