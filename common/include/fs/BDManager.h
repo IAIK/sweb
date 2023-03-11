@@ -1,7 +1,8 @@
 #pragma once
 
-#include "EASTL/list.h"
 #include <cstdint>
+#include "EASTL/list.h"
+#include "EASTL/atomic.h"
 
 class BDRequest;
 class BDVirtualDevice;
@@ -60,7 +61,7 @@ class BDManager
     /**
      * gets false when the irq is serviced
      */
-    bool probeIRQ;
+    eastl::atomic_flag probeIRQ{true};
 
     eastl::list<BDVirtualDevice*> device_list_;
 

@@ -38,7 +38,7 @@ void BDManager::addVirtualDevice(BDVirtualDevice* dev)
 void BDManager::serviceIRQ(uint32 irq_num)
 {
   debug(BD_MANAGER, "serviceIRQ: Servicing IRQ\n");
-  probeIRQ = false;
+  probeIRQ.clear();
 
   for (BDVirtualDevice* dev : device_list_)
     if (dev->getDriver()->irq == irq_num)

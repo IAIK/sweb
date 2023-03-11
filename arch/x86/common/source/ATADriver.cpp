@@ -83,7 +83,7 @@ void ATADrive::testIRQ()
 {
   mode = BD_ATA_MODE::BD_PIO;
 
-  BDManager::instance().probeIRQ = true;
+  BDManager::instance().probeIRQ.test_and_set();
   {
     WithInterrupts intr(true);
 
@@ -92,7 +92,7 @@ void ATADrive::testIRQ()
     readSector(0, 1, buf);
 
     debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
-    TIMEOUT_CHECK(BDManager::instance().probeIRQ,mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
+    TIMEOUT_CHECK(BDManager::instance().probeIRQ.test_and_set(),mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
     controller.reset();
   }
 }
@@ -353,7 +353,7 @@ void ATADrive::serviceIRQ()
 
     debugAdvanced(ATA_DRIVER, "serviceIRQ: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
 
-    BDManager::instance().probeIRQ = false;
+    BDManager::instance().probeIRQ.clear();
 
     if (mode == BD_ATA_MODE::BD_PIO_NO_IRQ)
         return;
