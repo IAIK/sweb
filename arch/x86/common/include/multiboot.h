@@ -110,13 +110,21 @@ struct [[gnu::packed]] multiboot_framebuffer_t
     } color_info;
 };
 
-
-
 struct [[gnu::packed]] color_descriptor
 {
     uint8 red_value;
     uint8 green_value;
     uint8 blue_value;
+};
+
+struct [[gnu::packed]]  multiboot_vbe_t
+{
+  uint32 vbe_control_info   : 32;
+  uint32 vbe_mode_info      : 32;
+  uint32 vbe_mode           : 32;
+  uint32 vbe_interface_seg  : 32;
+  uint32 vbe_interface_off  : 32;
+  uint32 vbe_interface_len  : 32;
 };
 
 typedef struct multiboot_header
@@ -181,12 +189,7 @@ typedef struct multiboot_info
   uint32 boot_loader_name   : 32;
   uint32 apm_table          : 32;
   // present if flags[11] f_vbe set
-  uint32 vbe_control_info   : 32;
-  uint32 vbe_mode_info      : 32;
-  uint32 vbe_mode           : 32;
-  uint32 vbe_interface_seg  : 32;
-  uint32 vbe_interface_off  : 32;
-  uint32 vbe_interface_len  : 32;
+  multiboot_vbe_t vbe;
   // present if flags[12] f_fb set
   multiboot_framebuffer_t framebuffer;
 } __attribute__((__packed__)) multiboot_info_t;
@@ -241,6 +244,14 @@ struct multiboot_remainder
 
   bool have_framebuffer = false;
   multiboot_framebuffer_t framebuffer;
+
+  bool have_elf_sec_hdr = false;
+  elf_section_header_table_t elf_sec;
+
+  bool have_vbe = false;
+  multiboot_vbe_t vbe;
+
+  char cmdline[256];
 
 }__attribute__((__packed__));
 

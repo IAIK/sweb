@@ -49,6 +49,16 @@ extern "C" void parseMultibootHeader()
   writeLine2Bochs((char*)(pointer)(mb_infos->boot_loader_name));
   PRINT("\n");
 
+  if (mb_infos && mb_infos->f_cmdline)
+  {
+    const char* cmdline = (char*)(uintptr_t)mb_infos->cmdline;
+    size_t len = strlen(cmdline);
+    if (len+1 <= sizeof(orig_mbr.cmdline))
+    {
+        memcpy(orig_mbr.cmdline, cmdline, len+1);
+    }
+  }
+
   if (mb_infos && mb_infos->f_fb)
   {
     orig_mbr.have_framebuffer = true;
@@ -57,7 +67,9 @@ extern "C" void parseMultibootHeader()
 
   if (mb_infos && mb_infos->f_vbe)
   {
-    struct vbe_mode* mode_info = (struct vbe_mode*)(uint64)mb_infos->vbe_mode_info;
+    orig_mbr.have_vbe = true;
+    orig_mbr.vbe = mb_infos->vbe;
+    struct vbe_mode* mode_info = (struct vbe_mode*)(uint64)mb_infos->vbe.vbe_mode_info;
     orig_mbr.have_vesa_console = 1;
     orig_mbr.vesa_lfb_pointer = mode_info->phys_base;
     orig_mbr.vesa_x_res = mode_info->x_resolution;
@@ -98,6 +110,12 @@ extern "C" void parseMultibootHeader()
       map = (memory_map*)(((uint64)(map)) + map->size + sizeof(map->size));
       ++i;
     }
+  }
+
+  if (mb_infos && mb_infos->f_elf_shdr)
+  {
+    orig_mbr.have_elf_sec_hdr = true;
+    orig_mbr.elf_sec = mb_infos->elf_sec;
   }
 }
 
