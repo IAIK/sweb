@@ -24,9 +24,12 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 extern uint32 bss_start_address;
 extern uint32 bss_end_address;
 extern uint8 boot_stack[];
-extern PageMapLevel4Entry kernel_page_map_level_4[];
-extern PageDirPointerTableEntry kernel_page_directory_pointer_table[];
-extern PageDirEntry kernel_page_directory[];
+
+extern PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+extern PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+extern PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+extern PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+
 
 extern uint32 tss_selector;
 
@@ -82,7 +85,10 @@ static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint3
   setSegmentBase(gdt_p + index, baseL, baseH);
   setSegmentLimit(gdt_p + index, limit);
 
-  gdt_p[index].typeH = tss ? 0 : (code ? 0xA : 0xC); // 4kb + 64bit
+  // code segment: granularity = 4kb, long mode = 1, default size = reserved, has to be 0
+  // data segment: granularity = 4kb, long mode = 1, default size = 32
+  // tss: granularity = 1 byte
+  gdt_p[index].typeH = tss ? 0 : (code ? 0xA : 0xC);
   gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
@@ -96,7 +102,10 @@ extern multiboot_info_t* multi_boot_structure_pointer;
 
 extern "C" void entry()
 {
+  // Save pointer to multiboot protocol information handed to us by the bootloader
   asm volatile("mov %ebx, multi_boot_structure_pointer - BASE");
+
+  // Bootloader already put us in protected mode
 
   PRINT("Booting...\n");
   PRINT("Clearing Framebuffer...\n");
@@ -114,16 +123,27 @@ extern "C" void entry()
   putHex32((uint32)TRUNCATE(&kernel_page_map_level_4)); putc('\n');
   puts(TRUNCATE("Kernel PDPT: "));
   putHex32((uint32)TRUNCATE(&kernel_page_directory_pointer_table)); putc('\n');
-  puts(TRUNCATE("Kernel PD: "));
+  puts(TRUNCATE("Kernel PD:  "));
   putHex32((uint32)TRUNCATE(&kernel_page_directory)); putc('\n');
+  puts(TRUNCATE("Kernel PT:  "));
+  putHex32((uint32)TRUNCATE(&kernel_page_table)); putc('\n');
 
 
-  asm volatile("movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n"
-               "movl $0, kernel_page_map_level_4 - BASE + 4\n"
-               "movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
-               "movl $0, kernel_page_directory_pointer_table - BASE + 4\n"
-               "movl $0x83, kernel_page_directory - BASE\n"
-               "movl $0, kernel_page_directory - BASE + 4\n");
+  // Map as uncachable for now to avoid problems with memory mapped I/O -> remapped later
+  asm volatile(
+    // Set PML4[0] -> PDPT
+    "movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n" 
+    "movl $0, kernel_page_map_level_4 - BASE + 4\n"
+    // Set PDPT[0] -> PD
+    "movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
+    "movl $0, kernel_page_directory_pointer_table - BASE + 4\n"
+    // Set PD[0] present, writeable, cache disabled, size (2MB large page), ppn = 0
+    "movl $0x93, kernel_page_directory - BASE\n"
+    "movl $0, kernel_page_directory - BASE + 4\n"
+    // Set PD[1] present, writeable, cache disabled, size (2MB large page), ppn = 1
+    "movl $0x200093, kernel_page_directory - BASE + 8\n"
+    "movl $0, kernel_page_directory - BASE + 12\n"
+    );
 
   PRINT("Enable PAE and PSE...\n");
   asm("mov %cr4,%eax\n"
@@ -133,6 +153,8 @@ extern "C" void entry()
   PRINT("Setting CR3 Register...\n");
   asm volatile("mov %[pd],%%cr3" : : [pd]"r"(TRUNCATE(kernel_page_map_level_4)));
 
+  // Enter compatibility mode (while long mode code segment is not yet loaded)
+  // Compatibility mode uses 4 level paging but ignores linear address bits 63:32 and treats them as 0
   PRINT("Enable EFER.LME and EFER.NXE...\n");
   asm volatile("mov $0xC0000080,%ecx\n"
       "rdmsr\n"
@@ -157,10 +179,10 @@ extern "C" void entry()
   g_tss_p->iobp = -1;
 
   PRINT("Setup Segments...\n");
-  setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0);
-  setSegmentDescriptor(2, 0, 0, 0xFFFFFFFF, 0, 0, 0);
-  setSegmentDescriptor(3, 0, 0, 0xFFFFFFFF, 3, 1, 0);
-  setSegmentDescriptor(4, 0, 0, 0xFFFFFFFF, 3, 0, 0);
+  setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0); // kernel code
+  setSegmentDescriptor(2, 0, 0, 0xFFFFFFFF, 0, 0, 0); // kernel data
+  setSegmentDescriptor(3, 0, 0, 0xFFFFFFFF, 3, 1, 0); // user code
+  setSegmentDescriptor(4, 0, 0, 0xFFFFFFFF, 3, 0, 0); // user data
   setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
 
   PRINT("Loading Long Mode GDT...\n");
@@ -181,6 +203,7 @@ extern "C" void entry()
 
   puts(TRUNCATE("GDT["));
   putHex8(KERNEL_DS);
+  puts(TRUNCATE("]="));
 
   for(uint8 i = 1; i <= sizeof(SegmentDescriptor); ++i)
   {
@@ -196,6 +219,8 @@ extern "C" void entry()
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
 
+  // Long jump loads the long mode code segment selector from the GDT
+  // After this, we are in proper 64-bit long mode and no longer in compatibility mode
   PRINT("Calling entry64()...\n");
   asm volatile("ljmp %[cs],$entry64-BASE\n" : : [cs]"i"(KERNEL_CS));
 

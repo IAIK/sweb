@@ -316,6 +316,36 @@ extern "C" [[noreturn]] void entry64()
       "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
   PRINT("Loading Long Mode Segments...\n");
   kprintf("Loading Long Mode Segments...\n");
+
+  if (A_BOOT & OUTPUT_ADVANCED)
+  {
+    kprintf("GDT: %p\n", &gdt);
+    kprintf("GDT[0]: %lx\n", *(uint64*)&gdt.entries[0]);
+    kprintf("GDT[0]: %lx\n", *(uint64*)&gdt.entries[1]);
+    kprintf("GDT[2]: %lx\n", *(uint64*)&gdt.entries[2]);
+    kprintf("GDT[3]: %lx\n", *(uint64*)&gdt.entries[3]);
+    kprintf("GDT: %p\n", VIRTUAL_TO_PHYSICAL_BOOT(&gdt));
+    kprintf("GDT[0]: %lx\n", *(uint64*)&(((GDT*)VIRTUAL_TO_PHYSICAL_BOOT(&gdt))->entries[0]));
+    kprintf("GDT[0]: %lx\n", *(uint64*)&(((GDT*)VIRTUAL_TO_PHYSICAL_BOOT(&gdt))->entries[1]));
+    kprintf("GDT[2]: %lx\n", *(uint64*)&(((GDT*)VIRTUAL_TO_PHYSICAL_BOOT(&gdt))->entries[2]));
+    kprintf("GDT[3]: %lx\n", *(uint64*)&(((GDT*)VIRTUAL_TO_PHYSICAL_BOOT(&gdt))->entries[3]));
+    kprintf("PML4[0]: %lx\n", *(uint64*)&kernel_page_map_level_4[0]);
+    kprintf("PDPT[0]: %lx\n", *(uint64*)&kernel_page_directory_pointer_table[0].pd);
+    kprintf("PD[0]: %lx\n", *(uint64*)&kernel_page_directory[0].page);
+    kprintf("PD[1]: %lx\n", *(uint64*)&kernel_page_directory[1].page);
+    kprintf("PD[2]: %lx\n", *(uint64*)&kernel_page_directory[2].page);
+  }
+
+  assert(kernel_page_directory[0].page.present);
+  assert(kernel_page_directory[0].page.size);
+  assert(kernel_page_directory[0].page.page_ppn == 0);
+  assert(kernel_page_directory[1].page.present);
+  assert(kernel_page_directory[1].page.size);
+  assert(kernel_page_directory[1].page.page_ppn == 1);
+  assert(*(uint64*)&gdt.entries[0] == 0);
+  assert(*(uint64*)&gdt.entries[1] != 0);
+  assert(*(uint64*)&gdt.entries[2] != 0);
+
   gdt_ptr.limit = sizeof(gdt) - 1;
   gdt_ptr.addr = (uint64)&gdt;
   asm("lgdt (%%rax)" : : "a"(&gdt_ptr));
@@ -325,6 +355,8 @@ extern "C" [[noreturn]] void entry64()
       "mov %%ax, %%fs\n"
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
+  PRINT("Reloading TSS...\n");
+  kprintf("Reloading TSS...\n");
   asm("ltr %%ax" : : "a"(KERNEL_TSS));
 
 
