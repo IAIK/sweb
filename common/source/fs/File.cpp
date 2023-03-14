@@ -87,6 +87,14 @@ int File::closeFd(FileDescriptor* fd)
     return 0;
 }
 
+int32 File::flush()
+{
+    if (f_inode_)
+        return f_inode_->flush();
+
+    return 0;
+}
+
 
 SimpleFile::SimpleFile(Inode* inode, Dentry* dentry, uint32 flag) :
     File(inode, dentry, flag)

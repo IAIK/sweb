@@ -170,10 +170,7 @@ class File
      * Flush all off the file's write operations. The File will be written to disk.
      * @return is the error code of the flush operation.
      */
-    virtual int32 flush()
-    {
-      return 0;
-    }
+    virtual int32 flush();
 
     virtual uint32 getSize();
 };

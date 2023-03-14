@@ -279,7 +279,7 @@ class Inode
       return i_mode_;
     }
 
-    int32 flush()
+    virtual int32 flush()
     {
       return 0;
     }
