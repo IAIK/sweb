@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "kprintf.h"
 #include "offsets.h"
+#include "kstring.h"
 
 #include "ArchInterrupts.h"
 
@@ -182,10 +183,24 @@ void ATADrive::pioReadData(eastl::span<uint16_t> buffer)
         "D"(buffer.data()), // RDI
         "c"(buffer.size()), // RCX
         "d"(controller.io_regs[IDEControllerChannel::IoRegister::DATA].port)); // RDX
+
+    if (ATA_DRIVER & OUTPUT_ADVANCED)
+    {
+        auto chks = checksum((uint32_t*)buffer.data(), buffer.size()*sizeof(*buffer.data()));
+        debug(ATA_DRIVER, "PIO read data [%p, %p), size: %zx, checksum: %x\n",
+            buffer.data(), buffer.data() + buffer.size(), buffer.size()*sizeof(*buffer.data()), chks);
+    }
 }
 
 void ATADrive::pioWriteData(eastl::span<uint16_t> buffer)
 {
+    if (ATA_DRIVER & OUTPUT_ADVANCED)
+    {
+        auto chks = checksum((uint32_t*)buffer.data(), buffer.size()*sizeof(*buffer.data()));
+        debug(ATA_DRIVER, "PIO write data [%p, %p), size: %zx, checksum: %x\n",
+            buffer.data(), buffer.data() + buffer.size(), buffer.size()*sizeof(*buffer.data()), chks);
+    }
+
     // Don't use rep outsw here because of required delay after port write
     for (const uint16_t& word : buffer)
     {
@@ -195,7 +210,8 @@ void ATADrive::pioWriteData(eastl::span<uint16_t> buffer)
 
 int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
 {
-  debugAdvanced(ATA_DRIVER, "readSector %x, num: %x into buffer %p\n", start_sector, num_sectors, buffer);
+  debug(ATA_DRIVER, "read %u sectors [%x, %x) = [%x, %x) into buffer %p\n",
+    num_sectors, start_sector, start_sector + num_sectors, start_sector*getSectorSize(), (start_sector + num_sectors)*getSectorSize(), buffer);
 
   controller.selectDrive(drive_num);
 
@@ -227,6 +243,8 @@ int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer
 
 int32 ATADrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
 {
+  debug(ATA_DRIVER, "write %u sectors [%x, %x) = [%x, %x) from buffer %p\n",
+      num_sectors, start_sector, start_sector + num_sectors, start_sector*getSectorSize(), (start_sector + num_sectors)*getSectorSize(), buffer);
   assert(buffer);
 
   controller.selectDrive(drive_num);
@@ -260,7 +278,7 @@ uint32 ATADrive::addRequest(BDRequest* br)
 {
   ScopeLock lock(lock_); // this lock might serialize stuff too much...
   bool interrupt_context = false;
-  debug(ATA_DRIVER, "addRequest, cmd = %d!\n", (int)br->getCmd());
+  debug(ATA_DRIVER, "addRequest %zu, cmd = %d!\n", br->request_id, (int)br->getCmd());
   if (mode != BD_ATA_MODE::BD_PIO_NO_IRQ)
   {
     interrupt_context = ArchInterrupts::disableInterrupts();
@@ -308,7 +326,7 @@ uint32 ATADrive::addRequest(BDRequest* br)
 
     jiffies = 0;
 
-    debugAdvanced(ATA_DRIVER, "addRequest: Waiting for request to be finished\n");
+    debugAdvanced(ATA_DRIVER, "addRequest: Waiting for request %zu to be finished\n", br->request_id);
     while (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
 
     if (jiffies >= IO_TIMEOUT*10)
@@ -322,19 +340,19 @@ uint32 ATADrive::addRequest(BDRequest* br)
         auto lba_m = controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].read();
         auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
 
-        debug(ATA_DRIVER, "addRequest: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
+        debug(ATA_DRIVER, "addRequest: id: %zu, Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", br->request_id, status.u8, error.u8, lba_l, lba_m, lba_h);
     }
 
     if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
     {
-      debug(ATA_DRIVER, "addRequest: Request is still pending, going to sleep\n");
+      debug(ATA_DRIVER, "addRequest: Request %zu is still pending, going to sleep\n", br->request_id);
       ArchInterrupts::disableInterrupts();
       if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
       {
         currentThread->setState(Thread::Sleeping);
         ArchInterrupts::enableInterrupts();
         Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
-        debug(ATA_DRIVER, "addRequest: Woke up after sleeping on request, state = %d\n", (int)br->getStatus());
+        debug(ATA_DRIVER, "addRequest: Woke up after sleeping on request %zu, state = %d\n", br->request_id, (int)br->getStatus());
         assert(br->getStatus() != BDRequest::BD_RESULT::BD_QUEUED && "ATA request still not done after waking up from sleep!");
       }
       ArchInterrupts::enableInterrupts();
@@ -379,21 +397,20 @@ void ATADrive::serviceIRQ()
 
   Thread* requesting_thread = br->getThread();
 
-  debugAdvanced(ATA_DRIVER, "serviceIRQ: Found active request!!\n");
+  debugAdvanced(ATA_DRIVER, "serviceIRQ: Found active request %zu!!\n", br->request_id);
   assert(br);
 
   uint16* word_buff = (uint16*) br->getBuffer();
   size_t blocks_done = br->getBlocksDone();
-  uint16_t* buf_ptr = word_buff + blocks_done*sector_word_size;
-
-  size_t bytes_done = blocks_done*sector_word_size*WORD_SIZE;
   size_t bytes_requested = br->getNumBlocks()*sector_word_size*WORD_SIZE;
 
   // TODO: target thread may not yet be sleeping (this irq handler and section with disabled interrupts in addRequest may run simultaneously if running on other cpu core)
 
   if (br->getCmd() == BDRequest::BD_CMD::BD_READ)
   {
-    debug(ATA_DRIVER, "serviceIRQ: Handling read request, [%zu/%zu], buffer: %p\n", bytes_done, bytes_requested, word_buff);
+    size_t bytes_done = blocks_done*sector_word_size*WORD_SIZE;
+    uint16_t* buf_ptr = word_buff + blocks_done*sector_word_size;
+    debugAdvanced(ATA_DRIVER, "serviceIRQ: Handling read request %zu, [%zu/%zu], buffer: %p\n", br->request_id, bytes_done, bytes_requested, word_buff);
     // This IRQ handler may be run in the context of any arbitrary thread, so we must not attempt to access userspace
     assert((size_t)word_buff >= USER_BREAK);
     if (!controller.waitDataReady())
@@ -415,19 +432,24 @@ void ATADrive::serviceIRQ()
     {
       assert(request_list_.popBack() == br);
       br->setStatus(BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
-      debug(ATA_DRIVER, "serviceIRQ: Read finished [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
+      debugAdvanced(ATA_DRIVER, "serviceIRQ: Read finished [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
       if (requesting_thread)
           requesting_thread->setState(Thread::Running);
     }
   }
   else if (br->getCmd() == BDRequest::BD_CMD::BD_WRITE)
   {
-    debug(ATA_DRIVER, "serviceIRQ: Handling write request, [%zu/%zu], buffer: %p\n", bytes_done, bytes_requested, word_buff);
     blocks_done++;
+    br->setBlocksDone(blocks_done);
+
+    size_t bytes_done = blocks_done*sector_word_size*WORD_SIZE;
+    uint16_t* buf_ptr = word_buff + blocks_done*sector_word_size;
+    debugAdvanced(ATA_DRIVER, "serviceIRQ: Handling write request %zu, [%zu/%zu], buffer: %p\n", br->request_id, bytes_done, bytes_requested, word_buff);
+
     if (blocks_done == br->getNumBlocks())
     {
       assert(request_list_.popBack() == br);
-      debug(ATA_DRIVER, "serviceIRQ: Write finished  [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
+      debugAdvanced(ATA_DRIVER, "serviceIRQ: Write finished  [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
       br->setStatus( BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
       if (requesting_thread)
           requesting_thread->setState(Thread::Running);
@@ -446,20 +468,17 @@ void ATADrive::serviceIRQ()
       }
 
       pioWriteData({buf_ptr, sector_word_size});
-
-      br->setBlocksDone(blocks_done);
     }
   }
   else
   {
-    blocks_done = br->getNumBlocks();
     assert(request_list_.popBack() == br);
     br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
     if (requesting_thread)
         requesting_thread->setState(Thread::Running);
   }
 
-  debugAdvanced(ATA_DRIVER, "serviceIRQ: Request handled!!\n");
+  debugAdvanced(ATA_DRIVER, "serviceIRQ: Request %zu handled!!\n", br->request_id);
 }
 
 

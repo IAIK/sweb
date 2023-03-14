@@ -48,17 +48,16 @@ void BDVirtualDevice::addRequest(BDRequest * command)
 
 int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
+  uint32 blocks2read = size / block_size_, jiffies = 0;
+  uint32 blockoffset = offset / block_size_;
+
+  debug(BD_VIRT_DEVICE, "readData, [%x, %x), size: %u, buffer: %p, #blocks: %u, blockoffset: %u\n", offset, offset + size, size, buffer, blocks2read, blockoffset);
   assert(buffer);
   assert(offset % block_size_ == 0 && "we can only read from the device in offsets of multiples of block_size_");
   assert(size % block_size_ == 0 && "we can only read multiples of block_size_ from the device");
 
   assert((offset + size <= getNumBlocks() * block_size_) && "tried reading out of range");
 
-  debug(BD_VIRT_DEVICE, "readData\n");
-  uint32 blocks2read = size / block_size_, jiffies = 0;
-  uint32 blockoffset = offset / block_size_;
-
-  debug(BD_VIRT_DEVICE, "blocks2read %d\n", blocks2read);
   BDRequest bd(dev_number_, BDRequest::BD_CMD::BD_READ, blockoffset, blocks2read, buffer);
   addRequest(&bd);
 
@@ -74,24 +73,36 @@ int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 
   if (bd.getStatus() != BDRequest::BD_RESULT::BD_DONE)
   {
+    debug(BD_VIRT_DEVICE, "readData failed for request %p id: %zu, status: %u, requesting thread: %p (%s)\n",
+        &bd, bd.request_id, (int)bd.getStatus(), bd.requesting_thread_, bd.requesting_thread_ ? bd.requesting_thread_->getName() : "(nil)");
     return -1;
   }
 
-  debug(BD_VIRT_DEVICE, "readData finished for request %p\n", &bd);
+  uint32_t chks = 0;
+  if (BD_VIRT_DEVICE & OUTPUT_ENABLED)
+    chks = checksum((uint32*)buffer, size);
+
+  debug(BD_VIRT_DEVICE, "readData finished for request %p id: %zu, requesting thread: %p (%s), checksum: %x\n",
+    &bd, bd.request_id, bd.requesting_thread_, bd.requesting_thread_ ? bd.requesting_thread_->getName() : "(nil)", chks);
   return size;
 }
 
 
 int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, const char *buffer)
 {
+  uint32 blocks2write = size / block_size_, jiffies = 0;
+  uint32 blockoffset = offset / block_size_;
+  uint32_t chks = 0;
+  if (BD_VIRT_DEVICE & OUTPUT_ENABLED)
+    chks = checksum((const uint32*)buffer, size);
+
+  debug(BD_VIRT_DEVICE, "writeData, [%x, %x), size: %u, buffer: %p, #blocks: %u, blockoffset: %u, checksum: %x\n",
+    offset, offset + size, size, buffer, blocks2write, blockoffset, chks);
+
   assert(offset % block_size_ == 0 && "we can only write multiples of block_size_ to the device");
   assert(size % block_size_ == 0 && "we can only write multiples of block_size_ to the device");
 
   assert((offset + size <= getNumBlocks() * block_size_) && "tried writing out of range");
-
-  debug(BD_VIRT_DEVICE, "writeData\n");
-  uint32 blocks2write = size / block_size_, jiffies = 0;
-  uint32 blockoffset = offset / block_size_;
 
   BDRequest bd(dev_number_, BDRequest::BD_CMD::BD_WRITE, blockoffset, blocks2write, const_cast<char*>(buffer));
   addRequest(&bd);

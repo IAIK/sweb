@@ -55,29 +55,30 @@ class BDRequest
      * checks performed, possible pagefault here
      *
      */
-    BDRequest(uint32 dev_id, BD_CMD cmd, uint32 start_block = 0, uint32 num_block = 0, void * buffer = nullptr) :
-        next_node_(0),
+    BDRequest(uint32 dev_id,
+              BD_CMD cmd,
+              uint32 start_block = 0,
+              uint32 num_block = 0,
+              void* buffer = nullptr) :
+        request_id(++request_counter),
         dev_id_(dev_id),
         cmd_(cmd),
         num_block_(num_block),
         start_block_(start_block),
-        result_(0),
-        status_(BD_RESULT::BD_QUEUED),
-        blocks_done_(0),
         buffer_(buffer),
         requesting_thread_(currentThread)
     {
     }
 
-    uint32 getDevID()           { return dev_id_; }
-    BD_CMD getCmd()             { return cmd_; }
-    uint32 getStartBlock()      { return start_block_; }
-    uint32 getNumBlocks()       { return num_block_; }
-    uint32 getResult()          { return result_; }
-    BD_RESULT getStatus()       { return status_; }
-    uint32 getBlocksDone()      { return blocks_done_; }
-    void *getBuffer()           { return buffer_; }
-    Thread *getThread()         { return requesting_thread_; }
+    uint32 getDevID() const      { return dev_id_; }
+    BD_CMD getCmd() const        { return cmd_; }
+    uint32 getStartBlock() const { return start_block_; }
+    uint32 getNumBlocks() const  { return num_block_; }
+    uint32 getResult() const     { return result_; }
+    BD_RESULT getStatus() const  { return status_; }
+    uint32 getBlocksDone() const { return blocks_done_; }
+    void *getBuffer() const      { return buffer_; }
+    Thread *getThread() const    { return requesting_thread_; }
 
     void setStartBlock( uint32 start_blk ) { start_block_  = start_blk; }
     void setResult( uint32 result )        { result_       = result;    }
@@ -87,7 +88,10 @@ class BDRequest
 
 
     friend class NonBlockingQueue<BDRequest>;
-    eastl::atomic<BDRequest*> next_node_;
+    eastl::atomic<BDRequest*> next_node_ = nullptr;
+
+    inline static eastl::atomic<size_t> request_counter = 0;
+    size_t request_id;
 
   private:
     BDRequest();
@@ -96,9 +100,9 @@ class BDRequest
     BD_CMD cmd_;
     uint32 num_block_;
     uint32 start_block_;
-    uint32 result_;
-    BD_RESULT status_;
-    uint32 blocks_done_;
-    void *buffer_;
+    uint32 result_ = 0;
+    BD_RESULT status_ = BD_RESULT::BD_QUEUED;
+    uint32 blocks_done_ = 0;
+    void* buffer_;
     Thread *requesting_thread_;
 };
