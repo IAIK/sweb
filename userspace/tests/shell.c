@@ -249,7 +249,7 @@ void printAvailableCommands() {
 /// ---------------------------------
 
 
-void readCommand() {
+size_t readCommand() {
   printf("\n%s", SHELL_CMD_LINE_PREFIX);
   size_t counter = 0;
   char temp_buffer[SHELL_BUFFER_SIZE] = {[SHELL_BUFFER_SIZE - 1] = 0};
@@ -351,7 +351,12 @@ void readCommand() {
     }
   }
   buffer[SHELL_BUFFER_SIZE - 1] = 0;
-  memcpy(last_command, buffer, SHELL_BUFFER_SIZE);
+
+  if (counter) {
+      memcpy(last_command, buffer, SHELL_BUFFER_SIZE);
+  }
+
+  return counter;
 }
 
 void handleCommand() {
@@ -431,8 +436,10 @@ int main(int argc, char* argv[]) {
   printAvailableCommands();
 
   while(running) {
-    readCommand();
-    handleCommand();
+    size_t command_len = readCommand();
+    if (command_len > 0) {
+        handleCommand();
+    }
   }
   return exit_code;
 }
