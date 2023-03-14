@@ -153,6 +153,11 @@ size_t Bitmap::getSize() const
   return size_;
 }
 
+size_t Bitmap::getBytesSize() const
+{
+    return BITMAP_BYTE_COUNT(size_);
+}
+
 size_t Bitmap::getNumBitsSet() const
 {
   return num_bits_set_;

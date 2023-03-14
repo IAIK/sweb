@@ -26,6 +26,7 @@ class Bitmap
     static bool unsetBit(uint8* b, size_t& num_bits_set, size_t bit_number);
 
     size_t getSize() const;
+    size_t getBytesSize() const;
 
     /**
      * returns the number of bits set
