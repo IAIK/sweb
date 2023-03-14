@@ -12,6 +12,7 @@ class Bitmap
     static uint8 const bits_per_bitmap_atom_;
 
     Bitmap(size_t number_of_bits);
+    Bitmap(const uint8_t* data, size_t number_of_bits);
     Bitmap(const Bitmap &bm);
     ~Bitmap();
 
@@ -59,6 +60,8 @@ class Bitmap
      * @return the byte
      */
     uint8 getByte(size_t byte_number) const;
+
+    const uint8* data() const;
 
   private:
     size_t size_;

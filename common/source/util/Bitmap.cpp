@@ -23,6 +23,19 @@ Bitmap::Bitmap(size_t number_of_bits) :
   bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)]{};
 }
 
+Bitmap::Bitmap(const uint8_t* data, size_t number_of_bits) :
+    size_(number_of_bits),
+    num_bits_set_(0)
+{
+    bitmap_ = new uint8[BITMAP_BYTE_COUNT(number_of_bits)]{};
+    memcpy(bitmap_, data, BITMAP_BYTE_COUNT(number_of_bits));
+    for (size_t i = 0; i < number_of_bits; ++i)
+    {
+        if (getBit(i))
+            ++num_bits_set_;
+    }
+}
+
 Bitmap::Bitmap(const Bitmap &bm)
   : size_(bm.size_)
   , num_bits_set_(bm.num_bits_set_)
@@ -148,4 +161,9 @@ size_t Bitmap::getNumBitsSet() const
 size_t Bitmap::getNumFreeBits() const
 {
   return size_ - num_bits_set_;
+}
+
+const uint8* Bitmap::data() const
+{
+    return bitmap_;
 }
