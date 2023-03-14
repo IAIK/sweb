@@ -18,11 +18,13 @@
 
 UserProcess::UserProcess(const eastl::string& executable_path,
                          FileSystemInfo* working_dir,
-                         uint32 terminal_number) :
+                         uint32 terminal_number,
+                         int& creation_status) :
     Thread(working_dir, executable_path, Thread::USER_THREAD),
     fd_(VfsSyscall::open(executable_path.c_str(), O_RDONLY))
 {
     debug(USERPROCESS, "Creating new user process %s\n", executable_path.c_str());
+    creation_status = -1;
     // should also be called if you fork a process
     ProcessRegistry::instance()->processStart();
 
@@ -66,6 +68,8 @@ UserProcess::UserProcess(const eastl::string& executable_path,
 
     // Run this thread in userspace when it is scheduled
     switch_to_userspace_ = 1;
+
+    creation_status = 0;
 }
 
 UserProcess::~UserProcess()

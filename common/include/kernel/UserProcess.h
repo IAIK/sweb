@@ -18,7 +18,8 @@ public:
      */
     UserProcess(const eastl::string& executable_path,
                 FileSystemInfo* working_dir,
-                uint32_t terminal_number = 0);
+                uint32_t terminal_number,
+                int& creation_status);
 
     virtual ~UserProcess();
 

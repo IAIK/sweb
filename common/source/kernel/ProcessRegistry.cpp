@@ -62,10 +62,14 @@ void ProcessRegistry::waitAllKilled()
         all_processes_killed_.wait();
 }
 
-void ProcessRegistry::createProcess(const char* path)
+int ProcessRegistry::createProcess(const char* path)
 {
-  Thread* process = new UserProcess(path, new FileSystemInfo(*default_working_dir_));
+  int creation_status = -1;
+  Thread* process = new UserProcess(path, new FileSystemInfo(*default_working_dir_), 0, creation_status);
   debug(PROCESS_REG, "created userprocess %s\n", path);
+
   Scheduler::instance()->addNewThread(process);
   debug(PROCESS_REG, "added thread %s\n", path);
+
+  return creation_status;
 }

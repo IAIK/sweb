@@ -37,7 +37,7 @@ class ProcessRegistry
 
     void waitAllKilled();
 
-    void createProcess(const char* path);
+    int createProcess(const char* path);
 
   private:
 
