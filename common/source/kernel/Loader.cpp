@@ -166,7 +166,8 @@ bool Loader::loadDebugInfoIfAvailable()
 
   eastl::vector<Elf::Shdr> section_headers;
   section_headers.resize(hdr_->e_shnum);
-  debug(USERTRACE, "Reading section headers, shoff: %lx, num headers: %u, read size_ %lu\n", hdr_->e_shoff, hdr_->e_shnum, hdr_->e_shnum*sizeof(Elf::Shdr));
+  debug(USERTRACE, "Reading section headers, shoff: %zx, num headers: %u, read size_ %zu\n",
+    (size_t)hdr_->e_shoff, hdr_->e_shnum, (size_t)hdr_->e_shnum*sizeof(Elf::Shdr));
   if (readFromBinary(reinterpret_cast<char*>(section_headers.data()), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
   {
     debug(USERTRACE, "Failed to load section headers!\n");
