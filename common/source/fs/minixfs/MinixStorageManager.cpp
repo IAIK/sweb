@@ -2,6 +2,8 @@
 
 #include "MinixFSSuperblock.h"
 
+#include "EASTL/unique_ptr.h"
+
 #include "assert.h"
 #include "debug.h"
 
@@ -116,64 +118,24 @@ void MinixStorageManager::freeInode(size_t index)
   debug(M_STORAGE_MANAGER, "freeInode: Inode %zu freed\n", index);
 }
 
-void MinixStorageManager::flush(MinixFSSuperblock *superblock)
+void MinixStorageManager::flush([[maybe_unused]]MinixFSSuperblock *superblock)
 {
   debug(M_STORAGE_MANAGER, "flush: starting flushing\n");
-  char* bm_buffer = new char[(num_inode_bm_blocks_ + num_zone_bm_blocks_) * BLOCK_SIZE];
-  uint32 num_inodes = inode_bitmap_.getSize();
-  uint32 i_byte = 0;
-  for (; i_byte < num_inodes / 8; i_byte++)
-  {
-    bm_buffer[i_byte] = inode_bitmap_.getByte(i_byte);
-  }
-  uint8 byte = 0;
-  for (uint32 i_bit = 0; i_bit < 8; i_bit++)
-  {
-    if (i_bit < num_inodes % 8)
-    {
-      if (inode_bitmap_.getBit(i_byte * 8 + i_bit))
-      {
-        byte &= 0x01 << i_bit;
-      }
-    }
-    else
-      byte &= 0x01 << i_bit;
-  }
-  bm_buffer[i_byte] = byte;
-  ++i_byte;
-  for (; i_byte < num_inode_bm_blocks_ * BLOCK_SIZE; i_byte++)
-  {
-    bm_buffer[i_byte] = 0xff;
-  }
+  if (M_STORAGE_MANAGER & OUTPUT_ENABLED)
+    printBitmap();
 
-  uint32 num_zones = zone_bitmap_.getSize();
-  uint32 z_byte = 0;
-  for (; z_byte < num_zones / 8; z_byte++, i_byte++)
-  {
-    bm_buffer[i_byte] = zone_bitmap_.getByte(z_byte);
-  }
-  byte = 0;
-  for (uint32 z_bit = 0; z_bit < 8; z_bit++)
-  {
-    if (z_bit < num_zones % 8)
-    {
-      if (zone_bitmap_.getBit(z_byte * 8 + z_bit))
-      {
-        byte &= 0x01 << z_bit;
-      }
-    }
-    else
-      byte &= 0x01 << z_bit;
-  }
-  bm_buffer[i_byte] = byte;
-  ++z_byte;
-  ++i_byte;
-  for (; z_byte < num_zone_bm_blocks_ * BLOCK_SIZE; z_byte++, i_byte++)
-  {
-    bm_buffer[i_byte] = 0xff;
-  }
-  superblock->writeBlocks(2, num_inode_bm_blocks_ + num_zone_bm_blocks_, bm_buffer);
-  delete[] bm_buffer;
+  auto buffer_block_size = num_inode_bm_blocks_ + num_zone_bm_blocks_;
+  auto buffer_size = buffer_block_size * BLOCK_SIZE;
+
+  auto bm_buffer = eastl::make_unique<char[]>(buffer_size);
+  memset(bm_buffer.get(), 0, buffer_size);
+
+  memcpy(bm_buffer.get(), inode_bitmap_.data(), inode_bitmap_.getBytesSize());
+  memcpy(bm_buffer.get() + num_inode_bm_blocks_*BLOCK_SIZE, zone_bitmap_.data(), zone_bitmap_.getBytesSize());
+
+
+  superblock->writeBlocks(2, buffer_block_size, bm_buffer.get());
+
   debug(M_STORAGE_MANAGER, "flush: flushing finished\n");
 }
 
