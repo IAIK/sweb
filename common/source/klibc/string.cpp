@@ -303,6 +303,8 @@ extern "C" void *memset(void *block, char c, size_t size)
     return block;
 }
 
+extern int system_state;
+
 extern "C" void *memcpy(void *dest, const void *src, size_t length)
 {
     size_t* s = (size_t*) src;
@@ -320,7 +322,9 @@ extern "C" void *memcpy(void *dest, const void *src, size_t length)
         *d8++ = *s8++;
     }
 
-    assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
+    // No assert if we're already in a kernel panic -> infinite recursion + stack overflow
+    if (system_state != 2)
+        assert(currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
     return dest;
 }
