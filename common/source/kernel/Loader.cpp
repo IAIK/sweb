@@ -100,7 +100,7 @@ bool Loader::readHeaders()
 
   if(readFromBinary((char*)hdr_, 0, sizeof(Elf::Ehdr)))
   {
-    debug(LOADER, "Loader::readHeaders: ERROR! The headers could not be load.\n");
+    debug(LOADER, "Loader::readHeaders: ERROR! The headers could not be loaded.\n");
     return false;
   }
 
@@ -166,6 +166,7 @@ bool Loader::loadDebugInfoIfAvailable()
 
   eastl::vector<Elf::Shdr> section_headers;
   section_headers.resize(hdr_->e_shnum);
+  debug(USERTRACE, "Reading section headers, shoff: %lx, num headers: %u, read size_ %lu\n", hdr_->e_shoff, hdr_->e_shnum, hdr_->e_shnum*sizeof(Elf::Shdr));
   if (readFromBinary(reinterpret_cast<char*>(section_headers.data()), hdr_->e_shoff, hdr_->e_shnum*sizeof(Elf::Shdr)))
   {
     debug(USERTRACE, "Failed to load section headers!\n");
@@ -181,6 +182,7 @@ bool Loader::loadDebugInfoIfAvailable()
   size_t section_name_size = section_headers[section_name_section].sh_size;
   eastl::vector<char> section_names(section_name_size);
 
+  debug(USERTRACE, "Reading shstrtab sh section %zu, offset: %zx, size: %zu\n", section_name_section, section_headers[section_name_section].sh_offset, section_name_size);
   if (readFromBinary(&section_names[0], section_headers[section_name_section].sh_offset, section_name_size ))
   {
     debug(USERTRACE, "Failed to load section name section\n");
