@@ -95,12 +95,13 @@ void Superblock::deleteAllInodes()
 {
     for (Inode* inode : all_inodes_)
     {
+        debug(SUPERBLOCK, "~Superblock remove dentries for inode %p\n", inode);
         while(!inode->getDentrys().empty())
         {
             delete inode->getDentrys().front();
         }
 
-        debug(SUPERBLOCK, "~Superblock write inode to disc\n");
+        debug(SUPERBLOCK, "~Superblock write inode %p to disc\n", inode);
         writeInode(inode);
 
         debug(SUPERBLOCK, "~Superblock delete inode %p\n", inode);

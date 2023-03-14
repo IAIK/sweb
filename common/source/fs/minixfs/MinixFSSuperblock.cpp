@@ -56,6 +56,32 @@ MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 
   debug(M_SB, "MinixFSSuperblock ctor finished\n");
 }
 
+MinixFSSuperblock::~MinixFSSuperblock()
+{
+  debug(M_SB, "~MinixSuperblock\n");
+  assert(dirty_inodes_.empty() == true);
+
+  storage_manager_->flush(this);
+
+  debug(M_SB, "Release open files\n");
+  releaseAllOpenFiles();
+
+  if (M_SB & OUTPUT_ENABLED)
+  {
+    for (auto* it : all_inodes_)
+      debug(M_SB, "Inode: %p\n", it);
+  }
+
+  // Also writes back inodes to disk
+  debug(M_SB, "Delete inodes and write back to disk\n");
+  deleteAllInodes();
+  all_inodes_set_.clear();
+
+  delete storage_manager_;
+
+  debug(M_SB, "~MinixSuperblock finished\n");
+}
+
 void MinixFSSuperblock::readHeader()
 {
   char buffer[BLOCK_SIZE];
@@ -160,13 +186,16 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   }
   uint32 first_inode_block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
   uint32 inode_block_num = first_inode_block + (i_num - 1) / INODES_PER_BLOCK;
+  uint32 byte_offset = ((i_num - 1) % INODES_PER_BLOCK) * INODE_SIZE;
   MinixFSInode *inode = nullptr;
+
   char ibuffer_array[BLOCK_SIZE];
   char* ibuffer = ibuffer_array;
+
   debug(M_SB, "getInode::reading block num: %d\n", inode_block_num);
   readBlocks(inode_block_num, 1, ibuffer);
   debug(M_SB, "getInode:: returned reading block num: %d\n", inode_block_num);
-  uint32 byte_offset = ((i_num - 1) % INODES_PER_BLOCK) * INODE_SIZE;
+
   debug(M_SB, "getInode:: setting offset: %d\n", byte_offset);
   ibuffer += byte_offset;
   auto* idata_v1 = (MinixFSInode::MinixFSInodeOnDiskDataV1*)ibuffer;
@@ -189,30 +218,6 @@ MinixFSInode* MinixFSSuperblock::getInode(uint16 i_num)
   inode = new MinixFSInode(this, i_mode, i_size, i_nlinks, i_zones, i_num);
   debug(M_SB, "getInode:: returned creating Inode\n");
   return inode;
-}
-
-MinixFSSuperblock::~MinixFSSuperblock()
-{
-  debug(M_SB, "~MinixSuperblock\n");
-  assert(dirty_inodes_.empty() == true);
-  storage_manager_->flush(this);
-
-  releaseAllOpenFiles();
-
-  debug(M_SB, "Open files released\n");
-  if (M_SB & OUTPUT_ENABLED)
-  {
-    for (auto* it : all_inodes_)
-      debug(M_SB, "Inode: %p\n", it);
-  }
-
-  // Also writes back inodes to disk
-  deleteAllInodes();
-  all_inodes_set_.clear();
-
-  delete storage_manager_;
-
-  debug(M_SB, "~MinixSuperblock finished\n");
 }
 
 Inode* MinixFSSuperblock::createInode(uint32 type)
@@ -273,11 +278,14 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   uint32 block = 2 + s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_
       + ((minix_inode->i_num_ - 1) * INODE_SIZE / BLOCK_SIZE);
   uint32 byte_offset = ((minix_inode->i_num_ - 1) * INODE_SIZE) % BLOCK_SIZE;
+
   char buffer[INODE_SIZE];
   memset((void*) buffer, 0, sizeof(buffer));
+
   debug(M_SB, "writeInode> reading block %d with offset %d from disc\n", block, byte_offset);
   readBytes(block, byte_offset, INODE_SIZE, buffer);
   debug(M_SB, "writeInode> read data from disc\n");
+
   debug(M_SB, "writeInode> the inode: i_type_: %d, i_nlink_: %d, i_size_: %d\n", minix_inode->i_type_,
         minix_inode->numLinks(), minix_inode->i_size_);
   if (minix_inode->i_type_ == I_FILE)
@@ -293,7 +301,9 @@ void MinixFSSuperblock::writeInode(Inode* inode)
   else
   {
     // link etc. unhandled
+    debugAlways(M_SB, "WARNING: Unhandled file type, cannot write to disk!\n");
   }
+
   ((uint32*)buffer)[1+V3_OFFSET] = minix_inode->i_size_;
   debug(M_SB, "writeInode> write inode %p link count %u\n", inode, minix_inode->numLinks());
   if (s_magic_ == MINIX_V3)
@@ -302,6 +312,7 @@ void MinixFSSuperblock::writeInode(Inode* inode)
     buffer[13] = minix_inode->numLinks();
   debug(M_SB, "writeInode> writing bytes to disc on block %d with offset %d\n", block, byte_offset);
   writeBytes(block, byte_offset, INODE_SIZE, buffer);
+
   debug(M_SB, "writeInode> flushing zones of inode %p\n", inode);
   minix_inode->i_zones_->flush(minix_inode->i_num_);
 }

@@ -112,6 +112,16 @@ MinixFSZone::~MinixFSZone()
   delete[] indirect_zones_;
 }
 
+void MinixFSZone::printZones()
+{
+    debug(M_ZONE, "Used minixfs zones:\n");
+    for (uint32_t i = 0, num_zones = getNumZones(); i < num_zones; ++i)
+    {
+        auto z = getZone(i);
+        debug(M_ZONE, "Zone[%u] = %x\n", i, z);
+    }
+}
+
 uint32 MinixFSZone::getZone(uint32 index)
 {
   assert(index < num_zones_);
@@ -126,7 +136,7 @@ uint32 MinixFSZone::getZone(uint32 index)
 
 void MinixFSZone::setZone(uint32 index, uint32 zone)
 {
-  debug(M_ZONE, "MinixFSZone::setZone> index: %d, zone: %d\n", index, zone);
+  debug(M_ZONE, "MinixFSZone::setZone> index: %d, zone: %x\n", index, zone);
   if (index < 7)
   {
     direct_zones_[index] = zone;

@@ -15,6 +15,10 @@ Inode::Inode(Superblock *superblock, uint32 inode_type) :
     i_state_(I_UNUSED),
     i_mode_((A_READABLE ^ A_WRITABLE) ^ A_EXECABLE)
 {
+    auto sb = getSuperblock();
+    auto type = sb ? sb->getFSType() : nullptr;
+    auto fs_name = type ? type->getFSName() : nullptr;
+    debug(INODE, "Inode() %s %p, type: %x\n", fs_name, this, i_type_);
 }
 
 Inode::~Inode()

@@ -8,22 +8,24 @@
 Dentry::Dentry(Inode* inode) :
     d_inode_(inode), d_parent_(this), d_mounts_(0), d_name_("/")
 {
-    debug(DENTRY, "Created root Dentry\n");
+    debug(DENTRY, "Created root Dentry %p %s\n", this, getName());
+    assert(inode);
     inode->addDentry(this);
 }
 
 Dentry::Dentry(Inode* inode, Dentry* parent, const eastl::string& name) :
     d_inode_(inode), d_parent_(parent), d_mounts_(0), d_name_(name)
 {
-    debug(DENTRY, "created Dentry with Name %s\n", name.c_str());
+    debug(DENTRY, "Created Dentry %p, name: %s\n", this, name.c_str());
     assert(name != "");
     parent->setChild(this);
+    assert(inode);
     inode->addDentry(this);
 }
 
 Dentry::~Dentry()
 {
-  debug(DENTRY, "Deleting Dentry %s, d_parent_: %p, this: %p\n", d_name_.c_str(), d_parent_, this);
+  debug(DENTRY, "Deleting Dentry %p, name: %s, d_parent_: %p, this: %p\n", this, d_name_.c_str(), d_parent_, this);
   if (d_parent_ && (d_parent_ != this))
   {
     d_parent_->childRemove(this);

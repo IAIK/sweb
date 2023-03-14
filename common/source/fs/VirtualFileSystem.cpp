@@ -175,6 +175,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   super = fst->readSuper(super, nullptr); //?
 
   Dentry *root = super->getRoot();
+  assert(root);
   assert(root->getParent() == root);
 
   super->setMountPoint(mountpoint_path.dentry_); // Set mountpoint for new superblock

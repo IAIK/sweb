@@ -56,7 +56,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
     debug(VFSSYSCALL, "(mkdir) Creating new directory Inode in superblock %p of type %s\n", parent_dir_sb, parent_dir_sb->getFSType()->getFSName());
     Inode* new_dir_inode = parent_dir_sb->createInode(I_DIR);
 
-    debug(VFSSYSCALL, "(mkdir) Creating new dentry: %s in parent dir %s\n", new_dir_name.c_str(), parent_dir_path.dentry_->getName());
+    debug(VFSSYSCALL, "(mkdir) Creating new dentry: %s in parent dir %s, inode: %p\n", new_dir_name.c_str(), parent_dir_path.dentry_->getName(), new_dir_inode);
     Dentry* new_dir_dentry = new Dentry(new_dir_inode, parent_dir_path.dentry_, new_dir_name);
     new_dir_inode->mkdir(new_dir_dentry);
 
@@ -103,8 +103,8 @@ ssize_t VfsSyscall::getdents(int fd, char* buffer, size_t buffer_size)
     }
 
     Dentry* dir_dentry = file_descriptor->getFile()->getDentry();
-    debug(VFSSYSCALL, "(getdents) Reading dentries for %s\n",
-          dir_dentry->getName());
+    debug(VFSSYSCALL, "(getdents) Reading dentries for dir %p (inode %p) %s\n",
+          dir_dentry, dir_dentry->getInode(), dir_dentry->getName());
 
     ssize_t buf_offs = 0;
     user_dirent* u_dirent = nullptr;
@@ -114,6 +114,8 @@ ssize_t VfsSyscall::getdents(int fd, char* buffer, size_t buffer_size)
         uint32 d_type = sub_dentry->getInode()->getType();
         const char* d_name = sub_dentry->getName();
         auto d_name_len = strlen(d_name) + 1;
+
+        debug(VFSSYSCALL, "(getdents) child %s, type: %x\n", d_name, d_type);
 
         u_dirent = (user_dirent*)(buffer + buf_offs);
 
@@ -302,6 +304,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   {
     debug(VFSSYSCALL, "(open) Found target file: %s\n", target_path.dentry_->getName());
     Inode* target_inode = target_path.dentry_->getInode();
+    assert(target_inode);
 
     File* file = target_inode->open(target_path.dentry_, flag);
     if (!file)
