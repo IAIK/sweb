@@ -30,7 +30,7 @@ Thread::Thread(FileSystemInfo* working_dir, eastl::string name, Thread::TYPE typ
         (type == Thread::USER_THREAD ? nullptr : (void*)&threadStartHack),
         getKernelStackStartPointer())),
     switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0),
-    console_color(CONSOLECOLOR::BRIGHT_BLUE),
+    console_color(type == Thread::USER_THREAD ? CONSOLECOLOR::BRIGHT_BLUE : CONSOLECOLOR::BRIGHT_GREEN),
     state_(Running),
     tid_(0),
     working_dir_(working_dir),

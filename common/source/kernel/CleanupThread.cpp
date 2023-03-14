@@ -7,7 +7,8 @@
 
 #include "assert.h"
 
-CleanupThread::CleanupThread() : Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
+CleanupThread::CleanupThread() :
+    Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
 {
     console_color = CONSOLECOLOR::BROWN;
 }
