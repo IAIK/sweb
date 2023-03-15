@@ -75,8 +75,8 @@ add_custom_command(TARGET kernel
     BYPRODUCTS ${KERNEL_BINARY} kernel.dbg kernel.unstripped
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/${KERNEL_BINARY}
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.unstripped
-    COMMAND ${STRIP_DEBUG_INFO}
     COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
+    COMMAND ${STRIP_DEBUG_INFO}
     COMMAND ${OBJCOPY_EXECUTABLE} -O elf32-i386 $<TARGET_FILE:kernel> $<TARGET_FILE:kernel>)
 
 add_dependencies(kernel add-dbg)

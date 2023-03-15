@@ -38,8 +38,8 @@ add_custom_command(TARGET kernel
     POST_BUILD
     BYPRODUCTS kernel.dbg kernel.unstripped
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.unstripped
-    COMMAND ${STRIP_DEBUG_INFO}
-    COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg)
+    COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
+    COMMAND ${STRIP_DEBUG_INFO})
 
 add_dependencies(kernel add-dbg)
 
