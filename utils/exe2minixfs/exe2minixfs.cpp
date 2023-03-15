@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 #endif
 
   size_t part_byte_offset = 0;
+  size_t part_byte_size = 0;
 
   if(partition != 0)
   {
@@ -139,11 +140,12 @@ int main(int argc, char *argv[])
     }
 
     part_byte_offset = (size_t)part_table[partition - 1].relsect * SECTOR_SIZE;
+    part_byte_size = part_table[partition - 1].numsect * SECTOR_SIZE;
   }
 
   MinixFSType* minixfs_type = new MinixFSType();
 
-  superblock_ = (Superblock*) new MinixFSSuperblock(minixfs_type, (size_t)image_fd, part_byte_offset);
+  superblock_ = (Superblock*) new MinixFSSuperblock(minixfs_type, (size_t)image_fd, part_byte_offset, part_byte_size);
   Dentry *root = superblock_->getRoot();
   superblock_->setMountPoint(root);
   Dentry *mount_point = superblock_->getMountPoint();

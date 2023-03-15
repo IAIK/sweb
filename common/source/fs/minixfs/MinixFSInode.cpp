@@ -149,7 +149,7 @@ int32 MinixFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
   for (uint32 zone_index = 0; zone_index < num_zones; zone_index++)
   {
     debug(M_INODE, "writeData: writing zone_index: %d, i_zones_->getZone(zone) : %d\n", zone_index,
-          i_zones_->getZone(zone));
+          i_zones_->getZone(zone_index));
     ((MinixFSSuperblock *) superblock_)->writeZone(i_zones_->getZone(zone_index + zone), wbuffer);
     wbuffer += ZONE_SIZE;
   }

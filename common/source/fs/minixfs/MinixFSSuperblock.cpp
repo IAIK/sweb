@@ -22,8 +22,8 @@
 
 #define ROOT_NAME "/"
 
-MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset) :
-    Superblock(fs_type, s_dev), superblock_(this), offset_(offset)
+MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset, uint64 partition_size) :
+    Superblock(fs_type, s_dev), superblock_(this), offset_(offset), size_(partition_size)
 {
   //read Superblock data from disc
   readHeader();
@@ -39,7 +39,7 @@ MinixFSSuperblock::MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 
         "s_magic_ : %llu\n",
         s_num_inodes_, s_zones_, s_num_inode_bm_blocks_, s_num_zone_bm_blocks_, s_1st_datazone_, s_log_zone_size_, s_max_file_size_, s_block_size_, (long long unsigned)s_magic_);
   assert(s_log_zone_size_ == 0);
-  assert(s_block_size_ == 1024);
+  assert(s_block_size_ == BLOCK_SIZE);
   //create Storage Manager
   uint32 bm_size = s_num_inode_bm_blocks_ + s_num_zone_bm_blocks_;
   auto bm_buffer = eastl::make_unique<char[]>(BLOCK_SIZE * bm_size);
@@ -353,6 +353,7 @@ uint16 MinixFSSuperblock::allocateZone()
   debug(M_ZONE, "MinixFSSuperblock allocateZone>\n");
   uint16 ret = (storage_manager_->allocZone() + s_1st_datazone_ - 1); // -1 because the zone nr 0 is set in the bitmap and should never be used!
   debug(M_ZONE, "MinixFSSuperblock allocateZone> returning %d\n", ret);
+  assert(ret < s_zones_);
   return ret;
 }
 
@@ -366,8 +367,11 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
 {
   assert(buffer);
 #ifdef EXE2MINIXFS
+  size_t offset = offset_ + block * BLOCK_SIZE;
   size_t read_size = BLOCK_SIZE * num_blocks;
-  fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
+  size_t read_end = -1;
+  assert(!__builtin_add_overflow(offset, read_size, &read_end) && read_end <= size_);
+  fseek((FILE*)s_dev_, offset, SEEK_SET);
   assert(fread(buffer, 1, read_size, (FILE*)s_dev_) == read_size);
 #else
   BDVirtualDevice* bdvd = BDManager::instance().getDeviceByNumber(s_dev_);
@@ -380,14 +384,18 @@ void MinixFSSuperblock::readBlocks(uint16 block, uint32 num_blocks, char* buffer
 
 void MinixFSSuperblock::writeZone(uint16 zone, char* buffer)
 {
+  assert(zone < s_zones_);
   writeBlocks(zone, ZONE_SIZE / BLOCK_SIZE, buffer);
 }
 
 void MinixFSSuperblock::writeBlocks(uint16 block, uint32 num_blocks, char* buffer)
 {
 #ifdef EXE2MINIXFS
+  size_t offset = offset_ + block * BLOCK_SIZE;
   size_t write_size = BLOCK_SIZE * num_blocks;
-  fseek((FILE*)s_dev_, offset_ + block * BLOCK_SIZE, SEEK_SET);
+  size_t write_end = -1;
+  assert(!__builtin_add_overflow(offset, write_size, &write_end) && write_end <= size_);
+  fseek((FILE*)s_dev_, offset, SEEK_SET);
   assert(fwrite(buffer, 1, write_size, (FILE*)s_dev_) == write_size);
 #else
   BDVirtualDevice* bdvd = BDManager::instance().getDeviceByNumber(s_dev_);

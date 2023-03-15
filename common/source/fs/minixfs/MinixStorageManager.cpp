@@ -102,7 +102,7 @@ size_t MinixStorageManager::allocInode()
     }
   }
   kprintfd("acquireInode: NO FREE INODE FOUND!\n");
-  assert(false); // full memory should have been checked.
+  assert(false && "Unable to allocate new inode on minixfs, no free inode found"); // full memory should have been checked.
   return 0;
 }
 

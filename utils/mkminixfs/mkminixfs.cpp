@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
 
   {
     printf("mkminixfs: Loading MinixFSSuperblock\n");
-    MinixFSSuperblock superblock(0, (size_t)image_fd, part_byte_offset);
+    MinixFSSuperblock superblock(0, (size_t)image_fd, part_byte_offset, part_byte_size);
   }
 
   if(have_partition)
