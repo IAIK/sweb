@@ -20,6 +20,8 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #define MULTIBOOT_HEADER_FLAGS (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA)
 #define MULTIBOOT_CHECKSUM (-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS))
 
+#define BOOT_STACK_SIZE (0x4000)
+
 extern uint32 bss_start_address;
 extern uint32 bss_end_address;
 extern uint8 boot_stack[];
@@ -136,9 +138,9 @@ extern "C" void entry()
   PRINT("Setup TSS...\n");
   TSS* g_tss_p = (TSS*) TRUNCATE(&g_tss);
   g_tss_p->ist0_h = -1U;
-  g_tss_p->ist0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
+  g_tss_p->ist0_l = (uint32) TRUNCATE(boot_stack) | 0x80000000 | BOOT_STACK_SIZE;
   g_tss_p->rsp0_h = -1U;
-  g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80004000;
+  g_tss_p->rsp0_l = (uint32) TRUNCATE(boot_stack) | 0x80000000 | BOOT_STACK_SIZE;
   g_tss_p->iobp = -1;
 
   PRINT("Setup Segments...\n");
