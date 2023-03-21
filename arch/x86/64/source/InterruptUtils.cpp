@@ -184,6 +184,7 @@ extern "C" void irqHandler_65()
 
 extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious);
 extern "C" void arch_pageFaultHandler();
+
 extern "C" void pageFaultHandler(uint64 address, uint64 error)
 {
   auto &regs = *(currentThread->switch_to_userspace_ ? currentThread->user_registers_ : currentThread->kernel_registers_);
@@ -203,7 +204,7 @@ extern "C" void pageFaultHandler(uint64 address, uint64 error)
   if (currentThread->switch_to_userspace_)
     arch_contextSwitch();
   else
-    asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
+    ArchThreads::flushTlb();
 }
 
 extern "C" void arch_irqHandler_1();
