@@ -152,6 +152,11 @@ public:
    */
   static void debugCheckNewThread(Thread* thread);
 
+  /**
+   * flush TLB
+   */
+  static void flushTlb();
+
 private:
   /**
    * creates the ArchThreadRegisters for a thread (common setup for kernel and user registers)
