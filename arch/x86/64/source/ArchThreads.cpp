@@ -161,11 +161,6 @@ void ArchThreads::printThreadRegisters(Thread *thread, size_t userspace_register
 
 extern "C" void threadStartHack();
 
-void ArchThreads::flushTlb()
-{
-  asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax", "memory");
-}
-
 void ArchThreads::debugCheckNewThread(Thread* thread)
 {
   assert(currentThread);

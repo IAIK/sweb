@@ -3,7 +3,7 @@
 #include "offsets.h"
 #include "multiboot.h"
 #include "ArchCommon.h"
-#include "ArchThreads.h"
+#include "ArchMemory.h"
 #include "kprintf.h"
 
 extern void* kernel_end_address;
@@ -109,5 +109,5 @@ extern "C" void removeBootTimeIdentMapping()
   pml4[0] = 0;
   pml4[1] = 0;
 
-  ArchThreads::flushTlb();
+  ArchMemory::flushTlb();
 }
