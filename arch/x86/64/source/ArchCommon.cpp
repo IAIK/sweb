@@ -225,10 +225,10 @@ extern "C" void entry64()
   PRINT("Initializing Kernel Paging Structures...\n");
   initialisePaging();
   PRINT("Setting CR3 Register...\n");
-  asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure())));
+  asm("mov %%rax, %%cr3" : : "a"(VIRTUAL_TO_PHYSICAL_BOOT(ArchMemory::getRootOfKernelPagingStructure())) : "memory");
   PRINT("Switch to our own stack...\n");
   asm("mov %[stack], %%rsp\n"
-      "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000));
+      "mov %[stack], %%rbp\n" : : [stack]"i"(boot_stack + 0x4000) : "memory");
   PRINT("Loading Long Mode Segments...\n");
 
   gdt_ptr.limit = sizeof(gdt) - 1;
@@ -239,8 +239,23 @@ extern "C" void entry64()
       "mov %%ax, %%ss\n"
       "mov %%ax, %%fs\n"
       "mov %%ax, %%gs\n"
-      : : "a"(KERNEL_DS));
+      : : "a"(KERNEL_DS) : "memory");
   asm("ltr %%ax" : : "a"(KERNEL_TSS));
+
+  PRINT("Check SMEP support...\n");
+  uint32 ebx=0;
+  asm volatile("mov $7, %%rax\n"
+               "xor %%rcx, %%rcx\n"
+               "cpuid\n"
+               :"=b"(ebx)::"rax", "rcx", "rdx", "cc");
+  if (ebx & (1<<7))
+  {
+    PRINT("Enable SMEP...\n");
+    asm volatile("mov %%cr4,%%rax\n"
+                 "or $0x100000, %%rax\n"
+                 "mov %%rax,%%cr4\n" ::: "rax", "memory");
+  }
+
   PRINT("Calling startup()...\n");
   asm("jmp *%[startup]" : : [startup]"r"(startup));
   while (1);
