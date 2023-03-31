@@ -247,7 +247,7 @@ extern "C" void entry64()
   asm volatile("mov $7, %%rax\n"
                "xor %%rcx, %%rcx\n"
                "cpuid\n"
-               :"=b"(ebx)::"rax", "rcx", "rdx", "cc");
+               :"=b"(ebx)::"rax", "rcx", "rdx");
   if (ebx & (1<<7))
   {
     PRINT("Enable SMEP...\n");

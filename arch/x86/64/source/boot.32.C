@@ -126,7 +126,7 @@ extern "C" void entry()
       "wrmsr\n" ::: "ecx", "eax", "edx");
 
   asm volatile("push $2\n"
-      "popf\n" ::: "cc");
+      "popf\n");
 
   PRINT("Enable Paging...\n");
   asm volatile("mov %%cr0,%%eax\n"
