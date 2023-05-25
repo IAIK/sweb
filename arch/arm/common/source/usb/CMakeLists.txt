@@ -1,4 +1,4 @@
-include_directories(
+target_include_directories(kernel PUBLIC
   ../../include/usb
   ../../include/usb/usbd
 )

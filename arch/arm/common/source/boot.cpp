@@ -1,9 +1,12 @@
-#include "types.h"
 #include "board_constants.h"
 #include "init_boottime_pagetables.h"
-#include "assert.h"
 #include "kstring.h"
+
 #include "ArchBoardSpecific.h"
+
+#include "types.h"
+
+#include "assert.h"
 
 extern "C" void __attribute__((naked)) PagingMode();
 extern "C" void startup();

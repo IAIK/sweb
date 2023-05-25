@@ -1,7 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include <ustl/ulist.h>
+
+#include "EASTL/list.h"
 
 /**
  * File system flag indicating if the system in question requires an device.
@@ -23,14 +24,14 @@ class FileSystemInfo;
 class VirtualFileSystem
 {
   protected:
-    ustl::list<Superblock*> superblocks_;
-    ustl::list<VfsMount*> mounts_;
-    ustl::list<FileSystemType*> file_system_types_;
+    eastl::list<Superblock*> superblocks_;
+    eastl::list<VfsMount*> mounts_;
+    eastl::list<FileSystemType*> file_system_types_;
 
   public:
     void initialize();
-    VirtualFileSystem();
-    ~VirtualFileSystem();
+    VirtualFileSystem() = default;
+    ~VirtualFileSystem() = default;
 
     /**
      * register the file-system-type to the vfs
@@ -103,4 +104,3 @@ class VirtualFileSystem
 };
 
 extern VirtualFileSystem vfs;
-

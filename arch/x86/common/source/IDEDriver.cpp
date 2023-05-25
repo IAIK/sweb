@@ -1,247 +1,401 @@
 #include "IDEDriver.h"
 
+#include "ATACommands.h"
+#include "ATADriver.h"
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
-#include "ATADriver.h"
-#include "ports.h"
-#include "kstring.h"
-#include "ArchInterrupts.h"
+#include "MasterBootRecord.h"
 #include "kprintf.h"
+#include "kstring.h"
+#include "ports.h"
+#include "source_location.h"
 
-uint32 IDEDriver::doDeviceDetection()
+#include "ArchInterrupts.h"
+
+size_t IDEControllerChannel::num_ide_controllers = 0;
+
+IDEControllerDriver::IDEControllerDriver() :
+    BasicDeviceDriver("IDE Driver")
 {
-  uint32 jiffies = 0;
-  uint16 base_port = 0x1F0;
-  uint16 base_regport = 0x3F6;
-  uint8 cs = 0;
-  uint8 sc;
-  uint8 sn;
-  uint8 devCtrl;
+}
 
-  uint8 ata_irqs[4] =
-  {
-  14, 15, 11, 9
-  };
+IDEControllerDriver& IDEControllerDriver::instance()
+{
+    static IDEControllerDriver instance_;
+    return instance_;
+}
 
-  // setup register values
-  devCtrl = 0x00; // please use interrupts
+void IDEControllerDriver::doDeviceDetection()
+{
+    // Assume we have an IDE controller
+    // Normally detcted via PCI bus enumeration
+    auto ide_controller = new IDEController("IDE Controller");
+    bindDevice(*ide_controller);
+}
 
-  // assume there are no devices
-  debug(IDE_DRIVER, "doDetection:%d\n", cs);
+IDEControllerChannel::IDEControllerChannel(const eastl::string& name,
+                                           uint16_t io_reg_base,
+                                           uint16_t control_reg_base,
+                                           uint16_t isa_irqnum) :
+    DeviceBus(name),
+    IrqDomain(name),
+    io_regs({io_reg_base}),
+    control_regs({control_reg_base}),
+    isa_irqnum(isa_irqnum),
+    controller_id(num_ide_controllers++)
+{
+    debug(IDE_DRIVER, "Init IDE Controller Channel %zu - %s\n", controller_id, deviceName().c_str());
 
-  for (cs = 0; cs < 4; cs++)
-  {
-    char name[5];
-    name[0] = 'i';
-    name[1] = 'd';
-    name[2] = 'e';
-    name[3] = cs + 'a';
-    name[4] = '\0';
+    registerDriver(PATADeviceDriver::instance());
 
-    debug(IDE_DRIVER, "doDetection:Detecting IDE DEV: %s\n", name);
+    IrqDomain::irq()
+        .mapTo(ArchInterrupts::isaIrqDomain(), isa_irqnum);
 
-    if (cs > 1)
+    doDeviceDetection();
+}
+
+void IDEControllerChannel::reset()
+{
+    debug(IDE_DRIVER, "Reset controller\n");
+    ControlRegister::DeviceControl dc{};
+    dc.reset = 1;
+    control_regs[ControlRegister::DEVICE_CONTROL].write(dc);
+    dc.reset = 0;
+    control_regs[ControlRegister::DEVICE_CONTROL].write(dc);
+
+    waitNotBusy();
+
+    // Drive 0 is normally automatically selected after reset, but this might not automatically be done by QEMU
+    selectDrive(0, true);
+}
+
+[[nodiscard]] bool IDEControllerChannel::isDataReady()
+{
+    auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+    return status.data_ready && !status.error && !status.drive_fault_error;
+}
+
+bool IDEControllerChannel::waitDriveReady(source_location loc)
+{
+    int jiffies = 0;
+    auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+    debugAdvanced(IDE_DRIVER, "Wait for drive to be ready. Status: %x\n",
+                  status.u8);
+    while ((status.busy || !status.ready) && jiffies++ < IO_TIMEOUT)
     {
-      base_port = 0x170;
-      base_regport = 0x376;
+        status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+        ++jiffies;
     }
 
-    outportbp(base_regport, devCtrl); // init the device with interupts
-
-    uint8 value = (cs % 2 == 0 ? 0xA0 : 0xB0);
-    uint16 bpp6 = base_port + 6;
-    uint16 bpp2 = base_port + 2;
-    uint16 bpp3 = base_port + 3;
-
-    outportb(bpp6, value);
-    outportb(0x80, 0x00);
-
-    outportb(bpp2, 0x55);
-    outportb(0x80, 0x00);
-    outportb(bpp3, 0xAA);
-    outportb(0x80, 0x00);
-    outportb(bpp2, 0xAA);
-    outportb(0x80, 0x00);
-    outportb(bpp3, 0x55);
-    outportb(0x80, 0x00);
-    outportb(bpp2, 0x55);
-    outportb(0x80, 0x00);
-    outportb(bpp3, 0xAA);
-    outportb(0x80, 0x00);
-
-    sc = inportb(bpp2);
-    outportb(0x80, 0x00);
-    sn = inportb(bpp3);
-    outportb(0x80, 0x00);
-
-    if ((sc == 0x55) && (sn == 0xAA))
+    if (status.error)
     {
-      outportbp(base_regport, devCtrl | 0x04); // RESET
-      outportbp(base_regport, devCtrl);
+        auto error = io_regs[IDEControllerChannel::IoRegister::ERROR].read();
 
-      jiffies = 0;
-      while (!(inportbp(base_port + 7) & 0x58) && jiffies++ < IO_TIMEOUT)
-        ArchInterrupts::yieldIfIFSet();
+        debugAlways(IDE_DRIVER,
+                    "Drive reported error while waiting for drive to be ready. "
+                    "Status: %x, error: %x. "
+                    "At %s:%u %s\n"
+                    "\n",
+                    status.u8, error.u8, loc.file_name(), loc.line(),
+                    loc.function_name());
 
-      if (jiffies >= IO_TIMEOUT)
-        debug(IDE_DRIVER, "doDetection: Still busy after reset!\n");
-      else
-      {
-        outportbp(base_port + 6, (cs % 2 == 0 ? 0xA0 : 0xB0));
+        return false;
+    }
 
-        jiffies = 0;
-        while(inportbp(base_port + 7) & 0x80 && jiffies++ < IO_TIMEOUT);
+    if (jiffies >= IO_TIMEOUT)
+    {
+        debugAlways(IDE_DRIVER,
+                    "ERROR: Timeout while waiting for IDE drive to be ready. "
+                    "Status: %x. "
+                    "At %s:%u %s\n",
+                    status.u8, loc.file_name(), loc.line(), loc.function_name());
+    }
 
-        uint8 c1 = inportbp(base_port + 2);
-        uint8 c2 = inportbp(base_port + 3);
+    return status.ready;
+}
 
-        debug(IDE_DRIVER, "c1 = %x, c2 = %x\n", c1, c2);
-        if (c1 != 0x01 && c2 != 0x01)
-          debug(IDE_DRIVER, "doDetection: Not found after reset ! \n");
-        else
-        {
-          uint8 c3 = inportbp(base_port + 7);
-          uint8 c4 = inportbp(base_port + 4);
-          uint8 c5 = inportbp(base_port + 5);
+bool IDEControllerChannel::waitNotBusy(source_location loc)
+{
+    int jiffies = 0;
+    auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+    debugAdvanced(IDE_DRIVER, "Wait until drive is not busy. Status: %x\n", status.u8);
+    while (status.busy && jiffies++ < IO_TIMEOUT)
+    {
+        status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+        ++jiffies;
+    }
 
-          if (((c4 == 0x14) && (c5 == 0xEB)) || ((c4 == 0x69) && (c5 == 0x96)))
-          {
-            debug(IDE_DRIVER, "doDetection: Found ATAPI ! \n");
-            debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
+    if (status.error)
+    {
+        auto error = io_regs[IDEControllerChannel::IoRegister::ERROR].read();
 
-            debug(IDE_DRIVER, "doDetection: CDROM not supported \n");
+        debugAlways(IDE_DRIVER,
+                    "Drive reported error while waiting until drive is not busy. "
+                    "Status: %x, error: %x.\n"
+                    "At %s:%u %s\n",
+                    status.u8, error.u8, loc.file_name(), loc.line(),
+                    loc.function_name());
 
-            // CDROM hook goes here
-            //
-            // char *name = "ATAX0";
-            // name[3] = cs + '0';
-            // drv = new CROMDriver ( base_port, cs % 2 );
-            // BDVirtualDevice *bdv = new
-            // BDVirtualDevice( drv, 0, drv->getNumSectors(),
-            // drv->getSectorSize(), name, true);
-            // BDManager::getInstance()->addDevice( bdv );
+        return false;
+    }
 
-          }
-          else
-          {
-            if (c3 != 0)
-            {
-              if ((c4 == 0x00) && (c5 == 0x00))
-              {
-                debug(IDE_DRIVER, "doDetection: Found PATA ! \n");
-                debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
+    if (jiffies >= IO_TIMEOUT)
+    {
+        debugAlways(IDE_DRIVER,
+                    "ERROR: Timeout while waiting until drive is not busy. "
+                    "Status: %x.\n"
+                    "At %s:%u %s\n",
+                    status.u8, loc.file_name(), loc.line(), loc.function_name());
+    }
 
-                ATADriver *drv = new ATADriver(base_port, cs % 2, ata_irqs[cs]);
-                BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name,
-                                                           true);
+    return !status.busy;
+}
 
-                BDManager::getInstance()->addVirtualDevice(bdv);
-                processMBR(drv, 0, drv->SPT, name);
-              }
-              else if ((c4 == 0x3C) && (c5 == 0xC3))
-              {
-                debug(IDE_DRIVER, "doDetection: Found SATA device! \n");
-                debug(IDE_DRIVER, "doDetection: port: %4X, drive: %d \n", base_port, cs % 2);
+bool IDEControllerChannel::waitDataReady(source_location loc)
+{
+    int jiffies = 0;
+    auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+    debugAdvanced(IDE_DRIVER, "Wait for data ready. Status: %x\n", status.u8);
+    while (status.busy && jiffies++ < IO_TIMEOUT)
+    {
+        status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+        ++jiffies;
+    }
 
-                // SATA hook
-                // drv = new SATADriver ( base_port, cs % 2 );
+    if (status.error)
+    {
+        auto error = io_regs[IDEControllerChannel::IoRegister::ERROR].read();
 
-                debug(IDE_DRIVER, "doDetection: Running SATA device as PATA in compatibility mode! \n");
+        debugAlways(IDE_DRIVER,
+                    "Drive reported error while waiting for data to be available. "
+                    "Status: %x, error: %x\n",
+                    status.u8, error.u8);
 
-                ATADriver *drv = new ATADriver(base_port, cs % 2, ata_irqs[cs]);
+        return false;
+    }
+    if (!status.data_ready)
+    {
+        auto error = io_regs[IDEControllerChannel::IoRegister::ERROR].read();
 
-                BDVirtualDevice *bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(), drv->getSectorSize(), name,
-                                                           true);
+        debugAlways(IDE_DRIVER, "Data not ready. Status: %x, error: %x\n", status.u8,
+                    error.u8);
+    }
 
-                BDManager::getInstance()->addVirtualDevice(bdv);
+    if (jiffies >= IO_TIMEOUT)
+    {
+        debugAlways(IDE_DRIVER,
+                    "ERROR: Timeout while waiting for IDE controller data ready.\n"
+                    "At %s:%u %s\n",
+                    loc.file_name(), loc.line(), loc.function_name());
+    }
 
-                processMBR(drv, 0, drv->SPT, name);
-              }
-            }
-            else
-            {
-              debug(IDE_DRIVER, "doDetection: Unknown harddisk!\n");
-            }
-          }
-        }
-      }
+    return status.data_ready;
+}
+
+
+void IDEControllerChannel::sendCommand(uint8_t cmd)
+{
+    debugAdvanced(IDE_DRIVER, "Send command: %x\n", cmd);
+    io_regs[IoRegister::COMMAND].write(cmd);
+}
+
+uint8_t IDEControllerChannel::selectedDrive()
+{
+    return selected_drive;
+}
+
+void IDEControllerChannel::selectDrive(uint8_t drive, bool force)
+{
+    assert(drive <= 1);
+
+    if (force || selected_drive != drive)
+    {
+        IoRegister::DriveHead dh{};
+        dh.drive_num = drive;
+        dh.use_lba = 1;
+        dh.always_set_0 = 1;
+        dh.always_set_1 = 1;
+        debugAdvanced(ATA_DRIVER, "Select %s drive %u\n", deviceName().c_str(), drive);
+        io_regs[IoRegister::DRIVE_HEAD].write(dh);
+
+        // Delay so drive select is registered before next command
+        for (size_t i = 0; i < 15; ++i)
+            control_regs[ControlRegister::ALT_STATUS].read();
+    }
+
+    selected_drive = drive;
+}
+
+bool IDEControllerChannel::detectChannel(uint16_t io_reg_base,
+                                         uint16_t control_reg_base)
+{
+    IoPort::IoRegisterSet io_regs{io_reg_base};
+
+    debug(IDE_DRIVER, "IDE Channel %x:%x detection\n", io_reg_base, control_reg_base);
+    auto status = io_regs[IoRegister::STATUS].read();
+    if (status.u8 == 0xFF)
+    {
+        debug(IDE_DRIVER, "Floating bus detected, channel empty\n");
+        return false;
+    }
+
+    // Detect presence of I/O ports by writing to them and trying to read back
+    // the written value
+    constexpr uint8_t test_sc = 0x55;
+    constexpr uint8_t test_sn = 0xAA;
+    io_regs[IoRegister::SECTOR_COUNT].write(test_sc);
+    io_regs[IoRegister::SECTOR_NUMBER].write(test_sn);
+
+    auto sc = io_regs[IoRegister::SECTOR_COUNT].read();
+    auto sn = io_regs[IoRegister::SECTOR_NUMBER].read();
+    if (sc == test_sc && sn == test_sn)
+    {
+        debug(IDE_DRIVER, "Channel %x:%x exists\n", io_reg_base, control_reg_base);
+        return true;
     }
     else
     {
-      debug(IDE_DRIVER, "doDetection: Not found!\n");
+        debug(IDE_DRIVER, "Channel %x:%x does not exists\n", io_reg_base,
+              control_reg_base);
+        return false;
     }
-
-  }
-
-  // TODO : verify if the device is ATA and not ATAPI or SATA
-  return 0;
 }
 
-int32 IDEDriver::processMBR(BDDriver* drv, uint32 sector, uint32 SPT, const char *name)
+
+void IDEControllerChannel::doDeviceDetection()
 {
-  uint32 offset = 0, numsec = 0;
-  uint16 buff[256]; // read buffer
-  debug(IDE_DRIVER, "processMBR:reading MBR\n");
+    debug(IDE_DRIVER, "IDE Channel device detection\n");
 
-  static uint32 part_num = 0;
-//   char part_num_str[2];
-//   char part_name[10];
-
-  uint32 read_res = ((ATADriver*)drv)->rawReadSector(sector, 1, (void *) buff);
-
-  if (read_res != 0)
-  {
-    debug(IDE_DRIVER, "processMBR: drv returned BD_ERROR\n");
-    return -1;
-  }
-
-  MBR *mbr = (MBR *) buff;
-
-  if (mbr->signature == 0xAA55)
-  {
-    debug(IDE_DRIVER, "processMBR: | Valid PC MBR | \n");
-    FP * fp = (FP *) mbr->parts;
-    uint32 i;
-    for (i = 0; i < 4; i++, fp++)
+    for (uint8_t disk = 0; disk < 2; ++disk)
     {
-      switch (fp->systid)
-      {
-        case 0x00:
-          // do nothing
-          break;
-        case 0x05: // DOS extended partition
-        case 0x0F: // Windows extended partition
-        case 0x85: // linux extended partition
-          debug(IDE_DRIVER, "ext. part. at: %d \n", fp->relsect);
-          if (processMBR(drv, sector + fp->relsect, SPT, name) == -1)
-            processMBR(drv, sector + fp->relsect - SPT, SPT, name);
-          break;
-        default:
-          // offset = fp->relsect - SPT;
-          offset = fp->relsect;
-          numsec = fp->numsect;
-
-          char part_name[6];
-          strncpy(part_name, name, 4);
-          part_name[4] = part_num + '0';
-          part_name[5] = 0;
-          part_num++;
-          BDVirtualDevice *bdv = new BDVirtualDevice(drv, offset, numsec, drv->getSectorSize(), part_name, true);
-
-          // set Partition Type (FileSystem identifier)
-          bdv->setPartitionType(fp->systid);
-
-          BDManager::getInstance()->addVirtualDevice(bdv);
-          break;
-      }
+        detectDrive(disk);
     }
-  }
-  else
-  {
-    debug(IDE_DRIVER, "processMBR: | Invalid PC MBR %d | \n", mbr->signature);
-    return -1;
-  }
+}
 
-  debug(IDE_DRIVER, "processMBR:, done with partitions \n");
-  return 0;
+void IDEControllerChannel::detectDrive(uint8_t drive_num)
+{
+    debug(ATA_DRIVER, "Reset %s drives\n", deviceName().c_str());
+    reset();
+
+    // Select drive again after reset
+    selectDrive(drive_num);
+
+    // Send IDENTIFY command
+    debug(ATA_DRIVER, "Send IDENTIFY command\n");
+    io_regs[IoRegister::COMMAND].write(ATACommand::PIO::IDENTIFY_DEVICE);
+
+    auto status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+    if (status.u8 == 0)
+    {
+        debug(ATA_DRIVER, "IDENTIFY: Drive %u does not exist\n", drive_num);
+    }
+    else
+    {
+        debug(ATA_DRIVER, "IDENTIFY: Drive %u exists\n", drive_num);
+        waitNotBusy();
+        status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+
+        auto lba_mid = io_regs[IoRegister::LBA_MID].read();
+        auto lba_high = io_regs[IoRegister::LBA_HIGH].read();
+        if (!status.error && (lba_mid != 0 || lba_high != 0))
+        {
+            debug(ATA_DRIVER,
+                  "IDENTIFY: Non spec-conforming ATAPI device found, aborting\n");
+            return;
+        }
+
+        waitDataReady();
+        status = control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+
+        /*
+          See ATA command set https://people.freebsd.org/~imp/asiabsdcon2015/works/d2161r5-ATAATAPI_Command_Set_-_3.pdf table 206 for device signatures
+         */
+        auto count = io_regs[IoRegister::SECTOR_COUNT].read();
+        auto lba_low = io_regs[IoRegister::LBA_LOW].read();
+        lba_mid = io_regs[IoRegister::LBA_MID].read();
+        lba_high = io_regs[IoRegister::LBA_HIGH].read();
+
+        debug(ATA_DRIVER, "IDENTIFY command signature: status: %x, count: %x, lba h: %x, lba m: %x, lba l: %x\n", status.u8, count, lba_high, lba_mid, lba_low);
+
+        bool found_driver = probeDrivers(IDEDeviceDescription{this, drive_num, {count, lba_low, lba_mid, lba_high}});
+        if (found_driver)
+        {
+            debug(ATA_DRIVER, "Found driver for device: %u\n", found_driver);
+        }
+        else
+        {
+            debug(ATA_DRIVER, "Could not find driver for device\n");
+        }
+
+        if (status.error)
+        {
+            debug(ATA_DRIVER, "IDENTIFY command aborted: Not an ATA device\n");
+
+            if (count == 0x01 && lba_low == 0x01 && lba_mid == 0x14 && lba_high == 0xEB)
+            {
+                debug(ATA_DRIVER, "IDENTIFY command aborted: ATAPI device found\n");
+            }
+            else if (count == 0x01 && lba_low == 0x01 &&
+                     ((lba_mid == 0x3C && lba_high == 0xC3) ||
+                      (lba_mid == 0x69 && lba_high == 0x96)))
+            {
+                debug(ATA_DRIVER, "IDENTIFY command aborted: SATA device found\n");
+            }
+            else if (count == 0x01 && lba_low == 0x01 && lba_mid == 0xCE &&
+                     lba_high == 0xAA)
+            {
+                debug(ATA_DRIVER, "IDENTIFY command aborted: Obsolete device identifier\n");
+            }
+            else
+            {
+                debug(ATA_DRIVER,
+                      "IDENTIFY command aborted: unknown device type identifier\n");
+            }
+        }
+        else
+        {
+            if (count == 0x01 && lba_low == 0x01 && lba_mid == 0x00 && lba_high == 0x00)
+            {
+                debug(ATA_DRIVER, "IDENTIFY: PATA device found\n");
+            }
+            else
+            {
+                debug(ATA_DRIVER, "IDENTIFY: Command succeeded but signature does not match ATA device\n");
+            }
+        }
+    }
+}
+
+IDEController::IDEController(const eastl::string& name) :
+    Device(name)
+{
+    debug(IDE_DRIVER, "Init %s\n", deviceName().c_str());
+    doDeviceDetection();
+}
+
+void IDEController::doDeviceDetection()
+{
+    // Assume default io registers
+    // Normally detected via PCI bus enumeration
+    eastl::array<eastl::tuple<const char*, uint16_t, uint16_t, uint8_t>, 4>
+        default_channels = {
+            {{"Primary IDE Channel", DefaultPorts::PRIMARY_IO,
+              DefaultPorts::PRIMARY_CONTROL, DefaultPorts::PRIMARY_ISA_IRQ},
+             {"Secondary IDE Channel", DefaultPorts::SECONDARY_IO,
+              DefaultPorts::SECONDARY_CONTROL, DefaultPorts::SECONDARY_ISA_IRQ},
+             {"Ternary IDE Channel", DefaultPorts::TERNARY_IO,
+              DefaultPorts::TERNARY_CONTROL, DefaultPorts::TERNARY_ISA_IRQ},
+             {"Quaternary IDE Channel", DefaultPorts::QUATERNARY_IO,
+              DefaultPorts::QUATERNARY_CONTROL, DefaultPorts::QUATERNARY_ISA_IRQ}}};
+
+    for (auto& [name, io_reg_base, control_reg_base, isa_irqnum] : default_channels)
+    {
+        if (IDEControllerChannel::detectChannel(io_reg_base, control_reg_base))
+        {
+            auto c =
+                new IDEControllerChannel{name, io_reg_base, control_reg_base, isa_irqnum};
+            channels.push_back(c);
+            addSubDevice(*c);
+        }
+    }
 }

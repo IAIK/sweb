@@ -1,9 +1,10 @@
 #include "Terminal.h"
+
 #include "Console.h"
-
 #include "KeyboardManager.h"
-
 #include "kprintf.h"
+
+#include "debug.h"
 
 Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_rows) :
     CharacterDevice(name), console_(console), num_columns_(num_columns), num_rows_(num_rows), len_(
@@ -11,7 +12,9 @@ Terminal::Terminal(char *name, Console *console, uint32 num_columns, uint32 num_
         EN)
 {
   characters_ = new uint8[len_];
+  debug(TERMINAL, "Created characters_ at [%p, %p)\n", characters_,  (uint8*)characters_ + len_);
   character_states_ = new uint8[len_];
+  debug(TERMINAL, "Created characters_states_ at [%p, %p)\n", character_states_,  (uint8*)character_states_ + len_);
 
   uint32 i;
   for (i = 0; i < len_; ++i)
@@ -27,9 +30,9 @@ void Terminal::clearBuffer()
   in_buffer_.clear();
 }
 
-void Terminal::putInBuffer(uint32 what)
+void Terminal::putInBuffer(uint32 key)
 {
-  in_buffer_.put(what);
+  in_buffer_.put(key);
 }
 
 char Terminal::read()
@@ -37,7 +40,7 @@ char Terminal::read()
   return (char) in_buffer_.get();
 }
 
-void Terminal::backspace(void)
+void Terminal::backspace()
 {
   if (in_buffer_.countElementsAhead())
     in_buffer_.get();
@@ -99,9 +102,9 @@ void Terminal::write(char character)
   console_->lockConsoleForDrawing();
   writeInternal(character);
   console_->unLockConsoleForDrawing();
-
 }
-void Terminal::writeString(char const *string)
+
+void Terminal::writeString(const char* string)
 {
   ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();
@@ -122,7 +125,7 @@ int32 Terminal::writeData(uint32 offset, uint32 size, const char*buffer)
   return size;
 }
 
-void Terminal::writeBuffer(char const *buffer, size_t len)
+void Terminal::writeBuffer(const char* buffer, size_t len)
 {
   ScopeLock lock(mutex_);
   console_->lockConsoleForDrawing();
@@ -166,7 +169,7 @@ uint32 Terminal::setCharacter(uint32 row, uint32 column, uint8 character)
   return 0;
 }
 
-void Terminal::setForegroundColor(Console::CONSOLECOLOR const &color)
+void Terminal::setForegroundColor(CONSOLECOLOR const &color)
 {
   ScopeLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 0 bits
@@ -175,7 +178,7 @@ void Terminal::setForegroundColor(Console::CONSOLECOLOR const &color)
   current_state_ |= color;
 }
 
-void Terminal::setBackgroundColor(Console::CONSOLECOLOR const &color)
+void Terminal::setBackgroundColor(CONSOLECOLOR const &color)
 {
   ScopeLock lock(mutex_);
   // 4 bit set == 1+2+4+8, shifted by 4 bits
@@ -185,7 +188,7 @@ void Terminal::setBackgroundColor(Console::CONSOLECOLOR const &color)
   current_state_ |= col << 4;
 }
 
-void Terminal::initTerminalColors(Console::CONSOLECOLOR fg, Console::CONSOLECOLOR bg)
+void Terminal::initTerminalColors(CONSOLECOLOR fg, CONSOLECOLOR bg)
 {
   setForegroundColor(fg);
   setBackgroundColor(bg);
@@ -252,7 +255,7 @@ uint32 Terminal::remap(uint32 key)
   ')', '!', '@', '#', '$', '%', '^', '&', '*', '('
   };
 
-  KeyboardManager * km = KeyboardManager::instance();
+  KeyboardManager * km = &KeyboardManager::instance();
 
   if (isLetter(key))
   {

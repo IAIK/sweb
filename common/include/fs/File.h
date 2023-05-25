@@ -1,7 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "ulist.h"
+
+#include "EASTL/list.h"
 
 class Superblock;
 class Inode;
@@ -73,7 +74,7 @@ class File
     /**
      * List of open file descriptors
      */
-    ustl::list<FileDescriptor*> f_fds_;
+    eastl::list<FileDescriptor*> f_fds_;
 
   public:
     /**
@@ -118,10 +119,10 @@ class File
      * @param origin is the on off SEEK_SET, SEEK_CUR and SEEK_END.
      * @returns the offset from the start off the file or -1 on failure.
      */
-    l_off_t lseek(l_off_t offset, uint8 origin);
+    virtual l_off_t lseek(l_off_t offset, uint8 origin);
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * reads from the file
      * @param buffer is the buffer where the data is written to
      * @param count is the number of bytes to read.
@@ -133,7 +134,7 @@ class File
     }
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * write to the file
      * @param buffer is the buffer where the data is read from
      * @param count is the number of bytes to write.
@@ -145,7 +146,7 @@ class File
     }
 
     /**
-     * Opens the file
+     * Opens the file (do nothing by default)
      * @param inode is the inode the read the file from.
      */
     virtual int32 open(uint32)
@@ -154,7 +155,7 @@ class File
     }
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * Close the file
      * @param inode is close, the superblock has the information, that this
      * inode is not use anymore.
@@ -165,14 +166,41 @@ class File
     }
 
     /**
-     * not implemented here
+     * not implemented here (do nothing by default)
      * Flush all off the file's write operations. The File will be written to disk.
      * @return is the error code of the flush operation.
      */
-    virtual int32 flush()
-    {
-      return 0;
-    }
+    virtual int32 flush();
 
     virtual uint32 getSize();
+};
+
+
+/**
+ * Base class for simple files with standard read/write behaviour
+ */
+class SimpleFile : public File
+{
+public:
+    SimpleFile(Inode* inode, Dentry* dentry, uint32 flag);
+    ~SimpleFile() override = default;
+
+    int32 read(char* buffer, size_t count, l_off_t offset) override;
+    int32 write(const char* buffer, size_t count, l_off_t offset) override;
+private:
+};
+
+/**
+ * Base class for simple files with no automatic offset advance
+ */
+class NoOffsetFile : public File
+{
+public:
+    NoOffsetFile(Inode* inode, Dentry* dentry, uint32 flag);
+    ~NoOffsetFile() override = default;
+
+    int32 read(char* buffer, size_t count, l_off_t offset) override;
+    int32 write(const char* buffer, size_t count, l_off_t offset) override;
+
+private:
 };

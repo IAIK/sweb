@@ -1,12 +1,14 @@
 #include "Path.h"
-#include "kprintf.h"
-#include "debug.h"
+
 #include "Dentry.h"
-#include "VfsMount.h"
 #include "Inode.h"
-#include "assert.h"
-#include "VirtualFileSystem.h"
 #include "PathWalker.h"
+#include "VfsMount.h"
+#include "VirtualFileSystem.h"
+#include "kprintf.h"
+
+#include "assert.h"
+#include "debug.h"
 
 Path::Path(Dentry* dentry, VfsMount* mnt) :
     dentry_(dentry), mnt_(mnt)
@@ -42,7 +44,7 @@ Path Path::parent(const Path* global_root) const
     return Path(dentry_->getParent(), mnt_);
 }
 
-int Path::child(const ustl::string& name, Path& out) const
+int Path::child(const eastl::string& name, Path& out) const
 { // Warning: out parameter may refer to this object!
     debug(PATHWALKER, "Walk down to child %s\n", name.c_str());
     assert(dentry_ && mnt_);
@@ -73,7 +75,7 @@ int Path::child(const ustl::string& name, Path& out) const
 }
 
 
-ustl::string Path::getAbsolutePath(const Path* global_root) const
+eastl::string Path::getAbsolutePath(const Path* global_root) const
 {
     if(isGlobalRoot(global_root))
     {

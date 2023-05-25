@@ -1,18 +1,19 @@
 #include "fs/ramfs/RamFSInode.h"
-#include "kstring.h"
-#include "assert.h"
-#include "fs/ramfs/RamFSSuperblock.h"
-#include "fs/ramfs/RamFSFile.h"
-#include "fs/Dentry.h"
-#include "FileSystemType.h"
 
-#include "console/kprintf.h"
+#include "FileSystemType.h"
+#include "fs/Dentry.h"
+#include "fs/ramfs/RamFSFile.h"
+#include "fs/ramfs/RamFSSuperblock.h"
+#include "kstring.h"
+
+#include "assert.h"
+#include "debug.h"
 
 #define BASIC_ALLOC 256
 
 RamFSInode::RamFSInode(Superblock *super_block, uint32 inode_type) :
     Inode(super_block, inode_type),
-    data_(0)
+    data_(nullptr)
 {
   debug(RAMFS, "New RamFSInode %p\n", this);
   if (inode_type == I_FILE)
@@ -26,6 +27,38 @@ RamFSInode::~RamFSInode()
 {
   debug(RAMFS, "Destroying RamFSInode %p\n", this);
   delete[] data_;
+}
+
+int32 RamFSInode::mkdir(Dentry *dentry)
+{
+    Inode::mkdir(dentry);
+
+    if (!new Dentry(this, dentry, "."))
+        return -1;
+    if (!new Dentry(dentry->getParent()->getInode(), dentry, ".."))
+        return -1;
+
+    return 0;
+}
+
+int32 RamFSInode::rmdir(Dentry* dentry)
+{
+    assert(dentry);
+    assert(dentry->getInode() == this);
+    assert(hasDentry(dentry));
+    assert(getType() == I_DIR);
+
+    if (!dentry->emptyChild({".", ".."}))
+    {
+        debug(RAMFS, "Error: %s inode %p has children, cannot unlink %s\n",
+              getSuperblock()->getFSType()->getFSName(), this, dentry->getName());
+        return -1;
+    }
+
+    delete lookup(".");
+    delete lookup("..");
+
+    return Inode::rmdir(dentry);
 }
 
 int32 RamFSInode::readData(uint32 offset, uint32 size, char *buffer)
@@ -65,7 +98,7 @@ int32 RamFSInode::writeData(uint32 offset, uint32 size, const char *buffer)
 File* RamFSInode::open(Dentry* dentry, uint32 flag)
 {
   debug(INODE, "%s Inode: Open file\n", getSuperblock()->getFSType()->getFSName());
-  assert(ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
+  assert(eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end());
 
   File* file = (File*) (new RamFSFile(this, dentry, flag));
   i_files_.push_back(file);

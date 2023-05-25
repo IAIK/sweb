@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "ports.h"
+
 #define ATKBD_DATA 0x60
 #define ATKBD_CTRL 0x64
 

@@ -11,9 +11,10 @@
 #define sc_open 5
 #define sc_close 6
 #define sc_lseek 19
-#define sc_pseudols 43
+#define sc_getdents 44
 #define sc_outline 105
 #define sc_sched_yield 158
 #define sc_createprocess 191
 #define sc_trace 252
 
+#define sc_getcpu 300

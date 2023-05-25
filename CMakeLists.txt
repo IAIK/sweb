@@ -1,21 +1,49 @@
-cmake_minimum_required(VERSION 3.5)
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+cmake_minimum_required(VERSION 3.17)
 
-# Include custom CMake modules from the cmake/ subdirectory
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-
-set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
-set(HDD_IMAGE "SWEB.qcow2")
+cmake_policy(SET CMP0079 NEW)
 
 if ("${ARCH}" STREQUAL "")
-  set (ARCH "x86/64")
+    set (ARCH "x86/64")
 endif("${ARCH}" STREQUAL "")
 MESSAGE("-- Target architecture: ${ARCH}")
 
 if ("${ARCH}" MATCHES "arm.*")
-  add_definitions(-DARM)
+    add_definitions(-DARM)
 endif("${ARCH}" MATCHES "arm.*")
+
+# Needs to be set before everything else
+set(CMAKE_TOOLCHAIN_FILE arch/${ARCH}/CMakeLists.compiler)
+
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(BUILD_SHARED_LIBS OFF)
+
+# Include custom CMake modules from the cmake/ subdirectory
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+project(sweb
+    LANGUAGES C CXX ASM)
+
+add_executable(kernel)
+set_target_properties(kernel PROPERTIES OUTPUT_NAME kernel.x)
+
+# https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#interface-libraries
+add_library(arch_options INTERFACE)
+add_library(kernel_options INTERFACE)
+add_library(userspace_options INTERFACE)
+
+target_link_libraries(kernel_options INTERFACE arch_options)
+target_link_libraries(userspace_options INTERFACE arch_options)
+target_link_libraries(kernel PUBLIC kernel_options)
+
+
+set(HDD_IMAGE_RAW "SWEB-flat.vmdk")
+set(HDD_IMAGE "SWEB.qcow2")
+set(INITRD_FILE ${PROJECT_BINARY_DIR}/sweb_initrd)
+# set(HDD_IMAGE_FILE ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk)
+
 
 unset(CMAKE_CROSSCOMPILING)
 if(APPLE OR WIN32)
@@ -26,10 +54,6 @@ endif(APPLE OR WIN32)
 # add-dbg for userspace binaries
 include(AddDebugInfo)
 
-include(arch/${ARCH}/CMakeLists.compiler)
-
-project(sweb
-  LANGUAGES C CXX ASM)
 
 string(REPLACE "/" ";" ARCH_LIST ${ARCH})
 string(REPLACE "/" "_" ARCH_ESC ${ARCH})
@@ -81,8 +105,6 @@ set(EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 
 include(arch/${ARCH}/CMakeLists.include)
 include(arch/${ARCH}/CMakeLists.userspace)
-string (REPLACE ";" " " KERNEL_CMAKE_C_FLAGS_STR "${KERNEL_CMAKE_C_FLAGS}")
-set(CMAKE_ASM_FLAGS ${KERNEL_CMAKE_C_FLAGS_STR})
 
 if(CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSS_COMPILE_FLAGS -G "Unix Makefiles")
@@ -99,133 +121,105 @@ endif()
 function(ADD_PROJECT_LIBRARY LIBRARY_NAME)
   arch2obj(archobj_libname ${LIBRARY_NAME})
 
-  file(GLOB source_files ${SOURCE_WILDCARDS})
+  file(GLOB source_files CONFIGURE_DEPENDS ${SOURCE_WILDCARDS})
 
-  set(library_files)
+  target_sources(kernel PUBLIC
+    ${source_files})
 
-  if(source_files)
-    set(library_files ${source_files})
-  endif(source_files)
-
-  if(archobj_libname)
-    set(library_files ${library_files} $<TARGET_OBJECTS:${archobj_libname}>)
-  endif(archobj_libname)
-
-  if(library_files)
-    add_library(${LIBRARY_NAME} ${library_files})
-
-    if(archobj_libname)
-      add_dependencies(${LIBRARY_NAME} ${archobj_libname})
-    endif(archobj_libname)
-
-    target_compile_options(${LIBRARY_NAME} PRIVATE
-      $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
-      $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
-      )
-
-    set(ENV{LIBRARY_NAMES} "$ENV{LIBRARY_NAMES};${LIBRARY_NAME}")
-  endif(library_files)
+  target_link_libraries(kernel PUBLIC
+      ${archobj_libname})
 endfunction(ADD_PROJECT_LIBRARY)
 
 set (SOURCE_WILDCARDS *.cpp *.c *.S)
 
 set(LIBRARY_FILENAMES)
 
-#Initialize global (environment) variables
+# Initialize global (environment) variables
 set(ENV{LIBRARY_NAMES})
 
-#Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
-add_library(userspace_libc "")
-target_compile_options(userspace_libc PUBLIC ${ARCH_USERSPACE_COMPILE_OPTIONS})
+# Build the Linker command
+target_link_options(kernel_options INTERFACE
+    -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld ${ARCH_APPEND_LD_ARGUMENTS})
 
-#Add the source directories
+
+# Create target for userspace libc (Need to to that here because some files (e.g. syscall.c) are all over the place)
+add_library(userspace_libc "")
+target_link_libraries(userspace_libc PUBLIC userspace_options)
+
+# Add the source directories
 add_subdirectory(arch)
 add_subdirectory(common)
 add_subdirectory(utils)
 add_subdirectory(userspace)
+add_subdirectory(lib)
 
+target_link_libraries(kernel_libc PUBLIC kernel_options)
+target_link_libraries(kernel PUBLIC kernel_libc)
 
-#FINAL_LIB_NAMES should contain the names of all libraries
-#these names can be used to link the kernel, no unpacking of *.a files is needed anymore
+# FINAL_LIB_NAMES should contain the names of all libraries
+# these names can be used to link the kernel, no unpacking of *.a files is needed anymore
 set(FINAL_LIB_NAMES $ENV{LIBRARY_NAMES})
 
-#Name of the executables of the userspace, needed for dependency checking
+# Name of the executables of the userspace, needed for dependency checking
 set(FINAL_USERSPACE_NAMES $ENV{USERSPACE_NAMES})
 
 
 
-#Build the Linker command
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -g -u entry -Wl,-T ${CMAKE_SOURCE_DIR}/arch/${ARCH}/utils/kernel-ld-script.ld)
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -o ${PROJECT_BINARY_DIR}/kernel.x)
-#set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,-Map -Wl,${PROJECT_BINARY_DIR}/kernel.map)
 
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,--start-group)
-foreach(libfile ${FINAL_LIB_NAMES})
-  set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} ${LIBRARY_OUTPUT_PATH}/lib${libfile}.a)
-endforeach(libfile)
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} -Wl,--end-group)
-set(KERNEL_LD_ARGUMENT ${KERNEL_LD_ARGUMENT} ${ARCH_APPEND_LD_ARGUMENTS})
 
-#Build userspace exe2minixfs command
+# Build userspace exe2minixfs command
 set(MINIXFS_ARGUMENT "")
 foreach(file $ENV{USERSPACE_NAMES_EXE2MINIX})
   list(APPEND MINIXFS_ARGUMENT ${file})
 endforeach(file)
 
-file(GLOB userspace_data userspace/data/*)
+file(GLOB userspace_data CONFIGURE_DEPENDS userspace/data/*)
 foreach(file ${userspace_data})
   get_filename_component(datafile ${file} NAME)
   list(APPEND MINIXFS_ARGUMENT ${file} ${datafile})
 endforeach(file)
 
+
+
 #Custom Target: hdd_image
 #Creates the hd image and copies all files to it
 add_custom_target (hdd_image ALL
-  DEPENDS kernel_to_image userspace_to_image
-  COMMAND qemu-img convert -f raw -O qcow2 ${HDD_IMAGE_RAW} ${HDD_IMAGE}
+    DEPENDS kernel_to_image userspace_to_image
+    BYPRODUCTS ${HDD_IMAGE}
+    COMMAND qemu-img convert -f raw -O qcow2 ${HDD_IMAGE_RAW} ${HDD_IMAGE}
 )
 
 #Custom Command: invoke exe2minixfs and copy boot files to our hd image
 add_custom_target (kernel_to_image
-    DEPENDS blank_hdd_image kernel_image exe2minixfs
+    DEPENDS blank_hdd_image kernel exe2minixfs mkminixfs userspace_to_image "${HDD_IMAGE_RAW}" "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" # "${INITRD_FILE}"
+    BYPRODUCTS kernel.dbg
 
     # x86/32 doesn't generate kernel.dbg
     COMMAND ${CMAKE_COMMAND} -E touch "./kernel.dbg"
-    COMMAND ./exe2minixfs ${HDD_IMAGE_RAW} 32256 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
-                                                 ./kernel.x boot/kernel.x
-                                                 ./kernel.dbg boot/kernel.dbg
+    #COMMAND ./mkminixfs "${HDD_IMAGE_RAW}" 1
+    COMMAND ./exe2minixfs "${HDD_IMAGE_RAW}" 1 "${CMAKE_SOURCE_DIR}/utils/images/menu.lst" boot/grub/menu.lst
+                                           $<TARGET_FILE:kernel> boot/kernel.x
+                                           ./kernel.dbg boot/kernel.dbg
+                                           #"${INITRD_FILE}" boot/initrd
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying kernel files to image..."
 )
 
-#Custom Command: Outputs kernel_image
-#Executes the linker command after all libraries where build successfully
-if("${ARCH}" MATCHES "armv8")
-#For armv8 we need to execute the final linking step twice because after the first time
-#The debug info gets extracted and linked in at the second link step
-add_custom_target (kernel_image
-    DEPENDS ${FINAL_LIB_NAMES} add-dbg
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${ADD_LD_ARGUMENT}
-    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-)
-
-else()
-
-add_custom_target (kernel_image
-    DEPENDS ${FINAL_LIB_NAMES} add-dbg
-    COMMAND ${LD_EXECUTABLE} ${KERNEL_LD_ARGUMENT} ${KERNEL_IMAGE_OBJCOPY}
-    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-)
-
-endif()
+add_custom_command (OUTPUT ${INITRD_FILE}
+  DEPENDS mkminixfs exe2minixfs
+  COMMAND dd if=/dev/zero of="${INITRD_FILE}" bs=512 count=1024
+  COMMAND ./mkminixfs -d "${INITRD_FILE}"
+  COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${CMAKE_SOURCE_DIR}/README.md README.md
+  COMMENT "Creating empty initrd..."
+  )
 
 #Custom Command: invoke exe2minixfs and copy all userspace programs to our hd image second partition
 add_custom_target (userspace_to_image
-    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs
-    COMMAND mkdir -p userspace/data
-    COMMAND cp -f ${CMAKE_SOURCE_DIR}/userspace/data/* ${PROJECT_BINARY_DIR}/userspace/data
-    COMMAND ./exe2minixfs ${HDD_IMAGE_RAW} 10321920 ${MINIXFS_ARGUMENT}
+    DEPENDS blank_hdd_image ${FINAL_USERSPACE_NAMES} exe2minixfs mkminixfs "${HDD_IMAGE_RAW}" # "${INITRD_FILE}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/userspace/data ${PROJECT_BINARY_DIR}/userspace/data
+    # COMMAND ./mkminixfs -d "${HDD_IMAGE_RAW}" -p 2
+    COMMAND ./exe2minixfs "${HDD_IMAGE_RAW}" 2 ${MINIXFS_ARGUMENT}
+    # COMMAND ./exe2minixfs "${INITRD_FILE}" 0 ${MINIXFS_ARGUMENT}
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT "Copying userspace programs to image..."
 )
@@ -289,17 +283,25 @@ add_custom_target(rungdb
 #Custom target: make mrproper
 #Makes really clean (except for the object files)
 add_custom_target(mrproper
-    COMMAND make clean
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR} -t clean
     COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
-    COMMAND cmake -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
+    COMMAND ${CMAKE_COMMAND} -E rm -fR -- ${PROJECT_BINARY_DIR}/*
+    COMMAND ${CMAKE_COMMAND} -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
+)
+
+#Custom target: make cleandisk
+#Deletes the disk image so it is freshly recreated on next build
+add_custom_target(cleandisk
+    COMMENT "Removing disk image"
+    COMMAND ${CMAKE_COMMAND} -E rm -f -- ${PROJECT_BINARY_DIR}/SWEB-flat.vmdk
+    COMMAND ${CMAKE_COMMAND} -E rm -f -- ${PROJECT_BINARY_DIR}/SWEB.qcow2
 )
 
 #Custom target: make debug
 add_custom_target(debug
-    COMMAND make clean
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR} -t clean
     COMMAND ${PROJECT_SOURCE_DIR}/utils/prompt.sh "rm -fR ${PROJECT_BINARY_DIR}/*: remove all arguments recursively [Y/n]? "
-    COMMAND rm -fR ${PROJECT_BINARY_DIR}/* || true
+    COMMAND ${CMAKE_COMMAND} -E rm -fR -- ${PROJECT_BINARY_DIR}/*
     COMMAND cmake -DDEBUG=1 -DARCH=${ARCH} ${PROJECT_SOURCE_DIR} ${CMAKE_CROSS_COMPILE_FLAGS}
 )
 

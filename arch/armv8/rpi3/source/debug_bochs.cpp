@@ -1,8 +1,8 @@
 #include "debug_bochs.h"
-#include "offsets.h"
+
 #include "KeyboardManager.h"
 #include "board_constants.h"
-
+#include "offsets.h"
 
 void writeChar2Bochs( char char2Write )
 {

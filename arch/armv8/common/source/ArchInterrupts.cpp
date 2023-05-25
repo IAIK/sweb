@@ -1,18 +1,25 @@
-#include "types.h"
 #include "ArchInterrupts.h"
+
+#include "InterruptUtils.h"
+#include "Scheduler.h"
+#include "SystemState.h"
+#include "Thread.h"
 #include "kprintf.h"
 #include "kstring.h"
-#include "InterruptUtils.h"
-#include "ArchThreads.h"
+
 #include "ArchBoardSpecific.h"
-#include "Thread.h"
+#include "ArchThreads.h"
+
+#include "types.h"
+
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector");
 
 extern "C" void exceptionHandler(size_t int_id, size_t curr_el, size_t exc_syndrome, size_t fault_address, size_t return_addr);
 extern "C" const size_t kernel_sp_struct_offset = (size_t)&((ArchThreadRegisters *)NULL)->SP_SM;
 extern uint8 boot_stack[];
 
 //in interrupt_entry.S is the code for the actual context switching
-extern "C" size_t interruptEntry(size_t int_id, size_t curr_el, size_t exc_syndrome, size_t fault_address, size_t return_addr )
+extern "C" size_t interruptEntry(size_t int_id, size_t curr_el, size_t exc_syndrome, size_t fault_address, size_t return_addr)
 {
 	exceptionHandler(int_id, curr_el, exc_syndrome, fault_address, return_addr);
 
@@ -100,4 +107,3 @@ void ArchInterrupts::yieldIfIFSet()
     __asm__ __volatile__("nop");
   }
 }
-

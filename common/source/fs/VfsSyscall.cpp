@@ -1,19 +1,22 @@
 #include "VfsSyscall.h"
-#include "kstring.h"
-#include "assert.h"
-#include "Dirent.h"
-#include "Inode.h"
+
 #include "Dentry.h"
-#include "Superblock.h"
+#include "Dirent.h"
 #include "File.h"
 #include "FileDescriptor.h"
-#include "FileSystemType.h"
 #include "FileSystemInfo.h"
-#include "VirtualFileSystem.h"
+#include "FileSystemType.h"
+#include "Inode.h"
 #include "MinixFSType.h"
 #include "PathWalker.h"
+#include "Superblock.h"
 #include "VfsMount.h"
+#include "VirtualFileSystem.h"
 #include "kprintf.h"
+#include "kstring.h"
+
+#include "assert.h"
+
 #ifndef EXE2MINIXFS
 #include "Thread.h"
 #endif
@@ -23,13 +26,14 @@
 
 FileDescriptor* VfsSyscall::getFileDescriptor(uint32 fd)
 {
-  return global_fd_list.getFileDescriptor(fd);
+  return FileDescriptorList::globalFdList().getFileDescriptor(fd);
 }
 
 
 int32 VfsSyscall::mkdir(const char* pathname, int32)
 {
   debug(VFSSYSCALL, "(mkdir) Path: %s\n", pathname);
+
   FileSystemInfo *fs_info = getcwd();
 
   Path target_path;
@@ -38,7 +42,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
 
   if((path_walk_status == PW_ENOTFOUND) && parent_dir_path.dentry_)
   {
-    ustl::string new_dir_name = PathWalker::lastPathSegment(pathname, true);
+    eastl::string new_dir_name = PathWalker::lastPathSegment(pathname, true);
 
     Inode* parent_dir_inode = parent_dir_path.dentry_->getInode();
     Superblock* parent_dir_sb = parent_dir_inode->getSuperblock();
@@ -52,7 +56,7 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
     debug(VFSSYSCALL, "(mkdir) Creating new directory Inode in superblock %p of type %s\n", parent_dir_sb, parent_dir_sb->getFSType()->getFSName());
     Inode* new_dir_inode = parent_dir_sb->createInode(I_DIR);
 
-    debug(VFSSYSCALL, "(mkdir) Creating new dentry: %s in parent dir %s\n", new_dir_name.c_str(), parent_dir_path.dentry_->getName());
+    debug(VFSSYSCALL, "(mkdir) Creating new dentry: %s in parent dir %s, inode: %p\n", new_dir_name.c_str(), parent_dir_path.dentry_->getName(), new_dir_inode);
     Dentry* new_dir_dentry = new Dentry(new_dir_inode, parent_dir_path.dentry_, new_dir_name);
     new_dir_inode->mkdir(new_dir_dentry);
 
@@ -74,74 +78,69 @@ int32 VfsSyscall::mkdir(const char* pathname, int32)
   return -1;
 }
 
-static const char* readdirPrefix(uint32 inode_type)
+
+ssize_t VfsSyscall::getdents(int fd, char* buffer, size_t buffer_size)
 {
-    switch (inode_type)
+    debug(VFSSYSCALL, "(getdents) Getting dentries for fd: %d\n", fd);
+
+    if (!buffer)
     {
-    case I_DIR:
-        return "[D] ";
-    case I_FILE:
-        return "[F] ";
-    case I_LNK:
-        return "[L] ";
-    default:
-        return "";
+        debug(VFSSYSCALL, "(getdents) Error: buffer = NULL\n");
+        return -1;
     }
-}
 
-Dirent* VfsSyscall::readdir(const char* pathname, char* buffer, size_t size)
-{
-  FileSystemInfo *fs_info = getcwd();
-
-  Path target_path;
-  if (PathWalker::pathWalk(pathname, fs_info, target_path) != PW_SUCCESS)
-  {
-    debug(VFSSYSCALL, "(readdir) ERROR: Path doesn't exist\n");
-    kprintf("Error: %s not found\n", pathname);
-    return 0;
-  }
-
-  if (target_path.dentry_->getInode()->getType() != I_DIR)
-  {
-    debug(VFSSYSCALL, "(readdir) ERROR: This path is not a directory\n");
-    kprintf("Error: %s is not a directory\n", pathname);
-    return nullptr;
-  }
-
-  debug(VFSSYSCALL, "(readdir) listing dir %s:\n", target_path.dentry_->getName());
-  size_t it = 0;
-  for (Dentry* sub_dentry : target_path.dentry_->d_child_)
-  {
-    uint32 inode_type = sub_dentry->getInode()->getType();
-    const char* prefix = readdirPrefix(inode_type);
-    const char* name = sub_dentry->getName();
-
-    if(buffer)
+    FileDescriptor* file_descriptor = getFileDescriptor(fd);
+    if (file_descriptor == nullptr)
     {
-      auto len_name = strlen(name);
-      if(it + len_name + 1 >= size)
-      {
-        debug(VFSSYSCALL, "Buffer is too small for all elements -> return it as it is\n");
-        buffer[it] = 0;
-        return 0;
-      }
-
-      memcpy(buffer + it, name, len_name);
-      it += len_name;
-      buffer[it++] = '\n';
+        debug(VFSSYSCALL, "(getdents) Error: The fd does not exist.\n");
+        return -1;
     }
-    else
+
+    if (file_descriptor->getFile()->getInode()->getType() != I_DIR)
     {
-      kprintf("%s%s\n", prefix, name);
+        debug(VFSSYSCALL, "(getdents) Error: fd is not a directory.\n");
+        return -1;
     }
-  }
 
-  if(buffer)
-  {
-    buffer[it] = 0;
-  }
+    Dentry* dir_dentry = file_descriptor->getFile()->getDentry();
+    debug(VFSSYSCALL, "(getdents) Reading dentries for dir %p (inode %p) %s\n",
+          dir_dentry, dir_dentry->getInode(), dir_dentry->getName());
 
-  return 0;
+    ssize_t buf_offs = 0;
+    user_dirent* u_dirent = nullptr;
+    user_dirent* u_dirent_prev = nullptr;
+    for (Dentry* sub_dentry : dir_dentry->d_child_)
+    {
+        uint32 d_type = sub_dentry->getInode()->getType();
+        const char* d_name = sub_dentry->getName();
+        auto d_name_len = strlen(d_name) + 1;
+
+        debug(VFSSYSCALL, "(getdents) child %s, type: %x\n", d_name, d_type);
+
+        u_dirent = (user_dirent*)(buffer + buf_offs);
+
+        size_t u_dirent_size = sizeof(*u_dirent) + d_name_len;
+
+        if (buf_offs + u_dirent_size > buffer_size)
+        {
+            debug(VFSSYSCALL, "(getdents) Error: Buffer is too small for all dirents. Size: %zu\n", buffer_size);
+            return -1;
+        }
+
+        u_dirent->d_offs_next = 0;
+        u_dirent->d_type = d_type;
+        memcpy(u_dirent->d_name, d_name, d_name_len);
+
+        buf_offs += u_dirent_size;
+
+        if (u_dirent_prev)
+        {
+            u_dirent_prev->d_offs_next = (char*)u_dirent - (char*)u_dirent_prev;
+        }
+        u_dirent_prev = u_dirent;
+    }
+
+    return buf_offs;
 }
 
 int32 VfsSyscall::chdir(const char* pathname)
@@ -254,15 +253,16 @@ int32 VfsSyscall::rmdir(const char* pathname)
 int32 VfsSyscall::close(uint32 fd)
 {
   debug(VFSSYSCALL, "(close) Close fd num %u\n", fd);
+
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(close) Error: the fd does not exist.\n");
     return -1;
   }
 
-  assert(!global_fd_list.remove(file_descriptor));
+  assert(!FileDescriptorList::globalFdList().remove(file_descriptor));
   file_descriptor->getFile()->closeFd(file_descriptor);
 
   debug(VFSSYSCALL, "(close) File closed\n");
@@ -276,6 +276,11 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
     debug(VFSSYSCALL, "(open) Invalid pathname\n");
     return -1;
   }
+
+#ifndef EXE2MINIXFS
+  // MutexLock l(vfs_lock); // TODO: When userspace pagefault occurs while holding vfs lock -> pagefault handler attempts to load page data -> calls vfs read -> lock vfs lock -> deadlock
+#endif
+
 
   debug(VFSSYSCALL, "(open) Opening file %s\n", pathname);
   if (flag & ~(O_RDONLY | O_WRONLY | O_CREAT | O_RDWR | O_TRUNC | O_APPEND))
@@ -299,16 +304,16 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
   {
     debug(VFSSYSCALL, "(open) Found target file: %s\n", target_path.dentry_->getName());
     Inode* target_inode = target_path.dentry_->getInode();
-
-    if (target_inode->getType() != I_FILE)
-    {
-      debug(VFSSYSCALL, "(open) Error: This path is not a file\n");
-      return -1;
-    }
+    assert(target_inode);
 
     File* file = target_inode->open(target_path.dentry_, flag);
+    if (!file)
+    {
+        debug(VFSSYSCALL, "(open) Unable to open file\n");
+        return -1;
+    }
     FileDescriptor* fd = file->openFd();
-    assert(!global_fd_list.add(fd));
+    assert(!FileDescriptorList::globalFdList().add(fd));
 
     debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd->getFd(), flag);
     return fd->getFd();
@@ -323,7 +328,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     debug(VFSSYSCALL, "(open) target does not exist, creating new file\n");
 
-    ustl::string new_dentry_name = PathWalker::lastPathSegment(pathname);
+    eastl::string new_dentry_name = PathWalker::lastPathSegment(pathname);
     if(new_dentry_name == "") // Path has trailing slashes
     {
       debug(VFSSYSCALL, "(open) Error: last path segment is empty (trailing '/')\n");
@@ -355,7 +360,7 @@ int32 VfsSyscall::open(const char* pathname, uint32 flag)
 
     File* file = new_file_inode->open(new_file_dentry, flag);
     FileDescriptor* fd = file->openFd();
-    assert(!global_fd_list.add(fd));
+    assert(!FileDescriptorList::globalFdList().add(fd));
 
     debug(VFSSYSCALL, "(open) Fd for new open file: %d, flags: %x\n", fd->getFd(), flag);
     return fd->getFd();
@@ -375,7 +380,7 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 {
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
@@ -389,9 +394,11 @@ int32 VfsSyscall::read(uint32 fd, char* buffer, uint32 count)
 
 int32 VfsSyscall::write(uint32 fd, const char *buffer, uint32 count)
 {
+  debug(VFSSYSCALL, "(write) Write %u bytes from %p to fd %u\n", count, buffer, fd);
+
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(write) Error: the fd does not exist.\n");
     return -1;
@@ -407,7 +414,7 @@ l_off_t VfsSyscall::lseek(uint32 fd, l_off_t offset, uint8 origin)
 {
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(lseek) Error: the fd does not exist.\n");
     return -1;
@@ -420,7 +427,7 @@ int32 VfsSyscall::flush(uint32 fd)
 {
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;
@@ -452,7 +459,7 @@ uint32 VfsSyscall::getFileSize(uint32 fd)
 {
   FileDescriptor* file_descriptor = getFileDescriptor(fd);
 
-  if (file_descriptor == 0)
+  if (file_descriptor == nullptr)
   {
     debug(VFSSYSCALL, "(read) Error: the fd does not exist.\n");
     return -1;

@@ -1,4 +1,4 @@
-include_directories(
+target_include_directories(kernel PUBLIC
     common/include
     ../${ARCH}/include
     ../${ARCH}/common/include
@@ -7,4 +7,3 @@ include_directories(
 )
 
 add_subdirectory(common/source)
-

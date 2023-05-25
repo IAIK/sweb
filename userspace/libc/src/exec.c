@@ -22,6 +22,7 @@
 #include "sys/syscall.h"
 #include "stdarg.h"
 #include "stdlib.h"
+#include "assert.h"
 
 /**
  * Creates a child process.
@@ -66,11 +67,29 @@ int execv(const char *path __attribute__((unused)), char *const argv[] __attribu
  * @param status exit status of the process
  *
  */
-void _exit(int status)
+__attribute__((noreturn)) void _exit(int status)
 {
   __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
+
+  assert(!"Returned from exit syscall");
 }
-void exit(int status)
+
+typedef void (*func_ptr)();
+extern func_ptr __fini_array_start;
+extern func_ptr __fini_array_end;
+
+// Call destructors
+void _fini()
 {
+    func_ptr* it = &__fini_array_start;
+	while(it != &__fini_array_end)
+        (*it++)();
+}
+
+__attribute__((noreturn)) void exit(int status)
+{
+    _fini();
   __syscall(sc_exit, status, 0x00, 0x00, 0x00, 0x00);
+
+  assert(!"Returned from exit syscall");
 }

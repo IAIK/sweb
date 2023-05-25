@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "internal.hh"
 
 using namespace std;
@@ -47,7 +51,8 @@ expr::evaluate(expr_context *ctx, const std::initializer_list<taddr> &arguments)
         shared_ptr<section> subsec
                 (make_shared<section>(cusec->type,
                                       cusec->begin + offset, len,
-                                      cusec->fmt, cusec->addr_size));
+                                      cusec->ord, cusec->fmt,
+                                      cusec->addr_size));
         cursor cur(subsec);
 
         // Prepare the expression result.  Some location descriptions

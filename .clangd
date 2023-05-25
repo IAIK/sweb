@@ -1,0 +1,20 @@
+CompileFlags:
+    CompilationDatabase: /tmp/sweb
+    Remove: [-fno-sync-libcalls]
+Completion:
+    AllScopes: true
+Hover:
+    ShowAKA: Yes
+Diagnostics:
+    ClangTidy:
+        Add:
+            - modernize*
+            - bugprone-*
+        Remove:
+            - modernize-use-trailing-return-type
+    UnusedIncludes: Strict
+---
+If:
+    PathMatch: "lib/EASTl/*"
+Diagnostics:
+    Suppress: "*"

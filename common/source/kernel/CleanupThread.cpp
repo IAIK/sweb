@@ -1,8 +1,16 @@
 #include "CleanupThread.h"
-#include "Scheduler.h"
 
-CleanupThread::CleanupThread() : Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
+#include "Scheduler.h"
+#include "VgaColors.h"
+
+#include "ArchMulticore.h"
+
+#include "assert.h"
+
+CleanupThread::CleanupThread() :
+    Thread(0, "CleanupThread", Thread::KERNEL_THREAD)
 {
+    console_color = CONSOLECOLOR::BROWN;
 }
 
 CleanupThread::~CleanupThread()
@@ -17,10 +25,9 @@ void CleanupThread::kill()
 
 void CleanupThread::Run()
 {
-  while (1)
+  while (true)
   {
     Scheduler::instance()->cleanupDeadThreads();
     Scheduler::instance()->yield();
   }
 }
-

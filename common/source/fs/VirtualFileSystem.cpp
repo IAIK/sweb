@@ -1,30 +1,23 @@
-#include "FileSystemType.h"
-#include "FileSystemInfo.h"
-#include "PathWalker.h"
 #include "VirtualFileSystem.h"
-#include "Dentry.h"
-#include "Superblock.h"
-#include "VfsMount.h"
-#include "kstring.h"
-#include "assert.h"
+
 #include "BDManager.h"
 #include "BDVirtualDevice.h"
+#include "Dentry.h"
+#include "FileSystemInfo.h"
+#include "FileSystemType.h"
+#include "PathWalker.h"
+#include "Scheduler.h"
+#include "Superblock.h"
 #include "Thread.h"
+#include "VfsMount.h"
+#include "kprintf.h"
+#include "kstring.h"
 
-#include "console/kprintf.h"
+#include "assert.h"
 
 VirtualFileSystem vfs;
 
 void VirtualFileSystem::initialize()
-{
-  new (this) VirtualFileSystem();
-}
-
-VirtualFileSystem::VirtualFileSystem()
-{
-}
-
-VirtualFileSystem::~VirtualFileSystem()
 {
 }
 
@@ -43,7 +36,7 @@ int32 VirtualFileSystem::registerFileSystem(FileSystemType *file_system_type)
 
 int32 VirtualFileSystem::unregisterFileSystem(FileSystemType *file_system_type)
 {
-  assert(file_system_type != 0);
+  assert(file_system_type != nullptr);
 
   const char *fs_name = file_system_type->getFSName();
   for (FileSystemType* fst : file_system_types_)
@@ -63,14 +56,14 @@ FileSystemType *VirtualFileSystem::getFsType(const char* fs_name)
     if (strcmp(fst->getFSName(), fs_name) == 0)
       return fst;
   }
-  return 0;
+  return nullptr;
 }
 
 VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
 {
   assert(dentry);
 
-  if (is_root == false)
+  if (!is_root)
   {
     for (VfsMount* mnt : mounts_)
     {
@@ -81,7 +74,7 @@ VfsMount *VirtualFileSystem::getVfsMount(const Dentry* dentry, bool is_root)
         return mnt;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 FileSystemInfo *VirtualFileSystem::rootMount(const char *fs_name, uint32 /*flags*/)
@@ -101,14 +94,14 @@ FileSystemInfo *VirtualFileSystem::rootMount(const char *fs_name, uint32 /*flags
 
   debug(VFS, "Create root %s superblock\n", fst->getFSName());
   Superblock *super = fst->createSuper(-1);
-  super = fst->readSuper(super, 0);
+  super = fst->readSuper(super, nullptr);
 
   Dentry *root = super->getRoot();
 
   super->setMountPoint(root);
   root->setMountedRoot(root);
 
-  VfsMount *root_mount = new VfsMount(0, root, root, super, 0);
+  VfsMount *root_mount = new VfsMount(nullptr, root, root, super, 0);
 
   mounts_.push_back(root_mount);
   superblocks_.push_back(super);
@@ -148,7 +141,7 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   uint32_t dev = -1;
   if(fst->getFSFlags() & FS_REQUIRES_DEV)
   {
-      BDVirtualDevice* bddev = BDManager::getInstance()->getDeviceByName(dev_name);
+      BDVirtualDevice* bddev = BDManager::instance().getDeviceByName(dev_name);
       if (!bddev)
       {
           debug(VFS, "mount: device with name %s doesn't exist\n", dev_name);
@@ -179,9 +172,10 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
   }
 
   debug(VFS, "mount: Fill superblock\n");
-  super = fst->readSuper(super, 0); //?
+  super = fst->readSuper(super, nullptr); //?
 
   Dentry *root = super->getRoot();
+  assert(root);
   assert(root->getParent() == root);
 
   super->setMountPoint(mountpoint_path.dentry_); // Set mountpoint for new superblock
@@ -202,14 +196,17 @@ int32 VirtualFileSystem::mount(const char* dev_name, const char* dir_name, const
 
 int32 VirtualFileSystem::rootUmount()
 {
-  if (superblocks_.size() == 0)
+  if (superblocks_.empty())
   {
     return -1;
   }
-  VfsMount *root_vfs_mount = mounts_.at(0);
+
+  assert(mounts_.size() > 0);
+  VfsMount *root_vfs_mount = mounts_.front();
   delete root_vfs_mount;
 
-  Superblock *root_sb = superblocks_.at(0);
+  assert(superblocks_.size() > 0);
+  Superblock *root_sb = superblocks_.front();
   delete root_sb;
   return 0;
 }
@@ -217,7 +214,7 @@ int32 VirtualFileSystem::rootUmount()
 int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 {
   FileSystemInfo *fs_info = currentThread->getWorkingDirInfo();
-  if (dir_name == 0)
+  if (dir_name == nullptr)
     return -1;
 
   Path mountpount_path;
@@ -256,4 +253,3 @@ int32 VirtualFileSystem::umount(const char* dir_name, uint32 /*flags*/)
 
   return 0;
 }
-

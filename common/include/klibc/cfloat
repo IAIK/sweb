@@ -1,0 +1,12 @@
+#pragma once
+
+#include "float.h"
+
+#if __cplusplus >= 201103L
+#  ifndef DECIMAL_DIG
+#    define DECIMAL_DIG __DECIMAL_DIG__
+#  endif
+#  ifndef FLT_EVAL_METHOD
+#    define FLT_EVAL_METHOD __FLT_EVAL_METHOD__
+#  endif
+#endif

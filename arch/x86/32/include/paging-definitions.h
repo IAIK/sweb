@@ -32,7 +32,7 @@ struct PageDirPageTableEntry
   size_t ignored_3                 :1;
   size_t ignored_2                 :1;
   size_t ignored_1                 :1;
-  size_t page_table_ppn            :20;
+  size_t page_ppn                  :20;
 } __attribute__((__packed__));
 
 static_assert(sizeof(PageDirPageTableEntry) == 4, "PageDirPageTableEntry is not 32 bit");
@@ -65,6 +65,8 @@ typedef union
   struct PageDirPageEntry page;
 } __attribute__((__packed__)) PageDirEntry;
 
+using PageDir = PageDirEntry[PAGE_DIRECTORY_ENTRIES];
+
 typedef struct
 {
   size_t present                   :1;
@@ -84,3 +86,4 @@ typedef struct
 
 static_assert(sizeof(PageDirPageEntry) == 4, "PageTableEntry is not 32 bit");
 
+using PageTable = PageTableEntry[PAGE_TABLE_ENTRIES];

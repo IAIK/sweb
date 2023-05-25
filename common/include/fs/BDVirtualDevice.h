@@ -1,11 +1,11 @@
 #pragma once
 
 #include "types.h"
-#include "ulist.h"
-#include "ustring.h"
 
-class BDDriver;
-class BDRequest;
+#include "EASTL/list.h"
+#include "EASTL/string.h"
+
+#include "assert.h"
 
 class BDDriver;
 class BDRequest;
@@ -13,8 +13,7 @@ class BDRequest;
 class BDVirtualDevice
 {
   public:
-    BDVirtualDevice(BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name,
-                    bool writable);
+    BDVirtualDevice(BDDriver *driver, uint32 offset, uint32 num_sectors, uint32 sector_size, const char *name, bool writable);
 
     void addRequest(BDRequest *command);
 
@@ -59,7 +58,7 @@ class BDVirtualDevice
      * @param buffer data, that should be written
      *
      */
-    [[nodiscard]] virtual int32 writeData(uint32 offset, uint32 size, char *buffer);
+    [[nodiscard]] virtual int32 writeData(uint32 offset, uint32 size, const char *buffer);
 
     /**
      * the PartitionType is a 8bit field in the PartitionTable of a MBR
@@ -96,6 +95,5 @@ class BDVirtualDevice
     bool writable_;
     BDDriver* driver_;
     uint8 partition_type_;
-    ustl::string name_;
+    eastl::string name_;
 };
-

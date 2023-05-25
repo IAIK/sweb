@@ -1,15 +1,17 @@
 #include "ArchBoardSpecific.h"
 
-#include "KeyboardManager.h"
-#include "board_constants.h"
-#include "InterruptUtils.h"
-#include "ArchCommon.h"
-#include "assert.h"
-#include "offsets.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
 #include "FrameBufferConsole.h"
+#include "InterruptUtils.h"
+#include "KeyboardManager.h"
+#include "Scheduler.h"
+#include "board_constants.h"
 #include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+
+#include "assert.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -35,7 +37,7 @@ pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
   return framebuffer;
 }
 
-uint32 ArchBoardSpecific::getUsableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
+size_t ArchBoardSpecific::getUsableMemoryRegion(size_t region __attribute__((unused)), pointer &start_address, pointer &end_address, size_t &type)
 {
   start_address = 0;
   end_address = ((PHYSICAL_MEMORY_AVAILABLE - ArchCommon::getVESAConsoleWidth() * ArchCommon::getVESAConsoleHeight() * ArchCommon::getVESAConsoleBitsPerPixel() / 8) & ~0xFFF);
@@ -91,23 +93,67 @@ void ArchBoardSpecific::onIdle()
   // the usb stack should work with less dynamic memory and more stack variables, then it would be less complicated
 }
 
+#define USE_SYSTEM_TIMER
+
+size_t timer_loading_value = 0;
 void ArchBoardSpecific::enableTimer()
 {
-  uint32* pic_base_enable = (uint32*)0x9000B218;
-  *pic_base_enable = 0x1;
+#ifdef USE_SYSTEM_TIMER
+    debug(A_BOOT, "Enabling system timer, addr %p\n", (uint32*)ARM_CORE0_TIM_IRQCNTL);
+  size_t timer_prescaler = 20;     // (1/prescaler) s = prescaler Hz
+  uint32 timer_frequency = 0;
+  asm("mrc p15, 0, %0, c14, c0, 0\n"
+      : "=r" (timer_frequency));
 
-  uint32* timer_load = (uint32*)0x9000B400;
-  //uint32* timer_value = timer_load + 1;
-  *timer_load = 0x800;
-  uint32* timer_control = timer_load + 2;
-  *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
-  uint32* timer_clear = timer_load + 3;
-  *timer_clear = 0x1;
+  timer_loading_value = timer_frequency / timer_prescaler;
+  debug(A_BOOT, "Setting timer tval: %u\n", timer_loading_value);
+  asm("mcr p15, 0, %0, c14, c3, 0\n"
+      :: "r" (timer_loading_value));
+
+  asm("mrc p15, 0, %0, c14, c3, 0\n"
+      : "=r" (timer_loading_value));
+  debug(A_BOOT, "Remaining timer tval: %u\n", timer_loading_value);
+
+  // CNTV_CTL
+  // enable timer
+  asm("mcr p15, 0, %0, c14, c3, 1\n"
+      :: "r" (1));
+
+  debug(A_BOOT, "Timer enabled, freq: %u\n", timer_frequency);
+
+
+  asm("mrc p15, 0, %0, c14, c3, 0\n"
+      : "=r" (timer_loading_value));
+  debug(A_BOOT, "Remaining timer tval: %u\n", timer_loading_value);
+
+  asm("mrc p15, 0, %0, c14, c3, 0\n"
+      : "=r" (timer_loading_value));
+  debug(A_BOOT, "Remaining timer tval: %u\n", timer_loading_value);
+
+  uint32* core0_irq_control = (uint32*)(ARM_CORE0_TIM_IRQCNTL);
+  *core0_irq_control = TIM_IRQCNTL_CNTVIRQ_IRQ;
+#else
+  // This timer is not actually implemented in QEMU hardware emulation
+
+  // uint32* pic_base_enable = (uint32*)0x9000B218;
+  // *pic_base_enable = 0x1;
+  *PIC_ENABLE_BASIC = 1;
+
+  // uint32* timer_load = (uint32*)0x9000B400;
+  // //uint32* timer_value = timer_load + 1;
+  // *timer_load = 0x800;
+  *TIMER_LOAD = 0x800;
+  // uint32* timer_control = timer_load + 2;
+  // *timer_control = (1 << 7) | (1 << 5) | (1 << 2);
+  *TIMER_CTRL = TIMER_IRQ_ENABLE | TIMER_CTRL_ENABLE | (1 << 2);
+  // uint32* timer_clear = timer_load + 3;
+  // *timer_clear = 0x1;
+  *TIMER_CLEAR = 1;
+#endif
 }
 
-void ArchBoardSpecific::setTimerFrequency(uint32 freq)
+void ArchBoardSpecific::setTimerFrequency([[maybe_unused]]uint32 freq)
 {
-  (void)freq;
   debug(A_BOOT, "Sorry, setTimerFrequency not implemented!\n");
 }
 
@@ -126,13 +172,22 @@ void ArchBoardSpecific::disableKBD()
 
 void ArchBoardSpecific::keyboard_irq_handler()
 {
-  KeyboardManager::instance()->serviceIRQ();
+  KeyboardManager::instance().serviceIRQ();
+}
+
+void resetTimer()
+{
+    asm("mcr p15, 0, %0, c14, c3, 0\n" :: "r" (timer_loading_value));
 }
 
 extern void timer_irq_handler();
 
 void ArchBoardSpecific::timer0_irq_handler()
 {
+#ifdef USE_SYSTEM_TIMER
+    resetTimer();
+    timer_irq_handler();
+#else
   uint32* timer_raw = (uint32*)0x9000B410;
   if ((*timer_raw & 0x1) != 0)
   {
@@ -142,14 +197,26 @@ void ArchBoardSpecific::timer0_irq_handler()
 
     timer_irq_handler();
   }
+#endif
 }
 
 #define IRQ(X) ((*pic) & (1 << X))
 void ArchBoardSpecific::irq_handler()
 {
+#ifdef USE_SYSTEM_TIMER
+  uint32* core0_irq_data = (uint32*)ARM_CORE0_IRQ_SOURCE;
+  if (*core0_irq_data & (1 << 3))
+  {
+      timer0_irq_handler();
+  }
+#else
+
   uint32* pic = (uint32*)PIC_BASE;
   if (IRQ(0))
+  {
     timer0_irq_handler();
+  }
+#endif
 }
 
 extern "C" void ArchBoardSpecific::disableMulticore(uint32* spin) {

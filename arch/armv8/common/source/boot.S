@@ -1,3 +1,6 @@
+# https://www.airs.com/blog/archives/518
+.section .note.GNU-stack,"",@progbits
+
 //parts of this code are from:
 //http://infocenter.arm.com/help/topic/com.arm.doc.dai0527a/DAI0527A_baremetal_boot_code_for_ARMv8_A_processors.pdf
 

@@ -6,12 +6,6 @@ class PageFaultHandler
 {
 private:
   /**
-   * The border address at which it is assumed that
-   * a pagefault happened by dereferencing a null pointer.
-   */
-  static const size_t null_reference_check_border_;
-
-  /**
    * Print out the pagefault information. Check if the pagefault is valid, or the thread state is corrupt.
    * Afterwards, load a the if necessary.
    * @param address The address on which the fault happened
@@ -35,6 +29,18 @@ private:
                                      bool present, bool writing,
                                      bool fetch, bool switch_to_us);
 
+  static void countPageFault(size_t address);
+
+  /**
+   * The border address at which it is assumed that
+   * a pagefault happened by dereferencing a null pointer.
+   */
+  static const size_t null_reference_check_border_;
+
+  static size_t pf_address;
+  static size_t pf_address_counter;
+
+
 public:
   /**
    * Enter a new pagefault. The pagefault is processed.
@@ -45,7 +51,6 @@ public:
    * @param writing true if the fault happened by writing to an address, else reading
    * @param fetch true in case the fault happened by an instruction fetch, else by an operand fetch
    */
-  static void enterPageFault(size_t address, bool user,
-                             bool present, bool writing,
-                             bool fetch);
+  static void enterPageFault(size_t address, size_t ip, bool user,
+                             bool present, bool writing, bool fetch);
 };

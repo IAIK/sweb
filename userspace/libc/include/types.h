@@ -8,7 +8,7 @@ typedef long unsigned int off_t;
 typedef long unsigned int mode_t;
 typedef long unsigned int uid_t;
 typedef long unsigned int gid_t;
-typedef long unsigned int size_t;
+typedef __SIZE_TYPE__ size_t;
 typedef long int ssize_t;
 
 #ifndef PID_T_DEFINED

@@ -79,7 +79,17 @@ extern void *memset(void *position, int value, size_t number_of_bytes);
  * @param str String
  * @return length of String
  */
-extern size_t strlen(const char* str);
+size_t strlen(const char* str);
+
+/**
+ * Gets the length of the null terminated string
+ * Returns 0 if str is a null pointer
+ * Returns strsz if no null character is found within the first strsz bytes of str
+ *
+ * @param str String
+ * @return length of String
+ */
+size_t strnlen_s(const char *str, size_t strsz);
 
 /**
  * Compares the 2 Strings, default implementation
@@ -94,6 +104,3 @@ extern char *strstr(const char *haystack, const char *needle);
 #ifdef __cplusplus
 }
 #endif
-
-
-

@@ -18,7 +18,7 @@
 #define PAGE_FAULT_WRITEABLE  0x00000002
 #define PAGE_FAULT_PRESENT    0x00000001
 
-typedef struct
+struct [[gnu::packed]] PageMapLevel4Entry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -33,11 +33,13 @@ typedef struct
   uint64 reserved_1                :12; // must be 0
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
-} __attribute__((__packed__)) PageMapLevel4Entry;
+};
 
 static_assert(sizeof(PageMapLevel4Entry) == 8, "PageMapLevel4Entry is not 64 bit");
 
-struct PageDirPointerTablePageDirEntry
+using PageMapLevel4 = PageMapLevel4Entry[PAGE_MAP_LEVEL_4_ENTRIES];
+
+struct [[gnu::packed]] PageDirPointerTablePageDirEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -52,11 +54,11 @@ struct PageDirPointerTablePageDirEntry
   uint64 reserved_1                :12; // must be 0
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
-} __attribute__((__packed__));
+};
 
 static_assert(sizeof(PageDirPointerTablePageDirEntry) == 8, "PageDirPointerTablePageDirEntry is not 64 bit");
 
-struct PageDirPointerTablePageEntry
+struct [[gnu::packed]] PageDirPointerTablePageEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -74,17 +76,19 @@ struct PageDirPointerTablePageEntry
   uint64 reserved_1                :12; // must be 0
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
-} __attribute__((__packed__));
+};
 
 static_assert(sizeof(PageDirPointerTablePageEntry) == 8, "PageDirPointerTablePageEntry is not 64 bit");
 
-typedef union
+union [[gnu::packed]] PageDirPointerTableEntry
 {
   struct PageDirPointerTablePageDirEntry pd;
   struct PageDirPointerTablePageEntry page;
-} __attribute__((__packed__)) PageDirPointerTableEntry;
+};
 
-struct PageDirPageTableEntry
+using PageDirPointerTable = PageDirPointerTableEntry[PAGE_DIR_POINTER_TABLE_ENTRIES];
+
+struct [[gnu::packed]] PageDirPageTableEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -99,11 +103,11 @@ struct PageDirPageTableEntry
   uint64 reserved_1                :12; // must be 0
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
-} __attribute__((__packed__));
+};
 
 static_assert(sizeof(PageDirPageTableEntry) == 8, "PageDirPageTableEntry is not 64 bit");
 
-struct PageDirPageEntry
+struct [[gnu::packed]] PageDirPageEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -121,17 +125,19 @@ struct PageDirPageEntry
   uint64 reserved_1                :12; // must be 0
   uint64 ignored_1                 :11;
   uint64 execution_disabled        :1;
-} __attribute__((__packed__));
+};
 
 static_assert(sizeof(PageDirPageEntry) == 8, "PageDirPageEntry is not 64 bit");
 
-typedef union
+union [[gnu::packed]] PageDirEntry
 {
   struct PageDirPageTableEntry pt;
   struct PageDirPageEntry page;
-} __attribute__((__packed__)) PageDirEntry;
+};
 
-typedef struct
+using PageDir = PageDirEntry[PAGE_DIR_ENTRIES];
+
+struct [[gnu::packed]] PageTableEntry
 {
   uint64 present                   :1;
   uint64 writeable                 :1;
@@ -140,13 +146,34 @@ typedef struct
   uint64 cache_disabled            :1;
   uint64 accessed                  :1;
   uint64 dirty                     :1;
-  uint64 size                      :1;
+  uint64 size                      :1; // PAT bit
   uint64 global                    :1;
   uint64 ignored_2                 :3;
   uint64 page_ppn                  :28;
   uint64 reserved_1                :12; // must be 0
-  uint64 ignored_1                 :11;
+  uint64 ignored_1                 :7;
+  uint64 protection_key            :4; // https://www.kernel.org/doc/html/next/core-api/protection-keys.html
   uint64 execution_disabled        :1;
-} __attribute__((__packed__)) PageTableEntry;
+};
 
 static_assert(sizeof(PageTableEntry) == 8, "PageTableEntry is not 64 bit");
+
+using PageTable = PageTableEntry[PAGE_TABLE_ENTRIES];
+
+struct [[gnu::packed]] VAddr
+{
+    union [[gnu::packed]]
+    {
+        uint64 addr;
+
+        struct [[gnu::packed]]
+        {
+            uint64 offset   : 12;
+            uint64 pti      : 9;
+            uint64 pdi      : 9;
+            uint64 pdpti    : 9;
+            uint64 pml4i    : 9;
+            uint64 reserved : 16;
+        };
+    };
+};

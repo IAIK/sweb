@@ -1,8 +1,29 @@
 #pragma once
 
-#include "types.h"
 #include "paging-definitions.h"
-#include "uvector.h"
+
+#include "types.h"
+
+#include "EASTL/vector.h"
+
+class ArchMemoryMapping
+{
+public:
+    PageDirEntry* pd;
+    PageTableEntry* pt;
+
+    pointer page; //address to the ident mapped ppn
+
+    size_t pd_ppn;
+    size_t pt_ppn;
+
+    size_t page_ppn;  //the physical page number
+
+    size_t page_size;
+
+    size_t pdi;
+    size_t pti;
+};
 
 /**
  *
@@ -13,7 +34,7 @@ class ArchMemory
 {
 public:
 
-/** 
+/**
  * Constructor
  * creates a new Page-Directory for a UserProccess by copying the
  * Kernel-Page-Directory
@@ -21,15 +42,25 @@ public:
  */
   ArchMemory();
 
-/** 
+  ArchMemory(uint32_t page_dir_page);
+
+
+/**
+ * Destructor. Recursively deletes the page directory and all page tables
+ *
+ */
+  ~ArchMemory();
+
+/**
  *
  * maps a virtual page to a physical page (pde and pte need to be set up first)
  *
- * @param virtual_page 
+ * @param virtual_page
  * @param physical_page
  * @param user_access PTE User/Supervisor Flag, governing the binary Paging
  * Privilege Mechanism
  */
+  [[nodiscard]]
   __attribute__((warn_unused_result)) bool mapPage(uint32 virtual_page, uint32 physical_page, uint32 user_access);
 
 /**
@@ -39,11 +70,6 @@ public:
  */
   void unmapPage(uint32 virtual_page);
 
-/**
- * Destructor. Recursively deletes the page directory and all page tables
- *
- */
-  ~ArchMemory();
 
 /**
  * Takes a Physical Page Number in Real Memory and returns a virtual address than
@@ -80,14 +106,15 @@ public:
  */
   static uint32 get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *physical_page, uint32 *physical_pte_page=0);
 
-  /**
-   *
-   * maps a virtual page to a physical page in kernel mapping
-   *
-   * @param virtual_page
-   * @param physical_page
-   */
-    static void mapKernelPage(uint32 virtual_page, uint32 physical_page);
+    /**
+     * maps a virtual page to a physical page in kernel mapping
+     *
+     * @param virtual_page
+     * @param physical_page
+     * @return true if the page has been mapped
+     */
+    [[nodiscard]]
+    static bool mapKernelPage(size_t virtual_page, size_t physical_page, bool can_alloc_pages = false, bool memory_mapped_io = false);
 
   /**
    * removes the mapping to a virtual_page by marking its PTE Entry as non valid
@@ -103,38 +130,41 @@ public:
   uint32 page_dir_page_;
 
   uint32 getRootOfPagingStructure();
+  static void loadPagingStructureRoot(size_t ttbr0_value);
+
+  static PageDirEntry* getKernelPagingStructureRootVirt();
+  static size_t getKernelPagingStructureRootPhys();
 
   static const size_t RESERVED_START = 0x80000ULL;
   static const size_t RESERVED_END = 0x80400ULL;
 
+
+  static ArchMemory& kernelArchMemory();
+
 private:
+    ArchMemory& operator=(const ArchMemory& src) = delete; // should never be implemented
 
-  PageTableEntry* getPTE(size_t vpn);
-  static PageTableEntry* getIdentAddressOfPT(PageDirEntry *page_directory, uint32 pde_vpn);
+    PageTableEntry* getPTE(size_t vpn);
+    static PageTableEntry* getIdentAddressOfPT(PageDirEntry* page_directory, uint32 pde_vpn);
 
-/**
- * Adds a page directory entry to the given page directory.
- * (In other words, adds the reference to a new page table to a given
- * page directory.)
- *
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- * @param physical_page_table_page physical page of the new page table.
- */
-  void insertPT(uint32 pde_vpn);
+    /**
+     * Adds a page directory entry to the given page directory.
+     * (In other words, adds the reference to a new page table to a given
+     * page directory.)
+     *
+     * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
+     * @param physical_page_table_page physical page of the new page table.
+     */
+    void insertPT(uint32 pde_vpn);
 
-/**
- * Removes a page directory entry from a given page directory if it is present
- * in the first place. Futhermore, the target page table is assured to be
- * empty.
- *
- * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
- */
-  void checkAndRemovePT(uint32 pde_vpn);
+    /**
+     * Removes a page directory entry from a given page directory if it is present
+     * in the first place. Futhermore, the target page table is assured to be
+     * empty.
+     *
+     * @param pde_vpn Index of the PDE (i.e. the page table) in the PD.
+     */
+    void checkAndRemovePT(uint32 pde_vpn);
 
-  ustl::vector<uint32> pt_ppns_;
-
-  ArchMemory(ArchMemory const &src); // not yet implemented
-  ArchMemory &operator=(ArchMemory const &src); // should never be implemented
-
+    eastl::vector<uint32> pt_ppns_;
 };
-

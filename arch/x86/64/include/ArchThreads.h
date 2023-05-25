@@ -1,6 +1,10 @@
 #pragma once
 
+#include "Scheduler.h"
+
 #include "types.h"
+
+#include "EASTL/unique_ptr.h"
 
 /**
  * The flag for full barrier synchronization.
@@ -11,44 +15,49 @@
 
 struct ArchThreadRegisters
 {
-  uint64  rip;       //   0
-  uint64  cs;        //   8
-  uint64  rflags;    //  16
-  uint64  rax;       //  24
-  uint64  rcx;       //  32
-  uint64  rdx;       //  40
-  uint64  rbx;       //  48
-  uint64  rsp;       //  56
-  uint64  rbp;       //  64
-  uint64  rsi;       //  72
-  uint64  rdi;       //  80
-  uint64  r8;        //  88
-  uint64  r9;        //  96
-  uint64  r10;       // 104
-  uint64  r11;       // 112
-  uint64  r12;       // 120
-  uint64  r13;       // 128
-  uint64  r14;       // 136
-  uint64  r15;       // 144
-  uint64  ds;        // 152
-  uint64  es;        // 160
-  uint64  fs;        // 168
-  uint64  gs;        // 176
-  uint64  ss;        // 184
-  uint64  rsp0;      // 192
-  uint64  cr3;       // 200
-  uint32  fpu[28];   // 208
+  uint64  rip;
+  uint64  cs;
+  uint64  rflags;
+  uint64  rax;
+  uint64  rcx;
+  uint64  rdx;
+  uint64  rbx;
+  uint64  rsp;
+  uint64  rbp;
+  uint64  rsi;
+  uint64  rdi;
+  uint64  r8;
+  uint64  r9;
+  uint64  r10;
+  uint64  r11;
+  uint64  r12;
+  uint64  r13;
+  uint64  r14;
+  uint64  r15;
+  uint64  ds;
+  uint64  es;
+  uint64  fs;
+  uint64  gs;
+  uint64  ss;
+  uint64  rsp0;
+  uint64  cr3;
+  uint64  fsbase;
+  uint32  fpu[28];
+
+    void setKernelStack(size_t k_stack)
+    {
+        rsp0 = k_stack;
+    }
+
+    void setStack(size_t stack)
+    {
+        rsp = stack;
+        rbp = stack;
+    }
 };
 
 class Thread;
 class ArchMemory;
-
-/**
- * this is where the thread info for task switching is stored
- *
- */
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching
@@ -57,6 +66,8 @@ extern Thread *currentThread;
 class ArchThreads
 {
 public:
+
+  [[noreturn]] static void startThreads(Thread* init_thread);
 
 /**
  * allocates space for the currentThreadRegisters
@@ -69,42 +80,51 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* kernel_stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createKernelRegisters(void* start_function,
+                                                                      void* kernel_stack);
+
+  /**
+   * creates the ArchThreadRegisters for a user thread
+   * @param info where the ArchThreadRegisters is saved
+   * @param start_function instruction pointer is set so start function
+   * @param user_stack pointer to the userstack
+   * @param kernel_stack pointer to the kernel stack
+   */
+  static eastl::unique_ptr<ArchThreadRegisters> createUserRegisters(void* start_function,
+                                                                    void* user_stack,
+                                                                    void* kernel_stack);
+
+  /**
+   * changes an existing ArchThreadRegisters so that execution will start / continue
+   * at the function specified
+   * it does not change anything else, and if the thread info / thread was currently
+   * executing something else this will lead to a lot of problems
+   * USE WITH CARE, or better, don't use at all if you're a student
+   * @param info the ArchThreadRegisters that we are going to mangle
+   * @param start_function instruction pointer for the next instruction that gets executed
+   */
+  static void changeInstructionPointer(ArchThreadRegisters& info, void* function);
+
+  static void* getInstructionPointer(ArchThreadRegisters& info);
+
+  static void setInterruptEnableFlag(ArchThreadRegisters& info, bool interrupts_enabled);
+  static bool getInterruptEnableFlag(ArchThreadRegisters& info);
 
 /**
- * creates the ArchThreadRegisters for a user thread
- * @param info where the ArchThreadRegisters is saved
- * @param start_function instruction pointer is set so start function
- * @param user_stack pointer to the userstack
- * @param kernel_stack pointer to the kernel stack
- */
-  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
-
-/**
- * changes an existing ArchThreadRegisters so that execution will start / continue
- * at the function specified
- * it does not change anything else, and if the thread info / thread was currently
- * executing something else this will lead to a lot of problems
- * USE WITH CARE, or better, don't use at all if you're a student
- * @param the ArchThreadRegisters that we are going to mangle
- * @param start_function instruction pointer for the next instruction that gets executed
- */
-  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
-
-/**
- *
  * on x86: invokes int65, whose handler facilitates a task switch
- *
  */
   static void yield();
 
 /**
  * sets a threads page map level 4
  *
- * @param *thread Pointer to Thread Object
+ * @param thread Pointer to Thread Object
  * @param arch_memory the arch memory object for the address space
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
+
+  static void switchToAddressSpace(Thread* thread);
+  static void switchToAddressSpace(ArchMemory& arch_memory);
 
 /**
  * uninterruptable locked operation
@@ -114,17 +134,35 @@ public:
  * @param new_value to set variable lock to
  * @returns old_value of variable lock
  */
-  static size_t testSetLock(size_t &lock, size_t new_value);
+  template<typename T>
+  static T testSetLock(volatile T &lock, T new_value)
+  {
+      return __sync_lock_test_and_set(&lock, new_value);
+  }
+
+ /**
+  * Counterpart to testSetLock()
+  * Writes 0 to the lock variable and provides a memory release barrier
+  * (ensures all previous memory stores are visible)
+  */
+  template<typename T>
+  static void syncLockRelease(volatile T &lock)
+  {
+      __sync_lock_release(&lock);
+  }
 
 /**
- * atomically increments or decrements value by increment
+ * atomically increments or decrements target by increment
  *
- * @param &value Reference to value
+ * @param &target Reference to target
  * @param increment can be positive or negative
- * @returns old value of value
+ * @returns old value of target
  */
-  static uint64 atomic_add(uint64 &value, int64 increment);
-  static int64 atomic_add(int64 &value, int64 increment);
+  template <typename T>
+  static T atomic_add(T& target, T increment)
+  {
+      return __atomic_fetch_add(&target, increment, __ATOMIC_SEQ_CST);
+  }
 
   /**
    * Atomically set a target to another value.
@@ -132,10 +170,11 @@ public:
    * @param target The target which shall be set
    * @param value The value which shall be set
    */
-  static void atomic_set(uint32 &target, uint32 value);
-  static void atomic_set(int32 &target, int32 value);
-  static void atomic_set(uint64 &target, uint64 value);
-  static void atomic_set(int64 &target, int64 value);
+  template <typename T>
+  static void atomic_set(T& target, T value)
+  {
+      __atomic_store_n(&target, value, __ATOMIC_SEQ_CST);
+  }
 
 /**
  *
@@ -159,6 +198,15 @@ private:
    * @param start_function instruction pointer is set to start function
    * @param stack stackpointer
    */
-  static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createBaseThreadRegisters(void* start_function, void* stack);
 };
 
+class WithAddressSpace
+{
+public:
+    WithAddressSpace(Thread* thread);
+    WithAddressSpace(ArchMemory& arch_memory);
+    ~WithAddressSpace();
+private:
+    size_t prev_addr_space_;
+};

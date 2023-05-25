@@ -131,7 +131,7 @@ extern pid_t fork();
  * @param status exit status of the process
  *
  */
-extern void _exit(int status);
+extern __attribute__((noreturn)) void _exit(int status);
 
 /**
  * Creates a new hard link to an existing file.

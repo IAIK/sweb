@@ -4,6 +4,8 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #include "types.h"
 #include "offsets.h"
 #include "multiboot.h"
+#include "print.32.h"
+#include "SegmentUtils.h"
 
 #if A_BOOT == A_BOOT | OUTPUT_ENABLED
 #define PRINT(X) print(TRUNCATE(X))
@@ -11,120 +13,155 @@ asm(".equ PHYS_BASE,0xFFFFFFFF00000000");
 #define PRINT(X)
 #endif
 
-#define TRUNCATE(X) ({ volatile unsigned int x = (unsigned int)(((char*)X)+0x7FFFFFFF); (char*)(x+1); })
 
 #define MULTIBOOT_PAGE_ALIGN (1<<0)
 #define MULTIBOOT_MEMORY_INFO (1<<1)
 #define MULTIBOOT_WANT_VESA (1<<2)
-#define MULTIBOOT_HEADER_MAGIC (0x1BADB002)
+#define MULTIBOOT_HEADER_MAGIC (0x1BADB002U)
 #define MULTIBOOT_HEADER_FLAGS (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_WANT_VESA)
 #define MULTIBOOT_CHECKSUM (-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS))
 
 extern uint32 bss_start_address;
 extern uint32 bss_end_address;
 extern uint8 boot_stack[];
-extern PageMapLevel4Entry kernel_page_map_level_4[];
+
+extern PageMapLevel4Entry kernel_page_map_level_4[PAGE_MAP_LEVEL_4_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+extern PageDirPointerTableEntry kernel_page_directory_pointer_table[2 * PAGE_DIR_POINTER_TABLE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+extern PageDirEntry kernel_page_directory[2 * PAGE_DIR_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+extern PageTableEntry kernel_page_table[8 * PAGE_TABLE_ENTRIES] __attribute__((aligned(PAGE_SIZE)));
+
 
 extern uint32 tss_selector;
 
-SegmentDescriptor gdt[7];
-
-struct GDT32Ptr
-{
-    uint16 limit;
-    uint32 addr;
-}__attribute__((__packed__));
-
-typedef struct
-{
-    uint32 reserved_0;
-    uint32 rsp0_l;
-    uint32 rsp0_h;
-    uint32 rsp1_l;
-    uint32 rsp1_h;
-    uint32 rsp2_l;
-    uint32 rsp2_h;
-    uint32 reserved_1;
-    uint32 reserved_2;
-    uint32 ist0_l;
-    uint32 ist0_h;
-    uint32 reserved_3[14];
-    uint16 reserved_4;
-    uint16 iobp;
-}__attribute__((__packed__)) TSS;
+GDT gdt;
 
 TSS g_tss;
 
-static const struct
+__attribute__((section (".mboot"))) static const multiboot_header mboot =
 {
-    uint32 magic = MULTIBOOT_HEADER_MAGIC;
-    uint32 flags = MULTIBOOT_HEADER_FLAGS;
-    uint32 checksum = MULTIBOOT_CHECKSUM;
-    uint32 mode = 0;
-    uint32 widht = 800;
-    uint32 height = 600;
-    uint32 depth = 32;
-} mboot __attribute__ ((section (".mboot")));
+    .magic = MULTIBOOT_HEADER_MAGIC,
+    .flags = MULTIBOOT_HEADER_FLAGS,
+    .checksum = MULTIBOOT_CHECKSUM,
 
-void print(const char* p)
+    .header_addr   = 0,
+    .load_addr     = 0,
+    .load_end_addr = 0,
+    .bss_end_addr  = 0,
+    .entry_addr    = 0,
+
+    .mode_type = 1,
+    .width = 80,
+    .height = 25,
+    .depth = 16,
+};
+
+static void writeLine2Bochs(const char* p)
 {
-  while (*p)
-    asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
+    while (*p)
+    {
+        asm volatile ("outb %b0, %w1" : : "a"(*p++), "d"(0xe9));
+    }
 }
 
-static void memset(char* block, char c, size_t length)
+
+void setSegmentBase(SegmentDescriptor* descr, uint32 baseL, uint32 baseH)
 {
-  for (size_t i = 0; i < length; ++i)
-    block[i] = c;
+    descr->baseLL = (uint16) (baseL & 0xFFFF);
+    descr->baseLM = (uint8) ((baseL >> 16U) & 0xFF);
+    descr->baseLH = (uint8) ((baseL >> 24U) & 0xFF);
+    descr->baseH = baseH;
 }
 
-static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code,
-                                 uint8 tss)
+void setSegmentLimit(SegmentDescriptor* descr, uint32 limit)
 {
-  SegmentDescriptor* gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
-  gdt_p[index].baseLL = (uint16) (baseL & 0xFFFF);
-  gdt_p[index].baseLM = (uint8) ((baseL >> 16U) & 0xFF);
-  gdt_p[index].baseLH = (uint8) ((baseL >> 24U) & 0xFF);
-  gdt_p[index].baseH = baseH;
-  gdt_p[index].limitL = (uint16) (limit & 0xFFFF);
-  gdt_p[index].limitH = (uint8) (((limit >> 16U) & 0xF));
-  gdt_p[index].typeH = tss ? 0 : (code ? 0xA : 0xC); // 4kb + 64bit
+    descr->limitL = (uint16) (limit & 0xFFFF);
+    descr->limitH = (uint8) (((limit >> 16U) & 0xF));
+}
+
+static void setSegmentDescriptor(uint32 index, uint32 baseH, uint32 baseL, uint32 limit, uint8 dpl, uint8 code, uint8 tss)
+{
+  auto gdt_p = (SegmentDescriptor*) TRUNCATE(&gdt);
+
+  setSegmentBase(gdt_p + index, baseL, baseH);
+  setSegmentLimit(gdt_p + index, limit);
+
+  // code segment: granularity = 4kb, long mode = 1, default size = reserved, has to be 0
+  // data segment: granularity = 4kb, long mode = 1, default size = 32
+  // tss: granularity = 1 byte
+  gdt_p[index].typeH = tss ? 0 : (code ? 0xA : 0xC);
   gdt_p[index].typeL = (tss ? 0x89 : 0x92) | ((dpl & 0x3) << 5) | (code ? 0x8 : 0); // present bit + memory expands upwards + code
 }
 
+static void print(const char* p)
+{
+    writeLine2Bochs(p);
+    puts(p);
+}
+
+extern multiboot_info_t* multi_boot_structure_pointer;
+
 extern "C" void entry()
 {
-  asm volatile("mov %ebx,multi_boot_structure_pointer - BASE");
+  // Save pointer to multiboot protocol information handed to us by the bootloader
+  asm volatile("mov %ebx, multi_boot_structure_pointer - BASE");
+
+  // Bootloader already put us in protected mode
+
   PRINT("Booting...\n");
   PRINT("Clearing Framebuffer...\n");
-  memset((char*) 0xB8000, 0, 80 * 25 * 2);
+  clearFB();
 
   PRINT("Clearing BSS...\n");
   char* bss_start = TRUNCATE(&bss_start_address);
   memset(bss_start, 0, TRUNCATE(&bss_end_address) - bss_start);
 
-  PRINT("Initializing Kernel Paging Structures...\n");
-  asm volatile("movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n"
-      "movl $0, kernel_page_map_level_4 - BASE + 4\n");
-  asm volatile("movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
-      "movl $0, kernel_page_directory_pointer_table - BASE + 4\n");
-  asm volatile("movl $0x83, kernel_page_directory - BASE\n"
-      "movl $0, kernel_page_directory - BASE + 4\n");
+  puts(TRUNCATE("Multiboot structure pointer: "));
+  putHex32(*(uint32*)TRUNCATE(&multi_boot_structure_pointer)); putc('\n');
 
-  PRINT("Enable PSE and PAE...\n");
-  asm volatile("mov %cr4,%eax\n"
-      "or $0x20, %eax\n"
+  PRINT("Initializing Kernel Paging Structures...\n");
+  puts(TRUNCATE("Kernel PML4: "));
+  putHex32((uint32)TRUNCATE(&kernel_page_map_level_4)); putc('\n');
+  puts(TRUNCATE("Kernel PDPT: "));
+  putHex32((uint32)TRUNCATE(&kernel_page_directory_pointer_table)); putc('\n');
+  puts(TRUNCATE("Kernel PD:  "));
+  putHex32((uint32)TRUNCATE(&kernel_page_directory)); putc('\n');
+  puts(TRUNCATE("Kernel PT:  "));
+  putHex32((uint32)TRUNCATE(&kernel_page_table)); putc('\n');
+
+
+  // Map as uncachable for now to avoid problems with memory mapped I/O -> remapped later
+  asm volatile(
+    // Set PML4[0] -> PDPT
+    "movl $kernel_page_directory_pointer_table - BASE + 3, kernel_page_map_level_4 - BASE\n" 
+    "movl $0, kernel_page_map_level_4 - BASE + 4\n"
+    // Set PDPT[0] -> PD
+    "movl $kernel_page_directory - BASE + 3, kernel_page_directory_pointer_table - BASE\n"
+    "movl $0, kernel_page_directory_pointer_table - BASE + 4\n"
+    // Set PD[0] present, writeable, cache disabled, size (2MB large page), ppn = 0
+    "movl $0x93, kernel_page_directory - BASE\n"
+    "movl $0, kernel_page_directory - BASE + 4\n"
+    // Set PD[1] present, writeable, cache disabled, size (2MB large page), ppn = 1
+    "movl $0x200093, kernel_page_directory - BASE + 8\n"
+    "movl $0, kernel_page_directory - BASE + 12\n"
+    );
+
+  PRINT("Enable PAE and PSE...\n");
+  asm("mov %cr4,%eax\n"
+      "or $0x30, %eax\n"
       "mov %eax,%cr4\n");
 
   PRINT("Setting CR3 Register...\n");
   asm volatile("mov %[pd],%%cr3" : : [pd]"r"(TRUNCATE(kernel_page_map_level_4)));
 
+  // Enter compatibility mode (while long mode code segment is not yet loaded)
+  // Compatibility mode uses 4 level paging but ignores linear address bits 63:32 and treats them as 0
   PRINT("Enable EFER.LME and EFER.NXE...\n");
   asm volatile("mov $0xC0000080,%ecx\n"
       "rdmsr\n"
       "or $0x900,%eax\n"
       "wrmsr\n");
 
+  PRINT("Clear flags...\n");
   asm volatile("push $2\n"
       "popf\n");
 
@@ -142,19 +179,37 @@ extern "C" void entry()
   g_tss_p->iobp = -1;
 
   PRINT("Setup Segments...\n");
-  setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0);
-  setSegmentDescriptor(2, 0, 0, 0xFFFFFFFF, 0, 0, 0);
-  setSegmentDescriptor(3, 0, 0, 0xFFFFFFFF, 3, 1, 0);
-  setSegmentDescriptor(4, 0, 0, 0xFFFFFFFF, 3, 0, 0);
+  setSegmentDescriptor(1, 0, 0, 0xFFFFFFFF, 0, 1, 0); // kernel code
+  setSegmentDescriptor(2, 0, 0, 0xFFFFFFFF, 0, 0, 0); // kernel data
+  setSegmentDescriptor(3, 0, 0, 0xFFFFFFFF, 3, 1, 0); // user code
+  setSegmentDescriptor(4, 0, 0, 0xFFFFFFFF, 3, 0, 0); // user data
   setSegmentDescriptor(5, -1U, (uint32) TRUNCATE(&g_tss) | 0x80000000, sizeof(TSS) - 1, 0, 0, 1);
 
   PRINT("Loading Long Mode GDT...\n");
-
-  struct GDT32Ptr gdt32_ptr;
+  GDT32Ptr gdt32_ptr;
   gdt32_ptr.limit = sizeof(gdt) - 1;
-  gdt32_ptr.addr = (uint32) TRUNCATE(gdt);
+  gdt32_ptr.addr = (uint32) TRUNCATE(&gdt);
+  puts(TRUNCATE("GDT addr: "));
+  putHex32(gdt32_ptr.addr); putc('\n');
+
+  puts(TRUNCATE("GDT[KERNEL_DS] addr: "));
+  putHex32(gdt32_ptr.addr + (KERNEL_DS >> 3)*(sizeof(SegmentDescriptor)/2)); putc('\n');
+
   asm volatile("lgdt %[gdt_ptr]" : : [gdt_ptr]"m"(gdt32_ptr));
-  asm volatile("mov %%ax, %%ds\n" : : "a"(KERNEL_DS));
+
+  puts(TRUNCATE("Kernel data segment selector: "));
+  putHex8(KERNEL_DS); putc('\n');
+
+
+  puts(TRUNCATE("GDT["));
+  putHex8(KERNEL_DS);
+  puts(TRUNCATE("]="));
+
+  for(uint8 i = 1; i <= sizeof(SegmentDescriptor); ++i)
+  {
+    putHex8(*((char*)((SegmentDescriptor*)TRUNCATE(&gdt) + ((KERNEL_DS >> 3)/2) + 1) - i));
+  }
+  putc('\n');
 
   PRINT("Setting Long Mode Segment Selectors...\n");
   asm volatile("mov %%ax, %%ds\n"
@@ -164,6 +219,8 @@ extern "C" void entry()
       "mov %%ax, %%gs\n"
       : : "a"(KERNEL_DS));
 
+  // Long jump loads the long mode code segment selector from the GDT
+  // After this, we are in proper 64-bit long mode and no longer in compatibility mode
   PRINT("Calling entry64()...\n");
   asm volatile("ljmp %[cs],$entry64-BASE\n" : : [cs]"i"(KERNEL_CS));
 

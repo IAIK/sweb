@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "dwarf++.hh"
 
 using namespace std;
@@ -157,7 +161,7 @@ AT_FLAG(artificial);
 AT_ENUM(calling_convention, DW_CC);
 AT_UDYNAMIC(count);
 expr_result
-at_data_member_location(const die &d, expr_context *ctx, taddr base, [[gnu::unused]] taddr pc)
+at_data_member_location(const die &d, expr_context *ctx, taddr base, [[maybe_unused]] taddr pc)
 {
         value v(d[DW_AT::data_member_location]);
         switch (v.get_type()) {

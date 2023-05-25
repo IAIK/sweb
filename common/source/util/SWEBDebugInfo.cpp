@@ -1,10 +1,10 @@
-#include <ustl/ustring.h>
+#include "EASTL/string.h"
 #include "kprintf.h"
+#include "kstring.h"
 #include "SWEBDebugInfo.h"
 #include "Stabs2DebugInfo.h"
 #include "ArchCommon.h"
 #include "ArchMemory.h"
-
 
 struct FileHeader {
     uint16_t functions;
@@ -23,19 +23,12 @@ struct LineHeader {
 } __attribute__((packed));
 
 
-SWEBDebugInfo::SWEBDebugInfo(char const *sweb_start, char const *sweb_end) : Stabs2DebugInfo(sweb_start, sweb_end, 0) {
-  if (sweb_start != 0 && sweb_end != 0)
+SWEBDebugInfo::SWEBDebugInfo(char const *sweb_begin, char const *sweb_end) : Stabs2DebugInfo(sweb_begin, sweb_end, nullptr) {
+  if (sweb_begin != nullptr && sweb_end != nullptr)
     initialiseSymbolTable();
 }
 
-SWEBDebugInfo::~SWEBDebugInfo() {
-}
-
-
 void SWEBDebugInfo::initialiseSymbolTable() {
-    function_defs_.reserve(256);
-    file_addrs_.reserve(256);
-
     char *data = (char *) stab_start_ + 8;
 
     char buffer[256];
@@ -45,7 +38,7 @@ void SWEBDebugInfo::initialiseSymbolTable() {
         strncpy(buffer, data, fh->filename_len);
         buffer[fh->filename_len] = 0;
         data += fh->filename_len;
-        ustl::string filename(buffer);
+        eastl::string filename(buffer);
 
         for(int fn = 0; fn < fh->functions; fn++) {
             FunctionHeader* fnh = (FunctionHeader*)data;
@@ -68,15 +61,15 @@ void SWEBDebugInfo::getCallNameAndLine(pointer address, const char *&name, ssize
     name = "UNKNOWN FUNCTION";
     line = 0;
 
-    if (!this || function_defs_.size() == 0)
+    if (!this || function_defs_.empty())
         return;
 
-    FunctionHeader* fh = 0;
+    FunctionHeader* fh = nullptr;
     for(auto f : function_defs_) {
       if (address >= f.first)
         fh = (FunctionHeader*)f.second;
     }
-    if (fh == 0)
+    if (fh == nullptr)
       return;
 
     name = ((char*)fh) + sizeof(FunctionHeader);
@@ -104,9 +97,9 @@ void SWEBDebugInfo::printCallInformation(pointer address) const {
     ssize_t line;
     getCallNameAndLine(address, name, line);
     if (line >= 0) {
-        kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s:%zu \n", address, name, line );
+      kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s:%zu \n", address, name, (size_t)line );
     }
     else {
-        kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s+%zx\n", address, name, -line);
+      kprintfd("%10zx: %." CALL_FUNC_NAME_LIMIT_STR "s+%zx\n", address, name, (size_t)-line);
     }
 }

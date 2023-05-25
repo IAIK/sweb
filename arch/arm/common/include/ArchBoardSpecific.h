@@ -6,7 +6,7 @@ class ArchBoardSpecific
 {
   public:
     static pointer getVESAConsoleLFBPtr();
-    static uint32 getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type);
+    static size_t getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
     static void frameBufferInit();
     static void onIdle();
     static void enableTimer();
@@ -20,4 +20,3 @@ class ArchBoardSpecific
     static void uart0_irq_handler();
     static void disableMulticore(uint32* spin);
 };
-

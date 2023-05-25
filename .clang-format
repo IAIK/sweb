@@ -1,0 +1,75 @@
+---
+Language: Cpp
+Standard: c++20
+
+AlignAfterOpenBracket: Align
+AlignOperands: true
+AlignConsecutiveBitFields: Consecutive
+AlignEscapedNewlines: Left
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+QualifierAlignment: Left
+
+BreakBeforeBraces: Allman
+BreakConstructorInitializers: AfterColon
+AlwaysBreakTemplateDeclarations: MultiLine
+BinPackArguments: true
+BinPackParameters: false
+PackConstructorInitializers: Never
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+KeepEmptyLinesAtTheStartOfBlocks: false
+SeparateDefinitionBlocks: Always
+
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+IndentCaseLabels: false
+NamespaceIndentation: All
+
+ColumnLimit: 100
+
+BitFieldColonSpacing: Both
+SpacesBeforeTrailingComments: 1
+SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: After
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+UseCRLF: false
+
+FixNamespaceComments: true
+
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^(<|")(assert|debug).h(>|")$'
+    Priority:        5
+    CaseSensitive:   true
+  - Regex:           '^(<|")EASTL/'
+    Priority:        4
+    CaseSensitive:   true
+  - Regex:           '^(<|")(types|klibc|libc\+\+|c?stdint|c?stddef|c?stdarg|stdlib|stdbool|c?math|c?limits|c?inttypes|c?float|c?ctype|c?string|ranges|transform)(.h)?(>|")$'
+    Priority:        3
+    CaseSensitive:   true
+  - Regex:           '^(<|")Arch*'
+    Priority:        2
+    CaseSensitive:   true
+  - Regex:           '.*'
+    Priority:        1
+    CaseSensitive:   false

@@ -4,9 +4,9 @@
 
 class MinixFSType : public FileSystemType
 {
-  public:
+public:
     MinixFSType();
-    virtual ~MinixFSType();
+    ~MinixFSType() override = default;
 
     /**
      *  reads the superblock from the device
@@ -14,13 +14,12 @@ class MinixFSType : public FileSystemType
      * @param data the data given to the mount system call
      * @return the superblock
      */
-    virtual Superblock *readSuper(Superblock *superblock, void *data) const;
+    Superblock* readSuper(Superblock* superblock, void* data) const override;
 
     /**
      * creates an Superblock object for the actual file system type
      * @param root the root dentry
      * @param s_dev the device number
      */
-    virtual Superblock *createSuper(uint32 s_dev);
+    Superblock* createSuper(uint32 s_dev) override;
 };
-

@@ -1,16 +1,32 @@
 #include "ArchCommon.h"
-#include "ArchBoardSpecific.h"
-#include "offsets.h"
-#include "kprintf.h"
-#include "ArchMemory.h"
-#include "TextConsole.h"
+
 #include "FrameBufferConsole.h"
-#include "backtrace.h"
+#include "KernelMemoryManager.h"
+#include "MMCDriver.h"
+#include "PlatformBus.h"
+#include "SMP.h"
 #include "SWEBDebugInfo.h"
+#include "SerialManager.h"
+#include "TextConsole.h"
+#include "backtrace.h"
+#include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchBoardSpecific.h"
+#include "ArchCpuLocalStorage.h"
+#include "ArchMemory.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
+RangeAllocator<> mmio_addr_allocator;
+
+extern void* kernel_start_address;
 extern void* kernel_end_address;
+
+pointer ArchCommon::getKernelStartAddress()
+{
+    return (pointer)&kernel_start_address;
+}
 
 pointer ArchCommon::getKernelEndAddress()
 {
@@ -48,6 +64,11 @@ size_t ArchCommon::getModuleEndAddress(size_t num __attribute__((unused)), size_
   return getKernelEndAddress();
 }
 
+const char* ArchCommon::getModuleName([[maybe_unused]]size_t num, [[maybe_unused]]size_t is_paging_set_up)
+{
+    return "kernel";
+}
+
 size_t ArchCommon::getVESAConsoleHeight()
 {
   return 480;
@@ -78,7 +99,7 @@ size_t ArchCommon::getNumUseableMemoryRegions()
   return 1;
 }
 
-size_t ArchCommon::getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
+size_t ArchCommon::getUseableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type)
 {
   return ArchBoardSpecific::getUsableMemoryRegion(region, start_address, end_address, type);
 }
@@ -89,12 +110,19 @@ Console* ArchCommon::createConsole(size_t count)
   return new FrameBufferConsole(count);
 }
 
-Stabs2DebugInfo const *kernel_debug_info = 0;
+const Stabs2DebugInfo* kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {
   extern unsigned char swebdbg_start_address_nr;
   extern unsigned char swebdbg_end_address_nr;
+
+  if (&swebdbg_start_address_nr == &swebdbg_end_address_nr)
+  {
+      debug(MAIN, "Empty debug info!\n");
+      kernel_debug_info = new SWEBDebugInfo(nullptr, nullptr);
+      return;
+  }
 
   kernel_debug_info = new SWEBDebugInfo((const char *)&swebdbg_start_address_nr, (const char*)&swebdbg_end_address_nr);
 }
@@ -123,7 +151,7 @@ extern "C" void dumpBss()
     }
 }
 
-extern "C" void halt()
+extern "C" void ArchCommon::halt()
 {
   asm volatile("wfi");
 }
@@ -135,3 +163,53 @@ void ArchCommon::idle()
   halt();
 }
 
+void ArchCommon::spinlockPause()
+{
+}
+
+uint64 ArchCommon::cpuTimestamp()
+{
+    uint64 timestamp;
+    asm volatile ("isb; mrs %0, cntvct_el0"
+                  : "=r" (timestamp));
+
+    return timestamp;
+}
+
+void ArchCommon::postBootInit()
+{
+}
+
+void ArchCommon::initPlatformDrivers()
+{
+    PlatformBus::instance().registerDriver(SerialManager::instance());
+}
+
+void ArchCommon::initBlockDeviceDrivers()
+{
+    PlatformBus::instance().registerDriver(MMCDeviceDriver::instance());
+}
+
+void ArchCommon::reservePagesPreKernelInit([[maybe_unused]]Allocator& alloc)
+{
+}
+
+void ArchCommon::initKernelVirtualAddressAllocator()
+{
+    mmio_addr_allocator.setUseable(KERNEL_START, (size_t)-1);
+    mmio_addr_allocator.setUnuseable(getKernelStartAddress(), getKernelEndAddress());
+    mmio_addr_allocator.setUnuseable(KernelMemoryManager::instance()->getKernelHeapStart(), KernelMemoryManager::instance()->getKernelHeapMaxEnd());
+    // TODO: ident mapping end
+    // mmio_addr_allocator.setUnuseable(IDENT_MAPPING_START, IDENT_MAPPING_END);
+    debug(MAIN, "Usable MMIO ranges:\n");
+    mmio_addr_allocator.printUsageInfo();
+}
+
+cpu_local size_t heart_beat_value = 0;
+const char* clock = "/-\\|";
+
+void ArchCommon::drawHeartBeat()
+{
+    ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,SMP::currentCpuId(),clock[heart_beat_value], CONSOLECOLOR::GREEN);
+    heart_beat_value = (heart_beat_value + 1) % 4;
+}

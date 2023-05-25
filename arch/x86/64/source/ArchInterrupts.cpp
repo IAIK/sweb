@@ -1,62 +1,222 @@
 #include "ArchInterrupts.h"
+
 #include "8259.h"
-#include "ports.h"
+#include "APIC.h"
+#include "CPUID.h"
+#include "InterruptDescriptorTable.h"
 #include "InterruptUtils.h"
-#include "ArchThreads.h"
-#include "assert.h"
+#include "IoApic.h"
+#include "IrqDomain.h"
+#include "KeyboardManager.h"
+#include "PageManager.h"
+#include "PlatformBus.h"
+#include "ProgrammableIntervalTimer.h"
+#include "Scheduler.h"
+#include "SystemState.h"
 #include "Thread.h"
+#include "X2Apic.h"
+#include "ports.h"
+
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
+#include "ArchThreads.h"
+
+#include "assert.h"
+#include "debug.h"
+
+cpu_local IrqDomain cpu_irq_vector_domain_("CPU interrupt vector", InterruptVector::NUM_VECTORS);
+cpu_local IrqDomain* cpu_root_irq_domain_ = &cpu_irq_vector_domain_;
+
+IrqDomain& ArchInterrupts::currentCpuRootIrqDomain()
+{
+    assert(cpu_root_irq_domain_);
+    return *cpu_root_irq_domain_;
+}
+
+IrqDomain& ArchInterrupts::isaIrqDomain()
+{
+    static IrqDomain isa_irq_domain("ISA IRQ", InterruptVector::NUM_ISA_INTERRUPTS);
+    return isa_irq_domain;
+}
+
+static void initInterruptDescriptorTable()
+{
+    auto& idt = InterruptDescriptorTable::instance();
+    idt.idtr().load();
+
+    if (A_INTERRUPTS & OUTPUT_ENABLED & OUTPUT_ADVANCED)
+    {
+        for (size_t i = 0; i < idt.entries.size(); ++i)
+        {
+            debug(A_INTERRUPTS,
+                  "%3zu -- offset: %p, ist: %x, present: %x, segment_selector: %x, "
+                  "type: %x, dpl: %x\n",
+                  i, idt.entries[i].offset(), idt.entries[i].ist, idt.entries[i].present,
+                  idt.entries[i].segment_selector, idt.entries[i].type,
+                  idt.entries[i].dpl);
+        }
+    }
+}
+
+void initCpuLocalInterruptHandlers()
+{
+  debug(A_INTERRUPTS, "Initializing interrupt handlers\n");
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::YIELD).useHandler(int65_handler_swi_yield);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::IPI_HALT_CPU).useHandler(int90_handler_halt_cpu);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::APIC_ERROR).useHandler(int91_handler_APIC_error);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::APIC_SPURIOUS).useHandler(int100_handler_APIC_spurious);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::IPI_REMOTE_FCALL).useHandler(int101_handler_cpu_fcall);
+  ArchInterrupts::currentCpuRootIrqDomain().irq(InterruptVector::SYSCALL).useHandler(syscallHandler);
+}
+
+void initInterruptControllers()
+{
+  debug(A_INTERRUPTS, "Initializing interrupt controllers\n");
+  assert(CpuLocalStorage::ClsInitialized());
+
+  PlatformBus::instance().registerDriver(ApicDriver::instance());
+  PlatformBus::instance().registerDriver(ApicTimerDriver::instance());
+  PlatformBus::instance().registerDriver(IoApicDriver::instance());
+  PlatformBus::instance().registerDriver(PIC8259Driver::instance());
+
+  assert(cpu_root_irq_domain_);
+  debug(A_INTERRUPTS, "Interrupt controllers initialized\n");
+}
 
 void ArchInterrupts::initialise()
 {
-  uint16 i;
-  disableInterrupts();
-  initialise8259s();
-  InterruptUtils::initialise();
-  for (i=0;i<16;++i)
-    disableIRQ(i);
+  initInterruptDescriptorTable();
+  initInterruptControllers();
+  initCpuLocalInterruptHandlers();
 }
 
 void ArchInterrupts::enableTimer()
 {
-  enableIRQ(0);
+  if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
+  {
+    debug(A_INTERRUPTS, "Enabling xApic %x timer\n", cpu_lapic->apicId());
+    enableIRQ(cpu_lapic->timer_interrupt_controller.irq());
+  }
+  else
+  {
+    debug(A_INTERRUPTS, "Enabling PIT timer IRQ\n");
+    enableIRQ(PIT::instance().irq());
+  }
+}
+
+void ArchInterrupts::disableTimer()
+{
+  if(cpu_lapic->isInitialized() && cpu_lapic->usingAPICTimer())
+  {
+    debug(A_INTERRUPTS, "Disabling xApic %x timer \n", cpu_lapic->apicId());
+    disableIRQ(cpu_lapic->timer_interrupt_controller.irq());
+  }
+  else
+  {
+    debug(A_INTERRUPTS, "Disabling PIT timer IRQ\n");
+    disableIRQ(PIT::instance().irq());
+  }
 }
 
 void ArchInterrupts::setTimerFrequency(uint32 freq) {
+  debug(A_INTERRUPTS, "Set timer frequency %u\n", freq);
+
+  PIT::setOperatingMode(PIT::OperatingMode::SQUARE_WAVE);
+
   uint16_t divisor;
   if(freq < (uint32)(1193180. / (1 << 16) + 1)) {
     divisor = 0;
   } else {
     divisor = (uint16)(1193180 / freq);
   }
-  outportb(0x43, 0x36);
-  outportb(0x40, divisor & 0xFF);
-  outportb(0x40, divisor >> 8);
+
+  PIT::setFrequencyDivisor(divisor);
 }
 
-void ArchInterrupts::disableTimer()
-{
-  disableIRQ(0);
-}
 
 void ArchInterrupts::enableKBD()
 {
-  enableIRQ(1);
-  enableIRQ(9);
+    debug(A_INTERRUPTS, "Enable keyboard irq\n");
+
+    enableIRQ(KeyboardManager::instance().irq());
 }
 
 void ArchInterrupts::disableKBD()
 {
-  disableIRQ(1);
+    enableIRQ(KeyboardManager::instance().irq(), false);
 }
 
-void ArchInterrupts::EndOfInterrupt(uint16 number) 
+void ArchInterrupts::enableIRQ(const IrqDomain::DomainIrqHandle& irq_handle, bool enable)
 {
-  sendEOI(number);
+    debug(A_INTERRUPTS, "[Cpu %zu] %s %s IRQ %zu\n", SMP::currentCpuId(),
+          enable ? "Enable" : "Disable", irq_handle.domain().name().c_str(),
+          irq_handle.irq());
+
+    for (auto&& domain_irq : irq_handle.forwardMappingChain())
+    {
+        domain_irq.activateInDomain(enable);
+    }
+}
+
+void ArchInterrupts::disableIRQ(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    enableIRQ(irq_handle, false);
+}
+
+void ArchInterrupts::startOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())
+    {
+        if (domain->controller())
+        {
+            domain->controller()->irqStart(local_irqnum);
+        }
+    }
+}
+
+void ArchInterrupts::startOfInterrupt(uint16 irqnum)
+{
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Start of IRQ %u\n", SMP::currentCpuId(), irqnum);
+
+    startOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
+}
+
+void ArchInterrupts::endOfInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& [domain, local_irqnum] : irq_handle.reverseMappingTree())
+    {
+        if (domain->controller())
+        {
+            domain->controller()->ack(local_irqnum);
+        }
+    }
+}
+
+void ArchInterrupts::endOfInterrupt(uint16 irqnum)
+{
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Sending EOI for IRQ %u\n",
+        SMP::currentCpuId(), irqnum);
+
+    endOfInterrupt(currentCpuRootIrqDomain().irq(irqnum));
+}
+
+void ArchInterrupts::handleInterrupt(const IrqDomain::DomainIrqHandle& irq_handle)
+{
+    for (auto&& domain_irq : irq_handle.reverseMappingTree())
+    {
+        domain_irq.handleInDomain();
+    }
+}
+
+void ArchInterrupts::handleInterrupt(uint16_t irqnum)
+{
+    handleInterrupt(currentCpuRootIrqDomain().irq(irqnum));
 }
 
 void ArchInterrupts::enableInterrupts()
 {
-   asm("sti");
+   asm("sti\n"
+       "nop\n");
 }
 
 bool ArchInterrupts::disableInterrupts()
@@ -66,7 +226,8 @@ bool ArchInterrupts::disableInterrupts()
       "popq %0\n"
       "cli"
       : "=a"(ret_val));
-  return (ret_val & (1 << 9));  //testing IF Flag
+  bool previous_state = (ret_val & (1 << 9));
+  return previous_state;  //testing IF Flag
 }
 
 bool ArchInterrupts::testIFSet()
@@ -91,8 +252,10 @@ void ArchInterrupts::yieldIfIFSet()
   }
 }
 
-
-struct context_switch_registers {
+struct [[gnu::packed]] context_switch_registers
+{
+  uint64 fsbase_low;
+  uint64 fsbase_high;
   uint64 ds;
   uint64 es;
   uint64 r15;
@@ -111,9 +274,12 @@ struct context_switch_registers {
   uint64 rcx;
   uint64 rax;
   uint64 rsp;
+  uint64_t interrupt_num;
+  uint64_t error_code;
 };
 
-struct interrupt_registers {
+struct [[gnu::packed]] interrupt_registers
+{
   uint64 rip;
   uint64 cs;
   uint64 rflags;
@@ -123,12 +289,27 @@ struct interrupt_registers {
 
 #include "kprintf.h"
 
-extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
+struct [[gnu::packed]] SavedContextSwitchRegisters
 {
-  struct context_switch_registers* registers;
-  registers = (struct context_switch_registers*) base;
-  struct interrupt_registers* iregisters;
-  iregisters = (struct interrupt_registers*) (base + sizeof(struct context_switch_registers)/sizeof(uint64) + error);
+    context_switch_registers registers;
+    interrupt_registers iregisters;
+};
+
+struct [[gnu::packed]] SavedContextSwitchRegistersWithError
+{
+    context_switch_registers registers;
+    uint64 error;
+    interrupt_registers iregisters;
+} __attribute__((packed));
+
+extern "C" ArchThreadRegisters* arch_saveThreadRegisters(void* base, uint64 error)
+{
+  context_switch_registers* registers = error ? &((SavedContextSwitchRegistersWithError*)base)->registers :
+                                                &((SavedContextSwitchRegisters*)base)->registers;
+  interrupt_registers* iregisters = error ? &((SavedContextSwitchRegistersWithError*)base)->iregisters :
+                                            &((SavedContextSwitchRegisters*)base)->iregisters;
+
+  restoreSavedFSBase();
   ArchThreadRegisters* info = currentThreadRegisters;
   asm("fnsave %[fpu]\n"
       "frstor %[fpu]\n"
@@ -156,33 +337,73 @@ extern "C" void arch_saveThreadRegisters(uint64* base, uint64 error)
   info->rcx = registers->rcx;
   info->rax = registers->rax;
   info->rbp = registers->rbp;
+  info->fsbase = (registers->fsbase_high << 32) | registers->fsbase_low;
   assert(!currentThread || currentThread->isStackCanaryOK());
+
+  return info;
 }
 
-typedef struct {
-    uint32 padding;
-    uint64 rsp0; // actually the TSS has more fields, but we don't need them
-} __attribute__((__packed__))TSS;
-
-extern TSS g_tss;
-
-extern "C" void arch_contextSwitch()
+extern "C" void genericInterruptEntry(SavedContextSwitchRegisters* regs)
 {
-  if(outstanding_EOIs)
-  {
-          debug(A_INTERRUPTS, "%zu outstanding End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", outstanding_EOIs);
-          assert(!outstanding_EOIs);
-  }
-  if (currentThread->switch_to_userspace_)
-  {
-    assert(currentThread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
-    assert(currentThread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
-  }
-  assert(currentThread->isStackCanaryOK() && "Kernel stack corruption detected.");
-  ArchThreadRegisters info = *currentThreadRegisters; // optimization: local copy produces more efficient code in this case
-  g_tss.rsp0 = info.rsp0;
+    // Take registers previously saved on the stack via assembly and store them in the
+    // saved registers of the thread
+    auto saved_regs = arch_saveThreadRegisters(&(regs->registers), 0);
 
-  asm volatile("frstor %[fpu]\n"
+    debugAdvanced(A_INTERRUPTS, "[Cpu %zu] Interrupt entry %zu\n",
+                  SMP::currentCpuId(), regs->registers.interrupt_num);
+
+    interruptHandler(regs->registers.interrupt_num, regs->registers.error_code, saved_regs);
+}
+
+
+
+extern "C" [[noreturn]] void contextSwitch(Thread* target_thread, ArchThreadRegisters* target_registers)
+{
+  target_thread = target_thread ? : currentThread;
+  target_registers = target_registers ? : currentThreadRegisters;
+  assert(target_thread);
+
+  if(A_INTERRUPTS & OUTPUT_ADVANCED)
+  {
+      debug(A_INTERRUPTS, "[Cpu %zu] Context switch to thread %s (%p) at rip %p\n", SMP::currentCpuId(), target_thread->getName(), target_thread, (void*)target_registers->rip);
+  }
+
+
+  assert(target_registers);
+  assert(!currentThread || currentThread->currently_scheduled_on_cpu_ == SMP::currentCpuId());
+
+  if((SMP::currentCpuId() == 0) && PIC8259::outstanding_EOIs_) // TODO: Check local APIC for pending EOIs
+  {
+    debug(A_INTERRUPTS, "%zu pending End-Of-Interrupt signal(s) on context switch. Probably called yield in the wrong place (e.g. in the scheduler)\n", PIC8259::outstanding_EOIs_);
+    assert(!((SMP::currentCpuId() == 0) && PIC8259::outstanding_EOIs_));
+  }
+  if (target_thread->switch_to_userspace_)
+  {
+      assert(target_thread->holding_lock_list_ == 0 && "Never switch to userspace when holding a lock! Never!");
+      assert(target_thread->lock_waiting_on_ == 0 && "How did you even manage to execute code while waiting for a lock?");
+      if ((target_registers->cs & 3) != 3)
+      {
+          debugAlways(
+              A_INTERRUPTS,
+              "Incorrect ring level for switch to userspace, expected 3, cs to restore is: %lx\n",
+              target_registers->cs);
+      }
+      assert((target_registers->cs & 3) == 3 && "Incorrect ring level for switch to userspace");
+  }
+  assert(target_thread->isStackCanaryOK() && "Kernel stack corruption detected.");
+
+  currentThread = target_thread;
+  currentThreadRegisters = target_registers;
+  currentThread->currently_scheduled_on_cpu_ = SMP::currentCpuId();
+
+  ArchThreadRegisters info = *target_registers;
+  assert(info.rip >= PAGE_SIZE); // debug
+  assert(info.rsp0 >= USER_BREAK);
+  cpu_tss.setTaskStack(info.rsp0);
+  size_t new_fsbase = target_thread->switch_to_userspace_ ? target_registers->fsbase : (uint64)getSavedFSBase();
+  setFSBase(new_fsbase); // Don't use CLS after this line
+  asm volatile(
+      "frstor %[fpu]\n"
       "mov %[cr3], %%cr3\n"
       "push %[ss]\n"
       "push %[rsp]\n"
@@ -206,11 +427,17 @@ extern "C" void arch_contextSwitch()
       "mov %[rbx], %%rbx\n"
       "mov %[rax], %%rax\n"
       "mov %[rbp], %%rbp\n"
-      "iretq" ::
-      [fpu]"m"(info.fpu), [cr3]"r"(info.cr3), [ss]"m"(info.ss), [rsp]"m"(info.rsp), [rflags]"m"(info.rflags),
-      [cs]"m"(info.cs), [rip]"m"(info.rip), [rsi]"m"(info.rsi), [rdi]"m"(info.rdi), [es]"m"(info.es), [ds]"m"(info.ds),
-      [r8]"m"(info.r8), [r9]"m"(info.r9), [r10]"m"(info.r10), [r11]"m"(info.r11),[r12]"m"(info.r12), [r13]"m"(info.r13),
-      [r14]"m"(info.r14), [r15]"m"(info.r15), [rdx]"m"(info.rdx),[rcx]"m"(info.rcx), [rbx]"m"(info.rbx),
-      [rax]"m"(info.rax), [rbp]"m"(info.rbp) : "memory");
+      // Check %cs in iret frame on stack whether we're returning to userspace
+      "testl $3, 8(%%rsp)\n"
+      "jz 1f\n"
+      "swapgs\n"
+      "1: iretq\n"
+      :
+      : [fpu]"m"(info.fpu), [cr3]"r"(info.cr3), [ss]"m"(info.ss), [rsp]"m"(info.rsp), [rflags]"m"(info.rflags),
+        [cs]"m"(info.cs), [rip]"m"(info.rip), [rsi]"m"(info.rsi), [rdi]"m"(info.rdi), [es]"m"(info.es), [ds]"m"(info.ds),
+        [r8]"m"(info.r8), [r9]"m"(info.r9), [r10]"m"(info.r10), [r11]"m"(info.r11), [r12]"m"(info.r12), [r13]"m"(info.r13),
+        [r14]"m"(info.r14), [r15]"m"(info.r15), [rdx]"m"(info.rdx), [rcx]"m"(info.rcx), [rbx]"m"(info.rbx),
+        [rax]"m"(info.rax), [rbp]"m"(info.rbp)
+      : "memory");
   assert(false && "This line should be unreachable");
 }

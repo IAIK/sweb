@@ -1,19 +1,22 @@
 #include "ArchThreads.h"
-#include "ArchInterrupts.h"
-#include "ArchMemory.h"
-#include "kprintf.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "Thread.h"
+
 #include "Scheduler.h"
 #include "SpinLock.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+
+#include "ArchInterrupts.h"
+#include "ArchMemory.h"
 
 SpinLock global_atomic_add_lock("");
 
 void ArchThreads::initialise()
 {
   new (&global_atomic_add_lock) SpinLock("global_atomic_add_lock");
-  currentThreadRegisters = (ArchThreadRegisters*) new uint8[sizeof(ArchThreadRegisters)];
+  static ArchThreadRegisters boot_thread_registers{};
+  currentThreadRegisters = &boot_thread_registers;
   pointer paging_root = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_paging_level1));
   currentThreadRegisters->TTBR0 = paging_root;
 }
@@ -28,39 +31,65 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
 
   if (thread->user_registers_)
     thread->user_registers_->TTBR0 = ttbr0_value;
+
+  if(thread == currentThread)
+  {
+      switchToAddressSpace(arch_memory);
+  }
 }
 
-void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+void ArchThreads::switchToAddressSpace(Thread* thread)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
-  assert(!((pointer)start_function & 0x3));
-  info->ELR = (pointer)start_function;
-  info->SPSR = 0x60000005;
-  info->SP = (pointer)stack & ~0xF;
-  info->SP_SM = 0;
-  info->X[29] = (pointer)stack & ~0xF; // X29 is the fp
-  info->TTBR0 = 0;
+    ArchMemory::loadPagingStructureRoot(thread->kernel_registers_->TTBR0);
 }
 
-void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
+void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
 {
-  info->ELR = (pointer)function;
+    size_t ttbr0_value = (LOAD_BASE + arch_memory.paging_root_page_ * PAGE_SIZE) | (((size_t)arch_memory.address_space_id) << 48);
+    ArchMemory::loadPagingStructureRoot(ttbr0_value);
 }
 
-void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createKernelRegisters(void* start_function, void* stack)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   assert(!((pointer)start_function & 0x3));
 
-  info->ELR = (pointer) start_function;
-  info->SPSR = 0x60000000;
-  info->SP = (pointer) user_stack & ~0xF;
-  info->SP_SM = (pointer) kernel_stack & ~0xF;
-  info->X[29] = (pointer) user_stack & ~0xF; // X29 is the fp
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
 
-  info->TTBR0 = 0;
+  regs->ELR = (pointer)start_function;
+  regs->SPSR = 0x60000005;
+  regs->SP = (pointer)stack & ~0xF;
+  regs->SP_SM = 0;
+  regs->X[29] = (pointer)stack & ~0xF; // X29 is the fp
+  regs->TTBR0 = 0;
+
+  return regs;
+}
+
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters& info, void* function)
+{
+  info.ELR = (pointer)function;
+}
+
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters& info)
+{
+    return (void*)info.ELR;
+}
+
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createUserRegisters(void* start_function, void* user_stack, void* kernel_stack)
+{
+  assert(!((pointer)start_function & 0x3));
+
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
+
+  regs->ELR = (pointer) start_function;
+  regs->SPSR = 0x60000000;
+  regs->SP = (pointer) user_stack & ~0xF;
+  regs->SP_SM = (pointer) kernel_stack & ~0xF;
+  regs->X[29] = (pointer) user_stack & ~0xF; // X29 is the fp
+
+  regs->TTBR0 = 0;
+
+  return regs;
 }
 
 void ArchThreads::yield()
@@ -131,7 +160,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-    ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
+    ArchThreadRegisters *info = userspace_registers ? thread->user_registers_.get() : thread->kernel_registers_.get();
     if (!info)
     {
       kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
@@ -175,14 +204,22 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->kernel_registers_->SP_SM == 0 && "kernel register set needs no backup of kernel SP_SM");
   assert(thread->kernel_registers_->SP == thread->kernel_registers_->X[29] && "new kernel stack must be empty");
   assert(thread->kernel_registers_->SP != currentThread->kernel_registers_->SP && thread->kernel_registers_->X[29] != currentThread->kernel_registers_->X[29] && "all threads need their own stack");
-  if (thread->user_registers_ == 0)
+  if (!thread->user_registers_)
     return;
   assert(thread->kernel_registers_->ELR == 0 && "user threads should not start execution in kernel mode");
   assert(thread->switch_to_userspace_ == 1 && "new user threads must start in userspace");
   assert(thread->kernel_registers_->SP == thread->user_registers_->SP_SM && "SP_SM should point to kernel stack");
   assert(thread->kernel_registers_->TTBR0 == thread->user_registers_->TTBR0 && "user and kernel part of a thread need to have the same pageing root");
   assert(thread->user_registers_->ELR != 0 && "user eip needs to be valid... execution will start there");
-  if (currentThread->user_registers_ == 0)
+  if (!currentThread->user_registers_)
     return;
   assert(currentThread->user_registers_->SP_SM != thread->user_registers_->SP_SM && "no 2 threads may have the same esp0 value");
+}
+
+
+[[noreturn]] void ArchThreads::startThreads([[maybe_unused]]Thread* init_thread)
+{
+    ArchInterrupts::enableInterrupts();
+    ArchCommon::halt();
+    assert(false);
 }

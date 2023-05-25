@@ -1,61 +1,37 @@
 #pragma once
 
-#include "types.h"
-#include <ulist.h>
 #include "Mutex.h"
-
 #include "Thread.h"
+
+#include "types.h"
+
+#include "EASTL/vector.h"
 
 class Terminal;
 
 class Console : public Thread
 {
     friend class Terminal;
-    friend class ConsoleManager;
 
-  public:
-
-    enum CONSOLECOLOR
-    {
-      BLACK = 0,
-      BLUE,
-      GREEN,
-      CYAN,
-      RED,
-      MAGENTA,
-      BROWN,
-      WHITE,
-      DARK_GREY,
-      BRIGHT_BLUE,
-      BRIGHT_GREEN,
-      BRIGHT_CYAN,
-      PINK,
-      BRIGHT_MAGENTA,
-      YELLOW,
-      BRIGHT_WHITE
-    };
-
-    Console(uint32 num_terminals, const char *name);
+public:
+    Console(uint32 num_terminals, const char* name);
+    ~Console() override = default;
 
     /**
      * Writes input from the keyboard to the active terminal
      */
-    virtual void Run();
+    void Run() override;
 
     /**
      * Checks if the given key is displayable.
      * @param key the key to check
      * @return true if displayable
      */
-    bool isDisplayable(uint32 key);
+    [[nodiscard]] bool isDisplayable(uint32 key) const;
 
-    virtual ~Console()
-    {
-    }
-
-    uint32 getNumTerminals() const;
-    Terminal* getActiveTerminal();
-    Terminal* getTerminal(uint32 term);
+    [[nodiscard]] uint32 getNumTerminals() const;
+    [[nodiscard]] Terminal* getActiveTerminal() const;
+    [[nodiscard]] Terminal* getTerminal(uint32 term) const;
 
     /**
      * Sets the terminal with the given number active.
@@ -67,17 +43,7 @@ class Console : public Thread
     void lockConsoleForDrawing();
     void unLockConsoleForDrawing();
 
-    /**
-     * Checks if all Console locks are free.
-     * @return true if all locks are free
-     */
-    bool areLocksFree()
-    {
-      return (!(system_state == RUNNING) || (console_lock_.isFree() && locked_for_drawing_ == 0));
-    }
-
-  protected:
-
+protected:
     /**
      * Handles special non displayable keys:
      * F-keys for switching active terminals
@@ -87,21 +53,23 @@ class Console : public Thread
      */
     void handleKey(uint32 key);
 
-    virtual void consoleClearScreen() =0;
-    virtual uint32 consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
-                                       uint8 const &state) =0;
-    virtual uint32 consoleGetNumRows() const=0;
-    virtual uint32 consoleGetNumColumns() const=0;
-    virtual void consoleScrollUp(uint8 const &state) =0;
+    virtual void consoleClearScreen() = 0;
+    virtual uint32 consoleSetCharacter(const uint32& row,
+                                       const uint32& column,
+                                       const uint8& character,
+                                       const uint8& state) = 0;
 
-    ustl::list<Terminal* > terminals_;
+    [[nodiscard]] virtual uint32 consoleGetNumRows() const = 0;
+    [[nodiscard]] virtual uint32 consoleGetNumColumns() const = 0;
+
+    virtual void consoleScrollUp(const uint8& state) = 0;
+
+    eastl::vector<Terminal*> terminals_;
     Mutex console_lock_;
     Mutex set_active_lock_;
     uint8 locked_for_drawing_;
 
     uint32 active_terminal_;
-
 };
 
 extern Console* main_console;
-

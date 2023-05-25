@@ -2,6 +2,8 @@
 
 #include "types.h"
 
+#include "EASTL/unique_ptr.h"
+
 /**
  * The flag for full barrier synchronization.
  */
@@ -11,35 +13,29 @@
 
 struct ArchThreadRegisters
 {
-  uint32  eip;       // 0
-  uint32  cs;        // 4
-  uint32  eflags;    // 8
-  uint32  eax;       // 12
-  uint32  ecx;       // 16
-  uint32  edx;       // 20
-  uint32  ebx;       // 24
-  uint32  esp;       // 28
-  uint32  ebp;       // 32
-  uint32  esi;       // 36
-  uint32  edi;       // 40
-  uint32  ds;        // 44
-  uint32  es;        // 48
-  uint32  fs;        // 52
-  uint32  gs;        // 56
-  uint32  ss;        // 60
-  uint32  esp0;      // 64
-  uint32  cr3;       // 68
-  uint32  fpu[27];   // 72
+  uint32  eip;
+  uint32  cs;
+  uint32  eflags;
+  uint32  eax;
+  uint32  ecx;
+  uint32  edx;
+  uint32  ebx;
+  uint32  esp;
+  uint32  ebp;
+  uint32  esi;
+  uint32  edi;
+  uint32  ds;
+  uint32  es;
+  uint32  fs;
+  uint32  gs;
+  uint32  ss;
+  uint32  esp0;
+  uint32  cr3;
+  uint32  fpu[27];
 };
 
 class Thread;
 class ArchMemory;
-/**
- * this is where the thread info for task switching is stored
- *
- */
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching
@@ -48,6 +44,9 @@ extern Thread *currentThread;
 class ArchThreads
 {
 public:
+
+  [[noreturn]] static void startThreads(Thread* init_thread);
+
 
 /**
  * allocates space for the currentThreadRegisters
@@ -60,33 +59,40 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* kernel_stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createKernelRegisters(void* start_function,
+                                                                      void* kernel_stack);
 
-/**
- * creates the ArchThreadRegisters for a user thread
- * @param info where the ArchThreadRegisters is saved
- * @param start_function instruction pointer is set so start function
- * @param user_stack pointer to the userstack
- * @param kernel_stack pointer to the kernel stack
- */
-  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
+  /**
+   * creates the ArchThreadRegisters for a user thread
+   * @param info where the ArchThreadRegisters is saved
+   * @param start_function instruction pointer is set so start function
+   * @param user_stack pointer to the userstack
+   * @param kernel_stack pointer to the kernel stack
+   */
+  static eastl::unique_ptr<ArchThreadRegisters> createUserRegisters(void* start_function,
+                                                                    void* user_stack,
+                                                                    void* kernel_stack);
 
-/**
- * changes an existing ArchThreadRegisters so that execution will start / continue
- * at the function specified
- * it does not change anything else, and if the thread info / thread was currently
- * executing something else this will lead to a lot of problems
- * USE WITH CARE, or better, don't use at all if you're a student
- * @param the ArchThreadRegisters that we are going to mangle
- * @param start_function instruction pointer for the next instruction that gets executed
- */
-  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
+  /**
+   * changes an existing ArchThreadRegisters so that execution will start / continue
+   * at the function specified
+   * it does not change anything else, and if the thread info / thread was currently
+   * executing something else this will lead to a lot of problems
+   * USE WITH CARE, or better, don't use at all if you're a student
+   * @param the ArchThreadRegisters that we are going to mangle
+   * @param start_function instruction pointer for the next instruction that gets executed
+   */
+  static void changeInstructionPointer(ArchThreadRegisters& info, void* function);
 
-/**
- *
- * on x86: invokes int65, whose handler facilitates a task switch
- *
- */
+  static void* getInstructionPointer(ArchThreadRegisters& info);
+
+  static void setInterruptEnableFlag(ArchThreadRegisters& info, bool interrupts_enabled);
+
+  /**
+   *
+   * on x86: invokes int65, whose handler facilitates a task switch
+   *
+   */
   static void yield();
 
 /**
@@ -97,6 +103,9 @@ public:
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
 
+  static void switchToAddressSpace(Thread* thread);
+  static void switchToAddressSpace(ArchMemory& arch_memory);
+
 /**
  * uninterruptable locked operation
  * exchanges value in variable lock with new_value and returns the old_value
@@ -105,7 +114,22 @@ public:
  * @param new_value to set variable lock to
  * @returns old_value of variable lock
  */
-  static uint32 testSetLock(uint32 &lock, uint32 new_value);
+  template<typename T>
+  static T testSetLock(volatile T &lock, T new_value)
+  {
+      return __sync_lock_test_and_set(&lock, new_value);
+  }
+
+/**
+ * Counterpart to testSetLock()
+ * Writes 0 to the lock variable and provides a memory release barrier
+ * (ensures all previous memory stores are visible)
+ */
+  template<typename T>
+  static void syncLockRelease(volatile T &lock)
+  {
+      __sync_lock_release(&lock);
+  }
 
 /**
  * atomically increments or decrements value by increment
@@ -153,6 +177,16 @@ private:
  * @param start_function instruction pointer is set to start function
  * @param stack stackpointer
  */
-  static void createBaseThreadRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createBaseThreadRegisters(void* start_function, void* stack);
 };
 
+
+class WithAddressSpace
+{
+public:
+    WithAddressSpace(Thread* thread);
+    WithAddressSpace(ArchMemory& arch_memory);
+    ~WithAddressSpace();
+private:
+    size_t prev_addr_space_;
+};

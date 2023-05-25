@@ -1,13 +1,19 @@
 #pragma once
 
-#include "types.h"
+#include "RangeAllocator.h"
 #include "paging-definitions.h"
 
+#include "types.h"
+
 class Console;
+class Allocator;
+
+extern RangeAllocator mmio_addr_allocator;
 
 class ArchCommon
 {
   public:
+    static pointer getKernelStartAddress();
     static pointer getKernelEndAddress();
     static pointer getFreeKernelMemoryStart();
     static pointer getFreeKernelMemoryEnd();
@@ -30,6 +36,10 @@ class ArchCommon
      * @return a Pointer to the location of the FrameBuffer
      */
     static pointer getFBPtr(size_t is_paging_set_up = 1);
+    static size_t getFBWidth();
+    static size_t getFBHeight();
+    static size_t getFBBitsPerCharacter();
+    static size_t getFBSize();
 
     /**
      * @return number of Useable Memory Regions
@@ -46,7 +56,7 @@ class ArchCommon
      * @param &type of Useable Memory Region
      * @return 1 if region >= number_of_regions, 0 otherwise
      */
-    static size_t getUsableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
+    static size_t getUseableMemoryRegion(size_t region, pointer &start_address, pointer &end_address, size_t &type);
 
     /**
      * @return size_t returns the number of modules loaded by grub
@@ -69,6 +79,8 @@ class ArchCommon
      */
     static size_t getModuleEndAddress(size_t num, size_t is_paging_set_up = 1);
 
+    static const char* getModuleName(size_t num, size_t is_paging_set_up = 1);
+
     /**
      * Generates the according console depending on the architecture
      * @param count the number of consoles to create
@@ -83,8 +95,14 @@ class ArchCommon
 
     /**
      * let the CPU idle, f.e. with the halt statement
+     * calls pre-idle handler functions
      */
     static void idle();
+
+    /**
+     * let CPU idle until next interrupt
+     */
+    static void halt();
 
     /**
      * draw a heartbeat character
@@ -95,5 +113,20 @@ class ArchCommon
     * draw some infos/statistics
     */
     static void drawStat();
-};
 
+    static void postBootInit();
+
+    static void initPlatformDrivers();
+
+    static void initBlockDeviceDrivers();
+
+    [[noreturn]] static void callWithStack(char* stack, void (*func)());
+
+    static uint64 cpuTimestamp();
+
+    static void spinlockPause();
+
+    static void reservePagesPreKernelInit(Allocator& pm);
+
+    static void initKernelVirtualAddressAllocator();
+};

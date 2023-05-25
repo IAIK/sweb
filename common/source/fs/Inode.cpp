@@ -1,7 +1,8 @@
 #include "Inode.h"
-#include "Superblock.h"
-#include "FileSystemType.h"
+
 #include "File.h"
+#include "FileSystemType.h"
+#include "Superblock.h"
 
 Inode::Inode(Superblock *superblock, uint32 inode_type) :
     i_dentrys_(),
@@ -14,6 +15,10 @@ Inode::Inode(Superblock *superblock, uint32 inode_type) :
     i_state_(I_UNUSED),
     i_mode_((A_READABLE ^ A_WRITABLE) ^ A_EXECABLE)
 {
+    auto sb = getSuperblock();
+    auto type = sb ? sb->getFSType() : nullptr;
+    auto fs_name = type ? type->getFSName() : nullptr;
+    debug(INODE, "Inode() %s %p, type: %x\n", fs_name, this, i_type_);
 }
 
 Inode::~Inode()
@@ -66,7 +71,7 @@ uint32 Inode::numLinks()
 
 bool Inode::hasDentry(Dentry* dentry)
 {
-    return ustl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end();
+    return eastl::find(i_dentrys_.begin(), i_dentrys_.end(), dentry) != i_dentrys_.end();
 }
 
 void Inode::addDentry(Dentry* dentry)
@@ -212,14 +217,14 @@ Dentry* Inode::lookup(const char* name)
     if (name == 0)
     {
         // ERROR_DNE
-        return 0;
+        return nullptr;
     }
 
     debug(INODE, "%s inode %p lookup %s\n", getSuperblock()->getFSType()->getFSName(), this, name);
 
     if (i_type_ != I_DIR)
     {
-        return 0;
+        return nullptr;
     }
 
     assert(i_dentrys_.size() >= 1);

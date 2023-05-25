@@ -66,7 +66,7 @@ extern long atol(const char *string);
  * successfull termination, EXIT_FAILURE for unsuccessful termination
  *
  */
-extern void exit(int status);
+extern __attribute__((noreturn)) void exit(int status);
 
 /**
  * register a function to be called at normal process termination

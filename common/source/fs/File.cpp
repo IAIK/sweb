@@ -1,13 +1,21 @@
 #include "File.h"
-#include "Inode.h"
-#include "FileDescriptor.h"
-#include "assert.h"
-#include "Superblock.h"
-#include "FileSystemType.h"
 
+#include "FileDescriptor.h"
+#include "FileSystemType.h"
+#include "Inode.h"
+#include "Superblock.h"
+
+#include "assert.h"
 
 File::File(Inode* inode, Dentry* dentry, uint32 flag) :
-    uid(0), gid(0), version(0), f_superblock_(0), f_inode_(inode), f_dentry_(dentry), flag_(flag)
+    uid(0),
+    gid(0),
+    version(0),
+    f_superblock_(inode->getSuperblock()),
+    f_inode_(inode),
+    f_dentry_(dentry),
+    flag_(flag),
+    offset_(0)
 {
     f_inode_->incRefCount();
 }
@@ -34,6 +42,7 @@ uint32 File::getSize()
 
 l_off_t File::lseek(l_off_t offset, uint8 origin)
 {
+  debug(VFS_FILE, "(lseek) offset: %llu, origin: %u\n", (long long unsigned int)offset, origin);
   if (origin == SEEK_SET)
     offset_ = offset;
   else if (origin == SEEK_CUR)
@@ -76,4 +85,88 @@ int File::closeFd(FileDescriptor* fd)
     }
 
     return 0;
+}
+
+int32 File::flush()
+{
+    if (f_inode_)
+        return f_inode_->flush();
+
+    return 0;
+}
+
+
+SimpleFile::SimpleFile(Inode* inode, Dentry* dentry, uint32 flag) :
+    File(inode, dentry, flag)
+{
+}
+
+int32 SimpleFile::read(char *buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(read) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count, (long long unsigned int)offset, (size_t)(offset_ + offset));
+    if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
+    {
+        int32 read_bytes = f_inode_->readData(offset_ + offset, count, buffer);
+        if (read_bytes >= 0)
+            offset_ += read_bytes;
+        return read_bytes;
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
+}
+
+int32 SimpleFile::write(const char *buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count, (long long unsigned int)offset, (size_t)(offset_ + offset));
+    if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
+    {
+        int32 written_bytes = f_inode_->writeData(offset_ + offset, count, buffer);
+        if (written_bytes >= 0)
+            offset_ += written_bytes;
+        return written_bytes;
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
+}
+
+NoOffsetFile::NoOffsetFile(Inode* inode, Dentry* dentry, uint32 flag) :
+    File(inode, dentry, flag)
+{
+}
+
+int32 NoOffsetFile::read(char* buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(read) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count,
+          (long long unsigned int)offset, (size_t)(offset_ + offset));
+    if (((flag_ & O_RDONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_READABLE))
+    {
+        return f_inode_->readData(offset_ + offset, count, buffer);
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
+}
+
+
+int32 NoOffsetFile::write(const char* buffer, size_t count, l_off_t offset)
+{
+    debug(VFS_FILE, "(write) buffer: %p, count: %zu, offset: %llu(%zu)\n", buffer, count,
+          (long long unsigned int)offset, (size_t)(offset_ + offset));
+    if (((flag_ & O_WRONLY) || (flag_ & O_RDWR)) && (f_inode_->getMode() & A_WRITABLE))
+    {
+        return f_inode_->writeData(offset_ + offset, count, buffer);
+    }
+    else
+    {
+        // ERROR_FF
+        return -1;
+    }
 }

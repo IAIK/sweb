@@ -10,7 +10,7 @@ LS_Phys = 0x1000;
 
 SECTIONS
 {
-  .text LS_Virt : AT(LS_Phys) 
+  .text LS_Virt : AT(LS_Phys)
   {
     PROVIDE(kernel_start_address = ABSOLUTE(.));
 
@@ -24,7 +24,7 @@ SECTIONS
     *(.rodata*)
     ro_data_end_address = .;
   }
-  
+
   .data ALIGN(4096) : AT(LS_Phys + (LS_Data - LS_Code))
   {
     LS_Data = .;
@@ -32,7 +32,30 @@ SECTIONS
     *(.data*)
     data_end_address = .;
   }
-  
+
+  .init_array : AT(LS_Phys + (__init_array_start - LS_Code))
+  {
+    __init_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+    KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
+    __init_array_end = .;
+  }
+
+  .preinit_array : AT(LS_Phys + (__preinit_array_start - LS_Code))
+  {
+    __preinit_array_start = .;
+    KEEP (*(.preinit_array))
+    __preinit_array_end = .;
+  }
+
+  .fini_array : AT(LS_Phys + (__fini_array_start - LS_Code))
+  {
+    __fini_array_start = .;
+    KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
+    KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+    __fini_array_end = .;
+  }
+
   .bss ALIGN(4096) : AT(LS_Phys + (LS_Bss - LS_Code))
   {
     LS_Bss = .;
@@ -53,7 +76,7 @@ SECTIONS
     . = ALIGN(4096);
     stab_end_address_nr = .;
   }
-  
+
   .stabstr : AT(LS_Phys + (LS_Stabstr - LS_Code))
   {
     LS_Stabstr = .;
@@ -65,7 +88,7 @@ SECTIONS
 
     PROVIDE(kernel_end_address = .);
   }
-  
+
   .ARM.attributes 0 : { *(.ARM.attributes) }
   .comment 0 : { *(.comment) }
 }

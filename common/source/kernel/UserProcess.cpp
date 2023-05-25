@@ -1,66 +1,95 @@
-#include "ProcessRegistry.h"
 #include "UserProcess.h"
-#include "kprintf.h"
+
 #include "Console.h"
-#include "Loader.h"
-#include "VfsSyscall.h"
 #include "File.h"
+#include "Loader.h"
 #include "PageManager.h"
-#include "ArchThreads.h"
-#include "offsets.h"
+#include "ProcessRegistry.h"
 #include "Scheduler.h"
+#include "VfsSyscall.h"
+#include "kprintf.h"
+#include "offsets.h"
 
-UserProcess::UserProcess(ustl::string filename, FileSystemInfo *fs_info, uint32 terminal_number) :
-    Thread(fs_info, filename, Thread::USER_THREAD), fd_(VfsSyscall::open(filename, O_RDONLY))
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
+#include "ArchThreads.h"
+
+#include "EASTL/string.h"
+
+UserProcess::UserProcess(const eastl::string& executable_path,
+                         FileSystemInfo* working_dir,
+                         uint32 terminal_number,
+                         int& creation_status) :
+    Thread(working_dir, executable_path, Thread::USER_THREAD),
+    fd_(VfsSyscall::open(executable_path.c_str(), O_RDONLY))
 {
-  ProcessRegistry::instance()->processStart(); //should also be called if you fork a process
+    debug(USERPROCESS, "Creating new user process %s\n", executable_path.c_str());
+    creation_status = -1;
+    // should also be called if you fork a process
+    ProcessRegistry::instance()->processStart();
 
-  if (fd_ >= 0)
-    loader_ = new Loader(fd_);
+    if (fd_ >= 0)
+        loader_ = new Loader(fd_);
 
-  if (!loader_ || !loader_->loadExecutableAndInitProcess())
-  {
-    debug(USERPROCESS, "Error: loading %s failed!\n", filename.c_str());
-    kill();
-    return;
-  }
+    if (!loader_ || !loader_->loadExecutableAndInitProcess())
+    {
+        debug(USERPROCESS, "Error: loading %s failed!\n", executable_path.c_str());
+        kill();
+        return;
+    }
 
-  size_t page_for_stack = PageManager::instance()->allocPPN();
-  bool vpn_mapped = loader_->arch_memory_.mapPage(USER_BREAK / PAGE_SIZE - 1, page_for_stack, 1);
-  assert(vpn_mapped && "Virtual page for stack was already mapped - this should never happen");
+    // Allocate a physical page for the stack and map it into the virtual address space
+    size_t stack_ppn = PageManager::instance().allocPPN();
+    size_t stack_vpn = (USER_BREAK / PAGE_SIZE) - 1;
 
-  ArchThreads::createUserRegisters(user_registers_, loader_->getEntryFunction(),
-                                   (void*) (USER_BREAK - sizeof(pointer)),
-                                   getKernelStackStartPointer());
+    bool vpn_mapped = loader_->arch_memory_.mapPage(stack_vpn, stack_ppn, true);
+    assert(vpn_mapped &&
+           "Virtual page for stack was already mapped - this should never happen");
 
-  ArchThreads::setAddressSpace(this, loader_->arch_memory_);
+    debug(THREAD, "Mapped stack at virt [%zx, %zx) -> phys [%zx, %zx)\n",
+          stack_vpn * PAGE_SIZE, (stack_vpn + 1) * PAGE_SIZE, stack_ppn * PAGE_SIZE,
+          (stack_ppn + 1) * PAGE_SIZE);
 
-  debug(USERPROCESS, "ctor: Done loading %s\n", filename.c_str());
+    // Stack pointer is decremented as new items are pushed onto the stack -> start at
+    // high end
+    void* init_user_stackptr =
+        (void*)((stack_vpn * PAGE_SIZE) + PAGE_SIZE - 2 * sizeof(pointer));
 
-  if (main_console->getTerminal(terminal_number))
-    setTerminal(main_console->getTerminal(terminal_number));
+    user_registers_ = ArchThreads::createUserRegisters(
+        loader_->getEntryFunction(), init_user_stackptr, getKernelStackStartPointer());
 
-  switch_to_userspace_ = 1;
+    // Ensure the thread is using the correct virtual memory address space
+    ArchThreads::setAddressSpace(this, loader_->arch_memory_);
+
+    debug(USERPROCESS, "ctor: Done loading %s\n", executable_path.c_str());
+
+    if (main_console->getTerminal(terminal_number))
+        setTerminal(main_console->getTerminal(terminal_number));
+
+    // Run this thread in userspace when it is scheduled
+    switch_to_userspace_ = 1;
+
+    creation_status = 0;
 }
 
 UserProcess::~UserProcess()
 {
-  assert(Scheduler::instance()->isCurrentlyCleaningUp());
-  delete loader_;
-  loader_ = 0;
+    assert(Scheduler::instance()->isCurrentlyCleaningUp());
+    delete loader_;
+    loader_ = nullptr;
 
-  if (fd_ > 0)
-    VfsSyscall::close(fd_);
+    if (fd_ > 0)
+        VfsSyscall::close(fd_);
 
-  delete working_dir_;
-  working_dir_ = 0;
+    delete working_dir_;
+    working_dir_ = nullptr;
 
-  ProcessRegistry::instance()->processExit();
+    ProcessRegistry::instance()->processExit();
 }
 
 void UserProcess::Run()
 {
-  debug(USERPROCESS, "Run: Fail-safe kernel panic - you probably have forgotten to set switch_to_userspace_ = 1\n");
-  assert(false);
+    debug(USERPROCESS, "Run: Fail-safe kernel panic - you probably have forgotten to set "
+                       "switch_to_userspace_ = 1\n");
+    assert(false && "UserProcess::Run called");
 }
-

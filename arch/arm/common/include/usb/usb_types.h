@@ -15,7 +15,9 @@ extern "C"
 {
 #endif
 
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 
 /** Unsigned 8 bit type */
 typedef unsigned  char    u8;

@@ -2,6 +2,8 @@
 
 #include "types.h"
 
+#include "EASTL/unique_ptr.h"
+
 /**
  * The flag for full barrier synchronization.
  */
@@ -21,19 +23,13 @@ struct ArchThreadRegisters
 	NeonQ  Q[32];
 	size_t SPSR;
 	size_t ELR;
-	size_t SP;
+	size_t SP; // Saved previous stack pointer (SP_EL0 when coming from user mode, else SP)
 	size_t TTBR0;
-	size_t SP_SM;
+	size_t SP_SM; // Kernel stack pointer
 };
 
 class Thread;
 class ArchMemory;
-/**
- * this is where the thread info for task switching is stored
- *
- */
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
 
 /**
  * Collection of architecture dependant code concerning Task Switching
@@ -42,6 +38,8 @@ extern Thread *currentThread;
 class ArchThreads
 {
 public:
+
+  [[noreturn]] static void startThreads(Thread* init_thread);
 
 /**
  * allocates space for the currentThreadRegisters
@@ -55,7 +53,8 @@ public:
  * @param start_function instruction pointer is set so start function
  * @param stack stackpointer
  */
-  static void createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createKernelRegisters(void* start_function,
+                                                                      void* kernel_stack);
 
   /**
    * changes an existing ArchThreadRegisters so that execution will start / continue
@@ -66,7 +65,9 @@ public:
    * @param the ArchThreadRegisters that we are going to mangle
    * @param start_function instruction pointer for the next instruction that gets executed
    */
-  static void changeInstructionPointer(ArchThreadRegisters *info, void* function);
+  static void changeInstructionPointer(ArchThreadRegisters& info, void* function);
+
+  static void* getInstructionPointer(ArchThreadRegisters& info);
 
 /**
  * creates the ArchThreadRegisters for a user thread
@@ -75,7 +76,9 @@ public:
  * @param user_stack pointer to the userstack
  * @param kernel_stack pointer to the kernel stack
  */
-  static void createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack);
+  static eastl::unique_ptr<ArchThreadRegisters> createUserRegisters(void* start_function,
+                                                                    void* user_stack,
+                                                                    void* kernel_stack);
 
 /**
  *
@@ -85,12 +88,15 @@ public:
   static void yield();
 
 /**
- * sets a threads CR3 register to the given page dir / etc. defining its address space
+ * sets a threads address space register to given address space
  *
  * @param *thread Pointer to Thread Object
  * @param arch_memory a reference to the arch memory object to use
  */
   static void setAddressSpace(Thread *thread, ArchMemory& arch_memory);
+
+  static void switchToAddressSpace(Thread* thread);
+  static void switchToAddressSpace(ArchMemory& arch_memory);
 
 /**
  * uninterruptable locked operation
@@ -101,6 +107,17 @@ public:
  * @returns old_value of variable lock
  */
   static size_t testSetLock(size_t &lock, size_t new_value);
+
+  /**
+   * Counterpart to testSetLock()
+   * Writes 0 to the lock variable and provides a memory release barrier
+   * (ensures all previous memory stores are visible)
+   */
+  template<typename T>
+  static void syncLockRelease(volatile T &lock)
+  {
+      __sync_lock_release(&lock);
+  }
 
 /**
  * atomically increments or decrements value by increment
@@ -137,4 +154,3 @@ public:
    */
   static void debugCheckNewThread(Thread* thread);
 };
-

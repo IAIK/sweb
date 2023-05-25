@@ -1,29 +1,30 @@
 #include "InterruptUtils.h"
 
-#include "ArchBoardSpecific.h"
 #include "BDManager.h"
-#include "KeyboardManager.h"
-#include "new.h"
-#include "ArchMemory.h"
-#include "ArchThreads.h"
-#include "ArchCommon.h"
 #include "Console.h"
 #include "FrameBufferConsole.h"
-#include "Terminal.h"
-#include "kprintf.h"
-#include "Scheduler.h"
-#include "debug_bochs.h"
-
-#include "panic.h"
-
-#include "Thread.h"
-#include "ArchInterrupts.h"
-#include "backtrace.h"
-
+#include "KeyboardManager.h"
 #include "Loader.h"
-#include "Syscall.h"
-#include "paging-definitions.h"
 #include "PageFaultHandler.h"
+#include "Scheduler.h"
+#include "Syscall.h"
+#include "Terminal.h"
+#include "Thread.h"
+#include "TimerTickHandler.h"
+#include "backtrace.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include "new.h"
+#include "paging-definitions.h"
+
+#include "ArchBoardSpecific.h"
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMemory.h"
+#include "ArchThreads.h"
+
+#include "assert.h"
+#include "debug.h"
 
 extern uint32* currentStack;
 extern Console* main_console;
@@ -78,18 +79,13 @@ void pageFaultHandler(uint32 address, uint32 type)
   }
   present = !((status == FLAG_TRANSLATION_PAGE) || (status == FLAG_TRANSLATION_SECTION));
 
-  PageFaultHandler::enterPageFault(address, currentThread->switch_to_userspace_,  present, writing, fetch);
+  // TODO: use real ip
+  PageFaultHandler::enterPageFault(address, 0, currentThread->switch_to_userspace_,  present, writing, fetch);
 }
 
 void timer_irq_handler()
 {
-  static uint32 heart_beat_value = 0;
-  const char* clock = "/-\\|";
-  ((FrameBufferConsole*)main_console)->consoleSetCharacter(0,0,clock[heart_beat_value],Console::GREEN);
-  heart_beat_value = (heart_beat_value + 1) % 4;
-
-  Scheduler::instance()->incTicks();
-  Scheduler::instance()->schedule();
+  TimerTickHandler::handleTimerTick();
 }
 
 void arch_uart1_irq_handler()
@@ -116,7 +112,7 @@ void arch_swi_irq_handler()
   else if (swi == 0x0) // syscall
   {
     currentThread->switch_to_userspace_ = 0;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     auto ret = Syscall::syscallException(currentThread->user_registers_->r[0],
                                          currentThread->user_registers_->r[1],
@@ -127,7 +123,7 @@ void arch_swi_irq_handler()
     currentThread->user_registers_->r[0] = ret;
     ArchInterrupts::disableInterrupts();
     currentThread->switch_to_userspace_ = 1;
-    currentThreadRegisters =  currentThread->user_registers_;
+    currentThreadRegisters =  currentThread->user_registers_.get();
   }
   else
   {
@@ -142,7 +138,10 @@ extern "C" void exceptionHandler(uint32 type)
 {
   assert(!currentThread || currentThread->isStackCanaryOK());
   debug(A_INTERRUPTS, "InterruptUtils::exceptionHandler: type = %x\n", type);
-  assert((currentThreadRegisters->cpsr & (0xE0)) == 0);
+
+  // TODO: should probably only check bits 6 and 7 ? (not 5)
+  // https://developer.arm.com/documentation/ddi0406/b/System-Level-Architecture/The-System-Level-Programmers--Model/ARM-processor-modes-and-core-registers/Program-Status-Registers--PSRs-
+  assert((currentThreadRegisters->spsr & (0xE0)) == 0 && "interrupt occurred while IRQ/FIQ masked");
   if (!currentThread)
   {
     Scheduler::instance()->schedule();
@@ -165,7 +164,7 @@ extern "C" void exceptionHandler(uint32 type)
     kprintfd("\nCPU Fault type = %x\n",type);
     ArchThreads::printThreadRegisters(currentThread,false);
     currentThread->switch_to_userspace_ = 0;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     currentThread->kill();
     for(;;);

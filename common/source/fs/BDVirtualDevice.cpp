@@ -1,11 +1,13 @@
-#include "ArchInterrupts.h"
+#include "BDVirtualDevice.h"
+
 #include "BDDriver.h"
 #include "BDRequest.h"
-#include "BDVirtualDevice.h"
-#include "kstring.h"
-#include "debug.h"
-#include "kprintf.h"
 #include "Thread.h"
+#include "kstring.h"
+
+#include "ArchInterrupts.h"
+
+#include "debug.h"
 
 BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_sectors, uint32 sector_size,
                                  const char *name, bool writable) :
@@ -13,8 +15,7 @@ BDVirtualDevice::BDVirtualDevice(BDDriver * driver, uint32 offset, uint32 num_se
     writable_(writable), driver_(driver), partition_type_(0), name_(name)
 {
 
-  debug(BD_VIRT_DEVICE, "ctor: offset = %d, num_sectors = %d,\n  sector_size = %d, "
-        "name = %s \n",
+  debug(BD_VIRT_DEVICE, "ctor: offset = %d, num_sectors = %d, sector_size = %d, name = %s\n",
         offset, num_sectors, sector_size, name);
   dev_number_ = 0;
 }
@@ -24,16 +25,16 @@ void BDVirtualDevice::addRequest(BDRequest * command)
   command->setResult(5);
   switch (command->getCmd())
   {
-    case BDRequest::BD_GET_BLK_SIZE:
+    case BDRequest::BD_CMD::BD_GET_BLK_SIZE:
       command->setResult(block_size_);
-      command->setStatus(BDRequest::BD_DONE);
+      command->setStatus(BDRequest::BD_RESULT::BD_DONE);
       break;
-    case BDRequest::BD_GET_NUM_BLOCKS:
+    case BDRequest::BD_CMD::BD_GET_NUM_BLOCKS:
       command->setResult(getNumBlocks());
-      command->setStatus(BDRequest::BD_DONE);
+      command->setStatus(BDRequest::BD_RESULT::BD_DONE);
       break;
-    case BDRequest::BD_READ:
-    case BDRequest::BD_WRITE:
+    case BDRequest::BD_CMD::BD_READ:
+    case BDRequest::BD_CMD::BD_WRITE:
       //start block and num blocks will be interpreted as start sector and num sectors
       command->setStartBlock(command->getStartBlock() * (block_size_ / sector_size_) + offset_);
       command->setNumBlocks(command->getNumBlocks() * (block_size_ / sector_size_));
@@ -42,60 +43,68 @@ void BDVirtualDevice::addRequest(BDRequest * command)
       command->setResult(driver_->addRequest(command));
       break;
   }
-  return;
 }
 
 
 int32 BDVirtualDevice::readData(uint32 offset, uint32 size, char *buffer)
 {
+  uint32 blocks2read = size / block_size_, jiffies = 0;
+  uint32 blockoffset = offset / block_size_;
+
+  debug(BD_VIRT_DEVICE, "readData, [%x, %x), size: %u, buffer: %p, #blocks: %u, blockoffset: %u\n", offset, offset + size, size, buffer, blocks2read, blockoffset);
   assert(buffer);
-  assert(offset % block_size_ == 0 && "we can only read multiples of block_size_ from the device");
+  assert(offset % block_size_ == 0 && "we can only read from the device in offsets of multiples of block_size_");
   assert(size % block_size_ == 0 && "we can only read multiples of block_size_ from the device");
 
   assert((offset + size <= getNumBlocks() * block_size_) && "tried reading out of range");
 
-  debug(BD_VIRT_DEVICE, "readData\n");
-  uint32 blocks2read = size / block_size_, jiffies = 0;
-  uint32 blockoffset = offset / block_size_;
-
-  debug(BD_VIRT_DEVICE, "blocks2read %d\n", blocks2read);
-  BDRequest bd(dev_number_, BDRequest::BD_READ, blockoffset, blocks2read, buffer);
+  BDRequest bd(dev_number_, BDRequest::BD_CMD::BD_READ, blockoffset, blocks2read, buffer);
   addRequest(&bd);
 
   if (driver_->irq != 0)
   {
-    bool interrupt_context = ArchInterrupts::disableInterrupts();
-    ArchInterrupts::enableInterrupts();
+    WithInterrupts intr(true);
 
-    while (bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT)
+    while (bd.getStatus() == BDRequest::BD_RESULT::BD_QUEUED && jiffies++ < IO_TIMEOUT)
       ArchInterrupts::yieldIfIFSet();
-
-    if (!interrupt_context)
-      ArchInterrupts::disableInterrupts();
   }
 
   assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
-  if (bd.getStatus() != BDRequest::BD_DONE)
+  if (bd.getStatus() != BDRequest::BD_RESULT::BD_DONE)
   {
+    debug(BD_VIRT_DEVICE, "readData failed for request %p id: %zu, status: %u, requesting thread: %p (%s)\n",
+        &bd, bd.request_id, (int)bd.getStatus(), bd.requesting_thread_, bd.requesting_thread_ ? bd.requesting_thread_->getName() : "(nil)");
     return -1;
   }
+
+  uint32_t chks = 0;
+  if (BD_VIRT_DEVICE & OUTPUT_ENABLED)
+    chks = checksum((uint32*)buffer, size);
+
+  debug(BD_VIRT_DEVICE, "readData finished for request %p id: %zu, requesting thread: %p (%s), checksum: %x\n",
+    &bd, bd.request_id, bd.requesting_thread_, bd.requesting_thread_ ? bd.requesting_thread_->getName() : "(nil)", chks);
   return size;
 }
 
 
-int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
+int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, const char *buffer)
 {
+  uint32 blocks2write = size / block_size_, jiffies = 0;
+  uint32 blockoffset = offset / block_size_;
+  uint32_t chks = 0;
+  if (BD_VIRT_DEVICE & OUTPUT_ENABLED)
+    chks = checksum((const uint32*)buffer, size);
+
+  debug(BD_VIRT_DEVICE, "writeData, [%x, %x), size: %u, buffer: %p, #blocks: %u, blockoffset: %u, checksum: %x\n",
+    offset, offset + size, size, buffer, blocks2write, blockoffset, chks);
+
   assert(offset % block_size_ == 0 && "we can only write multiples of block_size_ to the device");
   assert(size % block_size_ == 0 && "we can only write multiples of block_size_ to the device");
 
   assert((offset + size <= getNumBlocks() * block_size_) && "tried writing out of range");
 
-  debug(BD_VIRT_DEVICE, "writeData\n");
-  uint32 blocks2write = size / block_size_, jiffies = 0;
-  uint32 blockoffset = offset / block_size_;
-
-  BDRequest bd(dev_number_, BDRequest::BD_WRITE, blockoffset, blocks2write, buffer);
+  BDRequest bd(dev_number_, BDRequest::BD_CMD::BD_WRITE, blockoffset, blocks2write, const_cast<char*>(buffer));
   addRequest(&bd);
 
   if (driver_->irq != 0)
@@ -103,7 +112,7 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
     bool interrupt_context = ArchInterrupts::disableInterrupts();
     ArchInterrupts::enableInterrupts();
 
-    while (bd.getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT)
+    while (bd.getStatus() == BDRequest::BD_RESULT::BD_QUEUED && jiffies++ < IO_TIMEOUT)
       ArchInterrupts::yieldIfIFSet();
 
     if (!interrupt_context)
@@ -112,7 +121,7 @@ int32 BDVirtualDevice::writeData(uint32 offset, uint32 size, char *buffer)
 
   assert(Thread::currentThreadIsStackCanaryOK() && "Kernel stack corruption detected.");
 
-  if (bd.getStatus() != BDRequest::BD_DONE)
+  if (bd.getStatus() != BDRequest::BD_RESULT::BD_DONE)
     return -1;
   else
     return size;
@@ -124,7 +133,7 @@ void BDVirtualDevice::setPartitionType(uint8 part_type)
   partition_type_ = part_type;
 }
 
-uint8 BDVirtualDevice::getPartitionType(void) const
+uint8 BDVirtualDevice::getPartitionType() const
 {
   return partition_type_;
 }

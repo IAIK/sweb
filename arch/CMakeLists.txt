@@ -1,5 +1,6 @@
 
-include_directories(common/include
+target_include_directories(kernel PUBLIC
+    common/include
     ../common/include
     ../common/include/cache
     ../common/include/console
@@ -10,9 +11,7 @@ include_directories(common/include
     ../common/include/fs/unixfs
     ../common/include/kernel
     ../common/include/mm
-    ../common/include/ustl
     ../common/include/util
 )
 
 include(${ARCH}/CMakeLists.subfolders)
-

@@ -1,12 +1,15 @@
 #include "Condition.h"
-#include "Thread.h"
+
 #include "Mutex.h"
 #include "Scheduler.h"
-#include "assert.h"
-#include "kprintf.h"
-#include "debug.h"
 #include "Stabs2DebugInfo.h"
+#include "SystemState.h"
+#include "Thread.h"
 #include "backtrace.h"
+#include "kprintf.h"
+
+#include "assert.h"
+#include "debug.h"
 
 Condition::Condition(Mutex* mutex, const char* name) :
   Lock(name), mutex_(mutex)
@@ -32,7 +35,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   if(!called_by)
     called_by = getCalledBefore(1);
 //  debug(LOCK, "Condition::wait: Thread %s (%p) is waiting on condition %s (%p).\n",
-//        currentThread->getName(), currentThread, getName(), this);
+//        Scheduler::instance()->currentThread()->getName(), Scheduler::instance()->currentThread(), getName(), this);
 //  if(kernel_debug_info)
 //  {
 //    debug(LOCK, "The wait is called by: ");
@@ -64,7 +67,7 @@ void Condition::wait(bool re_acquire_mutex, pointer called_by)
   mutex_->release(called_by);
   sleepAndRelease();
   // Thread has been woken up again
-  currentThread->lock_waiting_on_ = 0;
+  currentThread->lock_waiting_on_ = nullptr;
 
   if(re_acquire_mutex)
   {
@@ -84,7 +87,7 @@ void Condition::signal(pointer called_by, bool broadcast)
     called_by = getCalledBefore(1);
   }
 //  debug(LOCK, "Condition::signal: Thread %s (%p) is signaling condition %s (%p).\n",
-//        currentThread->getName(), currentThread, getName(), this);
+//        currentThread()->getName(), currentThread(), getName(), this);
 //  debug(LOCK, "The signal is called by: ");
 //  kernel_debug_info->printCallInformation(called_by);
 

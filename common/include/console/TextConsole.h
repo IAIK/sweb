@@ -4,16 +4,16 @@
 
 class TextConsole : public Console
 {
-  public:
-    TextConsole ( uint32 num_terminals );
+public:
+    TextConsole(uint32 num_terminals);
+    ~TextConsole() override = default;
 
-  private:
-
+private:
     /**
      * Clears the console screen.
      * @pre console should be locked for drawing
      */
-    virtual void consoleClearScreen();
+    void consoleClearScreen() override;
 
     /**
      * Sets the given character to the given position on the console.
@@ -24,24 +24,26 @@ class TextConsole : public Console
      * @param state not implemented - should change the output color
      * @return 0
      */
-    virtual uint32 consoleSetCharacter ( uint32 const &row, uint32 const&column, uint8 const &character, uint8 const &state );
+    uint32 consoleSetCharacter(const uint32& row,
+                               const uint32& column,
+                               const uint8& character,
+                               const uint8& state) override;
 
     /**
      * Returns the console's number of rows.
      * @return the number of rows
      */
-    virtual uint32 consoleGetNumRows() const;
+    [[nodiscard]] uint32 consoleGetNumRows() const override;
 
     /**
      * Returns the console's number of Columns.
      * @return the number of columns
      */
-    virtual uint32 consoleGetNumColumns() const;
+    [[nodiscard]] uint32 consoleGetNumColumns() const override;
 
     /**
      * Scrolls up the console.
      * @pre console should be locked for drawing
      */
-    virtual void consoleScrollUp(uint8 const &state);
+    void consoleScrollUp(const uint8& state) override;
 };
-

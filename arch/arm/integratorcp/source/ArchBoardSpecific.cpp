@@ -1,15 +1,17 @@
 #include "ArchBoardSpecific.h"
 
-#include "KeyboardManager.h"
-#include "board_constants.h"
-#include "InterruptUtils.h"
-#include "ArchCommon.h"
-#include "assert.h"
-#include "offsets.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
 #include "FrameBufferConsole.h"
+#include "InterruptUtils.h"
+#include "KeyboardManager.h"
+#include "Scheduler.h"
+#include "board_constants.h"
 #include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+
+#include "assert.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE 8*1024*1024
 
@@ -18,7 +20,7 @@ pointer ArchBoardSpecific::getVESAConsoleLFBPtr()
   return ((PHYSICAL_MEMORY_AVAILABLE - ArchCommon::getVESAConsoleWidth() * ArchCommon::getVESAConsoleHeight() * ArchCommon::getVESAConsoleBitsPerPixel() / 8) & ~0xFFF);
 }
 
-uint32 ArchBoardSpecific::getUsableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
+uint32 ArchBoardSpecific::getUseableMemoryRegion(uint32 region __attribute__((unused)), pointer &start_address, pointer &end_address, uint32 &type)
 {
   start_address = 0;
   end_address = ArchCommon::getVESAConsoleLFBPtr(0);
@@ -34,14 +36,14 @@ void ArchBoardSpecific::frameBufferInit()
   // frame buffer initialization code from http://wiki.osdev.org/ARM_Integrator-CP_PL110_Dirty
   typedef struct _PL110MMIO
   {
-      uint32 volatile tim0; //0
-      uint32 volatile tim1; //4
-      uint32 volatile tim2; //8
-      uint32 volatile d; //c
-      uint32 volatile upbase; //10
-      uint32 volatile f; //14
-      uint32 volatile g; //18
-      uint32 volatile control; //1c
+      volatile uint32 tim0;    // 0
+      volatile uint32 tim1;    // 4
+      volatile uint32 tim2;    // 8
+      volatile uint32 d;       // c
+      volatile uint32 upbase;  // 10
+      volatile uint32 f;       // 14
+      volatile uint32 g;       // 18
+      volatile uint32 control; // 1c
   } PL110MMIO;
 
   PL110MMIO *plio;

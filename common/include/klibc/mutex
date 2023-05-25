@@ -1,0 +1,24 @@
+#pragma once
+
+#include "Mutex.h"
+
+// Forward std::mutex to standard sweb mutex. Required by EASTL.
+namespace std
+{
+    class mutex : public Mutex
+    {
+    public:
+        mutex() : Mutex("eastl::mutex") {}
+
+        void lock() { acquire(); }
+        void unlock() { release(); }
+        bool try_lock() { return acquireNonBlocking(); }
+
+    private:
+    };
+}
+
+namespace eastl
+{
+    using mutex = std::mutex;
+}

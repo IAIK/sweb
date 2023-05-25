@@ -1,58 +1,60 @@
 #include "Thread.h"
 
-#include "kprintf.h"
-#include "ArchThreads.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
-#include "Loader.h"
 #include "Console.h"
+#include "KernelMemoryManager.h"
+#include "Loader.h"
+#include "ProcessRegistry.h"
+#include "Scheduler.h"
+#include "Stabs2DebugInfo.h"
 #include "Terminal.h"
 #include "backtrace.h"
-#include "KernelMemoryManager.h"
-#include "Stabs2DebugInfo.h"
+#include "kprintf.h"
 
-#define BACKTRACE_MAX_FRAMES 20
+#include "ArchInterrupts.h"
+#include "ArchThreads.h"
 
+static constexpr size_t BACKTRACE_MAX_FRAMES = 20;
 
-
-const char* Thread::threadStatePrintable[3] =
+extern "C" [[noreturn]] void threadStartHack()
 {
-"Running", "Sleeping", "ToBeDestroyed"
-};
-
-extern "C" void threadStartHack()
-{
+  assert(currentThread);
   currentThread->setTerminal(main_console->getActiveTerminal());
   currentThread->Run();
   currentThread->kill();
-  debug(THREAD, "ThreadStartHack: Panic, thread couldn't be killed\n");
-  while(1);
+  debugAlways(THREAD, "ThreadStartHack: Panic, thread couldn't be killed\n");
+  assert(false);
 }
 
-Thread::Thread(FileSystemInfo *working_dir, ustl::string name, Thread::TYPE type) :
-    kernel_registers_(0), user_registers_(0), switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0), loader_(0),
-    next_thread_in_lock_waiters_list_(0), lock_waiting_on_(0), holding_lock_list_(0), state_(Running), tid_(0),
-    my_terminal_(0), working_dir_(working_dir), name_(ustl::move(name))
+Thread::Thread(FileSystemInfo* working_dir, eastl::string name, Thread::TYPE type) :
+    kernel_registers_(ArchThreads::createKernelRegisters(
+        (type == Thread::USER_THREAD ? nullptr : (void*)&threadStartHack),
+        getKernelStackStartPointer())),
+    switch_to_userspace_(type == Thread::USER_THREAD ? 1 : 0),
+    console_color(type == Thread::USER_THREAD ? CONSOLECOLOR::BRIGHT_BLUE : CONSOLECOLOR::BRIGHT_GREEN),
+    state_(Running),
+    tid_(0),
+    working_dir_(working_dir),
+    name_(eastl::move(name))
 {
-  debug(THREAD, "Thread ctor, this is %p, stack is %p, fs_info ptr: %p\n", this, kernel_stack_, working_dir_);
-  ArchThreads::createKernelRegisters(kernel_registers_, (void*) (type == Thread::USER_THREAD ? 0 : threadStartHack), getKernelStackStartPointer());
-  kernel_stack_[2047] = STACK_CANARY;
-  kernel_stack_[0] = STACK_CANARY;
+    debug(THREAD,
+          "Thread ctor, this is %p, name: %s, kernel stack: [%p, %p), working_dir ptr: "
+          "%p\n",
+          this, getName(), kernel_stack_, (char*)kernel_stack_ + sizeof(kernel_stack_),
+          working_dir_);
+
+    initKernelStackCanary();
 }
 
 Thread::~Thread()
 {
-  debug(THREAD, "~Thread: freeing ThreadInfos\n");
-  delete user_registers_;
-  user_registers_ = 0;
-  delete kernel_registers_;
-  kernel_registers_ = 0;
-  if(unlikely(holding_lock_list_ != 0))
+  debug(THREAD, "~Thread %s: freeing ThreadInfos\n", getName());
+  // registers automatically destroyed via unique_ptr
+
+  if(unlikely(holding_lock_list_ != nullptr))
   {
-    debug(THREAD, "~Thread: ERROR: Thread <%s (%p)> is going to be destroyed, but still holds some locks!\n",
-          getName(), this);
+    debugAlways(THREAD, "~Thread: ERROR: Thread <%s [%zu] (%p)> is going to be destroyed, but still holds some locks!\n", getName(), getTID(), this);
     Lock::printHoldingList(this);
-    assert(false);
+    assert(false && "~Thread: ERROR: Thread is going to be destroyed, but still holds some locks!\n");
   }
   debug(THREAD, "~Thread: done (%s)\n", name_.c_str());
 }
@@ -60,8 +62,7 @@ Thread::~Thread()
 // DO NOT use new / delete in this Method, as it is sometimes called from an Interrupt Handler with Interrupts disabled
 void Thread::kill()
 {
-  debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(),
-        currentThread, getName(), this);
+  debug(THREAD, "kill: Called by <%s (%p)>. Preparing Thread <%s (%p)> for destruction\n", currentThread->getName(), currentThread, getName(), this);
 
   setState(ToBeDestroyed); // vvv Code below this line may not be executed vvv
 
@@ -69,27 +70,46 @@ void Thread::kill()
   {
     ArchInterrupts::enableInterrupts();
     Scheduler::instance()->yield();
-    assert(false && "This should never happen, how are we still alive?");
+    assert(false && "Thread scheduled again after yield with state == ToBeDestroyed");
   }
 }
 
-void* Thread::getKernelStackStartPointer()
+void* Thread::getKernelStackStartPointer() const
 {
   pointer stack = (pointer) kernel_stack_;
-  stack += sizeof(kernel_stack_) - sizeof(uint32);
+  stack += sizeof(kernel_stack_) - 2*sizeof(size_t);
   return (void*)stack;
+}
+
+void Thread::initKernelStackCanary()
+{
+    kernel_stack_[2047] = STACK_CANARY;
+    kernel_stack_[0] = STACK_CANARY;
 }
 
 bool Thread::currentThreadIsStackCanaryOK()
 {
-  return !currentThread || currentThread->isStackCanaryOK();
+    if (!CpuLocalStorage::ClsInitialized())
+        return true;
+
+    return !currentThread || currentThread->isStackCanaryOK();
 }
-bool Thread::isStackCanaryOK()
+
+// Hack to allow the function to be called from the klibc
+// klibc is standalone and cannot include other SWEB code,
+// but function can be declared with external linkage.
+// We cannot use a class member function for that purpose
+extern "C" bool currentThreadIsStackCanaryOK()
+{
+    return Thread::currentThreadIsStackCanaryOK();
+}
+
+bool Thread::isStackCanaryOK() const
 {
   return kernel_stack_[0] == STACK_CANARY && kernel_stack_[2047] == STACK_CANARY;
 }
 
-Terminal *Thread::getTerminal()
+Terminal* Thread::getTerminal() const
 {
   return my_terminal_ ? my_terminal_ : main_console->getActiveTerminal();
 }
@@ -104,7 +124,7 @@ void Thread::printBacktrace()
   printBacktrace(currentThread != this);
 }
 
-FileSystemInfo* Thread::getWorkingDirInfo()
+FileSystemInfo* Thread::getWorkingDirInfo() const
 {
   return working_dir_;
 }
@@ -121,7 +141,7 @@ void Thread::setWorkingDirInfo(FileSystemInfo* working_dir)
   working_dir_ = working_dir;
 }
 
-extern Stabs2DebugInfo const *kernel_debug_info;
+extern const Stabs2DebugInfo* kernel_debug_info;
 
 void Thread::printBacktrace(bool use_stored_registers)
 {
@@ -138,7 +158,8 @@ void Thread::printBacktrace(bool use_stored_registers)
   {
     count = backtrace(call_stack, BACKTRACE_MAX_FRAMES, this, use_stored_registers);
 
-    debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
+    debug(BACKTRACE, "=== Begin of backtrace for %sthread <%s>[%zu] (%p) ===\n", user_registers_ ? "user" : "kernel", getName(), getTID(), this);
+    debug(BACKTRACE, " ----- Kernel -----------------------\n");
     for(size_t i = 0; i < count; ++i)
     {
         debug(BACKTRACE, " ");
@@ -147,21 +168,22 @@ void Thread::printBacktrace(bool use_stored_registers)
   }
   if(user_registers_)
   {
-    Stabs2DebugInfo const *deb = loader_->getDebugInfos();
-    count = backtrace_user(call_stack, BACKTRACE_MAX_FRAMES, this, 0);
-    debug(BACKTRACE, " ----- Userspace --------------------\n");
-    if(!deb)
-      debug(BACKTRACE, "Userspace debug info not set up, backtrace won't look nice!\n");
-    else
-    {
-      for(size_t i = 0; i < count; ++i)
+      const Stabs2DebugInfo* deb = loader_->getDebugInfos();
+      count = backtrace_user(call_stack, BACKTRACE_MAX_FRAMES, this, false);
+      debug(BACKTRACE, " ----- Userspace --------------------\n");
+      if (!deb)
+          debug(BACKTRACE,
+                "Userspace debug info not set up, backtrace won't look nice!\n");
+      else
       {
-        debug(BACKTRACE, " ");
-        deb->printCallInformation(call_stack[i]);
-      }
+          for (size_t i = 0; i < count; ++i)
+          {
+              debug(BACKTRACE, " ");
+              deb->printCallInformation(call_stack[i]);
+          }
     }
   }
-  debug(BACKTRACE, "=== End of backtrace for %sthread <%s> ===\n", user_registers_ ? "user" : "kernel", getName());
+  debug(BACKTRACE, "=== End of backtrace for %sthread <%s>[%zu] (%p) ===\n", user_registers_ ? "user" : "kernel", getName(), getTID(), this);
 }
 
 bool Thread::schedulable()
@@ -169,23 +191,55 @@ bool Thread::schedulable()
   return (getState() == Running);
 }
 
-const char *Thread::getName()
+bool Thread::canRunOnCpu(size_t cpu_id) const
 {
+    return (pinned_to_cpu == (size_t)-1) || (pinned_to_cpu == cpu_id);
+}
+
+bool Thread::isCurrentlyScheduled() const
+{
+  return currently_scheduled_on_cpu_ != (size_t)-1;
+}
+
+bool Thread::isCurrentlyScheduledOnCpu(size_t cpu_id) const
+{
+    return currently_scheduled_on_cpu_ == cpu_id;
+}
+
+void Thread::setSchedulingStartTimestamp(uint64 timestamp)
+{
+    sched_start = timestamp;
+}
+
+uint64 Thread::schedulingStartTimestamp() const
+{
+    return sched_start;
+}
+
+const char *Thread::getName() const
+{
+  if(!this)
+  {
+    return "(nil)";
+  }
+
   return name_.c_str();
 }
 
-size_t Thread::getTID()
+size_t Thread::getTID() const
 {
   return tid_;
 }
 
-ThreadState Thread::getState() const
+Thread::ThreadState Thread::getState() const
 {
+  assert(this);
   return state_;
 }
 
 void Thread::setState(ThreadState new_state)
 {
+  assert(this);
   assert(!((state_ == ToBeDestroyed) && (new_state != ToBeDestroyed)) && "Tried to change thread state when thread was already set to be destroyed");
   assert(!((new_state == Sleeping) && (currentThread != this)) && "Setting other threads to sleep is not thread-safe");
 

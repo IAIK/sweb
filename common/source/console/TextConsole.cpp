@@ -1,13 +1,15 @@
 #include "TextConsole.h"
-#include "Terminal.h"
-#include "ArchCommon.h"
-#include "panic.h"
-
-#include "Scheduler.h"
 
 #include "KeyboardManager.h"
+#include "Scheduler.h"
+#include "Terminal.h"
 #include "kprintf.h"
 #include "kstring.h"
+
+#include "ArchCommon.h"
+
+#include "assert.h"
+#include "debug.h"
 
 TextConsole::TextConsole(uint32 num_terminals) :
     Console(num_terminals, "TxTConsoleThread")
@@ -36,7 +38,9 @@ TextConsole::TextConsole(uint32 num_terminals) :
       cterm -= ((cterm / k) * k);
     }
 
+    debug(CONSOLE, "Creating Terminal\n");
     Terminal *term = new Terminal(term_name, this, consoleGetNumColumns(), consoleGetNumRows());
+    debug(CONSOLE, "Created Terminal at [%p, %p)\n", term, (char*)term + sizeof(*term));
     terminals_.push_back(term);
   }
 
@@ -63,25 +67,33 @@ void TextConsole::consoleClearScreen()
   }
 }
 
-uint32 TextConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
-                                        uint8 const &state)
+uint32 TextConsole::consoleSetCharacter(const uint32& row,
+                                        const uint32& column,
+                                        const uint8& character,
+                                        const uint8& state)
 {
   char *fb = (char*) ArchCommon::getFBPtr();
-  fb[(column + row * consoleGetNumColumns()) * 2] = character;
-  fb[(column + row * consoleGetNumColumns()) * 2 + 1] = state;
+  uint32_t console_columns = consoleGetNumColumns();
+  uint32_t console_rows = consoleGetNumRows();
+  assert(column < console_columns);
+  assert(row < console_rows);
+  fb[(column + row * console_columns) * 2] = character;
+  fb[(column + row * console_columns) * 2 + 1] = state;
 
   return 0;
 }
 
 
-#define STAT_ROWS (1)
+#define STAT_ROWS (2)
 
-void TextConsole::consoleScrollUp(uint8 const &state)
+void TextConsole::consoleScrollUp(const uint8& state)
 {
   char* fb = (char*) ArchCommon::getFBPtr();
-  memmove((void*) (fb + (consoleGetNumColumns() * 2 * STAT_ROWS)),
-          (void*) (fb + (consoleGetNumColumns() * 2 * (STAT_ROWS + 1))),
-          (consoleGetNumRows() - 1 + STAT_ROWS) * consoleGetNumColumns() * 2);
+  char* dst = (char*) (fb + (consoleGetNumColumns() * 2 * STAT_ROWS));
+  char* src = (char*) (fb + (consoleGetNumColumns() * 2 * (STAT_ROWS + 1)));
+  size_t size = (consoleGetNumRows() - STAT_ROWS - 1) * consoleGetNumColumns() * 2;
+  memmove(dst, src, size);
+
   for(size_t i = 0; i < consoleGetNumColumns(); i++)
   {
     fb[(i + (consoleGetNumRows() - 1) * consoleGetNumColumns()) * 2] = ' ';

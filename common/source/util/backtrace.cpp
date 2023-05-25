@@ -1,5 +1,6 @@
 #include "backtrace.h"
 #include "Thread.h"
+#include "Scheduler.h"
 
 pointer getCalledBefore(size_t offset)
 {

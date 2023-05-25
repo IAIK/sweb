@@ -3,9 +3,15 @@ INCLUDE(CMakeForceCompiler)
 
 # this one is important
 SET(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
 SET(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # which compilers to use for C and C++
+
+# Bare metal aarch-none-elf toolchains are available for download at
+# https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
+# e.g. if you have a x86_64 host system running linux, use the tools in the 'x86_64 Linux hosted' category
+# x86_64 Linux hosted cross toolchains -> AArch64 bare-metal target (aarch64-none-elf)
 
 find_program(CMAKE_ASM_COMPILER aarch64-linux-gnu-gcc)
 find_program(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
@@ -15,7 +21,15 @@ find_program(LD_EXECUTABLE aarch64-linux-gnu-gcc)
 find_program(LD_EXECUTABLE_PURE aarch64-linux-gnu-ld)
 find_program(OBJCOPY_EXECUTABLE aarch64-linux-gnu-objcopy)
 
-if(${CMAKE_VERSION} VERSION_LESS "3.6.0") 
-    CMAKE_FORCE_CXX_COMPILER(${CMAKE_CXX_COMPILER} STATIC_LIBRARY)	
+if(${CMAKE_VERSION} VERSION_LESS "3.6.0")
+    CMAKE_FORCE_CXX_COMPILER(${CMAKE_CXX_COMPILER} STATIC_LIBRARY)
     CMAKE_FORCE_C_COMPILER(${CMAKE_C_COMPILER} STATIC_LIBRARY)
+endif()
+
+if(${CMAKE_C_COMPILER} STREQUAL "CMAKE_C_COMPILER-NOTFOUND")
+    message(SEND_ERROR "No suitable C compiler found!")
+endif()
+
+if(${CMAKE_CXX_COMPILER} STREQUAL "CMAKE_CXX_COMPILER-NOTFOUND")
+    message(SEND_ERROR "No suitable C++ compiler found!")
 endif()

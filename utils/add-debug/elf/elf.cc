@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "elf++.hh"
 
 #include <cstring>
@@ -19,7 +23,8 @@ void canon_hdr(Hdr<Elf64, byte_order::native> *out, const void *data,
                 case elfdata::msb:
                         out->from(*(Hdr<Elf32, byte_order::msb>*)data);
                         break;
-                } // fallthrough
+                }
+                break;
         case elfclass::_64:
                 switch (ei_data) {
                 case elfdata::lsb:
@@ -28,7 +33,7 @@ void canon_hdr(Hdr<Elf64, byte_order::native> *out, const void *data,
                 case elfdata::msb:
                         out->from(*(Hdr<Elf64, byte_order::msb>*)data);
                         return;
-                } // fallthrough
+                }
         }
 }
 
@@ -44,9 +49,10 @@ struct elf::impl
         const shared_ptr<loader> l;
         Ehdr<> hdr;
         vector<section> sections;
-        //vector<segment> segments;
+        vector<segment> segments;
 
         section invalid_section;
+        segment invalid_segment;
 };
 
 elf::elf(const std::shared_ptr<loader> &l)
@@ -86,6 +92,14 @@ elf::elf(const std::shared_ptr<loader> &l)
         if (m->hdr.shnum && m->hdr.shstrndx >= m->hdr.shnum)
                 throw format_error("bad section name string table index");
 
+        // Load segments
+        const void *seg_data = l->load(m->hdr.phoff,
+                                       m->hdr.phentsize * m->hdr.phnum);
+        for (unsigned i = 0; i < m->hdr.phnum; i++) {
+                const void *seg = ((const char*)seg_data) + i * m->hdr.phentsize;
+                m->segments.push_back(segment(*this, seg));
+        }
+
         // Load sections
         const void *sec_data = l->load(m->hdr.shoff,
                                        m->hdr.shentsize * m->hdr.shnum);
@@ -116,6 +130,12 @@ elf::sections() const
         return m->sections;
 }
 
+const std::vector<segment> &
+elf::segments() const
+{
+        return m->segments;
+}
+
 const section &
 elf::get_section(const std::string &name) const
 {
@@ -131,6 +151,55 @@ elf::get_section(unsigned index) const
         if (index >= sections().size())
                 return m->invalid_section;
         return sections().at(index);
+}
+
+const segment&
+elf::get_segment(unsigned index) const
+{
+        if (index >= segments().size())
+                return m->invalid_segment;
+        return segments().at(index);
+}
+
+//////////////////////////////////////////////////////////////////
+// class segment
+//
+
+struct segment::impl {
+        impl(const elf &f)
+                : f(f), data(nullptr) { }
+
+        const elf f;
+        Phdr<> hdr;
+        const void *data;
+};
+
+segment::segment(const elf &f, const void *hdr)
+    : m(make_shared<impl>(f)) {
+        canon_hdr(&m->hdr, hdr, f.get_hdr().ei_class, f.get_hdr().ei_data);
+}
+
+const Phdr<> &
+segment::get_hdr() const {
+        return m->hdr;
+}
+
+const void *
+segment::data() const {
+        if (!m->data)
+                m->data = m->f.get_loader()->load(m->hdr.offset,
+                                                  m->hdr.filesz);
+        return m->data;
+}
+
+size_t
+segment::file_size() const {
+        return m->hdr.filesz;
+}
+
+size_t
+segment::mem_size() const {
+        return m->hdr.memsz;
 }
 
 //////////////////////////////////////////////////////////////////

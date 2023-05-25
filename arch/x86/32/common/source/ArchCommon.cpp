@@ -1,16 +1,37 @@
-#include <util/SWEBDebugInfo.h>
 #include "ArchCommon.h"
+
+#include "FrameBufferConsole.h"
+#include "IDEDriver.h"
+#include "KernelMemoryManager.h"
+#include "PageManager.h"
+#include "PlatformBus.h"
+#include "ProgrammableIntervalTimer.h"
+#include "SMP.h"
+#include "Scheduler.h"
+#include "SerialManager.h"
+#include "Stabs2DebugInfo.h"
+#include "TextConsole.h"
+#include "backtrace.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include "kstring.h"
 #include "multiboot.h"
 #include "offsets.h"
-#include "kprintf.h"
-#include "ArchMemory.h"
-#include "TextConsole.h"
-#include "FrameBufferConsole.h"
-#include "backtrace.h"
-#include "Stabs2DebugInfo.h"
 #include "ports.h"
-#include "PageManager.h"
+#include <util/SWEBDebugInfo.h>
 
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
+
+#if (A_BOOT == A_BOOT | OUTPUT_ENABLED)
+#define PRINT(X) writeLine2Bochs((const char*)VIRTUAL_TO_PHYSICAL_BOOT(X))
+#else
+#define PRINT(X)
+#endif
+
+RangeAllocator<> mmio_addr_allocator;
+
+extern void* kernel_start_address;
 extern void* kernel_end_address;
 
 multiboot_info_t* multi_boot_structure_pointer = (multiboot_info_t*)0xDEADDEAD; // must not be in bss segment
@@ -24,9 +45,31 @@ extern "C" void parseMultibootHeader()
 
   struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
 
+  PRINT("Bootloader: ");
+  writeLine2Bochs((char*)(pointer)(mb_infos->boot_loader_name));
+  PRINT("\n");
+
+  if (mb_infos && mb_infos->f_cmdline)
+  {
+    const char* cmdline = (char*)(uintptr_t)mb_infos->cmdline;
+    size_t len = strlen(cmdline);
+    if (len+1 <= sizeof(orig_mbr.cmdline))
+    {
+        memcpy(orig_mbr.cmdline, cmdline, len+1);
+    }
+  }
+
+  if (mb_infos && mb_infos->f_fb)
+  {
+    orig_mbr.have_framebuffer = true;
+    orig_mbr.framebuffer = mb_infos->framebuffer;
+  }
+
   if (mb_infos && mb_infos->f_vbe)
   {
-    struct vbe_mode* mode_info = (struct vbe_mode*)mb_infos->vbe_mode_info;
+    orig_mbr.have_vbe = true;
+    orig_mbr.vbe = mb_infos->vbe;
+    struct vbe_mode* mode_info = (struct vbe_mode*)mb_infos->vbe.vbe_mode_info;
     orig_mbr.have_vesa_console = 1;
     orig_mbr.vesa_lfb_pointer = mode_info->phys_base;
     orig_mbr.vesa_x_res = mode_info->x_resolution;
@@ -43,6 +86,9 @@ extern "C" void parseMultibootHeader()
       orig_mbr.module_maps[i].start_address = mods[i].mod_start;
       orig_mbr.module_maps[i].end_address = mods[i].mod_end;
       strncpy((char*)(uint32)orig_mbr.module_maps[i].name, (const char*)(uint32)mods[i].string, 256);
+      PRINT("Module: ");
+      writeLine2Bochs((char*)mods[i].string);
+      PRINT("\n");
     }
     orig_mbr.num_module_maps = mb_infos->mods_count;
   }
@@ -68,6 +114,17 @@ extern "C" void parseMultibootHeader()
       ++i;
     }
   }
+
+  if (mb_infos && mb_infos->f_elf_shdr)
+  {
+    orig_mbr.have_elf_sec_hdr = true;
+    orig_mbr.elf_sec = mb_infos->elf_sec;
+  }
+}
+
+pointer ArchCommon::getKernelStartAddress()
+{
+   return (pointer)&kernel_start_address;
 }
 
 pointer ArchCommon::getKernelEndAddress()
@@ -77,7 +134,10 @@ pointer ArchCommon::getKernelEndAddress()
 
 pointer ArchCommon::getFreeKernelMemoryStart()
 {
-   return (pointer)&kernel_end_address;
+   pointer free_kernel_memory_start = (pointer)&kernel_end_address;
+   for (size_t i = 0; i < getNumModules(); ++i)
+           free_kernel_memory_start = Max(getModuleEndAddress(i), free_kernel_memory_start);
+   return ((free_kernel_memory_start - 1) | 0xFFF) + 1;
 }
 
 pointer ArchCommon::getFreeKernelMemoryEnd()
@@ -109,14 +169,25 @@ uint32 ArchCommon::getNumModules(uint32 is_paging_set_up)
 
 }
 
-uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+const char* ArchCommon::getModuleName(size_t num, size_t is_paging_set_up)
 {
   if (is_paging_set_up)
-    return mbr.module_maps[num].start_address + 3*1024*1024*1024U;
+    return (char*)((size_t)mbr.module_maps[num].name);
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
-    return orig_mbr.module_maps[num].start_address ;
+    return (char*)orig_mbr.module_maps[num].name;
+  }
+}
+
+uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
+{
+  if (is_paging_set_up)
+    return mbr.module_maps[num].start_address + PHYSICAL_TO_VIRTUAL_OFFSET;
+  else
+  {
+    struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
+    return orig_mbr.module_maps[num].start_address;
   }
 
 }
@@ -124,7 +195,7 @@ uint32 ArchCommon::getModuleStartAddress(uint32 num, uint32 is_paging_set_up)
 uint32 ArchCommon::getModuleEndAddress(uint32 num, uint32 is_paging_set_up)
 {
   if (is_paging_set_up)
-    return mbr.module_maps[num].end_address + 3*1024*1024*1024U;
+    return mbr.module_maps[num].end_address + PHYSICAL_TO_VIRTUAL_OFFSET;
   else
   {
     struct multiboot_remainder &orig_mbr = (struct multiboot_remainder &)(*((struct multiboot_remainder*)VIRTUAL_TO_PHYSICAL_BOOT((pointer)&mbr)));
@@ -162,6 +233,26 @@ pointer ArchCommon::getFBPtr(uint32 is_paging_set_up)
     return 0x000B8000;
 }
 
+size_t ArchCommon::getFBWidth()
+{
+    return 80;
+}
+
+size_t ArchCommon::getFBHeight()
+{
+    return 25;
+}
+
+size_t ArchCommon::getFBBitsPerCharacter()
+{
+    return 16;
+}
+
+size_t ArchCommon::getFBSize()
+{
+    return getFBWidth() * getFBHeight() * getFBBitsPerCharacter()/8;
+}
+
 uint32 ArchCommon::getVESAConsoleBitsPerPixel()
 {
   return mbr.vesa_bits_per_pixel;
@@ -178,7 +269,7 @@ uint32 ArchCommon::getNumUseableMemoryRegions()
   return i;
 }
 
-uint32 ArchCommon::getUsableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
+uint32 ArchCommon::getUseableMemoryRegion(uint32 region, pointer &start_address, pointer &end_address, uint32 &type)
 {
   if (region >= MAX_MEMORY_MAPS)
     return 1;
@@ -201,57 +292,144 @@ Console* ArchCommon::createConsole(uint32 count)
     return new TextConsole(count);
 }
 
-Stabs2DebugInfo const *kernel_debug_info = 0;
+const Stabs2DebugInfo* kernel_debug_info = 0;
 
 void ArchCommon::initDebug()
 {
-  extern unsigned char stab_start_address_nr;
-  extern unsigned char stab_end_address_nr;
-
-  extern unsigned char stabstr_start_address_nr;
-
-  kernel_debug_info = new Stabs2DebugInfo((char const *)&stab_start_address_nr,
-                                          (char const *)&stab_end_address_nr,
-                                          (char const *)&stabstr_start_address_nr);
+    debug(A_COMMON, "initDebug\n");
+    for (size_t i = 0; i < getNumModules(); ++i)
+    {
+        debug(A_COMMON, "Checking module from [%zx -> %zx)\n", getModuleStartAddress(i), getModuleEndAddress(i));
+        if ((getModuleStartAddress(i) < getModuleEndAddress(i)) &&
+            (memcmp("SWEBDBG1", (const char*)getModuleStartAddress(i), 8) == 0))
+        {
+            debug(A_COMMON, "Found SWEBDBG\n");
+            kernel_debug_info = new SWEBDebugInfo((const char*)getModuleStartAddress(i),
+                                                  (const char*)getModuleEndAddress(i));
+        }
+    }
+    if (!kernel_debug_info)
+    {
+        kernel_debug_info = new SWEBDebugInfo(0, 0);
+    }
+    debug(A_COMMON, "initDebug done\n");
 }
 
 void ArchCommon::idle()
 {
+  halt();
+}
+
+void ArchCommon::halt()
+{
   asm volatile("hlt");
 }
 
+uint64 ArchCommon::cpuTimestamp()
+{
+    uint64 timestamp;
+    asm volatile("rdtsc\n"
+                 :"=A"(timestamp));
+    return timestamp;
+}
+
 #define STATS_OFFSET 22
-#define FREE_PAGES_OFFSET STATS_OFFSET + 11*2
 
 void ArchCommon::drawStat() {
-  const char* text  = "Free pages      F9 MemInfo   F10 Locks   F11 Stacktrace   F12 Threads";
-  const char* color = "xxxxxxxxxx      xx           xxx         xxx              xxx        ";
+    const char* text  = "Free pages      F9 MemInfo   F10 Locks   F11 Stacktrace   F12 Threads";
+    const char* color = "xxxxxxxxxx      xx           xxx         xxx              xxx        ";
 
-  char* fb = (char*)getFBPtr();
-  size_t i = 0;
-  while(text[i]) {
-    fb[i * 2 + STATS_OFFSET] = text[i];
-    fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? 0x80 : 0x08);
-    i++;
-  }
+    char* fb = (char*)getFBPtr();
+    size_t i = 0;
+    while(text[i]) {
+        fb[i * 2 + STATS_OFFSET] = text[i];
+        fb[i * 2 + STATS_OFFSET + 1] = (char)(color[i] == 'x' ? ((CONSOLECOLOR::BLACK) | (CONSOLECOLOR::DARK_GREY << 4)) :
+                                                                ((CONSOLECOLOR::DARK_GREY) | (CONSOLECOLOR::BLACK << 4)));
+        i++;
+    }
 
-  char itoa_buffer[33];
-  memset(itoa_buffer, '\0', sizeof(itoa_buffer));
-  itoa(PageManager::instance()->getNumFreePages(), itoa_buffer, 10);
+    char itoa_buffer[33];
 
-  for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
-  {
-    fb[i * 2 + FREE_PAGES_OFFSET] = itoa_buffer[i];
-  }
+#define STATS_FREE_PAGES_START (STATS_OFFSET + 11*2)
+    memset(fb + STATS_FREE_PAGES_START, 0, 4*2);
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(PageManager::instance().getNumFreePages(), itoa_buffer, 10);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+      fb[STATS_FREE_PAGES_START + i * 2] = itoa_buffer[i];
+      fb[STATS_FREE_PAGES_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
+    }
+
+#define STATS_NUM_THREADS_START (80*2 + 73*2)
+    memset(fb + STATS_NUM_THREADS_START, 0, 4*2);
+    memset(itoa_buffer, '\0', sizeof(itoa_buffer));
+    itoa(Scheduler::instance()->num_threads, itoa_buffer, 10);
+    for(size_t i = 0; (i < sizeof(itoa_buffer)) && (itoa_buffer[i] != '\0'); ++i)
+    {
+            fb[STATS_NUM_THREADS_START + i * 2] = itoa_buffer[i];
+            fb[STATS_NUM_THREADS_START + i * 2 + 1] = ((CONSOLECOLOR::WHITE) | (CONSOLECOLOR::BLACK << 4));
+    }
 }
+
+cpu_local size_t heart_beat_value = 0;
 
 void ArchCommon::drawHeartBeat()
 {
-  const char* clock = "/-\\|";
-  static uint32 heart_beat_value = 0;
-  char* fb = (char*)getFBPtr();
-  fb[0] = clock[heart_beat_value++ % 4];
-  fb[1] = 0x9f;
-
   drawStat();
+
+  const char* clock = "/-\\|";
+  char* fb = (char*)getFBPtr();
+  size_t cpu_id = SMP::currentCpuId();
+  fb[cpu_id*2] = clock[heart_beat_value++ % 4];
+  fb[cpu_id*2 + 1] = 0x9f;
+}
+
+
+
+
+void ArchCommon::postBootInit()
+{
+        initACPI();
+}
+
+
+[[noreturn]] void ArchCommon::callWithStack(char* stack, void (*func)())
+{
+        asm volatile("movl %[stack], %%esp\n"
+                     "calll *%[func]\n"
+                     ::[stack]"r"(stack),
+                      [func]"r"(func));
+        assert(false);
+}
+
+
+void ArchCommon::spinlockPause()
+{
+    asm volatile("pause\n");
+}
+
+void ArchCommon::reservePagesPreKernelInit(Allocator &alloc)
+{
+    ArchMulticore::reservePages(alloc);
+}
+
+void ArchCommon::initKernelVirtualAddressAllocator()
+{
+    mmio_addr_allocator.setUseable(KERNEL_START, (size_t)-1);
+    mmio_addr_allocator.setUnuseable(getKernelStartAddress(), getKernelEndAddress());
+    mmio_addr_allocator.setUnuseable(KernelMemoryManager::instance()->getKernelHeapStart(), KernelMemoryManager::instance()->getKernelHeapMaxEnd());
+    mmio_addr_allocator.setUnuseable(IDENT_MAPPING_START, IDENT_MAPPING_END);
+    debug(MAIN, "Usable MMIO ranges:\n");
+    mmio_addr_allocator.printUsageInfo();
+}
+
+void ArchCommon::initBlockDeviceDrivers()
+{
+    PlatformBus::instance().registerDriver(IDEControllerDriver::instance());
+}
+
+void ArchCommon::initPlatformDrivers()
+{
+    PlatformBus::instance().registerDriver(PITDriver::instance());
+    PlatformBus::instance().registerDriver(SerialManager::instance());
 }

@@ -1,17 +1,19 @@
 #include "ArchBoardSpecific.h"
 
-#include "KeyboardManager.h"
-#include "board_constants.h"
-#include "InterruptUtils.h"
-#include "ArchCommon.h"
-#include "assert.h"
-#include "offsets.h"
-#include "ArchInterrupts.h"
-#include "Scheduler.h"
 #include "FrameBufferConsole.h"
+#include "InterruptUtils.h"
+#include "KeyboardManager.h"
+#include "Scheduler.h"
+#include "board_constants.h"
 #include "kprintf.h"
+#include "offsets.h"
 #include "paging-definitions.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
 #include "ArchMemory.h"
+
+#include "assert.h"
 
 #define PHYSICAL_MEMORY_AVAILABLE (PAGE_ENTRIES * PAGE_SIZE * 4)
 
@@ -163,7 +165,7 @@ void ArchBoardSpecific::disableKBD()
 
 void ArchBoardSpecific::keyboard_irq_handler()
 {
-  KeyboardManager::instance()->serviceIRQ();
+  KeyboardManager::instance().serviceIRQ();
 }
 
 void resetTimer()

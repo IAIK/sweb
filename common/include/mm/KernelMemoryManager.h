@@ -1,7 +1,11 @@
 #pragma once
 
-#include "new.h"
+#include "Mutex.h"
 #include "SpinLock.h"
+#include "new.h"
+
+#include <cstddef>
+
 #include "assert.h"
 
 class MallocSegment
@@ -22,13 +26,12 @@ class MallocSegment
       freed_at_(0),
       alloc_at_(0)
     {
-      size_flag_ = (size & 0x7FFFFFFF); //size to max 2^31-1
-      if (used)
-        size_flag_ |= 0x80000000; //this is the used flag
-
+      assert(size <= 0x7FFFFFFF);
+      setSize(size);
+      setUsed(used);
     }
 
-    size_t getSize()
+    [[nodiscard]] size_t getSize() const
     {
       return (size_flag_ & 0x7FFFFFFF);
     }
@@ -39,7 +42,7 @@ class MallocSegment
       size_flag_ |= (size & 0x7FFFFFFF);
     }
 
-    bool getUsed()
+    [[nodiscard]] bool getUsed() const
     {
       return (size_flag_ & 0x80000000);
     }
@@ -51,7 +54,8 @@ class MallocSegment
         size_flag_ |= 0x80000000; //this is the used flag
     }
 
-    bool markerOk()
+    bool checkCanary();
+    [[nodiscard]] bool markerOk() const
     {
       return marker_ == (0xdeadbeef00000000ull | (uint32) (size_t) this);
     }
@@ -68,12 +72,16 @@ class MallocSegment
     size_t size_flag_; // = 0; //max size is 2^31-1
 };
 
-extern void* kernel_end_address;
-
 class KernelMemoryManager
 {
   public:
+    KernelMemoryManager() = delete;
+    KernelMemoryManager(const KernelMemoryManager&) = delete;
+    KernelMemoryManager& operator=(const KernelMemoryManager&) = delete;
+
     static KernelMemoryManager *instance();
+
+    static bool isReady();
 
     /**
      * allocateMemory is called by new
@@ -103,16 +111,13 @@ class KernelMemoryManager
      */
     pointer reallocateMemory(pointer virtual_address, size_t new_size, pointer called_by);
 
-    SpinLock& getKMMLock();
+    Mutex& getKMMLock();
 
-    Thread* KMMLockHeldBy();
+    [[nodiscard]] Thread* KMMLockHeldBy() const;
 
-    KernelMemoryManager() : lock_("")
-    {
-      assert(false && "dummy constructor - do not use!");
-    };
-
-    pointer getKernelBreak() const;
+    [[nodiscard]] pointer getKernelBreak() const;
+    [[nodiscard]] pointer getKernelHeapStart() const;
+    [[nodiscard]] pointer getKernelHeapMaxEnd() const;
     size_t getUsedKernelMemory(bool show_allocs);
     void startTracing();
     void stopTracing();
@@ -122,9 +127,11 @@ class KernelMemoryManager
 
     KernelMemoryManager(size_t min_heap_pages, size_t max_heap_pages);
 
-    static size_t pm_ready_;
+    static bool kmm_ready_;
 
     static KernelMemoryManager *instance_;
+
+    static void init();
 
   private:
     MallocSegment *findFreeSegment(size_t requested_size);
@@ -137,20 +144,24 @@ class KernelMemoryManager
      */
     void fillSegment(MallocSegment *this_one, size_t size, uint32 zero_check = 1);
 
-    void freeSegment(MallocSegment *this_one);
-    MallocSegment *getSegmentFromAddress(pointer virtual_address);
-    bool mergeWithFollowingFreeSegment(MallocSegment *this_one);
+    void freeSegment(MallocSegment *this_one, pointer called_by);
+    [[nodiscard]] MallocSegment *getSegmentFromAddress(pointer virtual_address) const;
+
+    MallocSegment* mergeSegments(MallocSegment* s1, MallocSegment* s2);
 
     /**
-     * This really implements the allocateMemory behaviour, but 
+     * This really implements the allocateMemory behaviour, but
      * does not lock the KMM, so we can also use it within the
      * reallocate method
      */
     inline pointer private_AllocateMemory(size_t requested_size, pointer called_by);
 
+    static size_t calcNumHeapPages();
+    static size_t mapKernelHeap(size_t max_heap_pages);
 
 
-        pointer ksbrk(ssize_t size);
+
+    pointer ksbrk(ssize_t size);
 
     MallocSegment* first_; //first_ must _never_ be NULL
     MallocSegment* last_;
@@ -163,9 +174,8 @@ class KernelMemoryManager
     void lockKMM();
     void unlockKMM();
 
-    SpinLock lock_;
+    Mutex lock_;
 
     uint32 segments_used_;
     uint32 segments_free_;
-    size_t approx_memory_free_;
 };

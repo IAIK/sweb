@@ -1,99 +1,120 @@
 #include "ATADriver.h"
 
+#include "ATACommands.h"
 #include "BDManager.h"
 #include "BDRequest.h"
-#include "ArchInterrupts.h"
-#include "8259.h"
-
+#include "IDEDriver.h"
+#include "MasterBootRecord.h"
 #include "Scheduler.h"
-#include "kprintf.h"
-
 #include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+#include "kstring.h"
+
+#include "ArchInterrupts.h"
+
+#include "debug.h"
 
 #define TIMEOUT_WARNING() do { kprintfd("%s:%d: timeout. THIS MIGHT CAUSE SERIOUS TROUBLE!\n", __PRETTY_FUNCTION__, __LINE__); } while (0)
 
-#define TIMEOUT_CHECK(CONDITION,BODY) jiffies = 0;\
-                                       while((CONDITION) && jiffies++ < IO_TIMEOUT)\
-                                         ArchInterrupts::yieldIfIFSet();\
-                                       if(jiffies >= IO_TIMEOUT)\
-                                       {\
-                                         BODY;\
-                                       }
+#define TIMEOUT_CHECK(CONDITION, BODY)            \
+    jiffies = 0;                                  \
+    while ((CONDITION) && jiffies++ < IO_TIMEOUT) \
+        ArchInterrupts::yieldIfIFSet();           \
+    if (jiffies >= IO_TIMEOUT)                    \
+    {                                             \
+        BODY;                                     \
+    }
 
-ATADriver::ATADriver( uint16 baseport, uint16 getdrive, uint16 irqnum ) : lock_("ATADriver::lock_")
+ATADrive::ATADrive(IDEControllerChannel& ide_controller, uint16 drive_num) :
+    BDDriver(ide_controller.isaIrqNumber()),
+    Device(eastl::string("ATA disk ") + eastl::to_string(drive_num)),
+    controller(ide_controller),
+    drive_num(drive_num),
+    irq_domain(eastl::string("ATA disk ") + eastl::to_string(drive_num)),
+    lock_("ATADriver::lock_")
 {
-  debug(ATA_DRIVER, "ctor: Entered with irgnum %d and baseport %d!!\n", irqnum, baseport);
+    // Disable irq to ensure this part of the interrupt tree won't be used while we map a new interrupt
+    ArchInterrupts::disableIRQ(controller.irq());
+    irq_domain.irq()
+        .mapTo(controller)
+        .useHandler([this]() { serviceIRQ(); });
 
-  jiffies = 0;
-  port = baseport;
-  drive= (getdrive == 0 ? 0xA0 : 0xB0);
+    controller.selectDrive(drive_num);
 
-  debug(ATA_DRIVER, "ctor: Requesting disk geometry !!\n");
+    IDEControllerChannel::ControlRegister::DeviceControl dc{};
+    dc.interrupt_disable = 0;
+    controller.control_regs[IDEControllerChannel::ControlRegister::DEVICE_CONTROL].write(dc);
 
-  outportbp (port + 6, drive);  // Get first drive
-  outportbp (port + 7, 0xEC);   // Get drive info data
-  TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return;);
+    controller.io_regs[IDEControllerChannel::IoRegister::COMMAND].write(
+        ATACommand::PIO::IDENTIFY_DEVICE);
+    controller.waitDataReady();
+    eastl::array<uint16_t, 256> identify{};
+    pioReadData(identify);
 
-  uint16 dd[256];
+    if (ATA_DRIVER & OUTPUT_ADVANCED)
+        printIdentifyInfo(identify);
 
-  for (uint32 dd_off = 0; dd_off != 256; dd_off++) // Read "sector" 512 b
-    dd [dd_off] = inportw ( port );
+    lba = identify[49] & (1 << 9);
+    numsec = *(uint32_t*)&identify[60];
 
-  debug(ATA_DRIVER, "max. original PIO support: %x, PIO3 support: %x, PIO4 support: %x\n", (dd[51] >> 8), (dd[64] & 0x1) != 0, (dd[64] & 0x2) != 0);
+    HPC = identify[3];
+    SPT = identify[6];
+    uint32 CYLS = identify[1];
 
-  debug(ATA_DRIVER, "ctor: Disk geometry read !!\n");
+    if (!numsec)
+        numsec = CYLS * HPC * SPT;
 
-  HPC = dd[3];
-  SPT = dd[6];
-  uint32 CYLS = dd[1];
-  numsec = CYLS * HPC * SPT;
+    uint32_t logical_sector_size = *(uint32_t*)&identify[117];
+    sector_word_size = logical_sector_size ? logical_sector_size : 256;
 
-  bool interrupt_context = ArchInterrupts::disableInterrupts();
-  ArchInterrupts::enableInterrupts();
+    debug(ATA_DRIVER, "Using LBA: %u, # sectors: %u, sector size: %zu\n", lba, numsec,
+          sector_word_size * sizeof(uint16_t));
 
-  enableIRQ( irqnum );
-  if( irqnum > 8 )
+    // Clear pending interrupts by reading status register
+    [[maybe_unused]] auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
+
+    debug(ATA_DRIVER, "Enabling interrupts for ATA IRQ check\n");
+    ArchInterrupts::enableIRQ(irq_domain.irq());
+
+    testIRQ();
+
+    debug(ATA_DRIVER, "ctor: Using ATA mode: %d !!\n", (int)mode);
+    debug(ATA_DRIVER, "ctor: Drive created !!\n");
+}
+
+void ATADrive::testIRQ()
+{
+  mode = BD_ATA_MODE::BD_PIO;
+
+  BDManager::instance().probeIRQ.test_and_set();
   {
-    enableIRQ( 2 );   // cascade
+    WithInterrupts intr(true);
+
+    controller.selectDrive(drive_num);
+    char buf[getSectorSize()];
+    readSector(0, 1, buf);
+
+    debug(ATA_DRIVER, "Waiting for ATA IRQ\n");
+    TIMEOUT_CHECK(BDManager::instance().probeIRQ.test_and_set(),mode = BD_ATA_MODE::BD_PIO_NO_IRQ;);
+    controller.reset();
   }
-
-  testIRQ( );
-  if( !interrupt_context )
-    ArchInterrupts::disableInterrupts();
-  irq = irqnum;
-  debug(ATA_DRIVER, "ctor: mode: %d !!\n", mode );
-
-  request_list_ = 0;
-  request_list_tail_ = 0;
-
-  debug(ATA_DRIVER, "ctor: Driver created !!\n");
-  return;
 }
 
-void ATADriver::testIRQ( )
+int32 ATADrive::rawReadSector(uint32 start_sector, uint32 num_sectors, void* buffer)
 {
-  mode = BD_PIO;
-
-  BDManager::getInstance()->probeIRQ = true;
-  readSector( 0, 1, 0 );
-
-  TIMEOUT_CHECK(BDManager::getInstance()->probeIRQ,mode = BD_PIO_NO_IRQ;);
-}
-
-int32 ATADriver::rawReadSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
-{
-  BD_ATA_MODES old_mode = mode;
-  mode = BD_PIO_NO_IRQ;
-  uint32 result = readSector ( start_sector, num_sectors, buffer );
+  BD_ATA_MODE old_mode = mode;
+  mode = BD_ATA_MODE::BD_PIO_NO_IRQ;
+  uint32 result = readSector(start_sector, num_sectors, buffer);
   mode = old_mode;
 
   return result;
 }
 
-int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
+int32 ATADrive::selectSector(uint32 start_sector, uint32 num_sectors)
 {
-  /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+    if (!controller.waitNotBusy())
+        return -1;
 
   //LBA: linear base address of the block
   //CYL: value of the cylinder CHS coordinate
@@ -112,271 +133,502 @@ int32 ATADriver::selectSector(uint32 start_sector, uint32 num_sectors)
   uint8 high = cyls >> 8;
   uint8 lo = cyls & 0x00FF;
 
-  //debug(ATA_DRIVER, "readSector:(drive | head): %d, num_sectors: %d, sect: %d, lo: %d, high: %d!!\n",(drive | head),num_sectors,sect,lo,high);
 
-  outportbp(port + 6, (drive | head)); // drive and head selection
-  outportbp(port + 2, num_sectors); // number of sectors to read
-  outportbp(port + 3, sect); // starting sector
-  outportbp(port + 4, lo); // cylinder low
-  outportbp(port + 5, high); // cylinder high
+  IDEControllerChannel::IoRegister::DriveHead dh =
+      controller.io_regs[IDEControllerChannel::IoRegister::DRIVE_HEAD].read();
+  dh.drive_num = drive_num;
+  dh.use_lba = lba;
+  dh.always_set_0 = 1;
+  dh.always_set_1 = 1;
 
-  /* Wait for drive to set DRDY */
-  TIMEOUT_CHECK((!inportbp(port + 7)) & 0x40,TIMEOUT_WARNING(); return -1;);
+  if (lba)
+  {
+      dh.lba_24_27 = (start_sector >> 24) & 0xF;
+  }
+  else
+  {
+      dh.chs_head_0_3 = head;
+  }
+
+  controller.io_regs[IDEControllerChannel::IoRegister::DRIVE_HEAD].write(dh);
+
+  controller.io_regs[IDEControllerChannel::IoRegister::SECTOR_COUNT].write(num_sectors);
+
+  if (lba)
+  {
+      controller.io_regs[IDEControllerChannel::IoRegister::LBA_LOW].write(start_sector &
+                                                                          0xFF);
+      controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].write(
+          (start_sector >> 8) & 0xFF);
+      controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].write(
+          (start_sector >> 16) & 0xFF);
+  }
+  else
+  {
+      controller.io_regs[IDEControllerChannel::IoRegister::SECTOR_NUMBER].write(sect);
+      controller.io_regs[IDEControllerChannel::IoRegister::CYLINDER_LOW].write(lo);
+      controller.io_regs[IDEControllerChannel::IoRegister::CYLINDER_HIGH].write(high);
+  }
+
+  if (!controller.waitDriveReady())
+      return -1;
 
   return 0;
 }
 
-int32 ATADriver::readSector ( uint32 start_sector, uint32 num_sectors, void *buffer )
+void ATADrive::pioReadData(eastl::span<uint16_t> buffer)
 {
+    asm volatile("cld\n" // Ensure correct direction (low to high)
+                 "rep insw\n" ::
+        "D"(buffer.data()), // RDI
+        "c"(buffer.size()), // RCX
+        "d"(controller.io_regs[IDEControllerChannel::IoRegister::DATA].port)); // RDX
+
+    if (ATA_DRIVER & OUTPUT_ADVANCED)
+    {
+        auto chks = checksum((uint32_t*)buffer.data(), buffer.size()*sizeof(*buffer.data()));
+        debug(ATA_DRIVER, "PIO read data [%p, %p), size: %zx, checksum: %x\n",
+            buffer.data(), buffer.data() + buffer.size(), buffer.size()*sizeof(*buffer.data()), chks);
+    }
+}
+
+void ATADrive::pioWriteData(eastl::span<uint16_t> buffer)
+{
+    if (ATA_DRIVER & OUTPUT_ADVANCED)
+    {
+        auto chks = checksum((uint32_t*)buffer.data(), buffer.size()*sizeof(*buffer.data()));
+        debug(ATA_DRIVER, "PIO write data [%p, %p), size: %zx, checksum: %x\n",
+            buffer.data(), buffer.data() + buffer.size(), buffer.size()*sizeof(*buffer.data()), chks);
+    }
+
+    // Don't use rep outsw here because of required delay after port write
+    for (const uint16_t& word : buffer)
+    {
+        controller.io_regs[IDEControllerChannel::IoRegister::DATA].write(word);
+    }
+}
+
+int32 ATADrive::readSector(uint32 start_sector, uint32 num_sectors, void *buffer)
+{
+  debug(ATA_DRIVER, "read %u sectors [%x, %x) = [%x, %x) into buffer %p\n",
+    num_sectors, start_sector, start_sector + num_sectors, start_sector*getSectorSize(), (start_sector + num_sectors)*getSectorSize(), buffer);
+
+  controller.selectDrive(drive_num);
+
   assert(buffer || (start_sector == 0 && num_sectors == 1));
   if (selectSector(start_sector, num_sectors) != 0)
     return -1;
 
-  for (int i = 0;; ++i)
-  {
-    /* Write the command code to the command register */
-    outportbp(port + 7, 0x20); // command
+  if (!controller.waitNotBusy())
+      return -1;
 
-    if (mode != BD_PIO_NO_IRQ)
+  controller.sendCommand(ATACommand::PIO::READ_SECTORS);
+
+  if (mode != BD_ATA_MODE::BD_PIO_NO_IRQ)
       return 0;
 
-    jiffies = 0;
-    while (inportbp(port + 7) != 0x58 && jiffies++ < IO_TIMEOUT)
-      ArchInterrupts::yieldIfIFSet();
-    if (jiffies >= IO_TIMEOUT)
-    {
-      if (i == 3)
-      {
-        TIMEOUT_WARNING();
-        return -1;
-      }
-    }
-    else
-      break;
-  }
+  if (!controller.waitDataReady())
+      return -1;
 
   if (buffer)
   {
-    uint32 counter;
-    uint16 *word_buff = (uint16 *) buffer;
-    for (counter = 0; counter != (256*num_sectors); counter++)  // read sector
-        word_buff [counter] = inportw ( port );
+    pioReadData({static_cast<uint16_t*>(buffer), sector_word_size*num_sectors});
   }
-  /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
 
-  //debug(ATA_DRIVER, "readSector:Read successfull !!\n");
-  return 0;  
-}
-
-int32 ATADriver::writeSector ( uint32 start_sector, uint32 num_sectors, void * buffer )
-{
-  assert(buffer);
-  if (selectSector(start_sector, num_sectors) != 0)
-    return -1;
-
-  uint16 *word_buff = (uint16 *) buffer;
-
-  /* Write the command code to the command register */
-  outportbp( port + 7, 0x30 );           // command
-
-  TIMEOUT_CHECK(inportbp(port + 7) != 0x58,TIMEOUT_WARNING(); return -1;);
-
-
-  uint32 count2 = (256*num_sectors);
-  if( mode != BD_PIO_NO_IRQ )
-    count2 = 256;
-
-  uint32 counter;
-  for (counter = 0; counter != count2; counter++) 
-      outportw ( port, word_buff [counter] );
- 
-  /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
-
-  /* Write flush code to the command register */
-  outportbp (port + 7, 0xE7);
-    
-  /* Wait for drive to clear BUSY */
-  TIMEOUT_CHECK(inportbp(port + 7) & 0x80,TIMEOUT_WARNING(); return -1;);
+  if (!controller.waitNotBusy())
+      return -1;
 
   return 0;
 }
 
-uint32 ATADriver::addRequest( BDRequest *br )
+int32 ATADrive::writeSector(uint32 start_sector, uint32 num_sectors, void * buffer)
+{
+  debug(ATA_DRIVER, "write %u sectors [%x, %x) = [%x, %x) from buffer %p\n",
+      num_sectors, start_sector, start_sector + num_sectors, start_sector*getSectorSize(), (start_sector + num_sectors)*getSectorSize(), buffer);
+  assert(buffer);
+
+  controller.selectDrive(drive_num);
+
+  if (selectSector(start_sector, num_sectors) != 0)
+    return -1;
+
+  controller.sendCommand(ATACommand::PIO::WRITE_SECTORS);
+
+  if (!controller.waitDataReady())
+      return -1;
+
+  uint32 count = (sector_word_size*num_sectors);
+  if( mode != BD_ATA_MODE::BD_PIO_NO_IRQ )
+    count = sector_word_size;
+
+  pioWriteData({static_cast<uint16_t*>(buffer), count});
+
+  if (!controller.waitNotBusy())
+      return -1;
+
+  controller.sendCommand(ATACommand::Other::FLUSH_CACHE);
+
+  if (!controller.waitNotBusy())
+      return -1;
+
+  return 0;
+}
+
+uint32 ATADrive::addRequest(BDRequest* br)
 {
   ScopeLock lock(lock_); // this lock might serialize stuff too much...
   bool interrupt_context = false;
-  debug(ATA_DRIVER, "addRequest %d!\n", br->getCmd() );
-  if( mode != BD_PIO_NO_IRQ )
+  debug(ATA_DRIVER, "addRequest %zu, cmd = %d!\n", br->request_id, (int)br->getCmd());
+  if (mode != BD_ATA_MODE::BD_PIO_NO_IRQ)
   {
     interrupt_context = ArchInterrupts::disableInterrupts();
 
-    //Add request to the list protected by the cli
-    if( request_list_ == 0 )
-      request_list_ = request_list_tail_ = br;
-    else
-    {
-      request_list_tail_->setNextRequest(br) ;
-      request_list_tail_ = br;
-    }
+    request_list_.pushFront(br);
   }
 
   int32 res = -1;
-  
-  switch( br->getCmd() )
+
+  switch(br->getCmd())
   {
-    case BDRequest::BD_READ:
-      res = readSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+  case BDRequest::BD_CMD::BD_READ:
+      res = readSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
-    case BDRequest::BD_WRITE:
-      res = writeSector( br->getStartBlock(), br->getNumBlocks(), br->getBuffer() );
+  case BDRequest::BD_CMD::BD_WRITE:
+      res = writeSector(br->getStartBlock(), br->getNumBlocks(), br->getBuffer());
       break;
-    default:
+  default:
       res = -1;
       break;
   }
-  
-  if( res != 0 )
+
+  if (res != 0)
   {
-    br->setStatus( BDRequest::BD_ERROR );
+    br->setStatus(BDRequest::BD_RESULT::BD_ERROR);
     debug(ATA_DRIVER, "Got out on error !!\n");
-      if( interrupt_context )
-        ArchInterrupts::enableInterrupts();
+    if (interrupt_context)
+      ArchInterrupts::enableInterrupts();
     return 0;
   }
 
-  if( mode == BD_PIO_NO_IRQ )
+  if (mode == BD_ATA_MODE::BD_PIO_NO_IRQ)
   {
-    debug(ATA_DRIVER, "addRequest:No IRQ operation !!\n");
-    br->setStatus( BDRequest::BD_DONE );
+    debug(ATA_DRIVER, "addRequest: No IRQ operation !!\n");
+    br->setStatus(BDRequest::BD_RESULT::BD_DONE);
     return 0;
   }
 
   if (currentThread)
   {
     if(interrupt_context)
-      ArchInterrupts::enableInterrupts();
-    jiffies = 0;
-    while (br->getStatus() == BDRequest::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
-    if (jiffies >= IO_TIMEOUT*10)
-      TIMEOUT_WARNING();
-    if (br->getStatus() == BDRequest::BD_QUEUED)
     {
+        ArchInterrupts::enableInterrupts();
+    }
+
+    jiffies = 0;
+
+    debugAdvanced(ATA_DRIVER, "addRequest: Waiting for request %zu to be finished\n", br->request_id);
+    while (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED && jiffies++ < IO_TIMEOUT*10);
+
+    if (jiffies >= IO_TIMEOUT*10)
+    {
+        [[maybe_unused]] auto data_ready = controller.waitDataReady();
+
+        TIMEOUT_WARNING();
+        auto status = controller.control_regs[IDEControllerChannel::ControlRegister::ALT_STATUS].read();
+        auto error = controller.io_regs[IDEControllerChannel::IoRegister::ERROR].read();
+        auto lba_l = controller.io_regs[IDEControllerChannel::IoRegister::LBA_LOW].read();
+        auto lba_m = controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].read();
+        auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
+
+        debug(ATA_DRIVER, "addRequest: id: %zu, Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", br->request_id, status.u8, error.u8, lba_l, lba_m, lba_h);
+    }
+
+    if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
+    {
+      debug(ATA_DRIVER, "addRequest: Request %zu is still pending, going to sleep\n", br->request_id);
       ArchInterrupts::disableInterrupts();
-      if (br->getStatus() == BDRequest::BD_QUEUED)
+      if (br->getStatus() == BDRequest::BD_RESULT::BD_QUEUED)
       {
-        currentThread->setState(Sleeping);
+        currentThread->setState(Thread::Sleeping);
         ArchInterrupts::enableInterrupts();
         Scheduler::instance()->yield(); // this is necessary! setting state to sleep and continuing to run is a BAD idea
+        debug(ATA_DRIVER, "addRequest: Woke up after sleeping on request %zu, state = %d\n", br->request_id, (int)br->getStatus());
+        assert(br->getStatus() != BDRequest::BD_RESULT::BD_QUEUED && "ATA request still not done after waking up from sleep!");
       }
       ArchInterrupts::enableInterrupts();
     }
   }
 
+  debugAdvanced(ATA_DRIVER, "addRequest: done\n");
   return 0;
 }
 
-bool ATADriver::waitForController( bool resetIfFailed = true )
+void ATADrive::serviceIRQ()
 {
-  uint32 jiffies = 0;
-  while( inportbp( port + 7 ) != 0x58  && jiffies++ < IO_TIMEOUT)
-    ArchInterrupts::yieldIfIFSet();
+    // Need to read status register to acknowledge and unblock interrupts
+    auto status = controller.io_regs[IDEControllerChannel::IoRegister::STATUS].read();
+    auto error = controller.io_regs[IDEControllerChannel::IoRegister::ERROR].read();
+    auto lba_l = controller.io_regs[IDEControllerChannel::IoRegister::LBA_LOW].read();
+    auto lba_m = controller.io_regs[IDEControllerChannel::IoRegister::LBA_MID].read();
+    auto lba_h = controller.io_regs[IDEControllerChannel::IoRegister::LBA_HIGH].read();
 
-  if(jiffies >= IO_TIMEOUT )
-  {
-    debug(ATA_DRIVER, "waitForController: controler still not ready\n");
-    if( resetIfFailed )
+    debugAdvanced(ATA_DRIVER, "serviceIRQ: Device status: %x, error: %x, lba_l: %x, lba_m: %x, lba_h: %x\n", status.u8, error.u8, lba_l, lba_m, lba_h);
+
+    BDManager::instance().probeIRQ.clear();
+
+    if (mode == BD_ATA_MODE::BD_PIO_NO_IRQ)
+        return;
+
+    BDRequest* br = request_list_.peekBack();
+
+    if (br == nullptr)
     {
-      debug(ATA_DRIVER, "waitForController: reseting\n");
-      outportbp( port + 0x206, 0x04 );
-      outportbp( port + 0x206, 0x00 ); // RESET
-    }
-    return false;
-  }
-  return true;
-}
-
-void ATADriver::nextRequest(BDRequest* br)
-{
-  if(br->getThread())
-    br->getThread()->setState(Running);
-  request_list_ = br->getNextRequest();
-}
-
-void ATADriver::serviceIRQ()
-{
-  if( mode == BD_PIO_NO_IRQ )
-    return;
-
-  if( request_list_ == 0 )
-  {
-    debug(ATA_DRIVER, "serviceIRQ: IRQ without request!!\n");
-    outportbp( port + 0x206, 0x04 );
-    outportbp( port + 0x206, 0x00 ); // RESET COTROLLER
-    debug(ATA_DRIVER, "serviceIRQ: Reset controller!!\n");
-    return; // not my interrupt
+        debug(ATA_DRIVER,
+              "serviceIRQ: IRQ without request! Device status: %x, error: %x, lba_l: %x, "
+              "lba_m: %x, lba_h: %x\n",
+              status.u8, error.u8, lba_l, lba_m, lba_h);
+        if (status.error || status.drive_fault_error)
+        {
+            debugAlways(ATA_DRIVER, "serviceIRQ: Device error, reset device! Status: %x, Error: %x\n", status.u8, error.u8);
+            controller.reset();
+        }
+        return; // not my interrupt
   }
 
-  BDRequest* br = request_list_;
-  debug(ATA_DRIVER, "serviceIRQ: Found active request!!\n");
+  Thread* requesting_thread = br->getThread();
+
+  debugAdvanced(ATA_DRIVER, "serviceIRQ: Found active request %zu!!\n", br->request_id);
+  assert(br);
 
   uint16* word_buff = (uint16*) br->getBuffer();
-  uint32 counter;
-  uint32 blocks_done = br->getBlocksDone();
+  size_t blocks_done = br->getBlocksDone();
+  size_t bytes_requested = br->getNumBlocks()*sector_word_size*WORD_SIZE;
 
-  if( br->getCmd() == BDRequest::BD_READ )
+  // TODO: target thread may not yet be sleeping (this irq handler and section with disabled interrupts in addRequest may run simultaneously if running on other cpu core)
+
+  if (br->getCmd() == BDRequest::BD_CMD::BD_READ)
   {
-    if( !waitForController() )
+    size_t bytes_done = blocks_done*sector_word_size*WORD_SIZE;
+    uint16_t* buf_ptr = word_buff + blocks_done*sector_word_size;
+    debugAdvanced(ATA_DRIVER, "serviceIRQ: Handling read request %zu, [%zu/%zu], buffer: %p\n", br->request_id, bytes_done, bytes_requested, word_buff);
+    // This IRQ handler may be run in the context of any arbitrary thread, so we must not attempt to access userspace
+    assert((size_t)word_buff >= USER_BREAK);
+    if (!controller.waitDataReady())
     {
-      br->setStatus( BDRequest::BD_ERROR );
-      nextRequest(br);
+      assert(request_list_.popBack() == br);
+      br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
+      debug(ATA_DRIVER, "serviceIRQ: Error while waiting for controller\n");
+      if (requesting_thread)
+          requesting_thread->setState(Thread::Running);
       return;
     }
 
-    for(counter = blocks_done * 256; counter!=(blocks_done + 1) * 256; counter++ )
-      word_buff [counter] = inportw ( port );
+    pioReadData({buf_ptr, sector_word_size});
 
     blocks_done++;
-    br->setBlocksDone( blocks_done );
+    br->setBlocksDone(blocks_done);
 
-    if( blocks_done == br->getNumBlocks() )
+    if (blocks_done == br->getNumBlocks())
     {
-      br->setStatus( BDRequest::BD_DONE );
-      nextRequest(br);
+      assert(request_list_.popBack() == br);
+      br->setStatus(BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
+      debugAdvanced(ATA_DRIVER, "serviceIRQ: Read finished [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
+      if (requesting_thread)
+          requesting_thread->setState(Thread::Running);
     }
   }
-  else if( br->getCmd() == BDRequest::BD_WRITE )
+  else if (br->getCmd() == BDRequest::BD_CMD::BD_WRITE)
   {
     blocks_done++;
-    if( blocks_done == br->getNumBlocks() )
+    br->setBlocksDone(blocks_done);
+
+    size_t bytes_done = blocks_done*sector_word_size*WORD_SIZE;
+    uint16_t* buf_ptr = word_buff + blocks_done*sector_word_size;
+    debugAdvanced(ATA_DRIVER, "serviceIRQ: Handling write request %zu, [%zu/%zu], buffer: %p\n", br->request_id, bytes_done, bytes_requested, word_buff);
+
+    if (blocks_done == br->getNumBlocks())
     {
-      debug(ATA_DRIVER, "serviceIRQ:All done!!\n");
-      br->setStatus( BDRequest::BD_DONE );
-      debug(ATA_DRIVER, "serviceIRQ:Waking up thread!!\n");
-      nextRequest(br);
+      assert(request_list_.popBack() == br);
+      debugAdvanced(ATA_DRIVER, "serviceIRQ: Write finished  [%zu/%zu], buffer: %p\n", bytes_requested, bytes_requested, word_buff);
+      br->setStatus( BDRequest::BD_RESULT::BD_DONE); // br may be deallocated as soon as status is set to done
+      if (requesting_thread)
+          requesting_thread->setState(Thread::Running);
     }
     else
     {
-      if( !waitForController() )
+      // This IRQ handler may be run in the context of any arbitrary thread, so we must not attempt to access userspace
+      assert((size_t)word_buff >= USER_BREAK);
+      if (!controller.waitDataReady())
       {
-        br->setStatus( BDRequest::BD_ERROR );
-        nextRequest(br);
+        assert(request_list_.popBack() == br);
+        br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
+        if (requesting_thread)
+            requesting_thread->setState(Thread::Running);
         return;
       }
-  
-      for(counter = blocks_done*256; counter != (blocks_done + 1) * 256; counter++ )
-        outportw ( port, word_buff [counter] );
 
-      br->setBlocksDone( blocks_done );
+      pioWriteData({buf_ptr, sector_word_size});
     }
   }
   else
   {
-    blocks_done = br->getNumBlocks();
-    br->setStatus( BDRequest::BD_ERROR );
-    nextRequest(br);
+    assert(request_list_.popBack() == br);
+    br->setStatus(BDRequest::BD_RESULT::BD_ERROR); // br may be deallocated as soon as status is set to error
+    if (requesting_thread)
+        requesting_thread->setState(Thread::Running);
   }
 
-  debug(ATA_DRIVER, "serviceIRQ:Request handled!!\n");
+  debugAdvanced(ATA_DRIVER, "serviceIRQ: Request %zu handled!!\n", br->request_id);
+}
+
+
+void ATADrive::printIdentifyInfo(eastl::span<uint16_t, 256> id) const
+{
+    uint16_t serialnum[11]{};
+    uint16_t firmware_rev[5]{};
+    uint16_t model_number[21]{};
+    uint32_t num_sectors_28bit = 0;
+    uint64_t num_logical_sectors = 0;
+    // default 256 words / 512 bytes if 0
+    uint32_t logical_sector_size = 0;
+    memcpy(serialnum, &id[10], 20);
+    memcpy(firmware_rev, &id[23], 8);
+    memcpy(model_number, &id[27], 40);
+    memcpy(&num_sectors_28bit, &id[60], 4);
+    memcpy(&num_logical_sectors, &id[100], 8);
+    memcpy(&logical_sector_size, &id[117], 4);
+    for (auto& x : serialnum)
+        x = __builtin_bswap16(x);
+    for (auto& x : firmware_rev)
+        x = __builtin_bswap16(x);
+    for (auto& x : model_number)
+        x = __builtin_bswap16(x);
+
+    debug(ATA_DRIVER, "Device serial number: %s\n", (char*)serialnum);
+    debug(ATA_DRIVER, "Firmware revision: %s\n", (char*)firmware_rev);
+    debug(ATA_DRIVER, "Model number: %s\n", (char*)model_number);
+    debug(ATA_DRIVER, "Cylinder: %u, Head: %u, Sector: %u, C*H*S = %u\n", id[1],
+          id[3], id[6], id[1] * id[3] * id[6]);
+    debug(ATA_DRIVER, "DRQ data block size: %u\n", (id[49] & 0xFF));
+    debug(ATA_DRIVER, "Capabilities: LBA %u, DMA %u, IORDY %u, IORDY DISABLE: %u\n",
+          !!(id[49] & (1 << 9)), !!(id[49] & (1 << 8)),
+          !!(id[49] & (1 << 11)), !!(id[49] & (1 << 10)));
+    debug(ATA_DRIVER, "#Sectors (28 bit): %u\n", *(uint32_t*)&num_sectors_28bit);
+    debug(ATA_DRIVER,
+          "Read/write multiple supported: %u, optimal multiple sector num: %u\n",
+          !!(id[59] & (1 << 8)), (id[59] & 0xFF));
+    debug(ATA_DRIVER, "Multiword DMA support: mode 0: %u, mode 1: %u, mode 2: %u\n",
+          !!(id[63] & (1 << 0)), !!(id[63] & (1 << 1)),
+          !!(id[63] & (1 << 2)));
+    debug(ATA_DRIVER, "PIO support: max original: %u, PIO3: %u, PIO4: %u\n", (id[51] >> 8), !!(id[64] & (1 << 0)),
+          !!(id[64] & (1 << 1)));
+    debug(ATA_DRIVER, "Extended num of user addressable sectors supported: %u\n",
+          !!(id[69] & (1 << 3)));
+    debug(ATA_DRIVER, "Max queue depth: %u\n", (id[75] & 0b11111));
+    debug(ATA_DRIVER,
+          "Major version: ATA/ATAPI5: %u, ATA/ATAPI6: %u, ATA/ATAPI7: %u, "
+          "ATA8-ACS: %u, ACS-2: %u, ACS-3: %u\n",
+          !!(id[80] & (1 << 5)), !!(id[80] & (1 << 6)),
+          !!(id[80] & (1 << 7)), !!(id[80] & (1 << 8)),
+          !!(id[80] & (1 << 9)), !!(id[80] & (1 << 10)));
+    debug(ATA_DRIVER,
+          "Command/feature support: SMART: %u, Security: %u, Power "
+          "management: %u, PACKET: %u, volatile write cache: %u, read "
+          "look-ahead: %u, DEVICE RESET: %u, WRITE BUFFER: %u, READ "
+          "BUFFER: %u, NOP: %u\n",
+          !!(id[82] & (1 << 0)), !!(id[82] & (1 << 1)),
+          !!(id[82] & (1 << 3)), !!(id[82] & (1 << 4)),
+          !!(id[82] & (1 << 5)), !!(id[82] & (1 << 6)),
+          !!(id[82] & (1 << 9)), !!(id[82] & (1 << 12)),
+          !!(id[82] & (1 << 13)), !!(id[82] & (1 << 14)));
+    debug(ATA_DRIVER, "48-bit address support: %u\n", !!(id[83] & (1 << 10)));
+    debug(ATA_DRIVER,
+          "UDMA support: m0: %u, m1: %u, m2: %u, m3: %u, m4: %u, m5: %u, "
+          "m6: %u\n",
+          !!(id[88] & (1 << 0)), !!(id[88] & (1 << 1)),
+          !!(id[88] & (1 << 2)), !!(id[88] & (1 << 3)),
+          !!(id[88] & (1 << 4)), !!(id[88] & (1 << 5)),
+          !!(id[88] & (1 << 6)));
+    debug(ATA_DRIVER,
+          "UDMA active: m0: %u, m1: %u, m2: %u, m3: %u, m4: %u, m5: %u, "
+          "m6: %u\n",
+          !!(id[88] & (1 << 8)), !!(id[88] & (1 << 9)),
+          !!(id[88] & (1 << 10)), !!(id[88] & (1 << 11)),
+          !!(id[88] & (1 << 12)), !!(id[88] & (1 << 13)),
+          !!(id[88] & (1 << 14)));
+    debug(ATA_DRIVER, "#Sectors: %" PRIu64 "\n", *(uint64_t*)&num_logical_sectors);
+    if (!(id[106] & (1 << 15)) && (id[106] & (1 << 14)))
+    {
+        debug(ATA_DRIVER, "Physical sector size: 2^%u*logical sectors\n",
+              (id[106] & 0xF));
+        debug(ATA_DRIVER,
+              "Logical sector size > 512: %u, multiple logical sectors per "
+              "phys sectors: %u\n",
+              !!(id[106] & (1 << 12)), !!(id[106] & (1 << 13)));
+        debug(ATA_DRIVER, "Logical sector size (words): %u\n",
+              *(uint32_t*)&logical_sector_size);
+    }
+
+    debug(ATA_DRIVER, "Transport type: %u (0 = parallel, 1 = serial)\n",
+          (id[222] & (0xF << 12)));
+    if ((id[222] & (0xF << 12)) >> 12 == 0)
+    {
+        debug(ATA_DRIVER, "Transport version: ATA8-APT: %u, ATA/ATAPI-7: %u\n",
+              !!(id[222] & (1 << 0)), !!(id[222] & (1 << 1)));
+    }
+    if ((id[222] & (0xF << 12)) >> 12 == 1)
+    {
+        debug(ATA_DRIVER,
+              "Transport version: ATA8-AST: %u, SATA 1.0a: %u, SATA II "
+              "Extensions: %u, SATA 2.5: %u, SATA 2.6: %u, SATA 3.0: %u, "
+              "SATA: 3.1: %u\n",
+              !!(id[222] & (1 << 0)), !!(id[222] & (1 << 1)),
+              !!(id[222] & (1 << 2)), !!(id[222] & (1 << 3)),
+              !!(id[222] & (1 << 4)), !!(id[222] & (1 << 5)),
+              !!(id[222] & (1 << 6)));
+    }
+    debug(ATA_DRIVER, "Integrity word: %x, validity indicator: %x\n",
+          (id[255] & (0xFF << 8)), (id[255] & 0xFF));
+}
+
+PATADeviceDriver::PATADeviceDriver() :
+    BasicDeviceDriver("PATA device driver")
+{
+}
+
+PATADeviceDriver& PATADeviceDriver::instance()
+{
+    static PATADeviceDriver instance_;
+    return instance_;
+}
+
+bool PATADeviceDriver::probe(const IDEDeviceDescription& descr)
+{
+    auto [controller, drive_num, signature] = descr;
+    if (signature == PATA_DRIVE_SIGNATURE)
+    {
+        debug(ATA_DRIVER, "Device description matches PATA device\n");
+
+        eastl::string disk_name{"ide"};
+        // idea = first disk of primary controller
+        // ideb = second disk of primary controller
+        // idec = first disk of secondary controller
+        // ...
+        disk_name += 'a' + controller->controller_id * 2 + drive_num;
+
+        debug(ATA_DRIVER, "Create block device %s\n", disk_name.c_str());
+        auto drv = new ATADrive(*controller, drive_num);
+        bindDevice(*drv);
+        auto* bdv = new BDVirtualDevice(drv, 0, drv->getNumSectors(),
+                                        drv->getSectorSize(), disk_name.c_str(), true);
+
+        BDManager::instance().addVirtualDevice(bdv);
+
+        detectMBRPartitions(bdv, drv, 0, drv->SPT, disk_name.c_str());
+
+        return true;
+    }
+
+    debug(ATA_DRIVER, "IDE device not compatible with PATA device driver\n");
+    return false;
 }

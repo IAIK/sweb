@@ -1,3 +1,8 @@
+# https://www.airs.com/blog/archives/518
+.section .note.GNU-stack,"",@progbits
+
+.text
+
 //parts of this code are from:
 //http://infocenter.arm.com/help/topic/com.arm.doc.dai0527a/DAI0527A_baremetal_boot_code_for_ARMv8_A_processors.pdf
 
@@ -10,6 +15,7 @@
 panic: b panic
 
 handle_exception:
+    // X2 holds address of neon register storage space in currentThreadRegisters (loaded in INTERRUPT_ENTRY)
     STP Q0  , Q1   , [X2, #32 * 0]  //store neon registers
     STP Q2  , Q3   , [X2, #32 * 1]
     STP Q4  , Q5   , [X2, #32 * 2]
@@ -52,8 +58,8 @@ exc_from_sm:
     MOV X5 , SP
 
 save_context_remainder:
-    STP X3 , X4 , [X2, #16 * 0]
-    STP X5 , X6 , [X2, #16 * 1]
+    STP X3 , X4 , [X2, #16 * 0] // save SPSR_EL1 + ELR_EL1
+    STP X5 , X6 , [X2, #16 * 1] // save SP_EL0 + TTBR0_EL1
 
 get_exc_parms:
     MRS X1 , CurrentEL     // current el register
@@ -68,10 +74,10 @@ restore_context:
     LDR  X0 , [X0]
     LDR  X1 , =kernel_sp_struct_offset
     LDR  X1 , [X1]
-    ADD  X0 , X0 , X1
+    ADD  X0 , X0 , X1 // X0 contains addr of currentThreadRegisters->SP_SM
 
-    LDP X1 , X2 , [X0, #-16 * 1]
-    LDP X3 , X4 , [X0, #-16 * 2]
+    LDP X1 , X2 , [X0, #-16 * 1] // Load saved SP -> X1, TTBR0 -> X2
+    LDP X3 , X4 , [X0, #-16 * 2] // Load saved SPSR -> X3, ELR -> X4
 
 check_sp:
     AND X6 , X3 , #0xf
@@ -83,23 +89,25 @@ restore_sp_sm:
     B        restore_rest
 
 restore_sp_um:
-    MSR SP_EL0    , X1
-    LDR X1 , =boot_stack
+    MSR SP_EL0    , X1 // Restore saved SP to SP_EL0
+    LDR X1 , =boot_stack // Switch current SP to top of boot_stack
     ADD X1 , X1 , #0x4000
     MOV SP , X1
 
 restore_rest:
-    MSR TTBR0_EL1 , X2
-    MSR SPSR_EL1  , X3
-    MSR ELR_EL1   , X4
+    MSR TTBR0_EL1 , X2 // Restore TTBR0_EL1
+    MSR SPSR_EL1  , X3 // Restore SPSR_EL1
+    MSR ELR_EL1   , X4 // Restore ELR_EL1
 
 
+    // Synchronization barrier
     DSB ISHST
     //TLBI ALLE1
     DSB ISH
     ISB
 
 
+    // X0 = address of stored neon registers
     SUB X0 , X0 , #32
 
     LDP Q30, Q31 , [X0, #-32 * 1]
@@ -119,6 +127,7 @@ restore_rest:
     LDP Q2 , Q3  , [X0, #-32 * 15]
     LDP Q0 , Q1  , [X0, #-32 * 16]
 
+    // X0 = address of stored X0 - X30 registers
     SUB X0 , X0 , #(32*16)
 
     LDP X29 , X30, [X0, #-16 * 1]
@@ -138,15 +147,19 @@ restore_rest:
     LDP X1  , X2 , [X0, #-16 * 15]
     LDR X0  , [X0, #(-16 * 15)-8]
 
+    // Synchronization barrier
     dmb sy
     dsb sy
     isb sy
 
+    //Return from exception
     ERET
 
 .macro INTERRUPT_ENTRY interrupt_id
     nop
-    
+
+    // Exceptions automatically switch to SP_ELn, so we can safely use the stack here
+
     /* this is used for debugging purposes
     MOV X0, #\interrupt_id
     MRS X1 , CurrentEL     // current el register
@@ -160,6 +173,7 @@ restore_rest:
     LDR X0, =currentThreadRegisters    //get registers of current registers
     LDR X0 , [X0]
 
+    // Store X2 - X30
     STP X2  , X3  , [X0, #16 * 1]
     STP X4  , X5  , [X0, #16 * 2]
     STP X6  , X7  , [X0, #16 * 3]
@@ -176,6 +190,7 @@ restore_rest:
     STP X28 , X29 , [X0, #16 * 14]
     STR X30 ,       [X0, #16 * 15]
 
+    // Store X0 - X1
     MOV X2  , X0
     LDP X0  , X1  , [SP] , #16
     STP X0  , X1  , [X2, #16 * 0]
@@ -265,4 +280,3 @@ INTERRUPT_ENTRY_INVALID
 .balign 0x80
 lower_el_aarch32_serror:
 INTERRUPT_ENTRY_INVALID
-

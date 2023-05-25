@@ -1,9 +1,10 @@
 #pragma once
 
-#include "ustring.h"
-#include "umap.h"
 #include "Stabs2DebugInfo.h"
 
+#include "EASTL/map.h"
+#include "EASTL/string.h"
+#include "EASTL/vector_map.h"
 
 // The limit for function names, after that, they will get capped
 #define CALL_FUNC_NAME_LIMIT 256
@@ -11,19 +12,18 @@
 
 class SWEBDebugInfo : public Stabs2DebugInfo {
 public:
+    SWEBDebugInfo(const char* sweb_begin, const char* sweb_end);
 
-    SWEBDebugInfo(char const *sweb_begin, char const *sweb_end);
+    ~SWEBDebugInfo() override = default;
 
-    virtual ~SWEBDebugInfo();
+    void getCallNameAndLine(pointer address, const char *&mangled_name, ssize_t &line) const override;
 
-    virtual void getCallNameAndLine(pointer address, const char *&mangled_name, ssize_t &line) const;
-
-    virtual void printCallInformation(pointer address) const;
+    void printCallInformation(pointer address) const override;
 
 private:
-    ustl::map<size_t, ustl::string> file_addrs_;
-    ustl::map<size_t, const char*> function_defs_;
+    eastl::vector_map<size_t, eastl::string> file_addrs_;
+    eastl::vector_map<size_t, const char*> function_defs_;
 
-    virtual void initialiseSymbolTable();
+    void initialiseSymbolTable() override;
 
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+
 #define PAGE_ENTRIES   512
 #define LEVEL0_ENTRIES PAGE_ENTRIES
 #define LEVEL1_ENTRIES PAGE_ENTRIES
@@ -107,3 +108,20 @@ typedef union
   struct Level12TableEntry table;
   struct Level2BlockEntry block;
 } __attribute__((__packed__)) Level2Entry;
+
+struct VAddr
+{
+    union
+    {
+        uint64 addr;
+        struct
+        {
+            uint64 offset   : 12;
+            uint64 l3i      : 9;
+            uint64 l2i      : 9;
+            uint64 l1i      : 9;
+            uint64 l0i      : 9; // ignored/always required to be the same since TCR_EL1.T0SZ/T1SZ == 25
+            uint64 reserved : 16;
+        } __attribute__((__packed__));;
+    } __attribute__((__packed__));;
+} __attribute__((__packed__));

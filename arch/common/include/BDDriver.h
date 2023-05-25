@@ -1,29 +1,32 @@
 #pragma once
 
-#include "types.h"
+#include <cstdint>
+
 class BDRequest;
 
 class BDDriver
 {
   public:
+    BDDriver() = default;
 
-    virtual ~BDDriver()
+    BDDriver(uint16_t irq) :
+        irq(irq)
     {
     }
 
-    virtual uint32 addRequest(BDRequest *) = 0;
+    virtual ~BDDriver() = default;
 
-    virtual int32 readSector(uint32, uint32, void *) = 0;
+    virtual uint32_t addRequest(BDRequest *) = 0;
 
-    virtual int32 writeSector(uint32, uint32, void *) = 0;
+    virtual int32_t readSector(uint32_t, uint32_t, void *) = 0;
 
-    virtual uint32 getNumSectors() = 0;
+    virtual int32_t writeSector(uint32_t, uint32_t, void *) = 0;
 
-    virtual uint32 getSectorSize() = 0;
+    virtual uint32_t getNumSectors() = 0;
+
+    virtual uint32_t getSectorSize() = 0;
 
     virtual void serviceIRQ() = 0;
 
-    uint16 irq;
+    uint16_t irq;
 };
-
-

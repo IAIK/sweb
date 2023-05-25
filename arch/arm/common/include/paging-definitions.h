@@ -64,3 +64,16 @@ typedef struct
 
 static_assert(sizeof(PageTableEntry) == 4, "PageTableEntry is not 32 bit");
 
+struct VAddr
+{
+    union
+    {
+        uint32 addr;
+        struct
+        {
+            uint32 offset   : 12;
+            uint32 pti      : 8;
+            uint32 pdi      : 12;
+        } __attribute__((__packed__));;
+    } __attribute__((__packed__));;
+} __attribute__((__packed__));

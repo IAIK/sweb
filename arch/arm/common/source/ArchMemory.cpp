@@ -1,9 +1,11 @@
 #include "ArchMemory.h"
-#include "kprintf.h"
-#include "assert.h"
+
 #include "PageManager.h"
-#include "offsets.h"
+#include "kprintf.h"
 #include "kstring.h"
+#include "offsets.h"
+
+#include "assert.h"
 
 #define PT_SIZE 1024
 #define PD_SIZE 16384
@@ -46,13 +48,19 @@ PageTableEntry* ArchMemory::getPTE(size_t vpn)
 
 ArchMemory::ArchMemory()
 {
-  page_dir_page_ = PageManager::instance()->allocPPN(PD_SIZE);
+  page_dir_page_ = PageManager::instance().allocPPN(PD_SIZE);
   debug(A_MEMORY, "ArchMemory::ArchMemory(): Got new Page no. %x\n", page_dir_page_);
 
   PageDirEntry *new_page_directory = (PageDirEntry*) getIdentAddressOfPPN(page_dir_page_);
   memcpy((void*) new_page_directory, (const void*) kernel_page_directory, PD_SIZE);
   for (uint32 p = 8; p < PAGE_DIR_ENTRIES / 2; ++p) // should be zero, this is just for safety
     new_page_directory[p].pt.size = PDE_SIZE_NONE;
+}
+
+ArchMemory::ArchMemory(uint32_t page_dir_page)
+{
+    page_dir_page_ = page_dir_page;
+    debug(A_MEMORY, "ArchMemory::ArchMemory(%zx)\n", page_dir_page_);
 }
 
 void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
@@ -76,16 +84,16 @@ void ArchMemory::checkAndRemovePT(uint32 pde_vpn)
   for (size_t i = 0; i < 4; ++i)
   {
     uint32 pt_slot = (pt_ppn - PHYS_OFFSET_4K) * 4 + i;
-    if (ustl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot) == pt_ppns_.end())
+    if (eastl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot) == pt_ppns_.end())
       return;
   }
 
-  PageManager::instance()->freePPN(pt_ppn - PHYS_OFFSET_4K);
+  PageManager::instance().freePPN(pt_ppn - PHYS_OFFSET_4K);
 
   for (size_t i = 0; i < 4; ++i)
   {
     uint32 pt_slot = (pt_ppn - PHYS_OFFSET_4K) * 4 + i;
-    pt_ppns_.erase(ustl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot));
+    pt_ppns_.erase(eastl::find(pt_ppns_.begin(), pt_ppns_.end(), pt_slot));
   }
 }
 
@@ -102,7 +110,7 @@ void ArchMemory::unmapPage(uint32 virtual_page)
   assert(pte_base[pte_vpn].size == PTE_SIZE_SMALL);
 
   pte_base[pte_vpn].size = PTE_SIZE_NONE;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+  PageManager::instance().freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
   ((uint32*)pte_base)[pte_vpn] = 0; // for easier debugging
 
   checkAndRemovePT(pde_vpn);
@@ -121,7 +129,7 @@ void ArchMemory::insertPT(uint32 pde_vpn)
   }
   else
   {
-    physical_page_table_page = PageManager::instance()->allocPPN();
+    physical_page_table_page = PageManager::instance().allocPPN();
     offset = 0;
     for (size_t i = 1; i < 4; ++i)
       pt_ppns_.push_back(physical_page_table_page * 4 + i);
@@ -174,7 +182,7 @@ ArchMemory::~ArchMemory()
         if (pte_base[pte_vpn].size == PTE_SIZE_SMALL)
         {
           pte_base[pte_vpn].size = PTE_SIZE_NONE;
-          PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+          PageManager::instance().freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
         }
       }
       page_directory[pde_vpn].pt.size = PDE_SIZE_NONE;
@@ -182,17 +190,17 @@ ArchMemory::~ArchMemory()
       bool free_pt_page = true;
       for (size_t i = 0; i < 4; ++i)
       {
-        auto it = ustl::find(pt_ppns_.begin(), pt_ppns_.end(), page_directory[pde_vpn].pt.pt_ppn * 4 + i);
+        auto it = eastl::find(pt_ppns_.begin(), pt_ppns_.end(), page_directory[pde_vpn].pt.pt_ppn * 4 + i);
         if (it == pt_ppns_.end())
           free_pt_page = false;
         else
           pt_ppns_.erase(it);
       }
       if (free_pt_page)
-        PageManager::instance()->freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
+        PageManager::instance().freePPN(page_directory[pde_vpn].pt.pt_ppn - PHYS_OFFSET_4K);
     }
   }
-  PageManager::instance()->freePPN(page_dir_page_, PD_SIZE);
+  PageManager::instance().freePPN(page_dir_page_, PD_SIZE);
 }
 
 pointer ArchMemory::checkAddressValid(uint32 vaddress_to_check)
@@ -245,17 +253,22 @@ uint32 ArchMemory::get_PPN_Of_VPN_In_KernelMapping(uint32 virtual_page, uint32 *
   return 0;
 }
 
-void ArchMemory::mapKernelPage(uint32 virtual_page, uint32 physical_page)
+bool ArchMemory::mapKernelPage(size_t virtual_page, size_t physical_page, [[maybe_unused]]bool can_alloc_pages, [[maybe_unused]]bool memory_mapped_io)
 {
   PageDirEntry *page_directory = kernel_page_directory;
   uint32 pde_vpn = virtual_page / PAGE_TABLE_ENTRIES;
   uint32 pte_vpn = virtual_page % PAGE_TABLE_ENTRIES;
   assert(page_directory[pde_vpn].page.size == PDE_SIZE_PT && "kernel page table has to be mapped already");
   PageTableEntry *pte_base = getIdentAddressOfPT(page_directory, pde_vpn);
-  assert(pte_base[pte_vpn].size == PTE_SIZE_NONE && "tried to map page but there was already a page mapped");
+  if (pte_base[pte_vpn].size != PTE_SIZE_NONE) {
+      return false;
+  }
+  // assert(pte_base[pte_vpn].size == PTE_SIZE_NONE && "tried to map page but there was already a page mapped");
   pte_base[pte_vpn].permissions = PAGE_PERMISSION_KERNEL;
   pte_base[pte_vpn].page_ppn = physical_page + PHYS_OFFSET_4K;
   pte_base[pte_vpn].size = PTE_SIZE_SMALL;
+
+  return true;
 }
 
 void ArchMemory::unmapKernelPage(uint32 virtual_page)
@@ -268,10 +281,32 @@ void ArchMemory::unmapKernelPage(uint32 virtual_page)
   assert(pte_base[pte_vpn].size != PTE_SIZE_SMALL && "tried to unmap page but there was no page mapped");
   pte_base[pte_vpn].size = PTE_SIZE_NONE;
   pte_base[pte_vpn].permissions = PAGE_PERMISSION_NONE;
-  PageManager::instance()->freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
+  PageManager::instance().freePPN(pte_base[pte_vpn].page_ppn - PHYS_OFFSET_4K);
 }
 
 uint32 ArchMemory::getRootOfPagingStructure()
 {
   return page_dir_page_;
+}
+
+PageDirEntry* ArchMemory::getKernelPagingStructureRootVirt()
+{
+    return kernel_page_directory;
+}
+
+size_t ArchMemory::getKernelPagingStructureRootPhys()
+{
+    return (size_t)VIRTUAL_TO_PHYSICAL_BOOT((size_t)getKernelPagingStructureRootVirt());
+}
+
+void ArchMemory::loadPagingStructureRoot(size_t ttbr0_value)
+{
+    __asm__ __volatile__("MCR p15, 0, %[ttbr0], c2, c0, 0\n"
+                         ::[ttbr0]"r"(ttbr0_value));
+}
+
+ArchMemory& ArchMemory::kernelArchMemory()
+{
+    static ArchMemory kernel_arch_mem((size_t)getKernelPagingStructureRootPhys()/PAGE_SIZE);
+    return kernel_arch_mem;
 }

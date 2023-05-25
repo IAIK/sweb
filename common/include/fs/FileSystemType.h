@@ -19,7 +19,7 @@ class FileSystemType
 
   public:
     FileSystemType(const char *fs_name);
-    virtual ~FileSystemType();
+    virtual ~FileSystemType() = default;
 
     FileSystemType const &operator =(FileSystemType const &instance)
     {

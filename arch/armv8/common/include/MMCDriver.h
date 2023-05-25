@@ -1,15 +1,17 @@
 #pragma once
 
 #include "BDDriver.h"
+#include "Device.h"
+#include "DeviceDriver.h"
 #include "Mutex.h"
 
 class BDRequest;
 
-class MMCDriver : public BDDriver
+class MMCDrive : public BDDriver, public Device
 {
   public:
-    NO_OPTIMIZE MMCDriver();
-    virtual ~MMCDriver();
+    NO_OPTIMIZE MMCDrive();
+    ~MMCDrive() override;
 
     /**
      * adds the given request to a list and checkes the type of the
@@ -17,7 +19,7 @@ class MMCDriver : public BDDriver
      * or the function returns otherwise.
      *
      */
-    uint32 addRequest(BDRequest *);
+    uint32 addRequest(BDRequest *) override;
 
     /**
      * @param 1 sector where it should be started to read
@@ -25,7 +27,7 @@ class MMCDriver : public BDDriver
      * @param 3 buffer where to save all that was read
      *
      */
-    int32 readSector(uint32, uint32, void *);
+    int32 readSector(uint32, uint32, void *) override;
 
     /**
      * @param 1 sector where it should be started to write
@@ -33,11 +35,11 @@ class MMCDriver : public BDDriver
      * @param 3 buffer, which content should be written to the sectors
      *
      */
-    int32 writeSector(uint32, uint32, void *);
+    int32 writeSector(uint32, uint32, void *) override;
 
-    uint32 getNumSectors();
-    uint32 getSectorSize();
-    void serviceIRQ();
+    uint32 getNumSectors() override;
+    uint32 getSectorSize() override;
+    void serviceIRQ() override;
     uint32 SPT;
   private:
 
@@ -61,3 +63,16 @@ class MMCDriver : public BDDriver
     uint32 num_sectors_;
 };
 
+class MMCDeviceDriver : public BasicDeviceDriver,
+                        public Driver<MMCDrive>
+{
+public:
+    MMCDeviceDriver();
+    ~MMCDeviceDriver() override = default;
+
+    static MMCDeviceDriver& instance();
+
+    void doDeviceDetection() override;
+
+private:
+};

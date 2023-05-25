@@ -1,3 +1,6 @@
-include_directories(../../include/kernel)
 add_project_library(common_kernel)
 
+target_include_directories(kernel PUBLIC
+    ../../include/kernel)
+
+add_subdirectory(smp)

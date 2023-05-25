@@ -1,6 +1,11 @@
 #pragma once
 
+#include <cstddef>
 #include "types.h"
+
+#ifndef EXE2MINIXFS
+#include "Mutex.h"
+#endif
 
 class Dirent;
 class Dentry;
@@ -24,15 +29,21 @@ class VfsSyscall
      */
     static int32 mkdir(const char* pathname, int32 /*type*/);
 
+    typedef struct
+    {
+        unsigned long long d_offs_next; // offset to the next entry
+        unsigned char d_type;           // file type
+        char d_name[];                  // file name (null terminated)
+    } __attribute__((packed)) user_dirent;
+
     /**
-     * The readdir() displays or saves the names from all childs into buffer and returns a pointer
-     * to a Dirent.
-     * @param pathname the destination-directory.
-     * @param buffer the buffer the output is saved to
-     * @param size the size of buffer in bytes
-     * @return the dirent
+     * Write the directory entries of a directory into a buffer
+     * @param fd The directory file descriptor to read direntries from
+     * @param buffer The buffer to write the direntries to
+     * @param buffer_size Size of the buffer in bytes
+     * @return Number of bytes written or -1 on error
      */
-    static Dirent* readdir(const char* pathname, char* buffer = 0, size_t size = 0);
+    static ssize_t getdents(int fd, char* buffer, size_t buffer_size);
 
     /**
      * chdir() changes the current directory to the specified directory.
@@ -143,8 +154,9 @@ class VfsSyscall
      */
     static FileDescriptor* getFileDescriptor(uint32 fd);
 
-  private:
+public:
+
+private:
     VfsSyscall();
     ~VfsSyscall();
 };
-

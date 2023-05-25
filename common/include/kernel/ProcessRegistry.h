@@ -1,24 +1,24 @@
 #pragma once
 
-#include "Thread.h"
-#include "Mutex.h"
 #include "Condition.h"
+#include "FileSystemInfo.h"
+#include "Mutex.h"
 
-class ProcessRegistry : public Thread
+#include <cstddef>
+#include <cstdint>
+
+class ProcessRegistry
 {
   public:
     /**
      * Constructor
-     * @param root_fs_info the FileSystemInfo
-     * @param progs a string-array of the userprograms which should be executed
+     * @param root_fs_info the default working directory to be used for new processes
      */
-    ProcessRegistry ( FileSystemInfo *root_fs_info, char const *progs[] );
-    ~ProcessRegistry();
+    ProcessRegistry(FileSystemInfo* root_fs_info);
+    virtual ~ProcessRegistry() = default;
 
-    /**
-     * Mounts the Minix-Partition with user-programs and creates processes
-     */
-    virtual void Run();
+    static ProcessRegistry* instance();
+    static void init(FileSystemInfo* root_fs_info);
 
     /**
      * Tells us that a userprocess is being destroyed
@@ -35,15 +35,15 @@ class ProcessRegistry : public Thread
      */
     size_t processCount();
 
-    static ProcessRegistry* instance();
-    void createProcess(const char* path);
+    void waitAllKilled();
+
+    int createProcess(const char* path);
 
   private:
 
-    char const **progs_;
-    uint32 progs_running_;
+    FileSystemInfo* default_working_dir_;
+    uint32_t progs_running_;
     Mutex counter_lock_;
     Condition all_processes_killed_;
     static ProcessRegistry* instance_;
 };
-

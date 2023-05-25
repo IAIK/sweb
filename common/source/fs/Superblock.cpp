@@ -1,9 +1,11 @@
 #include "Superblock.h"
-#include "assert.h"
+
 #include "Dentry.h"
-#include "Inode.h"
 #include "File.h"
 #include "FileSystemType.h"
+#include "Inode.h"
+
+#include "assert.h"
 
 Superblock::Superblock(FileSystemType* fs_type, size_t s_dev) :
     s_magic_(0), s_type_(fs_type), s_dev_(s_dev), s_flags_(0), s_root_(0), s_mountpoint_(0)
@@ -18,7 +20,7 @@ Superblock::~Superblock()
 
 void Superblock::deleteInode(Inode* inode)
 {
-  assert(inode != 0);
+  assert(inode);
   dirty_inodes_.remove(inode);
   used_inodes_.remove(inode);
   all_inodes_.remove(inode);
@@ -51,7 +53,7 @@ int Superblock::fileOpened(File* file)
     Inode* inode = file->getInode();
     assert(inode->getSuperblock() == this);
 
-    if(ustl::find(s_files_.begin(), s_files_.end(), file) != s_files_.end())
+    if(eastl::find(s_files_.begin(), s_files_.end(), file) != s_files_.end())
     {
         return -1;
     }
@@ -93,12 +95,13 @@ void Superblock::deleteAllInodes()
 {
     for (Inode* inode : all_inodes_)
     {
+        debug(SUPERBLOCK, "~Superblock remove dentries for inode %p\n", inode);
         while(!inode->getDentrys().empty())
         {
             delete inode->getDentrys().front();
         }
 
-        debug(SUPERBLOCK, "~Superblock write inode to disc\n");
+        debug(SUPERBLOCK, "~Superblock write inode %p to disc\n", inode);
         writeInode(inode);
 
         debug(SUPERBLOCK, "~Superblock delete inode %p\n", inode);

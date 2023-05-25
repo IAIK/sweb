@@ -3,6 +3,8 @@
 #include "string.h"
 #include "stdlib.h"
 #include "nonstd.h"
+#include "dirent.h"
+#include "fcntl.h"
 #include "sys/syscall.h"
 #include "wait.h"
 #include "assert.h"
@@ -19,7 +21,7 @@
 
 #define SHELL_MAX_ARGS 10
 #define SHELL_BUFFER_SIZE 256
-#define SHELL_DIR_CONTENT_SIZE 4096
+#define SHELL_DIR_CONTENT_SIZE 8192
 
 
 int running = 1;
@@ -29,8 +31,15 @@ char buffer[SHELL_BUFFER_SIZE];
 char command[SHELL_BUFFER_SIZE];
 char last_command[SHELL_BUFFER_SIZE];
 char args[SHELL_MAX_ARGS][SHELL_BUFFER_SIZE];
-char dir_content[SHELL_DIR_CONTENT_SIZE];
-char* tab_cursor = dir_content;
+char dirent_buffer[SHELL_DIR_CONTENT_SIZE];
+ssize_t ndents = 0;
+
+typedef struct
+{
+    const char* command;
+    size_t str_len;
+    size_t num_matches;
+} autocomplete_result_t;
 
 const char* sweb = \
 "  _____              _\n"
@@ -40,19 +49,20 @@ const char* sweb = \
 " /\\__/ /\\      /  __/ |_) |\n"
 " \\____/  \\_/\\_/ \\___|____/\n";
 
+const char* builtin_commands[] = {"ls", "exit", "help", "clear"};
+
+const char* d_type_str[] = {
+    // see constants in dirent.h
+    "F", // File
+    "D", // Directory
+    "L", // Link
+    "C", // Chardev
+    "B"  // Blockdev
+};
 
 /// --------------------------------
 ///         Helper Functions
 /// --------------------------------
-
-
-char* findOccurrence(char* file_list, char* user_input) {
-  char* occurrence = strstr(file_list, user_input);
-  while(occurrence != NULL && occurrence != file_list && *(occurrence - 1) != '\n') {
-    occurrence = strstr(occurrence + 1, user_input);
-  }
-  return occurrence;
-}
 
 size_t copyAndFlushBuffer(char* src_buffer, char* dst_buffer) {
   memcpy(dst_buffer, src_buffer, SHELL_BUFFER_SIZE);
@@ -62,6 +72,7 @@ size_t copyAndFlushBuffer(char* src_buffer, char* dst_buffer) {
   return length_string;
 }
 
+// FIXME: This function is broken. Cannot get the size of an array via a pointer
 int isCharArrayFilledWithZeroes(const char* array) {
   int array_size = sizeof(array);
   for(int i = 0; i < array_size; ++i) {
@@ -82,40 +93,6 @@ void printDivider() {
   printf("%s\n", SHELL_DIVIDER);
 }
 
-size_t dirEntryLength(const char* dir_entry) {
-  size_t count = 0;
-  while(dir_entry[count] != '\n' && ++count);
-  assert(count < SHELL_BUFFER_SIZE);
-  return count;
-}
-
-void listAllMatches(const char* needle) {
-  char* print_dir_ptr = dir_content;
-  while(1) {
-    print_dir_ptr = findOccurrence(print_dir_ptr, buffer);
-    if(!print_dir_ptr) {
-      return;
-    }
-    size_t count = dirEntryLength(print_dir_ptr);
-    int is_same_string = 1;
-    for(int i = 0; i < count; ++i) {
-      if(print_dir_ptr[i] != needle[i]) {
-        is_same_string = 0;
-        break;
-      }
-    }
-    printf(is_same_string ? " > " : "   ");
-    write(STDOUT_FILENO, print_dir_ptr, count);
-    if(is_same_string) {
-      write(STDOUT_FILENO, " <", 3);
-    }
-    printf("\n");
-    print_dir_ptr++;
-    if(print_dir_ptr >= dir_content + SHELL_DIR_CONTENT_SIZE) {
-      return;
-    }
-  }
-}
 
 int splitCommandAndArguments() {
   assert(buffer[SHELL_BUFFER_SIZE - 1] == 0);
@@ -147,6 +124,114 @@ int splitCommandAndArguments() {
   return arg_counter;
 }
 
+ssize_t getdentsBuffer(const char* path, char* buffer, size_t buffer_size)
+{
+    if (!path)
+        return -1;
+
+    int usr_fd = open(path, O_RDONLY);
+    if (usr_fd == -1)
+    {
+        printf("Dir open failed\n");
+        return -1;
+    }
+
+    ssize_t ndents = getdents(usr_fd, buffer, buffer_size);
+
+    close(usr_fd);
+
+    return ndents;
+}
+
+int ls(const char* path)
+{
+    ssize_t ndents = getdentsBuffer(path, dirent_buffer, sizeof(dirent_buffer));
+
+    if (ndents < 0)
+    {
+        printf("Unable to get directory content for %s", path);
+        return -1;
+    }
+
+    for (size_t dpos = 0; dpos < (size_t)(ndents);)
+    {
+        dirent* dent = (dirent*)(dirent_buffer + dpos);
+        printf("[%s] %s\n", dent->d_type <= 4 ? d_type_str[dent->d_type] : "?",
+               dent->d_name);
+
+        dpos += dent->d_offs_next;
+        if (dent->d_offs_next == 0)
+            break;
+    }
+
+    return 0;
+}
+
+autocomplete_result_t autocomplete(const char* user_input, const char* path)
+{
+    autocomplete_result_t res;
+    memset(&res, 0, sizeof(res));
+
+    ssize_t ndents = getdentsBuffer(path, dirent_buffer, sizeof(dirent_buffer));
+
+    for (size_t dpos = 0; dpos < (size_t)(ndents);)
+    {
+        dirent* dent = (dirent*)(dirent_buffer + dpos);
+
+        if (strstr(dent->d_name, user_input) == dent->d_name)
+        {
+            ++res.num_matches;
+            if (res.num_matches > 1)
+                printf("\n%s", dent->d_name);
+            if (!res.command)
+            {
+                res.command = dent->d_name;
+                res.str_len = strlen(res.command);
+            }
+            else
+            {
+                size_t i = 0;
+                while (i < res.str_len && res.command[i] && dent->d_name[i] &&
+                       res.command[i] == dent->d_name[i])
+                    ++i;
+                res.str_len = i;
+            }
+        }
+
+        dpos += dent->d_offs_next;
+        if (dent->d_offs_next == 0)
+            break;
+    }
+
+    for (size_t i = 0; i < sizeof(builtin_commands) / sizeof(builtin_commands[0]); ++i)
+    {
+        if (strstr(builtin_commands[i], user_input) == builtin_commands[i])
+        {
+            ++res.num_matches;
+            if (res.num_matches > 1)
+                printf("\n%s", builtin_commands[i]);
+            if (!res.command)
+            {
+                res.command = builtin_commands[i];
+                res.str_len = strlen(res.command);
+            }
+            else
+            {
+                size_t j = 0;
+                while (j < res.str_len && res.command[j] && builtin_commands[i][j] &&
+                       res.command[j] == builtin_commands[i][j])
+                    ++j;
+                res.str_len = j;
+            }
+        }
+    }
+
+    if (res.num_matches > 1)
+        printf("\n%s", res.command);
+
+    return res;
+}
+
 void printAvailableCommands() {
   printf("\n"
          " - help or h              | List all commands\n"
@@ -164,7 +249,7 @@ void printAvailableCommands() {
 /// ---------------------------------
 
 
-void readCommand() {
+size_t readCommand() {
   printf("\n%s", SHELL_CMD_LINE_PREFIX);
   size_t counter = 0;
   char temp_buffer[SHELL_BUFFER_SIZE] = {[SHELL_BUFFER_SIZE - 1] = 0};
@@ -205,35 +290,35 @@ void readCommand() {
         }
         counter--;
         break;
-      case '\t': {
+      case '\t':
+      {
         if (counter == 0) {
-          printDivider();
-          __syscall(sc_pseudols, (size_t)SHELL_EXECUTABLE_PREFIX, 0, 0, 0, 0);
-          printf("\n\n%s", SHELL_CMD_LINE_PREFIX);
-          break;
-        }
-        if(strcmp(buffer, ".") == 0 || strcmp(buffer, "..") == 0) {
-          break;
+            printDivider();
+            ls(SHELL_EXECUTABLE_PREFIX);
+            printf("\n\n%s", SHELL_CMD_LINE_PREFIX);
+            break;
         }
 
-        tab_cursor = temp_buffer_empty ? dir_content : tab_cursor;
-        char* occurrence = findOccurrence(tab_cursor, buffer);
-        if(!occurrence) {
-          tab_cursor = dir_content;
-          occurrence = findOccurrence(tab_cursor, buffer);
-          if(!occurrence) {
-            continue;
-          }
+        autocomplete_result_t res = autocomplete(buffer, SHELL_EXECUTABLE_PREFIX);
+        if (!res.command || !res.str_len)
+            continue; // no such file
+
+        if (res.num_matches > 1)
+            printf("\n%s%s", SHELL_CMD_LINE_PREFIX, buffer);
+
+        const char* completion = res.command;
+        completion += counter;
+
+        int i;
+        for (i = 0;
+                completion[i] && completion[i] != '\n' &&
+                counter < res.str_len && counter < SHELL_DIR_CONTENT_SIZE - 1;
+                i++, counter++)
+        {
+            buffer[counter] = completion[i];
         }
 
-        printDivider();
-        listAllMatches(occurrence);
-        printf("\n%s", SHELL_CMD_LINE_PREFIX);
-        size_t count = dirEntryLength(occurrence);
-        write(STDOUT_FILENO, occurrence, count);
-        memcpy(temp_buffer, occurrence, count);
-        temp_buffer[count] = 0;
-        tab_cursor = occurrence + 1 >= dir_content + SHELL_DIR_CONTENT_SIZE ? dir_content : occurrence + 1;
+        write(STDOUT_FILENO, completion, i);
         break;
       }
       case SHELL_KEY_UP:
@@ -246,14 +331,12 @@ void readCommand() {
         counter = strlen(buffer);
         write(STDOUT_FILENO, buffer, counter);
         memset(temp_buffer, 0, SHELL_BUFFER_SIZE);
-        tab_cursor = dir_content;
         break;
       case SHELL_KEY_DOWN:
         clearLine();
         printf("%s", SHELL_CMD_LINE_PREFIX);
         memset(buffer, 0, SHELL_BUFFER_SIZE);
         memset(temp_buffer, 0, SHELL_BUFFER_SIZE);
-        tab_cursor = dir_content;
         counter = 0;
         break;
       default:
@@ -268,23 +351,28 @@ void readCommand() {
     }
   }
   buffer[SHELL_BUFFER_SIZE - 1] = 0;
-  memcpy(last_command, buffer, SHELL_BUFFER_SIZE);
+
+  if (counter) {
+      memcpy(last_command, buffer, SHELL_BUFFER_SIZE);
+  }
+
+  return counter;
 }
 
 void handleCommand() {
   int arg_counter = splitCommandAndArguments();
   if(SHELL_ENABLE_DEBUG_ARGS) {
-    printf("Captured Command = %s (%ld)\n", command, strlen(command));
+    printf("Captured Command = %s (%zd)\n", command, strlen(command));
     for(int i = 0; i < arg_counter; ++i) {
       // Split up due to 256 byte printf limit
       printf("Arg #%d: ", i  + 1);
       printf("%s", args[i]);
-      printf(" (%ld)\n", strlen(args[i]));
+      printf(" (%zd)\n", strlen(args[i]));
     }
   }
 
   if (strcmp(command, "ls") == 0 || strcmp(command, "l") == 0) {
-    __syscall(sc_pseudols, (size_t)(arg_counter > 0 ? args[0] : "."), 0, 0, 0, 0);
+    ls((arg_counter > 0 ? args[0] : "."));
     return;
   }
 
@@ -316,7 +404,7 @@ void handleCommand() {
       // Split up due to 256 byte printf limit
       printf("Unknown command: ");
       printf("%s", command);
-      printf(" (%ld)\n ", strlen(command));
+      printf(" (%zd)\n ", strlen(command));
     }
     return;
   }
@@ -346,11 +434,12 @@ void handleCommand() {
 int main(int argc, char* argv[]) {
   printf("\n%s\nSWEB-Pseudo-Shell Starting...\n", sweb);
   printAvailableCommands();
-  __syscall(sc_pseudols, (size_t)SHELL_EXECUTABLE_PREFIX,
-            (size_t)dir_content, sizeof(dir_content), 0, 0);
+
   while(running) {
-    readCommand();
-    handleCommand();
+    size_t command_len = readCommand();
+    if (command_len > 0) {
+        handleCommand();
+    }
   }
   return exit_code;
 }

@@ -1,8 +1,10 @@
 #pragma once
 
-#include "types.h"
-#include "ustring.h"
 #include "Path.h"
+
+#include "types.h"
+
+#include "EASTL/string.h"
 
 class Dentry;
 class VfsMount;
@@ -23,7 +25,7 @@ class FileSystemInfo
 
   public:
     FileSystemInfo();
-    ~FileSystemInfo();
+    ~FileSystemInfo() = default;
     FileSystemInfo(const FileSystemInfo& fsi);
 
     /**
@@ -67,4 +69,3 @@ extern FileSystemInfo* default_working_dir;
 // you use a different getcwd() method depending on where your cpp is being compiled
 //   (it can come either from Thread.cpp or from exe2minixfs.cpp)
 FileSystemInfo* getcwd();
-

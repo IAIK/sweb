@@ -1,16 +1,23 @@
-#include <mm/KernelMemoryManager.h>
 #include "Console.h"
-#include "Terminal.h"
+
 #include "KeyboardManager.h"
-#include "Scheduler.h"
 #include "PageManager.h"
+#include "Scheduler.h"
+#include "ScopeLock.h"
+#include "Terminal.h"
 #include "backtrace.h"
+#include <mm/KernelMemoryManager.h>
+
+#include "ArchMulticore.h"
+
+#include "debug.h"
 
 Console* main_console;
 
-Console::Console(uint32, const char* name) : Thread(0, name, Thread::KERNEL_THREAD), console_lock_("Console::console_lock_"),
+Console::Console([[maybe_unused]] uint32 num_terminals, const char* name) : Thread(nullptr, name, Thread::KERNEL_THREAD), console_lock_("Console::console_lock_"),
     set_active_lock_("Console::set_active_state_lock_"), locked_for_drawing_(0), active_terminal_(0)
 {
+  debug(CONSOLE, "Created console at [%p, %p)\n", this, (char*)this + sizeof(*this));
 }
 
 void Console::lockConsoleForDrawing()
@@ -27,28 +34,43 @@ void Console::unLockConsoleForDrawing()
 
 void Console::handleKey(uint32 key)
 {
-  KeyboardManager * km = KeyboardManager::instance();
-
-  // the keycode for F1 is 0x80, while F2..F12 have keycodes 0x82..0x8e
-  uint32 terminal_selected = 0;
-  if (key == KEY_F1)
-    terminal_selected = 0;
-  else
-    terminal_selected = key - (KEY_F2 - 1);
+  KeyboardManager * km = &KeyboardManager::instance();
 
   if (km->isShift())
   {
-    if (terminal_selected < getNumTerminals())
-      setActiveTerminal(terminal_selected);
+      // the keycode for F1 is 0x80, while F2..F12 have keycodes 0x82..0x8e
+      uint32 terminal_selected = 0;
+      if (key == KEY_F1)
+          terminal_selected = 0;
+      else
+          terminal_selected = key - (KEY_F2 - 1);
 
-    return;
+      if (terminal_selected < getNumTerminals())
+          setActiveTerminal(terminal_selected);
+
+      return;
   }
 
-// else...
   switch (key)
   {
+    case KEY_F7:
+
+      ArchMulticore::stopOtherCpus();
+      Scheduler::instance()->printThreadList();
+      Scheduler::instance()->printStackTraces();
+      Scheduler::instance()->printLockingInformation();
+      for(auto* t : Scheduler::instance()->threads_)
+      {
+              kprintfd("Thread %p = %s\n", t, t->getName());
+              ArchThreads::printThreadRegisters(t, true);
+      }
+      assert(false && "F7 pressed");
+      break;
+    case KEY_F8:
+      debug_print_to_fb = !debug_print_to_fb;
+      break;
     case KEY_F9:
-      PageManager::instance()->printBitmap();
+      PageManager::instance().printUsageInfo();
       kprintfd("Used kernel memory: %zu\n", KernelMemoryManager::instance()->getUsedKernelMemory(true));
       break;
 
@@ -75,33 +97,34 @@ uint32 Console::getNumTerminals() const
   return terminals_.size();
 }
 
-Terminal *Console::getActiveTerminal()
+Terminal *Console::getActiveTerminal() const
 {
+  assert(active_terminal_ < terminals_.size());
   return terminals_[active_terminal_]; // why not locked? integer read is consistent anyway
 }
 
-Terminal *Console::getTerminal(uint32 term)
+Terminal *Console::getTerminal(uint32 term) const
 {
+  assert(term < terminals_.size());
   return terminals_[term];
 }
 
 void Console::setActiveTerminal(uint32 term)
 {
-  set_active_lock_.acquire();
+  ScopeLock l(set_active_lock_);
 
-  Terminal *t = terminals_[active_terminal_];
+  assert(term < terminals_.size());
+  Terminal* t = terminals_[active_terminal_];
   t->unSetAsActiveTerminal();
 
   t = terminals_[term];
   t->setAsActiveTerminal();
   active_terminal_ = term;
-
-  set_active_lock_.release();
 }
 
-void Console::Run(void)
+void Console::Run()
 {
-  KeyboardManager * km = KeyboardManager::instance();
+  KeyboardManager * km = &KeyboardManager::instance();
   uint32 key;
   do
   {
@@ -125,7 +148,7 @@ void Console::Run(void)
     Scheduler::instance()->yield();
   } while (1);
 }
-bool Console::isDisplayable(uint32 key)
+bool Console::isDisplayable(uint32 key) const
 {
   return (((key & 127) >= ' ') || (key == '\n') || (key == '\b'));
 }

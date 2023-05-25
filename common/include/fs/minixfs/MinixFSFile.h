@@ -2,10 +2,9 @@
 
 #include "File.h"
 
-class MinixFSFile : public File
+class MinixFSFile : public SimpleFile
 {
-  public:
-
+public:
     /**
      * constructor
      * @param inode the inode of the file
@@ -14,30 +13,11 @@ class MinixFSFile : public File
      */
     MinixFSFile(Inode* inode, Dentry* dentry, uint32 flag);
 
-    virtual ~MinixFSFile();
-
-    /**
-     * reads from the file
-     * @param buffer the buffer where the data is written to
-     * @param count the number of bytes to read
-     * @param offset the offset to read from counted from the current file position
-     * @return the number of bytes read
-     */
-    virtual int32 read(char *buffer, size_t count, l_off_t offset);
-
-    /**
-     * writes to the file
-     * @param buffer the buffer where the data is read from
-     * @param count the number of bytes to write
-     * @param offset the offset to write from counted from the current file position
-     * @return the number of bytes written
-     */
-    virtual int32 write(const char *buffer, size_t count, l_off_t offset);
+    ~MinixFSFile() override = default;
 
     /**
      * writes all data to disc
      * @return 0 on success
      */
-    virtual int32 flush();
+    int32 flush() override;
 };
-

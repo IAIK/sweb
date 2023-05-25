@@ -1,8 +1,10 @@
 #pragma once
 
-#include "types.h"
 #include "Console.h"
+#include "VgaColors.h"
 #include "chardev.h"
+
+#include "types.h"
 
 class Terminal : public CharacterDevice
 {
@@ -16,7 +18,7 @@ class Terminal : public CharacterDevice
       EN = 0, DE = 1
     };
 
-    static uint32 const TERMINAL_BUFFER_SIZE = 256;
+    static const uint32 TERMINAL_BUFFER_SIZE = 256;
 
     /**
      * Constructor creates the Terminal Character Device.
@@ -38,14 +40,14 @@ class Terminal : public CharacterDevice
      * Writes a string to the terminal.
      * @param string the string to write
      */
-    void writeString(char const *string);
+    void writeString(const char* string);
 
     /**
      * Writes a buffer with the given length to the terminal.
      * @param buffer the buffer to write
      * @param len the buffer's length
      */
-    void writeBuffer(char const *buffer, size_t len);
+    void writeBuffer(const char* buffer, size_t len);
 
     /**
      * Writes Data starting at the offset from the buffer with the given length to the terminal.
@@ -54,10 +56,10 @@ class Terminal : public CharacterDevice
      * @param buffer the buffer to write
      * @return the size
      */
-    virtual int32 writeData(uint32 offset, uint32 size, const char*buffer);
+    int32 writeData(uint32 offset, uint32 size, const char*buffer) override;
 
-    void setForegroundColor(Console::CONSOLECOLOR const &color);
-    void setBackgroundColor(Console::CONSOLECOLOR const &color);
+    void setForegroundColor(CONSOLECOLOR const &color);
+    void setBackgroundColor(CONSOLECOLOR const &color);
 
     /**
      * Reads one character.from the input
@@ -94,7 +96,7 @@ class Terminal : public CharacterDevice
     void clearBuffer();
     void putInBuffer(uint32 key);
 
-    void initTerminalColors(Console::CONSOLECOLOR fg, Console::CONSOLECOLOR bg);
+    void initTerminalColors(CONSOLECOLOR fg, CONSOLECOLOR bg);
 
     void backspace();
 
@@ -106,11 +108,6 @@ class Terminal : public CharacterDevice
     uint32 remap(uint32 key);
 
     void setLayout(Terminal::LAYOUTS layout);
-
-    bool isLockFree()
-    {
-      return mutex_.isFree();
-    }
 
   protected:
 
@@ -126,14 +123,14 @@ class Terminal : public CharacterDevice
      */
     void writeInternal(char character);
 
-    uint32 getNumRows() const;
-    uint32 getNumColumns() const;
+    [[nodiscard]] uint32 getNumRows() const;
+    [[nodiscard]] uint32 getNumColumns() const;
 
     uint32 setCharacter(uint32 row, uint32 column, uint8 character);
     void scrollUp();
 
-    bool isLetter(uint32 key);
-    bool isNumber(uint32 key);
+    static bool isLetter(uint32 key);
+    static bool isNumber(uint32 key);
 
     void clearScreen();
     void fullRedraw();
@@ -155,4 +152,3 @@ class Terminal : public CharacterDevice
     LAYOUTS layout_;
 
 };
-

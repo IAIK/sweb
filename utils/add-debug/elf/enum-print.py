@@ -1,3 +1,7 @@
+# Copyright (c) 2013 Austin T. Clements. All rights reserved.
+# Use of this source code is governed by an MIT license
+# that can be found in the LICENSE file.
+
 import sys, re
 from optparse import OptionParser
 
@@ -92,7 +96,7 @@ def make_to_string(typ, arg):
     print("        }")
     print("        return %s;" % expr_remainder(typ, arg))
     print("}")
-    print
+    print()
 
 def make_to_string_mask(typ, arg):
     print("std::string")
@@ -109,7 +113,7 @@ def make_to_string_mask(typ, arg):
     print("        else res.pop_back();")
     print("        return res;")
     print("}")
-    print
+    print()
 
 def do_enum_body(name, toks):
     keys = []

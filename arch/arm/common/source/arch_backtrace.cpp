@@ -1,11 +1,14 @@
-#include "kprintf.h"
-#include "Thread.h"
 #include "arch_backtrace.h"
+
 #include "InterruptUtils.h"
-#include "ArchThreads.h"
 #include "KernelMemoryManager.h" // for use of "kernel_end_address"
-#include "umap.h"
+#include "Thread.h"
+#include "kprintf.h"
+
 #include "ArchCommon.h"
+#include "ArchThreads.h"
+
+#include "EASTL/map.h"
 
 struct StackFrame
 {
@@ -76,5 +79,3 @@ int backtrace_user(pointer *call_stack, int size, Thread *thread, bool /*use_sto
 
   return i;
 }
-
-

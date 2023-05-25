@@ -1,10 +1,12 @@
 #include "FrameBufferConsole.h"
-#include "ArchCommon.h"
-#include "Terminal.h"
+
 #include "KeyboardManager.h"
-#include "kprintf.h"
 #include "Scheduler.h"
+#include "Terminal.h"
+#include "kprintf.h"
 #include "kstring.h"
+
+#include "ArchCommon.h"
 
 FrameBufferConsole::FrameBufferConsole(uint32 num_terminals) :
     Console(num_terminals, "VESAConsoleThread")
@@ -74,8 +76,10 @@ void FrameBufferConsole::setPixel(uint32 x, uint32 y, uint8 r, uint8 g, uint8 b)
   lfb[offset] = color;
 }
 
-uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&column, uint8 const &character,
-                                               uint8 const &state)
+uint32 FrameBufferConsole::consoleSetCharacter(const uint32& row,
+                                               const uint32& column,
+                                               const uint8& character,
+                                               const uint8& state)
 {
   CONSOLECOLOR fg, bg;
   colorsFromState(state, fg, bg);
@@ -111,7 +115,7 @@ uint32 FrameBufferConsole::consoleSetCharacter(uint32 const &row, uint32 const&c
   return 0;
 }
 
-void FrameBufferConsole::consoleScrollUp(uint8 const &state)
+void FrameBufferConsole::consoleScrollUp(const uint8& state)
 {
   CONSOLECOLOR fg, bg;
   colorsFromState(state, fg, bg);
@@ -133,52 +137,52 @@ uint16 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
   uint8 r = 0, g = 0, b = 0;
   switch(color)
   {
-  case BLACK:
+  case CONSOLECOLOR::BLACK:
     r = 0; g = 0; b = 0;
     break;
-  case BLUE:
+  case CONSOLECOLOR::BLUE:
     r = 0; g = 0; b = 255;
     break;
-  case GREEN:
+  case CONSOLECOLOR::GREEN:
     r = 0; g = 200; b = 0;
     break;
-  case CYAN:
+  case CONSOLECOLOR::CYAN:
     r = 0; g = 255; b = 255;
     break;
-  case RED:
+  case CONSOLECOLOR::RED:
     r = 255; g = 0; b = 0;
     break;
-  case MAGENTA:
+  case CONSOLECOLOR::MAGENTA:
     r = 255; g = 0; b = 255;
     break;
-  case BROWN:
+  case CONSOLECOLOR::BROWN:
     r = 165; g = 42; b = 42;
     break;
-  case WHITE:
+  case CONSOLECOLOR::WHITE:
     r = 245; g = 245; b = 245;
     break;
-  case DARK_GREY:
+  case CONSOLECOLOR::DARK_GREY:
     r = 169; g = 169; b = 169;
     break;
-  case BRIGHT_BLUE:
+  case CONSOLECOLOR::BRIGHT_BLUE:
     r = 144, g = 144; b = 238;
     break;
-  case BRIGHT_GREEN:
+  case CONSOLECOLOR::BRIGHT_GREEN:
     r = 144; g = 238; b = 144;
     break;
-  case BRIGHT_CYAN:
+  case CONSOLECOLOR::BRIGHT_CYAN:
     r = 224; g = 255; b = 255;
     break;
-  case PINK:
+  case CONSOLECOLOR::PINK:
     r = 255; g = 192; b = 203;
     break;
-  case BRIGHT_MAGENTA:
+  case CONSOLECOLOR::BRIGHT_MAGENTA:
     r = 255; g = 100; b = 255;
     break;
-  case YELLOW:
+  case CONSOLECOLOR::YELLOW:
     r = 255; g = 255; b = 0;
     break;
-  case BRIGHT_WHITE:
+  case CONSOLECOLOR::BRIGHT_WHITE:
     r = 255; g = 255; b = 255;
     break;
   }
@@ -188,7 +192,7 @@ uint16 FrameBufferConsole::convertConsoleColor(CONSOLECOLOR color)
   return scaled_b | (scaled_g << 5) | (scaled_r << 11);
 }
 
-void FrameBufferConsole::colorsFromState(uint8 const &state, CONSOLECOLOR &fg, CONSOLECOLOR &bg)
+void FrameBufferConsole::colorsFromState(const uint8& state, CONSOLECOLOR& fg, CONSOLECOLOR& bg)
 {
   fg = (CONSOLECOLOR) (state & 15);
   bg = (CONSOLECOLOR) ((state & 240) >> 4);

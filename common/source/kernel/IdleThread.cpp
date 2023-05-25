@@ -1,18 +1,32 @@
 #include "IdleThread.h"
-#include "Scheduler.h"
-#include "ArchCommon.h"
 
-IdleThread::IdleThread() : Thread(0, "IdleThread", Thread::KERNEL_THREAD)
+#include "Scheduler.h"
+#include "VgaColors.h"
+
+#include "ArchCommon.h"
+#include "ArchMulticore.h"
+
+#include "assert.h"
+#include "debug.h"
+
+IdleThread::IdleThread() :
+    Thread(nullptr, "IdleThread", Thread::KERNEL_THREAD)
 {
+    console_color = CONSOLECOLOR::WHITE;
+}
+
+IdleThread::~IdleThread()
+{
+    assert(false && "Idle thread should not be destroyed");
 }
 
 void IdleThread::Run()
 {
   uint32 last_ticks = 0;
   uint32 new_ticks = 0;
-  while (1)
+  while (true)
   {
-    new_ticks = Scheduler::instance()->getTicks();
+    new_ticks = Scheduler::instance()->getCpuTimerTicks();
     if (new_ticks == last_ticks)
     {
       last_ticks = new_ticks + 1;

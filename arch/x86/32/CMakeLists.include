@@ -1,35 +1,64 @@
+cmake_minimum_required(VERSION 3.13)
+
 set(KERNEL_BINARY kernel.x)
 
-set(ARCH_X86_32_KERNEL_CFLAGS -m32 -O0 -gstabs2 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${NOPICFLAG})
+set(ARCH_X86_32_KERNEL_CFLAGS -O0 -gdwarf-4 -Wall -Wextra -Werror -Wno-error=format -Wno-nonnull-compare -nostdinc -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-exceptions -fno-stack-protector -ffreestanding -mno-red-zone -mno-mmx -mno-sse2 -mno-sse3 -mno-3dnow ${NOPICFLAG})
 
-set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++17 -nostdinc++ -fno-rtti ${ARCH_X86_32_KERNEL_CFLAGS})
+set(KERNEL_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=gnu++20 -nostdinc++ -fno-rtti ${ARCH_X86_32_KERNEL_CFLAGS})
 set(KERNEL_CMAKE_C_FLAGS   ${CMAKE_C_FLAGS}   -std=gnu11 ${ARCH_X86_32_KERNEL_CFLAGS})
 
-set(ARCH_LD_ARGUMENTS -m32 -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -Wl,-melf_i386 -nostdinc -nostdlib -nodefaultlibs)
-set(KERNEL_LD_ARGUMENT ${ARCH_LD_ARGUMENTS} -mcmodel=kernel ${NOPIEFLAG})
-set(ARCH_APPEND_LD_ARGUMENTS )
+
+target_compile_options(arch_options INTERFACE
+    -m32)
+
+target_link_options(arch_options INTERFACE
+    -m32 -Wl,--build-id=none -Wl,-z,max-page-size=0x1000 -Wl,-melf_i386 -nostdinc -nostdlib -nodefaultlibs)
+
+
+target_link_options(kernel_options INTERFACE
+    -mcmodel=kernel ${NOPIEFLAG})
+
+target_compile_options(kernel_options INTERFACE
+    $<$<COMPILE_LANGUAGE:CXX>:${KERNEL_CMAKE_CXX_FLAGS}>
+    $<$<COMPILE_LANGUAGE:C>:${KERNEL_CMAKE_C_FLAGS}>
+    $<$<COMPILE_LANGUAGE:ASM>:${KERNEL_CMAKE_C_FLAGS}>
+    )
+
 
 MACRO(ARCH2OBJ ARCHOBJ_LIBNAME LIBRARY_NAME)
 ENDMACRO(ARCH2OBJ)
 
-
-set(KERNEL_IMAGE_OBJCOPY COMMAND ${OBJCOPY_EXECUTABLE} ${PROJECT_BINARY_DIR}/kernel.x --strip-unneeded ${PROJECT_BINARY_DIR}/kernel.x)
 if ("${DEBUG}" STREQUAL "1")
-  set(KERNEL_IMAGE_OBJCOPY )
+    set(STRIP_DEBUG_INFO "")
+else()
+    set(STRIP_DEBUG_INFO ${OBJCOPY_EXECUTABLE} $<TARGET_FILE:kernel> --strip-unneeded $<TARGET_FILE:kernel>)
 endif()
 
+add_custom_command(TARGET kernel
+    POST_BUILD
+    BYPRODUCTS kernel.dbg kernel.unstripped
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.unstripped
+    COMMAND ${PROJECT_BINARY_DIR}/add-dbg $<TARGET_FILE:kernel> ${PROJECT_BINARY_DIR}/kernel.dbg
+    COMMAND ${STRIP_DEBUG_INFO})
+
+add_dependencies(kernel add-dbg)
+
+
 set(AVAILABLE_MEMORY 8M)
+set(NUM_CPUS 4)
+
+set(DISK_MOUNT_ARG -drive file=${HDD_IMAGE},index=0,media=disk,id=sweb-hdd,if=ide)
 
 set(QEMU_BIN qemu-system-i386)
-set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} -drive file=${HDD_IMAGE},index=0,media=disk -debugcon stdio -no-reboot)
+set(QEMU_FLAGS_COMMON -m ${AVAILABLE_MEMORY} ${DISK_MOUNT_ARG} -smp ${NUM_CPUS} -debugcon stdio -no-reboot -no-shutdown -s -d guest_errors)
 string(REPLACE ";" " " QEMU_FLAGS_COMMON_STR "${QEMU_FLAGS_COMMON}")
 
 add_custom_target(kvm
-  COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -cpu kvm32
-  COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -cpu kvm32`"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  COMMAND reset -I
-  )
+    COMMAND ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -enable-kvm -cpu kvm32
+    COMMENT "Executing `${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -enable-kvm -cpu kvm32`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND reset -I
+    )
 
 # qemu: Run qemu in non debugging mode
 add_custom_target(qemu
@@ -41,31 +70,31 @@ add_custom_target(qemu
 
 # qemugdb: Run qemu in debugging mode
 add_custom_target(qemugdb
-	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -no-kvm -s -S
-	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -no-kvm -s -S on localhost:1234`"
+	COMMAND	${QEMU_BIN} ${QEMU_FLAGS_COMMON} -S
+	COMMENT "Executing `gdb ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -S on localhost:1234`"
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 	COMMAND reset -I
 	)
 
 # qemutacos: Run qemu in pipe monitor mode for tacos
 add_custom_target(qemutacos
-  COMMAND ${QEMU_BIN} -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
-  COMMENT "Executing `qemu-system-i386 -hda ${HDD_IMAGE} -m 8M -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout`"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  )
+    COMMAND ${QEMU_BIN} -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout
+    COMMENT "Executing `qemu-system-i386 -hda ${HDD_IMAGE} -m ${AVAILABLE_MEMORY} -snapshot -monitor pipe:qemu -nographic -debugcon /dev/stdout`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    )
 
 # net: Run qemu with network support, make sure to run after target "net-init"
 add_custom_target(net
-  COMMAND sudo ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32
-  COMMENT "Executing `sudo ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32`"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  COMMAND reset -I
-  )
+    COMMAND sudo ${QEMU_BIN} ${QEMU_FLAGS_COMMON} -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32
+    COMMENT "Executing `sudo ${QEMU_BIN} ${QEMU_FLAGS_COMMON_STR} -netdev bridge,id=hn0 -device rtl8139,netdev=hn0,id=nic1 -cpu qemu32`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND reset -I
+    )
 
 # net-init: Initializes br0 for target "net"
 add_custom_target(net-init
-  COMMAND sudo ${PROJECT_SOURCE_DIR}/utils/netinit.sh
-  COMMENT "Executing `sudo utils/netinit.sh`"
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  COMMAND reset -I
-  )
+    COMMAND sudo ${PROJECT_SOURCE_DIR}/utils/netinit.sh
+    COMMENT "Executing `sudo utils/netinit.sh`"
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND reset -I
+    )

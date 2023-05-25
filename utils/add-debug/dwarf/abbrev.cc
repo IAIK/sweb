@@ -1,3 +1,7 @@
+// Copyright (c) 2013 Austin T. Clements. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
+
 #include "internal.hh"
 
 using namespace std;
@@ -69,7 +73,7 @@ resolve_type(DW_AT name, DW_FORM form)
                 case DW_AT::ranges:
                         goto sec_offset;
                 default:
-                        // fallthrough
+                        // Fall through
                         break;
                 } // fallthrough
         case DW_FORM::data1:
@@ -128,6 +132,10 @@ resolve_type(DW_AT name, DW_FORM form)
                 case DW_AT::start_scope:
                 case DW_AT::ranges:
                         return value::type::rangelist;
+
+                case DW_AT::lo_user...DW_AT::hi_user:
+                        //HACK: ignore vendor extensions
+                        return value::type::invalid;
 
                 default:
                         throw format_error("DW_FORM_sec_offset not expected for attribute " +

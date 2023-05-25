@@ -10,6 +10,7 @@ extern "C"
 }
 #endif
 
+#include "IrqDomain.h"
 #include "RingBuffer.h"
 #include "atkbd.h"
 
@@ -113,16 +114,16 @@ extern "C"
 #define KEY_RWIN   (KEY_INS + 13)
 #define KEY_MENU   (KEY_INS + 14)
 
-class KeyboardManager
+class KeyboardManager : public IrqDomain
 {
   public:
     KeyboardManager();
-    ~KeyboardManager();
-    static KeyboardManager *instance()
+    ~KeyboardManager() = default;
+
+    static KeyboardManager& instance()
     {
-      if (!instance_)
-        instance_ = new KeyboardManager();
-      return instance_;
+      static KeyboardManager kb_manager;
+      return kb_manager;
     }
 
     bool getKeyFromKbd(uint32 &key)
@@ -193,9 +194,9 @@ class KeyboardManager
 
     RingBuffer<uint8> keyboard_buffer_;
 
-    static uint32 const STANDARD_KEYMAP[];
-    static uint32 const E0_KEYS[];
-    static uint8 const SET1_SCANCODES[];
+    static const uint32 STANDARD_KEYMAP[];
+    static const uint32 E0_KEYS[];
+    static const uint8 SET1_SCANCODES[];
     /**
      * converts the scancode into a key by looking in the Standard KeyMap
      *
@@ -215,9 +216,4 @@ class KeyboardManager
     uint32 usb_kbd_addr_;
     uint32 current_key_;
     uint32 next_is_up_;
-
-  protected:
-
-    static KeyboardManager *instance_;
 };
-

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "types.h"
 #include "Lock.h"
+
+#include "types.h"
+#include <cstddef>
 
 class Thread;
 
@@ -11,10 +13,10 @@ public:
 
   SpinLock(const char* name);
 
-  SpinLock(SpinLock const &) = delete;
-  SpinLock &operator=(SpinLock const&) = delete;
+  SpinLock(const SpinLock&) = delete;
+  SpinLock& operator=(const SpinLock&) = delete;
 
-  void acquire(pointer called_by = 0);
+  void acquire(pointer called_by = 0, bool yield = true);
 
   /**
    * Try to acquire the spinlock. If the spinlock is held by another thread at the moment,
@@ -33,7 +35,7 @@ public:
    * trust the return value only if the SpinLock can't be acquired or releases
    * when you're not locking. (= only use in atomic state)
    */
-  bool isFree();
+  bool isFree() const;
 
 private:
   /**
@@ -41,4 +43,3 @@ private:
    */
   size_t lock_;
 };
-

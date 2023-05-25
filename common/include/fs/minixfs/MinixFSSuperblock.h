@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Superblock.h"
 #include "MinixStorageManager.h"
-#include "umap.h"
+#include "Superblock.h"
+
+#include "EASTL/map.h"
 
 class Inode;
 class MinixFSInode;
@@ -11,39 +12,39 @@ class MinixFSType;
 
 class MinixFSSuperblock : public Superblock
 {
-  public:
+public:
     friend class MinixFSInode;
     friend class MinixFSZone;
     friend class MinixStorageManager;
 
-    MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset);
-    virtual ~MinixFSSuperblock();
+    MinixFSSuperblock(MinixFSType* fs_type, size_t s_dev, uint64 offset, uint64 partition_size);
+    ~MinixFSSuperblock() override;
 
     /**
      * creates one new inode of the superblock
      * @param type the file type of the new inode (I_DIR, I_FILE)
      * @return the new inode
      */
-    virtual Inode* createInode(uint32 type);
+    Inode* createInode(uint32 type) override;
 
     /**
      * reads one inode from the mounted file system
      * @param inode the inode to read
      * @return 0 on success
      */
-    virtual int32 readInode(Inode* inode);
+    int32 readInode(Inode* inode) override;
 
     /**
      * writes the inode from the mounted file system
      * @param inode the inode to write
      */
-    virtual void writeInode(Inode* inode);
+    void writeInode(Inode* inode) override;
 
     /**
      * removes one inode from the file system and frees all its resources
      * @param inode the inode to delete
      */
-    virtual void deleteInode(Inode* inode);
+    void deleteInode(Inode* inode) override;
 
     /**
      * add an inode to the all_inodes_ data structures
@@ -69,14 +70,43 @@ class MinixFSSuperblock : public Superblock
      */
     virtual void freeZone(uint16 index);
 
-  protected:
+    struct [[gnu::packed]] MinixFSSuperblockOnDiskDataV1
+    {
+        uint16 s_num_inodes;
+        uint16 s_num_zones;
+        uint16 s_imap_blocks;
+        uint16 s_zmap_blocks;
+        uint16 s_firstdatazone;
+        uint16 s_log_zone_size;
+        uint32 s_max_file_size;
+        uint16 s_magic;
+        uint16 s_mount_state;
+    };
 
+    struct [[gnu::packed]] MinixFSSuperblockOnDiskDataV3
+    {
+        uint32 s_num_inodes;
+        uint16 padding0;
+        uint16 s_imap_blocks;
+        uint16 s_zmap_blocks;
+        uint16 s_firstdatazone;
+        uint16 s_log_zone_size;
+        uint16 padding1;
+        uint32 s_max_file_size;
+        uint32 s_num_zones;
+        uint16 s_magic;
+        uint16 padding2;
+        uint16 s_blocksize;
+        uint8 s_disk_version;
+    };
+
+protected:
     /**
      * creates an Inode object with the given number from the file system
      * @param i_num the inode number
      * @return the Inode object
      */
-    MinixFSInode *getInode(uint16 i_num);
+    MinixFSInode* getInode(uint16 i_num);
 
     /**
      * creates an Inode object with the given number from the file system
@@ -87,14 +117,14 @@ class MinixFSSuperblock : public Superblock
      * @param is_already_loaded should be set to true if already loaded
      * @return the Inode object
      */
-    MinixFSInode *getInode(uint16 i_num, bool &is_already_loaded);
+    MinixFSInode* getInode(uint16 i_num, bool& is_already_loaded);
 
     /**
      * reads one Zone from the file system to the given buffer
      * @param zone the zone index to read
      * @param buffer the buffer to write in
      */
-    void readZone(uint16 zone, char *buffer);
+    void readZone(uint16 zone, char* buffer);
 
     /**
      * reads the given number of blocks from the file system to the given buffer
@@ -102,22 +132,22 @@ class MinixFSSuperblock : public Superblock
      * @param num_blocks the number of blcoks to read
      * @param buffer the buffer to write in
      */
-    void readBlocks(uint16 block, uint32 num_blocks, char *buffer);
+    void readBlocks(uint16 block, uint32 num_blocks, char* buffer);
 
     /**
      * writes one zone from the given buffer to the file system
      * @param zone the zone index to write
      * @param buffer the buffer to write
      */
-    void writeZone(uint16 zone, char *buffer);
+    void writeZone(uint16 zone, char* buffer);
 
     /**
-     * writes the given number of blcoks to the file system from the given buffer
+     * writes the given number of blocks to the file system from the given buffer
      * @param block the index of the first block to write
      * @param num_blocks the number of blocks to write
      * @param buffer the buffer to write
      */
-    void writeBlocks(uint16 block, uint32 num_blocks, char *buffer);
+    void writeBlocks(uint16 block, uint32 num_blocks, char* buffer);
 
     /**
      * writes the given number of bytes to the filesystem
@@ -128,7 +158,7 @@ class MinixFSSuperblock : public Superblock
      * @param buffer the buffer with the bytes to write
      * @return the number of bytes written
      */
-    int32 writeBytes(uint32 block, uint32 offset, uint32 size, char *buffer);
+    int32 writeBytes(uint32 block, uint32 offset, uint32 size, char* buffer);
 
     /**
      * reads the given number of bytes from the disc
@@ -139,14 +169,14 @@ class MinixFSSuperblock : public Superblock
      * @param buffer the buffer to write to
      * @return the number of bytes read
      */
-    int32 readBytes(uint32 block, uint32 offset, uint32 size, char *buffer);
+    int32 readBytes(uint32 block, uint32 offset, uint32 size, char* buffer);
 
     /**
      * reads the fs header
      */
     void readHeader();
-  private:
 
+private:
     /**
      * reads the root inode and its children from the filesystem
      */
@@ -185,8 +215,7 @@ class MinixFSSuperblock : public Superblock
 
     MinixStorageManager* storage_manager_;
 
-
-    ustl::map<uint32, Inode*> all_inodes_set_;
+    eastl::map<uint32, Inode*> all_inodes_set_;
 
     /**
      * pointer to self for compatability
@@ -194,8 +223,12 @@ class MinixFSSuperblock : public Superblock
     Superblock* superblock_;
 
     /**
-     * offset in the image file (in image util)
+     * offset in the partition
      */
     uint64 offset_;
-};
 
+    /**
+     * partition size in bytes
+     */
+    uint64 size_;
+};

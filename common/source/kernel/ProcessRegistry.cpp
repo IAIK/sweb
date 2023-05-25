@@ -1,113 +1,75 @@
-#include <mm/KernelMemoryManager.h>
 #include "ProcessRegistry.h"
+
+#include "KernelMemoryManager.h"
 #include "Scheduler.h"
 #include "UserProcess.h"
-#include "kprintf.h"
 #include "VfsSyscall.h"
 #include "VirtualFileSystem.h"
-#include "PageManager.h"
+#include "kprintf.h"
 
-ProcessRegistry* ProcessRegistry::instance_ = 0;
+#include "ArchMulticore.h"
 
-ProcessRegistry::ProcessRegistry(FileSystemInfo *root_fs_info, char const *progs[]) :
-    Thread(root_fs_info, "ProcessRegistry", Thread::KERNEL_THREAD), progs_(progs), progs_running_(0),
+ProcessRegistry* ProcessRegistry::instance_ = nullptr;
+
+ProcessRegistry::ProcessRegistry(FileSystemInfo* root_fs_info) :
+    default_working_dir_(root_fs_info),
+    progs_running_(0),
     counter_lock_("ProcessRegistry::counter_lock_"),
     all_processes_killed_(&counter_lock_, "ProcessRegistry::all_processes_killed_")
 {
-  instance_ = this; // instance_ is static! -> Singleton-like behaviour
-}
-
-ProcessRegistry::~ProcessRegistry()
-{
+  assert(default_working_dir_);
 }
 
 ProcessRegistry* ProcessRegistry::instance()
 {
+  assert(instance_ && "ProcessRegistry not yet initialized");
   return instance_;
 }
 
-void ProcessRegistry::Run()
+void ProcessRegistry::init(FileSystemInfo *root_fs_info)
 {
-  if (!progs_ || !progs_[0])
-    return;
-
-  debug(PROCESS_REG, "mounting userprog-partition \n");
-
-  debug(PROCESS_REG, "mkdir /usr\n");
-  assert( !VfsSyscall::mkdir("/usr", 0) );
-  debug(PROCESS_REG, "mount idea1\n");
-  assert( !VfsSyscall::mount("idea1", "/usr", "minixfs", 0) );
-
-  debug(PROCESS_REG, "mkdir /dev\n");
-  assert( !VfsSyscall::mkdir("/dev", 0) );
-  debug(PROCESS_REG, "mount devicefs\n");
-  assert( !VfsSyscall::mount(NULL, "/dev", "devicefs", 0) );
-
-
-  KernelMemoryManager::instance()->startTracing();
-
-  for (uint32 i = 0; progs_[i]; i++)
-  {
-    createProcess(progs_[i]);
-  }
-
-  counter_lock_.acquire();
-
-  while (progs_running_)
-    all_processes_killed_.wait();
-
-  counter_lock_.release();
-
-  debug(PROCESS_REG, "unmounting userprog-partition because all processes terminated \n");
-
-  VfsSyscall::umount("/usr", 0);
-  VfsSyscall::umount("/dev", 0);
-  vfs.rootUmount();
-
-  Scheduler::instance()->printStackTraces();
-  Scheduler::instance()->printThreadList();
-
-  PageManager* pm = PageManager::instance();
-  if(!DYNAMIC_KMM && pm->getNumFreePages() != pm->getNumPagesForUser())
-  {
-    PageManager::instance()->printBitmap();
-    debug(PM, "WARNING: You might be leaking physical memory pages somewhere\n");
-    debug(PM, "%u/%u free physical pages after unmounting detected\n",
-          pm->getNumFreePages(),
-          pm->getNumPagesForUser());
-  }
-
-  kill();
+    assert(!instance_ && "ProcessRegistry already initialized");
+    static ProcessRegistry inst(root_fs_info);
+    instance_ = &inst;
 }
 
 void ProcessRegistry::processExit()
 {
-  counter_lock_.acquire();
+  ScopeLock l(counter_lock_);
 
   if (--progs_running_ == 0)
-    all_processes_killed_.signal();
-
-  counter_lock_.release();
+    all_processes_killed_.broadcast();
 }
 
 void ProcessRegistry::processStart()
 {
-  counter_lock_.acquire();
+  ScopeLock l(counter_lock_);
   ++progs_running_;
-  counter_lock_.release();
 }
 
 size_t ProcessRegistry::processCount()
 {
+  // Note that the returned count value is out of date as soon
+  // as the lock is released
   ScopeLock lock(counter_lock_);
   return progs_running_;
 }
 
-void ProcessRegistry::createProcess(const char* path)
+void ProcessRegistry::waitAllKilled()
 {
-  debug(PROCESS_REG, "create process %s\n", path);
-  Thread* process = new UserProcess(path, new FileSystemInfo(*working_dir_));
+    ScopeLock l(counter_lock_);
+    while (progs_running_)
+        all_processes_killed_.wait();
+}
+
+int ProcessRegistry::createProcess(const char* path)
+{
+  int creation_status = -1;
+  Thread* process = new UserProcess(path, new FileSystemInfo(*default_working_dir_), 0, creation_status);
   debug(PROCESS_REG, "created userprocess %s\n", path);
+
   Scheduler::instance()->addNewThread(process);
   debug(PROCESS_REG, "added thread %s\n", path);
+
+  return creation_status;
 }

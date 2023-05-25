@@ -1,10 +1,12 @@
-#include "types.h"
 #include "board_constants.h"
-#include "init_boottime_pagetables.h"
-#include "assert.h"
-#include "kstring.h"
 #include "debug_bochs.h"
+#include "init_boottime_pagetables.h"
+#include "kstring.h"
 #include "offsets.h"
+
+#include "types.h"
+
+#include "assert.h"
 
 extern "C" void uartWritePostboot(const char *str);
 extern "C" void uartWritePreboot(const char *str);
@@ -159,13 +161,13 @@ extern "C" void setupSerialPort()
     uart->CR = 0;
     //the default clock seems to be 48Mhz
 
-    gpio_boot->GPFSEL1 &= ~(0x111 << (4 * 3));
+    gpio_boot->GPFSEL1 = gpio_boot->GPFSEL1 & ~(0x111 << (4 * 3));
     // set GPIO usage to uart
-    gpio_boot->GPFSEL1 |= (0x100 << (4 * 3));
+    gpio_boot->GPFSEL1 = gpio_boot->GPFSEL1 | (0x100 << (4 * 3));
     //do the same for pin 15
-    gpio_boot->GPFSEL1 &= ~(0x111 << (5 * 3));
+    gpio_boot->GPFSEL1 = gpio_boot->GPFSEL1 & ~(0x111 << (5 * 3));
     // set GPIO usage to uart
-    gpio_boot->GPFSEL1 |= (0x100 << (5 * 3));
+    gpio_boot->GPFSEL1 = gpio_boot->GPFSEL1 | (0x100 << (5 * 3));
 
     // disable the pullups
     gpio_boot->GPPUD = 0;

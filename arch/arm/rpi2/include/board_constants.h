@@ -1,10 +1,79 @@
 #pragma once
 
+#define MMIO_ORIGINAL    0x7e000000
+#define MMIO_REMAPPED    0x3f000000
+#define VIRT_MMIO_OFFSET 0x90000000
+
+#define MMIO_OFFSET(x) ((x) - MMIO_ORIGINAL)
+#define MMIO_TO_VIRT(x) (VIRT_MMIO_OFFSET + MMIO_OFFSET(x))
+
+#define BCM2836_INTERRUPT_CONTROLLER_BASE 0x7e00b200
+#define BCM2836_INTC_VIRT MMIO_TO_VIRT(BCM2836_INTERRUPT_CONTROLLER_BASE)
+
+
 #define SERIAL_BASE 0x86001000
 #define SERIAL_FLAG_REGISTER 0x18
 #define SERIAL_BUFFER_FULL (1 << 5)
 
-#define PIC_BASE 0x9000B200
+#define MMIO_BASE VIRT_MMIO_OFFSET + 0x3f0
+#define PIC_BASE BCM2836_INTC_VIRT
+#define TIMER_BASE VIRT_MMIO_OFFSET + 0xB400
 #define HCD_DESIGNWARE_BASE ((void*)0x90980000)
 #define BOARD_LOAD_BASE 0
 
+#define PIC_REG(offset) (uint32*)(PIC_BASE + (offset))
+
+#define PIC_ENABLE_BASIC_OFFSET 0x18
+
+#define PIC_PEND_BASIC    PIC_REG(0x00)
+#define PIC_PEND1         PIC_REG(0x04)
+#define PIC_PEND2         PIC_REG(0x08)
+#define PIC_FIQ_CONTROL   PIC_REG(0x0C)
+#define PIC_ENABLE1       PIC_REG(0x10)
+#define PIC_ENABLE2       PIC_REG(0x14)
+#define PIC_ENABLE_BASIC  PIC_REG(0x18)
+#define PIC_DISABLE1      PIC_REG(0x1C)
+#define PIC_DISABLE2      PIC_REG(0x20)
+#define PIC_DISABLE_BASIC PIC_REG(0x24)
+
+// IRQ pend basic
+#define PIC_IRQ_ARM_TIMER (1 << 0)
+#define PIC_IRQ_MAILBOX   (1 << 1)
+#define PIC_IRQ_DOORBELL0 (1 << 2)
+#define PIC_IRQ_DOORBELL1 (1 << 3)
+
+// IRQ pend1
+#define PIC_IRQ_SYSTIMER(x) (1 << (x))
+#define PIC_IRQ_AUX         (1 << 29)
+
+// IRQ pend2
+#define PIC_IRQ_GPIO(x) (1 << (17 + (x))
+#define PIC_IRQ_I2C     (1 << 21)
+#define PIC_IRQ_SPI     (1 << 22)
+#define PIC_IRQ_PCM     (1 << 23)
+#define PIC_IRQ_UART    (1 << 25)
+
+// Timer
+#define TIMER_REG(offset) (uint32*)(TIMER_BASE + (offset))
+
+#define TIMER_LOAD    TIMER_REG(0x00)
+#define TIMER_CTRL    TIMER_REG(0x08)
+#define TIMER_CLEAR   TIMER_REG(0x0C)
+
+#define TIMER_CTRL_32BIT  (1 << 1)
+#define TIMER_IRQ_ENABLE  (1 << 5)
+#define TIMER_CTRL_ENABLE (1 << 7)
+
+// CPU local interrupt controller
+#define LOCAL_INT_CONTROLLER_PHYS 0x40000000
+#define LOCAL_INT_CONTROLLER_VIRT 0x90100000
+
+#define ARM_CORE0_TIM_IRQCNTL_OFFS   0x40
+#define ARM_CORE0_IRQ_SOURCE_OFFS    0x60
+
+#define LOCAL_INT_CONTROLLER_REG(offs) (LOCAL_INT_CONTROLLER_VIRT + (offs))
+
+#define ARM_CORE0_TIM_IRQCNTL   LOCAL_INT_CONTROLLER_REG(ARM_CORE0_TIM_IRQCNTL_OFFS)
+#define ARM_CORE0_IRQ_SOURCE    LOCAL_INT_CONTROLLER_REG(ARM_CORE0_IRQ_SOURCE_OFFS)
+
+#define TIM_IRQCNTL_CNTVIRQ_IRQ (1 << 3)

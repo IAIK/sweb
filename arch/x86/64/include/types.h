@@ -1,56 +1,49 @@
 #pragma once
 
-typedef char int8;
-typedef unsigned char uint8;
+#include "stdint.h"
+#include "klibc/sys/types.h"
 
-typedef short int16;
-typedef unsigned short uint16;
+typedef int8_t int8;
+typedef uint8_t uint8;
 
-typedef int int32;
-typedef unsigned int uint32;
+typedef int16_t int16;
+typedef uint16_t uint16;
 
-typedef long unsigned int uint64;
-typedef long int int64;
+typedef int32_t int32;
+typedef uint32_t uint32;
 
-typedef uint64 pointer;
+typedef uint64_t uint64;
+typedef int64_t int64;
 
-typedef uint64 l_off_t;
+typedef uint64_t l_off_t;
 
-typedef uint64 mode_t;
-typedef uint64 uid_t;
-typedef uint64 gid_t;
-typedef uint64 size_t;
-typedef int64 ssize_t;
+typedef uint64_t mode_t;
+typedef uint64_t uid_t;
+typedef uint64_t gid_t;
 
-#pragma GCC poison double float
+typedef __SIZE_TYPE__ size_t;
+
+typedef uint64_t ppn_t;
+typedef size_t vpn_t;
+
+typedef size_t pointer;
+
+
+/* #pragma GCC poison double float */
 
 #define Min(x,y) (((x)<(y))?(x):(y))
 #define Max(x,y) (((x)>(y))?(x):(y))
 
 #define KERNEL_CS 0x10
 #define KERNEL_DS 0x20
-#define KERNEL_SS 0x20
+#define KERNEL_SS KERNEL_DS
 #define KERNEL_TSS 0x50
 #define DPL_KERNEL  0
 #define DPL_USER    3
-#define USER_CS (0x30|DPL_USER)
+#define USER_CS ((0x30)|DPL_USER)
 #define USER_DS ((0x40)|DPL_USER)
-#define USER_SS ((0x40)|DPL_USER)
+#define USER_SS USER_DS
 
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)
 #define unreachable()    __builtin_unreachable()
-
-typedef struct
-{
-    uint16 limitL;
-    uint16 baseLL;
-    uint8 baseLM;
-    uint8 typeL;
-    uint8 limitH :4;
-    uint8 typeH :4;
-    uint8 baseLH;
-    uint32 baseH;
-    uint32 reserved;
-}__attribute__((__packed__)) SegmentDescriptor;
-

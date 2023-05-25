@@ -1,13 +1,14 @@
-#include "fs/FileDescriptor.h"
 #include "fs/ramfs/RamFSSuperblock.h"
-#include "fs/ramfs/RamFSInode.h"
-#include "fs/ramfs/RamFSFile.h"
-#include "fs/ramfs/RamFSType.h"
-#include "fs/Dentry.h"
-#include "assert.h"
 
-#include "console/kprintf.h"
-#include "console/debug.h"
+#include "fs/Dentry.h"
+#include "fs/FileDescriptor.h"
+#include "fs/ramfs/RamFSFile.h"
+#include "fs/ramfs/RamFSInode.h"
+#include "fs/ramfs/RamFSType.h"
+
+#include "assert.h"
+#include "debug.h"
+
 #define ROOT_NAME "/"
 
 RamFSSuperblock::RamFSSuperblock(RamFSType* fs_type, uint32 s_dev) :
@@ -40,7 +41,7 @@ int32 RamFSSuperblock::readInode(Inode* inode)
 {
   assert(inode);
 
-  if (ustl::find(all_inodes_, inode) == all_inodes_.end())
+  if (eastl::find(all_inodes_.begin(), all_inodes_.end(), inode) == all_inodes_.end())
   {
     all_inodes_.push_back(inode);
   }
@@ -51,7 +52,7 @@ void RamFSSuperblock::writeInode(Inode* inode)
 {
   assert(inode);
 
-  if (ustl::find(all_inodes_, inode) == all_inodes_.end())
+  if (eastl::find(all_inodes_.begin(), all_inodes_.end(), inode) == all_inodes_.end())
   {
     all_inodes_.push_back(inode);
   }

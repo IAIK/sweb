@@ -25,6 +25,7 @@ class MinixFSZone
     void flush(uint32 inode_num);
     void freeZones();
 
+    void printZones();
   private:
 
     MinixFSSuperblock *superblock_;

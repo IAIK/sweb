@@ -1,12 +1,23 @@
-#include "backtrace.h"
-#include "Mutex.h"
+#include "ScopeLock.h"
 
-ScopeLock::ScopeLock(Mutex &m) : mutex_(m)
+#include "Mutex.h"
+#include "backtrace.h"
+
+ScopeLock::ScopeLock(Mutex& m, bool b, pointer called_by) :
+    mutex_(m),
+    use_mutex_(b)
 {
-  mutex_.acquire(getCalledBefore(1));
+    if (likely(use_mutex_))
+    {
+        mutex_.acquire(called_by);
+    }
 }
 
 ScopeLock::~ScopeLock()
 {
-  mutex_.release(getCalledBefore(1));
+    if (likely(use_mutex_))
+    {
+        mutex_.release(getCalledBefore(1));
+        use_mutex_ = false;
+    }
 }

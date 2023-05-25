@@ -1,10 +1,13 @@
 #pragma once
 
-#include "types.h"
-#include "kprintf.h"
-#include <ulist.h>
-#include <uatomic.h>
 #include "Dentry.h"
+#include "kprintf.h"
+
+#include "types.h"
+
+#include "EASTL/atomic.h"
+#include "EASTL/list.h"
+
 #include "assert.h"
 
 class File;
@@ -41,12 +44,12 @@ class Superblock;
 class Inode
 {
   protected:
-    ustl::list<Dentry*> i_dentrys_;
+    eastl::list<Dentry*> i_dentrys_;
 
     /**
      * The (open) file of this inode.
      */
-    ustl::list<File*> i_files_;
+    eastl::list<File*> i_files_;
 
     /**
      * the number of Dentry links to this inode.
@@ -74,7 +77,7 @@ class Inode
      * There are three possible inode state bits: I_DIRTY, I_LOCK, I_UNUSED.
      */
     uint32 i_state_;
-     
+
     /**
      * The inodes permission flag
      */
@@ -137,7 +140,7 @@ class Inode
      */
     virtual int32 symlink(Inode */*inode*/, Dentry */*dentry*/, const char */*link_name*/)
     {
-      return 0;
+      return -1;
     }
 
     /**
@@ -256,7 +259,7 @@ class Inode
       return i_type_;
     }
 
-    ustl::list<Dentry*>& getDentrys()
+    eastl::list<Dentry*>& getDentrys()
     {
       return i_dentrys_;
     }
@@ -276,7 +279,7 @@ class Inode
       return i_mode_;
     }
 
-    int32 flush()
+    virtual int32 flush()
     {
       return 0;
     }

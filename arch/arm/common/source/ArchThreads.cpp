@@ -1,13 +1,15 @@
 #include "ArchThreads.h"
-#include "ArchMemory.h"
-#include "kprintf.h"
-#include "paging-definitions.h"
-#include "offsets.h"
-#include "Thread.h"
+
 #include "Scheduler.h"
 #include "SpinLock.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+#include "paging-definitions.h"
 
-SpinLock global_atomic_add_lock("");
+#include "ArchMemory.h"
+
+SpinLock global_atomic_add_lock("global_atomic_add_lock");
 
 extern PageDirEntry kernel_page_directory[];
 
@@ -28,47 +30,67 @@ void ArchThreads::setAddressSpace(Thread *thread, ArchMemory& arch_memory)
     thread->user_registers_->ttbr0 = LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE;
 }
 
-void ArchThreads::createKernelRegisters(ArchThreadRegisters *&info, void* start_function, void* stack)
+void ArchThreads::switchToAddressSpace(Thread* thread)
 {
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
+    ArchMemory::loadPagingStructureRoot(thread->kernel_registers_->ttbr0);
+}
+
+void ArchThreads::switchToAddressSpace(ArchMemory& arch_memory)
+{
+    size_t ttbr0_value = (LOAD_BASE + arch_memory.page_dir_page_ * PAGE_SIZE);
+    ArchMemory::loadPagingStructureRoot(ttbr0_value);
+}
+
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createKernelRegisters(void* start_function, void* stack)
+{
+  assert(!((pointer)start_function & 0x3));
+
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
+
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
+
+  regs->pc = (pointer)start_function;
+  regs->lr = (pointer)start_function;
+  regs->cpsr = 0x6000001F;
+  regs->sp = (pointer)stack & ~0xF;
+  regs->r[11] = (pointer)stack & ~0xF; // r11 is the fp
+  regs->ttbr0 = pageDirectory;
+
+  return regs;
+}
+
+void ArchThreads::changeInstructionPointer(ArchThreadRegisters& info, void* function)
+{
+  info.pc = (pointer)function;
+  info.lr = (pointer)function;
+}
+
+void* ArchThreads::getInstructionPointer(ArchThreadRegisters& info)
+{
+    return (void*)info.pc;
+}
+
+eastl::unique_ptr<ArchThreadRegisters> ArchThreads::createUserRegisters(void* start_function, void* user_stack, void* kernel_stack)
+{
   assert(!((pointer)start_function & 0x3));
-  info->pc = (pointer)start_function;
-  info->lr = (pointer)start_function;
-  info->cpsr = 0x6000001F;
-  info->sp = (pointer)stack & ~0xF;
-  info->r[11] = (pointer)stack & ~0xF; // r11 is the fp
-  info->ttbr0 = pageDirectory;
-  assert((pageDirectory) != 0);
-  assert(((pageDirectory) & 0x3FFF) == 0);
-}
 
-void ArchThreads::changeInstructionPointer(ArchThreadRegisters *info, void* function)
-{
-  info->pc = (pointer)function;
-  info->lr = (pointer)function;
-}
+  auto regs = eastl::make_unique<ArchThreadRegisters>();
 
-void ArchThreads::createUserRegisters(ArchThreadRegisters *&info, void* start_function, void* user_stack, void* kernel_stack)
-{
-  info = (ArchThreadRegisters*)new uint8[sizeof(ArchThreadRegisters)];
-  memset((void*)info, 0, sizeof(ArchThreadRegisters));
   pointer pageDirectory = VIRTUAL_TO_PHYSICAL_BOOT(((pointer)kernel_page_directory));
   assert((pageDirectory) != 0);
   assert(((pageDirectory) & 0x3FFF) == 0);
-  assert(!((pointer)start_function & 0x3));
-  info->pc = (pointer)start_function;
-  info->lr = (pointer)start_function;
-  info->cpsr = 0x60000010;
-  info->sp = (pointer)user_stack & ~0xF;
-  info->r[11] = (pointer)user_stack & ~0xF; // r11 is the fp
-  info->sp0 = (pointer)kernel_stack & ~0xF;
-  info->ttbr0 = pageDirectory;
-  assert((pageDirectory) != 0);
-  assert(((pageDirectory) & 0x3FFF) == 0);
+
+  regs->pc = (pointer)start_function;
+  regs->lr = (pointer)start_function;
+  regs->cpsr = 0x60000010;
+  regs->sp = (pointer)user_stack & ~0xF;
+  regs->r[11] = (pointer)user_stack & ~0xF; // r11 is the fp
+  regs->sp0 = (pointer)kernel_stack & ~0xF;
+  regs->ttbr0 = pageDirectory;
+
+  return regs;
 }
 
 void ArchThreads::yield()
@@ -76,45 +98,7 @@ void ArchThreads::yield()
   asm("swi #0xffff");
 }
 
-extern "C" void memory_barrier();
 extern "C" uint32 arch_TestAndSet(uint32, uint32, uint32 new_value, uint32 *lock);
-uint32 ArchThreads::testSetLock(uint32 &lock, uint32 new_value)
-{
-  uint32 result;
-  memory_barrier();
-  asm("swp %[r], %[n], [%[l]]" : [r]"=&r"(result) : [n]"r"(new_value), [l]"r"(&lock));
-  memory_barrier();
-  return result;
-}
-
-extern "C" uint32 arch_atomic_add(uint32, uint32, uint32 increment, uint32 *value);
-uint32 ArchThreads::atomic_add(uint32 &value, int32 increment)
-{
-  global_atomic_add_lock.acquire();
-  uint32 result = value;
-  value += increment;
-  global_atomic_add_lock.release();
-  return result;
-}
-
-int32 ArchThreads::atomic_add(int32 &value, int32 increment)
-{
-  return (int32) ArchThreads::atomic_add((uint32 &) value, increment);
-}
-
-uint64 ArchThreads::atomic_add(uint64 &value, int64 increment)
-{
-  global_atomic_add_lock.acquire();
-  uint64 result = value;
-  value += increment;
-  global_atomic_add_lock.release();
-  return result;
-}
-
-int64 ArchThreads::atomic_add(int64 &value, int64 increment)
-{
-  return (int64) ArchThreads::atomic_add((uint64 &) value, increment);
-}
 
 void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 {
@@ -124,7 +108,7 @@ void ArchThreads::printThreadRegisters(Thread *thread, bool verbose)
 
 void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_registers, bool verbose)
 {
-  ArchThreadRegisters *info = userspace_registers?thread->user_registers_:thread->kernel_registers_;
+  ArchThreadRegisters *info = userspace_registers ? thread->user_registers_.get() : thread->kernel_registers_.get();
   if (!info)
   {
     kprintfd("%sThread: %18p, has no %s registers. %s\n",userspace_registers?"  User":"Kernel",thread,userspace_registers?"User":"Kernel",userspace_registers?"":"This should never(!) occur. How did you do that?");
@@ -145,18 +129,6 @@ void ArchThreads::printThreadRegisters(Thread *thread, uint32 userspace_register
 }
 
 
-
-void ArchThreads::atomic_set(uint32& target, uint32 value)
-{
-  // just re-use the method for exchange. Under ARM the build-ins do not work...
-  testSetLock(target, value);
-}
-
-void ArchThreads::atomic_set(int32& target, int32 value)
-{
-  atomic_set((uint32&)target, (uint32)value);
-}
-
 extern "C" void threadStartHack();
 
 void ArchThreads::debugCheckNewThread(Thread* thread)
@@ -168,7 +140,7 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   assert(thread->kernel_registers_->sp0 == 0 && "kernel register set needs no backup of kernel esp");
   assert(thread->kernel_registers_->sp == thread->kernel_registers_->r[11] && "new kernel stack must be empty");
   assert(thread->kernel_registers_->sp != currentThread->kernel_registers_->sp && thread->kernel_registers_->r[11] != currentThread->kernel_registers_->r[11] && "all threads need their own stack");
-  assert(thread->kernel_registers_->ttbr0 < 0x80000000 - BOARD_LOAD_BASE && "ttbr0 contains the physical page dir address");
+  assert(thread->kernel_registers_->ttbr0 < 0x80000000 - BOARD_LOAD_BASE && "ttbr0 needs to contain the physical page dir address");
   if (thread->user_registers_ == 0)
     return;
   assert(thread->kernel_registers_->pc == 0 && "user threads should not start execution in kernel mode");
@@ -179,4 +151,11 @@ void ArchThreads::debugCheckNewThread(Thread* thread)
   if (currentThread->user_registers_ == 0)
     return;
   assert(currentThread->user_registers_->sp0 != thread->user_registers_->sp0 && "no 2 threads may have the same esp0 value");
+}
+
+[[noreturn]] void ArchThreads::startThreads([[maybe_unused]]Thread* init_thread)
+{
+    ArchInterrupts::enableInterrupts();
+    yield();
+    assert(false);
 }

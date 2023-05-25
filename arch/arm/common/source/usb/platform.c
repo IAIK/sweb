@@ -13,7 +13,7 @@
 #include "debug.h"
 #include "board_constants.h"
 #include "kmalloc.h"
-#include "kstring.h"
+#include "string.h"
 
 void* MemoryReserve(u32 length __attribute__((unused)), void* physicalAddress) {
   return physicalAddress;

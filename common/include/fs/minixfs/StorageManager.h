@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Bitmap.h"
+
 #include "types.h"
 
 class StorageManager
@@ -14,7 +15,7 @@ class StorageManager
      */
     StorageManager(uint16 num_inodes, uint16 num_zones);
 
-    virtual ~StorageManager();
+    virtual ~StorageManager() = default;
 
     /**
      * frees the zone at the given index

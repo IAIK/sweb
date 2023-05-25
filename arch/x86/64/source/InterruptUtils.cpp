@@ -1,313 +1,290 @@
 #include "InterruptUtils.h"
 
-#include "ArchSerialInfo.h"
-#include "BDManager.h"
-#include "new.h"
-#include "ports.h"
-#include "ArchMemory.h"
-#include "ArchThreads.h"
-#include "ArchCommon.h"
-#include "Console.h"
-#include "Terminal.h"
-#include "kprintf.h"
-#include "Scheduler.h"
-#include "debug_bochs.h"
-#include "offsets.h"
-#include "kstring.h"
-
-#include "SerialManager.h"
-#include "KeyboardManager.h"
-#include "panic.h"
-
-#include "Thread.h"
-#include "ArchInterrupts.h"
-#include "backtrace.h"
-
-#include "SWEBDebugInfo.h"
-#include "Loader.h"
-#include "Syscall.h"
-#include "paging-definitions.h"
-#include "PageFaultHandler.h"
-
 #include "8259.h"
+#include "BDManager.h"
+#include "Console.h"
+#include "ErrorHandlers.h"
+#include "KeyboardManager.h"
+#include "Loader.h"
+#include "PageFaultHandler.h"
+#include "SWEBDebugInfo.h"
+#include "Scheduler.h"
+#include "SerialManager.h"
+#include "Syscall.h"
+#include "Terminal.h"
+#include "Thread.h"
+#include "TimerTickHandler.h"
+#include "backtrace.h"
+#include "debug_bochs.h"
+#include "kprintf.h"
+#include "kstring.h"
+#include "new.h"
+#include "offsets.h"
+#include "paging-definitions.h"
+#include "ports.h"
 
-#define LO_WORD(x) (((uint32)(x)) & 0x0000FFFFULL)
-#define HI_WORD(x) ((((uint32)(x)) >> 16) & 0x0000FFFFULL)
-#define LO_DWORD(x) (((uint64)(x)) & 0x00000000FFFFFFFFULL)
-#define HI_DWORD(x) ((((uint64)(x)) >> 32) & 0x00000000FFFFFFFFULL)
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMemory.h"
+#include "ArchMulticore.h"
+#include "ArchSerialInfo.h"
+#include "ArchThreads.h"
 
-#define TYPE_TRAP_GATE      15 // trap gate, i.e. IF flag is *not* cleared
-#define TYPE_INTERRUPT_GATE 14 // interrupt gate, i.e. IF flag *is* cleared
+#include "assert.h"
+#include "debug.h"
 
-#define DPL_KERNEL_SPACE     0 // kernelspace's protection level
-#define DPL_USER_SPACE       3 // userspaces's protection level
-
-#define SYSCALL_INTERRUPT 0x80 // number of syscall interrupt
+extern const SWEBDebugInfo* kernel_debug_info;
+extern eastl::atomic_flag assert_print_lock;
 
 
-// --- Pagefault error flags.
-//     PF because/in/caused by/...
-
-#define FLAG_PF_PRESENT     0x01 // =0: pt/page not present
-                                 // =1: of protection violation
-
-#define FLAG_PF_RDWR        0x02 // =0: read access
-                                 // =1: write access
-
-#define FLAG_PF_USER        0x04 // =0: supervisormode (CPL < 3)
-                                 // =1: usermode (CPL == 3)
-
-#define FLAG_PF_RSVD        0x08 // =0: not a reserved bit
-                                 // =1: a reserved bit
-
-#define FLAG_PF_INSTR_FETCH 0x10 // =0: not an instruction fetch
-                                 // =1: an instruction fetch (need PAE for that)
-
-struct GateDesc
+// generic interrupt handler -> dispatches to registered handlers for invoked interrupt number
+void interruptHandler(size_t interrupt_num,
+                      uint64_t error_code,
+                      ArchThreadRegisters* saved_registers)
 {
-  uint16 offset_ld_lw : 16;     // low word / low dword of handler entry point's address
-  uint16 segment_selector : 16; // (code) segment the handler resides in
-  uint8 ist       : 3;     // interrupt stack table index
-  uint8 zeros     : 5;     // set to zero
-  uint8 type      : 4;     // set to TYPE_TRAP_GATE or TYPE_INTERRUPT_GATE
-  uint8 zero_1    : 1;     // unsued - set to zero
-  uint8 dpl       : 2;     // descriptor protection level
-  uint8 present   : 1;     // present- flag - set to 1
-  uint16 offset_ld_hw : 16;     // high word / low dword of handler entry point's address
-  uint32 offset_hd : 32;        // high dword of handler entry point's address
-  uint32 reserved : 32;
-}__attribute__((__packed__));
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt handler %zu, error: %lx\n",
+        SMP::currentCpuId(), interrupt_num, error_code);
+    assert(interrupt_num < 256);
 
+    if (interrupt_num == 0xE)
+    {
+        uintptr_t pagefault_addr = 0;
+        asm volatile("movq %%cr2, %[cr2]\n" : [cr2] "=r"(pagefault_addr));
+        pageFaultHandler(pagefault_addr, error_code, saved_registers->rip);
+    }
+    else if (interrupt_num < 32)
+    {
+        errorHandler(interrupt_num, saved_registers->rip, saved_registers->cs, 0);
+    }
+    else
+    {
+        ArchInterrupts::startOfInterrupt(interrupt_num);
+        ArchInterrupts::handleInterrupt(interrupt_num);
+        ArchInterrupts::endOfInterrupt(interrupt_num);
+    }
 
-extern "C" void arch_dummyHandler();
-extern "C" void arch_dummyHandlerMiddle();
-
-uint64 InterruptUtils::pf_address;
-uint64 InterruptUtils::pf_address_counter;
-
-void InterruptUtils::initialise()
-{
-  uint32 num_handlers = 0;
-  for (uint32 i = 0; handlers[i].offset != 0; ++i)
-    num_handlers = handlers[i].number;
-  ++num_handlers;
-  // allocate some memory for our handlers
-  GateDesc *interrupt_gates = new GateDesc[num_handlers];
-  size_t dummy_handler_sled_size = (((size_t) arch_dummyHandlerMiddle) - (size_t) arch_dummyHandler);
-  assert((dummy_handler_sled_size % 128) == 0 && "cannot handle weird padding in the kernel binary");
-  dummy_handler_sled_size /= 128;
-
-  uint32 j = 0;
-  for (uint32 i = 0; i < num_handlers; ++i)
-  {
-    while (handlers[j].number < i && handlers[j].offset != 0)
-      ++j;
-    interrupt_gates[i].offset_ld_lw = LO_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
-    interrupt_gates[i].offset_ld_hw = HI_WORD(LO_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size)));
-    interrupt_gates[i].offset_hd = HI_DWORD((handlers[j].number == i && handlers[j].offset != 0) ? (size_t)handlers[j].offset : (((size_t)arch_dummyHandler)+i*dummy_handler_sled_size));
-    interrupt_gates[i].ist = 0; // we could provide up to 7 different indices here - 0 means legacy stack switching
-    interrupt_gates[i].present = 1;
-    interrupt_gates[i].segment_selector = KERNEL_CS;
-    interrupt_gates[i].type = TYPE_INTERRUPT_GATE;
-    interrupt_gates[i].zero_1 = 0;
-    interrupt_gates[i].zeros = 0;
-    interrupt_gates[i].reserved = 0;
-    interrupt_gates[i].dpl = ((i == SYSCALL_INTERRUPT && handlers[j].number == i) ? DPL_USER_SPACE : DPL_KERNEL_SPACE);
-    debug(A_INTERRUPTS,
-        "%x -- offset = %p, offset_ld_lw = %x, offset_ld_hw = %x, offset_hd = %x, ist = %x, present = %x, segment_selector = %x, type = %x, dpl = %x\n", i, handlers[i].offset,
-        interrupt_gates[i].offset_ld_lw, interrupt_gates[i].offset_ld_hw,
-        interrupt_gates[i].offset_hd, interrupt_gates[i].ist,
-        interrupt_gates[i].present, interrupt_gates[i].segment_selector,
-        interrupt_gates[i].type, interrupt_gates[i].dpl);
-  }
-  IDTR idtr;
-
-  idtr.base = (pointer) interrupt_gates;
-  idtr.limit = sizeof(GateDesc) * num_handlers - 1;
-  lidt(&idtr);
-  pf_address = 0xdeadbeef;
-  pf_address_counter = 0;
+    debugAdvanced(A_INTERRUPTS, "Interrupt handler %zu end\n", interrupt_num);
 }
 
-void InterruptUtils::lidt(IDTR *idtr)
+/**
+ * Interrupt handler for Programmable Interval Timer (PIT)
+ * ISA IRQ 0 -> remapped to interrupt vector 32 via PIC 8259/IoApic
+ */
+void int32_handler_PIT_irq0()
 {
-  asm volatile("lidt (%0) ": :"q" (idtr));
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u (ISA IRQ %u) called\n",
+        SMP::currentCpuId(), InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT, 0);
+
+    ArchCommon::callWithStack(
+        ArchMulticore::cpuStackTop(),
+        []()
+        {
+            TimerTickHandler::handleTimerTick();
+
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId() * 2] =
+                ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
+
+            // Signal end of interrupt here since we don't return normally
+            ArchInterrupts::endOfInterrupt(InterruptVector::REMAP_OFFSET + (uint8_t)ISA_IRQ::PIT);
+            contextSwitch();
+            assert(false);
+        });
 }
 
-void InterruptUtils::countPageFault(uint64 address)
+/**
+ * Interrupt handler for APIC timer
+ */
+void int127_handler_APIC_timer()
 {
-  if ((address ^ (uint64)currentThread) == pf_address)
-  {
-    pf_address_counter++;
-  }
-  else
-  {
-    pf_address = address ^ (uint64)currentThread;
-    pf_address_counter = 0;
-  }
-  if (pf_address_counter >= 10)
-  {
-    kprintfd("same pagefault from the same thread for 10 times in a row. most likely you have an error in your code\n");
-    asm("hlt");
-  }
-}
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
+        SMP::currentCpuId(), InterruptVector::APIC_TIMER);
 
-extern SWEBDebugInfo const *kernel_debug_info;
+    ArchCommon::callWithStack(ArchMulticore::cpuStackTop(),
+        []()
+        {
+            TimerTickHandler::handleTimerTick();
 
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId()*2] =
+                ((currentThread->console_color << 4) |
+                 CONSOLECOLOR::BRIGHT_WHITE);
 
-extern "C" void arch_contextSwitch();
-
-extern ArchThreadRegisters *currentThreadRegisters;
-extern Thread *currentThread;
-
-extern "C" void arch_irqHandler_0();
-extern "C" void irqHandler_0()
-{
-  ++outstanding_EOIs;
-  ArchCommon::drawHeartBeat();
-
-  Scheduler::instance()->incTicks();
-
-  Scheduler::instance()->schedule();
-
-  //kprintfd("irq0: Going to leave irq Handler 0\n");
-  ArchInterrupts::EndOfInterrupt(0);
-  arch_contextSwitch();
-}
-
-extern "C" void arch_irqHandler_65();
-extern "C" void irqHandler_65()
-{
-  Scheduler::instance()->schedule();
-  arch_contextSwitch();
-}
-
-extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious);
-extern "C" void arch_pageFaultHandler();
-extern "C" void pageFaultHandler(uint64 address, uint64 error)
-{
-  auto &regs = *(currentThread->switch_to_userspace_ ? currentThread->user_registers_ : currentThread->kernel_registers_);
-
-  if (address >= USER_BREAK && address < KERNEL_START) { // dirty hack due to qemu invoking the pf handler when accessing non canonical addresses
-    errorHandler(0xd, regs.rip, regs.cs, 0);
-    assert(0 && "thread should not survive a GP fault");
-  }
-  assert(!(error & FLAG_PF_RSVD) && "Reserved bit set in page table entry");
-
-  assert((regs.rflags&(1ULL<<9)) && "PF with interrupts disabled. PF handler will enable interrupts soon. Better panic now");
-
-  PageFaultHandler::enterPageFault(address, error & FLAG_PF_USER,
-                                   error & FLAG_PF_PRESENT,
-                                   error & FLAG_PF_RDWR,
-                                   error & FLAG_PF_INSTR_FETCH);
-  if (currentThread->switch_to_userspace_)
-    arch_contextSwitch();
-  else
-    asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
-}
-
-extern "C" void arch_irqHandler_1();
-extern "C" void irqHandler_1()
-{
-  ++outstanding_EOIs;
-  KeyboardManager::instance()->serviceIRQ( );
-  ArchInterrupts::EndOfInterrupt(1);
-}
-
-extern "C" void arch_irqHandler_3();
-extern "C" void irqHandler_3()
-{
-  kprintfd( "IRQ 3 called\n" );
-  ++outstanding_EOIs;
-  SerialManager::getInstance()->service_irq( 3 );
-  ArchInterrupts::EndOfInterrupt(3);
-  kprintfd( "IRQ 3 ended\n" );
-}
-
-extern "C" void arch_irqHandler_4();
-extern "C" void irqHandler_4()
-{
-  kprintfd( "IRQ 4 called\n" );
-  ++outstanding_EOIs;
-  SerialManager::getInstance()->service_irq( 4 );
-  ArchInterrupts::EndOfInterrupt(4);
-  kprintfd( "IRQ 4 ended\n" );
-}
-
-extern "C" void arch_irqHandler_6();
-extern "C" void irqHandler_6()
-{
-  kprintfd( "IRQ 6 called\n" );
-  kprintfd( "IRQ 6 ended\n" );
-}
-
-extern "C" void arch_irqHandler_9();
-extern "C" void irqHandler_9()
-{
-  kprintfd( "IRQ 9 called\n" );
-  ++outstanding_EOIs;
-  BDManager::getInstance()->serviceIRQ( 9 );
-  ArchInterrupts::EndOfInterrupt(9);
-}
-
-extern "C" void arch_irqHandler_11();
-extern "C" void irqHandler_11()
-{
-  kprintfd( "IRQ 11 called\n" );
-  ++outstanding_EOIs;
-  BDManager::getInstance()->serviceIRQ( 11 );
-  ArchInterrupts::EndOfInterrupt(11);
-}
-
-extern "C" void arch_irqHandler_14();
-extern "C" void irqHandler_14()
-{
-  //kprintfd( "IRQ 14 called\n" );
-  ++outstanding_EOIs;
-  BDManager::getInstance()->serviceIRQ( 14 );
-  ArchInterrupts::EndOfInterrupt(14);
-}
-
-extern "C" void arch_irqHandler_15();
-extern "C" void irqHandler_15()
-{
-  //kprintfd( "IRQ 15 called\n" );
-  ++outstanding_EOIs;
-  BDManager::getInstance()->serviceIRQ( 15 );
-  ArchInterrupts::EndOfInterrupt(15);
-}
-
-extern "C" void arch_syscallHandler();
-extern "C" void syscallHandler()
-{
-  currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
-  ArchInterrupts::enableInterrupts();
-
-  auto ret = Syscall::syscallException(currentThread->user_registers_->rax,
-                                       currentThread->user_registers_->rbx,
-                                       currentThread->user_registers_->rcx,
-                                       currentThread->user_registers_->rdx,
-                                       currentThread->user_registers_->rsi,
-                                       currentThread->user_registers_->rdi);
-
-  currentThread->user_registers_->rax = ret;
-
-  ArchInterrupts::disableInterrupts();
-  currentThread->switch_to_userspace_ = 1;
-  currentThreadRegisters = currentThread->user_registers_;
-  arch_contextSwitch();
+            // Signal end of interrupt here since we don't return normally
+            ArchInterrupts::endOfInterrupt(InterruptVector::APIC_TIMER);
+            contextSwitch();
+            assert(false);
+        });
 }
 
 
-extern const char* errors[];
-extern "C" void arch_errorHandler();
-extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
+/**
+ * Interrupt handler for software interrupt 65 used by yield()
+ */
+void int65_handler_swi_yield()
+{
+    debugAdvanced(A_INTERRUPTS, "[CPU %zu] Interrupt vector %u called\n",
+        SMP::currentCpuId(), InterruptVector::YIELD);
+
+    ArchCommon::callWithStack(
+        ArchMulticore::cpuStackTop(),
+        []()
+        {
+            Scheduler::instance()->schedule();
+
+            ((char*)ArchCommon::getFBPtr())[1 + SMP::currentCpuId() * 2] =
+                ((currentThread->console_color << 4) | CONSOLECOLOR::BRIGHT_WHITE);
+
+            // Signal end of interrupt here since we don't return normally
+            ArchInterrupts::endOfInterrupt(InterruptVector::YIELD);
+            contextSwitch();
+            assert(false);
+        });
+}
+
+/**
+ * Handler for pagefault exception
+ *
+ * @param address accessed address that caused the pagefault
+ * @param error information about the pagefault provided by the CPU
+ * @param ip CPU instruction pointer at the pagefault
+ */
+void pageFaultHandler(uint64_t address, uint64_t error, uint64_t ip)
+{
+    auto &regs = *(currentThread->switch_to_userspace_ ? currentThread->user_registers_ :
+                                                         currentThread->kernel_registers_);
+
+    // dirty hack due to qemu invoking the pf handler when accessing non canonical addresses
+    if (address >= USER_BREAK && address < KERNEL_START)
+    {
+        errorHandler(0xd, regs.rip, regs.cs, 0);
+        assert(false && "thread should not survive a GP fault");
+    }
+    PagefaultExceptionErrorCode error_code{static_cast<uint32_t>(error)};
+    assert(!error_code.reserved_write && "Reserved bit set in page table entry");
+
+    assert(ArchThreads::getInterruptEnableFlag(regs) && "PF with interrupts disabled. PF handler will enable interrupts soon. Better panic now");
+
+    PageFaultHandler::enterPageFault(address, ip, error_code.user, error_code.present,
+                                     error_code.write, error_code.instruction_fetch);
+    if (currentThread->switch_to_userspace_)
+        contextSwitch();
+    else
+        asm volatile ("movq %%cr3, %%rax; movq %%rax, %%cr3;" ::: "%rax");
+}
+
+/**
+ * Handler for Inter-Processor-Interrupt vector 90.
+ * Used to stop other CPUs when a kernel panic occurs.
+ */
+void int90_handler_halt_cpu()
+{
+    while (assert_print_lock.test_and_set(eastl::memory_order_acquire));
+
+    debugAlways(A_INTERRUPTS, "Interrupt %u called, CPU %zu halting\n", InterruptVector::IPI_HALT_CPU, SMP::currentCpuId());
+    if (currentThread)
+    {
+        debug(BACKTRACE, "CPU %zu backtrace:\n", SMP::currentCpuId());
+        currentThread->printBacktrace(false);
+    }
+
+    assert_print_lock.clear(eastl::memory_order_release);
+
+    while(true)
+    {
+        ArchCommon::halt();
+    }
+}
+
+/**
+ * APIC error interrupt handler.
+ * Invoked by the APIC when it encounters an error condition.
+ */
+void int91_handler_APIC_error()
+{
+    auto error = cpu_lapic->readRegister<Apic::Register::ERROR_STATUS>();
+    debugAlways(APIC, "Internal APIC error: %x\n", *(uint32_t*)&error);
+
+    assert(!"Internal APIC error");
+
+    cpu_lapic->writeRegister<Apic::Register::ERROR_STATUS>({});
+}
+
+/**
+ * Handler for spurious APIC interrupts.
+ * Spurious interrupts can be triggered under special conditions when an interrupt signal
+ * becomes masked at the same time it is raised. Can safely be ignored.
+ */
+void int100_handler_APIC_spurious()
+{
+    debug(A_INTERRUPTS, "IRQ %u called by CPU %zu, spurious APIC interrupt\n", InterruptVector::APIC_SPURIOUS, SMP::currentCpuId());
+}
+
+/**
+ * Handler for Inter-Processor-Interrupt vector 100.
+ * Used to send remote function call requests to other CPUs (e.g. TLB flush requests)
+ */
+void int101_handler_cpu_fcall()
+{
+    debug(A_INTERRUPTS, "IRQ %u called by CPU %zu\n", InterruptVector::IPI_REMOTE_FCALL, SMP::currentCpuId());
+
+    auto funcdata = SMP::currentCpu().fcall_queue.takeAll();
+    while (funcdata != nullptr)
+    {
+        debug(A_INTERRUPTS, "CPU %zu: Function call request from CPU %zu\n", SMP::currentCpuId(), funcdata->orig_cpu);
+
+        funcdata->received.store(true, eastl::memory_order_release);
+
+        assert(funcdata->target_cpu == SMP::currentCpuId());
+        assert(funcdata->func);
+
+        funcdata->func();
+
+        auto next = funcdata->next.load();
+        funcdata->done.store(true, eastl::memory_order_release); // funcdata object is invalid as soon as it is acknowledged
+        funcdata = next;
+    }
+}
+
+/**
+ * Handler for syscall software interrupts from userspace.
+ * Marks thread as being in kernel mode, reenables interrupts, and passes syscall
+ * parameters stored in user registers to the generic syscall handler.
+ */
+void syscallHandler()
+{
+    currentThread->switch_to_userspace_ = 0;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
+    ArchInterrupts::enableInterrupts();
+
+    auto ret = Syscall::syscallException(currentThread->user_registers_->rax,
+                                        currentThread->user_registers_->rbx,
+                                        currentThread->user_registers_->rcx,
+                                        currentThread->user_registers_->rdx,
+                                        currentThread->user_registers_->rsi,
+                                        currentThread->user_registers_->rdi);
+
+    currentThread->user_registers_->rax = ret;
+
+    ArchInterrupts::disableInterrupts();
+    currentThread->switch_to_userspace_ = 1;
+    currentThreadRegisters = currentThread->user_registers_.get();
+    contextSwitch();
+    assert(false);
+}
+
+/**
+ * Handler for exception interrupts raised by the CPU (e.g. invalid opcode, divide by zero, general protection fault, ...)
+ *
+ * @param num raised exception number
+ * @param rip instruction pointer when the exception was raised
+ * @param cs selected code segment when the exception was raised
+ * @param spurious whether the exception was a spurious interrupt rather than a CPU exception
+ */
+void errorHandler(size_t num, size_t rip, size_t cs, size_t spurious)
 {
   kprintfd("%zx\n",cs);
   if (spurious)
   {
-    assert(num < 128 && "there are only 128 interrupts");
+    assert(num < 256 && "there are only 256 interrupts");
     debug(CPU_ERROR, "Spurious Interrupt %zu (%zx)\n", num, num);
   }
   else
@@ -316,27 +293,25 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
     debug(CPU_ERROR, "\033[1;31m%s\033[0;39m\n", errors[num]);
   }
   const bool userspace = (cs & 0x3);
-  debug(CPU_ERROR, "Instruction Pointer: %zx, Userspace: %d - currentThread: %p %zd" ":%s, switch_to_userspace_: %d\n",
-        eip, userspace, currentThread,
+  debug(CPU_ERROR, "Instruction Pointer: %zx, Userspace: %d - currentThread(): %p %zd" ":%s, switch_to_userspace_: %d\n",
+        rip, userspace, currentThread,
         currentThread ? currentThread->getTID() : -1UL, currentThread ? currentThread->getName() : 0,
         currentThread ? currentThread->switch_to_userspace_ : -1);
 
   const Stabs2DebugInfo* deb = kernel_debug_info;
   assert(currentThread && "there should be no fault before there is a current thread");
   assert(currentThread->kernel_registers_ && "every thread needs kernel registers");
-  ArchThreadRegisters* registers_ = currentThread->kernel_registers_;
   if (userspace)
   {
     assert(currentThread->loader_ && "User Threads need to have a Loader");
     assert(currentThread->user_registers_ && (currentThread->user_registers_->cr3 == currentThread->kernel_registers_->cr3 &&
            "User and Kernel CR3 register values differ, this most likely is a bug!"));
     deb = currentThread->loader_->getDebugInfos();
-    registers_ = currentThread->user_registers_;
   }
-  if(deb && registers_->rip)
+  if(deb && rip)
   {
     debug(CPU_ERROR, "This Fault was probably caused by:");
-    deb->printCallInformation(registers_->rip);
+    deb->printCallInformation(rip);
   }
   ArchThreads::printThreadRegisters(currentThread, false);
   currentThread->printBacktrace(true);
@@ -344,20 +319,26 @@ extern "C" void errorHandler(size_t num, size_t eip, size_t cs, size_t spurious)
   if (spurious)
   {
     if (currentThread->switch_to_userspace_)
-      arch_contextSwitch();
+    {
+      contextSwitch();
+      assert(false);
+    }
   }
   else
   {
     currentThread->switch_to_userspace_ = false;
-    currentThreadRegisters = currentThread->kernel_registers_;
+    currentThreadRegisters = currentThread->kernel_registers_.get();
     ArchInterrupts::enableInterrupts();
     debug(CPU_ERROR, "Terminating process...\n");
     if (currentThread->user_registers_)
+    {
       Syscall::exit(888);
+    }
     else
+    {
       currentThread->kill();
+    }
+
+    assert(false);
   }
 }
-
-#include "ErrorHandlers.h" // error handler definitions and irq forwarding definitions
-

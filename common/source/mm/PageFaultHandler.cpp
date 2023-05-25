@@ -1,22 +1,29 @@
 #include "PageFaultHandler.h"
-#include "kprintf.h"
-#include "Thread.h"
-#include "ArchInterrupts.h"
-#include "offsets.h"
-#include "Scheduler.h"
+
 #include "Loader.h"
+#include "Scheduler.h"
 #include "Syscall.h"
+#include "Thread.h"
+#include "kprintf.h"
+#include "offsets.h"
+
+#include "ArchCommon.h"
+#include "ArchInterrupts.h"
+#include "ArchMulticore.h"
 #include "ArchThreads.h"
-extern "C" void arch_contextSwitch();
+
+#include "assert.h"
 
 const size_t PageFaultHandler::null_reference_check_border_ = PAGE_SIZE;
+size_t PageFaultHandler::pf_address = 0xDEADBEEF;
+size_t PageFaultHandler::pf_address_counter = 0;
 
 inline bool PageFaultHandler::checkPageFaultIsValid(size_t address, bool user,
                                                     bool present, bool switch_to_us)
 {
   assert((user == switch_to_us) && "Thread is in user mode even though is should not be.");
-  assert(!(address < USER_BREAK && currentThread->loader_ == 0) && "Thread accesses the user space, but has no loader.");
-  assert(!(user && currentThread->user_registers_ == 0) && "Thread is in user mode, but has no valid registers.");
+  assert(!(address < USER_BREAK && currentThread->loader_ == nullptr) && "Thread accesses the user space, but has no loader.");
+  assert(!(user && currentThread->user_registers_ == nullptr) && "Thread is in user mode, but has no valid registers.");
 
   if(address < null_reference_check_border_)
   {
@@ -48,8 +55,8 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
 {
   if (PAGEFAULT & OUTPUT_ENABLED)
     kprintfd("\n");
-  debug(PAGEFAULT, "Address: %18zx - Thread %zu: %s (%p)\n",
-        address, currentThread->getTID(), currentThread->getName(), currentThread);
+  debug(PAGEFAULT, "CPU %zu, Address: %18zx - Thread %zu: %s (%p)\n",
+        SMP::currentCpuId(), address, currentThread->getTID(), currentThread->getName(), currentThread);
   debug(PAGEFAULT, "Flags: %spresent, %s-mode, %s, %s-fetch, switch to userspace: %1d\n",
         present ? "    " : "not ",
         user ? "  user" : "kernel",
@@ -69,23 +76,28 @@ inline void PageFaultHandler::handlePageFault(size_t address, bool user,
     ArchThreads::printThreadRegisters(currentThread, true);
     currentThread->printBacktrace(true);
     if (currentThread->loader_)
+    {
       Syscall::exit(9999);
+    }
     else
+    {
       currentThread->kill();
+    }
   }
   debug(PAGEFAULT, "Page fault handling finished for Address: %18zx.\n", address);
 }
 
-void PageFaultHandler::enterPageFault(size_t address, bool user,
+void PageFaultHandler::enterPageFault(size_t address, size_t ip, bool user,
                                       bool present, bool writing,
                                       bool fetch)
 {
+  debug(PAGEFAULT, "CPU %zu, Pagefault at %zx, ip %zx, present: %u, writing: %u, user: %u, instr fetch: %u\n", SMP::currentCpuId(), address, ip, present, writing, user, fetch);
   assert(currentThread && "You have a pagefault, but no current thread");
   //save previous state on stack of currentThread
   uint32 saved_switch_to_userspace = currentThread->switch_to_userspace_;
 
   currentThread->switch_to_userspace_ = 0;
-  currentThreadRegisters = currentThread->kernel_registers_;
+  currentThreadRegisters = currentThread->kernel_registers_.get();
   ArchInterrupts::enableInterrupts();
 
   handlePageFault(address, user, present, writing, fetch, saved_switch_to_userspace);
@@ -93,5 +105,26 @@ void PageFaultHandler::enterPageFault(size_t address, bool user,
   ArchInterrupts::disableInterrupts();
   currentThread->switch_to_userspace_ = saved_switch_to_userspace;
   if (currentThread->switch_to_userspace_)
-    currentThreadRegisters = currentThread->user_registers_;
+  {
+    currentThreadRegisters = currentThread->user_registers_.get();
+  }
+}
+
+
+void PageFaultHandler::countPageFault(size_t address)
+{
+  if ((address ^ (size_t)currentThread) == pf_address)
+  {
+    pf_address_counter++;
+  }
+  else
+  {
+    pf_address = address ^ (size_t)currentThread;
+    pf_address_counter = 0;
+  }
+  if (pf_address_counter >= 10)
+  {
+    kprintfd("same pagefault from the same thread for 10 times in a row. most likely you have an error in your code\n");
+    ArchCommon::halt();
+  }
 }

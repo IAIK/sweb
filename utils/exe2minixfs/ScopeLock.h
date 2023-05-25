@@ -3,15 +3,16 @@
 #ifdef EXE2MINIXFS
 #pragma once
 
+#include "types.h"
+
 class Mutex;
 
 class ScopeLock
 {
 public:
-    ScopeLock(Mutex &){};
-    ScopeLock(Mutex &, bool){};
+    ScopeLock(Mutex&, bool = true, pointer = 0) {}
 
-    ScopeLock(ScopeLock const&) = delete;
-    ScopeLock &operator=(ScopeLock const&) = delete;
+    ScopeLock(const ScopeLock&) = delete;
+    ScopeLock& operator=(const ScopeLock&) = delete;
 };
 #endif

@@ -5,10 +5,10 @@
 
 class DeviceFSType : public RamFSType
 {
-  public:
+public:
     DeviceFSType();
 
-    virtual ~DeviceFSType();
+    ~DeviceFSType() override = default;
 
     /**
      * Reads the superblock from the device.
@@ -16,7 +16,7 @@ class DeviceFSType : public RamFSType
      * @param data is the data given to the mount system call.
      * @return is a pointer to the resulting superblock.
      */
-    virtual Superblock *readSuper(Superblock *superblock, void *data) const;
+    Superblock* readSuper(Superblock* superblock, void* data) const override;
 
     /**
      * Creates an Superblock object for the actual file system type.
@@ -24,11 +24,10 @@ class DeviceFSType : public RamFSType
      * @param s_dev the device number of the new superblock
      * @return a pointer to the Superblock object
      */
-    virtual Superblock *createSuper(uint32 s_dev);
+    Superblock* createSuper(uint32 s_dev) override;
 
     static DeviceFSType* getInstance();
 
 protected:
     static DeviceFSType* instance_;
 };
-
